@@ -82,14 +82,7 @@
 **Files** — `Run-React-Proof.cmd`, `docs/react-workflow.md`, `VERIFICATION.md`. Add a reproducible React ZIP builder at `tools/package_react_windows.py` and an archive-content test at `tests/test_package_react_windows.py`. Adapt the archive pattern from commit `ec477f8` for the current connected tree.
 
 - [ ] Build from a clean checkout of the candidate commit with `uv sync --locked`, `npm --prefix web ci` and `npm --prefix web run build`. Package tracked runtime sources, the compiled `web/dist`, both lockfiles, the Python pin, self-contained synthetic proof files under `proof/`, and the Windows guide. Archive-test extraction from a clean folder and the absence of credentials, local environments, `node_modules`, portfolio files and retained case data. Write a SHA-256 for the candidate ZIP and record its source commit.
-- [ ] Save the exact Windows proof instructions in `docs/react-workflow.md` before cutting the candidate commit. Install Node.js 24, uv 0.12.5 and the branded browsers. Download the candidate privately, compare its checksum, and extract it into a short local folder such as `C:\credit-os2-test`. Open PowerShell there and run the following commands.
-
-  ```powershell
-  Get-FileHash -Algorithm SHA256 'C:\Downloads\credit-os2-react.zip'
-  Set-Location 'C:\credit-os2-test'
-  .\Run-React-Proof.cmd
-  $LASTEXITCODE
-  ```
+- [ ] Save the exact [Windows proof instructions](../../react-workflow.md#run-the-browser-proof) before cutting the candidate commit. The PowerShell commands verify the companion checksum, extract to a fresh local directory, record the verified archive hash, and run the installed browsers through `Run-React-Proof.cmd`.
 
 - [ ] Require exit code `0`, one passing Google Chrome record and one passing Microsoft Edge record from the same ZIP, with OS, browser version, synthetic run ID, screenshots, source commit and ZIP digest. Save the proof from `proof-artifacts/` and summarise it in `VERIFICATION.md`. Record the final Windows results in a follow-up documentation commit and in the release notes so the archive can keep its tested bytes and source tag. When the designated work PC is unavailable, record the missing proof and keep the ZIP as a candidate. If either browser fails, fix the cause, rebuild and rerun both against the new digest.
 - [ ] After both Windows proofs pass, publish the tested ZIP and checksum on `EricMG13/credit-os2` with the exact tested source commit, Windows instructions and a note identifying the Caesars replay as retained evidence. Keep the previously working ZIP available. To roll back, extract the prior ZIP beside the newer build and point it to the backed-up workflow root if needed. Keep workflow data outside application folders so switching binaries leaves the original run records intact.

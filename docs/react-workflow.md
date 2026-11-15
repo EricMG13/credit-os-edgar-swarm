@@ -24,23 +24,35 @@ RBOT-HTML's existing pins.
 ## Run the browser proof
 
 On the Windows work PC, install Node.js 24, uv 0.12.5, Google Chrome and
-Microsoft Edge. In PowerShell, check the candidate SHA-256 against its companion
-checksum, then extract it to a short local path. Choose an unused extraction folder.
+Microsoft Edge. Save the candidate ZIP and its `.zip.sha256` file together.
+Run the following in PowerShell. Choose a short, unused, writable local folder.
 
 ```powershell
 $zip = 'C:\Downloads\credit-os2-react.zip'
 $folder = 'C:\credit-os2-test'
-Get-FileHash -Algorithm SHA256 $zip
-Expand-Archive -LiteralPath $zip -DestinationPath $folder
-Set-Location $folder
+$expected = ((Get-Content -LiteralPath "$zip.sha256" -Raw -ErrorAction Stop).Trim() -split '\s+')[0]
+$actual = (Get-FileHash -LiteralPath $zip -Algorithm SHA256 -ErrorAction Stop).Hash.ToLowerInvariant()
+if ($actual -ne $expected) { throw 'Candidate ZIP checksum mismatch.' }
+if (Test-Path -LiteralPath $folder) { throw 'Choose an unused extraction folder.' }
+Expand-Archive -LiteralPath $zip -DestinationPath $folder -ErrorAction Stop
+Set-Location -LiteralPath $folder -ErrorAction Stop
 Get-Content .\SOURCE-COMMIT.txt
-.\Run-React-Proof.cmd
-$LASTEXITCODE
+$env:CREDIT_OS_PROOF_ZIP_SHA256 = $actual
+try {
+    .\Run-React-Proof.cmd
+    $status = $LASTEXITCODE
+    Write-Output "Browser proof exit code $status."
+    if ($status -ne 0) { throw "Browser proof failed with exit code $status." }
+} finally {
+    Remove-Item Env:CREDIT_OS_PROOF_ZIP_SHA256
+}
 ```
 
-Keep the printed ZIP digest, source commit, and both browser JSON records together.
-The Windows release gate requires exit code 0 and passing records from both
-branded browsers on the work PC, from the same candidate archive.
+Keep the printed terminal result and the contents of the new
+`proof-artifacts/run-…` folder. Its `proof.json` pairs the two branded browser
+records with the same ZIP hash and source commit. It identifies the operating
+system and lists the screenshots for each synthetic run. The Windows release
+gate requires both browsers in that record and exit code 0 on the work PC.
 
 On macOS or after setup, run the following command.
 

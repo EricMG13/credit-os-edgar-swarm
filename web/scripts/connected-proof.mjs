@@ -2,13 +2,34 @@ import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import { spawn } from "node:child_process";
 import { cp, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
-import { tmpdir } from "node:os";
+import { arch, release } from "node:os";
 import path from "node:path";
 import { createInterface } from "node:readline";
-import { test } from "node:test";
+import { after, test } from "node:test";
 import { chromium } from "playwright";
 
 const project = path.resolve(import.meta.dirname, "../..");
+const sourceCommit = await readFile(path.join(project, "SOURCE-COMMIT.txt"), "utf8").then(
+  (text) => text.trim(),
+  (error) => {
+    if (error.code !== "ENOENT") throw error;
+    return null;
+  },
+);
+const zipSha256 = process.env.CREDIT_OS_PROOF_ZIP_SHA256?.toLowerCase() ?? null;
+if (sourceCommit !== null && !/^[0-9a-f]{40}$/u.test(sourceCommit)) {
+  throw new Error("Invalid source commit in SOURCE-COMMIT.txt");
+}
+if (zipSha256 !== null && (!sourceCommit || !/^[0-9a-f]{64}$/u.test(zipSha256))) {
+  throw new Error("ZIP proof requires the extracted source commit and a valid archive SHA-256");
+}
+const provenance = {
+  source_commit: sourceCommit,
+  zip_sha256: zipSha256,
+  platform: process.platform,
+  os_release: release(),
+  architecture: arch(),
+};
 const proofRoot = path.join(project, "proof-artifacts");
 await mkdir(proofRoot, { recursive: true });
 const artifacts = await mkdtemp(path.join(proofRoot, "run-"));
@@ -18,6 +39,16 @@ const python = path.join(
   ".venv",
   ...(process.platform === "win32" ? ["Scripts", "python.exe"] : ["bin", "python"]),
 );
+const browserProofs = [];
+
+after(async () => {
+  if (browserProofs.length === 2) {
+    await writeFile(
+      path.join(artifacts, "proof.json"),
+      JSON.stringify({ ...provenance, browser_proofs: browserProofs }, null, 2) + "\n",
+    );
+  }
+});
 
 async function startService(workspace) {
   const child = spawn(python, ["-m", "proof.serve", "--root", workspace, "--port", "0"], {
@@ -202,10 +233,11 @@ for (const [channel, brand, envName] of [
     { timeout: 120000 },
     async () => {
       const workspace = await mkdtemp(
-        path.join(process.platform === "win32" ? tmpdir() : "/tmp", "coc-"),
+        path.join(process.platform === "win32" ? artifacts : "/tmp", "coc-"),
       );
       let service;
       let browser;
+      let record;
       try {
         service = await startService(workspace);
         const executablePath = process.env[envName];
@@ -282,11 +314,14 @@ for (const [channel, brand, envName] of [
           path: path.join(artifacts, `${channel}-evidence.png`),
           fullPage: true,
         });
-        const record = {
+        record = {
+          ...provenance,
           browser: brand,
           version: browser.version(),
           run,
-          platform: process.platform,
+          screenshots: ["finished-report", "debt-maturities", "revenue", "evidence"].map(
+            (view) => `${channel}-${view}.png`,
+          ),
           checks: [
             "upload",
             "approved submission",
@@ -302,11 +337,6 @@ for (const [channel, brand, envName] of [
             "evidence reload and handoff",
           ],
         };
-        await writeFile(
-          path.join(artifacts, `${channel}.json`),
-          JSON.stringify(record, null, 2) + "\n",
-        );
-        console.log(`${brand} ${browser.version()} completed run ${run}`);
       } catch (error) {
         if (service !== undefined) console.error(service.stderr());
         await cp(path.join(workspace, "_engine", "logs"), path.join(artifacts, `${channel}-logs`), {
@@ -320,6 +350,12 @@ for (const [channel, brand, envName] of [
         await service?.stop();
         await rm(workspace, { recursive: true, force: true });
       }
+      await writeFile(
+        path.join(artifacts, `${channel}.json`),
+        JSON.stringify(record, null, 2) + "\n",
+      );
+      browserProofs.push(record);
+      console.log(`${brand} ${record.version} completed run ${record.run}`);
     },
   );
 }
