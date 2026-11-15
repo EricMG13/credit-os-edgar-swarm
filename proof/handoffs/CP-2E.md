@@ -45,23 +45,27 @@ Nothing supplied contradicts the view; a USD 1,250 million refinancing would.
 | MATERIAL | 0 |
 | MINOR | 1 |
 
-### T2F.1 - Register
+### Analytical appendix — complete canonical registers
 
-| Item | Value |
-| --- | --- |
-| Observed | Not supplied: nothing to report |
+#### T2F.1 Sourced operands
 
-### T2F.3 - Register
+| Operand | Value | Basis |
+| --- | --- | --- |
+| Reporting currency | USD | Filing p.1 |
 
-| Item | Value |
-| --- | --- |
-| Observed | Not supplied: nothing to report |
+#### T2F.3 Interest rate shock
 
-### T2F.4 - Unhedged exposure
+| Shock | Rate shock | Added annual interest before hedges | Added annual interest after hedges | Cash interest after the shock | Interest coverage after the shock | Change in interest coverage | Free cash flow after the shock | Added interest as share of EBITDA | Source |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| Reference rate up, first shock | 100 bp | 8.00 | 5.00 | 88.00 | 2.95x | -0.30x | 42.00 | 3.08% | Filing p.1 |
+| Reference rate up, second shock | 200 bp | 16.00 | Not supplied: no hedge sensitivity retained | 96.00 | 2.71x | -0.54x | 34.00 | 6.15% | Filing p.2 |
 
-| Item | Value |
-| --- | --- |
-| Unhedged exposure | Not supplied: no floating-rate or hedge balances in the synthetic filing |
+#### T2F.4 Currency shock
+
+| Shock | Currency move | Change in debt | Total debt after the move | Change in EBITDA | Total leverage after the move | Source |
+| --- | --- | --- | --- | --- | --- | --- |
+| Foreign currency strengthens, first move | 5% | 0.00 | 800.00 | 2.00 | 3.05x | Filing p.1 |
+| Foreign currency strengthens, second move | 10% | 0.00 | 800.00 | 4.00 | 3.03x | Filing p.2 |
 
 ### T2F.5 - Rate sensitivity
 

@@ -16,6 +16,7 @@ import { MetricGrid } from "./MetricGrid";
 import { monitoringLabel } from "./ModuleTable";
 import { Downside, downsideView } from "./Downside";
 import { BreakPoints, breakPointView } from "./BreakPoints";
+import { MacroSensitivity, macroView } from "./MacroSensitivity";
 
 function sectionIcon(heading: string): NavSection["icon"] {
   if (heading === "Bottom line") return "bottom-line";
@@ -124,6 +125,7 @@ export function Modules({
   const index = entry ? view.entries.indexOf(entry) : -1;
   const downside = entry ? downsideView(entry) : null;
   const breaks = entry ? breakPointView(entry) : null;
+  const macro = entry ? macroView(entry) : null;
   const evidenceHref = (line: number) => evidencePath(run.folder, String(index), line);
   const allMetrics = entry ? foundationMetrics(entry, view.catalogue) : [];
   const metrics = allMetrics.filter(({ metric }) =>
@@ -146,7 +148,7 @@ export function Modules({
           run={run}
           current={current.id}
           entry={entry}
-          hasLocalFigures={downside !== null || breaks !== null}
+          hasLocalFigures={downside !== null || breaks !== null || macro !== null}
         />
         <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-4">
           {current.outputs.length > 1 && (
@@ -188,6 +190,7 @@ export function Modules({
                   <div id="module-figures" tabIndex={-1} className="grid min-w-0 gap-4">
                     {downside && <Downside data={downside} href={evidenceHref} />}
                     {breaks && <BreakPoints data={breaks} href={evidenceHref} />}
+                    {macro && <MacroSensitivity data={macro} href={evidenceHref} />}
                     <LegacyVisuals
                       output={entry.output}
                       sections={entry.sections}

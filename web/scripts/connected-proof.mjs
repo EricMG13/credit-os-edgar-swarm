@@ -244,6 +244,36 @@ async function checkDownsideThresholds(report, page) {
   await page.setViewportSize(viewport);
 }
 
+async function checkMacro(report, modules, artifacts, channel, page) {
+  await modules.getByRole("link", { name: /^Rates, FX & hedging, Delivered/u }).click();
+  const rates = report.getByRole("region", { name: "Interest rate shocks", exact: true });
+  const chart = rates.getByRole("figure", { name: "Added annual interest", exact: true });
+  await chart.getByText("8.00", { exact: true }).waitFor();
+  await chart.getByText("5.00", { exact: true }).waitFor();
+  await chart.locator("[data-missing]").waitFor();
+  await chart.screenshot({ path: path.join(artifacts, `${channel}-rate-shocks.png`) });
+  await chart.getByRole("radio", { name: "Table", exact: true }).check();
+  await chart.getByRole("cell", { name: "5.00", exact: true }).waitFor();
+  await checkTraceFocus(
+    page,
+    chart.getByRole("button", { name: "Show sources for Added annual interest" }),
+    /Filing p\.1/u,
+  );
+  await rates.getByText("All rate-shock results and limitations", { exact: true }).click();
+  await rates
+    .getByRole("cell", { name: "Not supplied: no hedge sensitivity retained", exact: true })
+    .waitFor();
+  const currency = report.getByRole("figure", {
+    name: "Foreign-currency strengthening",
+    exact: true,
+  });
+  await currency.locator("[data-bar][data-zero]").first().waitFor();
+  await currency.getByRole("radio", { name: "Table", exact: true }).check();
+  const change = currency.getByRole("row", { name: /Change in EBITDA/u });
+  await change.getByRole("cell", { name: "2.00", exact: true }).waitFor();
+  await change.getByRole("cell", { name: "4.00", exact: true }).waitFor();
+}
+
 async function checkCharts(report, artifacts, channel, page) {
   const section = (name) =>
     report
@@ -257,6 +287,7 @@ async function checkCharts(report, artifacts, channel, page) {
   await modules.getByRole("link", { name: /^Refinancing & LME, Delivered/u }).waitFor();
   await checkModuleRecords(report, page, modules);
   await checkDownside(report, modules, artifacts, channel, page);
+  await checkMacro(report, modules, artifacts, channel, page);
   await modules.getByRole("link", { name: /^Financial foundation, Delivered/u }).click();
   const debt = report.getByRole("figure", { name: "Debt maturities", exact: true });
   await debt.getByRole("radio", { name: "Chart", exact: true }).waitFor();
@@ -447,6 +478,7 @@ for (const [channel, brand, envName] of [
             "calendar",
             "debt-maturities",
             "downside",
+            "rate-shocks",
             "revenue",
             "evidence",
           ].map((view) => `${channel}-${view}.png`),
@@ -462,6 +494,7 @@ for (const [channel, brand, envName] of [
             "readiness and monitoring records with source traces",
             "downside case comparison with signed cash flow and explicit gap",
             "downside break-point ranking, watch timing, and narrow layout",
+            "rate and currency shocks with zero and unreported hedge outcomes",
             "portfolio limits table and validation gap",
             "forecast chart and model",
             "forecast run figures and original module",

@@ -130,9 +130,9 @@ RBOT-HTML.
 
 | Entry | React target and placement | What delivery must supply | Source status and fallback |
 | --- | --- | --- | --- |
-| `CP-2E-V01` **Rate shock before/after hedging** | C5 ComparisonChart for discrete rate shocks. Modules. | Produced T2F.1–T2F.5 baseline, up to three upward rate shocks, interest/coverage/FCF and hedge effects. | Table/content only. Pair gross and hedged results on the same shock basis. |
-| `CP-2E-V02` **Currency shock exposure** | C5 ComparisonChart for discrete FX shocks. Modules. | T2F.4 specified currency moves, debt/EBITDA changes and leverage. | Table/content only. Group like currencies, directions and measures. |
-| `CP-2E-V03` **Hedges and residual risk** | R5 directed Hedge map with R4/C14 expiry lane. Modules. | T2F.5 hedge terms and dated expiries/notionals if actually retained. | New view. A span requires both dated endpoints. Use a point for a stated expiry only. |
+| `CP-2E-V01` **Rate shock before/after hedging** | C5 ComparisonChart for discrete rate shocks. Modules. | Produced T2F.1–T2F.5 baseline, up to three upward rate shocks, interest/coverage/FCF and hedge effects. | Compare gross and hedged results from the same shock row and reporting currency. Retained Caesars uses its linked cash-interest calculation and before/after all-in cover, with the hedged result left unavailable. |
+| `CP-2E-V02` **Currency shock exposure** | C5 ComparisonChart for discrete FX shocks. Modules. | T2F.4 specified currency moves, debt/EBITDA changes and leverage. | Compare compatible strengthening scenarios with one scale per measure. Source tables preserve incomplete comparisons and the Caesars translation gap. |
+| `CP-2E-V03` **Hedges and residual risk** | R5 directed Hedge map with R4/C14 expiry lane. Modules. | T2F.5 hedge terms and dated expiries/notionals if actually retained. | Hedge terms are traceable records. The publisher’s dated hedge events use the event lane. A span or map still requires supported endpoints or relationships. |
 
 ## CP-2G
 

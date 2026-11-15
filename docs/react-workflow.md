@@ -67,7 +67,7 @@ workspace and uploads the same synthetic Northbridge filing. The test checks the
 finished report and all five redesigned views, the issuer calendar and its source
 row, keyboard focus after closing figure and row traces, the exact original
 handoff download, a published CP-1 chart, downside cases and break points with
-source links and a 390 px layout, the portfolio limits table and
+source links and a 390 px layout, rate and currency shocks, the portfolio limits table and
 validation gap, and the model forecast that RBOT-HTML calculates. Run charts in
 Forecast are checked against the owning module and the same Evidence link.
 Results and screenshots are saved under
