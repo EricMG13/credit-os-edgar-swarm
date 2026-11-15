@@ -53,9 +53,10 @@ to the corresponding executable if it is installed in a nonstandard location.
 Success is two passing tests and exit code 0. Each browser uses a separate temporary
 workspace and uploads the same synthetic Northbridge filing. The test checks the
 finished report and all five redesigned views, the exact original handoff download,
-a published CP-1 chart, and the model forecast that RBOT-HTML calculates. Results and report screenshots are saved in a fresh
-folder under `proof-artifacts/`. The proof substitutes canned model responses and
-makes no paid calls.
+a published CP-1 chart, the portfolio limits table and validation gap, and the
+model forecast that RBOT-HTML calculates. Results and screenshots are saved under
+`proof-artifacts/`. The proof substitutes canned model responses and makes no
+paid calls.
 
 To prepare a local release candidate from committed sources, run:
 
@@ -90,6 +91,12 @@ either command beginning with `uv`. Open the printed loopback address. Regular m
 uses RBOT-HTML's existing provider-key checks, reviewed submission and run cap.
 
 [Module design and data coverage](design/react-module-coverage.md)
+
+For Portfolio Decision, use the pinned [portfolio workbook template](templates/portfolio.template.xlsx).
+The holdings and market-data workbook supplied for the design review does not
+pass the RBOT-HTML workbook validator. In a report, a limits record without a
+validated mandate, exposure date, NAV basis and rules stays in a table. If the
+handoff supplies a gap, the report shows its original reason.
 
 ## Claude medium live preflight
 

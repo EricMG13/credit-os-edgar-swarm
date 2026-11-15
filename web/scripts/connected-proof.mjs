@@ -120,6 +120,30 @@ async function checkCharts(report, artifacts, channel, page) {
   for (const value of ["500", "1,250", "Not supplied: the schedule stops here"]) {
     await debt.getByText(value, { exact: true }).first().waitFor();
   }
+  const source = debt.getByRole("link", { name: "Source table", exact: true });
+  const sourceHref = await source.getAttribute("href");
+  assert.match(sourceHref, /#evidence\/\d+-\d+$/u);
+  await source.click();
+  await page.waitForURL(new URL(sourceHref, page.url()).href);
+  await report
+    .getByRole("cell", { name: "Not supplied: the schedule stops here", exact: true })
+    .waitFor();
+  await page.reload();
+  await report.getByRole("cell", { name: "1,250", exact: true }).waitFor();
+
+  await section("Modules").click();
+  await modules.getByRole("link", { name: /^Committee decision, Delivered/u }).click();
+  const limits = report.getByRole("table", { name: "Portfolio limits", exact: true });
+  const issuerLimit = limits.getByRole("row").filter({ hasText: "Single-issuer limit" });
+  for (const value of ["3.0", "4.0", "5.0", "% NAV"]) {
+    await issuerLimit.getByRole("cell", { name: value, exact: true }).waitFor();
+  }
+  await limits.getByRole("cell", { name: "Not supplied: no proposal", exact: true }).waitFor();
+  await report.getByRole("note").filter({ hasText: "validated portfolio basis" }).waitFor();
+  assert.equal(
+    await report.getByRole("figure", { name: "Portfolio limits", exact: true }).count(),
+    0,
+  );
 
   await section("Forecast").click();
   const revenue = report.getByRole("figure", { name: "Revenue", exact: true });
@@ -244,7 +268,8 @@ for (const [channel, brand, envName] of [
             "finished publication",
             "overview",
             "changes",
-            "financial chart and table",
+            "financial chart, table and source trace reload",
+            "portfolio limits table and validation gap",
             "forecast chart and model",
             "report history",
             "evidence reload and handoff",

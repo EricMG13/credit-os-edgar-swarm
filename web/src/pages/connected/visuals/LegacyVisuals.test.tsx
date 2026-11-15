@@ -87,6 +87,43 @@ it("renders the published model cell displays, cases, dates and reasons", () => 
 
 const basis = ["Reporting unit", "Basis and limitation"];
 
+it("keeps portfolio limits as records when the descriptor supplies no validated portfolio basis", () => {
+  const rows = [
+    ["New issuer", "0.00", "Not supplied: no proposal", "5.0", "% NAV", "Synthetic."],
+    ["Sector", "12.50", "13.25", "15.0", "% NAV", "Synthetic."],
+  ];
+  render(
+    <LegacyVisuals
+      output={{
+        charts: [
+          {
+            title: "Portfolio limits",
+            table: 20,
+            kind: "limits",
+            label: 0,
+            current: 1,
+            proposed: 2,
+            limit: 3,
+            unit: "% NAV",
+          },
+        ],
+      }}
+      sections={fixture(
+        ["Limit", "Current exposure", "Proposed exposure", "Limit value", ...basis],
+        rows,
+      )}
+      evidenceHref={(line) => `#line-${String(line)}`}
+    />,
+  );
+  expect(screen.queryByRole("figure", { name: "Portfolio limits" })).toBeNull();
+  expect(screen.getByRole("note")).toHaveTextContent("validated portfolio basis");
+  const table = within(screen.getByRole("table", { name: "Portfolio limits" }));
+  expect(table.getByRole("cell", { name: "0.00" })).toBeInTheDocument();
+  expect(table.getByRole("cell", { name: "Not supplied: no proposal" })).toBeInTheDocument();
+  expect(table.getByRole("cell", { name: "13.25" })).toBeInTheDocument();
+  expect(screen.getByRole("link", { name: "Source table" })).toHaveAttribute("href", "#line-20");
+});
+
 it.each([
   [
     "Bridge",
@@ -105,13 +142,6 @@ it.each([
     ["Measure", "Prior period", "Prior", "Current period", "Current"],
     [["Revenue", "FY2024", "100", "FY2025", "120", "US$m", "Evidence"]],
     "FY2025",
-  ],
-  [
-    "Limits",
-    { kind: "limits", label: 0, current: 1, proposed: 2, limit: 3 },
-    ["Limit", "Current exposure", "Proposed exposure", "Limit value"],
-    [["Foreign exchange", "-1.5", "2.0", "5.0", "%", "Evidence"]],
-    "-1.5",
   ],
   [
     "Peer ratios",

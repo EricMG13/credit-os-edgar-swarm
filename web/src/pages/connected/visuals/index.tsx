@@ -96,7 +96,9 @@ export function LegacyVisuals({
             <h4 className="font-display text-h4">{title}</h4>
             {actions}
             <p role="note" className="text-small text-text-secondary">
-              Source table available. The chart could not be drawn on a common basis.
+              {category === "chart" && descriptor.kind === "limits"
+                ? "Source table available. This report does not record a validated portfolio basis for a chart."
+                : "Source table available. The chart could not be drawn on a common basis."}
             </p>
             <ChartTable caption={title} {...chartTable(table)} />
           </>
