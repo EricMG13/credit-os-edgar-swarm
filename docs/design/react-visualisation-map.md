@@ -225,7 +225,7 @@ original handoff download. The checks cover the retained case's descriptors.
 | Entry | React target and placement | What delivery must supply | Source status and fallback |
 | --- | --- | --- | --- |
 | `CP-MODEL-V01` **Published model and calculation provenance** | R1 Forecast grid and R12 derivation. Forecast and Evidence Trace. | Accepted/restricted CP-1 facts, model destination, calculation JSON, publication/source hashes. | Table/content only. Keep exact, rounded and source values distinct. |
-| `CP-MODEL-V02` **Shared chart collection and availability** | ChartFrame collection with N6 and trace. Forecast. | Eligible figures S.1–S.6 and other selected-owner outputs, state, limitation and exact data revision. | New view. List only available run figures and recorded gaps. Each trace keeps its module and table line. |
+| `CP-MODEL-V02` **Shared chart collection and availability** | ChartFrame collection with N6 and trace. Forecast. | Eligible figures S.1–S.6 and other selected-owner outputs, state, limitation and exact data revision. | Connected. The collection uses the selected modules' chart descriptors, recorded gaps and named build rejections. Both branded macOS browsers verified the Caesars figures and original trace route. |
 
 ## CP-OS
 

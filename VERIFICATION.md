@@ -4,6 +4,25 @@ Keep one running record here. A pass applies only to the stated scope. Earlier v
 engine is in [EricMG13/final-workflow](https://github.com/EricMG13/final-workflow)'s
 `VERIFICATION.md`, which also keeps the retained runs this copy leaves out.
 
+## 2026-11-15 — Published run charts in Forecast
+
+- Forecast takes figures and stated gaps from the current module output. Each
+  chart keeps the owning module and same handoff-line trace used in Modules.
+  The collection works without a calculation model. Native chart rejections
+  keep their diagnostic text in Evidence Record.
+- Confidence review checked alternate output identity, non-assessable charts,
+  recorded build rejections, zero versus a missing value, and cited gap text.
+  No dated event lanes or relationship maps entered the Forecast collection.
+- The retained Caesars case showed eight figures in Chrome and Edge on macOS.
+  Both kept the portfolio gap, the FY2027 cash-basis reconciliation, and the
+  2030 maturity of 3,962 US$m through the chart table and Evidence reload.
+  Both layouts fit 720 px. See `proof-artifacts/caesars-forecast-run-charts/`.
+- Source `47cbd8b`, ZIP SHA-256 `70d1414ead1682be2791ced60b314cca7b2abdec2350034442513ad09027c4f2`.
+  Extracted-package synthetic runs passed in macOS Chrome (`20261115-154748-01`)
+  and Edge (`20261115-154754-01`). Targeted web tests passed (73) and Python
+  passed (15). Lint, format, typecheck, build and quality gate passed.
+  Windows work-PC proof and publication are pending.
+
 ## 2026-11-15 — Portfolio evidence and all retained Caesars figures
 
 - The pinned portfolio validator at RBOT-HTML `fc010a7` rejects the supplied two-sheet
@@ -976,12 +995,3 @@ tests/test_context_form.py tests/test_inbox_activity.py -q -m "not live and not 
 tools/quality_gate.py` 0 findings, exit 0. Plans per pathway were prepared offline by the parametrised
 test (every pathway, four peer sources); `tests/test_financial_workflow.py` was not run (over the
 fast-test limit). M3-M7 are decided and not built here.
-
-## 2026-11-11 — Runs on earlier methods are listed and marked (branch `claude/list-earlier-method-runs`)
-
-Scope: offline, macOS; synthetic fixtures only (`tests/library_fixtures.py`, the fake launcher run). No
-model call, no run folder under `runs/` read or changed. Owner decision 2026-11-11: a run whose module
-methods changed since it ran is listed with `method_changes` and shown as "Earlier methods" (Report history
-status, run label; Run record lists the changes). Other refusals are unchanged. Real TDG runs were not
-rebuilt here.
-- Gates: `uv run pytest tests/test_library_index.py tests/test_update_library.py tests/test_credit_os_catalogue.py -q` 90 passed, exit 0; `node --test` static, reader, calendar 257 pass, exit 0; `uv run python tools/quality_gate.py` 0 findings, exit 0.
