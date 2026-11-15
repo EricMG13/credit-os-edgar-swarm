@@ -4,6 +4,20 @@ Keep one running record here. A pass applies only to the stated scope. Earlier v
 engine is in [EricMG13/final-workflow](https://github.com/EricMG13/final-workflow)'s
 `VERIFICATION.md`, which also keeps the retained runs this copy leaves out.
 
+## 2026-11-15 — Portfolio limits from a validated workbook
+
+- The native synthetic run uploaded and selected the test workbook. Both
+  browsers showed 2.37% against 2.50% and 3.73% against 5.00% in Modules and
+  Forecast. The illustrative 2.40 proposal stayed in the original table.
+- Confidence review checked the frozen source hash, selected output, date,
+  mismatching limit data and authored gap. CSV exports still use the source
+  table. Both browsers retained the Caesars gap at 390 px in both views.
+  Targeted web (97) and Python (17) tests, quality, lint, format and build passed.
+- Candidate `eb1a5c1` SHA-256
+  `8a2cd284e9b023c7138c973fcce0986a41067d7e9e6ad3b33c14213a8ddb3626`.
+  Clean macOS extraction passed Chrome (`20261115-172022-01`) and Edge
+  (`20261115-172031-01`). Windows work-PC proof and publication are pending.
+
 ## 2026-11-15 — Security decisions and last trades
 
 - Both macOS browsers checked six retained Caesars decisions, two observed
@@ -975,22 +989,3 @@ sol-high, opus-medium, opus-high; USD 20 cap unchanged).
 - Not verified: any live call (Opus at high effort, Balanced on either model, Claude from the
   page); the summary and Submit against a running service by hand; Windows; the full suite;
   confidence-review and rewrite-tournament on this change.
-
-## 2026-11-12 — Per-module effort (`--high-modules`) and one mixed-effort TDG live run
-
-Scope: historical TDG FY2024 (as of 2024-09-30), ruling `docs/rulings/2026-11-12-tdg-mixed-effort-to-cp2.md`;
-one paid run on gpt-6.1-sol. Not a current credit view; one run per setting.
-- Code: `HandoffExecutor(effort_by_module=...)`, passed by `run_live_handoffs` and `cpos_launch
-  --high-modules`. `tests/test_handoff_loop.py` and `tests/test_cpos_launch.py` passed (472, 1 skipped);
-  quality gate 0 findings; task review passed with three Low test gaps open (pass-through to
-  `run_live_handoffs`, seed digest, multi-turn). confidence-review and rewrite-tournament not run.
-- Live: `runs/cpos-tdg-sol-mixed-cp2-001` (main checkout), high on CP-0, CP-1A, CP-1D, CP-2, CP-2A.
-  `live/calls.jsonl` records high on CP-0, CP-1A, CP-1D and medium on CP-1, CP-1B, CP-DR, CP-1C.
-  Six modules accepted; stopped at CP-1D (three drafts refused: "Invalid Markdown table header",
-  which names no table; the fault was a 7-column header over an 8-column separator). USD 3.46.
-  CP-2, CP-2A, CP-2E did not run; no report was published.
-- Comparison with the saved all-medium runs: `runs/tdg-mixed-effort-comparison.md` (handoffs read
-  by a separate reviewer, tabled figures checked against the 10-K). High: clear gain on CP-1D
-  (unaccepted draft), none on CP-0, inconclusive on CP-1A; the medium modules needed no more.
-- Not verified: CP-2 onward under mixed effort; a same-code all-medium control (instructions
-  changed after both baselines); the full test suite.
