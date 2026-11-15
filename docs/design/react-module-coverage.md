@@ -114,17 +114,17 @@ compliance records on a basis that matches the run. The supplied Test CLO I
 exposure was dated 29 May 2026; the October Caesars run did not use it and
 published **Requires More Work** with a portfolio chart gap.
 
-## Evidence and implementation differences
+## Evidence and design dispositions
 
-React owns the design target. The connected renderer currently has one report
-shell, headline tiles, generic findings and tables, a working trace drawer,
-descriptor-backed charts/maps/events, and a published forecast grid. The
-separate React kit already supplies richer reading components such as
+React owns the design target. The pre-redesign reader had one report shell,
+headline tiles, generic findings and tables, a working trace drawer,
+descriptor-backed charts, maps and events, and a published forecast grid. The
+React kit supplies richer reading components such as
 `ModuleNav`, `MatrixBlock`, `WatchBlock`, `QuestionsBlock`, `StatementBlock`,
 `EvidenceFrame`, `ChangeCard`, and `ModuleSteps`. Their presence in the kit alone
 does not establish a live binding.
 
-| Most visible difference | Design disposition |
+| Pre-redesign difference | Design disposition |
 | --- | --- |
 | Overview currently includes a module link group and a lead handoff action. | Keep the verdict and selective delivery tiles on Overview. Use Modules for navigation and Evidence for original handoffs. |
 | Modules currently uses chips with module codes and generic rendered sections. Its descriptor figures appear ahead of findings. | Use the persistent module/section navigator, reader-facing module names and judgement before figures. Select the typed component using the map. |
@@ -133,12 +133,13 @@ does not establish a live binding.
 | Forecast has published cases and charts. Original model download is unavailable through the connected service. | Keep model cases, table and stated assumptions together. Establish actual original model asset access before exposing a download action. |
 | Replay can deliver native files while the standard library refuses listing. | The report state must state both outcomes. A labelled local preview cannot be counted as official publication. |
 
-Caesars `20261115-114658-01`, retained from the earlier RBOT-HTML baseline, supplies 12 accepted modules, eight chart descriptors,
-seven event lanes, seven directed maps, one explicit chart gap, and one published
-model grid with 34 rows and 14 columns. Chrome and Edge verified five report
-views in the read-only preview. This is evidence for the tested path and
-specific checks, including debt maturities, model grid, first-run Changes, and
-exact handoff download. It does not verify every descriptor or another pathway.
+Caesars `20261115-114658-01`, retained from the earlier RBOT-HTML baseline,
+supplies 12 accepted modules, eight chart descriptors, seven event descriptors,
+seven directed maps, one explicit chart gap, and one published model grid with
+34 rows and 14 columns. Chrome and Edge on macOS checked the five report views
+in the read-only preview, the visible rows and source links for all 21 drawn
+figures, and the two authored gaps. The report check also covered the model
+grid, first-run Changes and the exact handoff download.
 For the model fidelity check, the narrative and deterministic FY2027 base
 cash figures differ by USD 183.09 million. The cash-proxy label and stated
 limitation must remain with the model output.

@@ -20,10 +20,12 @@ The current connected renderer reads chart, chart-gap, event, and map
 descriptors from the published handoff and model data from the publisher. The
 Caesars preview supplied CP-1 revenue/EBITDA, EBITDA bridge, leverage, interest
 cover, liquidity, maturities and debt stack, CP-4 covenant headroom, seven
-event lanes, seven maps, and the CP-6 portfolio-limits gap. It supplied one
-forecast grid. The browser proof specifically checked the maturities figure,
-the forecast grid and its displayed value, and original handoff download.
-Presence of the other descriptors does not establish visual or source fidelity.
+event descriptors, seven maps and the CP-6 portfolio-limits gap. Six event
+descriptors contain dated marks. The Decision and watch descriptor carries
+an authored gap. Chrome and Edge on macOS checked plotted marks, the visible
+table cells against the published rows, and the source targets for all 21
+rendered figures. The separate report check covers the forecast grid and
+original handoff download. The checks cover the retained case's descriptors.
 
 ## CP-0
 
@@ -200,7 +202,7 @@ Presence of the other descriptors does not establish visual or source fidelity.
 | --- | --- | --- | --- |
 | `CP-6-V01` **Committee challenge and resolution** | P6 debate board and R5 challenge sequence. Modules and selected Overview reading. | T6A.4/T6A.6/T6A.7, committee_challenge and final bias. | Table/content only. Keep bull, bear, chair and resolution roles. |
 | `CP-6-V02` **Action bias, conditions and monitoring** | P1 decision, P4 change trigger and R8 watch. Overview and Modules. | T6-FINAL, unresolved risks, evidence weighting, monitoring actions and CP-2 thesis references. | Table/content only. Carry the stated action bias, confidence, and scope. |
-| `CP-6-V03` **Portfolio limit headroom** (`PD.1`) | C13 LimitsChart or S3 gap. Portfolio Fit and Modules. | Selected portfolio inputs/evaluation results: current/proposed exposure, NAV denominator, applicable limits and instrument eligibility. | Design gap. Requires validated dated fund exposure, NAV, applicable limits and eligible instrument. PD.1 remains unbound. |
+| `CP-6-V03` **Portfolio limit headroom** (`PD.1`) | C13 LimitsChart or S3 gap. Portfolio Fit and Modules. | Selected portfolio inputs/evaluation results: current/proposed exposure, NAV denominator, applicable limits and instrument eligibility. | Design gap. A native numeric limits descriptor can render a table. It carries no attestation of the dated portfolio basis, so PD.1 remains unbound. An authored gap takes precedence when the handoff records one. |
 | `CP-6-V04` **Catalysts and monitoring commitments** | R4 decision/watch EventLane. Modules and selected Overview watch items. | Explicit decision dates, assigned review dates, catalyst conditions and sources. | New view. Dated commitments and undated conditions use different forms. |
 
 ## CP-8
