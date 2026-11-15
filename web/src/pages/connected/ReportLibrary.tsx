@@ -9,6 +9,7 @@ import { PageHeader } from "../../shell/PageHeader";
 import { TextLink } from "../run/TextLink";
 import { Breadcrumb, card, ErrorNotice, field, heading, label } from "./layout";
 import {
+  comparisonForRun,
   comparisonRows,
   getSnapshot,
   reportPath,
@@ -303,13 +304,16 @@ function ReportPage({
   tab: Tab;
 }) {
   const view = buildReportView(snapshot, routeKey, run);
-  const rows = run.changes?.pack ? comparisonRows(run.changes) : [];
+  const change = comparisonForRun(run, snapshot.workspace.runs);
+  const rows = change?.pack && !change.problem ? comparisonRows(change) : [];
   return (
     <div className="mt-4 grid min-w-0 gap-5">
       <ReportNav tab={tab} modules={view.modules.length} />
       {tab === "history" && <RunHistory snapshot={snapshot} run={run} />}
       {tab === "overview" && <Overview snapshot={snapshot} run={run} view={view} />}
-      {tab === "changes" && <Changes snapshot={snapshot} run={run} entries={view.entries} />}
+      {tab === "changes" && (
+        <Changes snapshot={snapshot} run={run} entries={view.entries} change={change} />
+      )}
       {tab === "modules" && (
         <Modules snapshot={snapshot} run={run} view={view} module={parts[0]} output={parts[1]} />
       )}

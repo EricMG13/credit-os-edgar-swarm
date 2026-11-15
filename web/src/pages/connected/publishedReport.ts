@@ -45,15 +45,38 @@ type Measure = {
   prior?: Side | null;
   current?: Side | null;
   difference?: number | string | null;
+  same_period?: boolean;
+  comparable?: string;
   unit?: string | null;
   reason?: string | null;
 };
-type Changes = {
+type ComparisonRun = { as_of: string; pathway: string; format?: string };
+export type MaturityProfile = {
+  unit: string;
+  rows: { period: string; prior: string | null; current: string | null }[];
+};
+type ModuleComparison = {
+  module: string;
+  title: string;
+  ran_prior: boolean;
+  ran_current: boolean;
+  prior_bottom_line: string | null;
+  current_bottom_line: string | null;
+};
+export type Changes = {
   first_run?: boolean | null;
   note?: string | null;
   problem?: string | null;
-  pack?: { measures?: Measure[]; omitted?: Record<string, string> } | null;
+  pack?: {
+    measures?: Measure[];
+    omitted?: Record<string, string>;
+    prior?: ComparisonRun & { run: string };
+    current?: ComparisonRun;
+    maturity_profile?: MaturityProfile;
+    modules?: ModuleComparison[];
+  } | null;
   verdicts?: {
+    modules?: Record<string, { status: string; cause: string; why: string }>;
     measures?: Record<
       string,
       { kind: string; label: string; reason?: string | null; analysis_change?: string | null }
@@ -183,7 +206,35 @@ export function withUnit(value: string | number, unit?: string | null) {
   return unit ? `${String(value)}${/^[x%]$/.test(unit) ? "" : " "}${unit}` : String(value);
 }
 
-export function comparisonRows(changes: Changes) {
+export function comparisonForRun(run: PublishedRun, runs: Record<string, PublishedRun>) {
+  const change = run.changes;
+  if (!change?.pack || change.problem) return change;
+  const { prior, current } = change.pack;
+  const matches = Object.values(runs).filter((candidate) => candidate.folder === prior?.run);
+  const [earlier] = matches;
+  if (
+    prior &&
+    current &&
+    matches.length === 1 &&
+    earlier &&
+    run.issuerKey &&
+    earlier.issuerKey === run.issuerKey &&
+    earlier.folder !== run.folder &&
+    earlier.asOf === prior.as_of &&
+    earlier.pathway === prior.pathway &&
+    run.pathway === prior.pathway &&
+    run.pathway === current.pathway &&
+    run.asOf === current.as_of
+  )
+    return change;
+  return {
+    ...change,
+    pack: null,
+    problem: "The comparison does not match the listed issuer, dates and pathway.",
+  };
+}
+
+export function comparisonRows(changes: Changes, purpose: "evidence" | "reader" = "evidence") {
   const side = (item: Side | null | undefined) =>
     item?.value == null
       ? "Not stated"
@@ -194,16 +245,27 @@ export function comparisonRows(changes: Changes) {
     const comparable =
       verdict?.kind === "comparable" &&
       unitsMatch &&
+      measure.comparable !== "no" &&
       measure.prior?.value != null &&
       measure.current?.value != null;
+    const samePeriod =
+      measure.same_period === true ||
+      Boolean(measure.prior?.period && measure.prior.period === measure.current?.period);
+    const revision =
+      comparable && samePeriod && measure.difference != null && Number(measure.difference) !== 0;
+    const delta =
+      comparable && measure.difference != null && (purpose === "evidence" || !samePeriod)
+        ? withUnit(measure.difference, measure.unit)
+        : "—";
+    const reason = unitsMatch
+      ? verdict?.reason || verdict?.label || measure.reason || "Comparability not judged"
+      : "Reporting units differ.";
     return [
       measure.label,
       side(measure.prior),
       side(measure.current),
-      comparable && measure.difference != null ? withUnit(measure.difference, measure.unit) : "—",
-      unitsMatch
-        ? verdict?.reason || verdict?.label || measure.reason || "Comparability not judged"
-        : "Reporting units differ.",
+      delta,
+      revision ? `${reason} · Same-period analysis change` : reason,
       verdict?.analysis_change ?? "",
     ];
   });

@@ -1,6 +1,8 @@
 import { ClockRewind } from "@untitledui/icons";
 import { EmptyState } from "@/components/application/empty-state/empty-state";
 import { Button } from "@/components/base/buttons/button";
+import { Badge } from "@/components/base/badges/badges";
+import { ColumnsChart } from "@/components/chart/ColumnsChart";
 import { ChangeCard } from "@/pages/library/parts/ChangeCard";
 import { RunContext } from "@/pages/library/parts/RunContext";
 import type { Cell } from "@/pages/library/slice";
@@ -8,11 +10,15 @@ import { card, heading } from "../layout";
 import {
   comparisonRows,
   containsReference,
+  readParagraph,
+  type Changes as PublishedChanges,
+  type MaturityProfile,
   type OutputEntry,
   type PublishedRun,
   type Snapshot,
 } from "../publishedReport";
 import { PublishedTable, ReportFindings } from "../ReportContent";
+import { amount, distinct, ticks } from "../visuals/visualData";
 
 const cell = (value: string): Cell =>
   value === "Not stated" ? null : { kind: "value", at: null, text: value };
@@ -42,15 +48,16 @@ export function Changes({
   snapshot,
   run,
   entries,
+  change,
 }: {
   snapshot: Snapshot;
   run: PublishedRun;
   entries: OutputEntry[];
+  change: PublishedChanges | null | undefined;
 }) {
-  const change = run.changes;
   const entryIndex = entries.findIndex((entry) => entry.output.module === "CP-8" && entry.selected);
-  const entry = entries[entryIndex];
-  const rows = change && comparisonRows(change);
+  const entry = change?.problem ? undefined : entries[entryIndex];
+  const rows = change?.pack && !change.problem ? comparisonRows(change, "reader") : [];
   if (change?.first_run === true && !change.pack && !change.problem && !change.note)
     return (
       <section className={`${card} min-h-76 justify-center py-14`}>
@@ -77,7 +84,11 @@ export function Changes({
       <section className={card}>
         <h2 className={heading}>Changes since the last run</h2>
         {change?.problem ? (
-          <p>The comparison could not be read.</p>
+          <p>
+            {containsReference(change.problem)
+              ? "The comparison could not be read."
+              : change.problem}
+          </p>
         ) : !change?.pack ? (
           <p>
             {change?.note && !containsReference(change.note)
@@ -85,7 +96,7 @@ export function Changes({
               : "No comparison was recorded for this run."}
           </p>
         ) : null}
-        {rows && rows.length > 0 && (
+        {rows.length > 0 && (
           <RunContext.Provider value={{ traces: {}, open: () => undefined }}>
             <ul className="grid gap-4 lg:grid-cols-3">
               {rows.map(
@@ -97,7 +108,11 @@ export function Changes({
                     key={index}
                     change={{
                       measure: label,
-                      kind: delta && delta !== "—" ? "Comparable" : "Not assessable",
+                      kind: reason.endsWith("Same-period analysis change")
+                        ? "Same-period analysis change"
+                        : delta && delta !== "—"
+                          ? "Comparable"
+                          : "Not assessable",
                       current: cell(after),
                       from: cell(before),
                       change: delta && delta !== "—" ? delta : null,
@@ -116,15 +131,123 @@ export function Changes({
             </details>
           </RunContext.Provider>
         )}
-        {change?.pack && (
+        {change?.pack && !change.problem && (
           <a className="text-action underline" href="#evidence/trace">
             Review comparison evidence
           </a>
         )}
       </section>
+      {!change?.problem && change?.pack && (
+        <ComparisonMaturities
+          profile={change.pack.maturity_profile}
+          omitted={change.pack.omitted?.maturity_profile}
+        />
+      )}
+      {!change?.problem && change?.pack?.modules?.length && <ComparedModules change={change} />}
       {entry && (
         <ReportFindings snapshot={snapshot} run={run} entry={entry} entryIndex={entryIndex} />
       )}
     </>
+  );
+}
+
+function ComparedModules({ change }: { change: PublishedChanges }) {
+  const modules = change.pack?.modules ?? [];
+  const earlierFormat = change.pack?.prior?.format === "earlier";
+  function side(ran: boolean, bottomLine: string | null) {
+    if (bottomLine == null) return ran ? "Not stated" : "Did not run";
+    const { body } = readParagraph(bottomLine);
+    return containsReference(body) ? "See the retained handoff in Evidence." : body || "Not stated";
+  }
+  return (
+    <section className={card}>
+      <h2 className={heading}>What changed in the analysis</h2>
+      {earlierFormat && (
+        <p className="text-sm text-text-secondary">
+          The earlier run used an earlier report format.
+        </p>
+      )}
+      <div className="grid gap-2">
+        {modules.map((item) => {
+          const verdict = change.verdicts?.modules?.[item.module];
+          const explanation = [verdict?.cause, verdict?.why].filter((value): value is string =>
+            Boolean(value && !containsReference(value)),
+          );
+          return (
+            <details key={item.module} className="rounded-lg border border-border-hairline p-3">
+              <summary className="cursor-pointer font-medium">
+                {item.title} <Badge size="sm">{verdict?.status || "Explanation not stated"}</Badge>
+              </summary>
+              <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                <div>
+                  <h3 className="font-semibold">Earlier</h3>
+                  <p>{side(item.ran_prior, item.prior_bottom_line)}</p>
+                </div>
+                <div>
+                  <h3 className="font-semibold">Current</h3>
+                  <p>{side(item.ran_current, item.current_bottom_line)}</p>
+                </div>
+              </div>
+              {explanation.length > 0 && (
+                <p className="mt-2 text-sm text-text-secondary">{explanation.join(" · ")}</p>
+              )}
+            </details>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
+function MaturityGap({ reason }: { reason: string }) {
+  return (
+    <section className={card}>
+      <h2 className={heading}>Debt maturity schedules</h2>
+      <p role="note">{reason}</p>
+    </section>
+  );
+}
+
+function ComparisonMaturities({
+  profile,
+  omitted,
+}: {
+  profile?: MaturityProfile;
+  omitted?: string;
+}) {
+  if (!profile)
+    return omitted ? (
+      <MaturityGap reason={containsReference(omitted) ? "See the comparison evidence." : omitted} />
+    ) : null;
+  const groups = profile.rows.map((row) => row.period);
+  const series = (["prior", "current"] as const).map((key, index) => ({
+    name: index === 0 ? "Earlier run" : "Current run",
+    values: profile.rows.map((row) => amount(row[key] ?? "")),
+    labels: profile.rows.map((row) => (amount(row[key] ?? "") === null ? null : row[key])),
+  }));
+  const values = series.flatMap((item) => item.values);
+  if (
+    !profile.unit ||
+    !groups.length ||
+    !distinct(groups) ||
+    values.every((value) => value === null)
+  )
+    return (
+      <MaturityGap reason="The published comparison does not contain a usable maturity schedule." />
+    );
+  return (
+    <section className={card}>
+      <ColumnsChart
+        title="Debt maturity schedules"
+        note={profile.unit}
+        groups={groups}
+        series={series}
+        yTicks={ticks(values, true)}
+        table={{
+          head: ["Period", "Earlier run", "Current run"],
+          rows: profile.rows.map((row) => ({ label: row.period, cells: [row.prior, row.current] })),
+        }}
+      />
+    </section>
   );
 }

@@ -81,7 +81,7 @@
 
 **Files** — `Run-React-Proof.cmd`, `docs/react-workflow.md`, `VERIFICATION.md`. Add a reproducible React ZIP builder at `tools/package_react_windows.py` and an archive-content test at `tests/test_package_react_windows.py`. Adapt the archive pattern from commit `ec477f8` for the current connected tree.
 
-- [ ] Build from a clean checkout of the candidate commit with `uv sync --locked`, `npm --prefix web ci` and `npm --prefix web run build`. Package tracked runtime sources, the compiled `web/dist`, both lockfiles, the Python pin, proof files, `tests/test_cpos_launch.py` and its fixture dependencies, and the Windows guide. Archive-test extraction from a clean folder and the absence of credentials, local environments, `node_modules`, portfolio files and retained case data. Write a SHA-256 for the candidate ZIP and record its source commit.
+- [ ] Build from a clean checkout of the candidate commit with `uv sync --locked`, `npm --prefix web ci` and `npm --prefix web run build`. Package tracked runtime sources, the compiled `web/dist`, both lockfiles, the Python pin, self-contained synthetic proof files under `proof/`, and the Windows guide. Archive-test extraction from a clean folder and the absence of credentials, local environments, `node_modules`, portfolio files and retained case data. Write a SHA-256 for the candidate ZIP and record its source commit.
 - [ ] Save the exact Windows proof instructions in `docs/react-workflow.md` before cutting the candidate commit. Install Node.js 24, uv 0.12.5 and the branded browsers. Download the candidate privately, compare its checksum, and extract it into a short local folder such as `C:\credit-os2-test`. Open PowerShell there and run the following commands.
 
   ```powershell

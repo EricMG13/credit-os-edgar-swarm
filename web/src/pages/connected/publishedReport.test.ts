@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 import {
   classifySections,
   comparisonRows,
+  comparisonForRun,
+  type PublishedRun,
   displayColumns,
   readParagraph,
   publishedHref,
@@ -105,5 +107,74 @@ describe("published handoff boundaries", () => {
       "Reporting units differ.",
       "The newer analysis uses a different cash perimeter.",
     ]);
+  });
+
+  it("keeps a same-period revision in Evidence without presenting it as issuer movement", () => {
+    const change = {
+      pack: {
+        measures: [
+          {
+            key: "debt",
+            label: "Total debt",
+            unit: "US$m",
+            same_period: true,
+            prior: { value: "110", unit: "US$m", period: "FY2025" },
+            current: { value: "100", unit: "US$m", period: "FY2025" },
+            difference: "-10",
+          },
+        ],
+      },
+      verdicts: {
+        measures: {
+          debt: {
+            kind: "comparable",
+            label: "Same definition",
+            analysis_change: "The updated filing reclassifies 10 US$m.",
+          },
+        },
+      },
+    };
+    expect(comparisonRows(change)[0]).toEqual([
+      "Total debt",
+      "110 US$m (FY2025)",
+      "100 US$m (FY2025)",
+      "-10 US$m",
+      "Same definition · Same-period analysis change",
+      "The updated filing reclassifies 10 US$m.",
+    ]);
+    expect(comparisonRows(change, "reader")[0]?.[3]).toBe("—");
+  });
+
+  it("binds a comparison to the exact prior issuer, dates and pathway", () => {
+    const earlier = {
+      folder: "earlier",
+      issuerKey: "issuer:alpha",
+      asOf: "2024-12-31",
+      pathway: "credit_snapshot",
+    } as PublishedRun;
+    const change = {
+      pack: {
+        prior: {
+          run: "earlier",
+          as_of: "2024-12-31",
+          pathway: "credit_snapshot",
+          format: "earlier",
+        },
+        current: { as_of: "2025-03-31", pathway: "credit_snapshot" },
+        measures: [],
+      },
+    };
+    const current = { ...earlier, folder: "current", asOf: "2025-03-31", changes: change };
+    expect(comparisonForRun(current, { earlier, current })).toBe(change);
+    for (const mismatched of [
+      { ...earlier, issuerKey: "issuer:beta" },
+      { ...earlier, asOf: "2024-12-30" },
+      { ...earlier, pathway: "lite_credit_assessment" },
+    ]) {
+      expect(comparisonForRun(current, { earlier: mismatched, current })).toMatchObject({
+        pack: null,
+        problem: expect.any(String) as unknown,
+      });
+    }
   });
 });

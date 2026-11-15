@@ -28,6 +28,12 @@ engine is in [EricMG13/final-workflow](https://github.com/EricMG13/final-workflo
   Both verified the exact handoff download. Package validation confirmed the
   14 synthetic handoffs and excluded retained issuer data and credentials.
   The extracted proof uses its own fixtures and made no provider calls.
+- Paired CP-8 proof used the RBOT-HTML synthetic lite-assessment publisher with
+  an earlier-format prior. macOS Chrome and Edge checked the exact −1.40x
+  leverage change, the withheld cash difference, maturity gap, module
+  explanation, and Evidence reload and back/forward. Targeted tests also cover
+  same-period revisions, mismatched pair identity, maturity zero versus missing,
+  and the distinction between missing, unreadable and first-run comparisons.
 - Work-PC proof is pending. Keep the ZIP local until both Windows browsers pass.
 
 ## 2026-11-15 — Unified React frontend on RBOT-HTML
