@@ -254,6 +254,13 @@ export function ReportEvidence({
   const selectedModule = entry?.output.module ?? module;
   const line = location?.[2] === undefined ? undefined : Number(location[2]);
   const { evidence } = run;
+  const outputIssues =
+    tab === "Record"
+      ? entries.filter(
+          ({ output }) =>
+            (!module || output.module === module) && (output.issue || output.parseError),
+        )
+      : [];
   const sourceGroups = [
     { label: "Named in a handoff", rows: evidence.sources },
     { label: "Supplied but unnamed in handoffs", rows: evidence.unused },
@@ -433,6 +440,27 @@ export function ReportEvidence({
                   })),
               }}
             />
+          )}
+          {outputIssues.length > 0 && (
+            <div className="grid gap-2">
+              <h4 className="font-semibold">Handoff issues</h4>
+              <ul className="grid gap-2">
+                {outputIssues.map(({ output, selected }) => (
+                  <li key={output.id} className="grid gap-1 border-t border-border-hairline pt-2">
+                    <strong>
+                      {moduleName(output.module)}
+                      {selected ? "" : ` · ${output.label}`}
+                    </strong>
+                    {output.parseError && <p className="wrap-anywhere">{output.parseError}</p>}
+                    {output.issue?.split("; ").map((issue, index) => (
+                      <p key={index} className="wrap-anywhere">
+                        {issue}
+                      </p>
+                    ))}
+                  </li>
+                ))}
+              </ul>
+            </div>
           )}
           <div className="flex flex-wrap gap-2">
             {evidence.record.instructions

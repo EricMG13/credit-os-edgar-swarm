@@ -5,6 +5,7 @@ export type Table = { type: "table"; line: number; headers: string[]; rows: Row[
 type Paragraph = { type: "text"; line: number; end: number; text: string };
 export type Block = Table | Paragraph | { type: "equity"; line: number; text?: string };
 export type Section = { heading: string; level: number; line: number; blocks: Block[] };
+type FigureRef = Record<string, unknown> & { table: number };
 type Output = {
   id: string;
   run?: string;
@@ -12,13 +13,14 @@ type Output = {
   label: string;
   href: string;
   sha256: string;
+  issue?: string | null;
   parseError?: string;
   summary?: { bottomLine: string; confidence: string; limitation: string; line: number } | null;
   state?: { established: boolean | null; declared: string | null };
-  charts?: { table: number }[];
-  chartGaps?: { table: number }[];
-  events?: { table: number }[];
-  maps?: { table: number }[];
+  charts?: FigureRef[];
+  chartGaps?: FigureRef[];
+  events?: FigureRef[];
+  maps?: FigureRef[];
 };
 export type OutputEntry = { output: Output; sections: Section[]; selected: boolean };
 type Link = { href: string; label: string };

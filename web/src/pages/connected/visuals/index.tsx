@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { ChartTable } from "@/components/chart/ChartTable";
 import { ChartWithTable } from "@/components/chart/ChartWithTable";
+import { containsReference } from "../publishedReport";
 import { publishedChart } from "./charts";
 import { edgeMap } from "./EdgeMap";
 import { eventLane } from "./EventLane";
@@ -69,7 +70,9 @@ export function LegacyVisuals({
       return [
         <section key={key} className={`grid min-w-0 gap-2${box}`}>
           <h4 className="font-display text-h4">{title}</h4>
-          <p role="note">{gap}</p>
+          <p role="note">
+            {link && containsReference(gap) ? "Not established for this run. See Evidence." : gap}
+          </p>
           {actions}
         </section>,
       ];

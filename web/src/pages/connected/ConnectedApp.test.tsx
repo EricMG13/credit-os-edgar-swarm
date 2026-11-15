@@ -437,7 +437,13 @@ describe("connected activity and reports", () => {
           },
         },
         outputs: {
-          [output]: { id: output, module: "CP-2", label: "Published output", sha256: "digest" },
+          [output]: {
+            id: output,
+            module: "CP-2",
+            label: "Published output",
+            sha256: "digest",
+            issue: "Chart data: risk exposure is not in its fixed table",
+          },
         },
         handoffs: {
           digest: [
@@ -527,6 +533,11 @@ describe("connected activity and reports", () => {
     expect(screen.getByRole("cell", { name: filing })).toBeInTheDocument();
     expect(screen.queryByRole("cell", { name: "prior-filing.pdf" })).toBeNull();
     expect(screen.queryByText("Downstream-only instructions.")).toBeNull();
+    expect(screen.queryByText("Chart data: risk exposure is not in its fixed table")).toBeNull();
+    window.location.hash = "evidence/record/CP-2";
+    expect(
+      await screen.findByText("Chart data: risk exposure is not in its fixed table"),
+    ).toBeInTheDocument();
     window.location.hash = "changes";
     expect(await screen.findByText("No earlier run to compare.")).toBeInTheDocument();
     window.history.replaceState(null, "", "/");

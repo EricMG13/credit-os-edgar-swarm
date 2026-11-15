@@ -49,6 +49,21 @@ it("keeps unhandled chart contracts visible as source tables and published gaps 
   expect(screen.getByText("Ranking was withheld")).toBeInTheDocument();
 });
 
+it("keeps source names in Evidence when a published gap names a source file", () => {
+  render(
+    <LegacyVisuals
+      output={{ chartGaps: [{ title: "Liquidity", table: 20, gap: "Not in funding.xlsx" }] }}
+      evidenceHref={() => "#evidence/0-20"}
+    />,
+  );
+  expect(screen.getByRole("note")).toHaveTextContent("See Evidence");
+  expect(screen.queryByText(/funding\.xlsx/)).toBeNull();
+  expect(screen.getByRole("link", { name: "Source table" })).toHaveAttribute(
+    "href",
+    "#evidence/0-20",
+  );
+});
+
 it("renders the published model cell displays, cases, dates and reasons", () => {
   const model = {
     cashflow: {

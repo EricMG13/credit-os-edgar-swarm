@@ -156,6 +156,19 @@ async function checkCharts(report, artifacts, channel, page) {
     has: page.getByRole("rowheader", { name: "Revenue", exact: true }),
   });
   await revenueRow.getByRole("cell", { name: "1,050", exact: true }).first().waitFor();
+  const runCharts = report.getByRole("region", { name: "Run charts", exact: true });
+  const forecastDebt = runCharts.getByRole("figure", { name: "Debt maturities", exact: true });
+  await forecastDebt.getByRole("radio", { name: "Table", exact: true }).check();
+  await forecastDebt.getByRole("cell", { name: "1,250", exact: true }).waitFor();
+  assert.equal(
+    await forecastDebt
+      .getByRole("link", { name: "Source table", exact: true })
+      .getAttribute("href"),
+    sourceHref,
+  );
+  await runCharts.getByRole("table", { name: "Portfolio limits", exact: true }).waitFor();
+  await runCharts.getByRole("link", { name: "Financial foundation", exact: true }).click();
+  await report.getByRole("heading", { name: "Financial foundation", exact: true }).waitFor();
 
   await section("Report").click();
   await report.getByRole("heading", { name: "Report history", exact: true }).waitFor();
@@ -271,6 +284,7 @@ for (const [channel, brand, envName] of [
             "financial chart, table and source trace reload",
             "portfolio limits table and validation gap",
             "forecast chart and model",
+            "forecast run figures and original module",
             "report history",
             "evidence reload and handoff",
           ],

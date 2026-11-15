@@ -5,6 +5,7 @@ import { namedRow, namedTable, type buildReportView } from "../reportView";
 import { PublishedTable } from "../ReportContent";
 import { amount, record, stringsIn, word } from "../visuals/visualData";
 import { CashProxy, cashProxyCases, gridOf, LegacyForecast } from "../visuals/LegacyForecast";
+import { RunCharts } from "./RunCharts";
 
 function BasisNote({
   model,
@@ -138,6 +139,7 @@ export function Forecast({
           </a>
         </details>
       )}
+      <RunCharts view={view} folder={run.folder} />
     </>
   );
 }

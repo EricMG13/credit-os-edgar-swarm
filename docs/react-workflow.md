@@ -54,7 +54,8 @@ Success is two passing tests and exit code 0. Each browser uses a separate tempo
 workspace and uploads the same synthetic Northbridge filing. The test checks the
 finished report and all five redesigned views, the exact original handoff download,
 a published CP-1 chart, the portfolio limits table and validation gap, and the
-model forecast that RBOT-HTML calculates. Results and screenshots are saved under
+model forecast that RBOT-HTML calculates. Run charts in Forecast are checked
+against the owning module and the same Evidence link. Results and screenshots are saved under
 `proof-artifacts/`. The proof substitutes canned model responses and makes no
 paid calls.
 
