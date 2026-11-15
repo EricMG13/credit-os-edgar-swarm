@@ -27,6 +27,14 @@ table cells against the published rows, and the source targets for all 21
 rendered figures. The separate report check covers the forecast grid and
 original handoff download. The checks cover the retained case's descriptors.
 
+Native Markdown fixtures also exercise prior/current results, both peer ranges,
+the liquidity bridge, refinancing need, yield against maturity, recovery by
+class and three value allocations. Chrome and Edge on macOS verified their
+figures, table values and trace targets. The mixed-unit margin and KPI fixture
+uses its source table. These fixtures demonstrate renderer behavior when the
+publisher supplies the corresponding contract. Pathway eligibility follows
+RBOT-HTML.
+
 ## CP-0
 
 | Entry | React target and placement | What delivery must supply | Source status and fallback |
@@ -163,7 +171,7 @@ original handoff download. The checks cover the retained case's descriptors.
 
 | Entry | React target and placement | What delivery must supply | Source status and fallback |
 | --- | --- | --- | --- |
-| `CP-3D-V01` **Yield against maturity** (`RV.1`) | C9 ScatterPlot. Modules and Forecast when bound. | T3E.* compatible instrument yield/spread, maturity, quote date and source class. | Design gap. Use quote-date, maturity and comparable yield basis. RV.1 remains unbound. |
+| `CP-3D-V01` **Yield against maturity** (`RV.1`) | C9 ScatterPlot. Modules and Forecast when bound. | T3E.* compatible instrument yield/spread, maturity, quote date and source class. | Connected for a compatible published descriptor. The figure plots quoted instruments and the table preserves unquoted rows and their reasons. The current Relative Value preset still omits RV.1. |
 | `CP-3D-V02` **Market-implied versus fundamental risk** | R2 assumption/result details and C5 comparisons. Modules. | T3E.1–T3E.9 stated recovery/horizon assumptions, market inputs and computed implied-risk outputs. | Table/content only. Keep method assumptions and published validation limits. |
 | `CP-3D-V03` **Trading technicals and quote evidence** | R1 quote table and C2 for a dated series. Modules with full quotes in Evidence. | T3E.2–T3E.10 bid/offer, time, source and technical assessments. | Table/content only. Individual observations remain individual. |
 

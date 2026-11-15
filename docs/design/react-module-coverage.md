@@ -111,8 +111,10 @@ the portfolio debate phase of Committee Decision. A Holdings and Market Data
 workbook can supply dated instrument context. The portfolio visual still needs
 the contracted mandate, exposure, ratings, sector, holdings, maturity, and
 compliance records on a basis that matches the run. The supplied Test CLO I
-exposure was dated 29 May 2026; the October Caesars run did not use it and
-published **Requires More Work** with a portfolio chart gap.
+exposure was dated 29 May 2026. RBOT-HTML `b8cf4ca` recognizes the portfolio
+exports and reports their validation issues. The October Caesars run used
+separate issuer inputs and published **Requires More Work** with a portfolio
+chart gap.
 
 ## Evidence and design dispositions
 

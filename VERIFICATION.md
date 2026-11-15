@@ -4,6 +4,25 @@ Keep one running record here. A pass applies only to the stated scope. Earlier v
 engine is in [EricMG13/final-workflow](https://github.com/EricMG13/final-workflow)'s
 `VERIFICATION.md`, which also keeps the retained runs this copy leaves out.
 
+## 2026-11-15 — Latest RBOT-HTML and additional chart contracts
+
+- Verified upstream at `b8cf4ca`. The engine, native library and Python pins match it.
+  The React lockfile is unchanged. [Upstream method and portfolio verification](https://github.com/EricMG13/RBOT-HTML/blob/b8cf4ca58083e1a822fb45515cd7ce63ce467834/VERIFICATION.md)
+- The new native validator recognizes the supplied holdings, market data, mandate, exposure
+  and constraints. Validation failed for both the May exposure date and the October
+  Caesars date. React now offers the workbook selection for Full credit assessment.
+- Confidence review reproduced intermittent-data chart fallback and dropped recovery
+  columns. Both macOS browsers verified ten plots and one mixed-unit record from the
+  native descriptor parser, with exact zero, no-quote and recovery gaps. The figures
+  used synthetic handoffs. Caesars separately passed 23 retained descriptor checks.
+- Restored the newly required CP-2E and CP-3 registers in the synthetic handoffs.
+  Candidate source `3cb2b40` and ZIP SHA-256
+  `e2c984bf061d7b571cdc20b1f0d046032abf184ae20f4becf00120db1690811c`.
+  The clean extraction passed macOS Chrome (`20261115-155903-01`) and Edge
+  (`20261115-155910-01`), including the signed bridge and missing funding commitment.
+  Python (285), web (302), quality, typecheck, formatting and build checks passed.
+  Windows work-PC proof and publication remain pending.
+
 ## 2026-11-15 — Published run charts in Forecast
 
 - Forecast takes figures and stated gaps from the current module output. Each
@@ -972,26 +991,3 @@ tests/test_prose_checks.py tests/test_handoff_loop.py tests/test_update_library.
 Known limits: driver values are not checked against their anchors (the rationale is free text); runs
 interrupted before this change refuse to resume. Not verified: a real model writing the layer-1 block; the library on a layer-1 model beyond the
 store tests; `tests/test_financial_workflow.py`.
-
-## 2026-11-11 — Pathway presets: CP-DR and CP-2E everywhere (branch `claude/module-presets`)
-
-Decisions M1-M7 are recorded in `docs/rulings/2026-11-11-module-presets-and-changes.md` (a decision
-record; it does not lift the pause).
-
-(a) Live run facts, this dated case only (ruling `docs/rulings/2026-11-11-reader-format-live-test.md`): TDG
-FY2024 public files, context `runs/tdg-context-2024-09-30.json`, `credit_snapshot`, sol-medium, cap USD 15;
-run folder outside the repository. CP-0, CP-1, CP-1A, CP-2, CP-4, CP-3, CP-5 and CP-6 were all accepted and
-delivered; charged USD 3.20906590; two drafts were rejected and repaired within the retry limit (CP-1, CP-3).
-Reader check so far: only CP-6's reader passages were read by the controller: judgement first, sources on
-Basis lines, no codes in sentences. Remaining weakness: pipeline wording in reader text ("producer-owned
-corrections remain open", "canonical financial amount", "open producer QA findings") and dense prose.
-Not verified: the other seven modules' prose; a side-by-side against the VMO2 reference; analytical accuracy.
-
-(b) This change, offline only (no provider call, no run folder read or written): M1 and M2 presets, CP-2G
-added to credit_snapshot and covenant_refinancing, CP-8 removed from portfolio_decision, context-form
-copy. Gate results: `uv run pytest tests/test_cpos_launch.py
-tests/test_context_form.py tests/test_inbox_activity.py -q -m "not live and not browser"` 509 passed, exit 0;
-`tests/test_cp8_comparison.py tests/test_handoff_loop.py` 44 passed, exit 0; `uv run python
-tools/quality_gate.py` 0 findings, exit 0. Plans per pathway were prepared offline by the parametrised
-test (every pathway, four peer sources); `tests/test_financial_workflow.py` was not run (over the
-fast-test limit). M3-M7 are decided and not built here.
