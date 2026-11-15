@@ -4,6 +4,21 @@ Keep one running record here. A pass applies only to the stated scope. Earlier v
 engine is in [EricMG13/final-workflow](https://github.com/EricMG13/final-workflow)'s
 `VERIFICATION.md`, which also keeps the retained runs this copy leaves out.
 
+## 2026-11-15 — Downside case comparison
+
+- The retained Caesars CP-2A handoff supplied an unstressed control and three
+  named shocks. Chrome and Edge matched the cover-watch result of −31.3278 USD
+  million free cash flow and 1.22x all-in cover across chart, table and row trace.
+  The 720 px layout passed after the trace tooltip closed. The report still has
+  the same pre-existing horizontal overflow at 390 px.
+- Confidence review verified reordered columns, ambiguous control and shock
+  inputs, negative and zero geometry, cross-currency rejection and missing
+  net debt. Focused web (80) and Python (15) tests, quality, lint and build passed.
+- Candidate `203c547` SHA-256
+  `697bdea7f42e71c7454d0f19ea0cb82b31ad891dead59a34658bc54c4d32a58f`.
+  Clean macOS extraction passed Chrome (`20261115-164043-01`) and Edge
+  (`20261115-164051-01`). Windows work-PC proof and publication are pending.
+
 ## 2026-11-15 — Module readiness and monitoring records
 
 - The retained Caesars replay in macOS Chrome and Edge showed six CP-0 readiness
@@ -979,19 +994,3 @@ subset/turns marks, `open_regular` through `platform_io.regular_open`, hidden na
 - Reader check: not done; pending. No real run was read against the September VMO2 reference.
 - CP-8 summary lines (the "changes section" and the two-prior-runs lines) are not built: the CP-8 redesign has not merged.
 - Windows not run: the `O_BINARY` open of a carried file is from reading `platform_io.regular_open` only.
-
-## 2026-11-12 — Run start page browser tests after the preset change (branch `claude/web-search-run-page`)
-
-The browser tests (`-m browser`) were not run for the commits from 73b499b (presets) to d185d83. Run then:
-`tests/test_run_start_page.py` 14 failed, 42 passed (at 0e2c564: 1 failed, 55 passed). Causes: (a) real page
-defect, `build()` required "Current period" whenever CP-2G was in the run; CP-2G joined credit_snapshot and
-covenant_refinancing, so a Basic submission that the launcher accepts (`cpos_launch.prepare` takes a blank period)
-was blocked. The page now requires it for an earnings update only, labels it recommended, and adds a "Note" row
-for CP-2G when it is blank (10 tests). (b) stale expectations: Standard now shows the research-questions stage
-for credit_snapshot and covenant_refinancing (CP-DR is in every pathway); the services-forecast and limit-tick
-tests now count the page's own CP-DR note, CP-2A no-legal-documents limit and CP-2G reading it. (c) pre-existing
-since PR #46: a delivery files no report page, so `record.report` is `""`; the assertion now says so (the run
-page's link to the library's Report history for the run is checked by the next test). The research-text
-assertion already matched the final copy. After: that file 56 passed; `-m browser -k "run_start or context_form
-or library or inbox"` 100 passed, exit 0; the fast set 756 passed, exit 0; quality gate 0 findings, exit 0.
-Not verified: a forecast run with a blank current period through a live provider.
