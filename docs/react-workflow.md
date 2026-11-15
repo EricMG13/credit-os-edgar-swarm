@@ -115,8 +115,12 @@ Full credit assessment and Portfolio Decision accept the pinned [workbook
 template](templates/portfolio.template.xlsx) or the fund's own exports. For the
 exports, upload the mandate, constraints and exposure report CSVs and the
 holdings workbook. Select the holdings workbook in the Portfolio workbook field.
-RBOT-HTML lists the validation findings in the run summary. A published limits
-record without a validated portfolio basis stays in a table.
+RBOT-HTML lists the validation findings in the run summary. The limits chart shows
+current exposure against maximum limits when the published values match the
+run's frozen portfolio inputs on the same date and `% NAV` basis. For an export,
+the holdings must corroborate the exposure and the NAV. Proposals stay in the
+published table. A table containing a minimum limit or an unverified row stays
+in table view.
 
 ## Claude medium live preflight
 
