@@ -3,6 +3,7 @@ import { Button } from "@/components/base/buttons/button";
 import { DownloadButton } from "@/pages/library/parts/DownloadButton";
 import { DerivationTree } from "@/pages/library/parts/DerivationTree";
 import { RunTabLink } from "@/pages/library/parts/RunFrame";
+import type { TreeNode } from "@/pages/library/slice";
 import { moduleName } from "../api";
 import { card, field, heading } from "../layout";
 import {
@@ -132,23 +133,61 @@ function EvidenceLocation({
   );
 }
 
+function referencedText(node: TreeNode): string {
+  return [node.label, node.value, node.note, ...node.children.map(referencedText)]
+    .filter(Boolean)
+    .join("\n");
+}
+
 function TraceDetailsView({
   snapshot,
+  run,
   entry,
   index,
   line,
 }: {
   snapshot: Snapshot;
+  run: PublishedRun;
   entry: OutputEntry;
   index: number;
   line: number;
 }) {
   const trace = traceForLine(snapshot, entry, index, line);
   if (!trace) return null;
+  const references = referencedText(trace.derivation);
+  const sources = [
+    ...run.evidence.sources,
+    ...run.evidence.unused,
+    ...run.evidence.unrecorded,
+  ].filter((source) => references.includes(source.name));
   return (
-    <div className="grid gap-3 rounded-ds-md border border-border-hairline p-4">
-      <h3 className={heading}>Derivation</h3>
-      <DerivationTree node={trace.derivation} />
+    <div className={`grid min-w-0 gap-4 ${sources.length ? "lg:grid-cols-[3fr_2fr]" : ""}`}>
+      <section className="grid min-w-0 content-start gap-3 rounded-ds-md border border-border-hairline p-5">
+        <h3 className={heading}>Derivation</h3>
+        <DerivationTree node={trace.derivation} />
+      </section>
+      {sources.length > 0 && (
+        <section className="grid min-w-0 content-start gap-3 rounded-ds-md border border-border-hairline p-5">
+          <h3 className={heading}>Source records</h3>
+          <ul className="divide-y divide-border-hairline">
+            {sources.map(({ name, documentDate, type, sha256 }) => (
+              <li key={name} className="grid gap-1 py-2">
+                <strong className="text-sm wrap-anywhere">{name}</strong>
+                <p className="text-sm text-text-secondary">
+                  {[type, documentDate].filter(Boolean).join(" · ")}
+                </p>
+                {sha256 && <code className="text-xs break-all text-text-tertiary">{sha256}</code>}
+              </li>
+            ))}
+          </ul>
+          <a
+            className="w-fit text-action underline"
+            href={`#evidence/sources/${encodeURIComponent(entry.output.module)}`}
+          >
+            Open Sources
+          </a>
+        </section>
+      )}
     </div>
   );
 }
@@ -283,7 +322,13 @@ export function ReportEvidence({
             <HandoffDownload run={run} entry={entry} />
           </div>
           {line !== undefined && (
-            <TraceDetailsView snapshot={snapshot} entry={entry} line={line} index={selectedIndex} />
+            <TraceDetailsView
+              snapshot={snapshot}
+              run={run}
+              entry={entry}
+              line={line}
+              index={selectedIndex}
+            />
           )}
           <EvidenceLocation snapshot={snapshot} entry={entry} line={line} index={selectedIndex} />
         </article>
