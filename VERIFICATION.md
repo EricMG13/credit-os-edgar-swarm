@@ -4,6 +4,24 @@ Keep one running record here. A pass applies only to the stated scope. Earlier v
 engine is in [EricMG13/final-workflow](https://github.com/EricMG13/final-workflow)'s
 `VERIFICATION.md`, which also keeps the retained runs this copy leaves out.
 
+## 2026-11-15 — Portfolio limits from a validated fund export
+
+- Confidence review exercised the frozen source links and pinned bytes, plot
+  and table agreement, exact zero and zero maximum, report date and check
+  date, absent NAV, duplicate limits, minimum limits and exposure definitions
+  the holdings cannot corroborate. The targeted Python suite passed 103
+  tests. The changed-code quality gate and packaged web build passed.
+- The standard candidate `b532d3e` had SHA-256
+  `422d6a7769214b199aa7cfdf50511f52dcfeb617866a25a4a99701efcb5febcc`.
+  Its verified clean extraction passed full macOS Chrome
+  (`20261115-172838-01`) and Edge (`20261115-172847-01`) proof.
+- A separate synthetic upload used the same application with export fixtures
+  and a matching canned CP-6 handoff. Chrome (`20261115-172851-01`) and Edge
+  (`20261115-172902-01`) rendered 29.80% against 30.0% and 0.00% against
+  5.00% in Modules and Forecast. The 29.90% illustrative proposal stayed in
+  the original table. Both browsers showed the retained Caesars portfolio gap
+  at 390 px in both views. Windows work-PC proof and publication are pending.
+
 ## 2026-11-15 — Portfolio limits from a validated workbook
 
 - The native synthetic run uploaded and selected the test workbook. Both
@@ -958,34 +976,3 @@ passes every method to `--modules`; `test_run_start_page.py` asserts `changes`. 
 1,063 passed; all non-live, non-browser, non-slow less `tests/model` and `tests/test_financial_workflow.py` 1,477 passed;
 browser 100 passed; quality gate 0. Not verified: any real model writing CP-8's registers; whether CP-8's request fits a long
 run's context; real earlier runs on the lean-copy deliveries; the library's Changes section.
-
-## 2026-11-12 — Run start page: effort (Fast / Balanced / High) and model (GPT Sol / Claude Opus)
-
-Scope: offline, macOS; no provider was called and no run was started. Owner instruction recorded as
-the 2026-11-12 amendment in `docs/rulings/2026-11-11-run-start-submit.md` (configs sol-medium,
-sol-high, opus-medium, opus-high; USD 20 cap unchanged).
-- Effort map: `BALANCED_HIGH_MODULES` (CP-1A, CP-1D, CP-2, CP-2A, CP-3, CP-3C, CP-4, CP-4C, CP-6);
-  basis per module in `runs/tdg-mixed-effort-comparison.md`. Twelve of twenty assignments are
-  inferred from module type, not measured.
-- Engine: config `opus-high` (claude-opus-5-5, effort high, opus-medium price object);
-  `cpos_launch --balanced`. Service: answers carry `model` and `effort`, defaults gpt/balanced,
-  other values only at Advanced; six (model, effort) pairs map to the four configs; start-up
-  requires the ruling to name all four; Claude refused without the Anthropic key. Page:
-  two Advanced-only radio groups and a "Model and effort" summary row.
-- Passed: quality gate 0 findings (42 files); 1,787 tests across the page, launcher, handoff loop,
-  run start, inbox, packaging and `tests/model` files. Four failures, none from this change: the
-  three in `tests/known-failures.txt`, and `test_upload_to_filed_report_with_the_real_launcher`,
-  which fails identically on a clean `38d23de` checkout (empty `record.report`) and is not listed.
-- Reviews: task reviews of engine, service and page, and a security review of the paid-launch
-  gating (five invariants, seven saved probes), no High. One Medium fixed with a failing test
-  first (the Claude-unavailable refusal now links to Pathway); Low test gaps closed in the same round.
-- Page seen in a browser at desktop and 375 px (no horizontal overflow); controls appear only at
-  Advanced with Balanced and GPT Sol selected. Not a reader check: no report page changed.
-- Open, not fixed: a queued Claude run started after a restart without the Anthropic key fails
-  as "launcher exited 2" and counts toward the daily limit (nothing is spent); a pre-change
-  sealed-but-unmoved submission fails with a misleading reason; on the CLI a ruling naming
-  sol-medium also admits `--balanced` / `--high-modules`; AGENTS.md names
-  `tests/nightly-known-failures.txt` but the file is `tests/known-failures.txt`.
-- Not verified: any live call (Opus at high effort, Balanced on either model, Claude from the
-  page); the summary and Submit against a running service by hand; Windows; the full suite;
-  confidence-review and rewrite-tournament on this change.
