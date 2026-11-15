@@ -4,6 +4,20 @@ Keep one running record here. A pass applies only to the stated scope. Earlier v
 engine is in [EricMG13/final-workflow](https://github.com/EricMG13/final-workflow)'s
 `VERIFICATION.md`, which also keeps the retained runs this copy leaves out.
 
+## 2026-11-15 — Rate and currency sensitivity
+
+- The read-only Caesars handoff's 100 bp shock adds USD 59.68 million
+  annual cash interest and moves all-in cover from 1.52x to 1.48x. Both
+  browsers checked the distinct calculation traces, hedge terms, FX gap and
+  dated events at 390 px. The hedged cash impact remains unestablished.
+- Confidence review checked mixed currencies, zero versus missing net interest,
+  before/after quote alignment, and the reported shock basis. Focused web
+  (85) and Python (15) tests, quality, lint, format and build passed.
+- Candidate `944bc5e` SHA-256
+  `8c2c14f4448697e51529a98cdd424b233417bce799aab95b998e94539b4176c6`.
+  Clean macOS extraction passed Chrome (`20261115-165617-01`) and Edge
+  (`20261115-165625-01`). Windows work-PC proof and publication are pending.
+
 ## 2026-11-15 — Downside break points and narrow report layout
 
 - Retained Caesars showed the first break at 17.86% EBITDA decline with
@@ -966,25 +980,3 @@ one paid run on gpt-6.1-sol. Not a current credit view; one run per setting.
   (unaccepted draft), none on CP-0, inconclusive on CP-1A; the medium modules needed no more.
 - Not verified: CP-2 onward under mixed effort; a same-code all-medium control (instructions
   changed after both baselines); the full test suite.
-## 2026-11-12 — CP-2G facility schedule (branch `claude/cash-flow-model-comparison-498459`)
-
-Owner waiver 2026-11-12: the 800-line PR limit is waived for this branch's pull request (about 1,290
-changed lines: plan document about 340, tests about 520; the whole-branch review found no sensible split).
-
-Scope: CP-2G facility schedule: offline synthetic tests only; no provider called, no model response
-retained; a live CP-2G run that states `facilities` has not been done; the Forecast page was not
-exercised with the new `forecast_exact.json` keys.
-- `uv run pytest tests/test_cpos_facilities.py -q`: exit 0, 55 passed (the answer key puts the debt outside the stated facilities at the analyst's rate: 37.5, 34.8, 30.6).
-- `uv run pytest tests/test_cpos_launch.py -q -k "forecast or told_how"`: exit 0, 24 passed; the whole
-  file: 507 passed, 1 skipped (the paid live test).
-- `uv run python tools/quality_gate.py`: exit 0, 0 findings.
-- Independent checks: the output for a block without facilities is byte-identical to origin/main 36b6d8f
-  (sha256 e5017389abc2c878a0b0bae323a50bcbadf35c3a08f676f277c1505b9d047089 over the five model files);
-  the arithmetic matched an independent Fraction calculation over 74 accepted seeded random blocks
-  (11 with debt outside the stated facilities, per-case rates included; reviewer's probe, not in the suite); the
-  adversarial review found and fixed two Medium defects (negative total debt from repayments above
-  base debt; unbounded floating all-in rate). Three boundary tests each kill their mutant (`0 <= rate`
-  to `0 < rate`; `unallocated < 0` to `<= 0`; `due < start` to `<=`).
-- Known limits: debt outside the stated facilities bears interest at the analyst's assumed rate, not a sourced one; with base debt
-  missing no unit check runs on facility balances; the printed-in-CP-1 check for rate terms accepts
-  any matching percent anywhere in CP-1.
