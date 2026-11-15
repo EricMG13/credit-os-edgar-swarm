@@ -4,6 +4,22 @@ Keep one running record here. A pass applies only to the stated scope. Earlier v
 engine is in [EricMG13/final-workflow](https://github.com/EricMG13/final-workflow)'s
 `VERIFICATION.md`, which also keeps the retained runs this copy leaves out.
 
+## 2026-11-15 — Cross-module issuer calendar
+
+- Both macOS browsers checked 69 retained Caesars calendar rows, split into 46
+  historical and 23 scheduled events. Exact dates, publication dates, precision
+  and row traces matched the native handoffs. Both displayed the authored watch
+  gap, opened the source by keyboard, reloaded the route and fit 720 px.
+- Confidence review checked duplicate descriptors, coincident independent rows,
+  retained alternatives, incompatible dates and source text placement. The
+  synthetic path checked a scenario quarter and nine distinct same-day entries.
+  Focused web (53) and Python (15) tests, quality, lint, format and build passed.
+- Candidate `2611797` SHA-256
+  `0c89b8bbe33df260a6d7e8da45d2d8a174adddb1bc97c70650eb037ac5da92ff`.
+  Clean extraction passed macOS Chrome (`20261115-161013-01`) and Edge
+  (`20261115-161020-01`). The paired proof contains the hash and ten screenshots.
+  Windows work-PC proof and publication remain pending.
+
 ## 2026-11-15 — Paired browser proof tied to the candidate ZIP
 
 - The Windows guide verifies the companion checksum and extracts into a fresh
