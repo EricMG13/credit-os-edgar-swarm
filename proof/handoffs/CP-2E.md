@@ -45,33 +45,53 @@ Nothing supplied contradicts the view; a USD 1,250 million refinancing would.
 | MATERIAL | 0 |
 | MINOR | 1 |
 
-### Analytical appendix — complete canonical registers
-
-#### T2F.1 Sourced operands
+### Sourced operands
 
 | Operand | Value | Basis |
 | --- | --- | --- |
 | Reporting currency | USD | Filing p.1 |
 
-#### T2F.3 Interest rate shock
+### Interest rate shock
 
 | Shock | Rate shock | Added annual interest before hedges | Added annual interest after hedges | Cash interest after the shock | Interest coverage after the shock | Change in interest coverage | Free cash flow after the shock | Added interest as share of EBITDA | Source |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | Reference rate up, first shock | 100 bp | 8.00 | 5.00 | 88.00 | 2.95x | -0.30x | 42.00 | 3.08% | Filing p.1 |
 | Reference rate up, second shock | 200 bp | 16.00 | Not supplied: no hedge sensitivity retained | 96.00 | 2.71x | -0.54x | 34.00 | 6.15% | Filing p.2 |
 
-#### T2F.4 Currency shock
+### Currency shock
 
 | Shock | Currency move | Change in debt | Total debt after the move | Change in EBITDA | Total leverage after the move | Source |
 | --- | --- | --- | --- | --- | --- | --- |
 | Foreign currency strengthens, first move | 5% | 0.00 | 800.00 | 2.00 | 3.05x | Filing p.1 |
 | Foreign currency strengthens, second move | 10% | 0.00 | 800.00 | 4.00 | 3.03x | Filing p.2 |
 
+### T2F.1 - Source inventory
+
+| source_document_id | source_document_name | source_quality | period | entity_covered | data_supplied | limitation |
+| --- | --- | --- | --- | --- | --- | --- |
+| SYN-FILING | northbridge-filing.txt | Synthetic | FY2025 | Synthetic issuer | Filing context | Rates and FX inputs are fictional |
+
+### T2F.3 - Hedge schedule
+
+| Hedge Type | Notional | Instrument Covered | Rate / Strike | Maturity | Coverage Status | Source Trace | Limitation |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| Rate swap | USD 300m | Synthetic term loan | 4.00% | 2026 | Partial | Filing p.1 | Synthetic illustration |
+
+### T2F.4 - Floating-rate exposure
+
+| Metric | Amount | Formula / Source | Status | Credit Implication | Source Trace |
+| --- | --- | --- | --- | --- | --- |
+| Total debt | USD 800m | Synthetic debt schedule | Synthetic | Exposure denominator | Filing p.1 |
+| Gross floating-rate debt | USD 800m | Synthetic debt schedule | Synthetic | Debt reprices with rates | Filing p.1 |
+| Hedged floating-rate debt | USD 300m | Synthetic rate swap | Synthetic | Part of the debt is hedged | Filing p.1 |
+| Unhedged floating-rate debt | USD 500m | Gross less hedged debt | Calculated | Remaining debt reprices | Filing p.1 |
+| Unhedged debt percentage | 62.50% | Unhedged debt divided by total debt | Calculated | Share exposed to rate increases | Filing p.1 |
+
 ### T2F.5 - Rate sensitivity
 
-| Item | Value |
-| --- | --- |
-| Rate sensitivity | Not supplied: no exposure basis in the synthetic filing |
+| Sensitivity | Formula | Source Inputs | Estimated Cash Impact | FCF / Liquidity Implication | Status | Source Trace |
+| --- | --- | --- | --- | --- | --- | --- |
+| +100 bps cash-interest impact | Unhedged floating debt times shock | USD 500m at 1.00% | USD 5m | Additional annual cash interest | Calculated | Filing p.1 |
 
 ### T2F.6 - Register
 

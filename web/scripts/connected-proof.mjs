@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import { spawn } from "node:child_process";
-import { cp, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { cp, mkdir, mkdtemp, readdir, readFile, rm, writeFile } from "node:fs/promises";
 import { arch, release } from "node:os";
 import path from "node:path";
 import { createInterface } from "node:readline";
@@ -333,6 +333,38 @@ async function checkMacro(report, modules, artifacts, channel, page) {
   await change.getByRole("cell", { name: "4.00", exact: true }).waitFor();
 }
 
+async function checkRateMethod(workspace, run) {
+  const requests = path.join(workspace, "_engine", "runs", run, "requests", "CP-2E");
+  const [request, ...others] = await readdir(requests);
+  assert.ok(request && others.length === 0);
+  const { checks } = JSON.parse(
+    await readFile(path.join(requests, request, "1.method-checks.json"), "utf8"),
+  );
+  const rated = checks.filter((check) => check.script.endsWith("/rate_fx_sensitivity.py"));
+  assert.deepEqual(
+    Object.fromEntries(
+      rated.map(({ figure, status, recomputed }) => [figure, [status, recomputed]]),
+    ),
+    {
+      "Unhedged floating-rate debt": ["agreed", 500],
+      "Unhedged debt percentage": ["agreed", 62.5],
+      "+100 bps cash-interest impact": ["agreed", 5],
+    },
+  );
+  for (const register of ["T2F.1", "T2F.3", "T2F.4", "T2F.5"]) {
+    assert.ok(
+      checks.some(
+        (check) =>
+          check.script.endsWith("/completeness_check.py") &&
+          check.figure === "columns" &&
+          check.register === register &&
+          check.status === "agreed",
+      ),
+      `Expected the native completeness check to accept ${register}`,
+    );
+  }
+}
+
 async function checkSecurities(report, modules, artifacts, channel, page) {
   await modules.getByRole("link", { name: /^Security selection, Delivered/u }).click();
   const section = report.getByRole("region", { name: "Instrument decisions", exact: true });
@@ -518,6 +550,7 @@ for (const [channel, brand, envName] of [
         assert.equal(state.status(), 200);
         const completed = await state.json();
         assert.equal(completed.status, "finished", completed.reason ?? "The run did not finish.");
+        await checkRateMethod(workspace, run);
         await open.click();
         await page.waitForURL((url) => url.pathname === `/report/${run}`);
         const report = page.locator("main");
@@ -601,6 +634,7 @@ for (const [channel, brand, envName] of [
             "downside case comparison with signed cash flow and explicit gap",
             "downside break-point ranking, watch timing, and narrow layout",
             "rate and currency shocks with zero and unreported hedge outcomes",
+            "native completeness and rate sensitivity checks agreed",
             "dated instrument quotes, decision and recovery qualification",
             "selected workbook attestation, portfolio limits and proposal qualification",
             "forecast chart and model",

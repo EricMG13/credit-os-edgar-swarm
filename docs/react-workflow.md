@@ -1,6 +1,6 @@
 # Run Credit OS 2
 
-Credit OS 2 is based on RBOT-HTML `b8cf4ca`. It keeps that revision's Python pin,
+Credit OS 2 is based on RBOT-HTML `256101a`. It keeps that revision's Python pin,
 `pyproject.toml`, `uv.lock`, scheduler, calculations, provider configuration and library
 publication. The browser uses the Credit OS design system and React 19.3.0. Run intake,
 activity, library and report navigation live at one local address.
