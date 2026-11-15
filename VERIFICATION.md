@@ -4,6 +4,25 @@ Keep one running record here. A pass applies only to the stated scope. Earlier v
 engine is in [EricMG13/final-workflow](https://github.com/EricMG13/final-workflow)'s
 `VERIFICATION.md`, which also keeps the retained runs this copy leaves out.
 
+## 2026-11-15 — Connected five-step Run intake
+
+- Compared the connected page with the Credit OS Run mock and kit. Documents,
+  Purpose, Confirm, More context and Start use the existing stepper, drop zone,
+  purpose cards, details list and side Readiness. The cap comes from the native
+  scheduler. At 390 px the compact stepper and uploader fit inside the form.
+- Confidence review checked drag and drop, duplicate stored names, valid
+  file attachment choices, back navigation, pre-approval refusal, expired
+  approval and identical retries. The native summary is requested after
+  More context and the final submit uses its exact answers and digest.
+  Targeted web (98) and Python (27) tests, quality, lint, format and build passed.
+- Candidate `cac625b`, SHA-256
+  `6fb94dabd80d044070e3ced0bb1850e4df2d3bcd321b4712185ae5f27060b2a3`.
+  Clean extraction passed Chrome (`20261115-210031-01`) and Edge
+  (`20261115-210040-01`) on macOS. The interactive offline preview completed
+  `20261115-205932-01` and serves the same compiled JS and CSS. The engine and
+  pins match the existing RBOT-HTML `b8cf4ca` baseline. Upstream advanced to
+  `256101a`. Windows work-PC proof and publication are pending.
+
 ## 2026-11-15 — Windows candidate and extracted-project checks
 
 - The archive had omitted the React design system and brand tokens used by
@@ -967,30 +986,3 @@ Not verified: that a Key figures figure is the right measure or period in CP-1 (
 ## 2026-11-12 — Changes tab in the issuer library (branch `claude/changes-section`, stacked on PR #55, decision M8)
 Scope: `changes.js` renders the pack and CP-8's handoff; the store carries `run.changes`; offline. CI fast list 2,265 passed; node 268; browser gate 147 passed; quality gate 0; answer keys are literals; fix round 1: same-period differences are not issuer moves, no inferred first run, periods must match to join (probes exit 0).
 Not verified: a real CP-8 run in the tab; a CP-8 refusal's pack (the delivery omits it); dark mode (none); a reader check against the VMO2 reference.
-
-## 2026-11-12 — CP-8 fixes, rounds 1-3 (branches `claude/cp8-changes-r1`, `-r3`)
-
-Scope: engine, method and run start service, offline, no provider call. Round 1: pack schema `cpos-changes/2` (difference
-for equal units; `comparable` yes/no/judge; refs `E1`/`C1`); the checker reads each row and every printed difference; a CP-8
-not accepted, an unbuildable pack or a hold over the cap delivers without CP-8; the approval names the earlier run and the
-digest binds it (`--prior`); display name "Changes since the last run". Round 2: `same_period`, `definition_resolved`. Round 3:
-the sentence word lists are deleted; the check is mechanical (K1-K12): `changes.same_period` (same date, else same fiscal
-year), a withheld difference in no checked line, every figure of a checked line held in the pack, its definition texts or a
-handoff of either run (the launch caller passes this run's handoffs and `prior/*.md`), fact rows carry held amounts but no
-pack value or difference (Q-1). Answer keys are hand-written in `tests/test_changes.py`. Changed expectations (by the rulings):
-`test_a_cp8_that_is_not_accepted_loses_only_itself...` (exit 0); the summary digest is `bound(digest, prior)`; 500 US$m not
-held; "debt was 333"; two movement-in-words cases and one trend assertion dropped; a test renamed. Real pair (cpos-tdg-sol-medium-all-001
-then tdg-reader-format-001): five measures, all `judge`; 20 `E`, 11 `C` refs; CP-8's first request 318,153 bytes, hold 5.73.
-Results before the merge with main: fast set 1,439 passed, browser 138 passed, quality gate 0; reviewer probes `t4r3_same_period_rows`,
-`t4r4_fact_row_leak`, `t4r4_sentences`, `t4r4_same_period`, `t4r2_prior` pass. After merging main (99afe9e; tests adapted to its model-choice API): CI fast list plus test_changes 2,433 passed; whole fast suite without tests/model 1,787 passed; browser 144 passed; node 257 passed; quality gate 0.
-Not verified: a real model writing the ledger or judging a definition; whether the estimate matches a live first request; the
-library's Changes section; a real CP-8 handoff against the new figure rule (hand-written mini pack and probes only).
-## 2026-11-12 — CP-8 in the run: prior run, pins, comparison pack, check (branch `claude/cp8-changes`, decisions M5, M7, M8)
-
-Scope: engine and method, offline, no provider call. Built: `changes.py` (prior-run rule, `prior/*` pins, `changes.json`),
-`changes_check.py`, registry fan-in, `cp8.md`, `changes.json` in the delivery, the summary's `changes` line. Answer keys are
-hand-written in `tests/test_changes.py`; isolation is checked on the requests sent. Changed: `test_cpos_launch.py` no longer
-passes every method to `--modules`; `test_run_start_page.py` asserts `changes`. Results then: fast set plus `test_changes.py`
-1,063 passed; all non-live, non-browser, non-slow less `tests/model` and `tests/test_financial_workflow.py` 1,477 passed;
-browser 100 passed; quality gate 0. Not verified: any real model writing CP-8's registers; whether CP-8's request fits a long
-run's context; real earlier runs on the lean-copy deliveries; the library's Changes section.
