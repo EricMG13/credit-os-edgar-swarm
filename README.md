@@ -1,8 +1,13 @@
-# RBOT-HTML
+# Credit OS 2
 
-The credit workflow as two Python steps, or one run page service that starts them for analysts, with a
-static Issuer Library that opens from disk. The only server is the run page service (section 3);
-there is no compiled executable. This is a lean copy of the engine in
+**Credit OS 2** uses RBOT-HTML's original workflow and lockfile with a unified React
+frontend. [Start the React interface or run the Chrome and Edge proof](docs/react-workflow.md).
+The [module design and data audit](docs/design/react-module-coverage.md) records which
+visuals have source data and which are still proposals.
+
+The RBOT-HTML workflow below also runs as two Python steps or through its original
+run page. It exports a static Issuer Library that opens from disk. The workflow
+engine comes from
 [EricMG13/final-workflow](https://github.com/EricMG13/final-workflow), with a fresh history. That
 repository keeps the retained runs, deliverables and design work, and the Go application; none of
 them are here.

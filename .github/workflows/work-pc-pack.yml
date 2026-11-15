@@ -18,6 +18,7 @@ concurrency:
 
 jobs:
   pack:
+    if: github.repository == 'EricMG13/RBOT-HTML'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:

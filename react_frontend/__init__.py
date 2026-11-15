@@ -1,0 +1,204 @@
+"""Serve the React build through this checkout's run-start HTTP service."""
+
+from __future__ import annotations
+
+import json
+import re
+import threading
+from collections.abc import Iterator
+from contextlib import contextmanager
+from pathlib import Path
+from typing import Any
+from urllib.parse import SplitResult, unquote
+
+from deploy_workflow.inbox import runs
+from deploy_workflow.inbox.layout import Layout
+from deploy_workflow.inbox.scheduler import Scheduler, Settings
+from deploy_workflow.run_start import service
+
+PROJECT = Path(__file__).resolve().parent.parent
+RUN_ID = re.compile(r"[0-9A-Za-z][0-9A-Za-z._-]{0,79}")
+RUN_PAGE = re.compile(rf"/run/{RUN_ID.pattern}/?")
+REPORT_PAGE = re.compile(r"/report/([^/]+)/?")
+REPORT_FOLDER = re.compile(r"[\w. -]+")
+REPORT_PREFIX = "/connected/report/"
+STATIC_FILES = {"/data.js", "/symbol.svg", "/THIRD-PARTY-NOTICES.md"}
+STATIC_DIRS = ("/assets/", "/fonts/")
+EXPORT_PREFIX = "window.CREDIT_OS_DATA="
+EXPORT_KEYS = ("catalogue", "workspace", "activity", "chips")
+
+
+def _report_page(path: str) -> bool:
+    """Match a retained library folder without extending the scheduler's run ID grammar."""
+    found = REPORT_PAGE.fullmatch(path)
+    folder = unquote(found[1]) if found else ""
+    return folder not in {".", ".."} and REPORT_FOLDER.fullmatch(folder) is not None
+
+
+def _invalid_json(constant: str) -> None:
+    raise ValueError(f"invalid JSON constant {constant}")
+
+
+def _read_publication(path: Path) -> tuple[bytes, dict[str, Any] | None]:
+    """Decode the published assignment as JSON and retain the original JSON bytes."""
+    raw = service._read_regular(path)
+    if raw is None:
+        return b"null", None
+    assignment = raw.decode("utf-8").rstrip()
+    if not assignment.startswith(EXPORT_PREFIX) or not assignment.endswith(";"):
+        raise ValueError("invalid issuer library export")
+    encoded = assignment[len(EXPORT_PREFIX) : -1]
+    snapshot = json.loads(encoded, parse_constant=_invalid_json)
+    if not isinstance(snapshot, dict) or any(
+        not isinstance(snapshot.get(key), dict) for key in EXPORT_KEYS
+    ):
+        raise ValueError("invalid issuer library snapshot")
+    return encoded.encode("utf-8"), snapshot
+
+
+def _report_entries(snapshot: dict[str, Any] | None, layout: Layout) -> dict[str, dict[str, str]]:
+    if snapshot is None:
+        return {}
+    unfinished = {record.id for record in runs.load_all(layout) if record.status != "finished"}
+    workspace_runs = {run["folder"]: run for run in snapshot["workspace"]["runs"].values()}
+    return {
+        run_id: {
+            "id": run_id,
+            "issuer": run["name"],
+            "asOf": run["date"] or "",
+            "pathway": workspace_runs[run_id]["pathway"] or "",
+        }
+        for run in snapshot["catalogue"]["real"]
+        if RUN_ID.fullmatch(run_id := run["id"])
+        and run_id in workspace_runs
+        and run_id not in unfinished
+    }
+
+
+def _read_page(dist: Path, *, synthetic: bool, signal_url: str) -> bytes:
+    page = (dist / "index.html").read_bytes()
+    if b"<head>" not in page or page.count(b"connect-src 'none'") != 1:
+        raise ValueError("the React build must include its offline index policy")
+    mode = "synthetic" if synthetic else "live"
+    metadata = (
+        '<meta name="credit-os-backend" content="legacy">'
+        f'<meta name="credit-os-mode" content="{mode}">'
+    )
+    if signal_url:
+        metadata += f'<meta name="credit-os-signal-url" content="{signal_url}">'
+    page = page.replace(b"connect-src 'none'", b"connect-src 'self'", 1)
+    page = page.replace(b"<head>", b"<head>" + metadata.encode("ascii"), 1)
+    return page.replace(b'src="./', b'src="/').replace(b'href="./', b'href="/')
+
+
+def _handler(dist: Path, page: bytes, context: dict[str, Any]) -> type[service.Handler]:
+    class Handler(service.Handler):
+        def _get(self, url: SplitResult) -> None:
+            path = url.path
+            if (
+                path in {"/", "/index.html", "/start"}
+                or RUN_PAGE.fullmatch(path)
+                or _report_page(path)
+            ):
+                raise service._Reply(
+                    200,
+                    page,
+                    {
+                        "Content-Type": "text/html; charset=utf-8",
+                        "Content-Security-Policy": "frame-ancestors 'none'",
+                        "X-Frame-Options": "DENY",
+                        "Cache-Control": "no-store",
+                    },
+                )
+            if path == "/connected/context":
+                raise service._Reply(200, context)
+            if path == "/connected/snapshot":
+                payload, _ = self._publication()
+                raise service._Reply(
+                    200, payload, {"Content-Type": service._JSON, "Cache-Control": "no-store"}
+                )
+            if path == "/connected/reports" or path.startswith(REPORT_PREFIX):
+                self._reports(path)
+            self._assets(path)
+            super()._get(url)
+
+        def _assets(self, path: str) -> None:
+            if path in STATIC_FILES:
+                self._file(dist, path, direct=True)
+            for prefix in STATIC_DIRS:
+                if path.startswith(prefix):
+                    self._file(dist / prefix.strip("/"), path.removeprefix(prefix), direct=False)
+
+        def _publication(self) -> tuple[bytes, dict[str, Any] | None]:
+            return _read_publication(self._layout.engine / "library" / "data.js")
+
+        def _reports(self, path: str) -> None:
+            listing = path == "/connected/reports"
+            run_id = path.removeprefix(REPORT_PREFIX)
+            if not listing and RUN_ID.fullmatch(run_id) is None:
+                raise service._refuse(404, "unknown report")
+            _, snapshot = self._publication()
+            entries = _report_entries(snapshot, self._layout)
+            if listing:
+                raise service._Reply(200, {"reports": list(entries.values())})
+            if run_id not in entries:
+                raise service._refuse(404, "unknown report")
+            raise service._Reply(200, entries[run_id])
+
+    return Handler
+
+
+@contextmanager
+def make_server(  # noqa: PLR0913 - explicit launcher, mode and server options
+    root: Path,
+    *,
+    web: Path | None = None,
+    port: int = 0,
+    launcher: tuple[str, ...] | None = None,
+    synthetic: bool = False,
+    signal_url: str = "",
+) -> Iterator[service._Server]:
+    """Hold the upstream scheduler for the lifetime of the React HTTP server."""
+    if (synthetic and not launcher) or (not synthetic and launcher is not None):
+        raise ValueError("an explicit launcher is required in synthetic mode only")
+    if not 0 <= port <= 65535:
+        raise ValueError("--port must be from 0 to 65535")
+    dist = (web or PROJECT / "web" / "dist").resolve()
+    signal_link = service.signal_link(signal_url) if signal_url else ""
+    page = _read_page(dist, synthetic=synthetic, signal_url=signal_link)
+    context = json.loads((PROJECT / "cases/context/research-minimal.json").read_bytes())
+    if synthetic:
+        context["run"]["case_kind"] = "synthetic"
+    settings = (
+        Settings(root) if launcher is None else Settings(root, launcher=launcher, poll_seconds=0.2)
+    )
+    scheduler = Scheduler(settings)
+    try:
+        with service.make_server(scheduler, "127.0.0.1", port, signal_link) as server:
+            server.RequestHandlerClass = _handler(dist, page, context)
+            assert isinstance(server, service._Server)
+            yield server
+    finally:
+        scheduler.close()
+
+
+def serve(  # noqa: PLR0913 - match the server options
+    root: Path,
+    *,
+    web: Path | None = None,
+    port: int = 0,
+    launcher: tuple[str, ...] | None = None,
+    synthetic: bool = False,
+    signal_url: str = "",
+) -> None:
+    with make_server(
+        root, web=web, port=port, launcher=launcher, synthetic=synthetic, signal_url=signal_url
+    ) as server:
+        worker = threading.Thread(target=server.serve_forever)
+        worker.start()
+        try:
+            print(f"http://127.0.0.1:{server.server_address[1]}/", flush=True)
+            service._loop(server.scheduler)
+        finally:
+            server.shutdown()
+            worker.join()

@@ -4,6 +4,22 @@ Keep one running record here. A pass applies only to the stated scope. Earlier v
 engine is in [EricMG13/final-workflow](https://github.com/EricMG13/final-workflow)'s
 `VERIFICATION.md`, which also keeps the retained runs this copy leaves out.
 
+## 2026-11-15 — Unified React frontend on RBOT-HTML
+
+- The RBOT-HTML engine under `src/`, Python pin and lock inputs match `9d040f8`.
+  The new entry point uses the same scheduler, run approval, spend cap and publisher.
+- Chrome 157.0.8103.78 and Edge 157.0.4341.60 on macOS completed synthetic Northbridge
+  from upload and approval to a finished report with original handoff download.
+  Both showed CP-1 debt maturities, its FY2027 gap, and calculated base revenue of 1,050.
+- Focused Python tests passed (369). Adapter quality gate reported zero findings.
+  Report checks exposed and corrected duplicate dating, retained-folder routing,
+  and event and relationship figures appearing among forecast charts.
+- The synthetic proof covers one full pathway with canned model responses.
+  Native Claude medium preflight could plan the pathway offline. The available
+  OpenRouter credential did not supply the direct Anthropic key it requires, and
+  the available sample pack lacks the evidence for a complete analytical report.
+  See [React workflow](docs/react-workflow.md).
+
 ## 2026-11-14 — Synthetic pack follow-ups and the document-key test (branch `claude/synthetic-pack-followups`, PR #124)
 
 Scope is **offline and synthetic only**; nothing under `src/` changes. Closes the two Low items left

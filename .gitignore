@@ -24,3 +24,10 @@ private/
 /.library-new-*/
 /.library-old/
 .superpowers/
+
+# React build and synthetic browser proof
+/web/node_modules/
+/web/dist/
+/web/coverage/
+/proof-artifacts/
+/delivery/
