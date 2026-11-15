@@ -335,7 +335,9 @@ async function checkRecord(report, page, channel) {
     fullPage: true,
   });
   await nav.getByRole("link", { name: "Summary", exact: true }).click();
+  await report.getByRole("heading", { name: "Handoffs", exact: true }).waitFor();
   await report.getByRole("combobox", { name: "Module", exact: true }).selectOption("");
+  await page.waitForURL((url) => url.hash === "#evidence/summary");
 }
 
 async function checkChangesTrace(browser, endpoint, id) {
@@ -865,11 +867,12 @@ for (const [channel, brand, envName] of [
         await checkOverviewTrace(report, page);
         await checkCalendar(report, artifacts, channel, page);
         await checkCharts(report, artifacts, channel, page);
-        const handoff = page.waitForEvent("download");
-        await report
-          .getByRole("link", { name: "Download Fundamental credit", exact: true })
-          .click();
-        const file = await handoff;
+        const download = report.getByRole("link", {
+          name: "Download Fundamental credit",
+          exact: true,
+        });
+        await download.waitFor();
+        const [file] = await Promise.all([page.waitForEvent("download"), download.click()]);
         assert.equal(file.suggestedFilename(), "CP-2.md");
         const bytes = await readFile(await file.path());
         assert.match(bytes.toString("utf8"), /The synthetic issuer shows one observed item\./u);
