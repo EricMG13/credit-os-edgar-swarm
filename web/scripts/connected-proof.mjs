@@ -175,10 +175,14 @@ for (const [channel, brand, envName] of [
 
         const run = await submit(page);
         const open = page.getByRole("link", { name: "Open report", exact: true });
-        await open.waitFor({ timeout: 60000 });
+        const stopped = page
+          .getByRole("status")
+          .filter({ hasText: /^(Failed|Capped|Rejected|Interrupted)$/u });
+        await open.or(stopped).waitFor({ timeout: 60000 });
         const state = await page.request.get(new URL(`/api/runs/${run}`, service.endpoint).href);
         assert.equal(state.status(), 200);
-        assert.equal((await state.json()).status, "finished");
+        const completed = await state.json();
+        assert.equal(completed.status, "finished", completed.reason ?? "The run did not finish.");
         await open.click();
         await page.waitForURL((url) => url.pathname === `/report/${run}`);
         const report = page.locator("main");

@@ -17,7 +17,7 @@ import type {
   Table,
 } from "./publishedReport";
 
-export const readerModuleName = (id: string) => moduleName(id).replace(/ \(CP-[^)]+\)$/, "");
+const readerModuleName = (id: string) => moduleName(id).replace(/ \(CP-[^)]+\)$/, "");
 
 export function moduleState(entry: OutputEntry | undefined): ModuleState {
   if (!entry) return "Not run";
@@ -86,7 +86,7 @@ const creditMetrics = [
 
 const numeric = /^-?\d+(?:\.\d+)?$/;
 const exactComma = (value: string) => value.replace(/\B(?=(\d{3})+(?!\d|\.))/g, ",");
-export function financialValue(value: string, unit: string) {
+function financialValue(value: string, unit: string) {
   const [integer, fraction] = value.split(".");
   const display =
     fraction === undefined ? exactComma(integer ?? "") : `${exactComma(integer ?? "")}.${fraction}`;
