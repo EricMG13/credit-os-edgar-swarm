@@ -76,17 +76,36 @@ export type Summary = Reading & {
 
 export type RunStatus =
   "queued" | "running" | "finished" | "failed" | "capped" | "rejected" | "interrupted";
+export type RunEvent = {
+  at: string;
+  kind:
+    | "module_started"
+    | "module_accepted"
+    | "draft_rejected"
+    | "delivery_started"
+    | "delivered"
+    | "stopped"
+    | "changes_not_produced"
+    | "model_not_published";
+  module?: string;
+};
 export type Run = {
   id: string;
   status: RunStatus;
   reason: string;
   issuer_name: string;
+  as_of: string;
   pathway: string;
   modules: [string, "done" | "running" | "waiting"][];
   stalled?: boolean;
   started_at?: string;
   ended_at?: string;
   submitted_by?: string;
+  claimed_at?: string;
+  observed_at: string;
+  cap: string;
+  spent: string | null;
+  events: RunEvent[] | null;
 };
 
 export type ReportEntry = { id: string; issuer: string; asOf: string; pathway: string };
@@ -163,7 +182,7 @@ export const getSummary = (id: string, answers: Answers) =>
 export const submit = (id: string, answers: Answers, digest: string) =>
   request<{ run: string }>(`${submission(id)}/submit`, postJson({ answers, digest }));
 export const getRun = (id: string, signal: AbortSignal) =>
-  request<Run>(`/api/runs/${encodeURIComponent(id)}`, { signal });
+  request<Run>(`/connected/activity/${encodeURIComponent(id)}`, { signal });
 export const getReport = (id: string, signal: AbortSignal) =>
   request<ReportEntry>(`/connected/report/${encodeURIComponent(id)}`, { signal });
 

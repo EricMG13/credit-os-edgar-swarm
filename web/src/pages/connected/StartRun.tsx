@@ -6,6 +6,7 @@ import { Button } from "@/components/base/buttons/button";
 import { DetailsList } from "../run/start/DetailsList";
 import { PurposeCards } from "../run/start/Purpose";
 import { Readiness } from "../run/start/Readiness";
+import { SubmitConfirmation } from "../run/start/Start";
 import { Stepper } from "../run/start/Stepper";
 import {
   carryDocuments,
@@ -39,10 +40,17 @@ import { PageHeader } from "../../shell/PageHeader";
 const FORM_STEPS = {
   documents: { title: "Documents", next: "Continue to purpose", previous: null },
   purpose: { title: "Purpose", next: "Review inputs", previous: "documents" },
-  confirm: { title: "Confirm", next: "Confirm inputs", previous: "purpose" },
+  confirm: { title: "Confirm what was read", next: "Approve summary", previous: "purpose" },
   context: { title: "More context", next: "Review run", previous: "confirm" },
 } as const;
 type FormStep = keyof typeof FORM_STEPS;
+const STEP_GUIDANCE: Record<FormStep, string> = {
+  documents:
+    "Add annual and interim reports, the credit agreement and any other material the analysis should read.",
+  purpose: "The purpose determines which modules run.",
+  confirm: "Check the issuer, documents and purpose. Approving this summary costs nothing.",
+  context: "Optional. You can continue if the documents provide all the context.",
+};
 
 const PATHWAY_DESCRIPTIONS: Record<string, string> = {
   credit_snapshot: "Assess the issuer, downside, covenants, refinancing and forward cash flow.",
@@ -231,10 +239,11 @@ function ReviewPlan({
   const { run, identity } = answers.context;
   return (
     <>
-      <h2 className={heading}>Review run</h2>
       <dl className="grid gap-4 rounded-lg bg-surface-subtle p-4 text-sm sm:grid-cols-2">
         {[
           ["Issuer", identity.issuer_name],
+          ["Documents", String(summary.documents.length)],
+          ["Planned modules", String(summary.modules.length)],
           ["As-of date", run.as_of],
           ["Pathway", pathwayName(run.pathway)],
           ["Model and effort", `${summary.model} · ${summary.effort}`],
@@ -374,6 +383,9 @@ export function StartRun({
         title="Start a run"
         badges={mode === "synthetic" ? <Badge color="brand">Synthetic test</Badge> : undefined}
       />
+      <p className="mt-3 text-sm text-text-secondary">
+        Choose the documents and purpose, then review what will run.
+      </p>
       {value ? (
         <IntakeForm mode={mode} navigate={navigate} {...value} />
       ) : error ? (
@@ -416,6 +428,7 @@ function IntakeForm({
   const [attachments, setAttachments] = useState<Partial<Record<Attachment, string>>>({});
   const [legal, setLegal] = useState("none");
   const [edits, setEdits] = useState<Partial<Record<ComplexField, string>>>({});
+  const [analystNote, setAnalystNote] = useState("");
   const [level, setLevel] = useState(() => initial?.prior.level || "basic");
   const [model, setModel] = useState("gpt");
   const [effort, setEffort] = useState("balanced");
@@ -576,6 +589,7 @@ function IntakeForm({
       setEffort("balanced");
       setModules(carriedModules(prior));
       setEdits({});
+      setAnalystNote("");
       setAttachments({});
       setLegal("none");
       setIgnoredCopies([]);
@@ -629,6 +643,16 @@ function IntakeForm({
         );
       }
       const details = readDetails(edits);
+      const note = analystNote
+        .split(/\r\n?|\n/)
+        .map((line) => line.trim())
+        .filter(Boolean)
+        .join(" ");
+      if (note) {
+        const questions = details.research_questions ?? context.research_questions;
+        const listed: unknown[] = Array.isArray(questions) ? questions : [];
+        details.research_questions = [...listed, { text: note, focus_module: "" }];
+      }
       if (run.run_type === "primary") {
         const deals = details.deal_terms ?? context.deal_terms;
         if (!Array.isArray(deals) || deals.length === 0)
@@ -700,7 +724,7 @@ function IntakeForm({
   }
 
   async function submitReviewed() {
-    if (!review || !approved || !checksComplete) return;
+    if (!review || !approved || !checksComplete || (mode === "live" && !cap)) return;
     await withDraft("submit", async () => {
       try {
         const { run: id } = await submit(review.id, review.answers, review.summary.digest);
@@ -776,6 +800,8 @@ function IntakeForm({
   ]);
 
   const { title, previous, next } = FORM_STEPS[step];
+  const capText = cap === null ? null : `USD ${cap.toFixed(2)}`;
+  const synthetic = mode === "synthetic";
   const readinessItems = [
     {
       met: shownDocs.length > 0,
@@ -808,9 +834,14 @@ function IntakeForm({
         {error && <ErrorNotice>{error}</ErrorNotice>}
         {review ? (
           <div className="grid gap-5">
-            <h2 ref={focusStep} tabIndex={-1} className={`${heading} focus:outline-none`}>
-              Start
-            </h2>
+            <div className="grid gap-1">
+              <h2 ref={focusStep} tabIndex={-1} className={`${heading} focus:outline-none`}>
+                Start
+              </h2>
+              <p className="text-sm text-text-secondary">
+                Review the final run details and confirm to start.
+              </p>
+            </div>
             <ReviewPlan
               review={review}
               accepted={accepted}
@@ -836,13 +867,23 @@ function IntakeForm({
               />
               Approve: I have read this summary and want this run started
             </label>
-            <p className="text-sm text-text-secondary">
-              {mode === "synthetic"
-                ? "Synthetic run using the supplied documents."
-                : cap === null
-                  ? "Submit starts a paid run."
-                  : `Submit starts a paid run with a USD ${cap.toFixed(2)} cap.`}
-            </p>
+            <div className="grid gap-1 border-t border-border-hairline pt-4">
+              <h3 className="text-md font-semibold text-text-primary">
+                {synthetic ? "Submit starts a synthetic test" : "Submit starts a paid run"}
+              </h3>
+              <p id="run-submit-cost" className="text-sm text-text-secondary">
+                {synthetic ? (
+                  "The synthetic test uses the supplied documents and makes no paid provider calls."
+                ) : capText === null ? (
+                  "The spending cap is unavailable. Reopen the form to load it before submitting."
+                ) : (
+                  <>
+                    It can spend up to <strong className="tabular-nums">{capText}</strong>. You
+                    confirm once more before anything is spent.
+                  </>
+                )}
+              </p>
+            </div>
             <div className="flex flex-wrap items-center justify-between gap-3">
               <Button
                 color="secondary"
@@ -854,15 +895,36 @@ function IntakeForm({
               >
                 Edit inputs
               </Button>
-              <Button
-                size="xl"
-                isDisabled={!checksComplete || !approved || busy !== undefined}
-                onPress={() => {
+              <span className="text-sm text-text-tertiary">Step 5 of 5</span>
+              <SubmitConfirmation
+                label={
+                  busy === "submit"
+                    ? "Submitting…"
+                    : synthetic
+                      ? "Submit run"
+                      : `Submit, spend up to ${capText ?? "the cap"}`
+                }
+                confirm={
+                  synthetic
+                    ? {
+                        title: "Start a synthetic test?",
+                        text: "This test runs the workflow with the supplied documents and spends USD 0.00.",
+                        action: "Start synthetic run",
+                      }
+                    : {
+                        title: "Start a paid run?",
+                        text: `This run can spend up to ${capText ?? "the configured cap"} and stops when it reaches that cap. Once it starts, what it has spent cannot be taken back.`,
+                        action: `Start run, up to ${capText ?? "the cap"}`,
+                      }
+                }
+                isDisabled={
+                  !checksComplete || !approved || busy !== undefined || (!synthetic && !cap)
+                }
+                describedBy="run-submit-cost"
+                onConfirm={() => {
                   void submitReviewed();
                 }}
-              >
-                {busy === "submit" ? "Submitting…" : "Submit run"}
-              </Button>
+              />
             </div>
           </div>
         ) : (
@@ -872,14 +934,17 @@ function IntakeForm({
             }}
             className="grid min-w-0 grid-cols-1 gap-5"
           >
-            <h2
-              key={step}
-              ref={focusStep}
-              tabIndex={-1}
-              className={`${heading} focus:outline-none`}
-            >
-              {title}
-            </h2>
+            <div className="grid gap-1">
+              <h2
+                key={step}
+                ref={focusStep}
+                tabIndex={-1}
+                className={`${heading} focus:outline-none`}
+              >
+                {title}
+              </h2>
+              <p className="text-sm text-text-secondary">{STEP_GUIDANCE[step]}</p>
+            </div>
             <fieldset
               disabled={busy !== undefined}
               className="grid min-w-0 grid-cols-1 items-start gap-4 sm:grid-cols-2"
@@ -889,6 +954,7 @@ function IntakeForm({
                   <FileUpload.Root className="sm:col-span-2">
                     <FileUpload.DropZone
                       inputLabel="Documents"
+                      chooseFiles
                       hint="Add filings and other source documents. Up to 50 MB per file."
                       isDisabled={busy !== undefined}
                       onDropFiles={addFiles}
@@ -1071,6 +1137,7 @@ function IntakeForm({
                         setReading(undefined);
                         setPriorNote("");
                         setEdits({});
+                        setAnalystNote("");
                         setAttachments({});
                         setLegal("none");
                         setModules([]);
@@ -1163,32 +1230,64 @@ function IntakeForm({
                 </>
               )}
               {step === "confirm" && (
-                <div className="sm:col-span-2">
-                  <p className="text-sm text-text-secondary">
-                    Check the issuer, files and purpose before adding more context.
-                  </p>
-                  <DetailsList
-                    rows={[
-                      { label: "Issuer", value: identity.issuer_name },
-                      { label: "As-of date", value: run.as_of },
-                      { label: "Pathway", value: pathwayName(run.pathway) },
-                      {
-                        label: "Purpose",
-                        value: PURPOSES[(run.run_type ?? "research") as keyof typeof PURPOSES],
-                      },
-                    ]}
-                  />
-                  <h3 className="font-semibold">Documents inspected</h3>
-                  <DetailsList
-                    rows={shownDocs.map((doc) => ({
-                      label: storedName(doc),
-                      value: documentDescription(doc),
-                    }))}
-                  />
+                <div className="grid gap-4 sm:col-span-2">
+                  <section>
+                    <h3 className="font-semibold">Issuer</h3>
+                    <DetailsList
+                      rows={[
+                        { label: "Issuer", value: identity.issuer_name },
+                        { label: "As-of date", value: run.as_of },
+                        { label: "Reporting currency", value: run.reporting_currency },
+                      ]}
+                    />
+                  </section>
+                  <section>
+                    <h3 className="font-semibold">Documents inspected</h3>
+                    <DetailsList
+                      rows={shownDocs.map((doc) => ({
+                        label: storedName(doc),
+                        value: documentDescription(doc),
+                      }))}
+                    />
+                  </section>
+                  <section>
+                    <h3 className="font-semibold">Run</h3>
+                    <DetailsList
+                      rows={[
+                        { label: "Pathway", value: pathwayName(run.pathway) },
+                        {
+                          label: "Purpose",
+                          value: PURPOSES[(run.run_type ?? "research") as keyof typeof PURPOSES],
+                        },
+                        {
+                          label: "Spending cap",
+                          value: synthetic ? "USD 0.00 (synthetic test)" : capText,
+                        },
+                      ]}
+                    />
+                  </section>
                 </div>
               )}
               {step === "context" && (
                 <>
+                  <div className="grid gap-1 sm:col-span-2">
+                    <label className={label}>
+                      Anything the analysis should know
+                      <textarea
+                        aria-describedby="run-analyst-questions"
+                        className={field}
+                        rows={3}
+                        placeholder="For example, the committee wants a view on the 2028 maturities."
+                        value={analystNote}
+                        onChange={(event) => {
+                          setAnalystNote(event.target.value);
+                        }}
+                      />
+                    </label>
+                    <p id="run-analyst-questions" className="text-sm text-text-tertiary">
+                      Your note is included in the run’s research questions.
+                    </p>
+                  </div>
                   <label className={label}>
                     Date of your newest file
                     <input
@@ -1477,6 +1576,9 @@ function IntakeForm({
               >
                 Previous
               </Button>
+              <span className="text-sm text-text-tertiary">
+                Step {Object.keys(FORM_STEPS).indexOf(step) + 1} of 5
+              </span>
               <Button
                 type="submit"
                 isDisabled={busy !== undefined || (step === "documents" && !canRead)}
@@ -1488,11 +1590,12 @@ function IntakeForm({
         )}
       </div>
       <Readiness
+        capTitle={synthetic ? "Configured cap for paid runs" : undefined}
         data={{
           line: "Check the inputs and approve the run before it starts.",
           notMet: { count: String(notMet.length), items: notMet },
           met: { count: String(met.length), items: met },
-          cap: cap === null ? null : { value: 0, max: cap, label: `USD ${cap.toFixed(2)}` },
+          cap: cap && capText ? { value: 0, max: cap, label: `USD 0.00 of ${capText}` } : null,
         }}
       />
     </div>

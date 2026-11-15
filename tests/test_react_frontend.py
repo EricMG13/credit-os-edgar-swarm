@@ -2,6 +2,7 @@ import json
 import os
 import threading
 from collections.abc import Iterator, Mapping
+from decimal import Decimal
 from http.client import HTTPConnection
 from pathlib import Path
 from tempfile import TemporaryDirectory
@@ -10,6 +11,8 @@ import pytest
 
 from deploy_workflow.inbox import runs, startup
 from deploy_workflow.inbox.scheduler import Scheduler
+from deploy_workflow.model.budget import Budget
+from deploy_workflow.run_events import EVENTS, append_event
 from deploy_workflow.run_start.service import _Server
 from react_frontend import make_server
 
@@ -106,6 +109,43 @@ def test_same_origin_service_and_submit_gate(hosted: _Server) -> None:
         request(hosted, f"/api/submissions/{sid}/submit", "POST", headers=headers, body="{}")[0]
         == 400
     )
+
+
+def test_activity_uses_the_pinned_cap_and_curates_native_events(hosted: _Server) -> None:
+    layout = hosted.scheduler.layout
+    runs.save(
+        layout,
+        runs.Record(
+            id="activity",
+            pathway="credit_snapshot",
+            folder="activity",
+            status="interrupted",
+            claimed_at="2026-10-31T12:00:00Z",
+        ),
+    )
+    directory = layout.runs / "activity"
+    directory.mkdir(parents=True, exist_ok=True)
+    (directory / "workflow.json").write_text(
+        '{"provider_cap_usd":"50.00","instructions":{"CP-0":{},"CP-1":{}}}', encoding="utf-8"
+    )
+    budget = Budget(Decimal(50), directory / "live")
+    budget.reserve("call", Decimal(2), config_id="sol-medium")
+    budget.settle("call", Decimal("1.25"))
+    append_event(directory, "module_started", module="CP-0", reason="/local/file/path")
+    append_event(directory, "module_accepted", module="CP-0")
+    append_event(directory, "provider_call", body="private provider data")
+    append_event(directory, "module_started", module="outside the prepared plan")
+    status, raw, headers = request(hosted, "/connected/activity/activity")
+    assert status == 200 and headers["Cache-Control"] == "no-store"
+    record = json.loads(raw)
+    assert record["cap"] == "50.00"
+    assert Decimal(record["spent"]) == Decimal("1.25")
+    assert record["modules"] == [["CP-0", "done"], ["CP-1", "waiting"], ["Report", "waiting"]]
+    assert [event["kind"] for event in record["events"]] == ["module_started", "module_accepted"]
+    assert set(record["events"][0]) == {"kind", "at", "module"}
+    (directory / EVENTS).write_text("invalid event\n{}\n", encoding="utf-8")
+    assert json.loads(request(hosted, "/connected/activity/activity")[1])["events"] is None
+    assert request(hosted, "/connected/activity/unknown")[0] == 404
 
 
 def test_reports_admission_and_raw_snapshot(hosted: _Server, root: Path) -> None:

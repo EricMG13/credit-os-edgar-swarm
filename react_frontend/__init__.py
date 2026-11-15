@@ -17,11 +17,12 @@ from deploy_workflow.inbox.layout import Layout
 from deploy_workflow.inbox.scheduler import Scheduler, Settings
 from deploy_workflow.run_start import service
 
-from . import artifacts, portfolio
+from . import artifacts, portfolio, run_activity
 
 PROJECT = Path(__file__).resolve().parent.parent
 RUN_ID = re.compile(r"[0-9A-Za-z][0-9A-Za-z._-]{0,79}")
 RUN_PAGE = re.compile(rf"/run/{RUN_ID.pattern}/?")
+RUN_ACTIVITY = re.compile(rf"/connected/activity/({RUN_ID.pattern})")
 REPORT_PAGE = re.compile(r"/report/([^/]+)/?")
 REPORT_FOLDER = re.compile(r"[\w. -]+")
 REPORT_PREFIX = "/connected/report/"
@@ -125,6 +126,10 @@ def _handler(dist: Path, page: bytes, context: dict[str, Any]) -> type[service.H
             if path == "/connected/context":
                 cap = self._service.scheduler.settings.cap
                 raise http_base.Reply(200, {**context, "submission_cap_usd": str(cap)})
+            if match := RUN_ACTIVITY.fullmatch(path):
+                raise run_activity.reply(
+                    self._layout, match[1], self._service.scheduler.settings.cap
+                )
             if path == "/connected/snapshot":
                 payload, _ = self._publication()
                 raise http_base.Reply(

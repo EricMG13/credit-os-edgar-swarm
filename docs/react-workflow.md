@@ -78,8 +78,10 @@ to the corresponding executable if it is installed in a nonstandard location.
 Success is two passing tests and exit code 0. Each browser uses a separate temporary
 workspace and uploads the same synthetic Northbridge filing and portfolio workbook.
 It checks the five-step Run page, drop zone and Readiness panel, inspects both
-documents, selects the workbook in the form, and checks the
-finished report and all five redesigned views, the issuer calendar and its source
+documents, selects the workbook in the form, cancels the paid confirmation with
+submission blocked, and completes the synthetic confirmation. It checks recorded
+spend, elapsed time, modules and the delivery event on Run activity, the finished
+report and all five redesigned views, the issuer calendar and its source
 row, keyboard focus after closing figure and row traces, the exact original
 handoff download, a published CP-1 chart, downside cases and break points with
 source links and a 390 px layout, rate and currency shocks, dated instrument
@@ -108,9 +110,10 @@ manual synthetic proof. Enter `Northbridge Synthetic Group` and `2025-03-31`,
 then choose Full credit assessment (RBOT's Credit Snapshot pathway). Upload
 `proof/northbridge-filing.txt` and `proof/northbridge-portfolio.xlsx`, click
 Continue to purpose, choose Full credit assessment, then select Review inputs and
-Confirm inputs. In More context, select `northbridge-portfolio.xlsx` under
+Approve summary. In More context, select `northbridge-portfolio.xlsx` under
 Portfolio workbook. Select Review run, acknowledge the checks, approve the
-summary and select Submit run. Open the report when it finishes.
+summary and select Submit run. In the confirmation dialog, choose Start
+synthetic run. Open the report from Run activity when it finishes.
 
 ```sh
 PYTHONPATH=src uv run --locked python -m proof.serve --root /path/to/empty-proof-folder

@@ -16,6 +16,8 @@ interface FileUploadDropZoneProps {
   hint: string;
   /** Accessible name for the file input when it belongs to a larger form. */
   inputLabel?: string;
+  /** Shows the document picker as a primary action inside the drop zone. */
+  chooseFiles?: boolean;
   /** Disables dropping or uploading files. */
   isDisabled?: boolean;
   /**
@@ -39,6 +41,7 @@ export const FileUploadDropZone = ({
   className,
   hint,
   inputLabel,
+  chooseFiles = false,
   isDisabled,
   accept,
   allowsMultiple = true,
@@ -158,8 +161,11 @@ export const FileUploadDropZone = ({
       onDragEnd={handleDragOut}
       onDrop={handleDrop}
       className={cx(
-        "relative flex flex-col items-center gap-3 rounded-xl bg-primary px-6 py-4 text-tertiary ring-1 ring-secondary transition duration-100 ease-linear ring-inset",
-        isDraggingOver && "ring-2 ring-brand",
+        "relative flex flex-col items-center gap-3 rounded-xl px-6 text-tertiary transition duration-100 ease-linear",
+        chooseFiles
+          ? "border border-dashed border-border-container bg-surface-subtle py-6"
+          : "bg-primary py-4 ring-1 ring-secondary ring-inset",
+        isDraggingOver && (chooseFiles ? "border-action" : "ring-2 ring-brand"),
         isDisabled && "cursor-not-allowed bg-secondary",
         className,
       )}
@@ -172,12 +178,17 @@ export const FileUploadDropZone = ({
       />
 
       <div className="flex flex-col gap-1 text-center">
-        <div className="flex justify-center gap-1 text-center">
+        <div
+          className={cx(
+            "flex justify-center gap-1 text-center",
+            chooseFiles && "flex-col items-center gap-3",
+          )}
+        >
           <input
             ref={inputRef}
             id={id}
             type="file"
-            aria-label={inputLabel}
+            aria-label={inputLabel ?? "Files"}
             className="peer sr-only"
             tabIndex={-1}
             disabled={isDisabled}
@@ -185,17 +196,18 @@ export const FileUploadDropZone = ({
             multiple={allowsMultiple}
             onChange={handleInputFileChange}
           />
-          <label htmlFor={id} className="flex cursor-pointer">
-            <Button
-              color="link-color"
-              size="md"
-              isDisabled={isDisabled}
-              onClick={() => inputRef.current?.click()}
-            >
-              Click to upload
-            </Button>
-          </label>
-          <span className="text-sm max-md:hidden">or drag and drop</span>
+          {chooseFiles && (
+            <span className="text-sm font-semibold text-text-primary">Drop files here</span>
+          )}
+          <Button
+            color={chooseFiles ? "primary" : "link-color"}
+            size="md"
+            isDisabled={isDisabled}
+            onPress={() => inputRef.current?.click()}
+          >
+            {chooseFiles ? "Choose files" : "Click to upload"}
+          </Button>
+          {!chooseFiles && <span className="text-sm max-md:hidden">or drag and drop</span>}
         </div>
         <p
           className={cx(

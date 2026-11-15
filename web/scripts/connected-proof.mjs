@@ -97,7 +97,7 @@ function response(page, pathPattern, method) {
   );
 }
 
-async function submit(page, channel) {
+async function submit(page, channel, paidPreview = false) {
   await page.getByRole("link", { name: "Start a run", exact: true }).click();
   const stepper = page.getByRole("list", { name: "Steps in this run" });
   const current = stepper.locator('[aria-current="step"]');
@@ -108,8 +108,9 @@ async function submit(page, channel) {
   assert.ok(drop && side && side.x >= drop.x + drop.width, "Readiness sits beside the form");
   assert.equal(await stepper.getByRole("listitem").count(), 5);
   assert.match(await current.innerText(), /Documents/u);
-  await readiness.getByText("USD 20.00", { exact: true }).waitFor();
-  await page.screenshot({ path: path.join(artifacts, `${channel}-run-documents.png`) });
+  await readiness.getByText("USD 0.00 of USD 20.00", { exact: true }).waitFor();
+  if (!paidPreview)
+    await page.screenshot({ path: path.join(artifacts, `${channel}-run-documents.png`) });
   const desktop = page.viewportSize();
   await page.setViewportSize({ width: 390, height: 844 });
   await page.waitForFunction(() => {
@@ -121,10 +122,11 @@ async function submit(page, channel) {
       drop.getBoundingClientRect().right <= form.getBoundingClientRect().right
     );
   });
-  await page.screenshot({
-    path: path.join(artifacts, `${channel}-run-mobile.png`),
-    fullPage: true,
-  });
+  if (!paidPreview)
+    await page.screenshot({
+      path: path.join(artifacts, `${channel}-run-mobile.png`),
+      fullPage: true,
+    });
   await page.setViewportSize(desktop);
   await page.getByLabel("Issuer name", { exact: true }).fill("Northbridge Synthetic Group");
   await page.getByLabel("As-of date", { exact: true }).fill("2025-03-31");
@@ -163,13 +165,19 @@ async function submit(page, channel) {
   await page.getByRole("radio", { name: "Full credit assessment", exact: true }).waitFor();
   await page.getByRole("button", { name: "Review inputs", exact: true }).click();
   assert.match(await current.innerText(), /Confirm/u);
-  await page.getByRole("button", { name: "Confirm inputs", exact: true }).click();
+  await page.getByRole("button", { name: "Approve summary", exact: true }).click();
   assert.match(await current.innerText(), /More context/u);
+  await page
+    .getByLabel(/Anything the analysis should know/u)
+    .fill("Check the 2028 maturities.\nInclude refinancing risk.");
   await page
     .getByRole("combobox", { name: "Portfolio workbook", exact: true })
     .selectOption({ label: "northbridge-portfolio.xlsx" });
   await page.getByRole("button", { name: "Review run", exact: true }).click();
-  const submitButton = page.getByRole("button", { name: "Submit run", exact: true });
+  const submitButton = page.getByRole("button", {
+    name: paidPreview ? "Submit, spend up to USD 20.00" : "Submit run",
+    exact: true,
+  });
   await submitButton.waitFor();
   assert.match(await current.innerText(), /Start/u);
   for (const label of ["I have checked this", "I accept this limit"]) {
@@ -181,13 +189,85 @@ async function submit(page, channel) {
     exact: true,
   });
   assert.equal(await submitButton.isEnabled(), false);
+  let submitRequests = 0;
+  page.on("request", (request) => {
+    if (request.method() === "POST" && /\/submit$/u.test(new URL(request.url()).pathname))
+      submitRequests += 1;
+  });
   await consent.check();
+  await submitButton.click();
+  const dialog = page.getByRole("dialog", {
+    name: paidPreview ? "Start a paid run?" : "Start a synthetic test?",
+  });
+  await dialog.waitFor();
+  if (paidPreview) {
+    await dialog.getByText(/spend up to USD 20\.00/u).waitFor();
+    await dialog.getByRole("button", { name: "Start run, up to USD 20.00" }).waitFor();
+    await page.screenshot({
+      path: path.join(artifacts, `${channel}-paid-confirmation.png`),
+      animations: "disabled",
+    });
+  } else {
+    await page.screenshot({
+      path: path.join(artifacts, `${channel}-run-confirmation.png`),
+      animations: "disabled",
+    });
+  }
+  await dialog.getByRole("button", { name: "Cancel", exact: true }).click();
+  await dialog.waitFor({ state: "hidden" });
+  await page.waitForFunction(
+    () =>
+      document.activeElement?.matches("button") &&
+      document.activeElement.textContent.trim().startsWith("Submit"),
+  );
+  assert.equal(submitRequests, 0);
+  if (paidPreview) return;
+
   const submitted = response(page, /\/api\/submissions\/[^/]+\/submit$/u, "POST");
   const activity = page.waitForURL(/\/run\/\d{8}-\d{6}-\d{2}$/u);
   await submitButton.click();
+  await dialog.getByRole("button", { name: "Start synthetic run", exact: true }).click();
   assert.equal((await submitted).status(), 200);
   await activity;
+  assert.equal(submitRequests, 1);
   return new URL(page.url()).pathname.split("/").at(-1);
+}
+
+async function checkPaidConfirmation(browser, endpoint, channel) {
+  const page = await browser.newPage();
+  try {
+    // Exercise the production paid dialog with the offline service and no eligible submit URL.
+    await page.route(/\/api\/submissions\/[^/]+\/submit$/u, (route) => route.abort());
+    await page.route(
+      (url) => url.pathname === "/" || url.pathname === "/start",
+      async (route) => {
+        const result = await route.fetch();
+        const body = (await result.text()).replace(
+          'name="credit-os-mode" content="synthetic"',
+          'name="credit-os-mode" content="live"',
+        );
+        await route.fulfill({ response: result, body });
+      },
+    );
+    await page.goto(endpoint);
+    await submit(page, channel, true);
+  } finally {
+    await page.close();
+  }
+}
+
+async function checkActivity(page, channel) {
+  const activity = page.getByRole("region", { name: "Run activity", exact: true });
+  await activity.getByText("USD 0.00", { exact: true }).waitFor();
+  await activity.getByRole("progressbar", { name: "USD 0.00 of USD 20.00" }).waitFor();
+  await activity.getByRole("progressbar", { name: "14 of 14 modules" }).waitFor();
+  await activity.getByText(/^(?:\d+ min )?\d+ s$/u).waitFor();
+  const modules = activity.getByRole("group", { name: "Modules", exact: true });
+  const feed = activity.getByRole("group", { name: "Activity", exact: true });
+  await feed.getByText("Report delivered.", { exact: true }).waitFor();
+  const [left, right] = await Promise.all([modules.boundingBox(), feed.boundingBox()]);
+  assert.ok(left && right && right.x >= left.x + left.width, "Activity sits beside Modules");
+  await page.screenshot({ path: path.join(artifacts, `${channel}-run-activity.png`) });
 }
 
 async function checkTraceFocus(page, source, detail) {
@@ -540,6 +620,7 @@ for (const [channel, brand, envName] of [
         );
         assert.ok(brands?.includes(brand), `Expected branded ${brand}, received ${String(brands)}`);
 
+        await checkPaidConfirmation(browser, service.endpoint, channel);
         const run = await submit(page, channel);
         const open = page.getByRole("link", { name: "Open report", exact: true });
         const stopped = page
@@ -550,6 +631,7 @@ for (const [channel, brand, envName] of [
         assert.equal(state.status(), 200);
         const completed = await state.json();
         assert.equal(completed.status, "finished", completed.reason ?? "The run did not finish.");
+        await checkActivity(page, channel);
         await checkRateMethod(workspace, run);
         await open.click();
         await page.waitForURL((url) => url.pathname === `/report/${run}`);
@@ -610,6 +692,9 @@ for (const [channel, brand, envName] of [
           screenshots: [
             "run-documents",
             "run-mobile",
+            "paid-confirmation",
+            "run-confirmation",
+            "run-activity",
             "finished-report",
             "calendar",
             "debt-maturities",
@@ -624,6 +709,9 @@ for (const [channel, brand, envName] of [
             "upload",
             "five-step intake, document drop zone and responsive readiness panel",
             "approved submission",
+            "paid cap confirmation and cancel without submission",
+            "synthetic confirmation and exactly one submission",
+            "run activity spend, module count, elapsed time and delivery feed",
             "finished publication",
             "overview",
             "issuer calendar date precision and originating row",

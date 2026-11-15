@@ -67,11 +67,16 @@ async function advanceToPurpose() {
 
 function advanceToContext() {
   fireEvent.click(screen.getByRole("button", { name: "Review inputs" }));
-  fireEvent.click(screen.getByRole("button", { name: "Confirm inputs" }));
+  fireEvent.click(screen.getByRole("button", { name: "Approve summary" }));
 }
 
 function approve() {
   fireEvent.click(screen.getByRole("checkbox", { name: /Approve: I have read this summary/ }));
+}
+
+async function confirmSynthetic(submit: HTMLElement) {
+  fireEvent.click(submit);
+  fireEvent.click(await screen.findByRole("button", { name: "Start synthetic run" }));
 }
 
 afterEach(() => {
@@ -87,7 +92,7 @@ describe("connected run start", () => {
     fireEvent.change(issuer, { target: { value: "Synthetic Générale" } });
     const action = screen.getByRole("button", { name: "Continue to purpose" });
     expect(action).toBeDisabled();
-    expect(screen.getByRole("progressbar", { name: "USD 20.00" })).toHaveAttribute(
+    expect(screen.getByRole("progressbar", { name: "USD 0.00 of USD 20.00" })).toHaveAttribute(
       "aria-valuenow",
       "0",
     );
@@ -110,6 +115,9 @@ describe("connected run start", () => {
     await fillInputs();
     await advanceToPurpose();
     advanceToContext();
+    fireEvent.change(screen.getByLabelText("Anything the analysis should know"), {
+      target: { value: "Check the 2028 maturities.\nInclude refinancing risk." },
+    });
     fireEvent.change(await screen.findByLabelText("Portfolio workbook"), {
       target: { value: file.name },
     });
@@ -117,7 +125,12 @@ describe("connected run start", () => {
     await screen.findByRole("button", { name: "Submit run" });
     const body = fetchMock.mock.calls.find(([path]) => path.endsWith("/summary"))?.[1]?.body;
     expect(typeof body === "string" ? JSON.parse(body) : body).toMatchObject({
-      context: { attachments: { portfolio_workbook: true } },
+      context: {
+        attachments: { portfolio_workbook: true },
+        research_questions: [
+          { text: "Check the 2028 maturities. Include refinancing risk.", focus_module: "" },
+        ],
+      },
     });
   });
 
@@ -154,7 +167,7 @@ describe("connected run start", () => {
     });
     expect(submit).toBeDisabled();
     approve();
-    fireEvent.click(submit);
+    await confirmSynthetic(submit);
     const rawSubmit = fetchMock.mock.calls[6]?.[1]?.body;
     expect(typeof rawSubmit).toBe("string");
     expect(JSON.parse(rawSubmit as string)).toEqual({
@@ -176,7 +189,7 @@ describe("connected run start", () => {
       await review();
       const submit = await screen.findByRole("button", { name: "Submit run" });
       approve();
-      fireEvent.click(submit);
+      await confirmSynthetic(submit);
       expect(await screen.findByRole("alert")).toHaveTextContent("Review the run again");
       expect(screen.queryByRole("button", { name: "Submit run" })).toBeNull();
       expect(navigate).not.toHaveBeenCalled();
@@ -201,10 +214,10 @@ describe("connected run start", () => {
     await review();
     const submit = await screen.findByRole("button", { name: "Submit run" });
     approve();
-    fireEvent.click(submit);
+    await confirmSynthetic(submit);
     expect(await screen.findByRole("alert")).toHaveTextContent("Retrying Submit run is safe");
     expect(screen.getByRole("button", { name: "Edit inputs" })).toBeDisabled();
-    fireEvent.click(submit);
+    await confirmSynthetic(submit);
     await vi.waitFor(() => {
       expect(navigate).toHaveBeenCalledWith("/run/test-run");
     });
@@ -414,14 +427,24 @@ describe("connected activity and reports", () => {
     vi.stubGlobal(
       "fetch",
       vi.fn((path: string) => {
-        if (path === "/api/runs/test-run")
+        if (path === "/connected/activity/test-run")
           return Promise.resolve(
             Response.json({
               id: "test-run",
               status: "finished",
               issuer_name: report.issuer,
               pathway: report.pathway,
-              modules: [["CP-0", "done"]],
+              modules: [
+                ["CP-0", "done"],
+                ["Report", "done"],
+              ],
+              as_of: report.asOf,
+              cap: "20",
+              spent: "0",
+              started_at: "2026-10-31T17:31:00Z",
+              ended_at: "2026-10-31T17:32:14Z",
+              observed_at: "2026-10-31T17:35:00Z",
+              events: [{ kind: "delivered", at: "2026-10-31T17:32:01Z" }],
               reason: "",
             }),
           );
@@ -437,6 +460,13 @@ describe("connected activity and reports", () => {
     render(<ConnectedApp path="/run/test-run" mode="synthetic" />);
     expect(await screen.findByText(/Waiting for the report/)).toBeInTheDocument();
     expect(screen.getByText("Source readiness (CP-0)")).toBeInTheDocument();
+    expect(screen.getByRole("progressbar", { name: "USD 0.00 of USD 20.00" })).toHaveAttribute(
+      "aria-valuenow",
+      "0",
+    );
+    expect(screen.getByRole("progressbar", { name: "1 of 1 modules" })).toBeInTheDocument();
+    expect(screen.getByText("1 min 14 s")).toBeInTheDocument();
+    expect(screen.getByText("Report delivered.")).toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "Open report" })).toBeNull();
     expect(
       await screen.findByRole("link", { name: "Open report" }, { timeout: 3000 }),
@@ -624,7 +654,7 @@ describe("connected activity and reports", () => {
     const navigate = vi.fn();
     render(<ConnectedApp path="/start" mode="live" navigate={navigate} />);
     await review();
-    const submit = await screen.findByRole("button", { name: "Submit run" });
+    const submit = await screen.findByRole("button", { name: "Submit, spend up to USD 20.00" });
     expect(submit).toBeDisabled();
     const approval = screen.getByRole("checkbox", { name: /Approve: I have read this summary/ });
     expect(approval).toBeDisabled();
@@ -636,6 +666,14 @@ describe("connected activity and reports", () => {
     approve();
     expect(submit).toBeEnabled();
     fireEvent.click(submit);
+    const dialog = await screen.findByRole("dialog", { name: "Start a paid run?" });
+    expect(dialog).toHaveTextContent("spend up to USD 20.00");
+    expect(fetchMock.mock.calls.some(([path]) => path.endsWith("/submit"))).toBe(false);
+    fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(fetchMock.mock.calls.some(([path]) => path.endsWith("/submit"))).toBe(false);
+    fireEvent.click(submit);
+    fireEvent.click(await screen.findByRole("button", { name: "Start run, up to USD 20.00" }));
     await vi.waitFor(() => {
       expect(navigate).toHaveBeenCalledWith("/run/test-run");
     });

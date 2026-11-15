@@ -51,7 +51,7 @@ export function ConnectedApp({
       ) : start ? (
         <StartRun key={prior} mode={mode} navigate={navigate} from={prior ?? undefined} />
       ) : run ? (
-        <RunProgress key={run} id={run} />
+        <RunProgress key={run} id={run} mode={mode} />
       ) : report ? (
         <ReportReader key={report} id={report} />
       ) : (
