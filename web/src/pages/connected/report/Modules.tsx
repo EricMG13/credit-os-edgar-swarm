@@ -13,6 +13,7 @@ import {
 import { foundationMetrics, moduleState, type buildReportView } from "../reportView";
 import { LegacyVisuals } from "../visuals";
 import { MetricGrid } from "./MetricGrid";
+import { isMonitoringTable } from "./ModuleTable";
 
 function sectionIcon(heading: string): NavSection["icon"] {
   if (heading === "Bottom line") return "bottom-line";
@@ -36,13 +37,25 @@ function Navigator({
   const firstFinding =
     allSections.find(({ heading }) => heading === "Key findings") ??
     allSections.find(({ heading }) => sectionIcon(heading) === "records");
-  const sections = allSections
-    .filter((item) => item === firstFinding || sectionIcon(item.heading) !== "records")
-    .map(({ heading, line }) => ({
-      label: heading === firstFinding?.heading ? "Key findings" : heading,
-      key: `finding-${String(line)}`,
-      icon: heading === firstFinding?.heading ? ("findings" as const) : sectionIcon(heading),
-    }));
+  const sections = allSections.flatMap((item) => {
+    const { heading, line } = item;
+    const icon = sectionIcon(heading);
+    const extra = item.blocks.some(
+      (block) => block.type === "table" && isMonitoringTable(current, heading, block),
+    )
+      ? "Monitoring triggers"
+      : current === "CP-0" && heading === "Source-readiness summary"
+        ? "Readiness by area"
+        : null;
+    if (icon === "records" && item !== firstFinding && !extra) return [];
+    return [
+      {
+        label: extra ?? (item === firstFinding ? "Key findings" : heading),
+        key: `finding-${String(line)}`,
+        icon: item === firstFinding && !extra ? ("findings" as const) : icon,
+      },
+    ];
+  });
   if (
     entry &&
     (entry.output.charts?.length ||

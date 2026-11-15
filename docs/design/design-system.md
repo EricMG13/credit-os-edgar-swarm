@@ -370,6 +370,7 @@ Within a set every state has a different shape; no two states differ by colour o
 | Dated records | Past: filled circle, neutral. Next: half-filled circle, action. Later: ring, neutral |
 | Answer state | Answered: filled circle, success. Partly answered: half-filled circle, info. Not answered: ring, neutral |
 | Met or not met | Met: filled circle, success. Not met: triangle, warning |
+| Source readiness | Ready: filled circle, success. Ready with limitations: triangle, warning. Conditional: half-filled circle, info. Not ready: slashed circle, neutral |
 | Freshness | Checked: filled circle, success. Not checked yet: ring, neutral |
 | Module state | Delivered: filled circle, success. Delivered with gaps: dashed ring, gap colours. Not assessable: slashed circle, neutral. Not run (only in a run that has ended): ring, neutral |
 | Change state | Changed: triangle, action. Unchanged: square, neutral. Not assessable: slashed circle, neutral |

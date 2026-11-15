@@ -64,9 +64,16 @@ describe("published handoff boundaries", () => {
       body: "**Cash was USD 0m.**",
       basis: "report.pdf, page 7; report.pdf, page 8.",
     });
-    const headers = ["Cash", "Source", "Evidence ID", "Next module", "Downstream revenue"];
+    const headers = [
+      "Cash",
+      "Source",
+      "Evidence ID",
+      "Next module",
+      "Downstream revenue",
+      "Source / Limitation",
+    ];
     expect(displayColumns(headers, false)).toEqual([0, 4]);
-    expect(displayColumns(headers, true)).toEqual([0, 1, 2, 4]);
+    expect(displayColumns(headers, true)).toEqual([0, 1, 2, 4, 5]);
   });
 
   it("accepts only served workspace files and rejects path segments that change the target", () => {

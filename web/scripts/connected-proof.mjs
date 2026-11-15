@@ -175,6 +175,28 @@ async function checkCalendar(report, artifacts, channel, page) {
   await report.getByRole("cell", { name: "Filing p.1", exact: true }).waitFor();
 }
 
+async function checkModuleRecords(report, page, modules) {
+  await modules.getByRole("link", { name: /^Source readiness, Delivered/u }).click();
+  const readiness = report.getByRole("region", { name: "Readiness by area", exact: true });
+  await readiness.getByRole("group", { name: "Ready with limitations", exact: true }).waitFor();
+  await readiness.getByRole("group", { name: "Conditional", exact: true }).waitFor();
+  await checkTraceFocus(
+    page,
+    readiness.getByRole("button", { name: "Show sources for Financial statements", exact: true }),
+    /Filing p\.1/u,
+  );
+  await modules.getByRole("link", { name: /^Fundamental credit, Delivered/u }).click();
+  const watch = report.getByRole("region", { name: "Monitoring triggers", exact: true });
+  await watch.getByText("Below 3.1x", { exact: true }).waitFor();
+  await watch.getByText("Not supplied: no agreed floor", { exact: true }).waitFor();
+  assert.equal(await watch.getByRole("img").count(), 0);
+  await checkTraceFocus(
+    page,
+    watch.getByRole("button", { name: "Show sources for Interest cover", exact: true }),
+    /Filing p\.1; synthetic threshold/u,
+  );
+}
+
 async function checkCharts(report, artifacts, channel, page) {
   const section = (name) =>
     report
@@ -186,6 +208,7 @@ async function checkCharts(report, artifacts, channel, page) {
   const modules = report.getByRole("navigation", { name: "Modules and sections" });
   await modules.getByRole("link", { name: /^Liquidity, Delivered/u }).waitFor();
   await modules.getByRole("link", { name: /^Refinancing & LME, Delivered/u }).waitFor();
+  await checkModuleRecords(report, page, modules);
   await modules.getByRole("link", { name: /^Financial foundation, Delivered/u }).click();
   const debt = report.getByRole("figure", { name: "Debt maturities", exact: true });
   await debt.getByRole("radio", { name: "Chart", exact: true }).waitFor();
@@ -387,6 +410,7 @@ for (const [channel, brand, envName] of [
             "figure and row trace keyboard focus restoration",
             "changes",
             "financial chart, table and source trace reload",
+            "readiness and monitoring records with source traces",
             "portfolio limits table and validation gap",
             "forecast chart and model",
             "forecast run figures and original module",

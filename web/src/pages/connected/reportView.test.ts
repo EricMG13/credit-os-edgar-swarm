@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { foundationMetrics, traceKey } from "./reportView";
 import type { CatalogueRun, OutputEntry, Section, Snapshot } from "./publishedReport";
-import { traceForLine } from "./ReportContent";
+import { findingBlocks, traceForLine } from "./ReportContent";
 import { calculationNodes } from "./report/calculations";
 import { cashProxyCases, type Grid } from "./visuals/LegacyForecast";
 
@@ -111,6 +111,31 @@ describe("reader data fidelity", () => {
     expect(row?.statement).toContain("0.00");
     expect(row?.derivation.children[0]?.value).toBe("Filing page 14");
     expect(row?.evidenceItem).toBe("2-22");
+  });
+
+  it.each([
+    [
+      ["Trigger", "Threshold", "Signal", "Why It Matters", "Credit Impact", "Source"],
+      ["Cover", "Below 3.1x", "Cover is 3.1x", "Cash", "Headroom", "Source p. 1"],
+    ],
+    [
+      ["Trigger", "Threshold / Signal", "Why It Matters", "Credit Impact", "Source / Limitation"],
+      ["Cover", "Below 3.1x", "Cash", "Headroom", "Source p. 1; limit is indicative"],
+    ],
+  ])("only promotes a known monitoring register in its owning module (%j)", (headers, row) => {
+    const monitoring = {
+      ...table("T2.12 Monitoring triggers", headers, [row], 20),
+      level: 4,
+    };
+    const sections = [
+      { heading: "Findings", line: 1, level: 2, blocks: [] },
+      { heading: "Analytical appendix", line: 10, level: 3, blocks: [] },
+      monitoring,
+    ];
+    const finance = foundation(sections);
+    const credit = { ...finance, output: { ...finance.output, module: "CP-2" } };
+    expect(findingBlocks(sections, finance)).toEqual([]);
+    expect(findingBlocks(sections, credit)).toEqual([monitoring]);
   });
 
   it("reads calculation links from the ledger and retains stated operands", () => {

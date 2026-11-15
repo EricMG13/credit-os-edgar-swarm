@@ -8,7 +8,7 @@ import type { Trace, TreeNode } from "../library/slice";
 import { moduleName } from "./api";
 import { traceKey } from "./reportView";
 import { card, heading } from "./layout";
-import { typedModuleTable } from "./report/ModuleTable";
+import { isMonitoringTable, typedModuleTable } from "./report/ModuleTable";
 import { calculationNodes } from "./report/calculations";
 import {
   classifySections,
@@ -273,6 +273,7 @@ export function findingBlocks(sections: Section[], entry: OutputEntry) {
       }
       const promoted = section.blocks.filter((block) => {
         if (block.type !== "table") return false;
+        if (isMonitoringTable(entry.output.module, section.heading, block)) return true;
         const headers = block.headers.map((header) => header.trim().toLowerCase());
         return (
           (headers.includes("probability") && headers.includes("impact")) ||
@@ -447,6 +448,21 @@ export function ReportFindings({
         </div>
       );
     }
+    if (!overview && section.blocks.length === 1 && first?.type === "table") {
+      const typed = typedModuleTable(entry.output.module, section.heading, first, key);
+      if (typed) {
+        return (
+          <div
+            key={section.line}
+            className={card}
+            id={`finding-${String(section.line)}`}
+            tabIndex={-1}
+          >
+            {typed}
+          </div>
+        );
+      }
+    }
     return (
       <section
         key={section.line}
@@ -459,7 +475,8 @@ export function ReportFindings({
         {section.blocks.map((block) =>
           block.type === "table" ? (
             <div className="min-w-0" key={block.line}>
-              {(!overview && typedModuleTable(section.heading, block, key)) || (
+              {(!overview &&
+                typedModuleTable(entry.output.module, section.heading, block, key)) || (
                 <PublishedTable
                   table={block}
                   traceAt={key}

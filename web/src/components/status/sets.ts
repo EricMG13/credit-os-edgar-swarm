@@ -56,6 +56,12 @@ export const STATUS_SETS = {
     Met: ["filled circle", "success"],
     "Not met": ["triangle", "warning"],
   }),
+  "Source readiness": set({
+    Ready: ["filled circle", "success"],
+    "Ready with limitations": ["triangle", "warning"],
+    Conditional: ["half-filled circle", "info"],
+    "Not ready": ["slashed circle", "neutral"],
+  }),
   Freshness: set({
     Checked: ["filled circle", "success"],
     "Not checked yet": ["ring", "neutral"],

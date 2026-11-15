@@ -44,6 +44,7 @@ const COUNTS: [string, number][] = [
   ["Dated records", 3],
   ["Answer state", 3],
   ["Met or not met", 2],
+  ["Source readiness", 4],
   ["Freshness", 2],
   ["Module state", 4],
   ["Change state", 3],
@@ -54,8 +55,8 @@ const COUNTS: [string, number][] = [
 ];
 
 describe("STATUS_SETS", () => {
-  it("parses 13 sets with the stated number of states each", () => {
-    expect(parsed.size).toBe(13);
+  it("parses 14 sets with the stated number of states each", () => {
+    expect(parsed.size).toBe(14);
     for (const [name, count] of COUNTS) {
       expect(parsed.get(name)?.length, name).toBe(count);
     }

@@ -261,7 +261,8 @@ type WatchRecord = {
   items: readonly {
     indicator: string;
     threshold: string;
-    timing: "leading" | "lagging";
+    timing: "leading" | "lagging" | null;
+    detail?: readonly { label: string; text: string }[];
     trace: string | null;
   }[];
 };

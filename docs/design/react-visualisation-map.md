@@ -40,7 +40,7 @@ RBOT-HTML.
 | Entry | React target and placement | What delivery must supply | Source status and fallback |
 | --- | --- | --- | --- |
 | `CP-0-V01` **Source, period and consumer coverage** | R6 readiness groups and R2 facts. Modules with full coverage matrix in Evidence. | Source inventory, effective source hashes, issuer/perimeter/period coverage, source-to-module map (T1–T4, T6, T8 · P3/P5). | Table/content only. Unstated coverage remains a gap. |
-| `CP-0-V02` **Readiness and blocking gaps** | R5 pathway steps with S1 state marks. Modules. | T5/T7 readiness and gaps · selected downstream consumers and exact blocking reasons. | New view. Use only published module relationships and states. |
+| `CP-0-V02` **Readiness and blocking gaps** | R5 pathway steps with S1 state marks. Modules. | T5/T7 readiness and gaps · selected downstream consumers and exact blocking reasons. | Connected source-readiness grouping with authored limitations and row traces. Retain the source table for other readiness shapes. Pathway steps require published dependency records. |
 | `CP-0-V03` **Source chronology and supersession** | R4 dated source lane. Modules with source detail in Evidence. | Document publication, reporting period, revision/amendment dates and authority. | New view. Keep publication, reporting and import dates distinct. |
 
 ## CP-1
@@ -107,7 +107,7 @@ RBOT-HTML.
 | --- | --- | --- | --- |
 | `CP-2-V01` **Thesis, strengths and weaknesses** | P6 for-and-against board and P2 findings. Overview and Modules. | T2.7/T2.10 and key-findings/thesis/strengths/weaknesses registers. | Table/content only. Use stated arguments and provenance, including contrary evidence. |
 | `CP-2-V02` **Credit-risk transmission** | R5 directed EdgeMap with table. Modules. | T2.1/T2.11 assessments, named risks, explicit mechanisms and limitations. | New view. Display stated driver, mechanism and outcome links. |
-| `CP-2-V03` **Watch items and thesis invalidation** | R8 WatchBlock and P4 trigger callout. Modules and selected Overview watch items. | T2.11/T2.12 watch metrics, thresholds/conditions and evidence gaps. | Table/content only. State a threshold only when the handoff gives one. |
+| `CP-2-V03` **Watch items and thesis invalidation** | R8 WatchBlock and P4 trigger callout. Modules and selected Overview watch items. | T2.11/T2.12 watch metrics, thresholds/conditions and evidence gaps. | Connected WatchBlock for the published T2.12 register, with authored thresholds, limitations and row traces. Display the T2.11 analysis as authored and omit timing marks when the source leaves timing unstated. |
 
 ## CP-2A
 

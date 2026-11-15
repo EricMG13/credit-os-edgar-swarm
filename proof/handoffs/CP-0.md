@@ -4,6 +4,13 @@
 
 The synthetic issuer shows one observed item.
 
+### Source-readiness summary
+
+| Area | Readiness | Key limitation | Source |
+| --- | --- | --- | --- |
+| Financial statements | READY_WITH_LIMITATIONS | Only the synthetic filing is available | Filing p.1 |
+| Acquisition financing | CONDITIONAL | Financing terms are absent | Filing p.2 |
+
 ### Events: Sources
 
 | Event date | Date precision | Published | Event | Status | Source | Credit relevance |

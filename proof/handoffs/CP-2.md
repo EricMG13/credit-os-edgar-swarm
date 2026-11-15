@@ -58,11 +58,12 @@ A located finding.
 | --- | --- |
 | Observed | Not supplied: nothing to report |
 
-### T2.12 - Register
+### T2.12 Monitoring triggers
 
-| Item | Value |
-| --- | --- |
-| Observed | Not supplied: nothing to report |
+| Trigger | Threshold / Signal | Why It Matters | Credit Impact | Source / Limitation |
+| --- | --- | --- | --- | --- |
+| Interest cover | Below 3.1x | Lower cash cover | Less headroom | Filing p.1; synthetic threshold |
+| Liquidity | Not supplied: no agreed floor | Liquidity may vary | No quantified impact | Filing p.2; synthetic record |
 
 ## Calculations
 
