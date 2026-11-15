@@ -4,6 +4,23 @@ Keep one running record here. A pass applies only to the stated scope. Earlier v
 engine is in [EricMG13/final-workflow](https://github.com/EricMG13/final-workflow)'s
 `VERIFICATION.md`, which also keeps the retained runs this copy leaves out.
 
+## 2026-11-15 — Paired browser proof tied to the candidate ZIP
+
+- The Windows guide verifies the companion checksum and extracts into a fresh
+  local folder. The runner records the exact archive hash, source commit, host
+  platform and release, run IDs, browser versions and screenshot names together.
+  Windows synthetic workspaces use the short extraction path.
+- Confidence review checked invalid provenance and a failing second browser.
+  The latter returned exit 1, left Chrome's individual record, and wrote no
+  paired proof. The Python quality gate, focused Python tests (15), lint and
+  formatting passed.
+- Candidate `3712f2a`, ZIP SHA-256
+  `df2e529a8ea938989646d68f62711cfe4ac85335cd39f1d0979ecb602e00a044`.
+  A clean macOS extraction passed in Chrome (`20261115-160346-01`) and Edge
+  (`20261115-160352-01`). Verified `proof.json` against the ZIP, the exact
+  individual records and all eight screenshots. The React assets are identical
+  to the preceding candidate. Windows work-PC proof and publication are pending.
+
 ## 2026-11-15 — Latest RBOT-HTML and additional chart contracts
 
 - Verified upstream at `b8cf4ca`. The engine, native library and Python pins match it.
@@ -961,33 +978,3 @@ never spans lines, stripping is linear, the tool result tells the model how many
 marked text, check 9 covers `cite\s*turn\d+[a-z]+\d+` anywhere in the handoff and only U+E200-U+E202.
 Forecast riders: `~~~` fences are code, `\|` stays in its cell, working capital is the cell sign-reversed as CP-2G
 reads it (the base's test fixtures now print wc as `(10)`).
-
-## 2026-11-11 — Forecast from layer 1 (branch `claude/forecast-layer1`, decision M3)
-
-CP-MODEL (preset or `--modules`) means "publish the forecast"; it makes no model call. Without CP-2G,
-CP-1 gets a layer-1 variant of the forecast block (base operands as CP-1 prints them, run-rate drivers,
-no cases, no shock) and the forecast comes from it; with CP-2G the block, checks and files are unchanged.
-A bad or absent CP-1 block is not a CP-1 check: the model is withheld through the existing fail-open
-(stderr, `model_not_published` event, `forecast_failure` in the completion record). Published limits
-say "run-rate inputs the CP-1 handoff stated"; the library shows them under Model limitations, unchanged.
-Offline, synthetic handoffs only (no provider call, no run folder touched): new tests fail on the base
-and pass now. `uv run pytest tests/test_cpos_launch.py tests/test_handoff_loop.py tests/test_update_library.py
-tests/test_credit_os_store.py -q -m "not live and not browser"` 666 passed, exit 0; `uv run python
-tools/quality_gate.py` 0 findings, exit 0. Changed expectations: `--modules CP-MODEL` is no longer refused;
-earnings_update's report scope now names the run-rate forecast; the publish-failure stub takes a source
-argument.
-Fix round 1 (the operand-key row rule) was replaced in round 2 after re-review: CP-1 keeps its natural
-tables; each layer-1 base operand states `{"amount","reason":null,"row","period"}`, the exact first-cell
-label and period header it was read from, and Python reads that one cell (tables outside fences, `## Sources`,
-the block and the reader passages; trimmed and emphasis-stripped, case-sensitive; `1,000`, `-1,000`, `(1,000)`,
-U+2212 parse as signed; `1,000k`, `12%`, `n.a.` do not). Outflows (cp2g.OUTFLOWS) compare by magnitude, all
-others signed; zero, or several differing, cells refuse the operand by name (fail-open unchanged). CP-2G
-refuses a `row`/`period` and keeps its check byte for byte. The block still does not vouch for a reader
-figure in `figure_issues`. Probes `r2_m1_row_defeats.py`, `m3_layer1_operand.py`, `m3_block_vouches_reader.py`,
-`r2_m2_block_edges.py` exit 0 (the first two pass partly because the old-shape blocks they build carry no
-row/period and are refused; the accept/refuse cases are in the new tests). `uv run pytest tests/test_cpos_launch.py
-tests/test_prose_checks.py tests/test_handoff_loop.py tests/test_update_library.py -q -m "not live and not browser"`
-690 passed, exit 0; `uv run python tools/quality_gate.py` 0 findings, exit 0.
-Known limits: driver values are not checked against their anchors (the rationale is free text); runs
-interrupted before this change refuse to resume. Not verified: a real model writing the layer-1 block; the library on a layer-1 model beyond the
-store tests; `tests/test_financial_workflow.py`.
