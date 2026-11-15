@@ -15,6 +15,7 @@ import {
   containsReference,
   displayColumns,
   evidencePath,
+  FORECAST_INPUTS,
   methodNote,
   publishedHref,
   readParagraph,
@@ -139,7 +140,10 @@ function buildTrace(
     title: `Sources for ${section.heading}`,
     heading: section.heading,
     subtitle: `${moduleName(entry.output.module)} · Handoff line ${String(line)}`,
-    statement: statement.replaceAll("**", "").replaceAll("`", ""),
+    statement:
+      section.heading === FORECAST_INPUTS
+        ? "The model calculation uses the inputs recorded in this handoff."
+        : statement.replaceAll("**", "").replaceAll("`", ""),
     derivation: {
       ...node("Evidence retained with this item", ""),
       children: [
@@ -149,7 +153,16 @@ function buildTrace(
           const source = chip.source ?? chip.label;
           return source ? [node(source, "", chip.reason)] : [];
         }),
-        ...(!basis && !chips.length ? [node("Basis was not recorded for this item", null)] : []),
+        ...(!basis && !chips.length
+          ? [
+              node(
+                section.heading === FORECAST_INPUTS
+                  ? "Recorded forecast inputs"
+                  : "Basis was not recorded for this item",
+                null,
+              ),
+            ]
+          : []),
       ],
     },
     excerpt: excerpt
@@ -163,15 +176,22 @@ function buildTrace(
   };
 }
 
-export function traceForLine(snapshot: Snapshot, entry: OutputEntry, index: number, line: number) {
+export function handoffBlockAt(entry: OutputEntry, line: number) {
   for (const section of entry.sections) {
     const block = section.blocks.find(
       (item) =>
         item.line === line || (item.type === "table" && item.rows.some((row) => row.line === line)),
     );
-    if (block) return buildTrace(snapshot, entry, section, block, line, traceTarget(index, line));
+    if (block) return { section, block };
   }
   return null;
+}
+
+export function traceForLine(snapshot: Snapshot, entry: OutputEntry, index: number, line: number) {
+  const found = handoffBlockAt(entry, line);
+  return (
+    found && buildTrace(snapshot, entry, found.section, found.block, line, traceTarget(index, line))
+  );
 }
 
 export function PublishedTable({
@@ -179,12 +199,14 @@ export function PublishedTable({
   evidence = false,
   traceAt,
   rowSource,
+  rowHref,
   href,
 }: {
   table: Table;
   evidence?: boolean;
   traceAt?: (line: number) => string;
   rowSource?: (line: number, label: string) => ReactNode;
+  rowHref?: (line: number) => string | undefined;
   href?: string;
 }) {
   const columns = displayColumns(table.headers, evidence, table.rows);
@@ -220,12 +242,17 @@ export function PublishedTable({
             >
               {columns.map((column) => {
                 const cell = row.cells[column] ?? "";
+                const sourceHref = rowHref?.(row.line) ?? href;
                 return (
                   <td key={column} className="px-3 py-2.5 text-text-secondary">
                     {!evidence && containsReference(cell) ? (
-                      <a href={href} className="text-action underline">
-                        In Evidence
-                      </a>
+                      sourceHref ? (
+                        <a href={sourceHref} className="text-action underline">
+                          In Evidence
+                        </a>
+                      ) : (
+                        "Source reference unavailable"
+                      )
                     ) : cell.trim() ? (
                       richParts(cell)
                     ) : (
@@ -491,7 +518,7 @@ export function ReportFindings({
                 <PublishedTable
                   table={block}
                   traceAt={key}
-                  href={evidencePath(run.folder, String(entryIndex), block.line)}
+                  rowHref={(line) => evidencePath(run.folder, String(entryIndex), line)}
                 />
               )}
             </div>

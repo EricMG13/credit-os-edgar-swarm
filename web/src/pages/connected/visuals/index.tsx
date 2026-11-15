@@ -84,7 +84,21 @@ export function LegacyVisuals({
     }
     const publishedTable = tables.get(line);
     if (!publishedTable) return [];
-    const table = { ...publishedTable, evidenceInDrawer: Boolean(link) };
+    const table = {
+      ...publishedTable,
+      evidenceInDrawer: Boolean(link),
+      rowSource:
+        evidenceHref &&
+        ((at: number, label: string) => (
+          <PublishedSource
+            href={evidenceHref(at)}
+            name={label}
+            linkLabel={`Show sources for ${label}`}
+          >
+            Source row
+          </PublishedSource>
+        )),
+    };
     const note = word(descriptor.unit) || undefined;
     const frame = { title, note, actions };
     let chart: ReactNode;

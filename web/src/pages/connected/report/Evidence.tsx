@@ -1,14 +1,14 @@
 import type { ReactNode } from "react";
-import { Button } from "@/components/base/buttons/button";
 import { DownloadButton } from "@/pages/library/parts/DownloadButton";
 import { DerivationTree } from "@/pages/library/parts/DerivationTree";
 import { RunTabLink } from "@/pages/library/parts/RunFrame";
 import type { TreeNode } from "@/pages/library/slice";
-import { moduleName } from "../api";
+import { moduleName, type Mode } from "../api";
 import { card, field, heading } from "../layout";
 import {
   classifySections,
   evidencePath,
+  FORECAST_INPUTS,
   publishedHref,
   type OutputEntry,
   type PublishedRun,
@@ -24,6 +24,7 @@ import {
   traceTarget,
 } from "../ReportContent";
 import { ArtifactDownloads } from "./ArtifactDownloads";
+import { ReportRecord } from "./Record";
 
 function rowView(table: Table, line: number | undefined) {
   const row = table.rows.find((item) => item.line === line);
@@ -44,7 +45,14 @@ function EvidenceLocation({
   if (entry.output.parseError)
     return <p className="text-text-secondary">This handoff could not be read into sections.</p>;
   const sections = classifySections(entry.sections)
-    .filter(({ role }) => role !== "hidden")
+    .filter(
+      ({ role, section }) =>
+        role !== "hidden" ||
+        (entry.output.module === "CP-2G" &&
+          line !== undefined &&
+          section.heading === FORECAST_INPUTS &&
+          section.blocks.some((block) => block.line === line)),
+    )
     .map(({ section }) => section);
   const visible =
     line === undefined
@@ -91,6 +99,10 @@ function EvidenceLocation({
             >
               {block.type === "table" ? (
                 <PublishedTable table={rowView(block, line)} evidence />
+              ) : section.heading === FORECAST_INPUTS ? (
+                <pre className="max-h-100 overflow-auto rounded-ds-sm bg-surface-subtle p-3 text-xs whitespace-pre-wrap wrap-anywhere">
+                  {block.text}
+                </pre>
               ) : (
                 <p className="whitespace-pre-wrap wrap-anywhere text-text-secondary">
                   {richParts(block.text)}
@@ -139,6 +151,14 @@ function referencedText(node: TreeNode): string {
     .join("\n");
 }
 
+function namesSource(references: string, name: string) {
+  const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return (
+    Boolean(name) &&
+    new RegExp(`(?:^|[^\\p{L}\\p{N}._/-])${escaped}(?![\\p{L}\\p{N}._/-])`, "u").test(references)
+  );
+}
+
 function TraceDetailsView({
   snapshot,
   run,
@@ -159,7 +179,7 @@ function TraceDetailsView({
     ...run.evidence.sources,
     ...run.evidence.unused,
     ...run.evidence.unrecorded,
-  ].filter((source) => references.includes(source.name));
+  ].filter((source) => namesSource(references, source.name));
   return (
     <div className={`grid min-w-0 gap-4 ${sources.length ? "lg:grid-cols-[3fr_2fr]" : ""}`}>
       <section className="grid min-w-0 content-start gap-3 rounded-ds-md border border-border-hairline p-5">
@@ -236,12 +256,14 @@ export function ReportEvidence({
   entries,
   target,
   comparison,
+  mode,
 }: {
   snapshot: Snapshot;
   run: PublishedRun;
   entries: OutputEntry[];
   target?: string;
   comparison?: ReactNode;
+  mode: Mode;
 }) {
   const [section, module] = (target ?? "").split("/");
   const location = /^(\d+)(?:-(\d+))?$/.exec(section ?? "");
@@ -254,13 +276,6 @@ export function ReportEvidence({
   const selectedModule = entry?.output.module ?? module;
   const line = location?.[2] === undefined ? undefined : Number(location[2]);
   const { evidence } = run;
-  const outputIssues =
-    tab === "Record"
-      ? entries.filter(
-          ({ output }) =>
-            (!module || output.module === module) && (output.issue || output.parseError),
-        )
-      : [];
   const sourceGroups = [
     { label: "Named in a handoff", rows: evidence.sources },
     { label: "Supplied but unnamed in handoffs", rows: evidence.unused },
@@ -411,80 +426,9 @@ export function ReportEvidence({
       {tab === "Summary" && evidence.downloads.length > 0 && (
         <ArtifactDownloads folder={run.folder} />
       )}
-      {tab === "Trace" && comparison}
+      {tab === "Trace" && !entry && (!module || module === "CP-8") && comparison}
       {tab === "Gaps" && <EvidenceGaps run={run} entries={entries} module={module} />}
-      {tab === "Record" && (
-        <section className={card}>
-          <h3 className={heading}>Run record</h3>
-          <p className="font-mono text-sm">{run.folder}</p>
-          {evidence.record.cap !== null && <p>Provider cap · {evidence.record.cap} USD</p>}
-          {evidence.record.calls.length > 0 && (
-            <PublishedTable
-              evidence
-              table={{
-                type: "table",
-                line: 0,
-                headers: ["Module", "Attempt", "Started", "HTTP status", "Outcome", "Settled USD"],
-                rows: evidence.record.calls
-                  .filter((call) => !module || call.module === module)
-                  .map((call, index) => ({
-                    line: index,
-                    cells: [
-                      call.module ? moduleName(call.module) : "",
-                      call.attempt?.toString() ?? "",
-                      call.started ?? "",
-                      call.http_status?.toString() ?? "",
-                      call.error_class ?? "",
-                      call.settled_usd ?? "",
-                    ],
-                  })),
-              }}
-            />
-          )}
-          {outputIssues.length > 0 && (
-            <div className="grid gap-2">
-              <h4 className="font-semibold">Handoff issues</h4>
-              <ul className="grid gap-2">
-                {outputIssues.map(({ output, selected }) => (
-                  <li key={output.id} className="grid gap-1 border-t border-border-hairline pt-2">
-                    <strong>
-                      {moduleName(output.module)}
-                      {selected ? "" : ` · ${output.label}`}
-                    </strong>
-                    {output.parseError && <p className="wrap-anywhere">{output.parseError}</p>}
-                    {output.issue?.split("; ").map((issue, index) => (
-                      <p key={index} className="wrap-anywhere">
-                        {issue}
-                      </p>
-                    ))}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-          <div className="flex flex-wrap gap-2">
-            {evidence.record.instructions
-              .filter((item) => !module || module === item.module)
-              .map((item) => {
-                const href = publishedHref(item.href, run.folder);
-                return href ? (
-                  <Button key={item.href} href={href} download size="sm" color="secondary">
-                    {moduleName(item.module)} instructions
-                  </Button>
-                ) : null;
-              })}
-          </div>
-          <details className="grid gap-2 border-t border-border-hairline pt-3">
-            <summary className="cursor-pointer font-semibold">Recorded file hashes</summary>
-            {evidence.record.hashes.map((item) => (
-              <p key={item.name} className="mt-2 grid gap-1 text-sm wrap-anywhere">
-                {item.name}
-                <code className="text-text-tertiary">{item.sha256}</code>
-              </p>
-            ))}
-          </details>
-        </section>
-      )}
+      {tab === "Record" && <ReportRecord run={run} entries={entries} module={module} mode={mode} />}
     </div>
   );
 }

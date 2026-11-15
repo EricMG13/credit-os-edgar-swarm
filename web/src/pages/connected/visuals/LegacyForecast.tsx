@@ -142,7 +142,15 @@ function ForecastTable({ grid, title }: { grid: Grid; title: string }) {
 
 const FORECAST_LINES = ["Revenue", "Adj EBITDA", "Closing cash", "Closing debt"];
 
-function ForecastTrends({ grid, units }: { grid: Grid; units: string }) {
+function ForecastTrends({
+  grid,
+  units,
+  source,
+}: {
+  grid: Grid;
+  units: string;
+  source?: (label: string) => ReactNode;
+}) {
   const forecastColumns = grid.columns.flatMap((column, index) =>
     /^FY\d+E$/.test(column.label) ? [{ ...column, index }] : [],
   );
@@ -174,6 +182,7 @@ function ForecastTrends({ grid, units }: { grid: Grid; units: string }) {
         return (
           <TrendChart
             title={label}
+            actions={source?.(label)}
             key={label}
             periods={periods}
             series={series}
@@ -259,7 +268,15 @@ export function cashProxyCases(grid: Grid, other: Grid | null, downsideNote = ""
   return { periods, series, rows: series.map(({ name, cells }) => ({ label: name, cells })) };
 }
 
-export function CashProxy({ model, note }: { model: unknown; note?: ReactNode }) {
+export function CashProxy({
+  model,
+  note,
+  source,
+}: {
+  model: unknown;
+  note?: ReactNode;
+  source?: ReactNode;
+}) {
   const raw = record(record(model).cashflow);
   const grid = gridOf(raw);
   if (!grid) return null;
@@ -277,6 +294,7 @@ export function CashProxy({ model, note }: { model: unknown; note?: ReactNode })
       <div className="min-w-0 rounded-xl border border-border-hairline bg-surface-card p-5">
         <PathChart
           title="Cash proxy by scenario"
+          actions={source}
           subtitle={unit}
           periods={periods}
           series={series}
@@ -297,7 +315,15 @@ export function CashProxy({ model, note }: { model: unknown; note?: ReactNode })
   );
 }
 
-export function LegacyForecast({ model, summary }: { model?: unknown; summary?: ReactNode }) {
+export function LegacyForecast({
+  model,
+  summary,
+  source,
+}: {
+  model?: unknown;
+  summary?: ReactNode;
+  source?: (label: string) => ReactNode;
+}) {
   const published = record(model);
   const cashflow = record(published.cashflow);
   const grid = gridOf(cashflow);
@@ -308,14 +334,17 @@ export function LegacyForecast({ model, summary }: { model?: unknown; summary?: 
   if (model === null || model === undefined) return null;
   return (
     <section className="grid gap-4">
-      <h3 className="font-display text-h3">Cash flow model</h3>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h3 className="font-display text-h3">Cash flow model</h3>
+        {source?.("Cash flow model")}
+      </div>
       {grid === null ? (
         <p>This model has no readable calculation record.</p>
       ) : (
         <>
           {units && <p className="text-text-secondary">{units}</p>}
           {summary}
-          <ForecastTrends grid={grid} units={units} />
+          <ForecastTrends grid={grid} units={units} source={source} />
           <ForecastTable grid={grid} title="Cash flow model" />
           {other && <ForecastTable grid={other} title="Other forecast cases" />}
           {notes.length > 0 && (

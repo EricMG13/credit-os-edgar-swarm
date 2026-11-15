@@ -24,6 +24,8 @@ export interface SourceTable {
   line: number;
   headers: string[];
   rows: string[][];
+  rowLines?: (number | undefined)[];
+  rowSource?: (line: number, label: string) => ReactNode;
   evidenceInDrawer?: boolean;
 }
 
@@ -40,12 +42,16 @@ export function publishedTables(sections: unknown) {
         continue;
       }
       if (!strings(headers) || headers.length < 2) continue;
-      const cells = items(rows).map((row) => record(row).cells);
+      const sourceRows = items(rows).map(record);
+      const cells = sourceRows.map((row) => row.cells);
       if (
         cells.length > 0 &&
         cells.every((row): row is string[] => strings(row) && row.length === headers.length)
       ) {
-        tables.set(line, { line, headers, rows: cells });
+        const rowLines = sourceRows.map(({ line: at }) =>
+          typeof at === "number" && Number.isSafeInteger(at) && at > 0 ? at : undefined,
+        );
+        tables.set(line, { line, headers, rows: cells, rowLines });
       }
     }
   }
@@ -99,9 +105,16 @@ export function chartTable(table: SourceTable, columns = table.headers.map((_, i
     : columns;
   return {
     head: visible.map((index) => table.headers[index] ?? ""),
-    rows: table.rows.map((row) => ({
-      label: row[visible[0] ?? 0] ?? "",
-      cells: visible.slice(1).map((index) => row[index] || null),
-    })),
+    endHeading: "Source",
+    rows: table.rows.map((row, index) => {
+      const label = row[visible[0] ?? 0] ?? "";
+      const line = table.rowLines?.[index];
+      return {
+        label,
+        cells: visible.slice(1).map((column) => row[column] || null),
+        end: line === undefined ? undefined : table.rowSource?.(line, label),
+      };
+    }),
   };
 }
+import type { ReactNode } from "react";

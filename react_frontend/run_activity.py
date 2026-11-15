@@ -20,6 +20,7 @@ _RUN_EVENTS = frozenset(
     {"delivery_started", "delivered", "stopped", "changes_not_produced", "model_not_published"}
 )
 _FEED_LIMIT = 80
+_EXECUTIONS = frozenset({"host-session", "retained-response-replay", "synthetic", "live-provider"})
 
 
 def _milestone(raw: dict[str, Any], modules: set[str]) -> dict[str, str] | None:
@@ -96,6 +97,7 @@ def reply(layout: Layout, run_id: str, cap: Decimal) -> http_base.Reply:
     states = shown.get("modules", activity.module_states(record.pathway, []))
     manifest = _manifest(directory)
     modules = _planned(manifest, states)
+    execution = manifest.get("execution")
     return http_base.Reply(
         200,
         {
@@ -110,6 +112,9 @@ def reply(layout: Layout, run_id: str, cap: Decimal) -> http_base.Reply:
             "ended_at": record.ended_at,
             "submitted_by": record.submitted_by,
             "observed_at": snapshot["updated"],
+            "execution": execution
+            if isinstance(execution, str) and execution in _EXECUTIONS
+            else None,
             "cap": _cap(manifest, cap),
             "spent": shown.get("spent"),
             "stalled": shown.get("stalled", False),

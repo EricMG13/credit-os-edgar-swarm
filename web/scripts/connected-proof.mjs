@@ -286,6 +286,202 @@ async function checkTraceFocus(page, source, detail) {
   }
 }
 
+async function openExactTrace(page, source) {
+  await source.press("Enter");
+  const open = page.getByRole("dialog").getByRole("link", { name: "Open in Evidence" });
+  const href = await open.getAttribute("href");
+  assert.match(href, /#evidence\/\d+-\d+$/u);
+  await open.click();
+  await page.waitForURL(new URL(href, page.url()).href);
+  return href;
+}
+
+async function checkOverviewTrace(report, page) {
+  const source = report
+    .getByRole("button", { name: "Show sources for this passage" })
+    .filter({
+      visible: true,
+    })
+    .first();
+  await checkTraceFocus(page, source, /annual\.txt, page 2/u);
+  await openExactTrace(page, source);
+  await report
+    .getByText("The synthetic issuer's cover is thin at 3.1x.", { exact: false })
+    .first()
+    .waitFor();
+  await report.getByRole("link", { name: "Overview", exact: true }).click();
+}
+
+async function checkRecord(report, page, channel) {
+  const nav = report.getByRole("navigation", { name: "Evidence sections" });
+  await nav.getByRole("link", { name: "Record", exact: true }).click();
+  await report.getByRole("heading", { name: "Run record" }).waitFor();
+  await report.getByText("Synthetic test", { exact: true }).waitFor();
+  await report.getByText(/^(?:\d+ min )?\d+ s$/u).waitFor();
+  await report.getByRole("progressbar", { name: "USD 0.00 of USD 20.00" }).waitFor();
+  await report.getByRole("combobox", { name: "Module", exact: true }).selectOption("CP-1");
+  await report.getByRole("columnheader", { name: "Accepted (UTC)", exact: true }).waitFor();
+  await report.getByRole("columnheader", { name: "Adapter status", exact: true }).waitFor();
+  await report.getByRole("cell", { name: "200", exact: true }).waitFor();
+  await report.getByRole("link", { name: "Download instructions", exact: true }).waitFor();
+  await report.getByText("Recorded file hashes", { exact: true }).click();
+  await report
+    .locator("code")
+    .filter({ hasText: /^[0-9a-f]{64}$/u })
+    .first()
+    .waitFor();
+  await page.screenshot({
+    path: path.join(artifacts, `${channel}-evidence-record.png`),
+    fullPage: true,
+  });
+  await nav.getByRole("link", { name: "Summary", exact: true }).click();
+  await report.getByRole("combobox", { name: "Module", exact: true }).selectOption("");
+}
+
+async function checkChangesTrace(browser, endpoint, id) {
+  const page = await browser.newPage();
+  try {
+    // A separate fixture exercises paired-run links. The upload proof above uses the real publication.
+    const response = await page.request.get(new URL("/connected/snapshot", endpoint).href);
+    const snapshot = await response.json();
+    const [key, current] = Object.entries(snapshot.workspace.runs).find(
+      ([, run]) => run.folder === id,
+    );
+    const prior = {
+      ...current,
+      asOf: "2024-12-31",
+      folder: "comparison-fixture",
+      modules: { "CP-1": { outputs: ["earlier-schedule"], default: "earlier-schedule" } },
+      changes: null,
+    };
+    snapshot.workspace.runs["comparison-fixture"] = prior;
+    snapshot.workspace.outputs["earlier-schedule"] = {
+      id: "earlier-schedule",
+      module: "CP-1",
+      run: "comparison-fixture",
+      sha256: "earlier-schedule",
+      href: "",
+      label: "Financial foundation",
+    };
+    snapshot.workspace.handoffs["earlier-schedule"] = [
+      {
+        heading: "Chart data: debt maturities",
+        line: 20,
+        level: 3,
+        blocks: [
+          {
+            type: "table",
+            line: 22,
+            headers: ["Period", "Debt maturing", "Reporting unit", "Basis and limitation"],
+            rows: [{ line: 24, cells: ["FY2026", "0.00", "US$m", "Earlier schedule evidence."] }],
+          },
+        ],
+      },
+    ];
+    const output = "comparison-output";
+    current.modules["CP-8"] = { outputs: [output], default: output };
+    snapshot.workspace.outputs[output] = {
+      id: output,
+      module: "CP-8",
+      run: key,
+      sha256: output,
+      href: "",
+      label: "Comparison",
+    };
+    snapshot.workspace.handoffs[output] = [
+      {
+        heading: "What changed: the issuer",
+        line: 10,
+        level: 3,
+        blocks: [
+          {
+            type: "table",
+            line: 12,
+            headers: [
+              "Measure or fact",
+              "Earlier",
+              "Current",
+              "Cause",
+              "Effect on the credit view",
+            ],
+            rows: [
+              {
+                line: 14,
+                cells: ["**Net debt**", "600 US$m", "550 US$m", "New period", "Debt fell."],
+              },
+              {
+                line: 15,
+                cells: ["Interest cover", "3.1x", "3.2x", "New period", "Coverage improved."],
+              },
+            ],
+          },
+        ],
+      },
+    ];
+    current.changes = {
+      pack: {
+        prior: { run: prior.folder, as_of: prior.asOf, pathway: current.pathway },
+        current: { as_of: current.asOf, pathway: current.pathway },
+        maturity_profile: {
+          unit: "US$m",
+          rows: [
+            { period: "FY2026", prior: "0", current: "500" },
+            { period: "FY2027", prior: null, current: null },
+          ],
+        },
+        measures: [
+          {
+            key: "debt",
+            label: "Net debt",
+            prior: { value: "600", unit: "US$m" },
+            current: { value: "550", unit: "US$m" },
+            difference: "-50",
+            unit: "US$m",
+          },
+        ],
+      },
+      verdicts: { measures: { debt: { kind: "comparable", label: "Same definition" } } },
+    };
+    await page.route("**/connected/snapshot", (route) => route.fulfill({ json: snapshot }));
+    await page.goto(new URL(`/report/${id}#changes`, endpoint).href);
+    const report = page.locator("main");
+    const card = report.getByRole("listitem").filter({ hasText: "Net debt" });
+    await openExactTrace(
+      page,
+      card.getByRole("button", { name: "Show sources for Net debt", exact: true }),
+    );
+    await report.getByRole("cell", { name: "Debt fell.", exact: true }).waitFor();
+    assert.equal(
+      await report.getByRole("cell", { name: "Coverage improved.", exact: true }).count(),
+      0,
+    );
+    await page.reload();
+    await report.getByRole("cell", { name: "550 US$m", exact: true }).waitFor();
+    await page.goto(new URL(`/report/${id}#changes`, endpoint).href);
+    const chart = report.getByRole("figure", { name: "Debt maturity schedules", exact: true });
+    await chart.getByRole("radio", { name: "Table", exact: true }).check();
+    const year = chart.getByRole("row").filter({ hasText: "FY2026" });
+    const priorSource = year.getByRole("link", {
+      name: "Earlier run source for FY2026",
+      exact: true,
+    });
+    assert.equal(
+      await priorSource.getAttribute("href"),
+      "/report/comparison-fixture#evidence/0-24",
+    );
+    await openExactTrace(
+      page,
+      year.getByRole("button", { name: "Show sources for FY2026, current run", exact: true }),
+    );
+    await report.getByRole("cell", { name: "500", exact: true }).waitFor();
+    assert.equal(await report.getByRole("cell", { name: "1,250", exact: true }).count(), 0);
+    await page.goto(new URL("/report/comparison-fixture#evidence/0-24", endpoint).href);
+    await report.getByRole("cell", { name: "0.00", exact: true }).waitFor();
+  } finally {
+    await page.close();
+  }
+}
+
 async function checkCalendar(report, artifacts, channel, page) {
   await report.getByRole("link", { name: "Issuer calendar", exact: true }).click();
   await page.waitForURL((url) => url.hash === "#calendar");
@@ -491,12 +687,18 @@ async function checkCharts(report, artifacts, channel, page) {
   for (const value of ["500", "1,250", "Not supplied: the schedule stops here"]) {
     await debt.getByText(value, { exact: true }).first().waitFor();
   }
+  const debtRow = debt
+    .getByRole("row")
+    .filter({ has: debt.getByRole("cell", { name: "1,250", exact: true }) });
+  const debtRowSource = debtRow.getByRole("button", { name: /^Show sources for /u });
+  const debtRowHref = await checkTraceFocus(page, debtRowSource, "Basis");
   const source = debt.getByRole("button", {
     name: "Show sources for Debt maturities",
     exact: true,
   });
   const sourceHref = await checkTraceFocus(page, source, "Basis");
   assert.match(sourceHref, /#evidence\/\d+-\d+$/u);
+  assert.notEqual(sourceHref, debtRowHref);
   assert.ok(await debt.getByRole("radio", { name: "Table", exact: true }).isChecked());
   await source.press("Enter");
   await page.getByRole("dialog").getByRole("link", { name: "Open in Evidence" }).click();
@@ -543,6 +745,14 @@ async function checkCharts(report, artifacts, channel, page) {
   await revenue.screenshot({ path: path.join(artifacts, `${channel}-revenue.png`) });
   await revenue.getByRole("radio", { name: "Table", exact: true }).check();
   await revenue.getByText("1,050", { exact: true }).first().waitFor();
+  await openExactTrace(
+    page,
+    revenue.getByRole("button", { name: "Show sources for Revenue", exact: true }),
+  );
+  await report.locator("pre").filter({ hasText: "cpos-forecast-inputs/1" }).waitFor();
+  await page.reload();
+  await report.locator("pre").filter({ hasText: "cpos-forecast-inputs/1" }).waitFor();
+  await section("Forecast").click();
   const model = report.getByRole("table", { name: "Cash flow model", exact: true });
   const revenueRow = model.getByRole("row").filter({
     has: page.getByRole("rowheader", { name: "Revenue", exact: true }),
@@ -588,6 +798,7 @@ async function checkCharts(report, artifacts, channel, page) {
   await evidence.getByRole("link", { name: "Summary", exact: true }).click();
   await page.reload();
   await report.getByRole("heading", { name: "Handoffs", exact: true }).waitFor();
+  await checkRecord(report, page, channel);
 }
 
 for (const [channel, brand, envName] of [
@@ -651,6 +862,7 @@ for (const [channel, brand, envName] of [
           path: path.join(artifacts, `${channel}-finished-report.png`),
           fullPage: true,
         });
+        await checkOverviewTrace(report, page);
         await checkCalendar(report, artifacts, channel, page);
         await checkCharts(report, artifacts, channel, page);
         const handoff = page.waitForEvent("download");
@@ -664,6 +876,7 @@ for (const [channel, brand, envName] of [
         const publication = await page.request.get(
           new URL("/connected/snapshot", service.endpoint).href,
         );
+        await checkChangesTrace(browser, service.endpoint, run);
         assert.equal(publication.status(), 200);
         const { workspace: publishedWorkspace } = await publication.json();
         const published = Object.values(publishedWorkspace.runs).find(
@@ -704,6 +917,7 @@ for (const [channel, brand, envName] of [
             "portfolio-limits",
             "revenue",
             "evidence",
+            "evidence-record",
           ].map((view) => `${channel}-${view}.png`),
           checks: [
             "upload",
@@ -730,6 +944,9 @@ for (const [channel, brand, envName] of [
             "signed liquidity bridge and unfunded refinancing row",
             "report history",
             "evidence reload and handoff",
+            "exact Overview passage, module chart row and Forecast inputs",
+            "Evidence Record metadata, module timings, synthetic responses and hashes",
+            "paired Changes fixture links only to its matched handoff row",
           ],
         };
       } catch (error) {

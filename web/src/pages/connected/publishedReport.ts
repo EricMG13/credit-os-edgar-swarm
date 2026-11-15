@@ -5,6 +5,7 @@ export type Table = { type: "table"; line: number; headers: string[]; rows: Row[
 type Paragraph = { type: "text"; line: number; end: number; text: string };
 export type Block = Table | Paragraph | { type: "equity"; line: number; text?: string };
 export type Section = { heading: string; level: number; line: number; blocks: Block[] };
+export const FORECAST_INPUTS = "Forecast inputs (machine-readable)";
 type FigureRef = Record<string, unknown> & { table: number };
 type Output = {
   id: string;
@@ -108,6 +109,9 @@ export type PublishedRun = {
   asOf: string | null;
   pathway: string | null;
   modules: Record<string, { outputs: string[]; default: string | null }>;
+  record?: {
+    steps: { module: string; started?: string | null; accepted?: string | null }[];
+  } | null;
   changes?: Changes | null;
   evidence: {
     sources: Source[];

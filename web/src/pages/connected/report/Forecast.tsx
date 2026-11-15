@@ -1,20 +1,52 @@
 import { useState } from "react";
 import { card, field, heading, label } from "../layout";
-import { containsReference, type OutputEntry, type PublishedRun } from "../publishedReport";
+import {
+  containsReference,
+  evidencePath,
+  FORECAST_INPUTS,
+  type OutputEntry,
+  type PublishedRun,
+} from "../publishedReport";
 import { namedRow, namedTable, type buildReportView } from "../reportView";
 import { PublishedTable } from "../ReportContent";
 import { amount, record, stringsIn, word } from "../visuals/visualData";
 import { CashProxy, cashProxyCases, gridOf, LegacyForecast } from "../visuals/LegacyForecast";
 import { RunCharts } from "./RunCharts";
+import { PublishedSource } from "./PublishedTrace";
+
+type Model = ReturnType<typeof buildReportView>["models"][number];
+
+function forecastHandoff(model: Model, entries: OutputEntry[], folder: string) {
+  const matches = entries.filter(
+    ({ output }) =>
+      output.module === "CP-2G" &&
+      (model.sources.some(
+        (item) => item.sha256 === output.sha256 && (!item.output || item.output === output.id),
+      ) ||
+        (model.runFolder === folder &&
+          model.download.endsWith("/annual.md") &&
+          output.href === model.download.replace(/annual\.md$/, "CP-2G.md"))),
+  );
+  return matches.length === 1 ? matches[0] : undefined;
+}
+
+function inputsLine(entry: OutputEntry) {
+  const inputs = entry.sections.filter(({ heading }) => heading === FORECAST_INPUTS);
+  if (inputs.length !== 1) return;
+  const blocks = inputs[0]?.blocks.filter(
+    (block) => block.type === "text" && block.text.startsWith("```json\n"),
+  );
+  return blocks?.length === 1 ? blocks[0]?.line : undefined;
+}
 
 function BasisNote({
   model,
-  entries,
-  folder,
+  handoff,
+  href,
 }: {
-  model: ReturnType<typeof buildReportView>["models"][number];
-  entries: OutputEntry[];
-  folder: string;
+  model: Model;
+  handoff?: OutputEntry;
+  href: (line: number) => string;
 }) {
   const raw = record(model.cashflow);
   const limitation = stringsIn(raw.limits).find((line) =>
@@ -22,22 +54,13 @@ function BasisNote({
   );
   if (!limitation) return null;
   const grid = gridOf(raw);
-  const handoff = entries.find((entry) => entry.selected && entry.output.module === "CP-2G");
   const cases = grid && cashProxyCases(grid, null);
   const period = cases?.periods[0];
   const value = cases?.series.find(({ name }) => name === "Base case")?.values[0];
   const ledger =
     handoff &&
     namedTable(handoff, "Calculations", ["ID", "Calculation", "Inputs", "Result", "Source"]);
-  const holdsThisRun = model.runFolder === folder || model.runId === folder;
-  const matchingSource = model.sources.some(
-    (source) =>
-      source.sha256 === handoff?.output.sha256 &&
-      source.sha256 !== undefined &&
-      (!source.output || source.output === handoff?.output.id),
-  );
-  const comparable =
-    word(raw.units) === "USD millions" && holdsThisRun && (!model.sources.length || matchingSource);
+  const comparable = word(raw.units) === "USD millions" && Boolean(handoff);
   const fiscal = period?.slice(0, -1);
   const fcf = fiscal && namedRow(ledger, ({ cells }) => cells[1] === `Base FCF ${fiscal}`);
   const original = fcf ? amount(fcf.cells[3] ?? "") : null;
@@ -60,6 +83,16 @@ function BasisNote({
           <strong>{difference.toFixed(2)}</strong> US$m.
         </p>
       )}
+      {comparable && hasRecordedBridge && fcf && recordedInflow && (
+        <div className="flex flex-wrap gap-3">
+          <PublishedSource href={href(fcf.line)} name="Handoff free cash flow">
+            Free cash flow basis
+          </PublishedSource>
+          <PublishedSource href={href(recordedInflow.line)} name="Recorded difference">
+            Difference basis
+          </PublishedSource>
+        </div>
+      )}
       <p>{limitation}</p>
     </section>
   );
@@ -75,6 +108,30 @@ export function Forecast({
   const [selected, setSelected] = useState(0);
   const { models, entries } = view;
   const model = models[selected] ?? models[0];
+  const handoff = model && forecastHandoff(model, entries, run.folder);
+  const href = (line: number) =>
+    evidencePath(run.folder, String(handoff ? entries.indexOf(handoff) : -1), line);
+  const input = handoff && inputsLine(handoff);
+  const source =
+    input === undefined
+      ? undefined
+      : (name: string) => (
+          <PublishedSource name={name} href={href(input)}>
+            Forecast inputs
+          </PublishedSource>
+        );
+  const register = model?.register;
+  const assumptions =
+    register && handoff && namedTable(handoff, register.heading, register.headers);
+  function assumptionHref(cells: string[]) {
+    const row = namedRow(
+      assumptions || undefined,
+      (row) =>
+        row.cells.length === cells.length &&
+        row.cells.every((cell, index) => cell === cells[index]),
+    );
+    return row && href(row.line);
+  }
   return (
     <>
       <header className="grid gap-2">
@@ -108,10 +165,12 @@ export function Forecast({
       {model && (
         <LegacyForecast
           model={model}
+          source={source}
           summary={
             <CashProxy
               model={model}
-              note={<BasisNote model={model} entries={entries} folder={run.folder} />}
+              source={source?.("Cash proxy by scenario")}
+              note={<BasisNote model={model} handoff={handoff} href={href} />}
             />
           }
         />
@@ -129,10 +188,24 @@ export function Forecast({
               headers: model.register.headers,
               rows: model.register.rows.map((cells, line) => ({ cells, line })),
             }}
-            href="#evidence/trace/CP-2G"
+            rowHref={(line) => assumptionHref(model.register?.rows[line] ?? [])}
+            rowSource={(line, name) => {
+              const link = assumptionHref(model.register?.rows[line] ?? []);
+              return (
+                link && (
+                  <PublishedSource name={name} href={link}>
+                    Assumption source
+                  </PublishedSource>
+                )
+              );
+            }}
           />
           <a
-            href={`/report/${encodeURIComponent(run.folder)}#evidence/trace/CP-2G`}
+            href={
+              handoff
+                ? evidencePath(run.folder, String(entries.indexOf(handoff)))
+                : "#evidence/trace/CP-2G"
+            }
             className="text-action underline"
           >
             Open the forward credit handoff

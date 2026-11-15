@@ -103,6 +103,7 @@ export type Run = {
   submitted_by?: string;
   claimed_at?: string;
   observed_at: string;
+  execution?: "host-session" | "retained-response-replay" | "synthetic" | "live-provider" | null;
   cap: string;
   spent: string | null;
   events: RunEvent[] | null;

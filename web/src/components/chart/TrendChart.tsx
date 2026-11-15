@@ -26,6 +26,7 @@ interface TableRow {
 
 interface TrendChartProps {
   title: string;
+  actions?: React.ReactNode;
   /** The title's heading level; h4 unless the chart sits directly under a section's h2. */
   as?: "h3" | "h4";
   note?: string;
@@ -203,10 +204,19 @@ function Chart({ title, periods, series, table, yTicks }: Omit<TrendChartProps, 
 }
 
 /** A line chart over periods, with the Chart or Table toggle on the same data. */
-export function TrendChart({ title, as, note, periods, series, table, yTicks }: TrendChartProps) {
+export function TrendChart({
+  title,
+  as,
+  note,
+  periods,
+  series,
+  table,
+  yTicks,
+  actions,
+}: TrendChartProps) {
   check({ periods, series, table });
   return (
-    <ChartFrame title={title} as={as} note={note}>
+    <ChartFrame title={title} as={as} note={note} actions={actions}>
       {(view) =>
         view === "chart" ? (
           <Chart title={title} periods={periods} series={series} table={table} yTicks={yTicks} />

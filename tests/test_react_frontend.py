@@ -126,7 +126,9 @@ def test_activity_uses_the_pinned_cap_and_curates_native_events(hosted: _Server)
     directory = layout.runs / "activity"
     directory.mkdir(parents=True, exist_ok=True)
     (directory / "workflow.json").write_text(
-        '{"provider_cap_usd":"50.00","instructions":{"CP-0":{},"CP-1":{}}}', encoding="utf-8"
+        '{"execution":"live-provider","provider_cap_usd":"50.00",'
+        '"instructions":{"CP-0":{},"CP-1":{}}}',
+        encoding="utf-8",
     )
     budget = Budget(Decimal(50), directory / "live")
     budget.reserve("call", Decimal(2), config_id="sol-medium")
@@ -139,6 +141,7 @@ def test_activity_uses_the_pinned_cap_and_curates_native_events(hosted: _Server)
     assert status == 200 and headers["Cache-Control"] == "no-store"
     record = json.loads(raw)
     assert record["cap"] == "50.00"
+    assert record["execution"] == "live-provider"
     assert Decimal(record["spent"]) == Decimal("1.25")
     assert record["modules"] == [["CP-0", "done"], ["CP-1", "waiting"], ["Report", "waiting"]]
     assert [event["kind"] for event in record["events"]] == ["module_started", "module_accepted"]

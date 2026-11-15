@@ -2,7 +2,7 @@ import { createContext, useContext, useState, type ReactNode } from "react";
 import { TraceButton } from "@/pages/library/parts/TraceControl";
 import { TraceDrawer } from "@/pages/library/parts/TraceDrawer";
 import type { Trace } from "@/pages/library/slice";
-import { traceForLine } from "../ReportContent";
+import { handoffBlockAt, traceForLine } from "../ReportContent";
 import { evidencePath, type OutputEntry, type Snapshot } from "../publishedReport";
 
 type OpenTrace = (href: string) => (() => void) | null;
@@ -35,11 +35,11 @@ export function PublishedTraceProvider({
     const index = Number(location[1]);
     const line = Number(location[2]);
     const entry = entries[index];
-    if (!entry || !Number.isSafeInteger(line) || line <= 0) return null;
+    if (!entry || !Number.isSafeInteger(line) || line <= 0 || !handoffBlockAt(entry, line))
+      return null;
     return () => {
       const trace = traceForLine(snapshot, entry, index, line);
       if (trace) setSelection({ route, trace });
-      else window.location.assign(href);
     };
   };
   return (

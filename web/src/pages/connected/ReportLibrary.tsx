@@ -22,6 +22,7 @@ import {
 } from "./publishedReport";
 import { ReportFindings } from "./ReportContent";
 import { ReportEvidence } from "./report/Evidence";
+import type { Mode } from "./api";
 import { actionBias, buildReportView, foundationMetrics } from "./reportView";
 import { Calendar, buildCalendar } from "./report/Calendar";
 import { Changes, ComparisonTable } from "./report/Changes";
@@ -309,12 +310,14 @@ function ReportPage({
   routeKey,
   parts,
   tab,
+  mode,
 }: {
   snapshot: Snapshot;
   run: PublishedRun;
   routeKey: string;
   parts: string[];
   tab: Tab;
+  mode: Mode;
 }) {
   const view = buildReportView(snapshot, routeKey, run);
   const calendar =
@@ -369,6 +372,7 @@ function ReportPage({
               run={run}
               entries={view.entries}
               target={parts.join("/")}
+              mode={mode}
               comparison={
                 rows.length ? (
                   <section className={card}>
@@ -385,7 +389,7 @@ function ReportPage({
   );
 }
 
-export function ReportReader({ id }: { id: string }) {
+export function ReportReader({ id, mode }: { id: string; mode: Mode }) {
   const { value, error } = useResource(getSnapshot);
   const [sources, setSources] = useSourcesOn();
   const hash = useSyncExternalStore(listenHash, readHash);
@@ -437,7 +441,14 @@ export function ReportReader({ id }: { id: string }) {
         <p className={`mt-6 ${card}`}>No report was published for this run.</p>
       )}
       {value && found && (
-        <ReportPage snapshot={value} run={found[1]} routeKey={found[0]} parts={parts} tab={tab} />
+        <ReportPage
+          snapshot={value}
+          run={found[1]}
+          routeKey={found[0]}
+          parts={parts}
+          tab={tab}
+          mode={mode}
+        />
       )}
     </div>
   );

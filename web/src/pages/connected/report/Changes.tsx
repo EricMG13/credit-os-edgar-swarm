@@ -4,7 +4,6 @@ import { Button } from "@/components/base/buttons/button";
 import { Badge } from "@/components/base/badges/badges";
 import { ColumnsChart } from "@/components/chart/ColumnsChart";
 import { ChangeCard } from "@/pages/library/parts/ChangeCard";
-import { RunContext } from "@/pages/library/parts/RunContext";
 import type { Cell } from "@/pages/library/slice";
 import { card, heading } from "../layout";
 import {
@@ -19,14 +18,35 @@ import {
 } from "../publishedReport";
 import { PublishedTable, ReportFindings } from "../ReportContent";
 import { amount, distinct, ticks } from "../visuals/visualData";
+import { PublishedSource } from "./PublishedTrace";
+import { comparisonTrace, maturityTraces } from "./comparisonTrace";
 
 const cell = (value: string): Cell =>
   value === "Not stated" ? null : { kind: "value", at: null, text: value };
 
-export function ComparisonTable({ rows }: { rows: string[][] }) {
+export function ComparisonTable({
+  rows,
+  source,
+}: {
+  rows: string[][];
+  source?: (label: string) => string | undefined;
+}) {
   return (
     <PublishedTable
       evidence
+      rowSource={
+        source &&
+        ((_line, label) => {
+          const href = source(label);
+          return (
+            href && (
+              <PublishedSource href={href} name={label}>
+                Comparison row
+              </PublishedSource>
+            )
+          );
+        })
+      }
       table={{
         type: "table",
         line: 0,
@@ -57,6 +77,7 @@ export function Changes({
 }) {
   const entryIndex = entries.findIndex((entry) => entry.output.module === "CP-8" && entry.selected);
   const entry = change?.problem ? undefined : entries[entryIndex];
+  const trace = comparisonTrace(run.folder, change?.problem ? [] : entries);
   const rows = change?.pack && !change.problem ? comparisonRows(change, "reader") : [];
   if (change?.first_run === true && !change.pack && !change.problem && !change.note)
     return (
@@ -97,42 +118,52 @@ export function Changes({
           </p>
         ) : null}
         {rows.length > 0 && (
-          <RunContext.Provider value={{ traces: {}, open: () => undefined }}>
+          <>
             <ul className="grid gap-4 lg:grid-cols-3">
               {rows.map(
                 (
                   [label = "", before = "", after = "", delta, reason = "", analysis = ""],
                   index,
-                ) => (
-                  <ChangeCard
-                    key={index}
-                    change={{
-                      measure: label,
-                      kind: reason.endsWith("Same-period analysis change")
-                        ? "Same-period analysis change"
-                        : delta && delta !== "—"
-                          ? "Comparable"
-                          : "Not assessable",
-                      current: cell(after),
-                      from: cell(before),
-                      change: delta && delta !== "—" ? delta : null,
-                      direction: "none",
-                      cause: containsReference(reason) ? "See comparison evidence." : reason,
-                      effect: containsReference(analysis) ? "" : analysis,
-                      trace: null,
-                    }}
-                  />
-                ),
+                ) => {
+                  const href = trace.measure(label);
+                  return (
+                    <ChangeCard
+                      key={index}
+                      source={
+                        href && (
+                          <PublishedSource href={href} name={label}>
+                            Comparison row
+                          </PublishedSource>
+                        )
+                      }
+                      change={{
+                        measure: label,
+                        kind: reason.endsWith("Same-period analysis change")
+                          ? "Same-period analysis change"
+                          : delta && delta !== "—"
+                            ? "Comparable"
+                            : "Not assessable",
+                        current: cell(after),
+                        from: cell(before),
+                        change: delta && delta !== "—" ? delta : null,
+                        direction: "none",
+                        cause: containsReference(reason) ? "See comparison evidence." : reason,
+                        effect: containsReference(analysis) ? "" : analysis,
+                        trace: null,
+                      }}
+                    />
+                  );
+                },
               )}
             </ul>
             <details>
               <summary className="cursor-pointer font-medium">Comparison table</summary>
-              <ComparisonTable rows={rows} />
+              <ComparisonTable rows={rows} source={trace.measure} />
             </details>
-          </RunContext.Provider>
+          </>
         )}
         {change?.pack && !change.problem && (
-          <a className="text-action underline" href="#evidence/trace">
+          <a className="text-action underline" href={trace.handoff ?? "#evidence/trace/CP-8"}>
             Review comparison evidence
           </a>
         )}
@@ -141,9 +172,16 @@ export function Changes({
         <ComparisonMaturities
           profile={change.pack.maturity_profile}
           omitted={change.pack.omitted?.maturity_profile}
+          traces={
+            change.pack.maturity_profile
+              ? maturityTraces(snapshot, run, entries, change)
+              : undefined
+          }
         />
       )}
-      {!change?.problem && change?.pack?.modules?.length && <ComparedModules change={change} />}
+      {!change?.problem && change?.pack?.modules?.length && (
+        <ComparedModules change={change} source={trace.module} />
+      )}
       {entry && (
         <ReportFindings snapshot={snapshot} run={run} entry={entry} entryIndex={entryIndex} />
       )}
@@ -151,7 +189,13 @@ export function Changes({
   );
 }
 
-function ComparedModules({ change }: { change: PublishedChanges }) {
+function ComparedModules({
+  change,
+  source,
+}: {
+  change: PublishedChanges;
+  source: (module: string) => string | undefined;
+}) {
   const modules = change.pack?.modules ?? [];
   const earlierFormat = change.pack?.prior?.format === "earlier";
   function side(ran: boolean, bottomLine: string | null) {
@@ -170,6 +214,7 @@ function ComparedModules({ change }: { change: PublishedChanges }) {
       <div className="grid gap-2">
         {modules.map((item) => {
           const verdict = change.verdicts?.modules?.[item.module];
+          const href = source(item.module);
           const explanation = [verdict?.cause, verdict?.why].filter((value): value is string =>
             Boolean(value && !containsReference(value)),
           );
@@ -191,6 +236,11 @@ function ComparedModules({ change }: { change: PublishedChanges }) {
               {explanation.length > 0 && (
                 <p className="mt-2 text-sm text-text-secondary">{explanation.join(" · ")}</p>
               )}
+              {href && (
+                <PublishedSource href={href} name={item.title}>
+                  Analysis comparison row
+                </PublishedSource>
+              )}
             </details>
           );
         })}
@@ -211,9 +261,11 @@ function MaturityGap({ reason }: { reason: string }) {
 function ComparisonMaturities({
   profile,
   omitted,
+  traces,
 }: {
   profile?: MaturityProfile;
   omitted?: string;
+  traces?: ReturnType<typeof maturityTraces>;
 }) {
   if (!profile)
     return omitted ? (
@@ -243,11 +295,60 @@ function ComparisonMaturities({
         groups={groups}
         series={series}
         yTicks={ticks(values, true)}
+        actions={
+          <MaturitySources
+            name="Debt maturity schedules"
+            prior={traces?.prior?.table}
+            current={traces?.current.table}
+          />
+        }
         table={{
           head: ["Period", "Earlier run", "Current run"],
-          rows: profile.rows.map((row) => ({ label: row.period, cells: [row.prior, row.current] })),
+          endHeading: "Sources",
+          rows: profile.rows.map((row) => {
+            const prior = traces?.prior?.row(row.period, row.prior, profile.unit);
+            const current = traces?.current.row(row.period, row.current, profile.unit);
+            return {
+              label: row.period,
+              cells: [row.prior, row.current],
+              end:
+                prior || current ? (
+                  <MaturitySources name={row.period} prior={prior} current={current} />
+                ) : undefined,
+            };
+          }),
         }}
       />
     </section>
+  );
+}
+
+function MaturitySources({
+  name,
+  prior,
+  current,
+}: {
+  name: string;
+  prior?: string;
+  current?: string;
+}) {
+  if (!prior && !current) return null;
+  return (
+    <div className="flex flex-wrap gap-2">
+      {prior && (
+        <PublishedSource
+          href={prior}
+          name={`${name}, earlier run`}
+          linkLabel={`Earlier run source for ${name}`}
+        >
+          Earlier source
+        </PublishedSource>
+      )}
+      {current && (
+        <PublishedSource href={current} name={`${name}, current run`}>
+          Current source
+        </PublishedSource>
+      )}
+    </div>
   );
 }
