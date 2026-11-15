@@ -4,6 +4,24 @@ Keep one running record here. A pass applies only to the stated scope. Earlier v
 engine is in [EricMG13/final-workflow](https://github.com/EricMG13/final-workflow)'s
 `VERIFICATION.md`, which also keeps the retained runs this copy leaves out.
 
+## 2026-11-15 — RBOT-HTML 256101a and browser proof
+
+- Native backend and pins match upstream `256101a`. All 16 compiled React
+  files match the five-step Run candidate. The current upstream work-PC pack
+  and historical handoffs retain their original bytes.
+- Both browsers initially reached the new checker and failed on the old
+  synthetic CP-2E headers. The corrected fixture separates the chart data
+  from the native registers. Each browser verified the new completeness
+  records and native agreement on USD 500m unhedged debt, 62.5% and USD 5m
+  added interest. Confidence review also checked rejection of a renamed
+  header and an incorrect gross-interest value. Quality, 657 targeted
+  Python tests, 98 web tests and the build passed.
+- Candidate `8862b08` SHA-256
+  `0692c62a670c42e1af4d94c9d066920db09c4a5c53037467f6ad84574afea379`.
+  Clean macOS extraction passed Chrome (`20261115-210759-01`) and Edge
+  (`20261115-210811-01`). The offline preview completed
+  `20261115-210806-01`. Windows work-PC proof and publication are pending.
+
 ## 2026-11-15 — Connected five-step Run intake
 
 - Compared the connected page with the Credit OS Run mock and kit. Documents,
@@ -978,11 +996,3 @@ Gates: CI fast-tests command from `checks.yml` 2631 passed, exit 0; browser `-k 
 Probes (`wb_*`, then `t5_*`, `t4r4_*`): not_comparable_position, measure_label, module_cell(.py, .cjs), test_seams f1 and f4, changes_tab.cjs flipped to exit 0 or to the defect gone (f1, f4 now fail their reproduce assertions); wb_join_ids.cjs still exit 1 because it models the old `views.js` argument (the real call is covered by the browser test `test_over_time_joins_two_runs_the_pack_names_by_run_folder`); M3 and L4 probes still exit 1 (recorded limits). t5_*, t4r4_* exit 0.
 Fix round 2: one row per pack measure (a second is refused); white space (non-breaking, doubled) normalised before a verdict is read, in the checker and in `changes.js`; `cp8.md` now states the Effect-cell rule and the one-row rule (git blob `ba25e4d`, new method revision; the library fixtures stand in for it); the ruling sentence on unreadable verdicts is stated per `yes` / `judge` / `no`. Rows added to the shared fixture. `wbr1_seam.py` exit 0; test_changes 195, CI fast 2635, browser 151, node 276 passed; quality gate 0 findings.
 Not verified: any real model output; the Changes tab against the September VMO2 reference. A real model following the revised `cp8.md`.
-
-## 2026-11-12 — Short Credit Snapshot pathway (branch `claude/short-snapshot`, stacked on `claude/changes-section`, decision M6)
-Scope: `short_snapshot` = CP-0, CP-1, CP-L10 (hand-written preset key); CP-L10 method rewritten as a one-page prose module with a Key figures table; CP-L10 leads the Overview; offline, canned provider, no paid call. Tests written by hand: the preset, the order, the other presets without CP-L10, an end-to-end canned run to a verified delivery, four refused variants (a passage figure in no table, no Bottom line, a module code in a sentence, no Key figures table), node tests (lead, label), browser tests (run start page card and the service's three-module review; the library lists the run as "Short credit snapshot" with CP-L10 as lead). Fix round 2: Key figures sign exact, one table, missing CP-1 refused, browser test renamed to be selected by the browser gate. Fix round 1: methodology.json title and purpose; Key figures header and Value figures checked against the CP-1 handoff (`prose_checks.key_figures_issues`; proves a figure exists in CP-1, not that it is the right measure or period). Gates, exit 0 each: CI fast list 2,277 passed; node 271; browser gate 148; test_cpos_launch.py 532 passed; quality gate 0 findings.
-Not verified: that a Key figures figure is the right measure or period in CP-1 (only that it exists there); a real CP-L10 answer from a model; a reader check against the VMO2 reference; an earlier-format or CP-8-compared short snapshot in the library; Chrome only. Moved to the archive to keep this file under 1,000 lines: the 2026-11-10 library-links entry.
-
-## 2026-11-12 — Changes tab in the issuer library (branch `claude/changes-section`, stacked on PR #55, decision M8)
-Scope: `changes.js` renders the pack and CP-8's handoff; the store carries `run.changes`; offline. CI fast list 2,265 passed; node 268; browser gate 147 passed; quality gate 0; answer keys are literals; fix round 1: same-period differences are not issuer moves, no inferred first run, periods must match to join (probes exit 0).
-Not verified: a real CP-8 run in the tab; a CP-8 refusal's pack (the delivery omits it); dark mode (none); a reader check against the VMO2 reference.
