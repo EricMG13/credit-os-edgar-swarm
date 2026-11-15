@@ -4,6 +4,20 @@ Keep one running record here. A pass applies only to the stated scope. Earlier v
 engine is in [EricMG13/final-workflow](https://github.com/EricMG13/final-workflow)'s
 `VERIFICATION.md`, which also keeps the retained runs this copy leaves out.
 
+## 2026-11-15 — Security decisions and last trades
+
+- Both macOS browsers checked six retained Caesars decisions, two observed
+  bond prices ($93.28 and $84.94), exact yields (8.063520% and 9.318398%),
+  original quote and row traces, recovery qualifications, and year-precision
+  maturities. The module fit at 390 px with both tables open.
+- Confidence review checked future, impossible and conflicting quote dates,
+  missing locators, and unquoted rows. Targeted web (103) and Python (15)
+  tests, quality, lint, format and build passed.
+- Candidate `2c971bc` SHA-256
+  `79b6b93b02754cbfebc493f297bf4c4be06796f411f00df26d4a5b4fa1a79080`.
+  Clean macOS extraction passed Chrome (`20261115-170434-01`) and Edge
+  (`20261115-170442-01`). Windows work-PC proof and publication are pending.
+
 ## 2026-11-15 — Rate and currency sensitivity
 
 - The read-only Caesars handoff's 100 bp shock adds USD 59.68 million
