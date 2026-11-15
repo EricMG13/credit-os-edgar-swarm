@@ -1,0 +1,6 @@
+.venv/
+.legacy/
+__pycache__/
+.pytest_cache/
+.superpowers/
+proof-artifacts/
