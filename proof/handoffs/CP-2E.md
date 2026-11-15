@@ -57,6 +57,18 @@ Nothing supplied contradicts the view; a USD 1,250 million refinancing would.
 | --- | --- |
 | Observed | Not supplied: nothing to report |
 
+### T2F.4 - Unhedged exposure
+
+| Item | Value |
+| --- | --- |
+| Unhedged exposure | Not supplied: no floating-rate or hedge balances in the synthetic filing |
+
+### T2F.5 - Rate sensitivity
+
+| Item | Value |
+| --- | --- |
+| Rate sensitivity | Not supplied: no exposure basis in the synthetic filing |
+
 ### T2F.6 - Register
 
 | Item | Value |

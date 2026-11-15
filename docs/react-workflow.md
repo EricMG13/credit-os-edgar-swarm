@@ -1,6 +1,6 @@
 # Run Credit OS 2
 
-Credit OS 2 is based on RBOT-HTML `fc010a7`. It keeps that revision's Python pin,
+Credit OS 2 is based on RBOT-HTML `b8cf4ca`. It keeps that revision's Python pin,
 `pyproject.toml`, `uv.lock`, scheduler, calculations, provider configuration and library
 publication. The browser uses the Credit OS design system and React 19.3.0. Run intake,
 activity, library and report navigation live at one local address.
@@ -93,11 +93,12 @@ uses RBOT-HTML's existing provider-key checks, reviewed submission and run cap.
 
 [Module design and data coverage](design/react-module-coverage.md)
 
-For Portfolio Decision, use the pinned [portfolio workbook template](templates/portfolio.template.xlsx).
-The holdings and market-data workbook supplied for the design review does not
-pass the RBOT-HTML workbook validator. In a report, a limits record without a
-validated mandate, exposure date, NAV basis and rules stays in a table. If the
-handoff supplies a gap, the report shows its original reason.
+Full credit assessment and Portfolio Decision accept the pinned [workbook
+template](templates/portfolio.template.xlsx) or the fund's own exports. For the
+exports, upload the mandate, constraints and exposure report CSVs and the
+holdings workbook. Select the holdings workbook in the Portfolio workbook field.
+RBOT-HTML lists the validation findings in the run summary. A published limits
+record without a validated portfolio basis stays in a table.
 
 ## Claude medium live preflight
 

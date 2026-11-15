@@ -68,6 +68,25 @@ afterEach(() => {
 });
 
 describe("connected run start", () => {
+  it("sends the selected portfolio workbook with a full credit assessment", async () => {
+    const fetchMock = testingFetch(plan, undefined, {
+      "/connected/context": { ...context, attachments: { portfolio_workbook: false } },
+    });
+    render(<ConnectedApp path="/start" mode="synthetic" />);
+    await fillInputs();
+    fireEvent.click(screen.getByRole("button", { name: "Inspect documents" }));
+    await screen.findByRole("option", { name: file.name });
+    fireEvent.change(await screen.findByLabelText("Portfolio workbook"), {
+      target: { value: file.name },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Review run" }));
+    await screen.findByRole("button", { name: "Submit run" });
+    const body = fetchMock.mock.calls.find(([path]) => path.endsWith("/summary"))?.[1]?.body;
+    expect(typeof body === "string" ? JSON.parse(body) : body).toMatchObject({
+      context: { attachments: { portfolio_workbook: true } },
+    });
+  });
+
   it("uploads raw bytes, reads the files, and submits only the reviewed answers and digest", async () => {
     const fetchMock = testingFetch();
     const navigate = vi.fn();

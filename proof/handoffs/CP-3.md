@@ -77,6 +77,60 @@ A located finding.
 | --- | --- |
 | Observed | Not supplied: nothing to report |
 
+### Recovery waterfall
+
+| Line | Amount | Low | Base | High | Currency | Scale |
+| --- | --- | --- | --- | --- | --- | --- |
+| Enterprise value | — | Not supplied: no enterprise value in the synthetic filing | Not supplied: no enterprise value in the synthetic filing | Not supplied: no enterprise value in the synthetic filing | USD | m |
+
+### T3C.1 - Register
+
+| Item | Value |
+| --- | --- |
+| Portfolio fit | Not supplied: no portfolio inputs in the synthetic run |
+
+### T3C.2 - Register
+
+| Item | Value |
+| --- | --- |
+| Portfolio fit | Not supplied: no portfolio inputs in the synthetic run |
+
+### T3C.3 - Register
+
+| Item | Value |
+| --- | --- |
+| Portfolio fit | Not supplied: no portfolio inputs in the synthetic run |
+
+### T3C.5 - Register
+
+| Item | Value |
+| --- | --- |
+| Portfolio fit | Not supplied: no portfolio inputs in the synthetic run |
+
+### T3C.6 - Register
+
+| Item | Value |
+| --- | --- |
+| Portfolio fit | Not supplied: no portfolio inputs in the synthetic run |
+
+### T3C.7 - Register
+
+| Item | Value |
+| --- | --- |
+| Portfolio fit | Not supplied: no portfolio inputs in the synthetic run |
+
+### T3C.8 - Register
+
+| Item | Value |
+| --- | --- |
+| Portfolio fit | Not supplied: no portfolio inputs in the synthetic run |
+
+### T3C.9 - Register
+
+| Item | Value |
+| --- | --- |
+| Portfolio fit | Not supplied: no portfolio inputs in the synthetic run |
+
 ## Calculations
 
 | Item | Value |

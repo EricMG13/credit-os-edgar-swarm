@@ -1123,8 +1123,14 @@ function IntakeForm({
                 }}
               />
             )}
-            {(run.pathway === "portfolio_decision" || level === "advanced") &&
-              (["portfolio_workbook", "prior_case"] as const).map((key) => (
+            {(["portfolio_workbook", "prior_case"] as const)
+              .filter(
+                (key) =>
+                  level === "advanced" ||
+                  run.pathway === "portfolio_decision" ||
+                  (key === "portfolio_workbook" && run.pathway === "credit_snapshot"),
+              )
+              .map((key) => (
                 <SelectField
                   key={key}
                   title={ATTACHMENTS[key]}
