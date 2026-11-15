@@ -689,7 +689,7 @@ async function checkCharts(report, artifacts, channel, page) {
   }
   const debtRow = debt
     .getByRole("row")
-    .filter({ has: debt.getByRole("cell", { name: "1,250", exact: true }) });
+    .filter({ has: page.getByRole("cell", { name: "1,250", exact: true }) });
   const debtRowSource = debtRow.getByRole("button", { name: /^Show sources for /u });
   const debtRowHref = await checkTraceFocus(page, debtRowSource, "Basis");
   const source = debt.getByRole("button", {
