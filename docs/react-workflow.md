@@ -90,9 +90,10 @@ The bundled proof runs independently of development fixtures and local issuer da
 ## Open the interface
 
 Run the service against a short, local workflow workspace. Use a new folder for the
-manual synthetic proof, then upload `proof/northbridge-filing.txt`, enter
-`Northbridge Synthetic Group` and `2025-03-31`, and choose Full credit assessment
-(RBOT's Credit Snapshot pathway).
+manual synthetic proof. Enter `Northbridge Synthetic Group` and `2025-03-31`,
+then choose Full credit assessment (RBOT's Credit Snapshot pathway). Upload
+`proof/northbridge-filing.txt` and `proof/northbridge-portfolio.xlsx`, click
+Inspect documents, and select `northbridge-portfolio.xlsx` under Portfolio workbook.
 
 ```sh
 PYTHONPATH=src uv run --locked python -m proof.serve --root /path/to/empty-proof-folder

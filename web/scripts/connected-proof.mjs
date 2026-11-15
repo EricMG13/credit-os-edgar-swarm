@@ -401,10 +401,10 @@ async function checkCharts(report, artifacts, channel, page) {
   });
   await revenueRow.getByRole("cell", { name: "1,050", exact: true }).first().waitFor();
   const runCharts = report.getByRole("region", { name: "Run charts", exact: true });
-  await runCharts
-    .getByRole("figure", { name: "Portfolio limits", exact: true })
-    .getByText("3.73%", { exact: true })
-    .waitFor();
+  const forecastLimits = runCharts.getByRole("figure", { name: "Portfolio limits", exact: true });
+  await forecastLimits.getByText("3.73%", { exact: true }).waitFor();
+  await forecastLimits.getByRole("radio", { name: "Table", exact: true }).check();
+  await forecastLimits.getByRole("cell", { name: "2.37%", exact: true }).waitFor();
   const forecastDebt = runCharts.getByRole("figure", { name: "Debt maturities", exact: true });
   await forecastDebt.getByRole("radio", { name: "Table", exact: true }).check();
   await forecastDebt.getByRole("cell", { name: "1,250", exact: true }).waitFor();
@@ -428,7 +428,6 @@ async function checkCharts(report, artifacts, channel, page) {
   await refinancing
     .getByRole("cell", { name: "Not supplied: no commitment is stated", exact: true })
     .waitFor();
-  await runCharts.getByRole("table", { name: "Portfolio limits", exact: true }).waitFor();
   await runCharts.getByRole("link", { name: "Financial foundation", exact: true }).click();
   await report.getByRole("heading", { name: "Financial foundation", exact: true }).waitFor();
 
