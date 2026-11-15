@@ -4,6 +4,23 @@ Keep one running record here. A pass applies only to the stated scope. Earlier v
 engine is in [EricMG13/final-workflow](https://github.com/EricMG13/final-workflow)'s
 `VERIFICATION.md`, which also keeps the retained runs this copy leaves out.
 
+## 2026-11-15 — Keyboard source traces for figures and calendar rows
+
+- Both macOS browsers opened the Caesars Watchlist passage, maturity chart
+  and calendar row by keyboard. Escape returned focus to the exact control
+  and kept the selected Table view. Modules and Forecast opened the same maturity
+  source. The Evidence route reloaded with the 3,962 US$m maturity and the original
+  quarterly filing reference. The calendar table fit the 720 px viewport.
+- Confidence review reproduced lost focus and the reset Table view. Checked
+  same-run row identities, deduplicated exact source records, both trace dismissal
+  and deep-link navigation, and chart stability during module route changes.
+  Focused web (305) and Python (15) tests, quality, lint, format and build passed.
+- Candidate `3104896` SHA-256
+  `f30be0c81281f0b7fa560ed148e26099018c98cf08837dd6ddd39e61a1070c4b`.
+  Clean extraction passed macOS Chrome (`20261115-161824-01`) and Edge
+  (`20261115-161832-01`), with paired proof. Windows work-PC proof and
+  publication are pending.
+
 ## 2026-11-15 — Cross-module issuer calendar
 
 - Both macOS browsers checked 69 retained Caesars calendar rows, split into 46
@@ -964,33 +981,3 @@ page's link to the library's Report history for the run is checked by the next t
 assertion already matched the final copy. After: that file 56 passed; `-m browser -k "run_start or context_form
 or library or inbox"` 100 passed, exit 0; the fast set 756 passed, exit 0; quality gate 0 findings, exit 0.
 Not verified: a forecast run with a blank current period through a live provider.
-
-## 2026-11-12 — Web search from the run page; leaked citation markers (branch `claude/web-search-run-page`, decisions M1, M4)
-
-(a) Paid test, this dated case only (TDG FY2024, ruling `2026-11-11-cpdr-web-search-live-test.md`, run `tdg-cpdr-web-001`): CP-0, CP-1, CP-DR and CP-1C accepted, charged USD 3.39131650. CP-DR located HEICO and
-Howmet figures and CP-1C read them. Defect: the delivered CP-DR handoff held 54 provider citation markers
-(U+E200 `cite` U+E202 `turn..view..` U+E201) in reader prose, which the eight prose checks did not catch.
-Fix: markers are removed from a searching module's answer before the check (count in `<n>.markers.json` and a
-`citation_markers_removed` event; provider response unchanged), plus prose check 9 for any other shape
-(reader-ruling amendment). On that handoff the removal leaves 0 markers and adds no double space or
-space before a comma or full stop. Not verified: `store:false` behaviour was not separately inspected, peer
-figures were not checked against the cited pages, analytical accuracy.
-(b) This change, offline (no provider call): the standing run-start ruling lists `web-search`; `prepare`'s
-cap check holds the CP-DR search fee (USD 0.16) as the live loop does; the summary passes it; the page's
-approval summary says what goes to OpenAI; READMEs updated. Tests: `test_citation_markers.py`, the
-`prepare` and ruling tests in `test_cpos_launch.py`, `test_context_form.py`, `test_run_start_submissions.py`.
-`test_inbox_scheduler.py::test_a_submission_is_run_by_the_real_launcher_and_listed` failed identically on the base
-`claude/forecast-layer1` (canned answers; stopped at the checker); commit ebd4c13 fixed it (the canned launcher
-answers CP-2G with a forecast block).
-(c) Fix round 1 (security review, offline, no provider call): the page and ruling no longer say queries "use
-public names only" as a fact: the module is told to, the queries it sent are kept in `<n>.response.json`, and
-`flag_search_queries` flags afterwards any query with a supplied file name or a source figure of 4+ digits (years
-1900-2100 excepted) as a `search_query_flagged` event and `<n>.queries.json` (detection, not prevention; the
-library's Run record does not show the count: its store has no field). Owner ruling 2026-11-12: web search for
-`public` and `private` cases, off for `synthetic` (one rule, `web_search_offered`; offline hold, live hold and
-the `Web:` line agree; the page says before Submit whether the run searches). Source guidance and a `Source type`
-cell on web rows (METHODOLOGY-REVIEW.md): no paid run has exercised the new source guidance. Markers: a marker
-never spans lines, stripping is linear, the tool result tells the model how many were removed and an edit may quote
-marked text, check 9 covers `cite\s*turn\d+[a-z]+\d+` anywhere in the handoff and only U+E200-U+E202.
-Forecast riders: `~~~` fences are code, `\|` stays in its cell, working capital is the cell sign-reversed as CP-2G
-reads it (the base's test fixtures now print wc as `(10)`).
