@@ -34,6 +34,8 @@ interface StackChartProps {
   parts: StackPart[];
   /** One row per part, in the same order: the amount, then the share when parts carry one. */
   table: { head: string[]; rows: TableRowData[]; endHeading?: string };
+  /** Original disclosure when the source records additional information for each part. */
+  detailTable?: StackChartProps["table"];
 }
 
 const ROW_HEIGHT = 40;
@@ -202,7 +204,16 @@ function Chart({ title, parts }: Pick<StackChartProps, "title" | "parts">) {
 }
 
 /** One bar split into ranked parts, such as debt by instrument. */
-export function StackChart({ title, as, note, subtitle, actions, parts, table }: StackChartProps) {
+export function StackChart({
+  title,
+  as,
+  note,
+  subtitle,
+  actions,
+  parts,
+  table,
+  detailTable,
+}: StackChartProps) {
   check({ parts, table });
   return (
     <ChartWithTable
@@ -211,7 +222,7 @@ export function StackChart({ title, as, note, subtitle, actions, parts, table }:
       note={note}
       subtitle={subtitle}
       actions={actions}
-      table={table}
+      table={detailTable ?? table}
       chart={<Chart title={title} parts={parts} />}
     />
   );

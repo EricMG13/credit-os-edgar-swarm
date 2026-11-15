@@ -2,7 +2,6 @@ import type { ReactNode } from "react";
 import { BulletChart } from "@/components/chart/BulletChart";
 import { ChartWithTable } from "@/components/chart/ChartWithTable";
 import { ColumnsChart } from "@/components/chart/ColumnsChart";
-import { ComparisonChart, type ComparisonPanel } from "@/components/chart/ComparisonChart";
 import { DumbbellChart } from "@/components/chart/DumbbellChart";
 import { RangeStripChart } from "@/components/chart/RangeStripChart";
 import { seriesColors } from "@/components/chart/RowChart";
@@ -217,29 +216,29 @@ function paired(table: SourceTable, descriptor: Descriptor, frame: Frame) {
   }
   if (!sharedUnit || !samePeriods || values.some((value) => value !== null && value < 0))
     return null;
-  const panels = table.rows.map((row): ComparisonPanel => {
-    const left = amount(row[prior] ?? "");
-    const right = amount(row[current] ?? "");
+  const series = [prior, current].map((column, at) => {
+    const cells = table.rows.map((row) => row[column] ?? "");
+    const positions = cells.map(amount);
     return {
-      measure: row[label] ?? "",
-      max: Math.max(left ?? 0, right ?? 0) || 1,
-      values: [left, right],
-      texts: [
-        left === null ? null : (row[prior] ?? null),
-        right === null ? null : (row[current] ?? null),
-      ],
+      name: names[at] ?? "",
+      values: positions,
+      labels: cells.map((text, index) => (positions[index] === null ? null : text)),
     };
   });
-  if (panels.some((panel) => panel.values.includes(null))) return null;
   return (
-    <ComparisonChart
+    <ColumnsChart
       {...frame}
-      cases={names}
-      panels={panels}
+      groups={labels}
+      series={series}
+      yTicks={ticks(values, true)}
       table={{
         head: [table.headers[label] ?? "", ...names],
-        rows: panels.map((panel) => ({ label: panel.measure, cells: panel.texts })),
+        rows: table.rows.map((row, at) => ({
+          label: labels[at] ?? "",
+          cells: [row[prior] || null, row[current] || null],
+        })),
       }}
+      detailTable={chartTable(table)}
     />
   );
 }
@@ -315,7 +314,7 @@ function scatter(table: SourceTable, descriptor: Descriptor, frame: Frame) {
   });
   if (
     !distinct(points.map((point) => point.name)) ||
-    points.some((point) => point.x === null || point.y === null)
+    !points.some((point) => point.x !== null && point.y !== null)
   )
     return null;
   const xTitle = table.headers[date] ?? "";
@@ -339,7 +338,11 @@ function scatter(table: SourceTable, descriptor: Descriptor, frame: Frame) {
         })),
       }}
       y={{ title: yTitle, short: yTitle, ticks: ticks(points.map((point) => point.y)) }}
-      table={chartTable(table, [label, date, yieldAt])}
+      table={{
+        head: [table.headers[label] ?? "", xTitle, yTitle],
+        rows: points.map(({ name, xText, yText }) => ({ label: name, cells: [xText, yText] })),
+      }}
+      detailTable={chartTable(table)}
     />
   );
 }
@@ -364,7 +367,14 @@ function stack(table: SourceTable, descriptor: Descriptor, frame: Frame) {
   );
   if (parts.length === 0) return null;
   if (parts.length === entries.length) {
-    return <StackChart {...frame} parts={parts} table={chartTable(table, [label, column])} />;
+    return (
+      <StackChart
+        {...frame}
+        parts={parts}
+        table={chartTable(table, [label, column])}
+        detailTable={chartTable(table)}
+      />
+    );
   }
   const colors = seriesColors(entries.map((entry) => entry.name));
   return (
@@ -482,6 +492,7 @@ function recovery(table: SourceTable, descriptor: Descriptor, frame: Frame) {
           cells: names.map((name) => sourceRows.get(group)?.get(name) || null),
         })),
       }}
+      detailTable={chartTable(table)}
     />
   );
 }

@@ -26,6 +26,8 @@ interface ColumnsChartProps {
   yTicks: YTick[];
   /** One row per group, one cell per series, in series order. */
   table: { head: string[]; rows: TableRowData[]; endHeading?: string };
+  /** Original disclosure when the plotted values are a pivot of a wider source table. */
+  detailTable?: ColumnsChartProps["table"];
 }
 
 const LABEL_FILL = "var(--color-text-primary)";
@@ -337,6 +339,7 @@ export function ColumnsChart({
   series,
   yTicks,
   table,
+  detailTable,
 }: ColumnsChartProps) {
   check({ groups, series, table });
   return (
@@ -346,7 +349,7 @@ export function ColumnsChart({
       note={note}
       subtitle={subtitle}
       actions={actions}
-      table={table}
+      table={detailTable ?? table}
       chart={<Chart title={title} groups={groups} series={series} yTicks={yTicks} table={table} />}
     />
   );

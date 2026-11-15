@@ -102,6 +102,143 @@ it("renders the published model cell displays, cases, dates and reasons", () => 
 
 const basis = ["Reporting unit", "Basis and limitation"];
 
+it("plots the quoted note and retains the unquoted note, spread and quote date in the table", () => {
+  render(
+    <LegacyVisuals
+      output={{
+        charts: [
+          {
+            title: "Yield against maturity",
+            table: 20,
+            kind: "scatter",
+            label: 0,
+            date: 1,
+            yield: 2,
+            unit: "%",
+          },
+        ],
+      }}
+      sections={fixture(
+        ["Instrument", "Maturity date", "Yield", "Spread", "Quote date", "Source class", ...basis],
+        [
+          [
+            "Synthetic 2028 note",
+            "2028-06-15",
+            "6.4",
+            "+310 bp",
+            "2024-12-31",
+            "Dealer quote",
+            "%",
+            "Synthetic.",
+          ],
+          [
+            "Synthetic 2031 note",
+            "2031-03-01",
+            "Not supplied: no quote",
+            "Not supplied: no quote",
+            "2024-12-31",
+            "Dealer quote",
+            "%",
+            "Synthetic.",
+          ],
+        ],
+      )}
+    />,
+  );
+  const figure = within(screen.getByRole("figure", { name: "Yield against maturity" }));
+  expect(figure.getByText(/Not plotted: Synthetic 2031 note/)).toBeInTheDocument();
+  fireEvent.click(figure.getByRole("radio", { name: "Table" }));
+  expect(figure.getByRole("cell", { name: "+310 bp" })).toBeInTheDocument();
+  expect(figure.getAllByRole("cell", { name: "2024-12-31" })).toHaveLength(2);
+  expect(figure.getAllByRole("cell", { name: "Not supplied: no quote" })).toHaveLength(2);
+});
+
+it("preserves native claim size, recovery percent, zero and an explicit recovery gap", () => {
+  render(
+    <LegacyVisuals
+      output={{
+        charts: [
+          {
+            title: "Recovery by class",
+            table: 20,
+            kind: "recovery",
+            label: 0,
+            scenario: 1,
+            claim: 2,
+            recovery: 3,
+            percent: 4,
+            unit: "US$m",
+          },
+        ],
+      }}
+      sections={fixture(
+        ["Class", "Scenario", "Claim", "Recovery", "Recovery %", ...basis],
+        [
+          ["Secured", "Base", "1,200", "1,080", "90", "US$m", "Synthetic."],
+          [
+            "Secured",
+            "Downside",
+            "1,200",
+            "Not supplied: no downside value",
+            "Not supplied: no downside value",
+            "US$m",
+            "Synthetic.",
+          ],
+          ["Unsecured", "Base", "800", "0.00", "0", "US$m", "Synthetic."],
+        ],
+      )}
+    />,
+  );
+  const figure = within(screen.getByRole("figure", { name: "Recovery by class" }));
+  fireEvent.click(figure.getByRole("radio", { name: "Table" }));
+  expect(figure.getByRole("columnheader", { name: "Claim" })).toBeInTheDocument();
+  expect(figure.getByRole("columnheader", { name: "Recovery %" })).toBeInTheDocument();
+  expect(figure.getAllByRole("cell", { name: "1,200" })).toHaveLength(2);
+  expect(figure.getByRole("cell", { name: "0.00" })).toBeInTheDocument();
+  expect(figure.getAllByRole("cell", { name: "Not supplied: no downside value" })).toHaveLength(2);
+});
+
+it("keeps compatible earnings comparisons plotted when one value is missing", () => {
+  render(
+    <LegacyVisuals
+      output={{
+        charts: [
+          {
+            title: "Prior and current results",
+            table: 20,
+            kind: "grouped",
+            label: 0,
+            periods: [1, 3],
+            prior: 2,
+            current: 4,
+            unit: "US$m",
+          },
+        ],
+      }}
+      sections={fixture(
+        ["Measure", "Prior period", "Prior", "Current period", "Current", ...basis],
+        [
+          ["Revenue", "FY2023", "2,100", "FY2024", "2,250", "US$m", "Synthetic."],
+          [
+            "Adjusted EBITDA",
+            "FY2023",
+            "410",
+            "FY2024",
+            "Not supplied: not stated",
+            "US$m",
+            "Synthetic.",
+          ],
+        ],
+      )}
+    />,
+  );
+  const figure = within(screen.getByRole("figure", { name: "Prior and current results" }));
+  fireEvent.click(figure.getByRole("radio", { name: "Table" }));
+  expect(figure.getByRole("columnheader", { name: "Prior period" })).toBeInTheDocument();
+  expect(figure.getByRole("cell", { name: "2,250" })).toBeInTheDocument();
+  expect(figure.getByRole("cell", { name: "Not supplied: not stated" })).toBeInTheDocument();
+});
+
 it("keeps portfolio limits as records when the descriptor supplies no validated portfolio basis", () => {
   const rows = [
     ["New issuer", "0.00", "Not supplied: no proposal", "5.0", "% NAV", "Synthetic."],

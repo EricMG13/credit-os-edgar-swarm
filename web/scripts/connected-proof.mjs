@@ -166,6 +166,18 @@ async function checkCharts(report, artifacts, channel, page) {
       .getAttribute("href"),
     sourceHref,
   );
+  const bridge = runCharts.getByRole("figure", { name: "Liquidity bridge", exact: true });
+  await bridge.locator('[data-step="Debt repayment"][data-kind="down"]').waitFor();
+  await bridge.getByRole("radio", { name: "Table", exact: true }).check();
+  for (const value of ["-450", "570"]) {
+    await bridge.getByRole("cell", { name: value, exact: true }).waitFor();
+  }
+  const refinancing = runCharts.getByRole("figure", { name: "Refinancing need", exact: true });
+  await refinancing.locator('[data-missing][data-series="Committed resources"]').waitFor();
+  await refinancing.getByRole("radio", { name: "Table", exact: true }).check();
+  await refinancing
+    .getByRole("cell", { name: "Not supplied: no commitment is stated", exact: true })
+    .waitFor();
   await runCharts.getByRole("table", { name: "Portfolio limits", exact: true }).waitFor();
   await runCharts.getByRole("link", { name: "Financial foundation", exact: true }).click();
   await report.getByRole("heading", { name: "Financial foundation", exact: true }).waitFor();
@@ -285,6 +297,7 @@ for (const [channel, brand, envName] of [
             "portfolio limits table and validation gap",
             "forecast chart and model",
             "forecast run figures and original module",
+            "signed liquidity bridge and unfunded refinancing row",
             "report history",
             "evidence reload and handoff",
           ],
