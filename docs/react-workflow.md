@@ -109,7 +109,8 @@ In PowerShell, set `$env:PYTHONPATH = (Join-Path (Get-Location) 'src')` first, t
 either command beginning with `uv`. Open the printed loopback address. Regular mode
 uses RBOT-HTML's existing provider-key checks, reviewed submission and run cap.
 
-[Module design and data coverage](design/react-module-coverage.md)
+The repository's `docs/design/react-module-coverage.md` maps the report modules
+to the React components and published data.
 
 Full credit assessment and Portfolio Decision accept the pinned [workbook
 template](templates/portfolio.template.xlsx) or the fund's own exports. For the
@@ -122,28 +123,20 @@ the holdings must corroborate the exposure and the NAV. Proposals stay in the
 published table. A table containing a minimum limit or an unverified row stays
 in table view.
 
-## Claude medium live preflight
+## Live runs and report verification
 
-RBOT-HTML maps the Claude Fast preset to `opus-medium` (Claude Opus 5.5, medium
-effort). This preset uses the direct Anthropic adapter and requires
-`ANTHROPIC_API_KEY`. The hosted service also requires `OPENAI_API_KEY` at startup
-for its other original presets. The existing OpenRouter route targets DeepSeek.
-With the available OpenRouter credential, the Claude summary returned
-`Claude Opus is not available on this service` and issued no approval digest.
-No provider request was made and there is no live report to assess.
-
-The Northbridge filing used by the browser proof contains one line and arrives
-unrecognised at native intake. The strongest coherent tracked example was Harbor
-Freight Systems in `tests/fixtures/run-expectations/synthetic/`. Native preparation
-could read all ten files and plan the full 12-module first-run Credit Snapshot.
-It recognised eight files. The market quotes and peer data went unrecognised.
-The pack provided no recognised financial statements, confirmed executed agreement,
-or classified observed quote. The intake forecast flagged provisional legal terms,
-reliance on management claims, and an unresolved add-back baseline. These are
-preflight findings.
-
-To assess a full live report, use one issuer's financial statements for the required
+RBOT-HTML maps the Claude Fast preset to `opus-medium` (Claude Opus 5.5 at medium
+effort). Set `ANTHROPIC_API_KEY` in the launching environment for this preset and
+`OPENAI_API_KEY` for the service startup check. The regular reviewed submission
+uses RBOT-HTML's USD 20 cap. Use one issuer's financial statements for the required
 periods, cash and debt schedules, executed financing and covenant documents, and
-dated market, peer and ratings evidence where relevant. The existing live approval
-uses the original USD 20 cap. The offline cost check covered the maximum hold for
-one model call. Total live cost and the resulting report remain unverified.
+dated market, peer and ratings evidence where relevant.
+
+The redesigned reader was checked separately against the retained Caesars
+Entertainment report as of 2 October 2026. The live test produced 12 accepted
+handoffs from 18 source files. The final continuation reused eight responses and
+completed four modules through the live provider. Across its three segments the
+test settled USD 32.16235440 under a one-time USD 50 authorization. The native
+library withheld listing during its retained-method check. The read-only preview
+preserved that status and the missing portfolio and legal evidence. The browser
+proof in this ZIP uses the synthetic Northbridge case and canned responses.
