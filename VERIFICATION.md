@@ -4,6 +4,20 @@ Keep one running record here. A pass applies only to the stated scope. Earlier v
 engine is in [EricMG13/final-workflow](https://github.com/EricMG13/final-workflow)'s
 `VERIFICATION.md`, which also keeps the retained runs this copy leaves out.
 
+## 2026-11-15 — Module readiness and monitoring records
+
+- The retained Caesars replay in macOS Chrome and Edge showed six CP-0 readiness
+  decisions (five with limitations, one conditional) and eight CP-2 triggers.
+  The USD 1,502 million liquidity threshold and the unresolved covenant basis
+  match the handoffs. Both browsers checked section jumps and row trace focus.
+- Confidence review checked the combined and split register columns, module
+  ownership, unavailable thresholds and preservation of source qualifications.
+  Focused web (927) and Python (15) tests, quality, lint, format and build passed.
+- Candidate `c96d161` SHA-256
+  `5b0599d74f0ccbedd122c8920f8deaf225f4494eef309c7ee4c19c957cae86df`.
+  Clean extraction passed macOS Chrome (`20261115-162914-01`) and Edge
+  (`20261115-162922-01`). Windows work-PC proof and publication are pending.
+
 ## 2026-11-15 — Keyboard source traces for figures and calendar rows
 
 - Both macOS browsers opened the Caesars Watchlist passage, maturity chart
