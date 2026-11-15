@@ -63,13 +63,14 @@ npm --prefix web run proof:connected
 Playwright launches the installed branded browsers. Set `CHROME_PATH` or `EDGE_PATH`
 to the corresponding executable if it is installed in a nonstandard location.
 Success is two passing tests and exit code 0. Each browser uses a separate temporary
-workspace and uploads the same synthetic Northbridge filing. The test checks the
+workspace and uploads the same synthetic Northbridge filing and portfolio workbook.
+It inspects both documents, selects the workbook in the form, and checks the
 finished report and all five redesigned views, the issuer calendar and its source
 row, keyboard focus after closing figure and row traces, the exact original
 handoff download, a published CP-1 chart, downside cases and break points with
 source links and a 390 px layout, rate and currency shocks, dated instrument
-quotes and recovery qualifications, the portfolio limits table and validation
-gap, and the model forecast that RBOT-HTML calculates. Run charts in
+quotes and recovery qualifications, the workbook-matched portfolio limits chart
+and source table, and the model forecast that RBOT-HTML calculates. Run charts in
 Forecast are checked against the owning module and the same Evidence link.
 Results and screenshots are saved under
 `proof-artifacts/`. The proof substitutes canned model responses and makes no

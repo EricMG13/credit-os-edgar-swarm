@@ -4,6 +4,8 @@ import { ChartWithTable } from "@/components/chart/ChartWithTable";
 import { TRACE_HOST } from "@/pages/library/parts/TraceControl";
 import { containsReference } from "../publishedReport";
 import { PublishedSource } from "../report/PublishedTrace";
+import { usePortfolioBasis } from "../report/PortfolioBasis";
+import { portfolioLimits } from "./PortfolioLimits";
 import { publishedChart } from "./charts";
 import { edgeMap } from "./EdgeMap";
 import { eventLane } from "./EventLane";
@@ -44,6 +46,7 @@ export function LegacyVisuals({
   cards,
 }: LegacyVisualsProps) {
   const published = record(output);
+  const basis = usePortfolioBasis();
   const tables = publishedTables(sections ?? published.sections);
   const drawings = [
     ...byCategory(published, "charts", "chart"),
@@ -86,7 +89,16 @@ export function LegacyVisuals({
     const frame = { title, note, actions };
     let chart: ReactNode;
     if (category === "chart") {
-      chart = publishedChart(table, descriptor, frame);
+      const attested =
+        descriptor.kind === "limits" &&
+        link &&
+        basis &&
+        basis.output === published.id &&
+        basis.sha256 === published.sha256 &&
+        basis.tableLines.includes(line);
+      chart = attested
+        ? portfolioLimits(table, basis, frame)
+        : publishedChart(table, descriptor, frame);
     } else {
       const drawing = category === "event" ? eventLane(table) : edgeMap(table);
       chart =

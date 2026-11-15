@@ -16,17 +16,26 @@ from unittest.mock import patch
 from proof import DUMMY_KEY
 
 FILING = Path(__file__).with_name("northbridge-filing.txt")
+PORTFOLIO = Path(__file__).with_name("northbridge-portfolio.xlsx")
 HANDOFFS = Path(__file__).with_name("handoffs")
 
 
 def verify_upload(sources: Path, context: Path) -> str:
     """Bind the canned replies to exactly the synthetic filing in the scheduler drop."""
     files = {p.relative_to(sources) for p in sources.rglob("*") if p.is_file() and p != context}
-    if files != {Path(FILING.name)}:
-        raise ValueError(f"synthetic proof requires exactly one {FILING.name} upload")
+    filing = {Path(FILING.name)}
+    if files not in (filing, filing | {Path(PORTFOLIO.name)}):
+        raise ValueError(
+            f"synthetic proof requires exactly one {FILING.name} upload and at most its workbook"
+        )
     raw = (sources / FILING.name).read_bytes()
     if raw != FILING.read_bytes():
         raise ValueError("uploaded filing differs from the synthetic proof fixture")
+    if (
+        Path(PORTFOLIO.name) in files
+        and (sources / PORTFOLIO.name).read_bytes() != PORTFOLIO.read_bytes()
+    ):
+        raise ValueError("uploaded workbook differs from the synthetic proof fixture")
     return hashlib.sha256(raw).hexdigest()
 
 
@@ -60,6 +69,10 @@ def run_engine(argv: list[str]) -> int:
     if args.out is None or not args.no_library or not args.live:
         raise ValueError("synthetic proof requires a scheduler output and library ownership")
     digest = verify_upload(args.sources, args.context)
+    workbook = args.sources / PORTFOLIO.name
+    workbook_digest = (
+        hashlib.sha256(workbook.read_bytes()).hexdigest() if workbook.is_file() else None
+    )
 
     with tempfile.TemporaryDirectory(prefix="credit-os-proof-") as temp:
         prepared = cpos_launch.prepare(
@@ -79,6 +92,11 @@ def run_engine(argv: list[str]) -> int:
         context = json.loads(request.messages[1].text)
         if context["sources"].get(FILING.name) != digest:
             raise ValueError("CP-OS request did not retain the uploaded filing digest")
+        if (
+            workbook_digest is not None
+            and context["sources"].get(PORTFOLIO.name) != workbook_digest
+        ):
+            raise ValueError("CP-OS request did not retain the uploaded workbook digest")
         if context["run"] != run.model_dump(mode="json"):
             raise ValueError("CP-OS request did not retain the submitted run identity")
         text = canned_handoff(context, f"{run.issuer_name} as of {run.as_of}.")

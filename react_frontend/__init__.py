@@ -17,7 +17,7 @@ from deploy_workflow.inbox.layout import Layout
 from deploy_workflow.inbox.scheduler import Scheduler, Settings
 from deploy_workflow.run_start import service
 
-from . import artifacts
+from . import artifacts, portfolio
 
 PROJECT = Path(__file__).resolve().parent.parent
 RUN_ID = re.compile(r"[0-9A-Za-z][0-9A-Za-z._-]{0,79}")
@@ -132,6 +132,10 @@ def _handler(dist: Path, page: bytes, context: dict[str, Any]) -> type[service.H
             if match := artifacts.GRAPH.fullmatch(path):
                 _, snapshot = self._publication()
                 raise artifacts.reply(match, self._layout.engine / "runs", REPORT_FOLDER, snapshot)
+            if match := portfolio.PORTFOLIO.fullmatch(path):
+                _, snapshot = self._publication()
+                basis = portfolio.attested(self._layout.runs, match[1], snapshot)
+                raise http_base.Reply(200, {"basis": basis}, {"Cache-Control": "no-store"})
             if path == "/connected/reports" or path.startswith(REPORT_PREFIX):
                 self._reports(path)
             if asset := _asset_path(dist, path):

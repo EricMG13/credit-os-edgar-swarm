@@ -101,16 +101,39 @@ async function submit(page) {
   await page.getByRole("link", { name: "Start a run", exact: true }).click();
   await page.getByLabel("Issuer name", { exact: true }).fill("Northbridge Synthetic Group");
   await page.getByLabel("As-of date", { exact: true }).fill("2025-03-31");
-  const uploaded = response(page, /\/api\/submissions\/[^/]+\/files$/u, "POST");
-  await page.getByLabel("Documents", { exact: true }).setInputFiles({
-    name: "northbridge-filing.txt",
-    mimeType: "text/plain",
-    buffer: await readFile(path.join(project, "proof", "northbridge-filing.txt")),
-  });
+  const files = [
+    ["northbridge-filing.txt", "text/plain"],
+    [
+      "northbridge-portfolio.xlsx",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    ],
+  ];
+  const uploaded = files.map(([name]) =>
+    page.waitForResponse(
+      async (result) =>
+        /\/api\/submissions\/[^/]+\/files$/u.test(new URL(result.url()).pathname) &&
+        result.request().method() === "POST" &&
+        (await result.json()).name === name,
+    ),
+  );
+  await page.getByLabel("Documents", { exact: true }).setInputFiles(
+    await Promise.all(
+      files.map(async ([name, mimeType]) => ({
+        name,
+        mimeType,
+        buffer: await readFile(path.join(project, "proof", name)),
+      })),
+    ),
+  );
+  const [, ...uploads] = await Promise.all([
+    page.getByRole("button", { name: "Inspect documents", exact: true }).click(),
+    ...uploaded,
+  ]);
+  for (const upload of uploads) assert.equal(upload.status(), 200);
+  await page
+    .getByRole("combobox", { name: "Portfolio workbook", exact: true })
+    .selectOption({ label: "northbridge-portfolio.xlsx" });
   await page.getByRole("button", { name: "Review run", exact: true }).click();
-  const upload = await uploaded;
-  assert.equal(upload.status(), 200);
-  assert.equal((await upload.json()).name, "northbridge-filing.txt");
   const submitButton = page.getByRole("button", { name: "Submit run", exact: true });
   await submitButton.waitFor();
   for (const label of ["I have checked this", "I accept this limit"]) {
@@ -338,17 +361,33 @@ async function checkCharts(report, artifacts, channel, page) {
 
   await section("Modules").click();
   await modules.getByRole("link", { name: /^Committee decision, Delivered/u }).click();
-  const limits = report.getByRole("table", { name: "Portfolio limits", exact: true });
-  const issuerLimit = limits.getByRole("row").filter({ hasText: "Single-issuer limit" });
-  for (const value of ["3.0", "4.0", "5.0", "% NAV"]) {
-    await issuerLimit.getByRole("cell", { name: value, exact: true }).waitFor();
-  }
-  await limits.getByRole("cell", { name: "Not supplied: no proposal", exact: true }).waitFor();
-  await report.getByRole("note").filter({ hasText: "validated portfolio basis" }).waitFor();
-  assert.equal(
-    await report.getByRole("figure", { name: "Portfolio limits", exact: true }).count(),
-    0,
+  const limits = report.getByRole("figure", { name: "Portfolio limits", exact: true });
+  await limits.getByText("2.37%", { exact: true }).waitFor();
+  assert.equal(await limits.locator("[data-bar]").count(), 2);
+  assert.equal(await limits.locator("[data-tick]").count(), 2);
+  await limits.screenshot({ path: path.join(artifacts, `${channel}-portfolio-limits.png`) });
+  await checkTraceFocus(
+    page,
+    limits.getByRole("button", { name: "Show sources for Portfolio limits", exact: true }),
+    /Compliance_Monitor snapshot/u,
   );
+  await limits.getByRole("radio", { name: "Table", exact: true }).check();
+  for (const value of ["2.37%", "2.50%", "3.73%", "5.00%"]) {
+    await limits.getByRole("cell", { name: value, exact: true }).waitFor();
+  }
+  assert.equal(await limits.getByText("2.40%", { exact: true }).count(), 0);
+  await report
+    .locator("summary")
+    .filter({ hasText: /^Published exposures and proposals$/u })
+    .click();
+  const publishedLimits = report.getByRole("table", {
+    name: "Published exposures and proposals",
+    exact: true,
+  });
+  await publishedLimits.getByRole("cell", { name: "2.40", exact: true }).waitFor();
+  await publishedLimits
+    .getByRole("cell", { name: "Not supplied: no proposal", exact: true })
+    .waitFor();
 
   await section("Forecast").click();
   const revenue = report.getByRole("figure", { name: "Revenue", exact: true });
@@ -362,6 +401,10 @@ async function checkCharts(report, artifacts, channel, page) {
   });
   await revenueRow.getByRole("cell", { name: "1,050", exact: true }).first().waitFor();
   const runCharts = report.getByRole("region", { name: "Run charts", exact: true });
+  await runCharts
+    .getByRole("figure", { name: "Portfolio limits", exact: true })
+    .getByText("3.73%", { exact: true })
+    .waitFor();
   const forecastDebt = runCharts.getByRole("figure", { name: "Debt maturities", exact: true });
   await forecastDebt.getByRole("radio", { name: "Table", exact: true }).check();
   await forecastDebt.getByRole("cell", { name: "1,250", exact: true }).waitFor();
@@ -503,6 +546,7 @@ for (const [channel, brand, envName] of [
             "downside",
             "rate-shocks",
             "instrument-quotes",
+            "portfolio-limits",
             "revenue",
             "evidence",
           ].map((view) => `${channel}-${view}.png`),
@@ -520,7 +564,7 @@ for (const [channel, brand, envName] of [
             "downside break-point ranking, watch timing, and narrow layout",
             "rate and currency shocks with zero and unreported hedge outcomes",
             "dated instrument quotes, decision and recovery qualification",
-            "portfolio limits table and validation gap",
+            "selected workbook attestation, portfolio limits and proposal qualification",
             "forecast chart and model",
             "forecast run figures and original module",
             "signed liquidity bridge and unfunded refinancing row",

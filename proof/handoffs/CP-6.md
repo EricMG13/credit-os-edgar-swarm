@@ -25,8 +25,8 @@ A located finding.
 
 | Limit | Current exposure | Proposed exposure | Limit value | Reporting unit | Basis and limitation |
 | --- | --- | --- | --- | --- | --- |
-| Single-issuer limit | 3.0 | 4.0 | 5.0 | % NAV | Synthetic. |
-| High-yield bucket | 12.0 | Not supplied: no proposal | 15.0 | % NAV | Synthetic. |
+| Max single issuer exposure | 2.37 | 2.40 | 2.50 | % NAV | Synthetic Compliance_Monitor snapshot as of 2025-03-31. Proposal is illustrative. |
+| Max unrated exposure | 3.73 | Not supplied: no proposal | 5.00 | % NAV | Synthetic Compliance_Monitor snapshot as of 2025-03-31. |
 
 ### Events: Decision and watch
 
@@ -58,7 +58,7 @@ A located finding.
 
 ### Portfolio posture
 
-Final Sizing Posture: Requires More Work. The decision is driven by the absence of mandate and exposure data, because no portfolio limit is supplied, which implies the size is not established.
+Final Sizing Posture: Requires More Work. The decision is driven by the absence of a supported proposal because eligibility and risk budget were not established, which implies that the size is not established. The limits table is synthetic.
 Basis: annual.txt, page 2
 
 ### T6A.4 - Register

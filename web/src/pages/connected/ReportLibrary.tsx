@@ -29,6 +29,7 @@ import { Forecast } from "./report/Forecast";
 import { MetricGrid } from "./report/MetricGrid";
 import { Modules } from "./report/Modules";
 import { PublishedTraceProvider } from "./report/PublishedTrace";
+import { PortfolioBasisProvider } from "./report/PortfolioBasis";
 import { useResource } from "./useResource";
 
 const metricLabels = [
@@ -323,46 +324,63 @@ function ReportPage({
   return (
     <div className="mt-4 grid min-w-0 gap-5">
       <ReportNav tab={tab} modules={view.modules.length} />
-      <PublishedTraceProvider
-        route={JSON.stringify([routeKey, tab, parts])}
-        snapshot={snapshot}
+      <PortfolioBasisProvider
         folder={run.folder}
-        entries={view.entries}
+        enabled={
+          (tab === "forecast" || tab === "modules") &&
+          view.entries.some(
+            ({ output }) =>
+              output.module === "CP-6" && output.charts?.some(({ kind }) => kind === "limits"),
+          )
+        }
       >
-        {tab === "history" && <RunHistory snapshot={snapshot} run={run} />}
-        {tab === "overview" && (
-          <Overview
-            snapshot={snapshot}
-            run={run}
-            view={view}
-            hasCalendar={Boolean(calendar?.rows.length || calendar?.gaps.length)}
-          />
-        )}
-        {tab === "calendar" && calendar && <Calendar calendar={calendar} />}
-        {tab === "changes" && (
-          <Changes snapshot={snapshot} run={run} entries={view.entries} change={change} />
-        )}
-        {tab === "modules" && (
-          <Modules snapshot={snapshot} run={run} view={view} module={parts[0]} output={parts[1]} />
-        )}
-        {tab === "forecast" && <Forecast run={run} view={view} />}
-        {tab === "evidence" && (
-          <ReportEvidence
-            snapshot={snapshot}
-            run={run}
-            entries={view.entries}
-            target={parts.join("/")}
-            comparison={
-              rows.length ? (
-                <section className={card}>
-                  <h3 className={heading}>Comparison measures</h3>
-                  <ComparisonTable rows={rows} />
-                </section>
-              ) : null
-            }
-          />
-        )}
-      </PublishedTraceProvider>
+        <PublishedTraceProvider
+          route={JSON.stringify([routeKey, tab, parts])}
+          snapshot={snapshot}
+          folder={run.folder}
+          entries={view.entries}
+        >
+          {tab === "history" && <RunHistory snapshot={snapshot} run={run} />}
+          {tab === "overview" && (
+            <Overview
+              snapshot={snapshot}
+              run={run}
+              view={view}
+              hasCalendar={Boolean(calendar?.rows.length || calendar?.gaps.length)}
+            />
+          )}
+          {tab === "calendar" && calendar && <Calendar calendar={calendar} />}
+          {tab === "changes" && (
+            <Changes snapshot={snapshot} run={run} entries={view.entries} change={change} />
+          )}
+          {tab === "modules" && (
+            <Modules
+              snapshot={snapshot}
+              run={run}
+              view={view}
+              module={parts[0]}
+              output={parts[1]}
+            />
+          )}
+          {tab === "forecast" && <Forecast run={run} view={view} />}
+          {tab === "evidence" && (
+            <ReportEvidence
+              snapshot={snapshot}
+              run={run}
+              entries={view.entries}
+              target={parts.join("/")}
+              comparison={
+                rows.length ? (
+                  <section className={card}>
+                    <h3 className={heading}>Comparison measures</h3>
+                    <ComparisonTable rows={rows} />
+                  </section>
+                ) : null
+              }
+            />
+          )}
+        </PublishedTraceProvider>
+      </PortfolioBasisProvider>
     </div>
   );
 }

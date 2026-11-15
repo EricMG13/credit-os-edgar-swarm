@@ -28,6 +28,8 @@ function chartOutput(entry: OutputEntry) {
   const withheld = parseError || state?.established === false || blocked(entry);
   const coveredLines = new Set([...charts, ...chartGaps].map(({ table }) => table));
   return {
+    id: entry.output.id,
+    sha256: entry.output.sha256,
     charts: withheld ? [] : charts,
     chartGaps: [
       ...chartGaps,
