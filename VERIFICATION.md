@@ -4,6 +4,24 @@ Keep one running record here. A pass applies only to the stated scope. Earlier v
 engine is in [EricMG13/final-workflow](https://github.com/EricMG13/final-workflow)'s
 `VERIFICATION.md`, which also keeps the retained runs this copy leaves out.
 
+## 2026-11-15 — Windows candidate and extracted-project checks
+
+- The archive had omitted the React design system and brand tokens used by
+  12 web test files. Confidence review traced those reads and verified the
+  revised ZIP contains both files byte for byte. The Windows guide now records
+  the retained Caesars result. Packaged application, proof inputs and pins
+  match the preceding candidate. The Python quality gate and 27 targeted tests
+  passed. Extracted `CI=1 npm run gates` passed locally (3,047 web tests,
+  70 script tests and the file-browser checks).
+- Candidate `9c9a924`, SHA-256
+  `f6def4b788135bfb583e11829e339c92d90df22c1657ddcebf71bb6c2097fbfd`.
+  Its verified clean extraction passed macOS Chrome (`20261115-173348-01`)
+  and Edge (`20261115-173359-01`). The same build replayed all five Caesars
+  views at 1,440 and 390 px, checked against the mock layouts and native data.
+  The replay restored the download copy after local preview startup and verified
+  the CP-2 hash, C11/C14 and 464.86 versus 647.95 US$m. Windows work-PC proof
+  and publication are pending.
+
 ## 2026-11-15 — Portfolio limits from a validated fund export
 
 - Confidence review exercised the frozen source links and pinned bytes, plot
