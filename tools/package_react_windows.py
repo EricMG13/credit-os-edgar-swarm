@@ -20,6 +20,8 @@ SOURCE_PATHS = (
     "Run-React-Proof.cmd",
     "apps/issuer-library",
     "cases/context",
+    "docs/design/brand-tokens.md",
+    "docs/design/design-system.md",
     "docs/react-workflow.md",
     "docs/reuse/selected-methods",
     "docs/rulings",

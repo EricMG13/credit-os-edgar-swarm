@@ -3,7 +3,7 @@ from zipfile import ZipFile
 
 import pytest
 
-from tools.package_react_windows import validate_source, write_bundle
+from tools.package_react_windows import PROJECT, SOURCE_PATHS, git, validate_source, write_bundle
 
 
 @pytest.mark.parametrize("entry", ["../outside", "src/.env", "proof/key.pem", "web/dist/data.js"])
@@ -38,3 +38,10 @@ def test_keeps_runtime_and_compiled_assets_at_the_archive_root(tmp_path):
             "SOURCE-COMMIT.txt",
         }
         assert archive.read("SOURCE-COMMIT.txt") == b"candidate\n"
+
+
+def test_selected_sources_include_the_react_design_specs() -> None:
+    payload = git(PROJECT, "archive", "--format=zip", "HEAD", "--", *SOURCE_PATHS)
+    with ZipFile(BytesIO(payload)) as archive:
+        for name in ("docs/design/design-system.md", "docs/design/brand-tokens.md"):
+            assert archive.read(name) == (PROJECT / name).read_bytes()
