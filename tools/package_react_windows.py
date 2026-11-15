@@ -30,8 +30,6 @@ SOURCE_PATHS = (
     "pyproject.toml",
     "react_frontend",
     "src",
-    "tests/test_cpos_launch.py",
-    "tests/fixtures/run-expectations/outcome-key.json",
     "uv.lock",
     "web",
 )

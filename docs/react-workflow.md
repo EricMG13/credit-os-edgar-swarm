@@ -65,7 +65,8 @@ uv run --locked python tools/package_react_windows.py --revision HEAD
 
 The builder installs the locked frontend dependencies in a temporary source
 directory and writes `delivery/credit-os2-react.zip` and its checksum. Candidate
-archives contain the proof fixture and exclude local issuer data.
+archives contain the synthetic filing and canned handoffs in `proof/handoffs/`.
+The bundled proof runs independently of development fixtures and local issuer data.
 
 ## Open the interface
 

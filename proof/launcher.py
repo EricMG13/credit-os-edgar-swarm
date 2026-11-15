@@ -5,16 +5,18 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import re
 import socket
 import sys
 import tempfile
-from importlib import import_module
 from pathlib import Path
+from typing import Any
 from unittest.mock import patch
 
 from proof import DUMMY_KEY
 
 FILING = Path(__file__).with_name("northbridge-filing.txt")
+HANDOFFS = Path(__file__).with_name("handoffs")
 
 
 def verify_upload(sources: Path, context: Path) -> str:
@@ -32,6 +34,18 @@ def reject_network(*_args: object, **_kwargs: object) -> None:
     raise RuntimeError("outbound network is disabled in the synthetic CP-OS launcher")
 
 
+def canned_handoff(context: dict[str, Any], case: str) -> str:
+    module = context["module_id"]
+    if not re.fullmatch(r"CP-[A-Z0-9]+", module):
+        raise ValueError("unexpected module in the synthetic request")
+    findings = (HANDOFFS / f"{module}.md").read_text(encoding="utf-8")
+    sources = [f"- {name} {digest}" for name, digest in context["sources"].items()]
+    sources.extend(f"- {name} {entry['sha256']}" for name, entry in context["handoffs"].items())
+    return "\n".join(
+        [f"# {module}", "", "## Request", case, "", "## Sources", "", *sources, "", findings]
+    )
+
+
 def run_engine(argv: list[str]) -> int:
     from deploy_workflow.model.adapter import AdapterReply, LiveAdapter
     from deploy_workflow.model.turn import ToolCall, Turn, TurnRequest, Usage
@@ -47,9 +61,6 @@ def run_engine(argv: list[str]) -> int:
         raise ValueError("synthetic proof requires a scheduler output and library ownership")
     digest = verify_upload(args.sources, args.context)
 
-    sys.path.insert(0, str(cpos_launch.ROOT / "tests"))
-    fixture = import_module("test_cpos_launch")
-
     with tempfile.TemporaryDirectory(prefix="credit-os-proof-") as temp:
         prepared = cpos_launch.prepare(
             args.context,
@@ -63,8 +74,6 @@ def run_engine(argv: list[str]) -> int:
     run = prepared.plan.run
     if run.pathway != "credit_snapshot" or args.prior != "none":
         raise ValueError("synthetic proof requires a first Credit Snapshot run")
-    routes = list(prepared.layout.routes)
-    block = fixture.forecast_block()
 
     def complete(_adapter: LiveAdapter, request: TurnRequest, **_kwargs: object) -> AdapterReply:
         context = json.loads(request.messages[1].text)
@@ -72,9 +81,7 @@ def run_engine(argv: list[str]) -> int:
             raise ValueError("CP-OS request did not retain the uploaded filing digest")
         if context["run"] != run.model_dump(mode="json"):
             raise ValueError("CP-OS request did not retain the submitted run identity")
-        text = fixture.forecast_answer(context, routes, block).replace(
-            f"{fixture.ISSUER} as of {fixture.AS_OF}.", f"{run.issuer_name} as of {run.as_of}.", 1
-        )
+        text = canned_handoff(context, f"{run.issuer_name} as of {run.as_of}.")
         usage = Usage(
             input_tokens=0,
             cached_read_tokens=0,
