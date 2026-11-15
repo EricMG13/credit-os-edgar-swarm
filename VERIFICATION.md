@@ -4,6 +4,32 @@ Keep one running record here. A pass applies only to the stated scope. Earlier v
 engine is in [EricMG13/final-workflow](https://github.com/EricMG13/final-workflow)'s
 `VERIFICATION.md`, which also keeps the retained runs this copy leaves out.
 
+## 2026-11-15 — Evidence Record and report traces
+
+- Viewed the Record tab with the existing Evidence tabs and module filter.
+  Run totals use RBOT-HTML's scheduler timestamps and spend journal. Module
+  timings, calls, instructions and hashes use the published record. Synthetic
+  adapter responses carry an explicit label, and unavailable totals remain
+  unavailable in retained reports without a scheduler record.
+- Verified the Overview passage, a specific Modules debt chart row, and the
+  Forecast model's pinned input block. A separate paired-run fixture checked
+  the Changes measure link and both maturity schedule sources. It confirmed
+  that a recorded zero opens the earlier row and that the current source
+  excludes the other maturity rows. The upload-to-report proof used actual
+  RBOT-HTML publication of the synthetic run. Confidence review checked
+  ambiguous row bindings, exact amounts and the selected delivery's handoff.
+- Fixed two browser proof issues. The debt locator now searches within the
+  chosen row, and the download check waits until Summary has switched tabs
+  and cleared the module filter.
+- Backend and pins match `256101a`. The quality gate, 68 targeted Python tests,
+  1,408 web tests, production build, lint and formatting passed.
+- Candidate `f495920049e6691bb00538ee8802c62eb82290a4` SHA-256
+  `228292e206f850acc376db101f5650a887d1018ef04df4c7b4d567a15cbf3c7d`.
+  Chrome 157.0.8103.78 (`20261115-223326-01`) and Edge 157.0.4341.60
+  (`20261115-223341-01`) each passed 27 checks from a clean macOS extraction.
+  The preview build's files match the candidate and the preview run is
+  `20261115-222925-01`. The ZIP stays local pending both work PC passes.
+
 ## 2026-11-15 — Credit OS Run start and Run activity exports
 
 - Compared both screens with `Run start.dc.html` and `Run activity.dc.html` from
@@ -951,43 +977,3 @@ and the cross-check against earlier decisions: `docs/design/2026-11-12-redesign-
   Evidence were not rendered. Safari, Firefox, real browser zoom, print against the previous layout,
   screen readers and Windows not run. The header is 73px taller at 1440×900. This branch is 1,535 changed
   lines of code and tests against the 800-line convention, waived by the owner on 2026-11-12 (PR 67).
-
-## 2026-11-12 — No module code on screen (branch `claude/redesign-review-adaptation-892369`, owner ruling 2026-11-12)
-
-Scope: offline, macOS, headless Chrome; no provider called. Display only: the issuer library and the
-run start page name a module and never show its code (`CP-…`). Stored handoffs, routes, `href`s,
-download names, saved answers and stored source file names and paths are unchanged. The ruling is the
-2026-11-12 amendment in `docs/rulings/2026-11-11-reader-and-issuer-report.md` (it replaces "the code
-second" in decision 5).
-- `node --test apps/issuer-library/credit_os/web/reader.test.cjs apps/issuer-library/credit_os/web/static.test.cjs apps/issuer-library/credit_os/web/calendar.test.cjs`: exit 0, 266 passed.
-- `uv run pytest tests/test_context_form.py tests/test_run_start_page.py tests/test_library_reader_refs.py tests/test_library_index.py -q`: exit 0, 185 passed.
-- `uv run pytest tests/test_library_page_browser.py -m browser -q`: exit 0, 41 passed.
-- `uv run pytest tests/test_model_shell_browser.py -m browser -q`: exit 0, 7 passed.
-- `uv run python tools/quality_gate.py`: exit 0, 0 findings.
-- Fidelity: a scratch library built from the four listed TDG runs (all earlier format), every in-app
-  route crawled in headless Chrome with folds, audit items and the inspector opened: 248 routes, no
-  `CP-…` in text, `title` or `aria-label`, no "Name (Name)". The first crawl found 25 codes in Evidence's
-  "Methods changed since this run", which no fixture carried; fixed and tested. A stored source file name
-  that holds a `CP-` token is shown as stored (synthetic new-format run, browser test). The Changes tab and the Short Credit Snapshot pathway that
-  main added are covered by the same probes (the Changes route is scanned; the run start probe visits `short_snapshot`).
-- Reader check, scope: one real run (`cpos-tdg-sol-medium-all-001`) read on Report history, the Modules
-  navigator, the Liquidity page with its inspector, and Evidence, for this change only: names stand where
-  codes stood and nothing else moved. Not read against the September VMO2 reference for voice; the
-  change touches no prose.
-- Reviews: task review, whole-branch review, three fix rounds (service refusal text on the run start
-  page; "Methods changed"; stored file names), each re-reviewed.
-- Not verified: no real run is new format, so new-format pages rest on the synthetic fixture. On a
-  new-format page or the Changes tab a dotted token shaped like a step id (`T4.24`) reads "a method step", as
-  earlier-format pages have since 2026-11-10 (open, owner's call). Run start states the six-pathway,
-  three-level probe does not reach (upload, poll and carried-run messages). The shell's own navigation and
-  headings of the standalone HTML file (`src/deploy_vii/assets`) are covered by the new browser test;
-  its body content and files already delivered are not. Screen readers and Windows not run.
-
-## 2026-11-12 — First real CP-8 run read, and four defects fixed (branch `claude/changes-real-run-fixes`; ruling `2026-11-12-credit-snapshot-claude-rerun.md` and the amendment in `2026-11-11-module-presets-and-changes.md`)
-Scope: live, dated TDG FY2024 public case, candidates not reviewed. `tdg-proof-snapshot-opus-002` on opus-medium: 13 of 13 modules accepted, including CP-4 (64,000 output limit) and CP-8 (one rejected draft), delivered, USD 19.45 charged of a USD 25 cap; total proof-run spend USD 37.07. CP-8 found no issuer change (both runs read the same FY2024 filings) and marked undrawn facilities Not comparable (843 vs 1006 US$m: securitization availability added); the library Changes tab rendered it. Reading it found D1 (Basis lines cited `changes.json` and `prior/CP-1.md, page 4`), D2 (unchanged measures carried the cause `Unresolved`), D3 (the tab said gross debt is not stated although both CP-1s state it) and D4 (new modules were `Unresolved`); each fixed with a failing test first (D3 by saying what the comparison reads, not by fuzzy matching; no CP-1 layout change). Offline checks, not live: the real accepted CP-8 handoff through the new checker, with the pack rebuilt from the real handoffs (measures, modules, limitations and maturity profile equal to the real pack's; `omitted`, `schema` and `selection` differ by design) and the selections as recorded (`tdg-reader-format-001`'s manifest has no `selection` key, so null; the current run `preset`): 6 refusals (4 D2, 2 D1) with the first version of D4, 14 (4 D2, 8 D4, 2 D1) once a prior with no recorded selection counts as a preset run (a prior accepted as a base only for its lead module is a whole-pathway run); CI fast tests command exit 0 (2937 passed; node 278 passed); `quality_gate.py` exit 0. Probes `seam3_verdicts.py`, `seam3_page.cjs`, `t4r4_same_period.py` exit 0; `t4r4_sentences.py` exits 1 and `t4r4_fact_row_leak.py` passes only vacuously, both because the probe's Cash and Undrawn rows (zero difference) say `Unresolved`, which D2 now refuses; copies with `None` there exit 0 (62 ok; 7 refused, each for its own reason).
-Not proven: CP-DR web guidance on Claude; CP-8 on a pair where the issuer changed; the VMO2 reader check; the D1, D2 and D4 fixes on a new live CP-8 draft (the model may still write other forms); gross debt, net debt and free cash flow still unread from the two real CP-1 layouts.
-
-## 2026-11-12 — Proof runs on Claude and OpenAI, and the Anthropic output limit (branch `claude/anthropic-output-limit`; rulings `2026-11-12-module-changes-proof-runs*.md`)
-Scope: live, dated TDG FY2024 public case, candidates not reviewed. OpenAI sol-medium: three runs stopped at CP-1 with "You have no credits remaining"; USD 1.39 spent; nothing proven. Claude opus-medium: `tdg-proof-short-opus-001` (short_snapshot) CP-0, CP-1, CP-L10 accepted and delivered, USD 1.95, CP-L10 accepted on its first draft with a ten-row Key figures table; `tdg-proof-portfolio-opus-001` (portfolio_decision) CP-0, CP-1, CP-1A, CP-DR, CP-2, CP-2E accepted, stopped on its USD 10 cap in CP-3, USD 7.82, CP-1's layer-1 forecast inputs block accepted by `cpos_forecast.parse(..., "CP-1")`; `tdg-proof-snapshot-opus-001` (credit_snapshot with CP-8 against tdg-reader-format-001) CP-0, CP-1, CP-1A, CP-DR accepted, stopped in CP-4 at the output limit, USD 6.46. Opus cost about USD 1.3-1.6 a module.
-Defect: CP-4 call 19 ended `max_tokens` at 32,000 output tokens (7,431 thinking) inside `write_handoff`, so the call was lost (`StreamCut`, run stopped). Anthropic spends thinking out of the output limit. Fix: `cpos_launch.output_limit` asks Anthropic configs for 64,000 (others 32,000) and the hold follows (+USD 0.64 a call; opus-medium credit_snapshot 2.34 -> 2.98, portfolio_decision 2.11 -> 2.75, short_snapshot 0.99 -> 1.63). `wb_cap_presets.py` exit 0 (USD 20 cap admits every preset, with and without CP-8); `wb_cp8_hold_sizes.py` exit 0 but it imports the 32,000 constant, so it does not size Opus at 64,000. Known limit: a `max_tokens` stop inside a tool call is retried only when no usage was reported (`loop._RETRY_CLASSES`), so a charged cut stops the run; nothing tells the model to write shorter.
-Not proven: CP-8 and the Changes tab on real output; CP-2G with the new presets; CP-DR web search guidance (not offered on Claude); the VMO2 reader check; that 64,000 is enough for CP-4 (not rerun).
