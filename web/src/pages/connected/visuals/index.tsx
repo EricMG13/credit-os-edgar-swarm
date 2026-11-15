@@ -1,7 +1,9 @@
 import type { ReactNode } from "react";
 import { ChartTable } from "@/components/chart/ChartTable";
 import { ChartWithTable } from "@/components/chart/ChartWithTable";
+import { TRACE_HOST } from "@/pages/library/parts/TraceControl";
 import { containsReference } from "../publishedReport";
+import { PublishedSource } from "../report/PublishedTrace";
 import { publishedChart } from "./charts";
 import { edgeMap } from "./EdgeMap";
 import { eventLane } from "./EventLane";
@@ -60,15 +62,15 @@ export function LegacyVisuals({
     if (!title || typeof line !== "number" || !Number.isSafeInteger(line) || line <= 0) return [];
     const link = evidenceHref?.(line);
     const actions = link ? (
-      <a className="text-small text-action underline" href={link}>
+      <PublishedSource href={link} name={title}>
         Source table
-      </a>
+      </PublishedSource>
     ) : undefined;
     const gap = word(descriptor.gap);
     const key = `${category}-${title}-${String(line)}`;
     if (gap) {
       return [
-        <section key={key} className={`grid min-w-0 gap-2${box}`}>
+        <section key={key} className={`${TRACE_HOST} grid min-w-0 gap-2${box}`}>
           <h4 className="font-display text-h4">{title}</h4>
           <p role="note">
             {link && containsReference(gap) ? "Not established for this run. See Evidence." : gap}
@@ -93,7 +95,7 @@ export function LegacyVisuals({
         );
     }
     return [
-      <div className={`grid min-w-0 grid-cols-[minmax(0,1fr)] gap-2${box}`} key={key}>
+      <div className={`${TRACE_HOST} grid min-w-0 grid-cols-[minmax(0,1fr)] gap-2${box}`} key={key}>
         {chart ?? (
           <>
             <h4 className="font-display text-h4">{title}</h4>

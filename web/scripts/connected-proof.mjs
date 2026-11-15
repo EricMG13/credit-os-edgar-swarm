@@ -131,6 +131,22 @@ async function submit(page) {
   return new URL(page.url()).pathname.split("/").at(-1);
 }
 
+async function checkTraceFocus(page, source, detail) {
+  const trigger = await source.elementHandle();
+  try {
+    await source.press("Enter");
+    const drawer = page.getByRole("dialog");
+    await drawer.getByText(detail).first().waitFor();
+    const href = await drawer.getByRole("link", { name: "Open in Evidence" }).getAttribute("href");
+    await page.keyboard.press("Escape");
+    await drawer.waitFor({ state: "hidden" });
+    await page.waitForFunction((element) => document.activeElement === element, trigger);
+    return href;
+  } finally {
+    await trigger.dispose();
+  }
+}
+
 async function checkCalendar(report, artifacts, channel, page) {
   await report.getByRole("link", { name: "Issuer calendar", exact: true }).click();
   await page.waitForURL((url) => url.hash === "#calendar");
@@ -149,10 +165,12 @@ async function checkCalendar(report, artifacts, channel, page) {
     9,
   );
   await events.screenshot({ path: path.join(artifacts, `${channel}-calendar.png`) });
-  const source = table.getByRole("link", { name: /^Source for Synthetic note ·/u }).first();
-  const href = await source.getAttribute("href");
+  const source = table.getByRole("button", { name: /^Show sources for Synthetic note ·/u }).first();
+  const href = await checkTraceFocus(page, source, /Filing p\.1/u);
   assert.match(href, /#evidence\/\d+-\d+$/u);
-  await source.click();
+  await table.waitFor();
+  await source.press("Enter");
+  await page.getByRole("dialog").getByRole("link", { name: "Open in Evidence" }).click();
   await page.waitForURL(new URL(href, page.url()).href);
   await report.getByRole("cell", { name: "Filing p.1", exact: true }).waitFor();
 }
@@ -177,10 +195,15 @@ async function checkCharts(report, artifacts, channel, page) {
   for (const value of ["500", "1,250", "Not supplied: the schedule stops here"]) {
     await debt.getByText(value, { exact: true }).first().waitFor();
   }
-  const source = debt.getByRole("link", { name: "Source table", exact: true });
-  const sourceHref = await source.getAttribute("href");
+  const source = debt.getByRole("button", {
+    name: "Show sources for Debt maturities",
+    exact: true,
+  });
+  const sourceHref = await checkTraceFocus(page, source, "Basis");
   assert.match(sourceHref, /#evidence\/\d+-\d+$/u);
-  await source.click();
+  assert.ok(await debt.getByRole("radio", { name: "Table", exact: true }).isChecked());
+  await source.press("Enter");
+  await page.getByRole("dialog").getByRole("link", { name: "Open in Evidence" }).click();
   await page.waitForURL(new URL(sourceHref, page.url()).href);
   await report
     .getByRole("cell", { name: "Not supplied: the schedule stops here", exact: true })
@@ -218,9 +241,11 @@ async function checkCharts(report, artifacts, channel, page) {
   await forecastDebt.getByRole("radio", { name: "Table", exact: true }).check();
   await forecastDebt.getByRole("cell", { name: "1,250", exact: true }).waitFor();
   assert.equal(
-    await forecastDebt
-      .getByRole("link", { name: "Source table", exact: true })
-      .getAttribute("href"),
+    await checkTraceFocus(
+      page,
+      forecastDebt.getByRole("button", { name: "Show sources for Debt maturities", exact: true }),
+      "Basis",
+    ),
     sourceHref,
   );
   const bridge = runCharts.getByRole("figure", { name: "Liquidity bridge", exact: true });
@@ -359,6 +384,7 @@ for (const [channel, brand, envName] of [
             "finished publication",
             "overview",
             "issuer calendar date precision and originating row",
+            "figure and row trace keyboard focus restoration",
             "changes",
             "financial chart, table and source trace reload",
             "portfolio limits table and validation gap",

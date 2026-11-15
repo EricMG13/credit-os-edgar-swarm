@@ -29,12 +29,30 @@ export function TraceControl({
     throw new RangeError(`the run holds no trace "${trace}"`);
   }
   return (
+    <TraceButton
+      label={label}
+      onDark={onDark}
+      open={() => {
+        run.open(trace);
+      }}
+    />
+  );
+}
+
+export function TraceButton({
+  label,
+  open,
+  onDark = false,
+}: {
+  label: string;
+  open: () => void;
+  onDark?: boolean;
+}) {
+  return (
     <Tooltip title="Show sources" placement="top right">
       <TooltipTrigger
         aria-label={label}
-        onPress={() => {
-          run.open(trace);
-        }}
+        onPress={open}
         className={cx(
           "flex size-7 flex-none cursor-pointer items-center justify-center rounded-ds-sm border opacity-0 transition-opacity duration-150 group-hover/trace:opacity-100 focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 in-data-[sources=on]:opacity-100 motion-reduce:transition-none [@media(hover:none)]:opacity-100",
           onDark

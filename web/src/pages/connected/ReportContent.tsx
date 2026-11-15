@@ -80,8 +80,17 @@ export function traceDetails(
   block: Block,
   line: number,
 ) {
-  const chips = snapshot.chips[`${entry.output.id}:${String(line)}`] ?? [];
+  const chipsAt = (at: number) => snapshot.chips[`${entry.output.id}:${String(at)}`] ?? [];
   const row = block.type === "table" ? block.rows.find((item) => item.line === line) : null;
+  const tableRows = block.type === "table" && block.line === line ? block.rows : [];
+  const chips = [
+    ...new Map(
+      [...chipsAt(line), ...tableRows.flatMap((item) => chipsAt(item.line))].map((chip) => [
+        JSON.stringify(chip),
+        chip,
+      ]),
+    ).values(),
+  ];
   const statement =
     block.type === "text"
       ? readParagraph(block.text).body
@@ -90,16 +99,23 @@ export function traceDetails(
         : section.heading;
   const readerColumns =
     block.type === "table" ? displayColumns(block.headers, false, block.rows) : [];
+  const basisColumns =
+    block.type === "table"
+      ? displayColumns(block.headers, true, block.rows).filter(
+          (index) =>
+            !readerColumns.includes(index) || block.headers[index] === "Basis and limitation",
+        )
+      : [];
   const basis =
     block.type === "text"
       ? readParagraph(block.text).basis
-      : block.type === "table" && row
-        ? displayColumns(block.headers, true, block.rows)
-            .filter((index) => !readerColumns.includes(index))
-            .map((index) => row.cells[index])
-            .filter(Boolean)
-            .join("\n")
-        : null;
+      : [
+          ...new Set(
+            (row ? [row] : tableRows).flatMap((item) =>
+              basisColumns.map((index) => item.cells[index]).filter(Boolean),
+            ),
+          ),
+        ].join("\n") || null;
   return { chips, statement, basis };
 }
 

@@ -1,9 +1,11 @@
 import { ChartWithTable } from "@/components/chart/ChartWithTable";
+import { TRACE_HOST } from "@/pages/library/parts/TraceControl";
 import { moduleName } from "../api";
 import { card, heading } from "../layout";
 import { blocked, containsReference, evidencePath, type OutputEntry } from "../publishedReport";
 import { EVENT_HEADERS, eventLane, eventRecords } from "../visuals/EventLane";
 import { publishedTables, word } from "../visuals/visualData";
+import { PublishedSource } from "./PublishedTrace";
 
 type EventLocation = { owner: string; href: string };
 type CalendarRow = EventLocation & { cells: string[]; from: number; to: number };
@@ -79,13 +81,9 @@ export function buildCalendar(entries: OutputEntry[], folder: string) {
 
 function EventSource({ href, name }: { href: string; name: string }) {
   return (
-    <a
-      href={href}
-      aria-label={`Source for ${name}`}
-      className="text-small whitespace-nowrap text-action underline"
-    >
+    <PublishedSource href={href} name={name} linkLabel={`Source for ${name}`}>
       View source
-    </a>
+    </PublishedSource>
   );
 }
 
@@ -101,7 +99,7 @@ function CalendarFigure({ rows }: { rows: CalendarRow[] }) {
     (index) => {
       const row = rows[index];
       return row ? (
-        <p className="flex flex-wrap gap-x-2 text-text-secondary">
+        <p className={`${TRACE_HOST} flex flex-wrap items-center gap-x-2 text-text-secondary`}>
           <span>{row.owner}</span>
           <EventSource href={row.href} name={`${eventName(row.cells)} · ${row.owner}`} />
         </p>
@@ -153,7 +151,7 @@ export function Calendar({ calendar }: { calendar: ReturnType<typeof buildCalend
         <p className={card}>No dated events were published for this run.</p>
       )}
       {calendar.gaps.map(({ owner, href, title, reason }) => (
-        <section className={card} key={href}>
+        <section className={`${TRACE_HOST} ${card}`} key={href}>
           <h3 className={heading}>{title}</h3>
           <p>{owner}</p>
           <p role="note">

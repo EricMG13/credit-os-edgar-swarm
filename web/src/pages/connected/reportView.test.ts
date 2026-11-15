@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { foundationMetrics, traceKey } from "./reportView";
-import type { CatalogueRun, OutputEntry, Section } from "./publishedReport";
+import type { CatalogueRun, OutputEntry, Section, Snapshot } from "./publishedReport";
+import { traceForLine } from "./ReportContent";
 import { calculationNodes } from "./report/calculations";
 import { cashProxyCases, type Grid } from "./visuals/LegacyForecast";
 
@@ -78,6 +79,38 @@ describe("reader data fidelity", () => {
     const b = foundation([], { run: "first", id: "foundation-b", sha256: "second-hash" });
     const c = foundation([], { run: "second", id: "foundation-a", sha256: "first-hash" });
     expect(new Set([a, b, c].map((entry) => traceKey(entry, 22))).size).toBe(3);
+  });
+
+  it("derives a figure trace from its own rows and a row trace from only the selected row", () => {
+    const section = table(
+      "Chart data: debt maturities",
+      ["Period", "Debt", "Reporting unit", "Basis and limitation"],
+      [
+        ["FY2027", "0.00", "US$m", "Filing page 14"],
+        ["FY2028", "80", "US$m", "Filing page 20"],
+      ],
+      20,
+    );
+    const entry = foundation([section]);
+    const chip = { source: "filing.txt", excerpt: "The maturity schedule", sha256: "first-source" };
+    const snapshot = {
+      chips: {
+        "foundation-a:22": [chip],
+        "foundation-a:23": [chip],
+        "foundation-b:22": [{ source: "wrong.txt" }],
+      },
+    } as unknown as Snapshot;
+
+    const figure = traceForLine(snapshot, entry, 2, 21);
+    expect(figure?.evidenceItem).toBe("2-21");
+    expect(figure?.derivation.children).toMatchObject([
+      { label: "Basis", value: "Filing page 14\nFiling page 20" },
+      { label: "filing.txt" },
+    ]);
+    const row = traceForLine(snapshot, entry, 2, 22);
+    expect(row?.statement).toContain("0.00");
+    expect(row?.derivation.children[0]?.value).toBe("Filing page 14");
+    expect(row?.evidenceItem).toBe("2-22");
   });
 
   it("reads calculation links from the ledger and retains stated operands", () => {

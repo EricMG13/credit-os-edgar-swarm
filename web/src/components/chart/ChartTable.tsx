@@ -88,7 +88,7 @@ export function ChartTable({ caption, head, rows, endHeading }: ChartTableProps)
         </thead>
         <tbody>
           {rows.map((row, r) => (
-            <tr key={r} className="border-b border-border-hairline">
+            <tr key={r} className="group/trace relative border-b border-border-hairline">
               <th
                 scope="row"
                 className="sticky left-0 bg-surface-card px-3 py-2 text-left font-medium"
