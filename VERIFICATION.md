@@ -21,10 +21,10 @@ engine is in [EricMG13/final-workflow](https://github.com/EricMG13/final-workflo
 - The 91-figure map documents available producers and table/gap states. The
   browser evidence covers delivered cases and fixtures, not every pathway or
   a new paid run. The Caesars replay remains a labelled test preview.
-- Candidate source `011e514` and ZIP digest
-  `c6d6289367729ca9f52330d03054cb83d8e786157db556fb751f1a407015f45a`.
+- Candidate source `df9902b` and ZIP digest
+  `f0e0dde8da058c9d8e739bfc7d9265e7234b7295cc4efec849a9093281912507`.
   A clean extraction passed the full 14-module synthetic workflow in macOS
-  Chrome (run `20261115-150823-01`) and Edge (run `20261115-150831-01`).
+  Chrome (run `20261115-152941-01`) and Edge (run `20261115-152946-01`).
   Both verified the exact handoff download. Package validation confirmed the
   14 synthetic handoffs and excluded retained issuer data and credentials.
   The extracted proof uses its own fixtures and made no provider calls.
