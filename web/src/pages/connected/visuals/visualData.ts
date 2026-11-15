@@ -58,6 +58,13 @@ export function amount(cell: string): number | null {
   return Number.isFinite(value) ? value : null;
 }
 
+export function sharePosition(cell: string) {
+  const match = /^(0(?:\.\d+)?|1(?:\.0+)?)(?: \((\d+(?:\.\d+)?)%\))?$/.exec(cell);
+  if (!match) return null;
+  const value = Number(match[1]);
+  return match[2] === undefined || Math.abs(Number(match[2]) - value * 100) < 1e-10 ? value : null;
+}
+
 export function distinct(labels: string[]) {
   return labels.length === new Set(labels).size && labels.every(Boolean);
 }

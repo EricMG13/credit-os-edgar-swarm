@@ -8,7 +8,7 @@ import type { Trace, TreeNode } from "../library/slice";
 import { moduleName } from "./api";
 import { traceKey } from "./reportView";
 import { card, heading } from "./layout";
-import { isMonitoringTable, typedModuleTable } from "./report/ModuleTable";
+import { monitoringLabel, typedModuleTable } from "./report/ModuleTable";
 import { calculationNodes } from "./report/calculations";
 import {
   classifySections,
@@ -196,7 +196,7 @@ export function PublishedTable({
         <TraceControl trace={traceAt(line)} label={`Show sources for ${name}`} />
       )));
   return (
-    <div className="min-w-0 overflow-x-auto rounded-ds-md border border-border-hairline">
+    <div className="relative min-w-0 overflow-x-auto rounded-ds-md border border-border-hairline">
       <table className="w-full border-collapse text-sm">
         <thead className="bg-surface-subtle text-text-secondary">
           <tr>
@@ -276,7 +276,7 @@ export function findingBlocks(sections: Section[], entry: OutputEntry) {
       }
       const promoted = section.blocks.filter((block) => {
         if (block.type !== "table") return false;
-        if (isMonitoringTable(entry.output.module, section.heading, block)) return true;
+        if (monitoringLabel(entry.output.module, section.heading, block)) return true;
         const headers = block.headers.map((header) => header.trim().toLowerCase());
         return (
           (headers.includes("probability") && headers.includes("impact")) ||

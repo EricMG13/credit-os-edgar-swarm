@@ -114,8 +114,8 @@ RBOT-HTML.
 | Entry | React target and placement | What delivery must supply | Source status and fallback |
 | --- | --- | --- | --- |
 | `CP-2A-V01` **Base/downside/stress comparison** | C5 ComparisonChart with R9 case choices. Modules. | T2B.1–T2B.5 selected base period, static shocks, EBITDA, cash interest and credit metrics. | Connected when the selected handoff binds its named T2DS.1 cases to T2DS.4 results. Compare each measure on its own scale, using a signed axis for negative results. The full source table keeps all values and qualifications, including results without a compatible comparison. |
-| `CP-2A-V02` **First-break ranking and cushions** | C8 ranked bars or R8 WatchBlock. Modules. | T2B.6–T2B.8 break levels, required decline, outcome and ranking. | Table/content only. Keep incomparable cushions and qualitative breakpoints as records. |
-| `CP-2A-V03` **Stress assumptions and what breaks first** | R5 directed EdgeMap with R9 case choices. Modules. | Recorded scenario assumptions, test outcomes and explicit analytical explanation. | New view. Keep scenario assumptions visibly separate from observed outcomes. |
+| `CP-2A-V02` **First-break ranking and cushions** | C8 ranked bars or R8 WatchBlock. Modules. | T2B.6–T2B.8 break levels, required decline, outcome and ranking. | Connected rank on separately stated EBITDA-decline bases. The figure and table share the authored values and qualifications. Incomparable values have no bar. Retained sensitivity flags use the source's leading and lagging labels. |
+| `CP-2A-V03` **Stress assumptions and what breaks first** | R5 directed EdgeMap with R9 case choices. Modules. | Recorded scenario assumptions, test outcomes and explicit analytical explanation. | R9 uses the connected scenario register and R5 uses the published map. Detailed scenario crossing records stay in Evidence. |
 
 ## CP-2D
 

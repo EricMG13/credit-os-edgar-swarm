@@ -5,7 +5,7 @@ import { card, field, heading, label } from "../layout";
 import { blocked, containsReference, type OutputEntry, type Row } from "../publishedReport";
 import { PublishedTable } from "../ReportContent";
 import { namedTable } from "../reportView";
-import { amount, distinct } from "../visuals/visualData";
+import { amount, distinct, sharePosition } from "../visuals/visualData";
 import { PublishedSource } from "./PublishedTrace";
 
 const SCENARIOS = [
@@ -19,13 +19,6 @@ const SCENARIOS = [
   "Confidence",
 ];
 const RESULTS = "T2DS.4 Stressed flows and metrics";
-
-function fraction(cell: string) {
-  const match = /^(0(?:\.\d+)?|1(?:\.0+)?)(?: \((\d+(?:\.\d+)?)%\))?$/.exec(cell);
-  if (!match) return null;
-  const value = Number(match[1]);
-  return match[2] === undefined || Math.abs(Number(match[2]) - value * 100) < 1e-10 ? value : null;
-}
 
 function scenario({ line, cells }: Row) {
   const [
@@ -41,14 +34,17 @@ function scenario({ line, cells }: Row) {
   return { line, id, name, decline, interest, anchor, scope, category, confidence };
 }
 
+export function canReadDownside(entry: OutputEntry) {
+  return (
+    entry.output.module === "CP-2A" &&
+    entry.output.state?.established !== false &&
+    !blocked(entry) &&
+    !entry.output.parseError
+  );
+}
+
 export function downsideView(entry: OutputEntry) {
-  if (
-    entry.output.module !== "CP-2A" ||
-    entry.output.state?.established === false ||
-    blocked(entry) ||
-    entry.output.parseError
-  )
-    return null;
+  if (!canReadDownside(entry)) return null;
   const matrix = namedTable(entry, RESULTS, ["Metric", "Source"]);
   if (!matrix?.rows.length || matrix.headers[0] !== "Metric" || matrix.headers.at(-1) !== "Source")
     return null;
@@ -57,7 +53,7 @@ export function downsideView(entry: OutputEntry) {
   const cases =
     register?.headers.join("|") === SCENARIOS.join("|") ? register.rows.map(scenario) : [];
   const control = cases.filter(
-    ({ decline, interest }) => fraction(decline) === 0 && fraction(interest) === 0,
+    ({ decline, interest }) => sharePosition(decline) === 0 && sharePosition(interest) === 0,
   );
   const consistent =
     cases.length > 1 &&
@@ -69,8 +65,8 @@ export function downsideView(entry: OutputEntry) {
       ({ id, name, decline, interest }) =>
         names.includes(id) &&
         !containsReference(name) &&
-        fraction(decline) !== null &&
-        fraction(interest) !== null,
+        sharePosition(decline) !== null &&
+        sharePosition(interest) !== null,
     ) &&
     control.length === 1;
   return { matrix, control: consistent ? control[0] : undefined, cases: consistent ? cases : [] };

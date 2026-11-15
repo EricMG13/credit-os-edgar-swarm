@@ -13,8 +13,9 @@ import {
 import { foundationMetrics, moduleState, type buildReportView } from "../reportView";
 import { LegacyVisuals } from "../visuals";
 import { MetricGrid } from "./MetricGrid";
-import { isMonitoringTable } from "./ModuleTable";
+import { monitoringLabel } from "./ModuleTable";
 import { Downside, downsideView } from "./Downside";
+import { BreakPoints, breakPointView } from "./BreakPoints";
 
 function sectionIcon(heading: string): NavSection["icon"] {
   if (heading === "Bottom line") return "bottom-line";
@@ -28,13 +29,13 @@ function Navigator({
   run,
   current,
   entry,
-  hasDownside,
+  hasLocalFigures,
 }: {
   view: ReturnType<typeof buildReportView>;
   run: PublishedRun;
   current: string;
   entry?: OutputEntry;
-  hasDownside: boolean;
+  hasLocalFigures: boolean;
 }) {
   const allSections = entry ? findingBlocks(entry.sections, entry) : [];
   const firstFinding =
@@ -43,13 +44,12 @@ function Navigator({
   const sections = allSections.flatMap((item) => {
     const { heading, line } = item;
     const icon = sectionIcon(heading);
-    const extra = item.blocks.some(
-      (block) => block.type === "table" && isMonitoringTable(current, heading, block),
-    )
-      ? "Monitoring triggers"
-      : current === "CP-0" && heading === "Source-readiness summary"
-        ? "Readiness by area"
-        : null;
+    const watch = item.blocks.flatMap((block) =>
+      block.type === "table" ? (monitoringLabel(current, heading, block) ?? []) : [],
+    )[0];
+    const extra =
+      watch ??
+      (current === "CP-0" && heading === "Source-readiness summary" ? "Readiness by area" : null);
     if (icon === "records" && item !== firstFinding && !extra) return [];
     return [
       {
@@ -61,7 +61,7 @@ function Navigator({
   });
   if (
     entry &&
-    (hasDownside ||
+    (hasLocalFigures ||
       entry.output.charts?.length ||
       entry.output.chartGaps?.length ||
       entry.output.events?.length ||
@@ -123,6 +123,8 @@ export function Modules({
         : undefined;
   const index = entry ? view.entries.indexOf(entry) : -1;
   const downside = entry ? downsideView(entry) : null;
+  const breaks = entry ? breakPointView(entry) : null;
+  const evidenceHref = (line: number) => evidencePath(run.folder, String(index), line);
   const allMetrics = entry ? foundationMetrics(entry, view.catalogue) : [];
   const metrics = allMetrics.filter(({ metric }) =>
     ["Net debt (carrying basis)", "Debt principal", "All-in cash interest cover"].includes(
@@ -144,7 +146,7 @@ export function Modules({
           run={run}
           current={current.id}
           entry={entry}
-          hasDownside={downside !== null}
+          hasLocalFigures={downside !== null || breaks !== null}
         />
         <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-4">
           {current.outputs.length > 1 && (
@@ -184,18 +186,14 @@ export function Modules({
                     folder={run.folder}
                   />
                   <div id="module-figures" tabIndex={-1} className="grid min-w-0 gap-4">
-                    {downside && (
-                      <Downside
-                        data={downside}
-                        href={(line) => evidencePath(run.folder, String(index), line)}
-                      />
-                    )}
+                    {downside && <Downside data={downside} href={evidenceHref} />}
+                    {breaks && <BreakPoints data={breaks} href={evidenceHref} />}
                     <LegacyVisuals
                       output={entry.output}
                       sections={entry.sections}
                       primary={entry.output.module === "CP-1" ? "Debt maturities" : undefined}
                       cards
-                      evidenceHref={(line) => evidencePath(run.folder, String(index), line)}
+                      evidenceHref={evidenceHref}
                     />
                   </div>
                 </>

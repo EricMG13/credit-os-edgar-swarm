@@ -94,6 +94,23 @@ Nothing supplied contradicts the view; a USD 1,250 million refinancing would.
 | All-in cover (x) | 3.10 | 2.00 | 1.40 | Filing p.1 |
 | Net leverage (x) | 1.25 | 1.30 | Not calculated: net debt is missing | Filing p.1 |
 
+<!-- table-id: T2DS.6 -->
+
+#### T2DS.6 Break points
+
+| Break ID | Break | EBITDA decline at break (interest held) | EBITDA decline at break (k = 0.05) | Status | Source |
+| --- | --- | --- | --- | --- | --- |
+| B1 | FCF reaches zero | 0.10 (10%) | 0.20 (20%) | Calculated | Filing p.2 |
+| B2 | Cover reaches watch level | 0.15 (15%) | 0.12 (12%) | Analyst watch level, not a covenant | Filing p.1 |
+| B3 | Net leverage watch level | 0.32 (32%) | Not calculated: net debt is missing | Documentary gap | Filing p.1 |
+
+#### T2B.7 Monitoring sensitivity flags
+
+| Trigger ID | Indicator | Leading / Lagging | Threshold or Qualitative Signal | Linked Pathway Row | Escalation Consequence | Source Trace | Limitation |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| CP-2A-MON-001 | Financing costs | Leading | Increase of 100 bp | B1 | Review falling cash cover | Filing p.2 | Illustrative rate shock |
+| CP-2A-MON-002 | Cash generation | Lagging | Below zero | B2 | Review cash deficit | Filing p.1 | Working capital held constant |
+
 ### T5.5 - Register
 
 | Item | Value |

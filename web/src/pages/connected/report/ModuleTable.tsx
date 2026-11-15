@@ -72,22 +72,43 @@ function monitoringShape(title: string, data: ReturnType<typeof visible>) {
   );
 }
 
-export function isMonitoringTable(module: string, title: string, table: Table) {
-  return module === "CP-2" && monitoringShape(title, visible(table));
+function monitoringTitle(module: string, title: string, data: ReturnType<typeof visible>) {
+  if (module === "CP-2" && monitoringShape(title, data)) return "Monitoring triggers";
+  if (
+    module === "CP-2A" &&
+    /^T2B\.7 Monitoring sensitivity flags$/i.test(title) &&
+    data.headers.join("|") ===
+      "Indicator|Leading / Lagging|Threshold or Qualitative Signal|Limitation" &&
+    data.rows.every(({ cells }) => /^(?:Leading|Lagging)$/i.test(cells[1] ?? ""))
+  )
+    return "Monitoring sensitivities";
+  return null;
 }
 
-function monitoring(data: ReturnType<typeof visible>, traceAt: (line: number) => string) {
+export function monitoringLabel(module: string, title: string, table: Table) {
+  if (module !== "CP-2" && module !== "CP-2A") return null;
+  return monitoringTitle(module, title, visible(table));
+}
+
+function monitoring(
+  title: string,
+  data: ReturnType<typeof visible>,
+  traceAt: (line: number) => string,
+) {
+  const timed = data.headers[1] === "Leading / Lagging";
+  const thresholdAt = timed ? 2 : 1;
+  const detailAt = thresholdAt + 1;
   return (
     <WatchBlock
       block={{
         kind: "watch",
-        title: "Monitoring triggers",
+        title,
         items: data.rows.map(({ cells, line }) => ({
           indicator: readerText(cells[0]),
-          threshold: readerText(cells[1]),
-          timing: null,
-          detail: data.headers.slice(2).flatMap((label, index) => {
-            const text = readerText(cells[index + 2]);
+          threshold: readerText(cells[thresholdAt]),
+          timing: timed ? (cells[1]?.toLowerCase() === "leading" ? "leading" : "lagging") : null,
+          detail: data.headers.slice(detailAt).flatMap((label, index) => {
+            const text = readerText(cells[index + detailAt]);
             return text ? [{ label, text }] : [];
           }),
           trace: traceAt(line),
@@ -180,7 +201,8 @@ export function typedModuleTable(
   const data = visible(table);
   if (!data.rows.length) return null;
   if (module === "CP-0" && title === "Source-readiness summary") return readiness(data, traceAt);
-  if (module === "CP-2" && monitoringShape(title, data)) return monitoring(data, traceAt);
+  const watchTitle = monitoringTitle(module, title, data);
+  if (watchTitle) return monitoring(watchTitle, data, traceAt);
   const signature = data.headers.join("|");
   if (
     data.rows.some(({ cells }) =>

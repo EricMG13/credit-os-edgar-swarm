@@ -216,6 +216,32 @@ async function checkDownside(report, modules, artifacts, channel, page) {
   await scenarios
     .getByRole("cell", { name: "Not calculated: net debt is missing", exact: true })
     .waitFor();
+  await checkDownsideThresholds(report, page);
+}
+
+async function checkDownsideThresholds(report, page) {
+  const panel = report.getByRole("region", { name: "EBITDA break points", exact: true });
+  const chart = panel.getByRole("figure", { name: "EBITDA break points", exact: true });
+  await chart.getByText("0.10 (10%)", { exact: true }).waitFor();
+  assert.match(await chart.getByRole("listitem").first().innerText(), /FCF reaches zero/u);
+  await panel.getByRole("combobox", { name: "Cash-interest basis" }).selectOption("1");
+  await chart.getByText("0.12 (12%)", { exact: true }).waitFor();
+  assert.match(await chart.getByRole("listitem").first().innerText(), /Cover reaches watch level/u);
+  assert.equal(await chart.locator("[data-decline]").count(), 2);
+  await chart.getByRole("radio", { name: "Table", exact: true }).check();
+  await chart.getByRole("cell", { name: "Analyst watch level, not a covenant" }).waitFor();
+  await checkTraceFocus(
+    page,
+    chart.getByRole("button", { name: "Show sources for Cover reaches watch level" }),
+    /Filing p\.1/u,
+  );
+  const watches = report.getByRole("region", { name: "Monitoring sensitivities", exact: true });
+  await watches.getByRole("img", { name: "Leading", exact: true }).waitFor();
+  await watches.getByRole("img", { name: "Lagging", exact: true }).waitFor();
+  const viewport = page.viewportSize();
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.waitForFunction(() => document.documentElement.scrollWidth === 390);
+  await page.setViewportSize(viewport);
 }
 
 async function checkCharts(report, artifacts, channel, page) {
@@ -435,6 +461,7 @@ for (const [channel, brand, envName] of [
             "financial chart, table and source trace reload",
             "readiness and monitoring records with source traces",
             "downside case comparison with signed cash flow and explicit gap",
+            "downside break-point ranking, watch timing, and narrow layout",
             "portfolio limits table and validation gap",
             "forecast chart and model",
             "forecast run figures and original module",
