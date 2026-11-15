@@ -1,6 +1,7 @@
+import type { ReactNode } from "react";
 import type { SourceTable } from "./visualData";
 
-const EVENTS = [
+export const EVENT_HEADERS = [
   "Event date",
   "Date precision",
   "Published",
@@ -45,7 +46,8 @@ function dateSpan(date: string, precision: string) {
   return { from, to: end.getTime() - DAY };
 }
 
-function eventRecords(table: SourceTable) {
+export function eventRecords(table: SourceTable) {
+  if (table.headers.join("\0") !== EVENT_HEADERS.join("\0")) return [];
   return table.rows.flatMap(
     (
       [
@@ -71,8 +73,7 @@ function eventRecords(table: SourceTable) {
   );
 }
 
-export function eventLane(table: SourceTable) {
-  if (table.headers.join("\0") !== EVENTS.join("\0")) return null;
+export function eventLane(table: SourceTable, rowDetail?: (index: number) => ReactNode) {
   const events = eventRecords(table);
   if (!events.length || events.length !== table.rows.length) return null;
   events.sort((a, b) => a.from - b.from || a.to - b.to || a.index - b.index);
@@ -124,6 +125,7 @@ export function eventLane(table: SourceTable) {
                       <p className="text-text-secondary">
                         {date} · {precision} · {status}
                       </p>
+                      {rowDetail?.(index)}
                       <p className="text-text-secondary">
                         {relevance} · Published {published}
                         {table.evidenceInDrawer ? "" : ` · ${source}`}

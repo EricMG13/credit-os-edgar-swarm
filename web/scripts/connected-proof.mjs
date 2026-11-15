@@ -131,6 +131,32 @@ async function submit(page) {
   return new URL(page.url()).pathname.split("/").at(-1);
 }
 
+async function checkCalendar(report, artifacts, channel, page) {
+  await report.getByRole("link", { name: "Issuer calendar", exact: true }).click();
+  await page.waitForURL((url) => url.hash === "#calendar");
+  await page.reload();
+  const events = report.getByRole("figure", { name: "Published events", exact: true });
+  const scenario = events.getByRole("region", { name: "Scenario" });
+  await scenario
+    .getByRole("img", { name: /Synthetic review, 2025-Q3, quarter/u })
+    .first()
+    .waitFor();
+  await events.getByRole("radio", { name: "Table", exact: true }).check();
+  const table = events.getByRole("table", { name: "Published events", exact: true });
+  assert.equal(await table.getByRole("row").count(), 37);
+  assert.equal(
+    await table.getByRole("rowheader", { name: "Synthetic note", exact: true }).count(),
+    9,
+  );
+  await events.screenshot({ path: path.join(artifacts, `${channel}-calendar.png`) });
+  const source = table.getByRole("link", { name: /^Source for Synthetic note ·/u }).first();
+  const href = await source.getAttribute("href");
+  assert.match(href, /#evidence\/\d+-\d+$/u);
+  await source.click();
+  await page.waitForURL(new URL(href, page.url()).href);
+  await report.getByRole("cell", { name: "Filing p.1", exact: true }).waitFor();
+}
+
 async function checkCharts(report, artifacts, channel, page) {
   const section = (name) =>
     report
@@ -282,6 +308,7 @@ for (const [channel, brand, envName] of [
           path: path.join(artifacts, `${channel}-finished-report.png`),
           fullPage: true,
         });
+        await checkCalendar(report, artifacts, channel, page);
         await checkCharts(report, artifacts, channel, page);
         const handoff = page.waitForEvent("download");
         await report
@@ -319,14 +346,19 @@ for (const [channel, brand, envName] of [
           browser: brand,
           version: browser.version(),
           run,
-          screenshots: ["finished-report", "debt-maturities", "revenue", "evidence"].map(
-            (view) => `${channel}-${view}.png`,
-          ),
+          screenshots: [
+            "finished-report",
+            "calendar",
+            "debt-maturities",
+            "revenue",
+            "evidence",
+          ].map((view) => `${channel}-${view}.png`),
           checks: [
             "upload",
             "approved submission",
             "finished publication",
             "overview",
+            "issuer calendar date precision and originating row",
             "changes",
             "financial chart, table and source trace reload",
             "portfolio limits table and validation gap",

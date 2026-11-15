@@ -23,6 +23,7 @@ import {
 import { ReportFindings } from "./ReportContent";
 import { ReportEvidence } from "./report/Evidence";
 import { actionBias, buildReportView, foundationMetrics } from "./reportView";
+import { Calendar, buildCalendar } from "./report/Calendar";
 import { Changes, ComparisonTable } from "./report/Changes";
 import { Forecast } from "./report/Forecast";
 import { MetricGrid } from "./report/MetricGrid";
@@ -166,7 +167,8 @@ const tabs = [
   ["forecast", "Forecast"],
   ["evidence", "Evidence"],
 ] as const;
-type Tab = (typeof tabs)[number][0];
+type ReportTab = (typeof tabs)[number][0];
+type Tab = ReportTab | "calendar";
 
 function listenHash(fn: () => void) {
   window.addEventListener("hashchange", fn);
@@ -176,7 +178,7 @@ function listenHash(fn: () => void) {
 }
 
 const readHash = () => window.location.hash;
-const tabHref = (tab: Tab) => `#${tab}`;
+const tabHref = (tab: ReportTab) => `#${tab}`;
 
 function ReportNav({ tab, modules }: { tab: Tab; modules: number }) {
   return (
@@ -239,10 +241,12 @@ function Overview({
   snapshot,
   run,
   view,
+  hasCalendar,
 }: {
   snapshot: Snapshot;
   run: PublishedRun;
   view: ReturnType<typeof buildReportView>;
+  hasCalendar: boolean;
 }) {
   const foundation = view.entries.find((entry) => entry.selected && entry.output.module === "CP-1");
   const metrics = foundation
@@ -266,7 +270,14 @@ function Overview({
   );
   return (
     <>
-      <h2 className="font-display text-h2">Overview</h2>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h2 className="font-display text-h2">Overview</h2>
+        {hasCalendar && (
+          <a href="#calendar" className="text-action underline">
+            Issuer calendar
+          </a>
+        )}
+      </div>
       {view.lead ? (
         <ReportFindings
           key={view.lead.output.id}
@@ -304,13 +315,23 @@ function ReportPage({
   tab: Tab;
 }) {
   const view = buildReportView(snapshot, routeKey, run);
+  const calendar =
+    tab === "overview" || tab === "calendar" ? buildCalendar(view.entries, run.folder) : null;
   const change = comparisonForRun(run, snapshot.workspace.runs);
   const rows = change?.pack && !change.problem ? comparisonRows(change) : [];
   return (
     <div className="mt-4 grid min-w-0 gap-5">
       <ReportNav tab={tab} modules={view.modules.length} />
       {tab === "history" && <RunHistory snapshot={snapshot} run={run} />}
-      {tab === "overview" && <Overview snapshot={snapshot} run={run} view={view} />}
+      {tab === "overview" && (
+        <Overview
+          snapshot={snapshot}
+          run={run}
+          view={view}
+          hasCalendar={Boolean(calendar?.rows.length || calendar?.gaps.length)}
+        />
+      )}
+      {tab === "calendar" && calendar && <Calendar calendar={calendar} />}
       {tab === "changes" && (
         <Changes snapshot={snapshot} run={run} entries={view.entries} change={change} />
       )}
@@ -343,7 +364,8 @@ export function ReportReader({ id }: { id: string }) {
   const [sources, setSources] = useSourcesOn();
   const hash = useSyncExternalStore(listenHash, readHash);
   const [route, ...parts] = hash.slice(1).split("/");
-  const tab = tabs.find(([name]) => name === route)?.[0] ?? "overview";
+  const tab =
+    route === "calendar" ? route : (tabs.find(([name]) => name === route)?.[0] ?? "overview");
   const found = value && Object.entries(value.workspace.runs).find(([, run]) => run.folder === id);
   const catalogue = value?.catalogue.real.find((entry) => entry.id === id);
   const run = found ? found[1] : null;
