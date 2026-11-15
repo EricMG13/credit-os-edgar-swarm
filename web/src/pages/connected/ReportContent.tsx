@@ -178,15 +178,23 @@ export function PublishedTable({
   table,
   evidence = false,
   traceAt,
+  rowSource,
   href,
 }: {
   table: Table;
   evidence?: boolean;
   traceAt?: (line: number) => string;
+  rowSource?: (line: number, label: string) => ReactNode;
   href?: string;
 }) {
   const columns = displayColumns(table.headers, evidence, table.rows);
   if (!columns.length || !table.rows.length) return null;
+  const sources =
+    rowSource ??
+    (traceAt &&
+      ((line: number, name: string) => (
+        <TraceControl trace={traceAt(line)} label={`Show sources for ${name}`} />
+      )));
   return (
     <div className="min-w-0 overflow-x-auto rounded-ds-md border border-border-hairline">
       <table className="w-full border-collapse text-sm">
@@ -197,7 +205,7 @@ export function PublishedTable({
                 {richParts(table.headers[column] ?? "")}
               </th>
             ))}
-            {traceAt && (
+            {sources && (
               <th scope="col" className="px-2 py-2.5 text-left font-semibold">
                 <span className="sr-only">Sources</span>
               </th>
@@ -226,13 +234,8 @@ export function PublishedTable({
                   </td>
                 );
               })}
-              {traceAt && (
-                <td className="px-2 py-1.5">
-                  <TraceControl
-                    trace={traceAt(row.line)}
-                    label={`Show sources for ${row.cells[0] || "this row"}`}
-                  />
-                </td>
+              {sources && (
+                <td className="px-2 py-1.5">{sources(row.line, row.cells[0] || "this row")}</td>
               )}
             </tr>
           ))}

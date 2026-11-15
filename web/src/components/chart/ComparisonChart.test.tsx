@@ -166,6 +166,34 @@ describe("ComparisonChart chart side", () => {
     expect(bar).toHaveAttribute("data-zero");
     expect(bar).toHaveAttribute("data-width", "0");
   });
+
+  it("draws a deficit to the left of the same zero line as a surplus", () => {
+    const panel: ComparisonPanel = {
+      measure: "FCF",
+      min: -50,
+      max: 50,
+      values: [25, -50],
+      texts: ["25.00", "-50"],
+    };
+    const { container } = render(
+      <ComparisonChart
+        title="Stressed results"
+        cases={CASES}
+        panels={[panel]}
+        table={{ head: ["Measure", ...CASES], rows: [{ label: "FCF", cells: panel.texts }] }}
+      />,
+    );
+    expect(container.querySelector('[data-case="Base case"]')).toHaveAttribute("data-left", "50");
+    expect(container.querySelector('[data-case="Downside case"]')).toHaveAttribute(
+      "data-left",
+      "0",
+    );
+    expect(container.querySelector('[data-case="Downside case"]')).toHaveAttribute(
+      "data-width",
+      "50",
+    );
+    expect(container.querySelectorAll("[data-zero-axis]")).toHaveLength(2);
+  });
 });
 
 describe("ComparisonChart table side", () => {

@@ -14,6 +14,7 @@ import { foundationMetrics, moduleState, type buildReportView } from "../reportV
 import { LegacyVisuals } from "../visuals";
 import { MetricGrid } from "./MetricGrid";
 import { isMonitoringTable } from "./ModuleTable";
+import { Downside, downsideView } from "./Downside";
 
 function sectionIcon(heading: string): NavSection["icon"] {
   if (heading === "Bottom line") return "bottom-line";
@@ -27,11 +28,13 @@ function Navigator({
   run,
   current,
   entry,
+  hasDownside,
 }: {
   view: ReturnType<typeof buildReportView>;
   run: PublishedRun;
   current: string;
   entry?: OutputEntry;
+  hasDownside: boolean;
 }) {
   const allSections = entry ? findingBlocks(entry.sections, entry) : [];
   const firstFinding =
@@ -58,7 +61,8 @@ function Navigator({
   });
   if (
     entry &&
-    (entry.output.charts?.length ||
+    (hasDownside ||
+      entry.output.charts?.length ||
       entry.output.chartGaps?.length ||
       entry.output.events?.length ||
       entry.output.maps?.length)
@@ -118,6 +122,7 @@ export function Modules({
         ? current.outputs[Number(output)]
         : undefined;
   const index = entry ? view.entries.indexOf(entry) : -1;
+  const downside = entry ? downsideView(entry) : null;
   const allMetrics = entry ? foundationMetrics(entry, view.catalogue) : [];
   const metrics = allMetrics.filter(({ metric }) =>
     ["Net debt (carrying basis)", "Debt principal", "All-in cash interest cover"].includes(
@@ -139,6 +144,7 @@ export function Modules({
           run={run}
           current={current.id}
           entry={entry}
+          hasDownside={downside !== null}
         />
         <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-4">
           {current.outputs.length > 1 && (
@@ -177,7 +183,13 @@ export function Modules({
                     snapshot={snapshot}
                     folder={run.folder}
                   />
-                  <div id="module-figures" tabIndex={-1} className="min-w-0">
+                  <div id="module-figures" tabIndex={-1} className="grid min-w-0 gap-4">
+                    {downside && (
+                      <Downside
+                        data={downside}
+                        href={(line) => evidencePath(run.folder, String(index), line)}
+                      />
+                    )}
                     <LegacyVisuals
                       output={entry.output}
                       sections={entry.sections}

@@ -9,6 +9,8 @@ export interface ComparisonPanel {
   measure: string;
   /** The panel's own axis maximum, delivered; a bar's width is its value over it. */
   max: number;
+  /** Include a negative minimum only when the published measure needs a signed axis. */
+  min?: number;
   /** Position only, in case order; null is missing. */
   values: [number | null, number | null];
   /** The exact text of each value; null exactly where the value is missing. */
@@ -37,7 +39,11 @@ function check({ cases, panels, table }: Pick<ComparisonChartProps, "cases" | "p
   }
   if (cases[0] === cases[1]) throw new Error("the two cases must have distinct names");
   for (const p of panels) {
-    if (!(p.max > 0)) throw new Error(`panel "${p.measure}": max must be more than zero`);
+    const min = p.min ?? 0;
+    if (!Number.isFinite(min) || min > 0)
+      throw new Error(`panel "${p.measure}": min must be zero or below`);
+    if (!Number.isFinite(p.max - min) || p.max < 0 || p.max <= min)
+      throw new Error(`panel "${p.measure}": max must be at or above zero and above min`);
     p.values.forEach((v, i) => {
       const text = p.texts[i];
       if (v === null) {
@@ -49,11 +55,12 @@ function check({ cases, panels, table }: Pick<ComparisonChartProps, "cases" | "p
       if (text === null || text === undefined) {
         throw new Error(`panel "${p.measure}", ${cases[i] ?? ""}: a present value needs a text`);
       }
-      if (!(v >= 0)) {
+      if (min === 0 && !(v >= 0)) {
         throw new Error(
           `panel "${p.measure}": values sit on one zero baseline, so they must be zero or more`,
         );
       }
+      if (!(v >= min)) throw new Error(`panel "${p.measure}": a value is below the panel's min`);
       if (v > p.max) throw new Error(`panel "${p.measure}": a value is above the panel's max`);
     });
   }
@@ -82,6 +89,7 @@ function Row({
   caseName,
   color,
   value,
+  min,
   max,
   text,
 }: {
@@ -89,14 +97,26 @@ function Row({
   caseName: string;
   color: string;
   value: number | null;
+  min: number;
   max: number;
   text: string | null;
 }) {
-  const width = value === null ? 0 : (value / max) * 100;
+  const range = max - min;
+  const zero = (-min / range) * 100;
+  const left = value === null ? zero : ((Math.min(value, 0) - min) / range) * 100;
+  const width = value === null ? 0 : (Math.abs(value) / range) * 100;
   return (
     <>
       <span className="text-text-secondary">{label}</span>
       <div className="relative h-7">
+        {min < 0 && (
+          <i
+            aria-hidden="true"
+            data-zero-axis=""
+            className="absolute inset-y-0 w-px bg-border-control"
+            style={{ left: `${String(zero)}%` }}
+          />
+        )}
         {value === null ? (
           <span data-missing="" className="text-small font-medium leading-7">
             <Missing />
@@ -106,13 +126,17 @@ function Row({
             data-bar=""
             data-case={caseName}
             data-width={width}
+            data-left={left}
             data-zero={value === 0 ? "" : undefined}
-            className="absolute inset-y-0 left-0 min-w-0.5 rounded-ds-xs"
-            style={{ width: `${String(width)}%`, backgroundColor: color }}
+            className="absolute inset-y-0 min-w-0.5 rounded-ds-xs"
+            style={{ left: `${String(left)}%`, width: `${String(width)}%`, backgroundColor: color }}
           />
         )}
       </div>
-      <span data-value="" className="text-right font-medium tabular-nums text-text-primary">
+      <span
+        data-value=""
+        className="text-right font-medium wrap-anywhere tabular-nums text-text-primary"
+      >
         {text ?? ""}
       </span>
     </>
@@ -144,7 +168,9 @@ export function ComparisonChart({
               {panels.map((p) => (
                 <div key={p.measure} data-panel="" className="flex min-w-0 flex-col gap-2.5">
                   <Panel className="text-small font-medium text-text-secondary">{p.measure}</Panel>
-                  <div className="grid grid-cols-[72px_minmax(0,1fr)_56px] items-center gap-x-3 gap-y-2.5 text-small">
+                  <div
+                    className={`grid items-center gap-x-3 gap-y-2.5 text-small ${p.texts.some((text) => (text?.length ?? 0) > 12) ? "grid-cols-[72px_minmax(0,1fr)_minmax(56px,min(33%,9rem))]" : "grid-cols-[72px_minmax(0,1fr)_56px]"}`}
+                  >
                     {cases.map((c, i) => (
                       <Row
                         key={c}
@@ -152,6 +178,7 @@ export function ComparisonChart({
                         caseName={c}
                         color={colorOf(styles, c)}
                         value={p.values[i] ?? null}
+                        min={p.min ?? 0}
                         max={p.max}
                         text={p.texts[i] ?? null}
                       />

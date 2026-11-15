@@ -72,6 +72,28 @@ Nothing supplied contradicts the view; a USD 1,250 million refinancing would.
 | --- | --- |
 | Observed | Not supplied: nothing to report |
 
+### Analytical appendix — complete canonical registers
+
+<!-- table-id: T2DS.1 -->
+
+#### T2DS.1 Scenarios
+
+| Scenario ID | Name | EBITDA decline s | Cash-interest increase k | Anchor | What the assumption leaves out | Category | Confidence |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| s00 | Control (unstressed) | 0 | 0 | LTM to 2025-03-31 as reported | Not applicable | Documentary Fact | High |
+| s01 | Cost shock | 0.1 (10%) | 0 | Financing costs held | Working capital held | Analyst Interpretation | Medium |
+| s02 | Cost and rate shock | 0.2 (20%) | 0.05 (5%) | Repricing scenario | Working capital held | Analyst Interpretation | Low |
+
+<!-- table-id: T2DS.4 -->
+
+#### T2DS.4 Stressed flows and metrics
+
+| Metric | s00 | s01 | s02 | Source |
+| --- | --- | --- | --- | --- |
+| Stressed FCF (USD millions) | 10.00 | 0.00 | -5.1250 (−USD 5.13 million) | Filing p.2 |
+| All-in cover (x) | 3.10 | 2.00 | 1.40 | Filing p.1 |
+| Net leverage (x) | 1.25 | 1.30 | Not calculated: net debt is missing | Filing p.1 |
+
 ### T5.5 - Register
 
 | Item | Value |
