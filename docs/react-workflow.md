@@ -24,35 +24,48 @@ RBOT-HTML's existing pins.
 ## Run the browser proof
 
 On the Windows work PC, install Node.js 24, uv 0.12.5, Google Chrome and
-Microsoft Edge. Save the candidate ZIP and its `.zip.sha256` file together.
-Run the following in PowerShell. Choose a short, unused, writable local folder.
+Microsoft Edge. Save `credit-os2-react.zip` and `credit-os2-react.zip.sha256`
+together in Downloads. Paste the following into PowerShell.
 
 ```powershell
-$zip = 'C:\Downloads\credit-os2-react.zip'
-$folder = 'C:\credit-os2-test'
+$downloads = Join-Path $env:USERPROFILE 'Downloads'
+$zip = Join-Path $downloads 'credit-os2-react.zip'
 $expected = ((Get-Content -LiteralPath "$zip.sha256" -Raw -ErrorAction Stop).Trim() -split '\s+')[0]
 $actual = (Get-FileHash -LiteralPath $zip -Algorithm SHA256 -ErrorAction Stop).Hash.ToLowerInvariant()
 if ($actual -ne $expected) { throw 'Candidate ZIP checksum mismatch.' }
-if (Test-Path -LiteralPath $folder) { throw 'Choose an unused extraction folder.' }
+
+$id = [guid]::NewGuid().ToString('N').Substring(0, 8)
+$folder = Join-Path $env:TEMP "cos2-$id"
 Expand-Archive -LiteralPath $zip -DestinationPath $folder -ErrorAction Stop
-Set-Location -LiteralPath $folder -ErrorAction Stop
-Get-Content .\SOURCE-COMMIT.txt
-$env:CREDIT_OS_PROOF_ZIP_SHA256 = $actual
+$log = Join-Path $folder 'proof-console.txt'
+$exitFile = Join-Path $folder 'proof-exit-code.txt'
+
+Push-Location -LiteralPath $folder -ErrorAction Stop
 try {
-    .\Run-React-Proof.cmd
-    $status = $LASTEXITCODE
-    Write-Output "Browser proof exit code $status."
-    if ($status -ne 0) { throw "Browser proof failed with exit code $status." }
+    $env:CREDIT_OS_PROOF_ZIP_SHA256 = $actual
+    & $env:ComSpec /d /c 'Run-React-Proof.cmd 2>&1' | Tee-Object -FilePath $log
+    $exitCode = $LASTEXITCODE
 } finally {
-    Remove-Item Env:CREDIT_OS_PROOF_ZIP_SHA256
+    Remove-Item Env:CREDIT_OS_PROOF_ZIP_SHA256 -ErrorAction SilentlyContinue
+    Pop-Location
 }
+
+"Browser proof exit code: $exitCode" | Tee-Object -FilePath $exitFile
+$files = @($log, $exitFile)
+$proofFolder = Join-Path $folder 'proof-artifacts'
+if (Test-Path -LiteralPath $proofFolder) { $files += $proofFolder }
+
+$reply = Join-Path $downloads "credit-os2-windows-proof-$id.zip"
+Compress-Archive -LiteralPath $files -DestinationPath $reply -ErrorAction Stop
+Write-Host "Send back: $reply"
 ```
 
-Keep the printed terminal result and the contents of the new
-`proof-artifacts/run-…` folder. Its `proof.json` pairs the two branded browser
-records with the same ZIP hash and source commit. It identifies the operating
-system and lists the screenshots for each synthetic run. The Windows release
-gate requires both browsers in that record and exit code 0 on the work PC.
+Send back the printed `credit-os2-windows-proof-*.zip` even if the test fails.
+It contains `proof-console.txt`, `proof-exit-code.txt` and the generated
+`proof-artifacts/` directory if the runner reached the browser checks. A
+successful `proof.json` identifies the Windows platform, both branded browsers,
+the ZIP hash, the source commit and the screenshots for each synthetic run. The
+release requires both browser records and exit code 0 on the work PC.
 
 On macOS or after setup, run the following command.
 
