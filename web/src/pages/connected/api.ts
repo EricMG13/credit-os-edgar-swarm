@@ -131,8 +131,13 @@ function postJson(payload: unknown): RequestInit {
 
 const submission = (id: string) => `/api/submissions/${encodeURIComponent(id)}`;
 
-export const getContext = (signal: AbortSignal) =>
-  request<Context>("/connected/context", { signal });
+export async function getContext(signal: AbortSignal) {
+  const { submission_cap_usd: amount, ...template } = await request<
+    Context & { submission_cap_usd?: string }
+  >("/connected/context", { signal });
+  const cap = typeof amount === "string" && /^\d+(?:\.\d+)?$/.test(amount) ? Number(amount) : 0;
+  return { template, cap: Number.isFinite(cap) && cap > 0 ? cap : null };
+}
 export const createSubmission = () =>
   request<{ id: string }>("/api/submissions", { method: "POST" });
 const filePath = (id: string, name: string) =>

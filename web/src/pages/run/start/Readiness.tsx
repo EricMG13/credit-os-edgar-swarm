@@ -27,7 +27,11 @@ function ItemGroup({ state, count, items }: { state: Group; count: string; items
 }
 
 /** The readiness panel: what the slice says is met and not met, and the spending cap. */
-export function Readiness({ data }: { data: ReadinessData }) {
+export function Readiness({
+  data,
+}: {
+  data: Omit<ReadinessData, "cap"> & { cap: ReadinessData["cap"] | null };
+}) {
   const titleId = useId();
   return (
     <aside
@@ -46,7 +50,11 @@ export function Readiness({ data }: { data: ReadinessData }) {
       <ItemGroup state="Met" count={data.met.count} items={data.met.items} />
       <div className="flex flex-col gap-2">
         <p className="text-sm font-medium text-text-secondary">Spending cap for this run</p>
-        <ProgressBar value={data.cap.value} max={data.cap.max} label={data.cap.label} />
+        {data.cap ? (
+          <ProgressBar value={data.cap.value} max={data.cap.max} label={data.cap.label} />
+        ) : (
+          <p className="text-sm text-text-tertiary">Unavailable</p>
+        )}
       </div>
     </aside>
   );

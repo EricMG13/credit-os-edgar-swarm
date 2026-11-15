@@ -97,8 +97,35 @@ function response(page, pathPattern, method) {
   );
 }
 
-async function submit(page) {
+async function submit(page, channel) {
   await page.getByRole("link", { name: "Start a run", exact: true }).click();
+  const stepper = page.getByRole("list", { name: "Steps in this run" });
+  const current = stepper.locator('[aria-current="step"]');
+  const readiness = page.getByRole("complementary", { name: "Readiness", exact: true });
+  const dropZone = page.locator("[data-dropzone]");
+  await dropZone.waitFor();
+  const [drop, side] = await Promise.all([dropZone.boundingBox(), readiness.boundingBox()]);
+  assert.ok(drop && side && side.x >= drop.x + drop.width, "Readiness sits beside the form");
+  assert.equal(await stepper.getByRole("listitem").count(), 5);
+  assert.match(await current.innerText(), /Documents/u);
+  await readiness.getByText("USD 20.00", { exact: true }).waitFor();
+  await page.screenshot({ path: path.join(artifacts, `${channel}-run-documents.png`) });
+  const desktop = page.viewportSize();
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.waitForFunction(() => {
+    const drop = document.querySelector("[data-dropzone]");
+    const form = drop?.closest("form");
+    if (!drop || !form) return false;
+    return (
+      document.documentElement.scrollWidth === 390 &&
+      drop.getBoundingClientRect().right <= form.getBoundingClientRect().right
+    );
+  });
+  await page.screenshot({
+    path: path.join(artifacts, `${channel}-run-mobile.png`),
+    fullPage: true,
+  });
+  await page.setViewportSize(desktop);
   await page.getByLabel("Issuer name", { exact: true }).fill("Northbridge Synthetic Group");
   await page.getByLabel("As-of date", { exact: true }).fill("2025-03-31");
   const files = [
@@ -130,12 +157,21 @@ async function submit(page) {
     ...uploaded,
   ]);
   for (const upload of uploads) assert.equal(upload.status(), 200);
+  await page.getByRole("button", { name: "Continue to purpose", exact: true }).click();
+  await page.getByRole("heading", { name: "Purpose", exact: true }).waitFor();
+  assert.match(await current.innerText(), /Purpose/u);
+  await page.getByRole("radio", { name: "Full credit assessment", exact: true }).waitFor();
+  await page.getByRole("button", { name: "Review inputs", exact: true }).click();
+  assert.match(await current.innerText(), /Confirm/u);
+  await page.getByRole("button", { name: "Confirm inputs", exact: true }).click();
+  assert.match(await current.innerText(), /More context/u);
   await page
     .getByRole("combobox", { name: "Portfolio workbook", exact: true })
     .selectOption({ label: "northbridge-portfolio.xlsx" });
   await page.getByRole("button", { name: "Review run", exact: true }).click();
   const submitButton = page.getByRole("button", { name: "Submit run", exact: true });
   await submitButton.waitFor();
+  assert.match(await current.innerText(), /Start/u);
   for (const label of ["I have checked this", "I accept this limit"]) {
     for (const checkbox of await page.getByRole("checkbox", { name: label, exact: true }).all())
       await checkbox.check();
@@ -472,7 +508,7 @@ for (const [channel, brand, envName] of [
         );
         assert.ok(brands?.includes(brand), `Expected branded ${brand}, received ${String(brands)}`);
 
-        const run = await submit(page);
+        const run = await submit(page, channel);
         const open = page.getByRole("link", { name: "Open report", exact: true });
         const stopped = page
           .getByRole("status")
@@ -539,6 +575,8 @@ for (const [channel, brand, envName] of [
           version: browser.version(),
           run,
           screenshots: [
+            "run-documents",
+            "run-mobile",
             "finished-report",
             "calendar",
             "debt-maturities",
@@ -551,6 +589,7 @@ for (const [channel, brand, envName] of [
           ].map((view) => `${channel}-${view}.png`),
           checks: [
             "upload",
+            "five-step intake, document drop zone and responsive readiness panel",
             "approved submission",
             "finished publication",
             "overview",

@@ -14,6 +14,8 @@ interface FileUploadDropZoneProps {
   className?: string;
   /** A hint text explaining what files can be dropped. */
   hint: string;
+  /** Accessible name for the file input when it belongs to a larger form. */
+  inputLabel?: string;
   /** Disables dropping or uploading files. */
   isDisabled?: boolean;
   /**
@@ -36,6 +38,7 @@ interface FileUploadDropZoneProps {
 export const FileUploadDropZone = ({
   className,
   hint,
+  inputLabel,
   isDisabled,
   accept,
   allowsMultiple = true,
@@ -174,6 +177,7 @@ export const FileUploadDropZone = ({
             ref={inputRef}
             id={id}
             type="file"
+            aria-label={inputLabel}
             className="peer sr-only"
             tabIndex={-1}
             disabled={isDisabled}
@@ -188,7 +192,7 @@ export const FileUploadDropZone = ({
               isDisabled={isDisabled}
               onClick={() => inputRef.current?.click()}
             >
-              Click to upload <span className="md:hidden">and attach files</span>
+              Click to upload
             </Button>
           </label>
           <span className="text-sm max-md:hidden">or drag and drop</span>

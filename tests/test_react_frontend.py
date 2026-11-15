@@ -90,7 +90,10 @@ def test_react_page_routes_serve_the_build(hosted: _Server, web: Path) -> None:
 
 def test_same_origin_service_and_submit_gate(hosted: _Server) -> None:
     context = json.loads((PROJECT / "cases/context/research-minimal.json").read_bytes())
-    assert json.loads(request(hosted, "/connected/context")[1]) == context
+    assert json.loads(request(hosted, "/connected/context")[1]) == {
+        **context,
+        "submission_cap_usd": str(hosted.scheduler.settings.cap),
+    }
     assert request(hosted, "/connected/context", headers={"Origin": "http://other.test"})[0] == 403
     assert request(hosted, "/connected/snapshot", headers={"Host": "other.test"})[0] == 403
     assert request(hosted, "/api/submissions", "POST")[0] == 403
@@ -181,6 +184,7 @@ def test_synthetic_mode_uses_the_explicit_launcher(
             assert b'credit-os-signal-url"' not in page
             expected = json.loads((PROJECT / "cases/context/research-minimal.json").read_bytes())
             expected["run"]["case_kind"] = "synthetic"
+            expected["submission_cap_usd"] = str(server.scheduler.settings.cap)
             assert json.loads(request(server, "/connected/context")[1]) == expected
         finally:
             server.shutdown()

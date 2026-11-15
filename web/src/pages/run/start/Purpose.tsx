@@ -29,54 +29,70 @@ export function Purpose({
           The purpose decides which modules run, and so how much of the cap the run can use.
         </p>
       </div>
-      <RadioGroup
-        aria-labelledby={headingId}
-        value={selected}
-        onChange={setSelected}
-        className="flex flex-col gap-3"
-      >
-        {purposes.map((p) => (
-          <RadioField key={p.id} value={p.id} aria-label={p.title}>
-            <RadioButton
-              className={({ isSelected, isFocusVisible }) =>
-                cx(
-                  "block cursor-pointer rounded-xl bg-primary ring-1 ring-secondary ring-inset outline-none",
-                  isSelected && "ring-2 ring-brand",
-                  isFocusVisible && "outline-2 outline-offset-2 outline-brand",
-                )
-              }
-            >
-              {({ isSelected }) => (
-                <>
-                  <div className="flex items-center gap-3 rounded-t-xl border-b border-border-hairline py-3 pr-5 pl-3">
-                    <FeaturedIcon icon={FileCheck02} color="brand" size="sm" />
-                    <span className="text-md font-semibold text-secondary">{p.title}</span>
-                    <span
-                      aria-hidden="true"
-                      className={cx(
-                        "ml-auto flex size-4 flex-none items-center justify-center rounded text-white ring-1 ring-primary ring-inset",
-                        isSelected && "bg-brand-solid ring-brand",
-                      )}
-                    >
-                      {isSelected ? <Check className="size-3" strokeWidth={3} /> : null}
-                    </span>
-                  </div>
-                  <Text
-                    slot="description"
-                    elementType="div"
-                    className="flex items-start justify-between gap-4 p-4"
-                  >
-                    <p className="min-w-0 text-sm text-tertiary">{p.description}</p>
-                    <span className="max-w-1/3 shrink-0 rounded-md bg-primary px-1.5 py-0.5 text-xs font-medium text-secondary ring-1 ring-primary ring-inset">
-                      {p.modules}
-                    </span>
-                  </Text>
-                </>
-              )}
-            </RadioButton>
-          </RadioField>
-        ))}
-      </RadioGroup>
+      <PurposeCards label="Purpose" value={selected} onChange={setSelected} purposes={purposes} />
     </div>
+  );
+}
+
+export function PurposeCards({
+  label,
+  value,
+  onChange,
+  purposes,
+}: {
+  label: string;
+  value: string | null;
+  onChange: (value: string) => void;
+  purposes: Step["purposes"];
+}) {
+  return (
+    <RadioGroup
+      aria-label={label}
+      value={value}
+      onChange={onChange}
+      className="flex flex-col gap-3"
+    >
+      {purposes.map((p) => (
+        <RadioField key={p.id} value={p.id} aria-label={p.title}>
+          <RadioButton
+            className={({ isSelected, isFocusVisible }) =>
+              cx(
+                "block cursor-pointer rounded-xl bg-primary ring-1 ring-secondary ring-inset outline-none",
+                isSelected && "ring-2 ring-brand",
+                isFocusVisible && "outline-2 outline-offset-2 outline-brand",
+              )
+            }
+          >
+            {({ isSelected }) => (
+              <>
+                <div className="flex items-center gap-3 rounded-t-xl border-b border-border-hairline py-3 pr-5 pl-3">
+                  <FeaturedIcon icon={FileCheck02} color="brand" size="sm" />
+                  <span className="text-md font-semibold text-secondary">{p.title}</span>
+                  <span
+                    aria-hidden="true"
+                    className={cx(
+                      "ml-auto flex size-4 flex-none items-center justify-center rounded text-white ring-1 ring-primary ring-inset",
+                      isSelected && "bg-brand-solid ring-brand",
+                    )}
+                  >
+                    {isSelected ? <Check className="size-3" strokeWidth={3} /> : null}
+                  </span>
+                </div>
+                <Text
+                  slot="description"
+                  elementType="div"
+                  className="flex items-start justify-between gap-4 p-4"
+                >
+                  <p className="min-w-0 text-sm text-tertiary">{p.description}</p>
+                  <span className="max-w-1/3 shrink-0 rounded-md bg-primary px-1.5 py-0.5 text-xs font-medium text-secondary ring-1 ring-primary ring-inset">
+                    {p.modules}
+                  </span>
+                </Text>
+              </>
+            )}
+          </RadioButton>
+        </RadioField>
+      ))}
+    </RadioGroup>
   );
 }

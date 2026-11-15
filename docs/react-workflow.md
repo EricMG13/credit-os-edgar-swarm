@@ -77,7 +77,8 @@ Playwright launches the installed branded browsers. Set `CHROME_PATH` or `EDGE_P
 to the corresponding executable if it is installed in a nonstandard location.
 Success is two passing tests and exit code 0. Each browser uses a separate temporary
 workspace and uploads the same synthetic Northbridge filing and portfolio workbook.
-It inspects both documents, selects the workbook in the form, and checks the
+It checks the five-step Run page, drop zone and Readiness panel, inspects both
+documents, selects the workbook in the form, and checks the
 finished report and all five redesigned views, the issuer calendar and its source
 row, keyboard focus after closing figure and row traces, the exact original
 handoff download, a published CP-1 chart, downside cases and break points with
@@ -106,7 +107,10 @@ Run the service against a short, local workflow workspace. Use a new folder for 
 manual synthetic proof. Enter `Northbridge Synthetic Group` and `2025-03-31`,
 then choose Full credit assessment (RBOT's Credit Snapshot pathway). Upload
 `proof/northbridge-filing.txt` and `proof/northbridge-portfolio.xlsx`, click
-Inspect documents, and select `northbridge-portfolio.xlsx` under Portfolio workbook.
+Continue to purpose, choose Full credit assessment, then select Review inputs and
+Confirm inputs. In More context, select `northbridge-portfolio.xlsx` under
+Portfolio workbook. Select Review run, acknowledge the checks, approve the
+summary and select Submit run. Open the report when it finishes.
 
 ```sh
 PYTHONPATH=src uv run --locked python -m proof.serve --root /path/to/empty-proof-folder

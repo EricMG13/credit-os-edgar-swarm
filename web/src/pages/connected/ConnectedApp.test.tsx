@@ -26,10 +26,10 @@ function testingFetch(
   overrides: Record<string, unknown> = {},
 ) {
   const entries: Record<string, unknown> = {
-    "/connected/context": context,
+    "/connected/context": { ...context, submission_cap_usd: "20" },
     "/api/submissions": { id: "sub-1" },
     "/api/submissions/sub-1/files?name=Credit%20%26%20facts.html": { name: file.name },
-    "/api/submissions/sub-1/reading": { documents: plan.documents, error: "" },
+    "/api/submissions/sub-1/reading": { documents: plan.documents, ignored: [], error: "" },
     "/api/submissions/sub-1/summary": summary,
     "/api/submissions/sub-1/submit": { run: "test-run", status: "queued" },
     ...overrides,
@@ -55,7 +55,19 @@ async function fillInputs() {
 
 async function review() {
   await fillInputs();
+  await advanceToPurpose();
+  advanceToContext();
   fireEvent.click(screen.getByRole("button", { name: "Review run" }));
+}
+
+async function advanceToPurpose() {
+  fireEvent.click(screen.getByRole("button", { name: "Continue to purpose" }));
+  await screen.findByRole("heading", { name: "Purpose" });
+}
+
+function advanceToContext() {
+  fireEvent.click(screen.getByRole("button", { name: "Review inputs" }));
+  fireEvent.click(screen.getByRole("button", { name: "Confirm inputs" }));
 }
 
 function approve() {
@@ -68,14 +80,36 @@ afterEach(() => {
 });
 
 describe("connected run start", () => {
+  it("accepts a drop, displays actual reading progress, and keeps confirmation local", async () => {
+    const fetchMock = testingFetch();
+    const { container } = render(<ConnectedApp path="/start" mode="synthetic" />);
+    const issuer = await screen.findByLabelText("Issuer name");
+    fireEvent.change(issuer, { target: { value: "Synthetic Générale" } });
+    const action = screen.getByRole("button", { name: "Continue to purpose" });
+    expect(action).toBeDisabled();
+    expect(screen.getByRole("progressbar", { name: "USD 20.00" })).toHaveAttribute(
+      "aria-valuenow",
+      "0",
+    );
+    const dropZone = container.querySelector("[data-dropzone]");
+    if (!dropZone) throw new Error("Missing intake drop zone");
+    fireEvent.drop(dropZone, { dataTransfer: { files: [file] } });
+    expect(screen.getByText("Selected", { exact: true })).toBeInTheDocument();
+    await advanceToPurpose();
+    expect(screen.getByText("Documents inspected", { exact: true })).toBeInTheDocument();
+    advanceToContext();
+    expect(screen.getByRole("heading", { name: "More context" })).toHaveFocus();
+    expect(fetchMock.mock.calls.some(([path]) => /\/(summary|submit)$/.test(path))).toBe(false);
+  });
+
   it("sends the selected portfolio workbook with a full credit assessment", async () => {
     const fetchMock = testingFetch(plan, undefined, {
       "/connected/context": { ...context, attachments: { portfolio_workbook: false } },
     });
     render(<ConnectedApp path="/start" mode="synthetic" />);
     await fillInputs();
-    fireEvent.click(screen.getByRole("button", { name: "Inspect documents" }));
-    await screen.findByRole("option", { name: file.name });
+    await advanceToPurpose();
+    advanceToContext();
     fireEvent.change(await screen.findByLabelText("Portfolio workbook"), {
       target: { value: file.name },
     });
@@ -99,10 +133,11 @@ describe("connected run start", () => {
       "/api/submissions",
       "/api/submissions/sub-1/files?name=Credit%20%26%20facts.html",
       "/api/submissions/sub-1/reading",
+      "/api/submissions/sub-1/reading",
       "/api/submissions/sub-1/summary",
     ]);
     expect(fetchMock.mock.calls[2]?.[1]).toMatchObject({ method: "POST", body: file });
-    const rawAnswers = fetchMock.mock.calls[4]?.[1]?.body;
+    const rawAnswers = fetchMock.mock.calls[5]?.[1]?.body;
     expect(typeof rawAnswers).toBe("string");
     const body = JSON.parse(rawAnswers as string) as unknown;
     expect(body).toEqual({
@@ -120,7 +155,7 @@ describe("connected run start", () => {
     expect(submit).toBeDisabled();
     approve();
     fireEvent.click(submit);
-    const rawSubmit = fetchMock.mock.calls[5]?.[1]?.body;
+    const rawSubmit = fetchMock.mock.calls[6]?.[1]?.body;
     expect(typeof rawSubmit).toBe("string");
     expect(JSON.parse(rawSubmit as string)).toEqual({
       answers: body,
@@ -189,16 +224,18 @@ describe("connected run start", () => {
     render(<ConnectedApp path="/start" mode="synthetic" />);
     await fillInputs();
     fireEvent.change(screen.getByLabelText("Documents"), { target: { files: [renamed] } });
-    fireEvent.click(screen.getByRole("button", { name: "Review run" }));
+    fireEvent.click(screen.getByRole("button", { name: "Continue to purpose" }));
     expect(await screen.findByRole("alert")).toHaveTextContent("same stored name");
     expect(fetchMock.mock.calls.some(([path]) => path.endsWith("/summary"))).toBe(false);
     const remove = screen.getByRole("button", { name: "Remove Credit & facts (revised).html" });
     fireEvent.click(remove);
-    const reviewButton = screen.getByRole("button", { name: "Review run" });
+    const continueButton = screen.getByRole("button", { name: "Continue to purpose" });
     await vi.waitFor(() => {
-      expect(reviewButton).toBeEnabled();
+      expect(continueButton).toBeEnabled();
     });
-    fireEvent.click(reviewButton);
+    await advanceToPurpose();
+    advanceToContext();
+    fireEvent.click(screen.getByRole("button", { name: "Review run" }));
     expect(await screen.findByRole("button", { name: "Submit run" })).toBeDisabled();
     expect(fetchMock.mock.calls.filter(([path]) => path === "/api/submissions")).toHaveLength(2);
     expect(fetchMock.mock.calls.filter(([, init]) => init?.body === file)).toHaveLength(2);
@@ -208,12 +245,14 @@ describe("connected run start", () => {
     const fetchMock = testingFetch();
     render(<ConnectedApp path="/start" mode="synthetic" />);
     await fillInputs();
+    fireEvent.change(screen.getByLabelText("Your name"), { target: { value: "Dana Reyes" } });
+    await advanceToPurpose();
     fireEvent.change(screen.getByLabelText("Run purpose"), { target: { value: "primary" } });
     fireEvent.change(screen.getByLabelText("Run form level"), { target: { value: "advanced" } });
+    advanceToContext();
     fireEvent.change(screen.getByLabelText("Model"), { target: { value: "claude" } });
     fireEvent.change(screen.getByLabelText("Reasoning effort"), { target: { value: "high" } });
     fireEvent.change(screen.getByLabelText("Turns per module"), { target: { value: "64" } });
-    fireEvent.change(screen.getByLabelText("Your name"), { target: { value: "Dana Reyes" } });
     fireEvent.click(screen.getByRole("checkbox", { name: "Committee decision (CP-6)" }));
     const reviewRun = screen.getByRole("button", { name: "Review run" });
     fireEvent.click(reviewRun);
@@ -258,16 +297,16 @@ describe("connected run start", () => {
     });
     render(<ConnectedApp path="/start" mode="synthetic" />);
     await fillInputs();
-    fireEvent.change(screen.getByLabelText("Pathway"), { target: { value: "relative_value" } });
+    await advanceToPurpose();
+    fireEvent.click(screen.getByRole("radio", { name: "Relative Value" }));
     expect(screen.getByLabelText("Run purpose")).toHaveValue("secondary");
-    fireEvent.change(screen.getByLabelText("Pathway"), { target: { value: "earnings_update" } });
+    fireEvent.click(screen.getByRole("radio", { name: "Earnings Update" }));
     expect(screen.getByLabelText("Run purpose")).toHaveValue("earnings");
+    advanceToContext();
     expect(screen.getByLabelText("Current period")).toBeRequired();
     expect(screen.getByLabelText("Prior period")).toBeRequired();
     fireEvent.change(screen.getByLabelText("Current period"), { target: { value: "q3-2026" } });
     fireEvent.change(screen.getByLabelText("Prior period"), { target: { value: "q2-2026" } });
-    fireEvent.click(screen.getByRole("button", { name: "Inspect documents" }));
-    await screen.findByRole("option", { name: file.name });
     fireEvent.change(screen.getByLabelText("Management EBITDA bridge"), {
       target: { value: file.name },
     });
@@ -319,8 +358,10 @@ describe("connected run start", () => {
     expect(screen.getByLabelText("As-of date").getAttribute("value")).toMatch(
       /^\d{4}-\d{2}-\d{2}$/,
     );
-    expect(screen.getByLabelText("Turns per module")).toHaveValue(24);
     fireEvent.change(screen.getByLabelText("As-of date"), { target: { value: "2026-09-29" } });
+    await advanceToPurpose();
+    advanceToContext();
+    expect(screen.getByLabelText("Turns per module")).toHaveValue(24);
     fireEvent.click(screen.getByRole("button", { name: "Review run" }));
     const limit = await screen.findByRole("checkbox", { name: "I accept this limit" });
     expect(screen.getByText(/before your newest document/)).toBeInTheDocument();
@@ -329,6 +370,8 @@ describe("connected run start", () => {
     expect(screen.getByRole("checkbox", { name: /Approve:/ })).toBeEnabled();
     fireEvent.click(screen.getByRole("button", { name: "Edit inputs" }));
     fireEvent.change(screen.getByLabelText("As-of date"), { target: { value: "2026-09-30" } });
+    await advanceToPurpose();
+    advanceToContext();
     fireEvent.click(screen.getByRole("button", { name: "Review run" }));
     expect(await screen.findByRole("button", { name: "Submit run" })).toBeDisabled();
     const copy = fetchMock.mock.calls.filter(([path]) => path.endsWith("/carry"));

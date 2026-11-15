@@ -123,7 +123,8 @@ def _handler(dist: Path, page: bytes, context: dict[str, Any]) -> type[service.H
                     },
                 )
             if path == "/connected/context":
-                raise http_base.Reply(200, context)
+                cap = self._service.scheduler.settings.cap
+                raise http_base.Reply(200, {**context, "submission_cap_usd": str(cap)})
             if path == "/connected/snapshot":
                 payload, _ = self._publication()
                 raise http_base.Reply(
