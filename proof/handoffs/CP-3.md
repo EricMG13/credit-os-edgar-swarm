@@ -25,6 +25,14 @@ A located finding.
 
 A located finding.
 
+### Security decision summary
+
+| Instrument | Market level (31 Mar 2025) | Rank | Relative value | Recommendation | Source |
+| --- | --- | --- | --- | --- | --- |
+| Synthetic secured notes | $93.80; yield 7.0100%, 7.01% rounded | First lien | Fair | Neutral | Filing p.1 |
+| Synthetic unsecured notes | $88.12; yield 8.9000%, 8.90% rounded | Senior unsecured | Unclear | Requires More Work | Filing p.2 |
+| Synthetic term loan | Not supplied: no loan observation | First lien | Unclear | Requires More Work | Filing p.3 |
+
 ### Events: Instruments
 
 | Event date | Date precision | Published | Event | Status | Source | Credit relevance |
@@ -59,11 +67,12 @@ A located finding.
 | --- | --- |
 | Observed | Not supplied: nothing to report |
 
-### T3.6 - Register
+### T3.6 — Fundamental value matrix
 
-| Item | Value |
-| --- | --- |
-| Observed | Not supplied: nothing to report |
+| Security / Issuer | Fundamental View | Relative-Value View | Structural / Recovery View | Final Matrix Bucket | Rationale | Evidence ID | Source |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| Synthetic secured notes | Synthetic reference case | Fair | First lien; recovery not quantified | Neutral | Secondary quote only | S1 | Filing p.1 |
+| Synthetic unsecured notes | Synthetic reference case | Unclear | Senior unsecured; recovery not quantified | Requires More Work | Recovery basis unavailable | S2 | Filing p.2 |
 
 ### T3B.1 - Register
 
@@ -132,6 +141,8 @@ A located finding.
 | Portfolio fit | Not supplied: no portfolio inputs in the synthetic run |
 
 ## Calculations
+
+All amounts USD millions unless stated; yields are percentages from last trades on 2025-03-31; differences in yield are percentage points, shown in bp.
 
 | Item | Value |
 | --- | --- |

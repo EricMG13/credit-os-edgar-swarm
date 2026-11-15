@@ -17,6 +17,7 @@ import { monitoringLabel } from "./ModuleTable";
 import { Downside, downsideView } from "./Downside";
 import { BreakPoints, breakPointView } from "./BreakPoints";
 import { MacroSensitivity, macroView } from "./MacroSensitivity";
+import { Securities, securityView } from "./Securities";
 
 function sectionIcon(heading: string): NavSection["icon"] {
   if (heading === "Bottom line") return "bottom-line";
@@ -31,14 +32,16 @@ function Navigator({
   current,
   entry,
   hasLocalFigures,
+  figureTableLines,
 }: {
   view: ReturnType<typeof buildReportView>;
   run: PublishedRun;
   current: string;
   entry?: OutputEntry;
   hasLocalFigures: boolean;
+  figureTableLines: readonly number[];
 }) {
-  const allSections = entry ? findingBlocks(entry.sections, entry) : [];
+  const allSections = entry ? findingBlocks(entry.sections, entry, figureTableLines) : [];
   const firstFinding =
     allSections.find(({ heading }) => heading === "Key findings") ??
     allSections.find(({ heading }) => sectionIcon(heading) === "records");
@@ -126,6 +129,10 @@ export function Modules({
   const downside = entry ? downsideView(entry) : null;
   const breaks = entry ? breakPointView(entry) : null;
   const macro = entry ? macroView(entry) : null;
+  const securities = entry ? securityView(entry, run.asOf) : null;
+  const figureTableLines = [securities?.summaryLine, securities?.outcomes?.line].filter(
+    (line) => line !== undefined,
+  );
   const evidenceHref = (line: number) => evidencePath(run.folder, String(index), line);
   const allMetrics = entry ? foundationMetrics(entry, view.catalogue) : [];
   const metrics = allMetrics.filter(({ metric }) =>
@@ -148,7 +155,8 @@ export function Modules({
           run={run}
           current={current.id}
           entry={entry}
-          hasLocalFigures={downside !== null || breaks !== null || macro !== null}
+          hasLocalFigures={Boolean(downside || breaks || macro || securities)}
+          figureTableLines={figureTableLines}
         />
         <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-4">
           {current.outputs.length > 1 && (
@@ -173,6 +181,7 @@ export function Modules({
               run={run}
               entry={entry}
               entryIndex={index}
+              figureTableLines={figureTableLines}
               judgement={
                 leverage?.kind === "value"
                   ? `Lease-adjusted gross leverage is ${leverage.text}`
@@ -191,6 +200,7 @@ export function Modules({
                     {downside && <Downside data={downside} href={evidenceHref} />}
                     {breaks && <BreakPoints data={breaks} href={evidenceHref} />}
                     {macro && <MacroSensitivity data={macro} href={evidenceHref} />}
+                    {securities && <Securities data={securities} href={evidenceHref} />}
                     <LegacyVisuals
                       output={entry.output}
                       sections={entry.sections}

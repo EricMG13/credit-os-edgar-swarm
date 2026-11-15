@@ -154,9 +154,9 @@ RBOT-HTML.
 
 | Entry | React target and placement | What delivery must supply | Source status and fallback |
 | --- | --- | --- | --- |
-| `CP-3-V01` **Security comparison and preference** | R2 instrument cards and C5 comparison. Modules. | T3.1/T3.3/T3.5/T3.7/T3.9 market evidence, instrument terms, risks and recorded preference. | Table/content only. Keep identity and quote class linked to exact evidence. |
-| `CP-3-V02` **Price, compensation and recovery case** | C5 scenario comparison and R9 case choices. Modules. | CP-3 price and valuation judgments with CP-4C recoveries and CP-3D market terms when selected. | Table/content only. Keep price, yield and recovery on their own units and dates. |
-| `CP-3-V03` **Instrument optionality and catalyst dates** | R4 instrument EventLane. Modules. | Sourced maturity, call/put, coupon/reset and offer deadlines with security identity. | New view. Display stated option and maturity dates. Unknown stays unplaced. |
+| `CP-3-V01` **Security comparison and preference** | R2 instrument cards and C5 comparison. Modules. | T3.1/T3.3/T3.5/T3.7/T3.9 market evidence, instrument terms, risks and recorded preference. | Connected instrument cards use the published decision table, preserve missing marks and link each recommendation to its row. |
+| `CP-3-V02` **Price, compensation and recovery case** | C5 scenario comparison and R9 case choices. Modules. | CP-3 price and valuation judgments with CP-4C recoveries and CP-3D market terms when selected. | Price and yield use separate scales for same-date USD last-trade observations. The rationale table carries the published recovery and compensation qualifications. Numeric recovery needs an accepted recovery output. |
+| `CP-3-V03` **Instrument optionality and catalyst dates** | R4 instrument EventLane. Modules. | Sourced maturity, call/put, coupon/reset and offer deadlines with security identity. | The published instrument-event descriptor uses the event lane. Unknown dates stay unplaced. |
 
 ## CP-3C
 

@@ -249,14 +249,20 @@ function readerBlock(block: Block): boolean {
   return block.type === "table" || (block.type === "text" && !methodNote(block.text));
 }
 
-export function findingBlocks(sections: Section[], entry: OutputEntry) {
+export function findingBlocks(
+  sections: Section[],
+  entry: OutputEntry,
+  figureTableLines: readonly number[] = [],
+) {
   const drawings = new Set(
     [
       ...(entry.output.charts ?? []),
       ...(entry.output.chartGaps ?? []),
       ...(entry.output.maps ?? []),
       ...(entry.output.events ?? []),
-    ].map((item) => item.table),
+    ]
+      .map((item) => item.table)
+      .concat(figureTableLines),
   );
   return classifySections(sections)
     .flatMap(({ section, role }) => {
@@ -324,6 +330,7 @@ export function ReportFindings({
   overview = false,
   afterBottomLine,
   judgement,
+  figureTableLines,
 }: {
   snapshot: Snapshot;
   run: PublishedRun;
@@ -332,9 +339,10 @@ export function ReportFindings({
   overview?: boolean;
   afterBottomLine?: ReactNode;
   judgement?: string;
+  figureTableLines?: readonly number[];
 }) {
   const [activeTrace, setActiveTrace] = useState<string | null>(null);
-  const sections = findingBlocks(entry.sections, entry).filter(
+  const sections = findingBlocks(entry.sections, entry, figureTableLines).filter(
     (section) =>
       !overview ||
       [

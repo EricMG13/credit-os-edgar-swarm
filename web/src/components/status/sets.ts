@@ -62,6 +62,12 @@ export const STATUS_SETS = {
     Conditional: ["half-filled circle", "info"],
     "Not ready": ["slashed circle", "neutral"],
   }),
+  "Security recommendation": set({
+    Preferred: ["filled circle", "success"],
+    Neutral: ["ring", "neutral"],
+    Avoid: ["cross", "error"],
+    "Requires More Work": ["triangle", "warning"],
+  }),
   Freshness: set({
     Checked: ["filled circle", "success"],
     "Not checked yet": ["ring", "neutral"],

@@ -274,6 +274,28 @@ async function checkMacro(report, modules, artifacts, channel, page) {
   await change.getByRole("cell", { name: "4.00", exact: true }).waitFor();
 }
 
+async function checkSecurities(report, modules, artifacts, channel, page) {
+  await modules.getByRole("link", { name: /^Security selection, Delivered/u }).click();
+  const section = report.getByRole("region", { name: "Instrument decisions", exact: true });
+  const loan = section.getByRole("article").filter({ hasText: "Synthetic term loan" });
+  await loan.getByText("Not supplied: no loan observation", { exact: true }).waitFor();
+  await loan.getByText("Requires More Work", { exact: true }).waitFor();
+  await checkTraceFocus(
+    page,
+    loan.getByRole("button", { name: "Show sources for Synthetic term loan" }),
+    /Filing p\.3/u,
+  );
+  const figure = section.getByRole("figure", { name: "Last-trade prices and yields", exact: true });
+  await figure.getByText("7.0100%", { exact: true }).waitFor();
+  await figure.getByText("$88.12", { exact: true }).waitFor();
+  assert.equal(await figure.locator("[data-bar]").count(), 4);
+  await figure.screenshot({ path: path.join(artifacts, `${channel}-instrument-quotes.png`) });
+  await figure.getByRole("radio", { name: "Table", exact: true }).check();
+  await figure.getByRole("cell", { name: "8.9000%", exact: true }).waitFor();
+  await section.getByText("Credit and recovery rationale", { exact: true }).click();
+  await section.getByRole("cell", { name: "Recovery basis unavailable", exact: true }).waitFor();
+}
+
 async function checkCharts(report, artifacts, channel, page) {
   const section = (name) =>
     report
@@ -288,6 +310,7 @@ async function checkCharts(report, artifacts, channel, page) {
   await checkModuleRecords(report, page, modules);
   await checkDownside(report, modules, artifacts, channel, page);
   await checkMacro(report, modules, artifacts, channel, page);
+  await checkSecurities(report, modules, artifacts, channel, page);
   await modules.getByRole("link", { name: /^Financial foundation, Delivered/u }).click();
   const debt = report.getByRole("figure", { name: "Debt maturities", exact: true });
   await debt.getByRole("radio", { name: "Chart", exact: true }).waitFor();
@@ -479,6 +502,7 @@ for (const [channel, brand, envName] of [
             "debt-maturities",
             "downside",
             "rate-shocks",
+            "instrument-quotes",
             "revenue",
             "evidence",
           ].map((view) => `${channel}-${view}.png`),
@@ -495,6 +519,7 @@ for (const [channel, brand, envName] of [
             "downside case comparison with signed cash flow and explicit gap",
             "downside break-point ranking, watch timing, and narrow layout",
             "rate and currency shocks with zero and unreported hedge outcomes",
+            "dated instrument quotes, decision and recovery qualification",
             "portfolio limits table and validation gap",
             "forecast chart and model",
             "forecast run figures and original module",
