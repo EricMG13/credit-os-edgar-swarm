@@ -9,7 +9,13 @@ run status. It reads the library export produced by the legacy scheduler and ope
 published reports and handoff downloads in the same React shell. The shipped web build
 also retains its offline mode.
 
-## Setup
+## Windows work PC
+
+Download the Windows ZIP from [GitHub Releases](https://github.com/EricMG13/credit-os2/releases).
+Follow the [Windows work-PC proof steps](docs/windows-work-pc.md) to validate the checksum,
+extract the bundle, and run the same synthetic upload-to-report test in Chrome and Edge.
+
+## Set up from source
 
 Use Python 3.12.14, uv 0.12.5 and Node 24. The lockfiles pin the work-PC runtime packages,
 including Copilot SDK 1.0.8, pydantic 2.13.4, pypdf 6.21.4 and openpyxl 3.1.5.

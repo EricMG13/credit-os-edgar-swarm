@@ -7,3 +7,5 @@ proof-artifacts/
 node_modules/
 web/dist/
 web/coverage/
+.ruff_cache/
+delivery/

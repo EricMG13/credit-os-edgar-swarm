@@ -1,0 +1,55 @@
+name: Windows browser proof
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  browser-proof:
+    name: Extract ZIP and prove Chrome and Edge
+    runs-on: windows-2025
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7.1.0
+        with:
+          node-version: 24.16.0
+      - uses: astral-sh/setup-uv@v10.3.3
+        with:
+          version: 0.12.5
+          python-version: 3.12.14
+      - name: Build Windows ZIP
+        run: |
+          npm.cmd --prefix web ci --no-audit --no-fund
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          npm.cmd --prefix web run build
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          uv run --no-project --python 3.12.14 python -m tools.package_windows
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Run the work-PC command from the extracted ZIP
+        shell: pwsh
+        run: |
+          $unpacked = Join-Path $env:RUNNER_TEMP 'co2'
+          Expand-Archive -LiteralPath 'delivery/credit-os2-windows.zip' -DestinationPath $unpacked
+          $project = Join-Path $unpacked 'credit-os2'
+          & (Join-Path $project 'Run-Windows-Proof.cmd')
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - uses: actions/upload-artifact@v7.0.2
+        if: always()
+        with:
+          name: windows-browser-evidence
+          path: ${{ runner.temp }}/co2/credit-os2/proof-artifacts/
+          if-no-files-found: ignore
+      - uses: actions/upload-artifact@v7.0.2
+        with:
+          name: credit-os2-windows
+          path: |
+            delivery/credit-os2-windows.zip
+            delivery/credit-os2-windows.zip.sha256
+          if-no-files-found: error
