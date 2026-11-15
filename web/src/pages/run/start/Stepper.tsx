@@ -11,12 +11,14 @@ const STEPS = [
 
 /** The five steps of a run start. A step before `step` is complete; on any other step key (the
  *  started draft) all five are. Each state is said in words as well as drawn. */
-export function Stepper({ step }: { step: string }) {
-  const at = STEPS.findIndex((s) => s.key === step);
-  const current = at === -1 ? STEPS.length : at;
+type Step = { key: string; title: string; note: string };
+
+export function Stepper({ step, steps = STEPS }: { step: string; steps?: readonly Step[] }) {
+  const at = steps.findIndex((s) => s.key === step);
+  const current = at === -1 ? steps.length : at;
   return (
     <ol aria-label="Steps in this run" className="flex flex-wrap items-center gap-x-4 gap-y-3">
-      {STEPS.map((s, i) => {
+      {steps.map((s, i) => {
         const done = i < current;
         return (
           <li
@@ -44,7 +46,7 @@ export function Stepper({ step }: { step: string }) {
                 </span>
               </span>
             </span>
-            {i < STEPS.length - 1 ? (
+            {i < steps.length - 1 ? (
               <span
                 aria-hidden="true"
                 className={cx("h-px min-w-3 flex-1", done ? "bg-action" : "bg-border-hairline")}

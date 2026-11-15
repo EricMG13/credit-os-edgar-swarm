@@ -16,22 +16,33 @@ const ITEMS = [
 export function Shell({
   current,
   bleed = false,
+  sections,
+  symbol = "./symbol.svg",
   children,
 }: {
   current: Area;
   bleed?: boolean;
+  sections?: readonly { area: Area; href: string }[];
+  symbol?: string;
   children: ReactNode;
 }) {
+  const items =
+    sections === undefined
+      ? ITEMS
+      : ITEMS.flatMap((item) => {
+          const section = sections.find((entry) => entry.area === item.area);
+          return section ? [{ ...item, href: section.href }] : [];
+        });
   return (
     <div className="flex h-screen bg-surface-canvas text-text-primary">
       <aside style={{ width: 68 }} className="flex h-full max-h-full max-w-full py-1 pl-1">
         <div className="flex w-auto flex-col rounded-xl bg-primary pt-5 ring-1 ring-secondary ring-inset">
           <div className="flex justify-center px-3">
-            <img src="./symbol.svg" alt="" width="24" height="24" className="size-6" />
+            <img src={symbol} alt="" width="24" height="24" className="size-6" />
           </div>
           <nav aria-label="Areas">
             <ul className="mt-5 flex flex-col gap-0.5 px-3.5">
-              {ITEMS.map((item) => (
+              {items.map((item) => (
                 <li key={item.area}>
                   <NavButton
                     current={item.area === current}
