@@ -11,10 +11,13 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import SplitResult, unquote
 
+from deploy_workflow import http_base
 from deploy_workflow.inbox import runs
 from deploy_workflow.inbox.layout import Layout
 from deploy_workflow.inbox.scheduler import Scheduler, Settings
 from deploy_workflow.run_start import service
+
+from . import artifacts
 
 PROJECT = Path(__file__).resolve().parent.parent
 RUN_ID = re.compile(r"[0-9A-Za-z][0-9A-Za-z._-]{0,79}")
@@ -41,7 +44,7 @@ def _invalid_json(constant: str) -> None:
 
 def _read_publication(path: Path) -> tuple[bytes, dict[str, Any] | None]:
     """Decode the published assignment as JSON and retain the original JSON bytes."""
-    raw = service._read_regular(path)
+    raw = http_base.read_regular(path)
     if raw is None:
         return b"null", None
     assignment = raw.decode("utf-8").rstrip()
@@ -91,6 +94,15 @@ def _read_page(dist: Path, *, synthetic: bool, signal_url: str) -> bytes:
     return page.replace(b'src="./', b'src="/').replace(b'href="./', b'href="/')
 
 
+def _asset_path(dist: Path, path: str) -> tuple[Path, str, bool] | None:
+    if path in STATIC_FILES:
+        return dist, path, True
+    for prefix in STATIC_DIRS:
+        if path.startswith(prefix):
+            return dist / prefix.strip("/"), path.removeprefix(prefix), False
+    return None
+
+
 def _handler(dist: Path, page: bytes, context: dict[str, Any]) -> type[service.Handler]:
     class Handler(service.Handler):
         def _get(self, url: SplitResult) -> None:
@@ -100,7 +112,7 @@ def _handler(dist: Path, page: bytes, context: dict[str, Any]) -> type[service.H
                 or RUN_PAGE.fullmatch(path)
                 or _report_page(path)
             ):
-                raise service._Reply(
+                raise http_base.Reply(
                     200,
                     page,
                     {
@@ -111,23 +123,21 @@ def _handler(dist: Path, page: bytes, context: dict[str, Any]) -> type[service.H
                     },
                 )
             if path == "/connected/context":
-                raise service._Reply(200, context)
+                raise http_base.Reply(200, context)
             if path == "/connected/snapshot":
                 payload, _ = self._publication()
-                raise service._Reply(
-                    200, payload, {"Content-Type": service._JSON, "Cache-Control": "no-store"}
+                raise http_base.Reply(
+                    200, payload, {"Content-Type": http_base.JSON, "Cache-Control": "no-store"}
                 )
+            if match := artifacts.GRAPH.fullmatch(path):
+                _, snapshot = self._publication()
+                raise artifacts.reply(match, self._layout.engine / "runs", REPORT_FOLDER, snapshot)
             if path == "/connected/reports" or path.startswith(REPORT_PREFIX):
                 self._reports(path)
-            self._assets(path)
+            if asset := _asset_path(dist, path):
+                base, relative, direct = asset
+                raise self._file(base, relative, direct=direct)
             super()._get(url)
-
-        def _assets(self, path: str) -> None:
-            if path in STATIC_FILES:
-                self._file(dist, path, direct=True)
-            for prefix in STATIC_DIRS:
-                if path.startswith(prefix):
-                    self._file(dist / prefix.strip("/"), path.removeprefix(prefix), direct=False)
 
         def _publication(self) -> tuple[bytes, dict[str, Any] | None]:
             return _read_publication(self._layout.engine / "library" / "data.js")
@@ -136,14 +146,14 @@ def _handler(dist: Path, page: bytes, context: dict[str, Any]) -> type[service.H
             listing = path == "/connected/reports"
             run_id = path.removeprefix(REPORT_PREFIX)
             if not listing and RUN_ID.fullmatch(run_id) is None:
-                raise service._refuse(404, "unknown report")
+                raise http_base.refuse(404, "unknown report")
             _, snapshot = self._publication()
             entries = _report_entries(snapshot, self._layout)
             if listing:
-                raise service._Reply(200, {"reports": list(entries.values())})
+                raise http_base.Reply(200, {"reports": list(entries.values())})
             if run_id not in entries:
-                raise service._refuse(404, "unknown report")
-            raise service._Reply(200, entries[run_id])
+                raise http_base.refuse(404, "unknown report")
+            raise http_base.Reply(200, entries[run_id])
 
     return Handler
 

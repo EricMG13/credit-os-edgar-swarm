@@ -194,3 +194,42 @@ def test_empty_launcher_refused_in_both_modes(root: Path, web: Path) -> None:
             make_server(root, web=web, launcher=(), synthetic=synthetic),
         ):
             pytest.fail("accepted an empty launcher")
+
+
+def test_only_same_run_published_forecast_artifacts_are_downloadable(
+    hosted: _Server, root: Path
+) -> None:
+    engine = root / "_engine"
+    digest = "b" * 64
+    delivery = engine / "runs" / "one" / "deliveries" / digest
+    delivery.mkdir(parents=True)
+    (delivery / "calculation.json").write_bytes(b'{"exact":"1.25"}\r\n')
+    (delivery / "forecast_exact.json").write_bytes(b"{}")
+    published = {
+        "catalogue": {"real": []},
+        "workspace": {
+            "runs": {
+                "one": {
+                    "folder": "one",
+                    "evidence": {
+                        "downloads": [
+                            {"href": f"../runs/one/deliveries/{digest}/calculation.json"},
+                            {"href": f"../runs/two/deliveries/{digest}/forecast_exact.json"},
+                        ]
+                    },
+                }
+            }
+        },
+        "activity": {},
+        "chips": {},
+    }
+    library = engine / "library"
+    library.mkdir(exist_ok=True)
+    (library / "data.js").write_text(f"window.CREDIT_OS_DATA={json.dumps(published)};")
+    endpoint = "/connected/artifacts/one"
+    files = json.loads(request(hosted, endpoint)[1])["files"]
+    path = f"{endpoint}/{digest}/calculation.json"
+    assert files == [{"label": "Calculation JSON", "href": path}]
+    assert request(hosted, path)[:2] == (200, b'{"exact":"1.25"}\r\n')
+    assert request(hosted, f"{endpoint}/{digest}/forecast_exact.json")[0] == 404
+    assert request(hosted, f"/connected/artifacts/two/{digest}/calculation.json")[0] == 404

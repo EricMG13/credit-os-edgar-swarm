@@ -4,6 +4,25 @@ Keep one running record here. A pass applies only to the stated scope. Earlier v
 engine is in [EricMG13/final-workflow](https://github.com/EricMG13/final-workflow)'s
 `VERIFICATION.md`, which also keeps the retained runs this copy leaves out.
 
+## 2026-11-15 — Credit OS 2 React issuer report redesign
+
+- Upstream GitHub main was verified at RBOT-HTML `fc010a7`. Engine files and
+  Python/workspace pins match that commit. React and its lockfile are preserved.
+- Read-only Caesars replay, macOS Chrome 157.0.8103.78 and Edge 157.0.4341.60.
+  Verified five report views, 12 retained handoffs, eight chart descriptors,
+  seven event lanes, seven maps and the explicit portfolio chart gap.
+- Fidelity checks used 3,962 US$m 2030 maturities, the original CP-2 hash,
+  C11/C14 lineage, and 464.86 versus 647.95 US$m FY2027 forecast bases.
+  Narrow report views fit at 720 px; Escape returned focus from the trace.
+- Confidence review checked run and output identity, qualified forecasts, zero
+  versus missing, comparable units and same-run artifact downloads. Fixed the
+  driver-only downside label, lost module filter, chart qualification,
+  methodology files in the package, and responsive overflow.
+- The 91-figure map documents available producers and table/gap states. The
+  browser evidence covers delivered cases and fixtures, not every pathway or
+  a new paid run. The Caesars replay remains a labelled test preview.
+- Work-PC proof is pending. Keep the ZIP local until both Windows browsers pass.
+
 ## 2026-11-15 — Unified React frontend on RBOT-HTML
 
 - The RBOT-HTML engine under `src/`, Python pin and lock inputs match `9d040f8`.

@@ -1,4 +1,6 @@
-import { Fragment } from "react";
+import { Fragment, type ReactNode } from "react";
+import { PathChart } from "@/components/chart/PathChart";
+import { ChartTable } from "@/components/chart/ChartTable";
 import { TrendChart } from "@/components/chart/TrendChart";
 import { amount, items, record, stringsIn, ticks, word } from "./visualData";
 
@@ -16,12 +18,12 @@ interface GridRow {
   cells: Record<string, unknown>[];
 }
 
-interface Grid {
+export interface Grid {
   columns: GridColumn[];
   rows: GridRow[];
 }
 
-function gridOf(raw: unknown): Grid | null {
+export function gridOf(raw: unknown): Grid | null {
   const data = record(raw);
   const columns = items(data.columns).map((rawColumn) => {
     const column = record(rawColumn);
@@ -192,7 +194,110 @@ function ForecastTrends({ grid, units }: { grid: Grid; units: string }) {
   );
 }
 
-export function LegacyForecast({ model }: { model?: unknown }) {
+const CASH_PROXY = "Cash proxy (not issuer free cash flow)";
+const caseLabels: Record<string, string> = {
+  "Base case": "Base case",
+  "Downside case": "Downside case",
+  Upside: "Upside case",
+  "Downside (CP-2G drivers)": "Downside drivers",
+};
+const twoPlaces = new Intl.NumberFormat("en-US", {
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+});
+
+export function cashProxyCases(grid: Grid, other: Grid | null, downsideNote = "") {
+  const groupName = (group: string) => {
+    if (
+      group === "Downside case" &&
+      downsideNote.startsWith("Downside case is the stress case: a shock applied")
+    )
+      return "Downside shock";
+    return Object.hasOwn(caseLabels, group) ? (caseLabels[group] ?? group) : group;
+  };
+  const groups = [grid, other].flatMap((source) => {
+    if (!source) return [];
+    const rows = source.rows.filter((row) => row.label === CASH_PROXY);
+    const row = rows.length === 1 ? rows[0] : undefined;
+    if (!row) return [];
+    const groups = new Map<string, { period: string; cell?: Record<string, unknown> }[]>();
+    source.columns.forEach((column, index) => {
+      if (!/^FY\d{4}E$/.test(column.label)) return;
+      const cells = groups.get(column.group) ?? [];
+      cells.push({ period: column.label, cell: row.cells[index] });
+      groups.set(column.group, cells);
+    });
+    return [...groups];
+  });
+  const periods = [
+    ...new Set(groups.flatMap(([, cells]) => cells.map(({ period }) => period))),
+  ].sort();
+  const order = Object.keys(caseLabels);
+  groups.sort(([a], [b]) => order.indexOf(a) - order.indexOf(b));
+  const byName = new Set(groups.map(([group]) => groupName(group)));
+  if (byName.size !== groups.length || groups.length > 6) return { periods, series: [], rows: [] };
+  const series = groups.map(([group, cells]) => {
+    const matching = periods.map((period) => {
+      const selected = cells.filter((cell) => cell.period === period);
+      return selected.length === 1 ? selected[0]?.cell : undefined;
+    });
+    const values = matching.map((cell) =>
+      cell?.status === "value" ? amount(word(cell.exact)) : null,
+    );
+    return {
+      name: groupName(group),
+      values,
+      labels: values.map((value, index) =>
+        index === values.length - 1 && value !== null ? twoPlaces.format(value) : null,
+      ),
+      cells: matching.map((cell, index) => {
+        const value = values[index];
+        return typeof value === "number" ? twoPlaces.format(value) : word(cell?.reason) || null;
+      }),
+    };
+  });
+  return { periods, series, rows: series.map(({ name, cells }) => ({ label: name, cells })) };
+}
+
+export function CashProxy({ model, note }: { model: unknown; note?: ReactNode }) {
+  const raw = record(record(model).cashflow);
+  const grid = gridOf(raw);
+  if (!grid) return null;
+  const { periods, series, rows } = cashProxyCases(
+    grid,
+    gridOf(raw.other),
+    stringsIn(raw.notes).find((note) => note.startsWith("Downside case is")),
+  );
+  const values = series.flatMap((item) => item.values);
+  if (periods.length < 2 || !values.some((value) => value !== null)) return null;
+  const table = { head: ["Case", ...periods], rows };
+  const unit = word(raw.units);
+  return (
+    <div className="grid min-w-0 gap-4 xl:grid-cols-[1.65fr_1fr]">
+      <div className="min-w-0 rounded-xl border border-border-hairline bg-surface-card p-5">
+        <PathChart
+          title="Cash proxy by scenario"
+          subtitle={unit}
+          periods={periods}
+          series={series}
+          yTicks={ticks(values, true, (v) =>
+            new Intl.NumberFormat("en-US", { maximumFractionDigits: 2 }).format(v),
+          )}
+          table={table}
+        />
+      </div>
+      <div className="grid min-w-0 content-start gap-4">
+        <section className="grid min-w-0 gap-3 rounded-xl border border-border-hairline bg-surface-card p-5">
+          <h3 className="font-display text-h4">Scenario comparison</h3>
+          <ChartTable caption="Scenario comparison" {...table} />
+        </section>
+        {note}
+      </div>
+    </div>
+  );
+}
+
+export function LegacyForecast({ model, summary }: { model?: unknown; summary?: ReactNode }) {
   const published = record(model);
   const cashflow = record(published.cashflow);
   const grid = gridOf(cashflow);
@@ -209,6 +314,7 @@ export function LegacyForecast({ model }: { model?: unknown }) {
       ) : (
         <>
           {units && <p className="text-text-secondary">{units}</p>}
+          {summary}
           <ForecastTrends grid={grid} units={units} />
           <ForecastTable grid={grid} title="Cash flow model" />
           {other && <ForecastTable grid={other} title="Other forecast cases" />}

@@ -1,0 +1,351 @@
+module,handoff_line,heading_path,text_blocks,table_blocks,other_blocks,current_section_role,published_descriptor,design_destination,react_component
+CP-0,1,Front matter,1,0,0,Hidden transport,,Original handoff file,Governed download only
+CP-0,10,Request,1,0,0,Hidden transport,,Original handoff file,Governed download only
+CP-0,14,Sources,1,1,0,Sources,,Evidence → Sources,R14 SourceFileRow and R16 identity
+CP-0,39,Findings,0,0,0,Findings,,Modules,Parent section for the reader blocks
+CP-0,41,Findings → Bottom line,2,0,0,Judgement passage,,Modules and selected Overview lead,P1 BottomLine band
+CP-0,48,Findings → Analytical read-through,4,0,0,Findings,,Modules,P2 Findings with exact qualification and trace
+CP-0,62,Findings → Preparation summary,1,0,0,Findings,,Modules,P2 Findings with exact qualification and trace
+CP-0,67,Findings → Source-readiness summary,0,1,0,Findings,,Modules,R6 StatusBlock with stated reason
+CP-0,78,Findings → Limitations,1,0,0,Judgement passage,,Modules and selected Overview lead,P5 Limitations
+CP-0,83,Findings → Registers,0,0,0,Registers,,Evidence → Record,R13 RegisterTable and exact trace
+CP-0,85,Findings → Registers → P3 Input inventory,0,1,0,Findings,,Modules,R2 FactsBlock or qualified table selected by row shape
+CP-0,108,Findings → Registers → T1 Input gate,0,1,0,Findings,,Modules,R6 StatusBlock with stated reason
+CP-0,123,Findings → Registers → T2 Source register,0,1,0,Registers,,Evidence → Record,R13 RegisterTable and exact trace
+CP-0,146,Findings → Registers → T4 Content-to-module map,0,1,0,Findings,,Modules,R2 FactsBlock or qualified table selected by row shape
+CP-0,165,Findings → Registers → T6 Evidence trace,0,1,0,Findings,,Modules,R2 FactsBlock or qualified table selected by row shape
+CP-0,186,Findings → Registers → Source conflicts and reconciliations,0,1,0,Findings,,Modules,R2 FactsBlock or qualified table selected by row shape
+CP-0,194,Findings → Events: Sources,0,1,0,Drawing section,events · Sources,Modules,R4 EventLane with ChartTable
+CP-0,219,Findings → Confidence inputs,0,1,0,Findings,,Evidence → Record,R13 confidence inputs and published state
+CP-0,238,Calculations,2,1,0,Calculations,,Evidence → Trace,R12 DerivationTree with exact operands
+CP-0,255,Gaps,1,1,0,Gaps,,Evidence → Gaps,R13 RegisterTable grouped by stated severity
+CP-0,270,Next module,1,0,0,Hidden transport,,Original handoff file,Governed download only
+CP-1,1,Request,1,0,0,Hidden transport,,Original handoff file,Governed download only
+CP-1,5,Sources,0,2,0,Sources,,Evidence → Sources,R14 SourceFileRow and R16 identity
+CP-1,18,Findings,0,0,0,Findings,,Modules,Parent section for the reader blocks
+CP-1,20,Findings → Bottom line,2,0,0,Judgement passage,,Modules and selected Overview lead,P1 BottomLine band
+CP-1,27,Findings → Period table,0,1,0,Registers,,Modules with Evidence trace,R1 StatementBlock or R2 exact financial facts
+CP-1,39,Findings → Leverage and coverage: what the numbers say,2,0,0,Findings,,Modules,R6 StatusBlock with stated reason
+CP-1,47,Findings → Earnings and cash-flow quality,2,0,0,Findings,,Modules,P2 Findings with exact qualification and trace
+CP-1,55,Findings → Liquidity and maturities,1,0,0,Findings,,Modules,P2 Findings with exact qualification and trace
+CP-1,60,Findings → Subsequent events and the merger,1,0,0,Findings,,Modules,P2 Findings with exact qualification and trace
+CP-1,65,Findings → Contrary evidence and downside path,1,0,0,Findings,,Modules,P2 Findings with exact qualification and trace
+CP-1,70,Findings → Data and definition risks,1,0,0,Findings,,Modules,P2 Findings with exact qualification and trace
+CP-1,75,Findings → Limitations,1,0,0,Judgement passage,,Modules and selected Overview lead,P5 Limitations
+CP-1,80,Findings → T4.1 Source register,1,1,0,Registers,,Evidence → Record,R13 RegisterTable and exact trace
+CP-1,92,Findings → T4.2 Entity period key,1,1,0,Findings,,Modules,R2 FactsBlock or qualified table selected by row shape
+CP-1,103,Findings → T4.3 Normalization register,0,1,0,Registers,,Evidence → Record,R13 RegisterTable and exact trace
+CP-1,114,Findings → T4.4 Income statement,0,1,0,Findings,,Modules,R2 FactsBlock or qualified table selected by row shape
+CP-1,149,Findings → Segment schedule,1,1,0,Findings,,Modules with Evidence trace,R1 StatementBlock or R2 exact financial facts
+CP-1,161,Findings → T4.5 Cash flow statement,0,1,0,Findings,,Modules,R2 FactsBlock or qualified table selected by row shape
+CP-1,190,Findings → T4.6 Balance sheet,0,1,0,Findings,,Modules,R2 FactsBlock or qualified table selected by row shape
+CP-1,222,Findings → T4.18 Debt instruments,1,1,0,Findings,,Modules,R2 FactsBlock or qualified table selected by row shape
+CP-1,243,Findings → T4.8 Constructed period register,1,1,0,Registers,,Evidence → Record,R13 RegisterTable and exact trace
+CP-1,258,Findings → Chart data: revenue and EBITDA,1,1,0,Drawing section,charts · Revenue and EBITDA,Modules and Forecast run charts,C1 ColumnsChart with ChartTable
+CP-1,268,Findings → Chart data: EBITDA bridge,1,1,0,Drawing section,charts · EBITDA bridge,Modules and Forecast run charts,C10 WaterfallChart with ChartTable
+CP-1,280,Findings → Net debt data,0,1,0,Findings,,Modules with Evidence trace,R1 StatementBlock or R2 exact financial facts
+CP-1,288,Findings → Debt principal to carrying value,0,1,0,Findings,,Modules with Evidence trace,R1 StatementBlock or R2 exact financial facts
+CP-1,294,Findings → Post-balance-sheet adjustments,0,1,0,Findings,,Modules with Evidence trace,R1 StatementBlock or R2 exact financial facts
+CP-1,300,Findings → Chart data: leverage,1,1,0,Drawing section,charts · Leverage,Modules and Forecast run charts,C2 TrendChart or C3 PathChart by compatible series with ChartTable
+CP-1,310,Findings → Chart data: interest cover,1,1,0,Drawing section,charts · Interest cover,Modules and Forecast run charts,C2 TrendChart or C3 PathChart by compatible series with ChartTable
+CP-1,320,Findings → Chart data: liquidity,1,1,0,Drawing section,charts · Liquidity,Modules and Forecast run charts,C2 TrendChart or C3 PathChart by compatible series with ChartTable
+CP-1,330,Findings → Chart data: debt maturities,1,1,0,Drawing section,charts · Debt maturities,Modules and Forecast run charts,C1 ColumnsChart with ChartTable
+CP-1,343,Findings → Chart data: debt stack,1,1,0,Drawing section,charts · Debt stack,Modules and Forecast run charts,C4 StackChart with ChartTable
+CP-1,358,Findings → Financials and credit metrics,0,1,0,Findings,,Modules with Evidence trace,R1 StatementBlock or R2 exact financial facts
+CP-1,385,Findings → T4.9 Calculation register,0,1,0,Registers,,Evidence → Record,R13 RegisterTable and exact trace
+CP-1,410,Findings → T4.10 KPI dashboard,0,1,0,Findings,,Modules,R2 FactsBlock or qualified table selected by row shape
+CP-1,422,Findings → T4.11 Definition conflict register,0,1,0,Registers,,Evidence → Record,R13 RegisterTable and exact trace
+CP-1,434,Findings → T4.13 Readiness,0,1,0,Findings,,Modules,R6 StatusBlock with stated reason
+CP-1,445,Findings → Confidence inputs,0,1,0,Findings,,Evidence → Record,R13 confidence inputs and published state
+CP-1,464,Calculations,2,1,0,Calculations,,Evidence → Trace,R12 DerivationTree with exact operands
+CP-1,556,Gaps,10,0,0,Gaps,,Evidence → Gaps,R13 RegisterTable grouped by stated severity
+CP-1,569,Next module,1,0,0,Hidden transport,,Original handoff file,Governed download only
+CP-1A,1,Front matter,1,0,0,Hidden transport,,Original handoff file,Governed download only
+CP-1A,11,Request,1,0,0,Hidden transport,,Original handoff file,Governed download only
+CP-1A,15,Sources,0,2,0,Sources,,Evidence → Sources,R14 SourceFileRow and R16 identity
+CP-1A,31,Findings,0,0,0,Findings,,Modules,Parent section for the reader blocks
+CP-1A,33,Findings → Bottom line,2,0,0,Judgement passage,,Modules and selected Overview lead,P1 BottomLine band
+CP-1A,40,Findings → Key findings,5,0,0,Judgement passage,,Modules and selected Overview lead,P2 Findings
+CP-1A,57,Findings → Contrary evidence and what would change the view,1,0,0,Judgement passage,,Modules and selected Overview lead,P3 Contrary evidence and P4 Change-of-view callout
+CP-1A,62,Findings → Limitations,4,0,0,Judgement passage,,Modules and selected Overview lead,P5 Limitations
+CP-1A,69,Findings → Overall governance view,1,0,0,Findings,,Modules,P2 Findings with exact qualification and trace
+CP-1A,74,Findings → Company and operating model,0,1,0,Findings,,Modules,R2 FactsBlock or qualified table selected by row shape
+CP-1A,86,Findings → Company profile,0,1,0,Findings,,Modules,R2 FactsBlock or qualified table selected by row shape
+CP-1A,101,Findings → Transaction summary and new debt issues,1,0,0,Findings,,Modules,P2 Findings with exact qualification and trace
+CP-1A,106,Findings → Events: Issuer history,0,1,0,Drawing section,events · Issuer history,Modules,R4 EventLane with ChartTable
+CP-1A,131,Findings → Confidence inputs,0,1,0,Findings,,Evidence → Record,R13 confidence inputs and published state
+CP-1A,150,Findings → Map: ownership and control,0,1,0,Drawing section,maps · ownership and control,Modules,R5 EdgeMap with ChartTable
+CP-1A,167,Findings → Map: operating model to credit,0,1,0,Drawing section,maps · operating model to credit,Modules,R5 EdgeMap with ChartTable
+CP-1A,180,Findings → Analytical appendix — complete canonical registers,0,0,0,Registers,,Evidence → Record,R13 RegisterTable and exact trace
+CP-1A,182,Findings → Analytical appendix — complete canonical registers → transaction_summary — Transaction summary,0,1,0,Registers,,Evidence → Record,R13 RegisterTable and exact trace
+CP-1A,200,Findings → Analytical appendix — complete canonical registers → company_description — Company description,0,1,0,Registers,,Evidence → Record,R13 RegisterTable and exact trace
+CP-1A,206,Findings → Analytical appendix — complete canonical registers → revenue_business_mix — Revenue and business mix,0,1,0,Registers,,Evidence → Record,R13 RegisterTable and exact trace
+CP-1A,220,Findings → Analytical appendix — complete canonical registers → ownership_register — Ownership register,0,1,0,Registers,,Evidence → Record,R13 RegisterTable and exact trace
+CP-1A,231,Findings → Analytical appendix — complete canonical registers → operating_model — Operating model,0,1,0,Registers,,Evidence → Record,R13 RegisterTable and exact trace
+CP-1A,253,Findings → Analytical appendix — complete canonical registers → events_timeline — Events timeline,0,1,0,Registers,,Evidence → Record,R13 RegisterTable and exact trace
+CP-1A,264,Findings → Analytical appendix — complete canonical registers → gaps_ledger — Gaps ledger,0,1,0,Registers,,Evidence → Gaps,R13 RegisterTable grouped by stated severity
+CP-1A,274,Findings → Analytical appendix — complete canonical registers → conflict_log — Conflict log,0,1,0,Registers,,Evidence → Record,R13 RegisterTable and exact trace
+CP-1A,284,Findings → Analytical appendix — complete canonical registers → T2D.1 — Source register,0,1,0,Registers,,Evidence → Record,R13 RegisterTable and exact trace
+CP-1A,297,Findings → Analytical appendix — complete canonical registers → T2D.3 — Governance register,0,1,0,Registers,,Evidence → Record,R13 RegisterTable and exact trace
+CP-1A,308,Findings → Analytical appendix — complete canonical registers → T2D.4 — Behaviour flag register,0,1,0,Registers,,Evidence → Record,R13 RegisterTable and exact trace
+CP-1A,318,Findings → Analytical appendix — complete canonical registers → T2D.5 — Capital allocation risk table,0,1,0,Registers,,Evidence → Record,R13 RegisterTable and exact trace
+CP-1A,332,Findings → Analytical appendix — complete canonical registers → T2D.9 — Sponsor risk assessment,0,1,0,Registers,,Evidence → Record,R13 RegisterTable and exact trace
+CP-1A,344,Findings → Analytical appendix — complete canonical registers → T2D.11 — Gaps ledger (governance),0,1,0,Registers,,Evidence → Gaps,R13 RegisterTable grouped by stated severity
+CP-1A,356,Findings → Analytical appendix — complete canonical registers → cp1a.cp_model_snapshot_fields — Snapshot fields,0,1,0,Registers,,Evidence → Record,R13 RegisterTable and exact trace
+CP-1A,367,Calculations,2,1,0,Calculations,,Evidence → Trace,R12 DerivationTree with exact operands
+CP-1A,393,Gaps,1,1,0,Gaps,,Evidence → Gaps,R13 RegisterTable grouped by stated severity
+CP-1A,407,Next module,1,0,0,Hidden transport,,Original handoff file,Governed download only
+CP-2,1,Front matter,1,0,0,Hidden transport,,Original handoff file,Governed download only
+CP-2,11,Request,1,0,0,Hidden transport,,Original handoff file,Governed download only
+CP-2,15,Sources,0,2,0,Sources,,Evidence → Sources,R14 SourceFileRow and R16 identity
+CP-2,38,Findings,0,0,0,Findings,,Modules,Parent section for the reader blocks
+CP-2,40,Findings → Bottom line,2,0,0,Judgement passage,,Modules and selected Overview lead,P1 BottomLine band
+CP-2,47,Findings → Key findings,5,0,0,Judgement passage,,Modules and selected Overview lead,P2 Findings
+CP-2,64,Findings → Contrary evidence and what would change the view,1,0,0,Judgement passage,,Modules and selected Overview lead,P3 Contrary evidence and P4 Change-of-view callout
+CP-2,69,Findings → Limitations,5,0,0,Judgement passage,,Modules and selected Overview lead,P5 Limitations
+CP-2,77,Findings → Overall credit view,1,0,0,Findings,,Modules,P2 Findings with exact qualification and trace
+CP-2,82,Findings → Fundamental credit drivers,1,1,0,Findings,,Modules,R2 FactsBlock or qualified table selected by row shape
+CP-2,97,Findings → Company description and ownership,1,0,0,Findings,,Modules,P2 Findings with exact qualification and trace
+CP-2,102,"Findings → Revenue, margins and cash conversion",1,0,0,Findings,,Modules,P2 Findings with exact qualification and trace
+CP-2,107,Findings → Market frameworks translated into credit terms,2,0,0,Findings,,Modules,P2 Findings with exact qualification and trace
+CP-2,114,"Findings → Outlook, tailwinds and headwinds",1,0,0,Findings,,Modules,P2 Findings with exact qualification and trace
+CP-2,119,Findings → Qualitative downside scenario,1,0,0,Findings,,Modules,P2 Findings with exact qualification and trace
+CP-2,124,Findings → Strengths and weaknesses,1,0,0,Findings,,Modules,P6 for-and-against board
+CP-2,129,Findings → Confidence inputs,0,1,0,Findings,,Evidence → Record,R13 confidence inputs and published state
+CP-2,148,Findings → Map: credit-risk transmission,0,1,0,Drawing section,maps · credit-risk transmission,Modules,R5 EdgeMap with ChartTable
+CP-2,162,Findings → Analytical appendix — complete canonical registers,0,0,0,Registers,,Evidence → Record,R13 RegisterTable and exact trace
+CP-2,165,Findings → Analytical appendix — complete canonical registers → T2.1 Source register,1,1,0,Registers,,Evidence → Record,R13 RegisterTable and exact trace
+CP-2,184,Findings → Analytical appendix — complete canonical registers → T2.10 Materiality filter,0,1,0,Registers,,Evidence → Record,R13 RegisterTable and exact trace
+CP-2,197,Findings → Analytical appendix — complete canonical registers → T2.12 Monitoring triggers,0,1,0,Registers,,Evidence → Record,R13 RegisterTable and exact trace
+CP-2,211,Findings → Analytical appendix — complete canonical registers → cp2.cp_model_strengths_weaknesses,0,1,0,Registers,,Evidence → Record,R13 RegisterTable and exact trace
+CP-2,223,Findings → Analytical appendix — complete canonical registers → Figure register,0,1,0,Registers,,Evidence → Record,R13 RegisterTable and exact trace
+CP-2,251,Findings → Analytical appendix — complete canonical registers → Conflict and reconciliation log,0,1,0,Registers,,Evidence → Record,R13 RegisterTable and exact trace
+CP-2,259,Calculations,2,1,0,Calculations,,Evidence → Trace,R12 DerivationTree with exact operands
+CP-2,284,Gaps,0,1,0,Gaps,,Evidence → Gaps,R13 RegisterTable grouped by stated severity
+CP-2,295,Next module,1,0,0,Hidden transport,,Original handoff file,Governed download only
+CP-2A,1,Front matter,1,0,0,Hidden transport,,Original handoff file,Governed download only
+CP-2A,12,Request,1,0,0,Hidden transport,,Original handoff file,Governed download only
+CP-2A,16,Sources,0,2,0,Sources,,Evidence → Sources,R14 SourceFileRow and R16 identity
+CP-2A,34,Findings,0,0,0,Findings,,Modules,Parent section for the reader blocks
+CP-2A,36,Findings → Bottom line,2,0,0,Judgement passage,,Modules and selected Overview lead,P1 BottomLine band
+CP-2A,43,Findings → Key findings,5,0,0,Judgement passage,,Modules and selected Overview lead,P2 Findings
+CP-2A,60,Findings → Contrary evidence and what would change the view,1,0,0,Judgement passage,,Modules and selected Overview lead,P3 Contrary evidence and P4 Change-of-view callout
+CP-2A,65,Findings → Limitations,5,0,0,Judgement passage,,Modules and selected Overview lead,P5 Limitations
+CP-2A,73,Findings → Downside view,2,1,0,Findings,,Modules,R2 FactsBlock or qualified table selected by row shape
+CP-2A,90,Findings → Catalyst view,1,0,0,Findings,,Modules,P2 Findings with exact qualification and trace
+CP-2A,95,Findings → Confidence inputs,0,1,0,Findings,,Evidence → Record,R13 confidence inputs and published state
+CP-2A,114,Findings → Map: stress scenario,0,1,0,Drawing section,maps · stress scenario,Modules,R5 EdgeMap with ChartTable
+CP-2A,128,Findings → Analytical appendix — complete canonical registers,0,0,0,Registers,,Evidence → Record,R13 RegisterTable and exact trace
+CP-2A,130,Findings → Analytical appendix — complete canonical registers → Source gate and module status,1,0,0,Hidden transport,,Original handoff file,Governed download only
+CP-2A,135,Findings → Analytical appendix — complete canonical registers → T2B.1 Source register,0,1,0,Registers,,Evidence → Record,R13 RegisterTable and exact trace
+CP-2A,148,Findings → Analytical appendix — complete canonical registers → T2B.2 Business model snapshot,0,1,0,Registers,,Evidence → Record,R13 RegisterTable and exact trace
+CP-2A,166,Findings → Analytical appendix — complete canonical registers → T2DS.1 Scenarios,0,1,0,Registers,,Evidence → Record,R13 RegisterTable and exact trace
+CP-2A,176,Findings → Analytical appendix — complete canonical registers → T2DS.2 Base operands,1,2,0,Registers,,Evidence → Record,R13 RegisterTable and exact trace
+CP-2A,200,Findings → Analytical appendix — complete canonical registers → T2DS.4 Stressed flows and metrics,0,1,0,Registers,,Evidence → Record,R13 RegisterTable and exact trace
+CP-2A,215,Findings → Analytical appendix — complete canonical registers → T2DS.6 Break points,1,1,0,Registers,,Evidence → Record,R13 RegisterTable and exact trace
+CP-2A,228,Findings → Analytical appendix — complete canonical registers → T2DS.8 Scenario against break,0,1,0,Registers,,Evidence → Record,R13 RegisterTable and exact trace
+CP-2A,237,Findings → Analytical appendix — complete canonical registers → T2B.6 Downside sensitivity matrix,0,1,0,Registers,,Evidence → Record,R13 RegisterTable and exact trace
+CP-2A,253,Findings → Analytical appendix — complete canonical registers → T2B.7 Monitoring sensitivity flags,0,1,0,Registers,,Evidence → Record,R13 RegisterTable and exact trace
+CP-2A,267,Findings → Analytical appendix — complete canonical registers → T5.5 Monitoring priority table,0,1,0,Registers,,Evidence → Record,R13 RegisterTable and exact trace
+CP-2A,281,Findings → Analytical appendix — complete canonical registers → T5.7 Gaps ledger (catalysts),0,1,0,Registers,,Evidence → Gaps,R13 RegisterTable grouped by stated severity
+CP-2A,292,Findings → Analytical appendix — complete canonical registers → T2DS.9 Stress gaps,0,1,0,Registers,,Evidence → Record,R13 RegisterTable and exact trace
+CP-2A,304,Findings → Analytical appendix — complete canonical registers → T2B.9 Gaps ledger,0,1,0,Registers,,Evidence → Gaps,R13 RegisterTable grouped by stated severity
+CP-2A,315,Calculations,2,1,0,Calculations,,Evidence → Trace,R12 DerivationTree with exact operands
+CP-2A,363,Gaps,1,1,0,Gaps,,Evidence → Gaps,R13 RegisterTable grouped by stated severity
+CP-2A,377,Next module,1,0,0,Hidden transport,,Original handoff file,Governed download only
+CP-2E,1,Front matter,1,0,0,Hidden transport,,Original handoff file,Governed download only
+CP-2E,12,Request,1,0,0,Hidden transport,,Original handoff file,Governed download only
+CP-2E,16,Sources,0,2,0,Sources,,Evidence → Sources,R14 SourceFileRow and R16 identity
+CP-2E,30,Findings,0,0,0,Findings,,Modules,Parent section for the reader blocks
+CP-2E,32,Findings → Bottom line,2,0,0,Judgement passage,,Modules and selected Overview lead,P1 BottomLine band
+CP-2E,39,Findings → Key findings,6,0,0,Judgement passage,,Modules and selected Overview lead,P2 Findings
+CP-2E,59,Findings → Contrary evidence and what would change the view,1,0,0,Judgement passage,,Modules and selected Overview lead,P3 Contrary evidence and P4 Change-of-view callout
+CP-2E,64,Findings → Limitations,5,0,0,Judgement passage,,Modules and selected Overview lead,P5 Limitations
+CP-2E,72,Findings → Macro and hedging view,1,0,0,Findings,,Modules,P2 Findings with exact qualification and trace
+CP-2E,77,Findings → Credit implication,1,0,0,Findings,,Modules,P2 Findings with exact qualification and trace
+CP-2E,82,Findings → Macro-exposure summary,1,1,0,Findings,,Modules,R2 FactsBlock or qualified table selected by row shape
+CP-2E,95,Findings → Events: Hedges,0,1,0,Drawing section,events · Hedges,Modules,R4 EventLane with ChartTable
+CP-2E,109,Findings → Confidence inputs,0,1,0,Findings,,Evidence → Record,R13 confidence inputs and published state
+CP-2E,128,Findings → Analytical appendix — complete canonical registers,0,0,0,Registers,,Evidence → Record,R13 RegisterTable and exact trace
+CP-2E,130,Findings → Analytical appendix — complete canonical registers → Evidence trace,0,1,0,Registers,,Evidence → Record,R13 RegisterTable and exact trace
+CP-2E,154,Findings → Analytical appendix — complete canonical registers → T2F.1 — Source register,1,1,0,Registers,,Evidence → Record,R13 RegisterTable and exact trace
+CP-2E,167,Findings → Analytical appendix — complete canonical registers → T2F.3 — Hedging register,0,1,0,Registers,,Evidence → Record,R13 RegisterTable and exact trace
+CP-2E,179,Findings → Analytical appendix — complete canonical registers → T2F.6 — FX exposure and mismatch register,0,1,0,Registers,,Evidence → Record,R13 RegisterTable and exact trace
+CP-2E,189,Findings → Analytical appendix — complete canonical registers → T2F.7 — Commodity and inflation register,0,1,0,Registers,,Evidence → Record,R13 RegisterTable and exact trace
+CP-2E,201,Findings → Analytical appendix — complete canonical registers → T2G.1 — ESG disclosure inventory,0,1,0,Registers,,Evidence → Record,R13 RegisterTable and exact trace
+CP-2E,210,Findings → Analytical appendix — complete canonical registers → T2G.2 — Transition risk register,0,1,0,Registers,,Evidence → Record,R13 RegisterTable and exact trace
+CP-2E,221,Findings → Analytical appendix — complete canonical registers → T2G.3 — Social event-risk register,1,1,0,Registers,,Evidence → Record,R13 RegisterTable and exact trace
+CP-2E,233,Findings → Analytical appendix — complete canonical registers → T2G.4 — Materiality table,0,1,0,Registers,,Evidence → Record,R13 RegisterTable and exact trace
+CP-2E,245,"Findings → Analytical appendix — complete canonical registers → T2G.5 — KPI, SPT and ratchet table",0,1,0,Registers,,Evidence → Record,R13 RegisterTable and exact trace
+CP-2E,252,Findings → Analytical appendix — complete canonical registers → T2G.6 — Demand and access implications,0,1,0,Registers,,Evidence → Record,R13 RegisterTable and exact trace
+CP-2E,261,Findings → Analytical appendix — complete canonical registers → T2G.7 — ESG credit implication table,0,1,0,Registers,,Evidence → Record,R13 RegisterTable and exact trace
+CP-2E,271,Findings → Analytical appendix — complete canonical registers → T2G.8 — Gaps ledger (ESG),0,1,0,Registers,,Evidence → Gaps,R13 RegisterTable grouped by stated severity
+CP-2E,281,Calculations,2,1,0,Calculations,,Evidence → Trace,R12 DerivationTree with exact operands
+CP-2E,301,Gaps,1,1,0,Gaps,,Evidence → Gaps,R13 RegisterTable grouped by stated severity
+CP-2E,315,Next module,1,0,0,Hidden transport,,Original handoff file,Governed download only
+CP-2G,1,Front matter,1,0,0,Hidden transport,,Original handoff file,Governed download only
+CP-2G,14,Request,1,0,0,Hidden transport,,Original handoff file,Governed download only
+CP-2G,18,Sources,0,2,0,Sources,,Evidence → Sources,R14 SourceFileRow and R16 identity
+CP-2G,31,Findings,0,0,0,Findings,,Modules,Parent section for the reader blocks
+CP-2G,33,Findings → Bottom line,2,0,0,Judgement passage,,Modules and selected Overview lead,P1 BottomLine band
+CP-2G,40,Findings → Key findings,5,0,0,Judgement passage,,Modules and selected Overview lead,P2 Findings
+CP-2G,57,Findings → Contrary evidence and what would change the view,1,0,0,Judgement passage,,Modules and selected Overview lead,P3 Contrary evidence and P4 Change-of-view callout
+CP-2G,62,Findings → Limitations,5,0,0,Judgement passage,,Modules and selected Overview lead,P5 Limitations
+CP-2G,71,Findings → Forward credit view,1,0,0,Findings,,Modules,P2 Findings with exact qualification and trace
+CP-2G,76,Findings → Forward credit view → Forward-credit trajectory,0,1,0,Findings,,Modules and Forecast,P2 authored narrative with R9 case context
+CP-2G,88,Findings → Analytical appendix — complete canonical registers,2,0,0,Registers,,Evidence → Record,R13 RegisterTable and exact trace
+CP-2G,95,Findings → Analytical appendix — complete canonical registers → T2H.3 Assumption register,0,1,0,Registers,,Evidence → Record,R13 RegisterTable and exact trace
+CP-2G,118,Findings → Analytical appendix — complete canonical registers → T2H.4 Operating and cash-flow forecast,1,1,0,Registers,,Evidence → Record,R13 RegisterTable and exact trace
+CP-2G,133,"Findings → Analytical appendix — complete canonical registers → T2H.5 Debt, cash and liquidity roll-forward",1,1,0,Registers,,Evidence → Record,R13 RegisterTable and exact trace
+CP-2G,147,Findings → Analytical appendix — complete canonical registers → T2H.6 Credit metrics by case,1,1,0,Registers,,Evidence → Record,R13 RegisterTable and exact trace
+CP-2G,162,Findings → Analytical appendix — complete canonical registers → T2H.7 Breakpoints,0,1,0,Registers,,Evidence → Record,R13 RegisterTable and exact trace
+CP-2G,173,Findings → Analytical appendix — complete canonical registers → T2H.8 Case trajectories and monitoring,0,1,0,Registers,,Evidence → Record,R13 RegisterTable and exact trace
+CP-2G,182,Findings → Confidence inputs,0,1,0,Findings,,Evidence → Record,R13 confidence inputs and published state
+CP-2G,201,Findings → Forecast inputs (machine-readable),1,0,0,Hidden transport,,Original handoff file,Governed download only
+CP-2G,257,Calculations,2,1,0,Calculations,,Evidence → Trace,R12 DerivationTree with exact operands
+CP-2G,386,Gaps,0,1,0,Gaps,,Evidence → Gaps,R13 RegisterTable grouped by stated severity
+CP-2G,398,Next module,1,0,0,Hidden transport,,Original handoff file,Governed download only
+CP-3,1,Front matter,1,0,0,Hidden transport,,Original handoff file,Governed download only
+CP-3,12,Request,1,0,0,Hidden transport,,Original handoff file,Governed download only
+CP-3,16,Sources,0,2,0,Sources,,Evidence → Sources,R14 SourceFileRow and R16 identity
+CP-3,35,Findings,0,0,0,Findings,,Modules,Parent section for the reader blocks
+CP-3,37,Findings → Bottom line,2,0,0,Judgement passage,,Modules and selected Overview lead,P1 BottomLine band
+CP-3,44,Findings → Key findings,6,0,0,Judgement passage,,Modules and selected Overview lead,P2 Findings
+CP-3,64,Findings → Contrary evidence and what would change the view,1,0,0,Judgement passage,,Modules and selected Overview lead,P3 Contrary evidence and P4 Change-of-view callout
+CP-3,69,Findings → Limitations,5,0,0,Judgement passage,,Modules and selected Overview lead,P5 Limitations
+CP-3,77,Findings → Security decision summary,1,1,0,Findings,,Modules,R2 FactsBlock or qualified table selected by row shape
+CP-3,90,Findings → Fundamental credit summary,1,0,0,Findings,,Modules,P2 Findings with exact qualification and trace
+CP-3,95,Findings → Security selection conclusions,3,0,0,Findings,,Modules,P2 Findings with exact qualification and trace
+CP-3,106,Findings → Instrument preference and trade-offs,1,0,0,Findings,,Modules,P2 Findings with exact qualification and trace
+CP-3,111,Findings → Downside path,1,0,0,Findings,,Modules,P2 Findings with exact qualification and trace
+CP-3,116,Findings → Final credit and relative-value view,1,0,0,Findings,,Modules,P2 Findings with exact qualification and trace
+CP-3,121,Findings → Relative value,1,0,0,Findings,,Modules,P2 Findings with exact qualification and trace
+CP-3,126,Findings → Portfolio Fit,1,0,0,Findings,,Modules,R2 portfolio facts or S3 input gap
+CP-3,131,Findings → Events: Instruments,0,1,0,Drawing section,events · Instruments,Modules,R4 EventLane with ChartTable
+CP-3,144,Findings → Confidence inputs,0,1,0,Findings,,Evidence → Record,R13 confidence inputs and published state
+CP-3,163,Findings → Analytical appendix — complete canonical registers,1,0,0,Registers,,Evidence → Record,R13 RegisterTable and exact trace
+CP-3,168,Findings → Analytical appendix — complete canonical registers → T3B.1 — Source register (instrument and portfolio),0,1,0,Registers,,Evidence → Record,R13 RegisterTable and exact trace
+CP-3,186,Findings → Analytical appendix — complete canonical registers → T3.3 — Issuer and security scorecard,1,1,0,Registers,,Evidence → Record,R13 RegisterTable and exact trace
+CP-3,204,Findings → Analytical appendix — complete canonical registers → T3.6 — Fundamental value matrix,0,1,0,Registers,,Evidence → Record,R13 RegisterTable and exact trace
+CP-3,216,Findings → Analytical appendix — complete canonical registers → T3C.4 — Risk budget flags,0,1,0,Registers,,Evidence → Record,R13 RegisterTable and exact trace
+CP-3,228,Calculations,2,1,0,Calculations,,Evidence → Trace,R12 DerivationTree with exact operands
+CP-3,255,Gaps,0,1,0,Gaps,,Evidence → Gaps,R13 RegisterTable grouped by stated severity
+CP-3,266,Next module,1,0,0,Hidden transport,,Original handoff file,Governed download only
+CP-4,1,Request,1,0,0,Hidden transport,,Original handoff file,Governed download only
+CP-4,5,Sources,0,2,0,Sources,,Evidence → Sources,R14 SourceFileRow and R16 identity
+CP-4,20,Findings,0,0,0,Findings,,Modules,Parent section for the reader blocks
+CP-4,22,Findings → Bottom line,2,0,0,Judgement passage,,Modules and selected Overview lead,P1 BottomLine band
+CP-4,29,Findings → Key findings,7,0,0,Judgement passage,,Modules and selected Overview lead,P2 Findings
+CP-4,52,Findings → Contrary evidence and what would change the view,1,0,0,Judgement passage,,Modules and selected Overview lead,P3 Contrary evidence and P4 Change-of-view callout
+CP-4,57,Findings → Limitations,5,0,0,Judgement passage,,Modules and selected Overview lead,P5 Limitations
+CP-4,65,Findings → Overall legal credit view,1,0,0,Findings,,Modules,P2 Findings with exact qualification and trace
+CP-4,70,Findings → Covenant-implication summary,1,1,0,Findings,,Modules,R2 FactsBlock or qualified table selected by row shape
+CP-4,83,Findings → Nearest pressure point,1,0,0,Findings,,Modules,R8 WatchBlock or P4 change-of-view callout
+CP-4,88,Findings → Capital structure,0,1,0,Findings,,Modules,R2 FactsBlock or qualified table selected by row shape
+CP-4,104,Findings → Chart data: covenant headroom,1,1,0,Drawing section,charts · Covenant headroom,Modules and Forecast run charts,C6 BulletChart with ChartTable
+CP-4,118,Findings → Events: Legal,0,1,0,Drawing section,events · Legal,Modules,R4 EventLane with ChartTable
+CP-4,130,Findings → Map: legal entities,0,1,0,Drawing section,maps · legal entities,Modules,R5 EdgeMap with ChartTable
+CP-4,142,Findings → Map: intercreditor,0,1,0,Drawing section,maps · intercreditor,Modules,R5 EdgeMap with ChartTable
+CP-4,154,Findings → Confidence inputs,0,1,0,Findings,,Evidence → Record,R13 confidence inputs and published state
+CP-4,173,Findings → Analytical appendix — complete canonical registers,0,0,0,Registers,,Evidence → Record,R13 RegisterTable and exact trace
+CP-4,175,Findings → Analytical appendix — complete canonical registers → Evidence index,0,1,0,Registers,,Evidence → Record,R13 RegisterTable and exact trace
+CP-4,203,Findings → Analytical appendix — complete canonical registers → T4.1 Source gate,0,1,0,Registers,,Evidence → Record,R13 RegisterTable and exact trace
+CP-4,213,Findings → Analytical appendix — complete canonical registers → T4.2 Controlling document register,0,1,0,Registers,,Evidence → Record,R13 RegisterTable and exact trace
+CP-4,224,Findings → Analytical appendix — complete canonical registers → T4.3 Covenant feature register,0,1,0,Registers,,Evidence → Record,R13 RegisterTable and exact trace
+CP-4,245,Findings → Analytical appendix — complete canonical registers → Definition conflict and conflicts log,0,1,0,Registers,,Evidence → Record,R13 RegisterTable and exact trace
+CP-4,254,Findings → Analytical appendix — complete canonical registers → T4.9 PD versus LGD translation,0,1,0,Registers,,Evidence → Record,R13 RegisterTable and exact trace
+CP-4,265,Findings → Analytical appendix — complete canonical registers → T4.10 Market norm comparison,0,1,0,Registers,,Evidence → Record,R13 RegisterTable and exact trace
+CP-4,271,Findings → Analytical appendix — complete canonical registers → T4.11 Covenant aggressiveness score,1,1,0,Registers,,Evidence → Record,R13 RegisterTable and exact trace
+CP-4,285,Findings → Analytical appendix — complete canonical registers → T4.12 Red flags and monitoring triggers,0,1,0,Registers,,Evidence → Record,R13 RegisterTable and exact trace
+CP-4,296,Findings → Analytical appendix — complete canonical registers → T4.13 Gaps ledger,0,1,0,Registers,,Evidence → Gaps,R13 RegisterTable grouped by stated severity
+CP-4,307,Findings → Analytical appendix — complete canonical registers → T4D.1 Source gate (structure),0,1,0,Registers,,Evidence → Record,R13 RegisterTable and exact trace
+CP-4,317,Findings → Analytical appendix — complete canonical registers → T4D.2 Legal entity perimeter,0,1,0,Registers,,Evidence → Record,R13 RegisterTable and exact trace
+CP-4,330,Findings → Analytical appendix — complete canonical registers → T4D.3 Guarantor coverage,0,1,0,Registers,,Evidence → Record,R13 RegisterTable and exact trace
+CP-4,338,Findings → Analytical appendix — complete canonical registers → T4D.4 Collateral by entity,0,1,0,Registers,,Evidence → Record,R13 RegisterTable and exact trace
+CP-4,347,Findings → Analytical appendix — complete canonical registers → T4D.5 Structural priority,0,1,0,Registers,,Evidence → Record,R13 RegisterTable and exact trace
+CP-4,356,Findings → Analytical appendix — complete canonical registers → T4D.6 Leakage routes,0,1,0,Registers,,Evidence → Record,R13 RegisterTable and exact trace
+CP-4,365,Findings → Analytical appendix — complete canonical registers → T4D.7 Priming exposure,0,1,0,Registers,,Evidence → Record,R13 RegisterTable and exact trace
+CP-4,373,Findings → Analytical appendix — complete canonical registers → T4D.8 Gaps (structure),0,1,0,Registers,,Evidence → Record,R13 RegisterTable and exact trace
+CP-4,382,Findings → Analytical appendix — complete canonical registers → T4F.1 Controlling documents (intercreditor),0,1,0,Registers,,Evidence → Record,R13 RegisterTable and exact trace
+CP-4,391,Findings → Analytical appendix — complete canonical registers → T4F.2 Creditor class map,0,1,0,Registers,,Evidence → Record,R13 RegisterTable and exact trace
+CP-4,401,Findings → Analytical appendix — complete canonical registers → T4F.3 Enforcement control,0,1,0,Registers,,Evidence → Record,R13 RegisterTable and exact trace
+CP-4,410,Findings → Analytical appendix — complete canonical registers → T4F.4 Turnover and release,0,1,0,Registers,,Evidence → Record,R13 RegisterTable and exact trace
+CP-4,418,Findings → Analytical appendix — complete canonical registers → T4F.5 Recovery control assessment,0,1,0,Registers,,Evidence → Record,R13 RegisterTable and exact trace
+CP-4,426,Findings → Analytical appendix — complete canonical registers → T4F.6 Gaps (intercreditor),0,1,0,Registers,,Evidence → Record,R13 RegisterTable and exact trace
+CP-4,433,Findings → Analytical appendix — complete canonical registers → T4C.2 Capacity source map,0,1,0,Registers,,Evidence → Record,R13 RegisterTable and exact trace
+CP-4,442,Findings → Analytical appendix — complete canonical registers → T4C.3 Definition and ratio mechanics,0,1,0,Registers,,Evidence → Record,R13 RegisterTable and exact trace
+CP-4,452,Findings → Analytical appendix — complete canonical registers → T4C.4 Headroom,0,1,0,Registers,,Evidence → Record,R13 RegisterTable and exact trace
+CP-4,462,Findings → Analytical appendix — complete canonical registers → T4C.5 Capacity register,1,1,0,Registers,,Evidence → Record,R13 RegisterTable and exact trace
+CP-4,475,"Findings → Analytical appendix — complete canonical registers → T4C.6 Debt, lien and priming routes",0,1,0,Registers,,Evidence → Record,R13 RegisterTable and exact trace
+CP-4,484,Findings → Analytical appendix — complete canonical registers → T4C.7 Leakage routes,0,1,0,Registers,,Evidence → Record,R13 RegisterTable and exact trace
+CP-4,493,Findings → Analytical appendix — complete canonical registers → T4C.8 Add-back inflation,0,1,0,Registers,,Evidence → Record,R13 RegisterTable and exact trace
+CP-4,502,Findings → Analytical appendix — complete canonical registers → T4C.9 Leakage and basket flags,0,1,0,Registers,,Evidence → Record,R13 RegisterTable and exact trace
+CP-4,512,Findings → Analytical appendix — complete canonical registers → T4C.11 Capacity risk prioritisation,0,1,0,Registers,,Evidence → Record,R13 RegisterTable and exact trace
+CP-4,522,Findings → Analytical appendix — complete canonical registers → T4C.12 Gaps (capacity),0,1,0,Registers,,Evidence → Record,R13 RegisterTable and exact trace
+CP-4,531,Calculations,2,1,0,Calculations,,Evidence → Trace,R12 DerivationTree with exact operands
+CP-4,554,Gaps,1,1,0,Gaps,,Evidence → Gaps,R13 RegisterTable grouped by stated severity
+CP-4,568,Next module,1,0,0,Hidden transport,,Original handoff file,Governed download only
+CP-5,1,Front matter,1,0,0,Hidden transport,,Original handoff file,Governed download only
+CP-5,12,Request,1,0,0,Hidden transport,,Original handoff file,Governed download only
+CP-5,16,Sources,0,2,0,Sources,,Evidence → Sources,R14 SourceFileRow and R16 identity
+CP-5,41,Findings,0,0,0,Findings,,Modules,Parent section for the reader blocks
+CP-5,43,Findings → Bottom line,2,0,0,Judgement passage,,Modules and selected Overview lead,P1 BottomLine band
+CP-5,50,Findings → Key findings,6,0,0,Judgement passage,,Modules and selected Overview lead,P2 Findings
+CP-5,70,Findings → Contrary evidence and what would change the view,1,0,0,Judgement passage,,Modules and selected Overview lead,P3 Contrary evidence and P4 Change-of-view callout
+CP-5,75,Findings → Limitations,4,0,0,Judgement passage,,Modules and selected Overview lead,P5 Limitations
+CP-5,82,Findings → Traceability conclusion,1,0,0,Findings,,Modules,P2 Findings with exact qualification and trace
+CP-5,87,Findings → Clearance decision,3,0,0,Findings,,Modules,R6 StatusBlock with stated reason
+CP-5,96,Findings → Confidence inputs,0,1,0,Findings,,Evidence → Record,R13 confidence inputs and published state
+CP-5,115,Findings → Map: support and contradiction,0,1,0,Drawing section,maps · support and contradiction,Modules,R5 EdgeMap with ChartTable
+CP-5,132,Findings → Analytical appendix — complete canonical registers,1,0,0,Registers,,Evidence → Record,R13 RegisterTable and exact trace
+CP-5,137,Findings → Analytical appendix — complete canonical registers → T5B.1 Source register,0,1,0,Registers,,Evidence → Record,R13 RegisterTable and exact trace
+CP-5,161,Findings → Analytical appendix — complete canonical registers → T5B.2 Credit driver ranking,0,1,0,Registers,,Evidence → Record,R13 RegisterTable and exact trace
+CP-5,172,Findings → Analytical appendix — complete canonical registers → T5B.3 Traceability map,0,1,0,Registers,,Evidence → Record,R13 RegisterTable and exact trace
+CP-5,190,"Findings → Analytical appendix — complete canonical registers → T5.3 Math, logic and definition audit",0,1,0,Registers,,Evidence → Record,R13 RegisterTable and exact trace
+CP-5,200,Calculations,2,1,0,Calculations,,Evidence → Trace,R12 DerivationTree with exact operands
+CP-5,222,Gaps,1,1,0,Gaps,,Evidence → Gaps,R13 RegisterTable grouped by stated severity
+CP-5,238,Next module,1,0,0,Hidden transport,,Original handoff file,Governed download only
+CP-6,1,Front matter,1,0,0,Hidden transport,,Original handoff file,Governed download only
+CP-6,13,Request,1,0,0,Hidden transport,,Original handoff file,Governed download only
+CP-6,17,Sources,0,2,0,Sources,,Evidence → Sources,R14 SourceFileRow and R16 identity
+CP-6,36,Findings,0,0,0,Findings,,Modules,Parent section for the reader blocks
+CP-6,38,Findings → Bottom line,2,0,0,Judgement passage,,Modules and selected Overview lead,P1 BottomLine band
+CP-6,45,Findings → Key findings,5,0,0,Judgement passage,,Modules and selected Overview lead,P2 Findings
+CP-6,62,Findings → Contrary evidence and what would change the view,2,0,0,Judgement passage,,Modules and selected Overview lead,P3 Contrary evidence and P4 Change-of-view callout
+CP-6,69,Findings → Limitations,4,0,0,Judgement passage,,Modules and selected Overview lead,P5 Limitations
+CP-6,76,Findings → Decision,3,0,0,Findings,,Modules and selected Overview lead,P1 BottomLine with stated decision and qualification
+CP-6,85,Findings → Committee challenge,1,0,0,Findings,,Modules,P6 for-and-against board
+CP-6,90,"Findings → Bull, bear and chair record",1,0,0,Findings,,Modules,P6 for-and-against board
+CP-6,95,Findings → Single greatest uncertainty,1,0,0,Findings,,Modules,P2 Findings with exact qualification and trace
+CP-6,100,Findings → IC chair memo,1,0,0,Findings,,Modules,P2 Findings with exact qualification and trace
+CP-6,105,Findings → Decision evidence register,0,1,0,Registers,,Evidence → Record,R13 RegisterTable and exact trace
+CP-6,128,Findings → Chart data: portfolio limits,1,1,0,Drawing section,chartGaps · Portfolio limits,Modules and relevant Forecast,S3 stated chart gap
+CP-6,136,Findings → Events: Decision and watch,0,1,0,Drawing section,events · Decision and watch,Modules,R4 EventLane with ChartTable
+CP-6,142,Findings → Confidence inputs,0,1,0,Findings,,Evidence → Record,R13 confidence inputs and published state
+CP-6,161,Findings → Analytical appendix — complete canonical registers,1,0,0,Registers,,Evidence → Record,R13 RegisterTable and exact trace
+CP-6,166,Findings → Analytical appendix — complete canonical registers → T6A.4 Bear cross-examination,2,1,0,Registers,,Evidence → Record,R13 RegisterTable and exact trace
+CP-6,179,Findings → Analytical appendix — complete canonical registers → T6A.7 Debate resolution matrix,0,1,0,Registers,,Evidence → Record,R13 RegisterTable and exact trace
+CP-6,193,Calculations,2,1,0,Calculations,,Evidence → Trace,R12 DerivationTree with exact operands
+CP-6,205,Gaps,1,1,0,Gaps,,Evidence → Gaps,R13 RegisterTable grouped by stated severity
+CP-6,218,Next module,1,0,0,Hidden transport,,Original handoff file,Governed download only
+CP-DR,1,Front matter,1,0,0,Hidden transport,,Original handoff file,Governed download only
+CP-DR,19,Request,1,0,0,Hidden transport,,Original handoff file,Governed download only
+CP-DR,23,Sources,1,2,0,Sources,,Evidence → Sources,R14 SourceFileRow and R16 identity
+CP-DR,45,Findings,0,0,0,Findings,,Modules,Parent section for the reader blocks
+CP-DR,47,Findings → Bottom line,2,0,0,Judgement passage,,Modules and selected Overview lead,P1 BottomLine band
+CP-DR,54,Findings → Key findings,6,0,0,Judgement passage,,Modules and selected Overview lead,P2 Findings
+CP-DR,74,Findings → Contrary evidence and what would change the view,2,0,0,Judgement passage,,Modules and selected Overview lead,P3 Contrary evidence and P4 Change-of-view callout
+CP-DR,81,Findings → Limitations,5,0,0,Judgement passage,,Modules and selected Overview lead,P5 Limitations
+CP-DR,89,Findings → Research-answer summary,1,1,0,Findings,,Modules,R3 QuestionsBlock and source trace
+CP-DR,102,Findings → Demand signals,1,1,0,Findings,,Modules,R2 FactsBlock or qualified table selected by row shape
+CP-DR,117,Findings → Bond trading levels,1,1,0,Findings,,Modules,R2 FactsBlock or qualified table selected by row shape
+CP-DR,128,Findings → Analytical appendix — complete canonical registers,0,0,0,Registers,,Evidence → Record,R13 RegisterTable and exact trace
+CP-DR,130,Findings → Analytical appendix — complete canonical registers → TDR.2 Evidence ledger,0,1,0,Registers,,Evidence → Record,R13 RegisterTable and exact trace
+CP-DR,162,Findings → Analytical appendix — complete canonical registers → TDR.4 Candidate peers,0,1,0,Registers,,Evidence → Record,R13 RegisterTable and exact trace
+CP-DR,171,Findings → Analytical appendix — complete canonical registers → TDR.5 Provisional alignment observations,0,1,0,Registers,,Evidence → Record,R13 RegisterTable and exact trace
+CP-DR,186,Findings → Analytical appendix — complete canonical registers → TDR.6 Located peer figures,0,1,0,Registers,,Evidence → Record,R13 RegisterTable and exact trace
+CP-DR,201,Findings → Events: Research catalysts,0,1,0,Drawing section,events · Research catalysts,Modules,R4 EventLane with ChartTable
+CP-DR,211,Findings → Confidence inputs,0,1,0,Findings,,Evidence → Record,R13 confidence inputs and published state
+CP-DR,230,Calculations,2,1,0,Calculations,,Evidence → Trace,R12 DerivationTree with exact operands
+CP-DR,249,Gaps,0,1,0,Gaps,,Evidence → Gaps,R13 RegisterTable grouped by stated severity
+CP-DR,261,Next module,1,0,0,Hidden transport,,Original handoff file,Governed download only

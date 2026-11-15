@@ -495,6 +495,9 @@ describe("connected activity and reports", () => {
     expect(await screen.findByRole("heading", { name: report.issuer })).toBeInTheDocument();
     expect(screen.getByText("The report read the filing.")).toBeInTheDocument();
     expect(screen.queryByText(filing, { exact: false })).toBeNull();
+    expect(screen.queryByRole("link", { name: "Download Fundamental credit" })).toBeNull();
+    window.location.hash = "evidence";
+    await screen.findByRole("link", { name: "Download Fundamental credit" });
     expect(screen.getByRole("link", { name: "Download Fundamental credit" })).toHaveAttribute(
       "href",
       `/library/${download}`,
@@ -503,7 +506,10 @@ describe("connected activity and reports", () => {
       "download",
     );
     expect(screen.queryByRole("link", { name: "Download Financial foundation" })).toBeNull();
-    expect(screen.getByRole("link", { name: "Modules" })).toHaveAttribute("href", "#modules");
+    expect(screen.getByRole("link", { name: /^Modules(?: \d+)?$/ })).toHaveAttribute(
+      "href",
+      "#modules",
+    );
     window.location.hash = "modules/CP-2";
     expect(await screen.findByRole("cell", { name: "0" })).toBeInTheDocument();
     expect(screen.queryByRole("columnheader", { name: "Source" })).toBeNull();

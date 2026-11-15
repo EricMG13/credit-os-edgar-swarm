@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
 import { spawn } from "node:child_process";
 import { cp, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -103,11 +104,14 @@ async function checkCharts(report, artifacts, channel, page) {
   const section = (name) =>
     report
       .getByRole("navigation", { name: "Report sections" })
-      .getByRole("link", { name, exact: true });
+      .getByRole("link", { name: name === "Modules" ? /^Modules(?: \d+)?$/u : name, exact: true });
   await section("Changes").click();
   await report.getByText("No earlier run to compare.", { exact: true }).waitFor();
   await section("Modules").click();
-  await report.getByRole("link", { name: "Financial foundation (CP-1)", exact: true }).click();
+  const modules = report.getByRole("navigation", { name: "Modules and sections" });
+  await modules.getByRole("link", { name: /^Liquidity, Delivered/u }).waitFor();
+  await modules.getByRole("link", { name: /^Refinancing & LME, Delivered/u }).waitFor();
+  await modules.getByRole("link", { name: /^Financial foundation, Delivered/u }).click();
   const debt = report.getByRole("figure", { name: "Debt maturities", exact: true });
   await debt.getByRole("radio", { name: "Chart", exact: true }).waitFor();
   await debt.locator("svg.recharts-surface").first().waitFor();
@@ -132,7 +136,10 @@ async function checkCharts(report, artifacts, channel, page) {
   await section("Report").click();
   await report.getByRole("heading", { name: "Report history", exact: true }).waitFor();
   await section("Evidence").click();
+  const evidence = report.getByRole("navigation", { name: "Evidence sections" });
+  await evidence.getByRole("link", { name: "Sources", exact: true }).click();
   await report.getByRole("heading", { name: "Sources", exact: true }).waitFor();
+  await evidence.getByRole("link", { name: "Summary", exact: true }).click();
   await page.reload();
   await report.getByRole("heading", { name: "Handoffs", exact: true }).waitFor();
 }
@@ -175,9 +182,8 @@ for (const [channel, brand, envName] of [
         await open.click();
         await page.waitForURL((url) => url.pathname === `/report/${run}`);
         const report = page.locator("main");
-        await report
-          .getByText("Full credit assessment · As of 31 March 2025", { exact: true })
-          .waitFor();
+        await report.getByText("Full credit assessment", { exact: true }).waitFor();
+        await report.getByText("As of 31 March 2025", { exact: true }).waitFor();
         await report
           .getByText("The synthetic issuer shows one observed item.", { exact: false })
           .first()
@@ -198,10 +204,25 @@ for (const [channel, brand, envName] of [
           .click();
         const file = await handoff;
         assert.equal(file.suggestedFilename(), "CP-2.md");
-        assert.match(
-          await readFile(await file.path(), "utf8"),
-          /The synthetic issuer shows one observed item\./u,
+        const bytes = await readFile(await file.path());
+        assert.match(bytes.toString("utf8"), /The synthetic issuer shows one observed item\./u);
+        const publication = await page.request.get(
+          new URL("/connected/snapshot", service.endpoint).href,
         );
+        assert.equal(publication.status(), 200);
+        const { workspace: publishedWorkspace } = await publication.json();
+        const published = Object.values(publishedWorkspace.runs).find(
+          (item) => item.folder === run,
+        );
+        assert.ok(published);
+        assert.equal(
+          Object.values(published.modules).filter((module) => module.default).length,
+          14,
+        );
+        assert.ok(published.modules["CP-2D"].default);
+        assert.ok(published.modules["CP-3C"].default);
+        const designated = publishedWorkspace.outputs[published.modules["CP-2"].default];
+        assert.equal(createHash("sha256").update(bytes).digest("hex"), designated.sha256);
         assert.equal(new URL(page.url()).pathname, `/report/${run}`);
         assert.deepEqual(errors, []);
         await page.screenshot({

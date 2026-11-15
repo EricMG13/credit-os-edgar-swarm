@@ -7,11 +7,13 @@ export type Block = Table | Paragraph | { type: "equity"; line: number; text?: s
 export type Section = { heading: string; level: number; line: number; blocks: Block[] };
 type Output = {
   id: string;
+  run?: string;
   module: string;
   label: string;
   href: string;
   sha256: string;
   parseError?: string;
+  summary?: { bottomLine: string; confidence: string; limitation: string; line: number } | null;
   state?: { established: boolean | null; declared: string | null };
   charts?: { table: number }[];
   chartGaps?: { table: number }[];
@@ -28,7 +30,7 @@ type Source = {
   sha256: string | null;
 };
 type Chip = {
-  label: string;
+  label: string | null;
   quote: string | null;
   excerpt: string | null;
   file: string | null;
@@ -52,7 +54,10 @@ type Changes = {
   problem?: string | null;
   pack?: { measures?: Measure[]; omitted?: Record<string, string> } | null;
   verdicts?: {
-    measures?: Record<string, { kind: string; label: string; reason?: string | null }>;
+    measures?: Record<
+      string,
+      { kind: string; label: string; reason?: string | null; analysis_change?: string | null }
+    >;
   } | null;
 };
 type Model = {
@@ -122,6 +127,7 @@ export type Snapshot = {
     models: Model[];
   };
   chips: Record<string, Chip[]>;
+  preview?: { reason: string };
 };
 
 export async function getSnapshot(signal: AbortSignal): Promise<Snapshot | null> {
@@ -130,11 +136,15 @@ export async function getSnapshot(signal: AbortSignal): Promise<Snapshot | null>
   return (await response.json()) as Snapshot | null;
 }
 
-export function outputEntries(snapshot: Snapshot, run: PublishedRun): OutputEntry[] {
-  return Object.values(run.modules).flatMap((module) =>
+export function outputEntries(
+  snapshot: Snapshot,
+  run: PublishedRun,
+  routeKey: string,
+): OutputEntry[] {
+  return Object.entries(run.modules).flatMap(([moduleId, module]) =>
     module.outputs.flatMap((id) => {
       const output = snapshot.workspace.outputs[id];
-      return output
+      return output && output.module === moduleId && (!output.run || output.run === routeKey)
         ? [
             {
               output,
@@ -180,14 +190,21 @@ export function comparisonRows(changes: Changes) {
       : withUnit(item.value, item.unit) + (item.period ? ` (${item.period})` : "");
   return (changes.pack?.measures ?? []).map((measure) => {
     const verdict = changes.verdicts?.measures?.[measure.key];
+    const unitsMatch = (measure.prior?.unit ?? null) === (measure.current?.unit ?? null);
+    const comparable =
+      verdict?.kind === "comparable" &&
+      unitsMatch &&
+      measure.prior?.value != null &&
+      measure.current?.value != null;
     return [
       measure.label,
       side(measure.prior),
       side(measure.current),
-      verdict?.kind === "comparable" && measure.difference != null
-        ? withUnit(measure.difference, measure.unit)
-        : "—",
-      verdict?.reason || verdict?.label || measure.reason || "Comparability not judged",
+      comparable && measure.difference != null ? withUnit(measure.difference, measure.unit) : "—",
+      unitsMatch
+        ? verdict?.reason || verdict?.label || measure.reason || "Comparability not judged"
+        : "Reporting units differ.",
+      verdict?.analysis_change ?? "",
     ];
   });
 }

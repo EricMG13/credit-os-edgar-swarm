@@ -1,6 +1,6 @@
 # Run Credit OS 2
 
-Credit OS 2 is based on RBOT-HTML `9d040f8`. It keeps that revision's Python pin,
+Credit OS 2 is based on RBOT-HTML `fc010a7`. It keeps that revision's Python pin,
 `pyproject.toml`, `uv.lock`, scheduler, calculations, provider configuration and library
 publication. The browser uses the Credit OS design system and React 19.3.0. Run intake,
 activity, library and report navigation live at one local address.
@@ -23,12 +23,24 @@ RBOT-HTML's existing pins.
 
 ## Run the browser proof
 
-On Windows, run the following from the extracted project in PowerShell.
+On the Windows work PC, install Node.js 24, uv 0.12.5, Google Chrome and
+Microsoft Edge. In PowerShell, check the candidate SHA-256 against its companion
+checksum, then extract it to a short local path. Choose an unused extraction folder.
 
 ```powershell
+$zip = 'C:\Downloads\credit-os2-react.zip'
+$folder = 'C:\credit-os2-test'
+Get-FileHash -Algorithm SHA256 $zip
+Expand-Archive -LiteralPath $zip -DestinationPath $folder
+Set-Location $folder
+Get-Content .\SOURCE-COMMIT.txt
 .\Run-React-Proof.cmd
 $LASTEXITCODE
 ```
+
+Keep the printed ZIP digest, source commit, and both browser JSON records together.
+The Windows release gate requires exit code 0 and passing records from both
+branded browsers on the work PC, from the same candidate archive.
 
 On macOS or after setup, run the following command.
 
@@ -40,10 +52,20 @@ Playwright launches the installed branded browsers. Set `CHROME_PATH` or `EDGE_P
 to the corresponding executable if it is installed in a nonstandard location.
 Success is two passing tests and exit code 0. Each browser uses a separate temporary
 workspace and uploads the same synthetic Northbridge filing. The test checks the
-finished report, original handoff download, a published CP-1 chart, and the model
-forecast that RBOT-HTML calculates. Results and report screenshots are saved in a fresh
+finished report and all five redesigned views, the exact original handoff download,
+a published CP-1 chart, and the model forecast that RBOT-HTML calculates. Results and report screenshots are saved in a fresh
 folder under `proof-artifacts/`. The proof substitutes canned model responses and
 makes no paid calls.
+
+To prepare a local release candidate from committed sources, run:
+
+```sh
+uv run --locked python tools/package_react_windows.py --revision HEAD
+```
+
+The builder installs the locked frontend dependencies in a temporary source
+directory and writes `delivery/credit-os2-react.zip` and its checksum. Candidate
+archives contain the proof fixture and exclude local issuer data.
 
 ## Open the interface
 

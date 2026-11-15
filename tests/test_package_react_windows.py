@@ -1,0 +1,40 @@
+from io import BytesIO
+from zipfile import ZipFile
+
+import pytest
+
+from tools.package_react_windows import validate_source, write_bundle
+
+
+@pytest.mark.parametrize("entry", ["../outside", "src/.env", "proof/key.pem", "web/dist/data.js"])
+def test_refuses_unsafe_or_stale_source_entries(entry):
+    payload = BytesIO()
+    with ZipFile(payload, "w") as source:
+        source.writestr(entry, "not for the package")
+        with pytest.raises(ValueError, match="unsupported"):
+            validate_source(source)
+
+
+def test_keeps_runtime_and_compiled_assets_at_the_archive_root(tmp_path):
+    dist = tmp_path / "dist"
+    dist.mkdir()
+    (dist / "index.html").write_text("<title>Credit OS 2</title>")
+    payload = BytesIO()
+    with ZipFile(payload, "w") as source:
+        source.writestr("Run-React-Proof.cmd", "echo proof")
+        source.writestr("uv.lock", "")
+        source.writestr("web/package-lock.json", "{}")
+        source.writestr("proof/northbridge-filing.txt", "synthetic")
+        validate_source(source)
+        output = tmp_path / "candidate.zip"
+        write_bundle(source, dist, output, "candidate")
+    with ZipFile(output) as archive:
+        assert set(archive.namelist()) == {
+            "Run-React-Proof.cmd",
+            "uv.lock",
+            "web/package-lock.json",
+            "proof/northbridge-filing.txt",
+            "web/dist/index.html",
+            "SOURCE-COMMIT.txt",
+        }
+        assert archive.read("SOURCE-COMMIT.txt") == b"candidate\n"

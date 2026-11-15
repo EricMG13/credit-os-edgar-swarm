@@ -29,9 +29,17 @@ interface LegacyVisualsProps {
   output: unknown;
   sections?: unknown;
   evidenceHref?: (line: number) => string;
+  primary?: string;
+  cards?: boolean;
 }
 
-export function LegacyVisuals({ output, sections, evidenceHref }: LegacyVisualsProps) {
+export function LegacyVisuals({
+  output,
+  sections,
+  evidenceHref,
+  primary,
+  cards,
+}: LegacyVisualsProps) {
   const published = record(output);
   const tables = publishedTables(sections ?? published.sections);
   const drawings = [
@@ -39,7 +47,12 @@ export function LegacyVisuals({ output, sections, evidenceHref }: LegacyVisualsP
     ...byCategory(published, "chartGaps", "chart"),
     ...byCategory(published, "events", "event"),
     ...byCategory(published, "maps", "map"),
-  ].sort(compareLines);
+  ].sort((a, b) => {
+    if (primary && a.descriptor.title === primary && b.descriptor.title !== primary) return -1;
+    if (primary && b.descriptor.title === primary && a.descriptor.title !== primary) return 1;
+    return compareLines(a, b);
+  });
+  const box = cards ? " rounded-xl border border-border-hairline bg-surface-card p-5" : "";
   const views = drawings.flatMap(({ descriptor, category }): ReactNode[] => {
     const title = word(descriptor.title ?? descriptor.lane ?? descriptor.name);
     const line = descriptor.table;
@@ -54,7 +67,7 @@ export function LegacyVisuals({ output, sections, evidenceHref }: LegacyVisualsP
     const key = `${category}-${title}-${String(line)}`;
     if (gap) {
       return [
-        <section key={key} className="grid gap-2">
+        <section key={key} className={`grid min-w-0 gap-2${box}`}>
           <h4 className="font-display text-h4">{title}</h4>
           <p role="note">{gap}</p>
           {actions}
@@ -77,16 +90,21 @@ export function LegacyVisuals({ output, sections, evidenceHref }: LegacyVisualsP
         );
     }
     return [
-      <div className="grid min-w-0 gap-2" key={key}>
+      <div className={`grid min-w-0 grid-cols-[minmax(0,1fr)] gap-2${box}`} key={key}>
         {chart ?? (
           <>
             <h4 className="font-display text-h4">{title}</h4>
             {actions}
+            <p role="note" className="text-small text-text-secondary">
+              Source table available. The chart could not be drawn on a common basis.
+            </p>
             <ChartTable caption={title} {...chartTable(table)} />
           </>
         )}
       </div>,
     ];
   });
-  return views.length === 0 ? null : <div className="grid min-w-0 gap-8">{views}</div>;
+  return views.length === 0 ? null : (
+    <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-4">{views}</div>
+  );
 }

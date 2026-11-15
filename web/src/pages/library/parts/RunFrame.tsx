@@ -40,6 +40,7 @@ export function RunTabLink({
   current,
   label,
   count,
+  accessibleLabel,
   hint,
   small = false,
 }: {
@@ -47,6 +48,7 @@ export function RunTabLink({
   current: boolean;
   label: string;
   count?: string;
+  accessibleLabel?: string;
   hint?: string;
   /** The smaller tab of a page's own section tabs (the mock's `u-tab-sm`). */
   small?: boolean;
@@ -70,6 +72,7 @@ export function RunTabLink({
   return (
     <Link
       href={href}
+      aria-label={accessibleLabel}
       aria-current={current ? "page" : undefined}
       className={cx(
         TAB,

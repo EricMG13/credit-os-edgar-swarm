@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   classifySections,
+  comparisonRows,
   displayColumns,
   readParagraph,
   publishedHref,
@@ -74,5 +75,35 @@ describe("published handoff boundaries", () => {
     expect(publishedHref("downloads/test-run/%2e%2e/other.md", "test-run")).toBeNull();
     expect(publishedHref("downloads/test-run/a%2Fb.md", "test-run")).toBeNull();
     expect(publishedHref("https://example.com/CP-2.md", "test-run")).toBeNull();
+  });
+  it("carries authored changes and withholds a claimed delta across conflicting units", () => {
+    const measure = {
+      key: "cash",
+      label: "Cash",
+      prior: { value: "0", unit: "US$m", period: "FY2025" },
+      current: { value: "20", unit: "GBPm", period: "FY2026" },
+      difference: "20",
+      unit: "GBPm",
+    };
+    const rows = comparisonRows({
+      pack: { measures: [measure] },
+      verdicts: {
+        measures: {
+          cash: {
+            kind: "comparable",
+            label: "Comparable",
+            analysis_change: "The newer analysis uses a different cash perimeter.",
+          },
+        },
+      },
+    });
+    expect(rows[0]).toEqual([
+      "Cash",
+      "0 US$m (FY2025)",
+      "20 GBPm (FY2026)",
+      "—",
+      "Reporting units differ.",
+      "The newer analysis uses a different cash perimeter.",
+    ]);
   });
 });

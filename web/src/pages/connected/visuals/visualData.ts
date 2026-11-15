@@ -72,7 +72,11 @@ export function bounds(values: (number | null)[], zero = false) {
   return { min: zero && min === 0 ? 0 : min - margin, max: max + margin };
 }
 
-export function ticks(values: (number | null)[], zero = false, format = String) {
+export function ticks(
+  values: (number | null)[],
+  zero = false,
+  format: (value: number) => string = String,
+) {
   const { min, max } = bounds(values, zero);
   return [...new Set([min, min + (max - min) / 2, max])].map((value) => ({
     value,

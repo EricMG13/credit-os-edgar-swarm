@@ -54,6 +54,7 @@ export function ModuleNav({
   onSection,
   modules,
   current,
+  hrefFor,
 }: {
   issuer: string;
   run: string;
@@ -62,6 +63,7 @@ export function ModuleNav({
   onSection: (key: string) => void;
   modules: readonly NavModule[];
   current: string;
+  hrefFor?: (module: string) => string;
 }) {
   const sectionsLabel = useId();
   const modulesLabel = useId();
@@ -104,7 +106,7 @@ export function ModuleNav({
         {modules.map((module) => (
           <li key={module.id}>
             <Link
-              href={modulesHref(issuer, run, module.id)}
+              href={hrefFor?.(module.id) ?? modulesHref(issuer, run, module.id)}
               aria-label={`${module.name}, ${module.state}`}
               aria-current={module.id === current ? "page" : undefined}
               className={cx(ENTRY, "py-2", module.id === current && CURRENT)}

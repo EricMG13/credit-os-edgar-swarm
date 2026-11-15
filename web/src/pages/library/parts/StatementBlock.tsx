@@ -15,7 +15,13 @@ const STICKY = "sticky left-0 bg-surface-card";
  * trend column the predecessor had are not drawn (mock departure 5). A line the module marked
  * as emphasised is semibold, its figures only: a missing, withheld or gap cell keeps its own weight. The kit's ChartTable has no such line, so the table is drawn here.
  */
-export function StatementBlock({ block }: { block: Statement }) {
+export function StatementBlock({
+  block,
+  traceForRow,
+}: {
+  block: Statement;
+  traceForRow?: (index: number) => string | null;
+}) {
   return (
     <div className={TRACE_HOST}>
       <Section
@@ -43,10 +49,13 @@ export function StatementBlock({ block }: { block: Statement }) {
               </tr>
             </thead>
             <tbody>
-              {block.rows.map((row) => {
+              {block.rows.map((row, index) => {
                 const weight = row.emphasis ? "font-semibold" : "font-medium";
                 return (
-                  <tr key={row.label} className="border-b border-border-hairline last:border-b-0">
+                  <tr
+                    key={row.label}
+                    className={`${TRACE_HOST} border-b border-border-hairline last:border-b-0`}
+                  >
                     <th scope="row" className={`${STICKY} px-3 py-2 text-left ${weight}`}>
                       {row.label}
                     </th>
@@ -60,6 +69,14 @@ export function StatementBlock({ block }: { block: Statement }) {
                         </div>
                       </td>
                     ))}
+                    {traceForRow && (
+                      <td className="p-2">
+                        <TraceControl
+                          trace={traceForRow(index)}
+                          label={`Show sources for ${row.label}`}
+                        />
+                      </td>
+                    )}
                   </tr>
                 );
               })}

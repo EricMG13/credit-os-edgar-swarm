@@ -1,32 +1,32 @@
 import { useState, useSyncExternalStore } from "react";
 import { ArrowRight } from "@untitledui/icons";
+import { Badge } from "@/components/base/badges/badges";
 import { Button } from "@/components/base/buttons/button";
 import { StatusBadge } from "@/components/status/StatusBadge";
+import { RunTabLink } from "@/pages/library/parts/RunFrame";
+import { SourcesSwitch, useSourcesOn } from "@/pages/library/parts/SourcesSwitch";
 import { PageHeader } from "../../shell/PageHeader";
 import { TextLink } from "../run/TextLink";
-import { moduleName } from "./api";
 import { Breadcrumb, card, ErrorNotice, field, heading, label } from "./layout";
 import {
-  blocked,
   comparisonRows,
-  containsReference,
-  evidencePath,
   getSnapshot,
-  outputEntries,
-  passages,
   reportPath,
-  runModels,
   runPathway,
   runTiming,
   withUnit,
   type CatalogueRun,
-  type OutputEntry,
   type PublishedRun,
   type Snapshot,
 } from "./publishedReport";
-import { HandoffDownload, PublishedTable, ReportEvidence, ReportFindings } from "./ReportContent";
+import { ReportFindings } from "./ReportContent";
+import { ReportEvidence } from "./report/Evidence";
+import { actionBias, buildReportView, foundationMetrics } from "./reportView";
+import { Changes, ComparisonTable } from "./report/Changes";
+import { Forecast } from "./report/Forecast";
+import { MetricGrid } from "./report/MetricGrid";
+import { Modules } from "./report/Modules";
 import { useResource } from "./useResource";
-import { LegacyForecast, LegacyVisuals } from "./visuals";
 
 const metricLabels = [
   ["net_leverage", "Net leverage"],
@@ -177,25 +177,21 @@ function listenHash(fn: () => void) {
 const readHash = () => window.location.hash;
 const tabHref = (tab: Tab) => `#${tab}`;
 
-function ReportNav({ tab }: { tab: Tab }) {
+function ReportNav({ tab, modules }: { tab: Tab; modules: number }) {
   return (
     <nav
       aria-label="Report sections"
-      className="flex flex-wrap gap-x-5 gap-y-1 border-b border-border-hairline"
+      className="flex flex-wrap gap-3 border-b border-border-hairline"
     >
       {tabs.map(([key, title]) => (
-        <a
+        <RunTabLink
           key={key}
           href={tabHref(key)}
-          aria-current={tab === key ? "page" : undefined}
-          className={`rounded-t-ds-sm border-b-2 px-1 py-3 text-sm font-semibold outline-focus focus-visible:outline-2 ${
-            tab === key
-              ? "border-action text-action"
-              : "border-transparent text-text-secondary hover:text-text-primary"
-          }`}
-        >
-          {title}
-        </a>
+          label={title}
+          current={tab === key}
+          count={key === "modules" ? String(modules) : undefined}
+          accessibleLabel={key === "modules" ? `Modules ${String(modules)}` : undefined}
+        />
       ))}
     </nav>
   );
@@ -238,255 +234,56 @@ function RunHistory({ snapshot, run }: { snapshot: Snapshot; run: PublishedRun }
   );
 }
 
-function leadIndex(entries: OutputEntry[]) {
-  for (const module of ["CP-6", "CP-2", "CP-L10"]) {
-    const index = entries.findIndex(
-      (entry) =>
-        entry.selected &&
-        entry.output.module === module &&
-        !blocked(entry) &&
-        passages(entry.sections).some((section) => section.heading === "Bottom line"),
-    );
-    if (index !== -1) return index;
-  }
-  return -1;
-}
-
-function ModuleLinks({ entries, active }: { entries: OutputEntry[]; active?: string }) {
-  return (
-    <nav aria-label="Published modules" className="flex flex-wrap gap-2">
-      {[...new Set(entries.map((entry) => entry.output.module))].map((module) => (
-        <a
-          key={module}
-          href={`#modules/${module}`}
-          aria-current={active === module ? "page" : undefined}
-          className={`rounded-ds-full border px-3 py-1.5 text-sm font-semibold outline-focus focus-visible:outline-2 ${
-            active === module
-              ? "border-action-subtle-hover bg-action-subtle text-action"
-              : "border-border-hairline bg-surface-card text-text-secondary hover:text-text-primary"
-          }`}
-        >
-          {moduleName(module)}
-        </a>
-      ))}
-    </nav>
-  );
-}
-
-type ReportData = { snapshot: Snapshot; run: PublishedRun; entries: OutputEntry[] };
-
 function Overview({
   snapshot,
   run,
-  entries,
-  catalogue,
-}: ReportData & { catalogue?: CatalogueRun }) {
-  const index = leadIndex(entries);
-  const lead = entries[index];
+  view,
+}: {
+  snapshot: Snapshot;
+  run: PublishedRun;
+  view: ReturnType<typeof buildReportView>;
+}) {
+  const foundation = view.entries.find((entry) => entry.selected && entry.output.module === "CP-1");
+  const metrics = foundation
+    ? foundationMetrics(foundation, view.catalogue).filter(
+        ({ metric }) =>
+          ["Available liquidity", "Free cash flow", "Lease-adjusted gross leverage"].includes(
+            metric.label,
+          ) || metric.label.startsWith("Debt maturities through"),
+      )
+    : [];
+  const figures = metrics.length ? (
+    <MetricGrid
+      records={metrics}
+      snapshot={snapshot}
+      folder={run.folder}
+      entry={foundation}
+      entryIndex={foundation ? view.entries.indexOf(foundation) : -1}
+    />
+  ) : (
+    <HeadlineFigures catalogue={view.catalogue} />
+  );
   return (
     <>
-      {lead ? (
-        <ReportFindings snapshot={snapshot} run={run} entry={lead} entryIndex={index} overview />
+      <h2 className="font-display text-h2">Overview</h2>
+      {view.lead ? (
+        <ReportFindings
+          key={view.lead.output.id}
+          snapshot={snapshot}
+          run={run}
+          entry={view.lead}
+          entryIndex={view.entries.indexOf(view.lead)}
+          overview
+          judgement={actionBias(view.lead)}
+          afterBottomLine={figures}
+        />
       ) : (
-        <section className={card}>
-          <h2 className={heading}>Credit view</h2>
-          <p className="text-text-secondary">
+        <>
+          {figures}
+          <p className={card}>
             No credit view is available in the published handoffs for this run.
           </p>
-        </section>
-      )}
-      <HeadlineFigures catalogue={catalogue} />
-      <section className={card}>
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <h2 className={heading}>Modules</h2>
-          {lead && <HandoffDownload run={run} entry={lead} />}
-        </div>
-        {entries.length ? (
-          <ModuleLinks entries={entries} />
-        ) : (
-          <p className="text-text-secondary">No module output retained for this run.</p>
-        )}
-      </section>
-    </>
-  );
-}
-
-function Modules({
-  snapshot,
-  run,
-  entries,
-  module,
-  output,
-}: ReportData & { module?: string; output?: string }) {
-  const active =
-    entries.find((entry) => entry.output.module === module)?.output.module ??
-    entries[0]?.output.module;
-  const matching = entries.filter((entry) => entry.output.module === active);
-  const selected =
-    output === undefined
-      ? (matching.find((entry) => entry.selected) ??
-        (matching.length === 1 ? matching[0] : undefined))
-      : matching[Number(output)];
-  const index = selected ? entries.indexOf(selected) : -1;
-  if (!active) return <p className={card}>No module output retained for this run.</p>;
-  return (
-    <>
-      <ModuleLinks entries={entries} active={active} />
-      <section className={card}>
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <h2 className={heading}>{moduleName(active)}</h2>
-          {selected && <HandoffDownload run={run} entry={selected} />}
-        </div>
-        {matching.length > 1 && (
-          <nav aria-label="Saved outputs" className="flex flex-wrap gap-3">
-            {matching.map((entry, at) => (
-              <a
-                key={entry.output.id}
-                href={`#modules/${active}/${String(at)}`}
-                aria-current={entry === selected ? "page" : undefined}
-                className="text-sm font-medium text-action underline"
-              >
-                {entry.output.label}
-              </a>
-            ))}
-          </nav>
-        )}
-        {!selected && (
-          <p className="text-text-secondary">Choose a retained output to read its handoff.</p>
-        )}
-        {selected && !selected.selected && (
-          <p className="text-sm text-text-secondary">
-            This output is available to read. The workspace serves a download for the designated
-            handoff.
-          </p>
-        )}
-        {selected && blocked(selected) && <StatusBadge set="Module state" state="Not assessable" />}
-      </section>
-      {selected && (
-        <div className="grid min-w-0 gap-4" key={selected.output.id}>
-          <LegacyVisuals
-            output={selected.output}
-            sections={selected.sections}
-            evidenceHref={(line: number) => evidencePath(run.folder, String(index), line)}
-          />
-          <ReportFindings snapshot={snapshot} run={run} entry={selected} entryIndex={index} />
-        </div>
-      )}
-    </>
-  );
-}
-
-function Changes({ snapshot, run, entries }: ReportData) {
-  const change = run.changes;
-  const entryIndex = entries.findIndex((entry) => entry.output.module === "CP-8" && entry.selected);
-  const entry = entries[entryIndex];
-  const explanation = change?.problem
-    ? "The comparison could not be read."
-    : change?.note
-      ? "The comparison was not produced."
-      : change?.pack
-        ? null
-        : change?.first_run === true
-          ? "No earlier run to compare."
-          : "No comparison was recorded for this run.";
-  return (
-    <>
-      <section className={card}>
-        <h2 className={heading}>Changes since the last run</h2>
-        {explanation && <p className="text-text-secondary">{explanation}</p>}
-        {change?.note && !containsReference(change.note) && (
-          <p className="text-text-secondary">{change.note}</p>
-        )}
-        {change?.pack && <TextLink href="#evidence">Review comparison evidence</TextLink>}
-        {entry && <HandoffDownload run={run} entry={entry} />}
-      </section>
-      {entry && (
-        <ReportFindings snapshot={snapshot} run={run} entry={entry} entryIndex={entryIndex} />
-      )}
-      <RunHistory snapshot={snapshot} run={run} />
-    </>
-  );
-}
-
-function Forecast({ snapshot, run, entries, routeKey }: ReportData & { routeKey: string }) {
-  const [selected, setSelected] = useState(0);
-  const models = runModels(snapshot, routeKey, run);
-  const model = models[selected] ?? models[0];
-  const visuals = entries.filter(
-    ({ output, selected: isDefault }) =>
-      isDefault && (output.charts?.length || output.chartGaps?.length),
-  );
-  const register = model?.register;
-  return (
-    <>
-      <section className={card}>
-        <h2 className={heading}>Forecast</h2>
-        {!model && (
-          <p className="text-text-secondary">
-            No forecast model was published from this run’s files.
-          </p>
-        )}
-        {models.length > 1 && (
-          <label className={`${label} max-w-xs`}>
-            Published model
-            <select
-              className={field}
-              value={selected}
-              onChange={(event) => {
-                setSelected(Number(event.currentTarget.value));
-              }}
-            >
-              {models.map((item, index) => (
-                <option key={item.id} value={index}>
-                  Model {index + 1}
-                  {item.mode ? ` · ${item.mode}` : ""}
-                </option>
-              ))}
-            </select>
-          </label>
-        )}
-        {model?.scope && !containsReference(model.scope) && (
-          <p className="text-body text-text-secondary">{model.scope}</p>
-        )}
-        {model && (
-          <p className="text-sm text-text-secondary">
-            The hosted workspace provides the published forecast data. The original model file is
-            unavailable here.
-          </p>
-        )}
-      </section>
-      {model && <LegacyForecast model={model} />}
-      {register && (
-        <section className={card}>
-          <h2 className={heading}>Forecast assumptions</h2>
-          {register.intro && !containsReference(register.intro) && (
-            <p className="text-text-secondary">{register.intro}</p>
-          )}
-          <PublishedTable
-            table={{
-              type: "table",
-              line: 0,
-              headers: register.headers,
-              rows: register.rows.map((cells, line) => ({ line, cells })),
-            }}
-            href="#evidence"
-          />
-        </section>
-      )}
-      {visuals.length > 0 && (
-        <section className="grid gap-4">
-          <h2 className={heading}>Run charts</h2>
-          {visuals.map((item) => (
-            <LegacyVisuals
-              key={item.output.id}
-              output={{ ...item.output, maps: [], events: [] }}
-              sections={item.sections}
-              evidenceHref={(line: number) =>
-                evidencePath(run.folder, String(entries.indexOf(item)), line)
-              }
-            />
-          ))}
-        </section>
+        </>
       )}
     </>
   );
@@ -505,42 +302,33 @@ function ReportPage({
   parts: string[];
   tab: Tab;
 }) {
-  const catalogue = snapshot.catalogue.real.find((entry) => entry.id === run.folder);
-  const entries = outputEntries(snapshot, run);
-  const data = { snapshot, run, entries };
+  const view = buildReportView(snapshot, routeKey, run);
   const rows = run.changes?.pack ? comparisonRows(run.changes) : [];
   return (
-    <div className="mt-6 grid min-w-0 gap-5">
-      <ReportNav tab={tab} />
+    <div className="mt-4 grid min-w-0 gap-5">
+      <ReportNav tab={tab} modules={view.modules.length} />
       {tab === "history" && <RunHistory snapshot={snapshot} run={run} />}
-      {tab === "overview" && <Overview {...data} catalogue={catalogue} />}
-      {tab === "changes" && <Changes {...data} />}
-      {tab === "modules" && <Modules {...data} module={parts[0]} output={parts[1]} />}
-      {tab === "forecast" && <Forecast {...data} routeKey={routeKey} />}
+      {tab === "overview" && <Overview snapshot={snapshot} run={run} view={view} />}
+      {tab === "changes" && <Changes snapshot={snapshot} run={run} entries={view.entries} />}
+      {tab === "modules" && (
+        <Modules snapshot={snapshot} run={run} view={view} module={parts[0]} output={parts[1]} />
+      )}
+      {tab === "forecast" && <Forecast run={run} view={view} />}
       {tab === "evidence" && (
-        <>
-          <ReportEvidence {...data} target={parts[0]} />
-          {rows.length > 0 && (
-            <section className={card}>
-              <h2 className={heading}>Comparison measures</h2>
-              <PublishedTable
-                evidence
-                table={{
-                  type: "table",
-                  line: 0,
-                  headers: [
-                    "Measure",
-                    "Earlier",
-                    "Current",
-                    "Difference recorded by comparison",
-                    "Comparability",
-                  ],
-                  rows: rows.map((cells, line) => ({ cells, line })),
-                }}
-              />
-            </section>
-          )}
-        </>
+        <ReportEvidence
+          snapshot={snapshot}
+          run={run}
+          entries={view.entries}
+          target={parts.join("/")}
+          comparison={
+            rows.length ? (
+              <section className={card}>
+                <h3 className={heading}>Comparison measures</h3>
+                <ComparisonTable rows={rows} />
+              </section>
+            ) : null
+          }
+        />
       )}
     </div>
   );
@@ -548,6 +336,7 @@ function ReportPage({
 
 export function ReportReader({ id }: { id: string }) {
   const { value, error } = useResource(getSnapshot);
+  const [sources, setSources] = useSourcesOn();
   const hash = useSyncExternalStore(listenHash, readHash);
   const [route, ...parts] = hash.slice(1).split("/");
   const tab = tabs.find(([name]) => name === route)?.[0] ?? "overview";
@@ -555,22 +344,34 @@ export function ReportReader({ id }: { id: string }) {
   const catalogue = value?.catalogue.real.find((entry) => entry.id === id);
   const run = found ? found[1] : null;
   return (
-    <>
+    <div className="mx-auto w-full max-w-[96rem]" data-sources={sources ? "on" : "off"}>
       <Breadcrumb>Report</Breadcrumb>
       <PageHeader
         title={run ? catalogue?.name || run.issuerHeading || run.issuer : "Credit report"}
         badges={
           run && (
-            <p className="text-sm text-text-secondary">
-              {[runPathway(run, catalogue), runTiming(run)].filter(Boolean).join(" · ")}
-            </p>
+            <>
+              <Badge>{runTiming(run)}</Badge>
+              <Badge>{runPathway(run, catalogue)}</Badge>
+              {value?.preview ? (
+                <Badge color="brand">Test preview</Badge>
+              ) : (
+                <StatusBadge set="Run states" state="Finished" />
+              )}
+            </>
           )
         }
         actions={
           run && (
-            <Button color="secondary" href={`/run/${encodeURIComponent(id)}`}>
-              Run activity
-            </Button>
+            <div className="flex flex-wrap items-center gap-2">
+              <SourcesSwitch isSelected={sources} onChange={setSources} />
+              <Button color="secondary" href="#history">
+                Report history
+              </Button>
+              <Button color="secondary" href={`/run/${encodeURIComponent(id)}`}>
+                Run activity
+              </Button>
+            </div>
           )
         }
       />
@@ -586,6 +387,6 @@ export function ReportReader({ id }: { id: string }) {
       {value && found && (
         <ReportPage snapshot={value} run={found[1]} routeKey={found[0]} parts={parts} tab={tab} />
       )}
-    </>
+    </div>
   );
 }
