@@ -15,10 +15,10 @@ retained historical TDG FY2024 public files
 user's total of USD 30 stands: USD 1.39 is spent, so these runs are capped at USD 28 together.
 
 1. `credit_snapshot` preset with CP-8 against `tdg-reader-format-001`; cap USD 14; run directory
-   `/private/tmp/claude-501/-Users-ericguei-Documents-RBOT-HTML--claude-worktrees-pause-63d136/c8719821-dd4f-4042-ad6b-2051ff7e7dda/scratchpad/preview-ws/runs/tdg-proof-snapshot-opus-001`.
-2. `short_snapshot` preset; cap USD 4; run directory `/private/tmp/claude-501/-Users-ericguei-Documents-RBOT-HTML--claude-worktrees-pause-63d136/c8719821-dd4f-4042-ad6b-2051ff7e7dda/scratchpad/preview-ws/runs/tdg-proof-short-opus-001`.
+   `/private/tmp/claude-501/-Users-USER-Documents-RBOT-HTML--claude-worktrees-pause-63d136/c8719821-dd4f-4042-ad6b-2051ff7e7dda/scratchpad/preview-ws/runs/tdg-proof-snapshot-opus-001`.
+2. `short_snapshot` preset; cap USD 4; run directory `/private/tmp/claude-501/-Users-USER-Documents-RBOT-HTML--claude-worktrees-pause-63d136/c8719821-dd4f-4042-ad6b-2051ff7e7dda/scratchpad/preview-ws/runs/tdg-proof-short-opus-001`.
 3. `portfolio_decision` preset; cap USD 10; run directory
-   `/private/tmp/claude-501/-Users-ericguei-Documents-RBOT-HTML--claude-worktrees-pause-63d136/c8719821-dd4f-4042-ad6b-2051ff7e7dda/scratchpad/preview-ws/runs/tdg-proof-portfolio-opus-001`.
+   `/private/tmp/claude-501/-Users-USER-Documents-RBOT-HTML--claude-worktrees-pause-63d136/c8719821-dd4f-4042-ad6b-2051ff7e7dda/scratchpad/preview-ws/runs/tdg-proof-portfolio-opus-001`.
 
 Web search is offered only on OpenAI configs, so CP-DR reads only the run's files here: CP-DR's
 web source guidance is not exercised by these runs. All run directories are outside this repository
