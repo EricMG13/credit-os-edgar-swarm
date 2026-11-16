@@ -59,7 +59,7 @@ function fixture(): Grid {
   };
 }
 
-it("keeps exact period labels, dates and values with the period qualification under the table and the interest qualification at its row", () => {
+it("keeps exact period labels, dates and values with the period and interest qualifications under the table", () => {
   render(
     <ForecastTable
       grid={fixture()}
@@ -73,7 +73,8 @@ it("keeps exact period labels, dates and values with the period qualification un
   expect(header).not.toHaveTextContent(period);
   expect(screen.getByRole("list", { name: "Period qualifications" })).toHaveTextContent(period);
   const row = screen.getByRole("row", { name: /^Interest/ });
-  expect(row).toHaveTextContent(interest);
+  expect(row).not.toHaveTextContent(interest);
+  expect(screen.getByRole("list", { name: "Period qualifications" })).toHaveTextContent(interest);
   expect(within(row).getByRole("cell", { name: "776" })).toBeInTheDocument();
   expect(within(row).getByRole("cell", { name: "2,141" })).toBeInTheDocument();
   expect(screen.getByRole("cell", { name: "11,812.24" })).toHaveAttribute("title", "11812.2368");
@@ -213,4 +214,46 @@ it("collapses columns whose every cell is n.a. behind one disclosure and restore
     "aria-expanded",
     "true",
   );
+});
+
+it("draws the interest-basis qualification once, under the table, not in the row header", () => {
+  render(
+    <ForecastTable
+      grid={fixture()}
+      title="Model"
+      limits={["Base interest is IQ-TEXT"]}
+      source={(name) => <a href="#inputs">{name} source</a>}
+    />,
+  );
+  for (const header of screen.getAllByRole("rowheader", { name: /^Interest/ }))
+    expect(header.textContent).toBe("Interest");
+  const hits = screen.getAllByText(/IQ-TEXT/);
+  expect(hits).toHaveLength(1);
+  const item = hits[0]?.closest("li");
+  expect(item).toHaveTextContent("Interest");
+  expect(item).toContainElement(screen.getByRole("link", { name: /source$/ }));
+  expect(
+    screen.getByRole("table").compareDocumentPosition(item as Node) &
+      Node.DOCUMENT_POSITION_FOLLOWING,
+  ).toBeTruthy();
+});
+
+it("draws period and interest qualifications in one list", () => {
+  const grid = fixture();
+  const second = grid.columns[1];
+  if (!second) throw new Error("Missing fixture column");
+  second.label = "YTD (FY2027)";
+  render(
+    <ForecastTable
+      grid={grid}
+      title="Model"
+      limits={["Base period is FY2027; PQ-TEXT", "Base interest is IQ-TEXT"]}
+    />,
+  );
+  const lists = screen.getAllByRole("list");
+  expect(lists).toHaveLength(1);
+  expect(screen.getAllByText(/PQ-TEXT/)).toHaveLength(1);
+  expect(screen.getAllByText(/IQ-TEXT/)).toHaveLength(1);
+  expect(lists[0]).toHaveTextContent("PQ-TEXT");
+  expect(lists[0]).toHaveTextContent("IQ-TEXT");
 });

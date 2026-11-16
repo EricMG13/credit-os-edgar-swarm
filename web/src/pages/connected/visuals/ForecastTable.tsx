@@ -116,14 +116,10 @@ function ForecastCell({
 function ForecastRows({
   grid,
   rows,
-  interest,
-  source,
   expanded,
 }: {
   grid: Grid;
   rows: Grid["rows"];
-  interest: string[];
-  source: Source;
   expanded: boolean;
 }) {
   return (
@@ -143,15 +139,6 @@ function ForecastRows({
               className="sticky left-0 w-48 min-w-36 max-w-48 bg-surface-card px-3 py-2 text-left whitespace-normal sm:w-64 sm:max-w-64"
             >
               {row.label}
-              {row.label === "Interest" &&
-                interest.map((text, at) => (
-                  <Qualification
-                    key={at}
-                    text={text}
-                    label="Interest basis qualification"
-                    source={source}
-                  />
-                ))}
             </th>
             {row.cells.map((cell, position) => (
               <ForecastCell key={position} cell={cell} showReason={expanded && unpopulated(row)} />
@@ -235,13 +222,14 @@ export function ForecastTable({
       .filter((text) => periodColumn(inputGrid, text) === index)
       .map((text) => ({ label: column.label, text })),
   );
+  const interestShown = rows.some((row) => row.label === "Interest");
   const unbound = period.filter((text) => periodColumn(inputGrid, text) === undefined);
   return (
     <div className="grid min-w-0 gap-3">
       {unbound.map((text, at) => (
         <Qualification key={at} text={text} label="Base-period qualification" source={source} />
       ))}
-      {!rows.some((row) => row.label === "Interest") &&
+      {!interestShown &&
         interest.map((text, at) => (
           <Qualification
             key={at}
@@ -270,13 +258,7 @@ export function ForecastTable({
         <table className="w-full border-collapse text-small">
           <caption className="sr-only">{title}</caption>
           <ForecastColumns grid={grid} />
-          <ForecastRows
-            grid={grid}
-            rows={rows}
-            interest={interest}
-            source={source}
-            expanded={expanded || !canCollapse}
-          />
+          <ForecastRows grid={grid} rows={rows} expanded={expanded || !canCollapse} />
         </table>
       </div>
       {canHideColumns && (
@@ -297,13 +279,19 @@ export function ForecastTable({
           }}
         />
       )}
-      {bound.length > 0 && (
+      {(bound.length > 0 || (interestShown && interest.length > 0)) && (
         <ul aria-label="Period qualifications" className="grid gap-2">
           {bound.map(({ label, text }, at) => (
-            <li key={at}>
+            <li key={`period-${String(at)}`}>
               <Qualification text={text} label={`${label} period qualification`} source={source} />
             </li>
           ))}
+          {interestShown &&
+            interest.map((text, at) => (
+              <li key={`interest-${String(at)}`}>
+                <Qualification text={text} label="Interest basis qualification" source={source} />
+              </li>
+            ))}
         </ul>
       )}
     </div>
