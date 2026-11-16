@@ -476,3 +476,81 @@ it("draws no note when two sections match the register", () => {
   );
   expect(within(el).queryByText(new RegExp(NOTE))).toBeNull();
 });
+
+const FULL_HEAD = [
+  "agency",
+  "issuer/instrument",
+  "rating",
+  "outlook/watch",
+  "effective date",
+  "source",
+  "locator",
+  "status",
+];
+const fullRow = (agency: string, level: string, rating: string) => [
+  agency,
+  level,
+  rating,
+  "",
+  "",
+  "",
+  "",
+  "",
+];
+const fullRegister = (rows: string[][], head = FULL_HEAD) =>
+  ratingsEntry([section("T2R.1 Rating evidence register", 30, [table(32, head, rows)])]);
+const facility = (agency: string, label: string): CatalogueRating => ({
+  ...entered(agency, label),
+  scope: "facility",
+});
+const noteCount = (el: HTMLElement) => within(el).queryAllByText(new RegExp(NOTE)).length;
+
+it("compares only the issuer rating, never a facility entry", () => {
+  const el = bandWith(fullRegister([fullRow("Moody's", "Issuer (CFR)", "B1")]), [
+    entered("Moody's", "B1"),
+    facility("Moody's", "B2"),
+  ]);
+  expect(noteCount(el)).toBe(0);
+});
+
+it("draws no note when the register lists only instrument rows for the agency", () => {
+  const el = bandWith(fullRegister([fullRow("Moody's", "Senior secured notes", "B2")]), moody);
+  expect(noteCount(el)).toBe(0);
+});
+
+it("treats a qualified register rating as equal by its first word", () => {
+  const el = bandWith(
+    fullRegister([fullRow("Moody's", "Corporate family rating", "B1 (CFR)")]),
+    moody,
+  );
+  expect(noteCount(el)).toBe(0);
+});
+
+it("notes a difference when the issuer row differs, even if an instrument row matches", () => {
+  const el = bandWith(
+    fullRegister([
+      fullRow("Moody's", "Issuer", "B2"),
+      fullRow("Moody's", "Senior secured notes", "B1"),
+    ]),
+    moody,
+  );
+  expect(within(el).getByText(`${NOTE} Moody's`)).toBeVisible();
+});
+
+it("names an agency once when two issuer entries both differ", () => {
+  const el = bandWith(fullRegister([fullRow("Moody's", "Issuer", "B2")]), [
+    entered("Moody's", "B1"),
+    entered("Moody's", "Ba3"),
+  ]);
+  expect(within(el).getByText(`${NOTE} Moody's`)).toBeVisible();
+});
+
+it("draws no note for a facility-only entry against an issuer register row", () => {
+  const el = bandWith(fullRegister([fullRow("S&P", "Issuer", "B")]), [facility("S&P", "B+")]);
+  expect(noteCount(el)).toBe(0);
+});
+
+it("draws no note when the register has no issuer/instrument column", () => {
+  const el = bandWith(fullRegister([["Moody's", "B2"]], ["agency", "rating"]), moody);
+  expect(noteCount(el)).toBe(0);
+});

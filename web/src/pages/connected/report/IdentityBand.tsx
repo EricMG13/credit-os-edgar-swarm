@@ -91,19 +91,35 @@ function ratingRegister(entry: OutputEntry) {
   const [only] = tables;
   if (tables.length !== 1 || !only) return undefined;
   const names = only.headers.map((header) => header.trim().toLowerCase());
-  return { agency: names.indexOf("agency"), rating: names.indexOf("rating"), rows: only.rows };
+  return {
+    agency: names.indexOf("agency"),
+    level: names.indexOf("issuer/instrument"),
+    rating: names.indexOf("rating"),
+    rows: only.rows,
+  };
 }
 
-/** Entered agencies for which the register has rows but none with the entered rating. */
+const ISSUER_LEVEL = /\b(?:issuer|corporate family|cfr|icr|idr)\b/i;
+const firstToken = (text: string | undefined) => text?.trim().split(/\s+/)[0]?.toLowerCase();
+
+/** Entered issuer-scope agencies whose issuer-level register rows all carry another rating; each once. */
 function differingAgencies(entry: OutputEntry | undefined, ratings: CatalogueRating[]) {
   const register = entry && ratingRegister(entry);
-  if (!register) return [];
-  return ratings
+  if (!register || register.level < 0) return [];
+  const differing = ratings
+    .filter(({ scope }) => scope === "issuer")
     .filter(({ agency, label }) => {
-      const rows = register.rows.filter(({ cells }) => same(cells[register.agency], agency));
-      return rows.length > 0 && !rows.some(({ cells }) => same(cells[register.rating], label));
+      const rows = register.rows.filter(
+        ({ cells }) =>
+          same(cells[register.agency], agency) && ISSUER_LEVEL.test(cells[register.level] ?? ""),
+      );
+      return (
+        rows.length > 0 &&
+        !rows.some(({ cells }) => firstToken(cells[register.rating]) === label.trim().toLowerCase())
+      );
     })
     .map(({ agency }) => agency);
+  return [...new Set(differing)];
 }
 
 function RatingTile({ rating }: { rating: CatalogueRating }) {
