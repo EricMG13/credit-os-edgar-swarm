@@ -106,6 +106,14 @@ function byYear(events: EventRecord[]) {
   return groups;
 }
 
+function yearGaps(events: EventRecord[]) {
+  const years = [...new Set(events.map(yearOf))].sort((a, b) => a - b);
+  return years.flatMap((year, at) => {
+    const next = years[at + 1];
+    return next !== undefined && next - year > 1 ? [{ from: year + 1, to: next - 1 }] : [];
+  });
+}
+
 function gapText(from: number, to: number) {
   return `No events ${String(from)}${to > from ? ` to ${String(to)}` : ""}`;
 }
@@ -239,17 +247,20 @@ function YearStrip({
   rowId: (index: number) => string;
   setActive: (active: Active) => void;
 }) {
+  const strip = groups.length
+    ? [...groups, ...yearGaps(all)].sort(
+        (a, b) => ("from" in a ? a.from : a.year) - ("from" in b ? b.from : b.year),
+      )
+    : [];
   return (
     <div role="group" aria-label="Events by year" className="grid gap-2">
       <Legend events={all} hidden={hidden} onToggle={onToggle} />
       <div className="flex flex-wrap items-start gap-x-2 gap-y-3">
-        {groups.map(({ year, events }, at) => {
-          const before = groups[at - 1]?.year;
+        {strip.map((item) => {
+          if ("from" in item) return <Gap key={`gap-${String(item.from)}`} {...item} />;
+          const { year, events } = item;
           return (
             <div key={year} className="contents">
-              {before !== undefined && year - before > 1 ? (
-                <Gap from={before + 1} to={year - 1} />
-              ) : null}
               <div
                 role="group"
                 aria-label={`${String(year)}, ${events.length === 1 ? "1 event" : `${String(events.length)} events`}`}
@@ -375,6 +386,7 @@ function EventDrawing({ events, evidenceInDrawer, rowDetail }: Drawing) {
   const [hidden, setHidden] = useState<Hidden>(new Set());
   const groups = byYear(events.filter((event) => !hidden.has(event.category)));
   const toggleCategory = (category: EventRecord["category"]) => {
+    setActive(null);
     setHidden((prev) => {
       const next = new Set(prev);
       if (!next.delete(category)) next.add(category);
@@ -406,7 +418,6 @@ function EventDrawing({ events, evidenceInDrawer, rowDetail }: Drawing) {
             color="secondary"
             className="max-[480px]:min-h-11"
             size="sm"
-            aria-pressed={all}
             onClick={() => {
               setOpened(all ? new Set() : new Set(events.map((event) => event.index)));
             }}

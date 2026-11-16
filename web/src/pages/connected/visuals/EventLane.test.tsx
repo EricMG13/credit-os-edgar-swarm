@@ -65,6 +65,10 @@ it.each(KEY_EVENTS.map((event, index) => [event.event + " " + event.date, event,
     expect(item.getAllByText(key.relevance, { exact: true })).toHaveLength(1);
     const panel = within(panelOf(index));
     expect(panel.getAllByText(key.status, { exact: true })).toHaveLength(1);
+    const outsideSrOnly = item
+      .getAllByText(key.status, { exact: true })
+      .filter((el) => !el.classList.contains("sr-only"));
+    expect(outsideSrOnly).toHaveLength(1);
     expect(panel.getAllByText(`Published ${key.published}`, { exact: true })).toHaveLength(1);
     expect(panel.getAllByText(key.source, { exact: true })).toHaveLength(1);
     expect(item.getAllByText(`${key.date} · ${key.precision}`, { exact: true })).toHaveLength(1);
@@ -119,6 +123,27 @@ it("draws year groups, gaps and titles in the key order", () => {
     .getAllByRole("listitem")
     .map((item) => /owner-\d+/.exec(item.textContent)?.[0]);
   expect(owners).toEqual(expectedOwners);
+});
+
+it("orders the markers inside each year group like the key", () => {
+  draw();
+  const used = new Set<number>();
+  const ordered = KEY_ORDER.map((title) => {
+    const at = KEY_EVENTS.findIndex((e, i) => e.event === title && !used.has(i));
+    used.add(at);
+    return KEY_EVENTS[at] as KeyEvent;
+  });
+  KEY_YEARS.forEach(([year, n]) => {
+    const group = within(strip()).getByRole("group", { name: `${year}, ${yearLabel(n)}` });
+    const labels = Array.from(group.querySelectorAll("button"), (b) =>
+      b.getAttribute("aria-label"),
+    );
+    expect(labels).toEqual(
+      ordered
+        .filter((e) => e.year === year)
+        .map((e) => `${e.event}, ${e.date}, ${e.precision}, ${e.status}`),
+    );
+  });
 });
 
 it("leaves sources to the trace drawer when the host says so", () => {
@@ -219,11 +244,13 @@ it("hides and restores a category in strip, list, year groups and gaps", () => {
     expect(within(list()).queryByRole("group", { name: year })).toBeNull();
   });
   expect(within(strip()).getByRole("group", { name: "2026, 3 events" })).toBeInTheDocument();
-  expect(within(strip()).getByText("No events 2028 to 2030")).toBeInTheDocument();
-  expect(within(strip()).queryByText("No events 1999 to 2023")).toBeNull();
+  const gapTexts = Array.from(strip().querySelectorAll(".sr-only"), (el) => el.textContent);
+  expect(gapTexts).toEqual(KEY_GAPS);
   fireEvent.click(toggle("Historical, 6 events"));
   expect(shown()).toHaveLength(KEY_EVENTS.length);
-  expect(within(strip()).getByText("No events 1999 to 2023")).toBeInTheDocument();
+  expect(Array.from(strip().querySelectorAll(".sr-only"), (el) => el.textContent)).toEqual(
+    KEY_GAPS,
+  );
 });
 
 it("keeps open details across toggling and says so when every category is off", () => {
@@ -247,15 +274,11 @@ it("lets a row's own button close it while all details are shown", () => {
   const one = within(listItemOf(0)).getByRole("button", { name: /^Details for/ });
   fireEvent.click(one);
   expect(one).toHaveAttribute("aria-expanded", "false");
-  expect(screen.getByRole("button", { name: "Show all details" })).toHaveAttribute(
+  expect(screen.getByRole("button", { name: "Show all details" })).not.toHaveAttribute(
     "aria-pressed",
-    "false",
   );
   fireEvent.click(one);
-  expect(screen.getByRole("button", { name: "Hide all details" })).toHaveAttribute(
-    "aria-pressed",
-    "true",
-  );
+  expect(screen.getByRole("button", { name: "Hide all details" })).toBeInTheDocument();
 });
 
 it("closes every row on Hide all details, including one clicked while all were shown", () => {
