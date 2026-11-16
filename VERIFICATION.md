@@ -4,6 +4,35 @@ Keep one running record here. A pass applies only to the stated scope. Earlier v
 engine is in [EricMG13/final-workflow](https://github.com/EricMG13/final-workflow)'s
 `VERIFICATION.md`, which also keeps the retained runs this copy leaves out.
 
+## 2026-11-16 — Five branch-introduced Fallow findings resolved
+
+- Verified all five with their `fallow inspect --file ... --format json` commands
+  before editing. Extracted calendar validation/row mapping, forecast display and
+  unique-row lookup, and comparison rendering; simplified the unique-JSON lookup.
+  No suppressions, threshold changes, backend changes or dependency changes.
+- Fallow audit against `dd765b5`: PASS, zero introduced, two inherited findings
+  (`Modules` and `ReportReader`). RBOT-HTML and pins remain at `256101a`.
+- Confidence review with Astra ranked (1) calendar validation/order/source identity,
+  (2) unique forecast-input provenance, (3) missing/zero/duplicate chart cells and
+  caption layout, (4) comparison admission, (5) portfolio-provider scope. Traced
+  callers and previous code. Astra caught an empty-units caption regression;
+  normalized units outside the chart callback and added a regression. Other
+  semantics verified equivalent, including empty comparison headings being absent.
+- 71 focused tests pass across eight files; new guards cover ambiguous JSON,
+  invalid/duplicate event source lines and missing chart units. TypeScript,
+  changed-file ESLint/Prettier and changed-code quality gate pass (zero findings).
+- Fresh offline install and production build; source tree
+  `55f78cdd1d61e13e0dba8889e82fd63d1d785212`. Branded Chrome 157.0.8103.78
+  (`20261116-031230-01`) and Edge 157.0.4341.60 (`20261116-031246-01`) each pass
+  all 32 synthetic checks on macOS. Evidence: `proof-artifacts/run-rzGwkj/proof.json`.
+  This is source-snapshot proof, not ZIP or Windows acceptance.
+- Fidelity scope: unchanged compiled CSS (SHA-256
+  `914e40937b01bfc5efe4ecad2f6000924dff284e2fca629f897cb6831afd08f0`), browser
+  chart/table/trace assertions and actual Caesars Forecast opened at port 58338.
+  Retained CP-2G bytes match the prior SHA-256; preview stays read-only with its
+  Test preview/admission qualification. No providers, Signal work or tournaments.
+- ZIP not built or published; Chrome and Edge work-PC acceptance remains pending.
+
 ## 2026-11-16 — Five Caesars design critique priorities implemented
 
 - Preserved Credit OS React components and RBOT-HTML source/Python pins at
@@ -968,10 +997,3 @@ Not verified: a paid run; a note of a different quantity (`40% (364)`) or a rati
 Round 2 (same branch): a figure is real only if not glued (`Sep-24`, `FY-24`, `A1`), not after a period word, and an amount (unit, decimal, separator or 100+); a rounding needs fewer decimals, or the same number with separators added (`9432.72 (9,432.72)`); the rounding runs in a sized Decimal context (no overflow). Tests: 23 new cases failed before, 322 pass; the branch-added `100 (100)` note case now a negative, the `<= 1` check rewritten to assert one exact refusal per case.
 Round 2 real evidence (same 741 files): 21 removed (the same 21), 0 added, 79 unchanged; of 246 contexts 187 ratio, 23 rounding (all still notes), 36 negatives; no note became a negative; CP-L10 Key figures 0 before and after.
 Round 3 (same branch, Low findings): the three look-behind searches in note detection read a bounded tail (40 characters) instead of the whole text before the figure (linear again); an unsigned bracket after a negative figure is a negative, not a rounding note. Tests: 3 new cases failed before; real evidence on the same 741 files identical to round 2.
-
-## 2026-11-12 — Fidelity check reads figures with a thousands separator and a bracketed note (branch `claude/prose-number-reading`, ruling amendment 2026-11-12 in `2026-11-11-reader-and-issuer-report.md`)
-Scope: offline, `prose_checks.py` only (`figure_issues`, `key_figures_issues`); no provider or model call. Two defects that refused correct handoffs: (D1, D-KF) `4,173` and `4173` were different numbers; (D2) `3,395 (51.6%)` held `(51.6%)` as a negative, so the passage's `51.6%` was refused with advice to write the negative.
-Change: a figure's digits are compared without thousands separators; a parenthesised figure right after another figure (and its unit) is read as written, not as a negative. Alone or after words it stays negative. Passage and held sides share `_figures`, so both get both rules. Tests: new cases in `tests/test_prose_checks.py` (both comma directions, `1,291.27`, `1,25`, `2024, 437`, unit/scale/sign/decimal mismatches still refused, the three real cells, the three true negatives, `100 (-5.2%)`, Key figures); 11 of them failed before the change; the file's 253 tests passed after.
-Real evidence (read-only, 741 retained `.md` files: 222 drafts, 200 responses, 319 handoffs; old = origin/main module, new = this branch, `figure_issues` as the launcher calls it): 21 issues removed (7 thousands separator, 14 bracketed note), 0 added, 79 unchanged. `key_figures_issues` on the 3 retained CP-L10 texts with their CP-1: 0 before and after (the refused CP-L10 drafts of `tdg-proof-short-001` are not retained as files; the old refusal text is in its `1.review.json`).
-Probes: `probe_pr46.py` D1 and D2 pass, D3 (check 6, a different defect, not changed) still fails; `probe_key_figures_comma.py` exit 0.
-Not verified: a paid run (whether a model now passes at the first draft); Key figures against a real refused CP-L10 draft. (The adjacency rule above was too wide, see the next entry: real negatives directly after a figure, `Q2 (26,306)`, `Capital expenditures (42) (36)`, exist in the retained runs.)

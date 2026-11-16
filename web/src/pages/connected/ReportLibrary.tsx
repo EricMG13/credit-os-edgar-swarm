@@ -18,6 +18,7 @@ import {
   runTiming,
   withUnit,
   type CatalogueRun,
+  type OutputEntry,
   type PublishedRun,
   type Snapshot,
 } from "./publishedReport";
@@ -488,6 +489,28 @@ function Overview({
   );
 }
 
+function hasPortfolioCharts(entries: OutputEntry[]) {
+  return entries.some(
+    ({ output }) =>
+      output.module === "CP-6" && output.charts?.some(({ kind }) => kind === "limits"),
+  );
+}
+
+function ComparisonMeasures({ change }: { change: ReturnType<typeof comparisonForRun> }) {
+  if (!change?.pack || change.problem) return null;
+  return <ComparisonMeasuresTable rows={comparisonRows(change)} />;
+}
+
+function ComparisonMeasuresTable({ rows }: { rows: ReturnType<typeof comparisonRows> }) {
+  if (!rows.length) return null;
+  return (
+    <section className={card}>
+      <h3 className={heading}>Comparison measures</h3>
+      <ComparisonTable rows={rows} />
+    </section>
+  );
+}
+
 function ReportPage({
   snapshot,
   run,
@@ -507,19 +530,12 @@ function ReportPage({
   const calendar =
     tab === "overview" || tab === "calendar" ? buildCalendar(view.entries, run.folder) : null;
   const change = comparisonForRun(run, snapshot.workspace.runs);
-  const rows = change?.pack && !change.problem ? comparisonRows(change) : [];
   return (
     <div className="mt-4 grid min-w-0 gap-5">
       <ReportNav tab={tab} modules={view.modules.length} />
       <PortfolioBasisProvider
         folder={run.folder}
-        enabled={
-          (tab === "forecast" || tab === "modules") &&
-          view.entries.some(
-            ({ output }) =>
-              output.module === "CP-6" && output.charts?.some(({ kind }) => kind === "limits"),
-          )
-        }
+        enabled={(tab === "forecast" || tab === "modules") && hasPortfolioCharts(view.entries)}
       >
         <PublishedTraceProvider
           route={JSON.stringify([routeKey, tab, parts])}
@@ -557,14 +573,7 @@ function ReportPage({
               entries={view.entries}
               target={parts.join("/")}
               mode={mode}
-              comparison={
-                rows.length ? (
-                  <section className={card}>
-                    <h3 className={heading}>Comparison measures</h3>
-                    <ComparisonTable rows={rows} />
-                  </section>
-                ) : null
-              }
+              comparison={<ComparisonMeasures change={change} />}
             />
           )}
         </PublishedTraceProvider>

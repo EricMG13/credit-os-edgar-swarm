@@ -176,3 +176,26 @@ it("selects upcoming dates by recorded spans and keeps partial-date precision an
   expect(upcomingCalendarRows(calendar.rows, "2026-02-30")).toBeNull();
   expect(upcomingCalendarRows(calendar.rows, "2028-01-01")).toEqual([]);
 });
+
+it.each([20, 0, 22.5, 22])(
+  "withholds events whose source rows are invalid or duplicated: %s",
+  (line) => {
+    const handoff = entry("CP-2D", [
+      "2027-04-15",
+      "day",
+      "2026-09-30",
+      "Notes due",
+      "Scheduled",
+      "file",
+      "",
+    ]);
+    const block = handoff.sections[0]?.blocks[0];
+    if (block?.type !== "table" || !block.rows[0]) throw new Error("Missing table fixture");
+    block.rows.push({ ...block.rows[0], line });
+    const calendar = buildCalendar([handoff], "current");
+    expect(calendar.rows).toEqual([]);
+    expect(calendar.gaps).toHaveLength(1);
+    expect(calendar.gaps[0]?.reason).toBe("The handoff does not identify each event row.");
+    expect(calendar.gaps[0]?.href).toContain(`~${"2".repeat(64)}-20`);
+  },
+);

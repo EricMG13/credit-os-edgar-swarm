@@ -209,6 +209,18 @@ function forecastCaseLabel(group: string, downsideNote = "") {
   return Object.hasOwn(caseLabels, group) ? (caseLabels[group] ?? group) : group;
 }
 
+function displayForecastCell(cell: Record<string, unknown> | undefined) {
+  if (!cell) return null;
+  const display = word(cell.display);
+  const reason = word(cell.reason);
+  return reason ? `${display} ${reason}` : display || null;
+}
+
+function singleForecastRow(grid: Grid, label: string) {
+  const matches = grid.rows.filter((entry) => entry.label === label);
+  return matches.length === 1 ? matches[0] : undefined;
+}
+
 function ForecastTrends({
   grid,
   units,
@@ -222,6 +234,7 @@ function ForecastTrends({
   selectedCase?: string;
   downsideNote?: string;
 }) {
+  const note = units || undefined;
   const forecastColumns = grid.columns.flatMap((column, index) =>
     /^FY\d+E$/.test(column.label) ? [{ ...column, index }] : [],
   );
@@ -234,8 +247,7 @@ function ForecastTrends({
   return (
     <div className="grid gap-8">
       {FORECAST_LINES.map((label) => {
-        const found = grid.rows.filter((entry) => entry.label === label);
-        const row = found.length === 1 ? found[0] : undefined;
+        const row = singleForecastRow(grid, label);
         if (!row) return null;
         const perCase = groups.map((name) => {
           const cells = periods.map((period) => {
@@ -261,14 +273,10 @@ function ForecastTrends({
             periods={periods}
             series={series}
             yTicks={forecastTicks(values)}
-            note={units || undefined}
+            note={note}
             table={perCase.map(({ name, cells }) => ({
               name,
-              cells: cells.map((cell) => {
-                const display = word(cell?.display);
-                const reason = word(cell?.reason);
-                return reason ? `${display} ${reason}` : display || null;
-              }),
+              cells: cells.map(displayForecastCell),
             }))}
           />
         );

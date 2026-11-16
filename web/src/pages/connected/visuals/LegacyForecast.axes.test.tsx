@@ -7,12 +7,15 @@ vi.mock("@/components/chart/TrendChart", () => ({
     yTicks,
     series,
     table,
+    note,
   }: {
     yTicks: { value: number; label: string }[];
     series: unknown;
     table: unknown;
+    note?: string;
   }) => (
     <div>
+      {note !== undefined && <p aria-label="Chart note">{note}</p>}
       <output aria-label="Axis labels">{JSON.stringify(yTicks)}</output>
       <output aria-label="Exact chart values">{JSON.stringify(series)}</output>
       <output aria-label="Recorded display values">{JSON.stringify(table)}</output>
@@ -20,12 +23,12 @@ vi.mock("@/components/chart/TrendChart", () => ({
   ),
 }));
 
-function draw(values: string[]) {
+function draw(values: string[], units = "USD millions") {
   render(
     <LegacyForecast
       model={{
         cashflow: {
-          units: "USD millions",
+          units,
           columns: [
             { label: "FY2027E", group: "Base case" },
             { label: "FY2028E", group: "Base case" },
@@ -68,4 +71,12 @@ it("does not merge close but distinct ticks through display rounding", () => {
   expect(new Set(ticks.map((tick) => tick.label)).size).toBe(ticks.length);
   expect(ticks[0]).toEqual({ value: 100.001, label: "100.001" });
   expect(ticks.at(-1)).toEqual({ value: 100.003, label: "100.003" });
+});
+
+it("omits chart captions when the handoff has no units", () => {
+  draw(["0", "10"], "");
+  expect(screen.queryByLabelText("Chart note")).toBeNull();
+  expect(screen.getByLabelText("Exact chart values")).toHaveTextContent(
+    '[{"name":"Base case","values":[0,10]}]',
+  );
 });

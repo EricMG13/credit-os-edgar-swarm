@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import { expect, it } from "vitest";
-import type { OutputEntry, PublishedRun } from "../publishedReport";
+import { FORECAST_INPUTS, type OutputEntry, type PublishedRun } from "../publishedReport";
 import type { buildReportView } from "../reportView";
 import { Forecast } from "./Forecast";
 
@@ -150,3 +150,41 @@ it.each([
   expect(screen.queryByRole("link", { name: "Difference basis" })).toBeNull();
   expect(screen.getAllByText(limitation).length).toBeGreaterThan(0);
 });
+
+it.each([
+  { sections: 1, blocks: 1, linked: true },
+  { sections: 0, blocks: 1, linked: false },
+  { sections: 2, blocks: 1, linked: false },
+  { sections: 1, blocks: 0, linked: false },
+  { sections: 1, blocks: 2, linked: false },
+])(
+  "links forecast inputs only to an unambiguous JSON block: %j",
+  ({ sections, blocks, linked }) => {
+    const view = basisView();
+    const handoff = view.entries[0];
+    if (!handoff) throw new Error("Missing handoff fixture");
+    handoff.sections.push(
+      ...Array.from({ length: sections }, (_, section) => ({
+        heading: FORECAST_INPUTS,
+        level: 2,
+        line: 80 + section * 10,
+        blocks: Array.from({ length: blocks }, (_, block) => ({
+          type: "text" as const,
+          line: 82 + section * 10 + block * 3,
+          end: 84 + section * 10 + block * 3,
+          text: "```json\n{}\n```",
+        })),
+      })),
+    );
+    render(<Forecast view={view} run={run} />);
+    const links = screen.queryAllByRole("link", { name: "Forecast inputs" });
+    if (linked) {
+      expect(links.length).toBeGreaterThan(0);
+      for (const link of links)
+        expect(link).toHaveAttribute(
+          "href",
+          `/report/current#evidence/forward~${"a".repeat(64)}-82`,
+        );
+    } else expect(links).toHaveLength(0);
+  },
+);

@@ -41,10 +41,10 @@ function forecastHandoff(model: Model, entries: OutputEntry[], folder: string) {
 function inputsLine(entry: OutputEntry) {
   const inputs = entry.sections.filter(({ heading }) => heading === FORECAST_INPUTS);
   if (inputs.length !== 1) return;
-  const blocks = inputs[0]?.blocks.filter(
-    (block) => block.type === "text" && block.text.startsWith("```json\n"),
-  );
-  return blocks?.length === 1 ? blocks[0]?.line : undefined;
+  const blocks = inputs
+    .flatMap(({ blocks }) => blocks)
+    .filter((block) => block.type === "text" && block.text.startsWith("```json\n"));
+  return blocks.length === 1 ? blocks[0]?.line : undefined;
 }
 
 function recordedBridge(

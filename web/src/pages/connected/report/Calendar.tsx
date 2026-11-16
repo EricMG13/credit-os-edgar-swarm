@@ -2,9 +2,15 @@ import { ChartWithTable } from "@/components/chart/ChartWithTable";
 import { TRACE_HOST } from "@/pages/library/parts/TraceControl";
 import { moduleName } from "../api";
 import { card, heading } from "../layout";
-import { blocked, containsReference, evidencePath, type OutputEntry } from "../publishedReport";
+import {
+  blocked,
+  containsReference,
+  evidencePath,
+  type OutputEntry,
+  type Table,
+} from "../publishedReport";
 import { EVENT_HEADERS, eventLane, eventRecords } from "../visuals/EventLane";
-import { publishedTables, word } from "../visuals/visualData";
+import { publishedTables, word, type SourceTable } from "../visuals/visualData";
 import { PublishedSource } from "./PublishedTrace";
 
 type EventLocation = { owner: string; href: string };
@@ -15,6 +21,44 @@ function eventDisplay(cells: string[]) {
   return cells.map((text, index) =>
     [2, 3, 6].includes(index) && containsReference(text) ? "See Evidence" : text,
   );
+}
+
+function validatedEvents(table: SourceTable, block: Table) {
+  const events = eventRecords(table);
+  if (events.length !== block.rows.length) {
+    return { problem: "The recorded dates or precision could not be plotted." };
+  }
+  const lines = block.rows.map(({ line }) => line);
+  if (
+    lines.some((line) => !Number.isSafeInteger(line) || line <= table.line) ||
+    new Set(lines).size !== lines.length
+  ) {
+    return { problem: "The handoff does not identify each event row." };
+  }
+  return { events };
+}
+
+function calendarRows(
+  events: ReturnType<typeof eventRecords>,
+  block: Table,
+  entry: OutputEntry,
+  folder: string,
+  owner: string,
+): CalendarRow[] {
+  return events.flatMap(({ index, from, to }) => {
+    const row = block.rows[index];
+    return row
+      ? [
+          {
+            owner,
+            href: evidencePath(folder, entry, row.line),
+            cells: eventDisplay(row.cells),
+            from,
+            to,
+          },
+        ]
+      : [];
+  });
 }
 
 export function buildCalendar(entries: OutputEntry[], folder: string) {
@@ -44,35 +88,12 @@ export function buildCalendar(entries: OutputEntry[], folder: string) {
         continue;
       }
       if (!assessable) continue;
-      const events = eventRecords(table);
-      if (events.length !== block.rows.length) {
-        gaps.push({
-          owner,
-          href,
-          title,
-          reason: "The recorded dates or precision could not be plotted.",
-        });
+      const { events, problem } = validatedEvents(table, block);
+      if (!events) {
+        gaps.push({ owner, href, title, reason: problem });
         continue;
       }
-      const rowLines = block.rows.map(({ line }) => line);
-      if (
-        rowLines.some((line) => !Number.isSafeInteger(line) || line <= table.line) ||
-        new Set(rowLines).size !== rowLines.length
-      ) {
-        gaps.push({ owner, href, title, reason: "The handoff does not identify each event row." });
-        continue;
-      }
-      for (const { index: at, from, to } of events) {
-        const row = block.rows[at];
-        if (!row) continue;
-        rows.push({
-          owner,
-          href: evidencePath(folder, entry, row.line),
-          cells: eventDisplay(row.cells),
-          from,
-          to,
-        });
-      }
+      rows.push(...calendarRows(events, block, entry, folder, owner));
     }
   });
   rows.sort((a, b) => a.from - b.from || a.to - b.to);
