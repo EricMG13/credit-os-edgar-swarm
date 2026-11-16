@@ -84,7 +84,8 @@ export function lookupSentence(line: string) {
   if (off) return `Off, because this is a ${off[1] ?? ""} case.${rest}`;
   const refused = /^sec\.gov lookups will be refused: \S+ is not set$/.exec(body);
   if (refused) return "SEC lookups will be refused because the contact string for them is not set.";
-  return serviceText(text.replace(/;\s*--web-lookup on forces it\s*$/, ""));
+  const unlabelled = line.replace(/^\s*[A-Za-z]+:\s+/, "");
+  return serviceText(unlabelled.replace(/;\s*--web-lookup on forces it\s*$/, ""));
 }
 
 /** The comparison caveat the service writes in the compared run's own bracket: ` (earlier format, earlier methods)`, or "". */
@@ -345,7 +346,68 @@ function launcherLine(error: string): string {
  * still shown in plain words (a documented fail-open), and its raw text goes to `console.warn`.
  */
 export function refusalLines(error: string): string[] {
-  return refusalProblems(error).map(withoutFlags);
+  return splitRefusal(error).map(({ line }) => withoutFlags(line));
+}
+
+/** The screen controls a refusal can be shown on: each carries `data-field` with this key. */
+type ControlKey =
+  | "issuer_name"
+  | "cutoff"
+  | "legal_documents"
+  | "deal_terms"
+  | "quotes"
+  | "ratings"
+  | "research_questions"
+  | "valuation"
+  | "assumptions"
+  | "module_options";
+
+/** The control that sets a path: only these paths, and only where one control carries them. */
+const CONTROL_ROOTS =
+  /^(deal_terms|quotes|ratings|research_questions|valuation|assumptions|module_options)(?![\w])/;
+const CONTROL_PATHS: Readonly<Record<string, ControlKey>> = {
+  "identity.issuer_name": "issuer_name",
+  "run.cutoff": "cutoff",
+  "attachments.legal_documents": "legal_documents",
+};
+
+/** Whether the control that sets a path is drawn for a pathway that runs `requested`. */
+function isDrawn(path: string, requested: readonly string[]) {
+  const [root = "", part = ""] = path.split(".");
+  if (root === "module_options") {
+    const wanted = part.startsWith("cp3")
+      ? ["CP-3"]
+      : part.startsWith("cp6")
+        ? ["CP-6"]
+        : ["CP-3", "CP-6"];
+    return wanted.some((code) => requested.includes(code));
+  }
+  if (root === "assumptions") {
+    const pin = PINS.find((item) => item.key === part);
+    return pin
+      ? requested.includes(pin.module)
+      : PINS.some((item) => requested.includes(item.module));
+  }
+  return true;
+}
+
+function controlOf(path: string, requested?: readonly string[]): ControlKey | undefined {
+  const field = CONTROL_PATHS[path] ?? (CONTROL_ROOTS.exec(path)?.[1] as ControlKey | undefined);
+  return field && (!requested || isDrawn(path, requested)) ? field : undefined;
+}
+
+/** One refusal problem: its line as `refusalLines` words it, and the control that sets its path. */
+export type RefusalProblem = { line: string; field?: ControlKey };
+
+/**
+ * `refusalLines`, with the control (if the screen has one) that each problem is about. Given the
+ * modules the pathway runs, a problem whose control is not drawn for them has no control.
+ */
+export function refusalProblems(error: string, requested?: readonly string[]): RefusalProblem[] {
+  return splitRefusal(error).map(({ path, line }) => {
+    const field = controlOf(path, requested);
+    return { line: withoutFlags(line), ...(field ? { field } : {}) };
+  });
 }
 
 /** A command-line flag left in a line, outside double quotes, becomes `this setting` (logged raw). */
@@ -360,15 +422,16 @@ function withoutFlags(line: string) {
   return text;
 }
 
-function refusalProblems(error: string): string[] {
+/** The problems of a refusal, each with its path ("" when the problem has none). */
+function splitRefusal(error: string): { path: string; line: string }[] {
   const launcher = launcherLine(error);
-  if (launcher) return [launcher];
-  if (!PROBLEM.test(error)) return [error];
+  if (launcher) return [{ path: "", line: launcher }];
+  if (!PROBLEM.test(error)) return [{ path: "", line: error }];
   return error.split(new RegExp(`; (?=${PATH}: )`)).map((problem) => {
     const [, path = "", message = ""] = PROBLEM.exec(problem) ?? [];
     if (path === "$" || path === "schema") {
       console.warn(`Refusal not shown to the analyst: ${problem}`);
-      return FORM_SENTENCE;
+      return { path: "", line: FORM_SENTENCE };
     }
     const unknown = { found: false };
     const known = pathParts(path);
@@ -376,6 +439,6 @@ function refusalProblems(error: string): string[] {
     const found = known ?? fallbackParts(path);
     const text = plainTokens(plainMessage(typeMessage(message)), found.field, unknown);
     if (unknown.found) console.warn(`Refusal shown in plain words: ${problem}`);
-    return `${found.parts.join(" · ")}: ${text}`;
+    return { path, line: `${found.parts.join(" · ")}: ${text}` };
   });
 }

@@ -1,9 +1,11 @@
 """The forecast rules' sentences are in the reader's words (owner, 2026-11-16: no raw data)."""
 
 import re
+from pathlib import Path
 
 import pytest
 
+from deploy_vii.context import load_context
 from deploy_workflow import run_expectations as rx
 
 ADD_QUOTES = "Add observed quotes under Observed quotes, or a quotes file."
@@ -71,7 +73,7 @@ WORDS = {
     ),
     "cp4-declared-none": (
         (
-            "You said there is no agreement among the documents, so CP-4 stops with "
+            "No agreement is chosen among the documents, so CP-4 stops with "
             '"No executed governing document".'
         ),
         "Add the executed agreement and choose it under Legal documents, or leave out CP-4.",
@@ -134,3 +136,18 @@ def test_inherited_sentence_names_the_codes_that_it_reads() -> None:
     limited = rx._inherit("CP-3", ["CP-1", "CP-2"], edges, {"CP-1": "limited", "CP-2": "limited"})
     assert limited is not None
     assert limited["reason"] == "Expected to be limited because it reads CP-1, CP-2."
+
+
+def test_an_omitted_section_is_named_by_its_reader_title_without_quotes_or_id() -> None:
+    case = Path(__file__).resolve().parents[1] / "cases/cpdr-context-cutoff/context.json"
+    context = load_context(case.read_bytes())
+    [row] = [
+        item
+        for item in rx.expectations([], [], context, {}, omitted=["what-changed"])
+        if item["id"].startswith("run:section-omitted")
+    ]
+    # The title copied from the specification: src/deploy_vii/report_view.py, _COMPOSITIONS.
+    title = "What changed since the last Report"
+    assert row["reason"] == f"This pathway does not produce the {title} report section."
+    assert "'" not in row["reason"]
+    assert "what-changed" not in row["reason"]

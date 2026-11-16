@@ -1,5 +1,5 @@
 import { type MockInstance } from "vitest";
-import { comparisonCaveat, lookupSentence, refusalLines } from "./plain";
+import { comparisonCaveat, lookupSentence, refusalLines, refusalProblems } from "./plain";
 
 const LOOKUP_LINES: [string, string][] = [
   [
@@ -394,5 +394,69 @@ describe("low batch", () => {
     expect(warn).not.toHaveBeenCalled();
     const [inner = ""] = refusalLines("run.as_of: use --force here");
     expect(inner).toBe("Issuer and case date · As-of date: use this setting here");
+  });
+});
+
+describe("refusalProblems: each problem with the control that sets its path", () => {
+  it("N1 names the control of one problem and keeps refusalLines' line", () => {
+    const error = "assumptions.cp4c.ev_multiple: must be 99.99 or less.";
+    expect(refusalProblems(error)).toEqual([
+      { line: refusalLines(error)[0], field: "assumptions" },
+    ]);
+  });
+
+  it("N2 keeps the service's order across two problems", () => {
+    const error =
+      "deal_terms[0].size_m: is required.; assumptions.cp2e.rate_shocks_bps: is required.";
+    const problems = refusalProblems(error);
+    expect(problems.map(({ field }) => field)).toEqual(["deal_terms", "assumptions"]);
+    expect(problems.map(({ line }) => line)).toEqual(refusalLines(error));
+  });
+
+  it("N3 gives no control to text that names none", () => {
+    const cap = "The pathway cap changed while preparing this summary. Review the run again.";
+    expect(refusalProblems("foo.bar: x.")).toEqual([{ line: "foo.bar: x." }]);
+    expect(refusalProblems(cap)).toEqual([{ line: cap }]);
+  });
+
+  it.each([
+    ["identity.issuer_name: is required.", "issuer_name"],
+    ["run.cutoff: must not be after the as-of date.", "cutoff"],
+    ["attachments.legal_documents: is required.", "legal_documents"],
+    ["deal_terms[0].size_m: is required.", "deal_terms"],
+    ["quotes[1].price: must be a number.", "quotes"],
+    ["ratings[0].agency: is required.", "ratings"],
+    ["research_questions[2].text: is required.", "research_questions"],
+    ["valuation.user_multiple.value: is required.", "valuation"],
+    ["assumptions.cp4c.ev_multiple: must be 99.99 or less.", "assumptions"],
+    ["module_options.cp3_mode: is required.", "module_options"],
+  ])("maps %s to %s", (error, field) => {
+    expect(refusalProblems(error)[0]?.field).toBe(field);
+  });
+
+  it.each([
+    "attachments.prior_case: is required.",
+    "identity.ticker: is required.",
+    "run.as_of: is required.",
+    "run.pathway: is required.",
+  ])("leaves %s without a control", (error) => {
+    expect(refusalProblems(error)[0]?.field).toBeUndefined();
+  });
+
+  it("gives no control to a problem whose control the pathway does not draw", () => {
+    const lite = ["CP-0", "CP-1", "CP-1A", "CP-2", "CP-2A"];
+    expect(
+      refusalProblems("module_options.cp3_mode: is required.", lite)[0]?.field,
+    ).toBeUndefined();
+    expect(
+      refusalProblems("module_options.cp3_mode: is required.", [...lite, "CP-3"])[0]?.field,
+    ).toBe("module_options");
+    expect(
+      refusalProblems("assumptions.cp4c.ev_multiple: must be 1.", lite)[0]?.field,
+    ).toBeUndefined();
+    expect(refusalProblems("assumptions.cp2a.rationale: is required.", lite)[0]?.field).toBe(
+      "assumptions",
+    );
+    expect(refusalProblems("valuation.basis: is required.", lite)[0]?.field).toBe("valuation");
   });
 });

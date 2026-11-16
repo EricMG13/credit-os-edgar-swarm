@@ -1,4 +1,5 @@
-import { RowEditor, RowInput } from "./RowEditor";
+import type { ReactNode } from "react";
+import { RowEditor, RowInput, type Marker } from "./RowEditor";
 import {
   BASIS_FIELD,
   MARKET_FIELDS,
@@ -19,11 +20,15 @@ function Box({
   item,
   value,
   onChange,
+  marker,
+  message,
 }: {
   prefix: string;
   item: RowField;
   value: string;
   onChange: (value: string) => void;
+  marker?: Marker;
+  message?: ReactNode;
 }) {
   return (
     <RowInput
@@ -33,6 +38,8 @@ function Box({
       value={value}
       options={item.options}
       onChange={onChange}
+      marker={marker}
+      message={message}
     />
   );
 }
@@ -72,9 +79,14 @@ function PartFields({
 export function ValuationFields({
   form,
   onChange,
+  marker,
+  message,
 }: {
   form: ValuationForm;
   onChange: (next: ValuationForm) => void;
+  /** On the section's first control, so a refusal naming the section lands there. */
+  marker?: Marker;
+  message?: ReactNode;
 }) {
   const rows = (key: "peers" | "precedents") => (next: Row[]) => {
     onChange({ ...form, [key]: next });
@@ -85,6 +97,8 @@ export function ValuationFields({
         <Box
           prefix="valuation"
           item={PEER_SOURCE_FIELD}
+          marker={marker}
+          message={message}
           value={form.peer_source}
           onChange={(peer_source) => {
             onChange({ ...form, peer_source });

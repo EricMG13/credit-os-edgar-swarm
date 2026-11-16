@@ -14,6 +14,7 @@ from datetime import date
 from typing import Literal, TypedDict
 
 from deploy_vii.registry import dependencies, edge_rule
+from deploy_vii.report_view import _spec_of
 from deploy_workflow.context import RunContext
 from deploy_workflow.portfolio_workbook import NOT_COLLECTED, PortfolioCheck, count, finding_text
 
@@ -522,7 +523,7 @@ RULES: tuple[Rule, ...] = (
         "CP-4",
         lambda f: f.legal == "none",
         "will_refuse",
-        "You said there is no agreement among the documents, so CP-4 stops with "
+        "No agreement is chosen among the documents, so CP-4 stops with "
         '"No executed governing document".',
         "Add the executed agreement and choose it under Legal documents, or leave out CP-4.",
         _STEPS4 + " line 31: 'Blocked: No executed governing document. Output blocked message "
@@ -769,7 +770,7 @@ def expectations(  # noqa: PLR0913 - one keyword per forecast input; the portfol
             f"section-omitted-{section}",
             "information",
             Words(
-                f"The report section '{section}' is not produced by this pathway.",
+                f"This pathway does not produce the {_spec_of(section).title} report section.",
                 "",
                 "owner-path: src/deploy_workflow/owners/cpos_launch.py _layout (omitted sections)",
                 "observed offline",

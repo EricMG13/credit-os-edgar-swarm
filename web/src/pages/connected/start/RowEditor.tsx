@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { Button } from "@/components/base/buttons/button";
 import { moduleName } from "../api";
 import { field, label } from "../layout";
@@ -199,6 +199,13 @@ function RowItem({
   );
 }
 
+/** What a screen puts on a control so a refusal can be shown on it (`problemAttrs` in StartRun). */
+export type Marker = {
+  "data-field": string;
+  "aria-invalid"?: "true";
+  "aria-describedby"?: string;
+};
+
 export function RowInput({
   id,
   item,
@@ -206,6 +213,8 @@ export function RowInput({
   value,
   options,
   onChange,
+  marker,
+  message,
 }: {
   id: string;
   item: RowField;
@@ -213,9 +222,14 @@ export function RowInput({
   value: string;
   options?: readonly (readonly [string, string])[];
   onChange: (value: string) => void;
+  /** Set on the first control of a section that a refusal can name. */
+  marker?: Marker;
+  /** The refusal text, drawn under the control the marker is on. */
+  message?: ReactNode;
 }) {
   const hintText = item.hint ?? "";
   const hint = hintText ? `${id}-hint` : undefined;
+  const described = [hint, marker?.["aria-describedby"]].filter(Boolean).join(" ") || undefined;
   const offered = options ?? [];
   // A value the options do not list is still the value that is sent, so it is shown.
   const choices =
@@ -238,7 +252,8 @@ export function RowInput({
         <select
           id={id}
           className={field}
-          aria-describedby={hint}
+          {...marker}
+          aria-describedby={described}
           aria-required={item.required ? "true" : undefined}
           value={value}
           onChange={(event) => {
@@ -259,7 +274,8 @@ export function RowInput({
           type={item.kind === "date" ? "date" : "text"}
           inputMode={item.kind === "number" ? "decimal" : undefined}
           placeholder={item.placeholder}
-          aria-describedby={hint}
+          {...marker}
+          aria-describedby={described}
           aria-required={item.required ? "true" : undefined}
           value={value}
           onChange={(event) => {
@@ -272,6 +288,7 @@ export function RowInput({
           {hintText}
         </p>
       )}
+      {message}
     </div>
   );
 }

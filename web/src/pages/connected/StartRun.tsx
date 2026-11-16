@@ -78,6 +78,7 @@ import {
   PURPOSES,
   PURPOSE_STEP,
   refusalLines,
+  refusalProblems,
   RUN_PURPOSE_LABEL,
   storedName,
 } from "./start/plain";
@@ -126,24 +127,51 @@ type FieldKey =
   | "issuer_name"
   | "submitted_by"
   | "cutoff"
+  | "legal_documents"
   | "agreement"
   | "deal_terms"
+  | "quotes"
+  | "ratings"
+  | "research_questions"
   | "turns"
   | "valuation"
   | "assumptions"
   | "module_options";
 
-/** A validation failure that belongs to one control: shown on it, not in the general notice. */
+/**
+ * A problem that belongs to one control: shown on it, not in the general notice. A service refusal
+ * that names several problems carries the others, in their labelled lines, as `others`.
+ */
 class FieldProblem extends Error {
   constructor(
     readonly field: FieldKey,
     message: string,
+    readonly others?: readonly string[],
   ) {
     super(message);
   }
 }
 
-function stepOfField(field: FieldKey): FormStep {
+/**
+ * The first problem of a summary refusal whose control is drawn becomes a FieldProblem and the rest
+ * its `others`; a failure that is not a refusal, or names no drawn control, is `undefined` (the
+ * general notice shows it as it is).
+ */
+function refusedField(failure: unknown, requested: readonly string[]): FieldProblem | undefined {
+  if (!(failure instanceof RequestError) || failure.status === 404) return undefined;
+  const problems = refusalProblems(failure.message, requested);
+  const at = problems.findIndex(({ field }) => field !== undefined);
+  const first = problems[at];
+  if (!first?.field) return undefined;
+  return new FieldProblem(
+    first.field,
+    first.line,
+    problems.filter((_, position) => position !== at).map(({ line }) => line),
+  );
+}
+
+/** The step a control is drawn on: the issuer name and analyst name on Documents, the rest on Context. */
+export function stepOfField(field: FieldKey): FormStep {
   return field === "issuer_name" || field === "submitted_by" ? "documents" : "context";
 }
 
@@ -196,7 +224,10 @@ const ATTACHMENTS = {
   portfolio_workbook: "Portfolio workbook",
   prior_case: "Prior decision record",
 };
-const ROW_KINDS: RowKind[] = ["deal_terms", "quotes", "ratings", "research_questions"];
+const ROW_KINDS = ["deal_terms", "quotes", "ratings", "research_questions"] as const;
+/** The row editors of the Context step: each carries a `data-field` a refusal can name. */
+const isFieldRow = (kind: RowKind): kind is (typeof ROW_KINDS)[number] =>
+  (ROW_KINDS as readonly RowKind[]).includes(kind);
 type Forms = {
   valuation?: ValuationForm;
   module_options?: ModuleOptionsForm;
@@ -375,6 +406,7 @@ function useIntakeReviewState() {
   const [busy, setBusy] = useState<"review" | "submit" | "documents" | "copy">();
   const [error, setError] = useState("");
   const [fieldError, setFieldError] = useState<FieldProblem>();
+  const [otherProblems, setOtherProblems] = useState<readonly string[]>([]);
   const [submitUncertain, setSubmitUncertain] = useState(false);
   return {
     review,
@@ -389,6 +421,8 @@ function useIntakeReviewState() {
     setError,
     fieldError,
     setFieldError,
+    otherProblems,
+    setOtherProblems,
     submitUncertain,
     setSubmitUncertain,
   };
@@ -868,6 +902,8 @@ function ContextInputFields({ view }: { view: IntakeView }) {
         title="Legal documents"
         value={view.legal}
         choices={{ none: "No agreement", executed: "Executed agreement", draft: "Draft agreement" }}
+        problem={view.problem}
+        problemField="legal_documents"
         onChange={view.changeLegal}
       />
       {view.legal !== "none" && (
@@ -1002,11 +1038,7 @@ function StructuredContextFields({ view }: { view: IntakeView }) {
             primary={view.run.run_type === "primary"}
             required={kind === "deal_terms" && view.run.run_type === "primary"}
             focusChoices={focusChoices}
-            error={
-              kind === "deal_terms" && view.problem?.field === "deal_terms"
-                ? view.problem.message
-                : undefined
-            }
+            error={view.problem?.field === kind ? view.problem.message : undefined}
           />
         </section>
       ))}
@@ -1017,13 +1049,20 @@ function StructuredContextFields({ view }: { view: IntakeView }) {
 function ValuationSection({ view }: { view: IntakeView }) {
   const wanted = view.requested;
   const runs = { cp3: wanted.includes("CP-3"), cp6: wanted.includes("CP-6") };
-  if (view.level !== "advanced" && !view.forms.valuation && !view.forms.module_options) return null;
+  const named = view.problem?.field === "valuation" || view.problem?.field === "module_options";
+  if (view.level !== "advanced" && !view.forms.valuation && !view.forms.module_options && !named)
+    return null;
   return (
     <div className="grid gap-3 sm:col-span-2">
       <details className="rounded-lg border border-border-hairline p-3">
         <summary className="cursor-pointer text-sm font-semibold">{VALUATION_TITLE}</summary>
         <div className="mt-3">
-          <ValuationFields form={view.valuation} onChange={view.changeValuation} />
+          <ValuationFields
+            form={view.valuation}
+            onChange={view.changeValuation}
+            marker={problemAttrs(view.problem, "valuation")}
+            message={<FieldMessage problem={view.problem} field="valuation" />}
+          />
         </div>
       </details>
       {(runs.cp3 || runs.cp6) && (
@@ -1034,6 +1073,8 @@ function ValuationSection({ view }: { view: IntakeView }) {
               form={view.moduleOptions}
               runs={runs}
               onChange={view.changeModuleOptions}
+              marker={problemAttrs(view.problem, "module_options")}
+              message={<FieldMessage problem={view.problem} field="module_options" />}
             />
           </div>
         </details>
@@ -1043,7 +1084,8 @@ function ValuationSection({ view }: { view: IntakeView }) {
 }
 
 function AssumptionsSection({ view }: { view: IntakeView }) {
-  if (view.level !== "advanced" && !view.forms.assumptions) return null;
+  if (view.level !== "advanced" && !view.forms.assumptions && view.problem?.field !== "assumptions")
+    return null;
   return (
     <details className="rounded-lg border border-border-hairline p-3 sm:col-span-2">
       <summary className="cursor-pointer text-sm font-semibold">{ASSUMPTIONS_TITLE}</summary>
@@ -1055,6 +1097,8 @@ function AssumptionsSection({ view }: { view: IntakeView }) {
           form={view.assumptions}
           modules={view.requested}
           onChange={view.changeAssumptions}
+          marker={problemAttrs(view.problem, "assumptions")}
+          message={<FieldMessage problem={view.problem} field="assumptions" />}
         />
       </div>
     </details>
@@ -1315,6 +1359,8 @@ function IntakeForm({
     setError,
     fieldError,
     setFieldError,
+    otherProblems,
+    setOtherProblems,
     submitUncertain,
     setSubmitUncertain,
   } = reviewState;
@@ -1395,11 +1441,13 @@ function IntakeForm({
     setBusy(action);
     setError("");
     setFieldError(undefined);
+    setOtherProblems([]);
     try {
       await work();
     } catch (failure) {
       if (failure instanceof FieldProblem) {
         setFieldError(failure);
+        setOtherProblems(failure.others ?? []);
         setStep(stepOfField(failure.field));
         return;
       }
@@ -1624,7 +1672,9 @@ function IntakeForm({
       throw new Error("The service could not read any of the selected documents.");
     const answers = makeAnswers(result, details);
     const shownCap = capForPathway(caps, answers.context.run.pathway);
-    const summary = await getSummary(draft.id, answers, shownCap);
+    const summary = await getSummary(draft.id, answers, shownCap).catch((failure: unknown) => {
+      throw refusedField(failure, requested) ?? failure;
+    });
     requireSummaryCap(summary, shownCap);
     if (!summary.digest) throw new Error("The service did not issue an approval for this run.");
     const newestDate = newestOverride ?? newestPeriod(result);
@@ -1816,7 +1866,7 @@ function IntakeForm({
   }
 
   function changeRows(kind: RowKind, next: Row[]) {
-    if (kind === "deal_terms") clearProblem("deal_terms");
+    if (isFieldRow(kind)) clearProblem(kind);
     setRows((previous) => ({ ...previous, [kind]: next }));
   }
 
@@ -1901,12 +1951,15 @@ function IntakeForm({
     moduleOptions: forms.module_options ?? readModuleOptions(context.module_options),
     assumptions: forms.assumptions ?? readAssumptions(context.assumptions),
     changeAssumptions: (next) => {
+      clearProblem("assumptions");
       setForms((previous) => ({ ...previous, assumptions: next }));
     },
     changeValuation: (next) => {
+      clearProblem("valuation");
       setForms((previous) => ({ ...previous, valuation: next }));
     },
     changeModuleOptions: (next) => {
+      clearProblem("module_options");
       setForms((previous) => ({ ...previous, module_options: next }));
     },
     modules,
@@ -1943,7 +1996,7 @@ function IntakeForm({
       setNewestOverride(value || undefined);
     },
     changeLegal: (value) => {
-      clearProblem("agreement");
+      clearProblem("agreement", "legal_documents");
       setLegal(value);
     },
     changeAttachment,
@@ -1984,6 +2037,7 @@ function IntakeForm({
       step={step}
       review={review}
       error={error}
+      otherProblems={otherProblems}
       accepted={accepted}
       approved={approved}
       checksComplete={checksComplete === true}
@@ -2014,6 +2068,7 @@ type IntakePanelsProps = {
   step: FormStep;
   review?: Review;
   error: string;
+  otherProblems: readonly string[];
   accepted: Set<string>;
   approved: boolean;
   checksComplete: boolean;
@@ -2038,9 +2093,8 @@ type IntakePanelsProps = {
   onPrevious: () => void;
 };
 
-/** A service refusal in the screen's own words: one line as a sentence, several as a list. */
-function RefusalNotice({ error }: { error: string }) {
-  const lines = refusalLines(error);
+/** Refusal lines in the screen's own words: one as a sentence, several as a list. */
+function RefusalNotice({ lines }: { lines: readonly string[] }) {
   const [only] = lines;
   return (
     <ErrorNotice>
@@ -2062,6 +2116,7 @@ function IntakePanels(props: IntakePanelsProps) {
     step,
     review,
     error,
+    otherProblems,
     accepted,
     approved,
     checksComplete,
@@ -2108,7 +2163,8 @@ function IntakePanels(props: IntakePanelsProps) {
               : `Step ${String(FORM_STEP_KEYS.indexOf(step) + 1)} of ${String(STEP_TOTAL)} · ${title}`}
           </p>
         </div>
-        {error && <RefusalNotice error={error} />}
+        {error && <RefusalNotice lines={refusalLines(error)} />}
+        {otherProblems.length > 0 && <RefusalNotice lines={otherProblems} />}
         {review ? (
           <ReviewConfirmation
             review={review}
