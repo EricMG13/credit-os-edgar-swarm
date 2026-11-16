@@ -1,13 +1,56 @@
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
-import type { Changes as PublishedChanges, PublishedRun, Snapshot } from "../publishedReport";
+import type {
+  Changes as PublishedChanges,
+  OutputEntry,
+  PublishedRun,
+  Section,
+  Snapshot,
+} from "../publishedReport";
 import { Changes } from "./Changes";
 
 const run = { folder: "current" } as PublishedRun;
-const snapshot = {} as Snapshot;
+const snapshot = { chips: {} } as unknown as Snapshot;
 
-function renderChanges(change: PublishedChanges | null) {
-  return render(<Changes snapshot={snapshot} run={run} entries={[]} change={change} />);
+function renderChanges(change: PublishedChanges | null, entries: OutputEntry[] = []) {
+  return render(<Changes snapshot={snapshot} run={run} entries={entries} change={change} />);
+}
+
+const LEDGER = [
+  ["E1", "C1", "Segment margins are not disclosed", "Remaining", "\u2014"],
+  [
+    "E2",
+    "\u2014",
+    "Revolver terms were unavailable",
+    "Closed",
+    "Amended credit agreement supplied",
+  ],
+  ["\u2014", "C2", "Hedge book not provided", "New", "\u2014"],
+  ["E3", "\u2014", "Lease schedule not reconciled", "Parked", ""],
+];
+
+function cp8(ledger: string[][], module = "CP-8", heading = "Limitations ledger"): OutputEntry {
+  const sections: Section[] = [
+    { heading: "Findings", level: 2, line: 1, blocks: [] },
+    {
+      heading,
+      level: 3,
+      line: 10,
+      blocks: [
+        {
+          type: "table",
+          headers: ["Earlier ref", "Current ref", "Limitation", "Status", "What closed it"],
+          line: 11,
+          rows: ledger.map((cells, index) => ({ line: 12 + index, cells })),
+        },
+      ],
+    },
+  ];
+  return {
+    selected: true,
+    output: { id: "a", module, label: "a", href: "", sha256: "a".repeat(64) },
+    sections,
+  };
 }
 
 describe("connected report Changes", () => {
@@ -102,5 +145,41 @@ describe("connected report Changes", () => {
       ),
     ).toBeInTheDocument();
     expect(document.body.textContent).not.toMatch(/\(CP-[A-Za-z0-9]+\)/);
+  });
+
+  it("groups CP-8's limitations ledger by status without its reference columns", () => {
+    renderChanges({ first_run: false }, [cp8(LEDGER)]);
+    const ledger = screen.getByRole("region", { name: "Limitations" });
+    const groups = within(ledger)
+      .getAllByRole("heading", { level: 3 })
+      .map((h) => h.textContent);
+    expect(groups).toEqual(["Closed (1)", "Remaining (1)", "New (1)", "Parked (1)"]);
+    expect(within(ledger).getByText("Revolver terms were unavailable")).toBeVisible();
+    expect(within(ledger).getByText("Amended credit agreement supplied")).toBeVisible();
+    expect(within(ledger).getByText("Lease schedule not reconciled")).toBeVisible();
+    expect(within(ledger).queryByText(/^(E1|E2|E3|C1|C2)$/)).toBeNull();
+    expect(within(ledger).getAllByRole("button", { name: /^Show sources for/ })).toHaveLength(4);
+    expect(screen.queryByRole("link", { name: "Limitations ledger" })).toBeNull();
+  });
+
+  it("leaves a Gap ledger of another module and non-CP-8 ledgers out of the typed group", () => {
+    renderChanges({ first_run: false }, [cp8(LEDGER, "CP-2", "Gap ledger")]);
+    expect(screen.queryByRole("region", { name: "Limitations" })).toBeNull();
+  });
+
+  it("orders other statuses after the named ones and draws no placeholder as a closing note", () => {
+    renderChanges({ first_run: false }, [
+      cp8([
+        ["E1", "\u2014", "Hedge book is thin", "Watching", "\u2014"],
+        ["E2", "\u2014", "Pension terms are old", "No longer stated", "\u2014"],
+        ["E3", "\u2014", "Leases are open", "Remaining", "\u2014"],
+      ]),
+    ]);
+    const ledger = screen.getByRole("region", { name: "Limitations" });
+    const groups = within(ledger)
+      .getAllByRole("heading", { level: 3 })
+      .map((h) => h.textContent);
+    expect(groups).toEqual(["Remaining (1)", "No longer stated (1)", "Watching (1)"]);
+    expect(within(ledger).queryByText("\u2014")).toBeNull();
   });
 });

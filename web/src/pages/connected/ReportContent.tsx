@@ -329,6 +329,8 @@ const RECORD_CODE = new RegExp(String.raw`^(?:${CODE}\s|Confidence inputs$)`);
 function registerBlocks(section: Section, entry: OutputEntry) {
   if (entry.output.module === "CP-6" && /^T6E\.(?:4|6|7)\b/.test(section.heading))
     return section.blocks.filter(readerBlock);
+  if (entry.output.module === "CP-8" && section.heading === "Limitations ledger")
+    return section.blocks.filter(readerBlock);
   return section.blocks.filter((block) => {
     if (block.type !== "table") return false;
     if (monitoringLabel(entry.output.module, section.heading, block)) return true;
