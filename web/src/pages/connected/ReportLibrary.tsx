@@ -325,7 +325,7 @@ function ReportNav({ tab, modules }: { tab: Tab; modules: number }) {
           key={key}
           href={tabHref(key)}
           label={title}
-          current={tab === key}
+          current={tab === key || (tab === "calendar" && key === "overview")}
           count={key === "modules" ? String(modules) : undefined}
           accessibleLabel={key === "modules" ? `Modules ${String(modules)}` : undefined}
         />
@@ -635,9 +635,6 @@ function ReaderHeader({
       actions={
         <div className="flex flex-wrap items-center gap-2">
           <SourcesSwitch isSelected={sources} onChange={setSources} />
-          <Button color="secondary" href="#history">
-            Report history
-          </Button>
           <Button color="secondary" href={`/run/${encodeURIComponent(id)}`}>
             Run activity
           </Button>

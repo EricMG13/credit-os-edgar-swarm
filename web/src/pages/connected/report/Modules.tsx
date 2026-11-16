@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/base/buttons/button";
 import { StatusBadge } from "@/components/status/StatusBadge";
 import { ModuleNav, type NavSection } from "@/pages/library/parts/ModuleNav";
@@ -87,6 +87,32 @@ function Navigator({
   if (entry && recordSections(entry.sections, entry).length)
     sections.push({ label: "Statements and records", key: RECORDS_ID, icon: "records" });
   const [active, setActive] = useState(sections[0]?.key ?? null);
+  const aside = useRef<HTMLElement>(null);
+  const sectionKeys = sections.map(({ key }) => key).join("\n");
+  useEffect(() => {
+    // Without IntersectionObserver the entry follows clicks only.
+    if (typeof IntersectionObserver === "undefined") return;
+    const keys = sectionKeys.split("\n");
+    const targets = keys.flatMap((key) => document.getElementById(key) ?? []);
+    if (!targets.length) return;
+    const inView = new Set<string>();
+    // The scrolling region is the shell's `main`, so the top third is measured against it.
+    const spy = new IntersectionObserver(
+      (changes) => {
+        for (const { target, isIntersecting } of changes) {
+          if (isIntersecting) inView.add(target.id);
+          else inView.delete(target.id);
+        }
+        const first = keys.find((key) => inView.has(key));
+        if (first) setActive(first);
+      },
+      { root: aside.current?.closest("main") ?? null, rootMargin: "0px 0px -66% 0px" },
+    );
+    for (const target of targets) spy.observe(target);
+    return () => {
+      spy.disconnect();
+    };
+  }, [sectionKeys]);
   const [mobileSection, setMobileSection] = useState("");
   const moduleHref = (id: string) => `#modules/${encodeURIComponent(id)}`;
   const sectionNavigate = (id: string) => {
@@ -96,7 +122,10 @@ function Navigator({
     setActive(id);
   };
   return (
-    <aside className="self-start rounded-xl border border-border-hairline bg-surface-card py-2 min-[1001px]:sticky min-[1001px]:top-4">
+    <aside
+      ref={aside}
+      className="self-start rounded-xl border border-border-hairline bg-surface-card py-2 min-[1001px]:sticky min-[1001px]:top-4"
+    >
       <div className="grid gap-2 px-3 pb-2 min-[1001px]:hidden">
         <label className="grid gap-1 text-sm text-text-secondary">
           Module

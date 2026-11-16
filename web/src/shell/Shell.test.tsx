@@ -87,3 +87,20 @@ describe("PageHeader", () => {
     expect(screen.getByRole("button", { name: "Act" })).toBeInTheDocument();
   });
 });
+
+describe("Shell scroll container", () => {
+  it("makes the scrolling main a positioning context", () => {
+    render(<Shell current="library">content</Shell>);
+    expect(screen.getByRole("main")).toHaveClass("relative");
+  });
+
+  it("sizes the rail list from the space left under its margin, not from the full rail height", () => {
+    render(<Shell current="library">content</Shell>);
+    const rail = screen.getByRole("navigation", { name: "Areas" });
+    const list = within(rail).getByRole("list");
+    // A full-height list plus its top margin overflowed the document by the margin.
+    expect(list).not.toHaveClass("h-full");
+    expect(rail).toHaveClass("flex", "flex-col");
+    expect(list).toHaveClass("flex-1", "min-h-0");
+  });
+});

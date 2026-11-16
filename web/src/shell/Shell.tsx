@@ -40,8 +40,8 @@ export function Shell({
           <div className="flex shrink-0 justify-center px-2 min-[768px]:px-3">
             <img src={symbol} alt="" width="24" height="24" className="size-6" />
           </div>
-          <nav aria-label="Areas" className="min-w-0 flex-1">
-            <ul className="flex h-full items-center justify-around gap-0.5 px-1 min-[768px]:mt-5 min-[768px]:flex-col min-[768px]:items-stretch min-[768px]:justify-start min-[768px]:px-3.5">
+          <nav aria-label="Areas" className="flex min-h-0 min-w-0 flex-1 flex-col">
+            <ul className="flex min-h-0 flex-1 items-center justify-around gap-0.5 px-1 min-[768px]:mt-5 min-[768px]:flex-col min-[768px]:items-stretch min-[768px]:justify-start min-[768px]:px-3.5">
               {items.map((item) => (
                 <li
                   key={item.area}
@@ -62,7 +62,9 @@ export function Shell({
           </nav>
         </div>
       </aside>
-      <main className={`min-h-0 min-w-0 flex-1 overflow-y-auto${bleed ? "" : " p-4 sm:p-8"}`}>
+      <main
+        className={`relative min-h-0 min-w-0 flex-1 overflow-y-auto${bleed ? "" : " p-4 sm:p-8"}`}
+      >
         {children}
       </main>
     </div>
