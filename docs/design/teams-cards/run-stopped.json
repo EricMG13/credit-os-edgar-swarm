@@ -2,7 +2,7 @@
   "$schema": "https://adaptivecards.io/schemas/adaptive-card.json",
   "type": "AdaptiveCard",
   "version": "1.5",
-  "speak": "Credit OS. The run for Northbridge Holdings stopped at its spending cap. No report has been published.",
+  "speak": "Credit OS. The run for Northbridge Holdings stopped. Stopped at the cap before it finished. No report has been published.",
   "body": [
     {
       "type": "Container",
@@ -40,7 +40,7 @@
             },
             {
               "type": "TextBlock",
-              "text": "Deep pathway",
+              "text": "Deep credit assessment",
               "wrap": true,
               "isSubtle": true,
               "size": "Small",
@@ -100,7 +100,7 @@
           "items": [
             {
               "type": "TextBlock",
-              "text": "Priya Raman",
+              "text": "Priya R",
               "wrap": false,
               "size": "Small"
             }
@@ -242,13 +242,13 @@
     {
       "type": "Action.OpenUrl",
       "title": "Run activity",
-      "url": "https://credit-os.example/#/run",
+      "url": "https://credit-os.example/runs",
       "style": "positive"
     },
     {
       "type": "Action.OpenUrl",
       "title": "Library",
-      "url": "https://credit-os.example/#/",
+      "url": "https://credit-os.example/",
       "iconUrl": "icon:Library"
     }
   ]

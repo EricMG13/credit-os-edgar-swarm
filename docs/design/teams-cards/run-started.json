@@ -2,7 +2,7 @@
   "$schema": "https://adaptivecards.io/schemas/adaptive-card.json",
   "type": "AdaptiveCard",
   "version": "1.5",
-  "speak": "Credit OS. Run started for Northbridge Holdings, Full pathway, by Priya Raman at 13:45.",
+  "speak": "Credit OS. Run started for Northbridge Holdings.",
   "body": [
     {
       "type": "Container",
@@ -40,7 +40,7 @@
             },
             {
               "type": "TextBlock",
-              "text": "Full pathway",
+              "text": "Full credit assessment",
               "wrap": true,
               "isSubtle": true,
               "size": "Small",
@@ -100,7 +100,7 @@
           "items": [
             {
               "type": "TextBlock",
-              "text": "Priya Raman",
+              "text": "Priya R",
               "wrap": false,
               "size": "Small"
             }
@@ -236,13 +236,13 @@
     {
       "type": "Action.OpenUrl",
       "title": "Watch run",
-      "url": "https://credit-os.example/#/run",
+      "url": "https://credit-os.example/run/20261116-134500-01",
       "style": "positive"
     },
     {
       "type": "Action.OpenUrl",
       "title": "Library",
-      "url": "https://credit-os.example/#/",
+      "url": "https://credit-os.example/",
       "iconUrl": "icon:Library"
     }
   ]

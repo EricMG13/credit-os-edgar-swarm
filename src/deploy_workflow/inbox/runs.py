@@ -104,6 +104,7 @@ def cap_of(record: Record) -> Decimal:
     return value
 
 
+TEAMS_WEBHOOK_VARIABLE = "CREDIT_OS_TEAMS_WEBHOOK"  # read by deploy_workflow.inbox.teams
 PID_FILE_VARIABLE = "DEPLOY_WORKFLOW_PID_FILE"  # the launcher reads the same name
 
 
@@ -119,8 +120,9 @@ def child_environment() -> dict[str, str]:
     """The environment for a launcher child: this process's, plus the engine's ``src`` folder
     first on ``PYTHONPATH`` (so a child started outside the project's environment still finds it)
     and UTF-8 output. The provider key
-    passes through untouched."""
+    passes through untouched; the Teams webhook, a secret no run needs, is left out."""
     env = dict(os.environ)
+    env.pop(TEAMS_WEBHOOK_VARIABLE, None)
     existing = env.get("PYTHONPATH")
     env["PYTHONPATH"] = os.pathsep.join([str(_SRC), existing] if existing else [str(_SRC)])
     env["PYTHONUTF8"] = "1"

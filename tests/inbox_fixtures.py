@@ -133,7 +133,7 @@ def submit_run(
             "level": "basic",
             "model": "gpt",
             "effort": "balanced",
-            "submitted_by": "analyst",
+            "submitted_by": "Ana L",
         }
     )
     lay = Layout(root)

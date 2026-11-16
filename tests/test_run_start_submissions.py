@@ -56,7 +56,7 @@ def answers_for(tmp_path: Path, **change: object) -> Answers:
         "level": "basic",
         "model": "gpt",
         "effort": "balanced",
-        "submitted_by": "analyst",
+        "submitted_by": "Ana L",
     }
     base.update(change)
     return base  # type: ignore[return-value]
@@ -451,7 +451,9 @@ def test_the_digest_changes_with_a_file_the_context_the_modules_or_the_turns_onl
     base = answers_for(tmp_path)
     first = digest(layout, sid, base)
     assert len(first) == 64
-    assert digest(layout, sid, answers_for(tmp_path, level="advanced", submitted_by="x")) == first
+    assert (
+        digest(layout, sid, answers_for(tmp_path, level="advanced", submitted_by="Xan T")) == first
+    )
     assert digest(layout, sid, answers_for(tmp_path, max_turns=40)) != first
     assert digest(layout, sid, answers_for(tmp_path, modules=["CP-0"])) != first
     changed = answers_for(tmp_path)
@@ -531,6 +533,18 @@ def test_a_file_landing_while_the_summary_is_made_gives_no_digest(layout, tmp_pa
         {"level": "expert"},
         {"submitted_by": 5},
         {"submitted_by": "x" * 81},
+        {"submitted_by": ""},
+        {"submitted_by": "Eric"},
+        {"submitted_by": "Eric Garcia"},
+        {"submitted_by": "Eric g"},
+        {"submitted_by": "Eric MGH"},
+        {"submitted_by": "Eric M G"},
+        {"submitted_by": "Eric  G"},
+        {"submitted_by": " Eric G"},
+        {"submitted_by": "Eric G "},
+        {"submitted_by": "Er1c G"},
+        {"submitted_by": "-Eric G"},
+        {"submitted_by": "Eric G\n"},
     ],
 )
 def test_hostile_answers_are_refusals_not_exceptions(layout, tmp_path, change):
@@ -1559,3 +1573,16 @@ def test_two_submissions_carrying_from_one_run_both_end_with_the_runs_files(layo
         "a.txt": 3,
         "sub/b.txt": 3,
     }  # the earlier run's own files stay
+
+
+@pytest.mark.parametrize(
+    "name",
+    ["Eric G", "Eric MG", "Jo L", "Anne-Marie D", "D'Arcy OB", "D\u2019Arcy O", "Zo\u00eb \u00c9"],
+)
+def test_an_analyst_name_is_a_first_name_and_one_or_two_initials(tmp_path, name):
+    assert submissions.validated(answers_for(tmp_path, submitted_by=name))["submitted_by"] == name
+
+
+def test_a_refused_analyst_name_says_the_form_to_use(tmp_path):
+    with pytest.raises(Refused, match="for example Eric G, or two initials, for example Eric MG"):
+        submissions.validated(answers_for(tmp_path, submitted_by="Eric Garcia"))

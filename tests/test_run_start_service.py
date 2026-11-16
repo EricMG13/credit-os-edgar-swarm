@@ -51,7 +51,7 @@ def answers_for(**change: Any) -> dict[str, Any]:
         "level": "basic",
         "model": "gpt",
         "effort": "balanced",
-        "submitted_by": "analyst",
+        "submitted_by": "Ana L",
     }
     base.update(change)
     return base

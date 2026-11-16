@@ -40,7 +40,7 @@
             },
             {
               "type": "TextBlock",
-              "text": "Full pathway",
+              "text": "Full credit assessment",
               "wrap": true,
               "isSubtle": true,
               "size": "Small",
@@ -100,7 +100,7 @@
           "items": [
             {
               "type": "TextBlock",
-              "text": "Priya Raman",
+              "text": "Priya R",
               "wrap": false,
               "size": "Small"
             }
@@ -180,34 +180,19 @@
           "wrap": true
         }
       ]
-    },
-    {
-      "type": "Badge",
-      "text": "2 limits stated",
-      "style": "Default",
-      "appearance": "Tint",
-      "shape": "Rounded",
-      "spacing": "Medium",
-      "fallback": {
-        "type": "TextBlock",
-        "text": "2 limits stated",
-        "wrap": true,
-        "isSubtle": true,
-        "size": "Small"
-      }
     }
   ],
   "actions": [
     {
       "type": "Action.OpenUrl",
       "title": "Open report",
-      "url": "https://credit-os.example/#/issuer/northbridge-holdings",
+      "url": "https://credit-os.example/report/20261116-134500-01",
       "style": "positive"
     },
     {
       "type": "Action.OpenUrl",
       "title": "Library",
-      "url": "https://credit-os.example/#/",
+      "url": "https://credit-os.example/",
       "iconUrl": "icon:Library"
     }
   ]

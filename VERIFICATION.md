@@ -4,6 +4,17 @@ Keep one running record here. A pass applies only to the stated scope. Earlier v
 engine is in [EricMG13/final-workflow](https://github.com/EricMG13/final-workflow)'s
 `VERIFICATION.md`, which also keeps the retained runs this copy leaves out.
 
+## 2026-11-16 — Teams run cards and the analyst's name (branch `claude/zealous-keller-yvc5mb`, `main` at `52f798f` merged)
+
+Scope: a new sender (`src/deploy_workflow/inbox/teams.py`, `teams_brand.py`), its hook in the scheduler and the two services' start-up, the name rule in `run_start/submissions.py`, the React start page and the older start page's help text. No provider, handoff, module or library change; nothing was posted to Teams and no paid run was made.
+- Owner, 2026-11-16: cards for run activity only (started, report ready, stopped, summary); summary at 09:00, 13:00, 17:00 and 21:00 UK time on weekdays, skipped when quiet, five finished runs then a count; every card links to the library; the analyst's name is required as a first name and one initial ("Eric G"), two allowed ("Eric MG").
+- Changed: with `CREDIT_OS_TEAMS_WEBHOOK` and `CREDIT_OS_TEAMS_LINK` both set the scheduler posts each run's cards once (ledger `_engine/teams.json`; the first poll records existing runs and posts none) and the summary on its slots; with neither it posts nothing; with one the service refuses to start. `submitted_by` is refused unless it is a first name, a space and one or two capital initials, on the service and on the React page (same rule, `start/analystName.ts`); an empty name is refused. The report-ready card carries the library Overview's lead bottom line (`summary_fields`) unchanged.
+- Tests (synthetic, no network; posts go to a list): `tests/test_inbox_teams.py` 74 passed, with expected card texts written out by hand, the UK summer-time boundaries of 2026, restart, failed-post, unsaved-ledger, hand-edited-record and unreadable-ledger cases, a local HTTP server for the post and its refused redirect, and one scheduler run through the fake launcher; `tests/test_run_start_submissions.py` 153 passed (7 accepted and 12 refused names); the scheduler, service, activity, prior, context-form, React-server and launcher files, 1,900 tests in all, passed; `web`: `src/pages/connected` 34 files passed, typecheck, eslint, prettier and knip clean. Quality gate on the working tree: 0 findings.
+- Review: one independent adversarial review of the working tree (2 High, 5 Medium, 7 Low) and its simpler-design pass. Fixed: any exception in the sender is caught and logged, so a bad record or a garbled reply cannot stop the poll; a webhook or link with an unreadable port, a control character, a query or a fragment refuses the start; launched runs no longer inherit the webhook; the summary lists at most 18 rows (measured under 22 KB for a 93-run day with 80-character names); a failed ledger save no longer stops the pass; the retry counter is replaced by an age limit (two hours for a run card, the slot window for a summary) and a summary that was not posted leaves its runs for the next; a redirect is refused. Left as designed: a run ending after 21:00 UK is in no summary; module-written Markdown marks in the bottom line are shown as written.
+- Card check: the four payloads in `docs/design/teams-cards/` are the sender's output for sample runs (5.2 to 12.8 KB posted); rendered with Microsoft's reference renderer (adaptivecards 3), where the header, layout and text draw and `Badge` and `ProgressBar` fall back to text.
+- Not verified: a post to a real Teams channel, and so how Teams draws `Icon`, `Badge`, `ProgressBar`, `icon:Library` and the Fluent icon names; `tests/test_run_start_page.py` (browser), edited to type a valid name but not run: headless Chrome's `--dump-dom` hangs in this container even on a one-line local file; the full `web` gates and the full Python suite; Windows.
+- For the owner: card text goes to Microsoft (issuer, pathway, analyst name, times, counts, cap, the lead bottom line); a card's links work only for a reader who can reach `CREDIT_OS_TEAMS_LINK`; the report-ready card shows no count of stated limits because the library holds none; earlier records keep their free-text names and the summary shortens them ("Dana Reyes" to "Dana R"). The oldest entry here (2026-11-13, CP-DR web lookup) was trimmed to stay under 1,000 lines; git history keeps it.
+
 ## 2026-11-16 — Issuer calendar: year strip over a grouped list (PR #10, branch `claude/calendar-compact-strip`, base `main` at `a9aec10a`)
 
 Scope: presentation only: `web/src/pages/connected/visuals/EventLane.tsx`, its tests and answer key, the old-drawing assertions in `report/Calendar.test.tsx` and `visuals/LegacyVisuals.test.tsx`, and the calendar check in `web/scripts/connected-proof.mjs`. No backend, handoff, provider or model change. Gated code head `84e41de3`.
@@ -923,75 +934,3 @@ reviewer's loop-coverage probe exits 0. Not verified: the real service loop agai
 store error raised by `record_check` itself (still propagates to the loop); the full suite.
 Open, older than this change: a story whose topic match raised straight after it was added is not
 matched on a later pass.
-
-## 2026-11-13 — CP-DR web lookup: page fetch and SEC EDGAR tools (branch `claude/t5-cpdr-lookup-2e88f4`)
-
-Ruling: `docs/rulings/2026-11-13-cpdr-web-lookup.md`. Scope is **offline only**: no live request, no
-provider call, no paid run. Every test uses hand-written fixtures and fake resolvers, connectors and
-clocks. SEC JSON field names are unverified against real responses. A real run needs the owner to
-set `DEPLOY_WORKFLOW_SEC_USER_AGENT` and is a separate paid action.
-
-- Change: `fetch_page`, `sec_company_search`, `sec_filing_list` and `sec_concept_facts` for CP-DR;
-  an allowlist of 28 domains; pages retained under `<run>/live/web/` with a status against the research
-  cutoff; fail-closed acceptance checks on CP-DR's handoff; `--web-lookup` and `--web-host`.
-- Commands, each run on the tree of the commit that carries this entry (second pass, Task 5, on top
-  of the Task 4 commit 72c868b):
-  - `uv run pytest tests/test_weblookup.py tests/test_web_lookup_tools.py tests/test_web_search_scope.py tests/test_handoff_loop.py -q`: 589 passed, exit=0 (fix round 1).
-  - `uv run pytest tests/test_run_start_submissions.py tests/test_run_start_page.py tests/test_run_start_service.py -q`: 375 passed, exit=0 (headless Chrome; two earlier runs under load lost one or two Chrome launches each, exit status 2, and those tests pass alone).
-  - `uv run pytest tests/test_cpos_launch.py -q`: 806 passed, 1 skipped (the paid test), exit=0.
-  - `uv run python tools/quality_gate.py`: 0 findings in 28 changed files, exit=0 (fix round 1).
-  - Instruction size (Task 6): `earnings_update` 521,231 -> 520,888 characters (-343; `INSTRUCTION_BUDGET` unchanged), from the CP-DR method text only (named edit 2c names the two web paragraphs once as "a web paragraph"); `WEB_LOOKUP_RULES` (sent at call time, not in the total) 2,775 -> 2,613 (-162). Probe: `.superpowers/sdd/t5-cpdr-lookup/probes/t6_instruction_size.py`.
-- Scope of the acceptance tests (fix round 3): 15 cases (five `test_rt_*` tests) run the launcher's real checker on a CP-DR handoff in the method's register layout (TDR.1 to
-  TDR.6, the house Basis-line citation form); the remaining acceptance tests call
-  `web_handoff_issues` directly or a stub checker (unit scope). Two launcher tests cover the
-  relaunch rule (a started folder keeps its recorded lookup setting).
-- Hostile cases covered by tests: redirect off the allowlist; oversized body (refused, not
-  truncated); private and local addresses, also on a redirect hop; a post-cutoff page (later event,
-  rejected in a TDR.6 row); a quote not in the cited page; the User-Agent variable missing (refused,
-  names the variable) and never written anywhere; an injected instruction in page text; a forged
-  `<<<END>>>` delimiter; a PDF answer (refused, nothing retained).
-- Reviews: per-task review and two security reviews with probes. Findings were fixed in follow-up
-  commits: 2b34e1a, 0315d23, 0c61069, 73e5490, then the whole-branch review's fix round 3 (the
-  check's citation form, list-item units, TDR.6 one-hop evidence, hosted-search URLs and the
-  relaunch rule; see `git log --oneline 82b17f3..HEAD`).
-- Second-pass review (outside review of the branch): W1 an SEC filing document is dated by its
-  filing date from a filing list retained in the run, W2 a page is dated by the later of its
-  published and modified dates, N1 a cached row gets the index shape check, N2 an unreadable page
-  file gives a plain message (all in 72c868b); W5 a resumed run applies the web checks to a retained
-  CP-DR handoff (`HandoffExecutor.web_issues` through `cpos._with_web_checks`, tested with the
-  launcher's real `checker` in `test_w5_*` of `tests/test_cpos_launch.py`); W4 the run-start
-  summary carries the launcher's own `Lookup:` and `SEC:` lines, drawn on the research module's row
-  (`tests/test_run_start_submissions.py`, `test_run_start_page.py`). W3 (URLs that carry run material
-  are flagged, not refused) was answered, not changed: the ruling gives the reason. Commits on this
-  branch for the pass: 72c868b, then the Task 5 code and docs commits (`git log --oneline
-  e76625c..HEAD` also lists the merged-in main commits).
-- Security review of 72c868b, fix round 1 (the commit after c0220c8; `git log --oneline
-  c0220c8..HEAD`): an unreadable retained page gives the plain sentence on a repeated `fetch_page`
-  too; a filing list is recognised by its submissions address as well as its tool, and a document
-  retained before its list is re-dated by a new index row on the next fetch of its address (no
-  request; pages and bytes are counted per distinct address); the published date is the first found (meta, JSON-LD,
-  body line, `<time>`) and the modified date the latest stated, `page_date` the later of the two;
-  the filing-date lookup compares the host as the allowlist does, decodes the path, uses the latest
-  of several accessions, reads a list through the content-type extension and logs a damaged index.
-- Fix round 2 (re-review of 1c5daed and the Task 5 Low items): the page budget is the number of
-  distinct `url` values in the index and the byte budget the sum of `bytes` over them (a body
-  served at many addresses is charged per address; the re-dated row stays free); an unreadable
-  page that is later re-dated no longer stops `ModuleTools` registering later rows; the resume
-  recheck of a damaged index uses no known pages, as the live write does, and gives the one plain
-  issue only when that leaves the handoff an issue; a row whose `url`, `final_url` or
-  `content_type` is not text is a damaged index; a torn last index line is cut off before the next
-  append. Tests: `test_r1_*`, `test_r2_*`, `test_r3_*`, `test_r4_*`, and the extended
-  `test_a_torn_last_index_line_is_ignored_and_repaired`.
-- Low batch (re-review of 230f68b; commit: the one after 230f68b, `git log --oneline 230f68b..HEAD`): a row is a line that ends with a newline, so `_read_index` ignores an unterminated last line whether or not it parses (as `_append_row` cuts it); with a damaged index the resume recheck gives the one plain issue whenever the handoff names any web source (a `web-` id or an address), whatever the hosted-search setting. Tests: `test_l1_*`, `test_l2_*`.
-- Relaunch rule: a relaunch compares the recorded lookup setting with what the flag settles to for
-  the run's modules and case kind (a run without CP-DR started with `--web-lookup on` records `off`
-  and relaunches with the same flag).
-- Ruling points: with hosted `web_search` also on, a `## Sources` URL that was not fetched is
-  accepted (owner point open); the dropped checks are governed by instruction only.
-- Merge with `claude/quality-defects-appendix-cpdr` (67 commits): both records kept; on the merged tree
-  the web lookup, launcher and handoff-loop tests, `test_cpos_launch.py` and the quality gate exit 0.
-- Run-start summary change (the `Lookup:` and `SEC:` notes on the research module's row): its
-  fidelity check is `tests/test_run_start_submissions.py` and `tests/test_run_start_page.py`
-  (headless Chrome, synthetic case).
-- Not verified: live network behaviour; real SEC responses, headers, encodings and content types; real model use of the
-  tools and its citations; the full suite; concurrent writers to one run's web folder.

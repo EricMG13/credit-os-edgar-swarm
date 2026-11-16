@@ -64,7 +64,7 @@ def test_real_scheduler_exports_the_submitted_run(monkeypatch):
                     "level": "basic",
                     "model": "gpt",
                     "effort": "balanced",
-                    "submitted_by": "Proof test",
+                    "submitted_by": "Proof T",
                 }
             )
             summary = submissions.summary(layout, sid, answers)

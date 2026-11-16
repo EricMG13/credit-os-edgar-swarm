@@ -95,6 +95,7 @@ const issuer = async (pathway, docs) => {
   pick('data-k="pathway"', pathway);
   await uploadFiles(docs);
   type('i-issuer_name', 'Acme Corp'); type('d-as_of', '2026-10-31');
+  type('submitter', 'Ana L');
   pick('data-k="issue_classification"', 'high_yield');
 };
 const summarised = async () => {
@@ -1622,7 +1623,7 @@ def test_a_finished_runs_report_and_submitter_show_when_the_library_is_served(
     )
     page, watcher = page_with_launcher(str(HERE / "fixtures/canned_provider_launcher.py"))
     page.run(f"""
-    level('basic'); type('submitter', 'Dana Reyes');
+    level('basic'); type('submitter', 'Dana R');
     pick('data-k="pathway"', 'credit_snapshot');
     {body}
     await uploadFiles([file('credit-agreement.txt', {json.dumps(AGREEMENT)})]);
@@ -1649,7 +1650,7 @@ def test_a_finished_runs_report_and_submitter_show_when_the_library_is_served(
     # Decision 10: a finished run is not in Run activity (live runs only); it is reached from the
     # library, through its Report history.
     dom = html.unescape(_served_dom(page, "/library/#CP-OS/activity"))
-    assert f'data-run="{record.id}"' not in dom and "submitted by Dana Reyes" not in dom
+    assert f'data-run="{record.id}"' not in dom and "submitted by Dana R" not in dom
     assert "reports/" not in dom
     dom = html.unescape(_served_dom(page, f"/library/#W-Report/history?c={record.id}"))
     # The history is a run timeline: the run is an entry named by its date and pathway (its code is
@@ -2850,7 +2851,7 @@ def test_the_notice_carry_keeps_the_analysts_own_name(page_from):
     got = page.run(
         NOTICE
         + """
-      type('submitter', 'Dana Reyes');
+      type('submitter', 'Dana R');
       type('i-issuer_name', 'Acme Corp'); type('i-issuer_id', 'acme');
       await waitNotice();
       $('issuer-carry').click();
@@ -2858,7 +2859,7 @@ def test_the_notice_carry_keeps_the_analysts_own_name(page_from):
       await settle(200);
       return {submitter: $('submitter').value, sent: answers().submitted_by};"""
     )
-    assert got["submitter"] == "Dana Reyes" and got["sent"] == "Dana Reyes", got
+    assert got["submitter"] == "Dana R" and got["sent"] == "Dana R", got
 
 
 def test_unreadable_answers_set_only_the_name_and_id_and_keep_what_was_typed(
@@ -2871,7 +2872,7 @@ def test_unreadable_answers_set_only_the_name_and_id_and_keep_what_was_typed(
         got = page.run(
             """
           pick('data-k="pathway"', 'earnings_update'); type('d-as_of', '2026-09-30');
-          type('submitter', 'Dana Reyes');
+          type('submitter', 'Dana R');
           await startFrom(RUN_ID);
           return {pathway: getV($('st-pathway'), 'pathway'), asOf: $('d-as_of').value,
                   who: $('submitter').value, id: $('i-issuer_id').value,
@@ -2879,7 +2880,7 @@ def test_unreadable_answers_set_only_the_name_and_id_and_keep_what_was_typed(
                   level: LEVEL};""".replace("RUN_ID", json.dumps(run_id))
         )
     assert got["pathway"] == "earnings_update" and got["asOf"] == "2026-09-30"
-    assert got["who"] == "Dana Reyes" and got["id"] == "acme" and got["name"] == "Acme Corp"
+    assert got["who"] == "Dana R" and got["id"] == "acme" and got["name"] == "Acme Corp"
     assert "and its answers" not in got["msg"] and "1 document carried over" in got["msg"]
 
 

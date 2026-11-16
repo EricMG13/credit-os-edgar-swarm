@@ -2,7 +2,7 @@
   "$schema": "https://adaptivecards.io/schemas/adaptive-card.json",
   "type": "AdaptiveCard",
   "version": "1.5",
-  "speak": "Credit OS run summary at 17:00. 1 capped, 2 running, 1 queued, 7 finished today.",
+  "speak": "Credit OS run summary at 17:00. 1 stopped, 2 running, 1 queued, 7 finished today.",
   "body": [
     {
       "type": "Container",
@@ -123,7 +123,7 @@
                   "items": [
                     {
                       "type": "TextBlock",
-                      "text": "**1** Capped",
+                      "text": "**1** Stopped",
                       "wrap": false,
                       "size": "Small"
                     }
@@ -304,8 +304,8 @@
               "items": [
                 {
                   "type": "TextBlock",
-                  "text": "P. Raman",
-                  "wrap": false,
+                  "text": "Priya R",
+                  "wrap": true,
                   "size": "Small",
                   "isSubtle": true
                 }
@@ -313,7 +313,7 @@
             },
             {
               "type": "Column",
-              "width": "50px",
+              "width": "56px",
               "verticalContentAlignment": "Center",
               "items": [
                 {
@@ -369,8 +369,8 @@
               "items": [
                 {
                   "type": "TextBlock",
-                  "text": "T. Okafor",
-                  "wrap": false,
+                  "text": "Tom O",
+                  "wrap": true,
                   "size": "Small",
                   "isSubtle": true
                 }
@@ -378,7 +378,7 @@
             },
             {
               "type": "Column",
-              "width": "50px",
+              "width": "56px",
               "verticalContentAlignment": "Center",
               "items": [
                 {
@@ -432,8 +432,8 @@
               "items": [
                 {
                   "type": "TextBlock",
-                  "text": "P. Raman",
-                  "wrap": false,
+                  "text": "Priya R",
+                  "wrap": true,
                   "size": "Small",
                   "isSubtle": true
                 }
@@ -441,12 +441,12 @@
             },
             {
               "type": "Column",
-              "width": "50px",
+              "width": "56px",
               "verticalContentAlignment": "Center",
               "items": [
                 {
                   "type": "TextBlock",
-                  "text": "2/8",
+                  "text": "2/5",
                   "wrap": false,
                   "size": "Small",
                   "horizontalAlignment": "Right"
@@ -495,8 +495,8 @@
               "items": [
                 {
                   "type": "TextBlock",
-                  "text": "M. Tanaka",
-                  "wrap": false,
+                  "text": "Mei T",
+                  "wrap": true,
                   "size": "Small",
                   "isSubtle": true
                 }
@@ -504,7 +504,7 @@
             },
             {
               "type": "Column",
-              "width": "50px",
+              "width": "56px",
               "verticalContentAlignment": "Center",
               "items": [
                 {
@@ -558,8 +558,8 @@
               "items": [
                 {
                   "type": "TextBlock",
-                  "text": "M. Tanaka",
-                  "wrap": false,
+                  "text": "Mei T",
+                  "wrap": true,
                   "size": "Small",
                   "isSubtle": true
                 }
@@ -567,7 +567,7 @@
             },
             {
               "type": "Column",
-              "width": "50px",
+              "width": "56px",
               "verticalContentAlignment": "Center",
               "items": [
                 {
@@ -621,8 +621,8 @@
               "items": [
                 {
                   "type": "TextBlock",
-                  "text": "T. Okafor",
-                  "wrap": false,
+                  "text": "Tom O",
+                  "wrap": true,
                   "size": "Small",
                   "isSubtle": true
                 }
@@ -630,7 +630,7 @@
             },
             {
               "type": "Column",
-              "width": "50px",
+              "width": "56px",
               "verticalContentAlignment": "Center",
               "items": [
                 {
@@ -684,8 +684,8 @@
               "items": [
                 {
                   "type": "TextBlock",
-                  "text": "P. Raman",
-                  "wrap": false,
+                  "text": "Priya R",
+                  "wrap": true,
                   "size": "Small",
                   "isSubtle": true
                 }
@@ -693,7 +693,7 @@
             },
             {
               "type": "Column",
-              "width": "50px",
+              "width": "56px",
               "verticalContentAlignment": "Center",
               "items": [
                 {
@@ -747,8 +747,8 @@
               "items": [
                 {
                   "type": "TextBlock",
-                  "text": "M. Tanaka",
-                  "wrap": false,
+                  "text": "Mei T",
+                  "wrap": true,
                   "size": "Small",
                   "isSubtle": true
                 }
@@ -756,7 +756,7 @@
             },
             {
               "type": "Column",
-              "width": "50px",
+              "width": "56px",
               "verticalContentAlignment": "Center",
               "items": [
                 {
@@ -810,8 +810,8 @@
               "items": [
                 {
                   "type": "TextBlock",
-                  "text": "T. Okafor",
-                  "wrap": false,
+                  "text": "Tom O",
+                  "wrap": true,
                   "size": "Small",
                   "isSubtle": true
                 }
@@ -819,7 +819,7 @@
             },
             {
               "type": "Column",
-              "width": "50px",
+              "width": "56px",
               "verticalContentAlignment": "Center",
               "items": [
                 {
@@ -848,13 +848,13 @@
     {
       "type": "Action.OpenUrl",
       "title": "Run activity",
-      "url": "https://credit-os.example/#/run",
+      "url": "https://credit-os.example/runs",
       "style": "positive"
     },
     {
       "type": "Action.OpenUrl",
       "title": "Library",
-      "url": "https://credit-os.example/#/",
+      "url": "https://credit-os.example/",
       "iconUrl": "icon:Library"
     }
   ]

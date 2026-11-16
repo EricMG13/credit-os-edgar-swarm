@@ -34,6 +34,7 @@ import {
 } from "./api";
 import { Breadcrumb, card, ErrorNotice, field, heading, label } from "./layout";
 import { carryAccepted, decided, groupLimits, needsCheck } from "./start/limits";
+import { ANALYST_NAME_RULE, isAnalystName } from "./start/analystName";
 import { ReviewSheet } from "./start/ReviewSheet";
 import { documentDescription, LEVELS, PURPOSES, storedName } from "./start/plain";
 import { errorText, useResource } from "./useResource";
@@ -604,17 +605,26 @@ function DocumentFields({
           view.changeIdentity("issue_classification", value);
         }}
       />
-      <label className={label}>
-        Your name
-        <input
-          className={field}
-          maxLength={80}
-          value={view.submittedBy}
-          onChange={(event) => {
-            view.changeSubmittedBy(event.target.value);
-          }}
-        />
-      </label>
+      <div className="grid gap-2">
+        <label className={label}>
+          Your name
+          <input
+            aria-describedby="run-analyst-name"
+            className={field}
+            maxLength={80}
+            autoComplete="off"
+            placeholder="Eric G"
+            value={view.submittedBy}
+            onChange={(event) => {
+              view.changeSubmittedBy(event.target.value);
+            }}
+          />
+        </label>
+        <p id="run-analyst-name" className="text-sm text-text-tertiary">
+          First name and initial, such as Eric G. Use two initials, such as Eric MG, if a colleague
+          has a similar name. Shown on Run activity and in Teams.
+        </p>
+      </div>
       {view.copy ? (
         <Button color="secondary" onPress={view.resetIssuer}>
           This is a different issuer
@@ -1391,6 +1401,7 @@ function IntakeForm({
         "Enter an issuer name and an issuer ID using letters a–z, digits or hyphens.",
       );
     }
+    if (!isAnalystName(submittedBy.trim())) throw new Error(ANALYST_NAME_RULE);
     const details = readDetails(edits);
     const note = analystNote
       .split(/\r\n?|\n/)

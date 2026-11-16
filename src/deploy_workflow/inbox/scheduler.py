@@ -31,9 +31,12 @@ from typing import IO, Any
 
 from deploy_vii.contracts import PATHWAY_CAP_USD
 from deploy_workflow.context import load_context
+from deploy_workflow.credit_os_catalogue import summary_fields
 from deploy_workflow.inbox import activity, filing, layout, runs, startup
 from deploy_workflow.inbox.runs import Record
 from deploy_workflow.inbox.startup import StartupRefused
+from deploy_workflow.inbox.teams import Config as TeamsConfig
+from deploy_workflow.inbox.teams import Notifier
 from deploy_workflow.owners import cpos_launch
 from deploy_workflow.run_start import submissions
 from deploy_workflow.run_start.submissions import Answers
@@ -67,6 +70,7 @@ class Settings:
     max_per_day: int = 30
     poll_seconds: float = 10
     ruling: Path = startup.STANDING_RULING
+    teams: TeamsConfig | None = None  # Teams cards are posted only when the service sets this
     launcher: tuple[str, ...] = (
         sys.executable,
         "-X",
@@ -87,6 +91,16 @@ def _stop(child: subprocess.Popen[bytes]) -> None:
     except subprocess.TimeoutExpired:
         child.kill()
         child.wait()
+
+
+def _lead(library: Any, run_id: str) -> str:
+    """The bottom line the library's Overview leads with for this run, exactly as its module
+    wrote it; ``""`` when the library holds none."""
+    try:
+        run = next(run for run in library.runs if run["id"] == run_id)
+        return str(summary_fields(run)[0])
+    except (StopIteration, LookupError, TypeError):
+        return ""  # fail-open, display only: the card goes out without the line
 
 
 _MAX_PID_DIGITS = 10  # a longer number is no process ID (and int() refuses thousands of digits)
@@ -114,6 +128,12 @@ class Scheduler:
         self._kept_activity: dict[str, tuple[runs.Record, dict[str, Any]]] = {}
         self._bad_pid_files: set[str] = set()  # run IDs whose unusable PID file is logged
         self._limit_held = ""
+        # Run ID -> the report's lead bottom line, for its Teams card. Kept in memory only: a
+        # run that ends just before a restart gets its card without the line.
+        self._leads: dict[str, str] = {}
+        self._teams = (
+            Notifier(self.layout, settings.teams, self._logger) if settings.teams else None
+        )
         startup.write_pages(self.layout)
         self._recover()
         self._rebuild()
@@ -391,6 +411,11 @@ class Scheduler:
     def step(self) -> None:
         with self.lock:
             self._step()
+            records, leads = list(self._records.values()), dict(self._leads)
+        if self._teams is not None:  # outside the lock: a slow webhook never holds up a Submit
+            self._teams.tick(records, self.now(), leads)
+            for run_id in [i for i in self._leads if self._teams.settled(i)]:
+                del self._leads[run_id]  # only this thread writes _leads (here and in _reap)
 
     def _step(self) -> None:
         self._track_untracked()
@@ -433,7 +458,10 @@ class Scheduler:
             return  # nothing is decided without a rebuild; the next poll tries again
         for record, code in ended:
             with self._guard(f"run {record.id}"):
-                self._put(self._decide(record, code, library))
+                decided = self._decide(record, code, library)
+                self._put(decided)
+                if self._teams is not None and decided.status == "finished":
+                    self._leads[record.id] = _lead(library, record.id)
                 self._children.pop(record.id, None)
                 self._stopped.pop(record.id, None)
 
