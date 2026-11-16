@@ -82,7 +82,7 @@ const PEER_NAME = [
   "The peer company's name.",
 ] as const;
 const PEER_TICKER = ["ticker", "Ticker", "text", "HBI", "Its exchange ticker."] as const;
-export const FIGURES = "Millions of the reporting currency";
+export const FIGURES = "Millions of the currency the issuer's statements are printed in";
 const peerSummary = (row: Row) => joined([text(row, "name") || "New peer", text(row, "ticker")]);
 
 const VALUATION_SPECS: Pick<Record<RowKind, RowSpec>, "peer_names" | "peers" | "precedents"> = {
@@ -174,13 +174,7 @@ export const ROW_SPECS: Record<RowKind, RowSpec> = {
           "Your short label. Quotes must use the same ID, and relative value matches it to the facility schedule in the filings.",
         ],
         ["instrument", "Instrument", "select", undefined, undefined, { options: INSTRUMENTS }],
-        [
-          "currency",
-          "Currency",
-          "text",
-          "USD",
-          "Three uppercase letters. A facility in another currency than the reporting currency is not calculable in Liquidity (no FX conversion).",
-        ],
+        ["currency", "Currency", "text", "USD", "Three uppercase letters."],
         ["size_m", "Size (m)", "number", "1250", "Millions of the stated currency."],
         ["tenor_years", "Tenor (years)", "number", "7", "Years.", NEW_ISSUE],
         ["maturity", "Maturity", "date", undefined, "Optional."],

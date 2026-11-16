@@ -18,9 +18,6 @@ FINANCIAL = (
     "with financial pages."
 )
 PRO_FORMA_FIX = "Add CP-1D to the modules."
-NON_USD_FIX = (
-    "No file needed; read CP-2D amounts in the reporting currency as stated in its handoff."
-)
 LEGAL_FIX = "Add the executed agreement when it exists."
 
 # rule id: (reason, fix); an unchanged cell holds the text at commit 75e04394.
@@ -47,10 +44,6 @@ WORDS = {
     "cp2-primary-no-cp1d": (
         "This is a new-issue run without CP-1D: the pro forma base row has no add-back verdicts.",
         PRO_FORMA_FIX,
-    ),
-    "cp2d-non-usd": (
-        "The reporting currency is not USD, and CP-2D builds its bridge in USD millions.",
-        NON_USD_FIX,
     ),
     "cp2h-no-ratings": (
         (

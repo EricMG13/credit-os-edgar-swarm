@@ -341,6 +341,15 @@ class _VisibleText(HTMLParser):
 # pathway's (`PATHWAY_CAP_USD`), not one USD 20 for every run; the summary's lead says so.
 # Owner, 2026-11-16: the analyst's name is required, as a first name and one or two initials
 # (`submissions.is_analyst_name`), so the field's help no longer says "Optional".
+# Ruling 2026-11-16-reporting-currency-from-sources: the page no longer asks for the reporting
+# currency, and the money-figure hint names the currency of the issuer's statements.
+_CURRENCY_ASK = frozenset(
+    {
+        "Reporting currency",
+        "As the filing cover states it: three uppercase letters.",
+        "Millions of the reporting currency.",
+    }
+)
 _CAP_LEAD = "It uses the paid model (USD 20 cap)."
 _NAME_HELP = "Saved with the run, so Run activity shows who started it. Optional."
 CHANGED_BY_RULINGS: frozenset[str] = frozenset(
@@ -350,7 +359,7 @@ CHANGED_BY_RULINGS: frozenset[str] = frozenset(
     )
     if _CAP_LEAD in sentence
 )
-CHANGED_BY_OWNER = frozenset({_NAME_HELP})
+CHANGED_BY_OWNER = frozenset({_NAME_HELP}) | _CURRENCY_ASK
 
 
 def test_the_redesigned_markup_keeps_every_sentence_of_the_step_logic_commit() -> None:
@@ -472,3 +481,13 @@ def test_no_expectation_rule_or_page_rule_carries_a_flag_nothing_sets() -> None:
     assert "propagates" not in {f.name for f in dataclasses.fields(Rule)}
     assert not any(hasattr(rule, "propagates") for rule in RULES)
     assert "np:" not in FORM and ".np" not in FORM and "!x.np" not in FORM
+
+
+def test_the_page_asks_for_no_currency_and_warns_of_no_facility_currency() -> None:
+    """docs/rulings/2026-11-16-reporting-currency-from-sources.md: the currency is the one CP-1's
+    statements print; nothing is asked, built, prefilled or warned about."""
+    assert "reporting_currency" not in FORM
+    assert "Reporting currency" not in FORM
+    assert "not calculable" not in FORM
+    assert "no FX conversion" not in FORM
+    assert "stay in US$" not in FORM
