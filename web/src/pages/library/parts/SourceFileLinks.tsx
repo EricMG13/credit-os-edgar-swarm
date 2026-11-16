@@ -1,3 +1,4 @@
+import { Button } from "@/components/base/buttons/button";
 export function SourceFileLinks({ links }: { links: readonly { label: string; href: string }[] }) {
   if (links.length === 0) return null;
   return (
@@ -5,14 +6,16 @@ export function SourceFileLinks({ links }: { links: readonly { label: string; hr
       <ul className="grid gap-2 text-sm">
         {links.map(({ label, href }) => (
           <li key={href}>
-            <a
-              className="text-action underline wrap-anywhere"
+            <Button
+              className="whitespace-normal wrap-anywhere"
               href={href}
               target="_blank"
               rel="noopener noreferrer"
+              color="link-gray"
+              size="sm"
             >
               {label}
-            </a>
+            </Button>
           </li>
         ))}
       </ul>

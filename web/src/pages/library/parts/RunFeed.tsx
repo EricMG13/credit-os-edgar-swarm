@@ -1,10 +1,11 @@
-import { Link } from "react-aria-components";
+import { Button } from "@/components/base/buttons/button";
+import { ArrowRight } from "@untitledui/icons";
 import { Badge } from "@/components/base/badges/badges";
 import { StatusBadge } from "@/components/status/StatusBadge";
 import { STATUS_SETS, type Tone } from "@/components/status/sets";
 import { StatusShape } from "@/components/status/shapes";
 import type { History } from "../slice";
-import { TEXT_LINK, changesHref, overviewHref } from "./links";
+import { changesHref, overviewHref } from "./links";
 
 /** The marker disc takes the state's tone; the shape inside says the state without the colour. */
 const MARKER: Record<Tone, string> = {
@@ -16,8 +17,6 @@ const MARKER: Record<Tone, string> = {
   neutral: "bg-surface-subtle text-text-secondary",
   gap: "bg-surface-subtle text-text-secondary",
 };
-
-const LINK = `${TEXT_LINK} text-body font-semibold text-action underline`;
 
 /** One entry per run, newest first as delivered, joined by a dotted line down the marker rail. */
 export function RunFeed({ issuer, history }: { issuer: string; history: History }) {
@@ -53,13 +52,23 @@ export function RunFeed({ issuer, history }: { issuer: string; history: History 
               <p className="max-w-[64ch] text-body text-text-tertiary">{entry.text}</p>
               {entry.report === null ? null : (
                 <div className="flex flex-wrap gap-4">
-                  <Link href={overviewHref(issuer, entry.report)} className={LINK}>
+                  <Button
+                    href={overviewHref(issuer, entry.report)}
+                    color="link-gray"
+                    size="sm"
+                    iconTrailing={ArrowRight}
+                  >
                     Open report
-                  </Link>
+                  </Button>
                   {entry.changes === null ? null : (
-                    <Link href={changesHref(issuer, entry.changes.run)} className={LINK}>
+                    <Button
+                      href={changesHref(issuer, entry.changes.run)}
+                      color="link-gray"
+                      size="sm"
+                      iconTrailing={ArrowRight}
+                    >
                       {entry.changes.label}
-                    </Link>
+                    </Button>
                   )}
                 </div>
               )}

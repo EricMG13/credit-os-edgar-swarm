@@ -3,16 +3,21 @@ are written here from the fixture text, not read back from the code under test."
 
 import hashlib
 import json
+from decimal import Decimal
 from pathlib import Path
 
+from hypothesis import given, settings
+from hypothesis import strategies as st
 from library_fixtures import make_run, method
 
-from deploy_workflow.credit_os_catalogue import catalogue
+from deploy_workflow.credit_os_catalogue import catalogue, prior_metric
 from deploy_workflow.library_index import Library, build_library
 
 ROOT = Path(__file__).resolve().parents[1]
 from credit_os import store
 
+quotable = st.from_regex(r"-?[0-9]{1,6}(\.[0-9]{1,4})?", fullmatch=True)
+long_quotable = st.from_regex(r"-?[0-9]{1,30}(\.[0-9]{1,28})?", fullmatch=True)
 LEVERAGE = "| FY2024 | 6.57 | 4.93 | x | Same basis; pre-dividend cash. D1, D3. |"
 COVER = "| FY2024 | 3.29 | x | Issuer EBITDA / cash interest, net. D1. |"
 LIQUIDITY = "| 2024-09-30 | 6261 | 843 | US$m | Available RCF only, after letters of credit. |"
@@ -367,3 +372,364 @@ def test_a_run_on_the_reported_names_carries_no_label_on_its_measures(tmp_path):
     make_run(tmp_path, "run-a", cp1_extra=CHARTS)
     metrics = built(tmp_path)["real"][0]["metrics"]
     assert all("label" not in metric for metric in metrics.values())
+
+
+ENTERED = [
+    {
+        "agency": "Moody's",
+        "scope": "issuer",
+        "rating": "B1",
+        "outlook": "Stable",
+        "as_of": "2026-09-30",
+    },
+    {
+        "agency": "S&P",
+        "scope": "facility",
+        "rating": "B+",
+        "outlook": "Positive",
+        "as_of": "2026-08-15",
+    },
+]
+RATINGS = [
+    {
+        "label": "B1",
+        "agency": "Moody's",
+        "scope": "issuer",
+        "outlook": "Stable",
+        "date": "2026-09-30",
+    },
+    {
+        "label": "B+",
+        "agency": "S&P",
+        "scope": "facility",
+        "outlook": "Positive",
+        "date": "2026-08-15",
+    },
+]
+
+
+def test_entered_ratings_reach_the_catalogue_in_order(tmp_path):
+    run_dir = make_run(tmp_path, "run-a")
+    run = {**CONTEXT["run"], "as_of": "2026-10-31"}  # ratings may not postdate the run
+    pin_context(run_dir, json.dumps({**CONTEXT, "run": run, "ratings": ENTERED}).encode())
+    assert built(tmp_path)["real"][0]["ratings"] == RATINGS
+
+
+def test_no_ratings_without_context_or_entries_or_with_a_refused_context(tmp_path):
+    make_run(tmp_path, "run-a")
+    refused = make_run(tmp_path, "run-b")
+    pin_context(refused, json.dumps({**CONTEXT, "schema": "other", "ratings": ENTERED}).encode())
+    empty = make_run(tmp_path, "run-c")
+    pin_context(empty, json.dumps(CONTEXT).encode())
+    result = built(tmp_path)
+    assert [r["ratings"] for r in result["real"]] == [[], [], []]
+    assert sum("context not used" in i for i in result["issues"]) == 1
+
+
+def one_chart(chart: str, header: str, rows: list[str]) -> str:
+    """A single CP-1 chart table; the header cells after Period, then one line per row."""
+    cols = ["Period", *header.split(" ; "), "Reporting unit", "Basis and limitation"]
+    return "\n".join(
+        [f"### Chart data: {chart}", "", "| " + " | ".join(cols) + " |"]
+        + ["| " + " | ".join("---" for _ in cols) + " |"]
+        + [f"| {row} | Basis. |" for row in rows]
+        + [""]
+    )
+
+
+def lev_metrics(tmp_path, rows: list[str]) -> dict:
+    charts = one_chart("leverage", "Total debt / EBITDA", rows)
+    make_run(tmp_path, "run-a", cp1_extra=charts)
+    return built(tmp_path)["real"][0]["metrics"]
+
+
+def test_leverage_carries_last_years_value_and_the_exact_change(tmp_path):
+    metrics = lev_metrics(tmp_path, ["FY2022 | 3.9 | x", "FY2023 | 4.2 | x", "FY2024 | 4.4 | x"])
+    leverage = metrics["leverage"]
+    assert (leverage["value"], leverage["period"]) == ("4.4", "FY2024")
+    assert leverage["prior"] == {"value": "4.2", "period": "FY2023"}
+    assert leverage["change"] == "0.2"
+
+
+def test_interest_cover_change_keeps_its_trailing_zero_and_sign(tmp_path):
+    charts = one_chart(
+        "interest cover", "EBITDA / cash interest", ["FY2023 | 4.50 | x", "FY2024 | 4.00 | x"]
+    )
+    make_run(tmp_path, "run-a", cp1_extra=charts)
+    coverage = built(tmp_path)["real"][0]["metrics"]["coverage"]
+    assert coverage["prior"] == {"value": "4.50", "period": "FY2023"}
+    assert coverage["change"] == "-0.50"
+
+
+def test_liquidity_changes_for_cash_and_undrawn(tmp_path):
+    charts = one_chart(
+        "liquidity",
+        "Cash ; Undrawn committed facilities",
+        ["FY2023 | 300 | 400 | US$m", "FY2024 | 275 | 400 | US$m"],
+    )
+    make_run(tmp_path, "run-a", cp1_extra=charts)
+    metrics = built(tmp_path)["real"][0]["metrics"]
+    assert metrics["cash"]["change"] == "-25"
+    assert metrics["undrawn"]["change"] == "0"
+    assert metrics["undrawn"]["prior"] == {"value": "400", "period": "FY2023"}
+
+
+def test_an_unchanged_value_has_a_change_of_zero_at_its_written_scale(tmp_path):
+    metrics = lev_metrics(tmp_path, ["FY2023 | 2.25 | x", "FY2024 | 2.25 | x"])
+    assert metrics["leverage"]["change"] == "0.00"
+
+
+def test_half_year_prior_is_the_same_half_a_year_earlier():
+    # `chart_row` cannot order an `H1 2025` period (the whole table then gives no metric), so the
+    # prior rule is checked on the rows directly.
+    rows = [
+        {"Period": "H1 2024", "Total debt / EBITDA": "4.8", "Reporting unit": "x"},
+        {"Period": "H1 2025", "Total debt / EBITDA": "5.1", "Reporting unit": "x"},
+    ]
+    assert prior_metric(rows, rows[1], "Total debt / EBITDA") == (
+        {"value": "4.8", "period": "H1 2024"},
+        "0.3",
+    )
+
+
+def test_every_year_in_a_dated_label_is_lowered():
+    rows = [
+        {"Period": "FY2023 / 2023-09-30", "Cash": "10", "Reporting unit": "US$m"},
+        {"Period": "FY2024 / 2024-09-30", "Cash": "12", "Reporting unit": "US$m"},
+    ]
+    assert prior_metric(rows, rows[1], "Cash") == (
+        {"value": "10", "period": "FY2023 / 2023-09-30"},
+        "2",
+    )
+
+
+def test_a_label_without_a_four_digit_year_has_no_prior():
+    rows = [
+        {"Period": "LTM Sep-24", "Cash": "10", "Reporting unit": "US$m"},
+        {"Period": "LTM Sep-25", "Cash": "12", "Reporting unit": "US$m"},
+    ]
+    assert prior_metric(rows, rows[1], "Cash") is None
+
+
+def test_only_the_latest_and_an_older_non_adjacent_year_gives_no_prior(tmp_path):
+    metrics = lev_metrics(tmp_path, ["FY2022 | 3.9 | x", "FY2024 | 4.4 | x"])
+    assert "prior" not in metrics["leverage"] and "change" not in metrics["leverage"]
+    assert metrics["leverage"]["value"] == "4.4"
+
+
+def test_a_repeated_prior_period_gives_no_prior(tmp_path):
+    make_run(
+        tmp_path,
+        "run-a",
+        cp1_extra=one_chart(
+            "leverage",
+            "Total debt / EBITDA",
+            ["FY2023 | 4.2 | x", "FY2023 | 4.3 | x", "FY2024 | 4.4 | x"],
+        ),
+    )
+    result = built(tmp_path)  # the repeat also makes the table unorderable: no metric at all
+    assert "leverage" not in result["real"][0]["metrics"]
+
+
+def test_two_prior_rows_for_the_label_give_no_prior():
+    rows = [
+        {"Period": "FY2023", "Cash": "10", "Reporting unit": "US$m"},
+        {"Period": "FY2023", "Cash": "11", "Reporting unit": "US$m"},
+        {"Period": "FY2024", "Cash": "12", "Reporting unit": "US$m"},
+    ]
+    assert prior_metric(rows, rows[2], "Cash") is None
+
+
+def test_an_unquotable_prior_cell_gives_no_prior(tmp_path):
+    for cell in ("n.a.", ""):
+        metrics = lev_metrics(
+            tmp_path / (cell or "empty"), [f"FY2023 | {cell} | x", "FY2024 | 4.4 | x"]
+        )
+        assert "prior" not in metrics["leverage"] and "change" not in metrics["leverage"]
+
+
+def test_a_prior_in_another_unit_gives_no_prior(tmp_path):
+    metrics = lev_metrics(tmp_path, ["FY2023 | 4.2 | %", "FY2024 | 4.4 | x"])
+    assert "prior" not in metrics["leverage"] and "change" not in metrics["leverage"]
+
+
+def test_a_current_period_without_a_year_gives_no_prior_in_the_catalogue(tmp_path):
+    charts = one_chart(
+        "liquidity", "Cash ; Undrawn committed facilities", ["LTM Sep-25 | 5 | 6 | US$m"]
+    )
+    make_run(tmp_path, "run-a", cp1_extra=charts)
+    # `LTM Sep-25` cannot be ordered, so the table gives no metric and no comparator either
+    assert "cash" not in built(tmp_path)["real"][0]["metrics"]
+
+
+def test_the_adjusted_twin_column_supplies_the_prior(tmp_path):
+    charts = one_chart(
+        "leverage",
+        "Total debt / adjusted EBITDA",
+        ["FY2023 | 3.5 | x", "FY2024 | 3.9 | x"],
+    )
+    make_run(tmp_path, "run-a", cp1_extra=charts)
+    leverage = built(tmp_path)["real"][0]["metrics"]["leverage"]
+    assert leverage["label"] == "Total debt / adjusted EBITDA"
+    assert leverage["prior"] == {"value": "3.5", "period": "FY2023"}
+    assert leverage["change"] == "0.4"
+
+
+@given(a=quotable, b=quotable)
+def test_change_is_the_exact_decimal_difference(a, b):
+    rows = [
+        {"Period": "FY2023", "Cash": b, "Reporting unit": "US$m"},
+        {"Period": "FY2024", "Cash": a, "Reporting unit": "US$m"},
+    ]
+    prior, change = prior_metric(rows, rows[1], "Cash")
+    assert prior == {"value": b, "period": "FY2023"}
+    exact = Decimal(a) - Decimal(b)
+    assert change == format(abs(exact) if exact == 0 else exact, "f")  # a zero change has no sign
+
+
+def _change(current, prior):
+    rows = [
+        {"Period": "FY2023", "Cash": prior, "Reporting unit": "US$m"},
+        {"Period": "FY2024", "Cash": current, "Reporting unit": "US$m"},
+    ]
+    return prior_metric(rows, rows[1], "Cash")[1]
+
+
+def test_a_long_figure_is_subtracted_exactly():
+    assert _change("1234567890123456789012345678.9", "0.1") == "1234567890123456789012345678.8"
+
+
+def test_a_zero_change_has_no_sign_and_keeps_the_decimals():
+    assert _change("-0", "0") == "0"
+    assert _change("-0.0", "0.00") == "0.00"
+    assert _change("0.50", "0.50") == "0.00"
+
+
+def test_small_changes_are_unchanged():
+    assert _change("4.4", "4.2") == "0.2"
+    assert _change("4.00", "4.50") == "-0.50"
+
+
+def _decimals(text):
+    return len(text.partition(".")[2])
+
+
+def _integer_oracle(current, prior):
+    scale = max(_decimals(current), _decimals(prior))
+
+    def scaled(text):
+        whole, _, frac = text.partition(".")
+        return int(whole + frac.ljust(scale, "0"))
+
+    diff = scaled(current) - scaled(prior)
+    digits = str(abs(diff)).rjust(scale + 1, "0")
+    point = len(digits) - scale
+    body = digits[:point] + ("." + digits[point:] if scale else "")
+    return ("-" if diff < 0 else "") + body
+
+
+@settings(max_examples=200)
+@given(a=long_quotable, b=long_quotable)
+def test_change_equals_integer_arithmetic_for_long_figures(a, b):
+    assert _change(a, b) == _integer_oracle(a, b)
+
+
+def _based(prior_basis, current_basis):
+    rows = [
+        {
+            "Period": "FY2023",
+            "Cash": "10",
+            "Reporting unit": "x",
+            "Basis and limitation": prior_basis,
+        },
+        {
+            "Period": "FY2024",
+            "Cash": "12",
+            "Reporting unit": "x",
+            "Basis and limitation": current_basis,
+        },
+    ]
+    return prior_metric(rows, rows[1], "Cash")
+
+
+def test_rows_stating_different_definitions_give_no_comparator():
+    assert (
+        _based(
+            "Gross and net debt over EBITDA As Defined",
+            "over EBITDA As Defined; net figure uses year-end cash still holding the USD 4,216 "
+            "million accrued dividend, 5.55x pro forma (calculation C11)",
+        )
+        is None
+    )
+
+
+def test_identical_basis_text_keeps_the_comparator():
+    assert _based("Net of cash.", "Net of cash.") == ({"value": "10", "period": "FY2023"}, "2")
+
+
+def test_basis_differing_only_by_page_digits_or_punctuation_keeps_the_comparator():
+    assert _based("Net of cash (page 12).", "Net of cash, 2024; p. 15") is not None
+
+
+BASIS_COLUMN = "Basis and limitation |"
+
+
+def test_catalogue_metric_carries_no_prior_across_different_basis(tmp_path):
+    head = "| Period | Total debt / EBITDA | Net debt / EBITDA | Reporting unit | " + BASIS_COLUMN
+    text = f"""### Chart data: leverage
+
+{head}
+| --- | --- | --- | --- | --- |
+| FY2023 | 5.87 | 4.84 | x | Gross and net debt over EBITDA As Defined |
+| FY2024 | 6.01 | 4.51 | x | Net figure uses year-end cash holding the accrued dividend |
+"""
+    from deploy_workflow.credit_os_catalogue import handoff_metrics
+
+    metrics = handoff_metrics("x", {"path": "p.md", "sha256": "0" * 64}, text, {}, [])
+    for key in ("leverage", "net_leverage"):
+        assert "prior" not in metrics[key] and "change" not in metrics[key]
+
+
+def revenue_metrics(tmp_path, rows: list[str]) -> dict:
+    charts = one_chart("revenue and EBITDA", "Revenue ; Adjusted EBITDA", rows)
+    make_run(tmp_path, "run-a", cp1_extra=charts)
+    return built(tmp_path)["real"][0]["metrics"]
+
+
+def test_revenue_and_adjusted_ebitda_keep_their_commas_and_the_exact_change(tmp_path):
+    metrics = revenue_metrics(
+        tmp_path, ["FY2023 | 2,100 | 410 | US$m", "FY2024 | 2,250 | 445.5 | US$m"]
+    )
+    revenue, ebitda = metrics["revenue"], metrics["adjusted_ebitda"]
+    assert (revenue["value"], revenue["unit"], revenue["period"]) == ("2,250", "US$m", "FY2024")
+    assert revenue["prior"] == {"value": "2,100", "period": "FY2023"}
+    assert revenue["change"] == "150"
+    assert ebitda["value"] == "445.5"
+    assert ebitda["prior"]["value"] == "410"
+    assert ebitda["change"] == "35.5"
+
+
+def test_a_latest_cell_not_supplied_leaves_only_that_metric_out(tmp_path):
+    metrics = revenue_metrics(
+        tmp_path,
+        [
+            "FY2023 | 2,100 | 410 | US$m",
+            "FY2024 | 2,250 | Not supplied: the measure is not stated | US$m",
+        ],
+    )
+    assert "adjusted_ebitda" not in metrics
+    assert metrics["revenue"]["value"] == "2,250"
+
+
+def test_a_prior_cell_not_supplied_gives_no_comparator(tmp_path):
+    metrics = revenue_metrics(
+        tmp_path, ["FY2023 | Not supplied: x | 410 | US$m", "FY2024 | 2,250 | 445.5 | US$m"]
+    )
+    assert "prior" not in metrics["revenue"] and "change" not in metrics["revenue"]
+    assert metrics["adjusted_ebitda"]["change"] == "35.5"
+
+
+def test_without_the_table_there_is_no_revenue_and_commas_stay_refused_elsewhere(tmp_path):
+    metrics = lev_metrics(tmp_path, ["FY2023 | 4.2 | x", "FY2024 | 1,234 | x"])
+    assert "revenue" not in metrics and "adjusted_ebitda" not in metrics
+    assert "leverage" not in metrics

@@ -10,12 +10,13 @@ from tempfile import TemporaryDirectory
 import pytest
 
 from deploy_workflow.inbox import activity, runs, startup
+from deploy_workflow.inbox.layout import Layout, ensure_layout
 from deploy_workflow.inbox.scheduler import Scheduler
 from deploy_workflow.model.budget import Budget
 from deploy_workflow.run_events import EVENTS, append_event
 from deploy_workflow.run_start.service import _Server
 from deploy_vii.contracts import PATHWAY_CAP_USD
-from react_frontend import make_server
+from react_frontend import make_server, run_activity
 
 PROJECT = Path(__file__).resolve().parents[1]
 
@@ -203,7 +204,7 @@ def test_activity_list_shows_runs_in_progress_without_spend_or_file_names(hosted
 
     assert status == 200 and headers["Cache-Control"] == "no-store"
     listing = json.loads(raw)
-    assert set(listing) == {"updated", "held", "runs"}
+    assert set(listing) == {"updated", "held", "runs", "ended", "ended_total", "unreadable"}
     assert listing["held"] == held
     running, queued = listing["runs"]
     assert running == {
@@ -228,6 +229,162 @@ def test_activity_list_shows_runs_in_progress_without_spend_or_file_names(hosted
     assert set(queued) == set(running)
     page_status, _, page_headers = request(hosted, "/runs")
     assert page_status == 200 and page_headers["Content-Type"].startswith("text/html")
+
+
+def _ended_record(run_id: str, status: runs.Status, minute: int, reason: str = "") -> runs.Record:
+    return runs.Record(
+        id=run_id,
+        pathway="credit_snapshot",
+        folder=run_id,
+        status=status,
+        claimed_at="2026-10-31T11:00:00Z",
+        ended_at=f"2026-10-31T12:{minute:02d}:00Z",
+        issuer_name="Harbour Packaging",
+        reason=reason,
+        submitted_by="analyst",
+        files=("annual-report.pdf",),
+    )
+
+
+def test_activity_list_shows_ended_runs_without_spend_or_file_names(hosted: _Server) -> None:
+    scheduler = hosted.scheduler
+    assert isinstance(scheduler, Scheduler)
+    layout = scheduler.layout
+    for record in (
+        _ended_record("c-capped", "capped", 5, "Spending cap reached"),
+        _ended_record("d-failed", "failed", 10, "Provider error"),
+        _ended_record("e-finished", "finished", 20),
+        runs.Record(
+            id="a-running",
+            pathway="credit_snapshot",
+            folder="a-running",
+            status="running",
+            claimed_at="2026-10-31T12:00:00Z",
+        ),
+    ):
+        runs.save(layout, record)
+
+    status, raw, _ = request(hosted, "/connected/activity")
+
+    assert status == 200
+    listing = json.loads(raw)
+    assert set(listing) == {"updated", "held", "runs", "ended", "ended_total", "unreadable"}
+    assert [run["id"] for run in listing["ended"]] == ["d-failed", "c-capped"]
+    assert set(listing["ended"][0]) == {
+        "id",
+        "issuer_name",
+        "pathway",
+        "status",
+        "reason",
+        "ended_at",
+        "submitted_by",
+    }
+    assert listing["ended"][1]["reason"] == "Spending cap reached"
+    assert [run["id"] for run in listing["runs"]] == ["a-running"]
+
+
+def test_activity_list_keeps_the_twenty_latest_ended_runs(hosted: _Server) -> None:
+    scheduler = hosted.scheduler
+    assert isinstance(scheduler, Scheduler)
+    for minute in range(25):
+        runs.save(scheduler.layout, _ended_record(f"f-{minute:02d}", "failed", minute))
+
+    listing = json.loads(request(hosted, "/connected/activity")[1])
+
+    assert len(listing["ended"]) == 20
+    assert listing["ended_total"] == 25
+    assert listing["ended"][0]["ended_at"] == "2026-10-31T12:24:00Z"
+    assert listing["ended"][-1]["ended_at"] == "2026-10-31T12:05:00Z"
+
+
+def test_activity_sends_a_reason_without_the_service_root(hosted: _Server) -> None:
+    scheduler = hosted.scheduler
+    assert isinstance(scheduler, Scheduler)
+    layout = scheduler.layout
+    root = layout.root
+    path = root / "_engine" / "state" / "issuers.json"
+    runs.save(layout, _ended_record("p-path", "failed", 1, f"could not be filed: {path} is bad"))
+    runs.save(layout, _ended_record("q-plain", "failed", 2, "Provider error"))
+    runs.save(
+        layout,
+        runs.Record(
+            id="r-running",
+            pathway="credit_snapshot",
+            folder="r-running",
+            status="running",
+            claimed_at="2026-10-31T12:00:00Z",
+            reason=f"waiting on {root.resolve() / 'inbox' / 'a.pdf'}",
+        ),
+    )
+
+    listing = json.loads(request(hosted, "/connected/activity")[1])
+    ended = {run["id"]: run["reason"] for run in listing["ended"]}
+    single = json.loads(request(hosted, "/connected/activity/p-path")[1])["reason"]
+
+    relative = Path("_engine") / "state" / "issuers.json"
+    assert ended["p-path"] == f"could not be filed: {relative} is bad"
+    assert single == ended["p-path"]
+    assert ended["q-plain"] == "Provider error"
+    assert listing["runs"][0]["reason"] == f"waiting on {Path('inbox') / 'a.pdf'}"
+    sent = [run["reason"] for run in (*listing["ended"], *listing["runs"])] + [single]
+    assert len(sent) == 4
+    assert all(str(root.resolve()) not in reason for reason in sent)
+
+
+def test_activity_sends_ended_at_as_stored_and_lists_every_ended_status(hosted: _Server) -> None:
+    scheduler = hosted.scheduler
+    assert isinstance(scheduler, Scheduler)
+    layout = scheduler.layout
+    runs.save(layout, _ended_record("a-rejected", "rejected", 5))
+    runs.save(layout, _ended_record("b-interrupted", "interrupted", 5))
+    runs.save(layout, _ended_record("c-same", "failed", 5))
+    unended = _ended_record("d-none", "failed", 0)
+    unended.ended_at = ""
+    unended.claimed_at = "2026-10-31T12:30:00Z"
+    runs.save(layout, unended)
+
+    ended = json.loads(request(hosted, "/connected/activity")[1])["ended"]
+
+    assert [run["id"] for run in ended] == ["d-none", "c-same", "b-interrupted", "a-rejected"]
+    assert [run["status"] for run in ended][2:] == ["interrupted", "rejected"]
+    assert ended[0]["ended_at"] == ""
+
+
+_SHOWN = [
+    # (root, sep, reason, sent)
+    ("/data/app", "/", "filed: /data/app/_engine/x.json is bad", "filed: _engine/x.json is bad"),
+    ("/data/app", "/", "/data/app/a and (/data/app/b)", "a and (b)"),
+    ("/data/app", "/", "path='/data/app/x'", "path='x'"),
+    ("/data/app", "/", "see /data/app-old/_engine/x", "see x"),
+    ("/data/app", "/", "copy at /mnt/data/app/x failed", "copy at x failed"),
+    ("/data/app", "/", "Provider error", "Provider error"),
+    ("/", "/", "see https://example.test/a", "see https://example.test/a"),
+    (
+        "C:\\Shared\\CreditOS",
+        "\\",
+        "filed: C:\\Shared\\CreditOS\\_engine\\x.json bad",
+        "filed: _engine\\x.json bad",
+    ),
+    (
+        "C:\\Shared\\CreditOS",
+        "\\",
+        "denied: 'C:\\\\Shared\\\\CreditOS\\\\_engine\\\\r.log'",
+        "denied: '_engine\\\\r.log'",
+    ),
+    (
+        "C:\\Shared\\CreditOS",
+        "\\",
+        "see D:\\C:\\Shared\\CreditOS\\x and C:\\Shared\\CreditOS-old\\x",
+        "see x and x",
+    ),
+]
+
+
+@pytest.mark.parametrize(("root", "sep", "reason", "sent"), _SHOWN)
+def test_shown_removes_the_root_only_where_it_starts_a_path(
+    root: str, sep: str, reason: str, sent: str
+) -> None:
+    assert run_activity._plain_reason(root, sep, reason) == sent
 
 
 def test_reports_admission_and_reader_snapshot(hosted: _Server, root: Path) -> None:
@@ -369,3 +526,194 @@ def test_only_same_run_published_forecast_artifacts_are_downloadable(
     assert request(hosted, path)[:2] == (200, b'{"exact":"1.25"}\r\n')
     assert request(hosted, f"{endpoint}/{digest}/forecast_exact.json")[0] == 404
     assert request(hosted, f"/connected/artifacts/two/{digest}/calculation.json")[0] == 404
+
+
+POSIX_ROOT = "/srv/credit"
+
+
+@pytest.mark.parametrize(
+    ("reason", "expected"),
+    [
+        (
+            "could not be filed: /srv/credit/_engine/state/issuers.json is not a map",
+            "could not be filed: _engine/state/issuers.json is not a map",
+        ),
+        (
+            "could not be started: [Errno 2] No such file or directory: '/usr/local/bin/launcher'",
+            "could not be started: [Errno 2] No such file or directory: 'launcher'",
+        ),
+        (
+            "could not be started: [Errno 13] Permission denied: '/srv/credit'",
+            "could not be started: [Errno 13] Permission denied: 'the service folder'",
+        ),
+        ("copied /mnt/data/in/a.pdf to /srv/credit/inbox/a.pdf", "copied a.pdf to inbox/a.pdf"),
+        ("no folder at /var/tmp/run-7/", "no folder at run-7"),
+        (
+            "see https://example.test/docs/errors/429 for limits",
+            "see https://example.test/docs/errors/429 for limits",
+        ),
+        (
+            "3/4 modules finished; cover n/a and/or missing",
+            "3/4 modules finished; cover n/a and/or missing",
+        ),
+        (
+            "expected one deliveries/*/delivery.json, found 2",
+            "expected one deliveries/*/delivery.json, found 2",
+        ),
+        ("period 2026/11/16 see logs/r1.log", "period 2026/11/16 see logs/r1.log"),
+        ("Provider error", "Provider error"),
+        ("no file: '/Users/Jane Doe/runs/a.pdf'", "no file: 'a.pdf'"),
+        ("no folder at /var/tmp/run-7. Retry", "no folder at run-7. Retry"),
+        ("see /var/log/app/r1.log.", "see r1.log."),
+    ],
+)
+def test_plain_reason_posix(reason: str, expected: str) -> None:
+    assert run_activity._plain_reason(POSIX_ROOT, "/", reason) == expected
+
+
+WINDOWS_ROOT = r"C:\Shared\CreditOS"
+
+
+@pytest.mark.parametrize(
+    ("reason", "expected"),
+    [
+        (
+            r"could not be filed: C:\Shared\CreditOS\_engine\state\issuers.json is not a map",
+            r"could not be filed: _engine\state\issuers.json is not a map",
+        ),
+        (
+            "[Errno 13] Permission denied: 'C:\\\\Shared\\\\CreditOS\\\\_engine\\\\logs\\\\r.log'",
+            "[Errno 13] Permission denied: '_engine\\\\logs\\\\r.log'",
+        ),
+        (
+            r"[Errno 13] Permission denied: 'c:\shared\creditos\_engine\logs\r.log'",
+            r"[Errno 13] Permission denied: 'r.log'",
+        ),
+        (
+            "[WinError 2] The system cannot find the file specified: 'D:\\\\Tools\\\\launcher.exe'",
+            "[WinError 2] The system cannot find the file specified: 'launcher.exe'",
+        ),
+        (r"cannot reach \\fileserver\credit\inbox\a.pdf", "cannot reach a.pdf"),
+        (r"Permission denied: 'C:\Shared\CreditOS'", "Permission denied: 'the service folder'"),
+        (
+            "[WinError 2] cannot find: 'C:\\\\Program Files\\\\Python312\\\\python.exe'",
+            "[WinError 2] cannot find: 'python.exe'",
+        ),
+        (r"cannot find: 'C:\Program Files\Python312\python.exe'", "cannot find: 'python.exe'"),
+    ],
+)
+def test_plain_reason_windows(reason: str, expected: str) -> None:
+    assert run_activity._plain_reason(WINDOWS_ROOT, "\\", reason) == expected
+
+
+def _two_unreadable_records(layout: Layout) -> None:
+    runs.save(layout, _ended_record("d-failed", "failed", 10, "Provider error"))
+    runs.save(
+        layout,
+        runs.Record(
+            id="a-running",
+            pathway="credit_snapshot",
+            folder="a-running",
+            status="running",
+            claimed_at="2026-10-31T12:00:00Z",
+        ),
+    )
+    (layout.state / "broken.json").write_text("{not json", encoding="utf-8")
+    runs.save(layout, _ended_record("n-null", "failed", 11))
+    target = layout.state / "n-null.json"
+    data = json.loads(target.read_text(encoding="utf-8"))
+    data["reason"] = None
+    target.write_text(json.dumps(data), encoding="utf-8")
+
+
+def test_activity_list_survives_an_unreadable_record(hosted: _Server) -> None:
+    scheduler = hosted.scheduler
+    assert isinstance(scheduler, Scheduler)
+    _two_unreadable_records(scheduler.layout)
+
+    status, raw = request(hosted, "/connected/activity")[:2]
+    listing = json.loads(raw)
+
+    assert status == 200
+    assert [run["id"] for run in listing["runs"]] == ["a-running"]
+    assert [run["id"] for run in listing["ended"]] == ["d-failed"]
+    assert listing["ended_total"] == 1
+    assert listing["unreadable"] == 2
+    assert b"broken.json" not in raw
+    # The single-run page of a good run still answers.
+    assert request(hosted, "/connected/activity/d-failed")[0] == 200
+
+
+def test_load_all_still_refuses_an_unreadable_record(root: Path) -> None:
+    layout = ensure_layout(root)
+    runs.save(layout, _ended_record("d-failed", "failed", 10))
+    (layout.state / "broken.json").write_text("{not json", encoding="utf-8")
+
+    with pytest.raises(ValueError, match="broken.json"):
+        runs.load_all(layout)
+    good, bad = runs.load_readable(layout)
+    assert [record.id for record in good] == ["d-failed"]
+    assert bad == ["broken.json"]
+
+
+def test_activity_of_a_run_whose_own_record_is_unreadable_is_still_an_error(root: Path) -> None:
+    layout = ensure_layout(root)
+    (layout.state / "broken.json").write_text("{not json", encoding="utf-8")
+
+    with pytest.raises(ValueError, match="broken.json"):
+        run_activity.reply(layout, "broken")
+
+
+@pytest.mark.parametrize("bad_id", [None, 7, ["x"]])
+def test_activity_list_survives_a_record_whose_id_is_not_a_string(
+    hosted: _Server, bad_id: object
+) -> None:
+    scheduler = hosted.scheduler
+    assert isinstance(scheduler, Scheduler)
+    layout = scheduler.layout
+    runs.save(layout, _ended_record("d-failed", "failed", 10))
+    runs.save(layout, _ended_record("n-bad", "failed", 11))
+    target = layout.state / "n-bad.json"
+    data = json.loads(target.read_text(encoding="utf-8"))
+    data["id"] = bad_id
+    target.write_text(json.dumps(data), encoding="utf-8")
+
+    status, raw = request(hosted, "/connected/activity")[:2]
+    listing = json.loads(raw)
+
+    assert status == 200
+    assert [run["id"] for run in listing["ended"]] == ["d-failed"]
+    assert listing["unreadable"] == 1
+
+
+@pytest.mark.parametrize(
+    "field",
+    [
+        "id",
+        "issuer_name",
+        "pathway",
+        "status",
+        "reason",
+        "submitted_by",
+        "claimed_at",
+        "started_at",
+        "ended_at",
+    ],
+)
+def test_activity_list_counts_a_record_with_a_non_string_field(hosted: _Server, field: str) -> None:
+    scheduler = hosted.scheduler
+    assert isinstance(scheduler, Scheduler)
+    layout = scheduler.layout
+    runs.save(layout, _ended_record("d-failed", "failed", 10))
+    runs.save(layout, _ended_record("n-bad", "failed", 11))
+    target = layout.state / "n-bad.json"
+    data = json.loads(target.read_text(encoding="utf-8"))
+    data[field] = 5
+    target.write_text(json.dumps(data), encoding="utf-8")
+
+    status, raw = request(hosted, "/connected/activity")[:2]
+    listing = json.loads(raw)
+
+    assert status == 200
+    assert listing["unreadable"] == 1
+    assert [run["id"] for run in listing["ended"]] == ["d-failed"]

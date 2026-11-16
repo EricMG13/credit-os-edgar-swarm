@@ -1,8 +1,10 @@
 # Stage 5: Repair
 
-The first stage that changes code. Branch `audit/final-repairs`, cut from the commit under
-audit. The coordinator dispatches one fresh implementing agent per task in `tasks.md`, then a
-fresh reviewing agent that did not write the change. The coordinator writes no code.
+The first stage that changes code. Steps 1 to 6 run in the `repair-<n>` sub-sessions, one per
+group of tasks that share no file, each on its own branch with a pull request into
+`audit/final-repairs`. Steps 7 to 11 run in the lead on `audit/final-repairs` once every group is
+merged. Each task gets one fresh implementing agent, then a fresh reviewing agent that did not
+write the change. Controllers write no code.
 
 ## Inputs
 
@@ -51,8 +53,8 @@ After all tasks:
    lines).
 10. **Full frontend gates.** `npm --prefix web run gates` and `npm --prefix web run
     proof:connected`. Signal's tests are part of this and must pass.
-11. **Pull request** from `audit/final-repairs`, listing each task, the findings closed, the
-    gates' exit codes and what is open. Do not merge.
+11. **Push** `audit/final-repairs`. The pull request into `main` is opened in stage 7, after the
+    sweep.
 
 ## Outputs
 
@@ -61,5 +63,5 @@ After all tasks:
 | `output/5-repair/<task id>.md` | One report per task |
 | `output/5-repair/batch.md` | The Low and Info batch report |
 | `output/5-repair/review.md` | Each review's verdict and the branch self-review |
-| `output/5-repair/report.md` | Findings closed, findings open, gates, the pull request's address, ending with `Not verified:` |
+| `output/5-repair/report.md` | Findings closed, findings open, gates, each group's pull request, ending with `Not verified:` |
 | `output/4-register/register.jsonl` | Updated: each repaired finding gains `closed_by` (the commit) |

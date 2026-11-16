@@ -1,6 +1,6 @@
 # Stage 3: User journeys
 
-One agent per journey, Sonnet at `xhigh` effort (ruling R1), after stage 2 has finished.
+One agent per journey, Sonnet at `xhigh` effort (ruling R1). Runs alongside stage 2 and does not wait for it.
 Journeys cross sections, so they find what a section agent cannot: conflicts between screens.
 Read-only: an agent writes only under `output/3-journeys/<journey id>/`.
 
@@ -14,12 +14,13 @@ Read-only: an agent writes only under `output/3-journeys/<journey id>/`.
 | L3 | `docs/react-workflow.md` | Open the interface | The synthetic run, step by step |
 | L3 | `apps/issuer-library/README.md` | the run start page | What the analyst is meant to be able to do |
 | L4 | `output/1-rubrics/control-matrix.csv` | all | What the user may and may not decide |
-| L4 | `output/2-sections/*/report.md` | `Not verified:` lines only | Gaps a journey can close |
 
 ## Journeys
 
 Each agent uses its own service (`proof.serve` on its own port and folder) and behaves as the
 named person would: it reads the screen, not the code, to decide what to do next. No paid run.
+Every journey runs with all hosts but loopback blocked in the browser (ruling R8); a request to
+another host, or anything that fails to draw without one, is a High finding.
 
 | Id | Person | Journey |
 | :--- | :--- | :--- |

@@ -1,3 +1,5 @@
+import { FileSearch02 } from "@untitledui/icons";
+import { Button } from "@/components/base/buttons/button";
 import { createContext, useContext, useState, type ReactNode } from "react";
 import { TraceButton } from "@/pages/library/parts/TraceControl";
 import { TraceDrawer } from "@/pages/library/parts/TraceDrawer";
@@ -75,12 +77,12 @@ export function PublishedSource({
   return open ? (
     <TraceButton label={`Show sources for ${name}`} open={open} />
   ) : (
-    <a
+    <Button
       href={href}
-      aria-label={linkLabel}
-      className="text-small whitespace-nowrap text-action underline"
-    >
-      {children}
-    </a>
+      aria-label={linkLabel ?? children}
+      color="tertiary"
+      size="sm"
+      iconLeading={FileSearch02}
+    />
   );
 }

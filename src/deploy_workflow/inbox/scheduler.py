@@ -103,6 +103,23 @@ def _lead(library: Any, run_id: str) -> str:
         return ""  # fail-open, display only: the card goes out without the line
 
 
+def _unreadable_note(count: int) -> str:
+    """The activity note for ``count`` unreadable run records; it names no file."""
+    if count == 0:
+        return ""
+    if count == 1:
+        return (
+            "1 run record could not be read. Its run is not started, tracked or shown, and it "
+            "takes one running slot and one of each day's starts until the file is repaired and "
+            "the service restarted."
+        )
+    return (
+        f"{count} run records could not be read. Their runs are not started, tracked or shown, "
+        f"and they take {count} running slots and {count} of each day's starts until the files "
+        "are repaired and the service restarted."
+    )
+
+
 _MAX_PID_DIGITS = 10  # a longer number is no process ID (and int() refuses thousands of digits)
 
 
@@ -120,7 +137,23 @@ class Scheduler:
         self._lock: IO[str] | None = startup.take_lock(self.layout)
         self._logger = startup.open_log(self.layout, __name__)  # only the lock holder logs
         self.lock = threading.Lock()  # held by step() and submit(): a submit never splits a poll
-        self._records = {r.id: r for r in runs.load_all(self.layout)}
+        readable, self._unreadable = runs.load_readable(self.layout)
+        # A readable record carrying the run ID of an unreadable file (a backup copy made before a
+        # hand edit) is not tracked: saving or starting it would overwrite or double the run of the
+        # bad file. It is counted with that file's run, once.
+        stems = {runs.name_key(Path(name).stem) for name in self._unreadable}
+        shadows = [r.id for r in readable if runs.name_key(r.id) in stems]
+        self._records = {r.id: r for r in readable if r.id not in shadows}
+        if self._unreadable:
+            # Documented fail-open for display and tracking only: a bad record file is skipped, and
+            # the operator is told here and in the activity note. It is never written, its stem is
+            # never minted as a run ID, and it keeps one running slot and one start each day.
+            self._logger.warning(
+                "unreadable run record file(s) %s%s: their runs are not started, tracked or shown "
+                "until the file is repaired and the service restarted",
+                ", ".join(self._unreadable),
+                f" (and the readable copies of runs {', '.join(shadows)})" if shadows else "",
+            )
         self._children: dict[str, subprocess.Popen[bytes]] = {}
         self._rebuild_error = ""
         self._logged_rebuild_error = ""  # the last rebuild error written to the log
@@ -128,6 +161,7 @@ class Scheduler:
         self._kept_activity: dict[str, tuple[runs.Record, dict[str, Any]]] = {}
         self._bad_pid_files: set[str] = set()  # run IDs whose unusable PID file is logged
         self._limit_held = ""
+        self._unreadable_held = _unreadable_note(len(self._unreadable))
         # Run ID -> the report's lead bottom line, for its Teams card. Kept in memory only: a
         # run that ends just before a restart gets its card without the line.
         self._leads: dict[str, str] = {}
@@ -422,6 +456,9 @@ class Scheduler:
         self._finish_moves()
         with self._guard("sweep of the uploads"):
             queued = frozenset(r.submission for r in self._with_status("queued") if r.submission)
+            if self._unreadable:
+                # Fail closed: an unreadable record may be a waiting run, so no sealed upload goes.
+                queued |= {p.parent.name for p in self.layout.uploads.glob("*/sealed")}
             submissions.sweep(self.layout, self.clock(), queued)
         self._reap()
         self._start_queued()
@@ -431,7 +468,9 @@ class Scheduler:
                 list(self._records.values()),
                 now=self.now(),
                 kept=self._kept_activity,
-                held="; ".join(t for t in (self._rebuild_error, self._limit_held) if t),
+                held="; ".join(
+                    t for t in (self._rebuild_error, self._limit_held, self._unreadable_held) if t
+                ),
             )
             activity.write(self.layout, snapshot)
 
@@ -518,6 +557,7 @@ class Scheduler:
                 self.layout.drops / name,
                 self.layout.runs / name,
                 self.layout.logs / f"{name}.log",
+                self.layout.state / f"{name}.json",  # taken whether or not the record is readable
             )
             if name not in self._records and not any(os.path.lexists(p) for p in taken):
                 return name
@@ -529,7 +569,7 @@ class Scheduler:
         # Each moment's own local date, by the machine's time-zone rules: on a clock-change day
         # the offset of "now" would put the day's first hour on the day before.
         today = self.now().astimezone().date()
-        count = 0
+        count = len(self._unreadable)  # fail closed: each bad file counts as one start today
         for record in self._records.values():
             if not record.started_at:
                 continue
@@ -553,7 +593,11 @@ class Scheduler:
                 limit = self.settings.max_per_day
                 self._limit_held = f"daily limit of {limit} runs reached; waiting until tomorrow"
                 break
-            if len(self._with_status("running")) >= self.settings.max_running:
+            # Fail closed: each unreadable record file takes one running slot.
+            if (
+                len(self._with_status("running")) + len(self._unreadable)
+                >= self.settings.max_running
+            ):
                 break
             with self._guard(f"run {record.id}"):
                 today += self._launch(record)

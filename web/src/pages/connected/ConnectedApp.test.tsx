@@ -1076,6 +1076,148 @@ describe("connected activity and reports", () => {
     expect(screen.queryByText("No run in progress")).toBeNull();
   });
 
+  it("lists a run that ended without a report", async () => {
+    activityFetch({
+      updated: "2026-11-16T14:32:10Z",
+      held: "",
+      runs: [],
+      ended: [
+        {
+          id: "c-capped",
+          issuer_name: "Harbour Packaging",
+          pathway: "credit_snapshot",
+          status: "capped",
+          reason: "Spending cap reached",
+          ended_at: "2026-10-31T12:05:00Z",
+          submitted_by: "analyst",
+        },
+      ],
+    });
+    render(<ConnectedApp path="/runs" mode="synthetic" />);
+    const ended = await screen.findByRole("region", { name: "Ended without a report" });
+    expect(within(ended).getByRole("link", { name: "Harbour Packaging" })).toHaveAttribute(
+      "href",
+      "/run/c-capped",
+    );
+    expect(within(ended).getByText("Capped")).toBeVisible();
+    expect(within(ended).getByText("Spending cap reached")).toBeVisible();
+    expect(within(ended).getByText("31 Oct 2026, 12:05 UTC")).toBeVisible();
+    expect(screen.getByText("Ended", { selector: "dt" }).nextElementSibling).toHaveTextContent("1");
+    expect(screen.queryByText("No run in progress")).toBeNull();
+  });
+
+  it("says so when an ended run has no recorded end time", async () => {
+    activityFetch({
+      updated: "2026-11-16T14:32:10Z",
+      held: "",
+      runs: [],
+      ended: [
+        {
+          id: "x-rejected",
+          issuer_name: "Harbour Packaging",
+          pathway: "credit_snapshot",
+          status: "rejected",
+          reason: "",
+          ended_at: "",
+          submitted_by: "",
+        },
+      ],
+    });
+    render(<ConnectedApp path="/runs" mode="synthetic" />);
+    const ended = await screen.findByRole("region", { name: "Ended without a report" });
+    expect(within(ended).getByText("Not recorded")).toBeVisible();
+    expect(within(ended).getByText("Rejected")).toBeVisible();
+  });
+
+  it("counts every ended run and says how many are drawn", async () => {
+    const row = (n: number) => ({
+      id: `f-${String(n)}`,
+      issuer_name: `Issuer ${String(n)}`,
+      pathway: "credit_snapshot",
+      status: "failed",
+      reason: "Provider error",
+      ended_at: "2026-10-31T12:05:00Z",
+      submitted_by: "",
+    });
+    const rows = Array.from({ length: 20 }, (_, n) => row(n));
+    activityFetch({
+      updated: "2026-11-16T14:32:10Z",
+      held: "",
+      runs: [],
+      ended: rows,
+      ended_total: 23,
+    });
+    render(<ConnectedApp path="/runs" mode="synthetic" />);
+    const ended = await screen.findByRole("region", { name: "Ended without a report" });
+    expect(within(ended).getByText("Showing the latest 20 of 23.")).toBeVisible();
+    expect(screen.getByText("Ended", { selector: "dt" }).nextElementSibling).toHaveTextContent(
+      "23",
+    );
+    cleanup();
+    activityFetch({
+      updated: "2026-11-16T14:32:10Z",
+      held: "",
+      runs: [],
+      ended: rows,
+      ended_total: 20,
+    });
+    render(<ConnectedApp path="/runs" mode="synthetic" />);
+    await screen.findByRole("region", { name: "Ended without a report" });
+    expect(screen.queryByText(/Showing the latest/)).toBeNull();
+    expect(screen.getByText("Ended", { selector: "dt" }).nextElementSibling).toHaveTextContent(
+      "20",
+    );
+  });
+
+  it("says how many run records could not be read", async () => {
+    activityFetch({
+      updated: "2026-11-16T14:32:10Z",
+      held: "",
+      runs: [],
+      ended: [],
+      ended_total: 0,
+      unreadable: 2,
+    });
+    render(<ConnectedApp path="/runs" mode="synthetic" />);
+    expect(await screen.findByText("Some run records could not be read")).toBeVisible();
+    expect(screen.getByText("2 run records could not be read and are not listed.")).toBeVisible();
+    expect(screen.getByText("No readable run record is in progress")).toBeVisible();
+    expect(
+      screen.getByText(
+        "No readable run record is running or waiting. Finished runs are in the library.",
+      ),
+    ).toBeVisible();
+    expect(screen.queryByText("No run in progress")).toBeNull();
+    cleanup();
+    activityFetch({
+      updated: "2026-11-16T14:32:10Z",
+      held: "",
+      runs: [],
+      ended: [],
+      ended_total: 0,
+      unreadable: 1,
+    });
+    render(<ConnectedApp path="/runs" mode="synthetic" />);
+    expect(
+      await screen.findByText("1 run record could not be read and is not listed."),
+    ).toBeVisible();
+    cleanup();
+    for (const extra of [{ unreadable: 0 }, {}]) {
+      activityFetch({ updated: "2026-11-16T14:32:10Z", held: "", runs: [], ...extra });
+      render(<ConnectedApp path="/runs" mode="synthetic" />);
+      expect(await screen.findByText("No run in progress")).toBeVisible();
+      expect(screen.queryByText("Some run records could not be read")).toBeNull();
+      cleanup();
+    }
+  });
+
+  it("draws the list from a service that sends no ended runs", async () => {
+    activityFetch({ updated: "2026-11-16T14:32:10Z", held: "", runs: [] });
+    render(<ConnectedApp path="/runs" mode="synthetic" />);
+    expect(await screen.findByText("No run in progress")).toBeVisible();
+    expect(screen.queryByRole("region", { name: "Ended without a report" })).toBeNull();
+  });
+
   it("waits for report publication after the run has finished", async () => {
     let reportRequests = 0;
     vi.stubGlobal(
