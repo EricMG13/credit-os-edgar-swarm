@@ -281,6 +281,12 @@ export function ReviewSheet({
             ]}
           />
           <List title="Source lookup" items={(summary.lookup ?? []).map(lookupSentence)} />
+          {summary.web_search === true && (
+            <p className="text-sm text-text-secondary">
+              The research module will search the web. The issuer&apos;s name and the questions it
+              researches go to OpenAI&apos;s search.
+            </p>
+          )}
         </Block>
         {answers.level === "advanced" && (
           <Block title="Advanced choices" {...block}>

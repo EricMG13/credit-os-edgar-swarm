@@ -39,6 +39,7 @@ from deploy_workflow.owners.cpos_launch import (
     prepare,
     read_documents,
     refuse_deactivated,
+    web_search_on,
 )
 from deploy_workflow.platform_io import regular_open
 
@@ -801,6 +802,9 @@ def _summarise(layout: Layout, sid: str, answers: Answers) -> dict[str, Any]:
                 # default rule, no case hosts and the run folder not yet started. The SEC line
                 # names the variable, never its value.
                 "lookup": list(_lookup_lines(prepared, "default", (), os.environ)),
+                # Whether the research module searches the web, from the launcher's own rule
+                # (`web_search_on`, the one behind its `Web:` line), for the review to state.
+                "web_search": web_search_on(prepared, config, STANDING_RULING),
                 "model": answers["model"],
                 "effort": answers["effort"],
                 "cap": str(cap),

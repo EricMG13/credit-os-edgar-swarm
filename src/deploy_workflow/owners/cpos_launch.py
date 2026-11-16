@@ -89,6 +89,7 @@ from deploy_workflow.model.handoff import (
     WEB_LOOKUP_MODULES,
     WEB_SEARCH_CALLS_PER_TURN,
     WEB_SEARCH_CASE_KINDS,
+    WEB_SEARCH_MODULE,
     Check,
     _pages,
     recorded_web_lookup,
@@ -1554,6 +1555,18 @@ def run_cap(pathway: PathwayId, asked: Decimal | None) -> Decimal:
     return asked
 
 
+def web_search_on(prepared: Prepared, config: str, ruling: Path | None) -> bool:
+    """Whether this prepared run's research module searches the web: the one rule behind the
+    ``Web:`` line (the module is in the run, the ruling lists search, the config is OpenAI's and
+    the case kind is searchable)."""
+    return (
+        web_search_offered(
+            web_search_run(config, ruling), WEB_SEARCH_MODULE, prepared.plan.run.case_kind
+        )
+        and WEB_SEARCH_MODULE in prepared.ordered
+    )
+
+
 def _web_line(prepared: Prepared, config: str, ruling: Path | None) -> tuple[str, ...]:
     """Whether the research module searches the web, when it runs."""
     if "CP-DR" not in prepared.ordered:
@@ -1563,7 +1576,7 @@ def _web_line(prepared: Prepared, config: str, ruling: Path | None) -> tuple[str
         return ("Web:      off: web search is offered on GPT Sol only, not on this config",)
     if web_search_ruled(ruling) and kind not in WEB_SEARCH_CASE_KINDS:
         return (f"Web:      off: {kind} case",)
-    if web_search_ruled(ruling):
+    if web_search_on(prepared, config, ruling):
         return (f"Web:      CP-DR searches the web (the ruling lists {WEB_SEARCH_GRANT})",)
     why = "the ruling does not list" if ruling is not None else "no ruling lists"
     return (f"Web:      off: CP-DR reads only this run's files ({why} {WEB_SEARCH_GRANT})",)
