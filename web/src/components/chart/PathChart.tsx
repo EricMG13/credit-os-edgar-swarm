@@ -57,7 +57,7 @@ const TEXT_FILL = "var(--color-text-secondary)";
 const NA_FILL = "var(--color-text-tertiary)";
 const NEUTRAL = "var(--color-chart-other)";
 const NAME_CHAR = 7;
-const NAME_GAP = 14;
+const NAME_SPACING = 14;
 const PLOT_TOP = 24;
 const NAME_MARGIN = { min: 24, max: 168, gap: 16 };
 
@@ -287,7 +287,7 @@ function nameMargin(series: PathSeries[]) {
   );
 }
 
-/** How far each series' name label moves down so the labels stand `NAME_GAP` apart. */
+/** How far each series' name label moves down so the labels stand `NAME_SPACING` apart. */
 function nameShifts(series: PathSeries[], yTicks: YTick[], axis: number, named: boolean) {
   const first = yTicks[0]?.value ?? 0;
   const span = (yTicks[yTicks.length - 1]?.value ?? 0) - first;
@@ -301,7 +301,7 @@ function nameShifts(series: PathSeries[], yTicks: YTick[], axis: number, named: 
   const moved = named
     ? spread(
         at.map((a) => a.y),
-        NAME_GAP,
+        NAME_SPACING,
       )
     : [];
   return new Map(at.map((a, k) => [a.i, (moved[k] ?? a.y) - a.y]));
@@ -389,7 +389,7 @@ function Chart({
                     name={item.name}
                     dataKey={keyOf(index)}
                     style={style}
-                    labels={item.labels}
+                    labels={named && item.name !== emphasis ? undefined : item.labels}
                     labelOffset={index === 0 ? -10 : 18}
                     nameDy={nameDy.get(index)}
                     nameAt={

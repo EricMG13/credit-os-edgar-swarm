@@ -22,7 +22,9 @@ interface SeriesLineProps {
 export const EMPHASIS_CLASS = "series-emphasis";
 const EMPHASIS_WIDTH = 3.5;
 const LINE_WIDTH = 2;
-const NAME_GAP = 10;
+const NAME_INSET = 10;
+/** The value label at a named line end sits left of the point, above the line, clear of names. */
+const LABEL_RISE = 8;
 
 function point(
   { cx, cy, value, index }: DotItemDotProps,
@@ -40,7 +42,7 @@ function point(
         <text
           data-series-name={name}
           data-emphasised={emphasised ? "" : undefined}
-          x={cx + NAME_GAP}
+          x={cx + NAME_INSET}
           y={cy + 4 + nameDy}
           fontSize={12}
           fontWeight={emphasised ? 600 : 400}
@@ -53,9 +55,9 @@ function point(
         <text
           data-label=""
           data-series={name}
-          x={cx}
-          y={cy + labelOffset}
-          textAnchor="middle"
+          x={named ? cx - NAME_INSET : cx}
+          y={named ? cy - LABEL_RISE : cy + labelOffset}
+          textAnchor={named ? "end" : "middle"}
           fontSize={12}
           fill={LABEL_FILL}
         >

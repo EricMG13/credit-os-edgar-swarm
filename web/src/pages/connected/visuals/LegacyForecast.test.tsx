@@ -310,3 +310,54 @@ it("separates the name labels of scenarios that end close together", () => {
   expect(ys).toHaveLength(2);
   expect(Math.abs((ys[0] ?? 0) - (ys[1] ?? 0))).toBeGreaterThanOrEqual(14);
 });
+
+it("labels only the emphasised scenario's end value and keeps every scenario's name clear of it", () => {
+  const ends = [12000, 11900, 11800, 11700];
+  const groups = ["Base case", "Downside case", "Upside", "Downside (CP-2G drivers)"];
+  const close = {
+    cashflow: {
+      units: "USD millions",
+      columns: groups.flatMap((group) => [
+        { label: "FY2027E", group },
+        { label: "FY2028E", group },
+      ]),
+      rows: [
+        {
+          label: "Cash proxy (not issuer free cash flow)",
+          band: "Cash",
+          total: true,
+          cells: ends
+            .flatMap((end) => [end - 500, end])
+            .map((value) => ({
+              status: "value",
+              exact: String(value),
+              display: `${String(value)}.00`,
+            })),
+        },
+      ],
+    },
+  };
+  const { container } = render(<CashProxy model={close} selectedCase="Downside case" />);
+  const box = (el: Element) => ({
+    text: el.textContent,
+    x: Number(el.getAttribute("x")),
+    y: Number(el.getAttribute("y")),
+    series: el.getAttribute("data-series"),
+    anchor: el.getAttribute("text-anchor"),
+  });
+  const labels = [...container.querySelectorAll(".recharts-wrapper [data-label]")].map(box);
+  const names = [...container.querySelectorAll(".recharts-wrapper [data-series-name]")].map(box);
+  expect(labels.map(({ text, series }) => [text, series])).toEqual([
+    ["11,900.00", "Downside case"],
+  ]);
+  expect(names.map(({ text }) => text).sort()).toEqual([
+    "Base case",
+    "Downside case",
+    "Downside drivers",
+    "Upside case",
+  ]);
+  // The value label ends left of the line end and every name starts right of it: no name can sit on it.
+  const [value] = labels;
+  expect(value?.anchor).toBe("end");
+  for (const name of names) expect(value?.x ?? Infinity).toBeLessThan(name.x);
+});
