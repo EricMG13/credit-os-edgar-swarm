@@ -111,6 +111,17 @@ export type Run = {
   events: RunEvent[] | null;
 };
 
+export type LiveRun = Pick<Run, "id" | "issuer_name" | "pathway" | "reason" | "modules"> & {
+  status: "running" | "queued";
+  submitted_by: string;
+  started_at: string;
+  name_differs: boolean;
+  stalled: boolean;
+  /** How many source files the run lists; their names are audit material and are not sent. */
+  files: number;
+};
+export type Activity = { updated: string; held: string; runs: LiveRun[] };
+
 export type ReportEntry = { id: string; issuer: string; asOf: string; pathway: string };
 export class RequestError extends Error {
   constructor(
@@ -184,6 +195,8 @@ export const getSummary = (id: string, answers: Answers) =>
   request<Summary>(`${submission(id)}/summary`, postJson(answers));
 export const submit = (id: string, answers: Answers, digest: string) =>
   request<{ run: string }>(`${submission(id)}/submit`, postJson({ answers, digest }));
+export const getActivity = (signal: AbortSignal) =>
+  request<Activity>("/connected/activity", { signal });
 export const getRun = (id: string, signal: AbortSignal) =>
   request<Run>(`/connected/activity/${encodeURIComponent(id)}`, { signal });
 export const getReport = (id: string, signal: AbortSignal) =>

@@ -83,7 +83,9 @@ export function RunProgress({ id, mode }: { id: string; mode: Mode }) {
   const lines = run ? feedLines(run) : [];
   return (
     <>
-      <Breadcrumb>Run activity</Breadcrumb>
+      <Breadcrumb href="/runs" root="Run activity">
+        {run?.issuer_name || "Run"}
+      </Breadcrumb>
       <PageHeader
         title={run?.issuer_name || "Run activity"}
         badges={

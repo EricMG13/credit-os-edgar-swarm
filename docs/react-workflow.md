@@ -4,6 +4,8 @@ Credit OS 2 is based on RBOT-HTML `256101a`. It keeps that revision's Python pin
 `pyproject.toml`, `uv.lock`, scheduler, calculations, provider configuration and library
 publication. The browser uses the Credit OS design system and React 19.3.0. Run intake,
 activity, library and report navigation live at one local address.
+The rail's Run item opens Run activity (`/runs`): the runs that are running and waiting, each
+linked to its own page (`/run/<id>`). Start a run is a button there and on Library.
 
 ## Set up
 

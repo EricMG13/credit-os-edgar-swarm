@@ -22,7 +22,7 @@ from . import admission, artifacts, portfolio, run_activity, sources
 PROJECT = Path(__file__).resolve().parent.parent
 RUN_ID = re.compile(r"[0-9A-Za-z][0-9A-Za-z._-]{0,79}")
 RUN_PAGE = re.compile(rf"/run/{RUN_ID.pattern}/?")
-RUN_ACTIVITY = re.compile(rf"/connected/activity/({RUN_ID.pattern})")
+RUN_ACTIVITY = re.compile(rf"/connected/activity(?:/({RUN_ID.pattern}))?")
 REPORT_PAGE = re.compile(r"/report/([^/]+)/?")
 REPORT_FOLDER = re.compile(r"[\w. -]+")
 REPORT_PREFIX = "/connected/report/"
@@ -235,7 +235,9 @@ def _asset_path(dist: Path, path: str) -> tuple[Path, str, bool] | None:
 
 def _app_page(path: str) -> bool:
     return bool(
-        path in {"/", "/index.html", "/start"} or RUN_PAGE.fullmatch(path) or _report_page(path)
+        path in {"/", "/index.html", "/start", "/runs"}
+        or RUN_PAGE.fullmatch(path)
+        or _report_page(path)
     )
 
 
@@ -268,8 +270,12 @@ def _connected_reply(
     path = url.path
     if path == "/connected/context":
         return http_base.Reply(200, {**context, "submission_cap_usd": str(cap)})
-    if match := RUN_ACTIVITY.fullmatch(path):
-        return run_activity.reply(layout, match[1], cap)
+    if match := RUN_ACTIVITY.fullmatch(path):  # one run by its ID, or the runs in progress
+        return (
+            run_activity.reply(layout, match[1], cap)
+            if match[1]
+            else run_activity.listing(layout, cap)
+        )
     if path == "/connected/library":
         return _library_index(layout)
     if path == "/connected/snapshot":

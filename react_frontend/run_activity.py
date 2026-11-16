@@ -1,4 +1,4 @@
-"""Project RBOT-HTML's run record and recorded milestones for the React activity page."""
+"""Project RBOT-HTML's run records and recorded milestones for the React activity pages."""
 
 from __future__ import annotations
 
@@ -22,6 +22,7 @@ _RUN_EVENTS = frozenset(
     {"delivery_started", "delivered", "stopped", "changes_not_produced", "model_not_published"}
 )
 _FEED_LIMIT = 80
+_PUBLISHED = "window.RUN_ACTIVITY="  # how deploy_workflow.inbox.activity.write opens the file
 _EXECUTIONS = frozenset({"host-session", "retained-response-replay", "synthetic", "live-provider"})
 
 
@@ -110,6 +111,56 @@ def _cap(manifest: dict[str, Any], configured: Decimal) -> str:
         except InvalidOperation:
             pass
     return str(configured)
+
+
+def _held(layout: Layout) -> str:
+    """Why the scheduler holds the queue or the ended runs, from the activity file it writes."""
+    try:
+        text = (layout.engine / "activity.js").read_text(encoding="utf-8")
+        if not text.startswith(_PUBLISHED):
+            return ""
+        held = json.JSONDecoder().raw_decode(text, len(_PUBLISHED))[0]["held"]
+    except (OSError, ValueError, LookupError, TypeError):
+        # Documented fail-open (display only): with no readable file (none is written before the
+        # first poll) the note is left out; the runs themselves are read from their records.
+        return ""
+    return held if isinstance(held, str) else ""
+
+
+def listing(layout: Layout, cap: Decimal) -> http_base.Reply:
+    """The runs that are running or waiting. Spend, folders and file names are not sent."""
+    records = [item for item in runs.load_all(layout) if item.status in ("running", "queued")]
+    snapshot = activity.snapshot(
+        layout, records, cap=cap, now=datetime.now(UTC), held=_held(layout)
+    )
+    root = layout.runs.resolve()
+    return http_base.Reply(
+        200,
+        {
+            "updated": snapshot["updated"],
+            "held": snapshot["held"],
+            "runs": [
+                {
+                    "id": shown["id"],
+                    "issuer_name": shown["issuer_name"],
+                    "pathway": shown["pathway"],
+                    "status": shown["status"],
+                    "reason": shown["reason"],
+                    "submitted_by": shown["submitted_by"],
+                    "started_at": shown["started_at"],
+                    "name_differs": shown["name_differs"],
+                    "stalled": shown.get("stalled", False),
+                    "files": len(shown["files"]),
+                    "modules": _planned(
+                        _manifest(root / shown["id"]),
+                        shown.get("modules", activity.module_states(shown["pathway"], [])),
+                    ),
+                }
+                for shown in snapshot["runs"]
+            ],
+        },
+        {"Cache-Control": "no-store"},
+    )
 
 
 def reply(layout: Layout, run_id: str, cap: Decimal) -> http_base.Reply:

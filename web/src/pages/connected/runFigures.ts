@@ -40,13 +40,29 @@ export function spendFigure(run: Run): Figure {
   };
 }
 
-export function finishedFigure(run: Run): Figure {
+export function finishedFigure(run: Pick<Run, "modules">): Figure {
   const modules = run.modules.filter(([code]) => code !== "Report");
   const max = modules.length;
   if (max === 0) return { value: null, bar: null, note: "No analytical modules listed" };
   const value = modules.filter(([, state]) => state === "done").length;
   const text = `${String(value)} of ${String(max)}`;
   return { value: text, bar: { value, max, label: `${text} modules` } };
+}
+
+const STAMP = new Intl.DateTimeFormat("en-GB", {
+  timeZone: "UTC",
+  day: "numeric",
+  month: "short",
+  year: "numeric",
+  hour: "2-digit",
+  minute: "2-digit",
+  hourCycle: "h23",
+});
+
+/** "16 Nov 2026, 14:32 UTC" for the service's UTC time; any other text is returned as it is. */
+export function stamp(at: string) {
+  const time = Date.parse(at);
+  return Number.isFinite(time) ? `${STAMP.format(time)} UTC` : at;
 }
 
 function clock(timestamp: string) {

@@ -9,7 +9,7 @@ from tempfile import TemporaryDirectory
 
 import pytest
 
-from deploy_workflow.inbox import runs, startup
+from deploy_workflow.inbox import activity, runs, startup
 from deploy_workflow.inbox.scheduler import Scheduler
 from deploy_workflow.model.budget import Budget
 from deploy_workflow.run_events import EVENTS, append_event
@@ -149,6 +149,84 @@ def test_activity_uses_the_pinned_cap_and_curates_native_events(hosted: _Server)
     (directory / EVENTS).write_text("invalid event\n{}\n", encoding="utf-8")
     assert json.loads(request(hosted, "/connected/activity/activity")[1])["events"] is None
     assert request(hosted, "/connected/activity/unknown")[0] == 404
+
+
+def test_activity_list_shows_runs_in_progress_without_spend_or_file_names(hosted: _Server) -> None:
+    scheduler = hosted.scheduler
+    assert isinstance(scheduler, Scheduler)
+    layout = scheduler.layout
+    for record in (
+        runs.Record(
+            id="b-queued",
+            pathway="credit_snapshot",
+            folder="b-queued",
+            status="queued",
+            claimed_at="2026-10-31T12:00:00Z",
+            issuer_name="Harbour Packaging",
+            reason="3 runs are already running",
+        ),
+        runs.Record(
+            id="a-running",
+            pathway="credit_snapshot",
+            folder="a-running",
+            status="running",
+            claimed_at="2026-10-31T12:00:00Z",
+            issuer_name="Meridian Foods",
+            started_at="2026-10-31T12:01:00Z",
+            files=("annual-report.pdf", "notes.pdf"),
+            submitted_by="Dana Reyes",
+            name_differs=True,
+        ),
+        runs.Record(
+            id="c-finished",
+            pathway="credit_snapshot",
+            folder="c-finished",
+            status="finished",
+            claimed_at="2026-10-31T11:00:00Z",
+            ended_at="2026-10-31T11:30:00Z",
+        ),
+    ):
+        runs.save(layout, record)
+    directory = layout.runs / "a-running"
+    directory.mkdir(parents=True, exist_ok=True)
+    (directory / "workflow.json").write_text(
+        '{"instructions":{"CP-0":{},"CP-1":{}}}', encoding="utf-8"
+    )
+    append_event(directory, "module_started", module="CP-0")
+    append_event(directory, "module_accepted", module="CP-0")
+    held = "daily limit of 30 runs reached; waiting until tomorrow"
+    assert json.loads(request(hosted, "/connected/activity")[1])["held"] == ""
+    activity.write(layout, {"updated": "", "cap": "20", "held": held, "runs": []})
+
+    status, raw, headers = request(hosted, "/connected/activity")
+
+    assert status == 200 and headers["Cache-Control"] == "no-store"
+    listing = json.loads(raw)
+    assert set(listing) == {"updated", "held", "runs"}
+    assert listing["held"] == held
+    running, queued = listing["runs"]
+    assert running == {
+        "id": "a-running",
+        "issuer_name": "Meridian Foods",
+        "pathway": "credit_snapshot",
+        "status": "running",
+        "reason": "",
+        "submitted_by": "Dana Reyes",
+        "started_at": "2026-10-31T12:01:00Z",
+        "name_differs": True,
+        "stalled": False,
+        "files": 2,
+        "modules": [["CP-0", "done"], ["CP-1", "waiting"], ["Report", "waiting"]],
+    }
+    assert (queued["id"], queued["status"], queued["reason"], queued["files"]) == (
+        "b-queued",
+        "queued",
+        "3 runs are already running",
+        0,
+    )
+    assert set(queued) == set(running)
+    page_status, _, page_headers = request(hosted, "/runs")
+    assert page_status == 200 and page_headers["Content-Type"].startswith("text/html")
 
 
 def test_reports_admission_and_reader_snapshot(hosted: _Server, root: Path) -> None:
