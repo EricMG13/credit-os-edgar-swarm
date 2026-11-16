@@ -19,11 +19,13 @@ import {
   evidencePath,
   evidenceHref,
   evidenceToken,
+  CONFIDENCE_INPUTS,
   FORECAST_INPUTS,
   methodNote,
   publishedHref,
   readParagraph,
   type Block,
+  plainModuleNames,
   type OutputEntry,
   type PublishedRun,
   type Section,
@@ -34,10 +36,10 @@ import {
 export function richParts(value: string): ReactNode {
   return value.split(/(\*\*[^*]+\*\*|`[^`]+`)/g).map((part, index) => {
     if (part.startsWith("**") && part.endsWith("**"))
-      return <strong key={index}>{part.slice(2, -2)}</strong>;
+      return <strong key={index}>{plainModuleNames(part.slice(2, -2))}</strong>;
     if (part.startsWith("`") && part.endsWith("`"))
       return <code key={index}>{part.slice(1, -1)}</code>;
-    return part.replaceAll("\\|", "|");
+    return plainModuleNames(part.replaceAll("\\|", "|"));
   });
 }
 
@@ -68,7 +70,7 @@ export function HandoffDownload({ run, entry }: { run: PublishedRun; entry: Outp
   return href ? (
     <DownloadButton
       download={{
-        label: `Download ${moduleName(entry.output.module).replace(/ \(CP-[^)]+\)$/, "")}`,
+        label: `Download ${moduleName(entry.output.module)}`,
         href,
         reason: null,
       }}
@@ -156,23 +158,26 @@ function buildTrace(
     statement:
       section.heading === FORECAST_INPUTS
         ? "The model calculation uses the inputs recorded in this handoff."
-        : statement.replaceAll("**", "").replaceAll("`", ""),
+        : plainModuleNames(statement.replaceAll("**", "").replaceAll("`", "")),
     derivation: {
       ...node("Evidence retained with this item", ""),
       children: [
-        ...(basis ? [node("Basis", basis)] : []),
+        ...(basis ? [node("Basis", plainModuleNames(basis))] : []),
         ...calculationNodes(entry, basis ?? "", line),
         ...chips.flatMap((chip) => {
           const source = chip.source ?? chip.label;
           return source ? [node(source, "", sourceCitationNote(chip))] : [];
         }),
         ...(!basis && !chips.length
-          ? [
-              // Recorded inputs are not a gap: only a missing basis carries no value.
-              section.heading === FORECAST_INPUTS
-                ? node("Recorded forecast inputs", "")
-                : node("Basis was not recorded for this item", null),
-            ]
+          ? section.heading === CONFIDENCE_INPUTS && block.type === "table"
+            ? // The score is computed from the handoff's own inputs table: show its rows as written.
+              block.rows.map((item) => node(item.cells[0] ?? "", item.cells[1] ?? ""))
+            : [
+                // Recorded inputs are not a gap: only a missing basis carries no value.
+                section.heading === FORECAST_INPUTS
+                  ? node("Recorded forecast inputs", "")
+                  : node("Basis was not recorded for this item", null),
+              ]
           : []),
       ],
     },
@@ -240,7 +245,7 @@ export function PublishedTable({
     rowSource ??
     (traceAt &&
       ((line: number, name: string) => (
-        <TraceControl trace={traceAt(line)} label={`Show sources for ${name}`} />
+        <TraceControl trace={traceAt(line)} label={`Show sources for ${plainModuleNames(name)}`} />
       )));
   // A wide table scrolls sideways: it is a named, focusable region so the keyboard can reach it.
   const scrolls =
@@ -345,7 +350,12 @@ const isCoded = (section: Section, role: string) =>
 export function recordSections(sections: Section[], entry: OutputEntry) {
   return classifySections(sections)
     .filter(({ section, role }) => {
-      if (!isCoded(section, role)) return false;
+      // Confidence inputs is a register here: the page draws its score, Evidence holds the table.
+      if (
+        !isCoded(section, role) &&
+        !(role === "registers" && section.heading === "Confidence inputs")
+      )
+        return false;
       const drawn = registerBlocks(section, entry);
       return section.blocks.some((block) => block.type === "table" && !drawn.includes(block));
     })
@@ -504,8 +514,8 @@ function FindingsSummary({
       level="h3"
       text={{
         label: "Bottom line",
-        lead: summary.bottomLine,
-        rest: containsReference(summary.limitation) ? "" : summary.limitation,
+        lead: plainModuleNames(summary.bottomLine),
+        rest: containsReference(summary.limitation) ? "" : plainModuleNames(summary.limitation),
         trace: summaryTrace ? traceKey(entry, summary.line) : null,
       }}
     />
@@ -642,9 +652,13 @@ export function ReportFindings({
               label: findingLabel(section, overviewLabel),
               lead:
                 judgement ??
-                readParagraph(first.text).body.replaceAll("**", "").replaceAll("`", ""),
+                plainModuleNames(
+                  readParagraph(first.text).body.replaceAll("**", "").replaceAll("`", ""),
+                ),
               rest: judgement
-                ? readParagraph(first.text).body.replaceAll("**", "").replaceAll("`", "")
+                ? plainModuleNames(
+                    readParagraph(first.text).body.replaceAll("**", "").replaceAll("`", ""),
+                  )
                 : "",
               trace: key(first.line),
             }}

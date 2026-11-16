@@ -68,4 +68,39 @@ describe("connected report Changes", () => {
       expect(level).toBeLessThanOrEqual((levels[at - 1] ?? 1) + 1);
     });
   });
+
+  it("shows the compared bottom lines and the verdict's reason without a module code", () => {
+    renderChanges({
+      pack: {
+        measures: [],
+        modules: [
+          {
+            module: "CP-2",
+            title: "Fundamental credit",
+            ran_prior: true,
+            ran_current: true,
+            prior_bottom_line: "Credit is stable; Liquidity (CP-2D) is ample.",
+            current_bottom_line: "Credit is stable; Liquidity (CP-2D) is thin.",
+          },
+        ],
+      },
+      verdicts: {
+        modules: {
+          "CP-2": {
+            status: "Unchanged",
+            cause: "Follows Liquidity (CP-2D)",
+            why: "The view follows Financial foundation (CP-1), which did not change.",
+          },
+        },
+      },
+    });
+    expect(screen.getByText("Credit is stable; Liquidity is ample.")).toBeInTheDocument();
+    expect(screen.getByText("Credit is stable; Liquidity is thin.")).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "Follows Liquidity · The view follows Financial foundation, which did not change.",
+      ),
+    ).toBeInTheDocument();
+    expect(document.body.textContent).not.toMatch(/\(CP-[A-Za-z0-9]+\)/);
+  });
 });

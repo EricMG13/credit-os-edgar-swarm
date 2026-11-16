@@ -16,8 +16,16 @@ import {
   type PublishedRun,
   type Snapshot,
 } from "../publishedReport";
-import { foundationMetrics, moduleState, type buildReportView } from "../reportView";
+import {
+  foundationMetrics,
+  moduleState,
+  type MetricKey,
+  type buildReportView,
+} from "../reportView";
+
+const TILE_KEYS: readonly MetricKey[] = ["netDebt", "principal", "interestCover"];
 import { LegacyVisuals } from "../visuals";
+import { ModuleConfidence } from "./Confidence";
 import { MetricGrid } from "./MetricGrid";
 import { monitoringLabel } from "./ModuleTable";
 import { Downside, downsideView } from "./Downside";
@@ -287,13 +295,7 @@ function ModuleFindings({
   const { downside, breaks, macro, securities, tableLines: figureTableLines } = figures;
   const evidenceHref = (line: number) => evidencePath(run.folder, entry, line);
   const allMetrics = foundationMetrics(entry, view.catalogue);
-  const metrics = allMetrics.filter(({ metric }) =>
-    ["Net debt (carrying basis)", "Debt principal", "All-in cash interest cover"].includes(
-      metric.label,
-    ),
-  );
-  const leverage = allMetrics.find(({ metric }) => metric.label === "Lease-adjusted gross leverage")
-    ?.metric.value;
+  const metrics = allMetrics.filter(({ key }) => TILE_KEYS.includes(key));
   return (
     <ReportFindings
       key={entry.output.id}
@@ -303,11 +305,9 @@ function ModuleFindings({
       entryIndex={index}
       figureTableLines={figureTableLines}
       chartsDrawn
-      judgement={
-        leverage?.kind === "value" ? `Lease-adjusted gross leverage is ${leverage.text}` : undefined
-      }
       afterBottomLine={
         <>
+          <ModuleConfidence snapshot={snapshot} run={run} entry={entry} entryIndex={index} />
           <MetricGrid
             records={metrics}
             entry={entry}

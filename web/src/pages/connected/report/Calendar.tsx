@@ -67,9 +67,7 @@ export function buildCalendar(entries: OutputEntry[], folder: string) {
   entries.forEach((entry) => {
     const { output, sections, selected } = entry;
     if (!selected || !output.events?.length || output.parseError) return;
-    const owner = [moduleName(output.module).replace(/ \(CP-[^)]+\)$/, ""), output.state?.declared]
-      .filter(Boolean)
-      .join(" · ");
+    const owner = [moduleName(output.module), output.state?.declared].filter(Boolean).join(" · ");
     const assessable = output.state?.established !== false && !blocked(entry);
     const tables = publishedTables(sections);
     const blocks = sections.flatMap((section) => section.blocks);

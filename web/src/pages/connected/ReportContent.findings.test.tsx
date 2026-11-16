@@ -94,9 +94,7 @@ it.each([false, true])(
     if (!last) throw new Error("Missing final paragraph control");
     fireEvent.click(last);
     const drawer = await screen.findByRole("dialog", { name: "Sources for Bottom line" });
-    expect(
-      within(drawer).getByText("Earnings changes (CP-1B) · Handoff line 19"),
-    ).toBeInTheDocument();
+    expect(within(drawer).getByText("Earnings changes · Handoff line 19")).toBeInTheDocument();
     expect(within(drawer).getByText("Downside remains material.")).toBeInTheDocument();
     expect(within(drawer).getByText("Exact retained page-three excerpt.")).toBeInTheDocument();
     expect(within(drawer).getByRole("link", { name: "Open in Evidence" })).toHaveAttribute(

@@ -5,6 +5,16 @@ export type Table = { type: "table"; line: number; headers: string[]; rows: Row[
 type Paragraph = { type: "text"; line: number; end: number; text: string };
 export type Block = Table | Paragraph | { type: "equity"; line: number; text?: string };
 export type Section = { heading: string; level: number; line: number; blocks: Block[] };
+const FILE_EXTENSIONS = "jsonl?|x?html?|xml|pdf|docx?|xlsx?|xlsm|csv|tsv|pptx?|txt|md|zip";
+// A file name ahead before the next ";", ",", "|" or line end: the code belongs to a stored name.
+const FILE_AHEAD = new RegExp(String.raw`^[^;,|\n]*\.(?:${FILE_EXTENSIONS})\b`, "i");
+/** Drops the code from "Name (CP-x)" in handoff text; a code inside a stored file name or bare in a sentence stays. */
+export function plainModuleNames(text: string) {
+  return text.replace(/ \(CP-[A-Za-z0-9]+\)/g, (code, at: number) =>
+    FILE_AHEAD.test(text.slice(at + code.length)) ? code : "",
+  );
+}
+export const CONFIDENCE_INPUTS = "Confidence inputs";
 export const FORECAST_INPUTS = "Forecast inputs (machine-readable)";
 type FigureRef = Record<string, unknown> & { table: number };
 type Output = {
@@ -22,6 +32,7 @@ type Output = {
   chartGaps?: FigureRef[];
   events?: FigureRef[];
   maps?: FigureRef[];
+  confidence?: { value: number; band: string } | { missing: string };
 };
 export type OutputEntry = { output: Output; sections: Section[]; selected: boolean };
 type Link = { href: string; label: string };
@@ -349,7 +360,7 @@ const PASSAGES = [
 const HIDDEN =
   /^(Request|Next module|Front matter)$|downstream owners|Consumer readiness|command sheet|Readiness for downstream use|Upstream re-anchor|method trace|Module status|QA validation|machine-readable|research brief|Workstream plan|Cross-Module Handoff/i;
 const REGISTERS =
-  /source assessment|source context|period table|key located evidence|conflicts and duplicates|register|ledger/i;
+  /source assessment|confidence inputs|source context|period table|key located evidence|conflicts and duplicates|register|ledger/i;
 const TOP_ROLE = { Sources: "sources", Calculations: "calculations", Gaps: "gaps" } as const;
 const isTopRole = (heading: string): heading is keyof typeof TOP_ROLE =>
   Object.hasOwn(TOP_ROLE, heading);
@@ -444,8 +455,10 @@ export function readParagraph(text: string) {
   return { body: read, basis: citations.length ? citations.join(" ") : null };
 }
 
-const FILE_REFERENCE =
-  /(?<![\w.-])[\w-]+(?:\.[\w-]+)*\.(?:jsonl?|x?html?|xml|pdf|docx?|xlsx?|xlsm|csv|tsv|pptx?|txt|md|zip)\b/i;
+const FILE_REFERENCE = new RegExp(
+  String.raw`(?<![\w.-])[\w-]+(?:\.[\w-]+)*\.(?:${FILE_EXTENSIONS})\b`,
+  "i",
+);
 const LONG_HASH = /\b(?=[0-9a-f]*[a-f])[0-9a-f]{32,}\b/i;
 const REGISTER_ID = /\bCP-[A-Z0-9]+-(?:GAP|MON|FACT|CALC|EVID|SRC|ASSUMPTION)-[A-Z0-9-]+\b/i;
 

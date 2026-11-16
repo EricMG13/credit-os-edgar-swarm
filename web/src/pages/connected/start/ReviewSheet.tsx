@@ -1,6 +1,6 @@
 import { useId, type ReactNode } from "react";
 import { Button } from "@/components/base/buttons/button";
-import { moduleTitle, pathwayName, type Answers, type Summary } from "../api";
+import { moduleName, pathwayName, type Answers, type Summary } from "../api";
 import {
   changesSentence,
   comparisonCaveat,
@@ -88,7 +88,7 @@ const OUTCOME_STATE = {
 } as const;
 
 function scopeText(scope: string) {
-  return scope === "run" ? "Whole run" : moduleTitle(scope);
+  return scope === "run" ? "Whole run" : moduleName(scope);
 }
 
 function acceptanceLabel(group: LimitGroup) {
@@ -263,7 +263,7 @@ export function ReviewSheet({
           />
           <List
             title={`Modules (${String(summary.modules.length)})`}
-            items={summary.modules.map(moduleTitle)}
+            items={summary.modules.map(moduleName)}
           />
           {summary.omitted.length > 0 && (
             <p className="text-sm text-text-secondary">
