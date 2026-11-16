@@ -3,7 +3,6 @@ import { File05, Folder } from "@untitledui/icons";
 import { FileUpload } from "@/components/application/file-upload/file-upload-base";
 import { Badge } from "@/components/base/badges/badges";
 import { Button } from "@/components/base/buttons/button";
-import { DetailsList } from "../run/start/DetailsList";
 import { PurposeCards } from "../run/start/Purpose";
 import { Readiness } from "../run/start/Readiness";
 import { SubmitConfirmation } from "../run/start/Start";
@@ -21,7 +20,6 @@ import {
   getSummary,
   issuerSlug,
   moduleName,
-  pathwayName,
   RequestError,
   submit,
   upload,
@@ -34,21 +32,29 @@ import {
   type Summary,
 } from "./api";
 import { Breadcrumb, card, ErrorNotice, field, heading, label } from "./layout";
+import { ReviewSheet, needsCheck } from "./start/ReviewSheet";
+import { documentDescription, LEVELS, PURPOSES, storedName } from "./start/plain";
 import { errorText, useResource } from "./useResource";
 import { PageHeader } from "../../shell/PageHeader";
 
 const FORM_STEPS = {
   documents: { title: "Documents", next: "Continue to purpose", previous: null },
-  purpose: { title: "Purpose", next: "Review inputs", previous: "documents" },
-  confirm: { title: "Confirm what was read", next: "Approve summary", previous: "purpose" },
-  context: { title: "More context", next: "Review run", previous: "confirm" },
+  purpose: { title: "Purpose", next: "Continue to context", previous: "documents" },
+  context: { title: "More context", next: "Review run", previous: "purpose" },
 } as const;
 type FormStep = keyof typeof FORM_STEPS;
+const STEPPER_STEPS = [
+  { key: "documents", title: "Documents", note: "Add files" },
+  { key: "purpose", title: "Purpose", note: "Choose one" },
+  { key: "context", title: "More context", note: "Optional" },
+  { key: "start", title: "Review and start", note: "Paid step" },
+] as const;
+const STEP_TOTAL = STEPPER_STEPS.length;
+const FORM_STEP_KEYS = Object.keys(FORM_STEPS) as FormStep[];
 const STEP_GUIDANCE: Record<FormStep, string> = {
   documents:
     "Add annual and interim reports, the credit agreement and any other material the analysis should read.",
   purpose: "The purpose determines which modules run.",
-  confirm: "Check the issuer, documents and purpose. Approving this summary costs nothing.",
   context: "Optional. You can continue if the documents provide all the context.",
 };
 
@@ -83,13 +89,6 @@ function requireSummaryCap(summary: Summary, shownCap: string) {
     throw new Error("The pathway cap changed while preparing this summary. Review the run again.");
 }
 
-const PURPOSES = {
-  research: "No market view (research)",
-  primary: "New issue (primary)",
-  secondary: "Trading (secondary)",
-  earnings: "Earnings update",
-};
-const LEVELS = { basic: "Basic", standard: "Standard", advanced: "Advanced" };
 const ATTACHMENTS = {
   management_bridge: "Management EBITDA bridge",
   portfolio_workbook: "Portfolio workbook",
@@ -354,7 +353,7 @@ function readinessStatus(
       next: "Add and inspect documents",
     },
     {
-      met: step === "confirm" || step === "context",
+      met: step !== "documents" || review !== undefined,
       whenMet: "Purpose selected",
       next: "Choose a pathway and purpose",
     },
@@ -429,8 +428,6 @@ function StepFields({
       return <DocumentFields view={view} folderInput={folderInput} />;
     case "purpose":
       return <PurposeFields view={view} />;
-    case "confirm":
-      return <ConfirmFields view={view} />;
     case "context":
       return <ContextFields view={view} />;
   }
@@ -663,48 +660,6 @@ function PurposeFields({ view }: { view: IntakeView }) {
         onChange={view.changeLevel}
       />
     </>
-  );
-}
-
-function ConfirmFields({ view }: { view: IntakeView }) {
-  return (
-    <div className="grid gap-4 sm:col-span-2">
-      <section>
-        <h3 className="font-semibold">Issuer</h3>
-        <DetailsList
-          rows={[
-            { label: "Issuer", value: view.identity.issuer_name },
-            { label: "As-of date", value: view.run.as_of },
-            { label: "Reporting currency", value: view.run.reporting_currency },
-          ]}
-        />
-      </section>
-      <section>
-        <h3 className="font-semibold">Documents inspected</h3>
-        <DetailsList
-          rows={view.shownDocs.map((doc) => ({
-            label: storedName(doc),
-            value: documentDescription(doc),
-          }))}
-        />
-      </section>
-      <section>
-        <h3 className="font-semibold">Run</h3>
-        <DetailsList
-          rows={[
-            { label: "Pathway", value: pathwayName(view.run.pathway) },
-            {
-              label: "Purpose",
-              value: PURPOSES[(view.run.run_type ?? "research") as keyof typeof PURPOSES],
-            },
-            {
-              label: "Spending cap",
-              value: view.synthetic ? "USD 0.00 (synthetic test)" : view.capText,
-            },
-          ]}
-        />
-      </section>
-    </div>
   );
 }
 
@@ -1011,23 +966,8 @@ function focusStep(node: HTMLElement | null) {
   node?.focus();
 }
 
-function storedName({ source }: DocumentRecord) {
-  return source.replace(/(\.html?)\.jsonl$/i, "$1");
-}
-
 function fileName(file: File) {
   return (file.webkitRelativePath || "").split("/").slice(1).join("/") || file.name;
-}
-
-function documentDescription(doc: DocumentRecord) {
-  return [
-    doc.kind.replaceAll("_", " "),
-    doc.period_end && `period ends ${doc.period_end}`,
-    doc.executed === true ? "executed" : doc.executed === false ? "draft" : "",
-    doc.signal,
-  ]
-    .filter(Boolean)
-    .join(" · ");
 }
 
 function SelectField({
@@ -1085,143 +1025,6 @@ function readDetails(edits: Partial<Record<ComplexField, string>>) {
     details[key] = parsed;
   }
   return details;
-}
-
-function needsCheck(item: Summary["items"][number]) {
-  return (
-    item.outcome === "check" ||
-    item.outcome === "gap" ||
-    item.outcome === "limited" ||
-    item.outcome === "will_refuse"
-  );
-}
-
-function ReviewPlan({
-  review,
-  accepted,
-  onAccept,
-  disabled,
-}: {
-  review: Review;
-  accepted: Set<string>;
-  onAccept: (id: string, checked: boolean) => void;
-  disabled: boolean;
-}) {
-  const { summary, answers } = review;
-  const { run, identity } = answers.context;
-  return (
-    <>
-      <dl className="grid gap-4 rounded-lg bg-surface-subtle p-4 text-sm sm:grid-cols-2">
-        {[
-          ["Issuer", identity.issuer_name],
-          ["Documents", String(summary.documents.length)],
-          ["Planned modules", String(summary.modules.length)],
-          ["As-of date", run.as_of],
-          ["Pathway", pathwayName(run.pathway)],
-          ["Model and effort", `${summary.model} · ${summary.effort}`],
-          ["Reporting currency", run.reporting_currency],
-          ["Purpose", PURPOSES[run.run_type as keyof typeof PURPOSES]],
-          ["Case kind", run.case_kind],
-          ["Current period", run.current_period],
-          ["Prior period", run.prior_period],
-          ["Research cutoff", run.cutoff],
-          ["Run form level", LEVELS[answers.level as keyof typeof LEVELS]],
-          ["Turns per module", answers.max_turns],
-          ["Submitted by", answers.submitted_by],
-          ["Changes", summary.changes],
-        ]
-          .filter(([, value]) => value)
-          .map(([term, value]) => (
-            <div key={term}>
-              <dt className="text-text-tertiary">{term}</dt>
-              <dd className="mt-1 font-medium text-text-primary">{value}</dd>
-            </div>
-          ))}
-      </dl>
-      <section className="grid gap-2">
-        <h3 className="font-semibold">Documents read</h3>
-        <ul className="list-disc space-y-1 pl-5 text-sm text-text-secondary">
-          {summary.documents.map((doc, i) => (
-            <li key={i}>
-              {storedName(doc)} · {documentDescription(doc)}
-            </li>
-          ))}
-        </ul>
-        {summary.ignored.length > 0 && (
-          <>
-            <h3 className="font-semibold">Documents ignored</h3>
-            <ul className="list-disc space-y-1 pl-5 text-sm text-text-secondary">
-              {summary.ignored.map((doc, i) => (
-                <li key={i}>{typeof doc === "string" ? doc : `${doc.source} · ${doc.reason}`}</li>
-              ))}
-            </ul>
-          </>
-        )}
-      </section>
-      <section className="grid gap-2">
-        <h3 className="font-semibold">Planned modules</h3>
-        <ul className="grid gap-1.5 text-sm text-text-secondary sm:grid-cols-2">
-          {summary.modules.map((code) => (
-            <li key={code}>{moduleName(code)}</li>
-          ))}
-        </ul>
-        {summary.omitted.length > 0 && (
-          <p className="text-sm text-text-secondary">
-            Report sections omitted · {summary.omitted.join(", ")}
-          </p>
-        )}
-      </section>
-      {summary.lookup && summary.lookup.length > 0 && (
-        <section className="grid gap-2">
-          <h3 className="font-semibold">Source lookup</h3>
-          <ul className="list-disc pl-5 text-sm text-text-secondary">
-            {summary.lookup.map((line) => (
-              <li key={line}>{line}</li>
-            ))}
-          </ul>
-        </section>
-      )}
-      <details className="rounded-lg border border-border-hairline p-3">
-        <summary className="cursor-pointer text-sm font-semibold">Reviewed inputs</summary>
-        <pre className="mt-2 whitespace-pre-wrap wrap-anywhere text-xs text-text-secondary">
-          {JSON.stringify(answers.context, null, 2)}
-        </pre>
-      </details>
-      {summary.items.length > 0 && (
-        <section className="grid gap-2">
-          <h3 className="font-semibold">Readiness checks</h3>
-          <ul className="space-y-2">
-            {summary.items.map((item) => (
-              <li
-                key={item.id}
-                className="rounded-lg border border-border-hairline p-3 text-sm text-text-secondary"
-              >
-                <p className="font-semibold text-text-primary">
-                  {item.scope === "run" ? "Whole run" : moduleName(item.scope)} ·{" "}
-                  {item.outcome.replaceAll("_", " ")}
-                </p>
-                <p>{item.reason}</p>
-                {item.fix && <p>{item.fix}</p>}
-                {needsCheck(item) && (
-                  <label className="mt-2 flex items-center gap-2 font-semibold text-text-primary">
-                    <input
-                      type="checkbox"
-                      checked={accepted.has(item.id)}
-                      disabled={disabled}
-                      onChange={(event) => {
-                        onAccept(item.id, event.target.checked);
-                      }}
-                    />
-                    {item.outcome === "check" ? "I have checked this" : "I accept this limit"}
-                  </label>
-                )}
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
-    </>
-  );
 }
 
 export function StartRun({
@@ -1655,9 +1458,6 @@ function IntakeForm({
         });
         break;
       case "purpose":
-        goTo("confirm");
-        break;
-      case "confirm":
         goTo("context");
         break;
       case "context":
@@ -1821,19 +1621,21 @@ function IntakeForm({
   const synthetic = mode === "synthetic";
   const { met, notMet } = readinessStatus(shownDocs, step, review, checksComplete, approved);
 
-  function acceptReviewItem(id: string, checked: boolean) {
+  function acceptReviewItems(ids: readonly string[], checked: boolean) {
     setAccepted((previouslyAccepted) => {
       const nextAccepted = new Set(previouslyAccepted);
-      if (checked) nextAccepted.add(id);
-      else nextAccepted.delete(id);
+      for (const id of ids) {
+        if (checked) nextAccepted.add(id);
+        else nextAccepted.delete(id);
+      }
       return nextAccepted;
     });
     setApproved(false);
   }
 
-  function editReviewedInputs() {
+  function editReviewedInputs(target: FormStep) {
     setReview(undefined);
-    goTo("documents");
+    goTo(target);
   }
 
   function submitReviewedRun() {
@@ -1925,7 +1727,7 @@ function IntakeForm({
       next={next}
       met={met}
       notMet={notMet}
-      onAccept={acceptReviewItem}
+      onAccept={acceptReviewItems}
       onApprove={setApproved}
       onEdit={editReviewedInputs}
       onSubmit={submitReviewedRun}
@@ -1954,9 +1756,9 @@ type IntakePanelsProps = {
   next: string;
   met: string[];
   notMet: string[];
-  onAccept: (id: string, checked: boolean) => void;
+  onAccept: (ids: readonly string[], checked: boolean) => void;
   onApprove: (value: boolean) => void;
-  onEdit: () => void;
+  onEdit: (step: FormStep) => void;
   onSubmit: () => void;
   onAdvance: (event: SubmitEvent<HTMLFormElement>) => void;
   onPrevious: () => void;
@@ -1992,7 +1794,22 @@ function IntakePanels(props: IntakePanelsProps) {
   return (
     <div className="mt-6 grid min-w-0 items-start gap-6 min-[1041px]:grid-cols-[minmax(0,1fr)_320px]">
       <div className={`min-w-0 ${card}`}>
-        <Stepper step={review ? "start" : step} />
+        <Stepper
+          step={review ? "start" : step}
+          steps={STEPPER_STEPS}
+          onSelect={
+            busy === undefined && !submitUncertain
+              ? (key) => {
+                  onEdit(key as FormStep);
+                }
+              : undefined
+          }
+        />
+        <p className="text-sm text-text-secondary sm:hidden">
+          {review
+            ? `Step ${String(STEP_TOTAL)} of ${String(STEP_TOTAL)} · Review and start`
+            : `Step ${String(FORM_STEP_KEYS.indexOf(step) + 1)} of ${String(STEP_TOTAL)} · ${title}`}
+        </p>
         {error && <ErrorNotice>{error}</ErrorNotice>}
         {review ? (
           <ReviewConfirmation
@@ -2077,9 +1894,9 @@ function ReviewConfirmation({
   capText: string | null;
   capAvailable: boolean;
   synthetic: boolean;
-  onAccept: (id: string, checked: boolean) => void;
+  onAccept: (ids: readonly string[], checked: boolean) => void;
   onApprove: (approved: boolean) => void;
-  onEdit: () => void;
+  onEdit: (step: FormStep) => void;
   onSubmit: () => void;
 }) {
   const submitLabel = submitLabelFor({ busy, synthetic, capText });
@@ -2090,16 +1907,17 @@ function ReviewConfirmation({
     <div className="grid gap-5">
       <div className="grid gap-1">
         <h2 ref={focusStep} tabIndex={-1} className={`${heading} focus:outline-none`}>
-          Start
+          Review and start
         </h2>
         <p className="text-sm text-text-secondary">
           Review the final run details and confirm to start.
         </p>
       </div>
-      <ReviewPlan
+      <ReviewSheet
         review={review}
         accepted={accepted}
         disabled={busy !== undefined || submitUncertain}
+        onEdit={onEdit}
         onAccept={onAccept}
       />
       <label className="flex items-start gap-2 text-sm font-semibold">
@@ -2122,14 +1940,9 @@ function ReviewConfirmation({
         </p>
       </div>
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <Button
-          color="secondary"
-          isDisabled={busy !== undefined || submitUncertain}
-          onPress={onEdit}
-        >
-          Edit inputs
-        </Button>
-        <span className="text-sm text-text-tertiary">Step 5 of 5</span>
+        <span className="text-sm text-text-tertiary">
+          Step {STEP_TOTAL} of {STEP_TOTAL}
+        </span>
         <SubmitConfirmation
           label={submitLabel}
           confirm={confirmation}
@@ -2208,7 +2021,12 @@ function InputStepForm({
       className="grid min-w-0 grid-cols-1 gap-5"
     >
       <div className="grid gap-1">
-        <h2 ref={focusStep} tabIndex={-1} className={`${heading} focus:outline-none`}>
+        <h2
+          key={view.step}
+          ref={focusStep}
+          tabIndex={-1}
+          className={`${heading} focus:outline-none`}
+        >
           {title}
         </h2>
         <p className="text-sm text-text-secondary">{STEP_GUIDANCE[view.step]}</p>
@@ -2228,7 +2046,7 @@ function InputStepForm({
           Previous
         </Button>
         <span className="text-sm text-text-tertiary">
-          Step {Object.keys(FORM_STEPS).indexOf(view.step) + 1} of 5
+          Step {FORM_STEP_KEYS.indexOf(view.step) + 1} of {STEP_TOTAL}
         </span>
         <Button
           type="submit"

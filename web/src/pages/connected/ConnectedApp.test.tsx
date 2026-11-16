@@ -1,6 +1,7 @@
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { ConnectedApp } from "./ConnectedApp";
+import type { Summary } from "./api";
 
 const context = {
   run: { as_of: "", pathway: "credit_snapshot", case_kind: "synthetic", reporting_currency: "USD" },
@@ -33,7 +34,7 @@ const plan = {
 };
 
 function testingFetch(
-  summary: typeof plan = plan,
+  summary: typeof plan & { lookup?: string[]; prior?: Summary["prior"] } = plan,
   submitResponse?: Response | (() => Response),
   overrides: Record<string, unknown> = {},
 ) {
@@ -81,8 +82,9 @@ async function advanceToPurpose() {
 }
 
 function advanceToContext() {
-  fireEvent.click(screen.getByRole("button", { name: "Review inputs" }));
-  fireEvent.click(screen.getByRole("button", { name: "Approve summary" }));
+  const button = screen.getByRole("button", { name: "Continue to context" });
+  button.focus();
+  fireEvent.click(button);
 }
 
 function approve() {
@@ -94,12 +96,39 @@ async function confirmSynthetic(submit: HTMLElement) {
   fireEvent.click(await screen.findByRole("button", { name: "Start synthetic run" }));
 }
 
+async function reviewSheet(summary: Parameters<typeof testingFetch>[0]) {
+  testingFetch(summary);
+  render(<ConnectedApp path="/start" mode="synthetic" />);
+  await review();
+  await screen.findByRole("button", { name: "Submit run" });
+  return screen.getByRole("region", { name: "What will run" });
+}
+
 afterEach(() => {
   cleanup();
   vi.unstubAllGlobals();
 });
 
 describe("connected run start", () => {
+  it("has four steps and no approval before the review", async () => {
+    testingFetch();
+    render(<ConnectedApp path="/start" mode="synthetic" />);
+    await fillInputs();
+    const steps = within(screen.getByRole("list", { name: "Steps in this run" }));
+    expect(steps.getAllByRole("listitem")).toHaveLength(4);
+    expect(screen.getByText("Step 1 of 4 · Documents")).toBeInTheDocument();
+    await advanceToPurpose();
+    expect(screen.queryByRole("button", { name: "Approve summary" })).toBeNull();
+    advanceToContext();
+    expect(screen.getByRole("heading", { name: "More context" })).toHaveFocus();
+    expect(screen.queryByRole("button", { name: "Approve summary" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Go back to More context" })).toBeNull();
+    const back = screen.getByRole("button", { name: "Go back to Documents" });
+    back.focus();
+    fireEvent.click(back);
+    expect(screen.getByRole("heading", { name: "Documents" })).toHaveFocus();
+  });
+
   it("accepts a drop, displays actual reading progress, and keeps confirmation local", async () => {
     const fetchMock = testingFetch();
     const { container } = render(<ConnectedApp path="/start" mode="synthetic" />);
@@ -240,6 +269,8 @@ describe("connected run start", () => {
     render(<ConnectedApp path="/start" mode="synthetic" navigate={navigate} />);
     await review();
     const submit = await screen.findByRole("button", { name: "Submit run" });
+    expect(screen.getByText("Step 4 of 4", { exact: true })).toBeInTheDocument();
+    expect(screen.queryByText(/of 5/)).toBeNull();
     const paths = fetchMock.mock.calls.map(([path]) => path);
     expect(paths).toEqual([
       "/connected/context",
@@ -285,8 +316,7 @@ describe("connected run start", () => {
     render(<ConnectedApp path="/start" mode="synthetic" />);
     await fillInputs();
     await advanceToPurpose();
-    fireEvent.click(screen.getByRole("button", { name: "Review inputs" }));
-    fireEvent.click(screen.getByRole("button", { name: "Approve summary" }));
+    advanceToContext();
     const listed = screen.getByRole("checkbox", { name: "Listed equity" });
     fireEvent.click(listed);
     fireEvent.change(screen.getByLabelText("Ticker"), { target: { value: "ABC" } });
@@ -340,7 +370,7 @@ describe("connected run start", () => {
     approve();
     await confirmSynthetic(submit);
     expect(await screen.findByRole("alert")).toHaveTextContent("Retrying Submit run is safe");
-    expect(screen.getByRole("button", { name: "Edit inputs" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Edit issuer and documents" })).toBeDisabled();
     await confirmSynthetic(submit);
     await vi.waitFor(() => {
       expect(navigate).toHaveBeenCalledWith("/run/test-run");
@@ -379,6 +409,48 @@ describe("connected run start", () => {
     expect(fetchMock.mock.calls.filter(([, init]) => init?.body === file)).toHaveLength(2);
   });
 
+  it("reviews what will run in plain language with an edit link per block", async () => {
+    const sheet = await reviewSheet({
+      ...plan,
+      modules: ["CP-0", "CP-4"],
+      lookup: ["Lookup:   off: synthetic case (default); --web-lookup on forces it"],
+      prior: { id: "20261116-083145-01", as_of: "2025-03-31", pathway: "credit_snapshot" },
+      changes: "CP-8 compares with the credit_snapshot run (20261116-083145-01)",
+    });
+    expect(sheet).toHaveTextContent("Legal & covenants");
+    expect(sheet).toHaveTextContent(
+      "Compared with the Full credit assessment run as of 2025-03-31",
+    );
+    expect(sheet).toHaveTextContent("off: synthetic case (default)");
+    expect(sheet).not.toHaveTextContent(/CP-\d|--web-lookup|20261116-083145-01/);
+    expect(screen.queryByText("Reviewed inputs")).toBeNull();
+    expect(screen.queryByText("Turns per module")).toBeNull();
+    expect(screen.queryByText("Model and effort")).toBeNull();
+    expect(screen.queryByRole("button", { name: "Edit inputs" })).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Edit purpose and modules" }));
+    expect(screen.getByRole("heading", { name: "Purpose" })).toHaveFocus();
+  });
+
+  it("tells the analyst the earlier run used earlier methods, without its id", async () => {
+    const sheet = await reviewSheet({
+      ...plan,
+      prior: { id: "20261116-083145-01", as_of: "2025-03-31", pathway: "credit_snapshot" },
+      changes:
+        "CP-8 compares with the credit_snapshot run as of 2025-03-31 (20261116-083145-01; earlier format, earlier methods)",
+    });
+    expect(sheet).toHaveTextContent("earlier format, earlier methods");
+    expect(sheet).not.toHaveTextContent("20261116-083145-01");
+  });
+
+  it("keeps the id of an unusable earlier run out of the review", async () => {
+    const sheet = await reviewSheet({
+      ...plan,
+      changes: "first run (not used: 20261116-083145-01: different pathway)",
+    });
+    expect(sheet).toHaveTextContent("An earlier run exists but could not be used for comparison.");
+    expect(sheet).not.toHaveTextContent(/20261116-083145-01|not used/);
+  });
+
   it("enforces primary facility input and forwards the reviewed Advanced choices", async () => {
     const fetchMock = testingFetch();
     render(<ConnectedApp path="/start" mode="synthetic" />);
@@ -404,6 +476,7 @@ describe("connected run start", () => {
     fireEvent.change(fields, { target: { value: '[{"facility_id":"TL-B"}]' } });
     fireEvent.click(reviewRun);
     await screen.findByRole("button", { name: "Submit run" });
+    expect(screen.getByText("Model and effort")).toBeInTheDocument();
     const body = fetchMock.mock.calls.find(([path]) => path.endsWith("/summary"))?.[1]?.body;
     expect(JSON.parse(typeof body === "string" ? body : "null")).toMatchObject({
       context: { run: { run_type: "primary" }, deal_terms: [{ facility_id: "TL-B" }] },
@@ -573,7 +646,7 @@ describe("connected run start", () => {
     expect(screen.getByRole("checkbox", { name: /Approve:/ })).toBeDisabled();
     fireEvent.click(limit);
     expect(screen.getByRole("checkbox", { name: /Approve:/ })).toBeEnabled();
-    fireEvent.click(screen.getByRole("button", { name: "Edit inputs" }));
+    fireEvent.click(screen.getByRole("button", { name: "Edit issuer and documents" }));
     fireEvent.change(screen.getByLabelText("As-of date"), { target: { value: "2026-09-30" } });
     await advanceToPurpose();
     advanceToContext();
