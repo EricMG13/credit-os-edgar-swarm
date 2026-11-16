@@ -1,3 +1,5 @@
+import { SourceFileLinks } from "@/pages/library/parts/SourceFileLinks";
+import { sourceCitationNote, sourceFileLinks } from "../sourceFiles";
 import type { ReactNode } from "react";
 import { DownloadButton } from "@/pages/library/parts/DownloadButton";
 import { DerivationTree } from "@/pages/library/parts/DerivationTree";
@@ -116,12 +118,15 @@ function EvidenceLocation({
                       {(chip.file || chip.source) && (
                         <p className="wrap-anywhere">{chip.file ?? chip.source}</p>
                       )}
-                      {chip.reason && <p>{chip.reason}</p>}
-                      {(chip.quote || chip.excerpt) && (
+                      {sourceCitationNote(chip) && <p>{sourceCitationNote(chip)}</p>}
+                      {chip.excerpt && (
                         <blockquote className="mt-1 border-l-2 border-border-hairline pl-3">
-                          {chip.quote ?? chip.excerpt}
+                          {chip.excerpt}
                         </blockquote>
                       )}
+                      <SourceFileLinks
+                        links={sourceFileLinks(entry.output.id.split("/")[0] ?? "", chip)}
+                      />
                       {chip.sha256 && (
                         <code className="mt-1 block wrap-anywhere">{chip.sha256}</code>
                       )}
@@ -392,7 +397,9 @@ function EvidenceSummary({
 function EvidenceSources({
   sourceGroups,
   module,
+  folder,
 }: {
+  folder: string;
   sourceGroups: SourceGroup[];
   module?: string;
 }) {
@@ -426,6 +433,8 @@ function EvidenceSources({
                       .filter(Boolean)
                       .join(" · ")}
                   </p>
+                  <SourceFileLinks links={sourceFileLinks(folder, source)} />
+                  {source.sourceWarning && <p>{source.sourceWarning}</p>}
                   {source.sha256 && (
                     <code className="wrap-anywhere text-text-tertiary">{source.sha256}</code>
                   )}
@@ -603,7 +612,9 @@ export function ReportEvidence({
           </p>
         </section>
       )}
-      {tab === "Sources" && <EvidenceSources sourceGroups={sourceGroups} module={module} />}
+      {tab === "Sources" && (
+        <EvidenceSources sourceGroups={sourceGroups} module={module} folder={run.folder} />
+      )}
       {(tab === "Summary" || (tab === "Trace" && !entry && !invalidTraceAddress)) && (
         <EvidenceHandoffs entries={entries} module={module} run={run} />
       )}

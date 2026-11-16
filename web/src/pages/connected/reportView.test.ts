@@ -190,3 +190,49 @@ describe("reader data fidelity", () => {
     ).toBe("Downside shock");
   });
 });
+
+it("uses retained page text rather than a claim-only chip as the trace excerpt", () => {
+  const section = table(
+    "Chart data: debt",
+    ["Period", "Debt", "Source"],
+    [["FY2026", "776", "Filing"]],
+    20,
+  );
+  const entry = foundation([section], {
+    run: "case",
+    id: "case/foundation",
+    sha256: "a".repeat(64),
+  });
+  const sha256 = "b".repeat(64);
+  const href = `/connected/sources/case/${sha256}/filing.txt`;
+  const missing = {
+    source: "missing.txt",
+    quote: "776",
+    excerpt: null,
+    reason: "page not in source text",
+  };
+  const snapshot = {
+    chips: {
+      "case/foundation:22": [
+        missing,
+        {
+          file: "filing.txt",
+          source: "filing.txt",
+          quote: "776",
+          excerpt: "Interest expense was 776 in the retained filing.",
+          sha256,
+          href,
+          pageHref: `${href}?page=2`,
+        },
+      ],
+    },
+  } as unknown as Snapshot;
+  const trace = traceForLine(snapshot, entry, 0, 22);
+  expect(trace?.excerpt?.quote).toBe("Interest expense was 776 in the retained filing.");
+  expect(trace?.sourceLinks).toEqual([
+    { label: "Open cited source page 2: filing.txt", href: `${href}?page=2` },
+    { label: "Open source file: filing.txt", href },
+  ]);
+  snapshot.chips["case/foundation:22"] = [missing as Snapshot["chips"][string][number]];
+  expect(traceForLine(snapshot, entry, 0, 22)?.excerpt).toBeNull();
+});

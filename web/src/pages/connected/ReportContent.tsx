@@ -1,3 +1,4 @@
+import { sourceCitationNote, sourceFileLinks } from "./sourceFiles";
 import { useState, type ReactNode } from "react";
 import { BottomLine } from "../library/parts/BottomLine";
 import { DownloadButton } from "../library/parts/DownloadButton";
@@ -136,7 +137,7 @@ function buildTrace(
     note,
     children: [],
   });
-  const excerpt = chips.find((chip) => chip.quote || chip.excerpt);
+  const excerpt = chips.find((chip) => chip.excerpt);
   return {
     title: `Sources for ${section.heading}`,
     heading: section.heading,
@@ -152,7 +153,7 @@ function buildTrace(
         ...calculationNodes(entry, basis ?? "", line),
         ...chips.flatMap((chip) => {
           const source = chip.source ?? chip.label;
-          return source ? [node(source, "", chip.reason)] : [];
+          return source ? [node(source, "", sourceCitationNote(chip))] : [];
         }),
         ...(!basis && !chips.length
           ? [
@@ -168,12 +169,19 @@ function buildTrace(
     },
     excerpt: excerpt
       ? {
-          quote: excerpt.quote ?? excerpt.excerpt ?? "",
+          quote: excerpt.excerpt ?? "",
           source: excerpt.source ?? excerpt.label ?? "Source name unavailable",
         }
       : null,
     qualification: null,
     evidenceItem: target,
+    sourceLinks: [
+      ...new Map(
+        chips
+          .flatMap((chip) => sourceFileLinks(entry.output.id.split("/")[0] ?? "", chip))
+          .map((link) => [link.href, link]),
+      ).values(),
+    ],
   };
 }
 

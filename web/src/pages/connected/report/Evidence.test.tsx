@@ -294,3 +294,28 @@ it("does not admit a stale evidence address or display the handoff list for it",
   expect(screen.queryByRole("heading", { name: "Handoffs" })).toBeNull();
   expect(screen.queryByRole("heading", { name: "Run evidence" })).toBeNull();
 });
+
+it("opens only verified retained files from the source inventory", () => {
+  const sha256 = "d".repeat(64);
+  const href = `/connected/sources/case/${sha256}/Issuer.txt`;
+  renderEvidence([], "sources", {
+    ...emptyEvidence,
+    sources: [
+      { name: "Issuer.txt", type: "txt", documentDate: null, readBy: [], sha256, href },
+      {
+        name: "Missing.txt",
+        type: "txt",
+        documentDate: null,
+        readBy: [],
+        sha256,
+        sourceWarning: "Retained source is unavailable",
+      },
+    ],
+  });
+  expect(screen.getByRole("link", { name: "Open source file: Issuer.txt" })).toHaveAttribute(
+    "href",
+    href,
+  );
+  expect(screen.queryByRole("link", { name: "Open source file: Missing.txt" })).toBeNull();
+  expect(screen.getByText("Retained source is unavailable")).toBeVisible();
+});

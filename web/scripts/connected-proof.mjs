@@ -999,6 +999,27 @@ async function checkForecastRunCharts(report, page, sourceHref) {
   await report.getByRole("heading", { name: "Financial foundation", exact: true }).waitFor();
 }
 
+async function checkRetainedSourceFile(report, page) {
+  const source = report.getByRole("link", {
+    name: "Open source file: northbridge-filing.txt",
+    exact: true,
+  });
+  const href = await source.getAttribute("href");
+  assert.ok(href);
+  const opened = page.waitForEvent("popup");
+  await source.click();
+  const sourcePage = await opened;
+  try {
+    await sourcePage.waitForLoadState();
+    const expected = await readFile(path.join(project, "proof", "northbridge-filing.txt"), "utf8");
+    assert.equal(await sourcePage.locator("pre").textContent(), expected);
+    await sourcePage.goto(new URL(`${href}?page=1`, page.url()).href);
+    assert.equal(await sourcePage.locator("pre").textContent(), expected);
+  } finally {
+    await sourcePage.close();
+  }
+}
+
 async function checkReportEvidence(report, page, channel) {
   await report
     .getByRole("navigation", { name: "Report sections" })
@@ -1012,6 +1033,7 @@ async function checkReportEvidence(report, page, channel) {
   const evidence = report.getByRole("navigation", { name: "Evidence sections" });
   await evidence.getByRole("link", { name: "Sources", exact: true }).click();
   await report.getByRole("heading", { name: "Sources", exact: true }).waitFor();
+  await checkRetainedSourceFile(report, page);
   await evidence.getByRole("link", { name: "Summary", exact: true }).click();
   await page.reload();
   await report.getByRole("heading", { name: "Handoffs", exact: true }).waitFor();
@@ -1145,6 +1167,7 @@ async function checkBrowserRun(browser, service, workspace, channel, brand) {
       "signed liquidity bridge and unfunded refinancing row",
       "report history",
       "evidence reload and handoff",
+      "hash-attested original source file and exact retained page open from Evidence",
       "exact Overview passage, module chart row and Forecast inputs",
       "Evidence Record metadata, module timings, synthetic responses and hashes",
       "paired Changes fixture links only to its matched handoff row",

@@ -115,6 +115,7 @@ export type Trace = {
   /** The qualification sentence; `null` when the figure carries none. */
   qualification: string | null;
   evidenceItem: string;
+  sourceLinks?: readonly { label: string; href: string }[];
 };
 
 /** What the frame of a run page draws above its body. */

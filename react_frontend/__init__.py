@@ -16,7 +16,7 @@ from deploy_workflow.inbox.layout import Layout
 from deploy_workflow.inbox.scheduler import Scheduler, Settings
 from deploy_workflow.run_start import service
 
-from . import admission, artifacts, portfolio, run_activity
+from . import admission, artifacts, portfolio, run_activity, sources
 
 PROJECT = Path(__file__).resolve().parent.parent
 RUN_ID = re.compile(r"[0-9A-Za-z][0-9A-Za-z._-]{0,79}")
@@ -67,7 +67,7 @@ def _visible_publication(layout: Layout) -> tuple[bytes, dict[str, Any] | None]:
     payload, snapshot = _read_publication(layout.engine / "library" / "data.js")
     if snapshot is None:
         return payload, None
-    visible = admission.admitted(snapshot, layout)
+    visible = sources.enrich(admission.admitted(snapshot, layout), layout.runs)
     return json.dumps(visible, ensure_ascii=False).encode("utf-8"), visible
 
 
@@ -112,15 +112,50 @@ def _asset_path(dist: Path, path: str) -> tuple[Path, str, bool] | None:
     return None
 
 
-def _handler(dist: Path, page: bytes, context: dict[str, Any]) -> type[service.Handler]:
+def _app_page(path: str) -> bool:
+    return bool(
+        path in {"/", "/index.html", "/start"} or RUN_PAGE.fullmatch(path) or _report_page(path)
+    )
+
+
+def _report_request(path: str) -> tuple[bool, str]:
+    listing = path == "/connected/reports"
+    run_id = unquote(path.removeprefix(REPORT_PREFIX))
+    if not listing and not _valid_report_folder(run_id):
+        raise http_base.refuse(404, "unknown report")
+    return listing, run_id
+
+
+def _report_response(
+    entries: dict[str, dict[str, str]], listing: bool, run_id: str
+) -> http_base.Reply:
+    if listing:
+        return http_base.Reply(200, {"reports": list(entries.values())})
+    if run_id not in entries:
+        return http_base.refuse(404, "unknown report")
+    return http_base.Reply(200, entries[run_id])
+
+
+def _require_writable(read_only: bool) -> None:
+    if read_only:
+        raise http_base.refuse(405, "read-only retained preview")
+
+
+def _handler(
+    dist: Path, page: bytes, context: dict[str, Any], *, read_only: bool = False
+) -> type[service.Handler]:
     class Handler(service.Handler):
+        def _post(self, url: SplitResult) -> None:
+            _require_writable(read_only)
+            super()._post(url)
+
+        def _delete(self, url: SplitResult) -> None:
+            _require_writable(read_only)
+            super()._delete(url)
+
         def _get(self, url: SplitResult) -> None:
             path = url.path
-            if (
-                path in {"/", "/index.html", "/start"}
-                or RUN_PAGE.fullmatch(path)
-                or _report_page(path)
-            ):
+            if _app_page(path):
                 raise http_base.Reply(
                     200,
                     page,
@@ -143,6 +178,9 @@ def _handler(dist: Path, page: bytes, context: dict[str, Any]) -> type[service.H
                 raise http_base.Reply(
                     200, payload, {"Content-Type": http_base.JSON, "Cache-Control": "no-store"}
                 )
+            if path.startswith(sources.PREFIX):
+                _, snapshot = self._publication()
+                raise sources.reply(url, self._layout.runs, snapshot)
             if match := artifacts.GRAPH.fullmatch(path):
                 _, snapshot = self._publication()
                 raise artifacts.reply(match, self._layout.engine / "runs", REPORT_FOLDER, snapshot)
@@ -161,17 +199,10 @@ def _handler(dist: Path, page: bytes, context: dict[str, Any]) -> type[service.H
             return _visible_publication(self._layout)
 
         def _reports(self, path: str) -> None:
-            listing = path == "/connected/reports"
-            run_id = unquote(path.removeprefix(REPORT_PREFIX))
-            if not listing and not _valid_report_folder(run_id):
-                raise http_base.refuse(404, "unknown report")
+            listing, run_id = _report_request(path)
             _, snapshot = self._publication()
             entries = _report_entries(snapshot)
-            if listing:
-                raise http_base.Reply(200, {"reports": list(entries.values())})
-            if run_id not in entries:
-                raise http_base.refuse(404, "unknown report")
-            raise http_base.Reply(200, entries[run_id])
+            raise _report_response(entries, listing, run_id)
 
     return Handler
 
@@ -185,6 +216,7 @@ def make_server(  # noqa: PLR0913 - explicit launcher, mode and server options
     launcher: tuple[str, ...] | None = None,
     synthetic: bool = False,
     signal_url: str = "",
+    read_only: bool = False,
 ) -> Iterator[service._Server]:
     """Hold the upstream scheduler for the lifetime of the React HTTP server."""
     if (synthetic and not launcher) or (not synthetic and launcher is not None):
@@ -203,7 +235,7 @@ def make_server(  # noqa: PLR0913 - explicit launcher, mode and server options
     scheduler = Scheduler(settings)
     try:
         with service.make_server(scheduler, "127.0.0.1", port, signal_link) as server:
-            server.RequestHandlerClass = _handler(dist, page, context)
+            server.RequestHandlerClass = _handler(dist, page, context, read_only=read_only)
             assert isinstance(server, service._Server)
             yield server
     finally:

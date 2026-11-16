@@ -26,6 +26,8 @@ type Output = {
 export type OutputEntry = { output: Output; sections: Section[]; selected: boolean };
 type Link = { href: string; label: string };
 type Source = {
+  href?: string | null;
+  sourceWarning?: string | null;
   name: string;
   type: string | null;
   documentDate: string | null;
@@ -33,6 +35,9 @@ type Source = {
   sha256: string | null;
 };
 type Chip = {
+  quote_found?: boolean | null;
+  href?: string | null;
+  pageHref?: string | null;
   label: string | null;
   quote: string | null;
   excerpt: string | null;
