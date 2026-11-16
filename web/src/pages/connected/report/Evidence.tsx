@@ -112,27 +112,7 @@ function EvidenceLocation({
               {chips.length > 0 && (
                 <ul className="grid gap-2">
                   {chips.map((chip, chipIndex) => (
-                    <li
-                      key={chipIndex}
-                      className="rounded-ds-sm border border-border-hairline p-3 text-sm text-text-secondary"
-                    >
-                      <p className="font-medium text-text-primary">{chip.label}</p>
-                      {(chip.file || chip.source) && (
-                        <p className="wrap-anywhere">{chip.file ?? chip.source}</p>
-                      )}
-                      {sourceCitationNote(chip) && <p>{sourceCitationNote(chip)}</p>}
-                      {chip.excerpt && (
-                        <blockquote className="mt-1 border-l-2 border-border-hairline pl-3">
-                          {chip.excerpt}
-                        </blockquote>
-                      )}
-                      <SourceFileLinks
-                        links={sourceFileLinks(entry.output.id.split("/")[0] ?? "", chip)}
-                      />
-                      {chip.sha256 && (
-                        <code className="mt-1 block wrap-anywhere">{chip.sha256}</code>
-                      )}
-                    </li>
+                    <EvidenceCitation key={chipIndex} chip={chip} outputId={entry.output.id} />
                   ))}
                 </ul>
               )}
@@ -143,6 +123,30 @@ function EvidenceLocation({
     ))
   ) : (
     <p className="text-text-secondary">This location is unavailable in the published handoff.</p>
+  );
+}
+
+function EvidenceCitation({
+  chip,
+  outputId,
+}: {
+  chip: Snapshot["chips"][string][number];
+  outputId: string;
+}) {
+  const note = sourceCitationNote(chip);
+  return (
+    <li className="rounded-ds-sm border border-border-hairline p-3 text-sm text-text-secondary">
+      <p className="font-medium text-text-primary">{chip.label}</p>
+      {(chip.file || chip.source) && <p className="wrap-anywhere">{chip.file ?? chip.source}</p>}
+      {note && <p>{note}</p>}
+      {chip.excerpt && (
+        <blockquote className="mt-1 border-l-2 border-border-hairline pl-3">
+          {chip.excerpt}
+        </blockquote>
+      )}
+      <SourceFileLinks links={sourceFileLinks(outputId.split("/")[0] ?? "", chip)} />
+      {chip.sha256 && <code className="mt-1 block wrap-anywhere">{chip.sha256}</code>}
+    </li>
   );
 }
 

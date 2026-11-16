@@ -123,7 +123,7 @@ export type LiveRun = Pick<Run, "id" | "issuer_name" | "pathway" | "reason" | "m
 };
 export type Activity = { updated: string; held: string; runs: LiveRun[] };
 
-export type ReportEntry = { id: string; issuer: string; asOf: string; pathway: string };
+type ReportEntry = { id: string; issuer: string; asOf: string; pathway: string };
 export class RequestError extends Error {
   constructor(
     message: string,
