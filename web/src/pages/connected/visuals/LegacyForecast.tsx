@@ -99,20 +99,19 @@ function SelectedForecastTable({
 
 const FORECAST_LINES = ["Revenue", "Adj EBITDA", "Closing cash", "Closing debt"];
 
-const axisNumber = new Intl.NumberFormat("en-US", { maximumFractionDigits: 12 });
+const axisNumber = new Intl.NumberFormat("en-US", { maximumFractionDigits: 6 });
 const smallAxisNumber = new Intl.NumberFormat("en-US", {
   notation: "scientific",
   maximumFractionDigits: 6,
 });
 
-function forecastAxisLabel(value: number) {
-  return value !== 0 && Math.abs(value) < 0.01
-    ? smallAxisNumber.format(value)
-    : axisNumber.format(value);
-}
-
+/** Plain decimals while the step needs at most 6 decimals; otherwise scientific for all but zero. */
 function forecastTicks(values: (number | null)[], zero = false) {
-  const formatted = ticks(values, zero, forecastAxisLabel);
+  const plainTicks = ticks(values, zero, (value) => axisNumber.format(value));
+  const exact = plainTicks.every(({ value }) => Number(value.toFixed(6)) === value);
+  const formatted = exact
+    ? plainTicks
+    : ticks(values, zero, (value) => (value === 0 ? "0" : smallAxisNumber.format(value)));
   // Close but distinct values must not acquire identical labels through rounding.
   return new Set(formatted.map(({ label }) => label)).size === formatted.length
     ? formatted

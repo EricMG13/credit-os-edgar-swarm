@@ -33,13 +33,14 @@ export function chartDrawsVerbatim(body: string) {
 /**
  * Lines of the text blocks that the module page's charts draw beside themselves
  * (`ChartQualifications`), word for word. Only a published chart with a title, a table line, a
- * drawable table and no gap reaches `ChartQualifications`; a gap draws none.
+ * drawable table and no gap reason reaches `ChartQualifications`, whether listed in `charts` or
+ * `chartGaps`; a recorded gap reason draws none.
  */
 export function drawnQualificationLines(output: unknown, sections: unknown): Set<number> {
   const published = record(output);
   const tables = publishedTables(sections);
   const lines = new Set<number>();
-  for (const key of ["charts"]) {
+  for (const key of ["charts", "chartGaps"]) {
     for (const raw of items(published[key])) {
       const descriptor = record(raw);
       const title = word(descriptor.title ?? descriptor.lane ?? descriptor.name);

@@ -26,7 +26,9 @@ const LABEL_CHAR_PX = 7;
 const LABEL_MAX_PX = 224;
 export const AXIS_MIN_PX = 600;
 export const LANE_GRID = "grid min-w-216 gap-3 p-4 pr-60";
-export const LANE_TRACK = "relative mx-1 h-4";
+/** The side margin of the track and of the date labels above it; both must use it. */
+export const LANE_MARGIN = "mx-1";
+export const LANE_TRACK = `relative ${LANE_MARGIN} h-4`;
 
 type Span = { from: number; to: number };
 
@@ -137,7 +139,7 @@ export function eventLane(table: SourceTable, rowDetail?: (index: number) => Rea
       <div className="overflow-x-auto rounded-ds-md border border-border-hairline">
         <div className={LANE_GRID} role="group" aria-label="Event lanes on a shared date axis">
           <div
-            className="mx-1 flex flex-wrap justify-between gap-x-1 text-small tabular-nums text-text-secondary"
+            className={`${LANE_MARGIN} flex flex-wrap justify-between gap-x-1 text-small tabular-nums text-text-secondary`}
             role="group"
             aria-label="Date axis"
           >
@@ -178,7 +180,7 @@ export function eventLane(table: SourceTable, rowDetail?: (index: number) => Rea
                         />
                       ))}
                     </div>
-                    <div className="mx-1 grid">
+                    <div className={`${LANE_MARGIN} grid`}>
                       {laneEvents.map(
                         ({
                           index,

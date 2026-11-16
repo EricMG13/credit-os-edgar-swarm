@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { cleanup, render, screen } from "@testing-library/react";
 import { expect, it, vi } from "vitest";
 import { LegacyForecast } from "./LegacyForecast";
 
@@ -71,11 +71,11 @@ it("formats Caesars-scale axes without altering series or recorded table precisi
 
 it("keeps zero and small signed axis values distinct", () => {
   expect(draw(["-0.0002", "0.0002"]).map((tick) => tick.label)).toEqual([
-    "-2E-4",
-    "-1E-4",
+    "-0.0002",
+    "-0.0001",
     "0",
-    "1E-4",
-    "2E-4",
+    "0.0001",
+    "0.0002",
   ]);
 });
 
@@ -89,7 +89,7 @@ it("starts a positive axis at zero rather than at the data minimum", () => {
 it("does not merge distinct ticks through display rounding", () => {
   const ticks = draw(["0.005", "0.0125"]);
   expect(new Set(ticks.map((tick) => tick.label)).size).toBe(ticks.length);
-  expect(ticks.map((tick) => tick.label)).toContain("7.5E-3");
+  expect(ticks.map((tick) => tick.label)).toContain("0.0075");
 });
 
 it("omits chart captions when the handoff has no units", () => {
@@ -108,4 +108,29 @@ it.each([
   for (const tick of draw([low, high])) {
     expect(Number(tick.label.replaceAll(",", ""))).toBe(tick.value);
   }
+});
+
+const labelsFor = (values: string[]) => {
+  draw(values);
+  const out = screen.getByLabelText("Axis labels").textContent;
+  return (JSON.parse(out) as { label: string }[]).map((tick) => tick.label);
+};
+
+it("labels small forecast axes in plain decimals", () => {
+  expect(labelsFor(["0.005", "0.0125"])).toEqual([
+    "0",
+    "0.0025",
+    "0.005",
+    "0.0075",
+    "0.01",
+    "0.0125",
+  ]);
+  cleanup();
+  expect(labelsFor(["0.009", "0.024"])).toEqual(["0", "0.005", "0.01", "0.015", "0.02", "0.025"]);
+  cleanup();
+  expect(labelsFor(["-0.02", "-0.001"])).toEqual(["-0.02", "-0.015", "-0.01", "-0.005", "0"]);
+  cleanup();
+  for (const label of labelsFor(["2180", "12148"])) expect(label).toMatch(/^\d{1,3}(,\d{3})*$/u);
+  cleanup();
+  expect(labelsFor(["0.02", "0.12"])).toEqual(["0", "0.025", "0.05", "0.075", "0.1", "0.125"]);
 });

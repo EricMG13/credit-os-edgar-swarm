@@ -120,6 +120,14 @@ describe("drawing sections leave no handoff scaffolding", () => {
     expect(screen.getAllByText("GAP-SIDE-TEXT")).toHaveLength(1);
   });
 
+  it("draws a chartGaps descriptor with no gap reason once, like a chart", () => {
+    const entry = entryOf("CP-1", [drawing("Chart data: nogap", 80, ["EMPTY-GAP-TEXT"])], {
+      chartGaps: [{ title: "No reason", table: 81, unit: "x", columns: [1], gap: "" }],
+    });
+    page(entry);
+    expect(screen.getAllByText("EMPTY-GAP-TEXT")).toHaveLength(1);
+  });
+
   it("keeps a qualification naming another module word for word", () => {
     const text = "Cover is shown before the CP-2 adjustment CROSS-TEXT.";
     const entry = entryOf("CP-1", [drawing("Chart data: cross", 70, [text])], {

@@ -6,6 +6,7 @@ import {
   EVENT_HEADERS,
   eventLane,
   LANE_GRID,
+  LANE_MARGIN,
   LANE_TRACK,
 } from "./EventLane";
 
@@ -102,4 +103,18 @@ it("does not let a capped label overlap an event that starts inside it at the mi
   render(eventLane({ line: 0, headers: EVENT_HEADERS, rows }));
   // B starts at 36% of the axis; a 224px label is 37.3% of a 600px axis, so B needs its own lane.
   expect(document.querySelectorAll("[data-event-lane]")).toHaveLength(2);
+});
+
+it("draws the track and both label containers with the one shared margin", () => {
+  const day = (n: number) =>
+    new Date(Date.UTC(2000, 0, 1) + n * 86_400_000).toISOString().slice(0, 10);
+  render(
+    eventLane({ line: 0, headers: EVENT_HEADERS, rows: [row(day(0), "A"), row(day(100), "B")] }),
+  );
+  const margin = (el: Element | null) =>
+    /(?:^|\s)mx-\d+(?:\s|$)/u.exec(el?.className ?? "")?.[0].trim();
+  expect(margin(document.querySelector("[aria-label='Date axis']"))).toBe(LANE_MARGIN);
+  expect(margin(document.querySelector("[data-event-lane] > div"))).toBe(LANE_MARGIN);
+  expect(LANE_TRACK.split(" ")).toContain(LANE_MARGIN);
+  expect(margin(document.querySelector("[data-event-lane] .relative"))).toBe(LANE_MARGIN);
 });
