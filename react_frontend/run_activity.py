@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import json
+import os
+import re
 from datetime import UTC, datetime
 from decimal import Decimal, InvalidOperation
 from pathlib import Path
@@ -22,6 +24,8 @@ _RUN_EVENTS = frozenset(
     {"delivery_started", "delivered", "stopped", "changes_not_produced", "model_not_published"}
 )
 _FEED_LIMIT = 80
+_ENDED = ("failed", "capped", "rejected", "interrupted")
+_ENDED_SHOWN = 20
 _PUBLISHED = "window.RUN_ACTIVITY="  # how deploy_workflow.inbox.activity.write opens the file
 _EXECUTIONS = frozenset({"host-session", "retained-response-replay", "synthetic", "live-provider"})
 
@@ -127,9 +131,37 @@ def _held(layout: Layout) -> str:
     return held if isinstance(held, str) else ""
 
 
+def _strip_root(root: str, sep: str, reason: str) -> str:
+    """Remove ``root`` plus a separator where it starts a path, in plain and backslash-doubled form.
+
+    A path starts at the beginning of the text or after whitespace, a quote, ``(``, ``[``, ``:`` or
+    ``=``; a longer path that merely holds the root, or a sibling folder sharing its prefix, stays.
+    """
+    if not root.rstrip(sep):
+        return reason
+    prefix = root + sep
+    for form in {prefix, prefix.replace("\\", "\\\\")}:
+        reason = re.sub(rf"(^|[\s'\"(\[:=]){re.escape(form)}", r"\1", reason)
+    return reason
+
+
+def _shown(layout: Layout, reason: str) -> str:
+    """A reason with the service's own root folder removed, leaving the path relative to it."""
+    return _strip_root(str(layout.root.resolve()), os.sep, reason)
+
+
 def listing(layout: Layout) -> http_base.Reply:
-    """The runs that are running or waiting. Spend, folders and file names are not sent."""
-    records = [item for item in runs.load_all(layout) if item.status in ("running", "queued")]
+    """The runs that are running or waiting, and the latest that ended without a report.
+
+    Spend, run folders and absolute paths under the service root are not sent. A reason is sent as
+    stored with the root prefix removed, so a file name under the root can appear in it.
+    """
+    saved = runs.load_all(layout)
+    records = [item for item in saved if item.status in ("running", "queued")]
+    every_ended = [item for item in saved if item.status in _ENDED]
+    ended = sorted(
+        every_ended, key=lambda item: (item.ended_at or item.claimed_at, item.id), reverse=True
+    )[:_ENDED_SHOWN]
     snapshot = activity.snapshot(layout, records, now=datetime.now(UTC), held=_held(layout))
     root = layout.runs.resolve()
     return http_base.Reply(
@@ -143,7 +175,7 @@ def listing(layout: Layout) -> http_base.Reply:
                     "issuer_name": shown["issuer_name"],
                     "pathway": shown["pathway"],
                     "status": shown["status"],
-                    "reason": shown["reason"],
+                    "reason": _shown(layout, shown["reason"]),
                     "submitted_by": shown["submitted_by"],
                     "started_at": shown["started_at"],
                     "name_differs": shown["name_differs"],
@@ -156,6 +188,19 @@ def listing(layout: Layout) -> http_base.Reply:
                 }
                 for shown in snapshot["runs"]
             ],
+            "ended": [
+                {
+                    "id": item.id,
+                    "issuer_name": item.issuer_name,
+                    "pathway": item.pathway,
+                    "status": item.status,
+                    "reason": _shown(layout, item.reason),
+                    "ended_at": item.ended_at,
+                    "submitted_by": item.submitted_by,
+                }
+                for item in ended
+            ],
+            "ended_total": len(every_ended),
         },
         {"Cache-Control": "no-store"},
     )
@@ -183,7 +228,7 @@ def reply(layout: Layout, run_id: str) -> http_base.Reply:
             "as_of": record.as_of,
             "pathway": record.pathway,
             "status": record.status,
-            "reason": record.reason,
+            "reason": _shown(layout, record.reason),
             "claimed_at": record.claimed_at,
             "started_at": record.started_at,
             "ended_at": record.ended_at,

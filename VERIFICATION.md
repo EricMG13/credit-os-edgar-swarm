@@ -27,6 +27,38 @@ Scope: presentation of the connected issuer report (`web/src/pages/connected/`, 
 - Known: `ReportLibrary.wayfinding.test.tsx` and `ConnectedApp.test.tsx` each timed out once in a full run under load and pass alone; the first reproduces on unchanged code. Parked Low/Info: `(150)`, `+10`, `150*` with a money unit lose the unit (no upstream source writes these); outlook lookup on a plain object; diff is about 840 lines.
 - Not verified: the band with a real description and rating tiles in a browser (the synthetic run shows the gap state only); a real CP-1A handoff carrying the `company_description` register; entered ratings through a published `data.js` end to end (path read, not run); the older issuer-library page with a non-empty `ratings` list; `confidence-review`, `rewrite-tournament`, `/sweep refactoring discover` and the whole-branch review were not run; Windows.
 
+## 2026-11-16 — Browser proof on merged `main` (`4be1e30d`)
+
+Scope: `npm --prefix web run proof:connected` on the tree at `4be1e30d`, after `uv sync --locked`, `npm --prefix web ci` and `npm --prefix web run build`. Beyond the earlier run at `ab661d8d`, `main` now also contains #25, #26, #28, #29, #30 and #31. Synthetic Northbridge case with canned model responses; no provider, no paid run, no credentials. Load average at start 4.99.
+- Result: pass. Exit code 0; 2 of 2 browsers run and passed (tests 2, pass 2, fail 0, skipped 0). Google Chrome 157.0.8103.78 completed run `20261116-152404-01`; Microsoft Edge 157.0.4341.60 completed run `20261116-152432-01`. No check failed.
+- Not verified: Windows; the proof ran once; the proof drives no row control of the typed-row editor (#20, #21) and the pages and controls its script does not open; the reader's PR 3 and the reports-formatting work are not yet on `main`, so the proof must run again after they land.
+
+## 2026-11-16 — Start a run: errors on their fields; focus, announcements and readiness (PRs #31 and #30, merged to `main` as `8c76c434` and `4be1e30d`)
+
+Scope: PR D of `docs/superpowers/plans/2026-11-16-start-run-review-and-rows.md`, split in two: #31 (Task 6, 529 changed lines): `web/src/components/base/buttons/button.tsx`, `web/src/pages/connected/{StartRun.tsx,ConnectedApp.test.tsx}` and `web/src/pages/connected/start/{RowEditor.tsx,RowEditor.test.tsx,rows.ts}`; #30 (Tasks 7 and 8, 799 changed lines, stacked on #31): `web/scripts/connected-proof.mjs`, `web/src/pages/connected/{StartRun.tsx,layout.tsx,ConnectedApp.test.tsx}`, `web/src/pages/connected/start/{RowEditor.tsx,RowEditor.test.tsx,StartReadiness.tsx}` (new) and `web/src/pages/run/start/{Purpose.tsx,Start.tsx}`. The cap, review, acceptance and submit code is not changed (compared byte for byte by a probe); in #31 the validation messages, their order and the point they are raised are the same, only where the message is drawn changed; in #30 `withDraft` gained only the focus memory.
+- Changed (#31): a validation problem is shown on its own field instead of one notice at the top: the page goes to the field's step, opens the section it sits in, focuses and scrolls to it, and draws the message under it; editing the field clears it. Beside the step action, `1 problem to fix: …` takes the analyst back to the field and wraps on narrow screens. Service refusals and network failures stay in the general notice. Row editors: a row keeps its open or closed state when a row above it is removed; after Remove, focus stays in the editor; required fields (quote date and provider, rating agency and rating, question text) are marked, as the static form requires them.
+- Changed (#30): keyboard focus stays where it was when a request finishes; a step's heading takes focus only after a step change, not on first load. After inspecting, `1 document inspected, 0 ignored.` is announced, and announced again on a repeat. Readiness is four status rows (Documents inspected, Purpose chosen, Decisions made (`n of m`), Summary approved) with the cap bar; on narrow screens one line beside the step action: `2 of 4 ready · USD 0.00 of USD 25.00`. "Purpose chosen" stays Met after going back a step; it resets only on a different issuer or a carried-over run. Help lines: case kind, run form level, the earlier run's as-of date, and "Add at least one document to continue." Pathway cards show a radio dot; the review's actions stack on mobile with Submit last; the mobile step line and the stepper labels switch on one condition. Rows: the facility requirement is stated once; an invalid field has an error border; "Required" sits beside its label; removing a row is announced.
+- Gates: #31, web gates (`npm --prefix web run gates`) exit 0 with current `main` merged in (the last step, route visits in a browser, timed out once at 60 s and passed on re-run); `tools/quality_gate.py` exit 0; Chrome proof (`web/scripts/connected-proof.mjs`) exit 0 on #30's branch, which contains #31's change, with current `main` merged in. #30, web gates, the Chrome proof and `tools/quality_gate.py` exit 0 with current `main` merged in; the proof's new keyboard-stepper and focus-after-Inspect checks pass. The commit each ran on is not stated in either body.
+- Fidelity check (#30): against the synthetic service's own `/summary` (Northbridge case, Playwright in Chrome, 17 checks, all pass): each of the 8 items needing a decision is in exactly one decision card; issuer, as-of date, pathway, module count, cap and documents match the response; no module code or launcher flag in the review at the Basic level. Looked at in Chrome at 1440, 900 and 390 px, every step: no horizontal overflow; focus stays on "Inspect documents" after inspecting. #31 was looked at in Chrome against the synthetic service at 1440, 1100, 768 and 390 px (before `main` was merged in): the error sits under its field with focus in it; the problem button fits the viewport at every width (it was cut off at 390 px before the last commit).
+- Reviews: #31: task review (one Medium, a line added inside `changeRun`, fixed and re-reviewed); a separate review of the paid-submit path (pass: no sequence enables Submit on a stale or unapproved summary); sweep discovery, confidence-review, ponytail-review and rewrite-tournament (no defect); whole-branch adversarial review (pass, no High or Medium). #30: task review (spec met); a separate review of the paid-submit path (pass: readiness rows equal the gates they describe; the cap shown equals the cap sent); sweep discovery, confidence-review, ponytail-review, rewrite-tournament; whole-branch adversarial review, which failed the first head on one Medium (the purpose row after going back), fixed test-first and re-reviewed: approved, no High or Medium open.
+- Rulings / Known: one ruled change to the plan's own test: "Purpose chosen" is Not met on the Purpose step until Continue. #31 known, handled in #30 or left for the owner: the footer says "1 problem" when more than one field is wrong, the next one shows after the first is fixed; cutoff and turns messages sit behind the browser's own date and number checks.
+- For the owner (not fixed here): a step not yet reached is drawn as amber "Not met"; the badge set has two states. Below 1041px the one-line summary and the full panel are both drawn. The Basic-level help line names Advanced inputs (the plan's sentence). Older than this work: a run id in "Starting from run …" on Documents; a general notice drawn above the step heading with no scroll to it; the review's content reaching the card edge at 390px; focus lost after removing a document. Owed at merge: this entry, and the `/impeccable critique` re-run against the 21/40 baseline, which is still owed.
+- Not verified: Edge and Windows; a screen reader (whether the message is read once or twice; the announcements); Safari and Firefox; development StrictMode focus order (the built bundle is not affected); a paid run against a live provider; the earnings and new-issue pathways in the browser proof; the `/impeccable critique` re-run; #30 was retargeted to `main` after #31 merged; the merged tree equals #30's head tree, on which CI's two checks had passed; nothing was re-run on `main`.
+
+## 2026-11-16 — Final audit: stage briefs and cloud launch prompt (PR #29, merged to `main` as `7e2724b8`)
+
+Scope: documentation only: the new `docs/audit/2026-11-16-final/` (the briefs for the final audit before the work-PC hand-over); no application code changes.
+- Changed: `README.md` (scope with Signal excluded, stages, the 12 sections, rulings and the rules every agent follows), `FINDINGS-SCHEMA.md` (one finding format and the severity table), `stages/0-baseline.md` to `stages/7-send-off.md` (one brief per stage), `CLOUD-PROMPT.md` (the prompt that starts the audit in a cloud session) and `work-pc-init-prompt.draft.md` (draft first-setup prompt for the work PC; stage 7 finishes it as `docs/work-pc/WORK-PC-INIT-PROMPT.md`). Docs only, so it took the batched docs review; no sweep or whole-branch review applies.
+- Gates: none stated in the PR body beyond: every path the briefs cite was checked to exist.
+- Not verified: the audit has not been run; the briefs are untested as a workflow; the commands the briefs name were not executed; ruling R3 (which findings are repaired or parked) is the author's reading, not confirmed by the owner; CI's two checks passed on the PR head before merge.
+
+## 2026-11-16 — Wayfinding test: wait up to 5 s for the first render (PR #28, merged to `main` as `a9a9420b`)
+
+Scope: test only: `web/src/pages/connected/ReportLibrary.wayfinding.test.tsx`. No assertion, fixture, source or config file changes.
+- Changed: one line, `configure({ asyncUtilTimeout: 5000 })`, for this file only (its 14 `findBy…` waits were on Testing Library's 1,000 ms default); the rest of the diff is prettier wrapping the import.
+- Gates: before, on `main`'s reader code at a load average of about 60, the full suite failed 1 of 3,456 (this file) and the file alone failed 2 of 3 runs, always its first test at 1.0–1.2 s. After, on `a1ec33f9`: `npm test` exit 0 (load rose from 15 to 89 during the run); the file alone passed 6 of 6 runs; `npm run lint`, `format:check`, `typecheck`, `unused` exit 0.
+- Not verified: not run at the load of 170–210 where up to 4 of the 14 tests failed, so a slower machine could still pass 5 s; why the first render takes over a second was not profiled; CI's two checks passed on the PR head before merge.
+
 ## 2026-11-16 — Reader: unnamed module brackets keep their attribution; the Changes page states no-comparison in plain words (PR #26, merged to `main` as `5df9c29b`)
 
 Scope: `readerText` and `publishedReport.ts`, `report/Changes.tsx`, `report/Record.tsx`, `api.ts` and `start/ReviewSheet.tsx` under `web/src/pages/connected/`, with two ruling files in `docs/rulings/`. Owner rulings of 2026-11-16 on three items left open by #23 and by the review of rewritten work: the dropped attribution, launcher text on a findings page, and the scope of the web-search statement.
@@ -961,29 +993,3 @@ Each step was done on its own branch, reviewed, then merged here.
   package on Windows; the pack workflow and `checks.yml` on GitHub Actions;
   `test_financial_workflow.py` genuine-case tests (over 300 s). Oldest two entries trimmed from
   this file; git history keeps them.
-
-## 2026-11-14 — Synthetic pack follow-ups and the document-key test (branch `claude/synthetic-pack-followups`, PR #124)
-
-Scope is **offline and synthetic only**; nothing under `src/` changes. Closes the two Low items left
-open by the entry below.
-
-- Change: `tests/test_synthetic_market_data.py` recomputes every ratings-average column with its own
-  code and checks index values against hand-written bounds in `schema.json`; the brand word `Linden`
-  is replaced and the fixtures regenerated (rename only); new `tests/test_document_key.py`; both test
-  files join the pull-request test list.
-- `tests/test_document_key.py`: `guess_kind` against `document-key.json` for the 25 keyed documents
-  present (35 real ones are not in this repository): 21 under the launcher's own paging, 4 synthetic
-  files (07, 10, 18, 19) only under the key's paging; 13 prose cases must stay `unrecognised`.
-- Withdrawn: a banner-label rule in `_wraps` (46f1f31, reverted in 39fdf96). Two reviews and the sweep
-  each found prose that `main` reads as `unrecognised` and the rule read as a confident kind.
-- Commands: `uv run pytest tests/test_document_key.py tests/test_synthetic_market_data.py -q`;
-  `uv run pytest tests/test_cpos_launch.py -q -m "not live and not browser"` 837 passed;
-  `uv run python tools/quality_gate.py` 0 findings. Exit 0 each.
-- Reviews: `/sweep refactoring discover changed-update` no confirmed defect (register
-  `.superpowers/sdd/pack-followups/sweep/register.md`); whole-branch `adversarial-reviewer`
-  (`mx-architect`) pass, no High or Medium (`.superpowers/sdd/pack-followups/branch-review.md`).
-- For the owner: the key's note pages synthetic text files at `=== PAGE ===` without the banner; the
-  launcher gives one 12,000-character page with it. Either the key's paging or the classifier's
-  handling of a heading line above a cover line needs a ruling; neither was changed.
-- Not verified: the 35 real keyed documents; real issuer files with a heading above a mixed-case
-  title; `Tamsin` against a register of real companies; a mutation tool (hand mutants only).

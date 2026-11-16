@@ -15,7 +15,7 @@ from deploy_workflow.model.budget import Budget
 from deploy_workflow.run_events import EVENTS, append_event
 from deploy_workflow.run_start.service import _Server
 from deploy_vii.contracts import PATHWAY_CAP_USD
-from react_frontend import make_server
+from react_frontend import make_server, run_activity
 
 PROJECT = Path(__file__).resolve().parents[1]
 
@@ -203,7 +203,7 @@ def test_activity_list_shows_runs_in_progress_without_spend_or_file_names(hosted
 
     assert status == 200 and headers["Cache-Control"] == "no-store"
     listing = json.loads(raw)
-    assert set(listing) == {"updated", "held", "runs"}
+    assert set(listing) == {"updated", "held", "runs", "ended", "ended_total"}
     assert listing["held"] == held
     running, queued = listing["runs"]
     assert running == {
@@ -228,6 +228,162 @@ def test_activity_list_shows_runs_in_progress_without_spend_or_file_names(hosted
     assert set(queued) == set(running)
     page_status, _, page_headers = request(hosted, "/runs")
     assert page_status == 200 and page_headers["Content-Type"].startswith("text/html")
+
+
+def _ended_record(run_id: str, status: runs.Status, minute: int, reason: str = "") -> runs.Record:
+    return runs.Record(
+        id=run_id,
+        pathway="credit_snapshot",
+        folder=run_id,
+        status=status,
+        claimed_at="2026-10-31T11:00:00Z",
+        ended_at=f"2026-10-31T12:{minute:02d}:00Z",
+        issuer_name="Harbour Packaging",
+        reason=reason,
+        submitted_by="analyst",
+        files=("annual-report.pdf",),
+    )
+
+
+def test_activity_list_shows_ended_runs_without_spend_or_file_names(hosted: _Server) -> None:
+    scheduler = hosted.scheduler
+    assert isinstance(scheduler, Scheduler)
+    layout = scheduler.layout
+    for record in (
+        _ended_record("c-capped", "capped", 5, "Spending cap reached"),
+        _ended_record("d-failed", "failed", 10, "Provider error"),
+        _ended_record("e-finished", "finished", 20),
+        runs.Record(
+            id="a-running",
+            pathway="credit_snapshot",
+            folder="a-running",
+            status="running",
+            claimed_at="2026-10-31T12:00:00Z",
+        ),
+    ):
+        runs.save(layout, record)
+
+    status, raw, _ = request(hosted, "/connected/activity")
+
+    assert status == 200
+    listing = json.loads(raw)
+    assert set(listing) == {"updated", "held", "runs", "ended", "ended_total"}
+    assert [run["id"] for run in listing["ended"]] == ["d-failed", "c-capped"]
+    assert set(listing["ended"][0]) == {
+        "id",
+        "issuer_name",
+        "pathway",
+        "status",
+        "reason",
+        "ended_at",
+        "submitted_by",
+    }
+    assert listing["ended"][1]["reason"] == "Spending cap reached"
+    assert [run["id"] for run in listing["runs"]] == ["a-running"]
+
+
+def test_activity_list_keeps_the_twenty_latest_ended_runs(hosted: _Server) -> None:
+    scheduler = hosted.scheduler
+    assert isinstance(scheduler, Scheduler)
+    for minute in range(25):
+        runs.save(scheduler.layout, _ended_record(f"f-{minute:02d}", "failed", minute))
+
+    listing = json.loads(request(hosted, "/connected/activity")[1])
+
+    assert len(listing["ended"]) == 20
+    assert listing["ended_total"] == 25
+    assert listing["ended"][0]["ended_at"] == "2026-10-31T12:24:00Z"
+    assert listing["ended"][-1]["ended_at"] == "2026-10-31T12:05:00Z"
+
+
+def test_activity_sends_a_reason_without_the_service_root(hosted: _Server) -> None:
+    scheduler = hosted.scheduler
+    assert isinstance(scheduler, Scheduler)
+    layout = scheduler.layout
+    root = layout.root
+    path = root / "_engine" / "state" / "issuers.json"
+    runs.save(layout, _ended_record("p-path", "failed", 1, f"could not be filed: {path} is bad"))
+    runs.save(layout, _ended_record("q-plain", "failed", 2, "Provider error"))
+    runs.save(
+        layout,
+        runs.Record(
+            id="r-running",
+            pathway="credit_snapshot",
+            folder="r-running",
+            status="running",
+            claimed_at="2026-10-31T12:00:00Z",
+            reason=f"waiting on {root.resolve() / 'inbox' / 'a.pdf'}",
+        ),
+    )
+
+    listing = json.loads(request(hosted, "/connected/activity")[1])
+    ended = {run["id"]: run["reason"] for run in listing["ended"]}
+    single = json.loads(request(hosted, "/connected/activity/p-path")[1])["reason"]
+
+    relative = Path("_engine") / "state" / "issuers.json"
+    assert ended["p-path"] == f"could not be filed: {relative} is bad"
+    assert single == ended["p-path"]
+    assert ended["q-plain"] == "Provider error"
+    assert listing["runs"][0]["reason"] == f"waiting on {Path('inbox') / 'a.pdf'}"
+    sent = [run["reason"] for run in (*listing["ended"], *listing["runs"])] + [single]
+    assert len(sent) == 4
+    assert all(str(root.resolve()) not in reason for reason in sent)
+
+
+def test_activity_sends_ended_at_as_stored_and_lists_every_ended_status(hosted: _Server) -> None:
+    scheduler = hosted.scheduler
+    assert isinstance(scheduler, Scheduler)
+    layout = scheduler.layout
+    runs.save(layout, _ended_record("a-rejected", "rejected", 5))
+    runs.save(layout, _ended_record("b-interrupted", "interrupted", 5))
+    runs.save(layout, _ended_record("c-same", "failed", 5))
+    unended = _ended_record("d-none", "failed", 0)
+    unended.ended_at = ""
+    unended.claimed_at = "2026-10-31T12:30:00Z"
+    runs.save(layout, unended)
+
+    ended = json.loads(request(hosted, "/connected/activity")[1])["ended"]
+
+    assert [run["id"] for run in ended] == ["d-none", "c-same", "b-interrupted", "a-rejected"]
+    assert [run["status"] for run in ended][2:] == ["interrupted", "rejected"]
+    assert ended[0]["ended_at"] == ""
+
+
+_SHOWN = [
+    # (root, sep, reason, sent)
+    ("/data/app", "/", "filed: /data/app/_engine/x.json is bad", "filed: _engine/x.json is bad"),
+    ("/data/app", "/", "/data/app/a and (/data/app/b)", "a and (b)"),
+    ("/data/app", "/", "path='/data/app/x'", "path='x'"),
+    ("/data/app", "/", "see /data/app-old/_engine/x", "see /data/app-old/_engine/x"),
+    ("/data/app", "/", "copy at /mnt/data/app/x failed", "copy at /mnt/data/app/x failed"),
+    ("/data/app", "/", "Provider error", "Provider error"),
+    ("/", "/", "see https://example.test/a", "see https://example.test/a"),
+    (
+        "C:\\Shared\\CreditOS",
+        "\\",
+        "filed: C:\\Shared\\CreditOS\\_engine\\x.json bad",
+        "filed: _engine\\x.json bad",
+    ),
+    (
+        "C:\\Shared\\CreditOS",
+        "\\",
+        "denied: 'C:\\\\Shared\\\\CreditOS\\\\_engine\\\\r.log'",
+        "denied: '_engine\\\\r.log'",
+    ),
+    (
+        "C:\\Shared\\CreditOS",
+        "\\",
+        "see D:\\C:\\Shared\\CreditOS\\x and C:\\Shared\\CreditOS-old\\x",
+        "see D:\\C:\\Shared\\CreditOS\\x and C:\\Shared\\CreditOS-old\\x",
+    ),
+]
+
+
+@pytest.mark.parametrize(("root", "sep", "reason", "sent"), _SHOWN)
+def test_shown_removes_the_root_only_where_it_starts_a_path(
+    root: str, sep: str, reason: str, sent: str
+) -> None:
+    assert run_activity._strip_root(root, sep, reason) == sent
 
 
 def test_reports_admission_and_reader_snapshot(hosted: _Server, root: Path) -> None:

@@ -72,17 +72,25 @@ export function SubmitConfirmation({
   confirm,
   isDisabled,
   describedBy,
+  className,
   onConfirm,
 }: {
   label: string;
   confirm: Pick<Step["confirm"], "title" | "text" | "action">;
   isDisabled: boolean;
   describedBy?: string;
+  className?: string;
   onConfirm: () => void;
 }) {
   return (
     <DialogTrigger>
-      <Button size="xl" iconLeading={Lock01} isDisabled={isDisabled} aria-describedby={describedBy}>
+      <Button
+        size="xl"
+        iconLeading={Lock01}
+        isDisabled={isDisabled}
+        aria-describedby={describedBy}
+        className={className}
+      >
         {label}
       </Button>
       <ModalOverlay isDismissable>

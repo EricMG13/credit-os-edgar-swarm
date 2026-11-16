@@ -182,6 +182,20 @@ async function uploadRunDocuments(page) {
     ...uploaded,
   ]);
   for (const upload of uploads) assert.equal(upload.status(), 200);
+  await page.waitForFunction(
+    () => document.activeElement?.textContent?.trim() === "Inspect documents",
+  );
+}
+
+// A stepper "Go back to" button, pressed with the keyboard, lands focus on that step's heading.
+async function goBackWithKeyboard(page) {
+  await page.getByRole("button", { name: "Go back to Documents", exact: true }).focus();
+  await page.keyboard.press("Enter");
+  await page.waitForFunction(
+    () =>
+      document.activeElement?.matches("h2") &&
+      document.activeElement.textContent.trim() === "Documents",
+  );
 }
 
 async function checkCompanyBand(report, channel) {
@@ -201,6 +215,9 @@ async function approveRunInputs(page, paidPreview) {
   await page.getByRole("button", { name: "Continue to purpose", exact: true }).click();
   await page.getByRole("heading", { name: "Purpose", exact: true }).waitFor();
   assert.match(await current.innerText(), /Purpose/u);
+  await goBackWithKeyboard(page);
+  await page.getByRole("button", { name: "Continue to purpose", exact: true }).click();
+  await page.getByRole("heading", { name: "Purpose", exact: true }).waitFor();
   await page.getByRole("radio", { name: "Lite credit assessment", exact: true }).waitFor();
   await page.getByRole("radio", { name: "Full credit assessment", exact: true }).waitFor();
   await page.getByRole("radio", { name: "Deep credit assessment", exact: true }).waitFor();
