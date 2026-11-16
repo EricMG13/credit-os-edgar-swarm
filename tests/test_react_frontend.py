@@ -10,6 +10,7 @@ from tempfile import TemporaryDirectory
 import pytest
 
 from deploy_workflow.inbox import activity, runs, startup
+from deploy_workflow.inbox.layout import Layout, ensure_layout
 from deploy_workflow.inbox.scheduler import Scheduler
 from deploy_workflow.model.budget import Budget
 from deploy_workflow.run_events import EVENTS, append_event
@@ -203,7 +204,7 @@ def test_activity_list_shows_runs_in_progress_without_spend_or_file_names(hosted
 
     assert status == 200 and headers["Cache-Control"] == "no-store"
     listing = json.loads(raw)
-    assert set(listing) == {"updated", "held", "runs", "ended", "ended_total"}
+    assert set(listing) == {"updated", "held", "runs", "ended", "ended_total", "unreadable"}
     assert listing["held"] == held
     running, queued = listing["runs"]
     assert running == {
@@ -267,7 +268,7 @@ def test_activity_list_shows_ended_runs_without_spend_or_file_names(hosted: _Ser
 
     assert status == 200
     listing = json.loads(raw)
-    assert set(listing) == {"updated", "held", "runs", "ended", "ended_total"}
+    assert set(listing) == {"updated", "held", "runs", "ended", "ended_total", "unreadable"}
     assert [run["id"] for run in listing["ended"]] == ["d-failed", "c-capped"]
     assert set(listing["ended"][0]) == {
         "id",
@@ -354,8 +355,8 @@ _SHOWN = [
     ("/data/app", "/", "filed: /data/app/_engine/x.json is bad", "filed: _engine/x.json is bad"),
     ("/data/app", "/", "/data/app/a and (/data/app/b)", "a and (b)"),
     ("/data/app", "/", "path='/data/app/x'", "path='x'"),
-    ("/data/app", "/", "see /data/app-old/_engine/x", "see /data/app-old/_engine/x"),
-    ("/data/app", "/", "copy at /mnt/data/app/x failed", "copy at /mnt/data/app/x failed"),
+    ("/data/app", "/", "see /data/app-old/_engine/x", "see x"),
+    ("/data/app", "/", "copy at /mnt/data/app/x failed", "copy at x failed"),
     ("/data/app", "/", "Provider error", "Provider error"),
     ("/", "/", "see https://example.test/a", "see https://example.test/a"),
     (
@@ -374,7 +375,7 @@ _SHOWN = [
         "C:\\Shared\\CreditOS",
         "\\",
         "see D:\\C:\\Shared\\CreditOS\\x and C:\\Shared\\CreditOS-old\\x",
-        "see D:\\C:\\Shared\\CreditOS\\x and C:\\Shared\\CreditOS-old\\x",
+        "see x and x",
     ),
 ]
 
@@ -383,7 +384,7 @@ _SHOWN = [
 def test_shown_removes_the_root_only_where_it_starts_a_path(
     root: str, sep: str, reason: str, sent: str
 ) -> None:
-    assert run_activity._strip_root(root, sep, reason) == sent
+    assert run_activity._plain_reason(root, sep, reason) == sent
 
 
 def test_reports_admission_and_reader_snapshot(hosted: _Server, root: Path) -> None:
@@ -525,3 +526,131 @@ def test_only_same_run_published_forecast_artifacts_are_downloadable(
     assert request(hosted, path)[:2] == (200, b'{"exact":"1.25"}\r\n')
     assert request(hosted, f"{endpoint}/{digest}/forecast_exact.json")[0] == 404
     assert request(hosted, f"/connected/artifacts/two/{digest}/calculation.json")[0] == 404
+
+
+POSIX_ROOT = "/srv/credit"
+
+
+@pytest.mark.parametrize(
+    ("reason", "expected"),
+    [
+        (
+            "could not be filed: /srv/credit/_engine/state/issuers.json is not a map",
+            "could not be filed: _engine/state/issuers.json is not a map",
+        ),
+        (
+            "could not be started: [Errno 2] No such file or directory: '/usr/local/bin/launcher'",
+            "could not be started: [Errno 2] No such file or directory: 'launcher'",
+        ),
+        (
+            "could not be started: [Errno 13] Permission denied: '/srv/credit'",
+            "could not be started: [Errno 13] Permission denied: 'the service folder'",
+        ),
+        ("copied /mnt/data/in/a.pdf to /srv/credit/inbox/a.pdf", "copied a.pdf to inbox/a.pdf"),
+        ("no folder at /var/tmp/run-7/", "no folder at run-7"),
+        (
+            "see https://example.test/docs/errors/429 for limits",
+            "see https://example.test/docs/errors/429 for limits",
+        ),
+        (
+            "3/4 modules finished; cover n/a and/or missing",
+            "3/4 modules finished; cover n/a and/or missing",
+        ),
+        (
+            "expected one deliveries/*/delivery.json, found 2",
+            "expected one deliveries/*/delivery.json, found 2",
+        ),
+        ("period 2026/11/16 see logs/r1.log", "period 2026/11/16 see logs/r1.log"),
+        ("Provider error", "Provider error"),
+    ],
+)
+def test_plain_reason_posix(reason: str, expected: str) -> None:
+    assert run_activity._plain_reason(POSIX_ROOT, "/", reason) == expected
+
+
+WINDOWS_ROOT = r"C:\Shared\CreditOS"
+
+
+@pytest.mark.parametrize(
+    ("reason", "expected"),
+    [
+        (
+            r"could not be filed: C:\Shared\CreditOS\_engine\state\issuers.json is not a map",
+            r"could not be filed: _engine\state\issuers.json is not a map",
+        ),
+        (
+            "[Errno 13] Permission denied: 'C:\\\\Shared\\\\CreditOS\\\\_engine\\\\logs\\\\r.log'",
+            "[Errno 13] Permission denied: '_engine\\\\logs\\\\r.log'",
+        ),
+        (
+            r"[Errno 13] Permission denied: 'c:\shared\creditos\_engine\logs\r.log'",
+            r"[Errno 13] Permission denied: 'r.log'",
+        ),
+        (
+            "[WinError 2] The system cannot find the file specified: 'D:\\\\Tools\\\\launcher.exe'",
+            "[WinError 2] The system cannot find the file specified: 'launcher.exe'",
+        ),
+        (r"cannot reach \\fileserver\credit\inbox\a.pdf", "cannot reach a.pdf"),
+        (r"Permission denied: 'C:\Shared\CreditOS'", "Permission denied: 'the service folder'"),
+    ],
+)
+def test_plain_reason_windows(reason: str, expected: str) -> None:
+    assert run_activity._plain_reason(WINDOWS_ROOT, "\\", reason) == expected
+
+
+def _two_unreadable_records(layout: Layout) -> None:
+    runs.save(layout, _ended_record("d-failed", "failed", 10, "Provider error"))
+    runs.save(
+        layout,
+        runs.Record(
+            id="a-running",
+            pathway="credit_snapshot",
+            folder="a-running",
+            status="running",
+            claimed_at="2026-10-31T12:00:00Z",
+        ),
+    )
+    (layout.state / "broken.json").write_text("{not json", encoding="utf-8")
+    runs.save(layout, _ended_record("n-null", "failed", 11))
+    target = layout.state / "n-null.json"
+    data = json.loads(target.read_text(encoding="utf-8"))
+    data["reason"] = None
+    target.write_text(json.dumps(data), encoding="utf-8")
+
+
+def test_activity_list_survives_an_unreadable_record(hosted: _Server) -> None:
+    scheduler = hosted.scheduler
+    assert isinstance(scheduler, Scheduler)
+    _two_unreadable_records(scheduler.layout)
+
+    status, raw = request(hosted, "/connected/activity")[:2]
+    listing = json.loads(raw)
+
+    assert status == 200
+    assert [run["id"] for run in listing["runs"]] == ["a-running"]
+    assert [run["id"] for run in listing["ended"]] == ["d-failed"]
+    assert listing["ended_total"] == 1
+    assert listing["unreadable"] == 2
+    assert b"broken.json" not in raw
+    # The single-run page of a good run still answers.
+    assert request(hosted, "/connected/activity/d-failed")[0] == 200
+
+
+def test_load_all_still_refuses_an_unreadable_record(root: Path) -> None:
+    layout = ensure_layout(root)
+    runs.save(layout, _ended_record("d-failed", "failed", 10))
+    (layout.state / "broken.json").write_text("{not json", encoding="utf-8")
+
+    with pytest.raises(ValueError, match="broken.json"):
+        runs.load_all(layout)
+    good, bad = runs.load_readable(layout)
+    assert [record.id for record in good] == ["d-failed"]
+    assert bad == ["broken.json"]
+
+
+def test_activity_of_a_run_whose_own_record_is_unreadable_is_still_an_error(root: Path) -> None:
+    layout = ensure_layout(root)
+    (layout.state / "broken.json").write_text("{not json", encoding="utf-8")
+
+    with pytest.raises(ValueError, match="broken.json"):
+        run_activity.reply(layout, "broken")

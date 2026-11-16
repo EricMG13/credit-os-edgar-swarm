@@ -271,6 +271,11 @@ export function RunActivity() {
             {read.held}
           </Alert>
         )}
+        {read?.unreadable ? (
+          <Alert tone="warning" title="Some run records could not be read">
+            {`${String(read.unreadable)} run ${read.unreadable === 1 ? "record" : "records"} could not be read and are not listed.`}
+          </Alert>
+        ) : null}
         {read && running.length + waiting.length + ended.length === 0 && (
           <Empty title="No run in progress">
             No run is running or waiting. Finished runs are in the library.

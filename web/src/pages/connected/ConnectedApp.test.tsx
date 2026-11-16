@@ -1138,6 +1138,42 @@ describe("connected activity and reports", () => {
     );
   });
 
+  it("says how many run records could not be read", async () => {
+    activityFetch({
+      updated: "2026-11-16T14:32:10Z",
+      held: "",
+      runs: [],
+      ended: [],
+      ended_total: 0,
+      unreadable: 2,
+    });
+    render(<ConnectedApp path="/runs" mode="synthetic" />);
+    expect(await screen.findByText("Some run records could not be read")).toBeVisible();
+    expect(screen.getByText("2 run records could not be read and are not listed.")).toBeVisible();
+    expect(screen.getByText("No run in progress")).toBeVisible();
+    cleanup();
+    activityFetch({
+      updated: "2026-11-16T14:32:10Z",
+      held: "",
+      runs: [],
+      ended: [],
+      ended_total: 0,
+      unreadable: 1,
+    });
+    render(<ConnectedApp path="/runs" mode="synthetic" />);
+    expect(
+      await screen.findByText("1 run record could not be read and are not listed."),
+    ).toBeVisible();
+    cleanup();
+    for (const extra of [{ unreadable: 0 }, {}]) {
+      activityFetch({ updated: "2026-11-16T14:32:10Z", held: "", runs: [], ...extra });
+      render(<ConnectedApp path="/runs" mode="synthetic" />);
+      expect(await screen.findByText("No run in progress")).toBeVisible();
+      expect(screen.queryByText("Some run records could not be read")).toBeNull();
+      cleanup();
+    }
+  });
+
   it("draws the list from a service that sends no ended runs", async () => {
     activityFetch({ updated: "2026-11-16T14:32:10Z", held: "", runs: [] });
     render(<ConnectedApp path="/runs" mode="synthetic" />);

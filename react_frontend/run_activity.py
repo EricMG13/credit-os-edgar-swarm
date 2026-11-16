@@ -131,32 +131,83 @@ def _held(layout: Layout) -> str:
     return held if isinstance(held, str) else ""
 
 
-def _strip_root(root: str, sep: str, reason: str) -> str:
-    """Remove ``root`` plus a separator where it starts a path, in plain and backslash-doubled form.
+_PATH_START = r"(?P<start>^|[\s'\"(\[:=,;])"  # beginning of text, whitespace, a quote or bracket
+_PATH_BODY = r"[^\s'\"()\[\],;]"  # a path runs to whitespace, a quote, a bracket, `,` or `;`
+_ABSOLUTE = re.compile(
+    _PATH_START
+    + "(?P<path>"
+    + rf"/(?!/){_PATH_BODY}+"  # POSIX: one leading slash (`//` follows a URL scheme's colon)
+    + rf"|[A-Za-z]:[\\/]{_PATH_BODY}*"  # Windows drive, X:\ or X:/ (a doubled backslash is a run)
+    + rf"|\\{{2,4}}{_PATH_BODY}+"  # UNC \\host\share, single or doubled spelling
+    + ")"
+)
+_SEPARATORS = re.compile(r"[\\/]+")
 
-    A path starts at the beginning of the text or after whitespace, a quote, ``(``, ``[``, ``:`` or
-    ``=``; a longer path that merely holds the root, or a sibling folder sharing its prefix, stays.
+
+def _last_segment(found: re.Match[str]) -> str:
+    segments = [part for part in _SEPARATORS.split(found["path"]) if part]
+    # A bare drive or a lone separator names nothing: leave it as stored.
+    named = [part for part in segments if not re.fullmatch(r"[A-Za-z]:", part)]
+    return found["start"] + named[-1] if named else found[0]
+
+
+def _plain_reason(root: str, sep: str, reason: str) -> str:
+    """A reason with no absolute path: the service root is removed and any other path keeps its
+    last segment.
+
+    1. ``root`` plus a separator is removed where it starts a path, in plain and backslash-doubled
+       form, leaving the path relative to the root.
+    2. The bare root becomes ``the service folder``.
+    3. Any absolute path left (POSIX, Windows drive, UNC) keeps only its last segment.
+
+    A path starts at the beginning of the text or after whitespace, a quote, a bracket, ``:``,
+    ``=``, ``,`` or ``;``. A URL, a fraction (``3/4``) and a relative path stay as stored.
     """
-    if not root.rstrip(sep):
-        return reason
-    prefix = root + sep
-    for form in {prefix, prefix.replace("\\", "\\\\")}:
-        reason = re.sub(rf"(^|[\s'\"(\[:=]){re.escape(form)}", r"\1", reason)
-    return reason
+    if root.rstrip(sep):
+        prefix = root + sep
+        for form in {prefix, prefix.replace("\\", "\\\\")}:
+            reason = re.sub(rf"{_PATH_START}{re.escape(form)}", r"\g<start>", reason)
+        for form in {root, root.replace("\\", "\\\\")}:
+            # The bare root: at a path start, then the end, a delimiter, or a full stop that ends.
+            bare = rf"{_PATH_START}{re.escape(form)}(?=$|[\s'\")\],;]|\.(?:$|\s))"
+            reason = re.sub(bare, r"\g<start>the service folder", reason)
+    return _ABSOLUTE.sub(_last_segment, reason)
 
 
 def _shown(layout: Layout, reason: str) -> str:
-    """A reason with the service's own root folder removed, leaving the path relative to it."""
-    return _strip_root(str(layout.root.resolve()), os.sep, reason)
+    """A reason without absolute paths, from the service's own root folder."""
+    return _plain_reason(str(layout.root.resolve()), os.sep, reason)
+
+
+_TEXT_FIELDS = (
+    "id",
+    "issuer_name",
+    "pathway",
+    "status",
+    "reason",
+    "submitted_by",
+    "claimed_at",
+    "ended_at",
+)
+
+
+def _texts_are_strings(record: runs.Record) -> bool:
+    return all(isinstance(getattr(record, name), str) for name in _TEXT_FIELDS)
 
 
 def listing(layout: Layout) -> http_base.Reply:
     """The runs that are running or waiting, and the latest that ended without a report.
 
-    Spend, run folders and absolute paths under the service root are not sent. A reason is sent as
-    stored with the root prefix removed, so a file name under the root can appear in it.
+    Spend, run folders and absolute paths are not sent. A reason is sent as stored with the root
+    prefix removed and any other absolute path cut to its last segment, so a file name can appear in
+    it: it tells the operator which file to look at.
     """
-    saved = runs.load_all(layout)
+    # Documented fail-open (display only): a record file that cannot be read, or whose text fields
+    # are not strings, is left out of the list and counted in ``unreadable``; the scheduler still
+    # refuses such a file through ``runs.load_all``.
+    readable, bad_files = runs.load_readable(layout)
+    saved = [item for item in readable if _texts_are_strings(item)]
+    unreadable = len(bad_files) + len(readable) - len(saved)
     records = [item for item in saved if item.status in ("running", "queued")]
     every_ended = [item for item in saved if item.status in _ENDED]
     ended = sorted(
@@ -201,13 +252,18 @@ def listing(layout: Layout) -> http_base.Reply:
                 for item in ended
             ],
             "ended_total": len(every_ended),
+            "unreadable": unreadable,
         },
         {"Cache-Control": "no-store"},
     )
 
 
 def reply(layout: Layout, run_id: str) -> http_base.Reply:
-    record = next((item for item in runs.load_all(layout) if item.id == run_id), None)
+    readable, bad_files = runs.load_readable(layout)
+    if f"{run_id}.json" in bad_files:
+        # As before: a run whose own record cannot be read is an error, not an answer.
+        raise ValueError(f"{run_id}.json: unreadable run record")
+    record = next((item for item in readable if item.id == run_id), None)
     if record is None:
         raise http_base.refuse(404, "unknown run")
     directory = layout.runs.resolve() / run_id
