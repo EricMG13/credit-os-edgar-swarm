@@ -1,4 +1,4 @@
-import { render, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { PageHeader } from "./PageHeader";
 import { Shell, type Area } from "./Shell";
 
@@ -12,12 +12,39 @@ const AREAS: [Area, string, string][] = [
 ];
 
 describe("Shell", () => {
+  it("offers a skip link before any other link, targeting the main region", () => {
+    render(<Shell current="library">content</Shell>);
+    const [first] = screen.getAllByRole("link");
+    expect(first).toHaveAccessibleName("Skip to content");
+    expect(first).toHaveAttribute("href", "#main");
+    const main = screen.getByRole("main");
+    expect(main).toHaveAttribute("id", "main");
+    expect(main).toHaveAttribute("tabindex", "-1");
+  });
+
   it("names every area in the rail, in order, each linking to its hash", () => {
     render(<Shell current="library">content</Shell>);
     const rail = screen.getByRole("navigation", { name: "Areas" });
     const links = within(rail).getAllByRole("link");
     expect(links.map((a) => a.getAttribute("aria-label"))).toEqual(AREAS.map(([, name]) => name));
     expect(links.map((a) => a.getAttribute("href"))).toEqual(AREAS.map(([, , href]) => href));
+  });
+
+  it("moves focus to main on activation and leaves the URL hash alone", () => {
+    window.history.replaceState(null, "", "/#/library");
+    render(<Shell current="library">content</Shell>);
+    // jsdom does not navigate to a fragment, so a hash assertion cannot fail here; a cancelled
+    // click is what keeps a browser from changing the hash.
+    expect(fireEvent.click(screen.getByRole("link", { name: "Skip to content" }))).toBe(false);
+    expect(document.activeElement).toBe(screen.getByRole("main"));
+    window.history.replaceState(null, "", "/");
+  });
+
+  it("keeps each rail link at least 44px tall on a phone", () => {
+    render(<Shell current="library">content</Shell>);
+    const rail = screen.getByRole("navigation", { name: "Areas" });
+    for (const link of within(rail).getAllByRole("link"))
+      expect(link).toHaveClass("max-[480px]:min-h-11");
   });
 
   it("draws the current item in the selected surface and no other item", () => {
@@ -85,5 +112,22 @@ describe("PageHeader", () => {
     expect(screen.getByRole("heading", { level: 1, name: "Library" })).toBeInTheDocument();
     expect(screen.getByText("A badge")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Act" })).toBeInTheDocument();
+  });
+});
+
+describe("Shell scroll container", () => {
+  it("makes the scrolling main a positioning context", () => {
+    render(<Shell current="library">content</Shell>);
+    expect(screen.getByRole("main")).toHaveClass("relative");
+  });
+
+  it("sizes the rail list from the space left under its margin, not from the full rail height", () => {
+    render(<Shell current="library">content</Shell>);
+    const rail = screen.getByRole("navigation", { name: "Areas" });
+    const list = within(rail).getByRole("list");
+    // A full-height list plus its top margin overflowed the document by the margin.
+    expect(list).not.toHaveClass("h-full");
+    expect(rail).toHaveClass("flex", "flex-col");
+    expect(list).toHaveClass("flex-1", "min-h-0");
   });
 });

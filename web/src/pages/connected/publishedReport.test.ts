@@ -6,6 +6,7 @@ import {
   type PublishedRun,
   displayColumns,
   readParagraph,
+  plainModuleNames,
   publishedHref,
   runPathway,
   runTiming,
@@ -59,6 +60,14 @@ describe("published handoff boundaries", () => {
       "sources",
       "sources",
     ]);
+  });
+
+  it("files a Confidence inputs table under Findings as a register", () => {
+    const sections = [
+      { heading: "Findings", level: 2, line: 0, blocks: [] },
+      { heading: "Confidence inputs", level: 3, line: 1, blocks: [] },
+    ];
+    expect(classifySections(sections).map(({ role }) => role)).toEqual(["finding", "registers"]);
   });
 
   it("keeps the exact basis in trace and preserves identifiers in evidence tables only", () => {
@@ -241,5 +250,31 @@ describe("stable evidence addresses", () => {
     expect(resolveEvidenceLocation([revised], evidenceToken(first, 46))).toBeNull();
     expect(resolveEvidenceLocation([first], evidenceToken(first, 47))).toBeNull();
     expect(resolveEvidenceLocation([first, first], evidenceToken(first, 46))).toBeNull();
+  });
+});
+
+describe("plainModuleNames", () => {
+  it("shows a named upstream module without its code", () => {
+    expect(plainModuleNames("Liquidity (CP-2D); calculation C-4")).toBe(
+      "Liquidity; calculation C-4",
+    );
+    expect(plainModuleNames("Report (CP-1).pdf, page 3")).toBe("Report (CP-1).pdf, page 3");
+    expect(plainModuleNames("The CP-2 view is unchanged")).toBe("The CP-2 view is unchanged");
+  });
+
+  it.each([
+    ["Deck (CP-1) Q3.pdf, page 3", "Deck (CP-1) Q3.pdf, page 3"],
+    ["Model (CP-2)_v2.xlsx", "Model (CP-2)_v2.xlsx"],
+    ["Report (CP-1)-final.pdf", "Report (CP-1)-final.pdf"],
+    ["Data room (CP-1)/deck.pdf", "Data room (CP-1)/deck.pdf"],
+    ["Credit is stable; Liquidity (CP-2D) is ample.", "Credit is stable; Liquidity is ample."],
+    ["Basis: Financial foundation (CP-1)", "Basis: Financial foundation"],
+    ["Liquidity (CP-2D) shows cover of 2.5x.", "Liquidity shows cover of 2.5x."],
+    [
+      "Financial foundation (CP-1); TDG_2024-09-30_10-K_tdg-20240930.htm.jsonl, pages 73–73",
+      "Financial foundation; TDG_2024-09-30_10-K_tdg-20240930.htm.jsonl, pages 73–73",
+    ],
+  ])("keeps a stored file name and drops a module code beside it: %j", (input, expected) => {
+    expect(plainModuleNames(input)).toBe(expected);
   });
 });

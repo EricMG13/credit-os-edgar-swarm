@@ -218,7 +218,8 @@ describe("WaterfallChart chart side", () => {
       within(within(c).getByRole("list", { name: "Legend" }))
         .getAllByRole("listitem")
         .map((li) => li.textContent);
-    expect(items(first.container)).toEqual(["Total", "Cash out (minus)", "Cash in (plus)"]);
+    // The base walk has no increase, so its legend omits that category.
+    expect(items(first.container)).toEqual(["Total", "Cash out (minus)"]);
     const second = renderNetDebt();
     expect(items(second.container)).toEqual(["Total", "Increase (plus)", "Decrease (minus)"]);
   });
@@ -324,5 +325,60 @@ describe("WaterfallChart x-axis", () => {
       ].map((l) => l.textContent);
     expect(lines("Shareholder returns")).toEqual(["Shareholder", "returns"]);
     expect(lines("FY25E")).toEqual(["FY25E"]);
+  });
+});
+
+describe("WaterfallChart legend and step labels", () => {
+  const BRIDGE_LEGEND = { total: "Total", up: "Increase", down: "Decrease" };
+  const rises: WaterfallStep[] = [
+    { label: "FY25", kind: "total", from: 0, to: 3000, text: "3,000" },
+    { label: "Pricing", kind: "up", from: 3000, to: 3182, text: "182" },
+    { label: "Volume", kind: "up", from: 3182, to: 3254, text: "72" },
+    { label: "FY26", kind: "total", from: 0, to: 3254, text: "3,254" },
+  ];
+  const rowsOf = (steps: WaterfallStep[]) => ({
+    head: ["Step", "USD millions"],
+    rows: steps.map((s) => ({
+      label: s.label,
+      cells: [s.kind === "missing" ? null : s.text],
+    })),
+  });
+  const legendItems = (c: HTMLElement) =>
+    within(within(c).getByRole("list", { name: "Legend" }))
+      .getAllByRole("listitem")
+      .map((li) => li.textContent);
+  const draw = (steps: WaterfallStep[]) =>
+    render(
+      <WaterfallChart
+        title="EBITDA bridge"
+        steps={steps}
+        yTicks={[
+          { value: 0, label: "0" },
+          { value: 2000, label: "2,000" },
+          { value: 4000, label: "4,000" },
+        ]}
+        legend={BRIDGE_LEGEND}
+        table={rowsOf(steps)}
+      />,
+    );
+
+  it("lists no Decrease category when no step decreases", () => {
+    const { container } = draw(rises);
+    expect(legendItems(container)).toEqual(["Total", "Increase"]);
+  });
+
+  it("lists Decrease when a step decreases", () => {
+    const { container } = draw([
+      ...rises.slice(0, 2),
+      { label: "Costs", kind: "down", from: 3182, to: 3100, text: "-82" },
+      { label: "FY26", kind: "total", from: 0, to: 3100, text: "3,100" },
+    ]);
+    expect(legendItems(container)).toEqual(["Total", "Increase", "Decrease"]);
+  });
+
+  it("labels a small step with its exact published value", () => {
+    const { container } = draw(rises);
+    const label = container.querySelector('.recharts-wrapper [data-label][data-step="Pricing"]');
+    expect(label?.textContent).toBe("182");
   });
 });

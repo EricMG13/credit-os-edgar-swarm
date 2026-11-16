@@ -177,7 +177,7 @@ describe("Show sources", () => {
     const toggle = screen.getByRole("switch", { name: "Show sources" });
     expect(toggle).not.toBeChecked();
     expect(container.querySelector("[data-sources]")).toHaveAttribute("data-sources", "off");
-    expect(control()).toHaveClass("opacity-0");
+    expect(control().className).not.toContain("opacity-0");
   });
 
   it("turns every control on at once and off again", () => {
@@ -189,13 +189,12 @@ describe("Show sources", () => {
     expect(container.querySelector("[data-sources]")).toHaveAttribute("data-sources", "off");
   });
 
-  it("reveals a control on hover, keyboard focus and touch, by class", () => {
+  it("boxes a control on hover, keyboard focus and Show sources, by class", () => {
     renderFrame();
     expect(screen.getByTestId("figure")).toHaveClass("group/trace", "relative");
-    expect(control().className).toMatch(/group-hover\/trace:opacity-100/);
-    expect(control().className).toMatch(/focus-visible:opacity-100/);
-    expect(control().className).toMatch(/\[@media\(hover:none\)\]:opacity-100/);
-    expect(control().className).toMatch(/in-data-\[sources=on\]:opacity-100/);
+    expect(control().className).toMatch(/group-hover\/trace:border-border-control/);
+    expect(control().className).toMatch(/focus-visible:border-border-control/);
+    expect(control().className).toMatch(/in-data-\[sources=on\]:border-border-control/);
   });
 
   it("draws no control for a null trace and throws for a key the run does not hold", () => {

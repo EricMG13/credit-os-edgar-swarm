@@ -387,7 +387,7 @@ describe("Forecast page: cash flow in FY26", () => {
       within(within(figure(WALK)).getByRole("list", { name: "Legend" }))
         .getAllByRole("listitem")
         .map((li) => li.textContent),
-    ).toEqual(["Total", "Cash out (minus)", "Cash in (plus)"]);
+    ).toEqual(["Total", "Cash out (minus)"]);
     expect(within(figure(WALK)).getByText("FY26, USD millions")).toBeInTheDocument();
     expect(
       within(figure(WALK)).getByText(

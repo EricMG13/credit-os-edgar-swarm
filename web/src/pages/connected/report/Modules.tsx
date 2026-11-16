@@ -1,17 +1,31 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/base/buttons/button";
 import { StatusBadge } from "@/components/status/StatusBadge";
 import { ModuleNav, type NavSection } from "@/pages/library/parts/ModuleNav";
 import { card, field, heading } from "../layout";
-import { ReportFindings, findingBlocks } from "../ReportContent";
+import {
+  RECORDS_ID,
+  ReportFindings,
+  drawingTitle,
+  findingBlocks,
+  recordSections,
+} from "../ReportContent";
 import {
   evidencePath,
   type OutputEntry,
   type PublishedRun,
   type Snapshot,
 } from "../publishedReport";
-import { foundationMetrics, moduleState, type buildReportView } from "../reportView";
+import {
+  foundationMetrics,
+  moduleState,
+  type MetricKey,
+  type buildReportView,
+} from "../reportView";
+
+const TILE_KEYS: readonly MetricKey[] = ["netDebt", "principal", "interestCover"];
 import { LegacyVisuals } from "../visuals";
+import { ModuleConfidence } from "./Confidence";
 import { MetricGrid } from "./MetricGrid";
 import { monitoringLabel } from "./ModuleTable";
 import { Downside, downsideView } from "./Downside";
@@ -41,7 +55,7 @@ function Navigator({
   hasLocalFigures: boolean;
   figureTableLines: readonly number[];
 }) {
-  const allSections = entry ? findingBlocks(entry.sections, entry, figureTableLines) : [];
+  const allSections = entry ? findingBlocks(entry.sections, entry, figureTableLines, true) : [];
   const firstFinding =
     allSections.find(({ heading }) => heading === "Key findings") ??
     allSections.find(({ heading }) => sectionIcon(heading) === "records");
@@ -57,7 +71,7 @@ function Navigator({
     if (icon === "records" && item !== firstFinding && !extra) return [];
     return [
       {
-        label: extra ?? (item === firstFinding ? "Key findings" : heading),
+        label: extra ?? (item === firstFinding ? "Key findings" : drawingTitle(heading)),
         key: `finding-${String(line)}`,
         icon: item === firstFinding && !extra ? ("findings" as const) : icon,
       },
@@ -78,17 +92,78 @@ function Navigator({
       icon: "records",
     });
   }
+  if (entry && recordSections(entry.sections, entry).length)
+    sections.push({ label: "Statements and records", key: RECORDS_ID, icon: "records" });
   const [active, setActive] = useState(sections[0]?.key ?? null);
+  const aside = useRef<HTMLElement>(null);
+  // A clicked entry stays until the reader's own scroll input, so the scroll it causes cannot undo it.
+  const pinned = useRef(false);
+  const sectionKeys = sections.map(({ key }) => key).join("\n");
+  useEffect(() => {
+    // Without IntersectionObserver the entry follows clicks only.
+    if (typeof IntersectionObserver === "undefined") return;
+    const keys = sectionKeys.split("\n");
+    const targets = keys.flatMap((key) => document.getElementById(key) ?? []);
+    if (!targets.length) return;
+    const inView = new Set<string>();
+    const root = aside.current?.closest("main") ?? null;
+    // One decision for the scroll listener and the observer, so they cannot disagree. A short last
+    // section never reaches the top band, so the bottom of a scrolling page selects it.
+    const choose = () => {
+      if (pinned.current) return;
+      const scrolls = root !== null && root.scrollHeight > root.clientHeight;
+      const atBottom = scrolls && root.scrollTop + root.clientHeight >= root.scrollHeight - 2;
+      // An entry that holds another entry in view is not the one being read: the deepest wins.
+      const live = targets.filter((target) => inView.has(target.id));
+      const deepest = live.find((a) => !live.some((b) => b !== a && a.contains(b)));
+      const next = atBottom ? keys.at(-1) : deepest?.id;
+      if (next) setActive(next);
+    };
+    // The scrolling region is the shell's `main`, so the top third is measured against it.
+    const spy = new IntersectionObserver(
+      (changes) => {
+        for (const { target, isIntersecting } of changes) {
+          if (isIntersecting) inView.add(target.id);
+          else inView.delete(target.id);
+        }
+        choose();
+      },
+      { root, rootMargin: "0px 0px -66% 0px" },
+    );
+    for (const target of targets) spy.observe(target);
+    const release = (event: Event) => {
+      const from = event.target as Node;
+      // Enter and Space on the navigator's own buttons press them; every other key may scroll.
+      if (event instanceof KeyboardEvent && (event.key === "Enter" || event.key === " ")) {
+        if (aside.current?.contains(from)) return;
+      }
+      // A press on the container itself is its scrollbar; one on a descendant is not.
+      if (event.type === "pointerdown" && from !== root) return;
+      pinned.current = false;
+    };
+    const inputs = ["wheel", "touchmove", "keydown", "pointerdown"];
+    for (const name of inputs) root?.addEventListener(name, release);
+    root?.addEventListener("scroll", choose);
+    return () => {
+      spy.disconnect();
+      for (const name of inputs) root?.removeEventListener(name, release);
+      root?.removeEventListener("scroll", choose);
+    };
+  }, [sectionKeys]);
   const [mobileSection, setMobileSection] = useState("");
   const moduleHref = (id: string) => `#modules/${encodeURIComponent(id)}`;
   const sectionNavigate = (id: string) => {
     const target = document.getElementById(id);
     target?.focus();
     target?.scrollIntoView({ block: "start" });
+    pinned.current = true;
     setActive(id);
   };
   return (
-    <aside className="self-start rounded-xl border border-border-hairline bg-surface-card py-2 min-[1001px]:sticky min-[1001px]:top-4">
+    <aside
+      ref={aside}
+      className="self-start rounded-xl border border-border-hairline bg-surface-card py-2 min-[1001px]:sticky min-[1001px]:top-4"
+    >
       <div className="grid gap-2 px-3 pb-2 min-[1001px]:hidden">
         <label className="grid gap-1 text-sm text-text-secondary">
           Module
@@ -220,13 +295,7 @@ function ModuleFindings({
   const { downside, breaks, macro, securities, tableLines: figureTableLines } = figures;
   const evidenceHref = (line: number) => evidencePath(run.folder, entry, line);
   const allMetrics = foundationMetrics(entry, view.catalogue);
-  const metrics = allMetrics.filter(({ metric }) =>
-    ["Net debt (carrying basis)", "Debt principal", "All-in cash interest cover"].includes(
-      metric.label,
-    ),
-  );
-  const leverage = allMetrics.find(({ metric }) => metric.label === "Lease-adjusted gross leverage")
-    ?.metric.value;
+  const metrics = allMetrics.filter(({ key }) => TILE_KEYS.includes(key));
   return (
     <ReportFindings
       key={entry.output.id}
@@ -235,11 +304,10 @@ function ModuleFindings({
       entry={entry}
       entryIndex={index}
       figureTableLines={figureTableLines}
-      judgement={
-        leverage?.kind === "value" ? `Lease-adjusted gross leverage is ${leverage.text}` : undefined
-      }
+      chartsDrawn
       afterBottomLine={
         <>
+          <ModuleConfidence snapshot={snapshot} run={run} entry={entry} entryIndex={index} />
           <MetricGrid
             records={metrics}
             entry={entry}
@@ -257,6 +325,7 @@ function ModuleFindings({
               sections={entry.sections}
               primary={entry.output.module === "CP-1" ? "Debt maturities" : undefined}
               cards
+              headingLevel="h3"
               evidenceHref={evidenceHref}
             />
           </div>

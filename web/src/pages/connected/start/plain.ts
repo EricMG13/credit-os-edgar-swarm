@@ -1,4 +1,4 @@
-import { moduleTitle, type DocumentRecord } from "../api";
+import { moduleName, type DocumentRecord } from "../api";
 
 export const PURPOSES = {
   research: "No market view (research)",
@@ -26,7 +26,7 @@ export function documentDescription(doc: DocumentRecord) {
 
 /** Replaces each whole module code the page knows with the module's name; others stay. */
 export function plainText(text: string) {
-  return text.replace(/\bCP-[A-Z0-9]+\b/g, (code) => moduleTitle(code));
+  return text.replace(/\bCP-[A-Z0-9]+\b/g, (code) => moduleName(code));
 }
 
 /** A lookup line without the launcher's label or its flag hint. */

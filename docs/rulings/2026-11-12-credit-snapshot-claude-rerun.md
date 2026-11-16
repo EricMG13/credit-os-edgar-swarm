@@ -14,7 +14,7 @@ Scope: one CP-OS launch of the `credit_snapshot` preset with CP-8 against the ea
 `tdg-reader-format-001`, on Anthropic claude-opus-5-5 at medium effort, over the retained historical
 TDG FY2024 public files (`~/Documents/Final-workflow-PY/data/public-corpus/v1/TDG`, read only) with
 the context `runs/tdg-context-2024-09-30.json`. Cap USD 25 for the run folder
-`/private/tmp/claude-501/-Users-ericguei-Documents-RBOT-HTML--claude-worktrees-pause-63d136/c8719821-dd4f-4042-ad6b-2051ff7e7dda/scratchpad/preview-ws/runs/tdg-proof-snapshot-opus-002`, outside this repository and every retained run directory. It
+`/private/tmp/claude-501/-Users-USER-Documents-RBOT-HTML--claude-worktrees-pause-63d136/c8719821-dd4f-4042-ad6b-2051ff7e7dda/scratchpad/preview-ws/runs/tdg-proof-snapshot-opus-002`, outside this repository and every retained run directory. It
 is a fresh run: the stopped run cannot be resumed under a different cap. Spend before it on these
 proof runs is USD 17.62.
 

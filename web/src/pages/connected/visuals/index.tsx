@@ -1,5 +1,7 @@
 import type { ReactNode } from "react";
+import { GapPanel } from "@/components/gap/GapPanel";
 import { ChartQualifications } from "./ChartQualifications";
+import { chartsWithQualifications } from "./drawnQualifications";
 import { ChartTable } from "@/components/chart/ChartTable";
 import { ChartWithTable } from "@/components/chart/ChartWithTable";
 import { TRACE_HOST } from "@/pages/library/parts/TraceControl";
@@ -70,12 +72,35 @@ function drawingChart({
   return chart;
 }
 
+interface Entry {
+  first: boolean;
+  draw: (wide: string) => ReactNode;
+}
+
+/** Which cards span both columns: each primary card, and a card left alone in its row. */
+function widths(firsts: boolean[]) {
+  const wide: boolean[] = [];
+  let column = 0;
+  firsts.forEach((first, at) => {
+    const alone = column === 0 && at === firsts.length - 1;
+    wide.push(first || alone);
+    column = first || alone ? 0 : 1 - column;
+  });
+  return wide;
+}
+
+function entry(first: boolean, draw: Entry["draw"]): Entry {
+  return { first, draw };
+}
+
 interface LegacyVisualsProps {
   output: unknown;
   sections?: unknown;
   evidenceHref?: (line: number) => string;
   primary?: string;
   cards?: boolean;
+  /** The figure titles' heading level; h4 unless the figures sit directly under an h2. */
+  headingLevel?: "h3" | "h4";
 }
 
 export function LegacyVisuals({
@@ -84,11 +109,13 @@ export function LegacyVisuals({
   evidenceHref,
   primary,
   cards,
+  headingLevel: Heading = "h4",
 }: LegacyVisualsProps) {
   const published = record(output);
   const basis = usePortfolioBasis();
   const sourceSections = sections ?? published.sections;
   const tables = publishedTables(sourceSections);
+  const qualified = new Set(chartsWithQualifications(published, sourceSections));
   const drawings = [
     ...byCategory(published, "charts", "chart"),
     ...byCategory(published, "chartGaps", "chart"),
@@ -100,7 +127,7 @@ export function LegacyVisuals({
     return compareLines(a, b);
   });
   const box = cards ? " rounded-xl border border-border-hairline bg-surface-card p-5" : "";
-  const views = drawings.flatMap(({ descriptor, category }): ReactNode[] => {
+  const entries = drawings.flatMap(({ descriptor, category }): Entry[] => {
     const title = word(descriptor.title ?? descriptor.lane ?? descriptor.name);
     const line = descriptor.table;
     if (!title || typeof line !== "number" || !Number.isSafeInteger(line) || line <= 0) return [];
@@ -111,16 +138,17 @@ export function LegacyVisuals({
       </PublishedSource>
     ) : undefined;
     const gap = word(descriptor.gap);
+    const first = cards === true && primary !== undefined && title === primary;
     const key = `${category}-${title}-${String(line)}`;
     if (gap) {
       return [
-        <section key={key} className={`${TRACE_HOST} grid min-w-0 gap-2${box}`}>
-          <h4 className="font-display text-h4">{title}</h4>
-          <p role="note">
-            {link && containsReference(gap) ? "Not established for this run. See Evidence." : gap}
-          </p>
-          {actions}
-        </section>,
+        entry(first, (wide) => (
+          <section key={key} className={`${TRACE_HOST} grid min-w-0 gap-2${box}${wide}`}>
+            <Heading className="font-display text-h4 first-letter:uppercase">{title}</Heading>
+            <GapPanel role="note" reason={link && containsReference(gap) ? "See Evidence." : gap} />
+            {actions}
+          </section>
+        )),
       ];
     }
     const publishedTable = tables.get(line);
@@ -141,32 +169,46 @@ export function LegacyVisuals({
         )),
     };
     const note = word(descriptor.unit) || undefined;
-    const frame = { title, note, actions };
+    const frame = { title, note, actions, as: Heading };
     const chart = drawingChart({ category, descriptor, published, basis, link, table, frame });
     return [
-      <div className={`${TRACE_HOST} grid min-w-0 grid-cols-[minmax(0,1fr)] gap-2${box}`} key={key}>
-        {chart ?? (
-          <>
-            <h4 className="font-display text-h4">{title}</h4>
-            {actions}
-            <p role="note" className="text-small text-text-secondary">
-              {category === "chart" && descriptor.kind === "limits"
-                ? "Source table available. This report does not record a validated portfolio basis for a chart."
-                : "Source table available. The chart could not be drawn on a common basis."}
-            </p>
-            <ChartTable caption={title} {...chartTable(table)} />
-          </>
-        )}
-        <ChartQualifications
-          category={category}
-          sections={sourceSections}
-          line={line}
-          evidenceHref={evidenceHref}
-        />
-      </div>,
+      entry(first, (wide) => (
+        <div
+          className={`${TRACE_HOST} grid min-w-0 grid-cols-[minmax(0,1fr)] gap-2${box}${wide}`}
+          key={key}
+        >
+          {chart ?? (
+            <>
+              <Heading className="font-display text-h4 first-letter:uppercase">{title}</Heading>
+              {actions}
+              <p role="note" className="text-small text-text-secondary">
+                {category === "chart" && descriptor.kind === "limits"
+                  ? "Source table available. This report does not record a validated portfolio basis for a chart."
+                  : "Source table available. The chart could not be drawn on a common basis."}
+              </p>
+              <ChartTable caption={title} {...chartTable(table)} />
+            </>
+          )}
+          {qualified.has(descriptor) && (
+            <ChartQualifications
+              category={category}
+              sections={sourceSections}
+              line={line}
+              evidenceHref={evidenceHref}
+            />
+          )}
+        </div>
+      )),
     ];
   });
+  // At lg the cards sit two to a row: the primary card, and a card left alone in its row, take both.
+  const wides = widths(entries.map((e) => e.first));
+  const views = entries.map(({ draw }, at) => draw(cards && wides[at] ? " lg:col-span-2" : ""));
   return views.length === 0 ? null : (
-    <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-4">{views}</div>
+    <div
+      className={`grid min-w-0 grid-cols-[minmax(0,1fr)] gap-4${cards ? " lg:grid-cols-2" : ""}`}
+    >
+      {views}
+    </div>
   );
 }

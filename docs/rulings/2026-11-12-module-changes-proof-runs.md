@@ -15,11 +15,11 @@ FY2024 public files (`~/Documents/Final-workflow-PY/data/public-corpus/v1/TDG`, 
 
 1. `credit_snapshot` preset with CP-8 against the earlier run `tdg-reader-format-001`; context
    `runs/tdg-context-2024-09-30.json`; cap USD 12; run directory
-   `/private/tmp/claude-501/-Users-ericguei-Documents-RBOT-HTML--claude-worktrees-pause-63d136/c8719821-dd4f-4042-ad6b-2051ff7e7dda/scratchpad/preview-ws/runs/tdg-proof-snapshot-001`.
+   `/private/tmp/claude-501/-Users-USER-Documents-RBOT-HTML--claude-worktrees-pause-63d136/c8719821-dd4f-4042-ad6b-2051ff7e7dda/scratchpad/preview-ws/runs/tdg-proof-snapshot-001`.
 2. `short_snapshot` preset (CP-0, CP-1, CP-L10); the same context with the pathway changed; cap
-   USD 7.50; run directory `/private/tmp/claude-501/-Users-ericguei-Documents-RBOT-HTML--claude-worktrees-pause-63d136/c8719821-dd4f-4042-ad6b-2051ff7e7dda/scratchpad/preview-ws/runs/tdg-proof-short-001`.
+   USD 7.50; run directory `/private/tmp/claude-501/-Users-USER-Documents-RBOT-HTML--claude-worktrees-pause-63d136/c8719821-dd4f-4042-ad6b-2051ff7e7dda/scratchpad/preview-ws/runs/tdg-proof-short-001`.
 3. `portfolio_decision` preset (forecast from layer 1, no CP-2G); the same context with the pathway
-   changed; cap USD 10.50; run directory `/private/tmp/claude-501/-Users-ericguei-Documents-RBOT-HTML--claude-worktrees-pause-63d136/c8719821-dd4f-4042-ad6b-2051ff7e7dda/scratchpad/preview-ws/runs/tdg-proof-portfolio-001`.
+   changed; cap USD 10.50; run directory `/private/tmp/claude-501/-Users-USER-Documents-RBOT-HTML--claude-worktrees-pause-63d136/c8719821-dd4f-4042-ad6b-2051ff7e7dda/scratchpad/preview-ws/runs/tdg-proof-portfolio-001`.
 
 The per-run caps differ from the USD 15, USD 5 and USD 10 shown to the user because the launcher
 holds USD 5.73 for each call, so a cap must exceed the expected spend by that hold (a USD 5 cap

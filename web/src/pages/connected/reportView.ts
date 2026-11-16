@@ -17,8 +17,6 @@ import type {
   Table,
 } from "./publishedReport";
 
-const readerModuleName = (id: string) => moduleName(id).replace(/ \(CP-[^)]+\)$/, "");
-
 export function moduleState(entry: OutputEntry | undefined): ModuleState {
   if (!entry) return "Not run";
   if (entry.output.parseError || blocked(entry)) return "Not assessable";
@@ -58,7 +56,7 @@ export function buildReportView(snapshot: Snapshot, routeKey: string, run: Publi
   const modules = Object.keys(run.modules).map((id) => {
     const outputs = entries.filter((entry) => entry.output.module === id);
     const selected = outputs.find((entry) => entry.selected);
-    return { id, name: readerModuleName(id), state: moduleState(selected ?? outputs[0]), outputs };
+    return { id, name: moduleName(id), state: moduleState(selected ?? outputs[0]), outputs };
   });
   return {
     entries,
@@ -71,17 +69,21 @@ export function buildReportView(snapshot: Snapshot, routeKey: string, run: Publi
   };
 }
 
-type MetricBinding = { metric: Metric; line?: number };
+export type MetricKey =
+  | "liquidity"
+  | "freeCashFlow"
+  | "leverage"
+  | "interestCover"
+  | "netDebt"
+  | "principal"
+  | "maturities";
+type MetricBinding = { key: MetricKey; metric: Metric; line?: number };
 const creditMetrics = [
-  ["Total liquidity at period end", "Available liquidity", "US$m"],
-  ["Free cash flow (operating cash flow less capex), twelve months", "Free cash flow", "US$m"],
-  ["(Total debt plus financing obligations) / EBITDA", "Lease-adjusted gross leverage", "x"],
-  [
-    "EBITDA / (cash interest for debt plus cash rent recorded as interest)",
-    "All-in cash interest cover",
-    "x",
-  ],
-  ["Net debt at period end", "Net debt (carrying basis)", "US$m"],
+  ["liquidity", "Total liquidity at period end", "US$m"],
+  ["freeCashFlow", "Free cash flow (operating cash flow less capex), twelve months", "US$m"],
+  ["leverage", "(Total debt plus financing obligations) / EBITDA", "x"],
+  ["interestCover", "EBITDA / (cash interest for debt plus cash rent recorded as interest)", "x"],
+  ["netDebt", "Net debt at period end", "US$m"],
 ] as const;
 
 const numeric = /^-?\d+(?:\.\d+)?$/;
@@ -103,6 +105,7 @@ function creditMetricColumn(entry: OutputEntry, table: Table, date: string) {
 }
 
 function metricBinding(
+  key: MetricKey,
   label: string,
   value: string,
   unit: string,
@@ -110,6 +113,7 @@ function metricBinding(
   line?: number,
 ): MetricBinding {
   return {
+    key,
     metric: {
       label,
       value: { kind: "value", at: null, text: financialValue(value, unit) },
@@ -129,7 +133,7 @@ function principal(entry: OutputEntry, date: string): MetricBinding[] {
   const row = namedRow(table, ({ cells }) => cells[0] === date && cells[4] === "US$m");
   const value = row?.cells[1];
   return value && numeric.test(value)
-    ? [metricBinding("Debt principal", value, "US$m", date, row.line)]
+    ? [metricBinding("principal", "Contractual principal", value, "US$m", date, row.line)]
     : [];
 }
 
@@ -166,15 +170,7 @@ function maturityTotal(entry: OutputEntry, date: string): MetricBinding[] {
   });
   const value = row?.cells[3];
   return value && numeric.test(value)
-    ? [
-        metricBinding(
-          `Debt maturities through ${String(through)}`,
-          value,
-          "US$m",
-          row.cells[1] ?? "",
-          row.line,
-        ),
-      ]
+    ? [metricBinding("maturities", row.cells[1] ?? "", value, "US$m", date, row.line)]
     : [];
 }
 
@@ -201,22 +197,14 @@ export function foundationMetrics(entry: OutputEntry, catalogue: CatalogueRun | 
   const column = table && creditMetricColumn(entry, table, date);
   const measures =
     table && column !== undefined
-      ? creditMetrics.flatMap(([source, label, unit]) => {
+      ? creditMetrics.flatMap(([key, label, unit]) => {
           const row = namedRow(
             table,
-            ({ cells }) => cells[0] === source && cells[table.headers.indexOf("Unit")] === unit,
+            ({ cells }) => cells[0] === label && cells[table.headers.indexOf("Unit")] === unit,
           );
           const value = row?.cells[column];
           return value && numeric.test(value)
-            ? [
-                metricBinding(
-                  label,
-                  value,
-                  unit,
-                  label === "Free cash flow" ? `LTM to ${date}` : date,
-                  row.line,
-                ),
-              ]
+            ? [metricBinding(key, label, value, unit, date, row.line)]
             : [];
         })
       : [];

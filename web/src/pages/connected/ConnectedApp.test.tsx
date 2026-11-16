@@ -209,8 +209,8 @@ describe("connected run start", () => {
       target: { value: "advanced" },
     });
     advanceToContext();
-    expect(screen.queryByRole("checkbox", { name: /CP-MODEL/ })).toBeNull();
-    fireEvent.click(screen.getByRole("checkbox", { name: "Source readiness (CP-0)" }));
+    expect(screen.queryByRole("checkbox", { name: "Cash flow model" })).toBeNull();
+    fireEvent.click(screen.getByRole("checkbox", { name: "Source readiness" }));
     fireEvent.click(screen.getByRole("button", { name: "Review run" }));
     await screen.findByRole("button", { name: "Submit, spend up to USD 40.00" });
     const summaryRequest = fetchMock.mock.calls.find(([path]) => path.endsWith("/summary"));
@@ -463,7 +463,7 @@ describe("connected run start", () => {
     fireEvent.change(screen.getByLabelText("Model"), { target: { value: "claude" } });
     fireEvent.change(screen.getByLabelText("Reasoning effort"), { target: { value: "high" } });
     fireEvent.change(screen.getByLabelText("Turns per module"), { target: { value: "64" } });
-    fireEvent.click(screen.getByRole("checkbox", { name: "Committee decision (CP-6)" }));
+    fireEvent.click(screen.getByRole("checkbox", { name: "Committee decision" }));
     const reviewRun = screen.getByRole("button", { name: "Review run" });
     fireEvent.click(reviewRun);
     expect(await screen.findByRole("alert")).toHaveTextContent("Add at least one facility");
@@ -754,7 +754,7 @@ describe("connected activity and reports", () => {
       "aria-valuenow",
       "1",
     );
-    expect(screen.getByText("Source readiness (CP-0)").closest("li")).toHaveTextContent("Finished");
+    expect(screen.getByText("Source readiness").closest("li")).toHaveTextContent("Finished");
     expect(
       screen.getByText("submitted by Dana Reyes · started 16 Nov 2026, 14:02 UTC"),
     ).toBeInTheDocument();
@@ -822,7 +822,7 @@ describe("connected activity and reports", () => {
     render(<ConnectedApp path="/run/test-run" mode="synthetic" />);
     expect(await screen.findByText(/Waiting for the report/)).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Run activity" })).toHaveAttribute("href", "/runs");
-    expect(screen.getByText("Source readiness (CP-0)")).toBeInTheDocument();
+    expect(screen.getByText("Source readiness")).toBeInTheDocument();
     expect(
       screen.getByRole("progressbar", { name: /USD 0.00 of USD 25.00 cap usage/ }),
     ).toHaveAttribute("aria-valuenow", "0");
@@ -985,7 +985,7 @@ describe("connected activity and reports", () => {
     );
     window.location.hash = `evidence/${encodeURIComponent(output)}~${"d".repeat(64)}-9`;
     expect(
-      await screen.findByRole("heading", { name: "Fundamental credit (CP-2) · Line 9" }),
+      await screen.findByRole("heading", { name: "Fundamental credit · Line 9" }),
     ).toBeInTheDocument();
     expect(screen.getByRole("cell", { name: filing })).toBeInTheDocument();
     expect(screen.queryByRole("cell", { name: "prior-filing.pdf" })).toBeNull();

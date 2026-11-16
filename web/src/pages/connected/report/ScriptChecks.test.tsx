@@ -74,7 +74,7 @@ it("renders accepted record identity, exact figures, zero tolerance and status w
     "href",
     "#evidence/checks/CP-1",
   );
-  expect(screen.getByRole("option", { name: "Financial foundation (CP-1)" })).toBeInTheDocument();
+  expect(screen.getByRole("option", { name: "Financial foundation" })).toBeInTheDocument();
 });
 
 it("groups repeated register checks but keeps different numeric and missing values separate", () => {
@@ -124,7 +124,7 @@ it("keeps unknown statuses and hostile text literal, and filters modules without
   shown.unmount();
   show([record], "checks/CP-6");
   expect(
-    screen.getByText("No script-check record is held for Committee decision (CP-6)."),
+    screen.getByText("No script-check record is held for Committee decision."),
   ).toBeInTheDocument();
   expect(screen.queryByRole("region", { name: /Net debt/ })).toBeNull();
 });

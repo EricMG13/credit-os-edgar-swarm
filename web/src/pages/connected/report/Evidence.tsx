@@ -13,6 +13,7 @@ import {
   evidencePath,
   evidenceToken,
   FORECAST_INPUTS,
+  plainModuleNames,
   publishedHref,
   resolveEvidenceLocation,
   sectionContainsLine,
@@ -26,6 +27,7 @@ import {
 import {
   HandoffDownload,
   PublishedTable,
+  plainText,
   richParts,
   traceDetails,
   traceForLine,
@@ -96,7 +98,11 @@ function EvidenceLocation({
               id={`evidence-${evidenceToken(entry, block.line)}`}
             >
               {block.type === "table" ? (
-                <PublishedTable table={rowView(block, line)} evidence />
+                <PublishedTable
+                  table={rowView(block, line)}
+                  heading={plainText(section.heading)}
+                  evidence
+                />
               ) : section.heading === FORECAST_INPUTS ? (
                 <pre className="max-h-100 overflow-auto rounded-ds-sm bg-surface-subtle p-3 text-xs whitespace-pre-wrap wrap-anywhere">
                   {block.text}
@@ -107,7 +113,7 @@ function EvidenceLocation({
                 </p>
               )}
               {block.type === "table" && basis && (
-                <p className="text-sm text-text-secondary">{basis}</p>
+                <p className="text-sm text-text-secondary">{plainModuleNames(basis)}</p>
               )}
               {chips.length > 0 && (
                 <ul className="grid gap-2">
@@ -261,7 +267,7 @@ function EvidenceGaps({
                   className="border-t border-border-hairline align-top"
                 >
                   <th scope="row" className="px-4 py-3 font-medium text-text-primary">
-                    {gap.title || section.heading}
+                    {plainModuleNames(gap.title || section.heading)}
                   </th>
                   <td className="px-4 py-3">
                     {moduleName(entry.output.module)}
@@ -279,7 +285,7 @@ function EvidenceGaps({
                     )}
                   </td>
                   <td className="max-w-xl whitespace-pre-wrap px-4 py-3 text-text-secondary">
-                    {gap.details || "No additional detail recorded."}
+                    {plainModuleNames(gap.details) || "No additional detail recorded."}
                   </td>
                   <td className="px-4 py-3">
                     <a
