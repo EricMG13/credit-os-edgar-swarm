@@ -118,6 +118,8 @@ afterEach(() => {
 const sectionButtons = () =>
   within(screen.getByRole("list", { name: "On this page" })).getAllByRole("button");
 
+const marks = () => sectionButtons().map((button) => button.getAttribute("aria-current"));
+
 describe("report wayfinding", () => {
   it("marks the section in the top third of the scroll container, and no other", async () => {
     vi.stubGlobal("IntersectionObserver", FakeObserver);
@@ -141,6 +143,51 @@ describe("report wayfinding", () => {
       null,
       "location",
     ]);
+  });
+
+  it("keeps a clicked entry until the reader scrolls, then lets the observer take over", async () => {
+    vi.stubGlobal("IntersectionObserver", FakeObserver);
+    useSnapshot();
+    open("#modules/CP-1");
+    await screen.findByLabelText("Module");
+    const spy = observers.find((item) => item.observed.length > 0);
+    if (!spy) throw new Error("no observer");
+    const [, second, third] = spy.observed;
+    if (!second || !third) throw new Error("sections missing");
+    third.scrollIntoView = vi.fn();
+    fireEvent.click(sectionButtons()[2] as HTMLElement);
+    act(() => {
+      spy.callback([{ target: second, isIntersecting: true }]);
+    });
+    expect(marks()).toEqual([null, null, "location"]);
+    act(() => {
+      fireEvent.wheel(screen.getByRole("main"));
+    });
+    act(() => {
+      spy.callback([{ target: second, isIntersecting: true }]);
+    });
+    expect(marks()).toEqual([null, "location", null]);
+  });
+
+  it("marks the last entry when the scroll container is at its bottom", async () => {
+    vi.stubGlobal("IntersectionObserver", FakeObserver);
+    useSnapshot();
+    open("#modules/CP-1");
+    await screen.findByLabelText("Module");
+    const spy = observers.find((item) => item.observed.length > 0);
+    const first = spy?.observed[0];
+    if (!spy || !first) throw new Error("no observer");
+    const main = screen.getByRole("main");
+    Object.defineProperty(main, "scrollTop", { value: 600, configurable: true });
+    Object.defineProperty(main, "clientHeight", { value: 400, configurable: true });
+    Object.defineProperty(main, "scrollHeight", { value: 1000, configurable: true });
+    act(() => {
+      spy.callback([{ target: first, isIntersecting: true }]);
+    });
+    act(() => {
+      fireEvent.scroll(main);
+    });
+    expect(marks()).toEqual([null, null, "location"]);
   });
 
   it("renders the navigator and still activates an entry on click without IntersectionObserver", async () => {

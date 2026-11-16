@@ -88,6 +88,8 @@ function Navigator({
     sections.push({ label: "Statements and records", key: RECORDS_ID, icon: "records" });
   const [active, setActive] = useState(sections[0]?.key ?? null);
   const aside = useRef<HTMLElement>(null);
+  // A clicked entry stays until the reader's own scroll input, so the scroll it causes cannot undo it.
+  const pinned = useRef(false);
   const sectionKeys = sections.map(({ key }) => key).join("\n");
   useEffect(() => {
     // Without IntersectionObserver the entry follows clicks only.
@@ -96,6 +98,7 @@ function Navigator({
     const targets = keys.flatMap((key) => document.getElementById(key) ?? []);
     if (!targets.length) return;
     const inView = new Set<string>();
+    const root = aside.current?.closest("main") ?? null;
     // The scrolling region is the shell's `main`, so the top third is measured against it.
     const spy = new IntersectionObserver(
       (changes) => {
@@ -104,13 +107,29 @@ function Navigator({
           else inView.delete(target.id);
         }
         const first = keys.find((key) => inView.has(key));
-        if (first) setActive(first);
+        if (first && !pinned.current) setActive(first);
       },
-      { root: aside.current?.closest("main") ?? null, rootMargin: "0px 0px -66% 0px" },
+      { root, rootMargin: "0px 0px -66% 0px" },
     );
     for (const target of targets) spy.observe(target);
+    const release = (event: Event) => {
+      // Keys pressed inside the navigator operate its own buttons; they are not scrolling.
+      if (event.type === "keydown" && aside.current?.contains(event.target as Node)) return;
+      pinned.current = false;
+    };
+    // A short last section never reaches the top band, so the bottom of the page selects it.
+    const atBottom = () => {
+      if (!root || pinned.current) return;
+      const last = keys.at(-1);
+      if (last && root.scrollTop + root.clientHeight >= root.scrollHeight - 2) setActive(last);
+    };
+    const inputs = ["wheel", "touchmove", "keydown"];
+    for (const name of inputs) root?.addEventListener(name, release);
+    root?.addEventListener("scroll", atBottom);
     return () => {
       spy.disconnect();
+      for (const name of inputs) root?.removeEventListener(name, release);
+      root?.removeEventListener("scroll", atBottom);
     };
   }, [sectionKeys]);
   const [mobileSection, setMobileSection] = useState("");
@@ -119,6 +138,7 @@ function Navigator({
     const target = document.getElementById(id);
     target?.focus();
     target?.scrollIntoView({ block: "start" });
+    pinned.current = true;
     setActive(id);
   };
   return (
