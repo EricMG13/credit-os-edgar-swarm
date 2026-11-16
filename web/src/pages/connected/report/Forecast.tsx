@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { card, field, heading, label } from "../layout";
 import {
   containsReference,
@@ -123,6 +123,140 @@ function BasisNote({
   );
 }
 
+function ForecastCases({
+  caseOptions,
+  selectedCase,
+  setChosenCase,
+  source,
+}: {
+  caseOptions: ReturnType<typeof forecastCaseOptions>;
+  selectedCase: string | undefined;
+  setChosenCase: (name: string) => void;
+  source: ((name: string) => ReactNode) | undefined;
+}) {
+  return (
+    caseOptions.length > 1 && (
+      <section className="flex flex-col gap-4" aria-labelledby="forecast-case-heading">
+        <div className="flex flex-wrap items-baseline justify-between gap-2">
+          <h3 id="forecast-case-heading" className="font-display text-h3">
+            Two cases
+          </h3>
+          <p className="text-small text-text-tertiary">
+            The cash proxy and forecast charts follow the selected case.
+          </p>
+        </div>
+        <div role="radiogroup" aria-label="Forecast case" className="grid gap-4 sm:grid-cols-2">
+          {caseOptions.map(({ name, period, value, units }) => (
+            <div
+              key={name}
+              className={`relative flex flex-col gap-2 rounded-ds-md border bg-surface-card px-3 py-2.5 ${
+                selectedCase === name
+                  ? "border-action bg-surface-selected"
+                  : "border-border-hairline"
+              }`}
+            >
+              <div className={TRACE_HOST}>
+                <label className="block cursor-pointer has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-focus">
+                  <input
+                    type="radio"
+                    name="forecast-case"
+                    checked={selectedCase === name}
+                    onChange={() => {
+                      setChosenCase(name);
+                    }}
+                    className="sr-only"
+                  />
+                  <span className="flex items-baseline gap-2 text-sm font-semibold text-text-primary">
+                    {name}
+                    <span
+                      aria-hidden="true"
+                      className={`ml-auto size-4 flex-none self-center rounded-full border ${
+                        selectedCase === name ? "border-5 border-action" : "border-border-control"
+                      }`}
+                    />
+                  </span>
+                  <span className="mt-0.5 block pr-7 text-sm text-text-secondary">
+                    <span className="font-display text-h3 tabular-nums">
+                      {typeof value === "number"
+                        ? new Intl.NumberFormat("en-US", { maximumFractionDigits: 2 }).format(value)
+                        : "Not available"}
+                    </span>
+                    <span className="block text-text-tertiary">
+                      Cash proxy {period ? `· ${period}` : ""}
+                      {` · ${units}`}
+                    </span>
+                  </span>
+                </label>
+                <div className="absolute right-2.5 bottom-2.5">{source?.(name)}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+    )
+  );
+}
+
+function ForecastAssumptions({
+  model,
+  handoff,
+  run,
+  href,
+}: {
+  model: Model;
+  handoff: OutputEntry | undefined;
+  run: PublishedRun;
+  href: (line: number) => string;
+}) {
+  const register = model.register;
+  const assumptions =
+    register && handoff && namedTable(handoff, register.heading, register.headers);
+  function assumptionHref(cells: string[]) {
+    const row = namedRow(
+      assumptions || undefined,
+      (row) =>
+        row.cells.length === cells.length &&
+        row.cells.every((cell, index) => cell === cells[index]),
+    );
+    return row && href(row.line);
+  }
+  return (
+    model.register && (
+      <details className={card}>
+        <summary className="cursor-pointer font-semibold">Forecast assumptions</summary>
+        {model.register.intro && !containsReference(model.register.intro) && (
+          <p>{model.register.intro}</p>
+        )}
+        <PublishedTable
+          table={{
+            type: "table",
+            line: 0,
+            headers: model.register.headers,
+            rows: model.register.rows.map((cells, line) => ({ cells, line })),
+          }}
+          rowHref={(line) => assumptionHref(model.register?.rows[line] ?? [])}
+          rowSource={(line, name) => {
+            const link = assumptionHref(model.register?.rows[line] ?? []);
+            return (
+              link && (
+                <PublishedSource name={name} href={link}>
+                  Assumption source
+                </PublishedSource>
+              )
+            );
+          }}
+        />
+        <a
+          href={handoff ? evidencePath(run.folder, handoff) : "#evidence/trace/CP-2G"}
+          className="text-action underline"
+        >
+          Open the forward credit handoff
+        </a>
+      </details>
+    )
+  );
+}
+
 export function Forecast({
   view,
   run,
@@ -150,18 +284,6 @@ export function Forecast({
             Forecast inputs
           </PublishedSource>
         );
-  const register = model?.register;
-  const assumptions =
-    register && handoff && namedTable(handoff, register.heading, register.headers);
-  function assumptionHref(cells: string[]) {
-    const row = namedRow(
-      assumptions || undefined,
-      (row) =>
-        row.cells.length === cells.length &&
-        row.cells.every((cell, index) => cell === cells[index]),
-    );
-    return row && href(row.line);
-  }
   return (
     <>
       <header className="grid gap-2">
@@ -192,67 +314,12 @@ export function Forecast({
           </select>
         </label>
       )}
-      {caseOptions.length > 1 && (
-        <section className="flex flex-col gap-4" aria-labelledby="forecast-case-heading">
-          <div className="flex flex-wrap items-baseline justify-between gap-2">
-            <h3 id="forecast-case-heading" className="font-display text-h3">
-              Two cases
-            </h3>
-            <p className="text-small text-text-tertiary">
-              The cash proxy and forecast charts follow the selected case.
-            </p>
-          </div>
-          <div role="radiogroup" aria-label="Forecast case" className="grid gap-4 sm:grid-cols-2">
-            {caseOptions.map(({ name, period, value, units }) => (
-              <div
-                key={name}
-                className={`relative flex flex-col gap-2 rounded-ds-md border bg-surface-card px-3 py-2.5 ${
-                  selectedCase === name
-                    ? "border-action bg-surface-selected"
-                    : "border-border-hairline"
-                }`}
-              >
-                <div className={TRACE_HOST}>
-                  <label className="block cursor-pointer has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-focus">
-                    <input
-                      type="radio"
-                      name="forecast-case"
-                      checked={selectedCase === name}
-                      onChange={() => {
-                        setChosenCase(name);
-                      }}
-                      className="sr-only"
-                    />
-                    <span className="flex items-baseline gap-2 text-sm font-semibold text-text-primary">
-                      {name}
-                      <span
-                        aria-hidden="true"
-                        className={`ml-auto size-4 flex-none self-center rounded-full border ${
-                          selectedCase === name ? "border-5 border-action" : "border-border-control"
-                        }`}
-                      />
-                    </span>
-                    <span className="mt-0.5 block pr-7 text-sm text-text-secondary">
-                      <span className="font-display text-h3 tabular-nums">
-                        {typeof value === "number"
-                          ? new Intl.NumberFormat("en-US", { maximumFractionDigits: 2 }).format(
-                              value,
-                            )
-                          : "Not available"}
-                      </span>
-                      <span className="block text-text-tertiary">
-                        Cash proxy {period ? `· ${period}` : ""}
-                        {` · ${units}`}
-                      </span>
-                    </span>
-                  </label>
-                  <div className="absolute right-2.5 bottom-2.5">{source?.(name)}</div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
-      )}
+      <ForecastCases
+        caseOptions={caseOptions}
+        selectedCase={selectedCase}
+        setChosenCase={setChosenCase}
+        source={source}
+      />
       {model && (
         <LegacyForecast
           model={model}
@@ -268,39 +335,7 @@ export function Forecast({
           }
         />
       )}
-      {model?.register && (
-        <details className={card}>
-          <summary className="cursor-pointer font-semibold">Forecast assumptions</summary>
-          {model.register.intro && !containsReference(model.register.intro) && (
-            <p>{model.register.intro}</p>
-          )}
-          <PublishedTable
-            table={{
-              type: "table",
-              line: 0,
-              headers: model.register.headers,
-              rows: model.register.rows.map((cells, line) => ({ cells, line })),
-            }}
-            rowHref={(line) => assumptionHref(model.register?.rows[line] ?? [])}
-            rowSource={(line, name) => {
-              const link = assumptionHref(model.register?.rows[line] ?? []);
-              return (
-                link && (
-                  <PublishedSource name={name} href={link}>
-                    Assumption source
-                  </PublishedSource>
-                )
-              );
-            }}
-          />
-          <a
-            href={handoff ? evidencePath(run.folder, handoff) : "#evidence/trace/CP-2G"}
-            className="text-action underline"
-          >
-            Open the forward credit handoff
-          </a>
-        </details>
-      )}
+      {model && <ForecastAssumptions model={model} handoff={handoff} run={run} href={href} />}
       <RunCharts view={view} folder={run.folder} />
     </>
   );

@@ -99,7 +99,7 @@ function response(page, pathPattern, method) {
 
 const digest = (value) => createHash("sha256").update(value).digest("hex");
 
-async function submit(page, channel, paidPreview = false) {
+async function checkRunDocuments(page, channel, paidPreview) {
   await page.getByRole("link", { name: "Start a run", exact: true }).click();
   const stepper = page.getByRole("list", { name: "Steps in this run" });
   const current = stepper.locator('[aria-current="step"]');
@@ -113,6 +113,10 @@ async function submit(page, channel, paidPreview = false) {
   await readiness.getByText("USD 0.00 of USD 20.00", { exact: true }).waitFor();
   if (!paidPreview)
     await page.screenshot({ path: path.join(artifacts, `${channel}-run-documents.png`) });
+  await checkMobileDocuments(page, channel, paidPreview);
+}
+
+async function checkMobileDocuments(page, channel, paidPreview) {
   const desktop = page.viewportSize();
   await page.setViewportSize({ width: 390, height: 844 });
   await page.waitForFunction(() => {
@@ -130,6 +134,9 @@ async function submit(page, channel, paidPreview = false) {
       fullPage: true,
     });
   await page.setViewportSize(desktop);
+}
+
+async function uploadRunDocuments(page) {
   await page.getByLabel("Issuer name", { exact: true }).fill("Northbridge Synthetic Group");
   await page.getByLabel("As-of date", { exact: true }).fill("2025-03-31");
   const files = [
@@ -161,6 +168,12 @@ async function submit(page, channel, paidPreview = false) {
     ...uploaded,
   ]);
   for (const upload of uploads) assert.equal(upload.status(), 200);
+}
+
+async function approveRunInputs(page, paidPreview) {
+  const current = page
+    .getByRole("list", { name: "Steps in this run" })
+    .locator('[aria-current="step"]');
   await page.getByRole("button", { name: "Continue to purpose", exact: true }).click();
   await page.getByRole("heading", { name: "Purpose", exact: true }).waitFor();
   assert.match(await current.innerText(), /Purpose/u);
@@ -186,16 +199,10 @@ async function submit(page, channel, paidPreview = false) {
     for (const checkbox of await page.getByRole("checkbox", { name: label, exact: true }).all())
       await checkbox.check();
   }
-  const consent = page.getByRole("checkbox", {
-    name: "Approve: I have read this summary and want this run started",
-    exact: true,
-  });
-  assert.equal(await submitButton.isEnabled(), false);
-  let submitRequests = 0;
-  page.on("request", (request) => {
-    if (request.method() === "POST" && /\/submit$/u.test(new URL(request.url()).pathname))
-      submitRequests += 1;
-  });
+  return submitButton;
+}
+
+async function checkRunConfirmation(page, channel, paidPreview, consent, submitButton) {
   await consent.check();
   await submitButton.click();
   const dialog = page.getByRole("dialog", {
@@ -222,6 +229,24 @@ async function submit(page, channel, paidPreview = false) {
       document.activeElement?.matches("button") &&
       document.activeElement.textContent.trim().startsWith("Submit"),
   );
+  return dialog;
+}
+
+async function submit(page, channel, paidPreview = false) {
+  await checkRunDocuments(page, channel, paidPreview);
+  await uploadRunDocuments(page);
+  const submitButton = await approveRunInputs(page, paidPreview);
+  const consent = page.getByRole("checkbox", {
+    name: "Approve: I have read this summary and want this run started",
+    exact: true,
+  });
+  assert.equal(await submitButton.isEnabled(), false);
+  let submitRequests = 0;
+  page.on("request", (request) => {
+    if (request.method() === "POST" && /\/submit$/u.test(new URL(request.url()).pathname))
+      submitRequests += 1;
+  });
+  const dialog = await checkRunConfirmation(page, channel, paidPreview, consent, submitButton);
   assert.equal(submitRequests, 0);
   if (paidPreview) return;
 
@@ -900,6 +925,139 @@ async function checkReportEvidence(report, page, channel) {
   await checkRecord(report, page, channel);
 }
 
+async function checkBrowserRun(browser, service, workspace, channel, brand) {
+  const page = await browser.newPage();
+  page.setDefaultTimeout(15000);
+  const errors = [];
+  page.on("pageerror", (error) => errors.push(error.message));
+  await page.goto(service.endpoint);
+  const brands = await page.evaluate(() =>
+    navigator.userAgentData?.brands.map(({ brand }) => brand),
+  );
+  assert.ok(brands?.includes(brand), `Expected branded ${brand}, received ${String(brands)}`);
+
+  await checkPaidConfirmation(browser, service.endpoint, channel);
+  const run = await submit(page, channel);
+  const open = page.getByRole("link", { name: "Open report", exact: true });
+  const stopped = page
+    .getByRole("status")
+    .filter({ hasText: /^(Failed|Capped|Rejected|Interrupted)$/u });
+  await open.or(stopped).waitFor({ timeout: 60000 });
+  const state = await page.request.get(new URL(`/api/runs/${run}`, service.endpoint).href);
+  assert.equal(state.status(), 200);
+  const completed = await state.json();
+  assert.equal(completed.status, "finished", completed.reason ?? "The run did not finish.");
+  await checkActivity(page, channel);
+  await checkRateMethod(workspace, run);
+  await open.click();
+  await page.waitForURL((url) => url.pathname === `/report/${run}`);
+  const report = page.locator("main");
+  await report.getByText("Full credit assessment", { exact: true }).waitFor();
+  await report.getByText("As of 31 March 2025", { exact: true }).waitFor();
+  await report
+    .getByText("The synthetic issuer shows one observed item.", { exact: false })
+    .first()
+    .waitFor();
+  await page.reload();
+  await report
+    .getByText("The synthetic issuer shows one observed item.", { exact: false })
+    .first()
+    .waitFor();
+  await page.screenshot({
+    path: path.join(artifacts, `${channel}-finished-report.png`),
+    fullPage: true,
+  });
+  await checkOverviewTrace(report, page);
+  await checkCalendar(report, artifacts, channel, page);
+  await checkCharts(report, artifacts, channel, page);
+  const download = report.getByRole("link", {
+    name: "Download Fundamental credit",
+    exact: true,
+  });
+  await download.waitFor();
+  const [file] = await Promise.all([page.waitForEvent("download"), download.click()]);
+  assert.equal(file.suggestedFilename(), "CP-2.md");
+  const bytes = await readFile(await file.path());
+  assert.match(bytes.toString("utf8"), /The synthetic issuer shows one observed item\./u);
+  const publication = await page.request.get(new URL("/connected/snapshot", service.endpoint).href);
+  await checkChangesTrace(browser, service.endpoint, run);
+  assert.equal(publication.status(), 200);
+  const { workspace: publishedWorkspace } = await publication.json();
+  const published = Object.values(publishedWorkspace.runs).find((item) => item.folder === run);
+  assert.ok(published);
+  assert.equal(Object.values(published.modules).filter((module) => module.default).length, 14);
+  assert.ok(published.modules["CP-2D"].default);
+  assert.ok(published.modules["CP-3C"].default);
+  const designated = publishedWorkspace.outputs[published.modules["CP-2"].default];
+  assert.equal(createHash("sha256").update(bytes).digest("hex"), designated.sha256);
+  assert.equal(new URL(page.url()).pathname, `/report/${run}`);
+  assert.deepEqual(errors, []);
+  await page.screenshot({
+    path: path.join(artifacts, `${channel}-evidence.png`),
+    fullPage: true,
+  });
+  return {
+    ...provenance,
+    browser: brand,
+    version: browser.version(),
+    run,
+    screenshots: [
+      "run-documents",
+      "run-mobile",
+      "paid-confirmation",
+      "run-confirmation",
+      "run-activity",
+      "finished-report",
+      "calendar",
+      "debt-maturities",
+      "downside",
+      "rate-shocks",
+      "instrument-quotes",
+      "portfolio-limits",
+      "revenue",
+      "evidence",
+      "evidence-record",
+    ].map((view) => `${channel}-${view}.png`),
+    checks: [
+      "upload",
+      "five-step intake, document drop zone and responsive readiness panel",
+      "approved submission",
+      "paid cap confirmation and cancel without submission",
+      "synthetic confirmation and exactly one submission",
+      "run activity spend, module count, elapsed time and delivery feed",
+      "finished publication",
+      "overview",
+      "issuer calendar date precision and originating row",
+      "figure and row trace keyboard focus restoration",
+      "changes",
+      "financial chart, table and source trace reload",
+      "readiness and monitoring records with source traces",
+      "downside case comparison with signed cash flow and explicit gap",
+      "downside break-point ranking, watch timing, and narrow layout",
+      "rate and currency shocks with zero and unreported hedge outcomes",
+      "native completeness and rate sensitivity checks agreed",
+      "dated instrument quotes, decision and recovery qualification",
+      "selected workbook attestation, portfolio limits and proposal qualification",
+      "forecast chart and model",
+      "chart source control visible on hover with Show sources off",
+      "shared Base and Downside case selection updates cash proxy and exact model values",
+      "evidence bookmark retains identity after reorder and rejects old ordinal addresses",
+      "forecast run figures and original module",
+      "signed liquidity bridge and unfunded refinancing row",
+      "report history",
+      "evidence reload and handoff",
+      "exact Overview passage, module chart row and Forecast inputs",
+      "Evidence Record metadata, module timings, synthetic responses and hashes",
+      "paired Changes fixture links only to its matched handoff row",
+    ],
+  };
+}
+
+function launchBrowser(channel, envName) {
+  const executablePath = process.env[envName];
+  return chromium.launch(executablePath === undefined ? { channel } : { executablePath });
+}
+
 for (const [channel, brand, envName] of [
   ["chrome", "Google Chrome", "CHROME_PATH"],
   ["msedge", "Microsoft Edge", "EDGE_PATH"],
@@ -916,142 +1074,8 @@ for (const [channel, brand, envName] of [
       let record;
       try {
         service = await startService(workspace);
-        const executablePath = process.env[envName];
-        browser = await chromium.launch(
-          executablePath === undefined ? { channel } : { executablePath },
-        );
-        const page = await browser.newPage();
-        page.setDefaultTimeout(15000);
-        const errors = [];
-        page.on("pageerror", (error) => errors.push(error.message));
-        await page.goto(service.endpoint);
-        const brands = await page.evaluate(() =>
-          navigator.userAgentData?.brands.map(({ brand }) => brand),
-        );
-        assert.ok(brands?.includes(brand), `Expected branded ${brand}, received ${String(brands)}`);
-
-        await checkPaidConfirmation(browser, service.endpoint, channel);
-        const run = await submit(page, channel);
-        const open = page.getByRole("link", { name: "Open report", exact: true });
-        const stopped = page
-          .getByRole("status")
-          .filter({ hasText: /^(Failed|Capped|Rejected|Interrupted)$/u });
-        await open.or(stopped).waitFor({ timeout: 60000 });
-        const state = await page.request.get(new URL(`/api/runs/${run}`, service.endpoint).href);
-        assert.equal(state.status(), 200);
-        const completed = await state.json();
-        assert.equal(completed.status, "finished", completed.reason ?? "The run did not finish.");
-        await checkActivity(page, channel);
-        await checkRateMethod(workspace, run);
-        await open.click();
-        await page.waitForURL((url) => url.pathname === `/report/${run}`);
-        const report = page.locator("main");
-        await report.getByText("Full credit assessment", { exact: true }).waitFor();
-        await report.getByText("As of 31 March 2025", { exact: true }).waitFor();
-        await report
-          .getByText("The synthetic issuer shows one observed item.", { exact: false })
-          .first()
-          .waitFor();
-        await page.reload();
-        await report
-          .getByText("The synthetic issuer shows one observed item.", { exact: false })
-          .first()
-          .waitFor();
-        await page.screenshot({
-          path: path.join(artifacts, `${channel}-finished-report.png`),
-          fullPage: true,
-        });
-        await checkOverviewTrace(report, page);
-        await checkCalendar(report, artifacts, channel, page);
-        await checkCharts(report, artifacts, channel, page);
-        const download = report.getByRole("link", {
-          name: "Download Fundamental credit",
-          exact: true,
-        });
-        await download.waitFor();
-        const [file] = await Promise.all([page.waitForEvent("download"), download.click()]);
-        assert.equal(file.suggestedFilename(), "CP-2.md");
-        const bytes = await readFile(await file.path());
-        assert.match(bytes.toString("utf8"), /The synthetic issuer shows one observed item\./u);
-        const publication = await page.request.get(
-          new URL("/connected/snapshot", service.endpoint).href,
-        );
-        await checkChangesTrace(browser, service.endpoint, run);
-        assert.equal(publication.status(), 200);
-        const { workspace: publishedWorkspace } = await publication.json();
-        const published = Object.values(publishedWorkspace.runs).find(
-          (item) => item.folder === run,
-        );
-        assert.ok(published);
-        assert.equal(
-          Object.values(published.modules).filter((module) => module.default).length,
-          14,
-        );
-        assert.ok(published.modules["CP-2D"].default);
-        assert.ok(published.modules["CP-3C"].default);
-        const designated = publishedWorkspace.outputs[published.modules["CP-2"].default];
-        assert.equal(createHash("sha256").update(bytes).digest("hex"), designated.sha256);
-        assert.equal(new URL(page.url()).pathname, `/report/${run}`);
-        assert.deepEqual(errors, []);
-        await page.screenshot({
-          path: path.join(artifacts, `${channel}-evidence.png`),
-          fullPage: true,
-        });
-        record = {
-          ...provenance,
-          browser: brand,
-          version: browser.version(),
-          run,
-          screenshots: [
-            "run-documents",
-            "run-mobile",
-            "paid-confirmation",
-            "run-confirmation",
-            "run-activity",
-            "finished-report",
-            "calendar",
-            "debt-maturities",
-            "downside",
-            "rate-shocks",
-            "instrument-quotes",
-            "portfolio-limits",
-            "revenue",
-            "evidence",
-            "evidence-record",
-          ].map((view) => `${channel}-${view}.png`),
-          checks: [
-            "upload",
-            "five-step intake, document drop zone and responsive readiness panel",
-            "approved submission",
-            "paid cap confirmation and cancel without submission",
-            "synthetic confirmation and exactly one submission",
-            "run activity spend, module count, elapsed time and delivery feed",
-            "finished publication",
-            "overview",
-            "issuer calendar date precision and originating row",
-            "figure and row trace keyboard focus restoration",
-            "changes",
-            "financial chart, table and source trace reload",
-            "readiness and monitoring records with source traces",
-            "downside case comparison with signed cash flow and explicit gap",
-            "downside break-point ranking, watch timing, and narrow layout",
-            "rate and currency shocks with zero and unreported hedge outcomes",
-            "native completeness and rate sensitivity checks agreed",
-            "dated instrument quotes, decision and recovery qualification",
-            "selected workbook attestation, portfolio limits and proposal qualification",
-            "forecast chart and model",
-            "chart source control visible on hover with Show sources off",
-            "shared Base and Downside case selection updates cash proxy and exact model values",
-            "evidence bookmark retains identity after reorder and rejects old ordinal addresses",
-            "forecast run figures and original module",
-            "signed liquidity bridge and unfunded refinancing row",
-            "report history",
-            "evidence reload and handoff",
-            "exact Overview passage, module chart row and Forecast inputs",
-            "Evidence Record metadata, module timings, synthetic responses and hashes",
-            "paired Changes fixture links only to its matched handoff row",
-          ],
-        };
+        browser = await launchBrowser(channel, envName);
+        record = await checkBrowserRun(browser, service, workspace, channel, brand);
       } catch (error) {
         if (service !== undefined) console.error(service.stderr());
         await cp(path.join(workspace, "_engine", "logs"), path.join(artifacts, `${channel}-logs`), {
