@@ -21,6 +21,7 @@ from deploy_workflow.inbox.runs import (
     child_environment,
     command,
     load_all,
+    name_key,
     outcome,
     save,
     start,
@@ -528,3 +529,15 @@ def test_command_refuses_a_record_with_an_unknown_model_or_effort(layout, change
     record = Record("id1", "credit_snapshot", "acme", "queued", "t", **change)
     with pytest.raises(ValueError):
         command(layout, record, Path("c.json"), launcher=["py"], ruling=None)
+
+
+@pytest.mark.parametrize(
+    ("one", "two", "same"),
+    [
+        ("café-1", "café-1", True),
+        ("ABC-1", "abc-1", True),
+        ("abc-1", "abc-2", False),
+    ],
+)
+def test_name_key_ignores_case_and_unicode_form_only(one, two, same):
+    assert (name_key(one) == name_key(two)) is same

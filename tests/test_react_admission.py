@@ -2,6 +2,7 @@
 
 import copy
 import json
+import unicodedata
 from urllib.parse import quote
 
 from deploy_workflow.inbox import runs
@@ -155,3 +156,30 @@ def test_an_unreadable_record_hides_a_folder_whose_name_differs_only_in_case(hos
     visible = admitted(source, layout)
     assert set(visible["workspace"]["runs"]) == {"other"}
     assert [r["id"] for r in visible["catalogue"]["real"]] == ["other"]
+
+
+def _hidden_by(bad_stem: str, folder: str, hosted) -> set[str]:
+    layout = hosted.scheduler.layout
+    (layout.state / f"{bad_stem}.json").write_text("{not json", encoding="utf-8")
+    source = {
+        "catalogue": {"real": [{"id": folder}, {"id": "other"}]},
+        "workspace": {
+            "runs": {f: _run_of(f) for f in (folder, "other")},
+            "outputs": {},
+            "handoffs": {},
+            "models": [],
+        },
+        "chips": {},
+    }
+    return set(admitted(source, layout)["workspace"]["runs"])
+
+
+def test_a_decomposed_bad_stem_hides_a_composed_folder_name(hosted):
+    composed = unicodedata.normalize("NFC", "café-1")
+    decomposed = unicodedata.normalize("NFD", "café-1")
+    assert composed != decomposed
+    assert _hidden_by(decomposed, composed, hosted) == {"other"}
+
+
+def test_a_lower_case_bad_stem_hides_an_upper_case_folder_name(hosted):
+    assert _hidden_by("abc-3", "ABC-3", hosted) == {"other"}

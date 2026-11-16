@@ -127,8 +127,8 @@ class Scheduler:
         # A readable record carrying the run ID of an unreadable file (a backup copy made before a
         # hand edit) is not tracked: saving or starting it would overwrite or double the run of the
         # bad file. It is counted with that file's run, once.
-        stems = {Path(name).stem.casefold() for name in self._unreadable}
-        shadows = [r.id for r in readable if r.id.casefold() in stems]
+        stems = {runs.name_key(Path(name).stem) for name in self._unreadable}
+        shadows = [r.id for r in readable if runs.name_key(r.id) in stems]
         self._records = {r.id: r for r in readable if r.id not in shadows}
         if self._unreadable:
             # Documented fail-open for display and tracking only: a bad record file is skipped, and

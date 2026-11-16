@@ -20,12 +20,14 @@ def admitted(snapshot: dict[str, Any], layout: Layout) -> dict[str, Any]:
     # Fail closed for the run of an unreadable record file: its stem is the run ID, and a run whose
     # acceptance cannot be read is not shown. Every other publication stays visible.
     unfinished = {record.id for record in readable if record.status != "finished"}
-    unreadable_stems = {Path(name).stem.casefold() for name in unreadable}
+    unreadable_stems = {runs.name_key(Path(name).stem) for name in unreadable}
 
     def hidden(name: Any) -> bool:
         # A library folder is the run ID; a file system may fold its case, so an unreadable file's
         # stem hides a folder of any case. Readable records' IDs are compared as stored.
-        return name in unfinished or (isinstance(name, str) and name.casefold() in unreadable_stems)
+        return name in unfinished or (
+            isinstance(name, str) and runs.name_key(name) in unreadable_stems
+        )
 
     workspace = snapshot["workspace"]
     published = {key: run for key, run in workspace["runs"].items() if not hidden(run["folder"])}

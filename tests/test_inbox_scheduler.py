@@ -19,6 +19,7 @@ import sys
 import tempfile
 import threading
 import time
+import unicodedata
 from collections.abc import Callable
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
@@ -1595,3 +1596,42 @@ def test_the_unreadable_note_is_one_slot_when_a_copy_shares_the_run(root):
         assert len(w._unreadable) == 1 and w._records == {}
     finally:
         w.close()
+
+
+def _shadowed(root: Path, bad_stem: str, copy_id: str, monkeypatch) -> Scheduler:
+    """A bad ``<bad_stem>.json`` and a readable ``copy-<n>.json`` holding ``copy_id``; no start."""
+    started: list[str] = []
+    monkeypatch.setattr(
+        scheduler_module.runs, "start", lambda *a, **k: started.append(a[1].id) or None
+    )
+    bad, seen = _bad_record(root, bad_stem)
+    base = {"pathway": "credit_snapshot", "folder": "Acme", "claimed_at": "2026-11-15T08:00:00Z"}
+    record = Record(copy_id, status="queued", **base)
+    (root / "_engine/state/copy-1.json").write_text(
+        json.dumps(dataclasses.asdict(record)), encoding="utf-8"
+    )
+    name = [n for n in os.listdir(root / "_engine/state") if n != "copy-1.json"]
+    before = seen()
+    w = Scheduler(settings(root), now=lambda: _NOW)
+    try:
+        w.step()
+        assert copy_id not in w._records
+        assert len(w._unreadable) == 1
+        assert started == []
+        assert (bad.read_bytes(), bad.stat().st_mtime_ns) == before
+        assert name  # the bad file is still there under whatever form the volume keeps
+    finally:
+        w.close()
+    return w
+
+
+def test_a_decomposed_bad_file_name_excludes_a_composed_copy_id(root, monkeypatch):
+    composed = unicodedata.normalize("NFC", "café-1")
+    decomposed = unicodedata.normalize("NFD", "café-1")
+    assert composed != decomposed
+    _shadowed(root, decomposed, composed, monkeypatch)
+
+
+@pytest.mark.parametrize(("bad", "copy"), [("ABC-1", "abc-1"), ("abc-2", "ABC-2")])
+def test_case_differences_on_either_side_still_exclude_the_copy(root, monkeypatch, bad, copy):
+    _shadowed(root, bad, copy, monkeypatch)

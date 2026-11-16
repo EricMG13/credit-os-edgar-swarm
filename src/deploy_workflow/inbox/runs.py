@@ -8,6 +8,7 @@ import os
 import re
 import subprocess
 import sys
+import unicodedata
 from collections.abc import Sequence
 from dataclasses import asdict, dataclass
 from decimal import Decimal, InvalidOperation
@@ -158,6 +159,11 @@ def load_all(layout: Layout) -> list[Record]:
     """Every run record, sorted by id. The issuer registry, temporary files and dot files (such as
     a Mac ``._x.json`` sidecar) are not records."""
     return sorted((_load(p) for p in _record_files(layout)), key=lambda r: r.id)
+
+
+def name_key(text: str) -> str:
+    """Compare names by this key: file systems may ignore case and Unicode form (NFC or NFD)."""
+    return unicodedata.normalize("NFC", text).casefold()
 
 
 def load_readable(layout: Layout) -> tuple[list[Record], list[str]]:
