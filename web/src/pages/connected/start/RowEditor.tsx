@@ -13,6 +13,7 @@ export function RowEditor({
   primary,
   required,
   focusChoices,
+  openFirst,
 }: {
   kind: RowKind;
   rows: readonly Row[];
@@ -20,10 +21,12 @@ export function RowEditor({
   primary: boolean;
   required?: boolean;
   focusChoices?: Choices;
+  /** Draw the first row open when the editor appears. */
+  openFirst?: boolean;
 }) {
   const spec = ROW_SPECS[kind];
   const base = useId();
-  const [added, setAdded] = useState<number>();
+  const [added, setAdded] = useState<number | undefined>(openFirst ? 0 : undefined);
   return (
     <div className="grid gap-2">
       {required && rows.length === 0 && (
@@ -141,7 +144,7 @@ function RowItem({
   );
 }
 
-function RowInput({
+export function RowInput({
   id,
   item,
   blank,

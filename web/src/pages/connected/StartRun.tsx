@@ -32,24 +32,58 @@ import {
   type Mode,
   type Summary,
 } from "./api";
+import { AssumptionFields } from "./start/AssumptionFields";
+import {
+  ASSUMPTIONS_TITLE,
+  readAssumptions,
+  sendableAssumptions,
+  type AssumptionsForm,
+} from "./start/assumptions";
 import { RowEditor } from "./start/RowEditor";
+import { ModuleOptionsFields } from "./start/ModuleOptionsFields";
 import { ROW_SPECS, sendableRows, type Row, type RowKind } from "./start/rows";
+import {
+  MODULE_OPTIONS_TITLE,
+  readModuleOptions,
+  readValuation,
+  sendableModuleOptions,
+  sendableValuation,
+  VALUATION_TITLE,
+  type ModuleOptionsForm,
+  type ValuationForm,
+} from "./start/valuation";
+import { ValuationFields } from "./start/ValuationFields";
 import { Breadcrumb, card, ErrorNotice, field, heading, label } from "./layout";
 import { carryAccepted, decided, groupLimits, needsCheck } from "./start/limits";
 import { ReviewSheet } from "./start/ReviewSheet";
-import { documentDescription, LEVELS, PURPOSES, storedName } from "./start/plain";
+import {
+  CASE_KIND_LABEL,
+  CASE_KINDS,
+  documentDescription,
+  EFFORTS,
+  ISSUER_LIST_BOXES,
+  ISSUER_TEXT_BOXES,
+  LEVELS,
+  MODELS,
+  PATHWAY_LABEL,
+  PURPOSES,
+  PURPOSE_STEP,
+  refusalLines,
+  RUN_PURPOSE_LABEL,
+  storedName,
+} from "./start/plain";
 import { errorText, useResource } from "./useResource";
 import { PageHeader } from "../../shell/PageHeader";
 
 const FORM_STEPS = {
   documents: { title: "Documents", next: "Continue to purpose", previous: null },
-  purpose: { title: "Purpose", next: "Continue to context", previous: "documents" },
+  purpose: { title: PURPOSE_STEP, next: "Continue to context", previous: "documents" },
   context: { title: "More context", next: "Review run", previous: "purpose" },
 } as const;
 type FormStep = keyof typeof FORM_STEPS;
 const STEPPER_STEPS = [
   { key: "documents", title: "Documents", note: "Add files" },
-  { key: "purpose", title: "Purpose", note: "Choose one" },
+  { key: "purpose", title: PURPOSE_STEP, note: "Choose one" },
   { key: "context", title: "More context", note: "Optional" },
   { key: "start", title: "Review and start", note: "Paid step" },
 ] as const;
@@ -104,11 +138,11 @@ const ATTACHMENTS = {
   portfolio_workbook: "Portfolio workbook",
   prior_case: "Prior decision record",
 };
-const ROW_KINDS = Object.keys(ROW_SPECS) as RowKind[];
-const COMPLEX_FIELDS = {
-  valuation: "Valuation and peers",
-  assumptions: "Scenario assumptions",
-  module_options: "Module options",
+const ROW_KINDS: RowKind[] = ["deal_terms", "quotes", "ratings", "research_questions"];
+type Forms = {
+  valuation?: ValuationForm;
+  module_options?: ModuleOptionsForm;
+  assumptions?: AssumptionsForm;
 };
 type LatestIssuerInputs = { run: string; prior: PriorInputs };
 
@@ -118,7 +152,6 @@ async function latestIssuerInputs(issuer: string): Promise<LatestIssuerInputs | 
   return { run: latest.latest_run, prior: await getPriorInputs(latest.latest_run) };
 }
 
-type ComplexField = keyof typeof COMPLEX_FIELDS;
 type Attachment = keyof typeof ATTACHMENTS | "agreement";
 type DocumentRow = { name: string; stored?: string; file?: File };
 type IntakeView = {
@@ -142,7 +175,13 @@ type IntakeView = {
   level: string;
   analystNote: string;
   newest: string;
-  edits: Partial<Record<ComplexField, string>>;
+  forms: Forms;
+  valuation: ValuationForm;
+  moduleOptions: ModuleOptionsForm;
+  assumptions: AssumptionsForm;
+  changeAssumptions: (next: AssumptionsForm) => void;
+  changeValuation: (next: ValuationForm) => void;
+  changeModuleOptions: (next: ModuleOptionsForm) => void;
   modules: string[];
   requested: string[];
   turns: string;
@@ -170,8 +209,6 @@ type IntakeView = {
   changeNewestOverride: (value: string) => void;
   changeLegal: (value: string) => void;
   changeAttachment: (key: Attachment, value: string) => void;
-  changeDetail: (key: ComplexField, value: string) => void;
-  detailText: (key: ComplexField) => string;
   rowsOf: (kind: RowKind) => Row[];
   changeRows: (kind: RowKind, rows: Row[]) => void;
   changeModel: (value: string) => void;
@@ -217,7 +254,7 @@ function useIntakeDocumentsState() {
   const [ignoredCopies, setIgnoredCopies] = useState<string[]>([]);
   const [attachments, setAttachments] = useState<Partial<Record<Attachment, string>>>({});
   const [legal, setLegal] = useState("none");
-  const [edits, setEdits] = useState<Partial<Record<ComplexField, string>>>({});
+  const [forms, setForms] = useState<Forms>({});
   const [rows, setRows] = useState<Partial<Record<RowKind, Row[]>>>({});
   const [analystNote, setAnalystNote] = useState("");
   return {
@@ -233,8 +270,8 @@ function useIntakeDocumentsState() {
     setAttachments,
     legal,
     setLegal,
-    edits,
-    setEdits,
+    forms,
+    setForms,
     rows,
     setRows,
     analystNote,
@@ -596,14 +633,14 @@ function PurposeFields({ view }: { view: IntakeView }) {
     <>
       <div className="sm:col-span-2">
         <PurposeCards
-          label="Pathway"
+          label={PATHWAY_LABEL}
           value={view.run.pathway}
           purposes={PATHWAY_CARDS}
           onChange={view.changePathway}
         />
       </div>
       <SelectField
-        title="Run purpose"
+        title={RUN_PURPOSE_LABEL}
         value={view.run.run_type ?? "research"}
         choices={
           view.earnings
@@ -617,9 +654,9 @@ function PurposeFields({ view }: { view: IntakeView }) {
         onChange={view.changePurpose}
       />
       <SelectField
-        title="Case kind"
+        title={CASE_KIND_LABEL}
         value={view.run.case_kind}
-        choices={{ public: "Public filer", private: "Private", synthetic: "Synthetic test case" }}
+        choices={CASE_KINDS}
         onChange={(value) => {
           view.changeRun("case_kind", value);
         }}
@@ -640,7 +677,8 @@ function ContextFields({ view }: { view: IntakeView }) {
       <ContextInputFields view={view} />
       <IssuerDetailsFields view={view} />
       <StructuredContextFields view={view} />
-      <JsonDetailsFields view={view} />
+      <ValuationSection view={view} />
+      <AssumptionsSection view={view} />
       <AdvancedOptionsFields view={view} />
     </>
   );
@@ -768,19 +806,12 @@ function IssuerDetailsFields({ view }: { view: IntakeView }) {
     <details className="rounded-lg border border-border-hairline p-3 sm:col-span-2">
       <summary className="cursor-pointer font-semibold">Issuer details</summary>
       <div className="mt-3 grid gap-4 sm:grid-cols-2">
-        {(
-          [
-            ["borrower_name", "Borrower (legal entity)"],
-            ["parent_name", "Parent"],
-            ["sector", "Sector"],
-            ["country", "Country"],
-            ["sponsor", "Sponsor"],
-          ] as const
-        ).map(([key, title]) => (
+        {ISSUER_TEXT_BOXES.map(([key, title, example]) => (
           <label key={key} className={label}>
             {title}
             <input
               className={field}
+              placeholder={`e.g. ${example}`}
               value={view.identity[key] ?? ""}
               onChange={(event) => {
                 view.changeIdentity(key, event.target.value);
@@ -788,12 +819,7 @@ function IssuerDetailsFields({ view }: { view: IntakeView }) {
             />
           </label>
         ))}
-        {(
-          [
-            ["aliases", "Other names in the filings"],
-            ["guarantors", "Guarantors"],
-          ] as const
-        ).map(([key, title]) => (
+        {ISSUER_LIST_BOXES.map(([key, title]) => (
           <label key={key} className={label}>
             {title}
             <textarea
@@ -869,31 +895,50 @@ function StructuredContextFields({ view }: { view: IntakeView }) {
   );
 }
 
-function JsonDetailsFields({ view }: { view: IntakeView }) {
-  const shown = (Object.entries(COMPLEX_FIELDS) as [ComplexField, string][]).filter(
-    ([key]) => view.level === "advanced" || view.edits[key] !== undefined,
-  );
-  if (!shown.length) return null;
+function ValuationSection({ view }: { view: IntakeView }) {
+  const wanted = view.requested;
+  const runs = { cp3: wanted.includes("CP-3"), cp6: wanted.includes("CP-6") };
+  if (view.level !== "advanced" && !view.forms.valuation && !view.forms.module_options) return null;
   return (
-    <div className="grid gap-2 sm:col-span-2">
-      <p className="text-sm text-text-secondary">
-        These values are JSON objects. The service validates the content during review.
-      </p>
-      {shown.map(([key, title]) => (
-        <details key={key} className="rounded-lg border border-border-hairline p-3">
-          <summary className="cursor-pointer text-sm font-semibold">{title}</summary>
-          <textarea
-            aria-label={title}
-            className={`mt-2 w-full font-mono ${field}`}
-            rows={key === "valuation" ? 12 : 5}
-            value={view.detailText(key)}
-            onChange={(event) => {
-              view.changeDetail(key, event.target.value);
-            }}
-          />
+    <div className="grid gap-3 sm:col-span-2">
+      <details className="rounded-lg border border-border-hairline p-3">
+        <summary className="cursor-pointer text-sm font-semibold">{VALUATION_TITLE}</summary>
+        <div className="mt-3">
+          <ValuationFields form={view.valuation} onChange={view.changeValuation} />
+        </div>
+      </details>
+      {(runs.cp3 || runs.cp6) && (
+        <details className="rounded-lg border border-border-hairline p-3">
+          <summary className="cursor-pointer text-sm font-semibold">{MODULE_OPTIONS_TITLE}</summary>
+          <div className="mt-3">
+            <ModuleOptionsFields
+              form={view.moduleOptions}
+              runs={runs}
+              onChange={view.changeModuleOptions}
+            />
+          </div>
         </details>
-      ))}
+      )}
     </div>
+  );
+}
+
+function AssumptionsSection({ view }: { view: IntakeView }) {
+  if (view.level !== "advanced" && !view.forms.assumptions) return null;
+  return (
+    <details className="rounded-lg border border-border-hairline p-3 sm:col-span-2">
+      <summary className="cursor-pointer text-sm font-semibold">{ASSUMPTIONS_TITLE}</summary>
+      <div className="mt-3 grid gap-3">
+        <p className="text-sm text-text-secondary">
+          Optional. Pin a value only where you hold a house view; otherwise the module chooses.
+        </p>
+        <AssumptionFields
+          form={view.assumptions}
+          modules={view.requested}
+          onChange={view.changeAssumptions}
+        />
+      </div>
+    </details>
   );
 }
 
@@ -901,16 +946,11 @@ function AdvancedOptionsFields({ view }: { view: IntakeView }) {
   if (view.level !== "advanced") return null;
   return (
     <>
-      <SelectField
-        title="Model"
-        value={view.model}
-        choices={{ gpt: "GPT Sol", claude: "Claude Opus" }}
-        onChange={view.changeModel}
-      />
+      <SelectField title="Model" value={view.model} choices={MODELS} onChange={view.changeModel} />
       <SelectField
         title="Reasoning effort"
         value={view.effort}
-        choices={{ fast: "Fast", balanced: "Balanced", high: "High" }}
+        choices={EFFORTS}
         onChange={view.changeEffort}
       />
       <label className={label}>
@@ -991,21 +1031,6 @@ function SelectField({
 
 function isRecord(item: unknown): item is Row {
   return item !== null && typeof item === "object" && !Array.isArray(item);
-}
-
-function readDetails(edits: Partial<Record<ComplexField, string>>) {
-  const details: Record<string, unknown> = {};
-  for (const [key, raw] of Object.entries(edits) as [ComplexField, string][]) {
-    let parsed: unknown;
-    try {
-      parsed = JSON.parse(raw);
-    } catch {
-      throw new Error(`${COMPLEX_FIELDS[key]} must contain valid JSON.`);
-    }
-    if (!isRecord(parsed)) throw new Error(`${COMPLEX_FIELDS[key]} must be an object.`);
-    details[key] = parsed;
-  }
-  return details;
 }
 
 export function StartRun({
@@ -1103,8 +1128,8 @@ function IntakeForm({
     setAttachments,
     legal,
     setLegal,
-    edits,
-    setEdits,
+    forms,
+    setForms,
     rows,
     setRows,
     analystNote,
@@ -1307,7 +1332,7 @@ function IntakeForm({
     setModel("gpt");
     setEffort("balanced");
     setModules(carriedModules(prior));
-    setEdits({});
+    setForms({});
     setRows({});
     setAnalystNote("");
     setAttachments({});
@@ -1367,7 +1392,21 @@ function IntakeForm({
         "Enter an issuer name and an issuer ID using letters a–z, digits or hyphens.",
       );
     }
-    const details: Record<string, unknown> = readDetails(edits);
+    const details: Record<string, unknown> = {};
+    if (forms.valuation) details.valuation = sendableValuation(forms.valuation);
+    if (forms.module_options) {
+      const wanted = pathwayModules(run.pathway);
+      details.module_options = sendableModuleOptions(forms.module_options, {
+        cp3: wanted.includes("CP-3"),
+        cp6: wanted.includes("CP-6"),
+      });
+    }
+    if (forms.assumptions)
+      details.assumptions = sendableAssumptions(
+        forms.assumptions,
+        context.assumptions,
+        pathwayModules(run.pathway),
+      );
     for (const kind of ROW_KINDS) {
       const edited = rows[kind];
       if (edited) details[kind] = sendableRows(kind, edited, run.run_type === "primary");
@@ -1511,17 +1550,6 @@ function IntakeForm({
     });
   }
 
-  function detailText(key: ComplexField) {
-    return (
-      edits[key] ??
-      JSON.stringify(
-        context[key] ?? (key === "module_options" ? { cp3_mode: "", cp6_deep_debate: false } : {}),
-        null,
-        2,
-      )
-    );
-  }
-
   function inspectDocuments() {
     void withDraft("documents", async () => {
       await refreshDocuments();
@@ -1557,10 +1585,6 @@ function IntakeForm({
     setAttachments((previous) => ({ ...previous, [key]: value }));
   }
 
-  function changeDetail(key: ComplexField, value: string) {
-    setEdits((previous) => ({ ...previous, [key]: value }));
-  }
-
   function resetIssuer() {
     setCopy(undefined);
     reviewedRef.current = null;
@@ -1569,7 +1593,7 @@ function IntakeForm({
     setCustomSlug(undefined);
     setReading(undefined);
     setPriorNote("");
-    setEdits({});
+    setForms({});
     setRows({});
     setAnalystNote("");
     setAttachments({});
@@ -1677,7 +1701,19 @@ function IntakeForm({
     level,
     analystNote,
     newest,
-    edits,
+    forms,
+    valuation: forms.valuation ?? readValuation(context.valuation),
+    moduleOptions: forms.module_options ?? readModuleOptions(context.module_options),
+    assumptions: forms.assumptions ?? readAssumptions(context.assumptions),
+    changeAssumptions: (next) => {
+      setForms((previous) => ({ ...previous, assumptions: next }));
+    },
+    changeValuation: (next) => {
+      setForms((previous) => ({ ...previous, valuation: next }));
+    },
+    changeModuleOptions: (next) => {
+      setForms((previous) => ({ ...previous, module_options: next }));
+    },
     modules,
     requested,
     turns,
@@ -1704,8 +1740,6 @@ function IntakeForm({
     },
     changeLegal: setLegal,
     changeAttachment,
-    changeDetail,
-    detailText,
     rowsOf,
     changeRows,
     changeModel: setModel,
@@ -1773,6 +1807,25 @@ type IntakePanelsProps = {
   onPrevious: () => void;
 };
 
+/** A service refusal in the screen's own words: one line as a sentence, several as a list. */
+function RefusalNotice({ error }: { error: string }) {
+  const lines = refusalLines(error);
+  const [only] = lines;
+  return (
+    <ErrorNotice>
+      {lines.length === 1 ? (
+        only
+      ) : (
+        <ul className="list-disc pl-5">
+          {lines.map((line, position) => (
+            <li key={position}>{line}</li>
+          ))}
+        </ul>
+      )}
+    </ErrorNotice>
+  );
+}
+
 function IntakePanels(props: IntakePanelsProps) {
   const {
     step,
@@ -1820,7 +1873,7 @@ function IntakePanels(props: IntakePanelsProps) {
             ? `Step ${String(STEP_TOTAL)} of ${String(STEP_TOTAL)} · Review and start`
             : `Step ${String(FORM_STEP_KEYS.indexOf(step) + 1)} of ${String(STEP_TOTAL)} · ${title}`}
         </p>
-        {error && <ErrorNotice>{error}</ErrorNotice>}
+        {error && <RefusalNotice error={error} />}
         {review ? (
           <ReviewConfirmation
             review={review}

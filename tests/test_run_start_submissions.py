@@ -1600,3 +1600,14 @@ def test_a_run_without_the_research_module_states_no_web_search(layout, tmp_path
     assert (
         web_search_of(layout, tmp_path, "private", monkeypatch, modules=["CP-0", "CP-1"]) is False
     )
+
+
+def test_the_summary_names_each_omitted_report_section_by_its_title(layout, tmp_path):
+    from deploy_vii.report_view import _spec_of
+
+    sid, _ = upload_issuer(layout, tmp_path)
+    s = summary(layout, sid, answers_for(tmp_path, modules=["CP-0", "CP-1"]))
+    assert s["error"] == "" and s["omitted"]  # a run with sections not produced
+    assert len(s["omitted_titles"]) == len(s["omitted"])
+    assert s["omitted_titles"] == [_spec_of(block_id).title for block_id in s["omitted"]]
+    assert all(title != block_id for title, block_id in zip(s["omitted_titles"], s["omitted"]))

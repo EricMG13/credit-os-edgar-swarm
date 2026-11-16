@@ -10,10 +10,14 @@ import {
   type Summary,
 } from "../api";
 import {
+  CASE_KINDS,
+  choiceLabel,
   comparisonCaveat,
   documentDescription,
+  EFFORTS,
   LEVELS,
   lookupSentence,
+  MODELS,
   PURPOSES,
   storedName,
 } from "./plain";
@@ -92,6 +96,19 @@ const OUTCOME_STATE = {
   limited: "Limited",
   check: "Check",
 } as const;
+
+/** The omitted report sections by title; an older service sends no titles, so only their count. */
+function omittedSentence({ omitted, omitted_titles }: Summary) {
+  if (omitted_titles?.length === omitted.length)
+    return `Report sections omitted · ${omitted_titles.join(", ")}`;
+  return `${String(omitted.length)} report section${omitted.length === 1 ? " is" : "s are"} not produced`;
+}
+
+/** Both labels, or nothing: half of the pair would mislead. */
+function modelAndEffort({ model, effort }: Summary) {
+  const labels = [choiceLabel(MODELS, model), choiceLabel(EFFORTS, effort)];
+  return labels.every(Boolean) ? labels.join(" · ") : undefined;
+}
 
 function scopeText(scope: string) {
   return scope === "run" ? "Whole run" : moduleName(scope);
@@ -323,7 +340,7 @@ export function ReviewSheet({
             rows={[
               ["Pathway", pathwayName(run.pathway)],
               ["Purpose", PURPOSES[run.run_type as keyof typeof PURPOSES]],
-              ["Case kind", run.case_kind],
+              ["Case kind", choiceLabel(CASE_KINDS, run.case_kind)],
             ]}
           />
           <List
@@ -346,9 +363,7 @@ export function ReviewSheet({
             </div>
           )}
           {summary.omitted.length > 0 && (
-            <p className="text-sm text-text-secondary">
-              Report sections omitted · {serviceText(summary.omitted.join(", "))}
-            </p>
+            <p className="text-sm text-text-secondary">{omittedSentence(summary)}</p>
           )}
         </Block>
         <Block title="Context" edit="context" {...block}>
@@ -372,7 +387,7 @@ export function ReviewSheet({
           <Block title="Advanced choices" {...block}>
             <Facts
               rows={[
-                ["Model and effort", `${summary.model} · ${summary.effort}`],
+                ["Model and effort", modelAndEffort(summary)],
                 ["Form level", LEVELS[answers.level as keyof typeof LEVELS]],
                 ["Turns per module", answers.max_turns],
               ]}

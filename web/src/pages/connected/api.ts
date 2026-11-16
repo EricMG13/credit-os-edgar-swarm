@@ -77,6 +77,8 @@ export type Summary = Reading & {
   modules: string[];
   items: ReadinessItem[];
   omitted: string[];
+  /** The reader-facing title of each id in `omitted`; absent from an older service. */
+  omitted_titles?: string[];
   changes: string;
   lookup?: string[];
   web_search?: boolean;
