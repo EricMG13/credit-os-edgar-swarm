@@ -238,4 +238,18 @@ describe("connected report Changes", () => {
     expect(screen.queryByRole("region", { name: "Limitations" })).toBeNull();
     expect(screen.getByText("Margins")).toBeVisible();
   });
+
+  it("draws a gap card for a passage the CP-8 handoff lacks", () => {
+    const entry = cp8(LEDGER);
+    entry.sections.splice(1, 0, {
+      heading: "Bottom line",
+      level: 3,
+      line: 2,
+      blocks: [{ type: "text", line: 3, end: 3, text: "Little changed." }],
+    });
+    renderChanges(null, [entry]);
+    expect(screen.getByText("Segment margins are not disclosed")).toBeInTheDocument();
+    const gap = screen.getByRole("heading", { name: "Key findings" }).closest("section");
+    expect(gap).toHaveTextContent("Not established for this run");
+  });
 });

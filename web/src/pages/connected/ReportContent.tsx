@@ -24,6 +24,7 @@ import {
   FORECAST_INPUTS,
   methodNote,
   missingPassages,
+  passages,
   PASSAGES,
   publishedHref,
   readParagraph,
@@ -374,16 +375,8 @@ export const drawingTitle = (heading: string) =>
   heading.replace(DRAWING_PREFIX, "").replace(RECORD_PREFIX, "");
 
 // `chartsDrawn` is true on a page that draws this module's charts with their qualifications.
-export function findingBlocks(
-  sections: Section[],
-  entry: OutputEntry,
-  figureTableLines: readonly number[] = [],
-  chartsDrawn = false,
-) {
-  const qualified = chartsDrawn
-    ? drawnQualificationLines(entry.output, sections)
-    : new Set<number>();
-  const drawings = new Set(
+function drawingLines(entry: OutputEntry, figureTableLines: readonly number[] = []) {
+  return new Set(
     [
       ...(entry.output.charts ?? []),
       ...(entry.output.chartGaps ?? []),
@@ -393,6 +386,18 @@ export function findingBlocks(
       .map((item) => item.table)
       .concat(figureTableLines),
   );
+}
+
+export function findingBlocks(
+  sections: Section[],
+  entry: OutputEntry,
+  figureTableLines: readonly number[] = [],
+  chartsDrawn = false,
+) {
+  const qualified = chartsDrawn
+    ? drawnQualificationLines(entry.output, sections)
+    : new Set<number>();
+  const drawings = drawingLines(entry, figureTableLines);
   const blocksOf = (section: Section, role: string) => {
     if (role === "registers") return registerBlocks(section, entry);
     if (role !== "finding" && role !== "passage" && role !== "drawing") return [];
@@ -534,34 +539,41 @@ function findingsLayout(
   figureTableLines: readonly number[] | undefined,
   overview: boolean,
   chartsDrawn: boolean,
-  gaps: readonly string[] = [],
 ) {
+  const slots = passages(entry.sections);
+  const slotLines = new Set(slots.map((section) => section.line));
   const found = findingBlocks(entry.sections, entry, figureTableLines, chartsDrawn).filter(
-    (section) => !overview || PASSAGES.includes(section.heading),
+    (section) => !overview || slotLines.has(section.line),
   );
+  const slotOf = (name: string) =>
+    found.find((section) => section.heading === name && slotLines.has(section.line));
   const sections = [
-    ...PASSAGES.flatMap((name) => found.filter((section) => section.heading === name)),
-    ...found.filter((section) => !PASSAGES.includes(section.heading)),
+    ...PASSAGES.flatMap((name) => slotOf(name) ?? []),
+    ...found.filter((section) => !PASSAGES.some((name) => slotOf(name) === section)),
   ];
-  const keyFindings = overview
-    ? sections.find((section) => section.heading === "Key findings")
-    : undefined;
+  const keyFindings = overview ? slotOf("Key findings") : undefined;
   const contrary = keyFindings
-    ? sections.find(
-        (section) => section.heading === "Contrary evidence and what would change the view",
-      )
+    ? slotOf("Contrary evidence and what would change the view")
     : undefined;
+  // A passage whose content is drawn as a chart is present although it draws no text.
+  const drawings = drawingLines(entry, figureTableLines);
+  const charted = slots
+    .filter((section) => section.blocks.some((block) => drawings.has(block.line)))
+    .map((section) => section.heading);
+  const gaps = overview
+    ? []
+    : missingPassages(entry, [...PASSAGES.filter((name) => slotOf(name)), ...charted]);
   const slot = (section: Section): [Section, Section?] =>
     section === keyFindings && contrary ? [section, contrary] : [section];
   const groups: (string | [Section, Section?])[] = [];
   for (const name of PASSAGES) {
-    const section = sections.find((item) => item.heading === name);
+    const section = slotOf(name);
     if (section && section !== contrary) groups.push(slot(section));
     else if (!section && gaps.includes(name)) groups.push(name);
   }
   for (const section of sections)
-    if (!PASSAGES.includes(section.heading)) groups.push(slot(section));
-  return { sections, groups };
+    if (!PASSAGES.some((name) => slotOf(name) === section)) groups.push(slot(section));
+  return { sections, groups, drawnBottomLine: slotOf("Bottom line") !== undefined };
 }
 
 function followingParagraphs(section: Section, entry: OutputEntry, folder: string) {
@@ -630,11 +642,15 @@ export function ReportFindings({
   chartsDrawn?: boolean;
 }) {
   const [activeTrace, setActiveTrace] = useState<string | null>(null);
-  const gaps = overview ? [] : missingPassages(entry);
-  const { sections, groups } = findingsLayout(entry, figureTableLines, overview, chartsDrawn, gaps);
+  const { sections, groups, drawnBottomLine } = findingsLayout(
+    entry,
+    figureTableLines,
+    overview,
+    chartsDrawn,
+  );
   const key = (line: number) => traceKey(entry, line);
   const traces = findingsTraces(snapshot, entry, sections);
-  const hasBottomLine = sections.some((section) => section.heading === "Bottom line");
+  const hasBottomLine = drawnBottomLine;
   const summary = !hasBottomLine && entry.output.summary;
   const summaryTrace = summary && traceForLine(snapshot, entry, entryIndex, summary.line);
   if (summaryTrace) traces[key(summary.line)] = summaryTrace;
@@ -748,7 +764,9 @@ export function ReportFindings({
         {!hasBottomLine && afterBottomLine}
         {groups.map((group) => {
           if (typeof group === "string")
-            return group === "Bottom line" && summary ? null : (
+            return group === "Bottom line" &&
+              summary &&
+              !containsReference(summary.bottomLine) ? null : (
               <section key={group} className={card}>
                 <h2 className={heading}>{group}</h2>
                 <GapPanel reason={MISSING_PASSAGE} />

@@ -428,3 +428,106 @@ it("draws no bottom-line gap beside the module's own summary", () => {
   expect(screen.queryByRole("heading", { name: "Bottom line" })).not.toBeInTheDocument();
   expect(screen.getByRole("heading", { name: "Limitations" })).toBeInTheDocument();
 });
+
+const CONTRARY_HEADING = "Contrary evidence and what would change the view";
+const passage = (
+  heading: string,
+  line: number,
+  text = `${heading} says so.`,
+): Sections[number] => ({
+  heading,
+  level: 3,
+  line,
+  blocks: text ? [{ type: "text", line: line + 1, end: line + 1, text }] : [],
+});
+const gapOf = (name: string) => screen.getByRole("heading", { name }).closest("section");
+
+it("gaps a passage whose section has no blocks", () => {
+  renderSections([
+    FINDINGS,
+    passage("Bottom line", 2),
+    passage("Key findings", 4),
+    passage(CONTRARY_HEADING, 6, ""),
+    passage("Limitations", 8),
+  ]);
+  expect(screen.getByText("Limitations says so.")).toBeInTheDocument();
+  expect(gapOf(CONTRARY_HEADING)).toHaveTextContent("Not established for this run");
+});
+
+it("gaps a passage holding only a method note", () => {
+  renderSections([
+    FINDINGS,
+    passage("Bottom line", 2),
+    passage("Key findings", 4),
+    passage(CONTRARY_HEADING, 6, "Module status: complete."),
+    passage("Limitations", 8),
+  ]);
+  expect(screen.getByText("Limitations says so.")).toBeInTheDocument();
+  expect(screen.queryByText("Module status: complete.")).not.toBeInTheDocument();
+  expect(gapOf(CONTRARY_HEADING)).toHaveTextContent("Not established for this run");
+});
+
+it("shows the bottom-line gap when the summary band is dropped for a reference", () => {
+  renderSections([FINDINGS, passage("Key findings", 2)], {
+    summary: {
+      bottomLine: "See report.pdf for the view.",
+      confidence: "",
+      limitation: "",
+      line: 9,
+    },
+  });
+  expect(screen.getByText("Key findings says so.")).toBeInTheDocument();
+  expect(gapOf("Bottom line")).toHaveTextContent("Not established for this run");
+});
+
+it("draws a nested section named like a passage and keeps the real passage", () => {
+  renderSections([
+    FINDINGS,
+    passage("Bottom line", 2),
+    passage("Key findings", 4),
+    passage(CONTRARY_HEADING, 6),
+    {
+      heading: "Cash",
+      level: 3,
+      line: 8,
+      blocks: [{ type: "text", line: 9, end: 9, text: "Cash is ample." }],
+    },
+    {
+      heading: "Limitations",
+      level: 4,
+      line: 10,
+      blocks: [{ type: "text", line: 11, end: 11, text: "Nested caveat on cash." }],
+    },
+    passage("Limitations", 12),
+  ]);
+  expect(screen.getByText("Limitations says so.")).toBeInTheDocument();
+  expect(screen.getByText("Cash is ample.")).toBeInTheDocument();
+  expect(screen.getByText("Nested caveat on cash.")).toBeInTheDocument();
+});
+
+it("counts a passage drawn as a chart as present", () => {
+  renderSections(
+    [
+      FINDINGS,
+      passage("Bottom line", 2),
+      passage("Key findings", 4),
+      {
+        heading: CONTRARY_HEADING,
+        level: 3,
+        line: 6,
+        blocks: [
+          {
+            type: "table",
+            line: 7,
+            headers: ["Year", "Value"],
+            rows: [{ line: 8, cells: ["2025", "4"] }],
+          },
+        ],
+      },
+      passage("Limitations", 10),
+    ],
+    { chartGaps: [{ title: "Chart", table: 7, unit: "x", columns: [1], gap: "no data" }] },
+  );
+  expect(screen.getByText("Limitations says so.")).toBeInTheDocument();
+  expect(screen.queryByText(/The module's handoff has no such passage/)).not.toBeInTheDocument();
+});
