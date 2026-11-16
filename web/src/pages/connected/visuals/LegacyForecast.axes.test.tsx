@@ -89,7 +89,7 @@ it("starts a positive axis at zero rather than at the data minimum", () => {
 it("does not merge distinct ticks through display rounding", () => {
   const ticks = draw(["0.005", "0.0125"]);
   expect(new Set(ticks.map((tick) => tick.label)).size).toBe(ticks.length);
-  expect(ticks.map((tick) => tick.label)).toContain("0.0075");
+  expect(ticks.map((tick) => tick.label)).toContain("7.5E-3");
 });
 
 it("omits chart captions when the handoff has no units", () => {
@@ -98,4 +98,14 @@ it("omits chart captions when the handoff has no units", () => {
   expect(screen.getByLabelText("Exact chart values")).toHaveTextContent(
     '[{"name":"Base case","values":[0,10]}]',
   );
+});
+
+it.each([
+  ["0.02", "0.12"],
+  ["0.005", "0.0125"],
+  ["1234.5", "9876.5"],
+])("labels every tick of %s to %s with the value it stands for", (low, high) => {
+  for (const tick of draw([low, high])) {
+    expect(Number(tick.label.replaceAll(",", ""))).toBe(tick.value);
+  }
 });

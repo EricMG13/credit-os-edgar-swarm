@@ -57,3 +57,9 @@ it("covers 500 seeded series with 3 to 6 equal steps", () => {
     });
   }
 });
+
+it("treats a series with a non-finite value as empty and terminates", () => {
+  const empty = ticks([], false);
+  expect(ticks([Number.NaN, 3], false)).toEqual(empty);
+  expect(ticks([Infinity], false)).toEqual(empty);
+});

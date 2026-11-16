@@ -97,11 +97,13 @@ export function rangeTicks(values: (number | null)[], zero = false) {
 const NICE_MANTISSAS = [1, 2, 2.5, 5];
 const MAX_TICKS = 6;
 const EDGE = 1e-9;
+const MAX_EXPONENTS = 100;
 
 /** The smallest of 1, 2, 2.5 or 5 times a power of ten whose bracket has at most six ticks. */
 function niceStep(low: number, high: number) {
   const span = high - low;
-  for (let exponent = Math.floor(Math.log10(span)) - 2; ; exponent += 1) {
+  const start = Math.floor(Math.log10(span)) - 2;
+  for (let exponent = start; exponent < start + MAX_EXPONENTS; exponent += 1) {
     for (const mantissa of NICE_MANTISSAS) {
       const step = mantissa * 10 ** exponent;
       const count = Math.ceil(high / step - EDGE) - Math.floor(low / step + EDGE) + 1;
@@ -110,6 +112,7 @@ function niceStep(low: number, high: number) {
       }
     }
   }
+  throw new Error("no nice tick step fits the range");
 }
 
 /**
@@ -125,12 +128,15 @@ export function ticks(
   _zero = false,
   format?: (value: number) => string,
 ) {
-  const present = values.filter((value): value is number => value !== null);
+  const given = values.filter((value): value is number => value !== null);
+  // A value that is not a number cannot be placed on an axis: draw the axis of an empty series.
+  const present = given.every((value) => Number.isFinite(value)) ? given : [];
   const low = Math.min(0, ...present);
-  const high = Math.max(0, ...present);
-  const { step, decimals } = niceStep(low, high === low ? low + 1 : high);
+  const peak = Math.max(0, ...present);
+  const high = peak === low ? low + 1 : peak;
+  const { step, decimals } = niceStep(low, high);
   const first = Math.floor(low / step + EDGE);
-  const last = Math.ceil((high === low ? low + 1 : high) / step - EDGE);
+  const last = Math.ceil(high / step - EDGE);
   const grouped = new Intl.NumberFormat("en-US", {
     minimumFractionDigits: 0,
     maximumFractionDigits: decimals,

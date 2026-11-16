@@ -13,6 +13,8 @@ interface SeriesLineProps {
   labelOffset?: number;
   /** Draw the series name beside the point at this index: the line is named where it ends. */
   nameAt?: number;
+  /** Moves the name label down from its point, so labels of close lines do not overlap. */
+  nameDy?: number;
   /** The series stands out from the others: a heavier line, marked with a class. */
   emphasised?: boolean;
 }
@@ -24,7 +26,7 @@ const NAME_GAP = 10;
 
 function point(
   { cx, cy, value, index }: DotItemDotProps,
-  { name, style, labels, labelOffset, nameAt, emphasised }: SeriesLineProps,
+  { name, style, labels, labelOffset, nameAt, nameDy = 0, emphasised }: SeriesLineProps,
 ) {
   if (typeof cx !== "number" || typeof cy !== "number" || typeof value !== "number") return null;
   const mark = <Mark marker={style.marker} color={style.color} x={cx} y={cy} series={name} />;
@@ -39,7 +41,7 @@ function point(
           data-series-name={name}
           data-emphasised={emphasised ? "" : undefined}
           x={cx + NAME_GAP}
-          y={cy + 4}
+          y={cy + 4 + nameDy}
           fontSize={12}
           fontWeight={emphasised ? 600 : 400}
           fill={emphasised ? LABEL_FILL : NAME_FILL}

@@ -601,7 +601,8 @@ it("lays chart cards in two columns from lg and spans the primary chart across b
   };
   expect(card("Debt maturities").parentElement).toHaveClass("lg:grid-cols-2");
   expect(card("Debt maturities")).toHaveClass("lg:col-span-2");
-  expect(card("Interest")).not.toHaveClass("lg:col-span-2");
+  // The card left alone in the second row also spans both columns.
+  expect(card("Interest")).toHaveClass("lg:col-span-2");
 });
 
 it("keeps charts in one column when they are not cards", () => {
@@ -609,4 +610,17 @@ it("keeps charts in one column when they are not cards", () => {
   render(<LegacyVisuals output={output} sections={sections} />);
   const figure = screen.getByRole("figure", { name: "Interest" });
   expect(figure.closest(".lg\\:grid-cols-2")).toBeNull();
+});
+
+it("spans a lone card and the last card of an odd count across both columns", () => {
+  const { output, sections } = twoCharts();
+  const cardOf = (name: string) => screen.getByRole("figure", { name }).closest("div.rounded-xl");
+  const { unmount } = render(
+    <LegacyVisuals output={{ charts: [output.charts[0]] }} sections={sections} cards />,
+  );
+  expect(cardOf("Interest")).toHaveClass("lg:col-span-2");
+  unmount();
+  render(<LegacyVisuals output={output} sections={sections} cards />);
+  expect(cardOf("Interest")).not.toHaveClass("lg:col-span-2");
+  expect(cardOf("Debt maturities")).not.toHaveClass("lg:col-span-2");
 });

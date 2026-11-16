@@ -39,3 +39,19 @@ export function assignSeries(names: string[]): Map<string, SeriesStyle> {
   });
   return styles;
 }
+
+/**
+ * Label y positions spread to at least `gap` apart: a greedy push-down in ascending order, results
+ * in input order. ponytail: a label near the bottom of the plot can be pushed below the axis; the
+ * upgrade path is a two-sided relaxation that also moves the labels above it up.
+ */
+export function spread(ys: number[], gap: number): number[] {
+  const order = ys.map((_, i) => i).sort((a, b) => (ys[a] ?? 0) - (ys[b] ?? 0) || a - b);
+  const out = [...ys];
+  let previous = -Infinity;
+  for (const i of order) {
+    previous = Math.max(ys[i] ?? 0, previous + gap);
+    out[i] = previous;
+  }
+  return out;
+}

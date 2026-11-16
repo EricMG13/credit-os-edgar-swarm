@@ -99,10 +99,10 @@ function SelectedForecastTable({
 
 const FORECAST_LINES = ["Revenue", "Adj EBITDA", "Closing cash", "Closing debt"];
 
-const axisNumber = new Intl.NumberFormat("en-US", { maximumFractionDigits: 2 });
+const axisNumber = new Intl.NumberFormat("en-US", { maximumFractionDigits: 12 });
 const smallAxisNumber = new Intl.NumberFormat("en-US", {
   notation: "scientific",
-  maximumFractionDigits: 2,
+  maximumFractionDigits: 6,
 });
 
 function forecastAxisLabel(value: number) {

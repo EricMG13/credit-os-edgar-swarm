@@ -20,7 +20,7 @@ import {
 import { type TableCell, type TableRowData } from "./ChartTable";
 import { ChartWithTable } from "./ChartWithTable";
 import { SeriesLine } from "./SeriesLine";
-import { assignSeries } from "./series";
+import { assignSeries, spread } from "./series";
 import { BASELINE, HEIGHT, Legend, TICK, YAxisLabels, type YTick } from "./TrendChart";
 
 interface PathSeries {
@@ -57,6 +57,8 @@ const TEXT_FILL = "var(--color-text-secondary)";
 const NA_FILL = "var(--color-text-tertiary)";
 const NEUTRAL = "var(--color-chart-other)";
 const NAME_CHAR = 7;
+const NAME_GAP = 14;
+const PLOT_TOP = 24;
 const NAME_MARGIN = { min: 24, max: 168, gap: 16 };
 
 function check({
@@ -285,6 +287,26 @@ function nameMargin(series: PathSeries[]) {
   );
 }
 
+/** How far each series' name label moves down so the labels stand `NAME_GAP` apart. */
+function nameShifts(series: PathSeries[], yTicks: YTick[], axis: number, named: boolean) {
+  const first = yTicks[0]?.value ?? 0;
+  const span = (yTicks[yTicks.length - 1]?.value ?? 0) - first;
+  const height = HEIGHT - PLOT_TOP - axis;
+  const ends = series.map(
+    (s) => s.values[s.values.map((v) => v !== null).lastIndexOf(true)] ?? null,
+  );
+  const at = ends.flatMap((v, i) =>
+    v === null || span <= 0 ? [] : [{ i, y: PLOT_TOP + (1 - (v - first) / span) * height }],
+  );
+  const moved = named
+    ? spread(
+        at.map((a) => a.y),
+        NAME_GAP,
+      )
+    : [];
+  return new Map(at.map((a, k) => [a.i, (moved[k] ?? a.y) - a.y]));
+}
+
 function Chart({
   title,
   periods,
@@ -312,6 +334,7 @@ function Chart({
     .sort((a, b) => Number(a.item.name === emphasis) - Number(b.item.name === emphasis));
   const data = periodSeriesData(periods, series);
   const allMissing = periods.filter((_, p) => series.every((s) => s.values[p] === null));
+  const nameDy = nameShifts(series, yTicks, axisHeight(periods), named);
   return (
     // Period labels may need horizontal room on narrow screens; make that region keyboard-scrollable.
     <div
@@ -327,7 +350,7 @@ function Chart({
             <LineChart
               title={title}
               data={data}
-              margin={{ top: 24, right: named ? nameMargin(series) : 24, bottom: 0, left: 0 }}
+              margin={{ top: PLOT_TOP, right: named ? nameMargin(series) : 24, bottom: 0, left: 0 }}
             >
               <CartesianGrid vertical={false} stroke="var(--color-border-hairline)" />
               <XAxis
@@ -368,6 +391,7 @@ function Chart({
                     style={style}
                     labels={item.labels}
                     labelOffset={index === 0 ? -10 : 18}
+                    nameDy={nameDy.get(index)}
                     nameAt={
                       named ? item.values.map((v) => v !== null).lastIndexOf(true) : undefined
                     }

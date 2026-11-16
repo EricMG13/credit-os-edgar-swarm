@@ -291,3 +291,21 @@ it("retains other cases when the selected cash proxy is entirely missing", () =>
   expect(chart.getAllByText("not available")).toHaveLength(2);
   expect(chart.getByRole("row", { name: /Base case/ })).toBeInTheDocument();
 });
+
+it("separates the name labels of scenarios that end close together", () => {
+  const close = fourCases();
+  const row = close.cashflow.rows[0];
+  if (!row) throw new Error("Missing cash proxy fixture");
+  close.cashflow.columns = close.cashflow.columns.slice(0, 4);
+  row.cells = [12000, 12000, 11400, 11400].map((value) => ({
+    status: "value",
+    exact: String(value),
+    display: `${String(value)}.00`,
+  }));
+  const { container } = render(<CashProxy model={close} selectedCase="Base case" />);
+  const ys = [...container.querySelectorAll(".recharts-wrapper [data-series-name]")].map((name) =>
+    Number(name.getAttribute("y")),
+  );
+  expect(ys).toHaveLength(2);
+  expect(Math.abs((ys[0] ?? 0) - (ys[1] ?? 0))).toBeGreaterThanOrEqual(14);
+});
