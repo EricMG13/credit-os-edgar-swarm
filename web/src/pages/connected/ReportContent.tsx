@@ -546,8 +546,9 @@ function findingsLayout(
 ) {
   const slots = passages(entry.sections);
   const slotLines = new Set(slots.map((section) => section.line));
+  // Overview draws the run's limitations once, across modules (RunLimitations), not the lead's.
   const found = findingBlocks(entry.sections, entry, figureTableLines, chartsDrawn).filter(
-    (section) => !overview || slotLines.has(section.line),
+    (section) => !overview || (slotLines.has(section.line) && section.heading !== "Limitations"),
   );
   const slotOf = (name: string) =>
     found.find((section) => section.heading === name && slotLines.has(section.line));

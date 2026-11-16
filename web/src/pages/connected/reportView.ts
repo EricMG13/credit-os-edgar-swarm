@@ -2,9 +2,12 @@ import type { Metric, ModuleState } from "../library/slice";
 import { moduleName } from "./api";
 import {
   blocked,
+  containsReference,
+  methodNote,
   outputEntries,
   passages,
   readParagraph,
+  readerText,
   runModels,
   withUnit,
 } from "./publishedReport";
@@ -67,6 +70,76 @@ export function buildReportView(snapshot: Snapshot, routeKey: string, run: Publi
     models: runModels(snapshot, routeKey, run),
     catalogue: snapshot.catalogue.real.find((entry) => entry.id === run.folder),
   };
+}
+
+export type ReportView = ReturnType<typeof buildReportView>;
+
+/** Module ids in the order the run ran them, then any the record does not name. */
+export function moduleOrder(run: PublishedRun) {
+  return [
+    ...new Set([
+      ...(run.record?.steps ?? []).map((step) => step.module),
+      ...Object.keys(run.modules),
+    ]),
+  ];
+}
+
+const designated = (view: ReportView, id: string) =>
+  view.entries.find((entry) => entry.selected && entry.output.module === id);
+
+function passageTexts(entry: OutputEntry, heading: string) {
+  return passages(entry.sections)
+    .filter((section) => section.heading === heading)
+    .flatMap(({ blocks }) => blocks)
+    .filter((block) => block.type === "text");
+}
+
+/** One bottom line per module that ran, other than the lead; null where there is none to show. */
+export function moduleBottomLines(view: ReportView, run: PublishedRun) {
+  return moduleOrder(run).flatMap((id) => {
+    const entry = designated(view, id);
+    if (!entry || entry === view.lead) return [];
+    const block = passageTexts(entry, "Bottom line")[0];
+    const written = block
+      ? { line: block.line, body: readParagraph(block.text).body }
+      : entry.output.summary
+        ? { line: entry.output.summary.line, body: entry.output.summary.bottomLine }
+        : null;
+    const body = written?.body.replaceAll("**", "").replaceAll("`", "");
+    return [
+      {
+        id,
+        name: moduleName(id),
+        state: moduleState(entry),
+        entry,
+        text: body && !containsReference(body) ? readerText(body) : null,
+        line: written?.line ?? null,
+      },
+    ];
+  });
+}
+
+const sameLimitation = (text: string) =>
+  text
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}\s]/gu, "")
+    .replace(/\s+/g, " ")
+    .trim();
+
+/** Each limitation of the run once, in module order; a module that could not assess writes none. */
+export function runLimitations(view: ReportView, run: PublishedRun) {
+  const seen = new Set<string>();
+  return moduleOrder(run).flatMap((id) => {
+    const entry = designated(view, id);
+    if (!entry || blocked(entry)) return [];
+    return passageTexts(entry, "Limitations").flatMap((block) => {
+      const { body } = readParagraph(block.text);
+      const key = sameLimitation(body);
+      if (!body || methodNote(block.text) || seen.has(key)) return [];
+      seen.add(key);
+      return [{ id, name: moduleName(id), entry, text: readerText(body), line: block.line }];
+    });
+  });
 }
 
 export type MetricKey =
