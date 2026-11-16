@@ -8,6 +8,7 @@ import { RunTabLink } from "@/pages/library/parts/RunFrame";
 import { SourcesSwitch, useSourcesOn } from "@/pages/library/parts/SourcesSwitch";
 import { PageHeader } from "../../shell/PageHeader";
 import { TextLink } from "../run/TextLink";
+import { Callout } from "@/components/alert/Alert";
 import { Breadcrumb, card, ErrorNotice, field, heading, label } from "./layout";
 import {
   comparisonForRun,
@@ -659,9 +660,9 @@ function ReaderStatus({
     <>
       {error && <ErrorNotice>{error}</ErrorNotice>}
       {value?.preview?.reason && (
-        <p role="note" className={`${card} mt-4`}>
-          {value.preview.reason}
-        </p>
+        <div className="mt-4">
+          <Callout title="Test preview">{value.preview.reason}</Callout>
+        </div>
       )}
       {value === undefined && !error && (
         <p role="status" className="mt-6 text-text-secondary">

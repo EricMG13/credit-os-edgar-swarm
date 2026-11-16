@@ -268,11 +268,14 @@ it.each(["Retained-method check withheld admission.", ""])(
     snapshot.preview = { reason };
     useSnapshot(snapshot);
     render(<ConnectedApp path="/report/northbridge-2026" mode="synthetic" />);
-    expect(await screen.findByText("Test preview")).toBeInTheDocument();
+    expect((await screen.findAllByText("Test preview")).length).toBeGreaterThan(0);
     expect(screen.queryByText("Finished")).toBeNull();
     expect(screen.queryByText("Synthetic test")).toBeNull();
-    if (reason) expect(screen.getByRole("note")).toHaveTextContent(reason);
-    else expect(screen.queryByRole("note")).toBeNull();
+    if (reason) {
+      const note = screen.getByRole("note");
+      expect(note).toHaveTextContent("Test preview");
+      expect(note).toHaveTextContent(reason);
+    } else expect(screen.queryByRole("note")).toBeNull();
   },
 );
 

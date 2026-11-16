@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { GapPanel } from "@/components/gap/GapPanel";
 import { ChartQualifications } from "./ChartQualifications";
 import { ChartTable } from "@/components/chart/ChartTable";
 import { ChartWithTable } from "@/components/chart/ChartWithTable";
@@ -116,9 +117,12 @@ export function LegacyVisuals({
       return [
         <section key={key} className={`${TRACE_HOST} grid min-w-0 gap-2${box}`}>
           <h4 className="font-display text-h4">{title}</h4>
-          <p role="note">
-            {link && containsReference(gap) ? "Not established for this run. See Evidence." : gap}
-          </p>
+          <GapPanel
+            role="note"
+            reason={
+              link && containsReference(gap) ? "Not established for this run. See Evidence." : gap
+            }
+          />
           {actions}
         </section>,
       ];

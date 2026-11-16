@@ -1,30 +1,8 @@
 import { TRACE_HOST } from "@/pages/library/parts/TraceControl";
-import { containsReference, methodNote, readParagraph } from "../publishedReport";
+import { containsReference, readParagraph } from "../publishedReport";
 import { PublishedSource } from "../report/PublishedTrace";
-import { items, record, word } from "./visualData";
-
-function qualificationBlocks(sections: unknown, line: number) {
-  const owners = items(sections)
-    .map(record)
-    .filter((section) =>
-      items(section.blocks).some(
-        (block) => record(block).type === "table" && record(block).line === line,
-      ),
-    );
-  const owner = owners.length === 1 ? owners[0] : undefined;
-  if (!owner || !word(owner.heading).startsWith("Chart data: ")) return [];
-  const blocks = items(owner.blocks).map(record);
-  // More than one table makes the scope of the prose ambiguous.
-  if (blocks.filter((block) => block.type === "table").length !== 1) return [];
-  return blocks.filter(
-    (block) =>
-      block.type === "text" &&
-      typeof block.line === "number" &&
-      Number.isSafeInteger(block.line) &&
-      block.line > line &&
-      !methodNote(word(block.text)),
-  );
-}
+import { qualificationBlocks } from "./drawnQualifications";
+import { word } from "./visualData";
 
 export function ChartQualifications({
   category,

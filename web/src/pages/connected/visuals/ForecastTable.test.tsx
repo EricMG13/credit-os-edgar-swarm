@@ -68,14 +68,41 @@ it("keeps exact period labels, dates and values with the recorded qualification 
       source={(name) => <a href="#inputs">{name} source</a>}
     />,
   );
-  const header = screen.getByRole("columnheader", { name: /YTD \(H1 2026\)/ });
+  const header = screen.getByRole("columnheader", { name: "YTD (H1 2026)" });
   expect(header).toHaveAttribute("title", "2026-01-01 to 2026-06-30");
-  expect(header).toHaveTextContent(period);
+  expect(header).not.toHaveTextContent(period);
+  expect(screen.getByRole("list", { name: "Period qualifications" })).toHaveTextContent(period);
   const row = screen.getByRole("row", { name: /^Interest/ });
   expect(row).toHaveTextContent(interest);
   expect(within(row).getByRole("cell", { name: "776" })).toBeInTheDocument();
   expect(within(row).getByRole("cell", { name: "2,141" })).toBeInTheDocument();
   expect(screen.getByRole("cell", { name: "11,812.24" })).toHaveAttribute("title", "11812.2368");
+});
+
+it("draws a period qualification once, under the table, not in a column header", () => {
+  const grid = fixture();
+  const second = grid.columns[1];
+  if (!second) throw new Error("Missing fixture column");
+  second.label = "YTD (FY2027)";
+  render(
+    <ForecastTable
+      grid={grid}
+      title="Model"
+      limits={["Base period is FY2027; PQ-TEXT"]}
+      source={(name) => <a href="#inputs">{name} source</a>}
+    />,
+  );
+  for (const header of screen.getAllByRole("columnheader"))
+    expect(header).not.toHaveTextContent("PQ-TEXT");
+  const hits = screen.getAllByText(/PQ-TEXT/);
+  expect(hits).toHaveLength(1);
+  const item = hits[0]?.closest("li");
+  expect(item).toHaveTextContent("YTD (FY2027)");
+  expect(item).toContainElement(screen.getByRole("link", { name: /source$/ }));
+  const table = screen.getByRole("table");
+  expect(
+    table.compareDocumentPosition(item as Node) & Node.DOCUMENT_POSITION_FOLLOWING,
+  ).toBeTruthy();
 });
 
 it("keeps zero visible and restores each unavailable row and its exact reasons on request", () => {

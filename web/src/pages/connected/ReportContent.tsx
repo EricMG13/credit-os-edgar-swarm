@@ -9,6 +9,7 @@ import type { Trace, TreeNode } from "../library/slice";
 import { moduleName } from "./api";
 import { traceKey } from "./reportView";
 import { card, heading } from "./layout";
+import { drawnQualificationLines } from "./visuals/drawnQualifications";
 import { monitoringLabel, typedModuleTable } from "./report/ModuleTable";
 import { calculationNodes } from "./report/calculations";
 import {
@@ -330,11 +331,20 @@ export function recordSections(sections: Section[], entry: OutputEntry) {
     .map(({ section }) => section);
 }
 
+const NO_QUALIFICATION = "No qualification.";
+const DRAWING_PREFIX = /^(?:Chart data|Map|Events): /;
+export const drawingTitle = (heading: string) => heading.replace(DRAWING_PREFIX, "");
+
+// `chartsDrawn` is true on a page that draws this module's charts with their qualifications.
 export function findingBlocks(
   sections: Section[],
   entry: OutputEntry,
   figureTableLines: readonly number[] = [],
+  chartsDrawn = false,
 ) {
+  const qualified = chartsDrawn
+    ? drawnQualificationLines(entry.output, sections)
+    : new Set<number>();
   const drawings = new Set(
     [
       ...(entry.output.charts ?? []),
@@ -347,12 +357,27 @@ export function findingBlocks(
   );
   return classified(sections)
     .flatMap(({ section, role }) => {
-      if (role === "finding" || role === "passage" || role === "drawing") {
+      if (role === "finding" || role === "passage") {
         return [
           {
             ...section,
             blocks: section.blocks.filter(
               (block) => readerBlock(block) && !drawings.has(block.line),
+            ),
+          },
+        ];
+      }
+      if (role === "drawing") {
+        // A chart's own qualification, or the empty one, is not drawn a second time.
+        return [
+          {
+            ...section,
+            blocks: section.blocks.filter(
+              (block) =>
+                readerBlock(block) &&
+                !drawings.has(block.line) &&
+                !qualified.has(block.line) &&
+                !(block.type === "text" && block.text.trim() === NO_QUALIFICATION),
             ),
           },
         ];
@@ -435,6 +460,7 @@ export function ReportFindings({
   afterBottomLine,
   judgement,
   figureTableLines,
+  chartsDrawn,
 }: {
   snapshot: Snapshot;
   run: PublishedRun;
@@ -444,9 +470,10 @@ export function ReportFindings({
   afterBottomLine?: ReactNode;
   judgement?: string;
   figureTableLines?: readonly number[];
+  chartsDrawn?: boolean;
 }) {
   const [activeTrace, setActiveTrace] = useState<string | null>(null);
-  const sections = findingBlocks(entry.sections, entry, figureTableLines).filter(
+  const sections = findingBlocks(entry.sections, entry, figureTableLines, chartsDrawn).filter(
     (section) =>
       !overview ||
       [
@@ -587,7 +614,7 @@ export function ReportFindings({
         id={`finding-${String(section.line)}`}
         tabIndex={-1}
       >
-        <h2 className={heading}>{richParts(section.heading)}</h2>
+        <h2 className={heading}>{richParts(drawingTitle(section.heading))}</h2>
         {section.heading === "Bottom line" && afterBottomLine}
         {section.blocks.map((block) =>
           block.type === "table" ? (

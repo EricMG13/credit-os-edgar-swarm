@@ -118,15 +118,7 @@ function ForecastRows({
   );
 }
 
-function ForecastColumns({
-  grid,
-  period,
-  source,
-}: {
-  grid: Grid;
-  period: string[];
-  source: Source;
-}) {
+function ForecastColumns({ grid }: { grid: Grid }) {
   return (
     <thead className="border-b-2 border-border-hairline">
       <tr>
@@ -153,16 +145,6 @@ function ForecastColumns({
             title={column.start && column.end ? `${column.start} to ${column.end}` : undefined}
           >
             {column.label}
-            {period
-              .filter((text) => periodColumn(grid, text) === index)
-              .map((text, at) => (
-                <Qualification
-                  key={at}
-                  text={text}
-                  label="Period qualification — recorded label retained"
-                  source={source}
-                />
-              ))}
           </th>
         ))}
       </tr>
@@ -188,6 +170,11 @@ export function ForecastTable({
   const rows = expanded || !canCollapse ? grid.rows : populated;
   const period = limits.filter((text) => text.startsWith("Base period is "));
   const interest = limits.filter((text) => text.startsWith("Base interest is "));
+  const bound = grid.columns.flatMap((column, index) =>
+    period
+      .filter((text) => periodColumn(grid, text) === index)
+      .map((text) => ({ label: column.label, text })),
+  );
   const unbound = period.filter((text) => periodColumn(grid, text) === undefined);
   return (
     <div className="grid min-w-0 gap-3">
@@ -228,7 +215,7 @@ export function ForecastTable({
       <div className="overflow-x-auto" role="region" aria-label={title} tabIndex={0}>
         <table className="w-full border-collapse text-small">
           <caption className="sr-only">{title}</caption>
-          <ForecastColumns grid={grid} period={period} source={source} />
+          <ForecastColumns grid={grid} />
           <ForecastRows
             grid={grid}
             rows={rows}
@@ -238,6 +225,15 @@ export function ForecastTable({
           />
         </table>
       </div>
+      {bound.length > 0 && (
+        <ul aria-label="Period qualifications" className="grid gap-2">
+          {bound.map(({ label, text }, at) => (
+            <li key={at}>
+              <Qualification text={text} label={`${label} period qualification`} source={source} />
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }

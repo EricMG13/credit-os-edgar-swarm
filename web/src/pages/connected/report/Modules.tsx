@@ -3,7 +3,13 @@ import { Button } from "@/components/base/buttons/button";
 import { StatusBadge } from "@/components/status/StatusBadge";
 import { ModuleNav, type NavSection } from "@/pages/library/parts/ModuleNav";
 import { card, field, heading } from "../layout";
-import { RECORDS_ID, ReportFindings, findingBlocks, recordSections } from "../ReportContent";
+import {
+  RECORDS_ID,
+  ReportFindings,
+  drawingTitle,
+  findingBlocks,
+  recordSections,
+} from "../ReportContent";
 import {
   evidencePath,
   type OutputEntry,
@@ -41,7 +47,7 @@ function Navigator({
   hasLocalFigures: boolean;
   figureTableLines: readonly number[];
 }) {
-  const allSections = entry ? findingBlocks(entry.sections, entry, figureTableLines) : [];
+  const allSections = entry ? findingBlocks(entry.sections, entry, figureTableLines, true) : [];
   const firstFinding =
     allSections.find(({ heading }) => heading === "Key findings") ??
     allSections.find(({ heading }) => sectionIcon(heading) === "records");
@@ -57,7 +63,7 @@ function Navigator({
     if (icon === "records" && item !== firstFinding && !extra) return [];
     return [
       {
-        label: extra ?? (item === firstFinding ? "Key findings" : heading),
+        label: extra ?? (item === firstFinding ? "Key findings" : drawingTitle(heading)),
         key: `finding-${String(line)}`,
         icon: item === firstFinding && !extra ? ("findings" as const) : icon,
       },
@@ -237,6 +243,7 @@ function ModuleFindings({
       entry={entry}
       entryIndex={index}
       figureTableLines={figureTableLines}
+      chartsDrawn
       judgement={
         leverage?.kind === "value" ? `Lease-adjusted gross leverage is ${leverage.text}` : undefined
       }

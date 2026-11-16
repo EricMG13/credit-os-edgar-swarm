@@ -559,3 +559,13 @@ it("leaves invalid event dates and missing map endpoints in their source tables"
     "Not supplied: issuer undisclosed",
   );
 });
+
+it("draws a chart gap in the gap treatment with its title and the recorded reason", () => {
+  const reason = "no mandate, constraint or limit data in the run settings";
+  render(<LegacyVisuals output={{ chartGaps: [{ title: "Limits", table: 20, gap: reason }] }} />);
+  expect(screen.getByRole("heading", { name: "Limits" })).toBeInTheDocument();
+  const note = screen.getByRole("note");
+  expect(note.textContent).toBe(reason);
+  expect(note.className).toContain("first-letter:uppercase");
+  expect(note.parentElement?.className).toContain("gap-hatch");
+});
