@@ -87,13 +87,76 @@ it("applies the selected downside to forecast chart and model table", () => {
   expect(table.queryByRole("cell", { name: "110" })).toBeNull();
 });
 
-it("filters the cash proxy chart and its table to the selected downside case", () => {
+it("draws every case on the cash proxy chart and table, emphasising the selected one", () => {
   render(<CashProxy model={model} selectedCase="Downside shock" />);
   const chart = within(screen.getByRole("figure", { name: "Cash proxy by scenario" }));
   fireEvent.click(chart.getByRole("radio", { name: "Table" }));
   expect(chart.getByRole("row", { name: /Downside shock/ })).toBeInTheDocument();
-  expect(chart.queryByRole("row", { name: /Base case/ })).toBeNull();
+  expect(chart.getByRole("row", { name: /Base case/ })).toBeInTheDocument();
   expect(chart.getByRole("cell", { name: "6.00" })).toBeInTheDocument();
+});
+
+function fourCases() {
+  const groups = ["Base case", "Downside case", "Upside", "Downside (CP-2G drivers)"];
+  return {
+    cashflow: {
+      units: "USD millions",
+      columns: groups.flatMap((group) => [
+        { label: "FY2027E", group },
+        { label: "FY2028E", group },
+      ]),
+      rows: [
+        {
+          label: "Cash proxy (not issuer free cash flow)",
+          band: "Cash",
+          total: true,
+          cells: [10, 12, 5, 6, 14, 18, 7, 8].map((value) => ({
+            status: "value",
+            exact: String(value),
+            display: `${String(value)}.00`,
+          })),
+        },
+      ],
+    },
+  };
+}
+
+it("draws all four scenarios, each named, with only the selected one emphasised", () => {
+  const { container } = render(<CashProxy model={fourCases()} selectedCase="Upside case" />);
+  const names = [...container.querySelectorAll(".recharts-wrapper [data-series-name]")];
+  expect(names.map((name) => name.textContent).sort()).toEqual([
+    "Base case",
+    "Downside case",
+    "Downside drivers",
+    "Upside case",
+  ]);
+  expect(container.querySelectorAll(".recharts-wrapper path.recharts-line-curve")).toHaveLength(4);
+  const emphasised = container.querySelectorAll(".recharts-wrapper .series-emphasis");
+  expect(emphasised).toHaveLength(1);
+  const heavy = emphasised[0]?.querySelector("path.recharts-line-curve");
+  expect(heavy).toHaveAttribute("name", "Upside case");
+  expect(heavy).not.toHaveAttribute("stroke", "var(--color-chart-other)");
+  expect(Number(heavy?.getAttribute("stroke-width"))).toBeGreaterThan(2);
+  const others = [
+    ...container.querySelectorAll(".recharts-wrapper .recharts-line:not(.series-emphasis)"),
+  ];
+  expect(others).toHaveLength(3);
+  for (const line of others) {
+    const path = line.querySelector("path.recharts-line-curve");
+    expect(path).toHaveAttribute("stroke", "var(--color-chart-other)");
+    expect(path).toHaveAttribute("stroke-width", "2");
+  }
+});
+
+it("moves the emphasis when another case is selected", () => {
+  const { container, rerender } = render(
+    <CashProxy model={fourCases()} selectedCase="Base case" />,
+  );
+  const emphasisedName = () =>
+    container.querySelector(".recharts-wrapper [data-series-name][data-emphasised]")?.textContent;
+  expect(emphasisedName()).toBe("Base case");
+  rerender(<CashProxy model={fourCases()} selectedCase="Downside case" />);
+  expect(emphasisedName()).toBe("Downside case");
 });
 
 it("compares every case while the chart follows the selection, including zero and missing", () => {
@@ -226,5 +289,5 @@ it("retains other cases when the selected cash proxy is entirely missing", () =>
   const chart = within(screen.getByRole("figure", { name: "Cash proxy by scenario" }));
   fireEvent.click(chart.getByRole("radio", { name: "Table" }));
   expect(chart.getAllByText("not available")).toHaveLength(2);
-  expect(chart.queryByRole("row", { name: /Base case/ })).toBeNull();
+  expect(chart.getByRole("row", { name: /Base case/ })).toBeInTheDocument();
 });

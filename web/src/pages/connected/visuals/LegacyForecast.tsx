@@ -359,9 +359,7 @@ export function CashProxy({
     gridOf(raw.other),
     stringsIn(raw.notes).find((note) => note.startsWith("Downside case is")),
   );
-  const series = allSeries.filter(
-    (item) => selectedCase === undefined || item.name === selectedCase,
-  );
+  const series = allSeries;
   const rows = series.map(({ name, cells }) => ({ label: name, cells }));
   const values = series.flatMap((item) => item.values);
   if (periods.length < 2 || series.length === 0) return null;
@@ -376,6 +374,7 @@ export function CashProxy({
           subtitle={unit}
           periods={periods}
           series={series}
+          emphasis={series.some((item) => item.name === selectedCase) ? selectedCase : undefined}
           yTicks={forecastTicks(values, true)}
           table={table}
         />

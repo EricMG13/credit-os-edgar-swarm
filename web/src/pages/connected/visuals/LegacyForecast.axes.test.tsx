@@ -53,7 +53,14 @@ function draw(values: string[], units = "USD millions") {
 
 it("formats Caesars-scale axes without altering series or recorded table precision", () => {
   const values = ["11812.2368", "12147.690268558208"];
-  expect(draw(values).map((tick) => tick.label)).toEqual(["11,812.24", "11,979.96", "12,147.69"]);
+  expect(draw(values).map((tick) => tick.label)).toEqual([
+    "0",
+    "2,500",
+    "5,000",
+    "7,500",
+    "10,000",
+    "12,500",
+  ]);
   expect(screen.getByLabelText("Exact chart values")).toHaveTextContent(
     '[{"name":"Base case","values":[11812.2368,12147.690268558208]}]',
   );
@@ -63,14 +70,26 @@ it("formats Caesars-scale axes without altering series or recorded table precisi
 });
 
 it("keeps zero and small signed axis values distinct", () => {
-  expect(draw(["-0.0002", "0.0002"]).map((tick) => tick.label)).toEqual(["-2E-4", "0", "2E-4"]);
+  expect(draw(["-0.0002", "0.0002"]).map((tick) => tick.label)).toEqual([
+    "-2E-4",
+    "-1E-4",
+    "0",
+    "1E-4",
+    "2E-4",
+  ]);
 });
 
-it("does not merge close but distinct ticks through display rounding", () => {
+it("starts a positive axis at zero rather than at the data minimum", () => {
   const ticks = draw(["100.001", "100.003"]);
+  expect(ticks[0]).toEqual({ value: 0, label: "0" });
+  expect(ticks.at(-1)?.value).toBeGreaterThanOrEqual(100.003);
   expect(new Set(ticks.map((tick) => tick.label)).size).toBe(ticks.length);
-  expect(ticks[0]).toEqual({ value: 100.001, label: "100.001" });
-  expect(ticks.at(-1)).toEqual({ value: 100.003, label: "100.003" });
+});
+
+it("does not merge distinct ticks through display rounding", () => {
+  const ticks = draw(["0.005", "0.0125"]);
+  expect(new Set(ticks.map((tick) => tick.label)).size).toBe(ticks.length);
+  expect(ticks.map((tick) => tick.label)).toContain("0.0075");
 });
 
 it("omits chart captions when the handoff has no units", () => {

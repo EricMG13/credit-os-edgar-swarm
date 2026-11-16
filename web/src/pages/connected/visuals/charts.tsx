@@ -15,6 +15,7 @@ import {
   chartTable,
   distinct,
   items,
+  rangeTicks,
   ticks,
   word,
   type SourceTable,
@@ -323,7 +324,7 @@ function scatter(table: SourceTable, descriptor: Descriptor, frame: Frame) {
   const dateTicks =
     new Set(allDates).size === 1 && allDates[0] != null
       ? [allDates[0] - 86_400_000, allDates[0], allDates[0] + 86_400_000]
-      : ticks(allDates).map((tick) => tick.value);
+      : rangeTicks(allDates).map((tick) => tick.value);
   return (
     <ScatterPlot
       {...frame}
@@ -337,7 +338,7 @@ function scatter(table: SourceTable, descriptor: Descriptor, frame: Frame) {
           label: new Date(value).toISOString().slice(0, 10),
         })),
       }}
-      y={{ title: yTitle, short: yTitle, ticks: ticks(points.map((point) => point.y)) }}
+      y={{ title: yTitle, short: yTitle, ticks: rangeTicks(points.map((point) => point.y)) }}
       table={{
         head: [table.headers[label] ?? "", xTitle, yTitle],
         rows: points.map(({ name, xText, yText }) => ({ label: name, cells: [xText, yText] })),

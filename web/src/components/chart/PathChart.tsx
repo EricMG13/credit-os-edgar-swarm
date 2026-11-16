@@ -45,11 +45,19 @@ interface PathChartProps {
    */
   divider?: { period: string; at: "on" | "after"; label: string };
   yTicks: YTick[];
+  /**
+   * Draws every series named at its last point, this one in full colour and a heavier line and the
+   * rest in the neutral series colour.
+   */
+  emphasis?: string;
   table: { head: string[]; rows: TableRowData[]; endHeading?: string };
 }
 
 const TEXT_FILL = "var(--color-text-secondary)";
 const NA_FILL = "var(--color-text-tertiary)";
+const NEUTRAL = "var(--color-chart-other)";
+const NAME_CHAR = 7;
+const NAME_MARGIN = { min: 24, max: 168, gap: 16 };
 
 function check({
   periods,
@@ -268,17 +276,40 @@ function Divider({
   );
 }
 
+/** Room right of the plot for the longest series name, drawn beside each line's last point. */
+function nameMargin(series: PathSeries[]) {
+  const longest = Math.max(...series.map((s) => s.name.length));
+  return Math.min(
+    NAME_MARGIN.max,
+    Math.max(NAME_MARGIN.min, longest * NAME_CHAR + NAME_MARGIN.gap),
+  );
+}
+
 function Chart({
   title,
   periods,
   series,
   divider,
   yTicks,
+  emphasis,
   rows,
-}: Pick<PathChartProps, "title" | "periods" | "series" | "divider" | "yTicks"> & {
+}: Pick<PathChartProps, "title" | "periods" | "series" | "divider" | "yTicks" | "emphasis"> & {
   rows: TableRowData[];
 }) {
-  const styles = assignSeries(series.map((s) => s.name));
+  const named = emphasis !== undefined;
+  const assigned = assignSeries(series.map((s) => s.name));
+  const styles = named
+    ? new Map(
+        [...assigned].map(([name, style]) => [
+          name,
+          name === emphasis ? style : { ...style, color: NEUTRAL },
+        ]),
+      )
+    : assigned;
+  // The emphasised line is drawn last, on top.
+  const drawn = series
+    .map((item, index) => ({ item, index }))
+    .sort((a, b) => Number(a.item.name === emphasis) - Number(b.item.name === emphasis));
   const data = periodSeriesData(periods, series);
   const allMissing = periods.filter((_, p) => series.every((s) => s.values[p] === null));
   return (
@@ -296,7 +327,7 @@ function Chart({
             <LineChart
               title={title}
               data={data}
-              margin={{ top: 24, right: 24, bottom: 0, left: 0 }}
+              margin={{ top: 24, right: named ? nameMargin(series) : 24, bottom: 0, left: 0 }}
             >
               <CartesianGrid vertical={false} stroke="var(--color-border-hairline)" />
               <XAxis
@@ -326,7 +357,7 @@ function Chart({
                   label={{ value: "n.a.", position: "insideBottom", fill: NA_FILL, fontSize: 12 }}
                 />
               ))}
-              {series.map((item, index) => {
+              {drawn.map(({ item, index }) => {
                 const style = styles.get(item.name);
                 if (style === undefined) throw new Error(`no style for series "${item.name}"`);
                 return (
@@ -337,6 +368,10 @@ function Chart({
                     style={style}
                     labels={item.labels}
                     labelOffset={index === 0 ? -10 : 18}
+                    nameAt={
+                      named ? item.values.map((v) => v !== null).lastIndexOf(true) : undefined
+                    }
+                    emphasised={named && item.name === emphasis}
                   />
                 );
               })}
@@ -360,6 +395,7 @@ export function PathChart({
   series,
   divider,
   yTicks,
+  emphasis,
   table,
 }: PathChartProps) {
   check({ periods, series, divider, table });
@@ -378,6 +414,7 @@ export function PathChart({
           series={series}
           divider={divider}
           yTicks={yTicks}
+          emphasis={emphasis}
           rows={table.rows}
         />
       }

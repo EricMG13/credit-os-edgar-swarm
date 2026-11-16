@@ -85,16 +85,61 @@ export function bounds(values: (number | null)[], zero = false) {
   return { min: zero && min === 0 ? 0 : min - margin, max: max + margin };
 }
 
-export function ticks(
-  values: (number | null)[],
-  zero = false,
-  format: (value: number) => string = String,
-) {
+/** The spread of the data in three ticks. For axes that are not value axes (dates, scatter). */
+export function rangeTicks(values: (number | null)[], zero = false) {
   const { min, max } = bounds(values, zero);
   return [...new Set([min, min + (max - min) / 2, max])].map((value) => ({
     value,
-    label: format(value),
+    label: String(value),
   }));
+}
+
+const NICE_MANTISSAS = [1, 2, 2.5, 5];
+const MAX_TICKS = 6;
+const EDGE = 1e-9;
+
+/** The smallest of 1, 2, 2.5 or 5 times a power of ten whose bracket has at most six ticks. */
+function niceStep(low: number, high: number) {
+  const span = high - low;
+  for (let exponent = Math.floor(Math.log10(span)) - 2; ; exponent += 1) {
+    for (const mantissa of NICE_MANTISSAS) {
+      const step = mantissa * 10 ** exponent;
+      const count = Math.ceil(high / step - EDGE) - Math.floor(low / step + EDGE) + 1;
+      if (count <= MAX_TICKS) {
+        return { step, decimals: Math.max(0, -exponent + (mantissa === 2.5 ? 1 : 0)) };
+      }
+    }
+  }
+}
+
+/**
+ * Value-axis ticks at round numbers. Data that are all zero or more start at zero; data that are all
+ * zero or less end at zero; mixed data are bracketed on both sides. The labels are axis furniture:
+ * data labels, tooltips and tables keep the published strings. `zero` is kept for callers; the
+ * baseline rule makes it redundant.
+ */
+export function ticks(
+  values: (number | null)[],
+  // The baseline rule already includes zero; the flag stays so existing callers compile.
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  _zero = false,
+  format?: (value: number) => string,
+) {
+  const present = values.filter((value): value is number => value !== null);
+  const low = Math.min(0, ...present);
+  const high = Math.max(0, ...present);
+  const { step, decimals } = niceStep(low, high === low ? low + 1 : high);
+  const first = Math.floor(low / step + EDGE);
+  const last = Math.ceil((high === low ? low + 1 : high) / step - EDGE);
+  const grouped = new Intl.NumberFormat("en-US", {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: decimals,
+  });
+  const label = format ?? ((value: number) => grouped.format(value));
+  return Array.from({ length: last - first + 1 }, (_, at) => {
+    const value = Number(((first + at) * step).toFixed(decimals)) + 0;
+    return { value, label: label(value) };
+  });
 }
 
 export function chartTable(table: SourceTable, columns = table.headers.map((_, index) => index)) {

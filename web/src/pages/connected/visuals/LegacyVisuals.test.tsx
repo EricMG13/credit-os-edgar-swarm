@@ -569,3 +569,44 @@ it("draws a chart gap in the gap treatment with its title and the recorded reaso
   expect(note.className).toContain("first-letter:uppercase");
   expect(note.parentElement?.className).toContain("gap-hatch");
 });
+
+function twoCharts() {
+  const table = (line: number) => ({
+    type: "table",
+    line,
+    headers: ["Period", "Amount", "Reporting unit", "Basis and limitation"],
+    rows: [
+      { cells: ["FY2027", "10", "US$m", "Stated"] },
+      { cells: ["FY2028", "12", "US$m", "Stated"] },
+    ],
+  });
+  return {
+    output: {
+      charts: [
+        { title: "Interest", table: 20, unit: "US$m", columns: [1] },
+        { title: "Debt maturities", table: 30, unit: "US$m", columns: [1] },
+      ],
+    },
+    sections: [{ blocks: [table(20), table(30)] }],
+  };
+}
+
+it("lays chart cards in two columns from lg and spans the primary chart across both", () => {
+  const { output, sections } = twoCharts();
+  render(<LegacyVisuals output={output} sections={sections} primary="Debt maturities" cards />);
+  const card = (name: string) => {
+    const found = screen.getByRole("figure", { name }).closest("div.rounded-xl");
+    if (!(found instanceof HTMLElement)) throw new Error(`no card for ${name}`);
+    return found;
+  };
+  expect(card("Debt maturities").parentElement).toHaveClass("lg:grid-cols-2");
+  expect(card("Debt maturities")).toHaveClass("lg:col-span-2");
+  expect(card("Interest")).not.toHaveClass("lg:col-span-2");
+});
+
+it("keeps charts in one column when they are not cards", () => {
+  const { output, sections } = twoCharts();
+  render(<LegacyVisuals output={output} sections={sections} />);
+  const figure = screen.getByRole("figure", { name: "Interest" });
+  expect(figure.closest(".lg\\:grid-cols-2")).toBeNull();
+});

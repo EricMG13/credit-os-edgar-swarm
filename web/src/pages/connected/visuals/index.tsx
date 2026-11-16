@@ -112,10 +112,11 @@ export function LegacyVisuals({
       </PublishedSource>
     ) : undefined;
     const gap = word(descriptor.gap);
+    const wide = cards && primary !== undefined && title === primary ? " lg:col-span-2" : "";
     const key = `${category}-${title}-${String(line)}`;
     if (gap) {
       return [
-        <section key={key} className={`${TRACE_HOST} grid min-w-0 gap-2${box}`}>
+        <section key={key} className={`${TRACE_HOST} grid min-w-0 gap-2${box}${wide}`}>
           <h4 className="font-display text-h4">{title}</h4>
           <GapPanel
             role="note"
@@ -148,7 +149,10 @@ export function LegacyVisuals({
     const frame = { title, note, actions };
     const chart = drawingChart({ category, descriptor, published, basis, link, table, frame });
     return [
-      <div className={`${TRACE_HOST} grid min-w-0 grid-cols-[minmax(0,1fr)] gap-2${box}`} key={key}>
+      <div
+        className={`${TRACE_HOST} grid min-w-0 grid-cols-[minmax(0,1fr)] gap-2${box}${wide}`}
+        key={key}
+      >
         {chart ?? (
           <>
             <h4 className="font-display text-h4">{title}</h4>
@@ -171,6 +175,10 @@ export function LegacyVisuals({
     ];
   });
   return views.length === 0 ? null : (
-    <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-4">{views}</div>
+    <div
+      className={`grid min-w-0 grid-cols-[minmax(0,1fr)] gap-4${cards ? " lg:grid-cols-2" : ""}`}
+    >
+      {views}
+    </div>
   );
 }

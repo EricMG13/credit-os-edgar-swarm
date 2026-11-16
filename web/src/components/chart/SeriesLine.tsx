@@ -3,6 +3,7 @@ import { Mark } from "./marks";
 import type { SeriesStyle } from "./series";
 
 const LABEL_FILL = "var(--color-text-primary)";
+const NAME_FILL = "var(--color-text-secondary)";
 
 interface SeriesLineProps {
   name: string;
@@ -10,19 +11,42 @@ interface SeriesLineProps {
   style: SeriesStyle;
   labels?: (string | null)[];
   labelOffset?: number;
+  /** Draw the series name beside the point at this index: the line is named where it ends. */
+  nameAt?: number;
+  /** The series stands out from the others: a heavier line, marked with a class. */
+  emphasised?: boolean;
 }
+
+export const EMPHASIS_CLASS = "series-emphasis";
+const EMPHASIS_WIDTH = 3.5;
+const LINE_WIDTH = 2;
+const NAME_GAP = 10;
 
 function point(
   { cx, cy, value, index }: DotItemDotProps,
-  { name, style, labels, labelOffset }: SeriesLineProps,
+  { name, style, labels, labelOffset, nameAt, emphasised }: SeriesLineProps,
 ) {
   if (typeof cx !== "number" || typeof cy !== "number" || typeof value !== "number") return null;
   const mark = <Mark marker={style.marker} color={style.color} x={cx} y={cy} series={name} />;
-  if (!labels) return mark;
-  const label = labels[index];
+  const label = labels?.[index];
+  const named = nameAt === index;
+  if (!labels && !named) return mark;
   return (
     <g key={index}>
       {mark}
+      {named ? (
+        <text
+          data-series-name={name}
+          data-emphasised={emphasised ? "" : undefined}
+          x={cx + NAME_GAP}
+          y={cy + 4}
+          fontSize={12}
+          fontWeight={emphasised ? 600 : 400}
+          fill={emphasised ? LABEL_FILL : NAME_FILL}
+        >
+          {name}
+        </text>
+      ) : null}
       {label == null || labelOffset === undefined ? null : (
         <text
           data-label=""
@@ -48,8 +72,9 @@ export function SeriesLine(props: SeriesLineProps) {
       key={name}
       dataKey={dataKey}
       name={name}
+      className={props.emphasised ? EMPHASIS_CLASS : undefined}
       stroke={style.color}
-      strokeWidth={2}
+      strokeWidth={props.emphasised ? EMPHASIS_WIDTH : LINE_WIDTH}
       strokeDasharray={style.dash}
       connectNulls={false}
       isAnimationActive={false}
