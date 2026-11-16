@@ -20,8 +20,8 @@
   --display: "Schibsted Grotesk", system-ui, sans-serif;
 }
 * { box-sizing: border-box; margin: 0; }
-body { background: var(--teams-bg); font-family: var(--ui); color: var(--teams-ink); padding: 36px 40px 40px; width: 1440px; }
-.board { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: start; }
+body { background: var(--teams-bg); font-family: var(--ui); color: var(--teams-ink); padding: 36px 40px 40px; width: 1680px; }
+.board { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 32px; align-items: start; }
 .label { font: 600 12px/16px var(--ui); letter-spacing: .08em; text-transform: uppercase; color: var(--teams-ink-2); margin-bottom: 14px; }
 
 /* Teams message chrome */
@@ -44,6 +44,7 @@ body { background: var(--teams-bg); font-family: var(--ui); color: var(--teams-i
 .appname { font: 700 18px/1 var(--display); letter-spacing: -.01em; color: #fff; position: relative; }
 .band .kind { margin-left: auto; position: relative; font: 600 11px/1 var(--ui); letter-spacing: .08em; text-transform: uppercase; color: #c7cbe0; }
 .stripe { height: 4px; }
+.stripe.info { background: var(--blue); } .badge.info { color: #000a66; background: var(--blue-50); border-color: var(--blue-100); }
 .stripe.ok { background: var(--ok-mark); } .stripe.warn { background: #e0a800; }
 
 .body { padding: 20px 20px 18px; }
@@ -93,6 +94,8 @@ h2 { font: 700 24px/30px var(--ui); letter-spacing: -.015em; color: var(--ink); 
 .actions { display: flex; gap: 8px; padding: 14px 20px 16px; border-top: 1px solid var(--hair); background: #fafafb; }
 .btn { font: 600 14px/32px var(--ui); padding: 0 14px; border-radius: 4px; border: 1px solid #d1d1d1; background: #fff; color: var(--teams-ink); }
 .btn.primary { background: var(--teams-accent); border-color: var(--teams-accent); color: #fff; }
+.line { font: 400 13px/20px var(--ui); color: var(--ink-2); margin-top: 14px; }
+.line b { font-weight: 600; color: var(--ink); }
 .note { margin-top: 28px; font: 400 12px/18px var(--ui); color: var(--teams-ink-2); max-width: 1000px; }
 </style>
 </head>
@@ -100,15 +103,39 @@ h2 { font: 700 24px/30px var(--ui); letter-spacing: -.015em; color: var(--ink); 
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
   <defs>
     <symbol id="sym" viewBox="0 0 1521 1515"><path fill="currentColor" d="m724.8 173c238.6-82.4 489.9-172.7 795.3-172.7v211c-267.1 0-488 78.5-726.5 160.9-235.7 82.4-488 172.7-793.3 172.7v-211c267 0 487.9-78.5 724.5-160.9zm-724.5 477.8h1519.8v213h-111-1408.8zm0 652.5c267 0 487.9-78.5 724.5-161 238.6-82.4 489.9-172.6 795.3-172.6v210.9c-267.1 0-488 78.5-726.5 160.9-236.6 82.5-488 172.7-793.3 172.7z"/></symbol>
+    <symbol id="play" viewBox="0 0 24 24"><path d="M7 4v16l13-8z" fill="currentColor"/></symbol>
     <symbol id="check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></symbol>
     <symbol id="alert" viewBox="0 0 24 24"><path d="m21.7 18-8-14a2 2 0 0 0-3.4 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.7-3ZM12 9v4m0 4h.01" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></symbol>
   </defs>
 </svg>
 
 <div class="board">
-  <!-- Card 1 -->
   <section>
-    <div class="label">Mock-up 1 &middot; Report published</div>
+    <div class="label">1 &middot; Run started</div>
+    <div class="msg">
+      <div class="avatar"><svg><use href="#sym"/></svg></div>
+      <div>
+        <div class="meta"><b>Credit OS</b><span class="app">APP</span><span>13:45</span></div>
+        <div class="card">
+          <div class="band">
+            <svg class="wave" viewBox="0 0 1521 1515"><use href="#sym"/></svg>
+            <div class="logo"><svg><use href="#sym"/></svg></div>
+            <div class="appname">Credit OS</div>
+          </div>
+          <div class="stripe info"></div>
+          <div class="body">
+            <div class="row"><span class="badge info"><svg><use href="#play"/></svg>Run started</span><span class="badge plain">Full pathway</span></div>
+            <h2>Northbridge Holdings</h2>
+            <div class="sub">Started by <b>Priya Raman</b> &middot; 13:45</div>
+            <div class="line"><b>4 documents</b> read &middot; <b>14 modules</b> to run &middot; cap <b>USD 25.00</b></div><div class="line" style="margin-top:6px">You will get a message here when the report is ready or the run needs you.</div>
+          </div>
+          <div class="actions"><span class="btn primary">Watch the run</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+  <section>
+    <div class="label">2 &middot; Report ready</div>
     <div class="msg">
       <div class="avatar"><svg><use href="#sym"/></svg></div>
       <div>
@@ -116,55 +143,23 @@ h2 { font: 700 24px/30px var(--ui); letter-spacing: -.015em; color: var(--ink); 
         <div class="card">
           <div class="band">
             <svg class="wave" viewBox="0 0 1521 1515"><use href="#sym"/></svg>
-            <svg class="wave wave2" viewBox="0 0 1521 1515"><use href="#sym"/></svg>
             <div class="logo"><svg><use href="#sym"/></svg></div>
             <div class="appname">Credit OS</div>
-            <div class="kind">Run</div>
           </div>
           <div class="stripe ok"></div>
           <div class="body">
-            <div class="row">
-              <span class="badge ok"><svg><use href="#check"/></svg>Report published</span>
-              <span class="badge plain">Full pathway</span>
-            </div>
+            <div class="row"><span class="badge ok"><svg><use href="#check"/></svg>Report ready</span><span class="badge plain">Full pathway</span></div>
             <h2>Northbridge Holdings</h2>
-            <div class="sub">Started by <b>Priya Raman</b> &middot; finished 16 Nov 2026, 14:32 &middot; 47 min</div>
-
-            <div class="callout">
-              <div class="eyebrow">Bottom line</div>
-              <p>Leverage rose to 5.4x from 4.9x as acquisition debt was drawn ahead of the earnings it funds. Liquidity covers every maturity through FY2028.</p>
-            </div>
-
-            <div class="tiles">
-              <div class="tile"><div class="k">Modules</div><div class="v">14<small>of 14</small></div><div class="n ok">All complete</div></div>
-              <div class="tile"><div class="k">Changes</div><div class="v">6</div><div class="n up">Material since 12 Aug run</div></div>
-              <div class="tile"><div class="k">Stated limits</div><div class="v">2</div><div class="n">Listed in the report</div></div>
-            </div>
-
-            <div class="section">
-              <div class="k">Library pages <span>Checked against the run's handoffs</span></div>
-              <div class="chips">
-                <span class="chip"><svg><use href="#check"/></svg>Overview</span>
-                <span class="chip"><svg><use href="#check"/></svg>Changes</span>
-                <span class="chip"><svg><use href="#check"/></svg>Modules</span>
-                <span class="chip"><svg><use href="#check"/></svg>Forecast</span>
-                <span class="chip"><svg><use href="#check"/></svg>Evidence</span>
-              </div>
-            </div>
+            <div class="sub">Started by <b>Priya Raman</b> &middot; finished 14:32 &middot; 47 min</div>
+            <div class="callout"><div class="eyebrow">Bottom line</div><p>Leverage rose to 5.4x from 4.9x as acquisition debt was drawn ahead of the earnings it funds. Liquidity covers every maturity through FY2028.</p></div><div class="line"><b>14 of 14 modules</b> complete &middot; <b>2 limits</b> stated in the report</div>
           </div>
-          <div class="actions">
-            <span class="btn primary">Open report</span>
-            <span class="btn">See what changed</span>
-            <span class="btn">Evidence</span>
-          </div>
+          <div class="actions"><span class="btn primary">Open report</span></div>
         </div>
       </div>
     </div>
   </section>
-
-  <!-- Card 2 -->
   <section>
-    <div class="label">Mock-up 2 &middot; Run stopped, needs a decision</div>
+    <div class="label">3 &middot; Run stopped</div>
     <div class="msg">
       <div class="avatar"><svg><use href="#sym"/></svg></div>
       <div>
@@ -172,55 +167,23 @@ h2 { font: 700 24px/30px var(--ui); letter-spacing: -.015em; color: var(--ink); 
         <div class="card">
           <div class="band">
             <svg class="wave" viewBox="0 0 1521 1515"><use href="#sym"/></svg>
-            <svg class="wave wave2" viewBox="0 0 1521 1515"><use href="#sym"/></svg>
             <div class="logo"><svg><use href="#sym"/></svg></div>
             <div class="appname">Credit OS</div>
-            <div class="kind">Run</div>
           </div>
           <div class="stripe warn"></div>
           <div class="body">
-            <div class="row">
-              <span class="badge warn"><svg><use href="#alert"/></svg>Needs a decision</span>
-              <span class="badge plain">Deep pathway</span>
-            </div>
+            <div class="row"><span class="badge warn"><svg><use href="#alert"/></svg>Run stopped</span><span class="badge plain">Deep pathway</span></div>
             <h2>Northbridge Holdings</h2>
-            <div class="sub">Started by <b>Priya Raman</b> &middot; stopped 16 Nov 2026, 14:07</div>
-
-            <div class="callout warn">
-              <div class="eyebrow">Stopped at the spending cap</div>
-              <p>The next module would not fit under the USD 40.00 cap, so the run stopped. Nothing has been published and no further spend happens until you decide.</p>
-            </div>
-
-            <div class="two section">
-              <div>
-                <div class="k">Modules <span>11 of 14</span></div>
-                <div class="bar"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i class="off"></i><i class="off"></i><i class="off"></i></div>
-              </div>
-              <div>
-                <div class="k">Spend <span>USD 38.20 of 40.00</span></div>
-                <div class="meter"><i></i></div>
-              </div>
-            </div>
-
-            <div class="section">
-              <div class="k">Not run</div>
-              <div class="facts">
-                <div>Covenant headroom<span>Waiting</span></div>
-                <div>Recovery analysis<span>Waiting</span></div>
-                <div>Changes since the last run<span>Waiting</span></div>
-              </div>
-            </div>
+            <div class="sub">Started by <b>Priya Raman</b> &middot; stopped 14:07</div>
+            <div class="callout warn"><div class="eyebrow">Needs you</div><p>The run reached its USD 40.00 cap before it finished. No report has been published.</p></div><div class="section"><div class="k">Modules <span>11 of 14 complete</span></div><div class="bar"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i class="off"></i><i class="off"></i><i class="off"></i></div></div>
           </div>
-          <div class="actions">
-            <span class="btn primary">Review the run</span>
-            <span class="btn">Open Run activity</span>
-          </div>
+          <div class="actions"><span class="btn primary">Open Run activity</span></div>
         </div>
       </div>
     </div>
   </section>
 </div>
 
-<p class="note">Synthetic issuer and illustrative values. The navy header (logo, app name, wave) ships as one image, so it keeps the app's display face. Everything below it is drawn by Teams from Adaptive Card elements: text is in Teams' own font (Inter stands in for Segoe UI here) and the primary button takes Teams' accent colour, which a card cannot change.</p>
+<p class="note">Synthetic issuer and illustrative values. The navy header ships as one image; text below it renders in Teams' own font (Inter stands in for Segoe UI) and the button takes Teams' accent colour.</p>
 </body>
 </html>
