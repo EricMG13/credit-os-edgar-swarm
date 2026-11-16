@@ -547,6 +547,28 @@ def test_a_padded_decimal_matches_its_trimmed_form() -> None:
     assert len(fidelity("Leverage is 4.1x.", "| Leverage | 4.15x |")) == 1
 
 
+@pytest.mark.parametrize(
+    ("passage", "cell", "accepted"),
+    [
+        # A note beside a cell's value states no value (live run, TDG as of 2024-09-30, CP-1D).
+        ("Leverage rose 0.39x.", "0.3150 (about 0.39x against the 5.50x basis; see note)", False),
+        ("Leverage rose 0.39x.", "0.3150 (about 0.39x (see note))", False),
+        ("Leverage is 5.50x.", "0.3150 (about 0.39x against the 5.50x basis)", False),
+        # A bracketed value, rounding or ratio is what the table states.
+        ("Leverage rose 0.32x.", "0.3150 (0.32x)", True),
+        ("The share is 51.6%.", "3,395 (51.6%)", True),
+        ("The loss was (USD 45 million).", "(USD 45 million)", True),
+        ("The loss was (JPY 5,000 million).", "(JPY 5,000 million)", True),
+        ("Leverage is 5.9x.", "5.9x (issuer basis, see note 4)", True),
+    ],
+)
+def test_a_note_in_a_table_cell_holds_no_reader_figure(
+    passage: str, cell: str, accepted: bool
+) -> None:
+    issues = fidelity(passage, f"| ID | Result |\n| --- | --- |\n| C-1 | {cell} |")
+    assert (issues == ()) is accepted, issues
+
+
 FORECAST_BLOCK_DOC = (
     "### Forecast inputs (machine-readable)\n\n```json\n"
     '{"base_drivers": {"ebitda_margin": {"rationale": "FY2025 margin was 31.7%, carried forward"}}}'

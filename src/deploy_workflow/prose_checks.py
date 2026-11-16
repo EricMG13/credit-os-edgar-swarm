@@ -1261,15 +1261,35 @@ def _forecast_block_lines(text: str) -> set[int]:
     return lines
 
 
+# A parenthesis inside one table cell, holding at most one more: `(about 0.39x (see note))`.
+_PARENTHESIS = re.compile(r"\((?:[^()|\n]|\([^()|\n]*\))*\)")
+
+
+def _is_note(parenthesis: str) -> bool:
+    """A parenthesis holding a word besides its figures, units and currency: `(about 0.39x
+    measured against ...)` is a note; `(USD 45 million)`, `(12.3)` and `(0.32x)` are not."""
+    rest = _CURRENCY_WORD.sub(" ", NUMBER.sub(" ", parenthesis))
+    return any(word not in ISO_4217 for word in re.findall(r"[^\W\d_]+", rest))
+
+
+def _stated(line: str) -> str:
+    """A held line with the notes of its table cells blanked: a table backs a reader figure with
+    a value it states, not with a note beside it (live run, TDG as of 2024-09-30: the note in
+    `0.3150 (about 0.39x measured against ...)` held a passage's 0.39x)."""
+    if not line.lstrip().startswith("|"):
+        return line
+    return _PARENTHESIS.sub(lambda found: " " if _is_note(found[0]) else found[0], line)
+
+
 def figure_issues(text: str) -> tuple[str, ...]:
     """Every figure of a reader passage not held, with its sign, unit and scale, in the handoff
-    outside the reader passages. Sentence text only, as in the prose checks."""
+    outside the reader passages (a note in a table cell holds none). Sentence text only, as in
+    the prose checks."""
     passages = _pooled(_findings_sections(text) or [])
     inside = {number for body in passages.values() for number, _ in body}
     inside |= _forecast_block_lines(text)
-    held = _figures(
-        "\n".join(line for number, line in enumerate(text.splitlines(), 1) if number not in inside)
-    )
+    numbered = enumerate(text.splitlines(), 1)
+    held = _figures("\n".join(_stated(line) for number, line in numbered if number not in inside))
     lines = sorted(
         (line for body in passages.values() for line in _sentence_lines(body) if line.text.strip()),
         key=lambda line: line.number,
