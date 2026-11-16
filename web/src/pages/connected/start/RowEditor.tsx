@@ -1,4 +1,4 @@
-import { useId, useState } from "react";
+import { useEffect, useId, useRef, useState, type RefObject } from "react";
 import { Button } from "@/components/base/buttons/button";
 import { moduleName } from "../api";
 import { field, label } from "../layout";
@@ -13,6 +13,8 @@ export function RowEditor({
   primary,
   required,
   focusChoices,
+  error,
+  addRef,
 }: {
   kind: RowKind;
   rows: readonly Row[];
@@ -20,10 +22,31 @@ export function RowEditor({
   primary: boolean;
   required?: boolean;
   focusChoices?: Choices;
+  error?: string;
+  addRef?: RefObject<HTMLButtonElement | null>;
 }) {
   const spec = ROW_SPECS[kind];
   const base = useId();
+  const errorId = `${base}-error`;
+  // Each row keeps one identity while it is in the list, so its open state and input ids
+  // follow the row, not its position. The identity is not part of the row that is sent.
+  const [ids, setIds] = useState<number[]>(() => rows.map((_, at) => at));
+  const nextId = useRef(rows.length);
   const [added, setAdded] = useState<number>();
+  const keys = rows.map((_, at) => ids[at] ?? -(at + 1));
+  const removeButtons = useRef(new Map<number, HTMLButtonElement>());
+  const ownAdd = useRef<HTMLButtonElement | null>(null);
+  const addButton = addRef ?? ownAdd;
+  const refocus = useRef<{ add: boolean; at: number }>(undefined);
+  useEffect(() => {
+    const wanted = refocus.current;
+    refocus.current = undefined;
+    if (!wanted) return;
+    const keyAt = ids[Math.min(wanted.at, ids.length - 1)];
+    const target =
+      wanted.add || keyAt === undefined ? addButton.current : removeButtons.current.get(keyAt);
+    target?.focus();
+  }, [ids, addButton]);
   return (
     <div className="grid gap-2">
       {required && rows.length === 0 && (
@@ -31,46 +54,68 @@ export function RowEditor({
           At least one {spec.title.toLowerCase()} is required for a new issue.
         </p>
       )}
-      {rows.map((row, index) => (
-        <div key={index} className="relative min-w-0 rounded-lg border border-border-hairline p-3">
-          <RowItem
-            id={`${base}-${String(index)}`}
-            title={`${spec.title} ${String(index + 1)}`}
-            summary={spec.summary(row)}
-            fields={spec.fields.filter((item) => primary || !item.primaryOnly)}
-            kind={kind}
-            row={row}
-            startOpen={index === added}
-            focusChoices={focusChoices}
-            onField={(key, value) => {
-              onChange(rows.map((item, at) => (at === index ? { ...item, [key]: value } : item)));
-            }}
-          />
+      {rows.map((row, index) => {
+        const key = keys[index] ?? 0;
+        return (
+          <div key={key} className="relative min-w-0 rounded-lg border border-border-hairline p-3">
+            <RowItem
+              id={`${base}-${String(key)}`}
+              title={`${spec.title} ${String(index + 1)}`}
+              summary={spec.summary(row)}
+              fields={spec.fields.filter((item) => primary || !item.primaryOnly)}
+              kind={kind}
+              row={row}
+              startOpen={key === added}
+              focusChoices={focusChoices}
+              onField={(field, value) => {
+                onChange(
+                  rows.map((item, at) => (at === index ? { ...item, [field]: value } : item)),
+                );
+              }}
+            />
+            <Button
+              size="sm"
+              color="secondary"
+              className="absolute right-3 top-2"
+              aria-label={`Remove ${spec.title} ${String(index + 1)}`}
+              ref={(node) => {
+                if (node) removeButtons.current.set(key, node);
+                else removeButtons.current.delete(key);
+              }}
+              onPress={() => {
+                refocus.current = { add: rows.length === 1, at: index };
+                setIds(keys.filter((_, at) => at !== index));
+                onChange(rows.filter((_, at) => at !== index));
+              }}
+            >
+              Remove
+            </Button>
+          </div>
+        );
+      })}
+      <div className="grid gap-1">
+        <div>
           <Button
             size="sm"
             color="secondary"
-            className="absolute right-3 top-2"
-            aria-label={`Remove ${spec.title} ${String(index + 1)}`}
+            ref={addButton}
+            isDisabled={rows.length >= spec.max}
+            aria-describedby={error ? errorId : undefined}
             onPress={() => {
-              onChange(rows.filter((_, at) => at !== index));
+              nextId.current += 1;
+              setAdded(nextId.current);
+              setIds([...keys, nextId.current]);
+              onChange([...rows, emptyRow(kind)]);
             }}
           >
-            Remove
+            {spec.add}
           </Button>
         </div>
-      ))}
-      <div>
-        <Button
-          size="sm"
-          color="secondary"
-          isDisabled={rows.length >= spec.max}
-          onPress={() => {
-            setAdded(rows.length);
-            onChange([...rows, emptyRow(kind)]);
-          }}
-        >
-          {spec.add}
-        </Button>
+        {error && (
+          <p id={errorId} role="alert" className="text-sm text-error-primary">
+            {error}
+          </p>
+        )}
       </div>
     </div>
   );
@@ -156,7 +201,8 @@ function RowInput({
   options?: readonly (readonly [string, string])[];
   onChange: (value: string) => void;
 }) {
-  const hint = item.hint ? `${id}-hint` : undefined;
+  const hintText = [item.required && "Required.", item.hint].filter(Boolean).join(" ");
+  const hint = hintText ? `${id}-hint` : undefined;
   const offered = options ?? [];
   // A value the options do not list is still the value that is sent, so it is shown.
   const choices =
@@ -173,6 +219,7 @@ function RowInput({
           id={id}
           className={field}
           aria-describedby={hint}
+          aria-required={item.required ? "true" : undefined}
           value={value}
           onChange={(event) => {
             onChange(event.target.value);
@@ -193,15 +240,16 @@ function RowInput({
           inputMode={item.kind === "number" ? "decimal" : undefined}
           placeholder={item.placeholder}
           aria-describedby={hint}
+          aria-required={item.required ? "true" : undefined}
           value={value}
           onChange={(event) => {
             onChange(event.target.value);
           }}
         />
       )}
-      {item.hint && (
+      {hintText && (
         <p id={hint} className="text-xs text-text-secondary">
-          {item.hint}
+          {hintText}
         </p>
       )}
     </div>

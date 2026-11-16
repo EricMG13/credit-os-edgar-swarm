@@ -1,4 +1,4 @@
-import type { FC, ReactNode } from "react";
+import type { FC, ReactNode, Ref } from "react";
 import { isValidElement } from "react";
 import type {
   ButtonProps as AriaButtonProps,
@@ -113,6 +113,8 @@ interface CommonProps {
 export interface ButtonProps
   extends CommonProps, Omit<AriaButtonProps, "children" | "className" | "href"> {
   href?: undefined;
+  /** The button element, for code that must focus it. */
+  ref?: Ref<HTMLButtonElement>;
 }
 
 /** With `href` the button is a link (an anchor) with the same look. */
