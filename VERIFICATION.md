@@ -4,6 +4,12 @@ Keep one running record here. A pass applies only to the stated scope. Earlier v
 engine is in [EricMG13/final-workflow](https://github.com/EricMG13/final-workflow)'s
 `VERIFICATION.md`, which also keeps the retained runs this copy leaves out.
 
+## 2026-11-16 — Browser proof on merged `main` (`4be1e30d`)
+
+Scope: `npm --prefix web run proof:connected` on the tree at `4be1e30d`, after `uv sync --locked`, `npm --prefix web ci` and `npm --prefix web run build`. Beyond the earlier run at `ab661d8d`, `main` now also contains #25, #26, #28, #29, #30 and #31. Synthetic Northbridge case with canned model responses; no provider, no paid run, no credentials. Load average at start 4.99.
+- Result: pass. Exit code 0; 2 of 2 browsers run and passed (tests 2, pass 2, fail 0, skipped 0). Google Chrome 157.0.8103.78 completed run `20261116-152404-01`; Microsoft Edge 157.0.4341.60 completed run `20261116-152432-01`. No check failed.
+- Not verified: Windows; the proof ran once; the proof drives no row control of the typed-row editor (#20, #21) and the pages and controls its script does not open; the reader's PR 3 and the reports-formatting work are not yet on `main`, so the proof must run again after they land.
+
 ## 2026-11-16 — Start a run: errors on their fields; focus, announcements and readiness (PRs #31 and #30, merged to `main` as `8c76c434` and `4be1e30d`)
 
 Scope: PR D of `docs/superpowers/plans/2026-11-16-start-run-review-and-rows.md`, split in two: #31 (Task 6, 529 changed lines): `web/src/components/base/buttons/button.tsx`, `web/src/pages/connected/{StartRun.tsx,ConnectedApp.test.tsx}` and `web/src/pages/connected/start/{RowEditor.tsx,RowEditor.test.tsx,rows.ts}`; #30 (Tasks 7 and 8, 799 changed lines, stacked on #31): `web/scripts/connected-proof.mjs`, `web/src/pages/connected/{StartRun.tsx,layout.tsx,ConnectedApp.test.tsx}`, `web/src/pages/connected/start/{RowEditor.tsx,RowEditor.test.tsx,StartReadiness.tsx}` (new) and `web/src/pages/run/start/{Purpose.tsx,Start.tsx}`. The cap, review, acceptance and submit code is not changed (compared byte for byte by a probe); in #31 the validation messages, their order and the point they are raised are the same, only where the message is drawn changed; in #30 `withDraft` gained only the focus memory.
