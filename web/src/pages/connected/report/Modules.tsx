@@ -151,42 +151,75 @@ function Navigator({
   );
 }
 
-export function Modules({
-  snapshot,
-  run,
-  view,
-  module,
-  output,
-}: {
-  snapshot: Snapshot;
-  run: PublishedRun;
-  view: ReturnType<typeof buildReportView>;
-  module?: string;
-  output?: string;
-}) {
-  const current =
-    module === undefined
-      ? (view.modules.find(({ id }) => id === "CP-1") ?? view.modules[0])
-      : view.modules.find(({ id }) => id === module);
-  if (!current) return <p className={card}>This module is unavailable in the published run.</p>;
-  const entry =
-    output === undefined
-      ? (current.outputs.find(({ selected }) => selected) ??
-        (current.outputs.length === 1 ? current.outputs[0] : undefined))
-      : /^(?:0|[1-9]\d*)$/.test(output)
-        ? current.outputs[Number(output)]
-        : undefined;
-  const index = entry ? view.entries.indexOf(entry) : -1;
-  const downside = entry ? downsideView(entry) : null;
-  const breaks = entry ? breakPointView(entry) : null;
-  const macro = entry ? macroView(entry) : null;
-  const securities = entry ? securityView(entry, run.asOf) : null;
+type ReportView = ReturnType<typeof buildReportView>;
+type ModuleItem = ReportView["modules"][number];
+
+function defaultOutput(outputs: OutputEntry[]) {
+  return (
+    outputs.find(({ selected }) => selected) ?? (outputs.length === 1 ? outputs[0] : undefined)
+  );
+}
+
+function moduleOutput(current: ModuleItem, output: string | undefined) {
+  if (output === undefined) return defaultOutput(current.outputs);
+  return /^(?:0|[1-9]\d*)$/.test(output) ? current.outputs[Number(output)] : undefined;
+}
+
+function moduleFigures(entry: OutputEntry, run: PublishedRun) {
+  const downside = downsideView(entry);
+  const breaks = breakPointView(entry);
+  const macro = macroView(entry);
+  const securities = securityView(entry, run.asOf);
   const figureTableLines = [securities?.summaryLine, securities?.outcomes?.line].filter(
     (line) => line !== undefined,
   );
-  const evidenceHref = (line: number) =>
-    entry ? evidencePath(run.folder, entry, line) : "#evidence/summary";
-  const allMetrics = entry ? foundationMetrics(entry, view.catalogue) : [];
+  return {
+    downside,
+    breaks,
+    macro,
+    securities,
+    tableLines: figureTableLines,
+    hasLocalFigures: Boolean(downside || breaks || macro || securities),
+  };
+}
+
+function SavedOutputs({ current, entry }: { current: ModuleItem; entry?: OutputEntry }) {
+  return (
+    current.outputs.length > 1 && (
+      <nav aria-label="Saved outputs" className="flex flex-wrap gap-2">
+        {current.outputs.map((item, at) => (
+          <Button
+            key={item.output.id}
+            color="secondary"
+            size="sm"
+            href={`#modules/${encodeURIComponent(current.id)}/${String(at)}`}
+            aria-current={item === entry ? "page" : undefined}
+          >
+            {item.selected ? "Designated handoff" : `Retained output ${String(at + 1)}`}
+          </Button>
+        ))}
+      </nav>
+    )
+  );
+}
+
+function ModuleFindings({
+  snapshot,
+  run,
+  view,
+  entry,
+  figures,
+}: {
+  snapshot: Snapshot;
+  run: PublishedRun;
+  view: ReportView;
+  entry: OutputEntry;
+  figures: ReturnType<typeof moduleFigures>;
+}) {
+  const index = view.entries.indexOf(entry);
+  const { downside, breaks, macro, securities, tableLines: figureTableLines } = figures;
+  const evidenceHref = (line: number) => evidencePath(run.folder, entry, line);
+  const allMetrics = foundationMetrics(entry, view.catalogue);
   const metrics = allMetrics.filter(({ metric }) =>
     ["Net debt (carrying basis)", "Debt principal", "All-in cash interest cover"].includes(
       metric.label,
@@ -194,6 +227,60 @@ export function Modules({
   );
   const leverage = allMetrics.find(({ metric }) => metric.label === "Lease-adjusted gross leverage")
     ?.metric.value;
+  return (
+    <ReportFindings
+      key={entry.output.id}
+      snapshot={snapshot}
+      run={run}
+      entry={entry}
+      entryIndex={index}
+      figureTableLines={figureTableLines}
+      judgement={
+        leverage?.kind === "value" ? `Lease-adjusted gross leverage is ${leverage.text}` : undefined
+      }
+      afterBottomLine={
+        <>
+          <MetricGrid
+            records={metrics}
+            entry={entry}
+            entryIndex={index}
+            snapshot={snapshot}
+            folder={run.folder}
+          />
+          <div id="module-figures" tabIndex={-1} className="grid min-w-0 gap-4">
+            {downside && <Downside data={downside} href={evidenceHref} />}
+            {breaks && <BreakPoints data={breaks} href={evidenceHref} />}
+            {macro && <MacroSensitivity data={macro} href={evidenceHref} />}
+            {securities && <Securities data={securities} href={evidenceHref} />}
+            <LegacyVisuals
+              output={entry.output}
+              sections={entry.sections}
+              primary={entry.output.module === "CP-1" ? "Debt maturities" : undefined}
+              cards
+              evidenceHref={evidenceHref}
+            />
+          </div>
+        </>
+      }
+    />
+  );
+}
+
+function SelectedModule({
+  snapshot,
+  run,
+  view,
+  current,
+  entry,
+}: {
+  snapshot: Snapshot;
+  run: PublishedRun;
+  view: ReturnType<typeof buildReportView>;
+  current: ReportView["modules"][number];
+  entry?: OutputEntry;
+}) {
+  const figures = entry ? moduleFigures(entry, run) : null;
+  const figureTableLines = figures?.tableLines ?? [];
   return (
     <>
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -207,62 +294,19 @@ export function Modules({
           run={run}
           current={current.id}
           entry={entry}
-          hasLocalFigures={Boolean(downside || breaks || macro || securities)}
+          hasLocalFigures={Boolean(figures?.hasLocalFigures)}
           figureTableLines={figureTableLines}
         />
         <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-4">
-          {current.outputs.length > 1 && (
-            <nav aria-label="Saved outputs" className="flex flex-wrap gap-2">
-              {current.outputs.map((item, at) => (
-                <Button
-                  key={item.output.id}
-                  color="secondary"
-                  size="sm"
-                  href={`#modules/${encodeURIComponent(current.id)}/${String(at)}`}
-                  aria-current={item === entry ? "page" : undefined}
-                >
-                  {item.selected ? "Designated handoff" : `Retained output ${String(at + 1)}`}
-                </Button>
-              ))}
-            </nav>
-          )}
-          {entry ? (
-            <ReportFindings
+          <SavedOutputs current={current} entry={entry} />
+          {entry && figures ? (
+            <ModuleFindings
               key={entry.output.id}
               snapshot={snapshot}
               run={run}
+              view={view}
               entry={entry}
-              entryIndex={index}
-              figureTableLines={figureTableLines}
-              judgement={
-                leverage?.kind === "value"
-                  ? `Lease-adjusted gross leverage is ${leverage.text}`
-                  : undefined
-              }
-              afterBottomLine={
-                <>
-                  <MetricGrid
-                    records={metrics}
-                    entry={entry}
-                    entryIndex={index}
-                    snapshot={snapshot}
-                    folder={run.folder}
-                  />
-                  <div id="module-figures" tabIndex={-1} className="grid min-w-0 gap-4">
-                    {downside && <Downside data={downside} href={evidenceHref} />}
-                    {breaks && <BreakPoints data={breaks} href={evidenceHref} />}
-                    {macro && <MacroSensitivity data={macro} href={evidenceHref} />}
-                    {securities && <Securities data={securities} href={evidenceHref} />}
-                    <LegacyVisuals
-                      output={entry.output}
-                      sections={entry.sections}
-                      primary={entry.output.module === "CP-1" ? "Debt maturities" : undefined}
-                      cards
-                      evidenceHref={evidenceHref}
-                    />
-                  </div>
-                </>
-              }
+              figures={figures}
             />
           ) : (
             <section className={card}>
@@ -273,5 +317,34 @@ export function Modules({
         </div>
       </div>
     </>
+  );
+}
+
+export function Modules({
+  snapshot,
+  run,
+  view,
+  module,
+  output,
+}: {
+  snapshot: Snapshot;
+  run: PublishedRun;
+  view: ReportView;
+  module?: string;
+  output?: string;
+}) {
+  const current =
+    module === undefined
+      ? (view.modules.find(({ id }) => id === "CP-1") ?? view.modules[0])
+      : view.modules.find(({ id }) => id === module);
+  if (!current) return <p className={card}>This module is unavailable in the published run.</p>;
+  return (
+    <SelectedModule
+      snapshot={snapshot}
+      run={run}
+      view={view}
+      current={current}
+      entry={moduleOutput(current, output)}
+    />
   );
 }

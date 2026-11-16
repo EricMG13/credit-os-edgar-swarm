@@ -176,6 +176,7 @@ describe("connected library and report design", () => {
     run.modules = { "CP-1": { outputs: [id], default: id } };
     snapshot.workspace.outputs[id] = {
       id,
+      run: "north",
       module: "CP-1",
       label: "Financial foundation",
       href: id,
@@ -246,4 +247,63 @@ describe("connected library and report design", () => {
     fireEvent.change(sectionPicker, { target: { value: firstSection } });
     expect(document.activeElement).toBe(firstSectionTarget);
   });
+});
+
+it("withholds a catalogue-only report and its actions", async () => {
+  const snapshot = librarySnapshot() as unknown as Snapshot;
+  delete snapshot.workspace.runs.north;
+  useSnapshot(snapshot);
+  render(<ConnectedApp path="/report/northbridge-2026" mode="synthetic" />);
+  expect(await screen.findByText("No report was published for this run.")).toBeInTheDocument();
+  expect(screen.getByRole("heading", { name: "Credit report" })).toBeInTheDocument();
+  expect(screen.queryByRole("link", { name: "Run activity" })).toBeNull();
+  expect(screen.queryByRole("switch", { name: "Show sources" })).toBeNull();
+  expect(screen.queryByRole("navigation", { name: "Report sections" })).toBeNull();
+});
+
+it.each(["Retained-method check withheld admission.", ""])(
+  "preserves preview qualification without claiming completion: %j",
+  async (reason) => {
+    const snapshot = librarySnapshot() as unknown as Snapshot;
+    snapshot.preview = { reason };
+    useSnapshot(snapshot);
+    render(<ConnectedApp path="/report/northbridge-2026" mode="synthetic" />);
+    expect(await screen.findByText("Test preview")).toBeInTheDocument();
+    expect(screen.queryByText("Finished")).toBeNull();
+    expect(screen.queryByText("Synthetic test")).toBeNull();
+    if (reason) expect(screen.getByRole("note")).toHaveTextContent(reason);
+    else expect(screen.queryByRole("note")).toBeNull();
+  },
+);
+
+it.each([
+  { name: "Catalogue title", issuerHeading: "Handoff title", expected: "Catalogue title" },
+  { name: "", issuerHeading: "Handoff title", expected: "Handoff title" },
+  { name: "", issuerHeading: "", expected: "Northbridge" },
+])("preserves reader title fallbacks: %j", async ({ name, issuerHeading, expected }) => {
+  const snapshot = librarySnapshot() as unknown as Snapshot;
+  const catalogue = snapshot.catalogue.real[0];
+  const run = snapshot.workspace.runs.north;
+  if (!catalogue || !run) throw new Error("Missing report fixture");
+  catalogue.name = name;
+  run.issuerHeading = issuerHeading;
+  useSnapshot(snapshot);
+  render(<ConnectedApp path="/report/northbridge-2026" mode="synthetic" />);
+  expect(await screen.findByRole("heading", { name: expected, level: 1 })).toBeInTheDocument();
+});
+
+it("ends the loading state for a resolved null snapshot", async () => {
+  useSnapshot(null);
+  render(<ConnectedApp path="/report/absent" mode="synthetic" />);
+  expect(screen.getByText("Loading report…")).toBeInTheDocument();
+  expect(await screen.findByText("No report was published for this run.")).toBeInTheDocument();
+  expect(screen.queryByText("Loading report…")).toBeNull();
+});
+
+it("shows a snapshot error without admitting a report or remaining in loading", async () => {
+  vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("Snapshot unavailable")));
+  render(<ConnectedApp path="/report/northbridge-2026" mode="synthetic" />);
+  expect(await screen.findByRole("alert")).toHaveTextContent("Snapshot unavailable");
+  expect(screen.queryByText("Loading report…")).toBeNull();
+  expect(screen.queryByRole("link", { name: "Run activity" })).toBeNull();
 });

@@ -582,51 +582,81 @@ function ReportPage({
   );
 }
 
-export function ReportReader({ id, mode }: { id: string; mode: Mode }) {
-  const { value, error } = useResource(getSnapshot);
-  const [sources, setSources] = useSourcesOn();
-  const hash = useSyncExternalStore(listenHash, readHash);
-  const [route, ...parts] = hash.slice(1).split("/");
-  const tab =
-    route === "calendar" ? route : (tabs.find(([name]) => name === route)?.[0] ?? "overview");
-  const found = value && Object.entries(value.workspace.runs).find(([, run]) => run.folder === id);
-  const catalogue = value?.catalogue.real.find((entry) => entry.id === id);
-  const run = found ? found[1] : null;
+function ReaderBadges({
+  run,
+  catalogue,
+  preview,
+  mode,
+}: {
+  run: PublishedRun;
+  catalogue?: CatalogueRun;
+  preview?: Snapshot["preview"];
+  mode: Mode;
+}) {
   return (
-    <div className="mx-auto w-full max-w-[96rem]" data-sources={sources ? "on" : "off"}>
-      <Breadcrumb>Report</Breadcrumb>
-      <PageHeader
-        title={run ? catalogue?.name || run.issuerHeading || run.issuer : "Credit report"}
-        badges={
-          run && (
-            <>
-              <Badge>{runTiming(run)}</Badge>
-              <Badge>{runPathway(run, catalogue)}</Badge>
-              {value?.preview ? (
-                <Badge color="brand">Test preview</Badge>
-              ) : (
-                <>
-                  <StatusBadge set="Run states" state="Finished" />
-                  {mode === "synthetic" && <Badge color="brand">Synthetic test</Badge>}
-                </>
-              )}
-            </>
-          )
-        }
-        actions={
-          run && (
-            <div className="flex flex-wrap items-center gap-2">
-              <SourcesSwitch isSelected={sources} onChange={setSources} />
-              <Button color="secondary" href="#history">
-                Report history
-              </Button>
-              <Button color="secondary" href={`/run/${encodeURIComponent(id)}`}>
-                Run activity
-              </Button>
-            </div>
-          )
-        }
-      />
+    <>
+      <Badge>{runTiming(run)}</Badge>
+      <Badge>{runPathway(run, catalogue)}</Badge>
+      {preview ? (
+        <Badge color="brand">Test preview</Badge>
+      ) : (
+        <>
+          <StatusBadge set="Run states" state="Finished" />
+          {mode === "synthetic" && <Badge color="brand">Synthetic test</Badge>}
+        </>
+      )}
+    </>
+  );
+}
+
+function ReaderHeader({
+  run,
+  catalogue,
+  preview,
+  mode,
+  id,
+  sources,
+  setSources,
+}: {
+  run: PublishedRun | null;
+  catalogue?: CatalogueRun;
+  preview?: Snapshot["preview"];
+  mode: Mode;
+  id: string;
+  sources: boolean;
+  setSources: (selected: boolean) => void;
+}) {
+  if (!run) return <PageHeader title="Credit report" />;
+  return (
+    <PageHeader
+      title={catalogue?.name || run.issuerHeading || run.issuer}
+      badges={<ReaderBadges run={run} catalogue={catalogue} preview={preview} mode={mode} />}
+      actions={
+        <div className="flex flex-wrap items-center gap-2">
+          <SourcesSwitch isSelected={sources} onChange={setSources} />
+          <Button color="secondary" href="#history">
+            Report history
+          </Button>
+          <Button color="secondary" href={`/run/${encodeURIComponent(id)}`}>
+            Run activity
+          </Button>
+        </div>
+      }
+    />
+  );
+}
+
+function ReaderStatus({
+  value,
+  error,
+  found,
+}: {
+  value: Snapshot | null | undefined;
+  error: string | undefined;
+  found: boolean;
+}) {
+  return (
+    <>
       {error && <ErrorNotice>{error}</ErrorNotice>}
       {value?.preview?.reason && (
         <p role="note" className={`${card} mt-4`}>
@@ -641,6 +671,33 @@ export function ReportReader({ id, mode }: { id: string; mode: Mode }) {
       {value !== undefined && !found && (
         <p className={`mt-6 ${card}`}>No report was published for this run.</p>
       )}
+    </>
+  );
+}
+
+export function ReportReader({ id, mode }: { id: string; mode: Mode }) {
+  const { value, error } = useResource(getSnapshot);
+  const [sources, setSources] = useSourcesOn();
+  const hash = useSyncExternalStore(listenHash, readHash);
+  const [route, ...parts] = hash.slice(1).split("/");
+  const tab =
+    route === "calendar" ? route : (tabs.find(([name]) => name === route)?.[0] ?? "overview");
+  const found = value && Object.entries(value.workspace.runs).find(([, run]) => run.folder === id);
+  const catalogue = value?.catalogue.real.find((entry) => entry.id === id);
+  const run = found ? found[1] : null;
+  return (
+    <div className="mx-auto w-full max-w-[96rem]" data-sources={sources ? "on" : "off"}>
+      <Breadcrumb>Report</Breadcrumb>
+      <ReaderHeader
+        run={run}
+        catalogue={catalogue}
+        preview={value?.preview}
+        mode={mode}
+        id={id}
+        sources={sources}
+        setSources={setSources}
+      />
+      <ReaderStatus value={value} error={error} found={Boolean(found)} />
       {value && found && (
         <ReportPage
           snapshot={value}
