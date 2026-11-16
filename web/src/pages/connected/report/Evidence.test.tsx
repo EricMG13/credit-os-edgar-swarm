@@ -1,5 +1,5 @@
 import { cleanup, render, screen, within } from "@testing-library/react";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { hasRecordedGap, ReportEvidence } from "./Evidence";
 import type { OutputEntry, PublishedRun, Snapshot } from "../publishedReport";
 
@@ -458,3 +458,24 @@ it.each(["Deck Q3.pdf", "Deck (CP-1) Q3.pdf"])(
     expect(screen.getByRole("heading", { name: "Source records" })).toBeInTheDocument();
   },
 );
+
+it("shows the service's comparison note in full on the Record tab", () => {
+  vi.stubGlobal("fetch", () => new Promise(() => {}));
+  const note =
+    "changes: not produced \u2014 cpos_live_not_accepted: CP-8 not accepted within bounds";
+  const run = {
+    folder: "case",
+    evidence: emptyEvidence,
+    changes: { note },
+  } as unknown as PublishedRun;
+  const snapshot = {
+    workspace: { runs: {}, outputs: {}, handoffs: {}, models: [] },
+    chips: {},
+  } as unknown as Snapshot;
+  render(
+    <ReportEvidence snapshot={snapshot} run={run} entries={[]} target="record" mode="synthetic" />,
+  );
+  expect(screen.getByText("Comparison note:")).toBeVisible();
+  expect(screen.getByText(note)).toBeVisible();
+  vi.unstubAllGlobals();
+});

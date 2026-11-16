@@ -186,6 +186,12 @@ export function ReportRecord({
       <section className={card}>
         <h3 className={heading}>Run record</h3>
         <p className="font-mono text-sm wrap-anywhere">{run.folder}</p>
+        {run.changes?.note && (
+          <p className="text-sm wrap-anywhere">
+            <span className="text-text-tertiary">Comparison note: </span>
+            {run.changes.note}
+          </p>
+        )}
         <RunTotals
           value={value}
           mode={mode}
