@@ -1307,8 +1307,8 @@ def _is_note_amount(found: re.Match[str], note: str) -> bool:
 
 
 def _stated_cell(cell: str) -> str:
-    """A table cell with each amount of a note after its value blanked unless it restates that
-    value: the cell states `0.3150 (about 0.32x)` but not the 0.39x of `0.3150 (about 0.39x
+    """A table cell with each amount of a note blanked unless it restates the value the note
+    follows: the cell states `0.3150 (about 0.32x)` but not the 0.39x of `0.3150 (about 0.39x
     measured against ...)` (live run, TDG as of 2024-09-30, CP-1D). A parenthesis with no value
     before it is the cell's own figure."""
     masked = _PARENTHESIS.sub(lambda found: " " * len(found[0]), cell)
@@ -1319,7 +1319,7 @@ def _stated_cell(cell: str) -> str:
             return note[0]
 
         def kept(found: re.Match[str]) -> str:
-            stated = not _is_note_amount(found, note[0]) or _restates(found, values[0])
+            stated = not _is_note_amount(found, note[0]) or _restates(found, values[-1])
             return found[0] if stated else " "
 
         return NUMBER.sub(kept, note[0])
@@ -1359,7 +1359,8 @@ def figure_issues(text: str) -> tuple[str, ...]:
     for line in lines:
         for figure in dict.fromkeys(_figures(line.text, passage=True)):
             problem = _fidelity_problem(figure, held)
-            if problem is not None and _fidelity_problem(figure, noted) is None:
+            only_noted = all(h.number != figure.number for h in held)
+            if problem is not None and only_noted and _fidelity_problem(figure, noted) is None:
                 problem = _NOTE_ONLY.format(figure.shown)
             if problem is not None:
                 issues.append(f"Fidelity check, line {line.number}: {problem}")

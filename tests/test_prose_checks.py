@@ -566,6 +566,7 @@ def test_a_padded_decimal_matches_its_trimmed_form() -> None:
         ("Leverage rose about 0.32x.", "0.3150 (about 0.32x)", True),
         ("Leverage rose about 0.3x.", "0.3150 (0.3x rounded)", True),
         ("Costs rose 2.5%.", "0.025 (2.5% increase)", True),
+        ("Leverage rose about 0.32x.", "5.9331 − 5.6181 = 0.3150 (about 0.32x)", True),
         # A year, a period label or a count in a note is no competing value.
         ("The 2029 notes carry the risk.", "4,088 (notes due 2029)", True),
         ("Cover fell over 9 months.", "4,088 (9 months)", True),
@@ -588,6 +589,9 @@ def test_a_figure_held_only_in_a_note_is_told_so() -> None:
         "table value with the calculation that gives it."
     )
     assert fidelity("Leverage rose 0.39x.", cell) == (expected,)
+    # A number the handoff also states as a value is not "only in a note": its sign is named.
+    (issue,) = fidelity("Leverage rose 0.39x.", cell + "\n| C-2 | (0.39x) |")
+    assert "does not match the handoff, which writes it as (0.39x)" in issue
 
 
 FORECAST_BLOCK_DOC = (
