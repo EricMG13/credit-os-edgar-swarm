@@ -31,15 +31,6 @@ export function lookupSentence(line: string) {
   );
 }
 
-/** The changes line without the service's `(not used: <run>: <why>)` note, which names a run id. */
-export function changesSentence(changes: string) {
-  const text = serviceText(changes);
-  const kept = text.replace(/\s*\(not used:[\s\S]*$/, "");
-  return kept === text
-    ? text
-    : `${kept.replace(/\.$/, "")}. An earlier run exists but could not be used for comparison.`;
-}
-
 /** The comparison caveat the service writes in the compared run's own bracket: ` (earlier format, earlier methods)`, or "". */
 export function comparisonCaveat(changes: string) {
   const flags = /^[^(]*\([^;)]*; ([^)]*)\)/.exec(changes)?.[1];

@@ -35,7 +35,7 @@
 ## Controller rulings (made before the first dispatch)
 
 1. An unknown module id is shown as stored. A test pins that every module the run start can schedule has a plain name, so the fallback is unreachable for scheduled modules.
-2. `Name (CP-x)` in handoff text is shown as `Name` on every page (amendment 2026-11-12). A bare code inside a sentence and a `(CP-x)` inside a file name are stored text and stay.
+2. `Name (CP-x)` in handoff text is shown as `Name` on every page (amendment 2026-11-12). Superseded for bare codes by the reader ruling's amendment of 2026-11-16: on findings pages a standalone known module code is replaced by the module's name (`readerText`); a code in a register id, file name or path, and an unknown code, stay; the Evidence page and trace drawer keep `plainModuleNames`.
 3. CP-1 metric tiles take the handoff's own row label. Selection of which tiles a page shows moves from label strings to a `key`.
 4. `actionBias` on the Overview lead stays: it selects the module's own "Final Action Bias" word.
 5. The Overview lead keeps Bottom line, Key findings and Contrary evidence (design spec of 15 November, later than H5). Its Limitations card is replaced by the run-wide list, which includes the lead's items.
@@ -444,15 +444,17 @@ git commit -m "Order the reader passages and show a gap for a missing one"
 
 ### Task 7: Overview carries every module's bottom line and the run's limitations
 
+Refreshed 2026-11-16 against `main` at `bbb5b3dd` (PR 2a merged as #18, module codes as #23). Module-written text drawn on Overview goes through `readerText` (`publishedReport.ts:21`); components that use `richParts` pass `readerText` as its second argument. `moduleCodes.cases.json` is an answer key and is not edited.
+
 **Files:**
 - Modify: `web/src/pages/connected/reportView.ts` (three new exports)
 - Create: `web/src/pages/connected/report/OverviewModules.tsx`
 - Modify: `web/src/pages/connected/ReportLibrary.tsx:117-230` (`Overview`)
-- Modify: `web/src/pages/connected/ReportContent.tsx:531-540` (Overview no longer draws the lead's Limitations)
+- Modify: `web/src/pages/connected/ReportContent.tsx:541-570` (`findingsLayout`: Overview no longer draws the lead's Limitations)
 - Test: `web/src/pages/connected/reportView.test.ts`, `ReportLibrary.design.test.tsx`
 
 **Interfaces:**
-- Consumes: `moduleState`, `blocked`, `passages`, `readParagraph`, `containsReference`, `plainModuleNames`, `evidencePath`, `PublishedSource`, `PASSAGES` (Task 6).
+- Consumes: `moduleState`, `blocked`, `passages`, `readParagraph`, `containsReference`, `readerText`, `evidencePath`, `PublishedSource`, `PASSAGES` (Task 6).
 - Produces:
   - `moduleOrder(run: PublishedRun): string[]`
   - `moduleBottomLines(view: ReportView, run: PublishedRun): { id: string; name: string; state: ModuleState; entry: OutputEntry; text: string | null; line: number | null }[]`
@@ -509,12 +511,12 @@ Expected: FAIL (functions not exported; no such region).
 - [ ] **Step 3: Implement**
 
 - `moduleOrder`: module ids in order of first appearance in `run.record.steps`, then the remaining keys of `run.modules`.
-- `moduleBottomLines`: for each module in `moduleOrder` with a designated entry, except the lead's module: `text` is the body of the first text block of its `Bottom line` passage (`readParagraph`, `**` and backticks removed, as `BottomLine` does), else `output.summary.bottomLine`, else `null`. A text for which `containsReference` is true becomes `null`. The text is passed through `plainModuleNames`. `line` is that block's line.
-- `runLimitations`: for each module in `moduleOrder` (lead included) that is not blocked, each text block of its `Limitations` passage. Normalise for comparison only (lower case, Basis line dropped, punctuation removed, whitespace collapsed; ruling check 7); the first occurrence is kept and shown as written, less its Basis line and any `Name (CP-x)` code (`readParagraph`, then `plainModuleNames`). An item for which `containsReference` is true is shown as a link, "Read this limitation in Evidence", as `FindingParagraph` does.
-- `ModuleBottomLines`: `<section aria-label="Bottom line by module">`; per row the module name as a link to `#modules/<id>`, `StatusBadge set="Module state"`, the text (or `GapPanel` "Not established for this run" when `text` is null), and `PublishedSource href={evidencePath(run.folder, entry, line)}`.
-- `RunLimitations`: `<section aria-label="Limitations">`, a list; per item the text, the module name, and `PublishedSource`. Empty list: one sentence, "No module recorded a limitation for this run."
-- `Overview`: after the lead and the figures, `ModuleBottomLines`, then `RunLimitations`, then "Dates to watch". `findingsLayout` drops `Limitations` from the Overview heading list.
-- Add to the Overview design test: the fixture's CP-1 bottom line holds `Liquidity (CP-2D)`, and the "Bottom line by module" region shows `Liquidity` and no `(CP-`.
+- `moduleBottomLines`: for each module in `moduleOrder` with a designated entry, except the lead's module: `text` is the body of the first text block of its `Bottom line` passage (`readParagraph`, `**` and backticks removed, as `BottomLine` does), else `output.summary.bottomLine`, else `null`. A text for which `containsReference` is true becomes `null`. The text is passed through `readerText`. `line` is that block's line.
+- `runLimitations`: for each module in `moduleOrder` (lead included) that is not blocked, each text block of its `Limitations` passage. Normalise for comparison only (lower case, Basis line dropped, punctuation removed, whitespace collapsed; ruling check 7); the first occurrence is kept and shown as written, less its Basis line and any `Name (CP-x)` code (`readParagraph`, then `readerText`). An item for which `containsReference` is true is shown as a link, "Read this limitation in Evidence", as `FindingParagraph` does.
+- `ModuleBottomLines`: `<section aria-label="Bottom line by module">`; per row the module name as a link to `#modules/<id>`, `StatusBadge set="Module state"`, the text; a link "Read this bottom line in Evidence" when the bottom line holds a reference (`referenced`); `GapPanel` "Not established for this run" only when the module wrote none, and `PublishedSource href={evidencePath(run.folder, entry, line)}`.
+- `RunLimitations`: `<section aria-label="Limitations">`, a list; per item the text, the module name, and `PublishedSource`. Empty list: one sentence that does not assert absence, "No limitation is listed on this page for this run. Each module's page shows what it recorded." A module with no `Limitations` passage and a `Reader summary` contributes its `summary.limitation` (earlier-format runs); summary texts are read through `readParagraph`.
+- `Overview`: after the lead and the figures, `ModuleBottomLines`, then `RunLimitations`, then "Dates to watch". On Overview `findingsLayout` keeps every passage slot except `Limitations` (its `slotLines` filter); the pairing of Key findings with Contrary evidence is unchanged.
+- Add to the Overview design test: the fixture's CP-1 bottom line holds `Liquidity (CP-2D)`, and the "Bottom line by module" region shows `Liquidity` and no `CP-`. One limitation in the fixture holds a bare `CP-2D`; the "Limitations" region shows `Liquidity` there and no `CP-`.
 
 - [ ] **Step 4: Run the affected files**
 
@@ -536,18 +538,22 @@ Same four steps as Task 4, run once for each of the two pull requests. Run `npm 
 
 ## PR 3: run pages (branch from `main` after PR 2 merges)
 
-Not refreshed. `main` has since rebuilt the Start flow in four steps, and "Approve summary" no longer appears in `StartRun.tsx` (it remains only in a test), so Task 10 is probably obsolete. Task 9 still applies: `react_frontend/run_activity.py` still lists only running and queued runs. Refresh this section before it starts.
+Refreshed 2026-11-16 against `main` at `4be1e30d` (Start's PR D merged as #31 and #30). PR 3 is Task 9 only.
+
+- Task 9 still applies: `react_frontend/run_activity.py:130-161` lists only running and queued runs.
+- Task 10 is dropped. The Start flow no longer has a Confirm step: `FORM_STEPS` (`StartRun.tsx:52-56`) is Documents, Purpose and More context, whose buttons are "Continue to purpose", "Continue to context" and "Review run", and `ConnectedApp.test.tsx:137-140` already asserts that no "Approve summary" button exists. `docs/react-workflow.md:115` still says "Approve summary"; that file belongs to the Start work and is not changed here.
+- Keep to `react_frontend/run_activity.py`, the run types in `api.ts`, `RunActivity.tsx` and their tests. `ReportLibrary.tsx`, `reportView.ts`, `publishedReport.ts`, `report/**` and `web/scripts/connected-proof.mjs` are another session's.
 
 ### Task 9: Ended runs on Run activity
 
 **Files:**
 - Modify: `react_frontend/run_activity.py:130-161` (`listing`)
-- Modify: `web/src/pages/connected/api.ts:115-124`
+- Modify: `web/src/pages/connected/api.ts:125-134` (`LiveRun`, `Activity`)
 - Modify: `web/src/pages/connected/RunActivity.tsx`
 - Test: `tests/test_react_frontend.py`, `web/src/pages/connected/ConnectedApp.test.tsx`
 
 **Interfaces:**
-- Produces: `GET /connected/activity` gains `"ended": [{id, issuer_name, pathway, status, reason, ended_at, submitted_by}]`.
+- Produces: `GET /connected/activity` gains `"ended": [{id, issuer_name, pathway, status, reason, ended_at, submitted_by}]` and `"ended_total": <count of all such runs>` (added after the whole-branch review: the list is cut to 20, so the tally needs the real count).
 - Produces: `type EndedRun = Pick<Run, "id" | "issuer_name" | "pathway" | "reason"> & { status: "failed" | "capped" | "rejected" | "interrupted"; ended_at: string; submitted_by: string }`; `Activity.ended?: EndedRun[]`.
 
 - [ ] **Step 1: Write the failing tests**
@@ -561,7 +567,7 @@ def test_activity_list_shows_ended_runs_without_spend_or_file_names(hosted: _Ser
     #   e-finished finished  ended_at 2026-10-31T12:20:00Z
     #   a-running  running
     listing = json.loads(raw)
-    assert set(listing) == {"updated", "held", "runs", "ended"}
+    assert set(listing) == {"updated", "held", "runs", "ended", "ended_total"}
     assert [run["id"] for run in listing["ended"]] == ["d-failed", "c-capped"]
     assert set(listing["ended"][0]) == {
         "id", "issuer_name", "pathway", "status", "reason", "ended_at", "submitted_by",
@@ -573,6 +579,7 @@ def test_activity_list_shows_ended_runs_without_spend_or_file_names(hosted: _Ser
 def test_activity_list_keeps_the_twenty_latest_ended_runs(hosted: _Server) -> None:
     # 25 failed records, ended_at 12:00 to 12:24.
     assert len(listing["ended"]) == 20
+    assert listing["ended_total"] == 25
     assert listing["ended"][0]["ended_at"] == "2026-10-31T12:24:00Z"
 ```
 
@@ -609,7 +616,7 @@ Expected: FAIL (`"ended"` missing; no such region).
 - [ ] **Step 3: Implement**
 
 - `listing`: `ended` is the records whose status is `failed`, `capped`, `rejected` or `interrupted`, newest first by `ended_at or claimed_at` then id, cut to `_ENDED_SHOWN = 20`, with exactly the seven fields. The docstring says what is and is not sent.
-- `RunActivity`: a third `Group`, "Ended without a report": a table of Issuer (link to `/run/<id>`), Pathway, State (`StatusBadge set="Run states"`), Ended (`stamp`), Reason. The tally gains `Ended`. The "No run in progress" empty state shows only when running, waiting and ended are all empty.
+- `RunActivity`: a third `Group`, "Ended without a report": a table of Issuer (link to `/run/<id>`), Pathway, State (`StatusBadge set="Run states"`), Ended (`stamp`), Reason. The tally gains `Ended`, showing `ended_total`; when it exceeds the rows drawn, the group says "Showing the latest 20 of <total>." A reason is sent without the service's root directory (`_shown`). The "No run in progress" empty state shows only when running, waiting and ended are all empty.
 
 - [ ] **Step 4: Run both test files and the Python gate**
 
@@ -624,44 +631,13 @@ git add react_frontend/run_activity.py tests/test_react_frontend.py web/src/page
 git commit -m "List runs that ended without a report on Run activity"
 ```
 
-### Task 10: The Confirm step's button says what it does
+### Task 10: dropped
 
-**Files:**
-- Modify: `web/src/pages/connected/StartRun.tsx:43`
-- Modify: `web/src/pages/connected/ConnectedApp.test.tsx:85`, `web/scripts/connected-proof.mjs:201`, `docs/react-workflow.md:114-116`
-
-- [ ] **Step 1: Write the failing test**
-
-```tsx
-// ConnectedApp.test.tsx: on the Confirm step
-expect(screen.getByRole("button", { name: "Continue to more context" })).toBeVisible();
-expect(screen.queryByRole("button", { name: "Approve summary" })).toBeNull();
-```
-
-- [ ] **Step 2: Run it and see it fail**
-
-Run: `npx vitest run --coverage.enabled=false src/pages/connected/ConnectedApp.test.tsx`
-Expected: FAIL (button "Continue to more context" not found).
-
-- [ ] **Step 3: Implement**
-
-`FORM_STEPS.confirm.next` becomes `"Continue to more context"`. Update the helper at `ConnectedApp.test.tsx:85`, the proof script's click, and the walkthrough sentence in `docs/react-workflow.md`.
-
-- [ ] **Step 4: Run the affected file**
-
-Run: `npx vitest run --coverage.enabled=false src/pages/connected/ConnectedApp.test.tsx`
-Expected: PASS.
-
-- [ ] **Step 5: Commit**
-
-```bash
-git add web/src/pages/connected web/scripts/connected-proof.mjs docs/react-workflow.md
-git commit -m "Name the Confirm step's button for what it does"
-```
+See the note at the head of this section.
 
 ### Task 11 (PR 3 close): gates, reviews, record
 
-Same four steps as Task 4, plus the Python gates. `npm run proof:connected` must pass with the renamed button. Fidelity check scope: Run activity's ended group against the saved run records.
+Same four steps as Task 4, plus the Python gates. Fidelity check scope: Run activity's ended group against the saved run records.
 
 ## Not verified
 

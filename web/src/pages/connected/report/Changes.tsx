@@ -1,3 +1,4 @@
+import { ArrowRight } from "@untitledui/icons";
 import { useState } from "react";
 import { ClockRewind } from "@untitledui/icons";
 import { EmptyState } from "@/components/application/empty-state/empty-state";
@@ -7,6 +8,7 @@ import { Badge } from "@/components/base/badges/badges";
 import { ColumnsChart } from "@/components/chart/ColumnsChart";
 import { ChangeCard } from "@/pages/library/parts/ChangeCard";
 import type { Cell } from "@/pages/library/slice";
+import { changesSentence } from "../api";
 import { card, heading } from "../layout";
 import {
   comparisonRows,
@@ -20,9 +22,17 @@ import {
   type Snapshot,
 } from "../publishedReport";
 import { PublishedTable, ReportFindings } from "../ReportContent";
+import { tone } from "../signal";
 import { amount, distinct, ticks } from "../visuals/visualData";
 import { PublishedSource } from "./PublishedTrace";
 import { comparisonTrace, maturityTraces } from "./comparisonTrace";
+
+/** The owner's tone for a comparable measure's difference as sent; none where the table has no direction. */
+function cardTone(measure: { key: string; difference?: number | string | null } | undefined) {
+  if (measure?.difference == null) return undefined;
+  const result = tone(measure.key, String(measure.difference));
+  return result === "none" ? undefined : result;
+}
 
 const cell = (value: string): Cell =>
   value === "Not stated" ? null : { kind: "value", at: null, text: value };
@@ -67,6 +77,21 @@ export function ComparisonTable({
   );
 }
 
+/** The fixed sentence for a run with no comparison pack; the service's own reason is drawn only with the evidence. */
+function noComparisonSentence(raw: string | null | undefined) {
+  const text = (raw ?? "").replace(/^\s*changes:\s*/i, "").trim();
+  const form = text.toLowerCase();
+  if (form.startsWith("not produced"))
+    return "The comparison was planned but not produced for this run.";
+  if (form.startsWith("not compared")) return "This run was not compared with an earlier run.";
+  if (form.startsWith("first run of this pathway")) {
+    const sentence = changesSentence(text);
+    if (!containsReference(sentence))
+      return sentence.replace(/^./, (c) => c.toUpperCase()).replace(/\.?$/, ".");
+  }
+  return "No comparison was recorded for this run.";
+}
+
 export function Changes({
   snapshot,
   run,
@@ -82,6 +107,7 @@ export function Changes({
   const entry = change?.problem ? undefined : entries[entryIndex];
   const trace = comparisonTrace(run.folder, change?.problem ? [] : entries);
   const rows = change?.pack && !change.problem ? comparisonRows(change, "reader") : [];
+  const note = noComparisonSentence(change?.note);
   const [presentation, setPresentation] = useState<"cards" | "table">("cards");
   if (change?.first_run === true && !change.pack && !change.problem && !change.note)
     return (
@@ -115,11 +141,7 @@ export function Changes({
               : change.problem}
           </p>
         ) : !change?.pack ? (
-          <p>
-            {change?.note && !containsReference(change.note)
-              ? change.note
-              : "No comparison was recorded for this run."}
-          </p>
+          <p>{note}</p>
         ) : null}
         {rows.length > 0 && (
           <>
@@ -146,6 +168,11 @@ export function Changes({
                     index,
                   ) => {
                     const href = trace.measure(label);
+                    const kind = reason.endsWith("Same-period analysis change")
+                      ? "Same-period analysis change"
+                      : delta && delta !== "—"
+                        ? "Comparable"
+                        : "Not assessable";
                     return (
                       <ChangeCard
                         key={index}
@@ -158,15 +185,15 @@ export function Changes({
                         }
                         change={{
                           measure: label,
-                          kind: reason.endsWith("Same-period analysis change")
-                            ? "Same-period analysis change"
-                            : delta && delta !== "—"
-                              ? "Comparable"
-                              : "Not assessable",
+                          kind,
                           current: cell(after),
                           from: cell(before),
                           change: delta && delta !== "—" ? delta : null,
                           direction: "none",
+                          tone:
+                            kind === "Comparable"
+                              ? cardTone(change?.pack?.measures?.[index])
+                              : undefined,
                           cause: containsReference(reason) ? "See comparison evidence." : reason,
                           effect: containsReference(analysis) ? "" : analysis,
                           trace: null,
@@ -184,9 +211,14 @@ export function Changes({
           </>
         )}
         {change?.pack && !change.problem && (
-          <a className="text-action underline" href={trace.handoff ?? "#evidence/trace/CP-8"}>
+          <Button
+            href={trace.handoff ?? "#evidence/trace/CP-8"}
+            color="link-gray"
+            size="sm"
+            iconTrailing={ArrowRight}
+          >
             Review comparison evidence
-          </a>
+          </Button>
         )}
       </section>
       {!change?.problem && change?.pack && (

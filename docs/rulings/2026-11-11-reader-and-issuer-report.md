@@ -350,7 +350,7 @@ Amendment 2026-11-11: a run whose methods have since changed is listed and marke
 
 Amendment 2026-11-12 (owner): no module code is shown on screen, in the issuer library (the Modules navigator, Report history, Evidence, module pages, Overview, the inspector and its Basis items) and on the run start page. A reader sees a module's plain name, never its code. This replaces "the code second" in decision 5 and the reading of decision 7 under which new-format text kept its codes on screen. The Basis line form in the stored handoff (H3) and check 2 are unchanged: the handoff still names an upstream module as `Name (code)`, and the page shows the written name. It is display only: stored handoffs, routes, `href`s, download names and saved answer keys do not change, and stored source file names and file paths are shown exactly as stored on every page, even when they hold a `CP-` token. In the standalone HTML file rendered from `src/deploy_vii/assets` the navigator, headings, coverage table, limitation titles and inspector field name modules too; files already delivered are not rewritten, and codes inside that file's body content are as the data holds them.
 
-Amendment 2026-11-16 (owner): on findings pages a standalone module code in module-written text is replaced by the module's name; a code inside a register id, a file name or a path stays as stored; the Evidence page and the trace drawer draw text as they did. This supersedes the reading that a bare code is drawn as stored.
+Amendment 2026-11-16 (owner): on findings pages a standalone module code in module-written text is replaced by the module's name; a code inside a register id, a file name or a path stays as stored; the Evidence page and the trace drawer draw text as they did. This supersedes the reading that a bare code is drawn as stored. A " (CP-x)" directly after that module's own name is dropped; after any other words it becomes " (<module name>)"; a code the page does not know stays as stored (owner, 2026-11-16). When a run has no comparison, the Changes page states which of three cases applies (first run, planned but not produced, not compared) in a fixed sentence, and the service's reason is drawn only with the evidence.
 
 Amendment 2026-11-13 (owner: "all three. remove all the code no longer required if resolved by the prompt."; controller
 ruling E7). Check 6 of H6 becomes: an ID is a cell value containing at least one letter and one digit in a table
@@ -369,3 +369,39 @@ Owner: "remove vmo2 checker the cause was resolved". The reading of one real run
 against the September VMO2 reference (decision 11 and the "Not machine-gated" paragraph) is no
 longer required. The VMO2 outputs stay the voice reference; fidelity checks and the mechanical
 prose checks are unchanged. `AGENTS.md` carries the rule.
+
+## Amendment, 2026-11-16: year-on-year difference and better/worse marks
+
+Owner, 2026-11-16, relayed by the PR-manager session (the owner's word was "go", accepting that
+session's recommendations on PR #37; the wording below is the reports-formatting session's).
+Exceptions to "delivery adds no analysis":
+
+(a) Delivery may draw the difference between two module-written figures of the same metric one
+year apart, in exact decimal, only when both carry the same unit and the same definition, with the
+prior figure's period shown beside it. The change is this year minus last year.
+
+(b) Delivery may mark that difference, and a comparable Changes card, as better, worse or
+unchanged from the fixed table in `web/src/pages/connected/signal.ts`: lower is better for
+`leverage`, `net_leverage`, `netDebt`, `gross_debt`, `net_debt`; higher is better for `coverage`,
+`interestCover`, `revenue`, `adjusted_ebitda`, `undrawn`, `liquidity`, `freeCashFlow`,
+`free_cash_flow`. A key not in the table is neutral; `cash` carries no judgement (owner, 2026-11-16:
+a rise can be a facility drawn; revenue and adjusted EBITDA are judged instead). Each mark carries
+its word and its own shape, never colour alone.
+
+(c) No other figure is computed or judged by delivery. Downside, rate sensitivity and Forecast
+stay uncoloured.
+
+(d) Owner, 2026-11-16, to the reports-formatting session ("Yes, add note"): delivery may compare
+each issuer rating the analyst entered at run start with the issuer-level rows of the Ratings &
+triggers module's rating register (`T2R.1`), and when none of those rows carries the entered
+rating, draw one link to that module saying it shows a different rating for that agency. It draws
+no rating or other text from the register, never replaces the entered rating and draws nothing
+when the module did not run or its register cannot be read.
+
+The owner's other words for this section, same date and session: "use different measure revenue or
+adj ebitda" (cash no longer judged; revenue and adjusted EBITDA judged) and "drown undrawn", read
+as "drop undrawn" (no Undrawn facilities headline card).
+
+Also accepted: the company band's ratings are the analyst's run-start entries, labelled
+"Entered at run start". Parked for the owner: where the Ratings & triggers module ran, show its
+register's rating with a trace and keep the entry as the fallback.

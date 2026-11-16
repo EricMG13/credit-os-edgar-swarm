@@ -17,9 +17,20 @@ export function plainModuleNames(text: string) {
 // A standalone run of module codes ("CP-1" or "CP-1/CP-2"): nothing path-like or word-like touches it.
 const STANDALONE_CODES =
   /(?<![\w\-\\/.])CP-[A-Z0-9]+(?:\/CP-[A-Z0-9]+)*(?![\w\-\\/])(?!\.[A-Za-z])/g;
-/** Findings-page text: plainModuleNames, then each standalone known module code becomes the module's name. */
+// A bracketed code after text: " (CP-x)".
+const BRACKETED_CODE = / \((CP-[A-Za-z0-9]+)\)/g;
+/**
+ * Findings-page text: a " (CP-x)" right after that module's own name is dropped, after any other
+ * words it becomes " (<module name>)" (an unknown code stays), then each standalone known code
+ * becomes the module's name. A code inside a stored file name stays.
+ */
 export function readerText(text: string) {
-  return plainModuleNames(text).replace(STANDALONE_CODES, (run, at: number, whole: string) => {
+  const bracketed = text.replace(BRACKETED_CODE, (match, code: string, at: number) => {
+    const name = moduleName(code);
+    if (name === code || FILE_AHEAD.test(text.slice(at + match.length))) return match;
+    return text.slice(0, at).toLowerCase().endsWith(name.toLowerCase()) ? "" : ` (${name})`;
+  });
+  return bracketed.replace(STANDALONE_CODES, (run, at: number, whole: string) => {
     const kept = whole.slice(0, at).endsWith(" (") && whole[at + run.length] === ")";
     if (kept && FILE_AHEAD.test(whole.slice(at + run.length + 1))) return run;
     return run.replace(/CP-[A-Z0-9]+/g, moduleName);
@@ -186,7 +197,21 @@ export type PublishedRun = {
     };
   };
 };
-type Metric = { value?: number | string | null; unit?: string | null; period?: string | null };
+type Metric = {
+  value?: number | string | null;
+  unit?: string | null;
+  period?: string | null;
+  /** The same metric one year earlier, and `current - prior` as the back end computed it. */
+  prior?: { value: string; period: string };
+  change?: string;
+};
+export type CatalogueRating = {
+  label: string;
+  agency: string;
+  scope: "issuer" | "facility";
+  outlook: string;
+  date: string;
+};
 export type CatalogueRun = {
   id: string;
   name: string;
@@ -196,6 +221,8 @@ export type CatalogueRun = {
   sector: string;
   period: string;
   metrics: Record<string, Metric>;
+  /** The ratings the analyst entered at run start; absent means none. */
+  ratings?: CatalogueRating[];
 };
 export type PlannedIssuer = {
   issuer_id: string;
@@ -280,7 +307,26 @@ export function runTiming(run: Pick<PublishedRun, "asOf" | "period">) {
   return [date, run.period !== run.asOf ? run.period : ""].filter(Boolean).join(" · ");
 }
 
+const moneyUnit = /^(USD|US\$|[A-Z]{3})(?: millions|m)$/;
+const symbols: Record<string, string> = { USD: "$", US$: "$", GBP: "£", EUR: "€" };
+const moneySymbol = (code: string) => symbols[code] ?? `${code} `;
+
+export function unitLabel(unit: string) {
+  const code = moneyUnit.exec(unit)?.[1];
+  return code ? `${moneySymbol(code)}m` : unit;
+}
+
 export function withUnit(value: string | number, unit?: string | null) {
+  const code = unit ? moneyUnit.exec(unit)?.[1] : undefined;
+  if (code) {
+    const text = String(value);
+    if (!/^-?(\d+|\d{1,3}(,\d{3})+)(\.\d+)?$/.test(text)) return text;
+    const [plain = "", fraction] = text.replace(/^-/, "").split(".");
+    const integer = plain.replace(/,/g, "");
+    const grouped = integer.replace(/\B(?=(\d{3})+$)/g, ",");
+    const sign = text.startsWith("-") ? "-" : "";
+    return `${sign}${moneySymbol(code)}${grouped}${fraction === undefined ? "" : `.${fraction}`}m`;
+  }
   return unit ? `${String(value)}${/^[x%]$/.test(unit) ? "" : " "}${unit}` : String(value);
 }
 

@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { getContext, moduleName, PATHWAYS } from "./api";
+import { changesSentence, getContext, moduleName, PATHWAYS } from "./api";
 
 afterEach(() => vi.unstubAllGlobals());
 
@@ -72,4 +72,31 @@ describe("connected module names", () => {
     for (const { modules } of Object.values(PATHWAYS))
       for (const id of modules) expect(moduleName(id)).not.toMatch(/^CP-/);
   });
+});
+
+it("drops an unused earlier run from the changes line and says so", () => {
+  expect(changesSentence("first run (not used: 20261116-083145-01: different pathway)")).toBe(
+    "first run. An earlier run exists but could not be used for comparison.",
+  );
+  expect(changesSentence("first run")).toBe("first run");
+});
+
+it("drops the whole skip note when the reason quotes an issuer name with brackets", () => {
+  expect(
+    changesSentence(
+      "first run of this pathway (not used: 20261116-083145-01: its issuer name is 'Northbridge (UK) Ltd', not 'Northbridge Ltd')",
+    ),
+  ).toBe("first run of this pathway. An earlier run exists but could not be used for comparison.");
+});
+it("keeps one full stop when the kept text already ends with one", () => {
+  expect(
+    changesSentence(
+      "first run. (not used: 20261116-083145-01: it was launched with an explicit module subset)",
+    ),
+  ).toBe("first run. An earlier run exists but could not be used for comparison.");
+});
+it("drops the launcher's changes label and names the modules in plain words", () => {
+  expect(
+    changesSentence("changes: not produced \u2014 CP-8 was planned and CP-2A was blocked"),
+  ).toBe("not produced \u2014 Changes since the last run was planned and Downside was blocked");
 });

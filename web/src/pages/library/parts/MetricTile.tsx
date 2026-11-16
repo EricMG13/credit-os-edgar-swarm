@@ -1,4 +1,5 @@
 import type { Metric } from "../slice";
+import { YearChange } from "../../connected/report/YearChange";
 import { CellValue } from "./CellValue";
 import { TRACE_HOST, TraceControl } from "./TraceControl";
 
@@ -17,6 +18,14 @@ export function MetricTile({ metric }: { metric: Metric }) {
       <div className="min-h-9.5">
         <CellValue cell={metric.value} figureClass={FIGURE} />
       </div>
+      {metric.yearChange && (
+        <YearChange
+          metricKey={metric.yearChange.key}
+          change={metric.yearChange.change}
+          unit={metric.yearChange.unit}
+          prior={metric.yearChange.prior}
+        />
+      )}
       <span className="text-sm text-text-tertiary">{metric.note}</span>
       <span className="absolute top-3.5 right-3.5">
         <TraceControl trace={metric.trace} label="Show sources for this figure" />

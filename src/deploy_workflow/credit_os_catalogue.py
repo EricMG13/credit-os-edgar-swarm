@@ -13,11 +13,12 @@ import os
 import re
 from collections.abc import Mapping
 from datetime import UTC, datetime
+from decimal import Decimal, localcontext
 from pathlib import Path
 from typing import Any
 from urllib.parse import quote
 
-from deploy_workflow.context import CONTEXT_SOURCE_ID, ContextRefused, load_context
+from deploy_workflow.context import CONTEXT_SOURCE_ID, ContextRefused, RunContext, load_context
 from deploy_workflow.library_index import (
     Library,
     Refused,
@@ -30,7 +31,10 @@ from deploy_workflow.library_index import (
 SEGMENT_SAFE = "$&+:=@"  # What url.PathEscape keeps in one path segment.
 LISTED = {".md", ".txt", ".pdf", ".html", ".htm", ".json", ".csv", ".xlsx"}
 RUN_FILE_LIMIT = 5000
+BASIS = "Basis and limitation"
 _NUMBER = re.compile(r"-?\d+(?:\.\d+)?")
+_MONEY = re.compile(r"-?(?:\d+|\d{1,3}(?:,\d{3})+)(?:\.\d+)?")  # money may group thousands
+_MONEY_KEYS = frozenset({"revenue", "adjusted_ebitda"})  # the only metrics read as money
 _FISCAL_YEAR = re.compile(r"FY(\d{4})")
 _DATED_YEAR = re.compile(r"FY(\d{4}) / (\d{4}-\d{2}-\d{2})")
 _ISO_DATE = re.compile(r"(\d{4})-(\d{2})-(\d{2})")
@@ -45,6 +49,8 @@ _METRICS = (
     ("interest cover", "coverage", "EBITDA / cash interest"),
     ("liquidity", "cash", "Cash"),
     ("liquidity", "undrawn", "Undrawn committed facilities"),
+    ("revenue and EBITDA", "revenue", "Revenue"),
+    ("revenue and EBITDA", "adjusted_ebitda", "Adjusted EBITDA"),
 )
 
 
@@ -86,13 +92,11 @@ def period_order(cell: str) -> tuple[int, ...] | None:
 CHART_PREFIX = "Chart data: "
 
 
-def chart_row(
+def chart_rows(
     lines: list[str], chart: str, prefix: str = CHART_PREFIX
-) -> tuple[dict[str, str], int] | None:
-    """The latest-period row of ``### <prefix><chart>`` (``Chart data: <chart>``) as {column:
-    cell}, with its 1-based line. The latest is chosen by the Period value, whatever the row
-    order. None when the table is absent; ValueError when its periods cannot be ordered (never a
-    guess)."""
+) -> list[tuple[tuple[int, ...], dict[str, str], int]] | None:
+    """Every row of ``### <prefix><chart>`` as (period key, {column: cell}, 1-based line). None
+    when the table is absent; ValueError when its periods cannot be ordered (never a guess)."""
     try:
         start = lines.index(f"### {prefix}{chart}")
     except ValueError:
@@ -116,28 +120,110 @@ def chart_row(
     keys = [key for key, _, _ in ranked]
     if len({key[0] for key in keys}) != 1 or len(set(keys)) != len(keys):
         raise ValueError("the periods mix forms or repeat")
+    return ranked
+
+
+def chart_row(
+    lines: list[str], chart: str, prefix: str = CHART_PREFIX
+) -> tuple[dict[str, str], int] | None:
+    """The latest-period row of ``### <prefix><chart>`` (``Chart data: <chart>``) as {column:
+    cell}, with its 1-based line. The latest is chosen by the Period value, whatever the row
+    order. None when the table is absent; ValueError when its periods cannot be ordered (never a
+    guess)."""
+    ranked = chart_rows(lines, chart, prefix)
+    if ranked is None:
+        return None
     _, row, number = max(ranked, key=lambda item: item[0])
     return row, number
 
 
-def context_values(folder: Path, issues: list[str]) -> dict[str, str]:
-    """Ticker, sector, country, currency and period of the context CP-OS pinned for the run.
+_YEAR = re.compile(r"(?<!\d)\d{4}(?!\d)")
+
+
+_LOCATOR = re.compile(
+    r"\b(?:pages?|pp?|paras?|paragraphs?|sections?|notes?|lines?|slides?|exhibits?)\b\.?\s*"
+    r"(?:\d+(?:[.,]\d+)*(?:\s*(?:[-\u2013/&,]|and(?=\s*\d)|to(?=\s*\d))\s*\d+(?:[.,]\d+)*)*)",
+    re.IGNORECASE,
+)
+
+
+# A year after an instrument word names the instrument (`notes 2027`), not a place in a document:
+# it is kept (as letters, so the digit and locator removal leave it) and so tells two debts apart.
+_INSTRUMENT_YEAR = re.compile(
+    r"\b(notes?|bonds?|loans?|facility|facilities|due|maturing|maturity)\s+((?:19|20)\d{2})\b"
+)
+_YEAR_LETTERS = str.maketrans("0123456789", "abcdefghij")
+
+
+def definition_key(text: str | None) -> str | None:
+    """A definition text compared: no page or locator references, no digits, no punctuation, lower
+    case, one space between words. None stays None (no text)."""
+    if text is None:
+        return None
+    kept = _INSTRUMENT_YEAR.sub(
+        lambda m: f"{m[1]} {m[2].translate(_YEAR_LETTERS)}", text.casefold()
+    )
+    bare = _LOCATOR.sub(" ", kept)
+    return " ".join(re.sub(r"[^\w\s]|_|\d", " ", bare).split())
+
+
+def prior_metric(
+    rows: list[dict[str, str]], row: dict[str, str], column: str, number: re.Pattern[str] = _NUMBER
+) -> tuple[dict[str, str], str] | None:
+    """The same column a year earlier and the exact change, or None.
+
+    The prior row is the one row whose Period is ``row``'s with every 4-digit year lowered by one;
+    its cell must be a quotable number, its Reporting unit the current row's and its Basis and
+    limitation the same definition under ``definition_key`` (the cross-run rule)."""
+    label = row.get("Period", "")
+    years = _YEAR.findall(label)
+    if not years or any(int(year) < 1 for year in years):
+        return None
+    earlier = _YEAR.sub(lambda year: f"{int(year[0]) - 1:04d}", label)
+    found = [other for other in rows if other.get("Period") == earlier]
+    if len(found) != 1:
+        return None
+    prior_value = found[0].get(column, "")
+    unit = row.get("Reporting unit", "")
+    if not (number.fullmatch(prior_value) and found[0].get("Reporting unit", "") == unit):
+        return None
+    if definition_key(row.get(BASIS)) != definition_key(found[0].get(BASIS)):
+        return None
+    return {"value": prior_value, "period": earlier}, _exact_change(row[column], prior_value)
+
+
+def _exact_change(current: str, prior: str) -> str:
+    """``current - prior`` with every digit kept; a zero change carries no sign."""
+    with localcontext() as context:
+        context.prec = len(current) + len(prior) + 2
+        change = Decimal(current.replace(",", "")) - Decimal(prior.replace(",", ""))
+    return format(abs(change) if change == 0 else change, "f")
+
+
+def pinned_context(folder: Path, issues: list[str]) -> RunContext | None:
+    """The context CP-OS pinned for the run, or None when there is none or it is not used.
 
     ``workflow.json`` names the context by hash (``sources["context"]``); its bytes are under
-    ``inputs/<sha256>``. Bytes that fail the hash or the context rules leave every field empty
-    and are recorded as an issue.
+    ``inputs/<sha256>``. Bytes that fail the hash or the context rules give None and are recorded
+    as an issue.
     """
     try:
         workflow = json_object(read_inside(folder, "workflow.json"), "workflow.json")
         sources = workflow.get("sources")
         pin = sources.get(CONTEXT_SOURCE_ID) if isinstance(sources, dict) else None
         if not isinstance(pin, dict):
-            return {}  # This run was launched without a context form; its fields stay empty.
+            return None  # This run was launched without a context form; its fields stay empty.
         digest = pin.get("sha256")
         raw = read_pinned(folder, f"inputs/{digest}", digest)
-        context = load_context(raw)
+        return load_context(raw)
     except (Refused, ContextRefused) as error:
         issues.append(f"{folder.name}: context not used ({error})")
+        return None
+
+
+def context_values(context: RunContext | None) -> dict[str, str]:
+    """Ticker, sector, country, currency and period of the run's context; empty without one."""
+    if context is None:
         return {}
     found = {
         "ticker": context.identity.ticker,
@@ -147,6 +233,23 @@ def context_values(folder: Path, issues: list[str]) -> dict[str, str]:
         "current_period": context.run.current_period,
     }
     return {key: value.strip() for key, value in found.items() if value.strip()}
+
+
+def entered_ratings(context: RunContext | None) -> list[dict[str, str]]:
+    """The ratings the analyst entered, in the shape the library page reads (`label` is the rating
+    symbol, `date` its as-of date); empty without a context."""
+    if context is None:
+        return []
+    return [
+        {
+            "label": r.rating,
+            "agency": r.agency,
+            "scope": r.scope,
+            "outlook": r.outlook,
+            "date": r.as_of,
+        }
+        for r in context.ratings
+    ]
 
 
 def period_fields(context: dict[str, str]) -> tuple[str, str]:
@@ -194,22 +297,24 @@ def twin_of(column: str) -> str:
 
 def handoff_metrics(
     name: str, pin: dict[str, str], text: str, sources: dict[str, Any], issues: list[str]
-) -> dict[str, dict[str, str]]:
-    """Metrics quoted from the CP-1 chart tables' latest rows; a cell not supplied gives no key."""
+) -> dict[str, dict[str, Any]]:
+    """Metrics quoted from the CP-1 chart tables' latest rows; a cell not supplied gives no key.
+    A metric whose row a year earlier states the same column in the same unit also carries that
+    ``prior`` and the exact ``change``."""
     lines = text.replace("\r\n", "\n").split("\n")
-    metrics: dict[str, dict[str, str]] = {}
+    metrics: dict[str, dict[str, Any]] = {}
     unordered: set[str] = set()
     for chart, key, column in _METRICS:
         try:
-            found = chart_row(lines, chart)
+            ranked = chart_rows(lines, chart)
         except ValueError as error:
             if chart not in unordered:
                 unordered.add(chart)
                 issues.append(f"{name}: CP-1 {chart} table has no metric ({error})")
             continue
-        if found is None:
+        if ranked is None:
             continue
-        row, number = found
+        _, row, number = max(ranked, key=lambda item: item[0])
         held = column if column in row or twin_of(column) not in row else twin_of(column)
         value = row.get(held, "")
         if value.startswith(_NOT_SUPPLIED):
@@ -217,7 +322,8 @@ def handoff_metrics(
         unit, basis, period = (
             row.get(c, "") for c in ("Reporting unit", "Basis and limitation", "Period")
         )
-        if not (_NUMBER.fullmatch(value) and unit and basis and period):
+        pattern = _MONEY if key in _MONEY_KEYS else _NUMBER
+        if not (pattern.fullmatch(value) and unit and basis and period):
             issues.append(f"{name}: CP-1 {chart} {column!r} is not a quotable metric; left out")
             continue
         source = f"{name}.cp1-{chart.replace(' ', '-')}"
@@ -236,6 +342,9 @@ def handoff_metrics(
             "source": source,
             "provenance": "cited",
         }
+        compared = prior_metric([r for _, r, _ in ranked], row, held, pattern)
+        if compared is not None:
+            metrics[key]["prior"], metrics[key]["change"] = compared
         if held != column:  # an adjusted name is stated, not implied
             metrics[key]["label"] = held
     return metrics
@@ -339,7 +448,8 @@ def run_record(
     verified: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
     name = run["id"]
-    context = context_values(workspace / "runs" / name, issues)
+    pinned = pinned_context(workspace / "runs" / name, issues)
+    context = context_values(pinned)
     period, period_kind = period_fields(context)
     summary, gaps = summary_fields(run)
     title = pathway_title(run["pathway"])
@@ -363,7 +473,7 @@ def run_record(
         "files": run_files(workspace / "runs" / name, name, issues),
         "completion": None,
         "checkpoints": None,
-        "ratings": [],
+        "ratings": entered_ratings(pinned),
         "classification": "",
         "classification_source": "",
         "private_side": False,

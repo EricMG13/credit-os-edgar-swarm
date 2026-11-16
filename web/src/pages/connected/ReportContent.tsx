@@ -1,3 +1,5 @@
+import { Button } from "@/components/base/buttons/button";
+import { ArrowRight } from "@untitledui/icons";
 import { GapPanel } from "@/components/gap/GapPanel";
 import { sourceCitationNote, sourceFileLinks } from "./sourceFiles";
 import { useState, type ReactNode } from "react";
@@ -299,9 +301,9 @@ export function PublishedTable({
                   >
                     {!evidence && containsReference(cell) ? (
                       sourceHref ? (
-                        <a href={sourceHref} className="text-action underline">
+                        <Button href={sourceHref} color="link-gray" size="sm">
                           In Evidence
-                        </a>
+                        </Button>
                       ) : (
                         "Source reference unavailable"
                       )
@@ -442,9 +444,9 @@ export function FindingParagraph({
     <div className={`${TRACE_HOST} flex items-start justify-start gap-3`}>
       <p className="max-w-[55ch] text-body wrap-anywhere text-text-secondary">
         {containsReference(body) ? (
-          <a href={href} className="text-action underline">
+          <Button href={href} color="link-gray" size="sm" iconTrailing={ArrowRight}>
             Read this passage in Evidence
-          </a>
+          </Button>
         ) : (
           richParts(body, readerText)
         )}
@@ -473,18 +475,24 @@ function RecordsCard({
       <ul className="grid gap-1">
         {records.map((section) => (
           <li key={section.line}>
-            <a
+            <Button
               href={evidencePath(run.folder, entry, section.line)}
-              className="text-action underline"
+              color="link-gray"
+              size="sm"
             >
               {drawingTitle(section.heading)}
-            </a>
+            </Button>
           </li>
         ))}
       </ul>
-      <a href={evidencePath(run.folder, entry)} className="text-action underline">
+      <Button
+        href={evidencePath(run.folder, entry)}
+        color="link-gray"
+        size="sm"
+        iconTrailing={ArrowRight}
+      >
         Open this module in Evidence
-      </a>
+      </Button>
     </section>
   );
 }
@@ -546,8 +554,9 @@ function findingsLayout(
 ) {
   const slots = passages(entry.sections);
   const slotLines = new Set(slots.map((section) => section.line));
+  // Overview draws the run's limitations once, across modules (RunLimitations), not the lead's.
   const found = findingBlocks(entry.sections, entry, figureTableLines, chartsDrawn).filter(
-    (section) => !overview || slotLines.has(section.line),
+    (section) => !overview || (slotLines.has(section.line) && section.heading !== "Limitations"),
   );
   const slotOf = (name: string) =>
     found.find((section) => section.heading === name && slotLines.has(section.line));
@@ -612,9 +621,9 @@ function EmptyFindings({
         {entry.output.parseError
           ? "This handoff could not be read into sections."
           : "This handoff has no findings in this report format."}{" "}
-        <a href={evidencePath(run.folder, entry)} className="text-action underline">
+        <Button href={evidencePath(run.folder, entry)} color="link-gray" size="sm">
           Open Evidence
-        </a>
+        </Button>
       </p>
       {afterBottomLine}
       <RecordsCard run={run} entry={entry} records={records} />

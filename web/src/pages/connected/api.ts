@@ -131,7 +131,22 @@ export type LiveRun = Pick<Run, "id" | "issuer_name" | "pathway" | "reason" | "m
   /** How many source files the run lists; their names are audit material and are not sent. */
   files: number;
 };
-export type Activity = { updated: string; held: string; runs: LiveRun[] };
+/** A run that stopped without a report; its spend, folder and file names are not sent. */
+export type EndedRun = Pick<Run, "id" | "issuer_name" | "pathway" | "reason"> & {
+  status: "failed" | "capped" | "rejected" | "interrupted";
+  ended_at: string;
+  submitted_by: string;
+};
+export type Activity = {
+  updated: string;
+  held: string;
+  runs: LiveRun[];
+  ended?: EndedRun[];
+  /** All runs that ended without a report; `ended` holds only the latest. */
+  ended_total?: number;
+  /** Run records the service could not read; they are not in `runs` or `ended`. */
+  unreadable?: number;
+};
 
 type ReportEntry = { id: string; issuer: string; asOf: string; pathway: string };
 export class RequestError extends Error {
@@ -387,6 +402,15 @@ export function moduleName(id: string) {
 /** Replaces each whole module code the page knows with the module's name; others stay. */
 export function serviceText(text: string) {
   return text.replace(/\bCP-[A-Z0-9]+\b/g, (code) => moduleName(code));
+}
+
+/** The changes line without the launcher's "changes:" label or the service's `(not used: <run>: <why>)` note, which names a run id. */
+export function changesSentence(changes: string) {
+  const text = serviceText(changes.replace(/^\s*changes:\s+/i, ""));
+  const kept = text.replace(/\s*\(not used:[\s\S]*$/, "");
+  return kept === text
+    ? text
+    : `${kept.replace(/\.$/, "")}. An earlier run exists but could not be used for comparison.`;
 }
 
 export function pathwayName(pathway: string) {

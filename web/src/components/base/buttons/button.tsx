@@ -1,4 +1,4 @@
-import type { FC, ReactNode } from "react";
+import type { FC, ReactNode, Ref } from "react";
 import { isValidElement } from "react";
 import type {
   ButtonProps as AriaButtonProps,
@@ -72,6 +72,15 @@ export const styles = sortCx({
         "*:data-icon:text-fg-brand-secondary_alt hover:*:data-icon:text-fg-brand-secondary_hover",
       ].join(" "),
     },
+    "link-gray": {
+      root: [
+        "justify-normal rounded p-0! text-secondary hover:text-secondary_hover",
+        // Inner text underline
+        "*:data-text:underline *:data-text:decoration-transparent *:data-text:underline-offset-2 hover:*:data-text:decoration-current",
+        // Icon styles
+        "*:data-icon:text-fg-quaternary hover:*:data-icon:text-fg-quaternary_hover",
+      ].join(" "),
+    },
     "link-destructive": {
       root: [
         "justify-normal rounded p-0! text-error-primary outline-error hover:text-error-primary_hover",
@@ -113,6 +122,8 @@ interface CommonProps {
 export interface ButtonProps
   extends CommonProps, Omit<AriaButtonProps, "children" | "className" | "href"> {
   href?: undefined;
+  /** The button element, for code that must focus it. */
+  ref?: Ref<HTMLButtonElement>;
 }
 
 /** With `href` the button is a link (an anchor) with the same look. */
@@ -133,7 +144,8 @@ export const Button = ({
   ...props
 }: ButtonProps | LinkButtonProps) => {
   const isIcon = (IconLeading || IconTrailing) && !children;
-  const isLinkType = color === "link-color" || color === "link-destructive";
+  const isLinkType =
+    color === "link-color" || color === "link-gray" || color === "link-destructive";
 
   const commonChildren = (
     <>

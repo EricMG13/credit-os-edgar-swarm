@@ -1,3 +1,4 @@
+import { ArrowRight } from "@untitledui/icons";
 import { useCallback, useEffect, useSyncExternalStore } from "react";
 import { Badge } from "@/components/base/badges/badges";
 import { Button } from "@/components/base/buttons/button";
@@ -23,14 +24,24 @@ import {
 import { ReportFindings } from "./ReportContent";
 import { ReportEvidence } from "./report/Evidence";
 import type { Mode } from "./api";
-import { actionBias, buildReportView, foundationMetrics, type MetricKey } from "./reportView";
+import {
+  actionBias,
+  buildReportView,
+  foundationMetrics,
+  moduleBottomLines,
+  runLimitations,
+  type MetricKey,
+  type ReportView,
+} from "./reportView";
 
 const TILE_KEYS: readonly MetricKey[] = ["liquidity", "freeCashFlow", "leverage", "maturities"];
 import { Calendar, buildCalendar, upcomingCalendarRows } from "./report/Calendar";
 import { Changes, ComparisonTable } from "./report/Changes";
 import { Forecast } from "./report/Forecast";
+import { IdentityBand } from "./report/IdentityBand";
 import { MetricGrid } from "./report/MetricGrid";
 import { Modules } from "./report/Modules";
+import { ModuleBottomLines, RunLimitations } from "./report/OverviewModules";
 import { PublishedTraceProvider } from "./report/PublishedTrace";
 import { PortfolioBasisProvider } from "./report/PortfolioBasis";
 import { useResource } from "./useResource";
@@ -122,7 +133,7 @@ function Overview({
 }: {
   snapshot: Snapshot;
   run: PublishedRun;
-  view: ReturnType<typeof buildReportView>;
+  view: ReportView;
   hasCalendar: boolean;
 }) {
   const calendar = buildCalendar(view.entries, run.folder);
@@ -147,9 +158,9 @@ function Overview({
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h2 className="font-display text-h2">Overview</h2>
         {hasCalendar && (
-          <a href="#calendar" className="text-action underline">
+          <Button color="secondary" size="sm" href="#calendar">
             Issuer calendar
-          </a>
+          </Button>
         )}
       </div>
       {view.lead ? (
@@ -172,13 +183,15 @@ function Overview({
           </p>
         </>
       )}
+      <ModuleBottomLines run={run} rows={moduleBottomLines(view, run)} />
+      <RunLimitations run={run} rows={runLimitations(view, run)} />
       {calendar.rows.length > 0 && (
         <section className={`${card} grid gap-3`}>
           <div className="flex flex-wrap items-center justify-between gap-3">
             <h2 className={heading}>Dates to watch</h2>
-            <a href="#calendar" className="text-action underline">
+            <Button href="#calendar" color="link-gray" size="sm" iconTrailing={ArrowRight}>
               Open issuer calendar
-            </a>
+            </Button>
           </div>
           {watchRows === null ? (
             <p className="text-sm text-text-secondary" role="status">
@@ -215,9 +228,9 @@ function Overview({
                       {event.cells[0]}
                       {event.cells[1] ? ` · ${event.cells[1]}` : ""}
                     </span>
-                    <a className="text-action underline" href={event.href}>
+                    <Button href={event.href} color="link-gray" size="sm">
                       Evidence
-                    </a>
+                    </Button>
                   </div>
                 </li>
               ))}
@@ -258,11 +271,13 @@ function ReportPage({
   parts,
   tab,
   mode,
+  catalogue,
 }: {
   snapshot: Snapshot;
   run: PublishedRun;
   routeKey: string;
   parts: string[];
+  catalogue: CatalogueRun | undefined;
   tab: Tab;
   mode: Mode;
 }) {
@@ -272,7 +287,6 @@ function ReportPage({
   const change = comparisonForRun(run, snapshot.workspace.runs);
   return (
     <div className="mt-4 grid min-w-0 gap-5">
-      <ReportNav tab={tab} modules={view.modules.length} />
       <PortfolioBasisProvider
         folder={run.folder}
         enabled={(tab === "forecast" || tab === "modules") && hasPortfolioCharts(view.entries)}
@@ -283,6 +297,8 @@ function ReportPage({
           folder={run.folder}
           entries={view.entries}
         >
+          <IdentityBand catalogue={catalogue} entries={view.entries} folder={run.folder} />
+          <ReportNav tab={tab} modules={view.modules.length} />
           {tab === "history" && <RunHistory snapshot={snapshot} run={run} />}
           {tab === "overview" && (
             <Overview
@@ -453,6 +469,7 @@ export function ReportReader({ id, mode }: { id: string; mode: Mode }) {
           parts={parts}
           tab={tab}
           mode={mode}
+          catalogue={catalogue}
         />
       )}
     </div>

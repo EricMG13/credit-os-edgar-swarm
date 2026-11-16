@@ -1,10 +1,14 @@
 import type { Metric, ModuleState } from "../library/slice";
 import { moduleName } from "./api";
+import { exactDifference } from "./signal";
 import {
   blocked,
+  containsReference,
+  methodNote,
   outputEntries,
   passages,
   readParagraph,
+  readerText,
   runModels,
   withUnit,
 } from "./publishedReport";
@@ -69,6 +73,88 @@ export function buildReportView(snapshot: Snapshot, routeKey: string, run: Publi
   };
 }
 
+export type ReportView = ReturnType<typeof buildReportView>;
+
+/** Module ids in the order the run ran them, then any the record does not name. */
+export function moduleOrder(run: PublishedRun) {
+  return [
+    ...new Set([
+      ...(run.record?.steps ?? []).map((step) => step.module),
+      ...Object.keys(run.modules),
+    ]),
+  ];
+}
+
+const designated = (view: ReportView, id: string) =>
+  view.entries.find((entry) => entry.selected && entry.output.module === id);
+
+function passageTexts(entry: OutputEntry, heading: string) {
+  return passages(entry.sections)
+    .filter((section) => section.heading === heading)
+    .flatMap(({ blocks }) => blocks)
+    .filter((block) => block.type === "text");
+}
+
+/** One bottom line per module that ran, other than the lead; text is null where there is none to show; `referenced` marks one written but citing a source. */
+export function moduleBottomLines(view: ReportView, run: PublishedRun) {
+  return moduleOrder(run).flatMap((id) => {
+    const entry = designated(view, id);
+    if (!entry || entry === view.lead) return [];
+    const block = passageTexts(entry, "Bottom line").find((item) => !methodNote(item.text));
+    const written = block
+      ? { line: block.line, body: readParagraph(block.text).body }
+      : entry.output.summary
+        ? {
+            line: entry.output.summary.line,
+            body: readParagraph(entry.output.summary.bottomLine).body,
+          }
+        : null;
+    const body = written?.body.replaceAll("**", "").replaceAll("`", "");
+    const referenced = body !== undefined && containsReference(body);
+    return [
+      {
+        id,
+        name: moduleName(id),
+        state: moduleState(entry),
+        entry,
+        text: body && !referenced ? readerText(body) : null,
+        referenced,
+        line: written?.line ?? null,
+      },
+    ];
+  });
+}
+
+const sameLimitation = (text: string) =>
+  text
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}\s]/gu, "")
+    .replace(/\s+/g, " ")
+    .trim();
+
+/** Each limitation of the run once, in module order; a module that could not assess writes none. */
+export function runLimitations(view: ReportView, run: PublishedRun) {
+  const seen = new Set<string>();
+  return moduleOrder(run).flatMap((id) => {
+    const entry = designated(view, id);
+    if (!entry || blocked(entry)) return [];
+    const written = passageTexts(entry, "Limitations");
+    // An earlier-format handoff has no Limitations passage; its summary carries the limitation.
+    const items = passages(entry.sections).some((section) => section.heading === "Limitations")
+      ? written.map((block) => ({ text: block.text, line: block.line }))
+      : entry.output.summary
+        ? [{ text: entry.output.summary.limitation, line: entry.output.summary.line }]
+        : [];
+    return items.flatMap(({ text, line }) => {
+      const { body } = readParagraph(text);
+      const key = sameLimitation(body);
+      if (!body || methodNote(text) || seen.has(key)) return [];
+      seen.add(key);
+      return [{ id, name: moduleName(id), entry, text: readerText(body), line }];
+    });
+  });
+}
+
 export type MetricKey =
   | "liquidity"
   | "freeCashFlow"
@@ -92,7 +178,7 @@ function financialValue(value: string, unit: string) {
   const [integer, fraction] = value.split(".");
   const display =
     fraction === undefined ? exactComma(integer ?? "") : `${exactComma(integer ?? "")}.${fraction}`;
-  return unit === "US$m" ? `$${display}m` : withUnit(display, unit);
+  return withUnit(display, unit);
 }
 
 function creditMetricColumn(entry: OutputEntry, table: Table, date: string) {
@@ -104,6 +190,33 @@ function creditMetricColumn(entry: OutputEntry, table: Table, date: string) {
   return named.length === 1 ? named[0] : undefined;
 }
 
+const oneYearBefore = (date: string) => {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(date);
+  const [, year = "", month = "", day = ""] = match ?? [];
+  return match && !(month === "02" && day === "29")
+    ? `${String(Number(year) - 1).padStart(4, "0")}-${month}-${day}`
+    : undefined;
+};
+
+/** The column of the one period exactly a year before the current one, by its Start and End. */
+function priorMetricColumn(entry: OutputEntry, table: Table, date: string, column: number) {
+  const periods = namedTable(entry, "Period table", ["Period", "Start", "End"]);
+  const current = periods?.rows.filter((row) => row.cells[2] === date || row.cells[0] === date);
+  const [now] = current ?? [];
+  if (current?.length !== 1 || !now) return undefined;
+  const header = table.headers[column];
+  if (header !== now.cells[0] && header !== date) return undefined;
+  const start = oneYearBefore(now.cells[1] ?? "");
+  const end = oneYearBefore(now.cells[2] ?? "");
+  const prior = periods?.rows.filter((row) => row.cells[2] === end);
+  const [before] = prior ?? [];
+  if (!start || !end || prior?.length !== 1 || !before || before.cells[1] !== start)
+    return undefined;
+  const name = before.cells[0];
+  const columns = table.headers.flatMap((header, i) => (header === name ? [i] : []));
+  return columns.length === 1 && name ? { column: columns[0] as number, period: name } : undefined;
+}
+
 function metricBinding(
   key: MetricKey,
   label: string,
@@ -111,6 +224,7 @@ function metricBinding(
   unit: string,
   note: string,
   line?: number,
+  yearChange?: Metric["yearChange"],
 ): MetricBinding {
   return {
     key,
@@ -119,6 +233,7 @@ function metricBinding(
       value: { kind: "value", at: null, text: financialValue(value, unit) },
       note,
       trace: null,
+      ...(yearChange && { yearChange }),
     },
     line,
   };
@@ -195,6 +310,7 @@ export function foundationMetrics(entry: OutputEntry, catalogue: CatalogueRun | 
   if (!date || entry.output.module !== "CP-1" || blocked(entry)) return [];
   const table = namedTable(entry, "Financials and credit metrics", ["Metric", "Unit"]);
   const column = table && creditMetricColumn(entry, table, date);
+  const prior = table && column !== undefined && priorMetricColumn(entry, table, date, column);
   const measures =
     table && column !== undefined
       ? creditMetrics.flatMap(([key, label, unit]) => {
@@ -203,8 +319,20 @@ export function foundationMetrics(entry: OutputEntry, catalogue: CatalogueRun | 
             ({ cells }) => cells[0] === label && cells[table.headers.indexOf("Unit")] === unit,
           );
           const value = row?.cells[column];
+          const before = prior && row?.cells[prior.column];
+          const change = value && before ? exactDifference(value, before) : null;
           return value && numeric.test(value)
-            ? [metricBinding(key, label, value, unit, date, row.line)]
+            ? [
+                metricBinding(
+                  key,
+                  label,
+                  value,
+                  unit,
+                  date,
+                  row.line,
+                  change !== null && prior ? { key, change, unit, prior: prior.period } : undefined,
+                ),
+              ]
             : [];
         })
       : [];

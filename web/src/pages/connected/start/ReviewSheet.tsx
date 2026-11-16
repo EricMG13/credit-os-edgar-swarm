@@ -1,8 +1,14 @@
 import { useId, type ReactNode } from "react";
 import { Button } from "@/components/base/buttons/button";
-import { moduleName, pathwayName, serviceText, type Answers, type Summary } from "../api";
 import {
   changesSentence,
+  moduleName,
+  pathwayName,
+  serviceText,
+  type Answers,
+  type Summary,
+} from "../api";
+import {
   comparisonCaveat,
   documentDescription,
   LEVELS,
