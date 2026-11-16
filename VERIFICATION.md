@@ -4,6 +4,25 @@ Keep one running record here. A pass applies only to the stated scope. Earlier v
 engine is in [EricMG13/final-workflow](https://github.com/EricMG13/final-workflow)'s
 `VERIFICATION.md`, which also keeps the retained runs this copy leaves out.
 
+## 2026-11-16 — Teams cards carry the design as inline images (branch `claude/zealous-keller-yvc5mb`)
+
+Scope: presentation of the four Teams cards only (`inbox/teams.py` card parts, `inbox/teams_brand.py`, new `tools/teams_brand_images.mjs`); no change to when or what is posted.
+- Owner asked why the cards fell short of the mock-ups, then "try step 2 now": the brand pieces as images inside the card.
+- Changed: status pills, shapes and meta icons are the app's own, drawn by the tool as palette PNGs (pill about 1.2 KB, shape about 0.2 KB); the state stripe, progress bars, callout tints and the Stopped tile are PNGs made by the sender, the tints partly transparent; `Badge`, `ProgressBar`, `Icon` and Markdown bold are no longer used; summary rows stop at a posted size of 23 KB; the post is compact JSON.
+- Fidelity check: the four sample cards in `docs/design/teams-cards/` rendered with adaptivecards 3 and Microsoft's Teams light and dark host configurations (`adaptivecards-designer`), `rendered-light-dark-2x.png`, compared with `docs/design/mockups/teams-cards.html`: header, stripe, pills, icons, callouts, bars, tiles and rows match the mock-up's layout; the font, the button colour and rounded borders do not (Teams' own). Sizes posted: 9.7 to 11.1 KB for a run card, 20.9 KB for the sample summary with five finished rows.
+- Tests: `tests/test_inbox_teams.py` 76 passed, with the stripe colour, bar fill and tint alpha read from the PNGs by a reader written in the test; scheduler, service and React-server files passed; quality gate 0 findings.
+- Not verified: Teams itself, light or dark, desktop or mobile.
+
+## 2026-11-16 — Teams run cards and the analyst's name (branch `claude/zealous-keller-yvc5mb`, `main` at `52f798f` merged)
+
+Scope: a new sender (`src/deploy_workflow/inbox/teams.py`, `teams_brand.py`), its hook in the scheduler and the two services' start-up, the name rule in `run_start/submissions.py`, the React start page and the older start page's help text. No provider, handoff, module or library change; nothing was posted to Teams and no paid run was made.
+- Owner, 2026-11-16: cards for run activity only (started, report ready, stopped, summary); summary at 09:00, 13:00, 17:00 and 21:00 UK time on weekdays, skipped when quiet, five finished runs then a count; every card links to the library; the analyst's name is required as a first name and one initial ("Eric G"), two allowed ("Eric MG").
+- Changed: with `CREDIT_OS_TEAMS_WEBHOOK` and `CREDIT_OS_TEAMS_LINK` both set the scheduler posts each run's cards once (ledger `_engine/teams.json`; the first poll records existing runs and posts none) and the summary on its slots; with neither it posts nothing; with one the service refuses to start. `submitted_by` is refused unless it is a first name, a space and one or two capital initials, on the service and on the React page (same rule, `start/analystName.ts`); an empty name is refused. The report-ready card carries the library Overview's lead bottom line (`summary_fields`) unchanged.
+- Tests (synthetic, no network; posts go to a list): `tests/test_inbox_teams.py` 74 passed, with expected card texts written out by hand, the UK summer-time boundaries of 2026, restart, failed-post, unsaved-ledger, hand-edited-record and unreadable-ledger cases, a local HTTP server for the post and its refused redirect, and one scheduler run through the fake launcher; `tests/test_run_start_submissions.py` 153 passed (7 accepted and 12 refused names); the scheduler, service, activity, prior, context-form, React-server and launcher files, 1,900 tests in all, passed; `web`: `src/pages/connected` 34 files passed, typecheck, eslint, prettier and knip clean. Quality gate on the working tree: 0 findings.
+- Review: one independent adversarial review of the working tree (2 High, 5 Medium, 7 Low) and its simpler-design pass. Fixed: any exception in the sender is caught and logged, so a bad record or a garbled reply cannot stop the poll; a webhook or link with an unreadable port, a control character, a query or a fragment refuses the start; launched runs no longer inherit the webhook; the summary lists at most 18 rows (measured under 22 KB for a 93-run day with 80-character names); a failed ledger save no longer stops the pass; the retry counter is replaced by an age limit (two hours for a run card, the slot window for a summary) and a summary that was not posted leaves its runs for the next; a redirect is refused. Left as designed: a run ending after 21:00 UK is in no summary; module-written Markdown marks in the bottom line are shown as written.
+- Card check: the four payloads in `docs/design/teams-cards/` are the sender's output for sample runs (5.2 to 12.8 KB posted); rendered with Microsoft's reference renderer (adaptivecards 3), where the header, layout and text draw and `Badge` and `ProgressBar` fall back to text.
+- Not verified: a post to a real Teams channel, and so how Teams draws `Icon`, `Badge`, `ProgressBar`, `icon:Library` and the Fluent icon names; `tests/test_run_start_page.py` (browser), edited to type a valid name but not run: headless Chrome's `--dump-dom` hangs in this container even on a one-line local file; the full `web` gates and the full Python suite; Windows.
+- For the owner: card text goes to Microsoft (issuer, pathway, analyst name, times, counts, cap, the lead bottom line); a card's links work only for a reader who can reach `CREDIT_OS_TEAMS_LINK`; the report-ready card shows no count of stated limits because the library holds none; earlier records keep their free-text names and the summary shortens them ("Dana Reyes" to "Dana R"). The oldest entry here (2026-11-13, CP-DR web lookup) was trimmed to stay under 1,000 lines; git history keeps it.
 ## 2026-11-16 — Reader: year-on-year comparator on metric cards; colour by a fixed better/worse table (branch `claude/reports-formatting-updates-cfb43a`, not pushed)
 
 Scope: the catalogue's headline metrics (`src/deploy_workflow/credit_os_catalogue.py`: `chart_rows`, `prior_metric`, `handoff_metrics`) and the connected reader (`web/src/pages/connected/{signal.ts,HeadlineFigures.tsx,reportView.ts,report/YearChange.tsx,report/Changes.tsx,report/IdentityBand.tsx}`, `web/src/pages/library/{slice.ts,parts/MetricTile.tsx,parts/ChangeCard.tsx}`). Sits on the entry below.
@@ -945,55 +964,3 @@ This entry follows the one below and its checks supersede that entry's totals.
   one packet of a two-write reply; the test now reads to the close.
 - Not verified: the full weekly suite on the final head (re-run requested); `Smoke-test.ps1` and
   the Windows package on Windows; the pack workflow on GitHub Actions. Oldest two entries trimmed.
-
-## 2026-11-15 — Restructure: packaging, shared HTTP base, import contracts, file splits (branch `claude/busy-dijkstra-bgex9m`)
-
-Scope is **offline only**: code layout, packaging, tooling and documents. No provider or model run,
-no analytical, method or presentation change. Evidence is deterministic tests plus before/after
-output comparisons on synthetic data and the retained TDG fixture of 2026-11-13 (labelled below).
-Each step was done on its own branch, reviewed, then merged here.
-
-- Packaging: a uv workspace; `apps/issuer-library` is the member `issuer-library` (`credit_os`,
-  `update_library`). No `sys.path` edit remains for engine/app discovery; Signal finds its brand
-  files with `importlib.resources`. The engine/library dependency is circular at run time and is
-  declared so. Synthetic fixture library built before and after: identical except `built_at` and
-  the workspace path in `data.js`.
-- HTTP: `deploy_workflow/http_base.py` holds the server, request checks, body rules and static
-  serving for run start and Signal; each passes its own policy. About 550 raw requests per service,
-  old code against new: byte-identical replies. Behaviour change, deliberate: run start now closes
-  an HTTP/0.9 request line with no reply (it answered a bare 500 and logged a traceback); the base
-  closes these for every service.
-- Import direction: `deploy_vii` no longer imports `deploy_workflow`. `platform_io`, `context`,
-  `financial_series`, `liquidity_series`, `restructuring_series` and `trailing_period` moved into
-  `deploy_vii`; each old name is an alias of the same module object. `.importlinter` (import-linter
-  2.16): engine contract with no exception; `deploy_workflow` layers, exhaustive, 5 ignored imports
-  each with what removes it. The gate runs it (`--checks imports`) and scopes a file git reports as
-  moved by its diff from the file it moved from.
-- Splits, pure moves (every top-level block verbatim, once, in order; checked by two independent
-  scripts): `owners/cpos_launch.py` 3,986 to about 1,830 lines plus `cpos_launch_methods`,
-  `_tables`, `_prompts`, `_review`; `credit_os/store.py` 3,976 to 1,639 plus `source`,
-  `handoff_fields`, `cashflow`, `evidence`. Launcher offline preparation, 10 runs on synthetic
-  input: output trees identical. Forecast grid from the retained TDG fixture
-  (`tdg_sol_high_2026_11_13`; dated evidence, one issuer) and the synthetic library: identical.
-  `pin_label_forged` and its normaliser moved from `cp3d` to `owners/pins` (1,849 inputs, same output).
-- Method selection: `METHODOLOGY-REVIEW.md` gains an appendix table of the 64 sent method files;
-  `tests/test_methodology_selection.py` fails when it drifts from `METHODS`, `manifest.json` or the
-  bytes on disk. Known differences are listed in the test; 8 deliberate drifts each failed it.
-- Documents and packs: 47 unread history files removed from `docs/` (in git before `3275ff7`).
-  Pack numbers follow the highest ever issued; the pack workflow prunes packs older than 14 days
-  (dry run on the real folder: 0 removed, 69 kept).
-- Not done, with reasons: no package merge or rename (direction was already nearly clean); no
-  module framework (measured: 401 lines of structural clones in 44,452); `earnings_workflow.py` and
-  `owner_workflow.py` not split (50 existing gate findings in code no test executes; branch
-  `-s5b-split-workflows` kept unmerged); `cp*.py` not split (no fixture drives their submit path).
-- Checks on the merged branch: CI fast list plus the new files, 5,101 passed, 6 skipped, with the
-  known failures deselected; node page tests 567 passed; quality gate 0 findings (61 files, 8,469
-  lines in scope); `lint-imports` 3 contracts kept. Two permission tests now skip under root, as
-  their neighbour already did.
-- Browser tests on the merged branch: library page 104 passed, 1 skipped; library changes 8;
-  Signal page 13; model shell 7; launcher 10; changes 1. The run start page's browser tests could
-  not run in this container: Chrome times out on `--dump-dom`, identically on `main` (9d040f8).
-- Not verified: the full suite; the run start page in a browser; `Smoke-test.ps1` and the Windows
-  package on Windows; the pack workflow and `checks.yml` on GitHub Actions;
-  `test_financial_workflow.py` genuine-case tests (over 300 s). Oldest two entries trimmed from
-  this file; git history keeps them.

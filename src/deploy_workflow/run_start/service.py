@@ -49,6 +49,8 @@ failure is 500 ``{"error": "the service failed; see its log"}`` (its cause goes 
     Body: the answers object ``{"context", "modules", "max_turns", "level", "submitted_by",
     "model", "effort"}``. ``model`` is "gpt" or "claude", ``effort`` "fast", "balanced" or "high";
     other than "gpt" and "balanced" only at the "advanced" level.
+    ``submitted_by`` is the analyst's name: a first name, a space, then one or two capital initials
+    ("Eric G", "Eric MG"); anything else, an empty name included, is refused with the form to use.
     200 ``{"error": "", "digest", "modules", "items", "documents", "ignored", "omitted", "model",
     "effort", "changes", "lookup", "prior"}``, the launcher's own forecast and the digest to
     approve (``changes`` says whether CP-8 will run, and against which earlier run: its pathway
@@ -89,7 +91,9 @@ failure is 500 ``{"error": "the service failed; see its log"}`` (its cause goes 
     same rules and headers as a library file; it must itself be in ``_engine``.
 
 ``main`` runs this server in a daemon thread and the scheduler's ``step`` every poll in the main
-thread; ``step`` also sweeps stale uploads. ``--host`` must be this machine's own address: a
+thread; ``step`` also sweeps stale uploads and, when the environment holds both
+``CREDIT_OS_TEAMS_WEBHOOK`` and ``CREDIT_OS_TEAMS_LINK``, posts run cards to Teams
+(``deploy_workflow.inbox.teams``). ``--host`` must be this machine's own address: a
 wildcard address (``0.0.0.0``, ``::``, or any spelling that resolves to one) can never equal a
 ``Host`` header and is refused.
 """
@@ -113,7 +117,7 @@ from typing import Any, BinaryIO, cast
 from deploy_vii.contracts import DEACTIVATED_PATHWAYS, PATHWAY_CAP_USD
 from deploy_workflow import http_base
 from deploy_workflow.http_base import Body, Reply, refuse
-from deploy_workflow.inbox import activity, runs, startup
+from deploy_workflow.inbox import activity, runs, startup, teams
 from deploy_workflow.inbox.layout import Layout
 from deploy_workflow.inbox.scheduler import Scheduler, Settings
 from deploy_workflow.run_start import prior, submissions
@@ -456,8 +460,13 @@ def main(argv: Sequence[str] | None = None) -> int:
     except ValueError as error:
         print(error, file=sys.stderr)
         return 2
-    settings = Settings(args.root, max_running=args.max_running, max_per_day=args.max_per_day)
     try:
+        settings = Settings(
+            args.root,
+            max_running=args.max_running,
+            max_per_day=args.max_per_day,
+            teams=teams.config_from_environment(teams.LIBRARY_PAGES),
+        )
         scheduler = Scheduler(settings)
     except (ValueError, OSError) as error:  # StartupRefused, a long root
         print(error, file=sys.stderr)

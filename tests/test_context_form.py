@@ -339,7 +339,10 @@ class _VisibleText(HTMLParser):
 # Ruling 6 (the title) and 9 (the group number) landed there; 8 (button labels) is script.
 # Sentences a later ruling changed. Ruling 2026-11-15-pathway-tiers-and-caps: the cap is the
 # pathway's (`PATHWAY_CAP_USD`), not one USD 20 for every run; the summary's lead says so.
+# Owner, 2026-11-16: the analyst's name is required, as a first name and one or two initials
+# (`submissions.is_analyst_name`), so the field's help no longer says "Optional".
 _CAP_LEAD = "It uses the paid model (USD 20 cap)."
+_NAME_HELP = "Saved with the run, so Run activity shows who started it. Optional."
 CHANGED_BY_RULINGS: frozenset[str] = frozenset(
     sentence
     for sentence in json.loads(
@@ -347,6 +350,7 @@ CHANGED_BY_RULINGS: frozenset[str] = frozenset(
     )
     if _CAP_LEAD in sentence
 )
+CHANGED_BY_OWNER = frozenset({_NAME_HELP})
 
 
 def test_the_redesigned_markup_keeps_every_sentence_of_the_step_logic_commit() -> None:
@@ -358,9 +362,19 @@ def test_the_redesigned_markup_keeps_every_sentence_of_the_step_logic_commit() -
     page = _VisibleText()
     page.feed(FORM)
     assert len(before) > 100  # a fixture that lost its text would pass anything
-    assert set(before) - CHANGED_BY_RULINGS <= page.nodes, sorted(
-        set(before) - CHANGED_BY_RULINGS - page.nodes
-    )
+    assert _NAME_HELP in before
+    kept = set(before) - CHANGED_BY_RULINGS - CHANGED_BY_OWNER
+    assert kept <= page.nodes, sorted(kept - page.nodes)
+
+
+def test_the_name_field_says_the_form_the_service_takes() -> None:
+    page = _VisibleText()
+    page.feed(FORM)
+    assert _NAME_HELP not in page.nodes
+    assert (
+        "First name and initial, such as Eric G; two initials, such as Eric MG, if a colleague "
+        "has a similar name. Saved with the run, so Run activity and Teams show who started it."
+    ) in page.nodes
 
 
 def _rule(selector: str) -> str:

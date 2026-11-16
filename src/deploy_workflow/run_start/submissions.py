@@ -62,6 +62,11 @@ _MODULE_NAME_AT_MOST = 12
 _TURNS = (1, 64)
 _LEVELS = ("basic", "standard", "advanced")
 _SUBMITTER_AT_MOST = 80
+_INITIALS_AT_MOST = 2
+ANALYST_NAME_RULE = (
+    "Enter your name as your first name and initial, for example Eric G, "
+    "or two initials, for example Eric MG."
+)
 _KEYS = {"context", "modules", "max_turns", "level", "submitted_by", "model", "effort"}
 DEFAULT_MODEL, DEFAULT_EFFORT = "gpt", "balanced"  # the only pair below the Advanced level
 _ADVANCED = "advanced"
@@ -118,9 +123,24 @@ def validated(answers: object) -> Answers:
     if chosen and answers["level"] != _ADVANCED:
         raise Refused("the model and effort can be changed only at the Advanced level")
     by = answers["submitted_by"]
-    if not isinstance(by, str) or len(by) > _SUBMITTER_AT_MOST:
-        raise Refused(f"submitted_by is text of at most {_SUBMITTER_AT_MOST} characters")
+    if not isinstance(by, str) or len(by) > _SUBMITTER_AT_MOST or not is_analyst_name(by):
+        raise Refused(ANALYST_NAME_RULE)
     return answers  # type: ignore[return-value]
+
+
+def is_analyst_name(text: str) -> bool:
+    """Whether ``text`` is a first name, one space, then one or two capital initials: ``Eric G``,
+    or ``Eric MG`` where two analysts would otherwise read the same (owner, 2026-11-16). The
+    first name is letters, with single hyphens or apostrophes (straight or curly) inside it. The
+    start page's own check is the same rule (web/src/pages/connected/start/analystName.ts)."""
+    first, space, initials = text.partition(" ")
+    pieces = first.replace("'", "-").replace("\u2019", "-").split("-")
+    return (
+        bool(space)
+        and all(piece.isalpha() for piece in pieces)
+        and 1 <= len(initials) <= _INITIALS_AT_MOST
+        and all(letter.isalpha() and letter.isupper() for letter in initials)
+    )
 
 
 def require_provider_key(answers: Answers) -> None:
