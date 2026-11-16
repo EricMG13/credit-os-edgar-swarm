@@ -1,3 +1,4 @@
+import { GapPanel } from "@/components/gap/GapPanel";
 import { sourceCitationNote, sourceFileLinks } from "./sourceFiles";
 import { useState, type ReactNode } from "react";
 import { BottomLine } from "../library/parts/BottomLine";
@@ -22,6 +23,9 @@ import {
   CONFIDENCE_INPUTS,
   FORECAST_INPUTS,
   methodNote,
+  missingPassages,
+  passages,
+  PASSAGES,
   publishedHref,
   readParagraph,
   type Block,
@@ -329,6 +333,8 @@ const RECORD_CODE = new RegExp(String.raw`^(?:${CODE}\s|Confidence inputs$)`);
 function registerBlocks(section: Section, entry: OutputEntry) {
   if (entry.output.module === "CP-6" && /^T6E\.(?:4|6|7)\b/.test(section.heading))
     return section.blocks.filter(readerBlock);
+  if (entry.output.module === "CP-8" && section.heading === "Limitations ledger")
+    return section.blocks.filter(readerBlock);
   return section.blocks.filter((block) => {
     if (block.type !== "table") return false;
     if (monitoringLabel(entry.output.module, section.heading, block)) return true;
@@ -369,16 +375,8 @@ export const drawingTitle = (heading: string) =>
   heading.replace(DRAWING_PREFIX, "").replace(RECORD_PREFIX, "");
 
 // `chartsDrawn` is true on a page that draws this module's charts with their qualifications.
-export function findingBlocks(
-  sections: Section[],
-  entry: OutputEntry,
-  figureTableLines: readonly number[] = [],
-  chartsDrawn = false,
-) {
-  const qualified = chartsDrawn
-    ? drawnQualificationLines(entry.output, sections)
-    : new Set<number>();
-  const drawings = new Set(
+function drawingLines(entry: OutputEntry, figureTableLines: readonly number[] = []) {
+  return new Set(
     [
       ...(entry.output.charts ?? []),
       ...(entry.output.chartGaps ?? []),
@@ -388,6 +386,18 @@ export function findingBlocks(
       .map((item) => item.table)
       .concat(figureTableLines),
   );
+}
+
+export function findingBlocks(
+  sections: Section[],
+  entry: OutputEntry,
+  figureTableLines: readonly number[] = [],
+  chartsDrawn = false,
+) {
+  const qualified = chartsDrawn
+    ? drawnQualificationLines(entry.output, sections)
+    : new Set<number>();
+  const drawings = drawingLines(entry, figureTableLines);
   const blocksOf = (section: Section, role: string) => {
     if (role === "registers") return registerBlocks(section, entry);
     if (role !== "finding" && role !== "passage" && role !== "drawing") return [];
@@ -522,35 +532,48 @@ function FindingsSummary({
   );
 }
 
+const MISSING_PASSAGE = "Not established for this run. The module's handoff has no such passage.";
+
 function findingsLayout(
   entry: OutputEntry,
   figureTableLines: readonly number[] | undefined,
   overview: boolean,
   chartsDrawn: boolean,
 ) {
-  const sections = findingBlocks(entry.sections, entry, figureTableLines, chartsDrawn).filter(
-    (section) =>
-      !overview ||
-      [
-        "Bottom line",
-        "Key findings",
-        "Contrary evidence and what would change the view",
-        "Limitations",
-      ].includes(section.heading),
+  const slots = passages(entry.sections);
+  const slotLines = new Set(slots.map((section) => section.line));
+  const found = findingBlocks(entry.sections, entry, figureTableLines, chartsDrawn).filter(
+    (section) => !overview || slotLines.has(section.line),
   );
-  const keyFindings = overview
-    ? sections.find((section) => section.heading === "Key findings")
-    : undefined;
+  const slotOf = (name: string) =>
+    found.find((section) => section.heading === name && slotLines.has(section.line));
+  const sections = [
+    ...PASSAGES.flatMap((name) => slotOf(name) ?? []),
+    ...found.filter((section) => !PASSAGES.some((name) => slotOf(name) === section)),
+  ];
+  const keyFindings = overview ? slotOf("Key findings") : undefined;
   const contrary = keyFindings
-    ? sections.find(
-        (section) => section.heading === "Contrary evidence and what would change the view",
-      )
+    ? slotOf("Contrary evidence and what would change the view")
     : undefined;
-  const ordered = sections.filter((section) => section !== contrary);
-  const groups = ordered.map((section): [Section, Section?] =>
-    section === keyFindings && contrary ? [section, contrary] : [section],
-  );
-  return { sections, groups };
+  // A passage whose content is drawn as a chart is present although it draws no text.
+  const drawings = drawingLines(entry, figureTableLines);
+  const charted = slots
+    .filter((section) => section.blocks.some((block) => drawings.has(block.line)))
+    .map((section) => section.heading);
+  const gaps = overview
+    ? []
+    : missingPassages(entry, [...PASSAGES.filter((name) => slotOf(name)), ...charted]);
+  const slot = (section: Section): [Section, Section?] =>
+    section === keyFindings && contrary ? [section, contrary] : [section];
+  const groups: (string | [Section, Section?])[] = [];
+  for (const name of PASSAGES) {
+    const section = slotOf(name);
+    if (section && section !== contrary) groups.push(slot(section));
+    else if (!section && gaps.includes(name)) groups.push(name);
+  }
+  for (const section of sections)
+    if (!PASSAGES.some((name) => slotOf(name) === section)) groups.push(slot(section));
+  return { sections, groups, drawnBottomLine: slotOf("Bottom line") !== undefined };
 }
 
 function followingParagraphs(section: Section, entry: OutputEntry, folder: string) {
@@ -619,10 +642,15 @@ export function ReportFindings({
   chartsDrawn?: boolean;
 }) {
   const [activeTrace, setActiveTrace] = useState<string | null>(null);
-  const { sections, groups } = findingsLayout(entry, figureTableLines, overview, chartsDrawn);
+  const { sections, groups, drawnBottomLine } = findingsLayout(
+    entry,
+    figureTableLines,
+    overview,
+    chartsDrawn,
+  );
   const key = (line: number) => traceKey(entry, line);
   const traces = findingsTraces(snapshot, entry, sections);
-  const hasBottomLine = sections.some((section) => section.heading === "Bottom line");
+  const hasBottomLine = drawnBottomLine;
   const summary = !hasBottomLine && entry.output.summary;
   const summaryTrace = summary && traceForLine(snapshot, entry, entryIndex, summary.line);
   if (summaryTrace) traces[key(summary.line)] = summaryTrace;
@@ -734,7 +762,17 @@ export function ReportFindings({
       <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-4">
         {summary && <FindingsSummary summary={summary} entry={entry} summaryTrace={summaryTrace} />}
         {!hasBottomLine && afterBottomLine}
-        {groups.map(([section, contrary]) => {
+        {groups.map((group) => {
+          if (typeof group === "string")
+            return group === "Bottom line" &&
+              summary &&
+              !containsReference(summary.bottomLine) ? null : (
+              <section key={group} className={card}>
+                <h2 className={heading}>{group}</h2>
+                <GapPanel reason={MISSING_PASSAGE} />
+              </section>
+            );
+          const [section, contrary] = group;
           if (!contrary) return drawSection(section);
           return (
             <div key={section.line} className="grid min-w-0 gap-4 lg:grid-cols-2">
