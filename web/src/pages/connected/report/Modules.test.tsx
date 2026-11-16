@@ -505,6 +505,36 @@ it("draws a nested section named like a passage and keeps the real passage", () 
   expect(screen.getByText("Nested caveat on cash.")).toBeInTheDocument();
 });
 
+it("picks the passage slot by role and line when a nested section of the same name comes first", () => {
+  renderSections([
+    FINDINGS,
+    passage("Bottom line", 2),
+    passage("Key findings", 4),
+    passage(CONTRARY_HEADING, 6),
+    {
+      heading: "Cash",
+      level: 3,
+      line: 8,
+      blocks: [{ type: "text", line: 9, end: 9, text: "Cash is ample." }],
+    },
+    {
+      heading: "Limitations",
+      level: 4,
+      line: 10,
+      blocks: [{ type: "text", line: 11, end: 11, text: "Nested caveat on cash." }],
+    },
+    passage("Limitations", 12),
+  ]);
+  const before = (first: string, second: string) =>
+    Boolean(
+      screen.getByText(first).compareDocumentPosition(screen.getByText(second)) &
+      Node.DOCUMENT_POSITION_FOLLOWING,
+    );
+  expect(before("Limitations says so.", "Cash is ample.")).toBe(true);
+  expect(before("Limitations says so.", "Nested caveat on cash.")).toBe(true);
+  expect(before("Cash is ample.", "Nested caveat on cash.")).toBe(true);
+});
+
 it("counts a passage drawn as a chart as present", () => {
   renderSections(
     [
