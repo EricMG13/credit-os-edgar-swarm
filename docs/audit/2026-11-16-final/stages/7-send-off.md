@@ -1,6 +1,6 @@
 # Stage 7: Send-off
 
-Runs on the tip of `audit/final-sweep`. Proves the final tree, finishes the work-PC
+The lead runs it on `audit/final-repairs`, after merging the sweep's pull request. Proves the final tree, finishes the work-PC
 initialisation prompt and writes the audit summary. Changes documentation only.
 
 ## Inputs
@@ -52,7 +52,10 @@ initialisation prompt and writes the audit summary. Changes documentation only.
    `Not verified:` list.
 9. **Verification record.** Draft the `VERIFICATION.md` entry for the audit with its scope; keep
    the file under 1,000 lines.
-10. Commit the documentation to `audit/final-sweep`. Do not merge either pull request.
+10. Copy `output/` from `audit/final-coordination` onto `audit/final-repairs`, commit the
+    documentation, push, and open the pull request from `audit/final-repairs` into `main`: every
+    task and sweep item, the findings closed and open, the gates' exit codes, and the summary's
+    path. Do not merge it.
 
 ## Outputs
 
