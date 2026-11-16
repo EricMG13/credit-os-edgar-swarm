@@ -27,12 +27,13 @@ import {
   type Context,
   type DocumentRecord,
   type PriorInputs,
+  type ReadinessItem,
   type Reading,
   type Mode,
   type Summary,
 } from "./api";
 import { Breadcrumb, card, ErrorNotice, field, heading, label } from "./layout";
-import { needsCheck } from "./start/limits";
+import { carryAccepted, decided, groupLimits, needsCheck } from "./start/limits";
 import { ReviewSheet } from "./start/ReviewSheet";
 import { documentDescription, LEVELS, PURPOSES, storedName } from "./start/plain";
 import { errorText, useResource } from "./useResource";
@@ -78,6 +79,12 @@ const PATHWAY_CARDS = Object.entries(PATHWAYS).map(([id, pathway]) => ({
 
 type Review = { id: string; answers: Answers; summary: Summary; cap: string };
 type Draft = { id: string; uploaded: Map<File, string>; copied: boolean };
+type Reviewed = {
+  pathway: string;
+  issuerId: string;
+  items: ReadinessItem[];
+  accepted: Set<string>;
+};
 
 function capForPathway(caps: Record<string, string>, pathway: string) {
   const cap = caps[pathway];
@@ -354,7 +361,7 @@ function readinessStatus(
       next: "Add and inspect documents",
     },
     {
-      met: step !== "documents" || review !== undefined,
+      met: step !== "documents",
       whenMet: "Purpose selected",
       next: "Choose a pathway and purpose",
     },
@@ -1157,6 +1164,10 @@ function IntakeForm({
     setSubmitUncertain,
   } = reviewState;
   const draftRef = useRef<Draft | null>(null);
+  // Snapshot of the last review, made when the analyst leaves it by a stepper or Edit button.
+  // The next review uses it once, only for the same issuer id and pathway. "Carry over from
+  // latest run" and "This is a different issuer" clear it.
+  const reviewedRef = useRef<Reviewed | null>(null);
   const active = useRef(false);
   const folderInput = useRef<HTMLInputElement>(null);
 
@@ -1315,6 +1326,7 @@ function IntakeForm({
     setContext(startingContext(prior.context ? template : context, prior));
     setPurposeTouched(Boolean(prior.context));
     setCustomSlug(prior.issuer_id);
+    reviewedRef.current = null;
     setLevel(Object.hasOwn(LEVELS, prior.level) ? prior.level : "basic");
     setTurns(String(prior.max_turns || 32));
     setModel("gpt");
@@ -1411,8 +1423,6 @@ function IntakeForm({
     const summary = await getSummary(draft.id, answers, shownCap);
     requireSummaryCap(summary, shownCap);
     if (!summary.digest) throw new Error("The service did not issue an approval for this run.");
-    setAccepted(new Set());
-    setApproved(false);
     const newestDate = newestOverride ?? newestPeriod(result);
     const dateLimitation =
       newestDate && run.as_of < newestDate
@@ -1426,10 +1436,20 @@ function IntakeForm({
             },
           ]
         : [];
+    const items = [...summary.items, ...dateLimitation];
+    const reviewed = reviewedRef.current;
+    reviewedRef.current = null;
+    setAccepted(
+      reviewed?.pathway === answers.context.run.pathway &&
+        reviewed.issuerId === answers.context.identity.issuer_id
+        ? carryAccepted(reviewed.items, reviewed.accepted, items)
+        : new Set(),
+    );
+    setApproved(false);
     setReview({
       id: draft.id,
       answers,
-      summary: { ...summary, items: [...summary.items, ...dateLimitation] },
+      summary: { ...summary, items },
       cap: shownCap,
     });
   }
@@ -1568,6 +1588,7 @@ function IntakeForm({
 
   function resetIssuer() {
     setCopy(undefined);
+    reviewedRef.current = null;
     setContext(startingContext(template));
     setPurposeTouched(false);
     setCustomSlug(undefined);
@@ -1635,6 +1656,13 @@ function IntakeForm({
   }
 
   function editReviewedInputs(target: FormStep) {
+    if (review)
+      reviewedRef.current = {
+        pathway: review.answers.context.run.pathway,
+        issuerId: review.answers.context.identity.issuer_id,
+        items: review.summary.items,
+        accepted,
+      };
     setReview(undefined);
     goTo(target);
   }
@@ -1904,6 +1932,9 @@ function ReviewConfirmation({
   const confirmation = confirmationFor(synthetic, capText);
   const submitDisabled =
     !checksComplete || !approved || busy !== undefined || (!synthetic && !capAvailable);
+  const { groups } = groupLimits(review.summary.items);
+  const undecided = groups.filter((group) => !decided(group, accepted)).length;
+  const blocker = submitBlocker(undecided, approved);
   return (
     <div className="grid gap-5">
       <div className="grid gap-1">
@@ -1921,9 +1952,15 @@ function ReviewConfirmation({
         onEdit={onEdit}
         onAccept={onAccept}
       />
+      {blocker && (
+        <p id="run-submit-blocker" className="text-sm text-text-secondary">
+          {blocker}
+        </p>
+      )}
       <label className="flex items-start gap-2 text-sm font-semibold">
         <input
           type="checkbox"
+          aria-describedby={blocker ? "run-submit-blocker" : undefined}
           checked={approved}
           disabled={!checksComplete || busy !== undefined || submitUncertain}
           onChange={(event) => {
@@ -1954,6 +1991,12 @@ function ReviewConfirmation({
       </div>
     </div>
   );
+}
+
+function submitBlocker(undecided: number, approved: boolean) {
+  if (undecided > 0)
+    return `${String(undecided)} ${undecided === 1 ? "decision" : "decisions"} left before you can approve.`;
+  return approved ? "" : "Approve the summary to enable Submit.";
 }
 
 function SubmissionCost({ synthetic, capText }: { synthetic: boolean; capText: string | null }) {
