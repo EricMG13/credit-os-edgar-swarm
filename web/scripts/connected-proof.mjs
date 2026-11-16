@@ -202,10 +202,32 @@ async function checkCompanyBand(report, channel) {
   const band = report.getByRole("region", { name: "Company", exact: true });
   await band.getByText("Moody's", { exact: true }).waitFor();
   await band.getByText("B1", { exact: true }).waitFor();
+  await band.getByText("Entered at run start", { exact: true }).waitFor({ state: "visible" });
   const outlook = band.getByText("Negative", { exact: true });
   await outlook.waitFor();
   assert.match(await outlook.getAttribute("class"), /\btext-error-text\b/u);
   await band.screenshot({ path: path.join(artifacts, `${channel}-company-band.png`) });
+}
+
+async function checkOverviewMobile(report, page, channel) {
+  const desktop = page.viewportSize();
+  await page.setViewportSize({ width: 375, height: 844 });
+  await report.getByRole("link", { name: "Overview", exact: true }).click();
+  await page.getByRole("heading", { name: "Overview" }).waitFor();
+  const fits = await page.evaluate(() => {
+    const main = document.querySelector("main");
+    const over = (el) => el.scrollWidth > el.clientWidth;
+    return {
+      cards: document.querySelectorAll("main dl > div").length,
+      wide: [...document.querySelectorAll("main dl > div")].filter(over).length,
+      main: main ? over(main) : true,
+    };
+  });
+  assert.equal(fits.wide, 0, "a headline card overflows at 375px");
+  assert.equal(fits.main, false, "the main region overflows at 375px");
+  console.log(`overview mobile: ${String(fits.cards)} headline cards fit at 375px`);
+  await page.screenshot({ path: path.join(artifacts, `${channel}-overview-mobile.png`) });
+  await page.setViewportSize(desktop);
 }
 
 async function approveRunInputs(page, paidPreview) {
@@ -1271,6 +1293,7 @@ async function checkBrowserRun(browser, service, workspace, channel, brand) {
     fullPage: true,
   });
   await checkCompanyBand(report, channel);
+  await checkOverviewMobile(report, page, channel);
   await checkOverviewTrace(report, page);
   await checkCalendar(report, artifacts, channel, page);
   await checkCharts(report, artifacts, channel, page, run);
@@ -1326,6 +1349,7 @@ async function checkBrowserRun(browser, service, workspace, channel, brand) {
       "revenue",
       "forecast",
       "forecast-mobile",
+      "overview-mobile",
       "modules-mobile",
       "evidence",
       "evidence-record",

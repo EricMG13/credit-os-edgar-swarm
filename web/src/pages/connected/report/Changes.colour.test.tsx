@@ -48,10 +48,19 @@ function need(el: HTMLElement | null) {
 }
 const status = (el: HTMLElement) =>
   ["text-success-text", "text-error-text"].filter((name) => el.classList.contains(name));
-const hidden = (el: HTMLElement) => el.querySelector(".sr-only")?.textContent ?? null;
+const WORDS = /better|worse|unchanged/g;
+/** The tone word drawn in the figure, once and never sr-only; null when no tone word is drawn. */
+const word = (el: HTMLElement) => {
+  expect(el.querySelector(".sr-only")).toBeNull();
+  const found = el.textContent.match(WORDS) ?? [];
+  expect(found.length).toBeLessThanOrEqual(1);
+  return found[0] ?? null;
+};
+const shape = (el: HTMLElement) =>
+  [...el.querySelectorAll("[data-shape]")].map((s) => s.getAttribute("data-shape"));
 
 describe("Changes cards colour a comparable change by the owner's table", () => {
-  it("worse, better and unchanged carry colour and a hidden word", () => {
+  it("worse, better and unchanged carry colour, a visible word and a shape", () => {
     const figure = draw([
       { key: "net_leverage", difference: 0.3 },
       { key: "coverage", difference: 0.5 },
@@ -59,13 +68,16 @@ describe("Changes cards colour a comparable change by the owner's table", () => 
     ]);
     const worse = need(figure("net_leverage"));
     expect(status(worse)).toEqual(["text-error-text"]);
-    expect(hidden(worse)).toBe("worse");
+    expect(word(worse)).toBe("worse");
+    expect(shape(worse)).toEqual(["diamond"]);
     const better = need(figure("coverage"));
     expect(status(better)).toEqual(["text-success-text"]);
-    expect(hidden(better)).toBe("better");
+    expect(word(better)).toBe("better");
+    expect(shape(better)).toEqual(["filled circle"]);
     const flat = need(figure("cash"));
     expect(status(flat)).toEqual([]);
-    expect(hidden(flat)).toBe("unchanged");
+    expect(word(flat)).toBe("unchanged");
+    expect(shape(flat)).toEqual(["ring"]);
   });
 
   it("the Changes measure keys are in the table", () => {
@@ -89,6 +101,7 @@ describe("Changes cards colour a comparable change by the owner's table", () => 
     expect(figure("coverage")).toBeNull();
     const unknown = need(figure("mystery"));
     expect(status(unknown)).toEqual([]);
-    expect(hidden(unknown)).toBeNull();
+    expect(word(unknown)).toBeNull();
+    expect(shape(unknown)).toEqual([]);
   });
 });

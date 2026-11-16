@@ -17,6 +17,7 @@ import { PublishedSource } from "./PublishedTrace";
 
 const NO_DESCRIPTION = "Business description not in this run";
 const NO_RATINGS = "Ratings not entered for this run";
+const ENTERED = "Entered at run start";
 const DESCRIPTION = "Business description";
 const IN_EVIDENCE = "Business description in Evidence";
 
@@ -144,11 +145,14 @@ export function IdentityBand({
         </div>
       </div>
       {ratings.length > 0 ? (
-        <ul className="flex flex-wrap gap-3">
-          {ratings.map((rating, index) => (
-            <RatingTile key={index} rating={rating} />
-          ))}
-        </ul>
+        <div className="grid gap-1">
+          <ul className="flex flex-wrap gap-3">
+            {ratings.map((rating, index) => (
+              <RatingTile key={index} rating={rating} />
+            ))}
+          </ul>
+          <p className="text-xs text-text-secondary">{ENTERED}</p>
+        </div>
       ) : (
         <p className="text-text-tertiary">{NO_RATINGS}</p>
       )}

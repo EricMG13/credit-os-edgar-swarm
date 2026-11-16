@@ -3,6 +3,7 @@ import type { Change } from "../slice";
 import { CellValue } from "./CellValue";
 import { DirectionMark } from "./DirectionMark";
 import { InlineCell } from "./InlineCell";
+import { ToneMark } from "@/pages/connected/report/ToneMark";
 import { TRACE_HOST, TraceControl } from "./TraceControl";
 
 const TONE_CLASS = {
@@ -10,7 +11,6 @@ const TONE_CLASS = {
   worse: "text-error-text",
   flat: "text-text-secondary",
 } as const;
-const TONE_WORD = { better: "better", worse: "worse", flat: "unchanged" } as const;
 
 const VALUE = "text-2xl/8 tabular-nums text-text-primary";
 
@@ -19,11 +19,11 @@ function Direction({ change }: { change: Change }) {
   if (change.change === null) return null;
   return (
     <span
-      className={`inline-flex items-center gap-2 self-end rounded-ds-xs bg-surface-subtle px-1.5 py-1 text-xs font-medium ${TONE_CLASS[change.tone ?? "flat"]}`}
+      className={`inline-flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 self-end rounded-ds-xs bg-surface-subtle px-1.5 py-1 text-xs font-medium ${TONE_CLASS[change.tone ?? "flat"]}`}
     >
       {change.direction === "none" ? null : <DirectionMark direction={change.direction} />}
       {change.change}
-      {change.tone && <span className="sr-only">{TONE_WORD[change.tone]}</span>}
+      {change.tone && <ToneMark tone={change.tone} />}
     </span>
   );
 }

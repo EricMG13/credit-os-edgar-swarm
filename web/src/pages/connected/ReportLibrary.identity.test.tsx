@@ -122,6 +122,15 @@ it("draws each rating as a tile, in order, with Facility beside a facility agenc
   expect(within(el).queryByText(GAP_RATINGS)).toBeNull();
 });
 
+it("captions the ratings as entered at run start, once, only when there are ratings", async () => {
+  const el = await band(fixture({ ratings }));
+  expect(within(el).getAllByText("Entered at run start")).toHaveLength(1);
+  expect(within(el).getByText("Entered at run start")).toBeVisible();
+  cleanup();
+  const none = await band(fixture());
+  expect(within(none).queryByText("Entered at run start")).toBeNull();
+});
+
 it("draws the handoff's description and sector exactly", async () => {
   const el = await band(
     fixture({
