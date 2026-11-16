@@ -173,3 +173,17 @@ describe("published evidence gaps", () => {
     expect(screen.queryByText("Different module gap.")).toBeNull();
   });
 });
+
+it("does not repeat the retained-preview notice inside the Evidence page", () => {
+  const run = { folder: "case", evidence: emptyEvidence } as unknown as PublishedRun;
+  const snapshot = {
+    workspace: { runs: {}, outputs: {}, handoffs: {}, models: [] },
+    chips: {},
+    preview: { reason: "Retained method check; listing withheld." },
+  } as unknown as Snapshot;
+  render(
+    <ReportEvidence snapshot={snapshot} run={run} entries={[]} target="summary" mode="synthetic" />,
+  );
+  expect(screen.queryByRole("note")).toBeNull();
+  expect(screen.getByRole("heading", { name: "Evidence" })).toBeInTheDocument();
+});

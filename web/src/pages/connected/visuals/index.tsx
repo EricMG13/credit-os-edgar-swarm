@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { ChartQualifications } from "./ChartQualifications";
 import { ChartTable } from "@/components/chart/ChartTable";
 import { ChartWithTable } from "@/components/chart/ChartWithTable";
 import { TRACE_HOST } from "@/pages/library/parts/TraceControl";
@@ -30,6 +31,45 @@ function compareLines(a: Drawing, b: Drawing) {
   );
 }
 
+function drawingChart({
+  category,
+  descriptor,
+  published,
+  basis,
+  link,
+  table,
+  frame,
+}: {
+  category: Drawing["category"];
+  descriptor: Record<string, unknown>;
+  published: Record<string, unknown>;
+  basis: ReturnType<typeof usePortfolioBasis>;
+  link: string | undefined;
+  table: Parameters<typeof publishedChart>[0];
+  frame: Parameters<typeof publishedChart>[2];
+}) {
+  let chart: ReactNode;
+  if (category === "chart") {
+    const attested =
+      descriptor.kind === "limits" &&
+      link &&
+      basis &&
+      basis.output === published.id &&
+      basis.sha256 === published.sha256 &&
+      basis.tableLines.includes(table.line);
+    chart = attested
+      ? portfolioLimits(table, basis, frame)
+      : publishedChart(table, descriptor, frame);
+  } else {
+    const drawing = category === "event" ? eventLane(table) : edgeMap(table);
+    chart =
+      drawing === null ? null : (
+        <ChartWithTable {...frame} chart={drawing} table={chartTable(table)} />
+      );
+  }
+  return chart;
+}
+
 interface LegacyVisualsProps {
   output: unknown;
   sections?: unknown;
@@ -47,7 +87,8 @@ export function LegacyVisuals({
 }: LegacyVisualsProps) {
   const published = record(output);
   const basis = usePortfolioBasis();
-  const tables = publishedTables(sections ?? published.sections);
+  const sourceSections = sections ?? published.sections;
+  const tables = publishedTables(sourceSections);
   const drawings = [
     ...byCategory(published, "charts", "chart"),
     ...byCategory(published, "chartGaps", "chart"),
@@ -101,25 +142,7 @@ export function LegacyVisuals({
     };
     const note = word(descriptor.unit) || undefined;
     const frame = { title, note, actions };
-    let chart: ReactNode;
-    if (category === "chart") {
-      const attested =
-        descriptor.kind === "limits" &&
-        link &&
-        basis &&
-        basis.output === published.id &&
-        basis.sha256 === published.sha256 &&
-        basis.tableLines.includes(line);
-      chart = attested
-        ? portfolioLimits(table, basis, frame)
-        : publishedChart(table, descriptor, frame);
-    } else {
-      const drawing = category === "event" ? eventLane(table) : edgeMap(table);
-      chart =
-        drawing === null ? null : (
-          <ChartWithTable {...frame} chart={drawing} table={chartTable(table)} />
-        );
-    }
+    const chart = drawingChart({ category, descriptor, published, basis, link, table, frame });
     return [
       <div className={`${TRACE_HOST} grid min-w-0 grid-cols-[minmax(0,1fr)] gap-2${box}`} key={key}>
         {chart ?? (
@@ -134,6 +157,12 @@ export function LegacyVisuals({
             <ChartTable caption={title} {...chartTable(table)} />
           </>
         )}
+        <ChartQualifications
+          category={category}
+          sections={sourceSections}
+          line={line}
+          evidenceHref={evidenceHref}
+        />
       </div>,
     ];
   });

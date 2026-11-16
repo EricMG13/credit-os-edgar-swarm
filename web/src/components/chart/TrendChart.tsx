@@ -1,6 +1,5 @@
 import {
   CartesianGrid,
-  Line,
   LineChart,
   ResponsiveContainer,
   Tooltip,
@@ -11,6 +10,7 @@ import {
 import { ChartFrame } from "./ChartFrame";
 import { ChartTable } from "./ChartTable";
 import { Mark } from "./marks";
+import { SeriesLine } from "./SeriesLine";
 import { assignSeries, SERIES, type SeriesStyle } from "./series";
 
 interface SeriesData {
@@ -167,33 +167,11 @@ function Chart({ title, periods, series, table, yTicks }: Omit<TrendChartProps, 
             cursor={false}
             content={(props) => <ChartTooltip {...props} table={table} />}
           />
-          {series.map((s, i) => {
-            const style = styles.get(s.name);
+          {series.map((item, index) => {
+            const style = styles.get(item.name);
             if (style === undefined) return null;
             return (
-              <Line
-                key={s.name}
-                dataKey={keyOf(i)}
-                name={s.name}
-                stroke={style.color}
-                strokeWidth={2}
-                strokeDasharray={style.dash}
-                connectNulls={false}
-                isAnimationActive={false}
-                activeDot={false}
-                dot={({ cx, cy, value, index }) =>
-                  typeof cx === "number" && typeof cy === "number" && typeof value === "number" ? (
-                    <Mark
-                      key={index}
-                      marker={style.marker}
-                      color={style.color}
-                      x={cx}
-                      y={cy}
-                      series={s.name}
-                    />
-                  ) : null
-                }
-              />
+              <SeriesLine key={item.name} name={item.name} dataKey={keyOf(index)} style={style} />
             );
           })}
         </LineChart>

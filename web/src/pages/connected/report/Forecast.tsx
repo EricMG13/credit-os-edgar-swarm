@@ -137,7 +137,12 @@ function ForecastCases({
 }) {
   return (
     caseOptions.length > 1 && (
-      <section className="flex flex-col gap-4" aria-labelledby="forecast-case-heading">
+      <section
+        id="forecast-cases"
+        tabIndex={-1}
+        className="flex scroll-mt-4 flex-col gap-4 focus:outline-2 focus:outline-offset-2 focus:outline-focus"
+        aria-labelledby="forecast-case-heading"
+      >
         <div className="flex flex-wrap items-baseline justify-between gap-2">
           <h3 id="forecast-case-heading" className="font-display text-h3">
             Forecast cases
@@ -176,7 +181,7 @@ function ForecastCases({
                       }`}
                     />
                   </span>
-                  <span className="mt-0.5 block pr-7 text-sm text-text-secondary">
+                  <span className="mt-0.5 block pr-14 text-sm text-text-secondary sm:pr-7">
                     <span className="font-display text-h3 tabular-nums">
                       {typeof value === "number"
                         ? new Intl.NumberFormat("en-US", { maximumFractionDigits: 2 }).format(value)
@@ -261,6 +266,134 @@ function ForecastAssumptions({
   );
 }
 
+type ForecastSection = { id: string; label: string };
+
+function ForecastNavigation({ sections }: { sections: ForecastSection[] }) {
+  const [mobileSection, setMobileSection] = useState("");
+  const [active, setActive] = useState(sections[0]?.id ?? "");
+  const activeSection = sections.some(({ id }) => id === active) ? active : sections[0]?.id;
+  function navigate(id: string) {
+    const target = document.getElementById(id);
+    target?.focus();
+    target?.scrollIntoView({ block: "start" });
+    setActive(id);
+  }
+  return (
+    <>
+      <nav aria-label="Forecast sections" className="hidden flex-wrap items-center gap-3 md:flex">
+        <span className="text-xs font-medium text-text-tertiary">On this page</span>
+        {sections.map(({ id, label: name }) => (
+          <button
+            key={id}
+            type="button"
+            aria-current={activeSection === id ? "location" : undefined}
+            className="rounded-md px-2 py-1.5 text-sm text-action underline underline-offset-4 hover:bg-surface-subtle focus-visible:outline-2 focus-visible:outline-focus"
+            onClick={() => {
+              navigate(id);
+            }}
+          >
+            {name}
+          </button>
+        ))}
+      </nav>
+      <details className="rounded-lg border border-border-hairline bg-surface-card px-3 md:hidden">
+        <summary className="cursor-pointer py-2 text-sm font-medium text-action">
+          On this page
+        </summary>
+        <label className="grid gap-1 pb-3 text-sm text-text-secondary">
+          Jump to section
+          <select
+            aria-label="Jump to section"
+            className={field}
+            value={mobileSection}
+            onChange={(event) => {
+              const id = event.currentTarget.value;
+              setMobileSection("");
+              if (id) navigate(id);
+            }}
+          >
+            <option value="">Choose a section</option>
+            {sections.map(({ id, label: name }) => (
+              <option key={id} value={id}>
+                {name}
+              </option>
+            ))}
+          </select>
+        </label>
+      </details>
+    </>
+  );
+}
+
+function forecastSections(model: Model | undefined, hasCases: boolean): ForecastSection[] {
+  return [
+    ...(hasCases ? [{ id: "forecast-cases", label: "Cases" }] : []),
+    ...(model ? [{ id: "forecast-model", label: "Cash flow model" }] : []),
+    ...(model?.register ? [{ id: "forecast-assumptions", label: "Assumptions" }] : []),
+    { id: "forecast-run-charts", label: "Run charts" },
+  ];
+}
+
+function ForecastContent({
+  model,
+  selectedCase,
+  source,
+  handoff,
+  href,
+  view,
+  run,
+}: {
+  model?: Model;
+  selectedCase?: string;
+  source: ((name: string) => ReactNode) | undefined;
+  handoff: OutputEntry | undefined;
+  href: (line: number) => string;
+  view: ReturnType<typeof buildReportView>;
+  run: PublishedRun;
+}) {
+  return (
+    <>
+      {model && (
+        <div
+          id="forecast-model"
+          tabIndex={-1}
+          className="scroll-mt-4 focus:outline-2 focus:outline-offset-2 focus:outline-focus"
+        >
+          <LegacyForecast
+            model={model}
+            selectedCase={selectedCase}
+            source={source}
+            summary={
+              <CashProxy
+                model={model}
+                selectedCase={selectedCase}
+                source={source?.("Cash proxy by scenario")}
+                note={<BasisNote model={model} handoff={handoff} href={href} />}
+              />
+            }
+          />
+        </div>
+      )}
+      {model?.register && (
+        <div
+          id="forecast-assumptions"
+          tabIndex={-1}
+          className="scroll-mt-4 focus:outline-2 focus:outline-offset-2 focus:outline-focus"
+        >
+          <ForecastAssumptions model={model} handoff={handoff} run={run} href={href} />
+        </div>
+      )}
+      <div
+        id="forecast-run-charts"
+        tabIndex={-1}
+        className="scroll-mt-4 focus:outline-2 focus:outline-offset-2 focus:outline-focus"
+      >
+        <RunCharts view={view} folder={run.folder} />
+      </div>
+    </>
+  );
+}
+
 export function Forecast({
   view,
   run,
@@ -288,6 +421,7 @@ export function Forecast({
             Forecast inputs
           </PublishedSource>
         );
+  const sections = forecastSections(model, caseOptions.length > 1);
   return (
     <>
       <header className="grid gap-2">
@@ -318,6 +452,7 @@ export function Forecast({
           </select>
         </label>
       )}
+      {sections.length > 1 && <ForecastNavigation sections={sections} />}
       {model && <ForecastScope model={model} source={source} />}
       <ForecastCases
         caseOptions={caseOptions}
@@ -325,23 +460,15 @@ export function Forecast({
         setChosenCase={setChosenCase}
         source={source}
       />
-      {model && (
-        <LegacyForecast
-          model={model}
-          selectedCase={selectedCase}
-          source={source}
-          summary={
-            <CashProxy
-              model={model}
-              selectedCase={selectedCase}
-              source={source?.("Cash proxy by scenario")}
-              note={<BasisNote model={model} handoff={handoff} href={href} />}
-            />
-          }
-        />
-      )}
-      {model && <ForecastAssumptions model={model} handoff={handoff} run={run} href={href} />}
-      <RunCharts view={view} folder={run.folder} />
+      <ForecastContent
+        model={model}
+        selectedCase={selectedCase}
+        source={source}
+        handoff={handoff}
+        href={href}
+        view={view}
+        run={run}
+      />
     </>
   );
 }

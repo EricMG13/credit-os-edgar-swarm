@@ -1,4 +1,5 @@
-import { Fragment, type ReactNode } from "react";
+import { type ReactNode } from "react";
+import { ForecastTable } from "./ForecastTable";
 import { PathChart } from "@/components/chart/PathChart";
 import { ChartTable } from "@/components/chart/ChartTable";
 import { TrendChart } from "@/components/chart/TrendChart";
@@ -59,16 +60,20 @@ export function gridOf(raw: unknown): Grid | null {
   return { columns, rows };
 }
 
-function ForecastTable({
+function SelectedForecastTable({
   grid: inputGrid,
   title,
   selectedCase,
   downsideNote,
+  limits,
+  source,
 }: {
   grid: Grid;
   title: string;
   selectedCase?: string;
   downsideNote?: string;
+  limits: string[];
+  source?: (label: string) => ReactNode;
 }) {
   const selectedIndexes = inputGrid.columns.flatMap((column, index) => {
     const caseLabel = forecastCaseLabel(column.group, downsideNote);
@@ -89,86 +94,7 @@ function ForecastTable({
               .filter((cell) => cell !== undefined),
           })),
         };
-  const groups: { label: string; span: number }[] = [];
-  for (const column of grid.columns) {
-    const last = groups.at(-1);
-    if (last?.label === column.group) last.span += 1;
-    else groups.push({ label: column.group, span: 1 });
-  }
-  return (
-    // The read-only region scrolls horizontally by keyboard when its columns overflow.
-    // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex
-    <div className="overflow-x-auto" role="region" aria-label={title} tabIndex={0}>
-      <table className="w-full border-collapse text-small">
-        <caption className="sr-only">{title}</caption>
-        <thead className="border-b-2 border-border-hairline">
-          <tr>
-            <th scope="col" rowSpan={2} className="px-3 py-2 text-left">
-              Line item
-            </th>
-            {groups.map((group, index) => (
-              <th
-                key={index}
-                scope="colgroup"
-                colSpan={group.span}
-                className="px-3 py-2 text-center whitespace-nowrap"
-              >
-                {group.label}
-              </th>
-            ))}
-          </tr>
-          <tr>
-            {grid.columns.map((column, index) => (
-              <th
-                key={index}
-                scope="col"
-                className="px-3 py-2 text-right whitespace-nowrap"
-                title={column.start && column.end ? `${column.start} to ${column.end}` : undefined}
-              >
-                {column.label}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {grid.rows.map((row, index) => (
-            <Fragment key={index}>
-              {row.band && grid.rows[index - 1]?.band !== row.band ? (
-                <tr className="bg-surface-subtle">
-                  <th colSpan={grid.columns.length + 1} className="px-3 py-2 text-left">
-                    {row.band}
-                  </th>
-                </tr>
-              ) : null}
-              <tr className={`border-b border-border-hairline ${row.total ? "font-semibold" : ""}`}>
-                <th
-                  scope="row"
-                  className="sticky left-0 bg-surface-card px-3 py-2 text-left whitespace-nowrap"
-                >
-                  {row.label}
-                </th>
-                {row.cells.map((cell, position) => {
-                  const display = word(cell.display);
-                  const reason = word(cell.reason);
-                  const exact = word(cell.exact);
-                  return (
-                    <td
-                      key={position}
-                      className="px-3 py-2 text-right whitespace-nowrap tabular-nums"
-                      title={reason || exact || undefined}
-                      aria-label={reason ? `${display} ${reason}` : undefined}
-                    >
-                      {display}
-                    </td>
-                  );
-                })}
-              </tr>
-            </Fragment>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  );
+  return <ForecastTable grid={grid} title={title} limits={limits} source={source} />;
 }
 
 const FORECAST_LINES = ["Revenue", "Adj EBITDA", "Closing cash", "Closing debt"];
@@ -397,7 +323,7 @@ export function ForecastScope({
         <div className="grid gap-3 lg:grid-cols-2">
           {passages.map((passage, index) => (
             <div key={index} className={TRACE_HOST}>
-              <p className="max-w-prose pr-8 text-small text-text-secondary">{passage}</p>
+              <p className="max-w-prose pr-12 text-small text-text-secondary sm:pr-8">{passage}</p>
               <div className="absolute right-0 top-0">
                 {source?.(`Model scope qualification ${String(index + 1)}`)}
               </div>
@@ -513,14 +439,18 @@ export function LegacyForecast({
             selectedCase={selectedCase}
             downsideNote={notes.find((note) => note.startsWith("Downside case is"))}
           />
-          <ForecastTable
+          <SelectedForecastTable
+            limits={limits}
+            source={source}
             grid={grid}
             title="Cash flow model"
             selectedCase={selectedCase}
             downsideNote={notes.find((note) => note.startsWith("Downside case is"))}
           />
           {other && (
-            <ForecastTable
+            <SelectedForecastTable
+              limits={limits}
+              source={source}
               grid={other}
               title="Other forecast cases"
               selectedCase={selectedCase}

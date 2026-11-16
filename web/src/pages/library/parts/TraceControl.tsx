@@ -54,7 +54,7 @@ export function TraceButton({
         aria-label={label}
         onPress={open}
         className={cx(
-          "flex size-7 flex-none cursor-pointer items-center justify-center rounded-ds-sm border opacity-0 transition-opacity duration-150 group-hover/trace:opacity-100 focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 in-data-[sources=on]:opacity-100 motion-reduce:transition-none [@media(hover:none)]:opacity-100",
+          "flex size-7 flex-none cursor-pointer items-center justify-center rounded-ds-sm border opacity-0 transition-opacity duration-150 group-hover/trace:opacity-100 focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 in-data-[sources=on]:opacity-100 motion-reduce:transition-none max-[480px]:size-11 [@media(hover:none)]:opacity-100",
           onDark
             ? "border-white/30 bg-transparent text-white hover:bg-white/10 focus-visible:ring-offset-surface-inverse"
             : "border-border-hairline bg-surface-card text-text-tertiary hover:border-action-subtle-hover hover:bg-action-subtle hover:text-action",

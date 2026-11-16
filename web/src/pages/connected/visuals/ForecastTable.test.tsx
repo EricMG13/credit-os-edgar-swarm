@@ -1,0 +1,153 @@
+import { fireEvent, render, screen, within } from "@testing-library/react";
+import { expect, it } from "vitest";
+import { ForecastTable } from "./ForecastTable";
+import type { Grid } from "./LegacyForecast";
+
+const period =
+  "Base period is the twelve months to 30 June 2026; Financial foundation prints these twelve-month figures in the H1 2026 column of its credit-metrics table.";
+const interest =
+  "Base interest is cash interest paid on debt only (USD 776 million); forecast interest_rate is all-in and includes VICI and GLPI cash rent recorded as interest, so forecast interest is not comparable with the base-period cell and coverage on forecast interest is all-in cover.";
+function fixture(): Grid {
+  return {
+    columns: [
+      { label: "YTD (H1 2026)", group: "Year to date", start: "2026-01-01", end: "2026-06-30" },
+      { label: "FY2027E", group: "Base case", start: "2027-01-01", end: "2027-12-31" },
+    ],
+    rows: [
+      {
+        label: "Revenue",
+        band: "Operating",
+        total: false,
+        cells: [
+          { status: "value", exact: "11648", display: "11,648" },
+          { status: "value", exact: "11812.2368", display: "11,812.24" },
+        ],
+      },
+      {
+        label: "Interest",
+        band: "Cash",
+        total: false,
+        cells: [
+          { status: "value", exact: "776", display: "776" },
+          { status: "value", exact: "2141", display: "2,141" },
+        ],
+      },
+      {
+        label: "Zero cash",
+        band: "Cash",
+        total: false,
+        cells: [
+          { status: "value", exact: "0", display: "0.00" },
+          { status: "value", exact: "0", display: "0.00" },
+        ],
+      },
+      {
+        label: "Gross profit",
+        band: "Operating",
+        total: false,
+        cells: [
+          {
+            status: "na",
+            exact: null,
+            display: "n.a.",
+            reason: "The input does not record gross profit.",
+          },
+          { status: "nm", exact: null, display: "n.m.", reason: "This line is not projected." },
+        ],
+      },
+    ],
+  };
+}
+
+it("keeps exact period labels, dates and values with the recorded qualification at the header and interest row", () => {
+  render(
+    <ForecastTable
+      grid={fixture()}
+      title="Model"
+      limits={[period, interest]}
+      source={(name) => <a href="#inputs">{name} source</a>}
+    />,
+  );
+  const header = screen.getByRole("columnheader", { name: /YTD \(H1 2026\)/ });
+  expect(header).toHaveAttribute("title", "2026-01-01 to 2026-06-30");
+  expect(header).toHaveTextContent(period);
+  const row = screen.getByRole("row", { name: /^Interest/ });
+  expect(row).toHaveTextContent(interest);
+  expect(within(row).getByRole("cell", { name: "776" })).toBeInTheDocument();
+  expect(within(row).getByRole("cell", { name: "2,141" })).toBeInTheDocument();
+  expect(screen.getByRole("cell", { name: "11,812.24" })).toHaveAttribute("title", "11812.2368");
+});
+
+it("keeps zero visible and restores each unavailable row and its exact reasons on request", () => {
+  render(<ForecastTable grid={fixture()} title="Model" limits={[]} />);
+  expect(screen.getAllByRole("cell", { name: "0.00" })).toHaveLength(2);
+  expect(screen.queryByRole("rowheader", { name: "Gross profit" })).toBeNull();
+  fireEvent.click(screen.getByRole("button", { name: "Show 1 unavailable rows and reasons" }));
+  expect(screen.getByRole("rowheader", { name: "Gross profit" })).toBeInTheDocument();
+  expect(screen.getByText("The input does not record gross profit.")).toBeVisible();
+  expect(screen.getByText("This line is not projected.")).toBeVisible();
+  expect(screen.getByRole("button", { name: "Hide unavailable rows" })).toHaveAttribute(
+    "aria-expanded",
+    "true",
+  );
+});
+
+it("retains qualifications at table level when the period association is ambiguous or absent", () => {
+  const grid = fixture();
+  const first = grid.columns[0];
+  if (!first) throw new Error("Missing fixture column");
+  grid.columns[1] = { ...first };
+  render(<ForecastTable grid={grid} title="Model" limits={[period]} />);
+  expect(screen.getByText("Base-period qualification")).toBeInTheDocument();
+  expect(screen.getByText(period)).toBeInTheDocument();
+  expect(screen.queryByText("Period qualification — recorded label retained")).toBeNull();
+});
+
+it("never hides an unknown cell state or a numeric operand even when its status says unavailable", () => {
+  const grid = fixture();
+  grid.rows = [
+    {
+      label: "Unknown state",
+      band: "",
+      total: false,
+      cells: [
+        { status: "unknown", display: "?" },
+        { status: "unknown", display: "?" },
+      ],
+    },
+    {
+      label: "Operand present",
+      band: "",
+      total: false,
+      cells: [
+        { status: "na", exact: "0", display: "n.a." },
+        { status: "nm", exact: null, display: "n.m." },
+      ],
+    },
+  ];
+  render(<ForecastTable grid={grid} title="Model" limits={[]} />);
+  expect(screen.getByRole("rowheader", { name: "Unknown state" })).toBeInTheDocument();
+  expect(screen.getByRole("rowheader", { name: "Operand present" })).toBeInTheDocument();
+  expect(screen.queryByRole("button")).toBeNull();
+});
+
+it("does not bind a shortened period token to a longer recorded period", () => {
+  const grid = fixture();
+  const first = grid.columns[0];
+  if (!first) throw new Error("Missing fixture column");
+  first.label = "YTD (H1 202)";
+  render(<ForecastTable grid={grid} title="Model" limits={[period]} />);
+  expect(screen.getByText("Base-period qualification")).toBeInTheDocument();
+  expect(screen.getByText(period)).toBeInTheDocument();
+  expect(screen.queryByText("Period qualification — recorded label retained")).toBeNull();
+});
+
+it("shows an entirely unavailable table and every reason without requiring expansion", () => {
+  const grid = fixture();
+  grid.rows = grid.rows.filter((row) => row.label === "Gross profit");
+  render(<ForecastTable grid={grid} title="Model" limits={[]} />);
+  expect(screen.getByRole("rowheader", { name: "Gross profit" })).toBeInTheDocument();
+  expect(screen.getByText("The input does not record gross profit.")).toBeVisible();
+  expect(screen.getByText("This line is not projected.")).toBeVisible();
+  expect(screen.queryByRole("button")).toBeNull();
+});

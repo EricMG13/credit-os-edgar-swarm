@@ -4,6 +4,53 @@ Keep one running record here. A pass applies only to the stated scope. Earlier v
 engine is in [EricMG13/final-workflow](https://github.com/EricMG13/final-workflow)'s
 `VERIFICATION.md`, which also keeps the retained runs this copy leaves out.
 
+## 2026-11-16 — Financial qualifications and five reading-design fixes
+
+- Forecast preserves all recorded labels, dates, units and values while placing
+  exact base-period qualifications beside uniquely matched period headers and
+  exact interest-basis qualifications in the Interest row. Ambiguous/unrecognised
+  period tokens keep a visible table-level note; no analytical relabelling.
+- Historical chart qualifications now follow their owning chart, with paragraph
+  traces distinct from table traces. Ownership requires one matching section and
+  one table; source-bearing passages point to Evidence instead of leaking references.
+- Compact model tables hide only wholly unavailable/unmodelled rows without exact
+  operands, retain zeros/unknown states, and expand every missing-data reason.
+  Entirely unavailable tables remain visible. Forecast section jumps precede scope
+  and preserve keyboard focus; Evidence's duplicate preview notice is removed.
+- Under 768px the incumbent rail becomes bottom navigation and reading width grows;
+  narrow source controls are 44px, with matching text clearance. Cash charts use a
+  keyboard-scrollable minimum plot width under 480px to separate period labels.
+  Shared line rendering was extracted without changing points/labels/styles.
+- Two Astra confidence reviews ranked (1) qualification ownership/financial fidelity,
+  (2) missing versus zero, (3) source identity, (4) responsive width/trace overlap,
+  (5) navigation/focus/admission. Repaired partial-token association, all-missing
+  empty tables and mobile case/qualification text clearance; targeted regressions
+  cover them. Reviewers report no outstanding issue in the inspected scope.
+- 177 focused tests across 15 files pass; final Forecast/table subset 10/10 passes.
+  TypeScript, changed-file ESLint/Prettier and Python quality gate pass. Fallow
+  retains five inherited findings and labels `gapRecords` as introduced; its exact
+  function is unchanged from `fbcc5ac` (SHA-256
+  `554ac0b77d38e6a36775e67ed4d9b749f1965bdc38194b16f2a1cc21baf83753`).
+  No suppressions. Newly introduced chart duplication and changed-function
+  complexity were resolved; unchanged gap parsing was not refactored for this task.
+- Fresh offline install/build; source tree
+  `01e1525e6735cf738bf1eb2591ac546b1f270894`. Chrome 157.0.8103.78 run
+  `20261116-033501-01` and Edge 157.0.4341.60 run `20261116-033518-01` each pass
+  all 33 synthetic upload-to-report checks on macOS. Added browser checks cover
+  Forecast jumps, 390px main width, 44px source targets and nonoverlapping period
+  labels. Evidence: `proof-artifacts/run-ySH02V/proof.json` (source snapshot, no ZIP).
+- Fidelity check: Astra inspected actual retained Caesars at 1728x996 and 390x844;
+  Credit OS palette/type/icon language preserved, qualifications visible locally,
+  one Evidence notice, working keyboard jumps/trace dismissal/focus restoration,
+  mobile chart scroll and separated labels. Judgement card height about 334px
+  versus the reviewed ~650px. Viewport restored and reviewer tab closed.
+- User preview opened at port 58340, actual run `20261115-114658-01`; its assets
+  exactly match the tested build. CP-1 and CP-2G downloads retain their original
+  SHA-256 identities. Preview remains read-only and retains its admission notice.
+- Backend/Python pins match RBOT-HTML `256101a`; React dependencies unchanged.
+  No providers, Signal work or tournaments. ZIP not built/published; both browsers
+  still require acceptance on the actual Windows work PC.
+
 ## 2026-11-16 — Remaining Modules and ReportReader findings resolved
 
 - Verified both findings using `fallow inspect --file ... --format json` before
@@ -941,52 +988,3 @@ $ signal --root <root> ingest
 ```
 - Known limits: the one system DNS lookup per hop cannot be interrupted; `webfetch.py` reuses its connect timeout for the TLS handshake, so a slow connect plus a hung handshake can run to about twice the 10-second deadline (no request is sent after the deadline); two simultaneous passes may both fetch a due source; Windows not run.
 - Not verified: Windows; a live failing source, redirect, or conditional-GET (etag) against a real server; `ingest --loop`; stories were not compared with the feeds by hand beyond the five lines shown; the "no output" second ingest was read as "not due", not checked against the interval setting.
-
-## 2026-11-13 — Issuer library screens redrawn from a screen-to-component map; source references and audit material moved to Evidence (branch `claude/report-redesign-evidence`)
-Scope: presentation only, offline, base `517b9fb`, head `d47e3ba` before this entry; no provider or model call, no change to analysis, module instructions or the Python that builds `data.js` (no Python outside `tests/` changed; under `apps/` only the README and `fixtures/shape-key.json` beside the web files changed; under `tests/` 19 files changed, among them `test_library_reader_refs.py`, `test_cpos_launch.py`, `test_run_start_page.py`, `test_library_page_browser.py`, `test_library_changes_browser.py` and the `browser_probe_*.js` helpers, edited to match the new pages). Design: `docs/visualisations/2026-11-13-screen-component-map.md`, plan `docs/superpowers/plans/2026-11-13-library-redesign.md`. Rules applied: findings pages show findings and one trace control per paragraph, row or figure; source references, file names, hashes, ids, calculation ids, registers, gap ledgers and run codes are drawn only on the Evidence page and its drawer; text written for another module is drawn nowhere, search and drawer included; a run is named by period and pathway; nothing is computed or reworded (allowed: counts of listed items, the elapsed clock on Run activity, date display); motion only for live run state.
-Reviews: tasks 0 to 13 each had a task review and fix rounds (T1 1, T2 1, T3 3, T4 1, T5 2, T6 2, T7 1, T8 1, T9 2, T10 3, T11 1, T12 2, T13 1; the third rounds from a root-cause plan); two end batches closed 30 deferred Low items. Whole-branch review at `ac1164f`: changes needed, 2 High (trace controls dead on Forecast and Changes; search and the drawer reached text written for another module), 6 Medium, 8 Low. A simplification review recommended four rewrites and deletions and compacting the classifier answer key (same parsed JSON). Fix wave `7881b72..47b8f28`, round 2 `53f4070`, round 3 `d47e3ba` (an Evidence search hit is matched by module and line together); each round was re-reviewed, and the re-review of `d47e3ba` approved with no High or Medium finding open.
-Fidelity check (probe output at `53f4070`; the controller reports the same four checks pass at `d47e3ba` with these figures, real run `tdg-proof-snapshot-opus-002`, TransDigm, as of 30 September 2024, credit snapshot, earlier methods): findings, 19 findings routes, 0 failures, 2,463 figure tokens each found in the run's handoff data, and no Basis line, file name, hash, calculation id, method code, register id, run code or run folder in page text; evidence, 9,179 handoff cells present on the Evidence page across 13 modules, 0 failures (inter-module columns excluded by rule); hidden, 45 hidden items absent on 111 routes, 0 failures; overflow, 108 route and width checks, 0 failures. The same four checks pass on a copy of `apps/issuer-library/fixtures/synthetic-new-format`. Before and after the fix wave the visible text of 18 of the 19 findings routes is identical; Forecast differs only by the model's hash being replaced with its period-and-pathway label. On the real run the Gaps tile and tab badge both read 97 (plus 39 ledger rows and 11 model scope limits in their own group heads) and Calculations reads 232 (plus 11 comparison rows and 2 method notes).
-Reader check, scope: ONE real run (the run above, TransDigm, earlier methods), read by the controller from 1440 px screenshots at `ac1164f` (Overview, Financial foundation, Changes, Forecast) against the September VMO2 reference (source readiness screen). Verdict: pass with issues. Holds: judgement first on every page; status and register tables became typed components; no source, file, hash or id text on findings pages; one trace control per paragraph, card and figure. Issues left open: chart bar labels are the data's raw values with no thousands separators ("6585"); chart footnotes carry page locators written by the module ("page 153"); two runs with the same period and pathway read identically; the first Forecast card leaves blank space beside a taller neighbour. The Evidence page was not part of this read, Run activity was read on fixture runs only, and the fix wave after `ac1164f` was checked by probes and tests, not re-read by eye.
-Gates, by who measured and at which commit: at `d47e3ba` node tests (`node --test apps/issuer-library/credit_os/web/*.test.cjs`) 787 passed, 0 failed, exit 0 (measured by the controller and again by the author of this entry), and the library rebuild exit 0 (controller); at `53f4070`, the code before round 3, the controller measured the five library pytest files (`tests/test_update_library.py tests/test_library_index.py tests/test_library_reader_refs.py tests/test_issuer_library_packaging.py tests/test_context_form.py`) 174 passed exit 0 (also measured by the author of this entry at `53f4070`, node then 786 passed), the quality gate 0 findings, and the browser tests per file, every file exit 0: `test_library_page_browser.py` 102 passed 1 skipped (an opt-in screenshot test), `test_library_changes_browser.py` 8, `test_model_shell_browser.py` 7, `test_run_start_page.py` 144, `test_cpos_launch.py` 8 browser-marked, 269 passed and 1 skipped in all. Round 3 changed `evidence.js`, `screen.js`, one node test file and one line of `test_library_page_browser.py`; at `d47e3ba` its implementer re-ran the two library browser files (102 passed 1 skipped; changes passed), the five pytest files and the quality gate, all exit 0, and the controller did not re-run those.
-Merge with `main` at `d941eef` (79 commits; conflicts in this file, `static.test.cjs` and `tests/test_library_page_browser.py`): both records kept; the branch's tests kept with `main`'s pathway titles ("Full credit assessment" for `credit_snapshot`) in the assertions that read them; `main`'s new lite-run browser test proves CP-2 wrote the Overview lead from the key findings' trace controls, because the redesigned Overview draws no "Written by" link. On the merged tree, each exit 0: node tests 787 passed; the five library pytest files 176 passed; quality gate against `d941eef` 0 findings; `tests/test_cpos_launch.py` and `tests/test_run_start_page.py` without browser tests 709 passed, 1 skipped (the paid live test); browser tests per file 274 passed, 1 skipped (changes 8, model shell 7, CP-OS launch 10, run start 147, library page 102 and the opt-in skip; the two tests that first failed were fixed and re-run, not their whole files); library rebuild and the four run-level checks with the figures above. Not re-done after the merge: the reader check, and any read of a lite run in the redesigned pages beyond that one synthetic test.
-Open for the owner: the run name does not separate two runs with the same period and pathway; passages draw identifiers and file names as the module wrote them (a module-instruction follow-up); off-contract Markdown inside a passage (a fenced block, a table) is drawn raw or only in Evidence; a module with two saved outputs can share a line number between outputs, so an Evidence search hit could mark the first output's row (no such run exists); excluded run folder names appear under "Not shown" on the library home; an earlier-format Overview lists no dates; at 390 px a scatter chart scrolls in an unfocusable region; "Technical audit" is no longer a navigator search entry; the pull request is about 11,700 added lines against the 800-line guide (only `517b9fb..85cc2d6` stands alone as a separate pull request).
-Not verified: the reader check covers one run, one issuer and earlier methods only; no new-format real run exists; print, forced-colours and screen-reader behaviour were not exercised by a person; real keyboard presses (the tests use focus and click); browsers other than Chrome; Run activity against a live service; the full non-browser Python suite (weekly in CI), of which only the named files ran.
-
-## 2026-11-13 — Full and lite credit assessments; short credit snapshot deactivated (branch `claude/lite-full-credit-assessment`)
-Scope: offline only; no provider or model call. `credit_snapshot` is titled "Full credit assessment"; the new `lite_credit_assessment` (CP-0, CP-1, CP-1A, CP-2, CP-2A; no CP-MODEL, so no forecast) is offered on the run-start page; `short_snapshot` stays wired, is not offered, and a new run of it is refused at the launcher, the run-start summary and the inbox submit. Ruling: `docs/rulings/2026-11-13-full-and-lite-credit-assessments.md`.
-- Synthetic lite run, no model: `test_the_lite_pathway_runs_end_to_end_to_a_verified_delivery_with_a_synthetic_provider` reaches a verified delivery with all nine report blocks populated and no forecast published (`cp_forecast_published` false, no "Model not published" line, as nothing was requested). A second synthetic lite run plans CP-8 last against a lite prior and delivers the Changes pack, and the library renders a lite run with the Forecast page stating that no forecast was published. These prove the pipeline, not model output.
-- Prompt-size ceilings are tests per pathway; lite measures 392,429 characters (CP-1 5,717 fewer than with CP-MODEL) against 420,000 (table in the ruling).
-- Tests: `PYTHONPATH=src:. uv run pytest tests/test_cpos_launch.py tests/test_cpos_scale.py tests/test_context_form.py tests/test_run_start_page.py tests/test_run_start_scheduler.py tests/test_changes.py tests/test_credit_os_catalogue.py -q`: exit 0, 1807 passed, 1 skipped (the paid test); library, scheduler, service, packaging and update tests: exit 0, 500 passed, 1 skipped.
-- Page logic: `node --test` on reader, static, calendar and changes `.test.cjs`: exit 0, 394 pass, 0 fail (re-run after the final fix wave).
-- Final fix wave: starting a run from a past short-snapshot run keeps the default pathway, does not mark it carried and says the short credit snapshot is no longer offered (page test); a start from an offered-pathway run keeps its plain message (page test); the lite card names the credit agreement (page test); the README names the lite option.
-- `uv run python tools/quality_gate.py`: exit 0, 0 findings in 13 changed files (1,171 changed lines).
-- Not accepted: no reader check of a real lite run against the September VMO2 reference (AGENTS.md requires one for a presentation change), so the change is built, not accepted, until one real lite run is read. No lite run has been made; its cost (USD 5.07 baseline, measured before the 2026-11-13 method change) is an estimate. The page was not opened in a browser by hand; no lite case is in `model_testing/configs.py`.
-
-## 2026-11-13 — Prompt-first redesign of CP-8, forecast inputs and prose check 6 (PRs 84-91)
-Scope: synthetic tests and retained-data comparisons only. No provider was called. No live model has been sent any instruction changed here.
-
-What changed
-- Prose check 6 (PR 85): an ID is a cell of a column headed `ID` or ending ` ID` (ruling E7); 27 lines deleted. Retained: 974 files, 1 wrong refusal removed, 0 added, no ID-shaped value lost.
-- CP-8 (PRs 86, 87, 89): a pack measure with no row is refused; a row may print its own difference; a fact row is read in every cell; value cells must equal the pack's value (no grouping comma), unit and period; Basis items are `Run comparison` or a module handoff of a run in which the module ran; `Method change` is required only when both runs record `preset` (E1). Deleted: the trend word list (E11), the reading of numbers in words, list tolerance and cross-line joining (E3), the Basis file-name blacklist, the phrase ban. `methods/cp8.md` rewritten once (R1-R10), so runs holding a CP-8 handoff show "Earlier methods" (E10).
-- Forecast (PRs 88, 90, 91): the block states `currency`; delivered units read `<currency> millions`; the stated currency must be named in the Financial foundation handoff; a block with `scale` and no `currency` is refused or withheld; a block with neither reads USD millions as before; Net debt data Period is checked at acceptance; the `LTM Qn YYYY` balance path is deleted (397 lines); the instruction names operands by `row` and `period` only.
-
-Evidence (retained data)
-- CP-8: the one retained handoff with a pack (tdg-proof-snapshot-opus-002) gives the same 6 issues throughout (two reworded); page verdicts byte-identical across 974 files; digit reading unchanged across 280,974 lines and a 111,692-case comparison.
-- Forecast: every retained block re-derives byte-identically apart from reworded withheld reasons in one calculation file; all 23 retained Financial foundation handoffs name USD.
-- LTH run 20261112-164724-01: untouched; a relaunch re-derives a calculation file that differs from the delivered one in 25 cells (24 reworded reasons, 1 earlier limit text), so its delivery id would change.
-
-Not demonstrated
-- Any model's first attempt under the new CP-8 forms, the `currency` key, the Net debt Period forms, or balances printed as rows under period columns.
-- A non-USD issuer end to end: Financial foundation's chart tables are captioned `US$m`, so USD may always count as named.
-- 2 of 4 retained Financial foundation handoffs print cash or undrawn only in one-row-per-period tables; under the new instruction those are stated missing unless Financial foundation prints them as rows.
-
-Recorded limits
-- CP-8: a withheld size written in words is refused only when a listed unit word directly follows it; a `Not comparable` row can state a movement as a rate; a row allowed its own difference also passes another withheld difference of the same size; another module's name beside the right code passes in Basis; a fact-row cell such as `30/09/2024` is refused when its number equals a withheld size.
-- Forecast: a handoff naming the stated currency anywhere passes; one row in another currency passes.
-- Deferred: deletion of the `column` path and per-row unit reader, until a proof run shows how balances are printed (E9).
-
-Superseded reviewer probes (E6 and controller rulings of 2026-11-13): `swarm/probe_cp8.py` P3, `g70/p2_gbp_caption.py`, `g50/probe_split_tables.py`, `gaps4_ordinal_neighbour_leak.py`, `gaps4_spelled_fuzz.py`, the `thirty` lines of `counts_change_noun_leak.py`, `c1-review-precise/probe_empty_register_hint.py`, `f1-rereview/p7_token_rule_table.py` (lower-case rows), and the probes pinning the deleted per-cell currency comparison.
-
-Open for the owner (predate this work): billions unit cells read as millions; `£000`/`€000`/`GBP000`/`USD 000` not read as thousands; the pack reads the unit of `Free cash flow (CFO less capex)` as `CFO less capex`; a forecast block naming debt under an `LTM` column is accepted; digits split by markup pass the withheld-size check; with an explicit selection the checker requires no cause though the method text says `Unresolved`.
-
-Ledger: P1 agent=mx-scaffold fix-rounds=0 gates-first-pass=y; C1 agent=mx-feature fix-rounds=0 gates-first-pass=y; C2 agent=mx-feature fix-rounds=1 gates-first-pass=y; C3 agent=mx-feature fix-rounds=1 gates-first-pass=y; F1 agent=mx-feature fix-rounds=1 gates-first-pass=y; F2 agent=mx-feature fix-rounds=1 gates-first-pass=y; F3 agent=mx-feature fix-rounds=0 gates-first-pass=y; Z0 agent=mx-scaffold fix-rounds=0 gates-first-pass=n/a.

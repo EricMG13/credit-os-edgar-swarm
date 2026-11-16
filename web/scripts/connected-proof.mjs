@@ -745,6 +745,7 @@ async function checkCharts(report, artifacts, channel, page) {
   await checkPortfolioEvidence(report, modules, artifacts, channel, page);
   await section("Forecast").click();
   await checkForecastEvidence(report, artifacts, channel, page);
+  await checkReadingLayout(report, page, channel);
   await checkForecastRunCharts(report, page, sourceHref);
   await checkReportEvidence(report, page, channel);
 }
@@ -786,6 +787,47 @@ async function checkForecastPresentation(report, page, channel) {
   assert.equal(await comparison.getByRole("rowheader").count(), 2);
   await scope.scrollIntoViewIfNeeded();
   await page.screenshot({ path: path.join(artifacts, `${channel}-forecast.png`) });
+}
+
+async function checkReadingLayout(report, page, channel) {
+  const desktop = page.viewportSize();
+  const navigation = report.getByRole("navigation", { name: "Forecast sections", exact: true });
+  await navigation.getByRole("button", { name: "Cash flow model", exact: true }).click();
+  await page.waitForFunction(() => document.activeElement?.id === "forecast-model");
+  await page.setViewportSize({ width: 390, height: 844 });
+  await report
+    .locator("summary")
+    .filter({ hasText: /^On this page$/u })
+    .click();
+  await report
+    .getByRole("combobox", { name: "Jump to section", exact: true })
+    .selectOption("forecast-model");
+  await page.waitForFunction(() => document.activeElement?.id === "forecast-model");
+  const chart = report.getByRole("figure", { name: "Cash proxy by scenario", exact: true });
+  await chart.getByRole("radio", { name: "Chart", exact: true }).check();
+  const source = chart.getByRole("button", {
+    name: "Show sources for Cash proxy by scenario",
+    exact: true,
+  });
+  const box = await source.boundingBox();
+  assert.ok(box && box.width >= 44 && box.height >= 44);
+  const main = await page.locator("main").boundingBox();
+  assert.ok(main && main.x === 0 && main.width === 390);
+  await chart.scrollIntoViewIfNeeded();
+  await page.waitForFunction(() => document.documentElement.scrollWidth === 390);
+  const labels = await chart.locator("svg text").evaluateAll((nodes) =>
+    nodes
+      .filter((node) => /^FY\d{4}E$/u.test(node.textContent ?? ""))
+      .map((node) => {
+        const rect = node.getBoundingClientRect();
+        return { left: rect.left, right: rect.right };
+      })
+      .sort((a, b) => a.left - b.left),
+  );
+  assert.ok(labels.length >= 2);
+  for (let i = 1; i < labels.length; i += 1) assert.ok(labels[i].left >= labels[i - 1].right);
+  await page.screenshot({ path: path.join(artifacts, `${channel}-forecast-mobile.png`) });
+  await page.setViewportSize(desktop);
 }
 
 async function checkDebtEvidence(report, modules, artifacts, channel, page) {
@@ -1063,6 +1105,7 @@ async function checkBrowserRun(browser, service, workspace, channel, brand) {
       "portfolio-limits",
       "revenue",
       "forecast",
+      "forecast-mobile",
       "modules-mobile",
       "evidence",
       "evidence-record",
@@ -1088,6 +1131,7 @@ async function checkBrowserRun(browser, service, workspace, channel, brand) {
       "dated instrument quotes, decision and recovery qualification",
       "selected workbook attestation, portfolio limits and proposal qualification",
       "forecast chart and model",
+      "Forecast section jumps, full mobile reading width, 44px traces and separated chart period labels",
       "forecast qualifications precede cases and all-case comparison remains visible",
       "compact module and first-section navigation at 390px with complementary 1000/1001px breakpoints",
       "chart source control visible on hover with Show sources off",

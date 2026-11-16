@@ -34,29 +34,37 @@ export function Shell({
           return section ? [{ ...item, href: section.href }] : [];
         });
   return (
-    <div className="flex h-screen bg-surface-canvas text-text-primary">
-      <aside style={{ width: 68 }} className="flex h-full max-h-full max-w-full py-1 pl-1">
-        <div className="flex w-auto flex-col rounded-xl bg-primary pt-5 ring-1 ring-secondary ring-inset">
-          <div className="flex justify-center px-3">
+    <div className="flex h-screen min-h-0 flex-col bg-surface-canvas text-text-primary min-[768px]:flex-row">
+      <aside className="order-last flex h-16 w-full shrink-0 px-1 pt-1 min-[768px]:order-first min-[768px]:h-full min-[768px]:w-[68px] min-[768px]:py-1 min-[768px]:pl-1">
+        <div className="flex h-full w-full flex-row items-center rounded-xl bg-primary px-2 py-1 ring-1 ring-secondary ring-inset min-[768px]:w-auto min-[768px]:flex-col min-[768px]:items-stretch min-[768px]:px-0 min-[768px]:py-0 min-[768px]:pt-5">
+          <div className="flex shrink-0 justify-center px-2 min-[768px]:px-3">
             <img src={symbol} alt="" width="24" height="24" className="size-6" />
           </div>
-          <nav aria-label="Areas">
-            <ul className="mt-5 flex flex-col gap-0.5 px-3.5">
+          <nav aria-label="Areas" className="min-w-0 flex-1">
+            <ul className="flex h-full items-center justify-around gap-0.5 px-1 min-[768px]:mt-5 min-[768px]:flex-col min-[768px]:items-stretch min-[768px]:justify-start min-[768px]:px-3.5">
               {items.map((item) => (
-                <li key={item.area}>
+                <li
+                  key={item.area}
+                  className="flex min-w-0 flex-1 flex-col items-center min-[768px]:flex-none"
+                >
                   <NavButton
                     current={item.area === current}
                     href={item.href}
                     label={item.label}
                     icon={item.icon}
                   />
+                  <span className="max-w-full truncate text-xs text-fg-quaternary min-[768px]:hidden">
+                    {item.label}
+                  </span>
                 </li>
               ))}
             </ul>
           </nav>
         </div>
       </aside>
-      <main className={`min-w-0 flex-1 overflow-y-auto${bleed ? "" : " p-8"}`}>{children}</main>
+      <main className={`min-h-0 min-w-0 flex-1 overflow-y-auto${bleed ? "" : " p-4 sm:p-8"}`}>
+        {children}
+      </main>
     </div>
   );
 }

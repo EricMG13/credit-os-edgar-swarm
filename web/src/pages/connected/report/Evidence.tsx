@@ -423,11 +423,6 @@ export function ReportEvidence({
           />
         ))}
       </nav>
-      {snapshot.preview && (
-        <p role="note" className={card}>
-          {snapshot.preview.reason}
-        </p>
-      )}
       {tab === "Summary" && (
         <section className={card}>
           <h3 className={heading}>Run evidence</h3>

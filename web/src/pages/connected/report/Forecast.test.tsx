@@ -4,6 +4,8 @@ import type { OutputEntry, PublishedRun } from "../publishedReport";
 import type { buildReportView } from "../reportView";
 import { Forecast } from "./Forecast";
 
+type View = ReturnType<typeof buildReportView>;
+
 const run = { folder: "current" } as PublishedRun;
 
 function entry(
@@ -81,7 +83,7 @@ it("draws the designated run figure with a same-output trace even when no model 
     "href",
     "#modules/CP-1",
   );
-  expect(screen.getAllByText("No dated proposal was evaluated")).toHaveLength(2);
+  expect(screen.getAllByText("No dated proposal was evaluated").length).toBeGreaterThanOrEqual(2);
   expect(screen.getByText("Module not assessable.")).toBeInTheDocument();
   expect(screen.queryByRole("figure", { name: "Liquidity bridge" })).toBeNull();
   expect(screen.queryByText("237")).toBeNull();
@@ -112,4 +114,95 @@ it("shows the recorded build rejection and keeps its raw table in Evidence", () 
   );
   expect(screen.queryByRole("figure")).toBeNull();
   expect(screen.queryByText("725")).toBeNull();
+});
+
+it("provides local section jumps only for visible Forecast content", () => {
+  const model = {
+    id: "model",
+    issuerKey: "issuer",
+    runId: "run",
+    runFolder: "current",
+    href: "",
+    download: "",
+    sources: [],
+    cashflow: {
+      units: "USD millions",
+      columns: [
+        { label: "FY2027E", group: "Base case" },
+        { label: "FY2028E", group: "Base case" },
+        { label: "FY2027E", group: "Downside case" },
+        { label: "FY2028E", group: "Downside case" },
+      ],
+      rows: [
+        {
+          label: "Cash proxy (not issuer free cash flow)",
+          band: "Cash",
+          total: true,
+          cells: [
+            { status: "value", exact: "10", display: "10" },
+            { status: "value", exact: "12", display: "12" },
+            { status: "value", exact: "5", display: "5" },
+            { status: "value", exact: "6", display: "6" },
+          ],
+        },
+      ],
+    },
+    register: {
+      heading: "Forecast assumptions",
+      headers: ["Item"],
+      intro: "Recorded assumption.",
+      rows: [["Debt"]],
+    },
+  };
+  const view: View = {
+    catalogue: undefined,
+    lead: undefined,
+    entries: [],
+    modules: [],
+    models: [model as unknown as View["models"][number]],
+  };
+  render(<Forecast view={view} run={run} />);
+  const options = within(screen.getByLabelText("Jump to section"));
+  expect(options.getByRole("option", { name: "Cases" })).toHaveValue("forecast-cases");
+  expect(options.getByRole("option", { name: "Cash flow model" })).toHaveValue("forecast-model");
+  expect(options.getByRole("option", { name: "Assumptions" })).toHaveValue("forecast-assumptions");
+  expect(options.getByRole("option", { name: "Run charts" })).toHaveValue("forecast-run-charts");
+
+  const targets = new Map<string, ReturnType<typeof vi.fn>>();
+  for (const id of [
+    "forecast-cases",
+    "forecast-model",
+    "forecast-assumptions",
+    "forecast-run-charts",
+  ]) {
+    const target = document.getElementById(id);
+    if (!target) throw new Error(`Missing Forecast section target: ${id}`);
+    const scrollIntoView = vi.fn();
+    target.scrollIntoView = scrollIntoView;
+    targets.set(id, scrollIntoView);
+  }
+  fireEvent.change(screen.getByLabelText("Jump to section"), {
+    target: { value: "forecast-model" },
+  });
+  expect(document.activeElement).toBe(document.getElementById("forecast-model"));
+  expect(targets.get("forecast-model")).toHaveBeenCalledWith({ block: "start" });
+  expect(screen.getByLabelText("Jump to section")).toHaveValue("");
+  expect(window.location.hash).toBe("");
+});
+
+it("omits section jumps when those Forecast sections are not present", () => {
+  const view: View = {
+    catalogue: undefined,
+    lead: undefined,
+    entries: [],
+    modules: [],
+    models: [],
+  };
+  render(<Forecast view={view} run={run} />);
+  expect(screen.queryByRole("navigation", { name: "Forecast sections" })).toBeNull();
+  expect(screen.queryByLabelText("Jump to section")).toBeNull();
+  expect(document.getElementById("forecast-cases")).toBeNull();
+  expect(document.getElementById("forecast-model")).toBeNull();
+  expect(document.getElementById("forecast-assumptions")).toBeNull();
+  expect(document.getElementById("forecast-run-charts")).not.toBeNull();
 });

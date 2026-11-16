@@ -86,6 +86,21 @@ describe("PathChart chart side", () => {
     expect(markers(cover.container, "Base case")).toBe(6);
   });
 
+  it("keeps every period readable in a keyboard-scrollable narrow chart region", () => {
+    const { container } = renderEbitda();
+    const region = screen.getByRole("region", {
+      name: "EBITDA by case chart; scroll horizontally to read each period",
+    });
+    expect(region).toHaveAttribute("tabindex", "0");
+    expect(region).toHaveClass("overflow-x-auto");
+    expect(
+      [...region.querySelectorAll("div")].some((element) =>
+        element.classList.contains("min-w-[340px]"),
+      ),
+    ).toBe(true);
+    expect(container.querySelectorAll("[data-tick]")).toHaveLength(PERIODS.length);
+  });
+
   it("breaks the line at the missing period", () => {
     const { container } = renderCover();
     const paths = [...container.querySelectorAll("path.recharts-line-curve")];
