@@ -189,6 +189,135 @@ describe("coded registers leave the module page", () => {
   });
 });
 
+// Sentences copied from tests/fixtures/esg/CP-2E-h4.md lines 132-136 and 223-234 (retained TDG handoff).
+const DEBT_SENTENCE =
+  "All debt amounts below retain the annual filing's reporting precision. Credit-spread exposure remains even where the base rate is hedged; instrument-specific allocation of portfolio derivatives is not supplied.";
+const MACRO_SENTENCE =
+  "Macro Risk Level is Moderate. Current fixed coupons and effective derivatives limit a defined rate shock relative to historical FCF, but inflation recovery and future hedge replacement are not assured. Rates, FX & hedging is completed with limitations; numerical FX/input-cost shocks and a single reconciled forward interest result remain restricted.";
+const codedWith = (heading: string, line: number, body: string, headers: string[]): Section => ({
+  heading,
+  level: 4,
+  line,
+  blocks: [
+    { type: "text", line: line + 2, end: line + 3, text: `${body}\nBasis: calculation C07` },
+    {
+      type: "table",
+      headers,
+      line: line + 5,
+      rows: [{ line: line + 7, cells: headers.map(() => "cell") }],
+    },
+  ],
+});
+const monitoringTable = (line: number): Section["blocks"][number] => ({
+  type: "table",
+  headers: ["Indicator", "Leading / Lagging", "Threshold or Qualitative Signal", "Limitation"],
+  line,
+  rows: [{ line: line + 1, cells: ["Cover", "Leading", "Below 3x", "Indicative"] }],
+});
+
+describe("prose in a coded section stays on the module page", () => {
+  const coded = () =>
+    entryOf("CP-2E", [
+      text("Bottom line", 10),
+      codedWith("T2F.2 \u2014 debt and rate exposure", 132, DEBT_SENTENCE, [
+        "Debt Instrument",
+        "Amount",
+        "Fixed / Floating",
+      ]),
+      codedWith("T2F.8 \u2014 macro sensitivity summary", 223, MACRO_SENTENCE, [
+        "Macro Driver",
+        "Evidence",
+        "Risk Mechanic",
+      ]),
+    ]);
+
+  it("draws each sentence exactly once under the title without the code and its dash", () => {
+    page(coded());
+    expect(screen.getAllByText(DEBT_SENTENCE)).toHaveLength(1);
+    expect(screen.getAllByText(MACRO_SENTENCE)).toHaveLength(1);
+    expect(screen.getByRole("heading", { name: "debt and rate exposure" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "macro sensitivity summary" })).toBeInTheDocument();
+    expect(document.body.textContent).not.toContain("T2F.2");
+    expect(screen.queryByRole("columnheader", { name: "Amount" })).toBeNull();
+  });
+
+  it("lists a section whose table is not drawn, under a label without the code or dash", () => {
+    page(coded());
+    const card = document.getElementById("statements-and-records");
+    expect(card?.textContent).toContain("debt and rate exposure");
+    expect(card?.textContent).not.toContain("\u2014");
+    expect(card?.textContent).not.toContain(DEBT_SENTENCE);
+  });
+
+  it("draws prose and the promoted table of a partly promoted section and lists nothing", () => {
+    const section: Section = {
+      heading: "T2B.7 Monitoring sensitivity flags",
+      level: 3,
+      line: 20,
+      blocks: [
+        monitoringTable(21),
+        { type: "text", line: 25, end: 25, text: "Thresholds are indicative only." },
+      ],
+    };
+    const entry = entryOf("CP-2A", [section]);
+    page(entry);
+    expect(screen.getAllByText("Thresholds are indicative only.")).toHaveLength(1);
+    expect(recordSections(entry.sections, entry)).toEqual([]);
+  });
+
+  it("lists a partly promoted section that has another table not drawn", () => {
+    const other: Section["blocks"][number] = {
+      type: "table",
+      headers: ["Item", "Value"],
+      line: 30,
+      rows: [{ line: 31, cells: ["Row", "1"] }],
+    };
+    const section: Section = {
+      heading: "T2B.7 Monitoring sensitivity flags",
+      level: 3,
+      line: 20,
+      blocks: [monitoringTable(21), other],
+    };
+    const entry = entryOf("CP-2A", [section]);
+    expect(recordSections(entry.sections, entry).map((s) => s.line)).toEqual([20]);
+    expect(findingBlocks(entry.sections, entry)[0]?.blocks.map((b) => b.line)).toEqual([21]);
+  });
+
+  it("does not list a coded section that holds text only", () => {
+    const entry = entryOf("CP-1", [text("T4.9 Reading note", 20)]);
+    expect(recordSections(entry.sections, entry)).toEqual([]);
+    expect(findingBlocks(entry.sections, entry).map((s) => s.blocks.length)).toEqual([1]);
+  });
+
+  it("keeps handoff order between the sentence and a promoted table", () => {
+    const section: Section = {
+      heading: "T2B.7 Monitoring sensitivity flags",
+      level: 3,
+      line: 20,
+      blocks: [
+        { type: "text", line: 21, end: 21, text: "First prose." },
+        monitoringTable(23),
+        { type: "text", line: 26, end: 26, text: "Last prose." },
+      ],
+    };
+    const entry = entryOf("CP-2A", [section]);
+    expect(findingBlocks(entry.sections, entry)[0]?.blocks.map((b) => b.line)).toEqual([
+      21, 23, 26,
+    ]);
+  });
+
+  it("strips the dash after a code from record labels, hyphen or em dash", () => {
+    page(
+      entryOf("CP-2E", [
+        tableSection("T2F.3 - Hedge schedule", 20),
+        tableSection("T3.6 \u2014 Fundamental value matrix", 30),
+      ]),
+    );
+    expect(screen.getByRole("link", { name: "Hedge schedule" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Fundamental value matrix" })).toBeInTheDocument();
+  });
+});
+
 describe("wide tables pin their first column", () => {
   const wide = (count: number): Table => ({
     type: "table",

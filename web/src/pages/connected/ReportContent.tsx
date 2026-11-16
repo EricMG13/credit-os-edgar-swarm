@@ -316,8 +316,10 @@ function readerBlock(block: Block): boolean {
 }
 
 export const RECORDS_ID = "statements-and-records";
-const RECORD_PREFIX = /^[TP]\d+[A-Z]?(?:\.\d+)?\s+/;
-const RECORD_CODE = /^(?:[TP]\d+[A-Z]?(?:\.\d+)?\s|Confidence inputs$)/;
+// One register code (T4.4, P3, T2F.2); the prefix also takes the dash that follows it.
+const CODE = String.raw`[TP]\d+[A-Z]?(?:\.\d+)?`;
+const RECORD_PREFIX = new RegExp(String.raw`^${CODE}\s+(?:[-\u2013\u2014]\s*)?`);
+const RECORD_CODE = new RegExp(String.raw`^(?:${CODE}\s|Confidence inputs$)`);
 
 function registerBlocks(section: Section, entry: OutputEntry) {
   if (entry.output.module === "CP-6" && /^T6E\.(?:4|6|7)\b/.test(section.heading))
@@ -334,26 +336,27 @@ function registerBlocks(section: Section, entry: OutputEntry) {
   });
 }
 
-function classified(sections: Section[]) {
-  return classifySections(sections).map(({ section, role }) => {
-    const coded = role === "finding" && RECORD_CODE.test(section.heading);
-    return { section, role: coded ? ("registers" as const) : role, coded };
-  });
-}
+// A finding section whose heading starts with a register code: its prose stays on the page,
+// its tables go to Evidence unless they are promoted.
+const isCoded = (section: Section, role: string) =>
+  role === "finding" && RECORD_CODE.test(section.heading);
 
-// Coded registers and audit tables left off the module page; Evidence holds them.
+// Coded sections with a table that the page does not draw; Evidence holds those tables.
 export function recordSections(sections: Section[], entry: OutputEntry) {
-  return classified(sections)
-    .filter(
-      ({ section, coded }) =>
-        coded && section.blocks.some(readerBlock) && registerBlocks(section, entry).length === 0,
-    )
+  return classifySections(sections)
+    .filter(({ section, role }) => {
+      if (!isCoded(section, role)) return false;
+      const drawn = registerBlocks(section, entry);
+      return section.blocks.some((block) => block.type === "table" && !drawn.includes(block));
+    })
     .map(({ section }) => section);
 }
 
 const NO_QUALIFICATION = "No qualification.";
 const DRAWING_PREFIX = /^(?:Chart data|Map|Events): /;
-export const drawingTitle = (heading: string) => heading.replace(DRAWING_PREFIX, "");
+/** A section heading as drawn: without the drawing prefix, the register code and its dash. */
+export const drawingTitle = (heading: string) =>
+  heading.replace(DRAWING_PREFIX, "").replace(RECORD_PREFIX, "");
 
 // `chartsDrawn` is true on a page that draws this module's charts with their qualifications.
 export function findingBlocks(
@@ -375,38 +378,29 @@ export function findingBlocks(
       .map((item) => item.table)
       .concat(figureTableLines),
   );
-  return classified(sections)
-    .flatMap(({ section, role }) => {
-      if (role === "finding" || role === "passage") {
-        return [
-          {
-            ...section,
-            blocks: section.blocks.filter(
-              (block) => readerBlock(block) && !drawings.has(block.line),
-            ),
-          },
-        ];
-      }
-      if (role === "drawing") {
+  const blocksOf = (section: Section, role: string) => {
+    if (role === "registers") return registerBlocks(section, entry);
+    if (role !== "finding" && role !== "passage" && role !== "drawing") return [];
+    const promoted = isCoded(section, role) ? registerBlocks(section, entry) : null;
+    return section.blocks.filter(
+      (block) =>
+        readerBlock(block) &&
+        !drawings.has(block.line) &&
+        (promoted === null || block.type === "text" || promoted.includes(block)) &&
         // A chart's own qualification, or the empty one, is not drawn a second time.
-        return [
-          {
-            ...section,
-            blocks: section.blocks.filter(
-              (block) =>
-                readerBlock(block) &&
-                !drawings.has(block.line) &&
-                !qualified.has(block.line) &&
-                !(block.type === "text" && block.text.trim() === NO_QUALIFICATION),
-            ),
-          },
-        ];
-      }
-      if (role !== "registers") return [];
-      const promoted = registerBlocks(section, entry);
-      return promoted.length ? [{ ...section, blocks: promoted }] : [];
-    })
-    .filter((section) => section.blocks.length > 0);
+        (role !== "drawing" ||
+          (!qualified.has(block.line) &&
+            !(block.type === "text" && block.text.trim() === NO_QUALIFICATION))),
+    );
+  };
+  return classifySections(sections).flatMap(({ section, role }) => {
+    const blocks = blocksOf(section, role);
+    // A promoted table is typed by its full heading; a section without one drops the code here.
+    const plain = isCoded(section, role) && registerBlocks(section, entry).length === 0;
+    return blocks.length
+      ? [{ ...section, heading: plain ? drawingTitle(section.heading) : section.heading, blocks }]
+      : [];
+  });
 }
 
 export function FindingParagraph({
@@ -459,7 +453,7 @@ function RecordsCard({
               href={evidencePath(run.folder, entry, section.line)}
               className="text-action underline"
             >
-              {section.heading.replace(RECORD_PREFIX, "")}
+              {drawingTitle(section.heading)}
             </a>
           </li>
         ))}
