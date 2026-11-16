@@ -32,7 +32,8 @@ import {
   type Summary,
 } from "./api";
 import { Breadcrumb, card, ErrorNotice, field, heading, label } from "./layout";
-import { ReviewSheet, needsCheck } from "./start/ReviewSheet";
+import { needsCheck } from "./start/limits";
+import { ReviewSheet } from "./start/ReviewSheet";
 import { documentDescription, LEVELS, PURPOSES, storedName } from "./start/plain";
 import { errorText, useResource } from "./useResource";
 import { PageHeader } from "../../shell/PageHeader";

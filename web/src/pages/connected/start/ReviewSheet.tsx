@@ -11,13 +11,9 @@ import {
   PURPOSES,
   storedName,
 } from "./plain";
+import { needsCheck } from "./limits";
 
 type EditStep = "documents" | "purpose" | "context";
-type Item = Summary["items"][number];
-
-export function needsCheck(item: Item) {
-  return ["check", "gap", "limited", "will_refuse"].includes(item.outcome);
-}
 
 function Facts({ rows }: { rows: readonly (readonly [string, string | number | undefined])[] }) {
   return (
