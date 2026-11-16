@@ -141,14 +141,27 @@ _ABSOLUTE = re.compile(
     + rf"|\\{{2,4}}{_PATH_BODY}+"  # UNC \\host\share, single or doubled spelling
     + ")"
 )
+# A quoted absolute path runs to its closing quote, so a space in a folder name does not end it.
+_QUOTED = re.compile(
+    r"(?P<q>['\"])(?P<path>(?:/(?!/)|[A-Za-z]:[\\/]|\\{2,4})(?:(?!(?P=q)).)*)(?P=q)"
+)
 _SEPARATORS = re.compile(r"[\\/]+")
 
 
+def _name(path: str) -> str | None:
+    """The last named segment of ``path``; None when it names nothing."""
+    named = [p for p in _SEPARATORS.split(path) if p and not re.fullmatch(r"[A-Za-z]:", p)]
+    return named[-1] if named else None
+
+
+def _quoted_last_segment(found: re.Match[str]) -> str:
+    name = _name(found["path"])
+    return found["q"] + name + found["q"] if name else found[0]
+
+
 def _last_segment(found: re.Match[str]) -> str:
-    segments = [part for part in _SEPARATORS.split(found["path"]) if part]
-    # A bare drive or a lone separator names nothing: leave it as stored.
-    named = [part for part in segments if not re.fullmatch(r"[A-Za-z]:", part)]
-    return found["start"] + named[-1] if named else found[0]
+    name = _name(found["path"])
+    return found["start"] + name if name else found[0]
 
 
 def _plain_reason(root: str, sep: str, reason: str) -> str:
@@ -162,6 +175,10 @@ def _plain_reason(root: str, sep: str, reason: str) -> str:
 
     A path starts at the beginning of the text or after whitespace, a quote, a bracket, ``:``,
     ``=``, ``,`` or ``;``. A URL, a fraction (``3/4``) and a relative path stay as stored.
+
+    A quoted path runs to its closing quote, so a space in a folder name is handled there. An
+    unquoted path stops at the first space: a folder name with a space in an unquoted path keeps
+    its tail (a known limit; the text marks no end).
     """
     if root.rstrip(sep):
         prefix = root + sep
@@ -171,7 +188,7 @@ def _plain_reason(root: str, sep: str, reason: str) -> str:
             # The bare root: at a path start, then the end, a delimiter, or a full stop that ends.
             bare = rf"{_PATH_START}{re.escape(form)}(?=$|[\s'\")\],;]|\.(?:$|\s))"
             reason = re.sub(bare, r"\g<start>the service folder", reason)
-    return _ABSOLUTE.sub(_last_segment, reason)
+    return _ABSOLUTE.sub(_last_segment, _QUOTED.sub(_quoted_last_segment, reason))
 
 
 def _shown(layout: Layout, reason: str) -> str:
@@ -187,6 +204,7 @@ _TEXT_FIELDS = (
     "reason",
     "submitted_by",
     "claimed_at",
+    "started_at",
     "ended_at",
 )
 

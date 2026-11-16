@@ -1150,7 +1150,13 @@ describe("connected activity and reports", () => {
     render(<ConnectedApp path="/runs" mode="synthetic" />);
     expect(await screen.findByText("Some run records could not be read")).toBeVisible();
     expect(screen.getByText("2 run records could not be read and are not listed.")).toBeVisible();
-    expect(screen.getByText("No run in progress")).toBeVisible();
+    expect(screen.getByText("No readable run record is in progress")).toBeVisible();
+    expect(
+      screen.getByText(
+        "No readable run record is running or waiting. Finished runs are in the library.",
+      ),
+    ).toBeVisible();
+    expect(screen.queryByText("No run in progress")).toBeNull();
     cleanup();
     activityFetch({
       updated: "2026-11-16T14:32:10Z",
@@ -1162,7 +1168,7 @@ describe("connected activity and reports", () => {
     });
     render(<ConnectedApp path="/runs" mode="synthetic" />);
     expect(
-      await screen.findByText("1 run record could not be read and are not listed."),
+      await screen.findByText("1 run record could not be read and is not listed."),
     ).toBeVisible();
     cleanup();
     for (const extra of [{ unreadable: 0 }, {}]) {

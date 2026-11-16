@@ -164,15 +164,20 @@ def load_readable(layout: Layout) -> tuple[list[Record], list[str]]:
     """The readable run records sorted by id, and the sorted file names of those ``_load`` refuses.
 
     For display paths only: the scheduler uses ``load_all``, which raises on a bad file. Skipping a
-    bad file here is a documented fail-open, and each name is logged.
+    bad file here is a documented fail-open: the caller shows how many were skipped. Nothing is
+    logged, as this runs on every poll of the activity page.
     """
     records: list[Record] = []
     unreadable: list[str] = []
     for path in _record_files(layout):
         try:
-            records.append(_load(path))
-        except ValueError as error:
-            log.warning("skipping an unreadable run record: %s", error)
+            record = _load(path)
+        except ValueError:
+            unreadable.append(path.name)
+            continue
+        if isinstance(record.id, str):  # a hand-edited id of another type cannot be sorted
+            records.append(record)
+        else:
             unreadable.append(path.name)
     return sorted(records, key=lambda r: r.id), sorted(unreadable)
 

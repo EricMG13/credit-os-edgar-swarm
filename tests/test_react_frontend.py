@@ -562,6 +562,9 @@ POSIX_ROOT = "/srv/credit"
         ),
         ("period 2026/11/16 see logs/r1.log", "period 2026/11/16 see logs/r1.log"),
         ("Provider error", "Provider error"),
+        ("no file: '/Users/Jane Doe/runs/a.pdf'", "no file: 'a.pdf'"),
+        ("no folder at /var/tmp/run-7. Retry", "no folder at run-7. Retry"),
+        ("see /var/log/app/r1.log.", "see r1.log."),
     ],
 )
 def test_plain_reason_posix(reason: str, expected: str) -> None:
@@ -592,6 +595,11 @@ WINDOWS_ROOT = r"C:\Shared\CreditOS"
         ),
         (r"cannot reach \\fileserver\credit\inbox\a.pdf", "cannot reach a.pdf"),
         (r"Permission denied: 'C:\Shared\CreditOS'", "Permission denied: 'the service folder'"),
+        (
+            "[WinError 2] cannot find: 'C:\\\\Program Files\\\\Python312\\\\python.exe'",
+            "[WinError 2] cannot find: 'python.exe'",
+        ),
+        (r"cannot find: 'C:\Program Files\Python312\python.exe'", "cannot find: 'python.exe'"),
     ],
 )
 def test_plain_reason_windows(reason: str, expected: str) -> None:
@@ -654,3 +662,58 @@ def test_activity_of_a_run_whose_own_record_is_unreadable_is_still_an_error(root
 
     with pytest.raises(ValueError, match="broken.json"):
         run_activity.reply(layout, "broken")
+
+
+@pytest.mark.parametrize("bad_id", [None, 7, ["x"]])
+def test_activity_list_survives_a_record_whose_id_is_not_a_string(
+    hosted: _Server, bad_id: object
+) -> None:
+    scheduler = hosted.scheduler
+    assert isinstance(scheduler, Scheduler)
+    layout = scheduler.layout
+    runs.save(layout, _ended_record("d-failed", "failed", 10))
+    runs.save(layout, _ended_record("n-bad", "failed", 11))
+    target = layout.state / "n-bad.json"
+    data = json.loads(target.read_text(encoding="utf-8"))
+    data["id"] = bad_id
+    target.write_text(json.dumps(data), encoding="utf-8")
+
+    status, raw = request(hosted, "/connected/activity")[:2]
+    listing = json.loads(raw)
+
+    assert status == 200
+    assert [run["id"] for run in listing["ended"]] == ["d-failed"]
+    assert listing["unreadable"] == 1
+
+
+@pytest.mark.parametrize(
+    "field",
+    [
+        "id",
+        "issuer_name",
+        "pathway",
+        "status",
+        "reason",
+        "submitted_by",
+        "claimed_at",
+        "started_at",
+        "ended_at",
+    ],
+)
+def test_activity_list_counts_a_record_with_a_non_string_field(hosted: _Server, field: str) -> None:
+    scheduler = hosted.scheduler
+    assert isinstance(scheduler, Scheduler)
+    layout = scheduler.layout
+    runs.save(layout, _ended_record("d-failed", "failed", 10))
+    runs.save(layout, _ended_record("n-bad", "failed", 11))
+    target = layout.state / "n-bad.json"
+    data = json.loads(target.read_text(encoding="utf-8"))
+    data[field] = 5
+    target.write_text(json.dumps(data), encoding="utf-8")
+
+    status, raw = request(hosted, "/connected/activity")[:2]
+    listing = json.loads(raw)
+
+    assert status == 200
+    assert listing["unreadable"] == 1
+    assert [run["id"] for run in listing["ended"]] == ["d-failed"]
