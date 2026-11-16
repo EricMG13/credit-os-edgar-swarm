@@ -32,6 +32,8 @@ import {
   type Mode,
   type Summary,
 } from "./api";
+import { RowEditor } from "./start/RowEditor";
+import { ROW_SPECS, sendableRows, type Row, type RowKind } from "./start/rows";
 import { Breadcrumb, card, ErrorNotice, field, heading, label } from "./layout";
 import { carryAccepted, decided, groupLimits, needsCheck } from "./start/limits";
 import { ReviewSheet } from "./start/ReviewSheet";
@@ -102,53 +104,10 @@ const ATTACHMENTS = {
   portfolio_workbook: "Portfolio workbook",
   prior_case: "Prior decision record",
 };
-const ROW_EXAMPLES = {
-  deal_terms: {
-    facility_id: "",
-    instrument: "",
-    currency: "",
-    size_m: "",
-    tenor_years: "",
-    talk_spread_bps_low: "",
-    talk_spread_bps_high: "",
-    talk_oid_low: "",
-    talk_oid_high: "",
-    floor_pct: "",
-    coupon_pct: "",
-    margin_bps: "",
-    maturity: "",
-    call_protection: "",
-    use_of_proceeds: "",
-    as_of: "",
-    provider: "",
-  },
-  quotes: {
-    facility_id: "",
-    kind: "observed",
-    bid: "",
-    ask: "",
-    price: "",
-    yield_pct: "",
-    spread_bps: "",
-    as_of: "",
-    provider: "",
-  },
-  ratings: { agency: "", scope: "issuer", rating: "", outlook: "", as_of: "" },
-  research_questions: { text: "", focus_module: "" },
-};
-const ROW_LABELS = {
-  deal_terms: "Add facility",
-  quotes: "Add quote",
-  ratings: "Add rating",
-  research_questions: "Add research question",
-};
+const ROW_KINDS = Object.keys(ROW_SPECS) as RowKind[];
 const COMPLEX_FIELDS = {
-  deal_terms: "Facilities and deal terms",
-  quotes: "Observed quotes",
-  ratings: "Ratings",
   valuation: "Valuation and peers",
   assumptions: "Scenario assumptions",
-  research_questions: "Research questions",
   module_options: "Module options",
 };
 type LatestIssuerInputs = { run: string; prior: PriorInputs };
@@ -213,7 +172,8 @@ type IntakeView = {
   changeAttachment: (key: Attachment, value: string) => void;
   changeDetail: (key: ComplexField, value: string) => void;
   detailText: (key: ComplexField) => string;
-  addContextRow: (key: keyof typeof ROW_EXAMPLES) => void;
+  rowsOf: (kind: RowKind) => Row[];
+  changeRows: (kind: RowKind, rows: Row[]) => void;
   changeModel: (value: string) => void;
   changeEffort: (value: string) => void;
   changeTurns: (value: string) => void;
@@ -258,6 +218,7 @@ function useIntakeDocumentsState() {
   const [attachments, setAttachments] = useState<Partial<Record<Attachment, string>>>({});
   const [legal, setLegal] = useState("none");
   const [edits, setEdits] = useState<Partial<Record<ComplexField, string>>>({});
+  const [rows, setRows] = useState<Partial<Record<RowKind, Row[]>>>({});
   const [analystNote, setAnalystNote] = useState("");
   return {
     files,
@@ -274,6 +235,8 @@ function useIntakeDocumentsState() {
     setLegal,
     edits,
     setEdits,
+    rows,
+    setRows,
     analystNote,
     setAnalystNote,
   };
@@ -677,6 +640,7 @@ function ContextFields({ view }: { view: IntakeView }) {
       <ContextInputFields view={view} />
       <IssuerDetailsFields view={view} />
       <StructuredContextFields view={view} />
+      <JsonDetailsFields view={view} />
       <AdvancedOptionsFields view={view} />
     </>
   );
@@ -877,18 +841,46 @@ function IssuerDetailsFields({ view }: { view: IntakeView }) {
 }
 
 function StructuredContextFields({ view }: { view: IntakeView }) {
+  const focusChoices = [
+    ["", "Any"] as const,
+    ...pathwayModules(view.run.pathway).map((id) => [id, moduleName(id)] as const),
+  ];
+  return (
+    <div className="grid gap-4 sm:col-span-2">
+      <h3 className="font-semibold">Context details</h3>
+      {ROW_KINDS.map((kind) => (
+        <section key={kind} aria-labelledby={`rows-${kind}`} className="grid gap-2">
+          <h4 id={`rows-${kind}`} className="text-sm font-semibold">
+            {ROW_SPECS[kind].section}
+          </h4>
+          <RowEditor
+            kind={kind}
+            rows={view.rowsOf(kind)}
+            onChange={(next) => {
+              view.changeRows(kind, next);
+            }}
+            primary={view.run.run_type === "primary"}
+            required={kind === "deal_terms" && view.run.run_type === "primary"}
+            focusChoices={focusChoices}
+          />
+        </section>
+      ))}
+    </div>
+  );
+}
+
+function JsonDetailsFields({ view }: { view: IntakeView }) {
+  const shown = (Object.entries(COMPLEX_FIELDS) as [ComplexField, string][]).filter(
+    ([key]) => view.level === "advanced" || view.edits[key] !== undefined,
+  );
+  if (!shown.length) return null;
   return (
     <div className="grid gap-2 sm:col-span-2">
-      <h3 className="font-semibold">Context details</h3>
       <p className="text-sm text-text-secondary">
-        Enter structured values as context/1 JSON. The service validates the content during review.
+        These values are JSON objects. The service validates the content during review.
       </p>
-      {(Object.entries(COMPLEX_FIELDS) as [ComplexField, string][]).map(([key, title]) => (
-        <details
-          key={key}
-          open={key === "deal_terms" && view.run.run_type === "primary" ? true : undefined}
-          className="rounded-lg border border-border-hairline p-3"
-        >
+      {shown.map(([key, title]) => (
+        <details key={key} className="rounded-lg border border-border-hairline p-3">
           <summary className="cursor-pointer text-sm font-semibold">{title}</summary>
           <textarea
             aria-label={title}
@@ -899,18 +891,6 @@ function StructuredContextFields({ view }: { view: IntakeView }) {
               view.changeDetail(key, event.target.value);
             }}
           />
-          {isRowField(key) && (
-            <Button
-              size="sm"
-              color="secondary"
-              className="mt-2"
-              onPress={() => {
-                view.addContextRow(key);
-              }}
-            >
-              {ROW_LABELS[key]}
-            </Button>
-          )}
         </details>
       ))}
     </div>
@@ -1009,27 +989,20 @@ function SelectField({
   );
 }
 
-function isRowField(key: ComplexField): key is keyof typeof ROW_EXAMPLES {
-  return Object.hasOwn(ROW_EXAMPLES, key);
+function isRecord(item: unknown): item is Row {
+  return item !== null && typeof item === "object" && !Array.isArray(item);
 }
 
 function readDetails(edits: Partial<Record<ComplexField, string>>) {
   const details: Record<string, unknown> = {};
   for (const [key, raw] of Object.entries(edits) as [ComplexField, string][]) {
-    const list = isRowField(key);
     let parsed: unknown;
     try {
       parsed = JSON.parse(raw);
     } catch {
       throw new Error(`${COMPLEX_FIELDS[key]} must contain valid JSON.`);
     }
-    const isObject = (item: unknown) =>
-      item !== null && typeof item === "object" && !Array.isArray(item);
-    if (list ? !Array.isArray(parsed) || !parsed.every(isObject) : !isObject(parsed)) {
-      throw new Error(
-        `${COMPLEX_FIELDS[key]} must be ${list ? "a list of objects" : "an object"}.`,
-      );
-    }
+    if (!isRecord(parsed)) throw new Error(`${COMPLEX_FIELDS[key]} must be an object.`);
     details[key] = parsed;
   }
   return details;
@@ -1132,6 +1105,8 @@ function IntakeForm({
     setLegal,
     edits,
     setEdits,
+    rows,
+    setRows,
     analystNote,
     setAnalystNote,
   } = documentState;
@@ -1333,6 +1308,7 @@ function IntakeForm({
     setEffort("balanced");
     setModules(carriedModules(prior));
     setEdits({});
+    setRows({});
     setAnalystNote("");
     setAttachments({});
     setLegal("none");
@@ -1391,7 +1367,11 @@ function IntakeForm({
         "Enter an issuer name and an issuer ID using letters a–z, digits or hyphens.",
       );
     }
-    const details = readDetails(edits);
+    const details: Record<string, unknown> = readDetails(edits);
+    for (const kind of ROW_KINDS) {
+      const edited = rows[kind];
+      if (edited) details[kind] = sendableRows(kind, edited, run.run_type === "primary");
+    }
     const note = analystNote
       .split(/\r\n?|\n/)
       .map((line) => line.trim())
@@ -1535,12 +1515,7 @@ function IntakeForm({
     return (
       edits[key] ??
       JSON.stringify(
-        context[key] ??
-          (key === "module_options"
-            ? { cp3_mode: "", cp6_deep_debate: false }
-            : isRowField(key)
-              ? []
-              : {}),
+        context[key] ?? (key === "module_options" ? { cp3_mode: "", cp6_deep_debate: false } : {}),
         null,
         2,
       )
@@ -1595,6 +1570,7 @@ function IntakeForm({
     setReading(undefined);
     setPriorNote("");
     setEdits({});
+    setRows({});
     setAnalystNote("");
     setAttachments({});
     setLegal("none");
@@ -1617,19 +1593,15 @@ function IntakeForm({
     );
   }
 
-  function addContextRow(key: keyof typeof ROW_EXAMPLES) {
-    try {
-      const current = readDetails({ [key]: detailText(key) })[key];
-      if (!Array.isArray(current)) return;
-      const rows: unknown[] = current;
-      setEdits((previous) => ({
-        ...previous,
-        [key]: JSON.stringify([...rows, ROW_EXAMPLES[key]], null, 2),
-      }));
-      setError("");
-    } catch (failure) {
-      setError(errorText(failure));
-    }
+  function rowsOf(kind: RowKind): Row[] {
+    const edited = rows[kind];
+    if (edited) return edited;
+    const carried = context[kind];
+    return Array.isArray(carried) && carried.every(isRecord) ? carried : [];
+  }
+
+  function changeRows(kind: RowKind, next: Row[]) {
+    setRows((previous) => ({ ...previous, [kind]: next }));
   }
 
   const { shownDocs, inspected, ignored, documentRows, fileChoices } = intakeDocuments(
@@ -1729,7 +1701,8 @@ function IntakeForm({
     changeAttachment,
     changeDetail,
     detailText,
-    addContextRow,
+    rowsOf,
+    changeRows,
     changeModel: setModel,
     changeEffort: setEffort,
     changeTurns: setTurns,

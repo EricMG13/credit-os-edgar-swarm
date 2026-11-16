@@ -113,6 +113,13 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
+function sentSummary(fetchMock: ReturnType<typeof testingFetch>) {
+  const body = fetchMock.mock.calls.find(([path]) => path.endsWith("/summary"))?.[1]?.body;
+  return JSON.parse(typeof body === "string" ? body : "null") as {
+    context: Record<string, unknown>;
+  };
+}
+
 describe("connected run start", () => {
   it("has four steps and no approval before the review", async () => {
     testingFetch();
@@ -491,13 +498,13 @@ describe("connected run start", () => {
     const reviewRun = screen.getByRole("button", { name: "Review run" });
     fireEvent.click(reviewRun);
     expect(await screen.findByRole("alert")).toHaveTextContent("Add at least one facility");
-    const fields = screen.getByLabelText("Facilities and deal terms");
-    fireEvent.change(fields, { target: { value: "[null]" } });
+    fireEvent.change(screen.getByLabelText("Module options"), { target: { value: "[]" } });
     fireEvent.click(reviewRun);
-    expect(await screen.findByRole("alert")).toHaveTextContent("must be a list of objects");
+    expect(await screen.findByRole("alert")).toHaveTextContent("Module options must be an object.");
     expect(fetchMock.mock.calls.some(([path]) => path.endsWith("/summary"))).toBe(false);
-
-    fireEvent.change(fields, { target: { value: '[{"facility_id":"TL-B"}]' } });
+    fireEvent.change(screen.getByLabelText("Module options"), { target: { value: "{}" } });
+    fireEvent.click(screen.getByRole("button", { name: "Add facility" }));
+    fireEvent.change(screen.getByLabelText("Facility ID"), { target: { value: "TL-B" } });
     fireEvent.click(reviewRun);
     await screen.findByRole("button", { name: "Submit run" });
     expect(screen.getByText("Model and effort")).toBeInTheDocument();
@@ -511,6 +518,30 @@ describe("connected run start", () => {
       submitted_by: "Dana Reyes",
     });
     expect(body).not.toContain("CP-6");
+  });
+
+  it("leaves new-issue-only facility fields out of a run that is not a new issue", async () => {
+    const fetchMock = testingFetch();
+    render(<ConnectedApp path="/start" mode="synthetic" />);
+    await fillInputs();
+    await advanceToPurpose();
+    fireEvent.change(screen.getByLabelText("Run purpose"), { target: { value: "primary" } });
+    advanceToContext();
+    fireEvent.click(screen.getByRole("button", { name: "Add facility" }));
+    fireEvent.change(screen.getByLabelText("Facility ID"), { target: { value: "TL-B" } });
+    fireEvent.change(screen.getByLabelText("Tenor (years)"), { target: { value: "7" } });
+    fireEvent.click(screen.getByRole("button", { name: "Previous" }));
+    await screen.findByRole("heading", { name: "Purpose" });
+    fireEvent.change(screen.getByLabelText("Run purpose"), { target: { value: "secondary" } });
+    advanceToContext();
+    expect(screen.queryByLabelText("Tenor (years)")).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Review run" }));
+    await screen.findByRole("button", { name: "Submit run" });
+    const sent = sentSummary(fetchMock);
+    const keys =
+      "instrument currency size_m tenor_years talk_spread_bps_low talk_spread_bps_high talk_oid_low talk_oid_high floor_pct coupon_pct margin_bps maturity call_protection use_of_proceeds as_of provider";
+    const blanks = Object.fromEntries(keys.split(" ").map((key) => [key, ""]));
+    expect(sent.context.deal_terms).toEqual([{ ...blanks, facility_id: "TL-B" }]);
   });
 
   it("reviews an earnings update with periods and the chosen management bridge", async () => {
@@ -691,6 +722,49 @@ describe("connected run start", () => {
       max_turns: 24,
       modules: ["CP-0"],
     });
+  });
+
+  it("keeps JSON inputs behind Advanced, but draws one that holds an edit", async () => {
+    testingFetch();
+    render(<ConnectedApp path="/start" mode="synthetic" />);
+    await fillInputs();
+    await advanceToPurpose();
+    fireEvent.change(screen.getByLabelText("Run form level"), { target: { value: "advanced" } });
+    advanceToContext();
+    fireEvent.change(screen.getByLabelText("Valuation and peers"), { target: { value: "{" } });
+    fireEvent.click(screen.getByRole("button", { name: "Previous" }));
+    await screen.findByRole("heading", { name: "Purpose" });
+    fireEvent.change(screen.getByLabelText("Run form level"), { target: { value: "basic" } });
+    advanceToContext();
+    expect(screen.getByRole("button", { name: "Add rating" })).toBeInTheDocument();
+    expect(screen.getByLabelText("Valuation and peers")).toHaveValue("{");
+    expect(screen.queryByLabelText("Scenario assumptions")).toBeNull();
+    expect(screen.queryByText(/context\/1 JSON/)).toBeNull();
+  });
+
+  it("passes a prior run's rows through untouched when not edited", async () => {
+    const rows = [{ facility_id: "A", size_m: 500, extra: "x" }];
+    const fetchMock = testingFetch(plan, undefined, {
+      "/api/runs/earlier/inputs": {
+        issuer_id: "northbridge",
+        issuer_name: "Northbridge",
+        level: "basic",
+        max_turns: 32,
+        modules: [],
+        context: { ...context, deal_terms: rows, quotes: "not-a-list" },
+        files: [{ name: file.name, size: file.size }],
+      },
+      "/api/submissions/sub-1/carry": { carried: [file.name], kept: [] },
+    });
+    render(<ConnectedApp path="/start" search="?from=earlier" mode="synthetic" />);
+    expect(await screen.findByLabelText("Issuer name")).toHaveValue("Northbridge");
+    await advanceToPurpose();
+    advanceToContext();
+    fireEvent.click(screen.getByRole("button", { name: "Review run" }));
+    await screen.findByRole("button", { name: "Submit run" });
+    const sent = sentSummary(fetchMock);
+    expect(sent.context.deal_terms).toEqual(rows);
+    expect(sent.context.quotes).toBe("not-a-list");
   });
 
   it("shows refusals and cannot submit an unapproved draft", async () => {
