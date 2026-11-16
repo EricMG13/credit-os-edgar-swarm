@@ -184,7 +184,7 @@ function EndedTable({ runs }: { runs: EndedRun[] }) {
               <Table.Cell>
                 <StatusBadge set="Run states" state={ENDED[run.status]} />
               </Table.Cell>
-              <Table.Cell>{stamp(run.ended_at)}</Table.Cell>
+              <Table.Cell>{run.ended_at ? stamp(run.ended_at) : "Not recorded"}</Table.Cell>
               <Table.Cell>{run.reason}</Table.Cell>
             </Table.Row>
           )}

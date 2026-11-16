@@ -295,6 +295,56 @@ def test_activity_list_keeps_the_twenty_latest_ended_runs(hosted: _Server) -> No
     assert listing["ended"][-1]["ended_at"] == "2026-10-31T12:05:00Z"
 
 
+def test_activity_sends_a_reason_without_the_service_root(hosted: _Server) -> None:
+    scheduler = hosted.scheduler
+    assert isinstance(scheduler, Scheduler)
+    layout = scheduler.layout
+    root = layout.root
+    path = root / "_engine" / "state" / "issuers.json"
+    runs.save(layout, _ended_record("p-path", "failed", 1, f"could not be filed: {path} is bad"))
+    runs.save(layout, _ended_record("q-plain", "failed", 2, "Provider error"))
+    runs.save(
+        layout,
+        runs.Record(
+            id="r-running",
+            pathway="credit_snapshot",
+            folder="r-running",
+            status="running",
+            claimed_at="2026-10-31T12:00:00Z",
+            reason=f"waiting on {root.resolve()}/inbox/a.pdf",
+        ),
+    )
+
+    listing = json.loads(request(hosted, "/connected/activity")[1])
+    ended = {run["id"]: run["reason"] for run in listing["ended"]}
+    single = json.loads(request(hosted, "/connected/activity/p-path")[1])["reason"]
+
+    assert ended["p-path"] == "could not be filed: _engine/state/issuers.json is bad"
+    assert single == ended["p-path"]
+    assert ended["q-plain"] == "Provider error"
+    assert listing["runs"][0]["reason"] == "waiting on inbox/a.pdf"
+    assert str(root) not in json.dumps(listing)
+
+
+def test_activity_sends_ended_at_as_stored_and_lists_every_ended_status(hosted: _Server) -> None:
+    scheduler = hosted.scheduler
+    assert isinstance(scheduler, Scheduler)
+    layout = scheduler.layout
+    runs.save(layout, _ended_record("a-rejected", "rejected", 5))
+    runs.save(layout, _ended_record("b-interrupted", "interrupted", 5))
+    runs.save(layout, _ended_record("c-same", "failed", 5))
+    unended = _ended_record("d-none", "failed", 0)
+    unended.ended_at = ""
+    unended.claimed_at = "2026-10-31T12:30:00Z"
+    runs.save(layout, unended)
+
+    ended = json.loads(request(hosted, "/connected/activity")[1])["ended"]
+
+    assert [run["id"] for run in ended] == ["d-none", "c-same", "b-interrupted", "a-rejected"]
+    assert [run["status"] for run in ended][2:] == ["interrupted", "rejected"]
+    assert ended[0]["ended_at"] == ""
+
+
 def test_reports_admission_and_reader_snapshot(hosted: _Server, root: Path) -> None:
     scheduler = hosted.scheduler
     assert isinstance(scheduler, Scheduler)

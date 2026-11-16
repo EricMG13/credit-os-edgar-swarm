@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 from datetime import UTC, datetime
 from decimal import Decimal, InvalidOperation
 from pathlib import Path
@@ -129,11 +130,18 @@ def _held(layout: Layout) -> str:
     return held if isinstance(held, str) else ""
 
 
+def _shown(layout: Layout, reason: str) -> str:
+    """A reason with the service's own root folder removed, leaving the path relative to it."""
+    for root in {str(layout.root.resolve()), str(layout.root)}:
+        reason = reason.replace(root + os.sep, "")
+    return reason
+
+
 def listing(layout: Layout) -> http_base.Reply:
     """The runs that are running or waiting, and the latest that ended without a report.
 
-    Spend, folders and file names are not sent. An ended run is sent as its seven fields, with the
-    reason as the run's own page sends it.
+    Spend, run folders and absolute paths under the service root are not sent. A reason is sent as
+    stored with the root prefix removed, so a file name under the root can appear in it.
     """
     saved = runs.load_all(layout)
     records = [item for item in saved if item.status in ("running", "queued")]
@@ -155,7 +163,7 @@ def listing(layout: Layout) -> http_base.Reply:
                     "issuer_name": shown["issuer_name"],
                     "pathway": shown["pathway"],
                     "status": shown["status"],
-                    "reason": shown["reason"],
+                    "reason": _shown(layout, shown["reason"]),
                     "submitted_by": shown["submitted_by"],
                     "started_at": shown["started_at"],
                     "name_differs": shown["name_differs"],
@@ -174,8 +182,8 @@ def listing(layout: Layout) -> http_base.Reply:
                     "issuer_name": item.issuer_name,
                     "pathway": item.pathway,
                     "status": item.status,
-                    "reason": item.reason,
-                    "ended_at": item.ended_at or item.claimed_at,
+                    "reason": _shown(layout, item.reason),
+                    "ended_at": item.ended_at,
                     "submitted_by": item.submitted_by,
                 }
                 for item in ended
@@ -207,7 +215,7 @@ def reply(layout: Layout, run_id: str) -> http_base.Reply:
             "as_of": record.as_of,
             "pathway": record.pathway,
             "status": record.status,
-            "reason": record.reason,
+            "reason": _shown(layout, record.reason),
             "claimed_at": record.claimed_at,
             "started_at": record.started_at,
             "ended_at": record.ended_at,

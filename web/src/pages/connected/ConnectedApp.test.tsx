@@ -1075,6 +1075,29 @@ describe("connected activity and reports", () => {
     expect(screen.queryByText("No run in progress")).toBeNull();
   });
 
+  it("says so when an ended run has no recorded end time", async () => {
+    activityFetch({
+      updated: "2026-11-16T14:32:10Z",
+      held: "",
+      runs: [],
+      ended: [
+        {
+          id: "x-rejected",
+          issuer_name: "Harbour Packaging",
+          pathway: "credit_snapshot",
+          status: "rejected",
+          reason: "",
+          ended_at: "",
+          submitted_by: "",
+        },
+      ],
+    });
+    render(<ConnectedApp path="/runs" mode="synthetic" />);
+    const ended = await screen.findByRole("region", { name: "Ended without a report" });
+    expect(within(ended).getByText("Not recorded")).toBeVisible();
+    expect(within(ended).getByText("Rejected")).toBeVisible();
+  });
+
   it("draws the list from a service that sends no ended runs", async () => {
     activityFetch({ updated: "2026-11-16T14:32:10Z", held: "", runs: [] });
     render(<ConnectedApp path="/runs" mode="synthetic" />);
