@@ -1,4 +1,4 @@
-import { methodNote, readParagraph } from "../publishedReport";
+import { containsReference, methodNote, readParagraph } from "../publishedReport";
 import { items, publishedTables, record, word } from "./visualData";
 
 /** The text blocks of the section that owns the table at `line`, when a chart may draw them. */
@@ -25,24 +25,30 @@ export function qualificationBlocks(sections: unknown, line: number) {
   );
 }
 
+/** Whether the chart shows this body word for word; otherwise it shows a placeholder. */
+export function chartDrawsVerbatim(body: string) {
+  return body !== "" && !containsReference(body) && !/\bCP-[A-Z0-9]+\b/u.test(body);
+}
+
 /**
  * Lines of the text blocks that the module page's charts draw beside themselves
- * (`ChartQualifications`). A chart draws its qualifications when it is a published chart
- * or chart gap with a title and a table line, and, unless it is a gap, a drawable table.
+ * (`ChartQualifications`), word for word. Only a published chart with a title, a table line, a
+ * drawable table and no gap reaches `ChartQualifications`; a gap draws none.
  */
 export function drawnQualificationLines(output: unknown, sections: unknown): Set<number> {
   const published = record(output);
   const tables = publishedTables(sections);
   const lines = new Set<number>();
-  for (const key of ["charts", "chartGaps"]) {
+  for (const key of ["charts"]) {
     for (const raw of items(published[key])) {
       const descriptor = record(raw);
       const title = word(descriptor.title ?? descriptor.lane ?? descriptor.name);
       const line = descriptor.table;
       if (!title || typeof line !== "number" || !Number.isSafeInteger(line) || line <= 0) continue;
-      if (!word(descriptor.gap) && !tables.has(line)) continue;
+      if (word(descriptor.gap) || !tables.has(line)) continue;
       for (const block of qualificationBlocks(sections, line)) {
-        if (readParagraph(word(block.text)).body) lines.add(block.line as number);
+        if (chartDrawsVerbatim(readParagraph(word(block.text)).body))
+          lines.add(block.line as number);
       }
     }
   }

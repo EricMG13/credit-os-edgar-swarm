@@ -59,7 +59,7 @@ function fixture(): Grid {
   };
 }
 
-it("keeps exact period labels, dates and values with the recorded qualification at the header and interest row", () => {
+it("keeps exact period labels, dates and values with the period qualification under the table and the interest qualification at its row", () => {
   render(
     <ForecastTable
       grid={fixture()}

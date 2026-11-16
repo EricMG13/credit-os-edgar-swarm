@@ -1,7 +1,7 @@
 import { TRACE_HOST } from "@/pages/library/parts/TraceControl";
-import { containsReference, readParagraph } from "../publishedReport";
+import { readParagraph } from "../publishedReport";
 import { PublishedSource } from "../report/PublishedTrace";
-import { qualificationBlocks } from "./drawnQualifications";
+import { chartDrawsVerbatim, qualificationBlocks } from "./drawnQualifications";
 import { word } from "./visualData";
 
 export function ChartQualifications({
@@ -26,9 +26,7 @@ export function ChartQualifications({
       {passages.map(({ body, line: at }) => (
         <div key={at} className={`${TRACE_HOST} flex items-start justify-between gap-3`}>
           <p className="max-w-prose text-small text-text-secondary">
-            {containsReference(body) || /\bCP-[A-Z0-9]+\b/u.test(body)
-              ? "Qualification recorded in Evidence."
-              : body}
+            {chartDrawsVerbatim(body) ? body : "Qualification recorded in Evidence."}
           </p>
           {evidenceHref && (
             <PublishedSource href={evidenceHref(at)} name="Chart qualification">

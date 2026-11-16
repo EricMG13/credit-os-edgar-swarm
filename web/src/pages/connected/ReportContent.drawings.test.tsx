@@ -111,4 +111,21 @@ describe("drawing sections leave no handoff scaffolding", () => {
     page(entry);
     expect(screen.getAllByText("AMBIGUOUS-TEXT")).toHaveLength(1);
   });
+
+  it("keeps a qualification under a chart gap, which draws none", () => {
+    const entry = entryOf("CP-1", [drawing("Chart data: gapped", 60, ["GAP-SIDE-TEXT"])], {
+      chartGaps: [{ title: "Gapped", table: 61, gap: "no data" }],
+    });
+    page(entry);
+    expect(screen.getAllByText("GAP-SIDE-TEXT")).toHaveLength(1);
+  });
+
+  it("keeps a qualification naming another module word for word", () => {
+    const text = "Cover is shown before the CP-2 adjustment CROSS-TEXT.";
+    const entry = entryOf("CP-1", [drawing("Chart data: cross", 70, [text])], {
+      charts: [{ title: "Cross", table: 71, unit: "x", columns: [1] }],
+    });
+    page(entry);
+    expect(screen.getAllByText(text)).toHaveLength(1);
+  });
 });
