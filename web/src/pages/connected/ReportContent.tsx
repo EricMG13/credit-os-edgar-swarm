@@ -435,6 +435,45 @@ function findingsLayout(
   return { sections, groups };
 }
 
+function followingParagraphs(section: Section, entry: OutputEntry, folder: string) {
+  return section.blocks
+    .slice(1)
+    .map((block) =>
+      block.type === "text" ? (
+        <FindingParagraph
+          key={block.line}
+          block={block}
+          trace={traceKey(entry, block.line)}
+          href={evidencePath(folder, entry, block.line)}
+        />
+      ) : null,
+    );
+}
+
+function EmptyFindings({
+  entry,
+  folder,
+  afterBottomLine,
+}: {
+  entry: OutputEntry;
+  folder: string;
+  afterBottomLine?: ReactNode;
+}) {
+  return (
+    <>
+      <p className="text-text-secondary">
+        {entry.output.parseError
+          ? "This handoff could not be read into sections."
+          : "This handoff has no findings in this report format."}{" "}
+        <a href={evidencePath(folder, entry)} className="text-action underline">
+          Open Evidence
+        </a>
+      </p>
+      {afterBottomLine}
+    </>
+  );
+}
+
 export function ReportFindings({
   snapshot,
   run,
@@ -466,19 +505,7 @@ export function ReportFindings({
   if (summaryTrace) traces[key(summary.line)] = summaryTrace;
   const active = activeTrace === null ? null : traces[activeTrace];
   if (!sections.length && !summary)
-    return (
-      <>
-        <p className="text-text-secondary">
-          {entry.output.parseError
-            ? "This handoff could not be read into sections."
-            : "This handoff has no findings in this report format."}{" "}
-          <a href={evidencePath(run.folder, entry)} className="text-action underline">
-            Open Evidence
-          </a>
-        </p>
-        {afterBottomLine}
-      </>
-    );
+    return <EmptyFindings entry={entry} folder={run.folder} afterBottomLine={afterBottomLine} />;
   function drawSection(section: Section) {
     const first = section.blocks[0];
     if (
@@ -511,34 +538,11 @@ export function ReportFindings({
             <details className="rounded-lg border border-border-hairline bg-surface-card px-5 py-3">
               <summary className="cursor-pointer font-medium">Decision rationale</summary>
               <div className="mt-3 grid gap-3">
-                {section.blocks
-                  .slice(1)
-                  .map((block) =>
-                    block.type === "text" ? (
-                      <FindingParagraph
-                        key={block.line}
-                        block={block}
-                        trace={key(block.line)}
-                        href={evidencePath(run.folder, entry, block.line)}
-                      />
-                    ) : null,
-                  )}
+                {followingParagraphs(section, entry, run.folder)}
               </div>
             </details>
           )}
-          {!overview &&
-            section.blocks
-              .slice(1)
-              .map((block) =>
-                block.type === "text" ? (
-                  <FindingParagraph
-                    key={block.line}
-                    block={block}
-                    trace={key(block.line)}
-                    href={evidencePath(run.folder, entry, block.line)}
-                  />
-                ) : null,
-              )}
+          {!overview && followingParagraphs(section, entry, run.folder)}
         </div>
       );
     }
