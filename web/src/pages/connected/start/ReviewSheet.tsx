@@ -2,6 +2,7 @@ import { useId, type ReactNode } from "react";
 import { Button } from "@/components/base/buttons/button";
 import { moduleName, moduleTitle, pathwayName, type Answers, type Summary } from "../api";
 import {
+  changesSentence,
   documentDescription,
   LEVELS,
   lookupSentence,
@@ -94,7 +95,7 @@ export function ReviewSheet({
   const advanced = answers.level === "advanced";
   const changes = summary.prior
     ? `Compared with the ${pathwayName(summary.prior.pathway)} run as of ${summary.prior.as_of}`
-    : plainText(summary.changes);
+    : changesSentence(summary.changes);
   return (
     <>
       <section aria-labelledby={titleId} className="grid gap-4">

@@ -1,5 +1,5 @@
 import { moduleTitle } from "../api";
-import { lookupSentence, plainText } from "./plain";
+import { changesSentence, lookupSentence, plainText } from "./plain";
 
 it("names a module without its code", () => {
   expect(moduleTitle("CP-4")).toBe("Legal & covenants");
@@ -22,4 +22,11 @@ it("drops the launcher label and flag hint from a lookup line", () => {
   ).toBe(
     "on: Research questions may fetch allowlisted public pages and SEC EDGAR (public case default)",
   );
+});
+
+it("drops an unused earlier run from the changes line and says so", () => {
+  expect(changesSentence("first run (not used: 20261116-083145-01: different pathway)")).toBe(
+    "first run. An earlier run exists but could not be used for comparison.",
+  );
+  expect(changesSentence("first run")).toBe("first run");
 });

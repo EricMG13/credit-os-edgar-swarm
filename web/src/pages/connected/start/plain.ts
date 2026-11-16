@@ -35,3 +35,12 @@ export function lookupSentence(line: string) {
     line.replace(/^\s*[A-Z][a-z]*:\s+/, "").replace(/;\s*--web-lookup on forces it\s*$/, ""),
   );
 }
+
+/** The changes line without the service's `(not used: <run>: <why>)` note, which names a run id. */
+export function changesSentence(changes: string) {
+  const text = plainText(changes);
+  const kept = text.replace(/\s*\(not used:[^)]*\)\s*$/, "");
+  return kept === text
+    ? text
+    : `${kept}. An earlier run exists but could not be used for comparison.`;
+}

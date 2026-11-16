@@ -307,6 +307,19 @@ describe("connected run start", () => {
     expect(screen.getByRole("heading", { name: "Purpose" })).toHaveFocus();
   });
 
+  it("keeps the id of an unusable earlier run out of the review", async () => {
+    testingFetch({
+      ...plan,
+      changes: "first run (not used: 20261116-083145-01: different pathway)",
+    });
+    render(<ConnectedApp path="/start" mode="synthetic" />);
+    await review();
+    await screen.findByRole("button", { name: "Submit run" });
+    const sheet = screen.getByRole("region", { name: "What will run" });
+    expect(sheet).toHaveTextContent("An earlier run exists but could not be used for comparison.");
+    expect(sheet).not.toHaveTextContent(/20261116-083145-01|not used/);
+  });
+
   it("enforces primary facility input and forwards the reviewed Advanced choices", async () => {
     const fetchMock = testingFetch();
     render(<ConnectedApp path="/start" mode="synthetic" />);
