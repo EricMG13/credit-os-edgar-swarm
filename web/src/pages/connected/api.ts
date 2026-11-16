@@ -79,6 +79,7 @@ export type Summary = Reading & {
   omitted: string[];
   changes: string;
   lookup?: string[];
+  web_search?: boolean;
   prior?: { id: string; as_of: string; pathway: string } | null;
   model: string;
   effort: string;
@@ -381,6 +382,20 @@ const MODULE_NAMES: Readonly<Record<string, string>> = {
 
 export function moduleName(id: string) {
   return (Object.hasOwn(MODULE_NAMES, id) ? MODULE_NAMES[id] : undefined) ?? id;
+}
+
+/** Replaces each whole module code the page knows with the module's name; others stay. */
+export function serviceText(text: string) {
+  return text.replace(/\bCP-[A-Z0-9]+\b/g, (code) => moduleName(code));
+}
+
+/** The changes line without the launcher's "changes:" label or the service's `(not used: <run>: <why>)` note, which names a run id. */
+export function changesSentence(changes: string) {
+  const text = serviceText(changes.replace(/^\s*changes:\s+/i, ""));
+  const kept = text.replace(/\s*\(not used:[\s\S]*$/, "");
+  return kept === text
+    ? text
+    : `${kept.replace(/\.$/, "")}. An earlier run exists but could not be used for comparison.`;
 }
 
 export function pathwayName(pathway: string) {

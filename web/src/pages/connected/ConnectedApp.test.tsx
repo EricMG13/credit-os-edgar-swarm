@@ -38,7 +38,11 @@ const plan = {
 };
 
 function testingFetch(
-  summary: typeof plan & { lookup?: string[]; prior?: Summary["prior"] } = plan,
+  summary: typeof plan & {
+    lookup?: string[];
+    web_search?: boolean;
+    prior?: Summary["prior"];
+  } = plan,
   submitResponse?: Response | (() => Response),
   overrides: Record<string, unknown> = {},
 ) {
@@ -419,6 +423,26 @@ describe("connected run start", () => {
     expect(await screen.findByRole("button", { name: "Submit run" })).toBeDisabled();
     expect(fetchMock.mock.calls.filter(([path]) => path === "/api/submissions")).toHaveLength(2);
     expect(fetchMock.mock.calls.filter(([, init]) => init?.body === file)).toHaveLength(2);
+  });
+
+  describe("web search statement", () => {
+    const SENTENCE =
+      "The research module will search the web. The issuer's name and the questions it researches go to OpenAI's search.";
+
+    it("states once, on the review, that the research module searches the web", async () => {
+      const sheet = await reviewSheet({ ...plan, web_search: true });
+      expect(within(sheet).getAllByText(SENTENCE)).toHaveLength(1);
+    });
+
+    it("says nothing about web search when the summary says it is off", async () => {
+      const sheet = await reviewSheet({ ...plan, web_search: false });
+      expect(sheet).not.toHaveTextContent(/search the web/);
+    });
+
+    it("says nothing about web search when the summary does not say", async () => {
+      const sheet = await reviewSheet(plan);
+      expect(sheet).not.toHaveTextContent(/search the web/);
+    });
   });
 
   it("reviews what will run in plain language with an edit link per block", async () => {

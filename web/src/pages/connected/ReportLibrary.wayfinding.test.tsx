@@ -1,7 +1,19 @@
-import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import {
+  act,
+  configure,
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { ConnectedApp } from "./ConnectedApp";
 import type { Snapshot } from "./publishedReport";
+
+// The first render of the whole reader can pass the 1 s default on a busy machine.
+configure({ asyncUtilTimeout: 5000 });
 
 const EVIDENCE = {
   sources: [],

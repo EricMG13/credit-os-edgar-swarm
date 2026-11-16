@@ -855,10 +855,21 @@ async function checkReadingLayout(report, page, channel) {
     name: "Show sources for Cash proxy by scenario",
     exact: true,
   });
-  const box = await source.boundingBox();
-  assert.ok(box);
-  assert.ok(box.width >= 44);
-  assert.ok(box.height >= 44);
+  // 8d2089bc: the hit area is exactly 44px (26px padding box plus 9px each side), pixels -22 to +21
+  // from the centre. Prove all four corners of that square reach the button.
+  await source.scrollIntoViewIfNeeded();
+  const reachesButton = await source.evaluate((el) => {
+    const rect = el.getBoundingClientRect();
+    const cx = rect.left + rect.width / 2;
+    const cy = rect.top + rect.height / 2;
+    return [-22, 21].every((dx) =>
+      [-22, 21].every((dy) => {
+        const hit = document.elementFromPoint(cx + dx, cy + dy);
+        return hit !== null && el.contains(hit);
+      }),
+    );
+  });
+  assert.equal(reachesButton, true);
   const main = await page.locator("main").boundingBox();
   assert.ok(main);
   assert.ok(main.x === 0);
@@ -1004,7 +1015,9 @@ async function checkForecastEvidence(report, artifacts, channel, page) {
   const cashProxy = report.getByRole("figure", { name: "Cash proxy by scenario", exact: true });
   await cashProxy.getByRole("radio", { name: "Table", exact: true }).check();
   await cashProxy.getByRole("row", { name: /Downside shock/u }).waitFor();
-  assert.equal(await cashProxy.getByRole("row", { name: /Base case/u }).count(), 0);
+  // cc836f5f: the cash proxy draws every case, emphasising the selected one.
+  assert.equal(await cashProxy.getByRole("row", { name: /Base case/u }).count(), 1);
+  assert.equal(await cashProxy.getByRole("row", { name: /Downside shock/u }).count(), 1);
   const baseCase = report.getByRole("radio", { name: /^Base case/u });
   await baseCase.focus();
   await baseCase.press("Space");

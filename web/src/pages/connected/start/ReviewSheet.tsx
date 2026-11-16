@@ -1,13 +1,18 @@
 import { useId, type ReactNode } from "react";
 import { Button } from "@/components/base/buttons/button";
-import { moduleName, pathwayName, type Answers, type Summary } from "../api";
 import {
   changesSentence,
+  moduleName,
+  pathwayName,
+  serviceText,
+  type Answers,
+  type Summary,
+} from "../api";
+import {
   comparisonCaveat,
   documentDescription,
   LEVELS,
   lookupSentence,
-  plainText,
   PURPOSES,
   storedName,
 } from "./plain";
@@ -123,11 +128,11 @@ function LimitCard({
       {group.causes.map((cause, index) => (
         <div key={cause.id}>
           <p className="font-semibold text-text-primary">{scopeText(cause.scope)}</p>
-          <p id={index === 0 ? reasonId : undefined}>{plainText(cause.reason)}</p>
+          <p id={index === 0 ? reasonId : undefined}>{serviceText(cause.reason)}</p>
         </div>
       ))}
       {fixes.map((fix) => (
-        <p key={fix}>{plainText(fix)}</p>
+        <p key={fix}>{serviceText(fix)}</p>
       ))}
       {refusing.length > 0 && <p>Will also refuse: {refusing.join(", ")}</p>}
       {affected.length > 0 && <p>Also affects: {affected.join(", ")}</p>}
@@ -194,8 +199,8 @@ function LimitsToDecide({
           <ul className="mt-2 list-disc space-y-1 pl-5">
             {passive.map((item) => (
               <li key={item.id}>
-                {plainText(item.reason)}
-                {item.fix ? ` ${plainText(item.fix)}` : ""}
+                {serviceText(item.reason)}
+                {item.fix ? ` ${serviceText(item.fix)}` : ""}
               </li>
             ))}
           </ul>
@@ -267,7 +272,7 @@ export function ReviewSheet({
           />
           {summary.omitted.length > 0 && (
             <p className="text-sm text-text-secondary">
-              Report sections omitted · {plainText(summary.omitted.join(", "))}
+              Report sections omitted · {serviceText(summary.omitted.join(", "))}
             </p>
           )}
         </Block>
@@ -281,6 +286,12 @@ export function ReviewSheet({
             ]}
           />
           <List title="Source lookup" items={(summary.lookup ?? []).map(lookupSentence)} />
+          {summary.web_search === true && (
+            <p className="text-sm text-text-secondary">
+              The research module will search the web. The issuer&apos;s name and the questions it
+              researches go to OpenAI&apos;s search.
+            </p>
+          )}
         </Block>
         {answers.level === "advanced" && (
           <Block title="Advanced choices" {...block}>

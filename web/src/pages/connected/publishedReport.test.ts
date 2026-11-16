@@ -14,6 +14,7 @@ import {
   evidenceToken,
   resolveEvidenceLocation,
   type OutputEntry,
+  missingPassages,
 } from "./publishedReport";
 
 describe("published handoff boundaries", () => {
@@ -276,5 +277,52 @@ describe("plainModuleNames", () => {
     ],
   ])("keeps a stored file name and drops a module code beside it: %j", (input, expected) => {
     expect(plainModuleNames(input)).toBe(expected);
+  });
+});
+
+const CONTRARY = "Contrary evidence and what would change the view";
+function entry(module: string, headings: string[], bottom = "Judgement."): OutputEntry {
+  return {
+    selected: true,
+    output: { id: "a", module, label: "a", href: "", sha256: "a" },
+    sections: headings.length
+      ? [
+          { heading: "Findings", level: 2, line: 1, blocks: [] },
+          ...headings.map((heading, at) => ({
+            heading,
+            level: 3,
+            line: 2 + at,
+            blocks: [
+              {
+                type: "text" as const,
+                line: 20 + at,
+                end: 20 + at,
+                text: heading === "Bottom line" ? bottom : "Text.",
+              },
+            ],
+          })),
+        ]
+      : [],
+  };
+}
+
+describe("missing reader passages", () => {
+  it("lists the reader passages a prose module did not write", () => {
+    expect(missingPassages(entry("CP-2", ["Bottom line", "Limitations"]))).toEqual([
+      "Key findings",
+      CONTRARY,
+    ]);
+  });
+  it("asks a data module for its bottom line only", () => {
+    expect(missingPassages(entry("CP-1", ["Bottom line"]))).toEqual([]);
+    expect(missingPassages(entry("CP-1C", ["Key findings"]))).toEqual(["Bottom line"]);
+  });
+  it("asks a blocked module for nothing more", () => {
+    expect(missingPassages(entry("CP-2", ["Bottom line"], "Not assessable: no accounts."))).toEqual(
+      [],
+    );
+  });
+  it("does not judge an earlier-format handoff", () => {
+    expect(missingPassages(entry("CP-2", []))).toEqual([]);
   });
 });
