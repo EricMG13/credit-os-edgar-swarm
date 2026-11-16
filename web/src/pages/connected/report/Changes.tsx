@@ -7,11 +7,12 @@ import { Badge } from "@/components/base/badges/badges";
 import { ColumnsChart } from "@/components/chart/ColumnsChart";
 import { ChangeCard } from "@/pages/library/parts/ChangeCard";
 import type { Cell } from "@/pages/library/slice";
+import { changesSentence } from "../api";
 import { card, heading } from "../layout";
 import {
   comparisonRows,
   containsReference,
-  plainModuleNames,
+  readerText,
   readParagraph,
   type Changes as PublishedChanges,
   type MaturityProfile,
@@ -67,6 +68,21 @@ export function ComparisonTable({
   );
 }
 
+/** The fixed sentence for a run with no comparison pack; the service's own reason is drawn only with the evidence. */
+function noComparisonSentence(raw: string | null | undefined) {
+  const text = (raw ?? "").replace(/^\s*changes:\s*/i, "").trim();
+  const form = text.toLowerCase();
+  if (form.startsWith("not produced"))
+    return "The comparison was planned but not produced for this run.";
+  if (form.startsWith("not compared")) return "This run was not compared with an earlier run.";
+  if (form.startsWith("first run of this pathway")) {
+    const sentence = changesSentence(text);
+    if (!containsReference(sentence))
+      return sentence.replace(/^./, (c) => c.toUpperCase()).replace(/\.?$/, ".");
+  }
+  return "No comparison was recorded for this run.";
+}
+
 export function Changes({
   snapshot,
   run,
@@ -82,6 +98,7 @@ export function Changes({
   const entry = change?.problem ? undefined : entries[entryIndex];
   const trace = comparisonTrace(run.folder, change?.problem ? [] : entries);
   const rows = change?.pack && !change.problem ? comparisonRows(change, "reader") : [];
+  const note = noComparisonSentence(change?.note);
   const [presentation, setPresentation] = useState<"cards" | "table">("cards");
   if (change?.first_run === true && !change.pack && !change.problem && !change.note)
     return (
@@ -115,11 +132,7 @@ export function Changes({
               : change.problem}
           </p>
         ) : !change?.pack ? (
-          <p>
-            {change?.note && !containsReference(change.note)
-              ? change.note
-              : "No comparison was recorded for this run."}
-          </p>
+          <p>{note}</p>
         ) : null}
         {rows.length > 0 && (
           <>
@@ -224,7 +237,7 @@ function ComparedModules({
     const { body } = readParagraph(bottomLine);
     return containsReference(body)
       ? "See the retained handoff in Evidence."
-      : plainModuleNames(body) || "Not stated";
+      : readerText(body) || "Not stated";
   }
   return (
     <section className={card}>
@@ -258,7 +271,7 @@ function ComparedModules({
               </div>
               {explanation.length > 0 && (
                 <p className="mt-2 text-sm text-text-secondary">
-                  {plainModuleNames(explanation.join(" · "))}
+                  {readerText(explanation.join(" · "))}
                 </p>
               )}
               {href && (

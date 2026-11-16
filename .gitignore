@@ -26,6 +26,7 @@ private/
 .superpowers/
 
 # React build and synthetic browser proof
+/node_modules/
 /web/node_modules/
 /web/dist/
 /web/coverage/
