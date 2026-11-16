@@ -139,3 +139,49 @@ it("leads CP-1 with the module's own bottom line, not a sentence the app wrote",
   expect(screen.queryByText(/Lease-adjusted gross leverage is/)).toBeNull();
   expect(screen.getByText(lead)).toBeVisible();
 });
+
+function renderModule(extra: Partial<OutputEntry["output"]>) {
+  const entry = output("c", true);
+  entry.output = { ...entry.output, module: "CP-2", ...extra };
+  entry.sections = [
+    { heading: "Findings", level: 2, line: 1, blocks: [] },
+    {
+      heading: "Confidence inputs",
+      level: 3,
+      line: 4,
+      blocks: [
+        {
+          type: "table",
+          headers: ["Input", "Value"],
+          line: 5,
+          rows: [{ line: 6, cells: ["Coverage", "High"] }],
+        },
+      ],
+    },
+  ];
+  const props = fixture([]);
+  props.view.modules[0] = { ...props.view.modules[0], outputs: [entry] } as View["modules"][number];
+  props.view.entries = [entry];
+  return render(<Modules {...props} module="CP-2" />);
+}
+
+it("shows the published confidence score with its band", () => {
+  renderModule({ confidence: { value: 72, band: "Medium" } });
+  const tile = screen.getByText("Confidence score").closest("li");
+  expect(tile).toHaveTextContent("72");
+  expect(tile).toHaveTextContent("Medium");
+  expect(
+    within(tile as HTMLElement).getByRole("button", { name: "Show sources for this figure" }),
+  ).toBeVisible();
+  expect(screen.queryByRole("heading", { name: "Confidence inputs" })).toBeNull();
+});
+
+it("shows why there is no score", () => {
+  renderModule({ confidence: { missing: "The confidence inputs could not be read." } });
+  expect(screen.getByText("The confidence inputs could not be read.")).toBeVisible();
+});
+
+it("draws nothing for a run that predates the score", () => {
+  renderModule({});
+  expect(screen.queryByText("Confidence score")).toBeNull();
+});

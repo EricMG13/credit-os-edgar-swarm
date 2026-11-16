@@ -26,6 +26,7 @@ type Output = {
   chartGaps?: FigureRef[];
   events?: FigureRef[];
   maps?: FigureRef[];
+  confidence?: { value: number; band: string } | { missing: string };
 };
 export type OutputEntry = { output: Output; sections: Section[]; selected: boolean };
 type Link = { href: string; label: string };
@@ -353,7 +354,7 @@ const PASSAGES = [
 const HIDDEN =
   /^(Request|Next module|Front matter)$|downstream owners|Consumer readiness|command sheet|Readiness for downstream use|Upstream re-anchor|method trace|Module status|QA validation|machine-readable|research brief|Workstream plan|Cross-Module Handoff/i;
 const REGISTERS =
-  /source assessment|source context|period table|key located evidence|conflicts and duplicates|register|ledger/i;
+  /source assessment|confidence inputs|source context|period table|key located evidence|conflicts and duplicates|register|ledger/i;
 const TOP_ROLE = { Sources: "sources", Calculations: "calculations", Gaps: "gaps" } as const;
 const isTopRole = (heading: string): heading is keyof typeof TOP_ROLE =>
   Object.hasOwn(TOP_ROLE, heading);

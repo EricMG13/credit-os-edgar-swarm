@@ -12,6 +12,7 @@ import {
 } from "../publishedReport";
 import { foundationMetrics, moduleState, type buildReportView } from "../reportView";
 import { LegacyVisuals } from "../visuals";
+import { ModuleConfidence } from "./Confidence";
 import { MetricGrid } from "./MetricGrid";
 import { monitoringLabel } from "./ModuleTable";
 import { Downside, downsideView } from "./Downside";
@@ -233,6 +234,7 @@ function ModuleFindings({
       figureTableLines={figureTableLines}
       afterBottomLine={
         <>
+          <ModuleConfidence snapshot={snapshot} run={run} entry={entry} entryIndex={index} />
           <MetricGrid
             records={metrics}
             entry={entry}

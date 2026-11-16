@@ -62,6 +62,14 @@ describe("published handoff boundaries", () => {
     ]);
   });
 
+  it("files a Confidence inputs table under Findings as a register", () => {
+    const sections = [
+      { heading: "Findings", level: 2, line: 0, blocks: [] },
+      { heading: "Confidence inputs", level: 3, line: 1, blocks: [] },
+    ];
+    expect(classifySections(sections).map(({ role }) => role)).toEqual(["finding", "registers"]);
+  });
+
   it("keeps the exact basis in trace and preserves identifiers in evidence tables only", () => {
     expect(
       readParagraph("- **Cash was USD 0m.**\nBasis: report.pdf, page 7; report.pdf, page 8."),
