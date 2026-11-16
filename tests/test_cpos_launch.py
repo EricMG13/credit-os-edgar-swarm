@@ -1833,14 +1833,9 @@ def table(head: tuple[str, ...], row: tuple[str, ...]) -> str:
 NOT_ASSESSABLE = table(("Item", "Status"), ("Not assessable", NO_DOCUMENT))
 # The blocked form CP-4 is sent (READER_PASSAGES, CONFIDENCE_RULE and the selector list in its
 # instructions): `module_status: Blocked`, a Bottom line that begins `Not assessable: `, the gate
-# register only, and each report selector once with one not-assessable row under its header.
-BLOCKED_SELECTORS = {
-    "Covenant tests and headroom": NOT_ASSESSABLE,
-    "Red flags": NOT_ASSESSABLE,
-    "Lender protection score": NOT_ASSESSABLE,
-    "Capacity and baskets": NOT_ASSESSABLE,
-    "EBITDA definition": NOT_ASSESSABLE,
-    "Documents and structure": NOT_ASSESSABLE,
+# register only, and each report selector once: its routed ones (a table selector with one
+# not-assessable row, a prose selector with one sentence) and these fixed-header tables.
+FIXED_SELECTORS = {
     "Chart data: covenant headroom": table(
         (*CHART, "Basis and limitation"), (*[NO_DOCUMENT] * 5, "x", "Not assessable.")
     )
@@ -1852,9 +1847,12 @@ BLOCKED_SELECTORS = {
 }
 
 
-def blocked_cp4(context: dict) -> str:
+def blocked_cp4(context: dict, routes: list) -> str:
     gate = table(("Document", "Status", "Limitation"), (NO_DOCUMENT, "Blocked", "Source gate"))
-    selectors = [part for h, t in BLOCKED_SELECTORS.items() for part in (f"### {h}", "", t, "")]
+    sentence = "Not assessable: no executed governing document was supplied."
+    routed = {r.heading: NOT_ASSESSABLE if r.kind == "table" else sentence for r in routes}
+    selectors = {**routed, **FIXED_SELECTORS}
+    sections = [part for h, t in selectors.items() for part in (f"### {h}", "", t, "")]
     lines = [
         *("---", "module_id: CP-4", "module_status: Blocked", "---", "# CP-4", ""),
         *("## Request", "", f"{ISSUER} as of {AS_OF}.", "", "## Sources", ""),
@@ -1865,17 +1863,23 @@ def blocked_cp4(context: dict) -> str:
             "Not assessable: no executed governing document was supplied, so the covenants, their "
             "capacity and headroom and the lenders' protection are not established for this run."
         ),
-        *("", "### T4.1 Source gate register", "", gate, "", *selectors),
+        *("", "### T4.1 Source gate register", "", gate, "", *sections),
         *("## Calculations", "", "None.", "", "## Gaps", "", "None.", ""),
         *("## Next module", "", "The orchestrator selects the next module.", ""),
     ]
     return "\n".join(lines)
 
 
-def test_cp4_written_as_the_methods_blocked_message_is_accepted(tmp_path):
-    prepared, task, context = good_task(tmp_path, "CP-4")
+# Covenant & Refinancing (six table selectors), Deep (the live run's pathway) and Distressed
+# (one prose selector).
+@pytest.mark.parametrize(
+    "pathway", ["covenant_refinancing", "deep_credit_assessment", "distressed_restructuring"]
+)
+def test_cp4_written_as_the_methods_blocked_message_is_accepted(tmp_path, pathway):
+    prepared, task, context = good_task(tmp_path, "CP-4", pathway)
     task = legal_declared(task, "none")
-    raw = blocked_cp4(context).encode()
+    routes = [r for r in prepared.plan.layout.routes if r.module_id == "CP-4"]
+    raw = blocked_cp4(context, routes).encode()
     assert _checked_handoff(task, raw, checker(prepared.layout)) == ()
 
 

@@ -1286,7 +1286,8 @@ _SOURCE_GATE = (
     "run's context declares no legal documents, so no executed credit agreement or indenture was "
     "supplied, and a filing's summary of the agreements is not one. State `module_status: "
     "Blocked` in the front matter, begin `### Bottom line` with `Not assessable: `, write the gate "
-    "register only, and each report selector once with one not-assessable row."
+    "register only, and each report selector once: a table selector with its header and one "
+    "not-assessable row, a prose selector with one sentence saying so."
 )
 
 
