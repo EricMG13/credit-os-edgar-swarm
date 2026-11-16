@@ -34,7 +34,15 @@ function evidenceEntry(
 }
 
 function renderGaps(entries: OutputEntry[], module = "CP-1") {
-  const run = { folder: "case", evidence: emptyEvidence } as unknown as PublishedRun;
+  return renderEvidence(entries, `gaps/${module}`);
+}
+
+function renderEvidence(
+  entries: OutputEntry[],
+  target: string,
+  evidence: PublishedRun["evidence"] = emptyEvidence,
+) {
+  const run = { folder: "case", evidence } as unknown as PublishedRun;
   const snapshot = {
     workspace: { runs: {}, outputs: {}, handoffs: {}, models: [] },
     chips: {},
@@ -44,7 +52,7 @@ function renderGaps(entries: OutputEntry[], module = "CP-1") {
       snapshot={snapshot}
       run={run}
       entries={entries}
-      target={`gaps/${module}`}
+      target={target}
       mode="synthetic"
     />,
   );
@@ -239,4 +247,50 @@ it("does not repeat the retained-preview notice inside the Evidence page", () =>
   );
   expect(screen.queryByRole("note")).toBeNull();
   expect(screen.getByRole("heading", { name: "Evidence" })).toBeInTheDocument();
+});
+
+it("keeps filtered summary counts, alternate handoffs and source identities across evidence tabs", () => {
+  const entries = [
+    evidenceEntry("CP-1", "selected", true, []),
+    evidenceEntry("CP-1", "alternate", false, []),
+    evidenceEntry("CP-2G", "other", true, []),
+  ];
+  const source = {
+    name: "Issuer filing",
+    type: "PDF",
+    documentDate: "2026-10-31",
+    readBy: ["CP-1"],
+    sha256: "source-digest",
+  };
+  const evidence = {
+    ...emptyEvidence,
+    sources: [source],
+    unused: [{ ...source, name: "Other module", readBy: ["CP-2G"] }],
+    unrecorded: [{ ...source, name: "Use unknown", sha256: null }],
+  };
+  const summary = renderEvidence(entries, "summary/CP-1", evidence);
+  expect(screen.getByText("1 designated handoffs · 2 source files")).toBeVisible();
+  expect(
+    screen.getByRole("link", { name: "Financial foundation (CP-1) · Saved alternate" }),
+  ).toHaveAttribute("href", `/report/case#evidence/alternate~${"a".repeat(64)}`);
+  expect(screen.queryByRole("link", { name: /CP-2G/ })).toBeNull();
+  summary.unmount();
+  const sources = renderEvidence(entries, "sources/CP-1", evidence);
+  expect(screen.getByText("Issuer filing")).toBeVisible();
+  expect(screen.getByText("source-digest")).toBeVisible();
+  expect(screen.getByText("Use unknown")).toBeVisible();
+  expect(screen.queryByText("Other module")).toBeNull();
+  expect(screen.queryByText("Supplied but unnamed in handoffs")).toBeNull();
+  sources.unmount();
+  renderEvidence(entries, "sources/CP-unknown", evidence);
+  expect(screen.getByText("No issuer files are listed for CP-unknown.")).toBeVisible();
+  expect(screen.queryByText("Issuer filing")).toBeNull();
+});
+
+it("does not admit a stale evidence address or display the handoff list for it", () => {
+  const entry = evidenceEntry("CP-1", "saved", true, []);
+  renderEvidence([entry], `saved~${"b".repeat(64)}`);
+  expect(screen.getByRole("alert")).toHaveTextContent("Evidence link unavailable");
+  expect(screen.queryByRole("heading", { name: "Handoffs" })).toBeNull();
+  expect(screen.queryByRole("heading", { name: "Run evidence" })).toBeNull();
 });

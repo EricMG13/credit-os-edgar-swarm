@@ -1,3 +1,9 @@
+import {
+  checkDistinctSeries,
+  seriesKey as keyOf,
+  checkLabeledSeriesLength,
+  periodSeriesData,
+} from "./seriesData";
 import { Fragment, useState, type ReactNode } from "react";
 import {
   CartesianGrid,
@@ -45,30 +51,18 @@ interface PathChartProps {
 const TEXT_FILL = "var(--color-text-secondary)";
 const NA_FILL = "var(--color-text-tertiary)";
 
-function keyOf(i: number): string {
-  return `s${String(i)}`;
-}
-
 function check({
   periods,
   series,
   divider,
   table,
 }: Pick<PathChartProps, "periods" | "series" | "divider" | "table">) {
-  const repeated = series.find((s, i) => series.findIndex((o) => o.name === s.name) !== i);
-  if (repeated !== undefined)
-    throw new Error(`series names must be distinct: "${repeated.name}" repeats`);
+  checkDistinctSeries(series);
   const columns = table.head.slice(1);
   if (columns.length !== periods.length || columns.some((c, i) => c !== periods[i])) {
     throw new Error("the table's columns must be the periods, in the same order");
   }
-  const n = periods.length;
-  const bad = series.find((s) => s.values.length !== n || s.labels.length !== n);
-  if (bad !== undefined) {
-    throw new Error(
-      `series "${bad.name}" must have one value and one label per period (${String(n)} periods)`,
-    );
-  }
+  checkLabeledSeriesLength(series, periods.length, "period");
   if (divider !== undefined) {
     const at = periods.indexOf(divider.period);
     if (at < 0) throw new Error(`divider period "${divider.period}" is not one of the periods`);
@@ -285,11 +279,7 @@ function Chart({
   rows: TableRowData[];
 }) {
   const styles = assignSeries(series.map((s) => s.name));
-  const data = periods.map((period, index) => ({
-    period,
-    index,
-    ...Object.fromEntries(series.map((s, i) => [keyOf(i), s.values[index] ?? null])),
-  }));
+  const data = periodSeriesData(periods, series);
   const allMissing = periods.filter((_, p) => series.every((s) => s.values[p] === null));
   return (
     // Period labels may need horizontal room on narrow screens; make that region keyboard-scrollable.

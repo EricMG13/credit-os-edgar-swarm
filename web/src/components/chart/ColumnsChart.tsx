@@ -1,3 +1,4 @@
+import { checkDistinctSeries, seriesKey as keyOf, checkLabeledSeriesLength } from "./seriesData";
 import type { ReactNode } from "react";
 import { Bar, usePlotArea, useXAxisScale, type BarShapeProps } from "recharts";
 import { BarCanvas, type BarTooltipProps } from "./BarCanvas";
@@ -42,21 +43,9 @@ const LABEL_GAP = 4;
 /** The mock's fix for three-series groups: the middle label one 16px line higher. */
 const MIDDLE_RAISE = 16;
 
-function keyOf(i: number): string {
-  return `s${String(i)}`;
-}
-
 function check({ groups, series, table }: Pick<ColumnsChartProps, "groups" | "series" | "table">) {
-  const repeated = series.find((s, i) => series.findIndex((o) => o.name === s.name) !== i);
-  if (repeated !== undefined)
-    throw new Error(`series names must be distinct: "${repeated.name}" repeats`);
-  const n = groups.length;
-  const bad = series.find((s) => s.values.length !== n || s.labels.length !== n);
-  if (bad !== undefined) {
-    throw new Error(
-      `series "${bad.name}" must have one value and one label per group (${String(n)} groups)`,
-    );
-  }
+  checkDistinctSeries(series);
+  checkLabeledSeriesLength(series, groups.length, "group");
   for (const s of series) {
     groups.forEach((group, g) => {
       const present = s.values[g] !== null;

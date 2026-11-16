@@ -4,6 +4,16 @@ Keep one running record here. A pass applies only to the stated scope. Earlier v
 engine is in [EricMG13/final-workflow](https://github.com/EricMG13/final-workflow)'s
 `VERIFICATION.md`, which also keeps the retained runs this copy leaves out.
 
+## 2026-11-16 — Five remaining Fallow findings
+
+- Verified all four clone IDs with their `fallow dupes --trace` commands and Evidence with `fallow inspect` before edits. Shared chart name/shape validation, positional keys and period data preparation; shared exact evidence section-line membership; split Evidence routing, navigation, summary, sources and handoffs into bounded components. No suppressions.
+- Audit then exposed the pre-existing comparison-row complexity; verified its inspect command and extracted unchanged comparability, period and difference predicates. Final audit against `fbcc5ac`: PASS, zero introduced and zero inherited findings.
+- Confidence review, ranked: (1) financial semantics — Astra independently checked 19,440 before/after cases plus literal missing/zero/currency/precision/revision expectations; implementer checked another 10,000; (2) chart data/key/validation fidelity — independent Astra frozen-input assertions cover sparse cells, zero/null, signed values, hostile/duplicate names, order and exact errors; (3) evidence identity/routing/admission — retained exact match predicate, module/source filters, alternate links and stale-address rejection, covered by regression tests and parent diff review. No outstanding defect in this scope.
+- Targeted tests pass: chart subset 96; Evidence/publishedReport/design subset 32; connected app/design/Changes/legacy visuals/Forecast subset 58 (overlapping design tests); final Evidence rerun 11/11. TypeScript, changed-file ESLint/Prettier and Python quality gate pass (zero findings).
+- Fresh offline install/build from source tree `34510a2dd75d3ce8154534329c3f49525a0d7b02`; Chrome 157.0.8103.78 `20261116-035824-01` and Edge 157.0.4341.60 `20261116-035841-01` each pass all 33 synthetic upload-to-finished-report checks on macOS. Evidence: `proof-artifacts/run-vuQ8ku/proof.json`. Final commit additionally tightens one test-only excluded-module matcher; runtime source matches this tested tree.
+- Presentation fidelity scope: unchanged classes/markup/labels and chart data checked by component tests and branded browser proof. Opened retained Caesars in the app at `http://127.0.0.1:58341/report/20261115-114658-01#evidence/summary`; 12 handoffs/18 sources; Financial foundation opens the exact saved CP-1 revision. Observed Credit OS layout and Evidence controls preserved. This retained preview still reports missing source text/inventory entries; opening its handoff does not establish complete underlying source availability.
+- RBOT-HTML backend and pins remain identical to `256101a`; React dependencies unchanged. No providers, Signal, tournaments, ZIP build or publication. Actual Windows work-PC Chrome and Edge proof remains outstanding; ZIP stays held.
+
 ## 2026-11-16 — Evidence gap complexity repair
 
 - Verified the app finding before editing with `fallow inspect --file src/pages/connected/report/Evidence.tsx --format json`: `gapRecords` cyclomatic 15 / cognitive 24. Extracted table title selection and row conversion; retained block filters and per-row appending. No suppressions or design changes.

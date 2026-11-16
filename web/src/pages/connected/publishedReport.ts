@@ -240,6 +240,38 @@ export function comparisonForRun(run: PublishedRun, runs: Record<string, Publish
   };
 }
 
+function comparableMeasure(measure: Measure, kind: string | undefined, unitsMatch: boolean) {
+  return (
+    kind === "comparable" &&
+    unitsMatch &&
+    measure.comparable !== "no" &&
+    measure.prior?.value != null &&
+    measure.current?.value != null
+  );
+}
+
+function sameMeasurePeriod(measure: Measure) {
+  return (
+    measure.same_period === true ||
+    Boolean(measure.prior?.period && measure.prior.period === measure.current?.period)
+  );
+}
+
+function comparisonDifference(
+  measure: Measure,
+  comparable: boolean,
+  samePeriod: boolean,
+  purpose: "evidence" | "reader",
+) {
+  const revision =
+    comparable && samePeriod && measure.difference != null && Number(measure.difference) !== 0;
+  const delta =
+    comparable && measure.difference != null && (purpose === "evidence" || !samePeriod)
+      ? withUnit(measure.difference, measure.unit)
+      : "—";
+  return { revision, delta };
+}
+
 export function comparisonRows(changes: Changes, purpose: "evidence" | "reader" = "evidence") {
   const side = (item: Side | null | undefined) =>
     item?.value == null
@@ -248,21 +280,9 @@ export function comparisonRows(changes: Changes, purpose: "evidence" | "reader" 
   return (changes.pack?.measures ?? []).map((measure) => {
     const verdict = changes.verdicts?.measures?.[measure.key];
     const unitsMatch = (measure.prior?.unit ?? null) === (measure.current?.unit ?? null);
-    const comparable =
-      verdict?.kind === "comparable" &&
-      unitsMatch &&
-      measure.comparable !== "no" &&
-      measure.prior?.value != null &&
-      measure.current?.value != null;
-    const samePeriod =
-      measure.same_period === true ||
-      Boolean(measure.prior?.period && measure.prior.period === measure.current?.period);
-    const revision =
-      comparable && samePeriod && measure.difference != null && Number(measure.difference) !== 0;
-    const delta =
-      comparable && measure.difference != null && (purpose === "evidence" || !samePeriod)
-        ? withUnit(measure.difference, measure.unit)
-        : "—";
+    const comparable = comparableMeasure(measure, verdict?.kind, unitsMatch);
+    const samePeriod = sameMeasurePeriod(measure);
+    const { revision, delta } = comparisonDifference(measure, comparable, samePeriod, purpose);
     const reason = unitsMatch
       ? verdict?.reason || verdict?.label || measure.reason || "Comparability not judged"
       : "Reporting units differ.";
@@ -432,6 +452,17 @@ export function evidenceToken(entry: OutputEntry, line?: number) {
   return `${encodeURIComponent(id)}~${sha256}${line === undefined ? "" : `-${String(line)}`}`;
 }
 
+export function sectionContainsLine(section: Section, line: number) {
+  return (
+    section.line === line ||
+    section.blocks.some(
+      (block) =>
+        block.line === line ||
+        (block.type === "table" && block.rows.some((row) => row.line === line)),
+    )
+  );
+}
+
 export function resolveEvidenceLocation(entries: OutputEntry[], token: string) {
   const delimiter = token.lastIndexOf("~");
   if (delimiter <= 0) return null;
@@ -454,18 +485,7 @@ export function resolveEvidenceLocation(entries: OutputEntry[], token: string) {
   const { entry, index } = matchEntry;
   const line = match[2] === undefined ? undefined : Number(match[2]);
   if (line !== undefined && (!Number.isSafeInteger(line) || line <= 0)) return null;
-  if (
-    line !== undefined &&
-    !entry.sections.some(
-      (section) =>
-        section.line === line ||
-        section.blocks.some(
-          (block) =>
-            block.line === line ||
-            (block.type === "table" && block.rows.some((row) => row.line === line)),
-        ),
-    )
-  )
+  if (line !== undefined && !entry.sections.some((section) => sectionContainsLine(section, line)))
     return null;
   return { entry, index, line };
 }

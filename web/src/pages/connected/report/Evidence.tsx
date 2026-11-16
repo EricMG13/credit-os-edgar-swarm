@@ -13,6 +13,7 @@ import {
   FORECAST_INPUTS,
   publishedHref,
   resolveEvidenceLocation,
+  sectionContainsLine,
   type OutputEntry,
   type PublishedRun,
   type Section,
@@ -58,15 +59,7 @@ function EvidenceLocation({
   const visible =
     line === undefined
       ? sections
-      : sections.filter(
-          (section) =>
-            section.line === line ||
-            section.blocks.some(
-              (block) =>
-                block.line === line ||
-                (block.type === "table" && block.rows.some((row) => row.line === line)),
-            ),
-        );
+      : sections.filter((section) => sectionContainsLine(section, line));
   return visible.length ? (
     visible.map((section) => (
       <section key={section.line} className="grid gap-3 border-t border-border-hairline pt-3">
@@ -363,24 +356,133 @@ export function hasRecordedGap(blocks: Section["blocks"]) {
   return gapRecords(blocks).length > 0;
 }
 
-export function ReportEvidence({
-  snapshot,
-  run,
+type SourceGroup = { label: string; rows: PublishedRun["evidence"]["sources"] };
+
+function EvidenceSummary({
   entries,
-  target,
-  comparison,
-  mode,
+  module,
+  sourceGroups,
 }: {
-  snapshot: Snapshot;
-  run: PublishedRun;
   entries: OutputEntry[];
-  target?: string;
-  comparison?: ReactNode;
-  mode: Mode;
+  module?: string;
+  sourceGroups: SourceGroup[];
 }) {
+  return (
+    <section className={card}>
+      <h3 className={heading}>Run evidence</h3>
+      <p>
+        {String(
+          entries.filter((item) => item.selected && (!module || item.output.module === module))
+            .length,
+        )}{" "}
+        designated handoffs ·{" "}
+        {String(
+          sourceGroups.reduce(
+            (total, { rows }) =>
+              total + rows.filter((source) => !module || source.readBy.includes(module)).length,
+            0,
+          ),
+        )}{" "}
+        source files
+      </p>
+    </section>
+  );
+}
+
+function EvidenceSources({
+  sourceGroups,
+  module,
+}: {
+  sourceGroups: SourceGroup[];
+  module?: string;
+}) {
+  return (
+    <section className={card}>
+      <h3 className={heading}>Sources</h3>
+      {sourceGroups.every(
+        ({ rows }) => !rows.some((source) => !module || source.readBy.includes(module)),
+      ) && (
+        <p className="text-text-secondary">
+          {module
+            ? `No issuer files are listed for ${moduleName(module)}.`
+            : "No issuer files listed in this run’s published record."}
+        </p>
+      )}
+      {sourceGroups
+        .map((group) => ({
+          ...group,
+          rows: group.rows.filter((source) => !module || source.readBy.includes(module)),
+        }))
+        .filter(({ rows }) => rows.length > 0)
+        .map(({ label, rows }) => (
+          <div className="grid gap-2" key={label}>
+            <h3 className="font-medium">{label}</h3>
+            <ul className="divide-y divide-border-hairline rounded-ds-md border border-border-hairline">
+              {rows.map((source) => (
+                <li key={source.name} className="grid gap-1 px-4 py-3 text-sm">
+                  <p className="font-semibold wrap-anywhere">{source.name}</p>
+                  <p className="text-text-secondary">
+                    {[source.type, source.documentDate, ...source.readBy.map(moduleName)]
+                      .filter(Boolean)
+                      .join(" · ")}
+                  </p>
+                  {source.sha256 && (
+                    <code className="wrap-anywhere text-text-tertiary">{source.sha256}</code>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))}
+    </section>
+  );
+}
+
+function EvidenceHandoffs({
+  entries,
+  module,
+  run,
+}: {
+  entries: OutputEntry[];
+  module?: string;
+  run: PublishedRun;
+}) {
+  const zip = publishedHref(run.evidence.zip, run.folder);
+  return (
+    <section className={card}>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h3 className={heading}>Handoffs</h3>
+        {zip && (
+          <DownloadButton download={{ label: "Download all handoffs", href: zip, reason: null }} />
+        )}
+      </div>
+      <ul className="grid gap-2">
+        {entries.map(
+          (item) =>
+            (!module || item.output.module === module) && (
+              <li
+                key={item.output.id}
+                className="flex flex-wrap items-center justify-between gap-3 border-t border-border-hairline pt-2"
+              >
+                <a className="text-action underline" href={evidencePath(run.folder, item)}>
+                  {moduleName(item.output.module)}
+                  {item.selected ? "" : ` · ${item.output.label}`}
+                </a>
+                <HandoffDownload run={run} entry={item} />
+              </li>
+            ),
+        )}
+      </ul>
+    </section>
+  );
+}
+
+const tabs = ["Summary", "Trace", "Sources", "Gaps", "Record"] as const;
+type EvidenceTab = (typeof tabs)[number];
+
+function evidenceRoute(entries: OutputEntry[], target?: string) {
   const [section, module] = (target ?? "").split("/");
   const location = section ? resolveEvidenceLocation(entries, section) : null;
-  const tabs = ["Summary", "Trace", "Sources", "Gaps", "Record"] as const;
   const namedTab = tabs.find((label) => label.toLowerCase() === section);
   const invalidTraceAddress = Boolean(section && !namedTab && !location);
   const tab = location ? "Trace" : (namedTab ?? (invalidTraceAddress ? "Trace" : "Summary"));
@@ -388,15 +490,20 @@ export function ReportEvidence({
   const entry = location?.entry;
   const selectedModule = entry?.output.module ?? module;
   const line = location?.line;
-  const { evidence } = run;
-  const sourceGroups = [
-    { label: "Named in a handoff", rows: evidence.sources },
-    { label: "Supplied but unnamed in handoffs", rows: evidence.unused },
-    { label: "Use unrecorded", rows: evidence.unrecorded },
-  ];
-  const zip = publishedHref(evidence.zip, run.folder);
+  return { module, location, invalidTraceAddress, tab, selectedIndex, entry, selectedModule, line };
+}
+
+function EvidenceNavigation({
+  entries,
+  tab,
+  selectedModule,
+}: {
+  entries: OutputEntry[];
+  tab: EvidenceTab;
+  selectedModule?: string;
+}) {
   return (
-    <div className="grid min-w-0 gap-5">
+    <>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h2 className="font-display text-h2">Evidence</h2>
         <label className="grid gap-1 text-sm">
@@ -433,25 +540,38 @@ export function ReportEvidence({
           />
         ))}
       </nav>
+    </>
+  );
+}
+
+export function ReportEvidence({
+  snapshot,
+  run,
+  entries,
+  target,
+  comparison,
+  mode,
+}: {
+  snapshot: Snapshot;
+  run: PublishedRun;
+  entries: OutputEntry[];
+  target?: string;
+  comparison?: ReactNode;
+  mode: Mode;
+}) {
+  const { module, invalidTraceAddress, tab, selectedIndex, entry, selectedModule, line } =
+    evidenceRoute(entries, target);
+  const { evidence } = run;
+  const sourceGroups = [
+    { label: "Named in a handoff", rows: evidence.sources },
+    { label: "Supplied but unnamed in handoffs", rows: evidence.unused },
+    { label: "Use unrecorded", rows: evidence.unrecorded },
+  ];
+  return (
+    <div className="grid min-w-0 gap-5">
+      <EvidenceNavigation entries={entries} tab={tab} selectedModule={selectedModule} />
       {tab === "Summary" && (
-        <section className={card}>
-          <h3 className={heading}>Run evidence</h3>
-          <p>
-            {String(
-              entries.filter((item) => item.selected && (!module || item.output.module === module))
-                .length,
-            )}{" "}
-            designated handoffs ·{" "}
-            {String(
-              sourceGroups.reduce(
-                (total, { rows }) =>
-                  total + rows.filter((source) => !module || source.readBy.includes(module)).length,
-                0,
-              ),
-            )}{" "}
-            source files
-          </p>
-        </section>
+        <EvidenceSummary entries={entries} module={module} sourceGroups={sourceGroups} />
       )}
       {entry && (
         <article className={card}>
@@ -483,74 +603,9 @@ export function ReportEvidence({
           </p>
         </section>
       )}
-      {tab === "Sources" && (
-        <section className={card}>
-          <h3 className={heading}>Sources</h3>
-          {sourceGroups.every(
-            ({ rows }) => !rows.some((source) => !module || source.readBy.includes(module)),
-          ) && (
-            <p className="text-text-secondary">
-              {module
-                ? `No issuer files are listed for ${moduleName(module)}.`
-                : "No issuer files listed in this run’s published record."}
-            </p>
-          )}
-          {sourceGroups
-            .map((group) => ({
-              ...group,
-              rows: group.rows.filter((source) => !module || source.readBy.includes(module)),
-            }))
-            .filter(({ rows }) => rows.length > 0)
-            .map(({ label, rows }) => (
-              <div className="grid gap-2" key={label}>
-                <h3 className="font-medium">{label}</h3>
-                <ul className="divide-y divide-border-hairline rounded-ds-md border border-border-hairline">
-                  {rows.map((source) => (
-                    <li key={source.name} className="grid gap-1 px-4 py-3 text-sm">
-                      <p className="font-semibold wrap-anywhere">{source.name}</p>
-                      <p className="text-text-secondary">
-                        {[source.type, source.documentDate, ...source.readBy.map(moduleName)]
-                          .filter(Boolean)
-                          .join(" · ")}
-                      </p>
-                      {source.sha256 && (
-                        <code className="wrap-anywhere text-text-tertiary">{source.sha256}</code>
-                      )}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))}
-        </section>
-      )}
+      {tab === "Sources" && <EvidenceSources sourceGroups={sourceGroups} module={module} />}
       {(tab === "Summary" || (tab === "Trace" && !entry && !invalidTraceAddress)) && (
-        <section className={card}>
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <h3 className={heading}>Handoffs</h3>
-            {zip && (
-              <DownloadButton
-                download={{ label: "Download all handoffs", href: zip, reason: null }}
-              />
-            )}
-          </div>
-          <ul className="grid gap-2">
-            {entries.map(
-              (item) =>
-                (!module || item.output.module === module) && (
-                  <li
-                    key={item.output.id}
-                    className="flex flex-wrap items-center justify-between gap-3 border-t border-border-hairline pt-2"
-                  >
-                    <a className="text-action underline" href={evidencePath(run.folder, item)}>
-                      {moduleName(item.output.module)}
-                      {item.selected ? "" : ` · ${item.output.label}`}
-                    </a>
-                    <HandoffDownload run={run} entry={item} />
-                  </li>
-                ),
-            )}
-          </ul>
-        </section>
+        <EvidenceHandoffs entries={entries} module={module} run={run} />
       )}
       {tab === "Summary" && evidence.downloads.length > 0 && (
         <ArtifactDownloads folder={run.folder} />
