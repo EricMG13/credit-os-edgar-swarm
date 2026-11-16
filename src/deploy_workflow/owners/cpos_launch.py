@@ -1243,10 +1243,14 @@ def without_for(ordered: Sequence[str], items: Sequence[Item]) -> dict[str, list
     return result
 
 
-def _owned_issues(module: str, routes: Sequence[MarkdownRoute], text: str) -> list[str]:
+def _owned_issues(
+    module: str, routes: Sequence[MarkdownRoute], text: str, cp1: bytes | None = None
+) -> list[str]:
     """The tables a module is asked for beside its report routes, checked; for CP-1 also the net
-    debt table's arithmetic."""
-    money = money_unit(text)
+    debt table's arithmetic. A money table states CP-1's money unit: CP-1's own handoff is `text`,
+    any other module's is `cp1` (its CP-1 handoff; none means no money unit, `NO_MONEY`)."""
+    source = text if module == "CP-1" else cp1.decode("utf-8") if cp1 is not None else None
+    money = money_unit(source) if source is not None else None
     issues = [
         i for owned in _owner_tables(module, routes) for i in chart_issues(text, owned, money=money)
     ]
@@ -1332,7 +1336,7 @@ def checker(layout: MarkdownLayout) -> Check:
         for route in routes:
             if route.kind == "chart":
                 issues += chart_issues(text, route, money=money_unit(text))
-        issues += _owned_issues(task.module_id, routes, text)
+        issues += _owned_issues(task.module_id, routes, text, task.handoffs.get("CP-1"))
         issues += register_issues(task.module_id, text)
         issues += posture_issues(task.module_id, text)
         upstream = method_scripts.upstream_texts(task.handoffs)  # a copied figure is compared

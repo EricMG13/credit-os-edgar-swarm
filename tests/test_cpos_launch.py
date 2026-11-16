@@ -1750,6 +1750,15 @@ def test_run_directory_inside_the_issuer_folder_is_refused(tmp_path, capsys):
     assert not (tmp_path / "issuer/run").exists()
 
 
+# docs/rulings/2026-11-16-reporting-currency-from-sources.md: a money table of another module states
+# CP-1's money unit, so the fixture's CP-1 handoff is the least text that gives a USD run `US$m`.
+UPSTREAM = (
+    b"# upstream\n\n## Findings\n\n### T4.4 Income statement\n\n"
+    b"| Line item | FY2024 | Unit | Basis | Source |\n| --- | --- | --- | --- | --- |\n"
+    b"| EBITDA (Reported) | 1 | USD millions | Synthetic. | annual.txt |\n"
+)
+
+
 def good_task(tmp_path: Path, module: str = "CP-2", pathway: str | None = None):
     pathway = pathway or OWNER_PATHWAY.get(module, "covenant_refinancing")
     prepared = prepare(
@@ -1759,7 +1768,7 @@ def good_task(tmp_path: Path, module: str = "CP-2", pathway: str | None = None):
         config="sol-medium",
         cap="15",
     )
-    upstream = {"CP-1": b"# upstream"}
+    upstream = {"CP-1": UPSTREAM}
     task = HandoffTask(
         prepared.plan.run,
         module,
@@ -1772,7 +1781,7 @@ def good_task(tmp_path: Path, module: str = "CP-2", pathway: str | None = None):
     context = {
         "module_id": module,
         "sources": {"annual.txt": hashlib.sha256(b"Net sales").hexdigest()},
-        "handoffs": {"CP-1": {"sha256": hashlib.sha256(b"# upstream").hexdigest()}},
+        "handoffs": {"CP-1": {"sha256": hashlib.sha256(UPSTREAM).hexdigest()}},
     }
     return prepared, task, context
 
@@ -1788,7 +1797,7 @@ def test_checker_accepts_a_complete_handoff(tmp_path):
     [
         (ISSUER, "Someone Else", "selected issuer"),
         (AS_OF, "2024-01-01", AS_OF),
-        (hashlib.sha256(b"# upstream").hexdigest(), "gone", "CP-1"),
+        (hashlib.sha256(UPSTREAM).hexdigest(), "gone", "CP-1"),
         ("annual.txt " + hashlib.sha256(b"Net sales").hexdigest(), "nothing", "source"),
         ("### Red flags", "### Other", "Red flags"),
         (
@@ -5259,7 +5268,9 @@ def test_the_instructions_ask_each_owner_for_its_own_chart_table(tmp_path, modul
     prepared, *_ = good_task(tmp_path, module)
     text = (tmp_path / "out" / prepared.plan.instructions[module].path).read_text()
     assert f"`{OWNER_HEADERS[module]}`" in text
-    constrained = module in {"CP-1", "CP-2D", "CP-3C", "CP-4C"}
+    # docs/rulings/2026-11-16-reporting-currency-from-sources.md: CP-2D, CP-3C and CP-4C use the
+    # money unit, so the "reported in <unit>" sentence no longer applies to them.
+    constrained = module in {"CP-1"}
     assert ("Not supplied: reported in <unit>" in text) is constrained
 
 
@@ -5329,7 +5340,8 @@ def bridge_table(*amounts: str, unit: str = "US$m") -> str:
 
 def bridge_issues(*amounts: str, unit: str = "US$m") -> tuple[str, ...]:
     table = cpos_launch.OWNER_TABLES["CP-2D"][0]
-    return cpos_launch.chart_issues(bridge_table(*amounts, unit=unit), table)
+    # docs/rulings/2026-11-16-reporting-currency-from-sources.md: a USD run's money unit.
+    return cpos_launch.chart_issues(bridge_table(*amounts, unit=unit), table, money="US$m")
 
 
 def test_a_bridge_reconciles_at_the_precision_the_table_states():
@@ -5663,11 +5675,13 @@ def test_an_unsupplied_scenario_is_not_required_but_the_first_is():
 
 
 def test_a_scenario_table_that_is_present_is_checked_even_when_optional():
+    # docs/rulings/2026-11-16-reporting-currency-from-sources.md: a USD run's money unit.
     text = f"### {ALLOCATION_TWO}\n\n" + synthetic_table(
         ALLOCATION_HEAD, "| Enterprise value | 1 | US$m | S. |"
     )
     assert any(
-        "opening and a closing" in i for i in cpos_launch.chart_issues(text, allocation_spec(2))
+        "opening and a closing" in i
+        for i in cpos_launch.chart_issues(text, allocation_spec(2), money="US$m")
     )
 
 
@@ -6125,13 +6139,10 @@ def test_the_currency_sentence_is_sent_only_with_a_unit_constraint():
         # CP-1's money tables state the money unit in the check block instead (C1).
         sent = bool(spec.chart_unit) and spec.chart_unit != cpos_launch.MONEY
         assert (sentence in cpos_launch._selector(spec)) is sent, spec.heading
-    bridge = next(
-        t
-        for ts in cpos_launch.OWNER_TABLES.values()
-        for t in ts
-        if t.steps and t.chart_unit != cpos_launch.MONEY
-    )
-    assert sentence in cpos_launch._selector(bridge)
+    # docs/rulings/2026-11-16-reporting-currency-from-sources.md: no owner table is a fixed-unit
+    # bridge now (they take the money unit); a ratio table still carries the sentence.
+    ratio = cpos_launch.OwnerTable("Chart data: leverage", ("Total debt / EBITDA",), "x")
+    assert sentence in cpos_launch._selector(ratio)
 
 
 def test_the_value_allocation_rules_are_sent_once_to_their_module(tmp_path):
@@ -8397,31 +8408,113 @@ def test_gbp_statements_with_us_dollar_tables_are_sent_back_naming_the_money_uni
     assert any("`GBPm`" in i for i in issues), issues
 
 
-def test_another_modules_money_table_is_still_refused_in_gbpm(tmp_path):
-    prepared, task, context = good_task(tmp_path, "CP-2D")
-    raw = answer(context, list(prepared.plan.layout.routes))
-    assert "| 120 | US$m |" in raw
-    issues = _checked_handoff(
-        task, raw.replace("| 120 | US$m |", "| 120 | GBPm |").encode(), checker(prepared.layout)
-    )
-    refused = (
-        "`### Chart data: liquidity bridge` Free cash flow: a number in GBPm cannot be charted "
-        "as US$m; write `Not supplied: reported in GBPm`."
-    )
-    assert refused in issues, issues
+# docs/rulings/2026-11-16-reporting-currency-from-sources.md: the money tables of CP-2D, CP-3C and
+# CP-4C take CP-1's money unit (K1-K5 of the PR 2 task 1 answer key).
+MONEY_TABLES = {
+    "CP-2D": ("Chart data: liquidity bridge",),
+    "CP-3C": ("Chart data: refinancing need",),
+    "CP-4C": (
+        "Chart data: value allocation \u2014 scenario 1",
+        "Chart data: value allocation \u2014 scenario 2",
+        "Chart data: value allocation \u2014 scenario 3",
+    ),
+}
+GBP_CP1 = UPSTREAM.replace(b"USD millions", b"GBP millions")
+NO_UNIT_CP1 = UPSTREAM.replace(b"USD millions", b"n/a")
 
 
-def test_only_cp1s_money_tables_say_the_money_unit_and_every_other_selector_is_unchanged():
+def money_table_issues(module, tmp_path, raw_edit, cp1):
+    fresh = tmp_path / f"run{len(list(tmp_path.iterdir()))}"  # one prepared run per call
+    fresh.mkdir()
+    prepared, _task, context = good_task(fresh, module)
+    raw = raw_edit(answer(context, list(prepared.plan.layout.routes)))
+    routes = [r for r in prepared.plan.layout.routes if r.module_id == module]
+    heads = tuple(f"### {h}" for h in MONEY_TABLES[module])
+    return [
+        i
+        for i in cpos_launch._owned_issues(module, routes, raw, cp1)
+        if any(h[4:] in i for h in heads)
+    ]
+
+
+@pytest.mark.parametrize("module", sorted(MONEY_TABLES))
+def test_a_money_table_in_gbpm_passes_a_gbp_cp1_handoff_and_is_sent_back_by_a_usd_one(
+    tmp_path, module
+):
+    def gbp_answer(raw):
+        return raw.replace("US$m", "GBPm")
+
+    assert money_table_issues(module, tmp_path, gbp_answer, GBP_CP1) == []
+    sent_back = money_table_issues(module, tmp_path, gbp_answer, UPSTREAM)
+    assert sent_back and any("`US$m`" in i for i in sent_back), sent_back
+
+
+@pytest.mark.parametrize("module", sorted(MONEY_TABLES))
+def test_a_usd_run_states_us_dollars_in_the_three_money_tables(tmp_path, module):
+    assert money_table_issues(module, tmp_path, lambda raw: raw, UPSTREAM) == []
+
+
+@pytest.mark.parametrize("module", sorted(MONEY_TABLES))
+def test_a_money_table_in_two_units_is_sent_back(tmp_path, module):
+    def two_units(raw):
+        raw = raw.replace("US$m", "GBPm")
+        head = f"### {MONEY_TABLES[module][0]}"
+        start = raw.index(head)
+        end = raw.find("\n### ", start + 1)
+        end = len(raw) if end < 0 else end
+        section = raw[start:end]
+        cut = section.rindex("GBPm")
+        return raw[:start] + section[:cut] + "EURm" + section[cut + 4 :] + raw[end:]
+
+    issues = money_table_issues(module, tmp_path, two_units, GBP_CP1)
+    assert any("EURm" in i for i in issues), issues
+
+
+@pytest.mark.parametrize("module", sorted(MONEY_TABLES))
+def test_with_no_money_unit_a_stated_number_is_sent_back_and_a_gap_table_passes(tmp_path, module):
+    stated = money_table_issues(module, tmp_path, lambda raw: raw, NO_UNIT_CP1)
+    assert stated and all(cpos_launch.NO_MONEY in i for i in stated), stated
+    gap = "Not supplied: no money unit"
+
+    def gapped(raw):
+        out = []
+        heads = {f"### {h}" for h in MONEY_TABLES[module]}
+        inside = False
+        for line in raw.splitlines():
+            inside = line in heads if line.startswith("### ") else inside
+            if inside and re.match(r"\| (?!Step|Period|---)", line):
+                cells = line.split("|")[1:-1]
+                cells = [cells[0].strip()] + [gap] * (len(cells) - 3) + ["n/a", "Synthetic."]
+                line = "| " + " | ".join(cells) + " |"
+            out.append(line)
+        return "\n".join(out)
+
+    assert money_table_issues(module, tmp_path, gapped, NO_UNIT_CP1) == []
+
+
+def test_the_three_money_tables_say_the_money_unit_and_no_other_non_cp1_selector_changed():
+    # docs/rulings/2026-11-16-reporting-currency-from-sources.md. The digest covers the selectors of
+    # every OWNER_TABLES entry of a module other than CP-1 except the three money tables (CP-2D
+    # liquidity bridge, CP-3C refinancing need, CP-4C value allocation 1-3); it is recomputed over
+    # exactly that set, which is the old set's selectors minus those five.
+    money = {h for hs in MONEY_TABLES.values() for h in hs}
     text = "\n".join(
         cpos_launch._selector(t)
         for module in sorted(cpos_launch.OWNER_TABLES)
         if module != "CP-1"
         for t in cpos_launch.OWNER_TABLES[module]
+        if t.heading not in money
     )
-    # sha256 of these selectors at HEAD c532bb3 (measured before the change, not by this code)
-    digest = "4d55db88a6eed14bb347da382d11b7f595a784faeec8466c1b50045b8712ba72"
+    digest = "e6bfd348c1203b10264690575bc35bcaf8238b92c4d05c3c633b7f28d174785d"
     assert hashlib.sha256(text.encode()).hexdigest() == digest
     assert "the money unit" not in text
+    for module, headings in MONEY_TABLES.items():
+        for table in cpos_launch.OWNER_TABLES[module]:
+            if table.heading not in headings:
+                continue
+            selector = cpos_launch._selector(table)
+            assert "the money unit" in selector and "US$m" not in selector, table.heading
+            assert cpos_launch.CURRENCY_RULE not in selector
     for table in cpos_launch.OWNER_TABLES["CP-1"]:
         if table.chart_unit != cpos_launch.MONEY:
             continue

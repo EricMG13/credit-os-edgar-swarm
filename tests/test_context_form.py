@@ -443,10 +443,9 @@ def test_the_form_describes_the_rates_module_with_its_esg_part() -> None:
 
 
 # ---- fix round H: CP-1's money tables left the "US$ only" rule behind
-def test_the_non_usd_warning_names_only_the_modules_whose_money_tables_stay_in_us_dollars() -> None:
-    """C1 made CP-1's money tables the issuer's own currency; the CP-2D, CP-3C and CP-4C money
-    tables still say `US$m` (read from the launcher), so a non-USD issuer's cells there read
-    "Not supplied". The warning says exactly that and not that the chart strip is US dollars."""
+def test_the_non_usd_warning_is_gone_because_no_money_table_stays_in_us_dollars() -> None:
+    """docs/rulings/2026-11-16-reporting-currency-from-sources.md: the CP-2D, CP-3C and CP-4C money
+    tables take CP-1's money unit, so no table stays `US$m` and the form no longer warns of it."""
     from deploy_workflow.owners import cpos_launch
 
     stays = {
@@ -454,18 +453,14 @@ def test_the_non_usd_warning_names_only_the_modules_whose_money_tables_stay_in_u
         for module, tables in cpos_launch.OWNER_TABLES.items()
         if module != "CP-1" and any(t.chart_unit == "US$m" for t in tables)
     }
-    assert stays == {"CP-2D", "CP-3C", "CP-4C"}
+    assert stays == set()
     assert all(
         t.chart_unit == cpos_launch.MONEY
         for t in cpos_launch.OWNER_TABLES["CP-1"]
         if t.heading in ("Net debt data", "Chart data: liquidity", "Chart data: debt maturities")
     )
     assert "the report\\'s chart strip is US$ millions only" not in FORM
-    warning = (
-        "is not USD: CP-1\\'s money tables are in that currency, but the money tables of "
-        'CP-2D, CP-3C and CP-4C stay in US$ millions, so their money cells read "Not supplied".'
-    )
-    assert warning in FORM
+    assert "stay in US$ millions" not in FORM
 
 
 def test_no_expectation_rule_or_page_rule_carries_a_flag_nothing_sets() -> None:

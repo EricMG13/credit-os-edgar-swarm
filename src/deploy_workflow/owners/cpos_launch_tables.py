@@ -374,7 +374,7 @@ OWNER_TABLES: dict[str, tuple[OwnerTable, ...]] = {
         OwnerTable(
             "Chart data: liquidity bridge",
             ("Amount",),
-            "US$m",
+            MONEY,
             steps=True,
             rules=(
                 "Only accessible liquidity is bridged: restricted or trapped cash and uncertain "
@@ -388,7 +388,7 @@ OWNER_TABLES: dict[str, tuple[OwnerTable, ...]] = {
         OwnerTable(
             "Chart data: refinancing need",
             ("Debt maturing", "Committed resources"),
-            "US$m",
+            MONEY,
             rules=(
                 "Committed resources exclude a refinancing that is only a suggested path; a "
                 "resource shared by more than one need is counted once, never a double-counting. "
@@ -534,7 +534,7 @@ def _allocation(scenario: int) -> OwnerTable:
     return OwnerTable(
         f"Chart data: value allocation \u2014 scenario {scenario}",
         ("Amount",),
-        "US$m",
+        MONEY,
         steps=True,
         rules=f"Scenario {scenario} of the handoff's valuation rows.{ask}{rest}",
         optional=scenario > 1,
