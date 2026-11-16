@@ -144,6 +144,8 @@ export type Activity = {
   ended?: EndedRun[];
   /** All runs that ended without a report; `ended` holds only the latest. */
   ended_total?: number;
+  /** Run records the service could not read; they are not in `runs` or `ended`. */
+  unreadable?: number;
 };
 
 type ReportEntry = { id: string; issuer: string; asOf: string; pathway: string };

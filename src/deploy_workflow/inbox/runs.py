@@ -148,13 +148,38 @@ def _load(path: Path) -> Record:
         raise ValueError(f"{path.name}: unreadable run record ({error})") from error
 
 
+def _record_files(layout: Layout) -> list[Path]:
+    return [
+        p for p in layout.state.glob("*.json") if p.name != _REGISTRY and not p.name.startswith(".")
+    ]
+
+
 def load_all(layout: Layout) -> list[Record]:
     """Every run record, sorted by id. The issuer registry, temporary files and dot files (such as
     a Mac ``._x.json`` sidecar) are not records."""
-    paths = [
-        p for p in layout.state.glob("*.json") if p.name != _REGISTRY and not p.name.startswith(".")
-    ]
-    return sorted((_load(p) for p in paths), key=lambda r: r.id)
+    return sorted((_load(p) for p in _record_files(layout)), key=lambda r: r.id)
+
+
+def load_readable(layout: Layout) -> tuple[list[Record], list[str]]:
+    """The readable run records sorted by id, and the sorted file names of those ``_load`` refuses.
+
+    For display paths only: the scheduler uses ``load_all``, which raises on a bad file. Skipping a
+    bad file here is a documented fail-open: the caller shows how many were skipped. Nothing is
+    logged, as this runs on every poll of the activity page.
+    """
+    records: list[Record] = []
+    unreadable: list[str] = []
+    for path in _record_files(layout):
+        try:
+            record = _load(path)
+        except ValueError:
+            unreadable.append(path.name)
+            continue
+        if isinstance(record.id, str):  # a hand-edited id of another type cannot be sorted
+            records.append(record)
+        else:
+            unreadable.append(path.name)
+    return sorted(records, key=lambda r: r.id), sorted(unreadable)
 
 
 def alive(pid: int) -> bool:
