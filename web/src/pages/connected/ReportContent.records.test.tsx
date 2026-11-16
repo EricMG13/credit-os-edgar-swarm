@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import type { OutputEntry, PublishedRun, Section, Snapshot, Table } from "./publishedReport";
 import { evidencePath } from "./publishedReport";
 import type { buildReportView } from "./reportView";
-import { PublishedTable, findingBlocks, recordSections } from "./ReportContent";
+import { PublishedTable, ReportFindings, findingBlocks, recordSections } from "./ReportContent";
 import { Modules } from "./report/Modules";
 
 type View = ReturnType<typeof buildReportView>;
@@ -126,6 +126,32 @@ describe("coded registers leave the module page", () => {
     );
     expect(container.textContent).not.toContain("T4.4");
     expect(screen.getByRole("button", { name: "Statements and records" })).toBeInTheDocument();
+  });
+
+  it("draws no Statements and records heading in the overview", () => {
+    const entry = cp1();
+    render(
+      <ReportFindings
+        snapshot={{ chips: {} } as Snapshot}
+        run={{ folder: "retained case", issuer: "Issuer", asOf: "2026-10-31" } as PublishedRun}
+        entry={entry}
+        entryIndex={0}
+        overview
+      />,
+    );
+    expect(screen.queryByRole("heading", { name: "Statements and records" })).toBeNull();
+  });
+
+  it("draws the card, and so the navigator entry, when every section is a record", () => {
+    const entry = entryOf("CP-1", [
+      tableSection("T4.4 Income statement", 20),
+      tableSection("Confidence inputs", 30),
+    ]);
+    page(entry);
+    expect(screen.getByRole("heading", { name: "Statements and records" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Income statement" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Statements and records" })).toBeInTheDocument();
+    expect(document.getElementById("statements-and-records")).not.toBeNull();
   });
 
   it("draws no card for a module without coded sections", () => {

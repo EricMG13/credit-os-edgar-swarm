@@ -220,8 +220,8 @@ export function PublishedTable({
 }) {
   const columns = displayColumns(table.headers, evidence, table.rows);
   if (!columns.length || !table.rows.length) return null;
-  const pinned = (column: number) =>
-    columns.length >= 5 && column === columns[0] ? " sticky left-0 min-w-56" : "";
+  const pinned = (column: number, background: string) =>
+    columns.length >= 5 && column === columns[0] ? ` sticky left-0 min-w-56 ${background}` : "";
   const sources =
     rowSource ??
     (traceAt &&
@@ -237,7 +237,7 @@ export function PublishedTable({
               <th
                 key={column}
                 scope="col"
-                className={`px-3 py-2.5 text-left font-semibold${pinned(column)}${pinned(column) ? " bg-surface-subtle" : ""}`}
+                className={`px-3 py-2.5 text-left font-semibold${pinned(column, "bg-surface-subtle")}`}
               >
                 {richParts(table.headers[column] ?? "")}
               </th>
@@ -261,7 +261,7 @@ export function PublishedTable({
                 return (
                   <td
                     key={column}
-                    className={`px-3 py-2.5 text-text-secondary${pinned(column)}${pinned(column) ? " bg-surface-card" : ""}`}
+                    className={`px-3 py-2.5 text-text-secondary${pinned(column, "bg-surface-card")}`}
                   >
                     {!evidence && containsReference(cell) ? (
                       sourceHref ? (
@@ -314,11 +314,10 @@ function registerBlocks(section: Section, entry: OutputEntry) {
 }
 
 function classified(sections: Section[]) {
-  return classifySections(sections).map(({ section, role }) => ({
-    section,
-    role: role === "finding" && RECORD_CODE.test(section.heading) ? ("registers" as const) : role,
-    coded: role === "finding" && RECORD_CODE.test(section.heading),
-  }));
+  return classifySections(sections).map(({ section, role }) => {
+    const coded = role === "finding" && RECORD_CODE.test(section.heading);
+    return { section, role: coded ? ("registers" as const) : role, coded };
+  });
 }
 
 // Coded registers and audit tables left off the module page; Evidence holds them.
@@ -392,6 +391,41 @@ export function FindingParagraph({
   );
 }
 
+function RecordsCard({
+  run,
+  entry,
+  records,
+}: {
+  run: PublishedRun;
+  entry: OutputEntry;
+  records: Section[];
+}) {
+  if (!records.length) return null;
+  return (
+    <section className={card} id={RECORDS_ID} tabIndex={-1}>
+      <h2 className={heading}>Statements and records</h2>
+      <p className="max-w-[76ch] text-body text-text-secondary">
+        These tables are part of this module's record and are shown in Evidence.
+      </p>
+      <ul className="grid gap-1">
+        {records.map((section) => (
+          <li key={section.line}>
+            <a
+              href={evidencePath(run.folder, entry, section.line)}
+              className="text-action underline"
+            >
+              {section.heading.replace(RECORD_PREFIX, "")}
+            </a>
+          </li>
+        ))}
+      </ul>
+      <a href={evidencePath(run.folder, entry)} className="text-action underline">
+        Open this module in Evidence
+      </a>
+    </section>
+  );
+}
+
 export function ReportFindings({
   snapshot,
   run,
@@ -443,6 +477,7 @@ export function ReportFindings({
   const summaryTrace = summary && traceForLine(snapshot, entry, entryIndex, summary.line);
   if (summaryTrace) traces[key(summary.line)] = summaryTrace;
   const active = activeTrace === null ? null : traces[activeTrace];
+  const records = overview ? [] : recordSections(entry.sections, entry);
   if (!sections.length && !summary)
     return (
       <>
@@ -455,6 +490,7 @@ export function ReportFindings({
           </a>
         </p>
         {afterBottomLine}
+        <RecordsCard run={run} entry={entry} records={records} />
       </>
     );
   const keyFindings = overview
@@ -466,7 +502,6 @@ export function ReportFindings({
       )
     : undefined;
   const ordered = sections.filter((section) => section !== contrary);
-  const records = overview ? [] : recordSections(entry.sections, entry);
   function drawSection(section: Section) {
     const first = section.blocks[0];
     if (
@@ -602,29 +637,7 @@ export function ReportFindings({
             </div>
           );
         })}
-        {records.length > 0 && (
-          <section className={card} id={RECORDS_ID} tabIndex={-1}>
-            <h2 className={heading}>Statements and records</h2>
-            <p className="max-w-[76ch] text-body text-text-secondary">
-              These tables are part of this module's record and are shown in Evidence.
-            </p>
-            <ul className="grid gap-1">
-              {records.map((section) => (
-                <li key={section.line}>
-                  <a
-                    href={evidencePath(run.folder, entry, section.line)}
-                    className="text-action underline"
-                  >
-                    {section.heading.replace(RECORD_PREFIX, "")}
-                  </a>
-                </li>
-              ))}
-            </ul>
-            <a href={evidencePath(run.folder, entry)} className="text-action underline">
-              Open this module in Evidence
-            </a>
-          </section>
-        )}
+        <RecordsCard run={run} entry={entry} records={records} />
       </div>
       {active && (
         <TraceDrawer
