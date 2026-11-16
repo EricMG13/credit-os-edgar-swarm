@@ -1,5 +1,6 @@
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import { expect, it } from "vitest";
+import { EMPHASIS_CLASS } from "../../../components/chart/SeriesLine";
 import { CashProxy, forecastCaseOptions, ForecastScope, LegacyForecast } from "./LegacyForecast";
 
 import { Forecast } from "../report/Forecast";
@@ -131,14 +132,14 @@ it("draws all four scenarios, each named, with only the selected one emphasised"
     "Upside case",
   ]);
   expect(container.querySelectorAll(".recharts-wrapper path.recharts-line-curve")).toHaveLength(4);
-  const emphasised = container.querySelectorAll(".recharts-wrapper .series-emphasis");
+  const emphasised = container.querySelectorAll(`.recharts-wrapper .${EMPHASIS_CLASS}`);
   expect(emphasised).toHaveLength(1);
   const heavy = emphasised[0]?.querySelector("path.recharts-line-curve");
   expect(heavy).toHaveAttribute("name", "Upside case");
   expect(heavy).not.toHaveAttribute("stroke", "var(--color-chart-other)");
   expect(Number(heavy?.getAttribute("stroke-width"))).toBeGreaterThan(2);
   const others = [
-    ...container.querySelectorAll(".recharts-wrapper .recharts-line:not(.series-emphasis)"),
+    ...container.querySelectorAll(`.recharts-wrapper .recharts-line:not(.${EMPHASIS_CLASS})`),
   ];
   expect(others).toHaveLength(3);
   for (const line of others) {
