@@ -33,7 +33,7 @@ import {
   type Summary,
 } from "./api";
 import { Breadcrumb, card, ErrorNotice, field, heading, label } from "./layout";
-import { carryAccepted, groupLimits, needsCheck } from "./start/limits";
+import { carryAccepted, decided, groupLimits, needsCheck } from "./start/limits";
 import { ReviewSheet } from "./start/ReviewSheet";
 import { documentDescription, LEVELS, PURPOSES, storedName } from "./start/plain";
 import { errorText, useResource } from "./useResource";
@@ -79,7 +79,12 @@ const PATHWAY_CARDS = Object.entries(PATHWAYS).map(([id, pathway]) => ({
 
 type Review = { id: string; answers: Answers; summary: Summary; cap: string };
 type Draft = { id: string; uploaded: Map<File, string>; copied: boolean };
-type Reviewed = { pathway: string; items: ReadinessItem[]; accepted: Set<string> };
+type Reviewed = {
+  pathway: string;
+  issuerId: string;
+  items: ReadinessItem[];
+  accepted: Set<string>;
+};
 
 function capForPathway(caps: Record<string, string>, pathway: string) {
   const cap = caps[pathway];
@@ -1432,7 +1437,8 @@ function IntakeForm({
     const reviewed = reviewedRef.current;
     reviewedRef.current = null;
     setAccepted(
-      reviewed?.pathway === answers.context.run.pathway
+      reviewed?.pathway === answers.context.run.pathway &&
+        reviewed.issuerId === answers.context.identity.issuer_id
         ? carryAccepted(reviewed.items, reviewed.accepted, items)
         : new Set(),
     );
@@ -1647,13 +1653,13 @@ function IntakeForm({
   }
 
   function editReviewedInputs(target: FormStep) {
-    reviewedRef.current = review
-      ? {
-          pathway: review.answers.context.run.pathway,
-          items: review.summary.items,
-          accepted,
-        }
-      : null;
+    if (review)
+      reviewedRef.current = {
+        pathway: review.answers.context.run.pathway,
+        issuerId: review.answers.context.identity.issuer_id,
+        items: review.summary.items,
+        accepted,
+      };
     setReview(undefined);
     goTo(target);
   }
@@ -1924,7 +1930,7 @@ function ReviewConfirmation({
   const submitDisabled =
     !checksComplete || !approved || busy !== undefined || (!synthetic && !capAvailable);
   const { groups } = groupLimits(review.summary.items);
-  const undecided = groups.filter((group) => !group.ids.every((id) => accepted.has(id))).length;
+  const undecided = groups.filter((group) => !decided(group, accepted)).length;
   const blocker = submitBlocker(undecided, approved);
   return (
     <div className="grid gap-5">

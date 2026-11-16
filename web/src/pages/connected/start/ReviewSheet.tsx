@@ -111,13 +111,14 @@ function LimitCard({
 }) {
   const fixes = [...new Set(group.causes.map((cause) => cause.fix ?? "").filter(Boolean))];
   const affected = [...new Set(group.consequences.map((item) => scopeText(item.scope)))];
+  const reasonId = useId();
   return (
     <li className="grid gap-2 rounded-lg border border-border-hairline p-3 text-sm text-text-secondary">
       <StatusBadge set="Run limits" state={OUTCOME_STATE[group.outcome]} />
-      {group.causes.map((cause) => (
+      {group.causes.map((cause, index) => (
         <div key={cause.id}>
           <p className="font-semibold text-text-primary">{scopeText(cause.scope)}</p>
-          <p>{plainText(cause.reason)}</p>
+          <p id={index === 0 ? reasonId : undefined}>{plainText(cause.reason)}</p>
         </div>
       ))}
       {fixes.map((fix) => (
@@ -127,6 +128,7 @@ function LimitCard({
       <label className="flex items-center gap-2 font-semibold text-text-primary">
         <input
           type="checkbox"
+          aria-describedby={reasonId}
           checked={decided(group, accepted)}
           disabled={disabled}
           onChange={(event) => {
