@@ -1,6 +1,7 @@
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { ConnectedApp } from "./ConnectedApp";
+import type { Summary } from "./api";
 
 const context = {
   run: { as_of: "", pathway: "credit_snapshot", case_kind: "synthetic", reporting_currency: "USD" },
@@ -21,7 +22,7 @@ const plan = {
 };
 
 function testingFetch(
-  summary: typeof plan = plan,
+  summary: typeof plan & { lookup?: string[]; prior?: Summary["prior"] } = plan,
   submitResponse?: Response | (() => Response),
   overrides: Record<string, unknown> = {},
 ) {
@@ -242,7 +243,7 @@ describe("connected run start", () => {
     approve();
     await confirmSynthetic(submit);
     expect(await screen.findByRole("alert")).toHaveTextContent("Retrying Submit run is safe");
-    expect(screen.getByRole("button", { name: "Edit inputs" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Edit issuer and documents" })).toBeDisabled();
     await confirmSynthetic(submit);
     await vi.waitFor(() => {
       expect(navigate).toHaveBeenCalledWith("/run/test-run");
@@ -280,6 +281,32 @@ describe("connected run start", () => {
     expect(fetchMock.mock.calls.filter(([, init]) => init?.body === file)).toHaveLength(2);
   });
 
+  it("reviews what will run in plain language with an edit link per block", async () => {
+    testingFetch({
+      ...plan,
+      modules: ["CP-0", "CP-4"],
+      lookup: ["Lookup:   off: synthetic case (default); --web-lookup on forces it"],
+      prior: { id: "20261116-083145-01", as_of: "2025-03-31", pathway: "credit_snapshot" },
+      changes: "CP-8 compares with the credit_snapshot run (20261116-083145-01)",
+    });
+    render(<ConnectedApp path="/start" mode="synthetic" />);
+    await review();
+    await screen.findByRole("button", { name: "Submit run" });
+    const sheet = screen.getByRole("region", { name: "What will run" });
+    expect(sheet).toHaveTextContent("Legal & covenants");
+    expect(sheet).toHaveTextContent(
+      "Compared with the Full credit assessment run as of 2025-03-31",
+    );
+    expect(sheet).toHaveTextContent("off: synthetic case (default)");
+    expect(sheet).not.toHaveTextContent(/CP-\d|--web-lookup|20261116-083145-01/);
+    expect(screen.queryByText("Reviewed inputs")).toBeNull();
+    expect(screen.queryByText("Turns per module")).toBeNull();
+    expect(screen.queryByText("Model and effort")).toBeNull();
+    expect(screen.queryByRole("button", { name: "Edit inputs" })).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Edit purpose and modules" }));
+    expect(screen.getByRole("heading", { name: "Purpose" })).toHaveFocus();
+  });
+
   it("enforces primary facility input and forwards the reviewed Advanced choices", async () => {
     const fetchMock = testingFetch();
     render(<ConnectedApp path="/start" mode="synthetic" />);
@@ -305,6 +332,7 @@ describe("connected run start", () => {
     fireEvent.change(fields, { target: { value: '[{"facility_id":"TL-B"}]' } });
     fireEvent.click(reviewRun);
     await screen.findByRole("button", { name: "Submit run" });
+    expect(screen.getByText("Model and effort")).toBeInTheDocument();
     const body = fetchMock.mock.calls.find(([path]) => path.endsWith("/summary"))?.[1]?.body;
     expect(JSON.parse(typeof body === "string" ? body : "null")).toMatchObject({
       context: { run: { run_type: "primary" }, deal_terms: [{ facility_id: "TL-B" }] },
@@ -407,7 +435,7 @@ describe("connected run start", () => {
     expect(screen.getByRole("checkbox", { name: /Approve:/ })).toBeDisabled();
     fireEvent.click(limit);
     expect(screen.getByRole("checkbox", { name: /Approve:/ })).toBeEnabled();
-    fireEvent.click(screen.getByRole("button", { name: "Edit inputs" }));
+    fireEvent.click(screen.getByRole("button", { name: "Edit issuer and documents" }));
     fireEvent.change(screen.getByLabelText("As-of date"), { target: { value: "2026-09-30" } });
     await advanceToPurpose();
     advanceToContext();

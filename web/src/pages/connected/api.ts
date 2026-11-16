@@ -315,9 +315,13 @@ const MODULE_NAMES: Readonly<Record<string, string>> = {
   "CP-MODEL": "Cash flow model",
 };
 
+export function moduleTitle(id: string) {
+  return (Object.hasOwn(MODULE_NAMES, id) ? MODULE_NAMES[id] : undefined) ?? id;
+}
+
 export function moduleName(id: string) {
-  const name = Object.hasOwn(MODULE_NAMES, id) ? MODULE_NAMES[id] : undefined;
-  return name ? `${name} (${id})` : id;
+  const title = moduleTitle(id);
+  return title === id ? id : `${title} (${id})`;
 }
 
 export function pathwayName(pathway: string) {

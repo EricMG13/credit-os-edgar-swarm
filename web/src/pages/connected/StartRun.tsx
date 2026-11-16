@@ -20,19 +20,19 @@ import {
   getSummary,
   issuerSlug,
   moduleName,
-  pathwayName,
   RequestError,
   submit,
   upload,
   type Answers,
   type Context,
-  type DocumentRecord,
   type PriorInputs,
   type Reading,
   type Mode,
   type Summary,
 } from "./api";
 import { Breadcrumb, card, ErrorNotice, field, heading, label } from "./layout";
+import { ReviewSheet, needsCheck } from "./start/ReviewSheet";
+import { documentDescription, LEVELS, PURPOSES, storedName } from "./start/plain";
 import { errorText, useResource } from "./useResource";
 import { PageHeader } from "../../shell/PageHeader";
 
@@ -76,13 +76,6 @@ const PATHWAY_CARDS = Object.entries(PATHWAYS).map(([id, pathway]) => ({
 type Review = { id: string; answers: Answers; summary: Summary };
 type Draft = { id: string; uploaded: Map<File, string>; copied: boolean };
 
-const PURPOSES = {
-  research: "No market view (research)",
-  primary: "New issue (primary)",
-  secondary: "Trading (secondary)",
-  earnings: "Earnings update",
-};
-const LEVELS = { basic: "Basic", standard: "Standard", advanced: "Advanced" };
 const ATTACHMENTS = {
   management_bridge: "Management EBITDA bridge",
   portfolio_workbook: "Portfolio workbook",
@@ -144,23 +137,8 @@ function focusStep(node: HTMLElement | null) {
   node?.focus();
 }
 
-function storedName({ source }: DocumentRecord) {
-  return source.replace(/(\.html?)\.jsonl$/i, "$1");
-}
-
 function fileName(file: File) {
   return (file.webkitRelativePath || "").split("/").slice(1).join("/") || file.name;
-}
-
-function documentDescription(doc: DocumentRecord) {
-  return [
-    doc.kind.replaceAll("_", " "),
-    doc.period_end && `period ends ${doc.period_end}`,
-    doc.executed === true ? "executed" : doc.executed === false ? "draft" : "",
-    doc.signal,
-  ]
-    .filter(Boolean)
-    .join(" · ");
 }
 
 function SelectField({
@@ -218,143 +196,6 @@ function readDetails(edits: Partial<Record<ComplexField, string>>) {
     details[key] = parsed;
   }
   return details;
-}
-
-function needsCheck(item: Summary["items"][number]) {
-  return (
-    item.outcome === "check" ||
-    item.outcome === "gap" ||
-    item.outcome === "limited" ||
-    item.outcome === "will_refuse"
-  );
-}
-
-function ReviewPlan({
-  review,
-  accepted,
-  onAccept,
-  disabled,
-}: {
-  review: Review;
-  accepted: Set<string>;
-  onAccept: (id: string, checked: boolean) => void;
-  disabled: boolean;
-}) {
-  const { summary, answers } = review;
-  const { run, identity } = answers.context;
-  return (
-    <>
-      <dl className="grid gap-4 rounded-lg bg-surface-subtle p-4 text-sm sm:grid-cols-2">
-        {[
-          ["Issuer", identity.issuer_name],
-          ["Documents", String(summary.documents.length)],
-          ["Planned modules", String(summary.modules.length)],
-          ["As-of date", run.as_of],
-          ["Pathway", pathwayName(run.pathway)],
-          ["Model and effort", `${summary.model} · ${summary.effort}`],
-          ["Reporting currency", run.reporting_currency],
-          ["Purpose", PURPOSES[run.run_type as keyof typeof PURPOSES]],
-          ["Case kind", run.case_kind],
-          ["Current period", run.current_period],
-          ["Prior period", run.prior_period],
-          ["Research cutoff", run.cutoff],
-          ["Run form level", LEVELS[answers.level as keyof typeof LEVELS]],
-          ["Turns per module", answers.max_turns],
-          ["Submitted by", answers.submitted_by],
-          ["Changes", summary.changes],
-        ]
-          .filter(([, value]) => value)
-          .map(([term, value]) => (
-            <div key={term}>
-              <dt className="text-text-tertiary">{term}</dt>
-              <dd className="mt-1 font-medium text-text-primary">{value}</dd>
-            </div>
-          ))}
-      </dl>
-      <section className="grid gap-2">
-        <h3 className="font-semibold">Documents read</h3>
-        <ul className="list-disc space-y-1 pl-5 text-sm text-text-secondary">
-          {summary.documents.map((doc, i) => (
-            <li key={i}>
-              {storedName(doc)} · {documentDescription(doc)}
-            </li>
-          ))}
-        </ul>
-        {summary.ignored.length > 0 && (
-          <>
-            <h3 className="font-semibold">Documents ignored</h3>
-            <ul className="list-disc space-y-1 pl-5 text-sm text-text-secondary">
-              {summary.ignored.map((doc, i) => (
-                <li key={i}>{typeof doc === "string" ? doc : `${doc.source} · ${doc.reason}`}</li>
-              ))}
-            </ul>
-          </>
-        )}
-      </section>
-      <section className="grid gap-2">
-        <h3 className="font-semibold">Planned modules</h3>
-        <ul className="grid gap-1.5 text-sm text-text-secondary sm:grid-cols-2">
-          {summary.modules.map((code) => (
-            <li key={code}>{moduleName(code)}</li>
-          ))}
-        </ul>
-        {summary.omitted.length > 0 && (
-          <p className="text-sm text-text-secondary">
-            Report sections omitted · {summary.omitted.join(", ")}
-          </p>
-        )}
-      </section>
-      {summary.lookup && summary.lookup.length > 0 && (
-        <section className="grid gap-2">
-          <h3 className="font-semibold">Source lookup</h3>
-          <ul className="list-disc pl-5 text-sm text-text-secondary">
-            {summary.lookup.map((line) => (
-              <li key={line}>{line}</li>
-            ))}
-          </ul>
-        </section>
-      )}
-      <details className="rounded-lg border border-border-hairline p-3">
-        <summary className="cursor-pointer text-sm font-semibold">Reviewed inputs</summary>
-        <pre className="mt-2 whitespace-pre-wrap wrap-anywhere text-xs text-text-secondary">
-          {JSON.stringify(answers.context, null, 2)}
-        </pre>
-      </details>
-      {summary.items.length > 0 && (
-        <section className="grid gap-2">
-          <h3 className="font-semibold">Readiness checks</h3>
-          <ul className="space-y-2">
-            {summary.items.map((item) => (
-              <li
-                key={item.id}
-                className="rounded-lg border border-border-hairline p-3 text-sm text-text-secondary"
-              >
-                <p className="font-semibold text-text-primary">
-                  {item.scope === "run" ? "Whole run" : moduleName(item.scope)} ·{" "}
-                  {item.outcome.replaceAll("_", " ")}
-                </p>
-                <p>{item.reason}</p>
-                {item.fix && <p>{item.fix}</p>}
-                {needsCheck(item) && (
-                  <label className="mt-2 flex items-center gap-2 font-semibold text-text-primary">
-                    <input
-                      type="checkbox"
-                      checked={accepted.has(item.id)}
-                      disabled={disabled}
-                      onChange={(event) => {
-                        onAccept(item.id, event.target.checked);
-                      }}
-                    />
-                    {item.outcome === "check" ? "I have checked this" : "I accept this limit"}
-                  </label>
-                )}
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
-    </>
-  );
 }
 
 export function StartRun({
@@ -854,21 +695,27 @@ function IntakeForm({
           <div className="grid gap-5">
             <div className="grid gap-1">
               <h2 ref={focusStep} tabIndex={-1} className={`${heading} focus:outline-none`}>
-                Start
+                Review and start
               </h2>
               <p className="text-sm text-text-secondary">
                 Review the final run details and confirm to start.
               </p>
             </div>
-            <ReviewPlan
+            <ReviewSheet
               review={review}
               accepted={accepted}
               disabled={busy !== undefined || submitUncertain}
-              onAccept={(id, checked) => {
+              onEdit={(target) => {
+                setReview(undefined);
+                goTo(target);
+              }}
+              onAccept={(ids, checked) => {
                 setAccepted((previous) => {
                   const next = new Set(previous);
-                  if (checked) next.add(id);
-                  else next.delete(id);
+                  for (const id of ids) {
+                    if (checked) next.add(id);
+                    else next.delete(id);
+                  }
                   return next;
                 });
                 setApproved(false);
@@ -903,16 +750,6 @@ function IntakeForm({
               </p>
             </div>
             <div className="flex flex-wrap items-center justify-between gap-3">
-              <Button
-                color="secondary"
-                isDisabled={busy !== undefined || submitUncertain}
-                onPress={() => {
-                  setReview(undefined);
-                  goTo("documents");
-                }}
-              >
-                Edit inputs
-              </Button>
               <span className="text-sm text-text-tertiary">
                 Step {STEP_TOTAL} of {STEP_TOTAL}
               </span>
