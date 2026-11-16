@@ -17,7 +17,7 @@ Date: 2026-11-12. Review only: no code, handoff or run folder was changed; no pr
   changes-module fixes were merged after it ran. No run exists under those changes; one needs a
   new paid run.
 - Run folder (read-only, in another session's scratch space, so it may be cleaned up):
-  `/private/tmp/claude-501/-Users-ericguei-Documents-RBOT-HTML--claude-worktrees-pause-63d136/c8719821-dd4f-4042-ad6b-2051ff7e7dda/scratchpad/preview-ws/runs/tdg-proof-snapshot-opus-002`.
+  `/private/tmp/claude-501/-Users-USER-Documents-RBOT-HTML--claude-worktrees-pause-63d136/c8719821-dd4f-4042-ad6b-2051ff7e7dda/scratchpad/preview-ws/runs/tdg-proof-snapshot-opus-002`.
 - How it was read: a copy of the run was built into a scratch library with this checkout at main's
   tip (`a873f6f`, so the redesign pass 1 is included). Each section was captured from the Modules
   page at 1440 px in headless Chrome.
@@ -171,7 +171,7 @@ By subject: narrative High: 234; narrative Medium: 462; narrative Low: 133; visu
 
 ## Source readiness (CP-0)
 
-Handoff: `/private/tmp/claude-501/-Users-ericguei-Documents-RBOT-HTML--claude-worktrees-pause-63d136/c8719821-dd4f-4042-ad6b-2051ff7e7dda/scratchpad/preview-ws/runs/tdg-proof-snapshot-opus-002/requests/CP-0/49103856766826f1d85d8b782f3f3963c36b80eaa14981e8091d8f2b3ea7b124/1.response.md`
+Handoff: `/private/tmp/claude-501/-Users-USER-Documents-RBOT-HTML--claude-worktrees-pause-63d136/c8719821-dd4f-4042-ad6b-2051ff7e7dda/scratchpad/preview-ws/runs/tdg-proof-snapshot-opus-002/requests/CP-0/49103856766826f1d85d8b782f3f3963c36b80eaa14981e8091d8f2b3ea7b124/1.response.md`
 
 ### Bottom line
 
@@ -293,7 +293,7 @@ Kind: timeline · handoff lines 95-107 · verdict **BLOCK**
 - Visual: The timeline strip is visible and not folded away, but two key subsequent events overlap into one dot, and the strip has no labels, no as-of line and no ticks; the table under it wastes width on constant columns and wrapped file names.
 
 1. **High · visual** (Saboteur, Auditor)
-   - Where: Timeline strip 'Sources' lane, rendered at /private/tmp/claude-501/-Users-ericguei-Documents-RBOT-HTML--claude-worktrees-refactor-optimisation-sweep-01c49e/d3b58d68-0f70-4eca-af09-da4e7774dc7f/scratchpad/tmp/CP-0-007-a.png (crop of CP-0-007-top.png, y 960-1070); handoff lines 103-104
+   - Where: Timeline strip 'Sources' lane, rendered at /private/tmp/claude-501/-Users-USER-Documents-RBOT-HTML--claude-worktrees-refactor-optimisation-sweep-01c49e/d3b58d68-0f70-4eca-af09-da4e7774dc7f/scratchpad/tmp/CP-0-007-a.png (crop of CP-0-007-top.png, y 960-1070); handoff lines 103-104
    - Problem: There are 8 dated events but only 7 dots. The 2024-10-16 securitization drawdown and the 2024-10-18 USD 4,216 million special dividend fall on the same pixels (x≈377 and x≈393 overlap). The two most important subsequent events for creditors look like one marker.
    - Fix: Split or stack events that fall within a few pixels of each other, or show a count badge, so every row in the table has its own visible marker.
 2. **High · visual** (New reader, Saboteur)
@@ -317,7 +317,7 @@ Kind: timeline · handoff lines 95-107 · verdict **BLOCK**
    - Problem: The declaration is given per share and the payment in total USD, and the rows are not linked to each other. The reader cannot see that they are the same distribution, or that the 2024-09-30 cash balance is already committed to it. The cash-distortion point in line 102's relevance is left for the reader to work out.
    - Fix: Give both rows the same unit (total USD), and cross-reference the declaration to its payment in the Credit relevance cells.
 7. **Medium · visual** (New reader)
-   - Where: Events: Sources table, /private/tmp/claude-501/-Users-ericguei-Documents-RBOT-HTML--claude-worktrees-refactor-optimisation-sweep-01c49e/d3b58d68-0f70-4eca-af09-da4e7774dc7f/scratchpad/shots2/CP-0_s-95.png, Event date and Source columns (top 200-940 at display scale)
+   - Where: Events: Sources table, /private/tmp/claude-501/-Users-USER-Documents-RBOT-HTML--claude-worktrees-refactor-optimisation-sweep-01c49e/d3b58d68-0f70-4eca-af09-da4e7774dc7f/scratchpad/shots2/CP-0_s-95.png, Event date and Source columns (top 200-940 at display scale)
    - Problem: Dates break mid-value ('2023-11-' / '27 Basis'), while the raw file-name Source column takes about a quarter of the width and wraps over 4-5 lines in every row. Date precision is 'day' in every row and Published is '—' in every row, so two columns carry nothing and squeeze the Event and Credit relevance columns.
    - Fix: Keep dates on one line, shorten the Source to a readable label such as 'FY2024 10-K, p.63' with the full ID kept in Sources, and collapse columns that hold the same value in every row.
 8. **Low · narrative** (Saboteur)
@@ -353,7 +353,7 @@ Kind: prose/table · handoff lines 117-129 · verdict **CONCERNS**
    - Problem: The remediation text is pipeline shorthand ('htm filing controls', 'owners'). A reader cannot tell whether these gaps leave the view exposed.
    - Fix: State in plain words why the gap does not change the view (for example 'the 10-K text covers the same content').
 6. **Medium · visual** (New reader, Auditor)
-   - Where: Gaps table, Source column, CP-0_s-117.png crop /private/tmp/claude-501/-Users-ericguei-Documents-RBOT-HTML--claude-worktrees-refactor-optimisation-sweep-01c49e/d3b58d68-0f70-4eca-af09-da4e7774dc7f/scratchpad/tmp/CP-0-009-a.png (Source cells, e.g. 'TDG_2024-09-30_10-K_0001260221-24-000083_tdg-20240930.htm.jsonl, pages 61–62, 109–112')
+   - Where: Gaps table, Source column, CP-0_s-117.png crop /private/tmp/claude-501/-Users-USER-Documents-RBOT-HTML--claude-worktrees-refactor-optimisation-sweep-01c49e/d3b58d68-0f70-4eca-af09-da4e7774dc7f/scratchpad/tmp/CP-0-009-a.png (Source cells, e.g. 'TDG_2024-09-30_10-K_0001260221-24-000083_tdg-20240930.htm.jsonl, pages 61–62, 109–112')
    - Problem: Raw file names with accession numbers and a '.jsonl' extension take up about a quarter of the table's width and wrap over two or three lines. The text is hard to read and exposes the pipeline's file format.
    - Fix: Show a short document label (for example 'FY2024 10-K, pp. 61–62, 109–112') and keep the full file name in a tooltip or in Sources.
 7. **Low · visual** (Saboteur)
@@ -433,7 +433,7 @@ Kind: prose/table · handoff lines 36-46 · verdict **BLOCK**
 - Visual: There is no chart in this section. The one visual is an 8-column table that overflows the content pane: the Source column is clipped at the right edge, and narrow columns wrap to one or two words per line, making the rows very tall.
 
 1. **High · visual** (Auditor, New reader)
-   - Where: Source assessment table, Source column; screenshot CP-0_s-36.png, x 1240-1440, y 270-1160 (crop at /private/tmp/claude-501/-Users-ericguei-Documents-RBOT-HTML--claude-worktrees-refactor-optimisation-sweep-01c49e/d3b58d68-0f70-4eca-af09-da4e7774dc7f/scratchpad/tmp/CP-0-003-a.png)
+   - Where: Source assessment table, Source column; screenshot CP-0_s-36.png, x 1240-1440, y 270-1160 (crop at /private/tmp/claude-501/-Users-USER-Documents-RBOT-HTML--claude-worktrees-refactor-optimisation-sweep-01c49e/d3b58d68-0f70-4eca-af09-da4e7774dc7f/scratchpad/tmp/CP-0-003-a.png)
    - Problem: The table is wider than the content pane, so the Source column is cut off at the right edge mid-identifier, e.g. 'TDG_2024-09-30_10-K_0001260221-24-000083_tdg-20240930.htm.jsonl, pages 1–181' shows as 'TDG_2024-09-30_10-I / 000083_tdg-20240930 / 181'. Nothing on screen shows the column scrolls. The house standard puts source references in exactly this column, so the reader cannot read them.
    - Fix: Fit the 8-column table to the pane, for example by wrapping long identifiers, narrowing or merging columns, or showing a visible horizontal-scroll cue, so every Source cell is fully readable without leaving the page.
 2. **Medium · narrative** (New reader, Auditor)
@@ -549,7 +549,7 @@ Kind: prose/table · handoff lines 28-35 · verdict **CONCERNS**
    - Problem: The passage says the non-guarantor perimeter is unknown but does not say whether that gap is material. It gives no sense of the non-guarantors' share of assets or earnings from the combined summary, so a committee member cannot tell whether structural subordination is a real risk or a footnote.
    - Fix: State what the combined summary does or does not show about the non-guarantor share, with its period and unit, or say plainly that it cannot be sized.
 4. **Medium · visual** (New reader, Auditor)
-   - Where: Section prose block, /private/tmp/claude-501/-Users-ericguei-Documents-RBOT-HTML--claude-worktrees-refactor-optimisation-sweep-01c49e/d3b58d68-0f70-4eca-af09-da4e7774dc7f/scratchpad/shots2/CP-0_s-28.png, crop x330-1440 y220-450 (scratchpad/tmp/CP-0-002-a.png)
+   - Where: Section prose block, /private/tmp/claude-501/-Users-USER-Documents-RBOT-HTML--claude-worktrees-refactor-optimisation-sweep-01c49e/d3b58d68-0f70-4eca-af09-da4e7774dc7f/scratchpad/shots2/CP-0_s-28.png, crop x330-1440 y220-450 (scratchpad/tmp/CP-0-002-a.png)
    - Problem: Each line runs the full roughly 1,100 px content width in small type, about 170-180 characters per line. That is far past a comfortable measure, so the dense first paragraph reads as a five-line wall.
    - Fix: Limit prose width to about 75-95 characters per line (for example a max-width on module paragraphs) while tables keep the full width.
 5. **Low · narrative** (Auditor)
@@ -563,7 +563,7 @@ Kind: prose/table · handoff lines 28-35 · verdict **CONCERNS**
 
 ## Business & governance (CP-1A)
 
-Handoff: `/private/tmp/claude-501/-Users-ericguei-Documents-RBOT-HTML--claude-worktrees-pause-63d136/c8719821-dd4f-4042-ad6b-2051ff7e7dda/scratchpad/preview-ws/runs/tdg-proof-snapshot-opus-002/requests/CP-1A/1483b229586860fc7840722ed8b33b40936e2427d7445526bc6e8cf57b11fe9d/1.response.md`
+Handoff: `/private/tmp/claude-501/-Users-USER-Documents-RBOT-HTML--claude-worktrees-pause-63d136/c8719821-dd4f-4042-ad6b-2051ff7e7dda/scratchpad/preview-ws/runs/tdg-proof-snapshot-opus-002/requests/CP-1A/1483b229586860fc7840722ed8b33b40936e2427d7445526bc6e8cf57b11fe9d/1.response.md`
 
 ### Events: Issuer history
 
@@ -581,7 +581,7 @@ Kind: timeline · handoff lines 92-107 · verdict **BLOCK**
    - Problem: "Source readiness lane" is pipeline vocabulary that refers to another module's internal structure. It is shown on screen in the Credit relevance column, which breaks the house rule against module and pipeline wording.
    - Fix: Remove the cross-module pointers from Credit relevance and keep only the creditor consequence.
 3. **High · visual** (Saboteur, Auditor (promoted))
-   - Where: Timeline panel, 'Issuer history' row; /private/tmp/claude-501/-Users-ericguei-Documents-RBOT-HTML--claude-worktrees-refactor-optimisation-sweep-01c49e/d3b58d68-0f70-4eca-af09-da4e7774dc7f/scratchpad/tmp/CP-1A-020-a.png (crop of CP-1A_timeline.png, x 320-1440, y 200-330)
+   - Where: Timeline panel, 'Issuer history' row; /private/tmp/claude-501/-Users-USER-Documents-RBOT-HTML--claude-worktrees-refactor-optimisation-sweep-01c49e/d3b58d68-0f70-4eca-af09-da4e7774dc7f/scratchpad/tmp/CP-1A-020-a.png (crop of CP-1A_timeline.png, x 320-1440, y 200-330)
    - Problem: The timeline is a single unlabelled strip that runs from 1993 to 2024: one hollow box at 1993, one dot for 2022, and nine 2023-24 events drawn as one solid blue blob at the right edge. It has no event labels, no intermediate ticks and no legend, so the reader cannot tell any fiscal 2024 financing, acquisition or dividend step apart. It adds nothing beyond the table and looks like a rendering fault.
    - Fix: Scale the axis to the dense period, with the 1993 origin shown as a break or marker, and label or space each event so every fiscal 2024 step can be seen and read.
 4. **Medium · narrative** (New Reader)
@@ -650,7 +650,7 @@ Kind: map · handoff lines 120-130 · verdict **BLOCK**
 Kind: register appendix · handoff lines 131-197 · verdict **BLOCK**
 
 - Narrative: This register appendix is data and owes no judgement-first order, but its reader-facing cells carry pipeline routing (the Consumers table), an internal tool name with unscaled scores, and code-style enums and cross-reference IDs a credit reader cannot resolve.
-- Visual: The assigned screenshot CP-1A_s-131.png shows the page top because the appendix heading is not rendered and has no anchor. In my own render at 1440 px (/private/tmp/claude-501/-Users-ericguei-Documents-RBOT-HTML--claude-worktrees-refactor-optimisation-sweep-01c49e/d3b58d68-0f70-4eca-af09-da4e7774dc7f/scratchpad/tmp/CP-1A-023-s-133.png), the Governance register's Source column is cut off, and long .jsonl file names make the Fact register tall and heavy. Not verified: whether a horizontal scrollbar appears in a non-headless browser with scrollbars always shown, and how the empty Basis buttons behave when clicked.
+- Visual: The assigned screenshot CP-1A_s-131.png shows the page top because the appendix heading is not rendered and has no anchor. In my own render at 1440 px (/private/tmp/claude-501/-Users-USER-Documents-RBOT-HTML--claude-worktrees-refactor-optimisation-sweep-01c49e/d3b58d68-0f70-4eca-af09-da4e7774dc7f/scratchpad/tmp/CP-1A-023-s-133.png), the Governance register's Source column is cut off, and long .jsonl file names make the Fact register tall and heavy. Not verified: whether a horizontal scrollbar appears in a non-headless browser with scrollbars always shown, and how the empty Basis buttons behave when clicked.
 
 1. **High · narrative** (New reader, Auditor (promoted))
    - Where: Consumers table, lines 183-196: "| CP-0 | Complete (producer) | Nothing further; events recorded in its lane are referenced, not repeated"; "Canonical KPIs must treat accrued dividend"; "Use method defaults"; "Rely on legal module bounds"; "Supply prior case"
@@ -661,7 +661,7 @@ Kind: register appendix · handoff lines 131-197 · verdict **BLOCK**
    - Problem: This sentence names an internal tool and gives scores with no scale or direction (is 5 the worst?). It then closes with a disclaimer that undercuts the scores, so the reader cannot tell whether governance risk is high or merely tool-flagged.
    - Fix: State the governance risk in reader terms with its scale (for example, "extraction risk 5 of 5, highest"), say why the composite could not be scored, and drop the tool name.
 3. **High · visual** (Saboteur, Auditor (promoted))
-   - Where: Governance and behaviour register table, in my own render /private/tmp/claude-501/-Users-ericguei-Documents-RBOT-HTML--claude-worktrees-refactor-optimisation-sweep-01c49e/d3b58d68-0f70-4eca-af09-da4e7774dc7f/scratchpad/tmp/CP-1A-023-a.png (crop of CP-1A-023-s-133.png, y 1640-2300). The DOM has 9 header cells ending in "Source" (handoff line 157).
+   - Where: Governance and behaviour register table, in my own render /private/tmp/claude-501/-Users-USER-Documents-RBOT-HTML--claude-worktrees-refactor-optimisation-sweep-01c49e/d3b58d68-0f70-4eca-af09-da4e7774dc7f/scratchpad/tmp/CP-1A-023-a.png (crop of CP-1A-023-s-133.png, y 1640-2300). The DOM has 9 header cells ending in "Source" (handoff line 157).
    - Problem: At 1440 px the table ends at "Evidence quality". The Source column, which is the only place this register's references live under the house rule, is pushed off the right edge with no scroll cue, so the reader sees "High" evidence-quality ratings with no visible source.
    - Fix: Fit all nine columns, for example by narrowing Kind/Topic or wrapping Source, or show a visible horizontal-scroll affordance so the Source column can always be seen.
 4. **Medium · narrative** (New reader, Auditor (promoted))
@@ -669,11 +669,11 @@ Kind: register appendix · handoff lines 131-197 · verdict **BLOCK**
    - Problem: Reader cells contain code-style enums (behaviour_flag), internal cross-reference IDs (K18, X1) and run-configuration wording ("run settings", Source "context"). A reader without the pipeline cannot resolve any of these.
    - Fix: Use plain labels ("Behaviour flag", "Governance topic"), say what K18 and X1 stand for in words, and phrase F12 as "no pending transaction terms were supplied".
 5. **Medium · visual** (New reader)
-   - Where: Fact register Source column, lines 137-153: "TDG_2024-09-30_10-K_0001260221-24-000083_tdg-20240930.htm.jsonl, page 4" repeated in 15 of 17 rows; render crop /private/tmp/claude-501/-Users-ericguei-Documents-RBOT-HTML--claude-worktrees-refactor-optimisation-sweep-01c49e/d3b58d68-0f70-4eca-af09-da4e7774dc7f/scratchpad/tmp/CP-1A-023-b.png
+   - Where: Fact register Source column, lines 137-153: "TDG_2024-09-30_10-K_0001260221-24-000083_tdg-20240930.htm.jsonl, page 4" repeated in 15 of 17 rows; render crop /private/tmp/claude-501/-Users-USER-Documents-RBOT-HTML--claude-worktrees-refactor-optimisation-sweep-01c49e/d3b58d68-0f70-4eca-af09-da4e7774dc7f/scratchpad/tmp/CP-1A-023-b.png
    - Problem: Every source is a raw extraction file name with an accession number and a .jsonl suffix. Each one wraps to three lines and roughly doubles the row height, and "page 164" of a .jsonl file does not lead the reader to a page of the filing.
    - Fix: Show a short document label (for example, "FY2024 10-K, p. 164") and keep the file identifier in the link or tooltip.
 6. **Medium · visual** (Auditor, Saboteur)
-   - Where: Handoff line 131 heading "### Analytical appendix — complete canonical registers". There is no element with id s-131 in the rendered DOM (/private/tmp/claude-501/-Users-ericguei-Documents-RBOT-HTML--claude-worktrees-refactor-optimisation-sweep-01c49e/d3b58d68-0f70-4eca-af09-da4e7774dc7f/scratchpad/tmp/CP-1A-023.dom.html). The "On this page" list goes from "Map: operating model to credit" straight to "Fact register".
+   - Where: Handoff line 131 heading "### Analytical appendix — complete canonical registers". There is no element with id s-131 in the rendered DOM (/private/tmp/claude-501/-Users-USER-Documents-RBOT-HTML--claude-worktrees-refactor-optimisation-sweep-01c49e/d3b58d68-0f70-4eca-af09-da4e7774dc7f/scratchpad/tmp/CP-1A-023.dom.html). The "On this page" list goes from "Map: operating model to credit" straight to "Fact register".
    - Problem: The appendix heading is dropped, so the registers flow straight on from the narrative maps with nothing marking them as reference material. Headings also jump from h3 to h5. The assigned screenshot CP-1A_s-131.png consequently shows the page top, not this section.
    - Fix: Render a plain appendix heading (for example, "Appendix: registers", without "canonical") at the correct heading level so it has an anchor and an entry in On this page.
 7. **Low · narrative** (Saboteur)
@@ -745,7 +745,7 @@ Kind: reader passage · handoff lines 29-43 · verdict **CONCERNS**
    - Problem: The bullet gives no amount for the securitization draw and no starting point for the fall in liquidity (USD 6,261 million at year end appears only in the bottom line). It also lists 10-18 before 10-16, so the size and sequence of the post-period drain is unclear.
    - Fix: Order the events by date, give the amount drawn, and state the fall as 'from USD 6,261 million at 2024-09-30 to USD 3,308 million at 2024-12-28'.
 6. **Medium · visual** (New reader, Auditor (promoted from Low))
-   - Where: Key findings bullets, /private/tmp/claude-501/-Users-ericguei-Documents-RBOT-HTML--claude-worktrees-refactor-optimisation-sweep-01c49e/d3b58d68-0f70-4eca-af09-da4e7774dc7f/scratchpad/shots2/CP-1A_key-findings.png crop x330-1440, y220-900 (/private/tmp/claude-501/-Users-ericguei-Documents-RBOT-HTML--claude-worktrees-refactor-optimisation-sweep-01c49e/d3b58d68-0f70-4eca-af09-da4e7774dc7f/scratchpad/tmp/CP-1A-013-a.png)
+   - Where: Key findings bullets, /private/tmp/claude-501/-Users-USER-Documents-RBOT-HTML--claude-worktrees-refactor-optimisation-sweep-01c49e/d3b58d68-0f70-4eca-af09-da4e7774dc7f/scratchpad/shots2/CP-1A_key-findings.png crop x330-1440, y220-900 (/private/tmp/claude-501/-Users-USER-Documents-RBOT-HTML--claude-worktrees-refactor-optimisation-sweep-01c49e/d3b58d68-0f70-4eca-af09-da4e7774dc7f/scratchpad/tmp/CP-1A-013-a.png)
    - Problem: Every figure is set in bold monospace with a dotted underline inside proportional body text. Bullet 1 has six such chips and bullet 4 has four, which breaks the reading rhythm, and 'USD 3,000 million' wraps onto its own line start.
    - Fix: Show figures in the body typeface (tabular numerals) with a subtle link cue, and keep each amount and its unit unbroken.
 7. **Low · narrative** (New reader)
@@ -1097,7 +1097,7 @@ Kind: prose/table · handoff lines 223-234 · verdict **CONCERNS**
    - Problem: The check this row says was not run takes one division: (2,487 + 3,143) / 7,940 = 70.91%, not the 70.90% printed in K18. A trivial calculation is logged as a gap instead of being done, and the printed figure is off at two decimals.
    - Fix: Compute the share from the unrounded inputs (70.91%) in K18 and drop this row.
 4. **Medium · visual** (New reader, Auditor)
-   - Where: Gaps table Source column, crop /private/tmp/claude-501/-Users-ericguei-Documents-RBOT-HTML--claude-worktrees-refactor-optimisation-sweep-01c49e/d3b58d68-0f70-4eca-af09-da4e7774dc7f/scratchpad/tmp/CP-1A-025-a.png (full shot y≈1650-2230)
+   - Where: Gaps table Source column, crop /private/tmp/claude-501/-Users-USER-Documents-RBOT-HTML--claude-worktrees-refactor-optimisation-sweep-01c49e/d3b58d68-0f70-4eca-af09-da4e7774dc7f/scratchpad/tmp/CP-1A-025-a.png (full shot y≈1650-2230)
    - Problem: Each source shows the raw internal file name "TDG_2024-09-30_10-K_0001260221-24-000083_tdg-20240930.htm.jsonl", wrapped over three or four lines. It makes every row the tallest in the table and shows the reader a pipeline artefact (.jsonl) instead of a document name.
    - Fix: Show a short reader label such as "FY2024 10-K, p. 164", with the full identifier in a tooltip or in Sources.
 5. **Low · narrative** (New reader)
@@ -1143,7 +1143,7 @@ Kind: run plumbing · handoff lines 1-4, 235-238 · verdict **CONCERNS**
 
 ## Research questions (CP-DR)
 
-Handoff: `/private/tmp/claude-501/-Users-ericguei-Documents-RBOT-HTML--claude-worktrees-pause-63d136/c8719821-dd4f-4042-ad6b-2051ff7e7dda/scratchpad/preview-ws/runs/tdg-proof-snapshot-opus-002/requests/CP-DR/cf778865cd7ba4168937bb03559f9e6214258c76c4a2616cbd51165a96feb4fe/1.response.md`
+Handoff: `/private/tmp/claude-501/-Users-USER-Documents-RBOT-HTML--claude-worktrees-pause-63d136/c8719821-dd4f-4042-ad6b-2051ff7e7dda/scratchpad/preview-ws/runs/tdg-proof-snapshot-opus-002/requests/CP-DR/cf778865cd7ba4168937bb03559f9e6214258c76c4a2616cbd51165a96feb4fe/1.response.md`
 
 ### Bottom line
 
@@ -1205,7 +1205,7 @@ Kind: reader passage · handoff lines 29-48 · verdict **CONCERNS**
    - Problem: The first bullet uses "EBITDA As Defined", the issuer's non-GAAP metric, four bullets before the section explains it. A reader first meets the 52% margin without knowing it rests on management add-backs.
    - Fix: Flag the term as management's adjusted EBITDA at first use, or move the metric bullet ahead of the first bullet that uses it.
 5. **Medium · visual** (New reader; Auditor)
-   - Where: Key findings bullets, /private/tmp/claude-501/-Users-ericguei-Documents-RBOT-HTML--claude-worktrees-refactor-optimisation-sweep-01c49e/d3b58d68-0f70-4eca-af09-da4e7774dc7f/scratchpad/tmp/CP-DR-029-a.png (crop of CP-DR_key-findings.png, x 330-1100, y 220-1100)
+   - Where: Key findings bullets, /private/tmp/claude-501/-Users-USER-Documents-RBOT-HTML--claude-worktrees-refactor-optimisation-sweep-01c49e/d3b58d68-0f70-4eca-af09-da4e7774dc7f/scratchpad/tmp/CP-DR-029-a.png (crop of CP-DR_key-findings.png, x 330-1100, y 220-1100)
    - Problem: The figures are drawn in a bold monospace face with a dotted underline ("USD 1,067 million", "USD 4,279 million") inside proportional body text. This breaks the reading rhythm, widens the gaps between words, and in bullet 5 wraps "USD 106 million" onto its own line start.
    - Fix: Show linked figures in the body font with a light underline or tint, so they read as prose and stay clickable.
 6. **Low · narrative** (New reader)
@@ -1241,7 +1241,7 @@ Kind: reader passage · handoff lines 54-60 · verdict **BLOCK**
    - Problem: These clauses tell other analysis stages what they may use, not what the reader should conclude. Directions between modules leaking onto the page are pipeline wording under the house standard.
    - Fix: State the consequence for the reader instead, e.g. that this research gives no sector valuation benchmark for TDG's debt.
 5. **Medium · visual** (Auditor, Saboteur)
-   - Where: /private/tmp/claude-501/-Users-ericguei-Documents-RBOT-HTML--claude-worktrees-refactor-optimisation-sweep-01c49e/d3b58d68-0f70-4eca-af09-da4e7774dc7f/scratchpad/shots2/CP-DR_limitations.png, region x 330-1440, y 210-640 (crop /private/tmp/claude-501/-Users-ericguei-Documents-RBOT-HTML--claude-worktrees-refactor-optimisation-sweep-01c49e/d3b58d68-0f70-4eca-af09-da4e7774dc7f/scratchpad/tmp/CP-DR-031-a.png)
+   - Where: /private/tmp/claude-501/-Users-USER-Documents-RBOT-HTML--claude-worktrees-refactor-optimisation-sweep-01c49e/d3b58d68-0f70-4eca-af09-da4e7774dc7f/scratchpad/shots2/CP-DR_limitations.png, region x 330-1440, y 210-640 (crop /private/tmp/claude-501/-Users-USER-Documents-RBOT-HTML--claude-worktrees-refactor-optimisation-sweep-01c49e/d3b58d68-0f70-4eca-af09-da4e7774dc7f/scratchpad/tmp/CP-DR-031-a.png)
    - Problem: The last bullet ("confidence to Low.") runs straight into the next "Timeline" heading with almost no vertical gap. The Request, Sources and Executive answer headings all have a full section gap, so the boundary of the section and its key closing statement are visually blurred.
    - Fix: Put the same space after Limitations as after the other sections, so the Timeline heading starts a distinct block.
 6. **Low · narrative** (New reader)
@@ -1369,7 +1369,7 @@ Kind: timeline · handoff lines 110-115 · verdict **BLOCK**
    - Problem: The Credit relevance cell describes how later modules consume the fact, which is pipeline producer/consumer wording. It does not say what the fact means for the credit. A committee reader learns nothing from which module uses it.
    - Fix: State the credit implication directly, e.g. that aftermarket demand above pre-pandemic levels supports margin and interest cover, and drop the reference to which module uses it.
 2. **High · visual** (Saboteur, Auditor)
-   - Where: Timeline panel, 'Research catalysts' row: CP-DR_timeline.png crop (320,190)-(1440,340), saved as /private/tmp/claude-501/-Users-ericguei-Documents-RBOT-HTML--claude-worktrees-refactor-optimisation-sweep-01c49e/d3b58d68-0f70-4eca-af09-da4e7774dc7f/scratchpad/tmp/CP-DR-036-a.png
+   - Where: Timeline panel, 'Research catalysts' row: CP-DR_timeline.png crop (320,190)-(1440,340), saved as /private/tmp/claude-501/-Users-USER-Documents-RBOT-HTML--claude-worktrees-refactor-optimisation-sweep-01c49e/d3b58d68-0f70-4eca-af09-da4e7774dc7f/scratchpad/tmp/CP-DR-036-a.png
    - Problem: The only event is drawn as one empty pale bar running the full width from 2024-02-01 to 2024-02-29. It has no event label, no marker and no as-of (2024-09-30) reference. A month-precision point event therefore looks like a month-long duration, and the reader cannot tell what the bar stands for without the table.
    - Fix: Draw the event as a labelled marker spanning its month (e.g. 'Feb 2024: RPKs pass 2019 levels'), on an axis that also shows the as-of date.
 3. **Medium · narrative** (Saboteur)
@@ -1639,7 +1639,7 @@ Kind: prose/table · handoff lines 94-104 · verdict **BLOCK**
 
 ## Financial foundation (CP-1)
 
-Handoff: `/private/tmp/claude-501/-Users-ericguei-Documents-RBOT-HTML--claude-worktrees-pause-63d136/c8719821-dd4f-4042-ad6b-2051ff7e7dda/scratchpad/preview-ws/runs/tdg-proof-snapshot-opus-002/requests/CP-1/60f5e223f0ac25d067396f089d11e6dd3c3afedd5eb3e9076a92c749b2acc1c6/1.response.md`
+Handoff: `/private/tmp/claude-501/-Users-USER-Documents-RBOT-HTML--claude-worktrees-pause-63d136/c8719821-dd4f-4042-ad6b-2051ff7e7dda/scratchpad/preview-ws/runs/tdg-proof-snapshot-opus-002/requests/CP-1/60f5e223f0ac25d067396f089d11e6dd3c3afedd5eb3e9076a92c749b2acc1c6/1.response.md`
 
 ### Period table
 
@@ -1709,7 +1709,7 @@ Kind: prose/table · handoff lines 110-149 · verdict **BLOCK**
    - Problem: Missing values are written in five different ways. "Not supplied: not read" and "Not read" are pipeline wording that describes the tool's process, not the issuer, and they leave unclear whether a value is missing in the filing or was simply not read.
    - Fix: Use one reader-facing convention for missing values, with a short reason only where it matters to the credit view (for example "not disclosed" or "not computed for FY2023").
 7. **Medium · visual** (New reader + Auditor (promoted from Low))
-   - Where: Financials and credit metrics table, /private/tmp/claude-501/-Users-ericguei-Documents-RBOT-HTML--claude-worktrees-refactor-optimisation-sweep-01c49e/d3b58d68-0f70-4eca-af09-da4e7774dc7f/scratchpad/shots2/CP-1_s-110.png, full height (crop /private/tmp/claude-501/-Users-ericguei-Documents-RBOT-HTML--claude-worktrees-refactor-optimisation-sweep-01c49e/d3b58d68-0f70-4eca-af09-da4e7774dc7f/scratchpad/tmp/CP-1-048-a.png)
+   - Where: Financials and credit metrics table, /private/tmp/claude-501/-Users-USER-Documents-RBOT-HTML--claude-worktrees-refactor-optimisation-sweep-01c49e/d3b58d68-0f70-4eca-af09-da4e7774dc7f/scratchpad/shots2/CP-1_s-110.png, full height (crop /private/tmp/claude-501/-Users-USER-Documents-RBOT-HTML--claude-worktrees-refactor-optimisation-sweep-01c49e/d3b58d68-0f70-4eca-af09-da4e7774dc7f/scratchpad/tmp/CP-1-048-a.png)
    - Problem: The table runs past a full 2400 px screen as one block of 36 rows. Reported figures, leverage, coverage, liquidity and covenant terms are mixed with no group headings. The Source column wraps the long file name over three lines on most rows, which doubles the row height, while the FY columns are mostly empty space.
    - Fix: Split the rows into labelled groups (P&L and cash flow, debt and leverage, coverage, liquidity, covenant terms) and shorten the source text so most rows fit on one line.
 8. **Low · visual** (Auditor)
@@ -1925,7 +1925,7 @@ Kind: prose/table · handoff lines 229-283 · verdict **CONCERNS**
    - Problem: USD m results print with no thousands separator (25068), while the Inputs column next to them uses separators (25,068). Ratios print to ten decimal places. Bold is applied to some rows (USD m, C38-C47) and not to others (C05-C14). The eye is drawn to unrounded noise rather than to the figure that matters.
    - Fix: Format results the same way across the table: thousands separators for USD m, two-decimal x and one- or two-decimal %, with full precision left in the calculation JSON.
 6. **Medium · visual** (Auditor, New reader)
-   - Where: ID column, crop /private/tmp/claude-501/-Users-ericguei-Documents-RBOT-HTML--claude-worktrees-refactor-optimisation-sweep-01c49e/d3b58d68-0f70-4eca-af09-da4e7774dc7f/scratchpad/tmp/CP-1-057-a.png: "C01 Basis", "C05 Basis", while C06 has none
+   - Where: ID column, crop /private/tmp/claude-501/-Users-USER-Documents-RBOT-HTML--claude-worktrees-refactor-optimisation-sweep-01c49e/d3b58d68-0f70-4eca-af09-da4e7774dc7f/scratchpad/tmp/CP-1-057-a.png: "C01 Basis", "C05 Basis", while C06 has none
    - Problem: A grey "Basis" label appears under some IDs and not others. Nothing explains what it means or whether it can be clicked, so rows with and without it look like they differ in quality of support.
    - Fix: Either show a consistent, clearly labelled source cell on every row, or style "Basis" as an obvious control with a legend.
 7. **Low · narrative** (Saboteur)
@@ -2181,7 +2181,7 @@ Kind: chart · handoff lines 178-184 · verdict **BLOCK**
 - Visual: The bar chart is legible and proportional from a zero baseline: bar heights 139/113 match the 3.60/2.93 ratio. However, the chip row shows the banned 'Handoff' label and bare calculation codes, and the unit and date labelling and the use of card width are weak.
 
 1. **High · visual** (Auditor, New reader)
-   - Where: Interest cover chart, /private/tmp/claude-501/-Users-ericguei-Documents-RBOT-HTML--claude-worktrees-refactor-optimisation-sweep-01c49e/d3b58d68-0f70-4eca-af09-da4e7774dc7f/scratchpad/shots2/CP-1_charts.png, chip row under the FY2023 and FY2024 bars (crop /private/tmp/claude-501/-Users-ericguei-Documents-RBOT-HTML--claude-worktrees-refactor-optimisation-sweep-01c49e/d3b58d68-0f70-4eca-af09-da4e7774dc7f/scratchpad/tmp/CP-1-052-a.png, y about 285-305)
+   - Where: Interest cover chart, /private/tmp/claude-501/-Users-USER-Documents-RBOT-HTML--claude-worktrees-refactor-optimisation-sweep-01c49e/d3b58d68-0f70-4eca-af09-da4e7774dc7f/scratchpad/shots2/CP-1_charts.png, chip row under the FY2023 and FY2024 bars (crop /private/tmp/claude-501/-Users-USER-Documents-RBOT-HTML--claude-worktrees-refactor-optimisation-sweep-01c49e/d3b58d68-0f70-4eca-af09-da4e7774dc7f/scratchpad/tmp/CP-1-052-a.png, y about 285-305)
    - Problem: Each bar has a 'Handoff' chip and a 'Financial foundation · C13' / '· C12' chip. 'Handoff' is pipeline vocabulary the house standard bans from the screen, and the bare calculation codes mean nothing to a reader who does not know the pipeline. Two personas caught this, so it was promoted from Medium.
    - Fix: Remove the 'Handoff' chip and label the provenance in reader terms, e.g. 'Calculated: EBITDA As Defined ÷ cash interest paid, 10-K FY2024', with the calculation reference kept in the table's Basis column only.
 2. **Medium · narrative** (Saboteur)
@@ -2193,11 +2193,11 @@ Kind: chart · handoff lines 178-184 · verdict **BLOCK**
    - Problem: The heading 'Chart data:' describes the pipeline's purpose, not the content, and it shows in the page's on-this-page index and section title. The section also states no bottom line, such as whether cover improved and what it means, which a data module still owes.
    - Fix: Retitle it 'Interest cover, FY2023-FY2024' and open with a one-sentence bottom line, e.g. cash interest cover rose from 2.93x to 3.60x.
 4. **Low · visual** (Auditor)
-   - Where: Interest cover chart header 'x · As of 30 September 2024', /private/tmp/claude-501/-Users-ericguei-Documents-RBOT-HTML--claude-worktrees-refactor-optimisation-sweep-01c49e/d3b58d68-0f70-4eca-af09-da4e7774dc7f/scratchpad/tmp/CP-1-052-a.png, top right
+   - Where: Interest cover chart header 'x · As of 30 September 2024', /private/tmp/claude-501/-Users-USER-Documents-RBOT-HTML--claude-worktrees-refactor-optimisation-sweep-01c49e/d3b58d68-0f70-4eca-af09-da4e7774dc7f/scratchpad/tmp/CP-1-052-a.png, top right
    - Problem: The unit is a bare 'x' and the header gives a single as-of date over two fiscal-year periods. The chart has no y-axis, and the plot fills only about two thirds of the card width, leaving empty space on the right.
    - Fix: Label the unit as 'times (x)', write the date as 'Fiscal years to 30 September', and either span the full card width or add a light axis.
 5. **Low · visual** (New reader)
-   - Where: Table 'Chart data: interest cover', /private/tmp/claude-501/-Users-ericguei-Documents-RBOT-HTML--claude-worktrees-refactor-optimisation-sweep-01c49e/d3b58d68-0f70-4eca-af09-da4e7774dc7f/scratchpad/shots2/CP-1_s-178.png, top region (y about 190-310 displayed)
+   - Where: Table 'Chart data: interest cover', /private/tmp/claude-501/-Users-USER-Documents-RBOT-HTML--claude-worktrees-refactor-optimisation-sweep-01c49e/d3b58d68-0f70-4eca-af09-da4e7774dc7f/scratchpad/shots2/CP-1_s-178.png, top region (y about 190-310 displayed)
    - Problem: The column header 'EBITDA / cash interest' is set in monospace while the other headers are in the sans face. The unit 'x' sits in its own column away from the values, and each period cell carries a stray 'Basis' chip, which adds visual noise to a two-row table.
    - Fix: Use the sans face for every header, print the values as '2.93x' and '3.60x', and drop the separate unit column for this ratio table.
 
@@ -2307,7 +2307,7 @@ Kind: prose/table · handoff lines 91-109 · verdict **CONCERNS**
 
 ## Fundamental credit (CP-2)
 
-Handoff: `/private/tmp/claude-501/-Users-ericguei-Documents-RBOT-HTML--claude-worktrees-pause-63d136/c8719821-dd4f-4042-ad6b-2051ff7e7dda/scratchpad/preview-ws/runs/tdg-proof-snapshot-opus-002/requests/CP-2/b15f8ebbdefe7f4184545cfbf45afcc95dc5a380bd03e49c95c46a69e93b4ffc/1.response.md`
+Handoff: `/private/tmp/claude-501/-Users-USER-Documents-RBOT-HTML--claude-worktrees-pause-63d136/c8719821-dd4f-4042-ad6b-2051ff7e7dda/scratchpad/preview-ws/runs/tdg-proof-snapshot-opus-002/requests/CP-2/b15f8ebbdefe7f4184545cfbf45afcc95dc5a380bd03e49c95c46a69e93b4ffc/1.response.md`
 
 ### Bottom line
 
@@ -2593,7 +2593,7 @@ Kind: reader passage · handoff lines 47-51 · verdict **CONCERNS**
    - Problem: Naming 'the filing' as the speaker puts a source reference into a narrative sentence, which the house standard keeps for the Basis line. The Basis lists only module handoffs, so the reader cannot tell which filing is meant.
    - Fix: State the risk as a judgement ('competition is significant and pricing may have to adjust') and leave the source to the Basis line.
 6. **Low · visual** (New reader, Auditor)
-   - Where: CP-2_contrary-evidence.png, crop of the section at 330-1100 x 210-640 (saved as /private/tmp/claude-501/-Users-ericguei-Documents-RBOT-HTML--claude-worktrees-refactor-optimisation-sweep-01c49e/d3b58d68-0f70-4eca-af09-da4e7774dc7f/scratchpad/tmp/CP-2-063-a.png): figure chips "USD 1,375 million", "4.51x", "40%"
+   - Where: CP-2_contrary-evidence.png, crop of the section at 330-1100 x 210-640 (saved as /private/tmp/claude-501/-Users-USER-Documents-RBOT-HTML--claude-worktrees-refactor-optimisation-sweep-01c49e/d3b58d68-0f70-4eca-af09-da4e7774dc7f/scratchpad/tmp/CP-2-063-a.png): figure chips "USD 1,375 million", "4.51x", "40%"
    - Problem: Figures are set in a bold monospace face with a dotted underline inside proportional body text. This breaks the reading rhythm and makes the chips look like code or links. Only some numbers get the treatment: 'FY2024' and 'FY2028' do not, so the reader cannot tell which numbers are traceable.
    - Fix: Keep figure chips in the body typeface with a subtle underline or tint, so traceable numbers stand out without looking like code.
 7. **Low · visual** (Auditor)
@@ -2739,7 +2739,7 @@ Kind: reader passage · handoff lines 52-59 · verdict **CONCERNS**
 
 ## Downside (CP-2A)
 
-Handoff: `/private/tmp/claude-501/-Users-ericguei-Documents-RBOT-HTML--claude-worktrees-pause-63d136/c8719821-dd4f-4042-ad6b-2051ff7e7dda/scratchpad/preview-ws/runs/tdg-proof-snapshot-opus-002/requests/CP-2A/12f53f9c85569117da3121a4c68269e998863dd8780fafbf86af76c5c41086e3/1.response.md`
+Handoff: `/private/tmp/claude-501/-Users-USER-Documents-RBOT-HTML--claude-worktrees-pause-63d136/c8719821-dd4f-4042-ad6b-2051ff7e7dda/scratchpad/preview-ws/runs/tdg-proof-snapshot-opus-002/requests/CP-2A/12f53f9c85569117da3121a4c68269e998863dd8780fafbf86af76c5c41086e3/1.response.md`
 
 ### Stress design and status
 
@@ -2889,7 +2889,7 @@ Kind: prose/table · handoff lines 364-374 · verdict **BLOCK**
    - Problem: "Rate accelerator approximate" does not say which way the error runs or how large it could be. The SC1/SC2 interest shocks (0.0259/0.0518 per point) feed the coverage ratios above, so a reader cannot tell whether the stressed cover of 2.36x is overstated.
    - Fix: Say what the approximation assumes (for example, "assumes no hedging; actual cash-interest sensitivity may be lower") and which stressed metrics it affects.
 6. **Medium · visual** (Auditor, New reader)
-   - Where: Gaps table, shot CP-2A_s-364.png crop y≈1740-2230 (/private/tmp/claude-501/-Users-ericguei-Documents-RBOT-HTML--claude-worktrees-refactor-optimisation-sweep-01c49e/d3b58d68-0f70-4eca-af09-da4e7774dc7f/scratchpad/tmp/CP-2A-084-a.png): Gap cell "Hedge note not read [Insufficient Information] Basis"
+   - Where: Gaps table, shot CP-2A_s-364.png crop y≈1740-2230 (/private/tmp/claude-501/-Users-USER-Documents-RBOT-HTML--claude-worktrees-refactor-optimisation-sweep-01c49e/d3b58d68-0f70-4eca-af09-da4e7774dc7f/scratchpad/tmp/CP-2A-084-a.png): Gap cell "Hedge note not read [Insufficient Information] Basis"
    - Problem: A stray "Basis" chip sits inside the Gap cell of one row only. The bracketed "[Insufficient Information]" register tag shows as raw text. Both look like rendering artefacts in a table that otherwise has a dedicated Source column.
    - Fix: Render the evidence label as a consistent chip or column across rows. Drop the stray Basis link from the Gap cell, since the Source column already carries the reference.
 7. **Low · visual** (New reader)
@@ -3121,7 +3121,7 @@ Kind: map · handoff lines 71-84 · verdict **BLOCK**
 - Visual: The drawing on the Maps panel is clipped on the right and drops the terminal node, it breaks node labels mid-word, it overlaps edge labels and it has no legend; the section anchor itself shows only a table that repeats the one under the drawing.
 
 1. **High · visual** (Saboteur, Auditor)
-   - Where: Maps panel, 'Stress scenario' drawing; CP-2A_maps.png crop (340,220)-(1440,530), saved as /private/tmp/claude-501/-Users-ericguei-Documents-RBOT-HTML--claude-worktrees-refactor-optimisation-sweep-01c49e/d3b58d68-0f70-4eca-af09-da4e7774dc7f/scratchpad/tmp/CP-2A-078-a.png
+   - Where: Maps panel, 'Stress scenario' drawing; CP-2A_maps.png crop (340,220)-(1440,530), saved as /private/tmp/claude-501/-Users-USER-Documents-RBOT-HTML--claude-worktrees-refactor-optimisation-sweep-01c49e/d3b58d68-0f70-4eca-af09-da4e7774dc7f/scratchpad/tmp/CP-2A-078-a.png
    - Problem: The drawing is cut off at the right edge. The last edge label reads only 'Test' and the end node 'Higher loss given default for subordinated notes' (line 83) is not shown at all. The reader therefore never sees the creditor consequence the whole pathway leads to.
    - Fix: Fit the full graph inside the panel width, or wrap it into rows, so that every node, including the terminal loss-given-default node, and every edge label is visible.
 2. **Medium · narrative** (Saboteur)
@@ -3259,7 +3259,7 @@ Kind: reader passage · handoff lines 48-54 · verdict **CONCERNS**
 
 ## Forward credit model (CP-2G)
 
-Handoff: `/private/tmp/claude-501/-Users-ericguei-Documents-RBOT-HTML--claude-worktrees-pause-63d136/c8719821-dd4f-4042-ad6b-2051ff7e7dda/scratchpad/preview-ws/runs/tdg-proof-snapshot-opus-002/requests/CP-2G/e796971da51b4f4a9610b9c3601a09545f65b72b4612b4f5e158d99e6ab39e51/1.response.md`
+Handoff: `/private/tmp/claude-501/-Users-USER-Documents-RBOT-HTML--claude-worktrees-pause-63d136/c8719821-dd4f-4042-ad6b-2051ff7e7dda/scratchpad/preview-ws/runs/tdg-proof-snapshot-opus-002/requests/CP-2G/e796971da51b4f4a9610b9c3601a09545f65b72b4612b4f5e158d99e6ab39e51/1.response.md`
 
 ### Forecast inputs (machine-readable)
 
@@ -3277,7 +3277,7 @@ Kind: prose/table · handoff lines 97-148 · verdict **BLOCK**
    - Problem: The reader sees pipeline vocabulary: a schema id, snake_case keys (base_drivers, tax_wc_pct_revenue, downside_shock), null and "machine-readable". The house standard bars pipeline language from the reader's page.
    - Fix: Remove the raw schema from the Modules page; if the inputs must appear, show them as a labelled assumptions table in plain words.
 3. **High · visual** (Auditor + New reader (promoted))
-   - Where: Screenshot CP-2G_s-97.png, section top, approx. y 220-1140 (full-res crop /private/tmp/claude-501/-Users-ericguei-Documents-RBOT-HTML--claude-worktrees-refactor-optimisation-sweep-01c49e/d3b58d68-0f70-4eca-af09-da4e7774dc7f/scratchpad/tmp/CP-2G-093-a.png); handoff lines 99-147 (```json fence)
+   - Where: Screenshot CP-2G_s-97.png, section top, approx. y 220-1140 (full-res crop /private/tmp/claude-501/-Users-USER-Documents-RBOT-HTML--claude-worktrees-refactor-optimisation-sweep-01c49e/d3b58d68-0f70-4eca-af09-da4e7774dc7f/scratchpad/tmp/CP-2G-093-a.png); handoff lines 99-147 (```json fence)
    - Problem: The ```json fenced block does not render as a code block. It shows as one reflowed monospace paragraph about 50 lines long, with a literal "``json {" at the start and "} ``" at the end, and line breaks fall inside numbers ("\" 4173", "\"24880 \""). Nobody can read it, and it shows the page's fence handling is broken.
    - Fix: Render the fence as a preformatted block with its original line breaks, or better, leave this machine block off the reader's Modules page and keep it only as data feeding the Forecast page.
 4. **Medium · narrative** (Saboteur)
@@ -3409,7 +3409,7 @@ Kind: prose/table · handoff lines 56-79 · verdict **BLOCK**
    - Problem: The section restates the bottom line and the key findings after Limitations and after the Sources entry in the page navigation. The page therefore gives judgement, then limitations, then judgement again. The module's only summary table also sits below its caveats instead of next to the bottom line.
    - Fix: Move the forecast table up to the Bottom line or Key findings, and drop the repeated prose or cut it to one sentence that introduces the table.
 7. **Medium · visual** (Auditor, New reader)
-   - Where: Forward credit view table, /private/tmp/claude-501/-Users-ericguei-Documents-RBOT-HTML--claude-worktrees-refactor-optimisation-sweep-01c49e/d3b58d68-0f70-4eca-af09-da4e7774dc7f/scratchpad/tmp/CP-2G-091-a.png (crop 340,220-1400,880 of CP-2G_s-56.png)
+   - Where: Forward credit view table, /private/tmp/claude-501/-Users-USER-Documents-RBOT-HTML--claude-worktrees-refactor-optimisation-sweep-01c49e/d3b58d68-0f70-4eca-af09-da4e7774dc7f/scratchpad/tmp/CP-2G-091-a.png (crop 340,220-1400,880 of CP-2G_s-56.png)
    - Problem: The FY2024 column is left-aligned while every other numeric column is right-aligned. In the same column, the "pro forma" cells use a proportional font and the others use monospace, so the numbers do not line up. Precision also varies across a row ("8,734" next to "9,998.68"), and two decimals on USD millions suggests more precision than the forecast has.
    - Fix: Right-align all numeric columns in one numeric font, round USD m values to whole millions consistently, and move "pro forma" into the column header or a footnote marker.
 8. **Low · visual** (New reader)
@@ -3445,7 +3445,7 @@ Kind: prose/table · handoff lines 80-96 · verdict **BLOCK**
    - Problem: The table notes use internal labels (sha256 pinning, DEF-1..DEF-5, "inputs block") that a reader cannot decode without another page. Several tests (1, 2, 4, 9) are build hygiene, not credit content.
    - Fix: Keep only the tests that change how far a reader trusts the numbers (definitions, perimeter, nulls, downside), written in plain words, and move the build checks to the method steps.
 6. **Medium · visual** (Auditor + New reader)
-   - Where: QA test table, CP-2G_s-80.png crop x340-1400, y220-880 (/private/tmp/claude-501/-Users-ericguei-Documents-RBOT-HTML--claude-worktrees-refactor-optimisation-sweep-01c49e/d3b58d68-0f70-4eca-af09-da4e7774dc7f/scratchpad/tmp/CP-2G-092-a.png)
+   - Where: QA test table, CP-2G_s-80.png crop x340-1400, y220-880 (/private/tmp/claude-501/-Users-USER-Documents-RBOT-HTML--claude-worktrees-refactor-optimisation-sweep-01c49e/d3b58d68-0f70-4eca-af09-da4e7774dc7f/scratchpad/tmp/CP-2G-092-a.png)
    - Problem: Every test name ends in the same grey "Basis" chip, so all nine rows carry an identical label that tells the reader nothing and runs into the test text. No Basis line shows under the paragraph above, so it is unclear where "context; calculation G31" went.
    - Fix: Show the paragraph's Basis line once under the paragraph and drop the repeated per-row chip, or give the table a real Source column.
 7. **Low · visual** (Saboteur)
@@ -3743,7 +3743,7 @@ Kind: reader passage · handoff lines 48-55 · verdict **CONCERNS**
 
 ## Rates, FX & hedging (CP-2E)
 
-Handoff: `/private/tmp/claude-501/-Users-ericguei-Documents-RBOT-HTML--claude-worktrees-pause-63d136/c8719821-dd4f-4042-ad6b-2051ff7e7dda/scratchpad/preview-ws/runs/tdg-proof-snapshot-opus-002/requests/CP-2E/6e6adc1d42a32ae08e9e064b54d07035726f3ff441f0f5a6234ecac3c01cda6c/1.response.md`
+Handoff: `/private/tmp/claude-501/-Users-USER-Documents-RBOT-HTML--claude-worktrees-pause-63d136/c8719821-dd4f-4042-ad6b-2051ff7e7dda/scratchpad/preview-ws/runs/tdg-proof-snapshot-opus-002/requests/CP-2E/6e6adc1d42a32ae08e9e064b54d07035726f3ff441f0f5a6234ecac3c01cda6c/1.response.md`
 
 ### Analytical appendix — complete canonical registers (part 1 of 2: from 'T2F.1 Source register')
 
@@ -3881,7 +3881,7 @@ Kind: prose/table · handoff lines 81-93 · verdict **BLOCK**
    - Problem: One paragraph of about 150 words carries rates, hedge timing, monitoring triggers, FX and inflation, with eight percentages packed into it. On screen it is a nine-line wall of text, and the monitoring trigger is buried in the middle.
    - Fix: Split it into a two-sentence judgement and then short paragraphs, or bullets, for rate timing, the monitoring trigger, and FX/inflation.
 6. **Medium · visual** (Auditor, New reader)
-   - Where: Table in /private/tmp/claude-501/-Users-ericguei-Documents-RBOT-HTML--claude-worktrees-refactor-optimisation-sweep-01c49e/d3b58d68-0f70-4eca-af09-da4e7774dc7f/scratchpad/tmp/CP-2E-104-a.png, Forward point column row 1 and Exposure column
+   - Where: Table in /private/tmp/claude-501/-Users-USER-Documents-RBOT-HTML--claude-worktrees-refactor-optimisation-sweep-01c49e/d3b58d68-0f70-4eca-af09-da4e7774dc7f/scratchpad/tmp/CP-2E-104-a.png, Forward point column row 1 and Exposure column
    - Problem: The date breaks across lines ('after 2025-' / '03-31'), and the grey 'Basis' chips sit inline in the Exposure cells ('Unhedged floating-rate debt Basis', '+100 bp cash interest Basis'), where they read as part of the row label. The table has no Source column, so the Basis chip is the only route to sources and is easy to miss.
    - Fix: Keep dates from wrapping (non-breaking or a wider column), and move Basis into its own Source column or out of the label cell.
 7. **Low · narrative** (Auditor)
@@ -3889,7 +3889,7 @@ Kind: prose/table · handoff lines 81-93 · verdict **BLOCK**
    - Problem: Every other amount in the section is in USD million. 'bn' with one decimal place breaks the unit convention and the precision used everywhere else.
    - Fix: Show the amount in USD million at the source precision, matching the rest of the table.
 8. **Low · visual** (Saboteur)
-   - Where: Prose paragraph in /private/tmp/claude-501/-Users-ericguei-Documents-RBOT-HTML--claude-worktrees-refactor-optimisation-sweep-01c49e/d3b58d68-0f70-4eca-af09-da4e7774dc7f/scratchpad/tmp/CP-2E-104-a.png, top 140 px
+   - Where: Prose paragraph in /private/tmp/claude-501/-Users-USER-Documents-RBOT-HTML--claude-worktrees-refactor-optimisation-sweep-01c49e/d3b58d68-0f70-4eca-af09-da4e7774dc7f/scratchpad/tmp/CP-2E-104-a.png, top 140 px
    - Problem: Eleven figures appear in bold monospace with a dotted underline, so the paragraph looks like code. The table below shows the same figures in plain text, so the two styles disagree on one screen.
    - Fix: Use one quiet figure style for both prose and table, or reserve the emphasis for the one or two figures that carry the judgement.
 
@@ -4149,7 +4149,7 @@ Kind: prose/table · handoff lines 94-98 · verdict **CONCERNS**
    - Problem: "Handed to the committee debate" is pipeline handoff wording. "Were located" / "located" describes the model's search process rather than the issuer, which does not meet the reader-language rule.
    - Fix: State the conclusion directly (e.g. "Air-travel regulation is the one ESG factor to watch, through aftermarket revenue"), and put search scope in limitations as "not disclosed in the FY2024 annual filing".
 5. **Medium · visual** (Auditor, New reader)
-   - Where: Screenshot CP-2E_s-94.png, crop (340,210)-(1400,420) at /private/tmp/claude-501/-Users-ericguei-Documents-RBOT-HTML--claude-worktrees-refactor-optimisation-sweep-01c49e/d3b58d68-0f70-4eca-af09-da4e7774dc7f/scratchpad/tmp/CP-2E-105-a.png; handoff L97 "Basis: TDG_2024-09-30_10-K_..., pages 24–26"
+   - Where: Screenshot CP-2E_s-94.png, crop (340,210)-(1400,420) at /private/tmp/claude-501/-Users-USER-Documents-RBOT-HTML--claude-worktrees-refactor-optimisation-sweep-01c49e/d3b58d68-0f70-4eca-af09-da4e7774dc7f/scratchpad/tmp/CP-2E-105-a.png; handoff L97 "Basis: TDG_2024-09-30_10-K_..., pages 24–26"
    - Problem: The handoff has a Basis line for this paragraph (L97), but nothing shows between the paragraph and the "Events: Hedges" heading: no Basis line and no Basis chip, unlike the table rows below. On screen the paragraph has no visible source.
    - Fix: Render the paragraph's Basis line, or a Basis affordance, under the prose as the table rows already do.
 6. **Low · visual** (Auditor)
@@ -4165,7 +4165,7 @@ Kind: timeline · handoff lines 99-110 · verdict **CONCERNS**
 - Visual: The timeline is drawn as five unlabelled, same-styled dots with no as-of marker, and the events table spends its width on constant columns and repeated raw file names while the dates wrap.
 
 1. **High · visual** (Saboteur, Auditor)
-   - Where: Timeline panel, 'Hedges' row: CP-2E_timeline.png crop (340,200)-(1440,320), saved at /private/tmp/claude-501/-Users-ericguei-Documents-RBOT-HTML--claude-worktrees-refactor-optimisation-sweep-01c49e/d3b58d68-0f70-4eca-af09-da4e7774dc7f/scratchpad/tmp/CP-2E-106-a.png
+   - Where: Timeline panel, 'Hedges' row: CP-2E_timeline.png crop (340,200)-(1440,320), saved at /private/tmp/claude-501/-Users-USER-Documents-RBOT-HTML--claude-worktrees-refactor-optimisation-sweep-01c49e/d3b58d68-0f70-4eca-af09-da4e7774dc7f/scratchpad/tmp/CP-2E-106-a.png
    - Problem: The timeline shows five identical blue dots. Only the two end dates (2023-03-31, 2027-09-30) are labelled, and there is no as-of (2024-09-30) marker. Nothing separates the historical start from the four scheduled expiries, and the points carry no event text or notional, so a reader cannot see the 2025 swap cliff or the 2027 end of the hedge book, which are the point of this section.
    - Fix: Label each point with its date and a short event (such as 'USD 2,000m swaps mature'), mark the as-of date, and style historical and scheduled events differently.
 2. **Medium · narrative** (Saboteur, New reader)
@@ -4181,7 +4181,7 @@ Kind: timeline · handoff lines 99-110 · verdict **CONCERNS**
    - Problem: 'lane' is pipeline vocabulary, and the handoff names a module code. On screen the reader is sent to an internal module rather than given the fact (the module puts the FY2028 wall at USD 6,637 million).
    - Fix: Give the FY2028 maturity amount directly and drop the module and lane reference.
 5. **Medium · visual** (New reader, Auditor)
-   - Where: Events: Hedges table, Event date / Date precision / Published / Source columns: CP-2E_s-99.png crop (340,220)-(1440,560), saved at /private/tmp/claude-501/-Users-ericguei-Documents-RBOT-HTML--claude-worktrees-refactor-optimisation-sweep-01c49e/d3b58d68-0f70-4eca-af09-da4e7774dc7f/scratchpad/tmp/CP-2E-106-b.png
+   - Where: Events: Hedges table, Event date / Date precision / Published / Source columns: CP-2E_s-99.png crop (340,220)-(1440,560), saved at /private/tmp/claude-501/-Users-USER-Documents-RBOT-HTML--claude-worktrees-refactor-optimisation-sweep-01c49e/d3b58d68-0f70-4eca-af09-da4e7774dc7f/scratchpad/tmp/CP-2E-106-b.png
    - Problem: The narrowest column holds the dates, which break mid-value ('2023-03-' / '31 Basis'). Meanwhile 'Date precision' ('day' in every row) and 'Published' ('—' in every row) take width while carrying no information. The Source column repeats the same raw file name 'TDG_2024-09-30_10-K_0001260221-24-000083_tdg-20240930.htm.jsonl' five times over five or six lines, which makes every row tall.
    - Fix: Drop the constant columns, keep dates on one line, and show the source as a short label such as 'FY2024 10-K, p.176'.
 6. **Low · narrative** (New reader)
@@ -4189,7 +4189,7 @@ Kind: timeline · handoff lines 99-110 · verdict **CONCERNS**
    - Problem: The Status cells repeat the Event text ('maturity date and effective date per hedge table'), so each row is read twice for no new information.
    - Fix: Reduce Status to 'Historical' or 'Scheduled'.
 7. **Low · visual** (Auditor)
-   - Where: Timeline panel header 'Dated events by module': CP-2E_timeline.png crop at /private/tmp/claude-501/-Users-ericguei-Documents-RBOT-HTML--claude-worktrees-refactor-optimisation-sweep-01c49e/d3b58d68-0f70-4eca-af09-da4e7774dc7f/scratchpad/tmp/CP-2E-106-a.png
+   - Where: Timeline panel header 'Dated events by module': CP-2E_timeline.png crop at /private/tmp/claude-501/-Users-USER-Documents-RBOT-HTML--claude-worktrees-refactor-optimisation-sweep-01c49e/d3b58d68-0f70-4eca-af09-da4e7774dc7f/scratchpad/tmp/CP-2E-106-a.png
    - Problem: 'by module' is pipeline wording shown to the reader. The timeline also sits in a separate panel far above this table.
    - Fix: Use a reader caption such as 'Hedge start and expiry dates' and place the timeline beside the events table.
 
@@ -4337,7 +4337,7 @@ Kind: reader passage · handoff lines 44-60 · verdict **CONCERNS**
    - Problem: Units mix (bn vs million throughout), an approximate base carries a two-decimal ratio, and 4.14% also appears on line 50 for a different ratio (share of free cash flow). "In the pages read" and "covenant-currency mismatch" are process and analyst shorthand rather than reader language.
    - Fix: Use USD million consistently, round ratios built on approximate bases, and replace "in the pages read" with "in the FY2024 10-K".
 7. **Low · visual** (New reader, Auditor)
-   - Where: Key findings bullets 1-2, /private/tmp/claude-501/-Users-ericguei-Documents-RBOT-HTML--claude-worktrees-refactor-optimisation-sweep-01c49e/d3b58d68-0f70-4eca-af09-da4e7774dc7f/scratchpad/tmp/CP-2E-101-a.png (shot region x330-1440, y220-860)
+   - Where: Key findings bullets 1-2, /private/tmp/claude-501/-Users-USER-Documents-RBOT-HTML--claude-worktrees-refactor-optimisation-sweep-01c49e/d3b58d68-0f70-4eca-af09-da4e7774dc7f/scratchpad/tmp/CP-2E-101-a.png (shot region x330-1440, y220-860)
    - Problem: Bullets of 90-110 words carry up to 14 dotted-underlined monospace figure buttons each. The mixed monospace/proportional type breaks the reading line, and a line wrap strands an opening parenthesis ("USD 9,189 million (" / "USD 8,702 million"). Six bullets have no visible Basis control, and only the last, figure-free bullet shows one, so a reader cannot tell that the sources for the qualitative claims (e.g. "most contracts do not permit recovery") sit behind the figure buttons.
    - Fix: Keep figures in the body typeface with a subtle underline, prevent a figure button from wrapping away from its parenthesis, and give each bullet a consistent way to reach its Basis.
 8. **Low · visual** (Auditor)
@@ -4347,7 +4347,7 @@ Kind: reader passage · handoff lines 44-60 · verdict **CONCERNS**
 
 ## Legal & covenants (CP-4)
 
-Handoff: `/private/tmp/claude-501/-Users-ericguei-Documents-RBOT-HTML--claude-worktrees-pause-63d136/c8719821-dd4f-4042-ad6b-2051ff7e7dda/scratchpad/preview-ws/runs/tdg-proof-snapshot-opus-002/requests/CP-4/aeddb90620d1f11de1d6c90e8ee119663ad970b6bcc0515e5c98b3850c3f6dd1/1.response.md`
+Handoff: `/private/tmp/claude-501/-Users-USER-Documents-RBOT-HTML--claude-worktrees-pause-63d136/c8719821-dd4f-4042-ad6b-2051ff7e7dda/scratchpad/preview-ws/runs/tdg-proof-snapshot-opus-002/requests/CP-4/aeddb90620d1f11de1d6c90e8ee119663ad970b6bcc0515e5c98b3850c3f6dd1/1.response.md`
 
 ### Sources
 
@@ -4633,7 +4633,7 @@ Kind: prose/table · handoff lines 91-104 · verdict **BLOCK**
    - Problem: 'Not stated' is not an impact on the output, and 'regardless of documents' contradicts the table's premise that attaching documents closes each gap. Both make the reader guess at what is actually unknown.
    - Fix: State the concrete effect, for example 'enforceability of the guarantees not assessed', and explain the refinancing row's scope in reader terms.
 5. **Medium · visual** (New reader, Auditor)
-   - Where: Gaps table, screenshot /private/tmp/claude-501/-Users-ericguei-Documents-RBOT-HTML--claude-worktrees-refactor-optimisation-sweep-01c49e/d3b58d68-0f70-4eca-af09-da4e7774dc7f/scratchpad/shots2/CP-4_s-91.png, approx y 1125-1845 (display px)
+   - Where: Gaps table, screenshot /private/tmp/claude-501/-Users-USER-Documents-RBOT-HTML--claude-worktrees-refactor-optimisation-sweep-01c49e/d3b58d68-0f70-4eca-af09-da4e7774dc7f/scratchpad/shots2/CP-4_s-91.png, approx y 1125-1845 (display px)
    - Problem: The narrow first column carries the repeated '[Insufficient Information]' tag in eight of nine rows. Each gap name wraps over three or four lines, which nearly doubles row height and turns a 9-row table into a dense block about 720 px tall.
    - Fix: Drop the repeated tag, or show it once as a chip or column header, so each gap name fits on one or two lines.
 6. **Low · narrative** (Auditor)
@@ -4707,7 +4707,7 @@ Kind: map · handoff lines 70-75 · verdict **CONCERNS**
 
 ## Security selection (CP-3)
 
-Handoff: `/private/tmp/claude-501/-Users-ericguei-Documents-RBOT-HTML--claude-worktrees-pause-63d136/c8719821-dd4f-4042-ad6b-2051ff7e7dda/scratchpad/preview-ws/runs/tdg-proof-snapshot-opus-002/requests/CP-3/ccef34b927f316eb26b4d56da3700d1779f0966239dafc5935b729acb8a120df/1.response.md`
+Handoff: `/private/tmp/claude-501/-Users-USER-Documents-RBOT-HTML--claude-worktrees-pause-63d136/c8719821-dd4f-4042-ad6b-2051ff7e7dda/scratchpad/preview-ws/runs/tdg-proof-snapshot-opus-002/requests/CP-3/ccef34b927f316eb26b4d56da3700d1779f0966239dafc5935b729acb8a120df/1.response.md`
 
 ### Analytical appendix — complete canonical registers (part 2 of 3: from 'T3B.1 Instrument source register')
 
@@ -5271,7 +5271,7 @@ Kind: prose/table · handoff lines 81-85 · verdict **CONCERNS**
 
 ## Committee decision (CP-6)
 
-Handoff: `/private/tmp/claude-501/-Users-ericguei-Documents-RBOT-HTML--claude-worktrees-pause-63d136/c8719821-dd4f-4042-ad6b-2051ff7e7dda/scratchpad/preview-ws/runs/tdg-proof-snapshot-opus-002/requests/CP-6/26e68bc473935c4728e0a27c372af1a4241998ffdbffc34443d8dc57715c2ae1/1.response.md`
+Handoff: `/private/tmp/claude-501/-Users-USER-Documents-RBOT-HTML--claude-worktrees-pause-63d136/c8719821-dd4f-4042-ad6b-2051ff7e7dda/scratchpad/preview-ws/runs/tdg-proof-snapshot-opus-002/requests/CP-6/26e68bc473935c4728e0a27c372af1a4241998ffdbffc34443d8dc57715c2ae1/1.response.md`
 
 ### Analytical appendix — complete canonical registers (part 1 of 2: from 'Source gate register')
 
@@ -5513,7 +5513,7 @@ Kind: register appendix · handoff lines 227-309 · verdict **BLOCK**
    - Problem: The tables use undefined debate-process labels (CIO, RV, Bull/Bear Sustained, Starter Position, Partially Rebutted) as outcomes. A committee member who has not seen the debate format cannot tell what each verdict means for the credit.
    - Fix: Spell out abbreviations and replace process verdicts with plain judgements (e.g. "bear case holds: repeat debt-funded payouts are likely").
 5. **Medium · visual** (Auditor)
-   - Where: Compliance cross-examination table, Source column, Bullet 2 row; crop /private/tmp/claude-501/-Users-ericguei-Documents-RBOT-HTML--claude-worktrees-refactor-optimisation-sweep-01c49e/d3b58d68-0f70-4eca-af09-da4e7774dc7f/scratchpad/tmp/CP-6-153-a.png (orig x 1000-1440, y 1540-2080)
+   - Where: Compliance cross-examination table, Source column, Bullet 2 row; crop /private/tmp/claude-501/-Users-USER-Documents-RBOT-HTML--claude-worktrees-refactor-optimisation-sweep-01c49e/d3b58d68-0f70-4eca-af09-da4e7774dc7f/scratchpad/tmp/CP-6-153-a.png (orig x 1000-1440, y 1540-2080)
    - Problem: The seven-column table makes the Source column so narrow that "calculation" runs past the table's right border, and the cells wrap to one or two words per line (Bullet 1 runs 11 lines).
    - Fix: Give the Source column a minimum width, or move sources into each row's Basis fold, so nothing overflows the card.
 6. **Low · narrative** (Saboteur)
@@ -5642,7 +5642,7 @@ Kind: reader passage · handoff lines 51-65 · verdict **CONCERNS**
 Kind: reader passage · handoff lines 66-70 · verdict **CONCERNS**
 
 - Narrative: Judgement comes first, and the section opens on the strongest contrary case as the standard requires. But it uses a different leverage basis from the one the module itself mandates and gives an upgrade trigger that doesn't match the Bottom line. It is also one 200-word paragraph that buries the actionable triggers.
-- Visual: This is a single prose block with no chart. The reading column is comfortable and the spacing is clean, but the Basis line is not visible on the page and thresholds are styled as register figures. (Crop saved at /private/tmp/claude-501/-Users-ericguei-Documents-RBOT-HTML--claude-worktrees-refactor-optimisation-sweep-01c49e/d3b58d68-0f70-4eca-af09-da4e7774dc7f/scratchpad/tmp/CP-6-144-a.png.) Not verified: whether the Basis opens on click (the inspector was not exercised), and whether 4.51x and 6.01x reconcile as net versus gross in the upstream handoffs (CP-1 was not read).
+- Visual: This is a single prose block with no chart. The reading column is comfortable and the spacing is clean, but the Basis line is not visible on the page and thresholds are styled as register figures. (Crop saved at /private/tmp/claude-501/-Users-USER-Documents-RBOT-HTML--claude-worktrees-refactor-optimisation-sweep-01c49e/d3b58d68-0f70-4eca-af09-da4e7774dc7f/scratchpad/tmp/CP-6-144-a.png.) Not verified: whether the Basis opens on click (the inspector was not exercised), and whether 4.51x and 6.01x reconcile as net versus gross in the upstream handoffs (CP-1 was not read).
 
 1. **High · narrative** (Saboteur, Auditor)
    - Where: line 68: "Reported net leverage fell from 4.84x to 4.51x in FY2024" ... "if commercial aftermarket sales turned negative while leverage was still above 6x."
@@ -5829,13 +5829,13 @@ Kind: prose/table · handoff lines 122-126 · verdict **CONCERNS**
    - Problem: The paragraph runs about 1,000 px wide, roughly 180–190 characters per line, as one unbroken nine-line block. That is far beyond a comfortable line length and gives the eye no entry points, unlike the tables directly below.
    - Fix: Cap prose width at about 75–90 characters per line, or break the block into the numbered items so the page shows where each challenge starts.
 6. **Low · visual** (Auditor)
-   - Where: Screenshot CP-6_s-122.png, crop /private/tmp/claude-501/-Users-ericguei-Documents-RBOT-HTML--claude-worktrees-refactor-optimisation-sweep-01c49e/d3b58d68-0f70-4eca-af09-da4e7774dc7f/scratchpad/tmp/CP-6-149-a.png: inline figures "7.25x" and "23.47%"
+   - Where: Screenshot CP-6_s-122.png, crop /private/tmp/claude-501/-Users-USER-Documents-RBOT-HTML--claude-worktrees-refactor-optimisation-sweep-01c49e/d3b58d68-0f70-4eca-af09-da4e7774dc7f/scratchpad/tmp/CP-6-149-a.png: inline figures "7.25x" and "23.47%"
    - Problem: Only two figures carry the Basis control (bold monospace with a faint dotted underline). The paragraph cites four sources (line 125), but the price, yield and hedge-date claims have no visible source cue. The dotted underline is low-contrast and is the only sign that a figure is clickable.
    - Fix: Give the Basis control a clearer affordance (a visible underline or icon with enough contrast) and make sure the paragraph's sources are reachable from the claims that are not figures, for example with a paragraph-end Basis button.
 
 ## Evidence validation (CP-5)
 
-Handoff: `/private/tmp/claude-501/-Users-ericguei-Documents-RBOT-HTML--claude-worktrees-pause-63d136/c8719821-dd4f-4042-ad6b-2051ff7e7dda/scratchpad/preview-ws/runs/tdg-proof-snapshot-opus-002/requests/CP-5/8e197024c22d08fa48bf7155dc2076068ea474657922d1a7ce3f3af18ba90607/1.response.md`
+Handoff: `/private/tmp/claude-501/-Users-USER-Documents-RBOT-HTML--claude-worktrees-pause-63d136/c8719821-dd4f-4042-ad6b-2051ff7e7dda/scratchpad/preview-ws/runs/tdg-proof-snapshot-opus-002/requests/CP-5/8e197024c22d08fa48bf7155dc2076068ea474657922d1a7ce3f3af18ba90607/1.response.md`
 
 ### Front matter + Request + Next module
 
@@ -5857,7 +5857,7 @@ Kind: run plumbing · handoff lines 1-13, 14-17, 374-377 · verdict **BLOCK**
    - Problem: This whole section is pipeline routing (which module runs next, a conditional prior deliverable, reruns) shown to a credit committee reader. Once module codes are replaced by page names, it reads as if pages run and as if the 'Changes since the last run' page is conditional.
    - Fix: Don't show Next module on the reader page; move any reader-relevant parts (re-review once executed debt documents and market levels arrive) into Limitations or what-would-change-the-view.
 4. **High · visual** (Auditor, New reader)
-   - Where: Front matter, CP-5_s-1.png top of main column (crop /private/tmp/claude-501/-Users-ericguei-Documents-RBOT-HTML--claude-worktrees-refactor-optimisation-sweep-01c49e/d3b58d68-0f70-4eca-af09-da4e7774dc7f/scratchpad/tmp/CP-5-173-a.png): "issuer_id: tdg module_id: Evidence validation ... filename: tdg_CP-5_20240930.md qa_status: Restricted confidence_score: 0" (handoff lines 1-12)
+   - Where: Front matter, CP-5_s-1.png top of main column (crop /private/tmp/claude-501/-Users-USER-Documents-RBOT-HTML--claude-worktrees-refactor-optimisation-sweep-01c49e/d3b58d68-0f70-4eca-af09-da4e7774dc7f/scratchpad/tmp/CP-5-173-a.png): "issuer_id: tdg module_id: Evidence validation ... filename: tdg_CP-5_20240930.md qa_status: Restricted confidence_score: 0" (handoff lines 1-12)
    - Problem: The YAML front matter is printed to the reader as one run-on line of snake_case keys with no separators, and it shows a module code on screen ("tdg_CP-5_20240930.md") and pipeline field names (module_id, qa_status, traceability_scope). Both break the house rules and the line can't be read.
    - Fix: Keep front matter off the page, or show only the reader-relevant status fields as labelled chips (clearance, confidence band, scope), with no filename or key names.
 5. **Medium · narrative** (Saboteur)
@@ -5997,7 +5997,7 @@ Kind: prose/table · handoff lines 18-40 · verdict **BLOCK**
    - Problem: Pipeline words ('handoff', 'pinned', 'absorbed into this run') reach the reader in a column header and the closing note. Because the renderer swapped CP-5A for the page's own name, the note now says the page the reader is on 'has no separate handoff', which tells a committee member nothing.
    - Fix: Head the table 'Earlier analyses relied on', say 'Files supplied but not used:' and drop the absorbed-module sentence from the reader view.
 2. **High · visual** (New reader, Auditor (promoted))
-   - Where: Both Sources tables, sha256 column; CP-5_s-18.png crop x 340-1400, y 220-1160 (/private/tmp/claude-501/-Users-ericguei-Documents-RBOT-HTML--claude-worktrees-refactor-optimisation-sweep-01c49e/d3b58d68-0f70-4eca-af09-da4e7774dc7f/scratchpad/tmp/CP-5-157-a.png)
+   - Where: Both Sources tables, sha256 column; CP-5_s-18.png crop x 340-1400, y 220-1160 (/private/tmp/claude-501/-Users-USER-Documents-RBOT-HTML--claude-worktrees-refactor-optimisation-sweep-01c49e/d3b58d68-0f70-4eca-af09-da4e7774dc7f/scratchpad/tmp/CP-5-157-a.png)
    - Problem: The widest column on the page holds 64-character hashes that a portfolio manager cannot use. It squeezes the useful 'Use in this module' column into a tall, narrow block and pushes the filing name into four broken lines.
    - Fix: Remove the hashes from the reader view, or fold them into a provenance tooltip or the Evidence page, and give the width to the filing description and page list.
 3. **Medium · narrative** (New reader)
@@ -6439,7 +6439,7 @@ Kind: prose/table · handoff lines 337-362 · verdict **BLOCK**
 
 ## Changes since the last run (CP-8)
 
-Handoff: `/private/tmp/claude-501/-Users-ericguei-Documents-RBOT-HTML--claude-worktrees-pause-63d136/c8719821-dd4f-4042-ad6b-2051ff7e7dda/scratchpad/preview-ws/runs/tdg-proof-snapshot-opus-002/requests/CP-8/ad48310b6570654572ef68b17d8e4432de761c74b3124d457354b995caf61c65/1.response.md`
+Handoff: `/private/tmp/claude-501/-Users-USER-Documents-RBOT-HTML--claude-worktrees-pause-63d136/c8719821-dd4f-4042-ad6b-2051ff7e7dda/scratchpad/preview-ws/runs/tdg-proof-snapshot-opus-002/requests/CP-8/ad48310b6570654572ef68b17d8e4432de761c74b3124d457354b995caf61c65/1.response.md`
 
 ### Limitations ledger
 
@@ -6501,7 +6501,7 @@ Kind: prose/table · handoff lines 5-28 · verdict **BLOCK**
    - Problem: This scope limit decides how far the comparison can be relied on: it says that only one of the earlier run's sections was actually read. It is buried as a trailing sentence under a hash table rather than stated in Limitations.
    - Fix: Move the statement that only the earlier run's financial foundation was read into the Limitations passage, in plain wording, and leave the Sources section as a list of sources.
 5. **Medium · visual** (New reader, Auditor)
-   - Where: Sources tables, shot CP-8_s-5.png, crop /private/tmp/claude-501/-Users-ericguei-Documents-RBOT-HTML--claude-worktrees-refactor-optimisation-sweep-01c49e/d3b58d68-0f70-4eca-af09-da4e7774dc7f/scratchpad/tmp/CP-8-174-a.png (y 220-1040)
+   - Where: Sources tables, shot CP-8_s-5.png, crop /private/tmp/claude-501/-Users-USER-Documents-RBOT-HTML--claude-worktrees-refactor-optimisation-sweep-01c49e/d3b58d68-0f70-4eca-af09-da4e7774dc7f/scratchpad/tmp/CP-8-174-a.png (y 220-1040)
    - Problem: The 64-character sha256 strings take about 40-45% of each table's width, set in the proportional body font. In the first table this squeezes "Use in this module" into three-line wraps. Hashes carry no meaning for a portfolio manager and dominate the section visually.
    - Fix: Truncate the hash, or hide it behind a tooltip or monospace detail chip, so the source name and its use carry the table.
 6. **Medium · visual** (Auditor)

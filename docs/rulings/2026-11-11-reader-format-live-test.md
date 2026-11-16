@@ -13,7 +13,7 @@ Scope: one CP-OS launch of the `credit_snapshot` pathway preset on OpenAI gpt-6.
 effort, capped at USD 15 for the run folder, over the retained historical TDG FY2024 public files
 (`~/Documents/Final-workflow-PY/data/public-corpus/v1/TDG`, read only) with the context
 `runs/tdg-context-2024-09-30.json` (sha256 f7b95e1f…, unchanged). Run directory:
-`/private/tmp/claude-501/-Users-ericguei-Documents-RBOT-HTML--claude-worktrees-pause-63d136/c8719821-dd4f-4042-ad6b-2051ff7e7dda/scratchpad/preview-ws/runs/tdg-reader-format-001`,
+`/private/tmp/claude-501/-Users-USER-Documents-RBOT-HTML--claude-worktrees-pause-63d136/c8719821-dd4f-4042-ad6b-2051ff7e7dda/scratchpad/preview-ws/runs/tdg-reader-format-001`,
 outside this repository and every retained run directory.
 
 Purpose: the first real run in the reader format of the 2026-11-11 ruling — reader passages, Basis

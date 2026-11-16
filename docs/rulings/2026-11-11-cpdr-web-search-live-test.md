@@ -13,7 +13,7 @@ the retained historical TDG FY2024 public files
 (`~/Documents/Final-workflow-PY/data/public-corpus/v1/TDG`, read only) with the context
 `runs/tdg-context-2024-09-30.json` (peer source `cp_dr_public`). CP-DR may use OpenAI's hosted web
 search (USD 0.01 a search; `cases/pricing/openai-web-search.json`). Cap USD 10 for the run folder.
-Run directory: `/private/tmp/claude-501/-Users-ericguei-Documents-RBOT-HTML--claude-worktrees-pause-63d136/c8719821-dd4f-4042-ad6b-2051ff7e7dda/scratchpad/preview-ws/runs/tdg-cpdr-web-001`, outside this repository and every retained run
+Run directory: `/private/tmp/claude-501/-Users-USER-Documents-RBOT-HTML--claude-worktrees-pause-63d136/c8719821-dd4f-4042-ad6b-2051ff7e7dda/scratchpad/preview-ws/runs/tdg-cpdr-web-001`, outside this repository and every retained run
 directory. This is the test ruling 2026-11-10-cpdr-web-search-test.md described, which was not run.
 
 Purpose: show, for this dated case, whether OpenAI accepts web search on these requests, whether

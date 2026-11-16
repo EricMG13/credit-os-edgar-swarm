@@ -50,4 +50,22 @@ describe("connected report Changes", () => {
     expect(screen.getByText("The comparison could not be read.")).toBeInTheDocument();
     expect(screen.queryByText("No earlier run to compare.")).toBeNull();
   });
+
+  it("draws an h2 and skips no heading level, charts included", () => {
+    const { container } = renderChanges({
+      pack: {
+        maturity_profile: {
+          unit: "US$m",
+          rows: [{ period: "FY2026", prior: "10", current: "100" }],
+        },
+      },
+    });
+    const levels = Array.from(container.querySelectorAll("h1,h2,h3,h4,h5,h6"), (node) =>
+      Number(node.tagName.slice(1)),
+    );
+    expect(levels).toContain(2);
+    levels.forEach((level, at) => {
+      expect(level).toBeLessThanOrEqual((levels[at - 1] ?? 1) + 1);
+    });
+  });
 });

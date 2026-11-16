@@ -1,4 +1,4 @@
-import { useCallback, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useSyncExternalStore } from "react";
 import { Badge } from "@/components/base/badges/badges";
 import { Button } from "@/components/base/buttons/button";
 import { StatusBadge } from "@/components/status/StatusBadge";
@@ -6,6 +6,7 @@ import { RunTabLink } from "@/pages/library/parts/RunFrame";
 import { SourcesSwitch, useSourcesOn } from "@/pages/library/parts/SourcesSwitch";
 import { PageHeader } from "../../shell/PageHeader";
 import { TextLink } from "../run/TextLink";
+import { Callout } from "@/components/alert/Alert";
 import { Breadcrumb, card, ErrorNotice, heading } from "./layout";
 import {
   comparisonForRun,
@@ -65,7 +66,7 @@ function ReportNav({ tab, modules }: { tab: Tab; modules: number }) {
           key={key}
           href={tabHref(key)}
           label={title}
-          current={tab === key}
+          current={tab === key || (tab === "calendar" && key === "overview")}
           count={key === "modules" ? String(modules) : undefined}
           accessibleLabel={key === "modules" ? `Modules ${String(modules)}` : undefined}
         />
@@ -376,9 +377,6 @@ function ReaderHeader({
       actions={
         <div className="flex flex-wrap items-center gap-2">
           <SourcesSwitch isSelected={sources} onChange={setSources} />
-          <Button color="secondary" href="#history">
-            Report history
-          </Button>
           <Button color="secondary" href={`/run/${encodeURIComponent(id)}`}>
             Run activity
           </Button>
@@ -401,9 +399,9 @@ function ReaderStatus({
     <>
       {error && <ErrorNotice>{error}</ErrorNotice>}
       {value?.preview?.reason && (
-        <p role="note" className={`${card} mt-4`}>
-          {value.preview.reason}
-        </p>
+        <div className="mt-4">
+          <Callout title="Test preview">{value.preview.reason}</Callout>
+        </div>
       )}
       {value === undefined && !error && (
         <p role="status" className="mt-6 text-text-secondary">
@@ -428,6 +426,15 @@ export function ReportReader({ id, mode }: { id: string; mode: Mode }) {
   const found = value && Object.entries(value.workspace.runs).find(([, run]) => run.folder === id);
   const catalogue = value?.catalogue.real.find((entry) => entry.id === id);
   const run = found ? found[1] : null;
+  const issuer = run ? catalogue?.name || run.issuerHeading || run.issuer : null;
+  const page = tab === "calendar" ? "Issuer calendar" : tabs.find(([name]) => name === tab)?.[1];
+  useEffect(() => {
+    if (!issuer || !page) return;
+    document.title = `${page} — ${issuer} — Credit OS`;
+    return () => {
+      document.title = "Credit OS";
+    };
+  }, [issuer, page]);
   return (
     <div className="mx-auto w-full max-w-[96rem]" data-sources={sources ? "on" : "off"}>
       <Breadcrumb>Report</Breadcrumb>

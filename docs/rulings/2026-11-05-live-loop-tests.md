@@ -15,7 +15,7 @@ This campaign starts with a USD10 shared ceiling. Unknown charges stop execution
 Never mutate predecessor repositories or historical run directories.
 
 The user also explicitly answered "Allow the previously used credential file for
-this campaign" to the question identifying /Users/ericguei/Documents/OP Router.rtf.
+this campaign" to the question identifying /Users/USER/Documents/OP Router.rtf.
 For this campaign only, the launch process may extract its OpenAI key into memory
 and pass an environment mapping. Never print the file/key or write a credential
 copy. The runtime remains environment-only; no credential-file reader is added.

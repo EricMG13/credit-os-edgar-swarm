@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import path from "node:path";
-import { assignSeries, SERIES } from "./series";
+import { assignSeries, SERIES, spread } from "./series";
 
 const designSystem = readFileSync(
   path.resolve(import.meta.dirname, "..", "..", "..", "..", "docs", "design", "design-system.md"),
@@ -63,5 +63,35 @@ describe("assignSeries", () => {
     expect(styles.get("g")).toEqual(SERIES[6]);
     expect(styles.get("h")).toEqual(SERIES[6]);
     expect(styles.size).toBe(8);
+  });
+});
+
+describe("spread", () => {
+  it("pushes labels down to the minimum gap and keeps input order", () => {
+    expect(spread([100, 104, 150], 14)).toEqual([100, 114, 150]);
+    expect(spread([100, 100, 100], 14)).toEqual([100, 114, 128]);
+    expect(spread([10, 50, 90], 14)).toEqual([10, 50, 90]);
+    expect(spread([150, 100, 104], 14)).toEqual([150, 100, 114]);
+    expect(spread([], 14)).toEqual([]);
+  });
+
+  it("separates 500 seeded arrays by the gap without reordering them", () => {
+    let seed = 7;
+    const next = () => {
+      seed = (seed * 1664525 + 1013904223) % 4294967296;
+      return seed / 4294967296;
+    };
+    const rank = (ys: number[]) =>
+      ys.map((_, i) => i).sort((a, b) => (ys[a] ?? 0) - (ys[b] ?? 0) || a - b);
+    for (let run = 0; run < 500; run += 1) {
+      const ys = Array.from({ length: 1 + Math.floor(next() * 8) }, () => Math.floor(next() * 201));
+      const out = spread(ys, 14);
+      for (let a = 0; a < out.length; a += 1) {
+        for (let b = a + 1; b < out.length; b += 1) {
+          expect(Math.abs((out[a] ?? 0) - (out[b] ?? 0))).toBeGreaterThanOrEqual(14);
+        }
+      }
+      expect(rank(out)).toEqual(rank(ys));
+    }
   });
 });

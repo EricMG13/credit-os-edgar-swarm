@@ -6,8 +6,14 @@ function Row({ node }: { node: TreeNode }) {
   return (
     <span className="flex min-w-0 flex-col text-small font-semibold text-text-primary">
       <span>
-        <span className="font-medium text-text-tertiary">{node.label}</span>{" "}
-        {node.value === null ? <Missing /> : node.value}
+        {node.value === null ? (
+          <span className="gap-hatch rounded-ds-xs px-1 font-medium text-gap-text">
+            {node.label}
+          </span>
+        ) : (
+          <span className="font-medium text-text-tertiary">{node.label}</span>
+        )}{" "}
+        {node.value === null ? <Missing /> : <span className="wrap-anywhere">{node.value}</span>}
       </span>
       {node.note === null ? null : (
         <span className="font-mono text-mono font-normal break-words text-text-tertiary">

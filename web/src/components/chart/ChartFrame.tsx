@@ -32,7 +32,10 @@ export function ChartFrame({
   const titleId = useId();
   const subtitleId = useId();
   const heading = (
-    <Heading id={titleId} className="min-w-48 flex-1 font-display text-h4 text-text-primary">
+    <Heading
+      id={titleId}
+      className="min-w-48 flex-1 font-display text-h4 text-text-primary first-letter:uppercase"
+    >
       {title}
     </Heading>
   );

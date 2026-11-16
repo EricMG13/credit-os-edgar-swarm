@@ -6,7 +6,7 @@ first by mistake; the latest run's report is `latest-run-tdg-proof-snapshot-opus
 file, which also states the method, severity scale and limits. Same method here: 126 sections, one
 read-only reviewer each. 877 findings: 227 High, 446 Medium, 204 Low; 100 sections BLOCK, 26 CONCERNS.
 The repeating patterns are the same as in the latest run's report. Run folder (read-only):
-`/private/tmp/claude-501/-Users-ericguei-Documents-RBOT-HTML--claude-worktrees-pause-63d136/c8719821-dd4f-4042-ad6b-2051ff7e7dda/scratchpad/preview-ws/runs/tdg-reader-format-001`.
+`/private/tmp/claude-501/-Users-USER-Documents-RBOT-HTML--claude-worktrees-pause-63d136/c8719821-dd4f-4042-ad6b-2051ff7e7dda/scratchpad/preview-ws/runs/tdg-reader-format-001`.
 
 ## Counts by module
 
@@ -25,7 +25,7 @@ By subject: narrative High: 185; narrative Medium: 313; narrative Low: 74; visua
 
 ## Source readiness (CP-0)
 
-Handoff: `/private/tmp/claude-501/-Users-ericguei-Documents-RBOT-HTML--claude-worktrees-pause-63d136/c8719821-dd4f-4042-ad6b-2051ff7e7dda/scratchpad/preview-ws/runs/tdg-reader-format-001/requests/CP-0/331aa2e77a01ca0d054d1d43329f57c7c94fa9aa0557a6f7b8b6956ca306dc27/1.response.md`
+Handoff: `/private/tmp/claude-501/-Users-USER-Documents-RBOT-HTML--claude-worktrees-pause-63d136/c8719821-dd4f-4042-ad6b-2051ff7e7dda/scratchpad/preview-ws/runs/tdg-reader-format-001/requests/CP-0/331aa2e77a01ca0d054d1d43329f57c7c94fa9aa0557a6f7b8b6956ca306dc27/1.response.md`
 
 ### Selected live-consumer readiness and command sheet
 
@@ -405,7 +405,7 @@ Kind: timeline · handoff lines 81-88 · verdict **CONCERNS**
 
 ## Financial foundation (CP-1)
 
-Handoff: `/private/tmp/claude-501/-Users-ericguei-Documents-RBOT-HTML--claude-worktrees-pause-63d136/c8719821-dd4f-4042-ad6b-2051ff7e7dda/scratchpad/preview-ws/runs/tdg-reader-format-001/requests/CP-1/d9544ab4098afbb3399ed865fe1399bb8d71f5a1af45a0fa77e4f69ebc11779a/1.response.md`
+Handoff: `/private/tmp/claude-501/-Users-USER-Documents-RBOT-HTML--claude-worktrees-pause-63d136/c8719821-dd4f-4042-ad6b-2051ff7e7dda/scratchpad/preview-ws/runs/tdg-reader-format-001/requests/CP-1/d9544ab4098afbb3399ed865fe1399bb8d71f5a1af45a0fa77e4f69ebc11779a/1.response.md`
 
 ### Reported balance sheet and funding review
 
@@ -539,7 +539,7 @@ Kind: prose/table · handoff lines 4-17 · verdict **BLOCK**
    - Problem: A row named only 'context' with a hash and 'Dated user settings' appears in the source list. It is meaningless to the reader, who could take it for an undisclosed input that affected the analysis.
    - Fix: Remove run settings from the reader's source list, or name what they are in words (e.g. 'Analysis date and scope chosen by the analyst').
 5. **Medium · visual** (Auditor, New reader)
-   - Where: Sources table, /private/tmp/claude-501/-Users-ericguei-Documents-RBOT-HTML--claude-worktrees-refactor-optimisation-sweep-01c49e/d3b58d68-0f70-4eca-af09-da4e7774dc7f/scratchpad/shots/CP-1_s-4.png, region x 355-1390, y 255-1005 (original px)
+   - Where: Sources table, /private/tmp/claude-501/-Users-USER-Documents-RBOT-HTML--claude-worktrees-refactor-optimisation-sweep-01c49e/d3b58d68-0f70-4eca-af09-da4e7774dc7f/scratchpad/shots/CP-1_s-4.png, region x 355-1390, y 255-1005 (original px)
    - Problem: The sha256 column takes about 40% of the table width with unbroken 64-character strings. This squeezes the only meaningful column, 'Use and authority', into a narrow strip that wraps to 4-5 lines per row. File names also break mid-token at hyphens, which makes the seven-row table about 750 px tall for little reader content.
    - Fix: Remove or collapse the hash column so that the plain-language name and its use get most of the width, with one or two lines per row.
 6. **Low · visual** (Auditor)
@@ -1137,7 +1137,7 @@ Kind: run plumbing · handoff lines 1-3, 303-310 · verdict **BLOCK**
 
 ## Business & governance (CP-1A)
 
-Handoff: `/private/tmp/claude-501/-Users-ericguei-Documents-RBOT-HTML--claude-worktrees-pause-63d136/c8719821-dd4f-4042-ad6b-2051ff7e7dda/scratchpad/preview-ws/runs/tdg-reader-format-001/requests/CP-1A/3bde2f75df63a2643aec97cdc158f5e5894edcf0afa689cf6421808c16554bfe/1.response.md`
+Handoff: `/private/tmp/claude-501/-Users-USER-Documents-RBOT-HTML--claude-worktrees-pause-63d136/c8719821-dd4f-4042-ad6b-2051ff7e7dda/scratchpad/preview-ws/runs/tdg-reader-format-001/requests/CP-1A/3bde2f75df63a2643aec97cdc158f5e5894edcf0afa689cf6421808c16554bfe/1.response.md`
 
 ### Analytical appendix — complete canonical registers
 
@@ -1191,7 +1191,7 @@ Kind: map · handoff lines 97-104 · verdict **BLOCK**
    - Problem: The filing says the notes are guaranteed by 'TD Group, TransDigm UK and all of TransDigm Inc.'s Domestic Restricted Subsidiaries'. The map leaves out the subsidiary guarantors, who hold the operating assets, and omits the filing's statement that 'TD Group has no significant operations or assets separate from its investment in TransDigm Inc.'. A committee could misread how far the guarantees reach and how much the parent's guarantee is worth.
    - Fix: Add a node and edge for the Domestic Restricted Subsidiaries as guarantors, and state that the parent is a holding company with no separate assets, so the reader can judge guarantee coverage.
 2. **High · visual** (Saboteur, Auditor)
-   - Where: Maps panel, 'Ownership and control' drawing, CP-1A_maps.png crop (340,250)-(1400,440) at full resolution; also /private/tmp/claude-501/-Users-ericguei-Documents-RBOT-HTML--claude-worktrees-refactor-optimisation-sweep-01c49e/d3b58d68-0f70-4eca-af09-da4e7774dc7f/scratchpad/tmp/CP-1A-040-a.png
+   - Where: Maps panel, 'Ownership and control' drawing, CP-1A_maps.png crop (340,250)-(1400,440) at full resolution; also /private/tmp/claude-501/-Users-USER-Documents-RBOT-HTML--claude-worktrees-refactor-optimisation-sweep-01c49e/d3b58d68-0f70-4eca-af09-da4e7774dc7f/scratchpad/tmp/CP-1A-040-a.png
    - Problem: The 100% ownership edge from TransDigm Group Incorporated to TransDigm Inc. is drawn on exactly the same path as the parent's guarantee edge, so only one arrow labelled 'Guarantee' shows. The 'Ownership' label is in the DOM but hidden underneath it. The drawing therefore shows the parent only as a guarantor and leaves out the ownership link, which is the point of an ownership-and-control map.
    - Fix: Draw parallel or offset edges with separate, legible labels, and use a different line style for ownership and for guarantee, so both relationships between the parent and TransDigm Inc. show.
 3. **Medium · narrative** (New reader, Auditor)
@@ -1223,7 +1223,7 @@ Kind: map · handoff lines 105-115 · verdict **BLOCK**
 - Visual: The map drawing is visible but hard to read: the \"Analyst Interpretation\" edge labels are cut off, node text breaks mid-word, nothing explains the three line styles, and the edge table is repeated in two typographic styles.
 
 1. **High · visual** (Auditor, New reader)
-   - Where: Operating model to credit map, CP-1A_maps.png region x340-1400 y1030-1300 (crop /private/tmp/claude-501/-Users-ericguei-Documents-RBOT-HTML--claude-worktrees-refactor-optimisation-sweep-01c49e/d3b58d68-0f70-4eca-af09-da4e7774dc7f/scratchpad/tmp/CP-1A-041-a.png)
+   - Where: Operating model to credit map, CP-1A_maps.png region x340-1400 y1030-1300 (crop /private/tmp/claude-501/-Users-USER-Documents-RBOT-HTML--claude-worktrees-refactor-optimisation-sweep-01c49e/d3b58d68-0f70-4eca-af09-da4e7774dc7f/scratchpad/tmp/CP-1A-041-a.png)
    - Problem: All three second-column edge labels show only "alyst_Interpretati". The DOM text is "Analyst Interpretation", but it is wider than the gap between nodes, so both ends are cut off and the edge line through the text makes the space look like an underscore. The first-column labels "Management Language" and "Documentary Fact" run into the node borders. Two personas caught this, so it is promoted to High.
    - Fix: Widen the gap between columns or wrap and shorten the edge labels so each one fits fully between its nodes, on a background that hides the edge line behind the text.
 2. **High · visual** (Auditor, New reader)
@@ -1547,7 +1547,7 @@ Kind: reader passage · handoff lines 37-44 · verdict **BLOCK**
    - Problem: "Price-volume bridge", "mix reversal" and "perimeter" are analyst shorthand. A committee member has to translate them before seeing the credit consequence: no one can size how far earnings fall if aftermarket sales shrink.
    - Fix: State the consequence in plain words first, e.g. "we cannot size how much margin is lost if the aftermarket share falls", then the missing data.
 5. **Low · visual** (Auditor)
-   - Where: Screenshot CP-1A_limitations.png, crop (330,210)-(1440,560) saved as /private/tmp/claude-501/-Users-ericguei-Documents-RBOT-HTML--claude-worktrees-refactor-optimisation-sweep-01c49e/d3b58d68-0f70-4eca-af09-da4e7774dc7f/scratchpad/tmp/CP-1A-035-a.png: the last bullet's "Basis" line and the "Timeline" heading
+   - Where: Screenshot CP-1A_limitations.png, crop (330,210)-(1440,560) saved as /private/tmp/claude-501/-Users-USER-Documents-RBOT-HTML--claude-worktrees-refactor-optimisation-sweep-01c49e/d3b58d68-0f70-4eca-af09-da4e7774dc7f/scratchpad/tmp/CP-1A-035-a.png: the last bullet's "Basis" line and the "Timeline" heading
    - Problem: The third bullet ends about 10 px above the "Timeline" heading. There is no space or rule between them, so the end of the prose and the start of the chart panel run together, and the heading looks like part of the list.
    - Fix: Put the usual space between sections (or a rule) between the end of the Limitations list and the Timeline panel.
 6. **Low · visual** (Auditor, New reader)
@@ -1727,7 +1727,7 @@ Kind: prose/table · handoff lines 116-126 · verdict **CONCERNS**
    - Problem: References use internal pipeline names: a .jsonl extraction filename and the codes C1 to C4. The codes are only defined in the appendix Calculations register, so the reader needs another part of the page to understand them. The same raw filename is repeated in every Source cell (lines 123 to 125).
    - Fix: Cite the document as the reader knows it (for example 'TransDigm FY2024 10-K, pp. 55–57') and either name each calculation in plain words or link it to its register row.
 5. **Medium · visual** (New reader, Auditor)
-   - Where: Cash generation table, /private/tmp/claude-501/-Users-ericguei-Documents-RBOT-HTML--claude-worktrees-refactor-optimisation-sweep-01c49e/d3b58d68-0f70-4eca-af09-da4e7774dc7f/scratchpad/shots/CP-1A_s-116.png, region x 300-1160, y 250-530 (displayed scale)
+   - Where: Cash generation table, /private/tmp/claude-501/-Users-USER-Documents-RBOT-HTML--claude-worktrees-refactor-optimisation-sweep-01c49e/d3b58d68-0f70-4eca-af09-da4e7774dc7f/scratchpad/shots/CP-1A_s-116.png, region x 300-1160, y 250-530 (displayed scale)
    - Problem: The Source column is the widest column and wraps the raw .jsonl filename over four lines in every row, while the figure columns are squeezed: 'Increase USD 670 million' and 'USD -4,348 million' each wrap to three lines. Every Measure cell also carries a 'Basis' chip on top of the Source column, which duplicates it. The numbers the reader came for get the least room.
    - Fix: Shorten the source labels so the Source column narrows, give the figure columns room to stay on one line with right-aligned numbers, and drop either the per-row Basis chip or the Source column.
 6. **Low · narrative** (Saboteur)
@@ -1741,7 +1741,7 @@ Kind: prose/table · handoff lines 116-126 · verdict **CONCERNS**
 
 ## Fundamental credit (CP-2)
 
-Handoff: `/private/tmp/claude-501/-Users-ericguei-Documents-RBOT-HTML--claude-worktrees-pause-63d136/c8719821-dd4f-4042-ad6b-2051ff7e7dda/scratchpad/preview-ws/runs/tdg-reader-format-001/requests/CP-2/d9958cba20ea0c8cbd2dc72a05fbb21a83897e27cc9f59f187518cf2b9dff809/1.response.md`
+Handoff: `/private/tmp/claude-501/-Users-USER-Documents-RBOT-HTML--claude-worktrees-pause-63d136/c8719821-dd4f-4042-ad6b-2051ff7e7dda/scratchpad/preview-ws/runs/tdg-reader-format-001/requests/CP-2/d9958cba20ea0c8cbd2dc72a05fbb21a83897e27cc9f59f187518cf2b9dff809/1.response.md`
 
 ### Carried financial observations and definition controls
 
@@ -1931,7 +1931,7 @@ Kind: prose/table · handoff lines 65-79 · verdict **BLOCK**
    - Problem: The reader is pointed to internal register and calculation codes (C09, C2-05) that this page never defines. These are the kind of register codes the standard counts as pipeline vocabulary, so the Source column cannot be followed without opening another page.
    - Fix: In the Source column, name the source in reader terms (e.g. "FY2024 10-K cash-flow statement; analyst calculation") and keep the codes only in a link or tooltip.
 7. **Medium · visual** (Auditor, New reader)
-   - Where: Key credit metrics table, /private/tmp/claude-501/-Users-ericguei-Documents-RBOT-HTML--claude-worktrees-refactor-optimisation-sweep-01c49e/d3b58d68-0f70-4eca-af09-da4e7774dc7f/scratchpad/tmp/CP-2-055-a.png (crop 340,220-1400,920 of CP-2_s-65.png)
+   - Where: Key credit metrics table, /private/tmp/claude-501/-Users-USER-Documents-RBOT-HTML--claude-worktrees-refactor-optimisation-sweep-01c49e/d3b58d68-0f70-4eca-af09-da4e7774dc7f/scratchpad/tmp/CP-2-055-a.png (crop 340,220-1400,920 of CP-2_s-65.png)
    - Problem: Numeric columns are left-aligned and carry prefixes ("USD", "Approximately", "Illustrative", "Reported"), so the figures do not line up and cannot be compared down a column. Text in the Change and Source columns wraps to three lines, which makes every row tall and the seven metrics slow to scan.
    - Fix: Right-align the numbers, put units and the approximate/illustrative marker in the header or a footnote, and narrow the Source column so that each metric fits on one or two lines.
 8. **Low · visual** (Saboteur)
@@ -2191,7 +2191,7 @@ Kind: map · handoff lines 50-64 · verdict **BLOCK**
 - Visual: The diagram is visible and not folded, but it is broken: labels split mid-word, edge labels are clipped and overlap the lines, and edges show the evidence type instead of the relationship. The edge table is also rendered twice on the page in two different typographic styles.
 
 1. **High · visual** (Auditor, New reader)
-   - Where: Credit-risk transmission diagram, CP-2_maps.png, region x340-1400 y260-660 (crop at /private/tmp/claude-501/-Users-ericguei-Documents-RBOT-HTML--claude-worktrees-refactor-optimisation-sweep-01c49e/d3b58d68-0f70-4eca-af09-da4e7774dc7f/scratchpad/tmp/CP-2-054-a.png)
+   - Where: Credit-risk transmission diagram, CP-2_maps.png, region x340-1400 y260-660 (crop at /private/tmp/claude-501/-Users-USER-Documents-RBOT-HTML--claude-worktrees-refactor-optimisation-sweep-01c49e/d3b58d68-0f70-4eca-af09-da4e7774dc7f/scratchpad/tmp/CP-2-054-a.png)
    - Problem: Node labels break mid-word ("Installed aircraft com / ponents", "Debt-service resilienc / e", "Lower debt-capacity co / nfidence", "Denominator sensitivit / y"). Edge labels are clipped at both ends ("alyst Interpretati") and the two "Analyst Interpretation" labels on the converging edges overlap the curves and arrowheads. The drawing reads as broken.
    - Fix: Wrap node text at word boundaries or widen the nodes, and give edge labels enough room (or a legend keyed by line style) so that no label is clipped or crosses a line.
 2. **Medium · narrative** (Saboteur, Auditor)
@@ -2261,7 +2261,7 @@ Kind: prose/table · handoff lines 120-133 · verdict **CONCERNS**
 
 ## Legal & covenants (CP-4)
 
-Handoff: `/private/tmp/claude-501/-Users-ericguei-Documents-RBOT-HTML--claude-worktrees-pause-63d136/c8719821-dd4f-4042-ad6b-2051ff7e7dda/scratchpad/preview-ws/runs/tdg-reader-format-001/requests/CP-4/38bb6ccc9eb1f488ccd73936c3c5d7c68c3750a59e28b790d986365f2df75f08/1.response.md`
+Handoff: `/private/tmp/claude-501/-Users-USER-Documents-RBOT-HTML--claude-worktrees-pause-63d136/c8719821-dd4f-4042-ad6b-2051ff7e7dda/scratchpad/preview-ws/runs/tdg-reader-format-001/requests/CP-4/38bb6ccc9eb1f488ccd73936c3c5d7c68c3750a59e28b790d986365f2df75f08/1.response.md`
 
 ### Sources
 
@@ -2531,7 +2531,7 @@ Kind: prose/table · handoff lines 108-118 · verdict **BLOCK**
    - Problem: Read quickly, "even after document retrieval" suggests headroom stays unknowable even with the documents. The table also never ranks the gaps, so the reader cannot see that the missing executed documents drive the Not assessable status and the other rows follow from it.
    - Fix: Start with a one-line judgement that the missing executed documents are the single gap that leaves covenant headroom unassessable, and say plainly that headroom also needs the compliance certificates.
 6. **Medium · visual** (New reader, Auditor)
-   - Where: Gaps table, /private/tmp/claude-501/-Users-ericguei-Documents-RBOT-HTML--claude-worktrees-refactor-optimisation-sweep-01c49e/d3b58d68-0f70-4eca-af09-da4e7774dc7f/scratchpad/shots/CP-4_s-108.png region y~1400-1830 (crop /private/tmp/claude-501/-Users-ericguei-Documents-RBOT-HTML--claude-worktrees-refactor-optimisation-sweep-01c49e/d3b58d68-0f70-4eca-af09-da4e7774dc7f/scratchpad/tmp/CP-4-072-a.png)
+   - Where: Gaps table, /private/tmp/claude-501/-Users-USER-Documents-RBOT-HTML--claude-worktrees-refactor-optimisation-sweep-01c49e/d3b58d68-0f70-4eca-af09-da4e7774dc7f/scratchpad/shots/CP-4_s-108.png region y~1400-1830 (crop /private/tmp/claude-501/-Users-USER-Documents-RBOT-HTML--claude-worktrees-refactor-optimisation-sweep-01c49e/d3b58d68-0f70-4eca-af09-da4e7774dc7f/scratchpad/tmp/CP-4-072-a.png)
    - Problem: The five dense text columns wrap most cells to four or six lines, so six rows fill about 650 px of wall-of-text. The Source filename breaks mid-token across four lines ("TDG_2024-09-30_10- / K_0001260221-24- / 000083_tdg- / 20240930.htm.jsonl").
    - Fix: Cut the cells to short phrases, or fold the "Required bounded follow-up" detail into an expandable row, and show short reader-facing source labels that do not wrap mid-identifier.
 7. **Low · visual** (Auditor)
@@ -2665,7 +2665,7 @@ Kind: map · handoff lines 63-68 · verdict **BLOCK**
 
 ## Security selection (CP-3)
 
-Handoff: `/private/tmp/claude-501/-Users-ericguei-Documents-RBOT-HTML--claude-worktrees-pause-63d136/c8719821-dd4f-4042-ad6b-2051ff7e7dda/scratchpad/preview-ws/runs/tdg-reader-format-001/requests/CP-3/c9c1c598721987ca582298a7d52f6191aa8c193d74f62c274865899acb7b0f4e/1.response.md`
+Handoff: `/private/tmp/claude-501/-Users-USER-Documents-RBOT-HTML--claude-worktrees-pause-63d136/c8719821-dd4f-4042-ad6b-2051ff7e7dda/scratchpad/preview-ws/runs/tdg-reader-format-001/requests/CP-3/c9c1c598721987ca582298a7d52f6191aa8c193d74f62c274865899acb7b0f4e/1.response.md`
 
 ### Events: Instruments
 
@@ -3293,7 +3293,7 @@ Kind: prose/table · handoff lines 71-74 · verdict **CONCERNS**
 
 ## Evidence validation (CP-5)
 
-Handoff: `/private/tmp/claude-501/-Users-ericguei-Documents-RBOT-HTML--claude-worktrees-pause-63d136/c8719821-dd4f-4042-ad6b-2051ff7e7dda/scratchpad/preview-ws/runs/tdg-reader-format-001/requests/CP-5/2bd6b04939348b590ab9c3557eb4d4c1a37c55f6a2ad5035ce01c9807fac22df/1.response.md`
+Handoff: `/private/tmp/claude-501/-Users-USER-Documents-RBOT-HTML--claude-worktrees-pause-63d136/c8719821-dd4f-4042-ad6b-2051ff7e7dda/scratchpad/preview-ws/runs/tdg-reader-format-001/requests/CP-5/2bd6b04939348b590ab9c3557eb4d4c1a37c55f6a2ad5035ce01c9807fac22df/1.response.md`
 
 ### Analytical appendix — complete canonical registers (part 2 of 2: from 'T5B.8 — Gaps ledger')
 
@@ -3881,7 +3881,7 @@ Kind: prose/table · handoff lines 99-103 · verdict **BLOCK**
 
 ## Committee decision (CP-6)
 
-Handoff: `/private/tmp/claude-501/-Users-ericguei-Documents-RBOT-HTML--claude-worktrees-pause-63d136/c8719821-dd4f-4042-ad6b-2051ff7e7dda/scratchpad/preview-ws/runs/tdg-reader-format-001/requests/CP-6/65510b7dddd53992a399375adb71437c30fe7996c115f53b529fcb3af1fd3697/1.response.md`
+Handoff: `/private/tmp/claude-501/-Users-USER-Documents-RBOT-HTML--claude-worktrees-pause-63d136/c8719821-dd4f-4042-ad6b-2051ff7e7dda/scratchpad/preview-ws/runs/tdg-reader-format-001/requests/CP-6/65510b7dddd53992a399375adb71437c30fe7996c115f53b529fcb3af1fd3697/1.response.md`
 
 ### Bull opening and defense — steps 3 and 5
 
@@ -4319,7 +4319,7 @@ Kind: prose/table · handoff lines 181-190 · verdict **BLOCK**
    - Problem: None of the four paragraphs has a Basis line, although each makes evidential claims (historical servicing cash, the reported principal schedule, equity-tied financing). The reader cannot trace them. The Chair memo also repeats the verdict and the debate winner already stated in L183 and L185.
    - Fix: Add a Basis line under each paragraph and cut the Chair memo down to what it adds beyond the first two paragraphs.
 7. **Medium · visual** (New reader, Auditor)
-   - Where: Screenshot CP-6_s-181.png, section region crop (original px y≈228–606); crop saved as /private/tmp/claude-501/-Users-ericguei-Documents-RBOT-HTML--claude-worktrees-refactor-optimisation-sweep-01c49e/d3b58d68-0f70-4eca-af09-da4e7774dc7f/scratchpad/tmp/CP-6-118-a.png
+   - Where: Screenshot CP-6_s-181.png, section region crop (original px y≈228–606); crop saved as /private/tmp/claude-501/-Users-USER-Documents-RBOT-HTML--claude-worktrees-refactor-optimisation-sweep-01c49e/d3b58d68-0f70-4eca-af09-da4e7774dc7f/scratchpad/tmp/CP-6-118-a.png
    - Problem: The lead-in labels "Final Action Bias:", "Debate winner:" and "Single Greatest Uncertainty:" render in the same regular weight as the body text. The verdict "Requires More Work" gets no emphasis. The result is four dense 4–6-line blocks of small type that the eye cannot scan for the decision.
    - Fix: Make the labels bold or show them as a definition list or chip, and give the verdict visual weight so a reader sees the recommendation at a glance.
 8. **Low · narrative** (Saboteur)

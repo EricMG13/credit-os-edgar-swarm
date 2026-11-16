@@ -9,6 +9,7 @@ import type { Trace, TreeNode } from "../library/slice";
 import { moduleName } from "./api";
 import { traceKey } from "./reportView";
 import { card, heading } from "./layout";
+import { drawnQualificationLines } from "./visuals/drawnQualifications";
 import { monitoringLabel, typedModuleTable } from "./report/ModuleTable";
 import { calculationNodes } from "./report/calculations";
 import {
@@ -38,6 +39,16 @@ export function richParts(value: string): ReactNode {
       return <code key={index}>{part.slice(1, -1)}</code>;
     return part.replaceAll("\\|", "|");
   });
+}
+
+/** The text richParts draws, without its marks. */
+export function plainText(value: string): string {
+  return value
+    .replace(
+      /\*\*([^*]+)\*\*|`([^`]+)`/g,
+      (_, bold: string | undefined, code: string | undefined) => bold ?? code ?? "",
+    )
+    .replaceAll("\\|", "|");
 }
 
 function matchingDownload(run: PublishedRun, entry: OutputEntry) {
@@ -157,12 +168,10 @@ function buildTrace(
         }),
         ...(!basis && !chips.length
           ? [
-              node(
-                section.heading === FORECAST_INPUTS
-                  ? "Recorded forecast inputs"
-                  : "Basis was not recorded for this item",
-                null,
-              ),
+              // Recorded inputs are not a gap: only a missing basis carries no value.
+              section.heading === FORECAST_INPUTS
+                ? node("Recorded forecast inputs", "")
+                : node("Basis was not recorded for this item", null),
             ]
           : []),
       ],
@@ -210,8 +219,11 @@ export function PublishedTable({
   rowSource,
   rowHref,
   href,
+  heading: tableHeading,
 }: {
   table: Table;
+  /** The section heading that names the table's scroll region; "Table" when not given. */
+  heading?: string;
   evidence?: boolean;
   traceAt?: (line: number) => string;
   rowSource?: (line: number, label: string) => ReactNode;
@@ -220,19 +232,34 @@ export function PublishedTable({
 }) {
   const columns = displayColumns(table.headers, evidence, table.rows);
   if (!columns.length || !table.rows.length) return null;
+  const pinned = (column: number, background: string) =>
+    columns.length >= 5 && column === columns[0]
+      ? ` sm:sticky sm:left-0 sm:min-w-56 ${background}`
+      : "";
   const sources =
     rowSource ??
     (traceAt &&
       ((line: number, name: string) => (
         <TraceControl trace={traceAt(line)} label={`Show sources for ${name}`} />
       )));
+  // A wide table scrolls sideways: it is a named, focusable region so the keyboard can reach it.
+  const scrolls =
+    columns.length >= 5 ? { role: "region", "aria-label": tableHeading || "Table" } : {};
   return (
-    <div className="relative min-w-0 overflow-x-auto rounded-ds-md border border-border-hairline">
+    <div
+      {...scrolls}
+      tabIndex={columns.length >= 5 ? 0 : undefined}
+      className="relative min-w-0 overflow-x-auto rounded-ds-md border border-border-hairline"
+    >
       <table className="w-full border-collapse text-sm">
         <thead className="bg-surface-subtle text-text-secondary">
           <tr>
             {columns.map((column) => (
-              <th key={column} scope="col" className="px-3 py-2.5 text-left font-semibold">
+              <th
+                key={column}
+                scope="col"
+                className={`px-3 py-2.5 text-left font-semibold${pinned(column, "bg-surface-subtle")}`}
+              >
                 {richParts(table.headers[column] ?? "")}
               </th>
             ))}
@@ -253,7 +280,10 @@ export function PublishedTable({
                 const cell = row.cells[column] ?? "";
                 const sourceHref = rowHref?.(row.line) ?? href;
                 return (
-                  <td key={column} className="px-3 py-2.5 text-text-secondary">
+                  <td
+                    key={column}
+                    className={`px-3 py-2.5 text-text-secondary${pinned(column, "bg-surface-card")}`}
+                  >
                     {!evidence && containsReference(cell) ? (
                       sourceHref ? (
                         <a href={sourceHref} className="text-action underline">
@@ -285,11 +315,59 @@ function readerBlock(block: Block): boolean {
   return block.type === "table" || (block.type === "text" && !methodNote(block.text));
 }
 
+export const RECORDS_ID = "statements-and-records";
+// One register code (T4.4, P3, T2F.2); the prefix also takes the dash that follows it.
+const CODE = String.raw`[TP]\d+[A-Z]?(?:\.\d+)?`;
+const RECORD_PREFIX = new RegExp(String.raw`^${CODE}\s+(?:[-\u2013\u2014]\s*)?`);
+const RECORD_CODE = new RegExp(String.raw`^(?:${CODE}\s|Confidence inputs$)`);
+
+function registerBlocks(section: Section, entry: OutputEntry) {
+  if (entry.output.module === "CP-6" && /^T6E\.(?:4|6|7)\b/.test(section.heading))
+    return section.blocks.filter(readerBlock);
+  return section.blocks.filter((block) => {
+    if (block.type !== "table") return false;
+    if (monitoringLabel(entry.output.module, section.heading, block)) return true;
+    const headers = block.headers.map((header) => header.trim().toLowerCase());
+    return (
+      (headers.includes("probability") && headers.includes("impact")) ||
+      headers.some((header) => /leading/.test(header)) ||
+      (/date|window/.test(headers[0] ?? "") && headers.some((header) => /^event/.test(header)))
+    );
+  });
+}
+
+// A finding section whose heading starts with a register code: its prose stays on the page,
+// its tables go to Evidence unless they are promoted.
+const isCoded = (section: Section, role: string) =>
+  role === "finding" && RECORD_CODE.test(section.heading);
+
+// Coded sections with a table that the page does not draw; Evidence holds those tables.
+export function recordSections(sections: Section[], entry: OutputEntry) {
+  return classifySections(sections)
+    .filter(({ section, role }) => {
+      if (!isCoded(section, role)) return false;
+      const drawn = registerBlocks(section, entry);
+      return section.blocks.some((block) => block.type === "table" && !drawn.includes(block));
+    })
+    .map(({ section }) => section);
+}
+
+const NO_QUALIFICATION = "No qualification.";
+const DRAWING_PREFIX = /^(?:Chart data|Map|Events): /;
+/** A section heading as drawn: without the drawing prefix, the register code and its dash. */
+export const drawingTitle = (heading: string) =>
+  heading.replace(DRAWING_PREFIX, "").replace(RECORD_PREFIX, "");
+
+// `chartsDrawn` is true on a page that draws this module's charts with their qualifications.
 export function findingBlocks(
   sections: Section[],
   entry: OutputEntry,
   figureTableLines: readonly number[] = [],
+  chartsDrawn = false,
 ) {
+  const qualified = chartsDrawn
+    ? drawnQualificationLines(entry.output, sections)
+    : new Set<number>();
   const drawings = new Set(
     [
       ...(entry.output.charts ?? []),
@@ -300,38 +378,32 @@ export function findingBlocks(
       .map((item) => item.table)
       .concat(figureTableLines),
   );
-  return classifySections(sections)
-    .flatMap(({ section, role }) => {
-      if (role === "finding" || role === "passage" || role === "drawing") {
-        return [
-          {
-            ...section,
-            blocks: section.blocks.filter(
-              (block) => readerBlock(block) && !drawings.has(block.line),
-            ),
-          },
-        ];
-      }
-      if (role !== "registers") return [];
-      if (entry.output.module === "CP-6" && /^T6E\.(?:4|6|7)\b/.test(section.heading)) {
-        return [{ ...section, blocks: section.blocks.filter(readerBlock) }];
-      }
-      const promoted = section.blocks.filter((block) => {
-        if (block.type !== "table") return false;
-        if (monitoringLabel(entry.output.module, section.heading, block)) return true;
-        const headers = block.headers.map((header) => header.trim().toLowerCase());
-        return (
-          (headers.includes("probability") && headers.includes("impact")) ||
-          headers.some((header) => /leading/.test(header)) ||
-          (/date|window/.test(headers[0] ?? "") && headers.some((header) => /^event/.test(header)))
-        );
-      });
-      return promoted.length ? [{ ...section, blocks: promoted }] : [];
-    })
-    .filter((section) => section.blocks.length > 0);
+  const blocksOf = (section: Section, role: string) => {
+    if (role === "registers") return registerBlocks(section, entry);
+    if (role !== "finding" && role !== "passage" && role !== "drawing") return [];
+    const promoted = isCoded(section, role) ? registerBlocks(section, entry) : null;
+    return section.blocks.filter(
+      (block) =>
+        readerBlock(block) &&
+        !drawings.has(block.line) &&
+        (promoted === null || block.type === "text" || promoted.includes(block)) &&
+        // A chart's own qualification, or the empty one, is not drawn a second time.
+        (role !== "drawing" ||
+          (!qualified.has(block.line) &&
+            !(block.type === "text" && block.text.trim() === NO_QUALIFICATION))),
+    );
+  };
+  return classifySections(sections).flatMap(({ section, role }) => {
+    const blocks = blocksOf(section, role);
+    // A promoted table is typed by its full heading; a section without one drops the code here.
+    const plain = isCoded(section, role) && registerBlocks(section, entry).length === 0;
+    return blocks.length
+      ? [{ ...section, heading: plain ? drawingTitle(section.heading) : section.heading, blocks }]
+      : [];
+  });
 }
 
-function FindingParagraph({
+export function FindingParagraph({
   block,
   trace,
   href,
@@ -343,8 +415,8 @@ function FindingParagraph({
   const { body } = readParagraph(block.text);
   if (!body) return null;
   return (
-    <div className={`${TRACE_HOST} flex items-start justify-between gap-3`}>
-      <p className="max-w-[76ch] text-body wrap-anywhere text-text-secondary">
+    <div className={`${TRACE_HOST} flex items-start justify-start gap-3`}>
+      <p className="max-w-[55ch] text-body wrap-anywhere text-text-secondary">
         {containsReference(body) ? (
           <a href={href} className="text-action underline">
             Read this passage in Evidence
@@ -355,6 +427,41 @@ function FindingParagraph({
       </p>
       <TraceControl trace={trace} label="Show sources for this passage" />
     </div>
+  );
+}
+
+function RecordsCard({
+  run,
+  entry,
+  records,
+}: {
+  run: PublishedRun;
+  entry: OutputEntry;
+  records: Section[];
+}) {
+  if (!records.length) return null;
+  return (
+    <section className={card} id={RECORDS_ID} tabIndex={-1}>
+      <h2 className={heading}>Statements and records</h2>
+      <p className="max-w-[76ch] text-body text-text-secondary">
+        These tables are part of this module's record and are shown in Evidence.
+      </p>
+      <ul className="grid gap-1">
+        {records.map((section) => (
+          <li key={section.line}>
+            <a
+              href={evidencePath(run.folder, entry, section.line)}
+              className="text-action underline"
+            >
+              {drawingTitle(section.heading)}
+            </a>
+          </li>
+        ))}
+      </ul>
+      <a href={evidencePath(run.folder, entry)} className="text-action underline">
+        Open this module in Evidence
+      </a>
+    </section>
   );
 }
 
@@ -409,8 +516,9 @@ function findingsLayout(
   entry: OutputEntry,
   figureTableLines: readonly number[] | undefined,
   overview: boolean,
+  chartsDrawn: boolean,
 ) {
-  const sections = findingBlocks(entry.sections, entry, figureTableLines).filter(
+  const sections = findingBlocks(entry.sections, entry, figureTableLines, chartsDrawn).filter(
     (section) =>
       !overview ||
       [
@@ -451,12 +559,14 @@ function followingParagraphs(section: Section, entry: OutputEntry, folder: strin
 }
 
 function EmptyFindings({
+  run,
   entry,
-  folder,
+  records,
   afterBottomLine,
 }: {
+  run: PublishedRun;
   entry: OutputEntry;
-  folder: string;
+  records: Section[];
   afterBottomLine?: ReactNode;
 }) {
   return (
@@ -465,11 +575,12 @@ function EmptyFindings({
         {entry.output.parseError
           ? "This handoff could not be read into sections."
           : "This handoff has no findings in this report format."}{" "}
-        <a href={evidencePath(folder, entry)} className="text-action underline">
+        <a href={evidencePath(run.folder, entry)} className="text-action underline">
           Open Evidence
         </a>
       </p>
       {afterBottomLine}
+      <RecordsCard run={run} entry={entry} records={records} />
     </>
   );
 }
@@ -484,6 +595,7 @@ export function ReportFindings({
   afterBottomLine,
   judgement,
   figureTableLines,
+  chartsDrawn = false,
 }: {
   snapshot: Snapshot;
   run: PublishedRun;
@@ -494,9 +606,10 @@ export function ReportFindings({
   afterBottomLine?: ReactNode;
   judgement?: string;
   figureTableLines?: readonly number[];
+  chartsDrawn?: boolean;
 }) {
   const [activeTrace, setActiveTrace] = useState<string | null>(null);
-  const { sections, groups } = findingsLayout(entry, figureTableLines, overview);
+  const { sections, groups } = findingsLayout(entry, figureTableLines, overview, chartsDrawn);
   const key = (line: number) => traceKey(entry, line);
   const traces = findingsTraces(snapshot, entry, sections);
   const hasBottomLine = sections.some((section) => section.heading === "Bottom line");
@@ -504,8 +617,11 @@ export function ReportFindings({
   const summaryTrace = summary && traceForLine(snapshot, entry, entryIndex, summary.line);
   if (summaryTrace) traces[key(summary.line)] = summaryTrace;
   const active = activeTrace === null ? null : traces[activeTrace];
+  const records = overview ? [] : recordSections(entry.sections, entry);
   if (!sections.length && !summary)
-    return <EmptyFindings entry={entry} folder={run.folder} afterBottomLine={afterBottomLine} />;
+    return (
+      <EmptyFindings run={run} entry={entry} records={records} afterBottomLine={afterBottomLine} />
+    );
   function drawSection(section: Section) {
     const first = section.blocks[0];
     if (
@@ -542,7 +658,9 @@ export function ReportFindings({
               </div>
             </details>
           )}
-          {!overview && followingParagraphs(section, entry, run.folder)}
+          {!overview && section.blocks.slice(1).some((block) => block.type === "text") && (
+            <div className={card}>{followingParagraphs(section, entry, run.folder)}</div>
+          )}
         </div>
       );
     }
@@ -568,7 +686,9 @@ export function ReportFindings({
         id={`finding-${String(section.line)}`}
         tabIndex={-1}
       >
-        <h2 className={heading}>{richParts(findingLabel(section, overviewLabel))}</h2>
+        <h2 className={`${heading} first-letter:uppercase`}>
+          {richParts(drawingTitle(findingLabel(section, overviewLabel)))}
+        </h2>
         {section.heading === "Bottom line" && afterBottomLine}
         {section.blocks.map((block) =>
           block.type === "table" ? (
@@ -577,6 +697,7 @@ export function ReportFindings({
                 typedModuleTable(entry.output.module, section.heading, block, key)) || (
                 <PublishedTable
                   table={block}
+                  heading={plainText(drawingTitle(section.heading))}
                   traceAt={key}
                   rowHref={(line) => evidencePath(run.folder, entry, line)}
                 />
@@ -608,6 +729,7 @@ export function ReportFindings({
             </div>
           );
         })}
+        <RecordsCard run={run} entry={entry} records={records} />
       </div>
       {active && (
         <TraceDrawer

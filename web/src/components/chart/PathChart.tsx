@@ -20,7 +20,7 @@ import {
 import { type TableCell, type TableRowData } from "./ChartTable";
 import { ChartWithTable } from "./ChartWithTable";
 import { SeriesLine } from "./SeriesLine";
-import { assignSeries } from "./series";
+import { assignSeries, spread } from "./series";
 import { BASELINE, HEIGHT, Legend, TICK, YAxisLabels, type YTick } from "./TrendChart";
 
 interface PathSeries {
@@ -45,11 +45,21 @@ interface PathChartProps {
    */
   divider?: { period: string; at: "on" | "after"; label: string };
   yTicks: YTick[];
+  /**
+   * Draws every series named at its last point, this one in full colour and a heavier line and the
+   * rest in the neutral series colour.
+   */
+  emphasis?: string;
   table: { head: string[]; rows: TableRowData[]; endHeading?: string };
 }
 
 const TEXT_FILL = "var(--color-text-secondary)";
 const NA_FILL = "var(--color-text-tertiary)";
+const NEUTRAL = "var(--color-chart-other)";
+const NAME_CHAR = 7;
+const NAME_SPACING = 14;
+const PLOT_TOP = 24;
+const NAME_MARGIN = { min: 24, max: 168, gap: 16 };
 
 function check({
   periods,
@@ -268,19 +278,63 @@ function Divider({
   );
 }
 
+/** Room right of the plot for the longest series name, drawn beside each line's last point. */
+function nameMargin(series: PathSeries[]) {
+  const longest = Math.max(...series.map((s) => s.name.length));
+  return Math.min(
+    NAME_MARGIN.max,
+    Math.max(NAME_MARGIN.min, longest * NAME_CHAR + NAME_MARGIN.gap),
+  );
+}
+
+/** How far each series' name label moves down so the labels stand `NAME_SPACING` apart. */
+function nameShifts(series: PathSeries[], yTicks: YTick[], axis: number, named: boolean) {
+  const first = yTicks[0]?.value ?? 0;
+  const span = (yTicks[yTicks.length - 1]?.value ?? 0) - first;
+  const height = HEIGHT - PLOT_TOP - axis;
+  const ends = series.map(
+    (s) => s.values[s.values.map((v) => v !== null).lastIndexOf(true)] ?? null,
+  );
+  const at = ends.flatMap((v, i) =>
+    v === null || span <= 0 ? [] : [{ i, y: PLOT_TOP + (1 - (v - first) / span) * height }],
+  );
+  const moved = named
+    ? spread(
+        at.map((a) => a.y),
+        NAME_SPACING,
+      )
+    : [];
+  return new Map(at.map((a, k) => [a.i, (moved[k] ?? a.y) - a.y]));
+}
+
 function Chart({
   title,
   periods,
   series,
   divider,
   yTicks,
+  emphasis,
   rows,
-}: Pick<PathChartProps, "title" | "periods" | "series" | "divider" | "yTicks"> & {
+}: Pick<PathChartProps, "title" | "periods" | "series" | "divider" | "yTicks" | "emphasis"> & {
   rows: TableRowData[];
 }) {
-  const styles = assignSeries(series.map((s) => s.name));
+  const named = emphasis !== undefined;
+  const assigned = assignSeries(series.map((s) => s.name));
+  const styles = named
+    ? new Map(
+        [...assigned].map(([name, style]) => [
+          name,
+          name === emphasis ? style : { ...style, color: NEUTRAL },
+        ]),
+      )
+    : assigned;
+  // The emphasised line is drawn last, on top.
+  const drawn = series
+    .map((item, index) => ({ item, index }))
+    .sort((a, b) => Number(a.item.name === emphasis) - Number(b.item.name === emphasis));
   const data = periodSeriesData(periods, series);
   const allMissing = periods.filter((_, p) => series.every((s) => s.values[p] === null));
+  const nameDy = nameShifts(series, yTicks, axisHeight(periods), named);
   return (
     // Period labels may need horizontal room on narrow screens; make that region keyboard-scrollable.
     <div
@@ -296,7 +350,7 @@ function Chart({
             <LineChart
               title={title}
               data={data}
-              margin={{ top: 24, right: 24, bottom: 0, left: 0 }}
+              margin={{ top: PLOT_TOP, right: named ? nameMargin(series) : 24, bottom: 0, left: 0 }}
             >
               <CartesianGrid vertical={false} stroke="var(--color-border-hairline)" />
               <XAxis
@@ -326,7 +380,7 @@ function Chart({
                   label={{ value: "n.a.", position: "insideBottom", fill: NA_FILL, fontSize: 12 }}
                 />
               ))}
-              {series.map((item, index) => {
+              {drawn.map(({ item, index }) => {
                 const style = styles.get(item.name);
                 if (style === undefined) throw new Error(`no style for series "${item.name}"`);
                 return (
@@ -335,8 +389,13 @@ function Chart({
                     name={item.name}
                     dataKey={keyOf(index)}
                     style={style}
-                    labels={item.labels}
+                    labels={named && item.name !== emphasis ? undefined : item.labels}
                     labelOffset={index === 0 ? -10 : 18}
+                    nameDy={nameDy.get(index)}
+                    nameAt={
+                      named ? item.values.map((v) => v !== null).lastIndexOf(true) : undefined
+                    }
+                    emphasised={named && item.name === emphasis}
                   />
                 );
               })}
@@ -360,6 +419,7 @@ export function PathChart({
   series,
   divider,
   yTicks,
+  emphasis,
   table,
 }: PathChartProps) {
   check({ periods, series, divider, table });
@@ -378,6 +438,7 @@ export function PathChart({
           series={series}
           divider={divider}
           yTicks={yTicks}
+          emphasis={emphasis}
           rows={table.rows}
         />
       }

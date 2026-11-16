@@ -35,10 +35,55 @@ function columnGroups(grid: Grid) {
   return groups;
 }
 
+function unpopulatedCell(cell: Record<string, unknown>) {
+  return (cell.status === "na" || cell.status === "nm") && cell.exact == null;
+}
+
 function unpopulated(row: Grid["rows"][number]) {
+  return row.cells.length > 0 && row.cells.every(unpopulatedCell);
+}
+
+const NOT_AVAILABLE = "n.a.";
+
+function emptyColumns(grid: Grid) {
+  return grid.columns.flatMap((_, index) =>
+    grid.rows.length > 0 &&
+    grid.rows.every((row) => {
+      const cell = row.cells[index];
+      return cell !== undefined && word(cell.display) === NOT_AVAILABLE && cell.exact == null;
+    })
+      ? [index]
+      : [],
+  );
+}
+
+function withColumns(grid: Grid, keep: number[]): Grid {
+  const pick = <T,>(values: T[]) => keep.flatMap((index) => (values[index] ? [values[index]] : []));
+  return {
+    columns: pick(grid.columns),
+    rows: grid.rows.map((row) => ({ ...row, cells: pick(row.cells) })),
+  };
+}
+
+/** A note with the button that shows or hides what the table leaves out. */
+function Disclosure({
+  note,
+  label,
+  expanded,
+  onToggle,
+}: {
+  note: string | null;
+  label: string;
+  expanded: boolean;
+  onToggle: () => void;
+}) {
   return (
-    row.cells.length > 0 &&
-    row.cells.every((cell) => (cell.status === "na" || cell.status === "nm") && cell.exact == null)
+    <div className="flex flex-wrap items-center justify-between gap-2">
+      {note && <p className="text-small text-text-secondary">{note}</p>}
+      <Button color="secondary" size="sm" aria-expanded={expanded} onClick={onToggle}>
+        {label}
+      </Button>
+    </div>
   );
 }
 
@@ -71,14 +116,10 @@ function ForecastCell({
 function ForecastRows({
   grid,
   rows,
-  interest,
-  source,
   expanded,
 }: {
   grid: Grid;
   rows: Grid["rows"];
-  interest: string[];
-  source: Source;
   expanded: boolean;
 }) {
   return (
@@ -98,15 +139,6 @@ function ForecastRows({
               className="sticky left-0 w-48 min-w-36 max-w-48 bg-surface-card px-3 py-2 text-left whitespace-normal sm:w-64 sm:max-w-64"
             >
               {row.label}
-              {row.label === "Interest" &&
-                interest.map((text, at) => (
-                  <Qualification
-                    key={at}
-                    text={text}
-                    label="Interest basis qualification"
-                    source={source}
-                  />
-                ))}
             </th>
             {row.cells.map((cell, position) => (
               <ForecastCell key={position} cell={cell} showReason={expanded && unpopulated(row)} />
@@ -118,15 +150,7 @@ function ForecastRows({
   );
 }
 
-function ForecastColumns({
-  grid,
-  period,
-  source,
-}: {
-  grid: Grid;
-  period: string[];
-  source: Source;
-}) {
+function ForecastColumns({ grid }: { grid: Grid }) {
   return (
     <thead className="border-b-2 border-border-hairline">
       <tr>
@@ -153,16 +177,6 @@ function ForecastColumns({
             title={column.start && column.end ? `${column.start} to ${column.end}` : undefined}
           >
             {column.label}
-            {period
-              .filter((text) => periodColumn(grid, text) === index)
-              .map((text, at) => (
-                <Qualification
-                  key={at}
-                  text={text}
-                  label="Period qualification — recorded label retained"
-                  source={source}
-                />
-              ))}
           </th>
         ))}
       </tr>
@@ -171,7 +185,7 @@ function ForecastColumns({
 }
 
 export function ForecastTable({
-  grid,
+  grid: inputGrid,
   title,
   limits,
   source,
@@ -182,19 +196,40 @@ export function ForecastTable({
   source?: (label: string) => ReactNode;
 }) {
   const [expanded, setExpanded] = useState(false);
+  const [showColumns, setShowColumns] = useState(false);
+  const empty = emptyColumns(inputGrid);
+  // Columns are only set aside when another column holds a value; a table with none is drawn whole.
+  const canHideColumns =
+    empty.length > 0 &&
+    inputGrid.rows.some((row) =>
+      row.cells.some((cell, index) => !empty.includes(index) && !unpopulatedCell(cell)),
+    );
+  const grid =
+    canHideColumns && !showColumns
+      ? withColumns(
+          inputGrid,
+          inputGrid.columns.flatMap((_, index) => (empty.includes(index) ? [] : [index])),
+        )
+      : inputGrid;
   const missing = grid.rows.filter(unpopulated).length;
   const populated = grid.rows.filter((row) => !unpopulated(row));
   const canCollapse = missing > 0 && populated.length > 0;
   const rows = expanded || !canCollapse ? grid.rows : populated;
   const period = limits.filter((text) => text.startsWith("Base period is "));
   const interest = limits.filter((text) => text.startsWith("Base interest is "));
-  const unbound = period.filter((text) => periodColumn(grid, text) === undefined);
+  const bound = inputGrid.columns.flatMap((column, index) =>
+    period
+      .filter((text) => periodColumn(inputGrid, text) === index)
+      .map((text) => ({ label: column.label, text })),
+  );
+  const interestShown = rows.some((row) => row.label === "Interest");
+  const unbound = period.filter((text) => periodColumn(inputGrid, text) === undefined);
   return (
     <div className="grid min-w-0 gap-3">
       {unbound.map((text, at) => (
         <Qualification key={at} text={text} label="Base-period qualification" source={source} />
       ))}
-      {!rows.some((row) => row.label === "Interest") &&
+      {!interestShown &&
         interest.map((text, at) => (
           <Qualification
             key={at}
@@ -204,40 +239,61 @@ export function ForecastTable({
           />
         ))}
       {canCollapse && (
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <p className="text-small text-text-secondary">
-            {missing} rows have no recorded values in this view. Their missing-data reasons remain
-            available.
-          </p>
-          <Button
-            color="secondary"
-            size="sm"
-            aria-expanded={expanded}
-            onClick={() => {
-              setExpanded(!expanded);
-            }}
-          >
-            {expanded
+        <Disclosure
+          note={`${String(missing)} rows have no recorded values in this view. Their missing-data reasons remain available.`}
+          label={
+            expanded
               ? "Hide unavailable rows"
-              : `Show ${String(missing)} unavailable rows and reasons`}
-          </Button>
-        </div>
+              : `Show ${String(missing)} unavailable rows and reasons`
+          }
+          expanded={expanded}
+          onToggle={() => {
+            setExpanded(!expanded);
+          }}
+        />
       )}
       {/* The read-only region scrolls horizontally by keyboard when columns overflow. */}
       {/* eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex */}
       <div className="overflow-x-auto" role="region" aria-label={title} tabIndex={0}>
         <table className="w-full border-collapse text-small">
           <caption className="sr-only">{title}</caption>
-          <ForecastColumns grid={grid} period={period} source={source} />
-          <ForecastRows
-            grid={grid}
-            rows={rows}
-            interest={interest}
-            source={source}
-            expanded={expanded || !canCollapse}
-          />
+          <ForecastColumns grid={grid} />
+          <ForecastRows grid={grid} rows={rows} expanded={expanded || !canCollapse} />
         </table>
       </div>
+      {canHideColumns && (
+        <Disclosure
+          note={
+            showColumns
+              ? null
+              : `These columns have no recorded values: ${empty.map((index) => inputGrid.columns[index]?.label ?? "").join(", ")}.`
+          }
+          label={
+            showColumns
+              ? "Hide columns with no values"
+              : `Show ${String(empty.length)} columns with no values`
+          }
+          expanded={showColumns}
+          onToggle={() => {
+            setShowColumns(!showColumns);
+          }}
+        />
+      )}
+      {(bound.length > 0 || (interestShown && interest.length > 0)) && (
+        <ul aria-label="Qualifications" className="grid gap-2">
+          {bound.map(({ label, text }, at) => (
+            <li key={`period-${String(at)}`}>
+              <Qualification text={text} label={`${label} period qualification`} source={source} />
+            </li>
+          ))}
+          {interestShown &&
+            interest.map((text, at) => (
+              <li key={`interest-${String(at)}`}>
+                <Qualification text={text} label="Interest basis qualification" source={source} />
+              </li>
+            ))}
+        </ul>
+      )}
     </div>
   );
 }

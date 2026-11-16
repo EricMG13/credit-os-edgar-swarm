@@ -59,7 +59,7 @@ function fixture(): Grid {
   };
 }
 
-it("keeps exact period labels, dates and values with the recorded qualification at the header and interest row", () => {
+it("keeps exact period labels, dates and values with the period and interest qualifications under the table", () => {
   render(
     <ForecastTable
       grid={fixture()}
@@ -68,14 +68,42 @@ it("keeps exact period labels, dates and values with the recorded qualification 
       source={(name) => <a href="#inputs">{name} source</a>}
     />,
   );
-  const header = screen.getByRole("columnheader", { name: /YTD \(H1 2026\)/ });
+  const header = screen.getByRole("columnheader", { name: "YTD (H1 2026)" });
   expect(header).toHaveAttribute("title", "2026-01-01 to 2026-06-30");
-  expect(header).toHaveTextContent(period);
+  expect(header).not.toHaveTextContent(period);
+  expect(screen.getByRole("list", { name: "Qualifications" })).toHaveTextContent(period);
   const row = screen.getByRole("row", { name: /^Interest/ });
-  expect(row).toHaveTextContent(interest);
+  expect(row).not.toHaveTextContent(interest);
+  expect(screen.getByRole("list", { name: "Qualifications" })).toHaveTextContent(interest);
   expect(within(row).getByRole("cell", { name: "776" })).toBeInTheDocument();
   expect(within(row).getByRole("cell", { name: "2,141" })).toBeInTheDocument();
   expect(screen.getByRole("cell", { name: "11,812.24" })).toHaveAttribute("title", "11812.2368");
+});
+
+it("draws a period qualification once, under the table, not in a column header", () => {
+  const grid = fixture();
+  const second = grid.columns[1];
+  if (!second) throw new Error("Missing fixture column");
+  second.label = "YTD (FY2027)";
+  render(
+    <ForecastTable
+      grid={grid}
+      title="Model"
+      limits={["Base period is FY2027; PQ-TEXT"]}
+      source={(name) => <a href="#inputs">{name} source</a>}
+    />,
+  );
+  for (const header of screen.getAllByRole("columnheader"))
+    expect(header).not.toHaveTextContent("PQ-TEXT");
+  const hits = screen.getAllByText(/PQ-TEXT/);
+  expect(hits).toHaveLength(1);
+  const item = hits[0]?.closest("li");
+  expect(item).toHaveTextContent("YTD (FY2027)");
+  expect(item).toContainElement(screen.getByRole("link", { name: /source$/ }));
+  const table = screen.getByRole("table");
+  expect(
+    table.compareDocumentPosition(item as Node) & Node.DOCUMENT_POSITION_FOLLOWING,
+  ).toBeTruthy();
 });
 
 it("keeps zero visible and restores each unavailable row and its exact reasons on request", () => {
@@ -150,4 +178,82 @@ it("shows an entirely unavailable table and every reason without requiring expan
   expect(screen.getByText("The input does not record gross profit.")).toBeVisible();
   expect(screen.getByText("This line is not projected.")).toBeVisible();
   expect(screen.queryByRole("button")).toBeNull();
+});
+
+it("collapses columns whose every cell is n.a. behind one disclosure and restores them on request", () => {
+  const na = { status: "na", exact: null, display: "n.a.", reason: "Not recorded." };
+  const grid: Grid = {
+    columns: [
+      { label: "A", group: "Base case", start: "", end: "" },
+      { label: "B", group: "Base case", start: "", end: "" },
+      { label: "FY2027E", group: "Base case", start: "", end: "" },
+    ],
+    rows: [
+      {
+        label: "Revenue",
+        band: "",
+        total: false,
+        cells: [na, na, { status: "value", exact: "0", display: "0" }],
+      },
+    ],
+  };
+  render(<ForecastTable grid={grid} title="Model" limits={[]} />);
+  expect(screen.getAllByRole("columnheader").map((header) => header.textContent)).toEqual([
+    "Line item",
+    "Base case",
+    "FY2027E",
+  ]);
+  expect(screen.getAllByRole("cell")).toHaveLength(1);
+  const button = screen.getByRole("button", { name: "Show 2 columns with no values" });
+  expect(button).toHaveAttribute("aria-expanded", "false");
+  fireEvent.click(button);
+  expect(screen.getByRole("columnheader", { name: "A" })).toBeInTheDocument();
+  expect(screen.getByRole("columnheader", { name: "B" })).toBeInTheDocument();
+  expect(screen.getAllByRole("cell")).toHaveLength(3);
+  expect(screen.getByRole("button", { name: "Hide columns with no values" })).toHaveAttribute(
+    "aria-expanded",
+    "true",
+  );
+});
+
+it("draws the interest-basis qualification once, under the table, not in the row header", () => {
+  render(
+    <ForecastTable
+      grid={fixture()}
+      title="Model"
+      limits={["Base interest is IQ-TEXT"]}
+      source={(name) => <a href="#inputs">{name} source</a>}
+    />,
+  );
+  for (const header of screen.getAllByRole("rowheader", { name: /^Interest/ }))
+    expect(header.textContent).toBe("Interest");
+  const hits = screen.getAllByText(/IQ-TEXT/);
+  expect(hits).toHaveLength(1);
+  const item = hits[0]?.closest("li");
+  expect(item).toHaveTextContent("Interest");
+  expect(item).toContainElement(screen.getByRole("link", { name: /source$/ }));
+  expect(
+    screen.getByRole("table").compareDocumentPosition(item as Node) &
+      Node.DOCUMENT_POSITION_FOLLOWING,
+  ).toBeTruthy();
+});
+
+it("draws period and interest qualifications in one list", () => {
+  const grid = fixture();
+  const second = grid.columns[1];
+  if (!second) throw new Error("Missing fixture column");
+  second.label = "YTD (FY2027)";
+  render(
+    <ForecastTable
+      grid={grid}
+      title="Model"
+      limits={["Base period is FY2027; PQ-TEXT", "Base interest is IQ-TEXT"]}
+    />,
+  );
+  const lists = screen.getAllByRole("list");
+  expect(lists).toHaveLength(1);
+  expect(screen.getAllByText(/PQ-TEXT/)).toHaveLength(1);
+  expect(screen.getAllByText(/IQ-TEXT/)).toHaveLength(1);
+  expect(lists[0]).toHaveTextContent("PQ-TEXT");
+  expect(lists[0]).toHaveTextContent("IQ-TEXT");
 });

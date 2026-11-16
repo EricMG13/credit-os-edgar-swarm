@@ -391,11 +391,11 @@ describe("Changes, the other states of the frame", () => {
     expect(screen.queryByRole("radiogroup", { name: "Presentation" })).toBeNull();
   });
 
-  it("keeps every trace control hidden at rest until the frame's Show sources is on", () => {
+  it("keeps every trace control visible at rest and bordered while the frame's Show sources is on", () => {
     renderChanges("2026-09-30");
     const first = screen.getAllByRole("button", { name: "Show sources for this change" })[0];
-    expect(first?.className).toContain("opacity-0");
-    expect(first?.className).toContain("in-data-[sources=on]:opacity-100");
+    expect(first?.className).not.toContain("opacity-0");
+    expect(first?.className).toContain("in-data-[sources=on]:border-border-control");
     fireEvent.click(screen.getByRole("switch"));
     expect(document.querySelector("[data-sources='on']")).not.toBeNull();
   });

@@ -5,7 +5,7 @@
     {
       "consumed_path": "skills/cp-2g-forward-credit-model/SKILL.md",
       "archive_path": "docs/reuse/selected-methods/skills/cp-2g-forward-credit-model/SKILL.md",
-      "exact_copy_found_at": "/Users/ericguei/Documents/cp-os/skills/cp-2g-forward-credit-model/SKILL.md",
+      "exact_copy_found_at": "/Users/USER/Documents/cp-os/skills/cp-2g-forward-credit-model/SKILL.md",
       "sha256": "0337a01d8379f73c3aa9e0697742900c95f8d6b71d286cafe77fa66c8f770207",
       "source_revision": "not recorded at import; bytes pinned by sha256 (registered 2026-11-04 in final-workflow 5755da5 at the cp-os path, no commit named; see source_revision_note)"
     },
@@ -13,7 +13,7 @@
       "consumed_path": "skills/cp-2g-forward-credit-model/references/REF_CP-2G_STEPS.md",
       "archive_path": "docs/reuse/selected-methods/skills/cp-2g-forward-credit-model/references/REF_CP-2G_STEPS.md",
       "exact_copy_found_at": null,
-      "edited_copy_of": "/Users/ericguei/Documents/cp-os/skills/cp-2g-forward-credit-model/references/REF_CP-2G_STEPS.md",
+      "edited_copy_of": "/Users/USER/Documents/cp-os/skills/cp-2g-forward-credit-model/references/REF_CP-2G_STEPS.md",
       "sha256": "7db9c915f31c6d9722da13551053c7c4830c2e183097df4c33c92a674fd7ff13",
       "source_sha256": "b59d94f04dd2b7d4f243856433bdc46896be3765faf9d20acd77e0f56cf57536",
       "edit": "named edit: assumption-register rule sentence added: each T2H.3 row's `case` is base, upside or downside and the register carries rows for both `base` and `downside` (caos line 19); no other caos hunk ported (not the `cp2g.requires_base_and_downside_cases` checker id, `match: leading_word`, or the column splits); wording from caos-databricks vendor/deploy-v (last changed 592ee83a, repo HEAD dfff264); sha256 is this edited file, source_sha256 the previously archived file"
@@ -21,14 +21,14 @@
     {
       "consumed_path": "skills/cp-2e-macro-fx-hedging-sensitivity/SKILL.md",
       "archive_path": "docs/reuse/selected-methods/skills/cp-2e-macro-fx-hedging-sensitivity/SKILL.md",
-      "exact_copy_found_at": "/Users/ericguei/Documents/cp-os/skills/cp-2e-macro-fx-hedging-sensitivity/SKILL.md",
+      "exact_copy_found_at": "/Users/USER/Documents/cp-os/skills/cp-2e-macro-fx-hedging-sensitivity/SKILL.md",
       "sha256": "b931f41bb1ac7630c110f2a8b5d5bd4b5cf07d47232c333ef0a56d26923dfa95",
       "source_revision": "not recorded at import; bytes pinned by sha256 (registered 2026-11-04 in final-workflow 5755da5 at the cp-os path, no commit named; see source_revision_note)"
     },
     {
       "consumed_path": "skills/cp-2e-macro-fx-hedging-sensitivity/references/REF_CP-2E_STEPS.md",
       "archive_path": "docs/reuse/selected-methods/skills/cp-2e-macro-fx-hedging-sensitivity/references/REF_CP-2E_STEPS.md",
-      "exact_copy_found_at": "/Users/ericguei/Documents/cp-os/skills/cp-2e-macro-fx-hedging-sensitivity/references/REF_CP-2E_STEPS.md",
+      "exact_copy_found_at": "/Users/USER/Documents/cp-os/skills/cp-2e-macro-fx-hedging-sensitivity/references/REF_CP-2E_STEPS.md",
       "sha256": "23ddaf2269f8361e01a301e407b89dbb1ae16a05b8ce7430c9e20a8f83ab15b8",
       "source_revision": "not recorded at import; bytes pinned by sha256 (registered 2026-11-04 in final-workflow 5755da5 at the cp-os path, no commit named; see source_revision_note)",
       "lineage_check": "git blob equal to caos-databricks vendor/deploy-v/skills/cp-2e-macro-fx-hedging-sensitivity/references/REF_CP-2E_STEPS.md at repo HEAD dfff264 and at its vendor import cc9c3e58 (checked 2026-11-15); a cross-check, not the source this file was copied from"
@@ -36,7 +36,7 @@
     {
       "consumed_path": "skills/cp-2e-macro-fx-hedging-sensitivity/references/REF_CP-2F_STEPS.md",
       "archive_path": "docs/reuse/selected-methods/skills/cp-2e-macro-fx-hedging-sensitivity/references/REF_CP-2F_STEPS.md",
-      "exact_copy_found_at": "/Users/ericguei/Documents/cp-os/skills/cp-2e-macro-fx-hedging-sensitivity/references/REF_CP-2F_STEPS.md",
+      "exact_copy_found_at": "/Users/USER/Documents/cp-os/skills/cp-2e-macro-fx-hedging-sensitivity/references/REF_CP-2F_STEPS.md",
       "sha256": "312301c620990d3810d19125cde30224f9696860c3ef5f04b3f9473652555e08",
       "source_revision": "not recorded at import; bytes pinned by sha256 (registered 2026-11-04 in final-workflow 5755da5 at the cp-os path, no commit named; see source_revision_note)",
       "lineage_check": "git blob equal to caos-databricks vendor/deploy-v/skills/cp-2e-macro-fx-hedging-sensitivity/references/REF_CP-2F_STEPS.md at repo HEAD dfff264 and at its vendor import cc9c3e58 (checked 2026-11-15); a cross-check, not the source this file was copied from"
@@ -49,90 +49,90 @@
       "sha256": "23ceacf44aa2f67974859d6b93efc19bb7e2ec6e9dc95ae2675dbaf541e0820e",
       "source_sha256": "0cc76aea6e227ff923ca466fc000a80b1f2f6ef3b1fb74b78203e8601d507207",
       "edit": "Replaced 2026-11-13 by cp-os version 2.0 (cp-os HEAD b57a344, file last changed in 5a78f93), byte-for-byte, then named edits 2a and 2b: (2a) the open-web limits in RESEARCH ITEMS, ANSWER RULES (LOCAL limitation) and CAPABILITY GATE, and (2a-4, fix round 1) the pack-tools-only reading and TDR.6 quote clauses, made conditional on the project's web-search rules, with section C of the step bundle governing web use when granted; (2b) the UNRESOLVED gap row's claim_type is `gap` and missing evidence is Complete with Gaps, never Blocked (wording from caos-databricks vendor/deploy-v c746ad67); named edit 2c (2026-11-13): every clause conditional on the paragraph that begins \"web_search reaches public web pages\" is also conditional on the paragraph that begins \"fetch_page retrieves public web pages\" (RESEARCH ITEMS, ANSWER RULES, TDR.6 quote clause, CAPABILITY GATE; RESEARCH ITEMS names the pair once as \"a web paragraph\" and the later clauses use that term); under the lookup paragraph a page is fetched with `fetch_page` or the `sec_` tools and read with `read_pages` and `search_source`; the RESEARCH ITEMS after-the-as-of-date line gains the exception that a page dated after the cutoff may be cited as a labelled later event that carries no figure; sha256 is this edited file, source_sha256 the byte-for-byte copy of cp-os",
-      "edited_copy_of": "/Users/ericguei/Documents/cp-os/skills/cp-dr-deep-research/SKILL.md"
+      "edited_copy_of": "/Users/USER/Documents/cp-os/skills/cp-dr-deep-research/SKILL.md"
     },
     {
       "consumed_path": "skills/cp-dr-deep-research/references/REF_CP-DR_STEPS.md",
       "archive_path": "docs/reuse/selected-methods/skills/cp-dr-deep-research/references/REF_CP-DR_STEPS.md",
       "exact_copy_found_at": null,
-      "edited_copy_of": "/Users/ericguei/Documents/cp-os/skills/cp-dr-deep-research/references/REF_CP-DR_STEPS.md",
+      "edited_copy_of": "/Users/USER/Documents/cp-os/skills/cp-dr-deep-research/references/REF_CP-DR_STEPS.md",
       "sha256": "cab435618c7f4f3cd34add6fb5acdc83a130cb7f7bb33cc70c7622680c9d6bc3",
       "source_sha256": "a75bd020e039a67e37063b0475718aebac4a9fc3107819b9d2987b4e1f30643c",
       "edit": "Named edit 2b: gap row takes claim_type `gap` (step D) and missing evidence is Complete with Gaps, never Blocked (step F); wording from caos-databricks vendor/deploy-v c746ad67; named edit 2c (2026-11-13): section C reads \"verify that web_search or the lookup tools are granted first\" where it read \"verify WebSearch first\"; sha256 is this edited file, source_sha256 the byte-for-byte copy of cp-os b57a344"
     },
     {
-      "consumed_path": "/Users/ericguei/Documents/cp-os/skills/cp-2h-ratings-migration-trigger/SKILL.md",
+      "consumed_path": "/Users/USER/Documents/cp-os/skills/cp-2h-ratings-migration-trigger/SKILL.md",
       "archive_path": "docs/reuse/selected-methods/skills/cp-2h-ratings-migration-trigger/SKILL.md",
-      "exact_copy_found_at": "/Users/ericguei/Documents/cp-os/skills/cp-2h-ratings-migration-trigger/SKILL.md",
+      "exact_copy_found_at": "/Users/USER/Documents/cp-os/skills/cp-2h-ratings-migration-trigger/SKILL.md",
       "sha256": "19c0a304a1dc3b9a6fa8e94f7256582da0ad22b83de8cd21b5e3a770827e2ad9",
       "source_sha256": "acf25aaea52bee5da74069fdfe3013c511b4cb2f3e1cb9d3c99fc950a27a62bb",
       "edit": "named edit: `unknown` dropped from the critical_cell_values_casefold blocklist (cp-os 115f664, skills/cp-2h-ratings-migration-trigger/SKILL.md); wording from cp-os 115f664; sha256 is this edited file, source_sha256 the previously archived file",
       "source_revision": "cp-os b57a344 (after the named edit this file equals the live cp-os file at b57a344, last changed 115f664, as companions_note states; the copy it was edited from is the cp-os initial-commit text a31f3f5)"
     },
     {
-      "consumed_path": "/Users/ericguei/Documents/cp-os/skills/cp-2h-ratings-migration-trigger/references/REF_CP-2H_STEPS.md",
+      "consumed_path": "/Users/USER/Documents/cp-os/skills/cp-2h-ratings-migration-trigger/references/REF_CP-2H_STEPS.md",
       "archive_path": "docs/reuse/selected-methods/skills/cp-2h-ratings-migration-trigger/references/REF_CP-2H_STEPS.md",
-      "exact_copy_found_at": "/Users/ericguei/Documents/cp-os/skills/cp-2h-ratings-migration-trigger/references/REF_CP-2H_STEPS.md",
+      "exact_copy_found_at": "/Users/USER/Documents/cp-os/skills/cp-2h-ratings-migration-trigger/references/REF_CP-2H_STEPS.md",
       "sha256": "375615b8f373b15461233bb65e47a0f14c8ca34472cd84449d65dba4112c6b3e",
       "source_revision": "not recorded at import; bytes pinned by sha256 (registered 2026-11-04 in final-workflow 5755da5 at the cp-os path, no commit named; see source_revision_note)",
       "lineage_check": "git blob equal to caos-databricks vendor/deploy-v/skills/cp-2h-ratings-migration-trigger/references/REF_CP-2H_STEPS.md at its vendor import cc9c3e58, not at repo HEAD dfff264 (changed since) (checked 2026-11-15); a cross-check, not the source this file was copied from"
     },
     {
-      "consumed_path": "/Users/ericguei/Documents/cp-os/skills/cp-2h-ratings-migration-trigger/scripts/covenant_headroom.py",
+      "consumed_path": "/Users/USER/Documents/cp-os/skills/cp-2h-ratings-migration-trigger/scripts/covenant_headroom.py",
       "archive_path": "docs/reuse/selected-methods/skills/cp-2h-ratings-migration-trigger/scripts/covenant_headroom.py",
-      "exact_copy_found_at": "/Users/ericguei/Documents/cp-os/skills/cp-2h-ratings-migration-trigger/scripts/covenant_headroom.py",
+      "exact_copy_found_at": "/Users/USER/Documents/cp-os/skills/cp-2h-ratings-migration-trigger/scripts/covenant_headroom.py",
       "sha256": "9b01a0077994e84f039802d2210d0473c276ab0e1b3b840d39bebde6abb81533",
       "use": "unchanged historical helper executed for labelled duration/boundary controls only"
     },
     {
-      "consumed_path": "/Users/ericguei/Documents/cp-os/skills/cp-2h-ratings-migration-trigger/scripts/cp_tables.py",
+      "consumed_path": "/Users/USER/Documents/cp-os/skills/cp-2h-ratings-migration-trigger/scripts/cp_tables.py",
       "archive_path": "docs/reuse/selected-methods/skills/cp-2h-ratings-migration-trigger/scripts/cp_tables.py",
-      "exact_copy_found_at": "/Users/ericguei/Documents/cp-os/skills/cp-2h-ratings-migration-trigger/scripts/cp_tables.py",
+      "exact_copy_found_at": "/Users/USER/Documents/cp-os/skills/cp-2h-ratings-migration-trigger/scripts/cp_tables.py",
       "sha256": "02590c0bf151e1e291b72214df3311f686d88e576d60a80a6b5ca73ecc44a8d1",
       "use": "unchanged historical helper executed for labelled duration/boundary controls only"
     },
     {
-      "consumed_path": "/Users/ericguei/Documents/cp-os/skills/cp-5-evidence-trace-validator/SKILL.md",
+      "consumed_path": "/Users/USER/Documents/cp-os/skills/cp-5-evidence-trace-validator/SKILL.md",
       "archive_path": "docs/reuse/selected-methods/skills/cp-5-evidence-trace-validator/SKILL.md",
-      "exact_copy_found_at": "/Users/ericguei/Documents/cp-os/skills/cp-5-evidence-trace-validator/SKILL.md",
+      "exact_copy_found_at": "/Users/USER/Documents/cp-os/skills/cp-5-evidence-trace-validator/SKILL.md",
       "sha256": "7f21c8712cb40e871abaa1f855fdb95dded5df9887e354c39253e0492dd93390",
       "use": "unchanged selected methodology; historical source is evidence, not inherited authority",
       "source_revision": "not recorded at import; bytes pinned by sha256 (registered 2026-11-04 in final-workflow 5755da5 at the cp-os path, no commit named; see source_revision_note)"
     },
     {
-      "consumed_path": "/Users/ericguei/Documents/cp-os/skills/cp-5-evidence-trace-validator/references/CP-5_RUNBOOK.md",
+      "consumed_path": "/Users/USER/Documents/cp-os/skills/cp-5-evidence-trace-validator/references/CP-5_RUNBOOK.md",
       "archive_path": "docs/reuse/selected-methods/skills/cp-5-evidence-trace-validator/references/CP-5_RUNBOOK.md",
-      "exact_copy_found_at": "/Users/ericguei/Documents/caos-databricks/vendor/deploy-v/skills/cp-5-evidence-trace-validator/references/CP-5_RUNBOOK.md",
+      "exact_copy_found_at": "/Users/USER/Documents/caos-databricks/vendor/deploy-v/skills/cp-5-evidence-trace-validator/references/CP-5_RUNBOOK.md",
       "sha256": "b313093b43fc2f8ca6c32c2afc478f082f815a5e7f97caa91c8fbe83a659fb06",
       "use": "byte-for-byte copy of caos-databricks vendor/deploy-v (last changed c746ad67, repo HEAD dfff264); the only change from the previously archived text is the CP-5 ordering: CP-6 and CP-6A run after CP-5 and are not its input: the six ordering hunks of the caos copy (Upstream lines, UP/DOWN lines, the `Downstream (QA gate)` line); the caos copy differs from the archived file in nothing else; historical evidence, not inherited authority",
       "source_sha256": "c053b622c63b242364a8e53c1b2e676f6f02c1ce6a4f7e87728c885e9fd68434"
     },
     {
-      "consumed_path": "/Users/ericguei/Documents/cp-os/skills/cp-5-evidence-trace-validator/references/REF_CP-5_STEPS.md",
+      "consumed_path": "/Users/USER/Documents/cp-os/skills/cp-5-evidence-trace-validator/references/REF_CP-5_STEPS.md",
       "archive_path": "docs/reuse/selected-methods/skills/cp-5-evidence-trace-validator/references/REF_CP-5_STEPS.md",
-      "exact_copy_found_at": "/Users/ericguei/Documents/cp-os/skills/cp-5-evidence-trace-validator/references/REF_CP-5_STEPS.md",
+      "exact_copy_found_at": "/Users/USER/Documents/cp-os/skills/cp-5-evidence-trace-validator/references/REF_CP-5_STEPS.md",
       "sha256": "0b5beddbc0a5d3c99065379b7110e3b87fbc5392d38ed243ccbf7fdce70e506a",
       "use": "unchanged selected methodology; historical source is evidence, not inherited authority",
       "source_revision": "not recorded at import; bytes pinned by sha256 (registered 2026-11-04 in final-workflow 5755da5 at the cp-os path, no commit named; see source_revision_note)",
       "lineage_check": "git blob equal to caos-databricks vendor/deploy-v/skills/cp-5-evidence-trace-validator/references/REF_CP-5_STEPS.md at repo HEAD dfff264 and at its vendor import cc9c3e58 (checked 2026-11-15); a cross-check, not the source this file was copied from"
     },
     {
-      "consumed_path": "/Users/ericguei/Documents/cp-os/skills/cp-5-evidence-trace-validator/references/REF_CP-5A_STEPS.md",
+      "consumed_path": "/Users/USER/Documents/cp-os/skills/cp-5-evidence-trace-validator/references/REF_CP-5A_STEPS.md",
       "archive_path": "docs/reuse/selected-methods/skills/cp-5-evidence-trace-validator/references/REF_CP-5A_STEPS.md",
-      "exact_copy_found_at": "/Users/ericguei/Documents/caos-databricks/vendor/deploy-v/skills/cp-5-evidence-trace-validator/references/REF_CP-5A_STEPS.md",
+      "exact_copy_found_at": "/Users/USER/Documents/caos-databricks/vendor/deploy-v/skills/cp-5-evidence-trace-validator/references/REF_CP-5A_STEPS.md",
       "sha256": "4940a15162bb1f3a2063603cab8637573b5fd2da8c4e64b10759d75a8f207a16",
       "use": "byte-for-byte copy of caos-databricks vendor/deploy-v (last changed c746ad67, repo HEAD dfff264); the only change from the previously archived text is the CP-5 ordering: step 4 input line: `CP-6 and CP-6A run after CP-5 and are not its input`; the caos copy differs from the archived file in nothing else; historical evidence, not inherited authority",
       "source_sha256": "e93781b8055e0c33e744b06fb0706161885400d6f8c7ef07a743497d4a865e8d"
     },
     {
-      "consumed_path": "/Users/ericguei/Documents/cp-os/skills/cp-5-evidence-trace-validator/scripts/confidence_score.py",
+      "consumed_path": "/Users/USER/Documents/cp-os/skills/cp-5-evidence-trace-validator/scripts/confidence_score.py",
       "archive_path": "docs/reuse/selected-methods/skills/cp-5-evidence-trace-validator/scripts/confidence_score.py",
-      "exact_copy_found_at": "/Users/ericguei/Documents/cp-os/skills/cp-5-evidence-trace-validator/scripts/confidence_score.py",
+      "exact_copy_found_at": "/Users/USER/Documents/cp-os/skills/cp-5-evidence-trace-validator/scripts/confidence_score.py",
       "sha256": "6e88bc8c70f65cd9478d4e5c7f460c13d4b49f8e3dc5f540e28ec8acc0648b3f",
       "use": "unchanged selected methodology; historical source is evidence, not inherited authority"
     },
     {
-      "consumed_path": "/Users/ericguei/Documents/cp-os/skills/cp-6-ic-debate-challenge/SKILL.md",
+      "consumed_path": "/Users/USER/Documents/cp-os/skills/cp-6-ic-debate-challenge/SKILL.md",
       "archive_path": "docs/reuse/selected-methods/skills/cp-6-ic-debate-challenge/SKILL.md",
       "exact_copy_found_at": null,
       "note": "not a copy of the live cp-os file (sha256 57e995fc...): this file is the cp-os initial-commit text (a31f3f5, sha256 0ae74db0...) plus the named edits in `edit`",
@@ -142,392 +142,392 @@
       "edit": "named edits (CP-5 is CP-6's upstream QA gate, never its consumer), all from caos-databricks vendor/deploy-v (last changed 99069f83, repo HEAD dfff264): Dependencies sentence `Its QA gate is CP-5: CP-6 runs only after CP-5's handoff is accepted (Passed or Restricted), so CP-5 is upstream of CP-6 and never its consumer.` (caos line 8); in both header blocks `**Downstream (QA):** CP-5, CP-5A` replaced by `**Upstream (QA gate):** CP-5, CP-5A (accepted before this module runs; CP-5 is never its consumer)` placed before `**Downstream (Analytical):**` (caos 175, 339); in both UP/DOWN lines `| DOWN (QA): CP-5, CP-5A` replaced by `| UP (QA gate): CP-5, CP-5A` before `| DOWN (Analytical)` (caos 260, 422); no other caos hunk ported; sha256 is this edited file, source_sha256 the previously archived file"
     },
     {
-      "consumed_path": "/Users/ericguei/Documents/cp-os/skills/cp-6-ic-debate-challenge/references/REF_CP-6_STEPS.md",
+      "consumed_path": "/Users/USER/Documents/cp-os/skills/cp-6-ic-debate-challenge/references/REF_CP-6_STEPS.md",
       "archive_path": "docs/reuse/selected-methods/skills/cp-6-ic-debate-challenge/references/REF_CP-6_STEPS.md",
-      "exact_copy_found_at": "/Users/ericguei/Documents/cp-os/skills/cp-6-ic-debate-challenge/references/REF_CP-6_STEPS.md",
+      "exact_copy_found_at": "/Users/USER/Documents/cp-os/skills/cp-6-ic-debate-challenge/references/REF_CP-6_STEPS.md",
       "sha256": "6141d27e800d45d2d0208173f38060c75d97005ee9b93013e24a16a40570f1e1",
       "use": "unchanged selected methodology; historical source is evidence, not inherited authority",
       "source_revision": "not recorded at import; bytes pinned by sha256 (registered 2026-11-04 in final-workflow 5755da5 at the cp-os path, no commit named; see source_revision_note)",
       "lineage_check": "git blob equal to caos-databricks vendor/deploy-v/skills/cp-6-ic-debate-challenge/references/REF_CP-6_STEPS.md at repo HEAD dfff264 and at its vendor import cc9c3e58 (checked 2026-11-15); a cross-check, not the source this file was copied from"
     },
     {
-      "consumed_path": "/Users/ericguei/Documents/cp-os/skills/cp-6-ic-debate-challenge/references/REF_CP-6A_STEPS.md",
+      "consumed_path": "/Users/USER/Documents/cp-os/skills/cp-6-ic-debate-challenge/references/REF_CP-6A_STEPS.md",
       "archive_path": "docs/reuse/selected-methods/skills/cp-6-ic-debate-challenge/references/REF_CP-6A_STEPS.md",
-      "exact_copy_found_at": "/Users/ericguei/Documents/cp-os/skills/cp-6-ic-debate-challenge/references/REF_CP-6A_STEPS.md",
+      "exact_copy_found_at": "/Users/USER/Documents/cp-os/skills/cp-6-ic-debate-challenge/references/REF_CP-6A_STEPS.md",
       "sha256": "9e36ee1bc5ed1b2a99ffb2e8bc1ed2a10e2a3d26b70083a00beb598a8d1c9478",
       "use": "unchanged selected methodology; historical source is evidence, not inherited authority",
       "source_revision": "not recorded at import; bytes pinned by sha256 (registered 2026-11-04 in final-workflow 5755da5 at the cp-os path, no commit named; see source_revision_note)"
     },
     {
-      "consumed_path": "/Users/ericguei/Documents/cp-os/skills/cp-2a-downside-pathway/SKILL.md",
+      "consumed_path": "/Users/USER/Documents/cp-os/skills/cp-2a-downside-pathway/SKILL.md",
       "archive_path": "docs/reuse/selected-methods/skills/cp-2a-downside-pathway/SKILL.md",
-      "exact_copy_found_at": "/Users/ericguei/Documents/cp-os/skills/cp-2a-downside-pathway/SKILL.md",
+      "exact_copy_found_at": "/Users/USER/Documents/cp-os/skills/cp-2a-downside-pathway/SKILL.md",
       "sha256": "4c23c05eb697a09ca557a10d922ba4baad6bd0659c953e2d443859df85d5b213",
       "use": "unchanged selected methodology; historical source is evidence, not inherited authority",
       "source_revision": "not recorded at import; bytes pinned by sha256 (registered 2026-11-04 in final-workflow 5755da5 at the cp-os path, no commit named; see source_revision_note)"
     },
     {
-      "consumed_path": "/Users/ericguei/Documents/cp-os/skills/cp-2a-downside-pathway/references/REF_CP-2B_STEPS.md",
+      "consumed_path": "/Users/USER/Documents/cp-os/skills/cp-2a-downside-pathway/references/REF_CP-2B_STEPS.md",
       "archive_path": "docs/reuse/selected-methods/skills/cp-2a-downside-pathway/references/REF_CP-2B_STEPS.md",
-      "exact_copy_found_at": "/Users/ericguei/Documents/cp-os/skills/cp-2a-downside-pathway/references/REF_CP-2B_STEPS.md",
+      "exact_copy_found_at": "/Users/USER/Documents/cp-os/skills/cp-2a-downside-pathway/references/REF_CP-2B_STEPS.md",
       "sha256": "75434b4a5602c97f001d144ee5934a6601105f76aad9ea0ed2d71638726d7415",
       "use": "unchanged selected methodology; historical source is evidence, not inherited authority",
       "source_revision": "not recorded at import; bytes pinned by sha256 (registered 2026-11-04 in final-workflow 5755da5 at the cp-os path, no commit named; see source_revision_note)",
       "lineage_check": "git blob equal to caos-databricks vendor/deploy-v/skills/cp-2a-downside-pathway/references/REF_CP-2B_STEPS.md at repo HEAD dfff264 and at its vendor import cc9c3e58 (checked 2026-11-15); a cross-check, not the source this file was copied from"
     },
     {
-      "consumed_path": "/Users/ericguei/Documents/cp-os/skills/cp-2a-downside-pathway/references/CP-2B_SCHEMA_REFERENCE.md",
+      "consumed_path": "/Users/USER/Documents/cp-os/skills/cp-2a-downside-pathway/references/CP-2B_SCHEMA_REFERENCE.md",
       "archive_path": "docs/reuse/selected-methods/skills/cp-2a-downside-pathway/references/CP-2B_SCHEMA_REFERENCE.md",
-      "exact_copy_found_at": "/Users/ericguei/Documents/cp-os/skills/cp-2a-downside-pathway/references/CP-2B_SCHEMA_REFERENCE.md",
+      "exact_copy_found_at": "/Users/USER/Documents/cp-os/skills/cp-2a-downside-pathway/references/CP-2B_SCHEMA_REFERENCE.md",
       "sha256": "b65f2fe305958938bc79ce7497d700f17ee5e83fa40b4cf2b856f15c8db84b0b",
       "use": "unchanged selected methodology; historical source is evidence, not inherited authority"
     },
     {
-      "consumed_path": "/Users/ericguei/Documents/cp-os/skills/cp-4-legal-covenant-interpreter/SKILL.md",
+      "consumed_path": "/Users/USER/Documents/cp-os/skills/cp-4-legal-covenant-interpreter/SKILL.md",
       "archive_path": "docs/reuse/selected-methods/skills/cp-4-legal-covenant-interpreter/SKILL.md",
       "exact_copy_found_at": null,
-      "edited_copy_of": "/Users/ericguei/Documents/caos-databricks/vendor/deploy-v/skills/cp-4-legal-covenant-interpreter/SKILL.md",
+      "edited_copy_of": "/Users/USER/Documents/caos-databricks/vendor/deploy-v/skills/cp-4-legal-covenant-interpreter/SKILL.md",
       "sha256": "f9387cf2e5afc0f934f3fa909de7e46c2ea5cb85b94972f2d86535d6204c4025",
       "use": "selected legal interpretation methodology with a named edit (see `edit`); historical evidence, not inherited authority",
       "source_sha256": "40ebb2613562b4fc36d7880aa5ed04a88bbc4648ee9bc157f41f61d77150f6f7",
       "edit": "qa_status map sentence removed from common rule 10 (host overrides qa_status; canon D1 map not supplied here); wording from caos-databricks vendor/deploy-v (last changed 2975872f, repo HEAD dfff264); sha256 is this edited file, source_sha256 the byte-for-byte copy"
     },
     {
-      "consumed_path": "/Users/ericguei/Documents/cp-os/skills/cp-4-legal-covenant-interpreter/references/CP-4_RUNBOOK.md",
+      "consumed_path": "/Users/USER/Documents/cp-os/skills/cp-4-legal-covenant-interpreter/references/CP-4_RUNBOOK.md",
       "archive_path": "docs/reuse/selected-methods/skills/cp-4-legal-covenant-interpreter/references/CP-4_RUNBOOK.md",
-      "exact_copy_found_at": "/Users/ericguei/Documents/caos-databricks/vendor/deploy-v/skills/cp-4-legal-covenant-interpreter/references/CP-4_RUNBOOK.md",
+      "exact_copy_found_at": "/Users/USER/Documents/caos-databricks/vendor/deploy-v/skills/cp-4-legal-covenant-interpreter/references/CP-4_RUNBOOK.md",
       "sha256": "48b376e145791de99190be245973d6f05c730ed1a6573461b55ea2ce51298b0f",
       "use": "byte-for-byte copy of caos-databricks vendor/deploy-v (last changed 592ee83a, repo HEAD dfff264); historical evidence, not inherited authority"
     },
     {
-      "consumed_path": "/Users/ericguei/Documents/cp-os/skills/cp-4-legal-covenant-interpreter/references/REF_CP-4_STEPS.md",
+      "consumed_path": "/Users/USER/Documents/cp-os/skills/cp-4-legal-covenant-interpreter/references/REF_CP-4_STEPS.md",
       "archive_path": "docs/reuse/selected-methods/skills/cp-4-legal-covenant-interpreter/references/REF_CP-4_STEPS.md",
-      "exact_copy_found_at": "/Users/ericguei/Documents/caos-databricks/vendor/deploy-v/skills/cp-4-legal-covenant-interpreter/references/REF_CP-4_STEPS.md",
+      "exact_copy_found_at": "/Users/USER/Documents/caos-databricks/vendor/deploy-v/skills/cp-4-legal-covenant-interpreter/references/REF_CP-4_STEPS.md",
       "sha256": "536165daad72db3cc8541163db77c89b64b797f22374f84c69772bcaa3efc358",
       "use": "byte-for-byte copy of caos-databricks vendor/deploy-v (last changed 1aeaa27f, repo HEAD dfff264); historical evidence, not inherited authority"
     },
     {
-      "consumed_path": "/Users/ericguei/Documents/cp-os/skills/cp-4-legal-covenant-interpreter/references/CP-4B_RUNBOOK.md",
+      "consumed_path": "/Users/USER/Documents/cp-os/skills/cp-4-legal-covenant-interpreter/references/CP-4B_RUNBOOK.md",
       "archive_path": "docs/reuse/selected-methods/skills/cp-4-legal-covenant-interpreter/references/CP-4B_RUNBOOK.md",
-      "exact_copy_found_at": "/Users/ericguei/Documents/caos-databricks/vendor/deploy-v/skills/cp-4-legal-covenant-interpreter/references/CP-4B_RUNBOOK.md",
+      "exact_copy_found_at": "/Users/USER/Documents/caos-databricks/vendor/deploy-v/skills/cp-4-legal-covenant-interpreter/references/CP-4B_RUNBOOK.md",
       "sha256": "3569763fb8504b08b8cce6d2ffb15ca247f43d44f77d3339de2777bdd0e0344f",
       "use": "byte-for-byte copy of caos-databricks vendor/deploy-v (last changed 592ee83a, repo HEAD dfff264); historical evidence, not inherited authority"
     },
     {
-      "consumed_path": "/Users/ericguei/Documents/cp-os/skills/cp-4-legal-covenant-interpreter/references/REF_CP-4B_STEPS.md",
+      "consumed_path": "/Users/USER/Documents/cp-os/skills/cp-4-legal-covenant-interpreter/references/REF_CP-4B_STEPS.md",
       "archive_path": "docs/reuse/selected-methods/skills/cp-4-legal-covenant-interpreter/references/REF_CP-4B_STEPS.md",
-      "exact_copy_found_at": "/Users/ericguei/Documents/caos-databricks/vendor/deploy-v/skills/cp-4-legal-covenant-interpreter/references/REF_CP-4B_STEPS.md",
+      "exact_copy_found_at": "/Users/USER/Documents/caos-databricks/vendor/deploy-v/skills/cp-4-legal-covenant-interpreter/references/REF_CP-4B_STEPS.md",
       "sha256": "8a0cf2ed16693efa1a22b5c9bfbb7d3f697ac0cfe23319bdb784029094d02b64",
       "use": "byte-for-byte copy of caos-databricks vendor/deploy-v (last changed 592ee83a, repo HEAD dfff264); historical evidence, not inherited authority"
     },
     {
-      "consumed_path": "/Users/ericguei/Documents/cp-os/skills/cp-4-legal-covenant-interpreter/references/CP-4D_SCHEMA_REFERENCE.md",
+      "consumed_path": "/Users/USER/Documents/cp-os/skills/cp-4-legal-covenant-interpreter/references/CP-4D_SCHEMA_REFERENCE.md",
       "archive_path": "docs/reuse/selected-methods/skills/cp-4-legal-covenant-interpreter/references/CP-4D_SCHEMA_REFERENCE.md",
-      "exact_copy_found_at": "/Users/ericguei/Documents/cp-os/skills/cp-4-legal-covenant-interpreter/references/CP-4D_SCHEMA_REFERENCE.md",
+      "exact_copy_found_at": "/Users/USER/Documents/cp-os/skills/cp-4-legal-covenant-interpreter/references/CP-4D_SCHEMA_REFERENCE.md",
       "sha256": "0695f3917d43bba80aafe5e4d29045afbd00acbefd6ad55b3e40913141328cf8",
       "use": "unchanged selected historical methodology; current project transport/authority governs"
     },
     {
-      "consumed_path": "/Users/ericguei/Documents/cp-os/skills/cp-4-legal-covenant-interpreter/references/CP-4A_RUNBOOK.md",
+      "consumed_path": "/Users/USER/Documents/cp-os/skills/cp-4-legal-covenant-interpreter/references/CP-4A_RUNBOOK.md",
       "archive_path": "docs/reuse/selected-methods/skills/cp-4-legal-covenant-interpreter/references/CP-4A_RUNBOOK.md",
-      "exact_copy_found_at": "/Users/ericguei/Documents/caos-databricks/vendor/deploy-v/skills/cp-4-legal-covenant-interpreter/references/CP-4A_RUNBOOK.md",
+      "exact_copy_found_at": "/Users/USER/Documents/caos-databricks/vendor/deploy-v/skills/cp-4-legal-covenant-interpreter/references/CP-4A_RUNBOOK.md",
       "sha256": "478017a8aeaa47588a5bcc20ca8820054b7140fa28e41ed194f571040366f385",
       "use": "byte-for-byte copy of caos-databricks vendor/deploy-v (last changed 1aeaa27f, repo HEAD dfff264); historical evidence, not inherited authority"
     },
     {
-      "consumed_path": "/Users/ericguei/Documents/cp-os/skills/cp-4-legal-covenant-interpreter/references/REF_CP-4A_STEPS.md",
+      "consumed_path": "/Users/USER/Documents/cp-os/skills/cp-4-legal-covenant-interpreter/references/REF_CP-4A_STEPS.md",
       "archive_path": "docs/reuse/selected-methods/skills/cp-4-legal-covenant-interpreter/references/REF_CP-4A_STEPS.md",
-      "exact_copy_found_at": "/Users/ericguei/Documents/caos-databricks/vendor/deploy-v/skills/cp-4-legal-covenant-interpreter/references/REF_CP-4A_STEPS.md",
+      "exact_copy_found_at": "/Users/USER/Documents/caos-databricks/vendor/deploy-v/skills/cp-4-legal-covenant-interpreter/references/REF_CP-4A_STEPS.md",
       "sha256": "00763966ffa099f598558a9539ebb094b16d32d669cc9d81e9e7bd0fda2211e2",
       "use": "byte-for-byte copy of caos-databricks vendor/deploy-v (last changed 1aeaa27f, repo HEAD dfff264); historical evidence, not inherited authority"
     },
     {
-      "consumed_path": "/Users/ericguei/Documents/cp-os/skills/cp-4c-restructuring-fulcrum/SKILL.md",
+      "consumed_path": "/Users/USER/Documents/cp-os/skills/cp-4c-restructuring-fulcrum/SKILL.md",
       "archive_path": "docs/reuse/selected-methods/skills/cp-4c-restructuring-fulcrum/SKILL.md",
       "exact_copy_found_at": null,
-      "edited_copy_of": "/Users/ericguei/Documents/caos-databricks/vendor/deploy-v/skills/cp-4c-restructuring-fulcrum/SKILL.md",
+      "edited_copy_of": "/Users/USER/Documents/caos-databricks/vendor/deploy-v/skills/cp-4c-restructuring-fulcrum/SKILL.md",
       "sha256": "7c18e46a9eb9b2de9e3e1e708f6b1eadcc70411035d9b850cd81c27c2b645856",
       "use": "selected historical restructuring method with named edits (see `edit`); current project instructions govern scope and transport",
       "source_sha256": "dc1666f10022fc121dd2db19440e8e00cc5e91f5791cef5fbdd83c4c6a856da2",
       "edit": "qa_status map sentence removed from common rule 10 (host overrides qa_status; canon D1 map not supplied here); LITE-profile sentence removed from Dependencies and the whole `## LITE profile compatibility` section removed (no LITE route, no UPGRADE, no CP-L10 screen substitute here); named edit E4: the two words left pointing at the removed profile distinction cut, `In FULL_CREDIT_32, requires` -> `Requires` (Dependencies, line 8) and `requires CP-2A in both profiles;` -> `requires CP-2A;` (line 12); source text is caos-databricks vendor/deploy-v (last changed 592ee83a, repo HEAD dfff264); the E4 cut is a CP-OS edit (caos has the words E4 removes); sha256 is this edited file, source_sha256 the byte-for-byte copy"
     },
     {
-      "consumed_path": "/Users/ericguei/Documents/cp-os/skills/cp-4c-restructuring-fulcrum/references/REF_CP-4C_STEPS.md",
+      "consumed_path": "/Users/USER/Documents/cp-os/skills/cp-4c-restructuring-fulcrum/references/REF_CP-4C_STEPS.md",
       "archive_path": "docs/reuse/selected-methods/skills/cp-4c-restructuring-fulcrum/references/REF_CP-4C_STEPS.md",
-      "exact_copy_found_at": "/Users/ericguei/Documents/cp-os/skills/cp-4c-restructuring-fulcrum/references/REF_CP-4C_STEPS.md",
+      "exact_copy_found_at": "/Users/USER/Documents/cp-os/skills/cp-4c-restructuring-fulcrum/references/REF_CP-4C_STEPS.md",
       "sha256": "1483f4fe9e37d593bdf0cab58ac8eb0674aaa22745579bd9430380c57e763e97",
       "use": "Unchanged historical restructuring method/helper; current project instructions govern scope and transport",
       "source_revision": "not recorded at import; bytes pinned by sha256 (registered 2026-11-04 in final-workflow 5755da5 at the cp-os path, no commit named; see source_revision_note)",
       "lineage_check": "git blob equal to caos-databricks vendor/deploy-v/skills/cp-4c-restructuring-fulcrum/references/REF_CP-4C_STEPS.md at repo HEAD dfff264 and at its vendor import cc9c3e58 (checked 2026-11-15); a cross-check, not the source this file was copied from"
     },
     {
-      "consumed_path": "/Users/ericguei/Documents/cp-os/skills/cp-4c-restructuring-fulcrum/scripts/recovery_waterfall.py",
+      "consumed_path": "/Users/USER/Documents/cp-os/skills/cp-4c-restructuring-fulcrum/scripts/recovery_waterfall.py",
       "archive_path": "docs/reuse/selected-methods/skills/cp-4c-restructuring-fulcrum/scripts/recovery_waterfall.py",
-      "exact_copy_found_at": "/Users/ericguei/Documents/cp-os/skills/cp-4c-restructuring-fulcrum/scripts/recovery_waterfall.py",
+      "exact_copy_found_at": "/Users/USER/Documents/cp-os/skills/cp-4c-restructuring-fulcrum/scripts/recovery_waterfall.py",
       "sha256": "2e6c084747be7f67052c5c333fc80d5954f0fe6dcdba14e6b933fffaae3c1878",
       "use": "Unchanged historical restructuring method/helper; current project instructions govern scope and transport"
     },
     {
-      "consumed_path": "/Users/ericguei/Documents/cp-os/skills/cp-4c-restructuring-fulcrum/scripts/cp_tables.py",
+      "consumed_path": "/Users/USER/Documents/cp-os/skills/cp-4c-restructuring-fulcrum/scripts/cp_tables.py",
       "archive_path": "docs/reuse/selected-methods/skills/cp-4c-restructuring-fulcrum/scripts/cp_tables.py",
-      "exact_copy_found_at": "/Users/ericguei/Documents/cp-os/skills/cp-4c-restructuring-fulcrum/scripts/cp_tables.py",
+      "exact_copy_found_at": "/Users/USER/Documents/cp-os/skills/cp-4c-restructuring-fulcrum/scripts/cp_tables.py",
       "sha256": "02590c0bf151e1e291b72214df3311f686d88e576d60a80a6b5ca73ecc44a8d1",
       "use": "Unchanged historical restructuring method/helper; current project instructions govern scope and transport"
     },
     {
-      "consumed_path": "/Users/ericguei/Documents/cp-os/skills/cp-4c-restructuring-fulcrum/scripts/validate_handoff.py",
+      "consumed_path": "/Users/USER/Documents/cp-os/skills/cp-4c-restructuring-fulcrum/scripts/validate_handoff.py",
       "archive_path": "docs/reuse/selected-methods/skills/cp-4c-restructuring-fulcrum/scripts/validate_handoff.py",
-      "exact_copy_found_at": "/Users/ericguei/Documents/cp-os/skills/cp-4c-restructuring-fulcrum/scripts/validate_handoff.py",
+      "exact_copy_found_at": "/Users/USER/Documents/cp-os/skills/cp-4c-restructuring-fulcrum/scripts/validate_handoff.py",
       "sha256": "c640aaaf579907c63a72d5a5a0df5134ed89dbf273441846ec399353e3bbac9e",
       "use": "Unchanged transitive import dependency of selected waterfall helper, no legacy output validation invoked"
     },
     {
-      "consumed_path": "/Users/ericguei/Documents/cp-os/skills/cp-3-relative-value-security-selection/references/CP-3A_RUNBOOK.md",
+      "consumed_path": "/Users/USER/Documents/cp-os/skills/cp-3-relative-value-security-selection/references/CP-3A_RUNBOOK.md",
       "archive_path": "docs/reuse/selected-methods/skills/cp-3-relative-value-security-selection/references/CP-3A_RUNBOOK.md",
-      "exact_copy_found_at": "/Users/ericguei/Documents/cp-os/skills/cp-3-relative-value-security-selection/references/CP-3A_RUNBOOK.md",
+      "exact_copy_found_at": "/Users/USER/Documents/cp-os/skills/cp-3-relative-value-security-selection/references/CP-3A_RUNBOOK.md",
       "sha256": "cbb19deed431ea93c91b5e4d025d466869169681e8daa2d94a70ecde775dbc8e",
       "use": "Selected recovery-phase scope and market/preference safeguards; historical method, not inherited authority",
       "source_revision": "not recorded at import; bytes pinned by sha256 (registered 2026-11-04 in final-workflow 5755da5 at the cp-os path, no commit named; see source_revision_note)"
     },
     {
-      "consumed_path": "/Users/ericguei/Documents/cp-os/skills/cp-3-relative-value-security-selection/references/REF_CP-3A_STEPS.md",
+      "consumed_path": "/Users/USER/Documents/cp-os/skills/cp-3-relative-value-security-selection/references/REF_CP-3A_STEPS.md",
       "archive_path": "docs/reuse/selected-methods/skills/cp-3-relative-value-security-selection/references/REF_CP-3A_STEPS.md",
-      "exact_copy_found_at": "/Users/ericguei/Documents/cp-os/skills/cp-3-relative-value-security-selection/references/REF_CP-3A_STEPS.md",
+      "exact_copy_found_at": "/Users/USER/Documents/cp-os/skills/cp-3-relative-value-security-selection/references/REF_CP-3A_STEPS.md",
       "sha256": "40ab91d6bd3bf7159eb15b6d11f36f46728306c0afa045a6b36bdd8eb4de08ec",
       "use": "Selected recovery-phase scope and market/preference safeguards; historical method, not inherited authority",
       "source_revision": "not recorded at import; bytes pinned by sha256 (registered 2026-11-04 in final-workflow 5755da5 at the cp-os path, no commit named; see source_revision_note)",
       "lineage_check": "git blob equal to caos-databricks vendor/deploy-v/skills/cp-3-relative-value-security-selection/references/REF_CP-3A_STEPS.md at repo HEAD dfff264 and at its vendor import cc9c3e58 (checked 2026-11-15); a cross-check, not the source this file was copied from"
     },
     {
-      "consumed_path": "/Users/ericguei/Documents/cp-os/skills/cp-1c-peer-benchmark/SKILL.md",
+      "consumed_path": "/Users/USER/Documents/cp-os/skills/cp-1c-peer-benchmark/SKILL.md",
       "archive_path": "docs/reuse/selected-methods/skills/cp-1c-peer-benchmark/SKILL.md",
-      "exact_copy_found_at": "/Users/ericguei/Documents/cp-os/skills/cp-1c-peer-benchmark/SKILL.md",
+      "exact_copy_found_at": "/Users/USER/Documents/cp-os/skills/cp-1c-peer-benchmark/SKILL.md",
       "sha256": "4bd3b130ce0b49571f7b4b97da25a42a81dbed80b03ea752552ea8ae90cd9f71",
       "use": "Unchanged peer selection/alignment methodology and statistical helper; project transport and current user instructions govern",
       "source_revision": "not recorded at import; bytes pinned by sha256 (registered 2026-11-04 in final-workflow 5755da5 at the cp-os path, no commit named; see source_revision_note)"
     },
     {
-      "consumed_path": "/Users/ericguei/Documents/cp-os/skills/cp-1c-peer-benchmark/references/REF_CP-1C_STEPS.md",
+      "consumed_path": "/Users/USER/Documents/cp-os/skills/cp-1c-peer-benchmark/references/REF_CP-1C_STEPS.md",
       "archive_path": "docs/reuse/selected-methods/skills/cp-1c-peer-benchmark/references/REF_CP-1C_STEPS.md",
-      "exact_copy_found_at": "/Users/ericguei/Documents/cp-os/skills/cp-1c-peer-benchmark/references/REF_CP-1C_STEPS.md",
+      "exact_copy_found_at": "/Users/USER/Documents/cp-os/skills/cp-1c-peer-benchmark/references/REF_CP-1C_STEPS.md",
       "sha256": "fbbed9bac006c67a04397303c39c684046817cf491ebad6a4fa1302ecfbfd766",
       "use": "Unchanged peer selection/alignment methodology and statistical helper; project transport and current user instructions govern",
       "source_revision": "not recorded at import; bytes pinned by sha256 (registered 2026-11-04 in final-workflow 5755da5 at the cp-os path, no commit named; see source_revision_note)",
       "lineage_check": "git blob equal to caos-databricks vendor/deploy-v/skills/cp-1c-peer-benchmark/references/REF_CP-1C_STEPS.md at its vendor import cc9c3e58, not at repo HEAD dfff264 (changed since) (checked 2026-11-15); a cross-check, not the source this file was copied from"
     },
     {
-      "consumed_path": "/Users/ericguei/Documents/cp-os/skills/cp-1c-peer-benchmark/scripts/peer_statistics.py",
+      "consumed_path": "/Users/USER/Documents/cp-os/skills/cp-1c-peer-benchmark/scripts/peer_statistics.py",
       "archive_path": "docs/reuse/selected-methods/skills/cp-1c-peer-benchmark/scripts/peer_statistics.py",
-      "exact_copy_found_at": "/Users/ericguei/Documents/cp-os/skills/cp-1c-peer-benchmark/scripts/peer_statistics.py",
+      "exact_copy_found_at": "/Users/USER/Documents/cp-os/skills/cp-1c-peer-benchmark/scripts/peer_statistics.py",
       "sha256": "3073ed168e8f89b422b3421df4255a48a0875b1d44a90a53414ce078c2f7015b",
       "use": "Unchanged peer selection/alignment methodology and statistical helper; project transport and current user instructions govern"
     },
     {
-      "consumed_path": "/Users/ericguei/Documents/cp-os/skills/cp-1c-peer-benchmark/scripts/cp_tables.py",
+      "consumed_path": "/Users/USER/Documents/cp-os/skills/cp-1c-peer-benchmark/scripts/cp_tables.py",
       "archive_path": "docs/reuse/selected-methods/skills/cp-1c-peer-benchmark/scripts/cp_tables.py",
-      "exact_copy_found_at": "/Users/ericguei/Documents/cp-os/skills/cp-1c-peer-benchmark/scripts/cp_tables.py",
+      "exact_copy_found_at": "/Users/USER/Documents/cp-os/skills/cp-1c-peer-benchmark/scripts/cp_tables.py",
       "sha256": "02590c0bf151e1e291b72214df3311f686d88e576d60a80a6b5ca73ecc44a8d1",
       "use": "Unchanged peer selection/alignment methodology and statistical helper; project transport and current user instructions govern"
     },
     {
-      "consumed_path": "/Users/ericguei/Documents/cp-os/skills/cp-1c-peer-benchmark/scripts/validate_handoff.py",
+      "consumed_path": "/Users/USER/Documents/cp-os/skills/cp-1c-peer-benchmark/scripts/validate_handoff.py",
       "archive_path": "docs/reuse/selected-methods/skills/cp-1c-peer-benchmark/scripts/validate_handoff.py",
-      "exact_copy_found_at": "/Users/ericguei/Documents/cp-os/skills/cp-1c-peer-benchmark/scripts/validate_handoff.py",
+      "exact_copy_found_at": "/Users/USER/Documents/cp-os/skills/cp-1c-peer-benchmark/scripts/validate_handoff.py",
       "sha256": "c640aaaf579907c63a72d5a5a0df5134ed89dbf273441846ec399353e3bbac9e",
       "use": "Unchanged peer selection/alignment methodology and statistical helper; project transport and current user instructions govern"
     },
     {
-      "consumed_path": "/Users/ericguei/Documents/cp-os/skills/cp-3d-market-implied-risk/SKILL.md",
+      "consumed_path": "/Users/USER/Documents/cp-os/skills/cp-3d-market-implied-risk/SKILL.md",
       "archive_path": "docs/reuse/selected-methods/skills/cp-3d-market-implied-risk/SKILL.md",
-      "exact_copy_found_at": "/Users/ericguei/Documents/cp-os/skills/cp-3d-market-implied-risk/SKILL.md",
+      "exact_copy_found_at": "/Users/USER/Documents/cp-os/skills/cp-3d-market-implied-risk/SKILL.md",
       "sha256": "7b1dcf5967f599a94a6b0c2138a51647a66fd73fc232c385bbec4b20286e02a4",
       "use": "Selected historical CP-3D market/benchmark/technical questions and unchanged low-level cash-flow PV/yield solver; current project instructions govern transport and scope",
       "source_revision": "not recorded at import; bytes pinned by sha256 (registered 2026-11-04 in final-workflow 5755da5 at the cp-os path, no commit named; see source_revision_note)"
     },
     {
-      "consumed_path": "/Users/ericguei/Documents/cp-os/skills/cp-3d-market-implied-risk/references/REF_CP-3D_STEPS.md",
+      "consumed_path": "/Users/USER/Documents/cp-os/skills/cp-3d-market-implied-risk/references/REF_CP-3D_STEPS.md",
       "archive_path": "docs/reuse/selected-methods/skills/cp-3d-market-implied-risk/references/REF_CP-3D_STEPS.md",
-      "exact_copy_found_at": "/Users/ericguei/Documents/cp-os/skills/cp-3d-market-implied-risk/references/REF_CP-3D_STEPS.md",
+      "exact_copy_found_at": "/Users/USER/Documents/cp-os/skills/cp-3d-market-implied-risk/references/REF_CP-3D_STEPS.md",
       "sha256": "e1a3dc9584611edcf1e1dac66345aebba01e86b573c3ac7e7f848b7350683545",
       "use": "Selected historical CP-3D market/benchmark/technical questions and unchanged low-level cash-flow PV/yield solver; current project instructions govern transport and scope",
       "source_revision": "not recorded at import; bytes pinned by sha256 (registered 2026-11-04 in final-workflow 5755da5 at the cp-os path, no commit named; see source_revision_note)",
       "lineage_check": "git blob equal to caos-databricks vendor/deploy-v/skills/cp-3d-market-implied-risk/references/REF_CP-3D_STEPS.md at repo HEAD dfff264 and at its vendor import cc9c3e58 (checked 2026-11-15); a cross-check, not the source this file was copied from"
     },
     {
-      "consumed_path": "/Users/ericguei/Documents/cp-os/skills/cp-3d-market-implied-risk/scripts/bond_analytics.py",
+      "consumed_path": "/Users/USER/Documents/cp-os/skills/cp-3d-market-implied-risk/scripts/bond_analytics.py",
       "archive_path": "docs/reuse/selected-methods/skills/cp-3d-market-implied-risk/scripts/bond_analytics.py",
-      "exact_copy_found_at": "/Users/ericguei/Documents/cp-os/skills/cp-3d-market-implied-risk/scripts/bond_analytics.py",
+      "exact_copy_found_at": "/Users/USER/Documents/cp-os/skills/cp-3d-market-implied-risk/scripts/bond_analytics.py",
       "sha256": "b51b375a1a1c0aff668f85a9550e2d272f5f9a9be142407a68ba7bced0d4bced",
       "use": "Selected historical CP-3D market/benchmark/technical questions and unchanged low-level cash-flow PV/yield solver; current project instructions govern transport and scope"
     },
     {
-      "consumed_path": "/Users/ericguei/Documents/cp-os/skills/cp-3d-market-implied-risk/scripts/cp_tables.py",
+      "consumed_path": "/Users/USER/Documents/cp-os/skills/cp-3d-market-implied-risk/scripts/cp_tables.py",
       "archive_path": "docs/reuse/selected-methods/skills/cp-3d-market-implied-risk/scripts/cp_tables.py",
-      "exact_copy_found_at": "/Users/ericguei/Documents/cp-os/skills/cp-3d-market-implied-risk/scripts/cp_tables.py",
+      "exact_copy_found_at": "/Users/USER/Documents/cp-os/skills/cp-3d-market-implied-risk/scripts/cp_tables.py",
       "sha256": "02590c0bf151e1e291b72214df3311f686d88e576d60a80a6b5ca73ecc44a8d1",
       "use": "Selected historical CP-3D market/benchmark/technical questions and unchanged low-level cash-flow PV/yield solver; current project instructions govern transport and scope"
     },
     {
-      "consumed_path": "/Users/ericguei/Documents/cp-os/skills/cp-3d-market-implied-risk/scripts/validate_handoff.py",
+      "consumed_path": "/Users/USER/Documents/cp-os/skills/cp-3d-market-implied-risk/scripts/validate_handoff.py",
       "archive_path": "docs/reuse/selected-methods/skills/cp-3d-market-implied-risk/scripts/validate_handoff.py",
-      "exact_copy_found_at": "/Users/ericguei/Documents/cp-os/skills/cp-3d-market-implied-risk/scripts/validate_handoff.py",
+      "exact_copy_found_at": "/Users/USER/Documents/cp-os/skills/cp-3d-market-implied-risk/scripts/validate_handoff.py",
       "sha256": "c640aaaf579907c63a72d5a5a0df5134ed89dbf273441846ec399353e3bbac9e",
       "use": "Selected historical CP-3D market/benchmark/technical questions and unchanged low-level cash-flow PV/yield solver; current project instructions govern transport and scope"
     },
     {
-      "consumed_path": "/Users/ericguei/Documents/cp-os/skills/cp-3-relative-value-security-selection/references/REF_CP-3_STEPS.md",
+      "consumed_path": "/Users/USER/Documents/cp-os/skills/cp-3-relative-value-security-selection/references/REF_CP-3_STEPS.md",
       "archive_path": "docs/reuse/selected-methods/skills/cp-3-relative-value-security-selection/references/REF_CP-3_STEPS.md",
-      "exact_copy_found_at": "/Users/ericguei/Documents/cp-os/skills/cp-3-relative-value-security-selection/references/REF_CP-3_STEPS.md",
+      "exact_copy_found_at": "/Users/USER/Documents/cp-os/skills/cp-3-relative-value-security-selection/references/REF_CP-3_STEPS.md",
       "sha256": "a142dd66006ea876e3abc9166e0184fcb0685b32bc5cff703e9158da22fe8767",
       "use": "CP-3 market-intake source gate only; full RV/scoring/portfolio phases not claimed",
       "source_revision": "not recorded at import; bytes pinned by sha256 (registered 2026-11-04 in final-workflow 5755da5 at the cp-os path, no commit named; see source_revision_note)",
       "lineage_check": "git blob equal to caos-databricks vendor/deploy-v/skills/cp-3-relative-value-security-selection/references/REF_CP-3_STEPS.md at repo HEAD dfff264 and at its vendor import cc9c3e58 (checked 2026-11-15); a cross-check, not the source this file was copied from"
     },
     {
-      "consumed_path": "/Users/ericguei/Documents/cp-os/skills/cp-l10-financial-change-screen/SKILL.md",
+      "consumed_path": "/Users/USER/Documents/cp-os/skills/cp-l10-financial-change-screen/SKILL.md",
       "archive_path": "docs/reuse/selected-methods/skills/cp-l10-financial-change-screen/SKILL.md",
-      "exact_copy_found_at": "/Users/ericguei/Documents/cp-os/skills/cp-l10-financial-change-screen/SKILL.md",
+      "exact_copy_found_at": "/Users/USER/Documents/cp-os/skills/cp-l10-financial-change-screen/SKILL.md",
       "sha256": "8ebb7d70cd46a7b4f620e9b036b1a3b29e83da175d8d8bc3f101c8100ac43e30",
       "use": "Five-screen Lite analytical breadth, qualitative evidence/attention allocation and exact topic/table/owner boundaries; current project transport governs, no native acceptance inferred"
     },
     {
-      "consumed_path": "/Users/ericguei/Documents/cp-os/skills/cp-l10-financial-change-screen/references/CP-L10_CP_LITE_ANALYSIS_POLICY_v1.md",
+      "consumed_path": "/Users/USER/Documents/cp-os/skills/cp-l10-financial-change-screen/references/CP-L10_CP_LITE_ANALYSIS_POLICY_v1.md",
       "archive_path": "docs/reuse/selected-methods/skills/cp-l10-financial-change-screen/references/CP-L10_CP_LITE_ANALYSIS_POLICY_v1.md",
-      "exact_copy_found_at": "/Users/ericguei/Documents/cp-os/skills/cp-l10-financial-change-screen/references/CP-L10_CP_LITE_ANALYSIS_POLICY_v1.md",
+      "exact_copy_found_at": "/Users/USER/Documents/cp-os/skills/cp-l10-financial-change-screen/references/CP-L10_CP_LITE_ANALYSIS_POLICY_v1.md",
       "sha256": "d0db9ea2476d8d2f4356b83543d9cf71ea0d86017d8b1e291e0eabf1f02f7372",
       "use": "Five-screen Lite analytical breadth, qualitative evidence/attention allocation and exact topic/table/owner boundaries; current project transport governs, no native acceptance inferred"
     },
     {
-      "consumed_path": "/Users/ericguei/Documents/cp-os/skills/cp-l10-financial-change-screen/references/REF_CP-L10_ADAPTIVE_METHOD.md",
+      "consumed_path": "/Users/USER/Documents/cp-os/skills/cp-l10-financial-change-screen/references/REF_CP-L10_ADAPTIVE_METHOD.md",
       "archive_path": "docs/reuse/selected-methods/skills/cp-l10-financial-change-screen/references/REF_CP-L10_ADAPTIVE_METHOD.md",
-      "exact_copy_found_at": "/Users/ericguei/Documents/cp-os/skills/cp-l10-financial-change-screen/references/REF_CP-L10_ADAPTIVE_METHOD.md",
+      "exact_copy_found_at": "/Users/USER/Documents/cp-os/skills/cp-l10-financial-change-screen/references/REF_CP-L10_ADAPTIVE_METHOD.md",
       "sha256": "0481a8aa4d7a4a4ce1e8004a6faf098d033b05a995c15dcbe1896b64b7c010bb",
       "use": "Five-screen Lite analytical breadth, qualitative evidence/attention allocation and exact topic/table/owner boundaries; current project transport governs, no native acceptance inferred"
     },
     {
-      "consumed_path": "/Users/ericguei/Documents/cp-os/skills/cp-l10-financial-change-screen/references/CP-L10_SCHEMA_REFERENCE.md",
+      "consumed_path": "/Users/USER/Documents/cp-os/skills/cp-l10-financial-change-screen/references/CP-L10_SCHEMA_REFERENCE.md",
       "archive_path": "docs/reuse/selected-methods/skills/cp-l10-financial-change-screen/references/CP-L10_SCHEMA_REFERENCE.md",
-      "exact_copy_found_at": "/Users/ericguei/Documents/cp-os/skills/cp-l10-financial-change-screen/references/CP-L10_SCHEMA_REFERENCE.md",
+      "exact_copy_found_at": "/Users/USER/Documents/cp-os/skills/cp-l10-financial-change-screen/references/CP-L10_SCHEMA_REFERENCE.md",
       "sha256": "046bf01ddf46c65103bfe6e601db65de5813c5b76f18c9b96612d19c05bdd58f",
       "use": "Five-screen Lite analytical breadth, qualitative evidence/attention allocation and exact topic/table/owner boundaries; current project transport governs, no native acceptance inferred"
     },
     {
-      "consumed_path": "/Users/ericguei/Documents/cp-os/skills/cp-l10-financial-change-screen/references/REF_CP-L20_ADAPTIVE_METHOD.md",
+      "consumed_path": "/Users/USER/Documents/cp-os/skills/cp-l10-financial-change-screen/references/REF_CP-L20_ADAPTIVE_METHOD.md",
       "archive_path": "docs/reuse/selected-methods/skills/cp-l10-financial-change-screen/references/REF_CP-L20_ADAPTIVE_METHOD.md",
-      "exact_copy_found_at": "/Users/ericguei/Documents/cp-os/skills/cp-l10-financial-change-screen/references/REF_CP-L20_ADAPTIVE_METHOD.md",
+      "exact_copy_found_at": "/Users/USER/Documents/cp-os/skills/cp-l10-financial-change-screen/references/REF_CP-L20_ADAPTIVE_METHOD.md",
       "sha256": "0d9a308aaa6e4a7eb911b0a8d30b5ef6dd693038edb9e4c25af726fa0746ac7d",
       "use": "Five-screen Lite analytical breadth, qualitative evidence/attention allocation and exact topic/table/owner boundaries; current project transport governs, no native acceptance inferred"
     },
     {
-      "consumed_path": "/Users/ericguei/Documents/cp-os/skills/cp-l10-financial-change-screen/references/CP-L20_SCHEMA_REFERENCE.md",
+      "consumed_path": "/Users/USER/Documents/cp-os/skills/cp-l10-financial-change-screen/references/CP-L20_SCHEMA_REFERENCE.md",
       "archive_path": "docs/reuse/selected-methods/skills/cp-l10-financial-change-screen/references/CP-L20_SCHEMA_REFERENCE.md",
-      "exact_copy_found_at": "/Users/ericguei/Documents/cp-os/skills/cp-l10-financial-change-screen/references/CP-L20_SCHEMA_REFERENCE.md",
+      "exact_copy_found_at": "/Users/USER/Documents/cp-os/skills/cp-l10-financial-change-screen/references/CP-L20_SCHEMA_REFERENCE.md",
       "sha256": "1252e3a06b1831af38c18278e5aa9a825ef680c0416022954481e47e166b5eb8",
       "use": "Five-screen Lite analytical breadth, qualitative evidence/attention allocation and exact topic/table/owner boundaries; current project transport governs, no native acceptance inferred"
     },
     {
-      "consumed_path": "/Users/ericguei/Documents/cp-os/skills/cp-l10-financial-change-screen/references/REF_CP-L23_ADAPTIVE_METHOD.md",
+      "consumed_path": "/Users/USER/Documents/cp-os/skills/cp-l10-financial-change-screen/references/REF_CP-L23_ADAPTIVE_METHOD.md",
       "archive_path": "docs/reuse/selected-methods/skills/cp-l10-financial-change-screen/references/REF_CP-L23_ADAPTIVE_METHOD.md",
-      "exact_copy_found_at": "/Users/ericguei/Documents/cp-os/skills/cp-l10-financial-change-screen/references/REF_CP-L23_ADAPTIVE_METHOD.md",
+      "exact_copy_found_at": "/Users/USER/Documents/cp-os/skills/cp-l10-financial-change-screen/references/REF_CP-L23_ADAPTIVE_METHOD.md",
       "sha256": "51e2d1bfc4f66cc4a0a8375230572f28d9c757c706fb50ab8f7b56a409c1f0d7",
       "use": "Five-screen Lite analytical breadth, qualitative evidence/attention allocation and exact topic/table/owner boundaries; current project transport governs, no native acceptance inferred"
     },
     {
-      "consumed_path": "/Users/ericguei/Documents/cp-os/skills/cp-l10-financial-change-screen/references/CP-L23_SCHEMA_REFERENCE.md",
+      "consumed_path": "/Users/USER/Documents/cp-os/skills/cp-l10-financial-change-screen/references/CP-L23_SCHEMA_REFERENCE.md",
       "archive_path": "docs/reuse/selected-methods/skills/cp-l10-financial-change-screen/references/CP-L23_SCHEMA_REFERENCE.md",
-      "exact_copy_found_at": "/Users/ericguei/Documents/cp-os/skills/cp-l10-financial-change-screen/references/CP-L23_SCHEMA_REFERENCE.md",
+      "exact_copy_found_at": "/Users/USER/Documents/cp-os/skills/cp-l10-financial-change-screen/references/CP-L23_SCHEMA_REFERENCE.md",
       "sha256": "9a25fee9bd063fc6c3074f08468c5d823f84be5ea965f8c083a590117e1c2b12",
       "use": "Five-screen Lite analytical breadth, qualitative evidence/attention allocation and exact topic/table/owner boundaries; current project transport governs, no native acceptance inferred"
     },
     {
-      "consumed_path": "/Users/ericguei/Documents/cp-os/skills/cp-l10-financial-change-screen/references/REF_CP-L30_ADAPTIVE_METHOD.md",
+      "consumed_path": "/Users/USER/Documents/cp-os/skills/cp-l10-financial-change-screen/references/REF_CP-L30_ADAPTIVE_METHOD.md",
       "archive_path": "docs/reuse/selected-methods/skills/cp-l10-financial-change-screen/references/REF_CP-L30_ADAPTIVE_METHOD.md",
-      "exact_copy_found_at": "/Users/ericguei/Documents/cp-os/skills/cp-l10-financial-change-screen/references/REF_CP-L30_ADAPTIVE_METHOD.md",
+      "exact_copy_found_at": "/Users/USER/Documents/cp-os/skills/cp-l10-financial-change-screen/references/REF_CP-L30_ADAPTIVE_METHOD.md",
       "sha256": "852059fa62c41cec9c2a8164a135b1db9496c6c518339fa3c0eb0003718543a1",
       "use": "Five-screen Lite analytical breadth, qualitative evidence/attention allocation and exact topic/table/owner boundaries; current project transport governs, no native acceptance inferred"
     },
     {
-      "consumed_path": "/Users/ericguei/Documents/cp-os/skills/cp-l10-financial-change-screen/references/CP-L30_SCHEMA_REFERENCE.md",
+      "consumed_path": "/Users/USER/Documents/cp-os/skills/cp-l10-financial-change-screen/references/CP-L30_SCHEMA_REFERENCE.md",
       "archive_path": "docs/reuse/selected-methods/skills/cp-l10-financial-change-screen/references/CP-L30_SCHEMA_REFERENCE.md",
-      "exact_copy_found_at": "/Users/ericguei/Documents/cp-os/skills/cp-l10-financial-change-screen/references/CP-L30_SCHEMA_REFERENCE.md",
+      "exact_copy_found_at": "/Users/USER/Documents/cp-os/skills/cp-l10-financial-change-screen/references/CP-L30_SCHEMA_REFERENCE.md",
       "sha256": "5a63b25907de96567b01ac1ebb401835911e4e95c060cc8a52ef5663fa9d10a8",
       "use": "Five-screen Lite analytical breadth, qualitative evidence/attention allocation and exact topic/table/owner boundaries; current project transport governs, no native acceptance inferred"
     },
     {
-      "consumed_path": "/Users/ericguei/Documents/cp-os/skills/cp-l10-financial-change-screen/references/REF_CP-L40_ADAPTIVE_METHOD.md",
+      "consumed_path": "/Users/USER/Documents/cp-os/skills/cp-l10-financial-change-screen/references/REF_CP-L40_ADAPTIVE_METHOD.md",
       "archive_path": "docs/reuse/selected-methods/skills/cp-l10-financial-change-screen/references/REF_CP-L40_ADAPTIVE_METHOD.md",
-      "exact_copy_found_at": "/Users/ericguei/Documents/cp-os/skills/cp-l10-financial-change-screen/references/REF_CP-L40_ADAPTIVE_METHOD.md",
+      "exact_copy_found_at": "/Users/USER/Documents/cp-os/skills/cp-l10-financial-change-screen/references/REF_CP-L40_ADAPTIVE_METHOD.md",
       "sha256": "f80e3cb4f91c8fef9c2ea83c6af385864876d8683f65d79e9895a2f1ed8e0874",
       "use": "Five-screen Lite analytical breadth, qualitative evidence/attention allocation and exact topic/table/owner boundaries; current project transport governs, no native acceptance inferred"
     },
     {
-      "consumed_path": "/Users/ericguei/Documents/cp-os/skills/cp-l10-financial-change-screen/references/CP-L40_SCHEMA_REFERENCE.md",
+      "consumed_path": "/Users/USER/Documents/cp-os/skills/cp-l10-financial-change-screen/references/CP-L40_SCHEMA_REFERENCE.md",
       "archive_path": "docs/reuse/selected-methods/skills/cp-l10-financial-change-screen/references/CP-L40_SCHEMA_REFERENCE.md",
-      "exact_copy_found_at": "/Users/ericguei/Documents/cp-os/skills/cp-l10-financial-change-screen/references/CP-L40_SCHEMA_REFERENCE.md",
+      "exact_copy_found_at": "/Users/USER/Documents/cp-os/skills/cp-l10-financial-change-screen/references/CP-L40_SCHEMA_REFERENCE.md",
       "sha256": "8f36b959e62c3bcc9484de7db83bf5c9aadee15d7fc78f41d0bd0268d684d060",
       "use": "Five-screen Lite analytical breadth, qualitative evidence/attention allocation and exact topic/table/owner boundaries; current project transport governs, no native acceptance inferred"
     },
     {
-      "consumed_path": "/Users/ericguei/Documents/cp-os/skills/cp-l10-financial-change-screen/references/CP-L10__lite_financial_change_screen__payload.schema.txt",
+      "consumed_path": "/Users/USER/Documents/cp-os/skills/cp-l10-financial-change-screen/references/CP-L10__lite_financial_change_screen__payload.schema.txt",
       "archive_path": "docs/reuse/selected-methods/skills/cp-l10-financial-change-screen/references/CP-L10__lite_financial_change_screen__payload.schema.txt",
-      "exact_copy_found_at": "/Users/ericguei/Documents/cp-os/skills/cp-l10-financial-change-screen/references/CP-L10__lite_financial_change_screen__payload.schema.txt",
+      "exact_copy_found_at": "/Users/USER/Documents/cp-os/skills/cp-l10-financial-change-screen/references/CP-L10__lite_financial_change_screen__payload.schema.txt",
       "sha256": "626c02730fd75aac79cbbe7f4e31e532bac139fbbf59733ea992ab84dc408798",
       "use": "Selected Lite owned-object, confidence, posture and flag literals; full native schema acceptance not claimed because its external base reference is absent"
     },
     {
-      "consumed_path": "/Users/ericguei/Documents/cp-os/skills/cp-l10-financial-change-screen/references/CP-L20__lite_fundamental_credit_screen__payload.schema.txt",
+      "consumed_path": "/Users/USER/Documents/cp-os/skills/cp-l10-financial-change-screen/references/CP-L20__lite_fundamental_credit_screen__payload.schema.txt",
       "archive_path": "docs/reuse/selected-methods/skills/cp-l10-financial-change-screen/references/CP-L20__lite_fundamental_credit_screen__payload.schema.txt",
-      "exact_copy_found_at": "/Users/ericguei/Documents/cp-os/skills/cp-l10-financial-change-screen/references/CP-L20__lite_fundamental_credit_screen__payload.schema.txt",
+      "exact_copy_found_at": "/Users/USER/Documents/cp-os/skills/cp-l10-financial-change-screen/references/CP-L20__lite_fundamental_credit_screen__payload.schema.txt",
       "sha256": "add8c24314bcc3457fbe2686ce77431f813ca94d07d337a19b89db44b3c95b2d",
       "use": "Selected Lite owned-object, confidence, posture and flag literals; full native schema acceptance not claimed because its external base reference is absent"
     },
     {
-      "consumed_path": "/Users/ericguei/Documents/cp-os/skills/cp-l10-financial-change-screen/references/CP-L23__lite_liquidity_sensitivity_screen__payload.schema.txt",
+      "consumed_path": "/Users/USER/Documents/cp-os/skills/cp-l10-financial-change-screen/references/CP-L23__lite_liquidity_sensitivity_screen__payload.schema.txt",
       "archive_path": "docs/reuse/selected-methods/skills/cp-l10-financial-change-screen/references/CP-L23__lite_liquidity_sensitivity_screen__payload.schema.txt",
-      "exact_copy_found_at": "/Users/ericguei/Documents/cp-os/skills/cp-l10-financial-change-screen/references/CP-L23__lite_liquidity_sensitivity_screen__payload.schema.txt",
+      "exact_copy_found_at": "/Users/USER/Documents/cp-os/skills/cp-l10-financial-change-screen/references/CP-L23__lite_liquidity_sensitivity_screen__payload.schema.txt",
       "sha256": "6f42616a2d388678b799b2faf40f7110f02ad6d03e78a855c49f2a63ea9ff937",
       "use": "Selected Lite owned-object, confidence, posture and flag literals; full native schema acceptance not claimed because its external base reference is absent"
     },
     {
-      "consumed_path": "/Users/ericguei/Documents/cp-os/skills/cp-l10-financial-change-screen/references/CP-L30__lite_market_recovery_opportunity_screen__payload.schema.txt",
+      "consumed_path": "/Users/USER/Documents/cp-os/skills/cp-l10-financial-change-screen/references/CP-L30__lite_market_recovery_opportunity_screen__payload.schema.txt",
       "archive_path": "docs/reuse/selected-methods/skills/cp-l10-financial-change-screen/references/CP-L30__lite_market_recovery_opportunity_screen__payload.schema.txt",
-      "exact_copy_found_at": "/Users/ericguei/Documents/cp-os/skills/cp-l10-financial-change-screen/references/CP-L30__lite_market_recovery_opportunity_screen__payload.schema.txt",
+      "exact_copy_found_at": "/Users/USER/Documents/cp-os/skills/cp-l10-financial-change-screen/references/CP-L30__lite_market_recovery_opportunity_screen__payload.schema.txt",
       "sha256": "cb8d51ef89937f03be38afee3f7aac48b266962c71c3701b28be0b7b62eaf673",
       "use": "Selected Lite owned-object, confidence, posture and flag literals; full native schema acceptance not claimed because its external base reference is absent"
     },
     {
-      "consumed_path": "/Users/ericguei/Documents/cp-os/skills/cp-l10-financial-change-screen/references/CP-L40__lite_legal_structure_capacity_screen__payload.schema.txt",
+      "consumed_path": "/Users/USER/Documents/cp-os/skills/cp-l10-financial-change-screen/references/CP-L40__lite_legal_structure_capacity_screen__payload.schema.txt",
       "archive_path": "docs/reuse/selected-methods/skills/cp-l10-financial-change-screen/references/CP-L40__lite_legal_structure_capacity_screen__payload.schema.txt",
-      "exact_copy_found_at": "/Users/ericguei/Documents/cp-os/skills/cp-l10-financial-change-screen/references/CP-L40__lite_legal_structure_capacity_screen__payload.schema.txt",
+      "exact_copy_found_at": "/Users/USER/Documents/cp-os/skills/cp-l10-financial-change-screen/references/CP-L40__lite_legal_structure_capacity_screen__payload.schema.txt",
       "sha256": "7a2b5cd8547846b381fa72b831ba8a26323403ed045f63bb3a3a2425205329a0",
       "use": "Selected Lite owned-object, confidence, posture and flag literals; full native schema acceptance not claimed because its external base reference is absent"
     },
     {
-      "consumed_path": "/Users/ericguei/Documents/cp-os/skills/cp-2d-liquidity-cash-flow-bridge/SKILL.md",
+      "consumed_path": "/Users/USER/Documents/cp-os/skills/cp-2d-liquidity-cash-flow-bridge/SKILL.md",
       "archive_path": "docs/reuse/selected-methods/skills/cp-2d-liquidity-cash-flow-bridge/SKILL.md",
       "exact_copy_found_at": null,
-      "edited_copy_of": "/Users/ericguei/Documents/caos-databricks/vendor/deploy-v/skills/cp-2d-liquidity-cash-flow-bridge/SKILL.md",
+      "edited_copy_of": "/Users/USER/Documents/caos-databricks/vendor/deploy-v/skills/cp-2d-liquidity-cash-flow-bridge/SKILL.md",
       "sha256": "8a2e0c15b24c7fabe4068c5f6f79ca2951b43129c96c8967901ccf95c5aea111",
       "use": "Selected analytical breadth/labels; current project instructions govern transport, no inherited export/approval/completeness rulings.",
       "source_sha256": "38ef402cc68f0844e3832def74a123229aa30132058cd1b4ad6a3439523f53d8",
       "edit": "qa_status map sentence removed from common rule 10 (host overrides qa_status; canon D1 map not supplied here); wording from caos-databricks vendor/deploy-v (last changed 592ee83a, repo HEAD dfff264); sha256 is this edited file, source_sha256 the byte-for-byte copy"
     },
     {
-      "consumed_path": "/Users/ericguei/Documents/cp-os/skills/cp-2d-liquidity-cash-flow-bridge/references/REF_CP-2D_STEPS.md",
+      "consumed_path": "/Users/USER/Documents/cp-os/skills/cp-2d-liquidity-cash-flow-bridge/references/REF_CP-2D_STEPS.md",
       "archive_path": "docs/reuse/selected-methods/skills/cp-2d-liquidity-cash-flow-bridge/references/REF_CP-2D_STEPS.md",
-      "exact_copy_found_at": "/Users/ericguei/Documents/caos-databricks/vendor/deploy-v/skills/cp-2d-liquidity-cash-flow-bridge/references/REF_CP-2D_STEPS.md",
+      "exact_copy_found_at": "/Users/USER/Documents/caos-databricks/vendor/deploy-v/skills/cp-2d-liquidity-cash-flow-bridge/references/REF_CP-2D_STEPS.md",
       "sha256": "2e03ebd53839b0744912cc07368ca498b24ffacffd55ee0c31000257c4de7e1b",
       "use": "byte-for-byte copy of caos-databricks vendor/deploy-v (last changed 592ee83a, repo HEAD dfff264); historical evidence, not inherited authority"
     },
     {
-      "consumed_path": "/Users/ericguei/Documents/cp-os/skills/cp-2d-liquidity-cash-flow-bridge/references/CP-2D_SCHEMA_REFERENCE.md",
+      "consumed_path": "/Users/USER/Documents/cp-os/skills/cp-2d-liquidity-cash-flow-bridge/references/CP-2D_SCHEMA_REFERENCE.md",
       "archive_path": "docs/reuse/selected-methods/skills/cp-2d-liquidity-cash-flow-bridge/references/CP-2D_SCHEMA_REFERENCE.md",
-      "exact_copy_found_at": "/Users/ericguei/Documents/cp-os/skills/cp-2d-liquidity-cash-flow-bridge/references/CP-2D_SCHEMA_REFERENCE.md",
+      "exact_copy_found_at": "/Users/USER/Documents/cp-os/skills/cp-2d-liquidity-cash-flow-bridge/references/CP-2D_SCHEMA_REFERENCE.md",
       "sha256": "efbb5aed687073d59a1862aa8f88b0ac35540dcf823947c68478919dab6dafe5",
       "use": "Selected analytical breadth/labels; current project instructions govern transport, no inherited export/approval/completeness rulings."
     },
     {
-      "consumed_path": "/Users/ericguei/Documents/cp-os/skills/cp-0-source-readiness/SKILL.md",
+      "consumed_path": "/Users/USER/Documents/cp-os/skills/cp-0-source-readiness/SKILL.md",
       "archive_path": "docs/reuse/selected-methods/skills/cp-0-source-readiness/SKILL.md",
       "sha256": "20a3634526648cd4983fcfd412ba68162b9e832781abd7c90b5caa7a236a3e1d",
       "deploy_v_check": "byte-identical to Deploy V c4d2e35611151a7f5b45dbb759d92e968c5478b7 skills/cp-0-source-readiness/SKILL.md (checked 2026-11-13, git blob hash equal); sent to CP-OS CP-0 from Task 3 of the Deploy V methods plan",
@@ -535,14 +535,14 @@
       "use": "Preparation/readiness analytical duties and P1-P8 packaging evidence. Current project rules govern transport, Excel input only and no agents; historical approval/export/role machinery is not inherited authority."
     },
     {
-      "consumed_path": "/Users/ericguei/Documents/cp-os/skills/cp-0-source-readiness/references/REF_CP-PARSE_STEPS.md",
+      "consumed_path": "/Users/USER/Documents/cp-os/skills/cp-0-source-readiness/references/REF_CP-PARSE_STEPS.md",
       "archive_path": "docs/reuse/selected-methods/skills/cp-0-source-readiness/references/REF_CP-PARSE_STEPS.md",
       "sha256": "bacd9bc112fdef8b7207f5362490bb893d4451fee5075a5b1029f9a7c2fe6b75",
       "source_revision": "cp-os e67bf0cda2dc80d7a744bee371c4fb3c7b8b8df7 (selected files clean)",
       "use": "Preparation/readiness analytical duties and P1-P8 packaging evidence. Current project rules govern transport, Excel input only and no agents; historical approval/export/role machinery is not inherited authority."
     },
     {
-      "consumed_path": "/Users/ericguei/Documents/cp-os/skills/cp-0-source-readiness/references/CP-PARSE_SCHEMA_REFERENCE.md",
+      "consumed_path": "/Users/USER/Documents/cp-os/skills/cp-0-source-readiness/references/CP-PARSE_SCHEMA_REFERENCE.md",
       "archive_path": "docs/reuse/selected-methods/skills/cp-0-source-readiness/references/CP-PARSE_SCHEMA_REFERENCE.md",
       "sha256": "1790ab8edd56e1d3cdaa5c357a0acf09fb50fc1ec141a2e12976e9499a3d6d98",
       "source_revision": "cp-os e67bf0cda2dc80d7a744bee371c4fb3c7b8b8df7 (selected files clean)",
@@ -553,7 +553,7 @@
       "archive_path": "docs/reuse/selected-methods/skills/cp-1d-earnings-quality/SKILL.md",
       "sha256": "56b74b7274a9f0130419efd52e4b9dfe0b8820cff8749bee762e3266980ec344",
       "exact_copy_found_at": null,
-      "edited_copy_of": "/Users/ericguei/Documents/cp-os/skills/cp-1d-earnings-quality/SKILL.md",
+      "edited_copy_of": "/Users/USER/Documents/cp-os/skills/cp-1d-earnings-quality/SKILL.md",
       "source_revision": "cp-os e67bf0cda2dc80d7a744bee371c4fb3c7b8b8df7 (selected files clean)",
       "use": "Selected CP-1D/absorbed CP-1E analytical duties; current project transport, orchestration, delivery and Excel-input-only rules govern.",
       "source_sha256": "9682b2da83fe7fd3288cae31fc5d1cf7f6d2daa3de2fac297637fe13d5e8e2ae",
@@ -563,7 +563,7 @@
       "consumed_path": "skills/cp-1d-earnings-quality/references/CP-1D_SCHEMA_REFERENCE.md",
       "archive_path": "docs/reuse/selected-methods/skills/cp-1d-earnings-quality/references/CP-1D_SCHEMA_REFERENCE.md",
       "sha256": "44f0fc70c7ffc9db261c3d7214491e34980ef2b3fdf1112976b669a687b47465",
-      "exact_copy_found_at": "/Users/ericguei/Documents/cp-os/skills/cp-1d-earnings-quality/references/CP-1D_SCHEMA_REFERENCE.md",
+      "exact_copy_found_at": "/Users/USER/Documents/cp-os/skills/cp-1d-earnings-quality/references/CP-1D_SCHEMA_REFERENCE.md",
       "source_revision": "cp-os e67bf0cda2dc80d7a744bee371c4fb3c7b8b8df7 (selected files clean)",
       "use": "Selected CP-1D/absorbed CP-1E analytical duties; current project transport, orchestration, delivery and Excel-input-only rules govern."
     },
@@ -571,210 +571,210 @@
       "consumed_path": "skills/cp-1d-earnings-quality/references/CP-1E_SCHEMA_REFERENCE.md",
       "archive_path": "docs/reuse/selected-methods/skills/cp-1d-earnings-quality/references/CP-1E_SCHEMA_REFERENCE.md",
       "sha256": "709dd5cb14cab3fbd2d73f586be4349a06e8b5e785b43176b70b5e47cf476582",
-      "exact_copy_found_at": "/Users/ericguei/Documents/cp-os/skills/cp-1d-earnings-quality/references/CP-1E_SCHEMA_REFERENCE.md",
+      "exact_copy_found_at": "/Users/USER/Documents/cp-os/skills/cp-1d-earnings-quality/references/CP-1E_SCHEMA_REFERENCE.md",
       "source_revision": "cp-os e67bf0cda2dc80d7a744bee371c4fb3c7b8b8df7 (selected files clean)",
       "use": "Selected CP-1D/absorbed CP-1E analytical duties; current project transport, orchestration, delivery and Excel-input-only rules govern."
     },
     {
       "consumed_path": "skills/cp-0-source-readiness/references/CP-0_SCHEMA_REFERENCE.md",
       "archive_path": "docs/reuse/selected-methods/skills/cp-0-source-readiness/references/CP-0_SCHEMA_REFERENCE.md",
-      "exact_copy_found_at": "/Users/ericguei/Documents/cp-os/skills/cp-0-source-readiness/references/CP-0_SCHEMA_REFERENCE.md",
+      "exact_copy_found_at": "/Users/USER/Documents/cp-os/skills/cp-0-source-readiness/references/CP-0_SCHEMA_REFERENCE.md",
       "sha256": "2f50e7d03351d514deb509d8393d0049cb09c16e65f7cc1f4bbb314e4ad0af26"
     },
     {
       "consumed_path": "skills/cp-0-source-readiness/references/CP-0_SYSTEM_REFERENCE.md",
       "archive_path": "docs/reuse/selected-methods/skills/cp-0-source-readiness/references/CP-0_SYSTEM_REFERENCE.md",
-      "exact_copy_found_at": "/Users/ericguei/Documents/cp-os/skills/cp-0-source-readiness/references/CP-0_SYSTEM_REFERENCE.md",
+      "exact_copy_found_at": "/Users/USER/Documents/cp-os/skills/cp-0-source-readiness/references/CP-0_SYSTEM_REFERENCE.md",
       "sha256": "b1dc690e2ddb45632280abaa1f5a3d9ba3f63bd02f0871e8a83e7888f0320b40"
     },
     {
       "consumed_path": "skills/cp-0-source-readiness/references/CP-0__SourceReadiness__payload.schema.txt",
       "archive_path": "docs/reuse/selected-methods/skills/cp-0-source-readiness/references/CP-0__SourceReadiness__payload.schema.txt",
-      "exact_copy_found_at": "/Users/ericguei/Documents/cp-os/skills/cp-0-source-readiness/references/CP-0__SourceReadiness__payload.schema.txt",
+      "exact_copy_found_at": "/Users/USER/Documents/cp-os/skills/cp-0-source-readiness/references/CP-0__SourceReadiness__payload.schema.txt",
       "sha256": "d867d1b640bbe16c515822ae1d1302c6336ecf12d0740ec678eb6af2b1e25c87"
     },
     {
       "consumed_path": "skills/cp-0-source-readiness/references/CP-PARSE__DataPreparation__payload.schema.txt",
       "archive_path": "docs/reuse/selected-methods/skills/cp-0-source-readiness/references/CP-PARSE__DataPreparation__payload.schema.txt",
-      "exact_copy_found_at": "/Users/ericguei/Documents/cp-os/skills/cp-0-source-readiness/references/CP-PARSE__DataPreparation__payload.schema.txt",
+      "exact_copy_found_at": "/Users/USER/Documents/cp-os/skills/cp-0-source-readiness/references/CP-PARSE__DataPreparation__payload.schema.txt",
       "sha256": "6fd06964b8b16a2646495d1ee822bfd10df184f64e7d6a2054e19ff57b65fad5"
     },
     {
       "consumed_path": "skills/cp-0-source-readiness/references/CP0_CAPACITY_RESUME_CONTRACT_v1.md",
       "archive_path": "docs/reuse/selected-methods/skills/cp-0-source-readiness/references/CP0_CAPACITY_RESUME_CONTRACT_v1.md",
-      "exact_copy_found_at": "/Users/ericguei/Documents/cp-os/skills/cp-0-source-readiness/references/CP0_CAPACITY_RESUME_CONTRACT_v1.md",
+      "exact_copy_found_at": "/Users/USER/Documents/cp-os/skills/cp-0-source-readiness/references/CP0_CAPACITY_RESUME_CONTRACT_v1.md",
       "sha256": "bed5d23e11ef87912fe2fdd5cac8682038788dae9fb37816e9156d611a455a7d"
     },
     {
       "consumed_path": "skills/cp-0-source-readiness/references/CP0_PROFILE_ANCHOR_CONTRACT_v1.md",
       "archive_path": "docs/reuse/selected-methods/skills/cp-0-source-readiness/references/CP0_PROFILE_ANCHOR_CONTRACT_v1.md",
-      "exact_copy_found_at": "/Users/ericguei/Documents/cp-os/skills/cp-0-source-readiness/references/CP0_PROFILE_ANCHOR_CONTRACT_v1.md",
+      "exact_copy_found_at": "/Users/USER/Documents/cp-os/skills/cp-0-source-readiness/references/CP0_PROFILE_ANCHOR_CONTRACT_v1.md",
       "sha256": "45ad6ab2eeeb754ae46a716b7e947e3acac214ea2696ef5e072f10ef7d36451a"
     },
     {
       "consumed_path": "skills/cp-0-source-readiness/references/REF_CP-0_STEPS.md",
       "archive_path": "docs/reuse/selected-methods/skills/cp-0-source-readiness/references/REF_CP-0_STEPS.md",
-      "exact_copy_found_at": "/Users/ericguei/Documents/cp-os/skills/cp-0-source-readiness/references/REF_CP-0_STEPS.md",
+      "exact_copy_found_at": "/Users/USER/Documents/cp-os/skills/cp-0-source-readiness/references/REF_CP-0_STEPS.md",
       "sha256": "d367c334f529a33e371b6c9568b5dce8d487e0f0d1bee3e8c15830555e46e78a",
       "deploy_v_check": "byte-identical to Deploy V c4d2e35611151a7f5b45dbb759d92e968c5478b7 skills/cp-0-source-readiness/references/REF_CP-0_STEPS.md (checked 2026-11-13, git blob hash equal); sent to CP-OS CP-0 from Task 3 of the Deploy V methods plan"
     },
     {
       "consumed_path": "skills/cp-1b-earnings-delta/SKILL.md",
       "archive_path": "docs/reuse/selected-methods/skills/cp-1b-earnings-delta/SKILL.md",
-      "exact_copy_found_at": "/Users/ericguei/Documents/cp-os/skills/cp-1b-earnings-delta/SKILL.md",
+      "exact_copy_found_at": "/Users/USER/Documents/cp-os/skills/cp-1b-earnings-delta/SKILL.md",
       "sha256": "b3a9bd8091c1ea7995a68e909b73ffbc178cf57f4b8021630c3ec4f467ecb569",
       "source_revision": "cp-os b57a344 (copied 2026-11-10 in this repo's a2f5e8e, whose message and companions_note name that commit)"
     },
     {
       "consumed_path": "skills/cp-1b-earnings-delta/references/CP-1B_SCHEMA_REFERENCE.md",
       "archive_path": "docs/reuse/selected-methods/skills/cp-1b-earnings-delta/references/CP-1B_SCHEMA_REFERENCE.md",
-      "exact_copy_found_at": "/Users/ericguei/Documents/cp-os/skills/cp-1b-earnings-delta/references/CP-1B_SCHEMA_REFERENCE.md",
+      "exact_copy_found_at": "/Users/USER/Documents/cp-os/skills/cp-1b-earnings-delta/references/CP-1B_SCHEMA_REFERENCE.md",
       "sha256": "cf6f1e4163a0e329789f2c66b3c11c4e2156e773982d9e9f425ee72b43711360"
     },
     {
       "consumed_path": "skills/cp-1b-earnings-delta/references/CP-1B_SYSTEM_REFERENCE.md",
       "archive_path": "docs/reuse/selected-methods/skills/cp-1b-earnings-delta/references/CP-1B_SYSTEM_REFERENCE.md",
-      "exact_copy_found_at": "/Users/ericguei/Documents/cp-os/skills/cp-1b-earnings-delta/references/CP-1B_SYSTEM_REFERENCE.md",
+      "exact_copy_found_at": "/Users/USER/Documents/cp-os/skills/cp-1b-earnings-delta/references/CP-1B_SYSTEM_REFERENCE.md",
       "sha256": "df89a76fd84fb619b73c28339f3f9a6d5c3ab9d281bc0de984735a2c4cb1753f"
     },
     {
       "consumed_path": "skills/cp-1b-earnings-delta/references/REF_CP-1B_STEPS.md",
       "archive_path": "docs/reuse/selected-methods/skills/cp-1b-earnings-delta/references/REF_CP-1B_STEPS.md",
-      "exact_copy_found_at": "/Users/ericguei/Documents/cp-os/skills/cp-1b-earnings-delta/references/REF_CP-1B_STEPS.md",
+      "exact_copy_found_at": "/Users/USER/Documents/cp-os/skills/cp-1b-earnings-delta/references/REF_CP-1B_STEPS.md",
       "sha256": "5a5baa859471254ecba1807dfd067a8cc648fb5e0d40907dbc45a9b1edbd4889",
       "source_revision": "cp-os b57a344 (copied 2026-11-10 in this repo's a2f5e8e, whose message and companions_note name that commit)"
     },
     {
       "consumed_path": "skills/cp-1c-peer-benchmark/references/CP-1C_SCHEMA_REFERENCE.md",
       "archive_path": "docs/reuse/selected-methods/skills/cp-1c-peer-benchmark/references/CP-1C_SCHEMA_REFERENCE.md",
-      "exact_copy_found_at": "/Users/ericguei/Documents/cp-os/skills/cp-1c-peer-benchmark/references/CP-1C_SCHEMA_REFERENCE.md",
+      "exact_copy_found_at": "/Users/USER/Documents/cp-os/skills/cp-1c-peer-benchmark/references/CP-1C_SCHEMA_REFERENCE.md",
       "sha256": "b85719891c3b688f49dd636416f02460d1d9b71e33d8fa01a6bc42ef335f7aad"
     },
     {
       "consumed_path": "skills/cp-1c-peer-benchmark/references/CP-1C_SYSTEM_REFERENCE.md",
       "archive_path": "docs/reuse/selected-methods/skills/cp-1c-peer-benchmark/references/CP-1C_SYSTEM_REFERENCE.md",
-      "exact_copy_found_at": "/Users/ericguei/Documents/cp-os/skills/cp-1c-peer-benchmark/references/CP-1C_SYSTEM_REFERENCE.md",
+      "exact_copy_found_at": "/Users/USER/Documents/cp-os/skills/cp-1c-peer-benchmark/references/CP-1C_SYSTEM_REFERENCE.md",
       "sha256": "d85a1cc17ec9a079054a58761efba98ccacef58cd0a15ed084e39b5b38104048"
     },
     {
       "consumed_path": "skills/cp-1c-peer-benchmark/references/CP-1C__PeerBenchmark__payload.schema.txt",
       "archive_path": "docs/reuse/selected-methods/skills/cp-1c-peer-benchmark/references/CP-1C__PeerBenchmark__payload.schema.txt",
-      "exact_copy_found_at": "/Users/ericguei/Documents/cp-os/skills/cp-1c-peer-benchmark/references/CP-1C__PeerBenchmark__payload.schema.txt",
+      "exact_copy_found_at": "/Users/USER/Documents/cp-os/skills/cp-1c-peer-benchmark/references/CP-1C__PeerBenchmark__payload.schema.txt",
       "sha256": "76de802455505ba43735873a84d9d87ade3b9c673493738f4194e3605d8081e5"
     },
     {
       "consumed_path": "skills/cp-2a-downside-pathway/references/CP-2A_SCHEMA_REFERENCE.md",
       "archive_path": "docs/reuse/selected-methods/skills/cp-2a-downside-pathway/references/CP-2A_SCHEMA_REFERENCE.md",
-      "exact_copy_found_at": "/Users/ericguei/Documents/cp-os/skills/cp-2a-downside-pathway/references/CP-2A_SCHEMA_REFERENCE.md",
+      "exact_copy_found_at": "/Users/USER/Documents/cp-os/skills/cp-2a-downside-pathway/references/CP-2A_SCHEMA_REFERENCE.md",
       "sha256": "70bd7ca83ee7240e77578a8f8537de7484f5edb1394610fbe1ae038eab30c0a3"
     },
     {
       "consumed_path": "skills/cp-2a-downside-pathway/references/CP-2A_SYSTEM_REFERENCE.md",
       "archive_path": "docs/reuse/selected-methods/skills/cp-2a-downside-pathway/references/CP-2A_SYSTEM_REFERENCE.md",
-      "exact_copy_found_at": "/Users/ericguei/Documents/cp-os/skills/cp-2a-downside-pathway/references/CP-2A_SYSTEM_REFERENCE.md",
+      "exact_copy_found_at": "/Users/USER/Documents/cp-os/skills/cp-2a-downside-pathway/references/CP-2A_SYSTEM_REFERENCE.md",
       "sha256": "7e7cdc81a11cecc42d5d55a6b800ddd1b367a94c2bbd60e1a114a10e21614701"
     },
     {
       "consumed_path": "skills/cp-2a-downside-pathway/references/CP-2A__DownsidePathway__payload.schema.txt",
       "archive_path": "docs/reuse/selected-methods/skills/cp-2a-downside-pathway/references/CP-2A__DownsidePathway__payload.schema.txt",
-      "exact_copy_found_at": "/Users/ericguei/Documents/cp-os/skills/cp-2a-downside-pathway/references/CP-2A__DownsidePathway__payload.schema.txt",
+      "exact_copy_found_at": "/Users/USER/Documents/cp-os/skills/cp-2a-downside-pathway/references/CP-2A__DownsidePathway__payload.schema.txt",
       "sha256": "410b680f9a20d540e0dd463dcdf83eb173a12aa7d371b4aae45d8699d3c7226f"
     },
     {
       "consumed_path": "skills/cp-2a-downside-pathway/references/CP-2B_SYSTEM_REFERENCE.md",
       "archive_path": "docs/reuse/selected-methods/skills/cp-2a-downside-pathway/references/CP-2B_SYSTEM_REFERENCE.md",
-      "exact_copy_found_at": "/Users/ericguei/Documents/cp-os/skills/cp-2a-downside-pathway/references/CP-2B_SYSTEM_REFERENCE.md",
+      "exact_copy_found_at": "/Users/USER/Documents/cp-os/skills/cp-2a-downside-pathway/references/CP-2B_SYSTEM_REFERENCE.md",
       "sha256": "0a8f116546b54e29ff92939f3bd098a4e0d891a1ca8b98f53b93483986349aeb"
     },
     {
       "consumed_path": "skills/cp-2a-downside-pathway/references/CP-2B__EventCatalystRegister__payload.schema.txt",
       "archive_path": "docs/reuse/selected-methods/skills/cp-2a-downside-pathway/references/CP-2B__EventCatalystRegister__payload.schema.txt",
-      "exact_copy_found_at": "/Users/ericguei/Documents/cp-os/skills/cp-2a-downside-pathway/references/CP-2B__EventCatalystRegister__payload.schema.txt",
+      "exact_copy_found_at": "/Users/USER/Documents/cp-os/skills/cp-2a-downside-pathway/references/CP-2B__EventCatalystRegister__payload.schema.txt",
       "sha256": "5a548b862cc9376777b66af8fc25eb78b195e0d0b2b29270b915063f71e530cf"
     },
     {
       "consumed_path": "skills/cp-2a-downside-pathway/references/REF_CP-2A_STEPS.md",
       "archive_path": "docs/reuse/selected-methods/skills/cp-2a-downside-pathway/references/REF_CP-2A_STEPS.md",
-      "exact_copy_found_at": "/Users/ericguei/Documents/cp-os/skills/cp-2a-downside-pathway/references/REF_CP-2A_STEPS.md",
+      "exact_copy_found_at": "/Users/USER/Documents/cp-os/skills/cp-2a-downside-pathway/references/REF_CP-2A_STEPS.md",
       "sha256": "3253d74a88849c0cb9a06cd28f8414f8bef5edc20531cf76a2a428a8dc629643",
       "source_revision": "cp-os b57a344 (copied 2026-11-10 in this repo's a2f5e8e, whose message and companions_note name that commit)"
     },
     {
       "consumed_path": "skills/cp-2d-liquidity-cash-flow-bridge/references/CP-2D_SYSTEM_REFERENCE.md",
       "archive_path": "docs/reuse/selected-methods/skills/cp-2d-liquidity-cash-flow-bridge/references/CP-2D_SYSTEM_REFERENCE.md",
-      "exact_copy_found_at": "/Users/ericguei/Documents/cp-os/skills/cp-2d-liquidity-cash-flow-bridge/references/CP-2D_SYSTEM_REFERENCE.md",
+      "exact_copy_found_at": "/Users/USER/Documents/cp-os/skills/cp-2d-liquidity-cash-flow-bridge/references/CP-2D_SYSTEM_REFERENCE.md",
       "sha256": "f972c3955115beea485fb9427ecf1590ec9b89de90ff7133b9b4f3be45e561a9"
     },
     {
       "consumed_path": "skills/cp-2d-liquidity-cash-flow-bridge/references/CP-2D__LiquidityCashFlowBridge__payload.schema.txt",
       "archive_path": "docs/reuse/selected-methods/skills/cp-2d-liquidity-cash-flow-bridge/references/CP-2D__LiquidityCashFlowBridge__payload.schema.txt",
-      "exact_copy_found_at": "/Users/ericguei/Documents/cp-os/skills/cp-2d-liquidity-cash-flow-bridge/references/CP-2D__LiquidityCashFlowBridge__payload.schema.txt",
+      "exact_copy_found_at": "/Users/USER/Documents/cp-os/skills/cp-2d-liquidity-cash-flow-bridge/references/CP-2D__LiquidityCashFlowBridge__payload.schema.txt",
       "sha256": "f5fc15fd9814d9442776a4c81148fd34340d9d40bb9d0a24ee0259a105a15695"
     },
     {
       "consumed_path": "skills/cp-2e-macro-fx-hedging-sensitivity/references/CP-2E_SCHEMA_REFERENCE.md",
       "archive_path": "docs/reuse/selected-methods/skills/cp-2e-macro-fx-hedging-sensitivity/references/CP-2E_SCHEMA_REFERENCE.md",
-      "exact_copy_found_at": "/Users/ericguei/Documents/cp-os/skills/cp-2e-macro-fx-hedging-sensitivity/references/CP-2E_SCHEMA_REFERENCE.md",
+      "exact_copy_found_at": "/Users/USER/Documents/cp-os/skills/cp-2e-macro-fx-hedging-sensitivity/references/CP-2E_SCHEMA_REFERENCE.md",
       "sha256": "1fc18026b3a18e9f347bf5b53574b7aad12859a334b7eb5d101c16fe9bad42bb"
     },
     {
       "consumed_path": "skills/cp-2e-macro-fx-hedging-sensitivity/references/CP-2E_SYSTEM_REFERENCE.md",
       "archive_path": "docs/reuse/selected-methods/skills/cp-2e-macro-fx-hedging-sensitivity/references/CP-2E_SYSTEM_REFERENCE.md",
-      "exact_copy_found_at": "/Users/ericguei/Documents/cp-os/skills/cp-2e-macro-fx-hedging-sensitivity/references/CP-2E_SYSTEM_REFERENCE.md",
+      "exact_copy_found_at": "/Users/USER/Documents/cp-os/skills/cp-2e-macro-fx-hedging-sensitivity/references/CP-2E_SYSTEM_REFERENCE.md",
       "sha256": "e0614b8cd2f6a53bc752a2a141b0abc857b20db6f2f1e934558dbfff4ff1638f"
     },
     {
       "consumed_path": "skills/cp-2e-macro-fx-hedging-sensitivity/references/CP-2E__MacroFXHedgingSensitivity__payload.schema.txt",
       "archive_path": "docs/reuse/selected-methods/skills/cp-2e-macro-fx-hedging-sensitivity/references/CP-2E__MacroFXHedgingSensitivity__payload.schema.txt",
-      "exact_copy_found_at": "/Users/ericguei/Documents/cp-os/skills/cp-2e-macro-fx-hedging-sensitivity/references/CP-2E__MacroFXHedgingSensitivity__payload.schema.txt",
+      "exact_copy_found_at": "/Users/USER/Documents/cp-os/skills/cp-2e-macro-fx-hedging-sensitivity/references/CP-2E__MacroFXHedgingSensitivity__payload.schema.txt",
       "sha256": "78fec7d5f885b6e9d7371b202827ea13d341f60e04396e6d9e989b85d14b9c92"
     },
     {
       "consumed_path": "skills/cp-2e-macro-fx-hedging-sensitivity/references/CP-2F_SCHEMA_REFERENCE.md",
       "archive_path": "docs/reuse/selected-methods/skills/cp-2e-macro-fx-hedging-sensitivity/references/CP-2F_SCHEMA_REFERENCE.md",
-      "exact_copy_found_at": "/Users/ericguei/Documents/cp-os/skills/cp-2e-macro-fx-hedging-sensitivity/references/CP-2F_SCHEMA_REFERENCE.md",
+      "exact_copy_found_at": "/Users/USER/Documents/cp-os/skills/cp-2e-macro-fx-hedging-sensitivity/references/CP-2F_SCHEMA_REFERENCE.md",
       "sha256": "c6249797d0c93bbb5eb2e0f82a1505c970ea7530fab26febed4efba1663c6aa8"
     },
     {
       "consumed_path": "skills/cp-2e-macro-fx-hedging-sensitivity/references/CP-2F_SYSTEM_REFERENCE.md",
       "archive_path": "docs/reuse/selected-methods/skills/cp-2e-macro-fx-hedging-sensitivity/references/CP-2F_SYSTEM_REFERENCE.md",
-      "exact_copy_found_at": "/Users/ericguei/Documents/cp-os/skills/cp-2e-macro-fx-hedging-sensitivity/references/CP-2F_SYSTEM_REFERENCE.md",
+      "exact_copy_found_at": "/Users/USER/Documents/cp-os/skills/cp-2e-macro-fx-hedging-sensitivity/references/CP-2F_SYSTEM_REFERENCE.md",
       "sha256": "c19efed087a74b9fdb63922d8c13ab1d5d5d738aa7b8a0baa6d69af028ea3c64"
     },
     {
       "consumed_path": "skills/cp-2e-macro-fx-hedging-sensitivity/references/CP-2F__ESGSustainabilityCreditRisk__payload.schema.txt",
       "archive_path": "docs/reuse/selected-methods/skills/cp-2e-macro-fx-hedging-sensitivity/references/CP-2F__ESGSustainabilityCreditRisk__payload.schema.txt",
-      "exact_copy_found_at": "/Users/ericguei/Documents/cp-os/skills/cp-2e-macro-fx-hedging-sensitivity/references/CP-2F__ESGSustainabilityCreditRisk__payload.schema.txt",
+      "exact_copy_found_at": "/Users/USER/Documents/cp-os/skills/cp-2e-macro-fx-hedging-sensitivity/references/CP-2F__ESGSustainabilityCreditRisk__payload.schema.txt",
       "sha256": "8f512fe044384fb0ac7a787d2cb6efb413b9b2a6e432bddf1baf983a78be8358"
     },
     {
       "consumed_path": "skills/cp-2g-forward-credit-model/references/CP-2G_ForwardCreditModel.schema.md",
       "archive_path": "docs/reuse/selected-methods/skills/cp-2g-forward-credit-model/references/CP-2G_ForwardCreditModel.schema.md",
-      "exact_copy_found_at": "/Users/ericguei/Documents/cp-os/skills/cp-2g-forward-credit-model/references/CP-2G_ForwardCreditModel.schema.md",
+      "exact_copy_found_at": "/Users/USER/Documents/cp-os/skills/cp-2g-forward-credit-model/references/CP-2G_ForwardCreditModel.schema.md",
       "sha256": "d7bd456e2610d36de6512091ca65538f0ec888458ccad0041bb915f99490c496"
     },
     {
       "consumed_path": "skills/cp-2g-forward-credit-model/references/CP-2G__ForwardCreditModel__payload.schema.txt",
       "archive_path": "docs/reuse/selected-methods/skills/cp-2g-forward-credit-model/references/CP-2G__ForwardCreditModel__payload.schema.txt",
-      "exact_copy_found_at": "/Users/ericguei/Documents/cp-os/skills/cp-2g-forward-credit-model/references/CP-2G__ForwardCreditModel__payload.schema.txt",
+      "exact_copy_found_at": "/Users/USER/Documents/cp-os/skills/cp-2g-forward-credit-model/references/CP-2G__ForwardCreditModel__payload.schema.txt",
       "sha256": "5424a0a82f95d8e8e69bebc9faaeea2c81e0dff85492eaf9d3750d10e80fe0c3"
     },
     {
       "consumed_path": "skills/cp-2h-ratings-migration-trigger/references/CP-2H_RatingTransition.schema.md",
       "archive_path": "docs/reuse/selected-methods/skills/cp-2h-ratings-migration-trigger/references/CP-2H_RatingTransition.schema.md",
-      "exact_copy_found_at": "/Users/ericguei/Documents/cp-os/skills/cp-2h-ratings-migration-trigger/references/CP-2H_RatingTransition.schema.md",
+      "exact_copy_found_at": "/Users/USER/Documents/cp-os/skills/cp-2h-ratings-migration-trigger/references/CP-2H_RatingTransition.schema.md",
       "sha256": "f674ef714e27e332e5247b392ca895e646a5893d8d194ee7dedecab87f713a3e"
     },
     {
       "consumed_path": "skills/cp-2h-ratings-migration-trigger/references/CP-2H__RatingTransitionCase__payload.schema.txt",
       "archive_path": "docs/reuse/selected-methods/skills/cp-2h-ratings-migration-trigger/references/CP-2H__RatingTransitionCase__payload.schema.txt",
-      "exact_copy_found_at": "/Users/ericguei/Documents/cp-os/skills/cp-2h-ratings-migration-trigger/references/CP-2H__RatingTransitionCase__payload.schema.txt",
+      "exact_copy_found_at": "/Users/USER/Documents/cp-os/skills/cp-2h-ratings-migration-trigger/references/CP-2H__RatingTransitionCase__payload.schema.txt",
       "sha256": "81ebb127a618e5f4ce7cc8d640d16d999a17dff14d715b93be8344bb6550e2df"
     },
     {
       "consumed_path": "skills/cp-3-relative-value-security-selection/SKILL.md",
       "archive_path": "docs/reuse/selected-methods/skills/cp-3-relative-value-security-selection/SKILL.md",
-      "exact_copy_found_at": "/Users/ericguei/Documents/cp-os/skills/cp-3-relative-value-security-selection/SKILL.md",
+      "exact_copy_found_at": "/Users/USER/Documents/cp-os/skills/cp-3-relative-value-security-selection/SKILL.md",
       "sha256": "9e4ad1c1f383323f93d5f7d49865621af7d599df32c64b989f8d8fe7ea53dbe4",
       "note": "archived before 2026-11-10 as the cp-os initial-commit text (a31f3f5); after the named edit below it is identical to the live cp-os file (cp-os b57a344, file last changed in 115f664)",
       "source_sha256": "7e85b2f545fffcb3ad17f4997e5c577ae9620d279f1ffe8e12aefa8ce38abcd1",
@@ -783,185 +783,185 @@
     {
       "consumed_path": "skills/cp-3-relative-value-security-selection/references/CP-3A_SCHEMA_REFERENCE.md",
       "archive_path": "docs/reuse/selected-methods/skills/cp-3-relative-value-security-selection/references/CP-3A_SCHEMA_REFERENCE.md",
-      "exact_copy_found_at": "/Users/ericguei/Documents/cp-os/skills/cp-3-relative-value-security-selection/references/CP-3A_SCHEMA_REFERENCE.md",
+      "exact_copy_found_at": "/Users/USER/Documents/cp-os/skills/cp-3-relative-value-security-selection/references/CP-3A_SCHEMA_REFERENCE.md",
       "sha256": "6a61f6f3cd229be3ae6a9a9d531271527695bada0e658c6e31319aa43571a9dc"
     },
     {
       "consumed_path": "skills/cp-3-relative-value-security-selection/references/CP-3A_SYSTEM_REFERENCE.md",
       "archive_path": "docs/reuse/selected-methods/skills/cp-3-relative-value-security-selection/references/CP-3A_SYSTEM_REFERENCE.md",
-      "exact_copy_found_at": "/Users/ericguei/Documents/cp-os/skills/cp-3-relative-value-security-selection/references/CP-3A_SYSTEM_REFERENCE.md",
+      "exact_copy_found_at": "/Users/USER/Documents/cp-os/skills/cp-3-relative-value-security-selection/references/CP-3A_SYSTEM_REFERENCE.md",
       "sha256": "cf68f9b54c8d2e448d43c64f5071fa4ba154ceb804bd2e42c2a5981b0453b602"
     },
     {
       "consumed_path": "skills/cp-3-relative-value-security-selection/references/CP-3B_RUNBOOK.md",
       "archive_path": "docs/reuse/selected-methods/skills/cp-3-relative-value-security-selection/references/CP-3B_RUNBOOK.md",
-      "exact_copy_found_at": "/Users/ericguei/Documents/cp-os/skills/cp-3-relative-value-security-selection/references/CP-3B_RUNBOOK.md",
+      "exact_copy_found_at": "/Users/USER/Documents/cp-os/skills/cp-3-relative-value-security-selection/references/CP-3B_RUNBOOK.md",
       "sha256": "b506932e7abb629e5da139f0f049673c4737c662c988f4e0ee69fd799787bafa",
       "source_revision": "cp-os b57a344 (copied 2026-11-10 in this repo's a2f5e8e, whose message and companions_note name that commit)"
     },
     {
       "consumed_path": "skills/cp-3-relative-value-security-selection/references/CP-3B_SCHEMA_REFERENCE.md",
       "archive_path": "docs/reuse/selected-methods/skills/cp-3-relative-value-security-selection/references/CP-3B_SCHEMA_REFERENCE.md",
-      "exact_copy_found_at": "/Users/ericguei/Documents/cp-os/skills/cp-3-relative-value-security-selection/references/CP-3B_SCHEMA_REFERENCE.md",
+      "exact_copy_found_at": "/Users/USER/Documents/cp-os/skills/cp-3-relative-value-security-selection/references/CP-3B_SCHEMA_REFERENCE.md",
       "sha256": "c686fbe33f83970fa235e666f66a1caa55b3dbaab6eed2fe87d8bca3de8f640d"
     },
     {
       "consumed_path": "skills/cp-3-relative-value-security-selection/references/CP-3B_SYSTEM_REFERENCE.md",
       "archive_path": "docs/reuse/selected-methods/skills/cp-3-relative-value-security-selection/references/CP-3B_SYSTEM_REFERENCE.md",
-      "exact_copy_found_at": "/Users/ericguei/Documents/cp-os/skills/cp-3-relative-value-security-selection/references/CP-3B_SYSTEM_REFERENCE.md",
+      "exact_copy_found_at": "/Users/USER/Documents/cp-os/skills/cp-3-relative-value-security-selection/references/CP-3B_SYSTEM_REFERENCE.md",
       "sha256": "d6084e6ad7f603093c40c7a8f7cf1713bce460e6a6a7c709f641e0df598518fe"
     },
     {
       "consumed_path": "skills/cp-3-relative-value-security-selection/references/CP-3_SCHEMA_REFERENCE.md",
       "archive_path": "docs/reuse/selected-methods/skills/cp-3-relative-value-security-selection/references/CP-3_SCHEMA_REFERENCE.md",
-      "exact_copy_found_at": "/Users/ericguei/Documents/cp-os/skills/cp-3-relative-value-security-selection/references/CP-3_SCHEMA_REFERENCE.md",
+      "exact_copy_found_at": "/Users/USER/Documents/cp-os/skills/cp-3-relative-value-security-selection/references/CP-3_SCHEMA_REFERENCE.md",
       "sha256": "31e5ff3c2734e1ce35947e3484bba150413805a1671dacb98c9002db2d427040",
       "source_revision": "cp-os b57a344 (registered 2026-11-10 in this repo's a2f5e8e, whose message and companions_note name that commit; the same bytes were already in the archive, unregistered, in final-workflow 5755da5 of 2026-11-04)"
     },
     {
       "consumed_path": "skills/cp-3-relative-value-security-selection/references/CP-3_SYSTEM_REFERENCE.md",
       "archive_path": "docs/reuse/selected-methods/skills/cp-3-relative-value-security-selection/references/CP-3_SYSTEM_REFERENCE.md",
-      "exact_copy_found_at": "/Users/ericguei/Documents/cp-os/skills/cp-3-relative-value-security-selection/references/CP-3_SYSTEM_REFERENCE.md",
+      "exact_copy_found_at": "/Users/USER/Documents/cp-os/skills/cp-3-relative-value-security-selection/references/CP-3_SYSTEM_REFERENCE.md",
       "sha256": "f786e0441b4d07cb087f9e2aeee9502843a094d3f838bab083a14ef70893220b"
     },
     {
       "consumed_path": "skills/cp-3-relative-value-security-selection/references/REF_CP-3B_STEPS.md",
       "archive_path": "docs/reuse/selected-methods/skills/cp-3-relative-value-security-selection/references/REF_CP-3B_STEPS.md",
-      "exact_copy_found_at": "/Users/ericguei/Documents/cp-os/skills/cp-3-relative-value-security-selection/references/REF_CP-3B_STEPS.md",
+      "exact_copy_found_at": "/Users/USER/Documents/cp-os/skills/cp-3-relative-value-security-selection/references/REF_CP-3B_STEPS.md",
       "sha256": "9e134207ab85d004174ef27094948bdcbd798601def55cf307b63c5c302c4711",
       "source_revision": "cp-os b57a344 (copied 2026-11-10 in this repo's a2f5e8e, whose message and companions_note name that commit)"
     },
     {
       "consumed_path": "skills/cp-3d-market-implied-risk/references/CP-3D_MarketImpliedRisk.schema.md",
       "archive_path": "docs/reuse/selected-methods/skills/cp-3d-market-implied-risk/references/CP-3D_MarketImpliedRisk.schema.md",
-      "exact_copy_found_at": "/Users/ericguei/Documents/cp-os/skills/cp-3d-market-implied-risk/references/CP-3D_MarketImpliedRisk.schema.md",
+      "exact_copy_found_at": "/Users/USER/Documents/cp-os/skills/cp-3d-market-implied-risk/references/CP-3D_MarketImpliedRisk.schema.md",
       "sha256": "6227c7896f7a36e404b41fef02ce2bc952cfe987645f1e35c714ba1f66f33373"
     },
     {
       "consumed_path": "skills/cp-3d-market-implied-risk/references/CP-3D__MarketImpliedRiskMap__payload.schema.txt",
       "archive_path": "docs/reuse/selected-methods/skills/cp-3d-market-implied-risk/references/CP-3D__MarketImpliedRiskMap__payload.schema.txt",
-      "exact_copy_found_at": "/Users/ericguei/Documents/cp-os/skills/cp-3d-market-implied-risk/references/CP-3D__MarketImpliedRiskMap__payload.schema.txt",
+      "exact_copy_found_at": "/Users/USER/Documents/cp-os/skills/cp-3d-market-implied-risk/references/CP-3D__MarketImpliedRiskMap__payload.schema.txt",
       "sha256": "5cacafce920bb15186f0b91ab0cbcb55c559f0f83574ebefaffacc58662624fd"
     },
     {
       "consumed_path": "skills/cp-4-legal-covenant-interpreter/references/CP-4A_SCHEMA_REFERENCE.md",
       "archive_path": "docs/reuse/selected-methods/skills/cp-4-legal-covenant-interpreter/references/CP-4A_SCHEMA_REFERENCE.md",
-      "exact_copy_found_at": "/Users/ericguei/Documents/cp-os/skills/cp-4-legal-covenant-interpreter/references/CP-4A_SCHEMA_REFERENCE.md",
+      "exact_copy_found_at": "/Users/USER/Documents/cp-os/skills/cp-4-legal-covenant-interpreter/references/CP-4A_SCHEMA_REFERENCE.md",
       "sha256": "51836c0d862af8fd53f12ef590a7ece45f49585cb9bd039be57be8d988558314"
     },
     {
       "consumed_path": "skills/cp-4-legal-covenant-interpreter/references/CP-4A_SYSTEM_REFERENCE.md",
       "archive_path": "docs/reuse/selected-methods/skills/cp-4-legal-covenant-interpreter/references/CP-4A_SYSTEM_REFERENCE.md",
-      "exact_copy_found_at": "/Users/ericguei/Documents/cp-os/skills/cp-4-legal-covenant-interpreter/references/CP-4A_SYSTEM_REFERENCE.md",
+      "exact_copy_found_at": "/Users/USER/Documents/cp-os/skills/cp-4-legal-covenant-interpreter/references/CP-4A_SYSTEM_REFERENCE.md",
       "sha256": "80b90a1169dc9082f5bf14543ea67e8bd5cbfc3d3c603c83c40f291375198f7a"
     },
     {
       "consumed_path": "skills/cp-4-legal-covenant-interpreter/references/CP-4B_SCHEMA_REFERENCE.md",
       "archive_path": "docs/reuse/selected-methods/skills/cp-4-legal-covenant-interpreter/references/CP-4B_SCHEMA_REFERENCE.md",
-      "exact_copy_found_at": "/Users/ericguei/Documents/cp-os/skills/cp-4-legal-covenant-interpreter/references/CP-4B_SCHEMA_REFERENCE.md",
+      "exact_copy_found_at": "/Users/USER/Documents/cp-os/skills/cp-4-legal-covenant-interpreter/references/CP-4B_SCHEMA_REFERENCE.md",
       "sha256": "ab5f03322aac431ac75a4d523da77b38cfa6d1cedd77baee4dedd76b17679daa"
     },
     {
       "consumed_path": "skills/cp-4-legal-covenant-interpreter/references/CP-4B_SYSTEM_REFERENCE.md",
       "archive_path": "docs/reuse/selected-methods/skills/cp-4-legal-covenant-interpreter/references/CP-4B_SYSTEM_REFERENCE.md",
-      "exact_copy_found_at": "/Users/ericguei/Documents/cp-os/skills/cp-4-legal-covenant-interpreter/references/CP-4B_SYSTEM_REFERENCE.md",
+      "exact_copy_found_at": "/Users/USER/Documents/cp-os/skills/cp-4-legal-covenant-interpreter/references/CP-4B_SYSTEM_REFERENCE.md",
       "sha256": "ca81c7ede3a4086bbcd785146ea05793c844c7243e192abd6bcfa73597a10f28"
     },
     {
       "consumed_path": "skills/cp-4-legal-covenant-interpreter/references/CP-4_SCHEMA_REFERENCE.md",
       "archive_path": "docs/reuse/selected-methods/skills/cp-4-legal-covenant-interpreter/references/CP-4_SCHEMA_REFERENCE.md",
-      "exact_copy_found_at": "/Users/ericguei/Documents/cp-os/skills/cp-4-legal-covenant-interpreter/references/CP-4_SCHEMA_REFERENCE.md",
+      "exact_copy_found_at": "/Users/USER/Documents/cp-os/skills/cp-4-legal-covenant-interpreter/references/CP-4_SCHEMA_REFERENCE.md",
       "sha256": "f6f177e675011dc4d2f20f74a63f99f4919d892970bb58e424797aaa849f93df"
     },
     {
       "consumed_path": "skills/cp-4-legal-covenant-interpreter/references/CP-4_SYSTEM_REFERENCE.md",
       "archive_path": "docs/reuse/selected-methods/skills/cp-4-legal-covenant-interpreter/references/CP-4_SYSTEM_REFERENCE.md",
-      "exact_copy_found_at": "/Users/ericguei/Documents/cp-os/skills/cp-4-legal-covenant-interpreter/references/CP-4_SYSTEM_REFERENCE.md",
+      "exact_copy_found_at": "/Users/USER/Documents/cp-os/skills/cp-4-legal-covenant-interpreter/references/CP-4_SYSTEM_REFERENCE.md",
       "sha256": "ef944dcb1e270bb949f576061c72facef6447b55f8e29da4cb0b9fdd1e02725a"
     },
     {
       "consumed_path": "skills/cp-4c-restructuring-fulcrum/references/CP-4C_RestructuringScenario.schema.md",
       "archive_path": "docs/reuse/selected-methods/skills/cp-4c-restructuring-fulcrum/references/CP-4C_RestructuringScenario.schema.md",
-      "exact_copy_found_at": "/Users/ericguei/Documents/cp-os/skills/cp-4c-restructuring-fulcrum/references/CP-4C_RestructuringScenario.schema.md",
+      "exact_copy_found_at": "/Users/USER/Documents/cp-os/skills/cp-4c-restructuring-fulcrum/references/CP-4C_RestructuringScenario.schema.md",
       "sha256": "70ae77f77f30bf95a89ad6632c2f0dd458f14507ec4c92c3ee433128eb7adb49"
     },
     {
       "consumed_path": "skills/cp-4c-restructuring-fulcrum/references/CP-4C__RestructuringScenario__payload.schema.txt",
       "archive_path": "docs/reuse/selected-methods/skills/cp-4c-restructuring-fulcrum/references/CP-4C__RestructuringScenario__payload.schema.txt",
-      "exact_copy_found_at": "/Users/ericguei/Documents/cp-os/skills/cp-4c-restructuring-fulcrum/references/CP-4C__RestructuringScenario__payload.schema.txt",
+      "exact_copy_found_at": "/Users/USER/Documents/cp-os/skills/cp-4c-restructuring-fulcrum/references/CP-4C__RestructuringScenario__payload.schema.txt",
       "sha256": "c6b6defe9109b7e935fcee051ef16d15703c0918b6aab7c84ef8e689eca5af1e"
     },
     {
       "consumed_path": "skills/cp-5-evidence-trace-validator/references/CP-5A_SCHEMA_REFERENCE.md",
       "archive_path": "docs/reuse/selected-methods/skills/cp-5-evidence-trace-validator/references/CP-5A_SCHEMA_REFERENCE.md",
-      "exact_copy_found_at": "/Users/ericguei/Documents/cp-os/skills/cp-5-evidence-trace-validator/references/CP-5A_SCHEMA_REFERENCE.md",
+      "exact_copy_found_at": "/Users/USER/Documents/cp-os/skills/cp-5-evidence-trace-validator/references/CP-5A_SCHEMA_REFERENCE.md",
       "sha256": "05f9ebbdf6f6aabe3dbf39f525f708845cc1d4a7bd6e38a13e09d719bb35b2c9"
     },
     {
       "consumed_path": "skills/cp-5-evidence-trace-validator/references/CP-5A_SYSTEM_REFERENCE.md",
       "archive_path": "docs/reuse/selected-methods/skills/cp-5-evidence-trace-validator/references/CP-5A_SYSTEM_REFERENCE.md",
-      "exact_copy_found_at": "/Users/ericguei/Documents/cp-os/skills/cp-5-evidence-trace-validator/references/CP-5A_SYSTEM_REFERENCE.md",
+      "exact_copy_found_at": "/Users/USER/Documents/cp-os/skills/cp-5-evidence-trace-validator/references/CP-5A_SYSTEM_REFERENCE.md",
       "sha256": "05d4bed0e2af02906b69753e12ed5d1fd9ac517bfd3412df1a2951a86c4b561d"
     },
     {
       "consumed_path": "skills/cp-5-evidence-trace-validator/references/CP-5_SCHEMA_REFERENCE.md",
       "archive_path": "docs/reuse/selected-methods/skills/cp-5-evidence-trace-validator/references/CP-5_SCHEMA_REFERENCE.md",
-      "exact_copy_found_at": "/Users/ericguei/Documents/cp-os/skills/cp-5-evidence-trace-validator/references/CP-5_SCHEMA_REFERENCE.md",
+      "exact_copy_found_at": "/Users/USER/Documents/cp-os/skills/cp-5-evidence-trace-validator/references/CP-5_SCHEMA_REFERENCE.md",
       "sha256": "d1ed4179b74f7d0405bdecb312744ace0d88c4a8031e554ace6c98f5965d96c9"
     },
     {
       "consumed_path": "skills/cp-5-evidence-trace-validator/references/CP-5_SYSTEM_REFERENCE.md",
       "archive_path": "docs/reuse/selected-methods/skills/cp-5-evidence-trace-validator/references/CP-5_SYSTEM_REFERENCE.md",
-      "exact_copy_found_at": "/Users/ericguei/Documents/cp-os/skills/cp-5-evidence-trace-validator/references/CP-5_SYSTEM_REFERENCE.md",
+      "exact_copy_found_at": "/Users/USER/Documents/cp-os/skills/cp-5-evidence-trace-validator/references/CP-5_SYSTEM_REFERENCE.md",
       "sha256": "72d4c98c2fbdb2cef1f78a7a3835c3f6f07ca65db28990a67ae6cca8cec0aa56"
     },
     {
       "consumed_path": "skills/cp-6-ic-debate-challenge/references/CP-6A_SCHEMA_REFERENCE.md",
       "archive_path": "docs/reuse/selected-methods/skills/cp-6-ic-debate-challenge/references/CP-6A_SCHEMA_REFERENCE.md",
-      "exact_copy_found_at": "/Users/ericguei/Documents/cp-os/skills/cp-6-ic-debate-challenge/references/CP-6A_SCHEMA_REFERENCE.md",
+      "exact_copy_found_at": "/Users/USER/Documents/cp-os/skills/cp-6-ic-debate-challenge/references/CP-6A_SCHEMA_REFERENCE.md",
       "sha256": "f91e1ef62493c6bd734555dc7d4ee8b397a53f939a88f2c0e42b331880ae49e3"
     },
     {
       "consumed_path": "skills/cp-6-ic-debate-challenge/references/CP-6A_SYSTEM_REFERENCE.md",
       "archive_path": "docs/reuse/selected-methods/skills/cp-6-ic-debate-challenge/references/CP-6A_SYSTEM_REFERENCE.md",
-      "exact_copy_found_at": "/Users/ericguei/Documents/cp-os/skills/cp-6-ic-debate-challenge/references/CP-6A_SYSTEM_REFERENCE.md",
+      "exact_copy_found_at": "/Users/USER/Documents/cp-os/skills/cp-6-ic-debate-challenge/references/CP-6A_SYSTEM_REFERENCE.md",
       "sha256": "cedcf6fd097391fb5ce7c9d4f953241b207d9333fb471653af01ca90c1d006f6"
     },
     {
       "consumed_path": "skills/cp-6-ic-debate-challenge/references/CP-6_SCHEMA_REFERENCE.md",
       "archive_path": "docs/reuse/selected-methods/skills/cp-6-ic-debate-challenge/references/CP-6_SCHEMA_REFERENCE.md",
-      "exact_copy_found_at": "/Users/ericguei/Documents/cp-os/skills/cp-6-ic-debate-challenge/references/CP-6_SCHEMA_REFERENCE.md",
+      "exact_copy_found_at": "/Users/USER/Documents/cp-os/skills/cp-6-ic-debate-challenge/references/CP-6_SCHEMA_REFERENCE.md",
       "sha256": "d98894b5c77c380401f9705dcd00ee71f8252cfefe2a2afcce4b3823654618fc"
     },
     {
       "consumed_path": "skills/cp-6-ic-debate-challenge/references/CP-6_SYSTEM_REFERENCE.md",
       "archive_path": "docs/reuse/selected-methods/skills/cp-6-ic-debate-challenge/references/CP-6_SYSTEM_REFERENCE.md",
-      "exact_copy_found_at": "/Users/ericguei/Documents/cp-os/skills/cp-6-ic-debate-challenge/references/CP-6_SYSTEM_REFERENCE.md",
+      "exact_copy_found_at": "/Users/USER/Documents/cp-os/skills/cp-6-ic-debate-challenge/references/CP-6_SYSTEM_REFERENCE.md",
       "sha256": "b5395db90520627a2e3d5b2161dc4499cec41ad75024e51ee7973386d3d30608"
     },
     {
       "consumed_path": "skills/cp-dr-deep-research/references/CP-DR_DeepResearch.schema.md",
       "archive_path": "docs/reuse/selected-methods/skills/cp-dr-deep-research/references/CP-DR_DeepResearch.schema.md",
-      "exact_copy_found_at": "/Users/ericguei/Documents/cp-os/skills/cp-dr-deep-research/references/CP-DR_DeepResearch.schema.md",
+      "exact_copy_found_at": "/Users/USER/Documents/cp-os/skills/cp-dr-deep-research/references/CP-DR_DeepResearch.schema.md",
       "sha256": "6c90808df8632c535cb65b1321f0f16549d12b250e2d0fc8e5964c6ceafe94a8"
     },
     {
       "consumed_path": "skills/cp-dr-deep-research/references/CP-DR__DeepResearch__payload.schema.txt",
       "archive_path": "docs/reuse/selected-methods/skills/cp-dr-deep-research/references/CP-DR__DeepResearch__payload.schema.txt",
-      "exact_copy_found_at": "/Users/ericguei/Documents/cp-os/skills/cp-dr-deep-research/references/CP-DR__DeepResearch__payload.schema.txt",
+      "exact_copy_found_at": "/Users/USER/Documents/cp-os/skills/cp-dr-deep-research/references/CP-DR__DeepResearch__payload.schema.txt",
       "sha256": "87d4a28dda4a388edecada491b126ad6b630e7b1d08056ed560243e1c6b3cf5e"
     },
     {
       "consumed_path": "CANON_SHARED.md",
       "archive_path": "docs/reuse/selected-methods/CANON_SHARED.md",
-      "exact_copy_found_at": "/Users/ericguei/Documents/cp-os/CANON_SHARED.md",
+      "exact_copy_found_at": "/Users/USER/Documents/cp-os/CANON_SHARED.md",
       "sha256": "1ab484c5072a92944e1ed8b1591f96dfff2a021baf2cc230b8033eaa913a232d",
       "source_revision": "cp-os b57a344 (copied 2026-11-10 in this repo's a2f5e8e, whose message and companions_note name that commit)"
     },
     {
       "consumed_path": "skills/cp-os-credit-os/references/CP_DR_RESEARCH_BRIEF_V1.md",
       "archive_path": "docs/reuse/selected-methods/skills/cp-os-credit-os/references/CP_DR_RESEARCH_BRIEF_V1.md",
-      "exact_copy_found_at": "/Users/ericguei/Documents/cp-os/skills/cp-os-credit-os/references/CP_DR_RESEARCH_BRIEF_V1.md",
+      "exact_copy_found_at": "/Users/USER/Documents/cp-os/skills/cp-os-credit-os/references/CP_DR_RESEARCH_BRIEF_V1.md",
       "sha256": "5028a6476cdff812a457bdb994e614b15b73f7c663eaa96b533b64cfd758fbf0",
       "source_revision": "cp-os b57a344 (copied 2026-11-10 in this repo's a2f5e8e, whose message and companions_note name that commit)"
     },
@@ -969,7 +969,7 @@
       "consumed_path": "skills/cp-2-fundamental-credit-synthesizer/SKILL.md",
       "archive_path": "docs/reuse/selected-methods/skills/cp-2-fundamental-credit-synthesizer/SKILL.md",
       "exact_copy_found_at": null,
-      "edited_copy_of": "/Users/ericguei/Documents/cp-os/skills/cp-2-fundamental-credit-synthesizer/SKILL.md",
+      "edited_copy_of": "/Users/USER/Documents/cp-os/skills/cp-2-fundamental-credit-synthesizer/SKILL.md",
       "sha256": "0b419cb292a5325c6a89398bf802fa605f9b9c6b5e0197e585171e91d784ec6f",
       "source_sha256": "2419ccb707e0bce8659d79b077175f21e43b3ca95ad92968936da7d86da95135",
       "edit": "named edit: T2.10 `Mixed` removed from the Direction values (caos line 144) and the step 10 index line gains the `None supported` row and split-never-Mixed rule (caos line 283); no other caos hunk ported; wording from caos-databricks vendor/deploy-v (last changed 99069f83, repo HEAD dfff264); sha256 is this edited file, source_sha256 the previously archived file",
@@ -979,7 +979,7 @@
       "consumed_path": "skills/cp-2-fundamental-credit-synthesizer/references/REF_CP-2_STEPS.md",
       "archive_path": "docs/reuse/selected-methods/skills/cp-2-fundamental-credit-synthesizer/references/REF_CP-2_STEPS.md",
       "exact_copy_found_at": null,
-      "edited_copy_of": "/Users/ericguei/Documents/cp-os/skills/cp-2-fundamental-credit-synthesizer/references/REF_CP-2_STEPS.md",
+      "edited_copy_of": "/Users/USER/Documents/cp-os/skills/cp-2-fundamental-credit-synthesizer/references/REF_CP-2_STEPS.md",
       "sha256": "9200f6b0ab977c454176d7f78f6c55d39e41cfcccfa04a1b772f8c4c18f08bfe",
       "source_sha256": "292f114bc456c5924712d692408550b058ed4424d146719fe42579b092a94a92",
       "edit": "named edit: T2.10 Direction `Positive / Negative` with the split-never-Mixed rule (caos line 237) and the rule line `Rank at least one Positive and one Negative driver` with the one `None supported` row (caos line 239); no other caos hunk ported; wording from caos-databricks vendor/deploy-v (last changed 99069f83, repo HEAD dfff264); sha256 is this edited file, source_sha256 the previously archived file",
@@ -988,21 +988,21 @@
     {
       "consumed_path": "skills/cp-1a-business-transaction-fact-pack/SKILL.md",
       "archive_path": "docs/reuse/selected-methods/skills/cp-1a-business-transaction-fact-pack/SKILL.md",
-      "exact_copy_found_at": "/Users/ericguei/Documents/cp-os/skills/cp-1a-business-transaction-fact-pack/SKILL.md",
+      "exact_copy_found_at": "/Users/USER/Documents/cp-os/skills/cp-1a-business-transaction-fact-pack/SKILL.md",
       "sha256": "3885bc51b9fa0f8a2e316fe8f3f503505ab5ce28729526c5c28bff18a96e1f9a",
       "source_revision": "cp-os b57a344 (copied byte-for-byte 2026-11-13 in this repo's ff98a8c, whose message names that commit)"
     },
     {
       "consumed_path": "skills/cp-1a-business-transaction-fact-pack/references/REF_CP-1A_STEPS.md",
       "archive_path": "docs/reuse/selected-methods/skills/cp-1a-business-transaction-fact-pack/references/REF_CP-1A_STEPS.md",
-      "exact_copy_found_at": "/Users/ericguei/Documents/cp-os/skills/cp-1a-business-transaction-fact-pack/references/REF_CP-1A_STEPS.md",
+      "exact_copy_found_at": "/Users/USER/Documents/cp-os/skills/cp-1a-business-transaction-fact-pack/references/REF_CP-1A_STEPS.md",
       "sha256": "57a22436167df8177363c648041c03ae6d89888523ef9f419b7536943d0d2e55",
       "source_revision": "cp-os b57a344 (copied byte-for-byte 2026-11-13 in this repo's ff98a8c, whose message names that commit)"
     },
     {
       "consumed_path": "skills/cp-1a-business-transaction-fact-pack/references/REF_CP-2C_STEPS.md",
       "archive_path": "docs/reuse/selected-methods/skills/cp-1a-business-transaction-fact-pack/references/REF_CP-2C_STEPS.md",
-      "exact_copy_found_at": "/Users/ericguei/Documents/cp-os/skills/cp-1a-business-transaction-fact-pack/references/REF_CP-2C_STEPS.md",
+      "exact_copy_found_at": "/Users/USER/Documents/cp-os/skills/cp-1a-business-transaction-fact-pack/references/REF_CP-2C_STEPS.md",
       "sha256": "8e738d43447219ab8cf7f46b4ca97cd32c67eb7831aaae683b365a9f3514ad45",
       "source_revision": "cp-os b57a344 (copied byte-for-byte 2026-11-13 in this repo's ff98a8c, whose message names that commit)"
     },
@@ -1010,7 +1010,7 @@
       "consumed_path": "skills/cp-3c-refinancing-lme-risk/SKILL.md",
       "archive_path": "docs/reuse/selected-methods/skills/cp-3c-refinancing-lme-risk/SKILL.md",
       "exact_copy_found_at": null,
-      "edited_copy_of": "/Users/ericguei/Documents/Deploy V/skills/cp-3c-refinancing-lme-risk/SKILL.md",
+      "edited_copy_of": "/Users/USER/Documents/Deploy V/skills/cp-3c-refinancing-lme-risk/SKILL.md",
       "sha256": "eac3b117d9e1c7227cdfe12a83f51476cf5d7eedeea02857fdef4e2518447189",
       "source_sha256": "8c8c0534932f653288c68954406262c40e2fd6dcb6f23916220b5cec3e42d4bd",
       "edit": "r17 Scale column added to register T3D.2; wording from caos-databricks vendor/deploy-v (dfff264); sha256 is this edited file, source_sha256 the byte-for-byte copy of Deploy V c4d2e35"
@@ -1018,7 +1018,7 @@
     {
       "consumed_path": "skills/cp-3c-refinancing-lme-risk/references/CP-3C_RUNBOOK.md",
       "archive_path": "docs/reuse/selected-methods/skills/cp-3c-refinancing-lme-risk/references/CP-3C_RUNBOOK.md",
-      "exact_copy_found_at": "/Users/ericguei/Documents/Deploy V/skills/cp-3c-refinancing-lme-risk/references/CP-3C_RUNBOOK.md",
+      "exact_copy_found_at": "/Users/USER/Documents/Deploy V/skills/cp-3c-refinancing-lme-risk/references/CP-3C_RUNBOOK.md",
       "sha256": "13a2525bee2aae103114e7f5bd0ef7f7e6942c82e53041ea61e82aec4a498753",
       "source_revision": "Deploy V c4d2e35611151a7f5b45dbb759d92e968c5478b7 (copied byte-for-byte 2026-11-13 in this repo's 67533e3, whose message names that commit for all three CP-3C files; the two sibling entries' source_sha256 name the same commit)"
     },
@@ -1026,7 +1026,7 @@
       "consumed_path": "skills/cp-3c-refinancing-lme-risk/references/REF_CP-3C_STEPS.md",
       "archive_path": "docs/reuse/selected-methods/skills/cp-3c-refinancing-lme-risk/references/REF_CP-3C_STEPS.md",
       "exact_copy_found_at": null,
-      "edited_copy_of": "/Users/ericguei/Documents/Deploy V/skills/cp-3c-refinancing-lme-risk/references/REF_CP-3C_STEPS.md",
+      "edited_copy_of": "/Users/USER/Documents/Deploy V/skills/cp-3c-refinancing-lme-risk/references/REF_CP-3C_STEPS.md",
       "sha256": "29b5949a9acfc98386bd1062474504fdc9fa6c632a43f2b8b87cf965e2188a74",
       "source_sha256": "a0b1abe8f5ce28cf7d962aa26e72ae12326c102fba34f4d66f52b620dd40bf84",
       "edit": "r17 Scale column added to register T3D.2; wording from caos-databricks vendor/deploy-v (dfff264); sha256 is this edited file, source_sha256 the byte-for-byte copy of Deploy V c4d2e35"
@@ -1046,7 +1046,7 @@
       "archive_path": "docs/reuse/selected-methods/skills/cp-1-canonical-data-foundation/SKILL.md",
       "exact_copy_found_at": null,
       "sha256": "59ce07e40ef45fa9ee880737c2739a882275b749f0400517bd03888cb1b6548d",
-      "edited_copy_of": "/Users/ericguei/Documents/caos-databricks/vendor/deploy-v/skills/cp-1-canonical-data-foundation/SKILL.md",
+      "edited_copy_of": "/Users/USER/Documents/caos-databricks/vendor/deploy-v/skills/cp-1-canonical-data-foundation/SKILL.md",
       "source_sha256": "35b865705f9cb4a001c8a227767319bc3f34d274c3659164176ab2e70bf3a345",
       "edit": "Named edits, each stated here: (a) workbook: the CP-MODEL interface tables T4.14-T4.17 and T4.19, their stable tags (T4.18 Debt instruments was restored as a plain table in the step file, not removed), the cp1.* table list, the table-id comment rules and the workbook sentences are removed; (b) routing: the Dependencies and Feeds line, the module catalogue, `Run CP-1`, the invocation-fields block and entry protocol, the deterministic-computation and Automated QA validation sections, the companions list, the CP-DR research brief and adoption section, the filename, YAML, qa_status, confidence score and band rule, the six canon H2s and the full-run disqualifier lists are removed; the Output profile block (its prohibited conclusion, reader question and decision drivers) is removed with the profile's other lists, because the host sets the reader question and the opening; the Output profile block (its prohibited conclusion, reader question and decision drivers) is removed with the profile's other column lists, since the host sets the reader question and the opening; (c) runbook: not applicable to this file; the Output profile column lists duplicate the step file's Output lines and are removed there; (d) project conventions: a missing value is `Not supplied: <reason>` or `Not calculable: <reason>`, never `null`, an empty cell or a dash; gap lines are plain sentences with no snake_case or capitalised underscore tokens, register ids, hashes or the words canonical and handoff; the host's six H2s replace the canon H2s, registers are ### headings inside ## Findings, gaps go under ## Gaps, CP-1 is a data module owing ### Bottom line; the host's tables are named so the method never renames, merges or drops them; (e) operand tables: T4.7 stays retired and the statement tables and calculation register carry the shapes the host check reads (stated in the step file); (f) debt basis and EBITDA: carrying-value debt, reported EBITDA the primary denominator, adjusted EBITDA shown beside it and labelled when the issuer states it; wording from caos-databricks vendor/deploy-v (repo HEAD dfff264, file last changed a14f9051; Deploy V c4d2e35 is the ancestor); sha256 is this edited file, source_sha256 the byte-for-byte copy archived in the previous commit. Instruction-budget edit (2026-11-13): duplicate statements removed and wording shortened for the instruction budget, no rule removed; sha256 is this edited file.",
       "use": "CP-1 method sent to CP-OS (2026-11-13); current project instructions govern transport, scores and delivery",
@@ -1057,7 +1057,7 @@
       "archive_path": "docs/reuse/selected-methods/skills/cp-1-canonical-data-foundation/references/CP-1_RUNBOOK.md",
       "exact_copy_found_at": null,
       "sha256": "c8f0279d5ba0191d8ea395116933ce15060bfd8b2e4be4abc1e26acb5cc26ea9",
-      "edited_copy_of": "/Users/ericguei/Documents/caos-databricks/vendor/deploy-v/skills/cp-1-canonical-data-foundation/references/CP-1_RUNBOOK.md",
+      "edited_copy_of": "/Users/USER/Documents/caos-databricks/vendor/deploy-v/skills/cp-1-canonical-data-foundation/references/CP-1_RUNBOOK.md",
       "source_sha256": "7934e8c562832b8320243cbf08e84b16575a0d2e4974fd918bf094b300fcd4ad",
       "edit": "Named edits, each stated here: (a) workbook: the step 13 instruction removed; (b) routing: the Upstream and Downstream lines, the 11 downstream consumers, Dependencies, Export, the recommended-next-command sentence, the import wrappers and the filename or identity table removed; (c) runbook: the workflow table, anti-patterns, style, prohibited behaviours, separation discipline, citation rules, the duplicate 28-metric table, governance list, identity and dependencies are removed because the step file repeats them; the metric definitions, calculation status values, null and derived-period rules, event and liability discipline, evidence hierarchy are kept, the worked definition-conflict example is removed and the fail-or-restrict list is cut to one sentence naming a malformed table and the Discipline prohibitions; (d) project conventions: a missing value is `Not supplied: <reason>` or `Not calculable: <reason>`, never a dash or null; (e) operand tables: not applicable to this file; (f) debt basis and EBITDA: carrying-value debt kept; ratios use reported EBITDA and an adjusted-EBITDA ratio is a separate labelled row; wording from caos-databricks vendor/deploy-v (repo HEAD dfff264, file last changed b283233c; Deploy V c4d2e35 is the ancestor); sha256 is this edited file, source_sha256 the byte-for-byte copy archived in the previous commit. Instruction-budget edit (2026-11-13): duplicate statements removed and wording shortened for the instruction budget, no rule removed; sha256 is this edited file.",
       "use": "CP-1 method sent to CP-OS (2026-11-13); current project instructions govern transport, scores and delivery",
@@ -1068,7 +1068,7 @@
       "archive_path": "docs/reuse/selected-methods/skills/cp-1-canonical-data-foundation/references/REF_CP-1_STEPS.md",
       "exact_copy_found_at": null,
       "sha256": "7dde89ed2520ae1d2e5c0f340da11d4671aae71d040fd4c052f4ed9ef3c410f4",
-      "edited_copy_of": "/Users/ericguei/Documents/caos-databricks/vendor/deploy-v/skills/cp-1-canonical-data-foundation/references/REF_CP-1_STEPS.md",
+      "edited_copy_of": "/Users/USER/Documents/caos-databricks/vendor/deploy-v/skills/cp-1-canonical-data-foundation/references/REF_CP-1_STEPS.md",
       "source_sha256": "e9552f0d2b128cbe27ec58cdc2360e0e67c96a9f6ec21a140854f310de201bc1",
       "edit": "Named edits, each stated here: (a) workbook: REF_CP-1_13 Model Workbook Interface removed (registers T4.14-T4.19, tagged cp1.* tables, table-id comments, the worked skeleton, CP-MODEL readiness and the workbook-exporter sentence), and the debt rules it held are restated in step 10: debt totals use carrying values, principal and commitment are kept separately and are not substitutes, a lease liability the issuer presents on its own balance-sheet line is not added to total debt, while a lease the issuer carries inside its debt lines stays in and `Basis` names it; (b) routing: the consumer table, per-consumer readiness, canon output-assembly instruction and filename rule removed; the Downstream Readiness Matrix becomes a readiness table for the requested use (column Requested Use; T4.11 column Modules Affected); the bundle preamble and file inventory removed; (c) runbook: not applicable to this file; the per-step XML wrappers, step warnings blocks, the Workflow table and the Binding discipline trailer are removed because each step states its gate and output, the Style section is cut to one line, the Financial Statement Coverage entries line of step 4 ; step 4 item 2 gains this project's sentence on expense-block reconciliation between gross profit and operating profit and the running-text-where-a-table-is-required row of the prohibited behaviours are dropped (the Findings carry the tables the host asks for); \"a balance sheet is an instant\" is added to the statement-table paragraph (the source states it in step 13 only); step 7's \"compare to the precision the figures are printed at\" and \"correct the wrong figure rather than plug it\" are kept and reworded; \"never replace a directly reported period\" stays in step 8; step 11's \"FFO/Debt trajectory\" and step 5's \"WC inclusion\" are kept; (d) project conventions: `null` plus gap becomes `Not supplied: <reason>` or `Not calculable: <reason>`; gaps become plain-sentence lines under ## Gaps (T4.12 is no longer a table); the output sections are ### headings inside ## Findings; (e) operand tables: statement tables T4.4, T4.5, T4.6 take the heading, `Line item`, period, `Unit`, `Basis`, `Source` shape with the fixed rows, and T4.9 the heading, 13 columns and six fixed Metric Names, as the check reads them; T4.7 stays retired; (f) debt basis and EBITDA: step 9 leverage on carrying-value debt with reported EBITDA the denominator and adjusted rows beside them when stated; step 10 logs carrying against principal; T4.4 carries `EBITDA (Reported)` and, when stated, `EBITDA (Adjusted)`; wording from caos-databricks vendor/deploy-v (repo HEAD dfff264, file last changed a14f9051; Deploy V c4d2e35 is the ancestor); (g) step 13's analytical rules restated without its tagged tables, in plain prose and in the step each belongs to: cash conventions (outflows negative, cash interest and tax are cash paid, where operating-lease cost, lease principal and interest paid are classified) in step 5; the debt instruments table T4.18 with reader-worded headings and its rules in step 6; the adjusted EBITDA bridge rules in step 4 (it is the host's EBITDA bridge table); the segment schedule rules in step 4; period derivation in step 8; reconciliations in step 7; operating KPI rules in step 9; pro forma adjustments in step 8; evidence tier labels in step 1; no independent credit recommendation or unsupported normalisation in the discipline list; (h) acceptance-check rulings (owner, 2026-11-13): step 5 states that `Cash Interest Paid` is the positive amount paid while the activity totals and FX effect stay signed; step 7 refuses a difference in the three identities at the wrong figure, never plugged, and has a difference the source itself prints written as `Not supplied: <reason>` on the total it cannot support with a gap line (net income against equity stays a gap line); step 9 makes the fixed register rows' `Period` the Net debt table's Period cell and `Calculated Value` two decimal places; sha256 is this edited file, source_sha256 the byte-for-byte copy archived in the previous commit. Instruction-budget edit (2026-11-13): duplicate statements removed and wording shortened for the instruction budget, no rule removed (the balance-sheet-instant, expense-block and readiness-grouping sentences are dropped because prompts/CP-1.md, sent on every pathway, states each); sha256 is this edited file. Own-currency edit (owner ruling C1, 2026-11-13): step 9 says the six fixed register rows' `Unit` is the money unit (`US$m` for USD statements, else the statements' currency code and `m`), not `US$m`; sha256 is this edited file.",
       "use": "CP-1 method sent to CP-OS (2026-11-13); current project instructions govern transport, scores and delivery",
@@ -1077,7 +1077,7 @@
     {
       "consumed_path": "skills/cp-1-canonical-data-foundation/references/CP-1_SCHEMA_REFERENCE.md",
       "archive_path": "docs/reuse/selected-methods/skills/cp-1-canonical-data-foundation/references/CP-1_SCHEMA_REFERENCE.md",
-      "exact_copy_found_at": "/Users/ericguei/Documents/caos-databricks/vendor/deploy-v/skills/cp-1-canonical-data-foundation/references/CP-1_SCHEMA_REFERENCE.md",
+      "exact_copy_found_at": "/Users/USER/Documents/caos-databricks/vendor/deploy-v/skills/cp-1-canonical-data-foundation/references/CP-1_SCHEMA_REFERENCE.md",
       "sha256": "356e87cb37a5ed86c96b15a913f42b8aafee544cd70e4f8f2fde01ce58cc7b72",
       "source_revision": "caos-databricks vendor/deploy-v at repo HEAD dfff264 (file last changed a14f9051); Deploy V c4d2e35 is the ancestor",
       "use": "Archived, not sent: the SKILL opens it only to resolve an ambiguity; byte-for-byte (checked 2026-11-13, working file equals git blob at dfff264)"
@@ -1085,7 +1085,7 @@
     {
       "consumed_path": "skills/cp-1-canonical-data-foundation/references/CP-1_SYSTEM_REFERENCE.md",
       "archive_path": "docs/reuse/selected-methods/skills/cp-1-canonical-data-foundation/references/CP-1_SYSTEM_REFERENCE.md",
-      "exact_copy_found_at": "/Users/ericguei/Documents/caos-databricks/vendor/deploy-v/skills/cp-1-canonical-data-foundation/references/CP-1_SYSTEM_REFERENCE.md",
+      "exact_copy_found_at": "/Users/USER/Documents/caos-databricks/vendor/deploy-v/skills/cp-1-canonical-data-foundation/references/CP-1_SYSTEM_REFERENCE.md",
       "sha256": "7af64a9047ffa05e996dbb4cb1741b9a815744ecb7eb7bd3b134a4bccf9d2cd0",
       "source_revision": "caos-databricks vendor/deploy-v at repo HEAD dfff264 (file last changed cc9c3e58); Deploy V c4d2e35 is the ancestor",
       "use": "Archived, not sent: the SKILL opens it only to resolve an ambiguity; byte-for-byte (checked 2026-11-13, working file equals git blob at dfff264)"
