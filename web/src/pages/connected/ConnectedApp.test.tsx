@@ -82,7 +82,9 @@ async function advanceToPurpose() {
 }
 
 function advanceToContext() {
-  fireEvent.click(screen.getByRole("button", { name: "Continue to context" }));
+  const button = screen.getByRole("button", { name: "Continue to context" });
+  button.focus();
+  fireEvent.click(button);
 }
 
 function approve() {
@@ -121,7 +123,9 @@ describe("connected run start", () => {
     await advanceToPurpose();
     advanceToContext();
     expect(screen.queryByRole("button", { name: "Go back to More context" })).toBeNull();
-    fireEvent.click(screen.getByRole("button", { name: "Go back to Documents" }));
+    const back = screen.getByRole("button", { name: "Go back to Documents" });
+    back.focus();
+    fireEvent.click(back);
     expect(screen.getByRole("heading", { name: "Documents" })).toHaveFocus();
   });
 

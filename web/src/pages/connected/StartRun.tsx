@@ -2021,7 +2021,12 @@ function InputStepForm({
       className="grid min-w-0 grid-cols-1 gap-5"
     >
       <div className="grid gap-1">
-        <h2 ref={focusStep} tabIndex={-1} className={`${heading} focus:outline-none`}>
+        <h2
+          key={view.step}
+          ref={focusStep}
+          tabIndex={-1}
+          className={`${heading} focus:outline-none`}
+        >
           {title}
         </h2>
         <p className="text-sm text-text-secondary">{STEP_GUIDANCE[view.step]}</p>
