@@ -22,9 +22,10 @@ from pydantic import Field, ValidationError, model_validator
 from deploy_vii.contracts import Contract
 from deploy_vii.live.schema import exact_json, json_object
 from deploy_vii.readiness import shape_issues
+from deploy_workflow.method_scripts import currency_of
 from deploy_workflow.owners import cp2g
 from deploy_workflow.owners.cpos_facilities import Facility, Schedule, schedule
-from deploy_workflow.prose_checks import FORECAST_HEADING, reader_passages
+from deploy_workflow.prose_checks import FORECAST_HEADING, ISO_4217, reader_passages
 
 HEADING = FORECAST_HEADING
 SCHEMA_VERSION = "cpos-forecast-inputs/1"
@@ -322,7 +323,11 @@ def _layer1_problem(text: str, key: str, operand: Operand, amount: str | None) -
     return None if agrees else not_the_cell
 
 
-_CURRENCY = r"(?:US\$|USD|EUR|GBP|[$\u20ac\u00a3])"
+# Any ISO 4217 code names a currency (docs/rulings/2026-11-16-reporting-currency-from-sources.md: a
+# run is in the currency its sources report in), in capitals and not inside a word, so `CHFk` is
+# thousands and `Bank` or `Item` name no unit; USD, EUR, GBP and the signs are read in any case.
+_ISO_CODE = rf"(?<![A-Za-z])(?-i:{'|'.join(sorted(ISO_4217))})"
+_CURRENCY = rf"(?:US\$|USD|EUR|GBP|[$\u20ac\u00a3]|{_ISO_CODE})"
 _NAMES_THOUSANDS = re.compile(rf"\bthousands?\b|[$'\u2019]000s?\b|{_CURRENCY}\s?k\b", re.IGNORECASE)
 _NAMES_MILLIONS = re.compile(
     rf"\b(?:millions?|billions?)\b|{_CURRENCY}\s?(?:m|mm|mn|bn)\b", re.IGNORECASE
@@ -355,7 +360,8 @@ def _unit_of(scale: int, currency: str | None) -> str:
 def _units_named(text: str) -> frozenset[str]:
     """Which of `thousands` and `millions` a cell of CP-1 names as a unit, case-insensitive.
     Thousands: the word `thousand` or `thousands`; `$000`, `'000` (with a trailing s); a currency
-    (`US$`, `USD`, `EUR`, `GBP`, `$`, euro or pound sign) then `k`, at a word end. Millions: the
+    (`US$`, `$`, euro or pound sign, or an ISO 4217 code: `USD`, `EUR` and `GBP` in any case, any
+    other in capitals, `CHF`) then `k`, at a word end. Millions: the
     words `million`, `millions`, `billion`, `billions`; a currency then `m`, `mm`, `mn` or `bn`,
     at a word end (`US$m`, `USD m`, `$mn`, `US$ bn`). A bare number, `9M`, or `m` without a currency
     names none. Both may be named at once."""
@@ -577,8 +583,10 @@ def parse(source_text: str, cp1_text: str, source: str = "CP-2G") -> ForecastInp
 def _check_facilities(
     inputs: ForecastInputs, facilities: tuple[Facility, ...], cp1_text: str, stated: dict[str, str]
 ) -> None:
-    """Each stated term is printed in CP-1, the balances fit the base debt, and no case names a
-    driver the schedule replaces."""
+    """Each facility is in the block's currency, each stated term is printed in CP-1, the
+    balances fit the base debt, and no case names a driver the schedule replaces."""
+    code = inputs.currency or UNSTATED_CURRENCY
+    _check_facility_currencies(facilities, cp1_text, code)
     for number, facility in enumerate(facilities, 1):
         balance = stated.get(f"facility {number} balance", facility.balance)
         if not _printed(cp1_text, balance):
@@ -592,7 +600,6 @@ def _check_facilities(
                     f"CP-2G: facility {facility.name} {field} {value}% is not printed in CP-1"
                 )
     debt = inputs.base["debt"].amount
-    code = inputs.currency or UNSTATED_CURRENCY
     divided = f", in {code} millions after dividing by scale 1000" if inputs.scale == 1000 else ""
     if debt is not None:
         with localcontext(cp2g._EXACT):
@@ -616,6 +623,66 @@ def _check_facilities(
             raise ValueError(
                 f"CP-2G: {name} states debt_repayment, which is not used when facilities are stated"
             )
+
+
+def _t418_rows(cp1_text: str) -> list[tuple[str, str | None]]:
+    """Each row of CP-1's T4.18 (a table with `Instrument` and `Currency` columns): its instrument
+    name as compared (trimmed, emphasis removed, casefolded) and the ISO 4217 code its `Currency`
+    cell states, or None when the cell states no single code."""
+    found: list[tuple[str, str | None]] = []
+    for header, *rows in _tables(cp1_text):
+        labels = [_plain(cell) for cell in header]
+        if "Instrument" not in labels or "Currency" not in labels:
+            continue
+        at, currency = labels.index("Instrument"), labels.index("Currency")
+        found += [
+            (_plain(row[at]).casefold(), currency_of(row[currency]))
+            for row in rows
+            if len(row) > max(at, currency)
+        ]
+    return found
+
+
+_LEAVE_OUT = (
+    "leave it out of `facilities`: its debt stays in base debt at the `interest_rate` driver"
+)
+
+
+def _currency_refusal(name: str, rows: list[tuple[str, str | None]], code: str) -> str:
+    """Why a facility is not one T4.18 prints in the block's currency, and what to do instead."""
+    key = _plain(name).casefold()
+    stated = [currency for row_name, currency in rows if row_name == key]
+    if stated and stated[0] is not None:
+        return (
+            f"CP-2G: facility `{name}` is in `{stated[0]}` in CP-1's T4.18, not the block's "
+            f"`{code}`; {_LEAVE_OUT}"
+        )
+    why = (
+        "its T4.18 `Currency` cell gives no ISO 4217 code"
+        if stated
+        else "no T4.18 `Instrument` is named exactly so"
+    )
+    return (
+        f"CP-2G: facility `{name}` is not an instrument CP-1's T4.18 prints in `{code}` ({why}), "
+        "and T4.18 holds an instrument in another currency or in none it states; copy its name "
+        f"exactly as T4.18's `Instrument` prints it, or {_LEAVE_OUT}"
+    )
+
+
+def _check_facility_currencies(facilities: tuple[Facility, ...], cp1_text: str, code: str) -> None:
+    """Where any T4.18 row's `Currency` does not read as the block's currency (another code, or no
+    single code), T4.18 prints amounts in another currency (docs/rulings/2026-11-16-reporting-
+    currency-from-sources.md), so every facility must be an instrument T4.18 prints in the block's
+    currency, its name copied exactly (trimmed, emphasis removed, ignoring case); any other is
+    refused, named, and left to base debt at the `interest_rate` driver (PR 46 review M1). Where
+    every row reads as the block's currency, or CP-1 has no T4.18, nothing is refused here."""
+    rows = _t418_rows(cp1_text)
+    if all(currency == code for _, currency in rows):
+        return
+    own = {name for name, currency in rows if currency == code}
+    for facility in facilities:
+        if _plain(facility.name).casefold() not in own:
+            raise ValueError(_currency_refusal(facility.name, rows, code))
 
 
 _FACILITY_YEAR = ("opening", "rate", "interest", "repaid", "closing")

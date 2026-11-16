@@ -43,7 +43,9 @@ _EXACT = Context(prec=1000, traps=[Inexact])  # exact sums of figures of at most
 GAP_WORDS = ("Not supplied:", "Not calculable:")
 MAX_CELL = 25  # A longer cell is not a plain number; this also bounds every sum.
 PERIOD_FORMS = ("FY2024", "Q3 2025", "H1 2025", "9M 2025")
-UNIT_EXAMPLE = "USD millions"
+# Shown with a non-USD example beside it, so a model does not copy USD onto another currency
+# (docs/rulings/2026-11-16-reporting-currency-from-sources.md).
+UNIT_EXAMPLE = "`USD millions` or `GBP millions`"
 MONEY = "the money unit"  # Stands for the issuer's own currency unit in CP-1's money tables.
 REGISTER_UNIT = MONEY  # The Net debt table's Reporting unit.
 PLAIN = (
@@ -806,7 +808,7 @@ def _line_issues(found: Statement, label: str) -> list[str]:
     if unit is not None and _UNIT.fullmatch(unit) is None:
         issues.append(
             f"`{heading}` {label}: Unit `{unit}` must be a three-letter currency code and "
-            f"`millions` or `thousands`, for example `{UNIT_EXAMPLE}`."
+            f"`millions` or `thousands`, for example {UNIT_EXAMPLE}."
         )
     for at, period in enumerate(found.periods):
         cell = found.cell(label, at)
