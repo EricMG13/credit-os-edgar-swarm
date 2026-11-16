@@ -220,13 +220,9 @@ function ModuleFindings({
   const { downside, breaks, macro, securities, tableLines: figureTableLines } = figures;
   const evidenceHref = (line: number) => evidencePath(run.folder, entry, line);
   const allMetrics = foundationMetrics(entry, view.catalogue);
-  const metrics = allMetrics.filter(({ metric }) =>
-    ["Net debt (carrying basis)", "Debt principal", "All-in cash interest cover"].includes(
-      metric.label,
-    ),
+  const metrics = allMetrics.filter(({ key }) =>
+    ["netDebt", "principal", "interestCover"].includes(key),
   );
-  const leverage = allMetrics.find(({ metric }) => metric.label === "Lease-adjusted gross leverage")
-    ?.metric.value;
   return (
     <ReportFindings
       key={entry.output.id}
@@ -235,9 +231,6 @@ function ModuleFindings({
       entry={entry}
       entryIndex={index}
       figureTableLines={figureTableLines}
-      judgement={
-        leverage?.kind === "value" ? `Lease-adjusted gross leverage is ${leverage.text}` : undefined
-      }
       afterBottomLine={
         <>
           <MetricGrid

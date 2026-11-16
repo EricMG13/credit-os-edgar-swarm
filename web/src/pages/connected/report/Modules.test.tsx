@@ -83,3 +83,59 @@ it("respects explicit modules and does not substitute for an unknown module", ()
   expect(screen.getByText("This module is unavailable in the published run.")).toBeInTheDocument();
   expect(screen.queryByLabelText("Module")).toBeNull();
 });
+
+it("leads CP-1 with the module's own bottom line, not a sentence the app wrote", () => {
+  const lead = "Leverage is high but liquidity covers the next two years.";
+  const entry = output("a", true);
+  entry.sections = [
+    { heading: "Findings", level: 2, line: 1, blocks: [] },
+    {
+      heading: "Bottom line",
+      level: 3,
+      line: 2,
+      blocks: [{ type: "text", line: 3, end: 3, text: lead }],
+    },
+    {
+      heading: "Period table",
+      level: 3,
+      line: 5,
+      blocks: [
+        {
+          type: "table",
+          headers: ["Period", "Start", "End"],
+          line: 6,
+          rows: [{ line: 7, cells: ["FY2026", "2026-01-01", "2026-12-31"] }],
+        },
+      ],
+    },
+    {
+      heading: "Financials and credit metrics",
+      level: 3,
+      line: 10,
+      blocks: [
+        {
+          type: "table",
+          headers: ["Metric", "FY2026", "Unit"],
+          line: 11,
+          rows: [
+            { line: 12, cells: ["(Total debt plus financing obligations) / EBITDA", "5.4", "x"] },
+          ],
+        },
+      ],
+    },
+  ];
+  const props = fixture([entry]);
+  props.view.catalogue = {
+    id: "first",
+    issuer: "A",
+    name: "A",
+    title: "",
+    date: "2027-01-01",
+    period: "",
+    sector: "",
+    metrics: { cash: { value: 0, unit: "US$m", period: "2026-12-31" } },
+  };
+  render(<Modules {...props} />);
+  expect(screen.queryByText(/Lease-adjusted gross leverage is/)).toBeNull();
+  expect(screen.getByText(lead)).toBeVisible();
+});

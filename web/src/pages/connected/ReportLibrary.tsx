@@ -126,11 +126,8 @@ function Overview({
   const watchRows = upcomingCalendarRows(calendar.rows, run.asOf);
   const foundation = view.entries.find((entry) => entry.selected && entry.output.module === "CP-1");
   const metrics = foundation
-    ? foundationMetrics(foundation, view.catalogue).filter(
-        ({ metric }) =>
-          ["Available liquidity", "Free cash flow", "Lease-adjusted gross leverage"].includes(
-            metric.label,
-          ) || metric.label.startsWith("Debt maturities through"),
+    ? foundationMetrics(foundation, view.catalogue).filter(({ key }) =>
+        ["liquidity", "freeCashFlow", "leverage", "maturities"].includes(key),
       )
     : [];
   const figures = metrics.length ? (
