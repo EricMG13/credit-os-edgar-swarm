@@ -223,6 +223,7 @@ async function checkOverviewMobile(report, page, channel) {
       main: main ? over(main) : true,
     };
   });
+  assert.ok(fits.cards > 0, "no headline card was found on the Overview");
   assert.equal(fits.wide, 0, "a headline card overflows at 375px");
   assert.equal(fits.main, false, "the main region overflows at 375px");
   console.log(`overview mobile: ${String(fits.cards)} headline cards fit at 375px`);
