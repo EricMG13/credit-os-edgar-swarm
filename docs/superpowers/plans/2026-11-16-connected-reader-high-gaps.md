@@ -538,13 +538,17 @@ Same four steps as Task 4, run once for each of the two pull requests. Run `npm 
 
 ## PR 3: run pages (branch from `main` after PR 2 merges)
 
-Not refreshed. `main` has since rebuilt the Start flow in four steps, and "Approve summary" no longer appears in `StartRun.tsx` (it remains only in a test), so Task 10 is probably obsolete. Task 9 still applies: `react_frontend/run_activity.py` still lists only running and queued runs. Refresh this section before it starts.
+Refreshed 2026-11-16 against `main` at `4be1e30d` (Start's PR D merged as #31 and #30). PR 3 is Task 9 only.
+
+- Task 9 still applies: `react_frontend/run_activity.py:130-161` lists only running and queued runs.
+- Task 10 is dropped. The Start flow no longer has a Confirm step: `FORM_STEPS` (`StartRun.tsx:52-56`) is Documents, Purpose and More context, whose buttons are "Continue to purpose", "Continue to context" and "Review run", and `ConnectedApp.test.tsx:137-140` already asserts that no "Approve summary" button exists. `docs/react-workflow.md:115` still says "Approve summary"; that file belongs to the Start work and is not changed here.
+- Keep to `react_frontend/run_activity.py`, the run types in `api.ts`, `RunActivity.tsx` and their tests. `ReportLibrary.tsx`, `reportView.ts`, `publishedReport.ts`, `report/**` and `web/scripts/connected-proof.mjs` are another session's.
 
 ### Task 9: Ended runs on Run activity
 
 **Files:**
 - Modify: `react_frontend/run_activity.py:130-161` (`listing`)
-- Modify: `web/src/pages/connected/api.ts:115-124`
+- Modify: `web/src/pages/connected/api.ts:125-134` (`LiveRun`, `Activity`)
 - Modify: `web/src/pages/connected/RunActivity.tsx`
 - Test: `tests/test_react_frontend.py`, `web/src/pages/connected/ConnectedApp.test.tsx`
 
@@ -626,44 +630,13 @@ git add react_frontend/run_activity.py tests/test_react_frontend.py web/src/page
 git commit -m "List runs that ended without a report on Run activity"
 ```
 
-### Task 10: The Confirm step's button says what it does
+### Task 10: dropped
 
-**Files:**
-- Modify: `web/src/pages/connected/StartRun.tsx:43`
-- Modify: `web/src/pages/connected/ConnectedApp.test.tsx:85`, `web/scripts/connected-proof.mjs:201`, `docs/react-workflow.md:114-116`
-
-- [ ] **Step 1: Write the failing test**
-
-```tsx
-// ConnectedApp.test.tsx: on the Confirm step
-expect(screen.getByRole("button", { name: "Continue to more context" })).toBeVisible();
-expect(screen.queryByRole("button", { name: "Approve summary" })).toBeNull();
-```
-
-- [ ] **Step 2: Run it and see it fail**
-
-Run: `npx vitest run --coverage.enabled=false src/pages/connected/ConnectedApp.test.tsx`
-Expected: FAIL (button "Continue to more context" not found).
-
-- [ ] **Step 3: Implement**
-
-`FORM_STEPS.confirm.next` becomes `"Continue to more context"`. Update the helper at `ConnectedApp.test.tsx:85`, the proof script's click, and the walkthrough sentence in `docs/react-workflow.md`.
-
-- [ ] **Step 4: Run the affected file**
-
-Run: `npx vitest run --coverage.enabled=false src/pages/connected/ConnectedApp.test.tsx`
-Expected: PASS.
-
-- [ ] **Step 5: Commit**
-
-```bash
-git add web/src/pages/connected web/scripts/connected-proof.mjs docs/react-workflow.md
-git commit -m "Name the Confirm step's button for what it does"
-```
+See the note at the head of this section.
 
 ### Task 11 (PR 3 close): gates, reviews, record
 
-Same four steps as Task 4, plus the Python gates. `npm run proof:connected` must pass with the renamed button. Fidelity check scope: Run activity's ended group against the saved run records.
+Same four steps as Task 4, plus the Python gates. Fidelity check scope: Run activity's ended group against the saved run records.
 
 ## Not verified
 
