@@ -35,7 +35,7 @@
 ## Controller rulings (made before the first dispatch)
 
 1. An unknown module id is shown as stored. A test pins that every module the run start can schedule has a plain name, so the fallback is unreachable for scheduled modules.
-2. `Name (CP-x)` in handoff text is shown as `Name` on every page (amendment 2026-11-12). A bare code inside a sentence and a `(CP-x)` inside a file name are stored text and stay.
+2. `Name (CP-x)` in handoff text is shown as `Name` on every page (amendment 2026-11-12). Superseded for bare codes by the reader ruling's amendment of 2026-11-16: on findings pages a standalone known module code is replaced by the module's name (`readerText`); a code in a register id, file name or path, and an unknown code, stay; the Evidence page and trace drawer keep `plainModuleNames`.
 3. CP-1 metric tiles take the handoff's own row label. Selection of which tiles a page shows moves from label strings to a `key`.
 4. `actionBias` on the Overview lead stays: it selects the module's own "Final Action Bias" word.
 5. The Overview lead keeps Bottom line, Key findings and Contrary evidence (design spec of 15 November, later than H5). Its Limitations card is replaced by the run-wide list, which includes the lead's items.
@@ -444,15 +444,17 @@ git commit -m "Order the reader passages and show a gap for a missing one"
 
 ### Task 7: Overview carries every module's bottom line and the run's limitations
 
+Refreshed 2026-11-16 against `main` at `bbb5b3dd` (PR 2a merged as #18, module codes as #23). Module-written text drawn on Overview goes through `readerText` (`publishedReport.ts:21`); components that use `richParts` pass `readerText` as its second argument. `moduleCodes.cases.json` is an answer key and is not edited.
+
 **Files:**
 - Modify: `web/src/pages/connected/reportView.ts` (three new exports)
 - Create: `web/src/pages/connected/report/OverviewModules.tsx`
 - Modify: `web/src/pages/connected/ReportLibrary.tsx:117-230` (`Overview`)
-- Modify: `web/src/pages/connected/ReportContent.tsx:531-540` (Overview no longer draws the lead's Limitations)
+- Modify: `web/src/pages/connected/ReportContent.tsx:541-570` (`findingsLayout`: Overview no longer draws the lead's Limitations)
 - Test: `web/src/pages/connected/reportView.test.ts`, `ReportLibrary.design.test.tsx`
 
 **Interfaces:**
-- Consumes: `moduleState`, `blocked`, `passages`, `readParagraph`, `containsReference`, `plainModuleNames`, `evidencePath`, `PublishedSource`, `PASSAGES` (Task 6).
+- Consumes: `moduleState`, `blocked`, `passages`, `readParagraph`, `containsReference`, `readerText`, `evidencePath`, `PublishedSource`, `PASSAGES` (Task 6).
 - Produces:
   - `moduleOrder(run: PublishedRun): string[]`
   - `moduleBottomLines(view: ReportView, run: PublishedRun): { id: string; name: string; state: ModuleState; entry: OutputEntry; text: string | null; line: number | null }[]`
@@ -509,12 +511,12 @@ Expected: FAIL (functions not exported; no such region).
 - [ ] **Step 3: Implement**
 
 - `moduleOrder`: module ids in order of first appearance in `run.record.steps`, then the remaining keys of `run.modules`.
-- `moduleBottomLines`: for each module in `moduleOrder` with a designated entry, except the lead's module: `text` is the body of the first text block of its `Bottom line` passage (`readParagraph`, `**` and backticks removed, as `BottomLine` does), else `output.summary.bottomLine`, else `null`. A text for which `containsReference` is true becomes `null`. The text is passed through `plainModuleNames`. `line` is that block's line.
-- `runLimitations`: for each module in `moduleOrder` (lead included) that is not blocked, each text block of its `Limitations` passage. Normalise for comparison only (lower case, Basis line dropped, punctuation removed, whitespace collapsed; ruling check 7); the first occurrence is kept and shown as written, less its Basis line and any `Name (CP-x)` code (`readParagraph`, then `plainModuleNames`). An item for which `containsReference` is true is shown as a link, "Read this limitation in Evidence", as `FindingParagraph` does.
+- `moduleBottomLines`: for each module in `moduleOrder` with a designated entry, except the lead's module: `text` is the body of the first text block of its `Bottom line` passage (`readParagraph`, `**` and backticks removed, as `BottomLine` does), else `output.summary.bottomLine`, else `null`. A text for which `containsReference` is true becomes `null`. The text is passed through `readerText`. `line` is that block's line.
+- `runLimitations`: for each module in `moduleOrder` (lead included) that is not blocked, each text block of its `Limitations` passage. Normalise for comparison only (lower case, Basis line dropped, punctuation removed, whitespace collapsed; ruling check 7); the first occurrence is kept and shown as written, less its Basis line and any `Name (CP-x)` code (`readParagraph`, then `readerText`). An item for which `containsReference` is true is shown as a link, "Read this limitation in Evidence", as `FindingParagraph` does.
 - `ModuleBottomLines`: `<section aria-label="Bottom line by module">`; per row the module name as a link to `#modules/<id>`, `StatusBadge set="Module state"`, the text (or `GapPanel` "Not established for this run" when `text` is null), and `PublishedSource href={evidencePath(run.folder, entry, line)}`.
 - `RunLimitations`: `<section aria-label="Limitations">`, a list; per item the text, the module name, and `PublishedSource`. Empty list: one sentence, "No module recorded a limitation for this run."
-- `Overview`: after the lead and the figures, `ModuleBottomLines`, then `RunLimitations`, then "Dates to watch". `findingsLayout` drops `Limitations` from the Overview heading list.
-- Add to the Overview design test: the fixture's CP-1 bottom line holds `Liquidity (CP-2D)`, and the "Bottom line by module" region shows `Liquidity` and no `(CP-`.
+- `Overview`: after the lead and the figures, `ModuleBottomLines`, then `RunLimitations`, then "Dates to watch". On Overview `findingsLayout` keeps every passage slot except `Limitations` (its `slotLines` filter); the pairing of Key findings with Contrary evidence is unchanged.
+- Add to the Overview design test: the fixture's CP-1 bottom line holds `Liquidity (CP-2D)`, and the "Bottom line by module" region shows `Liquidity` and no `CP-`. One limitation in the fixture holds a bare `CP-2D`; the "Limitations" region shows `Liquidity` there and no `CP-`.
 
 - [ ] **Step 4: Run the affected files**
 
