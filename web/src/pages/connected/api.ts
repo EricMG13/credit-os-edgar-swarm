@@ -79,6 +79,7 @@ export type Summary = Reading & {
   omitted: string[];
   changes: string;
   lookup?: string[];
+  web_search?: boolean;
   prior?: { id: string; as_of: string; pathway: string } | null;
   model: string;
   effort: string;

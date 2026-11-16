@@ -1559,3 +1559,44 @@ def test_two_submissions_carrying_from_one_run_both_end_with_the_runs_files(layo
         "a.txt": 3,
         "sub/b.txt": 3,
     }  # the earlier run's own files stay
+
+
+def web_search_of(layout, tmp_path, kind, monkeypatch, **change):
+    """The summary's ``web_search`` for a ``kind`` case under ``change``."""
+    monkeypatch.delenv(SEC_AGENT, raising=False)
+    sid, _ = upload_issuer(layout, tmp_path)
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "present")
+    answers = answers_for(tmp_path, **change)
+    answers["context"]["run"]["case_kind"] = kind  # type: ignore[index]
+    result = summary(layout, sid, answers)
+    assert result["error"] == ""
+    return result["web_search"]
+
+
+def test_a_private_gpt_run_with_the_research_module_states_that_it_searches_the_web(
+    layout, tmp_path, monkeypatch
+):
+    assert web_search_of(layout, tmp_path, "private", monkeypatch) is True
+
+
+def test_a_public_gpt_run_with_the_research_module_states_that_it_searches_the_web(
+    layout, tmp_path, monkeypatch
+):
+    assert web_search_of(layout, tmp_path, "public", monkeypatch) is True
+
+
+def test_a_synthetic_case_summary_states_no_web_search(layout, tmp_path, monkeypatch):
+    assert web_search_of(layout, tmp_path, "synthetic", monkeypatch) is False
+
+
+def test_a_claude_run_summary_states_no_web_search(layout, tmp_path, monkeypatch):
+    assert (
+        web_search_of(layout, tmp_path, "private", monkeypatch, level="advanced", model="claude")
+        is False
+    )
+
+
+def test_a_run_without_the_research_module_states_no_web_search(layout, tmp_path, monkeypatch):
+    assert (
+        web_search_of(layout, tmp_path, "private", monkeypatch, modules=["CP-0", "CP-1"]) is False
+    )
