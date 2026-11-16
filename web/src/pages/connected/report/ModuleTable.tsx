@@ -7,12 +7,7 @@ import { WatchBlock } from "@/pages/library/parts/WatchBlock";
 import type { AnswerState, Cell } from "@/pages/library/slice";
 import { TRACE_HOST, TraceControl } from "@/pages/library/parts/TraceControl";
 import { SECTION_HEADING, SUBSECTION_HEADING } from "@/pages/library/parts/heading";
-import {
-  containsReference,
-  displayColumns,
-  readerText as codesNamed,
-  type Table,
-} from "../publishedReport";
+import { containsReference, displayColumns, readerText, type Table } from "../publishedReport";
 import { plainText, richParts } from "../ReportContent";
 
 function visible(table: Table) {
@@ -34,8 +29,8 @@ const READINESS = {
   NOT_READY: "Not ready",
 } as const;
 
-function readerText(text: string | undefined) {
-  return text && containsReference(text) ? "In Evidence" : codesNamed(text ?? "");
+function cellText(text: string | undefined) {
+  return text && containsReference(text) ? "In Evidence" : readerText(text ?? "");
 }
 
 function readiness(data: ReturnType<typeof visible>, traceAt: (line: number) => string) {
@@ -50,8 +45,8 @@ function readiness(data: ReturnType<typeof visible>, traceAt: (line: number) => 
     const label = READINESS[state as keyof typeof READINESS];
     const items = groups.get(label) ?? [];
     items.push({
-      text: readerText(cells[0]),
-      note: readerText(cells[2]) || null,
+      text: cellText(cells[0]),
+      note: cellText(cells[2]) || null,
       value: null,
       trace: traceAt(line),
     });
@@ -79,7 +74,7 @@ function limitations(data: ReturnType<typeof visible>, traceAt: (line: number) =
   if (limitation < 0 || status < 0 || closed < 0) return null;
   const groups = new Map<string, { text: string; closed: string; line: number }[]>();
   for (const { cells, line } of data.rows) {
-    const label = codesNamed(plainText(cells[status] ?? "")).trim();
+    const label = readerText(plainText(cells[status] ?? "")).trim();
     const note = cells[closed]?.trim() ?? "";
     groups.set(label, [
       ...(groups.get(label) ?? []),
@@ -108,15 +103,15 @@ function limitations(data: ReturnType<typeof visible>, traceAt: (line: number) =
                   className={`${TRACE_HOST} flex flex-wrap items-start gap-2 rounded-lg border border-border-hairline bg-surface-card p-2 text-sm`}
                 >
                   <span className="min-w-0 flex-1 wrap-anywhere">
-                    {richParts(item.text, codesNamed)}
+                    {richParts(item.text, readerText)}
                   </span>
                   <TraceControl
                     trace={traceAt(item.line)}
-                    label={`Show sources for ${codesNamed(plainText(item.text))}`}
+                    label={`Show sources for ${readerText(plainText(item.text))}`}
                   />
                   {item.closed && (
                     <p className="basis-full text-xs text-text-secondary">
-                      {richParts(item.closed, codesNamed)}
+                      {richParts(item.closed, readerText)}
                     </p>
                   )}
                 </li>
@@ -171,11 +166,11 @@ function monitoring(
         kind: "watch",
         title,
         items: data.rows.map(({ cells, line }) => ({
-          indicator: readerText(cells[0]),
-          threshold: readerText(cells[thresholdAt]),
+          indicator: cellText(cells[0]),
+          threshold: cellText(cells[thresholdAt]),
           timing: timed ? (cells[1]?.toLowerCase() === "leading" ? "leading" : "lagging") : null,
           detail: data.headers.slice(detailAt).flatMap((label, index) => {
-            const text = readerText(cells[index + detailAt]);
+            const text = cellText(cells[index + detailAt]);
             return text ? [{ label, text }] : [];
           }),
           trace: traceAt(line),
@@ -187,10 +182,10 @@ function monitoring(
 
 function readingCell(text: string): Cell {
   if (!text) return null;
-  if (/^withheld(?:[:\s]|$)/i.test(text)) return { kind: "withheld", reason: codesNamed(text) };
+  if (/^withheld(?:[:\s]|$)/i.test(text)) return { kind: "withheld", reason: readerText(text) };
   if (/^not (?:supplied|stated|calculable|modelled)(?:[:\s]|$)/i.test(text))
-    return { kind: "gap", reason: codesNamed(text) };
-  return { kind: "value", text: codesNamed(text), at: null };
+    return { kind: "gap", reason: readerText(text) };
+  return { kind: "value", text: readerText(text), at: null };
 }
 
 function statement(
@@ -204,7 +199,7 @@ function statement(
   if (!periods.every((period) => /^(?:FY|H[12] |Q[1-4] |LTM |20\d\d-)/.test(period))) return null;
   if (data.headers.slice(unit + 1).some((name) => name !== "Basis")) return null;
   const rows = data.rows.map(({ cells, line }) => ({
-    label: codesNamed([cells[0], cells[unit], cells[unit + 1]].filter(Boolean).join(" · ")),
+    label: readerText([cells[0], cells[unit], cells[unit + 1]].filter(Boolean).join(" · ")),
     cells: cells.slice(1, unit).map(readingCell),
     emphasis: false,
     line,
@@ -247,10 +242,10 @@ function research(
         kind: "questions",
         title,
         items: data.rows.map(({ cells, line }) => ({
-          question: codesNamed(cells[0] ?? ""),
+          question: readerText(cells[0] ?? ""),
           state: cells[1] as AnswerState,
           answer:
-            codesNamed(
+            readerText(
               [cells[2], cells[4] && `Open question · ${cells[4]}`].filter(Boolean).join("\n"),
             ) || null,
           trace: traceAt(line),
@@ -289,9 +284,9 @@ export function typedModuleTable(
           note: null,
           trace: null,
           rows: data.rows.map(({ cells, line }) => ({
-            risk: codesNamed(cells[0] ?? ""),
-            probability: cells[1] ? codesNamed(cells[1]) : null,
-            impact: cells[2] ? codesNamed(cells[2]) : null,
+            risk: readerText(cells[0] ?? ""),
+            probability: cells[1] ? readerText(cells[1]) : null,
+            impact: cells[2] ? readerText(cells[2]) : null,
             trace: traceAt(line),
           })),
         }}
@@ -307,9 +302,9 @@ export function typedModuleTable(
           kind: "watch",
           title,
           items: data.rows.map(({ cells, line }) => ({
-            indicator: codesNamed(cells[0] ?? ""),
+            indicator: readerText(cells[0] ?? ""),
             timing: cells[1]?.toLowerCase() === "leading" ? "leading" : "lagging",
-            threshold: codesNamed(cells[2] ?? ""),
+            threshold: readerText(cells[2] ?? ""),
             trace: traceAt(line),
           })),
         }}

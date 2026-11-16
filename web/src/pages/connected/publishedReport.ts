@@ -14,13 +14,15 @@ export function plainModuleNames(text: string) {
     FILE_AHEAD.test(text.slice(at + code.length)) ? code : "",
   );
 }
-// A standalone module code: nothing path-like or word-like touches it on either side.
-const STANDALONE_CODE = /(?<![\w\-\\/.])CP-[A-Z0-9]+(?![\w-])(?!\.[A-Za-z])/g;
+// A standalone run of module codes ("CP-1" or "CP-1/CP-2"): nothing path-like or word-like touches it.
+const STANDALONE_CODES =
+  /(?<![\w\-\\/.])CP-[A-Z0-9]+(?:\/CP-[A-Z0-9]+)*(?![\w\-\\/])(?!\.[A-Za-z])/g;
 /** Findings-page text: plainModuleNames, then each standalone known module code becomes the module's name. */
 export function readerText(text: string) {
-  return plainModuleNames(text).replace(STANDALONE_CODE, (code, at: number, whole: string) => {
-    const kept = whole.slice(0, at).endsWith(" (") && whole[at + code.length] === ")";
-    return kept && FILE_AHEAD.test(whole.slice(at + code.length + 1)) ? code : moduleName(code);
+  return plainModuleNames(text).replace(STANDALONE_CODES, (run, at: number, whole: string) => {
+    const kept = whole.slice(0, at).endsWith(" (") && whole[at + run.length] === ")";
+    if (kept && FILE_AHEAD.test(whole.slice(at + run.length + 1))) return run;
+    return run.replace(/CP-[A-Z0-9]+/g, moduleName);
   });
 }
 export const CONFIDENCE_INPUTS = "Confidence inputs";

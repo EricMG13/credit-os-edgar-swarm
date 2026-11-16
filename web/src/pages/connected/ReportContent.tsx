@@ -164,7 +164,7 @@ function buildTrace(
     statement:
       section.heading === FORECAST_INPUTS
         ? "The model calculation uses the inputs recorded in this handoff."
-        : readerText(statement.replaceAll("**", "").replaceAll("`", "")),
+        : plainModuleNames(statement.replaceAll("**", "").replaceAll("`", "")),
     derivation: {
       ...node("Evidence retained with this item", ""),
       children: [
@@ -241,6 +241,8 @@ export function PublishedTable({
   rowHref?: (line: number) => string | undefined;
   href?: string;
 }) {
+  // The Evidence page draws text as stored; findings pages name the module.
+  const shown = evidence ? plainModuleNames : readerText;
   const columns = displayColumns(table.headers, evidence, table.rows);
   if (!columns.length || !table.rows.length) return null;
   const pinned = (column: number, background: string) =>
@@ -251,7 +253,7 @@ export function PublishedTable({
     rowSource ??
     (traceAt &&
       ((line: number, name: string) => (
-        <TraceControl trace={traceAt(line)} label={`Show sources for ${readerText(name)}`} />
+        <TraceControl trace={traceAt(line)} label={`Show sources for ${shown(name)}`} />
       )));
   // A wide table scrolls sideways: it is a named, focusable region so the keyboard can reach it.
   const scrolls =
@@ -271,7 +273,7 @@ export function PublishedTable({
                 scope="col"
                 className={`px-3 py-2.5 text-left font-semibold${pinned(column, "bg-surface-subtle")}`}
               >
-                {richParts(table.headers[column] ?? "", readerText)}
+                {richParts(table.headers[column] ?? "", shown)}
               </th>
             ))}
             {sources && (
@@ -304,7 +306,7 @@ export function PublishedTable({
                         "Source reference unavailable"
                       )
                     ) : cell.trim() ? (
-                      richParts(cell, readerText)
+                      richParts(cell, shown)
                     ) : (
                       <span aria-label="Empty in the handoff">—</span>
                     )}

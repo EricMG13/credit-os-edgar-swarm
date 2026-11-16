@@ -55,6 +55,13 @@
     ["evidence", "Deck (CP-1) Q3.pdf", "Deck (CP-1) Q3.pdf"],
     ["service", "limited through CP-4, CP-2A", "limited through Legal & covenants, Downside"],
     ["service", "CP-DR has no market inputs", "Research questions has no market inputs"],
-    ["service", "CP-99 has no inputs", "CP-99 has no inputs"]
+    ["service", "CP-99 has no inputs", "CP-99 has no inputs"],
+    ["reader", "Read by CP-1/CP-2.", "Read by Financial foundation/Fundamental credit."],
+    ["reader", "See CP-2A/notes.md for the working.", "See CP-2A/notes.md for the working."],
+    ["reader", "outputs/CP-1 holds the tables.", "outputs/CP-1 holds the tables."],
+    ["reader", "The TDG-CP-1 pack is stored.", "The TDG-CP-1 pack is stored."],
+    ["reader", "archive.CP-1 is a folder name.", "archive.CP-1 is a folder name."],
+    ["reader", "CP-1's leverage is 5.2x.", "Financial foundation's leverage is 5.2x."],
+    ["evidence", "Read by CP-1/CP-2.", "Read by CP-1/CP-2."]
   ]
 }
