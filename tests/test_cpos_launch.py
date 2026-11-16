@@ -90,7 +90,7 @@ PATHWAY_MODULES = {
         *("CP-0", "CP-1", "CP-1A", "CP-DR", "CP-4", "CP-2", "CP-2A", "CP-2E", "CP-2D", "CP-2G"),
         *("CP-3C", "CP-3", "CP-5", "CP-6"),
     ),
-    "earnings_update": ("CP-0", "CP-1", "CP-1B", "CP-DR", "CP-2E", "CP-1D", "CP-5"),
+    "earnings_update": ("CP-0", "CP-1", "CP-1A", "CP-1B", "CP-DR", "CP-2E", "CP-1D", "CP-5"),
     "relative_value": (
         *("CP-0", "CP-1", "CP-1A", "CP-3D", "CP-DR", "CP-1C", "CP-2", "CP-2E", "CP-2D", "CP-3C"),
         *("CP-3", "CP-5"),
@@ -118,7 +118,9 @@ PRESET_ANSWER_KEY = {
     "credit_snapshot": (
         "CP-0 CP-1 CP-MODEL CP-1A CP-DR CP-2 CP-2A CP-2D CP-2E CP-2G CP-4 CP-3C CP-3 CP-5 CP-6"
     ),
-    "earnings_update": "CP-0 CP-1 CP-MODEL CP-1B CP-1D CP-DR CP-2E CP-5",
+    # Owner, 2026-11-16 ("Add it to Earnings Update"): CP-1A joins
+    # (docs/rulings/2026-11-16-earnings-update-cp1a.md).
+    "earnings_update": "CP-0 CP-1 CP-MODEL CP-1A CP-1B CP-1D CP-DR CP-2E CP-5",
     "relative_value": "CP-0 CP-1 CP-MODEL CP-1C CP-DR CP-2 CP-2D CP-2E CP-3 CP-3C CP-3D CP-5",
     "covenant_refinancing": (
         "CP-0 CP-1 CP-MODEL CP-1A CP-DR CP-2 CP-2A CP-2D CP-2E CP-2G CP-4 CP-3C CP-5"
@@ -1510,13 +1512,16 @@ def test_the_lite_pathway_runs_end_to_end_to_a_verified_delivery_with_a_syntheti
 # 2026-11-16 (owner: "fix all"): CP-1B is sent its cell-format note, 229 characters
 # (`method_scripts_cp1b.CP1B_NOTE`); the ceiling rises by that length, 546,500 to 546,729. The
 # reworded forecast-driver rule fits in the room that was left, so no ceiling rises for it.
+# 2026-11-16 (owner: "Add it to Earnings Update"; docs/rulings/2026-11-16-earnings-update-cp1a.md):
+# CP-1A joins earnings_update; its instructions total 546,723 before and 651,532 after (CP-1A
+# 104,584, CP-5 225 more for the added module), so the ceiling rises by 104,809: 546,729 to 651,538.
 INSTRUCTION_BUDGET = {
     "deep_credit_assessment": 1_900_500,
     "lite_credit_assessment": 420_000,
     "credit_snapshot": 1_483_647,
     "covenant_refinancing": 1_155_000,
     "distressed_restructuring": 1_186_500,
-    "earnings_update": 546_729,  # owner, 2026-11-16: fix all (CP1B_NOTE, 229)
+    "earnings_update": 651_538,  # owner, 2026-11-16: CP-1A joins (546,723 to 651,532)
     "portfolio_decision": 955_500,
     "relative_value": 1_071_000,
     "short_snapshot": 157_500,
