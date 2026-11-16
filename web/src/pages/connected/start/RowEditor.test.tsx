@@ -165,8 +165,11 @@ it("marks the fields the static form requires", () => {
   for (const name of ["As-of", "Provider"]) {
     const control = screen.getByLabelText(name);
     expect(control).toHaveAttribute("aria-required", "true");
-    expect(control).toHaveAccessibleDescription(/^Required\./);
+    expect(control.closest("div")).toHaveTextContent("Required");
+    expect(control.closest("div")?.querySelector("label")).not.toHaveTextContent("Required");
+    expect(control).not.toHaveAccessibleDescription(/Required/);
   }
+  expect(screen.getByLabelText("Bid").closest("div")).not.toHaveTextContent("Required");
   expect(screen.getByLabelText("Bid")).not.toHaveAttribute("aria-required");
   expect(Object.keys(ROW_SPECS)).toHaveLength(4);
   const required = Object.fromEntries(
@@ -190,4 +193,39 @@ it("draws its error under the Add button and describes the button with it", () =
   const add = screen.getByRole("button", { name: "Add facility" });
   expect(screen.getByRole("alert")).toHaveTextContent("Add a facility.");
   expect(add).toHaveAccessibleDescription("Add a facility.");
+});
+
+it("states the facility requirement once, whether or not it has failed", () => {
+  const requirement = "At least one facility is required for a new issue.";
+  const { rerender } = render(
+    <RowEditor kind="deal_terms" rows={[]} onChange={vi.fn()} primary required />,
+  );
+  expect(screen.getByText(requirement)).toBeInTheDocument();
+  rerender(
+    <RowEditor
+      kind="deal_terms"
+      rows={[]}
+      onChange={vi.fn()}
+      primary
+      required
+      error="Add at least one facility in Facilities and deal terms."
+    />,
+  );
+  expect(screen.queryByText(requirement)).toBeNull();
+  expect(screen.getByRole("alert")).toHaveTextContent("Add at least one facility");
+});
+
+it("announces a removed row", () => {
+  render(<Held kind="deal_terms" start={[named("A"), named("B")]} />);
+  expect(screen.getByRole("status")).toBeEmptyDOMElement();
+  fireEvent.click(screen.getByRole("button", { name: "Remove Facility 2" }));
+  expect(screen.getByRole("status")).toHaveTextContent("Facility 2 removed.");
+});
+
+it("marks the Add button as the control to focus for its kind", () => {
+  render(<RowEditor kind="deal_terms" rows={[]} onChange={vi.fn()} primary />);
+  expect(screen.getByRole("button", { name: "Add facility" })).toHaveAttribute(
+    "data-field",
+    "deal_terms",
+  );
 });

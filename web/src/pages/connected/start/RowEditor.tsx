@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState, type RefObject } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { Button } from "@/components/base/buttons/button";
 import { moduleName } from "../api";
 import { field, label } from "../layout";
@@ -14,7 +14,6 @@ export function RowEditor({
   required,
   focusChoices,
   error,
-  addRef,
 }: {
   kind: RowKind;
   rows: readonly Row[];
@@ -23,7 +22,6 @@ export function RowEditor({
   required?: boolean;
   focusChoices?: Choices;
   error?: string;
-  addRef?: RefObject<HTMLButtonElement | null>;
 }) {
   const spec = ROW_SPECS[kind];
   const base = useId();
@@ -33,10 +31,12 @@ export function RowEditor({
   const [ids, setIds] = useState<number[]>(() => rows.map((_, at) => at));
   const nextId = useRef(rows.length);
   const [added, setAdded] = useState<number>();
+  // An id is missing only for the render between a change from outside and the next setIds; the
+  // negative key is unique to the position, so no two rows share a key.
   const keys = rows.map((_, at) => ids[at] ?? -(at + 1));
+  const [removed, setRemoved] = useState("");
   const removeButtons = useRef(new Map<number, HTMLButtonElement>());
-  const ownAdd = useRef<HTMLButtonElement | null>(null);
-  const addButton = addRef ?? ownAdd;
+  const addButton = useRef<HTMLButtonElement | null>(null);
   const refocus = useRef<{ add: boolean; at: number }>(undefined);
   useEffect(() => {
     const wanted = refocus.current;
@@ -46,16 +46,17 @@ export function RowEditor({
     const target =
       wanted.add || keyAt === undefined ? addButton.current : removeButtons.current.get(keyAt);
     target?.focus();
-  }, [ids, addButton]);
+  }, [ids]);
   return (
     <div className="grid gap-2">
-      {required && rows.length === 0 && (
+      {required && rows.length === 0 && !error && (
         <p className="text-sm text-text-secondary">
           At least one {spec.title.toLowerCase()} is required for a new issue.
         </p>
       )}
       {rows.map((row, index) => {
-        const key = keys[index] ?? 0;
+        const key = keys[index];
+        if (key === undefined) return null;
         return (
           <div key={key} className="relative min-w-0 rounded-lg border border-border-hairline p-3">
             <RowItem
@@ -67,9 +68,9 @@ export function RowEditor({
               row={row}
               startOpen={key === added}
               focusChoices={focusChoices}
-              onField={(field, value) => {
+              onField={(name, value) => {
                 onChange(
-                  rows.map((item, at) => (at === index ? { ...item, [field]: value } : item)),
+                  rows.map((item, at) => (at === index ? { ...item, [name]: value } : item)),
                 );
               }}
             />
@@ -84,6 +85,7 @@ export function RowEditor({
               }}
               onPress={() => {
                 refocus.current = { add: rows.length === 1, at: index };
+                setRemoved(`${spec.title} ${String(index + 1)} removed.`);
                 setIds(keys.filter((_, at) => at !== index));
                 onChange(rows.filter((_, at) => at !== index));
               }}
@@ -99,10 +101,12 @@ export function RowEditor({
             size="sm"
             color="secondary"
             ref={addButton}
+            data-field={kind}
             isDisabled={rows.length >= spec.max}
             aria-describedby={error ? errorId : undefined}
             onPress={() => {
               nextId.current += 1;
+              setRemoved("");
               setAdded(nextId.current);
               setIds([...keys, nextId.current]);
               onChange([...rows, emptyRow(kind)]);
@@ -111,6 +115,9 @@ export function RowEditor({
             {spec.add}
           </Button>
         </div>
+        <p role="status" className="text-sm text-text-secondary empty:hidden">
+          {removed}
+        </p>
         {error && (
           <p id={errorId} role="alert" className="text-sm text-error-primary">
             {error}
@@ -201,7 +208,7 @@ function RowInput({
   options?: readonly (readonly [string, string])[];
   onChange: (value: string) => void;
 }) {
-  const hintText = [item.required && "Required.", item.hint].filter(Boolean).join(" ");
+  const hintText = item.hint ?? "";
   const hint = hintText ? `${id}-hint` : undefined;
   const offered = options ?? [];
   // A value the options do not list is still the value that is sent, so it is shown.
@@ -211,9 +218,12 @@ function RowInput({
       : offered;
   return (
     <div className="grid content-start gap-1">
-      <label htmlFor={id} className={label}>
-        {item.label}
-      </label>
+      <div className="flex items-baseline justify-between gap-2">
+        <label htmlFor={id} className={label}>
+          {item.label}
+        </label>
+        {item.required && <span className="text-xs font-medium text-text-secondary">Required</span>}
+      </div>
       {item.kind === "select" ? (
         <select
           id={id}

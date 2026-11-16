@@ -110,6 +110,7 @@ async function reviewSheet(summary: Parameters<typeof testingFetch>[0]) {
 afterEach(() => {
   cleanup();
   vi.unstubAllGlobals();
+  scrollIntoView.mockClear();
 });
 
 function sentSummary(fetchMock: ReturnType<typeof testingFetch>) {
@@ -498,6 +499,61 @@ describe("connected run start", () => {
       "Choose the uploaded file that is the agreement.",
     );
     await waitFor(() => expect(screen.getByLabelText("The agreement")).toHaveFocus());
+  });
+
+  it("returns focus to the field from the footer problem button", async () => {
+    testingFetch();
+    render(<ConnectedApp path="/start" mode="synthetic" />);
+    await fillInputs();
+    await advanceToPurpose();
+    fireEvent.change(screen.getByLabelText("Run form level"), { target: { value: "advanced" } });
+    advanceToContext();
+    const options = screen.getByLabelText("Module options");
+    fireEvent.change(options, { target: { value: "{" } });
+    fireEvent.click(screen.getByRole("button", { name: "Review run" }));
+    await waitFor(() => expect(options).toHaveFocus());
+    const calls = scrollIntoView.mock.calls.length;
+    screen.getByLabelText("Anything the analysis should know").focus();
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "1 problem to fix: Module options must contain valid JSON.",
+      }),
+    );
+    await waitFor(() => expect(options).toHaveFocus());
+    expect(scrollIntoView.mock.calls.length).toBeGreaterThan(calls);
+  });
+
+  it("marks an invalid control in its own state", async () => {
+    testingFetch();
+    render(<ConnectedApp path="/start" mode="synthetic" />);
+    await fillInputs();
+    await advanceToPurpose();
+    fireEvent.change(screen.getByLabelText("Run form level"), { target: { value: "advanced" } });
+    advanceToContext();
+    const options = screen.getByLabelText("Module options");
+    fireEvent.change(options, { target: { value: "{" } });
+    fireEvent.click(screen.getByRole("button", { name: "Review run" }));
+    await waitFor(() => expect(options).toHaveAttribute("aria-invalid", "true"));
+    expect(options).toHaveClass("aria-invalid:border-error-mark");
+  });
+
+  it("clears the agreement and facility errors when their inputs change", async () => {
+    testingFetch();
+    render(<ConnectedApp path="/start" mode="synthetic" />);
+    await fillInputs();
+    await advanceToPurpose();
+    fireEvent.change(screen.getByLabelText("Run purpose"), { target: { value: "primary" } });
+    advanceToContext();
+    fireEvent.click(screen.getByRole("button", { name: "Review run" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent("Add at least one facility");
+    fireEvent.click(screen.getByRole("button", { name: "Add facility" }));
+    expect(screen.queryByRole("alert")).toBeNull();
+    fireEvent.change(screen.getByLabelText("Facility ID"), { target: { value: "TL-B" } });
+    fireEvent.change(screen.getByLabelText("Legal documents"), { target: { value: "executed" } });
+    fireEvent.click(screen.getByRole("button", { name: "Review run" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent("Choose the uploaded file");
+    fireEvent.change(screen.getByLabelText("Legal documents"), { target: { value: "none" } });
+    expect(screen.queryByRole("alert")).toBeNull();
   });
 
   it("sends an issuer name of only spaces back to Documents with the problem on its field", async () => {

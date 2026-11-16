@@ -127,11 +127,8 @@ function FieldMessage({ problem, field }: { problem?: FieldProblem; field: Field
 }
 
 /** Opens what holds the control, then focuses and scrolls to it. */
-function focusField(field: FieldKey, dealAdd: RefObject<HTMLButtonElement | null>) {
-  const control =
-    field === "deal_terms"
-      ? dealAdd.current
-      : document.querySelector<HTMLElement>(`[data-field="${field}"]`);
+function focusField(field: FieldKey) {
+  const control = document.querySelector<HTMLElement>(`[data-field="${field}"]`);
   const holder = control?.closest("details");
   if (holder) holder.open = true;
   control?.focus();
@@ -236,7 +233,6 @@ type IntakeView = {
   rowsOf: (kind: RowKind) => Row[];
   changeRows: (kind: RowKind, rows: Row[]) => void;
   problem?: FieldProblem;
-  dealAdd: RefObject<HTMLButtonElement | null>;
   focusProblem: () => void;
   changeModel: (value: string) => void;
   changeEffort: (value: string) => void;
@@ -949,7 +945,6 @@ function StructuredContextFields({ view }: { view: IntakeView }) {
                 ? view.problem.message
                 : undefined
             }
-            addRef={kind === "deal_terms" ? view.dealAdd : undefined}
           />
         </section>
       ))}
@@ -1269,7 +1264,6 @@ function IntakeForm({
   const reviewedRef = useRef<Reviewed | null>(null);
   const active = useRef(false);
   const folderInput = useRef<HTMLInputElement>(null);
-  const dealAdd = useRef<HTMLButtonElement | null>(null);
   // The control that had focus when a busy state began; busy fieldsets disable it and drop focus.
   const focusedBefore = useRef<HTMLElement | null>(null);
   // The step heading takes focus only after the step changes, never on first render.
@@ -1875,14 +1869,13 @@ function IntakeForm({
     },
     toggleModule,
     problem: fieldError,
-    dealAdd,
     focusProblem: () => {
-      if (fieldError) focusField(fieldError.field, dealAdd);
+      if (fieldError) focusField(fieldError.field);
     },
   };
 
   useEffect(() => {
-    if (fieldError && busy === undefined) focusField(fieldError.field, dealAdd);
+    if (fieldError && busy === undefined) focusField(fieldError.field);
   }, [fieldError, busy]);
 
   useEffect(() => {
