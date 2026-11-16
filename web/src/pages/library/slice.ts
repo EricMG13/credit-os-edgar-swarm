@@ -135,7 +135,14 @@ export type RunHead = {
 export type BottomLineText = { label: string; lead: string; rest: string; trace: string | null };
 
 /** One headline figure: `value` is `null` when the figure is missing. */
-export type Metric = { label: string; value: Cell; note: string; trace: string | null };
+export type Metric = {
+  label: string;
+  value: Cell;
+  note: string;
+  trace: string | null;
+  /** The change against the same figure a year earlier; absent when no prior is known. */
+  yearChange?: { key: string; change: string; unit: string; prior: string };
+};
 
 /** One point of For and against; `qualifier` is the label drawn as a badge. */
 export type Point = { figure: Cell; text: string; qualifier: string; trace: string | null };
@@ -213,6 +220,8 @@ export type Change = {
   from: Cell;
   direction: "up" | "down" | "flat" | "none";
   change: string | null;
+  /** Better or worse for credit where the owner's table knows; absent leaves the figure neutral. */
+  tone?: "better" | "worse" | "flat";
   cause: string;
   effect: string;
   trace: string | null;

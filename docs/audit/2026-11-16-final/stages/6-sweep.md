@@ -53,8 +53,8 @@ If the sweep skill is available, run it as `both`, scope `whole-repo`, through `
 4. **Self-review and gates.** As stage 5 steps 8 and 10, plus the fast Python tests and
    `uv run python tools/quality_gate.py --base audit/final-repairs`.
 5. **After numbers.** Re-run every stage 0 measurement and put before and after side by side.
-6. **Pull request** from `audit/final-sweep` into `audit/final-repairs`' target, on its own, never
-   mixed with the repairs. Do not merge.
+6. **Pull request** from `audit/final-sweep` into `audit/final-repairs`, on its own, never mixed
+   with a repair. Do not merge; the lead does (ruling R9).
 
 ## Outputs
 

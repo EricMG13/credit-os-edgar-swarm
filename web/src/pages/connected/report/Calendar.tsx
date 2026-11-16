@@ -1,3 +1,5 @@
+import { Button } from "@/components/base/buttons/button";
+import { ArrowRight } from "@untitledui/icons";
 import { ChartWithTable } from "@/components/chart/ChartWithTable";
 import { TRACE_HOST } from "@/pages/library/parts/TraceControl";
 import { moduleName } from "../api";
@@ -178,9 +180,9 @@ export function Calendar({ calendar }: { calendar: ReturnType<typeof buildCalend
     <>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h2 className="font-display text-h2">Issuer calendar</h2>
-        <a href="#overview" className="text-action underline">
+        <Button href="#overview" color="link-gray" size="sm" iconTrailing={ArrowRight}>
           Back to Overview
-        </a>
+        </Button>
       </div>
       {calendar.rows.length ? (
         <CalendarFigure rows={calendar.rows} />

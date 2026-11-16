@@ -1,10 +1,17 @@
-import { useCallback, useRef, useState, type RefObject, type SubmitEvent } from "react";
+import {
+  useCallback,
+  useEffect,
+  useId,
+  useRef,
+  useState,
+  type RefObject,
+  type SubmitEvent,
+} from "react";
 import { File05, Folder } from "@untitledui/icons";
 import { FileUpload } from "@/components/application/file-upload/file-upload-base";
 import { Badge } from "@/components/base/badges/badges";
 import { Button } from "@/components/base/buttons/button";
 import { PurposeCards } from "../run/start/Purpose";
-import { Readiness } from "../run/start/Readiness";
 import { SubmitConfirmation } from "../run/start/Start";
 import { Stepper } from "../run/start/Stepper";
 import {
@@ -56,6 +63,7 @@ import { ValuationFields } from "./start/ValuationFields";
 import { Breadcrumb, card, ErrorNotice, field, heading, label } from "./layout";
 import { carryAccepted, decided, groupLimits, needsCheck } from "./start/limits";
 import { ReviewSheet } from "./start/ReviewSheet";
+import { StartReadiness } from "./start/StartReadiness";
 import {
   CASE_KIND_LABEL,
   CASE_KINDS,
@@ -113,6 +121,54 @@ const PATHWAY_CARDS = Object.entries(PATHWAYS).map(([id, pathway]) => ({
   modules: `${String(pathway.modules.length)} base modules`,
 }));
 
+type FieldKey =
+  | "issuer_name"
+  | "cutoff"
+  | "agreement"
+  | "deal_terms"
+  | "turns"
+  | "valuation"
+  | "assumptions"
+  | "module_options";
+
+/** A validation failure that belongs to one control: shown on it, not in the general notice. */
+class FieldProblem extends Error {
+  constructor(
+    readonly field: FieldKey,
+    message: string,
+  ) {
+    super(message);
+  }
+}
+
+function stepOfField(field: FieldKey): FormStep {
+  return field === "issuer_name" ? "documents" : "context";
+}
+
+function problemAttrs(problem: FieldProblem | undefined, field: FieldKey) {
+  return problem?.field === field
+    ? { "data-field": field, "aria-invalid": "true" as const, "aria-describedby": `error-${field}` }
+    : { "data-field": field };
+}
+
+function FieldMessage({ problem, field }: { problem?: FieldProblem; field: FieldKey }) {
+  if (problem?.field !== field) return null;
+  return (
+    <p id={`error-${field}`} role="alert" className="text-sm text-error-primary">
+      {problem.message}
+    </p>
+  );
+}
+
+/** Opens what holds the control, then focuses and scrolls to it. */
+function focusField(field: FieldKey) {
+  const control = document.querySelector<HTMLElement>(`[data-field="${field}"]`);
+  const holder = control?.closest("details");
+  if (holder) holder.open = true;
+  control?.focus();
+  control?.scrollIntoView({ block: "center" });
+}
+
 type Review = { id: string; answers: Answers; summary: Summary; cap: string };
 type Draft = { id: string; uploaded: Map<File, string>; copied: boolean };
 type Reviewed = {
@@ -159,6 +215,7 @@ type IntakeView = {
   busy?: "review" | "submit" | "documents" | "copy";
   canRead: boolean;
   copy?: { run: string };
+  priorAsOf: string;
   priorNote: string;
   identity: Context["identity"];
   issuerId: string;
@@ -168,6 +225,8 @@ type IntakeView = {
   inspected: Map<string, string>;
   ignored: Map<string, string>;
   shownDocs: DocumentRecord[];
+  read: boolean;
+  inspections: number;
   attachments: Partial<Record<Attachment, string>>;
   fileChoices: Record<string, string>;
   legal: string;
@@ -211,6 +270,8 @@ type IntakeView = {
   changeAttachment: (key: Attachment, value: string) => void;
   rowsOf: (kind: RowKind) => Row[];
   changeRows: (kind: RowKind, rows: Row[]) => void;
+  problem?: FieldProblem;
+  focusProblem: () => void;
   changeModel: (value: string) => void;
   changeEffort: (value: string) => void;
   changeTurns: (value: string) => void;
@@ -224,6 +285,7 @@ function useIntakeIdentityState(
 ) {
   const [copy, setCopy] = useState(initial);
   const [step, setStep] = useState<FormStep>("documents");
+  const [purposeChosen, setPurposeChosen] = useState(false);
   const [priorNote, setPriorNote] = useState(initial?.prior.error || warning || "");
   const [context, setContext] = useState<Context>(() => startingContext(template, initial?.prior));
   const [purposeTouched, setPurposeTouched] = useState(Boolean(initial?.prior.context));
@@ -234,6 +296,8 @@ function useIntakeIdentityState(
     setCopy,
     step,
     setStep,
+    purposeChosen,
+    setPurposeChosen,
     priorNote,
     setPriorNote,
     context,
@@ -308,6 +372,7 @@ function useIntakeReviewState() {
   const [approved, setApproved] = useState(false);
   const [busy, setBusy] = useState<"review" | "submit" | "documents" | "copy">();
   const [error, setError] = useState("");
+  const [fieldError, setFieldError] = useState<FieldProblem>();
   const [submitUncertain, setSubmitUncertain] = useState(false);
   return {
     review,
@@ -320,6 +385,8 @@ function useIntakeReviewState() {
     setBusy,
     error,
     setError,
+    fieldError,
+    setFieldError,
     submitUncertain,
     setSubmitUncertain,
   };
@@ -347,39 +414,38 @@ function intakeDocuments(reading: Reading | undefined, files: File[], uploaded: 
   return { shownDocs, inspected, ignored, documentRows, fileChoices };
 }
 
-function readinessStatus(
+type ReadinessRow = { label: string; met: boolean; detail?: string };
+
+function readinessRows(
   shownDocs: DocumentRecord[],
-  step: FormStep,
+  purposeChosen: boolean,
   review: Review | undefined,
-  checksComplete: boolean | undefined,
+  accepted: Set<string>,
   approved: boolean,
-) {
-  const entries = [
+): ReadinessRow[] {
+  const groups = review ? groupLimits(review.summary.items).groups : [];
+  const decidedCount = groups.filter((group) => decided(group, accepted)).length;
+  return [
+    { label: "Documents inspected", met: shownDocs.length > 0 },
+    { label: "Purpose chosen", met: purposeChosen },
     {
-      met: shownDocs.length > 0,
-      whenMet: "Documents inspected",
-      next: "Add and inspect documents",
+      label: "Decisions made",
+      met: review !== undefined && decidedCount === groups.length,
+      ...(review
+        ? {
+            detail: groups.length
+              ? `${String(decidedCount)} of ${String(groups.length)}`
+              : "None needed",
+          }
+        : {}),
     },
-    {
-      met: step !== "documents",
-      whenMet: "Purpose selected",
-      next: "Choose a pathway and purpose",
-    },
-    {
-      met: review !== undefined && checksComplete === true,
-      whenMet: "Run summary checked",
-      next: "Review the run summary",
-    },
-    {
-      met: review !== undefined && approved,
-      whenMet: "Summary approved",
-      next: "Approve the reviewed run",
-    },
+    { label: "Summary approved", met: review !== undefined && approved },
   ];
-  return {
-    met: entries.filter((item) => item.met).map((item) => item.whenMet),
-    notMet: entries.filter((item) => !item.met).map((item) => item.next),
-  };
+}
+
+/** What the analyst reads or hears for a control, to tell whether it is still the same one. */
+function accessibleText(node: HTMLElement) {
+  return node.getAttribute("aria-label") ?? node.textContent.trim();
 }
 
 function shownCapText(cap: number | null) {
@@ -441,6 +507,11 @@ function StepFields({
   }
 }
 
+function documentsRead(inspected: number, ignored: number) {
+  const noun = inspected === 1 ? "document" : "documents";
+  return `${String(inspected)} ${noun} inspected, ${String(ignored)} ignored.`;
+}
+
 function DocumentFields({
   view,
   folderInput,
@@ -487,6 +558,13 @@ function DocumentFields({
             {view.busy === "documents" ? "Reading documents…" : "Inspect documents"}
           </Button>
         </div>
+        <p role="status" className="text-sm text-text-secondary empty:hidden">
+          {view.read && view.documentRows.length > 0 ? (
+            <span key={view.inspections}>
+              {documentsRead(view.shownDocs.length, view.ignored.size)}
+            </span>
+          ) : null}
+        </p>
         {view.documentRows.length > 0 ? (
           <FileUpload.List aria-label="Documents added">
             {view.documentRows.map(({ name, stored, file }, index) => {
@@ -542,17 +620,21 @@ function DocumentFields({
           </p>
         )}
       </div>
-      <label className={label}>
-        Issuer name
-        <input
-          className={field}
-          required
-          value={view.identity.issuer_name}
-          onChange={(event) => {
-            view.changeIdentity("issuer_name", event.target.value);
-          }}
-        />
-      </label>
+      <div className="grid content-start gap-1">
+        <label className={label}>
+          Issuer name
+          <input
+            className={field}
+            required
+            {...problemAttrs(view.problem, "issuer_name")}
+            value={view.identity.issuer_name}
+            onChange={(event) => {
+              view.changeIdentity("issuer_name", event.target.value);
+            }}
+          />
+        </label>
+        <FieldMessage problem={view.problem} field="issuer_name" />
+      </div>
       <label className={label}>
         Issuer ID
         <input
@@ -567,18 +649,25 @@ function DocumentFields({
           }}
         />
       </label>
-      <label className={label}>
-        As-of date
-        <input
-          className={field}
-          type="date"
-          required
-          value={view.run.as_of}
-          onChange={(event) => {
-            view.changeRun("as_of", event.target.value);
-          }}
-        />
-      </label>
+      <div className="grid content-start gap-1">
+        <label className={label}>
+          As-of date
+          <input
+            className={field}
+            type="date"
+            required
+            value={view.run.as_of}
+            onChange={(event) => {
+              view.changeRun("as_of", event.target.value);
+            }}
+          />
+        </label>
+        {view.priorAsOf && (
+          <p className="text-sm text-text-tertiary">
+            Set to today for the new run. The earlier run used {view.priorAsOf}.
+          </p>
+        )}
+      </div>
       <label className={label}>
         Reporting currency
         <input
@@ -656,6 +745,7 @@ function PurposeFields({ view }: { view: IntakeView }) {
       <SelectField
         title={CASE_KIND_LABEL}
         value={view.run.case_kind}
+        help="Web research runs for public and private cases, never for a synthetic test case."
         choices={CASE_KINDS}
         onChange={(value) => {
           view.changeRun("case_kind", value);
@@ -664,6 +754,7 @@ function PurposeFields({ view }: { view: IntakeView }) {
       <SelectField
         title="Run form level"
         value={view.level}
+        help="Advanced adds model, effort, turns per module, module selection and valuation and assumption fields."
         choices={LEVELS}
         onChange={view.changeLevel}
       />
@@ -716,18 +807,22 @@ function ContextInputFields({ view }: { view: IntakeView }) {
           }}
         />
       </label>
-      <label className={label}>
-        Research cutoff
-        <input
-          className={field}
-          type="date"
-          value={view.run.cutoff || view.run.as_of}
-          max={view.run.as_of || undefined}
-          onChange={(event) => {
-            view.changeRun("cutoff", event.target.value);
-          }}
-        />
-      </label>
+      <div className="grid content-start gap-1">
+        <label className={label}>
+          Research cutoff
+          <input
+            className={field}
+            type="date"
+            {...problemAttrs(view.problem, "cutoff")}
+            value={view.run.cutoff || view.run.as_of}
+            max={view.run.as_of || undefined}
+            onChange={(event) => {
+              view.changeRun("cutoff", event.target.value);
+            }}
+          />
+        </label>
+        <FieldMessage problem={view.problem} field="cutoff" />
+      </div>
       <label className={label}>
         Current period
         <input
@@ -763,6 +858,8 @@ function ContextInputFields({ view }: { view: IntakeView }) {
           title="The agreement"
           value={view.attachments.agreement ?? ""}
           choices={view.fileChoices}
+          problem={view.problem}
+          problemField="agreement"
           onChange={(value) => {
             view.changeAttachment("agreement", value);
           }}
@@ -888,6 +985,11 @@ function StructuredContextFields({ view }: { view: IntakeView }) {
             primary={view.run.run_type === "primary"}
             required={kind === "deal_terms" && view.run.run_type === "primary"}
             focusChoices={focusChoices}
+            error={
+              kind === "deal_terms" && view.problem?.field === "deal_terms"
+                ? view.problem.message
+                : undefined
+            }
           />
         </section>
       ))}
@@ -953,21 +1055,25 @@ function AdvancedOptionsFields({ view }: { view: IntakeView }) {
         choices={EFFORTS}
         onChange={view.changeEffort}
       />
-      <label className={label}>
-        Turns per module
-        <input
-          className={field}
-          type="number"
-          required
-          min={1}
-          max={64}
-          step={1}
-          value={view.turns}
-          onChange={(event) => {
-            view.changeTurns(event.target.value);
-          }}
-        />
-      </label>
+      <div className="grid content-start gap-1">
+        <label className={label}>
+          Turns per module
+          <input
+            className={field}
+            type="number"
+            required
+            min={1}
+            max={64}
+            step={1}
+            {...problemAttrs(view.problem, "turns")}
+            value={view.turns}
+            onChange={(event) => {
+              view.changeTurns(event.target.value);
+            }}
+          />
+        </label>
+        <FieldMessage problem={view.problem} field="turns" />
+      </div>
       <fieldset className="min-w-0 rounded-lg border border-border-hairline p-3 sm:col-span-2">
         <legend className="px-1 text-sm font-semibold">Requested modules</legend>
         <div className="grid gap-2 sm:grid-cols-2">
@@ -990,6 +1096,9 @@ function AdvancedOptionsFields({ view }: { view: IntakeView }) {
   );
 }
 
+const HEADING_FOCUS =
+  "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus";
+
 function focusStep(node: HTMLElement | null) {
   node?.focus();
 }
@@ -998,22 +1107,35 @@ function fileName(file: File) {
   return (file.webkitRelativePath || "").split("/").slice(1).join("/") || file.name;
 }
 
-function SelectField({
+export function SelectField({
   title,
   value,
   choices,
   onChange,
+  problem,
+  problemField,
+  help,
 }: {
   title: string;
   value: string;
   choices: Readonly<Record<string, string>>;
   onChange: (value: string) => void;
+  problem?: FieldProblem;
+  problemField?: FieldKey;
+  help?: string;
 }) {
-  return (
+  const helpId = useId();
+  const failing = problemField !== undefined && problem?.field === problemField;
+  const describedBy =
+    [help ? helpId : "", failing ? `error-${problemField}` : ""].filter(Boolean).join(" ") ||
+    undefined;
+  const select = (
     <label className={label}>
       {title}
       <select
         className={field}
+        {...(problemField ? problemAttrs(problem, problemField) : {})}
+        aria-describedby={describedBy}
         value={value}
         onChange={(event) => {
           onChange(event.target.value);
@@ -1026,6 +1148,18 @@ function SelectField({
         ))}
       </select>
     </label>
+  );
+  if (!help && !problemField) return select;
+  return (
+    <div className="grid content-start gap-1">
+      {select}
+      {help && (
+        <p id={helpId} className="text-sm text-text-tertiary">
+          {help}
+        </p>
+      )}
+      {problemField && <FieldMessage problem={problem} field={problemField} />}
+    </div>
   );
 }
 
@@ -1104,6 +1238,8 @@ function IntakeForm({
     setCopy,
     step,
     setStep,
+    purposeChosen,
+    setPurposeChosen,
     priorNote,
     setPriorNote,
     context,
@@ -1160,6 +1296,8 @@ function IntakeForm({
     setBusy,
     error,
     setError,
+    fieldError,
+    setFieldError,
     submitUncertain,
     setSubmitUncertain,
   } = reviewState;
@@ -1170,6 +1308,12 @@ function IntakeForm({
   const reviewedRef = useRef<Reviewed | null>(null);
   const active = useRef(false);
   const folderInput = useRef<HTMLInputElement>(null);
+  // The control that had focus when a busy state began; busy fieldsets disable it and drop focus.
+  const focusedBefore = useRef<{ node: HTMLElement; text: string } | null>(null);
+  // The step heading takes focus only after the step changes, never on first render.
+  const [moved, setMoved] = useState(false);
+  // Counts finished inspections, so a repeated result is announced again.
+  const [inspections, setInspections] = useState(0);
 
   const { run, identity, issuerId, requested, cap, earnings, canRead, checksComplete, newest } =
     intakeRunDetails({
@@ -1183,6 +1327,12 @@ function IntakeForm({
       newestOverride,
       reading,
     });
+
+  function clearProblem(...fields: FieldKey[]) {
+    setFieldError((previous) =>
+      previous && fields.includes(previous.field) ? undefined : previous,
+    );
+  }
 
   function changeRun(key: keyof Context["run"], value: string) {
     if (key === "pathway") invalidateReview();
@@ -1200,6 +1350,7 @@ function IntakeForm({
     key: K,
     value: Context["identity"][K],
   ) {
+    if (key === "issuer_name") clearProblem("issuer_name");
     setContext((previous) => ({ ...previous, identity: { ...previous.identity, [key]: value } }));
   }
 
@@ -1220,11 +1371,21 @@ function IntakeForm({
   ) {
     if (active.current) return;
     active.current = true;
+    focusedBefore.current =
+      document.activeElement instanceof HTMLElement
+        ? { node: document.activeElement, text: accessibleText(document.activeElement) }
+        : null;
     setBusy(action);
     setError("");
+    setFieldError(undefined);
     try {
       await work();
     } catch (failure) {
+      if (failure instanceof FieldProblem) {
+        setFieldError(failure);
+        setStep(stepOfField(failure.field));
+        return;
+      }
       if (failure instanceof RequestError && failure.status === 404) {
         draftRef.current = null;
         setUploaded(new Map());
@@ -1325,6 +1486,7 @@ function IntakeForm({
     setPriorNote(prior.error || "");
     setContext(startingContext(prior.context ? template : context, prior));
     setPurposeTouched(Boolean(prior.context));
+    setPurposeChosen(false);
     setCustomSlug(prior.issuer_id);
     reviewedRef.current = null;
     setLevel(Object.hasOwn(LEVELS, prior.level) ? prior.level : "basic");
@@ -1354,11 +1516,11 @@ function IntakeForm({
 
   function makeAnswers(result: Reading, details: Record<string, unknown>): Answers {
     if (run.cutoff && run.cutoff > run.as_of)
-      throw new Error("Research cutoff must be on or before the as-of date.");
+      throw new FieldProblem("cutoff", "Research cutoff must be on or before the as-of date.");
     const available = new Set(result.documents.map(storedName));
     const chosen = (key: Attachment) => available.has(attachments[key] ?? "");
     if (legal !== "none" && !chosen("agreement"))
-      throw new Error("Choose the uploaded file that is the agreement.");
+      throw new FieldProblem("agreement", "Choose the uploaded file that is the agreement.");
     const advanced = level === "advanced";
     return {
       context: {
@@ -1388,7 +1550,8 @@ function IntakeForm({
 
   function reviewDetails() {
     if (!identity.issuer_name.trim() || !/^[a-z0-9][a-z0-9-]{0,39}$/.test(issuerId)) {
-      throw new Error(
+      throw new FieldProblem(
+        "issuer_name",
         "Enter an issuer name and an issuer ID using letters a–z, digits or hyphens.",
       );
     }
@@ -1424,10 +1587,13 @@ function IntakeForm({
     if (run.run_type === "primary") {
       const deals = details.deal_terms ?? context.deal_terms;
       if (!Array.isArray(deals) || deals.length === 0)
-        throw new Error("Add at least one facility in Facilities and deal terms.");
+        throw new FieldProblem(
+          "deal_terms",
+          "Add at least one facility in Facilities and deal terms.",
+        );
     }
     if (level === "advanced" && (!/^\d+$/.test(turns) || Number(turns) < 1 || Number(turns) > 64)) {
-      throw new Error("Turns per module must be a whole number from 1 to 64.");
+      throw new FieldProblem("turns", "Turns per module must be a whole number from 1 to 64.");
     }
     return details;
   }
@@ -1480,8 +1646,10 @@ function IntakeForm({
   }
 
   function goTo(next: FormStep) {
+    setMoved(true);
     setStep(next);
     setError("");
+    setFieldError(undefined);
   }
 
   async function advance(event: SubmitEvent<HTMLFormElement>) {
@@ -1498,6 +1666,7 @@ function IntakeForm({
         });
         break;
       case "purpose":
+        setPurposeChosen(true);
         goTo("context");
         break;
       case "context":
@@ -1553,6 +1722,7 @@ function IntakeForm({
   function inspectDocuments() {
     void withDraft("documents", async () => {
       await refreshDocuments();
+      setInspections((count) => count + 1);
     });
   }
 
@@ -1582,6 +1752,7 @@ function IntakeForm({
   }
 
   function changeAttachment(key: Attachment, value: string) {
+    if (key === "agreement") clearProblem("agreement");
     setAttachments((previous) => ({ ...previous, [key]: value }));
   }
 
@@ -1590,6 +1761,7 @@ function IntakeForm({
     reviewedRef.current = null;
     setContext(startingContext(template));
     setPurposeTouched(false);
+    setPurposeChosen(false);
     setCustomSlug(undefined);
     setReading(undefined);
     setPriorNote("");
@@ -1625,6 +1797,7 @@ function IntakeForm({
   }
 
   function changeRows(kind: RowKind, next: Row[]) {
+    if (kind === "deal_terms") clearProblem("deal_terms");
     setRows((previous) => ({ ...previous, [kind]: next }));
   }
 
@@ -1637,7 +1810,7 @@ function IntakeForm({
   const { title, previous, next } = FORM_STEPS[step];
   const capText = shownCapText(cap);
   const synthetic = mode === "synthetic";
-  const { met, notMet } = readinessStatus(shownDocs, step, review, checksComplete, approved);
+  const readiness = readinessRows(shownDocs, purposeChosen, review, accepted, approved);
 
   function acceptReviewItems(ids: readonly string[], checked: boolean) {
     setAccepted((previouslyAccepted) => {
@@ -1685,6 +1858,7 @@ function IntakeForm({
     busy,
     canRead,
     copy,
+    priorAsOf: run.as_of === today() ? (copy?.prior.context?.run.as_of ?? "") : "",
     priorNote,
     identity,
     issuerId,
@@ -1694,6 +1868,8 @@ function IntakeForm({
     inspected,
     ignored,
     shownDocs,
+    read: reading !== undefined,
+    inspections,
     attachments,
     fileChoices,
     legal,
@@ -1726,8 +1902,14 @@ function IntakeForm({
     discardDocument: (name, file) => void discardDocument(name, file),
     changeIdentity,
     changeListedEquity,
-    changeRun,
-    changeIssuerId: setCustomSlug,
+    changeRun: (key, value) => {
+      if (key === "cutoff" || key === "as_of") clearProblem("cutoff");
+      changeRun(key, value);
+    },
+    changeIssuerId: (value) => {
+      clearProblem("issuer_name");
+      setCustomSlug(value);
+    },
     changeSubmittedBy: setSubmittedBy,
     carryLatest: () => void copyLatest(),
     resetIssuer,
@@ -1738,15 +1920,42 @@ function IntakeForm({
     changeNewestOverride: (value) => {
       setNewestOverride(value || undefined);
     },
-    changeLegal: setLegal,
+    changeLegal: (value) => {
+      clearProblem("agreement");
+      setLegal(value);
+    },
     changeAttachment,
     rowsOf,
     changeRows,
     changeModel: setModel,
     changeEffort: setEffort,
-    changeTurns: setTurns,
+    changeTurns: (value) => {
+      clearProblem("turns");
+      setTurns(value);
+    },
     toggleModule,
+    problem: fieldError,
+    focusProblem: () => {
+      if (fieldError) focusField(fieldError.field);
+    },
   };
+
+  useEffect(() => {
+    if (fieldError && busy === undefined) focusField(fieldError.field);
+  }, [fieldError, busy]);
+
+  useEffect(() => {
+    if (busy !== undefined) return;
+    const remembered = focusedBefore.current;
+    focusedBefore.current = null;
+    if (
+      remembered?.node.isConnected &&
+      document.activeElement === document.body &&
+      !remembered.node.matches(":disabled") &&
+      accessibleText(remembered.node) === remembered.text
+    )
+      remembered.node.focus();
+  }, [busy]);
 
   return (
     <IntakePanels
@@ -1766,8 +1975,8 @@ function IntakeForm({
       title={title}
       previous={previous}
       next={next}
-      met={met}
-      notMet={notMet}
+      readiness={readiness}
+      focusHeading={moved}
       onAccept={acceptReviewItems}
       onApprove={setApproved}
       onEdit={editReviewedInputs}
@@ -1796,8 +2005,8 @@ type IntakePanelsProps = {
   title: string;
   previous: FormStep | null;
   next: string;
-  met: string[];
-  notMet: string[];
+  readiness: ReadinessRow[];
+  focusHeading: boolean;
   onAccept: (ids: readonly string[], checked: boolean) => void;
   onApprove: (value: boolean) => void;
   onEdit: (step: FormStep) => void;
@@ -1844,8 +2053,8 @@ function IntakePanels(props: IntakePanelsProps) {
     title,
     previous,
     next,
-    met,
-    notMet,
+    readiness,
+    focusHeading,
     onAccept,
     onApprove,
     onEdit,
@@ -1854,25 +2063,29 @@ function IntakePanels(props: IntakePanelsProps) {
     onAdvance,
     onPrevious,
   } = props;
+  const capBar = cap && capText ? { value: 0, max: cap, label: `USD 0.00 of ${capText}` } : null;
+  const ready = `${String(readiness.filter((row) => row.met).length)} of ${String(readiness.length)} ready · ${capBar ? capBar.label : "Cap unavailable"}`;
   return (
     <div className="mt-6 grid min-w-0 items-start gap-6 min-[1041px]:grid-cols-[minmax(0,1fr)_320px]">
       <div className={`min-w-0 ${card}`}>
-        <Stepper
-          step={review ? "start" : step}
-          steps={STEPPER_STEPS}
-          onSelect={
-            busy === undefined && !submitUncertain
-              ? (key) => {
-                  onEdit(key as FormStep);
-                }
-              : undefined
-          }
-        />
-        <p className="text-sm text-text-secondary sm:hidden">
-          {review
-            ? `Step ${String(STEP_TOTAL)} of ${String(STEP_TOTAL)} · Review and start`
-            : `Step ${String(FORM_STEP_KEYS.indexOf(step) + 1)} of ${String(STEP_TOTAL)} · ${title}`}
-        </p>
+        <div className="@container grid gap-5">
+          <Stepper
+            step={review ? "start" : step}
+            steps={STEPPER_STEPS}
+            onSelect={
+              busy === undefined && !submitUncertain
+                ? (key) => {
+                    onEdit(key as FormStep);
+                  }
+                : undefined
+            }
+          />
+          <p className="text-sm text-text-secondary @[620px]:hidden">
+            {review
+              ? `Step ${String(STEP_TOTAL)} of ${String(STEP_TOTAL)} · Review and start`
+              : `Step ${String(FORM_STEP_KEYS.indexOf(step) + 1)} of ${String(STEP_TOTAL)} · ${title}`}
+          </p>
+        </div>
         {error && <RefusalNotice error={error} />}
         {review ? (
           <ReviewConfirmation
@@ -1885,6 +2098,7 @@ function IntakePanels(props: IntakePanelsProps) {
             capText={capText}
             capAvailable={Boolean(cap)}
             synthetic={synthetic}
+            ready={ready}
             onAccept={onAccept}
             onApprove={onApprove}
             onEdit={onEdit}
@@ -1898,39 +2112,19 @@ function IntakePanels(props: IntakePanelsProps) {
             title={title}
             previous={previous}
             next={next}
+            ready={ready}
+            focusHeading={focusHeading}
             onAdvance={onAdvance}
             onPrevious={onPrevious}
           />
         )}
       </div>
-      <ReadinessPanel synthetic={synthetic} cap={cap} capText={capText} met={met} notMet={notMet} />
+      <StartReadiness
+        rows={readiness}
+        cap={capBar}
+        capTitle={synthetic ? "Configured cap for paid runs" : "Spending cap for this run"}
+      />
     </div>
-  );
-}
-
-function ReadinessPanel({
-  synthetic,
-  cap,
-  capText,
-  met,
-  notMet,
-}: {
-  synthetic: boolean;
-  cap: number | null;
-  capText: string | null;
-  met: string[];
-  notMet: string[];
-}) {
-  return (
-    <Readiness
-      capTitle={synthetic ? "Configured cap for paid runs" : undefined}
-      data={{
-        line: "Check the inputs and approve the run before it starts.",
-        notMet: { count: String(notMet.length), items: notMet },
-        met: { count: String(met.length), items: met },
-        cap: cap && capText ? { value: 0, max: cap, label: `USD 0.00 of ${capText}` } : null,
-      }}
-    />
   );
 }
 
@@ -1944,6 +2138,7 @@ function ReviewConfirmation({
   capText,
   capAvailable,
   synthetic,
+  ready,
   onAccept,
   onApprove,
   onEdit,
@@ -1959,6 +2154,7 @@ function ReviewConfirmation({
   capText: string | null;
   capAvailable: boolean;
   synthetic: boolean;
+  ready: string;
   onAccept: (ids: readonly string[], checked: boolean) => void;
   onApprove: (approved: boolean) => void;
   onEdit: (step: FormStep) => void;
@@ -1975,7 +2171,7 @@ function ReviewConfirmation({
   return (
     <div className="grid gap-5">
       <div className="grid gap-1">
-        <h2 ref={focusStep} tabIndex={-1} className={`${heading} focus:outline-none`}>
+        <h2 ref={focusStep} tabIndex={-1} className={`${heading} ${HEADING_FOCUS}`}>
           Review and start
         </h2>
         <p className="text-sm text-text-secondary">
@@ -2015,11 +2211,13 @@ function ReviewConfirmation({
           <SubmissionCost synthetic={synthetic} capText={capText} />
         </p>
       </div>
-      <div className="flex flex-wrap items-center justify-between gap-3">
+      <p className="text-sm text-text-secondary min-[1041px]:hidden">{ready}</p>
+      <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
         <span className="text-sm text-text-tertiary">
           Step {STEP_TOTAL} of {STEP_TOTAL}
         </span>
         <SubmitConfirmation
+          className="w-full sm:w-auto"
           label={submitLabel}
           confirm={confirmation}
           isDisabled={submitDisabled}
@@ -2084,6 +2282,8 @@ function InputStepForm({
   title,
   previous,
   next,
+  ready,
+  focusHeading,
   onAdvance,
   onPrevious,
 }: {
@@ -2092,9 +2292,12 @@ function InputStepForm({
   title: string;
   previous: FormStep | null;
   next: string;
+  ready: string;
+  focusHeading: boolean;
   onAdvance: (event: SubmitEvent<HTMLFormElement>) => void;
   onPrevious: () => void;
 }) {
+  const blocked = view.step === "documents" && !view.canRead;
   return (
     <form
       onSubmit={(event) => {
@@ -2105,9 +2308,9 @@ function InputStepForm({
       <div className="grid gap-1">
         <h2
           key={view.step}
-          ref={focusStep}
+          ref={focusHeading ? focusStep : undefined}
           tabIndex={-1}
-          className={`${heading} focus:outline-none`}
+          className={`${heading} ${HEADING_FOCUS}`}
         >
           {title}
         </h2>
@@ -2119,6 +2322,7 @@ function InputStepForm({
       >
         <StepFields view={view} folderInput={folderInput} />
       </fieldset>
+      <p className="text-sm text-text-secondary min-[1041px]:hidden">{ready}</p>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <Button
           color="secondary"
@@ -2127,15 +2331,35 @@ function InputStepForm({
         >
           Previous
         </Button>
-        <span className="text-sm text-text-tertiary">
-          Step {FORM_STEP_KEYS.indexOf(view.step) + 1} of {STEP_TOTAL}
-        </span>
-        <Button
-          type="submit"
-          isDisabled={view.busy !== undefined || (view.step === "documents" && !view.canRead)}
-        >
-          {view.busy === "review" ? "Preparing review…" : next}
-        </Button>
+        <div className="grid justify-items-center gap-1">
+          <span className="text-sm text-text-tertiary">
+            Step {FORM_STEP_KEYS.indexOf(view.step) + 1} of {STEP_TOTAL}
+          </span>
+          {view.problem && (
+            <Button
+              color="link-destructive"
+              size="sm"
+              className="max-w-full text-left whitespace-normal"
+              onPress={view.focusProblem}
+            >
+              {`1 problem to fix: ${view.problem.message}`}
+            </Button>
+          )}
+        </div>
+        <div className="flex flex-wrap items-center justify-end gap-3">
+          {blocked && (
+            <p id="run-step-blocker" className="text-sm text-text-secondary">
+              Add at least one document to continue.
+            </p>
+          )}
+          <Button
+            type="submit"
+            aria-describedby={blocked ? "run-step-blocker" : undefined}
+            isDisabled={view.busy !== undefined || blocked}
+          >
+            {view.busy === "review" ? "Preparing review…" : next}
+          </Button>
+        </div>
       </div>
     </form>
   );

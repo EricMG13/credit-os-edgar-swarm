@@ -335,7 +335,10 @@ class Handler(http_base.Handler):
         raise Reply(200, {"run": record.id, "status": record.status})
 
     def _run(self, run_id: str) -> dict[str, Any]:
-        record = next((r for r in runs.load_all(self._layout) if r.id == run_id), None)
+        records, unreadable = runs.load_readable(self._layout)
+        if f"{run_id}.json" in unreadable:  # fail closed: only this run's own bad file refuses it
+            raise ValueError("that run's record cannot be read")
+        record = next((r for r in records if r.id == run_id), None)
         if record is None:
             raise refuse(404, "unknown run")
         shown = activity.snapshot(self._layout, [record], now=datetime.now(UTC))["runs"][0]
@@ -458,7 +461,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     settings = Settings(args.root, max_running=args.max_running, max_per_day=args.max_per_day)
     try:
         scheduler = Scheduler(settings)
-    except (ValueError, OSError) as error:  # StartupRefused, a long root, an unreadable record
+    except (ValueError, OSError) as error:  # StartupRefused, a long root
         print(error, file=sys.stderr)
         return 2
     try:

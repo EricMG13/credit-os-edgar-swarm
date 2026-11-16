@@ -55,7 +55,11 @@ function joined(parts: readonly string[]) {
 
 type FieldDef = readonly [
   ...[key: string, label: string, kind: RowField["kind"]],
-  ...[placeholder?: string, hint?: string, extra?: Pick<RowField, "options" | "primaryOnly">],
+  ...[
+    placeholder?: string,
+    hint?: string,
+    extra?: Pick<RowField, "options" | "primaryOnly" | "required">,
+  ],
 ];
 
 /** Expands field tuples into fields of one group ("" for none); a placeholder is an example. */
@@ -67,6 +71,8 @@ export function group(name: string, ...defs: FieldDef[]): RowField[] {
 }
 
 const NEW_ISSUE = { primaryOnly: true } as const;
+// Required in the static form (docs/templates/context-form.html QUOTE_SPEC, RATING_SPEC, rows-q).
+const REQUIRED = { required: true } as const;
 
 const PEER_NAME = [
   "name",
@@ -256,8 +262,9 @@ export const ROW_SPECS: Record<RowKind, RowSpec> = {
         "date",
         undefined,
         "Within 30 days of the run as-of date, or it is stale and caps confidence.",
+        REQUIRED,
       ],
-      ["provider", "Provider", "text", "Dealer run", "Who gave the quote."],
+      ["provider", "Provider", "text", "Dealer run", "Who gave the quote.", REQUIRED],
     ),
     summary: (row) =>
       joined([
@@ -279,7 +286,7 @@ export const ROW_SPECS: Record<RowKind, RowSpec> = {
         "select",
         undefined,
         "Ratings & triggers reads S&P, Moody's and Fitch, one row per agency.",
-        { options: AGENCIES },
+        { options: AGENCIES, required: true },
       ],
       [
         "scope",
@@ -295,6 +302,7 @@ export const ROW_SPECS: Record<RowKind, RowSpec> = {
         "text",
         "B+ or B1",
         "As the agency writes it, on its own scale (B+ for S&P and Fitch, B1 for Moody's), or Withdrawn or Not rated.",
+        REQUIRED,
       ],
       ["outlook", "Outlook", "select", undefined, undefined, { options: OUTLOOKS }],
       ["as_of", "As-of", "date", undefined, "Date of the rating."],
@@ -315,6 +323,7 @@ export const ROW_SPECS: Record<RowKind, RowSpec> = {
         "text",
         "How much of 2025 adjusted EBITDA is run-rate cost savings?",
         "One question, plain text, no | character.",
+        REQUIRED,
       ],
       [
         "focus_module",

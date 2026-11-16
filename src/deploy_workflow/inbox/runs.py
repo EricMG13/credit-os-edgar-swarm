@@ -8,6 +8,7 @@ import os
 import re
 import subprocess
 import sys
+import unicodedata
 from collections.abc import Sequence
 from dataclasses import asdict, dataclass
 from decimal import Decimal, InvalidOperation
@@ -148,13 +149,44 @@ def _load(path: Path) -> Record:
         raise ValueError(f"{path.name}: unreadable run record ({error})") from error
 
 
+def _record_files(layout: Layout) -> list[Path]:
+    return [
+        p for p in layout.state.glob("*.json") if p.name != _REGISTRY and not p.name.startswith(".")
+    ]
+
+
 def load_all(layout: Layout) -> list[Record]:
     """Every run record, sorted by id. The issuer registry, temporary files and dot files (such as
     a Mac ``._x.json`` sidecar) are not records."""
-    paths = [
-        p for p in layout.state.glob("*.json") if p.name != _REGISTRY and not p.name.startswith(".")
-    ]
-    return sorted((_load(p) for p in paths), key=lambda r: r.id)
+    return sorted((_load(p) for p in _record_files(layout)), key=lambda r: r.id)
+
+
+def name_key(text: str) -> str:
+    """Compare names by this key: file systems may ignore case and Unicode form (NFC or NFD)."""
+    return unicodedata.normalize("NFC", text).casefold()
+
+
+def load_readable(layout: Layout) -> tuple[list[Record], list[str]]:
+    """The readable run records sorted by id, and the sorted file names of those ``_load`` refuses.
+
+    For callers that must keep working beside a bad file; ``load_all`` still raises on one. Each
+    caller decides what a skipped file means (the scheduler holds a slot for it, admission hides
+    its run, the run lookups refuse that run) and says so. Nothing is logged here, as this runs on
+    every poll of the activity page.
+    """
+    records: list[Record] = []
+    unreadable: list[str] = []
+    for path in _record_files(layout):
+        try:
+            record = _load(path)
+        except ValueError:
+            unreadable.append(path.name)
+            continue
+        if isinstance(record.id, str):  # a hand-edited id of another type cannot be sorted
+            records.append(record)
+        else:
+            unreadable.append(path.name)
+    return sorted(records, key=lambda r: r.id), sorted(unreadable)
 
 
 def alive(pid: int) -> bool:

@@ -1,3 +1,5 @@
+import { Button } from "@/components/base/buttons/button";
+import { ArrowRight } from "@untitledui/icons";
 import { SourceFileLinks } from "@/pages/library/parts/SourceFileLinks";
 import { sourceCitationNote, sourceFileLinks } from "../sourceFiles";
 import type { ReactNode } from "react";
@@ -211,12 +213,15 @@ function TraceDetailsView({
               </li>
             ))}
           </ul>
-          <a
-            className="w-fit text-action underline"
+          <Button
+            className="w-fit"
             href={`#evidence/sources/${encodeURIComponent(entry.output.module)}`}
+            color="link-gray"
+            size="sm"
+            iconTrailing={ArrowRight}
           >
             Open Sources
-          </a>
+          </Button>
         </section>
       )}
     </div>
@@ -288,12 +293,13 @@ function EvidenceGaps({
                     {plainModuleNames(gap.details) || "No additional detail recorded."}
                   </td>
                   <td className="px-4 py-3">
-                    <a
-                      className="text-action underline"
+                    <Button
                       href={evidencePath(run.folder, entry, gap.line)}
+                      color="link-gray"
+                      size="sm"
                     >
                       Open source
-                    </a>
+                    </Button>
                   </td>
                 </tr>
               ))}
@@ -485,10 +491,10 @@ function EvidenceHandoffs({
                 key={item.output.id}
                 className="flex flex-wrap items-center justify-between gap-3 border-t border-border-hairline pt-2"
               >
-                <a className="text-action underline" href={evidencePath(run.folder, item)}>
+                <Button href={evidencePath(run.folder, item)} color="link-gray" size="sm">
                   {moduleName(item.output.module)}
                   {item.selected ? "" : ` · ${item.output.label}`}
-                </a>
+                </Button>
                 <HandoffDownload run={run} entry={item} />
               </li>
             ),

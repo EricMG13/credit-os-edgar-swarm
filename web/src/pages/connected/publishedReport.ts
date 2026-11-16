@@ -197,7 +197,21 @@ export type PublishedRun = {
     };
   };
 };
-type Metric = { value?: number | string | null; unit?: string | null; period?: string | null };
+type Metric = {
+  value?: number | string | null;
+  unit?: string | null;
+  period?: string | null;
+  /** The same metric one year earlier, and `current - prior` as the back end computed it. */
+  prior?: { value: string; period: string };
+  change?: string;
+};
+export type CatalogueRating = {
+  label: string;
+  agency: string;
+  scope: "issuer" | "facility";
+  outlook: string;
+  date: string;
+};
 export type CatalogueRun = {
   id: string;
   name: string;
@@ -207,6 +221,8 @@ export type CatalogueRun = {
   sector: string;
   period: string;
   metrics: Record<string, Metric>;
+  /** The ratings the analyst entered at run start; absent means none. */
+  ratings?: CatalogueRating[];
 };
 export type Snapshot = {
   catalogue: { real: CatalogueRun[] };
@@ -284,7 +300,26 @@ export function runTiming(run: Pick<PublishedRun, "asOf" | "period">) {
   return [date, run.period !== run.asOf ? run.period : ""].filter(Boolean).join(" · ");
 }
 
+const moneyUnit = /^(USD|US\$|[A-Z]{3})(?: millions|m)$/;
+const symbols: Record<string, string> = { USD: "$", US$: "$", GBP: "£", EUR: "€" };
+const moneySymbol = (code: string) => symbols[code] ?? `${code} `;
+
+export function unitLabel(unit: string) {
+  const code = moneyUnit.exec(unit)?.[1];
+  return code ? `${moneySymbol(code)}m` : unit;
+}
+
 export function withUnit(value: string | number, unit?: string | null) {
+  const code = unit ? moneyUnit.exec(unit)?.[1] : undefined;
+  if (code) {
+    const text = String(value);
+    if (!/^-?(\d+|\d{1,3}(,\d{3})+)(\.\d+)?$/.test(text)) return text;
+    const [plain = "", fraction] = text.replace(/^-/, "").split(".");
+    const integer = plain.replace(/,/g, "");
+    const grouped = integer.replace(/\B(?=(\d{3})+$)/g, ",");
+    const sign = text.startsWith("-") ? "-" : "";
+    return `${sign}${moneySymbol(code)}${grouped}${fraction === undefined ? "" : `.${fraction}`}m`;
+  }
   return unit ? `${String(value)}${/^[x%]$/.test(unit) ? "" : " "}${unit}` : String(value);
 }
 
