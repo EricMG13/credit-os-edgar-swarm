@@ -365,7 +365,7 @@ export function findingBlocks(
     .filter((section) => section.blocks.length > 0);
 }
 
-function FindingParagraph({
+export function FindingParagraph({
   block,
   trace,
   href,
@@ -377,8 +377,8 @@ function FindingParagraph({
   const { body } = readParagraph(block.text);
   if (!body) return null;
   return (
-    <div className={`${TRACE_HOST} flex items-start justify-between gap-3`}>
-      <p className="max-w-[76ch] text-body wrap-anywhere text-text-secondary">
+    <div className={`${TRACE_HOST} flex items-start justify-start gap-3`}>
+      <p className="max-w-[55ch] text-body wrap-anywhere text-text-secondary">
         {containsReference(body) ? (
           <a href={href} className="text-action underline">
             Read this passage in Evidence

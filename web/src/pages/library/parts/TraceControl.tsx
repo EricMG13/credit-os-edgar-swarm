@@ -1,3 +1,4 @@
+import { FileSearch02 } from "@untitledui/icons";
 import { useContext } from "react";
 import { Tooltip, TooltipTrigger } from "@/components/base/tooltip/tooltip";
 import { cx } from "@/utils/cx";
@@ -7,8 +8,8 @@ import { RunContext } from "./RunContext";
 export const TRACE_HOST = "group/trace relative";
 
 /**
- * The one trace control per paragraph, row or figure. Hidden at rest; shown on hover of its host,
- * on keyboard focus, always on touch, and for every control while the frame's Show sources is on.
+ * The one trace control per paragraph, row or figure. Visible at rest at every width; its box border
+ * shows on hover of its host, on keyboard focus, and for every control while the frame's Show sources is on.
  * `null` is a figure with no trace: it draws nothing.
  */
 export function TraceControl({
@@ -54,18 +55,13 @@ export function TraceButton({
         aria-label={label}
         onPress={open}
         className={cx(
-          "flex size-7 flex-none cursor-pointer items-center justify-center rounded-ds-sm border opacity-0 transition-opacity duration-150 group-hover/trace:opacity-100 focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 in-data-[sources=on]:opacity-100 motion-reduce:transition-none max-[480px]:size-11 [@media(hover:none)]:opacity-100",
+          "relative flex size-7 flex-none cursor-pointer items-center justify-center rounded-ds-sm border bg-transparent transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 motion-reduce:transition-none max-[480px]:after:absolute max-[480px]:after:-inset-2",
           onDark
-            ? "border-white/30 bg-transparent text-white hover:bg-white/10 focus-visible:ring-offset-surface-inverse"
-            : "border-border-hairline bg-surface-card text-text-tertiary hover:border-action-subtle-hover hover:bg-action-subtle hover:text-action",
+            ? "border-transparent text-white/80 hover:border-white/60 hover:bg-white/10 hover:text-white focus-visible:border-white/60 focus-visible:ring-offset-surface-inverse group-hover/trace:border-white/60 in-data-[sources=on]:border-white/60"
+            : "border-transparent text-text-tertiary hover:border-border-control hover:bg-action-subtle hover:text-action focus-visible:border-border-control group-hover/trace:border-border-control in-data-[sources=on]:border-border-control",
         )}
       >
-        <span
-          aria-hidden="true"
-          className="relative size-2.5 rounded-ds-full border-[1.5px] border-current"
-        >
-          <span className="absolute inset-0.5 rounded-ds-full bg-current" />
-        </span>
+        <FileSearch02 aria-hidden="true" className="size-4" />
       </TooltipTrigger>
     </Tooltip>
   );

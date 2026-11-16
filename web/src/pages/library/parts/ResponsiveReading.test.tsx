@@ -22,5 +22,6 @@ it("keeps source controls easy to tap on narrow screens and unchanged on desktop
   render(<TraceButton label="Show sources for this chart" open={() => {}} />);
   const button = screen.getByRole("button", { name: "Show sources for this chart" });
   expect(button.className).toContain("size-7");
-  expect(button.className).toContain("max-[480px]:size-11");
+  expect(button.className).toContain("max-[480px]:after:-inset-2");
+  expect(button.className).not.toContain("max-[480px]:size-11");
 });
