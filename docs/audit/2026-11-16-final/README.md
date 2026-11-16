@@ -4,9 +4,10 @@ A staged audit of the whole application, front to back, before the repository is
 work PC. This file routes; each stage has one brief under `stages/`. To start the audit in a
 cloud session, paste [`CLOUD-PROMPT.md`](CLOUD-PROMPT.md).
 
-The session that runs the audit is its coordinator. It reads this file, runs the stages in
-order, dispatches sub-agents with the stage brief's path (never pasted content), and writes no
-code itself.
+The audit runs as one lead coordinator session (Fable) and several sub-sessions; who runs which
+stage, the waves, the branches and the hand-off are in [`SESSIONS.md`](SESSIONS.md). The lead
+and every sub-session controller dispatch sub-agents with the stage brief's path (never pasted
+content) and write no code themselves. "The coordinator" in a brief means the lead.
 
 ## Scope
 
@@ -63,12 +64,13 @@ Recorded by the session that wrote these briefs. The owner may overrule any of t
 
 | # | Ruling | Source |
 | :--- | :--- | :--- |
-| R1 | Stage 2 and 3 agents run on Sonnet at `xhigh` effort. Consolidation (stage 4) is the coordinator's own work. | Owner, 2026-11-16: "swarm = sonnet xhigh" |
+| R1 | Stage 2 and 3 workers run on Sonnet at `xhigh` effort. The lead runs on Fable; sub-session controllers on Opus 5.5 at `xhigh`. Consolidation (stage 4) is the lead's own work. | Owner, 2026-11-16: "swarm = sonnet xhigh", "one lead coordinator (fable)"; sub-session controllers from the owner's standing amendment |
 | R2 | Signal is out of scope, as above. | Owner, 2026-11-16: "No work to be done regarding Signal" |
 | R3 | Every finding is registered. High and Medium findings are repaired in stage 5. Low and Info findings are repaired in one batch at the end of stage 5. A finding about a hostile or unusual input is registered and parked, not repaired. A wrong figure, lost data, a leaked secret or path, or a failure on ordinary inputs is always repaired. | Coordinator's reading; the owner was asked and has not answered |
 | R4 | No paid run. No `--live`, no seat check, no real Submit. Journeys use `proof.serve`, which substitutes canned responses. | `AGENTS.md` |
 | R5 | A change that removes something the reader sees, or changes what the user controls, is not made. It is listed for the owner in `output/4-register/owner-decisions.md`. | Coordinator |
-| R6 | Stage 5 works on branch `audit/final-repairs`; stage 6 on `audit/final-sweep`, cut from the repairs tip. Each ends in a pull request. Nothing is merged without the owner's word. | Owner's standing rule |
+| R6 | Repairs and the sweep land on `audit/final-repairs` (branches in `SESSIONS.md`). The audit ends in one pull request from `audit/final-repairs` into `main`, which is not merged without the owner's word. | Owner's standing rule |
+| R9 | The lead may merge sub-session pull requests into `audit/final-repairs`, after reading the diff and the session's reports. No other merge. | Coordinator; needed so sub-sessions can work in parallel. The owner may withdraw it. |
 | R8 | The application works entirely offline. At run time the interface, its fonts, icons, scripts, styles, charts and data load only from the local machine (`file:` or loopback). Any request to another host, and any address of another host that the built files would load, is a High finding. Installing packages during setup is not run time. A live model run is the one thing that leaves the machine; it is a separate, paid action and is out of this audit (R4). | Owner, 2026-11-16: "the app functions entirely offline". That a live model run is outside this rule is the coordinator's reading. |
 | R7 | A tool or skill a brief names may be missing in the cloud. Use the fallback the brief gives and write the absence under `Not verified:`. Do not add a package to any manifest to get a tool. | Coordinator |
 
