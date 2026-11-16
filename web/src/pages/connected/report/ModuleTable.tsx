@@ -10,7 +10,7 @@ import { SECTION_HEADING, SUBSECTION_HEADING } from "@/pages/library/parts/headi
 import {
   containsReference,
   displayColumns,
-  plainModuleNames,
+  readerText as codesNamed,
   type Table,
 } from "../publishedReport";
 import { plainText, richParts } from "../ReportContent";
@@ -35,7 +35,7 @@ const READINESS = {
 } as const;
 
 function readerText(text: string | undefined) {
-  return text && containsReference(text) ? "In Evidence" : (text ?? "");
+  return text && containsReference(text) ? "In Evidence" : codesNamed(text ?? "");
 }
 
 function readiness(data: ReturnType<typeof visible>, traceAt: (line: number) => string) {
@@ -79,7 +79,7 @@ function limitations(data: ReturnType<typeof visible>, traceAt: (line: number) =
   if (limitation < 0 || status < 0 || closed < 0) return null;
   const groups = new Map<string, { text: string; closed: string; line: number }[]>();
   for (const { cells, line } of data.rows) {
-    const label = plainModuleNames(plainText(cells[status] ?? "")).trim();
+    const label = codesNamed(plainText(cells[status] ?? "")).trim();
     const note = cells[closed]?.trim() ?? "";
     groups.set(label, [
       ...(groups.get(label) ?? []),
@@ -107,14 +107,16 @@ function limitations(data: ReturnType<typeof visible>, traceAt: (line: number) =
                   key={item.line}
                   className={`${TRACE_HOST} flex flex-wrap items-start gap-2 rounded-lg border border-border-hairline bg-surface-card p-2 text-sm`}
                 >
-                  <span className="min-w-0 flex-1 wrap-anywhere">{richParts(item.text)}</span>
+                  <span className="min-w-0 flex-1 wrap-anywhere">
+                    {richParts(item.text, codesNamed)}
+                  </span>
                   <TraceControl
                     trace={traceAt(item.line)}
-                    label={`Show sources for ${plainModuleNames(plainText(item.text))}`}
+                    label={`Show sources for ${codesNamed(plainText(item.text))}`}
                   />
                   {item.closed && (
                     <p className="basis-full text-xs text-text-secondary">
-                      {richParts(item.closed)}
+                      {richParts(item.closed, codesNamed)}
                     </p>
                   )}
                 </li>
@@ -185,10 +187,10 @@ function monitoring(
 
 function readingCell(text: string): Cell {
   if (!text) return null;
-  if (/^withheld(?:[:\s]|$)/i.test(text)) return { kind: "withheld", reason: text };
+  if (/^withheld(?:[:\s]|$)/i.test(text)) return { kind: "withheld", reason: codesNamed(text) };
   if (/^not (?:supplied|stated|calculable|modelled)(?:[:\s]|$)/i.test(text))
-    return { kind: "gap", reason: text };
-  return { kind: "value", text, at: null };
+    return { kind: "gap", reason: codesNamed(text) };
+  return { kind: "value", text: codesNamed(text), at: null };
 }
 
 function statement(
@@ -202,7 +204,7 @@ function statement(
   if (!periods.every((period) => /^(?:FY|H[12] |Q[1-4] |LTM |20\d\d-)/.test(period))) return null;
   if (data.headers.slice(unit + 1).some((name) => name !== "Basis")) return null;
   const rows = data.rows.map(({ cells, line }) => ({
-    label: [cells[0], cells[unit], cells[unit + 1]].filter(Boolean).join(" · "),
+    label: codesNamed([cells[0], cells[unit], cells[unit + 1]].filter(Boolean).join(" · ")),
     cells: cells.slice(1, unit).map(readingCell),
     emphasis: false,
     line,
@@ -245,11 +247,12 @@ function research(
         kind: "questions",
         title,
         items: data.rows.map(({ cells, line }) => ({
-          question: cells[0] ?? "",
+          question: codesNamed(cells[0] ?? ""),
           state: cells[1] as AnswerState,
           answer:
-            [cells[2], cells[4] && `Open question · ${cells[4]}`].filter(Boolean).join("\n") ||
-            null,
+            codesNamed(
+              [cells[2], cells[4] && `Open question · ${cells[4]}`].filter(Boolean).join("\n"),
+            ) || null,
           trace: traceAt(line),
         })),
       }}
@@ -286,9 +289,9 @@ export function typedModuleTable(
           note: null,
           trace: null,
           rows: data.rows.map(({ cells, line }) => ({
-            risk: cells[0] ?? "",
-            probability: cells[1] || null,
-            impact: cells[2] || null,
+            risk: codesNamed(cells[0] ?? ""),
+            probability: cells[1] ? codesNamed(cells[1]) : null,
+            impact: cells[2] ? codesNamed(cells[2]) : null,
             trace: traceAt(line),
           })),
         }}
@@ -304,9 +307,9 @@ export function typedModuleTable(
           kind: "watch",
           title,
           items: data.rows.map(({ cells, line }) => ({
-            indicator: cells[0] ?? "",
+            indicator: codesNamed(cells[0] ?? ""),
             timing: cells[1]?.toLowerCase() === "leading" ? "leading" : "lagging",
-            threshold: cells[2] ?? "",
+            threshold: codesNamed(cells[2] ?? ""),
             trace: traceAt(line),
           })),
         }}

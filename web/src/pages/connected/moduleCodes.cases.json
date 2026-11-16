@@ -1,0 +1,60 @@
+{
+  "note": "Answer key written by the PR-manager session, not by the implementer. Every expected value is a literal. Do not edit, reorder or delete a case; cases may only be added by a reviewer.",
+  "cases": [
+    [
+      "reader",
+      "CP-1 does not state a single canonical figure.",
+      "Financial foundation does not state a single canonical figure."
+    ],
+    [
+      "reader",
+      "Blocked interface only: CP-2A is explicitly blocked.",
+      "Blocked interface only: Downside is explicitly blocked."
+    ],
+    ["reader", "CP-2A: covenant headroom restated", "Downside: covenant headroom restated"],
+    [
+      "reader",
+      "The classifier clears CP-3 and CP-3D.",
+      "The classifier clears Security selection and Market-implied risk."
+    ],
+    [
+      "reader",
+      "Financial foundation (CP-1) reports leverage of 5.2x.",
+      "Financial foundation reports leverage of 5.2x."
+    ],
+    [
+      "reader",
+      "Leverage is 5.2x (FY2024) and 4.8x pro forma; USD 1,250.0 million.",
+      "Leverage is 5.2x (FY2024) and 4.8x pro forma; USD 1,250.0 million."
+    ],
+    ["reader", "See CP-2E-GAP-001 for the hedge gap.", "See CP-2E-GAP-001 for the hedge gap."],
+    [
+      "reader",
+      "Read from outputs/CP-1.md and CP-1-tables.md.",
+      "Read from outputs/CP-1.md and CP-1-tables.md."
+    ],
+    ["reader", "Deck (CP-1) Q3.pdf", "Deck (CP-1) Q3.pdf"],
+    [
+      "reader",
+      "CP-2G-forecast-block.md is the forecast block.",
+      "CP-2G-forecast-block.md is the forecast block."
+    ],
+    ["reader", "CP-99 is not scheduled.", "CP-99 is not scheduled."],
+    ["reader", "XCP-1 and CP-1x are not module codes.", "XCP-1 and CP-1x are not module codes."],
+    [
+      "evidence",
+      "Financial foundation (CP-1) reports leverage of 5.2x.",
+      "Financial foundation reports leverage of 5.2x."
+    ],
+    [
+      "evidence",
+      "CP-1 does not state a single canonical figure.",
+      "CP-1 does not state a single canonical figure."
+    ],
+    ["evidence", "See CP-2E-GAP-001 for the hedge gap.", "See CP-2E-GAP-001 for the hedge gap."],
+    ["evidence", "Deck (CP-1) Q3.pdf", "Deck (CP-1) Q3.pdf"],
+    ["service", "limited through CP-4, CP-2A", "limited through Legal & covenants, Downside"],
+    ["service", "CP-DR has no market inputs", "Research questions has no market inputs"],
+    ["service", "CP-99 has no inputs", "CP-99 has no inputs"]
+  ]
+}

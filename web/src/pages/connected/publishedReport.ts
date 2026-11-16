@@ -1,4 +1,4 @@
-import { pathwayName } from "./api";
+import { moduleName, pathwayName } from "./api";
 
 export type Row = { line: number; cells: string[] };
 export type Table = { type: "table"; line: number; headers: string[]; rows: Row[] };
@@ -13,6 +13,15 @@ export function plainModuleNames(text: string) {
   return text.replace(/ \(CP-[A-Za-z0-9]+\)/g, (code, at: number) =>
     FILE_AHEAD.test(text.slice(at + code.length)) ? code : "",
   );
+}
+// A standalone module code: nothing path-like or word-like touches it on either side.
+const STANDALONE_CODE = /(?<![\w\-\\/.])CP-[A-Z0-9]+(?![\w-])(?!\.[A-Za-z])/g;
+/** Findings-page text: plainModuleNames, then each standalone known module code becomes the module's name. */
+export function readerText(text: string) {
+  return plainModuleNames(text).replace(STANDALONE_CODE, (code, at: number, whole: string) => {
+    const kept = whole.slice(0, at).endsWith(" (") && whole[at + code.length] === ")";
+    return kept && FILE_AHEAD.test(whole.slice(at + code.length + 1)) ? code : moduleName(code);
+  });
 }
 export const CONFIDENCE_INPUTS = "Confidence inputs";
 export const FORECAST_INPUTS = "Forecast inputs (machine-readable)";

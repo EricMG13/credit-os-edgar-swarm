@@ -44,7 +44,10 @@ export function calculationNodes(
       {
         label: plainModuleNames(label || id),
         value: value || null,
-        note: plainModuleNames([id, inputs, source].filter(Boolean).join(" · ")),
+        note: [id, inputs, source]
+          .filter(Boolean)
+          .map((part) => plainModuleNames(part ?? ""))
+          .join(" · "),
         children: idsIn(source ?? "").flatMap((child) => node(child, [...ancestors, id])),
       },
     ];
