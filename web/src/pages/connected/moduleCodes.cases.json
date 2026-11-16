@@ -81,6 +81,11 @@
       "Leverage of 5.2x (CP-1) and 4.8x (CP-2).",
       "Leverage of 5.2x (Financial foundation) and 4.8x (Fundamental credit)."
     ],
-    ["evidence", "The haircut (CP-3) holds.", "The haircut holds."]
+    ["evidence", "The haircut (CP-3) holds.", "The haircut holds."],
+    [
+      "reader",
+      "Financial data foundation (CP-1) reports leverage of 5.2x.",
+      "Financial data foundation (Financial foundation) reports leverage of 5.2x."
+    ]
   ]
 }

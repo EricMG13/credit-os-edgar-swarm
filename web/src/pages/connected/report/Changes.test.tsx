@@ -238,18 +238,28 @@ describe("connected report Changes", () => {
   });
 
   it.each([
-    [
-      "changes: not produced \u2014 CP-8 was planned and CP-2A was blocked",
-      "not produced \u2014 Changes since the last run was planned and Downside was blocked",
-    ],
+    ["changes: first run of this pathway", "First run of this pathway."],
     [
       "changes: first run of this pathway (not used: 20261115-114658-01: it was launched with an explicit module subset)",
-      "first run of this pathway. An earlier run exists but could not be used for comparison.",
+      "First run of this pathway. An earlier run exists but could not be used for comparison.",
     ],
-  ])("draws the launcher note %j in plain words, with no label, code or run id", (note, shown) => {
+    [
+      "changes: not produced \u2014 cpos_live_not_accepted: CP-8 not accepted within bounds",
+      "The comparison was planned but not produced for this run.",
+    ],
+    [
+      "changes: not produced \u2014 the comparison pack could not be built (no accepted handoffs)",
+      "The comparison was planned but not produced for this run.",
+    ],
+    [
+      "changes: not compared: the run folder is not inside a runs folder",
+      "This run was not compared with an earlier run.",
+    ],
+    ["see CP-8-GAP-003", "No comparison was recorded for this run."],
+  ])("draws the launcher note %j as a fixed sentence", (note, shown) => {
     const { container } = renderChanges({ note });
     expect(screen.getByText(shown)).toBeVisible();
-    expect(container.textContent).not.toMatch(/changes:|CP-|\d{8}-\d{6}/);
+    expect(container.textContent).not.toMatch(/changes:|CP-|cpos_|\d{8}-\d{6}/);
   });
 
   it("titles the ledger and falls back to the generic table when a column is missing", () => {
