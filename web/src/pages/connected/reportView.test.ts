@@ -1,6 +1,14 @@
 import { describe, expect, it } from "vitest";
-import { actionBias, foundationMetrics, traceKey } from "./reportView";
-import type { CatalogueRun, OutputEntry, Section, Snapshot } from "./publishedReport";
+import {
+  actionBias,
+  foundationMetrics,
+  moduleBottomLines,
+  moduleOrder,
+  runLimitations,
+  traceKey,
+} from "./reportView";
+import type { CatalogueRun, OutputEntry, PublishedRun, Section, Snapshot } from "./publishedReport";
+import { buildReportView } from "./reportView";
 import { findingBlocks, traceForLine } from "./ReportContent";
 import { calculationNodes } from "./report/calculations";
 import { cashProxyCases, type Grid } from "./visuals/LegacyForecast";
@@ -471,5 +479,303 @@ describe("overview comparator when the run period is a label", () => {
     const twice = [...rows, ["FY2024", "2024-01-01", "2024-12-31"]];
     expect(changes("FY2024", [periods(twice), measures])).toEqual(none);
     expect(changes("FY2024", [measures])).toEqual(none);
+  });
+});
+
+describe("what the overview carries for every module", () => {
+  type Spec = {
+    bottom?: string;
+    limits?: string[];
+    summary?: string;
+    summaryLimit?: string;
+    retained?: { bottom: string; limits: string[] };
+  };
+  const passage = (heading: string, line: number, texts: string[]): Section => ({
+    heading,
+    level: 3,
+    line,
+    blocks: texts.map((text, index) => ({
+      type: "text" as const,
+      line: line + index + 1,
+      end: line + index + 1,
+      text,
+    })),
+  });
+  const sectionsOf = ({ bottom, limits }: { bottom?: string; limits?: string[] }): Section[] => [
+    { heading: "Findings", level: 2, line: 1, blocks: [] },
+    ...(bottom === undefined ? [] : [passage("Bottom line", 10, [bottom])]),
+    ...(limits ? [passage("Limitations", 20, limits)] : []),
+  ];
+  function overviewFixture(specs: Record<string, Spec>, steps: string[] | null) {
+    const outputs: Record<string, unknown> = {};
+    const handoffs: Record<string, Section[]> = {};
+    const modules: PublishedRun["modules"] = {};
+    for (const [module, spec] of Object.entries(specs)) {
+      const id = `f/outputs/${module}.md`;
+      const ids = [id];
+      outputs[id] = {
+        id,
+        run: "key",
+        module,
+        label: module,
+        href: id,
+        sha256: `sha-${module}`,
+        summary: spec.summary
+          ? {
+              bottomLine: spec.summary,
+              confidence: "",
+              limitation: spec.summaryLimit ?? "",
+              line: 7,
+            }
+          : null,
+      };
+      handoffs[`sha-${module}`] = sectionsOf(spec);
+      if (spec.retained) {
+        const old = `f/outputs/${module}-old.md`;
+        ids.push(old);
+        outputs[old] = {
+          id: old,
+          run: "key",
+          module,
+          label: module,
+          href: old,
+          sha256: `old-${module}`,
+        };
+        handoffs[`old-${module}`] = sectionsOf({
+          bottom: spec.retained.bottom,
+          limits: spec.retained.limits,
+        });
+      }
+      modules[module] = { outputs: ids, default: id };
+    }
+    const run = {
+      folder: "f",
+      pathway: "credit_snapshot",
+      modules,
+      record: steps && { steps: steps.map((module) => ({ module })) },
+    } as unknown as PublishedRun;
+    const snapshot = {
+      catalogue: { real: [] },
+      workspace: { runs: { key: run }, outputs, handoffs, models: [] },
+      chips: {},
+    } as unknown as Snapshot;
+    return { run, view: buildReportView(snapshot, "key", run) };
+  }
+  const A = "Segment margins are not disclosed, so margin trends are group-level only.";
+  const full = (): Record<string, Spec> => ({
+    "CP-0": {
+      bottom: "The documents cover the last three financial years.",
+      limits: ["Source files were read as supplied."],
+    },
+    "CP-1": {
+      bottom: "Leverage is high but **liquidity** covers the next two years.",
+      limits: [A, "The 2026 audit is not yet signed."],
+      retained: { bottom: "An earlier draft.", limits: ["Only in the retained output."] },
+    },
+    "CP-2D": {
+      bottom: "Not assessable: no liquidity schedule was supplied.",
+      limits: ["Written by a module that could not assess."],
+    },
+    "CP-2": {
+      bottom: "Credit is stable.",
+      limits: [
+        "- segment margins are NOT disclosed; so margin trends are group-level only!\nBasis: Financial foundation (CP-1)",
+        "No covenant compliance certificate was supplied.",
+      ],
+    },
+  });
+  const steps = ["CP-0", "CP-1", "CP-2D", "CP-2"];
+
+  it("orders modules as the run ran them, then any the record does not name", () => {
+    const named = (record: PublishedRun["record"], modules: string[]) =>
+      ({
+        modules: Object.fromEntries(modules.map((id) => [id, { outputs: [], default: null }])),
+        record,
+      }) as unknown as PublishedRun;
+    const ran = (...ids: string[]) => ({ steps: ids.map((module) => ({ module })) });
+    expect(moduleOrder(named(ran("CP-1", "CP-0", "CP-1"), ["CP-0", "CP-1", "CP-2"]))).toEqual([
+      "CP-1",
+      "CP-0",
+      "CP-2",
+    ]);
+    expect(moduleOrder(named(null, ["CP-0", "CP-2"]))).toEqual(["CP-0", "CP-2"]);
+    expect(moduleOrder(named(ran("CP-9"), ["CP-0"]))).toEqual(["CP-9", "CP-0"]);
+  });
+
+  it("gives one bottom line per module that ran, other than the lead", () => {
+    const { run, view } = overviewFixture(full(), steps);
+    expect(view.lead?.output.module).toBe("CP-2");
+    const rows = moduleBottomLines(view, run);
+    expect(rows.map((row) => [row.id, row.state, row.text])).toEqual([
+      ["CP-0", "Delivered", "The documents cover the last three financial years."],
+      ["CP-1", "Delivered", "Leverage is high but liquidity covers the next two years."],
+      ["CP-2D", "Not assessable", "Not assessable: no liquidity schedule was supplied."],
+    ]);
+    expect(rows.map((row) => [row.name, row.line, row.entry.selected])).toEqual([
+      ["Source readiness", 11, true],
+      ["Financial foundation", 11, true],
+      ["Liquidity", 11, true],
+    ]);
+  });
+
+  it("falls back to the output summary, and shows no text for a reference or a missing line", () => {
+    const { run, view } = overviewFixture(
+      {
+        "CP-0": { summary: "Summary bottom line." },
+        "CP-1": { bottom: "See debt-schedule.xlsx for the figure." },
+        "CP-3": { limits: ["Only a limitation."] },
+        "CP-2": { bottom: "Credit is stable." },
+      },
+      null,
+    );
+    expect(moduleBottomLines(view, run).map((row) => [row.id, row.text, row.line])).toEqual([
+      ["CP-0", "Summary bottom line.", 7],
+      ["CP-1", null, 11],
+      ["CP-3", null, null],
+    ]);
+  });
+
+  it("tells a bottom line that cites a source from one the module never wrote", () => {
+    const { run, view } = overviewFixture(
+      {
+        "CP-0": { bottom: "Plain." },
+        "CP-1": { bottom: "See debt-schedule.xlsx for the figure." },
+        "CP-3": { limits: ["Only a limitation."] },
+        "CP-2": { bottom: "Credit is stable." },
+      },
+      null,
+    );
+    expect(moduleBottomLines(view, run).map((row) => [row.id, row.text, row.referenced])).toEqual([
+      ["CP-0", "Plain.", false],
+      ["CP-1", null, true],
+      ["CP-3", null, false],
+    ]);
+  });
+
+  it("skips a recorded step that has no designated output", () => {
+    const { run, view } = overviewFixture(
+      { "CP-1": { bottom: "One.", limits: ["A."] }, "CP-2": { bottom: "Lead." } },
+      ["CP-9", "CP-1", "CP-2"],
+    );
+    expect(moduleBottomLines(view, run).map((row) => row.id)).toEqual(["CP-1"]);
+    expect(runLimitations(view, run).map((row) => row.id)).toEqual(["CP-1"]);
+  });
+
+  it("removes backticks and names a backticked code in a bottom line", () => {
+    const { run, view } = overviewFixture(
+      { "CP-1": { bottom: "`CP-2D` view `x`." }, "CP-2": { bottom: "Lead." } },
+      null,
+    );
+    expect(moduleBottomLines(view, run)[0]?.text).toBe("Liquidity view x.");
+  });
+
+  it("keeps limitations that differ only in a period or a multiple", () => {
+    const { run, view } = overviewFixture(
+      {
+        "CP-1": {
+          limits: ["The FY2025 audit is not yet signed.", "Leverage above 4.5x is not tested."],
+        },
+        "CP-3": {
+          limits: [
+            "The FY2024 audit is not yet signed.",
+            "Leverage above 5.5x is not tested.",
+            "the fy2025 audit is NOT yet signed",
+          ],
+        },
+      },
+      ["CP-1", "CP-3"],
+    );
+    expect(runLimitations(view, run).map((row) => [row.id, row.text])).toEqual([
+      ["CP-1", "The FY2025 audit is not yet signed."],
+      ["CP-1", "Leverage above 4.5x is not tested."],
+      ["CP-3", "The FY2024 audit is not yet signed."],
+      ["CP-3", "Leverage above 5.5x is not tested."],
+    ]);
+  });
+
+  it("skips a method note that opens the Bottom line passage", () => {
+    const { run, view } = overviewFixture(
+      {
+        "CP-1": { bottom: "Module status: complete." },
+        "CP-2": { bottom: "Credit is stable." },
+      },
+      null,
+    );
+    expect(view.lead?.output.module).toBe("CP-2");
+    const [row] = moduleBottomLines(view, run);
+    expect(row?.text).toBeNull();
+    expect(row?.referenced).toBe(false);
+  });
+
+  it("reads a summary through readParagraph, so a trailing citation is not drawn", () => {
+    const { run, view } = overviewFixture(
+      {
+        "CP-1": {
+          summary: "Leverage is high [CP-1 p. 4].",
+          summaryLimit: "Unaudited. 【12†L5-L9】",
+        },
+        "CP-3": { summary: "Bonds are cheap 【12†L5-L9】." },
+      },
+      null,
+    );
+    expect(moduleBottomLines(view, run).map((row) => row.text)).toEqual([
+      "Leverage is high.",
+      "Bonds are cheap.",
+    ]);
+    expect(runLimitations(view, run).map((row) => row.text)).toEqual(["Unaudited."]);
+  });
+
+  it("takes the summary's limitation only from a module with no Limitations passage, once, and not from a blocked one", () => {
+    const { run, view } = overviewFixture(
+      {
+        "CP-1": { summary: "One.", summaryLimit: "The 2025 accounts are unaudited." },
+        "CP-3": { summary: "Three.", summaryLimit: "the 2025 accounts are UNAUDITED" },
+        "CP-4": {
+          bottom: "Four.",
+          limits: ["Written limitation."],
+          summary: "Four.",
+          summaryLimit: "Ignored: a passage exists.",
+        },
+        "CP-5": {
+          bottom: "Not assessable: nothing supplied.",
+          summary: "Five.",
+          summaryLimit: "Ignored: blocked.",
+        },
+        "CP-6": { summary: "Six.", summaryLimit: "" },
+      },
+      null,
+    );
+    expect(runLimitations(view, run).map((row) => [row.id, row.text, row.line])).toEqual([
+      ["CP-1", "The 2025 accounts are unaudited.", 7],
+      ["CP-4", "Written limitation.", 21],
+    ]);
+  });
+
+  it("lists each limitation of the run once, in module order", () => {
+    const { run, view } = overviewFixture(full(), steps);
+    expect(runLimitations(view, run).map((row) => [row.id, row.text])).toEqual([
+      ["CP-0", "Source files were read as supplied."],
+      ["CP-1", A],
+      ["CP-1", "The 2026 audit is not yet signed."],
+      ["CP-2", "No covenant compliance certificate was supplied."],
+    ]);
+  });
+
+  it("keeps a limitation's line, drops method notes and empty items, and names a bare code", () => {
+    const { run, view } = overviewFixture(
+      {
+        "CP-1": {
+          limits: [
+            "Module status: complete.",
+            "Basis: only a basis",
+            "Cash is shown by Liquidity (CP-2D) and CP-2D alike.",
+          ],
+        },
+      },
+      null,
+    );
+    expect(runLimitations(view, run).map((row) => [row.text, row.line, row.name])).toEqual([
+      ["Cash is shown by Liquidity and Liquidity alike.", 23, "Financial foundation"],
+    ]);
   });
 });

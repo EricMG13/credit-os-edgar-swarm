@@ -62,6 +62,30 @@
     ["reader", "The TDG-CP-1 pack is stored.", "The TDG-CP-1 pack is stored."],
     ["reader", "archive.CP-1 is a folder name.", "archive.CP-1 is a folder name."],
     ["reader", "CP-1's leverage is 5.2x.", "Financial foundation's leverage is 5.2x."],
-    ["evidence", "Read by CP-1/CP-2.", "Read by CP-1/CP-2."]
+    ["evidence", "Read by CP-1/CP-2.", "Read by CP-1/CP-2."],
+    ["reader", "The haircut (CP-3) holds.", "The haircut (Security selection) holds."],
+    [
+      "reader",
+      "Security selection (CP-3) and the haircut (CP-3) agree.",
+      "Security selection and the haircut (Security selection) agree."
+    ],
+    ["reader", "Downside (CP-2A) closed it.", "Downside closed it."],
+    [
+      "reader",
+      "business & governance (CP-1A) is unchanged.",
+      "business & governance is unchanged."
+    ],
+    ["reader", "Checked twice (CP-99) today.", "Checked twice (CP-99) today."],
+    [
+      "reader",
+      "Leverage of 5.2x (CP-1) and 4.8x (CP-2).",
+      "Leverage of 5.2x (Financial foundation) and 4.8x (Fundamental credit)."
+    ],
+    ["evidence", "The haircut (CP-3) holds.", "The haircut holds."],
+    [
+      "reader",
+      "Financial data foundation (CP-1) reports leverage of 5.2x.",
+      "Financial data foundation (Financial foundation) reports leverage of 5.2x."
+    ]
   ]
 }

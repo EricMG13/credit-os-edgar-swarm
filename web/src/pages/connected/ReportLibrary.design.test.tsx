@@ -1,7 +1,8 @@
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { ConnectedApp } from "./ConnectedApp";
 import { Changes } from "./report/Changes";
+import { buildReportView, runLimitations } from "./reportView";
 import type { Changes as PublishedChanges, PublishedRun, Snapshot } from "./publishedReport";
 
 const EMPTY_EVIDENCE = {
@@ -447,5 +448,142 @@ describe.each(CODED_VIEWS)("module codes in handoff text on %s", (hash, marker) 
     await screen.findByRole("heading", { level: 1, name: "Northbridge" });
     expect(document.body.textContent).toContain(marker);
     expect(document.body.textContent).not.toMatch(/\(CP-[A-Za-z0-9]+\)/);
+  });
+});
+
+describe("the overview carries every module's bottom line and the run's limitations", () => {
+  const text = (line: number, body: string) => ({
+    type: "text" as const,
+    line,
+    end: line,
+    text: body,
+  });
+  const handoff = (bottom: string | null, limits: string[]) => [
+    { heading: "Findings", level: 2, line: 1, blocks: [] },
+    ...(bottom === null
+      ? []
+      : [{ heading: "Bottom line", level: 3, line: 10, blocks: [text(11, bottom)] }]),
+    {
+      heading: "Limitations",
+      level: 3,
+      line: 20,
+      blocks: limits.map((body, index) => text(21 + index, body)),
+    },
+  ];
+  const BARE = "Cash is shown under CP-2D only.";
+  function overviewSnapshot(
+    modules: [string, string | null, string[]][],
+    order = modules.map(([module]) => module),
+  ) {
+    const snapshot = librarySnapshot() as unknown as Snapshot;
+    const run = snapshot.workspace.runs.north;
+    if (!run) throw new Error("Northbridge fixture is missing");
+    run.record = { steps: order.map((module) => ({ module })) };
+    run.modules = {};
+    for (const [index, [module, bottom, limits]] of modules.entries()) {
+      const id = `northbridge-2026/outputs/${module}.md`;
+      const sha256 = String(index + 1).padStart(64, "0");
+      run.modules[module] = { outputs: [id], default: id };
+      snapshot.workspace.outputs[id] = {
+        id,
+        run: "north",
+        module,
+        label: module,
+        href: id,
+        sha256,
+        state: { established: true, declared: null },
+      };
+      snapshot.workspace.handoffs[sha256] = handoff(bottom, limits);
+    }
+    return { snapshot, run };
+  }
+  async function showOverview() {
+    window.history.replaceState(null, "", "/report/northbridge-2026#overview");
+    render(<ConnectedApp path="/report/northbridge-2026" mode="synthetic" />);
+    await screen.findByRole("heading", { level: 1, name: "Northbridge" });
+  }
+
+  it("lists a bottom line per other module and each limitation once, by plain names", async () => {
+    const { snapshot, run } = overviewSnapshot([
+      ["CP-1", "Leverage is high; Liquidity (CP-2D) covers two years.", [BARE, "See debt.xlsx."]],
+      ["CP-2D", "Not assessable: no liquidity schedule was supplied.", ["Blocked limitation."]],
+      ["CP-3", null, []],
+      ["CP-4", "See debt.xlsx for the view.", []],
+      ["CP-2", "Credit is stable.", ["cash is shown under CP-2D only", "Lead limitation."]],
+    ]);
+    useSnapshot(snapshot);
+    await showOverview();
+    const lines = await screen.findByRole("region", { name: "Bottom line by module" });
+    expect(within(lines).getByRole("link", { name: "Liquidity" })).toHaveAttribute(
+      "href",
+      "#modules/CP-2D",
+    );
+    expect(within(lines).getByText("Not assessable")).toBeVisible();
+    expect(within(lines).getByText(/Leverage is high; Liquidity covers two years\./)).toBeVisible();
+    // CP-3 wrote no bottom line: a gap. CP-4 wrote one that cites a file: a link, not a gap.
+    expect(within(lines).getAllByText("Not established for this run")).toHaveLength(1);
+    expect(
+      within(lines).getByRole("link", { name: "Read this bottom line in Evidence" }),
+    ).toHaveAttribute(
+      "href",
+      expect.stringMatching(/^\/report\/northbridge-2026#evidence\/.*-11$/),
+    );
+    expect(within(lines).getAllByRole("listitem")).toHaveLength(4);
+    expect(lines.textContent).not.toMatch(/CP-/);
+    expect(within(lines).queryByText(/Credit is stable/)).toBeNull();
+
+    const limits = screen.getByRole("region", { name: "Limitations" });
+    const view = buildReportView(snapshot, "north", run);
+    expect(runLimitations(view, run)).toHaveLength(3);
+    expect(within(limits).getAllByRole("listitem")).toHaveLength(runLimitations(view, run).length);
+    expect(within(limits).getAllByRole("button", { name: /^Show sources for/ })).toHaveLength(
+      within(limits).getAllByRole("listitem").length,
+    );
+    expect(within(limits).getByText("Cash is shown under Liquidity only.")).toBeVisible();
+    expect(within(limits).getByText("Lead limitation.")).toBeVisible();
+    expect(
+      within(limits).getByRole("link", { name: "Read this limitation in Evidence" }),
+    ).toBeVisible();
+    expect(within(limits).queryByText(/Blocked limitation/)).toBeNull();
+    expect(limits.textContent).not.toMatch(/CP-/);
+    // The lead's own Limitations card is gone from the lead's passages.
+    expect(screen.getAllByRole("heading", { name: "Limitations" })).toHaveLength(1);
+  });
+
+  it("says so when no module recorded a limitation, and omits the list of other modules for a lone lead", async () => {
+    const { snapshot } = overviewSnapshot([["CP-2", "Credit is stable.", []]]);
+    useSnapshot(snapshot);
+    await showOverview();
+    const limits = await screen.findByRole("region", { name: "Limitations" });
+    expect(
+      within(limits).getByText(
+        "No limitation is listed on this page for this run. Each module's page shows what it recorded.",
+      ),
+    ).toBeVisible();
+    expect(within(limits).queryByRole("listitem")).toBeNull();
+    expect(screen.queryByRole("region", { name: "Bottom line by module" })).toBeNull();
+    expect(screen.getByText("Credit is stable.")).toBeVisible();
+  });
+
+  it("draws the summary's limitation for an earlier-format run, and not the empty sentence", async () => {
+    const { snapshot } = overviewSnapshot([["CP-1", null, []]]);
+    const output = snapshot.workspace.outputs["northbridge-2026/outputs/CP-1.md"];
+    if (!output) throw new Error("CP-1 output is missing");
+    output.summary = {
+      bottomLine: "Leverage is high [CP-1 p. 4].",
+      confidence: "Medium",
+      limitation: "The 2025 accounts are unaudited.",
+      line: 6,
+    };
+    snapshot.workspace.handoffs[output.sha256] = [
+      { heading: "Findings", level: 2, line: 1, blocks: [] },
+    ];
+    useSnapshot(snapshot);
+    await showOverview();
+    const lines = await screen.findByRole("region", { name: "Bottom line by module" });
+    expect(within(lines).getByText("Leverage is high.")).toBeVisible();
+    const limits = screen.getByRole("region", { name: "Limitations" });
+    expect(within(limits).getByText("The 2025 accounts are unaudited.")).toBeVisible();
+    expect(limits.textContent).not.toMatch(/No limitation is listed/);
   });
 });

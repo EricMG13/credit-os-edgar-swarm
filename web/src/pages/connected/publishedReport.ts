@@ -17,9 +17,20 @@ export function plainModuleNames(text: string) {
 // A standalone run of module codes ("CP-1" or "CP-1/CP-2"): nothing path-like or word-like touches it.
 const STANDALONE_CODES =
   /(?<![\w\-\\/.])CP-[A-Z0-9]+(?:\/CP-[A-Z0-9]+)*(?![\w\-\\/])(?!\.[A-Za-z])/g;
-/** Findings-page text: plainModuleNames, then each standalone known module code becomes the module's name. */
+// A bracketed code after text: " (CP-x)".
+const BRACKETED_CODE = / \((CP-[A-Za-z0-9]+)\)/g;
+/**
+ * Findings-page text: a " (CP-x)" right after that module's own name is dropped, after any other
+ * words it becomes " (<module name>)" (an unknown code stays), then each standalone known code
+ * becomes the module's name. A code inside a stored file name stays.
+ */
 export function readerText(text: string) {
-  return plainModuleNames(text).replace(STANDALONE_CODES, (run, at: number, whole: string) => {
+  const bracketed = text.replace(BRACKETED_CODE, (match, code: string, at: number) => {
+    const name = moduleName(code);
+    if (name === code || FILE_AHEAD.test(text.slice(at + match.length))) return match;
+    return text.slice(0, at).toLowerCase().endsWith(name.toLowerCase()) ? "" : ` (${name})`;
+  });
+  return bracketed.replace(STANDALONE_CODES, (run, at: number, whole: string) => {
     const kept = whole.slice(0, at).endsWith(" (") && whole[at + run.length] === ")";
     if (kept && FILE_AHEAD.test(whole.slice(at + run.length + 1))) return run;
     return run.replace(/CP-[A-Z0-9]+/g, moduleName);

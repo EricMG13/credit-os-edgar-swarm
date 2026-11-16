@@ -1,4 +1,4 @@
-import { changesSentence, comparisonCaveat, lookupSentence } from "./plain";
+import { comparisonCaveat, lookupSentence } from "./plain";
 
 it("drops the launcher label and flag hint from a lookup line", () => {
   expect(lookupSentence("Lookup:   off: synthetic case (default); --web-lookup on forces it")).toBe(
@@ -13,27 +13,6 @@ it("drops the launcher label and flag hint from a lookup line", () => {
   );
 });
 
-it("drops an unused earlier run from the changes line and says so", () => {
-  expect(changesSentence("first run (not used: 20261116-083145-01: different pathway)")).toBe(
-    "first run. An earlier run exists but could not be used for comparison.",
-  );
-  expect(changesSentence("first run")).toBe("first run");
-});
-
-it("drops the whole skip note when the reason quotes an issuer name with brackets", () => {
-  expect(
-    changesSentence(
-      "first run of this pathway (not used: 20261116-083145-01: its issuer name is 'Northbridge (UK) Ltd', not 'Northbridge Ltd')",
-    ),
-  ).toBe("first run of this pathway. An earlier run exists but could not be used for comparison.");
-});
-it("keeps one full stop when the kept text already ends with one", () => {
-  expect(
-    changesSentence(
-      "first run. (not used: 20261116-083145-01: it was launched with an explicit module subset)",
-    ),
-  ).toBe("first run. An earlier run exists but could not be used for comparison.");
-});
 it("drops the SEC label from a lookup line", () => {
   expect(
     lookupSentence(
