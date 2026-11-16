@@ -66,12 +66,54 @@ describe("reader data fidelity", () => {
     );
     const input = foundation([period, measures]);
     expect(foundationMetrics(input, date)).toMatchObject([
-      { metric: { label: "Available liquidity", value: { text: "$0m" } }, line: 12 },
+      {
+        key: "liquidity",
+        metric: { label: "Total liquidity at period end", value: { text: "$0m" } },
+        line: 12,
+      },
     ]);
     expect(foundationMetrics(foundation([period, measures, measures]), date)).toEqual([]);
     expect(
       foundationMetrics(input, { ...date, metrics: { cash: { period: "2025-12-31" } } }),
     ).toEqual([]);
+  });
+
+  it("labels each CP-1 tile with the handoff's own words", () => {
+    const measures = table(
+      "Financials and credit metrics",
+      headers,
+      [
+        ["Total liquidity at period end", "310", "US$m"],
+        ["Free cash flow (operating cash flow less capex), twelve months", "42", "US$m"],
+        ["(Total debt plus financing obligations) / EBITDA", "5.4", "x"],
+        ["EBITDA / (cash interest for debt plus cash rent recorded as interest)", "2.1", "x"],
+        ["Net debt at period end", "1200", "US$m"],
+      ],
+      10,
+    );
+    const debt = table(
+      "Debt principal to carrying value",
+      ["Period", "Contractual principal", "Discount", "Carrying value", "Reporting unit"],
+      [["2026-12-31", "1500", "20", "1480", "US$m"]],
+      20,
+    );
+    const rows = foundationMetrics(foundation([period, measures, debt]), date);
+    expect(rows.map(({ key, metric }) => [key, metric.label, metric.note])).toEqual([
+      ["liquidity", "Total liquidity at period end", "2026-12-31"],
+      [
+        "freeCashFlow",
+        "Free cash flow (operating cash flow less capex), twelve months",
+        "2026-12-31",
+      ],
+      ["leverage", "(Total debt plus financing obligations) / EBITDA", "2026-12-31"],
+      [
+        "interestCover",
+        "EBITDA / (cash interest for debt plus cash rent recorded as interest)",
+        "2026-12-31",
+      ],
+      ["netDebt", "Net debt at period end", "2026-12-31"],
+      ["principal", "Contractual principal", "2026-12-31"],
+    ]);
   });
 
   it("isolates trace identities for alternate outputs and other runs with the same row number", () => {
@@ -102,7 +144,11 @@ describe("reader data fidelity", () => {
     );
     const dated = { ...date, metrics: { cash: { period: "2026-06-30" } } };
     expect(foundationMetrics(foundation([schedule, ledger]), dated)).toMatchObject([
-      { metric: { label: "Debt maturities through 2027", value: { text: "$0m" } }, line: 46 },
+      {
+        key: "maturities",
+        metric: { label: "Maturities from 2026-07-01 to end-2027", value: { text: "$0m" } },
+        line: 46,
+      },
     ]);
     const foreign = table(
       "Chart data: debt maturities",
@@ -190,6 +236,29 @@ describe("reader data fidelity", () => {
     const credit = { ...finance, output: { ...finance.output, module: "CP-2" } };
     expect(findingBlocks(sections, finance)).toEqual([]);
     expect(findingBlocks(sections, credit)).toEqual([monitoring]);
+  });
+
+  it("returns CP-8's limitations ledger but not another module's gap ledger", () => {
+    const ledger = table(
+      "Limitations ledger",
+      ["Earlier ref", "Current ref", "Limitation", "Status", "What closed it"],
+      [["E1", "C1", "Margins are not disclosed", "Remaining", "\u2014"]],
+      20,
+    );
+    const gap = { ...ledger, heading: "Gap ledger" };
+    const withFindings = (section: Section) => [
+      { heading: "Findings", line: 1, level: 2, blocks: [] },
+      { ...section, level: 3 },
+    ];
+    const entry = (module: string, sections: Section[]) => ({
+      ...foundation(sections),
+      output: { ...foundation(sections).output, module },
+    });
+    const cp8 = withFindings(ledger);
+    expect(findingBlocks(cp8, entry("CP-8", cp8))).toEqual([cp8[1]]);
+    const cp2 = withFindings(gap);
+    expect(findingBlocks(cp2, entry("CP-2", cp2))).toEqual([]);
+    expect(findingBlocks(cp8, entry("CP-2", cp8))).toEqual([]);
   });
 
   it("reads calculation links from the ledger and retains stated operands", () => {

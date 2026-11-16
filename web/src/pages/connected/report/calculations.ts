@@ -1,5 +1,10 @@
 import type { TreeNode } from "@/pages/library/slice";
-import { classifySections, type Table, type OutputEntry } from "../publishedReport";
+import {
+  classifySections,
+  plainModuleNames,
+  type Table,
+  type OutputEntry,
+} from "../publishedReport";
 
 const idPattern = /\b[A-Z]\d{1,4}\b/g;
 
@@ -37,9 +42,9 @@ export function calculationNodes(
     const [, label, inputs, value, source] = row.cells;
     return [
       {
-        label: label || id,
+        label: plainModuleNames(label || id),
         value: value || null,
-        note: [id, inputs, source].filter(Boolean).join(" · "),
+        note: plainModuleNames([id, inputs, source].filter(Boolean).join(" · ")),
         children: idsIn(source ?? "").flatMap((child) => node(child, [...ancestors, id])),
       },
     ];

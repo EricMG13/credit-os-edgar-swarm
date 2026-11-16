@@ -79,6 +79,7 @@ export type Summary = Reading & {
   omitted: string[];
   changes: string;
   lookup?: string[];
+  web_search?: boolean;
   prior?: { id: string; as_of: string; pathway: string } | null;
   model: string;
   effort: string;
@@ -379,13 +380,8 @@ const MODULE_NAMES: Readonly<Record<string, string>> = {
   "CP-MODEL": "Cash flow model",
 };
 
-export function moduleTitle(id: string) {
-  return (Object.hasOwn(MODULE_NAMES, id) ? MODULE_NAMES[id] : undefined) ?? id;
-}
-
 export function moduleName(id: string) {
-  const name = Object.hasOwn(MODULE_NAMES, id) ? MODULE_NAMES[id] : undefined;
-  return name ? `${name} (${id})` : id;
+  return (Object.hasOwn(MODULE_NAMES, id) ? MODULE_NAMES[id] : undefined) ?? id;
 }
 
 export function pathwayName(pathway: string) {

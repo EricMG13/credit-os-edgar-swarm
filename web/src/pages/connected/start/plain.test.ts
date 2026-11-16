@@ -1,9 +1,9 @@
-import { moduleTitle } from "../api";
+import { moduleName } from "../api";
 import { changesSentence, comparisonCaveat, lookupSentence, plainText } from "./plain";
 
 it("names a module without its code", () => {
-  expect(moduleTitle("CP-4")).toBe("Legal & covenants");
-  expect(moduleTitle("CP-99")).toBe("CP-99");
+  expect(moduleName("CP-4")).toBe("Legal & covenants");
+  expect(moduleName("CP-99")).toBe("CP-99");
 });
 it("replaces known codes and leaves unknown ones", () => {
   expect(plainText("Expected to be limited through CP-4, CP-2A, which it reads.")).toBe(

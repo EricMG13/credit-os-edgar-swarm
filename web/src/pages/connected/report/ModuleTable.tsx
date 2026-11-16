@@ -5,7 +5,15 @@ import { StatementBlock } from "@/pages/library/parts/StatementBlock";
 import { StatusGroups } from "@/pages/library/parts/StatusBlock";
 import { WatchBlock } from "@/pages/library/parts/WatchBlock";
 import type { AnswerState, Cell } from "@/pages/library/slice";
-import { containsReference, displayColumns, type Table } from "../publishedReport";
+import { TRACE_HOST, TraceControl } from "@/pages/library/parts/TraceControl";
+import { SECTION_HEADING, SUBSECTION_HEADING } from "@/pages/library/parts/heading";
+import {
+  containsReference,
+  displayColumns,
+  plainModuleNames,
+  type Table,
+} from "../publishedReport";
+import { plainText, richParts } from "../ReportContent";
 
 function visible(table: Table) {
   const indexes = displayColumns(table.headers, false, table.rows);
@@ -59,6 +67,63 @@ function readiness(data: ReturnType<typeof visible>, traceAt: (line: number) => 
         hideEmptyValue: true,
       }))}
     />
+  );
+}
+
+const LEDGER_ORDER = ["Closed", "Remaining", "New", "No longer stated"];
+
+// CP-8's limitations ledger: one group per status; the two reference columns stay in Evidence.
+function limitations(data: ReturnType<typeof visible>, traceAt: (line: number) => string) {
+  const at = (name: string) => data.headers.findIndex((header) => header.trim() === name);
+  const [limitation, status, closed] = [at("Limitation"), at("Status"), at("What closed it")];
+  if (limitation < 0 || status < 0 || closed < 0) return null;
+  const groups = new Map<string, { text: string; closed: string; line: number }[]>();
+  for (const { cells, line } of data.rows) {
+    const label = plainModuleNames(plainText(cells[status] ?? "")).trim();
+    const note = cells[closed]?.trim() ?? "";
+    groups.set(label, [
+      ...(groups.get(label) ?? []),
+      { text: cells[limitation] ?? "", closed: note === "\u2014" ? "" : note, line },
+    ]);
+  }
+  const labels = [...groups.keys()];
+  const ordered = [
+    ...LEDGER_ORDER.filter((label) => groups.has(label)),
+    ...labels.filter((label) => !LEDGER_ORDER.includes(label)),
+  ];
+  const Heading = SUBSECTION_HEADING;
+  const Title = SECTION_HEADING;
+  return (
+    <section aria-label="Limitations" className="flex flex-col gap-4">
+      <Title className="font-display text-h3 text-text-primary">Limitations ledger</Title>
+      {ordered.map((label) => {
+        const items = groups.get(label) ?? [];
+        return (
+          <div key={label} className="flex flex-col gap-2">
+            <Heading className="font-semibold">{`${label} (${String(items.length)})`}</Heading>
+            <ul className="flex flex-col gap-2">
+              {items.map((item) => (
+                <li
+                  key={item.line}
+                  className={`${TRACE_HOST} flex flex-wrap items-start gap-2 rounded-lg border border-border-hairline bg-surface-card p-2 text-sm`}
+                >
+                  <span className="min-w-0 flex-1 wrap-anywhere">{richParts(item.text)}</span>
+                  <TraceControl
+                    trace={traceAt(item.line)}
+                    label={`Show sources for ${plainModuleNames(plainText(item.text))}`}
+                  />
+                  {item.closed && (
+                    <p className="basis-full text-xs text-text-secondary">
+                      {richParts(item.closed)}
+                    </p>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </div>
+        );
+      })}
+    </section>
   );
 }
 
@@ -210,6 +275,7 @@ export function typedModuleTable(
     )
   )
     return null;
+  if (module === "CP-8" && title === "Limitations ledger") return limitations(data, traceAt);
   if (signature === "Risk|Probability|Impact")
     return (
       <MatrixBlock

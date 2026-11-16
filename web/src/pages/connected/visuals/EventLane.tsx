@@ -1,6 +1,7 @@
 import { ChevronDown } from "@untitledui/icons";
 import { useId, useState, type ReactNode } from "react";
 import { Button } from "@/components/base/buttons/button";
+import { StatusShape } from "@/components/status/shapes";
 import { cx } from "@/utils/cx";
 import type { SourceTable } from "./visualData";
 
@@ -76,19 +77,37 @@ export function eventRecords(table: SourceTable) {
 type EventRecord = ReturnType<typeof eventRecords>[number];
 type Active = { index: number; from: "row" | "marker" } | null;
 
-const MARKS: Record<EventRecord["category"], string> = {
-  Historical: "bg-text-tertiary",
-  Scheduled: "bg-action",
-  Scenario: "border border-dashed border-action bg-surface-card",
-  "User reminder": "border border-action bg-surface-card",
-};
+const MARK_SHAPES = {
+  Historical: "filled circle",
+  Scheduled: "half-filled circle",
+  "User reminder": "ring",
+} as const;
 
 function Mark({ category }: { category: EventRecord["category"] }) {
+  const shape = category === "Scenario" ? null : MARK_SHAPES[category];
+  const tint = category === "Historical" ? "text-text-tertiary" : "text-action";
   return (
-    <span
-      aria-hidden="true"
-      className={cx("inline-block size-2.5 flex-none rounded-ds-full", MARKS[category])}
-    />
+    <span aria-hidden="true" className={cx("inline-flex flex-none", tint)}>
+      {shape ? (
+        <StatusShape shape={shape} />
+      ) : (
+        <svg
+          viewBox="0 0 10 10"
+          width={10}
+          height={10}
+          aria-hidden="true"
+          data-shape="diamond outline"
+          className="shrink-0"
+        >
+          <polygon
+            points="5,0.75 9.25,5 5,9.25 0.75,5"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.5"
+          />
+        </svg>
+      )}
+    </span>
   );
 }
 
@@ -340,9 +359,9 @@ function EventRow({
         <span className="tabular-nums text-text-secondary">
           {event.date} · {event.precision}
         </span>
-        <span className="flex items-center self-center @3xl:h-[22px] @3xl:self-start">
+        <span className="flex items-center gap-1 self-center text-text-secondary @3xl:h-[22px] @3xl:self-start">
           <Mark category={event.category} />
-          <span className="sr-only">{event.category}</span>
+          <span>{event.category}</span>
         </span>
       </div>
       <span className={cx("min-w-0 font-medium break-words", wide)}>{event.event}</span>

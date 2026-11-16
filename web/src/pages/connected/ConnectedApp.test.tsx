@@ -34,7 +34,11 @@ const plan = {
 };
 
 function testingFetch(
-  summary: typeof plan & { lookup?: string[]; prior?: Summary["prior"] } = plan,
+  summary: typeof plan & {
+    lookup?: string[];
+    web_search?: boolean;
+    prior?: Summary["prior"];
+  } = plan,
   submitResponse?: Response | (() => Response),
   overrides: Record<string, unknown> = {},
 ) {
@@ -214,8 +218,8 @@ describe("connected run start", () => {
       target: { value: "advanced" },
     });
     advanceToContext();
-    expect(screen.queryByRole("checkbox", { name: /CP-MODEL/ })).toBeNull();
-    fireEvent.click(screen.getByRole("checkbox", { name: "Source readiness (CP-0)" }));
+    expect(screen.queryByRole("checkbox", { name: "Cash flow model" })).toBeNull();
+    fireEvent.click(screen.getByRole("checkbox", { name: "Source readiness" }));
     fireEvent.click(screen.getByRole("button", { name: "Review run" }));
     await screen.findByRole("button", { name: "Submit, spend up to USD 40.00" });
     const summaryRequest = fetchMock.mock.calls.find(([path]) => path.endsWith("/summary"));
@@ -414,6 +418,26 @@ describe("connected run start", () => {
     expect(fetchMock.mock.calls.filter(([, init]) => init?.body === file)).toHaveLength(2);
   });
 
+  describe("web search statement", () => {
+    const SENTENCE =
+      "The research module will search the web. The issuer's name and the questions it researches go to OpenAI's search.";
+
+    it("states once, on the review, that the research module searches the web", async () => {
+      const sheet = await reviewSheet({ ...plan, web_search: true });
+      expect(within(sheet).getAllByText(SENTENCE)).toHaveLength(1);
+    });
+
+    it("says nothing about web search when the summary says it is off", async () => {
+      const sheet = await reviewSheet({ ...plan, web_search: false });
+      expect(sheet).not.toHaveTextContent(/search the web/);
+    });
+
+    it("says nothing about web search when the summary does not say", async () => {
+      const sheet = await reviewSheet(plan);
+      expect(sheet).not.toHaveTextContent(/search the web/);
+    });
+  });
+
   it("reviews what will run in plain language with an edit link per block", async () => {
     const sheet = await reviewSheet({
       ...plan,
@@ -485,7 +509,7 @@ describe("connected run start", () => {
     fireEvent.change(screen.getByLabelText("Model"), { target: { value: "claude" } });
     fireEvent.change(screen.getByLabelText("Reasoning effort"), { target: { value: "high" } });
     fireEvent.change(screen.getByLabelText("Turns per module"), { target: { value: "64" } });
-    fireEvent.click(screen.getByRole("checkbox", { name: "Committee decision (CP-6)" }));
+    fireEvent.click(screen.getByRole("checkbox", { name: "Committee decision" }));
     const reviewRun = screen.getByRole("button", { name: "Review run" });
     fireEvent.click(reviewRun);
     expect(await screen.findByRole("alert")).toHaveTextContent("Add at least one facility");
@@ -779,7 +803,7 @@ describe("connected activity and reports", () => {
       "aria-valuenow",
       "1",
     );
-    expect(screen.getByText("Source readiness (CP-0)").closest("li")).toHaveTextContent("Finished");
+    expect(screen.getByText("Source readiness").closest("li")).toHaveTextContent("Finished");
     expect(
       screen.getByText("submitted by Dana Reyes · started 16 Nov 2026, 14:02 UTC"),
     ).toBeInTheDocument();
@@ -847,7 +871,7 @@ describe("connected activity and reports", () => {
     render(<ConnectedApp path="/run/test-run" mode="synthetic" />);
     expect(await screen.findByText(/Waiting for the report/)).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Run activity" })).toHaveAttribute("href", "/runs");
-    expect(screen.getByText("Source readiness (CP-0)")).toBeInTheDocument();
+    expect(screen.getByText("Source readiness")).toBeInTheDocument();
     expect(
       screen.getByRole("progressbar", { name: /USD 0.00 of USD 25.00 cap usage/ }),
     ).toHaveAttribute("aria-valuenow", "0");
@@ -1010,7 +1034,7 @@ describe("connected activity and reports", () => {
     );
     window.location.hash = `evidence/${encodeURIComponent(output)}~${"d".repeat(64)}-9`;
     expect(
-      await screen.findByRole("heading", { name: "Fundamental credit (CP-2) · Line 9" }),
+      await screen.findByRole("heading", { name: "Fundamental credit · Line 9" }),
     ).toBeInTheDocument();
     expect(screen.getByRole("cell", { name: filing })).toBeInTheDocument();
     expect(screen.queryByRole("cell", { name: "prior-filing.pdf" })).toBeNull();

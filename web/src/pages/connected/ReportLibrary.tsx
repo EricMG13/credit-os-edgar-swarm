@@ -23,7 +23,9 @@ import {
 import { ReportFindings } from "./ReportContent";
 import { ReportEvidence } from "./report/Evidence";
 import type { Mode } from "./api";
-import { actionBias, buildReportView, foundationMetrics } from "./reportView";
+import { actionBias, buildReportView, foundationMetrics, type MetricKey } from "./reportView";
+
+const TILE_KEYS: readonly MetricKey[] = ["liquidity", "freeCashFlow", "leverage", "maturities"];
 import { Calendar, buildCalendar, upcomingCalendarRows } from "./report/Calendar";
 import { Changes, ComparisonTable } from "./report/Changes";
 import { Forecast } from "./report/Forecast";
@@ -127,12 +129,7 @@ function Overview({
   const watchRows = upcomingCalendarRows(calendar.rows, run.asOf);
   const foundation = view.entries.find((entry) => entry.selected && entry.output.module === "CP-1");
   const metrics = foundation
-    ? foundationMetrics(foundation, view.catalogue).filter(
-        ({ metric }) =>
-          ["Available liquidity", "Free cash flow", "Lease-adjusted gross leverage"].includes(
-            metric.label,
-          ) || metric.label.startsWith("Debt maturities through"),
-      )
+    ? foundationMetrics(foundation, view.catalogue).filter(({ key }) => TILE_KEYS.includes(key))
     : [];
   const figures = metrics.length ? (
     <MetricGrid

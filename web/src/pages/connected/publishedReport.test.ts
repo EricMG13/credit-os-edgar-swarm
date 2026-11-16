@@ -6,6 +6,7 @@ import {
   type PublishedRun,
   displayColumns,
   readParagraph,
+  plainModuleNames,
   publishedHref,
   runPathway,
   runTiming,
@@ -13,6 +14,7 @@ import {
   evidenceToken,
   resolveEvidenceLocation,
   type OutputEntry,
+  missingPassages,
 } from "./publishedReport";
 
 describe("published handoff boundaries", () => {
@@ -59,6 +61,14 @@ describe("published handoff boundaries", () => {
       "sources",
       "sources",
     ]);
+  });
+
+  it("files a Confidence inputs table under Findings as a register", () => {
+    const sections = [
+      { heading: "Findings", level: 2, line: 0, blocks: [] },
+      { heading: "Confidence inputs", level: 3, line: 1, blocks: [] },
+    ];
+    expect(classifySections(sections).map(({ role }) => role)).toEqual(["finding", "registers"]);
   });
 
   it("keeps the exact basis in trace and preserves identifiers in evidence tables only", () => {
@@ -241,5 +251,78 @@ describe("stable evidence addresses", () => {
     expect(resolveEvidenceLocation([revised], evidenceToken(first, 46))).toBeNull();
     expect(resolveEvidenceLocation([first], evidenceToken(first, 47))).toBeNull();
     expect(resolveEvidenceLocation([first, first], evidenceToken(first, 46))).toBeNull();
+  });
+});
+
+describe("plainModuleNames", () => {
+  it("shows a named upstream module without its code", () => {
+    expect(plainModuleNames("Liquidity (CP-2D); calculation C-4")).toBe(
+      "Liquidity; calculation C-4",
+    );
+    expect(plainModuleNames("Report (CP-1).pdf, page 3")).toBe("Report (CP-1).pdf, page 3");
+    expect(plainModuleNames("The CP-2 view is unchanged")).toBe("The CP-2 view is unchanged");
+  });
+
+  it.each([
+    ["Deck (CP-1) Q3.pdf, page 3", "Deck (CP-1) Q3.pdf, page 3"],
+    ["Model (CP-2)_v2.xlsx", "Model (CP-2)_v2.xlsx"],
+    ["Report (CP-1)-final.pdf", "Report (CP-1)-final.pdf"],
+    ["Data room (CP-1)/deck.pdf", "Data room (CP-1)/deck.pdf"],
+    ["Credit is stable; Liquidity (CP-2D) is ample.", "Credit is stable; Liquidity is ample."],
+    ["Basis: Financial foundation (CP-1)", "Basis: Financial foundation"],
+    ["Liquidity (CP-2D) shows cover of 2.5x.", "Liquidity shows cover of 2.5x."],
+    [
+      "Financial foundation (CP-1); TDG_2024-09-30_10-K_tdg-20240930.htm.jsonl, pages 73–73",
+      "Financial foundation; TDG_2024-09-30_10-K_tdg-20240930.htm.jsonl, pages 73–73",
+    ],
+  ])("keeps a stored file name and drops a module code beside it: %j", (input, expected) => {
+    expect(plainModuleNames(input)).toBe(expected);
+  });
+});
+
+const CONTRARY = "Contrary evidence and what would change the view";
+function entry(module: string, headings: string[], bottom = "Judgement."): OutputEntry {
+  return {
+    selected: true,
+    output: { id: "a", module, label: "a", href: "", sha256: "a" },
+    sections: headings.length
+      ? [
+          { heading: "Findings", level: 2, line: 1, blocks: [] },
+          ...headings.map((heading, at) => ({
+            heading,
+            level: 3,
+            line: 2 + at,
+            blocks: [
+              {
+                type: "text" as const,
+                line: 20 + at,
+                end: 20 + at,
+                text: heading === "Bottom line" ? bottom : "Text.",
+              },
+            ],
+          })),
+        ]
+      : [],
+  };
+}
+
+describe("missing reader passages", () => {
+  it("lists the reader passages a prose module did not write", () => {
+    expect(missingPassages(entry("CP-2", ["Bottom line", "Limitations"]))).toEqual([
+      "Key findings",
+      CONTRARY,
+    ]);
+  });
+  it("asks a data module for its bottom line only", () => {
+    expect(missingPassages(entry("CP-1", ["Bottom line"]))).toEqual([]);
+    expect(missingPassages(entry("CP-1C", ["Key findings"]))).toEqual(["Bottom line"]);
+  });
+  it("asks a blocked module for nothing more", () => {
+    expect(missingPassages(entry("CP-2", ["Bottom line"], "Not assessable: no accounts."))).toEqual(
+      [],
+    );
+  });
+  it("does not judge an earlier-format handoff", () => {
+    expect(missingPassages(entry("CP-2", []))).toEqual([]);
   });
 });
