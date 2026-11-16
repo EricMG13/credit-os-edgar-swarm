@@ -53,8 +53,9 @@ const STEP_GUIDANCE: Record<FormStep, string> = {
 };
 
 const PATHWAY_DESCRIPTIONS: Record<string, string> = {
-  credit_snapshot: "Assess the issuer, downside, covenants, refinancing and forward cash flow.",
   lite_credit_assessment: "Review the issuer's fundamentals, credit drivers and downside.",
+  credit_snapshot: "Assess the issuer, downside, covenants, refinancing and forward cash flow.",
+  deep_credit_assessment: "Full credit assessment plus every specialist module.",
   earnings_update: "Compare the latest results with an earlier period.",
   relative_value: "Compare instruments, pricing and compensation for risk.",
   covenant_refinancing: "Assess legal protections, funding needs and refinancing options.",
@@ -68,8 +69,19 @@ const PATHWAY_CARDS = Object.entries(PATHWAYS).map(([id, pathway]) => ({
   modules: `${String(pathway.modules.length)} base modules`,
 }));
 
-type Review = { id: string; answers: Answers; summary: Summary };
+type Review = { id: string; answers: Answers; summary: Summary; cap: string };
 type Draft = { id: string; uploaded: Map<File, string>; copied: boolean };
+
+function capForPathway(caps: Record<string, string>, pathway: string) {
+  const cap = caps[pathway];
+  if (!cap) throw new Error("The cap for this pathway is unavailable. Reload the form.");
+  return cap;
+}
+
+function requireSummaryCap(summary: Summary, shownCap: string) {
+  if (summary.cap !== shownCap)
+    throw new Error("The pathway cap changed while preparing this summary. Review the run again.");
+}
 
 const PURPOSES = {
   research: "No market view (research)",
@@ -401,14 +413,14 @@ export function StartRun({
 
 function IntakeForm({
   template,
-  cap,
+  caps,
   initial,
   warning,
   navigate,
   mode,
 }: {
   template: Context;
-  cap: number | null;
+  caps: Record<string, string>;
   initial?: { run: string; prior: PriorInputs };
   warning?: string;
   navigate: (path: string) => void;
@@ -448,6 +460,8 @@ function IntakeForm({
   const { run, identity } = context;
   const issuerId = customSlug ?? issuerSlug(identity.issuer_name);
   const requested = pathwayModules(run.pathway);
+  const selectedCap = caps[run.pathway];
+  const cap = selectedCap ? Number(selectedCap) : null;
   const earnings = run.pathway === "earnings_update";
   const canRead = files.length > 0 || (!!copy?.prior.files.length && !copy.prior.error);
   const checksComplete = review?.summary.items.every(
@@ -456,7 +470,15 @@ function IntakeForm({
   const newest = newestOverride ?? newestPeriod(reading);
 
   function changeRun(key: keyof Context["run"], value: string) {
+    if (key === "pathway") invalidateReview();
     setContext((previous) => ({ ...previous, run: { ...previous.run, [key]: value } }));
+  }
+
+  function invalidateReview() {
+    setReview(undefined);
+    setAccepted(new Set());
+    setApproved(false);
+    setSubmitUncertain(false);
   }
 
   function changeIdentity<K extends keyof Context["identity"]>(
@@ -634,63 +656,71 @@ function IntakeForm({
     };
   }
 
+  function reviewDetails() {
+    if (!identity.issuer_name.trim() || !/^[a-z0-9][a-z0-9-]{0,39}$/.test(issuerId)) {
+      throw new Error(
+        "Enter an issuer name and an issuer ID using letters a–z, digits or hyphens.",
+      );
+    }
+    const details = readDetails(edits);
+    const note = analystNote
+      .split(/\r\n?|\n/)
+      .map((line) => line.trim())
+      .filter(Boolean)
+      .join(" ");
+    if (note) {
+      const questions = details.research_questions ?? context.research_questions;
+      const listed: unknown[] = Array.isArray(questions) ? questions : [];
+      details.research_questions = [...listed, { text: note, focus_module: "" }];
+    }
+    if (run.run_type === "primary") {
+      const deals = details.deal_terms ?? context.deal_terms;
+      if (!Array.isArray(deals) || deals.length === 0)
+        throw new Error("Add at least one facility in Facilities and deal terms.");
+    }
+    if (level === "advanced" && (!/^\d+$/.test(turns) || Number(turns) < 1 || Number(turns) > 64)) {
+      throw new Error("Turns per module must be a whole number from 1 to 64.");
+    }
+    return details;
+  }
+
+  async function prepareReview() {
+    const details = reviewDetails();
+    const { draft, result } = await refreshDocuments();
+    if (!result.documents.length)
+      throw new Error("The service could not read any of the selected documents.");
+    const answers = makeAnswers(result, details);
+    const shownCap = capForPathway(caps, answers.context.run.pathway);
+    const summary = await getSummary(draft.id, answers, shownCap);
+    requireSummaryCap(summary, shownCap);
+    if (!summary.digest) throw new Error("The service did not issue an approval for this run.");
+    setAccepted(new Set());
+    setApproved(false);
+    const newestDate = newestOverride ?? newestPeriod(result);
+    const dateLimitation =
+      newestDate && run.as_of < newestDate
+        ? [
+            {
+              id: "form:newest-document-date",
+              scope: "run",
+              outcome: "limited",
+              reason: `The as-of date (${run.as_of}) is before your newest document (${newestDate}). Modules may set this document aside.`,
+              fix: "Use an as-of date on or after the newest document date.",
+            },
+          ]
+        : [];
+    setReview({
+      id: draft.id,
+      answers,
+      summary: { ...summary, items: [...summary.items, ...dateLimitation] },
+      cap: shownCap,
+    });
+  }
+
   async function makeReview() {
     if (!canRead || active.current) return;
-    await withDraft("review", async () => {
-      if (!identity.issuer_name.trim() || !/^[a-z0-9][a-z0-9-]{0,39}$/.test(issuerId)) {
-        throw new Error(
-          "Enter an issuer name and an issuer ID using letters a–z, digits or hyphens.",
-        );
-      }
-      const details = readDetails(edits);
-      const note = analystNote
-        .split(/\r\n?|\n/)
-        .map((line) => line.trim())
-        .filter(Boolean)
-        .join(" ");
-      if (note) {
-        const questions = details.research_questions ?? context.research_questions;
-        const listed: unknown[] = Array.isArray(questions) ? questions : [];
-        details.research_questions = [...listed, { text: note, focus_module: "" }];
-      }
-      if (run.run_type === "primary") {
-        const deals = details.deal_terms ?? context.deal_terms;
-        if (!Array.isArray(deals) || deals.length === 0)
-          throw new Error("Add at least one facility in Facilities and deal terms.");
-      }
-      if (
-        level === "advanced" &&
-        (!/^\d+$/.test(turns) || Number(turns) < 1 || Number(turns) > 64)
-      ) {
-        throw new Error("Turns per module must be a whole number from 1 to 64.");
-      }
-      const { draft, result } = await refreshDocuments();
-      if (!result.documents.length)
-        throw new Error("The service could not read any of the selected documents.");
-      const answers = makeAnswers(result, details);
-      const summary = await getSummary(draft.id, answers);
-      if (!summary.digest) throw new Error("The service did not issue an approval for this run.");
-      setAccepted(new Set());
-      setApproved(false);
-      const newestDate = newestOverride ?? newestPeriod(result);
-      const dateLimitation =
-        newestDate && run.as_of < newestDate
-          ? [
-              {
-                id: "form:newest-document-date",
-                scope: "run",
-                outcome: "limited",
-                reason: `The as-of date (${run.as_of}) is before your newest document (${newestDate}). Modules may set this document aside.`,
-                fix: "Use an as-of date on or after the newest document date.",
-              },
-            ]
-          : [];
-      setReview({
-        id: draft.id,
-        answers,
-        summary: { ...summary, items: [...summary.items, ...dateLimitation] },
-      });
-    });
+    invalidateReview();
+    await withDraft("review", prepareReview);
   }
 
   function goTo(next: FormStep) {
@@ -725,9 +755,27 @@ function IntakeForm({
 
   async function submitReviewed() {
     if (!review || !approved || !checksComplete || (mode === "live" && !cap)) return;
+    if (
+      review.answers.context.run.pathway !== run.pathway ||
+      review.cap !== caps[run.pathway] ||
+      review.summary.cap !== review.cap
+    ) {
+      setReview(undefined);
+      setAccepted(new Set());
+      setApproved(false);
+      setError(
+        "The pathway or spending cap changed after review. Review the run again before submitting.",
+      );
+      return;
+    }
     await withDraft("submit", async () => {
       try {
-        const { run: id } = await submit(review.id, review.answers, review.summary.digest);
+        const { run: id } = await submit(
+          review.id,
+          review.answers,
+          review.summary.digest,
+          review.cap,
+        );
         navigate(`/run/${encodeURIComponent(id)}`);
       } catch (failure) {
         if (failure instanceof RequestError && [400, 404].includes(failure.status)) {
@@ -800,7 +848,7 @@ function IntakeForm({
   ]);
 
   const { title, previous, next } = FORM_STEPS[step];
-  const capText = cap === null ? null : `USD ${cap.toFixed(2)}`;
+  const capText = cap === null || !Number.isFinite(cap) ? null : `USD ${cap.toFixed(2)}`;
   const synthetic = mode === "synthetic";
   const readinessItems = [
     {
@@ -1173,6 +1221,7 @@ function IntakeForm({
                       value={run.pathway}
                       purposes={PATHWAY_CARDS}
                       onChange={(pathway) => {
+                        invalidateReview();
                         setContext((previous) => ({
                           ...previous,
                           run: {
@@ -1370,7 +1419,8 @@ function IntakeForm({
                       (key) =>
                         level === "advanced" ||
                         run.pathway === "portfolio_decision" ||
-                        (key === "portfolio_workbook" && run.pathway === "credit_snapshot"),
+                        (key === "portfolio_workbook" &&
+                          ["credit_snapshot", "deep_credit_assessment"].includes(run.pathway)),
                     )
                     .map((key) => (
                       <SelectField

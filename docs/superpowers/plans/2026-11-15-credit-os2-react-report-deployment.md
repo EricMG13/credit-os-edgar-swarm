@@ -4,7 +4,7 @@
 
 **Architecture** — Keep CP-OS and RBOT-HTML as the owners of execution, analytical handoffs, delivery and library admission. Adapt published run data in the existing React reader and reuse its page, chart, table and trace components. The existing submission, activity, library and report routes stay connected at one loopback address.
 
-**Versions** — RBOT-HTML backend baseline `256101a`, original connected baseline `b271d90`, Python `3.13.15` and the existing `uv.lock`, React and React DOM `19.3.0` and the existing `web/package-lock.json`. The existing Windows setup uses Node.js 24 and uv 0.12.5.
+**Versions** — RBOT-HTML backend baseline `be953752`, original connected baseline `b271d90`, Python `3.13.15` and the existing `uv.lock`, React and React DOM `19.3.0` and the existing `web/package-lock.json`. The existing Windows setup uses Node.js 24 and uv 0.12.5.
 
 **Design inputs** — [React report design](../../design/react-module-coverage.md), [design system](../../design/design-system.md), [component map](../../design/component-map.md), [library mocks](../../design/mocks/library.md), [model mocks](../../design/mocks/model.md), [91-figure map](../../design/react-visualisation-map.md) and [350-section Caesars crosswalk](../../design/react-live-handoff-crosswalk.csv). Compare the five redesigned views with the local mockups in `delivery/caesars-20261115-114658-01/mockups/`. The mockups are reference images. The React sources settle component behaviour and responsive states.
 
