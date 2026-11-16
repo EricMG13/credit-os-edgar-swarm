@@ -383,3 +383,48 @@ it("opens the confidence tile's trace on the inputs the score was computed from"
   expect(drawer.textContent).toContain("Coverage");
   expect(drawer.textContent).toContain("High");
 });
+
+it("draws the reader passages in order and a gap for the missing one", () => {
+  const CONTRARY = "Contrary evidence and what would change the view";
+  const text = (heading: string, line: number): Sections[number] => ({
+    heading,
+    level: 3,
+    line,
+    blocks: [{ type: "text", line: line + 1, end: line + 1, text: `${heading} says so.` }],
+  });
+  renderSections([
+    FINDINGS,
+    text("Limitations", 2),
+    text("Bottom line", 4),
+    text("Key findings", 6),
+  ]);
+  // The bottom line band names itself by its label; its heading is the judgement.
+  const headings = [...document.querySelectorAll("h1, h2, h3, h4, section[aria-label]")].map(
+    (node) => node.getAttribute("aria-label") ?? node.textContent,
+  );
+  const at = ["Bottom line", "Key findings", CONTRARY, "Limitations"].map((name) =>
+    headings.indexOf(name),
+  );
+  expect(at.every((index) => index >= 0)).toBe(true);
+  expect(at).toEqual([...at].sort((a, b) => a - b));
+  const gap = screen.getByRole("heading", { name: CONTRARY }).closest("section");
+  expect(gap).toHaveTextContent("Not established for this run");
+});
+
+it("draws no bottom-line gap beside the module's own summary", () => {
+  renderSections(
+    [
+      FINDINGS,
+      {
+        heading: "Key findings",
+        level: 3,
+        line: 2,
+        blocks: [{ type: "text", line: 3, end: 3, text: "Margins held." }],
+      },
+    ],
+    { summary: { bottomLine: "Leverage is stable.", confidence: "", limitation: "", line: 9 } },
+  );
+  expect(screen.getByText("Leverage is stable.")).toBeInTheDocument();
+  expect(screen.queryByRole("heading", { name: "Bottom line" })).not.toBeInTheDocument();
+  expect(screen.getByRole("heading", { name: "Limitations" })).toBeInTheDocument();
+});

@@ -1,3 +1,4 @@
+import { GapPanel } from "@/components/gap/GapPanel";
 import { sourceCitationNote, sourceFileLinks } from "./sourceFiles";
 import { useState, type ReactNode } from "react";
 import { BottomLine } from "../library/parts/BottomLine";
@@ -22,6 +23,8 @@ import {
   CONFIDENCE_INPUTS,
   FORECAST_INPUTS,
   methodNote,
+  missingPassages,
+  PASSAGES,
   publishedHref,
   readParagraph,
   type Block,
@@ -524,22 +527,22 @@ function FindingsSummary({
   );
 }
 
+const MISSING_PASSAGE = "Not established for this run. The module's handoff has no such passage.";
+
 function findingsLayout(
   entry: OutputEntry,
   figureTableLines: readonly number[] | undefined,
   overview: boolean,
   chartsDrawn: boolean,
+  gaps: readonly string[] = [],
 ) {
-  const sections = findingBlocks(entry.sections, entry, figureTableLines, chartsDrawn).filter(
-    (section) =>
-      !overview ||
-      [
-        "Bottom line",
-        "Key findings",
-        "Contrary evidence and what would change the view",
-        "Limitations",
-      ].includes(section.heading),
+  const found = findingBlocks(entry.sections, entry, figureTableLines, chartsDrawn).filter(
+    (section) => !overview || PASSAGES.includes(section.heading),
   );
+  const sections = [
+    ...PASSAGES.flatMap((name) => found.filter((section) => section.heading === name)),
+    ...found.filter((section) => !PASSAGES.includes(section.heading)),
+  ];
   const keyFindings = overview
     ? sections.find((section) => section.heading === "Key findings")
     : undefined;
@@ -548,10 +551,16 @@ function findingsLayout(
         (section) => section.heading === "Contrary evidence and what would change the view",
       )
     : undefined;
-  const ordered = sections.filter((section) => section !== contrary);
-  const groups = ordered.map((section): [Section, Section?] =>
-    section === keyFindings && contrary ? [section, contrary] : [section],
-  );
+  const slot = (section: Section): [Section, Section?] =>
+    section === keyFindings && contrary ? [section, contrary] : [section];
+  const groups: (string | [Section, Section?])[] = [];
+  for (const name of PASSAGES) {
+    const section = sections.find((item) => item.heading === name);
+    if (section && section !== contrary) groups.push(slot(section));
+    else if (!section && gaps.includes(name)) groups.push(name);
+  }
+  for (const section of sections)
+    if (!PASSAGES.includes(section.heading)) groups.push(slot(section));
   return { sections, groups };
 }
 
@@ -621,7 +630,8 @@ export function ReportFindings({
   chartsDrawn?: boolean;
 }) {
   const [activeTrace, setActiveTrace] = useState<string | null>(null);
-  const { sections, groups } = findingsLayout(entry, figureTableLines, overview, chartsDrawn);
+  const gaps = overview ? [] : missingPassages(entry);
+  const { sections, groups } = findingsLayout(entry, figureTableLines, overview, chartsDrawn, gaps);
   const key = (line: number) => traceKey(entry, line);
   const traces = findingsTraces(snapshot, entry, sections);
   const hasBottomLine = sections.some((section) => section.heading === "Bottom line");
@@ -736,7 +746,15 @@ export function ReportFindings({
       <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-4">
         {summary && <FindingsSummary summary={summary} entry={entry} summaryTrace={summaryTrace} />}
         {!hasBottomLine && afterBottomLine}
-        {groups.map(([section, contrary]) => {
+        {groups.map((group) => {
+          if (typeof group === "string")
+            return group === "Bottom line" && summary ? null : (
+              <section key={group} className={card}>
+                <h2 className={heading}>{group}</h2>
+                <GapPanel reason={MISSING_PASSAGE} />
+              </section>
+            );
+          const [section, contrary] = group;
           if (!contrary) return drawSection(section);
           return (
             <div key={section.line} className="grid min-w-0 gap-4 lg:grid-cols-2">

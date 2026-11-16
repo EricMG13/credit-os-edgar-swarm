@@ -351,7 +351,7 @@ export function comparisonRows(changes: Changes, purpose: "evidence" | "reader" 
   });
 }
 
-const PASSAGES = [
+export const PASSAGES = [
   "Bottom line",
   "Key findings",
   "Contrary evidence and what would change the view",
@@ -411,6 +411,18 @@ export function blocked(entry: OutputEntry) {
         .find((block) => block.type === "text")
         ?.text.startsWith("Not assessable:") === true
     : entry.output.state?.established === false;
+}
+
+const DATA_MODULES = ["CP-0", "CP-PARSE", "CP-1", "CP-1C"];
+
+// The reader passages a module's handoff lacks. An earlier-format handoff,
+// with none of them, is not judged.
+export function missingPassages(entry: OutputEntry) {
+  const present = passages(entry.sections).map((section) => section.heading);
+  if (!present.length) return [];
+  const owed =
+    blocked(entry) || DATA_MODULES.includes(entry.output.module) ? ["Bottom line"] : PASSAGES;
+  return owed.filter((name) => !present.includes(name));
 }
 
 export function methodNote(text: string) {
