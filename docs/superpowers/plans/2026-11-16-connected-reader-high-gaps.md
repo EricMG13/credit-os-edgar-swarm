@@ -538,18 +538,22 @@ Same four steps as Task 4, run once for each of the two pull requests. Run `npm 
 
 ## PR 3: run pages (branch from `main` after PR 2 merges)
 
-Not refreshed. `main` has since rebuilt the Start flow in four steps, and "Approve summary" no longer appears in `StartRun.tsx` (it remains only in a test), so Task 10 is probably obsolete. Task 9 still applies: `react_frontend/run_activity.py` still lists only running and queued runs. Refresh this section before it starts.
+Refreshed 2026-11-16 against `main` at `4be1e30d` (Start's PR D merged as #31 and #30). PR 3 is Task 9 only.
+
+- Task 9 still applies: `react_frontend/run_activity.py:130-161` lists only running and queued runs.
+- Task 10 is dropped. The Start flow no longer has a Confirm step: `FORM_STEPS` (`StartRun.tsx:52-56`) is Documents, Purpose and More context, whose buttons are "Continue to purpose", "Continue to context" and "Review run", and `ConnectedApp.test.tsx:137-140` already asserts that no "Approve summary" button exists. `docs/react-workflow.md:115` still says "Approve summary"; that file belongs to the Start work and is not changed here.
+- Keep to `react_frontend/run_activity.py`, the run types in `api.ts`, `RunActivity.tsx` and their tests. `ReportLibrary.tsx`, `reportView.ts`, `publishedReport.ts`, `report/**` and `web/scripts/connected-proof.mjs` are another session's.
 
 ### Task 9: Ended runs on Run activity
 
 **Files:**
 - Modify: `react_frontend/run_activity.py:130-161` (`listing`)
-- Modify: `web/src/pages/connected/api.ts:115-124`
+- Modify: `web/src/pages/connected/api.ts:125-134` (`LiveRun`, `Activity`)
 - Modify: `web/src/pages/connected/RunActivity.tsx`
 - Test: `tests/test_react_frontend.py`, `web/src/pages/connected/ConnectedApp.test.tsx`
 
 **Interfaces:**
-- Produces: `GET /connected/activity` gains `"ended": [{id, issuer_name, pathway, status, reason, ended_at, submitted_by}]`.
+- Produces: `GET /connected/activity` gains `"ended": [{id, issuer_name, pathway, status, reason, ended_at, submitted_by}]` and `"ended_total": <count of all such runs>` (added after the whole-branch review: the list is cut to 20, so the tally needs the real count).
 - Produces: `type EndedRun = Pick<Run, "id" | "issuer_name" | "pathway" | "reason"> & { status: "failed" | "capped" | "rejected" | "interrupted"; ended_at: string; submitted_by: string }`; `Activity.ended?: EndedRun[]`.
 
 - [ ] **Step 1: Write the failing tests**
@@ -563,7 +567,7 @@ def test_activity_list_shows_ended_runs_without_spend_or_file_names(hosted: _Ser
     #   e-finished finished  ended_at 2026-10-31T12:20:00Z
     #   a-running  running
     listing = json.loads(raw)
-    assert set(listing) == {"updated", "held", "runs", "ended"}
+    assert set(listing) == {"updated", "held", "runs", "ended", "ended_total"}
     assert [run["id"] for run in listing["ended"]] == ["d-failed", "c-capped"]
     assert set(listing["ended"][0]) == {
         "id", "issuer_name", "pathway", "status", "reason", "ended_at", "submitted_by",
@@ -575,6 +579,7 @@ def test_activity_list_shows_ended_runs_without_spend_or_file_names(hosted: _Ser
 def test_activity_list_keeps_the_twenty_latest_ended_runs(hosted: _Server) -> None:
     # 25 failed records, ended_at 12:00 to 12:24.
     assert len(listing["ended"]) == 20
+    assert listing["ended_total"] == 25
     assert listing["ended"][0]["ended_at"] == "2026-10-31T12:24:00Z"
 ```
 
@@ -611,7 +616,7 @@ Expected: FAIL (`"ended"` missing; no such region).
 - [ ] **Step 3: Implement**
 
 - `listing`: `ended` is the records whose status is `failed`, `capped`, `rejected` or `interrupted`, newest first by `ended_at or claimed_at` then id, cut to `_ENDED_SHOWN = 20`, with exactly the seven fields. The docstring says what is and is not sent.
-- `RunActivity`: a third `Group`, "Ended without a report": a table of Issuer (link to `/run/<id>`), Pathway, State (`StatusBadge set="Run states"`), Ended (`stamp`), Reason. The tally gains `Ended`. The "No run in progress" empty state shows only when running, waiting and ended are all empty.
+- `RunActivity`: a third `Group`, "Ended without a report": a table of Issuer (link to `/run/<id>`), Pathway, State (`StatusBadge set="Run states"`), Ended (`stamp`), Reason. The tally gains `Ended`, showing `ended_total`; when it exceeds the rows drawn, the group says "Showing the latest 20 of <total>." A reason is sent without the service's root directory (`_shown`). The "No run in progress" empty state shows only when running, waiting and ended are all empty.
 
 - [ ] **Step 4: Run both test files and the Python gate**
 
@@ -626,44 +631,13 @@ git add react_frontend/run_activity.py tests/test_react_frontend.py web/src/page
 git commit -m "List runs that ended without a report on Run activity"
 ```
 
-### Task 10: The Confirm step's button says what it does
+### Task 10: dropped
 
-**Files:**
-- Modify: `web/src/pages/connected/StartRun.tsx:43`
-- Modify: `web/src/pages/connected/ConnectedApp.test.tsx:85`, `web/scripts/connected-proof.mjs:201`, `docs/react-workflow.md:114-116`
-
-- [ ] **Step 1: Write the failing test**
-
-```tsx
-// ConnectedApp.test.tsx: on the Confirm step
-expect(screen.getByRole("button", { name: "Continue to more context" })).toBeVisible();
-expect(screen.queryByRole("button", { name: "Approve summary" })).toBeNull();
-```
-
-- [ ] **Step 2: Run it and see it fail**
-
-Run: `npx vitest run --coverage.enabled=false src/pages/connected/ConnectedApp.test.tsx`
-Expected: FAIL (button "Continue to more context" not found).
-
-- [ ] **Step 3: Implement**
-
-`FORM_STEPS.confirm.next` becomes `"Continue to more context"`. Update the helper at `ConnectedApp.test.tsx:85`, the proof script's click, and the walkthrough sentence in `docs/react-workflow.md`.
-
-- [ ] **Step 4: Run the affected file**
-
-Run: `npx vitest run --coverage.enabled=false src/pages/connected/ConnectedApp.test.tsx`
-Expected: PASS.
-
-- [ ] **Step 5: Commit**
-
-```bash
-git add web/src/pages/connected web/scripts/connected-proof.mjs docs/react-workflow.md
-git commit -m "Name the Confirm step's button for what it does"
-```
+See the note at the head of this section.
 
 ### Task 11 (PR 3 close): gates, reviews, record
 
-Same four steps as Task 4, plus the Python gates. `npm run proof:connected` must pass with the renamed button. Fidelity check scope: Run activity's ended group against the saved run records.
+Same four steps as Task 4, plus the Python gates. Fidelity check scope: Run activity's ended group against the saved run records.
 
 ## Not verified
 

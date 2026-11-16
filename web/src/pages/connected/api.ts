@@ -131,7 +131,20 @@ export type LiveRun = Pick<Run, "id" | "issuer_name" | "pathway" | "reason" | "m
   /** How many source files the run lists; their names are audit material and are not sent. */
   files: number;
 };
-export type Activity = { updated: string; held: string; runs: LiveRun[] };
+/** A run that stopped without a report; its spend, folder and file names are not sent. */
+export type EndedRun = Pick<Run, "id" | "issuer_name" | "pathway" | "reason"> & {
+  status: "failed" | "capped" | "rejected" | "interrupted";
+  ended_at: string;
+  submitted_by: string;
+};
+export type Activity = {
+  updated: string;
+  held: string;
+  runs: LiveRun[];
+  ended?: EndedRun[];
+  /** All runs that ended without a report; `ended` holds only the latest. */
+  ended_total?: number;
+};
 
 type ReportEntry = { id: string; issuer: string; asOf: string; pathway: string };
 export class RequestError extends Error {
