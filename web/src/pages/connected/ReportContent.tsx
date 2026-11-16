@@ -168,12 +168,10 @@ function buildTrace(
         }),
         ...(!basis && !chips.length
           ? [
-              node(
-                section.heading === FORECAST_INPUTS
-                  ? "Recorded forecast inputs"
-                  : "Basis was not recorded for this item",
-                null,
-              ),
+              // Recorded inputs are not a gap: only a missing basis carries no value.
+              section.heading === FORECAST_INPUTS
+                ? node("Recorded forecast inputs", "")
+                : node("Basis was not recorded for this item", null),
             ]
           : []),
       ],
@@ -235,7 +233,9 @@ export function PublishedTable({
   const columns = displayColumns(table.headers, evidence, table.rows);
   if (!columns.length || !table.rows.length) return null;
   const pinned = (column: number, background: string) =>
-    columns.length >= 5 && column === columns[0] ? ` sticky left-0 min-w-56 ${background}` : "";
+    columns.length >= 5 && column === columns[0]
+      ? ` sm:sticky sm:left-0 sm:min-w-56 ${background}`
+      : "";
   const sources =
     rowSource ??
     (traceAt &&

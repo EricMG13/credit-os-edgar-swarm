@@ -46,11 +46,11 @@ export function assignSeries(names: string[]): Map<string, SeriesStyle> {
  * upgrade path is a two-sided relaxation that also moves the labels above it up.
  */
 export function spread(ys: number[], gap: number): number[] {
-  const order = ys.map((_, i) => i).sort((a, b) => (ys[a] ?? 0) - (ys[b] ?? 0) || a - b);
   const out = [...ys];
   let previous = -Infinity;
-  for (const i of order) {
-    previous = Math.max(ys[i] ?? 0, previous + gap);
+  // Array.prototype.sort is stable, so equal ys keep their input order.
+  for (const { y, i } of ys.map((y, i) => ({ y, i })).sort((a, b) => a.y - b.y)) {
+    previous = Math.max(y, previous + gap);
     out[i] = previous;
   }
   return out;

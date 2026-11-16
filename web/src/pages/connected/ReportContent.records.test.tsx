@@ -1,9 +1,15 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import type { OutputEntry, PublishedRun, Section, Snapshot, Table } from "./publishedReport";
-import { evidencePath } from "./publishedReport";
+import { FORECAST_INPUTS, evidencePath } from "./publishedReport";
 import type { buildReportView } from "./reportView";
-import { PublishedTable, ReportFindings, findingBlocks, recordSections } from "./ReportContent";
+import {
+  PublishedTable,
+  ReportFindings,
+  findingBlocks,
+  recordSections,
+  traceForLine,
+} from "./ReportContent";
 import { Modules } from "./report/Modules";
 
 type View = ReturnType<typeof buildReportView>;
@@ -327,13 +333,21 @@ describe("wide tables pin their first column", () => {
   });
   it("sticks the first column at five columns", () => {
     render(<PublishedTable table={wide(5)} />);
-    expect(screen.getByRole("columnheader", { name: "H0" })).toHaveClass("sticky");
-    expect(screen.getByRole("cell", { name: "v0" })).toHaveClass("sticky");
-    expect(screen.getByRole("columnheader", { name: "H1" })).not.toHaveClass("sticky");
+    // From sm up only: below it the table scrolls whole, so the first column never pins.
+    expect(screen.getByRole("columnheader", { name: "H0" })).toHaveClass(
+      "sm:sticky",
+      "sm:min-w-56",
+    );
+    expect(screen.getByRole("columnheader", { name: "H0" })).not.toHaveClass("sticky");
+    expect(screen.getByRole("columnheader", { name: "H0" })).not.toHaveClass("min-w-56");
+    expect(screen.getByRole("cell", { name: "v0" })).toHaveClass("sm:sticky");
+    expect(screen.getByRole("cell", { name: "v0" })).not.toHaveClass("sticky");
+    expect(screen.getByRole("columnheader", { name: "H1" })).not.toHaveClass("sm:sticky");
   });
   it("leaves four columns unchanged", () => {
     render(<PublishedTable table={wide(4)} />);
     expect(screen.getByRole("columnheader", { name: "H0" })).not.toHaveClass("sticky");
+    expect(screen.getByRole("columnheader", { name: "H0" })).not.toHaveClass("sm:sticky");
     expect(screen.getByRole("cell", { name: "v0" })).not.toHaveClass("sticky");
   });
 });
@@ -436,5 +450,17 @@ describe("module page continuation paragraphs", () => {
     expect(card).not.toBeNull();
     expect(card).toContainElement(screen.getByText("Second continuation."));
     expect(card).not.toContainElement(screen.getByRole("region", { name: "Bottom line" }));
+  });
+});
+
+describe("the trace of the forecast inputs", () => {
+  it("names the recorded inputs with a value, so the drawer does not hatch it as a gap", () => {
+    const entry = entryOf("CP-2G", [text(FORECAST_INPUTS, 10)]);
+    const trace = traceForLine({ chips: {} } as Snapshot, entry, 0, 11);
+    const recorded = trace?.derivation.children.find(
+      (child) => child.label === "Recorded forecast inputs",
+    );
+    expect(recorded).toBeDefined();
+    expect(recorded?.value).not.toBeNull();
   });
 });

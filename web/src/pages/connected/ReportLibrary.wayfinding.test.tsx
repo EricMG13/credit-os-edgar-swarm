@@ -326,13 +326,10 @@ describe("report wayfinding", () => {
   it("keeps the reader on Forecast when the skip link is activated", async () => {
     useSnapshot();
     open("#forecast");
-    const nav = await screen.findByRole("navigation", { name: "Report sections" });
-    fireEvent.click(screen.getByRole("link", { name: "Skip to content" }));
-    const current = within(nav)
-      .getAllByRole("link")
-      .filter((link) => link.getAttribute("aria-current") === "page");
-    expect(current.map((link) => link.textContent)).toEqual(["Forecast"]);
-    expect(window.location.hash).toBe("#forecast");
+    await screen.findByRole("navigation", { name: "Report sections" });
+    // jsdom does not navigate to a fragment, so a hash or tab assertion cannot fail here. A
+    // cancelled click is what stops a browser from changing the hash and so the tab.
+    expect(fireEvent.click(screen.getByRole("link", { name: "Skip to content" }))).toBe(false);
     expect(document.activeElement).toBe(screen.getByRole("main"));
   });
 

@@ -280,7 +280,7 @@ export function ForecastTable({
         />
       )}
       {(bound.length > 0 || (interestShown && interest.length > 0)) && (
-        <ul aria-label="Period qualifications" className="grid gap-2">
+        <ul aria-label="Qualifications" className="grid gap-2">
           {bound.map(({ label, text }, at) => (
             <li key={`period-${String(at)}`}>
               <Qualification text={text} label={`${label} period qualification`} source={source} />

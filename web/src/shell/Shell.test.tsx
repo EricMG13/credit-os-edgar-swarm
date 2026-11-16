@@ -33,9 +33,10 @@ describe("Shell", () => {
   it("moves focus to main on activation and leaves the URL hash alone", () => {
     window.history.replaceState(null, "", "/#/library");
     render(<Shell current="library">content</Shell>);
-    fireEvent.click(screen.getByRole("link", { name: "Skip to content" }));
+    // jsdom does not navigate to a fragment, so a hash assertion cannot fail here; a cancelled
+    // click is what keeps a browser from changing the hash.
+    expect(fireEvent.click(screen.getByRole("link", { name: "Skip to content" }))).toBe(false);
     expect(document.activeElement).toBe(screen.getByRole("main"));
-    expect(window.location.hash).toBe("#/library");
     window.history.replaceState(null, "", "/");
   });
 

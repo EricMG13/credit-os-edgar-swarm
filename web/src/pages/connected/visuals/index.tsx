@@ -145,12 +145,7 @@ export function LegacyVisuals({
         entry(first, (wide) => (
           <section key={key} className={`${TRACE_HOST} grid min-w-0 gap-2${box}${wide}`}>
             <Heading className="font-display text-h4 first-letter:uppercase">{title}</Heading>
-            <GapPanel
-              role="note"
-              reason={
-                link && containsReference(gap) ? "Not established for this run. See Evidence." : gap
-              }
-            />
+            <GapPanel role="note" reason={link && containsReference(gap) ? "See Evidence." : gap} />
             {actions}
           </section>
         )),

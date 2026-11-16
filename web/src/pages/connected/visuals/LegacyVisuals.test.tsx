@@ -57,6 +57,7 @@ it("keeps source names in Evidence when a published gap names a source file", ()
     />,
   );
   expect(screen.getByRole("note")).toHaveTextContent("See Evidence");
+  expect(screen.getAllByText(/Not established for this run/)).toHaveLength(1);
   expect(screen.queryByText(/funding\.xlsx/)).toBeNull();
   expect(screen.getByRole("link", { name: "Source table" })).toHaveAttribute(
     "href",

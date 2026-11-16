@@ -353,12 +353,11 @@ export function CashProxy({
   const raw = record(record(model).cashflow);
   const grid = gridOf(raw);
   if (!grid) return null;
-  const { periods, series: allSeries } = cashProxyCases(
+  const { periods, series } = cashProxyCases(
     grid,
     gridOf(raw.other),
     stringsIn(raw.notes).find((note) => note.startsWith("Downside case is")),
   );
-  const series = allSeries;
   const rows = series.map(({ name, cells }) => ({ label: name, cells }));
   const values = series.flatMap((item) => item.values);
   if (periods.length < 2 || series.length === 0) return null;
@@ -384,7 +383,7 @@ export function CashProxy({
           <ChartTable
             caption="Scenario comparison"
             head={table.head}
-            rows={allSeries.map(({ name, cells }) => ({
+            rows={series.map(({ name, cells }) => ({
               label: name,
               cells,
               current: name === selectedCase,

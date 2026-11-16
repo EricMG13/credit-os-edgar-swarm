@@ -71,10 +71,10 @@ it("keeps exact period labels, dates and values with the period and interest qua
   const header = screen.getByRole("columnheader", { name: "YTD (H1 2026)" });
   expect(header).toHaveAttribute("title", "2026-01-01 to 2026-06-30");
   expect(header).not.toHaveTextContent(period);
-  expect(screen.getByRole("list", { name: "Period qualifications" })).toHaveTextContent(period);
+  expect(screen.getByRole("list", { name: "Qualifications" })).toHaveTextContent(period);
   const row = screen.getByRole("row", { name: /^Interest/ });
   expect(row).not.toHaveTextContent(interest);
-  expect(screen.getByRole("list", { name: "Period qualifications" })).toHaveTextContent(interest);
+  expect(screen.getByRole("list", { name: "Qualifications" })).toHaveTextContent(interest);
   expect(within(row).getByRole("cell", { name: "776" })).toBeInTheDocument();
   expect(within(row).getByRole("cell", { name: "2,141" })).toBeInTheDocument();
   expect(screen.getByRole("cell", { name: "11,812.24" })).toHaveAttribute("title", "11812.2368");
