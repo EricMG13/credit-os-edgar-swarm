@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { ConnectedApp } from "./ConnectedApp";
 import type { Summary } from "./api";
@@ -475,7 +475,7 @@ describe("connected run start", () => {
     expect(alert).toHaveTextContent("Module options must contain valid JSON.");
     expect(options).toHaveAttribute("aria-invalid", "true");
     expect(options).toHaveAccessibleDescription(/must contain valid JSON/);
-    expect(options).toHaveFocus();
+    await waitFor(() => expect(options).toHaveFocus());
     expect(options.closest("details")).toHaveAttribute("open");
     expect(scrollIntoView).toHaveBeenCalled();
     expect(
@@ -497,7 +497,27 @@ describe("connected run start", () => {
     expect(await screen.findByRole("alert")).toHaveTextContent(
       "Choose the uploaded file that is the agreement.",
     );
-    expect(screen.getByLabelText("The agreement")).toHaveFocus();
+    await waitFor(() => expect(screen.getByLabelText("The agreement")).toHaveFocus());
+  });
+
+  it("sends an issuer name of only spaces back to Documents with the problem on its field", async () => {
+    const fetchMock = testingFetch();
+    render(<ConnectedApp path="/start" mode="synthetic" />);
+    await fillInputs();
+    fireEvent.change(screen.getByLabelText("Issuer ID"), {
+      target: { value: "syntheticgenerale" },
+    });
+    fireEvent.change(screen.getByLabelText("Issuer name"), { target: { value: "   " } });
+    await advanceToPurpose();
+    advanceToContext();
+    fireEvent.click(screen.getByRole("button", { name: "Review run" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Enter an issuer name and an issuer ID using letters a–z, digits or hyphens.",
+    );
+    const name = await screen.findByLabelText("Issuer name");
+    expect(name).toHaveAttribute("aria-invalid", "true");
+    await waitFor(() => expect(name).toHaveFocus());
+    expect(fetchMock.mock.calls.some(([path]) => path.endsWith("/summary"))).toBe(false);
   });
 
   it("enforces primary facility input and forwards the reviewed Advanced choices", async () => {
@@ -516,7 +536,7 @@ describe("connected run start", () => {
     const reviewRun = screen.getByRole("button", { name: "Review run" });
     fireEvent.click(reviewRun);
     expect(await screen.findByRole("alert")).toHaveTextContent("Add at least one facility");
-    expect(screen.getByRole("button", { name: "Add facility" })).toHaveFocus();
+    await waitFor(() => expect(screen.getByRole("button", { name: "Add facility" })).toHaveFocus());
     fireEvent.change(screen.getByLabelText("Module options"), { target: { value: "[]" } });
     fireEvent.click(reviewRun);
     expect(await screen.findByRole("alert")).toHaveTextContent("Module options must be an object.");

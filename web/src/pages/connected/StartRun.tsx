@@ -1261,7 +1261,6 @@ function IntakeForm({
 
   function changeRun(key: keyof Context["run"], value: string) {
     if (key === "pathway") invalidateReview();
-    if (key === "cutoff" || key === "as_of") clearProblem("cutoff");
     setContext((previous) => ({ ...previous, run: { ...previous.run, [key]: value } }));
   }
 
@@ -1801,7 +1800,10 @@ function IntakeForm({
     discardDocument: (name, file) => void discardDocument(name, file),
     changeIdentity,
     changeListedEquity,
-    changeRun,
+    changeRun: (key, value) => {
+      if (key === "cutoff" || key === "as_of") clearProblem("cutoff");
+      changeRun(key, value);
+    },
     changeIssuerId: (value) => {
       clearProblem("issuer_name");
       setCustomSlug(value);
