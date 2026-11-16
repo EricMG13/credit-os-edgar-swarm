@@ -184,6 +184,16 @@ async function uploadRunDocuments(page) {
   for (const upload of uploads) assert.equal(upload.status(), 200);
 }
 
+async function checkCompanyBand(report, channel) {
+  const band = report.getByRole("region", { name: "Company", exact: true });
+  await band.getByText("Moody's", { exact: true }).waitFor();
+  await band.getByText("B1", { exact: true }).waitFor();
+  const outlook = band.getByText("Negative", { exact: true });
+  await outlook.waitFor();
+  assert.match(await outlook.getAttribute("class"), /\btext-error-text\b/u);
+  await band.screenshot({ path: path.join(artifacts, `${channel}-company-band.png`) });
+}
+
 async function approveRunInputs(page, paidPreview) {
   const current = page
     .getByRole("list", { name: "Steps in this run" })
@@ -204,6 +214,13 @@ async function approveRunInputs(page, paidPreview) {
   await page
     .getByRole("combobox", { name: "Portfolio workbook", exact: true })
     .selectOption({ label: "northbridge-portfolio.xlsx" });
+  const ratings = page.getByRole("region", { name: "Ratings", exact: true });
+  await ratings.getByRole("button", { name: "Add rating", exact: true }).click();
+  await ratings.getByLabel("Agency", { exact: true }).selectOption("Moody's");
+  await ratings.getByLabel("Scope", { exact: true }).selectOption("issuer");
+  await ratings.getByLabel("Rating", { exact: true }).fill("B1");
+  await ratings.getByLabel("Outlook", { exact: true }).selectOption("Negative");
+  await ratings.getByLabel("As-of", { exact: true }).fill("2025-02-28");
   await page.getByRole("button", { name: "Review run", exact: true }).click();
   const submitButton = page.getByRole("button", {
     name: paidPreview ? "Submit, spend up to USD 25.00" : "Submit run",
@@ -1236,6 +1253,7 @@ async function checkBrowserRun(browser, service, workspace, channel, brand) {
     path: path.join(artifacts, `${channel}-finished-report.png`),
     fullPage: true,
   });
+  await checkCompanyBand(report, channel);
   await checkOverviewTrace(report, page);
   await checkCalendar(report, artifacts, channel, page);
   await checkCharts(report, artifacts, channel, page, run);

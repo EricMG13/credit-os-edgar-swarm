@@ -1,3 +1,5 @@
+import { ArrowRight } from "@untitledui/icons";
+import { Button } from "@/components/base/buttons/button";
 import { GapPanel } from "@/components/gap/GapPanel";
 import { StatusBadge } from "@/components/status/StatusBadge";
 import { card, heading } from "../layout";
@@ -24,20 +26,26 @@ export function ModuleBottomLines({
             className="grid gap-2 border-t border-border-hairline pt-3 first:border-t-0 first:pt-0"
           >
             <div className="flex flex-wrap items-center gap-3">
-              <a href={`#modules/${row.id}`} className="font-semibold text-action underline">
+              <Button
+                color="link-gray"
+                size="sm"
+                href={`#modules/${row.id}`}
+                iconTrailing={ArrowRight}
+              >
                 {row.name}
-              </a>
+              </Button>
               <StatusBadge set="Module state" state={row.state} />
             </div>
             {row.text !== null ? (
               <p className="max-w-[65ch] text-body text-text-secondary">{row.text}</p>
             ) : row.referenced ? (
-              <a
+              <Button
+                color="link-gray"
+                size="sm"
                 href={evidencePath(run.folder, row.entry, row.line ?? undefined)}
-                className="text-action underline"
               >
                 Read this bottom line in Evidence
-              </a>
+              </Button>
             ) : (
               <GapPanel reason="This module's handoff has no bottom line; its handoff is in Evidence." />
             )}
@@ -81,9 +89,9 @@ export function RunLimitations({
               >
                 <p className="max-w-[65ch] text-body wrap-anywhere text-text-secondary">
                   {containsReference(row.text) ? (
-                    <a href={href} className="text-action underline">
+                    <Button color="link-gray" size="sm" href={href}>
                       Read this limitation in Evidence
-                    </a>
+                    </Button>
                   ) : (
                     richParts(row.text, readerText)
                   )}

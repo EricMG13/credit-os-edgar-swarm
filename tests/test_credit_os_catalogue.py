@@ -6,7 +6,7 @@ import json
 from decimal import Decimal
 from pathlib import Path
 
-from hypothesis import given
+from hypothesis import given, settings
 from hypothesis import strategies as st
 from library_fixtures import make_run, method
 
@@ -17,6 +17,7 @@ ROOT = Path(__file__).resolve().parents[1]
 from credit_os import store
 
 quotable = st.from_regex(r"-?[0-9]{1,6}(\.[0-9]{1,4})?", fullmatch=True)
+long_quotable = st.from_regex(r"-?[0-9]{1,30}(\.[0-9]{1,28})?", fullmatch=True)
 LEVERAGE = "| FY2024 | 6.57 | 4.93 | x | Same basis; pre-dividend cash. D1, D3. |"
 COVER = "| FY2024 | 3.29 | x | Issuer EBITDA / cash interest, net. D1. |"
 LIQUIDITY = "| 2024-09-30 | 6261 | 843 | US$m | Available RCF only, after letters of credit. |"
@@ -582,4 +583,52 @@ def test_change_is_the_exact_decimal_difference(a, b):
     ]
     prior, change = prior_metric(rows, rows[1], "Cash")
     assert prior == {"value": b, "period": "FY2023"}
-    assert change == format(Decimal(a) - Decimal(b), "f")
+    exact = Decimal(a) - Decimal(b)
+    assert change == format(abs(exact) if exact == 0 else exact, "f")  # a zero change has no sign
+
+
+def _change(current, prior):
+    rows = [
+        {"Period": "FY2023", "Cash": prior, "Reporting unit": "US$m"},
+        {"Period": "FY2024", "Cash": current, "Reporting unit": "US$m"},
+    ]
+    return prior_metric(rows, rows[1], "Cash")[1]
+
+
+def test_a_long_figure_is_subtracted_exactly():
+    assert _change("1234567890123456789012345678.9", "0.1") == "1234567890123456789012345678.8"
+
+
+def test_a_zero_change_has_no_sign_and_keeps_the_decimals():
+    assert _change("-0", "0") == "0"
+    assert _change("-0.0", "0.00") == "0.00"
+    assert _change("0.50", "0.50") == "0.00"
+
+
+def test_small_changes_are_unchanged():
+    assert _change("4.4", "4.2") == "0.2"
+    assert _change("4.00", "4.50") == "-0.50"
+
+
+def _decimals(text):
+    return len(text.partition(".")[2])
+
+
+def _integer_oracle(current, prior):
+    scale = max(_decimals(current), _decimals(prior))
+
+    def scaled(text):
+        whole, _, frac = text.partition(".")
+        return int(whole + frac.ljust(scale, "0"))
+
+    diff = scaled(current) - scaled(prior)
+    digits = str(abs(diff)).rjust(scale + 1, "0")
+    point = len(digits) - scale
+    body = digits[:point] + ("." + digits[point:] if scale else "")
+    return ("-" if diff < 0 else "") + body
+
+
+@settings(max_examples=200)
+@given(a=long_quotable, b=long_quotable)
+def test_change_equals_integer_arithmetic_for_long_figures(a, b):
+    assert _change(a, b) == _integer_oracle(a, b)

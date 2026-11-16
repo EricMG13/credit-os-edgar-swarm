@@ -2,6 +2,7 @@ import { cleanup, render, screen, within } from "@testing-library/react";
 import { afterEach, expect, it, vi } from "vitest";
 import { ReportReader } from "./ReportLibrary";
 import { IdentityBand } from "./report/IdentityBand";
+import { readerText } from "./publishedReport";
 import type { Block, OutputEntry, PublishedRun, Section, Snapshot } from "./publishedReport";
 
 const GAP_DESCRIPTION = "Business description not in this run";
@@ -291,4 +292,24 @@ it("colours the outlook only for Positive and Negative, by its first word", asyn
   expect(outlookStatus(el, "Negative watch")).toEqual(["text-error-text"]);
   expect(outlookStatus(el, "Stable")).toEqual([]);
   expect(outlookStatus(el, "Developing")).toEqual([]);
+});
+
+it("draws handoff company text through readerText, and the catalogue sector as entered", async () => {
+  const raw = "Makes components; see CP-2A for the downside case.";
+  const el = await band(fixture({ handoff: [profile([["Business", raw]])] }));
+  const shown = readerText(raw);
+  expect(shown).not.toContain("CP-2A");
+  const span = within(el).getByText(shown);
+  expect(span.textContent).toBe(shown);
+  expect(span.getAttribute("title")).toBe(shown);
+  cleanup();
+  const own = await band(fixture({ sector: "Sector CP-1 note" }));
+  expect(within(own).getByText("Sector CP-1 note")).toBeVisible();
+});
+
+it("draws a handoff sector through readerText", async () => {
+  const raw = "Aerospace, see CP-2A";
+  const el = await band(fixture({ handoff: [profile([["Sector and segments", raw]])] }));
+  expect(within(el).getByText(readerText(raw))).toBeVisible();
+  expect(readerText(raw)).not.toContain("CP-2A");
 });

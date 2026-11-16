@@ -5,6 +5,7 @@ import { TRACE_HOST } from "@/pages/library/parts/TraceControl";
 import {
   blocked,
   evidencePath,
+  readerText,
   type CatalogueRating,
   type CatalogueRun,
   type OutputEntry,
@@ -104,8 +105,12 @@ export function IdentityBand({
   const entry = entries.find(
     (item) => item.selected && item.output.module === "CP-1A" && !blocked(item),
   );
-  const found = describeCompany(entry);
-  const sector = filled(catalogue?.sector) ?? sectorOf(entry);
+  const described = describeCompany(entry);
+  const found = described && { ...described, text: readerText(described.text) };
+  const handoffSector = sectorOf(entry);
+  const sector =
+    filled(catalogue?.sector) ??
+    (handoffSector === undefined ? undefined : readerText(handoffSector));
   const ratings = catalogue?.ratings ?? [];
   return (
     <section

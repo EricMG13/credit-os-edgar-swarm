@@ -13,7 +13,7 @@ import os
 import re
 from collections.abc import Mapping
 from datetime import UTC, datetime
-from decimal import Decimal
+from decimal import Decimal, localcontext
 from pathlib import Path
 from typing import Any
 from urllib.parse import quote
@@ -154,8 +154,15 @@ def prior_metric(
     unit = row.get("Reporting unit", "")
     if not (_NUMBER.fullmatch(prior_value) and found[0].get("Reporting unit", "") == unit):
         return None
-    change = Decimal(row[column]) - Decimal(prior_value)
-    return {"value": prior_value, "period": earlier}, format(change, "f")
+    return {"value": prior_value, "period": earlier}, _exact_change(row[column], prior_value)
+
+
+def _exact_change(current: str, prior: str) -> str:
+    """``current - prior`` with every digit kept; a zero change carries no sign."""
+    with localcontext() as context:
+        context.prec = len(current) + len(prior) + 2
+        change = Decimal(current) - Decimal(prior)
+    return format(abs(change) if change == 0 else change, "f")
 
 
 def pinned_context(folder: Path, issues: list[str]) -> RunContext | None:
