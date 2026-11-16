@@ -50,14 +50,15 @@ const COUNTS: [string, number][] = [
   ["Module state", 4],
   ["Change state", 3],
   ["Gap severity", 3],
+  ["Run limits", 4],
   ["File state", 4],
   ["Approval", 1],
   ["Activity that cannot be read", 1],
 ];
 
 describe("STATUS_SETS", () => {
-  it("parses 15 sets with the stated number of states each", () => {
-    expect(parsed.size).toBe(15);
+  it("parses 16 sets with the stated number of states each", () => {
+    expect(parsed.size).toBe(16);
     for (const [name, count] of COUNTS) {
       expect(parsed.get(name)?.length, name).toBe(count);
     }

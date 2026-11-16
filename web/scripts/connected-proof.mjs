@@ -211,10 +211,8 @@ async function approveRunInputs(page, paidPreview) {
   });
   await submitButton.waitFor();
   assert.match(await current.innerText(), /Review and start/u);
-  for (const label of ["I have checked this", "I accept this limit"]) {
-    for (const checkbox of await page.getByRole("checkbox", { name: label, exact: true }).all())
-      await checkbox.check();
-  }
+  const limits = page.getByRole("region", { name: "Limits to decide" });
+  for (const checkbox of await limits.getByRole("checkbox").all()) await checkbox.check();
   return submitButton;
 }
 
@@ -574,10 +572,15 @@ async function checkCalendar(report, artifacts, channel, page) {
   await page.waitForURL((url) => url.hash === "#calendar");
   await page.reload();
   const events = report.getByRole("figure", { name: "Published events", exact: true });
-  const scenario = events.getByRole("region", { name: "Scenario" });
-  await scenario
-    .getByRole("img", { name: /Synthetic review, 2025-Q3, quarter/u })
-    .first()
+  const marker = events
+    .getByRole("group", { name: "Events by year", exact: true })
+    .getByRole("button", { name: /Synthetic review, 2025-Q3, quarter/u })
+    .first();
+  await marker.waitFor();
+  assert.equal(await marker.getAttribute("data-event-category"), "Scenario");
+  await events
+    .getByRole("group", { name: "Show categories", exact: true })
+    .getByRole("button", { name: /^Scenario, /u, pressed: true })
     .waitFor();
   await events.getByRole("radio", { name: "Table", exact: true }).check();
   const table = events.getByRole("table", { name: "Published events", exact: true });

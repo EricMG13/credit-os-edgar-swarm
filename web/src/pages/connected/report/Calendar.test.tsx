@@ -61,17 +61,26 @@ it("keeps same-date contributions distinct with their original row traces and se
     <Calendar calendar={buildCalendar([first, alternative, second, scenario], "retained case")} />,
   );
   const figure = within(screen.getByRole("figure", { name: "Published events" }));
-  const scheduled = within(figure.getByRole("region", { name: "Scheduled" }));
-  expect(scheduled.getAllByRole("img", { name: /Notes due, 2027-Q2, quarter/ })).toHaveLength(2);
-  expect(
-    within(figure.getByRole("region", { name: "Scenario" })).getByRole("img"),
-  ).toHaveAccessibleName(/Consent outcome, 2027-04-15, day/);
-  expect(scheduled.getByRole("link", { name: "Source for Notes due · Liquidity" })).toHaveAttribute(
+  const events = within(figure.getByRole("group", { name: "Events in date order" }));
+  const markers = within(figure.getByRole("group", { name: "Events by year" }));
+  const dates = events.getAllByText("2027-Q2 · quarter");
+  expect(dates).toHaveLength(2);
+  expect(events.getByText("2027-04-15 · day")).toBeInTheDocument();
+  const notes = markers.getAllByRole("button", { name: /Notes due, 2027-Q2, quarter/ });
+  expect(notes).toHaveLength(2);
+  notes.forEach((note) => {
+    expect(note).toHaveAttribute("data-event-category", "Scheduled");
+  });
+  expect(markers.getByRole("button", { name: /Consent outcome, 2027-04-15, day/ })).toHaveAttribute(
+    "data-event-category",
+    "Scenario",
+  );
+  expect(events.getByRole("link", { name: "Source for Notes due · Liquidity" })).toHaveAttribute(
     "href",
     `/report/retained%20case#evidence/CP-2D-1~${"2".repeat(64)}-22`,
   );
   expect(
-    scheduled.getByRole("link", { name: "Source for Notes due · Refinancing & LME" }),
+    events.getByRole("link", { name: "Source for Notes due · Refinancing & LME" }),
   ).toHaveAttribute("href", `/report/retained%20case#evidence/CP-3C-2~${"3".repeat(64)}-22`);
   expect(figure.queryByText(/approval\.pdf|agreement\.pdf|Earlier revision/)).toBeNull();
   fireEvent.click(figure.getByRole("radio", { name: "Table" }));

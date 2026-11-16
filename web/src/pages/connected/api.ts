@@ -62,11 +62,20 @@ export type PriorInputs = {
   max_turns: number;
   error?: string;
 };
+export type ReadinessItem = {
+  id: string;
+  scope: string;
+  outcome: string;
+  reason: string;
+  fix?: string;
+  counted?: boolean;
+  inherited_from?: string[];
+};
 export type Summary = Reading & {
   digest: string;
   cap: string;
   modules: string[];
-  items: { id: string; scope: string; outcome: string; reason: string; fix?: string }[];
+  items: ReadinessItem[];
   omitted: string[];
   changes: string;
   lookup?: string[];

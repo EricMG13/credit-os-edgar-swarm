@@ -1,4 +1,7 @@
-import type { ReactNode } from "react";
+import { ChevronDown } from "@untitledui/icons";
+import { useId, useState, type ReactNode } from "react";
+import { Button } from "@/components/base/buttons/button";
+import { cx } from "@/utils/cx";
 import type { SourceTable } from "./visualData";
 
 export const EVENT_HEADERS = [
@@ -13,9 +16,6 @@ export const EVENT_HEADERS = [
 
 const EVENT_LANES = ["Historical", "Scheduled", "Scenario", "User reminder"] as const;
 const DAY = 86_400_000;
-const TRACK_GRID =
-  "grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] items-center gap-3 md:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]";
-
 function dayOf(text: string) {
   const date = Date.parse(text);
   return Number.isFinite(date) && new Date(date).toISOString().slice(0, 10) === text ? date : null;
@@ -73,88 +73,414 @@ export function eventRecords(table: SourceTable) {
   );
 }
 
-export function eventLane(table: SourceTable, rowDetail?: (index: number) => ReactNode) {
-  const events = eventRecords(table);
-  if (!events.length || events.length !== table.rows.length) return null;
-  events.sort((a, b) => a.from - b.from || a.to - b.to || a.index - b.index);
-  const start = events[0]?.from ?? 0;
-  const end = Math.max(...events.map((event) => event.to));
-  const axisWidth = Math.max(DAY, end - start);
-  const position = (when: number) => ((when - start) / axisWidth) * 100;
-  const iso = (time: number) => new Date(time).toISOString().slice(0, 10);
+type EventRecord = ReturnType<typeof eventRecords>[number];
+type Active = { index: number; from: "row" | "marker" } | null;
+
+const MARKS: Record<EventRecord["category"], string> = {
+  Historical: "bg-text-tertiary",
+  Scheduled: "bg-action",
+  Scenario: "border border-dashed border-action bg-surface-card",
+  "User reminder": "border border-action bg-surface-card",
+};
+
+function Mark({ category }: { category: EventRecord["category"] }) {
   return (
-    <div className="grid gap-5">
-      <div
-        className="grid gap-3 rounded-ds-md border border-border-hairline p-4"
-        role="group"
-        aria-label="Event lanes on a shared date axis"
-      >
-        <div className={TRACK_GRID}>
-          <span />
-          <div
-            className="mx-1 flex flex-wrap justify-between gap-x-1 text-small tabular-nums text-text-secondary"
-            role="group"
-            aria-label="Date axis"
+    <span
+      aria-hidden="true"
+      className={cx("inline-block size-2.5 flex-none rounded-ds-full", MARKS[category])}
+    />
+  );
+}
+
+function yearOf(event: EventRecord) {
+  return Number(event.date.slice(0, 4));
+}
+
+function byYear(events: EventRecord[]) {
+  const groups: { year: number; events: EventRecord[] }[] = [];
+  for (const event of events) {
+    const last = groups.at(-1);
+    if (last?.year === yearOf(event)) last.events.push(event);
+    else groups.push({ year: yearOf(event), events: [event] });
+  }
+  return groups;
+}
+
+function yearGaps(events: EventRecord[]) {
+  const years = [...new Set(events.map(yearOf))].sort((a, b) => a - b);
+  return years.flatMap((year, at) => {
+    const next = years[at + 1];
+    return next !== undefined && next - year > 1 ? [{ from: year + 1, to: next - 1 }] : [];
+  });
+}
+
+function gapText(from: number, to: number) {
+  return `No events ${String(from)}${to > from ? ` to ${String(to)}` : ""}`;
+}
+
+function Gap({ from, to }: { from: number; to: number }) {
+  return (
+    <span className="flex items-start px-1 text-text-tertiary">
+      <span aria-hidden="true">⋯</span>
+      <span className="sr-only">{gapText(from, to)}</span>
+    </span>
+  );
+}
+
+function focusRow(id: string) {
+  const row = document.getElementById(id);
+  if (!row) return;
+  row.focus();
+  if (typeof row.scrollIntoView === "function") row.scrollIntoView({ block: "nearest" });
+}
+
+function Marker({
+  event,
+  rowId,
+  lit,
+  onActive,
+}: {
+  event: EventRecord;
+  rowId: string;
+  lit: boolean;
+  onActive: (active: boolean) => void;
+}) {
+  const { date, precision, status, category } = event;
+  return (
+    <button
+      type="button"
+      tabIndex={-1}
+      aria-label={`${event.event}, ${date}, ${precision}, ${status}`}
+      aria-controls={rowId}
+      data-event-category={category}
+      data-event-precision={precision}
+      data-active={lit}
+      className="flex size-3.5 items-center justify-center rounded-ds-full data-[active=true]:ring-2 data-[active=true]:ring-focus max-[480px]:pointer-events-none"
+      onClick={() => {
+        focusRow(rowId);
+      }}
+      onMouseEnter={() => {
+        onActive(true);
+      }}
+      onMouseLeave={() => {
+        onActive(false);
+      }}
+      onFocus={() => {
+        onActive(true);
+      }}
+      onBlur={() => {
+        onActive(false);
+      }}
+    >
+      <Mark category={category} />
+    </button>
+  );
+}
+
+type Hidden = ReadonlySet<EventRecord["category"]>;
+
+function Legend({
+  events,
+  hidden,
+  onToggle,
+}: {
+  events: EventRecord[];
+  hidden: Hidden;
+  onToggle: (category: EventRecord["category"]) => void;
+}) {
+  return (
+    <div
+      role="group"
+      aria-label="Show categories"
+      className="flex flex-wrap gap-x-2 gap-y-1 text-small"
+    >
+      {EVENT_LANES.map((lane) => {
+        const count = events.filter((event) => event.category === lane).length;
+        const off = hidden.has(lane);
+        return count ? (
+          <button
+            key={lane}
+            type="button"
+            aria-pressed={!off}
+            aria-label={`${lane}, ${String(count)} ${count === 1 ? "event" : "events"}`}
+            className={cx(
+              "flex cursor-pointer items-center gap-1.5 rounded-ds-sm px-1.5 py-0.5 focus-visible:ring-2 focus-visible:ring-focus max-[480px]:min-h-11",
+              off ? "text-text-tertiary" : "text-text-secondary",
+            )}
+            onClick={() => {
+              onToggle(lane);
+            }}
           >
-            <time dateTime={iso(start)}>{iso(start)}</time>
-            {end === start ? null : <time dateTime={iso(end)}>{iso(end)}</time>}
-          </div>
-        </div>
-        {EVENT_LANES.map((category) => {
-          const members = events.filter((event) => event.category === category);
-          if (!members.length) return null;
+            <span className={cx("flex", off && "opacity-40 grayscale")}>
+              <Mark category={lane} />
+            </span>
+            <span aria-hidden="true">
+              {lane} <span className="tabular-nums">{count}</span>
+            </span>
+          </button>
+        ) : null;
+      })}
+    </div>
+  );
+}
+
+type Drawing = {
+  events: EventRecord[];
+  evidenceInDrawer: boolean;
+  rowDetail?: (index: number) => ReactNode;
+};
+
+function YearStrip({
+  events: all,
+  hidden,
+  onToggle,
+  groups,
+  active,
+  rowId,
+  setActive,
+}: {
+  events: EventRecord[];
+  hidden: Hidden;
+  onToggle: (category: EventRecord["category"]) => void;
+  groups: ReturnType<typeof byYear>;
+  active: Active;
+  rowId: (index: number) => string;
+  setActive: (active: Active) => void;
+}) {
+  const strip = groups.length
+    ? [...groups, ...yearGaps(all)].sort(
+        (a, b) => ("from" in a ? a.from : a.year) - ("from" in b ? b.from : b.year),
+      )
+    : [];
+  return (
+    <div role="group" aria-label="Events by year" className="grid gap-2">
+      <Legend events={all} hidden={hidden} onToggle={onToggle} />
+      <div className="flex flex-wrap items-start gap-x-2 gap-y-3">
+        {strip.map((item) => {
+          if ("from" in item) return <Gap key={`gap-${String(item.from)}`} {...item} />;
+          const { year, events } = item;
           return (
-            <section key={category} className="grid gap-3" aria-label={category}>
-              <h5 className="font-semibold text-small text-text-primary">{category}</h5>
-              {members.map(
-                ({
-                  index,
-                  date,
-                  precision,
-                  event,
-                  status,
-                  from,
-                  to,
-                  relevance,
-                  published,
-                  source,
-                }) => (
-                  <div key={index} className={TRACK_GRID}>
-                    <div className="min-w-0 text-small">
-                      <p className="font-medium break-words">{event}</p>
-                      <p className="text-text-secondary">
-                        {date} · {precision} · {status}
-                      </p>
-                      {rowDetail?.(index)}
-                      <p className="text-text-secondary">
-                        {relevance} · Published {published}
-                        {table.evidenceInDrawer ? "" : ` · ${source}`}
-                      </p>
-                    </div>
-                    <div className="relative mx-1 h-4">
-                      <span
-                        className="absolute inset-x-0 top-1/2 border-t border-border-control"
-                        aria-hidden="true"
-                      />
-                      <i
-                        role="img"
-                        aria-label={`${event}, ${date}, ${precision}, ${status}`}
-                        data-event-precision={precision}
-                        className={`absolute top-1/2 h-3 -translate-y-1/2 rounded-ds-full ${from === to ? "w-3 -translate-x-1/2" : "min-w-px"} ${category === "Scenario" ? "border border-dashed border-action bg-surface-card" : "bg-action"}`}
-                        style={{
-                          left: `${String(position(from))}%`,
-                          width:
-                            from === to ? undefined : `${String(position(to) - position(from))}%`,
-                        }}
-                      />
-                    </div>
-                  </div>
-                ),
-              )}
-            </section>
+            <div key={year} className="contents">
+              <div
+                role="group"
+                aria-label={`${String(year)}, ${events.length === 1 ? "1 event" : `${String(events.length)} events`}`}
+                className="grid gap-1"
+              >
+                <div className="flex max-w-24 flex-wrap gap-0.5">
+                  {events.map((event) => (
+                    <Marker
+                      key={event.index}
+                      event={event}
+                      rowId={rowId(event.index)}
+                      lit={active?.index === event.index && active.from === "row"}
+                      onActive={(on) => {
+                        setActive(on ? { index: event.index, from: "marker" } : null);
+                      }}
+                    />
+                  ))}
+                </div>
+                <span className="text-small tabular-nums text-text-secondary">{year}</span>
+              </div>
+            </div>
           );
         })}
       </div>
     </div>
+  );
+}
+
+function EventRow({
+  event,
+  rowId,
+  panelId,
+  open,
+  lit,
+  showSource,
+  rowDetail,
+  onToggle,
+  onActive,
+}: {
+  event: EventRecord;
+  rowId: string;
+  panelId: string;
+  open: boolean;
+  lit: boolean;
+  showSource: boolean;
+  rowDetail: Drawing["rowDetail"];
+  onToggle: () => void;
+  onActive: (active: boolean) => void;
+}) {
+  const wide = rowDetail ? "" : "col-span-2 @3xl:col-span-1";
+  return (
+    <li
+      id={rowId}
+      tabIndex={-1}
+      data-active={lit}
+      className={cx(
+        "grid gap-x-3 gap-y-1 border-t border-border-hairline py-2 @3xl:py-1 text-small first:border-t-0 outline-hidden focus:ring-2 focus:ring-focus focus:ring-inset data-[active=true]:bg-action-subtle @3xl:items-start",
+        rowDetail ? "" : "grid-cols-[minmax(0,1fr)_auto]",
+        rowDetail
+          ? "@3xl:grid-cols-[7.5rem_auto_minmax(0,5fr)_minmax(0,4fr)_13rem_auto]"
+          : "@3xl:grid-cols-[7.5rem_auto_minmax(0,5fr)_minmax(0,4fr)_auto]",
+      )}
+      onMouseEnter={() => {
+        onActive(true);
+      }}
+      onMouseLeave={() => {
+        onActive(false);
+      }}
+      onFocus={() => {
+        onActive(true);
+      }}
+      onBlur={() => {
+        onActive(false);
+      }}
+    >
+      <div className="flex items-center gap-2 @3xl:contents">
+        <span className="tabular-nums text-text-secondary">
+          {event.date} · {event.precision}
+        </span>
+        <span className="flex items-center self-center @3xl:h-[22px] @3xl:self-start">
+          <Mark category={event.category} />
+          <span className="sr-only">{event.category}</span>
+        </span>
+      </div>
+      <span className={cx("min-w-0 font-medium break-words", wide)}>{event.event}</span>
+      <span className={cx("min-w-0 break-words text-text-secondary", wide)}>{event.relevance}</span>
+      <div
+        className={cx(
+          "flex flex-wrap items-center gap-5 @3xl:contents",
+          !rowDetail && "col-start-2 row-start-1",
+        )}
+      >
+        {rowDetail ? <div className="min-w-0 @3xl:-my-[3px]">{rowDetail(event.index)}</div> : null}
+        <button
+          type="button"
+          aria-label={`Details for ${event.event}`}
+          aria-expanded={open}
+          aria-controls={panelId}
+          className="relative flex size-7 flex-none cursor-pointer items-center justify-center self-center rounded-ds-sm border border-transparent bg-transparent text-text-tertiary transition-colors duration-150 hover:border-border-control hover:bg-action-subtle hover:text-action focus-visible:border-border-control focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 motion-reduce:transition-none @3xl:-my-[3px] @3xl:self-start max-[480px]:after:absolute max-[480px]:after:-inset-[9px]"
+          onClick={onToggle}
+        >
+          <ChevronDown aria-hidden="true" className={cx("size-4", open && "rotate-180")} />
+        </button>
+      </div>
+      <div
+        id={panelId}
+        hidden={!open}
+        className={cx("grid gap-0.5 text-text-secondary @3xl:col-start-3 @3xl:col-end-[-1]", wide)}
+      >
+        <p>{event.status}</p>
+        <p>Published {event.published}</p>
+        {showSource ? <p>{event.source}</p> : null}
+      </div>
+    </li>
+  );
+}
+
+function EventDrawing({ events, evidenceInDrawer, rowDetail }: Drawing) {
+  const prefix = useId();
+  const [active, setActive] = useState<Active>(null);
+  const [opened, setOpened] = useState<ReadonlySet<number>>(new Set());
+  const all = events.every((event) => opened.has(event.index));
+  const [hidden, setHidden] = useState<Hidden>(new Set());
+  const groups = byYear(events.filter((event) => !hidden.has(event.category)));
+  const toggleCategory = (category: EventRecord["category"]) => {
+    setActive(null);
+    setHidden((prev) => {
+      const next = new Set(prev);
+      if (!next.delete(category)) next.add(category);
+      return next;
+    });
+  };
+  const rowId = (index: number) => `${prefix}-row-${String(index)}`;
+  const toggle = (index: number) => {
+    setOpened((prev) => {
+      const next = new Set(prev);
+      if (!next.delete(index)) next.add(index);
+      return next;
+    });
+  };
+  return (
+    <div className="@container grid gap-4">
+      <YearStrip
+        events={events}
+        hidden={hidden}
+        onToggle={toggleCategory}
+        groups={groups}
+        active={active}
+        rowId={rowId}
+        setActive={setActive}
+      />
+      <div role="group" aria-label="Events in date order" className="grid gap-2 @3xl:gap-0">
+        <div className="@3xl:pb-2">
+          <Button
+            color="secondary"
+            className="max-[480px]:min-h-11"
+            size="sm"
+            onClick={() => {
+              setOpened(all ? new Set() : new Set(events.map((event) => event.index)));
+            }}
+          >
+            {all ? "Hide all details" : "Show all details"}
+          </Button>
+        </div>
+        {groups.length ? null : (
+          <p role="status" className="text-small text-text-secondary">
+            No categories are selected.
+          </p>
+        )}
+        <div>
+          {groups.map(({ year, events: members }) => (
+            <div
+              key={year}
+              role="group"
+              aria-labelledby={`${prefix}-year-${String(year)}`}
+              className="grid gap-1 @3xl:gap-0 @3xl:border-t @3xl:border-border-hairline @3xl:first:border-t-0 @3xl:grid-cols-[3rem_minmax(0,1fr)]"
+            >
+              <span
+                id={`${prefix}-year-${String(year)}`}
+                className="font-semibold tabular-nums text-text-primary @3xl:pt-1.5"
+              >
+                {year}
+              </span>
+              <ul className="min-w-0">
+                {members.map((event) => (
+                  <EventRow
+                    key={event.index}
+                    event={event}
+                    rowId={rowId(event.index)}
+                    panelId={`${rowId(event.index)}-details`}
+                    open={opened.has(event.index)}
+                    lit={active?.index === event.index && active.from === "marker"}
+                    showSource={!evidenceInDrawer}
+                    rowDetail={rowDetail}
+                    onToggle={() => {
+                      toggle(event.index);
+                    }}
+                    onActive={(on) => {
+                      setActive(on ? { index: event.index, from: "row" } : null);
+                    }}
+                  />
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export function eventLane(table: SourceTable, rowDetail?: (index: number) => ReactNode) {
+  const events = eventRecords(table);
+  if (!events.length || events.length !== table.rows.length) return null;
+  events.sort((a, b) => a.from - b.from || a.to - b.to || a.index - b.index);
+  return (
+    <EventDrawing
+      events={events}
+      evidenceInDrawer={table.evidenceInDrawer === true}
+      rowDetail={rowDetail}
+    />
   );
 }
