@@ -41,6 +41,20 @@ engine is in [EricMG13/final-workflow](https://github.com/EricMG13/final-workflo
 - Browser preparation found and fixed a duplicated-label locator in Record.
   Visual inspection also required an explicit label for unrecorded model units;
   the native synthetic model leaves units null, and the UI does not infer them.
+- Final clean-extraction browser proof: Chrome 157.0.8103.78 completed
+  `20261116-023525-01`; Edge 157.0.4341.60 completed `20261116-023541-01`.
+  Both passed all 30 recorded checks on macOS, including source hover with
+  Show sources off, Base/Downside selection (independent 315/252 fixture values),
+  exact source reload, output reorder and rejection of an old ordinal link.
+  Paired Changes uses an explicitly separate fixture, not a second analytical run.
+  The final null-unit change also passed 15 focused frontend tests.
+- Candidate source `ab6641058546f8dc9ccde1054a44ce9b0beb62d7`; SHA-256
+  `b0faadd99b3801d4c7ee922c0553b566196bd1c189cfdacc9913c43f7a783ce1`.
+  Proof retained at `proof-artifacts/run-EkSYga/proof.json`; logs and screenshots
+  are beside it. Preview run `20261116-023313-01` is synthetic and its 16 compiled
+  files match the final candidate. Opened the Forecast view in the app preview.
+  Browser retries corrected only test selectors and the paired fixture's digest
+  lookup; no native backend or analytical output changed.
 - The Windows release gate remains open. Keep the ZIP local until Chrome and
   Edge both pass on the actual Windows work PC using `docs/react-workflow.md`.
 
