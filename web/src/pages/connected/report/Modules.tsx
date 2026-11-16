@@ -10,7 +10,14 @@ import {
   type PublishedRun,
   type Snapshot,
 } from "../publishedReport";
-import { foundationMetrics, moduleState, type buildReportView } from "../reportView";
+import {
+  foundationMetrics,
+  moduleState,
+  type MetricKey,
+  type buildReportView,
+} from "../reportView";
+
+const TILE_KEYS: readonly MetricKey[] = ["netDebt", "principal", "interestCover"];
 import { LegacyVisuals } from "../visuals";
 import { ModuleConfidence } from "./Confidence";
 import { MetricGrid } from "./MetricGrid";
@@ -221,9 +228,7 @@ function ModuleFindings({
   const { downside, breaks, macro, securities, tableLines: figureTableLines } = figures;
   const evidenceHref = (line: number) => evidencePath(run.folder, entry, line);
   const allMetrics = foundationMetrics(entry, view.catalogue);
-  const metrics = allMetrics.filter(({ key }) =>
-    ["netDebt", "principal", "interestCover"].includes(key),
-  );
+  const metrics = allMetrics.filter(({ key }) => TILE_KEYS.includes(key));
   return (
     <ReportFindings
       key={entry.output.id}

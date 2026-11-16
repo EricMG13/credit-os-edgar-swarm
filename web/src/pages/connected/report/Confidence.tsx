@@ -3,12 +3,12 @@ import type { Metric } from "@/pages/library/slice";
 import type { OutputEntry, Snapshot } from "../publishedReport";
 import { MetricGrid } from "./MetricGrid";
 
-const INPUTS = "confidence inputs";
+const INPUTS = "Confidence inputs";
 
 /** The line of the handoff's Confidence inputs table, so the tile's trace opens those inputs. */
 function inputsLine(entry: OutputEntry) {
   for (const section of entry.sections) {
-    if (section.heading.trim().toLowerCase() !== INPUTS) continue;
+    if (section.heading !== INPUTS) continue;
     const table = section.blocks.find((block) => block.type === "table");
     if (table) return table.line;
   }

@@ -379,10 +379,10 @@ function codedSections() {
 
 const CODED_VIEWS: [string, string][] = [
   ["#overview", "Credit is stable"],
-  ["#changes", "Changes since the last run"],
+  ["#changes", "Credit is stable"],
   ["#modules", "Cash runway"],
   ["#forecast", "Forecast assumptions"],
-  ["#evidence/summary", "Handoffs"],
+  ["#evidence/summary", "Fundamental credit"],
 ];
 
 describe.each(CODED_VIEWS)("module codes in handoff text on %s", (hash, marker) => {
