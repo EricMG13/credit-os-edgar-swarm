@@ -229,28 +229,30 @@ export function RunActivity() {
             No run is running or waiting. Finished runs are in the library.
           </Empty>
         )}
-        <div
-          className={
-            running.length && waiting.length
-              ? "grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_440px]"
-              : undefined
-          }
-        >
-          {running.length > 0 && (
-            <Group title="Running">
-              <ul className="grid gap-4">
-                {running.map((run) => (
-                  <RunningCard key={run.id} run={run} />
-                ))}
-              </ul>
-            </Group>
-          )}
-          {waiting.length > 0 && (
-            <Group title="Waiting">
-              <WaitingTable runs={waiting} />
-            </Group>
-          )}
-        </div>
+        {running.length + waiting.length > 0 && (
+          <div
+            className={
+              running.length && waiting.length
+                ? "grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_440px]"
+                : undefined
+            }
+          >
+            {running.length > 0 && (
+              <Group title="Running">
+                <ul className="grid gap-4">
+                  {running.map((run) => (
+                    <RunningCard key={run.id} run={run} />
+                  ))}
+                </ul>
+              </Group>
+            )}
+            {waiting.length > 0 && (
+              <Group title="Waiting">
+                <WaitingTable runs={waiting} />
+              </Group>
+            )}
+          </div>
+        )}
       </div>
     </>
   );
