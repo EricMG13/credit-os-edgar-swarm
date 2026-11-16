@@ -57,13 +57,13 @@ export function RunCharts({
     if (!entry) return [];
     const output = chartOutput(entry);
     if (!output.charts.length && !output.chartGaps.length) return [];
-    return [{ id, name, entry, output, at: view.entries.indexOf(entry) }];
+    return [{ id, name, entry, output }];
   });
   return (
     <section aria-label="Run charts" className="grid min-w-0 gap-4">
       <h3 className={heading}>Run charts</h3>
       {groups.length ? (
-        groups.map(({ id, name, entry, output, at }) => (
+        groups.map(({ id, name, entry, output }) => (
           <div key={id} className="grid min-w-0 gap-2">
             <a href={`#modules/${encodeURIComponent(id)}`} className="w-fit text-action underline">
               {name}
@@ -71,7 +71,7 @@ export function RunCharts({
             <LegacyVisuals
               output={output}
               sections={entry.sections}
-              evidenceHref={(line) => evidencePath(folder, String(at), line)}
+              evidenceHref={(line) => evidencePath(folder, entry, line)}
               cards
             />
           </div>

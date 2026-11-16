@@ -4,7 +4,7 @@ import { RunContext } from "@/pages/library/parts/RunContext";
 import { TraceDrawer } from "@/pages/library/parts/TraceDrawer";
 import type { Metric, Trace } from "@/pages/library/slice";
 import { traceForLine } from "../ReportContent";
-import { evidencePath, type OutputEntry, type Snapshot } from "../publishedReport";
+import { evidenceHref, type OutputEntry, type Snapshot } from "../publishedReport";
 import { traceKey } from "../reportView";
 
 export function MetricGrid({
@@ -42,7 +42,7 @@ export function MetricGrid({
       {active && (
         <TraceDrawer
           trace={active}
-          evidenceHref={evidencePath(folder, active.evidenceItem)}
+          evidenceHref={evidenceHref(folder, active.evidenceItem)}
           isOpen
           onClose={() => {
             setOpen(null);

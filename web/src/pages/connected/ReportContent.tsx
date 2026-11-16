@@ -15,6 +15,8 @@ import {
   containsReference,
   displayColumns,
   evidencePath,
+  evidenceHref,
+  evidenceToken,
   FORECAST_INPUTS,
   methodNote,
   publishedHref,
@@ -62,8 +64,7 @@ export function HandoffDownload({ run, entry }: { run: PublishedRun; entry: Outp
   ) : null;
 }
 
-export const traceTarget = (entryIndex: number, line?: number) =>
-  `${String(entryIndex)}${line === undefined ? "" : `-${String(line)}`}`;
+const traceTarget = (entry: OutputEntry, line?: number) => evidenceToken(entry, line);
 
 function tableStatement(table: Table, row: Table["rows"][number]) {
   return displayColumns(table.headers, true, table.rows)
@@ -187,10 +188,10 @@ export function handoffBlockAt(entry: OutputEntry, line: number) {
   return null;
 }
 
-export function traceForLine(snapshot: Snapshot, entry: OutputEntry, index: number, line: number) {
+export function traceForLine(snapshot: Snapshot, entry: OutputEntry, _index: number, line: number) {
   const found = handoffBlockAt(entry, line);
   return (
-    found && buildTrace(snapshot, entry, found.section, found.block, line, traceTarget(index, line))
+    found && buildTrace(snapshot, entry, found.section, found.block, line, traceTarget(entry, line))
   );
 }
 
@@ -391,7 +392,7 @@ export function ReportFindings({
           section,
           block,
           line,
-          traceTarget(entryIndex, line),
+          traceTarget(entry, line),
         );
     }
   }
@@ -407,7 +408,7 @@ export function ReportFindings({
           {entry.output.parseError
             ? "This handoff could not be read into sections."
             : "This handoff has no findings in this report format."}{" "}
-          <a href={evidencePath(run.folder, String(entryIndex))} className="text-action underline">
+          <a href={evidencePath(run.folder, entry)} className="text-action underline">
             Open Evidence
           </a>
         </p>
@@ -463,7 +464,7 @@ export function ReportFindings({
                         key={block.line}
                         block={block}
                         trace={key(block.line)}
-                        href={evidencePath(run.folder, String(entryIndex), block.line)}
+                        href={evidencePath(run.folder, entry, block.line)}
                       />
                     ) : null,
                   )}
@@ -479,7 +480,7 @@ export function ReportFindings({
                     key={block.line}
                     block={block}
                     trace={key(block.line)}
-                    href={evidencePath(run.folder, String(entryIndex), block.line)}
+                    href={evidencePath(run.folder, entry, block.line)}
                   />
                 ) : null,
               )}
@@ -518,7 +519,7 @@ export function ReportFindings({
                 <PublishedTable
                   table={block}
                   traceAt={key}
-                  rowHref={(line) => evidencePath(run.folder, String(entryIndex), line)}
+                  rowHref={(line) => evidencePath(run.folder, entry, line)}
                 />
               )}
             </div>
@@ -527,7 +528,7 @@ export function ReportFindings({
               key={block.line}
               block={block}
               trace={key(block.line)}
-              href={evidencePath(run.folder, String(entryIndex), block.line)}
+              href={evidencePath(run.folder, entry, block.line)}
             />
           ) : null,
         )}
@@ -562,7 +563,7 @@ export function ReportFindings({
       {active && (
         <TraceDrawer
           trace={active}
-          evidenceHref={evidencePath(run.folder, active.evidenceItem)}
+          evidenceHref={evidenceHref(run.folder, active.evidenceItem)}
           isOpen
           onClose={() => {
             setActiveTrace(null);

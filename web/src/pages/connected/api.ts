@@ -106,6 +106,8 @@ export type Run = {
   execution?: "host-session" | "retained-response-replay" | "synthetic" | "live-provider" | null;
   cap: string;
   spent: string | null;
+  settled_spent?: string | null;
+  held?: string | null;
   events: RunEvent[] | null;
 };
 

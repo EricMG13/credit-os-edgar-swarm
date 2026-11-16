@@ -1,7 +1,8 @@
-import { useState, useSyncExternalStore } from "react";
+import { useState, useSyncExternalStore, type Dispatch, type SetStateAction } from "react";
 import { ArrowRight } from "@untitledui/icons";
 import { Badge } from "@/components/base/badges/badges";
 import { Button } from "@/components/base/buttons/button";
+import { ButtonGroup, ButtonGroupItem } from "@/components/base/button-group/button-group";
 import { StatusBadge } from "@/components/status/StatusBadge";
 import { RunTabLink } from "@/pages/library/parts/RunFrame";
 import { SourcesSwitch, useSourcesOn } from "@/pages/library/parts/SourcesSwitch";
@@ -62,72 +63,200 @@ function HeadlineFigures({ catalogue }: { catalogue?: CatalogueRun }) {
   );
 }
 
-function MatchRuns({ snapshot, query }: { snapshot: Snapshot; query: string }) {
+type LibraryFilters = { query: string; sector: string; pathway: string };
+
+function MatchRuns({
+  snapshot,
+  filters,
+  setFilters,
+}: {
+  snapshot: Snapshot;
+  filters: LibraryFilters;
+  setFilters: Dispatch<SetStateAction<LibraryFilters>>;
+}) {
+  const [layout, setLayout] = useState<"cards" | "list">("cards");
   const byFolder = new Map(Object.values(snapshot.workspace.runs).map((run) => [run.folder, run]));
   const groups = new Map<string, CatalogueRun[]>();
   for (const entry of snapshot.catalogue.real) {
     const run = byFolder.get(entry.id);
     const key = run?.issuerKey ?? entry.id;
-    const matches = [
-      entry.name,
-      entry.issuer,
-      entry.title,
-      entry.sector,
-      entry.period,
-      entry.date,
-    ].some((value) => value.toLowerCase().includes(query.trim().toLowerCase()));
-    if (matches) groups.set(key, [...(groups.get(key) ?? []), entry]);
+    groups.set(key, [...(groups.get(key) ?? []), entry]);
   }
-  if (!groups.size)
-    return (
-      <p className={card}>{query.trim() ? "No issuers match this search." : "No reports yet"}</p>
-    );
+  const sectors = [
+    ...new Set(snapshot.catalogue.real.map((entry) => entry.sector).filter(Boolean)),
+  ].sort();
+  const pathways = [
+    ...new Set(
+      snapshot.catalogue.real
+        .map((entry) => {
+          const run = byFolder.get(entry.id);
+          return runPathway(run ?? { pathway: null }, entry);
+        })
+        .filter(Boolean),
+    ),
+  ].sort();
+  const cards = [...groups]
+    .map(([key, entries]) => {
+      const ordered = [...entries].sort((a, b) => b.date.localeCompare(a.date));
+      const newest = ordered[0];
+      if (!newest) return null;
+      const linked = ordered.find((entry) => byFolder.has(entry.id));
+      const newestRun = byFolder.get(newest.id);
+      const pathway = runPathway(newestRun ?? { pathway: null }, newest);
+      const matches =
+        [newest.name, newest.issuer, newest.title, newest.sector, newest.period, newest.date].some(
+          (value) => value.toLowerCase().includes(filters.query.trim().toLowerCase()),
+        ) &&
+        (filters.sector === "all" || newest.sector === filters.sector) &&
+        (filters.pathway === "all" || pathway === filters.pathway);
+      if (!matches) return null;
+      return { key, entries: ordered, newest, linked };
+    })
+    .filter((item): item is NonNullable<typeof item> => item !== null);
   return (
-    <ul className="grid gap-4 lg:grid-cols-2">
-      {[...groups].map(([key, entries]) => {
-        const ordered = [...entries].sort((a, b) => b.date.localeCompare(a.date));
-        const newest = ordered[0];
-        if (!newest) return null;
-        const linked = ordered.find((entry) => byFolder.has(entry.id));
-        return (
-          <li key={key} className={card}>
-            <header className="grid gap-1">
-              <h3 className={heading}>{newest.name}</h3>
+    <div className="grid gap-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-wrap gap-3">
+          <label className="grid gap-1 text-sm text-text-secondary">
+            Sector
+            <select
+              aria-label="Sector"
+              value={filters.sector}
+              onChange={(event) => {
+                const sector = event.currentTarget.value;
+                setFilters((previous) => ({ ...previous, sector }));
+              }}
+              className={field}
+            >
+              <option value="all">All</option>
+              {sectors.map((sector) => (
+                <option key={sector} value={sector}>
+                  {sector}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="grid gap-1 text-sm text-text-secondary">
+            Pathway
+            <select
+              aria-label="Pathway"
+              value={filters.pathway}
+              onChange={(event) => {
+                const pathway = event.currentTarget.value;
+                setFilters((previous) => ({ ...previous, pathway }));
+              }}
+              className={field}
+            >
+              <option value="all">All</option>
+              {pathways.map((pathway) => (
+                <option key={pathway} value={pathway}>
+                  {pathway}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+        <ButtonGroup
+          aria-label="Layout"
+          size="sm"
+          disallowEmptySelection
+          selectedKeys={[layout]}
+          onSelectionChange={(keys) => {
+            const [key] = keys;
+            if (key === "cards" || key === "list") setLayout(key);
+          }}
+        >
+          <ButtonGroupItem id="cards">Cards</ButtonGroupItem>
+          <ButtonGroupItem id="list">List</ButtonGroupItem>
+        </ButtonGroup>
+      </div>
+      {cards.length === 0 ? (
+        <p className={card}>
+          {filters.query.trim() || filters.sector !== "all" || filters.pathway !== "all"
+            ? "No issuers match these filters."
+            : "No reports yet"}
+        </p>
+      ) : layout === "cards" ? (
+        <ul className="grid gap-4 lg:grid-cols-2">
+          {cards.map(({ key, entries, newest, linked }) => (
+            <li key={key} className={`${card} grid gap-5`}>
+              <header className="grid gap-1">
+                <h3 className={heading}>{newest.name}</h3>
+                <p className="text-sm text-text-secondary">
+                  {[newest.issuer !== newest.name ? newest.issuer : "", newest.sector]
+                    .filter(Boolean)
+                    .join(" · ")}
+                </p>
+              </header>
               <p className="text-sm text-text-secondary">
-                {[newest.issuer !== newest.name ? newest.issuer : "", newest.sector]
-                  .filter(Boolean)
-                  .join(" · ")}
+                {runPathway(byFolder.get(newest.id) ?? { pathway: null }, newest)} ·{" "}
+                <time dateTime={newest.date}>{newest.date}</time>
               </p>
-            </header>
-            <p className="text-sm text-text-secondary">
-              {runPathway(byFolder.get(newest.id) ?? { pathway: null }, newest)} ·{" "}
-              <time dateTime={newest.date}>{newest.date}</time>
-            </p>
-            <HeadlineFigures catalogue={newest} />
-            {linked ? (
-              <div className="flex flex-wrap items-center gap-3">
-                <Button href={reportPath(linked.id)} color="secondary" iconTrailing={ArrowRight}>
-                  Open report
-                </Button>
-                <TextLink
-                  href={`${reportPath(linked.id)}#history`}
-                >{`${String(entries.length)} ${entries.length === 1 ? "run" : "runs"}`}</TextLink>
-              </div>
-            ) : (
-              <p className="text-sm text-text-secondary">
-                No run report was published for this entry.
-              </p>
-            )}
-          </li>
-        );
-      })}
-    </ul>
+              <HeadlineFigures catalogue={newest} />
+              {linked ? (
+                <div className="flex flex-wrap items-center gap-3">
+                  <Button href={reportPath(linked.id)} color="secondary" iconTrailing={ArrowRight}>
+                    Open report
+                  </Button>
+                  <TextLink
+                    href={`${reportPath(linked.id)}#history`}
+                  >{`${String(entries.length)} ${entries.length === 1 ? "run" : "runs"}`}</TextLink>
+                </div>
+              ) : (
+                <p className="text-sm text-text-secondary">
+                  No run report was published for this entry.
+                </p>
+              )}
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <div className="overflow-x-auto rounded-ds-md border border-border-hairline bg-surface-card">
+          <table className="w-full text-left text-sm">
+            <thead>
+              <tr className="border-b border-border-hairline text-text-secondary">
+                <th className="p-3">Issuer</th>
+                <th className="p-3">Sector</th>
+                <th className="p-3">Pathway</th>
+                <th className="p-3">As of</th>
+                <th className="p-3">Report</th>
+              </tr>
+            </thead>
+            <tbody>
+              {cards.map(({ key, newest, linked }) => (
+                <tr key={key} className="border-b border-border-hairline last:border-0">
+                  <th scope="row" className="p-3 font-semibold">
+                    {newest.name}
+                  </th>
+                  <td className="p-3">{newest.sector || "—"}</td>
+                  <td className="p-3">
+                    {runPathway(byFolder.get(newest.id) ?? { pathway: null }, newest)}
+                  </td>
+                  <td className="p-3">{newest.date}</td>
+                  <td className="p-3">
+                    {linked ? (
+                      <TextLink href={reportPath(linked.id)}>Open report</TextLink>
+                    ) : (
+                      "Not published"
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
   );
 }
 
 export function ReportLibrary() {
   const { value, error } = useResource(getSnapshot);
-  const [query, setQuery] = useState("");
+  const [filters, setFilters] = useState<LibraryFilters>({
+    query: "",
+    sector: "all",
+    pathway: "all",
+  });
   return (
     <>
       <PageHeader title="Library" actions={<Button href="/start">Start a run</Button>} />
@@ -146,15 +275,15 @@ export function ReportLibrary() {
                 Search issuers
                 <input
                   type="search"
-                  value={query}
+                  value={filters.query}
                   onChange={(event) => {
-                    setQuery(event.currentTarget.value);
+                    setFilters((previous) => ({ ...previous, query: event.currentTarget.value }));
                   }}
                   className={field}
                 />
               </label>
             )}
-            <MatchRuns snapshot={value} query={query} />
+            <MatchRuns snapshot={value} filters={filters} setFilters={setFilters} />
           </>
         )}
       </section>
@@ -251,6 +380,7 @@ function Overview({
   view: ReturnType<typeof buildReportView>;
   hasCalendar: boolean;
 }) {
+  const calendar = buildCalendar(view.entries, run.folder);
   const foundation = view.entries.find((entry) => entry.selected && entry.output.module === "CP-1");
   const metrics = foundation
     ? foundationMetrics(foundation, view.catalogue).filter(
@@ -299,6 +429,41 @@ function Overview({
             No credit view is available in the published handoffs for this run.
           </p>
         </>
+      )}
+      {calendar.rows.length > 0 && (
+        <section className={`${card} grid gap-3`}>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <h2 className={heading}>Dates to watch</h2>
+            <a href="#calendar" className="text-action underline">
+              Open issuer calendar
+            </a>
+          </div>
+          <ul className="grid gap-2">
+            {calendar.rows.slice(0, 5).map((event, index) => (
+              <li
+                key={`${event.href}-${String(index)}`}
+                className="flex flex-wrap items-baseline justify-between gap-2 border-t border-border-hairline pt-2"
+              >
+                <div>
+                  <p className="font-semibold">{event.cells[3] || "Dated event"}</p>
+                  <p className="text-sm text-text-secondary">
+                    {event.owner}
+                    {event.cells[6] ? ` · ${event.cells[6]}` : ""}
+                  </p>
+                </div>
+                <div className="flex items-center gap-3 text-sm">
+                  <span>
+                    {event.cells[0]}
+                    {event.cells[1] ? ` · ${event.cells[1]}` : ""}
+                  </span>
+                  <a className="text-action underline" href={event.href}>
+                    Evidence
+                  </a>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </section>
       )}
     </>
   );
@@ -412,7 +577,10 @@ export function ReportReader({ id, mode }: { id: string; mode: Mode }) {
               {value?.preview ? (
                 <Badge color="brand">Test preview</Badge>
               ) : (
-                <StatusBadge set="Run states" state="Finished" />
+                <>
+                  <StatusBadge set="Run states" state="Finished" />
+                  {mode === "synthetic" && <Badge color="brand">Synthetic test</Badge>}
+                </>
               )}
             </>
           )
@@ -432,6 +600,11 @@ export function ReportReader({ id, mode }: { id: string; mode: Mode }) {
         }
       />
       {error && <ErrorNotice>{error}</ErrorNotice>}
+      {value?.preview?.reason && (
+        <p role="note" className={`${card} mt-4`}>
+          {value.preview.reason}
+        </p>
+      )}
       {value === undefined && !error && (
         <p role="status" className="mt-6 text-text-secondary">
           Loading report…

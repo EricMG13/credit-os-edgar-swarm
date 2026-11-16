@@ -10,7 +10,14 @@ import {
 import { namedRow, namedTable, type buildReportView } from "../reportView";
 import { PublishedTable } from "../ReportContent";
 import { amount, record, stringsIn, word } from "../visuals/visualData";
-import { CashProxy, cashProxyCases, gridOf, LegacyForecast } from "../visuals/LegacyForecast";
+import { TRACE_HOST } from "@/pages/library/parts/TraceControl";
+import {
+  CashProxy,
+  cashProxyCases,
+  forecastCaseOptions,
+  gridOf,
+  LegacyForecast,
+} from "../visuals/LegacyForecast";
 import { RunCharts } from "./RunCharts";
 import { PublishedSource } from "./PublishedTrace";
 
@@ -106,11 +113,16 @@ export function Forecast({
   run: PublishedRun;
 }) {
   const [selected, setSelected] = useState(0);
+  const [chosenCase, setChosenCase] = useState("");
   const { models, entries } = view;
   const model = models[selected] ?? models[0];
+  const caseOptions = model ? forecastCaseOptions(model) : [];
+  const selectedCase = caseOptions.some(({ name }) => name === chosenCase)
+    ? chosenCase
+    : caseOptions[0]?.name;
   const handoff = model && forecastHandoff(model, entries, run.folder);
   const href = (line: number) =>
-    evidencePath(run.folder, String(handoff ? entries.indexOf(handoff) : -1), line);
+    handoff ? evidencePath(run.folder, handoff, line) : "#evidence/summary";
   const input = handoff && inputsLine(handoff);
   const source =
     input === undefined
@@ -162,13 +174,76 @@ export function Forecast({
           </select>
         </label>
       )}
+      {caseOptions.length > 1 && (
+        <section className="flex flex-col gap-4" aria-labelledby="forecast-case-heading">
+          <div className="flex flex-wrap items-baseline justify-between gap-2">
+            <h3 id="forecast-case-heading" className="font-display text-h3">
+              Two cases
+            </h3>
+            <p className="text-small text-text-tertiary">
+              Choose a case: every chart below follows it.
+            </p>
+          </div>
+          <div role="radiogroup" aria-label="Forecast case" className="grid gap-4 sm:grid-cols-2">
+            {caseOptions.map(({ name, period, value, units }) => (
+              <div
+                key={name}
+                className={`relative flex flex-col gap-2 rounded-ds-md border bg-surface-card px-3 py-2.5 ${
+                  selectedCase === name
+                    ? "border-action bg-surface-selected"
+                    : "border-border-hairline"
+                }`}
+              >
+                <div className={TRACE_HOST}>
+                  <label className="block cursor-pointer has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-focus">
+                    <input
+                      type="radio"
+                      name="forecast-case"
+                      checked={selectedCase === name}
+                      onChange={() => {
+                        setChosenCase(name);
+                      }}
+                      className="sr-only"
+                    />
+                    <span className="flex items-baseline gap-2 text-sm font-semibold text-text-primary">
+                      {name}
+                      <span
+                        aria-hidden="true"
+                        className={`ml-auto size-4 flex-none self-center rounded-full border ${
+                          selectedCase === name ? "border-5 border-action" : "border-border-control"
+                        }`}
+                      />
+                    </span>
+                    <span className="mt-0.5 block pr-7 text-sm text-text-secondary">
+                      <span className="font-display text-h3 tabular-nums">
+                        {typeof value === "number"
+                          ? new Intl.NumberFormat("en-US", { maximumFractionDigits: 2 }).format(
+                              value,
+                            )
+                          : "Not available"}
+                      </span>
+                      <span className="block text-text-tertiary">
+                        Cash proxy {period ? `· ${period}` : ""}
+                        {units ? ` · ${units}` : ""}
+                      </span>
+                    </span>
+                  </label>
+                  <div className="absolute right-2.5 bottom-2.5">{source?.(name)}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
       {model && (
         <LegacyForecast
           model={model}
+          selectedCase={selectedCase}
           source={source}
           summary={
             <CashProxy
               model={model}
+              selectedCase={selectedCase}
               source={source?.("Cash proxy by scenario")}
               note={<BasisNote model={model} handoff={handoff} href={href} />}
             />
@@ -201,11 +276,7 @@ export function Forecast({
             }}
           />
           <a
-            href={
-              handoff
-                ? evidencePath(run.folder, String(entries.indexOf(handoff)))
-                : "#evidence/trace/CP-2G"
-            }
+            href={handoff ? evidencePath(run.folder, handoff) : "#evidence/trace/CP-2G"}
             className="text-action underline"
           >
             Open the forward credit handoff

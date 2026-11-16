@@ -4,6 +4,43 @@ Keep one running record here. A pass applies only to the stated scope. Earlier v
 engine is in [EricMG13/final-workflow](https://github.com/EricMG13/final-workflow)'s
 `VERIFICATION.md`, which also keeps the retained runs this copy leaves out.
 
+## 2026-11-16 — Connected admission, durable traces and Credit OS design
+
+- Scope: React reader and additive connected adapter only. Native RBOT-HTML
+  source, issuer-library engine and Python pins still match `256101a`; React
+  dependency lock remains unchanged. No provider execution, Signal work,
+  tournaments or publication.
+- Admission now applies to the snapshot consumed by the Library and report
+  reader, the report listing, forecast artifacts and portfolio attestation.
+  Managed running/queued/failed/capped/rejected/interrupted reports stay out;
+  native retained reports without scheduler records remain available, including
+  folders containing spaces and Unicode. Source publications are not changed.
+- Evidence links bind output identity, SHA-256 revision and exact paragraph,
+  table row or section line. Reordering cannot select another output. Old ordinal
+  links and missing revisions/rows show an unavailable state. Overview, Changes,
+  Modules, Forecast, calendar and Evidence use the same resolver.
+- Credit OS fidelity scope: original React components and Claude HTML exports
+  at `450f6406`, Library filters and Cards/List, Overview dates with traces,
+  Changes Cards/Table, Forecast case cards and shared chart/table selection,
+  source-control hover, existing Evidence navigation and expandable Record.
+  Gaps counts actual saved gap rows, preserves effects and delivered severity,
+  and filters explicit None records. Module-scoped counts and empty states agree.
+- Confidence review ranked identity/reordering, admission timing, exact data
+  preservation, null/zero budget display, filters and case-label matching.
+  Reproduced and repaired empty-result controls disappearing, deferred event
+  reads, Gap ID being mistaken for Gap, unknown severity being discarded, and
+  Downside shock selection differing from its raw Downside case column label.
+  Budget totals use one retained reservation snapshot and exact decimal sums;
+  unreadable journals remain unavailable, holds are separate from settled charges.
+  Native historical admission and invalidation of unversioned bookmarks are
+  deliberate. Browser/platform scope and retained source limitations stay explicit.
+- Checks before browser proof: 74 targeted Python tests, 1,425 frontend tests,
+  TypeScript, ESLint, formatting and the changed-code quality gate passed.
+  Fallow retains baseline findings plus complexity/duplication warnings in
+  touched code; the new unused export was removed. Browser results follow below.
+- The Windows release gate remains open. Keep the ZIP local until Chrome and
+  Edge both pass on the actual Windows work PC using `docs/react-workflow.md`.
+
 ## 2026-11-15 — Evidence Record and report traces
 
 - Viewed the Record tab with the existing Evidence tabs and module filter.
@@ -916,64 +953,3 @@ Fix round 3 (H1 year before a comma, M1 ISO dates, M2 `change`/`difference` not 
 ## 2026-11-12 — A withheld difference is refused in the analysis register's Why and the ledger (branch `claude/cp8-why-cell-withheld`, owner "fine, PR and merge")
 Scope: offline, synthetic; no provider. K9's register exemption narrowed to the Effect cell of the measure's own issuer row (`Same definition` with `Correction` or `Method change`); the analysis Why, ledger, fact rows and other measures' rows refuse a withheld size (pack `no`, said `Not comparable`, same-period flagged, same-period net debt change incl. cash), as before in passages. Same functions, per-line exemption. 295 tests in `tests/test_changes.py` pass, none changed or weakened; 9 new cases failed on the old code first. CI fast-tests: exit 0, 3000 passed; node set: exit 0, 298 passed; `tools/quality_gate.py`: exit 0, 0 findings; reviewer probes ndsame_why, ndsame_k9, ndsame_flag, netdebt2_attacks, seam3_verdicts, realfix_check (real accepted-then-corrected handoff), t4r4_same_period: all exit 0.
 Not verified: a real model writing a Why cell; a collision of a withheld size with another measure's stated value is still refused (as in passages).
-
-## 2026-11-12 — Forecast inputs in thousands: `scale` 1000 (branch `claude/forecast-units-scale-b`, PR B, stacked on PR A)
-Plan: `docs/superpowers/plans/2026-11-12-forecast-named-rows-and-units.md`, Tasks B1-B6. A forecast inputs block may state `scale` 1000: it then states base amounts, amount drivers and facility balances exactly as CP-1 prints them in USD thousands, and Python divides by 1000 exactly before any check or calculation. The cell and printed checks compare the stated text with CP-1; the history record reads the named rows and publishes the same unit; the published record carries `scale` and `units` and the library's caption uses them. A named row whose own cells or headers name the other unit is refused, and a scale-1000 CP-2G block must name its rows. Both instruction texts ask for `scale`. A block without `scale` produces byte-identical files.
-Scope: offline. Synthetic fixtures with hand-computed answer keys (`tests/test_cpos_scale.py`); a millions fixture and the same fixture times 1000 at scale 1000 publish identical figures in every file, facilities and cases included (also on 800 generated fixtures, reviewer's probe); the store's grid compared with a hand key on 1,768 cells, 0 differences; two retained thousands handoffs (LTH, IHRT) read with hand-written named blocks and synthetic drivers: every base and fiscal-year history value equals the printed cell divided by 1000; the unit rule run over the numeric rows of the six retained CP-1 handoffs refuses 11 rows, all printed in millions inside thousands handoffs. No provider called: no model has stated `scale`.
-Reader check: NOT done on a real run; pending the owner's paid run on a thousands issuer. On synthetic data the grid of a thousands block equals the millions grid cell for cell and the caption reads USD millions.
-Commands: PR-check pytest list 3097 passed, 113 deselected, 1 warning, exit 0; quality gate against PR A 0 findings, exit 0; node 278 pass, exit 0. Reviews: task reviews (mx-precise), adversarial review (mx-adversary: no arithmetic defect), whole-branch review with confidence review and rewrite tournament (mx-architect), one fix wave. Hand-picked mutants 85/100 killed; survivors left: T07, C02, C03, F03, U03, U08, U09, U10, U11, U12, U15, K08, R01, R04, G03.
-Known, for the owner: nothing detects a missing or wrong `scale` (six-digit thousands without it read as millions; a millions handoff at scale 1000 publishes figures a thousand times too small); the unit check reads only named operands and only unit words in the row, the named column's header and the table's first header cell, so a millions cell with no unit words nearby, a facility balance or an amount driver in the other unit is not caught; revolver availability is printed in millions on all four retained thousands issuers, so Liquidity is n.a. there until an operand-level scale is decided; a delivery without the history record reads CP-1 as printed under the record's caption (new runs always ask for the record); the PR is about 1345 changed lines against the 800-line limit, waived by the owner on 2026-11-12 (split B-i/B-ii exists).
-Not verified: any model response to the instructions; the Forecast page in a browser; a paid thousands run; non-USD issuers; the weekly and live suites; mutation testing beyond the hand-picked mutants.
-
-## 2026-11-12 — CP-2G names its rows; history from named rows only (branch `claude/forecast-units-scale`, PR A)
-Plan: `docs/superpowers/plans/2026-11-12-forecast-named-rows-and-units.md`, Tasks A1-A4. A CP-2G forecast inputs block may name, for each base operand with an amount, the CP-1 table row and period column it was read from; a named amount must be that one cell under the sign rule, and the instruction asks for the names. The history record is built from named rows only: the code that located a line by its amount is deleted, which removes the wrong-row residual recorded for PR 1. A block that names nothing still forecasts as before and gets no history (every line: the inputs do not name the row and period). A refused base operand may be restated as missing instead of nulling every driver.
-Scope: offline. Synthetic fixtures with hand-computed answer keys; the reviewer's residual probe before the change (exit 1) and after (n.a. with the header named); 1,500 and 4,500 generated CP-1 handoffs compared with the code before the change (unnamed CP-2G blocks byte-identical with the history flag off; layer-1 blocks identical); retained CP-1 handoffs (the live TDG forecast run, web TDG, NATL) read with hand-named blocks and synthetic drivers, which prove the cell check and the history on real tables, not a model's ability to name rows. No retained delivery holds model files, so byte-identical re-derivation rests on the synthetic pin and the generated comparison. No provider called: no CP-2G has yet named a row.
-Commands: PR-check pytest list 2969 passed, 113 deselected, 1 warning, exit 0; quality gate against main 0 findings, exit 0; node 278 pass, exit 0. Reviews: task reviews (mx-precise), adversarial review (mx-adversary: no High or Medium; 12,000 generated cases raise nothing and every shown value is a cell of the named row), whole-branch review with confidence review and rewrite tournament (mx-architect), one fix wave. Hand-picked mutants 34/40 killed; survivors M20, K04, K06, K08, K10, K18, on lines that predate this branch.
-Known, for the owner: a block that names nothing shows seven history columns of n.a. with the naming reason; names are not tied to one table, so a same-label row in another table that prints the base amount under the same period adds its periods; the repair wording for a schema refusal of a base operand still offers nulling every driver; a delivery made with the history flag from an unnamed CP-2G block before this change would not re-derive byte for byte (none is retained); the PR is about 1086 changed lines against the 800-line limit, waived by the owner on 2026-11-12 (a clean split exists at the instruction commit).
-Not verified: any model response to the new instruction or repair line; the Forecast page in a browser for this change; the weekly and live suites; mutation testing beyond the hand-picked mutants.
-
-## 2026-11-12 — A same-period net debt difference is the analysis's, not the issuer's (branch `claude/net-debt-same-period`, owner "Yes, fix it")
-Scope: offline, synthetic. Pack: `net_debt_change` gains `same_period` and the two rows' periods, gross debt and cash (schema stays `/3`, additive). Checker: the cash difference is passed through K9's functions as a measure-shaped record, so a same-period change's gross debt, cash and net debt sizes are refused in checked lines while both values may be stated. Tab: flagged and non-zero shows both runs' balances, periods and the sentence, no change figure; zero or two periods unchanged; a pack without the flag as before; periods now beside the cash movement. Hand-written expectations (7,100 to 6,990 gross, 910 to 880 cash, 6,190 to 6,110 net; 2,100 to 2,000, 300 to 250). Changed expectations: the two exact-dict `net_debt_change` assertions in `tests/test_changes.py` gain the new keys (different periods, `same_period` false). `cp8.md` states the rule.
-Not verified: a real model writing a same-period net debt CP-8; the page in a browser against a real pack.
-
-## 2026-11-12 — CP-1 states gross debt in `### Net debt data` so the net debt change can be shown (branch `claude/cp1-gross-debt-row`, base a639fb7, owner "Yes, add it")
-Scope: offline, synthetic. A `Gross debt` row cannot sit in an existing chart table (all four are period-row tables); controller ruling: a fifth period-row owner table on CP-1, all seven pathways (`Period | Gross debt | Cash | Net debt | Reporting unit | Basis and limitation`, US$m, not a `Chart data:` heading so the library does not draw it). Checker: net debt = gross debt - cash exactly in Decimal when all three are stated, and, where the liquidity table has a row `same_period` calls the same period (`FY2024` and `FY2024 / 2024-09-30` are; `2024-09-30` and `FY2024` are not), a stated cash equal to that row's Cash. Pack: `gross_debt`, `net_debt` and the table's own Cash (not the liquidity table's) are read from the same latest row of that table, so the net debt change makes no cross-table read; the #66 exact-label row rule now reads only free cash flow. Hand-written expectations in `tests/test_cpos_launch.py` and `tests/test_changes.py` (2,100 - 300 = 1,800; 2,000 - 250 = 1,750). Method: `cp8.md` wording only (CP-1's method is unchanged: the instruction is the launcher's owner-table rule, so no CP-1 method revision); older runs show "methods changed" for CP-8 by hash.
-Compatibility: an older run (no table) is still a CP-8 base and renders; its net debt change is left out, `omitted` naming the run.
-Knock-on read in code: the library draws only `Chart data:` headings (this table is a reference section); `cpos_forecast` reads cells by row label and period header, so the table's period-labelled rows and measure headers cannot be named as an operand; CP-L10 Key figures only gain held figures; the report strip routes only chart blocks.
-Not verified: a real model writing this table; the library page with a real handoff carrying it; the VMO2 reader check (no presentation change was made to a delivered report).
-
-## 2026-11-12 — Redesign pass 1: run header, Modules, inspector and Overview (branch `claude/redesign-modules-overview`, stacked on PR 62)
-
-Scope: offline, macOS, headless Chrome; no provider called. Presentation only, from the Claude Design
-redesign: the run header (back link, meta line, "Start a run on this issuer" over http), text-only tabs,
-the strip, 250px navigator, the module page (bottom line as headline, findings list, fold rows; charts
-stay open), the inspector as cards, and the Overview in two columns. What was built, what was not adopted
-and the cross-check against earlier decisions: `docs/design/2026-11-12-redesign-pass-1.md`.
-- On 13d258b: `node --test` reader, static, calendar, changes: exit 0, 295 passed. `uv run pytest
-  tests/test_library_page_browser.py tests/test_library_changes_browser.py tests/test_model_shell_browser.py
-  -m browser -q`: exit 0, 95 passed, 1 skipped (a screenshot helper). `uv run pytest tests/test_context_form.py
-  tests/test_run_start_page.py tests/test_library_reader_refs.py tests/test_library_index.py
-  tests/test_update_library.py -q`: exit 0, 252 passed. `uv run python tools/quality_gate.py`: exit 0, 0 findings.
-- Fidelity: a scratch library built from the four listed TDG runs (all earlier format), every in-app route
-  crawled from `file://` before the change (fe3dd7d) and after (13d258b) with folds, audit items and the
-  inspector opened; every word on each of 252 routes (710 page and inspector states) compared by count.
-  Nothing is missing except the header's "Change run" link and its duplicate run-code chip, removed on
-  purpose. The same comparison reported 249 drops before those two were allowed, so it does detect a
-  removed string. No module code on those routes (252 routes, 0 hits).
-- Reader check, scope: one real run (`cpos-tdg-sol-medium-all-001`) read at 1440 on the Liquidity and
-  Financial foundation pages and the Overview, against two of the September VMO2 screenshots. The module
-  page reads judgement first (bottom line, confidence and main limitation, findings with creditor impact,
-  analysis, limits, registers folded), the reference's order; no source reference sits in a narrative
-  sentence. The Overview of this earlier-format run says "No bottom line in this handoff." for every module
-  (unchanged by this pass; owner question). Main's Forecast period-columns grid was read under the new
-  header at 1280 on its synthetic four-case model only.
-- Reviews: three task reviews, a whole-branch review (approve with fixes, Lows only), a review of the fix
-  batch (one High: without the start link the "As of" block broke over four lines; fixed and re-reviewed),
-  and a re-review of the chart index route (one Medium: it opened the first forecast model, not the chosen
-  one; fixed and re-reviewed). Each finding's probe ran before and after.
-- Not verified: no real run is new format, so new-format pages and the Overview's lead, key charts and
-  nearest dates rest on synthetic fixtures. "Start a run on this issuer" was not clicked through to a
-  running start service. Forecast with a published model and the inspector on Changes, Forecast and
-  Evidence were not rendered. Safari, Firefox, real browser zoom, print against the previous layout,
-  screen readers and Windows not run. The header is 73px taller at 1440×900. This branch is 1,535 changed
-  lines of code and tests against the 800-line convention, waived by the owner on 2026-11-12 (PR 67).

@@ -151,7 +151,7 @@ def test_activity_uses_the_pinned_cap_and_curates_native_events(hosted: _Server)
     assert request(hosted, "/connected/activity/unknown")[0] == 404
 
 
-def test_reports_admission_and_raw_snapshot(hosted: _Server, root: Path) -> None:
+def test_reports_admission_and_reader_snapshot(hosted: _Server, root: Path) -> None:
     scheduler = hosted.scheduler
     assert isinstance(scheduler, Scheduler)
     assert scheduler.settings.cap == 20
@@ -172,11 +172,21 @@ def test_reports_admission_and_raw_snapshot(hosted: _Server, root: Path) -> None
         id="demo", pathway="credit_snapshot", folder="demo", status="running", claimed_at=""
     )
     runs.save(scheduler.layout, record)
-    assert json.loads(request(hosted, "/connected/snapshot")[1]) == export
+    hidden = json.loads(request(hosted, "/connected/snapshot")[1])
+    assert hidden["workspace"]["runs"] == {}
+    assert hidden["catalogue"]["real"] == []
+    assert hidden["chips"] == {}
+    assert request(hosted, "/connected/artifacts/demo")[0] == 404
     assert request(hosted, "/connected/report/demo")[0] == 404
     assert json.loads(request(hosted, "/connected/reports")[1]) == {"reports": []}
+    for state in ("failed", "capped", "interrupted", "rejected", "queued"):
+        record.status = state
+        runs.save(scheduler.layout, record)
+        assert json.loads(request(hosted, "/connected/snapshot")[1])["workspace"]["runs"] == {}
+        assert request(hosted, "/connected/report/demo")[0] == 404
     record.status = "finished"
     runs.save(scheduler.layout, record)
+    assert json.loads(request(hosted, "/connected/snapshot")[1]) == export
     status, result, _ = request(hosted, "/connected/report/demo")
     assert status == 200
     assert json.loads(result) == {

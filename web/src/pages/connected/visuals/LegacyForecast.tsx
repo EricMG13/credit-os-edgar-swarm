@@ -57,7 +57,36 @@ export function gridOf(raw: unknown): Grid | null {
   return { columns, rows };
 }
 
-function ForecastTable({ grid, title }: { grid: Grid; title: string }) {
+function ForecastTable({
+  grid: inputGrid,
+  title,
+  selectedCase,
+  downsideNote,
+}: {
+  grid: Grid;
+  title: string;
+  selectedCase?: string;
+  downsideNote?: string;
+}) {
+  const selectedIndexes = inputGrid.columns.flatMap((column, index) => {
+    const caseLabel = forecastCaseLabel(column.group, downsideNote);
+    const isScenario = Object.hasOwn(caseLabels, column.group) || caseLabel === selectedCase;
+    return !isScenario || selectedCase === undefined || caseLabel === selectedCase ? [index] : [];
+  });
+  const grid =
+    selectedCase === undefined || selectedIndexes.length === 0
+      ? inputGrid
+      : {
+          columns: selectedIndexes
+            .map((index) => inputGrid.columns[index])
+            .filter((column) => column !== undefined),
+          rows: inputGrid.rows.map((row) => ({
+            ...row,
+            cells: selectedIndexes
+              .map((index) => row.cells[index])
+              .filter((cell) => cell !== undefined),
+          })),
+        };
   const groups: { label: string; span: number }[] = [];
   for (const column of grid.columns) {
     const last = groups.at(-1);
@@ -142,20 +171,43 @@ function ForecastTable({ grid, title }: { grid: Grid; title: string }) {
 
 const FORECAST_LINES = ["Revenue", "Adj EBITDA", "Closing cash", "Closing debt"];
 
+const caseLabels: Record<string, string> = {
+  "Base case": "Base case",
+  "Downside case": "Downside case",
+  Upside: "Upside case",
+  "Downside (CP-2G drivers)": "Downside drivers",
+};
+
+function forecastCaseLabel(group: string, downsideNote = "") {
+  if (
+    group === "Downside case" &&
+    downsideNote.startsWith("Downside case is the stress case: a shock applied")
+  )
+    return "Downside shock";
+  return Object.hasOwn(caseLabels, group) ? (caseLabels[group] ?? group) : group;
+}
+
 function ForecastTrends({
   grid,
   units,
   source,
+  selectedCase,
+  downsideNote,
 }: {
   grid: Grid;
   units: string;
   source?: (label: string) => ReactNode;
+  selectedCase?: string;
+  downsideNote?: string;
 }) {
   const forecastColumns = grid.columns.flatMap((column, index) =>
     /^FY\d+E$/.test(column.label) ? [{ ...column, index }] : [],
   );
   const periods = [...new Set(forecastColumns.map((column) => column.label))].sort();
-  const groups = [...new Set(forecastColumns.map((column) => column.group))];
+  const groups = [...new Set(forecastColumns.map((column) => column.group))].filter(
+    (group) =>
+      selectedCase === undefined || forecastCaseLabel(group, downsideNote) === selectedCase,
+  );
   if (periods.length < 2 || groups.length === 0 || groups.length > 6) return null;
   return (
     <div className="grid gap-8">
@@ -204,26 +256,12 @@ function ForecastTrends({
 }
 
 const CASH_PROXY = "Cash proxy (not issuer free cash flow)";
-const caseLabels: Record<string, string> = {
-  "Base case": "Base case",
-  "Downside case": "Downside case",
-  Upside: "Upside case",
-  "Downside (CP-2G drivers)": "Downside drivers",
-};
 const twoPlaces = new Intl.NumberFormat("en-US", {
   minimumFractionDigits: 2,
   maximumFractionDigits: 2,
 });
 
 export function cashProxyCases(grid: Grid, other: Grid | null, downsideNote = "") {
-  const groupName = (group: string) => {
-    if (
-      group === "Downside case" &&
-      downsideNote.startsWith("Downside case is the stress case: a shock applied")
-    )
-      return "Downside shock";
-    return Object.hasOwn(caseLabels, group) ? (caseLabels[group] ?? group) : group;
-  };
   const groups = [grid, other].flatMap((source) => {
     if (!source) return [];
     const rows = source.rows.filter((row) => row.label === CASH_PROXY);
@@ -243,7 +281,7 @@ export function cashProxyCases(grid: Grid, other: Grid | null, downsideNote = ""
   ].sort();
   const order = Object.keys(caseLabels);
   groups.sort(([a], [b]) => order.indexOf(a) - order.indexOf(b));
-  const byName = new Set(groups.map(([group]) => groupName(group)));
+  const byName = new Set(groups.map(([group]) => forecastCaseLabel(group, downsideNote)));
   if (byName.size !== groups.length || groups.length > 6) return { periods, series: [], rows: [] };
   const series = groups.map(([group, cells]) => {
     const matching = periods.map((period) => {
@@ -254,7 +292,7 @@ export function cashProxyCases(grid: Grid, other: Grid | null, downsideNote = ""
       cell?.status === "value" ? amount(word(cell.exact)) : null,
     );
     return {
-      name: groupName(group),
+      name: forecastCaseLabel(group, downsideNote),
       values,
       labels: values.map((value, index) =>
         index === values.length - 1 && value !== null ? twoPlaces.format(value) : null,
@@ -268,23 +306,47 @@ export function cashProxyCases(grid: Grid, other: Grid | null, downsideNote = ""
   return { periods, series, rows: series.map(({ name, cells }) => ({ label: name, cells })) };
 }
 
+export function forecastCaseOptions(model: unknown) {
+  const cashflow = record(record(model).cashflow);
+  const grid = gridOf(cashflow);
+  if (!grid) return [];
+  const { periods, series } = cashProxyCases(
+    grid,
+    gridOf(cashflow.other),
+    stringsIn(cashflow.notes).find((note) => note.startsWith("Downside case is")),
+  );
+  const latestPeriod = periods.at(-1);
+  return series.map(({ name, values }) => ({
+    name,
+    period: latestPeriod,
+    value: values.at(-1),
+    units: word(cashflow.units),
+  }));
+}
+
 export function CashProxy({
   model,
   note,
   source,
+  selectedCase,
 }: {
   model: unknown;
   note?: ReactNode;
   source?: ReactNode;
+  selectedCase?: string;
 }) {
   const raw = record(record(model).cashflow);
   const grid = gridOf(raw);
   if (!grid) return null;
-  const { periods, series, rows } = cashProxyCases(
+  const { periods, series: allSeries } = cashProxyCases(
     grid,
     gridOf(raw.other),
     stringsIn(raw.notes).find((note) => note.startsWith("Downside case is")),
   );
+  const series = allSeries.filter(
+    (item) => selectedCase === undefined || item.name === selectedCase,
+  );
+  const rows = series.map(({ name, cells }) => ({ label: name, cells }));
   const values = series.flatMap((item) => item.values);
   if (periods.length < 2 || !values.some((value) => value !== null)) return null;
   const table = { head: ["Case", ...periods], rows };
@@ -319,10 +381,12 @@ export function LegacyForecast({
   model,
   summary,
   source,
+  selectedCase,
 }: {
   model?: unknown;
   summary?: ReactNode;
   source?: (label: string) => ReactNode;
+  selectedCase?: string;
 }) {
   const published = record(model);
   const cashflow = record(published.cashflow);
@@ -344,9 +408,27 @@ export function LegacyForecast({
         <>
           {units && <p className="text-text-secondary">{units}</p>}
           {summary}
-          <ForecastTrends grid={grid} units={units} source={source} />
-          <ForecastTable grid={grid} title="Cash flow model" />
-          {other && <ForecastTable grid={other} title="Other forecast cases" />}
+          <ForecastTrends
+            grid={grid}
+            units={units}
+            source={source}
+            selectedCase={selectedCase}
+            downsideNote={notes.find((note) => note.startsWith("Downside case is"))}
+          />
+          <ForecastTable
+            grid={grid}
+            title="Cash flow model"
+            selectedCase={selectedCase}
+            downsideNote={notes.find((note) => note.startsWith("Downside case is"))}
+          />
+          {other && (
+            <ForecastTable
+              grid={other}
+              title="Other forecast cases"
+              selectedCase={selectedCase}
+              downsideNote={notes.find((note) => note.startsWith("Downside case is"))}
+            />
+          )}
           {notes.length > 0 && (
             <ul className="list-disc pl-5">
               {notes.map((note, index) => (

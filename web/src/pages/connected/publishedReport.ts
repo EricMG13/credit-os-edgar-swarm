@@ -427,5 +427,51 @@ export function publishedHref(href: string | null | undefined, folder: string) {
   }
 }
 
-export const evidencePath = (id: string, output: string, line?: number) =>
-  `/report/${encodeURIComponent(id)}#evidence/${output}${line === undefined ? "" : `-${String(line)}`}`;
+export function evidenceToken(entry: OutputEntry, line?: number) {
+  const { id, sha256 } = entry.output;
+  return `${encodeURIComponent(id)}~${sha256}${line === undefined ? "" : `-${String(line)}`}`;
+}
+
+export function resolveEvidenceLocation(entries: OutputEntry[], token: string) {
+  const delimiter = token.lastIndexOf("~");
+  if (delimiter <= 0) return null;
+  let id: string;
+  try {
+    id = decodeURIComponent(token.slice(0, delimiter));
+  } catch {
+    return null;
+  }
+  const match = /^([a-f\d]{64})(?:-(\d+))?$/i.exec(token.slice(delimiter + 1));
+  if (!match) return null;
+  const matches: { entry: OutputEntry; index: number }[] = [];
+  entries.forEach((entry, index) => {
+    if (entry.output.id === id && entry.output.sha256.toLowerCase() === match[1]?.toLowerCase())
+      matches.push({ entry, index });
+  });
+  if (matches.length !== 1) return null;
+  const matchEntry = matches[0];
+  if (!matchEntry) return null;
+  const { entry, index } = matchEntry;
+  const line = match[2] === undefined ? undefined : Number(match[2]);
+  if (line !== undefined && (!Number.isSafeInteger(line) || line <= 0)) return null;
+  if (
+    line !== undefined &&
+    !entry.sections.some(
+      (section) =>
+        section.line === line ||
+        section.blocks.some(
+          (block) =>
+            block.line === line ||
+            (block.type === "table" && block.rows.some((row) => row.line === line)),
+        ),
+    )
+  )
+    return null;
+  return { entry, index, line };
+}
+
+export const evidencePath = (id: string, entry: OutputEntry, line?: number) =>
+  `/report/${encodeURIComponent(id)}#evidence/${evidenceToken(entry, line)}`;
+
+export const evidenceHref = (id: string, token: string) =>
+  `/report/${encodeURIComponent(id)}#evidence/${token}`;

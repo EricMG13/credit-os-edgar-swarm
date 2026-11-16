@@ -4,15 +4,18 @@ import type { OutputEntry } from "../publishedReport";
 import { EVENT_HEADERS } from "../visuals/EventLane";
 import { buildCalendar, Calendar } from "./Calendar";
 
+let entrySequence = 0;
 function entry(module: string, cells: string[], selected = true): OutputEntry {
+  entrySequence += 1;
+  const revision = module.match(/\d/u)?.[0] ?? "0";
   return {
     selected,
     output: {
       module,
-      id: module,
+      id: `${module}-${String(entrySequence)}`,
       label: module,
       href: "",
-      sha256: module,
+      sha256: revision.repeat(64),
       events: [{ table: 20, lane: "Dated events" }],
     },
     sections: [
@@ -27,6 +30,7 @@ function entry(module: string, cells: string[], selected = true): OutputEntry {
 }
 
 it("keeps same-date contributions distinct with their original row traces and separate date precision", () => {
+  entrySequence = 0;
   const event = [
     "2027-Q2",
     "quarter",
@@ -64,11 +68,11 @@ it("keeps same-date contributions distinct with their original row traces and se
   ).toHaveAccessibleName(/Consent outcome, 2027-04-15, day/);
   expect(scheduled.getByRole("link", { name: "Source for Notes due · Liquidity" })).toHaveAttribute(
     "href",
-    "/report/retained%20case#evidence/0-22",
+    `/report/retained%20case#evidence/CP-2D-1~${"2".repeat(64)}-22`,
   );
   expect(
     scheduled.getByRole("link", { name: "Source for Notes due · Refinancing & LME" }),
-  ).toHaveAttribute("href", "/report/retained%20case#evidence/2-22");
+  ).toHaveAttribute("href", `/report/retained%20case#evidence/CP-3C-2~${"3".repeat(64)}-22`);
   expect(figure.queryByText(/approval\.pdf|agreement\.pdf|Earlier revision/)).toBeNull();
   fireEvent.click(figure.getByRole("radio", { name: "Table" }));
   expect(figure.getAllByRole("cell", { name: "2026-09-30" })).toHaveLength(2);
@@ -77,10 +81,11 @@ it("keeps same-date contributions distinct with their original row traces and se
   ).toBeInTheDocument();
   expect(
     figure.getByRole("link", { name: "Source for Notes due · Refinancing & LME" }),
-  ).toHaveAttribute("href", "/report/retained%20case#evidence/2-22");
+  ).toHaveAttribute("href", `/report/retained%20case#evidence/CP-3C-2~${"3".repeat(64)}-22`);
 });
 
 it("keeps recorded gaps as reasons and leaves a mismatched precision unplotted", () => {
+  entrySequence = 0;
   const gap = entry(
     "CP-6",
     EVENT_HEADERS.map(() => "Not supplied: no review date"),
@@ -102,7 +107,7 @@ it("keeps recorded gaps as reasons and leaves a mismatched precision unplotted",
   expect(screen.getByText(/recorded dates or precision could not be plotted/)).toBeInTheDocument();
   expect(screen.getByRole("link", { name: "Source for Decision and watch" })).toHaveAttribute(
     "href",
-    "/report/current#evidence/0-20",
+    `/report/current#evidence/CP-6-1~${"6".repeat(64)}-20`,
   );
   expect(screen.queryByRole("figure")).toBeNull();
 });

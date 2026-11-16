@@ -1,6 +1,8 @@
+import { useState } from "react";
 import { ClockRewind } from "@untitledui/icons";
 import { EmptyState } from "@/components/application/empty-state/empty-state";
 import { Button } from "@/components/base/buttons/button";
+import { ButtonGroup, ButtonGroupItem } from "@/components/base/button-group/button-group";
 import { Badge } from "@/components/base/badges/badges";
 import { ColumnsChart } from "@/components/chart/ColumnsChart";
 import { ChangeCard } from "@/pages/library/parts/ChangeCard";
@@ -79,6 +81,7 @@ export function Changes({
   const entry = change?.problem ? undefined : entries[entryIndex];
   const trace = comparisonTrace(run.folder, change?.problem ? [] : entries);
   const rows = change?.pack && !change.problem ? comparisonRows(change, "reader") : [];
+  const [presentation, setPresentation] = useState<"cards" | "table">("cards");
   if (change?.first_run === true && !change.pack && !change.problem && !change.note)
     return (
       <section className={`${card} min-h-76 justify-center py-14`}>
@@ -119,47 +122,64 @@ export function Changes({
         ) : null}
         {rows.length > 0 && (
           <>
-            <ul className="grid gap-4 lg:grid-cols-3">
-              {rows.map(
-                (
-                  [label = "", before = "", after = "", delta, reason = "", analysis = ""],
-                  index,
-                ) => {
-                  const href = trace.measure(label);
-                  return (
-                    <ChangeCard
-                      key={index}
-                      source={
-                        href && (
-                          <PublishedSource href={href} name={label}>
-                            Comparison row
-                          </PublishedSource>
-                        )
-                      }
-                      change={{
-                        measure: label,
-                        kind: reason.endsWith("Same-period analysis change")
-                          ? "Same-period analysis change"
-                          : delta && delta !== "—"
-                            ? "Comparable"
-                            : "Not assessable",
-                        current: cell(after),
-                        from: cell(before),
-                        change: delta && delta !== "—" ? delta : null,
-                        direction: "none",
-                        cause: containsReference(reason) ? "See comparison evidence." : reason,
-                        effect: containsReference(analysis) ? "" : analysis,
-                        trace: null,
-                      }}
-                    />
-                  );
-                },
-              )}
-            </ul>
-            <details>
-              <summary className="cursor-pointer font-medium">Comparison table</summary>
-              <ComparisonTable rows={rows} source={trace.measure} />
-            </details>
+            <div className="flex justify-end">
+              <ButtonGroup
+                aria-label="Presentation"
+                size="sm"
+                disallowEmptySelection
+                selectedKeys={[presentation]}
+                onSelectionChange={(keys) => {
+                  const [key] = keys;
+                  if (key === "cards" || key === "table") setPresentation(key);
+                }}
+              >
+                <ButtonGroupItem id="cards">Cards</ButtonGroupItem>
+                <ButtonGroupItem id="table">Table</ButtonGroupItem>
+              </ButtonGroup>
+            </div>
+            {presentation === "cards" ? (
+              <ul className="grid gap-4 lg:grid-cols-3">
+                {rows.map(
+                  (
+                    [label = "", before = "", after = "", delta, reason = "", analysis = ""],
+                    index,
+                  ) => {
+                    const href = trace.measure(label);
+                    return (
+                      <ChangeCard
+                        key={index}
+                        source={
+                          href && (
+                            <PublishedSource href={href} name={label}>
+                              Comparison row
+                            </PublishedSource>
+                          )
+                        }
+                        change={{
+                          measure: label,
+                          kind: reason.endsWith("Same-period analysis change")
+                            ? "Same-period analysis change"
+                            : delta && delta !== "—"
+                              ? "Comparable"
+                              : "Not assessable",
+                          current: cell(after),
+                          from: cell(before),
+                          change: delta && delta !== "—" ? delta : null,
+                          direction: "none",
+                          cause: containsReference(reason) ? "See comparison evidence." : reason,
+                          effect: containsReference(analysis) ? "" : analysis,
+                          trace: null,
+                        }}
+                      />
+                    );
+                  },
+                )}
+              </ul>
+            ) : (
+              <section aria-label="Earlier against current">
+                <ComparisonTable rows={rows} source={trace.measure} />
+              </section>
+            )}
           </>
         )}
         {change?.pack && !change.problem && (

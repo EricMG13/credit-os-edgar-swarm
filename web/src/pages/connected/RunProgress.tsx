@@ -134,6 +134,7 @@ export function RunProgress({ id, mode }: { id: string; mode: Mode }) {
             </p>
           )}
           <Summary
+            spendCaption="Cap usage"
             run={{
               spend: spendFigure(run),
               finished: finishedFigure(run),

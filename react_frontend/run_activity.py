@@ -12,6 +12,8 @@ from deploy_workflow import http_base
 from deploy_workflow.inbox import activity, runs
 from deploy_workflow.inbox.layout import Layout
 from deploy_workflow.library_index import Refused, read_inside
+from deploy_workflow.model.budget import BudgetError, exact_sum, read_reservation_snapshot
+from deploy_workflow.model.pricing import money_text
 from deploy_workflow.owners.cpos_launch import METHODS
 from deploy_workflow.run_events import EVENTS, read_events
 
@@ -21,6 +23,31 @@ _RUN_EVENTS = frozenset(
 )
 _FEED_LIMIT = 80
 _EXECUTIONS = frozenset({"host-session", "retained-response-replay", "synthetic", "live-provider"})
+
+
+def _usage(directory: Path) -> dict[str, str | None]:
+    """Break cap usage into settled charges and unresolved holds from the same journal."""
+    live = directory / "live"
+    try:
+        if not live.exists() and not live.is_symlink():
+            settled = held = Decimal(0)
+        else:
+            if not live.is_dir():
+                raise BudgetError("live is not a folder")
+            rows = read_reservation_snapshot(live)
+            settled = exact_sum(
+                row.settled_usd
+                for row in rows
+                if row.status in ("settled", "overrun") and row.settled_usd is not None
+            )
+            held = exact_sum(row.usd for row in rows if row.status in ("unknown", None))
+        return {
+            "spent": money_text(exact_sum((settled, held))),
+            "settled_spent": money_text(settled),
+            "held": money_text(held),
+        }
+    except (BudgetError, OSError, RecursionError):
+        return {"spent": None, "settled_spent": None, "held": None}
 
 
 def _milestone(raw: dict[str, Any], modules: set[str]) -> dict[str, str] | None:
@@ -94,6 +121,7 @@ def reply(layout: Layout, run_id: str, cap: Decimal) -> http_base.Reply:
         raise http_base.refuse(404, "run activity is unavailable")
     snapshot = activity.snapshot(layout, [record], cap=cap, now=datetime.now(UTC))
     [shown] = snapshot["runs"]
+    usage = _usage(directory)
     states = shown.get("modules", activity.module_states(record.pathway, []))
     manifest = _manifest(directory)
     modules = _planned(manifest, states)
@@ -116,7 +144,7 @@ def reply(layout: Layout, run_id: str, cap: Decimal) -> http_base.Reply:
             if isinstance(execution, str) and execution in _EXECUTIONS
             else None,
             "cap": _cap(manifest, cap),
-            "spent": shown.get("spent"),
+            **usage,
             "stalled": shown.get("stalled", False),
             "modules": modules,
             "events": _feed(directory, {code for code, _ in modules}),

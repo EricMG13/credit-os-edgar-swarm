@@ -1,0 +1,109 @@
+"""Publication precedes scheduler acceptance; every connected reader must agree."""
+
+import copy
+import json
+from urllib.parse import quote
+
+from deploy_workflow.inbox import runs
+from react_frontend.admission import admitted
+from tests import test_react_frontend as fixtures
+
+hosted = fixtures.hosted
+root = fixtures.root
+web = fixtures.web
+request = fixtures.request
+
+
+def publication():
+    return {
+        "catalogue": {
+            "real": [
+                {"id": folder, "name": folder, "date": "2026-10-31"}
+                for folder in ("managed", "Rapport Émetteur")
+            ]
+        },
+        "workspace": {
+            "runs": {
+                "managed-key": {
+                    "folder": "managed",
+                    "pathway": "credit_snapshot",
+                    "modules": {
+                        "CP-1": {"outputs": ["managed/output"], "default": "managed/output"}
+                    },
+                },
+                "retained-key": {
+                    "folder": "Rapport Émetteur",
+                    "pathway": "credit_snapshot",
+                    "modules": {
+                        "CP-1": {"outputs": ["retained/output"], "default": "retained/output"}
+                    },
+                },
+            },
+            "outputs": {
+                "managed/output": {"run": "managed-key", "sha256": "managed-hash"},
+                "retained/output": {"run": "retained-key", "sha256": "retained-hash"},
+            },
+            "handoffs": {"managed-hash": ["unfinished"], "retained-hash": ["retained"]},
+            "models": [
+                {"runId": "managed"},
+                {"runFolder": "managed"},
+                {"runFolder": "Rapport Émetteur"},
+            ],
+        },
+        "chips": {"managed/output:4": ["unfinished"], "retained/output:4": ["retained"]},
+        "activity": {},
+        "preview": {"reason": "Retained test publication"},
+    }
+
+
+def test_admission_preserves_retained_identity_and_excludes_unaccepted_outputs(hosted):
+    layout = hosted.scheduler.layout
+    runs.save(
+        layout,
+        runs.Record(
+            id="managed",
+            pathway="credit_snapshot",
+            folder="managed",
+            status="running",
+            claimed_at="",
+        ),
+    )
+    source = publication()
+    original = copy.deepcopy(source)
+    visible = admitted(source, layout)
+    assert source == original
+    assert set(visible["workspace"]["runs"]) == {"retained-key"}
+    assert set(visible["workspace"]["outputs"]) == {"retained/output"}
+    assert visible["workspace"]["handoffs"] == {"retained-hash": ["retained"]}
+    assert visible["workspace"]["models"] == [{"runFolder": "Rapport Émetteur"}]
+    assert visible["chips"] == {"retained/output:4": ["retained"]}
+    assert visible["preview"] == original["preview"]
+
+
+def test_retained_unicode_folder_and_snapshot_share_admission(hosted):
+    layout = hosted.scheduler.layout
+    directory = layout.engine / "library"
+    directory.mkdir(exist_ok=True)
+    source = publication()
+    (directory / "data.js").write_text(
+        f"window.CREDIT_OS_DATA={json.dumps(source)};", encoding="utf-8"
+    )
+    runs.save(
+        layout,
+        runs.Record(
+            id="managed",
+            pathway="credit_snapshot",
+            folder="managed",
+            status="failed",
+            claimed_at="",
+        ),
+    )
+    visible = json.loads(request(hosted, "/connected/snapshot")[1])
+    assert [run["id"] for run in visible["catalogue"]["real"]] == ["Rapport Émetteur"]
+    status, body, _ = request(hosted, "/connected/report/" + quote("Rapport Émetteur", safe=""))
+    assert status == 200
+    assert json.loads(body)["id"] == "Rapport Émetteur"
+    assert json.loads(request(hosted, "/connected/reports")[1])["reports"] == [json.loads(body)]
+    assert request(hosted, "/connected/report/managed")[0] == 404
+    for folder in ("..", "../managed", "managed/other"):
+        assert request(hosted, "/connected/report/" + quote(folder, safe=""))[0] == 404

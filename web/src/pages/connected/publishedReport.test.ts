@@ -9,6 +9,10 @@ import {
   publishedHref,
   runPathway,
   runTiming,
+  evidencePath,
+  evidenceToken,
+  resolveEvidenceLocation,
+  type OutputEntry,
 } from "./publishedReport";
 
 describe("published handoff boundaries", () => {
@@ -183,5 +187,59 @@ describe("published handoff boundaries", () => {
         problem: expect.any(String) as unknown,
       });
     }
+  });
+});
+
+describe("stable evidence addresses", () => {
+  const first = {
+    output: {
+      id: "run/CP-1/first.md",
+      sha256: "a".repeat(64),
+      module: "CP-1",
+      label: "First handoff",
+      href: "first.md",
+    },
+    sections: [
+      {
+        heading: "Findings",
+        level: 2,
+        line: 40,
+        blocks: [
+          {
+            type: "table",
+            line: 45,
+            headers: ["Measure"],
+            rows: [{ line: 46, cells: ["Leverage"] }],
+          },
+        ],
+      },
+    ],
+    selected: true,
+  } as OutputEntry;
+  const second: OutputEntry = {
+    ...first,
+    output: { ...first.output, id: "run/CP-1/second.md", sha256: "b".repeat(64) },
+  };
+
+  it("keeps an output and row address bound when entries reorder", () => {
+    const token = evidenceToken(first, 46);
+    expect(evidencePath("issuer run", first, 46)).toBe(`/report/issuer%20run#evidence/${token}`);
+    expect(resolveEvidenceLocation([second, first], token)).toMatchObject({
+      entry: first,
+      index: 1,
+      line: 46,
+    });
+  });
+
+  it("rejects unavailable revisions and old ordinal links", () => {
+    expect(resolveEvidenceLocation([second], evidenceToken(first, 46))).toBeNull();
+    expect(resolveEvidenceLocation([first], "1-46")).toBeNull();
+    const revised: OutputEntry = {
+      ...first,
+      output: { ...first.output, sha256: "c".repeat(64) },
+    };
+    expect(resolveEvidenceLocation([revised], evidenceToken(first, 46))).toBeNull();
+    expect(resolveEvidenceLocation([first], evidenceToken(first, 47))).toBeNull();
+    expect(resolveEvidenceLocation([first, first], evidenceToken(first, 46))).toBeNull();
   });
 });

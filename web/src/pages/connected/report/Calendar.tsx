@@ -20,7 +20,7 @@ function eventDisplay(cells: string[]) {
 export function buildCalendar(entries: OutputEntry[], folder: string) {
   const rows: CalendarRow[] = [];
   const gaps: CalendarGap[] = [];
-  entries.forEach((entry, index) => {
+  entries.forEach((entry) => {
     const { output, sections, selected } = entry;
     if (!selected || !output.events?.length || output.parseError) return;
     const owner = [moduleName(output.module).replace(/ \(CP-[^)]+\)$/, ""), output.state?.declared]
@@ -37,7 +37,7 @@ export function buildCalendar(entries: OutputEntry[], folder: string) {
       const block = blocks.find((item) => item.type === "table" && item.line === table.line);
       if (block?.type !== "table") continue;
       seen.add(table.line);
-      const href = evidencePath(folder, String(index), table.line);
+      const href = evidencePath(folder, entry, table.line);
       const gap = word(descriptor.gap);
       if (gap) {
         gaps.push({ owner, href, title, reason: gap });
@@ -67,7 +67,7 @@ export function buildCalendar(entries: OutputEntry[], folder: string) {
         if (!row) continue;
         rows.push({
           owner,
-          href: evidencePath(folder, String(index), row.line),
+          href: evidencePath(folder, entry, row.line),
           cells: eventDisplay(row.cells),
           from,
           to,

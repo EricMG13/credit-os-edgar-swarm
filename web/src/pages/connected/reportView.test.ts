@@ -29,7 +29,7 @@ function foundation(
   options: { run: string; id: string; sha256: string } = {
     run: "first",
     id: "foundation-a",
-    sha256: "first-hash",
+    sha256: "a".repeat(64),
   },
 ): OutputEntry {
   return { output: { ...options, module: "CP-1", label: "", href: "" }, selected: true, sections };
@@ -76,8 +76,8 @@ describe("reader data fidelity", () => {
 
   it("isolates trace identities for alternate outputs and other runs with the same row number", () => {
     const a = foundation([]);
-    const b = foundation([], { run: "first", id: "foundation-b", sha256: "second-hash" });
-    const c = foundation([], { run: "second", id: "foundation-a", sha256: "first-hash" });
+    const b = foundation([], { run: "first", id: "foundation-b", sha256: "b".repeat(64) });
+    const c = foundation([], { run: "second", id: "foundation-a", sha256: "c".repeat(64) });
     expect(new Set([a, b, c].map((entry) => traceKey(entry, 22))).size).toBe(3);
   });
 
@@ -102,7 +102,7 @@ describe("reader data fidelity", () => {
     } as unknown as Snapshot;
 
     const figure = traceForLine(snapshot, entry, 2, 21);
-    expect(figure?.evidenceItem).toBe("2-21");
+    expect(figure?.evidenceItem).toBe(`foundation-a~${"a".repeat(64)}-21`);
     expect(figure?.derivation.children).toMatchObject([
       { label: "Basis", value: "Filing page 14\nFiling page 20" },
       { label: "filing.txt" },
@@ -110,7 +110,7 @@ describe("reader data fidelity", () => {
     const row = traceForLine(snapshot, entry, 2, 22);
     expect(row?.statement).toContain("0.00");
     expect(row?.derivation.children[0]?.value).toBe("Filing page 14");
-    expect(row?.evidenceItem).toBe("2-22");
+    expect(row?.evidenceItem).toBe(`foundation-a~${"a".repeat(64)}-22`);
   });
 
   it.each([

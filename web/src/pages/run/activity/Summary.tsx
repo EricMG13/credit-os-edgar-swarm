@@ -39,11 +39,17 @@ function WithBar({ caption, figure }: { caption: string; figure: Figure }) {
 }
 
 /** Spend, modules finished and elapsed time, formatted by the caller. */
-export function Summary({ run }: { run: Pick<RunRecord, "spend" | "finished" | "elapsed"> }) {
+export function Summary({
+  run,
+  spendCaption = "Spend",
+}: {
+  run: Pick<RunRecord, "spend" | "finished" | "elapsed">;
+  spendCaption?: string;
+}) {
   return (
     <Card>
       <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,220px),1fr))] gap-8">
-        <WithBar caption="Spend" figure={run.spend} />
+        <WithBar caption={spendCaption} figure={run.spend} />
         <WithBar caption="Modules finished" figure={run.finished} />
         <Item caption="Elapsed" value={run.elapsed.value ?? <Missing />}>
           <span className="text-sm text-text-tertiary">{run.elapsed.note}</span>

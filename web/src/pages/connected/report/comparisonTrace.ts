@@ -39,13 +39,13 @@ export function comparisonTrace(folder: string, entries: OutputEntry[]) {
   return {
     measure: (label: string) => {
       const row = namedRow(issuer, ({ cells }) => plain(cells[0]) === label);
-      return row && evidencePath(folder, String(index), row.line);
+      return row && entry && evidencePath(folder, entry, row.line);
     },
     module: (code: string) => {
       const row = namedRow(analysis, ({ cells }) => plain(cells[0]).endsWith(`(${code})`));
-      return row && evidencePath(folder, String(index), row.line);
+      return row && entry && evidencePath(folder, entry, row.line);
     },
-    handoff: entry && evidencePath(folder, String(index)),
+    handoff: entry && evidencePath(folder, entry),
   };
 }
 
@@ -61,13 +61,13 @@ function scheduleTrace(folder: string, entries: OutputEntry[]) {
   const debtColumn = table?.headers.indexOf("Debt maturing") ?? -1;
   const unitColumn = table?.headers.indexOf("Reporting unit") ?? -1;
   return {
-    table: table && evidencePath(folder, String(index), table.line),
+    table: table && evidencePath(folder, entry, table.line),
     row: (period: string, value: string | null, unit: string) => {
       const expected = value === null ? undefined : exactAmount(value);
       if (expected === undefined) return;
       const row = namedRow(table, ({ cells }) => cells[periodColumn] === period);
       if (row?.cells[unitColumn] === unit && exactAmount(row.cells[debtColumn] ?? "") === expected)
-        return evidencePath(folder, String(index), row.line);
+        return entry && evidencePath(folder, entry, row.line);
     },
   };
 }

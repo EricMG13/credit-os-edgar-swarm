@@ -97,6 +97,8 @@ function response(page, pathPattern, method) {
   );
 }
 
+const digest = (value) => createHash("sha256").update(value).digest("hex");
+
 async function submit(page, channel, paidPreview = false) {
   await page.getByRole("link", { name: "Start a run", exact: true }).click();
   const stepper = page.getByRole("list", { name: "Steps in this run" });
@@ -259,7 +261,11 @@ async function checkPaidConfirmation(browser, endpoint, channel) {
 async function checkActivity(page, channel) {
   const activity = page.getByRole("region", { name: "Run activity", exact: true });
   await activity.getByText("USD 0.00", { exact: true }).waitFor();
-  await activity.getByRole("progressbar", { name: "USD 0.00 of USD 20.00" }).waitFor();
+  await activity
+    .getByRole("progressbar", {
+      name: "USD 0.00 of USD 20.00 cap usage; USD 0.00 settled, USD 0.00 reserved or unknown",
+    })
+    .waitFor();
   await activity.getByRole("progressbar", { name: "14 of 14 modules" }).waitFor();
   await activity.getByText(/^(?:\d+ min )?\d+ s$/u).waitFor();
   const modules = activity.getByRole("group", { name: "Modules", exact: true });
@@ -290,7 +296,7 @@ async function openExactTrace(page, source) {
   await source.press("Enter");
   const open = page.getByRole("dialog").getByRole("link", { name: "Open in Evidence" });
   const href = await open.getAttribute("href");
-  assert.match(href, /#evidence\/\d+-\d+$/u);
+  assert.match(href, /#evidence\/.+~[0-9a-f]{64}-\d+$/u);
   await open.click();
   await page.waitForURL(new URL(href, page.url()).href);
   return href;
@@ -318,7 +324,11 @@ async function checkRecord(report, page, channel) {
   await report.getByRole("heading", { name: "Run record" }).waitFor();
   await report.getByText("Synthetic test", { exact: true }).waitFor();
   await report.getByText(/^(?:\d+ min )?\d+ s$/u).waitFor();
-  await report.getByRole("progressbar", { name: "USD 0.00 of USD 20.00" }).waitFor();
+  await report
+    .getByRole("progressbar", {
+      name: "USD 0.00 of USD 20.00 cap usage; USD 0.00 settled, USD 0.00 reserved or unknown",
+    })
+    .waitFor();
   await report.getByRole("combobox", { name: "Module", exact: true }).selectOption("CP-1");
   await report.getByRole("columnheader", { name: "Accepted (UTC)", exact: true }).waitFor();
   await report.getByRole("columnheader", { name: "Adapter status", exact: true }).waitFor();
@@ -361,7 +371,7 @@ async function checkChangesTrace(browser, endpoint, id) {
       id: "earlier-schedule",
       module: "CP-1",
       run: "comparison-fixture",
-      sha256: "earlier-schedule",
+      sha256: digest("earlier-schedule"),
       href: "",
       label: "Financial foundation",
     };
@@ -380,13 +390,24 @@ async function checkChangesTrace(browser, endpoint, id) {
         ],
       },
     ];
+    prior.modules["CP-1"].outputs.unshift("reordered-output");
+    snapshot.workspace.outputs["reordered-output"] = {
+      id: "reordered-output",
+      module: "CP-1",
+      run: "comparison-fixture",
+      sha256: digest("reordered-output"),
+      href: "",
+      label: "Earlier retained output",
+    };
+    snapshot.workspace.handoffs["reordered-output"] =
+      snapshot.workspace.handoffs["earlier-schedule"];
     const output = "comparison-output";
     current.modules["CP-8"] = { outputs: [output], default: output };
     snapshot.workspace.outputs[output] = {
       id: output,
       module: "CP-8",
       run: key,
-      sha256: output,
+      sha256: digest(output),
       href: "",
       label: "Comparison",
     };
@@ -469,7 +490,7 @@ async function checkChangesTrace(browser, endpoint, id) {
     });
     assert.equal(
       await priorSource.getAttribute("href"),
-      "/report/comparison-fixture#evidence/0-24",
+      `/report/comparison-fixture#evidence/earlier-schedule~${digest("earlier-schedule")}-24`,
     );
     await openExactTrace(
       page,
@@ -477,8 +498,18 @@ async function checkChangesTrace(browser, endpoint, id) {
     );
     await report.getByRole("cell", { name: "500", exact: true }).waitFor();
     assert.equal(await report.getByRole("cell", { name: "1,250", exact: true }).count(), 0);
-    await page.goto(new URL("/report/comparison-fixture#evidence/0-24", endpoint).href);
+    await page.goto(
+      new URL(
+        `/report/comparison-fixture#evidence/earlier-schedule~${digest("earlier-schedule")}-24`,
+        endpoint,
+      ).href,
+    );
     await report.getByRole("cell", { name: "0.00", exact: true }).waitFor();
+    await page.goto(new URL("/report/comparison-fixture#evidence/1-24", endpoint).href);
+    await report
+      .getByRole("alert")
+      .getByText("Evidence link unavailable", { exact: true })
+      .waitFor();
   } finally {
     await page.close();
   }
@@ -504,7 +535,7 @@ async function checkCalendar(report, artifacts, channel, page) {
   await events.screenshot({ path: path.join(artifacts, `${channel}-calendar.png`) });
   const source = table.getByRole("button", { name: /^Show sources for Synthetic note ·/u }).first();
   const href = await checkTraceFocus(page, source, /Filing p\.1/u);
-  assert.match(href, /#evidence\/\d+-\d+$/u);
+  assert.match(href, /#evidence\/.+~[0-9a-f]{64}-\d+$/u);
   await table.waitFor();
   await source.press("Enter");
   await page.getByRole("dialog").getByRole("link", { name: "Open in Evidence" }).click();
@@ -699,7 +730,7 @@ async function checkCharts(report, artifacts, channel, page) {
     exact: true,
   });
   const sourceHref = await checkTraceFocus(page, source, "Basis");
-  assert.match(sourceHref, /#evidence\/\d+-\d+$/u);
+  assert.match(sourceHref, /#evidence\/.+~[0-9a-f]{64}-\d+$/u);
   assert.notEqual(sourceHref, debtRowHref);
   assert.ok(await debt.getByRole("radio", { name: "Table", exact: true }).isChecked());
   await source.press("Enter");
@@ -760,6 +791,29 @@ async function checkCharts(report, artifacts, channel, page) {
     has: page.getByRole("rowheader", { name: "Revenue", exact: true }),
   });
   await revenueRow.getByRole("cell", { name: "1,050", exact: true }).first().waitFor();
+  // Independent fixture arithmetic: 1,000 × 1.05 × 0.30 = 315; a 20% shock gives 252.
+  const ebitdaRow = model.getByRole("row").filter({
+    has: page.getByRole("rowheader", {
+      name: "Adj EBITDA (as named in Financial foundation)",
+      exact: true,
+    }),
+  });
+  await ebitdaRow.getByRole("cell", { name: "315", exact: true }).waitFor();
+  const downsideCase = report.getByRole("radio", { name: /^Downside shock/u });
+  await downsideCase.focus();
+  await downsideCase.press("Space");
+  assert.ok(await downsideCase.isChecked());
+  await ebitdaRow.getByRole("cell", { name: "252", exact: true }).waitFor();
+  assert.equal(await ebitdaRow.getByRole("cell", { name: "315", exact: true }).count(), 0);
+  const cashProxy = report.getByRole("figure", { name: "Cash proxy by scenario", exact: true });
+  await cashProxy.getByRole("radio", { name: "Table", exact: true }).check();
+  await cashProxy.getByRole("row", { name: /Downside shock/u }).waitFor();
+  assert.equal(await cashProxy.getByRole("row", { name: /Base case/u }).count(), 0);
+  const baseCase = report.getByRole("radio", { name: /^Base case/u });
+  await baseCase.focus();
+  await baseCase.press("Space");
+  await ebitdaRow.getByRole("cell", { name: "315", exact: true }).waitFor();
+  await cashProxy.getByRole("row", { name: /Base case/u }).waitFor();
   const runCharts = report.getByRole("region", { name: "Run charts", exact: true });
   const forecastLimits = runCharts.getByRole("figure", { name: "Portfolio limits", exact: true });
   await forecastLimits.getByText("3.73%", { exact: true }).waitFor();
@@ -943,6 +997,8 @@ for (const [channel, brand, envName] of [
             "dated instrument quotes, decision and recovery qualification",
             "selected workbook attestation, portfolio limits and proposal qualification",
             "forecast chart and model",
+            "shared Base and Downside case selection updates cash proxy and exact model values",
+            "evidence bookmark retains identity after reorder and rejects old ordinal addresses",
             "forecast run figures and original module",
             "signed liquidity bridge and unfunded refinancing row",
             "report history",

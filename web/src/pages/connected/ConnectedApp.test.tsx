@@ -441,6 +441,8 @@ describe("connected activity and reports", () => {
               as_of: report.asOf,
               cap: "20",
               spent: "0",
+              settled_spent: "0",
+              held: "0",
               started_at: "2026-10-31T17:31:00Z",
               ended_at: "2026-10-31T17:32:14Z",
               observed_at: "2026-10-31T17:35:00Z",
@@ -460,10 +462,9 @@ describe("connected activity and reports", () => {
     render(<ConnectedApp path="/run/test-run" mode="synthetic" />);
     expect(await screen.findByText(/Waiting for the report/)).toBeInTheDocument();
     expect(screen.getByText("Source readiness (CP-0)")).toBeInTheDocument();
-    expect(screen.getByRole("progressbar", { name: "USD 0.00 of USD 20.00" })).toHaveAttribute(
-      "aria-valuenow",
-      "0",
-    );
+    expect(
+      screen.getByRole("progressbar", { name: /USD 0.00 of USD 20.00 cap usage/ }),
+    ).toHaveAttribute("aria-valuenow", "0");
     expect(screen.getByRole("progressbar", { name: "1 of 1 modules" })).toBeInTheDocument();
     expect(screen.getByText("1 min 14 s")).toBeInTheDocument();
     expect(screen.getByText("Report delivered.")).toBeInTheDocument();
@@ -533,12 +534,12 @@ describe("connected activity and reports", () => {
             id: output,
             module: "CP-2",
             label: "Published output",
-            sha256: "digest",
+            sha256: "d".repeat(64),
             issue: "Chart data: risk exposure is not in its fixed table",
           },
         },
         handoffs: {
-          digest: [
+          ["d".repeat(64)]: [
             { heading: "Findings", level: 2, line: 1, blocks: [] },
             {
               heading: "Bottom line",
@@ -616,9 +617,9 @@ describe("connected activity and reports", () => {
     expect(await screen.findByRole("dialog")).toHaveTextContent(filing);
     expect(screen.getByRole("link", { name: "Open in Evidence" })).toHaveAttribute(
       "href",
-      `${path}#evidence/0-9`,
+      `${path}#evidence/${encodeURIComponent(output)}~${"d".repeat(64)}-9`,
     );
-    window.location.hash = "evidence/0-9";
+    window.location.hash = `evidence/${encodeURIComponent(output)}~${"d".repeat(64)}-9`;
     expect(
       await screen.findByRole("heading", { name: "Fundamental credit (CP-2) · Line 9" }),
     ).toBeInTheDocument();
@@ -626,6 +627,8 @@ describe("connected activity and reports", () => {
     expect(screen.queryByRole("cell", { name: "prior-filing.pdf" })).toBeNull();
     expect(screen.queryByText("Downstream-only instructions.")).toBeNull();
     expect(screen.queryByText("Chart data: risk exposure is not in its fixed table")).toBeNull();
+    window.location.hash = "evidence/0-9";
+    expect(await screen.findByRole("alert")).toHaveTextContent("Evidence link unavailable");
     window.location.hash = "evidence/record/CP-2";
     expect(
       await screen.findByText("Chart data: risk exposure is not in its fixed table"),

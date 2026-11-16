@@ -70,14 +70,15 @@ function RunTotals({
         {elapsed && <dd className="text-sm text-text-tertiary">{elapsed.note}</dd>}
       </div>
       <div className="grid content-start gap-1">
-        <dt className="text-sm text-text-tertiary">Spend against the cap</dt>
+        <dt className="text-sm text-text-tertiary">Cap usage</dt>
         <dd className="font-semibold tabular-nums">{spend?.value ?? missing}</dd>
         <dd>
           {spend?.bar ? (
             <ProgressBar {...spend.bar} labelBelow />
           ) : (
             <span className="text-sm text-text-tertiary">
-              {cap === null ? spend?.note : `Recorded cap USD ${String(cap)}`}
+              {spend?.note ??
+                (cap === null ? "Recorded cap unavailable" : `Recorded cap USD ${String(cap)}`)}
             </span>
           )}
         </dd>

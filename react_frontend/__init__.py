@@ -12,12 +12,11 @@ from typing import Any
 from urllib.parse import SplitResult, unquote
 
 from deploy_workflow import http_base
-from deploy_workflow.inbox import runs
 from deploy_workflow.inbox.layout import Layout
 from deploy_workflow.inbox.scheduler import Scheduler, Settings
 from deploy_workflow.run_start import service
 
-from . import artifacts, portfolio, run_activity
+from . import admission, artifacts, portfolio, run_activity
 
 PROJECT = Path(__file__).resolve().parent.parent
 RUN_ID = re.compile(r"[0-9A-Za-z][0-9A-Za-z._-]{0,79}")
@@ -32,11 +31,15 @@ EXPORT_PREFIX = "window.CREDIT_OS_DATA="
 EXPORT_KEYS = ("catalogue", "workspace", "activity", "chips")
 
 
+def _valid_report_folder(folder: str) -> bool:
+    return folder not in {".", ".."} and REPORT_FOLDER.fullmatch(folder) is not None
+
+
 def _report_page(path: str) -> bool:
     """Match a retained library folder without extending the scheduler's run ID grammar."""
     found = REPORT_PAGE.fullmatch(path)
     folder = unquote(found[1]) if found else ""
-    return folder not in {".", ".."} and REPORT_FOLDER.fullmatch(folder) is not None
+    return _valid_report_folder(folder)
 
 
 def _invalid_json(constant: str) -> None:
@@ -60,10 +63,17 @@ def _read_publication(path: Path) -> tuple[bytes, dict[str, Any] | None]:
     return encoded.encode("utf-8"), snapshot
 
 
-def _report_entries(snapshot: dict[str, Any] | None, layout: Layout) -> dict[str, dict[str, str]]:
+def _visible_publication(layout: Layout) -> tuple[bytes, dict[str, Any] | None]:
+    payload, snapshot = _read_publication(layout.engine / "library" / "data.js")
+    if snapshot is None:
+        return payload, None
+    visible = admission.admitted(snapshot, layout)
+    return json.dumps(visible, ensure_ascii=False).encode("utf-8"), visible
+
+
+def _report_entries(snapshot: dict[str, Any] | None) -> dict[str, dict[str, str]]:
     if snapshot is None:
         return {}
-    unfinished = {record.id for record in runs.load_all(layout) if record.status != "finished"}
     workspace_runs = {run["folder"]: run for run in snapshot["workspace"]["runs"].values()}
     return {
         run_id: {
@@ -73,9 +83,7 @@ def _report_entries(snapshot: dict[str, Any] | None, layout: Layout) -> dict[str
             "pathway": workspace_runs[run_id]["pathway"] or "",
         }
         for run in snapshot["catalogue"]["real"]
-        if RUN_ID.fullmatch(run_id := run["id"])
-        and run_id in workspace_runs
-        and run_id not in unfinished
+        if _valid_report_folder(run_id := run["id"]) and run_id in workspace_runs
     }
 
 
@@ -150,15 +158,15 @@ def _handler(dist: Path, page: bytes, context: dict[str, Any]) -> type[service.H
             super()._get(url)
 
         def _publication(self) -> tuple[bytes, dict[str, Any] | None]:
-            return _read_publication(self._layout.engine / "library" / "data.js")
+            return _visible_publication(self._layout)
 
         def _reports(self, path: str) -> None:
             listing = path == "/connected/reports"
-            run_id = path.removeprefix(REPORT_PREFIX)
-            if not listing and RUN_ID.fullmatch(run_id) is None:
+            run_id = unquote(path.removeprefix(REPORT_PREFIX))
+            if not listing and not _valid_report_folder(run_id):
                 raise http_base.refuse(404, "unknown report")
             _, snapshot = self._publication()
-            entries = _report_entries(snapshot, self._layout)
+            entries = _report_entries(snapshot)
             if listing:
                 raise http_base.Reply(200, {"reports": list(entries.values())})
             if run_id not in entries:

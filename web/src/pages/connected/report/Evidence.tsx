@@ -3,15 +3,19 @@ import { DownloadButton } from "@/pages/library/parts/DownloadButton";
 import { DerivationTree } from "@/pages/library/parts/DerivationTree";
 import { RunTabLink } from "@/pages/library/parts/RunFrame";
 import type { TreeNode } from "@/pages/library/slice";
+import { StatusBadge } from "@/components/status/StatusBadge";
 import { moduleName, type Mode } from "../api";
 import { card, field, heading } from "../layout";
 import {
   classifySections,
   evidencePath,
+  evidenceToken,
   FORECAST_INPUTS,
   publishedHref,
+  resolveEvidenceLocation,
   type OutputEntry,
   type PublishedRun,
+  type Section,
   type Snapshot,
   type Table,
 } from "../publishedReport";
@@ -21,7 +25,6 @@ import {
   richParts,
   traceDetails,
   traceForLine,
-  traceTarget,
 } from "../ReportContent";
 import { ArtifactDownloads } from "./ArtifactDownloads";
 import { ReportRecord } from "./Record";
@@ -34,12 +37,10 @@ function rowView(table: Table, line: number | undefined) {
 function EvidenceLocation({
   snapshot,
   entry,
-  index,
   line,
 }: {
   snapshot: Snapshot;
   entry: OutputEntry;
-  index: number;
   line?: number;
 }) {
   if (entry.output.parseError)
@@ -95,7 +96,7 @@ function EvidenceLocation({
             <div
               className="grid gap-2"
               key={block.line}
-              id={`evidence-${traceTarget(index, block.line)}`}
+              id={`evidence-${evidenceToken(entry, block.line)}`}
             >
               {block.type === "table" ? (
                 <PublishedTable table={rowView(block, line)} evidence />
@@ -221,33 +222,135 @@ function EvidenceGaps({
   entries: OutputEntry[];
   module?: string;
 }) {
-  const items = entries.flatMap((entry, index) => {
-    if (!entry.selected || (module && entry.output.module !== module)) return [];
+  const items = entries.flatMap((entry) => {
+    if (module && entry.output.module !== module) return [];
     return classifySections(entry.sections)
-      .filter(({ role, section }) => role === "gaps" && section.blocks.length)
-      .map(({ section }) => ({ entry, index, section }));
+      .filter(({ role }) => role === "gaps")
+      .flatMap(({ section }) => gapRecords(section.blocks).map((gap) => ({ entry, section, gap })));
   });
   return (
     <section className={card}>
-      <h3 className={heading}>Gaps</h3>
+      <div className="grid gap-1">
+        <h3 className={heading}>
+          Gaps <span className="ml-1 text-sm font-normal text-text-secondary">{items.length}</span>
+        </h3>
+        <p className="text-sm text-text-secondary">
+          What this run could not establish, with the detail each handoff records.
+        </p>
+      </div>
       {items.length ? (
-        <ul className="grid gap-2">
-          {items.map(({ entry, index, section }) => (
-            <li key={`${entry.output.id}-${String(section.line)}`}>
-              <a
-                className="text-action underline"
-                href={evidencePath(run.folder, String(index), section.line)}
-              >
-                {moduleName(entry.output.module)} · {section.heading}
-              </a>
-            </li>
-          ))}
-        </ul>
+        <div className="mt-4 overflow-x-auto rounded-ds-md border border-border-hairline">
+          <table className="w-full border-collapse text-left text-sm">
+            <thead className="bg-surface-subtle text-text-secondary">
+              <tr>
+                <th className="px-4 py-3 font-medium">Gap</th>
+                <th className="px-4 py-3 font-medium">Module</th>
+                <th className="px-4 py-3 font-medium">Severity</th>
+                <th className="px-4 py-3 font-medium">Recorded detail</th>
+                <th className="px-4 py-3 font-medium">Trace</th>
+              </tr>
+            </thead>
+            <tbody>
+              {items.map(({ entry, section, gap }) => (
+                <tr
+                  key={`${entry.output.id}-${String(gap.line)}`}
+                  className="border-t border-border-hairline align-top"
+                >
+                  <th scope="row" className="px-4 py-3 font-medium text-text-primary">
+                    {gap.title || section.heading}
+                  </th>
+                  <td className="px-4 py-3">
+                    {moduleName(entry.output.module)}
+                    {!entry.selected && ` · ${entry.output.label}`}
+                  </td>
+                  <td className="px-4 py-3">
+                    {gap.severity === "High" ||
+                    gap.severity === "Medium" ||
+                    gap.severity === "Low" ? (
+                      <StatusBadge set="Gap severity" state={gap.severity} />
+                    ) : gap.severity ? (
+                      gap.severity
+                    ) : (
+                      <span className="text-text-tertiary">Not recorded</span>
+                    )}
+                  </td>
+                  <td className="max-w-xl whitespace-pre-wrap px-4 py-3 text-text-secondary">
+                    {gap.details || "No additional detail recorded."}
+                  </td>
+                  <td className="px-4 py-3">
+                    <a
+                      className="text-action underline"
+                      href={evidencePath(run.folder, entry, gap.line)}
+                    >
+                      Open source
+                    </a>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       ) : (
-        <p>No gaps are listed in these published handoffs.</p>
+        <p className="mt-4 text-text-secondary">
+          {module ? `No recorded gaps for ${moduleName(module)}.` : "This run lists no gaps."}
+        </p>
       )}
     </section>
   );
+}
+
+type GapRecord = { line: number; title: string; severity: string | null; details: string };
+
+function noGap(value: string | undefined) {
+  return /^(?:none|no|nil|n\/a|n\.a\.)\.?$/i.test((value ?? "").trim());
+}
+
+function gapRecords(blocks: Section["blocks"]): GapRecord[] {
+  const records: GapRecord[] = [];
+  for (const block of blocks) {
+    if (block.type === "text") {
+      const text = block.text.trim();
+      if (text && !noGap(text))
+        records.push({
+          line: block.line,
+          title: "Gap recorded as text",
+          severity: null,
+          details: text,
+        });
+      continue;
+    }
+    if (
+      block.type !== "table" ||
+      (block.headers.includes("Earlier ref") && block.headers.includes("Current ref"))
+    )
+      continue;
+    const severityIndex = block.headers.findIndex((header) => /severity/i.test(header));
+    const titleHeader = (header: string) =>
+      !/severity/i.test(header) && !/^(?:id|gap id|reference|ref)$/i.test(header.trim());
+    const titled = block.headers.findIndex(
+      (header) => titleHeader(header) && /gap|missing|issue|item|shortfall|risk/i.test(header),
+    );
+    const titleIndex = titled >= 0 ? titled : Math.max(0, block.headers.findIndex(titleHeader));
+    for (const row of block.rows) {
+      const title = row.cells[titleIndex]?.trim() ?? "";
+      if (!title || noGap(title)) continue;
+      records.push({
+        line: row.line,
+        title,
+        severity: severityIndex < 0 ? null : row.cells[severityIndex]?.trim() || null,
+        details: block.headers
+          .map((header, index) => ({ header, value: row.cells[index]?.trim() ?? "" }))
+          .filter(({ value }, index) => value && index !== titleIndex && index !== severityIndex)
+          .map(({ header, value }) => `${header}: ${value}`)
+          .join("\n"),
+      });
+    }
+  }
+  return records;
+}
+
+export function hasRecordedGap(blocks: Section["blocks"]) {
+  return gapRecords(blocks).length > 0;
 }
 
 export function ReportEvidence({
@@ -266,15 +369,15 @@ export function ReportEvidence({
   mode: Mode;
 }) {
   const [section, module] = (target ?? "").split("/");
-  const location = /^(\d+)(?:-(\d+))?$/.exec(section ?? "");
+  const location = section ? resolveEvidenceLocation(entries, section) : null;
   const tabs = ["Summary", "Trace", "Sources", "Gaps", "Record"] as const;
-  const tab = location
-    ? "Trace"
-    : (tabs.find((label) => label.toLowerCase() === section) ?? "Summary");
-  const selectedIndex = location ? Number(location[1]) : -1;
-  const entry = entries[selectedIndex];
+  const namedTab = tabs.find((label) => label.toLowerCase() === section);
+  const invalidTraceAddress = Boolean(section && !namedTab && !location);
+  const tab = location ? "Trace" : (namedTab ?? (invalidTraceAddress ? "Trace" : "Summary"));
+  const selectedIndex = location?.index ?? -1;
+  const entry = location?.entry;
   const selectedModule = entry?.output.module ?? module;
-  const line = location?.[2] === undefined ? undefined : Number(location[2]);
+  const line = location?.line;
   const { evidence } = run;
   const sourceGroups = [
     { label: "Named in a handoff", rows: evidence.sources },
@@ -329,8 +432,19 @@ export function ReportEvidence({
         <section className={card}>
           <h3 className={heading}>Run evidence</h3>
           <p>
-            {String(entries.filter((item) => item.selected).length)} designated handoffs ·{" "}
-            {String(sourceGroups.reduce((total, { rows }) => total + rows.length, 0))} source files
+            {String(
+              entries.filter((item) => item.selected && (!module || item.output.module === module))
+                .length,
+            )}{" "}
+            designated handoffs ·{" "}
+            {String(
+              sourceGroups.reduce(
+                (total, { rows }) =>
+                  total + rows.filter((source) => !module || source.readBy.includes(module)).length,
+                0,
+              ),
+            )}{" "}
+            source files
           </p>
         </section>
       )}
@@ -352,15 +466,28 @@ export function ReportEvidence({
               index={selectedIndex}
             />
           )}
-          <EvidenceLocation snapshot={snapshot} entry={entry} line={line} index={selectedIndex} />
+          <EvidenceLocation snapshot={snapshot} entry={entry} line={line} />
         </article>
+      )}
+      {tab === "Trace" && invalidTraceAddress && (
+        <section role="alert" className={card}>
+          <h3 className={heading}>Evidence link unavailable</h3>
+          <p className="text-text-secondary">
+            This link does not identify a saved handoff revision in this report. Open a handoff from
+            the list to create a current evidence link.
+          </p>
+        </section>
       )}
       {tab === "Sources" && (
         <section className={card}>
           <h3 className={heading}>Sources</h3>
-          {sourceGroups.every(({ rows }) => !rows.length) && (
+          {sourceGroups.every(
+            ({ rows }) => !rows.some((source) => !module || source.readBy.includes(module)),
+          ) && (
             <p className="text-text-secondary">
-              No issuer files listed in this run’s published record.
+              {module
+                ? `No issuer files are listed for ${moduleName(module)}.`
+                : "No issuer files listed in this run’s published record."}
             </p>
           )}
           {sourceGroups
@@ -391,7 +518,7 @@ export function ReportEvidence({
             ))}
         </section>
       )}
-      {(tab === "Summary" || (tab === "Trace" && !entry)) && (
+      {(tab === "Summary" || (tab === "Trace" && !entry && !invalidTraceAddress)) && (
         <section className={card}>
           <div className="flex flex-wrap items-center justify-between gap-3">
             <h3 className={heading}>Handoffs</h3>
@@ -403,16 +530,13 @@ export function ReportEvidence({
           </div>
           <ul className="grid gap-2">
             {entries.map(
-              (item, index) =>
+              (item) =>
                 (!module || item.output.module === module) && (
                   <li
                     key={item.output.id}
                     className="flex flex-wrap items-center justify-between gap-3 border-t border-border-hairline pt-2"
                   >
-                    <a
-                      className="text-action underline"
-                      href={evidencePath(run.folder, String(index))}
-                    >
+                    <a className="text-action underline" href={evidencePath(run.folder, item)}>
                       {moduleName(item.output.module)}
                       {item.selected ? "" : ` · ${item.output.label}`}
                     </a>

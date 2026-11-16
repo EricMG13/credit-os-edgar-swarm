@@ -133,7 +133,8 @@ export function Modules({
   const figureTableLines = [securities?.summaryLine, securities?.outcomes?.line].filter(
     (line) => line !== undefined,
   );
-  const evidenceHref = (line: number) => evidencePath(run.folder, String(index), line);
+  const evidenceHref = (line: number) =>
+    entry ? evidencePath(run.folder, entry, line) : "#evidence/summary";
   const allMetrics = entry ? foundationMetrics(entry, view.catalogue) : [];
   const metrics = allMetrics.filter(({ metric }) =>
     ["Net debt (carrying basis)", "Debt principal", "All-in cash interest cover"].includes(

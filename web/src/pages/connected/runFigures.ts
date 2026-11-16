@@ -1,7 +1,7 @@
 import type { ActivityLine, Figure, ModuleWord } from "../run/slice-activity";
 import { moduleName, type Run, type RunEvent } from "./api";
 
-function amount(text: string | null): number | undefined {
+function amount(text: string | null | undefined): number | undefined {
   if (!text || !/^\d+(?:\.\d+)?(?:e[+-]?\d+)?$/i.test(text)) return;
   const value = Number(text);
   if (Number.isFinite(value)) return value;
@@ -10,19 +10,33 @@ function amount(text: string | null): number | undefined {
 const usd = (value: number) => `USD ${value.toFixed(2)}`;
 
 export function spendFigure(run: Run): Figure {
-  const beforeStart = !run.started_at && (run.status === "queued" || run.status === "rejected");
-  const spent = amount(run.spent) ?? (beforeStart ? 0 : undefined);
-  if (spent === undefined) return { value: null, bar: null, note: "Spend is unavailable" };
+  const spent = amount(run.spent);
+  if (spent === undefined)
+    return {
+      value: null,
+      bar: null,
+      note: "Cap usage is unavailable; the budget journal could not be read",
+    };
+  const settled = amount(run.settled_spent);
+  const held = amount(run.held);
+  const breakdown =
+    settled !== undefined && held !== undefined
+      ? `; ${usd(settled)} settled, ${usd(held)} reserved or unknown`
+      : "";
   const cap = amount(run.cap);
   if (!cap)
     return {
       value: usd(spent),
       bar: null,
-      note: cap === 0 ? "Provider-free run" : "Cap is unavailable",
+      note: `${cap === 0 ? "Configured cap is USD 0.00" : "Cap is unavailable"}${breakdown}`,
     };
   return {
     value: usd(spent),
-    bar: { value: Math.min(spent, cap), max: cap, label: `${usd(spent)} of ${usd(cap)}` },
+    bar: {
+      value: Math.min(spent, cap),
+      max: cap,
+      label: `${usd(spent)} of ${usd(cap)} cap usage${breakdown}`,
+    },
   };
 }
 

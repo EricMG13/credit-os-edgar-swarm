@@ -16,7 +16,7 @@ function entry(
     selected,
     output: {
       id: title,
-      sha256: title,
+      sha256: "d".repeat(64),
       module,
       label: "",
       href: "",
@@ -72,7 +72,7 @@ it("draws the designated run figure with a same-output trace even when no model 
   const figure = within(screen.getByRole("figure", { name: "Debt maturities" }));
   expect(figure.getByRole("link", { name: "Source table" })).toHaveAttribute(
     "href",
-    "/report/current#evidence/1-21",
+    `/report/current#evidence/Debt%20maturities~${"d".repeat(64)}-21`,
   );
   fireEvent.click(figure.getByRole("radio", { name: "Table" }));
   expect(figure.getByRole("cell", { name: "0.00" })).toBeInTheDocument();
@@ -108,7 +108,7 @@ it("shows the recorded build rejection and keeps its raw table in Evidence", () 
   expect(screen.getByText("Sent back by the build.")).toBeInTheDocument();
   expect(screen.getByRole("link", { name: "Source table" })).toHaveAttribute(
     "href",
-    "/report/current#evidence/0-21",
+    `/report/current#evidence/Covenants~${"d".repeat(64)}-21`,
   );
   expect(screen.queryByRole("figure")).toBeNull();
   expect(screen.queryByText("725")).toBeNull();
