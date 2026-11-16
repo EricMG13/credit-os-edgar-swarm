@@ -336,3 +336,46 @@ it("shows a snapshot error without admitting a report or remaining in loading", 
   expect(screen.queryByText("Loading report…")).toBeNull();
   expect(screen.queryByRole("link", { name: "Run activity" })).toBeNull();
 });
+
+describe.each(["#overview", "#changes", "#modules", "#forecast", "#evidence/summary"])(
+  "module codes in handoff text on %s",
+  (hash) => {
+    it("shows a module by its plain name", async () => {
+      const snapshot = librarySnapshot() as unknown as Snapshot;
+      const run = snapshot.workspace.runs.north;
+      if (!run) throw new Error("Northbridge fixture is missing");
+      const id = "northbridge-2026/outputs/CP-1.md";
+      run.modules = { "CP-1": { outputs: [id], default: id } };
+      snapshot.workspace.outputs[id] = {
+        id,
+        run: "north",
+        module: "CP-1",
+        label: "Financial foundation",
+        href: id,
+        sha256: "handoff-digest",
+        state: { established: true, declared: null },
+      };
+      snapshot.workspace.handoffs["handoff-digest"] = [
+        {
+          heading: "Findings",
+          level: 2,
+          line: 10,
+          blocks: [
+            {
+              type: "table",
+              line: 12,
+              headers: ["Item", "Owner"],
+              rows: [{ line: 14, cells: ["Cash runway", "Liquidity (CP-2D)"] }],
+            },
+            { type: "text", line: 16, end: 16, text: "Basis: Financial foundation (CP-1)" },
+          ],
+        },
+      ];
+      useSnapshot(snapshot);
+      window.history.replaceState(null, "", `/report/northbridge-2026${hash}`);
+      render(<ConnectedApp path="/report/northbridge-2026" mode="synthetic" />);
+      await screen.findByRole("heading", { level: 1, name: "Northbridge" });
+      expect(document.body.textContent).not.toMatch(/\(CP-[A-Z0-9]+\)/);
+    });
+  },
+);

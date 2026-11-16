@@ -131,7 +131,7 @@ describe("published evidence gaps", () => {
 
     expect(screen.getByRole("heading", { name: "Gaps 1" })).toBeVisible();
     expect(screen.getByText("Effect: Could increase liquidity pressure")).toBeVisible();
-    expect(screen.getByText("Financial foundation (CP-1) · Saved alternate")).toBeVisible();
+    expect(screen.getByText("Financial foundation · Saved alternate")).toBeVisible();
     expect(screen.getByRole("link", { name: "Open source" })).toHaveAttribute(
       "href",
       `/report/case#evidence/${encodeURIComponent(saved.output.id)}~${saved.output.sha256}-7`,
@@ -220,7 +220,7 @@ describe("published evidence gaps", () => {
 
   it("handles empty lists and an unknown module filter without showing another module's rows", () => {
     const empty = renderGaps([]);
-    expect(screen.getByText("No recorded gaps for Financial foundation (CP-1).")).toBeVisible();
+    expect(screen.getByText("No recorded gaps for Financial foundation.")).toBeVisible();
     empty.unmount();
     renderGaps(
       [
@@ -271,7 +271,7 @@ it("keeps filtered summary counts, alternate handoffs and source identities acro
   const summary = renderEvidence(entries, "summary/CP-1", evidence);
   expect(screen.getByText("1 designated handoffs · 2 source files")).toBeVisible();
   expect(
-    screen.getByRole("link", { name: "Financial foundation (CP-1) · Saved alternate" }),
+    screen.getByRole("link", { name: "Financial foundation · Saved alternate" }),
   ).toHaveAttribute("href", `/report/case#evidence/alternate~${"a".repeat(64)}`);
   expect(screen.queryByRole("link", { name: /CP-2G/ })).toBeNull();
   summary.unmount();

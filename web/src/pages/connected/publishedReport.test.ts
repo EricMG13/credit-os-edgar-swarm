@@ -6,6 +6,7 @@ import {
   type PublishedRun,
   displayColumns,
   readParagraph,
+  plainModuleNames,
   publishedHref,
   runPathway,
   runTiming,
@@ -241,5 +242,15 @@ describe("stable evidence addresses", () => {
     expect(resolveEvidenceLocation([revised], evidenceToken(first, 46))).toBeNull();
     expect(resolveEvidenceLocation([first], evidenceToken(first, 47))).toBeNull();
     expect(resolveEvidenceLocation([first, first], evidenceToken(first, 46))).toBeNull();
+  });
+});
+
+describe("plainModuleNames", () => {
+  it("shows a named upstream module without its code", () => {
+    expect(plainModuleNames("Liquidity (CP-2D); calculation C-4")).toBe(
+      "Liquidity; calculation C-4",
+    );
+    expect(plainModuleNames("Report (CP-1).pdf, page 3")).toBe("Report (CP-1).pdf, page 3");
+    expect(plainModuleNames("The CP-2 view is unchanged")).toBe("The CP-2 view is unchanged");
   });
 });

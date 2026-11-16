@@ -5,6 +5,10 @@ export type Table = { type: "table"; line: number; headers: string[]; rows: Row[
 type Paragraph = { type: "text"; line: number; end: number; text: string };
 export type Block = Table | Paragraph | { type: "equity"; line: number; text?: string };
 export type Section = { heading: string; level: number; line: number; blocks: Block[] };
+/** Drops the code from "Name (CP-x)" in handoff text; a code in a file name or bare in a sentence stays. */
+export function plainModuleNames(text: string) {
+  return text.replace(/ \(CP-[A-Za-z0-9]+\)(?!\.\w)/g, "");
+}
 export const FORECAST_INPUTS = "Forecast inputs (machine-readable)";
 type FigureRef = Record<string, unknown> & { table: number };
 type Output = {

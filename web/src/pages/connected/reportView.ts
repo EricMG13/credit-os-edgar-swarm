@@ -17,7 +17,7 @@ import type {
   Table,
 } from "./publishedReport";
 
-const readerModuleName = (id: string) => moduleName(id).replace(/ \(CP-[^)]+\)$/, "");
+const readerModuleName = (id: string) => moduleName(id);
 
 export function moduleState(entry: OutputEntry | undefined): ModuleState {
   if (!entry) return "Not run";

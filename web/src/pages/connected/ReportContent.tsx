@@ -23,6 +23,7 @@ import {
   publishedHref,
   readParagraph,
   type Block,
+  plainModuleNames,
   type OutputEntry,
   type PublishedRun,
   type Section,
@@ -33,10 +34,10 @@ import {
 export function richParts(value: string): ReactNode {
   return value.split(/(\*\*[^*]+\*\*|`[^`]+`)/g).map((part, index) => {
     if (part.startsWith("**") && part.endsWith("**"))
-      return <strong key={index}>{part.slice(2, -2)}</strong>;
+      return <strong key={index}>{plainModuleNames(part.slice(2, -2))}</strong>;
     if (part.startsWith("`") && part.endsWith("`"))
       return <code key={index}>{part.slice(1, -1)}</code>;
-    return part.replaceAll("\\|", "|");
+    return plainModuleNames(part.replaceAll("\\|", "|"));
   });
 }
 
@@ -57,7 +58,7 @@ export function HandoffDownload({ run, entry }: { run: PublishedRun; entry: Outp
   return href ? (
     <DownloadButton
       download={{
-        label: `Download ${moduleName(entry.output.module).replace(/ \(CP-[^)]+\)$/, "")}`,
+        label: `Download ${moduleName(entry.output.module)}`,
         href,
         reason: null,
       }}
@@ -149,7 +150,7 @@ function buildTrace(
     derivation: {
       ...node("Evidence retained with this item", ""),
       children: [
-        ...(basis ? [node("Basis", basis)] : []),
+        ...(basis ? [node("Basis", plainModuleNames(basis))] : []),
         ...calculationNodes(entry, basis ?? "", line),
         ...chips.flatMap((chip) => {
           const source = chip.source ?? chip.label;

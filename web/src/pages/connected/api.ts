@@ -371,8 +371,7 @@ const MODULE_NAMES: Readonly<Record<string, string>> = {
 };
 
 export function moduleName(id: string) {
-  const name = Object.hasOwn(MODULE_NAMES, id) ? MODULE_NAMES[id] : undefined;
-  return name ? `${name} (${id})` : id;
+  return (Object.hasOwn(MODULE_NAMES, id) ? MODULE_NAMES[id] : undefined) ?? id;
 }
 
 export function pathwayName(pathway: string) {

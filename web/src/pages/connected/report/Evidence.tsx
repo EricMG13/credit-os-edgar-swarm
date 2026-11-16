@@ -13,6 +13,7 @@ import {
   evidencePath,
   evidenceToken,
   FORECAST_INPUTS,
+  plainModuleNames,
   publishedHref,
   resolveEvidenceLocation,
   sectionContainsLine,
@@ -107,7 +108,7 @@ function EvidenceLocation({
                 </p>
               )}
               {block.type === "table" && basis && (
-                <p className="text-sm text-text-secondary">{basis}</p>
+                <p className="text-sm text-text-secondary">{plainModuleNames(basis)}</p>
               )}
               {chips.length > 0 && (
                 <ul className="grid gap-2">
