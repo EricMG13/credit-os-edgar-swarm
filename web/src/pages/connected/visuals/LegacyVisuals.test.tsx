@@ -432,7 +432,7 @@ it("keeps unstated stack balances out of the plot while retaining their stated r
   expect(figure.getByRole("table")).toHaveTextContent("Not supplied: no balance");
 });
 
-it("positions dated points and coarse intervals on one axis in separate status lanes", () => {
+it("draws dated points and coarse intervals as year markers and dated rows with their precision", () => {
   const sections = fixture(
     ["Event date", "Date precision", "Published", "Event", "Status", "Source", "Credit relevance"],
     [
@@ -462,16 +462,14 @@ it("positions dated points and coarse intervals on one axis in separate status l
       sections={sections}
     />,
   );
-  const lane = within(screen.getByRole("group", { name: "Event lanes on a shared date axis" }));
-  const history = within(lane.getByRole("region", { name: "Historical" }));
-  const scenario = within(lane.getByRole("region", { name: "Scenario" }));
-  const point = history.getByRole("img", { name: /Bond retired.*2028-03-31.*day/ });
-  const range = scenario.getByRole("img", { name: /Refinancing scenario.*2028-Q2.*quarter/ });
-  expect(point).toHaveStyle({ left: "0%" });
-  expect(point.style.width).toBe("");
-  expect(Number.parseFloat(range.style.left)).toBeGreaterThan(0);
-  expect(Number.parseFloat(range.style.width)).toBeGreaterThan(98);
-  expect(lane.getByRole("group", { name: "Date axis" })).toHaveTextContent("2028-03-312028-06-30");
+  const markers = within(screen.getByRole("group", { name: "Events by year" }));
+  const rows = within(screen.getByRole("group", { name: "Events in date order" }));
+  const point = markers.getByRole("button", { name: /Bond retired.*2028-03-31.*day/ });
+  const range = markers.getByRole("button", { name: /Refinancing scenario.*2028-Q2.*quarter/ });
+  expect(point).toHaveAttribute("data-event-category", "Historical");
+  expect(range).toHaveAttribute("data-event-category", "Scenario");
+  expect(rows.getByText("2028-03-31 · day")).toBeInTheDocument();
+  expect(rows.getByText("2028-Q2 · quarter")).toBeInTheDocument();
 });
 
 it("draws each named node once and connects published parallel, return and self edges", () => {
