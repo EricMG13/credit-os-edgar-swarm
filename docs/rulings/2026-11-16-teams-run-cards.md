@@ -42,7 +42,6 @@ of it, is the PR-manager session's reading of the owner's answer above.
 - A run queued by the earlier release under a free-text analyst name, whose move into the run folder
   was cut short, is failed after the upgrade with the reason "the submitted documents changed before
   the run could start"; the documents had not changed (the stored name fails the new name rule).
-- On the older start page a name refusal has no "Go to" button.
 - A webhook reply slower than 10 seconds is treated as failed and retried a minute later, so a card
   Teams accepted late can appear twice.
 - A card's links work only for a reader who can reach `CREDIT_OS_TEAMS_LINK`.

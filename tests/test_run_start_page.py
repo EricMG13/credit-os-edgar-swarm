@@ -1070,7 +1070,8 @@ def test_a_limit_must_be_ticked_before_approval_and_an_error_blocks_it(page):
     assert seen["approved"] == {"approve": False, "approved": True, "submit": False}
     assert seen["untick"] == {"approve": True, "approved": False, "submit": True}
     assert seen["after"]["error"] and "digest" not in seen["after"]
-    assert "80 characters" in seen["refusal"]["state"]  # the service's own sentence, as text
+    # the service's own sentence, as text
+    assert "first name and initial" in seen["refusal"]["state"]
     assert seen["refusal"]["gate"] == {"approve": True, "approved": False, "submit": True}
     assert seen["refusal"]["links"] == ["pathway"] and seen["refusal"]["ticks"] == 0
 
@@ -1301,6 +1302,7 @@ def test_upload_to_filed_report_with_the_real_launcher(
     choose('legal-file', 'credit-agreement.txt');
     // The canned answers name this issuer and date (tests/test_cpos_launch.py ISSUER, AS_OF).
     type('i-issuer_name', {json.dumps(ISSUER)}); type('d-as_of', {json.dumps(AS_OF)});
+    type('submitter', 'Ana L');
     pick('data-k="issue_classification"', 'high_yield');
     await review();
     tickAll(); approve();
@@ -1453,26 +1455,27 @@ _REVIEW_STATE = """
 _AS_OF_EARLY = f"""
     pick('data-k="pathway"', 'earnings_update');
     await uploadFiles([file('annual.txt', {json.dumps(REPORT)})]);
-    type('i-issuer_name', 'Acme Corp'); pick('data-k="issue_classification"', 'high_yield');
+    type('i-issuer_name', 'Acme Corp'); type('submitter', 'Ana L');
+    pick('data-k="issue_classification"', 'high_yield');
     type('d-current_period', 'fy-2025'); type('d-prior_period', 'fy-2024');
     type('d-as_of', '2025-06-30');"""
 _EXECUTED_ON_MEMO = f"""
     pick('data-k="pathway"', 'distressed_restructuring');
     await uploadFiles([file('annual.txt', {json.dumps(REPORT)}),
       file('memo.txt', {json.dumps(MEMO)})]);
-    type('i-issuer_name', 'Acme Corp'); type('d-as_of', '2026-10-31');
+    type('i-issuer_name', 'Acme Corp'); type('submitter', 'Ana L'); type('d-as_of', '2026-10-31');
     pick('data-k="issue_classification"', 'high_yield'); type('d-current_period', 'fy-2025');
     choose('legal-file', 'memo.txt');"""
 _LEGAL_NONE = f"""
     pick('data-k="pathway"', 'distressed_restructuring');
     await uploadFiles([file('annual.txt', {json.dumps(REPORT)})]);
-    type('i-issuer_name', 'Acme Corp'); type('d-as_of', '2026-10-31');
+    type('i-issuer_name', 'Acme Corp'); type('submitter', 'Ana L'); type('d-as_of', '2026-10-31');
     pick('data-k="issue_classification"', 'high_yield'); type('d-current_period', 'fy-2025');"""
 _ONE_PERIOD = f"""
     pick('data-k="pathway"', 'earnings_update');
     await uploadFiles([file('annual.txt', {json.dumps(REPORT)}),
       file('annual-copy.txt', {json.dumps(REPORT)})]);
-    type('i-issuer_name', 'Acme Corp'); type('d-as_of', '2026-10-31');
+    type('i-issuer_name', 'Acme Corp'); type('submitter', 'Ana L'); type('d-as_of', '2026-10-31');
     pick('data-k="issue_classification"', 'high_yield');
     type('d-current_period', 'fy-2025'); type('d-prior_period', 'fy-2024');"""
 
@@ -1536,7 +1539,7 @@ def test_the_earnings_comparison_claims_nothing_when_two_periods_are_recognised(
     pick('data-k="pathway"', 'earnings_update');
     await uploadFiles([file('annual.txt', {json.dumps(REPORT)}),
       file('prior.txt', {json.dumps(REPORT.replace("2025", "2024"))})]);
-    type('i-issuer_name', 'Acme Corp'); type('d-as_of', '2026-10-31');
+    type('i-issuer_name', 'Acme Corp'); type('submitter', 'Ana L'); type('d-as_of', '2026-10-31');
     pick('data-k="issue_classification"', 'high_yield');
     type('d-current_period', 'fy-2025'); type('d-prior_period', 'fy-2024');""",
     )
@@ -1805,7 +1808,7 @@ def test_choosing_another_agreement_file_clears_a_ticked_approval(page):
         f"""pick('data-k="pathway"', 'distressed_restructuring');
     await uploadFiles([file('annual.txt', {json.dumps(REPORT)}),
       file('agreement.txt', {json.dumps(AGREEMENT)}), file('memo.txt', {json.dumps(MEMO)})]);
-    type('i-issuer_name', 'Acme Corp'); type('d-as_of', '2026-10-31');
+    type('i-issuer_name', 'Acme Corp'); type('submitter', 'Ana L'); type('d-as_of', '2026-10-31');
     pick('data-k="issue_classification"', 'high_yield'); type('d-current_period', 'fy-2025');
     choose('legal-file', 'agreement.txt'); pick('data-k="legal_documents"', 'executed');""",
         "gotoStep('legal'); choose('legal-file', 'memo.txt');",
@@ -1817,7 +1820,8 @@ def test_choosing_another_agreement_file_clears_a_ticked_approval(page):
 EARNINGS = f"""pick('data-k="pathway"', 'earnings_update');
     await uploadFiles([file('annual.txt', {json.dumps(REPORT)}),
       file('prior.txt', {json.dumps(REPORT.replace("2025", "2024"))})]);
-    type('i-issuer_name', 'Acme Corp'); pick('data-k="issue_classification"', 'high_yield');
+    type('i-issuer_name', 'Acme Corp'); type('submitter', 'Ana L');
+    pick('data-k="issue_classification"', 'high_yield');
     type('d-current_period', 'fy-2025'); type('d-prior_period', 'fy-2024');
     type('d-as_of', '2026-10-31');"""
 

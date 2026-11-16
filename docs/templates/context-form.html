@@ -1840,7 +1840,7 @@ const STAGE_OF_RULE = {
 };
 // A refusal's sentence names no stage; these words do.
 function errorStage(text) {
-  if (/submitted_by/.test(text)) return 'pathway';
+  if (/submitted_by|first name and initial/.test(text)) return 'pathway';
   if (/\b(files?|documents?|sources?|folder)\b/i.test(text)) return 'documents';
   if (/\b(modules?|turns|level|model|effort|Claude Opus)\b/i.test(text)) return 'pathway';
   return '';

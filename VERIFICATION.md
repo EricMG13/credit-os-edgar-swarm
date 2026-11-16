@@ -4,6 +4,14 @@ Keep one running record here. A pass applies only to the stated scope. Earlier v
 engine is in [EricMG13/final-workflow](https://github.com/EricMG13/final-workflow)'s
 `VERIFICATION.md`, which also keeps the retained runs this copy leaves out.
 
+## 2026-11-16 — Older start page: name refusal routes to the pathway step again (branch `claude/legacy-start-page-name`)
+
+Scope: `docs/templates/context-form.html` (`errorStage`) and `tests/test_run_start_page.py` only.
+- Broke: after #40 the 15 browser tests in `tests/test_run_start_page.py` that open the review failed. Causes: (1) the service's new name sentence ("Enter your name as your first name and initial...") has no `submitted_by`, so `errorStage` gave a name refusal no "Go to" button; (2) setups that never typed a name now got a name refusal and so no summary items.
+- Fixed: `errorStage` also matches `first name and initial` and sends it to `pathway`; ten page setups type `Ana L`; the "80 characters" assertion now reads the service's new sentence. `links == ["pathway"]` unchanged; it failed (`[]`) before the page fix and passed after.
+- Commands: `pytest -m browser tests/test_run_start_page.py` 152 passed (one earlier loaded-machine run had 3 unrelated tests fail with a Chrome `CalledProcessError`; each passed alone and in the next full run); `tests/test_run_start_submissions.py tests/test_run_start_service.py` and `tools/quality_gate.py` see the commit report.
+- Not verified: the page in a real browser by hand; React start page (unchanged); CI (deselects browser tests).
+
 ## 2026-11-16 — Teams cards carry the design as inline images (branch `claude/zealous-keller-yvc5mb`)
 
 Scope: presentation of the four Teams cards only (`inbox/teams.py` card parts, `inbox/teams_brand.py`, new `tools/teams_brand_images.mjs`); no change to when or what is posted.
