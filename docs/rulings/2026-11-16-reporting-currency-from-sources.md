@@ -47,6 +47,15 @@ non-USD run.
   beside the figure. No rate is looked up, derived or invented. If the sources give neither (the
   owner expects this never to happen), the total is not calculable and says why; it is never a
   partial total.
+- CP-1's T4.18 keeps each instrument's own amounts and gives its `Currency` as an ISO 4217 code.
+  Each row also has a `Reporting Currency Amount` and an `FX Rate`. The `FX Rate` cell holds the
+  rate only; the rate's locator goes in the row's `Source` cell. (Decided in this pull request's
+  review, PR 46: a wrong forecast figure, and source references belong only on Evidence.)
+- The forecast leaves out of its `facilities` any instrument whose T4.18 `Currency` is not the
+  run's currency; that debt stays in the remainder at the interest-rate driver. When T4.18 holds
+  such a row, a facility must match an `Instrument` on a row in the run's currency exactly, or it
+  is refused (`cpos_forecast._check_facility_currencies`). The cost: such a facility's interest
+  is forecast at the driver rate, not its coupon.
 - Provider spend and caps stay in USD: they are the cost of the run, not the issuer's currency.
 - The `cp2d-non-usd` forecast rule ("CP-2D builds its bridge in USD millions") is removed from every
   copy, and so are the start forms' warnings that money tables stay in US$ millions and that a
