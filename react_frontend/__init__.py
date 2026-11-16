@@ -6,7 +6,7 @@ import json
 import gzip
 import re
 import threading
-from collections.abc import Iterator
+from collections.abc import Iterator, Mapping
 from contextlib import contextmanager
 from pathlib import Path
 from typing import Any
@@ -16,6 +16,7 @@ from deploy_workflow import http_base
 from deploy_workflow.inbox.layout import Layout
 from deploy_workflow.inbox.scheduler import Scheduler, Settings
 from deploy_workflow.run_start import service
+from deploy_vii.contracts import PATHWAY_CAP_USD, PathwayId
 
 from . import admission, artifacts, portfolio, run_activity, sources
 
@@ -263,13 +264,13 @@ def _require_writable(read_only: bool) -> None:
 
 
 def _connected_reply(
-    layout: Layout, url: SplitResult, context: dict[str, Any], cap: Any
+    layout: Layout, url: SplitResult, context: dict[str, Any], caps: Mapping[PathwayId, str]
 ) -> http_base.Reply | None:
     path = url.path
     if path == "/connected/context":
-        return http_base.Reply(200, {**context, "submission_cap_usd": str(cap)})
+        return http_base.Reply(200, {**context, "submission_caps_usd": caps})
     if match := RUN_ACTIVITY.fullmatch(path):
-        return run_activity.reply(layout, match[1], cap)
+        return run_activity.reply(layout, match[1])
     if path == "/connected/library":
         return _library_index(layout)
     if path == "/connected/snapshot":
@@ -303,6 +304,8 @@ def _connected_report_reply(layout: Layout, path: str, url: SplitResult) -> http
 def _handler(
     dist: Path, page: bytes, context: dict[str, Any], *, read_only: bool = False
 ) -> type[service.Handler]:
+    caps = {pathway: str(amount) for pathway, amount in PATHWAY_CAP_USD.items()}
+
     class Handler(service.Handler):
         def send_reply(self, reply: http_base.Reply) -> None:
             if isinstance(reply.body, bytes):
@@ -350,9 +353,7 @@ def _handler(
                         "Cache-Control": "no-store",
                     },
                 )
-            reply = _connected_reply(
-                self._layout, url, context, self._service.scheduler.settings.cap
-            )
+            reply = _connected_reply(self._layout, url, context, caps)
             if reply is not None:
                 raise reply
             if asset := _asset_path(dist, path):

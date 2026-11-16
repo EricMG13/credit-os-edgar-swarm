@@ -358,36 +358,11 @@ function FindingParagraph({
   );
 }
 
-export function ReportFindings({
-  snapshot,
-  run,
-  entry,
-  entryIndex,
-  overview = false,
-  afterBottomLine,
-  judgement,
-  figureTableLines,
-}: {
-  snapshot: Snapshot;
-  run: PublishedRun;
-  entry: OutputEntry;
-  entryIndex: number;
-  overview?: boolean;
-  afterBottomLine?: ReactNode;
-  judgement?: string;
-  figureTableLines?: readonly number[];
-}) {
-  const [activeTrace, setActiveTrace] = useState<string | null>(null);
-  const sections = findingBlocks(entry.sections, entry, figureTableLines).filter(
-    (section) =>
-      !overview ||
-      [
-        "Bottom line",
-        "Key findings",
-        "Contrary evidence and what would change the view",
-        "Limitations",
-      ].includes(section.heading),
-  );
+function findingLabel(section: Section, overviewLabel?: string) {
+  return section.heading === "Bottom line" ? (overviewLabel ?? section.heading) : section.heading;
+}
+
+function findingsTraces(snapshot: Snapshot, entry: OutputEntry, sections: Section[]) {
   const traces: Record<string, Trace> = {};
   const key = (line: number) => traceKey(entry, line);
   for (const section of sections) {
@@ -404,6 +379,87 @@ export function ReportFindings({
         );
     }
   }
+  return traces;
+}
+
+function FindingsSummary({
+  summary,
+  entry,
+  summaryTrace,
+}: {
+  summary: NonNullable<OutputEntry["output"]["summary"]>;
+  entry: OutputEntry;
+  summaryTrace: Trace | null | undefined | false;
+}) {
+  if (containsReference(summary.bottomLine)) return null;
+  return (
+    <BottomLine
+      level="h3"
+      text={{
+        label: "Bottom line",
+        lead: summary.bottomLine,
+        rest: containsReference(summary.limitation) ? "" : summary.limitation,
+        trace: summaryTrace ? traceKey(entry, summary.line) : null,
+      }}
+    />
+  );
+}
+
+function findingsLayout(
+  entry: OutputEntry,
+  figureTableLines: readonly number[] | undefined,
+  overview: boolean,
+) {
+  const sections = findingBlocks(entry.sections, entry, figureTableLines).filter(
+    (section) =>
+      !overview ||
+      [
+        "Bottom line",
+        "Key findings",
+        "Contrary evidence and what would change the view",
+        "Limitations",
+      ].includes(section.heading),
+  );
+  const keyFindings = overview
+    ? sections.find((section) => section.heading === "Key findings")
+    : undefined;
+  const contrary = keyFindings
+    ? sections.find(
+        (section) => section.heading === "Contrary evidence and what would change the view",
+      )
+    : undefined;
+  const ordered = sections.filter((section) => section !== contrary);
+  const groups = ordered.map((section): [Section, Section?] =>
+    section === keyFindings && contrary ? [section, contrary] : [section],
+  );
+  return { sections, groups };
+}
+
+export function ReportFindings({
+  snapshot,
+  run,
+  entry,
+  entryIndex,
+  overview = false,
+  overviewLabel,
+  afterBottomLine,
+  judgement,
+  figureTableLines,
+}: {
+  snapshot: Snapshot;
+  run: PublishedRun;
+  entry: OutputEntry;
+  entryIndex: number;
+  overview?: boolean;
+  overviewLabel?: string;
+  afterBottomLine?: ReactNode;
+  judgement?: string;
+  figureTableLines?: readonly number[];
+}) {
+  const [activeTrace, setActiveTrace] = useState<string | null>(null);
+  const { sections, groups } = findingsLayout(entry, figureTableLines, overview);
+  const key = (line: number) => traceKey(entry, line);
+  const traces = findingsTraces(snapshot, entry, sections);
   const hasBottomLine = sections.some((section) => section.heading === "Bottom line");
   const summary = !hasBottomLine && entry.output.summary;
   const summaryTrace = summary && traceForLine(snapshot, entry, entryIndex, summary.line);
@@ -423,15 +479,6 @@ export function ReportFindings({
         {afterBottomLine}
       </>
     );
-  const keyFindings = overview
-    ? sections.find((section) => section.heading === "Key findings")
-    : undefined;
-  const contrary = keyFindings
-    ? sections.find(
-        (section) => section.heading === "Contrary evidence and what would change the view",
-      )
-    : undefined;
-  const ordered = sections.filter((section) => section !== contrary);
   function drawSection(section: Section) {
     const first = section.blocks[0];
     if (
@@ -449,7 +496,7 @@ export function ReportFindings({
           <BottomLine
             level="h2"
             text={{
-              label: section.heading,
+              label: findingLabel(section, overviewLabel),
               lead:
                 judgement ??
                 readParagraph(first.text).body.replaceAll("**", "").replaceAll("`", ""),
@@ -517,7 +564,7 @@ export function ReportFindings({
         id={`finding-${String(section.line)}`}
         tabIndex={-1}
       >
-        <h2 className={heading}>{richParts(section.heading)}</h2>
+        <h2 className={heading}>{richParts(findingLabel(section, overviewLabel))}</h2>
         {section.heading === "Bottom line" && afterBottomLine}
         {section.blocks.map((block) =>
           block.type === "table" ? (
@@ -546,20 +593,10 @@ export function ReportFindings({
   return (
     <RunContext.Provider value={{ traces, open: setActiveTrace }}>
       <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-4">
-        {summary && !containsReference(summary.bottomLine) && (
-          <BottomLine
-            level="h3"
-            text={{
-              label: "Bottom line",
-              lead: summary.bottomLine,
-              rest: containsReference(summary.limitation) ? "" : summary.limitation,
-              trace: summaryTrace ? key(summary.line) : null,
-            }}
-          />
-        )}
+        {summary && <FindingsSummary summary={summary} entry={entry} summaryTrace={summaryTrace} />}
         {!hasBottomLine && afterBottomLine}
-        {ordered.map((section) => {
-          if (section !== keyFindings || !contrary) return drawSection(section);
+        {groups.map(([section, contrary]) => {
+          if (!contrary) return drawSection(section);
           return (
             <div key={section.line} className="grid min-w-0 gap-4 lg:grid-cols-2">
               {drawSection(section)}

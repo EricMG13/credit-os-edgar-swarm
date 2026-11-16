@@ -64,6 +64,7 @@ export type PriorInputs = {
 };
 export type Summary = Reading & {
   digest: string;
+  cap: string;
   modules: string[];
   items: { id: string; scope: string; outcome: string; reason: string; fix?: string }[];
   omitted: string[];
@@ -104,7 +105,7 @@ export type Run = {
   claimed_at?: string;
   observed_at: string;
   execution?: "host-session" | "retained-response-replay" | "synthetic" | "live-provider" | null;
-  cap: string;
+  cap: string | null;
   spent: string | null;
   settled_spent?: string | null;
   held?: string | null;
@@ -154,11 +155,20 @@ function postJson(payload: unknown): RequestInit {
 const submission = (id: string) => `/api/submissions/${encodeURIComponent(id)}`;
 
 export async function getContext(signal: AbortSignal) {
-  const { submission_cap_usd: amount, ...template } = await request<
-    Context & { submission_cap_usd?: string }
+  const { submission_caps_usd: amounts, ...template } = await request<
+    Context & { submission_caps_usd?: Record<string, string> }
   >("/connected/context", { signal });
-  const cap = typeof amount === "string" && /^\d+(?:\.\d+)?$/.test(amount) ? Number(amount) : 0;
-  return { template, cap: Number.isFinite(cap) && cap > 0 ? cap : null };
+  const caps = Object.fromEntries(
+    Object.entries(amounts ?? {}).filter(
+      ([pathway, amount]) =>
+        Object.hasOwn(PATHWAYS, pathway) &&
+        typeof amount === "string" &&
+        /^\d+(?:\.\d+)?$/.test(amount) &&
+        Number.isFinite(Number(amount)) &&
+        Number(amount) > 0,
+    ),
+  );
+  return { template, caps };
 }
 export const createSubmission = () =>
   request<{ id: string }>("/api/submissions", { method: "POST" });
@@ -180,10 +190,17 @@ export const getLatestIssuerRun = (issuer: string) =>
 export const carryDocuments = (id: string, run: string) =>
   request<{ carried: string[]; kept: string[] }>(`${submission(id)}/carry`, postJson({ run }));
 export const getReading = (id: string) => request<Reading>(`${submission(id)}/reading`);
-export const getSummary = (id: string, answers: Answers) =>
-  request<Summary>(`${submission(id)}/summary`, postJson(answers));
-export const submit = (id: string, answers: Answers, digest: string) =>
-  request<{ run: string }>(`${submission(id)}/submit`, postJson({ answers, digest }));
+function postShownCap(payload: unknown, shownCap: string): RequestInit {
+  return {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "X-Shown-Cap": shownCap },
+    body: JSON.stringify(payload),
+  };
+}
+export const getSummary = (id: string, answers: Answers, shownCap: string) =>
+  request<Summary>(`${submission(id)}/summary`, postShownCap(answers, shownCap));
+export const submit = (id: string, answers: Answers, digest: string, shownCap: string) =>
+  request<{ run: string }>(`${submission(id)}/submit`, postShownCap({ answers, digest }, shownCap));
 export const getRun = (id: string, signal: AbortSignal) =>
   request<Run>(`/connected/activity/${encodeURIComponent(id)}`, { signal });
 export const getReport = (id: string, signal: AbortSignal) =>
@@ -201,6 +218,10 @@ export function issuerSlug(name: string) {
 }
 
 export const PATHWAYS: Readonly<Record<string, { label: string; modules: string[] }>> = {
+  lite_credit_assessment: {
+    label: "Lite credit assessment",
+    modules: ["CP-0", "CP-1", "CP-1A", "CP-2", "CP-2A"],
+  },
   credit_snapshot: {
     label: "Full credit assessment",
     modules: [
@@ -220,9 +241,30 @@ export const PATHWAYS: Readonly<Record<string, { label: string; modules: string[
       "CP-6",
     ],
   },
-  lite_credit_assessment: {
-    label: "Lite credit assessment",
-    modules: ["CP-0", "CP-1", "CP-1A", "CP-2", "CP-2A"],
+  deep_credit_assessment: {
+    label: "Deep credit assessment",
+    modules: [
+      "CP-0",
+      "CP-1",
+      "CP-1A",
+      "CP-1B",
+      "CP-DR",
+      "CP-1C",
+      "CP-1D",
+      "CP-2",
+      "CP-4",
+      "CP-2A",
+      "CP-2E",
+      "CP-2D",
+      "CP-2G",
+      "CP-2H",
+      "CP-3D",
+      "CP-3C",
+      "CP-4C",
+      "CP-3",
+      "CP-5",
+      "CP-6",
+    ],
   },
   earnings_update: {
     label: "Earnings Update",

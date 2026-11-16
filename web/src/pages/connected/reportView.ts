@@ -63,7 +63,7 @@ export function buildReportView(snapshot: Snapshot, routeKey: string, run: Publi
   return {
     entries,
     modules,
-    lead: ["CP-6", "CP-2", "CP-L10"]
+    lead: ["CP-6", "CP-2", "CP-L10", ...(run.pathway === "earnings_update" ? ["CP-1B"] : [])]
       .map((id) => entries.find((entry) => isLead(entry, id)))
       .find((entry) => entry !== undefined),
     models: runModels(snapshot, routeKey, run),
