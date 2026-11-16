@@ -20,7 +20,6 @@ import {
   getSummary,
   issuerSlug,
   moduleName,
-  moduleTitle,
   RequestError,
   submit,
   upload,
@@ -844,7 +843,7 @@ function IssuerDetailsFields({ view }: { view: IntakeView }) {
 function StructuredContextFields({ view }: { view: IntakeView }) {
   const focusChoices = [
     ["", "Any"] as const,
-    ...pathwayModules(view.run.pathway).map((id) => [id, moduleTitle(id)] as const),
+    ...pathwayModules(view.run.pathway).map((id) => [id, moduleName(id)] as const),
   ];
   return (
     <div className="grid gap-4 sm:col-span-2">
