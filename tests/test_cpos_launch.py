@@ -8513,7 +8513,9 @@ def test_the_three_money_tables_say_the_money_unit_and_no_other_non_cp1_selector
             if table.heading not in headings:
                 continue
             selector = cpos_launch._selector(table)
-            assert "the money unit" in selector and "US$m" not in selector, table.heading
+            # The definition (ruling 2026-11-16) is the only place `US$m` appears.
+            bare = selector.replace(MONEY_UNIT_DEFINITION, "")
+            assert "the money unit" in selector and "US$m" not in bare, table.heading
             assert cpos_launch.CURRENCY_RULE not in selector
     for table in cpos_launch.OWNER_TABLES["CP-1"]:
         if table.chart_unit != cpos_launch.MONEY:
@@ -8522,6 +8524,29 @@ def test_the_three_money_tables_say_the_money_unit_and_no_other_non_cp1_selector
         assert "the money unit" in selector and "US$m" not in selector, table.heading
         assert cpos_launch.CURRENCY_RULE not in selector
     assert "The money unit is `US$m` when your statements are in USD" in cpos_launch.CP1_CHECK_BLOCK
+
+
+CP1_CHECK_DIGEST = (  # CP1_CHECK_BLOCK before the fix
+    "0e1cae26d6641dc413760acc64885f1e42e81b08be0caa9d2c90503b747e8617"
+)
+MONEY_UNIT_DEFINITION = (
+    "The money unit is the unit of Financial foundation's statements: `US$m` when they are in "
+    "USD, else their currency code and `m` (`GBPm`, `EURm`, `CHFm`), in millions."
+)
+
+
+@pytest.mark.parametrize("module", sorted(MONEY_TABLES))
+def test_the_instructions_of_the_three_money_modules_define_the_money_unit(tmp_path, module):
+    # docs/rulings/2026-11-16-reporting-currency-from-sources.md: only CP-1's check block defined
+    # it, so these three modules were told an undefined term.
+    prepared, *_ = good_task(tmp_path, module)
+    text = (tmp_path / "out" / prepared.plan.instructions[module].path).read_text()
+    assert text.count(MONEY_UNIT_DEFINITION) == 1
+
+
+def test_cp1_check_block_is_unchanged_by_the_money_unit_definition():
+    assert MONEY_UNIT_DEFINITION not in cpos_launch.CP1_CHECK_BLOCK
+    assert hashlib.sha256(cpos_launch.CP1_CHECK_BLOCK.encode()).hexdigest() == CP1_CHECK_DIGEST
 
 
 def test_a_non_usd_reporting_currency_no_longer_limits_the_chart_strip():

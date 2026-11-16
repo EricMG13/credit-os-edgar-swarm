@@ -22,6 +22,12 @@ from deploy_workflow.prose_checks import ISO_4217
 
 # Fixed so any run's charts can be read without issuer-specific row selectors.
 MONEY = cp1_check.MONEY  # CP-1's money tables' unit, resolved per handoff by `money_unit`.
+# Sent with the money tables of CP-2D, CP-3C and CP-4C only: CP-1's own check block defines the
+# term for CP-1 (docs/rulings/2026-11-16-reporting-currency-from-sources.md).
+MONEY_UNIT_RULE = (
+    "The money unit is the unit of Financial foundation's statements: `US$m` when they are in "
+    "USD, else their currency code and `m` (`GBPm`, `EURm`, `CHFm`), in millions."
+)
 CHART_TABLES: dict[str, tuple[str, tuple[str, ...], str]] = {
     "S.1": ("Chart data: leverage", ("Total debt / EBITDA", "Net debt / EBITDA"), "x"),
     "S.2": ("Chart data: interest cover", ("EBITDA / cash interest",), "x"),
@@ -377,6 +383,7 @@ OWNER_TABLES: dict[str, tuple[OwnerTable, ...]] = {
             MONEY,
             steps=True,
             rules=(
+                f"{MONEY_UNIT_RULE} "
                 "Only accessible liquidity is bridged: restricted or trapped cash and uncertain "
                 "facility access are not accessible liquidity, so exclude them or state each as "
                 "its own step. Use the method's signed values and timing; name the basis in "
@@ -390,6 +397,7 @@ OWNER_TABLES: dict[str, tuple[OwnerTable, ...]] = {
             ("Debt maturing", "Committed resources"),
             MONEY,
             rules=(
+                f"{MONEY_UNIT_RULE} "
                 "Committed resources exclude a refinancing that is only a suggested path; a "
                 "resource shared by more than one need is counted once, never a double-counting. "
                 "Name the maturity and funding basis in Basis and limitation."
@@ -517,10 +525,11 @@ OWNER_TABLES |= {
 # costs and is stated in the text, not as a row the check would add twice.
 MAX_SERIES = 3
 ALLOCATION_RULES = (
-    " Scenario identity is the label of its source valuation row; name it in Basis and "
-    "limitation of the first row. The first row is the enterprise value as stated. The next rows "
-    "are the costs and deductions, each a negative change. Then each class's distribution is a "
-    "negative change, in the order the method states them: assume no legal pool order. The last "
+    f" {MONEY_UNIT_RULE} Scenario identity is the label of its source valuation row; name it in "
+    "Basis and limitation of the first row. The first row is the enterprise value as stated. The "
+    "next rows are the costs and deductions, each a negative change. Then each class's "
+    "distribution is a negative change, in the order the method states them: assume no legal pool "
+    "order. The last "
     "row is the value not distributed after the last distribution (0 when all is allocated), so "
     "that the first row plus the changes reconcile to it. Available value is the running position "
     "after the costs: state it in Basis and limitation of the last cost row, not as a row. Do "
