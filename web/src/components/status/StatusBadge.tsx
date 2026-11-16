@@ -27,9 +27,16 @@ interface StatusBadgeProps<S extends SetName> {
   state: keyof (typeof STATUS_SETS)[S] & string;
   /** Live run state: only the Run states set's Running badge pulses a halo. */
   live?: boolean;
+  /** Text in place of the state's word, for a named thing in that state; say the state beside it. */
+  label?: string;
 }
 
-export function StatusBadge<S extends SetName>({ set, state, live = false }: StatusBadgeProps<S>) {
+export function StatusBadge<S extends SetName>({
+  set,
+  state,
+  live = false,
+  label,
+}: StatusBadgeProps<S>) {
   const states: Readonly<Record<string, State | undefined>> | undefined = Object.hasOwn(
     STATUS_SETS,
     set,
@@ -42,7 +49,7 @@ export function StatusBadge<S extends SetName>({ set, state, live = false }: Sta
     <ToneBadge
       shape={found.shape}
       tone={found.tone}
-      word={found.word}
+      word={label ?? found.word}
       live={live && set === "Run states" && state === "Running"}
     />
   );
