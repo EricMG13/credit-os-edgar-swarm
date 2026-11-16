@@ -1,4 +1,4 @@
-import { pathwayName } from "./api";
+import { moduleName, pathwayName } from "./api";
 
 export type Row = { line: number; cells: string[] };
 export type Table = { type: "table"; line: number; headers: string[]; rows: Row[] };
@@ -13,6 +13,17 @@ export function plainModuleNames(text: string) {
   return text.replace(/ \(CP-[A-Za-z0-9]+\)/g, (code, at: number) =>
     FILE_AHEAD.test(text.slice(at + code.length)) ? code : "",
   );
+}
+// A standalone run of module codes ("CP-1" or "CP-1/CP-2"): nothing path-like or word-like touches it.
+const STANDALONE_CODES =
+  /(?<![\w\-\\/.])CP-[A-Z0-9]+(?:\/CP-[A-Z0-9]+)*(?![\w\-\\/])(?!\.[A-Za-z])/g;
+/** Findings-page text: plainModuleNames, then each standalone known module code becomes the module's name. */
+export function readerText(text: string) {
+  return plainModuleNames(text).replace(STANDALONE_CODES, (run, at: number, whole: string) => {
+    const kept = whole.slice(0, at).endsWith(" (") && whole[at + run.length] === ")";
+    if (kept && FILE_AHEAD.test(whole.slice(at + run.length + 1))) return run;
+    return run.replace(/CP-[A-Z0-9]+/g, moduleName);
+  });
 }
 export const CONFIDENCE_INPUTS = "Confidence inputs";
 export const FORECAST_INPUTS = "Forecast inputs (machine-readable)";
@@ -351,7 +362,7 @@ export function comparisonRows(changes: Changes, purpose: "evidence" | "reader" 
   });
 }
 
-const PASSAGES = [
+export const PASSAGES = [
   "Bottom line",
   "Key findings",
   "Contrary evidence and what would change the view",
@@ -411,6 +422,20 @@ export function blocked(entry: OutputEntry) {
         .find((block) => block.type === "text")
         ?.text.startsWith("Not assessable:") === true
     : entry.output.state?.established === false;
+}
+
+const DATA_MODULES = ["CP-0", "CP-PARSE", "CP-1", "CP-1C"];
+
+// The reader passages a module's handoff lacks. An earlier-format handoff,
+// with none of them, is not judged. `drawn` names the passages the page
+// actually draws; without it a passage counts as present when its heading is.
+export function missingPassages(entry: OutputEntry, drawn?: readonly string[]) {
+  const written = passages(entry.sections).map((section) => section.heading);
+  if (!written.length) return [];
+  const present = drawn ?? written;
+  const owed =
+    blocked(entry) || DATA_MODULES.includes(entry.output.module) ? ["Bottom line"] : PASSAGES;
+  return owed.filter((name) => !present.includes(name));
 }
 
 export function methodNote(text: string) {

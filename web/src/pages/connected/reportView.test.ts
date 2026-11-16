@@ -238,6 +238,29 @@ describe("reader data fidelity", () => {
     expect(findingBlocks(sections, credit)).toEqual([monitoring]);
   });
 
+  it("returns CP-8's limitations ledger but not another module's gap ledger", () => {
+    const ledger = table(
+      "Limitations ledger",
+      ["Earlier ref", "Current ref", "Limitation", "Status", "What closed it"],
+      [["E1", "C1", "Margins are not disclosed", "Remaining", "\u2014"]],
+      20,
+    );
+    const gap = { ...ledger, heading: "Gap ledger" };
+    const withFindings = (section: Section) => [
+      { heading: "Findings", line: 1, level: 2, blocks: [] },
+      { ...section, level: 3 },
+    ];
+    const entry = (module: string, sections: Section[]) => ({
+      ...foundation(sections),
+      output: { ...foundation(sections).output, module },
+    });
+    const cp8 = withFindings(ledger);
+    expect(findingBlocks(cp8, entry("CP-8", cp8))).toEqual([cp8[1]]);
+    const cp2 = withFindings(gap);
+    expect(findingBlocks(cp2, entry("CP-2", cp2))).toEqual([]);
+    expect(findingBlocks(cp8, entry("CP-2", cp8))).toEqual([]);
+  });
+
   it("reads calculation links from the ledger and retains stated operands", () => {
     const calculations = table(
       "Calculations",

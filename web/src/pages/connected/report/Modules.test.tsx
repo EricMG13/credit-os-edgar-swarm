@@ -383,3 +383,181 @@ it("opens the confidence tile's trace on the inputs the score was computed from"
   expect(drawer.textContent).toContain("Coverage");
   expect(drawer.textContent).toContain("High");
 });
+
+it("draws the reader passages in order and a gap for the missing one", () => {
+  const CONTRARY = "Contrary evidence and what would change the view";
+  const text = (heading: string, line: number): Sections[number] => ({
+    heading,
+    level: 3,
+    line,
+    blocks: [{ type: "text", line: line + 1, end: line + 1, text: `${heading} says so.` }],
+  });
+  renderSections([
+    FINDINGS,
+    text("Limitations", 2),
+    text("Bottom line", 4),
+    text("Key findings", 6),
+  ]);
+  // The bottom line band names itself by its label; its heading is the judgement.
+  const headings = [...document.querySelectorAll("h1, h2, h3, h4, section[aria-label]")].map(
+    (node) => node.getAttribute("aria-label") ?? node.textContent,
+  );
+  const at = ["Bottom line", "Key findings", CONTRARY, "Limitations"].map((name) =>
+    headings.indexOf(name),
+  );
+  expect(at.every((index) => index >= 0)).toBe(true);
+  expect(at).toEqual([...at].sort((a, b) => a - b));
+  const gap = screen.getByRole("heading", { name: CONTRARY }).closest("section");
+  expect(gap).toHaveTextContent("Not established for this run");
+});
+
+it("draws no bottom-line gap beside the module's own summary", () => {
+  renderSections(
+    [
+      FINDINGS,
+      {
+        heading: "Key findings",
+        level: 3,
+        line: 2,
+        blocks: [{ type: "text", line: 3, end: 3, text: "Margins held." }],
+      },
+    ],
+    { summary: { bottomLine: "Leverage is stable.", confidence: "", limitation: "", line: 9 } },
+  );
+  expect(screen.getByText("Leverage is stable.")).toBeInTheDocument();
+  expect(screen.queryByRole("heading", { name: "Bottom line" })).not.toBeInTheDocument();
+  expect(screen.getByRole("heading", { name: "Limitations" })).toBeInTheDocument();
+});
+
+const CONTRARY_HEADING = "Contrary evidence and what would change the view";
+const passage = (
+  heading: string,
+  line: number,
+  text = `${heading} says so.`,
+): Sections[number] => ({
+  heading,
+  level: 3,
+  line,
+  blocks: text ? [{ type: "text", line: line + 1, end: line + 1, text }] : [],
+});
+const gapOf = (name: string) => screen.getByRole("heading", { name }).closest("section");
+
+it("gaps a passage whose section has no blocks", () => {
+  renderSections([
+    FINDINGS,
+    passage("Bottom line", 2),
+    passage("Key findings", 4),
+    passage(CONTRARY_HEADING, 6, ""),
+    passage("Limitations", 8),
+  ]);
+  expect(screen.getByText("Limitations says so.")).toBeInTheDocument();
+  expect(gapOf(CONTRARY_HEADING)).toHaveTextContent("Not established for this run");
+});
+
+it("gaps a passage holding only a method note", () => {
+  renderSections([
+    FINDINGS,
+    passage("Bottom line", 2),
+    passage("Key findings", 4),
+    passage(CONTRARY_HEADING, 6, "Module status: complete."),
+    passage("Limitations", 8),
+  ]);
+  expect(screen.getByText("Limitations says so.")).toBeInTheDocument();
+  expect(screen.queryByText("Module status: complete.")).not.toBeInTheDocument();
+  expect(gapOf(CONTRARY_HEADING)).toHaveTextContent("Not established for this run");
+});
+
+it("shows the bottom-line gap when the summary band is dropped for a reference", () => {
+  renderSections([FINDINGS, passage("Key findings", 2)], {
+    summary: {
+      bottomLine: "See report.pdf for the view.",
+      confidence: "",
+      limitation: "",
+      line: 9,
+    },
+  });
+  expect(screen.getByText("Key findings says so.")).toBeInTheDocument();
+  expect(gapOf("Bottom line")).toHaveTextContent("Not established for this run");
+});
+
+it("draws a nested section named like a passage and keeps the real passage", () => {
+  renderSections([
+    FINDINGS,
+    passage("Bottom line", 2),
+    passage("Key findings", 4),
+    passage(CONTRARY_HEADING, 6),
+    {
+      heading: "Cash",
+      level: 3,
+      line: 8,
+      blocks: [{ type: "text", line: 9, end: 9, text: "Cash is ample." }],
+    },
+    {
+      heading: "Limitations",
+      level: 4,
+      line: 10,
+      blocks: [{ type: "text", line: 11, end: 11, text: "Nested caveat on cash." }],
+    },
+    passage("Limitations", 12),
+  ]);
+  expect(screen.getByText("Limitations says so.")).toBeInTheDocument();
+  expect(screen.getByText("Cash is ample.")).toBeInTheDocument();
+  expect(screen.getByText("Nested caveat on cash.")).toBeInTheDocument();
+});
+
+it("picks the passage slot by role and line when a nested section of the same name comes first", () => {
+  renderSections([
+    FINDINGS,
+    passage("Bottom line", 2),
+    passage("Key findings", 4),
+    passage(CONTRARY_HEADING, 6),
+    {
+      heading: "Cash",
+      level: 3,
+      line: 8,
+      blocks: [{ type: "text", line: 9, end: 9, text: "Cash is ample." }],
+    },
+    {
+      heading: "Limitations",
+      level: 4,
+      line: 10,
+      blocks: [{ type: "text", line: 11, end: 11, text: "Nested caveat on cash." }],
+    },
+    passage("Limitations", 12),
+  ]);
+  const before = (first: string, second: string) =>
+    Boolean(
+      screen.getByText(first).compareDocumentPosition(screen.getByText(second)) &
+      Node.DOCUMENT_POSITION_FOLLOWING,
+    );
+  expect(before("Limitations says so.", "Cash is ample.")).toBe(true);
+  expect(before("Limitations says so.", "Nested caveat on cash.")).toBe(true);
+  expect(before("Cash is ample.", "Nested caveat on cash.")).toBe(true);
+});
+
+it("counts a passage drawn as a chart as present", () => {
+  renderSections(
+    [
+      FINDINGS,
+      passage("Bottom line", 2),
+      passage("Key findings", 4),
+      {
+        heading: CONTRARY_HEADING,
+        level: 3,
+        line: 6,
+        blocks: [
+          {
+            type: "table",
+            line: 7,
+            headers: ["Year", "Value"],
+            rows: [{ line: 8, cells: ["2025", "4"] }],
+          },
+        ],
+      },
+      passage("Limitations", 10),
+    ],
+    { chartGaps: [{ title: "Chart", table: 7, unit: "x", columns: [1], gap: "no data" }] },
+  );
+  expect(screen.getByText("Limitations says so.")).toBeInTheDocument();
+  expect(screen.queryByText(/The module's handoff has no such passage/)).not.toBeInTheDocument();
+});
