@@ -182,4 +182,60 @@ describe("connected report Changes", () => {
     expect(groups).toEqual(["Remaining (1)", "No longer stated (1)", "Watching (1)"]);
     expect(within(ledger).queryByText("\u2014")).toBeNull();
   });
+
+  const HEADERS = ["Earlier ref", "Current ref", "Limitation", "Status", "What closed it"];
+  function ledgerOf(headers: string[], rows: string[][]) {
+    const entry = cp8([]);
+    const block = entry.sections[1]?.blocks[0];
+    if (block?.type !== "table") throw new Error("fixture has no table");
+    block.headers = headers;
+    block.rows = rows.map((cells, index) => ({ line: 12 + index, cells }));
+    return entry;
+  }
+
+  it("draws a status cell without its marks and sorts it as the plain status", () => {
+    renderChanges({ first_run: false }, [
+      ledgerOf(HEADERS, [
+        ["E1", "\u2014", "Margins", "**Remaining**", "\u2014"],
+        ["E2", "\u2014", "Revolver", "**Closed**", "Filing"],
+      ]),
+    ]);
+    const ledger = screen.getByRole("region", { name: "Limitations" });
+    const groups = within(ledger)
+      .getAllByRole("heading", { level: 3 })
+      .map((h) => h.textContent);
+    expect(groups).toEqual(["Closed (1)", "Remaining (1)"]);
+  });
+
+  it("shows a module named as Name (CP-x) without its code, in the status, text, note and trace name", () => {
+    renderChanges({ first_run: false }, [
+      ledgerOf(HEADERS, [
+        [
+          "E1",
+          "\u2014",
+          "Covenant view from **Financial foundation (CP-1)** is stale",
+          "Closed by Financial foundation (CP-1)",
+          "Updated in Liquidity (CP-2D) and **Credit (CP-2)**",
+        ],
+      ]),
+    ]);
+    const ledger = screen.getByRole("region", { name: "Limitations" });
+    expect(ledger.textContent).not.toMatch(/\(CP-/);
+    expect(within(ledger).getByText("Updated in Liquidity and", { exact: false })).toBeVisible();
+    expect(within(ledger).getByText("Financial foundation", { selector: "strong" })).toBeVisible();
+    expect(within(ledger).getByRole("button").getAttribute("aria-label")).toBe(
+      "Show sources for Covenant view from Financial foundation is stale",
+    );
+  });
+
+  it("titles the ledger and falls back to the generic table when a column is missing", () => {
+    const { unmount } = renderChanges({ first_run: false }, [ledgerOf(HEADERS, LEDGER)]);
+    expect(screen.getByRole("heading", { level: 2, name: "Limitations ledger" })).toBeVisible();
+    unmount();
+    renderChanges({ first_run: false }, [
+      ledgerOf(HEADERS.slice(0, 4), [["E1", "C1", "Margins", "Remaining"]]),
+    ]);
+    expect(screen.queryByRole("region", { name: "Limitations" })).toBeNull();
+    expect(screen.getByText("Margins")).toBeVisible();
+  });
 });

@@ -6,8 +6,13 @@ import { StatusGroups } from "@/pages/library/parts/StatusBlock";
 import { WatchBlock } from "@/pages/library/parts/WatchBlock";
 import type { AnswerState, Cell } from "@/pages/library/slice";
 import { TRACE_HOST, TraceControl } from "@/pages/library/parts/TraceControl";
-import { SUBSECTION_HEADING } from "@/pages/library/parts/heading";
-import { containsReference, displayColumns, type Table } from "../publishedReport";
+import { SECTION_HEADING, SUBSECTION_HEADING } from "@/pages/library/parts/heading";
+import {
+  containsReference,
+  displayColumns,
+  plainModuleNames,
+  type Table,
+} from "../publishedReport";
 import { plainText, richParts } from "../ReportContent";
 
 function visible(table: Table) {
@@ -74,7 +79,7 @@ function limitations(data: ReturnType<typeof visible>, traceAt: (line: number) =
   if (limitation < 0 || status < 0 || closed < 0) return null;
   const groups = new Map<string, { text: string; closed: string; line: number }[]>();
   for (const { cells, line } of data.rows) {
-    const label = cells[status]?.trim() ?? "";
+    const label = plainModuleNames(plainText(cells[status] ?? "")).trim();
     const note = cells[closed]?.trim() ?? "";
     groups.set(label, [
       ...(groups.get(label) ?? []),
@@ -87,8 +92,10 @@ function limitations(data: ReturnType<typeof visible>, traceAt: (line: number) =
     ...labels.filter((label) => !LEDGER_ORDER.includes(label)),
   ];
   const Heading = SUBSECTION_HEADING;
+  const Title = SECTION_HEADING;
   return (
     <section aria-label="Limitations" className="flex flex-col gap-4">
+      <Title className="font-display text-h3 text-text-primary">Limitations ledger</Title>
       {ordered.map((label) => {
         const items = groups.get(label) ?? [];
         return (
@@ -103,7 +110,7 @@ function limitations(data: ReturnType<typeof visible>, traceAt: (line: number) =
                   <span className="min-w-0 flex-1 wrap-anywhere">{richParts(item.text)}</span>
                   <TraceControl
                     trace={traceAt(item.line)}
-                    label={`Show sources for ${plainText(item.text)}`}
+                    label={`Show sources for ${plainModuleNames(plainText(item.text))}`}
                   />
                   {item.closed && (
                     <p className="basis-full text-xs text-text-secondary">
