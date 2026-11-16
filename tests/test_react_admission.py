@@ -107,3 +107,32 @@ def test_retained_unicode_folder_and_snapshot_share_admission(hosted):
     assert request(hosted, "/connected/report/managed")[0] == 404
     for folder in ("..", "../managed", "managed/other"):
         assert request(hosted, "/connected/report/" + quote(folder, safe=""))[0] == 404
+
+
+def _run_of(folder):
+    return {"folder": folder, "modules": {"CP-1": {"outputs": [f"{folder}/o"]}}}
+
+
+def test_an_unreadable_record_hides_its_own_run_and_nothing_else(hosted):
+    layout = hosted.scheduler.layout
+    for run_id, status in (("a-finished", "finished"), ("b-running", "running")):
+        runs.save(layout, runs.Record(run_id, "credit_snapshot", run_id, status, ""))
+    bad = layout.state / "x-bad.json"
+    bad.write_text("{not json", encoding="utf-8")
+    before, stamp = bad.read_bytes(), bad.stat().st_mtime_ns
+    folders = ("a-finished", "b-running", "x-bad")
+    source = {
+        "catalogue": {"real": [{"id": f} for f in folders]},
+        "workspace": {
+            "runs": {f: _run_of(f) for f in folders},
+            "outputs": {f"{f}/o": {"run": f, "sha256": f"h-{f}"} for f in folders},
+            "handoffs": {},
+            "models": [],
+        },
+        "chips": {},
+    }
+    visible = admitted(source, layout)
+    assert set(visible["workspace"]["runs"]) == {"a-finished"}
+    assert [r["id"] for r in visible["catalogue"]["real"]] == ["a-finished"]
+    assert set(visible["workspace"]["outputs"]) == {"a-finished/o"}
+    assert (bad.read_bytes(), bad.stat().st_mtime_ns) == (before, stamp)

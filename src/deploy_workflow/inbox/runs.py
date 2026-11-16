@@ -163,9 +163,10 @@ def load_all(layout: Layout) -> list[Record]:
 def load_readable(layout: Layout) -> tuple[list[Record], list[str]]:
     """The readable run records sorted by id, and the sorted file names of those ``_load`` refuses.
 
-    For display paths only: the scheduler uses ``load_all``, which raises on a bad file. Skipping a
-    bad file here is a documented fail-open: the caller shows how many were skipped. Nothing is
-    logged, as this runs on every poll of the activity page.
+    For callers that must keep working beside a bad file; ``load_all`` still raises on one. Each
+    caller decides what a skipped file means (the scheduler holds a slot for it, admission hides
+    its run, the run lookups refuse that run) and says so. Nothing is logged here, as this runs on
+    every poll of the activity page.
     """
     records: list[Record] = []
     unreadable: list[str] = []

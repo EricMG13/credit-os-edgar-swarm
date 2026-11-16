@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Any
 
 from deploy_workflow.inbox import runs
@@ -15,7 +16,11 @@ def admitted(snapshot: dict[str, Any], layout: Layout) -> dict[str, Any]:
     A publication alone therefore cannot establish completion for a managed run.
     Historical library folders without a scheduler record retain native admission.
     """
-    unfinished = {record.id for record in runs.load_all(layout) if record.status != "finished"}
+    readable, unreadable = runs.load_readable(layout)
+    # Fail closed for the run of an unreadable record file: its stem is the run ID, and a run whose
+    # acceptance cannot be read is not shown. Every other publication stays visible.
+    unfinished = {record.id for record in readable if record.status != "finished"}
+    unfinished |= {Path(name).stem for name in unreadable}
     workspace = snapshot["workspace"]
     published = {
         key: run for key, run in workspace["runs"].items() if run["folder"] not in unfinished

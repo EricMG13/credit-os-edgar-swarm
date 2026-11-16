@@ -19,6 +19,7 @@ import sys
 import tempfile
 import threading
 import time
+from collections.abc import Callable
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from types import SimpleNamespace
@@ -45,7 +46,7 @@ from deploy_workflow.inbox import activity
 from deploy_workflow.inbox import scheduler as scheduler_module
 from deploy_workflow.inbox import startup as startup_module
 from deploy_workflow.inbox.layout import Layout, ensure_layout
-from deploy_workflow.inbox.runs import Record, alive, load_all
+from deploy_workflow.inbox.runs import Record, alive, load_all, load_readable
 from deploy_workflow.inbox.scheduler import Scheduler, Settings, StartupRefused
 from deploy_workflow.inbox.startup import STANDING_RULING
 from deploy_workflow.model.adapter import KEY_VARIABLES
@@ -546,11 +547,147 @@ def _log(root: Path) -> str:
     return log.read_text(encoding="utf-8") if log.is_file() else ""
 
 
-def test_an_unreadable_run_record_stops_start_up_naming_the_file(root):
+_NOW = datetime(2026, 11, 16, 9, 0, 0, tzinfo=UTC)
+_STEM = "20261116-090000-01"  # the ID _new_id mints first at _NOW
+
+
+def _bad_record(root: Path, stem: str = "bad") -> tuple[Path, Callable[[], tuple[bytes, int]]]:
+    """Write an unreadable record; the returned function reads its bytes and mtime."""
     ensure_layout(root)
-    (root / "_engine/state/bad.json").write_text("{not json", encoding="utf-8")
-    with pytest.raises(ValueError, match="bad.json"):
-        Scheduler(settings(root))
+    path = root / f"_engine/state/{stem}.json"
+    path.write_text("{not json", encoding="utf-8")
+    return path, lambda: (path.read_bytes(), path.stat().st_mtime_ns)
+
+
+def test_the_scheduler_starts_beside_an_unreadable_record_and_leaves_it_alone(root):
+    _, seen = _bad_record(root)
+    before = seen()
+    w = Scheduler(settings(root))
+    try:
+        w.step()
+        assert seen() == before
+        assert w._records == {}
+        w.step()
+    finally:
+        w.close()
+    assert _log(root).count("bad.json") == 1
+    assert "not started, tracked or shown" in _log(root)
+
+
+def test_a_new_run_never_takes_the_id_of_an_unreadable_record(root, fake_env):
+    _, seen = _bad_record(root, _STEM)
+    before = seen()
+    w = Scheduler(settings(root), now=lambda: _NOW)
+    try:
+        assert w._new_id() == "20261116-090000-02"
+        fake_env({"events": DELIVERED, "sleep": 20})
+        record = submit_run(w, root)
+        assert record.id == "20261116-090000-02"
+        assert seen() == before
+    finally:
+        w.close()
+
+
+def _readable_status(root: Path) -> list[str]:
+    return [r.status for r in load_readable(layout(root))[0]]
+
+
+def test_an_unreadable_record_takes_a_running_slot_and_no_process_starts(root, fake_env):
+    fake_env({"events": DELIVERED, "sleep": 20})
+    _, seen = _bad_record(root)
+    before = seen()
+    w = Scheduler(settings(root, max_running=1))
+    try:
+        submit_run(w, root)
+        go(w)
+        assert _readable_status(root) == ["queued"]
+        assert w._children == {}
+        assert seen() == before
+    finally:
+        w.close()
+
+
+def test_an_unreadable_record_counts_as_one_start_today(root, fake_env):
+    fake_env({"events": DELIVERED, "sleep": 20})
+    _bad_record(root)
+    w = Scheduler(settings(root, max_per_day=1))
+    try:
+        submit_run(w, root)
+        go(w)
+        assert _readable_status(root) == ["queued"] and w._children == {}
+        assert "daily limit of 1 runs reached" in activity_js(root)
+    finally:
+        w.close()
+
+
+def _sealed_upload_older_than_the_sweep(root: Path) -> Path:
+    folder = root / "_engine/uploads" / ("a" * 32)
+    (folder / "sealed").mkdir(parents=True)
+    (folder / "sealed/a.txt").write_text("x", encoding="utf-8")
+    return folder
+
+
+def test_a_sealed_upload_survives_the_sweep_while_a_record_is_unreadable(root):
+    _bad_record(root)
+    stale = _sealed_upload_older_than_the_sweep(root)
+    far = time.time() + 3 * submissions.STALE_SECONDS
+    w = Scheduler(settings(root), clock=lambda: far)
+    try:
+        w.step()
+        assert stale.is_dir()
+    finally:
+        w.close()
+
+
+def test_a_stale_upload_is_swept_when_every_record_is_readable(root):
+    ensure_layout(root)
+    stale = _sealed_upload_older_than_the_sweep(root)
+    far = time.time() + 3 * submissions.STALE_SECONDS
+    w = Scheduler(settings(root), clock=lambda: far)
+    try:
+        w.step()
+        assert not stale.exists()
+    finally:
+        w.close()
+
+
+def test_the_held_note_says_records_could_not_be_read_without_naming_a_file(root):
+    _bad_record(root, "secret-name")
+    w = Scheduler(settings(root))
+    try:
+        w.step()
+        held = activity_js(root)
+    finally:
+        w.close()
+    assert (
+        "1 run record could not be read. Its run is not started, tracked or shown, and it takes "
+        "one running slot until the file is repaired and the service restarted."
+    ) in held
+    assert "secret-name" not in held
+
+
+def test_the_held_note_counts_several_unreadable_records(root):
+    _bad_record(root, "one")
+    _bad_record(root, "two")
+    w = Scheduler(settings(root))
+    try:
+        w.step()
+        held = activity_js(root)
+    finally:
+        w.close()
+    assert (
+        "2 run records could not be read. Their runs are not started, tracked or shown, and "
+        "they take 2 running slots until the files are repaired and the service restarted."
+    ) in held
+
+
+def test_there_is_no_held_note_when_every_record_is_readable(root):
+    w = Scheduler(settings(root))
+    try:
+        w.step()
+        assert "could not be read" not in activity_js(root)
+    finally:
+        w.close()
 
 
 def test_start_up_writes_the_library_page_once_and_no_inbox(root):
