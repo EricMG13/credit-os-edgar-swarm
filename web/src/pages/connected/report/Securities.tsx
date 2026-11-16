@@ -5,7 +5,7 @@ import { StatusBadge } from "@/components/status/StatusBadge";
 import { TRACE_HOST } from "@/pages/library/parts/TraceControl";
 import { card, field, heading, label } from "../layout";
 import { PublishedTable } from "../ReportContent";
-import { blocked, containsReference, type OutputEntry } from "../publishedReport";
+import { blocked, containsReference, type OutputEntry, unitLabel } from "../publishedReport";
 import { namedTable } from "../reportView";
 import { amount, distinct } from "../visuals/visualData";
 import { PublishedSource } from "./PublishedTrace";
@@ -234,17 +234,23 @@ function PriceAndYield({
   );
 }
 
+/** `runUnit` is the run's money unit (`runMoneyUnit`); the market levels stay US market quotes. */
 export function Securities({
   data,
   href,
+  runUnit,
 }: {
   data: NonNullable<ReturnType<typeof securityView>>;
   href: EvidenceHref;
+  runUnit?: string;
 }) {
   const { chartable, date, records, outcomes, summaryLine } = data;
   return (
     <section aria-label="Instrument decisions" className={`${card} min-w-0`}>
       <h3 className={heading}>Instrument decisions</h3>
+      {records.length > 0 && runUnit && runUnit !== "US$m" && (
+        <p role="note">{`Market levels are US market quotes in US dollars; this run reports in ${unitLabel(runUnit)}.`}</p>
+      )}
       {records.length > 0 && (
         <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,20rem),1fr))] gap-3">
           {records.map((item) => (
