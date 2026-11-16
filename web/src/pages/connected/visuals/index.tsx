@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { GapPanel } from "@/components/gap/GapPanel";
 import { ChartQualifications } from "./ChartQualifications";
+import { chartsWithQualifications } from "./drawnQualifications";
 import { ChartTable } from "@/components/chart/ChartTable";
 import { ChartWithTable } from "@/components/chart/ChartWithTable";
 import { TRACE_HOST } from "@/pages/library/parts/TraceControl";
@@ -114,6 +115,7 @@ export function LegacyVisuals({
   const basis = usePortfolioBasis();
   const sourceSections = sections ?? published.sections;
   const tables = publishedTables(sourceSections);
+  const qualified = new Set(chartsWithQualifications(published, sourceSections));
   const drawings = [
     ...byCategory(published, "charts", "chart"),
     ...byCategory(published, "chartGaps", "chart"),
@@ -192,12 +194,14 @@ export function LegacyVisuals({
               <ChartTable caption={title} {...chartTable(table)} />
             </>
           )}
-          <ChartQualifications
-            category={category}
-            sections={sourceSections}
-            line={line}
-            evidenceHref={evidenceHref}
-          />
+          {qualified.has(descriptor) && (
+            <ChartQualifications
+              category={category}
+              sections={sourceSections}
+              line={line}
+              evidenceHref={evidenceHref}
+            />
+          )}
         </div>
       )),
     ];

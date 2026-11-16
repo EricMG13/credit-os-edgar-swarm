@@ -31,26 +31,40 @@ export function chartDrawsVerbatim(body: string) {
 }
 
 /**
- * Lines of the text blocks that the module page's charts draw beside themselves
- * (`ChartQualifications`), word for word. Only a published chart with a title, a table line, a
- * drawable table and no gap reason reaches `ChartQualifications`, whether listed in `charts` or
- * `chartGaps`; a recorded gap reason draws none.
+ * The chart descriptors (`charts` and `chartGaps`) that reach `ChartQualifications`: a published
+ * chart with a title, a table line, a drawable table and no gap reason. `LegacyVisuals` draws
+ * qualifications only for these, and `drawnQualificationLines` hides from the findings only the
+ * text these draw, so the two cannot disagree.
  */
-export function drawnQualificationLines(output: unknown, sections: unknown): Set<number> {
+export function chartsWithQualifications(output: unknown, sections: unknown) {
   const published = record(output);
   const tables = publishedTables(sections);
+  return ["charts", "chartGaps"].flatMap((key) =>
+    items(published[key])
+      .map(record)
+      .filter((descriptor) => {
+        const title = word(descriptor.title ?? descriptor.lane ?? descriptor.name);
+        const line = descriptor.table;
+        return (
+          title !== "" &&
+          typeof line === "number" &&
+          line > 0 &&
+          !word(descriptor.gap) &&
+          tables.has(line)
+        );
+      }),
+  );
+}
+
+/**
+ * Lines of the text blocks that the module page's charts draw beside themselves
+ * (`ChartQualifications`), word for word.
+ */
+export function drawnQualificationLines(output: unknown, sections: unknown): Set<number> {
   const lines = new Set<number>();
-  for (const key of ["charts", "chartGaps"]) {
-    for (const raw of items(published[key])) {
-      const descriptor = record(raw);
-      const title = word(descriptor.title ?? descriptor.lane ?? descriptor.name);
-      const line = descriptor.table;
-      if (!title || typeof line !== "number" || !Number.isSafeInteger(line) || line <= 0) continue;
-      if (word(descriptor.gap) || !tables.has(line)) continue;
-      for (const block of qualificationBlocks(sections, line)) {
-        if (chartDrawsVerbatim(readParagraph(word(block.text)).body))
-          lines.add(block.line as number);
-      }
+  for (const descriptor of chartsWithQualifications(output, sections)) {
+    for (const block of qualificationBlocks(sections, descriptor.table as number)) {
+      if (chartDrawsVerbatim(readParagraph(word(block.text)).body)) lines.add(block.line as number);
     }
   }
   return lines;
