@@ -98,6 +98,10 @@ function acceptanceLabel(group: LimitGroup) {
     : `I accept these ${String(group.ids.length)} limits`;
 }
 
+function moduleNames(items: readonly { scope: string }[]): string[] {
+  return [...new Set(items.map((item) => scopeText(item.scope)))];
+}
+
 function LimitCard({
   group,
   accepted,
@@ -110,7 +114,8 @@ function LimitCard({
   onAccept: (ids: readonly string[], checked: boolean) => void;
 }) {
   const fixes = [...new Set(group.causes.map((cause) => cause.fix ?? "").filter(Boolean))];
-  const affected = [...new Set(group.consequences.map((item) => scopeText(item.scope)))];
+  const refusing = moduleNames(group.consequences.filter((item) => item.outcome === "will_refuse"));
+  const affected = moduleNames(group.consequences).filter((name) => !refusing.includes(name));
   const reasonId = useId();
   return (
     <li className="grid gap-2 rounded-lg border border-border-hairline p-3 text-sm text-text-secondary">
@@ -124,6 +129,7 @@ function LimitCard({
       {fixes.map((fix) => (
         <p key={fix}>{plainText(fix)}</p>
       ))}
+      {refusing.length > 0 && <p>Will also refuse: {refusing.join(", ")}</p>}
       {affected.length > 0 && <p>Also affects: {affected.join(", ")}</p>}
       <label className="flex items-center gap-2 font-semibold text-text-primary">
         <input
@@ -187,7 +193,10 @@ function LimitsToDecide({
           <summary className="cursor-pointer">{`No action needed (${String(passive.length)})`}</summary>
           <ul className="mt-2 list-disc space-y-1 pl-5">
             {passive.map((item) => (
-              <li key={item.id}>{plainText(item.reason)}</li>
+              <li key={item.id}>
+                {plainText(item.reason)}
+                {item.fix ? ` ${plainText(item.fix)}` : ""}
+              </li>
             ))}
           </ul>
         </details>

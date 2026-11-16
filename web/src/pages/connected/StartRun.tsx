@@ -1164,6 +1164,9 @@ function IntakeForm({
     setSubmitUncertain,
   } = reviewState;
   const draftRef = useRef<Draft | null>(null);
+  // Snapshot of the last review, made when the analyst leaves it by a stepper or Edit button.
+  // The next review uses it once, only for the same issuer id and pathway. "Carry over from
+  // latest run" and "This is a different issuer" clear it.
   const reviewedRef = useRef<Reviewed | null>(null);
   const active = useRef(false);
   const folderInput = useRef<HTMLInputElement>(null);

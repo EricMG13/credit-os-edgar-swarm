@@ -1106,6 +1106,68 @@ describe("connected run start limits as decisions", () => {
     expect(fetchMock.mock.calls.some(([path]) => path.endsWith("/submit"))).toBe(false);
   });
 
+  it("names the following modules that will refuse apart from those that are only limited", async () => {
+    const refusing = [
+      {
+        id: "CP-4:declared-none",
+        scope: "CP-4",
+        outcome: "will_refuse",
+        reason: "Legal documents declared none.",
+        fix: FIX,
+        inherited_from: [],
+      },
+      {
+        id: "CP-4C:from:CP-4",
+        scope: "CP-4C",
+        outcome: "will_refuse",
+        reason: "Expected to be will refuse through CP-4, which it reads.",
+        fix: "",
+        inherited_from: ["CP-4"],
+      },
+      {
+        id: "CP-5:from:CP-4",
+        scope: "CP-5",
+        outcome: "limited",
+        reason: "Expected to be limited through CP-4, which it reads.",
+        fix: "",
+        inherited_from: ["CP-4"],
+      },
+    ];
+    testingFetch({ ...plan, items: refusing });
+    render(<ConnectedApp path="/start" mode="live" />);
+    await review();
+    await screen.findByRole("button", { name: "Submit, spend up to USD 25.00" });
+    const limits = screen.getByRole("region", { name: "Limits to decide" });
+    expect(limits).toHaveTextContent("Will also refuse: Recovery & fulcrum");
+    expect(limits).toHaveTextContent("Also affects: Evidence validation");
+    expect(limits).not.toHaveTextContent("Also affects: Recovery");
+    expect(screen.getByRole("checkbox", { name: "I accept these 3 limits" })).toBeInTheDocument();
+    expect(limits).not.toHaveTextContent(/CP-\d/);
+  });
+
+  it("draws the reason and the fix of an item that needs no action", async () => {
+    const passive = [
+      {
+        id: "run:workbook-none",
+        scope: "run",
+        outcome: "information",
+        reason: "No portfolio workbook was chosen.",
+        fix: "Add the fund's workbook and choose it under Issuer and dates.",
+      },
+    ];
+    testingFetch({ ...plan, items: passive });
+    render(<ConnectedApp path="/start" mode="synthetic" />);
+    await review();
+    await screen.findByRole("button", { name: "Submit run" });
+    const limits = screen.getByRole("region", { name: "Limits to decide" });
+    expect(limits).toHaveTextContent("No action needed (1)");
+    const details = limits.querySelector("details");
+    expect(details).toHaveTextContent("No portfolio workbook was chosen.");
+    expect(details).toHaveTextContent(
+      "Add the fund's workbook and choose it under Issuer and dates.",
+    );
+  });
+
   it("says there are no limits when the service finds none", async () => {
     testingFetch();
     render(<ConnectedApp path="/start" mode="synthetic" />);
@@ -1180,6 +1242,41 @@ describe("connected run start limits as decisions", () => {
     fireEvent.click(screen.getByRole("button", { name: "Edit issuer and documents" }));
     fireEvent.click(screen.getByRole("button", { name: "This is a different issuer" }));
     await fillInputs();
+    await advanceToPurpose();
+    advanceToContext();
+    fireEvent.click(screen.getByRole("button", { name: "Review run" }));
+    expect(
+      await screen.findByRole("checkbox", { name: "I accept these 3 limits" }),
+    ).not.toBeChecked();
+  });
+
+  it("does not carry an acceptance after a reset when the same issuer is typed again", async () => {
+    testingFetch({ ...plan, items: cascade }, undefined, {
+      "/api/runs/earlier/inputs": {
+        issuer_id: "northbridge",
+        issuer_name: "Northbridge",
+        level: "basic",
+        max_turns: 32,
+        modules: [],
+        context,
+        files: [{ name: file.name, size: file.size }],
+      },
+      "/api/submissions/sub-1/carry": { carried: [file.name], kept: [] },
+    });
+    render(<ConnectedApp path="/start" search="?from=earlier" mode="synthetic" />);
+    await screen.findByLabelText("Issuer name");
+    fireEvent.change(screen.getByLabelText("As-of date"), { target: { value: "2026-10-31" } });
+    await advanceToPurpose();
+    advanceToContext();
+    fireEvent.click(screen.getByRole("button", { name: "Review run" }));
+    fireEvent.click(await screen.findByRole("checkbox", { name: "I accept these 3 limits" }));
+    fireEvent.click(screen.getByRole("button", { name: "Edit issuer and documents" }));
+    fireEvent.click(screen.getByRole("button", { name: "This is a different issuer" }));
+    fireEvent.change(await screen.findByLabelText("Issuer name"), {
+      target: { value: "Northbridge" },
+    });
+    fireEvent.change(screen.getByLabelText("As-of date"), { target: { value: "2026-10-31" } });
+    fireEvent.change(screen.getByLabelText("Documents"), { target: { files: [file] } });
     await advanceToPurpose();
     advanceToContext();
     fireEvent.click(screen.getByRole("button", { name: "Review run" }));
