@@ -46,6 +46,38 @@ function inputsLine(entry: OutputEntry) {
   return blocks?.length === 1 ? blocks[0]?.line : undefined;
 }
 
+function recordedBridge(
+  handoff: OutputEntry | undefined,
+  units: unknown,
+  fiscal: string | undefined,
+  value: number | null | undefined,
+) {
+  if (!handoff || word(units) !== "USD millions" || !fiscal || typeof value !== "number")
+    return null;
+  const ledger = namedTable(handoff, "Calculations", [
+    "ID",
+    "Calculation",
+    "Inputs",
+    "Result",
+    "Source",
+  ]);
+  const fcf = namedRow(ledger, ({ cells }) => cells[1] === `Base FCF ${fiscal}`);
+  const inflow = namedRow(
+    ledger,
+    ({ cells }) => cells[1] === `Base taxes and working-capital inflow ${fiscal}`,
+  );
+  if (!fcf || !inflow) return null;
+  const original = amount(fcf.cells[3] ?? "");
+  const difference = amount(inflow.cells[3] ?? "");
+  if (
+    original === null ||
+    difference === null ||
+    !(Math.abs(original - value - difference) < 0.005)
+  )
+    return null;
+  return { value, original, difference, fcfLine: fcf.line, inflowLine: inflow.line };
+}
+
 function BasisNote({
   model,
   handoff,
@@ -64,38 +96,24 @@ function BasisNote({
   const cases = grid && cashProxyCases(grid, null);
   const period = cases?.periods[0];
   const value = cases?.series.find(({ name }) => name === "Base case")?.values[0];
-  const ledger =
-    handoff &&
-    namedTable(handoff, "Calculations", ["ID", "Calculation", "Inputs", "Result", "Source"]);
-  const comparable = word(raw.units) === "USD millions" && Boolean(handoff);
   const fiscal = period?.slice(0, -1);
-  const fcf = fiscal && namedRow(ledger, ({ cells }) => cells[1] === `Base FCF ${fiscal}`);
-  const original = fcf ? amount(fcf.cells[3] ?? "") : null;
-  const recordedInflow =
-    fiscal &&
-    namedRow(ledger, ({ cells }) => cells[1] === `Base taxes and working-capital inflow ${fiscal}`);
-  const difference = recordedInflow ? amount(recordedInflow.cells[3] ?? "") : null;
-  const hasRecordedBridge =
-    typeof value === "number" &&
-    original !== null &&
-    difference !== null &&
-    Math.abs(original - value - difference) < 0.005;
+  const bridge = recordedBridge(handoff, raw.units, fiscal, value);
   return (
     <section className={card}>
       <h3 className={heading}>{fiscal ? `${fiscal} base case basis` : "Model basis"}</h3>
-      {comparable && hasRecordedBridge && (
+      {bridge && (
         <p>
-          The calculation gives <strong>{value.toFixed(2)}</strong> cash proxy. The handoff gives{" "}
-          <strong>{original.toFixed(2)}</strong> free cash flow. The displayed difference is{" "}
-          <strong>{difference.toFixed(2)}</strong> US$m.
+          The calculation gives <strong>{bridge.value.toFixed(2)}</strong> cash proxy. The handoff
+          gives <strong>{bridge.original.toFixed(2)}</strong> free cash flow. The displayed
+          difference is <strong>{bridge.difference.toFixed(2)}</strong> US$m.
         </p>
       )}
-      {comparable && hasRecordedBridge && fcf && recordedInflow && (
+      {bridge && (
         <div className="flex flex-wrap gap-3">
-          <PublishedSource href={href(fcf.line)} name="Handoff free cash flow">
+          <PublishedSource href={href(bridge.fcfLine)} name="Handoff free cash flow">
             Free cash flow basis
           </PublishedSource>
-          <PublishedSource href={href(recordedInflow.line)} name="Recorded difference">
+          <PublishedSource href={href(bridge.inflowLine)} name="Recorded difference">
             Difference basis
           </PublishedSource>
         </div>

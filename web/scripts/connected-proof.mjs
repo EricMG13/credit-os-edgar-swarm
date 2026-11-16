@@ -714,6 +714,16 @@ async function checkCharts(report, artifacts, channel, page) {
   await checkDownside(report, modules, artifacts, channel, page);
   await checkMacro(report, modules, artifacts, channel, page);
   await checkSecurities(report, modules, artifacts, channel, page);
+  const sourceHref = await checkDebtEvidence(report, modules, artifacts, channel, page);
+  await section("Modules").click();
+  await checkPortfolioEvidence(report, modules, artifacts, channel, page);
+  await section("Forecast").click();
+  await checkForecastEvidence(report, artifacts, channel, page);
+  await checkForecastRunCharts(report, page, sourceHref);
+  await checkReportEvidence(report, page, channel);
+}
+
+async function checkDebtEvidence(report, modules, artifacts, channel, page) {
   await modules.getByRole("link", { name: /^Financial foundation, Delivered/u }).click();
   const debt = report.getByRole("figure", { name: "Debt maturities", exact: true });
   await debt.getByRole("radio", { name: "Chart", exact: true }).waitFor();
@@ -745,7 +755,10 @@ async function checkCharts(report, artifacts, channel, page) {
   await page.reload();
   await report.getByRole("cell", { name: "1,250", exact: true }).waitFor();
 
-  await section("Modules").click();
+  return sourceHref;
+}
+
+async function checkPortfolioEvidence(report, modules, artifacts, channel, page) {
   await modules.getByRole("link", { name: /^Committee decision, Delivered/u }).click();
   const limits = report.getByRole("figure", { name: "Portfolio limits", exact: true });
   await limits.getByText("2.37%", { exact: true }).waitFor();
@@ -774,8 +787,9 @@ async function checkCharts(report, artifacts, channel, page) {
   await publishedLimits
     .getByRole("cell", { name: "Not supplied: no proposal", exact: true })
     .waitFor();
+}
 
-  await section("Forecast").click();
+async function checkForecastEvidence(report, artifacts, channel, page) {
   const revenue = report.getByRole("figure", { name: "Revenue", exact: true });
   await revenue.locator("svg.recharts-surface").first().waitFor();
   const sourceSwitch = report.getByRole("switch");
@@ -800,7 +814,10 @@ async function checkCharts(report, artifacts, channel, page) {
   await report.locator("pre").filter({ hasText: "cpos-forecast-inputs/1" }).waitFor();
   await page.reload();
   await report.locator("pre").filter({ hasText: "cpos-forecast-inputs/1" }).waitFor();
-  await section("Forecast").click();
+  await report
+    .getByRole("navigation", { name: "Report sections" })
+    .getByRole("link", { name: "Forecast", exact: true })
+    .click();
   const model = report.getByRole("table", { name: "Cash flow model", exact: true });
   const revenueRow = model.getByRole("row").filter({
     has: page.getByRole("rowheader", { name: "Revenue", exact: true }),
@@ -829,6 +846,9 @@ async function checkCharts(report, artifacts, channel, page) {
   await baseCase.press("Space");
   await ebitdaRow.getByRole("cell", { name: "315", exact: true }).waitFor();
   await cashProxy.getByRole("row", { name: /Base case/u }).waitFor();
+}
+
+async function checkForecastRunCharts(report, page, sourceHref) {
   const runCharts = report.getByRole("region", { name: "Run charts", exact: true });
   const forecastLimits = runCharts.getByRole("figure", { name: "Portfolio limits", exact: true });
   await forecastLimits.getByText("3.73%", { exact: true }).waitFor();
@@ -859,10 +879,18 @@ async function checkCharts(report, artifacts, channel, page) {
     .waitFor();
   await runCharts.getByRole("link", { name: "Financial foundation", exact: true }).click();
   await report.getByRole("heading", { name: "Financial foundation", exact: true }).waitFor();
+}
 
-  await section("Report").click();
+async function checkReportEvidence(report, page, channel) {
+  await report
+    .getByRole("navigation", { name: "Report sections" })
+    .getByRole("link", { name: "Report", exact: true })
+    .click();
   await report.getByRole("heading", { name: "Report history", exact: true }).waitFor();
-  await section("Evidence").click();
+  await report
+    .getByRole("navigation", { name: "Report sections" })
+    .getByRole("link", { name: "Evidence", exact: true })
+    .click();
   const evidence = report.getByRole("navigation", { name: "Evidence sections" });
   await evidence.getByRole("link", { name: "Sources", exact: true }).click();
   await report.getByRole("heading", { name: "Sources", exact: true }).waitFor();
