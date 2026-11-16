@@ -1077,3 +1077,23 @@ def test_an_accepted_signal_url_reaches_the_server_normalised_through_main(
 )
 def test_an_accepted_signal_url_is_stored_normalised(given, stored):
     assert service.signal_link(given) == stored
+
+
+def test_a_run_beside_an_unreadable_record_resolves_and_its_own_bad_record_is_refused(svc):
+    sid = svc.new()
+    svc.upload(sid, "a.txt", b"Net sales were 100.")
+    answers = answers_for()
+    digest = svc.call("POST", f"/api/submissions/{sid}/summary", answers).json()["digest"]
+    run = svc.call("POST", f"/api/submissions/{sid}/submit", {"answers": answers, "digest": digest})
+    run_id = run.json()["run"]
+    bad = layout(svc.root).state / "20200101-000000-01.json"
+    bad.write_text("{not json", encoding="utf-8")
+    before = (bad.read_bytes(), bad.stat().st_mtime_ns)
+    assert svc.call("GET", f"/api/runs/{run_id}").json()["id"] == run_id
+    assert svc.call("GET", "/api/runs/20200101-000000-02").status == 404
+    refused = svc.call("GET", "/api/runs/20200101-000000-01")
+    missing = svc.call("GET", "/api/runs/20200101-000000-02")
+    assert missing.status == 404 and missing.json() == {"error": "unknown run"}
+    assert refused.status == 500 and b"{not json" not in refused.body  # today's reply to ValueError
+    assert refused.body != missing.body
+    assert (bad.read_bytes(), bad.stat().st_mtime_ns) == before

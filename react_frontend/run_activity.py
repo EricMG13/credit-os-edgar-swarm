@@ -221,8 +221,9 @@ def listing(layout: Layout) -> http_base.Reply:
     it: it tells the operator which file to look at.
     """
     # Documented fail-open (display only): a record file that cannot be read, or whose text fields
-    # are not strings, is left out of the list and counted in ``unreadable``; the scheduler still
-    # refuses such a file through ``runs.load_all``.
+    # are not strings, is left out of the list and counted in ``unreadable``. The scheduler skips a
+    # file it cannot read (one slot, one daily start, a ``held`` note); a record whose text fields
+    # are not strings it tracks like any other.
     readable, bad_files = runs.load_readable(layout)
     saved = [item for item in readable if _texts_are_strings(item)]
     unreadable = len(bad_files) + len(readable) - len(saved)
