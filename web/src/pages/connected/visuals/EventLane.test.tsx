@@ -240,3 +240,31 @@ it("keeps open details across toggling and says so when every category is off", 
   expect(screen.queryAllByRole("listitem")).toHaveLength(0);
   expect(within(strip()).queryAllByRole("group", { name: /^\d{4}, / })).toHaveLength(0);
 });
+
+it("lets a row's own button close it while all details are shown", () => {
+  draw();
+  fireEvent.click(screen.getByRole("button", { name: "Show all details" }));
+  const one = within(listItemOf(0)).getByRole("button", { name: /^Details for/ });
+  fireEvent.click(one);
+  expect(one).toHaveAttribute("aria-expanded", "false");
+  expect(screen.getByRole("button", { name: "Show all details" })).toHaveAttribute(
+    "aria-pressed",
+    "false",
+  );
+  fireEvent.click(one);
+  expect(screen.getByRole("button", { name: "Hide all details" })).toHaveAttribute(
+    "aria-pressed",
+    "true",
+  );
+});
+
+it("closes every row on Hide all details, including one clicked while all were shown", () => {
+  draw();
+  fireEvent.click(screen.getByRole("button", { name: "Show all details" }));
+  fireEvent.click(within(listItemOf(0)).getByRole("button", { name: /^Details for/ }));
+  fireEvent.click(screen.getByRole("button", { name: "Show all details" }));
+  fireEvent.click(screen.getByRole("button", { name: "Hide all details" }));
+  KEY_EVENTS.forEach((e, index) => {
+    expect(within(panelOf(index)).getByText(e.status)).not.toBeVisible();
+  });
+});

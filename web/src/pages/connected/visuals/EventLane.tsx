@@ -299,16 +299,18 @@ function EventRow({
   onToggle: () => void;
   onActive: (active: boolean) => void;
 }) {
+  const wide = rowDetail ? "" : "col-span-2 @3xl:col-span-1";
   return (
     <li
       id={rowId}
       tabIndex={-1}
       data-active={lit}
       className={cx(
-        "grid gap-x-3 gap-y-1 border-t border-border-hairline py-2 md:py-1 text-small first:border-t-0 outline-hidden focus:ring-2 focus:ring-focus focus:ring-inset data-[active=true]:bg-action-subtle md:items-start",
+        "grid gap-x-3 gap-y-1 border-t border-border-hairline py-2 @3xl:py-1 text-small first:border-t-0 outline-hidden focus:ring-2 focus:ring-focus focus:ring-inset data-[active=true]:bg-action-subtle @3xl:items-start",
+        rowDetail ? "" : "grid-cols-[minmax(0,1fr)_auto]",
         rowDetail
-          ? "md:grid-cols-[7.5rem_auto_minmax(0,5fr)_minmax(0,4fr)_13rem_auto]"
-          : "md:grid-cols-[7.5rem_auto_minmax(0,5fr)_minmax(0,4fr)_auto]",
+          ? "@3xl:grid-cols-[7.5rem_auto_minmax(0,5fr)_minmax(0,4fr)_13rem_auto]"
+          : "@3xl:grid-cols-[7.5rem_auto_minmax(0,5fr)_minmax(0,4fr)_auto]",
       )}
       onMouseEnter={() => {
         onActive(true);
@@ -323,25 +325,30 @@ function EventRow({
         onActive(false);
       }}
     >
-      <div className="flex items-center gap-2 md:contents">
+      <div className="flex items-center gap-2 @3xl:contents">
         <span className="tabular-nums text-text-secondary">
           {event.date} · {event.precision}
         </span>
-        <span className="flex items-center self-center md:h-[22px] md:self-start">
+        <span className="flex items-center self-center @3xl:h-[22px] @3xl:self-start">
           <Mark category={event.category} />
           <span className="sr-only">{event.category}</span>
         </span>
       </div>
-      <span className="min-w-0 font-medium break-words">{event.event}</span>
-      <span className="min-w-0 break-words text-text-secondary">{event.relevance}</span>
-      <div className="flex flex-wrap items-center gap-5 md:contents">
-        {rowDetail ? <div className="min-w-0 md:-my-[3px]">{rowDetail(event.index)}</div> : null}
+      <span className={cx("min-w-0 font-medium break-words", wide)}>{event.event}</span>
+      <span className={cx("min-w-0 break-words text-text-secondary", wide)}>{event.relevance}</span>
+      <div
+        className={cx(
+          "flex flex-wrap items-center gap-5 @3xl:contents",
+          !rowDetail && "col-start-2 row-start-1",
+        )}
+      >
+        {rowDetail ? <div className="min-w-0 @3xl:-my-[3px]">{rowDetail(event.index)}</div> : null}
         <button
           type="button"
           aria-label={`Details for ${event.event}`}
           aria-expanded={open}
           aria-controls={panelId}
-          className="relative flex size-7 flex-none cursor-pointer items-center justify-center self-center rounded-ds-sm border border-transparent bg-transparent text-text-tertiary transition-colors duration-150 hover:border-border-control hover:bg-action-subtle hover:text-action focus-visible:border-border-control focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 motion-reduce:transition-none md:-my-[3px] md:self-start max-[480px]:after:absolute max-[480px]:after:-inset-[9px]"
+          className="relative flex size-7 flex-none cursor-pointer items-center justify-center self-center rounded-ds-sm border border-transparent bg-transparent text-text-tertiary transition-colors duration-150 hover:border-border-control hover:bg-action-subtle hover:text-action focus-visible:border-border-control focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 motion-reduce:transition-none @3xl:-my-[3px] @3xl:self-start max-[480px]:after:absolute max-[480px]:after:-inset-[9px]"
           onClick={onToggle}
         >
           <ChevronDown aria-hidden="true" className={cx("size-4", open && "rotate-180")} />
@@ -350,7 +357,7 @@ function EventRow({
       <div
         id={panelId}
         hidden={!open}
-        className="grid gap-0.5 text-text-secondary md:col-start-3 md:col-end-[-1]"
+        className={cx("grid gap-0.5 text-text-secondary @3xl:col-start-3 @3xl:col-end-[-1]", wide)}
       >
         <p>{event.status}</p>
         <p>Published {event.published}</p>
@@ -363,8 +370,8 @@ function EventRow({
 function EventDrawing({ events, evidenceInDrawer, rowDetail }: Drawing) {
   const prefix = useId();
   const [active, setActive] = useState<Active>(null);
-  const [all, setAll] = useState(false);
   const [opened, setOpened] = useState<ReadonlySet<number>>(new Set());
+  const all = events.every((event) => opened.has(event.index));
   const [hidden, setHidden] = useState<Hidden>(new Set());
   const groups = byYear(events.filter((event) => !hidden.has(event.category)));
   const toggleCategory = (category: EventRecord["category"]) => {
@@ -383,7 +390,7 @@ function EventDrawing({ events, evidenceInDrawer, rowDetail }: Drawing) {
     });
   };
   return (
-    <div className="grid gap-4">
+    <div className="@container grid gap-4">
       <YearStrip
         events={events}
         hidden={hidden}
@@ -393,15 +400,15 @@ function EventDrawing({ events, evidenceInDrawer, rowDetail }: Drawing) {
         rowId={rowId}
         setActive={setActive}
       />
-      <div role="group" aria-label="Events in date order" className="grid gap-2 md:gap-0">
-        <div className="md:pb-2">
+      <div role="group" aria-label="Events in date order" className="grid gap-2 @3xl:gap-0">
+        <div className="@3xl:pb-2">
           <Button
             color="secondary"
             className="max-[480px]:min-h-11"
             size="sm"
             aria-pressed={all}
             onClick={() => {
-              setAll((prev) => !prev);
+              setOpened(all ? new Set() : new Set(events.map((event) => event.index)));
             }}
           >
             {all ? "Hide all details" : "Show all details"}
@@ -418,11 +425,11 @@ function EventDrawing({ events, evidenceInDrawer, rowDetail }: Drawing) {
               key={year}
               role="group"
               aria-labelledby={`${prefix}-year-${String(year)}`}
-              className="grid gap-1 md:gap-0 md:border-t md:border-border-hairline md:first:border-t-0 md:grid-cols-[3rem_minmax(0,1fr)]"
+              className="grid gap-1 @3xl:gap-0 @3xl:border-t @3xl:border-border-hairline @3xl:first:border-t-0 @3xl:grid-cols-[3rem_minmax(0,1fr)]"
             >
               <span
                 id={`${prefix}-year-${String(year)}`}
-                className="font-semibold tabular-nums text-text-primary md:pt-1.5"
+                className="font-semibold tabular-nums text-text-primary @3xl:pt-1.5"
               >
                 {year}
               </span>
@@ -433,7 +440,7 @@ function EventDrawing({ events, evidenceInDrawer, rowDetail }: Drawing) {
                     event={event}
                     rowId={rowId(event.index)}
                     panelId={`${rowId(event.index)}-details`}
-                    open={all || opened.has(event.index)}
+                    open={opened.has(event.index)}
                     lit={active?.index === event.index && active.from === "marker"}
                     showSource={!evidenceInDrawer}
                     rowDetail={rowDetail}
