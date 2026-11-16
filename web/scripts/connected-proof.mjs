@@ -810,9 +810,13 @@ async function checkReadingLayout(report, page, channel) {
     exact: true,
   });
   const box = await source.boundingBox();
-  assert.ok(box && box.width >= 44 && box.height >= 44);
+  assert.ok(box);
+  assert.ok(box.width >= 44);
+  assert.ok(box.height >= 44);
   const main = await page.locator("main").boundingBox();
-  assert.ok(main && main.x === 0 && main.width === 390);
+  assert.ok(main);
+  assert.ok(main.x === 0);
+  assert.ok(main.width === 390);
   await chart.scrollIntoViewIfNeeded();
   await page.waitForFunction(() => document.documentElement.scrollWidth === 390);
   const labels = await chart.locator("svg text").evaluateAll((nodes) =>

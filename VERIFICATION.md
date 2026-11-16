@@ -4,6 +4,16 @@ Keep one running record here. A pass applies only to the stated scope. Earlier v
 engine is in [EricMG13/final-workflow](https://github.com/EricMG13/final-workflow)'s
 `VERIFICATION.md`, which also keeps the retained runs this copy leaves out.
 
+## 2026-11-16 — Evidence gap complexity repair
+
+- Verified the app finding before editing with `fallow inspect --file src/pages/connected/report/Evidence.tsx --format json`: `gapRecords` cyclomatic 15 / cognitive 24. Extracted table title selection and row conversion; retained block filters and per-row appending. No suppressions or design changes.
+- The subsequent audit exposed `checkReadingLayout` CRAP 42 (cyclomatic 6, estimated coverage absent). Verified with its `fallow inspect` command before separating null/dimension assertions; preserved exact `===` semantics. This browser check executes in both branded proofs.
+- Confidence review, ranked: (1) lost gap/source identity — Astra compared 3,600 adversarial inputs with the original, exact equality; (2) title fallback, no-gap and ledger exclusions, sparse/zero details and order — nine Evidence tests pass, including two independent boundary regressions; (3) large-table append — reproduced spread argument-limit failure, replaced with individual appends, Astra verified actual helpers with 200,000 rows; (4) assertion semantics — restored original handling of negative zero. No outstanding Astra finding.
+- 38 targeted tests pass; final Evidence subset 9/9 passes. TypeScript, changed-file ESLint/Prettier and Python quality gate pass (zero findings). Final Fallow audit against `fbcc5ac`: PASS, zero introduced findings, five inherited findings remain.
+- Final source tree `e26d7fe86f3bf6d9a480aa4907c7b1dae1a5cc10`; fresh build passes all 33 upload-to-finished-report checks in each browser on macOS: Chrome 157.0.8103.78 (`20261116-035417-01`) and Edge 157.0.4341.60 (`20261116-035435-01`). Evidence: `proof-artifacts/run-9vzN45/proof.json`. This is synthetic source-snapshot proof, not a Windows or ZIP proof.
+- Fidelity scope: behavior-preserving Evidence parser and test assertions only; no layout, component, chart, number, qualification or backend edits. Native backend and pins match RBOT-HTML `256101a`; React dependencies unchanged. No providers, tournaments, Signal changes or ZIP build/publication. Windows work-PC Chrome and Edge proof remains required.
+- Trimmed the oldest verification entry to keep this record below 1,000 lines; git history retains it.
+
 ## 2026-11-16 — Financial qualifications and five reading-design fixes
 
 - Forecast preserves all recorded labels, dates, units and values while placing
@@ -959,32 +969,3 @@ Scope: Signal's HTTP service, feed API and feed page, its packaging, and the opt
 - Live fetch of two public feeds, no model call, no cost; throwaway root outside the repository; the page was driven before the last two fix commits. `sources propose` and `approve` for UK CMA cases (Atom) and BEREC (RSS), `topics add` Mergers (merger, acquisition) and Telecoms (roaming, spectrum, broadband, mobile), `ingest`: CMA cases 50 new, BEREC 10 new, exit 0; `topics list`: Mergers 22, Telecoms 3. `serve` on 127.0.0.1, page at 1280 px in the desktop app's browser: the name was kept from its cookie, following Mergers filled For you with 22 cards, Save set its pressed state, a search for "roaming" inside For you gave no cards (those stories are under Telecoms), Latest showed CMA and BEREC cards with their topic tags, `/api/status` reported 2 approved, 0 failing, no loop error, and the console stayed empty.
 
 Not verified: anything on Windows (`Start signal.cmd`, Ctrl-C, port refusal); browsers other than Chrome and any screen reader; the 45-second poll timer itself (tests trigger the poll by making the tab visible); the run start rail link clicked in a browser; the real 120-second deadline (tested scaled down) and the per-address share behind a proxy or over IPv6; the ingest loop's own 60-second tick against real feeds; a root on a network or synced folder; store sizes on real data; a display name changed in another tab; a crash between storing a story and matching it to topics; the browser-test clean-up after a hung run. The slice 1 fetcher was rebuilt on `research.webfetch` after the pre-merge review of pull request 101; see the slice 1 entry.
-
-## 2026-11-13 — Signal slice 1: command line (branch `claude/signal-1b-store-ingest-cli`, tip after the pre-merge review fixes)
-Scope: Signal slice 1 command line only (`python -m deploy_workflow.signal`); no pages, no AI pass, no login, no model call, no cost.
-- `uv run pytest tests/test_signal_store.py tests/test_signal_feeds.py tests/test_signal_fetch.py tests/test_signal_fold.py tests/test_signal_ingest.py tests/test_signal_cli.py -q`: exit 0, 234 passed.
-- `uv run python tools/quality_gate.py`: exit 0, output `quality gate: 0 finding(s) in 14 changed file(s), 2642 line(s) in scope`.
-- Security: the fetcher was rebuilt on `research.webfetch` after a pre-merge review found the first version connected to an address it had not checked. A security review of the rebuilt fetcher over real TLS on loopback found nothing High or Medium: every connection went to a checked address; 58 non-public address forms and 50 hostile redirect targets were refused; the 10-second deadline held against dripped headers and bodies. Its probes are kept under `.superpowers/sdd/slice1-review-fixes/probes/`, not in the repository; two of them (`probe_f2_validator_provenance`, `probe_f2_validator_injection`) now exit 1 because the behaviour they demonstrated is gone. The 17 earlier `probe_fetch_*` probes tested the deleted transport and no longer apply.
-- Live fetch of two public feeds (UK CMA cases Atom, BEREC RSS), no model call, no cost; real network, throwaway root outside the repository. All commands exit 0. `<root>` stands for the long scratch folder passed to `--root`. Re-run on 2026-11-13 with the rebuilt fetcher over real TLS (same commands, throwaway root, no model call): CMA cases 50 new, BEREC 10 new, every command exit 0; the transcript below is from the first run.
-```
-$ signal --root <root> sources propose "CMA cases" --kind regulator --url https://www.gov.uk/cma-cases.atom --by owner
-$ signal --root <root> sources propose "BEREC" --kind regulator --url https://www.berec.europa.eu/en/rss.xml --by owner
-$ signal --root <root> sources approve 1
-$ signal --root <root> sources approve 2
-$ signal --root <root> ingest
-CMA cases: ok: 50 new
-BEREC: ok: 10 new
-$ signal --root <root> stories --limit 5
-2026-11-11 12:01  CMA cases  Pilgrim’s / Walkers Deli & Sausage Co merger inquiry
-2026-11-11 07:51  BEREC  BEREC views on roaming topics of draft ITRE report
-2026-11-11 07:30  CMA cases  AkzoNobel / Axalta merger inquiry
-2026-11-11 07:02  CMA cases  McCormick / Unilever merger inquiry
-2026-11-10 14:09  CMA cases  Final recommendation that the Secretary of State replace the Assimilated Technology Transfer Block Exemption
-$ signal --root <root> sources list
-1  approved  healthy  2026-11-11 12:01  CMA cases
-2  approved  healthy  2026-11-11 07:51  BEREC
-$ signal --root <root> ingest
-(no output: sources not due within the minimum interval)
-```
-- Known limits: the one system DNS lookup per hop cannot be interrupted; `webfetch.py` reuses its connect timeout for the TLS handshake, so a slow connect plus a hung handshake can run to about twice the 10-second deadline (no request is sent after the deadline); two simultaneous passes may both fetch a due source; Windows not run.
-- Not verified: Windows; a live failing source, redirect, or conditional-GET (etag) against a real server; `ingest --loop`; stories were not compared with the feeds by hand beyond the five lines shown; the "no output" second ingest was read as "not due", not checked against the interval setting.

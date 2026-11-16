@@ -157,6 +157,59 @@ describe("published evidence gaps", () => {
     expect(screen.queryByText("G-02")).toBeNull();
   });
 
+  it("preserves fallback titles, zero details, row order and source lines with sparse cells", () => {
+    const entry = evidenceEntry("CP-1", "CP-1/fallback.md", true, [
+      {
+        type: "table",
+        line: 5,
+        headers: ["ID", "Severity", "Description", "Amount", "Empty", "Reason"],
+        rows: [
+          { line: 6, cells: ["G-1", " Critical ", " Missing debt ", "0", "", " Last "] },
+          { line: 7, cells: ["G-2", "", "Sparse trailing cells"] },
+          { line: 8, cells: ["G-3", "High"] },
+          { line: 9, cells: ["G-4", "High", " N/A "] },
+        ],
+      },
+    ]);
+    renderGaps([entry]);
+    expect(screen.getByRole("heading", { name: "Gaps 2" })).toBeVisible();
+    const row = screen.getByRole("row", { name: /Missing debt/ });
+    expect(row).toHaveTextContent("Critical");
+    expect(row).toHaveTextContent("ID: G-1 Amount: 0 Reason: Last");
+    expect(row).not.toHaveTextContent("Empty:");
+    expect(screen.getByRole("row", { name: /Sparse trailing cells/ })).toBeVisible();
+    const links = screen.getAllByRole("link", { name: "Open source" });
+    expect(links.map((link) => link.getAttribute("href"))).toEqual(
+      [6, 7].map(
+        (line) =>
+          `/report/case#evidence/${encodeURIComponent(entry.output.id)}~${entry.output.sha256}-${String(line)}`,
+      ),
+    );
+  });
+
+  it("keeps the first-column fallback and excludes only paired comparison ledgers", () => {
+    expect(
+      hasRecordedGap([
+        {
+          type: "table",
+          line: 5,
+          headers: ["ID", "Severity"],
+          rows: [{ line: 6, cells: ["0", "Low"] }],
+        },
+      ]),
+    ).toBe(true);
+    expect(
+      hasRecordedGap([
+        {
+          type: "table",
+          line: 5,
+          headers: ["Earlier ref", "Gap"],
+          rows: [{ line: 6, cells: ["E1", "Missing current evidence"] }],
+        },
+      ]),
+    ).toBe(true);
+  });
+
   it("handles empty lists and an unknown module filter without showing another module's rows", () => {
     const empty = renderGaps([]);
     expect(screen.getByText("No recorded gaps for Financial foundation (CP-1).")).toBeVisible();

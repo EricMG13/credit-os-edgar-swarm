@@ -305,6 +305,36 @@ function noGap(value: string | undefined) {
   return /^(?:none|no|nil|n\/a|n\.a\.)\.?$/i.test((value ?? "").trim());
 }
 
+function gapTitleIndex(headers: string[]) {
+  const titleHeader = (header: string) =>
+    !/severity/i.test(header) && !/^(?:id|gap id|reference|ref)$/i.test(header.trim());
+  const titled = headers.findIndex(
+    (header) => titleHeader(header) && /gap|missing|issue|item|shortfall|risk/i.test(header),
+  );
+  return titled >= 0 ? titled : Math.max(0, headers.findIndex(titleHeader));
+}
+
+function tableGapRecords(block: Table): GapRecord[] {
+  const severityIndex = block.headers.findIndex((header) => /severity/i.test(header));
+  const titleIndex = gapTitleIndex(block.headers);
+  return block.rows.flatMap((row) => {
+    const title = row.cells[titleIndex]?.trim() ?? "";
+    if (!title || noGap(title)) return [];
+    return [
+      {
+        line: row.line,
+        title,
+        severity: severityIndex < 0 ? null : row.cells[severityIndex]?.trim() || null,
+        details: block.headers
+          .map((header, index) => ({ header, value: row.cells[index]?.trim() ?? "" }))
+          .filter(({ value }, index) => value && index !== titleIndex && index !== severityIndex)
+          .map(({ header, value }) => `${header}: ${value}`)
+          .join("\n"),
+      },
+    ];
+  });
+}
+
 function gapRecords(blocks: Section["blocks"]): GapRecord[] {
   const records: GapRecord[] = [];
   for (const block of blocks) {
@@ -324,27 +354,7 @@ function gapRecords(blocks: Section["blocks"]): GapRecord[] {
       (block.headers.includes("Earlier ref") && block.headers.includes("Current ref"))
     )
       continue;
-    const severityIndex = block.headers.findIndex((header) => /severity/i.test(header));
-    const titleHeader = (header: string) =>
-      !/severity/i.test(header) && !/^(?:id|gap id|reference|ref)$/i.test(header.trim());
-    const titled = block.headers.findIndex(
-      (header) => titleHeader(header) && /gap|missing|issue|item|shortfall|risk/i.test(header),
-    );
-    const titleIndex = titled >= 0 ? titled : Math.max(0, block.headers.findIndex(titleHeader));
-    for (const row of block.rows) {
-      const title = row.cells[titleIndex]?.trim() ?? "";
-      if (!title || noGap(title)) continue;
-      records.push({
-        line: row.line,
-        title,
-        severity: severityIndex < 0 ? null : row.cells[severityIndex]?.trim() || null,
-        details: block.headers
-          .map((header, index) => ({ header, value: row.cells[index]?.trim() ?? "" }))
-          .filter(({ value }, index) => value && index !== titleIndex && index !== severityIndex)
-          .map(({ header, value }) => `${header}: ${value}`)
-          .join("\n"),
-      });
-    }
+    for (const record of tableGapRecords(block)) records.push(record);
   }
   return records;
 }
