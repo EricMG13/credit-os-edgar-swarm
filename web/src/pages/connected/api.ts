@@ -384,6 +384,11 @@ export function moduleName(id: string) {
   return (Object.hasOwn(MODULE_NAMES, id) ? MODULE_NAMES[id] : undefined) ?? id;
 }
 
+/** Replaces each whole module code the page knows with the module's name; others stay. */
+export function serviceText(text: string) {
+  return text.replace(/\bCP-[A-Z0-9]+\b/g, (code) => moduleName(code));
+}
+
 export function pathwayName(pathway: string) {
   if (Object.hasOwn(PATHWAYS, pathway)) return PATHWAYS[pathway]?.label ?? pathway;
   return pathway === "short_snapshot" ? "Short credit snapshot" : pathway.replaceAll("_", " ");

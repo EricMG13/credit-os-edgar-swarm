@@ -1,16 +1,5 @@
-import { moduleName } from "../api";
-import { changesSentence, comparisonCaveat, lookupSentence, plainText } from "./plain";
+import { changesSentence, comparisonCaveat, lookupSentence } from "./plain";
 
-it("names a module without its code", () => {
-  expect(moduleName("CP-4")).toBe("Legal & covenants");
-  expect(moduleName("CP-99")).toBe("CP-99");
-});
-it("replaces known codes and leaves unknown ones", () => {
-  expect(plainText("Expected to be limited through CP-4, CP-2A, which it reads.")).toBe(
-    "Expected to be limited through Legal & covenants, Downside, which it reads.",
-  );
-  expect(plainText("CP-99 is not a module")).toBe("CP-99 is not a module");
-});
 it("drops the launcher label and flag hint from a lookup line", () => {
   expect(lookupSentence("Lookup:   off: synthetic case (default); --web-lookup on forces it")).toBe(
     "off: synthetic case (default)",

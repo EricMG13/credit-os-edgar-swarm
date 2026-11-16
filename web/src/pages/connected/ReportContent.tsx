@@ -21,6 +21,7 @@ import {
   evidenceHref,
   evidenceToken,
   CONFIDENCE_INPUTS,
+  readerText,
   FORECAST_INPUTS,
   methodNote,
   missingPassages,
@@ -37,13 +38,14 @@ import {
   type Table,
 } from "./publishedReport";
 
-export function richParts(value: string): ReactNode {
+/** Drawn marks and text; findings pages pass readerText, Evidence keeps the default. */
+export function richParts(value: string, clean = plainModuleNames): ReactNode {
   return value.split(/(\*\*[^*]+\*\*|`[^`]+`)/g).map((part, index) => {
     if (part.startsWith("**") && part.endsWith("**"))
-      return <strong key={index}>{plainModuleNames(part.slice(2, -2))}</strong>;
+      return <strong key={index}>{clean(part.slice(2, -2))}</strong>;
     if (part.startsWith("`") && part.endsWith("`"))
       return <code key={index}>{part.slice(1, -1)}</code>;
-    return plainModuleNames(part.replaceAll("\\|", "|"));
+    return clean(part.replaceAll("\\|", "|"));
   });
 }
 
@@ -239,6 +241,8 @@ export function PublishedTable({
   rowHref?: (line: number) => string | undefined;
   href?: string;
 }) {
+  // The Evidence page draws text as stored; findings pages name the module.
+  const shown = evidence ? plainModuleNames : readerText;
   const columns = displayColumns(table.headers, evidence, table.rows);
   if (!columns.length || !table.rows.length) return null;
   const pinned = (column: number, background: string) =>
@@ -249,7 +253,7 @@ export function PublishedTable({
     rowSource ??
     (traceAt &&
       ((line: number, name: string) => (
-        <TraceControl trace={traceAt(line)} label={`Show sources for ${plainModuleNames(name)}`} />
+        <TraceControl trace={traceAt(line)} label={`Show sources for ${shown(name)}`} />
       )));
   // A wide table scrolls sideways: it is a named, focusable region so the keyboard can reach it.
   const scrolls =
@@ -269,7 +273,7 @@ export function PublishedTable({
                 scope="col"
                 className={`px-3 py-2.5 text-left font-semibold${pinned(column, "bg-surface-subtle")}`}
               >
-                {richParts(table.headers[column] ?? "")}
+                {richParts(table.headers[column] ?? "", shown)}
               </th>
             ))}
             {sources && (
@@ -302,7 +306,7 @@ export function PublishedTable({
                         "Source reference unavailable"
                       )
                     ) : cell.trim() ? (
-                      richParts(cell)
+                      richParts(cell, shown)
                     ) : (
                       <span aria-label="Empty in the handoff">—</span>
                     )}
@@ -328,7 +332,7 @@ export const RECORDS_ID = "statements-and-records";
 // One register code (T4.4, P3, T2F.2); the prefix also takes the dash that follows it.
 const CODE = String.raw`[TP]\d+[A-Z]?(?:\.\d+)?`;
 const RECORD_PREFIX = new RegExp(String.raw`^${CODE}\s+(?:[-\u2013\u2014]\s*)?`);
-const RECORD_CODE = new RegExp(String.raw`^(?:${CODE}\s|Confidence inputs$)`);
+const RECORD_CODE = new RegExp(String.raw`^${CODE}\s`);
 
 function registerBlocks(section: Section, entry: OutputEntry) {
   if (entry.output.module === "CP-6" && /^T6E\.(?:4|6|7)\b/.test(section.heading))
@@ -359,7 +363,7 @@ export function recordSections(sections: Section[], entry: OutputEntry) {
       // Confidence inputs is a register here: the page draws its score, Evidence holds the table.
       if (
         !isCoded(section, role) &&
-        !(role === "registers" && section.heading === "Confidence inputs")
+        !(role === "registers" && section.heading === CONFIDENCE_INPUTS)
       )
         return false;
       const drawn = registerBlocks(section, entry);
@@ -442,7 +446,7 @@ export function FindingParagraph({
             Read this passage in Evidence
           </a>
         ) : (
-          richParts(body)
+          richParts(body, readerText)
         )}
       </p>
       <TraceControl trace={trace} label="Show sources for this passage" />
@@ -524,8 +528,8 @@ function FindingsSummary({
       level="h3"
       text={{
         label: "Bottom line",
-        lead: plainModuleNames(summary.bottomLine),
-        rest: containsReference(summary.limitation) ? "" : plainModuleNames(summary.limitation),
+        lead: readerText(summary.bottomLine),
+        rest: containsReference(summary.limitation) ? "" : readerText(summary.limitation),
         trace: summaryTrace ? traceKey(entry, summary.line) : null,
       }}
     />
@@ -680,11 +684,9 @@ export function ReportFindings({
               label: findingLabel(section, overviewLabel),
               lead:
                 judgement ??
-                plainModuleNames(
-                  readParagraph(first.text).body.replaceAll("**", "").replaceAll("`", ""),
-                ),
+                readerText(readParagraph(first.text).body.replaceAll("**", "").replaceAll("`", "")),
               rest: judgement
-                ? plainModuleNames(
+                ? readerText(
                     readParagraph(first.text).body.replaceAll("**", "").replaceAll("`", ""),
                   )
                 : "",
@@ -729,7 +731,7 @@ export function ReportFindings({
         tabIndex={-1}
       >
         <h2 className={`${heading} first-letter:uppercase`}>
-          {richParts(drawingTitle(findingLabel(section, overviewLabel)))}
+          {richParts(drawingTitle(findingLabel(section, overviewLabel)), readerText)}
         </h2>
         {section.heading === "Bottom line" && afterBottomLine}
         {section.blocks.map((block) =>

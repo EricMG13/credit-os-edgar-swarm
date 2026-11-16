@@ -11,7 +11,7 @@ import { card, heading } from "../layout";
 import {
   comparisonRows,
   containsReference,
-  plainModuleNames,
+  readerText,
   readParagraph,
   type Changes as PublishedChanges,
   type MaturityProfile,
@@ -224,7 +224,7 @@ function ComparedModules({
     const { body } = readParagraph(bottomLine);
     return containsReference(body)
       ? "See the retained handoff in Evidence."
-      : plainModuleNames(body) || "Not stated";
+      : readerText(body) || "Not stated";
   }
   return (
     <section className={card}>
@@ -258,7 +258,7 @@ function ComparedModules({
               </div>
               {explanation.length > 0 && (
                 <p className="mt-2 text-sm text-text-secondary">
-                  {plainModuleNames(explanation.join(" · "))}
+                  {readerText(explanation.join(" · "))}
                 </p>
               )}
               {href && (

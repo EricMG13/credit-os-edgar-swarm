@@ -162,6 +162,15 @@ describe("connected report Changes", () => {
     expect(screen.queryByRole("link", { name: "Limitations ledger" })).toBeNull();
   });
 
+  it("names the module in a ledger cell instead of drawing its code", () => {
+    renderChanges({ first_run: false }, [
+      cp8([["—", "—", "Covenant headroom", "Closed", "CP-2A: covenant headroom restated"]]),
+    ]);
+    const ledger = screen.getByRole("region", { name: "Limitations" });
+    expect(within(ledger).getByText("Downside: covenant headroom restated")).toBeVisible();
+    expect(ledger.textContent).not.toMatch(/CP-2A/);
+  });
+
   it("leaves a Gap ledger of another module and non-CP-8 ledgers out of the typed group", () => {
     renderChanges({ first_run: false }, [cp8(LEDGER, "CP-2", "Gap ledger")]);
     expect(screen.queryByRole("region", { name: "Limitations" })).toBeNull();
