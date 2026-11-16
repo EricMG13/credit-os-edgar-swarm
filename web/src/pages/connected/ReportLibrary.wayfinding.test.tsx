@@ -14,7 +14,7 @@ const EVIDENCE = {
   record: { hashes: [], instructions: [], calls: [], cap: null },
 };
 
-function snapshot(name = "Northbridge"): Snapshot {
+function snapshot(name = "Northbridge", withFigures = false): Snapshot {
   const id = "northbridge-2026/outputs/CP-1.md";
   const text = (line: number) => ({
     type: "text",
@@ -61,6 +61,7 @@ function snapshot(name = "Northbridge"): Snapshot {
           href: id,
           sha256: "digest",
           state: { established: true, declared: null },
+          ...(withFigures ? { charts: [{ title: "Leverage", table: 99, kind: "periods" }] } : {}),
         },
       },
       handoffs: {
@@ -77,10 +78,10 @@ function snapshot(name = "Northbridge"): Snapshot {
   } as unknown as Snapshot;
 }
 
-function useSnapshot(name?: string) {
+function useSnapshot(name?: string, withFigures?: boolean) {
   vi.stubGlobal(
     "fetch",
-    vi.fn(() => Promise.resolve(Response.json(snapshot(name)))),
+    vi.fn(() => Promise.resolve(Response.json(snapshot(name, withFigures)))),
   );
 }
 
@@ -149,6 +150,30 @@ describe("report wayfinding", () => {
       null,
       "location",
     ]);
+  });
+
+  it("marks an entry nested in another when both cross the top third: the deepest wins", async () => {
+    vi.stubGlobal("IntersectionObserver", FakeObserver);
+    useSnapshot(undefined, true);
+    open("#modules/CP-1");
+    await screen.findByLabelText("Module");
+    const spy = observers.find((item) => item.observed.length > 0);
+    if (!spy) throw new Error("no observer");
+    const bottom = document.getElementById("finding-10");
+    const figures = document.getElementById("module-figures");
+    if (!bottom || !figures) throw new Error("targets missing");
+    expect(bottom.contains(figures)).toBe(true);
+    act(() => {
+      spy.callback([
+        { target: bottom, isIntersecting: true },
+        { target: figures, isIntersecting: true },
+      ]);
+    });
+    expect(marks()).toEqual([null, "location", null, null]);
+    act(() => {
+      spy.callback([{ target: figures, isIntersecting: false }]);
+    });
+    expect(marks()).toEqual(["location", null, null, null]);
   });
 
   it("keeps a clicked entry until the reader scrolls, then lets the observer take over", async () => {

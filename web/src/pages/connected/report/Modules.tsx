@@ -105,7 +105,10 @@ function Navigator({
       if (pinned.current) return;
       const scrolls = root !== null && root.scrollHeight > root.clientHeight;
       const atBottom = scrolls && root.scrollTop + root.clientHeight >= root.scrollHeight - 2;
-      const next = atBottom ? keys.at(-1) : keys.find((key) => inView.has(key));
+      // An entry that holds another entry in view is not the one being read: the deepest wins.
+      const live = targets.filter((target) => inView.has(target.id));
+      const deepest = live.find((a) => !live.some((b) => b !== a && a.contains(b)));
+      const next = atBottom ? keys.at(-1) : deepest?.id;
       if (next) setActive(next);
     };
     // The scrolling region is the shell's `main`, so the top third is measured against it.
