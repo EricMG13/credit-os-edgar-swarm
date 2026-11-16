@@ -20,8 +20,8 @@
   --display: "Schibsted Grotesk", system-ui, sans-serif;
 }
 * { box-sizing: border-box; margin: 0; }
-body { background: var(--teams-bg); font-family: var(--ui); color: var(--teams-ink); padding: 36px 40px 40px; width: 1680px; }
-.board { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 32px; align-items: start; }
+body { background: var(--teams-bg); font-family: var(--ui); color: var(--teams-ink); padding: 36px 40px 40px; width: 1500px; }
+.board { display: grid; grid-template-columns: 1fr 1fr; gap: 36px 40px; align-items: start; }
 .label { font: 600 12px/16px var(--ui); letter-spacing: .08em; text-transform: uppercase; color: var(--teams-ink-2); margin-bottom: 14px; }
 
 /* Teams message chrome */
@@ -96,6 +96,16 @@ h2 { font: 700 24px/30px var(--ui); letter-spacing: -.015em; color: var(--ink); 
 .btn.primary { background: var(--teams-accent); border-color: var(--teams-accent); color: #fff; }
 .line { font: 400 13px/20px var(--ui); color: var(--ink-2); margin-top: 14px; }
 .line b { font-weight: 600; color: var(--ink); }
+.tiles.four { grid-template-columns: repeat(4, 1fr); }
+.tile.warn { background: var(--warn-fill); border-color: var(--warn-edge); }
+.runs { margin-top: 8px; border-top: 1px solid var(--hair); }
+.run { display: grid; grid-template-columns: 1fr 96px 132px; gap: 14px; align-items: center; padding: 9px 0; border-bottom: 1px solid var(--hair); }
+.run .who { font: 600 14px/18px var(--ui); color: var(--ink); }
+.run .who small { display: block; font: 400 12px/16px var(--ui); color: var(--ink-3); margin-top: 1px; }
+.run .mini { height: 6px; border-radius: 3px; background: #e8e9eb; overflow: hidden; }
+.run .mini i { display: block; height: 100%; background: var(--blue); border-radius: 3px; }
+.run .st { font: 500 12px/16px var(--ui); color: var(--ink-2); text-align: right; }
+.run .st.ok { color: var(--ok-text); } .run .st.warn { color: var(--warn-text); font-weight: 600; }
 .note { margin-top: 28px; font: 400 12px/18px var(--ui); color: var(--teams-ink-2); max-width: 1000px; }
 </style>
 </head>
@@ -176,6 +186,35 @@ h2 { font: 700 24px/30px var(--ui); letter-spacing: -.015em; color: var(--ink); 
             <h2>Northbridge Holdings</h2>
             <div class="sub">Started by <b>Priya Raman</b> &middot; stopped 14:07</div>
             <div class="callout warn"><div class="eyebrow">Needs you</div><p>The run reached its USD 40.00 cap before it finished. No report has been published.</p></div><div class="section"><div class="k">Modules <span>11 of 14 complete</span></div><div class="bar"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i class="off"></i><i class="off"></i><i class="off"></i></div></div>
+          </div>
+          <div class="actions"><span class="btn primary">Open Run activity</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+  <section>
+    <div class="label">4 &middot; Run summary, every 4 hours</div>
+    <div class="msg">
+      <div class="avatar"><svg><use href="#sym"/></svg></div>
+      <div>
+        <div class="meta"><b>Credit OS</b><span class="app">APP</span><span>16:00</span></div>
+        <div class="card">
+          <div class="band">
+            <svg class="wave" viewBox="0 0 1521 1515"><use href="#sym"/></svg>
+            <div class="logo"><svg><use href="#sym"/></svg></div>
+            <div class="appname">Credit OS</div>
+          </div>
+          <div class="stripe info"></div>
+          <div class="body">
+            <div class="row"><span class="badge info" style="padding-left:9px">Run summary</span><span class="badge plain">Next at 20:00</span></div>
+            <h2>Runs today</h2>
+            <div class="sub">Monday 16 Nov 2026 &middot; as of 16:00</div>
+            <div class="tiles four">
+              <div class="tile"><div class="k">Running</div><div class="v">2</div></div>
+              <div class="tile"><div class="k">Waiting</div><div class="v">1</div></div>
+              <div class="tile warn"><div class="k">Stopped</div><div class="v">1</div></div>
+              <div class="tile"><div class="k">Completed</div><div class="v">3</div></div>
+            </div><div class="section"><div class="k">Needs you</div><div class="runs"><div class="run"><div class="who">Northbridge Holdings<small>Deep &middot; Priya Raman</small></div><div class="mini"><i style="width:79%"></i></div><div class="st warn">Stopped at cap, 14:07</div></div></div></div><div class="section"><div class="k">In progress</div><div class="runs"><div class="run"><div class="who">Harrowgate Industrials<small>Full &middot; Tom Okafor</small></div><div class="mini"><i style="width:64%"></i></div><div class="st ">9 of 14 modules</div></div><div class="run"><div class="who">Calder Telecom<small>Lite &middot; Priya Raman</small></div><div class="mini"><i style="width:25%"></i></div><div class="st ">2 of 8 modules</div></div><div class="run"><div class="who">Sable Energy<small>Full &middot; Mei Tanaka</small></div><div></div><div class="st ">Waiting to start</div></div></div></div><div class="section"><div class="k">Completed today</div><div class="runs"><div class="run"><div class="who">Aldwick Foods<small>Full &middot; Tom Okafor</small></div><div></div><div class="st ok">Report ready, 09:52</div></div><div class="run"><div class="who">Meridian Packaging<small>Lite &middot; Mei Tanaka</small></div><div></div><div class="st ok">Report ready, 11:18</div></div><div class="run"><div class="who">Northbridge Holdings<small>Full &middot; Priya Raman</small></div><div></div><div class="st ok">Report ready, 14:32</div></div></div></div>
           </div>
           <div class="actions"><span class="btn primary">Open Run activity</span></div>
         </div>
