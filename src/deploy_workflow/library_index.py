@@ -21,6 +21,12 @@ in this run:
 
 Every other run folder is left out with its reason. Nothing here runs analysis, calls a provider
 or writes a file.
+
+Planned issuers: when the workspace is a shared root's ``_engine`` folder and the root holds
+``swarm/plan.json`` (schema ``swarm-plan/1``), each planned issuer with no listed run is carried in
+``Library.planned`` (never in ``runs``): name, ticker, issuer ID, the plan status and a status text,
+and no report. A listed run of the issuer always replaces its planned entry. A plan that cannot be
+read is left out with its reason, like a run folder.
 """
 
 from __future__ import annotations
@@ -52,6 +58,13 @@ _COMPLETED = re.compile(r"^completed-([0-9a-f]{64})\.json$")
 _RESPONSE = re.compile(r"^requests/([A-Z0-9-]+)/([0-9a-f]{64})/([1-9][0-9]*)\.response\.md$")
 _HEADING = re.compile(r"^=== (\S+) sha256 [0-9a-f]{64} ===$", re.MULTILINE)
 _SHA = re.compile(r"^[0-9a-f]{64}$")
+PLAN_SCHEMA = "swarm-plan/1"  # `tools/swarm/prepare.py` writes it
+PLAN_FILE = "swarm/plan.json"  # Relative to the shared root, which holds the ``_engine`` workspace.
+ENGINE_FOLDER = "_engine"  # `deploy_workflow.inbox.layout.Layout.engine`
+PLANNED_TEXT = {
+    "pending": "No runs yet",
+    "failed": "Last attempt failed; no completed run yet",
+}
 _IDENTITY = ("run_id", "issuer_id", "issuer_name", "as_of", "pathway")
 
 MethodText = Callable[[str], str | None]  # The current method block for a module, None if unknown.
@@ -65,6 +78,9 @@ class Refused(ValueError):
 @dataclass
 class Library:
     runs: list[dict[str, Any]] = field(default_factory=list)
+    # Planned issuers with no listed run (see `planned_issuers`); kept apart from ``runs``, which
+    # every reader treats as having a delivery.
+    planned: list[dict[str, str]] = field(default_factory=list)
     excluded: list[tuple[str, str]] = field(default_factory=list)  # (run folder, reason)
     # Run id -> the delivery this build verified (folder, files, parsed view). Per-build state,
     # shared read-only so later readers need not verify and parse the same delivery again; a
@@ -535,6 +551,43 @@ def current_method() -> tuple[MethodText, MethodHeadings]:
     return text, headings
 
 
+def planned_issuers(workspace: Path, listed: set[str]) -> list[dict[str, str]]:
+    """The plan's issuers whose ID is not in ``listed``, in plan order; ``Refused`` when the plan
+    cannot be read. Empty when the workspace is not a shared root's engine folder or has no plan."""
+    root = workspace.parent
+    if workspace.name != ENGINE_FOLDER or not os.path.lexists(root / PLAN_FILE):
+        return []
+    plan = json_object(read_inside(root, PLAN_FILE), PLAN_FILE)
+    if plan.get("schema") != PLAN_SCHEMA:
+        raise Refused(f"{PLAN_FILE} is not a {PLAN_SCHEMA} plan")
+    issuers = plan.get("issuers")
+    if not isinstance(issuers, list):
+        raise Refused(f"{PLAN_FILE} lists no issuers")
+    planned: list[dict[str, str]] = []
+    for item in issuers:
+        if not isinstance(item, dict) or not all(
+            isinstance(item.get(key), str) and item[key].strip()
+            for key in ("issuer_id", "name", "status")
+        ):
+            raise Refused(f"{PLAN_FILE} has an issuer without an issuer_id, name and status")
+        if item["issuer_id"] in listed:
+            continue
+        ticker = item.get("ticker")
+        status = item["status"]
+        planned.append(
+            {
+                "issuer_id": item["issuer_id"],
+                "name": item["name"],
+                "ticker": ticker if isinstance(ticker, str) else "",
+                "status": status,
+                "status_text": PLANNED_TEXT.get(
+                    status, f"No listed run yet (plan status {status})"
+                ),
+            }
+        )
+    return planned
+
+
 def build_library(
     workspace: Path, page_dir: Path, method: tuple[MethodText, MethodHeadings] | None = None
 ) -> Library:
@@ -560,6 +613,10 @@ def build_library(
             # One unreadable folder must not stop the others from being listed.
             library.excluded.append((shown, f"unreadable run record ({type(error).__name__})"))
     mark_latest(library.runs)
+    try:
+        library.planned = planned_issuers(workspace, {run["issuer_id"] for run in library.runs})
+    except Refused as error:
+        library.excluded.append((PLAN_FILE, str(error)))
     # Issuer A to Z; within an issuer the latest evidence date first, then the run folder.
     library.runs.sort(key=lambda r: r["id"])
     library.runs.sort(key=lambda r: str(r.get("as_of") or ""), reverse=True)

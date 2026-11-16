@@ -388,6 +388,7 @@ def catalogue(workspace: Path, library: Library) -> dict[str, Any]:
     return {
         "real": real,
         "illustrative": [],
+        "planned": list(library.planned),
         "sources": sources,
         "built_at": datetime.now(UTC).strftime("%d %b %Y, %H:%M:%S UTC"),
         "issues": issues,

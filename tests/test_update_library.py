@@ -831,3 +831,25 @@ def test_no_record_for_the_delivered_write_carries_nothing_and_says_so(tmp_path)
     )
     assert script_checks(tmp_path) == []
     assert any("CP-1" in i and "delivered" in i for i in data_of(tmp_path)["workspace"]["issues"])
+
+
+def test_a_workspace_with_only_a_plan_publishes_its_planned_issuers(tmp_path):
+    engine = tmp_path / "_engine"
+    engine.mkdir()
+    (tmp_path / "swarm").mkdir()
+    plan = {
+        "schema": "swarm-plan/1",
+        "issuers": [{"issuer_id": "acme", "name": "Acme", "ticker": "ACM", "status": "pending"}],
+    }
+    (tmp_path / "swarm" / "plan.json").write_text(json.dumps(plan), encoding="utf-8")
+    library = update_library.update_library(engine)
+    assert library.runs == []
+    assert data_of(engine)["catalogue"]["planned"] == [
+        {
+            "issuer_id": "acme",
+            "name": "Acme",
+            "ticker": "ACM",
+            "status": "pending",
+            "status_text": "No runs yet",
+        }
+    ]

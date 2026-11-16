@@ -369,3 +369,26 @@ def test_only_same_run_published_forecast_artifacts_are_downloadable(
     assert request(hosted, path)[:2] == (200, b'{"exact":"1.25"}\r\n')
     assert request(hosted, f"{endpoint}/{digest}/forecast_exact.json")[0] == 404
     assert request(hosted, f"/connected/artifacts/two/{digest}/calculation.json")[0] == 404
+
+
+def test_library_index_carries_planned_issuers_with_no_run(hosted: _Server, root: Path) -> None:
+    library = root / "_engine" / "library"
+    library.mkdir(exist_ok=True)
+    planned = [
+        {
+            "issuer_id": "acme",
+            "name": "Acme",
+            "ticker": "ACM",
+            "status": "pending",
+            "status_text": "No runs yet",
+        }
+    ]
+    export = {
+        "catalogue": {"real": [], "planned": planned},
+        "workspace": {"runs": {}},
+        "activity": {"excluded": [], "issues": []},
+        "chips": {},
+    }
+    (library / "data.js").write_text(f"window.CREDIT_OS_DATA={json.dumps(export)};\n")
+    reply = json.loads(request(hosted, "/connected/library")[1])
+    assert reply["catalogue"] == {"real": [], "planned": planned}

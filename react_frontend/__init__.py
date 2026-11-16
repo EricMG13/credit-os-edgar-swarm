@@ -107,7 +107,10 @@ def _library_index(layout: Layout) -> http_base.Reply:
     return http_base.Reply(
         200,
         {
-            "catalogue": {"real": visible["catalogue"].get("real", [])},
+            "catalogue": {
+                "real": visible["catalogue"].get("real", []),
+                "planned": visible["catalogue"].get("planned", []),
+            },
             "workspace": {"runs": runs},
             "preview": visible.get("preview"),
         },

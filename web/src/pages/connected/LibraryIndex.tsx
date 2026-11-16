@@ -11,6 +11,7 @@ import {
   runPathway,
   type CatalogueRun,
   type LibraryIndex,
+  type PlannedIssuer,
 } from "./publishedReport";
 import { HeadlineFigures } from "./HeadlineFigures";
 import { useResource } from "./useResource";
@@ -65,6 +66,17 @@ function MatchRuns({
       return { key, entries: ordered, newest, linked };
     })
     .filter((item): item is NonNullable<typeof item> => item !== null);
+  // A planned issuer has no run yet, so it has no sector or pathway to filter on: it is listed
+  // only while neither filter is chosen, and the search matches its name, ticker and issuer ID.
+  const needle = filters.query.trim().toLowerCase();
+  const planned: PlannedIssuer[] =
+    filters.sector === "all" && filters.pathway === "all"
+      ? (snapshot.catalogue.planned ?? []).filter((item) =>
+          [item.name, item.ticker, item.issuer_id].some((value) =>
+            value.toLowerCase().includes(needle),
+          ),
+        )
+      : [];
   return (
     <div className="grid gap-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -122,7 +134,7 @@ function MatchRuns({
           <ButtonGroupItem id="list">List</ButtonGroupItem>
         </ButtonGroup>
       </div>
-      {cards.length === 0 ? (
+      {cards.length === 0 && planned.length === 0 ? (
         <p className={card}>
           {filters.query.trim() || filters.sector !== "all" || filters.pathway !== "all"
             ? "No issuers match these filters."
@@ -130,6 +142,15 @@ function MatchRuns({
         </p>
       ) : layout === "cards" ? (
         <ul className="grid gap-4 lg:grid-cols-2">
+          {planned.map((item) => (
+            <li key={`planned-${item.issuer_id}`} className={`${card} grid gap-2`}>
+              <h3 className={heading}>{item.name}</h3>
+              <p className="text-sm text-text-secondary">
+                {[item.ticker, item.issuer_id].filter(Boolean).join(" · ")}
+              </p>
+              <p className="text-sm text-text-secondary">{item.status_text}</p>
+            </li>
+          ))}
           {cards.map(({ key, entries, newest, linked }) => (
             <li key={key} className={`${card} grid gap-5`}>
               <header className="grid gap-1">
@@ -175,6 +196,20 @@ function MatchRuns({
               </tr>
             </thead>
             <tbody>
+              {planned.map((item) => (
+                <tr
+                  key={`planned-${item.issuer_id}`}
+                  className="border-b border-border-hairline last:border-0"
+                >
+                  <th scope="row" className="p-3 font-semibold">
+                    {item.name}
+                  </th>
+                  <td className="p-3">—</td>
+                  <td className="p-3">—</td>
+                  <td className="p-3">—</td>
+                  <td className="p-3">{item.status_text}</td>
+                </tr>
+              ))}
               {cards.map(({ key, newest, linked }) => (
                 <tr key={key} className="border-b border-border-hairline last:border-0">
                   <th scope="row" className="p-3 font-semibold">
@@ -222,7 +257,7 @@ export function ReportLibrary() {
         {value === null && <p className={card}>No reports yet</p>}
         {value && (
           <>
-            {value.catalogue.real.length > 0 && (
+            {(value.catalogue.real.length > 0 || (value.catalogue.planned ?? []).length > 0) && (
               <label className={`${label} max-w-md`}>
                 Search issuers
                 <input

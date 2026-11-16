@@ -197,6 +197,13 @@ export type CatalogueRun = {
   period: string;
   metrics: Record<string, Metric>;
 };
+export type PlannedIssuer = {
+  issuer_id: string;
+  name: string;
+  ticker: string;
+  status: string;
+  status_text: string;
+};
 export type Snapshot = {
   catalogue: { real: CatalogueRun[] };
   workspace: {
@@ -210,7 +217,7 @@ export type Snapshot = {
 };
 
 export type LibraryIndex = {
-  catalogue: Snapshot["catalogue"];
+  catalogue: Snapshot["catalogue"] & { planned?: PlannedIssuer[] };
   workspace: {
     runs: Record<string, Pick<PublishedRun, "folder" | "issuerKey" | "pathway">>;
   };

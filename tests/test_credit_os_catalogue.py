@@ -367,3 +367,23 @@ def test_a_run_on_the_reported_names_carries_no_label_on_its_measures(tmp_path):
     make_run(tmp_path, "run-a", cp1_extra=CHARTS)
     metrics = built(tmp_path)["real"][0]["metrics"]
     assert all("label" not in metric for metric in metrics.values())
+
+
+def test_catalogue_carries_the_planned_issuers_apart_from_the_runs(tmp_path):
+    engine = tmp_path / "_engine"
+    engine.mkdir()
+    make_run(engine, "run-a")  # issuer "nbg"
+    (tmp_path / "swarm").mkdir()
+    plan = {
+        "schema": "swarm-plan/1",
+        "issuers": [
+            {"issuer_id": "nbg", "name": "Plan NBG", "ticker": "N", "status": "pending"},
+            {"issuer_id": "acme", "name": "Acme", "ticker": "ACM", "status": "pending"},
+        ],
+    }
+    (tmp_path / "swarm" / "plan.json").write_text(json.dumps(plan), encoding="utf-8")
+    result = built(engine)
+    assert [run["id"] for run in result["real"]] == ["run-a"]
+    assert [(p["issuer_id"], p["name"], p["status_text"]) for p in result["planned"]] == [
+        ("acme", "Acme", "No runs yet")
+    ]

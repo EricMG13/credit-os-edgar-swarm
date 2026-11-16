@@ -470,3 +470,84 @@ def test_a_run_cpos_completed_with_a_fake_provider_is_listed(tmp_path, monkeypat
     library = build_library(tmp_path / "ws", tmp_path / "ws/library", current_method())
     assert library.excluded == []
     assert [r["method_changes"] for r in library.runs] == [[f"CP-1: {names[0]} no longer selected"]]
+
+
+def write_plan(root: Path, issuers: list[dict], schema: str = "swarm-plan/1") -> None:
+    (root / "swarm").mkdir(exist_ok=True)
+    (root / "swarm" / "plan.json").write_text(
+        json.dumps({"schema": schema, "issuers": issuers, "skipped": []}), encoding="utf-8"
+    )
+
+
+def plan_entry(issuer_id: str, name: str, status: str = "pending", ticker: str = "") -> dict:
+    return {"issuer_id": issuer_id, "name": name, "ticker": ticker, "status": status}
+
+
+def test_planned_issuers_with_no_run_are_carried_with_the_plans_own_name_and_status(tmp_path):
+    engine = tmp_path / "_engine"
+    engine.mkdir()
+    write_plan(
+        tmp_path,
+        [
+            plan_entry("acme-corp", "Acme Corporation", ticker="ACM"),
+            plan_entry("zeta", "Zeta plc", status="failed"),
+        ],
+    )
+    library = listed(engine)
+    assert library.runs == [] and library.excluded == []
+    assert library.planned == [
+        {
+            "issuer_id": "acme-corp",
+            "name": "Acme Corporation",
+            "ticker": "ACM",
+            "status": "pending",
+            "status_text": "No runs yet",
+        },
+        {
+            "issuer_id": "zeta",
+            "name": "Zeta plc",
+            "ticker": "",
+            "status": "failed",
+            "status_text": "Last attempt failed; no completed run yet",
+        },
+    ]
+
+
+def test_a_listed_run_replaces_its_issuers_planned_entry(tmp_path):
+    engine = tmp_path / "_engine"
+    engine.mkdir()
+    make_run(engine, "run-a")  # issuer_id "nbg"
+    write_plan(tmp_path, [plan_entry("nbg", "Plan Name"), plan_entry("other", "Other plc")])
+    library = listed(engine)
+    assert [run["issuer_id"] for run in library.runs] == ["nbg"]
+    assert [item["issuer_id"] for item in library.planned] == ["other"]
+
+
+def test_a_workspace_that_is_not_an_engine_folder_ignores_a_plan_beside_it(tmp_path):
+    workspace = tmp_path / "workspace"
+    workspace.mkdir()
+    write_plan(tmp_path, [plan_entry("acme", "Acme")])
+    assert listed(workspace).planned == []
+
+
+@pytest.mark.parametrize(
+    ("text", "reason"),
+    [
+        ("{not json", "plan.json is not valid JSON"),
+        ('{"schema": "swarm-plan/2", "issuers": []}', "is not a swarm-plan/1 plan"),
+        ('{"schema": "swarm-plan/1"}', "lists no issuers"),
+        (
+            '{"schema": "swarm-plan/1", "issuers": [{"issuer_id": "a"}]}',
+            "an issuer without an issuer_id, name and status",
+        ),
+    ],
+)
+def test_a_plan_that_cannot_be_read_is_reported_and_lists_nothing(tmp_path, text, reason):
+    engine = tmp_path / "_engine"
+    engine.mkdir()
+    (tmp_path / "swarm").mkdir()
+    (tmp_path / "swarm" / "plan.json").write_text(text, encoding="utf-8")
+    library = listed(engine)
+    assert library.planned == []
+    ((name, why),) = library.excluded
+    assert name == "swarm/plan.json" and reason in why
