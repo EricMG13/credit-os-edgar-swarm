@@ -3149,6 +3149,7 @@ describe("connected run start: module choices sent", () => {
       "CP-0",
       "CP-1",
       "CP-MODEL",
+      "CP-1A",
       "CP-1B",
       "CP-DR",
       "CP-2E",
@@ -3236,6 +3237,7 @@ describe("connected run start: module choices sent", () => {
       "CP-0",
       "CP-1",
       "CP-MODEL",
+      "CP-1A",
       "CP-1B",
       "CP-DR",
       "CP-5",
@@ -3263,7 +3265,7 @@ describe("connected run start: module choices sent", () => {
     testingFetch({
       ...plan,
       cap: "20",
-      modules: ["CP-0", "CP-1", "CP-1B", "CP-DR", "CP-2E", "CP-MODEL", "CP-1D", "CP-5"],
+      modules: ["CP-0", "CP-1", "CP-1A", "CP-1B", "CP-DR", "CP-2E", "CP-MODEL", "CP-1D", "CP-5"],
     });
     render(<ConnectedApp path="/start" mode="synthetic" />);
     await fillInputs();
@@ -3273,7 +3275,7 @@ describe("connected run start: module choices sent", () => {
     earningsPeriods();
     fireEvent.click(screen.getByRole("button", { name: "Review run" }));
     await screen.findByRole("button", { name: "Submit run" });
-    expect(screen.getByText("Modules (7)")).toBeVisible();
+    expect(screen.getByText("Modules (8)")).toBeVisible();
     expect(screen.queryByText(/Cash flow model/)).toBeNull();
   });
 
@@ -3344,7 +3346,7 @@ describe("connected run start: module choices sent", () => {
       "Relative Value": "11 base modules",
       "Portfolio Decision": "8 base modules",
       "Full credit assessment": "14 base modules",
-      "Earnings Update": "7 base modules",
+      "Earnings Update": "8 base modules",
       "Lite credit assessment": "5 base modules",
     };
     for (const [name, text] of Object.entries(counts)) {

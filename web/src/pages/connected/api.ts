@@ -310,7 +310,8 @@ export const PATHWAYS: Readonly<Record<string, { label: string; modules: string[
   },
   earnings_update: {
     label: "Earnings Update",
-    modules: ["CP-0", "CP-1", "CP-MODEL", "CP-1B", "CP-1D", "CP-DR", "CP-2E", "CP-5"],
+    // Owner, 2026-11-16: CP-1A joins (docs/rulings/2026-11-16-earnings-update-cp1a.md).
+    modules: ["CP-0", "CP-1", "CP-MODEL", "CP-1A", "CP-1B", "CP-1D", "CP-DR", "CP-2E", "CP-5"],
   },
   relative_value: {
     label: "Relative Value",
