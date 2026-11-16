@@ -816,6 +816,7 @@ def _summarise(layout: Layout, sid: str, answers: Answers) -> dict[str, Any]:
                 "documents": list(prepared.documents),
                 "ignored": list(prepared.ignored),
                 "omitted": list(prepared.omitted),
+                "omitted_titles": list(prepared.omitted_titles),
                 "changes": prepared.changes.removeprefix("changes: "),
                 # The launcher's own statement for this prepared run, under the setting Submit
                 # launches with: `runs.command` passes no --web-lookup or --web-host, so the

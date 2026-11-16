@@ -354,6 +354,11 @@ class Prepared:
     changes: str = ""  # The one line the run records about that comparison.
     portfolio: PortfolioCheck = NOT_COLLECTED  # The portfolio workbook found and its checks.
 
+    @property
+    def omitted_titles(self) -> tuple[str, ...]:
+        """The reader-facing title of each omitted section, from the spec `_layout` reads."""
+        return tuple(_spec_of(block_id).title for block_id in self.omitted)
+
 
 def _sha(raw: bytes) -> str:
     return hashlib.sha256(raw).hexdigest()

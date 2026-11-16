@@ -1,8 +1,8 @@
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { ConnectedApp } from "./ConnectedApp";
-import { SelectField } from "./StartRun";
-import type { Summary } from "./api";
+import { SelectField, carriedModules, stepOfField } from "./StartRun";
+import { moduleName, pathwayModules, type Summary } from "./api";
 
 const scrollIntoView = vi.fn();
 Element.prototype.scrollIntoView = scrollIntoView;
@@ -31,7 +31,7 @@ const plan = {
   modules: ["CP-0"],
   items: [] as { id: string; scope: string; outcome: string; reason: string }[],
   ignored: [],
-  omitted: [],
+  omitted: [] as string[],
   changes: "first run",
   model: "gpt",
   effort: "balanced",
@@ -41,6 +41,7 @@ function testingFetch(
   summary: typeof plan & {
     lookup?: string[];
     web_search?: boolean;
+    omitted_titles?: string[];
     prior?: Summary["prior"];
   } = plan,
   submitResponse?: Response | (() => Response),
@@ -242,7 +243,8 @@ describe("connected run start", () => {
       modules: string[];
     };
     expect(reviewedAnswers.context.run.pathway).toBe("deep_credit_assessment");
-    expect(reviewedAnswers.modules).not.toContain("CP-MODEL");
+    // The picker never offers the forecast; the list the page sends holds it once.
+    expect(reviewedAnswers.modules.filter((code) => code === "CP-MODEL")).toHaveLength(1);
     expect(reviewedAnswers.modules).not.toContain("CP-0");
   });
 
@@ -462,7 +464,7 @@ describe("connected run start", () => {
     expect(sheet).toHaveTextContent(
       "Compared with the Full credit assessment run as of 2025-03-31",
     );
-    expect(sheet).toHaveTextContent("off: synthetic case (default)");
+    expect(sheet).toHaveTextContent("Off, because this is a synthetic case.");
     expect(sheet).not.toHaveTextContent(/CP-\d|--web-lookup|20261116-083145-01/);
     expect(screen.queryByText("Reviewed inputs")).toBeNull();
     expect(screen.queryByText("Turns per module")).toBeNull();
@@ -470,6 +472,53 @@ describe("connected run start", () => {
     expect(screen.queryByRole("button", { name: "Edit inputs" })).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: "Edit purpose and modules" }));
     expect(screen.getByRole("heading", { name: "Purpose" })).toHaveFocus();
+  });
+
+  it("D12 shows the case kind, model and effort by their option labels", async () => {
+    testingFetch({ ...plan, model: "gpt", effort: "balanced" });
+    render(<ConnectedApp path="/start" mode="synthetic" />);
+    await fillInputs();
+    await advanceToPurpose();
+    fireEvent.change(screen.getByLabelText("Run form level"), { target: { value: "advanced" } });
+    advanceToContext();
+    fireEvent.click(screen.getByRole("button", { name: "Review run" }));
+    await screen.findByRole("button", { name: "Submit run" });
+    const sheet = screen.getByRole("region", { name: "What will run" });
+    expect(sheet).toHaveTextContent("Synthetic test case");
+    expect(sheet).toHaveTextContent("GPT Sol · Balanced");
+    expect(within(sheet).queryByText("synthetic")).toBeNull();
+    expect(within(sheet).queryByText("gpt · balanced")).toBeNull();
+  });
+
+  it("L5 shows nothing for Model and effort when one of the two has no label", async () => {
+    testingFetch({ ...plan, model: "gpt", effort: "turbo" });
+    render(<ConnectedApp path="/start" mode="synthetic" />);
+    await fillInputs();
+    await advanceToPurpose();
+    fireEvent.change(screen.getByLabelText("Run form level"), { target: { value: "advanced" } });
+    advanceToContext();
+    fireEvent.click(screen.getByRole("button", { name: "Review run" }));
+    await screen.findByRole("button", { name: "Submit run" });
+    const sheet = screen.getByRole("region", { name: "What will run" });
+    expect(within(sheet).getByText("Form level")).toBeInTheDocument();
+    expect(within(sheet).queryByText("Model and effort")).toBeNull();
+    expect(sheet).not.toHaveTextContent(/GPT Sol|turbo/);
+  });
+
+  it("D13 names the omitted report sections by title, never by id", async () => {
+    const sheet = await reviewSheet({
+      ...plan,
+      omitted: ["liquidity-runway", "what-changed"],
+      omitted_titles: ["Liquidity runway", "What changed"],
+    });
+    expect(sheet).toHaveTextContent("Report sections omitted · Liquidity runway, What changed");
+    expect(sheet).not.toHaveTextContent(/liquidity-runway|what-changed/);
+  });
+
+  it("D14 counts the omitted report sections when the service sends no titles", async () => {
+    const sheet = await reviewSheet({ ...plan, omitted: ["liquidity-runway", "what-changed"] });
+    expect(sheet).toHaveTextContent("2 report sections are not produced");
+    expect(sheet).not.toHaveTextContent(/liquidity-runway|what-changed/);
   });
 
   it("tells the analyst the earlier run used earlier methods, without its id", async () => {
@@ -514,27 +563,26 @@ describe("connected run start", () => {
     },
   );
 
-  it("shows a JSON problem on its field, focuses it and clears it when fixed", async () => {
+  it("shows a problem on its field, focuses it and clears it when fixed", async () => {
     testingFetch();
     render(<ConnectedApp path="/start" mode="synthetic" />);
     await fillInputs();
     await advanceToPurpose();
     fireEvent.change(screen.getByLabelText("Run form level"), { target: { value: "advanced" } });
     advanceToContext();
-    const options = screen.getByLabelText("Module options");
-    fireEvent.change(options, { target: { value: "{" } });
+    fireEvent.change(screen.getByLabelText("Legal documents"), { target: { value: "executed" } });
     fireEvent.click(screen.getByRole("button", { name: "Review run" }));
+    const options = await screen.findByLabelText("The agreement");
     const alert = await screen.findByRole("alert");
-    expect(alert).toHaveTextContent("Module options must contain valid JSON.");
+    expect(alert).toHaveTextContent("Choose the uploaded file that is the agreement.");
     expect(options).toHaveAttribute("aria-invalid", "true");
-    expect(options).toHaveAccessibleDescription(/must contain valid JSON/);
+    expect(options).toHaveAccessibleDescription(/Choose the uploaded file/);
     await waitFor(() => expect(options).toHaveFocus());
-    expect(options.closest("details")).toHaveAttribute("open");
     expect(scrollIntoView).toHaveBeenCalled();
     expect(
-      screen.getByText("1 problem to fix: Module options must contain valid JSON."),
+      screen.getByText("1 problem to fix: Choose the uploaded file that is the agreement."),
     ).toBeInTheDocument();
-    fireEvent.change(options, { target: { value: "{}" } });
+    fireEvent.change(options, { target: { value: file.name } });
     expect(screen.queryByRole("alert")).toBeNull();
     expect(options).not.toHaveAttribute("aria-invalid");
   });
@@ -560,15 +608,15 @@ describe("connected run start", () => {
     await advanceToPurpose();
     fireEvent.change(screen.getByLabelText("Run form level"), { target: { value: "advanced" } });
     advanceToContext();
-    const options = screen.getByLabelText("Module options");
-    fireEvent.change(options, { target: { value: "{" } });
+    fireEvent.change(screen.getByLabelText("Legal documents"), { target: { value: "executed" } });
     fireEvent.click(screen.getByRole("button", { name: "Review run" }));
+    const options = await screen.findByLabelText("The agreement");
     await waitFor(() => expect(options).toHaveFocus());
     const calls = scrollIntoView.mock.calls.length;
     screen.getByLabelText("Anything the analysis should know").focus();
     fireEvent.click(
       screen.getByRole("button", {
-        name: "1 problem to fix: Module options must contain valid JSON.",
+        name: "1 problem to fix: Choose the uploaded file that is the agreement.",
       }),
     );
     await waitFor(() => expect(options).toHaveFocus());
@@ -582,9 +630,9 @@ describe("connected run start", () => {
     await advanceToPurpose();
     fireEvent.change(screen.getByLabelText("Run form level"), { target: { value: "advanced" } });
     advanceToContext();
-    const options = screen.getByLabelText("Module options");
-    fireEvent.change(options, { target: { value: "{" } });
+    fireEvent.change(screen.getByLabelText("Legal documents"), { target: { value: "executed" } });
     fireEvent.click(screen.getByRole("button", { name: "Review run" }));
+    const options = await screen.findByLabelText("The agreement");
     await waitFor(() => expect(options).toHaveAttribute("aria-invalid", "true"));
     expect(options).toHaveClass("aria-invalid:border-error-mark");
   });
@@ -645,11 +693,7 @@ describe("connected run start", () => {
     fireEvent.click(reviewRun);
     expect(await screen.findByRole("alert")).toHaveTextContent("Add at least one facility");
     await waitFor(() => expect(screen.getByRole("button", { name: "Add facility" })).toHaveFocus());
-    fireEvent.change(screen.getByLabelText("Module options"), { target: { value: "[]" } });
-    fireEvent.click(reviewRun);
-    expect(await screen.findByRole("alert")).toHaveTextContent("Module options must be an object.");
     expect(fetchMock.mock.calls.some(([path]) => path.endsWith("/summary"))).toBe(false);
-    fireEvent.change(screen.getByLabelText("Module options"), { target: { value: "{}" } });
     fireEvent.click(screen.getByRole("button", { name: "Add facility" }));
     fireEvent.change(screen.getByLabelText("Facility ID"), { target: { value: "TL-B" } });
     fireEvent.click(reviewRun);
@@ -877,7 +921,7 @@ describe("connected run start", () => {
       },
       level: "advanced",
       max_turns: 24,
-      modules: ["CP-0"],
+      modules: ["CP-0", "CP-MODEL"],
     });
   });
 
@@ -907,7 +951,7 @@ describe("connected run start", () => {
     ).toBeInTheDocument();
     expect(
       screen.getByText(
-        "Advanced adds model, effort, turns per module, module selection and JSON inputs.",
+        "Advanced adds model, effort, turns per module, module selection and valuation and assumption fields.",
       ),
     ).toBeInTheDocument();
     expect(panel.getByText("Purpose chosen").closest("li")).toHaveTextContent("Not met");
@@ -919,22 +963,34 @@ describe("connected run start", () => {
     expect(screen.getByText(/of 4 ready · USD 0\.00 of USD 25\.00/)).toBeInTheDocument();
   });
 
-  it("keeps JSON inputs behind Advanced, but draws one that holds an edit", async () => {
+  it("keeps a section edited at Advanced drawn at Basic: Valuation and the assumptions groups", async () => {
     testingFetch();
     render(<ConnectedApp path="/start" mode="synthetic" />);
     await fillInputs();
     await advanceToPurpose();
     fireEvent.change(screen.getByLabelText("Run form level"), { target: { value: "advanced" } });
     advanceToContext();
-    fireEvent.change(screen.getByLabelText("Valuation and peers"), { target: { value: "{" } });
+    fireEvent.change(screen.getByLabelText("Peer source"), { target: { value: "none" } });
+    fireEvent.click(screen.getByRole("checkbox", { name: "Pin Downside" }));
     fireEvent.click(screen.getByRole("button", { name: "Previous" }));
     await screen.findByRole("heading", { name: "Purpose" });
     fireEvent.change(screen.getByLabelText("Run form level"), { target: { value: "basic" } });
     advanceToContext();
     expect(screen.getByRole("button", { name: "Add rating" })).toBeInTheDocument();
-    expect(screen.getByLabelText("Valuation and peers")).toHaveValue("{");
-    expect(screen.queryByLabelText("Scenario assumptions")).toBeNull();
-    expect(screen.queryByText(/context\/1 JSON/)).toBeNull();
+    expect(screen.getByLabelText("Peer source")).toHaveValue("none");
+    expect(screen.getByRole("checkbox", { name: "Pin Downside" })).toBeChecked();
+    expect(screen.getByRole("checkbox", { name: "Pin Liquidity" })).not.toBeChecked();
+  });
+
+  it("draws neither Valuation nor the assumptions groups at Basic when nothing was edited", async () => {
+    testingFetch();
+    render(<ConnectedApp path="/start" mode="synthetic" />);
+    await fillInputs();
+    await advanceToPurpose();
+    advanceToContext();
+    expect(screen.getByRole("button", { name: "Add rating" })).toBeInTheDocument();
+    expect(screen.queryByLabelText("Peer source")).toBeNull();
+    expect(screen.queryByRole("checkbox", { name: "Pin Downside" })).toBeNull();
   });
 
   it("passes a prior run's rows through untouched when not edited", async () => {
@@ -970,6 +1026,495 @@ describe("connected run start", () => {
     expect(await screen.findByRole("alert")).toHaveTextContent("This context was refused");
     expect(screen.queryByRole("button", { name: "Submit run" })).toBeNull();
     expect(fetchMock.mock.calls.some(([path]) => path.endsWith("/submit"))).toBe(false);
+  });
+
+  it("shows a refusal in the screen's own labels, not a field path", async () => {
+    testingFetch({
+      ...plan,
+      error: "assumptions.cp4c.ev_multiple: must be 99.99 or less.",
+      digest: "",
+    });
+    render(<ConnectedApp path="/start" mode="synthetic" />);
+    await review();
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Scenario assumptions · Recovery & fulcrum · EV multiple: must be 99.99 or less.",
+    );
+    expect(document.body).not.toHaveTextContent("assumptions.cp4c");
+  });
+
+  it("lists identical problems as separate items; the first goes to its control", async () => {
+    const one = "deal_terms[0].size_m: is required.";
+    testingFetch({ ...plan, error: `${one}; ${one}; ${one}`, digest: "" });
+    render(<ConnectedApp path="/start" mode="synthetic" />);
+    await review();
+    await screen.findByRole("button", { name: /^1 problem to fix: Facilities and deal terms/ });
+    const notice = screen.getAllByRole("alert").find((alert) => alert.querySelector("ul"));
+    expect(within(notice as HTMLElement).getAllByRole("listitem")).toHaveLength(2);
+  });
+
+  it("lists several refusals that name no control inside the alert", async () => {
+    testingFetch({
+      ...plan,
+      error: "run.as_of: is required.; identity.ticker: is required.",
+      digest: "",
+    });
+    render(<ConnectedApp path="/start" mode="synthetic" />);
+    await review();
+    const alert = await screen.findByRole("alert");
+    expect(within(alert).getAllByRole("listitem")).toHaveLength(2);
+    expect(alert).toHaveTextContent("Issuer and case date · As-of date: is required.");
+  });
+});
+
+describe("connected run start: Module options and Valuation as fields", () => {
+  const blankMarket = {
+    market_cap_m: "",
+    net_debt_m: "",
+    ev_m: "",
+    ebitda_basis: "LTM",
+    as_of: "",
+    source: "",
+  };
+  const blankMultiple = { value: "", basis: "LTM", rationale: "" };
+  const peer = {
+    name: "Harbour Industrial",
+    ticker: "HBI",
+    ev_m: "4200",
+    ebitda_m: "520",
+    as_of: "2026-09-30",
+    source: "Company filings",
+  };
+  const loadedValuation = {
+    peer_source: "user_comps",
+    basis: "public_comps",
+    issuer_market: blankMarket,
+    peers: [peer],
+    precedents: [],
+    user_multiple: blankMultiple,
+  };
+  const loadedOptions = { cp3_mode: "capital_structure_rv", cp6_deep_debate: false };
+  const deepContext = {
+    ...context,
+    run: { ...context.run, pathway: "deep_credit_assessment" },
+    submission_caps_usd: submissionCaps,
+    valuation: loadedValuation,
+    module_options: loadedOptions,
+  };
+
+  async function advancedStart(loaded: Record<string, unknown> = {}) {
+    const fetchMock = testingFetch({ ...plan, cap: "40" }, undefined, {
+      "/connected/context": { ...deepContext, ...loaded },
+    });
+    render(<ConnectedApp path="/start" mode="synthetic" />);
+    await fillInputs();
+    await advanceToPurpose();
+    fireEvent.change(screen.getByLabelText("Run form level"), { target: { value: "advanced" } });
+    advanceToContext();
+    return fetchMock;
+  }
+
+  async function sentContext(fetchMock: ReturnType<typeof testingFetch>) {
+    fireEvent.click(screen.getByRole("button", { name: "Review run" }));
+    await screen.findByRole("button", { name: "Submit run" });
+    return sentSummary(fetchMock).context as {
+      valuation: Record<string, unknown>;
+      module_options: Record<string, unknown>;
+    };
+  }
+
+  const pick = (name: string, value: string) => {
+    fireEvent.change(screen.getByLabelText(name), { target: { value } });
+  };
+  const typeIn = (scope: HTMLElement, name: string, value: string) => {
+    fireEvent.change(within(scope).getByLabelText(name), { target: { value } });
+  };
+  const peers = () => screen.getByRole("region", { name: "Peers" });
+  const precedents = () => screen.getByRole("region", { name: "Precedents" });
+
+  it("K1 sends the loaded values when nothing is touched", async () => {
+    const sent = await sentContext(await advancedStart());
+    expect(sent.valuation).toEqual(loadedValuation);
+    expect(sent.module_options).toEqual(loadedOptions);
+  });
+
+  it("K2 sends the chosen relative value mode and Deep Debate", async () => {
+    const fetchMock = await advancedStart();
+    pick("Relative value mode", "single_name_rv");
+    fireEvent.click(screen.getByRole("checkbox", { name: "Deep Debate" }));
+    const sent = await sentContext(fetchMock);
+    expect(sent.module_options).toEqual({ cp3_mode: "single_name_rv", cp6_deep_debate: true });
+  });
+
+  it("K3 asks a named peer list for a name and ticker only", async () => {
+    const fetchMock = await advancedStart({ valuation: { ...loadedValuation, peers: [] } });
+    pick("Peer source", "user_list");
+    fireEvent.click(within(peers()).getByRole("button", { name: "Add peer" }));
+    typeIn(peers(), "Name", "Harbour Industrial");
+    typeIn(peers(), "Ticker", "HBI");
+    for (const hidden of ["EV (m)", "EBITDA (m)", "As-of", "Source"])
+      expect(within(peers()).queryByLabelText(hidden)).toBeNull();
+    const sent = await sentContext(fetchMock);
+    expect(sent.valuation.peers).toEqual([
+      { name: "Harbour Industrial", ticker: "HBI", ev_m: "", ebitda_m: "", as_of: "", source: "" },
+    ]);
+  });
+
+  it("K4 sends peer figures, and no peers once the source no longer takes them", async () => {
+    const fetchMock = await advancedStart({ valuation: { ...loadedValuation, peers: [] } });
+    pick("Peer source", "user_comps");
+    fireEvent.click(within(peers()).getByRole("button", { name: "Add peer" }));
+    typeIn(peers(), "Name", "Harbour Industrial");
+    typeIn(peers(), "Ticker", "HBI");
+    typeIn(peers(), "EV (m)", "4200");
+    typeIn(peers(), "EBITDA (m)", "520");
+    typeIn(peers(), "As-of", "2026-09-30");
+    typeIn(peers(), "Source", "Company filings");
+    expect(within(peers()).getByLabelText("As-of")).toHaveAttribute("type", "date");
+    const sent = await sentContext(fetchMock);
+    expect(sent.valuation.peers).toEqual([peer]);
+    cleanup();
+    const second = await advancedStart();
+    pick("Peer source", "cp_dr_public");
+    expect(screen.queryByRole("region", { name: "Peers" })).toBeNull();
+    expect((await sentContext(second)).valuation.peers).toEqual([]);
+  });
+
+  it("K5 sends the analyst's own multiple, and blanks it when the basis changes", async () => {
+    const fetchMock = await advancedStart();
+    pick("Valuation basis", "user_multiple");
+    pick("Multiple (x)", "8.5");
+    pick("Multiple basis", "NTM");
+    pick("Rationale", "Sector median less a size discount");
+    const sent = await sentContext(fetchMock);
+    expect(sent.valuation.user_multiple).toEqual({
+      value: "8.5",
+      basis: "NTM",
+      rationale: "Sector median less a size discount",
+    });
+    cleanup();
+    const second = await advancedStart();
+    pick("Valuation basis", "user_multiple");
+    pick("Multiple (x)", "8.5");
+    pick("Valuation basis", "auto");
+    for (const gone of ["Multiple (x)", "Multiple basis", "Rationale"])
+      expect(screen.queryByLabelText(gone)).toBeNull();
+    expect((await sentContext(second)).valuation.user_multiple).toEqual(blankMultiple);
+  });
+
+  it("K6 sends precedents only for a basis that uses them", async () => {
+    const fetchMock = await advancedStart();
+    pick("Valuation basis", "precedents");
+    fireEvent.click(within(precedents()).getByRole("button", { name: "Add precedent" }));
+    typeIn(precedents(), "Target", "Northgate Tools");
+    typeIn(precedents(), "Acquirer", "Orion Capital");
+    typeIn(precedents(), "Date", "2025-06-30");
+    typeIn(precedents(), "EV (m)", "2400");
+    typeIn(precedents(), "EBITDA (m)", "300");
+    typeIn(precedents(), "Source", "Press release");
+    const sent = await sentContext(fetchMock);
+    expect(sent.valuation.precedents).toEqual([
+      {
+        target: "Northgate Tools",
+        acquirer: "Orion Capital",
+        date: "2025-06-30",
+        ev_m: "2400",
+        ebitda_m: "300",
+        source: "Press release",
+      },
+    ]);
+    cleanup();
+    const second = await advancedStart();
+    pick("Valuation basis", "precedents");
+    fireEvent.click(within(precedents()).getByRole("button", { name: "Add precedent" }));
+    typeIn(precedents(), "Target", "Northgate Tools");
+    pick("Valuation basis", "auto");
+    expect(screen.queryByRole("region", { name: "Precedents" })).toBeNull();
+    expect((await sentContext(second)).valuation.precedents).toEqual([]);
+  });
+
+  it("K7 sends the issuer's market values for the issuer's own trading multiple", async () => {
+    const fetchMock = await advancedStart();
+    expect(screen.queryByLabelText("Market cap (m)")).toBeNull();
+    pick("Valuation basis", "issuer_trading");
+    pick("Market cap (m)", "3100");
+    pick("Net debt (m)", "1900");
+    pick("Enterprise value (m)", "5000");
+    pick("EBITDA basis", "LTM");
+    pick("Market data as-of", "2026-10-30");
+    pick("Market data source", "Exchange close");
+    const sent = await sentContext(fetchMock);
+    expect(sent.valuation.issuer_market).toEqual({
+      market_cap_m: "3100",
+      net_debt_m: "1900",
+      ev_m: "5000",
+      ebitda_basis: "LTM",
+      as_of: "2026-10-30",
+      source: "Exchange close",
+    });
+  });
+
+  it("K8 gives each issuer detail an example", async () => {
+    await advancedStart();
+    const examples = {
+      "Borrower (legal entity)": "e.g. Northbridge Holdings LLC",
+      Parent: "e.g. Northbridge Group plc",
+      Sector: "e.g. Industrials",
+      Country: "e.g. United States",
+      Sponsor: "e.g. Harbour Peak Capital",
+    };
+    for (const [name, example] of Object.entries(examples))
+      expect(screen.getByLabelText(name)).toHaveAttribute("placeholder", example);
+  });
+
+  it("K9 has no JSON box for these two sections and none for the assumptions either", async () => {
+    await advancedStart();
+    expect(screen.queryByRole("textbox", { name: "Valuation and peers" })).toBeNull();
+    expect(screen.queryByRole("textbox", { name: "Module options" })).toBeNull();
+    expect(screen.queryByRole("textbox", { name: "Scenario assumptions" })).toBeNull();
+  });
+
+  it("K10 shows a prior run's peer in its boxes", async () => {
+    testingFetch({ ...plan, cap: "40" }, undefined, {
+      "/api/runs/earlier/inputs": {
+        issuer_id: "northbridge",
+        issuer_name: "Northbridge",
+        level: "advanced",
+        max_turns: 32,
+        modules: [],
+        context: { ...deepContext, valuation: { ...loadedValuation, peers: [peer] } },
+        files: [{ name: file.name, size: file.size }],
+      },
+      "/api/submissions/sub-1/carry": { carried: [file.name], kept: [] },
+    });
+    render(<ConnectedApp path="/start" search="?from=earlier" mode="synthetic" />);
+    expect(await screen.findByLabelText("Issuer name")).toHaveValue("Northbridge");
+    await advanceToPurpose();
+    advanceToContext();
+    const shown = peers();
+    expect(within(shown).getByLabelText("Name")).toHaveValue(peer.name);
+    expect(within(shown).getByLabelText("Ticker")).toHaveValue(peer.ticker);
+    expect(within(shown).getByLabelText("EV (m)")).toHaveValue(peer.ev_m);
+    expect(within(shown).getByLabelText("EBITDA (m)")).toHaveValue(peer.ebitda_m);
+    expect(within(shown).getByLabelText("As-of")).toHaveValue(peer.as_of);
+    expect(within(shown).getByLabelText("Source")).toHaveValue(peer.source);
+  });
+});
+
+describe("connected run start: Scenario assumptions as fields", () => {
+  const PIN_MODULES = {
+    cp2a: "CP-2A",
+    cp2d: "CP-2D",
+    cp2e: "CP-2E",
+    cp3c: "CP-3C",
+    cp3d: "CP-3D",
+    cp4c: "CP-4C",
+  } as const;
+  const noPins = { cp2a: null, cp2d: null, cp2e: null, cp3c: null, cp3d: null, cp4c: null };
+  const cp3dPin = { recovery_pct: "40", rationale: "Agency study" };
+  const loadedAssumptions = {
+    ...noPins,
+    cp2d: { horizon_months: "12", minimum_cash_m: "100", rationale: "Policy" },
+  };
+  const title = (key: keyof typeof PIN_MODULES) => moduleName(PIN_MODULES[key]);
+
+  async function start(pathway: string, loaded: Record<string, unknown> = {}) {
+    const cap = submissionCaps[pathway as keyof typeof submissionCaps];
+    const fetchMock = testingFetch({ ...plan, cap }, undefined, {
+      "/connected/context": {
+        ...context,
+        run: { ...context.run, pathway },
+        submission_caps_usd: submissionCaps,
+        assumptions: noPins,
+        ...loaded,
+      },
+    });
+    render(<ConnectedApp path="/start" mode="synthetic" />);
+    await fillInputs();
+    await advanceToPurpose();
+    fireEvent.change(screen.getByLabelText("Run form level"), { target: { value: "advanced" } });
+    advanceToContext();
+    return fetchMock;
+  }
+  const deepStart = (loaded: Record<string, unknown> = {}) =>
+    start("deep_credit_assessment", loaded);
+
+  async function sentAssumptions(fetchMock: ReturnType<typeof testingFetch>) {
+    fireEvent.click(screen.getByRole("button", { name: "Review run" }));
+    await screen.findByRole("button", { name: "Submit run" });
+    return sentSummary(fetchMock).context.assumptions as Record<string, unknown>;
+  }
+
+  const groupOf = (key: keyof typeof PIN_MODULES) =>
+    screen.getByRole("region", { name: title(key) });
+  const pin = (key: keyof typeof PIN_MODULES) => {
+    fireEvent.click(within(groupOf(key)).getByRole("checkbox", { name: `Pin ${title(key)}` }));
+  };
+  const typeIn = (key: keyof typeof PIN_MODULES, name: string, value: string) => {
+    fireEvent.change(within(groupOf(key)).getByLabelText(name), { target: { value } });
+  };
+
+  it("B1 sends the loaded assumptions when nothing is touched", async () => {
+    const sent = await sentAssumptions(await deepStart({ assumptions: loadedAssumptions }));
+    expect(sent).toEqual(loadedAssumptions);
+  });
+
+  it("B2 sends one to four downside scenarios, and a rationale", async () => {
+    const fetchMock = await deepStart();
+    pin("cp2a");
+    typeIn("cp2a", "EBITDA decline (%)", "20");
+    typeIn("cp2a", "Interest increase (%)", "15");
+    fireEvent.click(within(groupOf("cp2a")).getByRole("button", { name: "Add scenario" }));
+    const declines = within(groupOf("cp2a")).getAllByLabelText("EBITDA decline (%)");
+    const interests = within(groupOf("cp2a")).getAllByLabelText("Interest increase (%)");
+    expect(declines).toHaveLength(2);
+    fireEvent.change(declines[1] as HTMLElement, { target: { value: "35" } });
+    fireEvent.change(interests[1] as HTMLElement, { target: { value: "25" } });
+    typeIn("cp2a", "Rationale", "Committee stress cases");
+    const add = within(groupOf("cp2a")).getByRole("button", { name: "Add scenario" });
+    fireEvent.click(add);
+    fireEvent.click(add);
+    expect(within(groupOf("cp2a")).getAllByLabelText("EBITDA decline (%)")).toHaveLength(4);
+    expect(add).toBeDisabled();
+    fireEvent.click(within(groupOf("cp2a")).getByRole("button", { name: "Remove Scenario 4" }));
+    fireEvent.click(within(groupOf("cp2a")).getByRole("button", { name: "Remove Scenario 3" }));
+    expect((await sentAssumptions(fetchMock)).cp2a).toEqual({
+      scenarios: [
+        { ebitda_decline_pct: "20", interest_increase_pct: "15" },
+        { ebitda_decline_pct: "35", interest_increase_pct: "25" },
+      ],
+      rationale: "Committee stress cases",
+    });
+  });
+
+  it("B3 sends the liquidity pin", async () => {
+    const fetchMock = await deepStart();
+    pin("cp2d");
+    typeIn("cp2d", "Horizon (months)", "18");
+    typeIn("cp2d", "Minimum cash (m)", "150");
+    typeIn("cp2d", "Rationale", "Treasury policy minimum");
+    expect((await sentAssumptions(fetchMock)).cp2d).toEqual({
+      horizon_months: "18",
+      minimum_cash_m: "150",
+      rationale: "Treasury policy minimum",
+    });
+  });
+
+  it("B4 sends the rate and FX shocks as lists, and an optional hedge ratio", async () => {
+    const fetchMock = await deepStart();
+    pin("cp2e");
+    typeIn("cp2e", "Rate shocks (bps)", "100, 200");
+    typeIn("cp2e", "FX shocks (%)", "10");
+    typeIn("cp2e", "Hedge ratio (%)", "60");
+    typeIn("cp2e", "Rationale", "House scenarios");
+    expect((await sentAssumptions(fetchMock)).cp2e).toEqual({
+      rate_shocks_bps: ["100", "200"],
+      fx_shocks_pct: ["10"],
+      hedge_ratio_pct: "60",
+      rationale: "House scenarios",
+    });
+  });
+
+  it("B5 sends the refinancing, recovery and recovery-valuation pins", async () => {
+    const fetchMock = await deepStart();
+    pin("cp3c");
+    typeIn("cp3c", "Repricing (bps)", "50");
+    typeIn("cp3c", "Rationale", "Desk view");
+    pin("cp3d");
+    typeIn("cp3d", "Recovery (%)", "40");
+    typeIn("cp3d", "Rationale", "Agency study");
+    pin("cp4c");
+    typeIn("cp4c", "EV multiple", "7.5");
+    typeIn("cp4c", "Rationale", "Distressed comps");
+    const sent = await sentAssumptions(fetchMock);
+    expect(sent.cp3c).toEqual({ repricing_bps: "50", rationale: "Desk view" });
+    expect(sent.cp3d).toEqual(cp3dPin);
+    expect(sent.cp4c).toEqual({ ev_multiple: "7.5", rationale: "Distressed comps" });
+  });
+
+  it("B6 sends null for a group that is unticked again", async () => {
+    const fetchMock = await deepStart();
+    pin("cp2a");
+    typeIn("cp2a", "EBITDA decline (%)", "20");
+    pin("cp2a");
+    expect(within(groupOf("cp2a")).queryByLabelText("EBITDA decline (%)")).toBeNull();
+    expect((await sentAssumptions(fetchMock)).cp2a).toBeNull();
+  });
+
+  it("B7 shows only the groups whose modules the pathway runs", async () => {
+    await start("lite_credit_assessment");
+    const runs = pathwayModules("lite_credit_assessment");
+    const keys = Object.keys(PIN_MODULES) as (keyof typeof PIN_MODULES)[];
+    const expected = keys.filter((key) => runs.includes(PIN_MODULES[key]));
+    expect(expected.length).toBeGreaterThan(0);
+    expect(expected.length).toBeLessThan(keys.length);
+    for (const key of keys) {
+      const box = screen.queryByRole("checkbox", { name: `Pin ${title(key)}` });
+      if (expected.includes(key)) expect(box).toBeInTheDocument();
+      else expect(box).toBeNull();
+    }
+  });
+
+  it("B7b sends a group of a module the pathway does not run as it was loaded", async () => {
+    const hidden = { ...noPins, cp3d: cp3dPin };
+    const fetchMock = await start("lite_credit_assessment", { assumptions: hidden });
+    expect(screen.queryByRole("checkbox", { name: "Pin Market-implied risk" })).toBeNull();
+    fireEvent.click(screen.getByRole("checkbox", { name: "Pin Downside" }));
+    const sent = await sentAssumptions(fetchMock);
+    expect(sent.cp3d).toEqual(cp3dPin);
+    expect(sent.cp2d).toBeNull();
+    expect(sent.cp2a).toEqual({
+      scenarios: [{ ebitda_decline_pct: "", interest_increase_pct: "" }],
+      rationale: "",
+    });
+  });
+
+  it("B8 shows no JSON and no assumptions text area", async () => {
+    await deepStart();
+    expect(screen.queryByRole("textbox", { name: "Scenario assumptions" })).toBeNull();
+    expect(screen.queryByLabelText("Scenario assumptions")).toBeNull();
+    expect(document.body.textContent).not.toMatch(/JSON/i);
+  });
+
+  it("B9 shows a prior run's pin ticked with its values", async () => {
+    testingFetch({ ...plan, cap: "40" }, undefined, {
+      "/api/runs/earlier/inputs": {
+        issuer_id: "northbridge",
+        issuer_name: "Northbridge",
+        level: "advanced",
+        max_turns: 32,
+        modules: [],
+        context: {
+          ...context,
+          run: { ...context.run, pathway: "deep_credit_assessment" },
+          assumptions: { ...noPins, cp3d: cp3dPin },
+        },
+        files: [{ name: file.name, size: file.size }],
+      },
+      "/api/submissions/sub-1/carry": { carried: [file.name], kept: [] },
+    });
+    render(<ConnectedApp path="/start" search="?from=earlier" mode="synthetic" />);
+    expect(await screen.findByLabelText("Issuer name")).toHaveValue("Northbridge");
+    await advanceToPurpose();
+    advanceToContext();
+    expect(
+      within(groupOf("cp3d")).getByRole("checkbox", { name: "Pin Market-implied risk" }),
+    ).toBeChecked();
+    expect(within(groupOf("cp3d")).getByLabelText("Recovery (%)")).toHaveValue("40");
+    expect(within(groupOf("cp3d")).getByLabelText("Rationale")).toHaveValue("Agency study");
+  });
+
+  it("gives every box an example and a unit and range hint", async () => {
+    await deepStart();
+    for (const key of Object.keys(PIN_MODULES) as (keyof typeof PIN_MODULES)[]) pin(key);
+    for (const key of Object.keys(PIN_MODULES) as (keyof typeof PIN_MODULES)[]) {
+      const boxes = within(groupOf(key)).getAllByRole("textbox");
+      expect(boxes.length).toBeGreaterThan(1);
+      for (const box of boxes) {
+        expect(box.getAttribute("placeholder")).toMatch(/^e\.g\. /);
+        const hint = box.getAttribute("aria-describedby");
+        expect(hint && document.getElementById(hint)?.textContent).toBeTruthy();
+      }
+    }
   });
 });
 
@@ -1497,7 +2042,7 @@ const cascade = [
     id: "CP-2A:from:CP-4",
     scope: "CP-2A",
     outcome: "limited",
-    reason: "Expected to be limited through CP-4, which it reads.",
+    reason: "Expected to be limited because it reads CP-4.",
     fix: "",
     inherited_from: ["CP-4"],
   },
@@ -1505,7 +2050,7 @@ const cascade = [
     id: "CP-5:from:CP-2A",
     scope: "CP-5",
     outcome: "limited",
-    reason: "Expected to be limited through CP-2A, which it reads.",
+    reason: "Expected to be limited because it reads CP-2A.",
     fix: "",
     inherited_from: ["CP-2A"],
   },
@@ -1513,7 +2058,7 @@ const cascade = [
     id: "run:section-omitted-x",
     scope: "run",
     outcome: "information",
-    reason: "The report section 'x' is not produced by this pathway.",
+    reason: "This pathway does not produce the x report section.",
   },
 ];
 
@@ -1556,7 +2101,7 @@ describe("connected run start limits as decisions", () => {
         id: "CP-4C:from:CP-4",
         scope: "CP-4C",
         outcome: "will_refuse",
-        reason: "Expected to be will refuse through CP-4, which it reads.",
+        reason: "Expected to refuse because it reads CP-4.",
         fix: "",
         inherited_from: ["CP-4"],
       },
@@ -1564,7 +2109,7 @@ describe("connected run start limits as decisions", () => {
         id: "CP-5:from:CP-4",
         scope: "CP-5",
         outcome: "limited",
-        reason: "Expected to be limited through CP-4, which it reads.",
+        reason: "Expected to be limited because it reads CP-4.",
         fix: "",
         inherited_from: ["CP-4"],
       },
@@ -1948,6 +2493,189 @@ describe("connected run start: what an acceptance carries to", () => {
   });
 });
 
+describe("connected run start: leave out modules that would refuse", () => {
+  const refusing = [
+    {
+      id: "CP-4:declared-none",
+      scope: "CP-4",
+      outcome: "will_refuse",
+      reason: "Legal documents declared none.",
+      fix: FIX,
+      inherited_from: [],
+    },
+    {
+      id: "CP-4C:from:CP-4",
+      scope: "CP-4C",
+      outcome: "will_refuse",
+      reason: "Expected to refuse because it reads CP-4.",
+      fix: "",
+      inherited_from: ["CP-4"],
+    },
+    {
+      id: "CP-2A:from:CP-4",
+      scope: "CP-2A",
+      outcome: "limited",
+      reason: "Expected to be limited because it reads CP-4.",
+      fix: "",
+      inherited_from: ["CP-4"],
+    },
+  ];
+
+  function summaryBodies(fetchMock: ReturnType<typeof testingFetch>) {
+    return fetchMock.mock.calls
+      .filter(([path]) => path.endsWith("/summary"))
+      .map(([, init]) => {
+        const body = init?.body;
+        return JSON.parse(typeof body === "string" ? body : "null") as { modules: string[] };
+      });
+  }
+
+  it("leaves the modules out, makes a new summary, and puts them back", async () => {
+    const fetchMock = testingFetch({ ...plan, cap: "20", items: refusing });
+    render(<ConnectedApp path="/start" mode="live" />);
+    await fillInputs();
+    await advanceToPurpose();
+    fireEvent.click(screen.getByRole("radio", { name: /Distressed & Restructuring/ }));
+    advanceToContext();
+    fireEvent.click(screen.getByRole("button", { name: "Review run" }));
+    const leave = await screen.findByRole("button", {
+      name: "Leave out Legal & covenants and Recovery & fulcrum",
+    });
+    expect(screen.getAllByRole("button", { name: /^Leave out / })).toHaveLength(1);
+    expect(screen.queryByText(/^Left out:/)).toBeNull();
+    const everyModule = pathwayModules("distressed_restructuring");
+    fireEvent.click(leave);
+    expect(
+      screen.queryByRole("checkbox", { name: /Approve: I have read this summary/ }),
+    ).toBeNull();
+    fireEvent.click(await screen.findByRole("button", { name: "Review run" }));
+    await screen.findByText("Left out: Legal & covenants, Recovery & fulcrum");
+    expect(summaryBodies(fetchMock)[1]?.modules).toEqual(
+      everyModule.filter((code) => code !== "CP-4" && code !== "CP-4C"),
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Put back" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Review run" }));
+    await vi.waitFor(() => {
+      expect(summaryBodies(fetchMock)).toHaveLength(3);
+    });
+    expect(summaryBodies(fetchMock)[2]?.modules).toEqual([]);
+  });
+});
+
+describe("connected run start: the Basic run sends what it sent before", () => {
+  const entered = "Compare the covenant package with the last amendment.";
+  const sentBody = (fetchMock: ReturnType<typeof testingFetch>) => {
+    const body = fetchMock.mock.calls.find(([path]) => path.endsWith("/summary"))?.[1]?.body;
+    return JSON.parse(typeof body === "string" ? body : "null") as unknown;
+  };
+
+  it("N8 sends no modules, the Basic settings and the entered context", async () => {
+    const fetchMock = testingFetch();
+    render(<ConnectedApp path="/start" mode="synthetic" />);
+    await fillInputs();
+    await advanceToPurpose();
+    advanceToContext();
+    fireEvent.change(screen.getByLabelText("Anything the analysis should know"), {
+      target: { value: entered },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Review run" }));
+    await screen.findByRole("button", { name: "Submit run" });
+    expect(sentBody(fetchMock)).toEqual({
+      context: {
+        run: {
+          as_of: "2026-10-31",
+          cutoff: "2026-10-31",
+          pathway: "credit_snapshot",
+          case_kind: "synthetic",
+          reporting_currency: "USD",
+        },
+        identity: { issuer_name: "Synthetic Générale", issuer_id: "synthetic-generale" },
+        research_questions: [{ text: entered, focus_module: "" }],
+      },
+      modules: [],
+      level: "basic",
+      max_turns: 32,
+      model: "gpt",
+      effort: "balanced",
+      submitted_by: "Ana L",
+    });
+  });
+
+  it("N9 sends the pathway's modules without the left-out ones, the rest as in N8", async () => {
+    const fetchMock = testingFetch({
+      ...plan,
+      cap: "20",
+      items: [
+        {
+          id: "CP-4:declared-none",
+          scope: "CP-4",
+          outcome: "will_refuse",
+          reason: "No agreement is chosen among the documents.",
+          fix: FIX,
+          inherited_from: [],
+        },
+        {
+          id: "CP-4C:from:CP-4",
+          scope: "CP-4C",
+          outcome: "will_refuse",
+          reason: "Expected to refuse because it reads CP-4.",
+          fix: "",
+          inherited_from: ["CP-4"],
+        },
+      ] as never,
+    });
+    render(<ConnectedApp path="/start" mode="live" />);
+    await fillInputs();
+    await advanceToPurpose();
+    fireEvent.click(screen.getByRole("radio", { name: /Distressed & Restructuring/ }));
+    advanceToContext();
+    fireEvent.click(screen.getByRole("button", { name: "Review run" }));
+    fireEvent.click(
+      await screen.findByRole("button", {
+        name: "Leave out Legal & covenants and Recovery & fulcrum",
+      }),
+    );
+    fireEvent.click(await screen.findByRole("button", { name: "Review run" }));
+    await screen.findByText("Left out: Legal & covenants, Recovery & fulcrum");
+    const bodies = fetchMock.mock.calls
+      .filter(([path]) => path.endsWith("/summary"))
+      .map(
+        ([, init]) => JSON.parse(typeof init?.body === "string" ? init.body : "null") as unknown,
+      );
+    expect(bodies[1]).toEqual({
+      context: {
+        run: {
+          as_of: "2026-10-31",
+          cutoff: "2026-10-31",
+          pathway: "distressed_restructuring",
+          run_type: "research",
+          case_kind: "synthetic",
+          reporting_currency: "USD",
+        },
+        identity: { issuer_name: "Synthetic Générale", issuer_id: "synthetic-generale" },
+      },
+      modules: [
+        "CP-0",
+        "CP-1",
+        "CP-1A",
+        "CP-1C",
+        "CP-DR",
+        "CP-2",
+        "CP-2A",
+        "CP-2E",
+        "CP-2G",
+        "CP-2H",
+        "CP-5",
+      ],
+      level: "basic",
+      max_turns: 32,
+      model: "gpt",
+      effort: "balanced",
+      submitted_by: "Ana L",
+    });
+  });
+});
+
 describe("connected run start: readiness after going back, and repeated announcements", () => {
   const rowOf = (name: string) =>
     within(screen.getByRole("complementary", { name: "Readiness" }))
@@ -2144,5 +2872,575 @@ describe("select field with both help and a problem", () => {
     expect(select).toHaveAccessibleDescription(
       "Pick the kind of legal document. Choose the agreement.",
     );
+  });
+});
+
+describe("connected run start: one mechanism for a refusal that names a control", () => {
+  const P1 = "assumptions.cp4c.ev_multiple: must be 99.99 or less.";
+  const P1_LINE = "Scenario assumptions · Recovery & fulcrum · EV multiple: must be 99.99 or less.";
+  const P3 = "deal_terms[0].size_m: is required.; assumptions.cp2e.rate_shocks_bps: is required.";
+  const FACILITY_LINE = "Facilities and deal terms · Facility 1 · Size (m): is required.";
+  const RATES_LINE = "Scenario assumptions · Rates, FX & hedging · Rate shocks (bps): is required.";
+
+  /** The summary answers with each reply in turn, the last one repeating. */
+  function answering(...replies: object[]) {
+    let at = 0;
+    return testingFetch(plan, undefined, {
+      "/api/submissions/sub-1/summary": () =>
+        Promise.resolve(Response.json(replies[Math.min(at++, replies.length - 1)])),
+    });
+  }
+  const stepHeading = (step: "documents" | "purpose" | "context") =>
+    ({ documents: "Documents", purpose: "Purpose", context: "More context" })[step];
+  const refused = (error: string) => ({ ...plan, error, digest: "" });
+
+  async function advancedReview(replies: object[]) {
+    answering(...replies);
+    render(<ConnectedApp path="/start" mode="synthetic" />);
+    await fillInputs();
+    await advanceToPurpose();
+    fireEvent.click(screen.getByRole("radio", { name: "Deep credit assessment" }));
+    fireEvent.change(screen.getByLabelText("Run form level"), { target: { value: "advanced" } });
+    advanceToContext();
+    fireEvent.click(screen.getByRole("button", { name: "Review run" }));
+  }
+  const noticeOf = (text: string) =>
+    screen.getAllByRole("alert").find((alert) => alert.textContent.includes(text));
+
+  it("N4 shows a refused assumption on its section, opened and focused, not in the notice", async () => {
+    await advancedReview([refused(P1)]);
+    const footer = await screen.findByRole("button", { name: `1 problem to fix: ${P1_LINE}` });
+    expect(footer).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: stepHeading(stepOfField("assumptions")) }),
+    ).toBeInTheDocument();
+    const section = screen.getByText("Scenario assumptions").closest("details");
+    await waitFor(() => expect(section).toHaveAttribute("open"));
+    const control = document.querySelector<HTMLElement>('[data-field="assumptions"]');
+    expect(control).not.toBeNull();
+    expect(section).toContainElement(control);
+    await waitFor(() => expect(control).toHaveFocus());
+    expect(control).toHaveAttribute("aria-invalid", "true");
+    expect(control).toHaveAccessibleDescription(P1_LINE);
+    expect(screen.getAllByRole("alert")).toHaveLength(1);
+    expect(screen.getByRole("alert")).toBe(document.getElementById("error-assumptions"));
+  });
+
+  it("N5 sends the facility problem to the Facilities control and keeps the other in the notice", async () => {
+    await advancedReview([refused(P3)]);
+    await screen.findByRole("button", { name: `1 problem to fix: ${FACILITY_LINE}` });
+    expect(
+      screen.getByRole("heading", { name: stepHeading(stepOfField("deal_terms")) }),
+    ).toBeInTheDocument();
+    const control = document.querySelector<HTMLElement>('[data-field="deal_terms"]');
+    await waitFor(() => expect(control).toHaveFocus());
+    expect(control).toHaveAccessibleDescription(FACILITY_LINE);
+    const notice = noticeOf(RATES_LINE);
+    expect(notice).toBeDefined();
+    expect(notice).toHaveTextContent(RATES_LINE);
+    expect(notice).not.toHaveTextContent("Facility 1");
+    expect(within(notice as HTMLElement).queryAllByRole("listitem")).toHaveLength(0);
+    expect(screen.getAllByRole("alert")).toHaveLength(2);
+  });
+
+  it("N6 keeps a refusal that names no control in the notice only", async () => {
+    await advancedReview([refused("foo.bar: must be x.")]);
+    expect(await screen.findByRole("alert")).toHaveTextContent("foo.bar: must be x.");
+    expect(document.querySelector('[aria-invalid="true"]')).toBeNull();
+    expect(screen.queryByRole("button", { name: /problem to fix/ })).toBeNull();
+  });
+
+  it("N7 clears the field message and the footer once the value is corrected and reviewed again", async () => {
+    await advancedReview([refused(P1), { ...plan, cap: "40" }]);
+    await screen.findByRole("button", { name: `1 problem to fix: ${P1_LINE}` });
+    const control = document.querySelector<HTMLElement>('[data-field="assumptions"]');
+    await waitFor(() => expect(control).toHaveFocus());
+    fireEvent.click(control as HTMLElement);
+    expect(control).not.toHaveAttribute("aria-invalid");
+    fireEvent.click(screen.getByRole("button", { name: "Review run" }));
+    await screen.findByRole("button", { name: "Submit run" });
+    expect(document.getElementById("error-assumptions")).toBeNull();
+    expect(screen.queryByRole("button", { name: /problem to fix/ })).toBeNull();
+  });
+});
+
+describe("connected run start: a refusal goes to a control only when it is drawn", () => {
+  const OPTIONS = "module_options.cp3_mode: is required.";
+  async function reviewOn(pathway: string, error: string, level = "advanced") {
+    testingFetch({ ...plan, cap: "40", error, digest: "" });
+    render(<ConnectedApp path="/start" mode="synthetic" />);
+    await fillInputs();
+    await advanceToPurpose();
+    fireEvent.click(screen.getByRole("radio", { name: pathway }));
+    fireEvent.change(screen.getByLabelText("Run form level"), { target: { value: level } });
+    advanceToContext();
+    fireEvent.click(screen.getByRole("button", { name: "Review run" }));
+  }
+
+  it("keeps a Module options refusal in the notice on a pathway with neither CP-3 nor CP-6", async () => {
+    await reviewOn("Lite credit assessment", OPTIONS);
+    const alert = await screen.findByRole("alert");
+    expect(alert).toHaveTextContent("Module options");
+    expect(document.querySelector('[aria-invalid="true"]')).toBeNull();
+    expect(screen.queryByRole("button", { name: /problem to fix/ })).toBeNull();
+  });
+
+  it("routes the same refusal to its control, open, on Deep credit assessment", async () => {
+    await reviewOn("Deep credit assessment", OPTIONS);
+    await screen.findByRole("button", { name: /^1 problem to fix: Module options/ });
+    const control = document.querySelector<HTMLElement>('[data-field="module_options"]');
+    await waitFor(() => expect(control).toHaveFocus());
+    expect(control).toHaveAttribute("aria-invalid", "true");
+    expect(control).toHaveAccessibleDescription(
+      expect.stringContaining("Module options · Relative value mode: is required."),
+    );
+    expect(screen.getByText("Module options").closest("details")).toHaveAttribute("open");
+  });
+
+  it("keeps an assumptions refusal in the notice when the pathway runs none of the pinned modules", async () => {
+    await reviewOn(
+      "Lite credit assessment",
+      "assumptions.cp4c.ev_multiple: must be 99.99 or less.",
+    );
+    expect(await screen.findByRole("alert")).toHaveTextContent("EV multiple: must be 99.99");
+    expect(document.querySelector('[aria-invalid="true"]')).toBeNull();
+    expect(screen.queryByRole("button", { name: /problem to fix/ })).toBeNull();
+  });
+
+  it("opens Valuation and peers for a valuation refusal", async () => {
+    await reviewOn("Deep credit assessment", "valuation.user_multiple.value: is required.");
+    await screen.findByRole("button", { name: /^1 problem to fix: Valuation and peers/ });
+    const control = document.querySelector<HTMLElement>('[data-field="valuation"]');
+    await waitFor(() => expect(control).toHaveFocus());
+    expect(control).toHaveAttribute("aria-invalid", "true");
+    expect(control).toHaveAccessibleDescription(
+      expect.stringContaining(
+        "Valuation and peers · Your own multiple · Multiple (x): is required.",
+      ),
+    );
+    expect(screen.getByText("Valuation and peers").closest("details")).toHaveAttribute("open");
+  });
+
+  it("shows a legal documents refusal on the Legal documents select", async () => {
+    await reviewOn("Deep credit assessment", "attachments.legal_documents: is required.");
+    await screen.findByRole("button", { name: /^1 problem to fix:/ });
+    const select = screen.getByLabelText("Legal documents");
+    await waitFor(() => expect(select).toHaveFocus());
+    expect(select).toHaveAttribute("aria-invalid", "true");
+    expect(select).toHaveAttribute("data-field", "legal_documents");
+    expect(screen.getAllByRole("alert")).toHaveLength(1);
+    fireEvent.change(select, { target: { value: "executed" } });
+    expect(select).not.toHaveAttribute("aria-invalid");
+  });
+});
+
+describe("the step each refusable control is drawn on", () => {
+  async function toStep(step: "documents" | "context") {
+    testingFetch({ ...plan, cap: "40" });
+    render(<ConnectedApp path="/start" mode="synthetic" />);
+    await fillInputs();
+    if (step === "documents") return;
+    await advanceToPurpose();
+    fireEvent.click(screen.getByRole("radio", { name: "Deep credit assessment" }));
+    fireEvent.change(screen.getByLabelText("Run form level"), { target: { value: "advanced" } });
+    fireEvent.click(screen.getByRole("button", { name: "Continue to context" }));
+    await screen.findByRole("heading", { name: "More context" });
+  }
+  const marked = (field: string) => document.querySelector(`[data-field="${field}"]`);
+
+  it("draws the issuer name on Documents", async () => {
+    await toStep("documents");
+    expect(marked("issuer_name")).not.toBeNull();
+    expect(stepOfField("issuer_name")).toBe("documents");
+  });
+
+  it.each([
+    "cutoff",
+    "legal_documents",
+    "deal_terms",
+    "quotes",
+    "ratings",
+    "research_questions",
+    "valuation",
+    "assumptions",
+    "module_options",
+  ] as const)("draws %s on Context", async (field) => {
+    await toStep("context");
+    expect(marked(field)).not.toBeNull();
+    expect(stepOfField(field)).toBe("context");
+  });
+});
+
+describe("connected run start: module choices sent", () => {
+  const summaryBodies = (fetchMock: ReturnType<typeof testingFetch>) =>
+    fetchMock.mock.calls
+      .filter(([path]) => path.endsWith("/summary"))
+      .map(
+        ([, init]) =>
+          JSON.parse(typeof init?.body === "string" ? init.body : "null") as {
+            modules: string[];
+            level: string;
+            max_turns: number;
+            model: string;
+            effort: string;
+          },
+      );
+
+  it("R1 a Basic run sends no modules after a module choice made at Advanced", async () => {
+    const fetchMock = testingFetch({ ...plan, cap: "20" });
+    render(<ConnectedApp path="/start" mode="synthetic" />);
+    await fillInputs();
+    await advanceToPurpose();
+    fireEvent.click(screen.getByRole("radio", { name: /Relative Value/ }));
+    fireEvent.change(screen.getByLabelText("Run form level"), { target: { value: "advanced" } });
+    advanceToContext();
+    fireEvent.click(await screen.findByRole("checkbox", { name: moduleName("CP-3D") }));
+    fireEvent.click(screen.getByRole("button", { name: "Previous" }));
+    await screen.findByRole("heading", { name: "Purpose" });
+    fireEvent.change(screen.getByLabelText("Run form level"), { target: { value: "basic" } });
+    advanceToContext();
+    fireEvent.click(await screen.findByRole("button", { name: "Review run" }));
+    await screen.findByRole("button", { name: "Submit run" });
+    expect(summaryBodies(fetchMock)[0]).toMatchObject({
+      modules: [],
+      level: "basic",
+      max_turns: 32,
+      model: "gpt",
+      effort: "balanced",
+    });
+  });
+
+  const earningsPeriods = () => {
+    fireEvent.change(screen.getByLabelText("Current period"), { target: { value: "q3-2026" } });
+    fireEvent.change(screen.getByLabelText("Prior period"), { target: { value: "q2-2026" } });
+  };
+
+  const kept = (pathway: RegExp, left: string, expected: string[]) => async () => {
+    const fetchMock = testingFetch({
+      ...plan,
+      cap: "20",
+      items: [
+        {
+          id: `${left}:declared`,
+          scope: left,
+          outcome: "will_refuse",
+          reason: "Expected to refuse.",
+          fix: FIX,
+          inherited_from: [],
+        },
+      ] as never,
+    });
+    render(<ConnectedApp path="/start" mode="live" />);
+    await fillInputs();
+    await advanceToPurpose();
+    fireEvent.click(screen.getByRole("radio", { name: pathway }));
+    advanceToContext();
+    if (left === "CP-1D") earningsPeriods();
+    fireEvent.click(screen.getByRole("button", { name: "Review run" }));
+    fireEvent.click(await screen.findByRole("button", { name: `Leave out ${moduleName(left)}` }));
+    fireEvent.click(await screen.findByRole("button", { name: "Review run" }));
+    await screen.findByText(`Left out: ${moduleName(left)}`);
+    expect(summaryBodies(fetchMock).at(-1)?.modules).toEqual(expected);
+  };
+
+  it(
+    "R2a Earnings Update leaves CP-1D out and keeps the forecast",
+    kept(/Earnings Update/, "CP-1D", [
+      "CP-0",
+      "CP-1",
+      "CP-MODEL",
+      "CP-1B",
+      "CP-DR",
+      "CP-2E",
+      "CP-5",
+    ]),
+  );
+  it(
+    "R2b Relative Value leaves CP-3D out and keeps the forecast",
+    kept(/Relative Value/, "CP-3D", [
+      "CP-0",
+      "CP-1",
+      "CP-MODEL",
+      "CP-1C",
+      "CP-DR",
+      "CP-2",
+      "CP-2D",
+      "CP-2E",
+      "CP-3",
+      "CP-3C",
+      "CP-5",
+    ]),
+  );
+  it(
+    "R2c Portfolio Decision leaves CP-6 out and keeps the forecast",
+    kept(/Portfolio Decision/, "CP-6", [
+      "CP-0",
+      "CP-1",
+      "CP-MODEL",
+      "CP-DR",
+      "CP-2",
+      "CP-2E",
+      "CP-3",
+      "CP-5",
+    ]),
+  );
+
+  it("R4 an Advanced choice on Earnings Update ends with CP-MODEL and holds no unticked code", async () => {
+    const fetchMock = testingFetch({ ...plan, cap: "20" });
+    render(<ConnectedApp path="/start" mode="synthetic" />);
+    await fillInputs();
+    await advanceToPurpose();
+    fireEvent.click(screen.getByRole("radio", { name: /Earnings Update/ }));
+    fireEvent.change(screen.getByLabelText("Run form level"), { target: { value: "advanced" } });
+    advanceToContext();
+    earningsPeriods();
+    fireEvent.click(await screen.findByRole("checkbox", { name: moduleName("CP-1D") }));
+    fireEvent.click(screen.getByRole("button", { name: "Review run" }));
+    await screen.findByRole("button", { name: "Submit run" });
+    const sent = summaryBodies(fetchMock)[0]?.modules ?? [];
+    expect(sent.filter((code) => code === "CP-MODEL")).toHaveLength(1);
+    expect(sent).not.toContain("CP-1D");
+  });
+
+  it("R10 the review's Leave out never names the forecast the run keeps", async () => {
+    const fetchMock = testingFetch({
+      ...plan,
+      cap: "20",
+      items: [
+        {
+          id: "CP-1D:declared",
+          scope: "CP-1D",
+          outcome: "will_refuse",
+          reason: "Expected to refuse.",
+          fix: FIX,
+          inherited_from: [],
+        },
+      ] as never,
+    });
+    render(<ConnectedApp path="/start" mode="live" />);
+    await fillInputs();
+    await advanceToPurpose();
+    fireEvent.click(screen.getByRole("radio", { name: /Earnings Update/ }));
+    fireEvent.change(screen.getByLabelText("Run form level"), { target: { value: "advanced" } });
+    advanceToContext();
+    earningsPeriods();
+    fireEvent.click(await screen.findByRole("checkbox", { name: moduleName("CP-2E") }));
+    fireEvent.click(screen.getByRole("button", { name: "Review run" }));
+    const leave = await screen.findByRole("button", { name: /^Leave out / });
+    expect(leave).toHaveAccessibleName("Leave out Earnings quality");
+    expect(screen.queryByText(/Cash flow model/)).toBeNull();
+    fireEvent.click(leave);
+    fireEvent.click(await screen.findByRole("button", { name: "Review run" }));
+    await screen.findByText("Left out: Earnings quality, Rates, FX & hedging");
+    expect(summaryBodies(fetchMock).at(-1)?.modules).toEqual([
+      "CP-0",
+      "CP-1",
+      "CP-MODEL",
+      "CP-1B",
+      "CP-DR",
+      "CP-5",
+    ]);
+  });
+
+  it("R7 a prior run's page list carries over as the page list", () => {
+    const pathway = "relative_value";
+    const prior = {
+      issuer_id: "x",
+      issuer_name: "X",
+      context: { ...context, run: { ...context.run, pathway } },
+      files: [],
+      level: "advanced",
+      modules: pathwayModules(pathway).filter((code) => code !== "CP-3D"),
+      max_turns: 32,
+    };
+    expect(carriedModules(prior as never)).toEqual(
+      pathwayModules(pathway).filter((code) => code !== "CP-3D"),
+    );
+    expect(carriedModules({ ...prior, modules: ["CP-NOPE"] })).toEqual([]);
+  });
+
+  it("S8 the review sheet counts and lists the service's plan without CP-MODEL", async () => {
+    testingFetch({
+      ...plan,
+      cap: "20",
+      modules: ["CP-0", "CP-1", "CP-1B", "CP-DR", "CP-2E", "CP-MODEL", "CP-1D", "CP-5"],
+    });
+    render(<ConnectedApp path="/start" mode="synthetic" />);
+    await fillInputs();
+    await advanceToPurpose();
+    fireEvent.click(screen.getByRole("radio", { name: /Earnings Update/ }));
+    advanceToContext();
+    earningsPeriods();
+    fireEvent.click(screen.getByRole("button", { name: "Review run" }));
+    await screen.findByRole("button", { name: "Submit run" });
+    expect(screen.getByText("Modules (7)")).toBeVisible();
+    expect(screen.queryByText(/Cash flow model/)).toBeNull();
+  });
+
+  it("L1 a carried list holding no drawn module carries nothing", () => {
+    const prior = {
+      issuer_id: "x",
+      issuer_name: "X",
+      context: { ...context, run: { ...context.run, pathway: "credit_snapshot" } },
+      files: [],
+      level: "advanced",
+      modules: ["CP-MODEL"],
+      max_turns: 32,
+    };
+    expect(carriedModules(prior as never)).toEqual([]);
+  });
+
+  it("S7 a carried list gains CP-MODEL only where the carried pathway's preset holds it", () => {
+    const prior = (pathway: string, modules: string[]) =>
+      ({
+        issuer_id: "x",
+        issuer_name: "X",
+        context: { ...context, run: { ...context.run, pathway } },
+        files: [],
+        level: "advanced",
+        modules,
+        max_turns: 32,
+      }) as never;
+    expect(carriedModules(prior("credit_snapshot", ["CP-0"]))).toEqual(["CP-0", "CP-MODEL"]);
+    expect(carriedModules(prior("lite_credit_assessment", ["CP-0", "CP-1"]))).toEqual([
+      "CP-0",
+      "CP-1",
+    ]);
+    expect(carriedModules(prior("relative_value", ["CP-0", "CP-1A"]))).toEqual([]);
+    expect(carriedModules(prior("relative_value", []))).toEqual([]);
+  });
+
+  it.each([
+    "Earnings Update",
+    "Relative Value",
+    "Portfolio Decision",
+    "Full credit assessment",
+    "Deep credit assessment",
+  ])("S3 %s draws no Cash flow model checkbox", async (name) => {
+    testingFetch({ ...plan, cap: "20" });
+    render(<ConnectedApp path="/start" mode="synthetic" />);
+    await fillInputs();
+    await advanceToPurpose();
+    fireEvent.click(screen.getByRole("radio", { name: new RegExp(name) }));
+    fireEvent.change(screen.getByLabelText("Run form level"), { target: { value: "advanced" } });
+    advanceToContext();
+    if (name === "Earnings Update") earningsPeriods();
+    expect(screen.queryByRole("checkbox", { name: "Cash flow model" })).toBeNull();
+    if (name === "Relative Value" || name === "Portfolio Decision") {
+      expect(screen.queryByRole("checkbox", { name: "Business & governance" })).toBeNull();
+    }
+    fireEvent.click(await screen.findByRole("button", { name: "Add research question" }));
+    const focus = await screen.findByLabelText("Focus module");
+    expect(within(focus).queryByText("Cash flow model")).toBeNull();
+  });
+
+  it("S4 the pathway cards count the modules without CP-MODEL", async () => {
+    testingFetch({ ...plan, cap: "20" });
+    render(<ConnectedApp path="/start" mode="synthetic" />);
+    await fillInputs();
+    await advanceToPurpose();
+    const counts: Record<string, string> = {
+      "Deep credit assessment": "20 base modules",
+      "Relative Value": "11 base modules",
+      "Portfolio Decision": "8 base modules",
+      "Full credit assessment": "14 base modules",
+      "Earnings Update": "7 base modules",
+      "Lite credit assessment": "5 base modules",
+    };
+    for (const [name, text] of Object.entries(counts)) {
+      const card = screen.getByRole("radio", { name: new RegExp(name) }).closest("label");
+      expect(card).not.toBeNull();
+      expect(within(card as HTMLElement).getByText(text, { exact: true })).toBeVisible();
+    }
+  });
+
+  it("S5 the last drawn module stays ticked and the run sends it with CP-MODEL", async () => {
+    const fetchMock = testingFetch({ ...plan, cap: "20" });
+    render(<ConnectedApp path="/start" mode="synthetic" />);
+    await fillInputs();
+    await advanceToPurpose();
+    fireEvent.click(screen.getByRole("radio", { name: /Earnings Update/ }));
+    fireEvent.change(screen.getByLabelText("Run form level"), { target: { value: "advanced" } });
+    advanceToContext();
+    earningsPeriods();
+    const drawn = pathwayModules("earnings_update").filter((code) => code !== "CP-MODEL");
+    for (const code of drawn.slice(1)) {
+      fireEvent.click(await screen.findByRole("checkbox", { name: moduleName(code) }));
+    }
+    const [first] = drawn;
+    const last = await screen.findByRole("checkbox", { name: moduleName(first ?? "") });
+    expect(last).toBeDisabled();
+    fireEvent.click(screen.getByRole("button", { name: "Review run" }));
+    await screen.findByRole("button", { name: "Submit run" });
+    expect(summaryBodies(fetchMock)[0]?.modules).toEqual([first, "CP-MODEL"]);
+  });
+});
+
+describe("connected run start: the analyst note's refusal", () => {
+  const PIPE =
+    "contains a pipe character, a line feed or a carriage return, which a dossier table cell cannot hold.";
+  const noteLine = `Anything the analysis should know: ${PIPE}`;
+
+  async function refused(error: string, rows = false) {
+    testingFetch({ ...plan, digest: "", error });
+    render(<ConnectedApp path="/start" mode="synthetic" />);
+    await fillInputs();
+    await advanceToPurpose();
+    advanceToContext();
+    if (rows) {
+      fireEvent.click(await screen.findByRole("button", { name: "Add research question" }));
+      fireEvent.change(await screen.findByLabelText("Question"), {
+        target: { value: "How is leverage trending" },
+      });
+    }
+    fireEvent.change(await screen.findByLabelText("Anything the analysis should know"), {
+      target: { value: "Leverage | coverage trend" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Review run" }));
+  }
+
+  it("R8 goes to the note box, not to a question row", async () => {
+    await refused(`research_questions[0].text: ${PIPE}`);
+    const note = screen.getByLabelText("Anything the analysis should know");
+    await waitFor(() => {
+      expect(note).toHaveFocus();
+    });
+    expect(note).toHaveAttribute("aria-invalid", "true");
+    expect(note).toHaveAccessibleDescription(noteLine);
+    expect(
+      await screen.findByRole("button", { name: `1 problem to fix: ${noteLine}` }),
+    ).toBeTruthy();
+    const editor = document.querySelector('[data-field="research_questions"]');
+    expect(editor).not.toHaveAttribute("aria-invalid");
+    expect(editor).not.toHaveAttribute("aria-describedby");
+    expect(screen.queryByText(/Question 1/)).toBeNull();
+  });
+
+  it("R11 editing the note clears its problem", async () => {
+    await refused(`research_questions[0].text: ${PIPE}`);
+    const note = screen.getByLabelText("Anything the analysis should know");
+    await waitFor(() => {
+      expect(note).toHaveAttribute("aria-invalid", "true");
+    });
+    fireEvent.change(note, { target: { value: "Leverage and coverage trend" } });
+    expect(note).not.toHaveAttribute("aria-invalid");
+    expect(screen.queryByText(noteLine)).toBeNull();
+  });
+
+  it("R9 a problem on a held question row stays on the editor; the next index is the note's", async () => {
+    await refused(`research_questions[0].text: ${PIPE}`, true);
+    const add = await screen.findByRole("button", { name: "Add research question" });
+    await waitFor(() => {
+      expect(add).toHaveFocus();
+    });
+    expect(add).toHaveAccessibleDescription(expect.stringContaining("Question 1"));
+    cleanup();
+    vi.unstubAllGlobals();
+    await refused(`research_questions[1].text: ${PIPE}`, true);
+    const note = screen.getByLabelText("Anything the analysis should know");
+    await waitFor(() => {
+      expect(note).toHaveFocus();
+    });
+    expect(note).toHaveAccessibleDescription(noteLine);
   });
 });

@@ -51,13 +51,15 @@ failure is 500 ``{"error": "the service failed; see its log"}`` (its cause goes 
     other than "gpt" and "balanced" only at the "advanced" level.
     ``submitted_by`` is the analyst's name: a first name, a space, then one or two capital initials
     ("Eric G", "Eric MG"); anything else, an empty name included, is refused with the form to use.
-    200 ``{"error": "", "digest", "modules", "items", "documents", "ignored", "omitted", "model",
-    "effort", "changes", "lookup", "prior"}``, the launcher's own forecast and the digest to
-    approve (``changes`` says whether CP-8 will run, and against which earlier run: its pathway
-    and as-of date; ``lookup`` is the launcher's own Lookup line and, when present, its SEC
-    line, as the run Submit starts will have them; ``prior`` is ``{"id", "as_of", "pathway"}``
-    of that run or null for a first run, and is part of the digest: the launcher is started with
-    that run, ``--prior <id>`` or ``--prior none``; the modules list holds CP-8 when it will);
+    200 ``{"error": "", "digest", "modules", "items", "documents", "ignored", "omitted",
+    "omitted_titles", "model", "effort", "changes", "lookup", "prior"}``, the launcher's own
+    forecast and the digest to approve (``omitted_titles`` is the reader-facing title of each
+    id in ``omitted``, same order; ``changes`` says whether CP-8 will run, and against which
+    earlier run: its pathway and as-of date; ``lookup`` is the launcher's own Lookup line and,
+    when present, its SEC line, as the run Submit starts will have them; ``prior`` is
+    ``{"id", "as_of", "pathway"}`` of that run or null for a first run, and is part of the
+    digest: the launcher is started with that run, ``--prior <id>`` or ``--prior none``; the
+    modules list holds CP-8 when it will);
     or 200 ``{"error": "<sentence>"}`` with no digest when the answers or files are refused
     (Claude Opus without an Anthropic key on the service included). Only the latest digest
     issued is accepted.
