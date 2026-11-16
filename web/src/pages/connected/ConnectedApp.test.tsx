@@ -164,6 +164,8 @@ describe("connected run start", () => {
     render(<ConnectedApp path="/start" mode="synthetic" navigate={navigate} />);
     await review();
     const submit = await screen.findByRole("button", { name: "Submit run" });
+    expect(screen.getByText("Step 4 of 4", { exact: true })).toBeInTheDocument();
+    expect(screen.queryByText(/of 5/)).toBeNull();
     const paths = fetchMock.mock.calls.map(([path]) => path);
     expect(paths).toEqual([
       "/connected/context",

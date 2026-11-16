@@ -48,6 +48,7 @@ const STEPPER_STEPS = [
   { key: "context", title: "More context", note: "Optional" },
   { key: "start", title: "Review and start", note: "Paid step" },
 ] as const;
+const STEP_TOTAL = STEPPER_STEPS.length;
 const FORM_STEP_KEYS = Object.keys(FORM_STEPS) as FormStep[];
 const STEP_GUIDANCE: Record<FormStep, string> = {
   documents:
@@ -845,8 +846,8 @@ function IntakeForm({
         />
         <p className="text-sm text-text-secondary sm:hidden">
           {review
-            ? "Step 4 of 4 · Review and start"
-            : `Step ${String(FORM_STEP_KEYS.indexOf(step) + 1)} of 4 · ${title}`}
+            ? `Step ${String(STEP_TOTAL)} of ${String(STEP_TOTAL)} · Review and start`
+            : `Step ${String(FORM_STEP_KEYS.indexOf(step) + 1)} of ${String(STEP_TOTAL)} · ${title}`}
         </p>
         {error && <ErrorNotice>{error}</ErrorNotice>}
         {review ? (
@@ -912,7 +913,9 @@ function IntakeForm({
               >
                 Edit inputs
               </Button>
-              <span className="text-sm text-text-tertiary">Step 5 of 5</span>
+              <span className="text-sm text-text-tertiary">
+                Step {STEP_TOTAL} of {STEP_TOTAL}
+              </span>
               <SubmitConfirmation
                 label={
                   busy === "submit"
@@ -1555,7 +1558,7 @@ function IntakeForm({
                 Previous
               </Button>
               <span className="text-sm text-text-tertiary">
-                Step {FORM_STEP_KEYS.indexOf(step) + 1} of 4
+                Step {FORM_STEP_KEYS.indexOf(step) + 1} of {STEP_TOTAL}
               </span>
               <Button
                 type="submit"
