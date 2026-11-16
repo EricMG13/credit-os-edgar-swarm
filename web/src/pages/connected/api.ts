@@ -112,7 +112,7 @@ export type Run = {
   events: RunEvent[] | null;
 };
 
-export type ReportEntry = { id: string; issuer: string; asOf: string; pathway: string };
+type ReportEntry = { id: string; issuer: string; asOf: string; pathway: string };
 export class RequestError extends Error {
   constructor(
     message: string,

@@ -280,6 +280,29 @@ describe("connected run start", () => {
     });
   });
 
+  it("clears a hidden ticker from the submitted issuer context when listed equity is unchecked", async () => {
+    const fetchMock = testingFetch();
+    render(<ConnectedApp path="/start" mode="synthetic" />);
+    await fillInputs();
+    await advanceToPurpose();
+    fireEvent.click(screen.getByRole("button", { name: "Review inputs" }));
+    fireEvent.click(screen.getByRole("button", { name: "Approve summary" }));
+    const listed = screen.getByRole("checkbox", { name: "Listed equity" });
+    fireEvent.click(listed);
+    fireEvent.change(screen.getByLabelText("Ticker"), { target: { value: "ABC" } });
+    fireEvent.click(listed);
+
+    fireEvent.click(screen.getByRole("button", { name: "Review run" }));
+    await screen.findByRole("button", { name: "Submit run" });
+
+    const summaryCall = fetchMock.mock.calls.find(([path]) => path.endsWith("/summary"));
+    expect(summaryCall).toBeDefined();
+    const answers = JSON.parse(summaryCall?.[1]?.body as string) as {
+      context: { identity: Record<string, unknown> };
+    };
+    expect(answers.context.identity).toMatchObject({ listed_equity: false, ticker: "" });
+  });
+
   it.each([400, 404])(
     "requires fresh review when the service rejects approval with %s",
     async (status) => {
@@ -446,6 +469,72 @@ describe("connected run start", () => {
       },
     });
     expect(fetchMock.mock.calls.filter(([, options]) => options?.body === file)).toHaveLength(1);
+  });
+
+  it("copies the latest issuer inputs through inspection and into the reviewed payload", async () => {
+    const fetchMock = testingFetch(plan, undefined, {
+      "/api/issuers/northbridge": {
+        latest_run: "latest-case",
+        runs: 2,
+        latest_as_of: "2026-09-30",
+      },
+      "/api/runs/latest-case/inputs": {
+        issuer_id: "northbridge",
+        issuer_name: "Northbridge",
+        level: "advanced",
+        max_turns: 24,
+        modules: ["CP-0"],
+        context: { ...context, identity: { ...context.identity, sector: "Gaming" } },
+        files: [{ name: file.name, size: file.size }],
+      },
+      "/api/submissions/sub-1/carry": { carried: [file.name], kept: [] },
+    });
+    render(<ConnectedApp path="/start" mode="synthetic" />);
+    fireEvent.change(await screen.findByLabelText("Issuer name"), {
+      target: { value: "Northbridge" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Carry over from latest run" }));
+    await screen.findByText(/Starting from run latest-case/);
+    expect(screen.getByLabelText("Issuer ID")).toHaveAttribute("readonly");
+    expect(screen.getByLabelText("Issuer name")).toHaveValue("Northbridge");
+    fireEvent.change(screen.getByLabelText("As-of date"), { target: { value: "2026-10-31" } });
+    await advanceToPurpose();
+    expect(screen.getByLabelText("Run form level")).toHaveValue("advanced");
+    advanceToContext();
+    expect(screen.getByLabelText("Turns per module")).toHaveValue(24);
+    fireEvent.click(screen.getByRole("button", { name: "Review run" }));
+    await screen.findByRole("button", { name: "Submit run" });
+    const body = fetchMock.mock.calls.find(([path]) => path.endsWith("/summary"))?.[1]?.body;
+    expect(JSON.parse(typeof body === "string" ? body : "null")).toMatchObject({
+      context: {
+        identity: { issuer_id: "northbridge", sector: "Gaming" },
+        run: { as_of: "2026-10-31" },
+      },
+      max_turns: 24,
+    });
+    expect(fetchMock.mock.calls.filter(([path]) => path.endsWith("/carry"))).toHaveLength(1);
+    expect(fetchMock.mock.calls.find(([path]) => path.endsWith("/carry"))?.[1]?.body).toBe(
+      '{"run":"latest-case"}',
+    );
+    expect(fetchMock.mock.calls.some(([path]) => path.includes("/files?"))).toBe(false);
+    expect(fetchMock.mock.calls.some(([path]) => path.endsWith("/submit"))).toBe(false);
+  });
+
+  it("keeps an editable new issuer when latest-run lookup finds no earlier run", async () => {
+    const fetchMock = testingFetch(plan, undefined, {
+      "/api/issuers/northbridge": { latest_run: "", runs: 0, latest_as_of: "" },
+    });
+    render(<ConnectedApp path="/start" mode="synthetic" />);
+    fireEvent.change(await screen.findByLabelText("Issuer name"), {
+      target: { value: "Northbridge" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Carry over from latest run" }));
+    expect(await screen.findByText("No earlier run was found for this issuer.")).toBeVisible();
+    expect(screen.getByLabelText("Issuer ID")).not.toHaveAttribute("readonly");
+    expect(screen.getByLabelText("Issuer name")).toHaveValue("Northbridge");
+    expect(
+      fetchMock.mock.calls.some(([path]) => /\/(inputs|carry|summary|submit)$/.test(path)),
+    ).toBe(false);
   });
 
   it("carries a prior run's documents and answers, with a buffer for new dates", async () => {
@@ -695,7 +784,9 @@ describe("connected activity and reports", () => {
     );
     window.history.replaceState(null, "", path);
     render(<ConnectedApp path={path} mode="synthetic" />);
-    expect(await screen.findByRole("heading", { name: report.issuer })).toBeInTheDocument();
+    expect(
+      await screen.findByRole("heading", { name: report.issuer }, { timeout: 3000 }),
+    ).toBeInTheDocument();
     expect(screen.getByText("The report read the filing.")).toBeInTheDocument();
     expect(screen.queryByText(filing, { exact: false })).toBeNull();
     expect(screen.queryByRole("link", { name: "Download Fundamental credit" })).toBeNull();
