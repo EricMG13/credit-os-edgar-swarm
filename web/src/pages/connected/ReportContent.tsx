@@ -211,8 +211,11 @@ export function PublishedTable({
   rowSource,
   rowHref,
   href,
+  heading: tableHeading,
 }: {
   table: Table;
+  /** The section heading that names the table's scroll region; "Table" when not given. */
+  heading?: string;
   evidence?: boolean;
   traceAt?: (line: number) => string;
   rowSource?: (line: number, label: string) => ReactNode;
@@ -230,7 +233,14 @@ export function PublishedTable({
         <TraceControl trace={traceAt(line)} label={`Show sources for ${name}`} />
       )));
   return (
-    <div className="relative min-w-0 overflow-x-auto rounded-ds-md border border-border-hairline">
+    <div
+      role="region"
+      // The read-only region scrolls horizontally by keyboard when columns overflow.
+      // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex
+      tabIndex={0}
+      aria-label={tableHeading || "Table"}
+      className="relative min-w-0 overflow-x-auto rounded-ds-md border border-border-hairline"
+    >
       <table className="w-full border-collapse text-sm">
         <thead className="bg-surface-subtle text-text-secondary">
           <tr>
@@ -576,19 +586,22 @@ export function ReportFindings({
               </div>
             </details>
           )}
-          {!overview &&
-            section.blocks
-              .slice(1)
-              .map((block) =>
-                block.type === "text" ? (
-                  <FindingParagraph
-                    key={block.line}
-                    block={block}
-                    trace={key(block.line)}
-                    href={evidencePath(run.folder, entry, block.line)}
-                  />
-                ) : null,
-              )}
+          {!overview && section.blocks.slice(1).some((block) => block.type === "text") && (
+            <div className={card}>
+              {section.blocks
+                .slice(1)
+                .map((block) =>
+                  block.type === "text" ? (
+                    <FindingParagraph
+                      key={block.line}
+                      block={block}
+                      trace={key(block.line)}
+                      href={evidencePath(run.folder, entry, block.line)}
+                    />
+                  ) : null,
+                )}
+            </div>
+          )}
         </div>
       );
     }
@@ -614,7 +627,9 @@ export function ReportFindings({
         id={`finding-${String(section.line)}`}
         tabIndex={-1}
       >
-        <h2 className={heading}>{richParts(drawingTitle(section.heading))}</h2>
+        <h2 className={`${heading} first-letter:uppercase`}>
+          {richParts(drawingTitle(section.heading))}
+        </h2>
         {section.heading === "Bottom line" && afterBottomLine}
         {section.blocks.map((block) =>
           block.type === "table" ? (
@@ -623,6 +638,7 @@ export function ReportFindings({
                 typedModuleTable(entry.output.module, section.heading, block, key)) || (
                 <PublishedTable
                   table={block}
+                  heading={section.heading}
                   traceAt={key}
                   rowHref={(line) => evidencePath(run.folder, entry, line)}
                 />

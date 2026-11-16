@@ -35,10 +35,55 @@ function columnGroups(grid: Grid) {
   return groups;
 }
 
+function unpopulatedCell(cell: Record<string, unknown>) {
+  return (cell.status === "na" || cell.status === "nm") && cell.exact == null;
+}
+
 function unpopulated(row: Grid["rows"][number]) {
+  return row.cells.length > 0 && row.cells.every(unpopulatedCell);
+}
+
+const NOT_AVAILABLE = "n.a.";
+
+function emptyColumns(grid: Grid) {
+  return grid.columns.flatMap((_, index) =>
+    grid.rows.length > 0 &&
+    grid.rows.every((row) => {
+      const cell = row.cells[index];
+      return cell !== undefined && word(cell.display) === NOT_AVAILABLE && cell.exact == null;
+    })
+      ? [index]
+      : [],
+  );
+}
+
+function withColumns(grid: Grid, keep: number[]): Grid {
+  const pick = <T,>(values: T[]) => keep.flatMap((index) => (values[index] ? [values[index]] : []));
+  return {
+    columns: pick(grid.columns),
+    rows: grid.rows.map((row) => ({ ...row, cells: pick(row.cells) })),
+  };
+}
+
+/** A note with the button that shows or hides what the table leaves out. */
+function Disclosure({
+  note,
+  label,
+  expanded,
+  onToggle,
+}: {
+  note: string | null;
+  label: string;
+  expanded: boolean;
+  onToggle: () => void;
+}) {
   return (
-    row.cells.length > 0 &&
-    row.cells.every((cell) => (cell.status === "na" || cell.status === "nm") && cell.exact == null)
+    <div className="flex flex-wrap items-center justify-between gap-2">
+      {note && <p className="text-small text-text-secondary">{note}</p>}
+      <Button color="secondary" size="sm" aria-expanded={expanded} onClick={onToggle}>
+        {label}
+      </Button>
+    </div>
   );
 }
 
@@ -153,7 +198,7 @@ function ForecastColumns({ grid }: { grid: Grid }) {
 }
 
 export function ForecastTable({
-  grid,
+  grid: inputGrid,
   title,
   limits,
   source,
@@ -164,18 +209,33 @@ export function ForecastTable({
   source?: (label: string) => ReactNode;
 }) {
   const [expanded, setExpanded] = useState(false);
+  const [showColumns, setShowColumns] = useState(false);
+  const empty = emptyColumns(inputGrid);
+  // Columns are only set aside when another column holds a value; a table with none is drawn whole.
+  const canHideColumns =
+    empty.length > 0 &&
+    inputGrid.rows.some((row) =>
+      row.cells.some((cell, index) => !empty.includes(index) && !unpopulatedCell(cell)),
+    );
+  const grid =
+    canHideColumns && !showColumns
+      ? withColumns(
+          inputGrid,
+          inputGrid.columns.flatMap((_, index) => (empty.includes(index) ? [] : [index])),
+        )
+      : inputGrid;
   const missing = grid.rows.filter(unpopulated).length;
   const populated = grid.rows.filter((row) => !unpopulated(row));
   const canCollapse = missing > 0 && populated.length > 0;
   const rows = expanded || !canCollapse ? grid.rows : populated;
   const period = limits.filter((text) => text.startsWith("Base period is "));
   const interest = limits.filter((text) => text.startsWith("Base interest is "));
-  const bound = grid.columns.flatMap((column, index) =>
+  const bound = inputGrid.columns.flatMap((column, index) =>
     period
-      .filter((text) => periodColumn(grid, text) === index)
+      .filter((text) => periodColumn(inputGrid, text) === index)
       .map((text) => ({ label: column.label, text })),
   );
-  const unbound = period.filter((text) => periodColumn(grid, text) === undefined);
+  const unbound = period.filter((text) => periodColumn(inputGrid, text) === undefined);
   return (
     <div className="grid min-w-0 gap-3">
       {unbound.map((text, at) => (
@@ -191,24 +251,18 @@ export function ForecastTable({
           />
         ))}
       {canCollapse && (
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <p className="text-small text-text-secondary">
-            {missing} rows have no recorded values in this view. Their missing-data reasons remain
-            available.
-          </p>
-          <Button
-            color="secondary"
-            size="sm"
-            aria-expanded={expanded}
-            onClick={() => {
-              setExpanded(!expanded);
-            }}
-          >
-            {expanded
+        <Disclosure
+          note={`${String(missing)} rows have no recorded values in this view. Their missing-data reasons remain available.`}
+          label={
+            expanded
               ? "Hide unavailable rows"
-              : `Show ${String(missing)} unavailable rows and reasons`}
-          </Button>
-        </div>
+              : `Show ${String(missing)} unavailable rows and reasons`
+          }
+          expanded={expanded}
+          onToggle={() => {
+            setExpanded(!expanded);
+          }}
+        />
       )}
       {/* The read-only region scrolls horizontally by keyboard when columns overflow. */}
       {/* eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex */}
@@ -225,6 +279,24 @@ export function ForecastTable({
           />
         </table>
       </div>
+      {canHideColumns && (
+        <Disclosure
+          note={
+            showColumns
+              ? null
+              : `These columns have no recorded values: ${empty.map((index) => inputGrid.columns[index]?.label ?? "").join(", ")}.`
+          }
+          label={
+            showColumns
+              ? "Hide columns with no values"
+              : `Show ${String(empty.length)} columns with no values`
+          }
+          expanded={showColumns}
+          onToggle={() => {
+            setShowColumns(!showColumns);
+          }}
+        />
+      )}
       {bound.length > 0 && (
         <ul aria-label="Period qualifications" className="grid gap-2">
           {bound.map(({ label, text }, at) => (

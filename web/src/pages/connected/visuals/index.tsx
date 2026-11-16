@@ -98,6 +98,8 @@ interface LegacyVisualsProps {
   evidenceHref?: (line: number) => string;
   primary?: string;
   cards?: boolean;
+  /** The figure titles' heading level; h4 unless the figures sit directly under an h2. */
+  headingLevel?: "h3" | "h4";
 }
 
 export function LegacyVisuals({
@@ -106,6 +108,7 @@ export function LegacyVisuals({
   evidenceHref,
   primary,
   cards,
+  headingLevel: Heading = "h4",
 }: LegacyVisualsProps) {
   const published = record(output);
   const basis = usePortfolioBasis();
@@ -139,7 +142,7 @@ export function LegacyVisuals({
       return [
         entry(first, (wide) => (
           <section key={key} className={`${TRACE_HOST} grid min-w-0 gap-2${box}${wide}`}>
-            <h4 className="font-display text-h4">{title}</h4>
+            <Heading className="font-display text-h4 first-letter:uppercase">{title}</Heading>
             <GapPanel
               role="note"
               reason={
@@ -169,7 +172,7 @@ export function LegacyVisuals({
         )),
     };
     const note = word(descriptor.unit) || undefined;
-    const frame = { title, note, actions };
+    const frame = { title, note, actions, as: Heading };
     const chart = drawingChart({ category, descriptor, published, basis, link, table, frame });
     return [
       entry(first, (wide) => (
@@ -179,7 +182,7 @@ export function LegacyVisuals({
         >
           {chart ?? (
             <>
-              <h4 className="font-display text-h4">{title}</h4>
+              <Heading className="font-display text-h4 first-letter:uppercase">{title}</Heading>
               {actions}
               <p role="note" className="text-small text-text-secondary">
                 {category === "chart" && descriptor.kind === "limits"

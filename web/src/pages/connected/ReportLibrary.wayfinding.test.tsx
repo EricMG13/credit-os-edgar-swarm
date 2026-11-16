@@ -1,4 +1,4 @@
-import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { ConnectedApp } from "./ConnectedApp";
 import type { Snapshot } from "./publishedReport";
@@ -14,7 +14,7 @@ const EVIDENCE = {
   record: { hashes: [], instructions: [], calls: [], cap: null },
 };
 
-function snapshot(): Snapshot {
+function snapshot(name = "Northbridge"): Snapshot {
   const id = "northbridge-2026/outputs/CP-1.md";
   const text = (line: number) => ({
     type: "text",
@@ -27,7 +27,7 @@ function snapshot(): Snapshot {
       real: [
         {
           id: "northbridge-2026",
-          name: "Northbridge",
+          name,
           issuer: "Northbridge",
           title: "Full credit assessment",
           date: "2026-10-31",
@@ -77,10 +77,10 @@ function snapshot(): Snapshot {
   } as unknown as Snapshot;
 }
 
-function useSnapshot() {
+function useSnapshot(name?: string) {
   vi.stubGlobal(
     "fetch",
-    vi.fn(() => Promise.resolve(Response.json(snapshot()))),
+    vi.fn(() => Promise.resolve(Response.json(snapshot(name)))),
   );
 }
 
@@ -172,11 +172,36 @@ describe("report wayfinding", () => {
     expect(current.map((link) => link.textContent)).toEqual(["Overview"]);
   });
 
+  it("keeps the six report tabs at least 44px tall on a phone", async () => {
+    useSnapshot();
+    open("");
+    const nav = await screen.findByRole("navigation", { name: "Report sections" });
+    const links = within(nav).getAllByRole("link");
+    expect(links).toHaveLength(6);
+    for (const link of links) expect(link).toHaveClass("max-[480px]:min-h-11");
+  });
+
   it("offers the Report tab and no Report history link", async () => {
     useSnapshot();
     open("");
     const nav = await screen.findByRole("navigation", { name: "Report sections" });
     expect(within(nav).getByRole("link", { name: "Report" })).toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "Report history" })).toBeNull();
+  });
+
+  it("titles the document by page and issuer, and restores it on unmount", async () => {
+    useSnapshot("Caesars Entertainment");
+    window.history.replaceState(null, "", "/report/northbridge-2026#forecast");
+    const view = render(<ConnectedApp path="/report/northbridge-2026" mode="synthetic" />);
+    await screen.findByRole("navigation", { name: "Report sections" });
+    expect(document.title).toBe("Forecast — Caesars Entertainment — Credit OS");
+    act(() => {
+      window.location.hash = "#calendar";
+    });
+    await waitFor(() => {
+      expect(document.title).toBe("Issuer calendar — Caesars Entertainment — Credit OS");
+    });
+    view.unmount();
+    expect(document.title).toBe("Credit OS");
   });
 });

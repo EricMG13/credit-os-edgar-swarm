@@ -208,3 +208,76 @@ describe("wide tables pin their first column", () => {
     expect(screen.getByRole("cell", { name: "v0" })).not.toHaveClass("sticky");
   });
 });
+
+describe("scrollable table wrappers", () => {
+  const table: Table = {
+    type: "table",
+    headers: ["Item", "Value"],
+    line: 1,
+    rows: [{ line: 2, cells: ["Row", "1"] }],
+  };
+  it("is a focusable region named by the section heading", () => {
+    render(<PublishedTable table={table} heading="Net debt data" />);
+    expect(screen.getByRole("region", { name: "Net debt data" })).toHaveAttribute("tabindex", "0");
+  });
+  it("is named Table when the caller passes no heading", () => {
+    render(<PublishedTable table={table} />);
+    expect(screen.getByRole("region", { name: "Table" })).toHaveAttribute("tabindex", "0");
+  });
+});
+
+describe("section headings drawn from handoff text", () => {
+  it("start with a capital by CSS and keep the DOM text", () => {
+    const section = text("stress scenario", 40);
+    const entry: OutputEntry = {
+      selected: true,
+      output: { id: "o", module: "CP-1", label: "o", href: "", sha256: "o".repeat(64) },
+      sections: [FINDINGS, section],
+    };
+    render(
+      <ReportFindings
+        snapshot={{ chips: {} } as Snapshot}
+        run={{ folder: "f", issuer: "I", asOf: "2026-10-31" } as PublishedRun}
+        entry={entry}
+        entryIndex={0}
+      />,
+    );
+    const heading = screen.getByRole("heading", { name: "stress scenario" });
+    expect(heading.textContent).toBe("stress scenario");
+    expect(heading).toHaveClass("first-letter:uppercase");
+  });
+});
+
+describe("module page continuation paragraphs", () => {
+  it("sit inside one card after the verdict band", () => {
+    const entry: OutputEntry = {
+      selected: true,
+      output: { id: "o", module: "CP-1", label: "o", href: "", sha256: "o".repeat(64) },
+      sections: [
+        FINDINGS,
+        {
+          heading: "Bottom line",
+          level: 3,
+          line: 10,
+          blocks: [
+            { type: "text", line: 11, end: 11, text: "The verdict." },
+            { type: "text", line: 12, end: 12, text: "First continuation." },
+            { type: "text", line: 13, end: 13, text: "Second continuation." },
+          ],
+        },
+      ],
+    };
+    render(
+      <ReportFindings
+        snapshot={{ chips: {} } as Snapshot}
+        run={{ folder: "f", issuer: "I", asOf: "2026-10-31" } as PublishedRun}
+        entry={entry}
+        entryIndex={0}
+      />,
+    );
+    const card = screen.getByText("First continuation.").closest("div.bg-surface-card");
+    expect(card).not.toBeNull();
+    expect(card).toContainElement(screen.getByText("Second continuation."));
+    expect(card).not.toContainElement(screen.getByRole("region", { name: "Bottom line" }));
+  });
+});

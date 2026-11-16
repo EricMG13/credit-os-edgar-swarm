@@ -178,3 +178,39 @@ it("shows an entirely unavailable table and every reason without requiring expan
   expect(screen.getByText("This line is not projected.")).toBeVisible();
   expect(screen.queryByRole("button")).toBeNull();
 });
+
+it("collapses columns whose every cell is n.a. behind one disclosure and restores them on request", () => {
+  const na = { status: "na", exact: null, display: "n.a.", reason: "Not recorded." };
+  const grid: Grid = {
+    columns: [
+      { label: "A", group: "Base case", start: "", end: "" },
+      { label: "B", group: "Base case", start: "", end: "" },
+      { label: "FY2027E", group: "Base case", start: "", end: "" },
+    ],
+    rows: [
+      {
+        label: "Revenue",
+        band: "",
+        total: false,
+        cells: [na, na, { status: "value", exact: "0", display: "0" }],
+      },
+    ],
+  };
+  render(<ForecastTable grid={grid} title="Model" limits={[]} />);
+  expect(screen.getAllByRole("columnheader").map((header) => header.textContent)).toEqual([
+    "Line item",
+    "Base case",
+    "FY2027E",
+  ]);
+  expect(screen.getAllByRole("cell")).toHaveLength(1);
+  const button = screen.getByRole("button", { name: "Show 2 columns with no values" });
+  expect(button).toHaveAttribute("aria-expanded", "false");
+  fireEvent.click(button);
+  expect(screen.getByRole("columnheader", { name: "A" })).toBeInTheDocument();
+  expect(screen.getByRole("columnheader", { name: "B" })).toBeInTheDocument();
+  expect(screen.getAllByRole("cell")).toHaveLength(3);
+  expect(screen.getByRole("button", { name: "Hide columns with no values" })).toHaveAttribute(
+    "aria-expanded",
+    "true",
+  );
+});

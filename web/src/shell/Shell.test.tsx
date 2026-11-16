@@ -12,12 +12,29 @@ const AREAS: [Area, string, string][] = [
 ];
 
 describe("Shell", () => {
+  it("offers a skip link before any other link, targeting the main region", () => {
+    render(<Shell current="library">content</Shell>);
+    const [first] = screen.getAllByRole("link");
+    expect(first).toHaveAccessibleName("Skip to content");
+    expect(first).toHaveAttribute("href", "#main");
+    const main = screen.getByRole("main");
+    expect(main).toHaveAttribute("id", "main");
+    expect(main).toHaveAttribute("tabindex", "-1");
+  });
+
   it("names every area in the rail, in order, each linking to its hash", () => {
     render(<Shell current="library">content</Shell>);
     const rail = screen.getByRole("navigation", { name: "Areas" });
     const links = within(rail).getAllByRole("link");
     expect(links.map((a) => a.getAttribute("aria-label"))).toEqual(AREAS.map(([, name]) => name));
     expect(links.map((a) => a.getAttribute("href"))).toEqual(AREAS.map(([, , href]) => href));
+  });
+
+  it("keeps each rail link at least 44px tall on a phone", () => {
+    render(<Shell current="library">content</Shell>);
+    const rail = screen.getByRole("navigation", { name: "Areas" });
+    for (const link of within(rail).getAllByRole("link"))
+      expect(link).toHaveClass("max-[480px]:min-h-11");
   });
 
   it("draws the current item in the selected surface and no other item", () => {

@@ -295,6 +295,7 @@ function ModuleFindings({
               sections={entry.sections}
               primary={entry.output.module === "CP-1" ? "Debt maturities" : undefined}
               cards
+              headingLevel="h3"
               evidenceHref={evidenceHref}
             />
           </div>

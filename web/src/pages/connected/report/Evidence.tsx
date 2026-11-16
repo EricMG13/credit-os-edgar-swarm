@@ -94,7 +94,7 @@ function EvidenceLocation({
               id={`evidence-${evidenceToken(entry, block.line)}`}
             >
               {block.type === "table" ? (
-                <PublishedTable table={rowView(block, line)} evidence />
+                <PublishedTable table={rowView(block, line)} heading={section.heading} evidence />
               ) : section.heading === FORECAST_INPUTS ? (
                 <pre className="max-h-100 overflow-auto rounded-ds-sm bg-surface-subtle p-3 text-xs whitespace-pre-wrap wrap-anywhere">
                   {block.text}

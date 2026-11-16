@@ -25,6 +25,8 @@ export interface Frame {
   title: string;
   note?: string;
   actions?: ReactNode;
+  /** The title's heading level; h4 unless the figure sits directly under an h2. */
+  as?: "h3" | "h4";
 }
 
 type Descriptor = Record<string, unknown>;
