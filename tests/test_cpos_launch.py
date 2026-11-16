@@ -1515,16 +1515,26 @@ def test_the_lite_pathway_runs_end_to_end_to_a_verified_delivery_with_a_syntheti
 # 2026-11-16 (owner: "Add it to Earnings Update"; docs/rulings/2026-11-16-earnings-update-cp1a.md):
 # CP-1A joins earnings_update; its instructions total 546,723 before and 651,532 after (CP-1A
 # 104,584, CP-5 225 more for the added module), so the ceiling rises by 104,809: 546,729 to 651,538.
+# 2026-11-16 (owner: "the sources materials will contain a selected FX rate for the reporting. and
+# that can be used to calculate it"; docs/rulings/2026-11-16-reporting-currency-from-sources.md):
+# CP-1's T4.18 currency columns and step 3 sentence, CP-2D's currency rule, and a non-USD example
+# beside each USD-only one sent to a model. Measured on this file's input before (base 9c685dd) and
+# after, each ceiling rises by its pathway's increase: covenant_refinancing 1,135,971 to 1,137,754
+# (+1,783); credit_snapshot 1,466,034 to 1,467,887 (+1,853); deep_credit_assessment 1,805,254 to
+# 1,807,317 (+2,063); distressed_restructuring 1,170,054 to 1,171,521 (+1,467); earnings_update
+# 651,532 to 652,785 (+1,253); lite_credit_assessment 414,801 to 415,934 (+1,133);
+# portfolio_decision 942,102 to 943,390 (+1,288); relative_value 1,061,779 to 1,063,523 (+1,744);
+# short_snapshot 156,212 to 157,256 (+1,044).
 INSTRUCTION_BUDGET = {
-    "deep_credit_assessment": 1_900_500,
-    "lite_credit_assessment": 420_000,
-    "credit_snapshot": 1_483_647,
-    "covenant_refinancing": 1_155_000,
-    "distressed_restructuring": 1_186_500,
-    "earnings_update": 651_538,  # owner, 2026-11-16: CP-1A joins (546,723 to 651,532)
-    "portfolio_decision": 955_500,
-    "relative_value": 1_071_000,
-    "short_snapshot": 157_500,
+    "deep_credit_assessment": 1_902_563,
+    "lite_credit_assessment": 421_133,
+    "credit_snapshot": 1_485_500,
+    "covenant_refinancing": 1_156_783,
+    "distressed_restructuring": 1_187_967,
+    "earnings_update": 652_791,  # owner, 2026-11-16: CP-1A joins; then reporting currency
+    "portfolio_decision": 956_788,
+    "relative_value": 1_072_744,
+    "short_snapshot": 158_544,
 }
 
 
@@ -2777,6 +2787,147 @@ def test_the_step_file_gives_the_fixed_register_rows_the_money_unit_not_us_dolla
         assert "US$m" not in (CP1_DIR / name).read_text(), name
 
 
+# docs/rulings/2026-11-16-reporting-currency-from-sources.md: a facility in another currency counts
+# at the amount the filings state for it in the reporting currency, else at the FX rate the source
+# materials state for the reporting, recorded beside it; no rate is looked up, derived or invented.
+T418_COLUMNS = (
+    "| `Currency` | `Reporting Currency Amount` | `FX Rate and Source` | `Coupon or Margin` |"
+)
+T418_RULES = (
+    (
+        "`Currency` is the instrument's own denomination; its amounts are as the filing prints "
+        "them, the one exception to step 3's single currency."
+    ),
+    (
+        "`Reporting Currency Amount` is its carrying value (its principal where carrying values "
+        "are not disclosed) in the statements' currency and unit: the amount the issuer states "
+        "for it in that currency, else its amount converted at the FX rate the source materials "
+        "state for the reporting, with the rate and its locator in `FX Rate and Source`, else "
+        "`Not supplied: <reason>` with a gap line."
+    ),
+    # The brief's "blank unless converted": CP-1 never writes an empty cell (its SKILL.md), and
+    # T4.18 writes a term that does not apply as `Not applicable`.
+    "`FX Rate and Source` is `Not applicable` unless the amount was converted.",
+    "Never look up, derive or invent a rate.",
+    "The `Reporting Currency Amount` cells plus that row reconcile to `Total Debt` (step 7).",
+)
+CP1_STEP3_CURRENCY = (
+    "The currency is the presentation currency the consolidated statements are printed in; a "
+    "functional or other currency is recorded in T4.2; a figure is converted only at a rate the "
+    "sources state."
+)
+CP2D_CURRENCY_RULE = (
+    "11. Currency: every amount of T2E.2, T2E.3 and T2E.5 is in the currency of Financial "
+    "foundation's (CP-1's) statements; a facility in another currency enters at CP-1's T4.18 "
+    "`Reporting Currency Amount`; a total that needs one CP-1 gives as `Not supplied` is not "
+    "calculable, with that reason, never a partial total; never convert at a rate of your own."
+)
+
+
+def test_cp1_is_sent_each_instruments_reporting_currency_amount_and_never_invents_a_rate(tmp_path):
+    text = _built_instruction(tmp_path, "CP-1", ("CP-1",))
+    (t418,) = [line for line in text.splitlines() if "### T4.18 Debt instruments" in line]
+    assert T418_COLUMNS in t418
+    for rule in T418_RULES:
+        assert rule in t418, rule
+    assert "in the table's currency" not in t418
+    step3 = text.partition("## REF_CP-1_03_Normalization.md")[2].partition("## REF_CP-1_04")[0]
+    assert CP1_STEP3_CURRENCY in step3
+
+
+def test_cp2d_is_sent_one_currency_rule_for_its_liquidity_tables(tmp_path):
+    text = _built_instruction(tmp_path, "CP-2D", ("CP-1", "CP-2D"))
+    assert text.count(CP2D_CURRENCY_RULE) == 1
+    method = cpos_launch.method_text("CP-2D")
+    assert method.count("Reporting Currency Amount") == 1
+
+
+# The same ruling: a model may copy a USD-only example onto a non-USD issuer's figures, so every
+# example shown with USD shows another currency beside it, and no text says USD is the default.
+_CODE_SPAN = re.compile(r"`([^`\n]+)`")
+_SHOWS_USD = re.compile(r"USD|US\$|\$\s?\d")
+_PROSE_USD = re.compile(r"(?<![A-Za-z])(?:USD|US\$|\$)\s?\d")
+_PROSE_OTHER = re.compile(r"(?<![A-Za-z])([A-Z]{3})\s?\d|[\u20ac\u00a3\u00a5]\s?\d")
+_SENTENCE_END = re.compile(r"(?<=[.!?])\s+|\n")
+
+
+def _names_another_currency(span):
+    from deploy_workflow.prose_checks import ISO_4217
+
+    codes = set(re.findall(r"(?<![A-Za-z])[A-Z]{3}(?![A-Z])", span))
+    return bool(codes & (ISO_4217 - {"USD"})) or re.search("[\u20ac\u00a3\u00a5]", span) is not None
+
+
+def usd_only_examples(text):
+    """Each sentence (or line) whose examples show USD and no other currency: in code spans, or
+    in prose as a USD amount; and each sentence that makes USD the default."""
+    from deploy_workflow.prose_checks import ISO_4217
+
+    found = [m[0] for m in re.finditer(r"[^.\n]*\bUSD by default\b[^.\n]*", text)]
+    for sentence in _SENTENCE_END.split(text):
+        spans = _CODE_SPAN.findall(sentence)
+        prose = _CODE_SPAN.sub(" ", sentence)
+        usd = any(_SHOWS_USD.search(s) for s in spans) or _PROSE_USD.search(prose)
+        other = any(_names_another_currency(s) for s in spans) or any(
+            m[1] in ISO_4217 - {"USD"} or not m[1] for m in _PROSE_OTHER.finditer(prose)
+        )
+        if usd and not other:
+            found.append(sentence)
+    return found
+
+
+def test_the_usd_only_example_finder_finds_what_it_should():
+    assert usd_only_examples("Write it as `USD 1,250m`. Fine.") == ["Write it as `USD 1,250m`."]
+    for flagged in (
+        "Header (`EBITDA (USD m)`).",
+        "Say `$3.2bn`.",
+        "In the currency (USD by default) millions.",
+        "No rounding (USD 6,261 million, not USD 6.3 billion).",
+        "Permits up to $200m.",
+        "Write `USD 1,250m`; ALL of it.",
+    ):
+        assert usd_only_examples(flagged) != [], flagged
+    for fine in (
+        "Write `USD 1,250m` or `GBP 1,250m`.",
+        "The money unit is `US$m` for USD, else the code and `m` (`GBPm`).",
+        "Either `$3.2bn` or `\u20ac3.2bn`.",
+        "A EUR quote against a USD one.",
+        "Its unit is `CHFk`.",
+        "Up to A$200m.",
+        "No rounding (USD 6,261 million or GBP 6,261 million, never 6.3 billion).",
+    ):
+        assert usd_only_examples(fine) == [], fine
+
+
+# Known and kept: CP-4's worked example, "Illustrative Only — Do Not Use as Issuer Data", quotes a
+# covenant provision, whose amount is in the document's own currency (byte-identical caos files,
+# REF_CP-4_STEPS.md and CP-4_RUNBOOK.md; not edited here).
+CP4_QUOTED_PROVISION = "Summary: Permits up to the greater of $200m and 100% of LTM Consolidated"
+
+
+def test_no_text_sent_to_a_model_gives_usd_as_its_only_example(tmp_path):
+    from deploy_workflow import prose_checks
+    from deploy_workflow.owners import cpos_launch_prompts
+
+    _, texts = all_instructions(tmp_path, modules=tuple(m for m in METHODS if m != "CP-8"))
+    sent = {f"instructions {m}": text for m, text in texts.items()}
+    sent |= {f"method {m}": cpos_launch.method_text(m) for m in METHODS}
+    # Blocks a pathway sends only in some runs (the forecast and period-table blocks).
+    sent |= {
+        name: value
+        for name, value in vars(cpos_launch_prompts).items()
+        if name.isupper() and isinstance(value, str)
+    }
+    sent |= {f"script note {m}": note for m, note in method_scripts.NOTES.items()}
+    # Text a repair round sends back.
+    sent |= {f"figure advice {k}": v for k, v in prose_checks.FIGURE_ADVICE.items()}
+    sent["CP-1 unit example"] = cp1_check.UNIT_EXAMPLE
+    found = {name: usd_only_examples(text) for name, text in sent.items()}
+    quoted = {name for name, f in found.items() if f and set(f) == {CP4_QUOTED_PROVISION}}
+    assert quoted == {"instructions CP-4", "method CP-4"}, "the known quote moved or went"
+    assert {name: f for name, f in found.items() if f and name not in quoted} == {}
+
+
 def test_cp1_method_files_are_archived_with_hashes_and_named_edits():
     manifest = json.loads((ROOT / "docs/reuse/selected-methods/manifest.json").read_text())
     entries = {e["archive_path"]: e for e in manifest["files"]}
@@ -2959,16 +3110,22 @@ def test_every_module_is_told_what_stands_for_acceptance_scripts_and_questions(t
 # 2026-11-15-method-script-checks.md), so runs made before it are marked "Earlier methods" for it.
 # CP-3 pin recomputed on 2026-11-15 (owner: "restore the CP-3 portfolio-fit tables"): its scope
 # section no longer names T3C.1 to T3C.3 and T3C.5 to T3C.9 (same ruling).
+# CP-1, CP-2A, CP-2D and CP-8 pins recomputed on 2026-11-16 (owner: "the sources materials will
+# contain a selected FX rate for the reporting. and that can be used to calculate it"; ruling
+# docs/rulings/2026-11-16-reporting-currency-from-sources.md): CP-1's step file gains T4.18's
+# `Reporting Currency Amount` and `FX Rate and Source` and step 3's currency sentence, CP-2D's
+# SKILL Canon Core rule 11, and CP-2A's stress copy and CP-8's method lose their USD-only
+# examples and default, so runs made before it are marked "Earlier methods" for these four.
 METHOD_TEXT_SHA256_AT_1B41E65 = {
     "CP-0": "307017934f4e8e75fc432e8b7ef100bba82ce84f1bb6910f37c7e715fe701e72",
-    "CP-1": "f047d555dd9ae1284a8fbf42feb3b63096b00077c021a303357fa16ce933d493",
+    "CP-1": "9eecf10eddaae6c7e65875f9fc5829eaa040458dacacdda7044eb001257041f7",
     "CP-1A": "9de9426a829625461dee6cf850965590c923f661ceaa57208ad9028da8796b03",
     "CP-1B": "38d9fa7b075d1ce5d0cd21bcc216f57f37369cd4db395b3f1fb65498697a509f",
     "CP-1C": "9353afdbce820f59c2dcabc951fc1ff3813174b3c84e79b47bc22bea97f3bbe8",
     "CP-1D": "d4d1ee4507d743cdb9d98bffd865ca3d012a4b4fb79a92a275cfc6a796bff453",
     "CP-2": "5cbdd1f22217b8bffcf9a276b2645a96f5eb40c05c6262d47473715eeee6cdcc",
-    "CP-2A": "ab479e6fbfecb748bdda2767345f7945c01fa719d13a76e364a13b54fb63a8b1",
-    "CP-2D": "fe39c49f842c99f6ffd390bd409cbb44adbbe397720d0a0d4d935b52a34a8fda",
+    "CP-2A": "d403599f316b985bdf9649b58cbb16bf096c20ec9210292675739afc7b86f848",
+    "CP-2D": "d9604a035ae812a841ab489fea1546dd1b8bc36b6a23ee67b597b1b5644f1345",
     "CP-2E": "ecf16c44a9a8e982af71150f83938011185e163128ed1ddbf09aba0c5740db63",
     "CP-2G": "30f8bb12685ec883e4c824ea03a53fac4c4c3afc9bd2801a2019db77740523aa",
     "CP-2H": "f500af91511584f3dda4d0dd10180766dabe19d81de7df12a99b6da2d92e89b4",
@@ -2979,7 +3136,7 @@ METHOD_TEXT_SHA256_AT_1B41E65 = {
     "CP-4C": "1d96547563190f89b909c37ea47969ecb04a2c794c5971b6db8f7c94c836b1f8",
     "CP-5": "d9298b83eba40be26a7cc6ddf5d5c12558e5c5cd471e7ce39e9c3942dc27f733",
     "CP-6": "31de155b03d7632332e3f3e6f887767477b362cd1c963436afa6469b91c94b4a",
-    "CP-8": "0a0b339a9f9a284328b9a6fb50513a9bd03f2aa58dd45a387fe057b6ce2612c3",
+    "CP-8": "46f8c05ff744c2c2bb9eee94f1aceefd57588d265f7289389c189a12fc2ff41d",
     "CP-DR": "476b3e75a7b1f5d0d3349512bb220fde603988caa9cd4af5f8f62996dae0cd81",
     "CP-L10": "5b0e904dd62e1d1b341ec3d7d1717500d68ce1aee734b347e0dbbdfbe696b006",
 }
@@ -7431,10 +7588,12 @@ NET_DEBT_PERIOD_SENTENCE = (
     "the year-end date) and the date alone (`2025-06-30`) for an interim balance sheet: one form "
     "for every row of the table, each period once, and no other word in the cell"
 )
+# Its example shows a non-USD unit beside USD
+# (docs/rulings/2026-11-16-reporting-currency-from-sources.md).
 UNIT_FORM_SENTENCE = (
     "Where a table states its unit, write it as the three-letter currency code and `millions` or "
-    "`thousands` (`USD millions`), the same in every statement table; the `Chart data:` tables "
-    "and `Net debt data` keep the unit their own rule gives."
+    "`thousands` (`USD millions` or `GBP millions`), the same in every statement table; the "
+    "`Chart data:` tables and `Net debt data` keep the unit their own rule gives."
 )
 
 
@@ -8546,7 +8705,13 @@ def test_the_instructions_of_the_three_money_modules_define_the_money_unit(tmp_p
 
 def test_cp1_check_block_is_unchanged_by_the_money_unit_definition():
     assert MONEY_UNIT_DEFINITION not in cpos_launch.CP1_CHECK_BLOCK
-    assert hashlib.sha256(cpos_launch.CP1_CHECK_BLOCK.encode()).hexdigest() == CP1_CHECK_DIGEST
+    # The same ruling's method-text change (branch claude/reporting-currency-method-text) widened
+    # only the block's unit example, `USD millions` to `UNIT_EXAMPLE`; put back, the block is the
+    # one pinned.
+    shown = f"({cp1_check.UNIT_EXAMPLE})"
+    assert cpos_launch.CP1_CHECK_BLOCK.count(shown) == 1
+    before = cpos_launch.CP1_CHECK_BLOCK.replace(shown, "(`USD millions`)")
+    assert hashlib.sha256(before.encode()).hexdigest() == CP1_CHECK_DIGEST
 
 
 def test_a_non_usd_reporting_currency_no_longer_limits_the_chart_strip():

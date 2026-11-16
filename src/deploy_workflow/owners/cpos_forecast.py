@@ -24,7 +24,7 @@ from deploy_vii.live.schema import exact_json, json_object
 from deploy_vii.readiness import shape_issues
 from deploy_workflow.owners import cp2g
 from deploy_workflow.owners.cpos_facilities import Facility, Schedule, schedule
-from deploy_workflow.prose_checks import FORECAST_HEADING, reader_passages
+from deploy_workflow.prose_checks import FORECAST_HEADING, ISO_4217, reader_passages
 
 HEADING = FORECAST_HEADING
 SCHEMA_VERSION = "cpos-forecast-inputs/1"
@@ -322,7 +322,11 @@ def _layer1_problem(text: str, key: str, operand: Operand, amount: str | None) -
     return None if agrees else not_the_cell
 
 
-_CURRENCY = r"(?:US\$|USD|EUR|GBP|[$\u20ac\u00a3])"
+# Any ISO 4217 code names a currency (docs/rulings/2026-11-16-reporting-currency-from-sources.md: a
+# run is in the currency its sources report in), in capitals and not inside a word, so `CHFk` is
+# thousands and `Bank` or `Item` name no unit; USD, EUR, GBP and the signs are read in any case.
+_ISO_CODE = rf"(?<![A-Za-z])(?-i:{'|'.join(sorted(ISO_4217))})"
+_CURRENCY = rf"(?:US\$|USD|EUR|GBP|[$\u20ac\u00a3]|{_ISO_CODE})"
 _NAMES_THOUSANDS = re.compile(rf"\bthousands?\b|[$'\u2019]000s?\b|{_CURRENCY}\s?k\b", re.IGNORECASE)
 _NAMES_MILLIONS = re.compile(
     rf"\b(?:millions?|billions?)\b|{_CURRENCY}\s?(?:m|mm|mn|bn)\b", re.IGNORECASE
@@ -355,7 +359,8 @@ def _unit_of(scale: int, currency: str | None) -> str:
 def _units_named(text: str) -> frozenset[str]:
     """Which of `thousands` and `millions` a cell of CP-1 names as a unit, case-insensitive.
     Thousands: the word `thousand` or `thousands`; `$000`, `'000` (with a trailing s); a currency
-    (`US$`, `USD`, `EUR`, `GBP`, `$`, euro or pound sign) then `k`, at a word end. Millions: the
+    (`US$`, `$`, euro or pound sign, or an ISO 4217 code: `USD`, `EUR` and `GBP` in any case, any
+    other in capitals, `CHF`) then `k`, at a word end. Millions: the
     words `million`, `millions`, `billion`, `billions`; a currency then `m`, `mm`, `mn` or `bn`,
     at a word end (`US$m`, `USD m`, `$mn`, `US$ bn`). A bare number, `9M`, or `m` without a currency
     names none. Both may be named at once."""

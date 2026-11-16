@@ -750,11 +750,11 @@ AFTER = re.compile(
 CURRENCY_BEFORE = re.compile(r"(?:(?<![A-Za-z])(?P<code>[A-Z]{3})\s+|[$€£¥]\s?)\Z")
 FIGURE_ADVICE = {
     "decimals": "round to at most two decimals.",
-    "scale": "put a currency (`USD` or a symbol) before a scaled amount, or reword a count.",
+    "scale": "put a currency (`USD`, `GBP` or a symbol) before a scaled amount, or reword a count.",
     "unit": (
         "a number with no unit does not belong in a reader sentence: reword it in words or move "
         "it to a table, or add a unit or currency if it is an amount or ratio (for example "
-        "`USD 1,250 million`, `45%`, `3.1x`, `18 months`)."
+        "`USD 1,250 million` or `GBP 1,250 million`, `45%`, `3.1x`, `18 months`)."
     ),
 }
 

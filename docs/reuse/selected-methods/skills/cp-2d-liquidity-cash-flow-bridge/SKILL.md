@@ -26,6 +26,7 @@ Use current command qualifiers, current conversation scope, then validated match
 8. Non-debt funding float: trend deposits/deferred revenue/supplier finance—not payables; Evidence→Risk Mechanic→Credit Implication.
 9. Show source vs normalized one-offs; label normalization+Analyst Judgement. Never infer covenant capacity; absent inputs=`Not Calculable`.
 10. `committee_status`∈Committee Ready|Draft Only|Requires More Work|Insufficient Information|Restricted|Blocked. Restricted→score≤59 (band from the score: 40-59 Low, below 40 Insufficient Information); Blocked→≤39.
+11. Currency: every amount of T2E.2, T2E.3 and T2E.5 is in the currency of Financial foundation's (CP-1's) statements; a facility in another currency enters at CP-1's T4.18 `Reporting Currency Amount`; a total that needs one CP-1 gives as `Not supplied` is not calculable, with that reason, never a partial total; never convert at a rate of your own.
 
 ## Analytical depth — binding on every run
 
