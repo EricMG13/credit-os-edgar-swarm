@@ -22,6 +22,8 @@ _RUN_EVENTS = frozenset(
     {"delivery_started", "delivered", "stopped", "changes_not_produced", "model_not_published"}
 )
 _FEED_LIMIT = 80
+_ENDED = ("failed", "capped", "rejected", "interrupted")
+_ENDED_SHOWN = 20
 _PUBLISHED = "window.RUN_ACTIVITY="  # how deploy_workflow.inbox.activity.write opens the file
 _EXECUTIONS = frozenset({"host-session", "retained-response-replay", "synthetic", "live-provider"})
 
@@ -128,8 +130,18 @@ def _held(layout: Layout) -> str:
 
 
 def listing(layout: Layout) -> http_base.Reply:
-    """The runs that are running or waiting. Spend, folders and file names are not sent."""
-    records = [item for item in runs.load_all(layout) if item.status in ("running", "queued")]
+    """The runs that are running or waiting, and the latest that ended without a report.
+
+    Spend, folders and file names are not sent. An ended run is sent as its seven fields, with the
+    reason as the run's own page sends it.
+    """
+    saved = runs.load_all(layout)
+    records = [item for item in saved if item.status in ("running", "queued")]
+    ended = sorted(
+        (item for item in saved if item.status in _ENDED),
+        key=lambda item: (item.ended_at or item.claimed_at, item.id),
+        reverse=True,
+    )[:_ENDED_SHOWN]
     snapshot = activity.snapshot(layout, records, now=datetime.now(UTC), held=_held(layout))
     root = layout.runs.resolve()
     return http_base.Reply(
@@ -155,6 +167,18 @@ def listing(layout: Layout) -> http_base.Reply:
                     ),
                 }
                 for shown in snapshot["runs"]
+            ],
+            "ended": [
+                {
+                    "id": item.id,
+                    "issuer_name": item.issuer_name,
+                    "pathway": item.pathway,
+                    "status": item.status,
+                    "reason": item.reason,
+                    "ended_at": item.ended_at or item.claimed_at,
+                    "submitted_by": item.submitted_by,
+                }
+                for item in ended
             ],
         },
         {"Cache-Control": "no-store"},

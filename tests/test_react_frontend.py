@@ -203,7 +203,7 @@ def test_activity_list_shows_runs_in_progress_without_spend_or_file_names(hosted
 
     assert status == 200 and headers["Cache-Control"] == "no-store"
     listing = json.loads(raw)
-    assert set(listing) == {"updated", "held", "runs"}
+    assert set(listing) == {"updated", "held", "runs", "ended"}
     assert listing["held"] == held
     running, queued = listing["runs"]
     assert running == {
@@ -228,6 +228,71 @@ def test_activity_list_shows_runs_in_progress_without_spend_or_file_names(hosted
     assert set(queued) == set(running)
     page_status, _, page_headers = request(hosted, "/runs")
     assert page_status == 200 and page_headers["Content-Type"].startswith("text/html")
+
+
+def _ended_record(run_id: str, status: runs.Status, minute: int, reason: str = "") -> runs.Record:
+    return runs.Record(
+        id=run_id,
+        pathway="credit_snapshot",
+        folder=run_id,
+        status=status,
+        claimed_at="2026-10-31T11:00:00Z",
+        ended_at=f"2026-10-31T12:{minute:02d}:00Z",
+        issuer_name="Harbour Packaging",
+        reason=reason,
+        submitted_by="analyst",
+        files=("annual-report.pdf",),
+    )
+
+
+def test_activity_list_shows_ended_runs_without_spend_or_file_names(hosted: _Server) -> None:
+    scheduler = hosted.scheduler
+    assert isinstance(scheduler, Scheduler)
+    layout = scheduler.layout
+    for record in (
+        _ended_record("c-capped", "capped", 5, "Spending cap reached"),
+        _ended_record("d-failed", "failed", 10, "Provider error"),
+        _ended_record("e-finished", "finished", 20),
+        runs.Record(
+            id="a-running",
+            pathway="credit_snapshot",
+            folder="a-running",
+            status="running",
+            claimed_at="2026-10-31T12:00:00Z",
+        ),
+    ):
+        runs.save(layout, record)
+
+    status, raw, _ = request(hosted, "/connected/activity")
+
+    assert status == 200
+    listing = json.loads(raw)
+    assert set(listing) == {"updated", "held", "runs", "ended"}
+    assert [run["id"] for run in listing["ended"]] == ["d-failed", "c-capped"]
+    assert set(listing["ended"][0]) == {
+        "id",
+        "issuer_name",
+        "pathway",
+        "status",
+        "reason",
+        "ended_at",
+        "submitted_by",
+    }
+    assert listing["ended"][1]["reason"] == "Spending cap reached"
+    assert [run["id"] for run in listing["runs"]] == ["a-running"]
+
+
+def test_activity_list_keeps_the_twenty_latest_ended_runs(hosted: _Server) -> None:
+    scheduler = hosted.scheduler
+    assert isinstance(scheduler, Scheduler)
+    for minute in range(25):
+        runs.save(scheduler.layout, _ended_record(f"f-{minute:02d}", "failed", minute))
+
+    listing = json.loads(request(hosted, "/connected/activity")[1])
+
+    assert len(listing["ended"]) == 20
+    assert listing["ended"][0]["ended_at"] == "2026-10-31T12:24:00Z"
+    assert listing["ended"][-1]["ended_at"] == "2026-10-31T12:05:00Z"
 
 
 def test_reports_admission_and_reader_snapshot(hosted: _Server, root: Path) -> None:

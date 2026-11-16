@@ -1045,6 +1045,43 @@ describe("connected activity and reports", () => {
     expect(screen.queryByText("No run in progress")).toBeNull();
   });
 
+  it("lists a run that ended without a report", async () => {
+    activityFetch({
+      updated: "2026-11-16T14:32:10Z",
+      held: "",
+      runs: [],
+      ended: [
+        {
+          id: "c-capped",
+          issuer_name: "Harbour Packaging",
+          pathway: "credit_snapshot",
+          status: "capped",
+          reason: "Spending cap reached",
+          ended_at: "2026-10-31T12:05:00Z",
+          submitted_by: "analyst",
+        },
+      ],
+    });
+    render(<ConnectedApp path="/runs" mode="synthetic" />);
+    const ended = await screen.findByRole("region", { name: "Ended without a report" });
+    expect(within(ended).getByRole("link", { name: "Harbour Packaging" })).toHaveAttribute(
+      "href",
+      "/run/c-capped",
+    );
+    expect(within(ended).getByText("Capped")).toBeVisible();
+    expect(within(ended).getByText("Spending cap reached")).toBeVisible();
+    expect(within(ended).getByText("31 Oct 2026, 12:05 UTC")).toBeVisible();
+    expect(screen.getByText("Ended", { selector: "dt" }).nextElementSibling).toHaveTextContent("1");
+    expect(screen.queryByText("No run in progress")).toBeNull();
+  });
+
+  it("draws the list from a service that sends no ended runs", async () => {
+    activityFetch({ updated: "2026-11-16T14:32:10Z", held: "", runs: [] });
+    render(<ConnectedApp path="/runs" mode="synthetic" />);
+    expect(await screen.findByText("No run in progress")).toBeVisible();
+    expect(screen.queryByRole("region", { name: "Ended without a report" })).toBeNull();
+  });
+
   it("waits for report publication after the run has finished", async () => {
     let reportRequests = 0;
     vi.stubGlobal(

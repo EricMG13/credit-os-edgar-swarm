@@ -9,16 +9,29 @@ import { StatusBadge } from "@/components/status/StatusBadge";
 import { StatusShape } from "@/components/status/shapes";
 import { PageHeader } from "../../shell/PageHeader";
 import { TextLink } from "../run/TextLink";
-import { getActivity, moduleName, pathwayName, type Activity, type LiveRun } from "./api";
+import {
+  getActivity,
+  moduleName,
+  pathwayName,
+  type Activity,
+  type EndedRun,
+  type LiveRun,
+} from "./api";
 import { heading } from "./layout";
 import { finishedFigure, stamp } from "./runFigures";
 
 const RELOAD_MS = 5000;
 const STEP = { done: "Finished", running: "Running", waiting: "Queued" } as const;
+const ENDED = {
+  failed: "Failed",
+  capped: "Capped",
+  rejected: "Rejected",
+  interrupted: "Interrupted",
+} as const satisfies Record<EndedRun["status"], string>;
 const panel = "rounded-ds-lg border border-border-subtle bg-surface-card shadow-1";
 
-const runPath = (run: LiveRun) => `/run/${encodeURIComponent(run.id)}`;
-const issuer = (run: LiveRun) => run.issuer_name || "Issuer not named";
+const runPath = (run: { id: string }) => `/run/${encodeURIComponent(run.id)}`;
+const issuer = (run: { issuer_name: string }) => run.issuer_name || "Issuer not named";
 const fileCount = (run: LiveRun) =>
   run.files > 0 && `${String(run.files)} source file${run.files === 1 ? "" : "s"}`;
 const texts = (...parts: (string | false)[]) =>
@@ -150,6 +163,37 @@ function WaitingTable({ runs }: { runs: LiveRun[] }) {
   );
 }
 
+function EndedTable({ runs }: { runs: EndedRun[] }) {
+  return (
+    <div className={`${panel} overflow-hidden`}>
+      <Table aria-label="Runs that ended without a report" size="sm">
+        <Table.Header>
+          <Table.Head id="issuer" isRowHeader label="Issuer" />
+          <Table.Head id="pathway" label="Pathway" />
+          <Table.Head id="state" label="State" />
+          <Table.Head id="ended" label="Ended" />
+          <Table.Head id="reason" label="Reason" />
+        </Table.Header>
+        <Table.Body items={runs}>
+          {(run) => (
+            <Table.Row id={run.id}>
+              <Table.Cell>
+                <TextLink href={runPath(run)}>{issuer(run)}</TextLink>
+              </Table.Cell>
+              <Table.Cell>{pathwayName(run.pathway)}</Table.Cell>
+              <Table.Cell>
+                <StatusBadge set="Run states" state={ENDED[run.status]} />
+              </Table.Cell>
+              <Table.Cell>{stamp(run.ended_at)}</Table.Cell>
+              <Table.Cell>{run.reason}</Table.Cell>
+            </Table.Row>
+          )}
+        </Table.Body>
+      </Table>
+    </div>
+  );
+}
+
 function Group({ title, children }: { title: string; children: ReactNode }) {
   return (
     <section aria-label={title} className="grid min-w-0 content-start gap-3">
@@ -184,6 +228,7 @@ export function RunActivity() {
   const read = typeof activity === "object" ? activity : undefined;
   const running = read?.runs.filter((run) => run.status === "running") ?? [];
   const waiting = read?.runs.filter((run) => run.status === "queued") ?? [];
+  const ended = read?.ended ?? [];
   return (
     <>
       <PageHeader
@@ -200,6 +245,7 @@ export function RunActivity() {
                 counts={[
                   ["Running", running.length],
                   ["Waiting", waiting.length],
+                  ["Ended", ended.length],
                 ]}
               />
             )}
@@ -224,7 +270,7 @@ export function RunActivity() {
             {read.held}
           </Alert>
         )}
-        {read && running.length + waiting.length === 0 && (
+        {read && running.length + waiting.length + ended.length === 0 && (
           <Empty title="No run in progress">
             No run is running or waiting. Finished runs are in the library.
           </Empty>
@@ -252,6 +298,11 @@ export function RunActivity() {
               </Group>
             )}
           </div>
+        )}
+        {ended.length > 0 && (
+          <Group title="Ended without a report">
+            <EndedTable runs={ended} />
+          </Group>
         )}
       </div>
     </>
