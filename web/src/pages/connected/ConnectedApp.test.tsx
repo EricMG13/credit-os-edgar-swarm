@@ -1,7 +1,7 @@
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { ConnectedApp } from "./ConnectedApp";
-import type { Summary } from "./api";
+import { pathwayModules, type Summary } from "./api";
 
 const context = {
   run: { as_of: "", pathway: "credit_snapshot", case_kind: "synthetic", reporting_currency: "USD" },
@@ -1601,5 +1601,74 @@ describe("connected run start: what an acceptance carries to", () => {
     fireEvent.click(screen.getByRole("button", { name: "Review run" }));
     expect(await limitBox()).not.toBeChecked();
     expect(approvalBox()).toBeDisabled();
+  });
+});
+
+describe("connected run start: leave out modules that would refuse", () => {
+  const refusing = [
+    {
+      id: "CP-4:declared-none",
+      scope: "CP-4",
+      outcome: "will_refuse",
+      reason: "Legal documents declared none.",
+      fix: FIX,
+      inherited_from: [],
+    },
+    {
+      id: "CP-4C:from:CP-4",
+      scope: "CP-4C",
+      outcome: "will_refuse",
+      reason: "Expected to be will refuse through CP-4, which it reads.",
+      fix: "",
+      inherited_from: ["CP-4"],
+    },
+    {
+      id: "CP-2A:from:CP-4",
+      scope: "CP-2A",
+      outcome: "limited",
+      reason: "Expected to be limited through CP-4, which it reads.",
+      fix: "",
+      inherited_from: ["CP-4"],
+    },
+  ];
+
+  function summaryBodies(fetchMock: ReturnType<typeof testingFetch>) {
+    return fetchMock.mock.calls
+      .filter(([path]) => path.endsWith("/summary"))
+      .map(([, init]) => {
+        const body = init?.body;
+        return JSON.parse(typeof body === "string" ? body : "null") as { modules: string[] };
+      });
+  }
+
+  it("leaves the modules out, makes a new summary, and puts them back", async () => {
+    const fetchMock = testingFetch({ ...plan, cap: "20", items: refusing });
+    render(<ConnectedApp path="/start" mode="live" />);
+    await fillInputs();
+    await advanceToPurpose();
+    fireEvent.click(screen.getByRole("radio", { name: /Distressed & Restructuring/ }));
+    advanceToContext();
+    fireEvent.click(screen.getByRole("button", { name: "Review run" }));
+    const leave = await screen.findByRole("button", {
+      name: "Leave out Legal & covenants and Recovery & fulcrum",
+    });
+    expect(screen.getAllByRole("button", { name: /^Leave out / })).toHaveLength(1);
+    expect(screen.queryByText(/^Left out:/)).toBeNull();
+    const everyModule = pathwayModules("distressed_restructuring");
+    fireEvent.click(leave);
+    expect(
+      screen.queryByRole("checkbox", { name: /Approve: I have read this summary/ }),
+    ).toBeNull();
+    fireEvent.click(await screen.findByRole("button", { name: "Review run" }));
+    await screen.findByText("Left out: Legal & covenants, Recovery & fulcrum");
+    expect(summaryBodies(fetchMock)[1]?.modules).toEqual(
+      everyModule.filter((code) => code !== "CP-4" && code !== "CP-4C"),
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Put back" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Review run" }));
+    await vi.waitFor(() => {
+      expect(summaryBodies(fetchMock)).toHaveLength(3);
+    });
+    expect(summaryBodies(fetchMock)[2]?.modules).toEqual([]);
   });
 });

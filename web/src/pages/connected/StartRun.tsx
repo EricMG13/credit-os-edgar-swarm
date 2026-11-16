@@ -1352,7 +1352,7 @@ function IntakeForm({
             }
           : {}),
       },
-      modules: advanced ? modules : [],
+      modules,
       max_turns: advanced ? Number(turns) : 32,
       level,
       model: advanced ? model : "gpt",
@@ -1639,6 +1639,11 @@ function IntakeForm({
     goTo(target);
   }
 
+  function changeReviewedModules(next: string[]) {
+    editReviewedInputs("context");
+    setModules(next);
+  }
+
   function submitReviewedRun() {
     void submitReviewed();
   }
@@ -1732,6 +1737,7 @@ function IntakeForm({
       onAccept={acceptReviewItems}
       onApprove={setApproved}
       onEdit={editReviewedInputs}
+      onModules={changeReviewedModules}
       onSubmit={submitReviewedRun}
       onAdvance={advanceCurrentStep}
       onPrevious={returnToPreviousStep}
@@ -1761,6 +1767,7 @@ type IntakePanelsProps = {
   onAccept: (ids: readonly string[], checked: boolean) => void;
   onApprove: (value: boolean) => void;
   onEdit: (step: FormStep) => void;
+  onModules: (modules: string[]) => void;
   onSubmit: () => void;
   onAdvance: (event: SubmitEvent<HTMLFormElement>) => void;
   onPrevious: () => void;
@@ -1789,6 +1796,7 @@ function IntakePanels(props: IntakePanelsProps) {
     onAccept,
     onApprove,
     onEdit,
+    onModules,
     onSubmit,
     onAdvance,
     onPrevious,
@@ -1827,6 +1835,7 @@ function IntakePanels(props: IntakePanelsProps) {
             onAccept={onAccept}
             onApprove={onApprove}
             onEdit={onEdit}
+            onModules={onModules}
             onSubmit={onSubmit}
           />
         ) : (
@@ -1885,6 +1894,7 @@ function ReviewConfirmation({
   onAccept,
   onApprove,
   onEdit,
+  onModules,
   onSubmit,
 }: {
   review: Review;
@@ -1899,6 +1909,7 @@ function ReviewConfirmation({
   onAccept: (ids: readonly string[], checked: boolean) => void;
   onApprove: (approved: boolean) => void;
   onEdit: (step: FormStep) => void;
+  onModules: (modules: string[]) => void;
   onSubmit: () => void;
 }) {
   const submitLabel = submitLabelFor({ busy, synthetic, capText });
@@ -1923,6 +1934,7 @@ function ReviewConfirmation({
         accepted={accepted}
         disabled={busy !== undefined || submitUncertain}
         onEdit={onEdit}
+        onModules={onModules}
         onAccept={onAccept}
       />
       {blocker && (
