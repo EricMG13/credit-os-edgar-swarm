@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 from datetime import UTC, datetime
 from decimal import Decimal, InvalidOperation
 from pathlib import Path
@@ -130,11 +131,23 @@ def _held(layout: Layout) -> str:
     return held if isinstance(held, str) else ""
 
 
+def _strip_root(root: str, sep: str, reason: str) -> str:
+    """Remove ``root`` plus a separator where it starts a path, in plain and backslash-doubled form.
+
+    A path starts at the beginning of the text or after whitespace, a quote, ``(``, ``[``, ``:`` or
+    ``=``; a longer path that merely holds the root, or a sibling folder sharing its prefix, stays.
+    """
+    if not root.rstrip(sep):
+        return reason
+    prefix = root + sep
+    for form in {prefix, prefix.replace("\\", "\\\\")}:
+        reason = re.sub(rf"(^|[\s'\"(\[:=]){re.escape(form)}", r"\1", reason)
+    return reason
+
+
 def _shown(layout: Layout, reason: str) -> str:
     """A reason with the service's own root folder removed, leaving the path relative to it."""
-    for root in {str(layout.root.resolve()), str(layout.root)}:
-        reason = reason.replace(root + os.sep, "")
-    return reason
+    return _strip_root(str(layout.root.resolve()), os.sep, reason)
 
 
 def listing(layout: Layout) -> http_base.Reply:
@@ -145,10 +158,9 @@ def listing(layout: Layout) -> http_base.Reply:
     """
     saved = runs.load_all(layout)
     records = [item for item in saved if item.status in ("running", "queued")]
+    every_ended = [item for item in saved if item.status in _ENDED]
     ended = sorted(
-        (item for item in saved if item.status in _ENDED),
-        key=lambda item: (item.ended_at or item.claimed_at, item.id),
-        reverse=True,
+        every_ended, key=lambda item: (item.ended_at or item.claimed_at, item.id), reverse=True
     )[:_ENDED_SHOWN]
     snapshot = activity.snapshot(layout, records, now=datetime.now(UTC), held=_held(layout))
     root = layout.runs.resolve()
@@ -188,6 +200,7 @@ def listing(layout: Layout) -> http_base.Reply:
                 }
                 for item in ended
             ],
+            "ended_total": len(every_ended),
         },
         {"Cache-Control": "no-store"},
     )

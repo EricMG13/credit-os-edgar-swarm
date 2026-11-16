@@ -553,7 +553,7 @@ Refreshed 2026-11-16 against `main` at `4be1e30d` (Start's PR D merged as #31 an
 - Test: `tests/test_react_frontend.py`, `web/src/pages/connected/ConnectedApp.test.tsx`
 
 **Interfaces:**
-- Produces: `GET /connected/activity` gains `"ended": [{id, issuer_name, pathway, status, reason, ended_at, submitted_by}]`.
+- Produces: `GET /connected/activity` gains `"ended": [{id, issuer_name, pathway, status, reason, ended_at, submitted_by}]` and `"ended_total": <count of all such runs>` (added after the whole-branch review: the list is cut to 20, so the tally needs the real count).
 - Produces: `type EndedRun = Pick<Run, "id" | "issuer_name" | "pathway" | "reason"> & { status: "failed" | "capped" | "rejected" | "interrupted"; ended_at: string; submitted_by: string }`; `Activity.ended?: EndedRun[]`.
 
 - [ ] **Step 1: Write the failing tests**
@@ -567,7 +567,7 @@ def test_activity_list_shows_ended_runs_without_spend_or_file_names(hosted: _Ser
     #   e-finished finished  ended_at 2026-10-31T12:20:00Z
     #   a-running  running
     listing = json.loads(raw)
-    assert set(listing) == {"updated", "held", "runs", "ended"}
+    assert set(listing) == {"updated", "held", "runs", "ended", "ended_total"}
     assert [run["id"] for run in listing["ended"]] == ["d-failed", "c-capped"]
     assert set(listing["ended"][0]) == {
         "id", "issuer_name", "pathway", "status", "reason", "ended_at", "submitted_by",
@@ -579,6 +579,7 @@ def test_activity_list_shows_ended_runs_without_spend_or_file_names(hosted: _Ser
 def test_activity_list_keeps_the_twenty_latest_ended_runs(hosted: _Server) -> None:
     # 25 failed records, ended_at 12:00 to 12:24.
     assert len(listing["ended"]) == 20
+    assert listing["ended_total"] == 25
     assert listing["ended"][0]["ended_at"] == "2026-10-31T12:24:00Z"
 ```
 
@@ -615,7 +616,7 @@ Expected: FAIL (`"ended"` missing; no such region).
 - [ ] **Step 3: Implement**
 
 - `listing`: `ended` is the records whose status is `failed`, `capped`, `rejected` or `interrupted`, newest first by `ended_at or claimed_at` then id, cut to `_ENDED_SHOWN = 20`, with exactly the seven fields. The docstring says what is and is not sent.
-- `RunActivity`: a third `Group`, "Ended without a report": a table of Issuer (link to `/run/<id>`), Pathway, State (`StatusBadge set="Run states"`), Ended (`stamp`), Reason. The tally gains `Ended`. The "No run in progress" empty state shows only when running, waiting and ended are all empty.
+- `RunActivity`: a third `Group`, "Ended without a report": a table of Issuer (link to `/run/<id>`), Pathway, State (`StatusBadge set="Run states"`), Ended (`stamp`), Reason. The tally gains `Ended`, showing `ended_total`; when it exceeds the rows drawn, the group says "Showing the latest 20 of <total>." A reason is sent without the service's root directory (`_shown`). The "No run in progress" empty state shows only when running, waiting and ended are all empty.
 
 - [ ] **Step 4: Run both test files and the Python gate**
 

@@ -137,7 +137,14 @@ export type EndedRun = Pick<Run, "id" | "issuer_name" | "pathway" | "reason"> & 
   ended_at: string;
   submitted_by: string;
 };
-export type Activity = { updated: string; held: string; runs: LiveRun[]; ended?: EndedRun[] };
+export type Activity = {
+  updated: string;
+  held: string;
+  runs: LiveRun[];
+  ended?: EndedRun[];
+  /** All runs that ended without a report; `ended` holds only the latest. */
+  ended_total?: number;
+};
 
 type ReportEntry = { id: string; issuer: string; asOf: string; pathway: string };
 export class RequestError extends Error {

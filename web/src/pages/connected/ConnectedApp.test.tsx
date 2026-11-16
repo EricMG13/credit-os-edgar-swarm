@@ -1098,6 +1098,46 @@ describe("connected activity and reports", () => {
     expect(within(ended).getByText("Rejected")).toBeVisible();
   });
 
+  it("counts every ended run and says how many are drawn", async () => {
+    const row = (n: number) => ({
+      id: `f-${String(n)}`,
+      issuer_name: `Issuer ${String(n)}`,
+      pathway: "credit_snapshot",
+      status: "failed",
+      reason: "Provider error",
+      ended_at: "2026-10-31T12:05:00Z",
+      submitted_by: "",
+    });
+    const rows = Array.from({ length: 20 }, (_, n) => row(n));
+    activityFetch({
+      updated: "2026-11-16T14:32:10Z",
+      held: "",
+      runs: [],
+      ended: rows,
+      ended_total: 23,
+    });
+    render(<ConnectedApp path="/runs" mode="synthetic" />);
+    const ended = await screen.findByRole("region", { name: "Ended without a report" });
+    expect(within(ended).getByText("Showing the latest 20 of 23.")).toBeVisible();
+    expect(screen.getByText("Ended", { selector: "dt" }).nextElementSibling).toHaveTextContent(
+      "23",
+    );
+    cleanup();
+    activityFetch({
+      updated: "2026-11-16T14:32:10Z",
+      held: "",
+      runs: [],
+      ended: rows,
+      ended_total: 20,
+    });
+    render(<ConnectedApp path="/runs" mode="synthetic" />);
+    await screen.findByRole("region", { name: "Ended without a report" });
+    expect(screen.queryByText(/Showing the latest/)).toBeNull();
+    expect(screen.getByText("Ended", { selector: "dt" }).nextElementSibling).toHaveTextContent(
+      "20",
+    );
+  });
+
   it("draws the list from a service that sends no ended runs", async () => {
     activityFetch({ updated: "2026-11-16T14:32:10Z", held: "", runs: [] });
     render(<ConnectedApp path="/runs" mode="synthetic" />);

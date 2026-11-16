@@ -222,13 +222,14 @@ function Empty({ title, children }: { title: string; children: string }) {
   );
 }
 
-/** What is running and what is waiting. A run's own page has its spend, modules and activity. */
+/** What is running, waiting and ended without a report. A run's own page has its spend, modules and activity. */
 export function RunActivity() {
   const activity = useActivity();
   const read = typeof activity === "object" ? activity : undefined;
   const running = read?.runs.filter((run) => run.status === "running") ?? [];
   const waiting = read?.runs.filter((run) => run.status === "queued") ?? [];
   const ended = read?.ended ?? [];
+  const endedTotal = Math.max(read?.ended_total ?? 0, ended.length);
   return (
     <>
       <PageHeader
@@ -245,7 +246,7 @@ export function RunActivity() {
                 counts={[
                   ["Running", running.length],
                   ["Waiting", waiting.length],
-                  ["Ended", ended.length],
+                  ["Ended", endedTotal],
                 ]}
               />
             )}
@@ -261,8 +262,8 @@ export function RunActivity() {
         )}
         {activity === "unreadable" && (
           <Empty title="Run activity could not be read">
-            Nothing is claimed about runs in progress or waiting. This page reads it again every few
-            seconds. Finished runs are in the library.
+            Nothing is claimed about runs in progress, waiting or ended without a report. This page
+            reads it again every few seconds. Finished runs are in the library.
           </Empty>
         )}
         {read?.held && (
@@ -301,6 +302,11 @@ export function RunActivity() {
         )}
         {ended.length > 0 && (
           <Group title="Ended without a report">
+            {endedTotal > ended.length && (
+              <p className="text-sm text-text-secondary">
+                {`Showing the latest ${String(ended.length)} of ${String(endedTotal)}.`}
+              </p>
+            )}
             <EndedTable runs={ended} />
           </Group>
         )}
