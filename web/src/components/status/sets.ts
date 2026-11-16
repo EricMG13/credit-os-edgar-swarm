@@ -88,6 +88,12 @@ export const STATUS_SETS = {
     Medium: ["triangle", "warning"],
     Low: ["ring", "neutral"],
   }),
+  "Run limits": set({
+    "Will refuse": ["diamond", "error"],
+    Gap: ["dashed ring", "gap"],
+    Limited: ["triangle", "warning"],
+    Check: ["ring", "info"],
+  }),
   "File state": set({
     Uploading: ["half-filled circle", "action"],
     "Read in full": ["filled circle", "success"],

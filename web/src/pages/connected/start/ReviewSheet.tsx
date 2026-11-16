@@ -11,13 +11,10 @@ import {
   PURPOSES,
   storedName,
 } from "./plain";
+import { StatusBadge } from "@/components/status/StatusBadge";
+import { decided, groupLimits, type LimitGroup } from "./limits";
 
 type EditStep = "documents" | "purpose" | "context";
-type Item = Summary["items"][number];
-
-export function needsCheck(item: Item) {
-  return ["check", "gap", "limited", "will_refuse"].includes(item.outcome);
-}
 
 function Facts({ rows }: { rows: readonly (readonly [string, string | number | undefined])[] }) {
   return (
@@ -83,6 +80,131 @@ function List({ title, items }: { title: string; items: readonly string[] }) {
   );
 }
 
+const OUTCOME_STATE = {
+  will_refuse: "Will refuse",
+  gap: "Gap",
+  limited: "Limited",
+  check: "Check",
+} as const;
+
+function scopeText(scope: string) {
+  return scope === "run" ? "Whole run" : moduleName(scope);
+}
+
+function acceptanceLabel(group: LimitGroup) {
+  if (group.kind === "check") return "I have checked this";
+  return group.ids.length === 1
+    ? "I accept this limit"
+    : `I accept these ${String(group.ids.length)} limits`;
+}
+
+function moduleNames(items: readonly { scope: string }[]): string[] {
+  return [...new Set(items.map((item) => scopeText(item.scope)))];
+}
+
+function LimitCard({
+  group,
+  accepted,
+  disabled,
+  onAccept,
+}: {
+  group: LimitGroup;
+  accepted: ReadonlySet<string>;
+  disabled: boolean;
+  onAccept: (ids: readonly string[], checked: boolean) => void;
+}) {
+  const fixes = [...new Set(group.causes.map((cause) => cause.fix ?? "").filter(Boolean))];
+  const refusing = moduleNames(group.consequences.filter((item) => item.outcome === "will_refuse"));
+  const affected = moduleNames(group.consequences).filter((name) => !refusing.includes(name));
+  const reasonId = useId();
+  return (
+    <li className="grid gap-2 rounded-lg border border-border-hairline p-3 text-sm text-text-secondary">
+      <StatusBadge set="Run limits" state={OUTCOME_STATE[group.outcome]} />
+      {group.causes.map((cause, index) => (
+        <div key={cause.id}>
+          <p className="font-semibold text-text-primary">{scopeText(cause.scope)}</p>
+          <p id={index === 0 ? reasonId : undefined}>{plainText(cause.reason)}</p>
+        </div>
+      ))}
+      {fixes.map((fix) => (
+        <p key={fix}>{plainText(fix)}</p>
+      ))}
+      {refusing.length > 0 && <p>Will also refuse: {refusing.join(", ")}</p>}
+      {affected.length > 0 && <p>Also affects: {affected.join(", ")}</p>}
+      <label className="flex items-center gap-2 font-semibold text-text-primary">
+        <input
+          type="checkbox"
+          aria-describedby={reasonId}
+          checked={decided(group, accepted)}
+          disabled={disabled}
+          onChange={(event) => {
+            onAccept(group.ids, event.target.checked);
+          }}
+        />
+        {acceptanceLabel(group)}
+      </label>
+    </li>
+  );
+}
+
+function LimitsToDecide({
+  items,
+  accepted,
+  disabled,
+  onAccept,
+}: {
+  items: Summary["items"];
+  accepted: ReadonlySet<string>;
+  disabled: boolean;
+  onAccept: (ids: readonly string[], checked: boolean) => void;
+}) {
+  const titleId = useId();
+  const { groups, passive } = groupLimits(items);
+  const decidedCount = groups.filter((group) => decided(group, accepted)).length;
+  return (
+    <section aria-labelledby={titleId} className="grid gap-2">
+      <div className="flex flex-wrap items-baseline justify-between gap-2">
+        <h3 id={titleId} className="font-semibold text-text-primary">
+          Limits to decide
+        </h3>
+        {groups.length > 0 && (
+          <span className="text-sm text-text-tertiary">
+            {decidedCount} of {groups.length} decided
+          </span>
+        )}
+      </div>
+      {groups.length === 0 ? (
+        <p className="text-sm text-text-secondary">No limits found for this run.</p>
+      ) : (
+        <ul className="space-y-2">
+          {groups.map((group) => (
+            <LimitCard
+              key={group.key}
+              group={group}
+              accepted={accepted}
+              disabled={disabled}
+              onAccept={onAccept}
+            />
+          ))}
+        </ul>
+      )}
+      {passive.length > 0 && (
+        <details className="text-sm text-text-secondary">
+          <summary className="cursor-pointer">{`No action needed (${String(passive.length)})`}</summary>
+          <ul className="mt-2 list-disc space-y-1 pl-5">
+            {passive.map((item) => (
+              <li key={item.id}>
+                {plainText(item.reason)}
+                {item.fix ? ` ${plainText(item.fix)}` : ""}
+              </li>
+            ))}
+          </ul>
+        </details>
+      )}
+    </section>
+  );
+}
+
 export function ReviewSheet({
   review,
   accepted,
@@ -139,7 +261,10 @@ export function ReviewSheet({
               ["Case kind", run.case_kind],
             ]}
           />
-          <List title="Planned modules" items={summary.modules.map(moduleName)} />
+          <List
+            title={`Modules (${String(summary.modules.length)})`}
+            items={summary.modules.map(moduleName)}
+          />
           {summary.omitted.length > 0 && (
             <p className="text-sm text-text-secondary">
               Report sections omitted · {plainText(summary.omitted.join(", "))}
@@ -169,39 +294,12 @@ export function ReviewSheet({
           </Block>
         )}
       </section>
-      {summary.items.length > 0 && (
-        <section className="grid gap-2">
-          <h3 className="font-semibold">Readiness checks</h3>
-          <ul className="space-y-2">
-            {summary.items.map((item) => (
-              <li
-                key={item.id}
-                className="rounded-lg border border-border-hairline p-3 text-sm text-text-secondary"
-              >
-                <p className="font-semibold text-text-primary">
-                  {item.scope === "run" ? "Whole run" : moduleName(item.scope)} ·{" "}
-                  {item.outcome.replaceAll("_", " ")}
-                </p>
-                <p>{item.reason}</p>
-                {item.fix && <p>{item.fix}</p>}
-                {needsCheck(item) && (
-                  <label className="mt-2 flex items-center gap-2 font-semibold text-text-primary">
-                    <input
-                      type="checkbox"
-                      checked={accepted.has(item.id)}
-                      disabled={disabled}
-                      onChange={(event) => {
-                        onAccept([item.id], event.target.checked);
-                      }}
-                    />
-                    {item.outcome === "check" ? "I have checked this" : "I accept this limit"}
-                  </label>
-                )}
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
+      <LimitsToDecide
+        items={summary.items}
+        accepted={accepted}
+        disabled={disabled}
+        onAccept={onAccept}
+      />
     </>
   );
 }

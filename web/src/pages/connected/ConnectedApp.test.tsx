@@ -1046,3 +1046,462 @@ describe("connected activity and reports", () => {
     });
   });
 });
+
+const FIX = "Add the executed agreement and declare it.";
+const cascade = [
+  {
+    id: "CP-4:declared-none",
+    scope: "CP-4",
+    outcome: "will_refuse",
+    reason: "Legal documents declared none.",
+    fix: FIX,
+    inherited_from: [],
+  },
+  {
+    id: "CP-2A:from:CP-4",
+    scope: "CP-2A",
+    outcome: "limited",
+    reason: "Expected to be limited through CP-4, which it reads.",
+    fix: "",
+    inherited_from: ["CP-4"],
+  },
+  {
+    id: "CP-5:from:CP-2A",
+    scope: "CP-5",
+    outcome: "limited",
+    reason: "Expected to be limited through CP-2A, which it reads.",
+    fix: "",
+    inherited_from: ["CP-2A"],
+  },
+  {
+    id: "run:section-omitted-x",
+    scope: "run",
+    outcome: "information",
+    reason: "The report section 'x' is not produced by this pathway.",
+  },
+];
+
+describe("connected run start limits as decisions", () => {
+  it("groups a cause with the limits that follow from it, in paid mode", async () => {
+    const fetchMock = testingFetch({ ...plan, items: cascade });
+    render(<ConnectedApp path="/start" mode="live" />);
+    await review();
+    const submit = await screen.findByRole("button", { name: "Submit, spend up to USD 25.00" });
+    const limits = screen.getByRole("region", { name: "Limits to decide" });
+    expect(within(limits).getAllByRole("checkbox")).toHaveLength(1);
+    expect(limits).toHaveTextContent("Will refuse");
+    expect(limits).toHaveTextContent("Legal documents declared none.");
+    expect(limits).toHaveTextContent("Also affects: Downside, Evidence validation");
+    expect(limits).toHaveTextContent("No action needed (1)");
+    expect(limits).not.toHaveTextContent(/CP-\d/);
+    expect(screen.getByText("1 decision left before you can approve.")).toBeInTheDocument();
+    const approval = screen.getByRole("checkbox", { name: /Approve: I have read this summary/ });
+    expect(approval).toBeDisabled();
+    expect(submit).toBeDisabled();
+    fireEvent.click(screen.getByRole("checkbox", { name: "I accept these 3 limits" }));
+    expect(approval).toBeEnabled();
+    expect(submit).toBeDisabled();
+    approve();
+    expect(submit).toBeEnabled();
+    expect(fetchMock.mock.calls.some(([path]) => path.endsWith("/submit"))).toBe(false);
+  });
+
+  it("names the following modules that will refuse apart from those that are only limited", async () => {
+    const refusing = [
+      {
+        id: "CP-4:declared-none",
+        scope: "CP-4",
+        outcome: "will_refuse",
+        reason: "Legal documents declared none.",
+        fix: FIX,
+        inherited_from: [],
+      },
+      {
+        id: "CP-4C:from:CP-4",
+        scope: "CP-4C",
+        outcome: "will_refuse",
+        reason: "Expected to be will refuse through CP-4, which it reads.",
+        fix: "",
+        inherited_from: ["CP-4"],
+      },
+      {
+        id: "CP-5:from:CP-4",
+        scope: "CP-5",
+        outcome: "limited",
+        reason: "Expected to be limited through CP-4, which it reads.",
+        fix: "",
+        inherited_from: ["CP-4"],
+      },
+    ];
+    testingFetch({ ...plan, items: refusing });
+    render(<ConnectedApp path="/start" mode="live" />);
+    await review();
+    await screen.findByRole("button", { name: "Submit, spend up to USD 25.00" });
+    const limits = screen.getByRole("region", { name: "Limits to decide" });
+    expect(limits).toHaveTextContent("Will also refuse: Recovery & fulcrum");
+    expect(limits).toHaveTextContent("Also affects: Evidence validation");
+    expect(limits).not.toHaveTextContent("Also affects: Recovery");
+    expect(screen.getByRole("checkbox", { name: "I accept these 3 limits" })).toBeInTheDocument();
+    expect(limits).not.toHaveTextContent(/CP-\d/);
+  });
+
+  it("draws the reason and the fix of an item that needs no action", async () => {
+    const passive = [
+      {
+        id: "run:workbook-none",
+        scope: "run",
+        outcome: "information",
+        reason: "No portfolio workbook was chosen.",
+        fix: "Add the fund's workbook and choose it under Issuer and dates.",
+      },
+    ];
+    testingFetch({ ...plan, items: passive });
+    render(<ConnectedApp path="/start" mode="synthetic" />);
+    await review();
+    await screen.findByRole("button", { name: "Submit run" });
+    const limits = screen.getByRole("region", { name: "Limits to decide" });
+    expect(limits).toHaveTextContent("No action needed (1)");
+    const details = limits.querySelector("details");
+    expect(details).toHaveTextContent("No portfolio workbook was chosen.");
+    expect(details).toHaveTextContent(
+      "Add the fund's workbook and choose it under Issuer and dates.",
+    );
+  });
+
+  it("says there are no limits when the service finds none", async () => {
+    testingFetch();
+    render(<ConnectedApp path="/start" mode="synthetic" />);
+    await review();
+    await screen.findByRole("button", { name: "Submit run" });
+    expect(screen.getByText("No limits found for this run.")).toBeInTheDocument();
+    expect(
+      screen.getByRole("checkbox", { name: /Approve: I have read this summary/ }),
+    ).toBeEnabled();
+  });
+
+  it("keeps an acceptance when the same limit comes back, and never the approval", async () => {
+    testingFetch({ ...plan, items: cascade });
+    render(<ConnectedApp path="/start" mode="synthetic" />);
+    await review();
+    fireEvent.click(await screen.findByRole("checkbox", { name: "I accept these 3 limits" }));
+    approve();
+    fireEvent.click(screen.getByRole("button", { name: "Edit context" }));
+    fireEvent.click(screen.getByRole("button", { name: "Review run" }));
+    expect(await screen.findByRole("checkbox", { name: "I accept these 3 limits" })).toBeChecked();
+    expect(
+      screen.getByRole("checkbox", { name: /Approve: I have read this summary/ }),
+    ).not.toBeChecked();
+  });
+
+  it("does not keep an acceptance when the limit's reason changed", async () => {
+    const changed = cascade.map((item, i) =>
+      i === 0 ? { ...item, reason: "Legal documents declared none (draft found)." } : item,
+    );
+    const base = testingFetch({ ...plan, items: cascade });
+    let summaries = 0;
+    vi.stubGlobal("fetch", (path: string, init?: RequestInit) => {
+      if (!path.endsWith("/summary")) return base(path, init);
+      summaries += 1;
+      return summaries === 1
+        ? base(path, init)
+        : Promise.resolve(Response.json({ ...plan, items: changed }));
+    });
+    render(<ConnectedApp path="/start" mode="synthetic" />);
+    await review();
+    fireEvent.click(await screen.findByRole("checkbox", { name: "I accept these 3 limits" }));
+    fireEvent.click(screen.getByRole("button", { name: "Edit context" }));
+    fireEvent.click(screen.getByRole("button", { name: "Review run" }));
+    expect(
+      await screen.findByRole("checkbox", { name: "I accept these 3 limits" }),
+    ).not.toBeChecked();
+    expect(
+      screen.getByRole("checkbox", { name: /Approve: I have read this summary/ }),
+    ).toBeDisabled();
+  });
+
+  it("drops acceptances when the issuer is changed", async () => {
+    testingFetch({ ...plan, items: cascade }, undefined, {
+      "/api/runs/earlier/inputs": {
+        issuer_id: "northbridge",
+        issuer_name: "Northbridge",
+        level: "basic",
+        max_turns: 32,
+        modules: [],
+        context,
+        files: [{ name: file.name, size: file.size }],
+      },
+      "/api/submissions/sub-1/carry": { carried: [file.name], kept: [] },
+    });
+    render(<ConnectedApp path="/start" search="?from=earlier" mode="synthetic" />);
+    await screen.findByLabelText("Issuer name");
+    fireEvent.change(screen.getByLabelText("As-of date"), { target: { value: "2026-10-31" } });
+    await advanceToPurpose();
+    advanceToContext();
+    fireEvent.click(screen.getByRole("button", { name: "Review run" }));
+    fireEvent.click(await screen.findByRole("checkbox", { name: "I accept these 3 limits" }));
+    fireEvent.click(screen.getByRole("button", { name: "Edit issuer and documents" }));
+    fireEvent.click(screen.getByRole("button", { name: "This is a different issuer" }));
+    await fillInputs();
+    await advanceToPurpose();
+    advanceToContext();
+    fireEvent.click(screen.getByRole("button", { name: "Review run" }));
+    expect(
+      await screen.findByRole("checkbox", { name: "I accept these 3 limits" }),
+    ).not.toBeChecked();
+  });
+
+  it("does not carry an acceptance after a reset when the same issuer is typed again", async () => {
+    testingFetch({ ...plan, items: cascade }, undefined, {
+      "/api/runs/earlier/inputs": {
+        issuer_id: "northbridge",
+        issuer_name: "Northbridge",
+        level: "basic",
+        max_turns: 32,
+        modules: [],
+        context,
+        files: [{ name: file.name, size: file.size }],
+      },
+      "/api/submissions/sub-1/carry": { carried: [file.name], kept: [] },
+    });
+    render(<ConnectedApp path="/start" search="?from=earlier" mode="synthetic" />);
+    await screen.findByLabelText("Issuer name");
+    fireEvent.change(screen.getByLabelText("As-of date"), { target: { value: "2026-10-31" } });
+    await advanceToPurpose();
+    advanceToContext();
+    fireEvent.click(screen.getByRole("button", { name: "Review run" }));
+    fireEvent.click(await screen.findByRole("checkbox", { name: "I accept these 3 limits" }));
+    fireEvent.click(screen.getByRole("button", { name: "Edit issuer and documents" }));
+    fireEvent.click(screen.getByRole("button", { name: "This is a different issuer" }));
+    fireEvent.change(await screen.findByLabelText("Issuer name"), {
+      target: { value: "Northbridge" },
+    });
+    fireEvent.change(screen.getByLabelText("As-of date"), { target: { value: "2026-10-31" } });
+    fireEvent.change(screen.getByLabelText("Documents"), { target: { files: [file] } });
+    await advanceToPurpose();
+    advanceToContext();
+    fireEvent.click(screen.getByRole("button", { name: "Review run" }));
+    expect(
+      await screen.findByRole("checkbox", { name: "I accept these 3 limits" }),
+    ).not.toBeChecked();
+  });
+
+  it("closes the stepper, Edit buttons and approval after an uncertain submit", async () => {
+    testingFetch(plan, () => new Response("failed", { status: 500 }));
+    render(<ConnectedApp path="/start" mode="live" />);
+    await review();
+    await screen.findByRole("button", { name: "Submit, spend up to USD 25.00" });
+    approve();
+    fireEvent.click(screen.getByRole("button", { name: "Submit, spend up to USD 25.00" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Start run, up to USD 25.00" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent("Retrying Submit run is safe.");
+    expect(screen.queryAllByRole("button", { name: /^Go back to/ })).toHaveLength(0);
+    for (const name of ["Edit issuer and documents", "Edit purpose and modules", "Edit context"])
+      expect(screen.getByRole("button", { name })).toBeDisabled();
+    expect(
+      screen.getByRole("checkbox", { name: /Approve: I have read this summary/ }),
+    ).toBeDisabled();
+  });
+
+  it("closes the stepper, Edit buttons and approval while a submit is in flight", async () => {
+    let release!: (response: Response) => void;
+    const pending = new Promise<Response>((resolve) => {
+      release = resolve;
+    });
+    const fetchMock = testingFetch(plan);
+    const navigate = vi.fn();
+    const base = fetchMock.getMockImplementation();
+    vi.stubGlobal("fetch", (path: string, init?: RequestInit) =>
+      path.endsWith("/submit") ? pending : base?.(path, init),
+    );
+    render(<ConnectedApp path="/start" mode="live" navigate={navigate} />);
+    await review();
+    await screen.findByRole("button", { name: "Submit, spend up to USD 25.00" });
+    approve();
+    fireEvent.click(screen.getByRole("button", { name: "Submit, spend up to USD 25.00" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Start run, up to USD 25.00" }));
+    await screen.findByRole("button", { name: "Submitting…" });
+    for (const name of ["Edit issuer and documents", "Edit purpose and modules", "Edit context"])
+      expect(screen.getByRole("button", { name })).toBeDisabled();
+    expect(
+      screen.getByRole("checkbox", { name: /Approve: I have read this summary/ }),
+    ).toBeDisabled();
+    expect(screen.queryAllByRole("button", { name: /^Go back to/ })).toHaveLength(0);
+    release(Response.json({ run: "test-run", status: "queued" }));
+    await vi.waitFor(() => {
+      expect(navigate).toHaveBeenCalledWith("/run/test-run");
+    });
+  });
+});
+
+describe("connected run start: what an acceptance carries to", () => {
+  const limitBox = () => screen.findByRole("checkbox", { name: "I accept these 3 limits" });
+  const approvalBox = () =>
+    screen.getByRole("checkbox", { name: /Approve: I have read this summary/ });
+
+  async function acceptThenEdit(edit: string) {
+    await review();
+    fireEvent.click(await limitBox());
+    fireEvent.click(screen.getByRole("button", { name: edit }));
+  }
+
+  it("describes each group's checkbox by its first cause", async () => {
+    const gap = {
+      id: "run:portfolio-missing",
+      scope: "run",
+      outcome: "gap",
+      reason: "No portfolio workbook.",
+      fix: "Attach the portfolio workbook.",
+    };
+    testingFetch({ ...plan, items: [...cascade, gap] });
+    render(<ConnectedApp path="/start" mode="live" />);
+    await review();
+    expect(await limitBox()).toHaveAccessibleDescription("Legal documents declared none.");
+    expect(
+      screen.getByRole("checkbox", { name: "I accept this limit" }),
+    ).toHaveAccessibleDescription("No portfolio workbook.");
+  });
+
+  it("drops an acceptance when a different issuer name is typed", async () => {
+    testingFetch({ ...plan, items: cascade });
+    render(<ConnectedApp path="/start" mode="live" />);
+    await acceptThenEdit("Edit issuer and documents");
+    fireEvent.change(screen.getByLabelText("Issuer name"), {
+      target: { value: "Other Issuer plc" },
+    });
+    await advanceToPurpose();
+    advanceToContext();
+    fireEvent.click(screen.getByRole("button", { name: "Review run" }));
+    expect(await limitBox()).not.toBeChecked();
+    expect(approvalBox()).toBeDisabled();
+  });
+
+  it("drops an acceptance when a different issuer ID is typed", async () => {
+    testingFetch({ ...plan, items: cascade });
+    render(<ConnectedApp path="/start" mode="live" />);
+    await acceptThenEdit("Edit issuer and documents");
+    fireEvent.change(screen.getByLabelText("Issuer ID"), { target: { value: "another-issuer" } });
+    await advanceToPurpose();
+    advanceToContext();
+    fireEvent.click(screen.getByRole("button", { name: "Review run" }));
+    expect(await limitBox()).not.toBeChecked();
+    expect(approvalBox()).toBeDisabled();
+  });
+
+  it("keeps an acceptance across a stepper hop between form steps", async () => {
+    testingFetch({ ...plan, items: cascade });
+    render(<ConnectedApp path="/start" mode="live" />);
+    await acceptThenEdit("Edit context");
+    fireEvent.click(screen.getByRole("button", { name: "Go back to Purpose" }));
+    advanceToContext();
+    fireEvent.click(screen.getByRole("button", { name: "Review run" }));
+    expect(await limitBox()).toBeChecked();
+    expect(approvalBox()).not.toBeChecked();
+  });
+
+  it("drops an acceptance when another pathway is chosen", async () => {
+    const base = testingFetch({ ...plan, items: cascade });
+    let summaries = 0;
+    vi.stubGlobal("fetch", (path: string, init?: RequestInit) => {
+      if (!path.endsWith("/summary")) return base(path, init);
+      summaries += 1;
+      return summaries === 1
+        ? base(path, init)
+        : Promise.resolve(Response.json({ ...plan, cap: "40", items: cascade }));
+    });
+    render(<ConnectedApp path="/start" mode="live" />);
+    await acceptThenEdit("Edit purpose and modules");
+    fireEvent.click(screen.getByRole("radio", { name: "Deep credit assessment" }));
+    advanceToContext();
+    fireEvent.click(screen.getByRole("button", { name: "Review run" }));
+    await screen.findByRole("button", { name: "Submit, spend up to USD 40.00" });
+    expect(await limitBox()).not.toBeChecked();
+    expect(approvalBox()).toBeDisabled();
+  });
+
+  it("uses a carried acceptance once: a refused submit leaves nothing for the next review", async () => {
+    testingFetch({ ...plan, items: cascade }, () =>
+      Response.json({ error: "stale" }, { status: 400 }),
+    );
+    render(<ConnectedApp path="/start" mode="live" />);
+    await acceptThenEdit("Edit context");
+    fireEvent.click(screen.getByRole("button", { name: "Review run" }));
+    expect(await limitBox()).toBeChecked();
+    approve();
+    fireEvent.click(screen.getByRole("button", { name: "Submit, spend up to USD 25.00" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Start run, up to USD 25.00" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Review the run again before submitting.",
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Review run" }));
+    expect(await limitBox()).not.toBeChecked();
+    expect(approvalBox()).toBeDisabled();
+  });
+
+  it("counts a group with only some members accepted as undecided", async () => {
+    const gap = {
+      id: "run:portfolio-missing",
+      scope: "run",
+      outcome: "gap",
+      reason: "No portfolio workbook.",
+      fix: "Attach the portfolio workbook.",
+    };
+    const first = [...cascade, gap];
+    const revised = first.map((item, i) =>
+      i === 2 ? { ...item, reason: "Expected to be limited through CP-2A (revised)." } : item,
+    );
+    const base = testingFetch({ ...plan, items: first });
+    let summaries = 0;
+    vi.stubGlobal("fetch", (path: string, init?: RequestInit) => {
+      if (!path.endsWith("/summary")) return base(path, init);
+      summaries += 1;
+      return summaries === 1
+        ? base(path, init)
+        : Promise.resolve(Response.json({ ...plan, items: revised }));
+    });
+    render(<ConnectedApp path="/start" mode="live" />);
+    await review();
+    fireEvent.click(await limitBox());
+    fireEvent.click(screen.getByRole("checkbox", { name: "I accept this limit" }));
+    fireEvent.click(screen.getByRole("button", { name: "Edit context" }));
+    fireEvent.click(screen.getByRole("button", { name: "Review run" }));
+    expect(await limitBox()).not.toBeChecked();
+    expect(screen.getByRole("checkbox", { name: "I accept this limit" })).toBeChecked();
+    expect(screen.getByText("1 decision left before you can approve.")).toBeInTheDocument();
+    expect(screen.getByRole("region", { name: "Limits to decide" })).toHaveTextContent(
+      "1 of 2 decided",
+    );
+    expect(approvalBox()).toBeDisabled();
+  });
+
+  it("carries nothing after Carry over from latest run", async () => {
+    testingFetch({ ...plan, items: cascade }, undefined, {
+      "/api/issuers/acme": { latest_run: "earlier", runs: 1, latest_as_of: "2026-09-30" },
+      "/api/runs/earlier/inputs": {
+        issuer_id: "acme",
+        issuer_name: "Acme",
+        level: "basic",
+        max_turns: 32,
+        modules: [],
+        context: null,
+        files: [{ name: file.name, size: file.size }],
+      },
+      "/api/submissions/sub-1/carry": { carried: [file.name], kept: [] },
+    });
+    render(<ConnectedApp path="/start" mode="live" />);
+    fireEvent.change(await screen.findByLabelText("Issuer name"), { target: { value: "Acme" } });
+    fireEvent.change(screen.getByLabelText("As-of date"), { target: { value: "2026-10-31" } });
+    fireEvent.change(screen.getByLabelText("Documents"), { target: { files: [file] } });
+    await advanceToPurpose();
+    advanceToContext();
+    fireEvent.click(screen.getByRole("button", { name: "Review run" }));
+    fireEvent.click(await limitBox());
+    fireEvent.click(screen.getByRole("button", { name: "Edit issuer and documents" }));
+    fireEvent.click(screen.getByRole("button", { name: "Carry over from latest run" }));
+    await screen.findByRole("button", { name: "This is a different issuer" });
+    await advanceToPurpose();
+    advanceToContext();
+    fireEvent.click(screen.getByRole("button", { name: "Review run" }));
+    expect(await limitBox()).not.toBeChecked();
+    expect(approvalBox()).toBeDisabled();
+  });
+});

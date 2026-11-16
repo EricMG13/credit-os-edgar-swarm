@@ -16,7 +16,7 @@
 - The approval checkbox keeps its exact name: `Approve: I have read this summary and want this run started`.
 - The confirmation dialog keeps its exact titles, text and action names, paid and synthetic.
 - The spending cap is the pathway's cap from the service (`caps`, `Summary.cap`; ruling `docs/rulings/2026-11-15-pathway-tiers-and-caps.md`); the page never computes it. `capForPathway`, `requireSummaryCap`, the `X-Shown-Cap` header, `invalidateReview` and the pathway/cap re-check in submit are not changed by any task.
-- Line references in Tasks 3–8 were written against `63d7edd`; main has since gained the per-pathway caps (`ed26598a`) and split `StartRun.tsx` into hooks and panels (`c88773d8`). Locate by symbol, not by line. A carried acceptance (Task 4) is still cleared wherever `invalidateReview()` runs.
+- Line references in Tasks 3–8 were written against `63d7edd`; main has since gained the per-pathway caps (`ed26598a`) and split `StartRun.tsx` into hooks and panels (`c88773d8`). Locate by symbol, not by line. A carried acceptance (Task 4) is used only by the next review of the same issuer id and pathway, for a limit with the same id and reason; it is compared at use, not cleared by `invalidateReview()`.
 - Submit and the approval stay disabled until every item whose outcome is `will_refuse`, `gap`, `limited` or `check` has its id in the accepted set. Grouping changes how ids are accepted, never which ids are required.
 - The page ships `style-src 'self'`: no `style` attribute and no inline script. Tailwind classes only.
 - No module code (`CP-…`), run id or launcher flag is drawn in the Start flow below the Advanced level. Advanced controls keep codes (`Committee decision (CP-6)`).
