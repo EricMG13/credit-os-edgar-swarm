@@ -181,6 +181,10 @@ describe("leaveOut", () => {
     expect(leaveOut(first(refusing), ["CP-4", "CP-4C"], [])).toBeNull();
   });
 
+  it("S6 offers nothing when every module but CP-MODEL is refusing", () => {
+    expect(leaveOut(first(refusing), ["CP-4", "CP-4C", "CP-MODEL"], [])).toBeNull();
+  });
+
   it("offers nothing when nothing would be removed", () => {
     expect(leaveOut(first(refusing), requested, ["CP-0", "CP-1"])).toBeNull();
   });

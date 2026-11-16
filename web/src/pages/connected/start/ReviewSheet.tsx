@@ -2,6 +2,7 @@ import { useId, type ReactNode } from "react";
 import { Button } from "@/components/base/buttons/button";
 import {
   changesSentence,
+  drawnModules,
   moduleName,
   pathwayModules,
   pathwayName,
@@ -344,8 +345,8 @@ export function ReviewSheet({
             ]}
           />
           <List
-            title={`Modules (${String(summary.modules.length)})`}
-            items={summary.modules.map(moduleName)}
+            title={`Modules (${String(drawnModules(summary.modules).length)})`}
+            items={drawnModules(summary.modules).map(moduleName)}
           />
           {leftOut.length > 0 && (
             <div className="flex flex-wrap items-center justify-between gap-3 text-sm text-text-secondary">

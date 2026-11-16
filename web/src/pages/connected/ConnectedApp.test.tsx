@@ -1,7 +1,7 @@
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { ConnectedApp } from "./ConnectedApp";
-import { SelectField, stepOfField } from "./StartRun";
+import { SelectField, carriedModules, stepOfField } from "./StartRun";
 import { moduleName, pathwayModules, type Summary } from "./api";
 
 const scrollIntoView = vi.fn();
@@ -243,7 +243,8 @@ describe("connected run start", () => {
       modules: string[];
     };
     expect(reviewedAnswers.context.run.pathway).toBe("deep_credit_assessment");
-    expect(reviewedAnswers.modules).not.toContain("CP-MODEL");
+    // The picker never offers the forecast; the list the page sends holds it once.
+    expect(reviewedAnswers.modules.filter((code) => code === "CP-MODEL")).toHaveLength(1);
     expect(reviewedAnswers.modules).not.toContain("CP-0");
   });
 
@@ -920,7 +921,7 @@ describe("connected run start", () => {
       },
       level: "advanced",
       max_turns: 24,
-      modules: ["CP-0"],
+      modules: ["CP-0", "CP-MODEL"],
     });
   });
 
@@ -2653,9 +2654,19 @@ describe("connected run start: the Basic run sends what it sent before", () => {
         },
         identity: { issuer_name: "Synthetic Générale", issuer_id: "synthetic-generale" },
       },
-      modules: pathwayModules("distressed_restructuring").filter(
-        (code) => code !== "CP-4" && code !== "CP-4C",
-      ),
+      modules: [
+        "CP-0",
+        "CP-1",
+        "CP-1A",
+        "CP-1C",
+        "CP-DR",
+        "CP-2",
+        "CP-2A",
+        "CP-2E",
+        "CP-2G",
+        "CP-2H",
+        "CP-5",
+      ],
       level: "basic",
       max_turns: 32,
       model: "gpt",
@@ -3057,5 +3068,379 @@ describe("the step each refusable control is drawn on", () => {
     await toStep("context");
     expect(marked(field)).not.toBeNull();
     expect(stepOfField(field)).toBe("context");
+  });
+});
+
+describe("connected run start: module choices sent", () => {
+  const summaryBodies = (fetchMock: ReturnType<typeof testingFetch>) =>
+    fetchMock.mock.calls
+      .filter(([path]) => path.endsWith("/summary"))
+      .map(
+        ([, init]) =>
+          JSON.parse(typeof init?.body === "string" ? init.body : "null") as {
+            modules: string[];
+            level: string;
+            max_turns: number;
+            model: string;
+            effort: string;
+          },
+      );
+
+  it("R1 a Basic run sends no modules after a module choice made at Advanced", async () => {
+    const fetchMock = testingFetch({ ...plan, cap: "20" });
+    render(<ConnectedApp path="/start" mode="synthetic" />);
+    await fillInputs();
+    await advanceToPurpose();
+    fireEvent.click(screen.getByRole("radio", { name: /Relative Value/ }));
+    fireEvent.change(screen.getByLabelText("Run form level"), { target: { value: "advanced" } });
+    advanceToContext();
+    fireEvent.click(await screen.findByRole("checkbox", { name: moduleName("CP-3D") }));
+    fireEvent.click(screen.getByRole("button", { name: "Previous" }));
+    await screen.findByRole("heading", { name: "Purpose" });
+    fireEvent.change(screen.getByLabelText("Run form level"), { target: { value: "basic" } });
+    advanceToContext();
+    fireEvent.click(await screen.findByRole("button", { name: "Review run" }));
+    await screen.findByRole("button", { name: "Submit run" });
+    expect(summaryBodies(fetchMock)[0]).toMatchObject({
+      modules: [],
+      level: "basic",
+      max_turns: 32,
+      model: "gpt",
+      effort: "balanced",
+    });
+  });
+
+  const earningsPeriods = () => {
+    fireEvent.change(screen.getByLabelText("Current period"), { target: { value: "q3-2026" } });
+    fireEvent.change(screen.getByLabelText("Prior period"), { target: { value: "q2-2026" } });
+  };
+
+  const kept = (pathway: RegExp, left: string, expected: string[]) => async () => {
+    const fetchMock = testingFetch({
+      ...plan,
+      cap: "20",
+      items: [
+        {
+          id: `${left}:declared`,
+          scope: left,
+          outcome: "will_refuse",
+          reason: "Expected to refuse.",
+          fix: FIX,
+          inherited_from: [],
+        },
+      ] as never,
+    });
+    render(<ConnectedApp path="/start" mode="live" />);
+    await fillInputs();
+    await advanceToPurpose();
+    fireEvent.click(screen.getByRole("radio", { name: pathway }));
+    advanceToContext();
+    if (left === "CP-1D") earningsPeriods();
+    fireEvent.click(screen.getByRole("button", { name: "Review run" }));
+    fireEvent.click(await screen.findByRole("button", { name: `Leave out ${moduleName(left)}` }));
+    fireEvent.click(await screen.findByRole("button", { name: "Review run" }));
+    await screen.findByText(`Left out: ${moduleName(left)}`);
+    expect(summaryBodies(fetchMock).at(-1)?.modules).toEqual(expected);
+  };
+
+  it(
+    "R2a Earnings Update leaves CP-1D out and keeps the forecast",
+    kept(/Earnings Update/, "CP-1D", [
+      "CP-0",
+      "CP-1",
+      "CP-MODEL",
+      "CP-1B",
+      "CP-DR",
+      "CP-2E",
+      "CP-5",
+    ]),
+  );
+  it(
+    "R2b Relative Value leaves CP-3D out and keeps the forecast",
+    kept(/Relative Value/, "CP-3D", [
+      "CP-0",
+      "CP-1",
+      "CP-MODEL",
+      "CP-1C",
+      "CP-DR",
+      "CP-2",
+      "CP-2D",
+      "CP-2E",
+      "CP-3",
+      "CP-3C",
+      "CP-5",
+    ]),
+  );
+  it(
+    "R2c Portfolio Decision leaves CP-6 out and keeps the forecast",
+    kept(/Portfolio Decision/, "CP-6", [
+      "CP-0",
+      "CP-1",
+      "CP-MODEL",
+      "CP-DR",
+      "CP-2",
+      "CP-2E",
+      "CP-3",
+      "CP-5",
+    ]),
+  );
+
+  it("R4 an Advanced choice on Earnings Update ends with CP-MODEL and holds no unticked code", async () => {
+    const fetchMock = testingFetch({ ...plan, cap: "20" });
+    render(<ConnectedApp path="/start" mode="synthetic" />);
+    await fillInputs();
+    await advanceToPurpose();
+    fireEvent.click(screen.getByRole("radio", { name: /Earnings Update/ }));
+    fireEvent.change(screen.getByLabelText("Run form level"), { target: { value: "advanced" } });
+    advanceToContext();
+    earningsPeriods();
+    fireEvent.click(await screen.findByRole("checkbox", { name: moduleName("CP-1D") }));
+    fireEvent.click(screen.getByRole("button", { name: "Review run" }));
+    await screen.findByRole("button", { name: "Submit run" });
+    const sent = summaryBodies(fetchMock)[0]?.modules ?? [];
+    expect(sent.filter((code) => code === "CP-MODEL")).toHaveLength(1);
+    expect(sent).not.toContain("CP-1D");
+  });
+
+  it("R10 the review's Leave out never names the forecast the run keeps", async () => {
+    const fetchMock = testingFetch({
+      ...plan,
+      cap: "20",
+      items: [
+        {
+          id: "CP-1D:declared",
+          scope: "CP-1D",
+          outcome: "will_refuse",
+          reason: "Expected to refuse.",
+          fix: FIX,
+          inherited_from: [],
+        },
+      ] as never,
+    });
+    render(<ConnectedApp path="/start" mode="live" />);
+    await fillInputs();
+    await advanceToPurpose();
+    fireEvent.click(screen.getByRole("radio", { name: /Earnings Update/ }));
+    fireEvent.change(screen.getByLabelText("Run form level"), { target: { value: "advanced" } });
+    advanceToContext();
+    earningsPeriods();
+    fireEvent.click(await screen.findByRole("checkbox", { name: moduleName("CP-2E") }));
+    fireEvent.click(screen.getByRole("button", { name: "Review run" }));
+    const leave = await screen.findByRole("button", { name: /^Leave out / });
+    expect(leave).toHaveAccessibleName("Leave out Earnings quality");
+    expect(screen.queryByText(/Cash flow model/)).toBeNull();
+    fireEvent.click(leave);
+    fireEvent.click(await screen.findByRole("button", { name: "Review run" }));
+    await screen.findByText("Left out: Earnings quality, Rates, FX & hedging");
+    expect(summaryBodies(fetchMock).at(-1)?.modules).toEqual([
+      "CP-0",
+      "CP-1",
+      "CP-MODEL",
+      "CP-1B",
+      "CP-DR",
+      "CP-5",
+    ]);
+  });
+
+  it("R7 a prior run's page list carries over as the page list", () => {
+    const pathway = "relative_value";
+    const prior = {
+      issuer_id: "x",
+      issuer_name: "X",
+      context: { ...context, run: { ...context.run, pathway } },
+      files: [],
+      level: "advanced",
+      modules: pathwayModules(pathway).filter((code) => code !== "CP-3D"),
+      max_turns: 32,
+    };
+    expect(carriedModules(prior as never)).toEqual(
+      pathwayModules(pathway).filter((code) => code !== "CP-3D"),
+    );
+    expect(carriedModules({ ...prior, modules: ["CP-NOPE"] })).toEqual([]);
+  });
+
+  it("S8 the review sheet counts and lists the service's plan without CP-MODEL", async () => {
+    testingFetch({
+      ...plan,
+      cap: "20",
+      modules: ["CP-0", "CP-1", "CP-1B", "CP-DR", "CP-2E", "CP-MODEL", "CP-1D", "CP-5"],
+    });
+    render(<ConnectedApp path="/start" mode="synthetic" />);
+    await fillInputs();
+    await advanceToPurpose();
+    fireEvent.click(screen.getByRole("radio", { name: /Earnings Update/ }));
+    advanceToContext();
+    earningsPeriods();
+    fireEvent.click(screen.getByRole("button", { name: "Review run" }));
+    await screen.findByRole("button", { name: "Submit run" });
+    expect(screen.getByText("Modules (7)")).toBeVisible();
+    expect(screen.queryByText(/Cash flow model/)).toBeNull();
+  });
+
+  it("L1 a carried list holding no drawn module carries nothing", () => {
+    const prior = {
+      issuer_id: "x",
+      issuer_name: "X",
+      context: { ...context, run: { ...context.run, pathway: "credit_snapshot" } },
+      files: [],
+      level: "advanced",
+      modules: ["CP-MODEL"],
+      max_turns: 32,
+    };
+    expect(carriedModules(prior as never)).toEqual([]);
+  });
+
+  it("S7 a carried list gains CP-MODEL only where the carried pathway's preset holds it", () => {
+    const prior = (pathway: string, modules: string[]) =>
+      ({
+        issuer_id: "x",
+        issuer_name: "X",
+        context: { ...context, run: { ...context.run, pathway } },
+        files: [],
+        level: "advanced",
+        modules,
+        max_turns: 32,
+      }) as never;
+    expect(carriedModules(prior("credit_snapshot", ["CP-0"]))).toEqual(["CP-0", "CP-MODEL"]);
+    expect(carriedModules(prior("lite_credit_assessment", ["CP-0", "CP-1"]))).toEqual([
+      "CP-0",
+      "CP-1",
+    ]);
+    expect(carriedModules(prior("relative_value", ["CP-0", "CP-1A"]))).toEqual([]);
+    expect(carriedModules(prior("relative_value", []))).toEqual([]);
+  });
+
+  it.each([
+    "Earnings Update",
+    "Relative Value",
+    "Portfolio Decision",
+    "Full credit assessment",
+    "Deep credit assessment",
+  ])("S3 %s draws no Cash flow model checkbox", async (name) => {
+    testingFetch({ ...plan, cap: "20" });
+    render(<ConnectedApp path="/start" mode="synthetic" />);
+    await fillInputs();
+    await advanceToPurpose();
+    fireEvent.click(screen.getByRole("radio", { name: new RegExp(name) }));
+    fireEvent.change(screen.getByLabelText("Run form level"), { target: { value: "advanced" } });
+    advanceToContext();
+    if (name === "Earnings Update") earningsPeriods();
+    expect(screen.queryByRole("checkbox", { name: "Cash flow model" })).toBeNull();
+    if (name === "Relative Value" || name === "Portfolio Decision") {
+      expect(screen.queryByRole("checkbox", { name: "Business & governance" })).toBeNull();
+    }
+    fireEvent.click(await screen.findByRole("button", { name: "Add research question" }));
+    const focus = await screen.findByLabelText("Focus module");
+    expect(within(focus).queryByText("Cash flow model")).toBeNull();
+  });
+
+  it("S4 the pathway cards count the modules without CP-MODEL", async () => {
+    testingFetch({ ...plan, cap: "20" });
+    render(<ConnectedApp path="/start" mode="synthetic" />);
+    await fillInputs();
+    await advanceToPurpose();
+    const counts: Record<string, string> = {
+      "Deep credit assessment": "20 base modules",
+      "Relative Value": "11 base modules",
+      "Portfolio Decision": "8 base modules",
+      "Full credit assessment": "14 base modules",
+      "Earnings Update": "7 base modules",
+      "Lite credit assessment": "5 base modules",
+    };
+    for (const [name, text] of Object.entries(counts)) {
+      const card = screen.getByRole("radio", { name: new RegExp(name) }).closest("label");
+      expect(card).not.toBeNull();
+      expect(within(card as HTMLElement).getByText(text, { exact: true })).toBeVisible();
+    }
+  });
+
+  it("S5 the last drawn module stays ticked and the run sends it with CP-MODEL", async () => {
+    const fetchMock = testingFetch({ ...plan, cap: "20" });
+    render(<ConnectedApp path="/start" mode="synthetic" />);
+    await fillInputs();
+    await advanceToPurpose();
+    fireEvent.click(screen.getByRole("radio", { name: /Earnings Update/ }));
+    fireEvent.change(screen.getByLabelText("Run form level"), { target: { value: "advanced" } });
+    advanceToContext();
+    earningsPeriods();
+    const drawn = pathwayModules("earnings_update").filter((code) => code !== "CP-MODEL");
+    for (const code of drawn.slice(1)) {
+      fireEvent.click(await screen.findByRole("checkbox", { name: moduleName(code) }));
+    }
+    const [first] = drawn;
+    const last = await screen.findByRole("checkbox", { name: moduleName(first ?? "") });
+    expect(last).toBeDisabled();
+    fireEvent.click(screen.getByRole("button", { name: "Review run" }));
+    await screen.findByRole("button", { name: "Submit run" });
+    expect(summaryBodies(fetchMock)[0]?.modules).toEqual([first, "CP-MODEL"]);
+  });
+});
+
+describe("connected run start: the analyst note's refusal", () => {
+  const PIPE =
+    "contains a pipe character, a line feed or a carriage return, which a dossier table cell cannot hold.";
+  const noteLine = `Anything the analysis should know: ${PIPE}`;
+
+  async function refused(error: string, rows = false) {
+    testingFetch({ ...plan, digest: "", error });
+    render(<ConnectedApp path="/start" mode="synthetic" />);
+    await fillInputs();
+    await advanceToPurpose();
+    advanceToContext();
+    if (rows) {
+      fireEvent.click(await screen.findByRole("button", { name: "Add research question" }));
+      fireEvent.change(await screen.findByLabelText("Question"), {
+        target: { value: "How is leverage trending" },
+      });
+    }
+    fireEvent.change(await screen.findByLabelText("Anything the analysis should know"), {
+      target: { value: "Leverage | coverage trend" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Review run" }));
+  }
+
+  it("R8 goes to the note box, not to a question row", async () => {
+    await refused(`research_questions[0].text: ${PIPE}`);
+    const note = screen.getByLabelText("Anything the analysis should know");
+    await waitFor(() => {
+      expect(note).toHaveFocus();
+    });
+    expect(note).toHaveAttribute("aria-invalid", "true");
+    expect(note).toHaveAccessibleDescription(noteLine);
+    expect(
+      await screen.findByRole("button", { name: `1 problem to fix: ${noteLine}` }),
+    ).toBeTruthy();
+    const editor = document.querySelector('[data-field="research_questions"]');
+    expect(editor).not.toHaveAttribute("aria-invalid");
+    expect(editor).not.toHaveAttribute("aria-describedby");
+    expect(screen.queryByText(/Question 1/)).toBeNull();
+  });
+
+  it("R11 editing the note clears its problem", async () => {
+    await refused(`research_questions[0].text: ${PIPE}`);
+    const note = screen.getByLabelText("Anything the analysis should know");
+    await waitFor(() => {
+      expect(note).toHaveAttribute("aria-invalid", "true");
+    });
+    fireEvent.change(note, { target: { value: "Leverage and coverage trend" } });
+    expect(note).not.toHaveAttribute("aria-invalid");
+    expect(screen.queryByText(noteLine)).toBeNull();
+  });
+
+  it("R9 a problem on a held question row stays on the editor; the next index is the note's", async () => {
+    await refused(`research_questions[0].text: ${PIPE}`, true);
+    const add = await screen.findByRole("button", { name: "Add research question" });
+    await waitFor(() => {
+      expect(add).toHaveFocus();
+    });
+    expect(add).toHaveAccessibleDescription(expect.stringContaining("Question 1"));
+    cleanup();
+    vi.unstubAllGlobals();
+    await refused(`research_questions[1].text: ${PIPE}`, true);
+    const note = screen.getByLabelText("Anything the analysis should know");
+    await waitFor(() => {
+      expect(note).toHaveFocus();
+    });
+    expect(note).toHaveAccessibleDescription(noteLine);
   });
 });

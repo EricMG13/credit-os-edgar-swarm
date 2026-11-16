@@ -1,4 +1,4 @@
-import type { ReadinessItem } from "../api";
+import { drawnModules, type ReadinessItem } from "../api";
 
 type LimitOutcome = "will_refuse" | "gap" | "limited" | "check";
 export type LimitGroup = {
@@ -143,5 +143,6 @@ export function leaveOut(
   const selected = modules.length ? modules : requested;
   const chosen = requested.filter((code) => selected.includes(code));
   const kept = chosen.filter((code) => !refusing.has(code));
-  return kept.length > 0 && kept.length < chosen.length ? kept : null;
+  // The forecast is sent but is not a module: a list holding only it is never offered.
+  return drawnModules(kept).length > 0 && kept.length < chosen.length ? kept : null;
 }

@@ -267,14 +267,15 @@ export const PATHWAYS: Readonly<Record<string, { label: string; modules: string[
     modules: [
       "CP-0",
       "CP-1",
+      "CP-MODEL",
       "CP-1A",
       "CP-DR",
-      "CP-4",
       "CP-2",
       "CP-2A",
-      "CP-2E",
       "CP-2D",
+      "CP-2E",
       "CP-2G",
+      "CP-4",
       "CP-3C",
       "CP-3",
       "CP-5",
@@ -286,6 +287,7 @@ export const PATHWAYS: Readonly<Record<string, { label: string; modules: string[
     modules: [
       "CP-0",
       "CP-1",
+      "CP-MODEL",
       "CP-1A",
       "CP-1B",
       "CP-DR",
@@ -308,22 +310,22 @@ export const PATHWAYS: Readonly<Record<string, { label: string; modules: string[
   },
   earnings_update: {
     label: "Earnings Update",
-    modules: ["CP-0", "CP-1", "CP-1B", "CP-DR", "CP-2E", "CP-1D", "CP-5"],
+    modules: ["CP-0", "CP-1", "CP-MODEL", "CP-1B", "CP-1D", "CP-DR", "CP-2E", "CP-5"],
   },
   relative_value: {
     label: "Relative Value",
     modules: [
       "CP-0",
       "CP-1",
-      "CP-1A",
-      "CP-3D",
-      "CP-DR",
+      "CP-MODEL",
       "CP-1C",
+      "CP-DR",
       "CP-2",
-      "CP-2E",
       "CP-2D",
-      "CP-3C",
+      "CP-2E",
       "CP-3",
+      "CP-3C",
+      "CP-3D",
       "CP-5",
     ],
   },
@@ -332,14 +334,15 @@ export const PATHWAYS: Readonly<Record<string, { label: string; modules: string[
     modules: [
       "CP-0",
       "CP-1",
+      "CP-MODEL",
       "CP-1A",
       "CP-DR",
-      "CP-4",
       "CP-2",
       "CP-2A",
+      "CP-2D",
       "CP-2E",
       "CP-2G",
-      "CP-2D",
+      "CP-4",
       "CP-3C",
       "CP-5",
     ],
@@ -350,23 +353,31 @@ export const PATHWAYS: Readonly<Record<string, { label: string; modules: string[
       "CP-0",
       "CP-1",
       "CP-1A",
-      "CP-DR",
-      "CP-4",
       "CP-1C",
+      "CP-DR",
       "CP-2",
       "CP-2A",
       "CP-2E",
       "CP-2G",
       "CP-2H",
+      "CP-4",
       "CP-4C",
       "CP-5",
     ],
   },
   portfolio_decision: {
     label: "Portfolio Decision",
-    modules: ["CP-0", "CP-1", "CP-1A", "CP-DR", "CP-2", "CP-2E", "CP-3", "CP-5", "CP-6"],
+    modules: ["CP-0", "CP-1", "CP-MODEL", "CP-DR", "CP-2", "CP-2E", "CP-3", "CP-5", "CP-6"],
   },
 };
+/** `CP-MODEL` publishes the forecast and makes no model call: it is sent, never drawn as a module. */
+export const FORECAST_CODE = "CP-MODEL";
+
+/** The modules a pathway draws and counts: its list without the forecast. */
+export function drawnModules(modules: readonly string[]) {
+  return modules.filter((code) => code !== FORECAST_CODE);
+}
+
 export function pathwayModules(pathway: string) {
   return Object.hasOwn(PATHWAYS, pathway) ? (PATHWAYS[pathway]?.modules ?? []) : [];
 }

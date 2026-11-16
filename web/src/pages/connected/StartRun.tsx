@@ -30,6 +30,8 @@ import {
   RequestError,
   submit,
   upload,
+  drawnModules,
+  FORECAST_CODE,
   type Answers,
   type Context,
   type DocumentRecord,
@@ -120,7 +122,7 @@ const PATHWAY_CARDS = Object.entries(PATHWAYS).map(([id, pathway]) => ({
   id,
   title: pathway.label,
   description: PATHWAY_DESCRIPTIONS[id] ?? "",
-  modules: `${String(pathway.modules.length)} base modules`,
+  modules: `${String(drawnModules(pathway.modules).length)} base modules`,
 }));
 
 type FieldKey =
@@ -133,6 +135,7 @@ type FieldKey =
   | "quotes"
   | "ratings"
   | "research_questions"
+  | "analyst_note"
   | "turns"
   | "valuation"
   | "assumptions"
@@ -157,9 +160,13 @@ class FieldProblem extends Error {
  * its `others`; a failure that is not a refusal, or names no drawn control, is `undefined` (the
  * general notice shows it as it is).
  */
-function refusedField(failure: unknown, requested: readonly string[]): FieldProblem | undefined {
+function refusedField(
+  failure: unknown,
+  requested: readonly string[],
+  noteAt: number,
+): FieldProblem | undefined {
   if (!(failure instanceof RequestError) || failure.status === 404) return undefined;
-  const problems = refusalProblems(failure.message, requested);
+  const problems = refusalProblems(failure.message, requested, noteAt);
   const at = problems.findIndex(({ field }) => field !== undefined);
   const first = problems[at];
   if (!first?.field) return undefined;
@@ -834,6 +841,7 @@ function ContextInputFields({ view }: { view: IntakeView }) {
           Anything the analysis should know
           <textarea
             aria-describedby="run-analyst-questions"
+            {...problemAttrs(view.problem, "analyst_note")}
             className={field}
             rows={3}
             placeholder="For example, the committee wants a view on the 2028 maturities."
@@ -843,6 +851,7 @@ function ContextInputFields({ view }: { view: IntakeView }) {
             }}
           />
         </label>
+        <FieldMessage problem={view.problem} field="analyst_note" />
         <p id="run-analyst-questions" className="text-sm text-text-tertiary">
           Your note is included in the run’s research questions.
         </p>
@@ -1019,7 +1028,7 @@ function IssuerDetailsFields({ view }: { view: IntakeView }) {
 function StructuredContextFields({ view }: { view: IntakeView }) {
   const focusChoices = [
     ["", "Any"] as const,
-    ...pathwayModules(view.run.pathway).map((id) => [id, moduleName(id)] as const),
+    ...drawnModules(pathwayModules(view.run.pathway)).map((id) => [id, moduleName(id)] as const),
   ];
   return (
     <div className="grid gap-4 sm:col-span-2">
@@ -1138,12 +1147,12 @@ function AdvancedOptionsFields({ view }: { view: IntakeView }) {
       <fieldset className="min-w-0 rounded-lg border border-border-hairline p-3 sm:col-span-2">
         <legend className="px-1 text-sm font-semibold">Requested modules</legend>
         <div className="grid gap-2 sm:grid-cols-2">
-          {view.requested.map((code) => (
+          {drawnModules(view.requested).map((code) => (
             <label key={code} className="flex items-center gap-2 text-sm">
               <input
                 type="checkbox"
                 checked={!view.modules.length || view.modules.includes(code)}
-                disabled={view.modules.length === 1 && view.modules.includes(code)}
+                disabled={drawnModules(view.modules).length === 1 && view.modules.includes(code)}
                 onChange={(event) => {
                   view.toggleModule(code, event.target.checked);
                 }}
@@ -1671,9 +1680,10 @@ function IntakeForm({
     if (!result.documents.length)
       throw new Error("The service could not read any of the selected documents.");
     const answers = makeAnswers(result, details);
+    const noteAt = noteIndex(details, analystNote);
     const shownCap = capForPathway(caps, answers.context.run.pathway);
     const summary = await getSummary(draft.id, answers, shownCap).catch((failure: unknown) => {
-      throw refusedField(failure, requested) ?? failure;
+      throw refusedField(failure, requested, noteAt) ?? failure;
     });
     requireSummaryCap(summary, shownCap);
     if (!summary.digest) throw new Error("The service did not issue an approval for this run.");
@@ -1990,8 +2000,14 @@ function IntakeForm({
     resetIssuer,
     changePathway,
     changePurpose,
-    changeLevel: setLevel,
-    changeAnalystNote: setAnalystNote,
+    changeLevel: (value) => {
+      if (value !== "advanced") setModules([]);
+      setLevel(value);
+    },
+    changeAnalystNote: (value) => {
+      clearProblem("analyst_note");
+      setAnalystNote(value);
+    },
     changeNewestOverride: (value) => {
       setNewestOverride(value || undefined);
     },
@@ -2484,7 +2500,18 @@ function startingContext(template: Context, prior?: PriorInputs): Context {
   };
 }
 
-function carriedModules(prior?: PriorInputs) {
+export function carriedModules(prior?: PriorInputs) {
   const available = pathwayModules(prior?.context?.run.pathway ?? "");
-  return prior?.modules.every((code) => available.includes(code)) ? prior.modules : [];
+  const chosen = prior?.modules ?? [];
+  if (!drawnModules(chosen).length || !chosen.every((code) => available.includes(code))) return [];
+  // Runs recorded before the page listed the forecast kept none; the page offers no way to drop it.
+  return chosen.length && available.includes(FORECAST_CODE) && !chosen.includes(FORECAST_CODE)
+    ? available.filter((code) => chosen.includes(code) || code === FORECAST_CODE)
+    : chosen;
+}
+
+/** How many question rows were sent before the note, which goes last (none when no note). */
+function noteIndex(details: Record<string, unknown>, note: string) {
+  const sent = details.research_questions;
+  return note.trim() && Array.isArray(sent) ? sent.length - 1 : Infinity;
 }

@@ -358,6 +358,7 @@ type ControlKey =
   | "quotes"
   | "ratings"
   | "research_questions"
+  | "analyst_note"
   | "valuation"
   | "assumptions"
   | "module_options";
@@ -391,7 +392,13 @@ function isDrawn(path: string, requested: readonly string[]) {
   return true;
 }
 
-function controlOf(path: string, requested?: readonly string[]): ControlKey | undefined {
+function controlOf(
+  path: string,
+  requested?: readonly string[],
+  noteAt?: number,
+): ControlKey | undefined {
+  const row = /^research_questions\[(\d+)\]/.exec(path)?.[1];
+  if (noteAt !== undefined && row !== undefined && Number(row) >= noteAt) return "analyst_note";
   const field = CONTROL_PATHS[path] ?? (CONTROL_ROOTS.exec(path)?.[1] as ControlKey | undefined);
   return field && (!requested || isDrawn(path, requested)) ? field : undefined;
 }
@@ -401,14 +408,25 @@ export type RefusalProblem = { line: string; field?: ControlKey };
 
 /**
  * `refusalLines`, with the control (if the screen has one) that each problem is about. Given the
- * modules the pathway runs, a problem whose control is not drawn for them has no control.
+ * modules the pathway runs, a problem whose control is not drawn for them has no control. Given
+ * `noteAt` (how many question rows were sent before the analyst's note, which is sent as the next
+ * research question), a problem on a question from that index on is the note's: its control is
+ * the note box and its line names the note, not a question row.
  */
-export function refusalProblems(error: string, requested?: readonly string[]): RefusalProblem[] {
-  return splitRefusal(error).map(({ path, line }) => {
-    const field = controlOf(path, requested);
-    return { line: withoutFlags(line), ...(field ? { field } : {}) };
+export function refusalProblems(
+  error: string,
+  requested?: readonly string[],
+  noteAt?: number,
+): RefusalProblem[] {
+  return splitRefusal(error).map(({ path, line, text }) => {
+    const field = controlOf(path, requested, noteAt);
+    const shown = field === "analyst_note" ? `${NOTE_LABEL}: ${text}` : line;
+    return { line: withoutFlags(shown), ...(field ? { field } : {}) };
   });
 }
+
+/** The label of the analyst note box, which names its problems. */
+const NOTE_LABEL = "Anything the analysis should know";
 
 /** A command-line flag left in a line, outside double quotes, becomes `this setting` (logged raw). */
 function withoutFlags(line: string) {
@@ -423,15 +441,15 @@ function withoutFlags(line: string) {
 }
 
 /** The problems of a refusal, each with its path ("" when the problem has none). */
-function splitRefusal(error: string): { path: string; line: string }[] {
+function splitRefusal(error: string): { path: string; line: string; text: string }[] {
   const launcher = launcherLine(error);
-  if (launcher) return [{ path: "", line: launcher }];
-  if (!PROBLEM.test(error)) return [{ path: "", line: error }];
+  if (launcher) return [{ path: "", line: launcher, text: launcher }];
+  if (!PROBLEM.test(error)) return [{ path: "", line: error, text: error }];
   return error.split(new RegExp(`; (?=${PATH}: )`)).map((problem) => {
     const [, path = "", message = ""] = PROBLEM.exec(problem) ?? [];
     if (path === "$" || path === "schema") {
       console.warn(`Refusal not shown to the analyst: ${problem}`);
-      return { path: "", line: FORM_SENTENCE };
+      return { path: "", line: FORM_SENTENCE, text: FORM_SENTENCE };
     }
     const unknown = { found: false };
     const known = pathParts(path);
@@ -439,6 +457,6 @@ function splitRefusal(error: string): { path: string; line: string }[] {
     const found = known ?? fallbackParts(path);
     const text = plainTokens(plainMessage(typeMessage(message)), found.field, unknown);
     if (unknown.found) console.warn(`Refusal shown in plain words: ${problem}`);
-    return { path, line: `${found.parts.join(" · ")}: ${text}` };
+    return { path, line: `${found.parts.join(" · ")}: ${text}`, text };
   });
 }
