@@ -1,10 +1,11 @@
+import { Button as KitButton } from "@/components/base/buttons/button";
+import { ArrowRight } from "@untitledui/icons";
 import { ChevronDown, ChevronUp } from "@untitledui/icons";
 import { useEffect, useRef, useState } from "react";
-import { Button, Disclosure, DisclosurePanel, Link } from "react-aria-components";
+import { Button, Disclosure, DisclosurePanel } from "react-aria-components";
 import { cx } from "@/utils/cx";
 import type { Limitations as LimitationsData } from "../slice";
 import type { SECTION_HEADING, SUBSECTION_HEADING } from "./heading";
-import { TEXT_LINK } from "./links";
 import { TRACE_HOST, TraceControl } from "./TraceControl";
 
 /**
@@ -33,15 +34,17 @@ function Limitation({ text, trace }: LimitationsData["items"][number]) {
           {text}
         </span>
         {overflows ? (
-          <Button
+          <KitButton
             aria-expanded={open}
             onPress={() => {
               setOpen(!open);
             }}
-            className={`${TEXT_LINK} cursor-pointer text-small font-semibold text-action underline print:hidden`}
+            className="print:hidden"
+            color="link-gray"
+            size="sm"
           >
             {open ? "Show less" : "Show all"}
-          </Button>
+          </KitButton>
         ) : null}
       </span>
       <TraceControl trace={trace} label="Show sources for this limitation" />
@@ -83,12 +86,9 @@ export function Limitations({
                 </span>
               </Heading>
               <div className="flex items-center gap-4">
-                <Link
-                  href={gapsHref}
-                  className={`${TEXT_LINK} text-small font-semibold text-action underline`}
-                >
+                <KitButton href={gapsHref} color="link-gray" size="sm" iconTrailing={ArrowRight}>
                   {limitations.gapsLink.label}
-                </Link>
+                </KitButton>
                 <Button
                   slot="trigger"
                   aria-label={isExpanded ? "Collapse limitations" : "Expand limitations"}

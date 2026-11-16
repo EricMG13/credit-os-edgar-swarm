@@ -198,6 +198,38 @@ async function goBackWithKeyboard(page) {
   );
 }
 
+async function checkCompanyBand(report, channel) {
+  const band = report.getByRole("region", { name: "Company", exact: true });
+  await band.getByText("Moody's", { exact: true }).waitFor();
+  await band.getByText("B1", { exact: true }).waitFor();
+  await band.getByText("Entered at run start", { exact: true }).waitFor({ state: "visible" });
+  const outlook = band.getByText("Negative", { exact: true });
+  await outlook.waitFor();
+  assert.match(await outlook.getAttribute("class"), /\btext-error-text\b/u);
+  await band.screenshot({ path: path.join(artifacts, `${channel}-company-band.png`) });
+}
+
+async function checkOverviewMobile(report, page, channel) {
+  const desktop = page.viewportSize();
+  await page.setViewportSize({ width: 375, height: 844 });
+  await report.getByRole("link", { name: "Overview", exact: true }).click();
+  await page.getByRole("heading", { name: "Overview" }).waitFor();
+  const fits = await page.evaluate(() => {
+    const main = document.querySelector("main");
+    const over = (el) => el.scrollWidth > el.clientWidth;
+    return {
+      cards: document.querySelectorAll("main dl > div").length,
+      wide: [...document.querySelectorAll("main dl > div")].filter(over).length,
+      main: main ? over(main) : true,
+    };
+  });
+  assert.equal(fits.wide, 0, "a headline card overflows at 375px");
+  assert.equal(fits.main, false, "the main region overflows at 375px");
+  console.log(`overview mobile: ${String(fits.cards)} headline cards fit at 375px`);
+  await page.screenshot({ path: path.join(artifacts, `${channel}-overview-mobile.png`) });
+  await page.setViewportSize(desktop);
+}
+
 async function approveRunInputs(page, paidPreview) {
   const current = page
     .getByRole("list", { name: "Steps in this run" })
@@ -221,6 +253,13 @@ async function approveRunInputs(page, paidPreview) {
   await page
     .getByRole("combobox", { name: "Portfolio workbook", exact: true })
     .selectOption({ label: "northbridge-portfolio.xlsx" });
+  const ratings = page.getByRole("region", { name: "Ratings", exact: true });
+  await ratings.getByRole("button", { name: "Add rating", exact: true }).click();
+  await ratings.getByLabel("Agency", { exact: true }).selectOption("Moody's");
+  await ratings.getByLabel("Scope", { exact: true }).selectOption("issuer");
+  await ratings.getByLabel("Rating", { exact: true }).fill("B1");
+  await ratings.getByLabel("Outlook", { exact: true }).selectOption("Negative");
+  await ratings.getByLabel("As-of", { exact: true }).fill("2025-02-28");
   await page.getByRole("button", { name: "Review run", exact: true }).click();
   const submitButton = page.getByRole("button", {
     name: paidPreview ? "Submit, spend up to USD 25.00" : "Submit run",
@@ -652,7 +691,7 @@ async function checkDownside(report, modules, artifacts, channel, page) {
   await chart.screenshot({ path: path.join(artifacts, `${channel}-downside.png`) });
   await chart.getByRole("radio", { name: "Table", exact: true }).check();
   await chart.getByRole("cell", { name: "-5.1250 (−USD 5.13 million)", exact: true }).waitFor();
-  const trace = chart.getByRole("button", { name: "Show sources for Stressed FCF (USD millions)" });
+  const trace = chart.getByRole("button", { name: "Show sources for Stressed FCF ($m)" });
   await checkTraceFocus(page, trace, /Filing p\.2/u);
   await scenarios.getByText("Full scenario results", { exact: true }).click();
   await scenarios
@@ -1253,6 +1292,8 @@ async function checkBrowserRun(browser, service, workspace, channel, brand) {
     path: path.join(artifacts, `${channel}-finished-report.png`),
     fullPage: true,
   });
+  await checkCompanyBand(report, channel);
+  await checkOverviewMobile(report, page, channel);
   await checkOverviewTrace(report, page);
   await checkCalendar(report, artifacts, channel, page);
   await checkCharts(report, artifacts, channel, page, run);
@@ -1308,6 +1349,7 @@ async function checkBrowserRun(browser, service, workspace, channel, brand) {
       "revenue",
       "forecast",
       "forecast-mobile",
+      "overview-mobile",
       "modules-mobile",
       "evidence",
       "evidence-record",

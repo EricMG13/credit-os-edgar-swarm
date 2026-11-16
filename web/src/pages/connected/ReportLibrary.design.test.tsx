@@ -156,7 +156,7 @@ describe("connected library and report design", () => {
     north.metrics = { leverage: { value: "965", unit: "US$m", period: "2026-06-30" } };
     useSnapshot(snapshot);
     render(<ConnectedApp path="/" mode="synthetic" />);
-    const value = await screen.findByText("965 US$m");
+    const value = await screen.findByText("$965m");
     expect(value).toHaveClass("whitespace-nowrap");
     const grid = value.closest("dl");
     expect(grid).toHaveClass("grid-cols-[repeat(auto-fit,minmax(9rem,1fr))]");

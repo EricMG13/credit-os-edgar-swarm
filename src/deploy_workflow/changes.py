@@ -88,7 +88,12 @@ from typing import Any, Literal
 from pydantic import Field
 
 from deploy_vii.contracts import Contract, Identifier
-from deploy_workflow.credit_os_catalogue import CHART_PREFIX, chart_row, period_order
+from deploy_workflow.credit_os_catalogue import (
+    CHART_PREFIX,
+    chart_row,
+    definition_key as _definition_key,
+    period_order,
+)
 from deploy_workflow.library_index import (
     MethodHeadings,
     MethodText,
@@ -515,33 +520,6 @@ def _read(text: str) -> tuple[dict[str, Observation], dict[str, str]]:
 def observations(text: str) -> dict[str, Observation]:
     """The measures a CP-1 handoff states."""
     return _read(text)[0]
-
-
-_LOCATOR = re.compile(
-    r"\b(?:pages?|pp?|paras?|paragraphs?|sections?|notes?|lines?|slides?|exhibits?)\b\.?\s*"
-    r"(?:\d+(?:[.,]\d+)*(?:\s*(?:[-\u2013/&,]|and(?=\s*\d)|to(?=\s*\d))\s*\d+(?:[.,]\d+)*)*)",
-    re.IGNORECASE,
-)
-
-
-# A year after an instrument word names the instrument (`notes 2027`), not a place in a document:
-# it is kept (as letters, so the digit and locator removal leave it) and so tells two debts apart.
-_INSTRUMENT_YEAR = re.compile(
-    r"\b(notes?|bonds?|loans?|facility|facilities|due|maturing|maturity)\s+((?:19|20)\d{2})\b"
-)
-_YEAR_LETTERS = str.maketrans("0123456789", "abcdefghij")
-
-
-def _definition_key(text: str | None) -> str | None:
-    """A definition text compared: no page or locator references, no digits, no punctuation, lower
-    case, one space between words. None stays None (no text)."""
-    if text is None:
-        return None
-    kept = _INSTRUMENT_YEAR.sub(
-        lambda m: f"{m[1]} {m[2].translate(_YEAR_LETTERS)}", text.casefold()
-    )
-    bare = _LOCATOR.sub(" ", kept)
-    return " ".join(re.sub(r"[^\w\s]|_|\d", " ", bare).split())
 
 
 def _clause(who: str, why: str | None) -> str:

@@ -1,3 +1,4 @@
+import { ArrowRight } from "@untitledui/icons";
 import { useState } from "react";
 import { ClockRewind } from "@untitledui/icons";
 import { EmptyState } from "@/components/application/empty-state/empty-state";
@@ -21,9 +22,17 @@ import {
   type Snapshot,
 } from "../publishedReport";
 import { PublishedTable, ReportFindings } from "../ReportContent";
+import { tone } from "../signal";
 import { amount, distinct, ticks } from "../visuals/visualData";
 import { PublishedSource } from "./PublishedTrace";
 import { comparisonTrace, maturityTraces } from "./comparisonTrace";
+
+/** The owner's tone for a comparable measure's difference as sent; none where the table has no direction. */
+function cardTone(measure: { key: string; difference?: number | string | null } | undefined) {
+  if (measure?.difference == null) return undefined;
+  const result = tone(measure.key, String(measure.difference));
+  return result === "none" ? undefined : result;
+}
 
 const cell = (value: string): Cell =>
   value === "Not stated" ? null : { kind: "value", at: null, text: value };
@@ -159,6 +168,11 @@ export function Changes({
                     index,
                   ) => {
                     const href = trace.measure(label);
+                    const kind = reason.endsWith("Same-period analysis change")
+                      ? "Same-period analysis change"
+                      : delta && delta !== "—"
+                        ? "Comparable"
+                        : "Not assessable";
                     return (
                       <ChangeCard
                         key={index}
@@ -171,15 +185,15 @@ export function Changes({
                         }
                         change={{
                           measure: label,
-                          kind: reason.endsWith("Same-period analysis change")
-                            ? "Same-period analysis change"
-                            : delta && delta !== "—"
-                              ? "Comparable"
-                              : "Not assessable",
+                          kind,
                           current: cell(after),
                           from: cell(before),
                           change: delta && delta !== "—" ? delta : null,
                           direction: "none",
+                          tone:
+                            kind === "Comparable"
+                              ? cardTone(change?.pack?.measures?.[index])
+                              : undefined,
                           cause: containsReference(reason) ? "See comparison evidence." : reason,
                           effect: containsReference(analysis) ? "" : analysis,
                           trace: null,
@@ -197,9 +211,14 @@ export function Changes({
           </>
         )}
         {change?.pack && !change.problem && (
-          <a className="text-action underline" href={trace.handoff ?? "#evidence/trace/CP-8"}>
+          <Button
+            href={trace.handoff ?? "#evidence/trace/CP-8"}
+            color="link-gray"
+            size="sm"
+            iconTrailing={ArrowRight}
+          >
             Review comparison evidence
-          </a>
+          </Button>
         )}
       </section>
       {!change?.problem && change?.pack && (

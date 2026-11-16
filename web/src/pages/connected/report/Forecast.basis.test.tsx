@@ -115,7 +115,7 @@ const run = { folder: "current" } as PublishedRun;
 it("preserves the recorded bridge and its exact source lines", () => {
   render(<Forecast view={basisView()} run={run} />);
   expect(screen.getByText(/The calculation gives/)).toHaveTextContent(
-    "The calculation gives 10.00 cash proxy. The handoff gives 15.00 free cash flow. The displayed difference is 5.00 US$m.",
+    "The calculation gives 10.00 cash proxy. The handoff gives 15.00 free cash flow. The displayed difference is $5.00m.",
   );
   expect(screen.getByRole("link", { name: "Free cash flow basis" })).toHaveAttribute(
     "href",
