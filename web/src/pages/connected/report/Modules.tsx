@@ -3,7 +3,7 @@ import { Button } from "@/components/base/buttons/button";
 import { StatusBadge } from "@/components/status/StatusBadge";
 import { ModuleNav, type NavSection } from "@/pages/library/parts/ModuleNav";
 import { card, field, heading } from "../layout";
-import { ReportFindings, findingBlocks } from "../ReportContent";
+import { RECORDS_ID, ReportFindings, findingBlocks, recordSections } from "../ReportContent";
 import {
   evidencePath,
   type OutputEntry,
@@ -78,6 +78,8 @@ function Navigator({
       icon: "records",
     });
   }
+  if (entry && recordSections(entry.sections, entry).length)
+    sections.push({ label: "Statements and records", key: RECORDS_ID, icon: "records" });
   const [active, setActive] = useState(sections[0]?.key ?? null);
   const [mobileSection, setMobileSection] = useState("");
   const moduleHref = (id: string) => `#modules/${encodeURIComponent(id)}`;

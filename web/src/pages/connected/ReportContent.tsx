@@ -220,6 +220,8 @@ export function PublishedTable({
 }) {
   const columns = displayColumns(table.headers, evidence, table.rows);
   if (!columns.length || !table.rows.length) return null;
+  const pinned = (column: number) =>
+    columns.length >= 5 && column === columns[0] ? " sticky left-0 min-w-56" : "";
   const sources =
     rowSource ??
     (traceAt &&
@@ -232,7 +234,11 @@ export function PublishedTable({
         <thead className="bg-surface-subtle text-text-secondary">
           <tr>
             {columns.map((column) => (
-              <th key={column} scope="col" className="px-3 py-2.5 text-left font-semibold">
+              <th
+                key={column}
+                scope="col"
+                className={`px-3 py-2.5 text-left font-semibold${pinned(column)}${pinned(column) ? " bg-surface-subtle" : ""}`}
+              >
                 {richParts(table.headers[column] ?? "")}
               </th>
             ))}
@@ -253,7 +259,10 @@ export function PublishedTable({
                 const cell = row.cells[column] ?? "";
                 const sourceHref = rowHref?.(row.line) ?? href;
                 return (
-                  <td key={column} className="px-3 py-2.5 text-text-secondary">
+                  <td
+                    key={column}
+                    className={`px-3 py-2.5 text-text-secondary${pinned(column)}${pinned(column) ? " bg-surface-card" : ""}`}
+                  >
                     {!evidence && containsReference(cell) ? (
                       sourceHref ? (
                         <a href={sourceHref} className="text-action underline">
@@ -285,6 +294,43 @@ function readerBlock(block: Block): boolean {
   return block.type === "table" || (block.type === "text" && !methodNote(block.text));
 }
 
+export const RECORDS_ID = "statements-and-records";
+const RECORD_PREFIX = /^[TP]\d+[A-Z]?(?:\.\d+)?\s+/;
+const RECORD_CODE = /^(?:[TP]\d+[A-Z]?(?:\.\d+)?\s|Confidence inputs$)/;
+
+function registerBlocks(section: Section, entry: OutputEntry) {
+  if (entry.output.module === "CP-6" && /^T6E\.(?:4|6|7)\b/.test(section.heading))
+    return section.blocks.filter(readerBlock);
+  return section.blocks.filter((block) => {
+    if (block.type !== "table") return false;
+    if (monitoringLabel(entry.output.module, section.heading, block)) return true;
+    const headers = block.headers.map((header) => header.trim().toLowerCase());
+    return (
+      (headers.includes("probability") && headers.includes("impact")) ||
+      headers.some((header) => /leading/.test(header)) ||
+      (/date|window/.test(headers[0] ?? "") && headers.some((header) => /^event/.test(header)))
+    );
+  });
+}
+
+function classified(sections: Section[]) {
+  return classifySections(sections).map(({ section, role }) => ({
+    section,
+    role: role === "finding" && RECORD_CODE.test(section.heading) ? ("registers" as const) : role,
+    coded: role === "finding" && RECORD_CODE.test(section.heading),
+  }));
+}
+
+// Coded registers and audit tables left off the module page; Evidence holds them.
+export function recordSections(sections: Section[], entry: OutputEntry) {
+  return classified(sections)
+    .filter(
+      ({ section, coded }) =>
+        coded && section.blocks.some(readerBlock) && registerBlocks(section, entry).length === 0,
+    )
+    .map(({ section }) => section);
+}
+
 export function findingBlocks(
   sections: Section[],
   entry: OutputEntry,
@@ -300,7 +346,7 @@ export function findingBlocks(
       .map((item) => item.table)
       .concat(figureTableLines),
   );
-  return classifySections(sections)
+  return classified(sections)
     .flatMap(({ section, role }) => {
       if (role === "finding" || role === "passage" || role === "drawing") {
         return [
@@ -313,19 +359,7 @@ export function findingBlocks(
         ];
       }
       if (role !== "registers") return [];
-      if (entry.output.module === "CP-6" && /^T6E\.(?:4|6|7)\b/.test(section.heading)) {
-        return [{ ...section, blocks: section.blocks.filter(readerBlock) }];
-      }
-      const promoted = section.blocks.filter((block) => {
-        if (block.type !== "table") return false;
-        if (monitoringLabel(entry.output.module, section.heading, block)) return true;
-        const headers = block.headers.map((header) => header.trim().toLowerCase());
-        return (
-          (headers.includes("probability") && headers.includes("impact")) ||
-          headers.some((header) => /leading/.test(header)) ||
-          (/date|window/.test(headers[0] ?? "") && headers.some((header) => /^event/.test(header)))
-        );
-      });
+      const promoted = registerBlocks(section, entry);
       return promoted.length ? [{ ...section, blocks: promoted }] : [];
     })
     .filter((section) => section.blocks.length > 0);
@@ -432,6 +466,7 @@ export function ReportFindings({
       )
     : undefined;
   const ordered = sections.filter((section) => section !== contrary);
+  const records = overview ? [] : recordSections(entry.sections, entry);
   function drawSection(section: Section) {
     const first = section.blocks[0];
     if (
@@ -567,6 +602,29 @@ export function ReportFindings({
             </div>
           );
         })}
+        {records.length > 0 && (
+          <section className={card} id={RECORDS_ID} tabIndex={-1}>
+            <h2 className={heading}>Statements and records</h2>
+            <p className="max-w-[76ch] text-body text-text-secondary">
+              These tables are part of this module's record and are shown in Evidence.
+            </p>
+            <ul className="grid gap-1">
+              {records.map((section) => (
+                <li key={section.line}>
+                  <a
+                    href={evidencePath(run.folder, entry, section.line)}
+                    className="text-action underline"
+                  >
+                    {section.heading.replace(RECORD_PREFIX, "")}
+                  </a>
+                </li>
+              ))}
+            </ul>
+            <a href={evidencePath(run.folder, entry)} className="text-action underline">
+              Open this module in Evidence
+            </a>
+          </section>
+        )}
       </div>
       {active && (
         <TraceDrawer
