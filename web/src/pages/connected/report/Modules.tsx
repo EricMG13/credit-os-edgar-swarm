@@ -99,6 +99,15 @@ function Navigator({
     if (!targets.length) return;
     const inView = new Set<string>();
     const root = aside.current?.closest("main") ?? null;
+    // One decision for the scroll listener and the observer, so they cannot disagree. A short last
+    // section never reaches the top band, so the bottom of a scrolling page selects it.
+    const choose = () => {
+      if (pinned.current) return;
+      const scrolls = root !== null && root.scrollHeight > root.clientHeight;
+      const atBottom = scrolls && root.scrollTop + root.clientHeight >= root.scrollHeight - 2;
+      const next = atBottom ? keys.at(-1) : keys.find((key) => inView.has(key));
+      if (next) setActive(next);
+    };
     // The scrolling region is the shell's `main`, so the top third is measured against it.
     const spy = new IntersectionObserver(
       (changes) => {
@@ -106,30 +115,28 @@ function Navigator({
           if (isIntersecting) inView.add(target.id);
           else inView.delete(target.id);
         }
-        const first = keys.find((key) => inView.has(key));
-        if (first && !pinned.current) setActive(first);
+        choose();
       },
       { root, rootMargin: "0px 0px -66% 0px" },
     );
     for (const target of targets) spy.observe(target);
     const release = (event: Event) => {
-      // Keys pressed inside the navigator operate its own buttons; they are not scrolling.
-      if (event.type === "keydown" && aside.current?.contains(event.target as Node)) return;
+      const from = event.target as Node;
+      // Enter and Space on the navigator's own buttons press them; every other key may scroll.
+      if (event instanceof KeyboardEvent && (event.key === "Enter" || event.key === " ")) {
+        if (aside.current?.contains(from)) return;
+      }
+      // A press on the container itself is its scrollbar; one on a descendant is not.
+      if (event.type === "pointerdown" && from !== root) return;
       pinned.current = false;
     };
-    // A short last section never reaches the top band, so the bottom of the page selects it.
-    const atBottom = () => {
-      if (!root || pinned.current) return;
-      const last = keys.at(-1);
-      if (last && root.scrollTop + root.clientHeight >= root.scrollHeight - 2) setActive(last);
-    };
-    const inputs = ["wheel", "touchmove", "keydown"];
+    const inputs = ["wheel", "touchmove", "keydown", "pointerdown"];
     for (const name of inputs) root?.addEventListener(name, release);
-    root?.addEventListener("scroll", atBottom);
+    root?.addEventListener("scroll", choose);
     return () => {
       spy.disconnect();
       for (const name of inputs) root?.removeEventListener(name, release);
-      root?.removeEventListener("scroll", atBottom);
+      root?.removeEventListener("scroll", choose);
     };
   }, [sectionKeys]);
   const [mobileSection, setMobileSection] = useState("");

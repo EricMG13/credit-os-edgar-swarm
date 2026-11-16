@@ -118,6 +118,12 @@ afterEach(() => {
 const sectionButtons = () =>
   within(screen.getByRole("list", { name: "On this page" })).getAllByRole("button");
 
+function scrollSizes(main: HTMLElement, top: number, client: number, height: number) {
+  Object.defineProperty(main, "scrollTop", { value: top, configurable: true });
+  Object.defineProperty(main, "clientHeight", { value: client, configurable: true });
+  Object.defineProperty(main, "scrollHeight", { value: height, configurable: true });
+}
+
 const marks = () => sectionButtons().map((button) => button.getAttribute("aria-current"));
 
 describe("report wayfinding", () => {
@@ -188,6 +194,79 @@ describe("report wayfinding", () => {
       fireEvent.scroll(main);
     });
     expect(marks()).toEqual([null, null, "location"]);
+  });
+
+  it("selects the last entry when an observer notice follows the bottom scroll", async () => {
+    vi.stubGlobal("IntersectionObserver", FakeObserver);
+    useSnapshot();
+    open("#modules/CP-1");
+    await screen.findByLabelText("Module");
+    const spy = observers.find((item) => item.observed.length > 0);
+    const first = spy?.observed[0];
+    if (!spy || !first) throw new Error("no observer");
+    const main = screen.getByRole("main");
+    scrollSizes(main, 600, 400, 1000);
+    act(() => {
+      fireEvent.scroll(main);
+    });
+    act(() => {
+      spy.callback([{ target: first, isIntersecting: true }]);
+    });
+    expect(marks()).toEqual([null, null, "location"]);
+  });
+
+  it("follows the observer when the container cannot scroll", async () => {
+    vi.stubGlobal("IntersectionObserver", FakeObserver);
+    useSnapshot();
+    open("#modules/CP-1");
+    await screen.findByLabelText("Module");
+    const spy = observers.find((item) => item.observed.length > 0);
+    const first = spy?.observed[0];
+    if (!spy || !first) throw new Error("no observer");
+    scrollSizes(screen.getByRole("main"), 0, 800, 800);
+    act(() => {
+      spy.callback([{ target: first, isIntersecting: true }]);
+    });
+    expect(marks()).toEqual(["location", null, null]);
+  });
+
+  it("releases a clicked entry on a scrolling key pressed in the navigator", async () => {
+    vi.stubGlobal("IntersectionObserver", FakeObserver);
+    useSnapshot();
+    open("#modules/CP-1");
+    await screen.findByLabelText("Module");
+    const spy = observers.find((item) => item.observed.length > 0);
+    const [, second, third] = spy?.observed ?? [];
+    if (!spy || !second || !third) throw new Error("sections missing");
+    third.scrollIntoView = vi.fn();
+    const button = sectionButtons()[2] as HTMLElement;
+    fireEvent.click(button);
+    act(() => {
+      fireEvent.keyDown(button, { key: "ArrowDown" });
+    });
+    act(() => {
+      spy.callback([{ target: second, isIntersecting: true }]);
+    });
+    expect(marks()).toEqual([null, "location", null]);
+  });
+
+  it("releases a clicked entry when the reader presses the scrollbar", async () => {
+    vi.stubGlobal("IntersectionObserver", FakeObserver);
+    useSnapshot();
+    open("#modules/CP-1");
+    await screen.findByLabelText("Module");
+    const spy = observers.find((item) => item.observed.length > 0);
+    const [, second, third] = spy?.observed ?? [];
+    if (!spy || !second || !third) throw new Error("sections missing");
+    third.scrollIntoView = vi.fn();
+    fireEvent.click(sectionButtons()[2] as HTMLElement);
+    act(() => {
+      fireEvent.pointerDown(screen.getByRole("main"));
+    });
+    act(() => {
+      spy.callback([{ target: second, isIntersecting: true }]);
+    });
+    expect(marks()).toEqual([null, "location", null]);
   });
 
   it("renders the navigator and still activates an entry on click without IntersectionObserver", async () => {
