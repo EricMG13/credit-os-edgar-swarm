@@ -181,7 +181,7 @@ export function Forecast({
               Two cases
             </h3>
             <p className="text-small text-text-tertiary">
-              Choose a case: every chart below follows it.
+              The cash proxy and forecast charts follow the selected case.
             </p>
           </div>
           <div role="radiogroup" aria-label="Forecast case" className="grid gap-4 sm:grid-cols-2">
@@ -224,7 +224,7 @@ export function Forecast({
                       </span>
                       <span className="block text-text-tertiary">
                         Cash proxy {period ? `· ${period}` : ""}
-                        {units ? ` · ${units}` : ""}
+                        {` · ${units}`}
                       </span>
                     </span>
                   </label>

@@ -46,6 +46,16 @@ it("offers the published Base and Downside cases with actual latest cash proxy v
   ]);
 });
 
+it("labels absent units as not recorded in the case data and model", () => {
+  const noUnits = { cashflow: { ...model.cashflow, units: null } };
+  expect(forecastCaseOptions(noUnits).map(({ units }) => units)).toEqual([
+    "Units not recorded",
+    "Units not recorded",
+  ]);
+  render(<LegacyForecast model={noUnits} />);
+  expect(screen.getByText("Units not recorded")).toBeInTheDocument();
+});
+
 it("applies the selected downside to forecast chart and model table", () => {
   render(<LegacyForecast model={model} selectedCase="Downside shock" />);
   const chart = within(screen.getByRole("figure", { name: "Revenue" }));

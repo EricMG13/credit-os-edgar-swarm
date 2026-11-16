@@ -38,6 +38,9 @@ engine is in [EricMG13/final-workflow](https://github.com/EricMG13/final-workflo
   TypeScript, ESLint, formatting and the changed-code quality gate passed.
   Fallow retains baseline findings plus complexity/duplication warnings in
   touched code; the new unused export was removed. Browser results follow below.
+- Browser preparation found and fixed a duplicated-label locator in Record.
+  Visual inspection also required an explicit label for unrecorded model units;
+  the native synthetic model leaves units null, and the UI does not infer them.
 - The Windows release gate remains open. Keep the ZIP local until Chrome and
   Edge both pass on the actual Windows work PC using `docs/react-workflow.md`.
 

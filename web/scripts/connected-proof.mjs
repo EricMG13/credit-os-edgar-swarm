@@ -322,7 +322,10 @@ async function checkRecord(report, page, channel) {
   const nav = report.getByRole("navigation", { name: "Evidence sections" });
   await nav.getByRole("link", { name: "Record", exact: true }).click();
   await report.getByRole("heading", { name: "Run record" }).waitFor();
-  await report.getByText("Synthetic test", { exact: true }).waitFor();
+  await report
+    .getByRole("definition")
+    .filter({ hasText: /^Synthetic test$/u })
+    .waitFor();
   await report.getByText(/^(?:\d+ min )?\d+ s$/u).waitFor();
   await report
     .getByRole("progressbar", {
@@ -775,6 +778,18 @@ async function checkCharts(report, artifacts, channel, page) {
   await section("Forecast").click();
   const revenue = report.getByRole("figure", { name: "Revenue", exact: true });
   await revenue.locator("svg.recharts-surface").first().waitFor();
+  const sourceSwitch = report.getByRole("switch");
+  if (await sourceSwitch.isChecked())
+    await report.getByText("Show sources", { exact: true }).click();
+  await revenue.hover();
+  const revenueSource = revenue.getByRole("button", {
+    name: "Show sources for Revenue",
+    exact: true,
+  });
+  await page.waitForFunction(
+    (control) => control !== null && getComputedStyle(control).opacity === "1",
+    await revenueSource.elementHandle(),
+  );
   await revenue.screenshot({ path: path.join(artifacts, `${channel}-revenue.png`) });
   await revenue.getByRole("radio", { name: "Table", exact: true }).check();
   await revenue.getByText("1,050", { exact: true }).first().waitFor();
@@ -997,6 +1012,7 @@ for (const [channel, brand, envName] of [
             "dated instrument quotes, decision and recovery qualification",
             "selected workbook attestation, portfolio limits and proposal qualification",
             "forecast chart and model",
+            "chart source control visible on hover with Show sources off",
             "shared Base and Downside case selection updates cash proxy and exact model values",
             "evidence bookmark retains identity after reorder and rejects old ordinal addresses",
             "forecast run figures and original module",

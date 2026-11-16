@@ -320,7 +320,7 @@ export function forecastCaseOptions(model: unknown) {
     name,
     period: latestPeriod,
     value: values.at(-1),
-    units: word(cashflow.units),
+    units: word(cashflow.units) || "Units not recorded",
   }));
 }
 
@@ -406,7 +406,7 @@ export function LegacyForecast({
         <p>This model has no readable calculation record.</p>
       ) : (
         <>
-          {units && <p className="text-text-secondary">{units}</p>}
+          <p className="text-text-secondary">{units || "Units not recorded"}</p>
           {summary}
           <ForecastTrends
             grid={grid}
