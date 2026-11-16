@@ -17,8 +17,6 @@ import type {
   Table,
 } from "./publishedReport";
 
-const readerModuleName = (id: string) => moduleName(id);
-
 export function moduleState(entry: OutputEntry | undefined): ModuleState {
   if (!entry) return "Not run";
   if (entry.output.parseError || blocked(entry)) return "Not assessable";
@@ -58,7 +56,7 @@ export function buildReportView(snapshot: Snapshot, routeKey: string, run: Publi
   const modules = Object.keys(run.modules).map((id) => {
     const outputs = entries.filter((entry) => entry.output.module === id);
     const selected = outputs.find((entry) => entry.selected);
-    return { id, name: readerModuleName(id), state: moduleState(selected ?? outputs[0]), outputs };
+    return { id, name: moduleName(id), state: moduleState(selected ?? outputs[0]), outputs };
   });
   return {
     entries,

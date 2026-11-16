@@ -337,45 +337,98 @@ it("shows a snapshot error without admitting a report or remaining in loading", 
   expect(screen.queryByRole("link", { name: "Run activity" })).toBeNull();
 });
 
-describe.each(["#overview", "#changes", "#modules", "#forecast", "#evidence/summary"])(
-  "module codes in handoff text on %s",
-  (hash) => {
-    it("shows a module by its plain name", async () => {
-      const snapshot = librarySnapshot() as unknown as Snapshot;
-      const run = snapshot.workspace.runs.north;
-      if (!run) throw new Error("Northbridge fixture is missing");
-      const id = "northbridge-2026/outputs/CP-1.md";
-      run.modules = { "CP-1": { outputs: [id], default: id } };
+const CODED_CELL = "Liquidity (CP-2D)";
+const CODED_BASIS = "Basis: Financial foundation (CP-1)";
+
+function codedSections() {
+  return [
+    {
+      heading: "Findings",
+      level: 2,
+      line: 10,
+      blocks: [
+        {
+          type: "table" as const,
+          line: 12,
+          headers: ["Item", "Owner"],
+          rows: [{ line: 14, cells: ["Cash runway", CODED_CELL] }],
+        },
+        {
+          type: "text" as const,
+          line: 16,
+          end: 17,
+          text: `Cash covers the year.\n${CODED_BASIS}`,
+        },
+      ],
+    },
+    {
+      heading: "Bottom line",
+      level: 3,
+      line: 20,
+      blocks: [
+        {
+          type: "text" as const,
+          line: 21,
+          end: 22,
+          text: `Credit is stable; ${CODED_CELL} is ample.\n${CODED_BASIS}`,
+        },
+      ],
+    },
+  ];
+}
+
+const CODED_VIEWS: [string, string][] = [
+  ["#overview", "Credit is stable"],
+  ["#changes", "Changes since the last run"],
+  ["#modules", "Cash runway"],
+  ["#forecast", "Forecast assumptions"],
+  ["#evidence/summary", "Handoffs"],
+];
+
+describe.each(CODED_VIEWS)("module codes in handoff text on %s", (hash, marker) => {
+  it("shows a module by its plain name", async () => {
+    const snapshot = librarySnapshot() as unknown as Snapshot;
+    const run = snapshot.workspace.runs.north;
+    if (!run) throw new Error("Northbridge fixture is missing");
+    run.changes = { note: "No earlier run matched." };
+    run.modules = {};
+    for (const module of ["CP-1", "CP-2", "CP-8"]) {
+      const id = `northbridge-2026/outputs/${module}.md`;
+      run.modules[module] = { outputs: [id], default: id };
       snapshot.workspace.outputs[id] = {
         id,
         run: "north",
-        module: "CP-1",
-        label: "Financial foundation",
+        module,
+        label: module,
         href: id,
-        sha256: "handoff-digest",
+        sha256: `digest-${module}`,
         state: { established: true, declared: null },
       };
-      snapshot.workspace.handoffs["handoff-digest"] = [
-        {
-          heading: "Findings",
-          level: 2,
-          line: 10,
-          blocks: [
-            {
-              type: "table",
-              line: 12,
-              headers: ["Item", "Owner"],
-              rows: [{ line: 14, cells: ["Cash runway", "Liquidity (CP-2D)"] }],
-            },
-            { type: "text", line: 16, end: 16, text: "Basis: Financial foundation (CP-1)" },
-          ],
+      snapshot.workspace.handoffs[`digest-${module}`] = codedSections();
+    }
+    snapshot.workspace.models = [
+      {
+        id: "model",
+        issuerKey: run.issuerKey ?? "",
+        runId: null,
+        runFolder: "northbridge-2026",
+        sources: [],
+        cashflow: null,
+        register: {
+          heading: "Forecast assumptions",
+          intro: null,
+          headers: ["Item", "Owner"],
+          rows: [["Cash runway", CODED_CELL]],
         },
-      ];
-      useSnapshot(snapshot);
-      window.history.replaceState(null, "", `/report/northbridge-2026${hash}`);
-      render(<ConnectedApp path="/report/northbridge-2026" mode="synthetic" />);
-      await screen.findByRole("heading", { level: 1, name: "Northbridge" });
-      expect(document.body.textContent).not.toMatch(/\(CP-[A-Z0-9]+\)/);
-    });
-  },
-);
+        href: "",
+        download: "",
+      },
+    ];
+    useSnapshot(snapshot);
+    window.history.replaceState(null, "", `/report/northbridge-2026${hash}`);
+    render(<ConnectedApp path="/report/northbridge-2026" mode="synthetic" />);
+    await screen.findByRole("heading", { level: 1, name: "Northbridge" });
+    expect(document.body.textContent).toContain(marker);
+    expect(document.body.textContent).not.toMatch(/\(CP-[A-Za-z0-9]+\)/);
+  });
+});

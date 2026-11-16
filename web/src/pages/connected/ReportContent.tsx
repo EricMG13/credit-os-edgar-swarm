@@ -398,8 +398,8 @@ function FindingsSummary({
       level="h3"
       text={{
         label: "Bottom line",
-        lead: summary.bottomLine,
-        rest: containsReference(summary.limitation) ? "" : summary.limitation,
+        lead: plainModuleNames(summary.bottomLine),
+        rest: containsReference(summary.limitation) ? "" : plainModuleNames(summary.limitation),
         trace: summaryTrace ? traceKey(entry, summary.line) : null,
       }}
     />
@@ -500,9 +500,13 @@ export function ReportFindings({
               label: findingLabel(section, overviewLabel),
               lead:
                 judgement ??
-                readParagraph(first.text).body.replaceAll("**", "").replaceAll("`", ""),
+                plainModuleNames(
+                  readParagraph(first.text).body.replaceAll("**", "").replaceAll("`", ""),
+                ),
               rest: judgement
-                ? readParagraph(first.text).body.replaceAll("**", "").replaceAll("`", "")
+                ? plainModuleNames(
+                    readParagraph(first.text).body.replaceAll("**", "").replaceAll("`", ""),
+                  )
                 : "",
               trace: key(first.line),
             }}
