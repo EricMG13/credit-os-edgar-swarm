@@ -2203,7 +2203,12 @@ function InputStepForm({
             Step {FORM_STEP_KEYS.indexOf(view.step) + 1} of {STEP_TOTAL}
           </span>
           {view.problem && (
-            <Button color="link-destructive" size="sm" onPress={view.focusProblem}>
+            <Button
+              color="link-destructive"
+              size="sm"
+              className="max-w-full text-left whitespace-normal"
+              onPress={view.focusProblem}
+            >
               {`1 problem to fix: ${view.problem.message}`}
             </Button>
           )}
