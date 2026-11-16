@@ -94,7 +94,7 @@ function passageTexts(entry: OutputEntry, heading: string) {
     .filter((block) => block.type === "text");
 }
 
-/** One bottom line per module that ran, other than the lead; null where there is none to show. */
+/** One bottom line per module that ran, other than the lead; text is null where there is none to show; `referenced` marks one written but citing a source. */
 export function moduleBottomLines(view: ReportView, run: PublishedRun) {
   return moduleOrder(run).flatMap((id) => {
     const entry = designated(view, id);
@@ -106,13 +106,15 @@ export function moduleBottomLines(view: ReportView, run: PublishedRun) {
         ? { line: entry.output.summary.line, body: entry.output.summary.bottomLine }
         : null;
     const body = written?.body.replaceAll("**", "").replaceAll("`", "");
+    const referenced = body !== undefined && containsReference(body);
     return [
       {
         id,
         name: moduleName(id),
         state: moduleState(entry),
         entry,
-        text: body && !containsReference(body) ? readerText(body) : null,
+        text: body && !referenced ? readerText(body) : null,
+        referenced,
         line: written?.line ?? null,
       },
     ];

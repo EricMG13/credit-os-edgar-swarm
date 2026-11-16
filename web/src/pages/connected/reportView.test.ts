@@ -515,6 +515,64 @@ describe("what the overview carries for every module", () => {
     ]);
   });
 
+  it("tells a bottom line that cites a source from one the module never wrote", () => {
+    const { run, view } = overviewFixture(
+      {
+        "CP-0": { bottom: "Plain." },
+        "CP-1": { bottom: "See debt-schedule.xlsx for the figure." },
+        "CP-3": { limits: ["Only a limitation."] },
+        "CP-2": { bottom: "Credit is stable." },
+      },
+      null,
+    );
+    expect(moduleBottomLines(view, run).map((row) => [row.id, row.text, row.referenced])).toEqual([
+      ["CP-0", "Plain.", false],
+      ["CP-1", null, true],
+      ["CP-3", null, false],
+    ]);
+  });
+
+  it("skips a recorded step that has no designated output", () => {
+    const { run, view } = overviewFixture(
+      { "CP-1": { bottom: "One.", limits: ["A."] }, "CP-2": { bottom: "Lead." } },
+      ["CP-9", "CP-1", "CP-2"],
+    );
+    expect(moduleBottomLines(view, run).map((row) => row.id)).toEqual(["CP-1"]);
+    expect(runLimitations(view, run).map((row) => row.id)).toEqual(["CP-1"]);
+  });
+
+  it("removes backticks and names a backticked code in a bottom line", () => {
+    const { run, view } = overviewFixture(
+      { "CP-1": { bottom: "`CP-2D` view `x`." }, "CP-2": { bottom: "Lead." } },
+      null,
+    );
+    expect(moduleBottomLines(view, run)[0]?.text).toBe("Liquidity view x.");
+  });
+
+  it("keeps limitations that differ only in a period or a multiple", () => {
+    const { run, view } = overviewFixture(
+      {
+        "CP-1": {
+          limits: ["The FY2025 audit is not yet signed.", "Leverage above 4.5x is not tested."],
+        },
+        "CP-3": {
+          limits: [
+            "The FY2024 audit is not yet signed.",
+            "Leverage above 5.5x is not tested.",
+            "the fy2025 audit is NOT yet signed",
+          ],
+        },
+      },
+      ["CP-1", "CP-3"],
+    );
+    expect(runLimitations(view, run).map((row) => [row.id, row.text])).toEqual([
+      ["CP-1", "The FY2025 audit is not yet signed."],
+      ["CP-1", "Leverage above 4.5x is not tested."],
+      ["CP-3", "The FY2024 audit is not yet signed."],
+      ["CP-3", "Leverage above 5.5x is not tested."],
+    ]);
+  });
+
   it("lists each limitation of the run once, in module order", () => {
     const { run, view } = overviewFixture(full(), steps);
     expect(runLimitations(view, run).map((row) => [row.id, row.text])).toEqual([

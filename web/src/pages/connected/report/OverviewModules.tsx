@@ -29,10 +29,17 @@ export function ModuleBottomLines({
               </a>
               <StatusBadge set="Module state" state={row.state} />
             </div>
-            {row.text === null ? (
-              <GapPanel reason="This module's handoff has no bottom line the page can show; its handoff is in Evidence." />
-            ) : (
+            {row.text !== null ? (
               <p className="max-w-[65ch] text-body text-text-secondary">{row.text}</p>
+            ) : row.referenced ? (
+              <a
+                href={evidencePath(run.folder, row.entry, row.line ?? undefined)}
+                className="text-action underline"
+              >
+                Read this bottom line in Evidence
+              </a>
+            ) : (
+              <GapPanel reason="This module's handoff has no bottom line; its handoff is in Evidence." />
             )}
             <PublishedSource
               href={evidencePath(run.folder, row.entry, row.line ?? undefined)}

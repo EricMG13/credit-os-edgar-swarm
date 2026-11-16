@@ -508,6 +508,7 @@ describe("the overview carries every module's bottom line and the run's limitati
       ["CP-1", "Leverage is high; Liquidity (CP-2D) covers two years.", [BARE, "See debt.xlsx."]],
       ["CP-2D", "Not assessable: no liquidity schedule was supplied.", ["Blocked limitation."]],
       ["CP-3", null, []],
+      ["CP-4", "See debt.xlsx for the view.", []],
       ["CP-2", "Credit is stable.", ["cash is shown under CP-2D only", "Lead limitation."]],
     ]);
     useSnapshot(snapshot);
@@ -519,8 +520,15 @@ describe("the overview carries every module's bottom line and the run's limitati
     );
     expect(within(lines).getByText("Not assessable")).toBeVisible();
     expect(within(lines).getByText(/Leverage is high; Liquidity covers two years\./)).toBeVisible();
-    expect(within(lines).getByText("Not established for this run")).toBeVisible();
-    expect(within(lines).getAllByRole("listitem")).toHaveLength(3);
+    // CP-3 wrote no bottom line: a gap. CP-4 wrote one that cites a file: a link, not a gap.
+    expect(within(lines).getAllByText("Not established for this run")).toHaveLength(1);
+    expect(
+      within(lines).getByRole("link", { name: "Read this bottom line in Evidence" }),
+    ).toHaveAttribute(
+      "href",
+      expect.stringMatching(/^\/report\/northbridge-2026#evidence\/.*-11$/),
+    );
+    expect(within(lines).getAllByRole("listitem")).toHaveLength(4);
     expect(lines.textContent).not.toMatch(/CP-/);
     expect(within(lines).queryByText(/Credit is stable/)).toBeNull();
 
