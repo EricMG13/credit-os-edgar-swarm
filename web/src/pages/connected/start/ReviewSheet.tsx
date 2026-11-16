@@ -3,6 +3,7 @@ import { Button } from "@/components/base/buttons/button";
 import { moduleName, moduleTitle, pathwayName, type Answers, type Summary } from "../api";
 import {
   changesSentence,
+  comparisonCaveat,
   documentDescription,
   LEVELS,
   lookupSentence,
@@ -94,7 +95,7 @@ export function ReviewSheet({
   const { run, identity } = answers.context;
   const advanced = answers.level === "advanced";
   const changes = summary.prior
-    ? `Compared with the ${pathwayName(summary.prior.pathway)} run as of ${summary.prior.as_of}`
+    ? `Compared with the ${pathwayName(summary.prior.pathway)} run as of ${summary.prior.as_of}${comparisonCaveat(summary.changes)}`
     : changesSentence(summary.changes);
   return (
     <>

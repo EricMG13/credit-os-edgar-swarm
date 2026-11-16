@@ -409,6 +409,21 @@ describe("connected run start", () => {
     expect(screen.getByRole("heading", { name: "Purpose" })).toHaveFocus();
   });
 
+  it("tells the analyst the earlier run used earlier methods, without its id", async () => {
+    testingFetch({
+      ...plan,
+      prior: { id: "20261116-083145-01", as_of: "2025-03-31", pathway: "credit_snapshot" },
+      changes:
+        "CP-8 compares with the credit_snapshot run as of 2025-03-31 (20261116-083145-01; earlier format, earlier methods)",
+    });
+    render(<ConnectedApp path="/start" mode="synthetic" />);
+    await review();
+    await screen.findByRole("button", { name: "Submit run" });
+    const sheet = screen.getByRole("region", { name: "What will run" });
+    expect(sheet).toHaveTextContent("earlier format, earlier methods");
+    expect(sheet).not.toHaveTextContent("20261116-083145-01");
+  });
+
   it("keeps the id of an unusable earlier run out of the review", async () => {
     testingFetch({
       ...plan,

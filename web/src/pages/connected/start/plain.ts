@@ -32,15 +32,21 @@ export function plainText(text: string) {
 /** A lookup line without the launcher's label or its flag hint. */
 export function lookupSentence(line: string) {
   return plainText(
-    line.replace(/^\s*[A-Z][a-z]*:\s+/, "").replace(/;\s*--web-lookup on forces it\s*$/, ""),
+    line.replace(/^\s*[A-Za-z]+:\s+/, "").replace(/;\s*--web-lookup on forces it\s*$/, ""),
   );
 }
 
 /** The changes line without the service's `(not used: <run>: <why>)` note, which names a run id. */
 export function changesSentence(changes: string) {
   const text = plainText(changes);
-  const kept = text.replace(/\s*\(not used:[^)]*\)\s*$/, "");
+  const kept = text.replace(/\s*\(not used:[\s\S]*$/, "");
   return kept === text
     ? text
-    : `${kept}. An earlier run exists but could not be used for comparison.`;
+    : `${kept.replace(/\.$/, "")}. An earlier run exists but could not be used for comparison.`;
+}
+
+/** The comparison caveat the service writes after the earlier run: ` (earlier format, earlier methods)`, or "". */
+export function comparisonCaveat(changes: string) {
+  const found = ["earlier format", "earlier methods"].filter((phrase) => changes.includes(phrase));
+  return found.length ? ` (${found.join(", ")})` : "";
 }
