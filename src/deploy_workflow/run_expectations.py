@@ -392,6 +392,14 @@ _ADD_EXECUTED = (
 _ADD_QUOTES = "Add observed quotes under Observed quotes, or a quotes file."
 _CP4_LIVE = "legal documents declared %r (entered by user)"
 
+
+def no_legal_documents(context: RunContext) -> bool:
+    """The context declares no legal documents, so CP-4 has no executed governing document and
+    stops at its source gate. One rule for the forecast (`cp4-declared-none`) and the launcher's
+    acceptance of CP-4 (`cpos_launch.checker`)."""
+    return context.attachments.legal_documents == "none"
+
+
 # ponytail: the Will refuse wording below is provisional; A-live (Covenant & Refinancing, legal
 # documents `none`) records what CP-4 and its consumers do and sets the final text.
 RULES: tuple[Rule, ...] = (
@@ -521,7 +529,7 @@ RULES: tuple[Rule, ...] = (
     Rule(
         "cp4-declared-none",
         "CP-4",
-        lambda f: f.legal == "none",
+        lambda f: no_legal_documents(f.context),
         "will_refuse",
         "No agreement is chosen among the documents, so CP-4 stops with "
         '"No executed governing document".',

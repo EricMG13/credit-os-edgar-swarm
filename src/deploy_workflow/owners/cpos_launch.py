@@ -197,7 +197,13 @@ from deploy_workflow.prose_checks import (
 )
 from deploy_workflow.research.intake import effective_cutoff
 from deploy_workflow.research.weblookup import USER_AGENT_ENV, bare_host_problem, usable_user_agent
-from deploy_workflow.run_expectations import Item, edges_for, expectations, guess_kind
+from deploy_workflow.run_expectations import (
+    Item,
+    edges_for,
+    expectations,
+    guess_kind,
+    no_legal_documents,
+)
 from deploy_workflow.workflow import _put
 
 log = logging.getLogger(__name__)
@@ -1275,13 +1281,33 @@ def _front_matter_score_issues(text: str) -> tuple[str, ...]:
     return tuple(issues)
 
 
+_SOURCE_GATE = (
+    "Write the method's blocked message and stop: Blocked: No executed governing document. The "
+    "run's context declares no legal documents, so no executed credit agreement or indenture was "
+    "supplied, and a filing's summary of the agreements is not one. State `module_status: "
+    "Blocked` in the front matter, begin `### Bottom line` with `Not assessable: `, write the gate "
+    "register only, and each report selector once with one not-assessable row."
+)
+
+
+def _source_gate_issues(task: HandoffTask, text: str) -> tuple[str, ...]:
+    """CP-4's source gate (REF_CP-4_STEPS line 31: "Blocked: No executed governing document.
+    Output blocked message and STOP."), by the forecast's own rule. Live run 2026-11-16: CP-4
+    concluded covenant headroom from a 10-K's summary in a run that declared no legal documents."""
+    if task.module_id != "CP-4" or _blocked_at_gate(text):
+        return ()
+    if no_legal_documents(load_context(task.sources[CONTEXT_SOURCE_ID])):
+        return (_SOURCE_GATE,)
+    return ()
+
+
 def checker(layout: MarkdownLayout) -> Check:
     """Anchors and report selectors for one module's answer, so a defect is repaired inside the
     module's loop rather than found at delivery after every module was paid for."""
 
     def check(task: HandoffTask, raw: bytes) -> tuple[str, ...]:
         text = raw.decode("utf-8")
-        issues = []
+        issues = list(_source_gate_issues(task, text))  # first: a gated draft is rewritten
         if task.run.as_of.isoformat() not in text:
             issues.append(f"State the as-of date {task.run.as_of} in ## Request.")
         for name, handoff in task.handoffs.items():

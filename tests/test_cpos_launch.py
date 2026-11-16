@@ -1752,8 +1752,9 @@ def test_run_directory_inside_the_issuer_folder_is_refused(tmp_path, capsys):
 
 def good_task(tmp_path: Path, module: str = "CP-2", pathway: str | None = None):
     pathway = pathway or OWNER_PATHWAY.get(module, "covenant_refinancing")
+    settings = context_file(tmp_path, pathway)
     prepared = prepare(
-        context_file(tmp_path, pathway),
+        settings,
         issuer_folder(tmp_path),
         tmp_path / "out",
         config="sol-medium",
@@ -1764,7 +1765,7 @@ def good_task(tmp_path: Path, module: str = "CP-2", pathway: str | None = None):
         prepared.plan.run,
         module,
         b"",
-        {"annual.txt": b"Net sales", "context": b"{}"},
+        {"annual.txt": b"Net sales", "context": settings.read_bytes()},
         upstream,
         1,
         (),
@@ -1780,6 +1781,101 @@ def good_task(tmp_path: Path, module: str = "CP-2", pathway: str | None = None):
 def test_checker_accepts_a_complete_handoff(tmp_path):
     prepared, task, context = good_task(tmp_path, "CP-4")
     raw = answer(context, list(prepared.plan.layout.routes)).encode()
+    assert _checked_handoff(task, raw, checker(prepared.layout)) == ()
+
+
+def legal_declared(task: HandoffTask, legal: str) -> HandoffTask:
+    """The task with its run context declaring `attachments.legal_documents` as ``legal``."""
+    data = json.loads(task.sources["context"])
+    data["attachments"]["legal_documents"] = legal
+    sources = {**task.sources, "context": json.dumps(data).encode()}
+    return dataclasses.replace(task, sources=sources)
+
+
+def source_gate_issues(issues: tuple[str, ...]) -> list[str]:
+    return [i for i in issues if "Blocked" in i and "No executed governing document" in i]
+
+
+# Live run 2026-11-16 (TDG, Deep, Opus medium, legal documents "none"): CP-4 wrote `Completed with
+# Limitations` from the 10-K's summary of the agreements, against REF_CP-4_STEPS line 31 ("Blocked:
+# No executed governing document. Output blocked message and STOP.") and the forecast's
+# `cp4-declared-none`.
+@pytest.mark.parametrize(
+    ("module", "legal", "status", "refused"),
+    [
+        ("CP-4", "none", "Completed with Limitations", True),
+        ("CP-4", "executed", "Completed with Limitations", False),
+        ("CP-4", "none", "Blocked", False),
+        ("CP-1", "none", "Completed with Limitations", False),
+    ],
+)
+def test_cp4_is_held_to_its_source_gate_when_the_context_declares_no_legal_documents(
+    tmp_path, module, legal, status, refused
+):
+    prepared, task, context = good_task(tmp_path, module)
+    task = legal_declared(task, legal)
+    front = f"---\nmodule_id: {module}\nmodule_status: {status}\n---\n"
+    raw = (front + answer(context, list(prepared.plan.layout.routes))).encode()
+    issues = source_gate_issues(_checked_handoff(task, raw, checker(prepared.layout)))
+    assert len(issues) == (1 if refused else 0)
+
+
+NO_DOCUMENT = "Not supplied: no executed governing document"
+EDGES = ("From", "Relationship", "Edge type", "To", "Evidence")
+CHART = ("Test", "Threshold", "Current", "Headroom", "Direction", "Reporting unit")
+EVENTS = ("Event date", "Date precision", "Published", "Event", "Status", "Source")
+
+
+def table(head: tuple[str, ...], row: tuple[str, ...]) -> str:
+    return "\n".join("| " + " | ".join(cells) + " |" for cells in (head, ("---",) * len(head), row))
+
+
+NOT_ASSESSABLE = table(("Item", "Status"), ("Not assessable", NO_DOCUMENT))
+# The blocked form CP-4 is sent (READER_PASSAGES, CONFIDENCE_RULE and the selector list in its
+# instructions): `module_status: Blocked`, a Bottom line that begins `Not assessable: `, the gate
+# register only, and each report selector once with one not-assessable row under its header.
+BLOCKED_SELECTORS = {
+    "Covenant tests and headroom": NOT_ASSESSABLE,
+    "Red flags": NOT_ASSESSABLE,
+    "Lender protection score": NOT_ASSESSABLE,
+    "Capacity and baskets": NOT_ASSESSABLE,
+    "EBITDA definition": NOT_ASSESSABLE,
+    "Documents and structure": NOT_ASSESSABLE,
+    "Chart data: covenant headroom": table(
+        (*CHART, "Basis and limitation"), (*[NO_DOCUMENT] * 5, "x", "Not assessable.")
+    )
+    + "\n\nNo qualification.",
+    "Events: Legal": table((*EVENTS, "Credit relevance"), (NO_DOCUMENT,) * 7),
+    "Confidence inputs": table(("Input", "Value"), ("Not assessable", NO_DOCUMENT)),
+    "Map: legal entities": table(EDGES, (NO_DOCUMENT,) * 5),
+    "Map: intercreditor": table(EDGES, (NO_DOCUMENT,) * 5),
+}
+
+
+def blocked_cp4(context: dict) -> str:
+    gate = table(("Document", "Status", "Limitation"), (NO_DOCUMENT, "Blocked", "Source gate"))
+    selectors = [part for h, t in BLOCKED_SELECTORS.items() for part in (f"### {h}", "", t, "")]
+    lines = [
+        *("---", "module_id: CP-4", "module_status: Blocked", "---", "# CP-4", ""),
+        *("## Request", "", f"{ISSUER} as of {AS_OF}.", "", "## Sources", ""),
+        f"- annual.txt {context['sources']['annual.txt']}",
+        f"- CP-1 {context['handoffs']['CP-1']['sha256']}",
+        *("", "## Findings", "", "### Bottom line", ""),
+        (
+            "Not assessable: no executed governing document was supplied, so the covenants, their "
+            "capacity and headroom and the lenders' protection are not established for this run."
+        ),
+        *("", "### T4.1 Source gate register", "", gate, "", *selectors),
+        *("## Calculations", "", "None.", "", "## Gaps", "", "None.", ""),
+        *("## Next module", "", "The orchestrator selects the next module.", ""),
+    ]
+    return "\n".join(lines)
+
+
+def test_cp4_written_as_the_methods_blocked_message_is_accepted(tmp_path):
+    prepared, task, context = good_task(tmp_path, "CP-4")
+    task = legal_declared(task, "none")
+    raw = blocked_cp4(context).encode()
     assert _checked_handoff(task, raw, checker(prepared.layout)) == ()
 
 
