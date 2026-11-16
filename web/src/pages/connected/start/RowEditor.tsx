@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState, type Ref } from "react";
+import { useEffect, useId, useRef, useState, type RefObject } from "react";
 import { Button } from "@/components/base/buttons/button";
 import { moduleName } from "../api";
 import { field, label } from "../layout";
@@ -23,7 +23,7 @@ export function RowEditor({
   required?: boolean;
   focusChoices?: Choices;
   error?: string;
-  addRef?: Ref<HTMLButtonElement>;
+  addRef?: RefObject<HTMLButtonElement | null>;
 }) {
   const spec = ROW_SPECS[kind];
   const base = useId();
@@ -35,16 +35,18 @@ export function RowEditor({
   const [added, setAdded] = useState<number>();
   const keys = rows.map((_, at) => ids[at] ?? -(at + 1));
   const removeButtons = useRef(new Map<number, HTMLButtonElement>());
-  const addButton = useRef<HTMLButtonElement | null>(null);
+  const ownAdd = useRef<HTMLButtonElement | null>(null);
+  const addButton = addRef ?? ownAdd;
   const refocus = useRef<{ add: boolean; at: number }>(undefined);
   useEffect(() => {
     const wanted = refocus.current;
     refocus.current = undefined;
     if (!wanted) return;
     const keyAt = ids[Math.min(wanted.at, ids.length - 1)];
-    const target = wanted.add || keyAt === undefined ? addButton.current : removeButtons.current.get(keyAt);
+    const target =
+      wanted.add || keyAt === undefined ? addButton.current : removeButtons.current.get(keyAt);
     target?.focus();
-  }, [ids]);
+  }, [ids, addButton]);
   return (
     <div className="grid gap-2">
       {required && rows.length === 0 && (
@@ -71,42 +73,32 @@ export function RowEditor({
                 );
               }}
             />
-            <div
+            <Button
+              size="sm"
+              color="secondary"
               className="absolute right-3 top-2"
+              aria-label={`Remove ${spec.title} ${String(index + 1)}`}
               ref={(node) => {
-                const button = node?.querySelector("button");
-                if (button) removeButtons.current.set(key, button);
+                if (node) removeButtons.current.set(key, node);
                 else removeButtons.current.delete(key);
               }}
+              onPress={() => {
+                refocus.current = { add: rows.length === 1, at: index };
+                setIds(keys.filter((_, at) => at !== index));
+                onChange(rows.filter((_, at) => at !== index));
+              }}
             >
-              <Button
-                size="sm"
-                color="secondary"
-                aria-label={`Remove ${spec.title} ${String(index + 1)}`}
-                onPress={() => {
-                  refocus.current = { add: rows.length === 1, at: index };
-                  setIds(keys.filter((_, at) => at !== index));
-                  onChange(rows.filter((_, at) => at !== index));
-                }}
-              >
-                Remove
-              </Button>
-            </div>
+              Remove
+            </Button>
           </div>
         );
       })}
       <div className="grid gap-1">
-        <div
-          ref={(node) => {
-            const button = node?.querySelector("button") ?? null;
-            addButton.current = button;
-            if (typeof addRef === "function") addRef(button);
-            else if (addRef) addRef.current = button;
-          }}
-        >
+        <div>
           <Button
             size="sm"
             color="secondary"
+            ref={addButton}
             isDisabled={rows.length >= spec.max}
             aria-describedby={error ? errorId : undefined}
             onPress={() => {

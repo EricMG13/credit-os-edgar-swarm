@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState, type RefObject, type SubmitEvent } from "react";
+import { useCallback, useEffect, useRef, useState, type RefObject, type SubmitEvent } from "react";
 import { File05, Folder } from "@untitledui/icons";
 import { FileUpload } from "@/components/application/file-upload/file-upload-base";
 import { Badge } from "@/components/base/badges/badges";
@@ -78,6 +78,57 @@ const PATHWAY_CARDS = Object.entries(PATHWAYS).map(([id, pathway]) => ({
   description: PATHWAY_DESCRIPTIONS[id] ?? "",
   modules: `${String(pathway.modules.length)} base modules`,
 }));
+
+type FieldKey =
+  | "issuer_name"
+  | "cutoff"
+  | "agreement"
+  | "deal_terms"
+  | "turns"
+  | "valuation"
+  | "assumptions"
+  | "module_options";
+
+/** A validation failure that belongs to one control: shown on it, not in the general notice. */
+class FieldProblem extends Error {
+  constructor(
+    readonly field: FieldKey,
+    message: string,
+  ) {
+    super(message);
+  }
+}
+
+function stepOfField(field: FieldKey): FormStep {
+  return field === "issuer_name" ? "documents" : "context";
+}
+
+function problemAttrs(problem: FieldProblem | undefined, field: FieldKey) {
+  return problem?.field === field
+    ? { "data-field": field, "aria-invalid": "true" as const, "aria-describedby": `error-${field}` }
+    : { "data-field": field };
+}
+
+function FieldMessage({ problem, field }: { problem?: FieldProblem; field: FieldKey }) {
+  if (problem?.field !== field) return null;
+  return (
+    <p id={`error-${field}`} role="alert" className="text-sm text-error-primary">
+      {problem.message}
+    </p>
+  );
+}
+
+/** Opens what holds the control, then focuses and scrolls to it. */
+function focusField(field: FieldKey, dealAdd: RefObject<HTMLButtonElement | null>) {
+  const control =
+    field === "deal_terms"
+      ? dealAdd.current
+      : document.querySelector<HTMLElement>(`[data-field="${field}"]`);
+  const holder = control?.closest("details");
+  if (holder) holder.open = true;
+  control?.focus();
+  control?.scrollIntoView({ block: "center" });
+}
 
 type Review = { id: string; answers: Answers; summary: Summary; cap: string };
 type Draft = { id: string; uploaded: Map<File, string>; copied: boolean };
@@ -174,6 +225,9 @@ type IntakeView = {
   detailText: (key: ComplexField) => string;
   rowsOf: (kind: RowKind) => Row[];
   changeRows: (kind: RowKind, rows: Row[]) => void;
+  problem?: FieldProblem;
+  dealAdd: RefObject<HTMLButtonElement | null>;
+  focusProblem: () => void;
   changeModel: (value: string) => void;
   changeEffort: (value: string) => void;
   changeTurns: (value: string) => void;
@@ -271,6 +325,7 @@ function useIntakeReviewState() {
   const [approved, setApproved] = useState(false);
   const [busy, setBusy] = useState<"review" | "submit" | "documents" | "copy">();
   const [error, setError] = useState("");
+  const [fieldError, setFieldError] = useState<FieldProblem>();
   const [submitUncertain, setSubmitUncertain] = useState(false);
   return {
     review,
@@ -283,6 +338,8 @@ function useIntakeReviewState() {
     setBusy,
     error,
     setError,
+    fieldError,
+    setFieldError,
     submitUncertain,
     setSubmitUncertain,
   };
@@ -505,17 +562,21 @@ function DocumentFields({
           </p>
         )}
       </div>
-      <label className={label}>
-        Issuer name
-        <input
-          className={field}
-          required
-          value={view.identity.issuer_name}
-          onChange={(event) => {
-            view.changeIdentity("issuer_name", event.target.value);
-          }}
-        />
-      </label>
+      <div className="grid content-start gap-1">
+        <label className={label}>
+          Issuer name
+          <input
+            className={field}
+            required
+            {...problemAttrs(view.problem, "issuer_name")}
+            value={view.identity.issuer_name}
+            onChange={(event) => {
+              view.changeIdentity("issuer_name", event.target.value);
+            }}
+          />
+        </label>
+        <FieldMessage problem={view.problem} field="issuer_name" />
+      </div>
       <label className={label}>
         Issuer ID
         <input
@@ -678,18 +739,22 @@ function ContextInputFields({ view }: { view: IntakeView }) {
           }}
         />
       </label>
-      <label className={label}>
-        Research cutoff
-        <input
-          className={field}
-          type="date"
-          value={view.run.cutoff || view.run.as_of}
-          max={view.run.as_of || undefined}
-          onChange={(event) => {
-            view.changeRun("cutoff", event.target.value);
-          }}
-        />
-      </label>
+      <div className="grid content-start gap-1">
+        <label className={label}>
+          Research cutoff
+          <input
+            className={field}
+            type="date"
+            {...problemAttrs(view.problem, "cutoff")}
+            value={view.run.cutoff || view.run.as_of}
+            max={view.run.as_of || undefined}
+            onChange={(event) => {
+              view.changeRun("cutoff", event.target.value);
+            }}
+          />
+        </label>
+        <FieldMessage problem={view.problem} field="cutoff" />
+      </div>
       <label className={label}>
         Current period
         <input
@@ -725,6 +790,8 @@ function ContextInputFields({ view }: { view: IntakeView }) {
           title="The agreement"
           value={view.attachments.agreement ?? ""}
           choices={view.fileChoices}
+          problem={view.problem}
+          problemField="agreement"
           onChange={(value) => {
             view.changeAttachment("agreement", value);
           }}
@@ -862,6 +929,12 @@ function StructuredContextFields({ view }: { view: IntakeView }) {
             primary={view.run.run_type === "primary"}
             required={kind === "deal_terms" && view.run.run_type === "primary"}
             focusChoices={focusChoices}
+            error={
+              kind === "deal_terms" && view.problem?.field === "deal_terms"
+                ? view.problem.message
+                : undefined
+            }
+            addRef={kind === "deal_terms" ? view.dealAdd : undefined}
           />
         </section>
       ))}
@@ -886,11 +959,13 @@ function JsonDetailsFields({ view }: { view: IntakeView }) {
             aria-label={title}
             className={`mt-2 w-full font-mono ${field}`}
             rows={key === "valuation" ? 12 : 5}
+            {...problemAttrs(view.problem, key)}
             value={view.detailText(key)}
             onChange={(event) => {
               view.changeDetail(key, event.target.value);
             }}
           />
+          <FieldMessage problem={view.problem} field={key} />
         </details>
       ))}
     </div>
@@ -913,21 +988,25 @@ function AdvancedOptionsFields({ view }: { view: IntakeView }) {
         choices={{ fast: "Fast", balanced: "Balanced", high: "High" }}
         onChange={view.changeEffort}
       />
-      <label className={label}>
-        Turns per module
-        <input
-          className={field}
-          type="number"
-          required
-          min={1}
-          max={64}
-          step={1}
-          value={view.turns}
-          onChange={(event) => {
-            view.changeTurns(event.target.value);
-          }}
-        />
-      </label>
+      <div className="grid content-start gap-1">
+        <label className={label}>
+          Turns per module
+          <input
+            className={field}
+            type="number"
+            required
+            min={1}
+            max={64}
+            step={1}
+            {...problemAttrs(view.problem, "turns")}
+            value={view.turns}
+            onChange={(event) => {
+              view.changeTurns(event.target.value);
+            }}
+          />
+        </label>
+        <FieldMessage problem={view.problem} field="turns" />
+      </div>
       <fieldset className="min-w-0 rounded-lg border border-border-hairline p-3 sm:col-span-2">
         <legend className="px-1 text-sm font-semibold">Requested modules</legend>
         <div className="grid gap-2 sm:grid-cols-2">
@@ -963,17 +1042,22 @@ function SelectField({
   value,
   choices,
   onChange,
+  problem,
+  problemField,
 }: {
   title: string;
   value: string;
   choices: Readonly<Record<string, string>>;
   onChange: (value: string) => void;
+  problem?: FieldProblem;
+  problemField?: FieldKey;
 }) {
-  return (
+  const select = (
     <label className={label}>
       {title}
       <select
         className={field}
+        {...(problemField ? problemAttrs(problem, problemField) : {})}
         value={value}
         onChange={(event) => {
           onChange(event.target.value);
@@ -986,6 +1070,13 @@ function SelectField({
         ))}
       </select>
     </label>
+  );
+  if (!problemField) return select;
+  return (
+    <div className="grid content-start gap-1">
+      {select}
+      <FieldMessage problem={problem} field={problemField} />
+    </div>
   );
 }
 
@@ -1000,9 +1091,9 @@ function readDetails(edits: Partial<Record<ComplexField, string>>) {
     try {
       parsed = JSON.parse(raw);
     } catch {
-      throw new Error(`${COMPLEX_FIELDS[key]} must contain valid JSON.`);
+      throw new FieldProblem(key, `${COMPLEX_FIELDS[key]} must contain valid JSON.`);
     }
-    if (!isRecord(parsed)) throw new Error(`${COMPLEX_FIELDS[key]} must be an object.`);
+    if (!isRecord(parsed)) throw new FieldProblem(key, `${COMPLEX_FIELDS[key]} must be an object.`);
     details[key] = parsed;
   }
   return details;
@@ -1135,6 +1226,8 @@ function IntakeForm({
     setBusy,
     error,
     setError,
+    fieldError,
+    setFieldError,
     submitUncertain,
     setSubmitUncertain,
   } = reviewState;
@@ -1145,6 +1238,7 @@ function IntakeForm({
   const reviewedRef = useRef<Reviewed | null>(null);
   const active = useRef(false);
   const folderInput = useRef<HTMLInputElement>(null);
+  const dealAdd = useRef<HTMLButtonElement | null>(null);
 
   const { run, identity, issuerId, requested, cap, earnings, canRead, checksComplete, newest } =
     intakeRunDetails({
@@ -1159,8 +1253,15 @@ function IntakeForm({
       reading,
     });
 
+  function clearProblem(...fields: FieldKey[]) {
+    setFieldError((previous) =>
+      previous && fields.includes(previous.field) ? undefined : previous,
+    );
+  }
+
   function changeRun(key: keyof Context["run"], value: string) {
     if (key === "pathway") invalidateReview();
+    if (key === "cutoff" || key === "as_of") clearProblem("cutoff");
     setContext((previous) => ({ ...previous, run: { ...previous.run, [key]: value } }));
   }
 
@@ -1175,6 +1276,7 @@ function IntakeForm({
     key: K,
     value: Context["identity"][K],
   ) {
+    if (key === "issuer_name") clearProblem("issuer_name");
     setContext((previous) => ({ ...previous, identity: { ...previous.identity, [key]: value } }));
   }
 
@@ -1197,9 +1299,15 @@ function IntakeForm({
     active.current = true;
     setBusy(action);
     setError("");
+    setFieldError(undefined);
     try {
       await work();
     } catch (failure) {
+      if (failure instanceof FieldProblem) {
+        setFieldError(failure);
+        setStep(stepOfField(failure.field));
+        return;
+      }
       if (failure instanceof RequestError && failure.status === 404) {
         draftRef.current = null;
         setUploaded(new Map());
@@ -1329,11 +1437,11 @@ function IntakeForm({
 
   function makeAnswers(result: Reading, details: Record<string, unknown>): Answers {
     if (run.cutoff && run.cutoff > run.as_of)
-      throw new Error("Research cutoff must be on or before the as-of date.");
+      throw new FieldProblem("cutoff", "Research cutoff must be on or before the as-of date.");
     const available = new Set(result.documents.map(storedName));
     const chosen = (key: Attachment) => available.has(attachments[key] ?? "");
     if (legal !== "none" && !chosen("agreement"))
-      throw new Error("Choose the uploaded file that is the agreement.");
+      throw new FieldProblem("agreement", "Choose the uploaded file that is the agreement.");
     const advanced = level === "advanced";
     return {
       context: {
@@ -1363,7 +1471,8 @@ function IntakeForm({
 
   function reviewDetails() {
     if (!identity.issuer_name.trim() || !/^[a-z0-9][a-z0-9-]{0,39}$/.test(issuerId)) {
-      throw new Error(
+      throw new FieldProblem(
+        "issuer_name",
         "Enter an issuer name and an issuer ID using letters a–z, digits or hyphens.",
       );
     }
@@ -1385,10 +1494,13 @@ function IntakeForm({
     if (run.run_type === "primary") {
       const deals = details.deal_terms ?? context.deal_terms;
       if (!Array.isArray(deals) || deals.length === 0)
-        throw new Error("Add at least one facility in Facilities and deal terms.");
+        throw new FieldProblem(
+          "deal_terms",
+          "Add at least one facility in Facilities and deal terms.",
+        );
     }
     if (level === "advanced" && (!/^\d+$/.test(turns) || Number(turns) < 1 || Number(turns) > 64)) {
-      throw new Error("Turns per module must be a whole number from 1 to 64.");
+      throw new FieldProblem("turns", "Turns per module must be a whole number from 1 to 64.");
     }
     return details;
   }
@@ -1443,6 +1555,7 @@ function IntakeForm({
   function goTo(next: FormStep) {
     setStep(next);
     setError("");
+    setFieldError(undefined);
   }
 
   async function advance(event: SubmitEvent<HTMLFormElement>) {
@@ -1554,10 +1667,12 @@ function IntakeForm({
   }
 
   function changeAttachment(key: Attachment, value: string) {
+    if (key === "agreement") clearProblem("agreement");
     setAttachments((previous) => ({ ...previous, [key]: value }));
   }
 
   function changeDetail(key: ComplexField, value: string) {
+    clearProblem(key);
     setEdits((previous) => ({ ...previous, [key]: value }));
   }
 
@@ -1601,6 +1716,7 @@ function IntakeForm({
   }
 
   function changeRows(kind: RowKind, next: Row[]) {
+    if (kind === "deal_terms") clearProblem("deal_terms");
     setRows((previous) => ({ ...previous, [kind]: next }));
   }
 
@@ -1686,7 +1802,10 @@ function IntakeForm({
     changeIdentity,
     changeListedEquity,
     changeRun,
-    changeIssuerId: setCustomSlug,
+    changeIssuerId: (value) => {
+      clearProblem("issuer_name");
+      setCustomSlug(value);
+    },
     changeSubmittedBy: setSubmittedBy,
     carryLatest: () => void copyLatest(),
     resetIssuer,
@@ -1697,7 +1816,10 @@ function IntakeForm({
     changeNewestOverride: (value) => {
       setNewestOverride(value || undefined);
     },
-    changeLegal: setLegal,
+    changeLegal: (value) => {
+      clearProblem("agreement");
+      setLegal(value);
+    },
     changeAttachment,
     changeDetail,
     detailText,
@@ -1705,9 +1827,21 @@ function IntakeForm({
     changeRows,
     changeModel: setModel,
     changeEffort: setEffort,
-    changeTurns: setTurns,
+    changeTurns: (value) => {
+      clearProblem("turns");
+      setTurns(value);
+    },
     toggleModule,
+    problem: fieldError,
+    dealAdd,
+    focusProblem: () => {
+      if (fieldError) focusField(fieldError.field, dealAdd);
+    },
   };
+
+  useEffect(() => {
+    if (fieldError && busy === undefined) focusField(fieldError.field, dealAdd);
+  }, [fieldError, busy]);
 
   return (
     <IntakePanels
@@ -2062,9 +2196,16 @@ function InputStepForm({
         >
           Previous
         </Button>
-        <span className="text-sm text-text-tertiary">
-          Step {FORM_STEP_KEYS.indexOf(view.step) + 1} of {STEP_TOTAL}
-        </span>
+        <div className="grid justify-items-center gap-1">
+          <span className="text-sm text-text-tertiary">
+            Step {FORM_STEP_KEYS.indexOf(view.step) + 1} of {STEP_TOTAL}
+          </span>
+          {view.problem && (
+            <Button color="link-destructive" size="sm" onPress={view.focusProblem}>
+              {`1 problem to fix: ${view.problem.message}`}
+            </Button>
+          )}
+        </div>
         <Button
           type="submit"
           isDisabled={view.busy !== undefined || (view.step === "documents" && !view.canRead)}

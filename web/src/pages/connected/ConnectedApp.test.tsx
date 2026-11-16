@@ -3,6 +3,9 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { ConnectedApp } from "./ConnectedApp";
 import type { Summary } from "./api";
 
+const scrollIntoView = vi.fn();
+Element.prototype.scrollIntoView = scrollIntoView;
+
 const context = {
   run: { as_of: "", pathway: "credit_snapshot", case_kind: "synthetic", reporting_currency: "USD" },
   identity: { issuer_name: "", issuer_id: "" },
@@ -458,6 +461,45 @@ describe("connected run start", () => {
     expect(sheet).not.toHaveTextContent(/20261116-083145-01|not used/);
   });
 
+  it("shows a JSON problem on its field, focuses it and clears it when fixed", async () => {
+    testingFetch();
+    render(<ConnectedApp path="/start" mode="synthetic" />);
+    await fillInputs();
+    await advanceToPurpose();
+    fireEvent.change(screen.getByLabelText("Run form level"), { target: { value: "advanced" } });
+    advanceToContext();
+    const options = screen.getByLabelText("Module options");
+    fireEvent.change(options, { target: { value: "{" } });
+    fireEvent.click(screen.getByRole("button", { name: "Review run" }));
+    const alert = await screen.findByRole("alert");
+    expect(alert).toHaveTextContent("Module options must contain valid JSON.");
+    expect(options).toHaveAttribute("aria-invalid", "true");
+    expect(options).toHaveAccessibleDescription(/must contain valid JSON/);
+    expect(options).toHaveFocus();
+    expect(options.closest("details")).toHaveAttribute("open");
+    expect(scrollIntoView).toHaveBeenCalled();
+    expect(
+      screen.getByText("1 problem to fix: Module options must contain valid JSON."),
+    ).toBeInTheDocument();
+    fireEvent.change(options, { target: { value: "{}" } });
+    expect(screen.queryByRole("alert")).toBeNull();
+    expect(options).not.toHaveAttribute("aria-invalid");
+  });
+
+  it("marks the agreement choice when none is chosen", async () => {
+    testingFetch();
+    render(<ConnectedApp path="/start" mode="synthetic" />);
+    await fillInputs();
+    await advanceToPurpose();
+    advanceToContext();
+    fireEvent.change(screen.getByLabelText("Legal documents"), { target: { value: "executed" } });
+    fireEvent.click(screen.getByRole("button", { name: "Review run" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Choose the uploaded file that is the agreement.",
+    );
+    expect(screen.getByLabelText("The agreement")).toHaveFocus();
+  });
+
   it("enforces primary facility input and forwards the reviewed Advanced choices", async () => {
     const fetchMock = testingFetch();
     render(<ConnectedApp path="/start" mode="synthetic" />);
@@ -474,6 +516,7 @@ describe("connected run start", () => {
     const reviewRun = screen.getByRole("button", { name: "Review run" });
     fireEvent.click(reviewRun);
     expect(await screen.findByRole("alert")).toHaveTextContent("Add at least one facility");
+    expect(screen.getByRole("button", { name: "Add facility" })).toHaveFocus();
     fireEvent.change(screen.getByLabelText("Module options"), { target: { value: "[]" } });
     fireEvent.click(reviewRun);
     expect(await screen.findByRole("alert")).toHaveTextContent("Module options must be an object.");
