@@ -378,7 +378,7 @@ async function checkChangesTrace(browser, endpoint, id) {
       href: "",
       label: "Financial foundation",
     };
-    snapshot.workspace.handoffs["earlier-schedule"] = [
+    snapshot.workspace.handoffs[digest("earlier-schedule")] = [
       {
         heading: "Chart data: debt maturities",
         line: 20,
@@ -402,8 +402,8 @@ async function checkChangesTrace(browser, endpoint, id) {
       href: "",
       label: "Earlier retained output",
     };
-    snapshot.workspace.handoffs["reordered-output"] =
-      snapshot.workspace.handoffs["earlier-schedule"];
+    snapshot.workspace.handoffs[digest("reordered-output")] =
+      snapshot.workspace.handoffs[digest("earlier-schedule")];
     const output = "comparison-output";
     current.modules["CP-8"] = { outputs: [output], default: output };
     snapshot.workspace.outputs[output] = {
@@ -414,7 +414,7 @@ async function checkChangesTrace(browser, endpoint, id) {
       href: "",
       label: "Comparison",
     };
-    snapshot.workspace.handoffs[output] = [
+    snapshot.workspace.handoffs[digest(output)] = [
       {
         heading: "What changed: the issuer",
         line: 10,
