@@ -1519,23 +1519,23 @@ def test_the_lite_pathway_runs_end_to_end_to_a_verified_delivery_with_a_syntheti
 # that can be used to calculate it"; docs/rulings/2026-11-16-reporting-currency-from-sources.md):
 # CP-1's T4.18 currency columns and step 3 sentence, CP-2D's currency rule, CP-2G's foreign-facility
 # rule, CP-1's check-block conversion clause, and a non-USD example beside each USD-only one sent to
-# a model (PR 46 and its review fixes). Measured on this file's input before (base 943280e) and
-# after, each ceiling rises by its pathway's increase: covenant_refinancing 1,135,971 to 1,138,223
-# (+2,252); credit_snapshot 1,466,034 to 1,468,356 (+2,322); deep_credit_assessment 1,805,254 to
-# 1,807,786 (+2,532); distressed_restructuring 1,170,054 to 1,171,848 (+1,794); earnings_update
-# 651,532 to 652,919 (+1,387); lite_credit_assessment 414,801 to 416,068 (+1,267);
-# portfolio_decision 942,102 to 943,524 (+1,422); relative_value 1,061,779 to 1,063,799 (+2,020);
-# short_snapshot 156,212 to 157,390 (+1,178).
+# a model (PR 46 and its two review rounds). Measured on this file's input before (base 943280e) and
+# after, each ceiling rises by its pathway's increase: covenant_refinancing 1,135,971 to 1,138,250
+# (+2,279); credit_snapshot 1,466,034 to 1,468,383 (+2,349); deep_credit_assessment 1,805,254 to
+# 1,807,813 (+2,559); distressed_restructuring 1,170,054 to 1,171,875 (+1,821); earnings_update
+# 651,532 to 652,944 (+1,412); lite_credit_assessment 414,801 to 416,093 (+1,292);
+# portfolio_decision 942,102 to 943,549 (+1,447); relative_value 1,061,779 to 1,063,824 (+2,045);
+# short_snapshot 156,212 to 157,415 (+1,203).
 INSTRUCTION_BUDGET = {
-    "deep_credit_assessment": 1_903_032,
-    "lite_credit_assessment": 421_267,
-    "credit_snapshot": 1_485_969,
-    "covenant_refinancing": 1_157_252,
-    "distressed_restructuring": 1_188_294,
-    "earnings_update": 652_925,  # owner, 2026-11-16: CP-1A joins; then reporting currency
-    "portfolio_decision": 956_922,
-    "relative_value": 1_073_020,
-    "short_snapshot": 158_678,
+    "deep_credit_assessment": 1_903_059,
+    "lite_credit_assessment": 421_292,
+    "credit_snapshot": 1_485_996,
+    "covenant_refinancing": 1_157_279,
+    "distressed_restructuring": 1_188_321,
+    "earnings_update": 652_950,  # owner, 2026-11-16: CP-1A joins; then reporting currency
+    "portfolio_decision": 956_947,
+    "relative_value": 1_073_045,
+    "short_snapshot": 158_703,
 }
 
 
@@ -2794,8 +2794,8 @@ def test_the_step_file_gives_the_fixed_register_rows_the_money_unit_not_us_dolla
 T418_COLUMNS = "| `Currency` | `Reporting Currency Amount` | `FX Rate` | `Coupon or Margin` |"
 T418_RULES = (
     (
-        "`Currency` is the instrument's own denomination; its amounts are as the filing prints "
-        "them, the one exception to step 3's single currency."
+        "`Currency` is the ISO 4217 code of the instrument's denomination (`EUR`); its amounts "
+        "are as the filing prints them, the one exception to step 3's single currency."
     ),
     (
         "`Reporting Currency Amount` is its carrying value (its principal where carrying values "
@@ -2863,8 +2863,9 @@ def test_cp2d_is_sent_one_currency_rule_for_its_liquidity_tables(tmp_path):
 
 # PR 46 review F1 (same ruling): T4.18 prints a facility's amounts in its own currency, so CP-2G
 # leaves a facility in another currency out of `facilities` and names each row as T4.18 does.
+# Review M1 (round 2): the name is copied exactly, so the check can match it to its T4.18 row.
 FOREIGN_FACILITY_RULE = (
-    "Write each `name` as the instrument's T4.18 `Instrument`. Leave out a facility whose T4.18 "
+    "Copy each `name` exactly as T4.18's `Instrument` prints it. Leave out a facility whose T4.18 "
     "`Currency` is not the block's `currency`: its debt stays in base debt at your "
     "`interest_rate` driver."
 )
@@ -3153,9 +3154,11 @@ def test_every_module_is_told_what_stands_for_acceptance_scripts_and_questions(t
 # CP-1 and CP-2D recomputed again the same day (PR 46 review F2 and F4): CP-2D's rule 11 lets a
 # foreign facility's undrawn, commitment, amortisation or maturity amount in only where CP-1
 # states it in the statements' currency, and T4.18's `FX Rate and Source` is `FX Rate`.
+# CP-1 recomputed once more the same day (PR 46 review M1): T4.18's `Currency` is the ISO 4217
+# code of the instrument's denomination.
 METHOD_TEXT_SHA256_AT_1B41E65 = {
     "CP-0": "307017934f4e8e75fc432e8b7ef100bba82ce84f1bb6910f37c7e715fe701e72",
-    "CP-1": "fa9d6c57f957bcebbc2ec27c4a44d0ee8fd29c45528966e576b439b35044716f",
+    "CP-1": "cd35253a4729b5ad8c3e31087e190c30437c9ec7d3af165dae3109685536d0d0",
     "CP-1A": "9de9426a829625461dee6cf850965590c923f661ceaa57208ad9028da8796b03",
     "CP-1B": "38d9fa7b075d1ce5d0cd21bcc216f57f37369cd4db395b3f1fb65498697a509f",
     "CP-1C": "9353afdbce820f59c2dcabc951fc1ff3813174b3c84e79b47bc22bea97f3bbe8",

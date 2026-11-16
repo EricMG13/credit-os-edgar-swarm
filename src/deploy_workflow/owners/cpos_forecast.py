@@ -625,36 +625,64 @@ def _check_facilities(
             )
 
 
-def _t418_currencies(cp1_text: str) -> dict[str, str | None]:
-    """Each instrument CP-1's T4.18 names (a table with `Instrument` and `Currency` columns; the
-    name trimmed and casefolded, its first row counting) and the ISO 4217 code its `Currency` cell
-    states, or None when the cell states no single code."""
-    found: dict[str, str | None] = {}
+def _t418_rows(cp1_text: str) -> list[tuple[str, str | None]]:
+    """Each row of CP-1's T4.18 (a table with `Instrument` and `Currency` columns): its instrument
+    name as compared (trimmed, emphasis removed, casefolded) and the ISO 4217 code its `Currency`
+    cell states, or None when the cell states no single code."""
+    found: list[tuple[str, str | None]] = []
     for header, *rows in _tables(cp1_text):
         labels = [_plain(cell) for cell in header]
         if "Instrument" not in labels or "Currency" not in labels:
             continue
         at, currency = labels.index("Instrument"), labels.index("Currency")
-        for row in rows:
-            if len(row) > max(at, currency):
-                found.setdefault(_plain(row[at]).casefold(), currency_of(row[currency]))
+        found += [
+            (_plain(row[at]).casefold(), currency_of(row[currency]))
+            for row in rows
+            if len(row) > max(at, currency)
+        ]
     return found
 
 
+_LEAVE_OUT = (
+    "leave it out of `facilities`: its debt stays in base debt at the `interest_rate` driver"
+)
+
+
+def _currency_refusal(name: str, rows: list[tuple[str, str | None]], code: str) -> str:
+    """Why a facility is not one T4.18 prints in the block's currency, and what to do instead."""
+    key = _plain(name).casefold()
+    stated = [currency for row_name, currency in rows if row_name == key]
+    if stated and stated[0] is not None:
+        return (
+            f"CP-2G: facility `{name}` is in `{stated[0]}` in CP-1's T4.18, not the block's "
+            f"`{code}`; {_LEAVE_OUT}"
+        )
+    why = (
+        "its T4.18 `Currency` cell gives no ISO 4217 code"
+        if stated
+        else "no T4.18 `Instrument` is named exactly so"
+    )
+    return (
+        f"CP-2G: facility `{name}` is not an instrument CP-1's T4.18 prints in `{code}` ({why}), "
+        "and T4.18 holds an instrument in another currency or in none it states; copy its name "
+        f"exactly as T4.18's `Instrument` prints it, or {_LEAVE_OUT}"
+    )
+
+
 def _check_facility_currencies(facilities: tuple[Facility, ...], cp1_text: str, code: str) -> None:
-    """A facility T4.18 prints in another currency than the block's is refused: its amounts are in
-    that currency (docs/rulings/2026-11-16-reporting-currency-from-sources.md), so it is left out of
-    `facilities` and its debt stays in base debt at the `interest_rate` driver. A facility no T4.18
-    row names, or whose cell states no single code, is not refused."""
-    currencies = _t418_currencies(cp1_text)
+    """Where any T4.18 row's `Currency` does not read as the block's currency (another code, or no
+    single code), T4.18 prints amounts in another currency (docs/rulings/2026-11-16-reporting-
+    currency-from-sources.md), so every facility must be an instrument T4.18 prints in the block's
+    currency, its name copied exactly (trimmed, emphasis removed, ignoring case); any other is
+    refused, named, and left to base debt at the `interest_rate` driver (PR 46 review M1). Where
+    every row reads as the block's currency, or CP-1 has no T4.18, nothing is refused here."""
+    rows = _t418_rows(cp1_text)
+    if all(currency == code for _, currency in rows):
+        return
+    own = {name for name, currency in rows if currency == code}
     for facility in facilities:
-        other = currencies.get(facility.name.strip().casefold())
-        if other is not None and other != code:
-            raise ValueError(
-                f"CP-2G: facility `{facility.name}` is in `{other}` in CP-1's T4.18, not the "
-                f"block's `{code}`; leave it out of `facilities`: its debt stays in base debt at "
-                "the `interest_rate` driver"
-            )
+        if _plain(facility.name).casefold() not in own:
+            raise ValueError(_currency_refusal(facility.name, rows, code))
 
 
 _FACILITY_YEAR = ("opening", "rate", "interest", "repaid", "closing")
