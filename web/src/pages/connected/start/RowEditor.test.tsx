@@ -1,7 +1,8 @@
 import { fireEvent, render, screen } from "@testing-library/react";
+import { useState } from "react";
 import { expect, it, vi } from "vitest";
 import { RowEditor } from "./RowEditor";
-import { emptyRow, ROW_SPECS, sendableRows } from "./rows";
+import { emptyRow, ROW_SPECS, sendableRows, type Row, type RowKind } from "./rows";
 
 it("adds an empty facility with every field key", () => {
   const onChange = vi.fn();
@@ -123,4 +124,70 @@ it("sends every key the service reads, trimmed, as strings", () => {
   expect(sendableRows("research_questions", asked, true)).toEqual([
     { ...blank("research_questions"), text: "Why?" },
   ]);
+});
+
+function Held({ kind, start }: { kind: RowKind; start: Row[] }) {
+  const [rows, setRows] = useState(start);
+  return <RowEditor kind={kind} rows={rows} onChange={setRows} primary />;
+}
+const named = (id: string) => ({ ...emptyRow("deal_terms"), facility_id: id });
+const cards = () => [...document.querySelectorAll("details")];
+const openIds = () =>
+  cards()
+    .filter((item) => item.open)
+    .map((item) => item.querySelector<HTMLInputElement>("input")?.value);
+
+it("keeps a row's open state with the row when a row above it is removed", () => {
+  render(<Held kind="deal_terms" start={[named("A"), named("B"), named("C")]} />);
+  (cards()[2] as HTMLDetailsElement).open = true;
+  fireEvent.click(screen.getByRole("button", { name: "Remove Facility 1" }));
+  expect(openIds()).toEqual(["C"]);
+});
+
+it("keeps a just-added row open when a row above it is removed", () => {
+  render(<Held kind="deal_terms" start={[named("A"), named("B")]} />);
+  fireEvent.click(screen.getByRole("button", { name: "Add facility" }));
+  expect(cards().map((item) => item.open)).toEqual([false, false, true]);
+  fireEvent.click(screen.getByRole("button", { name: "Remove Facility 1" }));
+  expect(cards().map((item) => item.open)).toEqual([false, true]);
+});
+
+it("moves focus to Add after the last row is removed and keeps it on a Remove button otherwise", () => {
+  render(<Held kind="deal_terms" start={[named("A"), named("B")]} />);
+  fireEvent.click(screen.getByRole("button", { name: "Remove Facility 1" }));
+  expect(document.activeElement).toBe(screen.getByRole("button", { name: "Remove Facility 1" }));
+  fireEvent.click(screen.getByRole("button", { name: "Remove Facility 1" }));
+  expect(document.activeElement).toBe(screen.getByRole("button", { name: "Add facility" }));
+});
+
+it("marks the fields the static form requires", () => {
+  render(<Held kind="quotes" start={[emptyRow("quotes")]} />);
+  for (const name of ["As-of", "Provider"]) {
+    const control = screen.getByLabelText(name);
+    expect(control).toHaveAttribute("aria-required", "true");
+    expect(control).toHaveAccessibleDescription(/^Required\./);
+  }
+  expect(screen.getByLabelText("Bid")).not.toHaveAttribute("aria-required");
+  expect(Object.keys(ROW_SPECS)).toHaveLength(4);
+  const required = Object.fromEntries(
+    Object.entries(ROW_SPECS).map(([kind, spec]) => [
+      kind,
+      spec.fields.filter((item) => item.required).map((item) => item.key),
+    ]),
+  );
+  expect(required).toEqual({
+    deal_terms: [],
+    quotes: ["as_of", "provider"],
+    ratings: ["agency", "rating"],
+    research_questions: ["text"],
+  });
+});
+
+it("draws its error under the Add button and describes the button with it", () => {
+  render(
+    <RowEditor kind="deal_terms" rows={[]} onChange={vi.fn()} primary error="Add a facility." />,
+  );
+  const add = screen.getByRole("button", { name: "Add facility" });
+  expect(screen.getByRole("alert")).toHaveTextContent("Add a facility.");
+  expect(add).toHaveAccessibleDescription("Add a facility.");
 });
