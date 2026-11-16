@@ -4,6 +4,15 @@ Keep one running record here. A pass applies only to the stated scope. Earlier v
 engine is in [EricMG13/final-workflow](https://github.com/EricMG13/final-workflow)'s
 `VERIFICATION.md`, which also keeps the retained runs this copy leaves out.
 
+## 2026-11-16 — Report pages show a run's figures in its own currency (branch `claude/reporting-currency-report-pages`, into `claude/reporting-currency`, PR 2)
+
+Scope: the connected React report only (`web/src/pages/connected/reportView.ts`, `report/Forecast.tsx`, `report/Securities.tsx`, `report/Modules.tsx` and their tests); ruling `docs/rulings/2026-11-16-reporting-currency-from-sources.md`. No Python, method, launcher or library change; `withUnit` and `unitLabel` unchanged. No provider was called.
+- Owner, 2026-11-16: "it has to run run on any reported currency provided by the source files"; "the source files dictate reporting currency".
+- Changed: the Overview credit-metric tiles (liquidity, free cash flow, net debt, contractual principal, maturities) take the run's money unit, the one the catalogue records with the run's cash figure (CP-1's), else the one money unit (`US$m|[A-Z]{3}m`) the table states, and carry the row's unit into the value and year change; a row or schedule in another unit draws no tile. The Forecast basis note accepts `<ISO code> millions` and labels the difference with it. On a non-USD run the Instrument decisions card notes that market levels are US market quotes in US dollars.
+- Fidelity check: hand-written expected strings for GBP (`£1,250m`, `+£150m vs H1 2025`, `£5.00m`), CHF (`CHF 1,250m`, `CHF 5.00m`), EUR (`€5.00m`), mixed-unit tables and USD (`$1,250m`, `$5.00m`, the whole tile object); 9 new cases failed before the change, every USD case passed before and after. Two existing assertions pinned the superseded USD-only rule and change citing the ruling: the GBP maturity-schedule refusal now has its catalogue state the run's unit (`US$m`); the Forecast "unsupported unit" case uses `EUR thousands` for `EUR millions`.
+- Commands, exit 0: `npm --prefix web ci`; `npm --prefix web run` lint, format:check, typecheck, test (172 files, 3,906 tests), unused, duplication, build; `tools/quality_gate.py` (0 changed Python files).
+- Not verified: `proof:connected` (exit 1: it needs branded Google Chrome and Microsoft Edge, and this container has Chromium only; it stops at the brand check before any report page); a real non-USD run's pages; the security price chart for a non-USD CP-3 whose basis line does not say "All amounts USD millions" (unchanged: withheld). Oldest entry trimmed.
+
 ## 2026-11-16 — Earnings Update runs CP-1A (branch `claude/earnings-update-cp1a`)
 
 Scope: the `earnings_update` preset and its copies (`src/deploy_vii/contracts.py`, `web/src/pages/connected/api.ts`, `docs/templates/context-form.html` `PATHWAYS` and `RUN_ORDER`) and the tests that pin them; ruling `docs/rulings/2026-11-16-earnings-update-cp1a.md`. Caps, launcher, registry, method files and delivery code unchanged. No provider was called.
@@ -944,52 +953,3 @@ Scope: presentation only, all under `web/`; no backend, handoff, provider or mod
   OpenRouter credential did not supply the direct Anthropic key it requires, and
   the available sample pack lacks the evidence for a complete analytical report.
   See [React workflow](docs/react-workflow.md).
-
-## 2026-11-15 — Restructure, second part: removals, method provenance, CP-3C and CP-6A, review (branch `claude/busy-dijkstra-bgex9m`, PR #126)
-
-Scope is **offline only**. No provider or model was called. No model has written a CP-3C or CP-6A
-handoff for the full credit assessment under the new instructions: that needs the owner's paid run.
-This entry follows the one below and its checks supersede that entry's totals.
-
-- Removed, code that no used entry point, journal registry, rule list or test reaches (5,181 lines,
-  no test removed): the Deploy VII earnings owner runtime (`earnings_workflow.py` 4,604 to 689
-  lines; `compose_delta` and what it reaches stay for CP-1B), `owner_workflow`'s JSON-lines
-  transport and `python -m` entry, CP-OS's `navigation`/`verify_navigation`, and 85 uncalled reader
-  and compute definitions in 16 module files. Checked independently: no kept top-level definition
-  changed (AST, docstrings aside), no removed name is referenced, no undefined name in `src`,
-  `apps` or `tools`. Launcher offline preparation, 10 runs over 7 pathways on synthetic input:
-  identical before and after each stage. Kept for the owner's decision: the `OwnerWorkflow` journal
-  chain (`model_testing`, `run_pathway`, `model.loop`), which a 2026-11-13 ruling and `tests/model`
-  still rely on.
-- Method provenance: `manifest.json` gives `source_revision` with its basis for 15 more files; 19
-  files say "not recorded at import; bytes pinned by sha256" (cp-os was not reachable; two of them
-  had been attributed to cp-os `b57a344` wrongly); a `project_files` list registers the three
-  project method files; three unregistered CP-3B duplicates removed after a byte comparison. No
-  method file's sha256 changed. `tests/test_methodology_selection.py` has no known differences left.
-- Full credit assessment (ruling `docs/rulings/2026-11-15-full-assessment-cp3c-cp6a.md`):
-  `credit_snapshot` adds CP-2D and CP-3C. CP-6's scope section no longer cuts T6E.4, T6E.6, T6E.7
-  and T6E.11 (project file, sha256 `617c887c18dd`); CP-6's instructions gain `CP6A_BLOCK` on both
-  pathways that run CP-6; `posture_issues` refuses a non-blocked CP-6 handoff without
-  `### Portfolio posture` and the method's `Final Sizing Posture:` first sentence. Launcher prepared
-  offline for the 7 active pathways before and after: only `credit_snapshot` (two new modules, CP-6)
-  and `portfolio_decision` (CP-6) differ. Fidelity check, synthetic fixture only: default library
-  build identical apart from `built_at` and the workspace path; with two hand-made SYNTHETIC
-  handoffs, `tests/test_library_full_assessment_browser.py` checks CP-6's and CP-3C's pages against
-  the Markdown. Prompt-size ceiling for the pathway raised to 1,483,647 characters (the owner's
-  1,340,000 plus the measured addition): for the owner to confirm. Cost is estimated, not measured.
-- Review: eight reviewers, one per slice, no high-severity finding. Fixed: Signal imports without
-  `credit_os` and names missing brand files at start-up; three permission skips no longer call
-  `os.geteuid` where it is absent (Windows); a failed pack prune no longer blocks the pack commit;
-  the bundle test starts a Python on the bundle's two import roots and finds the library and engine
-  inside it (Linux; not the Windows package). Gate: lines moved verbatim count as moved only in a
-  file the change adds, and code that only moved is still checked with ruff's `F` rules.
-- Open after review: delivery's call item reads a section named `Final Sizing Posture`, not the new
-  `### Portfolio posture` (the library page shows it; settle after a paid run); `posture_issues`
-  checks the first sentence only; no test pins that `OwnerWorkflow.open` refuses a retained
-  JSON-lines run; no test runs `compose_delta`.
-- Checks on the final head: the CI fast list 4,631 passed, 6 skipped, known failures deselected;
-  node page tests 567 passed; quality gate 0 findings; `lint-imports` 3 contracts kept. GitHub Actions,
-  full weekly suite on `7cba8c6` (before the removals): 5,956 passed, 1 failed, a test that read
-  one packet of a two-write reply; the test now reads to the close.
-- Not verified: the full weekly suite on the final head (re-run requested); `Smoke-test.ps1` and
-  the Windows package on Windows; the pack workflow on GitHub Actions. Oldest two entries trimmed.

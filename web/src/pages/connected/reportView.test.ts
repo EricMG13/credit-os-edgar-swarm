@@ -167,7 +167,10 @@ describe("reader data fidelity", () => {
       [["2027", "0", "GBPm"]],
       30,
     );
-    expect(foundationMetrics(foundation([foreign, ledger]), dated)).toEqual([]);
+    // docs/rulings/2026-11-16-reporting-currency-from-sources.md: the run's currency is the money
+    // unit recorded with its cash figure; a schedule in another currency draws no tile.
+    const usd = { ...date, metrics: { cash: { period: "2026-06-30", unit: "US$m" } } };
+    expect(foundationMetrics(foundation([foreign, ledger]), usd)).toEqual([]);
   });
 
   it("does not turn an earnings lead or an unrecognised decision into a committee action", () => {
@@ -852,7 +855,7 @@ describe("overview tiles in the run's own reporting currency", () => {
   const tiles = (input: Section[], unit?: string) =>
     foundationMetrics(foundation(input), catalogueIn(unit)).map(({ key, metric }) => [
       key,
-      metric.value.kind === "value" ? metric.value.text : null,
+      metric.value?.kind === "value" ? metric.value.text : null,
     ]);
 
   it("shows a GBP run's tiles in pounds and carries GBPm into the year change", () => {
@@ -921,6 +924,25 @@ describe("overview tiles in the run's own reporting currency", () => {
       ["interestCover", "2.7x"],
       ["principal", "£3,400m"],
       ["maturities", "£640m"],
+    ]);
+  });
+
+  it("draws no money tile from tables in another currency than the run's", () => {
+    expect(tiles(oneUnit("US$m"), "GBPm")).toEqual([
+      ["leverage", "3.8x"],
+      ["interestCover", "2.7x"],
+    ]);
+  });
+
+  it("reads each table's own unit when the cash figure records no money unit", () => {
+    expect(tiles(oneUnit("US$m"), "USD millions")).toEqual([
+      ["liquidity", "$1,250m"],
+      ["freeCashFlow", "$95.5m"],
+      ["leverage", "3.8x"],
+      ["interestCover", "2.7x"],
+      ["netDebt", "$2,875m"],
+      ["principal", "$3,400m"],
+      ["maturities", "$640m"],
     ]);
   });
 

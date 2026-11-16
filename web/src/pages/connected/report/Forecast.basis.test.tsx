@@ -136,7 +136,8 @@ it("preserves a zero-valued bridge", () => {
 });
 
 it.each([
-  { units: "EUR millions" },
+  // docs/rulings/2026-11-16-reporting-currency-from-sources.md: "EUR millions" is now shown (below).
+  { units: "EUR thousands" },
   { units: "" },
   { original: "Not supplied" },
   { difference: "6" },
@@ -198,6 +199,10 @@ it.each([
   [
     "CHF millions",
     "The calculation gives 10.00 cash proxy. The handoff gives 15.00 free cash flow. The displayed difference is CHF 5.00m.",
+  ],
+  [
+    "EUR millions",
+    "The calculation gives 10.00 cash proxy. The handoff gives 15.00 free cash flow. The displayed difference is €5.00m.",
   ],
   [
     "USD millions",
