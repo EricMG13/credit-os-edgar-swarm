@@ -1,0 +1,126 @@
+import { fireEvent, render, screen } from "@testing-library/react";
+import { expect, it, vi } from "vitest";
+import { RowEditor } from "./RowEditor";
+import { emptyRow, ROW_SPECS, sendableRows } from "./rows";
+
+it("adds an empty facility with every field key", () => {
+  const onChange = vi.fn();
+  render(<RowEditor kind="deal_terms" rows={[]} onChange={onChange} primary />);
+  fireEvent.click(screen.getByRole("button", { name: "Add facility" }));
+  expect(onChange).toHaveBeenCalledWith([emptyRow("deal_terms")]);
+  expect(Object.keys(emptyRow("deal_terms"))).toHaveLength(17);
+  expect(emptyRow("quotes")).toMatchObject({ kind: "observed" });
+  expect(emptyRow("ratings")).toMatchObject({ scope: "issuer" });
+});
+
+it("writes one field as a string and keeps unknown keys", () => {
+  const onChange = vi.fn();
+  render(
+    <RowEditor
+      kind="deal_terms"
+      rows={[{ facility_id: "", size_m: 500, custom: 7 }]}
+      onChange={onChange}
+      primary
+    />,
+  );
+  fireEvent.change(screen.getByLabelText("Facility ID"), { target: { value: "tlb-2031" } });
+  expect(onChange).toHaveBeenCalledWith([{ facility_id: "tlb-2031", size_m: 500, custom: 7 }]);
+});
+
+it("shows new-issue fields only for a new issue", () => {
+  const { rerender } = render(
+    <RowEditor
+      kind="deal_terms"
+      rows={[emptyRow("deal_terms")]}
+      onChange={vi.fn()}
+      primary={false}
+    />,
+  );
+  expect(screen.queryByLabelText("Tenor (years)")).toBeNull();
+  expect(screen.queryByLabelText("Talk spread low (bps)")).toBeNull();
+  rerender(
+    <RowEditor kind="deal_terms" rows={[emptyRow("deal_terms")]} onChange={vi.fn()} primary />,
+  );
+  expect(screen.getByLabelText("Tenor (years)")).toBeInTheDocument();
+});
+
+it("summarises a row and removes it", () => {
+  const onChange = vi.fn();
+  const row = {
+    ...emptyRow("deal_terms"),
+    facility_id: "tlb-2031",
+    instrument: "Term loan B",
+    currency: "USD",
+    size_m: "1250",
+  };
+  render(<RowEditor kind="deal_terms" rows={[row]} onChange={onChange} primary />);
+  expect(screen.getByText("tlb-2031 · Term loan B · USD 1250m")).toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button", { name: "Remove Facility 1" }));
+  expect(onChange).toHaveBeenCalledWith([]);
+});
+
+it("stops adding at the maximum and states a requirement", () => {
+  const rows = Array.from({ length: ROW_SPECS.research_questions.max }, () =>
+    emptyRow("research_questions"),
+  );
+  render(<RowEditor kind="research_questions" rows={rows} onChange={vi.fn()} primary={false} />);
+  expect(screen.getByRole("button", { name: "Add research question" })).toBeDisabled();
+  render(<RowEditor kind="deal_terms" rows={[]} onChange={vi.fn()} primary required />);
+  expect(
+    screen.getByText("At least one facility is required for a new issue."),
+  ).toBeInTheDocument();
+});
+
+it("shows a held value that is not among the options", () => {
+  const { rerender } = render(
+    <RowEditor
+      kind="deal_terms"
+      rows={[{ ...emptyRow("deal_terms"), instrument: "Bridge loan" }]}
+      onChange={vi.fn()}
+      primary
+    />,
+  );
+  const instrument = screen.getByLabelText<HTMLSelectElement>("Instrument");
+  expect(instrument.selectedOptions[0]?.textContent).toBe("Bridge loan");
+  rerender(
+    <RowEditor
+      kind="research_questions"
+      rows={[{ text: "Q?", focus_module: "CP-2D" }]}
+      onChange={vi.fn()}
+      primary={false}
+      focusChoices={[["", "Any"]]}
+    />,
+  );
+  const focus = screen.getByLabelText<HTMLSelectElement>("Focus module");
+  expect(focus.selectedOptions[0]?.textContent).toBe("Liquidity");
+});
+
+// Keys of the service models (src/deploy_vii/context.py DealTerm, Quote, Rating, ResearchQuestion).
+const SERVICE_KEYS = {
+  deal_terms:
+    "facility_id instrument currency size_m tenor_years talk_spread_bps_low talk_spread_bps_high talk_oid_low talk_oid_high floor_pct coupon_pct margin_bps maturity call_protection use_of_proceeds as_of provider",
+  quotes: "facility_id kind bid ask price yield_pct spread_bps as_of provider",
+  ratings: "agency scope rating outlook as_of",
+  research_questions: "text focus_module",
+};
+const blank = (kind: keyof typeof SERVICE_KEYS) =>
+  Object.fromEntries(SERVICE_KEYS[kind].split(" ").map((key) => [key, ""]));
+
+it("sends every key the service reads, trimmed, as strings", () => {
+  const typed = [{ facility_id: " TL-B ", size_m: 500, tenor_years: "7" }, emptyRow("deal_terms")];
+  const expected = { ...blank("deal_terms"), facility_id: "TL-B", size_m: "500" };
+  expect(sendableRows("deal_terms", typed, false)).toEqual([expected]);
+  expect(sendableRows("deal_terms", typed, true)).toEqual([{ ...expected, tenor_years: "7" }]);
+  const quote = { ...blank("quotes"), kind: "observed", bid: " 98 " };
+  expect(sendableRows("quotes", [quote, emptyRow("quotes")], true)).toEqual([
+    { ...quote, bid: "98" },
+  ]);
+  const rating = { ...emptyRow("ratings"), rating: "B+", custom: 7 };
+  expect(sendableRows("ratings", [rating, emptyRow("ratings")], true)).toEqual([
+    { ...blank("ratings"), scope: "issuer", rating: "B+", custom: 7 },
+  ]);
+  const asked = [{ text: " Why? " }, { ...emptyRow("research_questions"), text: "  " }];
+  expect(sendableRows("research_questions", asked, true)).toEqual([
+    { ...blank("research_questions"), text: "Why?" },
+  ]);
+});
