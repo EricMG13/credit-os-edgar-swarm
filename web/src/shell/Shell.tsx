@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { useRef, type ReactNode } from "react";
 import { BookOpen01, Cube01, Grid01, PlayCircle, Signal01 } from "@untitledui/icons";
 import { NavButton } from "@/components/application/app-navigation/base-components/nav-button";
 
@@ -33,15 +33,27 @@ export function Shell({
           const section = sections.find((entry) => entry.area === item.area);
           return section ? [{ ...item, href: section.href }] : [];
         });
+  const main = useRef<HTMLElement>(null);
   return (
     <div className="flex h-screen min-h-0 flex-col bg-surface-canvas text-text-primary min-[768px]:flex-row">
+      <a
+        href="#main"
+        // The app routes on the URL hash, so the link moves focus and leaves the hash alone.
+        onClick={(event) => {
+          event.preventDefault();
+          main.current?.focus();
+        }}
+        className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50 focus:rounded-md focus:bg-surface-card focus:px-3 focus:py-2 focus:text-text-primary focus:outline-2 focus:outline-offset-2 focus:outline-focus-ring"
+      >
+        Skip to content
+      </a>
       <aside className="order-last flex h-16 w-full shrink-0 px-1 pt-1 min-[768px]:order-first min-[768px]:h-full min-[768px]:w-[68px] min-[768px]:py-1 min-[768px]:pl-1">
         <div className="flex h-full w-full flex-row items-center rounded-xl bg-primary px-2 py-1 ring-1 ring-secondary ring-inset min-[768px]:w-auto min-[768px]:flex-col min-[768px]:items-stretch min-[768px]:px-0 min-[768px]:py-0 min-[768px]:pt-5">
           <div className="flex shrink-0 justify-center px-2 min-[768px]:px-3">
             <img src={symbol} alt="" width="24" height="24" className="size-6" />
           </div>
-          <nav aria-label="Areas" className="min-w-0 flex-1">
-            <ul className="flex h-full items-center justify-around gap-0.5 px-1 min-[768px]:mt-5 min-[768px]:flex-col min-[768px]:items-stretch min-[768px]:justify-start min-[768px]:px-3.5">
+          <nav aria-label="Areas" className="flex min-h-0 min-w-0 flex-1 flex-col">
+            <ul className="flex min-h-0 flex-1 items-center justify-around gap-0.5 px-1 min-[768px]:mt-5 min-[768px]:flex-col min-[768px]:items-stretch min-[768px]:justify-start min-[768px]:px-3.5">
               {items.map((item) => (
                 <li
                   key={item.area}
@@ -62,7 +74,12 @@ export function Shell({
           </nav>
         </div>
       </aside>
-      <main className={`min-h-0 min-w-0 flex-1 overflow-y-auto${bleed ? "" : " p-4 sm:p-8"}`}>
+      <main
+        id="main"
+        ref={main}
+        tabIndex={-1}
+        className={`relative min-h-0 min-w-0 flex-1 overflow-y-auto focus:outline-none${bleed ? "" : " p-4 sm:p-8"}`}
+      >
         {children}
       </main>
     </div>

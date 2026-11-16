@@ -50,4 +50,57 @@ describe("connected report Changes", () => {
     expect(screen.getByText("The comparison could not be read.")).toBeInTheDocument();
     expect(screen.queryByText("No earlier run to compare.")).toBeNull();
   });
+
+  it("draws an h2 and skips no heading level, charts included", () => {
+    const { container } = renderChanges({
+      pack: {
+        maturity_profile: {
+          unit: "US$m",
+          rows: [{ period: "FY2026", prior: "10", current: "100" }],
+        },
+      },
+    });
+    const levels = Array.from(container.querySelectorAll("h1,h2,h3,h4,h5,h6"), (node) =>
+      Number(node.tagName.slice(1)),
+    );
+    expect(levels).toContain(2);
+    levels.forEach((level, at) => {
+      expect(level).toBeLessThanOrEqual((levels[at - 1] ?? 1) + 1);
+    });
+  });
+
+  it("shows the compared bottom lines and the verdict's reason without a module code", () => {
+    renderChanges({
+      pack: {
+        measures: [],
+        modules: [
+          {
+            module: "CP-2",
+            title: "Fundamental credit",
+            ran_prior: true,
+            ran_current: true,
+            prior_bottom_line: "Credit is stable; Liquidity (CP-2D) is ample.",
+            current_bottom_line: "Credit is stable; Liquidity (CP-2D) is thin.",
+          },
+        ],
+      },
+      verdicts: {
+        modules: {
+          "CP-2": {
+            status: "Unchanged",
+            cause: "Follows Liquidity (CP-2D)",
+            why: "The view follows Financial foundation (CP-1), which did not change.",
+          },
+        },
+      },
+    });
+    expect(screen.getByText("Credit is stable; Liquidity is ample.")).toBeInTheDocument();
+    expect(screen.getByText("Credit is stable; Liquidity is thin.")).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "Follows Liquidity · The view follows Financial foundation, which did not change.",
+      ),
+    ).toBeInTheDocument();
+    expect(document.body.textContent).not.toMatch(/\(CP-[A-Za-z0-9]+\)/);
+  });
 });

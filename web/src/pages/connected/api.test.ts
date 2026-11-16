@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { getContext } from "./api";
+import { getContext, moduleName, PATHWAYS } from "./api";
 
 afterEach(() => vi.unstubAllGlobals());
 
@@ -59,5 +59,17 @@ describe("connected pathway caps", () => {
     const result = await getContext(new AbortController().signal);
 
     expect(result.caps).toEqual({});
+  });
+});
+
+describe("connected module names", () => {
+  it("names a module without its code", () => {
+    expect(moduleName("CP-2D")).toBe("Liquidity");
+    expect(moduleName("CP-1")).toBe("Financial foundation");
+    expect(moduleName("CP-99")).toBe("CP-99");
+  });
+  it("has a plain name for every module the run start can schedule", () => {
+    for (const { modules } of Object.values(PATHWAYS))
+      for (const id of modules) expect(moduleName(id)).not.toMatch(/^CP-/);
   });
 });

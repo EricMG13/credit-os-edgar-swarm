@@ -5,9 +5,9 @@ max_score: 40
 na_heuristics: 
 p0_count: 0
 p1_count: 4
-target_identity: "file:/Users/ericguei/Documents/RBOT-HTML/.claude/worktrees/impeccable-report-library-595877/apps/issuer-library/credit_os/web/index.html"
+target_identity: "file:apps/issuer-library/credit_os/web/index.html"
 target_fingerprint: "sha256:9bca907ca796ab4f1bb1e59a3d559a16eadf4af22d1bbd2b4c2163bebacb8165"
-target_path: /Users/ericguei/Documents/RBOT-HTML/.claude/worktrees/impeccable-report-library-595877/apps/issuer-library/credit_os/web/index.html
+target_path: apps/issuer-library/credit_os/web/index.html
 timestamp: 2026-11-10T07-05-51Z
 slug: apps-issuer-library-credit-os-web-index-html
 closed: true

@@ -57,6 +57,7 @@ it("keeps source names in Evidence when a published gap names a source file", ()
     />,
   );
   expect(screen.getByRole("note")).toHaveTextContent("See Evidence");
+  expect(screen.getAllByText(/Not established for this run/)).toHaveLength(1);
   expect(screen.queryByText(/funding\.xlsx/)).toBeNull();
   expect(screen.getByRole("link", { name: "Source table" })).toHaveAttribute(
     "href",
@@ -431,7 +432,7 @@ it("keeps unstated stack balances out of the plot while retaining their stated r
   expect(figure.getByRole("table")).toHaveTextContent("Not supplied: no balance");
 });
 
-it("positions dated points and coarse intervals on one axis in separate status lanes", () => {
+it("draws dated points and coarse intervals as year markers and dated rows with their precision", () => {
   const sections = fixture(
     ["Event date", "Date precision", "Published", "Event", "Status", "Source", "Credit relevance"],
     [
@@ -461,16 +462,14 @@ it("positions dated points and coarse intervals on one axis in separate status l
       sections={sections}
     />,
   );
-  const lane = within(screen.getByRole("group", { name: "Event lanes on a shared date axis" }));
-  const history = within(lane.getByRole("region", { name: "Historical" }));
-  const scenario = within(lane.getByRole("region", { name: "Scenario" }));
-  const point = history.getByRole("img", { name: /Bond retired.*2028-03-31.*day/ });
-  const range = scenario.getByRole("img", { name: /Refinancing scenario.*2028-Q2.*quarter/ });
-  expect(point).toHaveStyle({ left: "0%" });
-  expect(point.style.width).toBe("");
-  expect(Number.parseFloat(range.style.left)).toBeGreaterThan(0);
-  expect(Number.parseFloat(range.style.width)).toBeGreaterThan(98);
-  expect(lane.getByRole("group", { name: "Date axis" })).toHaveTextContent("2028-03-312028-06-30");
+  const markers = within(screen.getByRole("group", { name: "Events by year" }));
+  const rows = within(screen.getByRole("group", { name: "Events in date order" }));
+  const point = markers.getByRole("button", { name: /Bond retired.*2028-03-31.*day/ });
+  const range = markers.getByRole("button", { name: /Refinancing scenario.*2028-Q2.*quarter/ });
+  expect(point).toHaveAttribute("data-event-category", "Historical");
+  expect(range).toHaveAttribute("data-event-category", "Scenario");
+  expect(rows.getByText("2028-03-31 · day")).toBeInTheDocument();
+  expect(rows.getByText("2028-Q2 · quarter")).toBeInTheDocument();
 });
 
 it("draws each named node once and connects published parallel, return and self edges", () => {
@@ -558,4 +557,88 @@ it("leaves invalid event dates and missing map endpoints in their source tables"
   expect(screen.getByRole("table", { name: "legal entities" })).toHaveTextContent(
     "Not supplied: issuer undisclosed",
   );
+});
+
+it("draws a chart gap in the gap treatment with its title and the recorded reason", () => {
+  const reason = "no mandate, constraint or limit data in the run settings";
+  render(<LegacyVisuals output={{ chartGaps: [{ title: "Limits", table: 20, gap: reason }] }} />);
+  expect(screen.getByRole("heading", { name: "Limits" })).toBeInTheDocument();
+  const note = screen.getByRole("note");
+  expect(note.textContent).toBe(reason);
+  expect(note.className).toContain("first-letter:uppercase");
+  expect(note.parentElement?.className).toContain("gap-hatch");
+});
+
+function twoCharts() {
+  const table = (line: number) => ({
+    type: "table",
+    line,
+    headers: ["Period", "Amount", "Reporting unit", "Basis and limitation"],
+    rows: [
+      { cells: ["FY2027", "10", "US$m", "Stated"] },
+      { cells: ["FY2028", "12", "US$m", "Stated"] },
+    ],
+  });
+  return {
+    output: {
+      charts: [
+        { title: "Interest", table: 20, unit: "US$m", columns: [1] },
+        { title: "Debt maturities", table: 30, unit: "US$m", columns: [1] },
+      ],
+    },
+    sections: [{ blocks: [table(20), table(30)] }],
+  };
+}
+
+it("lays chart cards in two columns from lg and spans the primary chart across both", () => {
+  const { output, sections } = twoCharts();
+  render(<LegacyVisuals output={output} sections={sections} primary="Debt maturities" cards />);
+  const card = (name: string) => {
+    const found = screen.getByRole("figure", { name }).closest("div.rounded-xl");
+    if (!(found instanceof HTMLElement)) throw new Error(`no card for ${name}`);
+    return found;
+  };
+  expect(card("Debt maturities").parentElement).toHaveClass("lg:grid-cols-2");
+  expect(card("Debt maturities")).toHaveClass("lg:col-span-2");
+  // The card left alone in the second row also spans both columns.
+  expect(card("Interest")).toHaveClass("lg:col-span-2");
+});
+
+it("keeps charts in one column when they are not cards", () => {
+  const { output, sections } = twoCharts();
+  render(<LegacyVisuals output={output} sections={sections} />);
+  const figure = screen.getByRole("figure", { name: "Interest" });
+  expect(figure.closest(".lg\\:grid-cols-2")).toBeNull();
+});
+
+it("spans a lone card and the last card of an odd count across both columns", () => {
+  const { output, sections } = twoCharts();
+  const cardOf = (name: string) => screen.getByRole("figure", { name }).closest("div.rounded-xl");
+  const { unmount } = render(
+    <LegacyVisuals output={{ charts: [output.charts[0]] }} sections={sections} cards />,
+  );
+  expect(cardOf("Interest")).toHaveClass("lg:col-span-2");
+  unmount();
+  render(<LegacyVisuals output={output} sections={sections} cards />);
+  expect(cardOf("Interest")).not.toHaveClass("lg:col-span-2");
+  expect(cardOf("Debt maturities")).not.toHaveClass("lg:col-span-2");
+});
+
+it("keeps the heading level on a period chart with a negative value", () => {
+  const sections = fixture(
+    ["Period", "Free cash flow", "Reporting unit", "Basis and limitation"],
+    [
+      ["FY2028", "250.00", "US$m", "Issuer statement"],
+      ["FY2029", "-40.00", "US$m", "Issuer statement"],
+    ],
+  );
+  render(
+    <LegacyVisuals
+      headingLevel="h3"
+      output={{ charts: [{ title: "Free cash flow", table: 20, unit: "US$m", columns: [1] }] }}
+      sections={sections}
+    />,
+  );
+  expect(screen.getByRole("heading", { name: "Free cash flow", level: 3 })).toBeInTheDocument();
+  expect(screen.queryByRole("heading", { level: 4 })).toBeNull();
 });
