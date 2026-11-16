@@ -19,7 +19,12 @@ export class ConnectedLoadBoundary extends Component<Props, { failed: boolean }>
           </p>
           <button
             className="mt-3 min-h-11 rounded-ds-sm bg-action px-4 py-2 text-sm font-semibold text-text-on-action hover:bg-action-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
-            onClick={this.props.reload ?? (() => window.location.reload())}
+            onClick={
+              this.props.reload ??
+              (() => {
+                window.location.reload();
+              })
+            }
             type="button"
           >
             Reload page

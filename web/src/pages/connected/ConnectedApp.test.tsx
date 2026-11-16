@@ -525,6 +525,101 @@ describe("connected activity and reports", () => {
     pathway: "credit_snapshot",
   };
 
+  function activityFetch(body: unknown, status = 200) {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn((path: string) => {
+        if (path !== "/connected/activity") throw new Error(`Unexpected request ${path}`);
+        return Promise.resolve(Response.json(body, { status }));
+      }),
+    );
+  }
+  const waiting = {
+    id: "harbour-2026-11",
+    issuer_name: "Harbour Packaging",
+    pathway: "credit_snapshot",
+    status: "queued",
+    reason: "3 runs are already running",
+    submitted_by: "",
+    started_at: "",
+    name_differs: false,
+    stalled: false,
+    files: 2,
+    modules: [
+      ["CP-0", "waiting"],
+      ["Report", "waiting"],
+    ],
+  };
+
+  it("lists the runs in progress and waiting, with module progress and no run code", async () => {
+    activityFetch({
+      updated: "2026-11-16T14:32:10Z",
+      held: "daily limit of 30 runs reached; waiting until tomorrow",
+      runs: [
+        {
+          ...waiting,
+          id: "meridian-2026-11",
+          issuer_name: "Meridian Foods",
+          status: "running",
+          reason: "",
+          submitted_by: "Dana Reyes",
+          started_at: "2026-11-16T14:02:00Z",
+          name_differs: true,
+          stalled: true,
+          files: 14,
+          modules: [
+            ["CP-0", "done"],
+            ["CP-1", "running"],
+            ["Report", "waiting"],
+          ],
+        },
+        waiting,
+      ],
+    });
+    render(<ConnectedApp path="/runs" mode="synthetic" />);
+    expect(await screen.findByRole("link", { name: "Meridian Foods" })).toHaveAttribute(
+      "href",
+      "/run/meridian-2026-11",
+    );
+    expect(screen.getByRole("heading", { level: 1, name: "Run activity" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Run" })).toHaveAttribute("aria-current", "page");
+    expect(screen.getByRole("link", { name: "Run" })).toHaveAttribute("href", "/runs");
+    expect(screen.getByRole("link", { name: "Start a run" })).toHaveAttribute("href", "/start");
+    expect(screen.getByText("Updated 16 Nov 2026, 14:32 UTC")).toBeInTheDocument();
+    for (const term of ["Running", "Waiting"])
+      expect(screen.getByText(term, { selector: "dt" }).nextElementSibling).toHaveTextContent("1");
+    expect(screen.getByRole("progressbar", { name: "1 of 2 modules" })).toHaveAttribute(
+      "aria-valuenow",
+      "1",
+    );
+    expect(screen.getByText("Source readiness (CP-0)").closest("li")).toHaveTextContent("Finished");
+    expect(
+      screen.getByText("submitted by Dana Reyes · started 16 Nov 2026, 14:02 UTC"),
+    ).toBeInTheDocument();
+    expect(screen.getByText("No activity in the last hour")).toBeInTheDocument();
+    expect(screen.getByText("14 source files")).toBeInTheDocument();
+    expect(screen.getByText("Issuer name differs from earlier runs")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Harbour Packaging" })).toHaveAttribute(
+      "href",
+      "/run/harbour-2026-11",
+    );
+    expect(screen.getByText("3 runs are already running")).toBeInTheDocument();
+    expect(screen.getByText(/daily limit of 30 runs reached/)).toBeInTheDocument();
+    expect(document.body).not.toHaveTextContent(/2026-11\b/);
+  });
+
+  it("says so when no run is in progress and when activity cannot be read", async () => {
+    activityFetch({ updated: "2026-11-16T14:32:10Z", held: "", runs: [] });
+    render(<ConnectedApp path="/runs" mode="synthetic" />);
+    expect(await screen.findByText("No run in progress")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Open the library" })).toHaveAttribute("href", "/");
+    cleanup();
+    activityFetch({ error: "run activity is unavailable" }, 500);
+    render(<ConnectedApp path="/runs" mode="synthetic" />);
+    expect(await screen.findByText("Run activity could not be read")).toBeInTheDocument();
+    expect(screen.queryByText("No run in progress")).toBeNull();
+  });
+
   it("waits for report publication after the run has finished", async () => {
     let reportRequests = 0;
     vi.stubGlobal(
@@ -564,6 +659,7 @@ describe("connected activity and reports", () => {
     );
     render(<ConnectedApp path="/run/test-run" mode="synthetic" />);
     expect(await screen.findByText(/Waiting for the report/)).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Run activity" })).toHaveAttribute("href", "/runs");
     expect(screen.getByText("Source readiness (CP-0)")).toBeInTheDocument();
     expect(
       screen.getByRole("progressbar", { name: /USD 0.00 of USD 25.00 cap usage/ }),

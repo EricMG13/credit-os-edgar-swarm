@@ -10,6 +10,9 @@ const ReportLibrary = lazy(() =>
 const ReportReader = lazy(() =>
   import("./ReportLibrary").then(({ ReportReader }) => ({ default: ReportReader })),
 );
+const RunActivity = lazy(() =>
+  import("./RunActivity").then(({ RunActivity }) => ({ default: RunActivity })),
+);
 const RunProgress = lazy(() =>
   import("./RunProgress").then(({ RunProgress }) => ({ default: RunProgress })),
 );
@@ -25,7 +28,7 @@ function LoadingPage() {
 
 const SECTIONS: { area: Area; href: string }[] = [
   { area: "library", href: "/" },
-  { area: "run", href: "/start" },
+  { area: "run", href: "/runs" },
 ];
 
 function assign(path: string) {
@@ -60,7 +63,8 @@ export function ConnectedApp({
   const report = reportFolder(path);
   const start = path === "/start" || path === "/start/";
   const prior = new URLSearchParams(search).get("from");
-  const current = start || run ? "run" : "library";
+  const runs = path === "/runs" || path === "/runs/";
+  const current = start || run || runs ? "run" : "library";
   return (
     <Shell current={current} sections={SECTIONS} symbol="/symbol.svg">
       <Suspense fallback={<LoadingPage />}>
@@ -68,6 +72,8 @@ export function ConnectedApp({
           <ReportLibrary />
         ) : start ? (
           <StartRun key={prior} mode={mode} navigate={navigate} from={prior ?? undefined} />
+        ) : runs ? (
+          <RunActivity />
         ) : run ? (
           <RunProgress key={run} id={run} mode={mode} />
         ) : report ? (
