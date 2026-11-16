@@ -6,10 +6,12 @@ Expected texts are written out here, not computed with the module under test.
 
 from __future__ import annotations
 
+import base64
 import json
 import logging
 import tempfile
 import threading
+import zlib
 from collections.abc import Iterator
 from dataclasses import replace
 from datetime import UTC, datetime, timedelta
@@ -67,14 +69,48 @@ def record(run_id: str = "20261116-134500-01", **change: Any) -> Record:
 
 
 def texts(part: Any) -> list[str]:
-    """Every text a card shows, in order: TextBlocks and Badges (their fallbacks left out)."""
+    """Every text a card shows, in order: TextBlocks, RichTextBlocks (their runs joined) and the
+    status pill, an image whose alternative text is its word."""
     if isinstance(part, list):
         return [t for item in part for t in texts(item)]
     if not isinstance(part, dict):
         return []
-    own = [part["text"]] if part.get("type") in ("TextBlock", "Badge") else []
-    rest = [t for key, value in part.items() if key != "fallback" for t in texts(value)]
-    return own + rest
+    if part.get("type") == "RichTextBlock":
+        return ["".join(run["text"] for run in part["inlines"])]
+    own = [part["text"]] if part.get("type") == "TextBlock" else []
+    if part.get("type") == "Image" and part.get("id") == "status":
+        own = [part["altText"]]
+    return own + [t for value in part.values() for t in texts(value)]
+
+
+def pixel_row(url: str) -> tuple[int, bytes]:
+    """The width and first pixel row of an RGBA PNG data URI with no row filter, read here
+    without the module's own encoder."""
+    data = base64.b64decode(url.removeprefix("data:image/png;base64,"))
+    width = int.from_bytes(data[16:20], "big")
+    at, chunks = 8, b""
+    while at < len(data):
+        size, kind = int.from_bytes(data[at : at + 4], "big"), data[at + 4 : at + 8]
+        if kind == b"IDAT":
+            chunks += data[at + 8 : at + 8 + size]
+        at += 12 + size
+    raw = zlib.decompress(chunks)
+    assert raw[0] == 0  # filter type none
+    return width, raw[1 : 1 + 4 * width]
+
+
+def first_pixel(url: str) -> tuple[int, ...]:
+    return tuple(pixel_row(url)[1][:4])
+
+
+def posted_bytes(card: dict[str, Any]) -> int:
+    message = {
+        "type": "message",
+        "attachments": [
+            {"contentType": "application/vnd.microsoft.card.adaptive", "content": card}
+        ],
+    }
+    return len(json.dumps(message, ensure_ascii=False, separators=(",", ":")).encode())
 
 
 def actions(card: dict[str, Any]) -> list[tuple[str, str]]:
@@ -201,9 +237,10 @@ def test_a_slot_is_read_from_any_time_zone():
 def test_the_started_card_says_who_when_and_what_will_run():
     card = teams.started_card(record(), LINK, 14)
     assert card["type"] == "AdaptiveCard" and card["version"] == "1.5"
-    header = card["body"][0]
-    assert header["backgroundImage"]["url"].startswith("data:image/png;base64,iVBOR")
-    assert header["items"][0]["altText"] == "Credit OS"
+    band, stripe = card["body"][0]["items"]
+    assert band["backgroundImage"]["url"].startswith("data:image/png;base64,iVBOR")
+    assert band["items"][0]["altText"] == "Credit OS"
+    assert first_pixel(stripe["items"][0]["url"]) == (0, 26, 255, 255)  # brand blue: running
     assert texts(card["body"][1:]) == [
         "Northbridge Holdings",
         "Full credit assessment",
@@ -288,8 +325,23 @@ def test_the_stopped_card_says_why_and_how_far_it_got(state, word, sentence):
         "11/14 modules",
     ]
     bar = card["body"][-1]["columns"][1]["items"][0]
-    assert (bar["type"], bar["value"], bar["max"]) == ("ProgressBar", 11, 14)
-    assert bar["fallback"]["text"] == "11 of 14 modules complete"
+    assert (bar["type"], bar["altText"], bar["size"]) == (
+        "Image",
+        "11 of 14 modules done",
+        "Stretch",
+    )
+    width, row = pixel_row(bar["url"])
+    filled = sum(row[i : i + 4] == bytes((0, 26, 255, 255)) for i in range(0, len(row), 4))
+    assert (width, filled) == (600, 471)  # 11/14 of 600, rounded
+    stripe = card["body"][0]["items"][1]["items"][0]
+    assert (
+        first_pixel(stripe["url"])
+        == {
+            "capped": (224, 168, 0, 255),
+            "failed": (165, 76, 72, 255),
+            "interrupted": (224, 168, 0, 255),
+        }[state]
+    )
     assert "logs" not in json.dumps(card)  # the record's reason is machinery: not shown
     assert actions(card)[0] == ("Run activity", "http://127.0.0.1:8765/runs")
 
@@ -348,21 +400,21 @@ def test_the_summary_counts_the_day_and_lists_five_finished_runs(lay):
         "Runs today",
         "Mon 16 Nov 2026",
         "13:00",
-        "**1** Stopped",
-        "**1** Running",
-        "**1** Queued",
-        "**7** Finished",
+        "1 Stopped",
+        "1 Running",
+        "1 Queued",
+        "7 Finished",
     ]
     rows = [shown[i : i + 3] for i in range(7, len(shown) - 1, 3)]
     assert rows[:3] == [
-        ["**Northbridge Holdings** Deep", "Priya R", "12:07"],
-        ["**Harrowgate Industrials** Full", "Tom O", "0/14"],
-        ["**Sable Energy** Full", "Priya R", "Queued"],
+        ["Northbridge Holdings Deep", "Priya R", "12:07"],
+        ["Harrowgate Industrials Full", "Tom O", "0/14"],
+        ["Sable Energy Full", "Priya R", "Queued"],
     ]
     assert [row[2] for row in rows[3:]] == ["16:18", "15:17", "14:16", "13:15", "12:14"]
     assert shown[-1] == "+2 more finished"
     assert "Yesterday plc" not in json.dumps(card)
-    assert len(json.dumps(card)) < 20_000  # Teams refuses a card of about 25 KB
+    assert posted_bytes(card) < 23_000  # Teams refuses a card of about 25 KB
 
 
 def test_the_summary_is_posted_once_per_slot_and_not_when_the_day_is_quiet(lay):
@@ -593,11 +645,15 @@ def test_a_bad_day_s_summary_stays_under_the_teams_limit(lay):
     sender.tick(runs, MONDAY_1300, {})
     [card] = sent.cards
     shown = texts(card["body"])
-    assert shown[3:7] == ["**30** Stopped", "**3** Running", "**30** Queued", "**30** Finished"]
-    assert shown[-1] == "+25 more stopped \u00b7 +27 more queued \u00b7 +25 more finished"
-    assert len(card["body"][3]["items"]) == 16
-    posted = {"type": "message", "attachments": [{"contentType": "x", "content": card}]}
-    assert len(json.dumps(posted).encode()) < 22_000
+    assert shown[3:7] == ["30 Stopped", "3 Running", "30 Queued", "30 Finished"]
+    rows = [texts(row)[-1] for row in card["body"][3]["items"]]
+    queued = rows.count("Queued")
+    assert rows[:9] == ["12:30"] * 5 + ["0/14"] * 3 + ["Queued"]  # stopped first, five of them
+    assert queued >= 1 and len(rows) == 5 + 3 + queued
+    assert (
+        shown[-1] == f"+25 more stopped \u00b7 +{30 - queued} more queued \u00b7 +30 more finished"
+    )
+    assert 21_000 < posted_bytes(card) <= 23_000
 
 
 def test_an_unreadable_ledger_replays_nothing(lay):
@@ -750,3 +806,25 @@ def test_the_run_start_service_links_into_its_library_page():
         "Run activity",
         "http://10.0.0.5:8765/library/index.html#CP-OS/activity",
     )
+
+
+def test_every_run_state_has_its_pill_and_shape_and_every_meta_icon_is_drawn():
+    from deploy_workflow.inbox import teams_brand
+
+    states = {"queued", "running", "finished", "failed", "capped", "rejected", "interrupted"}
+    assert set(teams_brand.PILLS) == set(teams_brand.SHAPES) == states
+    assert set(teams_brand.ICONS) == {"person", "clock", "document", "layers", "money"}
+    for url in (*teams_brand.PILLS.values(), *teams_brand.SHAPES.values()):
+        assert (
+            base64.b64decode(url.removeprefix("data:image/png;base64,"))[:8] == b"\x89PNG\r\n\x1a\n"
+        )
+
+
+def test_a_callout_tint_lets_the_theme_show_through_and_its_rule_does_not():
+    done = record(status="finished", ended_at="2026-11-16T14:32:00Z")
+    callout = teams.finished_card(done, LINK, (1, 1), "The lead.")["body"][-1]
+    width, row = pixel_row(callout["backgroundImage"]["url"])
+    assert callout["backgroundImage"]["fillMode"] == "RepeatVertically"
+    assert row[:12] == bytes((0, 26, 255, 255)) * 3  # a 3px opaque rule
+    assert row[12:16] == bytes((0, 26, 255, 18))  # then the tint, mostly transparent
+    assert width == 1600

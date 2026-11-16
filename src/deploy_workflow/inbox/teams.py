@@ -35,11 +35,15 @@ summary (its own card says so).
 
 from __future__ import annotations
 
+import base64
+import functools
 import json
 import logging
 import os
+import struct
 import urllib.parse
 import urllib.request
+import zlib
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass, field
 from datetime import UTC, datetime, timedelta
@@ -52,16 +56,17 @@ from deploy_workflow.inbox import activity
 from deploy_workflow.inbox.layout import Layout
 from deploy_workflow.inbox.runs import TEAMS_WEBHOOK_VARIABLE, Record, cap_of
 from deploy_workflow.inbox.startup import StartupRefused
-from deploy_workflow.inbox.teams_brand import BAND, LOCKUP
+from deploy_workflow.inbox.teams_brand import BAND, ICONS, LOCKUP, PILLS, SHAPES
 from deploy_workflow.run_events import EVENTS, read_events
 
 WEBHOOK_VARIABLE = TEAMS_WEBHOOK_VARIABLE
 LINK_VARIABLE = "CREDIT_OS_TEAMS_LINK"
 SLOTS = (9, 13, 17, 21)  # UK hours a summary is due, Monday to Friday
 FINISHED_SHOWN = 5  # the summary lists this many finished runs, then counts the rest
-# The other groups are cut too, so a bad day's card stays under Teams' limit of about 25 KB (a
-# row is about 0.9 KB): at most 18 rows in all.
+# The other groups are cut too, and rows stop where the posted card would pass _CARD_BYTES:
+# Teams refuses a card of about 25 KB, and a summary row is about 1.6 KB.
 _ROWS_SHOWN: Mapping[str, int] = {"stopped": 5, "running": 5, "queued": 3}
+_CARD_BYTES = 23_000
 
 _SLOT_MINUTES = 30
 _SATURDAY = 5  # datetime.weekday()
@@ -72,16 +77,15 @@ _TIMEOUT = 10  # seconds: the post runs in the polling thread, between polls
 _TIME = "%Y-%m-%dT%H:%M:%SZ"
 _ENDED = ("finished", "capped", "failed", "interrupted", "rejected")
 _STOPPED = _ENDED[1:]
-# Status -> (word, Fluent icon, filled, Teams colour), after web/src/components/status/sets.ts
-# ("Run states"): half circle, ring, filled circle, triangle, diamond, pause bars, cross.
-_STATES: Mapping[str, tuple[str, str, bool, str]] = {
-    "queued": ("Queued", "Circle", False, "Default"),
-    "running": ("Running", "CircleHalfFill", True, "Accent"),
-    "finished": ("Finished", "Circle", True, "Good"),
-    "capped": ("Capped", "Triangle", True, "Warning"),
-    "failed": ("Failed", "Diamond", True, "Attention"),
-    "interrupted": ("Interrupted", "Pause", True, "Warning"),
-    "rejected": ("Rejected", "Dismiss", False, "Default"),
+# Status -> the word its pill and shape say, after web/src/components/status/sets.ts ("Run states").
+_STATES: Mapping[str, str] = {
+    "queued": "Queued",
+    "running": "Running",
+    "finished": "Finished",
+    "capped": "Capped",
+    "failed": "Failed",
+    "interrupted": "Interrupted",
+    "rejected": "Rejected",
 }
 _WHY_STOPPED: Mapping[str, str] = {
     "capped": "Stopped at the cap before it finished.",
@@ -177,7 +181,7 @@ def post(webhook: str, card: Card) -> None:
     }
     request = urllib.request.Request(  # https only: config_from_environment checked it
         webhook,
-        data=json.dumps(message, ensure_ascii=False).encode("utf-8"),
+        data=json.dumps(message, ensure_ascii=False, separators=(",", ":")).encode("utf-8"),
         headers={"Content-Type": "application/json; charset=utf-8"},
         method="POST",
     )
@@ -231,22 +235,86 @@ def due_slot(now: datetime) -> str:
 
 
 # -- card parts -------------------------------------------------------------------------------
+#
+# Teams draws a card's text, buttons and named colours itself. What the design needs beyond that
+# is drawn as images: the header, each state's pill and shape and the meta icons are fixed
+# (teams_brand); the tints, the bars and the stripe are made here, as small PNGs repeated behind
+# a container or column. A tint is partly transparent, so Teams' own text stays readable on it in
+# the light and the dark theme alike.
+
+_BLUE, _GREEN, _AMBER = (0, 26, 255), (15, 128, 72), (224, 168, 0)
+_RED, _GREY = (165, 76, 72), (127, 132, 141)
+_TONE: Mapping[str, tuple[int, int, int]] = {
+    "queued": _GREY,
+    "running": _BLUE,
+    "finished": _GREEN,
+    "failed": _RED,
+    "capped": _AMBER,
+    "rejected": _GREY,
+    "interrupted": _AMBER,
+}
+_TINT_ALPHA = {_BLUE: 18, _AMBER: 30, _RED: 22, _GREEN: 22, _GREY: 22}  # out of 255
+_TRACK = (*_GREY, 64)
+_EDGE_PX, _EDGE_SPAN = 3, 1600  # a callout's left rule, and the widest a card is drawn
+_STRIPE_PX = 160  # 1px high, stretched: about 3px high on a card 480px wide
+_BAR_PX, _ROW_BAR_PX = 300, 64  # a bar's drawn width; 4px high when shown at that width
 
 
-def _icon(
-    name: str, *, filled: bool = False, colour: str = "Default", size: str = "xSmall"
-) -> Card:
-    style = "Filled" if filled else "Regular"
-    return {"type": "Icon", "name": name, "size": size, "color": colour, "style": style}
+def _png(width: int, rows: Sequence[bytes]) -> str:
+    """An RGBA PNG of the given pixel rows, as a data URI."""
+
+    def chunk(kind: bytes, data: bytes) -> bytes:
+        return (
+            struct.pack(">I", len(data)) + kind + data + struct.pack(">I", zlib.crc32(kind + data))
+        )
+
+    header = struct.pack(">IIBBBBB", width, len(rows), 8, 6, 0, 0, 0)
+    pixels = zlib.compress(b"".join(b"\0" + row for row in rows), 9)
+    png = b"\x89PNG\r\n\x1a\n" + chunk(b"IHDR", header) + chunk(b"IDAT", pixels)
+    return "data:image/png;base64," + base64.b64encode(png + chunk(b"IEND", b"")).decode()
+
+
+@functools.cache
+def _fill(rgba: tuple[int, int, int, int]) -> str:
+    return _png(1, [bytes(rgba)])
+
+
+@functools.cache
+def _edged(rgb: tuple[int, int, int]) -> str:
+    """A tint with an opaque rule along its left edge, repeated down a callout."""
+    tint = bytes((*rgb, _TINT_ALPHA[rgb]))
+    return _png(_EDGE_SPAN, [bytes((*rgb, 255)) * _EDGE_PX + tint * (_EDGE_SPAN - _EDGE_PX)])
+
+
+def _behind(url: str, mode: str = "Repeat") -> dict[str, str]:
+    return {"url": url, "fillMode": mode, "horizontalAlignment": "Left"}
+
+
+def _image(url: str, alt: str, height: str, **more: Any) -> Card:
+    return {"type": "Image", "url": url, "altText": alt, "height": height, **more}
+
+
+def _icon(name: str, alt: str) -> Card:
+    return _image(ICONS[name], alt, "14px", width="14px")
 
 
 def _shape(status: str) -> Card:
-    _, name, filled, colour = _STATES[status]
-    return _icon(name, filled=filled, colour=colour, size="xxSmall")
+    return _image(SHAPES[status], _STATES[status], "10px", width="10px")
+
+
+def _pill(status: str) -> Card:
+    return _image(PILLS[status], _STATES[status], "22px", id="status")
 
 
 def _text(text: str, **more: Any) -> Card:
     return {"type": "TextBlock", "text": text, "wrap": True, **more}
+
+
+def _runs(*parts: tuple[str, dict[str, Any]], **more: Any) -> Card:
+    """Text in runs of their own weight and colour. A TextRun is shown as written: Teams reads
+    no Markdown there, so nothing needs escaping."""
+    inlines = [{"type": "TextRun", "text": text, **style} for text, style in parts]
+    return {"type": "RichTextBlock", "inlines": inlines, **more}
 
 
 def _plain(text: str) -> str:
@@ -265,8 +333,9 @@ def _column(items: list[Card], width: str = "auto", **more: Any) -> Card:
     }
 
 
-def _header() -> Card:
-    return {
+def _header(status: str) -> Card:
+    """The navy band with the lockup, then a 3px stripe in the state's colour."""
+    band = {
         "type": "Container",
         "bleed": True,
         "backgroundImage": {
@@ -275,23 +344,36 @@ def _header() -> Card:
             "horizontalAlignment": "Right",
             "verticalAlignment": "Center",
         },
-        "items": [{"type": "Image", "url": LOCKUP, "height": "28px", "altText": "Credit OS"}],
+        "items": [_image(LOCKUP, "Credit OS", "28px")],
     }
+    # Stretched to the card's width, keeping its shape: about 3px high on a card 450px wide.
+    rule = _stretched(_strip(_STRIPE_PX, 1, ((1, (*_TONE[status], 255)),)))
+    stripe = {"type": "Container", "bleed": True, "spacing": "None", "items": [rule]}
+    return {"type": "Container", "items": [band, stripe]}
 
 
-def _badge(status: str) -> Card:
-    word, name, _, colour = _STATES[status]
-    return {
-        "type": "Badge",
-        "text": word,
-        "icon": name,
-        "iconPosition": "Before",
-        "style": colour,
-        "appearance": "Tint",
-        "shape": "Rounded",
-        "size": "Large",
-        "fallback": _text(word, weight="Bolder", color=colour),
-    }
+def _bar(done: int, total: int, width: int) -> Card:
+    """A progress bar drawn ``width`` pixels wide (twice over, for sharp screens) and 4px high,
+    filled for the share of modules done. Shown stretched across its column."""
+    share = min(max(done, 0), max(total, 1)) / max(total, 1)
+    parts = ((share, (*_BLUE, 255)), (1 - share, _TRACK))
+    return _stretched(_strip(2 * width, 8, parts), f"{done} of {total} modules done")
+
+
+def _stretched(url: str, alt: str = "") -> Card:
+    return {"type": "Image", "url": url, "altText": alt, "size": "Stretch", "spacing": "None"}
+
+
+@functools.cache
+def _strip(
+    width: int, height: int, parts: tuple[tuple[float, tuple[int, int, int, int]], ...]
+) -> str:
+    """A ``width`` by ``height`` PNG of colour bands left to right, each its share of the width."""
+    row = b""
+    for share, rgba in parts:
+        row += bytes(rgba) * round(share * width)
+    row = (row + bytes(parts[-1][1]) * width)[: 4 * width]
+    return _png(width, [row] * height)
 
 
 def _title(name: str, sub: str, right: Card) -> Card:
@@ -303,33 +385,32 @@ def _title(name: str, sub: str, right: Card) -> Card:
     }
 
 
-def _meta(items: Sequence[tuple[str, str]]) -> list[Card]:
+def _meta(items: Sequence[tuple[str, str, str]]) -> list[Card]:
     """One line of icon and value pairs; no line at all when there is nothing to show."""
     columns: list[Card] = []
-    for icon, text in items:
-        columns.append(_column([_icon(icon)], spacing="Default" if columns else "None"))
+    for icon, alt, text in items:
+        columns.append(_column([_icon(icon, alt)], spacing="Default" if columns else "None"))
         columns.append(_column([_text(_plain(text), size="Small", wrap=False)], spacing="Small"))
     return [{"type": "ColumnSet", "spacing": "Small", "columns": columns}] if columns else []
 
 
-def _callout(text: str, style: str) -> Card:
+def _callout(text: str, tone: tuple[int, int, int]) -> Card:
     return {
         "type": "Container",
-        "style": style,
         "roundedCorners": True,
-        "showBorder": True,
         "spacing": "Medium",
+        "backgroundImage": _behind(_edged(tone), "RepeatVertically"),
         "items": [_text(_plain(text))],
     }
 
 
-def _card(body: list[Card], primary: tuple[str, str], link: Links, speak: str) -> Card:
+def _card(status: str, body: list[Card], primary: tuple[str, str], link: Links, speak: str) -> Card:
     return {
         "$schema": "https://adaptivecards.io/schemas/adaptive-card.json",
         "type": "AdaptiveCard",
         "version": "1.5",
         "speak": speak,
-        "body": [_header(), *body],
+        "body": [_header(status), *body],
         "actions": [
             {"type": "Action.OpenUrl", "title": primary[0], "url": primary[1], "style": "positive"},
             {
@@ -361,9 +442,9 @@ def _cap(record: Record) -> str:
         return ""  # a hand-edited record: the cap is left out, as Run activity shows none
 
 
-def _who_when(record: Record, at: str) -> list[tuple[str, str]]:
-    found = [("Person", record.submitted_by), ("Clock", _clock(at))]
-    return [(icon, text) for icon, text in found if text]
+def _who_when(record: Record, at: str) -> list[tuple[str, str, str]]:
+    found = [("person", "Started by", record.submitted_by), ("clock", "Time", _clock(at))]
+    return [(icon, alt, text) for icon, alt, text in found if text]
 
 
 def progress(layout: Layout, record: Record) -> tuple[int, int]:
@@ -378,55 +459,51 @@ def progress(layout: Layout, record: Record) -> tuple[int, int]:
 
 
 def started_card(record: Record, link: Links, modules: int) -> Card:
-    counts = [("Document", f"{len(record.files)} docs"), ("Layer", f"{modules} modules")]
+    counts = [
+        ("document", "Documents", f"{len(record.files)} docs"),
+        ("layers", "Modules", f"{modules} modules"),
+    ]
     cap = _cap(record)
     body = [
-        _title(_issuer(record), _pathway(record), _badge("running")),
+        _title(_issuer(record), _pathway(record), _pill("running")),
         *_meta(_who_when(record, record.started_at)),
-        *_meta([*counts, *([("Money", cap)] if cap else [])]),
+        *_meta([*counts, *([("money", "Spending cap", cap)] if cap else [])]),
     ]
     speak = f"Credit OS. Run started for {_issuer(record)}."
-    return _card(body, ("Watch run", link.to("run", record.id)), link, speak)
+    return _card("running", body, ("Watch run", link.to("run", record.id)), link, speak)
 
 
 def finished_card(record: Record, link: Links, done: tuple[int, int], lead: str) -> Card:
-    meta = [*_who_when(record, record.ended_at), ("Layer", f"{done[0]}/{done[1]} modules")]
-    body = [_title(_issuer(record), _pathway(record), _badge("finished")), *_meta(meta)]
+    modules = ("layers", "Modules", f"{done[0]}/{done[1]} modules")
+    meta = [*_who_when(record, record.ended_at), modules]
+    body = [_title(_issuer(record), _pathway(record), _pill("finished")), *_meta(meta)]
     if lead:
-        body.append(_callout(lead, "accent"))
+        body.append(_callout(lead, _BLUE))
     speak = f"Credit OS. The report for {_issuer(record)} is ready."
-    return _card(body, ("Open report", link.to("report", record.id)), link, speak)
+    return _card("finished", body, ("Open report", link.to("report", record.id)), link, speak)
 
 
 def stopped_card(record: Record, link: Links, done: tuple[int, int]) -> Card:
     cap = _cap(record)
-    meta = [*_who_when(record, record.ended_at), *([("Money", cap)] if cap else [])]
+    meta = [*_who_when(record, record.ended_at), *([("money", "Spending cap", cap)] if cap else [])]
     why = f"{_WHY_STOPPED[record.status]} {_NOT_PUBLISHED}"
-    count = f"{done[0]} of {done[1]} modules complete"
-    bar = {
-        "type": "ProgressBar",
-        "value": done[0],
-        "max": max(done[1], 1),
-        "color": "Accent",
-        "fallback": _text(count, size="Small", isSubtle=True),
-    }
     short = _text(f"{done[0]}/{done[1]} modules", size="Small", weight="Bolder", wrap=False)
     body = [
-        _title(_issuer(record), _pathway(record), _badge(record.status)),
+        _title(_issuer(record), _pathway(record), _pill(record.status)),
         *_meta(meta),
-        _callout(why, "warning"),
+        _callout(why, _TONE[record.status]),
         {
             "type": "ColumnSet",
             "spacing": "Medium",
             "columns": [
-                _column([_icon("Layer")]),
-                _column([bar], "stretch", spacing="Small"),
+                _column([_icon("layers", "Modules")]),
+                _column([_bar(*done, _BAR_PX)], "stretch", spacing="Small"),
                 _column([short], spacing="Small"),
             ],
         },
     ]
     speak = f"Credit OS. The run for {_issuer(record)} stopped. {why}"
-    return _card(body, ("Run activity", link.to("runs")), link, speak)
+    return _card(record.status, body, ("Run activity", link.to("runs")), link, speak)
 
 
 # -- the summary ------------------------------------------------------------------------------
@@ -442,25 +519,38 @@ def short_name(name: str) -> str:
 
 
 def _count(status: str, number: int, label: str) -> Card:
-    text = _text(f"**{number}** {label}", size="Small", wrap=False)
+    text = _runs((str(number), {"weight": "Bolder"}), (f" {label}", {"size": "Small"}))
     inner = [_column([_shape(status)]), _column([text], "stretch", spacing="Small")]
-    return _column([{"type": "ColumnSet", "columns": inner}], "stretch", spacing="Small")
+    tile: Card = {
+        "type": "Container",
+        "showBorder": True,
+        "roundedCorners": True,
+        "items": [{"type": "ColumnSet", "columns": inner}],
+    }
+    if status in _STOPPED and number:  # stopped runs need someone: the one tinted tile
+        tile["backgroundImage"] = _behind(_fill((*_AMBER, _TINT_ALPHA[_AMBER])))
+    return _column([tile], "stretch", spacing="Small")
 
 
-def _row(record: Record, right: str) -> Card:
-    name = f"**{_plain(_issuer(record))}** {_plain(_pathway(record).split()[0])}"
+def _row(record: Record, right: str, done: tuple[int, int] | None) -> Card:
+    name = _runs(
+        (_issuer(record), {"weight": "Bolder", "size": "Small"}),
+        (f" {_pathway(record).split()[0]}", {"size": "Small", "isSubtle": True}),
+    )
     emphasis = {"color": "Warning", "weight": "Bolder"} if record.status in _STOPPED else {}
+    bar = [_bar(*done, _ROW_BAR_PX)] if done else []
     return {
         "type": "ColumnSet",
         "separator": True,
         "spacing": "Small",
         "columns": [
             _column([_shape(record.status)]),
-            _column([_text(name, size="Small", wrap=False)], "stretch", spacing="Small"),
+            _column([name], "stretch", spacing="Small"),
             _column([_text(_plain(short_name(record.submitted_by)), size="Small", isSubtle=True)]),
+            _column(bar, f"{_ROW_BAR_PX}px"),
             _column(
                 [_text(right, size="Small", wrap=False, horizontalAlignment="Right", **emphasis)],
-                "56px",
+                "48px",
             ),
         ],
     }
@@ -474,12 +564,57 @@ class Day:
     running: Sequence[tuple[Record, str]]
     queued: Sequence[Record]
     finished: Sequence[tuple[Record, str]]  # newest first
+    done: Mapping[str, tuple[int, int]] = field(default_factory=dict)  # run ID -> modules done
 
 
 def summary_card(day: Day, now: datetime, link: Links) -> Card:
+    """The day's runs, stopped first. Rows are added in that order while the posted card stays
+    within ``_CARD_BYTES``; the rows left out are counted beneath."""
     uk = uk_time(now)
+    queued = [(record, "Queued") for record in day.queued]
+    groups = [
+        ("stopped", day.stopped, _ROWS_SHOWN["stopped"]),
+        ("running", day.running, _ROWS_SHOWN["running"]),
+        ("queued", queued, _ROWS_SHOWN["queued"]),
+        ("finished", day.finished, FINISHED_SHOWN),
+    ]
+    speak = (
+        f"Credit OS run summary at {uk:%H:%M}. {len(day.stopped)} stopped, {len(day.running)} "
+        f"running, {len(day.queued)} queued, {len(day.finished)} finished today."
+    )
+    rows: list[Card] = []
+    shown = dict.fromkeys([word for word, _, _ in groups], 0)
+    card = _summary(uk, day, rows, groups, shown, link, speak)
+    for word, found, limit in groups:
+        for record, right in found[:limit]:
+            rows.append(_row(record, right, day.done.get(record.id)))
+            shown[word] += 1
+            trial = _summary(uk, day, rows, groups, shown, link, speak)
+            if _posted_bytes(trial) > _CARD_BYTES:
+                rows.pop()
+                shown[word] -= 1
+                return _summary(uk, day, rows, groups, shown, link, speak)
+            card = trial
+    return card
+
+
+def _posted_bytes(card: Card) -> int:
+    attachment = {"contentType": "application/vnd.microsoft.card.adaptive", "content": card}
+    message = {"type": "message", "attachments": [attachment]}
+    return len(json.dumps(message, ensure_ascii=False, separators=(",", ":")).encode("utf-8"))
+
+
+def _summary(  # noqa: PLR0913 - the parts summary_card has worked out
+    uk: datetime,
+    day: Day,
+    rows: list[Card],
+    groups: Sequence[tuple[str, Sequence[Any], int]],
+    shown: Mapping[str, int],
+    link: Links,
+    speak: str,
+) -> Card:
     clock = [
-        _column([_icon("Clock")]),
+        _column([_icon("clock", "Time")]),
         _column([_text(f"{uk:%H:%M}", size="Small", wrap=False)], spacing="Small"),
     ]
     counts = [
@@ -488,28 +623,21 @@ def summary_card(day: Day, now: datetime, link: Links) -> Card:
         _count("queued", len(day.queued), "Queued"),
         _count("finished", len(day.finished), "Finished"),
     ]
-    queued = [(record, "Queued") for record in day.queued]
-    groups = [("stopped", day.stopped), ("running", day.running), ("queued", queued)]
-    shown = [(word, found, _ROWS_SHOWN[word]) for word, found in groups]
-    shown.append(("finished", day.finished, FINISHED_SHOWN))
-    rows = [_row(record, right) for _, found, limit in shown for record, right in found[:limit]]
     more = [
-        f"+{len(found) - limit} more {word}" for word, found, limit in shown if len(found) > limit
+        f"+{len(found) - shown[word]} more {word}"
+        for word, found, _ in groups
+        if len(found) > shown[word]
     ]
     body = [
         _title(
             "Runs today", f"{uk:%a} {uk.day} {uk:%b %Y}", {"type": "ColumnSet", "columns": clock}
         ),
         {"type": "ColumnSet", "spacing": "Medium", "columns": counts},
-        {"type": "Container", "spacing": "Medium", "items": rows},
+        {"type": "Container", "spacing": "Medium", "items": list(rows)},
     ]
     if more:
         body.append(_text(" \u00b7 ".join(more), size="Small", isSubtle=True, spacing="Small"))
-    speak = (
-        f"Credit OS run summary at {uk:%H:%M}. {len(day.stopped)} stopped, {len(day.running)} "
-        f"running, {len(day.queued)} queued, {len(day.finished)} finished today."
-    )
-    return _card(body, ("Run activity", link.to("runs")), link, speak)
+    return _card("running", body, ("Run activity", link.to("runs")), link, speak)
 
 
 # -- the sender -------------------------------------------------------------------------------
@@ -660,12 +788,15 @@ class Notifier:
             found.sort(key=lambda pair: (pair[0].ended_at, str(pair[0].id)), reverse=True)
             return [(record, f"{at:%H:%M}") for record, at in found]
 
+        stopped = ended(_STOPPED)
         running = [r for r in records if r.status == "running"]
+        done = {r.id: progress(self._layout, r) for r in (*running, *(r for r, _ in stopped))}
         return Day(
-            stopped=ended(_STOPPED),
-            running=[(r, "{}/{}".format(*progress(self._layout, r))) for r in running],
+            stopped=stopped,
+            running=[(r, "{}/{}".format(*done[r.id])) for r in running],
             queued=[r for r in records if r.status == "queued"],
             finished=ended(("finished",)),
+            done=done,
         )
 
 

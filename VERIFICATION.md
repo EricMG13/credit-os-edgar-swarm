@@ -4,6 +4,15 @@ Keep one running record here. A pass applies only to the stated scope. Earlier v
 engine is in [EricMG13/final-workflow](https://github.com/EricMG13/final-workflow)'s
 `VERIFICATION.md`, which also keeps the retained runs this copy leaves out.
 
+## 2026-11-16 — Teams cards carry the design as inline images (branch `claude/zealous-keller-yvc5mb`)
+
+Scope: presentation of the four Teams cards only (`inbox/teams.py` card parts, `inbox/teams_brand.py`, new `tools/teams_brand_images.mjs`); no change to when or what is posted.
+- Owner asked why the cards fell short of the mock-ups, then "try step 2 now": the brand pieces as images inside the card.
+- Changed: status pills, shapes and meta icons are the app's own, drawn by the tool as palette PNGs (pill about 1.2 KB, shape about 0.2 KB); the state stripe, progress bars, callout tints and the Stopped tile are PNGs made by the sender, the tints partly transparent; `Badge`, `ProgressBar`, `Icon` and Markdown bold are no longer used; summary rows stop at a posted size of 23 KB; the post is compact JSON.
+- Fidelity check: the four sample cards in `docs/design/teams-cards/` rendered with adaptivecards 3 and Microsoft's Teams light and dark host configurations (`adaptivecards-designer`), `rendered-light-dark-2x.png`, compared with `docs/design/mockups/teams-cards.html`: header, stripe, pills, icons, callouts, bars, tiles and rows match the mock-up's layout; the font, the button colour and rounded borders do not (Teams' own). Sizes posted: 9.7 to 11.1 KB for a run card, 20.9 KB for the sample summary with five finished rows.
+- Tests: `tests/test_inbox_teams.py` 76 passed, with the stripe colour, bar fill and tint alpha read from the PNGs by a reader written in the test; scheduler, service and React-server files passed; quality gate 0 findings.
+- Not verified: Teams itself, light or dark, desktop or mobile.
+
 ## 2026-11-16 — Teams run cards and the analyst's name (branch `claude/zealous-keller-yvc5mb`, `main` at `52f798f` merged)
 
 Scope: a new sender (`src/deploy_workflow/inbox/teams.py`, `teams_brand.py`), its hook in the scheduler and the two services' start-up, the name rule in `run_start/submissions.py`, the React start page and the older start page's help text. No provider, handoff, module or library change; nothing was posted to Teams and no paid run was made.

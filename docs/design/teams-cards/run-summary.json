@@ -6,19 +6,38 @@
   "body": [
     {
       "type": "Container",
-      "bleed": true,
-      "backgroundImage": {
-        "url": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAoAAAAA4BAMAAACf5VQhAAAAMFBMVEUADo8ADo0ADYsADYYADIAAC3gAC3EACmsACmUACV4AB1EAB0oAB0YABkEABTkABTMCDE7hAAABIklEQVR42u3aMQ6CMBTG8RY5AIS41xidCYm7JBp1NAGJB5ALGPUIOuiqg/fQxYsYF2+iRzBCYeD9v5m2yY/Ha9OgP6qR6bz/e352NsUWchRRyj3dTNGh6Ck1vZjCY6lA5R7vxf0A1MvXuhS/cL/+YV5uAtkV2L4+52UbgGC+1m7jle+ggvfefWhjC5K6d2R5bGcPF8nnZPnQ1iFIYu/L89DaZPIA3e3K2JxOGN8kSTy770OS3iBNjfWCFqPXS8ZxFR1BSO2NKtGTABhE3agbeZXNrxt6I73wtef7flAhXbMB6zuTQwAggAACSAAEEEAACYAAAgggAbDGNPVC9VHXQppffPmE6YEAAkgABBBAAAmAAAIIIAEQQAABJAACCCCA5Fe+w1Uchfbg8xIAAAAASUVORK5CYII=",
-        "fillMode": "Cover",
-        "horizontalAlignment": "Right",
-        "verticalAlignment": "Center"
-      },
       "items": [
         {
-          "type": "Image",
-          "url": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAOwAAAA4CAMAAADJouQfAAAAkFBMVEUAAAAAGv/+/v////////////////////////////9AU/8AGf8QKP8AGP9VZv/T1/80SP+wuP+9w/8AAP8AF/8AGP+Klv8AGf8+Uf94hf9peP+Zo//q7P8mO/8AFP+Ajf+iq/8AGv/Dyf/e4f8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABKljlNAAAAMHRSTlMA/v3QDo0vTbFw/9D/Tv//////AjFl/4////////8M//+g//8AAAAAAAAAAAAAAAAOc4NQAAAEhklEQVR42uWb63ajIBCATYABqjEx26ZJ2m738v7vuF5AZwARk23PMc6vHGtkPubKxGaZld1rnm+ikuevu+wB5MfLJlFefiwddZdvkiXfLRt3t5kluxWxLpr2eTNbnhcbsPl82HypYfuyuUFelsn6c3OT/FyPYZdq2t+3wb4uEja/DTZfJGwKWVGejvu/79uHhy3Kt/3WCL7+eLAfpx70wWGL8ril8t2wXAvJvwG2KH8Rzn1VvX1+M6xsFmb8i2EPlwpxvlfXQ+HdEzeJhNt1FM2iov7A2uX1lPkhbP36OkRhi49DnXiJRS+HsOkjvtcpuWWa3wfbPUZEN1V1izEBVAdldBB8DHbrSvU0GtFjyyv0dab/g2WF5RKeoTTWlQH1fyuKp8BW1yKSqCNhhkTfA9uxtAytt8jIvuLFHCVQ1I/AVmURr79BPcHzDX0HbINo7NVyUVjORhbjPaVH68O+H09TpCOwdv26YIA0n+EO2EECsMJ4qQYuNV6scwjVfAZGwx4DXK5leS7SmuOQmprwCT+/gOwzZ5MsOXfyZ5vD02CBeI7ZZtbfyzJkZTanN06FZdSWXUxxk1ZNjLUUIKwPDLjmkuA9LBhFUQwqx7DacSqwWojhNqZ0CPb8FJXzBCw4puyUlQYWmUL6OXTINioNdmt3kmSlPonbOAVS/6KlZ167KNwgVabb6/TsYUnF2KIMhPLKFKz00h+zDquGmI01FXfCMhIfSPAzpNFT1XmF9fpbHmWhMSwwE5FsKNzCMazdQo72Umi3j/vfsGocltUpqV5+uI3TOGsj2Pgzhg0lqA7Wz47g1CT1VW48AWuSESCbaMPFkY/yJFjleZHsd86pwDoMe2eCisMybAGGU5jdAHDq7KRlR2AzLgityL6g9KhozArigKwT44wSR6BOd+NgzNojAs4Ts2CLc1leL3fBSlJ9sVhFsYmmYLXXnvlRDP35Kx12mELNLT3a9Evkug/LiWunwUZKT2NXTvssngSLx22TsDLQVLQHTbKgCnSDElslyY2dPtA+QjX2rM+4IuwBMdLrcd4MitFAUtZ9yWURcHbAjq5SYIeHBxdj82A90gRYTU7Lul+WwOLMC7XlG1fnyCfSSo9tQ8w1k3+HBkq7/fk47OFCSJtD3+GjmD7Psr556NO/dmFNheJ9QRTETolNRR/75IgnhzBtqzrXtMn0LPp0qd4J6emQfHjnnjO0UBQWzMhGiqE5llZzEWgX+0QvhI6tZVyjL7K2tIVLz6naO1//MzZvGxnLQIg1Cx5QaIODcnSoqbAAONbBHVWYFs0bYYiUdvFXbGAxMmagGihUenh4UiXcIYuCACwPwLpDKDlyXU/3xm9PN8yg8CS1VhhwU4G7HbCWUp6GOgvBZqC2gSyO2iQyewRh/0BnqSHY/el806TCqqC10FNjcpB1BIJzRc/+tQOkrp8T+l7zOA2RI97++PZZHh7399lV/Rj9uqbXDHa3wS70ta98PV58o2kX+/Zivh7DrutFzXW9gruul6trT57z2vxztnBZ0T9EdL6c8q8uy7bqP1NqNouBIh2EAAAAAElFTkSuQmCC",
-          "height": "28px",
-          "altText": "Credit OS"
+          "type": "Container",
+          "bleed": true,
+          "backgroundImage": {
+            "url": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAABQIAAABwCAMAAABy1f2eAAAAGFBMVEUAADMAEYgAEXcAEWYAAET///8AEVUAAFVvxP4LAAAACHRSTlP///////////OBUtQAAAIoSURBVHja7dxRCsIwFABBTaq9/40lIiLor6DdmSukLK9J2tMJ+Irz/xtzO/YaXS6eU5DAz/27bodfIwkECfzYvz2xRhIIEljtnwSCBL6Ze2iNJBAkMDn/SSBIYLt/EggSGO6fBIIEhvsngSCBsfMPCQQJDH3+IYEggcY/CQQJNP5JIEjgOv3QPwmEZgKNfxII0QQWfv4igSCBLv9JIEig3T8JhHoCHf5KIFQT6O6fBEI0gTb/JBCiCZw2/yQQmgmUPwmEaALt/UkgRBMofxIIzQT67EMCoZlAt54lEJoJVD8JhGQCh1NfCYRkAtVPAiGZwDEdekggFBNo9JNACCZwrPaJnwRCLIFjmvskEGoJHCt92ieBkErget/1wiuB0EngWAPf3JVPAuGYxsN8cU+e5kkggAQCSCCABAJIIIAEAkgggAQCSCCABAJIIIAEAkgggAQCSCCABAJIIIAEAkgggAQCEggggQASCCCBABIIIIEAEggggQASCCCBABIIIIHA08bPk0D4mjM/TwJBAiUQkEAJBCRQAgEJlEBAAiUQkEAJBCRQAgEJlEBAAiUQkEAJBCRQAgEJlEBAAiUQJBAJBAlEAkECkUCQQCQQJBAJBAlEAkECkUCQQCQQJBAJBAlEAkECkUCQQCQQJBAJBAlEAkECkUCQQCQQJBAJBAlEAkECkUCQQCQQJBAJBAlEAkECkUCQQAmUQJBACQQkUAIBCZRAQAIjCbwBOixk5B1puhgAAAAASUVORK5CYII=",
+            "fillMode": "Cover",
+            "horizontalAlignment": "Right",
+            "verticalAlignment": "Center"
+          },
+          "items": [
+            {
+              "type": "Image",
+              "url": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAOwAAAA4CAMAAADJouQfAAAAt1BMVEUAAAAAEf8AEf8AEf8AEf8AEf8AIv8AIv8AEf8AIv8AIv8AEf8AIv8AEf8AEf8AEf8AEf8AIv8AEf8RM/9VZv+Imf+7zP/MzP/d3f/u7v+Zmf////8iM/////////////////+qqv/u///M3f+7u/+Zqv+IiP////////////8zRP93iP9md/8zVf8RIv////////8iRP////////////////////+qu/9EVf9mZv/d7v8AIv8AIv8b7SRAAAAAPXRSTlMARIi73e7/iGbdVVXu/zPMEZmZ/////////////yJmiFX///////9EzBH//////zN3/+6Zqt27/////8wzcUqetgAABUBJREFUeNrlm+t2mzgQgJWL3Ta3dmuc2GWFSGtXku01KkjE2ez7P9ceQMAIhLn4JOeQzK8EY2m+uWkkMEK5nJ1fXE6mR2RyefHpDL0H+fxl2km+fB496lVH1BT3etys1zfTHjK5GjXr7bSX3I7Yt3c3055yczda2Mtpb/k62jo8HSAjrcnfJkNgJ98+jmPH6tq/hsF+HyXsxTDYi3dbi2fO/P5hsVzCPmqUsO2gPxauFrjUvj/Yv+cFaAV2+t5gnXvXlLeGxR7x3wTWefwJOX+tHte/3xiWJhMz/sqwm+0KkC4fd//sa/ccHZTTYLiOJJmUIIRYOr1ouz+g2BoWlutmNfqzcearJfDoYruxe7459gQLk2+GzDsRNh3GjY7d60uVzUUCw9gi1joQ3ATrVuXp0JjQTT6NwdeVdxJsypH+lQzsRbR6pwjBZKzE9RW4LnkX2NVuf6R6NaSZMscQp8CK1Dmpa0Qyrn/ErnAyal4GWW+H/fn0vD++/tpDOHTdk2kL2ARR+yvlqsCyWiBmgcS1EiELq7R12OX93Gnvqqx6ZvOHxOeYal3wCbClWGCJjlIv4FRkAaWjILue/I1j1xgMAmx3z85h1q05tqmZTaMCqI1RXzCluZV5QIOKIXiQftoNNjAih2emjYt7GQJeZl3bxT6wyvRlZlaelVWFsAxzChxpV5Ayn0h6SZESNuVRCPlloJamiypZwoq5GbyRuK6SwgZ7aJEW2KCiT/o/oxo2CAv1/DK1mTYNLqqN7AYb6g+LCuway7PSVgw83HXp6dcuRtUklYQWiqm4KCIeHFNhEAUZfxdYCioScG1CL7OIDlo6qBNhYyM/gMAaTbWeMuDZchiD1SKMpF67ICxlWV1VjAmzPNULBi9tqSIveD1YVuhuh2U+5gHPbpNl+aCFY6Ny9YSwtgKVRlEIJ/HMpNXWkx5/HVjV1N0ZfV8Agl3o69wtDKAt0AYrKymbBwctS3PO69lhTyxQqtTYAqtguGn/Yx34QaFo7rROnrXApoHLidHIEfQKS098NIyJEYAsEx2MPsxA0QW2nrNenrNZfPiyrBR+P9j9wXnebVtg66EFYamx+kLRfAouIm2wXq09q+NjoeM57g47c348dMpZUlVAUACLG2H5AFi/1nkzMAbPJ9OLezfYvbNedC5Q1NJUpBvNEAaYtJQxH9bWTmGclTRVnVwmZzlSlWkqykw+DjvbrfqdQWUbaW6EtUsrsMSS2UaBkl1g9eC+WTCSIZQxvtcJdr+777v0aDPGHM7DUAWWgmDHISN+8gGICdxpndVxHOprPCo8HRm9lWwP483WIF2u5s7mz6x9i5eZlyUnUHr6dFYDFvYeRc+efjGk3ZuKHMPY4qWxobdDEQfmb4KdHbZP8BDK/Xe+OWHzHqMabKYNE34UFk6muebE0i7mZDEhoCLx2lw6NKK8XWQM2KAGO396WJpfv286b2s6lgktrBVYcyOgKyqo0bamguQAMNGVlbXSQDU2FeY9y7Wz73sGhbChgUQ2WLjFyzXBhYaSWmBzN6rmQ6iwiHIujeuitTderp0BxzLpKWaBG2Fkh0U4j9aYVjQPBbLBIpxthyotCy1wQ+PMFJM4tw5p288+zA+t75AcO8n3BBF+yzE59gkRQeWK6P20A/uCEOH51glEdY8HH1kuF6v1b2fT6dWvUT7Y+vqRHkZ/HwZ7PkrYs2GwI33t62UI68s4WdHVENjRvqv58nEc+8Fe1ETXPVlvR/169VWv9xdvRv5Dgf/6vDZ/h8YuH+gHEWl38an9py7n447g/wE84YbEjo1lCwAAAABJRU5ErkJggg==",
+              "altText": "Credit OS",
+              "height": "28px"
+            }
+          ]
+        },
+        {
+          "type": "Container",
+          "bleed": true,
+          "spacing": "None",
+          "items": [
+            {
+              "type": "Image",
+              "url": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAKAAAAABCAYAAABZj6VmAAAAEklEQVR42mNgkPr/fxSP4oHCAEvfTxCZ2DHKAAAAAElFTkSuQmCC",
+              "altText": "",
+              "size": "Stretch",
+              "spacing": "None"
+            }
+          ]
         }
       ]
     },
@@ -62,11 +81,11 @@
                   "verticalContentAlignment": "Center",
                   "items": [
                     {
-                      "type": "Icon",
-                      "name": "Clock",
-                      "size": "xSmall",
-                      "color": "Default",
-                      "style": "Regular"
+                      "type": "Image",
+                      "url": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAB4AAAAcCAMAAABBJv+bAAAAS1BMVEUAAAB3iIiIiIh3iIh3iIh3iIh3iIh3iIh3iIiIiIh3iIh3iIh3iIh3iIh3iIiIiIiIiIh3iIh3iIh3iIiIiJl3d4iIiIiIiIiIiIjVur1rAAAAGXRSTlMAM3eZu3cR3f9m7sxmiCIiM0RVqhEiRBFVACksjQAAAPFJREFUeNqNk8sWgyAMRINBMoVirbS1//+lPbwU1EWzYeAGiWEg+jfUwFrzqK6YGQQlZDRHeovr1jE7G8W9px6An7J+xMnY0hGQOaGU8pSOL0DIBQCvJAKwbFVZSKkdeGQlsK/9YHXECvAF203tmDxsFk/AnPEb+CTBNa/DZMFpdNBXuC67kkZEE+DXohnuiE3suzcdDmWMscaG4p53hZKGpr8TIx+K8tFbU0/q+zjlKpfaaD7fP2/d4NqBJj77HgPIwR9GYOsf0rde6BYB+HZmkcaBSoDhZKbLSWNF0Z61XFiRaG2MPJgrq8/pGQwz/R8/XFcJ/aHDlnkAAAAASUVORK5CYII=",
+                      "altText": "Time",
+                      "height": "14px",
+                      "width": "14px"
                     }
                   ]
                 },
@@ -100,35 +119,113 @@
           "verticalContentAlignment": "Center",
           "items": [
             {
-              "type": "ColumnSet",
-              "columns": [
+              "type": "Container",
+              "showBorder": true,
+              "roundedCorners": true,
+              "items": [
                 {
-                  "type": "Column",
-                  "width": "auto",
-                  "verticalContentAlignment": "Center",
-                  "items": [
+                  "type": "ColumnSet",
+                  "columns": [
                     {
-                      "type": "Icon",
-                      "name": "Triangle",
-                      "size": "xxSmall",
-                      "color": "Warning",
-                      "style": "Filled"
+                      "type": "Column",
+                      "width": "auto",
+                      "verticalContentAlignment": "Center",
+                      "items": [
+                        {
+                          "type": "Image",
+                          "url": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABYAAAAUCAMAAAC+oj0CAAAADFBMVEUAAACqVQCqVQCqVQAC8sHSAAAABHRSTlMAVar/oA4xLwAAAEZJREFUeNqVzkEKgEAMBMGk5/9/FoToujaIc2zqMFWf69YMihPjJCg2nnOK3zwxzmQUPzl3RvHKWTPbuVkbvviGh7Nn6t8OPCEBzfPsbVAAAAAASUVORK5CYII=",
+                          "altText": "Capped",
+                          "height": "10px",
+                          "width": "10px"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "Column",
+                      "width": "stretch",
+                      "verticalContentAlignment": "Center",
+                      "items": [
+                        {
+                          "type": "RichTextBlock",
+                          "inlines": [
+                            {
+                              "type": "TextRun",
+                              "text": "1",
+                              "weight": "Bolder"
+                            },
+                            {
+                              "type": "TextRun",
+                              "text": " Stopped",
+                              "size": "Small"
+                            }
+                          ]
+                        }
+                      ],
+                      "spacing": "Small"
                     }
                   ]
-                },
+                }
+              ],
+              "backgroundImage": {
+                "url": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mN4sIJBDgAFmwGnLh70ZQAAAABJRU5ErkJggg==",
+                "fillMode": "Repeat",
+                "horizontalAlignment": "Left"
+              }
+            }
+          ],
+          "spacing": "Small"
+        },
+        {
+          "type": "Column",
+          "width": "stretch",
+          "verticalContentAlignment": "Center",
+          "items": [
+            {
+              "type": "Container",
+              "showBorder": true,
+              "roundedCorners": true,
+              "items": [
                 {
-                  "type": "Column",
-                  "width": "stretch",
-                  "verticalContentAlignment": "Center",
-                  "items": [
+                  "type": "ColumnSet",
+                  "columns": [
                     {
-                      "type": "TextBlock",
-                      "text": "**1** Stopped",
-                      "wrap": false,
-                      "size": "Small"
+                      "type": "Column",
+                      "width": "auto",
+                      "verticalContentAlignment": "Center",
+                      "items": [
+                        {
+                          "type": "Image",
+                          "url": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABYAAAAUCAMAAAC+oj0CAAAADFBMVEUAAAAAAP8AAP8AAP9U2JTaAAAABHRSTlMAVar/oA4xLwAAAFxJREFUeNp9kUsOACEIQ/u5/52NRhgwYbp8gWIrcEXJlogm+UoF0kVslMTDYzfm01eoWGGBho8N83zDyiOuLunxYc94MBnw8MAMCbeYfMPzt6qh2Okb9gJ3kTG5AGV3Aq98vaSDAAAAAElFTkSuQmCC",
+                          "altText": "Running",
+                          "height": "10px",
+                          "width": "10px"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "Column",
+                      "width": "stretch",
+                      "verticalContentAlignment": "Center",
+                      "items": [
+                        {
+                          "type": "RichTextBlock",
+                          "inlines": [
+                            {
+                              "type": "TextRun",
+                              "text": "2",
+                              "weight": "Bolder"
+                            },
+                            {
+                              "type": "TextRun",
+                              "text": " Running",
+                              "size": "Small"
+                            }
+                          ]
+                        }
+                      ],
+                      "spacing": "Small"
                     }
-                  ],
-                  "spacing": "Small"
+                  ]
                 }
               ]
             }
@@ -141,35 +238,51 @@
           "verticalContentAlignment": "Center",
           "items": [
             {
-              "type": "ColumnSet",
-              "columns": [
+              "type": "Container",
+              "showBorder": true,
+              "roundedCorners": true,
+              "items": [
                 {
-                  "type": "Column",
-                  "width": "auto",
-                  "verticalContentAlignment": "Center",
-                  "items": [
+                  "type": "ColumnSet",
+                  "columns": [
                     {
-                      "type": "Icon",
-                      "name": "CircleHalfFill",
-                      "size": "xxSmall",
-                      "color": "Accent",
-                      "style": "Filled"
+                      "type": "Column",
+                      "width": "auto",
+                      "verticalContentAlignment": "Center",
+                      "items": [
+                        {
+                          "type": "Image",
+                          "url": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABYAAAAUCAMAAAC+oj0CAAAADFBMVEUAAABVVVVVVVVVVVWH3s5DAAAABHRSTlMAVar/oA4xLwAAAGBJREFUeNp1UdEOACEIEvj/f765rJOavNSYgmJEAaREIgxUgY2EGmAsEAF0vvem2vnRXLglunvJwO2zHP/Tx+Jq8h0WMdCDyEAPA4budXQiseVxR8U3wifY6QzZkALnZh+bvAHLJxmJIgAAAABJRU5ErkJggg==",
+                          "altText": "Queued",
+                          "height": "10px",
+                          "width": "10px"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "Column",
+                      "width": "stretch",
+                      "verticalContentAlignment": "Center",
+                      "items": [
+                        {
+                          "type": "RichTextBlock",
+                          "inlines": [
+                            {
+                              "type": "TextRun",
+                              "text": "1",
+                              "weight": "Bolder"
+                            },
+                            {
+                              "type": "TextRun",
+                              "text": " Queued",
+                              "size": "Small"
+                            }
+                          ]
+                        }
+                      ],
+                      "spacing": "Small"
                     }
                   ]
-                },
-                {
-                  "type": "Column",
-                  "width": "stretch",
-                  "verticalContentAlignment": "Center",
-                  "items": [
-                    {
-                      "type": "TextBlock",
-                      "text": "**2** Running",
-                      "wrap": false,
-                      "size": "Small"
-                    }
-                  ],
-                  "spacing": "Small"
                 }
               ]
             }
@@ -182,76 +295,51 @@
           "verticalContentAlignment": "Center",
           "items": [
             {
-              "type": "ColumnSet",
-              "columns": [
+              "type": "Container",
+              "showBorder": true,
+              "roundedCorners": true,
+              "items": [
                 {
-                  "type": "Column",
-                  "width": "auto",
-                  "verticalContentAlignment": "Center",
-                  "items": [
+                  "type": "ColumnSet",
+                  "columns": [
                     {
-                      "type": "Icon",
-                      "name": "Circle",
-                      "size": "xxSmall",
-                      "color": "Default",
-                      "style": "Regular"
+                      "type": "Column",
+                      "width": "auto",
+                      "verticalContentAlignment": "Center",
+                      "items": [
+                        {
+                          "type": "Image",
+                          "url": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABYAAAAUCAMAAAC+oj0CAAAAD1BMVEUAAAAAqlUAqlUAqlUAVVVTCAHUAAAABXRSTlMAVar//1RxM2gAAABPSURBVHjafZFRDsAwCEIFev8zL+2WTGvp+3wxRCViAVIiEQXqg0lCCRzt70fVY8st+VADXrPrmaIDXpsQo80m5pw+juurzGNdDW9rUursAT2uA5N/jZkHAAAAAElFTkSuQmCC",
+                          "altText": "Finished",
+                          "height": "10px",
+                          "width": "10px"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "Column",
+                      "width": "stretch",
+                      "verticalContentAlignment": "Center",
+                      "items": [
+                        {
+                          "type": "RichTextBlock",
+                          "inlines": [
+                            {
+                              "type": "TextRun",
+                              "text": "7",
+                              "weight": "Bolder"
+                            },
+                            {
+                              "type": "TextRun",
+                              "text": " Finished",
+                              "size": "Small"
+                            }
+                          ]
+                        }
+                      ],
+                      "spacing": "Small"
                     }
                   ]
-                },
-                {
-                  "type": "Column",
-                  "width": "stretch",
-                  "verticalContentAlignment": "Center",
-                  "items": [
-                    {
-                      "type": "TextBlock",
-                      "text": "**1** Queued",
-                      "wrap": false,
-                      "size": "Small"
-                    }
-                  ],
-                  "spacing": "Small"
-                }
-              ]
-            }
-          ],
-          "spacing": "Small"
-        },
-        {
-          "type": "Column",
-          "width": "stretch",
-          "verticalContentAlignment": "Center",
-          "items": [
-            {
-              "type": "ColumnSet",
-              "columns": [
-                {
-                  "type": "Column",
-                  "width": "auto",
-                  "verticalContentAlignment": "Center",
-                  "items": [
-                    {
-                      "type": "Icon",
-                      "name": "Circle",
-                      "size": "xxSmall",
-                      "color": "Good",
-                      "style": "Filled"
-                    }
-                  ]
-                },
-                {
-                  "type": "Column",
-                  "width": "stretch",
-                  "verticalContentAlignment": "Center",
-                  "items": [
-                    {
-                      "type": "TextBlock",
-                      "text": "**7** Finished",
-                      "wrap": false,
-                      "size": "Small"
-                    }
-                  ],
-                  "spacing": "Small"
                 }
               ]
             }
@@ -275,11 +363,11 @@
               "verticalContentAlignment": "Center",
               "items": [
                 {
-                  "type": "Icon",
-                  "name": "Triangle",
-                  "size": "xxSmall",
-                  "color": "Warning",
-                  "style": "Filled"
+                  "type": "Image",
+                  "url": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABYAAAAUCAMAAAC+oj0CAAAADFBMVEUAAACqVQCqVQCqVQAC8sHSAAAABHRSTlMAVar/oA4xLwAAAEZJREFUeNqVzkEKgEAMBMGk5/9/FoToujaIc2zqMFWf69YMihPjJCg2nnOK3zwxzmQUPzl3RvHKWTPbuVkbvviGh7Nn6t8OPCEBzfPsbVAAAAAASUVORK5CYII=",
+                  "altText": "Capped",
+                  "height": "10px",
+                  "width": "10px"
                 }
               ]
             },
@@ -289,10 +377,21 @@
               "verticalContentAlignment": "Center",
               "items": [
                 {
-                  "type": "TextBlock",
-                  "text": "**Northbridge Holdings** Deep",
-                  "wrap": false,
-                  "size": "Small"
+                  "type": "RichTextBlock",
+                  "inlines": [
+                    {
+                      "type": "TextRun",
+                      "text": "Northbridge Holdings",
+                      "weight": "Bolder",
+                      "size": "Small"
+                    },
+                    {
+                      "type": "TextRun",
+                      "text": " Deep",
+                      "size": "Small",
+                      "isSubtle": true
+                    }
+                  ]
                 }
               ],
               "spacing": "Small"
@@ -313,7 +412,21 @@
             },
             {
               "type": "Column",
-              "width": "56px",
+              "width": "64px",
+              "verticalContentAlignment": "Center",
+              "items": [
+                {
+                  "type": "Image",
+                  "url": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAAAICAYAAAAx3fd+AAAANklEQVR42u3SMQ0AIBAEwdOBGpzR0KL53wUhYYoxsNlkVPGWtc+8JYIbQHQDYAAMgAEwAD8N0IzoI7nck45hAAAAAElFTkSuQmCC",
+                  "altText": "11 of 14 modules done",
+                  "size": "Stretch",
+                  "spacing": "None"
+                }
+              ]
+            },
+            {
+              "type": "Column",
+              "width": "48px",
               "verticalContentAlignment": "Center",
               "items": [
                 {
@@ -340,11 +453,11 @@
               "verticalContentAlignment": "Center",
               "items": [
                 {
-                  "type": "Icon",
-                  "name": "CircleHalfFill",
-                  "size": "xxSmall",
-                  "color": "Accent",
-                  "style": "Filled"
+                  "type": "Image",
+                  "url": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABYAAAAUCAMAAAC+oj0CAAAADFBMVEUAAAAAAP8AAP8AAP9U2JTaAAAABHRSTlMAVar/oA4xLwAAAFxJREFUeNp9kUsOACEIQ/u5/52NRhgwYbp8gWIrcEXJlogm+UoF0kVslMTDYzfm01eoWGGBho8N83zDyiOuLunxYc94MBnw8MAMCbeYfMPzt6qh2Okb9gJ3kTG5AGV3Aq98vaSDAAAAAElFTkSuQmCC",
+                  "altText": "Running",
+                  "height": "10px",
+                  "width": "10px"
                 }
               ]
             },
@@ -354,10 +467,21 @@
               "verticalContentAlignment": "Center",
               "items": [
                 {
-                  "type": "TextBlock",
-                  "text": "**Harrowgate Industrials** Full",
-                  "wrap": false,
-                  "size": "Small"
+                  "type": "RichTextBlock",
+                  "inlines": [
+                    {
+                      "type": "TextRun",
+                      "text": "Harrowgate Industrials",
+                      "weight": "Bolder",
+                      "size": "Small"
+                    },
+                    {
+                      "type": "TextRun",
+                      "text": " Full",
+                      "size": "Small",
+                      "isSubtle": true
+                    }
+                  ]
                 }
               ],
               "spacing": "Small"
@@ -378,7 +502,21 @@
             },
             {
               "type": "Column",
-              "width": "56px",
+              "width": "64px",
+              "verticalContentAlignment": "Center",
+              "items": [
+                {
+                  "type": "Image",
+                  "url": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAAAICAYAAAAx3fd+AAAANklEQVR42u3SMREAIBAEsdOBGpzR0KL5XwQVQ4oo2E1GFffWPvNFEc8AAhoAA2AADIAB+GmABooD+Oqyu5YeAAAAAElFTkSuQmCC",
+                  "altText": "9 of 14 modules done",
+                  "size": "Stretch",
+                  "spacing": "None"
+                }
+              ]
+            },
+            {
+              "type": "Column",
+              "width": "48px",
               "verticalContentAlignment": "Center",
               "items": [
                 {
@@ -403,11 +541,11 @@
               "verticalContentAlignment": "Center",
               "items": [
                 {
-                  "type": "Icon",
-                  "name": "CircleHalfFill",
-                  "size": "xxSmall",
-                  "color": "Accent",
-                  "style": "Filled"
+                  "type": "Image",
+                  "url": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABYAAAAUCAMAAAC+oj0CAAAADFBMVEUAAAAAAP8AAP8AAP9U2JTaAAAABHRSTlMAVar/oA4xLwAAAFxJREFUeNp9kUsOACEIQ/u5/52NRhgwYbp8gWIrcEXJlogm+UoF0kVslMTDYzfm01eoWGGBho8N83zDyiOuLunxYc94MBnw8MAMCbeYfMPzt6qh2Okb9gJ3kTG5AGV3Aq98vaSDAAAAAElFTkSuQmCC",
+                  "altText": "Running",
+                  "height": "10px",
+                  "width": "10px"
                 }
               ]
             },
@@ -417,10 +555,21 @@
               "verticalContentAlignment": "Center",
               "items": [
                 {
-                  "type": "TextBlock",
-                  "text": "**Calder Telecom** Lite",
-                  "wrap": false,
-                  "size": "Small"
+                  "type": "RichTextBlock",
+                  "inlines": [
+                    {
+                      "type": "TextRun",
+                      "text": "Calder Telecom",
+                      "weight": "Bolder",
+                      "size": "Small"
+                    },
+                    {
+                      "type": "TextRun",
+                      "text": " Lite",
+                      "size": "Small",
+                      "isSubtle": true
+                    }
+                  ]
                 }
               ],
               "spacing": "Small"
@@ -441,7 +590,21 @@
             },
             {
               "type": "Column",
-              "width": "56px",
+              "width": "64px",
+              "verticalContentAlignment": "Center",
+              "items": [
+                {
+                  "type": "Image",
+                  "url": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAAAICAYAAAAx3fd+AAAAN0lEQVR42u3SIQEAIBAEsMtBGpphsGT+z4CFiTVYMqpesfaZ3IkAAggggAACCCCAAAIIIIAAP2lEtbMq/MpERgAAAABJRU5ErkJggg==",
+                  "altText": "2 of 5 modules done",
+                  "size": "Stretch",
+                  "spacing": "None"
+                }
+              ]
+            },
+            {
+              "type": "Column",
+              "width": "48px",
               "verticalContentAlignment": "Center",
               "items": [
                 {
@@ -466,11 +629,11 @@
               "verticalContentAlignment": "Center",
               "items": [
                 {
-                  "type": "Icon",
-                  "name": "Circle",
-                  "size": "xxSmall",
-                  "color": "Default",
-                  "style": "Regular"
+                  "type": "Image",
+                  "url": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABYAAAAUCAMAAAC+oj0CAAAADFBMVEUAAABVVVVVVVVVVVWH3s5DAAAABHRSTlMAVar/oA4xLwAAAGBJREFUeNp1UdEOACEIEvj/f765rJOavNSYgmJEAaREIgxUgY2EGmAsEAF0vvem2vnRXLglunvJwO2zHP/Tx+Jq8h0WMdCDyEAPA4budXQiseVxR8U3wifY6QzZkALnZh+bvAHLJxmJIgAAAABJRU5ErkJggg==",
+                  "altText": "Queued",
+                  "height": "10px",
+                  "width": "10px"
                 }
               ]
             },
@@ -480,10 +643,21 @@
               "verticalContentAlignment": "Center",
               "items": [
                 {
-                  "type": "TextBlock",
-                  "text": "**Sable Energy** Full",
-                  "wrap": false,
-                  "size": "Small"
+                  "type": "RichTextBlock",
+                  "inlines": [
+                    {
+                      "type": "TextRun",
+                      "text": "Sable Energy",
+                      "weight": "Bolder",
+                      "size": "Small"
+                    },
+                    {
+                      "type": "TextRun",
+                      "text": " Full",
+                      "size": "Small",
+                      "isSubtle": true
+                    }
+                  ]
                 }
               ],
               "spacing": "Small"
@@ -504,7 +678,13 @@
             },
             {
               "type": "Column",
-              "width": "56px",
+              "width": "64px",
+              "verticalContentAlignment": "Center",
+              "items": []
+            },
+            {
+              "type": "Column",
+              "width": "48px",
               "verticalContentAlignment": "Center",
               "items": [
                 {
@@ -529,11 +709,11 @@
               "verticalContentAlignment": "Center",
               "items": [
                 {
-                  "type": "Icon",
-                  "name": "Circle",
-                  "size": "xxSmall",
-                  "color": "Good",
-                  "style": "Filled"
+                  "type": "Image",
+                  "url": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABYAAAAUCAMAAAC+oj0CAAAAD1BMVEUAAAAAqlUAqlUAqlUAVVVTCAHUAAAABXRSTlMAVar//1RxM2gAAABPSURBVHjafZFRDsAwCEIFev8zL+2WTGvp+3wxRCViAVIiEQXqg0lCCRzt70fVY8st+VADXrPrmaIDXpsQo80m5pw+juurzGNdDW9rUursAT2uA5N/jZkHAAAAAElFTkSuQmCC",
+                  "altText": "Finished",
+                  "height": "10px",
+                  "width": "10px"
                 }
               ]
             },
@@ -543,10 +723,21 @@
               "verticalContentAlignment": "Center",
               "items": [
                 {
-                  "type": "TextBlock",
-                  "text": "**Tarrant Chemicals** Full",
-                  "wrap": false,
-                  "size": "Small"
+                  "type": "RichTextBlock",
+                  "inlines": [
+                    {
+                      "type": "TextRun",
+                      "text": "Tarrant Chemicals",
+                      "weight": "Bolder",
+                      "size": "Small"
+                    },
+                    {
+                      "type": "TextRun",
+                      "text": " Full",
+                      "size": "Small",
+                      "isSubtle": true
+                    }
+                  ]
                 }
               ],
               "spacing": "Small"
@@ -567,7 +758,13 @@
             },
             {
               "type": "Column",
-              "width": "56px",
+              "width": "64px",
+              "verticalContentAlignment": "Center",
+              "items": []
+            },
+            {
+              "type": "Column",
+              "width": "48px",
               "verticalContentAlignment": "Center",
               "items": [
                 {
@@ -592,11 +789,11 @@
               "verticalContentAlignment": "Center",
               "items": [
                 {
-                  "type": "Icon",
-                  "name": "Circle",
-                  "size": "xxSmall",
-                  "color": "Good",
-                  "style": "Filled"
+                  "type": "Image",
+                  "url": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABYAAAAUCAMAAAC+oj0CAAAAD1BMVEUAAAAAqlUAqlUAqlUAVVVTCAHUAAAABXRSTlMAVar//1RxM2gAAABPSURBVHjafZFRDsAwCEIFev8zL+2WTGvp+3wxRCViAVIiEQXqg0lCCRzt70fVY8st+VADXrPrmaIDXpsQo80m5pw+juurzGNdDW9rUursAT2uA5N/jZkHAAAAAElFTkSuQmCC",
+                  "altText": "Finished",
+                  "height": "10px",
+                  "width": "10px"
                 }
               ]
             },
@@ -606,10 +803,21 @@
               "verticalContentAlignment": "Center",
               "items": [
                 {
-                  "type": "TextBlock",
-                  "text": "**Fennmoor Logistics** Lite",
-                  "wrap": false,
-                  "size": "Small"
+                  "type": "RichTextBlock",
+                  "inlines": [
+                    {
+                      "type": "TextRun",
+                      "text": "Fennmoor Logistics",
+                      "weight": "Bolder",
+                      "size": "Small"
+                    },
+                    {
+                      "type": "TextRun",
+                      "text": " Lite",
+                      "size": "Small",
+                      "isSubtle": true
+                    }
+                  ]
                 }
               ],
               "spacing": "Small"
@@ -630,7 +838,13 @@
             },
             {
               "type": "Column",
-              "width": "56px",
+              "width": "64px",
+              "verticalContentAlignment": "Center",
+              "items": []
+            },
+            {
+              "type": "Column",
+              "width": "48px",
               "verticalContentAlignment": "Center",
               "items": [
                 {
@@ -655,11 +869,11 @@
               "verticalContentAlignment": "Center",
               "items": [
                 {
-                  "type": "Icon",
-                  "name": "Circle",
-                  "size": "xxSmall",
-                  "color": "Good",
-                  "style": "Filled"
+                  "type": "Image",
+                  "url": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABYAAAAUCAMAAAC+oj0CAAAAD1BMVEUAAAAAqlUAqlUAqlUAVVVTCAHUAAAABXRSTlMAVar//1RxM2gAAABPSURBVHjafZFRDsAwCEIFev8zL+2WTGvp+3wxRCViAVIiEQXqg0lCCRzt70fVY8st+VADXrPrmaIDXpsQo80m5pw+juurzGNdDW9rUursAT2uA5N/jZkHAAAAAElFTkSuQmCC",
+                  "altText": "Finished",
+                  "height": "10px",
+                  "width": "10px"
                 }
               ]
             },
@@ -669,10 +883,21 @@
               "verticalContentAlignment": "Center",
               "items": [
                 {
-                  "type": "TextBlock",
-                  "text": "**Northbridge Holdings** Full",
-                  "wrap": false,
-                  "size": "Small"
+                  "type": "RichTextBlock",
+                  "inlines": [
+                    {
+                      "type": "TextRun",
+                      "text": "Northbridge Holdings",
+                      "weight": "Bolder",
+                      "size": "Small"
+                    },
+                    {
+                      "type": "TextRun",
+                      "text": " Full",
+                      "size": "Small",
+                      "isSubtle": true
+                    }
+                  ]
                 }
               ],
               "spacing": "Small"
@@ -693,7 +918,13 @@
             },
             {
               "type": "Column",
-              "width": "56px",
+              "width": "64px",
+              "verticalContentAlignment": "Center",
+              "items": []
+            },
+            {
+              "type": "Column",
+              "width": "48px",
               "verticalContentAlignment": "Center",
               "items": [
                 {
@@ -718,11 +949,11 @@
               "verticalContentAlignment": "Center",
               "items": [
                 {
-                  "type": "Icon",
-                  "name": "Circle",
-                  "size": "xxSmall",
-                  "color": "Good",
-                  "style": "Filled"
+                  "type": "Image",
+                  "url": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABYAAAAUCAMAAAC+oj0CAAAAD1BMVEUAAAAAqlUAqlUAqlUAVVVTCAHUAAAABXRSTlMAVar//1RxM2gAAABPSURBVHjafZFRDsAwCEIFev8zL+2WTGvp+3wxRCViAVIiEQXqg0lCCRzt70fVY8st+VADXrPrmaIDXpsQo80m5pw+juurzGNdDW9rUursAT2uA5N/jZkHAAAAAElFTkSuQmCC",
+                  "altText": "Finished",
+                  "height": "10px",
+                  "width": "10px"
                 }
               ]
             },
@@ -732,10 +963,21 @@
               "verticalContentAlignment": "Center",
               "items": [
                 {
-                  "type": "TextBlock",
-                  "text": "**Meridian Packaging** Lite",
-                  "wrap": false,
-                  "size": "Small"
+                  "type": "RichTextBlock",
+                  "inlines": [
+                    {
+                      "type": "TextRun",
+                      "text": "Meridian Packaging",
+                      "weight": "Bolder",
+                      "size": "Small"
+                    },
+                    {
+                      "type": "TextRun",
+                      "text": " Lite",
+                      "size": "Small",
+                      "isSubtle": true
+                    }
+                  ]
                 }
               ],
               "spacing": "Small"
@@ -756,7 +998,13 @@
             },
             {
               "type": "Column",
-              "width": "56px",
+              "width": "64px",
+              "verticalContentAlignment": "Center",
+              "items": []
+            },
+            {
+              "type": "Column",
+              "width": "48px",
               "verticalContentAlignment": "Center",
               "items": [
                 {
@@ -781,11 +1029,11 @@
               "verticalContentAlignment": "Center",
               "items": [
                 {
-                  "type": "Icon",
-                  "name": "Circle",
-                  "size": "xxSmall",
-                  "color": "Good",
-                  "style": "Filled"
+                  "type": "Image",
+                  "url": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABYAAAAUCAMAAAC+oj0CAAAAD1BMVEUAAAAAqlUAqlUAqlUAVVVTCAHUAAAABXRSTlMAVar//1RxM2gAAABPSURBVHjafZFRDsAwCEIFev8zL+2WTGvp+3wxRCViAVIiEQXqg0lCCRzt70fVY8st+VADXrPrmaIDXpsQo80m5pw+juurzGNdDW9rUursAT2uA5N/jZkHAAAAAElFTkSuQmCC",
+                  "altText": "Finished",
+                  "height": "10px",
+                  "width": "10px"
                 }
               ]
             },
@@ -795,10 +1043,21 @@
               "verticalContentAlignment": "Center",
               "items": [
                 {
-                  "type": "TextBlock",
-                  "text": "**Aldwick Foods** Full",
-                  "wrap": false,
-                  "size": "Small"
+                  "type": "RichTextBlock",
+                  "inlines": [
+                    {
+                      "type": "TextRun",
+                      "text": "Aldwick Foods",
+                      "weight": "Bolder",
+                      "size": "Small"
+                    },
+                    {
+                      "type": "TextRun",
+                      "text": " Full",
+                      "size": "Small",
+                      "isSubtle": true
+                    }
+                  ]
                 }
               ],
               "spacing": "Small"
@@ -819,7 +1078,13 @@
             },
             {
               "type": "Column",
-              "width": "56px",
+              "width": "64px",
+              "verticalContentAlignment": "Center",
+              "items": []
+            },
+            {
+              "type": "Column",
+              "width": "48px",
               "verticalContentAlignment": "Center",
               "items": [
                 {
