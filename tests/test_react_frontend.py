@@ -312,7 +312,7 @@ def test_activity_sends_a_reason_without_the_service_root(hosted: _Server) -> No
             folder="r-running",
             status="running",
             claimed_at="2026-10-31T12:00:00Z",
-            reason=f"waiting on {root.resolve()}/inbox/a.pdf",
+            reason=f"waiting on {root.resolve() / 'inbox' / 'a.pdf'}",
         ),
     )
 
@@ -320,11 +320,14 @@ def test_activity_sends_a_reason_without_the_service_root(hosted: _Server) -> No
     ended = {run["id"]: run["reason"] for run in listing["ended"]}
     single = json.loads(request(hosted, "/connected/activity/p-path")[1])["reason"]
 
-    assert ended["p-path"] == "could not be filed: _engine/state/issuers.json is bad"
+    relative = Path("_engine") / "state" / "issuers.json"
+    assert ended["p-path"] == f"could not be filed: {relative} is bad"
     assert single == ended["p-path"]
     assert ended["q-plain"] == "Provider error"
-    assert listing["runs"][0]["reason"] == "waiting on inbox/a.pdf"
-    assert str(root) not in json.dumps(listing)
+    assert listing["runs"][0]["reason"] == f"waiting on {Path('inbox') / 'a.pdf'}"
+    sent = [run["reason"] for run in (*listing["ended"], *listing["runs"])] + [single]
+    assert len(sent) == 4
+    assert all(str(root.resolve()) not in reason for reason in sent)
 
 
 def test_activity_sends_ended_at_as_stored_and_lists_every_ended_status(hosted: _Server) -> None:
