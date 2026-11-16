@@ -22,9 +22,9 @@
 | 2 | Module codes on screen | 1 | 1 |
 | 3 | App-written CP-1 lead sentence and relabelled measures | 2 | 1 |
 | 4 | Published confidence score never shown | 3 | 1 |
-| 5 | CP-8 limitations ledger missing from Changes | 5 | 2 |
-| 6 | Missing or misordered reader passages shown silently | 6 | 2 |
-| 1 | Overview omits other modules' bottom lines and run-wide limitations | 7 | 2 |
+| 5 | CP-8 limitations ledger missing from Changes | 5 | 2a |
+| 6 | Missing or misordered reader passages shown silently | 6 | 2a |
+| 1 | Overview omits other modules' bottom lines and run-wide limitations | 7 | 2b |
 | 7 | Ended runs listed nowhere | 9 | 3 |
 | 9 | "Approve summary" button approves nothing | 10 | 3 |
 
@@ -299,10 +299,26 @@ git commit -m "Show the published confidence score on the module page"
 
 ## PR 2: reader composition (branch from `main` after PR 1 merges)
 
+Refreshed 2026-11-16 against the merged head `242d6633` (`main` at `915b0f79` plus PR 1). Findings 5, 6 and 1 were re-checked there and still hold. What moved under this section since the plan was written:
+
+- `findingBlocks` (`ReportContent.tsx:372`) now takes `chartsDrawn` and filters register sections through `registerBlocks(section, entry)` (`:329`); the CP-6 exception lives there.
+- Coded sections' tables go to a "Statements and records" card (`recordSections`, `RecordsCard`), which links to Evidence.
+- `findingsLayout` (`:525`) takes `chartsDrawn`. `FindingParagraph` and `plainText` are exported. Section headings are drawn through `drawingTitle`.
+- `GapPanel` takes `{ reason, role? }`.
+- PR 1 added `plainModuleNames` and `CONFIDENCE_INPUTS` (`publishedReport.ts`), `MetricKey`, and `TILE_KEYS` in `ReportLibrary.tsx`.
+
+Carried from PR 1's reviews, binding on every task here:
+
+- Any handoff text a new component draws passes through `richParts` or `plainModuleNames`. A new aria-label or trace-control name built from handoff text does too.
+- Every new render test asserts a marker that exists only when the fixture's content is drawn, so it cannot pass on an empty view.
+- Each wrap or branch added gets a test that fails without it.
+
+**Size:** PR 1 reached 856 lines against the 800 cap. PR 2 is therefore two pull requests: **PR 2a** is Tasks 5 and 6 with the close in Task 8; **PR 2b** is Task 7 with its own close, branched from `main` after 2a merges.
+
 ### Task 5: CP-8 limitations ledger on Changes
 
 **Files:**
-- Modify: `web/src/pages/connected/ReportContent.tsx:315-318` (`findingBlocks`)
+- Modify: `web/src/pages/connected/ReportContent.tsx:329-342` (`registerBlocks`)
 - Modify: `web/src/pages/connected/report/ModuleTable.tsx:195-205` (`typedModuleTable`)
 - Test: `web/src/pages/connected/report/Changes.test.tsx`, `reportView.test.ts`
 
@@ -342,8 +358,8 @@ Expected: FAIL (no region named "Limitations").
 
 - [ ] **Step 3: Implement**
 
-- `findingBlocks`: keep the `Limitations ledger` register section of a CP-8 entry, beside the existing CP-6 exception.
-- `typedModuleTable`: for CP-8 `Limitations ledger`, a `<section aria-label="Limitations">` with one group per Status, in the order Closed, Remaining, New, No longer stated, then any other status in table order. Group heading: `<status> (<rows in group>)`. Each row: the Limitation cell; for a non-empty, non-`—` "What closed it" cell, that text beneath; one trace control (`traceAt(row.line)`). The two ref columns are not drawn. Follow the layout of `readiness()` in the same file.
+- `registerBlocks`: return the reader blocks of a CP-8 entry's `Limitations ledger` section, beside the existing CP-6 exception. `recordSections` then no longer lists it under "Statements and records"; assert that in the Changes test (`queryByRole("link", { name: "Limitations ledger" })` is null).
+- `typedModuleTable`: for CP-8 `Limitations ledger`, a `<section aria-label="Limitations">` with one group per Status, in the order Closed, Remaining, New, No longer stated, then any other status in table order. Group heading: `<status> (<rows in group>)`. Each row: the Limitation cell; for a non-empty, non-`—` "What closed it" cell, that text beneath; one trace control (`traceAt(row.line)`). Cell text is drawn with `richParts`. The two ref columns are not drawn. Follow the layout of `readiness()` in the same file (`ModuleTable.tsx:33`).
 
 - [ ] **Step 4: Run the affected files**
 
@@ -360,8 +376,8 @@ git commit -m "Show CP-8's limitations ledger on Changes"
 ### Task 6: Reader passages in order, with a gap for a missing one
 
 **Files:**
-- Modify: `web/src/pages/connected/publishedReport.ts:343-348` (export, new function)
-- Modify: `web/src/pages/connected/ReportContent.tsx:408-436,593-606`
+- Modify: `web/src/pages/connected/publishedReport.ts:354-359` (export `PASSAGES`, new function)
+- Modify: `web/src/pages/connected/ReportContent.tsx:525-554` (`findingsLayout`) and `:732-747` (the `ReportFindings` return)
 - Test: `web/src/pages/connected/publishedReport.test.ts`, `report/Modules.test.tsx`
 
 **Interfaces:**
@@ -410,7 +426,9 @@ Expected: FAIL (`missingPassages` not exported; headings in handoff order).
 
 - `missingPassages`: with no reader passage present, `[]`. For a blocked entry or a data module (`CP-0`, `CP-PARSE`, `CP-1`, `CP-1C`), `["Bottom line"]` less what is present. Otherwise `PASSAGES` less what is present.
 - `findingsLayout`: the four passages first, in `PASSAGES` order, then every other section in handoff order. The Overview pairing of Key findings with Contrary evidence is unchanged.
+- `findingsLayout` and the Overview filter at `:534-539` use the exported `PASSAGES`, not a second copy of the four headings.
 - `ReportFindings` (module pages and Changes, not Overview): at the place of each missing passage, a card with the passage name as `h2` and `GapPanel` (`@/components/gap/GapPanel`) with reason `Not established for this run. The module's handoff has no such passage.`
+- The "Statements and records" card stays last, after every section.
 
 - [ ] **Step 4: Run the affected files**
 
@@ -429,12 +447,12 @@ git commit -m "Order the reader passages and show a gap for a missing one"
 **Files:**
 - Modify: `web/src/pages/connected/reportView.ts` (three new exports)
 - Create: `web/src/pages/connected/report/OverviewModules.tsx`
-- Modify: `web/src/pages/connected/ReportLibrary.tsx:114-232` (`Overview`)
-- Modify: `web/src/pages/connected/ReportContent.tsx:413-422` (Overview no longer draws the lead's Limitations)
+- Modify: `web/src/pages/connected/ReportLibrary.tsx:117-230` (`Overview`)
+- Modify: `web/src/pages/connected/ReportContent.tsx:531-540` (Overview no longer draws the lead's Limitations)
 - Test: `web/src/pages/connected/reportView.test.ts`, `ReportLibrary.design.test.tsx`
 
 **Interfaces:**
-- Consumes: `moduleState`, `blocked`, `passages`, `readParagraph`, `containsReference`, `evidencePath`, `PublishedSource`, `missingPassages` (Task 6).
+- Consumes: `moduleState`, `blocked`, `passages`, `readParagraph`, `containsReference`, `plainModuleNames`, `evidencePath`, `PublishedSource`, `PASSAGES` (Task 6).
 - Produces:
   - `moduleOrder(run: PublishedRun): string[]`
   - `moduleBottomLines(view: ReportView, run: PublishedRun): { id: string; name: string; state: ModuleState; entry: OutputEntry; text: string | null; line: number | null }[]`
@@ -491,11 +509,12 @@ Expected: FAIL (functions not exported; no such region).
 - [ ] **Step 3: Implement**
 
 - `moduleOrder`: module ids in order of first appearance in `run.record.steps`, then the remaining keys of `run.modules`.
-- `moduleBottomLines`: for each module in `moduleOrder` with a designated entry, except the lead's module: `text` is the body of the first text block of its `Bottom line` passage (`readParagraph`, `**` and backticks removed, as `BottomLine` does), else `output.summary.bottomLine`, else `null`. A text for which `containsReference` is true becomes `null`. `line` is that block's line.
-- `runLimitations`: for each module in `moduleOrder` (lead included) that is not blocked, each text block of its `Limitations` passage. Normalise for comparison only (lower case, Basis line dropped, punctuation removed, whitespace collapsed; ruling check 7); the first occurrence is kept and shown as written.
+- `moduleBottomLines`: for each module in `moduleOrder` with a designated entry, except the lead's module: `text` is the body of the first text block of its `Bottom line` passage (`readParagraph`, `**` and backticks removed, as `BottomLine` does), else `output.summary.bottomLine`, else `null`. A text for which `containsReference` is true becomes `null`. The text is passed through `plainModuleNames`. `line` is that block's line.
+- `runLimitations`: for each module in `moduleOrder` (lead included) that is not blocked, each text block of its `Limitations` passage. Normalise for comparison only (lower case, Basis line dropped, punctuation removed, whitespace collapsed; ruling check 7); the first occurrence is kept and shown as written, less its Basis line and any `Name (CP-x)` code (`readParagraph`, then `plainModuleNames`). An item for which `containsReference` is true is shown as a link, "Read this limitation in Evidence", as `FindingParagraph` does.
 - `ModuleBottomLines`: `<section aria-label="Bottom line by module">`; per row the module name as a link to `#modules/<id>`, `StatusBadge set="Module state"`, the text (or `GapPanel` "Not established for this run" when `text` is null), and `PublishedSource href={evidencePath(run.folder, entry, line)}`.
 - `RunLimitations`: `<section aria-label="Limitations">`, a list; per item the text, the module name, and `PublishedSource`. Empty list: one sentence, "No module recorded a limitation for this run."
 - `Overview`: after the lead and the figures, `ModuleBottomLines`, then `RunLimitations`, then "Dates to watch". `findingsLayout` drops `Limitations` from the Overview heading list.
+- Add to the Overview design test: the fixture's CP-1 bottom line holds `Liquidity (CP-2D)`, and the "Bottom line by module" region shows `Liquidity` and no `(CP-`.
 
 - [ ] **Step 4: Run the affected files**
 
@@ -509,13 +528,15 @@ git add web/src/pages/connected
 git commit -m "Overview: one bottom line per module and the run's limitations"
 ```
 
-### Task 8 (PR 2 close): gates, reviews, record
+### Task 8 (close of PR 2a, and again of PR 2b): gates, reviews, record
 
-Same four steps as Task 4. Fidelity check scope: Overview's module rows and limitations, a module page's passage order, and Changes' ledger, each against the Northbridge handoffs.
+Same four steps as Task 4, run once for each of the two pull requests. Run `npm run unused` after Task 7 in particular: it adds a file and three exports. Fidelity check scope: Overview's module rows and limitations, a module page's passage order, and Changes' ledger, each against the Northbridge handoffs.
 
 ---
 
 ## PR 3: run pages (branch from `main` after PR 2 merges)
+
+Not refreshed. `main` has since rebuilt the Start flow in four steps, and "Approve summary" no longer appears in `StartRun.tsx` (it remains only in a test), so Task 10 is probably obsolete. Task 9 still applies: `react_frontend/run_activity.py` still lists only running and queued runs. Refresh this section before it starts.
 
 ### Task 9: Ended runs on Run activity
 
