@@ -20,6 +20,7 @@ import {
   type PublishedRun,
   type Section,
   type Snapshot,
+  type ScriptCheckRecord,
   type Table,
 } from "../publishedReport";
 import {
@@ -31,6 +32,7 @@ import {
 } from "../ReportContent";
 import { ArtifactDownloads } from "./ArtifactDownloads";
 import { ReportRecord } from "./Record";
+import { ScriptChecks } from "./ScriptChecks";
 
 function rowView(table: Table, line: number | undefined) {
   const row = table.rows.find((item) => item.line === line);
@@ -486,13 +488,18 @@ function EvidenceHandoffs({
   );
 }
 
-const tabs = ["Summary", "Trace", "Sources", "Gaps", "Record"] as const;
+const tabs = ["Summary", "Trace", "Sources", "Gaps", "Script checks", "Record"] as const;
 type EvidenceTab = (typeof tabs)[number];
 
-function evidenceRoute(entries: OutputEntry[], target?: string) {
+const tabRoute = (tab: EvidenceTab) => (tab === "Script checks" ? "checks" : tab.toLowerCase());
+
+function evidenceRoute(entries: OutputEntry[], target: string | undefined, hasChecks: boolean) {
   const [section, module] = (target ?? "").split("/");
   const location = section ? resolveEvidenceLocation(entries, section) : null;
-  const namedTab = tabs.find((label) => label.toLowerCase() === section);
+  const namedTab =
+    section === "checks" && !hasChecks
+      ? "Summary"
+      : tabs.find((label) => tabRoute(label) === section);
   const invalidTraceAddress = Boolean(section && !namedTab && !location);
   const tab = location ? "Trace" : (namedTab ?? (invalidTraceAddress ? "Trace" : "Summary"));
   const selectedIndex = location?.index ?? -1;
@@ -506,10 +513,12 @@ function EvidenceNavigation({
   entries,
   tab,
   selectedModule,
+  checks,
 }: {
   entries: OutputEntry[];
   tab: EvidenceTab;
   selectedModule?: string;
+  checks: ScriptCheckRecord[];
 }) {
   return (
     <>
@@ -522,12 +531,17 @@ function EvidenceNavigation({
             value={selectedModule ?? ""}
             onChange={(event) => {
               window.location.assign(
-                `#evidence/${tab.toLowerCase()}${event.target.value ? `/${event.target.value}` : ""}`,
+                `#evidence/${tabRoute(tab)}${event.target.value ? `/${event.target.value}` : ""}`,
               );
             }}
           >
             <option value="">All modules</option>
-            {[...new Set(entries.map((item) => item.output.module))].map((id) => (
+            {[
+              ...new Set([
+                ...entries.map((item) => item.output.module),
+                ...checks.map((record) => record.module),
+              ]),
+            ].map((id) => (
               <option value={id} key={id}>
                 {moduleName(id)}
               </option>
@@ -539,18 +553,69 @@ function EvidenceNavigation({
         aria-label="Evidence sections"
         className="flex flex-wrap gap-3 border-b border-border-hairline"
       >
-        {tabs.map((item) => (
-          <RunTabLink
-            key={item}
-            label={item}
-            current={tab === item}
-            href={`#evidence/${item.toLowerCase()}${selectedModule ? `/${selectedModule}` : ""}`}
-            small
-          />
-        ))}
+        {tabs
+          .filter((item) => item !== "Script checks" || checks.length > 0)
+          .map((item) => (
+            <RunTabLink
+              key={item}
+              label={item}
+              count={
+                item === "Script checks"
+                  ? String(
+                      checks
+                        .filter((record) => !selectedModule || record.module === selectedModule)
+                        .reduce((n, record) => n + record.outcomes.length, 0),
+                    )
+                  : undefined
+              }
+              current={tab === item}
+              href={`#evidence/${tabRoute(item)}${selectedModule ? `/${selectedModule}` : ""}`}
+              small
+            />
+          ))}
       </nav>
     </>
   );
+}
+
+function EvidenceHandoff({
+  snapshot,
+  run,
+  entry,
+  line,
+  selectedIndex,
+}: {
+  snapshot: Snapshot;
+  run: PublishedRun;
+  entry: OutputEntry;
+  line?: number;
+  selectedIndex: number;
+}) {
+  return (
+    <article className={card}>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h2 className={heading}>
+          {moduleName(entry.output.module)} ·{" "}
+          {line === undefined ? "Handoff evidence" : `Line ${String(line)}`}
+        </h2>
+        <HandoffDownload run={run} entry={entry} />
+      </div>
+      {line !== undefined && (
+        <TraceDetailsView
+          snapshot={snapshot}
+          run={run}
+          entry={entry}
+          line={line}
+          index={selectedIndex}
+        />
+      )}
+      <EvidenceLocation snapshot={snapshot} entry={entry} line={line} />
+    </article>
+  );
+}
+
+function showHandoffs(tab: EvidenceTab, entry: OutputEntry | undefined, invalid: boolean) {
+  return tab === "Summary" || (tab === "Trace" && !entry && !invalid);
 }
 
 export function ReportEvidence({
@@ -568,8 +633,9 @@ export function ReportEvidence({
   comparison?: ReactNode;
   mode: Mode;
 }) {
+  const checks = run.evidence.scriptChecks ?? [];
   const { module, invalidTraceAddress, tab, selectedIndex, entry, selectedModule, line } =
-    evidenceRoute(entries, target);
+    evidenceRoute(entries, target, checks.length > 0);
   const { evidence } = run;
   const sourceGroups = [
     { label: "Named in a handoff", rows: evidence.sources },
@@ -578,30 +644,23 @@ export function ReportEvidence({
   ];
   return (
     <div className="grid min-w-0 gap-5">
-      <EvidenceNavigation entries={entries} tab={tab} selectedModule={selectedModule} />
+      <EvidenceNavigation
+        entries={entries}
+        tab={tab}
+        selectedModule={selectedModule}
+        checks={checks}
+      />
       {tab === "Summary" && (
         <EvidenceSummary entries={entries} module={module} sourceGroups={sourceGroups} />
       )}
       {entry && (
-        <article className={card}>
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <h2 className={heading}>
-              {moduleName(entry.output.module)} ·{" "}
-              {line === undefined ? "Handoff evidence" : `Line ${String(line)}`}
-            </h2>
-            <HandoffDownload run={run} entry={entry} />
-          </div>
-          {line !== undefined && (
-            <TraceDetailsView
-              snapshot={snapshot}
-              run={run}
-              entry={entry}
-              line={line}
-              index={selectedIndex}
-            />
-          )}
-          <EvidenceLocation snapshot={snapshot} entry={entry} line={line} />
-        </article>
+        <EvidenceHandoff
+          snapshot={snapshot}
+          run={run}
+          entry={entry}
+          line={line}
+          selectedIndex={selectedIndex}
+        />
       )}
       {tab === "Trace" && invalidTraceAddress && (
         <section role="alert" className={card}>
@@ -615,7 +674,7 @@ export function ReportEvidence({
       {tab === "Sources" && (
         <EvidenceSources sourceGroups={sourceGroups} module={module} folder={run.folder} />
       )}
-      {(tab === "Summary" || (tab === "Trace" && !entry && !invalidTraceAddress)) && (
+      {showHandoffs(tab, entry, invalidTraceAddress) && (
         <EvidenceHandoffs entries={entries} module={module} run={run} />
       )}
       {tab === "Summary" && evidence.downloads.length > 0 && (
@@ -623,6 +682,7 @@ export function ReportEvidence({
       )}
       {tab === "Trace" && !entry && (!module || module === "CP-8") && comparison}
       {tab === "Gaps" && <EvidenceGaps run={run} entries={entries} module={module} />}
+      {tab === "Script checks" && <ScriptChecks records={checks} module={module} />}
       {tab === "Record" && <ReportRecord run={run} entries={entries} module={module} mode={mode} />}
     </div>
   );

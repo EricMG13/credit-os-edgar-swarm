@@ -20,6 +20,7 @@ from deploy_workflow.inbox import runs
 from deploy_workflow.inbox.layout import Layout
 from deploy_workflow.model.handoff import _pages
 from react_frontend import _visible_publication, make_server, sources
+from tests.test_pdf_form_text import make as form_pdf
 
 NAME = "Issuer report.txt"
 RAW = b"A" * 12000 + b"Second page: exact 123\n<script>no execution</script>\n"
@@ -92,6 +93,29 @@ def test_exact_original_and_native_page_identity(published: tuple[Layout, dict[s
     assert "sandbox" in response.headers["Content-Security-Policy"]
     page = sources.reply(urlsplit(chip["pageHref"]), layout.runs, enriched)
     assert page.body == _pages(NAME, RAW)[1].encode() == RAW[12000:]
+
+
+def test_pdf_form_text_reaches_source_page_without_changing_original(
+    published: tuple[Layout, dict[str, Any]],
+) -> None:
+    layout, snapshot = published
+    raw = form_pdf()
+    digest = hashlib.sha256(raw).hexdigest()
+    name = "Issuer form.pdf"
+    folder = layout.runs / FOLDER
+    (folder / "inputs" / digest).write_bytes(raw)
+    (folder / "workflow.json").write_text(json.dumps({"sources": {name: {"sha256": digest}}}))
+    record = snapshot["workspace"]["runs"]["run-key"]
+    record["evidence"]["sources"] = [{"name": name, "sha256": digest}]
+    url = f"{sources.PREFIX}{FOLDER}/{digest}/{quote(name, safe='')}"
+    page = sources.reply(urlsplit(url + "?page=1"), layout.runs, snapshot)
+    assert isinstance(page.body, bytes)
+    assert b"Page heading 2026" in page.body
+    assert b"Revenue 4,275.5" in page.body
+    assert b"reading-order" in page.body.lower()
+    original = sources.reply(urlsplit(url), layout.runs, snapshot)
+    assert original.body == raw
+    assert (folder / "inputs" / digest).read_bytes() == raw
 
 
 def test_original_sha_inventory_headers_cannot_turn_hash_into_filename(

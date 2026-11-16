@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { foundationMetrics, traceKey } from "./reportView";
+import { actionBias, foundationMetrics, traceKey } from "./reportView";
 import type { CatalogueRun, OutputEntry, Section, Snapshot } from "./publishedReport";
 import { findingBlocks, traceForLine } from "./ReportContent";
 import { calculationNodes } from "./report/calculations";
@@ -79,6 +79,60 @@ describe("reader data fidelity", () => {
     const b = foundation([], { run: "first", id: "foundation-b", sha256: "b".repeat(64) });
     const c = foundation([], { run: "second", id: "foundation-a", sha256: "c".repeat(64) });
     expect(new Set([a, b, c].map((entry) => traceKey(entry, 22))).size).toBe(3);
+  });
+
+  it("keeps a zero maturity amount only for its stated forward window and currency", () => {
+    const schedule = table(
+      "Chart data: debt maturities",
+      ["Period", "Debt maturing", "Reporting unit"],
+      [["2027", "0", "US$m"]],
+      30,
+    );
+    const ledger = table(
+      "Calculations",
+      ["ID", "Calculation", "Inputs", "Result", "Source"],
+      [
+        ["C1", "Other calculation", "", "900", ""],
+        ["C2", "Maturities from 2026-07-01 to end-2028", "", "800", ""],
+        ["C3", "Maturities from 2025-07-01 to end-2027", "", "700", ""],
+        ["C4", "Maturities from 2026-01-01 to end-2027", "", "600", ""],
+        ["C5", "Maturities from 2026-07-01 to end-2027", "", "0", ""],
+      ],
+      40,
+    );
+    const dated = { ...date, metrics: { cash: { period: "2026-06-30" } } };
+    expect(foundationMetrics(foundation([schedule, ledger]), dated)).toMatchObject([
+      { metric: { label: "Debt maturities through 2027", value: { text: "$0m" } }, line: 46 },
+    ]);
+    const foreign = table(
+      "Chart data: debt maturities",
+      schedule.blocks[0]?.type === "table" ? schedule.blocks[0].headers : [],
+      [["2027", "0", "GBPm"]],
+      30,
+    );
+    expect(foundationMetrics(foundation([foreign, ledger]), dated)).toEqual([]);
+  });
+
+  it("does not turn an earnings lead or an unrecognised decision into a committee action", () => {
+    const decision: Section = {
+      heading: "Decision",
+      level: 2,
+      line: 1,
+      blocks: [{ type: "text", line: 2, end: 2, text: "Final Action Bias: Watchlist." }],
+    };
+    const earnings = foundation([decision]);
+    earnings.output.module = "CP-1B";
+    expect(actionBias(earnings)).toBeUndefined();
+    const committee = { ...earnings, output: { ...earnings.output, module: "CP-6" } };
+    expect(actionBias(committee)).toBe("Watchlist");
+    expect(
+      actionBias({ ...committee, sections: [{ ...decision, heading: "Limitations" }] }),
+    ).toBeUndefined();
+    expect(
+      actionBias({ ...committee, sections: [table("Decision", ["Action"], [["Avoid"]], 5)] }),
+    ).toBeUndefined();
+    decision.blocks = [{ type: "text", line: 2, end: 2, text: "Final Action Bias: Unspecified." }];
+    expect(actionBias(committee)).toBeUndefined();
   });
 
   it("derives a figure trace from its own rows and a row trace from only the selected row", () => {

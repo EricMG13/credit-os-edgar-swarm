@@ -9,11 +9,12 @@ from tempfile import TemporaryDirectory
 
 import pytest
 
-from deploy_workflow.inbox import runs, startup
+from deploy_workflow.inbox import activity, runs, startup
 from deploy_workflow.inbox.scheduler import Scheduler
 from deploy_workflow.model.budget import Budget
 from deploy_workflow.run_events import EVENTS, append_event
 from deploy_workflow.run_start.service import _Server
+from deploy_vii.contracts import PATHWAY_CAP_USD
 from react_frontend import make_server
 
 PROJECT = Path(__file__).resolve().parents[1]
@@ -95,7 +96,7 @@ def test_same_origin_service_and_submit_gate(hosted: _Server) -> None:
     context = json.loads((PROJECT / "cases/context/research-minimal.json").read_bytes())
     assert json.loads(request(hosted, "/connected/context")[1]) == {
         **context,
-        "submission_cap_usd": str(hosted.scheduler.settings.cap),
+        "submission_caps_usd": {pathway: str(cap) for pathway, cap in PATHWAY_CAP_USD.items()},
     }
     assert request(hosted, "/connected/context", headers={"Origin": "http://other.test"})[0] == 403
     assert request(hosted, "/connected/snapshot", headers={"Host": "other.test"})[0] == 403
@@ -151,10 +152,87 @@ def test_activity_uses_the_pinned_cap_and_curates_native_events(hosted: _Server)
     assert request(hosted, "/connected/activity/unknown")[0] == 404
 
 
+def test_activity_list_shows_runs_in_progress_without_spend_or_file_names(hosted: _Server) -> None:
+    scheduler = hosted.scheduler
+    assert isinstance(scheduler, Scheduler)
+    layout = scheduler.layout
+    for record in (
+        runs.Record(
+            id="b-queued",
+            pathway="credit_snapshot",
+            folder="b-queued",
+            status="queued",
+            claimed_at="2026-10-31T12:00:00Z",
+            issuer_name="Harbour Packaging",
+            reason="3 runs are already running",
+        ),
+        runs.Record(
+            id="a-running",
+            pathway="credit_snapshot",
+            folder="a-running",
+            status="running",
+            claimed_at="2026-10-31T12:00:00Z",
+            issuer_name="Meridian Foods",
+            started_at="2026-10-31T12:01:00Z",
+            files=("annual-report.pdf", "notes.pdf"),
+            submitted_by="Dana Reyes",
+            name_differs=True,
+        ),
+        runs.Record(
+            id="c-finished",
+            pathway="credit_snapshot",
+            folder="c-finished",
+            status="finished",
+            claimed_at="2026-10-31T11:00:00Z",
+            ended_at="2026-10-31T11:30:00Z",
+        ),
+    ):
+        runs.save(layout, record)
+    directory = layout.runs / "a-running"
+    directory.mkdir(parents=True, exist_ok=True)
+    (directory / "workflow.json").write_text(
+        '{"instructions":{"CP-0":{},"CP-1":{}}}', encoding="utf-8"
+    )
+    append_event(directory, "module_started", module="CP-0")
+    append_event(directory, "module_accepted", module="CP-0")
+    held = "daily limit of 30 runs reached; waiting until tomorrow"
+    assert json.loads(request(hosted, "/connected/activity")[1])["held"] == ""
+    activity.write(layout, {"updated": "", "cap": "20", "held": held, "runs": []})
+
+    status, raw, headers = request(hosted, "/connected/activity")
+
+    assert status == 200 and headers["Cache-Control"] == "no-store"
+    listing = json.loads(raw)
+    assert set(listing) == {"updated", "held", "runs"}
+    assert listing["held"] == held
+    running, queued = listing["runs"]
+    assert running == {
+        "id": "a-running",
+        "issuer_name": "Meridian Foods",
+        "pathway": "credit_snapshot",
+        "status": "running",
+        "reason": "",
+        "submitted_by": "Dana Reyes",
+        "started_at": "2026-10-31T12:01:00Z",
+        "name_differs": True,
+        "stalled": False,
+        "files": 2,
+        "modules": [["CP-0", "done"], ["CP-1", "waiting"], ["Report", "waiting"]],
+    }
+    assert (queued["id"], queued["status"], queued["reason"], queued["files"]) == (
+        "b-queued",
+        "queued",
+        "3 runs are already running",
+        0,
+    )
+    assert set(queued) == set(running)
+    page_status, _, page_headers = request(hosted, "/runs")
+    assert page_status == 200 and page_headers["Content-Type"].startswith("text/html")
+
+
 def test_reports_admission_and_reader_snapshot(hosted: _Server, root: Path) -> None:
     scheduler = hosted.scheduler
     assert isinstance(scheduler, Scheduler)
-    assert scheduler.settings.cap == 20
     library = root / "_engine" / "library"
     publication = library / "data.js"
     publication.unlink(missing_ok=True)
@@ -228,7 +306,6 @@ def test_synthetic_mode_uses_the_explicit_launcher(
     launcher = ("unused-by-test",)
     with make_server(root, web=web, launcher=launcher, synthetic=True) as server:
         assert server.scheduler.settings.launcher == launcher
-        assert server.scheduler.settings.cap == 20
         thread = threading.Thread(target=server.serve_forever)
         thread.start()
         try:
@@ -237,7 +314,9 @@ def test_synthetic_mode_uses_the_explicit_launcher(
             assert b'credit-os-signal-url"' not in page
             expected = json.loads((PROJECT / "cases/context/research-minimal.json").read_bytes())
             expected["run"]["case_kind"] = "synthetic"
-            expected["submission_cap_usd"] = str(server.scheduler.settings.cap)
+            expected["submission_caps_usd"] = {
+                pathway: str(cap) for pathway, cap in PATHWAY_CAP_USD.items()
+            }
             assert json.loads(request(server, "/connected/context")[1]) == expected
         finally:
             server.shutdown()

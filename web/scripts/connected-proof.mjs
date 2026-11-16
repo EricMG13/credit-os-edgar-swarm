@@ -111,7 +111,7 @@ async function checkRunDocuments(page, channel, paidPreview) {
   assert.ok(drop && side && side.x >= drop.x + drop.width, "Readiness sits beside the form");
   assert.equal(await stepper.getByRole("listitem").count(), 4);
   assert.match(await current.innerText(), /Documents/u);
-  await readiness.getByText("USD 0.00 of USD 20.00", { exact: true }).waitFor();
+  await readiness.getByText("USD 0.00 of USD 25.00", { exact: true }).waitFor();
   if (!paidPreview)
     await page.screenshot({ path: path.join(artifacts, `${channel}-run-documents.png`) });
   await checkMobileDocuments(page, channel, paidPreview);
@@ -191,6 +191,10 @@ async function approveRunInputs(page, paidPreview) {
   await page.getByRole("button", { name: "Continue to purpose", exact: true }).click();
   await page.getByRole("heading", { name: "Purpose", exact: true }).waitFor();
   assert.match(await current.innerText(), /Purpose/u);
+  await page.getByRole("radio", { name: "Lite credit assessment", exact: true }).waitFor();
+  await page.getByRole("radio", { name: "Full credit assessment", exact: true }).waitFor();
+  await page.getByRole("radio", { name: "Deep credit assessment", exact: true }).waitFor();
+  await page.getByText("20 base modules", { exact: true }).waitFor();
   await page.getByRole("radio", { name: "Full credit assessment", exact: true }).waitFor();
   await page.getByRole("button", { name: "Continue to context", exact: true }).click();
   assert.match(await current.innerText(), /More context/u);
@@ -202,7 +206,7 @@ async function approveRunInputs(page, paidPreview) {
     .selectOption({ label: "northbridge-portfolio.xlsx" });
   await page.getByRole("button", { name: "Review run", exact: true }).click();
   const submitButton = page.getByRole("button", {
-    name: paidPreview ? "Submit, spend up to USD 20.00" : "Submit run",
+    name: paidPreview ? "Submit, spend up to USD 25.00" : "Submit run",
     exact: true,
   });
   await submitButton.waitFor();
@@ -222,8 +226,8 @@ async function checkRunConfirmation(page, channel, paidPreview, consent, submitB
   });
   await dialog.waitFor();
   if (paidPreview) {
-    await dialog.getByText(/spend up to USD 20\.00/u).waitFor();
-    await dialog.getByRole("button", { name: "Start run, up to USD 20.00" }).waitFor();
+    await dialog.getByText(/spend up to USD 25\.00/u).waitFor();
+    await dialog.getByRole("button", { name: "Start run, up to USD 25.00" }).waitFor();
     await page.screenshot({
       path: path.join(artifacts, `${channel}-paid-confirmation.png`),
       animations: "disabled",
@@ -245,6 +249,11 @@ async function checkRunConfirmation(page, channel, paidPreview, consent, submitB
 }
 
 async function submit(page, channel, paidPreview = false) {
+  const shownCaps = [];
+  page.on("request", (request) => {
+    if (/\/api\/submissions\/[^/]+\/(?:summary|submit)$/u.test(new URL(request.url()).pathname))
+      shownCaps.push(request.headers()["x-shown-cap"]);
+  });
   await checkRunDocuments(page, channel, paidPreview);
   await uploadRunDocuments(page);
   const submitButton = await approveRunInputs(page, paidPreview);
@@ -260,7 +269,10 @@ async function submit(page, channel, paidPreview = false) {
   });
   const dialog = await checkRunConfirmation(page, channel, paidPreview, consent, submitButton);
   assert.equal(submitRequests, 0);
-  if (paidPreview) return;
+  if (paidPreview) {
+    assert.deepEqual(shownCaps, ["25"]);
+    return;
+  }
 
   const submitted = response(page, /\/api\/submissions\/[^/]+\/submit$/u, "POST");
   const activity = page.waitForURL(/\/run\/\d{8}-\d{6}-\d{2}$/u);
@@ -269,6 +281,7 @@ async function submit(page, channel, paidPreview = false) {
   assert.equal((await submitted).status(), 200);
   await activity;
   assert.equal(submitRequests, 1);
+  assert.deepEqual(shownCaps, ["25", "25"]);
   return new URL(page.url()).pathname.split("/").at(-1);
 }
 
@@ -300,7 +313,7 @@ async function checkActivity(page, channel) {
   await activity.getByText("USD 0.00", { exact: true }).waitFor();
   await activity
     .getByRole("progressbar", {
-      name: "USD 0.00 of USD 20.00 cap usage; USD 0.00 settled, USD 0.00 reserved or unknown",
+      name: "USD 0.00 of USD 25.00 cap usage; USD 0.00 settled, USD 0.00 reserved or unknown",
     })
     .waitFor();
   await activity.getByRole("progressbar", { name: "14 of 14 modules" }).waitFor();
@@ -366,7 +379,7 @@ async function checkRecord(report, page, channel) {
   await report.getByText(/^(?:\d+ min )?\d+ s$/u).waitFor();
   await report
     .getByRole("progressbar", {
-      name: "USD 0.00 of USD 20.00 cap usage; USD 0.00 settled, USD 0.00 reserved or unknown",
+      name: "USD 0.00 of USD 25.00 cap usage; USD 0.00 settled, USD 0.00 reserved or unknown",
     })
     .waitFor();
   await report.getByRole("combobox", { name: "Module", exact: true }).selectOption("CP-1");
@@ -506,9 +519,7 @@ async function checkChangesTrace(browser, endpoint, id) {
       },
       verdicts: { measures: { debt: { kind: "comparable", label: "Same definition" } } },
     };
-    await page.route("**/connected/snapshot?run=*", (route) =>
-      route.fulfill({ json: snapshot }),
-    );
+    await page.route("**/connected/snapshot?run=*", (route) => route.fulfill({ json: snapshot }));
     await page.goto(new URL(`/report/${id}#changes`, endpoint).href);
     const report = page.locator("main");
     const card = report.getByRole("listitem").filter({ hasText: "Net debt" });
@@ -739,7 +750,7 @@ async function checkSecurities(report, modules, artifacts, channel, page) {
   await section.getByRole("cell", { name: "Recovery basis unavailable", exact: true }).waitFor();
 }
 
-async function checkCharts(report, artifacts, channel, page) {
+async function checkCharts(report, artifacts, channel, page, run) {
   const section = (name) =>
     report
       .getByRole("navigation", { name: "Report sections" })
@@ -762,7 +773,7 @@ async function checkCharts(report, artifacts, channel, page) {
   await checkForecastEvidence(report, artifacts, channel, page);
   await checkReadingLayout(report, page, channel);
   await checkForecastRunCharts(report, page, sourceHref);
-  await checkReportEvidence(report, page, channel);
+  await checkReportEvidence(report, page, channel, run);
 }
 
 async function checkCompactModules(report, page, channel) {
@@ -1035,7 +1046,7 @@ async function checkRetainedSourceFile(report, page) {
   }
 }
 
-async function checkReportEvidence(report, page, channel) {
+async function checkReportEvidence(report, page, channel, run) {
   await report
     .getByRole("navigation", { name: "Report sections" })
     .getByRole("link", { name: "Report", exact: true })
@@ -1053,6 +1064,68 @@ async function checkReportEvidence(report, page, channel) {
   await page.reload();
   await report.getByRole("heading", { name: "Handoffs", exact: true }).waitFor();
   await checkRecord(report, page, channel);
+  await checkPublishedScriptChecks(report, page, channel, run);
+  await report.getByRole("combobox", { name: "Module", exact: true }).selectOption("");
+  await evidence.getByRole("link", { name: "Summary", exact: true }).click();
+  await report.getByRole("heading", { name: "Handoffs", exact: true }).waitFor();
+}
+
+async function checkPublishedScriptChecks(report, page, channel, run) {
+  const snapshot = await page.request.get(
+    new URL(`/connected/snapshot?run=${encodeURIComponent(run)}`, page.url()).href,
+  );
+  assert.equal(snapshot.status(), 200);
+  const { workspace } = await snapshot.json();
+  const published = Object.values(workspace.runs).find((item) => item.folder === run);
+  assert.ok(published);
+  const record = published.evidence.scriptChecks?.find((item) => item.module === "CP-2E");
+  assert.ok(record && record.outcomes.length > 0, "The published run must retain CP-2E checks");
+  const rateCheck = record.outcomes.find(
+    (outcome) => outcome.figure === "Unhedged floating-rate debt",
+  );
+  assert.ok(rateCheck, "The published run must retain the floating-rate debt check");
+  const nav = report.getByRole("navigation", { name: "Evidence sections" });
+  await nav.getByRole("link", { name: /Script checks/u }).click();
+  await page.waitForURL((url) => url.hash === "#evidence/checks");
+  await report.getByRole("heading", { name: "Script checks", exact: true }).waitFor();
+  const module = report.getByRole("combobox", { name: "Module", exact: true });
+  await module.selectOption("CP-2E");
+  await page.waitForURL((url) => url.hash === "#evidence/checks/CP-2E");
+  const rate = report.getByRole("region", {
+    name: `${rateCheck.figure}: ${rateCheck.status}`,
+    exact: true,
+  });
+  await rate.waitFor();
+  await rate.getByText(rateCheck.reason, { exact: true }).waitFor();
+  await checkOutcomeValues(rate, rateCheck);
+  await checkCheckMetadata(report, record);
+  await page.screenshot({
+    path: path.join(artifacts, `${channel}-evidence-script-checks.png`),
+    fullPage: true,
+  });
+}
+
+async function checkOutcomeValues(rate, rateCheck) {
+  const recomputed = [rateCheck.recomputed, rateCheck.recomputedLabel]
+    .filter((value) => value !== null)
+    .join(" ");
+  if (recomputed) {
+    await rate
+      .getByText(`${recomputed}${rateCheck.unit ? ` ${rateCheck.unit}` : ""}`, {
+        exact: true,
+      })
+      .waitFor();
+  }
+}
+
+async function checkCheckMetadata(report, record) {
+  for (const { status, n } of record.counts) {
+    await report.getByText(`${String(n)} ${status}`, { exact: true }).waitFor();
+  }
+  const storedScript = record.scripts.find((script) => script.sha256);
+  if (storedScript?.sha256) {
+    await report.locator("code").getByText(storedScript.sha256, { exact: true }).waitFor();
+  }
 }
 
 async function checkCompactLibrary(page, endpoint, run) {
@@ -1149,7 +1222,7 @@ async function checkBrowserRun(browser, service, workspace, channel, brand) {
   });
   await checkOverviewTrace(report, page);
   await checkCalendar(report, artifacts, channel, page);
-  await checkCharts(report, artifacts, channel, page);
+  await checkCharts(report, artifacts, channel, page, run);
   const download = report.getByRole("link", {
     name: "Download Fundamental credit",
     exact: true,
@@ -1205,10 +1278,11 @@ async function checkBrowserRun(browser, service, workspace, channel, brand) {
       "modules-mobile",
       "evidence",
       "evidence-record",
+      "evidence-script-checks",
     ].map((view) => `${channel}-${view}.png`),
     checks: [
       "upload",
-      "five-step intake, document drop zone and responsive readiness panel",
+      "four-step intake, document drop zone and responsive readiness panel",
       "approved submission",
       "paid cap confirmation and cancel without submission",
       "synthetic confirmation and exactly one submission",
@@ -1243,6 +1317,7 @@ async function checkBrowserRun(browser, service, workspace, channel, brand) {
       "hash-attested original source file and exact retained page open from Evidence",
       "exact Overview passage, module chart row and Forecast inputs",
       "Evidence Record metadata, module timings, synthetic responses and hashes",
+      "CP-2E script checks match retained status, recomputed values and native counts",
       "paired Changes fixture links only to its matched handoff row",
     ],
   };

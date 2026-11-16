@@ -2,6 +2,7 @@ import json
 import sys
 import tempfile
 import time
+from decimal import Decimal
 from io import BytesIO
 from pathlib import Path
 
@@ -30,7 +31,7 @@ def test_rejects_a_changed_or_additional_upload(tmp_path):
 def test_real_scheduler_exports_the_submitted_run(monkeypatch):
     monkeypatch.setattr(sys, "dont_write_bytecode", True)
     monkeypatch.setenv("OPENAI_API_KEY", DUMMY_KEY)
-    from deploy_workflow.inbox.runs import load_all
+    from deploy_workflow.inbox.runs import cap_of, load_all
     from deploy_workflow.inbox.scheduler import Scheduler, Settings
     from deploy_workflow.model.adapter import KEY_VARIABLES
     from deploy_workflow.run_start import submissions
@@ -66,7 +67,7 @@ def test_real_scheduler_exports_the_submitted_run(monkeypatch):
                     "submitted_by": "Proof test",
                 }
             )
-            summary = submissions.summary(layout, sid, answers, cap=scheduler.settings.cap)
+            summary = submissions.summary(layout, sid, answers)
             assert not summary["error"], summary["error"]
             submitted = scheduler.submit(sid, answers, summary["digest"])
             deadline = time.monotonic() + 20
@@ -78,6 +79,8 @@ def test_real_scheduler_exports_the_submitted_run(monkeypatch):
                 time.sleep(0.05)
             log = (layout.logs / f"{submitted.id}.log").read_text()
             assert record.status == "finished", (record.reason, log)
+            assert record.cap == "25"
+            assert cap_of(record) == Decimal(25)
             assert "Charged:  USD 0" in log
             assert_exported_report(layout, submitted.id)
         finally:

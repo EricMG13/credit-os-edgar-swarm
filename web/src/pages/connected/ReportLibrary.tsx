@@ -162,6 +162,7 @@ function Overview({
           entry={view.lead}
           entryIndex={view.entries.indexOf(view.lead)}
           overview
+          overviewLabel={view.lead.output.module === "CP-1B" ? "Earnings view" : undefined}
           judgement={actionBias(view.lead)}
           afterBottomLine={figures}
         />
