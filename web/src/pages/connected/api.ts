@@ -389,6 +389,15 @@ export function serviceText(text: string) {
   return text.replace(/\bCP-[A-Z0-9]+\b/g, (code) => moduleName(code));
 }
 
+/** The changes line without the launcher's "changes:" label or the service's `(not used: <run>: <why>)` note, which names a run id. */
+export function changesSentence(changes: string) {
+  const text = serviceText(changes.replace(/^\s*changes:\s+/i, ""));
+  const kept = text.replace(/\s*\(not used:[\s\S]*$/, "");
+  return kept === text
+    ? text
+    : `${kept.replace(/\.$/, "")}. An earlier run exists but could not be used for comparison.`;
+}
+
 export function pathwayName(pathway: string) {
   if (Object.hasOwn(PATHWAYS, pathway)) return PATHWAYS[pathway]?.label ?? pathway;
   return pathway === "short_snapshot" ? "Short credit snapshot" : pathway.replaceAll("_", " ");

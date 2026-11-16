@@ -7,6 +7,7 @@ import { Badge } from "@/components/base/badges/badges";
 import { ColumnsChart } from "@/components/chart/ColumnsChart";
 import { ChangeCard } from "@/pages/library/parts/ChangeCard";
 import type { Cell } from "@/pages/library/slice";
+import { changesSentence } from "../api";
 import { card, heading } from "../layout";
 import {
   comparisonRows,
@@ -82,6 +83,7 @@ export function Changes({
   const entry = change?.problem ? undefined : entries[entryIndex];
   const trace = comparisonTrace(run.folder, change?.problem ? [] : entries);
   const rows = change?.pack && !change.problem ? comparisonRows(change, "reader") : [];
+  const note = change?.note ? changesSentence(change.note) : "";
   const [presentation, setPresentation] = useState<"cards" | "table">("cards");
   if (change?.first_run === true && !change.pack && !change.problem && !change.note)
     return (
@@ -116,9 +118,7 @@ export function Changes({
           </p>
         ) : !change?.pack ? (
           <p>
-            {change?.note && !containsReference(change.note)
-              ? change.note
-              : "No comparison was recorded for this run."}
+            {note && !containsReference(note) ? note : "No comparison was recorded for this run."}
           </p>
         ) : null}
         {rows.length > 0 && (

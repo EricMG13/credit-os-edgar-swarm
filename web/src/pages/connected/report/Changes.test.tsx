@@ -237,6 +237,21 @@ describe("connected report Changes", () => {
     );
   });
 
+  it.each([
+    [
+      "changes: not produced \u2014 CP-8 was planned and CP-2A was blocked",
+      "not produced \u2014 Changes since the last run was planned and Downside was blocked",
+    ],
+    [
+      "changes: first run of this pathway (not used: 20261115-114658-01: it was launched with an explicit module subset)",
+      "first run of this pathway. An earlier run exists but could not be used for comparison.",
+    ],
+  ])("draws the launcher note %j in plain words, with no label, code or run id", (note, shown) => {
+    const { container } = renderChanges({ note });
+    expect(screen.getByText(shown)).toBeVisible();
+    expect(container.textContent).not.toMatch(/changes:|CP-|\d{8}-\d{6}/);
+  });
+
   it("titles the ledger and falls back to the generic table when a column is missing", () => {
     const { unmount } = renderChanges({ first_run: false }, [ledgerOf(HEADERS, LEDGER)]);
     expect(screen.getByRole("heading", { level: 2, name: "Limitations ledger" })).toBeVisible();
