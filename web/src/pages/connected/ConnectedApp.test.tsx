@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { ConnectedApp } from "./ConnectedApp";
 
@@ -66,8 +66,7 @@ async function advanceToPurpose() {
 }
 
 function advanceToContext() {
-  fireEvent.click(screen.getByRole("button", { name: "Review inputs" }));
-  fireEvent.click(screen.getByRole("button", { name: "Approve summary" }));
+  fireEvent.click(screen.getByRole("button", { name: "Continue to context" }));
 }
 
 function approve() {
@@ -85,6 +84,31 @@ afterEach(() => {
 });
 
 describe("connected run start", () => {
+  it("has four steps and no approval before the review", async () => {
+    testingFetch();
+    render(<ConnectedApp path="/start" mode="synthetic" />);
+    await fillInputs();
+    const steps = within(screen.getByRole("list", { name: "Steps in this run" }));
+    expect(steps.getAllByRole("listitem")).toHaveLength(4);
+    expect(screen.getByText("Step 1 of 4 · Documents")).toBeInTheDocument();
+    await advanceToPurpose();
+    expect(screen.queryByRole("button", { name: "Approve summary" })).toBeNull();
+    advanceToContext();
+    expect(screen.getByRole("heading", { name: "More context" })).toHaveFocus();
+    expect(screen.queryByRole("button", { name: "Approve summary" })).toBeNull();
+  });
+
+  it("returns to a visited step from the stepper", async () => {
+    testingFetch();
+    render(<ConnectedApp path="/start" mode="synthetic" />);
+    await fillInputs();
+    await advanceToPurpose();
+    advanceToContext();
+    expect(screen.queryByRole("button", { name: "Go back to More context" })).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Go back to Documents" }));
+    expect(screen.getByRole("heading", { name: "Documents" })).toHaveFocus();
+  });
+
   it("accepts a drop, displays actual reading progress, and keeps confirmation local", async () => {
     const fetchMock = testingFetch();
     const { container } = render(<ConnectedApp path="/start" mode="synthetic" />);

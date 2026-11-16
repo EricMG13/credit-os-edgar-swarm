@@ -3,7 +3,6 @@ import { File05, Folder } from "@untitledui/icons";
 import { FileUpload } from "@/components/application/file-upload/file-upload-base";
 import { Badge } from "@/components/base/badges/badges";
 import { Button } from "@/components/base/buttons/button";
-import { DetailsList } from "../run/start/DetailsList";
 import { PurposeCards } from "../run/start/Purpose";
 import { Readiness } from "../run/start/Readiness";
 import { SubmitConfirmation } from "../run/start/Start";
@@ -39,16 +38,21 @@ import { PageHeader } from "../../shell/PageHeader";
 
 const FORM_STEPS = {
   documents: { title: "Documents", next: "Continue to purpose", previous: null },
-  purpose: { title: "Purpose", next: "Review inputs", previous: "documents" },
-  confirm: { title: "Confirm what was read", next: "Approve summary", previous: "purpose" },
-  context: { title: "More context", next: "Review run", previous: "confirm" },
+  purpose: { title: "Purpose", next: "Continue to context", previous: "documents" },
+  context: { title: "More context", next: "Review run", previous: "purpose" },
 } as const;
 type FormStep = keyof typeof FORM_STEPS;
+const STEPPER_STEPS = [
+  { key: "documents", title: "Documents", note: "Add files" },
+  { key: "purpose", title: "Purpose", note: "Choose one" },
+  { key: "context", title: "More context", note: "Optional" },
+  { key: "start", title: "Review and start", note: "Paid step" },
+] as const;
+const FORM_STEP_KEYS = Object.keys(FORM_STEPS) as FormStep[];
 const STEP_GUIDANCE: Record<FormStep, string> = {
   documents:
     "Add annual and interim reports, the credit agreement and any other material the analysis should read.",
   purpose: "The purpose determines which modules run.",
-  confirm: "Check the issuer, documents and purpose. Approving this summary costs nothing.",
   context: "Optional. You can continue if the documents provide all the context.",
 };
 
@@ -712,9 +716,6 @@ function IntakeForm({
         });
         break;
       case "purpose":
-        goTo("confirm");
-        break;
-      case "confirm":
         goTo("context");
         break;
       case "context":
@@ -809,7 +810,7 @@ function IntakeForm({
       next: "Add and inspect documents",
     },
     {
-      met: step === "confirm" || step === "context",
+      met: step !== "documents" || review !== undefined,
       whenMet: "Purpose selected",
       next: "Choose a pathway and purpose",
     },
@@ -830,7 +831,23 @@ function IntakeForm({
   return (
     <div className="mt-6 grid min-w-0 items-start gap-6 min-[1041px]:grid-cols-[minmax(0,1fr)_320px]">
       <div className={`min-w-0 ${card}`}>
-        <Stepper step={review ? "start" : step} />
+        <Stepper
+          step={review ? "start" : step}
+          steps={STEPPER_STEPS}
+          onSelect={
+            busy === undefined && !submitUncertain
+              ? (key) => {
+                  setReview(undefined);
+                  goTo(key as FormStep);
+                }
+              : undefined
+          }
+        />
+        <p className="text-sm text-text-secondary sm:hidden">
+          {review
+            ? "Step 4 of 4 · Review and start"
+            : `Step ${String(FORM_STEP_KEYS.indexOf(step) + 1)} of 4 · ${title}`}
+        </p>
         {error && <ErrorNotice>{error}</ErrorNotice>}
         {review ? (
           <div className="grid gap-5">
@@ -1229,45 +1246,6 @@ function IntakeForm({
                   />
                 </>
               )}
-              {step === "confirm" && (
-                <div className="grid gap-4 sm:col-span-2">
-                  <section>
-                    <h3 className="font-semibold">Issuer</h3>
-                    <DetailsList
-                      rows={[
-                        { label: "Issuer", value: identity.issuer_name },
-                        { label: "As-of date", value: run.as_of },
-                        { label: "Reporting currency", value: run.reporting_currency },
-                      ]}
-                    />
-                  </section>
-                  <section>
-                    <h3 className="font-semibold">Documents inspected</h3>
-                    <DetailsList
-                      rows={shownDocs.map((doc) => ({
-                        label: storedName(doc),
-                        value: documentDescription(doc),
-                      }))}
-                    />
-                  </section>
-                  <section>
-                    <h3 className="font-semibold">Run</h3>
-                    <DetailsList
-                      rows={[
-                        { label: "Pathway", value: pathwayName(run.pathway) },
-                        {
-                          label: "Purpose",
-                          value: PURPOSES[(run.run_type ?? "research") as keyof typeof PURPOSES],
-                        },
-                        {
-                          label: "Spending cap",
-                          value: synthetic ? "USD 0.00 (synthetic test)" : capText,
-                        },
-                      ]}
-                    />
-                  </section>
-                </div>
-              )}
               {step === "context" && (
                 <>
                   <div className="grid gap-1 sm:col-span-2">
@@ -1577,7 +1555,7 @@ function IntakeForm({
                 Previous
               </Button>
               <span className="text-sm text-text-tertiary">
-                Step {Object.keys(FORM_STEPS).indexOf(step) + 1} of 5
+                Step {FORM_STEP_KEYS.indexOf(step) + 1} of 4
               </span>
               <Button
                 type="submit"
