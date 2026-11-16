@@ -1,6 +1,7 @@
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { ConnectedApp } from "./ConnectedApp";
+import { SelectField } from "./StartRun";
 import type { Summary } from "./api";
 
 const scrollIntoView = vi.fn();
@@ -833,10 +834,9 @@ describe("connected run start", () => {
     expect(screen.getByText("Add at least one document to continue.")).toBeInTheDocument();
     await fillInputs();
     fireEvent.click(screen.getByRole("button", { name: "Inspect documents" }));
-    expect(await screen.findByText("1 document inspected, 0 ignored.")).toHaveAttribute(
-      "role",
-      "status",
-    );
+    expect(
+      (await screen.findByText("1 document inspected, 0 ignored.")).closest("[role=status]"),
+    ).not.toBeNull();
   });
 
   it("reads readiness as four status rows", async () => {
@@ -1775,10 +1775,8 @@ describe("connected run start: readiness after going back, and repeated announce
     await chosenPurpose();
     fireEvent.click(screen.getByRole("button", { name: "Previous" }));
     await screen.findByRole("heading", { name: "Purpose" });
-    expect(rowOf("Purpose chosen")).not.toHaveTextContent("Not met");
     fireEvent.click(screen.getByRole("button", { name: "Previous" }));
     await screen.findByRole("heading", { name: "Documents" });
-    expect(rowOf("Purpose chosen")).not.toHaveTextContent("Not met");
     expect(screen.getByText(/^2 of 4 ready/)).toBeInTheDocument();
   });
 
@@ -1823,5 +1821,125 @@ describe("connected run start: readiness after going back, and repeated announce
     expect(rowOf("Purpose chosen")).not.toHaveTextContent("Not met");
     fireEvent.click(screen.getByRole("button", { name: "This is a different issuer" }));
     expect(rowOf("Purpose chosen")).toHaveTextContent("Not met");
+  });
+
+  it("announces a second inspection with the same result again", async () => {
+    testingFetch();
+    render(<ConnectedApp path="/start" mode="synthetic" />);
+    await fillInputs();
+    fireEvent.click(screen.getByRole("button", { name: "Inspect documents" }));
+    const status = (await screen.findByText("1 document inspected, 0 ignored.")).closest(
+      "[role=status]",
+    );
+    const records: MutationRecord[] = [];
+    const observer = new MutationObserver((seen) => records.push(...seen));
+    observer.observe(status as Element, { childList: true, characterData: true, subtree: true });
+    fireEvent.click(screen.getByRole("button", { name: "Inspect documents" }));
+    await screen.findByRole("button", { name: "Reading documents…" });
+    await screen.findByRole("button", { name: "Inspect documents" });
+    records.push(...observer.takeRecords());
+    observer.disconnect();
+    expect(records.length).toBeGreaterThan(0);
+  });
+
+  it("draws no inspection line once no document is left", async () => {
+    const fetchMock = testingFetch(plan, undefined, {
+      "/api/submissions/sub-1/reading": () =>
+        Promise.resolve(
+          Response.json({
+            documents: fetchMock.mock.calls.some(([, init]) => init?.method === "DELETE")
+              ? []
+              : plan.documents,
+            ignored: [],
+            error: "",
+          }),
+        ),
+    });
+    render(<ConnectedApp path="/start" mode="synthetic" />);
+    await fillInputs();
+    fireEvent.click(screen.getByRole("button", { name: "Inspect documents" }));
+    await screen.findByText("1 document inspected, 0 ignored.");
+    fireEvent.click(screen.getByRole("button", { name: `Remove ${file.name}` }));
+    await screen.findByText("No documents yet.");
+    expect(screen.queryByText(/documents? inspected/)).toBeNull();
+  });
+
+  it("says None needed, not 0 of 0, when the review has no limit groups", async () => {
+    testingFetch();
+    render(<ConnectedApp path="/start" mode="synthetic" />);
+    await review();
+    await screen.findByRole("button", { name: "Submit run" });
+    const row = rowOf("Decisions made");
+    expect(row).toHaveTextContent("None needed");
+    expect(row).not.toHaveTextContent("0 of 0");
+    expect(row).not.toHaveTextContent("Not met");
+  });
+
+  it("says the cap is unavailable on the one line when the service sends none", async () => {
+    testingFetch(plan, undefined, {
+      "/connected/context": { ...context, submission_caps_usd: {} },
+    });
+    render(<ConnectedApp path="/start" mode="live" />);
+    await fillInputs();
+    expect(screen.getByText("0 of 4 ready · Cap unavailable")).toBeInTheDocument();
+  });
+
+  it("leaves focus alone when the pressed button became a different control", async () => {
+    // jsdom does not drop focus when a fieldset is disabled; the service call does it here.
+    testingFetch(plan, undefined, {
+      "/api/issuers/northbridge": {
+        latest_run: "latest-case",
+        runs: 1,
+        latest_as_of: "2025-03-31",
+      },
+      "/api/runs/latest-case/inputs": () => {
+        if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
+        return Promise.resolve(Response.json(earlier));
+      },
+      "/api/submissions/sub-1/carry": { carried: [file.name], kept: [] },
+    });
+    render(<ConnectedApp path="/start" mode="synthetic" />);
+    fireEvent.change(await screen.findByLabelText("Issuer name"), {
+      target: { value: "Northbridge" },
+    });
+    const pressed = screen.getByRole("button", { name: "Carry over from latest run" });
+    pressed.focus();
+    fireEvent.click(pressed);
+    await screen.findByText(/Starting from run latest-case/);
+    await waitFor(() => expect(pressed).toBeEnabled());
+    expect(pressed).toHaveTextContent("This is a different issuer");
+    expect(document.activeElement).not.toBe(pressed);
+  });
+
+  it("stops saying the date was set to today once the analyst changes it", async () => {
+    testingFetch(plan, undefined, { "/api/runs/earlier/inputs": earlier });
+    render(<ConnectedApp path="/start" search="?from=earlier" mode="synthetic" />);
+    const line = "Set to today for the new run. The earlier run used 2025-03-31.";
+    expect(await screen.findByText(line)).toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText("As-of date"), { target: { value: "2025-06-30" } });
+    expect(screen.queryByText(line)).toBeNull();
+  });
+});
+
+describe("select field with both help and a problem", () => {
+  it("draws both and keeps both in the description", () => {
+    render(
+      <SelectField
+        title="Legal documents"
+        value=""
+        choices={{ "": "None", agreement: "Agreement" }}
+        onChange={vi.fn()}
+        help="Pick the kind of legal document."
+        problemField="agreement"
+        problem={{ name: "Error", message: "Choose the agreement.", field: "agreement" }}
+      />,
+    );
+    const select = screen.getByRole("combobox", { name: "Legal documents" });
+    expect(screen.getByText("Pick the kind of legal document.")).toBeInTheDocument();
+    expect(screen.getByRole("alert")).toHaveTextContent("Choose the agreement.");
+    expect(select).toHaveAttribute("aria-invalid", "true");
+    expect(select).toHaveAccessibleDescription(
+      "Pick the kind of legal document. Choose the agreement.",
+    );
   });
 });

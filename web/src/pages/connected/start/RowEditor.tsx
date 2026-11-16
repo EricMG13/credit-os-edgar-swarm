@@ -34,7 +34,7 @@ export function RowEditor({
   // An id is missing only for the render between a change from outside and the next setIds; the
   // negative key is unique to the position, so no two rows share a key.
   const keys = rows.map((_, at) => ids[at] ?? -(at + 1));
-  const [removed, setRemoved] = useState("");
+  const [removed, setRemoved] = useState({ text: "", count: 0 });
   const removeButtons = useRef(new Map<number, HTMLButtonElement>());
   const addButton = useRef<HTMLButtonElement | null>(null);
   const refocus = useRef<{ add: boolean; at: number }>(undefined);
@@ -85,7 +85,10 @@ export function RowEditor({
               }}
               onPress={() => {
                 refocus.current = { add: rows.length === 1, at: index };
-                setRemoved(`${spec.title} ${String(index + 1)} removed.`);
+                setRemoved((previous) => ({
+                  text: `${spec.title} ${String(index + 1)} removed.`,
+                  count: previous.count + 1,
+                }));
                 setIds(keys.filter((_, at) => at !== index));
                 onChange(rows.filter((_, at) => at !== index));
               }}
@@ -106,7 +109,7 @@ export function RowEditor({
             aria-describedby={error ? errorId : undefined}
             onPress={() => {
               nextId.current += 1;
-              setRemoved("");
+              setRemoved((previous) => ({ text: "", count: previous.count }));
               setAdded(nextId.current);
               setIds([...keys, nextId.current]);
               onChange([...rows, emptyRow(kind)]);
@@ -116,7 +119,7 @@ export function RowEditor({
           </Button>
         </div>
         <p role="status" className="text-sm text-text-secondary empty:hidden">
-          {removed}
+          {removed.text ? <span key={removed.count}>{removed.text}</span> : null}
         </p>
         {error && (
           <p id={errorId} role="alert" className="text-sm text-error-primary">
@@ -218,11 +221,15 @@ function RowInput({
       : offered;
   return (
     <div className="grid content-start gap-1">
-      <div className="flex items-baseline justify-between gap-2">
+      <div className="flex items-baseline gap-2">
         <label htmlFor={id} className={label}>
           {item.label}
         </label>
-        {item.required && <span className="text-xs font-medium text-text-secondary">Required</span>}
+        {item.required && (
+          <span className="text-xs font-medium whitespace-nowrap text-text-secondary">
+            Required
+          </span>
+        )}
       </div>
       {item.kind === "select" ? (
         <select

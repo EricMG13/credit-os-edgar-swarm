@@ -193,6 +193,7 @@ type IntakeView = {
   ignored: Map<string, string>;
   shownDocs: DocumentRecord[];
   read: boolean;
+  inspections: number;
   attachments: Partial<Record<Attachment, string>>;
   fileChoices: Record<string, string>;
   legal: string;
@@ -393,10 +394,21 @@ function readinessRows(
     {
       label: "Decisions made",
       met: review !== undefined && decidedCount === groups.length,
-      ...(review ? { detail: `${String(decidedCount)} of ${String(groups.length)}` } : {}),
+      ...(review
+        ? {
+            detail: groups.length
+              ? `${String(decidedCount)} of ${String(groups.length)}`
+              : "None needed",
+          }
+        : {}),
     },
     { label: "Summary approved", met: review !== undefined && approved },
   ];
+}
+
+/** What the analyst reads or hears for a control, to tell whether it is still the same one. */
+function accessibleText(node: HTMLElement) {
+  return node.getAttribute("aria-label") ?? node.textContent.trim();
 }
 
 function shownCapText(cap: number | null) {
@@ -510,7 +522,11 @@ function DocumentFields({
           </Button>
         </div>
         <p role="status" className="text-sm text-text-secondary empty:hidden">
-          {view.read ? documentsRead(view.shownDocs.length, view.ignored.size) : ""}
+          {view.read && view.documentRows.length > 0 ? (
+            <span key={view.inspections}>
+              {documentsRead(view.shownDocs.length, view.ignored.size)}
+            </span>
+          ) : null}
         </p>
         {view.documentRows.length > 0 ? (
           <FileUpload.List aria-label="Documents added">
@@ -1053,7 +1069,7 @@ function fileName(file: File) {
   return (file.webkitRelativePath || "").split("/").slice(1).join("/") || file.name;
 }
 
-function SelectField({
+export function SelectField({
   title,
   value,
   choices,
@@ -1071,13 +1087,17 @@ function SelectField({
   help?: string;
 }) {
   const helpId = useId();
+  const failing = problemField !== undefined && problem?.field === problemField;
+  const describedBy =
+    [help ? helpId : "", failing ? `error-${problemField}` : ""].filter(Boolean).join(" ") ||
+    undefined;
   const select = (
     <label className={label}>
       {title}
       <select
         className={field}
-        aria-describedby={help ? helpId : undefined}
         {...(problemField ? problemAttrs(problem, problemField) : {})}
+        aria-describedby={describedBy}
         value={value}
         onChange={(event) => {
           onChange(event.target.value);
@@ -1091,20 +1111,16 @@ function SelectField({
       </select>
     </label>
   );
-  if (help)
-    return (
-      <div className="grid content-start gap-1">
-        {select}
-        <p id={helpId} className="text-sm text-text-tertiary">
-          {help}
-        </p>
-      </div>
-    );
-  if (!problemField) return select;
+  if (!help && !problemField) return select;
   return (
     <div className="grid content-start gap-1">
       {select}
-      <FieldMessage problem={problem} field={problemField} />
+      {help && (
+        <p id={helpId} className="text-sm text-text-tertiary">
+          {help}
+        </p>
+      )}
+      {problemField && <FieldMessage problem={problem} field={problemField} />}
     </div>
   );
 }
@@ -1270,9 +1286,11 @@ function IntakeForm({
   const active = useRef(false);
   const folderInput = useRef<HTMLInputElement>(null);
   // The control that had focus when a busy state began; busy fieldsets disable it and drop focus.
-  const focusedBefore = useRef<HTMLElement | null>(null);
+  const focusedBefore = useRef<{ node: HTMLElement; text: string } | null>(null);
   // The step heading takes focus only after the step changes, never on first render.
   const [moved, setMoved] = useState(false);
+  // Counts finished inspections, so a repeated result is announced again.
+  const [inspections, setInspections] = useState(0);
 
   const { run, identity, issuerId, requested, cap, earnings, canRead, checksComplete, newest } =
     intakeRunDetails({
@@ -1331,7 +1349,9 @@ function IntakeForm({
     if (active.current) return;
     active.current = true;
     focusedBefore.current =
-      document.activeElement instanceof HTMLElement ? document.activeElement : null;
+      document.activeElement instanceof HTMLElement
+        ? { node: document.activeElement, text: accessibleText(document.activeElement) }
+        : null;
     setBusy(action);
     setError("");
     setFieldError(undefined);
@@ -1676,6 +1696,7 @@ function IntakeForm({
   function inspectDocuments() {
     void withDraft("documents", async () => {
       await refreshDocuments();
+      setInspections((count) => count + 1);
     });
   }
 
@@ -1811,7 +1832,7 @@ function IntakeForm({
     busy,
     canRead,
     copy,
-    priorAsOf: copy?.prior.context?.run.as_of ?? "",
+    priorAsOf: run.as_of === today() ? (copy?.prior.context?.run.as_of ?? "") : "",
     priorNote,
     identity,
     issuerId,
@@ -1822,6 +1843,7 @@ function IntakeForm({
     ignored,
     shownDocs,
     read: reading !== undefined,
+    inspections,
     attachments,
     fileChoices,
     legal,
@@ -1891,11 +1913,12 @@ function IntakeForm({
     const remembered = focusedBefore.current;
     focusedBefore.current = null;
     if (
-      remembered?.isConnected &&
+      remembered?.node.isConnected &&
       document.activeElement === document.body &&
-      !remembered.matches(":disabled")
+      !remembered.node.matches(":disabled") &&
+      accessibleText(remembered.node) === remembered.text
     )
-      remembered.focus();
+      remembered.node.focus();
   }, [busy]);
 
   return (
@@ -1983,7 +2006,7 @@ function IntakePanels(props: IntakePanelsProps) {
     onPrevious,
   } = props;
   const capBar = cap && capText ? { value: 0, max: cap, label: `USD 0.00 of ${capText}` } : null;
-  const ready = `${String(readiness.filter((row) => row.met).length)} of ${String(readiness.length)} ready${capBar ? ` · ${capBar.label}` : ""}`;
+  const ready = `${String(readiness.filter((row) => row.met).length)} of ${String(readiness.length)} ready · ${capBar ? capBar.label : "Cap unavailable"}`;
   return (
     <div className="mt-6 grid min-w-0 items-start gap-6 min-[1041px]:grid-cols-[minmax(0,1fr)_320px]">
       <div className={`min-w-0 ${card}`}>

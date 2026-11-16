@@ -229,3 +229,18 @@ it("marks the Add button as the control to focus for its kind", () => {
     "deal_terms",
   );
 });
+
+it("announces a second removal of the same position again", () => {
+  render(<Held kind="deal_terms" start={[named("A"), named("B"), named("C")]} />);
+  const status = screen.getByRole("status");
+  fireEvent.click(screen.getByRole("button", { name: "Remove Facility 1" }));
+  expect(status).toHaveTextContent("Facility 1 removed.");
+  const records: MutationRecord[] = [];
+  const observer = new MutationObserver((seen) => records.push(...seen));
+  observer.observe(status, { childList: true, characterData: true, subtree: true });
+  fireEvent.click(screen.getByRole("button", { name: "Remove Facility 1" }));
+  records.push(...observer.takeRecords());
+  observer.disconnect();
+  expect(status).toHaveTextContent("Facility 1 removed.");
+  expect(records.length).toBeGreaterThan(0);
+});
