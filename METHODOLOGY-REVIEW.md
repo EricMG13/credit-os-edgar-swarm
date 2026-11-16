@@ -219,23 +219,23 @@ this is not an assertion that no response exists anywhere in every old worktree.
   conflicts, gaps and consumers. Sampled statements about aftermarket contracts,
   cost recovery and dividend financing match the frozen source spans on pages 13
   and 42. The binding crash follows the response, before settlement. Evidence:
-  [raw answer and instructions](</Users/ericguei/Documents/Deploy Workflow/artifacts/model-testing/issuer-pdf-20261103/issuer-pdf-sol-medium-tdg-fy2024-20261103-80aeb7a0e7/raw/8ff77228a09b5832ab0cd4e1d24e1784d08830f55e7460775c328aa1a63d2aa2-5.json>)
-  and [run outcome](</Users/ericguei/Documents/Deploy Workflow/artifacts/model-testing/issuer-pdf-20261103/issuer-pdf-sol-medium-tdg-fy2024-20261103-80aeb7a0e7/run.json>).
+  [raw answer and instructions](</Users/USER/Documents/Deploy Workflow/artifacts/model-testing/issuer-pdf-20261103/issuer-pdf-sol-medium-tdg-fy2024-20261103-80aeb7a0e7/raw/8ff77228a09b5832ab0cd4e1d24e1784d08830f55e7460775c328aa1a63d2aa2-5.json>)
+  and [run outcome](</Users/USER/Documents/Deploy Workflow/artifacts/model-testing/issuer-pdf-20261103/issuer-pdf-sol-medium-tdg-fy2024-20261103-80aeb7a0e7/run.json>).
 - **Synthetic examples, not model conclusions:** the CP-2D case ends with 20m cash,
   10m headroom and no funding gap; CP-3C applies 10m resources to 50m debt and has a
   40m refinancing need; CP-3 prefers its only available instrument. These are useful
   deterministic cases, but their analyst inputs were authored in advance. See
-  [CP-2D expectations](</Users/ericguei/Documents/Deploy Workflow/cases/cp2d-owner/expected.json>),
-  [CP-3C expectations](</Users/ericguei/Documents/Deploy Workflow/cases/cp3c-owner/expected.json>)
-  and [CP-3/6 literal submissions](</Users/ericguei/Documents/Deploy Workflow/cases/cp3-cp6-owner/submissions.json>).
+  [CP-2D expectations](</Users/USER/Documents/Deploy Workflow/cases/cp2d-owner/expected.json>),
+  [CP-3C expectations](</Users/USER/Documents/Deploy Workflow/cases/cp3c-owner/expected.json>)
+  and [CP-3/6 literal submissions](</Users/USER/Documents/Deploy Workflow/cases/cp3-cp6-owner/submissions.json>).
 - **Current code outranks stale prep notes:** CP-2H is registered through
   `OwnerSpec`/`owner_core` even though an old case note reports no generic live step.
   CP-3 report prose exists despite older omissions. Later owner ledgers demonstrate
   synthetic executions for legal/research/Lite modules whose preparation manifests
   still say draft or not executed. See
-  [owner dispatch](</Users/ericguei/Documents/Deploy Workflow/src/deploy_workflow/owner_workflow.py>),
-  [report mapping](</Users/ericguei/Documents/Deploy Workflow/src/deploy_vii/report_view.py>)
-  and [execution ledger](</Users/ericguei/Documents/Deploy Workflow/work/build/ledger.md>).
+  [owner dispatch](</Users/USER/Documents/Deploy Workflow/src/deploy_workflow/owner_workflow.py>),
+  [report mapping](</Users/USER/Documents/Deploy Workflow/src/deploy_vii/report_view.py>)
+  and [execution ledger](</Users/USER/Documents/Deploy Workflow/work/build/ledger.md>).
 - **Reuse existing corrections:** selected commit `2c809379` and the local import
   already guard `expand_unit_maps(... _fin(binding) ...)` with membership of CP-0/CP-1;
   other modules pass through without financial binding conversion. This addresses
@@ -248,13 +248,13 @@ this is not an assertion that no response exists anywhere in every old worktree.
 - **CP-8 limit is in current code:** one `decision`, three required for calibration,
   and unconditional Interim output. This is a contract/capability mismatch that
   can be established without alleging model failure. See
-  [CP-8 owner](</Users/ericguei/Documents/Deploy Workflow/src/deploy_workflow/owners/cp8.py:345>).
+  [CP-8 owner](</Users/USER/Documents/Deploy Workflow/src/deploy_workflow/owners/cp8.py:345>).
 - **Delivery proof is bounded:** the
-  [CP-1 chart acceptance](</Users/ericguei/Documents/Deploy Workflow/docs/CP1-CHART-ACCEPTANCE.md>)
+  [CP-1 chart acceptance](</Users/USER/Documents/Deploy Workflow/docs/CP1-CHART-ACCEPTANCE.md>)
   demonstrates a populated synthetic slice. It does not prove real-issuer delivery
   or Markdown-input assembly. The actual
-  [CP-OS code](</Users/ericguei/Documents/Deploy Workflow/src/deploy_workflow/owners/cpos.py:1>)
-  and [scope selector](</Users/ericguei/Documents/Deploy Workflow/src/deploy_workflow/owner_rendering.py:579>)
+  [CP-OS code](</Users/USER/Documents/Deploy Workflow/src/deploy_workflow/owners/cpos.py:1>)
+  and [scope selector](</Users/USER/Documents/Deploy Workflow/src/deploy_workflow/owner_rendering.py:579>)
   establish the remaining boundary differences.
 
 One reviewer ran four focused synthetic checks successfully (1.51s): CP-8's two
@@ -350,7 +350,7 @@ stored result. Additional findings come from the retained `source_context` respo
 `9ffffea9…-4.json`, financial submissions `c9e239dc…-3.json` / `-5.json`, the snapshot's
 financial repair issues, and readiness stage blob `5c2c6e79…` under that same run.
 The operative readiness rule is in
-[downstream_readiness.py](</Users/ericguei/Documents/Deploy Workflow/src/deploy_vii/downstream_readiness.py:313>).
+[downstream_readiness.py](</Users/USER/Documents/Deploy Workflow/src/deploy_vii/downstream_readiness.py:313>).
 
 ## CP-0, reviewed from actual model output
 
@@ -407,10 +407,10 @@ No new methodology rule has been tested yet. The next comparison should show the
 same CP-0 output after only these targeted changes; then examine CP-1's actual
 financial output. Do not change later modules based on their documentation alone.
 
-Evidence: [exact sent instructions and raw submission](</Users/ericguei/Documents/Deploy Workflow/artifacts/model-testing/issuer-pdf-20261103/issuer-pdf-sol-medium-tdg-fy2024-20261103-80aeb7a0e7/raw/e074f686e78629948ff718b6d5df48a77e7a346da762654800ee8f701f255c45-3.json>),
-[call log](</Users/ericguei/Documents/Deploy Workflow/artifacts/model-testing/issuer-pdf-20261103/issuer-pdf-sol-medium-tdg-fy2024-20261103-80aeb7a0e7/calls.jsonl>),
-[stored CP-0 result](</Users/ericguei/Documents/Deploy Workflow/artifacts/model-testing/issuer-pdf-20261103/issuer-pdf-sol-medium-tdg-fy2024-20261103-80aeb7a0e7/execution/blobs/ce9afba860666af7f09852c6ffe34e31f5ff1321c63f41c8774eee691b6247f1>),
-and [written CP-0 method](</Users/ericguei/Documents/Deploy Workflow/src/deploy_vii/methods/cp0.md>).
+Evidence: [exact sent instructions and raw submission](</Users/USER/Documents/Deploy Workflow/artifacts/model-testing/issuer-pdf-20261103/issuer-pdf-sol-medium-tdg-fy2024-20261103-80aeb7a0e7/raw/e074f686e78629948ff718b6d5df48a77e7a346da762654800ee8f701f255c45-3.json>),
+[call log](</Users/USER/Documents/Deploy Workflow/artifacts/model-testing/issuer-pdf-20261103/issuer-pdf-sol-medium-tdg-fy2024-20261103-80aeb7a0e7/calls.jsonl>),
+[stored CP-0 result](</Users/USER/Documents/Deploy Workflow/artifacts/model-testing/issuer-pdf-20261103/issuer-pdf-sol-medium-tdg-fy2024-20261103-80aeb7a0e7/execution/blobs/ce9afba860666af7f09852c6ffe34e31f5ff1321c63f41c8774eee691b6247f1>),
+and [written CP-0 method](</Users/USER/Documents/Deploy Workflow/src/deploy_vii/methods/cp0.md>).
 
 ## Earlier version comparison
 
@@ -444,7 +444,7 @@ This is a reuse decision, not a proposal to rewrite all the methods.
 Deploy Workflow's shared method tree is `6f4a3997e7356352898c410cb7a045722aa5bf03`;
 its shared catalog blob is `e3f179cd25b1046ef921da1a306e68e150f440be`.
 This establishes identity of those documents, **not** identical code or behavior.
-Its [contracts still declare `deploy-v-r14`](</Users/ericguei/Documents/Deploy Workflow/src/deploy_vii/contracts.py:89>),
+Its [contracts still declare `deploy-v-r14`](</Users/USER/Documents/Deploy Workflow/src/deploy_vii/contracts.py:89>),
 while individual methods contain later adaptations and CP-DR is dated 2026-10-31.
 
 ## Changes that should survive simplification
@@ -456,7 +456,7 @@ while individual methods contain later adaptations and CP-DR is dated 2026-10-31
    amortisation terms, and adds sourced pro forma adjustments. It also records
    lease/interest cash-flow classification for accounting-basis comparability.
    These are substantive protections, not orchestration overhead.
-   See [CP-1 steps and registers](</Users/ericguei/Documents/Deploy VI/reference/deploy-v-r14/skills/cp-1-canonical-data-foundation/references/REF_CP-1_STEPS.md>).
+   See [CP-1 steps and registers](</Users/USER/Documents/Deploy VI/reference/deploy-v-r14/skills/cp-1-canonical-data-foundation/references/REF_CP-1_STEPS.md>).
 
 2. **Clearer handoffs and evidence routing.** r15/r16 repair missing-evidence wording;
    r17 separates ambiguous leverage, market-price and case/period columns and repairs
@@ -470,15 +470,15 @@ while individual methods contain later adaptations and CP-DR is dated 2026-10-31
    from missing analytical handoffs. It tolerates PDF quote extraction artifacts
    without permitting arbitrary paraphrase as a quotation. Preserve those behaviors;
    the old leases, status machinery and repeated identity fields are not themselves
-   analytical requirements. See [methodology adaptation](</Users/ericguei/Documents/DEPLOY VII/docs/methodology-adaptation.md>).
+   analytical requirements. See [methodology adaptation](</Users/USER/Documents/DEPLOY VII/docs/methodology-adaptation.md>).
 
 4. **New research and valuation content.** Workflow's CP-DR adds a question-led
    evidence dossier and located peer facts; CP-1C adds valuation-basis tables and
    supplies selected multiples to CP-4C. Keep the distinctions between sourced
    facts, user-supplied figures and assumptions. The implemented research mode is
    LOCAL/supplied evidence and user URL intake; its name does not prove autonomous
-   research or complete peer discovery. See [CP-DR](</Users/ericguei/Documents/Deploy Workflow/src/deploy_vii/methods/cpdr.md>)
-   and [CP-1C](</Users/ericguei/Documents/Deploy Workflow/src/deploy_vii/methods/cp1c.md>).
+   research or complete peer discovery. See [CP-DR](</Users/USER/Documents/Deploy Workflow/src/deploy_vii/methods/cpdr.md>)
+   and [CP-1C](</Users/USER/Documents/Deploy Workflow/src/deploy_vii/methods/cp1c.md>).
 
 5. **Later financial-input fixes.** The selected Workflow CP-1 chain contains
    quantity-family, source-binding and coverage work absent from older versions.
@@ -505,12 +505,12 @@ They prevent us from describing a partial implementation as the complete method.
 | House scales | VI has five recommendation levels plus Avoid/N/A. Workflow CP-6 has Overweight/Neutral/Underweight/Insufficient Information, with separate confidence. | Keep the chosen scale explicit. There is no lossless automatic conversion between them. |
 | Arithmetic conventions | Workflow's Model cell context uses precision 38 / HALF_EVEN; several Codex financial contexts use precision 50 / HALF_UP, with other contexts for exact operations. | Reuse calculations deliberately and define output rounding; do not assume all forks produce equivalent boundary results. |
 
-Direct references: [CP-1B contract](</Users/ericguei/Documents/Deploy Workflow/docs/reviews/cp1b-core-contract.md>),
-[CP-2G omissions](</Users/ericguei/Documents/Deploy Workflow/src/deploy_vii/methods/cp2g.md:17>),
-[CP-6 mapping](</Users/ericguei/Documents/Deploy Workflow/src/deploy_vii/methods/cp6.md:9>),
-[VI house scales](</Users/ericguei/Documents/Deploy VI/rbot/rules.json:23>),
-[Workflow arithmetic](</Users/ericguei/Documents/Deploy Workflow/src/deploy_vii/model/_cells.py:24>),
-[Codex financial methods](</Users/ericguei/Documents/deploy workflow Codex/docs/methods/FINANCIAL-METHOD.md>).
+Direct references: [CP-1B contract](</Users/USER/Documents/Deploy Workflow/docs/reviews/cp1b-core-contract.md>),
+[CP-2G omissions](</Users/USER/Documents/Deploy Workflow/src/deploy_vii/methods/cp2g.md:17>),
+[CP-6 mapping](</Users/USER/Documents/Deploy Workflow/src/deploy_vii/methods/cp6.md:9>),
+[VI house scales](</Users/USER/Documents/Deploy VI/rbot/rules.json:23>),
+[Workflow arithmetic](</Users/USER/Documents/Deploy Workflow/src/deploy_vii/model/_cells.py:24>),
+[Codex financial methods](</Users/USER/Documents/deploy workflow Codex/docs/methods/FINANCIAL-METHOD.md>).
 
 There are also plain execution restrictions in later methods: one-decimal ASCII
 peer tables, bans on digits in certain prose, fixed synthetic source layouts and
@@ -573,7 +573,7 @@ no native/full-owner clearance follows from this analytical loop.
 - **Analytical breadth:** use the Deploy V-derived instructions with the reviewed
   r14–r18 corrections as references. Do not restore the original package unchanged
   or automatically inherit its M365-only host rules. VI's own
-  [amended ADR](</Users/ericguei/Documents/Deploy VI/docs/adr/0003-base-on-caos-fork-r14.md>)
+  [amended ADR](</Users/USER/Documents/Deploy VI/docs/adr/0003-base-on-caos-fork-r14.md>)
   and VII's adaptation policy both support retaining useful analytical wording.
 - **Current capabilities:** reuse Workflow's later research, valuation, financial
   input and calculation work where applicable. For a narrowed module, keep its

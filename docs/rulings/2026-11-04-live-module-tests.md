@@ -16,7 +16,7 @@ reservations and actual usage accounting use the existing Budget/CallLog helpers
 No automatic retry after unknown charge. Record actual provider results, source and
 upstream hashes, errors, costs and replay recordings. Start only after offline readiness.
 
-The user explicitly directed checking /Users/ericguei/Documents/OP Router.rtf.
+The user explicitly directed checking /Users/USER/Documents/OP Router.rtf.
 That file contains an OpenAI credential as well as OpenRouter credentials. For this
 current authorised run only, load the OpenAI credential into the executing process's
 memory/environment mapping; never print it, commit it or write another credential

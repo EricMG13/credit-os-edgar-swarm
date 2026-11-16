@@ -109,7 +109,7 @@ async function checkRunDocuments(page, channel, paidPreview) {
   await checkRunBundle(page);
   const [drop, side] = await Promise.all([dropZone.boundingBox(), readiness.boundingBox()]);
   assert.ok(drop && side && side.x >= drop.x + drop.width, "Readiness sits beside the form");
-  assert.equal(await stepper.getByRole("listitem").count(), 5);
+  assert.equal(await stepper.getByRole("listitem").count(), 4);
   assert.match(await current.innerText(), /Documents/u);
   await readiness.getByText("USD 0.00 of USD 25.00", { exact: true }).waitFor();
   if (!paidPreview)
@@ -196,9 +196,7 @@ async function approveRunInputs(page, paidPreview) {
   await page.getByRole("radio", { name: "Deep credit assessment", exact: true }).waitFor();
   await page.getByText("20 base modules", { exact: true }).waitFor();
   await page.getByRole("radio", { name: "Full credit assessment", exact: true }).waitFor();
-  await page.getByRole("button", { name: "Review inputs", exact: true }).click();
-  assert.match(await current.innerText(), /Confirm/u);
-  await page.getByRole("button", { name: "Approve summary", exact: true }).click();
+  await page.getByRole("button", { name: "Continue to context", exact: true }).click();
   assert.match(await current.innerText(), /More context/u);
   await page
     .getByLabel(/Anything the analysis should know/u)
@@ -212,7 +210,7 @@ async function approveRunInputs(page, paidPreview) {
     exact: true,
   });
   await submitButton.waitFor();
-  assert.match(await current.innerText(), /Start/u);
+  assert.match(await current.innerText(), /Review and start/u);
   for (const label of ["I have checked this", "I accept this limit"]) {
     for (const checkbox of await page.getByRole("checkbox", { name: label, exact: true }).all())
       await checkbox.check();
@@ -1284,7 +1282,7 @@ async function checkBrowserRun(browser, service, workspace, channel, brand) {
     ].map((view) => `${channel}-${view}.png`),
     checks: [
       "upload",
-      "five-step intake, document drop zone and responsive readiness panel",
+      "four-step intake, document drop zone and responsive readiness panel",
       "approved submission",
       "paid cap confirmation and cancel without submission",
       "synthetic confirmation and exactly one submission",

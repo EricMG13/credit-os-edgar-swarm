@@ -28,7 +28,7 @@ import {
 export type RunTab = "overview" | "changes" | "modules" | "forecast" | "evidence";
 
 const TAB =
-  "inline-flex items-center gap-1.5 border-b-2 border-transparent whitespace-nowrap font-semibold";
+  "inline-flex items-center gap-1.5 border-b-2 border-transparent whitespace-nowrap font-semibold max-[480px]:min-h-11";
 const TAB_SIZE = {
   md: "h-9 px-1.5 pb-2.5 text-md",
   sm: "h-8 px-1 pb-2.5 text-sm",

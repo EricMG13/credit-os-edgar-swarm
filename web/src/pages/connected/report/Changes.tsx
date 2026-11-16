@@ -311,6 +311,7 @@ function ComparisonMaturities({
     <section className={card}>
       <ColumnsChart
         title="Debt maturity schedules"
+        as="h3"
         note={profile.unit}
         groups={groups}
         series={series}

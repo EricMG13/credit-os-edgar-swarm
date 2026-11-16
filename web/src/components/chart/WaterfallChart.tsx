@@ -165,11 +165,20 @@ function isKind(key: string): key is Kind {
   return key === "total" || key === "up" || key === "down";
 }
 
-function KindLegend({ legend }: { legend: WaterfallChartProps["legend"] }) {
+/** Only the categories the steps use: a legend entry for a bar that is not drawn misleads. */
+function KindLegend({
+  legend,
+  steps,
+}: {
+  legend: WaterfallChartProps["legend"];
+  steps: WaterfallStep[];
+}) {
+  const used = new Set(steps.map((s) => s.kind));
   return (
     <ul aria-label="Legend" className="flex flex-wrap gap-x-5 gap-y-2">
       {Object.keys(legend)
         .filter(isKind)
+        .filter((kind) => used.has(kind))
         .map((kind) => (
           <li
             key={kind}
@@ -204,7 +213,7 @@ function Chart({
       categories={steps.map((s) => s.label)}
       yTicks={yTicks}
       tooltip={(props) => <WaterfallTooltip {...props} steps={steps} />}
-      legend={<KindLegend legend={legend} />}
+      legend={<KindLegend legend={legend} steps={steps} />}
     >
       <MissingMarks steps={steps} />
       <Bar

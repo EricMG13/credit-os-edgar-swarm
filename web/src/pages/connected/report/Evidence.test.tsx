@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 import { hasRecordedGap, ReportEvidence } from "./Evidence";
 import type { OutputEntry, PublishedRun, Snapshot } from "../publishedReport";
@@ -41,11 +41,12 @@ function renderEvidence(
   entries: OutputEntry[],
   target: string,
   evidence: PublishedRun["evidence"] = emptyEvidence,
+  chips: Snapshot["chips"] = {},
 ) {
   const run = { folder: "case", evidence } as unknown as PublishedRun;
   const snapshot = {
     workspace: { runs: {}, outputs: {}, handoffs: {}, models: [] },
-    chips: {},
+    chips,
   } as unknown as Snapshot;
   return render(
     <ReportEvidence
@@ -318,4 +319,72 @@ it("opens only verified retained files from the source inventory", () => {
   );
   expect(screen.queryByRole("link", { name: "Open source file: Missing.txt" })).toBeNull();
   expect(screen.getByText("Retained source is unavailable")).toBeVisible();
+});
+
+it("preserves citation identity, warnings and exact source links without inventing missing detail", () => {
+  const entry = evidenceEntry("CP-1", "case/CP-1.md", true, [
+    { type: "text", line: 5, end: 5, text: "A dated facility confirmation was not supplied." },
+  ]);
+  const hash = "c".repeat(64);
+  const href = `/connected/sources/case/${hash}/filing.txt`;
+  const missing = {
+    label: "Source identity missing",
+    quote: null,
+    excerpt: null,
+    file: null,
+    source: null,
+    sha256: null,
+    reason: null,
+  };
+  renderEvidence(
+    [entry],
+    `${encodeURIComponent(entry.output.id)}~${entry.output.sha256}`,
+    emptyEvidence,
+    {
+      [`${entry.output.id}:5`]: [
+        {
+          ...missing,
+          label: "Filing citation",
+          file: "filing.txt",
+          source: "Fallback should not replace filename",
+          sha256: hash,
+          href,
+          pageHref: `${href}?page=2&end=3`,
+          excerpt: "Exact retained source passage.",
+          reason: "Printed page numbering differs.",
+          quote_found: false,
+        },
+        { ...missing, label: "Named source only", source: "Issuer presentation" },
+        missing,
+        { ...missing, label: "Empty filename", file: "", source: "Do not coerce empty to missing" },
+      ],
+    },
+  );
+  const item = (label: string) => {
+    const li = screen.getByText(label, { exact: true }).closest("li");
+    if (!li) throw new Error(`Missing citation list item: ${label}`);
+    return within(li);
+  };
+  const citation = item("Filing citation");
+  expect(citation.getByText("filing.txt", { exact: true })).toBeVisible();
+  expect(citation.queryByText("Fallback should not replace filename")).toBeNull();
+  expect(citation.getByText("Exact retained source passage.").tagName).toBe("BLOCKQUOTE");
+  expect(
+    citation.getByText(
+      "Printed page numbering differs. The recorded quote or value was not located on the cited page.",
+    ),
+  ).toBeVisible();
+  expect(citation.getByRole("link", { name: "Open source file: filing.txt" })).toHaveAttribute(
+    "href",
+    href,
+  );
+  expect(
+    citation.getByRole("link", { name: "Open cited source pages 2–3: filing.txt" }),
+  ).toHaveAttribute("href", `${href}?page=2&end=3`);
+  expect(citation.getByText(hash).tagName).toBe("CODE");
+  expect(item("Named source only").getByText("Issuer presentation")).toBeVisible();
+  expect(item("Named source only").queryByRole("link")).toBeNull();
+  expect(item("Source identity missing").queryByRole("link")).toBeNull();
+  expect(item("Source identity missing").queryByText(hash)).toBeNull();
+  expect(item("Empty filename").queryByText("Do not coerce empty to missing")).toBeNull();
 });

@@ -14,7 +14,7 @@ export const EVENT_HEADERS = [
 const EVENT_LANES = ["Historical", "Scheduled", "Scenario", "User reminder"] as const;
 const DAY = 86_400_000;
 const TRACK_GRID =
-  "grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] items-center gap-3 md:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]";
+  "grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] items-center gap-3 md:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]";
 
 function dayOf(text: string) {
   const date = Date.parse(text);

@@ -1,9 +1,8 @@
-import { useCallback, useRef, useState, type SubmitEvent } from "react";
+import { useCallback, useRef, useState, type RefObject, type SubmitEvent } from "react";
 import { File05, Folder } from "@untitledui/icons";
 import { FileUpload } from "@/components/application/file-upload/file-upload-base";
 import { Badge } from "@/components/base/badges/badges";
 import { Button } from "@/components/base/buttons/button";
-import { DetailsList } from "../run/start/DetailsList";
 import { PurposeCards } from "../run/start/Purpose";
 import { Readiness } from "../run/start/Readiness";
 import { SubmitConfirmation } from "../run/start/Start";
@@ -21,7 +20,6 @@ import {
   getSummary,
   issuerSlug,
   moduleName,
-  pathwayName,
   RequestError,
   submit,
   upload,
@@ -34,21 +32,29 @@ import {
   type Summary,
 } from "./api";
 import { Breadcrumb, card, ErrorNotice, field, heading, label } from "./layout";
+import { ReviewSheet, needsCheck } from "./start/ReviewSheet";
+import { documentDescription, LEVELS, PURPOSES, storedName } from "./start/plain";
 import { errorText, useResource } from "./useResource";
 import { PageHeader } from "../../shell/PageHeader";
 
 const FORM_STEPS = {
   documents: { title: "Documents", next: "Continue to purpose", previous: null },
-  purpose: { title: "Purpose", next: "Review inputs", previous: "documents" },
-  confirm: { title: "Confirm what was read", next: "Approve summary", previous: "purpose" },
-  context: { title: "More context", next: "Review run", previous: "confirm" },
+  purpose: { title: "Purpose", next: "Continue to context", previous: "documents" },
+  context: { title: "More context", next: "Review run", previous: "purpose" },
 } as const;
 type FormStep = keyof typeof FORM_STEPS;
+const STEPPER_STEPS = [
+  { key: "documents", title: "Documents", note: "Add files" },
+  { key: "purpose", title: "Purpose", note: "Choose one" },
+  { key: "context", title: "More context", note: "Optional" },
+  { key: "start", title: "Review and start", note: "Paid step" },
+] as const;
+const STEP_TOTAL = STEPPER_STEPS.length;
+const FORM_STEP_KEYS = Object.keys(FORM_STEPS) as FormStep[];
 const STEP_GUIDANCE: Record<FormStep, string> = {
   documents:
     "Add annual and interim reports, the credit agreement and any other material the analysis should read.",
   purpose: "The purpose determines which modules run.",
-  confirm: "Check the issuer, documents and purpose. Approving this summary costs nothing.",
   context: "Optional. You can continue if the documents provide all the context.",
 };
 
@@ -83,13 +89,6 @@ function requireSummaryCap(summary: Summary, shownCap: string) {
     throw new Error("The pathway cap changed while preparing this summary. Review the run again.");
 }
 
-const PURPOSES = {
-  research: "No market view (research)",
-  primary: "New issue (primary)",
-  secondary: "Trading (secondary)",
-  earnings: "Earnings update",
-};
-const LEVELS = { basic: "Basic", standard: "Standard", advanced: "Advanced" };
 const ATTACHMENTS = {
   management_bridge: "Management EBITDA bridge",
   portfolio_workbook: "Portfolio workbook",
@@ -144,30 +143,831 @@ const COMPLEX_FIELDS = {
   research_questions: "Research questions",
   module_options: "Module options",
 };
+type LatestIssuerInputs = { run: string; prior: PriorInputs };
+
+async function latestIssuerInputs(issuer: string): Promise<LatestIssuerInputs | null> {
+  const latest = await getLatestIssuerRun(issuer);
+  if (!latest.latest_run) return null;
+  return { run: latest.latest_run, prior: await getPriorInputs(latest.latest_run) };
+}
+
 type ComplexField = keyof typeof COMPLEX_FIELDS;
 type Attachment = keyof typeof ATTACHMENTS | "agreement";
+type DocumentRow = { name: string; stored?: string; file?: File };
+type IntakeView = {
+  step: FormStep;
+  busy?: "review" | "submit" | "documents" | "copy";
+  canRead: boolean;
+  copy?: { run: string };
+  priorNote: string;
+  identity: Context["identity"];
+  issuerId: string;
+  submittedBy: string;
+  run: Context["run"];
+  documentRows: DocumentRow[];
+  inspected: Map<string, string>;
+  ignored: Map<string, string>;
+  shownDocs: DocumentRecord[];
+  attachments: Partial<Record<Attachment, string>>;
+  fileChoices: Record<string, string>;
+  legal: string;
+  earnings: boolean;
+  level: string;
+  analystNote: string;
+  newest: string;
+  edits: Partial<Record<ComplexField, string>>;
+  modules: string[];
+  requested: string[];
+  turns: string;
+  model: string;
+  effort: string;
+  capText: string | null;
+  synthetic: boolean;
+  addFiles: (selected: Iterable<File> | null) => void;
+  inspectDocuments: () => void;
+  discardDocument: (name: string, file?: File) => void;
+  changeIdentity: (
+    key: keyof Context["identity"],
+    value: Context["identity"][keyof Context["identity"]],
+  ) => void;
+  changeListedEquity: (checked: boolean) => void;
+  changeRun: (key: keyof Context["run"], value: string) => void;
+  changeIssuerId: (value: string) => void;
+  changeSubmittedBy: (value: string) => void;
+  carryLatest: () => void;
+  resetIssuer: () => void;
+  changePathway: (value: string) => void;
+  changePurpose: (value: string) => void;
+  changeLevel: (value: string) => void;
+  changeAnalystNote: (value: string) => void;
+  changeNewestOverride: (value: string) => void;
+  changeLegal: (value: string) => void;
+  changeAttachment: (key: Attachment, value: string) => void;
+  changeDetail: (key: ComplexField, value: string) => void;
+  detailText: (key: ComplexField) => string;
+  addContextRow: (key: keyof typeof ROW_EXAMPLES) => void;
+  changeModel: (value: string) => void;
+  changeEffort: (value: string) => void;
+  changeTurns: (value: string) => void;
+  toggleModule: (code: string, checked: boolean) => void;
+};
+
+function useIntakeIdentityState(
+  template: Context,
+  initial?: { run: string; prior: PriorInputs },
+  warning?: string,
+) {
+  const [copy, setCopy] = useState(initial);
+  const [step, setStep] = useState<FormStep>("documents");
+  const [priorNote, setPriorNote] = useState(initial?.prior.error || warning || "");
+  const [context, setContext] = useState<Context>(() => startingContext(template, initial?.prior));
+  const [purposeTouched, setPurposeTouched] = useState(Boolean(initial?.prior.context));
+  const [customSlug, setCustomSlug] = useState(initial?.prior.issuer_id);
+  const [newestOverride, setNewestOverride] = useState<string>();
+  return {
+    copy,
+    setCopy,
+    step,
+    setStep,
+    priorNote,
+    setPriorNote,
+    context,
+    setContext,
+    purposeTouched,
+    setPurposeTouched,
+    customSlug,
+    setCustomSlug,
+    newestOverride,
+    setNewestOverride,
+  };
+}
+
+function useIntakeDocumentsState() {
+  const [files, setFiles] = useState<File[]>([]);
+  const [reading, setReading] = useState<Reading>();
+  const [uploaded, setUploaded] = useState(new Map<File, string>());
+  const [ignoredCopies, setIgnoredCopies] = useState<string[]>([]);
+  const [attachments, setAttachments] = useState<Partial<Record<Attachment, string>>>({});
+  const [legal, setLegal] = useState("none");
+  const [edits, setEdits] = useState<Partial<Record<ComplexField, string>>>({});
+  const [analystNote, setAnalystNote] = useState("");
+  return {
+    files,
+    setFiles,
+    reading,
+    setReading,
+    uploaded,
+    setUploaded,
+    ignoredCopies,
+    setIgnoredCopies,
+    attachments,
+    setAttachments,
+    legal,
+    setLegal,
+    edits,
+    setEdits,
+    analystNote,
+    setAnalystNote,
+  };
+}
+
+function useIntakeRunOptions(initial?: { run: string; prior: PriorInputs }) {
+  const [level, setLevel] = useState(() => initial?.prior.level || "basic");
+  const [model, setModel] = useState("gpt");
+  const [effort, setEffort] = useState("balanced");
+  const [turns, setTurns] = useState(() => String(initial?.prior.max_turns || 32));
+  const [modules, setModules] = useState<string[]>(() => carriedModules(initial?.prior));
+  const [submittedBy, setSubmittedBy] = useState("");
+  return {
+    level,
+    setLevel,
+    model,
+    setModel,
+    effort,
+    setEffort,
+    turns,
+    setTurns,
+    modules,
+    setModules,
+    submittedBy,
+    setSubmittedBy,
+  };
+}
+
+function useIntakeReviewState() {
+  const [review, setReview] = useState<Review>();
+  const [accepted, setAccepted] = useState(new Set<string>());
+  const [approved, setApproved] = useState(false);
+  const [busy, setBusy] = useState<"review" | "submit" | "documents" | "copy">();
+  const [error, setError] = useState("");
+  const [submitUncertain, setSubmitUncertain] = useState(false);
+  return {
+    review,
+    setReview,
+    accepted,
+    setAccepted,
+    approved,
+    setApproved,
+    busy,
+    setBusy,
+    error,
+    setError,
+    submitUncertain,
+    setSubmitUncertain,
+  };
+}
+
+function intakeDocuments(reading: Reading | undefined, files: File[], uploaded: Map<File, string>) {
+  const shownDocs = reading?.documents ?? [];
+  const inspected = new Map(shownDocs.map((doc) => [storedName(doc), documentDescription(doc)]));
+  const ignored = new Map(
+    (reading?.ignored ?? []).map((item) =>
+      typeof item === "string" ? [item, "Will not be read"] : [item.source, item.reason],
+    ),
+  );
+  const localNames = new Set(uploaded.values());
+  const documentRows = [
+    ...files.map((file) => ({ name: fileName(file), stored: uploaded.get(file), file })),
+    ...[...new Set([...inspected.keys(), ...ignored.keys()])]
+      .filter((name) => !localNames.has(name))
+      .map((name) => ({ name, stored: name, file: undefined })),
+  ];
+  const fileChoices: Record<string, string> = Object.fromEntries([
+    ["", "None"] as const,
+    ...Array.from(inspected.keys(), (name) => [name, name] as const),
+  ]);
+  return { shownDocs, inspected, ignored, documentRows, fileChoices };
+}
+
+function readinessStatus(
+  shownDocs: DocumentRecord[],
+  step: FormStep,
+  review: Review | undefined,
+  checksComplete: boolean | undefined,
+  approved: boolean,
+) {
+  const entries = [
+    {
+      met: shownDocs.length > 0,
+      whenMet: "Documents inspected",
+      next: "Add and inspect documents",
+    },
+    {
+      met: step !== "documents" || review !== undefined,
+      whenMet: "Purpose selected",
+      next: "Choose a pathway and purpose",
+    },
+    {
+      met: review !== undefined && checksComplete === true,
+      whenMet: "Run summary checked",
+      next: "Review the run summary",
+    },
+    {
+      met: review !== undefined && approved,
+      whenMet: "Summary approved",
+      next: "Approve the reviewed run",
+    },
+  ];
+  return {
+    met: entries.filter((item) => item.met).map((item) => item.whenMet),
+    notMet: entries.filter((item) => !item.met).map((item) => item.next),
+  };
+}
+
+function shownCapText(cap: number | null) {
+  return cap === null || !Number.isFinite(cap) ? null : `USD ${cap.toFixed(2)}`;
+}
+
+function intakeRunDetails({
+  context,
+  customSlug,
+  caps,
+  files,
+  copy,
+  review,
+  accepted,
+  newestOverride,
+  reading,
+}: {
+  context: Context;
+  customSlug?: string;
+  caps: Record<string, string>;
+  files: File[];
+  copy?: { prior: PriorInputs };
+  review?: Review;
+  accepted: Set<string>;
+  newestOverride?: string;
+  reading?: Reading;
+}) {
+  const { run, identity } = context;
+  const selectedCap = caps[run.pathway];
+  return {
+    run,
+    identity,
+    issuerId: customSlug ?? issuerSlug(identity.issuer_name),
+    requested: pathwayModules(run.pathway),
+    cap: selectedCap ? Number(selectedCap) : null,
+    earnings: run.pathway === "earnings_update",
+    canRead: files.length > 0 || (!!copy?.prior.files.length && !copy.prior.error),
+    checksComplete: review?.summary.items.every(
+      (item) => !needsCheck(item) || accepted.has(item.id),
+    ),
+    newest: newestOverride ?? newestPeriod(reading),
+  };
+}
+
+function StepFields({
+  view,
+  folderInput,
+}: {
+  view: IntakeView;
+  folderInput: RefObject<HTMLInputElement | null>;
+}) {
+  switch (view.step) {
+    case "documents":
+      return <DocumentFields view={view} folderInput={folderInput} />;
+    case "purpose":
+      return <PurposeFields view={view} />;
+    case "context":
+      return <ContextFields view={view} />;
+  }
+}
+
+function DocumentFields({
+  view,
+  folderInput,
+}: {
+  view: IntakeView;
+  folderInput: RefObject<HTMLInputElement | null>;
+}) {
+  return (
+    <>
+      <FileUpload.Root className="sm:col-span-2">
+        <FileUpload.DropZone
+          inputLabel="Documents"
+          chooseFiles
+          hint="Add filings and other source documents. Up to 50 MB per file."
+          isDisabled={view.busy !== undefined}
+          onDropFiles={view.addFiles}
+        />
+        <input
+          ref={folderInput}
+          className="sr-only"
+          aria-label="Document folder"
+          tabIndex={-1}
+          type="file"
+          multiple
+          {...{ webkitdirectory: "" }}
+          onChange={(event) => {
+            view.addFiles(event.target.files);
+            event.target.value = "";
+          }}
+        />
+        <div className="flex flex-wrap items-center gap-3">
+          <Button
+            color="secondary"
+            iconLeading={Folder}
+            onPress={() => folderInput.current?.click()}
+          >
+            Choose a folder
+          </Button>
+          <Button
+            color="secondary"
+            isDisabled={!view.canRead || view.busy !== undefined}
+            onPress={view.inspectDocuments}
+          >
+            {view.busy === "documents" ? "Reading documents…" : "Inspect documents"}
+          </Button>
+        </div>
+        {view.documentRows.length > 0 ? (
+          <FileUpload.List aria-label="Documents added">
+            {view.documentRows.map(({ name, stored, file }, index) => {
+              const reason = stored ? view.ignored.get(stored) : undefined;
+              const description = stored ? view.inspected.get(stored) : undefined;
+              return (
+                <li
+                  key={`${name}-${String(index)}`}
+                  className="flex min-w-0 items-start gap-3 rounded-xl p-3 text-sm ring-1 ring-secondary ring-inset"
+                >
+                  <File05 aria-hidden="true" className="mt-1 size-5 shrink-0 text-text-tertiary" />
+                  <div className="min-w-0 flex-1">
+                    <p className="font-medium wrap-anywhere">{name}</p>
+                    <Badge size="sm" color={reason ? "error" : description ? "success" : "gray"}>
+                      {reason ? "Ignored" : description ? "Inspected" : "Selected"}
+                    </Badge>
+                    {(reason || description) && (
+                      <p className="mt-1 wrap-anywhere text-text-secondary">
+                        {reason || description}
+                      </p>
+                    )}
+                  </div>
+                  <Button
+                    size="sm"
+                    color="secondary"
+                    aria-label={`Remove ${name}`}
+                    isDisabled={view.busy !== undefined}
+                    onPress={() => {
+                      view.discardDocument(name, file);
+                    }}
+                  >
+                    Remove
+                  </Button>
+                </li>
+              );
+            })}
+          </FileUpload.List>
+        ) : (
+          <p className="text-sm text-text-secondary">No documents yet.</p>
+        )}
+      </FileUpload.Root>
+      <div className="grid gap-2 sm:col-span-2">
+        <h3 className="font-semibold">Issuer and case date</h3>
+        {view.copy && (
+          <p className="text-sm text-text-secondary">
+            Starting from run {view.copy.run}. Review the copied answers, add dates, and inspect its
+            available documents.
+          </p>
+        )}
+        {view.priorNote && (
+          <p role="status" className="text-sm text-text-secondary">
+            {view.priorNote}
+          </p>
+        )}
+      </div>
+      <label className={label}>
+        Issuer name
+        <input
+          className={field}
+          required
+          value={view.identity.issuer_name}
+          onChange={(event) => {
+            view.changeIdentity("issuer_name", event.target.value);
+          }}
+        />
+      </label>
+      <label className={label}>
+        Issuer ID
+        <input
+          className={field}
+          required
+          pattern="[a-z0-9][a-z0-9\\-]{0,39}"
+          maxLength={40}
+          value={view.issuerId}
+          readOnly={!!view.copy}
+          onChange={(event) => {
+            view.changeIssuerId(event.target.value);
+          }}
+        />
+      </label>
+      <label className={label}>
+        As-of date
+        <input
+          className={field}
+          type="date"
+          required
+          value={view.run.as_of}
+          onChange={(event) => {
+            view.changeRun("as_of", event.target.value);
+          }}
+        />
+      </label>
+      <label className={label}>
+        Reporting currency
+        <input
+          className={field}
+          required
+          pattern="[A-Z]{3}"
+          maxLength={3}
+          value={view.run.reporting_currency}
+          onChange={(event) => {
+            view.changeRun("reporting_currency", event.target.value.toUpperCase());
+          }}
+        />
+      </label>
+      <SelectField
+        title="Issue classification"
+        value={view.identity.issue_classification ?? ""}
+        choices={{
+          "": "Choose classification",
+          investment_grade: "Investment grade",
+          high_yield: "High yield",
+        }}
+        onChange={(value) => {
+          view.changeIdentity("issue_classification", value);
+        }}
+      />
+      <label className={label}>
+        Your name
+        <input
+          className={field}
+          maxLength={80}
+          value={view.submittedBy}
+          onChange={(event) => {
+            view.changeSubmittedBy(event.target.value);
+          }}
+        />
+      </label>
+      {view.copy ? (
+        <Button color="secondary" onPress={view.resetIssuer}>
+          This is a different issuer
+        </Button>
+      ) : (
+        <Button color="secondary" onPress={view.carryLatest}>
+          Carry over from latest run
+        </Button>
+      )}
+    </>
+  );
+}
+
+function PurposeFields({ view }: { view: IntakeView }) {
+  return (
+    <>
+      <div className="sm:col-span-2">
+        <PurposeCards
+          label="Pathway"
+          value={view.run.pathway}
+          purposes={PATHWAY_CARDS}
+          onChange={view.changePathway}
+        />
+      </div>
+      <SelectField
+        title="Run purpose"
+        value={view.run.run_type ?? "research"}
+        choices={
+          view.earnings
+            ? { earnings: PURPOSES.earnings }
+            : {
+                research: PURPOSES.research,
+                primary: PURPOSES.primary,
+                secondary: PURPOSES.secondary,
+              }
+        }
+        onChange={view.changePurpose}
+      />
+      <SelectField
+        title="Case kind"
+        value={view.run.case_kind}
+        choices={{ public: "Public filer", private: "Private", synthetic: "Synthetic test case" }}
+        onChange={(value) => {
+          view.changeRun("case_kind", value);
+        }}
+      />
+      <SelectField
+        title="Run form level"
+        value={view.level}
+        choices={LEVELS}
+        onChange={view.changeLevel}
+      />
+    </>
+  );
+}
+
+function ContextFields({ view }: { view: IntakeView }) {
+  return (
+    <>
+      <ContextInputFields view={view} />
+      <IssuerDetailsFields view={view} />
+      <StructuredContextFields view={view} />
+      <AdvancedOptionsFields view={view} />
+    </>
+  );
+}
+
+function ContextInputFields({ view }: { view: IntakeView }) {
+  return (
+    <>
+      <div className="grid gap-1 sm:col-span-2">
+        <label className={label}>
+          Anything the analysis should know
+          <textarea
+            aria-describedby="run-analyst-questions"
+            className={field}
+            rows={3}
+            placeholder="For example, the committee wants a view on the 2028 maturities."
+            value={view.analystNote}
+            onChange={(event) => {
+              view.changeAnalystNote(event.target.value);
+            }}
+          />
+        </label>
+        <p id="run-analyst-questions" className="text-sm text-text-tertiary">
+          Your note is included in the run’s research questions.
+        </p>
+      </div>
+      <label className={label}>
+        Date of your newest file
+        <input
+          className={field}
+          type="date"
+          value={view.newest}
+          onChange={(event) => {
+            view.changeNewestOverride(event.target.value);
+          }}
+        />
+      </label>
+      <label className={label}>
+        Research cutoff
+        <input
+          className={field}
+          type="date"
+          value={view.run.cutoff || view.run.as_of}
+          max={view.run.as_of || undefined}
+          onChange={(event) => {
+            view.changeRun("cutoff", event.target.value);
+          }}
+        />
+      </label>
+      <label className={label}>
+        Current period
+        <input
+          className={field}
+          required={view.earnings}
+          placeholder="q3-2026"
+          value={view.run.current_period ?? ""}
+          onChange={(event) => {
+            view.changeRun("current_period", event.target.value.trim().toLowerCase());
+          }}
+        />
+      </label>
+      <label className={label}>
+        Prior period
+        <input
+          className={field}
+          required={view.earnings}
+          placeholder="q2-2026"
+          value={view.run.prior_period ?? ""}
+          onChange={(event) => {
+            view.changeRun("prior_period", event.target.value.trim().toLowerCase());
+          }}
+        />
+      </label>
+      <SelectField
+        title="Legal documents"
+        value={view.legal}
+        choices={{ none: "No agreement", executed: "Executed agreement", draft: "Draft agreement" }}
+        onChange={view.changeLegal}
+      />
+      {view.legal !== "none" && (
+        <SelectField
+          title="The agreement"
+          value={view.attachments.agreement ?? ""}
+          choices={view.fileChoices}
+          onChange={(value) => {
+            view.changeAttachment("agreement", value);
+          }}
+        />
+      )}
+      {(view.earnings || view.level === "advanced") && (
+        <SelectField
+          title={ATTACHMENTS.management_bridge}
+          value={view.attachments.management_bridge ?? ""}
+          choices={view.fileChoices}
+          onChange={(value) => {
+            view.changeAttachment("management_bridge", value);
+          }}
+        />
+      )}
+      {(["portfolio_workbook", "prior_case"] as const)
+        .filter(
+          (key) =>
+            view.level === "advanced" ||
+            view.run.pathway === "portfolio_decision" ||
+            (key === "portfolio_workbook" &&
+              ["credit_snapshot", "deep_credit_assessment"].includes(view.run.pathway)),
+        )
+        .map((key) => (
+          <SelectField
+            key={key}
+            title={ATTACHMENTS[key]}
+            value={view.attachments[key] ?? ""}
+            choices={view.fileChoices}
+            onChange={(value) => {
+              view.changeAttachment(key, value);
+            }}
+          />
+        ))}
+    </>
+  );
+}
+
+function IssuerDetailsFields({ view }: { view: IntakeView }) {
+  return (
+    <details className="rounded-lg border border-border-hairline p-3 sm:col-span-2">
+      <summary className="cursor-pointer font-semibold">Issuer details</summary>
+      <div className="mt-3 grid gap-4 sm:grid-cols-2">
+        {(
+          [
+            ["borrower_name", "Borrower (legal entity)"],
+            ["parent_name", "Parent"],
+            ["sector", "Sector"],
+            ["country", "Country"],
+            ["sponsor", "Sponsor"],
+          ] as const
+        ).map(([key, title]) => (
+          <label key={key} className={label}>
+            {title}
+            <input
+              className={field}
+              value={view.identity[key] ?? ""}
+              onChange={(event) => {
+                view.changeIdentity(key, event.target.value);
+              }}
+            />
+          </label>
+        ))}
+        {(
+          [
+            ["aliases", "Other names in the filings"],
+            ["guarantors", "Guarantors"],
+          ] as const
+        ).map(([key, title]) => (
+          <label key={key} className={label}>
+            {title}
+            <textarea
+              className={field}
+              placeholder="One per line"
+              defaultValue={(view.identity[key] ?? []).join("\n")}
+              key={view.copy?.run ?? "new"}
+              onChange={(event) => {
+                view.changeIdentity(
+                  key,
+                  event.target.value
+                    .split("\n")
+                    .map((line) => line.trim())
+                    .filter(Boolean),
+                );
+              }}
+            />
+          </label>
+        ))}
+        <label className="flex items-center gap-2 text-sm font-semibold">
+          <input
+            type="checkbox"
+            checked={view.identity.listed_equity ?? false}
+            onChange={(event) => {
+              view.changeListedEquity(event.target.checked);
+            }}
+          />{" "}
+          Listed equity
+        </label>
+        {view.identity.listed_equity && (
+          <label className={label}>
+            Ticker
+            <input
+              className={field}
+              value={view.identity.ticker ?? ""}
+              onChange={(event) => {
+                view.changeIdentity("ticker", event.target.value);
+              }}
+            />
+          </label>
+        )}
+      </div>
+    </details>
+  );
+}
+
+function StructuredContextFields({ view }: { view: IntakeView }) {
+  return (
+    <div className="grid gap-2 sm:col-span-2">
+      <h3 className="font-semibold">Context details</h3>
+      <p className="text-sm text-text-secondary">
+        Enter structured values as context/1 JSON. The service validates the content during review.
+      </p>
+      {(Object.entries(COMPLEX_FIELDS) as [ComplexField, string][]).map(([key, title]) => (
+        <details
+          key={key}
+          open={key === "deal_terms" && view.run.run_type === "primary" ? true : undefined}
+          className="rounded-lg border border-border-hairline p-3"
+        >
+          <summary className="cursor-pointer text-sm font-semibold">{title}</summary>
+          <textarea
+            aria-label={title}
+            className={`mt-2 w-full font-mono ${field}`}
+            rows={key === "valuation" ? 12 : 5}
+            value={view.detailText(key)}
+            onChange={(event) => {
+              view.changeDetail(key, event.target.value);
+            }}
+          />
+          {isRowField(key) && (
+            <Button
+              size="sm"
+              color="secondary"
+              className="mt-2"
+              onPress={() => {
+                view.addContextRow(key);
+              }}
+            >
+              {ROW_LABELS[key]}
+            </Button>
+          )}
+        </details>
+      ))}
+    </div>
+  );
+}
+
+function AdvancedOptionsFields({ view }: { view: IntakeView }) {
+  if (view.level !== "advanced") return null;
+  return (
+    <>
+      <SelectField
+        title="Model"
+        value={view.model}
+        choices={{ gpt: "GPT Sol", claude: "Claude Opus" }}
+        onChange={view.changeModel}
+      />
+      <SelectField
+        title="Reasoning effort"
+        value={view.effort}
+        choices={{ fast: "Fast", balanced: "Balanced", high: "High" }}
+        onChange={view.changeEffort}
+      />
+      <label className={label}>
+        Turns per module
+        <input
+          className={field}
+          type="number"
+          required
+          min={1}
+          max={64}
+          step={1}
+          value={view.turns}
+          onChange={(event) => {
+            view.changeTurns(event.target.value);
+          }}
+        />
+      </label>
+      <fieldset className="min-w-0 rounded-lg border border-border-hairline p-3 sm:col-span-2">
+        <legend className="px-1 text-sm font-semibold">Requested modules</legend>
+        <div className="grid gap-2 sm:grid-cols-2">
+          {view.requested.map((code) => (
+            <label key={code} className="flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={!view.modules.length || view.modules.includes(code)}
+                disabled={view.modules.length === 1 && view.modules.includes(code)}
+                onChange={(event) => {
+                  view.toggleModule(code, event.target.checked);
+                }}
+              />{" "}
+              {moduleName(code)}
+            </label>
+          ))}
+        </div>
+      </fieldset>
+    </>
+  );
+}
 
 function focusStep(node: HTMLElement | null) {
   node?.focus();
 }
 
-function storedName({ source }: DocumentRecord) {
-  return source.replace(/(\.html?)\.jsonl$/i, "$1");
-}
-
 function fileName(file: File) {
   return (file.webkitRelativePath || "").split("/").slice(1).join("/") || file.name;
-}
-
-function documentDescription(doc: DocumentRecord) {
-  return [
-    doc.kind.replaceAll("_", " "),
-    doc.period_end && `period ends ${doc.period_end}`,
-    doc.executed === true ? "executed" : doc.executed === false ? "draft" : "",
-    doc.signal,
-  ]
-    .filter(Boolean)
-    .join(" · ");
 }
 
 function SelectField({
@@ -225,143 +1025,6 @@ function readDetails(edits: Partial<Record<ComplexField, string>>) {
     details[key] = parsed;
   }
   return details;
-}
-
-function needsCheck(item: Summary["items"][number]) {
-  return (
-    item.outcome === "check" ||
-    item.outcome === "gap" ||
-    item.outcome === "limited" ||
-    item.outcome === "will_refuse"
-  );
-}
-
-function ReviewPlan({
-  review,
-  accepted,
-  onAccept,
-  disabled,
-}: {
-  review: Review;
-  accepted: Set<string>;
-  onAccept: (id: string, checked: boolean) => void;
-  disabled: boolean;
-}) {
-  const { summary, answers } = review;
-  const { run, identity } = answers.context;
-  return (
-    <>
-      <dl className="grid gap-4 rounded-lg bg-surface-subtle p-4 text-sm sm:grid-cols-2">
-        {[
-          ["Issuer", identity.issuer_name],
-          ["Documents", String(summary.documents.length)],
-          ["Planned modules", String(summary.modules.length)],
-          ["As-of date", run.as_of],
-          ["Pathway", pathwayName(run.pathway)],
-          ["Model and effort", `${summary.model} · ${summary.effort}`],
-          ["Reporting currency", run.reporting_currency],
-          ["Purpose", PURPOSES[run.run_type as keyof typeof PURPOSES]],
-          ["Case kind", run.case_kind],
-          ["Current period", run.current_period],
-          ["Prior period", run.prior_period],
-          ["Research cutoff", run.cutoff],
-          ["Run form level", LEVELS[answers.level as keyof typeof LEVELS]],
-          ["Turns per module", answers.max_turns],
-          ["Submitted by", answers.submitted_by],
-          ["Changes", summary.changes],
-        ]
-          .filter(([, value]) => value)
-          .map(([term, value]) => (
-            <div key={term}>
-              <dt className="text-text-tertiary">{term}</dt>
-              <dd className="mt-1 font-medium text-text-primary">{value}</dd>
-            </div>
-          ))}
-      </dl>
-      <section className="grid gap-2">
-        <h3 className="font-semibold">Documents read</h3>
-        <ul className="list-disc space-y-1 pl-5 text-sm text-text-secondary">
-          {summary.documents.map((doc, i) => (
-            <li key={i}>
-              {storedName(doc)} · {documentDescription(doc)}
-            </li>
-          ))}
-        </ul>
-        {summary.ignored.length > 0 && (
-          <>
-            <h3 className="font-semibold">Documents ignored</h3>
-            <ul className="list-disc space-y-1 pl-5 text-sm text-text-secondary">
-              {summary.ignored.map((doc, i) => (
-                <li key={i}>{typeof doc === "string" ? doc : `${doc.source} · ${doc.reason}`}</li>
-              ))}
-            </ul>
-          </>
-        )}
-      </section>
-      <section className="grid gap-2">
-        <h3 className="font-semibold">Planned modules</h3>
-        <ul className="grid gap-1.5 text-sm text-text-secondary sm:grid-cols-2">
-          {summary.modules.map((code) => (
-            <li key={code}>{moduleName(code)}</li>
-          ))}
-        </ul>
-        {summary.omitted.length > 0 && (
-          <p className="text-sm text-text-secondary">
-            Report sections omitted · {summary.omitted.join(", ")}
-          </p>
-        )}
-      </section>
-      {summary.lookup && summary.lookup.length > 0 && (
-        <section className="grid gap-2">
-          <h3 className="font-semibold">Source lookup</h3>
-          <ul className="list-disc pl-5 text-sm text-text-secondary">
-            {summary.lookup.map((line) => (
-              <li key={line}>{line}</li>
-            ))}
-          </ul>
-        </section>
-      )}
-      <details className="rounded-lg border border-border-hairline p-3">
-        <summary className="cursor-pointer text-sm font-semibold">Reviewed inputs</summary>
-        <pre className="mt-2 whitespace-pre-wrap wrap-anywhere text-xs text-text-secondary">
-          {JSON.stringify(answers.context, null, 2)}
-        </pre>
-      </details>
-      {summary.items.length > 0 && (
-        <section className="grid gap-2">
-          <h3 className="font-semibold">Readiness checks</h3>
-          <ul className="space-y-2">
-            {summary.items.map((item) => (
-              <li
-                key={item.id}
-                className="rounded-lg border border-border-hairline p-3 text-sm text-text-secondary"
-              >
-                <p className="font-semibold text-text-primary">
-                  {item.scope === "run" ? "Whole run" : moduleName(item.scope)} ·{" "}
-                  {item.outcome.replaceAll("_", " ")}
-                </p>
-                <p>{item.reason}</p>
-                {item.fix && <p>{item.fix}</p>}
-                {needsCheck(item) && (
-                  <label className="mt-2 flex items-center gap-2 font-semibold text-text-primary">
-                    <input
-                      type="checkbox"
-                      checked={accepted.has(item.id)}
-                      disabled={disabled}
-                      onChange={(event) => {
-                        onAccept(item.id, event.target.checked);
-                      }}
-                    />
-                    {item.outcome === "check" ? "I have checked this" : "I accept this limit"}
-                  </label>
-                )}
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
-    </>
-  );
 }
 
 export function StartRun({
@@ -426,48 +1089,88 @@ function IntakeForm({
   navigate: (path: string) => void;
   mode: Mode;
 }) {
-  const [copy, setCopy] = useState(initial);
-  const [step, setStep] = useState<FormStep>("documents");
-  const [priorNote, setPriorNote] = useState(initial?.prior.error || warning || "");
-  const [context, setContext] = useState<Context>(() => startingContext(template, initial?.prior));
-  const [purposeTouched, setPurposeTouched] = useState(Boolean(initial?.prior.context));
-  const [customSlug, setCustomSlug] = useState(initial?.prior.issuer_id);
-  const [newestOverride, setNewestOverride] = useState<string>();
-  const [files, setFiles] = useState<File[]>([]);
-  const [reading, setReading] = useState<Reading>();
-  const [uploaded, setUploaded] = useState(new Map<File, string>());
-  const [ignoredCopies, setIgnoredCopies] = useState<string[]>([]);
-  const [attachments, setAttachments] = useState<Partial<Record<Attachment, string>>>({});
-  const [legal, setLegal] = useState("none");
-  const [edits, setEdits] = useState<Partial<Record<ComplexField, string>>>({});
-  const [analystNote, setAnalystNote] = useState("");
-  const [level, setLevel] = useState(() => initial?.prior.level || "basic");
-  const [model, setModel] = useState("gpt");
-  const [effort, setEffort] = useState("balanced");
-  const [turns, setTurns] = useState(() => String(initial?.prior.max_turns || 32));
-  const [modules, setModules] = useState<string[]>(() => carriedModules(initial?.prior));
-  const [submittedBy, setSubmittedBy] = useState("");
-  const [review, setReview] = useState<Review>();
-  const [accepted, setAccepted] = useState(new Set<string>());
-  const [approved, setApproved] = useState(false);
-  const [busy, setBusy] = useState<"review" | "submit" | "documents" | "copy">();
-  const [error, setError] = useState("");
-  const [submitUncertain, setSubmitUncertain] = useState(false);
+  const identityState = useIntakeIdentityState(template, initial, warning);
+  const documentState = useIntakeDocumentsState();
+  const runOptions = useIntakeRunOptions(initial);
+  const reviewState = useIntakeReviewState();
+  const {
+    copy,
+    setCopy,
+    step,
+    setStep,
+    priorNote,
+    setPriorNote,
+    context,
+    setContext,
+    purposeTouched,
+    setPurposeTouched,
+    customSlug,
+    setCustomSlug,
+    newestOverride,
+    setNewestOverride,
+  } = identityState;
+  const {
+    files,
+    setFiles,
+    reading,
+    setReading,
+    uploaded,
+    setUploaded,
+    ignoredCopies,
+    setIgnoredCopies,
+    attachments,
+    setAttachments,
+    legal,
+    setLegal,
+    edits,
+    setEdits,
+    analystNote,
+    setAnalystNote,
+  } = documentState;
+  const {
+    level,
+    setLevel,
+    model,
+    setModel,
+    effort,
+    setEffort,
+    turns,
+    setTurns,
+    modules,
+    setModules,
+    submittedBy,
+    setSubmittedBy,
+  } = runOptions;
+  const {
+    review,
+    setReview,
+    accepted,
+    setAccepted,
+    approved,
+    setApproved,
+    busy,
+    setBusy,
+    error,
+    setError,
+    submitUncertain,
+    setSubmitUncertain,
+  } = reviewState;
   const draftRef = useRef<Draft | null>(null);
   const active = useRef(false);
   const folderInput = useRef<HTMLInputElement>(null);
 
-  const { run, identity } = context;
-  const issuerId = customSlug ?? issuerSlug(identity.issuer_name);
-  const requested = pathwayModules(run.pathway);
-  const selectedCap = caps[run.pathway];
-  const cap = selectedCap ? Number(selectedCap) : null;
-  const earnings = run.pathway === "earnings_update";
-  const canRead = files.length > 0 || (!!copy?.prior.files.length && !copy.prior.error);
-  const checksComplete = review?.summary.items.every(
-    (item) => !needsCheck(item) || accepted.has(item.id),
-  );
-  const newest = newestOverride ?? newestPeriod(reading);
+  const { run, identity, issuerId, requested, cap, earnings, canRead, checksComplete, newest } =
+    intakeRunDetails({
+      context,
+      customSlug,
+      caps,
+      files,
+      copy,
+      review,
+      accepted,
+      newestOverride,
+      reading,
+    });
 
   function changeRun(key: keyof Context["run"], value: string) {
     if (key === "pathway") invalidateReview();
@@ -486,6 +1189,17 @@ function IntakeForm({
     value: Context["identity"][K],
   ) {
     setContext((previous) => ({ ...previous, identity: { ...previous.identity, [key]: value } }));
+  }
+
+  function changeListedEquity(checked: boolean) {
+    setContext((previous) => ({
+      ...previous,
+      identity: {
+        ...previous.identity,
+        listed_equity: checked,
+        ...(checked ? {} : { ticker: "" }),
+      },
+    }));
   }
 
   async function withDraft(
@@ -588,38 +1302,40 @@ function IntakeForm({
     setError("");
   }
 
+  async function copyLatestWork() {
+    const latest = await latestIssuerInputs(issuerId);
+    if (!latest) {
+      setPriorNote("No earlier run was found for this issuer.");
+      return;
+    }
+    const { run: latestRun, prior } = latest;
+    setCopy({ run: latestRun, prior });
+    setPriorNote(prior.error || "");
+    setContext(startingContext(prior.context ? template : context, prior));
+    setPurposeTouched(Boolean(prior.context));
+    setCustomSlug(prior.issuer_id);
+    setLevel(Object.hasOwn(LEVELS, prior.level) ? prior.level : "basic");
+    setTurns(String(prior.max_turns || 32));
+    setModel("gpt");
+    setEffort("balanced");
+    setModules(carriedModules(prior));
+    setEdits({});
+    setAnalystNote("");
+    setAttachments({});
+    setLegal("none");
+    setIgnoredCopies([]);
+    setNewestOverride(undefined);
+    setReading(undefined);
+    draftRef.current = null;
+    setUploaded(new Map());
+  }
+
   async function copyLatest() {
     if (!/^[a-z0-9][a-z0-9-]{0,39}$/.test(issuerId)) {
       setError("Enter an issuer ID before looking up its latest run.");
       return;
     }
-    await withDraft("copy", async () => {
-      const latest = await getLatestIssuerRun(issuerId);
-      if (!latest.latest_run) {
-        setPriorNote("No earlier run was found for this issuer.");
-        return;
-      }
-      const prior = await getPriorInputs(latest.latest_run);
-      setCopy({ run: latest.latest_run, prior });
-      setPriorNote(prior.error || "");
-      setContext(startingContext(prior.context ? template : context, prior));
-      setPurposeTouched(Boolean(prior.context));
-      setCustomSlug(prior.issuer_id);
-      setLevel(Object.hasOwn(LEVELS, prior.level) ? prior.level : "basic");
-      setTurns(String(prior.max_turns || 32));
-      setModel("gpt");
-      setEffort("balanced");
-      setModules(carriedModules(prior));
-      setEdits({});
-      setAnalystNote("");
-      setAttachments({});
-      setLegal("none");
-      setIgnoredCopies([]);
-      setNewestOverride(undefined);
-      setReading(undefined);
-      draftRef.current = null;
-      setUploaded(new Map());
-    });
+    await withDraft("copy", copyLatestWork);
   }
 
   function makeAnswers(result: Reading, details: Record<string, unknown>): Answers {
@@ -742,9 +1458,6 @@ function IntakeForm({
         });
         break;
       case "purpose":
-        goTo("confirm");
-        break;
-      case "confirm":
         goTo("context");
         break;
       case "context":
@@ -813,6 +1526,75 @@ function IntakeForm({
     );
   }
 
+  function inspectDocuments() {
+    void withDraft("documents", async () => {
+      await refreshDocuments();
+    });
+  }
+
+  function changePathway(pathway: string) {
+    invalidateReview();
+    setContext((previous) => ({
+      ...previous,
+      run: {
+        ...previous.run,
+        pathway,
+        run_type:
+          pathway === "earnings_update"
+            ? "earnings"
+            : !purposeTouched || previous.run.run_type === "earnings"
+              ? pathway === "relative_value"
+                ? "secondary"
+                : "research"
+              : previous.run.run_type,
+      },
+    }));
+    setModules([]);
+  }
+
+  function changePurpose(value: string) {
+    setPurposeTouched(true);
+    changeRun("run_type", value);
+  }
+
+  function changeAttachment(key: Attachment, value: string) {
+    setAttachments((previous) => ({ ...previous, [key]: value }));
+  }
+
+  function changeDetail(key: ComplexField, value: string) {
+    setEdits((previous) => ({ ...previous, [key]: value }));
+  }
+
+  function resetIssuer() {
+    setCopy(undefined);
+    setContext(startingContext(template));
+    setPurposeTouched(false);
+    setCustomSlug(undefined);
+    setReading(undefined);
+    setPriorNote("");
+    setEdits({});
+    setAnalystNote("");
+    setAttachments({});
+    setLegal("none");
+    setModules([]);
+    setLevel("basic");
+    setModel("gpt");
+    setEffort("balanced");
+    setTurns("32");
+    setIgnoredCopies([]);
+    setNewestOverride(undefined);
+    draftRef.current = null;
+    setUploaded(new Map());
+  }
+
+  function toggleModule(code: string, checked: boolean) {
+    const selected = modules.length ? modules : requested;
+    const next = checked ? [...selected, code] : selected.filter((item) => item !== code);
+    setModules(
+      next.length === requested.length ? [] : requested.filter((item) => next.includes(item)),
+    );
+  }
+
   function addContextRow(key: keyof typeof ROW_EXAMPLES) {
     try {
       const current = readDetails({ [key]: detailText(key) })[key];
@@ -828,827 +1610,452 @@ function IntakeForm({
     }
   }
 
-  const shownDocs = reading?.documents ?? [];
-  const inspected = new Map(shownDocs.map((doc) => [storedName(doc), documentDescription(doc)]));
-  const ignored = new Map(
-    (reading?.ignored ?? []).map((item) =>
-      typeof item === "string" ? [item, "Will not be read"] : [item.source, item.reason],
-    ),
+  const { shownDocs, inspected, ignored, documentRows, fileChoices } = intakeDocuments(
+    reading,
+    files,
+    uploaded,
   );
-  const localNames = new Set(uploaded.values());
-  const documentRows = [
-    ...files.map((file) => ({ name: fileName(file), stored: uploaded.get(file), file })),
-    ...[...new Set([...inspected.keys(), ...ignored.keys()])]
-      .filter((name) => !localNames.has(name))
-      .map((name) => ({ name, stored: name, file: undefined })),
-  ];
-  const fileChoices: Record<string, string> = Object.fromEntries([
-    ["", "None"] as const,
-    ...Array.from(inspected.keys(), (name) => [name, name] as const),
-  ]);
 
   const { title, previous, next } = FORM_STEPS[step];
-  const capText = cap === null || !Number.isFinite(cap) ? null : `USD ${cap.toFixed(2)}`;
+  const capText = shownCapText(cap);
   const synthetic = mode === "synthetic";
-  const readinessItems = [
-    {
-      met: shownDocs.length > 0,
-      whenMet: "Documents inspected",
-      next: "Add and inspect documents",
-    },
-    {
-      met: step === "confirm" || step === "context",
-      whenMet: "Purpose selected",
-      next: "Choose a pathway and purpose",
-    },
-    {
-      met: review !== undefined && checksComplete === true,
-      whenMet: "Run summary checked",
-      next: "Review the run summary",
-    },
-    {
-      met: review !== undefined && approved,
-      whenMet: "Summary approved",
-      next: "Approve the reviewed run",
-    },
-  ];
-  const met = readinessItems.filter((item) => item.met).map((item) => item.whenMet);
-  const notMet = readinessItems.filter((item) => !item.met).map((item) => item.next);
+  const { met, notMet } = readinessStatus(shownDocs, step, review, checksComplete, approved);
 
+  function acceptReviewItems(ids: readonly string[], checked: boolean) {
+    setAccepted((previouslyAccepted) => {
+      const nextAccepted = new Set(previouslyAccepted);
+      for (const id of ids) {
+        if (checked) nextAccepted.add(id);
+        else nextAccepted.delete(id);
+      }
+      return nextAccepted;
+    });
+    setApproved(false);
+  }
+
+  function editReviewedInputs(target: FormStep) {
+    setReview(undefined);
+    goTo(target);
+  }
+
+  function submitReviewedRun() {
+    void submitReviewed();
+  }
+
+  function advanceCurrentStep(event: SubmitEvent<HTMLFormElement>) {
+    void advance(event);
+  }
+
+  function returnToPreviousStep() {
+    if (previous !== null) goTo(previous);
+  }
+
+  const view: IntakeView = {
+    step,
+    busy,
+    canRead,
+    copy,
+    priorNote,
+    identity,
+    issuerId,
+    submittedBy,
+    run,
+    documentRows,
+    inspected,
+    ignored,
+    shownDocs,
+    attachments,
+    fileChoices,
+    legal,
+    earnings,
+    level,
+    analystNote,
+    newest,
+    edits,
+    modules,
+    requested,
+    turns,
+    model,
+    effort,
+    capText,
+    synthetic,
+    addFiles,
+    inspectDocuments,
+    discardDocument: (name, file) => void discardDocument(name, file),
+    changeIdentity,
+    changeListedEquity,
+    changeRun,
+    changeIssuerId: setCustomSlug,
+    changeSubmittedBy: setSubmittedBy,
+    carryLatest: () => void copyLatest(),
+    resetIssuer,
+    changePathway,
+    changePurpose,
+    changeLevel: setLevel,
+    changeAnalystNote: setAnalystNote,
+    changeNewestOverride: (value) => {
+      setNewestOverride(value || undefined);
+    },
+    changeLegal: setLegal,
+    changeAttachment,
+    changeDetail,
+    detailText,
+    addContextRow,
+    changeModel: setModel,
+    changeEffort: setEffort,
+    changeTurns: setTurns,
+    toggleModule,
+  };
+
+  return (
+    <IntakePanels
+      step={step}
+      review={review}
+      error={error}
+      accepted={accepted}
+      approved={approved}
+      checksComplete={checksComplete === true}
+      busy={busy}
+      submitUncertain={submitUncertain}
+      capText={capText}
+      cap={cap}
+      synthetic={synthetic}
+      view={view}
+      folderInput={folderInput}
+      title={title}
+      previous={previous}
+      next={next}
+      met={met}
+      notMet={notMet}
+      onAccept={acceptReviewItems}
+      onApprove={setApproved}
+      onEdit={editReviewedInputs}
+      onSubmit={submitReviewedRun}
+      onAdvance={advanceCurrentStep}
+      onPrevious={returnToPreviousStep}
+    />
+  );
+}
+
+type IntakePanelsProps = {
+  step: FormStep;
+  review?: Review;
+  error: string;
+  accepted: Set<string>;
+  approved: boolean;
+  checksComplete: boolean;
+  busy?: "review" | "submit" | "documents" | "copy";
+  submitUncertain: boolean;
+  capText: string | null;
+  cap: number | null;
+  synthetic: boolean;
+  view: IntakeView;
+  folderInput: RefObject<HTMLInputElement | null>;
+  title: string;
+  previous: FormStep | null;
+  next: string;
+  met: string[];
+  notMet: string[];
+  onAccept: (ids: readonly string[], checked: boolean) => void;
+  onApprove: (value: boolean) => void;
+  onEdit: (step: FormStep) => void;
+  onSubmit: () => void;
+  onAdvance: (event: SubmitEvent<HTMLFormElement>) => void;
+  onPrevious: () => void;
+};
+
+function IntakePanels(props: IntakePanelsProps) {
+  const {
+    step,
+    review,
+    error,
+    accepted,
+    approved,
+    checksComplete,
+    busy,
+    submitUncertain,
+    capText,
+    cap,
+    synthetic,
+    view,
+    folderInput,
+    title,
+    previous,
+    next,
+    met,
+    notMet,
+    onAccept,
+    onApprove,
+    onEdit,
+    onSubmit,
+    onAdvance,
+    onPrevious,
+  } = props;
   return (
     <div className="mt-6 grid min-w-0 items-start gap-6 min-[1041px]:grid-cols-[minmax(0,1fr)_320px]">
       <div className={`min-w-0 ${card}`}>
-        <Stepper step={review ? "start" : step} />
+        <Stepper
+          step={review ? "start" : step}
+          steps={STEPPER_STEPS}
+          onSelect={
+            busy === undefined && !submitUncertain
+              ? (key) => {
+                  onEdit(key as FormStep);
+                }
+              : undefined
+          }
+        />
+        <p className="text-sm text-text-secondary sm:hidden">
+          {review
+            ? `Step ${String(STEP_TOTAL)} of ${String(STEP_TOTAL)} · Review and start`
+            : `Step ${String(FORM_STEP_KEYS.indexOf(step) + 1)} of ${String(STEP_TOTAL)} · ${title}`}
+        </p>
         {error && <ErrorNotice>{error}</ErrorNotice>}
         {review ? (
-          <div className="grid gap-5">
-            <div className="grid gap-1">
-              <h2 ref={focusStep} tabIndex={-1} className={`${heading} focus:outline-none`}>
-                Start
-              </h2>
-              <p className="text-sm text-text-secondary">
-                Review the final run details and confirm to start.
-              </p>
-            </div>
-            <ReviewPlan
-              review={review}
-              accepted={accepted}
-              disabled={busy !== undefined || submitUncertain}
-              onAccept={(id, checked) => {
-                setAccepted((previous) => {
-                  const next = new Set(previous);
-                  if (checked) next.add(id);
-                  else next.delete(id);
-                  return next;
-                });
-                setApproved(false);
-              }}
-            />
-            <label className="flex items-start gap-2 text-sm font-semibold">
-              <input
-                type="checkbox"
-                checked={approved}
-                disabled={!checksComplete || busy !== undefined || submitUncertain}
-                onChange={(event) => {
-                  setApproved(event.target.checked);
-                }}
-              />
-              Approve: I have read this summary and want this run started
-            </label>
-            <div className="grid gap-1 border-t border-border-hairline pt-4">
-              <h3 className="text-md font-semibold text-text-primary">
-                {synthetic ? "Submit starts a synthetic test" : "Submit starts a paid run"}
-              </h3>
-              <p id="run-submit-cost" className="text-sm text-text-secondary">
-                {synthetic ? (
-                  "The synthetic test uses the supplied documents and makes no paid provider calls."
-                ) : capText === null ? (
-                  "The spending cap is unavailable. Reopen the form to load it before submitting."
-                ) : (
-                  <>
-                    It can spend up to <strong className="tabular-nums">{capText}</strong>. You
-                    confirm once more before anything is spent.
-                  </>
-                )}
-              </p>
-            </div>
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <Button
-                color="secondary"
-                isDisabled={busy !== undefined || submitUncertain}
-                onPress={() => {
-                  setReview(undefined);
-                  goTo("documents");
-                }}
-              >
-                Edit inputs
-              </Button>
-              <span className="text-sm text-text-tertiary">Step 5 of 5</span>
-              <SubmitConfirmation
-                label={
-                  busy === "submit"
-                    ? "Submitting…"
-                    : synthetic
-                      ? "Submit run"
-                      : `Submit, spend up to ${capText ?? "the cap"}`
-                }
-                confirm={
-                  synthetic
-                    ? {
-                        title: "Start a synthetic test?",
-                        text: "This test runs the workflow with the supplied documents and spends USD 0.00.",
-                        action: "Start synthetic run",
-                      }
-                    : {
-                        title: "Start a paid run?",
-                        text: `This run can spend up to ${capText ?? "the configured cap"} and stops when it reaches that cap. Once it starts, what it has spent cannot be taken back.`,
-                        action: `Start run, up to ${capText ?? "the cap"}`,
-                      }
-                }
-                isDisabled={
-                  !checksComplete || !approved || busy !== undefined || (!synthetic && !cap)
-                }
-                describedBy="run-submit-cost"
-                onConfirm={() => {
-                  void submitReviewed();
-                }}
-              />
-            </div>
-          </div>
+          <ReviewConfirmation
+            review={review}
+            accepted={accepted}
+            approved={approved}
+            checksComplete={checksComplete}
+            busy={busy}
+            submitUncertain={submitUncertain}
+            capText={capText}
+            capAvailable={Boolean(cap)}
+            synthetic={synthetic}
+            onAccept={onAccept}
+            onApprove={onApprove}
+            onEdit={onEdit}
+            onSubmit={onSubmit}
+          />
         ) : (
-          <form
-            onSubmit={(event) => {
-              void advance(event);
-            }}
-            className="grid min-w-0 grid-cols-1 gap-5"
-          >
-            <div className="grid gap-1">
-              <h2
-                key={step}
-                ref={focusStep}
-                tabIndex={-1}
-                className={`${heading} focus:outline-none`}
-              >
-                {title}
-              </h2>
-              <p className="text-sm text-text-secondary">{STEP_GUIDANCE[step]}</p>
-            </div>
-            <fieldset
-              disabled={busy !== undefined}
-              className="grid min-w-0 grid-cols-1 items-start gap-4 sm:grid-cols-2"
-            >
-              {step === "documents" && (
-                <>
-                  <FileUpload.Root className="sm:col-span-2">
-                    <FileUpload.DropZone
-                      inputLabel="Documents"
-                      chooseFiles
-                      hint="Add filings and other source documents. Up to 50 MB per file."
-                      isDisabled={busy !== undefined}
-                      onDropFiles={addFiles}
-                    />
-                    <input
-                      ref={folderInput}
-                      className="sr-only"
-                      aria-label="Document folder"
-                      tabIndex={-1}
-                      type="file"
-                      multiple
-                      {...{ webkitdirectory: "" }}
-                      onChange={(event) => {
-                        addFiles(event.target.files);
-                        event.target.value = "";
-                      }}
-                    />
-                    <div className="flex flex-wrap items-center gap-3">
-                      <Button
-                        color="secondary"
-                        iconLeading={Folder}
-                        onPress={() => folderInput.current?.click()}
-                      >
-                        Choose a folder
-                      </Button>
-                      <Button
-                        color="secondary"
-                        isDisabled={!canRead || busy !== undefined}
-                        onPress={() => {
-                          void withDraft("documents", async () => {
-                            await refreshDocuments();
-                          });
-                        }}
-                      >
-                        {busy === "documents" ? "Reading documents…" : "Inspect documents"}
-                      </Button>
-                    </div>
-                    {documentRows.length > 0 ? (
-                      <FileUpload.List aria-label="Documents added">
-                        {documentRows.map(({ name, stored, file }, index) => {
-                          const reason = stored ? ignored.get(stored) : undefined;
-                          const description = stored ? inspected.get(stored) : undefined;
-                          return (
-                            <li
-                              key={`${name}-${String(index)}`}
-                              className="flex min-w-0 items-start gap-3 rounded-xl p-3 text-sm ring-1 ring-secondary ring-inset"
-                            >
-                              <File05
-                                aria-hidden="true"
-                                className="mt-1 size-5 shrink-0 text-text-tertiary"
-                              />
-                              <div className="min-w-0 flex-1">
-                                <p className="font-medium wrap-anywhere">{name}</p>
-                                <Badge
-                                  size="sm"
-                                  color={reason ? "error" : description ? "success" : "gray"}
-                                >
-                                  {reason ? "Ignored" : description ? "Inspected" : "Selected"}
-                                </Badge>
-                                {(reason || description) && (
-                                  <p className="mt-1 wrap-anywhere text-text-secondary">
-                                    {reason || description}
-                                  </p>
-                                )}
-                              </div>
-                              <Button
-                                size="sm"
-                                color="secondary"
-                                aria-label={`Remove ${name}`}
-                                isDisabled={busy !== undefined}
-                                onPress={() => {
-                                  void discardDocument(name, file);
-                                }}
-                              >
-                                Remove
-                              </Button>
-                            </li>
-                          );
-                        })}
-                      </FileUpload.List>
-                    ) : (
-                      <p className="text-sm text-text-secondary">No documents yet.</p>
-                    )}
-                  </FileUpload.Root>
-                  <div className="grid gap-2 sm:col-span-2">
-                    <h3 className="font-semibold">Issuer and case date</h3>
-                    {copy && (
-                      <p className="text-sm text-text-secondary">
-                        Starting from run {copy.run}. Review the copied answers, add dates, and
-                        inspect its available documents.
-                      </p>
-                    )}
-                    {priorNote && (
-                      <p role="status" className="text-sm text-text-secondary">
-                        {priorNote}
-                      </p>
-                    )}
-                  </div>
-                  <label className={label}>
-                    Issuer name
-                    <input
-                      className={field}
-                      required
-                      value={identity.issuer_name}
-                      onChange={(event) => {
-                        changeIdentity("issuer_name", event.target.value);
-                      }}
-                    />
-                  </label>
-                  <label className={label}>
-                    Issuer ID
-                    <input
-                      className={field}
-                      required
-                      pattern="[a-z0-9][a-z0-9\\-]{0,39}"
-                      maxLength={40}
-                      value={issuerId}
-                      readOnly={!!copy}
-                      onChange={(event) => {
-                        setCustomSlug(event.target.value);
-                      }}
-                    />
-                  </label>
-                  <label className={label}>
-                    As-of date
-                    <input
-                      className={field}
-                      type="date"
-                      required
-                      value={run.as_of}
-                      onChange={(event) => {
-                        changeRun("as_of", event.target.value);
-                      }}
-                    />
-                  </label>
-                  <label className={label}>
-                    Reporting currency
-                    <input
-                      className={field}
-                      required
-                      pattern="[A-Z]{3}"
-                      maxLength={3}
-                      value={run.reporting_currency}
-                      onChange={(event) => {
-                        changeRun("reporting_currency", event.target.value.toUpperCase());
-                      }}
-                    />
-                  </label>
-                  <SelectField
-                    title="Issue classification"
-                    value={identity.issue_classification ?? ""}
-                    choices={{
-                      "": "Choose classification",
-                      investment_grade: "Investment grade",
-                      high_yield: "High yield",
-                    }}
-                    onChange={(value) => {
-                      changeIdentity("issue_classification", value);
-                    }}
-                  />
-                  <label className={label}>
-                    Your name
-                    <input
-                      className={field}
-                      maxLength={80}
-                      value={submittedBy}
-                      onChange={(event) => {
-                        setSubmittedBy(event.target.value);
-                      }}
-                    />
-                  </label>
-                  {copy ? (
-                    <Button
-                      color="secondary"
-                      onPress={() => {
-                        setCopy(undefined);
-                        setContext(startingContext(template));
-                        setPurposeTouched(false);
-                        setCustomSlug(undefined);
-                        setReading(undefined);
-                        setPriorNote("");
-                        setEdits({});
-                        setAnalystNote("");
-                        setAttachments({});
-                        setLegal("none");
-                        setModules([]);
-                        setLevel("basic");
-                        setModel("gpt");
-                        setEffort("balanced");
-                        setTurns("32");
-                        setIgnoredCopies([]);
-                        setNewestOverride(undefined);
-                        draftRef.current = null;
-                        setUploaded(new Map());
-                      }}
-                    >
-                      This is a different issuer
-                    </Button>
-                  ) : (
-                    <Button
-                      color="secondary"
-                      onPress={() => {
-                        void copyLatest();
-                      }}
-                    >
-                      Carry over from latest run
-                    </Button>
-                  )}
-                </>
-              )}
-              {step === "purpose" && (
-                <>
-                  <div className="sm:col-span-2">
-                    <PurposeCards
-                      label="Pathway"
-                      value={run.pathway}
-                      purposes={PATHWAY_CARDS}
-                      onChange={(pathway) => {
-                        invalidateReview();
-                        setContext((previous) => ({
-                          ...previous,
-                          run: {
-                            ...previous.run,
-                            pathway,
-                            run_type:
-                              pathway === "earnings_update"
-                                ? "earnings"
-                                : !purposeTouched || previous.run.run_type === "earnings"
-                                  ? pathway === "relative_value"
-                                    ? "secondary"
-                                    : "research"
-                                  : previous.run.run_type,
-                          },
-                        }));
-                        setModules([]);
-                      }}
-                    />
-                  </div>
-                  <SelectField
-                    title="Run purpose"
-                    value={run.run_type ?? "research"}
-                    choices={
-                      earnings
-                        ? { earnings: PURPOSES.earnings }
-                        : {
-                            research: PURPOSES.research,
-                            primary: PURPOSES.primary,
-                            secondary: PURPOSES.secondary,
-                          }
-                    }
-                    onChange={(value) => {
-                      setPurposeTouched(true);
-                      changeRun("run_type", value);
-                    }}
-                  />
-                  <SelectField
-                    title="Case kind"
-                    value={run.case_kind}
-                    choices={{
-                      public: "Public filer",
-                      private: "Private",
-                      synthetic: "Synthetic test case",
-                    }}
-                    onChange={(value) => {
-                      changeRun("case_kind", value);
-                    }}
-                  />
-                  <SelectField
-                    title="Run form level"
-                    value={level}
-                    choices={LEVELS}
-                    onChange={setLevel}
-                  />
-                </>
-              )}
-              {step === "confirm" && (
-                <div className="grid gap-4 sm:col-span-2">
-                  <section>
-                    <h3 className="font-semibold">Issuer</h3>
-                    <DetailsList
-                      rows={[
-                        { label: "Issuer", value: identity.issuer_name },
-                        { label: "As-of date", value: run.as_of },
-                        { label: "Reporting currency", value: run.reporting_currency },
-                      ]}
-                    />
-                  </section>
-                  <section>
-                    <h3 className="font-semibold">Documents inspected</h3>
-                    <DetailsList
-                      rows={shownDocs.map((doc) => ({
-                        label: storedName(doc),
-                        value: documentDescription(doc),
-                      }))}
-                    />
-                  </section>
-                  <section>
-                    <h3 className="font-semibold">Run</h3>
-                    <DetailsList
-                      rows={[
-                        { label: "Pathway", value: pathwayName(run.pathway) },
-                        {
-                          label: "Purpose",
-                          value: PURPOSES[(run.run_type ?? "research") as keyof typeof PURPOSES],
-                        },
-                        {
-                          label: "Spending cap",
-                          value: synthetic ? "USD 0.00 (synthetic test)" : capText,
-                        },
-                      ]}
-                    />
-                  </section>
-                </div>
-              )}
-              {step === "context" && (
-                <>
-                  <div className="grid gap-1 sm:col-span-2">
-                    <label className={label}>
-                      Anything the analysis should know
-                      <textarea
-                        aria-describedby="run-analyst-questions"
-                        className={field}
-                        rows={3}
-                        placeholder="For example, the committee wants a view on the 2028 maturities."
-                        value={analystNote}
-                        onChange={(event) => {
-                          setAnalystNote(event.target.value);
-                        }}
-                      />
-                    </label>
-                    <p id="run-analyst-questions" className="text-sm text-text-tertiary">
-                      Your note is included in the run’s research questions.
-                    </p>
-                  </div>
-                  <label className={label}>
-                    Date of your newest file
-                    <input
-                      className={field}
-                      type="date"
-                      value={newest}
-                      onChange={(event) => {
-                        setNewestOverride(event.target.value || undefined);
-                      }}
-                    />
-                  </label>
-                  <label className={label}>
-                    Research cutoff
-                    <input
-                      className={field}
-                      type="date"
-                      value={run.cutoff || run.as_of}
-                      max={run.as_of || undefined}
-                      onChange={(event) => {
-                        changeRun("cutoff", event.target.value);
-                      }}
-                    />
-                  </label>
-                  <label className={label}>
-                    Current period
-                    <input
-                      className={field}
-                      required={earnings}
-                      placeholder="q3-2026"
-                      value={run.current_period ?? ""}
-                      onChange={(event) => {
-                        changeRun("current_period", event.target.value.trim().toLowerCase());
-                      }}
-                    />
-                  </label>
-                  <label className={label}>
-                    Prior period
-                    <input
-                      className={field}
-                      required={earnings}
-                      placeholder="q2-2026"
-                      value={run.prior_period ?? ""}
-                      onChange={(event) => {
-                        changeRun("prior_period", event.target.value.trim().toLowerCase());
-                      }}
-                    />
-                  </label>
-                  <SelectField
-                    title="Legal documents"
-                    value={legal}
-                    choices={{
-                      none: "No agreement",
-                      executed: "Executed agreement",
-                      draft: "Draft agreement",
-                    }}
-                    onChange={setLegal}
-                  />
-                  {legal !== "none" && (
-                    <SelectField
-                      title="The agreement"
-                      value={attachments.agreement ?? ""}
-                      choices={fileChoices}
-                      onChange={(value) => {
-                        setAttachments((previous) => ({ ...previous, agreement: value }));
-                      }}
-                    />
-                  )}
-                  {(earnings || level === "advanced") && (
-                    <SelectField
-                      title={ATTACHMENTS.management_bridge}
-                      value={attachments.management_bridge ?? ""}
-                      choices={fileChoices}
-                      onChange={(value) => {
-                        setAttachments((previous) => ({ ...previous, management_bridge: value }));
-                      }}
-                    />
-                  )}
-                  {(["portfolio_workbook", "prior_case"] as const)
-                    .filter(
-                      (key) =>
-                        level === "advanced" ||
-                        run.pathway === "portfolio_decision" ||
-                        (key === "portfolio_workbook" &&
-                          ["credit_snapshot", "deep_credit_assessment"].includes(run.pathway)),
-                    )
-                    .map((key) => (
-                      <SelectField
-                        key={key}
-                        title={ATTACHMENTS[key]}
-                        value={attachments[key] ?? ""}
-                        choices={fileChoices}
-                        onChange={(value) => {
-                          setAttachments((previous) => ({ ...previous, [key]: value }));
-                        }}
-                      />
-                    ))}
-                  <details className="rounded-lg border border-border-hairline p-3 sm:col-span-2">
-                    <summary className="cursor-pointer font-semibold">Issuer details</summary>
-                    <div className="mt-3 grid gap-4 sm:grid-cols-2">
-                      {(
-                        [
-                          ["borrower_name", "Borrower (legal entity)"],
-                          ["parent_name", "Parent"],
-                          ["sector", "Sector"],
-                          ["country", "Country"],
-                          ["sponsor", "Sponsor"],
-                        ] as const
-                      ).map(([key, title]) => (
-                        <label key={key} className={label}>
-                          {title}
-                          <input
-                            className={field}
-                            value={identity[key] ?? ""}
-                            onChange={(event) => {
-                              changeIdentity(key, event.target.value);
-                            }}
-                          />
-                        </label>
-                      ))}
-                      {(
-                        [
-                          ["aliases", "Other names in the filings"],
-                          ["guarantors", "Guarantors"],
-                        ] as const
-                      ).map(([key, title]) => (
-                        <label key={key} className={label}>
-                          {title}
-                          <textarea
-                            className={field}
-                            placeholder="One per line"
-                            defaultValue={(identity[key] ?? []).join("\n")}
-                            key={copy?.run ?? "new"}
-                            onChange={(event) => {
-                              changeIdentity(
-                                key,
-                                event.target.value
-                                  .split("\n")
-                                  .map((line) => line.trim())
-                                  .filter(Boolean),
-                              );
-                            }}
-                          />
-                        </label>
-                      ))}
-                      <label className="flex items-center gap-2 text-sm font-semibold">
-                        <input
-                          type="checkbox"
-                          checked={identity.listed_equity ?? false}
-                          onChange={(event) => {
-                            const listed_equity = event.target.checked;
-                            setContext((previous) => ({
-                              ...previous,
-                              identity: {
-                                ...previous.identity,
-                                listed_equity,
-                                ticker: listed_equity ? previous.identity.ticker : "",
-                              },
-                            }));
-                          }}
-                        />{" "}
-                        Listed equity
-                      </label>
-                      {identity.listed_equity && (
-                        <label className={label}>
-                          Ticker
-                          <input
-                            className={field}
-                            value={identity.ticker ?? ""}
-                            onChange={(event) => {
-                              changeIdentity("ticker", event.target.value);
-                            }}
-                          />
-                        </label>
-                      )}
-                    </div>
-                  </details>
-                  <div className="grid gap-2 sm:col-span-2">
-                    <h3 className="font-semibold">Context details</h3>
-                    <p className="text-sm text-text-secondary">
-                      Enter structured values as context/1 JSON. The service validates the content
-                      during review.
-                    </p>
-                    {(Object.entries(COMPLEX_FIELDS) as [ComplexField, string][]).map(
-                      ([key, title]) => (
-                        <details
-                          key={key}
-                          open={
-                            key === "deal_terms" && run.run_type === "primary" ? true : undefined
-                          }
-                          className="rounded-lg border border-border-hairline p-3"
-                        >
-                          <summary className="cursor-pointer text-sm font-semibold">
-                            {title}
-                          </summary>
-                          <textarea
-                            aria-label={title}
-                            className={`mt-2 w-full font-mono ${field}`}
-                            rows={key === "valuation" ? 12 : 5}
-                            value={detailText(key)}
-                            onChange={(event) => {
-                              setEdits((previous) => ({ ...previous, [key]: event.target.value }));
-                            }}
-                          />
-                          {isRowField(key) && (
-                            <Button
-                              size="sm"
-                              color="secondary"
-                              className="mt-2"
-                              onPress={() => {
-                                addContextRow(key);
-                              }}
-                            >
-                              {ROW_LABELS[key]}
-                            </Button>
-                          )}
-                        </details>
-                      ),
-                    )}
-                  </div>
-                  {level === "advanced" && (
-                    <>
-                      <SelectField
-                        title="Model"
-                        value={model}
-                        choices={{ gpt: "GPT Sol", claude: "Claude Opus" }}
-                        onChange={setModel}
-                      />
-                      <SelectField
-                        title="Reasoning effort"
-                        value={effort}
-                        choices={{ fast: "Fast", balanced: "Balanced", high: "High" }}
-                        onChange={setEffort}
-                      />
-                      <label className={label}>
-                        Turns per module
-                        <input
-                          className={field}
-                          type="number"
-                          required
-                          min={1}
-                          max={64}
-                          step={1}
-                          value={turns}
-                          onChange={(event) => {
-                            setTurns(event.target.value);
-                          }}
-                        />
-                      </label>
-                      <fieldset className="min-w-0 rounded-lg border border-border-hairline p-3 sm:col-span-2">
-                        <legend className="px-1 text-sm font-semibold">Requested modules</legend>
-                        <div className="grid gap-2 sm:grid-cols-2">
-                          {requested.map((code) => (
-                            <label key={code} className="flex items-center gap-2 text-sm">
-                              <input
-                                type="checkbox"
-                                checked={!modules.length || modules.includes(code)}
-                                disabled={modules.length === 1 && modules.includes(code)}
-                                onChange={(event) => {
-                                  const selected = modules.length ? modules : requested;
-                                  const next = event.target.checked
-                                    ? [...selected, code]
-                                    : selected.filter((item) => item !== code);
-                                  setModules(
-                                    next.length === requested.length
-                                      ? []
-                                      : requested.filter((item) => next.includes(item)),
-                                  );
-                                }}
-                              />{" "}
-                              {moduleName(code)}
-                            </label>
-                          ))}
-                        </div>
-                      </fieldset>
-                    </>
-                  )}
-                </>
-              )}
-            </fieldset>
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <Button
-                color="secondary"
-                isDisabled={previous === null || busy !== undefined}
-                onPress={() => {
-                  if (previous !== null) goTo(previous);
-                }}
-              >
-                Previous
-              </Button>
-              <span className="text-sm text-text-tertiary">
-                Step {Object.keys(FORM_STEPS).indexOf(step) + 1} of 5
-              </span>
-              <Button
-                type="submit"
-                isDisabled={busy !== undefined || (step === "documents" && !canRead)}
-              >
-                {busy === "review" ? "Preparing review…" : next}
-              </Button>
-            </div>
-          </form>
+          <InputStepForm
+            view={view}
+            folderInput={folderInput}
+            title={title}
+            previous={previous}
+            next={next}
+            onAdvance={onAdvance}
+            onPrevious={onPrevious}
+          />
         )}
       </div>
-      <Readiness
-        capTitle={synthetic ? "Configured cap for paid runs" : undefined}
-        data={{
-          line: "Check the inputs and approve the run before it starts.",
-          notMet: { count: String(notMet.length), items: notMet },
-          met: { count: String(met.length), items: met },
-          cap: cap && capText ? { value: 0, max: cap, label: `USD 0.00 of ${capText}` } : null,
-        }}
-      />
+      <ReadinessPanel synthetic={synthetic} cap={cap} capText={capText} met={met} notMet={notMet} />
     </div>
+  );
+}
+
+function ReadinessPanel({
+  synthetic,
+  cap,
+  capText,
+  met,
+  notMet,
+}: {
+  synthetic: boolean;
+  cap: number | null;
+  capText: string | null;
+  met: string[];
+  notMet: string[];
+}) {
+  return (
+    <Readiness
+      capTitle={synthetic ? "Configured cap for paid runs" : undefined}
+      data={{
+        line: "Check the inputs and approve the run before it starts.",
+        notMet: { count: String(notMet.length), items: notMet },
+        met: { count: String(met.length), items: met },
+        cap: cap && capText ? { value: 0, max: cap, label: `USD 0.00 of ${capText}` } : null,
+      }}
+    />
+  );
+}
+
+function ReviewConfirmation({
+  review,
+  accepted,
+  approved,
+  checksComplete,
+  busy,
+  submitUncertain,
+  capText,
+  capAvailable,
+  synthetic,
+  onAccept,
+  onApprove,
+  onEdit,
+  onSubmit,
+}: {
+  review: Review;
+  accepted: Set<string>;
+  approved: boolean;
+  checksComplete: boolean;
+  busy?: "review" | "submit" | "documents" | "copy";
+  submitUncertain: boolean;
+  capText: string | null;
+  capAvailable: boolean;
+  synthetic: boolean;
+  onAccept: (ids: readonly string[], checked: boolean) => void;
+  onApprove: (approved: boolean) => void;
+  onEdit: (step: FormStep) => void;
+  onSubmit: () => void;
+}) {
+  const submitLabel = submitLabelFor({ busy, synthetic, capText });
+  const confirmation = confirmationFor(synthetic, capText);
+  const submitDisabled =
+    !checksComplete || !approved || busy !== undefined || (!synthetic && !capAvailable);
+  return (
+    <div className="grid gap-5">
+      <div className="grid gap-1">
+        <h2 ref={focusStep} tabIndex={-1} className={`${heading} focus:outline-none`}>
+          Review and start
+        </h2>
+        <p className="text-sm text-text-secondary">
+          Review the final run details and confirm to start.
+        </p>
+      </div>
+      <ReviewSheet
+        review={review}
+        accepted={accepted}
+        disabled={busy !== undefined || submitUncertain}
+        onEdit={onEdit}
+        onAccept={onAccept}
+      />
+      <label className="flex items-start gap-2 text-sm font-semibold">
+        <input
+          type="checkbox"
+          checked={approved}
+          disabled={!checksComplete || busy !== undefined || submitUncertain}
+          onChange={(event) => {
+            onApprove(event.target.checked);
+          }}
+        />
+        Approve: I have read this summary and want this run started
+      </label>
+      <div className="grid gap-1 border-t border-border-hairline pt-4">
+        <h3 className="text-md font-semibold text-text-primary">
+          {synthetic ? "Submit starts a synthetic test" : "Submit starts a paid run"}
+        </h3>
+        <p id="run-submit-cost" className="text-sm text-text-secondary">
+          <SubmissionCost synthetic={synthetic} capText={capText} />
+        </p>
+      </div>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <span className="text-sm text-text-tertiary">
+          Step {STEP_TOTAL} of {STEP_TOTAL}
+        </span>
+        <SubmitConfirmation
+          label={submitLabel}
+          confirm={confirmation}
+          isDisabled={submitDisabled}
+          describedBy="run-submit-cost"
+          onConfirm={onSubmit}
+        />
+      </div>
+    </div>
+  );
+}
+
+function SubmissionCost({ synthetic, capText }: { synthetic: boolean; capText: string | null }) {
+  if (synthetic)
+    return <>The synthetic test uses the supplied documents and makes no paid provider calls.</>;
+  if (capText === null)
+    return <>The spending cap is unavailable. Reopen the form to load it before submitting.</>;
+  return (
+    <>
+      It can spend up to <strong className="tabular-nums">{capText}</strong>. You confirm once more
+      before anything is spent.
+    </>
+  );
+}
+
+function submitLabelFor({
+  busy,
+  synthetic,
+  capText,
+}: {
+  busy?: "review" | "submit" | "documents" | "copy";
+  synthetic: boolean;
+  capText: string | null;
+}) {
+  if (busy === "submit") return "Submitting…";
+  if (synthetic) return "Submit run";
+  return `Submit, spend up to ${capText ?? "the cap"}`;
+}
+
+function confirmationFor(synthetic: boolean, capText: string | null) {
+  if (synthetic)
+    return {
+      title: "Start a synthetic test?",
+      text: "This test runs the workflow with the supplied documents and spends USD 0.00.",
+      action: "Start synthetic run",
+    };
+  return {
+    title: "Start a paid run?",
+    text: `This run can spend up to ${capText ?? "the configured cap"} and stops when it reaches that cap. Once it starts, what it has spent cannot be taken back.`,
+    action: `Start run, up to ${capText ?? "the cap"}`,
+  };
+}
+
+function InputStepForm({
+  view,
+  folderInput,
+  title,
+  previous,
+  next,
+  onAdvance,
+  onPrevious,
+}: {
+  view: IntakeView;
+  folderInput: RefObject<HTMLInputElement | null>;
+  title: string;
+  previous: FormStep | null;
+  next: string;
+  onAdvance: (event: SubmitEvent<HTMLFormElement>) => void;
+  onPrevious: () => void;
+}) {
+  return (
+    <form
+      onSubmit={(event) => {
+        onAdvance(event);
+      }}
+      className="grid min-w-0 grid-cols-1 gap-5"
+    >
+      <div className="grid gap-1">
+        <h2
+          key={view.step}
+          ref={focusStep}
+          tabIndex={-1}
+          className={`${heading} focus:outline-none`}
+        >
+          {title}
+        </h2>
+        <p className="text-sm text-text-secondary">{STEP_GUIDANCE[view.step]}</p>
+      </div>
+      <fieldset
+        disabled={view.busy !== undefined}
+        className="grid min-w-0 grid-cols-1 items-start gap-4 sm:grid-cols-2"
+      >
+        <StepFields view={view} folderInput={folderInput} />
+      </fieldset>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <Button
+          color="secondary"
+          isDisabled={previous === null || view.busy !== undefined}
+          onPress={onPrevious}
+        >
+          Previous
+        </Button>
+        <span className="text-sm text-text-tertiary">
+          Step {FORM_STEP_KEYS.indexOf(view.step) + 1} of {STEP_TOTAL}
+        </span>
+        <Button
+          type="submit"
+          isDisabled={view.busy !== undefined || (view.step === "documents" && !view.canRead)}
+        >
+          {view.busy === "review" ? "Preparing review…" : next}
+        </Button>
+      </div>
+    </form>
   );
 }
 

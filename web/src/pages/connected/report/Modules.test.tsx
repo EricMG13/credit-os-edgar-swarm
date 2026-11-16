@@ -185,3 +185,40 @@ it("draws nothing for a run that predates the score", () => {
   renderModule({});
   expect(screen.queryByText("Confidence score")).toBeNull();
 });
+
+it("skips no heading level on a module page that draws a relationship map", () => {
+  const map = {
+    type: "table" as const,
+    line: 20,
+    headers: ["From", "Relationship", "Edge type", "To", "Evidence"],
+    rows: [{ line: 21, cells: ["A", "Owns", "Ownership", "B", "Source 1"] }],
+  };
+  const entry: OutputEntry = {
+    selected: true,
+    output: {
+      id: "m",
+      module: "CP-1",
+      label: "m",
+      href: "",
+      sha256: "m".repeat(64),
+      maps: [{ name: "credit-risk transmission", table: 20 }],
+    },
+    sections: [
+      {
+        heading: "Bottom line",
+        level: 3,
+        line: 10,
+        blocks: [{ type: "text", line: 11, end: 11, text: "A verdict." }],
+      },
+      { heading: "Transmission", level: 3, line: 19, blocks: [map] },
+    ],
+  };
+  const { container } = render(<Modules {...fixture([entry])} />);
+  expect(screen.getByRole("heading", { name: "credit-risk transmission" })).toBeInTheDocument();
+  const levels = Array.from(container.querySelectorAll("h1,h2,h3,h4,h5,h6"), (node) =>
+    Number(node.tagName.slice(1)),
+  );
+  levels.forEach((level, at) => {
+    expect(level).toBeLessThanOrEqual((levels[at - 1] ?? 1) + 1);
+  });
+});

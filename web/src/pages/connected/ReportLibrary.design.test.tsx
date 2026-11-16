@@ -148,6 +148,20 @@ describe("connected library and report design", () => {
     expect(screen.getByText("Finished")).toBeInTheDocument();
   });
 
+  it("lays the metric tiles out in an auto-fit grid and keeps each value on one line", async () => {
+    const snapshot = librarySnapshot() as unknown as Snapshot;
+    const [north] = snapshot.catalogue.real;
+    if (!north) throw new Error("Northbridge fixture is missing");
+    north.metrics = { leverage: { value: "965", unit: "US$m", period: "2026-06-30" } };
+    useSnapshot(snapshot);
+    render(<ConnectedApp path="/" mode="synthetic" />);
+    const value = await screen.findByText("965 US$m");
+    expect(value).toHaveClass("whitespace-nowrap");
+    const grid = value.closest("dl");
+    expect(grid).toHaveClass("grid-cols-[repeat(auto-fit,minmax(9rem,1fr))]");
+    expect(grid).not.toHaveClass("xl:grid-cols-5");
+  });
+
   it("keeps repeated issuer searches usable after other filters change", async () => {
     useSnapshot(librarySnapshot());
     render(<ConnectedApp path="/" mode="synthetic" />);
@@ -297,11 +311,14 @@ it.each(["Retained-method check withheld admission.", ""])(
     snapshot.preview = { reason };
     useSnapshot(snapshot);
     render(<ConnectedApp path="/report/northbridge-2026" mode="synthetic" />);
-    expect(await screen.findByText("Test preview")).toBeInTheDocument();
+    expect((await screen.findAllByText("Test preview")).length).toBeGreaterThan(0);
     expect(screen.queryByText("Finished")).toBeNull();
     expect(screen.queryByText("Synthetic test")).toBeNull();
-    if (reason) expect(screen.getByRole("note")).toHaveTextContent(reason);
-    else expect(screen.queryByRole("note")).toBeNull();
+    if (reason) {
+      const note = screen.getByRole("note");
+      expect(note).toHaveTextContent("Test preview");
+      expect(note).toHaveTextContent(reason);
+    } else expect(screen.queryByRole("note")).toBeNull();
   },
 );
 

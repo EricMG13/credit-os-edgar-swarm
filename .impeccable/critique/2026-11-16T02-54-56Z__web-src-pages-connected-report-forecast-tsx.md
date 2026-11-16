@@ -5,9 +5,9 @@ max_score: 40
 na_heuristics: 
 p0_count: 0
 p1_count: 2
-target_identity: "file:/Users/ericguei/.codex/worktrees/rbot-react/credit-os-connected/web/src/pages/connected/report/Forecast.tsx"
+target_identity: "file:web/src/pages/connected/report/Forecast.tsx"
 target_fingerprint: "sha256:ec931198863ef58d24ee7258d5065e0cd5f7bdf7d4ff867beee963ad87036429"
-target_path: /Users/ericguei/.codex/worktrees/rbot-react/credit-os-connected/web/src/pages/connected/report/Forecast.tsx
+target_path: web/src/pages/connected/report/Forecast.tsx
 timestamp: 2026-11-16T02-54-56Z
 slug: web-src-pages-connected-report-forecast-tsx
 ---

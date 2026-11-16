@@ -19,7 +19,7 @@
 - Geometry of a drawing uses stated numbers only (views.js:264-266); a dated item is never moved to a day the source does not state (views.js:683).
 - Gates per task: the node tests and the pytest files the task names; then `uv run python tools/quality_gate.py`. Each test run within `timeout 300`.
 - Node tests: `node --test apps/issuer-library/credit_os/web/reader.test.cjs apps/issuer-library/credit_os/web/static.test.cjs apps/issuer-library/credit_os/web/calendar.test.cjs apps/issuer-library/credit_os/web/changes.test.cjs`.
-- Real-run fixture for probes (read-only copy): `SCR/ws2` where `SCR=/private/tmp/claude-501/-Users-ericguei-Documents-RBOT-HTML--claude-worktrees-refactor-optimisation-sweep-01c49e/d3b58d68-0f70-4eca-af09-da4e7774dc7f/scratchpad`; rebuild its library into a fresh folder with `uv run python apps/issuer-library/update_library.py --workspace <copy>`.
+- Real-run fixture for probes (read-only copy): `SCR/ws2` where `SCR=/private/tmp/claude-501/-Users-USER-Documents-RBOT-HTML--claude-worktrees-refactor-optimisation-sweep-01c49e/d3b58d68-0f70-4eca-af09-da4e7774dc7f/scratchpad`; rebuild its library into a fresh folder with `uv run python apps/issuer-library/update_library.py --workspace <copy>`.
 - Every task report ends with a `Not verified:` line.
 
 ## Review Focus
