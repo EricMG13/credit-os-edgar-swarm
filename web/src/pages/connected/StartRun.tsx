@@ -62,6 +62,7 @@ import {
 import { ValuationFields } from "./start/ValuationFields";
 import { Breadcrumb, card, ErrorNotice, field, heading, label } from "./layout";
 import { carryAccepted, decided, groupLimits, needsCheck } from "./start/limits";
+import { ANALYST_NAME_RULE, isAnalystName } from "./start/analystName";
 import { ReviewSheet } from "./start/ReviewSheet";
 import { StartReadiness } from "./start/StartReadiness";
 import {
@@ -123,6 +124,7 @@ const PATHWAY_CARDS = Object.entries(PATHWAYS).map(([id, pathway]) => ({
 
 type FieldKey =
   | "issuer_name"
+  | "submitted_by"
   | "cutoff"
   | "agreement"
   | "deal_terms"
@@ -142,7 +144,7 @@ class FieldProblem extends Error {
 }
 
 function stepOfField(field: FieldKey): FormStep {
-  return field === "issuer_name" ? "documents" : "context";
+  return field === "issuer_name" || field === "submitted_by" ? "documents" : "context";
 }
 
 function problemAttrs(problem: FieldProblem | undefined, field: FieldKey) {
@@ -693,17 +695,32 @@ function DocumentFields({
           view.changeIdentity("issue_classification", value);
         }}
       />
-      <label className={label}>
-        Your name
-        <input
-          className={field}
-          maxLength={80}
-          value={view.submittedBy}
-          onChange={(event) => {
-            view.changeSubmittedBy(event.target.value);
-          }}
-        />
-      </label>
+      <div className="grid gap-2">
+        <label className={label}>
+          Your name
+          <input
+            className={field}
+            maxLength={80}
+            autoComplete="off"
+            placeholder="Eric G"
+            {...problemAttrs(view.problem, "submitted_by")}
+            aria-describedby={
+              view.problem?.field === "submitted_by"
+                ? "error-submitted_by run-analyst-name"
+                : "run-analyst-name"
+            }
+            value={view.submittedBy}
+            onChange={(event) => {
+              view.changeSubmittedBy(event.target.value);
+            }}
+          />
+        </label>
+        <FieldMessage problem={view.problem} field="submitted_by" />
+        <p id="run-analyst-name" className="text-sm text-text-tertiary">
+          First name and initial, such as Eric G. Use two initials, such as Eric MG, if a colleague
+          has a similar name. Shown on Run activity and in Teams.
+        </p>
+      </div>
       {view.copy ? (
         <Button color="secondary" onPress={view.resetIssuer}>
           This is a different issuer
@@ -1555,6 +1572,8 @@ function IntakeForm({
         "Enter an issuer name and an issuer ID using letters a–z, digits or hyphens.",
       );
     }
+    if (!isAnalystName(submittedBy.trim()))
+      throw new FieldProblem("submitted_by", ANALYST_NAME_RULE);
     const details: Record<string, unknown> = {};
     if (forms.valuation) details.valuation = sendableValuation(forms.valuation);
     if (forms.module_options) {
@@ -1910,7 +1929,10 @@ function IntakeForm({
       clearProblem("issuer_name");
       setCustomSlug(value);
     },
-    changeSubmittedBy: setSubmittedBy,
+    changeSubmittedBy: (value) => {
+      clearProblem("submitted_by");
+      setSubmittedBy(value);
+    },
     carryLatest: () => void copyLatest(),
     resetIssuer,
     changePathway,

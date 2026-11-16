@@ -76,6 +76,11 @@ async function fillInputs() {
   fireEvent.change(name, { target: { value: "Synthetic Générale" } });
   fireEvent.change(screen.getByLabelText("As-of date"), { target: { value: "2026-10-31" } });
   fireEvent.change(screen.getByLabelText("Documents"), { target: { files: [file] } });
+  typeName();
+}
+
+function typeName() {
+  fireEvent.change(screen.getByLabelText("Your name"), { target: { value: "Ana L" } });
 }
 
 async function review() {
@@ -312,7 +317,7 @@ describe("connected run start", () => {
       level: "basic",
       model: "gpt",
       effort: "balanced",
-      submitted_by: "",
+      submitted_by: "Ana L",
     });
     expect(submit).toBeDisabled();
     approve();
@@ -535,6 +540,28 @@ describe("connected run start", () => {
     expect(sheet).not.toHaveTextContent(/20261116-083145-01|not used/);
   });
 
+  it.each(["", "Eric Garcia", "eric g"])(
+    "asks for a first name and initial, not %j",
+    async (name) => {
+      const fetchMock = testingFetch();
+      render(<ConnectedApp path="/start" mode="synthetic" />);
+      await fillInputs();
+      fireEvent.change(screen.getByLabelText("Your name"), { target: { value: name } });
+      await advanceToPurpose();
+      advanceToContext();
+      fireEvent.click(screen.getByRole("button", { name: "Review run" }));
+      expect(await screen.findByRole("alert")).toHaveTextContent(
+        "Enter your name as your first name and initial, for example Eric G, or two initials, for example Eric MG.",
+      );
+      const field = await screen.findByLabelText("Your name");
+      expect(field).toHaveAttribute("aria-invalid", "true");
+      await waitFor(() => expect(field).toHaveFocus());
+      fireEvent.change(field, { target: { value: "Eric G" } });
+      expect(field).not.toHaveAttribute("aria-invalid");
+      expect(fetchMock.mock.calls.some(([path]) => path.endsWith("/summary"))).toBe(false);
+    },
+  );
+
   it("shows a problem on its field, focuses it and clears it when fixed", async () => {
     testingFetch();
     render(<ConnectedApp path="/start" mode="synthetic" />);
@@ -652,7 +679,7 @@ describe("connected run start", () => {
     const fetchMock = testingFetch();
     render(<ConnectedApp path="/start" mode="synthetic" />);
     await fillInputs();
-    fireEvent.change(screen.getByLabelText("Your name"), { target: { value: "Dana Reyes" } });
+    fireEvent.change(screen.getByLabelText("Your name"), { target: { value: "Dana R" } });
     await advanceToPurpose();
     fireEvent.change(screen.getByLabelText("Run purpose"), { target: { value: "primary" } });
     fireEvent.change(screen.getByLabelText("Run form level"), { target: { value: "advanced" } });
@@ -678,7 +705,7 @@ describe("connected run start", () => {
       model: "claude",
       effort: "high",
       max_turns: 64,
-      submitted_by: "Dana Reyes",
+      submitted_by: "Dana R",
     });
     expect(body).not.toContain("CP-6");
   });
@@ -789,6 +816,7 @@ describe("connected run start", () => {
     expect(screen.getByLabelText("Issuer ID")).toHaveAttribute("readonly");
     expect(screen.getByLabelText("Issuer name")).toHaveValue("Northbridge");
     fireEvent.change(screen.getByLabelText("As-of date"), { target: { value: "2026-10-31" } });
+    typeName();
     await advanceToPurpose();
     expect(screen.getByLabelText("Run form level")).toHaveValue("advanced");
     advanceToContext();
@@ -862,6 +890,7 @@ describe("connected run start", () => {
       screen.getByText("Set to today for the new run. The earlier run used 2025-03-31."),
     ).toBeInTheDocument();
     fireEvent.change(screen.getByLabelText("As-of date"), { target: { value: "2026-09-29" } });
+    typeName();
     await advanceToPurpose();
     advanceToContext();
     expect(screen.getByLabelText("Turns per module")).toHaveValue(24);
@@ -873,6 +902,7 @@ describe("connected run start", () => {
     expect(screen.getByRole("checkbox", { name: /Approve:/ })).toBeEnabled();
     fireEvent.click(screen.getByRole("button", { name: "Edit issuer and documents" }));
     fireEvent.change(screen.getByLabelText("As-of date"), { target: { value: "2026-09-30" } });
+    typeName();
     await advanceToPurpose();
     advanceToContext();
     fireEvent.click(screen.getByRole("button", { name: "Review run" }));
@@ -978,6 +1008,7 @@ describe("connected run start", () => {
     });
     render(<ConnectedApp path="/start" search="?from=earlier" mode="synthetic" />);
     expect(await screen.findByLabelText("Issuer name")).toHaveValue("Northbridge");
+    typeName();
     await advanceToPurpose();
     advanceToContext();
     fireEvent.click(screen.getByRole("button", { name: "Review run" }));
@@ -2185,6 +2216,7 @@ describe("connected run start limits as decisions", () => {
     render(<ConnectedApp path="/start" search="?from=earlier" mode="synthetic" />);
     await screen.findByLabelText("Issuer name");
     fireEvent.change(screen.getByLabelText("As-of date"), { target: { value: "2026-10-31" } });
+    typeName();
     await advanceToPurpose();
     advanceToContext();
     fireEvent.click(screen.getByRole("button", { name: "Review run" }));
@@ -2192,6 +2224,7 @@ describe("connected run start limits as decisions", () => {
     fireEvent.click(screen.getByRole("button", { name: "Edit issuer and documents" }));
     fireEvent.click(screen.getByRole("button", { name: "This is a different issuer" }));
     await fillInputs();
+    typeName();
     await advanceToPurpose();
     advanceToContext();
     fireEvent.click(screen.getByRole("button", { name: "Review run" }));
@@ -2216,6 +2249,7 @@ describe("connected run start limits as decisions", () => {
     render(<ConnectedApp path="/start" search="?from=earlier" mode="synthetic" />);
     await screen.findByLabelText("Issuer name");
     fireEvent.change(screen.getByLabelText("As-of date"), { target: { value: "2026-10-31" } });
+    typeName();
     await advanceToPurpose();
     advanceToContext();
     fireEvent.click(screen.getByRole("button", { name: "Review run" }));
@@ -2227,6 +2261,7 @@ describe("connected run start limits as decisions", () => {
     });
     fireEvent.change(screen.getByLabelText("As-of date"), { target: { value: "2026-10-31" } });
     fireEvent.change(screen.getByLabelText("Documents"), { target: { files: [file] } });
+    typeName();
     await advanceToPurpose();
     advanceToContext();
     fireEvent.click(screen.getByRole("button", { name: "Review run" }));
@@ -2441,6 +2476,7 @@ describe("connected run start: what an acceptance carries to", () => {
     fireEvent.change(await screen.findByLabelText("Issuer name"), { target: { value: "Acme" } });
     fireEvent.change(screen.getByLabelText("As-of date"), { target: { value: "2026-10-31" } });
     fireEvent.change(screen.getByLabelText("Documents"), { target: { files: [file] } });
+    typeName();
     await advanceToPurpose();
     advanceToContext();
     fireEvent.click(screen.getByRole("button", { name: "Review run" }));
@@ -2448,6 +2484,7 @@ describe("connected run start: what an acceptance carries to", () => {
     fireEvent.click(screen.getByRole("button", { name: "Edit issuer and documents" }));
     fireEvent.click(screen.getByRole("button", { name: "Carry over from latest run" }));
     await screen.findByRole("button", { name: "This is a different issuer" });
+    typeName();
     await advanceToPurpose();
     advanceToContext();
     fireEvent.click(screen.getByRole("button", { name: "Review run" }));
