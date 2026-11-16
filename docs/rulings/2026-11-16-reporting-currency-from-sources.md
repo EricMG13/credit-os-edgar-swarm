@@ -37,6 +37,10 @@ non-USD run.
   handoff. No module, check, page or label takes it from `run.reporting_currency`.
 - `run.reporting_currency` stays in the context schema, optional; neither start page asks for it
   or defaults it. A value an older context holds is not read for the run's currency.
+- The retired owner path still reads `run.reporting_currency` and is not changed here:
+  `src/deploy_workflow/owners/period_basis.py`, `cp1d.py`, `cp2e.py`, `cp3c.py`, `cpl10.py` and
+  `cp2a.py` (through `period_basis`). Only `src/deploy_workflow/owner_workflow.py` calls them; CP-OS
+  and delivery never do. A context without the value would be refused on that path alone.
 - A facility in another currency than the statements counts in every total at the amount the
   filings state for it in the reporting currency. Where the filings give none, it is converted at
   the FX rate the source materials state for the reporting, with the rate and its source recorded
