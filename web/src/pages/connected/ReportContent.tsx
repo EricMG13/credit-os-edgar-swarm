@@ -471,38 +471,11 @@ function RecordsCard({
   );
 }
 
-export function ReportFindings({
-  snapshot,
-  run,
-  entry,
-  entryIndex,
-  overview = false,
-  afterBottomLine,
-  judgement,
-  figureTableLines,
-  chartsDrawn,
-}: {
-  snapshot: Snapshot;
-  run: PublishedRun;
-  entry: OutputEntry;
-  entryIndex: number;
-  overview?: boolean;
-  afterBottomLine?: ReactNode;
-  judgement?: string;
-  figureTableLines?: readonly number[];
-  chartsDrawn?: boolean;
-}) {
-  const [activeTrace, setActiveTrace] = useState<string | null>(null);
-  const sections = findingBlocks(entry.sections, entry, figureTableLines, chartsDrawn).filter(
-    (section) =>
-      !overview ||
-      [
-        "Bottom line",
-        "Key findings",
-        "Contrary evidence and what would change the view",
-        "Limitations",
-      ].includes(section.heading),
-  );
+function findingLabel(section: Section, overviewLabel?: string) {
+  return section.heading === "Bottom line" ? (overviewLabel ?? section.heading) : section.heading;
+}
+
+function findingsTraces(snapshot: Snapshot, entry: OutputEntry, sections: Section[]) {
   const traces: Record<string, Trace> = {};
   const key = (line: number) => traceKey(entry, line);
   for (const section of sections) {
@@ -519,27 +492,48 @@ export function ReportFindings({
         );
     }
   }
-  const hasBottomLine = sections.some((section) => section.heading === "Bottom line");
-  const summary = !hasBottomLine && entry.output.summary;
-  const summaryTrace = summary && traceForLine(snapshot, entry, entryIndex, summary.line);
-  if (summaryTrace) traces[key(summary.line)] = summaryTrace;
-  const active = activeTrace === null ? null : traces[activeTrace];
-  const records = overview ? [] : recordSections(entry.sections, entry);
-  if (!sections.length && !summary)
-    return (
-      <>
-        <p className="text-text-secondary">
-          {entry.output.parseError
-            ? "This handoff could not be read into sections."
-            : "This handoff has no findings in this report format."}{" "}
-          <a href={evidencePath(run.folder, entry)} className="text-action underline">
-            Open Evidence
-          </a>
-        </p>
-        {afterBottomLine}
-        <RecordsCard run={run} entry={entry} records={records} />
-      </>
-    );
+  return traces;
+}
+
+function FindingsSummary({
+  summary,
+  entry,
+  summaryTrace,
+}: {
+  summary: NonNullable<OutputEntry["output"]["summary"]>;
+  entry: OutputEntry;
+  summaryTrace: Trace | null | undefined | false;
+}) {
+  if (containsReference(summary.bottomLine)) return null;
+  return (
+    <BottomLine
+      level="h3"
+      text={{
+        label: "Bottom line",
+        lead: summary.bottomLine,
+        rest: containsReference(summary.limitation) ? "" : summary.limitation,
+        trace: summaryTrace ? traceKey(entry, summary.line) : null,
+      }}
+    />
+  );
+}
+
+function findingsLayout(
+  entry: OutputEntry,
+  figureTableLines: readonly number[] | undefined,
+  overview: boolean,
+  chartsDrawn: boolean,
+) {
+  const sections = findingBlocks(entry.sections, entry, figureTableLines, chartsDrawn).filter(
+    (section) =>
+      !overview ||
+      [
+        "Bottom line",
+        "Key findings",
+        "Contrary evidence and what would change the view",
+        "Limitations",
+      ].includes(section.heading),
+  );
   const keyFindings = overview
     ? sections.find((section) => section.heading === "Key findings")
     : undefined;
@@ -549,6 +543,91 @@ export function ReportFindings({
       )
     : undefined;
   const ordered = sections.filter((section) => section !== contrary);
+  const groups = ordered.map((section): [Section, Section?] =>
+    section === keyFindings && contrary ? [section, contrary] : [section],
+  );
+  return { sections, groups };
+}
+
+function followingParagraphs(section: Section, entry: OutputEntry, folder: string) {
+  return section.blocks
+    .slice(1)
+    .map((block) =>
+      block.type === "text" ? (
+        <FindingParagraph
+          key={block.line}
+          block={block}
+          trace={traceKey(entry, block.line)}
+          href={evidencePath(folder, entry, block.line)}
+        />
+      ) : null,
+    );
+}
+
+function EmptyFindings({
+  run,
+  entry,
+  records,
+  afterBottomLine,
+}: {
+  run: PublishedRun;
+  entry: OutputEntry;
+  records: Section[];
+  afterBottomLine?: ReactNode;
+}) {
+  return (
+    <>
+      <p className="text-text-secondary">
+        {entry.output.parseError
+          ? "This handoff could not be read into sections."
+          : "This handoff has no findings in this report format."}{" "}
+        <a href={evidencePath(run.folder, entry)} className="text-action underline">
+          Open Evidence
+        </a>
+      </p>
+      {afterBottomLine}
+      <RecordsCard run={run} entry={entry} records={records} />
+    </>
+  );
+}
+
+export function ReportFindings({
+  snapshot,
+  run,
+  entry,
+  entryIndex,
+  overview = false,
+  overviewLabel,
+  afterBottomLine,
+  judgement,
+  figureTableLines,
+  chartsDrawn = false,
+}: {
+  snapshot: Snapshot;
+  run: PublishedRun;
+  entry: OutputEntry;
+  entryIndex: number;
+  overview?: boolean;
+  overviewLabel?: string;
+  afterBottomLine?: ReactNode;
+  judgement?: string;
+  figureTableLines?: readonly number[];
+  chartsDrawn?: boolean;
+}) {
+  const [activeTrace, setActiveTrace] = useState<string | null>(null);
+  const { sections, groups } = findingsLayout(entry, figureTableLines, overview, chartsDrawn);
+  const key = (line: number) => traceKey(entry, line);
+  const traces = findingsTraces(snapshot, entry, sections);
+  const hasBottomLine = sections.some((section) => section.heading === "Bottom line");
+  const summary = !hasBottomLine && entry.output.summary;
+  const summaryTrace = summary && traceForLine(snapshot, entry, entryIndex, summary.line);
+  if (summaryTrace) traces[key(summary.line)] = summaryTrace;
+  const active = activeTrace === null ? null : traces[activeTrace];
+  const records = overview ? [] : recordSections(entry.sections, entry);
+  if (!sections.length && !summary)
+    return (
+      <EmptyFindings run={run} entry={entry} records={records} afterBottomLine={afterBottomLine} />
+    );
   function drawSection(section: Section) {
     const first = section.blocks[0];
     if (
@@ -566,7 +645,7 @@ export function ReportFindings({
           <BottomLine
             level="h2"
             text={{
-              label: section.heading,
+              label: findingLabel(section, overviewLabel),
               lead:
                 judgement ??
                 readParagraph(first.text).body.replaceAll("**", "").replaceAll("`", ""),
@@ -581,36 +660,12 @@ export function ReportFindings({
             <details className="rounded-lg border border-border-hairline bg-surface-card px-5 py-3">
               <summary className="cursor-pointer font-medium">Decision rationale</summary>
               <div className="mt-3 grid gap-3">
-                {section.blocks
-                  .slice(1)
-                  .map((block) =>
-                    block.type === "text" ? (
-                      <FindingParagraph
-                        key={block.line}
-                        block={block}
-                        trace={key(block.line)}
-                        href={evidencePath(run.folder, entry, block.line)}
-                      />
-                    ) : null,
-                  )}
+                {followingParagraphs(section, entry, run.folder)}
               </div>
             </details>
           )}
           {!overview && section.blocks.slice(1).some((block) => block.type === "text") && (
-            <div className={card}>
-              {section.blocks
-                .slice(1)
-                .map((block) =>
-                  block.type === "text" ? (
-                    <FindingParagraph
-                      key={block.line}
-                      block={block}
-                      trace={key(block.line)}
-                      href={evidencePath(run.folder, entry, block.line)}
-                    />
-                  ) : null,
-                )}
-            </div>
+            <div className={card}>{followingParagraphs(section, entry, run.folder)}</div>
           )}
         </div>
       );
@@ -638,7 +693,7 @@ export function ReportFindings({
         tabIndex={-1}
       >
         <h2 className={`${heading} first-letter:uppercase`}>
-          {richParts(drawingTitle(section.heading))}
+          {richParts(drawingTitle(findingLabel(section, overviewLabel)))}
         </h2>
         {section.heading === "Bottom line" && afterBottomLine}
         {section.blocks.map((block) =>
@@ -669,20 +724,10 @@ export function ReportFindings({
   return (
     <RunContext.Provider value={{ traces, open: setActiveTrace }}>
       <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-4">
-        {summary && !containsReference(summary.bottomLine) && (
-          <BottomLine
-            level="h3"
-            text={{
-              label: "Bottom line",
-              lead: summary.bottomLine,
-              rest: containsReference(summary.limitation) ? "" : summary.limitation,
-              trace: summaryTrace ? key(summary.line) : null,
-            }}
-          />
-        )}
+        {summary && <FindingsSummary summary={summary} entry={entry} summaryTrace={summaryTrace} />}
         {!hasBottomLine && afterBottomLine}
-        {ordered.map((section) => {
-          if (section !== keyFindings || !contrary) return drawSection(section);
+        {groups.map(([section, contrary]) => {
+          if (!contrary) return drawSection(section);
           return (
             <div key={section.line} className="grid min-w-0 gap-4 lg:grid-cols-2">
               {drawSection(section)}

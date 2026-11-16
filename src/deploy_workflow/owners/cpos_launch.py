@@ -28,7 +28,14 @@ from decimal import Decimal, InvalidOperation
 from pathlib import Path
 from typing import Any
 
-from deploy_vii.contracts import DEACTIVATED_MESSAGE, DEACTIVATED_PATHWAYS, PATHWAY_MODULES, Run
+from deploy_vii.contracts import (
+    DEACTIVATED_MESSAGE,
+    DEACTIVATED_PATHWAYS,
+    PATHWAY_CAP_USD,
+    PATHWAY_MODULES,
+    PathwayId,
+    Run,
+)
 from deploy_vii.registry import dependencies, modules, plan
 from deploy_vii.report_view import _spec_of, pathways
 from deploy_workflow import (
@@ -52,10 +59,12 @@ from deploy_workflow.context import CONTEXT_SOURCE_ID, RunContext, load_context
 from deploy_workflow.credit_os_chips import MODULE_NAMES
 from deploy_workflow.docx_text import docx_text
 from deploy_workflow.handoff_delivery import (
+    BLANK_SPLITS,
     DeliveryRequest,
     HandoffInput,
     MarkdownLayout,
     MarkdownRoute,
+    table_faults,
 )
 from deploy_workflow.html_text import convert_html
 from deploy_workflow.markdown_delivery import (
@@ -904,6 +913,17 @@ def _earlier_run(  # noqa: PLR0913 - the identity of the run and the approved ch
     )
 
 
+def _cap_differs(held: HandoffPlan | None, request: HandoffPlan) -> str:
+    """Why a run folder's request differs, when its cap is the cause: a folder started at another
+    cap (the USD 20 before per-pathway caps) resumes only at that cap, never at a higher one."""
+    if held is None or held.provider_cap_usd == request.provider_cap_usd:
+        return ""
+    return (
+        f" (the folder was started at a cap of USD {held.provider_cap_usd}, not USD "
+        f"{request.provider_cap_usd}; resume it with --cap {held.provider_cap_usd})"
+    )
+
+
 class _Cp8DoesNotFit(Exception):
     """CP-8's first request would hold more than the cap; ``prepare`` plans the run without it."""
 
@@ -1170,7 +1190,10 @@ def _prepare(  # noqa: PLR0913, PLR0915 - `prepare`'s body: one keyword per sett
     raw = request.model_dump_json(indent=2).encode()
     manifest = directory / "workflow.json"
     if manifest.exists() and manifest.read_bytes() != raw:
-        raise LaunchRefused(f"--out {directory}: holds a different request; choose a new --out")
+        raise LaunchRefused(
+            f"--out {directory}: holds a different request{_cap_differs(held, request)}; "
+            "choose a new --out"
+        )
     for relative, content in (*converted.items(), *earlier.items()):
         _put(directory / relative, content)
     for module, text in texts.items():
@@ -1274,6 +1297,7 @@ def checker(layout: MarkdownLayout) -> Check:
                 text, json.loads(task.sources[PACK_NAME]), [item.decode("utf-8") for item in sent]
             )
         routes = tuple(r for r in layout.routes if r.module_id == task.module_id)
+        faults = table_faults(text)  # every malformed table, so one review names them all
         try:
             if routes:
                 own = layout.model_copy(
@@ -1294,7 +1318,11 @@ def checker(layout: MarkdownLayout) -> Check:
                 require_issuer(task.run, layout.issuer_aliases, task.module_id, text.splitlines())
                 literal_module(task.module_id, raw)
         except ValueError as error:
-            issues.append(f"The report adapter refused this handoff: {error}")
+            # its table error, listed below: the same text, or with the scan's hint after it
+            listed = any(f in (str(error), str(error) + BLANK_SPLITS) for f in faults)
+            if not listed:
+                issues.append(f"The report adapter refused this handoff: {error}")
+        issues += faults
         for route in routes:
             if route.kind == "chart":
                 issues += chart_issues(text, route, money=money_unit(text))
@@ -1509,6 +1537,23 @@ def _cap(text: str) -> Decimal:
     return value
 
 
+def run_cap(pathway: PathwayId, asked: Decimal | None) -> Decimal:
+    """The cap a launch runs at: the pathway's (`PATHWAY_CAP_USD`), or a lower one asked for.
+
+    Owner, 2026-11-15: "Hard cap per pathway". Every launch ends here (the run start service
+    passes `--cap` too), so a cap above the pathway's is refused whoever asks; the pathway is the
+    context's, which is what runs."""
+    ceiling = PATHWAY_CAP_USD[pathway]
+    if asked is None:
+        return ceiling
+    if asked > ceiling:
+        raise LaunchRefused(
+            f"--cap {asked}: above the {pathway} cap of USD {ceiling} "
+            "(docs/rulings/2026-11-15-pathway-tiers-and-caps.md); a lower cap is allowed"
+        )
+    return asked
+
+
 def _web_line(prepared: Prepared, config: str, ruling: Path | None) -> tuple[str, ...]:
     """Whether the research module searches the web, when it runs."""
     if "CP-DR" not in prepared.ordered:
@@ -1694,7 +1739,11 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--context", type=Path, required=True, help="context/1 JSON file")
     parser.add_argument("--sources", type=Path, required=True, help="folder of issuer files")
     parser.add_argument("--config", choices=tuple(CONFIGS), required=True, help="model and effort")
-    parser.add_argument("--cap", type=_cap, required=True, help="USD ceiling for this run folder")
+    parser.add_argument(
+        "--cap",
+        type=_cap,
+        help="USD ceiling for this run folder: at most, and by default, the pathway's cap",
+    )
     parser.add_argument("--modules", nargs="+", help="default: the context's pathway preset")
     parser.add_argument("--max-turns", type=int, default=32, help="model turns per module")
     parser.add_argument("--out", type=Path, help="run folder; default runs/<run id>")
@@ -1831,7 +1880,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             args.sources,
             args.out,
             config=args.config,
-            cap=args.cap,
+            cap=run_cap(context.run.pathway, args.cap),
             modules=args.modules,
             web_search=web_search_run(args.config, args.ruling),
             prior=args.prior,

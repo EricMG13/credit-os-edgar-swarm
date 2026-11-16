@@ -8,10 +8,18 @@ export const field =
   "w-full rounded-lg border border-border-hairline bg-surface-card px-3 py-2 text-text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus";
 export const label = "flex min-w-0 flex-col gap-1.5 text-sm font-medium text-text-primary";
 
-export function Breadcrumb({ children }: { children: string }) {
+export function Breadcrumb({
+  children,
+  href = "/",
+  root = "Library",
+}: {
+  children: string;
+  href?: string;
+  root?: string;
+}) {
   return (
     <nav aria-label="Breadcrumb" className="mb-5 text-sm text-text-tertiary">
-      <TextLink href="/">Library</TextLink>
+      <TextLink href={href}>{root}</TextLink>
       {" / "}
       {children}
     </nav>

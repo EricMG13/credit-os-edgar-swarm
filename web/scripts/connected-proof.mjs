@@ -106,14 +106,28 @@ async function checkRunDocuments(page, channel, paidPreview) {
   const readiness = page.getByRole("complementary", { name: "Readiness", exact: true });
   const dropZone = page.locator("[data-dropzone]");
   await dropZone.waitFor();
+  await checkRunBundle(page);
   const [drop, side] = await Promise.all([dropZone.boundingBox(), readiness.boundingBox()]);
   assert.ok(drop && side && side.x >= drop.x + drop.width, "Readiness sits beside the form");
   assert.equal(await stepper.getByRole("listitem").count(), 5);
   assert.match(await current.innerText(), /Documents/u);
-  await readiness.getByText("USD 0.00 of USD 20.00", { exact: true }).waitFor();
+  await readiness.getByText("USD 0.00 of USD 25.00", { exact: true }).waitFor();
   if (!paidPreview)
     await page.screenshot({ path: path.join(artifacts, `${channel}-run-documents.png`) });
   await checkMobileDocuments(page, channel, paidPreview);
+}
+
+async function checkRunBundle(page) {
+  const scripts = await page.evaluate(() =>
+    performance
+      .getEntriesByType("resource")
+      .map((entry) => new URL(entry.name))
+      .filter((url) => url.origin === location.origin && url.pathname.endsWith(".js"))
+      .map((url) => url.pathname),
+  );
+  assert.ok(scripts.some((name) => name.includes("/StartRun-")));
+  assert.ok(scripts.every((name) => name.startsWith("/connected-assets/")));
+  assert.ok(!scripts.some((name) => /\/(ReportLibrary|LibraryIndex|RunProgress)-/u.test(name)));
 }
 
 async function checkMobileDocuments(page, channel, paidPreview) {
@@ -177,6 +191,10 @@ async function approveRunInputs(page, paidPreview) {
   await page.getByRole("button", { name: "Continue to purpose", exact: true }).click();
   await page.getByRole("heading", { name: "Purpose", exact: true }).waitFor();
   assert.match(await current.innerText(), /Purpose/u);
+  await page.getByRole("radio", { name: "Lite credit assessment", exact: true }).waitFor();
+  await page.getByRole("radio", { name: "Full credit assessment", exact: true }).waitFor();
+  await page.getByRole("radio", { name: "Deep credit assessment", exact: true }).waitFor();
+  await page.getByText("20 base modules", { exact: true }).waitFor();
   await page.getByRole("radio", { name: "Full credit assessment", exact: true }).waitFor();
   await page.getByRole("button", { name: "Review inputs", exact: true }).click();
   assert.match(await current.innerText(), /Confirm/u);
@@ -190,7 +208,7 @@ async function approveRunInputs(page, paidPreview) {
     .selectOption({ label: "northbridge-portfolio.xlsx" });
   await page.getByRole("button", { name: "Review run", exact: true }).click();
   const submitButton = page.getByRole("button", {
-    name: paidPreview ? "Submit, spend up to USD 20.00" : "Submit run",
+    name: paidPreview ? "Submit, spend up to USD 25.00" : "Submit run",
     exact: true,
   });
   await submitButton.waitFor();
@@ -210,8 +228,8 @@ async function checkRunConfirmation(page, channel, paidPreview, consent, submitB
   });
   await dialog.waitFor();
   if (paidPreview) {
-    await dialog.getByText(/spend up to USD 20\.00/u).waitFor();
-    await dialog.getByRole("button", { name: "Start run, up to USD 20.00" }).waitFor();
+    await dialog.getByText(/spend up to USD 25\.00/u).waitFor();
+    await dialog.getByRole("button", { name: "Start run, up to USD 25.00" }).waitFor();
     await page.screenshot({
       path: path.join(artifacts, `${channel}-paid-confirmation.png`),
       animations: "disabled",
@@ -233,6 +251,11 @@ async function checkRunConfirmation(page, channel, paidPreview, consent, submitB
 }
 
 async function submit(page, channel, paidPreview = false) {
+  const shownCaps = [];
+  page.on("request", (request) => {
+    if (/\/api\/submissions\/[^/]+\/(?:summary|submit)$/u.test(new URL(request.url()).pathname))
+      shownCaps.push(request.headers()["x-shown-cap"]);
+  });
   await checkRunDocuments(page, channel, paidPreview);
   await uploadRunDocuments(page);
   const submitButton = await approveRunInputs(page, paidPreview);
@@ -248,7 +271,10 @@ async function submit(page, channel, paidPreview = false) {
   });
   const dialog = await checkRunConfirmation(page, channel, paidPreview, consent, submitButton);
   assert.equal(submitRequests, 0);
-  if (paidPreview) return;
+  if (paidPreview) {
+    assert.deepEqual(shownCaps, ["25"]);
+    return;
+  }
 
   const submitted = response(page, /\/api\/submissions\/[^/]+\/submit$/u, "POST");
   const activity = page.waitForURL(/\/run\/\d{8}-\d{6}-\d{2}$/u);
@@ -257,6 +283,7 @@ async function submit(page, channel, paidPreview = false) {
   assert.equal((await submitted).status(), 200);
   await activity;
   assert.equal(submitRequests, 1);
+  assert.deepEqual(shownCaps, ["25", "25"]);
   return new URL(page.url()).pathname.split("/").at(-1);
 }
 
@@ -288,7 +315,7 @@ async function checkActivity(page, channel) {
   await activity.getByText("USD 0.00", { exact: true }).waitFor();
   await activity
     .getByRole("progressbar", {
-      name: "USD 0.00 of USD 20.00 cap usage; USD 0.00 settled, USD 0.00 reserved or unknown",
+      name: "USD 0.00 of USD 25.00 cap usage; USD 0.00 settled, USD 0.00 reserved or unknown",
     })
     .waitFor();
   await activity.getByRole("progressbar", { name: "14 of 14 modules" }).waitFor();
@@ -354,7 +381,7 @@ async function checkRecord(report, page, channel) {
   await report.getByText(/^(?:\d+ min )?\d+ s$/u).waitFor();
   await report
     .getByRole("progressbar", {
-      name: "USD 0.00 of USD 20.00 cap usage; USD 0.00 settled, USD 0.00 reserved or unknown",
+      name: "USD 0.00 of USD 25.00 cap usage; USD 0.00 settled, USD 0.00 reserved or unknown",
     })
     .waitFor();
   await report.getByRole("combobox", { name: "Module", exact: true }).selectOption("CP-1");
@@ -380,6 +407,7 @@ async function checkRecord(report, page, channel) {
 
 async function checkChangesTrace(browser, endpoint, id) {
   const page = await browser.newPage();
+  page.setDefaultTimeout(15000);
   try {
     // A separate fixture exercises paired-run links. The upload proof above uses the real publication.
     const response = await page.request.get(new URL("/connected/snapshot", endpoint).href);
@@ -493,7 +521,7 @@ async function checkChangesTrace(browser, endpoint, id) {
       },
       verdicts: { measures: { debt: { kind: "comparable", label: "Same definition" } } },
     };
-    await page.route("**/connected/snapshot", (route) => route.fulfill({ json: snapshot }));
+    await page.route("**/connected/snapshot?run=*", (route) => route.fulfill({ json: snapshot }));
     await page.goto(new URL(`/report/${id}#changes`, endpoint).href);
     const report = page.locator("main");
     const card = report.getByRole("listitem").filter({ hasText: "Net debt" });
@@ -724,7 +752,7 @@ async function checkSecurities(report, modules, artifacts, channel, page) {
   await section.getByRole("cell", { name: "Recovery basis unavailable", exact: true }).waitFor();
 }
 
-async function checkCharts(report, artifacts, channel, page) {
+async function checkCharts(report, artifacts, channel, page, run) {
   const section = (name) =>
     report
       .getByRole("navigation", { name: "Report sections" })
@@ -747,7 +775,7 @@ async function checkCharts(report, artifacts, channel, page) {
   await checkForecastEvidence(report, artifacts, channel, page);
   await checkReadingLayout(report, page, channel);
   await checkForecastRunCharts(report, page, sourceHref);
-  await checkReportEvidence(report, page, channel);
+  await checkReportEvidence(report, page, channel, run);
 }
 
 async function checkCompactModules(report, page, channel) {
@@ -1020,7 +1048,7 @@ async function checkRetainedSourceFile(report, page) {
   }
 }
 
-async function checkReportEvidence(report, page, channel) {
+async function checkReportEvidence(report, page, channel, run) {
   await report
     .getByRole("navigation", { name: "Report sections" })
     .getByRole("link", { name: "Report", exact: true })
@@ -1038,13 +1066,121 @@ async function checkReportEvidence(report, page, channel) {
   await page.reload();
   await report.getByRole("heading", { name: "Handoffs", exact: true }).waitFor();
   await checkRecord(report, page, channel);
+  await checkPublishedScriptChecks(report, page, channel, run);
+  await report.getByRole("combobox", { name: "Module", exact: true }).selectOption("");
+  await evidence.getByRole("link", { name: "Summary", exact: true }).click();
+  await report.getByRole("heading", { name: "Handoffs", exact: true }).waitFor();
+}
+
+async function checkPublishedScriptChecks(report, page, channel, run) {
+  const snapshot = await page.request.get(
+    new URL(`/connected/snapshot?run=${encodeURIComponent(run)}`, page.url()).href,
+  );
+  assert.equal(snapshot.status(), 200);
+  const { workspace } = await snapshot.json();
+  const published = Object.values(workspace.runs).find((item) => item.folder === run);
+  assert.ok(published);
+  const record = published.evidence.scriptChecks?.find((item) => item.module === "CP-2E");
+  assert.ok(record && record.outcomes.length > 0, "The published run must retain CP-2E checks");
+  const rateCheck = record.outcomes.find(
+    (outcome) => outcome.figure === "Unhedged floating-rate debt",
+  );
+  assert.ok(rateCheck, "The published run must retain the floating-rate debt check");
+  const nav = report.getByRole("navigation", { name: "Evidence sections" });
+  await nav.getByRole("link", { name: /Script checks/u }).click();
+  await page.waitForURL((url) => url.hash === "#evidence/checks");
+  await report.getByRole("heading", { name: "Script checks", exact: true }).waitFor();
+  const module = report.getByRole("combobox", { name: "Module", exact: true });
+  await module.selectOption("CP-2E");
+  await page.waitForURL((url) => url.hash === "#evidence/checks/CP-2E");
+  const rate = report.getByRole("region", {
+    name: `${rateCheck.figure}: ${rateCheck.status}`,
+    exact: true,
+  });
+  await rate.waitFor();
+  await rate.getByText(rateCheck.reason, { exact: true }).waitFor();
+  await checkOutcomeValues(rate, rateCheck);
+  await checkCheckMetadata(report, record);
+  await page.screenshot({
+    path: path.join(artifacts, `${channel}-evidence-script-checks.png`),
+    fullPage: true,
+  });
+}
+
+async function checkOutcomeValues(rate, rateCheck) {
+  const recomputed = [rateCheck.recomputed, rateCheck.recomputedLabel]
+    .filter((value) => value !== null)
+    .join(" ");
+  if (recomputed) {
+    await rate
+      .getByText(`${recomputed}${rateCheck.unit ? ` ${rateCheck.unit}` : ""}`, {
+        exact: true,
+      })
+      .waitFor();
+  }
+}
+
+async function checkCheckMetadata(report, record) {
+  for (const { status, n } of record.counts) {
+    await report.getByText(`${String(n)} ${status}`, { exact: true }).waitFor();
+  }
+  const storedScript = record.scripts.find((script) => script.sha256);
+  if (storedScript?.sha256) {
+    await report.locator("code").getByText(storedScript.sha256, { exact: true }).waitFor();
+  }
+}
+
+async function checkCompactLibrary(page, endpoint, run) {
+  const response = await page.request.get(new URL("/connected/library", endpoint).href);
+  assert.equal(response.status(), 200);
+  const index = await response.json();
+  assert.equal(index.chips, undefined);
+  assert.deepEqual(Object.keys(index.workspace), ["runs"]);
+  const found = Object.values(index.workspace.runs).find((item) => item.folder === run);
+  assert.ok(found);
+  assert.deepEqual(Object.keys(found).sort(), ["folder", "issuerKey", "pathway"]);
+  assert.ok(index.catalogue.real.some((item) => item.id === run));
+}
+
+async function checkLibrarySearch(browser, endpoint) {
+  const library = await browser.newPage();
+  library.setDefaultTimeout(15000);
+  try {
+    await library.goto(endpoint);
+    const search = library.getByRole("searchbox", { name: "Search issuers" });
+    await search.fill("zz no match");
+    await library.getByText("No issuers match these filters.", { exact: true }).waitFor();
+    await search.fill("Northbridge");
+    await library.getByRole("link", { name: "Open report", exact: true }).waitFor();
+    await search.fill("zz again");
+    await library.getByText("No issuers match these filters.", { exact: true }).waitFor();
+    await search.fill("");
+    await library.getByRole("link", { name: "Open report", exact: true }).waitFor();
+  } finally {
+    await library.close();
+  }
 }
 
 async function checkBrowserRun(browser, service, workspace, channel, brand) {
   const page = await browser.newPage();
   page.setDefaultTimeout(15000);
   const errors = [];
+  const publicationRequests = [];
+  const scriptRequests = [];
+  page.on("request", (request) => {
+    const url = new URL(request.url());
+    if (url.pathname.endsWith(".js")) scriptRequests.push(url.pathname);
+    if (url.pathname.startsWith("/connected/")) publicationRequests.push(url.pathname + url.search);
+  });
   page.on("pageerror", (error) => errors.push(error.message));
+  await page.goto(new URL("/start", service.endpoint).href);
+  await page.getByLabel("Issuer name", { exact: true }).waitFor();
+  assert.ok(scriptRequests.some((path) => /connected-assets\/StartRun-[^/]+\.js$/u.test(path)));
+  assert.ok(
+    !scriptRequests.some((path) => /connected-assets\/ReportLibrary-[^/]+\.js$/u.test(path)),
+  );
+  assert.ok(!scriptRequests.some((path) => /\/assets\/index-[^/]+\.js$/u.test(path)));
+  scriptRequests.length = 0;
   await page.goto(service.endpoint);
   const brands = await page.evaluate(() =>
     navigator.userAgentData?.brands.map(({ brand }) => brand),
@@ -1066,6 +1202,10 @@ async function checkBrowserRun(browser, service, workspace, channel, brand) {
   await checkRateMethod(workspace, run);
   await open.click();
   await page.waitForURL((url) => url.pathname === `/report/${run}`);
+  await page.getByRole("heading", { name: "Overview" }).waitFor();
+  assert.ok(
+    scriptRequests.some((path) => /connected-assets\/ReportLibrary-[^/]+\.js$/u.test(path)),
+  );
   const report = page.locator("main");
   await report.getByText("Full credit assessment", { exact: true }).waitFor();
   await report.getByText("As of 31 March 2025", { exact: true }).waitFor();
@@ -1084,7 +1224,7 @@ async function checkBrowserRun(browser, service, workspace, channel, brand) {
   });
   await checkOverviewTrace(report, page);
   await checkCalendar(report, artifacts, channel, page);
-  await checkCharts(report, artifacts, channel, page);
+  await checkCharts(report, artifacts, channel, page, run);
   const download = report.getByRole("link", {
     name: "Download Fundamental credit",
     exact: true,
@@ -1096,6 +1236,11 @@ async function checkBrowserRun(browser, service, workspace, channel, brand) {
   assert.match(bytes.toString("utf8"), /The synthetic issuer shows one observed item\./u);
   const publication = await page.request.get(new URL("/connected/snapshot", service.endpoint).href);
   await checkChangesTrace(browser, service.endpoint, run);
+  await checkCompactLibrary(page, service.endpoint, run);
+  await checkLibrarySearch(browser, service.endpoint);
+  assert.ok(publicationRequests.includes("/connected/library"));
+  assert.ok(publicationRequests.includes(`/connected/snapshot?run=${encodeURIComponent(run)}`));
+  assert.ok(!publicationRequests.includes("/connected/snapshot"));
   assert.equal(publication.status(), 200);
   const { workspace: publishedWorkspace } = await publication.json();
   const published = Object.values(publishedWorkspace.runs).find((item) => item.folder === run);
@@ -1135,6 +1280,7 @@ async function checkBrowserRun(browser, service, workspace, channel, brand) {
       "modules-mobile",
       "evidence",
       "evidence-record",
+      "evidence-script-checks",
     ].map((view) => `${channel}-${view}.png`),
     checks: [
       "upload",
@@ -1144,6 +1290,9 @@ async function checkBrowserRun(browser, service, workspace, channel, brand) {
       "synthetic confirmation and exactly one submission",
       "run activity spend, module count, elapsed time and delivery feed",
       "finished publication",
+      "compact library index, repeated issuer searches and report-scoped browser requests",
+      "Run loads only connected route bundles without the report reader or offline app",
+      "route-based JavaScript loads only after navigation (run, library, and report chunks)",
       "overview",
       "issuer calendar date precision and originating row",
       "figure and row trace keyboard focus restoration",
@@ -1170,6 +1319,7 @@ async function checkBrowserRun(browser, service, workspace, channel, brand) {
       "hash-attested original source file and exact retained page open from Evidence",
       "exact Overview passage, module chart row and Forecast inputs",
       "Evidence Record metadata, module timings, synthetic responses and hashes",
+      "CP-2E script checks match retained status, recomputed values and native counts",
       "paired Changes fixture links only to its matched handoff row",
     ],
   };

@@ -104,6 +104,28 @@ type Model = {
   href: string;
   download: string;
 };
+export type ScriptCheckOutcome = {
+  figure: string | null;
+  register: string | null;
+  row: string | null;
+  status: string;
+  reason: string | null;
+  script: string | null;
+  stated: string | null;
+  recomputed: number | null;
+  recomputedLabel: string | null;
+  tolerance: number | null;
+  unit: string | null;
+};
+export type ScriptCheckRecord = {
+  module: string;
+  attempt: number;
+  response: string | null;
+  counts: { status: string; n: number }[];
+  scripts: { name: string; sha256: string | null }[];
+  outcomes: ScriptCheckOutcome[];
+};
+
 export type PublishedRun = {
   folder: string;
   issuer: string;
@@ -119,6 +141,7 @@ export type PublishedRun = {
   } | null;
   changes?: Changes | null;
   evidence: {
+    scriptChecks?: ScriptCheckRecord[];
     sources: Source[];
     unused: Source[];
     unrecorded: Source[];
@@ -164,9 +187,24 @@ export type Snapshot = {
   preview?: { reason: string };
 };
 
-export async function getSnapshot(signal: AbortSignal): Promise<Snapshot | null> {
-  const response = await fetch("/connected/snapshot", { cache: "no-store", signal });
+export type LibraryIndex = {
+  catalogue: Snapshot["catalogue"];
+  workspace: {
+    runs: Record<string, Pick<PublishedRun, "folder" | "issuerKey" | "pathway">>;
+  };
+  preview?: Snapshot["preview"];
+};
+
+export async function getLibraryIndex(signal: AbortSignal): Promise<LibraryIndex | null> {
+  const response = await fetch("/connected/library", { cache: "no-store", signal });
   if (!response.ok) throw new Error("The published library could not be loaded.");
+  return (await response.json()) as LibraryIndex | null;
+}
+
+export async function getSnapshot(signal: AbortSignal, folder?: string): Promise<Snapshot | null> {
+  const query = folder === undefined ? "" : `?run=${encodeURIComponent(folder)}`;
+  const response = await fetch(`/connected/snapshot${query}`, { cache: "no-store", signal });
+  if (!response.ok) throw new Error("The published report could not be loaded.");
   return (await response.json()) as Snapshot | null;
 }
 

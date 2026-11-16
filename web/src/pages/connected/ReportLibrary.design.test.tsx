@@ -63,7 +63,23 @@ function useSnapshot(snapshot: unknown) {
   vi.stubGlobal(
     "fetch",
     vi.fn((path: string) => {
-      if (path !== "/connected/snapshot") throw new Error(`Unexpected request ${path}`);
+      const data = snapshot as Snapshot;
+      if (path === "/connected/library") {
+        const runs = Object.fromEntries(
+          Object.entries(data.workspace.runs).map(([key, run]) => [
+            key,
+            {
+              folder: run.folder,
+              issuerKey: run.issuerKey,
+              pathway: run.pathway,
+            },
+          ]),
+        );
+        return Promise.resolve(Response.json({ catalogue: data.catalogue, workspace: { runs } }));
+      }
+      const url = new URL(path, "http://localhost");
+      if (url.pathname !== "/connected/snapshot" || !url.searchParams.get("run"))
+        throw new Error(`Unexpected request ${path}`);
       return Promise.resolve(Response.json(snapshot));
     }),
   );
@@ -144,6 +160,19 @@ describe("connected library and report design", () => {
     const grid = value.closest("dl");
     expect(grid).toHaveClass("grid-cols-[repeat(auto-fit,minmax(9rem,1fr))]");
     expect(grid).not.toHaveClass("xl:grid-cols-5");
+  });
+
+  it("keeps repeated issuer searches usable after other filters change", async () => {
+    useSnapshot(librarySnapshot());
+    render(<ConnectedApp path="/" mode="synthetic" />);
+    await screen.findByRole("heading", { name: "Northbridge" });
+    fireEvent.change(screen.getByLabelText("Sector"), { target: { value: "Industrials" } });
+    const search = screen.getByRole("searchbox", { name: "Search issuers" });
+    fireEvent.change(search, { target: { value: "zz" } });
+    fireEvent.change(search, { target: { value: "zz no match" } });
+    expect(await screen.findByText("No issuers match these filters.")).toBeInTheDocument();
+    fireEvent.change(search, { target: { value: "North" } });
+    expect(await screen.findByRole("heading", { name: "Northbridge" })).toBeInTheDocument();
   });
 
   it("switches Changes between cards and a table using the same published values", () => {

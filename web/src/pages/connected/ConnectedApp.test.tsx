@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { ConnectedApp } from "./ConnectedApp";
 
@@ -6,9 +6,21 @@ const context = {
   run: { as_of: "", pathway: "credit_snapshot", case_kind: "synthetic", reporting_currency: "USD" },
   identity: { issuer_name: "", issuer_id: "" },
 };
+const submissionCaps = {
+  credit_snapshot: "25",
+  lite_credit_assessment: "15",
+  deep_credit_assessment: "40",
+  earnings_update: "20",
+  relative_value: "20",
+  covenant_refinancing: "20",
+  distressed_restructuring: "20",
+  portfolio_decision: "20",
+  short_snapshot: "20",
+};
 const file = new File(["sample input"], "Credit & facts.html", { type: "text/html" });
 const plan = {
   digest: "server-approved",
+  cap: "25",
   error: "",
   documents: [{ source: file.name, kind: "annual_report" }],
   modules: ["CP-0"],
@@ -26,7 +38,7 @@ function testingFetch(
   overrides: Record<string, unknown> = {},
 ) {
   const entries: Record<string, unknown> = {
-    "/connected/context": { ...context, submission_cap_usd: "20" },
+    "/connected/context": { ...context, submission_caps_usd: submissionCaps },
     "/api/submissions": { id: "sub-1" },
     "/api/submissions/sub-1/files?name=Credit%20%26%20facts.html": { name: file.name },
     "/api/submissions/sub-1/reading": { documents: plan.documents, ignored: [], error: "" },
@@ -40,7 +52,10 @@ function testingFetch(
         typeof submitResponse === "function" ? submitResponse() : submitResponse,
       );
     if (!Object.hasOwn(entries, path)) throw new Error(`Unexpected request ${path}`);
-    return Promise.resolve(Response.json(entries[path]));
+    const entry = entries[path];
+    if (entry instanceof Response) return Promise.resolve(entry);
+    if (typeof entry === "function") return (entry as () => Promise<Response>)();
+    return Promise.resolve(Response.json(entry));
   });
   vi.stubGlobal("fetch", fetchMock);
   return fetchMock;
@@ -92,7 +107,7 @@ describe("connected run start", () => {
     fireEvent.change(issuer, { target: { value: "Synthetic Générale" } });
     const action = screen.getByRole("button", { name: "Continue to purpose" });
     expect(action).toBeDisabled();
-    expect(screen.getByRole("progressbar", { name: "USD 0.00 of USD 20.00" })).toHaveAttribute(
+    expect(screen.getByRole("progressbar", { name: "USD 0.00 of USD 25.00" })).toHaveAttribute(
       "aria-valuenow",
       "0",
     );
@@ -109,7 +124,11 @@ describe("connected run start", () => {
 
   it("sends the selected portfolio workbook with a full credit assessment", async () => {
     const fetchMock = testingFetch(plan, undefined, {
-      "/connected/context": { ...context, attachments: { portfolio_workbook: false } },
+      "/connected/context": {
+        ...context,
+        submission_caps_usd: submissionCaps,
+        attachments: { portfolio_workbook: false },
+      },
     });
     render(<ConnectedApp path="/start" mode="synthetic" />);
     await fillInputs();
@@ -134,6 +153,87 @@ describe("connected run start", () => {
     });
   });
 
+  it("offers Deep in Lite/Full/Deep order and binds its 20 analytical modules to USD 40", async () => {
+    const fetchMock = testingFetch({ ...plan, cap: "40" });
+    render(<ConnectedApp path="/start" mode="live" />);
+    await fillInputs();
+    await advanceToPurpose();
+    const pathways = screen.getByRole("radiogroup", { name: "Pathway" });
+    expect(
+      within(pathways)
+        .getAllByRole("radio")
+        .map((radio) => radio.getAttribute("value")),
+    ).toEqual([
+      "lite_credit_assessment",
+      "credit_snapshot",
+      "deep_credit_assessment",
+      "earnings_update",
+      "relative_value",
+      "covenant_refinancing",
+      "distressed_restructuring",
+      "portfolio_decision",
+    ]);
+    fireEvent.click(within(pathways).getByRole("radio", { name: "Deep credit assessment" }));
+    expect(screen.getByRole("progressbar", { name: "USD 0.00 of USD 40.00" })).toBeVisible();
+    expect(screen.getByText("20 base modules", { exact: true })).toBeVisible();
+    fireEvent.change(screen.getByLabelText("Run form level"), {
+      target: { value: "advanced" },
+    });
+    advanceToContext();
+    expect(screen.queryByRole("checkbox", { name: /CP-MODEL/ })).toBeNull();
+    fireEvent.click(screen.getByRole("checkbox", { name: "Source readiness (CP-0)" }));
+    fireEvent.click(screen.getByRole("button", { name: "Review run" }));
+    await screen.findByRole("button", { name: "Submit, spend up to USD 40.00" });
+    const summaryRequest = fetchMock.mock.calls.find(([path]) => path.endsWith("/summary"));
+    expect(summaryRequest?.[1]?.headers).toMatchObject({ "X-Shown-Cap": "40" });
+    const rawAnswers = summaryRequest?.[1]?.body;
+    const reviewedAnswers = JSON.parse(typeof rawAnswers === "string" ? rawAnswers : "null") as {
+      context: { run: { pathway: string } };
+      modules: string[];
+    };
+    expect(reviewedAnswers.context.run.pathway).toBe("deep_credit_assessment");
+    expect(reviewedAnswers.modules).not.toContain("CP-MODEL");
+    expect(reviewedAnswers.modules).not.toContain("CP-0");
+  });
+
+  it("rejects a summary with a missing or different cap before enabling submission", async () => {
+    for (const cap of ["40", undefined]) {
+      const mismatched = { ...plan, cap };
+      const fetchMock = testingFetch(mismatched as typeof plan);
+      render(<ConnectedApp path="/start" mode="live" />);
+      await fillInputs();
+      await advanceToPurpose();
+      advanceToContext();
+      fireEvent.click(screen.getByRole("button", { name: "Review run" }));
+      expect(await screen.findByRole("alert")).toHaveTextContent("cap changed while preparing");
+      expect(screen.queryByRole("button", { name: "Submit, spend up to USD 25.00" })).toBeNull();
+      expect(fetchMock.mock.calls.some(([path]) => path.endsWith("/submit"))).toBe(false);
+      cleanup();
+    }
+  });
+
+  it("locks pathway answers while summary cap approval is pending", async () => {
+    let resolveSummary!: (response: Response) => void;
+    const delayed = new Promise<Response>((resolve) => {
+      resolveSummary = resolve;
+    });
+    const fetchMock = testingFetch(plan, undefined, {
+      "/api/submissions/sub-1/summary": () => delayed,
+    });
+    render(<ConnectedApp path="/start" mode="live" />);
+    await fillInputs();
+    await advanceToPurpose();
+    advanceToContext();
+    fireEvent.click(screen.getByRole("button", { name: "Review run" }));
+    expect(await screen.findByRole("button", { name: "Preparing review…" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Previous" })).toBeDisabled();
+    expect(screen.getByLabelText("Anything the analysis should know")).toBeDisabled();
+    resolveSummary(Response.json(plan));
+    await screen.findByRole("button", { name: "Submit, spend up to USD 25.00" });
+    const summaryRequest = fetchMock.mock.calls.find(([path]) => path.endsWith("/summary"));
+    expect(summaryRequest?.[1]?.headers).toMatchObject({ "X-Shown-Cap": "25" });
+  });
+
   it("uploads raw bytes, reads the files, and submits only the reviewed answers and digest", async () => {
     const fetchMock = testingFetch();
     const navigate = vi.fn();
@@ -150,6 +250,7 @@ describe("connected run start", () => {
       "/api/submissions/sub-1/summary",
     ]);
     expect(fetchMock.mock.calls[2]?.[1]).toMatchObject({ method: "POST", body: file });
+    expect(fetchMock.mock.calls[5]?.[1]?.headers).toMatchObject({ "X-Shown-Cap": "25" });
     const rawAnswers = fetchMock.mock.calls[5]?.[1]?.body;
     expect(typeof rawAnswers).toBe("string");
     const body = JSON.parse(rawAnswers as string) as unknown;
@@ -177,6 +278,29 @@ describe("connected run start", () => {
     await vi.waitFor(() => {
       expect(navigate).toHaveBeenCalledWith("/run/test-run");
     });
+  });
+
+  it("clears a hidden ticker from the submitted issuer context when listed equity is unchecked", async () => {
+    const fetchMock = testingFetch();
+    render(<ConnectedApp path="/start" mode="synthetic" />);
+    await fillInputs();
+    await advanceToPurpose();
+    fireEvent.click(screen.getByRole("button", { name: "Review inputs" }));
+    fireEvent.click(screen.getByRole("button", { name: "Approve summary" }));
+    const listed = screen.getByRole("checkbox", { name: "Listed equity" });
+    fireEvent.click(listed);
+    fireEvent.change(screen.getByLabelText("Ticker"), { target: { value: "ABC" } });
+    fireEvent.click(listed);
+
+    fireEvent.click(screen.getByRole("button", { name: "Review run" }));
+    await screen.findByRole("button", { name: "Submit run" });
+
+    const summaryCall = fetchMock.mock.calls.find(([path]) => path.endsWith("/summary"));
+    expect(summaryCall).toBeDefined();
+    const answers = JSON.parse(summaryCall?.[1]?.body as string) as {
+      context: { identity: Record<string, unknown> };
+    };
+    expect(answers.context.identity).toMatchObject({ listed_equity: false, ticker: "" });
   });
 
   it.each([400, 404])(
@@ -224,6 +348,7 @@ describe("connected run start", () => {
     const requests = fetchMock.mock.calls.filter(([path]) => path.endsWith("/submit"));
     expect(requests).toHaveLength(2);
     expect(requests[0]).toEqual(requests[1]);
+    expect(requests[0]?.[1]?.headers).toMatchObject({ "X-Shown-Cap": "25" });
     expect(fetchMock.mock.calls.filter(([path]) => path.endsWith("/summary"))).toHaveLength(1);
   });
 
@@ -292,9 +417,10 @@ describe("connected run start", () => {
   });
 
   it("reviews an earnings update with periods and the chosen management bridge", async () => {
-    const fetchMock = testingFetch(plan, undefined, {
+    const fetchMock = testingFetch({ ...plan, cap: "20" }, undefined, {
       "/connected/context": {
         ...context,
+        submission_caps_usd: submissionCaps,
         attachments: {
           management_bridge: false,
           portfolio_workbook: false,
@@ -343,6 +469,72 @@ describe("connected run start", () => {
       },
     });
     expect(fetchMock.mock.calls.filter(([, options]) => options?.body === file)).toHaveLength(1);
+  });
+
+  it("copies the latest issuer inputs through inspection and into the reviewed payload", async () => {
+    const fetchMock = testingFetch(plan, undefined, {
+      "/api/issuers/northbridge": {
+        latest_run: "latest-case",
+        runs: 2,
+        latest_as_of: "2026-09-30",
+      },
+      "/api/runs/latest-case/inputs": {
+        issuer_id: "northbridge",
+        issuer_name: "Northbridge",
+        level: "advanced",
+        max_turns: 24,
+        modules: ["CP-0"],
+        context: { ...context, identity: { ...context.identity, sector: "Gaming" } },
+        files: [{ name: file.name, size: file.size }],
+      },
+      "/api/submissions/sub-1/carry": { carried: [file.name], kept: [] },
+    });
+    render(<ConnectedApp path="/start" mode="synthetic" />);
+    fireEvent.change(await screen.findByLabelText("Issuer name"), {
+      target: { value: "Northbridge" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Carry over from latest run" }));
+    await screen.findByText(/Starting from run latest-case/);
+    expect(screen.getByLabelText("Issuer ID")).toHaveAttribute("readonly");
+    expect(screen.getByLabelText("Issuer name")).toHaveValue("Northbridge");
+    fireEvent.change(screen.getByLabelText("As-of date"), { target: { value: "2026-10-31" } });
+    await advanceToPurpose();
+    expect(screen.getByLabelText("Run form level")).toHaveValue("advanced");
+    advanceToContext();
+    expect(screen.getByLabelText("Turns per module")).toHaveValue(24);
+    fireEvent.click(screen.getByRole("button", { name: "Review run" }));
+    await screen.findByRole("button", { name: "Submit run" });
+    const body = fetchMock.mock.calls.find(([path]) => path.endsWith("/summary"))?.[1]?.body;
+    expect(JSON.parse(typeof body === "string" ? body : "null")).toMatchObject({
+      context: {
+        identity: { issuer_id: "northbridge", sector: "Gaming" },
+        run: { as_of: "2026-10-31" },
+      },
+      max_turns: 24,
+    });
+    expect(fetchMock.mock.calls.filter(([path]) => path.endsWith("/carry"))).toHaveLength(1);
+    expect(fetchMock.mock.calls.find(([path]) => path.endsWith("/carry"))?.[1]?.body).toBe(
+      '{"run":"latest-case"}',
+    );
+    expect(fetchMock.mock.calls.some(([path]) => path.includes("/files?"))).toBe(false);
+    expect(fetchMock.mock.calls.some(([path]) => path.endsWith("/submit"))).toBe(false);
+  });
+
+  it("keeps an editable new issuer when latest-run lookup finds no earlier run", async () => {
+    const fetchMock = testingFetch(plan, undefined, {
+      "/api/issuers/northbridge": { latest_run: "", runs: 0, latest_as_of: "" },
+    });
+    render(<ConnectedApp path="/start" mode="synthetic" />);
+    fireEvent.change(await screen.findByLabelText("Issuer name"), {
+      target: { value: "Northbridge" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Carry over from latest run" }));
+    expect(await screen.findByText("No earlier run was found for this issuer.")).toBeVisible();
+    expect(screen.getByLabelText("Issuer ID")).not.toHaveAttribute("readonly");
+    expect(screen.getByLabelText("Issuer name")).toHaveValue("Northbridge");
+    expect(
+      fetchMock.mock.calls.some(([path]) => /\/(inputs|carry|summary|submit)$/.test(path)),
+    ).toBe(false);
   });
 
   it("carries a prior run's documents and answers, with a buffer for new dates", async () => {
@@ -422,6 +614,101 @@ describe("connected activity and reports", () => {
     pathway: "credit_snapshot",
   };
 
+  function activityFetch(body: unknown, status = 200) {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn((path: string) => {
+        if (path !== "/connected/activity") throw new Error(`Unexpected request ${path}`);
+        return Promise.resolve(Response.json(body, { status }));
+      }),
+    );
+  }
+  const waiting = {
+    id: "harbour-2026-11",
+    issuer_name: "Harbour Packaging",
+    pathway: "credit_snapshot",
+    status: "queued",
+    reason: "3 runs are already running",
+    submitted_by: "",
+    started_at: "",
+    name_differs: false,
+    stalled: false,
+    files: 2,
+    modules: [
+      ["CP-0", "waiting"],
+      ["Report", "waiting"],
+    ],
+  };
+
+  it("lists the runs in progress and waiting, with module progress and no run code", async () => {
+    activityFetch({
+      updated: "2026-11-16T14:32:10Z",
+      held: "daily limit of 30 runs reached; waiting until tomorrow",
+      runs: [
+        {
+          ...waiting,
+          id: "meridian-2026-11",
+          issuer_name: "Meridian Foods",
+          status: "running",
+          reason: "",
+          submitted_by: "Dana Reyes",
+          started_at: "2026-11-16T14:02:00Z",
+          name_differs: true,
+          stalled: true,
+          files: 14,
+          modules: [
+            ["CP-0", "done"],
+            ["CP-1", "running"],
+            ["Report", "waiting"],
+          ],
+        },
+        waiting,
+      ],
+    });
+    render(<ConnectedApp path="/runs" mode="synthetic" />);
+    expect(await screen.findByRole("link", { name: "Meridian Foods" })).toHaveAttribute(
+      "href",
+      "/run/meridian-2026-11",
+    );
+    expect(screen.getByRole("heading", { level: 1, name: "Run activity" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Run" })).toHaveAttribute("aria-current", "page");
+    expect(screen.getByRole("link", { name: "Run" })).toHaveAttribute("href", "/runs");
+    expect(screen.getByRole("link", { name: "Start a run" })).toHaveAttribute("href", "/start");
+    expect(screen.getByText("Updated 16 Nov 2026, 14:32 UTC")).toBeInTheDocument();
+    for (const term of ["Running", "Waiting"])
+      expect(screen.getByText(term, { selector: "dt" }).nextElementSibling).toHaveTextContent("1");
+    expect(screen.getByRole("progressbar", { name: "1 of 2 modules" })).toHaveAttribute(
+      "aria-valuenow",
+      "1",
+    );
+    expect(screen.getByText("Source readiness (CP-0)").closest("li")).toHaveTextContent("Finished");
+    expect(
+      screen.getByText("submitted by Dana Reyes · started 16 Nov 2026, 14:02 UTC"),
+    ).toBeInTheDocument();
+    expect(screen.getByText("No activity in the last hour")).toBeInTheDocument();
+    expect(screen.getByText("14 source files")).toBeInTheDocument();
+    expect(screen.getByText("Issuer name differs from earlier runs")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Harbour Packaging" })).toHaveAttribute(
+      "href",
+      "/run/harbour-2026-11",
+    );
+    expect(screen.getByText("3 runs are already running")).toBeInTheDocument();
+    expect(screen.getByText(/daily limit of 30 runs reached/)).toBeInTheDocument();
+    expect(document.body).not.toHaveTextContent(/2026-11\b/);
+  });
+
+  it("says so when no run is in progress and when activity cannot be read", async () => {
+    activityFetch({ updated: "2026-11-16T14:32:10Z", held: "", runs: [] });
+    render(<ConnectedApp path="/runs" mode="synthetic" />);
+    expect(await screen.findByText("No run in progress")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Open the library" })).toHaveAttribute("href", "/");
+    cleanup();
+    activityFetch({ error: "run activity is unavailable" }, 500);
+    render(<ConnectedApp path="/runs" mode="synthetic" />);
+    expect(await screen.findByText("Run activity could not be read")).toBeInTheDocument();
+    expect(screen.queryByText("No run in progress")).toBeNull();
+  });
+
   it("waits for report publication after the run has finished", async () => {
     let reportRequests = 0;
     vi.stubGlobal(
@@ -439,7 +726,7 @@ describe("connected activity and reports", () => {
                 ["Report", "done"],
               ],
               as_of: report.asOf,
-              cap: "20",
+              cap: "25",
               spent: "0",
               settled_spent: "0",
               held: "0",
@@ -461,9 +748,10 @@ describe("connected activity and reports", () => {
     );
     render(<ConnectedApp path="/run/test-run" mode="synthetic" />);
     expect(await screen.findByText(/Waiting for the report/)).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Run activity" })).toHaveAttribute("href", "/runs");
     expect(screen.getByText("Source readiness (CP-0)")).toBeInTheDocument();
     expect(
-      screen.getByRole("progressbar", { name: /USD 0.00 of USD 20.00 cap usage/ }),
+      screen.getByRole("progressbar", { name: /USD 0.00 of USD 25.00 cap usage/ }),
     ).toHaveAttribute("aria-valuenow", "0");
     expect(screen.getByRole("progressbar", { name: "1 of 1 modules" })).toBeInTheDocument();
     expect(screen.getByText("1 min 14 s")).toBeInTheDocument();
@@ -585,13 +873,16 @@ describe("connected activity and reports", () => {
     vi.stubGlobal(
       "fetch",
       vi.fn((path: string) => {
-        if (path !== "/connected/snapshot") throw new Error(`Unexpected request ${path}`);
+        if (path !== `/connected/snapshot?run=${encodeURIComponent(folder)}`)
+          throw new Error(`Unexpected request ${path}`);
         return Promise.resolve(Response.json(snapshot));
       }),
     );
     window.history.replaceState(null, "", path);
     render(<ConnectedApp path={path} mode="synthetic" />);
-    expect(await screen.findByRole("heading", { name: report.issuer })).toBeInTheDocument();
+    expect(
+      await screen.findByRole("heading", { name: report.issuer }, { timeout: 3000 }),
+    ).toBeInTheDocument();
     expect(screen.getByText("The report read the filing.")).toBeInTheDocument();
     expect(screen.queryByText(filing, { exact: false })).toBeNull();
     expect(screen.queryByRole("link", { name: "Download Fundamental credit" })).toBeNull();
@@ -657,7 +948,7 @@ describe("connected activity and reports", () => {
     const navigate = vi.fn();
     render(<ConnectedApp path="/start" mode="live" navigate={navigate} />);
     await review();
-    const submit = await screen.findByRole("button", { name: "Submit, spend up to USD 20.00" });
+    const submit = await screen.findByRole("button", { name: "Submit, spend up to USD 25.00" });
     expect(submit).toBeDisabled();
     const approval = screen.getByRole("checkbox", { name: /Approve: I have read this summary/ });
     expect(approval).toBeDisabled();
@@ -670,13 +961,13 @@ describe("connected activity and reports", () => {
     expect(submit).toBeEnabled();
     fireEvent.click(submit);
     const dialog = await screen.findByRole("dialog", { name: "Start a paid run?" });
-    expect(dialog).toHaveTextContent("spend up to USD 20.00");
+    expect(dialog).toHaveTextContent("spend up to USD 25.00");
     expect(fetchMock.mock.calls.some(([path]) => path.endsWith("/submit"))).toBe(false);
     fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
     expect(screen.queryByRole("dialog")).toBeNull();
     expect(fetchMock.mock.calls.some(([path]) => path.endsWith("/submit"))).toBe(false);
     fireEvent.click(submit);
-    fireEvent.click(await screen.findByRole("button", { name: "Start run, up to USD 20.00" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Start run, up to USD 25.00" }));
     await vi.waitFor(() => {
       expect(navigate).toHaveBeenCalledWith("/run/test-run");
     });
