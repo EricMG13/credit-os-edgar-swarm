@@ -4,6 +4,7 @@ import type { IconProps } from "@/utils/is-react-component";
 import { TRACE_HOST } from "@/pages/library/parts/TraceControl";
 import {
   blocked,
+  containsReference,
   evidencePath,
   readerText,
   type CatalogueRating,
@@ -17,6 +18,7 @@ import { PublishedSource } from "./PublishedTrace";
 const NO_DESCRIPTION = "Business description not in this run";
 const NO_RATINGS = "Ratings not entered for this run";
 const DESCRIPTION = "Business description";
+const IN_EVIDENCE = "Business description in Evidence";
 
 const outlookIcons: Record<string, FC<IconProps>> = {
   positive: ArrowUpRight,
@@ -75,7 +77,7 @@ function RatingTile({ rating }: { rating: CatalogueRating }) {
   const Icon = outlookIcons[word];
   return (
     <li
-      title={`as of ${rating.date}`}
+      title={rating.date.trim() ? `as of ${rating.date}` : undefined}
       className="grid min-w-28 gap-0.5 rounded-lg border border-border-hairline bg-surface-card px-3 py-2"
     >
       <span className="text-xs text-text-tertiary">
@@ -106,11 +108,14 @@ export function IdentityBand({
     (item) => item.selected && item.output.module === "CP-1A" && !blocked(item),
   );
   const described = describeCompany(entry);
+  const referenced = described !== undefined && containsReference(described.text);
   const found = described && { ...described, text: readerText(described.text) };
   const handoffSector = sectorOf(entry);
   const sector =
     filled(catalogue?.sector) ??
-    (handoffSector === undefined ? undefined : readerText(handoffSector));
+    (handoffSector === undefined || containsReference(handoffSector)
+      ? undefined
+      : readerText(handoffSector));
   const ratings = catalogue?.ratings ?? [];
   return (
     <section
@@ -123,8 +128,11 @@ export function IdentityBand({
           {sector && <p className="text-xs text-text-tertiary">{sector}</p>}
           {found && entry ? (
             <p className={`${TRACE_HOST} flex items-start gap-2 text-text-primary`}>
-              <span title={found.text} className="line-clamp-2 min-w-0">
-                {found.text}
+              <span
+                title={referenced ? undefined : found.text}
+                className={referenced ? "min-w-0 text-text-tertiary" : "line-clamp-2 min-w-0"}
+              >
+                {referenced ? IN_EVIDENCE : found.text}
               </span>
               <PublishedSource href={evidencePath(folder, entry, found.line)} name={DESCRIPTION}>
                 {DESCRIPTION}

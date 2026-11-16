@@ -632,3 +632,59 @@ def _integer_oracle(current, prior):
 @given(a=long_quotable, b=long_quotable)
 def test_change_equals_integer_arithmetic_for_long_figures(a, b):
     assert _change(a, b) == _integer_oracle(a, b)
+
+
+def _based(prior_basis, current_basis):
+    rows = [
+        {
+            "Period": "FY2023",
+            "Cash": "10",
+            "Reporting unit": "x",
+            "Basis and limitation": prior_basis,
+        },
+        {
+            "Period": "FY2024",
+            "Cash": "12",
+            "Reporting unit": "x",
+            "Basis and limitation": current_basis,
+        },
+    ]
+    return prior_metric(rows, rows[1], "Cash")
+
+
+def test_rows_stating_different_definitions_give_no_comparator():
+    assert (
+        _based(
+            "Gross and net debt over EBITDA As Defined",
+            "over EBITDA As Defined; net figure uses year-end cash still holding the USD 4,216 "
+            "million accrued dividend, 5.55x pro forma (calculation C11)",
+        )
+        is None
+    )
+
+
+def test_identical_basis_text_keeps_the_comparator():
+    assert _based("Net of cash.", "Net of cash.") == ({"value": "10", "period": "FY2023"}, "2")
+
+
+def test_basis_differing_only_by_page_digits_or_punctuation_keeps_the_comparator():
+    assert _based("Net of cash (page 12).", "Net of cash, 2024; p. 15") is not None
+
+
+BASIS_COLUMN = "Basis and limitation |"
+
+
+def test_catalogue_metric_carries_no_prior_across_different_basis(tmp_path):
+    head = "| Period | Total debt / EBITDA | Net debt / EBITDA | Reporting unit | " + BASIS_COLUMN
+    text = f"""### Chart data: leverage
+
+{head}
+| --- | --- | --- | --- | --- |
+| FY2023 | 5.87 | 4.84 | x | Gross and net debt over EBITDA As Defined |
+| FY2024 | 6.01 | 4.51 | x | Net figure uses year-end cash holding the accrued dividend |
+"""
+    from deploy_workflow.credit_os_catalogue import handoff_metrics
+
+    metrics = handoff_metrics("x", {"path": "p.md", "sha256": "0" * 64}, text, {}, [])
+    for key in ("leverage", "net_leverage"):
+        assert "prior" not in metrics[key] and "change" not in metrics[key]

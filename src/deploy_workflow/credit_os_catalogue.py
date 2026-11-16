@@ -31,6 +31,7 @@ from deploy_workflow.library_index import (
 SEGMENT_SAFE = "$&+:=@"  # What url.PathEscape keeps in one path segment.
 LISTED = {".md", ".txt", ".pdf", ".html", ".htm", ".json", ".csv", ".xlsx"}
 RUN_FILE_LIMIT = 5000
+BASIS = "Basis and limitation"
 _NUMBER = re.compile(r"-?\d+(?:\.\d+)?")
 _FISCAL_YEAR = re.compile(r"FY(\d{4})")
 _DATED_YEAR = re.compile(r"FY(\d{4}) / (\d{4}-\d{2}-\d{2})")
@@ -135,13 +136,41 @@ def chart_row(
 _YEAR = re.compile(r"(?<!\d)\d{4}(?!\d)")
 
 
+_LOCATOR = re.compile(
+    r"\b(?:pages?|pp?|paras?|paragraphs?|sections?|notes?|lines?|slides?|exhibits?)\b\.?\s*"
+    r"(?:\d+(?:[.,]\d+)*(?:\s*(?:[-\u2013/&,]|and(?=\s*\d)|to(?=\s*\d))\s*\d+(?:[.,]\d+)*)*)",
+    re.IGNORECASE,
+)
+
+
+# A year after an instrument word names the instrument (`notes 2027`), not a place in a document:
+# it is kept (as letters, so the digit and locator removal leave it) and so tells two debts apart.
+_INSTRUMENT_YEAR = re.compile(
+    r"\b(notes?|bonds?|loans?|facility|facilities|due|maturing|maturity)\s+((?:19|20)\d{2})\b"
+)
+_YEAR_LETTERS = str.maketrans("0123456789", "abcdefghij")
+
+
+def definition_key(text: str | None) -> str | None:
+    """A definition text compared: no page or locator references, no digits, no punctuation, lower
+    case, one space between words. None stays None (no text)."""
+    if text is None:
+        return None
+    kept = _INSTRUMENT_YEAR.sub(
+        lambda m: f"{m[1]} {m[2].translate(_YEAR_LETTERS)}", text.casefold()
+    )
+    bare = _LOCATOR.sub(" ", kept)
+    return " ".join(re.sub(r"[^\w\s]|_|\d", " ", bare).split())
+
+
 def prior_metric(
     rows: list[dict[str, str]], row: dict[str, str], column: str
 ) -> tuple[dict[str, str], str] | None:
     """The same column a year earlier and the exact change, or None.
 
     The prior row is the one row whose Period is ``row``'s with every 4-digit year lowered by one;
-    its cell must be a quotable number and its Reporting unit the current row's."""
+    its cell must be a quotable number, its Reporting unit the current row's and its Basis and
+    limitation the same definition under ``definition_key`` (the cross-run rule)."""
     label = row.get("Period", "")
     years = _YEAR.findall(label)
     if not years or any(int(year) < 1 for year in years):
@@ -153,6 +182,8 @@ def prior_metric(
     prior_value = found[0].get(column, "")
     unit = row.get("Reporting unit", "")
     if not (_NUMBER.fullmatch(prior_value) and found[0].get("Reporting unit", "") == unit):
+        return None
+    if definition_key(row.get(BASIS)) != definition_key(found[0].get(BASIS)):
         return None
     return {"value": prior_value, "period": earlier}, _exact_change(row[column], prior_value)
 

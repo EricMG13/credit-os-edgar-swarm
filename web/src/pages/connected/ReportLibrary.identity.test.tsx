@@ -313,3 +313,35 @@ it("draws a handoff sector through readerText", async () => {
   expect(within(el).getByText(readerText(raw))).toBeVisible();
   expect(readerText(raw)).not.toContain("CP-2A");
 });
+
+const FILE = "TDG_2024-09-30_10-K_0001260221-24-000083_tdg-20240930.htm.jsonl";
+
+it("draws no description text or title when the handoff's description holds a file name", async () => {
+  const raw = `Designs aircraft components (${FILE}, page 4).`;
+  const el = await band(fixture({ handoff: [profile([["Business", raw]])] }));
+  expect(el.innerHTML).not.toContain(FILE);
+  expect(el.querySelector("[title]")).toBeNull();
+  expect(within(el).getByText("Business description in Evidence")).toBeVisible();
+});
+
+it("draws no description text when the register's description holds a register id", async () => {
+  const raw = "Makes components; see CP-1A-FACT-004.";
+  const el = await band(fixture({ handoff: [register(["A", raw, "US", "Aero"])] }));
+  expect(el.innerHTML).not.toContain("CP-1A-FACT-004");
+  expect(within(el).getByText("Business description in Evidence")).toBeVisible();
+});
+
+it("omits a handoff sector that holds a reference", async () => {
+  const raw = `Aerospace per ${FILE}`;
+  const el = await band(fixture({ handoff: [profile([["Sector and segments", raw]])] }));
+  expect(el.innerHTML).not.toContain(FILE);
+});
+
+it("gives a rating with no date no title", async () => {
+  const el = await band(
+    fixture({
+      ratings: [{ label: "B1", agency: "Moody's", scope: "issuer", outlook: "", date: "" }],
+    }),
+  );
+  expect(el.querySelector("li")?.hasAttribute("title")).toBe(false);
+});
