@@ -247,6 +247,7 @@ function useIntakeIdentityState(
 ) {
   const [copy, setCopy] = useState(initial);
   const [step, setStep] = useState<FormStep>("documents");
+  const [purposeChosen, setPurposeChosen] = useState(false);
   const [priorNote, setPriorNote] = useState(initial?.prior.error || warning || "");
   const [context, setContext] = useState<Context>(() => startingContext(template, initial?.prior));
   const [purposeTouched, setPurposeTouched] = useState(Boolean(initial?.prior.context));
@@ -257,6 +258,8 @@ function useIntakeIdentityState(
     setCopy,
     step,
     setStep,
+    purposeChosen,
+    setPurposeChosen,
     priorNote,
     setPriorNote,
     context,
@@ -377,7 +380,7 @@ type ReadinessRow = { label: string; met: boolean; detail?: string };
 
 function readinessRows(
   shownDocs: DocumentRecord[],
-  step: FormStep,
+  purposeChosen: boolean,
   review: Review | undefined,
   accepted: Set<string>,
   approved: boolean,
@@ -386,7 +389,7 @@ function readinessRows(
   const decidedCount = groups.filter((group) => decided(group, accepted)).length;
   return [
     { label: "Documents inspected", met: shownDocs.length > 0 },
-    { label: "Purpose chosen", met: step !== "documents" },
+    { label: "Purpose chosen", met: purposeChosen },
     {
       label: "Decisions made",
       met: review !== undefined && decidedCount === groups.length,
@@ -1196,6 +1199,8 @@ function IntakeForm({
     setCopy,
     step,
     setStep,
+    purposeChosen,
+    setPurposeChosen,
     priorNote,
     setPriorNote,
     context,
@@ -1438,6 +1443,7 @@ function IntakeForm({
     setPriorNote(prior.error || "");
     setContext(startingContext(prior.context ? template : context, prior));
     setPurposeTouched(Boolean(prior.context));
+    setPurposeChosen(false);
     setCustomSlug(prior.issuer_id);
     reviewedRef.current = null;
     setLevel(Object.hasOwn(LEVELS, prior.level) ? prior.level : "basic");
@@ -1603,6 +1609,7 @@ function IntakeForm({
         });
         break;
       case "purpose":
+        setPurposeChosen(true);
         goTo("context");
         break;
       case "context":
@@ -1712,6 +1719,7 @@ function IntakeForm({
     reviewedRef.current = null;
     setContext(startingContext(template));
     setPurposeTouched(false);
+    setPurposeChosen(false);
     setCustomSlug(undefined);
     setReading(undefined);
     setPriorNote("");
@@ -1760,7 +1768,7 @@ function IntakeForm({
   const { title, previous, next } = FORM_STEPS[step];
   const capText = shownCapText(cap);
   const synthetic = mode === "synthetic";
-  const readiness = readinessRows(shownDocs, step, review, accepted, approved);
+  const readiness = readinessRows(shownDocs, purposeChosen, review, accepted, approved);
 
   function acceptReviewItems(ids: readonly string[], checked: boolean) {
     setAccepted((previouslyAccepted) => {

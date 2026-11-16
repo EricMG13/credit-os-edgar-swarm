@@ -856,9 +856,9 @@ describe("connected run start", () => {
         "Advanced adds model, effort, turns per module, module selection and JSON inputs.",
       ),
     ).toBeInTheDocument();
-    expect(panel.getByText("Purpose chosen").closest("li")).toHaveTextContent("Met");
-    expect(panel.getByText("Purpose chosen").closest("li")).not.toHaveTextContent("Not met");
+    expect(panel.getByText("Purpose chosen").closest("li")).toHaveTextContent("Not met");
     advanceToContext();
+    expect(panel.getByText("Purpose chosen").closest("li")).not.toHaveTextContent("Not met");
     fireEvent.click(screen.getByRole("button", { name: "Review run" }));
     await screen.findByRole("button", { name: "Submit run" });
     expect(panel.getByText("Decisions made").closest("li")).toHaveTextContent("0 of 1");
@@ -1742,5 +1742,86 @@ describe("connected run start: what an acceptance carries to", () => {
     fireEvent.click(screen.getByRole("button", { name: "Review run" }));
     expect(await limitBox()).not.toBeChecked();
     expect(approvalBox()).toBeDisabled();
+  });
+});
+
+describe("connected run start: readiness after going back, and repeated announcements", () => {
+  const rowOf = (name: string) =>
+    within(screen.getByRole("complementary", { name: "Readiness" }))
+      .getByText(name)
+      .closest("li");
+  const earlier = {
+    issuer_id: "northbridge",
+    issuer_name: "Northbridge",
+    level: "basic",
+    max_turns: 32,
+    modules: [],
+    context: { ...context, run: { ...context.run, as_of: "2025-03-31" } },
+    files: [{ name: file.name, size: file.size }],
+  };
+
+  async function chosenPurpose() {
+    testingFetch({ ...plan, cap: "40" });
+    render(<ConnectedApp path="/start" mode="synthetic" />);
+    await fillInputs();
+    await advanceToPurpose();
+    fireEvent.click(screen.getByRole("radio", { name: "Deep credit assessment" }));
+    expect(rowOf("Purpose chosen")).toHaveTextContent("Not met");
+    advanceToContext();
+    expect(rowOf("Purpose chosen")).not.toHaveTextContent("Not met");
+  }
+
+  it("keeps Purpose chosen met after Previous", async () => {
+    await chosenPurpose();
+    fireEvent.click(screen.getByRole("button", { name: "Previous" }));
+    await screen.findByRole("heading", { name: "Purpose" });
+    expect(rowOf("Purpose chosen")).not.toHaveTextContent("Not met");
+    fireEvent.click(screen.getByRole("button", { name: "Previous" }));
+    await screen.findByRole("heading", { name: "Documents" });
+    expect(rowOf("Purpose chosen")).not.toHaveTextContent("Not met");
+    expect(screen.getByText(/^2 of 4 ready/)).toBeInTheDocument();
+  });
+
+  it("keeps Purpose chosen met after the stepper and after Edit on the review", async () => {
+    await chosenPurpose();
+    fireEvent.click(screen.getByRole("button", { name: "Go back to Documents" }));
+    await screen.findByRole("heading", { name: "Documents" });
+    expect(rowOf("Purpose chosen")).not.toHaveTextContent("Not met");
+    expect(screen.getByText(/^2 of 4 ready/)).toBeInTheDocument();
+    await advanceToPurpose();
+    advanceToContext();
+    fireEvent.click(screen.getByRole("button", { name: "Review run" }));
+    await screen.findByRole("button", { name: "Submit run" });
+    fireEvent.click(screen.getByRole("button", { name: "Edit issuer and documents" }));
+    await screen.findByRole("heading", { name: "Documents" });
+    expect(rowOf("Purpose chosen")).not.toHaveTextContent("Not met");
+  });
+
+  it("returns Purpose chosen to not met on a carry-over and on a reset", async () => {
+    testingFetch(plan, undefined, {
+      "/api/issuers/northbridge": {
+        latest_run: "latest-case",
+        runs: 1,
+        latest_as_of: "2025-03-31",
+      },
+      "/api/runs/latest-case/inputs": earlier,
+      "/api/submissions/sub-1/carry": { carried: [file.name], kept: [] },
+    });
+    render(<ConnectedApp path="/start" mode="synthetic" />);
+    await fillInputs();
+    await advanceToPurpose();
+    advanceToContext();
+    fireEvent.click(screen.getByRole("button", { name: "Go back to Documents" }));
+    fireEvent.change(screen.getByLabelText("Issuer name"), { target: { value: "Northbridge" } });
+    expect(rowOf("Purpose chosen")).not.toHaveTextContent("Not met");
+    fireEvent.click(screen.getByRole("button", { name: "Carry over from latest run" }));
+    await screen.findByRole("button", { name: "This is a different issuer" });
+    expect(rowOf("Purpose chosen")).toHaveTextContent("Not met");
+    await advanceToPurpose();
+    advanceToContext();
+    fireEvent.click(screen.getByRole("button", { name: "Go back to Documents" }));
+    expect(rowOf("Purpose chosen")).not.toHaveTextContent("Not met");
+    fireEvent.click(screen.getByRole("button", { name: "This is a different issuer" }));
+    expect(rowOf("Purpose chosen")).toHaveTextContent("Not met");
   });
 });
