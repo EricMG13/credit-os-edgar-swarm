@@ -1,5 +1,6 @@
+import { Button } from "@/components/base/buttons/button";
+import { ArrowRight } from "@untitledui/icons";
 import { useRef, useState, type ReactNode } from "react";
-import { Link } from "react-aria-components";
 import { Alert } from "@/components/alert/Alert";
 import { Blocked } from "@/components/gap/Blocked";
 import { StatusBadge } from "@/components/status/StatusBadge";
@@ -16,7 +17,7 @@ import { recordSections } from "./parts/recordNav";
 import { Section } from "./parts/Section";
 import { TRACE_HOST, TraceControl } from "./parts/TraceControl";
 import { SECTION_HEADING, SUBSECTION_HEADING } from "./parts/heading";
-import { TEXT_LINK, evidenceHref } from "./parts/links";
+import { evidenceHref } from "./parts/links";
 
 /** The sections a delivered module has, in page order: the navigator's first group. */
 function sectionsOf(body: DeliveredBody): NavSection[] {
@@ -125,12 +126,15 @@ function BlockedModule({
         </div>
       )}
       <p className="max-w-[72ch] text-small text-text-secondary">{body.note}</p>
-      <Link
+      <Button
+        className="w-fit"
         href={gapsHref}
-        className={`${TEXT_LINK} w-fit text-small font-semibold text-action underline`}
+        color="link-gray"
+        size="sm"
+        iconTrailing={ArrowRight}
       >
         {body.gapsLink.label}
-      </Link>
+      </Button>
     </div>
   );
 }
@@ -184,12 +188,9 @@ function ModuleView({
           {body.kind !== "delivered" ? null : body.limitations.items.length === 0 ? (
             <div className="flex items-center gap-4">
               <StatusBadge set="Module state" state={module.state} />
-              <Link
-                href={gapsHref}
-                className={`${TEXT_LINK} text-small font-semibold text-action underline`}
-              >
+              <Button href={gapsHref} color="link-gray" size="sm" iconTrailing={ArrowRight}>
                 {body.limitations.gapsLink.label}
-              </Link>
+              </Button>
             </div>
           ) : (
             <StatusBadge set="Module state" state={module.state} />

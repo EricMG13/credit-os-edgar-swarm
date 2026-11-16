@@ -359,3 +359,117 @@ it("uses retained page text rather than a claim-only chip as the trace excerpt",
   snapshot.chips["case/foundation:22"] = [missing as Snapshot["chips"][string][number]];
   expect(traceForLine(snapshot, entry, 0, 22)?.excerpt).toBeNull();
 });
+
+describe("overview year-on-year comparator", () => {
+  const catalogue = {
+    id: "first",
+    issuer: "A",
+    name: "A",
+    title: "",
+    date: "2025-01-01",
+    period: "",
+    sector: "",
+    metrics: { cash: { value: 0, unit: "US$m", period: "2024-12-31" } },
+  } satisfies CatalogueRun;
+  const base = [
+    ["FY2023", "2023-01-01", "2023-12-31"],
+    ["FY2024", "2024-01-01", "2024-12-31"],
+  ];
+  const periods = (extra: string[][] = []) =>
+    table("Period table", ["Period", "Start", "End"], [...base, ...extra], 5);
+  const measures = (headers: string[], leverage: string[], liquidity: string[]) =>
+    table(
+      "Financials and credit metrics",
+      headers,
+      [
+        ["Total liquidity at period end", ...liquidity, "US$m"],
+        ["(Total debt plus financing obligations) / EBITDA", ...leverage, "x"],
+      ],
+      10,
+    );
+  const change = (sections: Section[]) =>
+    foundationMetrics(foundation(sections), catalogue).map(({ key, metric }) => [
+      key,
+      metric.yearChange,
+    ]);
+
+  it("compares with the one row exactly a year earlier", () => {
+    const m = measures(["Metric", "FY2023", "FY2024", "Unit"], ["4.2", "4.4"], ["300", "275"]);
+    expect(change([periods(), m])).toEqual([
+      ["liquidity", { change: "-25", unit: "US$m", prior: "FY2023", key: "liquidity" }],
+      ["leverage", { change: "0.2", unit: "x", prior: "FY2023", key: "leverage" }],
+    ]);
+  });
+
+  it("draws no comparator rather than a guess", () => {
+    const m = measures(["Metric", "FY2023", "FY2024", "Unit"], ["4.2", "4.4"], ["300", "275"]);
+    const none = [
+      ["liquidity", undefined],
+      ["leverage", undefined],
+    ];
+    expect(change([periods([["LTM", "2023-10-01", "2023-12-31"]]), m])).toEqual(none);
+    expect(
+      change([table("Period table", ["Period", "Start", "End"], [base[1] ?? []], 5), m]),
+    ).toEqual(none);
+    const dup = measures(
+      ["Metric", "FY2023", "FY2023", "FY2024", "Unit"],
+      ["4.2", "4.2", "4.4"],
+      ["300", "300", "275"],
+    );
+    expect(change([periods(), dup])).toEqual(none);
+    const text = measures(["Metric", "FY2023", "FY2024", "Unit"], ["n.a.", "4.4"], ["300", "275"]);
+    expect(change([periods(), text])[1]).toEqual(["leverage", undefined]);
+  });
+});
+
+describe("overview comparator when the run period is a label", () => {
+  const withPeriod = (period: string): CatalogueRun => ({
+    id: "first",
+    issuer: "A",
+    name: "A",
+    title: "",
+    date: "2025-01-01",
+    period: "",
+    sector: "",
+    metrics: { cash: { value: 0, unit: "US$m", period } },
+  });
+  const rows = [
+    ["FY2023", "2023-01-01", "2023-12-31"],
+    ["FY2024", "2024-01-01", "2024-12-31"],
+  ];
+  const periods = (cells: string[][] = rows) =>
+    table("Period table", ["Period", "Start", "End"], cells, 5);
+  const measures = table(
+    "Financials and credit metrics",
+    ["Metric", "FY2023", "FY2024", "Unit"],
+    [
+      ["Total liquidity at period end", "300", "275", "US$m"],
+      ["(Total debt plus financing obligations) / EBITDA", "4.2", "4.4", "x"],
+    ],
+    10,
+  );
+  const changes = (period: string, sections: Section[]) =>
+    foundationMetrics(foundation(sections), withPeriod(period)).map(({ key, metric }) => [
+      key,
+      metric.yearChange,
+    ]);
+  const found = [
+    ["liquidity", { change: "-25", unit: "US$m", prior: "FY2023", key: "liquidity" }],
+    ["leverage", { change: "0.2", unit: "x", prior: "FY2023", key: "leverage" }],
+  ];
+  const none = [
+    ["liquidity", undefined],
+    ["leverage", undefined],
+  ];
+
+  it("finds the prior year from a period label and from an end date alike", () => {
+    expect(changes("FY2024", [periods(), measures])).toEqual(found);
+    expect(changes("2024-12-31", [periods(), measures])).toEqual(found);
+  });
+
+  it("draws nothing when the label names two rows or there is no Period table", () => {
+    const twice = [...rows, ["FY2024", "2024-01-01", "2024-12-31"]];
+    expect(changes("FY2024", [periods(twice), measures])).toEqual(none);
+    expect(changes("FY2024", [measures])).toEqual(none);
+  });
+});

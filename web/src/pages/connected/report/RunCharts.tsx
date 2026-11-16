@@ -1,3 +1,5 @@
+import { Button } from "@/components/base/buttons/button";
+import { ArrowRight } from "@untitledui/icons";
 import { heading } from "../layout";
 import { blocked, evidencePath, type OutputEntry } from "../publishedReport";
 import type { buildReportView } from "../reportView";
@@ -65,9 +67,15 @@ export function RunCharts({
       {groups.length ? (
         groups.map(({ id, name, entry, output }) => (
           <div key={id} className="grid min-w-0 gap-2">
-            <a href={`#modules/${encodeURIComponent(id)}`} className="w-fit text-action underline">
+            <Button
+              className="w-fit"
+              href={`#modules/${encodeURIComponent(id)}`}
+              color="link-gray"
+              size="sm"
+              iconTrailing={ArrowRight}
+            >
               {name}
-            </a>
+            </Button>
             <LegacyVisuals
               output={output}
               sections={entry.sections}

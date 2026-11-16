@@ -635,7 +635,7 @@ async function checkDownside(report, modules, artifacts, channel, page) {
   await chart.screenshot({ path: path.join(artifacts, `${channel}-downside.png`) });
   await chart.getByRole("radio", { name: "Table", exact: true }).check();
   await chart.getByRole("cell", { name: "-5.1250 (−USD 5.13 million)", exact: true }).waitFor();
-  const trace = chart.getByRole("button", { name: "Show sources for Stressed FCF (USD millions)" });
+  const trace = chart.getByRole("button", { name: "Show sources for Stressed FCF ($m)" });
   await checkTraceFocus(page, trace, /Filing p\.2/u);
   await scenarios.getByText("Full scenario results", { exact: true }).click();
   await scenarios

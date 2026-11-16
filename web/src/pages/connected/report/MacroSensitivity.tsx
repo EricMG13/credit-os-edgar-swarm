@@ -3,7 +3,13 @@ import { ComparisonChart, type ComparisonPanel } from "@/components/chart/Compar
 import { TRACE_HOST } from "@/pages/library/parts/TraceControl";
 import { card, field, heading, label } from "../layout";
 import { PublishedTable } from "../ReportContent";
-import { blocked, containsReference, type OutputEntry, type Table } from "../publishedReport";
+import {
+  blocked,
+  containsReference,
+  type OutputEntry,
+  type Table,
+  unitLabel,
+} from "../publishedReport";
 import { namedRow, namedTable } from "../reportView";
 import { amount, distinct, sharePosition } from "../visuals/visualData";
 import { PublishedSource } from "./PublishedTrace";
@@ -262,7 +268,7 @@ function RateShocks({ table, currency, href }: { table: Table; currency: string;
     )
       return null;
     return panel(
-      `+${row} bp, ${currency} millions`,
+      `+${row} bp, ${unitLabel(`${currency} millions`)}`,
       [gross, after === null ? null : net],
       [before, after],
     );
@@ -320,7 +326,7 @@ function FxShocks({ table, currency, href }: { table: Table; currency: string; h
     const a = convert(from);
     const b = convert(to);
     if (!unit || a === null || b === null || !Number.isFinite(Math.abs(a) + Math.abs(b))) return [];
-    return [panel(`${measure} (${unit})`, [from, to], [a, b])];
+    return [panel(`${measure} (${unitLabel(unit)})`, [from, to], [a, b])];
   });
   return (
     <section aria-label="Currency shocks" className={`${card} ${TRACE_HOST}`}>

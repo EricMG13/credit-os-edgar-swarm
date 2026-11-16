@@ -1,3 +1,5 @@
+import { Button } from "@/components/base/buttons/button";
+import { ArrowRight } from "@untitledui/icons";
 import { useState, type ReactNode } from "react";
 import { card, field, heading, label } from "../layout";
 import {
@@ -6,6 +8,7 @@ import {
   FORECAST_INPUTS,
   type OutputEntry,
   type PublishedRun,
+  withUnit,
 } from "../publishedReport";
 import { namedRow, namedTable, type buildReportView } from "../reportView";
 import { PublishedTable } from "../ReportContent";
@@ -106,7 +109,7 @@ function BasisNote({
         <p>
           The calculation gives <strong>{bridge.value.toFixed(2)}</strong> cash proxy. The handoff
           gives <strong>{bridge.original.toFixed(2)}</strong> free cash flow. The displayed
-          difference is <strong>{bridge.difference.toFixed(2)}</strong> US$m.
+          difference is <strong>{withUnit(bridge.difference.toFixed(2), "US$m")}</strong>.
         </p>
       )}
       {bridge && (
@@ -255,12 +258,14 @@ function ForecastAssumptions({
             );
           }}
         />
-        <a
+        <Button
           href={handoff ? evidencePath(run.folder, handoff) : "#evidence/trace/CP-2G"}
-          className="text-action underline"
+          color="link-gray"
+          size="sm"
+          iconTrailing={ArrowRight}
         >
           Open the forward credit handoff
-        </a>
+        </Button>
       </details>
     )
   );
@@ -283,17 +288,17 @@ function ForecastNavigation({ sections }: { sections: ForecastSection[] }) {
       <nav aria-label="Forecast sections" className="hidden flex-wrap items-center gap-3 md:flex">
         <span className="text-xs font-medium text-text-tertiary">On this page</span>
         {sections.map(({ id, label: name }) => (
-          <button
+          <Button
             key={id}
-            type="button"
             aria-current={activeSection === id ? "location" : undefined}
-            className="rounded-md px-2 py-1.5 text-sm text-action underline underline-offset-4 hover:bg-surface-subtle focus-visible:outline-2 focus-visible:outline-focus"
-            onClick={() => {
+            color="link-gray"
+            size="sm"
+            onPress={() => {
               navigate(id);
             }}
           >
             {name}
-          </button>
+          </Button>
         ))}
       </nav>
       <details className="rounded-lg border border-border-hairline bg-surface-card px-3 md:hidden">
@@ -427,9 +432,15 @@ export function Forecast({
       <header className="grid gap-2">
         <h2 className="font-display text-h2">Forecast</h2>
         {model && (
-          <a href="#evidence/summary" className="w-fit text-action underline">
+          <Button
+            className="w-fit"
+            href="#evidence/summary"
+            color="link-gray"
+            size="sm"
+            iconTrailing={ArrowRight}
+          >
             Forecast evidence and artifacts
-          </a>
+          </Button>
         )}
       </header>
       {!model && <p className={card}>No forecast model was published from this run’s files.</p>}

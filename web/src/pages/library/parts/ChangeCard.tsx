@@ -5,15 +5,25 @@ import { DirectionMark } from "./DirectionMark";
 import { InlineCell } from "./InlineCell";
 import { TRACE_HOST, TraceControl } from "./TraceControl";
 
+const TONE_CLASS = {
+  better: "text-success-text",
+  worse: "text-error-text",
+  flat: "text-text-secondary",
+} as const;
+const TONE_WORD = { better: "better", worse: "worse", flat: "unchanged" } as const;
+
 const VALUE = "text-2xl/8 tabular-nums text-text-primary";
 
 /** The delivered direction: its words and, for up, down or flat, the mock's mark; "none" has no mark. */
 function Direction({ change }: { change: Change }) {
   if (change.change === null) return null;
   return (
-    <span className="inline-flex items-center gap-2 self-end rounded-ds-xs bg-surface-subtle px-1.5 py-1 text-xs font-medium text-text-secondary">
+    <span
+      className={`inline-flex items-center gap-2 self-end rounded-ds-xs bg-surface-subtle px-1.5 py-1 text-xs font-medium ${TONE_CLASS[change.tone ?? "flat"]}`}
+    >
       {change.direction === "none" ? null : <DirectionMark direction={change.direction} />}
       {change.change}
+      {change.tone && <span className="sr-only">{TONE_WORD[change.tone]}</span>}
     </span>
   );
 }
