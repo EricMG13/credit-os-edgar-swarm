@@ -33,6 +33,8 @@ LISTED = {".md", ".txt", ".pdf", ".html", ".htm", ".json", ".csv", ".xlsx"}
 RUN_FILE_LIMIT = 5000
 BASIS = "Basis and limitation"
 _NUMBER = re.compile(r"-?\d+(?:\.\d+)?")
+_MONEY = re.compile(r"-?(?:\d+|\d{1,3}(?:,\d{3})+)(?:\.\d+)?")  # money may group thousands
+_MONEY_KEYS = frozenset({"revenue", "adjusted_ebitda"})  # the only metrics read as money
 _FISCAL_YEAR = re.compile(r"FY(\d{4})")
 _DATED_YEAR = re.compile(r"FY(\d{4}) / (\d{4}-\d{2}-\d{2})")
 _ISO_DATE = re.compile(r"(\d{4})-(\d{2})-(\d{2})")
@@ -47,6 +49,8 @@ _METRICS = (
     ("interest cover", "coverage", "EBITDA / cash interest"),
     ("liquidity", "cash", "Cash"),
     ("liquidity", "undrawn", "Undrawn committed facilities"),
+    ("revenue and EBITDA", "revenue", "Revenue"),
+    ("revenue and EBITDA", "adjusted_ebitda", "Adjusted EBITDA"),
 )
 
 
@@ -164,7 +168,7 @@ def definition_key(text: str | None) -> str | None:
 
 
 def prior_metric(
-    rows: list[dict[str, str]], row: dict[str, str], column: str
+    rows: list[dict[str, str]], row: dict[str, str], column: str, number: re.Pattern[str] = _NUMBER
 ) -> tuple[dict[str, str], str] | None:
     """The same column a year earlier and the exact change, or None.
 
@@ -181,7 +185,7 @@ def prior_metric(
         return None
     prior_value = found[0].get(column, "")
     unit = row.get("Reporting unit", "")
-    if not (_NUMBER.fullmatch(prior_value) and found[0].get("Reporting unit", "") == unit):
+    if not (number.fullmatch(prior_value) and found[0].get("Reporting unit", "") == unit):
         return None
     if definition_key(row.get(BASIS)) != definition_key(found[0].get(BASIS)):
         return None
@@ -192,7 +196,7 @@ def _exact_change(current: str, prior: str) -> str:
     """``current - prior`` with every digit kept; a zero change carries no sign."""
     with localcontext() as context:
         context.prec = len(current) + len(prior) + 2
-        change = Decimal(current) - Decimal(prior)
+        change = Decimal(current.replace(",", "")) - Decimal(prior.replace(",", ""))
     return format(abs(change) if change == 0 else change, "f")
 
 
@@ -318,7 +322,8 @@ def handoff_metrics(
         unit, basis, period = (
             row.get(c, "") for c in ("Reporting unit", "Basis and limitation", "Period")
         )
-        if not (_NUMBER.fullmatch(value) and unit and basis and period):
+        pattern = _MONEY if key in _MONEY_KEYS else _NUMBER
+        if not (pattern.fullmatch(value) and unit and basis and period):
             issues.append(f"{name}: CP-1 {chart} {column!r} is not a quotable metric; left out")
             continue
         source = f"{name}.cp1-{chart.replace(' ', '-')}"
@@ -337,7 +342,7 @@ def handoff_metrics(
             "source": source,
             "provenance": "cited",
         }
-        compared = prior_metric([r for _, r, _ in ranked], row, held)
+        compared = prior_metric([r for _, r, _ in ranked], row, held, pattern)
         if compared is not None:
             metrics[key]["prior"], metrics[key]["change"] = compared
         if held != column:  # an adjusted name is stated, not implied

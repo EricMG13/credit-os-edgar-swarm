@@ -383,13 +383,14 @@ prior figure's period shown beside it. The change is this year minus last year.
 (b) Delivery may mark that difference, and a comparable Changes card, as better, worse or
 unchanged from the fixed table in `web/src/pages/connected/signal.ts`: lower is better for
 `leverage`, `net_leverage`, `netDebt`, `gross_debt`, `net_debt`; higher is better for `coverage`,
-`interestCover`, `cash`, `undrawn`, `liquidity`, `freeCashFlow`, `free_cash_flow`. A key not in the
-table is neutral. Each mark carries its word and its own shape, never colour alone.
+`interestCover`, `revenue`, `adjusted_ebitda`, `undrawn`, `liquidity`, `freeCashFlow`,
+`free_cash_flow`. A key not in the table is neutral; `cash` carries no judgement (owner, 2026-11-16:
+a rise can be a facility drawn; revenue and adjusted EBITDA are judged instead). Each mark carries
+its word and its own shape, never colour alone.
 
 (c) No other figure is computed or judged by delivery. Downside, rate sensitivity and Forecast
 stay uncoloured.
 
 Also accepted: the company band's ratings are the analyst's run-start entries, labelled
 "Entered at run start"; preferring the Ratings & triggers module when it ran is parked for the
-owner. Known and left for the audit: "higher cash is better" cannot see cash raised by drawing a
-facility.
+owner.

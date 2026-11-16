@@ -688,3 +688,48 @@ def test_catalogue_metric_carries_no_prior_across_different_basis(tmp_path):
     metrics = handoff_metrics("x", {"path": "p.md", "sha256": "0" * 64}, text, {}, [])
     for key in ("leverage", "net_leverage"):
         assert "prior" not in metrics[key] and "change" not in metrics[key]
+
+
+def revenue_metrics(tmp_path, rows: list[str]) -> dict:
+    charts = one_chart("revenue and EBITDA", "Revenue ; Adjusted EBITDA", rows)
+    make_run(tmp_path, "run-a", cp1_extra=charts)
+    return built(tmp_path)["real"][0]["metrics"]
+
+
+def test_revenue_and_adjusted_ebitda_keep_their_commas_and_the_exact_change(tmp_path):
+    metrics = revenue_metrics(
+        tmp_path, ["FY2023 | 2,100 | 410 | US$m", "FY2024 | 2,250 | 445.5 | US$m"]
+    )
+    revenue, ebitda = metrics["revenue"], metrics["adjusted_ebitda"]
+    assert (revenue["value"], revenue["unit"], revenue["period"]) == ("2,250", "US$m", "FY2024")
+    assert revenue["prior"] == {"value": "2,100", "period": "FY2023"}
+    assert revenue["change"] == "150"
+    assert ebitda["value"] == "445.5"
+    assert ebitda["prior"]["value"] == "410"
+    assert ebitda["change"] == "35.5"
+
+
+def test_a_latest_cell_not_supplied_leaves_only_that_metric_out(tmp_path):
+    metrics = revenue_metrics(
+        tmp_path,
+        [
+            "FY2023 | 2,100 | 410 | US$m",
+            "FY2024 | 2,250 | Not supplied: the measure is not stated | US$m",
+        ],
+    )
+    assert "adjusted_ebitda" not in metrics
+    assert metrics["revenue"]["value"] == "2,250"
+
+
+def test_a_prior_cell_not_supplied_gives_no_comparator(tmp_path):
+    metrics = revenue_metrics(
+        tmp_path, ["FY2023 | Not supplied: x | 410 | US$m", "FY2024 | 2,250 | 445.5 | US$m"]
+    )
+    assert "prior" not in metrics["revenue"] and "change" not in metrics["revenue"]
+    assert metrics["adjusted_ebitda"]["change"] == "35.5"
+
+
+def test_without_the_table_there_is_no_revenue_and_commas_stay_refused_elsewhere(tmp_path):
+    metrics = lev_metrics(tmp_path, ["FY2023 | 4.2 | x", "FY2024 | 1,234 | x"])
+    assert "revenue" not in metrics and "adjusted_ebitda" not in metrics
+    assert "leverage" not in metrics
