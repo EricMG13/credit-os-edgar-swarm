@@ -1,10 +1,17 @@
-import { useCallback, useEffect, useRef, useState, type RefObject, type SubmitEvent } from "react";
+import {
+  useCallback,
+  useEffect,
+  useId,
+  useRef,
+  useState,
+  type RefObject,
+  type SubmitEvent,
+} from "react";
 import { File05, Folder } from "@untitledui/icons";
 import { FileUpload } from "@/components/application/file-upload/file-upload-base";
 import { Badge } from "@/components/base/badges/badges";
 import { Button } from "@/components/base/buttons/button";
 import { PurposeCards } from "../run/start/Purpose";
-import { Readiness } from "../run/start/Readiness";
 import { SubmitConfirmation } from "../run/start/Start";
 import { Stepper } from "../run/start/Stepper";
 import {
@@ -37,6 +44,7 @@ import { ROW_SPECS, sendableRows, type Row, type RowKind } from "./start/rows";
 import { Breadcrumb, card, ErrorNotice, field, heading, label } from "./layout";
 import { carryAccepted, decided, groupLimits, needsCheck } from "./start/limits";
 import { ReviewSheet } from "./start/ReviewSheet";
+import { StartReadiness } from "./start/StartReadiness";
 import { documentDescription, LEVELS, PURPOSES, storedName } from "./start/plain";
 import { errorText, useResource } from "./useResource";
 import { PageHeader } from "../../shell/PageHeader";
@@ -177,6 +185,7 @@ type IntakeView = {
   busy?: "review" | "submit" | "documents" | "copy";
   canRead: boolean;
   copy?: { run: string };
+  priorAsOf: string;
   priorNote: string;
   identity: Context["identity"];
   issuerId: string;
@@ -186,6 +195,7 @@ type IntakeView = {
   inspected: Map<string, string>;
   ignored: Map<string, string>;
   shownDocs: DocumentRecord[];
+  read: boolean;
   attachments: Partial<Record<Attachment, string>>;
   fileChoices: Record<string, string>;
   legal: string;
@@ -367,39 +377,27 @@ function intakeDocuments(reading: Reading | undefined, files: File[], uploaded: 
   return { shownDocs, inspected, ignored, documentRows, fileChoices };
 }
 
-function readinessStatus(
+type ReadinessRow = { label: string; met: boolean; detail?: string };
+
+function readinessRows(
   shownDocs: DocumentRecord[],
   step: FormStep,
   review: Review | undefined,
-  checksComplete: boolean | undefined,
+  accepted: Set<string>,
   approved: boolean,
-) {
-  const entries = [
+): ReadinessRow[] {
+  const groups = review ? groupLimits(review.summary.items).groups : [];
+  const decidedCount = groups.filter((group) => decided(group, accepted)).length;
+  return [
+    { label: "Documents inspected", met: shownDocs.length > 0 },
+    { label: "Purpose chosen", met: step !== "documents" },
     {
-      met: shownDocs.length > 0,
-      whenMet: "Documents inspected",
-      next: "Add and inspect documents",
+      label: "Decisions made",
+      met: review !== undefined && decidedCount === groups.length,
+      ...(review ? { detail: `${String(decidedCount)} of ${String(groups.length)}` } : {}),
     },
-    {
-      met: step !== "documents",
-      whenMet: "Purpose selected",
-      next: "Choose a pathway and purpose",
-    },
-    {
-      met: review !== undefined && checksComplete === true,
-      whenMet: "Run summary checked",
-      next: "Review the run summary",
-    },
-    {
-      met: review !== undefined && approved,
-      whenMet: "Summary approved",
-      next: "Approve the reviewed run",
-    },
+    { label: "Summary approved", met: review !== undefined && approved },
   ];
-  return {
-    met: entries.filter((item) => item.met).map((item) => item.whenMet),
-    notMet: entries.filter((item) => !item.met).map((item) => item.next),
-  };
 }
 
 function shownCapText(cap: number | null) {
@@ -461,6 +459,11 @@ function StepFields({
   }
 }
 
+function documentsRead(inspected: number, ignored: number) {
+  const noun = inspected === 1 ? "document" : "documents";
+  return `${String(inspected)} ${noun} inspected, ${String(ignored)} ignored.`;
+}
+
 function DocumentFields({
   view,
   folderInput,
@@ -507,6 +510,9 @@ function DocumentFields({
             {view.busy === "documents" ? "Reading documents…" : "Inspect documents"}
           </Button>
         </div>
+        <p role="status" className="text-sm text-text-secondary empty:hidden">
+          {view.read ? documentsRead(view.shownDocs.length, view.ignored.size) : ""}
+        </p>
         {view.documentRows.length > 0 ? (
           <FileUpload.List aria-label="Documents added">
             {view.documentRows.map(({ name, stored, file }, index) => {
@@ -591,18 +597,25 @@ function DocumentFields({
           }}
         />
       </label>
-      <label className={label}>
-        As-of date
-        <input
-          className={field}
-          type="date"
-          required
-          value={view.run.as_of}
-          onChange={(event) => {
-            view.changeRun("as_of", event.target.value);
-          }}
-        />
-      </label>
+      <div className="grid content-start gap-1">
+        <label className={label}>
+          As-of date
+          <input
+            className={field}
+            type="date"
+            required
+            value={view.run.as_of}
+            onChange={(event) => {
+              view.changeRun("as_of", event.target.value);
+            }}
+          />
+        </label>
+        {view.priorAsOf && (
+          <p className="text-sm text-text-tertiary">
+            Set to today for the new run. The earlier run used {view.priorAsOf}.
+          </p>
+        )}
+      </div>
       <label className={label}>
         Reporting currency
         <input
@@ -680,6 +693,7 @@ function PurposeFields({ view }: { view: IntakeView }) {
       <SelectField
         title="Case kind"
         value={view.run.case_kind}
+        help="Web research runs for public and private cases, never for a synthetic test case."
         choices={{ public: "Public filer", private: "Private", synthetic: "Synthetic test case" }}
         onChange={(value) => {
           view.changeRun("case_kind", value);
@@ -688,6 +702,7 @@ function PurposeFields({ view }: { view: IntakeView }) {
       <SelectField
         title="Run form level"
         value={view.level}
+        help="Advanced adds model, effort, turns per module, module selection and JSON inputs."
         choices={LEVELS}
         onChange={view.changeLevel}
       />
@@ -1029,6 +1044,9 @@ function AdvancedOptionsFields({ view }: { view: IntakeView }) {
   );
 }
 
+const HEADING_FOCUS =
+  "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus";
+
 function focusStep(node: HTMLElement | null) {
   node?.focus();
 }
@@ -1044,6 +1062,7 @@ function SelectField({
   onChange,
   problem,
   problemField,
+  help,
 }: {
   title: string;
   value: string;
@@ -1051,12 +1070,15 @@ function SelectField({
   onChange: (value: string) => void;
   problem?: FieldProblem;
   problemField?: FieldKey;
+  help?: string;
 }) {
+  const helpId = useId();
   const select = (
     <label className={label}>
       {title}
       <select
         className={field}
+        aria-describedby={help ? helpId : undefined}
         {...(problemField ? problemAttrs(problem, problemField) : {})}
         value={value}
         onChange={(event) => {
@@ -1071,6 +1093,15 @@ function SelectField({
       </select>
     </label>
   );
+  if (help)
+    return (
+      <div className="grid content-start gap-1">
+        {select}
+        <p id={helpId} className="text-sm text-text-tertiary">
+          {help}
+        </p>
+      </div>
+    );
   if (!problemField) return select;
   return (
     <div className="grid content-start gap-1">
@@ -1239,6 +1270,10 @@ function IntakeForm({
   const active = useRef(false);
   const folderInput = useRef<HTMLInputElement>(null);
   const dealAdd = useRef<HTMLButtonElement | null>(null);
+  // The control that had focus when a busy state began; busy fieldsets disable it and drop focus.
+  const focusedBefore = useRef<HTMLElement | null>(null);
+  // The step heading takes focus only after the step changes, never on first render.
+  const [moved, setMoved] = useState(false);
 
   const { run, identity, issuerId, requested, cap, earnings, canRead, checksComplete, newest } =
     intakeRunDetails({
@@ -1296,6 +1331,8 @@ function IntakeForm({
   ) {
     if (active.current) return;
     active.current = true;
+    focusedBefore.current =
+      document.activeElement instanceof HTMLElement ? document.activeElement : null;
     setBusy(action);
     setError("");
     setFieldError(undefined);
@@ -1552,6 +1589,7 @@ function IntakeForm({
   }
 
   function goTo(next: FormStep) {
+    setMoved(true);
     setStep(next);
     setError("");
     setFieldError(undefined);
@@ -1728,7 +1766,7 @@ function IntakeForm({
   const { title, previous, next } = FORM_STEPS[step];
   const capText = shownCapText(cap);
   const synthetic = mode === "synthetic";
-  const { met, notMet } = readinessStatus(shownDocs, step, review, checksComplete, approved);
+  const readiness = readinessRows(shownDocs, step, review, accepted, approved);
 
   function acceptReviewItems(ids: readonly string[], checked: boolean) {
     setAccepted((previouslyAccepted) => {
@@ -1771,6 +1809,7 @@ function IntakeForm({
     busy,
     canRead,
     copy,
+    priorAsOf: copy?.prior.context?.run.as_of ?? "",
     priorNote,
     identity,
     issuerId,
@@ -1780,6 +1819,7 @@ function IntakeForm({
     inspected,
     ignored,
     shownDocs,
+    read: reading !== undefined,
     attachments,
     fileChoices,
     legal,
@@ -1845,6 +1885,18 @@ function IntakeForm({
     if (fieldError && busy === undefined) focusField(fieldError.field, dealAdd);
   }, [fieldError, busy]);
 
+  useEffect(() => {
+    if (busy !== undefined) return;
+    const remembered = focusedBefore.current;
+    focusedBefore.current = null;
+    if (
+      remembered?.isConnected &&
+      document.activeElement === document.body &&
+      !remembered.matches(":disabled")
+    )
+      remembered.focus();
+  }, [busy]);
+
   return (
     <IntakePanels
       step={step}
@@ -1863,8 +1915,8 @@ function IntakeForm({
       title={title}
       previous={previous}
       next={next}
-      met={met}
-      notMet={notMet}
+      readiness={readiness}
+      focusHeading={moved}
       onAccept={acceptReviewItems}
       onApprove={setApproved}
       onEdit={editReviewedInputs}
@@ -1892,8 +1944,8 @@ type IntakePanelsProps = {
   title: string;
   previous: FormStep | null;
   next: string;
-  met: string[];
-  notMet: string[];
+  readiness: ReadinessRow[];
+  focusHeading: boolean;
   onAccept: (ids: readonly string[], checked: boolean) => void;
   onApprove: (value: boolean) => void;
   onEdit: (step: FormStep) => void;
@@ -1920,8 +1972,8 @@ function IntakePanels(props: IntakePanelsProps) {
     title,
     previous,
     next,
-    met,
-    notMet,
+    readiness,
+    focusHeading,
     onAccept,
     onApprove,
     onEdit,
@@ -1929,25 +1981,29 @@ function IntakePanels(props: IntakePanelsProps) {
     onAdvance,
     onPrevious,
   } = props;
+  const capBar = cap && capText ? { value: 0, max: cap, label: `USD 0.00 of ${capText}` } : null;
+  const ready = `${String(readiness.filter((row) => row.met).length)} of ${String(readiness.length)} ready${capBar ? ` · ${capBar.label}` : ""}`;
   return (
     <div className="mt-6 grid min-w-0 items-start gap-6 min-[1041px]:grid-cols-[minmax(0,1fr)_320px]">
       <div className={`min-w-0 ${card}`}>
-        <Stepper
-          step={review ? "start" : step}
-          steps={STEPPER_STEPS}
-          onSelect={
-            busy === undefined && !submitUncertain
-              ? (key) => {
-                  onEdit(key as FormStep);
-                }
-              : undefined
-          }
-        />
-        <p className="text-sm text-text-secondary sm:hidden">
-          {review
-            ? `Step ${String(STEP_TOTAL)} of ${String(STEP_TOTAL)} · Review and start`
-            : `Step ${String(FORM_STEP_KEYS.indexOf(step) + 1)} of ${String(STEP_TOTAL)} · ${title}`}
-        </p>
+        <div className="@container grid gap-5">
+          <Stepper
+            step={review ? "start" : step}
+            steps={STEPPER_STEPS}
+            onSelect={
+              busy === undefined && !submitUncertain
+                ? (key) => {
+                    onEdit(key as FormStep);
+                  }
+                : undefined
+            }
+          />
+          <p className="text-sm text-text-secondary @[620px]:hidden">
+            {review
+              ? `Step ${String(STEP_TOTAL)} of ${String(STEP_TOTAL)} · Review and start`
+              : `Step ${String(FORM_STEP_KEYS.indexOf(step) + 1)} of ${String(STEP_TOTAL)} · ${title}`}
+          </p>
+        </div>
         {error && <ErrorNotice>{error}</ErrorNotice>}
         {review ? (
           <ReviewConfirmation
@@ -1960,6 +2016,7 @@ function IntakePanels(props: IntakePanelsProps) {
             capText={capText}
             capAvailable={Boolean(cap)}
             synthetic={synthetic}
+            ready={ready}
             onAccept={onAccept}
             onApprove={onApprove}
             onEdit={onEdit}
@@ -1972,39 +2029,19 @@ function IntakePanels(props: IntakePanelsProps) {
             title={title}
             previous={previous}
             next={next}
+            ready={ready}
+            focusHeading={focusHeading}
             onAdvance={onAdvance}
             onPrevious={onPrevious}
           />
         )}
       </div>
-      <ReadinessPanel synthetic={synthetic} cap={cap} capText={capText} met={met} notMet={notMet} />
+      <StartReadiness
+        rows={readiness}
+        cap={capBar}
+        capTitle={synthetic ? "Configured cap for paid runs" : "Spending cap for this run"}
+      />
     </div>
-  );
-}
-
-function ReadinessPanel({
-  synthetic,
-  cap,
-  capText,
-  met,
-  notMet,
-}: {
-  synthetic: boolean;
-  cap: number | null;
-  capText: string | null;
-  met: string[];
-  notMet: string[];
-}) {
-  return (
-    <Readiness
-      capTitle={synthetic ? "Configured cap for paid runs" : undefined}
-      data={{
-        line: "Check the inputs and approve the run before it starts.",
-        notMet: { count: String(notMet.length), items: notMet },
-        met: { count: String(met.length), items: met },
-        cap: cap && capText ? { value: 0, max: cap, label: `USD 0.00 of ${capText}` } : null,
-      }}
-    />
   );
 }
 
@@ -2018,6 +2055,7 @@ function ReviewConfirmation({
   capText,
   capAvailable,
   synthetic,
+  ready,
   onAccept,
   onApprove,
   onEdit,
@@ -2032,6 +2070,7 @@ function ReviewConfirmation({
   capText: string | null;
   capAvailable: boolean;
   synthetic: boolean;
+  ready: string;
   onAccept: (ids: readonly string[], checked: boolean) => void;
   onApprove: (approved: boolean) => void;
   onEdit: (step: FormStep) => void;
@@ -2047,7 +2086,7 @@ function ReviewConfirmation({
   return (
     <div className="grid gap-5">
       <div className="grid gap-1">
-        <h2 ref={focusStep} tabIndex={-1} className={`${heading} focus:outline-none`}>
+        <h2 ref={focusStep} tabIndex={-1} className={`${heading} ${HEADING_FOCUS}`}>
           Review and start
         </h2>
         <p className="text-sm text-text-secondary">
@@ -2086,11 +2125,13 @@ function ReviewConfirmation({
           <SubmissionCost synthetic={synthetic} capText={capText} />
         </p>
       </div>
-      <div className="flex flex-wrap items-center justify-between gap-3">
+      <p className="text-sm text-text-secondary min-[1041px]:hidden">{ready}</p>
+      <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
         <span className="text-sm text-text-tertiary">
           Step {STEP_TOTAL} of {STEP_TOTAL}
         </span>
         <SubmitConfirmation
+          className="w-full sm:w-auto"
           label={submitLabel}
           confirm={confirmation}
           isDisabled={submitDisabled}
@@ -2155,6 +2196,8 @@ function InputStepForm({
   title,
   previous,
   next,
+  ready,
+  focusHeading,
   onAdvance,
   onPrevious,
 }: {
@@ -2163,9 +2206,12 @@ function InputStepForm({
   title: string;
   previous: FormStep | null;
   next: string;
+  ready: string;
+  focusHeading: boolean;
   onAdvance: (event: SubmitEvent<HTMLFormElement>) => void;
   onPrevious: () => void;
 }) {
+  const blocked = view.step === "documents" && !view.canRead;
   return (
     <form
       onSubmit={(event) => {
@@ -2176,9 +2222,9 @@ function InputStepForm({
       <div className="grid gap-1">
         <h2
           key={view.step}
-          ref={focusStep}
+          ref={focusHeading ? focusStep : undefined}
           tabIndex={-1}
-          className={`${heading} focus:outline-none`}
+          className={`${heading} ${HEADING_FOCUS}`}
         >
           {title}
         </h2>
@@ -2190,6 +2236,7 @@ function InputStepForm({
       >
         <StepFields view={view} folderInput={folderInput} />
       </fieldset>
+      <p className="text-sm text-text-secondary min-[1041px]:hidden">{ready}</p>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <Button
           color="secondary"
@@ -2213,12 +2260,20 @@ function InputStepForm({
             </Button>
           )}
         </div>
-        <Button
-          type="submit"
-          isDisabled={view.busy !== undefined || (view.step === "documents" && !view.canRead)}
-        >
-          {view.busy === "review" ? "Preparing review…" : next}
-        </Button>
+        <div className="flex flex-wrap items-center justify-end gap-3">
+          {blocked && (
+            <p id="run-step-blocker" className="text-sm text-text-secondary">
+              Add at least one document to continue.
+            </p>
+          )}
+          <Button
+            type="submit"
+            aria-describedby={blocked ? "run-step-blocker" : undefined}
+            isDisabled={view.busy !== undefined || blocked}
+          >
+            {view.busy === "review" ? "Preparing review…" : next}
+          </Button>
+        </div>
       </div>
     </form>
   );

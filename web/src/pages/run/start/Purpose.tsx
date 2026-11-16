@@ -1,6 +1,6 @@
 import { useId, useState } from "react";
 import { RadioButton, RadioField, RadioGroup, Text } from "react-aria-components";
-import { Check, FileCheck02 } from "@untitledui/icons";
+import { FileCheck02 } from "@untitledui/icons";
 import { FeaturedIcon } from "@/components/foundations/featured-icon/featured-icon";
 import { cx } from "@/utils/cx";
 import type { StartDraft } from "../slice";
@@ -71,11 +71,15 @@ export function PurposeCards({
                   <span
                     aria-hidden="true"
                     className={cx(
-                      "ml-auto flex size-4 flex-none items-center justify-center rounded text-white ring-1 ring-primary ring-inset",
-                      isSelected && "bg-brand-solid ring-brand",
+                      "ml-auto flex size-4 flex-none items-center justify-center rounded-full ring-1 ring-primary ring-inset",
+                      isSelected && "ring-2 ring-brand",
                     )}
                   >
-                    {isSelected ? <Check className="size-3" strokeWidth={3} /> : null}
+                    {isSelected ? (
+                      <svg viewBox="0 0 8 8" className="size-2 fill-action">
+                        <circle cx="4" cy="4" r="4" />
+                      </svg>
+                    ) : null}
                   </span>
                 </div>
                 <Text

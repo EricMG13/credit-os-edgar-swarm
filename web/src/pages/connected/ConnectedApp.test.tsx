@@ -711,7 +711,11 @@ describe("connected run start", () => {
       level: "advanced",
       max_turns: 24,
       modules: ["CP-0"],
-      context: { ...context, identity: { ...context.identity, sector: "Gaming" } },
+      context: {
+        ...context,
+        run: { ...context.run, as_of: "2025-03-31" },
+        identity: { ...context.identity, sector: "Gaming" },
+      },
       files: [{ name: file.name, size: file.size }],
     };
     const fetchMock = testingFetch(plan, undefined, {
@@ -730,6 +734,9 @@ describe("connected run start", () => {
     expect(screen.getByLabelText("As-of date").getAttribute("value")).toMatch(
       /^\d{4}-\d{2}-\d{2}$/,
     );
+    expect(
+      screen.getByText("Set to today for the new run. The earlier run used 2025-03-31."),
+    ).toBeInTheDocument();
     fireEvent.change(screen.getByLabelText("As-of date"), { target: { value: "2026-09-29" } });
     await advanceToPurpose();
     advanceToContext();
@@ -761,6 +768,45 @@ describe("connected run start", () => {
       max_turns: 24,
       modules: ["CP-0"],
     });
+  });
+
+  it("keeps focus and announces the result after inspecting documents", async () => {
+    testingFetch();
+    render(<ConnectedApp path="/start" mode="synthetic" />);
+    expect(await screen.findByRole("heading", { name: "Documents" })).not.toHaveFocus();
+    expect(screen.getByText("Add at least one document to continue.")).toBeInTheDocument();
+    await fillInputs();
+    fireEvent.click(screen.getByRole("button", { name: "Inspect documents" }));
+    expect(await screen.findByText("1 document inspected, 0 ignored.")).toHaveAttribute(
+      "role",
+      "status",
+    );
+  });
+
+  it("reads readiness as four status rows", async () => {
+    testingFetch({ ...plan, items: cascade });
+    render(<ConnectedApp path="/start" mode="synthetic" />);
+    await fillInputs();
+    const panel = within(screen.getByRole("complementary", { name: "Readiness" }));
+    expect(panel.getAllByRole("listitem")).toHaveLength(4);
+    await advanceToPurpose();
+    expect(
+      screen.getByText(
+        "Web research runs for public and private cases, never for a synthetic test case.",
+      ),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "Advanced adds model, effort, turns per module, module selection and JSON inputs.",
+      ),
+    ).toBeInTheDocument();
+    expect(panel.getByText("Purpose chosen").closest("li")).toHaveTextContent("Met");
+    expect(panel.getByText("Purpose chosen").closest("li")).not.toHaveTextContent("Not met");
+    advanceToContext();
+    fireEvent.click(screen.getByRole("button", { name: "Review run" }));
+    await screen.findByRole("button", { name: "Submit run" });
+    expect(panel.getByText("Decisions made").closest("li")).toHaveTextContent("0 of 1");
+    expect(screen.getByText(/of 4 ready · USD 0\.00 of USD 25\.00/)).toBeInTheDocument();
   });
 
   it("keeps JSON inputs behind Advanced, but draws one that holds an edit", async () => {
