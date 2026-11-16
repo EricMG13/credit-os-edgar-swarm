@@ -63,18 +63,16 @@ it.each(KEY_EVENTS.map((event, index) => [event.event + " " + event.date, event,
     const item = within(listItemOf(index));
     expect(item.getAllByText(key.event, { exact: true })).toHaveLength(1);
     expect(item.getAllByText(key.relevance, { exact: true })).toHaveLength(1);
-    const panel = within(panelOf(index));
+    const panelEl = panelOf(index);
+    const panel = within(panelEl);
     expect(panel.getAllByText(key.status, { exact: true })).toHaveLength(1);
-    const outsideSrOnly = item
-      .getAllByText(key.status, { exact: true })
-      .filter((el) => !el.classList.contains("sr-only"));
-    expect(outsideSrOnly).toHaveLength(1);
     expect(panel.getAllByText(`Published ${key.published}`, { exact: true })).toHaveLength(1);
     expect(panel.getAllByText(key.source, { exact: true })).toHaveLength(1);
     expect(item.getAllByText(`${key.date} · ${key.precision}`, { exact: true })).toHaveLength(1);
     expect(
-      Array.from(listItemOf(index).querySelectorAll(".sr-only"), (el) => el.textContent),
-    ).toEqual([key.category]);
+      item.queryAllByText(key.category, { exact: true }).filter((el) => !panelEl.contains(el)),
+    ).toHaveLength(1);
+    expect(listItemOf(index).querySelectorAll(".sr-only")).toHaveLength(0);
     const marker = markerOf(index);
     expect(marker).toHaveAccessibleName(
       `${key.event}, ${key.date}, ${key.precision}, ${key.status}`,
@@ -290,4 +288,31 @@ it("closes every row on Hide all details, including one clicked while all were s
   KEY_EVENTS.forEach((e, index) => {
     expect(within(panelOf(index)).getByText(e.status)).not.toBeVisible();
   });
+});
+
+const SHAPE_OF = {
+  Historical: "filled circle",
+  Scheduled: "half-filled circle",
+  Scenario: "diamond outline",
+  "User reminder": "ring",
+} as const;
+
+it.each(KEY_EVENTS.map((e, index) => [e.event + " " + e.date, e.category, index] as const))(
+  "draws the %s mark as its own category shape in the strip and the row, never the dashed ring",
+  (_name, category, index) => {
+    draw();
+    const expected = SHAPE_OF[category];
+    expect(markerOf(index).querySelector("[data-shape]")).toHaveAttribute("data-shape", expected);
+    expect(listItemOf(index).querySelector("[data-shape]")).toHaveAttribute("data-shape", expected);
+    expect(document.querySelector('[data-shape="dashed ring"]')).toBeNull();
+  },
+);
+
+it("draws the same shape in each legend toggle", () => {
+  draw();
+  const legend = screen.getByRole("group", { name: "Show categories" });
+  const shapes = within(legend)
+    .getAllByRole("button")
+    .map((b) => b.querySelector("[data-shape]")?.getAttribute("data-shape"));
+  expect(shapes).toEqual(["filled circle", "half-filled circle", "diamond outline", "ring"]);
 });
