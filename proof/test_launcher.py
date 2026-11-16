@@ -39,7 +39,7 @@ def test_real_scheduler_exports_the_submitted_run(monkeypatch):
         if key != "OPENAI_API_KEY":
             monkeypatch.delenv(key, raising=False)
     launcher = launcher_command()
-    data = json.loads((PROJECT / "cases/cpdr-context-cutoff/context.json").read_text())
+    data = json.loads((PROJECT / "cases/context/research-minimal.json").read_text())
     data["run"].update(
         pathway="credit_snapshot", as_of="2025-04-30", cutoff="", case_kind="synthetic"
     )

@@ -113,11 +113,11 @@ The finished report appears in the issuer library. Analysts never handle a conte
 From a checkout:
 
 ```bash
-PYTHONPATH=src uv run python -m deploy_workflow.run_start --root /path/to/shared-folder --host <address> --port 8765
+uv run python -m deploy_workflow.run_start --root /path/to/shared-folder --host <address> --port 8765
 ```
 
-On Windows, put `set PYTHONPATH=src` on its own line before the command. The package is not
-installed in a checkout, so without `PYTHONPATH` the command fails with `ModuleNotFoundError`.
+`uv sync` installs the engine and the issuer library into the checkout's environment, so no
+`PYTHONPATH` is needed.
 
 From the Windows package: `Start run page.cmd <root> [address]`. Without a folder it uses
 `FINAL_WORKFLOW_WORKSPACE`; with neither it prints the usage and exits 1. Without an address it
@@ -166,7 +166,10 @@ the run uses it, and a later step stays locked while an earlier one has an error
 2. **Purpose.** Pick one of `credit_snapshot`, `earnings_update`, `relative_value`,
    `covenant_refinancing`, `distressed_restructuring`, `portfolio_decision` or
    `lite_credit_assessment` (the Lite credit assessment: CP-0, CP-1, CP-1A, CP-2 and CP-2A; no
-   forecast is published). `credit_snapshot` is titled "Full credit assessment". The short credit
+   forecast is published). `credit_snapshot` is titled "Full credit assessment": CP-0, CP-1, CP-1A,
+   CP-DR, CP-2, CP-2A, CP-2D, CP-2E, CP-2G, CP-4, CP-3C, CP-3, CP-5 and CP-6 with the forecast;
+   CP-6 runs its portfolio debate (CP-6A) on every run (owner, 2026-11-15, ruling
+   `docs/rulings/2026-11-15-full-assessment-cp3c-cp6a.md`). The short credit
    snapshot (`short_snapshot`, CP-0, CP-1 and one CP-L10 page) is deactivated: it is not offered and
    a new run of it is refused; the lite credit assessment is the short option. Each row lists its
    modules. Pick Basic,
@@ -175,7 +178,19 @@ the run uses it, and a later step stays locked while an earlier one has an error
 3. **Confirm.** Issuer name and ID (at most 40 characters), as-of date, periods and currency. An
    as-of date before the newest document is a limit for the whole run, and you must tick it on the
    summary. Legal, where CP-4, CP-2A or CP-4C runs: choose the uploaded agreement file, or say there
-   is none. `executed` and `draft` can be chosen only by selecting a file.
+   is none. `executed` and `draft` can be chosen only by selecting a file. Portfolio workbook, in
+   the full credit assessment and the portfolio decision: choose the uploaded fund workbook (its
+   mandate, exposures and compliance limits, in the layout of
+   `docs/templates/portfolio.template.xlsx`), or none. It is asked for, not required (owner,
+   2026-11-15, ruling `docs/rulings/2026-11-15-full-assessment-portfolio-workbook.md`). The launcher
+   checks it before the run: its sums, shares, units and dates against the run's as-of date; CP-0,
+   CP-3 and CP-6 are told each finding, and a workbook that fails is a Limited item to tick. With
+   none, CP-6's portfolio posture states that the fund's limits were not supplied (a Note, no
+   tick, in the full assessment; the portfolio decision's Gap is unchanged). The fund's own export
+   (mandate, constraints and exposure report CSVs and a holdings workbook) is accepted beside the
+   template and checked with the holdings as the authority; upload all its files and choose the
+   holdings workbook. Check before uploading: `uv run deploy-vii validate-input portfolio <file>
+   --as-of <as-of date>`, or `... validate-input portfolio-exports <folder or files> --as-of <as-of date>`.
 4. **More context.** Standard and Advanced (at Basic only for a primary run, a held answer, an error
    or "Answer this now"): market and ratings; peers, valuation and module modes (the peer source,
    your own peers, the Relative value mode and Deep Debate for the Committee module); research

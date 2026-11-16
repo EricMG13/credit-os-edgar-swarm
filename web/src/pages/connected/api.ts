@@ -76,17 +76,39 @@ export type Summary = Reading & {
 
 export type RunStatus =
   "queued" | "running" | "finished" | "failed" | "capped" | "rejected" | "interrupted";
+export type RunEvent = {
+  at: string;
+  kind:
+    | "module_started"
+    | "module_accepted"
+    | "draft_rejected"
+    | "delivery_started"
+    | "delivered"
+    | "stopped"
+    | "changes_not_produced"
+    | "model_not_published";
+  module?: string;
+};
 export type Run = {
   id: string;
   status: RunStatus;
   reason: string;
   issuer_name: string;
+  as_of: string;
   pathway: string;
   modules: [string, "done" | "running" | "waiting"][];
   stalled?: boolean;
   started_at?: string;
   ended_at?: string;
   submitted_by?: string;
+  claimed_at?: string;
+  observed_at: string;
+  execution?: "host-session" | "retained-response-replay" | "synthetic" | "live-provider" | null;
+  cap: string;
+  spent: string | null;
+  settled_spent?: string | null;
+  held?: string | null;
+  events: RunEvent[] | null;
 };
 
 export type ReportEntry = { id: string; issuer: string; asOf: string; pathway: string };
@@ -131,8 +153,13 @@ function postJson(payload: unknown): RequestInit {
 
 const submission = (id: string) => `/api/submissions/${encodeURIComponent(id)}`;
 
-export const getContext = (signal: AbortSignal) =>
-  request<Context>("/connected/context", { signal });
+export async function getContext(signal: AbortSignal) {
+  const { submission_cap_usd: amount, ...template } = await request<
+    Context & { submission_cap_usd?: string }
+  >("/connected/context", { signal });
+  const cap = typeof amount === "string" && /^\d+(?:\.\d+)?$/.test(amount) ? Number(amount) : 0;
+  return { template, cap: Number.isFinite(cap) && cap > 0 ? cap : null };
+}
 export const createSubmission = () =>
   request<{ id: string }>("/api/submissions", { method: "POST" });
 const filePath = (id: string, name: string) =>
@@ -158,7 +185,7 @@ export const getSummary = (id: string, answers: Answers) =>
 export const submit = (id: string, answers: Answers, digest: string) =>
   request<{ run: string }>(`${submission(id)}/submit`, postJson({ answers, digest }));
 export const getRun = (id: string, signal: AbortSignal) =>
-  request<Run>(`/api/runs/${encodeURIComponent(id)}`, { signal });
+  request<Run>(`/connected/activity/${encodeURIComponent(id)}`, { signal });
 export const getReport = (id: string, signal: AbortSignal) =>
   request<ReportEntry>(`/connected/report/${encodeURIComponent(id)}`, { signal });
 
@@ -185,7 +212,9 @@ export const PATHWAYS: Readonly<Record<string, { label: string; modules: string[
       "CP-2",
       "CP-2A",
       "CP-2E",
+      "CP-2D",
       "CP-2G",
+      "CP-3C",
       "CP-3",
       "CP-5",
       "CP-6",

@@ -1,7 +1,12 @@
+import {
+  checkDistinctSeries,
+  seriesKey as keyOf,
+  checkLabeledSeriesLength,
+  periodSeriesData,
+} from "./seriesData";
 import { Fragment, useState, type ReactNode } from "react";
 import {
   CartesianGrid,
-  Line,
   LineChart,
   ReferenceLine,
   ResponsiveContainer,
@@ -14,7 +19,7 @@ import {
 } from "recharts";
 import { type TableCell, type TableRowData } from "./ChartTable";
 import { ChartWithTable } from "./ChartWithTable";
-import { Mark } from "./marks";
+import { SeriesLine } from "./SeriesLine";
 import { assignSeries } from "./series";
 import { BASELINE, HEIGHT, Legend, TICK, YAxisLabels, type YTick } from "./TrendChart";
 
@@ -43,14 +48,8 @@ interface PathChartProps {
   table: { head: string[]; rows: TableRowData[]; endHeading?: string };
 }
 
-const LABEL_GAP = 10;
 const TEXT_FILL = "var(--color-text-secondary)";
-const LABEL_FILL = "var(--color-text-primary)";
 const NA_FILL = "var(--color-text-tertiary)";
-
-function keyOf(i: number): string {
-  return `s${String(i)}`;
-}
 
 function check({
   periods,
@@ -58,20 +57,12 @@ function check({
   divider,
   table,
 }: Pick<PathChartProps, "periods" | "series" | "divider" | "table">) {
-  const repeated = series.find((s, i) => series.findIndex((o) => o.name === s.name) !== i);
-  if (repeated !== undefined)
-    throw new Error(`series names must be distinct: "${repeated.name}" repeats`);
+  checkDistinctSeries(series);
   const columns = table.head.slice(1);
   if (columns.length !== periods.length || columns.some((c, i) => c !== periods[i])) {
     throw new Error("the table's columns must be the periods, in the same order");
   }
-  const n = periods.length;
-  const bad = series.find((s) => s.values.length !== n || s.labels.length !== n);
-  if (bad !== undefined) {
-    throw new Error(
-      `series "${bad.name}" must have one value and one label per period (${String(n)} periods)`,
-    );
-  }
+  checkLabeledSeriesLength(series, periods.length, "period");
   if (divider !== undefined) {
     const at = periods.indexOf(divider.period);
     if (at < 0) throw new Error(`divider period "${divider.period}" is not one of the periods`);
@@ -288,98 +279,72 @@ function Chart({
   rows: TableRowData[];
 }) {
   const styles = assignSeries(series.map((s) => s.name));
-  const data = periods.map((period, index) => ({
-    period,
-    index,
-    ...Object.fromEntries(series.map((s, i) => [keyOf(i), s.values[index] ?? null])),
-  }));
+  const data = periodSeriesData(periods, series);
   const allMissing = periods.filter((_, p) => series.every((s) => s.values[p] === null));
   return (
-    <div className="flex flex-col gap-3 [&_.recharts-surface:focus-visible]:outline-2 [&_.recharts-surface:focus-visible]:outline-solid [&_.recharts-surface:focus-visible]:outline-offset-2 [&_.recharts-surface:focus-visible]:outline-focus">
-      <ResponsiveContainer width="100%" height={HEIGHT}>
-        <LineChart title={title} data={data} margin={{ top: 24, right: 24, bottom: 0, left: 0 }}>
-          <CartesianGrid vertical={false} stroke="var(--color-border-hairline)" />
-          <XAxis
-            dataKey="period"
-            tickLine={false}
-            axisLine={BASELINE}
-            tick={WrappedTick}
-            interval={0}
-            height={axisHeight(periods)}
-            padding={PERIOD_INSET}
-            tickMargin={8}
-          />
-          <YAxisLabels yTicks={yTicks} />
-          <Tooltip
-            isAnimationActive={false}
-            cursor={false}
-            content={(props) => <PathTooltip {...props} periods={periods} rows={rows} />}
-          />
-          {divider === undefined ? null : (
-            <Divider divider={divider} next={periods[periods.indexOf(divider.period) + 1]} />
-          )}
-          {allMissing.map((period) => (
-            <ReferenceLine
-              key={period}
-              x={period}
-              stroke="none"
-              label={{ value: "n.a.", position: "insideBottom", fill: NA_FILL, fontSize: 12 }}
-            />
-          ))}
-          {series.map((s, i) => {
-            const style = styles.get(s.name);
-            if (style === undefined) throw new Error(`no style for series "${s.name}"`);
-            return (
-              <Line
-                key={s.name}
-                dataKey={keyOf(i)}
-                name={s.name}
-                stroke={style.color}
-                strokeWidth={2}
-                strokeDasharray={style.dash}
-                connectNulls={false}
-                isAnimationActive={false}
-                activeDot={false}
-                dot={({ cx, cy, value, index }) => {
-                  if (
-                    typeof cx !== "number" ||
-                    typeof cy !== "number" ||
-                    typeof value !== "number"
-                  ) {
-                    return null;
-                  }
-                  const label = s.labels[index];
-                  return (
-                    <g key={index}>
-                      <Mark
-                        marker={style.marker}
-                        color={style.color}
-                        x={cx}
-                        y={cy}
-                        series={s.name}
-                      />
-                      {label === null || label === undefined ? null : (
-                        <text
-                          data-label=""
-                          data-series={s.name}
-                          x={cx}
-                          y={i === 0 ? cy - LABEL_GAP : cy + LABEL_GAP + 8}
-                          textAnchor="middle"
-                          fontSize={12}
-                          fill={LABEL_FILL}
-                        >
-                          {label}
-                        </text>
-                      )}
-                    </g>
-                  );
-                }}
+    // Period labels may need horizontal room on narrow screens; make that region keyboard-scrollable.
+    <div
+      role="region"
+      aria-label={`${title} chart; scroll horizontally to read each period`}
+      // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex
+      tabIndex={0}
+      className="overflow-x-auto focus-visible:outline-2 focus-visible:outline-focus"
+    >
+      <div className="min-w-[340px] min-[480px]:min-w-0">
+        <div className="flex flex-col gap-3 [&_.recharts-surface:focus-visible]:outline-2 [&_.recharts-surface:focus-visible]:outline-solid [&_.recharts-surface:focus-visible]:outline-offset-2 [&_.recharts-surface:focus-visible]:outline-focus">
+          <ResponsiveContainer width="100%" height={HEIGHT}>
+            <LineChart
+              title={title}
+              data={data}
+              margin={{ top: 24, right: 24, bottom: 0, left: 0 }}
+            >
+              <CartesianGrid vertical={false} stroke="var(--color-border-hairline)" />
+              <XAxis
+                dataKey="period"
+                tickLine={false}
+                axisLine={BASELINE}
+                tick={WrappedTick}
+                interval={0}
+                height={axisHeight(periods)}
+                padding={PERIOD_INSET}
+                tickMargin={8}
               />
-            );
-          })}
-        </LineChart>
-      </ResponsiveContainer>
-      {series.length >= 2 ? <Legend names={series.map((s) => s.name)} styles={styles} /> : null}
+              <YAxisLabels yTicks={yTicks} />
+              <Tooltip
+                isAnimationActive={false}
+                cursor={false}
+                content={(props) => <PathTooltip {...props} periods={periods} rows={rows} />}
+              />
+              {divider === undefined ? null : (
+                <Divider divider={divider} next={periods[periods.indexOf(divider.period) + 1]} />
+              )}
+              {allMissing.map((period) => (
+                <ReferenceLine
+                  key={period}
+                  x={period}
+                  stroke="none"
+                  label={{ value: "n.a.", position: "insideBottom", fill: NA_FILL, fontSize: 12 }}
+                />
+              ))}
+              {series.map((item, index) => {
+                const style = styles.get(item.name);
+                if (style === undefined) throw new Error(`no style for series "${item.name}"`);
+                return (
+                  <SeriesLine
+                    key={item.name}
+                    name={item.name}
+                    dataKey={keyOf(index)}
+                    style={style}
+                    labels={item.labels}
+                    labelOffset={index === 0 ? -10 : 18}
+                  />
+                );
+              })}
+            </LineChart>
+          </ResponsiveContainer>
+          {series.length >= 2 ? <Legend names={series.map((s) => s.name)} styles={styles} /> : null}
+        </div>
+      </div>
     </div>
   );
 }

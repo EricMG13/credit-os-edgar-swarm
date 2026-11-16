@@ -1,5 +1,9 @@
 # Component map
 
+The [connected React report design](react-module-coverage.md) applies this kit to
+each RBOT module. Its [visualisation map](react-visualisation-map.md) records the
+component, input contract, and fallback for every catalogue entry.
+
 Step D0b of the [design track](../superpowers/plans/2026-11-13-design-track.md), written
 2026-11-13 and revised twice the same day: after the owner's first review, and after an
 audit of the merged map. It maps every screen,

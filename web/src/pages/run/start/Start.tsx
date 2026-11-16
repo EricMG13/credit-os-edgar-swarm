@@ -55,13 +55,34 @@ export function Submit({
   blocked?: { id: string };
 }) {
   return (
+    <SubmitConfirmation
+      label={label}
+      confirm={confirm}
+      isDisabled={blocked !== undefined}
+      describedBy={blocked?.id}
+      onConfirm={() => {
+        window.location.hash = `#/run/start/${confirm.started}`;
+      }}
+    />
+  );
+}
+
+export function SubmitConfirmation({
+  label,
+  confirm,
+  isDisabled,
+  describedBy,
+  onConfirm,
+}: {
+  label: string;
+  confirm: Pick<Step["confirm"], "title" | "text" | "action">;
+  isDisabled: boolean;
+  describedBy?: string;
+  onConfirm: () => void;
+}) {
+  return (
     <DialogTrigger>
-      <Button
-        size="xl"
-        iconLeading={Lock01}
-        isDisabled={blocked !== undefined}
-        aria-describedby={blocked?.id}
-      >
+      <Button size="xl" iconLeading={Lock01} isDisabled={isDisabled} aria-describedby={describedBy}>
         {label}
       </Button>
       <ModalOverlay isDismissable>
@@ -86,13 +107,15 @@ export function Submit({
                     <p className="text-sm text-text-tertiary">{confirm.text}</p>
                   </div>
                 </div>
-                <div className="flex flex-col gap-3">
-                  <Button color="secondary" onPress={close}>
+                <div className="flex flex-col gap-3 sm:flex-row">
+                  <Button className="sm:flex-1" color="secondary" onPress={close}>
                     Cancel
                   </Button>
                   <Button
+                    className="sm:flex-1"
                     onPress={() => {
-                      window.location.hash = `#/run/start/${confirm.started}`;
+                      close();
+                      onConfirm();
                     }}
                   >
                     {confirm.action}

@@ -15,7 +15,7 @@ export function BottomLine({ text, level }: { text: BottomLineText; level: Level
       aria-label={text.label}
       className={cx(
         TRACE_HOST,
-        "flex items-start gap-4 rounded-[10px] bg-surface-inverse px-8 py-6 text-white",
+        "flex items-start gap-3 rounded-[10px] bg-surface-inverse px-4 py-4 text-white sm:gap-4 sm:px-8 sm:py-6",
       )}
     >
       <span

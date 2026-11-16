@@ -8,11 +8,12 @@ export interface ProgressBarProps {
   max: number;
   /** The text shown beside the bar, for example "3 of 8", supplied by the caller. */
   label: string;
+  labelBelow?: boolean;
   className?: string;
 }
 
 /** The source's bar with its label at the right. The label is the caller's text; nothing is computed for display. */
-export const ProgressBar = ({ value, max, label, className }: ProgressBarProps) => {
+export const ProgressBar = ({ value, max, label, labelBelow, className }: ProgressBarProps) => {
   const labelId = useId();
   if (!(max > 0)) throw new RangeError("ProgressBar needs a max greater than 0");
   if (!Number.isFinite(value) || value < 0 || value > max) {
@@ -21,7 +22,7 @@ export const ProgressBar = ({ value, max, label, className }: ProgressBarProps) 
   const percentage = (value * 100) / max;
 
   return (
-    <div className="flex items-center gap-3">
+    <div className={cx("flex", labelBelow ? "flex-col gap-1.5" : "items-center gap-3")}>
       <div
         role="progressbar"
         aria-labelledby={labelId}

@@ -33,17 +33,23 @@ function WithBar({ caption, figure }: { caption: string; figure: Figure }) {
   const { label, value: at, max } = figure.bar;
   return (
     <Item caption={caption} value={value}>
-      <ProgressBar value={at} max={max} label={label} />
+      <ProgressBar value={at} max={max} label={label} labelBelow />
     </Item>
   );
 }
 
-/** Spend, modules finished and elapsed time. Every string arrives in the slice; nothing counts. */
-export function Summary({ run }: { run: RunRecord }) {
+/** Spend, modules finished and elapsed time, formatted by the caller. */
+export function Summary({
+  run,
+  spendCaption = "Spend",
+}: {
+  run: Pick<RunRecord, "spend" | "finished" | "elapsed">;
+  spendCaption?: string;
+}) {
   return (
     <Card>
-      <div className="grid grid-cols-[repeat(auto-fit,minmax(220px,1fr))] gap-8">
-        <WithBar caption="Spend" figure={run.spend} />
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,220px),1fr))] gap-8">
+        <WithBar caption={spendCaption} figure={run.spend} />
         <WithBar caption="Modules finished" figure={run.finished} />
         <Item caption="Elapsed" value={run.elapsed.value ?? <Missing />}>
           <span className="text-sm text-text-tertiary">{run.elapsed.note}</span>

@@ -9,7 +9,7 @@ is a separate service.) There is no compiled executable. Both steps run with a c
    (root `README.md`). Without `--live` it only prepares and reviews; `--live` with a ruling is
    the paid run, which publishes the report inside the run folder.
 2. **Update the library**: `Update library.cmd [workspace]` in the package, or
-   `python apps/issuer-library/update_library.py --workspace <folder>`. It rebuilds
+   `uv run python apps/issuer-library/update_library.py --workspace <folder>`. It rebuilds
    `<workspace>/library/` and the wrapper opens `library/index.html`. Without an argument the
    wrapper uses `FINAL_WORKFLOW_WORKSPACE`, else `Documents\FinalWorkflow`. The script writes
    nothing but `library/` (built beside it, then swapped in whole), and refuses to write through a
@@ -37,6 +37,40 @@ Issuer library, Run activity and Search. Routes are hash routes.
 | Evidence | `#W-Evidence` | Tabs: Summary, Trace, Sources, Calculations, Gaps, Registers, Run record; the handoffs, each downloadable |
 | Run activity | `#CP-OS/activity` | Runs by state, with labelled, connected steps |
 
+**Full credit assessment.** Since 2026-11-15 its runs hold Refinancing & LME (CP-3C) and Liquidity
+(CP-2D), each on its own module page and in Overview, and the Committee decision page (CP-6) holds
+the portfolio debate: its Portfolio posture section and its cross-examination, scoring and decision
+tables as findings; its gaps ledger is on Evidence (ruling
+`docs/rulings/2026-11-15-full-assessment-cp3c-cp6a.md`). No page code changed for this.
+
+**Portfolio workbook (full credit assessment and portfolio decision).** The start page asks for the
+fund's workbook (mandate, exposures and compliance limits, in the layout of
+`docs/templates/portfolio.template.xlsx`); it is not required. Before the run the launcher checks
+its sums and values (distributions adding to 100, holdings' shares against market value over NAV,
+top holdings against the holdings detail and top-10 figure, the sector-limit row against the
+sector, units, currencies, signs and dates against the run's as-of date) and tells CP-0, CP-3 and
+CP-6 each finding; no figure a finding names may be used as a live constraint or exposure. The
+library draws CP-6's Portfolio posture as before; a workbook that failed its checks is stated there
+in plain words (ruling `docs/rulings/2026-11-15-full-assessment-portfolio-workbook.md`). Check a
+workbook before uploading it (exit 0 when it passes; one line per finding otherwise):
+
+```
+uv run deploy-vii validate-input portfolio "<path to the workbook>.xlsx" --as-of <the run's as-of date, YYYY-MM-DD>
+```
+
+The fund's own export is accepted beside the template: its mandate, constraints and exposure report
+(CSV files, or sheets of one workbook) (the report in five stacked sections A to E, each a title row, a header row and data rows) and
+its holdings workbook (a `Holdings` sheet, optionally `Market Data`). The holdings are the
+authority: par, market value at mid, counts, issuer, sector and second-lien shares and par-weighted
+price, margin and yield are recomputed from them, and every figure the report, the constraints and
+the mandate state is checked against them and against their own totals (twelve classes of defect,
+`docs/templates/README.md`). Upload all the files and choose the holdings workbook as the
+portfolio workbook. Check them together before uploading:
+
+```
+uv run deploy-vii validate-input portfolio-exports "<folder holding the export's files>" --as-of <the run's as-of date, YYYY-MM-DD>
+```
+
 **Where audit material is drawn.** Source references, file names, hashes, ids, calculation ids,
 registers, gap ledgers and run codes are drawn only on the Evidence page and in the trace drawer.
 Every other page shows findings and one trace control per paragraph, row or figure; the control opens
@@ -61,7 +95,7 @@ is `docs/visualisations/2026-11-13-screen-component-map.md`.
 `hydrate.js` and `screening.js` are helpers. The store and its sources are listed in
 `credit_os/SOURCE.md`.
 
-**Build and test.** `python apps/issuer-library/update_library.py --workspace <folder>` builds the
+**Build and test.** `uv run python apps/issuer-library/update_library.py --workspace <folder>` builds the
 library (step 2). The node tests are `node --test apps/issuer-library/credit_os/web/*.test.cjs`. The
 browser tests are `tests/test_library_page_browser.py` and `tests/test_library_changes_browser.py`. `apps/issuer-library/fixtures/shape-key.json` is the answer key for the
 classifiers in `shapes.js`, taken from the reference run `tdg-proof-snapshot-opus-002`, one record per line. Its table
@@ -78,7 +112,7 @@ policy. Its hashes are checked when it is built: update it after new runs.
 ## Automated: the run start page
 
 `Start run page.cmd <root> [address]` in the package (or
-`PYTHONPATH=src uv run python -m deploy_workflow.run_start --root <root> --host <address> --port 8765`
+`uv run python -m deploy_workflow.run_start --root <root> --host <address> --port 8765`
 from a checkout) serves the start page. Analysts open `http://<address>:8765/`, upload the issuer's
 documents, answer the staged questions, approve the summary and choose Submit; Submit starts a
 paid run. The root README (section 3) has the stages, the three levels and the steps.
@@ -192,7 +226,7 @@ script, the Credit OS store and page parts; `Run workflow.cmd`, `Update library.
 `Start run page.cmd` and `Smoke-test.ps1`. It ships one ruling, the run page's standing one;
 any other paid run needs a ruling written in `engine\docs\rulings`. It ships no Copilot SDK or
 runtime either, so run the Copilot configurations from a checkout. The bundled Python's
-`python313._pth` lists `engine\src`, because the embeddable Python ignores `PYTHONPATH`.
+`python313._pth` lists `engine\src` and `engine`, because the embeddable Python ignores `PYTHONPATH`.
 
 The package is a pilot build, not a signed enterprise release, and it has not been run on Windows.
 Run `Smoke-test.ps1` on the target host as acceptance: it checks the bundled Python, an offline run

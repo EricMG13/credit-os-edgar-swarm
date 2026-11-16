@@ -1,7 +1,12 @@
-import { useCallback, useId, useRef, useState, type SubmitEvent } from "react";
-import { UploadCloud02 } from "@untitledui/icons";
+import { useCallback, useRef, useState, type SubmitEvent } from "react";
+import { File05, Folder } from "@untitledui/icons";
+import { FileUpload } from "@/components/application/file-upload/file-upload-base";
+import { Badge } from "@/components/base/badges/badges";
 import { Button } from "@/components/base/buttons/button";
-import { FeaturedIcon } from "@/components/foundations/featured-icon/featured-icon";
+import { DetailsList } from "../run/start/DetailsList";
+import { PurposeCards } from "../run/start/Purpose";
+import { Readiness } from "../run/start/Readiness";
+import { SubmitConfirmation } from "../run/start/Start";
 import { Stepper } from "../run/start/Stepper";
 import {
   carryDocuments,
@@ -32,10 +37,36 @@ import { Breadcrumb, card, ErrorNotice, field, heading, label } from "./layout";
 import { errorText, useResource } from "./useResource";
 import { PageHeader } from "../../shell/PageHeader";
 
-const STEPS = [
-  { key: "inputs", title: "Run inputs", note: "Documents and issuer" },
-  { key: "review", title: "Review", note: "Check the forecast" },
-] as const;
+const FORM_STEPS = {
+  documents: { title: "Documents", next: "Continue to purpose", previous: null },
+  purpose: { title: "Purpose", next: "Review inputs", previous: "documents" },
+  confirm: { title: "Confirm what was read", next: "Approve summary", previous: "purpose" },
+  context: { title: "More context", next: "Review run", previous: "confirm" },
+} as const;
+type FormStep = keyof typeof FORM_STEPS;
+const STEP_GUIDANCE: Record<FormStep, string> = {
+  documents:
+    "Add annual and interim reports, the credit agreement and any other material the analysis should read.",
+  purpose: "The purpose determines which modules run.",
+  confirm: "Check the issuer, documents and purpose. Approving this summary costs nothing.",
+  context: "Optional. You can continue if the documents provide all the context.",
+};
+
+const PATHWAY_DESCRIPTIONS: Record<string, string> = {
+  credit_snapshot: "Assess the issuer, downside, covenants, refinancing and forward cash flow.",
+  lite_credit_assessment: "Review the issuer's fundamentals, credit drivers and downside.",
+  earnings_update: "Compare the latest results with an earlier period.",
+  relative_value: "Compare instruments, pricing and compensation for risk.",
+  covenant_refinancing: "Assess legal protections, funding needs and refinancing options.",
+  distressed_restructuring: "Assess stressed liquidity, covenants and recoveries.",
+  portfolio_decision: "Assess instruments and portfolio fit for a decision.",
+};
+const PATHWAY_CARDS = Object.entries(PATHWAYS).map(([id, pathway]) => ({
+  id,
+  title: pathway.label,
+  description: PATHWAY_DESCRIPTIONS[id] ?? "",
+  modules: `${String(pathway.modules.length)} base modules`,
+}));
 
 type Review = { id: string; answers: Answers; summary: Summary };
 type Draft = { id: string; uploaded: Map<File, string>; copied: boolean };
@@ -104,7 +135,7 @@ const COMPLEX_FIELDS = {
 type ComplexField = keyof typeof COMPLEX_FIELDS;
 type Attachment = keyof typeof ATTACHMENTS | "agreement";
 
-function focusReview(node: HTMLDivElement | null) {
+function focusStep(node: HTMLElement | null) {
   node?.focus();
 }
 
@@ -208,10 +239,11 @@ function ReviewPlan({
   const { run, identity } = answers.context;
   return (
     <>
-      <h2 className={heading}>Review run</h2>
       <dl className="grid gap-4 rounded-lg bg-surface-subtle p-4 text-sm sm:grid-cols-2">
         {[
           ["Issuer", identity.issuer_name],
+          ["Documents", String(summary.documents.length)],
+          ["Planned modules", String(summary.modules.length)],
           ["As-of date", run.as_of],
           ["Pathway", pathwayName(run.pathway)],
           ["Model and effort", `${summary.model} · ${summary.effort}`],
@@ -331,13 +363,13 @@ export function StartRun({
 }) {
   const load = useCallback(
     async (signal: AbortSignal) => {
-      const template = await getContext(signal);
-      if (!from || signal.aborted) return { template };
+      const runOptions = await getContext(signal);
+      if (!from || signal.aborted) return runOptions;
       try {
         const prior = await getPriorInputs(from);
-        return { template, initial: { run: from, prior } };
+        return { ...runOptions, initial: { run: from, prior } };
       } catch (failure) {
-        return { template, warning: errorText(failure) };
+        return { ...runOptions, warning: errorText(failure) };
       }
     },
     [from],
@@ -347,7 +379,13 @@ export function StartRun({
   return (
     <>
       <Breadcrumb>Start a run</Breadcrumb>
-      <PageHeader title="Start a run" />
+      <PageHeader
+        title="Start a run"
+        badges={mode === "synthetic" ? <Badge color="brand">Synthetic test</Badge> : undefined}
+      />
+      <p className="mt-3 text-sm text-text-secondary">
+        Choose the documents and purpose, then review what will run.
+      </p>
       {value ? (
         <IntakeForm mode={mode} navigate={navigate} {...value} />
       ) : error ? (
@@ -363,18 +401,21 @@ export function StartRun({
 
 function IntakeForm({
   template,
+  cap,
   initial,
   warning,
   navigate,
   mode,
 }: {
   template: Context;
+  cap: number | null;
   initial?: { run: string; prior: PriorInputs };
   warning?: string;
   navigate: (path: string) => void;
   mode: Mode;
 }) {
   const [copy, setCopy] = useState(initial);
+  const [step, setStep] = useState<FormStep>("documents");
   const [priorNote, setPriorNote] = useState(initial?.prior.error || warning || "");
   const [context, setContext] = useState<Context>(() => startingContext(template, initial?.prior));
   const [purposeTouched, setPurposeTouched] = useState(Boolean(initial?.prior.context));
@@ -382,11 +423,12 @@ function IntakeForm({
   const [newestOverride, setNewestOverride] = useState<string>();
   const [files, setFiles] = useState<File[]>([]);
   const [reading, setReading] = useState<Reading>();
-  const [uploadedNames, setUploadedNames] = useState<string[]>([]);
+  const [uploaded, setUploaded] = useState(new Map<File, string>());
   const [ignoredCopies, setIgnoredCopies] = useState<string[]>([]);
   const [attachments, setAttachments] = useState<Partial<Record<Attachment, string>>>({});
   const [legal, setLegal] = useState("none");
   const [edits, setEdits] = useState<Partial<Record<ComplexField, string>>>({});
+  const [analystNote, setAnalystNote] = useState("");
   const [level, setLevel] = useState(() => initial?.prior.level || "basic");
   const [model, setModel] = useState("gpt");
   const [effort, setEffort] = useState("balanced");
@@ -401,8 +443,7 @@ function IntakeForm({
   const [submitUncertain, setSubmitUncertain] = useState(false);
   const draftRef = useRef<Draft | null>(null);
   const active = useRef(false);
-  const fileId = useId();
-  const folderId = useId();
+  const folderInput = useRef<HTMLInputElement>(null);
 
   const { run, identity } = context;
   const issuerId = customSlug ?? issuerSlug(identity.issuer_name);
@@ -438,7 +479,7 @@ function IntakeForm({
     } catch (failure) {
       if (failure instanceof RequestError && failure.status === 404) {
         draftRef.current = null;
-        setUploadedNames([]);
+        setUploaded(new Map());
         setReading(undefined);
       }
       setError(errorText(failure));
@@ -469,14 +510,14 @@ function IntakeForm({
         )
       ) {
         draftRef.current = null;
-        setUploadedNames([]);
+        setUploaded(new Map());
         setReading(undefined);
         throw new Error(
           "Two documents have the same stored name. Remove one or rename it before continuing.",
         );
       }
       draft.uploaded.set(file, result.name);
-      setUploadedNames([...draft.uploaded.values()]);
+      setUploaded(new Map(draft.uploaded));
     }
     if (!draft.copied && copy?.prior.files.length && !copy.prior.error) {
       await carryDocuments(draft.id, copy.run);
@@ -498,7 +539,7 @@ function IntakeForm({
         await removeDocument(draft.id, stored);
         if (file) {
           draft.uploaded.delete(file);
-          setUploadedNames([...draft.uploaded.values()]);
+          setUploaded(new Map(draft.uploaded));
         }
         if (copy) setIgnoredCopies((previous) => [...new Set([...previous, stored])]);
       }
@@ -512,7 +553,8 @@ function IntakeForm({
     });
   }
 
-  function addFiles(selected: FileList | null) {
+  function addFiles(selected: Iterable<File> | null) {
+    if (active.current) return;
     const added = Array.from(selected ?? []).filter(
       (file) =>
         !fileName(file)
@@ -520,6 +562,7 @@ function IntakeForm({
           .some((part) => part.startsWith(".")),
     );
     setFiles((previous) => [...previous, ...added]);
+    if (added.length > 0) setReading(undefined);
     setError("");
   }
 
@@ -546,13 +589,14 @@ function IntakeForm({
       setEffort("balanced");
       setModules(carriedModules(prior));
       setEdits({});
+      setAnalystNote("");
       setAttachments({});
       setLegal("none");
       setIgnoredCopies([]);
       setNewestOverride(undefined);
       setReading(undefined);
       draftRef.current = null;
-      setUploadedNames([]);
+      setUploaded(new Map());
     });
   }
 
@@ -590,8 +634,7 @@ function IntakeForm({
     };
   }
 
-  async function makeReview(event: SubmitEvent<HTMLFormElement>) {
-    event.preventDefault();
+  async function makeReview() {
     if (!canRead || active.current) return;
     await withDraft("review", async () => {
       if (!identity.issuer_name.trim() || !/^[a-z0-9][a-z0-9-]{0,39}$/.test(issuerId)) {
@@ -600,6 +643,16 @@ function IntakeForm({
         );
       }
       const details = readDetails(edits);
+      const note = analystNote
+        .split(/\r\n?|\n/)
+        .map((line) => line.trim())
+        .filter(Boolean)
+        .join(" ");
+      if (note) {
+        const questions = details.research_questions ?? context.research_questions;
+        const listed: unknown[] = Array.isArray(questions) ? questions : [];
+        details.research_questions = [...listed, { text: note, focus_module: "" }];
+      }
       if (run.run_type === "primary") {
         const deals = details.deal_terms ?? context.deal_terms;
         if (!Array.isArray(deals) || deals.length === 0)
@@ -640,8 +693,38 @@ function IntakeForm({
     });
   }
 
+  function goTo(next: FormStep) {
+    setStep(next);
+    setError("");
+  }
+
+  async function advance(event: SubmitEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (active.current) return;
+    switch (step) {
+      case "documents":
+        if (!canRead) return;
+        await withDraft("documents", async () => {
+          const { result } = await refreshDocuments();
+          if (!result.documents.length)
+            throw new Error("The service could not read any of the selected documents.");
+          goTo("purpose");
+        });
+        break;
+      case "purpose":
+        goTo("confirm");
+        break;
+      case "confirm":
+        goTo("context");
+        break;
+      case "context":
+        await makeReview();
+        break;
+    }
+  }
+
   async function submitReviewed() {
-    if (!review || !approved || !checksComplete) return;
+    if (!review || !approved || !checksComplete || (mode === "live" && !cap)) return;
     await withDraft("submit", async () => {
       try {
         const { run: id } = await submit(review.id, review.answers, review.summary.digest);
@@ -650,7 +733,7 @@ function IntakeForm({
         if (failure instanceof RequestError && [400, 404].includes(failure.status)) {
           if (failure.status === 404) {
             draftRef.current = null;
-            setUploadedNames([]);
+            setUploaded(new Map());
             setReading(undefined);
           }
           setReview(undefined);
@@ -698,627 +781,823 @@ function IntakeForm({
   }
 
   const shownDocs = reading?.documents ?? [];
-  const allStored = [
-    ...new Set([
-      ...shownDocs.map(storedName),
-      ...(reading?.ignored ?? []).map((item) => (typeof item === "string" ? item : item.source)),
-    ]),
+  const inspected = new Map(shownDocs.map((doc) => [storedName(doc), documentDescription(doc)]));
+  const ignored = new Map(
+    (reading?.ignored ?? []).map((item) =>
+      typeof item === "string" ? [item, "Will not be read"] : [item.source, item.reason],
+    ),
+  );
+  const localNames = new Set(uploaded.values());
+  const documentRows = [
+    ...files.map((file) => ({ name: fileName(file), stored: uploaded.get(file), file })),
+    ...[...new Set([...inspected.keys(), ...ignored.keys()])]
+      .filter((name) => !localNames.has(name))
+      .map((name) => ({ name, stored: name, file: undefined })),
   ];
   const fileChoices: Record<string, string> = Object.fromEntries([
     ["", "None"] as const,
-    ...shownDocs.map((doc) => [storedName(doc), storedName(doc)] as const),
+    ...Array.from(inspected.keys(), (name) => [name, name] as const),
   ]);
-  const localNames = new Set(uploadedNames);
+
+  const { title, previous, next } = FORM_STEPS[step];
+  const capText = cap === null ? null : `USD ${cap.toFixed(2)}`;
+  const synthetic = mode === "synthetic";
+  const readinessItems = [
+    {
+      met: shownDocs.length > 0,
+      whenMet: "Documents inspected",
+      next: "Add and inspect documents",
+    },
+    {
+      met: step === "confirm" || step === "context",
+      whenMet: "Purpose selected",
+      next: "Choose a pathway and purpose",
+    },
+    {
+      met: review !== undefined && checksComplete === true,
+      whenMet: "Run summary checked",
+      next: "Review the run summary",
+    },
+    {
+      met: review !== undefined && approved,
+      whenMet: "Summary approved",
+      next: "Approve the reviewed run",
+    },
+  ];
+  const met = readinessItems.filter((item) => item.met).map((item) => item.whenMet);
+  const notMet = readinessItems.filter((item) => !item.met).map((item) => item.next);
 
   return (
-    <div className={`mt-6 max-w-4xl ${card}`}>
-      <Stepper step={review ? "review" : "inputs"} steps={STEPS} />
-      {error && <ErrorNotice>{error}</ErrorNotice>}
-      {review ? (
-        <div ref={focusReview} tabIndex={-1} className="grid gap-5">
-          <ReviewPlan
-            review={review}
-            accepted={accepted}
-            disabled={busy !== undefined || submitUncertain}
-            onAccept={(id, checked) => {
-              setAccepted((previous) => {
-                const next = new Set(previous);
-                if (checked) next.add(id);
-                else next.delete(id);
-                return next;
-              });
-              setApproved(false);
-            }}
-          />
-          <label className="flex items-start gap-2 text-sm font-semibold">
-            <input
-              type="checkbox"
-              checked={approved}
-              disabled={!checksComplete || busy !== undefined || submitUncertain}
-              onChange={(event) => {
-                setApproved(event.target.checked);
-              }}
-            />
-            Approve: I have read this summary and want this run started
-          </label>
-          {mode === "synthetic" && (
-            <p className="text-sm text-text-tertiary">
-              Synthetic run using the supplied documents.
-            </p>
-          )}
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <Button
-              color="secondary"
-              isDisabled={busy !== undefined || submitUncertain}
-              onPress={() => {
-                setReview(undefined);
-                setError("");
-              }}
-            >
-              Edit inputs
-            </Button>
-            <Button
-              isDisabled={!checksComplete || !approved || busy !== undefined}
-              onPress={() => {
-                void submitReviewed();
-              }}
-            >
-              {busy === "submit" ? "Submitting…" : "Submit run"}
-            </Button>
-          </div>
-        </div>
-      ) : (
-        <form
-          onSubmit={(event) => {
-            void makeReview(event);
-          }}
-          className="grid gap-5"
-        >
-          <h2 className={heading}>Run inputs</h2>
-          {copy && (
-            <p className="text-sm text-text-secondary">
-              Starting from run {copy.run}. Review the copied answers, add dates, and inspect its
-              available documents.
-            </p>
-          )}
-          {priorNote && (
-            <p role="status" className="text-sm text-text-secondary">
-              {priorNote}
-            </p>
-          )}
-          <fieldset disabled={busy !== undefined} className="grid min-w-0 gap-4 sm:grid-cols-2">
-            <SelectField
-              title="Pathway"
-              value={run.pathway}
-              choices={Object.fromEntries(
-                Object.entries(PATHWAYS).map(([id, path]) => [id, path.label]),
-              )}
-              onChange={(pathway) => {
-                setContext((previous) => ({
-                  ...previous,
-                  run: {
-                    ...previous.run,
-                    pathway,
-                    run_type:
-                      pathway === "earnings_update"
-                        ? "earnings"
-                        : !purposeTouched || previous.run.run_type === "earnings"
-                          ? pathway === "relative_value"
-                            ? "secondary"
-                            : "research"
-                          : previous.run.run_type,
-                  },
-                }));
-                setModules([]);
-              }}
-            />
-            <SelectField
-              title="Run purpose"
-              value={run.run_type ?? "research"}
-              choices={
-                earnings
-                  ? { earnings: PURPOSES.earnings }
-                  : {
-                      research: PURPOSES.research,
-                      primary: PURPOSES.primary,
-                      secondary: PURPOSES.secondary,
-                    }
-              }
-              onChange={(value) => {
-                setPurposeTouched(true);
-                changeRun("run_type", value);
-              }}
-            />
-            <SelectField
-              title="Case kind"
-              value={run.case_kind}
-              choices={{
-                public: "Public filer",
-                private: "Private",
-                synthetic: "Synthetic test case",
-              }}
-              onChange={(value) => {
-                changeRun("case_kind", value);
-              }}
-            />
-            <SelectField
-              title="Run form level"
-              value={level}
-              choices={LEVELS}
-              onChange={setLevel}
-            />
-            <label className={label}>
-              Issuer name
-              <input
-                className={field}
-                required
-                value={identity.issuer_name}
-                onChange={(event) => {
-                  changeIdentity("issuer_name", event.target.value);
-                }}
-              />
-            </label>
-            <label className={label}>
-              Issuer ID
-              <input
-                className={field}
-                required
-                pattern="[a-z0-9][a-z0-9\\-]{0,39}"
-                maxLength={40}
-                value={issuerId}
-                readOnly={!!copy}
-                onChange={(event) => {
-                  setCustomSlug(event.target.value);
-                }}
-              />
-            </label>
-            <label className={label}>
-              As-of date
-              <input
-                className={field}
-                type="date"
-                required
-                value={run.as_of}
-                onChange={(event) => {
-                  changeRun("as_of", event.target.value);
-                }}
-              />
-            </label>
-            <label className={label}>
-              Reporting currency
-              <input
-                className={field}
-                required
-                pattern="[A-Z]{3}"
-                maxLength={3}
-                value={run.reporting_currency}
-                onChange={(event) => {
-                  changeRun("reporting_currency", event.target.value.toUpperCase());
-                }}
-              />
-            </label>
-            <SelectField
-              title="Issue classification"
-              value={identity.issue_classification ?? ""}
-              choices={{
-                "": "Choose classification",
-                investment_grade: "Investment grade",
-                high_yield: "High yield",
-              }}
-              onChange={(value) => {
-                changeIdentity("issue_classification", value);
-              }}
-            />
-            <label className={label}>
-              Your name
-              <input
-                className={field}
-                maxLength={80}
-                value={submittedBy}
-                onChange={(event) => {
-                  setSubmittedBy(event.target.value);
-                }}
-              />
-            </label>
-            {copy ? (
-              <Button
-                color="secondary"
-                onPress={() => {
-                  setCopy(undefined);
-                  setContext(startingContext(template));
-                  setPurposeTouched(false);
-                  setCustomSlug(undefined);
-                  setReading(undefined);
-                  setPriorNote("");
-                  setEdits({});
-                  setAttachments({});
-                  setLegal("none");
-                  setModules([]);
-                  setLevel("basic");
-                  setModel("gpt");
-                  setEffort("balanced");
-                  setTurns("32");
-                  setIgnoredCopies([]);
-                  setNewestOverride(undefined);
-                  draftRef.current = null;
-                  setUploadedNames([]);
-                }}
-              >
-                This is a different issuer
-              </Button>
-            ) : (
-              <Button
-                color="secondary"
-                onPress={() => {
-                  void copyLatest();
-                }}
-              >
-                Carry over from latest run
-              </Button>
-            )}
-            <div className="grid gap-3 rounded-xl bg-surface-subtle px-4 py-5 text-text-secondary ring-1 ring-secondary ring-inset sm:col-span-2">
-              <FeaturedIcon icon={UploadCloud02} color="gray" size="md" />
-              <label htmlFor={fileId} className="font-semibold text-text-primary">
-                Documents
-              </label>
-              <input
-                className="max-w-full text-sm file:mr-3 file:rounded-lg file:border-0 file:bg-action file:px-3 file:py-2 file:font-semibold file:text-text-on-action"
-                id={fileId}
-                type="file"
-                multiple
-                onChange={(event) => {
-                  addFiles(event.target.files);
-                  event.target.value = "";
-                }}
-              />
-              <label htmlFor={folderId} className="font-semibold text-text-primary">
-                Document folder
-              </label>
-              <input
-                className="max-w-full text-sm"
-                id={folderId}
-                type="file"
-                multiple
-                {...{ webkitdirectory: "" }}
-                onChange={(event) => {
-                  addFiles(event.target.files);
-                  event.target.value = "";
-                }}
-              />
-              <p className="text-xs">
-                Add filings and other source documents. Up to 50 MB per file.
+    <div className="mt-6 grid min-w-0 items-start gap-6 min-[1041px]:grid-cols-[minmax(0,1fr)_320px]">
+      <div className={`min-w-0 ${card}`}>
+        <Stepper step={review ? "start" : step} />
+        {error && <ErrorNotice>{error}</ErrorNotice>}
+        {review ? (
+          <div className="grid gap-5">
+            <div className="grid gap-1">
+              <h2 ref={focusStep} tabIndex={-1} className={`${heading} focus:outline-none`}>
+                Start
+              </h2>
+              <p className="text-sm text-text-secondary">
+                Review the final run details and confirm to start.
               </p>
-              {files.length > 0 && (
-                <ul aria-label="Documents selected" className="grid gap-2 text-sm">
-                  {files.map((file, index) => (
-                    <li key={index} className="flex flex-wrap items-center gap-2">
-                      <span className="wrap-anywhere">{fileName(file)}</span>
+            </div>
+            <ReviewPlan
+              review={review}
+              accepted={accepted}
+              disabled={busy !== undefined || submitUncertain}
+              onAccept={(id, checked) => {
+                setAccepted((previous) => {
+                  const next = new Set(previous);
+                  if (checked) next.add(id);
+                  else next.delete(id);
+                  return next;
+                });
+                setApproved(false);
+              }}
+            />
+            <label className="flex items-start gap-2 text-sm font-semibold">
+              <input
+                type="checkbox"
+                checked={approved}
+                disabled={!checksComplete || busy !== undefined || submitUncertain}
+                onChange={(event) => {
+                  setApproved(event.target.checked);
+                }}
+              />
+              Approve: I have read this summary and want this run started
+            </label>
+            <div className="grid gap-1 border-t border-border-hairline pt-4">
+              <h3 className="text-md font-semibold text-text-primary">
+                {synthetic ? "Submit starts a synthetic test" : "Submit starts a paid run"}
+              </h3>
+              <p id="run-submit-cost" className="text-sm text-text-secondary">
+                {synthetic ? (
+                  "The synthetic test uses the supplied documents and makes no paid provider calls."
+                ) : capText === null ? (
+                  "The spending cap is unavailable. Reopen the form to load it before submitting."
+                ) : (
+                  <>
+                    It can spend up to <strong className="tabular-nums">{capText}</strong>. You
+                    confirm once more before anything is spent.
+                  </>
+                )}
+              </p>
+            </div>
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <Button
+                color="secondary"
+                isDisabled={busy !== undefined || submitUncertain}
+                onPress={() => {
+                  setReview(undefined);
+                  goTo("documents");
+                }}
+              >
+                Edit inputs
+              </Button>
+              <span className="text-sm text-text-tertiary">Step 5 of 5</span>
+              <SubmitConfirmation
+                label={
+                  busy === "submit"
+                    ? "Submitting…"
+                    : synthetic
+                      ? "Submit run"
+                      : `Submit, spend up to ${capText ?? "the cap"}`
+                }
+                confirm={
+                  synthetic
+                    ? {
+                        title: "Start a synthetic test?",
+                        text: "This test runs the workflow with the supplied documents and spends USD 0.00.",
+                        action: "Start synthetic run",
+                      }
+                    : {
+                        title: "Start a paid run?",
+                        text: `This run can spend up to ${capText ?? "the configured cap"} and stops when it reaches that cap. Once it starts, what it has spent cannot be taken back.`,
+                        action: `Start run, up to ${capText ?? "the cap"}`,
+                      }
+                }
+                isDisabled={
+                  !checksComplete || !approved || busy !== undefined || (!synthetic && !cap)
+                }
+                describedBy="run-submit-cost"
+                onConfirm={() => {
+                  void submitReviewed();
+                }}
+              />
+            </div>
+          </div>
+        ) : (
+          <form
+            onSubmit={(event) => {
+              void advance(event);
+            }}
+            className="grid min-w-0 grid-cols-1 gap-5"
+          >
+            <div className="grid gap-1">
+              <h2
+                key={step}
+                ref={focusStep}
+                tabIndex={-1}
+                className={`${heading} focus:outline-none`}
+              >
+                {title}
+              </h2>
+              <p className="text-sm text-text-secondary">{STEP_GUIDANCE[step]}</p>
+            </div>
+            <fieldset
+              disabled={busy !== undefined}
+              className="grid min-w-0 grid-cols-1 items-start gap-4 sm:grid-cols-2"
+            >
+              {step === "documents" && (
+                <>
+                  <FileUpload.Root className="sm:col-span-2">
+                    <FileUpload.DropZone
+                      inputLabel="Documents"
+                      chooseFiles
+                      hint="Add filings and other source documents. Up to 50 MB per file."
+                      isDisabled={busy !== undefined}
+                      onDropFiles={addFiles}
+                    />
+                    <input
+                      ref={folderInput}
+                      className="sr-only"
+                      aria-label="Document folder"
+                      tabIndex={-1}
+                      type="file"
+                      multiple
+                      {...{ webkitdirectory: "" }}
+                      onChange={(event) => {
+                        addFiles(event.target.files);
+                        event.target.value = "";
+                      }}
+                    />
+                    <div className="flex flex-wrap items-center gap-3">
                       <Button
-                        size="sm"
                         color="secondary"
-                        aria-label={`Remove ${fileName(file)}`}
+                        iconLeading={Folder}
+                        onPress={() => folderInput.current?.click()}
+                      >
+                        Choose a folder
+                      </Button>
+                      <Button
+                        color="secondary"
+                        isDisabled={!canRead || busy !== undefined}
                         onPress={() => {
-                          void discardDocument(fileName(file), file);
+                          void withDraft("documents", async () => {
+                            await refreshDocuments();
+                          });
                         }}
                       >
-                        Remove
+                        {busy === "documents" ? "Reading documents…" : "Inspect documents"}
                       </Button>
-                    </li>
-                  ))}
-                </ul>
-              )}
-              {reading && allStored.length > 0 && (
-                <ul aria-label="Source reading" className="grid gap-2 text-sm">
-                  {allStored.map((name) => {
-                    const doc = shownDocs.find((item) => storedName(item) === name);
-                    return (
-                      <li key={name} className="flex flex-wrap items-center gap-2">
-                        <span className="wrap-anywhere">
-                          {name} · {doc ? documentDescription(doc) : "Will not be read"}
-                        </span>
-                        {!localNames.has(name) && (
-                          <Button
-                            size="sm"
-                            color="secondary"
-                            aria-label={`Remove ${name}`}
-                            onPress={() => {
-                              void discardDocument(name);
-                            }}
-                          >
-                            Remove
-                          </Button>
-                        )}
-                      </li>
-                    );
-                  })}
-                </ul>
-              )}
-              <Button
-                className="justify-self-start"
-                color="secondary"
-                isDisabled={!canRead || busy !== undefined}
-                onPress={() => {
-                  void withDraft("documents", async () => {
-                    await refreshDocuments();
-                  });
-                }}
-              >
-                {busy === "documents" ? "Reading documents…" : "Inspect documents"}
-              </Button>
-            </div>
-            <label className={label}>
-              Date of your newest file
-              <input
-                className={field}
-                type="date"
-                value={newest}
-                onChange={(event) => {
-                  setNewestOverride(event.target.value || undefined);
-                }}
-              />
-            </label>
-            <label className={label}>
-              Research cutoff
-              <input
-                className={field}
-                type="date"
-                value={run.cutoff || run.as_of}
-                max={run.as_of || undefined}
-                onChange={(event) => {
-                  changeRun("cutoff", event.target.value);
-                }}
-              />
-            </label>
-            <label className={label}>
-              Current period
-              <input
-                className={field}
-                required={earnings}
-                placeholder="q3-2026"
-                value={run.current_period ?? ""}
-                onChange={(event) => {
-                  changeRun("current_period", event.target.value.trim().toLowerCase());
-                }}
-              />
-            </label>
-            <label className={label}>
-              Prior period
-              <input
-                className={field}
-                required={earnings}
-                placeholder="q2-2026"
-                value={run.prior_period ?? ""}
-                onChange={(event) => {
-                  changeRun("prior_period", event.target.value.trim().toLowerCase());
-                }}
-              />
-            </label>
-            <SelectField
-              title="Legal documents"
-              value={legal}
-              choices={{
-                none: "No agreement",
-                executed: "Executed agreement",
-                draft: "Draft agreement",
-              }}
-              onChange={setLegal}
-            />
-            {legal !== "none" && (
-              <SelectField
-                title="The agreement"
-                value={attachments.agreement ?? ""}
-                choices={fileChoices}
-                onChange={(value) => {
-                  setAttachments((previous) => ({ ...previous, agreement: value }));
-                }}
-              />
-            )}
-            {(earnings || level === "advanced") && (
-              <SelectField
-                title={ATTACHMENTS.management_bridge}
-                value={attachments.management_bridge ?? ""}
-                choices={fileChoices}
-                onChange={(value) => {
-                  setAttachments((previous) => ({ ...previous, management_bridge: value }));
-                }}
-              />
-            )}
-            {(run.pathway === "portfolio_decision" || level === "advanced") &&
-              (["portfolio_workbook", "prior_case"] as const).map((key) => (
-                <SelectField
-                  key={key}
-                  title={ATTACHMENTS[key]}
-                  value={attachments[key] ?? ""}
-                  choices={fileChoices}
-                  onChange={(value) => {
-                    setAttachments((previous) => ({ ...previous, [key]: value }));
-                  }}
-                />
-              ))}
-            <details className="rounded-lg border border-border-hairline p-3 sm:col-span-2">
-              <summary className="cursor-pointer font-semibold">Issuer details</summary>
-              <div className="mt-3 grid gap-4 sm:grid-cols-2">
-                {(
-                  [
-                    ["borrower_name", "Borrower (legal entity)"],
-                    ["parent_name", "Parent"],
-                    ["sector", "Sector"],
-                    ["country", "Country"],
-                    ["sponsor", "Sponsor"],
-                  ] as const
-                ).map(([key, title]) => (
-                  <label key={key} className={label}>
-                    {title}
-                    <input
-                      className={field}
-                      value={identity[key] ?? ""}
-                      onChange={(event) => {
-                        changeIdentity(key, event.target.value);
-                      }}
-                    />
-                  </label>
-                ))}
-                {(
-                  [
-                    ["aliases", "Other names in the filings"],
-                    ["guarantors", "Guarantors"],
-                  ] as const
-                ).map(([key, title]) => (
-                  <label key={key} className={label}>
-                    {title}
-                    <textarea
-                      className={field}
-                      placeholder="One per line"
-                      defaultValue={(identity[key] ?? []).join("\n")}
-                      key={copy?.run ?? "new"}
-                      onChange={(event) => {
-                        changeIdentity(
-                          key,
-                          event.target.value
-                            .split("\n")
-                            .map((line) => line.trim())
-                            .filter(Boolean),
-                        );
-                      }}
-                    />
-                  </label>
-                ))}
-                <label className="flex items-center gap-2 text-sm font-semibold">
-                  <input
-                    type="checkbox"
-                    checked={identity.listed_equity ?? false}
-                    onChange={(event) => {
-                      const listed_equity = event.target.checked;
-                      setContext((previous) => ({
-                        ...previous,
-                        identity: {
-                          ...previous.identity,
-                          listed_equity,
-                          ticker: listed_equity ? previous.identity.ticker : "",
-                        },
-                      }));
-                    }}
-                  />{" "}
-                  Listed equity
-                </label>
-                {identity.listed_equity && (
+                    </div>
+                    {documentRows.length > 0 ? (
+                      <FileUpload.List aria-label="Documents added">
+                        {documentRows.map(({ name, stored, file }, index) => {
+                          const reason = stored ? ignored.get(stored) : undefined;
+                          const description = stored ? inspected.get(stored) : undefined;
+                          return (
+                            <li
+                              key={`${name}-${String(index)}`}
+                              className="flex min-w-0 items-start gap-3 rounded-xl p-3 text-sm ring-1 ring-secondary ring-inset"
+                            >
+                              <File05
+                                aria-hidden="true"
+                                className="mt-1 size-5 shrink-0 text-text-tertiary"
+                              />
+                              <div className="min-w-0 flex-1">
+                                <p className="font-medium wrap-anywhere">{name}</p>
+                                <Badge
+                                  size="sm"
+                                  color={reason ? "error" : description ? "success" : "gray"}
+                                >
+                                  {reason ? "Ignored" : description ? "Inspected" : "Selected"}
+                                </Badge>
+                                {(reason || description) && (
+                                  <p className="mt-1 wrap-anywhere text-text-secondary">
+                                    {reason || description}
+                                  </p>
+                                )}
+                              </div>
+                              <Button
+                                size="sm"
+                                color="secondary"
+                                aria-label={`Remove ${name}`}
+                                isDisabled={busy !== undefined}
+                                onPress={() => {
+                                  void discardDocument(name, file);
+                                }}
+                              >
+                                Remove
+                              </Button>
+                            </li>
+                          );
+                        })}
+                      </FileUpload.List>
+                    ) : (
+                      <p className="text-sm text-text-secondary">No documents yet.</p>
+                    )}
+                  </FileUpload.Root>
+                  <div className="grid gap-2 sm:col-span-2">
+                    <h3 className="font-semibold">Issuer and case date</h3>
+                    {copy && (
+                      <p className="text-sm text-text-secondary">
+                        Starting from run {copy.run}. Review the copied answers, add dates, and
+                        inspect its available documents.
+                      </p>
+                    )}
+                    {priorNote && (
+                      <p role="status" className="text-sm text-text-secondary">
+                        {priorNote}
+                      </p>
+                    )}
+                  </div>
                   <label className={label}>
-                    Ticker
+                    Issuer name
                     <input
                       className={field}
-                      value={identity.ticker ?? ""}
+                      required
+                      value={identity.issuer_name}
                       onChange={(event) => {
-                        changeIdentity("ticker", event.target.value);
+                        changeIdentity("issuer_name", event.target.value);
                       }}
                     />
                   </label>
-                )}
-              </div>
-            </details>
-            <div className="grid gap-2 sm:col-span-2">
-              <h3 className="font-semibold">Context details</h3>
-              <p className="text-sm text-text-secondary">
-                Enter structured values as context/1 JSON. The service validates the content during
-                review.
-              </p>
-              {(Object.entries(COMPLEX_FIELDS) as [ComplexField, string][]).map(([key, title]) => (
-                <details
-                  key={key}
-                  open={key === "deal_terms" && run.run_type === "primary" ? true : undefined}
-                  className="rounded-lg border border-border-hairline p-3"
-                >
-                  <summary className="cursor-pointer text-sm font-semibold">{title}</summary>
-                  <textarea
-                    aria-label={title}
-                    className={`mt-2 w-full font-mono ${field}`}
-                    rows={key === "valuation" ? 12 : 5}
-                    value={detailText(key)}
-                    onChange={(event) => {
-                      setEdits((previous) => ({ ...previous, [key]: event.target.value }));
+                  <label className={label}>
+                    Issuer ID
+                    <input
+                      className={field}
+                      required
+                      pattern="[a-z0-9][a-z0-9\\-]{0,39}"
+                      maxLength={40}
+                      value={issuerId}
+                      readOnly={!!copy}
+                      onChange={(event) => {
+                        setCustomSlug(event.target.value);
+                      }}
+                    />
+                  </label>
+                  <label className={label}>
+                    As-of date
+                    <input
+                      className={field}
+                      type="date"
+                      required
+                      value={run.as_of}
+                      onChange={(event) => {
+                        changeRun("as_of", event.target.value);
+                      }}
+                    />
+                  </label>
+                  <label className={label}>
+                    Reporting currency
+                    <input
+                      className={field}
+                      required
+                      pattern="[A-Z]{3}"
+                      maxLength={3}
+                      value={run.reporting_currency}
+                      onChange={(event) => {
+                        changeRun("reporting_currency", event.target.value.toUpperCase());
+                      }}
+                    />
+                  </label>
+                  <SelectField
+                    title="Issue classification"
+                    value={identity.issue_classification ?? ""}
+                    choices={{
+                      "": "Choose classification",
+                      investment_grade: "Investment grade",
+                      high_yield: "High yield",
+                    }}
+                    onChange={(value) => {
+                      changeIdentity("issue_classification", value);
                     }}
                   />
-                  {isRowField(key) && (
+                  <label className={label}>
+                    Your name
+                    <input
+                      className={field}
+                      maxLength={80}
+                      value={submittedBy}
+                      onChange={(event) => {
+                        setSubmittedBy(event.target.value);
+                      }}
+                    />
+                  </label>
+                  {copy ? (
                     <Button
-                      size="sm"
                       color="secondary"
-                      className="mt-2"
                       onPress={() => {
-                        addContextRow(key);
+                        setCopy(undefined);
+                        setContext(startingContext(template));
+                        setPurposeTouched(false);
+                        setCustomSlug(undefined);
+                        setReading(undefined);
+                        setPriorNote("");
+                        setEdits({});
+                        setAnalystNote("");
+                        setAttachments({});
+                        setLegal("none");
+                        setModules([]);
+                        setLevel("basic");
+                        setModel("gpt");
+                        setEffort("balanced");
+                        setTurns("32");
+                        setIgnoredCopies([]);
+                        setNewestOverride(undefined);
+                        draftRef.current = null;
+                        setUploaded(new Map());
                       }}
                     >
-                      {ROW_LABELS[key]}
+                      This is a different issuer
+                    </Button>
+                  ) : (
+                    <Button
+                      color="secondary"
+                      onPress={() => {
+                        void copyLatest();
+                      }}
+                    >
+                      Carry over from latest run
                     </Button>
                   )}
-                </details>
-              ))}
-            </div>
-            {level === "advanced" && (
-              <>
-                <SelectField
-                  title="Model"
-                  value={model}
-                  choices={{ gpt: "GPT Sol", claude: "Claude Opus" }}
-                  onChange={setModel}
-                />
-                <SelectField
-                  title="Reasoning effort"
-                  value={effort}
-                  choices={{ fast: "Fast", balanced: "Balanced", high: "High" }}
-                  onChange={setEffort}
-                />
-                <label className={label}>
-                  Turns per module
-                  <input
-                    className={field}
-                    type="number"
-                    required
-                    min={1}
-                    max={64}
-                    step={1}
-                    value={turns}
-                    onChange={(event) => {
-                      setTurns(event.target.value);
+                </>
+              )}
+              {step === "purpose" && (
+                <>
+                  <div className="sm:col-span-2">
+                    <PurposeCards
+                      label="Pathway"
+                      value={run.pathway}
+                      purposes={PATHWAY_CARDS}
+                      onChange={(pathway) => {
+                        setContext((previous) => ({
+                          ...previous,
+                          run: {
+                            ...previous.run,
+                            pathway,
+                            run_type:
+                              pathway === "earnings_update"
+                                ? "earnings"
+                                : !purposeTouched || previous.run.run_type === "earnings"
+                                  ? pathway === "relative_value"
+                                    ? "secondary"
+                                    : "research"
+                                  : previous.run.run_type,
+                          },
+                        }));
+                        setModules([]);
+                      }}
+                    />
+                  </div>
+                  <SelectField
+                    title="Run purpose"
+                    value={run.run_type ?? "research"}
+                    choices={
+                      earnings
+                        ? { earnings: PURPOSES.earnings }
+                        : {
+                            research: PURPOSES.research,
+                            primary: PURPOSES.primary,
+                            secondary: PURPOSES.secondary,
+                          }
+                    }
+                    onChange={(value) => {
+                      setPurposeTouched(true);
+                      changeRun("run_type", value);
                     }}
                   />
-                </label>
-                <fieldset className="min-w-0 rounded-lg border border-border-hairline p-3 sm:col-span-2">
-                  <legend className="px-1 text-sm font-semibold">Requested modules</legend>
-                  <div className="grid gap-2 sm:grid-cols-2">
-                    {requested.map((code) => (
-                      <label key={code} className="flex items-center gap-2 text-sm">
+                  <SelectField
+                    title="Case kind"
+                    value={run.case_kind}
+                    choices={{
+                      public: "Public filer",
+                      private: "Private",
+                      synthetic: "Synthetic test case",
+                    }}
+                    onChange={(value) => {
+                      changeRun("case_kind", value);
+                    }}
+                  />
+                  <SelectField
+                    title="Run form level"
+                    value={level}
+                    choices={LEVELS}
+                    onChange={setLevel}
+                  />
+                </>
+              )}
+              {step === "confirm" && (
+                <div className="grid gap-4 sm:col-span-2">
+                  <section>
+                    <h3 className="font-semibold">Issuer</h3>
+                    <DetailsList
+                      rows={[
+                        { label: "Issuer", value: identity.issuer_name },
+                        { label: "As-of date", value: run.as_of },
+                        { label: "Reporting currency", value: run.reporting_currency },
+                      ]}
+                    />
+                  </section>
+                  <section>
+                    <h3 className="font-semibold">Documents inspected</h3>
+                    <DetailsList
+                      rows={shownDocs.map((doc) => ({
+                        label: storedName(doc),
+                        value: documentDescription(doc),
+                      }))}
+                    />
+                  </section>
+                  <section>
+                    <h3 className="font-semibold">Run</h3>
+                    <DetailsList
+                      rows={[
+                        { label: "Pathway", value: pathwayName(run.pathway) },
+                        {
+                          label: "Purpose",
+                          value: PURPOSES[(run.run_type ?? "research") as keyof typeof PURPOSES],
+                        },
+                        {
+                          label: "Spending cap",
+                          value: synthetic ? "USD 0.00 (synthetic test)" : capText,
+                        },
+                      ]}
+                    />
+                  </section>
+                </div>
+              )}
+              {step === "context" && (
+                <>
+                  <div className="grid gap-1 sm:col-span-2">
+                    <label className={label}>
+                      Anything the analysis should know
+                      <textarea
+                        aria-describedby="run-analyst-questions"
+                        className={field}
+                        rows={3}
+                        placeholder="For example, the committee wants a view on the 2028 maturities."
+                        value={analystNote}
+                        onChange={(event) => {
+                          setAnalystNote(event.target.value);
+                        }}
+                      />
+                    </label>
+                    <p id="run-analyst-questions" className="text-sm text-text-tertiary">
+                      Your note is included in the run’s research questions.
+                    </p>
+                  </div>
+                  <label className={label}>
+                    Date of your newest file
+                    <input
+                      className={field}
+                      type="date"
+                      value={newest}
+                      onChange={(event) => {
+                        setNewestOverride(event.target.value || undefined);
+                      }}
+                    />
+                  </label>
+                  <label className={label}>
+                    Research cutoff
+                    <input
+                      className={field}
+                      type="date"
+                      value={run.cutoff || run.as_of}
+                      max={run.as_of || undefined}
+                      onChange={(event) => {
+                        changeRun("cutoff", event.target.value);
+                      }}
+                    />
+                  </label>
+                  <label className={label}>
+                    Current period
+                    <input
+                      className={field}
+                      required={earnings}
+                      placeholder="q3-2026"
+                      value={run.current_period ?? ""}
+                      onChange={(event) => {
+                        changeRun("current_period", event.target.value.trim().toLowerCase());
+                      }}
+                    />
+                  </label>
+                  <label className={label}>
+                    Prior period
+                    <input
+                      className={field}
+                      required={earnings}
+                      placeholder="q2-2026"
+                      value={run.prior_period ?? ""}
+                      onChange={(event) => {
+                        changeRun("prior_period", event.target.value.trim().toLowerCase());
+                      }}
+                    />
+                  </label>
+                  <SelectField
+                    title="Legal documents"
+                    value={legal}
+                    choices={{
+                      none: "No agreement",
+                      executed: "Executed agreement",
+                      draft: "Draft agreement",
+                    }}
+                    onChange={setLegal}
+                  />
+                  {legal !== "none" && (
+                    <SelectField
+                      title="The agreement"
+                      value={attachments.agreement ?? ""}
+                      choices={fileChoices}
+                      onChange={(value) => {
+                        setAttachments((previous) => ({ ...previous, agreement: value }));
+                      }}
+                    />
+                  )}
+                  {(earnings || level === "advanced") && (
+                    <SelectField
+                      title={ATTACHMENTS.management_bridge}
+                      value={attachments.management_bridge ?? ""}
+                      choices={fileChoices}
+                      onChange={(value) => {
+                        setAttachments((previous) => ({ ...previous, management_bridge: value }));
+                      }}
+                    />
+                  )}
+                  {(["portfolio_workbook", "prior_case"] as const)
+                    .filter(
+                      (key) =>
+                        level === "advanced" ||
+                        run.pathway === "portfolio_decision" ||
+                        (key === "portfolio_workbook" && run.pathway === "credit_snapshot"),
+                    )
+                    .map((key) => (
+                      <SelectField
+                        key={key}
+                        title={ATTACHMENTS[key]}
+                        value={attachments[key] ?? ""}
+                        choices={fileChoices}
+                        onChange={(value) => {
+                          setAttachments((previous) => ({ ...previous, [key]: value }));
+                        }}
+                      />
+                    ))}
+                  <details className="rounded-lg border border-border-hairline p-3 sm:col-span-2">
+                    <summary className="cursor-pointer font-semibold">Issuer details</summary>
+                    <div className="mt-3 grid gap-4 sm:grid-cols-2">
+                      {(
+                        [
+                          ["borrower_name", "Borrower (legal entity)"],
+                          ["parent_name", "Parent"],
+                          ["sector", "Sector"],
+                          ["country", "Country"],
+                          ["sponsor", "Sponsor"],
+                        ] as const
+                      ).map(([key, title]) => (
+                        <label key={key} className={label}>
+                          {title}
+                          <input
+                            className={field}
+                            value={identity[key] ?? ""}
+                            onChange={(event) => {
+                              changeIdentity(key, event.target.value);
+                            }}
+                          />
+                        </label>
+                      ))}
+                      {(
+                        [
+                          ["aliases", "Other names in the filings"],
+                          ["guarantors", "Guarantors"],
+                        ] as const
+                      ).map(([key, title]) => (
+                        <label key={key} className={label}>
+                          {title}
+                          <textarea
+                            className={field}
+                            placeholder="One per line"
+                            defaultValue={(identity[key] ?? []).join("\n")}
+                            key={copy?.run ?? "new"}
+                            onChange={(event) => {
+                              changeIdentity(
+                                key,
+                                event.target.value
+                                  .split("\n")
+                                  .map((line) => line.trim())
+                                  .filter(Boolean),
+                              );
+                            }}
+                          />
+                        </label>
+                      ))}
+                      <label className="flex items-center gap-2 text-sm font-semibold">
                         <input
                           type="checkbox"
-                          checked={!modules.length || modules.includes(code)}
-                          disabled={modules.length === 1 && modules.includes(code)}
+                          checked={identity.listed_equity ?? false}
                           onChange={(event) => {
-                            const selected = modules.length ? modules : requested;
-                            const next = event.target.checked
-                              ? [...selected, code]
-                              : selected.filter((item) => item !== code);
-                            setModules(
-                              next.length === requested.length
-                                ? []
-                                : requested.filter((item) => next.includes(item)),
-                            );
+                            const listed_equity = event.target.checked;
+                            setContext((previous) => ({
+                              ...previous,
+                              identity: {
+                                ...previous.identity,
+                                listed_equity,
+                                ticker: listed_equity ? previous.identity.ticker : "",
+                              },
+                            }));
                           }}
                         />{" "}
-                        {moduleName(code)}
+                        Listed equity
                       </label>
-                    ))}
+                      {identity.listed_equity && (
+                        <label className={label}>
+                          Ticker
+                          <input
+                            className={field}
+                            value={identity.ticker ?? ""}
+                            onChange={(event) => {
+                              changeIdentity("ticker", event.target.value);
+                            }}
+                          />
+                        </label>
+                      )}
+                    </div>
+                  </details>
+                  <div className="grid gap-2 sm:col-span-2">
+                    <h3 className="font-semibold">Context details</h3>
+                    <p className="text-sm text-text-secondary">
+                      Enter structured values as context/1 JSON. The service validates the content
+                      during review.
+                    </p>
+                    {(Object.entries(COMPLEX_FIELDS) as [ComplexField, string][]).map(
+                      ([key, title]) => (
+                        <details
+                          key={key}
+                          open={
+                            key === "deal_terms" && run.run_type === "primary" ? true : undefined
+                          }
+                          className="rounded-lg border border-border-hairline p-3"
+                        >
+                          <summary className="cursor-pointer text-sm font-semibold">
+                            {title}
+                          </summary>
+                          <textarea
+                            aria-label={title}
+                            className={`mt-2 w-full font-mono ${field}`}
+                            rows={key === "valuation" ? 12 : 5}
+                            value={detailText(key)}
+                            onChange={(event) => {
+                              setEdits((previous) => ({ ...previous, [key]: event.target.value }));
+                            }}
+                          />
+                          {isRowField(key) && (
+                            <Button
+                              size="sm"
+                              color="secondary"
+                              className="mt-2"
+                              onPress={() => {
+                                addContextRow(key);
+                              }}
+                            >
+                              {ROW_LABELS[key]}
+                            </Button>
+                          )}
+                        </details>
+                      ),
+                    )}
                   </div>
-                </fieldset>
-              </>
-            )}
-          </fieldset>
-          <Button
-            className="justify-self-end"
-            type="submit"
-            isDisabled={busy !== undefined || !canRead}
-          >
-            {busy === "review" ? "Preparing review…" : "Review run"}
-          </Button>
-        </form>
-      )}
+                  {level === "advanced" && (
+                    <>
+                      <SelectField
+                        title="Model"
+                        value={model}
+                        choices={{ gpt: "GPT Sol", claude: "Claude Opus" }}
+                        onChange={setModel}
+                      />
+                      <SelectField
+                        title="Reasoning effort"
+                        value={effort}
+                        choices={{ fast: "Fast", balanced: "Balanced", high: "High" }}
+                        onChange={setEffort}
+                      />
+                      <label className={label}>
+                        Turns per module
+                        <input
+                          className={field}
+                          type="number"
+                          required
+                          min={1}
+                          max={64}
+                          step={1}
+                          value={turns}
+                          onChange={(event) => {
+                            setTurns(event.target.value);
+                          }}
+                        />
+                      </label>
+                      <fieldset className="min-w-0 rounded-lg border border-border-hairline p-3 sm:col-span-2">
+                        <legend className="px-1 text-sm font-semibold">Requested modules</legend>
+                        <div className="grid gap-2 sm:grid-cols-2">
+                          {requested.map((code) => (
+                            <label key={code} className="flex items-center gap-2 text-sm">
+                              <input
+                                type="checkbox"
+                                checked={!modules.length || modules.includes(code)}
+                                disabled={modules.length === 1 && modules.includes(code)}
+                                onChange={(event) => {
+                                  const selected = modules.length ? modules : requested;
+                                  const next = event.target.checked
+                                    ? [...selected, code]
+                                    : selected.filter((item) => item !== code);
+                                  setModules(
+                                    next.length === requested.length
+                                      ? []
+                                      : requested.filter((item) => next.includes(item)),
+                                  );
+                                }}
+                              />{" "}
+                              {moduleName(code)}
+                            </label>
+                          ))}
+                        </div>
+                      </fieldset>
+                    </>
+                  )}
+                </>
+              )}
+            </fieldset>
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <Button
+                color="secondary"
+                isDisabled={previous === null || busy !== undefined}
+                onPress={() => {
+                  if (previous !== null) goTo(previous);
+                }}
+              >
+                Previous
+              </Button>
+              <span className="text-sm text-text-tertiary">
+                Step {Object.keys(FORM_STEPS).indexOf(step) + 1} of 5
+              </span>
+              <Button
+                type="submit"
+                isDisabled={busy !== undefined || (step === "documents" && !canRead)}
+              >
+                {busy === "review" ? "Preparing review…" : next}
+              </Button>
+            </div>
+          </form>
+        )}
+      </div>
+      <Readiness
+        capTitle={synthetic ? "Configured cap for paid runs" : undefined}
+        data={{
+          line: "Check the inputs and approve the run before it starts.",
+          notMet: { count: String(notMet.length), items: notMet },
+          met: { count: String(met.length), items: met },
+          cap: cap && capText ? { value: 0, max: cap, label: `USD 0.00 of ${capText}` } : null,
+        }}
+      />
     </div>
   );
 }

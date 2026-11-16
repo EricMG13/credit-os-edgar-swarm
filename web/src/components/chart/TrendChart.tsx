@@ -1,6 +1,6 @@
+import { checkDistinctSeries, seriesKey as keyOf, periodSeriesData } from "./seriesData";
 import {
   CartesianGrid,
-  Line,
   LineChart,
   ResponsiveContainer,
   Tooltip,
@@ -11,6 +11,7 @@ import {
 import { ChartFrame } from "./ChartFrame";
 import { ChartTable } from "./ChartTable";
 import { Mark } from "./marks";
+import { SeriesLine } from "./SeriesLine";
 import { assignSeries, SERIES, type SeriesStyle } from "./series";
 
 interface SeriesData {
@@ -26,6 +27,7 @@ interface TableRow {
 
 interface TrendChartProps {
   title: string;
+  actions?: React.ReactNode;
   /** The title's heading level; h4 unless the chart sits directly under a section's h2. */
   as?: "h3" | "h4";
   note?: string;
@@ -46,10 +48,6 @@ export interface YTick {
 export const HEIGHT = 240;
 export const TICK = { fontSize: 12, fill: "var(--color-text-tertiary)" };
 export const BASELINE = { stroke: "var(--color-border-control)", strokeWidth: 1 };
-
-function keyOf(i: number): string {
-  return `s${String(i)}`;
-}
 
 /** The styles in legend order: each of the first six names, then a single Other. */
 function legendEntries(names: string[], styles: Map<string, SeriesStyle>) {
@@ -135,9 +133,7 @@ export function YAxisLabels({ yTicks }: { yTicks: YTick[] | undefined }) {
 function check({ periods, series, table }: Pick<TrendChartProps, "periods" | "series" | "table">) {
   const same = series.length === table.length && series.every((s, i) => s.name === table[i]?.name);
   if (!same) throw new Error("series and table must carry the same names in the same order");
-  const repeated = series.find((s, i) => series.findIndex((o) => o.name === s.name) !== i);
-  if (repeated !== undefined)
-    throw new Error(`series names must be distinct: "${repeated.name}" repeats`);
+  checkDistinctSeries(series);
   const n = periods.length;
   const bad = series.find((s, i) => s.values.length !== n || table[i]?.cells.length !== n);
   if (bad !== undefined) {
@@ -149,11 +145,7 @@ function check({ periods, series, table }: Pick<TrendChartProps, "periods" | "se
 
 function Chart({ title, periods, series, table, yTicks }: Omit<TrendChartProps, "note" | "as">) {
   const styles = assignSeries(series.map((s) => s.name));
-  const data = periods.map((period, index) => ({
-    period,
-    index,
-    ...Object.fromEntries(series.map((s, i) => [keyOf(i), s.values[index] ?? null])),
-  }));
+  const data = periodSeriesData(periods, series);
   return (
     <div className="flex flex-col gap-3 [&_.recharts-surface:focus-visible]:outline-2 [&_.recharts-surface:focus-visible]:outline-solid [&_.recharts-surface:focus-visible]:outline-offset-2 [&_.recharts-surface:focus-visible]:outline-focus">
       <ResponsiveContainer width="100%" height={HEIGHT}>
@@ -166,33 +158,11 @@ function Chart({ title, periods, series, table, yTicks }: Omit<TrendChartProps, 
             cursor={false}
             content={(props) => <ChartTooltip {...props} table={table} />}
           />
-          {series.map((s, i) => {
-            const style = styles.get(s.name);
+          {series.map((item, index) => {
+            const style = styles.get(item.name);
             if (style === undefined) return null;
             return (
-              <Line
-                key={s.name}
-                dataKey={keyOf(i)}
-                name={s.name}
-                stroke={style.color}
-                strokeWidth={2}
-                strokeDasharray={style.dash}
-                connectNulls={false}
-                isAnimationActive={false}
-                activeDot={false}
-                dot={({ cx, cy, value, index }) =>
-                  typeof cx === "number" && typeof cy === "number" && typeof value === "number" ? (
-                    <Mark
-                      key={index}
-                      marker={style.marker}
-                      color={style.color}
-                      x={cx}
-                      y={cy}
-                      series={s.name}
-                    />
-                  ) : null
-                }
-              />
+              <SeriesLine key={item.name} name={item.name} dataKey={keyOf(index)} style={style} />
             );
           })}
         </LineChart>
@@ -203,10 +173,19 @@ function Chart({ title, periods, series, table, yTicks }: Omit<TrendChartProps, 
 }
 
 /** A line chart over periods, with the Chart or Table toggle on the same data. */
-export function TrendChart({ title, as, note, periods, series, table, yTicks }: TrendChartProps) {
+export function TrendChart({
+  title,
+  as,
+  note,
+  periods,
+  series,
+  table,
+  yTicks,
+  actions,
+}: TrendChartProps) {
   check({ periods, series, table });
   return (
-    <ChartFrame title={title} as={as} note={note}>
+    <ChartFrame title={title} as={as} note={note} actions={actions}>
       {(view) =>
         view === "chart" ? (
           <Chart title={title} periods={periods} series={series} table={table} yTicks={yTicks} />

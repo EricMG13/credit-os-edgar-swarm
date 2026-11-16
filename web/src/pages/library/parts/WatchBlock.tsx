@@ -19,40 +19,62 @@ function Mark({ timing }: { timing: keyof typeof WORD }) {
  * for a screen reader, the indicator, its threshold and one trace control. A legend explains the marks.
  */
 export function WatchBlock({ block }: { block: Extract<RecordBlock, { kind: "watch" }> }) {
+  const hasTiming = block.items.some((item) => item.timing !== null);
   return (
     <Section title={block.title} level={SUBSECTION_HEADING}>
       <div>
         <ul>
-          {block.items.map((item) => (
+          {block.items.map((item, index) => (
             <li
-              key={item.indicator}
+              key={item.detail ? `${item.indicator}-${String(index)}` : item.indicator}
               className={`${TRACE_HOST} flex flex-wrap items-center gap-1.5 border-b border-border-hairline py-3 text-small last:border-b-0`}
             >
-              <span
-                role="img"
-                aria-label={WORD[item.timing]}
-                className="flex size-7 flex-none items-center justify-center rounded-ds-full border border-border-hairline bg-surface-subtle text-text-tertiary"
-              >
-                <Mark timing={item.timing} />
-              </span>
+              {item.timing && (
+                <span
+                  role="img"
+                  aria-label={WORD[item.timing]}
+                  className="flex size-7 flex-none items-center justify-center rounded-ds-full border border-border-hairline bg-surface-subtle text-text-tertiary"
+                >
+                  <Mark timing={item.timing} />
+                </span>
+              )}
               <span className="min-w-40 flex-1 font-medium text-text-primary">
                 {item.indicator}
               </span>
               <span className="text-text-tertiary tabular-nums">{item.threshold}</span>
-              <TraceControl trace={item.trace} label="Show sources for this indicator" />
+              <TraceControl
+                trace={item.trace}
+                label={
+                  item.detail
+                    ? `Show sources for ${item.indicator}`
+                    : "Show sources for this indicator"
+                }
+              />
+              {item.detail?.length ? (
+                <dl className="grid basis-full gap-2 text-text-secondary">
+                  {item.detail.map(({ label, text }) => (
+                    <div key={label} className="text-small wrap-anywhere">
+                      <dt className="inline font-medium text-text-primary">{label}</dt>{" "}
+                      <dd className="inline">{text}</dd>
+                    </div>
+                  ))}
+                </dl>
+              ) : null}
             </li>
           ))}
         </ul>
-        <p className="mt-3 flex items-center gap-2 text-small text-text-tertiary">
-          <span aria-hidden="true" className="flex">
-            <Mark timing="leading" />
-          </span>
-          {WORD.leading}
-          <span aria-hidden="true" className="ml-3 flex">
-            <Mark timing="lagging" />
-          </span>
-          {WORD.lagging}
-        </p>
+        {hasTiming && (
+          <p className="mt-3 flex items-center gap-2 text-small text-text-tertiary">
+            <span aria-hidden="true" className="flex">
+              <Mark timing="leading" />
+            </span>
+            {WORD.leading}
+            <span aria-hidden="true" className="ml-3 flex">
+              <Mark timing="lagging" />
+            </span>
+            {WORD.lagging}
+          </p>
+        )}
       </div>
     </Section>
   );

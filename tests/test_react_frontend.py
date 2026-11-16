@@ -2,6 +2,7 @@ import json
 import os
 import threading
 from collections.abc import Iterator, Mapping
+from decimal import Decimal
 from http.client import HTTPConnection
 from pathlib import Path
 from tempfile import TemporaryDirectory
@@ -10,6 +11,8 @@ import pytest
 
 from deploy_workflow.inbox import runs, startup
 from deploy_workflow.inbox.scheduler import Scheduler
+from deploy_workflow.model.budget import Budget
+from deploy_workflow.run_events import EVENTS, append_event
 from deploy_workflow.run_start.service import _Server
 from react_frontend import make_server
 
@@ -90,7 +93,10 @@ def test_react_page_routes_serve_the_build(hosted: _Server, web: Path) -> None:
 
 def test_same_origin_service_and_submit_gate(hosted: _Server) -> None:
     context = json.loads((PROJECT / "cases/context/research-minimal.json").read_bytes())
-    assert json.loads(request(hosted, "/connected/context")[1]) == context
+    assert json.loads(request(hosted, "/connected/context")[1]) == {
+        **context,
+        "submission_cap_usd": str(hosted.scheduler.settings.cap),
+    }
     assert request(hosted, "/connected/context", headers={"Origin": "http://other.test"})[0] == 403
     assert request(hosted, "/connected/snapshot", headers={"Host": "other.test"})[0] == 403
     assert request(hosted, "/api/submissions", "POST")[0] == 403
@@ -105,7 +111,47 @@ def test_same_origin_service_and_submit_gate(hosted: _Server) -> None:
     )
 
 
-def test_reports_admission_and_raw_snapshot(hosted: _Server, root: Path) -> None:
+def test_activity_uses_the_pinned_cap_and_curates_native_events(hosted: _Server) -> None:
+    layout = hosted.scheduler.layout
+    runs.save(
+        layout,
+        runs.Record(
+            id="activity",
+            pathway="credit_snapshot",
+            folder="activity",
+            status="interrupted",
+            claimed_at="2026-10-31T12:00:00Z",
+        ),
+    )
+    directory = layout.runs / "activity"
+    directory.mkdir(parents=True, exist_ok=True)
+    (directory / "workflow.json").write_text(
+        '{"execution":"live-provider","provider_cap_usd":"50.00",'
+        '"instructions":{"CP-0":{},"CP-1":{}}}',
+        encoding="utf-8",
+    )
+    budget = Budget(Decimal(50), directory / "live")
+    budget.reserve("call", Decimal(2), config_id="sol-medium")
+    budget.settle("call", Decimal("1.25"))
+    append_event(directory, "module_started", module="CP-0", reason="/local/file/path")
+    append_event(directory, "module_accepted", module="CP-0")
+    append_event(directory, "provider_call", body="private provider data")
+    append_event(directory, "module_started", module="outside the prepared plan")
+    status, raw, headers = request(hosted, "/connected/activity/activity")
+    assert status == 200 and headers["Cache-Control"] == "no-store"
+    record = json.loads(raw)
+    assert record["cap"] == "50.00"
+    assert record["execution"] == "live-provider"
+    assert Decimal(record["spent"]) == Decimal("1.25")
+    assert record["modules"] == [["CP-0", "done"], ["CP-1", "waiting"], ["Report", "waiting"]]
+    assert [event["kind"] for event in record["events"]] == ["module_started", "module_accepted"]
+    assert set(record["events"][0]) == {"kind", "at", "module"}
+    (directory / EVENTS).write_text("invalid event\n{}\n", encoding="utf-8")
+    assert json.loads(request(hosted, "/connected/activity/activity")[1])["events"] is None
+    assert request(hosted, "/connected/activity/unknown")[0] == 404
+
+
+def test_reports_admission_and_reader_snapshot(hosted: _Server, root: Path) -> None:
     scheduler = hosted.scheduler
     assert isinstance(scheduler, Scheduler)
     assert scheduler.settings.cap == 20
@@ -126,11 +172,21 @@ def test_reports_admission_and_raw_snapshot(hosted: _Server, root: Path) -> None
         id="demo", pathway="credit_snapshot", folder="demo", status="running", claimed_at=""
     )
     runs.save(scheduler.layout, record)
-    assert json.loads(request(hosted, "/connected/snapshot")[1]) == export
+    hidden = json.loads(request(hosted, "/connected/snapshot")[1])
+    assert hidden["workspace"]["runs"] == {}
+    assert hidden["catalogue"]["real"] == []
+    assert hidden["chips"] == {}
+    assert request(hosted, "/connected/artifacts/demo")[0] == 404
     assert request(hosted, "/connected/report/demo")[0] == 404
     assert json.loads(request(hosted, "/connected/reports")[1]) == {"reports": []}
+    for state in ("failed", "capped", "interrupted", "rejected", "queued"):
+        record.status = state
+        runs.save(scheduler.layout, record)
+        assert json.loads(request(hosted, "/connected/snapshot")[1])["workspace"]["runs"] == {}
+        assert request(hosted, "/connected/report/demo")[0] == 404
     record.status = "finished"
     runs.save(scheduler.layout, record)
+    assert json.loads(request(hosted, "/connected/snapshot")[1]) == export
     status, result, _ = request(hosted, "/connected/report/demo")
     assert status == 200
     assert json.loads(result) == {
@@ -181,6 +237,7 @@ def test_synthetic_mode_uses_the_explicit_launcher(
             assert b'credit-os-signal-url"' not in page
             expected = json.loads((PROJECT / "cases/context/research-minimal.json").read_bytes())
             expected["run"]["case_kind"] = "synthetic"
+            expected["submission_cap_usd"] = str(server.scheduler.settings.cap)
             assert json.loads(request(server, "/connected/context")[1]) == expected
         finally:
             server.shutdown()
@@ -194,3 +251,42 @@ def test_empty_launcher_refused_in_both_modes(root: Path, web: Path) -> None:
             make_server(root, web=web, launcher=(), synthetic=synthetic),
         ):
             pytest.fail("accepted an empty launcher")
+
+
+def test_only_same_run_published_forecast_artifacts_are_downloadable(
+    hosted: _Server, root: Path
+) -> None:
+    engine = root / "_engine"
+    digest = "b" * 64
+    delivery = engine / "runs" / "one" / "deliveries" / digest
+    delivery.mkdir(parents=True)
+    (delivery / "calculation.json").write_bytes(b'{"exact":"1.25"}\r\n')
+    (delivery / "forecast_exact.json").write_bytes(b"{}")
+    published = {
+        "catalogue": {"real": []},
+        "workspace": {
+            "runs": {
+                "one": {
+                    "folder": "one",
+                    "evidence": {
+                        "downloads": [
+                            {"href": f"../runs/one/deliveries/{digest}/calculation.json"},
+                            {"href": f"../runs/two/deliveries/{digest}/forecast_exact.json"},
+                        ]
+                    },
+                }
+            }
+        },
+        "activity": {},
+        "chips": {},
+    }
+    library = engine / "library"
+    library.mkdir(exist_ok=True)
+    (library / "data.js").write_text(f"window.CREDIT_OS_DATA={json.dumps(published)};")
+    endpoint = "/connected/artifacts/one"
+    files = json.loads(request(hosted, endpoint)[1])["files"]
+    path = f"{endpoint}/{digest}/calculation.json"
+    assert files == [{"label": "Calculation JSON", "href": path}]
+    assert request(hosted, path)[:2] == (200, b'{"exact":"1.25"}\r\n')
+    assert request(hosted, f"{endpoint}/{digest}/forecast_exact.json")[0] == 404
+    assert request(hosted, f"/connected/artifacts/two/{digest}/calculation.json")[0] == 404

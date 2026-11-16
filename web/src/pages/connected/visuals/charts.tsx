@@ -2,10 +2,9 @@ import type { ReactNode } from "react";
 import { BulletChart } from "@/components/chart/BulletChart";
 import { ChartWithTable } from "@/components/chart/ChartWithTable";
 import { ColumnsChart } from "@/components/chart/ColumnsChart";
-import { ComparisonChart, type ComparisonPanel } from "@/components/chart/ComparisonChart";
 import { DumbbellChart } from "@/components/chart/DumbbellChart";
 import { RangeStripChart } from "@/components/chart/RangeStripChart";
-import { RowChart, RowLegend, seriesColors } from "@/components/chart/RowChart";
+import { seriesColors } from "@/components/chart/RowChart";
 import { ScatterPlot } from "@/components/chart/ScatterPlot";
 import { StackChart } from "@/components/chart/StackChart";
 import { TrendChart } from "@/components/chart/TrendChart";
@@ -217,112 +216,29 @@ function paired(table: SourceTable, descriptor: Descriptor, frame: Frame) {
   }
   if (!sharedUnit || !samePeriods || values.some((value) => value !== null && value < 0))
     return null;
-  const panels = table.rows.map((row): ComparisonPanel => {
-    const left = amount(row[prior] ?? "");
-    const right = amount(row[current] ?? "");
+  const series = [prior, current].map((column, at) => {
+    const cells = table.rows.map((row) => row[column] ?? "");
+    const positions = cells.map(amount);
     return {
-      measure: row[label] ?? "",
-      max: Math.max(left ?? 0, right ?? 0) || 1,
-      values: [left, right],
-      texts: [
-        left === null ? null : (row[prior] ?? null),
-        right === null ? null : (row[current] ?? null),
-      ],
+      name: names[at] ?? "",
+      values: positions,
+      labels: cells.map((text, index) => (positions[index] === null ? null : text)),
     };
   });
-  if (panels.some((panel) => panel.values.includes(null))) return null;
   return (
-    <ComparisonChart
+    <ColumnsChart
       {...frame}
-      cases={names}
-      panels={panels}
+      groups={labels}
+      series={series}
+      yTicks={ticks(values, true)}
       table={{
         head: [table.headers[label] ?? "", ...names],
-        rows: panels.map((panel) => ({ label: panel.measure, cells: panel.texts })),
+        rows: table.rows.map((row, at) => ({
+          label: labels[at] ?? "",
+          cells: [row[prior] || null, row[current] || null],
+        })),
       }}
-    />
-  );
-}
-
-function limits(table: SourceTable, descriptor: Descriptor, frame: Frame) {
-  const slots = indices(table, [
-    descriptor.label,
-    descriptor.current,
-    descriptor.proposed,
-    descriptor.limit,
-  ]);
-  if (slots === null) return null;
-  const [label = 0, current = 1, proposed = 2, limit = 3] = slots;
-  if (
-    !chartCells(table, [current, proposed, limit]) ||
-    valuesIn(table, [current, proposed, limit]).every((value) => value === null)
-  )
-    return null;
-  const names = [
-    table.headers[current] ?? "",
-    table.headers[proposed] ?? "",
-    table.headers[limit] ?? "",
-  ];
-  if (!distinct(names) || !distinct(table.rows.map((row) => row[label] ?? ""))) return null;
-  const colors = seriesColors(names);
-  return (
-    <RowChart
-      {...frame}
-      table={chartTable(table)}
-      legend={
-        <RowLegend
-          items={names.map((name, i) => ({
-            label: name,
-            swatch: (
-              <i
-                className={
-                  i === 2
-                    ? "h-3 border-l-2 border-dashed border-text-primary"
-                    : "size-2 rounded-ds-xs"
-                }
-                style={{ backgroundColor: i === 2 ? undefined : colors[i] }}
-              />
-            ),
-          }))}
-        />
-      }
-      rows={table.rows.map((row) => {
-        const values = [current, proposed, limit].map((column) => amount(row[column] ?? ""));
-        const { min, max } = bounds(values, true);
-        const percent = (value: number) => ((value - min) / (max - min)) * 100;
-        const zero = percent(0);
-        const target = values[2];
-        return {
-          label: row[label] ?? "",
-          sub: row.at(-2) ?? "",
-          values: names.map((name, i) => `${name} ${row[slots[i + 1] ?? 0] ?? ""}`).join(" · "),
-          track: (
-            <>
-              {values.slice(0, 2).map((value, i) =>
-                value === null ? null : (
-                  <i
-                    key={i}
-                    aria-hidden="true"
-                    className={`absolute h-2 min-w-px rounded-ds-xs ${i === 0 ? "top-1" : "top-4"}`}
-                    style={{
-                      left: `${String(Math.min(zero, percent(value)))}%`,
-                      width: `${String(Math.abs(percent(value) - zero))}%`,
-                      backgroundColor: colors[i],
-                    }}
-                  />
-                ),
-              )}
-              {target === undefined || target === null ? null : (
-                <i
-                  aria-hidden="true"
-                  className="absolute inset-y-0 border-l-2 border-dashed border-text-primary"
-                  style={{ left: `${String(percent(target))}%` }}
-                />
-              )}
-            </>
-          ),
-        };
-      })}
+      detailTable={chartTable(table)}
     />
   );
 }
@@ -398,7 +314,7 @@ function scatter(table: SourceTable, descriptor: Descriptor, frame: Frame) {
   });
   if (
     !distinct(points.map((point) => point.name)) ||
-    points.some((point) => point.x === null || point.y === null)
+    !points.some((point) => point.x !== null && point.y !== null)
   )
     return null;
   const xTitle = table.headers[date] ?? "";
@@ -422,7 +338,11 @@ function scatter(table: SourceTable, descriptor: Descriptor, frame: Frame) {
         })),
       }}
       y={{ title: yTitle, short: yTitle, ticks: ticks(points.map((point) => point.y)) }}
-      table={chartTable(table, [label, date, yieldAt])}
+      table={{
+        head: [table.headers[label] ?? "", xTitle, yTitle],
+        rows: points.map(({ name, xText, yText }) => ({ label: name, cells: [xText, yText] })),
+      }}
+      detailTable={chartTable(table)}
     />
   );
 }
@@ -447,7 +367,14 @@ function stack(table: SourceTable, descriptor: Descriptor, frame: Frame) {
   );
   if (parts.length === 0) return null;
   if (parts.length === entries.length) {
-    return <StackChart {...frame} parts={parts} table={chartTable(table, [label, column])} />;
+    return (
+      <StackChart
+        {...frame}
+        parts={parts}
+        table={chartTable(table, [label, column])}
+        detailTable={chartTable(table)}
+      />
+    );
   }
   const colors = seriesColors(entries.map((entry) => entry.name));
   return (
@@ -565,6 +492,7 @@ function recovery(table: SourceTable, descriptor: Descriptor, frame: Frame) {
           cells: names.map((name) => sourceRows.get(group)?.get(name) || null),
         })),
       }}
+      detailTable={chartTable(table)}
     />
   );
 }
@@ -581,7 +509,8 @@ export function publishedChart(table: SourceTable, descriptor: Descriptor, frame
     case "dumbbell":
       return paired(table, descriptor, frame);
     case "limits":
-      return limits(table, descriptor, frame);
+      // Numeric roles alone do not attest the mandate, exposure date or NAV basis.
+      return null;
     case "range":
       return range(table, descriptor, frame);
     case "scatter":

@@ -38,6 +38,9 @@ from deploy_workflow.run_start.submissions import (
 )
 
 
+AS_ROOT = hasattr(os, "geteuid") and os.geteuid() == 0  # no geteuid on Windows
+
+
 @pytest.fixture
 def layout() -> Iterator[Layout]:
     # pytest's tmp_path is longer than the 80-character root limit on macOS.
@@ -248,6 +251,48 @@ def test_the_summary_is_the_launchers_forecast(layout, tmp_path):
     assert s["ignored"] == list(expected.ignored)
     assert s["prior"] is None  # no earlier run is listed: the approval names a first run
     assert s["digest"] == submissions.bound(digest(layout, sid, answers), "none")
+
+
+def full_assessment_summary(layout, tmp_path, workbook: bytes | None) -> dict[str, object]:
+    """The summary of a full credit assessment, with the portfolio workbook chosen when given."""
+    sid, _ = upload_issuer(layout, tmp_path)
+    answers = answers_for(tmp_path)
+    answers["context"]["run"]["pathway"] = "credit_snapshot"  # type: ignore[index]
+    if workbook is not None:
+        put(layout, sid, "SYNTHETIC-portfolio.xlsx", workbook)
+        answers["context"]["attachments"]["portfolio_workbook"] = True  # type: ignore[index]
+    return summary(layout, sid, answers, cap=Decimal(20))
+
+
+def test_a_full_assessment_summary_without_the_workbook_adds_no_tick(layout, tmp_path):
+    result = full_assessment_summary(layout, tmp_path, None)
+    assert result["error"] == ""
+    ours = [i for i in result["items"] if "portfolio" in i["id"]]  # type: ignore[union-attr]
+    # One information row: no tick (the page ticks gap, limited, will-refuse and fixable checks).
+    assert [(i["id"], i["outcome"], i["counted"]) for i in ours] == [
+        ("CP-6:portfolio-workbook-none", "information", False)
+    ]
+
+
+def test_a_full_assessment_summary_lists_a_workbook_that_fails_its_checks(layout, tmp_path):
+    from tools import synthetic_portfolio_workbooks as synth
+
+    raw = synth.workbook_bytes(synth.broken("maturity-sum-over"))
+    result = full_assessment_summary(layout, tmp_path, raw)
+    assert result["error"] == ""
+    assert "SYNTHETIC-portfolio.xlsx" in [d["source"] for d in result["documents"]]  # type: ignore[union-attr]
+    ours = [i for i in result["items"] if "portfolio" in i["id"]]  # type: ignore[union-attr]
+    assert [(i["id"], i["outcome"]) for i in ours] == [
+        ("CP-6:portfolio-workbook-fails-checks", "limited")
+    ]
+    assert ours[0]["reason"].endswith(
+        "SYNTHETIC-portfolio.xlsx: 1 finding; first: Maturity_Profile!B2:B6: pct_nav of the 5 "
+        "rows sums to 102.0, outside 99.0 to 101.0 (2.0 more than 100)."
+    )
+    clean = synth.workbook_bytes(synth.clean())
+    shutil.rmtree(tmp_path / "issuer")
+    passed = full_assessment_summary(layout, tmp_path, clean)
+    assert not [i for i in passed["items"] if "portfolio" in i["id"]]  # type: ignore[union-attr]
 
 
 SEC_AGENT = "DEPLOY_WORKFLOW_SEC_USER_AGENT"
@@ -969,6 +1014,7 @@ def test_a_summary_racing_the_removal_of_its_folder_is_refused_not_an_oserror(
         summary(layout, sid, answers_for(tmp_path), cap=Decimal(20))
 
 
+@pytest.mark.skipif(AS_ROOT, reason="root reads any folder")
 def test_an_oserror_while_the_summary_reads_is_logged_not_passed_off_as_a_change(
     layout, tmp_path, caplog
 ):
@@ -1438,7 +1484,7 @@ def test_open_regular_does_not_wait_on_a_fifo(tmp_path):
     assert not held and outcome == ["refused"]
 
 
-@pytest.mark.skipif(os.geteuid() == 0, reason="root reads any folder")
+@pytest.mark.skipif(AS_ROOT, reason="root reads any folder")
 def test_a_carry_from_a_folder_with_an_unreadable_subfolder_is_refused(layout, tmp_path):
     src = tmp_path / "run"
     (src / "q3").mkdir(parents=True)

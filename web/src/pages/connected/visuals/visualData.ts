@@ -24,6 +24,8 @@ export interface SourceTable {
   line: number;
   headers: string[];
   rows: string[][];
+  rowLines?: (number | undefined)[];
+  rowSource?: (line: number, label: string) => ReactNode;
   evidenceInDrawer?: boolean;
 }
 
@@ -40,12 +42,16 @@ export function publishedTables(sections: unknown) {
         continue;
       }
       if (!strings(headers) || headers.length < 2) continue;
-      const cells = items(rows).map((row) => record(row).cells);
+      const sourceRows = items(rows).map(record);
+      const cells = sourceRows.map((row) => row.cells);
       if (
         cells.length > 0 &&
         cells.every((row): row is string[] => strings(row) && row.length === headers.length)
       ) {
-        tables.set(line, { line, headers, rows: cells });
+        const rowLines = sourceRows.map(({ line: at }) =>
+          typeof at === "number" && Number.isSafeInteger(at) && at > 0 ? at : undefined,
+        );
+        tables.set(line, { line, headers, rows: cells, rowLines });
       }
     }
   }
@@ -56,6 +62,13 @@ export function amount(cell: string): number | null {
   if (!/^-?\d[\d,]*(?:\.\d+)?$/.test(cell)) return null;
   const value = Number(cell.replaceAll(",", ""));
   return Number.isFinite(value) ? value : null;
+}
+
+export function sharePosition(cell: string) {
+  const match = /^(0(?:\.\d+)?|1(?:\.0+)?)(?: \((\d+(?:\.\d+)?)%\))?$/.exec(cell);
+  if (!match) return null;
+  const value = Number(match[1]);
+  return match[2] === undefined || Math.abs(Number(match[2]) - value * 100) < 1e-10 ? value : null;
 }
 
 export function distinct(labels: string[]) {
@@ -72,7 +85,11 @@ export function bounds(values: (number | null)[], zero = false) {
   return { min: zero && min === 0 ? 0 : min - margin, max: max + margin };
 }
 
-export function ticks(values: (number | null)[], zero = false, format = String) {
+export function ticks(
+  values: (number | null)[],
+  zero = false,
+  format: (value: number) => string = String,
+) {
   const { min, max } = bounds(values, zero);
   return [...new Set([min, min + (max - min) / 2, max])].map((value) => ({
     value,
@@ -88,9 +105,16 @@ export function chartTable(table: SourceTable, columns = table.headers.map((_, i
     : columns;
   return {
     head: visible.map((index) => table.headers[index] ?? ""),
-    rows: table.rows.map((row) => ({
-      label: row[visible[0] ?? 0] ?? "",
-      cells: visible.slice(1).map((index) => row[index] || null),
-    })),
+    endHeading: "Source",
+    rows: table.rows.map((row, index) => {
+      const label = row[visible[0] ?? 0] ?? "";
+      const line = table.rowLines?.[index];
+      return {
+        label,
+        cells: visible.slice(1).map((column) => row[column] || null),
+        end: line === undefined ? undefined : table.rowSource?.(line, label),
+      };
+    }),
   };
 }
+import type { ReactNode } from "react";

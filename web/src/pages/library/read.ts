@@ -830,7 +830,7 @@ function readWatch(w: Rec, path: string, traces: Traces): RecordBlock {
           return {
             indicator: named(i, "indicator", p),
             threshold: named(i, "threshold", p),
-            timing: oneOf(i, "timing", p, ["leading", "lagging"]),
+            timing: oneOf(i, "timing", p, ["leading", "lagging"] as const),
             trace: traceKey(i, "trace", p, traces),
           };
         }),

@@ -64,7 +64,15 @@ describe("Shell bleed", () => {
 
   it("pads main by default", () => {
     render(<Shell current="signal">x</Shell>);
-    expect(screen.getByRole("main").className).toMatch(/\bp-8\b/);
+    expect(screen.getByRole("main").className).toContain("p-4");
+    expect(screen.getByRole("main").className).toContain("sm:p-8");
+  });
+
+  it("keeps the desktop rail while giving narrow screens a labelled horizontal navigation", () => {
+    const { container } = render(<Shell current="library">x</Shell>);
+    expect(container.firstElementChild?.className).toContain("min-[768px]:flex-row");
+    expect(screen.getByRole("navigation", { name: "Areas" })).toBeInTheDocument();
+    expect(screen.getByText("Library", { selector: "span" })).toHaveClass("min-[768px]:hidden");
   });
 });
 

@@ -34,20 +34,29 @@ CUT = {
         *("T2DS.3", "T2DS.5", "T2DS.7", "T2B.3", "T2B.4", "T2B.5"),
         *("T5.1", "T5.2", "T5.3", "T5.4"),
     ],
+    # Owner, 2026-11-15 ("restore the cut tables"): T2F.4 and T2F.5 hold the inputs and figures
+    # of CP-2E's method script check (ruling 2026-11-15-method-script-checks.md).
     "CP-2E": [
-        *("T2F.2", "T2F.4", "T2F.5", "T2F.8", "T2F.9"),
+        *("T2F.2", "T2F.8", "T2F.9"),
     ],
     "CP-2G": ["T2H.1", "T2H.2", "T2H.9"],
     "CP-3": [
         *("T3.1", "T3.4", "T3.5", "T3.7", "T3.9", "T3.10"),
         *("T3B.2", "T3B.3", "T3B.4", "T3B.5", "T3B.6", "T3B.7", "T3B.8", "T3B.10", "T3B.11"),
-        *("T3C.1", "T3C.2", "T3C.3", "T3C.5", "T3C.6", "T3C.7", "T3C.8", "T3C.9"),
     ],
     "CP-5": [
         *("T5B.4", "T5B.5", "T5B.6", "T5B.7", "T5B.8"),
         *("T5.1", "T5.2", "T5.4", "T5.5", "T5.6", "T5.7", "T5.8", "T5.9"),
     ],
-    "CP-6": ["T6A.6", "T6A.11", "T6E.4", "T6E.6", "T6E.7", "T6E.11"],
+    # Owner, 2026-11-15 ("module cp-6A within cp-6 should be fully functional"): CP-6A's registers
+    # are written and checked again, although both runs' inventory rows still classify them CUT.
+    "CP-6": ["T6A.6", "T6A.11"],
+}
+RESTORED = {
+    "CP-6": ["T6E.4", "T6E.6", "T6E.7", "T6E.11"],
+    "CP-2E": ["T2F.4", "T2F.5"],
+    # Owner, 2026-11-15: "restore the CP-3 portfolio-fit tables" (CP-6A's gate names them).
+    "CP-3": [*("T3C.1", "T3C.2", "T3C.3", "T3C.5", "T3C.6", "T3C.7", "T3C.8", "T3C.9")],
 }
 # The medium run wrote four CP-1A registers under names, not ids (checked against that run's
 # `<!-- table-id: ... -->` tags: T2D.2, T2D.6, T2D.7, T2D.8).
@@ -240,6 +249,26 @@ def test_every_scope_id_is_cut_in_every_inventory_row_of_both_runs(module):
         assert {cls for _, cls in mine} == {"CUT"}, (module, ident, mine)
 
 
+@pytest.mark.parametrize("module", list(RESTORED))
+def test_the_restored_registers_were_cut_by_rule_r1_and_are_now_required(module):
+    """Rule R1 would still cut them (every inventory row CUT); the owner restored them."""
+    rows = [r for r in inventory_rows() if r[1] == module]
+    section = dict(cpos_launch.method_sections(module))[f"{SCOPE_FILE} § {module}"]
+    for ident in RESTORED[module]:
+        mine = {r[3] for r in rows if row_id(r[0], r[1], r[2]) == ident}
+        assert mine == {"CUT"}, ident
+        assert ident not in CUT[module]
+        assert ident in cpos_launch.required_registers(module)
+        assert not re.search(rf"\b{re.escape(ident)}\b", section), ident
+
+
+def test_a_cp6_handoff_without_a_cp6a_register_is_refused_naming_it():
+    text = registers("CP-6", skip=("T6E.6",))
+    (issue,) = refusal("CP-6", text)
+    assert "Missing registers: T6E.6." in issue
+    assert refusal("CP-6", registers("CP-6")) == []
+
+
 def test_ownership_register_stays_out_while_a_delivery_reader_names_it():
     # handoff_delivery.py:488 reads the CP-1A section `Ownership and control` as table
     # `ownership_register`; rule R1's STOP: leave an id with a reader out of the list.
@@ -255,10 +284,23 @@ def _without_constants(source: str, names: tuple[str, ...]) -> str:
 def test_no_check_reader_or_library_names_a_cut_or_routing_register():
     """A hit is a reader or a code-sent requirement of a register the transport stops writing."""
     sources = {
-        "cpos_launch.py": _without_constants(
-            (ROOT / "src/deploy_workflow/owners/cpos_launch.py").read_text(),
-            ("ROUTING_RULES", "CP0_BLOCK", "UPSTREAM_SCOPE_NOTE", "ROUTING_REGISTERS"),
-        ),
+        **{
+            name: _without_constants(
+                (ROOT / "src/deploy_workflow/owners" / name).read_text(),
+                ("ROUTING_RULES", "CP0_BLOCK", "UPSTREAM_SCOPE_NOTE", "ROUTING_REGISTERS"),
+            )
+            for name in (
+                "cpos_launch.py",
+                "cpos_launch_methods.py",
+                "cpos_launch_prompts.py",
+                "cpos_launch_review.py",
+                "cpos_launch_tables.py",
+            )
+        },
+        **{
+            path.name: path.read_text()
+            for path in sorted((ROOT / "src/deploy_workflow").glob("method_scripts*.py"))
+        },
         **{
             name: (ROOT / "src/deploy_workflow" / name).read_text()
             for name in (
@@ -268,7 +310,10 @@ def test_no_check_reader_or_library_names_a_cut_or_routing_register():
                 "changes_check.py",
             )
         },
-        "store.py": (ROOT / "apps/issuer-library/credit_os/store.py").read_text(),
+        **{
+            name: (ROOT / "apps/issuer-library/credit_os" / name).read_text()
+            for name in ("store.py", "source.py", "handoff_fields.py", "cashflow.py", "evidence.py")
+        },
         # `firstHeading` is read by store.py:1154 and views.js:91 (T5B.3 and T6A.7 stay in scope).
         "catalog.json": (ROOT / "apps/issuer-library/credit_os/catalog.json").read_text(),
     }
@@ -277,6 +322,9 @@ def test_no_check_reader_or_library_names_a_cut_or_routing_register():
     # catalog.json `call.heading` (T5B.7, TDR.3) is read only by `pinned_fields` for an entry whose
     # `path` equals the output (store.py:1164); no catalog entry has a `path`, so nothing reads it.
     allowed = {("catalog.json", "T5B.7"), ("catalog.json", "TDR.3")}
+    # CP-3's method-script check names T3B.2, T3B.4 and T3B.6 only in its docstring, to say why it
+    # does not read them (ruling 2026-11-15-method-script-checks.md); it reads its own table.
+    allowed |= {("method_scripts_cp3.py", i) for i in ("T3B.2", "T3B.4", "T3B.6")}
     hits = []
     for ident in ids:
         pattern = re.compile(rf"(?<![A-Za-z0-9_.]){re.escape(ident)}(?![A-Za-z0-9_]|\.[0-9A-Za-z])")
@@ -364,13 +412,19 @@ REQUIRED = {
     "CP-2": ["T2.1", "T2.10", "T2.12"],
     "CP-2A": ["T2B.1", "T2B.2", "T2B.6", "T2B.7", "T2B.9", "T5.5", "T5.7"],
     "CP-2E": [
-        *("T2F.1", "T2F.3", "T2F.6", "T2F.7"),
+        *("T2F.1", "T2F.3", "T2F.4", "T2F.5", "T2F.6", "T2F.7"),
         *("T2G.1", "T2G.2", "T2G.3", "T2G.4", "T2G.5", "T2G.6", "T2G.7", "T2G.8"),
     ],
     "CP-2G": ["T2H.3", "T2H.4", "T2H.5", "T2H.6", "T2H.7", "T2H.8"],
-    "CP-3": ["T3.3", "T3.6", "T3B.1", "T3C.4"],
+    # The SKILL's `required_register_ids` less the scope section's T3 and T3B ids.
+    "CP-3": [
+        *("T3.3", "T3.6", "T3B.1", "T3C.1", "T3C.2", "T3C.3", "T3C.4", "T3C.5", "T3C.6"),
+        *("T3C.7", "T3C.8", "T3C.9"),
+    ],
     "CP-5": ["T5B.1", "T5B.2", "T5B.3", "T5.3"],
-    "CP-6": ["T6A.4", "T6A.7"],
+    # The SKILL's `required_register_ids` (T6A.4; T6A.6; T6A.7; T6A.11; T6E.4; T6E.6; T6E.7;
+    # T6E.11) less the scope section's T6A.6 and T6A.11.
+    "CP-6": ["T6A.4", "T6A.7", "T6E.4", "T6E.6", "T6E.7", "T6E.11"],
 }
 NOTHING = "| Item | Value |\n| --- | --- |\n| Observed | Not supplied: nothing to report |\n\n"
 

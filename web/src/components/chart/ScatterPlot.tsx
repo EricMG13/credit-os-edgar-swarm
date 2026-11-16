@@ -48,6 +48,8 @@ interface ScatterPlotProps {
   points: ScatterPoint[];
   /** One row per point, in order, with its x then its y string. */
   table: { head: string[]; rows: TableRowData[]; endHeading?: string };
+  /** Original disclosure when the source records additional quote fields or gap reasons. */
+  detailTable?: ScatterPlotProps["table"];
 }
 
 const LABEL = { fontSize: 12, fill: "var(--color-text-secondary)" };
@@ -288,6 +290,7 @@ export function ScatterPlot({
   othersName,
   points,
   table,
+  detailTable,
 }: ScatterPlotProps) {
   check({ x, y, points, table });
   return (
@@ -297,7 +300,7 @@ export function ScatterPlot({
       note={note}
       subtitle={subtitle}
       actions={actions}
-      table={table}
+      table={detailTable ?? table}
       chart={<Chart title={title} x={x} y={y} othersName={othersName} points={points} />}
     />
   );

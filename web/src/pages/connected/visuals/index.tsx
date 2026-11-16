@@ -1,6 +1,12 @@
 import type { ReactNode } from "react";
+import { ChartQualifications } from "./ChartQualifications";
 import { ChartTable } from "@/components/chart/ChartTable";
 import { ChartWithTable } from "@/components/chart/ChartWithTable";
+import { TRACE_HOST } from "@/pages/library/parts/TraceControl";
+import { containsReference } from "../publishedReport";
+import { PublishedSource } from "../report/PublishedTrace";
+import { usePortfolioBasis } from "../report/PortfolioBasis";
+import { portfolioLimits } from "./PortfolioLimits";
 import { publishedChart } from "./charts";
 import { edgeMap } from "./EdgeMap";
 import { eventLane } from "./EventLane";
@@ -25,68 +31,142 @@ function compareLines(a: Drawing, b: Drawing) {
   );
 }
 
+function drawingChart({
+  category,
+  descriptor,
+  published,
+  basis,
+  link,
+  table,
+  frame,
+}: {
+  category: Drawing["category"];
+  descriptor: Record<string, unknown>;
+  published: Record<string, unknown>;
+  basis: ReturnType<typeof usePortfolioBasis>;
+  link: string | undefined;
+  table: Parameters<typeof publishedChart>[0];
+  frame: Parameters<typeof publishedChart>[2];
+}) {
+  let chart: ReactNode;
+  if (category === "chart") {
+    const attested =
+      descriptor.kind === "limits" &&
+      link &&
+      basis &&
+      basis.output === published.id &&
+      basis.sha256 === published.sha256 &&
+      basis.tableLines.includes(table.line);
+    chart = attested
+      ? portfolioLimits(table, basis, frame)
+      : publishedChart(table, descriptor, frame);
+  } else {
+    const drawing = category === "event" ? eventLane(table) : edgeMap(table);
+    chart =
+      drawing === null ? null : (
+        <ChartWithTable {...frame} chart={drawing} table={chartTable(table)} />
+      );
+  }
+  return chart;
+}
+
 interface LegacyVisualsProps {
   output: unknown;
   sections?: unknown;
   evidenceHref?: (line: number) => string;
+  primary?: string;
+  cards?: boolean;
 }
 
-export function LegacyVisuals({ output, sections, evidenceHref }: LegacyVisualsProps) {
+export function LegacyVisuals({
+  output,
+  sections,
+  evidenceHref,
+  primary,
+  cards,
+}: LegacyVisualsProps) {
   const published = record(output);
-  const tables = publishedTables(sections ?? published.sections);
+  const basis = usePortfolioBasis();
+  const sourceSections = sections ?? published.sections;
+  const tables = publishedTables(sourceSections);
   const drawings = [
     ...byCategory(published, "charts", "chart"),
     ...byCategory(published, "chartGaps", "chart"),
     ...byCategory(published, "events", "event"),
     ...byCategory(published, "maps", "map"),
-  ].sort(compareLines);
+  ].sort((a, b) => {
+    if (primary && a.descriptor.title === primary && b.descriptor.title !== primary) return -1;
+    if (primary && b.descriptor.title === primary && a.descriptor.title !== primary) return 1;
+    return compareLines(a, b);
+  });
+  const box = cards ? " rounded-xl border border-border-hairline bg-surface-card p-5" : "";
   const views = drawings.flatMap(({ descriptor, category }): ReactNode[] => {
     const title = word(descriptor.title ?? descriptor.lane ?? descriptor.name);
     const line = descriptor.table;
     if (!title || typeof line !== "number" || !Number.isSafeInteger(line) || line <= 0) return [];
     const link = evidenceHref?.(line);
     const actions = link ? (
-      <a className="text-small text-action underline" href={link}>
+      <PublishedSource href={link} name={title}>
         Source table
-      </a>
+      </PublishedSource>
     ) : undefined;
     const gap = word(descriptor.gap);
     const key = `${category}-${title}-${String(line)}`;
     if (gap) {
       return [
-        <section key={key} className="grid gap-2">
+        <section key={key} className={`${TRACE_HOST} grid min-w-0 gap-2${box}`}>
           <h4 className="font-display text-h4">{title}</h4>
-          <p role="note">{gap}</p>
+          <p role="note">
+            {link && containsReference(gap) ? "Not established for this run. See Evidence." : gap}
+          </p>
           {actions}
         </section>,
       ];
     }
     const publishedTable = tables.get(line);
     if (!publishedTable) return [];
-    const table = { ...publishedTable, evidenceInDrawer: Boolean(link) };
+    const table = {
+      ...publishedTable,
+      evidenceInDrawer: Boolean(link),
+      rowSource:
+        evidenceHref &&
+        ((at: number, label: string) => (
+          <PublishedSource
+            href={evidenceHref(at)}
+            name={label}
+            linkLabel={`Show sources for ${label}`}
+          >
+            Source row
+          </PublishedSource>
+        )),
+    };
     const note = word(descriptor.unit) || undefined;
     const frame = { title, note, actions };
-    let chart: ReactNode;
-    if (category === "chart") {
-      chart = publishedChart(table, descriptor, frame);
-    } else {
-      const drawing = category === "event" ? eventLane(table) : edgeMap(table);
-      chart =
-        drawing === null ? null : (
-          <ChartWithTable {...frame} chart={drawing} table={chartTable(table)} />
-        );
-    }
+    const chart = drawingChart({ category, descriptor, published, basis, link, table, frame });
     return [
-      <div className="grid min-w-0 gap-2" key={key}>
+      <div className={`${TRACE_HOST} grid min-w-0 grid-cols-[minmax(0,1fr)] gap-2${box}`} key={key}>
         {chart ?? (
           <>
             <h4 className="font-display text-h4">{title}</h4>
             {actions}
+            <p role="note" className="text-small text-text-secondary">
+              {category === "chart" && descriptor.kind === "limits"
+                ? "Source table available. This report does not record a validated portfolio basis for a chart."
+                : "Source table available. The chart could not be drawn on a common basis."}
+            </p>
             <ChartTable caption={title} {...chartTable(table)} />
           </>
         )}
+        <ChartQualifications
+          category={category}
+          sections={sourceSections}
+          line={line}
+          evidenceHref={evidenceHref}
+        />
       </div>,
     ];
   });
-  return views.length === 0 ? null : <div className="grid min-w-0 gap-8">{views}</div>;
+  return views.length === 0 ? null : (
+    <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-4">{views}</div>
+  );
 }

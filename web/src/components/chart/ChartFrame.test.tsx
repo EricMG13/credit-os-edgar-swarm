@@ -7,6 +7,7 @@ const body = () => <p>body</p>;
 describe("ChartFrame", () => {
   it("without subtitle and actions the header holds only the title and the toggle", () => {
     render(<ChartFrame title="Net debt path">{body}</ChartFrame>);
+    expect(screen.getByRole("figure")).toHaveClass("group/trace");
     const header = screen.getByRole("radiogroup", {
       name: "Net debt path: Chart or Table",
     }).parentElement?.parentElement;

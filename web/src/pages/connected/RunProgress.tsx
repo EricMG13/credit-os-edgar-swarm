@@ -1,8 +1,12 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/base/buttons/button";
+import { Badge } from "@/components/base/badges/badges";
+import { Card } from "@/components/card/Card";
 import { StatusBadge } from "@/components/status/StatusBadge";
 import { PageHeader } from "../../shell/PageHeader";
 import { ModuleSteps } from "../run/activity/ModuleSteps";
+import { Feed } from "../run/activity/Feed";
+import { Summary } from "../run/activity/Summary";
 import {
   getReport,
   getRun,
@@ -10,10 +14,12 @@ import {
   moduleName,
   pathwayName,
   RequestError,
+  type Mode,
   type Run,
   type RunStatus,
 } from "./api";
-import { Breadcrumb, card, ErrorNotice, heading } from "./layout";
+import { Breadcrumb, ErrorNotice } from "./layout";
+import { elapsedFigure, feedLines, finishedFigure, moduleWord, spendFigure } from "./runFigures";
 import { errorText } from "./useResource";
 
 const WORDS = {
@@ -26,9 +32,7 @@ const WORDS = {
   interrupted: "Interrupted",
 } as const satisfies Record<RunStatus, string>;
 
-const MODULE_STATE = { done: "Finished", running: "Running", waiting: "Queued" } as const;
-
-export function RunProgress({ id }: { id: string }) {
+export function RunProgress({ id, mode }: { id: string; mode: Mode }) {
   const [run, setRun] = useState<Run>();
   const [error, setError] = useState("");
   const [reportReady, setReportReady] = useState(false);
@@ -76,6 +80,7 @@ export function RunProgress({ id }: { id: string }) {
 
   const restartable = run && ["failed", "capped", "rejected", "interrupted"].includes(run.status);
   const live = run?.status === "queued" || run?.status === "running";
+  const lines = run ? feedLines(run) : [];
   return (
     <>
       <Breadcrumb>Run activity</Breadcrumb>
@@ -87,7 +92,15 @@ export function RunProgress({ id }: { id: string }) {
               <span role="status">
                 <StatusBadge set="Run states" state={WORDS[run.status]} live={live} />
               </span>
-              <span className="text-sm text-text-secondary">{pathwayName(run.pathway)}</span>
+              <Badge color="brand">{pathwayName(run.pathway)}</Badge>
+              {mode === "synthetic" && <Badge color="gray">Synthetic test</Badge>}
+              {run.as_of && (
+                <Badge color="gray">
+                  <span>
+                    As of <time dateTime={run.as_of}>{run.as_of}</time>
+                  </span>
+                </Badge>
+              )}
             </>
           )
         }
@@ -108,22 +121,8 @@ export function RunProgress({ id }: { id: string }) {
         </div>
       )}
       {run ? (
-        <section className={`mt-6 max-w-4xl ${card}`}>
-          <h2 className={heading}>Run activity</h2>
-          {run.submitted_by && (
-            <p className="text-sm text-text-secondary">Submitted by {run.submitted_by}</p>
-          )}
-          {run.started_at && (
-            <p className="text-sm text-text-secondary">
-              Started <time dateTime={run.started_at}>{run.started_at}</time>
-            </p>
-          )}
-          {run.ended_at && (
-            <p className="text-sm text-text-secondary">
-              Ended <time dateTime={run.ended_at}>{run.ended_at}</time>
-            </p>
-          )}
-          {run.reason && <p className="text-sm text-text-secondary">{run.reason}</p>}
+        <section aria-label="Run activity" className="mt-6 grid gap-6">
+          {run.reason && <ErrorNotice>{run.reason}</ErrorNotice>}
           {run.stalled && (
             <p className="text-sm text-text-secondary">
               No activity has been recorded in the last hour.
@@ -134,15 +133,39 @@ export function RunProgress({ id }: { id: string }) {
               Waiting for the report to become available…
             </p>
           )}
-          <ModuleSteps
-            live={live}
-            steps={run.modules.map(([code, state]) => ({
-              kind: "module",
-              name: moduleName(code),
-              state: state === "waiting" && !live ? "Not run" : MODULE_STATE[state],
-              detail: null,
-            }))}
+          <Summary
+            spendCaption="Cap usage"
+            run={{
+              spend: spendFigure(run),
+              finished: finishedFigure(run),
+              elapsed: elapsedFigure(run),
+            }}
           />
+          <div className="grid min-w-0 items-start gap-6 xl:grid-cols-2">
+            <Card title="Modules">
+              <ModuleSteps
+                live={live}
+                steps={run.modules.map(([code, state]) => ({
+                  kind: "module",
+                  name: moduleName(code),
+                  state: moduleWord(state, live),
+                  detail: null,
+                }))}
+              />
+            </Card>
+            <Card title="Activity">
+              {run.events === null && (
+                <p className="pb-3 text-sm text-text-secondary">The activity log is unavailable.</p>
+              )}
+              {lines.length > 0 ? (
+                <Feed lines={lines} live={live} />
+              ) : (
+                run.events !== null && (
+                  <p className="text-sm text-text-secondary">No activity recorded yet.</p>
+                )
+              )}
+            </Card>
+          </div>
         </section>
       ) : (
         !error && (

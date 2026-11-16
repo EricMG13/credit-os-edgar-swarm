@@ -5,22 +5,29 @@ export type Table = { type: "table"; line: number; headers: string[]; rows: Row[
 type Paragraph = { type: "text"; line: number; end: number; text: string };
 export type Block = Table | Paragraph | { type: "equity"; line: number; text?: string };
 export type Section = { heading: string; level: number; line: number; blocks: Block[] };
+export const FORECAST_INPUTS = "Forecast inputs (machine-readable)";
+type FigureRef = Record<string, unknown> & { table: number };
 type Output = {
   id: string;
+  run?: string;
   module: string;
   label: string;
   href: string;
   sha256: string;
+  issue?: string | null;
   parseError?: string;
+  summary?: { bottomLine: string; confidence: string; limitation: string; line: number } | null;
   state?: { established: boolean | null; declared: string | null };
-  charts?: { table: number }[];
-  chartGaps?: { table: number }[];
-  events?: { table: number }[];
-  maps?: { table: number }[];
+  charts?: FigureRef[];
+  chartGaps?: FigureRef[];
+  events?: FigureRef[];
+  maps?: FigureRef[];
 };
 export type OutputEntry = { output: Output; sections: Section[]; selected: boolean };
 type Link = { href: string; label: string };
 type Source = {
+  href?: string | null;
+  sourceWarning?: string | null;
   name: string;
   type: string | null;
   documentDate: string | null;
@@ -28,7 +35,10 @@ type Source = {
   sha256: string | null;
 };
 type Chip = {
-  label: string;
+  quote_found?: boolean | null;
+  href?: string | null;
+  pageHref?: string | null;
+  label: string | null;
   quote: string | null;
   excerpt: string | null;
   file: string | null;
@@ -43,16 +53,42 @@ type Measure = {
   prior?: Side | null;
   current?: Side | null;
   difference?: number | string | null;
+  same_period?: boolean;
+  comparable?: string;
   unit?: string | null;
   reason?: string | null;
 };
-type Changes = {
+type ComparisonRun = { as_of: string; pathway: string; format?: string };
+export type MaturityProfile = {
+  unit: string;
+  rows: { period: string; prior: string | null; current: string | null }[];
+};
+type ModuleComparison = {
+  module: string;
+  title: string;
+  ran_prior: boolean;
+  ran_current: boolean;
+  prior_bottom_line: string | null;
+  current_bottom_line: string | null;
+};
+export type Changes = {
   first_run?: boolean | null;
   note?: string | null;
   problem?: string | null;
-  pack?: { measures?: Measure[]; omitted?: Record<string, string> } | null;
+  pack?: {
+    measures?: Measure[];
+    omitted?: Record<string, string>;
+    prior?: ComparisonRun & { run: string };
+    current?: ComparisonRun;
+    maturity_profile?: MaturityProfile;
+    modules?: ModuleComparison[];
+  } | null;
   verdicts?: {
-    measures?: Record<string, { kind: string; label: string; reason?: string | null }>;
+    modules?: Record<string, { status: string; cause: string; why: string }>;
+    measures?: Record<
+      string,
+      { kind: string; label: string; reason?: string | null; analysis_change?: string | null }
+    >;
   } | null;
 };
 type Model = {
@@ -78,6 +114,9 @@ export type PublishedRun = {
   asOf: string | null;
   pathway: string | null;
   modules: Record<string, { outputs: string[]; default: string | null }>;
+  record?: {
+    steps: { module: string; started?: string | null; accepted?: string | null }[];
+  } | null;
   changes?: Changes | null;
   evidence: {
     sources: Source[];
@@ -122,6 +161,7 @@ export type Snapshot = {
     models: Model[];
   };
   chips: Record<string, Chip[]>;
+  preview?: { reason: string };
 };
 
 export async function getSnapshot(signal: AbortSignal): Promise<Snapshot | null> {
@@ -130,11 +170,15 @@ export async function getSnapshot(signal: AbortSignal): Promise<Snapshot | null>
   return (await response.json()) as Snapshot | null;
 }
 
-export function outputEntries(snapshot: Snapshot, run: PublishedRun): OutputEntry[] {
-  return Object.values(run.modules).flatMap((module) =>
+export function outputEntries(
+  snapshot: Snapshot,
+  run: PublishedRun,
+  routeKey: string,
+): OutputEntry[] {
+  return Object.entries(run.modules).flatMap(([moduleId, module]) =>
     module.outputs.flatMap((id) => {
       const output = snapshot.workspace.outputs[id];
-      return output
+      return output && output.module === moduleId && (!output.run || output.run === routeKey)
         ? [
             {
               output,
@@ -173,21 +217,87 @@ export function withUnit(value: string | number, unit?: string | null) {
   return unit ? `${String(value)}${/^[x%]$/.test(unit) ? "" : " "}${unit}` : String(value);
 }
 
-export function comparisonRows(changes: Changes) {
+export function comparisonForRun(run: PublishedRun, runs: Record<string, PublishedRun>) {
+  const change = run.changes;
+  if (!change?.pack || change.problem) return change;
+  const { prior, current } = change.pack;
+  const matches = Object.values(runs).filter((candidate) => candidate.folder === prior?.run);
+  const [earlier] = matches;
+  if (
+    prior &&
+    current &&
+    matches.length === 1 &&
+    earlier &&
+    run.issuerKey &&
+    earlier.issuerKey === run.issuerKey &&
+    earlier.folder !== run.folder &&
+    earlier.asOf === prior.as_of &&
+    earlier.pathway === prior.pathway &&
+    run.pathway === prior.pathway &&
+    run.pathway === current.pathway &&
+    run.asOf === current.as_of
+  )
+    return change;
+  return {
+    ...change,
+    pack: null,
+    problem: "The comparison does not match the listed issuer, dates and pathway.",
+  };
+}
+
+function comparableMeasure(measure: Measure, kind: string | undefined, unitsMatch: boolean) {
+  return (
+    kind === "comparable" &&
+    unitsMatch &&
+    measure.comparable !== "no" &&
+    measure.prior?.value != null &&
+    measure.current?.value != null
+  );
+}
+
+function sameMeasurePeriod(measure: Measure) {
+  return (
+    measure.same_period === true ||
+    Boolean(measure.prior?.period && measure.prior.period === measure.current?.period)
+  );
+}
+
+function comparisonDifference(
+  measure: Measure,
+  comparable: boolean,
+  samePeriod: boolean,
+  purpose: "evidence" | "reader",
+) {
+  const revision =
+    comparable && samePeriod && measure.difference != null && Number(measure.difference) !== 0;
+  const delta =
+    comparable && measure.difference != null && (purpose === "evidence" || !samePeriod)
+      ? withUnit(measure.difference, measure.unit)
+      : "—";
+  return { revision, delta };
+}
+
+export function comparisonRows(changes: Changes, purpose: "evidence" | "reader" = "evidence") {
   const side = (item: Side | null | undefined) =>
     item?.value == null
       ? "Not stated"
       : withUnit(item.value, item.unit) + (item.period ? ` (${item.period})` : "");
   return (changes.pack?.measures ?? []).map((measure) => {
     const verdict = changes.verdicts?.measures?.[measure.key];
+    const unitsMatch = (measure.prior?.unit ?? null) === (measure.current?.unit ?? null);
+    const comparable = comparableMeasure(measure, verdict?.kind, unitsMatch);
+    const samePeriod = sameMeasurePeriod(measure);
+    const { revision, delta } = comparisonDifference(measure, comparable, samePeriod, purpose);
+    const reason = unitsMatch
+      ? verdict?.reason || verdict?.label || measure.reason || "Comparability not judged"
+      : "Reporting units differ.";
     return [
       measure.label,
       side(measure.prior),
       side(measure.current),
-      verdict?.kind === "comparable" && measure.difference != null
-        ? withUnit(measure.difference, measure.unit)
-        : "—",
-      verdict?.reason || verdict?.label || measure.reason || "Comparability not judged",
+      delta,
+      revision ? `${reason} · Same-period analysis change` : reason,
+      verdict?.analysis_change ?? "",
     ];
   });
 }
@@ -308,7 +418,7 @@ export function containsReference(text: string) {
 const INTERMODULE =
   /^(?:supplied handoff|use in this module|effect on this module|consumer|downstream module|receiving module|responsible module|command|required consumer action|escalation consequence|next commands?|next modules?|downstream consumers?|downstream modules? affected|downstream handoff impact|downstream owners|affected consumers|affected modules|downstream_use|consumer_module_id)$|^consequence for cp-/;
 const SOURCE_COLUMN =
-  /\bid$|^linked pathway row$|^(?:(?:sources?|evidence)(?:\s*\/\s*clause|\s+(?:trace|locator|register|document|file|sha|hash|page|reference|ref|link)s?)?|sha256|source document name|source and basis|source\(s\)|source row\/section\/quote|sha256 hash|where found)$|\b(?:hash(?:es)?|sha|sha256|locators?|citations?|file ?names?)\b/;
+  /\bid$|^linked pathway row$|^(?:(?:sources?|evidence)(?:\s*\/\s*(?:clause|limitation)|\s+(?:trace|locator|register|document|file|sha|hash|page|reference|ref|link)s?)?|sha256|source document name|source and basis|source\(s\)|source row\/section\/quote|sha256 hash|where found)$|\b(?:hash(?:es)?|sha|sha256|locators?|citations?|file ?names?)\b/;
 
 export function displayColumns(headers: string[], evidence: boolean, rows: Row[] = []) {
   return headers.flatMap((text, index) => {
@@ -342,5 +452,51 @@ export function publishedHref(href: string | null | undefined, folder: string) {
   }
 }
 
-export const evidencePath = (id: string, output: string, line?: number) =>
-  `/report/${encodeURIComponent(id)}#evidence/${output}${line === undefined ? "" : `-${String(line)}`}`;
+export function evidenceToken(entry: OutputEntry, line?: number) {
+  const { id, sha256 } = entry.output;
+  return `${encodeURIComponent(id)}~${sha256}${line === undefined ? "" : `-${String(line)}`}`;
+}
+
+export function sectionContainsLine(section: Section, line: number) {
+  return (
+    section.line === line ||
+    section.blocks.some(
+      (block) =>
+        block.line === line ||
+        (block.type === "table" && block.rows.some((row) => row.line === line)),
+    )
+  );
+}
+
+export function resolveEvidenceLocation(entries: OutputEntry[], token: string) {
+  const delimiter = token.lastIndexOf("~");
+  if (delimiter <= 0) return null;
+  let id: string;
+  try {
+    id = decodeURIComponent(token.slice(0, delimiter));
+  } catch {
+    return null;
+  }
+  const match = /^([a-f\d]{64})(?:-(\d+))?$/i.exec(token.slice(delimiter + 1));
+  if (!match) return null;
+  const matches: { entry: OutputEntry; index: number }[] = [];
+  entries.forEach((entry, index) => {
+    if (entry.output.id === id && entry.output.sha256.toLowerCase() === match[1]?.toLowerCase())
+      matches.push({ entry, index });
+  });
+  if (matches.length !== 1) return null;
+  const matchEntry = matches[0];
+  if (!matchEntry) return null;
+  const { entry, index } = matchEntry;
+  const line = match[2] === undefined ? undefined : Number(match[2]);
+  if (line !== undefined && (!Number.isSafeInteger(line) || line <= 0)) return null;
+  if (line !== undefined && !entry.sections.some((section) => sectionContainsLine(section, line)))
+    return null;
+  return { entry, index, line };
+}
+
+export const evidencePath = (id: string, entry: OutputEntry, line?: number) =>
+  `/report/${encodeURIComponent(id)}#evidence/${evidenceToken(entry, line)}`;
+
+export const evidenceHref = (id: string, token: string) =>
+  `/report/${encodeURIComponent(id)}#evidence/${token}`;

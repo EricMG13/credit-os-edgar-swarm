@@ -11,14 +11,17 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import SplitResult, unquote
 
-from deploy_workflow.inbox import runs
+from deploy_workflow import http_base
 from deploy_workflow.inbox.layout import Layout
 from deploy_workflow.inbox.scheduler import Scheduler, Settings
 from deploy_workflow.run_start import service
 
+from . import admission, artifacts, portfolio, run_activity, sources
+
 PROJECT = Path(__file__).resolve().parent.parent
 RUN_ID = re.compile(r"[0-9A-Za-z][0-9A-Za-z._-]{0,79}")
 RUN_PAGE = re.compile(rf"/run/{RUN_ID.pattern}/?")
+RUN_ACTIVITY = re.compile(rf"/connected/activity/({RUN_ID.pattern})")
 REPORT_PAGE = re.compile(r"/report/([^/]+)/?")
 REPORT_FOLDER = re.compile(r"[\w. -]+")
 REPORT_PREFIX = "/connected/report/"
@@ -28,11 +31,15 @@ EXPORT_PREFIX = "window.CREDIT_OS_DATA="
 EXPORT_KEYS = ("catalogue", "workspace", "activity", "chips")
 
 
+def _valid_report_folder(folder: str) -> bool:
+    return folder not in {".", ".."} and REPORT_FOLDER.fullmatch(folder) is not None
+
+
 def _report_page(path: str) -> bool:
     """Match a retained library folder without extending the scheduler's run ID grammar."""
     found = REPORT_PAGE.fullmatch(path)
     folder = unquote(found[1]) if found else ""
-    return folder not in {".", ".."} and REPORT_FOLDER.fullmatch(folder) is not None
+    return _valid_report_folder(folder)
 
 
 def _invalid_json(constant: str) -> None:
@@ -41,7 +48,7 @@ def _invalid_json(constant: str) -> None:
 
 def _read_publication(path: Path) -> tuple[bytes, dict[str, Any] | None]:
     """Decode the published assignment as JSON and retain the original JSON bytes."""
-    raw = service._read_regular(path)
+    raw = http_base.read_regular(path)
     if raw is None:
         return b"null", None
     assignment = raw.decode("utf-8").rstrip()
@@ -56,10 +63,17 @@ def _read_publication(path: Path) -> tuple[bytes, dict[str, Any] | None]:
     return encoded.encode("utf-8"), snapshot
 
 
-def _report_entries(snapshot: dict[str, Any] | None, layout: Layout) -> dict[str, dict[str, str]]:
+def _visible_publication(layout: Layout) -> tuple[bytes, dict[str, Any] | None]:
+    payload, snapshot = _read_publication(layout.engine / "library" / "data.js")
+    if snapshot is None:
+        return payload, None
+    visible = sources.enrich(admission.admitted(snapshot, layout), layout.runs)
+    return json.dumps(visible, ensure_ascii=False).encode("utf-8"), visible
+
+
+def _report_entries(snapshot: dict[str, Any] | None) -> dict[str, dict[str, str]]:
     if snapshot is None:
         return {}
-    unfinished = {record.id for record in runs.load_all(layout) if record.status != "finished"}
     workspace_runs = {run["folder"]: run for run in snapshot["workspace"]["runs"].values()}
     return {
         run_id: {
@@ -69,9 +83,7 @@ def _report_entries(snapshot: dict[str, Any] | None, layout: Layout) -> dict[str
             "pathway": workspace_runs[run_id]["pathway"] or "",
         }
         for run in snapshot["catalogue"]["real"]
-        if RUN_ID.fullmatch(run_id := run["id"])
-        and run_id in workspace_runs
-        and run_id not in unfinished
+        if _valid_report_folder(run_id := run["id"]) and run_id in workspace_runs
     }
 
 
@@ -91,16 +103,60 @@ def _read_page(dist: Path, *, synthetic: bool, signal_url: str) -> bytes:
     return page.replace(b'src="./', b'src="/').replace(b'href="./', b'href="/')
 
 
-def _handler(dist: Path, page: bytes, context: dict[str, Any]) -> type[service.Handler]:
+def _asset_path(dist: Path, path: str) -> tuple[Path, str, bool] | None:
+    if path in STATIC_FILES:
+        return dist, path, True
+    for prefix in STATIC_DIRS:
+        if path.startswith(prefix):
+            return dist / prefix.strip("/"), path.removeprefix(prefix), False
+    return None
+
+
+def _app_page(path: str) -> bool:
+    return bool(
+        path in {"/", "/index.html", "/start"} or RUN_PAGE.fullmatch(path) or _report_page(path)
+    )
+
+
+def _report_request(path: str) -> tuple[bool, str]:
+    listing = path == "/connected/reports"
+    run_id = unquote(path.removeprefix(REPORT_PREFIX))
+    if not listing and not _valid_report_folder(run_id):
+        raise http_base.refuse(404, "unknown report")
+    return listing, run_id
+
+
+def _report_response(
+    entries: dict[str, dict[str, str]], listing: bool, run_id: str
+) -> http_base.Reply:
+    if listing:
+        return http_base.Reply(200, {"reports": list(entries.values())})
+    if run_id not in entries:
+        return http_base.refuse(404, "unknown report")
+    return http_base.Reply(200, entries[run_id])
+
+
+def _require_writable(read_only: bool) -> None:
+    if read_only:
+        raise http_base.refuse(405, "read-only retained preview")
+
+
+def _handler(
+    dist: Path, page: bytes, context: dict[str, Any], *, read_only: bool = False
+) -> type[service.Handler]:
     class Handler(service.Handler):
+        def _post(self, url: SplitResult) -> None:
+            _require_writable(read_only)
+            super()._post(url)
+
+        def _delete(self, url: SplitResult) -> None:
+            _require_writable(read_only)
+            super()._delete(url)
+
         def _get(self, url: SplitResult) -> None:
             path = url.path
-            if (
-                path in {"/", "/index.html", "/start"}
-                or RUN_PAGE.fullmatch(path)
-                or _report_page(path)
-            ):
-                raise service._Reply(
+            if _app_page(path):
+                raise http_base.Reply(
                     200,
                     page,
                     {
@@ -111,39 +167,42 @@ def _handler(dist: Path, page: bytes, context: dict[str, Any]) -> type[service.H
                     },
                 )
             if path == "/connected/context":
-                raise service._Reply(200, context)
+                cap = self._service.scheduler.settings.cap
+                raise http_base.Reply(200, {**context, "submission_cap_usd": str(cap)})
+            if match := RUN_ACTIVITY.fullmatch(path):
+                raise run_activity.reply(
+                    self._layout, match[1], self._service.scheduler.settings.cap
+                )
             if path == "/connected/snapshot":
                 payload, _ = self._publication()
-                raise service._Reply(
-                    200, payload, {"Content-Type": service._JSON, "Cache-Control": "no-store"}
+                raise http_base.Reply(
+                    200, payload, {"Content-Type": http_base.JSON, "Cache-Control": "no-store"}
                 )
+            if path.startswith(sources.PREFIX):
+                _, snapshot = self._publication()
+                raise sources.reply(url, self._layout.runs, snapshot)
+            if match := artifacts.GRAPH.fullmatch(path):
+                _, snapshot = self._publication()
+                raise artifacts.reply(match, self._layout.engine / "runs", REPORT_FOLDER, snapshot)
+            if match := portfolio.PORTFOLIO.fullmatch(path):
+                _, snapshot = self._publication()
+                basis = portfolio.attested(self._layout.runs, match[1], snapshot)
+                raise http_base.Reply(200, {"basis": basis}, {"Cache-Control": "no-store"})
             if path == "/connected/reports" or path.startswith(REPORT_PREFIX):
                 self._reports(path)
-            self._assets(path)
+            if asset := _asset_path(dist, path):
+                base, relative, direct = asset
+                raise self._file(base, relative, direct=direct)
             super()._get(url)
 
-        def _assets(self, path: str) -> None:
-            if path in STATIC_FILES:
-                self._file(dist, path, direct=True)
-            for prefix in STATIC_DIRS:
-                if path.startswith(prefix):
-                    self._file(dist / prefix.strip("/"), path.removeprefix(prefix), direct=False)
-
         def _publication(self) -> tuple[bytes, dict[str, Any] | None]:
-            return _read_publication(self._layout.engine / "library" / "data.js")
+            return _visible_publication(self._layout)
 
         def _reports(self, path: str) -> None:
-            listing = path == "/connected/reports"
-            run_id = path.removeprefix(REPORT_PREFIX)
-            if not listing and RUN_ID.fullmatch(run_id) is None:
-                raise service._refuse(404, "unknown report")
+            listing, run_id = _report_request(path)
             _, snapshot = self._publication()
-            entries = _report_entries(snapshot, self._layout)
-            if listing:
-                raise service._Reply(200, {"reports": list(entries.values())})
-            if run_id not in entries:
-                raise service._refuse(404, "unknown report")
-            raise service._Reply(200, entries[run_id])
+            entries = _report_entries(snapshot)
+            raise _report_response(entries, listing, run_id)
 
     return Handler
 
@@ -157,6 +216,7 @@ def make_server(  # noqa: PLR0913 - explicit launcher, mode and server options
     launcher: tuple[str, ...] | None = None,
     synthetic: bool = False,
     signal_url: str = "",
+    read_only: bool = False,
 ) -> Iterator[service._Server]:
     """Hold the upstream scheduler for the lifetime of the React HTTP server."""
     if (synthetic and not launcher) or (not synthetic and launcher is not None):
@@ -175,7 +235,7 @@ def make_server(  # noqa: PLR0913 - explicit launcher, mode and server options
     scheduler = Scheduler(settings)
     try:
         with service.make_server(scheduler, "127.0.0.1", port, signal_link) as server:
-            server.RequestHandlerClass = _handler(dist, page, context)
+            server.RequestHandlerClass = _handler(dist, page, context, read_only=read_only)
             assert isinstance(server, service._Server)
             yield server
     finally:

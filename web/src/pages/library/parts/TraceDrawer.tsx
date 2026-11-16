@@ -1,6 +1,7 @@
 import { Button } from "@/components/base/buttons/button";
 import { SlideoutMenu } from "@/components/application/slideout-menus/slideout-menu";
 import type { Trace } from "../slice";
+import { SourceFileLinks } from "./SourceFileLinks";
 import { DerivationTree } from "./DerivationTree";
 
 const CAPTION = "text-xs font-medium text-text-tertiary";
@@ -56,6 +57,7 @@ export function TraceDrawer({
             <p className="text-small text-text-secondary">{trace.qualification}</p>
           </div>
         )}
+        <SourceFileLinks links={trace.sourceLinks ?? []} />
       </SlideoutMenu.Content>
       <SlideoutMenu.Footer className="flex justify-end gap-3">
         <Button color="secondary" slot="close">
