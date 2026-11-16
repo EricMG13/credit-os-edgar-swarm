@@ -14,6 +14,7 @@ from deploy_workflow.inbox.scheduler import Scheduler
 from deploy_workflow.model.budget import Budget
 from deploy_workflow.run_events import EVENTS, append_event
 from deploy_workflow.run_start.service import _Server
+from deploy_vii.contracts import PATHWAY_CAP_USD
 from react_frontend import make_server
 
 PROJECT = Path(__file__).resolve().parents[1]
@@ -95,7 +96,7 @@ def test_same_origin_service_and_submit_gate(hosted: _Server) -> None:
     context = json.loads((PROJECT / "cases/context/research-minimal.json").read_bytes())
     assert json.loads(request(hosted, "/connected/context")[1]) == {
         **context,
-        "submission_cap_usd": str(hosted.scheduler.settings.cap),
+        "submission_caps_usd": {pathway: str(cap) for pathway, cap in PATHWAY_CAP_USD.items()},
     }
     assert request(hosted, "/connected/context", headers={"Origin": "http://other.test"})[0] == 403
     assert request(hosted, "/connected/snapshot", headers={"Host": "other.test"})[0] == 403
@@ -154,7 +155,6 @@ def test_activity_uses_the_pinned_cap_and_curates_native_events(hosted: _Server)
 def test_reports_admission_and_reader_snapshot(hosted: _Server, root: Path) -> None:
     scheduler = hosted.scheduler
     assert isinstance(scheduler, Scheduler)
-    assert scheduler.settings.cap == 20
     library = root / "_engine" / "library"
     publication = library / "data.js"
     publication.unlink(missing_ok=True)
@@ -228,7 +228,6 @@ def test_synthetic_mode_uses_the_explicit_launcher(
     launcher = ("unused-by-test",)
     with make_server(root, web=web, launcher=launcher, synthetic=True) as server:
         assert server.scheduler.settings.launcher == launcher
-        assert server.scheduler.settings.cap == 20
         thread = threading.Thread(target=server.serve_forever)
         thread.start()
         try:
@@ -237,7 +236,9 @@ def test_synthetic_mode_uses_the_explicit_launcher(
             assert b'credit-os-signal-url"' not in page
             expected = json.loads((PROJECT / "cases/context/research-minimal.json").read_bytes())
             expected["run"]["case_kind"] = "synthetic"
-            expected["submission_cap_usd"] = str(server.scheduler.settings.cap)
+            expected["submission_caps_usd"] = {
+                pathway: str(cap) for pathway, cap in PATHWAY_CAP_USD.items()
+            }
             assert json.loads(request(server, "/connected/context")[1]) == expected
         finally:
             server.shutdown()

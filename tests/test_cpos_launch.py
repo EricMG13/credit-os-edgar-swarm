@@ -104,6 +104,13 @@ PATHWAY_MODULES = {
         *("CP-0", "CP-1", "CP-1A", "CP-DR", "CP-2", "CP-2E", "CP-3", "CP-5", "CP-6"),
     ),
     "lite_credit_assessment": ("CP-0", "CP-1", "CP-1A", "CP-2", "CP-2A"),
+    # Owner, 2026-11-15: "Deep = all". Worked out by hand from methodology.json's inputs: CP-1C
+    # after CP-DR, CP-1D after CP-1B, CP-2 after the CP-1 family, CP-2H after CP-2G, CP-3D after
+    # CP-2H, CP-3C after CP-2D, CP-4C after CP-4 and CP-3C, CP-3 after every specialist it reads.
+    "deep_credit_assessment": (
+        *("CP-0", "CP-1", "CP-1A", "CP-1B", "CP-DR", "CP-1C", "CP-1D", "CP-2", "CP-4", "CP-2A"),
+        *("CP-2E", "CP-2D", "CP-2G", "CP-2H", "CP-3D", "CP-3C", "CP-4C", "CP-3", "CP-5", "CP-6"),
+    ),
 }
 # The owner's preset answer key (2026-11-11), hand-written as sets: what each pathway requests.
 PRESET_ANSWER_KEY = {
@@ -127,6 +134,12 @@ PRESET_ANSWER_KEY = {
     # CP-2A's two downside blocks. No CP-MODEL (ruling 2026-11-13): the chart strip and credit
     # metrics are routed to CP-1 and no forecast is published.
     "lite_credit_assessment": "CP-0 CP-1 CP-1A CP-2 CP-2A",
+    # The deep credit assessment (owner, 2026-11-15, "Deep = all"): the full one plus CP-1B, CP-1C,
+    # CP-1D, CP-2H, CP-3D and CP-4C.
+    "deep_credit_assessment": (
+        "CP-0 CP-1 CP-MODEL CP-1A CP-DR CP-2 CP-2A CP-2D CP-2E CP-2G CP-4 CP-3C CP-3 CP-5 CP-6 "
+        "CP-1B CP-1C CP-1D CP-2H CP-3D CP-4C"
+    ),
 }
 SHORT_SNAPSHOT = ("CP-0", "CP-1", "CP-L10")
 # Run order of the lite pathway and its report blocks, written by hand from the Front Page: the
@@ -740,7 +753,7 @@ def launch(tmp_path: Path, *extra: str, pathway: str = "covenant_refinancing") -
     return [
         *("--context", str(context_file(tmp_path, pathway))),
         *("--sources", str(issuer_folder(tmp_path))),
-        *("--config", "sol-medium", "--cap", "50", "--out", str(tmp_path / "out")),
+        *("--config", "sol-medium", "--cap", "15", "--out", str(tmp_path / "out")),
         *extra,
     ]
 
@@ -748,7 +761,7 @@ def launch(tmp_path: Path, *extra: str, pathway: str = "covenant_refinancing") -
 def test_folder_files_are_pinned_and_unusable_ones_reported(tmp_path):
     folder = issuer_folder(tmp_path)
     prepared = prepare(
-        context_file(tmp_path), folder, tmp_path / "out", config="sol-medium", cap="50"
+        context_file(tmp_path), folder, tmp_path / "out", config="sol-medium", cap="15"
     )
     assert set(prepared.plan.sources) == {"annual.txt", "filings/notes.md", "context"}
     assert prepared.plan.sources["annual.txt"].sha256 == (
@@ -767,7 +780,7 @@ def test_underscore_folders_are_reported_rather_than_silently_dropped(tmp_path):
     (folder / "_archive").mkdir()
     (folder / "_archive/old.txt").write_text("Old filing.")
     prepared = prepare(
-        context_file(tmp_path), folder, tmp_path / "out", config="sol-medium", cap="50"
+        context_file(tmp_path), folder, tmp_path / "out", config="sol-medium", cap="15"
     )
     assert "_archive/old.txt" in prepared.ignored
     assert "_archive/old.txt" not in prepared.plan.sources
@@ -787,7 +800,7 @@ def test_html_filings_reach_the_model_as_visible_text(tmp_path, name, raw):
     original = raw if isinstance(raw, bytes) else raw.encode()
     (folder / name).write_bytes(original)
     prepared = prepare(
-        context_file(tmp_path), folder, tmp_path / "out", config="sol-medium", cap="50"
+        context_file(tmp_path), folder, tmp_path / "out", config="sol-medium", cap="15"
     )
     key = name + ".jsonl"
     pinned = (tmp_path / "out" / prepared.plan.sources[key].path).read_bytes()
@@ -806,7 +819,7 @@ def test_word_documents_reach_the_model_as_text(tmp_path):
     original = docx(para("<w:t>Net sales were 100.</w:t>"))
     (folder / "lender memo.docx").write_bytes(original)
     prepared = prepare(
-        context_file(tmp_path), folder, tmp_path / "out", config="sol-medium", cap="50"
+        context_file(tmp_path), folder, tmp_path / "out", config="sol-medium", cap="15"
     )
     key = "lender memo.docx.jsonl"
     pinned = (tmp_path / "out" / prepared.plan.sources[key].path).read_bytes()
@@ -828,7 +841,7 @@ def test_html_filing_and_a_file_named_like_its_text_refuse_instead_of_overwritin
     (folder / f"{html}.jsonl").write_text(json.dumps({"page": 1, "text": "older extract"}) + "\n")
     expected = f"--sources: {html} and {html}.jsonl would both be source {html}.jsonl"
     with pytest.raises(LaunchRefused, match=re.escape(expected)):
-        prepare(context_file(tmp_path), folder, tmp_path / "out", config="sol-medium", cap="50")
+        prepare(context_file(tmp_path), folder, tmp_path / "out", config="sol-medium", cap="15")
     assert not (tmp_path / "out" / "workflow.json").exists()
 
 
@@ -840,7 +853,7 @@ def test_html_filings_use_the_page_size_of_the_cp_os_loop(tmp_path):
     long_line = "y" * 5000
     (folder / "filing.htm").write_text(f"<html><body>{paragraphs}<p>{long_line}</p></body></html>")
     prepared = prepare(
-        context_file(tmp_path), folder, tmp_path / "out", config="sol-medium", cap="50"
+        context_file(tmp_path), folder, tmp_path / "out", config="sol-medium", cap="15"
     )
     key = "filing.htm.jsonl"
     pages = _pages(key, (tmp_path / "out" / prepared.plan.sources[key].path).read_bytes())
@@ -856,7 +869,7 @@ def test_context_file_inside_the_folder_is_not_counted_as_issuer_evidence(tmp_pa
     folder = issuer_folder(tmp_path)
     inside = folder / "context.json"
     inside.write_text(context_file(tmp_path).read_text())
-    prepared = prepare(inside, folder, tmp_path / "out", config="sol-medium", cap="50")
+    prepared = prepare(inside, folder, tmp_path / "out", config="sol-medium", cap="15")
     assert set(prepared.plan.sources) == {"annual.txt", "filings/notes.md", "context"}
 
 
@@ -892,7 +905,7 @@ def test_folder_must_hold_usable_files(tmp_path, capsys, folder):
     code = main(
         [
             *("--context", str(context_file(tmp_path)), "--sources", str(tmp_path / folder)),
-            *("--config", "sol-medium", "--cap", "50", "--out", str(tmp_path / "out")),
+            *("--config", "sol-medium", "--cap", "15", "--out", str(tmp_path / "out")),
         ]
     )
     assert code == 2
@@ -906,7 +919,7 @@ def test_context_sets_run_identity_modules_and_report_routes(tmp_path):
         issuer_folder(tmp_path),
         tmp_path / "out",
         config="sol-medium",
-        cap="50",
+        cap="15",
     )
     run = prepared.plan.run
     assert (run.issuer_id, run.issuer_name, run.as_of.isoformat()) == ("nbg", ISSUER, AS_OF)
@@ -926,7 +939,7 @@ def test_selected_method_and_report_selectors_reach_the_instructions(tmp_path):
         issuer_folder(tmp_path),
         tmp_path / "out",
         config="sol-medium",
-        cap="50",
+        cap="15",
     )
     text = (tmp_path / "out" / prepared.plan.instructions["CP-4"].path).read_text()
     method = ROOT / "docs/reuse/selected-methods/skills/cp-4-legal-covenant-interpreter/SKILL.md"
@@ -943,7 +956,7 @@ def test_instructions_ask_for_the_reader_passages_and_keep_the_method_verbatim(t
         issuer_folder(tmp_path),
         tmp_path / "out",
         config="sol-medium",
-        cap="50",
+        cap="15",
     )
     text = (tmp_path / "out" / prepared.plan.instructions["CP-4"].path).read_text()
     assert "### Reader summary" not in text and "Reader summary" not in text
@@ -960,7 +973,7 @@ def test_explicit_modules_narrow_the_run_and_keep_dependencies(tmp_path):
         issuer_folder(tmp_path),
         tmp_path / "out",
         config="sol-medium",
-        cap="50",
+        cap="15",
         modules=("CP-4",),
     )
     assert prepared.ordered == ("CP-0", "CP-1", "CP-4")
@@ -1043,7 +1056,7 @@ def search_holds(tmp_path: Path, kind: str) -> tuple[Decimal, Decimal, list[str]
             tmp_path / "issuer",
             tmp_path / name,
             config="sol-medium",
-            cap="50",
+            cap="15",
             modules=("CP-DR",),
             web_search=searching,
         ).hold
@@ -1079,7 +1092,7 @@ def test_a_ruling_that_lists_web_search_makes_the_command_line_check_the_search_
         tmp_path / "issuer",
         tmp_path / "probe",
         config="sol-medium",
-        cap="50",
+        cap="15",
         modules=("CP-DR",),
     )
     base[base.index("--cap") + 1] = str(plain.hold + Decimal("0.05"))
@@ -1186,7 +1199,7 @@ def prepare_routes(
             tmp_path / "issuer",
             tmp_path / "preview",
             config=config,
-            cap="50",
+            cap="15",
             modules=modules,
         ).plan.layout.routes
     )
@@ -1274,7 +1287,7 @@ def test_a_short_snapshot_still_runs_end_to_end_through_the_lower_level_function
         tmp_path / "issuer",
         tmp_path / "out",
         config="sol-medium",
-        cap="50",
+        cap="15",
     )
     routes = list(prepared.plan.layout.routes)
     provider.answer = lambda context: short_snapshot_answer(context, routes)
@@ -1456,7 +1469,7 @@ def test_the_lite_pathway_runs_end_to_end_to_a_verified_delivery_with_a_syntheti
             tmp_path / "issuer",
             tmp_path / "preview",
             config="sol-medium",
-            cap="50",
+            cap="15",
         ).plan.layout.routes
     )
     # No CP-MODEL and no CP-2G: CP-1 writes no forecast block, and none is published.
@@ -1491,12 +1504,19 @@ def test_the_lite_pathway_runs_end_to_end_to_a_verified_delivery_with_a_syntheti
 # 2026-11-15: CP-1 is sent its method-script note (owner: "approved", ruling
 # 2026-11-15-method-script-checks.md); earnings_update measured 545,907 before and 546,407 after
 # on this file's input. Its ceiling is the owner's 546,000 plus that measured 500.
+# 2026-11-15: deep_credit_assessment, a new pathway (owner: "Deep max $40, Full $25 and Lite $15",
+# "Deep = all"; ruling 2026-11-15-pathway-tiers-and-caps), measured 1,805,013 on this file's input:
+# rounded up to the next 10,000 plus 5%, 1,900,500. No other ceiling moved.
+# 2026-11-16 (owner: "fix all"): CP-1B is sent its cell-format note, 229 characters
+# (`method_scripts_cp1b.CP1B_NOTE`); the ceiling rises by that length, 546,500 to 546,729. The
+# reworded forecast-driver rule fits in the room that was left, so no ceiling rises for it.
 INSTRUCTION_BUDGET = {
+    "deep_credit_assessment": 1_900_500,
     "lite_credit_assessment": 420_000,
     "credit_snapshot": 1_483_647,
     "covenant_refinancing": 1_155_000,
     "distressed_restructuring": 1_186_500,
-    "earnings_update": 546_500,
+    "earnings_update": 546_729,  # owner, 2026-11-16: fix all (CP1B_NOTE, 229)
     "portfolio_decision": 955_500,
     "relative_value": 1_071_000,
     "short_snapshot": 157_500,
@@ -1529,7 +1549,7 @@ def test_every_pathway_runs_end_to_end_to_a_verified_report(tmp_path, provider, 
             tmp_path / "issuer",
             tmp_path / "preview",
             config="sol-medium",
-            cap="50",
+            cap="15",
         ).plan.layout.routes
     )
     # CP-2G after CP-1 must write a forecast block; the declined one publishes no model.
@@ -1732,7 +1752,7 @@ def good_task(tmp_path: Path, module: str = "CP-2", pathway: str | None = None):
         issuer_folder(tmp_path),
         tmp_path / "out",
         config="sol-medium",
-        cap="50",
+        cap="15",
     )
     upstream = {"CP-1": b"# upstream"}
     task = HandoffTask(
@@ -1837,7 +1857,7 @@ def all_texts(tmp_path: Path) -> dict[str, str]:
         issuer_folder(tmp_path),
         tmp_path / "out",
         config="sol-medium",
-        cap="50",
+        cap="15",
     )
     return {
         module: (tmp_path / "out" / ref.path).read_text()
@@ -1876,7 +1896,7 @@ def test_a_report_selector_named_like_a_passage_is_the_passage_and_is_asked_once
         issuer_folder(tmp_path),
         tmp_path / "out",
         config="sol-medium",
-        cap="50",
+        cap="15",
     )
     named = [r for r in prepared.plan.layout.routes if r.heading == "Key findings"]
     assert [(r.module_id, r.kind) for r in named] == [("CP-2", "prose")]
@@ -2836,7 +2856,7 @@ def all_instructions(tmp_path, pathway="distressed_restructuring", modules=None,
         issuer_folder(tmp_path),
         tmp_path / "out",
         config="sol-medium",
-        cap="50",
+        cap="15",
         modules=modules,
     )
     return prepared, {
@@ -3164,7 +3184,7 @@ def test_the_bottom_line_is_retained_in_the_accepted_handoff(tmp_path, provider)
             tmp_path / "issuer",
             tmp_path / "preview",
             config="sol-medium",
-            cap="50",
+            cap="15",
         ).plan.layout.routes
     )
     provider.answer = lambda context: covenant_answer(context, routes)
@@ -3292,7 +3312,7 @@ def test_a_run_without_cp1_still_omits_the_chart_block(tmp_path):
         issuer_folder(tmp_path),
         tmp_path / "out",
         config="sol-medium",
-        cap="50",
+        cap="15",
         modules=("CP-1A",),
     )
     assert "CP-1" not in prepared.ordered
@@ -3305,7 +3325,7 @@ def test_yield_against_maturity_stays_omitted(tmp_path):
         issuer_folder(tmp_path),
         tmp_path / "out",
         config="sol-medium",
-        cap="50",
+        cap="15",
     )
     assert "yield-against-maturity" in prepared.omitted
 
@@ -3323,7 +3343,7 @@ def test_the_report_scope_no_longer_says_charts_are_unpublished(tmp_path):
         issuer_folder(tmp_path / "b"),
         tmp_path / "b" / "out",
         config="sol-medium",
-        cap="50",
+        cap="15",
         modules=("CP-1",),
     )
     assert "The HTML Model and calculation JSON are not published" in bare.plan.layout.scope
@@ -3524,7 +3544,7 @@ def test_the_launcher_layout_has_no_front_routes_now_the_reader_summary_is_retir
         issuer_folder(tmp_path),
         tmp_path / "out",
         config="sol-medium",
-        cap="50",
+        cap="15",
     )
     assert full.plan.layout.front == ()
 
@@ -3550,7 +3570,7 @@ def report_folder(tmp_path: Path) -> Path:
 
 
 def prepared_with(tmp_path: Path, context: Path, folder: Path, **extra):
-    return prepare(context, folder, tmp_path / "out", config="sol-medium", cap="50", **extra)
+    return prepare(context, folder, tmp_path / "out", config="sol-medium", cap="15", **extra)
 
 
 def test_prepared_carries_each_pinned_sources_guess_and_the_expectations(tmp_path):
@@ -3632,7 +3652,7 @@ def test_the_declarations_do_not_change_any_instruction_byte(tmp_path):
         data["run"]["run_type"] = run_type
         context.write_text(json.dumps(data))
         prepared = prepare(
-            context, report_folder(tmp_path / legal), out, config="sol-medium", cap="50"
+            context, report_folder(tmp_path / legal), out, config="sol-medium", cap="15"
         )
         return {m: (out / "instructions" / f"{m}.md").read_bytes() for m in prepared.ordered}
 
@@ -3903,7 +3923,7 @@ def forecast_run(  # noqa: PLR0913 - one keyword per scenario setting
             tmp_path / "issuer",
             tmp_path / "preview",
             config="sol-medium",
-            cap="50",
+            cap="15",
             modules=modules,
         ).plan.layout.routes
     )
@@ -4383,7 +4403,7 @@ def test_cp1_gets_the_layer_1_block_only_when_the_forecast_lacks_cp2g(tmp_path):
             issuer_folder(folder),
             folder / "out",
             config="sol-medium",
-            cap="50",
+            cap="15",
             modules=modules,
         )
         return prepared, (folder / "out/instructions/CP-1.md").read_text()
@@ -4515,7 +4535,7 @@ def test_the_forecast_instructions_come_before_the_method_block_and_leave_it_unc
         issuer_folder(tmp_path),
         tmp_path / "out",
         config="sol-medium",
-        cap="50",
+        cap="15",
         modules=("CP-2G",),
     )
     text = (tmp_path / "out/instructions/CP-2G.md").read_text()
@@ -4758,7 +4778,7 @@ def test_a_short_snapshot_run_in_the_library_is_listed_with_its_label_and_cp_l10
         tmp_path / "issuer",
         tmp_path / "runs" / RUN_ID,
         config="sol-medium",
-        cap="50",
+        cap="15",
     )
     routes = list(prepared.plan.layout.routes)
     provider.answer = lambda context: short_snapshot_answer(context, routes)
@@ -4815,7 +4835,7 @@ def test_each_pathways_run_reaches_the_library_screens(tmp_path, provider, capsy
             tmp_path / "issuer",
             tmp_path / "preview",
             config="sol-medium",
-            cap="50",
+            cap="15",
         ).plan.layout.routes
     )
     forecast = "CP-2G" in PATHWAY_MODULES[pathway]
@@ -4865,7 +4885,7 @@ def test_a_lite_run_fills_the_library_pages_and_its_forecast_page_states_the_gap
             tmp_path / "issuer",
             tmp_path / "preview",
             config="sol-medium",
-            cap="50",
+            cap="15",
         ).plan.layout.routes
     )
     provider.answer = lambda context: answer(context, routes)
@@ -4905,6 +4925,70 @@ def test_a_lite_run_fills_the_library_pages_and_its_forecast_page_states_the_gap
     assert sources and all("/CP-2.md:" in source for source in sources), sources
     assert "First run of this pathway" in shown["Changes"]
     assert "No forecast model was published from this run\u2019s files" in shown["Forecast"]
+
+
+def _deep_run_in_the_library(tmp_path, provider, capsys) -> dict:
+    """A SYNTHETIC deep run (fake provider, hand-written handoffs) launched into runs/ through the
+    real launcher, delivery and library refresh; returns the library's data."""
+    argv = launch(tmp_path, "--live", "--ruling", str(RULING), pathway="deep_credit_assessment")
+    argv[argv.index("--out") + 1] = str(tmp_path / "runs" / RUN_ID)
+    routes = prepare_routes(tmp_path, "sol-medium", None)
+    provider.answer = lambda context: forecast_answer(context, routes, forecast_block())
+    assert main(argv) == 0
+    assert "Library not updated" not in capsys.readouterr().err
+    text = (tmp_path / "library/data.js").read_text(encoding="utf-8")
+    return json.loads(text.removeprefix("window.CREDIT_OS_DATA=").rstrip().removesuffix(";"))
+
+
+def test_a_deep_run_is_delivered_and_listed_by_the_library_with_every_module(
+    tmp_path, provider, capsys
+):
+    """Ruling 2026-11-15-pathway-tiers-and-caps. Synthetic handoffs: this proves the wiring from
+    the launcher to the library's data, not any analysis."""
+    data = _deep_run_in_the_library(tmp_path, provider, capsys)
+    deep = PATHWAY_MODULES["deep_credit_assessment"]
+    assert tuple(c[0] for c in provider.calls) == deep
+    run = data["workspace"]["runs"][RUN_ID]
+    assert run["pathway"] == "deep_credit_assessment"
+    held = {code for code, entry in run["modules"].items() if entry.get("outputs")}
+    assert held == set(deep)  # all twenty handoffs reach the Modules pages
+    (model,) = data["workspace"]["models"]  # the forecast is published: CP-1 and CP-2G ran
+    assert model["cashflow"] is not None
+    receipt = next((tmp_path / "runs" / RUN_ID / "deliveries").glob("*/delivery.json"))
+    delivered = json.loads(receipt.read_text())
+    assert "Deep credit assessment" in delivered["scope"]
+    assert "Sections not produced: what-changed." in delivered["scope"]  # a first run: no CP-8
+    report = ReportView.model_validate_json((receipt.parent / "report-view.json").read_text())
+    blocks = tuple(block.block_id for block in report.blocks)
+    assert set(FULL_BLOCKS) - {"what-changed"} <= set(blocks) and len(blocks) == 23
+    assert {"recovery-by-class", "peer-positioning", "rating-triggers"} <= set(blocks)
+
+
+@pytest.mark.browser
+def test_a_deep_run_fills_the_library_pages(tmp_path, provider, capsys):
+    """The same synthetic deep run read in the real library: Overview, Changes, Modules, Forecast
+    and Evidence render with its label, no console message and no unfilled value."""
+    from test_library_page_browser import visit
+
+    data = _deep_run_in_the_library(tmp_path, provider, capsys)
+    (model,) = data["workspace"]["models"]
+    index = tmp_path / "library/index.html"
+    shown = {}
+    for name, route in {
+        "Overview": f"#W-Overview/overview?c={RUN_ID}",
+        "Changes": f"#W-Changes/changes?c={RUN_ID}",
+        "Modules CP-4C": f"#CP-4C?c={RUN_ID}",
+        "Modules CP-1C": f"#CP-1C?c={RUN_ID}",
+        "Forecast": f"#W-Forecast/{model['id']}?c={RUN_ID}",
+        "Evidence": f"#W-Evidence/sources?c={RUN_ID}",
+    }.items():
+        dom, console = visit(index, route)
+        shown[name] = " ".join(re.sub(r"(?s)<(script|style)\b.*?</\1>|<[^>]+>", " ", dom).split())
+        assert console == [], (name, console)
+        assert UNFILLED.search(shown[name]) is None, (name, UNFILLED.findall(shown[name]))
+        assert ISSUER in shown[name] and "Deep credit assessment" in shown[name], name
+    assert "First run of this pathway" in shown["Changes"]
+    assert "FY2025E" in shown["Forecast"]
 
 
 def test_a_delivery_without_a_forecast_has_no_forecast_key_in_its_receipt(
@@ -4990,7 +5074,8 @@ def test_the_forecast_instructions_lock_the_entry_values_the_method_would_ask_fo
     assert "give your own judgment as `Analyst Interpretation`" in block
     assert "anchored to a stated figure" in block
     assert "name the anchor in `rationale`" in block and "in `limitation`" in block
-    assert "only when no stated figure can anchor it" in block
+    # Replaced 2026-11-16 (owner: fix all): never one driver null; see test_cpos_facilities.
+    assert "Never write null for one driver or year" in block
 
 
 def test_the_forecast_instructions_cap_driver_values_at_four_decimal_places():
@@ -6309,7 +6394,7 @@ def test_run_live_handoffs_hands_the_effort_map_to_the_executor(tmp_path, monkey
         issuer_folder(tmp_path),
         tmp_path / "out",
         config="sol-medium",
-        cap="50",
+        cap="15",
     )
     with pytest.raises(Stop):
         cpos.run_live_handoffs(
@@ -6385,7 +6470,7 @@ def test_a_claude_run_under_a_ruling_that_lists_web_search_runs_with_search_off(
         issuer_folder(tmp_path),
         tmp_path / "out",
         config="opus-medium",
-        cap="50",
+        cap="15",
         modules=("CP-DR",),
     )
     for config, searching in (("opus-medium", False), ("sol-medium", True)):
@@ -6410,7 +6495,7 @@ def test_a_claude_launch_says_search_is_off_and_holds_no_search_fee(tmp_path, ca
         tmp_path / "issuer",
         tmp_path / "probe",
         config="opus-medium",
-        cap="50",
+        cap="15",
         modules=("CP-DR",),
     )
     argv[argv.index("--cap") + 1] = str(plain.hold + Decimal("0.05"))  # a 0.16 fee would not fit
@@ -6461,7 +6546,7 @@ def test_the_offline_hold_follows_the_larger_anthropic_output_limit(tmp_path, mo
 
     def hold(config: str, out: str) -> Decimal:
         return prepare(
-            context, folder, tmp_path / out, config=config, cap="50", modules=("CP-4",)
+            context, folder, tmp_path / out, config=config, cap="15", modules=("CP-4",)
         ).hold
 
     now = hold("opus-medium", "now")
@@ -7154,7 +7239,7 @@ def _built_instruction(tmp_path, module, modules):
         issuer_folder(tmp_path),
         tmp_path / "out",
         config="sol-medium",
-        cap="50",
+        cap="15",
         modules=modules,
     )
     return (tmp_path / "out" / prepared.plan.instructions[module].path).read_text()
@@ -7535,7 +7620,7 @@ def copilot_readiness(tmp_path, monkeypatch, limit):
     monkeypatch.setattr(copilot, "TOKEN_LIMITS", {"gpt-6.1-sol": limit})
     prepared = prepare(
         context_file(tmp_path), issuer_folder(tmp_path), tmp_path / "out",
-        config="copilot-sol-medium", cap="50",
+        config="copilot-sol-medium", cap="15",
     )  # fmt: skip
     return prepared, cpos_launch._readiness(prepared, "copilot-sol-medium")
 
@@ -7574,7 +7659,7 @@ def test_readiness_is_silent_when_every_first_prompt_is_well_inside_the_limit(
 def test_readiness_has_no_context_lines_off_the_copilot_route(tmp_path):
     prepared = prepare(
         context_file(tmp_path), issuer_folder(tmp_path), tmp_path / "out",
-        config="sol-medium", cap="50",
+        config="sol-medium", cap="15",
     )  # fmt: skip
     assert "Context:" not in cpos_launch._readiness(prepared, "sol-medium")
 
@@ -7582,7 +7667,7 @@ def test_readiness_has_no_context_lines_off_the_copilot_route(tmp_path):
 def test_a_model_whose_limit_is_not_known_gets_no_first_prompt_estimate(tmp_path):
     prepared = prepare(
         context_file(tmp_path), issuer_folder(tmp_path), tmp_path / "out",
-        config="copilot-opus-medium", cap="50",
+        config="copilot-opus-medium", cap="15",
     )  # fmt: skip
     assert cpos_launch._first_prompt_lines(prepared, "copilot-opus-medium") == ()
 
@@ -7982,7 +8067,7 @@ def test_run_live_handoffs_resolves_the_default_against_the_case_kind(tmp_path, 
             issuer_folder(out),
             out / "out",
             config="sol-medium",
-            cap="50",
+            cap="15",
         )
         with pytest.raises(Stop):
             cpos.run_live_handoffs(
@@ -8992,15 +9077,16 @@ T46_CP1B = """### T4.6 - Variance register
 """
 
 
-def test_cp1b_is_checked_by_its_script_without_a_note(tmp_path):
-    """`earnings_update` has 93 characters under its ceiling, so CP-1B is sent no note
-    (`method_scripts_cp1b.CP1B_NOTE_UNSENT` measures the need); its own T4.6 is still checked."""
+def test_cp1b_is_sent_its_cell_format_note_and_checked_by_its_script(tmp_path):
+    """CP-1B is sent `method_scripts_cp1b.CP1B_NOTE` (owner, 2026-11-16: fix all; the
+    `earnings_update` ceiling is raised by its length); its own T4.6 is checked."""
     from deploy_workflow import method_scripts_cp1b
 
-    assert "CP-1B" in method_scripts.CHECKS and "CP-1B" not in method_scripts.NOTES
+    assert "CP-1B" in method_scripts.CHECKS
+    assert method_scripts.NOTES["CP-1B"] == method_scripts_cp1b.CP1B_NOTE
     (tmp_path / "texts").mkdir()
     _, texts = all_instructions(tmp_path / "texts", "earnings_update")
-    assert method_scripts_cp1b.CP1B_NOTE_UNSENT not in texts["CP-1B"]
+    assert method_scripts_cp1b.CP1B_NOTE in texts["CP-1B"]
     prepared, task, context = good_task(tmp_path, "CP-1B", "earnings_update")
     raw = answer(context, list(prepared.plan.layout.routes))
     check = checker(prepared.layout)
@@ -9061,7 +9147,10 @@ T410_SENT = """## Findings
 """
 
 
-@pytest.mark.parametrize("pathway", ["credit_snapshot", "relative_value", "portfolio_decision"])
+@pytest.mark.parametrize(
+    "pathway",
+    ["credit_snapshot", "relative_value", "portfolio_decision", "deep_credit_assessment"],
+)
 def test_cp3_is_asked_for_its_waterfall_and_checked_against_the_t410_it_was_sent(tmp_path, pathway):
     (tmp_path / "texts").mkdir()
     _, texts = all_instructions(tmp_path / "texts", pathway)
@@ -9082,6 +9171,61 @@ def test_cp3_is_asked_for_its_waterfall_and_checked_against_the_t410_it_was_sent
         sent = {**task.handoffs, "CP-1C": T410_SENT.format(low=low).encode()}
         issues = _checked_handoff(dataclasses.replace(task, handoffs=sent), cited.encode(), check)
         assert any("T4.10" in i and "recomputes 3.8 x" in i for i in issues) is sent_back, low
+
+
+@pytest.mark.parametrize(("low", "accepted"), [("420", True), ("380", False)])
+def test_in_the_deep_assessment_cp3_is_checked_against_the_t410_cp1c_wrote_in_the_run(
+    tmp_path, provider, capsys, low, accepted
+):
+    """Ruling 2026-11-15-pathway-tiers-and-caps: in Deep, CP-1C runs before CP-3 and the launcher
+    sends CP-3 the CP-1C handoff this run accepted, so the CP-3 check compares CP-3's T4.10 copy
+    with it. SYNTHETIC handoffs: CP-1C states Low `low`; CP-3 copies 4.2x (420 / 100) for every
+    case, so a Low of 380 (3.8x) is a mis-copy the check sends back."""
+    argv = launch(tmp_path, "--live", "--ruling", str(RULING), pathway="deep_credit_assessment")
+    routes = prepare_routes(tmp_path, "sol-medium", None)
+
+    def respond(context):
+        raw = answer(context, routes)
+        if context["module_id"] == "CP-2G":
+            return forecast_answer(context, routes, REAL_DECLINED_BLOCK)
+        if context["module_id"] == "CP-1C":
+            t410 = T410_SENT.format(low=low).removeprefix("## Findings\n\n")
+            return raw.replace("\n## Calculations", "\n" + t410 + "\n## Calculations", 1)
+        if context["module_id"] == "CP-3":
+            start = raw.index("### Recovery waterfall")
+            bare = (
+                raw[:start] + raw[raw.index("\n\n", raw.index("| Enterprise value", start)) + 2 :]
+            )
+            return bare.replace("\n## Calculations", "\n" + CP3_FROM_T410 + "## Calculations", 1)
+        return raw
+
+    provider.answer = respond
+    assert main(argv) == (0 if accepted else 1)
+    called = [c[0] for c in provider.calls]
+    assert called.index("CP-1C") < called.index("CP-3")
+    sent_back = "row `EV multiple (Low) from CP-1C T4.10` states 4.2 x, but the method's"
+    reviews = [
+        json.loads(path.read_text())["issues"]
+        for path in (tmp_path / "out/live/modules").glob("*/*.review.json")
+        if (path.parent / "invocation.json")
+        .read_text()
+        .startswith('{"messages":[{"role":"system","text":"# CP-3 for ')
+    ]
+    assert reviews  # CP-3's drafts were reviewed
+    flagged = [i for issues in reviews for i in issues if sent_back in i]
+    if accepted:
+        assert not flagged
+        (record,) = (tmp_path / "out/requests/CP-3").glob("*/1.method-checks.json")
+        copies = {
+            c["figure"]: c["status"]
+            for c in json.loads(record.read_text())["checks"]
+            if c["figure"].endswith("from CP-1C T4.10")
+        }
+        assert set(copies.values()) == {"agreed"} and len(copies) == 3, copies
+    else:  # each of CP-3's drafts is sent back for the mis-copy; the run stops at CP-3
+        assert len(flagged) == len(reviews) == 3
+        assert "recomputes 3.8 x" in flagged[0]
+        assert "Stopped: cpos_live_not_accepted: CP-3" in capsys.readouterr().err
 
 
 def test_each_attempt_keeps_its_method_script_checks_beside_its_review(tmp_path):
@@ -9114,3 +9258,38 @@ def test_each_attempt_keeps_its_method_script_checks_beside_its_review(tmp_path)
     _, other, _ = good_task(tmp_path / "other", "CP-L10", "short_snapshot")
     _handoff(other, tmp_path / "run1", lambda _task: shell.format("").encode(), lambda *_: (), 1)
     assert not list((tmp_path / "run1").rglob("*.method-checks.json"))
+
+
+def test_the_check_lists_every_malformed_table_of_a_draft_in_one_review(tmp_path):
+    """Live 2026-11-15: one refusal per table cost CP-1 two of its three writes. The issuer is
+    named as the test's own, so the adapter reaches the tables and raises its first table error:
+    that error is listed once, not also as a refusal of the adapter."""
+    fixtures = Path(__file__).parent / "fixtures" / "live_2026_11_15"
+    prepared, task, _ = good_task(tmp_path, "CP-1", "earnings_update")
+    text = (fixtures / "earnings_update-CP-1-draft1.md").read_text(encoding="utf-8")
+    raw = text.replace("TransDigm Group Incorporated", ISSUER, 1).encode()
+    issues = _checked_handoff(task, raw, checker(prepared.layout))
+    for line in (323, 382):
+        mine = [i for i in issues if f"table header at line {line}:" in i]
+        assert len(mine) == 1, (line, issues)
+    assert not [i for i in issues if i.startswith("The report adapter refused")], issues
+
+
+def test_an_adapter_refusal_that_is_only_a_prefix_of_a_listed_fault_is_still_named(tmp_path):
+    from deploy_workflow.owners.cpos import _checked_handoff
+
+    prepared, task, context = good_task(tmp_path, "CP-4")
+    good = answer(context, list(prepared.plan.layout.routes))
+    lines = good.split("\n")
+    at = lines.index("## Gaps")
+    group_a = ["", "| **Note table** |", "| A | B |", "|---|---|", "| 1 | 2", ""]
+    bad_a = at + 5
+    pad = 10 * bad_a - (at + len(group_a)) - 3
+    group_b = [*[""] * pad, "| A | B |", "|---|---|", "| 1 | 2", ""]
+    text = "\n".join([*lines[:at], *group_a, *group_b, *lines[at:]])
+    bad_b = text.split("\n").index("| 1 | 2", bad_a) + 1
+    assert str(bad_b).startswith(str(bad_a))
+    review = _checked_handoff(task, text.encode(), cpos_launch.checker(prepared.layout))
+    named = "boundary pipes: line "
+    assert sum(i.endswith(f"{named}{bad_a}") for i in review) == 1, review
+    assert sum(i.endswith(f"{named}{bad_b}") for i in review) == 1, review

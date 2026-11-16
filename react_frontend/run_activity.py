@@ -100,7 +100,7 @@ def _planned(manifest: dict[str, Any], fallback: list[list[str]]) -> list[list[s
     return [[code, states.get(code, "waiting")] for code in (*codes, "Report")]
 
 
-def _cap(manifest: dict[str, Any], configured: Decimal) -> str:
+def _cap(manifest: dict[str, Any], recorded: str | None) -> str | None:
     amount = manifest.get("provider_cap_usd")
     if isinstance(amount, str):
         try:
@@ -109,17 +109,17 @@ def _cap(manifest: dict[str, Any], configured: Decimal) -> str:
                 return str(pinned)
         except InvalidOperation:
             pass
-    return str(configured)
+    return recorded
 
 
-def reply(layout: Layout, run_id: str, cap: Decimal) -> http_base.Reply:
+def reply(layout: Layout, run_id: str) -> http_base.Reply:
     record = next((item for item in runs.load_all(layout) if item.id == run_id), None)
     if record is None:
         raise http_base.refuse(404, "unknown run")
     directory = layout.runs.resolve() / run_id
     if directory.resolve() != directory or (directory / EVENTS).is_symlink():
         raise http_base.refuse(404, "run activity is unavailable")
-    snapshot = activity.snapshot(layout, [record], cap=cap, now=datetime.now(UTC))
+    snapshot = activity.snapshot(layout, [record], now=datetime.now(UTC))
     [shown] = snapshot["runs"]
     usage = _usage(directory)
     states = shown.get("modules", activity.module_states(record.pathway, []))
@@ -143,7 +143,7 @@ def reply(layout: Layout, run_id: str, cap: Decimal) -> http_base.Reply:
             "execution": execution
             if isinstance(execution, str) and execution in _EXECUTIONS
             else None,
-            "cap": _cap(manifest, cap),
+            "cap": _cap(manifest, shown.get("cap")),
             **usage,
             "stalled": shown.get("stalled", False),
             "modules": modules,

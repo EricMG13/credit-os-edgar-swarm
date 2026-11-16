@@ -28,6 +28,7 @@ from test_library_page_browser import chrome
 from deploy_workflow import run_expectations as RE
 from deploy_workflow.inbox import runs, startup
 from deploy_workflow.inbox.scheduler import Scheduler
+from deploy_workflow.model.adapter import KEY_VARIABLES
 from deploy_workflow.owners.cpos_launch import (
     update_library_at,
 )  # the real one, before any test patches it
@@ -209,6 +210,10 @@ def page(
     chrome()  # skips here when there is no browser
     monkeypatch.setattr(startup, "FORM", FORM)
     fake_env({"sleep": 30})
+    # A Claude Opus choice is refused unless the service's environment holds the Anthropic key
+    # (`submissions.require_provider_key`, presence only). The tests that pick it must not depend
+    # on the machine they run on; the launcher is the fake one, so no provider is called.
+    monkeypatch.setenv(KEY_VARIABLES["anthropic"], "test-key-not-real")
     with _serving(root, tmp_path) as (served, _watcher):
         yield served
 
@@ -236,7 +241,7 @@ def test_the_steps_each_pathway_shows_at_each_level(page):
     const out = {};
     for (const pathway of ['credit_snapshot', 'earnings_update', 'relative_value',
         'covenant_refinancing', 'distressed_restructuring', 'portfolio_decision',
-        'lite_credit_assessment']) {
+        'lite_credit_assessment', 'deep_credit_assessment']) {
       pick('data-k="pathway"', pathway);
       out[pathway] = {};
       for (const l of ['basic', 'standard', 'advanced']) {
@@ -259,6 +264,8 @@ def test_the_steps_each_pathway_shows_at_each_level(page):
         "distressed_restructuring": {"basic": four, "standard": five, "advanced": five},
         "portfolio_decision": {"basic": four, "standard": five, "advanced": five},
         "lite_credit_assessment": {"basic": four, "standard": four, "advanced": five},
+        # Deep runs CP-DR as Full does: its research questions are asked from Standard.
+        "deep_credit_assessment": {"basic": four, "standard": five, "advanced": five},
     }
     for pathway, levels in expected.items():
         assert {k: v for k, v in seen[pathway].items() if "Groups" not in k} == levels, pathway
@@ -836,8 +843,11 @@ def test_the_review_shows_the_services_forecast_per_module(page):
         assert named(item["reason"]) in seen["ready"]
     assert by_module["CP-4"]["outcome"] == "will_refuse"  # legal documents: none, on CP-4
     assert ["legal", "Go to Legal"] in seen["goto"]
-    for text in ("GPT Sol, Balanced (the default)", "USD 20", "Acme Corp", "2026-10-31", "1 read"):
+    # The cap is the service's answer for this pathway (ruling 2026-11-15-pathway-tiers-and-caps).
+    cap = "USD 25 for this run, the full credit assessment's cap"
+    for text in ("GPT Sol, Balanced (the default)", cap, "Acme Corp", "2026-10-31", "1 read"):
         assert text in seen["facts"], text
+    assert summary["cap"] == "25" and "USD 20" not in seen["facts"]
     # No earlier run in the service's folder: the summary says CP-8 has nothing to compare with.
     assert summary["changes"] == "first run of this pathway"
     assert "Changesfirst run of this pathway" in seen["facts"]
@@ -845,6 +855,29 @@ def test_the_review_shows_the_services_forecast_per_module(page):
     for section in summary["omitted"]:
         assert section in seen["facts"]
     assert "confirmed when the summary is made" not in seen["ready"]
+
+
+@pytest.mark.parametrize(
+    ("pathway", "cap", "label"),
+    [
+        ("lite_credit_assessment", "15", "lite credit assessment"),
+        ("deep_credit_assessment", "40", "deep credit assessment"),
+        ("relative_value", "20", "relative value"),
+    ],
+)
+def test_the_review_shows_the_pathways_cap_from_the_service(page, pathway, cap, label):
+    """Ruling 2026-11-15-pathway-tiers-and-caps: the summary's Cap row is the service's figure for
+    the chosen pathway, and the choice itself shows the same cap."""
+    seen = page.run(f"""
+    await issuer({json.dumps(pathway)}, [file('annual.txt', {json.dumps(REPORT)})]);
+    const S = await review();
+    const row = document.getElementById('path-' + {json.dumps(pathway)}).closest('.prow');
+    return {{cap: S.cap, refused: S.error, facts: document.getElementById('rv-facts').textContent,
+      choice: row.querySelector('.imp').textContent}};
+    """)
+    assert (seen["refused"], seen["cap"]) == ("", cap)
+    assert f"USD {cap} for this run, the {label}'s cap" in seen["facts"]
+    assert seen["choice"].startswith(f"Cap: USD {cap} a run. Needs: ")
 
 
 def test_the_review_draws_the_launchers_lookup_statement_as_text(page):
@@ -874,7 +907,8 @@ def test_the_review_draws_the_launchers_lookup_statement_as_text(page):
 
 
 def test_the_page_offers_the_lite_credit_assessment_and_the_service_reviews_its_five_modules(page):
-    """The lite credit assessment (CP-0, CP-1, CP-1A, CP-2, CP-2A) is the second pathway offered.
+    """The lite credit assessment (CP-0, CP-1, CP-1A, CP-2, CP-2A) is the first pathway offered,
+    then Full and Deep, then the five purpose pathways (ruling 2026-11-15-pathway-tiers-and-caps).
     The deactivated short credit snapshot is not offered at all."""
     seen = page.run(f"""
     const cards = [...document.querySelectorAll('#pathcards input[data-k="pathway"]')].map(e => ({{
@@ -887,8 +921,9 @@ def test_the_page_offers_the_lite_credit_assessment_and_the_service_reviews_its_
     """)
     values = [c["value"] for c in seen["cards"]]
     assert values == [
-        "credit_snapshot",
         "lite_credit_assessment",
+        "credit_snapshot",
+        "deep_credit_assessment",
         "earnings_update",
         "relative_value",
         "covenant_refinancing",
@@ -2872,6 +2907,7 @@ def test_a_refused_listing_is_shown_and_carries_nothing(root, tmp_path, monkeypa
         "distressed_restructuring",
         "portfolio_decision",
         "lite_credit_assessment",
+        "deep_credit_assessment",
     ],
 )
 def test_no_module_code_is_shown_on_any_stage_at_any_level_of_a_pathway(page, pathway):
@@ -3117,10 +3153,11 @@ def test_the_pathways_are_rows_in_three_columns_and_the_chosen_row_is_blue_50(pa
     """,
         size="1440,900",
     )
-    assert (seen["n"], seen["cards"]) == (7, 0), seen
+    assert (seen["n"], seen["cards"]) == (8, 0), seen  # Lite, Full, Deep and the five purpose ones
     assert seen["needs"]["left"] > seen["label"]["right"]
     assert seen["chosen"] == "rgb(229, 232, 255)" and seen["other"] != seen["chosen"]
-    assert seen["radius"] == "8px" and seen["needsText"].startswith("Needs: ")
+    # The third column leads with the pathway's cap (the first row is Lite: USD 15).
+    assert seen["radius"] == "8px" and seen["needsText"].startswith("Cap: USD 15 a run. Needs: ")
 
 
 def test_the_level_and_the_name_sit_side_by_side(page):
@@ -3378,7 +3415,10 @@ def test_approve_and_submit_stay_in_view_while_the_card_is_taller_than_main(page
     """,
         size=size,
     )
-    assert seen["modules"] == 12 and seen["taller"] is True
+    # The full credit assessment launches 14 modules since CP-2D and CP-3C joined it (ruling
+    # 2026-11-15-full-assessment-cp3c-cp6a): CP-0, CP-1, CP-1A, CP-DR, CP-2, CP-2A, CP-2D, CP-2E,
+    # CP-2G, CP-4, CP-3C, CP-3, CP-5, CP-6.
+    assert seen["modules"] == 14 and seen["taller"] is True
     assert all(visible and top > 0 for top, visible in seen["mid"]), seen["mid"]
     assert seen["focus"] == [["approve", True]] * 2, seen["focus"]
     assert seen["top"] is True

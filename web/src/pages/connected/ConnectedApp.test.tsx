@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { ConnectedApp } from "./ConnectedApp";
 
@@ -6,9 +6,21 @@ const context = {
   run: { as_of: "", pathway: "credit_snapshot", case_kind: "synthetic", reporting_currency: "USD" },
   identity: { issuer_name: "", issuer_id: "" },
 };
+const submissionCaps = {
+  credit_snapshot: "25",
+  lite_credit_assessment: "15",
+  deep_credit_assessment: "40",
+  earnings_update: "20",
+  relative_value: "20",
+  covenant_refinancing: "20",
+  distressed_restructuring: "20",
+  portfolio_decision: "20",
+  short_snapshot: "20",
+};
 const file = new File(["sample input"], "Credit & facts.html", { type: "text/html" });
 const plan = {
   digest: "server-approved",
+  cap: "25",
   error: "",
   documents: [{ source: file.name, kind: "annual_report" }],
   modules: ["CP-0"],
@@ -26,7 +38,7 @@ function testingFetch(
   overrides: Record<string, unknown> = {},
 ) {
   const entries: Record<string, unknown> = {
-    "/connected/context": { ...context, submission_cap_usd: "20" },
+    "/connected/context": { ...context, submission_caps_usd: submissionCaps },
     "/api/submissions": { id: "sub-1" },
     "/api/submissions/sub-1/files?name=Credit%20%26%20facts.html": { name: file.name },
     "/api/submissions/sub-1/reading": { documents: plan.documents, ignored: [], error: "" },
@@ -40,7 +52,10 @@ function testingFetch(
         typeof submitResponse === "function" ? submitResponse() : submitResponse,
       );
     if (!Object.hasOwn(entries, path)) throw new Error(`Unexpected request ${path}`);
-    return Promise.resolve(Response.json(entries[path]));
+    const entry = entries[path];
+    if (entry instanceof Response) return Promise.resolve(entry);
+    if (typeof entry === "function") return (entry as () => Promise<Response>)();
+    return Promise.resolve(Response.json(entry));
   });
   vi.stubGlobal("fetch", fetchMock);
   return fetchMock;
@@ -92,7 +107,7 @@ describe("connected run start", () => {
     fireEvent.change(issuer, { target: { value: "Synthetic Générale" } });
     const action = screen.getByRole("button", { name: "Continue to purpose" });
     expect(action).toBeDisabled();
-    expect(screen.getByRole("progressbar", { name: "USD 0.00 of USD 20.00" })).toHaveAttribute(
+    expect(screen.getByRole("progressbar", { name: "USD 0.00 of USD 25.00" })).toHaveAttribute(
       "aria-valuenow",
       "0",
     );
@@ -109,7 +124,11 @@ describe("connected run start", () => {
 
   it("sends the selected portfolio workbook with a full credit assessment", async () => {
     const fetchMock = testingFetch(plan, undefined, {
-      "/connected/context": { ...context, attachments: { portfolio_workbook: false } },
+      "/connected/context": {
+        ...context,
+        submission_caps_usd: submissionCaps,
+        attachments: { portfolio_workbook: false },
+      },
     });
     render(<ConnectedApp path="/start" mode="synthetic" />);
     await fillInputs();
@@ -134,6 +153,87 @@ describe("connected run start", () => {
     });
   });
 
+  it("offers Deep in Lite/Full/Deep order and binds its 20 analytical modules to USD 40", async () => {
+    const fetchMock = testingFetch({ ...plan, cap: "40" });
+    render(<ConnectedApp path="/start" mode="live" />);
+    await fillInputs();
+    await advanceToPurpose();
+    const pathways = screen.getByRole("radiogroup", { name: "Pathway" });
+    expect(
+      within(pathways)
+        .getAllByRole("radio")
+        .map((radio) => radio.getAttribute("value")),
+    ).toEqual([
+      "lite_credit_assessment",
+      "credit_snapshot",
+      "deep_credit_assessment",
+      "earnings_update",
+      "relative_value",
+      "covenant_refinancing",
+      "distressed_restructuring",
+      "portfolio_decision",
+    ]);
+    fireEvent.click(within(pathways).getByRole("radio", { name: "Deep credit assessment" }));
+    expect(screen.getByRole("progressbar", { name: "USD 0.00 of USD 40.00" })).toBeVisible();
+    expect(screen.getByText("20 base modules", { exact: true })).toBeVisible();
+    fireEvent.change(screen.getByLabelText("Run form level"), {
+      target: { value: "advanced" },
+    });
+    advanceToContext();
+    expect(screen.queryByRole("checkbox", { name: /CP-MODEL/ })).toBeNull();
+    fireEvent.click(screen.getByRole("checkbox", { name: "Source readiness (CP-0)" }));
+    fireEvent.click(screen.getByRole("button", { name: "Review run" }));
+    await screen.findByRole("button", { name: "Submit, spend up to USD 40.00" });
+    const summaryRequest = fetchMock.mock.calls.find(([path]) => path.endsWith("/summary"));
+    expect(summaryRequest?.[1]?.headers).toMatchObject({ "X-Shown-Cap": "40" });
+    const rawAnswers = summaryRequest?.[1]?.body;
+    const reviewedAnswers = JSON.parse(typeof rawAnswers === "string" ? rawAnswers : "null") as {
+      context: { run: { pathway: string } };
+      modules: string[];
+    };
+    expect(reviewedAnswers.context.run.pathway).toBe("deep_credit_assessment");
+    expect(reviewedAnswers.modules).not.toContain("CP-MODEL");
+    expect(reviewedAnswers.modules).not.toContain("CP-0");
+  });
+
+  it("rejects a summary with a missing or different cap before enabling submission", async () => {
+    for (const cap of ["40", undefined]) {
+      const mismatched = { ...plan, cap };
+      const fetchMock = testingFetch(mismatched as typeof plan);
+      render(<ConnectedApp path="/start" mode="live" />);
+      await fillInputs();
+      await advanceToPurpose();
+      advanceToContext();
+      fireEvent.click(screen.getByRole("button", { name: "Review run" }));
+      expect(await screen.findByRole("alert")).toHaveTextContent("cap changed while preparing");
+      expect(screen.queryByRole("button", { name: "Submit, spend up to USD 25.00" })).toBeNull();
+      expect(fetchMock.mock.calls.some(([path]) => path.endsWith("/submit"))).toBe(false);
+      cleanup();
+    }
+  });
+
+  it("locks pathway answers while summary cap approval is pending", async () => {
+    let resolveSummary!: (response: Response) => void;
+    const delayed = new Promise<Response>((resolve) => {
+      resolveSummary = resolve;
+    });
+    const fetchMock = testingFetch(plan, undefined, {
+      "/api/submissions/sub-1/summary": () => delayed,
+    });
+    render(<ConnectedApp path="/start" mode="live" />);
+    await fillInputs();
+    await advanceToPurpose();
+    advanceToContext();
+    fireEvent.click(screen.getByRole("button", { name: "Review run" }));
+    expect(await screen.findByRole("button", { name: "Preparing review…" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Previous" })).toBeDisabled();
+    expect(screen.getByLabelText("Anything the analysis should know")).toBeDisabled();
+    resolveSummary(Response.json(plan));
+    await screen.findByRole("button", { name: "Submit, spend up to USD 25.00" });
+    const summaryRequest = fetchMock.mock.calls.find(([path]) => path.endsWith("/summary"));
+    expect(summaryRequest?.[1]?.headers).toMatchObject({ "X-Shown-Cap": "25" });
+  });
+
   it("uploads raw bytes, reads the files, and submits only the reviewed answers and digest", async () => {
     const fetchMock = testingFetch();
     const navigate = vi.fn();
@@ -150,6 +250,7 @@ describe("connected run start", () => {
       "/api/submissions/sub-1/summary",
     ]);
     expect(fetchMock.mock.calls[2]?.[1]).toMatchObject({ method: "POST", body: file });
+    expect(fetchMock.mock.calls[5]?.[1]?.headers).toMatchObject({ "X-Shown-Cap": "25" });
     const rawAnswers = fetchMock.mock.calls[5]?.[1]?.body;
     expect(typeof rawAnswers).toBe("string");
     const body = JSON.parse(rawAnswers as string) as unknown;
@@ -224,6 +325,7 @@ describe("connected run start", () => {
     const requests = fetchMock.mock.calls.filter(([path]) => path.endsWith("/submit"));
     expect(requests).toHaveLength(2);
     expect(requests[0]).toEqual(requests[1]);
+    expect(requests[0]?.[1]?.headers).toMatchObject({ "X-Shown-Cap": "25" });
     expect(fetchMock.mock.calls.filter(([path]) => path.endsWith("/summary"))).toHaveLength(1);
   });
 
@@ -292,9 +394,10 @@ describe("connected run start", () => {
   });
 
   it("reviews an earnings update with periods and the chosen management bridge", async () => {
-    const fetchMock = testingFetch(plan, undefined, {
+    const fetchMock = testingFetch({ ...plan, cap: "20" }, undefined, {
       "/connected/context": {
         ...context,
+        submission_caps_usd: submissionCaps,
         attachments: {
           management_bridge: false,
           portfolio_workbook: false,
@@ -439,7 +542,7 @@ describe("connected activity and reports", () => {
                 ["Report", "done"],
               ],
               as_of: report.asOf,
-              cap: "20",
+              cap: "25",
               spent: "0",
               settled_spent: "0",
               held: "0",
@@ -463,7 +566,7 @@ describe("connected activity and reports", () => {
     expect(await screen.findByText(/Waiting for the report/)).toBeInTheDocument();
     expect(screen.getByText("Source readiness (CP-0)")).toBeInTheDocument();
     expect(
-      screen.getByRole("progressbar", { name: /USD 0.00 of USD 20.00 cap usage/ }),
+      screen.getByRole("progressbar", { name: /USD 0.00 of USD 25.00 cap usage/ }),
     ).toHaveAttribute("aria-valuenow", "0");
     expect(screen.getByRole("progressbar", { name: "1 of 1 modules" })).toBeInTheDocument();
     expect(screen.getByText("1 min 14 s")).toBeInTheDocument();
@@ -658,7 +761,7 @@ describe("connected activity and reports", () => {
     const navigate = vi.fn();
     render(<ConnectedApp path="/start" mode="live" navigate={navigate} />);
     await review();
-    const submit = await screen.findByRole("button", { name: "Submit, spend up to USD 20.00" });
+    const submit = await screen.findByRole("button", { name: "Submit, spend up to USD 25.00" });
     expect(submit).toBeDisabled();
     const approval = screen.getByRole("checkbox", { name: /Approve: I have read this summary/ });
     expect(approval).toBeDisabled();
@@ -671,13 +774,13 @@ describe("connected activity and reports", () => {
     expect(submit).toBeEnabled();
     fireEvent.click(submit);
     const dialog = await screen.findByRole("dialog", { name: "Start a paid run?" });
-    expect(dialog).toHaveTextContent("spend up to USD 20.00");
+    expect(dialog).toHaveTextContent("spend up to USD 25.00");
     expect(fetchMock.mock.calls.some(([path]) => path.endsWith("/submit"))).toBe(false);
     fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
     expect(screen.queryByRole("dialog")).toBeNull();
     expect(fetchMock.mock.calls.some(([path]) => path.endsWith("/submit"))).toBe(false);
     fireEvent.click(submit);
-    fireEvent.click(await screen.findByRole("button", { name: "Start run, up to USD 20.00" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Start run, up to USD 25.00" }));
     await vi.waitFor(() => {
       expect(navigate).toHaveBeenCalledWith("/run/test-run");
     });

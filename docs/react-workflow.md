@@ -1,6 +1,6 @@
 # Run Credit OS 2
 
-Credit OS 2 is based on RBOT-HTML `256101a`. It keeps that revision's Python pin,
+Credit OS 2 is based on RBOT-HTML `be953752`. It keeps that revision's Python pin,
 `pyproject.toml`, `uv.lock`, scheduler, calculations, provider configuration and library
 publication. The browser uses the Credit OS design system and React 19.3.0. Run intake,
 activity, library and report navigation live at one local address.
@@ -148,7 +148,8 @@ in table view.
 RBOT-HTML maps the Claude Fast preset to `opus-medium` (Claude Opus 5.5 at medium
 effort). Set `ANTHROPIC_API_KEY` in the launching environment for this preset and
 `OPENAI_API_KEY` for the service startup check. The regular reviewed submission
-uses RBOT-HTML's USD 20 cap. Use one issuer's financial statements for the required
+uses RBOT-HTML's pathway cap: Lite USD 15, Full USD 25, Deep USD 40, or USD 20
+for a purpose pathway. Use one issuer's financial statements for the required
 periods, cash and debt schedules, executed financing and covenant documents, and
 dated market, peer and ratings evidence where relevant.
 

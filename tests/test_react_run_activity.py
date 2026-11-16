@@ -1,7 +1,9 @@
 from decimal import Decimal
 
+from deploy_workflow.inbox import runs
+from deploy_workflow.inbox.layout import Layout
 from deploy_workflow.model.budget import Budget
-from react_frontend.run_activity import _usage
+from react_frontend.run_activity import _cap, _usage, reply
 
 
 def test_usage_separates_settled_charges_and_unknown_or_open_holds(tmp_path):
@@ -36,3 +38,31 @@ def test_usage_does_not_report_zero_when_live_path_is_not_a_directory(tmp_path):
     (tmp_path / "live").write_text("unreadable", encoding="utf-8")
 
     assert _usage(tmp_path) == {"spent": None, "settled_spent": None, "held": None}
+
+
+def test_activity_uses_recorded_selected_or_legacy_pathway_cap(tmp_path):
+    layout = Layout(tmp_path)
+    layout.state.mkdir(parents=True)
+    cases = (
+        ("legacy-full", "credit_snapshot", "", "20"),
+        ("legacy-lite", "lite_credit_assessment", "", "15"),
+        ("selected-full", "credit_snapshot", "23", "23"),
+    )
+    for run_id, pathway, cap, expected in cases:
+        record = runs.Record(
+            id=run_id,
+            pathway=pathway,
+            folder=run_id,
+            status="finished",
+            claimed_at="2026-11-16T12:00:00Z",
+            cap=cap,
+        )
+        runs.save(layout, record)
+        (layout.runs / run_id).mkdir(parents=True)
+        response = reply(layout, run_id)
+        assert response.body["cap"] == expected
+
+
+def test_activity_cap_missing_and_pinned_legacy_workflow_cap():
+    assert _cap({}, None) is None
+    assert _cap({"provider_cap_usd": "50.00"}, "25") == "50.00"
