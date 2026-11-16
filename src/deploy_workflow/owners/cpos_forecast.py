@@ -22,6 +22,7 @@ from pydantic import Field, ValidationError, model_validator
 from deploy_vii.contracts import Contract
 from deploy_vii.live.schema import exact_json, json_object
 from deploy_vii.readiness import shape_issues
+from deploy_workflow.method_scripts import currency_of
 from deploy_workflow.owners import cp2g
 from deploy_workflow.owners.cpos_facilities import Facility, Schedule, schedule
 from deploy_workflow.prose_checks import FORECAST_HEADING, ISO_4217, reader_passages
@@ -582,8 +583,10 @@ def parse(source_text: str, cp1_text: str, source: str = "CP-2G") -> ForecastInp
 def _check_facilities(
     inputs: ForecastInputs, facilities: tuple[Facility, ...], cp1_text: str, stated: dict[str, str]
 ) -> None:
-    """Each stated term is printed in CP-1, the balances fit the base debt, and no case names a
-    driver the schedule replaces."""
+    """Each facility is in the block's currency, each stated term is printed in CP-1, the
+    balances fit the base debt, and no case names a driver the schedule replaces."""
+    code = inputs.currency or UNSTATED_CURRENCY
+    _check_facility_currencies(facilities, cp1_text, code)
     for number, facility in enumerate(facilities, 1):
         balance = stated.get(f"facility {number} balance", facility.balance)
         if not _printed(cp1_text, balance):
@@ -597,7 +600,6 @@ def _check_facilities(
                     f"CP-2G: facility {facility.name} {field} {value}% is not printed in CP-1"
                 )
     debt = inputs.base["debt"].amount
-    code = inputs.currency or UNSTATED_CURRENCY
     divided = f", in {code} millions after dividing by scale 1000" if inputs.scale == 1000 else ""
     if debt is not None:
         with localcontext(cp2g._EXACT):
@@ -620,6 +622,38 @@ def _check_facilities(
         if case is not None and case.debt_repayment is not None:
             raise ValueError(
                 f"CP-2G: {name} states debt_repayment, which is not used when facilities are stated"
+            )
+
+
+def _t418_currencies(cp1_text: str) -> dict[str, str | None]:
+    """Each instrument CP-1's T4.18 names (a table with `Instrument` and `Currency` columns; the
+    name trimmed and casefolded, its first row counting) and the ISO 4217 code its `Currency` cell
+    states, or None when the cell states no single code."""
+    found: dict[str, str | None] = {}
+    for header, *rows in _tables(cp1_text):
+        labels = [_plain(cell) for cell in header]
+        if "Instrument" not in labels or "Currency" not in labels:
+            continue
+        at, currency = labels.index("Instrument"), labels.index("Currency")
+        for row in rows:
+            if len(row) > max(at, currency):
+                found.setdefault(_plain(row[at]).casefold(), currency_of(row[currency]))
+    return found
+
+
+def _check_facility_currencies(facilities: tuple[Facility, ...], cp1_text: str, code: str) -> None:
+    """A facility T4.18 prints in another currency than the block's is refused: its amounts are in
+    that currency (docs/rulings/2026-11-16-reporting-currency-from-sources.md), so it is left out of
+    `facilities` and its debt stays in base debt at the `interest_rate` driver. A facility no T4.18
+    row names, or whose cell states no single code, is not refused."""
+    currencies = _t418_currencies(cp1_text)
+    for facility in facilities:
+        other = currencies.get(facility.name.strip().casefold())
+        if other is not None and other != code:
+            raise ValueError(
+                f"CP-2G: facility `{facility.name}` is in `{other}` in CP-1's T4.18, not the "
+                f"block's `{code}`; leave it out of `facilities`: its debt stays in base debt at "
+                "the `interest_rate` driver"
             )
 
 
