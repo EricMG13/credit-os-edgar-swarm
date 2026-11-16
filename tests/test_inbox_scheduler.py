@@ -661,7 +661,8 @@ def test_the_held_note_says_records_could_not_be_read_without_naming_a_file(root
         w.close()
     assert (
         "1 run record could not be read. Its run is not started, tracked or shown, and it takes "
-        "one running slot until the file is repaired and the service restarted."
+        "one running slot and one of each day's starts until the file is repaired and the service "
+        "restarted."
     ) in held
     assert "secret-name" not in held
 
@@ -677,7 +678,8 @@ def test_the_held_note_counts_several_unreadable_records(root):
         w.close()
     assert (
         "2 run records could not be read. Their runs are not started, tracked or shown, and "
-        "they take 2 running slots until the files are repaired and the service restarted."
+        "they take 2 running slots and 2 of each day's starts until the files are repaired and the "
+        "service restarted."
     ) in held
 
 
@@ -1543,3 +1545,53 @@ def test_a_queued_run_with_no_context_json_in_its_folder_fails_and_starts_nothin
         == f"no context.json in _engine/drops/{run_id}; submit it again from the run page"
     )
     assert started == []
+
+
+_RUN = "20261115-080000-01"
+
+
+def _copy_beside_the_bad_file(root: Path, **changes: Any) -> tuple[Path, tuple[bytes, int]]:
+    """An unreadable ``<run>.json`` and a readable ``<run>.orig.json`` holding the same run ID."""
+    bad, seen = _bad_record(root, _RUN)
+    base = {"pathway": "credit_snapshot", "folder": "Acme", "claimed_at": "2026-11-15T08:00:00Z"}
+    record = Record(_RUN, status="queued", **base, **changes)
+    (root / f"_engine/state/{_RUN}.orig.json").write_text(
+        json.dumps(dataclasses.asdict(record)), encoding="utf-8"
+    )
+    return bad, seen()
+
+
+@pytest.mark.parametrize("approved", [False, True])
+def test_a_readable_copy_of_an_unreadable_records_run_is_never_tracked_or_started(
+    root, monkeypatch, approved
+):
+    started: list[str] = []
+    monkeypatch.setattr(
+        scheduler_module.runs, "start", lambda *a, **k: started.append(a[1].id) or None
+    )
+    changes = {"submission": "a" * 32, "digest": "d" * 64} if approved else {}
+    bad, before = _copy_beside_the_bad_file(root, **changes)
+    if approved:
+        (root / f"_engine/drops/{_RUN}").mkdir(parents=True)
+        (root / f"_engine/drops/{_RUN}/context.json").write_text("{}", encoding="utf-8")
+    w = Scheduler(settings(root), now=lambda: _NOW)
+    try:
+        w.step()
+        w.step()
+        assert _RUN not in w._records
+        held = activity_js(root)
+    finally:
+        w.close()
+    assert (bad.read_bytes(), bad.stat().st_mtime_ns) == before
+    assert started == []
+    assert "1 run record could not be read" in held  # one run, counted once
+    assert len([line for line in _log(root).splitlines() if _RUN in line]) == 1
+
+
+def test_the_unreadable_note_is_one_slot_when_a_copy_shares_the_run(root):
+    _copy_beside_the_bad_file(root)
+    w = Scheduler(settings(root, max_running=2))
+    try:
+        assert len(w._unreadable) == 1 and w._records == {}
+    finally:
+        w.close()

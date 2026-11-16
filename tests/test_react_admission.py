@@ -136,3 +136,22 @@ def test_an_unreadable_record_hides_its_own_run_and_nothing_else(hosted):
     assert [r["id"] for r in visible["catalogue"]["real"]] == ["a-finished"]
     assert set(visible["workspace"]["outputs"]) == {"a-finished/o"}
     assert (bad.read_bytes(), bad.stat().st_mtime_ns) == (before, stamp)
+
+
+def test_an_unreadable_record_hides_a_folder_whose_name_differs_only_in_case(hosted):
+    layout = hosted.scheduler.layout
+    (layout.state / "A-Run.json").write_text("{not json", encoding="utf-8")
+    folders = ("a-run", "other")
+    source = {
+        "catalogue": {"real": [{"id": f} for f in folders]},
+        "workspace": {
+            "runs": {f: _run_of(f) for f in folders},
+            "outputs": {f"{f}/o": {"run": f, "sha256": f"h-{f}"} for f in folders},
+            "handoffs": {},
+            "models": [],
+        },
+        "chips": {},
+    }
+    visible = admitted(source, layout)
+    assert set(visible["workspace"]["runs"]) == {"other"}
+    assert [r["id"] for r in visible["catalogue"]["real"]] == ["other"]

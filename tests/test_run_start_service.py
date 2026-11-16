@@ -1092,5 +1092,8 @@ def test_a_run_beside_an_unreadable_record_resolves_and_its_own_bad_record_is_re
     assert svc.call("GET", f"/api/runs/{run_id}").json()["id"] == run_id
     assert svc.call("GET", "/api/runs/20200101-000000-02").status == 404
     refused = svc.call("GET", "/api/runs/20200101-000000-01")
-    assert refused.status != 200 and b"{not json" not in refused.body
+    missing = svc.call("GET", "/api/runs/20200101-000000-02")
+    assert missing.status == 404 and missing.json() == {"error": "unknown run"}
+    assert refused.status == 500 and b"{not json" not in refused.body  # today's reply to ValueError
+    assert refused.body != missing.body
     assert (bad.read_bytes(), bad.stat().st_mtime_ns) == before

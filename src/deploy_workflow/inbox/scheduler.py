@@ -96,12 +96,13 @@ def _unreadable_note(count: int) -> str:
     if count == 1:
         return (
             "1 run record could not be read. Its run is not started, tracked or shown, and it "
-            "takes one running slot until the file is repaired and the service restarted."
+            "takes one running slot and one of each day's starts until the file is repaired and "
+            "the service restarted."
         )
     return (
         f"{count} run records could not be read. Their runs are not started, tracked or shown, "
-        f"and they take {count} running slots until the files are repaired and the service "
-        "restarted."
+        f"and they take {count} running slots and {count} of each day's starts until the files "
+        "are repaired and the service restarted."
     )
 
 
@@ -123,15 +124,21 @@ class Scheduler:
         self._logger = startup.open_log(self.layout, __name__)  # only the lock holder logs
         self.lock = threading.Lock()  # held by step() and submit(): a submit never splits a poll
         readable, self._unreadable = runs.load_readable(self.layout)
-        self._records = {r.id: r for r in readable}
+        # A readable record carrying the run ID of an unreadable file (a backup copy made before a
+        # hand edit) is not tracked: saving or starting it would overwrite or double the run of the
+        # bad file. It is counted with that file's run, once.
+        stems = {Path(name).stem.casefold() for name in self._unreadable}
+        shadows = [r.id for r in readable if r.id.casefold() in stems]
+        self._records = {r.id: r for r in readable if r.id not in shadows}
         if self._unreadable:
             # Documented fail-open for display and tracking only: a bad record file is skipped, and
             # the operator is told here and in the activity note. It is never written, its stem is
-            # never minted as a run ID, and it keeps one running slot and one start today.
+            # never minted as a run ID, and it keeps one running slot and one start each day.
             self._logger.warning(
-                "unreadable run record file(s) %s: their runs are not started, tracked or shown "
+                "unreadable run record file(s) %s%s: their runs are not started, tracked or shown "
                 "until the file is repaired and the service restarted",
                 ", ".join(self._unreadable),
+                f" (and the readable copies of runs {', '.join(shadows)})" if shadows else "",
             )
         self._children: dict[str, subprocess.Popen[bytes]] = {}
         self._rebuild_error = ""
