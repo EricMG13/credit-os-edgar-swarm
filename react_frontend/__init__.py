@@ -3,13 +3,14 @@
 from __future__ import annotations
 
 import json
+import gzip
 import re
 import threading
 from collections.abc import Iterator
 from contextlib import contextmanager
 from pathlib import Path
 from typing import Any
-from urllib.parse import SplitResult, unquote
+from urllib.parse import SplitResult, parse_qs, unquote
 
 from deploy_workflow import http_base
 from deploy_workflow.inbox.layout import Layout
@@ -26,7 +27,7 @@ REPORT_PAGE = re.compile(r"/report/([^/]+)/?")
 REPORT_FOLDER = re.compile(r"[\w. -]+")
 REPORT_PREFIX = "/connected/report/"
 STATIC_FILES = {"/data.js", "/symbol.svg", "/THIRD-PARTY-NOTICES.md"}
-STATIC_DIRS = ("/assets/", "/fonts/")
+STATIC_DIRS = ("/assets/", "/connected-assets/", "/fonts/")
 EXPORT_PREFIX = "window.CREDIT_OS_DATA="
 EXPORT_KEYS = ("catalogue", "workspace", "activity", "chips")
 
@@ -64,11 +65,130 @@ def _read_publication(path: Path) -> tuple[bytes, dict[str, Any] | None]:
 
 
 def _visible_publication(layout: Layout) -> tuple[bytes, dict[str, Any] | None]:
-    payload, snapshot = _read_publication(layout.engine / "library" / "data.js")
-    if snapshot is None:
-        return payload, None
-    visible = sources.enrich(admission.admitted(snapshot, layout), layout.runs)
+    return _visible_scope(layout, None)
+
+
+def _visible_scope(layout: Layout, folder: str | None) -> tuple[bytes, dict[str, Any] | None]:
+    admitted = _admitted_scope(layout, folder)
+    if admitted is None:
+        return b"null", None
+    visible = sources.enrich(admitted, layout.runs)
     return json.dumps(visible, ensure_ascii=False).encode("utf-8"), visible
+
+
+def _admitted_scope(layout: Layout, folder: str | None) -> dict[str, Any] | None:
+    payload, snapshot = _read_publication(layout.engine / "library" / "data.js")
+    del payload
+    if snapshot is None:
+        if folder is not None:
+            raise http_base.refuse(404, "unknown report")
+        return None
+    admitted = admission.admitted(snapshot, layout)
+    if folder is not None:
+        scoped = sources.scoped(admitted, folder)
+        if scoped is None:
+            raise http_base.refuse(404, "unknown report")
+        admitted = scoped
+    return admitted
+
+
+def _library_index(layout: Layout) -> http_base.Reply:
+    _, snapshot = _read_publication(layout.engine / "library" / "data.js")
+    if snapshot is None:
+        return http_base.Reply(200, None)
+    visible = admission.admitted(snapshot, layout)
+    runs = {
+        key: {
+            field: record[field] for field in ("folder", "issuerKey", "pathway") if field in record
+        }
+        for key, record in visible["workspace"].get("runs", {}).items()
+    }
+    return http_base.Reply(
+        200,
+        {
+            "catalogue": {"real": visible["catalogue"].get("real", [])},
+            "workspace": {"runs": runs},
+            "preview": visible.get("preview"),
+        },
+        {"Cache-Control": "no-store"},
+    )
+
+
+def _scope_query(query: str) -> str | None:
+    if not query:
+        return None
+    if re.search(r"%(?![0-9A-Fa-f]{2})", query):
+        raise http_base.refuse(400, "invalid report query")
+    try:
+        values = parse_qs(
+            query, keep_blank_values=True, strict_parsing=True, encoding="utf-8", errors="strict"
+        )
+    except (UnicodeDecodeError, ValueError) as error:
+        raise http_base.refuse(400, "invalid report query") from error
+    if set(values) != {"run"} or len(values["run"]) != 1:
+        raise http_base.refuse(400, "invalid report query")
+    folder = values["run"][0]
+    if not folder:
+        raise http_base.refuse(400, "invalid report query")
+    if not _valid_report_folder(folder):
+        raise http_base.refuse(404, "unknown report")
+    return folder
+
+
+def _vary(headers: dict[str, str]) -> None:
+    name = next((key for key in headers if key.lower() == "vary"), "Vary")
+    values = {value.strip().lower() for value in headers.get(name, "").split(",") if value.strip()}
+    if "*" not in values and "accept-encoding" not in values:
+        headers[name] = ", ".join((*headers.get(name, "").split(", "), "Accept-Encoding")).lstrip(
+            ", "
+        )
+
+
+def _gzip_quality(header: str) -> float:
+    """Read gzip's quality value; malformed or duplicated gzip directives fail closed."""
+    direct: list[float] = []
+    wildcard: list[float] = []
+    for item in header.split(","):
+        pieces = [piece.strip() for piece in item.split(";")]
+        encoding = pieces[0].lower()
+        q = 1.0
+        malformed = False
+        seen_q = False
+        for parameter in pieces[1:]:
+            if parameter.lower().startswith("q="):
+                if seen_q:
+                    malformed = True
+                    continue
+                seen_q = True
+                text = parameter[2:].strip()
+                if re.fullmatch(r"(?:0(?:\.[0-9]{0,3})?|1(?:\.0{0,3})?)", text) is None:
+                    malformed = True
+                else:
+                    q = float(text)
+        if malformed:
+            q = 0.0
+        if encoding == "gzip":
+            direct.append(q)
+        elif encoding == "*":
+            wildcard.append(q)
+    if direct:
+        return direct[0] if len(direct) == 1 else 0.0
+    return wildcard[0] if len(wildcard) == 1 else 0.0
+
+
+def _compressible(reply: http_base.Reply, path: str) -> bool:
+    if path.startswith(sources.PREFIX) or not isinstance(reply.body, (bytes, bytearray)):
+        return False
+    media = next(
+        (value.lower() for key, value in reply.headers.items() if key.lower() == "content-type"), ""
+    )
+    media = media.partition(";")[0].strip()
+    return media.startswith("text/") or media in {
+        "application/json",
+        "application/javascript",
+        "application/xml",
+        "image/svg+xml",
+    }
 
 
 def _report_entries(snapshot: dict[str, Any] | None) -> dict[str, dict[str, str]]:
@@ -88,7 +208,8 @@ def _report_entries(snapshot: dict[str, Any] | None) -> dict[str, dict[str, str]
 
 
 def _read_page(dist: Path, *, synthetic: bool, signal_url: str) -> bytes:
-    page = (dist / "index.html").read_bytes()
+    connected = dist / "connected.html"
+    page = (connected if connected.is_file() else dist / "index.html").read_bytes()
     if b"<head>" not in page or page.count(b"connect-src 'none'") != 1:
         raise ValueError("the React build must include its offline index policy")
     mode = "synthetic" if synthetic else "live"
@@ -141,10 +262,73 @@ def _require_writable(read_only: bool) -> None:
         raise http_base.refuse(405, "read-only retained preview")
 
 
+def _connected_reply(
+    layout: Layout, url: SplitResult, context: dict[str, Any], cap: Any
+) -> http_base.Reply | None:
+    path = url.path
+    if path == "/connected/context":
+        return http_base.Reply(200, {**context, "submission_cap_usd": str(cap)})
+    if match := RUN_ACTIVITY.fullmatch(path):
+        return run_activity.reply(layout, match[1], cap)
+    if path == "/connected/library":
+        return _library_index(layout)
+    if path == "/connected/snapshot":
+        folder = _scope_query(url.query)
+        payload, _ = _visible_scope(layout, folder)
+        return http_base.Reply(
+            200, payload, {"Content-Type": http_base.JSON, "Cache-Control": "no-store"}
+        )
+    if path.startswith(sources.PREFIX):
+        return sources.reply(url, layout.runs, _admitted_scope(layout, None))
+    return _connected_report_reply(layout, path, url)
+
+
+def _connected_report_reply(layout: Layout, path: str, url: SplitResult) -> http_base.Reply | None:
+    if match := artifacts.GRAPH.fullmatch(path):
+        snapshot = _admitted_scope(layout, None)
+        return artifacts.reply(match, layout.engine / "runs", REPORT_FOLDER, snapshot)
+    if match := portfolio.PORTFOLIO.fullmatch(path):
+        snapshot = _admitted_scope(layout, None)
+        basis = portfolio.attested(layout.runs, match[1], snapshot)
+        return http_base.Reply(200, {"basis": basis}, {"Cache-Control": "no-store"})
+    if path == "/connected/reports" or path.startswith(REPORT_PREFIX):
+        listing, run_id = _report_request(path)
+        _, snapshot = _read_publication(layout.engine / "library" / "data.js")
+        if snapshot is not None:
+            snapshot = admission.admitted(snapshot, layout)
+        return _report_response(_report_entries(snapshot), listing, run_id)
+    return None
+
+
 def _handler(
     dist: Path, page: bytes, context: dict[str, Any], *, read_only: bool = False
 ) -> type[service.Handler]:
     class Handler(service.Handler):
+        def send_reply(self, reply: http_base.Reply) -> None:
+            if isinstance(reply.body, bytes):
+                body, headers = reply.body, dict(reply.headers)
+            else:
+                body = json.dumps(reply.body, ensure_ascii=False).encode("utf-8")
+                headers = {
+                    "Content-Type": http_base.JSON,
+                    "Cache-Control": "no-store",
+                    **reply.headers,
+                }
+            response = http_base.Reply(reply.status, body, headers)
+            if _compressible(response, self.path):
+                _vary(headers)
+                quality = _gzip_quality(self.headers.get("Accept-Encoding", ""))
+                if quality > 0:
+                    compressed = gzip.compress(body, mtime=0)
+                    if len(body) >= 256 and len(compressed) < len(body):
+                        headers["Content-Encoding"] = "gzip"
+                        response = http_base.Reply(reply.status, compressed, headers)
+                    else:
+                        response = http_base.Reply(reply.status, body, headers)
+                else:
+                    response = http_base.Reply(reply.status, body, headers)
+            super().send_reply(response)
+
         def _post(self, url: SplitResult) -> None:
             _require_writable(read_only)
             super()._post(url)
@@ -166,43 +350,23 @@ def _handler(
                         "Cache-Control": "no-store",
                     },
                 )
-            if path == "/connected/context":
-                cap = self._service.scheduler.settings.cap
-                raise http_base.Reply(200, {**context, "submission_cap_usd": str(cap)})
-            if match := RUN_ACTIVITY.fullmatch(path):
-                raise run_activity.reply(
-                    self._layout, match[1], self._service.scheduler.settings.cap
-                )
-            if path == "/connected/snapshot":
-                payload, _ = self._publication()
-                raise http_base.Reply(
-                    200, payload, {"Content-Type": http_base.JSON, "Cache-Control": "no-store"}
-                )
-            if path.startswith(sources.PREFIX):
-                _, snapshot = self._publication()
-                raise sources.reply(url, self._layout.runs, snapshot)
-            if match := artifacts.GRAPH.fullmatch(path):
-                _, snapshot = self._publication()
-                raise artifacts.reply(match, self._layout.engine / "runs", REPORT_FOLDER, snapshot)
-            if match := portfolio.PORTFOLIO.fullmatch(path):
-                _, snapshot = self._publication()
-                basis = portfolio.attested(self._layout.runs, match[1], snapshot)
-                raise http_base.Reply(200, {"basis": basis}, {"Cache-Control": "no-store"})
-            if path == "/connected/reports" or path.startswith(REPORT_PREFIX):
-                self._reports(path)
+            reply = _connected_reply(
+                self._layout, url, context, self._service.scheduler.settings.cap
+            )
+            if reply is not None:
+                raise reply
             if asset := _asset_path(dist, path):
                 base, relative, direct = asset
-                raise self._file(base, relative, direct=direct)
+                response = self._file(base, relative, direct=direct)
+                if path.startswith(("/assets/", "/connected-assets/")) and re.search(
+                    r"-[A-Za-z0-9_-]{8,}\.", relative
+                ):
+                    response.headers["Cache-Control"] = "public, max-age=31536000, immutable"
+                raise response
             super()._get(url)
 
-        def _publication(self) -> tuple[bytes, dict[str, Any] | None]:
-            return _visible_publication(self._layout)
-
-        def _reports(self, path: str) -> None:
-            listing, run_id = _report_request(path)
-            _, snapshot = self._publication()
-            entries = _report_entries(snapshot)
-            raise _report_response(entries, listing, run_id)
+        def _publication(self, folder: str | None = None) -> tuple[bytes, dict[str, Any] | None]:
+            return _visible_scope(self._layout, folder)
 
     return Handler
 
