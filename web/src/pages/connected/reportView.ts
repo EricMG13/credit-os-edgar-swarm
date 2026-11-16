@@ -99,11 +99,14 @@ export function moduleBottomLines(view: ReportView, run: PublishedRun) {
   return moduleOrder(run).flatMap((id) => {
     const entry = designated(view, id);
     if (!entry || entry === view.lead) return [];
-    const block = passageTexts(entry, "Bottom line")[0];
+    const block = passageTexts(entry, "Bottom line").find((item) => !methodNote(item.text));
     const written = block
       ? { line: block.line, body: readParagraph(block.text).body }
       : entry.output.summary
-        ? { line: entry.output.summary.line, body: entry.output.summary.bottomLine }
+        ? {
+            line: entry.output.summary.line,
+            body: readParagraph(entry.output.summary.bottomLine).body,
+          }
         : null;
     const body = written?.body.replaceAll("**", "").replaceAll("`", "");
     const referenced = body !== undefined && containsReference(body);
@@ -134,12 +137,19 @@ export function runLimitations(view: ReportView, run: PublishedRun) {
   return moduleOrder(run).flatMap((id) => {
     const entry = designated(view, id);
     if (!entry || blocked(entry)) return [];
-    return passageTexts(entry, "Limitations").flatMap((block) => {
-      const { body } = readParagraph(block.text);
+    const written = passageTexts(entry, "Limitations");
+    // An earlier-format handoff has no Limitations passage; its summary carries the limitation.
+    const items = passages(entry.sections).some((section) => section.heading === "Limitations")
+      ? written.map((block) => ({ text: block.text, line: block.line }))
+      : entry.output.summary
+        ? [{ text: entry.output.summary.limitation, line: entry.output.summary.line }]
+        : [];
+    return items.flatMap(({ text, line }) => {
+      const { body } = readParagraph(text);
       const key = sameLimitation(body);
-      if (!body || methodNote(block.text) || seen.has(key)) return [];
+      if (!body || methodNote(text) || seen.has(key)) return [];
       seen.add(key);
-      return [{ id, name: moduleName(id), entry, text: readerText(body), line: block.line }];
+      return [{ id, name: moduleName(id), entry, text: readerText(body), line }];
     });
   });
 }

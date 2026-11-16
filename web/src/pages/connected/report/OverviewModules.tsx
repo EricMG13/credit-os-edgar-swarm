@@ -67,7 +67,8 @@ export function RunLimitations({
       <h2 className={heading}>Limitations</h2>
       {rows.length === 0 ? (
         <p className="text-body text-text-secondary">
-          No module recorded a limitation for this run.
+          No limitation is listed on this page for this run. Each module's page shows what it
+          recorded.
         </p>
       ) : (
         <ul className="grid gap-3">

@@ -373,6 +373,7 @@ describe("what the overview carries for every module", () => {
     bottom?: string;
     limits?: string[];
     summary?: string;
+    summaryLimit?: string;
     retained?: { bottom: string; limits: string[] };
   };
   const passage = (heading: string, line: number, texts: string[]): Section => ({
@@ -406,7 +407,12 @@ describe("what the overview carries for every module", () => {
         href: id,
         sha256: `sha-${module}`,
         summary: spec.summary
-          ? { bottomLine: spec.summary, confidence: "", limitation: "", line: 7 }
+          ? {
+              bottomLine: spec.summary,
+              confidence: "",
+              limitation: spec.summaryLimit ?? "",
+              line: 7,
+            }
           : null,
       };
       handoffs[`sha-${module}`] = sectionsOf(spec);
@@ -570,6 +576,64 @@ describe("what the overview carries for every module", () => {
       ["CP-1", "Leverage above 4.5x is not tested."],
       ["CP-3", "The FY2024 audit is not yet signed."],
       ["CP-3", "Leverage above 5.5x is not tested."],
+    ]);
+  });
+
+  it("skips a method note that opens the Bottom line passage", () => {
+    const { run, view } = overviewFixture(
+      {
+        "CP-1": { bottom: "Module status: complete." },
+        "CP-2": { bottom: "Credit is stable." },
+      },
+      null,
+    );
+    expect(view.lead?.output.module).toBe("CP-2");
+    const [row] = moduleBottomLines(view, run);
+    expect(row?.text).toBeNull();
+    expect(row?.referenced).toBe(false);
+  });
+
+  it("reads a summary through readParagraph, so a trailing citation is not drawn", () => {
+    const { run, view } = overviewFixture(
+      {
+        "CP-1": {
+          summary: "Leverage is high [CP-1 p. 4].",
+          summaryLimit: "Unaudited. 【12†L5-L9】",
+        },
+        "CP-3": { summary: "Bonds are cheap 【12†L5-L9】." },
+      },
+      null,
+    );
+    expect(moduleBottomLines(view, run).map((row) => row.text)).toEqual([
+      "Leverage is high.",
+      "Bonds are cheap.",
+    ]);
+    expect(runLimitations(view, run).map((row) => row.text)).toEqual(["Unaudited."]);
+  });
+
+  it("takes the summary's limitation only from a module with no Limitations passage, once, and not from a blocked one", () => {
+    const { run, view } = overviewFixture(
+      {
+        "CP-1": { summary: "One.", summaryLimit: "The 2025 accounts are unaudited." },
+        "CP-3": { summary: "Three.", summaryLimit: "the 2025 accounts are UNAUDITED" },
+        "CP-4": {
+          bottom: "Four.",
+          limits: ["Written limitation."],
+          summary: "Four.",
+          summaryLimit: "Ignored: a passage exists.",
+        },
+        "CP-5": {
+          bottom: "Not assessable: nothing supplied.",
+          summary: "Five.",
+          summaryLimit: "Ignored: blocked.",
+        },
+        "CP-6": { summary: "Six.", summaryLimit: "" },
+      },
+      null,
+    );
+    expect(runLimitations(view, run).map((row) => [row.id, row.text, row.line])).toEqual([
+      ["CP-1", "The 2025 accounts are unaudited.", 7],
+      ["CP-4", "Written limitation.", 21],
     ]);
   });
 
