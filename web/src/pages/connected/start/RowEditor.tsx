@@ -1,6 +1,6 @@
 import { useId, useState } from "react";
 import { Button } from "@/components/base/buttons/button";
-import { moduleTitle } from "../api";
+import { moduleName } from "../api";
 import { field, label } from "../layout";
 import { emptyRow, ROW_SPECS, text, type Row, type RowField, type RowKind } from "./rows";
 
@@ -161,7 +161,7 @@ function RowInput({
   // A value the options do not list is still the value that is sent, so it is shown.
   const choices =
     value && item.kind === "select" && !offered.some(([option]) => option === value)
-      ? [...offered, [value, item.key === "focus_module" ? moduleTitle(value) : value] as const]
+      ? [...offered, [value, item.key === "focus_module" ? moduleName(value) : value] as const]
       : offered;
   return (
     <div className="grid content-start gap-1">
