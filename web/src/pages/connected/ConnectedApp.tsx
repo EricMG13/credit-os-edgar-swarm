@@ -1,10 +1,27 @@
+import { lazy, Suspense } from "react";
 import { Button } from "@/components/base/buttons/button";
 import { PageHeader } from "../../shell/PageHeader";
 import { Shell, type Area } from "../../shell/Shell";
 import type { Mode } from "./api";
-import { ReportLibrary, ReportReader } from "./ReportLibrary";
-import { RunProgress } from "./RunProgress";
-import { StartRun } from "./StartRun";
+
+const ReportLibrary = lazy(() =>
+  import("./LibraryIndex").then(({ ReportLibrary }) => ({ default: ReportLibrary })),
+);
+const ReportReader = lazy(() =>
+  import("./ReportLibrary").then(({ ReportReader }) => ({ default: ReportReader })),
+);
+const RunProgress = lazy(() =>
+  import("./RunProgress").then(({ RunProgress }) => ({ default: RunProgress })),
+);
+const StartRun = lazy(() => import("./StartRun").then(({ StartRun }) => ({ default: StartRun })));
+
+function LoadingPage() {
+  return (
+    <p role="status" className="mx-auto mt-6 w-full max-w-[96rem] text-text-secondary">
+      Loading this page…
+    </p>
+  );
+}
 
 const SECTIONS: { area: Area; href: string }[] = [
   { area: "library", href: "/" },
@@ -46,17 +63,19 @@ export function ConnectedApp({
   const current = start || run ? "run" : "library";
   return (
     <Shell current={current} sections={SECTIONS} symbol="/symbol.svg">
-      {path === "/" || path === "/index.html" ? (
-        <ReportLibrary />
-      ) : start ? (
-        <StartRun key={prior} mode={mode} navigate={navigate} from={prior ?? undefined} />
-      ) : run ? (
-        <RunProgress key={run} id={run} mode={mode} />
-      ) : report ? (
-        <ReportReader key={report} id={report} mode={mode} />
-      ) : (
-        <PageHeader title="Page not found" actions={<Button href="/">Library</Button>} />
-      )}
+      <Suspense fallback={<LoadingPage />}>
+        {path === "/" || path === "/index.html" ? (
+          <ReportLibrary />
+        ) : start ? (
+          <StartRun key={prior} mode={mode} navigate={navigate} from={prior ?? undefined} />
+        ) : run ? (
+          <RunProgress key={run} id={run} mode={mode} />
+        ) : report ? (
+          <ReportReader key={report} id={report} mode={mode} />
+        ) : (
+          <PageHeader title="Page not found" actions={<Button href="/">Library</Button>} />
+        )}
+      </Suspense>
     </Shell>
   );
 }

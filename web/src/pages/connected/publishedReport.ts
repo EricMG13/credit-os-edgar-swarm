@@ -164,9 +164,24 @@ export type Snapshot = {
   preview?: { reason: string };
 };
 
-export async function getSnapshot(signal: AbortSignal): Promise<Snapshot | null> {
-  const response = await fetch("/connected/snapshot", { cache: "no-store", signal });
+export type LibraryIndex = {
+  catalogue: Snapshot["catalogue"];
+  workspace: {
+    runs: Record<string, Pick<PublishedRun, "folder" | "issuerKey" | "pathway">>;
+  };
+  preview?: Snapshot["preview"];
+};
+
+export async function getLibraryIndex(signal: AbortSignal): Promise<LibraryIndex | null> {
+  const response = await fetch("/connected/library", { cache: "no-store", signal });
   if (!response.ok) throw new Error("The published library could not be loaded.");
+  return (await response.json()) as LibraryIndex | null;
+}
+
+export async function getSnapshot(signal: AbortSignal, folder?: string): Promise<Snapshot | null> {
+  const query = folder === undefined ? "" : `?run=${encodeURIComponent(folder)}`;
+  const response = await fetch(`/connected/snapshot${query}`, { cache: "no-store", signal });
+  if (!response.ok) throw new Error("The published report could not be loaded.");
   return (await response.json()) as Snapshot | null;
 }
 

@@ -85,18 +85,141 @@ def _identity(item: dict[str, Any], pins: dict[str, Any]) -> tuple[str, str]:
     return name, digest
 
 
-def _source(root: Path, folder: str, name: str, digest: str) -> Source:
+def _source(root: Path, folder: str, name: str, digest: str, *, pages: bool = True) -> Source:
     raw = read_inside(root, f"{folder}/inputs/{digest}")
     actual = hashlib.sha256(raw).hexdigest()
     if actual != digest:
         raise SourceMismatch(actual)
+    page_map: dict[int, str] = {}
+    problem = None
+    if pages:
+        try:
+            page_map = dict(enumerate(_pages(name, raw), 1))
+        except (
+            ValueError,
+            OSError,
+            TypeError,
+            KeyError,
+            IndexError,
+            BadZipFile,
+            PyPdfError,
+        ) as error:
+            problem = f"source pages unavailable: {type(error).__name__}"
+    return Source(name, digest, raw, page_map, problem)
+
+
+def verified_one(
+    root: Path, record: dict[str, Any], name: str, digest: str, *, pages: bool = False
+) -> Source | None:
+    """Recheck the requested original against its publication and workflow pin only."""
     try:
-        pages = dict(enumerate(_pages(name, raw), 1))
-        problem = None
-    except (ValueError, OSError, TypeError, KeyError, IndexError, BadZipFile, PyPdfError) as error:
-        pages = {}
-        problem = f"source pages unavailable: {type(error).__name__}"
-    return Source(name, digest, raw, pages, problem)
+        if not any(
+            item.get("name") == name and item.get("sha256") == digest for item in _published(record)
+        ):
+            return None
+        pins = _pins(root, record["folder"])
+        identity = _identity({"name": name, "sha256": digest}, pins)
+        return _source(root, record["folder"], *identity, pages=pages)
+    except (OSError, ValueError):
+        return None
+
+
+def scoped(snapshot: dict[str, Any], folder: str) -> dict[str, Any] | None:
+    """Keep report history metadata and the selected run's validated Changes dependency."""
+    workspace = snapshot["workspace"]
+    records = workspace.get("runs", {})
+    selected = [(key, run) for key, run in records.items() if run.get("folder") == folder]
+    if len(selected) != 1:
+        return None
+    key, current = selected[0]
+    issuer = current.get("issuerKey")
+    related = {
+        run_key: run
+        for run_key, run in records.items()
+        if run_key == key or (issuer and run.get("issuerKey") == issuer)
+    }
+    full_keys = {key}
+    change = current.get("changes")
+    pack = change.get("pack") if isinstance(change, dict) else None
+    prior = pack.get("prior") if isinstance(pack, dict) else None
+    if isinstance(prior, dict) and isinstance(prior.get("run"), str):
+        matches = [
+            (run_key, run) for run_key, run in records.items() if run.get("folder") == prior["run"]
+        ]
+        if len(matches) != 1:
+            # Keep duplicate-folder metadata so the React comparison retains its ambiguity guard.
+            related.update((run_key, run) for run_key, run in matches)
+        else:
+            prior_key, earlier = matches[0]
+            current_ref = pack.get("current") if isinstance(pack, dict) else None
+            if (
+                issuer
+                and earlier.get("issuerKey") == issuer
+                and earlier.get("folder") != folder
+                and earlier.get("asOf") == prior.get("as_of")
+                and earlier.get("pathway") == prior.get("pathway") == current.get("pathway")
+                and isinstance(current_ref, dict)
+                and current.get("asOf") == current_ref.get("as_of")
+                and current.get("pathway") == current_ref.get("pathway")
+            ):
+                related[prior_key] = earlier
+                full_keys.add(prior_key)
+
+    def summary(run: dict[str, Any]) -> dict[str, Any]:
+        return {
+            field: run[field]
+            for field in ("folder", "issuerKey", "pathway", "asOf", "period")
+            if field in run
+        }
+
+    output_ids = {
+        output_id
+        for run_key in full_keys
+        for module in related[run_key].get("modules", {}).values()
+        for output_id in module.get("outputs", [])
+    }
+    outputs = {
+        output_id: output
+        for output_id, output in workspace.get("outputs", {}).items()
+        if output_id in output_ids and (not output.get("run") or output["run"] in full_keys)
+    }
+    hashes = {output["sha256"] for output in outputs.values()}
+    catalogue = [
+        entry
+        for entry in snapshot["catalogue"].get("real", [])
+        if entry.get("id") in {run.get("folder") for run in related.values()}
+    ]
+    return {
+        **snapshot,
+        "catalogue": {**snapshot["catalogue"], "real": catalogue},
+        "workspace": {
+            **workspace,
+            "runs": {
+                run_key: run if run_key in full_keys else summary(run)
+                for run_key, run in related.items()
+            },
+            "outputs": outputs,
+            "handoffs": {
+                digest: value
+                for digest, value in workspace.get("handoffs", {}).items()
+                if digest in hashes
+            },
+            "models": [
+                model
+                for model in workspace.get("models", [])
+                if model.get("runId") in {related[run_key].get("folder") for run_key in full_keys}
+                or model.get("runFolder")
+                in {related[run_key].get("folder") for run_key in full_keys}
+                or any(source.get("run") in full_keys for source in model.get("sources", []))
+            ],
+        },
+        "activity": {},
+        "chips": {
+            chip_key: value
+            for chip_key, value in snapshot.get("chips", {}).items()
+            if chip_key.rpartition(":")[0] in outputs
+        },
+    }
 
 
 def _load_source(root: Path, folder: str, identity: tuple[str, str], checked: Checked) -> None:
@@ -224,8 +347,9 @@ def enrich(snapshot: dict[str, Any], root: Path) -> dict[str, Any]:
     result = copy.deepcopy(snapshot)
     for chips in result.get("chips", {}).values():
         for chip in chips:
-            chip.pop("href", None)
-            chip.pop("pageHref", None)
+            if isinstance(chip, dict):
+                chip.pop("href", None)
+                chip.pop("pageHref", None)
     for key, record in result["workspace"]["runs"].items():
         _refresh(result, key, record, root)
     return result
@@ -252,10 +376,12 @@ def reply(url: SplitResult, root: Path, snapshot: dict[str, Any] | None) -> http
     records = [r for r in snapshot["workspace"]["runs"].values() if r["folder"] == folder]
     if len(records) != 1:
         raise http_base.refuse(404, "source unavailable")
-    source = verified(root, copy.deepcopy(records[0])).available.get(name)
-    if source is None or source.digest != digest:
+    source = verified_one(root, records[0], name, digest, pages=bool(url.query))
+    if source is None:
         raise http_base.refuse(404, "source unavailable")
-    raw = _requested_pages(url.query, source) if url.query else source.raw
+    raw = source.raw
+    if url.query:
+        raw = _requested_pages(url.query, source)
     media = (
         "text/plain; charset=utf-8"
         if url.query or name.endswith(".txt")

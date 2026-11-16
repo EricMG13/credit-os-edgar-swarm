@@ -585,7 +585,8 @@ describe("connected activity and reports", () => {
     vi.stubGlobal(
       "fetch",
       vi.fn((path: string) => {
-        if (path !== "/connected/snapshot") throw new Error(`Unexpected request ${path}`);
+        if (path !== `/connected/snapshot?run=${encodeURIComponent(folder)}`)
+          throw new Error(`Unexpected request ${path}`);
         return Promise.resolve(Response.json(snapshot));
       }),
     );

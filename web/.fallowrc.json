@@ -1,0 +1,6 @@
+{
+  "entry": [
+    "src/connected-main.tsx",
+    "vite.connected.config.ts"
+  ]
+}
