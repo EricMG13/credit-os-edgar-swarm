@@ -376,6 +376,7 @@ Within a set every state has a different shape; no two states differ by colour o
 | Module state | Delivered: filled circle, success. Delivered with gaps: dashed ring, gap colours. Not assessable: slashed circle, neutral. Not run (only in a run that has ended): ring, neutral |
 | Change state | Changed: triangle, action. Unchanged: square, neutral. Not assessable: slashed circle, neutral |
 | Gap severity | High: diamond, error. Medium: triangle, warning. Low: ring, neutral |
+| Run limits | Will refuse: diamond, error. Gap: dashed ring, gap colours. Limited: triangle, warning. Check: ring, info |
 | File state | Uploading: half-filled circle, action. Read in full: filled circle, success. Read in part: triangle, warning. Unreadable: diamond, error |
 | Approval | Awaiting your approval: half-filled circle, info |
 | Activity that cannot be read | State not known: dashed ring, gap colours |
@@ -383,10 +384,10 @@ Within a set every state has a different shape; no two states differ by colour o
 A shape recurs across sets with the same meaning: the filled circle is Success, Finished,
 Healthy, Past, Answered, Met, Checked, Delivered and Read in full; the half-filled circle is
 Running, Proposed, Next, Partly answered, Uploading and Awaiting your approval; the ring is
-Info, Queued, Quiet, Later, Not answered, Not checked yet, Low and Not run; the triangle is
-Warning, Capped, Not met, Medium, Read in part and Changed; the diamond is Error, Failed,
-Failing, High and Unreadable; the square is Approved and Unchanged; the pause bars are
-Interrupted and Paused; the dashed ring is a gap, Delivered with gaps and State not known. Two
+Info, Queued, Quiet, Later, Not answered, Not checked yet, Low, Check and Not run; the triangle is
+Warning, Capped, Not met, Medium, Limited, Read in part and Changed; the diamond is Error, Failed,
+Failing, High, Will refuse and Unreadable; the square is Approved and Unchanged; the pause bars are
+Interrupted and Paused; the dashed ring is a gap, Gap, Delivered with gaps and State not known. Two
 states that share a shape never appear in one list together.
 
 The sets added at review 2 (ruling 7), and why each shape:

@@ -211,10 +211,8 @@ async function approveRunInputs(page, paidPreview) {
   });
   await submitButton.waitFor();
   assert.match(await current.innerText(), /Review and start/u);
-  for (const label of ["I have checked this", "I accept this limit"]) {
-    for (const checkbox of await page.getByRole("checkbox", { name: label, exact: true }).all())
-      await checkbox.check();
-  }
+  const limits = page.getByRole("region", { name: "Limits to decide" });
+  for (const checkbox of await limits.getByRole("checkbox").all()) await checkbox.check();
   return submitButton;
 }
 
