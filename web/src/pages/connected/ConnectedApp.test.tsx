@@ -96,6 +96,14 @@ async function confirmSynthetic(submit: HTMLElement) {
   fireEvent.click(await screen.findByRole("button", { name: "Start synthetic run" }));
 }
 
+async function reviewSheet(summary: Parameters<typeof testingFetch>[0]) {
+  testingFetch(summary);
+  render(<ConnectedApp path="/start" mode="synthetic" />);
+  await review();
+  await screen.findByRole("button", { name: "Submit run" });
+  return screen.getByRole("region", { name: "What will run" });
+}
+
 afterEach(() => {
   cleanup();
   vi.unstubAllGlobals();
@@ -114,14 +122,6 @@ describe("connected run start", () => {
     advanceToContext();
     expect(screen.getByRole("heading", { name: "More context" })).toHaveFocus();
     expect(screen.queryByRole("button", { name: "Approve summary" })).toBeNull();
-  });
-
-  it("returns to a visited step from the stepper", async () => {
-    testingFetch();
-    render(<ConnectedApp path="/start" mode="synthetic" />);
-    await fillInputs();
-    await advanceToPurpose();
-    advanceToContext();
     expect(screen.queryByRole("button", { name: "Go back to More context" })).toBeNull();
     const back = screen.getByRole("button", { name: "Go back to Documents" });
     back.focus();
@@ -410,17 +410,13 @@ describe("connected run start", () => {
   });
 
   it("reviews what will run in plain language with an edit link per block", async () => {
-    testingFetch({
+    const sheet = await reviewSheet({
       ...plan,
       modules: ["CP-0", "CP-4"],
       lookup: ["Lookup:   off: synthetic case (default); --web-lookup on forces it"],
       prior: { id: "20261116-083145-01", as_of: "2025-03-31", pathway: "credit_snapshot" },
       changes: "CP-8 compares with the credit_snapshot run (20261116-083145-01)",
     });
-    render(<ConnectedApp path="/start" mode="synthetic" />);
-    await review();
-    await screen.findByRole("button", { name: "Submit run" });
-    const sheet = screen.getByRole("region", { name: "What will run" });
     expect(sheet).toHaveTextContent("Legal & covenants");
     expect(sheet).toHaveTextContent(
       "Compared with the Full credit assessment run as of 2025-03-31",
@@ -436,29 +432,21 @@ describe("connected run start", () => {
   });
 
   it("tells the analyst the earlier run used earlier methods, without its id", async () => {
-    testingFetch({
+    const sheet = await reviewSheet({
       ...plan,
       prior: { id: "20261116-083145-01", as_of: "2025-03-31", pathway: "credit_snapshot" },
       changes:
         "CP-8 compares with the credit_snapshot run as of 2025-03-31 (20261116-083145-01; earlier format, earlier methods)",
     });
-    render(<ConnectedApp path="/start" mode="synthetic" />);
-    await review();
-    await screen.findByRole("button", { name: "Submit run" });
-    const sheet = screen.getByRole("region", { name: "What will run" });
     expect(sheet).toHaveTextContent("earlier format, earlier methods");
     expect(sheet).not.toHaveTextContent("20261116-083145-01");
   });
 
   it("keeps the id of an unusable earlier run out of the review", async () => {
-    testingFetch({
+    const sheet = await reviewSheet({
       ...plan,
       changes: "first run (not used: 20261116-083145-01: different pathway)",
     });
-    render(<ConnectedApp path="/start" mode="synthetic" />);
-    await review();
-    await screen.findByRole("button", { name: "Submit run" });
-    const sheet = screen.getByRole("region", { name: "What will run" });
     expect(sheet).toHaveTextContent("An earlier run exists but could not be used for comparison.");
     expect(sheet).not.toHaveTextContent(/20261116-083145-01|not used/);
   });

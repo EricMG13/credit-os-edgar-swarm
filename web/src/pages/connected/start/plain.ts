@@ -45,8 +45,8 @@ export function changesSentence(changes: string) {
     : `${kept.replace(/\.$/, "")}. An earlier run exists but could not be used for comparison.`;
 }
 
-/** The comparison caveat the service writes after the earlier run: ` (earlier format, earlier methods)`, or "". */
+/** The comparison caveat the service writes in the compared run's own bracket: ` (earlier format, earlier methods)`, or "". */
 export function comparisonCaveat(changes: string) {
-  const found = ["earlier format", "earlier methods"].filter((phrase) => changes.includes(phrase));
-  return found.length ? ` (${found.join(", ")})` : "";
+  const flags = /^[^(]*\([^;)]*; ([^)]*)\)/.exec(changes)?.[1];
+  return flags ? ` (${flags})` : "";
 }

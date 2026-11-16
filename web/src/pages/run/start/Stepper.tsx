@@ -13,8 +13,6 @@ const STEPS = [
  *  started draft) all are. Each state is said in words as well as drawn. */
 type Step = { key: string; title: string; note: string };
 
-const COLUMNS: Record<number, string> = { 4: "grid-cols-4", 5: "grid-cols-5" };
-
 /** With `onSelect`, a completed step is a button that returns to it. */
 export function Stepper({
   step,
@@ -33,7 +31,7 @@ export function Stepper({
         aria-label="Steps in this run"
         className={cx(
           "grid items-center gap-1 @[620px]:flex @[620px]:gap-3",
-          COLUMNS[steps.length] ?? "grid-cols-5",
+          steps.length === 4 ? "grid-cols-4" : "grid-cols-5",
         )}
       >
         {steps.map((s, i) => {
@@ -73,7 +71,7 @@ export function Stepper({
                   onClick={() => {
                     onSelect(s.key);
                   }}
-                  className="inline-flex cursor-pointer items-center gap-2 rounded-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-action"
+                  className="inline-flex cursor-pointer items-center gap-2 rounded-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
                 >
                   {marker}
                   {label}

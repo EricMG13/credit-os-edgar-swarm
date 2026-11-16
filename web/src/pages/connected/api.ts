@@ -375,8 +375,8 @@ export function moduleTitle(id: string) {
 }
 
 export function moduleName(id: string) {
-  const title = moduleTitle(id);
-  return title === id ? id : `${title} (${id})`;
+  const name = Object.hasOwn(MODULE_NAMES, id) ? MODULE_NAMES[id] : undefined;
+  return name ? `${name} (${id})` : id;
 }
 
 export function pathwayName(pathway: string) {

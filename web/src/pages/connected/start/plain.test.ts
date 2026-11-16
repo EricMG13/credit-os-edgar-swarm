@@ -32,13 +32,11 @@ it("drops an unused earlier run from the changes line and says so", () => {
 });
 
 it("drops the whole skip note when the reason quotes an issuer name with brackets", () => {
-  const result = changesSentence(
-    "first run of this pathway (not used: 20261116-083145-01: its issuer name is 'Northbridge (UK) Ltd', not 'Northbridge Ltd')",
-  );
-  expect(result).not.toContain("20261116-083145-01");
-  expect(result).toBe(
-    "first run of this pathway. An earlier run exists but could not be used for comparison.",
-  );
+  expect(
+    changesSentence(
+      "first run of this pathway (not used: 20261116-083145-01: its issuer name is 'Northbridge (UK) Ltd', not 'Northbridge Ltd')",
+    ),
+  ).toBe("first run of this pathway. An earlier run exists but could not be used for comparison.");
 });
 it("keeps one full stop when the kept text already ends with one", () => {
   expect(
@@ -66,4 +64,11 @@ it("reads the comparison caveat from the changes line", () => {
   expect(comparisonCaveat(`${head} (20261116-083145-01; earlier format, earlier methods)`)).toBe(
     " (earlier format, earlier methods)",
   );
+});
+it("reads the caveat from the compared run's bracket, not a later not-used note", () => {
+  expect(
+    comparisonCaveat(
+      "CP-8 compares with the credit_snapshot run as of 2025-03-31 (20261116-083145-01) (not used: 20261001-000000-01: its issuer name is 'acme earlier methods', not 'Acme')",
+    ),
+  ).toBe("");
 });

@@ -16,12 +16,7 @@ type EditStep = "documents" | "purpose" | "context";
 type Item = Summary["items"][number];
 
 export function needsCheck(item: Item) {
-  return (
-    item.outcome === "check" ||
-    item.outcome === "gap" ||
-    item.outcome === "limited" ||
-    item.outcome === "will_refuse"
-  );
+  return ["check", "gap", "limited", "will_refuse"].includes(item.outcome);
 }
 
 function Facts({ rows }: { rows: readonly (readonly [string, string | number | undefined])[] }) {
@@ -41,14 +36,14 @@ function Facts({ rows }: { rows: readonly (readonly [string, string | number | u
 
 function Block({
   title,
-  editLabel,
+  edit,
   onEdit,
   disabled,
   children,
 }: {
   title: string;
-  editLabel?: string;
-  onEdit?: () => void;
+  edit?: EditStep;
+  onEdit: (step: EditStep) => void;
   disabled: boolean;
   children: ReactNode;
 }) {
@@ -56,9 +51,16 @@ function Block({
     <div className="grid gap-3 rounded-lg bg-surface-subtle p-4">
       <div className="flex items-center justify-between gap-3">
         <h4 className="font-semibold text-text-primary">{title}</h4>
-        {editLabel && (
-          <Button color="secondary" size="sm" isDisabled={disabled} onPress={onEdit}>
-            {editLabel}
+        {edit && (
+          <Button
+            color="secondary"
+            size="sm"
+            isDisabled={disabled}
+            onPress={() => {
+              onEdit(edit);
+            }}
+          >
+            {`Edit ${title.toLowerCase()}`}
           </Button>
         )}
       </div>
@@ -67,13 +69,17 @@ function Block({
   );
 }
 
-function List({ items }: { items: readonly string[] }) {
+function List({ title, items }: { title: string; items: readonly string[] }) {
+  if (!items.length) return null;
   return (
-    <ul className="list-disc space-y-1 pl-5 text-sm text-text-secondary">
-      {items.map((text, i) => (
-        <li key={i}>{text}</li>
-      ))}
-    </ul>
+    <>
+      <h5 className="text-sm font-semibold text-text-primary">{title}</h5>
+      <ul className="list-disc space-y-1 pl-5 text-sm text-text-secondary">
+        {items.map((text, i) => (
+          <li key={i}>{text}</li>
+        ))}
+      </ul>
+    </>
   );
 }
 
@@ -93,24 +99,17 @@ export function ReviewSheet({
   const titleId = useId();
   const { summary, answers } = review;
   const { run, identity } = answers.context;
-  const advanced = answers.level === "advanced";
   const changes = summary.prior
     ? `Compared with the ${pathwayName(summary.prior.pathway)} run as of ${summary.prior.as_of}${comparisonCaveat(summary.changes)}`
     : changesSentence(summary.changes);
+  const block = { onEdit, disabled };
   return (
     <>
       <section aria-labelledby={titleId} className="grid gap-4">
         <h3 id={titleId} className="font-semibold text-text-primary">
           What will run
         </h3>
-        <Block
-          title="Issuer and documents"
-          editLabel="Edit issuer and documents"
-          onEdit={() => {
-            onEdit("documents");
-          }}
-          disabled={disabled}
-        >
+        <Block title="Issuer and documents" edit="documents" {...block}>
           <Facts
             rows={[
               ["Issuer", identity.issuer_name],
@@ -119,31 +118,20 @@ export function ReviewSheet({
               ["Submitted by", answers.submitted_by],
             ]}
           />
-          <h5 className="text-sm font-semibold text-text-primary">Documents read</h5>
           <List
+            title="Documents read"
             items={summary.documents.map(
               (doc) => `${storedName(doc)} · ${documentDescription(doc)}`,
             )}
           />
-          {summary.ignored.length > 0 && (
-            <>
-              <h5 className="text-sm font-semibold text-text-primary">Documents ignored</h5>
-              <List
-                items={summary.ignored.map((doc) =>
-                  typeof doc === "string" ? doc : `${doc.source} · ${doc.reason}`,
-                )}
-              />
-            </>
-          )}
+          <List
+            title="Documents ignored"
+            items={summary.ignored.map((doc) =>
+              typeof doc === "string" ? doc : `${doc.source} · ${doc.reason}`,
+            )}
+          />
         </Block>
-        <Block
-          title="Purpose and modules"
-          editLabel="Edit purpose and modules"
-          onEdit={() => {
-            onEdit("purpose");
-          }}
-          disabled={disabled}
-        >
+        <Block title="Purpose and modules" edit="purpose" {...block}>
           <Facts
             rows={[
               ["Pathway", pathwayName(run.pathway)],
@@ -151,22 +139,14 @@ export function ReviewSheet({
               ["Case kind", run.case_kind],
             ]}
           />
-          <h5 className="text-sm font-semibold text-text-primary">Planned modules</h5>
-          <List items={summary.modules.map(moduleTitle)} />
+          <List title="Planned modules" items={summary.modules.map(moduleTitle)} />
           {summary.omitted.length > 0 && (
             <p className="text-sm text-text-secondary">
               Report sections omitted · {plainText(summary.omitted.join(", "))}
             </p>
           )}
         </Block>
-        <Block
-          title="Context"
-          editLabel="Edit context"
-          onEdit={() => {
-            onEdit("context");
-          }}
-          disabled={disabled}
-        >
+        <Block title="Context" edit="context" {...block}>
           <Facts
             rows={[
               ["Current period", run.current_period],
@@ -175,15 +155,10 @@ export function ReviewSheet({
               ["Changes", changes],
             ]}
           />
-          {summary.lookup && summary.lookup.length > 0 && (
-            <>
-              <h5 className="text-sm font-semibold text-text-primary">Source lookup</h5>
-              <List items={summary.lookup.map(lookupSentence)} />
-            </>
-          )}
+          <List title="Source lookup" items={(summary.lookup ?? []).map(lookupSentence)} />
         </Block>
-        {advanced && (
-          <Block title="Advanced choices" disabled={disabled}>
+        {answers.level === "advanced" && (
+          <Block title="Advanced choices" {...block}>
             <Facts
               rows={[
                 ["Model and effort", `${summary.model} · ${summary.effort}`],
