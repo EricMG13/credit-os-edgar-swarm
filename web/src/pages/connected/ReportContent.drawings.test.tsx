@@ -128,11 +128,15 @@ describe("drawing sections leave no handoff scaffolding", () => {
     expect(screen.getAllByText("EMPTY-GAP-TEXT")).toHaveLength(1);
   });
 
-  it("keeps a qualification naming another module word for word", () => {
-    const text = "Cover is shown before the CP-2 adjustment CROSS-TEXT.";
-    const entry = entryOf("CP-1", [drawing("Chart data: cross", 70, [text])], {
-      charts: [{ title: "Cross", table: 71, unit: "x", columns: [1] }],
-    });
+  it("names another module in a qualification instead of drawing its code", () => {
+    const text = "Cover is shown before the Fundamental credit adjustment CROSS-TEXT.";
+    const entry = entryOf(
+      "CP-1",
+      [drawing("Chart data: cross", 70, [text.replace("Fundamental credit", "CP-2")])],
+      {
+        charts: [{ title: "Cross", table: 71, unit: "x", columns: [1] }],
+      },
+    );
     page(entry);
     expect(screen.getAllByText(text)).toHaveLength(1);
   });

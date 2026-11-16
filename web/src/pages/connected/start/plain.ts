@@ -1,4 +1,4 @@
-import { moduleName, type DocumentRecord } from "../api";
+import { serviceText, type DocumentRecord } from "../api";
 
 export const PURPOSES = {
   research: "No market view (research)",
@@ -24,25 +24,11 @@ export function documentDescription(doc: DocumentRecord) {
     .join(" · ");
 }
 
-/** Replaces each whole module code the page knows with the module's name; others stay. */
-export function plainText(text: string) {
-  return text.replace(/\bCP-[A-Z0-9]+\b/g, (code) => moduleName(code));
-}
-
 /** A lookup line without the launcher's label or its flag hint. */
 export function lookupSentence(line: string) {
-  return plainText(
+  return serviceText(
     line.replace(/^\s*[A-Za-z]+:\s+/, "").replace(/;\s*--web-lookup on forces it\s*$/, ""),
   );
-}
-
-/** The changes line without the service's `(not used: <run>: <why>)` note, which names a run id. */
-export function changesSentence(changes: string) {
-  const text = plainText(changes);
-  const kept = text.replace(/\s*\(not used:[\s\S]*$/, "");
-  return kept === text
-    ? text
-    : `${kept.replace(/\.$/, "")}. An earlier run exists but could not be used for comparison.`;
 }
 
 /** The comparison caveat the service writes in the compared run's own bracket: ` (earlier format, earlier methods)`, or "". */

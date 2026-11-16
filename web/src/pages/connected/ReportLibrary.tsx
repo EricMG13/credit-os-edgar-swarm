@@ -23,7 +23,15 @@ import {
 import { ReportFindings } from "./ReportContent";
 import { ReportEvidence } from "./report/Evidence";
 import type { Mode } from "./api";
-import { actionBias, buildReportView, foundationMetrics, type MetricKey } from "./reportView";
+import {
+  actionBias,
+  buildReportView,
+  foundationMetrics,
+  moduleBottomLines,
+  runLimitations,
+  type MetricKey,
+  type ReportView,
+} from "./reportView";
 
 const TILE_KEYS: readonly MetricKey[] = ["liquidity", "freeCashFlow", "leverage", "maturities"];
 import { Calendar, buildCalendar, upcomingCalendarRows } from "./report/Calendar";
@@ -31,6 +39,7 @@ import { Changes, ComparisonTable } from "./report/Changes";
 import { Forecast } from "./report/Forecast";
 import { MetricGrid } from "./report/MetricGrid";
 import { Modules } from "./report/Modules";
+import { ModuleBottomLines, RunLimitations } from "./report/OverviewModules";
 import { PublishedTraceProvider } from "./report/PublishedTrace";
 import { PortfolioBasisProvider } from "./report/PortfolioBasis";
 import { useResource } from "./useResource";
@@ -122,7 +131,7 @@ function Overview({
 }: {
   snapshot: Snapshot;
   run: PublishedRun;
-  view: ReturnType<typeof buildReportView>;
+  view: ReportView;
   hasCalendar: boolean;
 }) {
   const calendar = buildCalendar(view.entries, run.folder);
@@ -172,6 +181,8 @@ function Overview({
           </p>
         </>
       )}
+      <ModuleBottomLines run={run} rows={moduleBottomLines(view, run)} />
+      <RunLimitations run={run} rows={runLimitations(view, run)} />
       {calendar.rows.length > 0 && (
         <section className={`${card} grid gap-3`}>
           <div className="flex flex-wrap items-center justify-between gap-3">

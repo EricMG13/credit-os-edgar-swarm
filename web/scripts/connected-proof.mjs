@@ -182,6 +182,20 @@ async function uploadRunDocuments(page) {
     ...uploaded,
   ]);
   for (const upload of uploads) assert.equal(upload.status(), 200);
+  await page.waitForFunction(
+    () => document.activeElement?.textContent?.trim() === "Inspect documents",
+  );
+}
+
+// A stepper "Go back to" button, pressed with the keyboard, lands focus on that step's heading.
+async function goBackWithKeyboard(page) {
+  await page.getByRole("button", { name: "Go back to Documents", exact: true }).focus();
+  await page.keyboard.press("Enter");
+  await page.waitForFunction(
+    () =>
+      document.activeElement?.matches("h2") &&
+      document.activeElement.textContent.trim() === "Documents",
+  );
 }
 
 async function approveRunInputs(page, paidPreview) {
@@ -191,6 +205,9 @@ async function approveRunInputs(page, paidPreview) {
   await page.getByRole("button", { name: "Continue to purpose", exact: true }).click();
   await page.getByRole("heading", { name: "Purpose", exact: true }).waitFor();
   assert.match(await current.innerText(), /Purpose/u);
+  await goBackWithKeyboard(page);
+  await page.getByRole("button", { name: "Continue to purpose", exact: true }).click();
+  await page.getByRole("heading", { name: "Purpose", exact: true }).waitFor();
   await page.getByRole("radio", { name: "Lite credit assessment", exact: true }).waitFor();
   await page.getByRole("radio", { name: "Full credit assessment", exact: true }).waitFor();
   await page.getByRole("radio", { name: "Deep credit assessment", exact: true }).waitFor();
@@ -838,10 +855,21 @@ async function checkReadingLayout(report, page, channel) {
     name: "Show sources for Cash proxy by scenario",
     exact: true,
   });
-  const box = await source.boundingBox();
-  assert.ok(box);
-  assert.ok(box.width >= 44);
-  assert.ok(box.height >= 44);
+  // 8d2089bc: the hit area is exactly 44px (26px padding box plus 9px each side), pixels -22 to +21
+  // from the centre. Prove all four corners of that square reach the button.
+  await source.scrollIntoViewIfNeeded();
+  const reachesButton = await source.evaluate((el) => {
+    const rect = el.getBoundingClientRect();
+    const cx = rect.left + rect.width / 2;
+    const cy = rect.top + rect.height / 2;
+    return [-22, 21].every((dx) =>
+      [-22, 21].every((dy) => {
+        const hit = document.elementFromPoint(cx + dx, cy + dy);
+        return hit !== null && el.contains(hit);
+      }),
+    );
+  });
+  assert.equal(reachesButton, true);
   const main = await page.locator("main").boundingBox();
   assert.ok(main);
   assert.ok(main.x === 0);
@@ -987,7 +1015,9 @@ async function checkForecastEvidence(report, artifacts, channel, page) {
   const cashProxy = report.getByRole("figure", { name: "Cash proxy by scenario", exact: true });
   await cashProxy.getByRole("radio", { name: "Table", exact: true }).check();
   await cashProxy.getByRole("row", { name: /Downside shock/u }).waitFor();
-  assert.equal(await cashProxy.getByRole("row", { name: /Base case/u }).count(), 0);
+  // cc836f5f: the cash proxy draws every case, emphasising the selected one.
+  assert.equal(await cashProxy.getByRole("row", { name: /Base case/u }).count(), 1);
+  assert.equal(await cashProxy.getByRole("row", { name: /Downside shock/u }).count(), 1);
   const baseCase = report.getByRole("radio", { name: /^Base case/u });
   await baseCase.focus();
   await baseCase.press("Space");
