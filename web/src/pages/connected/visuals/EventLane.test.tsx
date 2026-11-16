@@ -1,6 +1,13 @@
 import { render, screen, within } from "@testing-library/react";
 import { expect, it } from "vitest";
-import { assignLanes, EVENT_HEADERS, eventLane } from "./EventLane";
+import {
+  assignLanes,
+  AXIS_MIN_PX,
+  EVENT_HEADERS,
+  eventLane,
+  LANE_GRID,
+  LANE_TRACK,
+} from "./EventLane";
 
 const span = (from: number, to: number) => ({ from, to });
 
@@ -73,4 +80,26 @@ it("draws far-apart events in one shared lane and crowded ones in another, keepi
   expect(lanes[0]?.querySelectorAll("[role=img]")).toHaveLength(3);
   for (const index of [0, 1, 2, 3])
     expect(scheduled.getByText(`Owner ${String(index)}`)).toBeVisible();
+});
+
+const SPACING_PX = 4;
+const spacing = (classes: string, pattern: RegExp) =>
+  SPACING_PX * Number(pattern.exec(classes)?.[1] ?? Number.NaN);
+
+it("measures label room against the narrowest axis the drawn classes can produce", () => {
+  const drawn =
+    spacing(LANE_GRID, /(?:^|\s)min-w-(\d+)(?:\s|$)/) -
+    spacing(LANE_GRID, /(?:^|\s)p-(\d+)(?:\s|$)/) -
+    spacing(LANE_GRID, /(?:^|\s)pr-(\d+)(?:\s|$)/) -
+    2 * spacing(LANE_TRACK, /(?:^|\s)mx-(\d+)(?:\s|$)/);
+  expect(AXIS_MIN_PX).toBe(drawn);
+});
+
+it("does not let a capped label overlap an event that starts inside it at the minimum axis", () => {
+  const day = (n: number) =>
+    new Date(Date.UTC(2000, 0, 1) + n * 86_400_000).toISOString().slice(0, 10);
+  const rows = [row(day(0), "A"), row(day(360), "B"), row(day(1000), "C")];
+  render(eventLane({ line: 0, headers: EVENT_HEADERS, rows }));
+  // B starts at 36% of the axis; a 224px label is 37.3% of a 600px axis, so B needs its own lane.
+  expect(document.querySelectorAll("[data-event-lane]")).toHaveLength(2);
 });
