@@ -225,10 +225,25 @@ describe("connected library and report design", () => {
     expect(await screen.findByRole("heading", { name: "Dates to watch" })).toBeInTheDocument();
     expect(screen.getByText("Refinancing maturity")).toBeInTheDocument();
     expect(screen.getByText("2027-03-15 · day")).toBeInTheDocument();
+    expect(screen.getByText("Scheduled")).toBeInTheDocument();
     const evidence = screen
       .getAllByRole("link", { name: "Evidence" })
       .find((link) => link.getAttribute("href")?.includes("#evidence/"));
     expect(evidence).toBeDefined();
     expect(evidence).toHaveAttribute("href", expect.stringMatching(/#evidence\//));
+
+    window.location.hash = "#modules/CP-1";
+    const modulePicker = await screen.findByLabelText("Module");
+    expect(modulePicker).toHaveValue("CP-1");
+    const sectionPicker = screen.getByLabelText("Jump to section");
+    const firstSection = sectionPicker
+      .querySelector("option:not([value=''])")
+      ?.getAttribute("value");
+    expect(firstSection).toBeTruthy();
+    const firstSectionTarget = document.getElementById(firstSection ?? "");
+    if (!firstSectionTarget) throw new Error("First module section is missing");
+    firstSectionTarget.scrollIntoView = vi.fn();
+    fireEvent.change(sectionPicker, { target: { value: firstSection } });
+    expect(document.activeElement).toBe(firstSectionTarget);
   });
 });

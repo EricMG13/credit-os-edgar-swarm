@@ -4,6 +4,48 @@ Keep one running record here. A pass applies only to the stated scope. Earlier v
 engine is in [EricMG13/final-workflow](https://github.com/EricMG13/final-workflow)'s
 `VERIFICATION.md`, which also keeps the retained runs this copy leaves out.
 
+## 2026-11-16 — Five Caesars design critique priorities implemented
+
+- Preserved Credit OS React components and RBOT-HTML source/Python pins at
+  `256101a`; React dependencies unchanged. No providers, Signal work or tournaments.
+- Forecast now promotes exact reference-free scope/basis sentences before case
+  selection, with traces and the complete original notes retained below. Case
+  cards say Forecast cases; descriptions come from retained notes or explicit gaps.
+  Comparison keeps every case, highlights the selection and retains row traces;
+  the chart and its table still follow the selected case, including missing values.
+- Forecast axes use readable labels without changing series/table values; close
+  ticks fall back to exact labels rather than merge through display rounding.
+- Dates to watch uses the run as-of date, excludes Historical events, retains
+  recorded precision/status/source identity and qualifies overlapping partial dates.
+  Narrow Modules uses a native selector and collapsible section jump; desktop
+  navigation is preserved, with complementary 1000/1001px visibility boundaries.
+- Confidence review ranked (1) analytical fidelity/reference leakage, (2) case
+  selection versus comparison, (3) date/status ambiguity, (4) keyboard/navigation
+  boundaries, (5) rounded values/missing versus zero. Tests and Astra reviewers
+  confirmed and repaired false absence wording, missing-case comparison vanishing,
+  historical partial dates appearing upcoming, first-section activation failing,
+  and the breakpoint overlap. Numeric inputs and retained handoffs were untouched.
+- Two independent Astra reviewers rereviewed their fixes and inspected actual
+  Caesars in Chrome. Forecast: four rows, selected chart, readable axes, exact
+  464.86/647.95/183.09 bridge, trace to handoff line 310. Overview: watch dates begin
+  November 2026. At 390px the module selector and first-section jump work; all
+  temporary review tabs closed and viewport restored. This is scoped fidelity
+  review, not analytical clearance or Windows proof.
+- 61 focused tests pass, plus TypeScript, changed-file ESLint/Prettier and Python
+  quality gate (zero findings). Fallow still reports five 'new' and two inherited
+  complexity warnings: AST comparison shows four flagged new functions unchanged
+  from HEAD and the fifth differs only in its axis formatter call, with no added
+  branching. Existing complexity risks are retained; no suppressions were added.
+- Fresh offline dependency install and production build; staged production tree
+  `fb91f1e5e7eb01f403a13ba30ffd5ca19d040d14`. Both branded browsers passed all 32
+  synthetic upload-to-report checks on macOS: Chrome 157.0.8103.78 run
+  `20261116-030448-01`, Edge 157.0.4341.60 run `20261116-030505-01`.
+  Evidence: `proof-artifacts/run-4l6Qel/proof.json`. Added checks cover all-case
+  comparison, early scope, compact navigation and breakpoint/first-section behavior.
+- Updated read-only actual Caesars preview is at port 58337, run
+  `20261115-114658-01`; original Test preview/admission qualification remains.
+  ZIP was not rebuilt or published. Chrome and Edge work-PC acceptance is pending.
+
 ## 2026-11-16 — Four remaining Fallow findings resolved
 
 - Split Forecast case cards and assumptions into components; split browser intake
@@ -933,62 +975,3 @@ Change: a figure's digits are compared without thousands separators; a parenthes
 Real evidence (read-only, 741 retained `.md` files: 222 drafts, 200 responses, 319 handoffs; old = origin/main module, new = this branch, `figure_issues` as the launcher calls it): 21 issues removed (7 thousands separator, 14 bracketed note), 0 added, 79 unchanged. `key_figures_issues` on the 3 retained CP-L10 texts with their CP-1: 0 before and after (the refused CP-L10 drafts of `tdg-proof-short-001` are not retained as files; the old refusal text is in its `1.review.json`).
 Probes: `probe_pr46.py` D1 and D2 pass, D3 (check 6, a different defect, not changed) still fails; `probe_key_figures_comma.py` exit 0.
 Not verified: a paid run (whether a model now passes at the first draft); Key figures against a real refused CP-L10 draft. (The adjacency rule above was too wide, see the next entry: real negatives directly after a figure, `Q2 (26,306)`, `Capital expenditures (42) (36)`, exist in the retained runs.)
-
-## 2026-11-12 — Module output review changes: sources resolve, each drawing shown once, reader vocabulary checked everywhere (branch `claude/modules-page-sources-charts`, ruling `2026-11-12-module-output-review-changes.md`)
-Scope: offline only. No provider or model call was made. Decisions 7 to 11 (launcher text, checker, confidence score, post-balance-sheet table) are proven by tests and hand-written handoffs only, not by a model run. Display changes were checked on a copy of the retained real run `tdg-proof-snapshot-opus-002` (TDG, as of 2024-09-30, credit snapshot): one run, 1440 px, headless Chrome.
-Library:
-- A chart, map or timeline is shown once, as a drawing with a "Table form" fold; a drawing with no numbers gets a "Not established for this run" card (decision 1).
-- Request, Next module and front matter sit in an "Evidence & audit" fold; the front-matter `filename` line is not drawn (decision 2).
-- Figures, Basis links, table rows and `Source` cells open the inspector on the file and page; "Row" replaces "Handoff"; "unresolved citations" replaces "citations without a page" (decision 3).
-- Register ids lose their module code; no heading says "a method step"; a negative amount is one figure; a fenced block is drawn as a block; wide tables scroll from the keyboard (decisions 4, 5).
-- Drawings: bridge labels wrap, the debt stack has a ranking and security legend, the timeline has year ticks, an as-of line and a numbered key, map text wraps on words (decision 6).
-Method and checks (new runs only):
-- Reader vocabulary is checked in Findings, Calculations and Gaps; new check 10 refuses pipeline wording; the bottom line is at most 45 words in the first sentence and 180 in all (decisions 7, 8).
-- Modules state no confidence score, band or QA status and mention no helper scripts; a `### Confidence inputs` table is written and Python computes the score by the method's formula (decision 9).
-- Financial foundation writes `### Post-balance-sheet adjustments`; `## Sources` names file, description and date; modules use plain module names; chart tables carry one qualification sentence; map text is at most 60 characters (decisions 10, 11).
-Fidelity check (13 module pages of the run, before the branch vs after; every number token; three handoffs against their pages): no number, period, unit or source file name lost unexplained. One loss class was found: the "Not established" card dropped a stating row's other cells on Legal & covenants and Committee decision. Fixed in 188cb5f; re-checked: 8 of 8 statements back on the page. The compare script is `compare.py` in the session scratchpad (not in the repo).
-Reader check against the September VMO2 reference: Financial foundation, Business & governance, Fundamental credit. Verdict: pass with issues. Open issues (display or wording, none loses content):
-- Business & governance timeline: 8 of 11 events stacked at the right edge, markers on the as-of line.
-- Map labels at crossings and arrowheads are ambiguous (the edge table is unambiguous).
-- Bar labels are raw ("6585", "7940"); "1 unresolved citation" repeats six times on Debt maturities; the Sources table spends a column on sha256.
-- Figure buttons that open a file and page: 29 of 29, 42 of 42, 0 of 65 (Fundamental credit cites upstream modules only). Basis buttons that open a file and page: 62 of 111, 58 of 78, 0 of 58.
-Real-run numbers (they measure different things; each is from its own step):
-- Task A2 (chips): `issuer_page` chips 0 to 580 on the run. Whole-branch review, three retained runs: 116, 501 and 494 gap chips became page chips (1,111 in all), 0 regressions.
-- Task A3: "a method step" on the run 375 to 4 (4 left in CP-5 table cells, the no-title fallback). Task A4: sign-outside-figure 8 to 0.
-Gates at a816851 (all exit 0): node tests 363 passed; `uv run python tools/quality_gate.py --base a873f6f` 0 findings, 3165 lines in scope; PR-check pytest 3435 passed, 122 deselected; browser tests 83 passed, 1 skipped (a screenshot helper). Two one-line residual fixes followed (earlier-format map fold guard; "or cash" restored); gates re-run at the final code commit 02a06f6, all exit 0: node tests 364 passed; quality gate 0 findings, 3177 lines in scope; PR-check pytest 3435 passed; browser tests 83 passed, 1 skipped.
-Not verified: a paid run (whether a model obeys the new text; the refused-draft rate under the tighter checks); other runs and widths; earlier-format pages on a real run with maps; screen readers; the weekly slow suite.
-For the owner:
-- Bottom-line limits 45 and 180 words are the controller's values; 11 of 13 real bottom lines on the run exceed 180 words (184 to 286). Keep, raise or drop.
-- Check 10 refuses some ordinary wording ("canonical basis", "the pack mix", "upstream module prices"); narrow the list or accept retries.
-- The 60-character map limit as worded also shortens Relationship and Evidence, which are not drawn.
-- Decision 10 gaps: no pro forma cash column; cumulative rows with two events; the Amount sign convention chosen (4348 and -4348 are both accepted); the table is drawn only on Financial foundation.
-- PR size is 3,524 changed lines (whole-branch review) against the 800-line convention: one PR or split by commit range.
-- Longer shared text raised the per-call hold (opus-medium largest call 2.98 to 3.02 USD); an opus-medium run with `--cap 3` now refuses offline; the cap test moved 3 to 3.5.
-- The confidence score rests on the module's own stated inputs; nothing checks them. A score, band or QA status stated in front matter is refused; one stated in body text is not.
-- The bottom line is set in headline type (recorded redesign decision); labels at crossings stay ambiguous; "unnamed module" is shown for a code with no display name; the paid run that proves decisions 7 to 11 is not made.
-
-## 2026-11-12 — Run start in four steps (branch `claude/redesign-run-start`)
-Plan and reports: `.superpowers/sdd/2026-11-12-redesign-run-start/`; record: `docs/design/2026-11-12-run-start-four-steps.md`.
-Scope: the page `docs/templates/context-form.html` only, tested by synthetic browser tests against a stubbed service. No provider run; no real run started.
-Changed: the eight sections stay as groups under five steps (Documents, Purpose, Confirm, More context, Start); documents first; a numbered stepper, fixed footer, readiness column, the Start card "What Submit does", and the run screen in the redesign's look. `build()`, `context.json`, the requests and the service are unchanged; the answer-key tests were not edited. Controller rulings 1-11 are in the record.
-Checks: `tests/test_context_form.py` and `tests/test_run_start_page.py` 180 passed, exit 0 (Task 1: 147 then 148; Task 2: 159; Task 3: 169 then 172); three library-page browser tests that load the form passed (the `-k context` filter selects none); quality gate 0 findings, exit 0. Reviewer probes: Task 1 re-review 5 passed, Task 2 14 passed, Task 3 re-review 8 passed. On a 12-module summary Submit first comes into view after 12.5-21.1% of the scroll, and after 69.2-77.1% on the short snapshot; a focused Approve or Submit is always visible.
-Reviews (mx-precise): Task 1 changes required (M1 More context dropped off screen when its last held answer was undone; M2 group-level assertions deleted; L1 a legal-error test on an unreachable state), closed in fix a6eec82, re-review approve. Task 2 approve, with three Lows carried to Task 3 and closed there. Task 3 changes required (M1 the sticky card hid Approve and Submit; M2 the run screens lost the title and Start over), closed in fix a4408ff (Rulings 10 and 11), re-review approve; its Lows L1-L3 were fixed in the same round.
-Reader check: not applicable to this form. The VMO2 reference check covers the issuer report; the look here was read against the mock-up notes only, with three desktop screenshots by eye in Task 2.
-Open, for the owner: the 960px JavaScript/CSS breakpoint both match; the files table keeps a 560px minimum width below 720px; the mock-up's library empty state (R0) is not built.
-Whole-branch review: by a separate reviewer; found two Medium defects (a button opening a later group of a step left its heading off screen; the Start module rows collapsed at 375px) and seven Low; fixed in this commit; re-review of the whole-branch fix (4ab364d) by a separate reviewer: approve; every button target lands in view at 1440 and 720px; payload and Submit rules unchanged; reviewer probes `probes/wbr` and `probes/t3r` pass apart from one probe that pinned the README's old short-snapshot sentence, corrected in this commit.
-Not verified: look beyond three desktop screenshots (none of Start or the run screen; no pixel comparison with the mock-up); widths 720-960px, print, forced-colors; 375px by a scroll-width probe only; keyboard traversal and screen readers; the run screen driven with literal run data, not a real run; groups kept on More context after a level change until the step is left; real-service submit beyond the existing browser tests; real Tab traversal, screen readers and forced-colors; browsers other than headless Chrome; a real run or provider call (the service was stubbed throughout); `?from=` beyond one credit-snapshot fixture run.
-
-## 2026-11-12 — Forecast inputs name cells of period-row tables; `LTM Qn YYYY` is a balance date (branch `claude/forecast-reader-findings`; findings 1, 2, 6 and the instruction side of 4 of the LTH reader check)
-Plan: `docs/superpowers/plans/2026-11-12-forecast-reader-findings.md`, Tasks E1-E4, rulings R1-R6. An operand may name its cell in a table with one row per period as `row` (the period) and `column` (the measure's header); `column` with `period` is refused and partial naming stays refused. The history record reads such tables, and reads a label `LTM Qn YYYY` (row label or column header) as the balance at that label's End for debt, cash and undrawn only, and only when CP-1's period table dates the label to the day the year to date (or the fiscal year) ends; it is never read for a flow. A period row whose `Reporting unit` differs from the named row's is n.a. with the reason, never converted. The limit that listed the LTM header as unread now says what is and is not read. Instructions: the `column` form, `interest` defined as cash interest (interest expense may be named if `scope_limits` says so), balances printed as plain numbers under their period, the LTM label dated in the period table; repair lines name `column`. A block that uses no new key publishes byte-identical files, except the one limit line where CP-1 carries an LTM label.
-Scope: offline. Synthetic fixture with a hand answer key (plan lines 43-87); 459 recorded calls replayed before and after (429 identical, 24 differ only where CP-1 holds an LTM label, 6 only in two refusal texts); the real LTH CP-1 of run `20261112-164724-01` read with a HAND-NAMED block (no model ran): FY2024 cash 10.879 and net debt 1,544.718; YTD and LTM cash 175.509, debt 1,534.356, net debt 1,358.847; LTM leverage equals CP-1's own C3 and C4; with the run's block unchanged only one limit line differs. No provider called: no model has yet used `column`.
-Commands: pytest (cpos launch, facilities, periods, scale, store, handoff loop) exit 0; quality gate 0 findings, exit 0. Reviews: task reviews (mx-precise), two adversarial reviews (mx-adversary: no flow leaked, no balance in a column ending another day; one Medium on mixed units, fixed), whole-branch review with confidence review and rewrite tournament (mx-architect), two fix waves. Hand-picked mutants 34/40 killed, then the four untested ones (M03, M06, M19, M35) killed by new tests; M10 and M11 survive singly.
-Known, for the owner: an operand with no base amount cannot name a history-only cell, so LTH's June 2025 undrawn 618.5 and LTM liquidity stay n.a. (R3); the delivered LTH run does not change, cash and debt balances appear only when a model names them by `column` or CP-1 prints plain balances (`1,534.356 at 2025-06-30` is not read); a scale-1000 issuer cannot name the US$m chart tables; nothing checks that a stock is named at the base period (R6); two tables that state one balance in different units and disagree publish the same-unit figure unflagged (CP-1's validation refuses such a handoff); a currency difference between rows is not detected; re-delivering a run whose CP-1 has an LTM label gives a new delivery id; the branch is about 1,400 changed lines against the 800-line limit.
-Not verified: any model response to the new instructions; a paid run; the Forecast page's rendering of the new reasons and limits; the layer-1 `column` path through a delivery; the weekly and live suites; mutation testing beyond the hand-picked mutants. Moved to the archive to keep this file under 1,000 lines: the 2026-11-10 Library and report screens entry.
-
-## 2026-11-12 — Forecast page: neutral labels and notes, lines with no figure folded, readable model picker (branch `claude/forecast-reader-findings-page`; findings 3, 4, 5, 7 of the LTH reader check)
-Plan: `docs/superpowers/plans/2026-11-12-forecast-reader-findings.md`, Tasks P1-P3. On a delivery with a history record the rows read `Adj EBITDA (as named in Financial foundation)`, `LTM Adj EBITDA`, `Closing debt`, `Interest`, `Interest coverage (Adj EBITDA / interest)`, and the notes that named EBITDA As Defined, securitization and refinancing costs are replaced by three issuer-neutral notes. A line with no figure in any column of any case moves, with its cells and reasons, into a closed list `Lines with no figure in this run (N)`; the seven column groups stay. The model picker reads `<run date> · <pathway> · <run id>`, not the delivery hash; a recorded predecessor is named by its label. Controller correction to the plan's wording: the interest note ends at "rather than cash paid" (the plan's second clause was false when facilities are stated).
-Scope: offline; presentation only. Store and node tests with hand-named expectations; the base commit's grid compared with the tip's cell for cell on six inputs, the real LTH delivery included (equal apart from the new `empty` flag); every table row of the real page byte-identical to before, in the main table or the fold; `Why cells show n.a.` unchanged (117 lines).
-Reader check, scope: ONE real run (`20261112-164724-01`, LTH, Sonnet by a reverted local patch) rebuilt from a copy of its run root with this branch and read in Chrome at 1440 px by the controller, and in headless Chrome by the reviewer's probe: picker `18 August 2025 · Credit snapshot · 20261112-164724-01`; 17 of 34 lines folded, each with no figure anywhere; main grid shows Revenue, Adjusted EBITDA, Earnings to cash proxy, Cash and liquidity (Distributions, Debt repayment), Debt and Credit metrics; no note carries another issuer's wording. Against the September VMO2 reference: the same three screenshots as the entry below (none shows a forecast grid); the reference writes a gap in words in the cell, this page keeps `n.a.` with the reason in a tooltip and the closed list. Not read: the other 57 screenshots.
-Commands: pytest (seven store and library files) 472 passed, exit 0; node 4 files, exit 0; browser `-k "forecast or cashflow or model"` 5 passed, 1 skipped, exit 0; quality gate 0 findings, exit 0. Reviews: task review (mx-precise), whole-branch review with confidence review and rewrite tournament (mx-architect), one fix wave.
-Known, for the owner: lines fold on older HTML-Model deliveries too once their library is rebuilt (two lines on the retained TDG delivery, both empty in every column); on the LTH run Closing cash, Accessible liquidity, Net debt and Net leverage are in the fold because that run's model did not name cash; folded lines do not print unless the fold is open; the other-case table still lists every line; the Profitability rows keep the first issuer's captions (they are always folded on a run with a history record; predates this change); the run's own text still says "opus-medium".
-Not verified: a real HTML-Model delivery in a browser; two deliveries or a predecessor in a real library; keyboard and screen-reader use beyond markup; widths other than 1440 px; a new paid run.

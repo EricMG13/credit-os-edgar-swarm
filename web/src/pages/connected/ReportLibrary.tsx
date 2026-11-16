@@ -25,7 +25,7 @@ import { ReportFindings } from "./ReportContent";
 import { ReportEvidence } from "./report/Evidence";
 import type { Mode } from "./api";
 import { actionBias, buildReportView, foundationMetrics } from "./reportView";
-import { Calendar, buildCalendar } from "./report/Calendar";
+import { Calendar, buildCalendar, upcomingCalendarRows } from "./report/Calendar";
 import { Changes, ComparisonTable } from "./report/Changes";
 import { Forecast } from "./report/Forecast";
 import { MetricGrid } from "./report/MetricGrid";
@@ -381,6 +381,7 @@ function Overview({
   hasCalendar: boolean;
 }) {
   const calendar = buildCalendar(view.entries, run.folder);
+  const watchRows = upcomingCalendarRows(calendar.rows, run.asOf);
   const foundation = view.entries.find((entry) => entry.selected && entry.output.module === "CP-1");
   const metrics = foundation
     ? foundationMetrics(foundation, view.catalogue).filter(
@@ -438,31 +439,49 @@ function Overview({
               Open issuer calendar
             </a>
           </div>
-          <ul className="grid gap-2">
-            {calendar.rows.slice(0, 5).map((event, index) => (
-              <li
-                key={`${event.href}-${String(index)}`}
-                className="flex flex-wrap items-baseline justify-between gap-2 border-t border-border-hairline pt-2"
-              >
-                <div>
-                  <p className="font-semibold">{event.cells[3] || "Dated event"}</p>
-                  <p className="text-sm text-text-secondary">
-                    {event.owner}
-                    {event.cells[6] ? ` · ${event.cells[6]}` : ""}
-                  </p>
-                </div>
-                <div className="flex items-center gap-3 text-sm">
-                  <span>
-                    {event.cells[0]}
-                    {event.cells[1] ? ` · ${event.cells[1]}` : ""}
-                  </span>
-                  <a className="text-action underline" href={event.href}>
-                    Evidence
-                  </a>
-                </div>
-              </li>
-            ))}
-          </ul>
+          {watchRows === null ? (
+            <p className="text-sm text-text-secondary" role="status">
+              Upcoming dates cannot be determined because this run has no valid as-of date.
+            </p>
+          ) : watchRows.length === 0 ? (
+            <p className="text-sm text-text-secondary" role="status">
+              No recorded event dates fall on or after this run’s as-of date.
+            </p>
+          ) : (
+            <ul className="grid gap-2">
+              {watchRows.slice(0, 5).map((event, index) => (
+                <li
+                  key={`${event.href}-${String(index)}`}
+                  className="flex flex-wrap items-baseline justify-between gap-2 border-t border-border-hairline pt-2"
+                >
+                  <div>
+                    <p className="font-semibold">{event.cells[3] || "Dated event"}</p>
+                    <p className="text-sm text-text-secondary">
+                      {event.owner}
+                      {event.cells[6] ? ` · ${event.cells[6]}` : ""}
+                    </p>
+                    {event.cells[4] && (
+                      <p className="text-sm text-text-secondary">{event.cells[4]}</p>
+                    )}
+                    {event.timingWithinRecordedPeriod && (
+                      <p className="text-sm text-text-secondary">
+                        Timing falls within the recorded period; the exact date is unresolved.
+                      </p>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-3 text-sm">
+                    <span>
+                      {event.cells[0]}
+                      {event.cells[1] ? ` · ${event.cells[1]}` : ""}
+                    </span>
+                    <a className="text-action underline" href={event.href}>
+                      Evidence
+                    </a>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
         </section>
       )}
     </>

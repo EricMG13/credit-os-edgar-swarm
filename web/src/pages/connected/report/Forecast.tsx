@@ -15,6 +15,7 @@ import {
   CashProxy,
   cashProxyCases,
   forecastCaseOptions,
+  ForecastScope,
   gridOf,
   LegacyForecast,
 } from "../visuals/LegacyForecast";
@@ -139,14 +140,14 @@ function ForecastCases({
       <section className="flex flex-col gap-4" aria-labelledby="forecast-case-heading">
         <div className="flex flex-wrap items-baseline justify-between gap-2">
           <h3 id="forecast-case-heading" className="font-display text-h3">
-            Two cases
+            Forecast cases
           </h3>
           <p className="text-small text-text-tertiary">
             The cash proxy and forecast charts follow the selected case.
           </p>
         </div>
         <div role="radiogroup" aria-label="Forecast case" className="grid gap-4 sm:grid-cols-2">
-          {caseOptions.map(({ name, period, value, units }) => (
+          {caseOptions.map(({ name, period, value, units, description }) => (
             <div
               key={name}
               className={`relative flex flex-col gap-2 rounded-ds-md border bg-surface-card px-3 py-2.5 ${
@@ -184,6 +185,9 @@ function ForecastCases({
                     <span className="block text-text-tertiary">
                       Cash proxy {period ? `· ${period}` : ""}
                       {` · ${units}`}
+                    </span>
+                    <span className="mt-2 block text-small text-text-secondary">
+                      {description || "Case description not recorded."}
                     </span>
                   </span>
                 </label>
@@ -314,6 +318,7 @@ export function Forecast({
           </select>
         </label>
       )}
+      {model && <ForecastScope model={model} source={source} />}
       <ForecastCases
         caseOptions={caseOptions}
         selectedCase={selectedCase}

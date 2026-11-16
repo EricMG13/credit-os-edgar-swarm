@@ -9,6 +9,8 @@ export type TableCell = string | null | { withheld: true } | { gap: true };
 export interface TableRowData {
   label: string;
   cells: TableCell[];
+  /** Marks the current row without hiding other rows needed for comparison. */
+  current?: boolean;
   /** A last cell for one control per row; the column exists only when some row has one. */
   end?: ReactNode;
 }
@@ -88,10 +90,14 @@ export function ChartTable({ caption, head, rows, endHeading }: ChartTableProps)
         </thead>
         <tbody>
           {rows.map((row, r) => (
-            <tr key={r} className="group/trace relative border-b border-border-hairline">
+            <tr
+              key={r}
+              aria-current={row.current || undefined}
+              className={`group/trace relative border-b border-border-hairline ${row.current ? "bg-surface-selected" : ""}`}
+            >
               <th
                 scope="row"
-                className="sticky left-0 bg-surface-card px-3 py-2 text-left font-medium"
+                className={`sticky left-0 px-3 py-2 text-left font-medium ${row.current ? "bg-surface-selected" : "bg-surface-card"}`}
               >
                 {row.label}
               </th>

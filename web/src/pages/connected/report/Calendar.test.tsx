@@ -2,7 +2,7 @@ import { fireEvent, render, screen, within } from "@testing-library/react";
 import { expect, it } from "vitest";
 import type { OutputEntry } from "../publishedReport";
 import { EVENT_HEADERS } from "../visuals/EventLane";
-import { buildCalendar, Calendar } from "./Calendar";
+import { buildCalendar, Calendar, upcomingCalendarRows } from "./Calendar";
 
 let entrySequence = 0;
 function entry(module: string, cells: string[], selected = true): OutputEntry {
@@ -110,4 +110,69 @@ it("keeps recorded gaps as reasons and leaves a mismatched precision unplotted",
     `/report/current#evidence/CP-6-1~${"6".repeat(64)}-20`,
   );
   expect(screen.queryByRole("figure")).toBeNull();
+});
+
+it("selects upcoming dates by recorded spans and keeps partial-date precision and chronology", () => {
+  entrySequence = 0;
+  const calendar = buildCalendar(
+    [
+      entry("CP-1", ["1973", "year", "2026-09-30", "Historical", "Historical", "file", ""]),
+      entry("CP-1", [
+        "2026",
+        "year",
+        "2026-09-30",
+        "Historical year",
+        "Historical — Completed",
+        "file",
+        "",
+      ]),
+      entry("CP-1", [
+        "2026-Q4",
+        "quarter",
+        "2026-09-30",
+        "Historical quarter",
+        "Historical — Closed",
+        "file",
+        "",
+      ]),
+      entry("CP-1", [
+        "2026-10",
+        "month",
+        "2026-09-30",
+        "Historical month",
+        "Historical — Filed",
+        "file",
+        "",
+      ]),
+      entry("CP-2D", ["2027-Q2", "quarter", "2026-09-30", "Quarter", "Scheduled", "file", ""]),
+      entry("CP-3C", [
+        "2026-10",
+        "month",
+        "2026-09-30",
+        "October",
+        "Scenario — Conditional",
+        "file",
+        "",
+      ]),
+      entry("CP-3C", ["2026-11", "month", "2026-09-30", "November", "User reminder", "file", ""]),
+    ],
+    "current",
+  );
+  const rows = upcomingCalendarRows(calendar.rows, "2026-10-15");
+  expect(
+    rows?.map(({ cells, timingWithinRecordedPeriod }) => [
+      cells[3],
+      cells[0],
+      cells[1],
+      cells[4],
+      timingWithinRecordedPeriod,
+    ]),
+  ).toEqual([
+    ["October", "2026-10", "month", "Scenario — Conditional", true],
+    ["November", "2026-11", "month", "User reminder", false],
+    ["Quarter", "2027-Q2", "quarter", "Scheduled", false],
+  ]);
+  expect(upcomingCalendarRows(calendar.rows, null)).toBeNull();
+  expect(upcomingCalendarRows(calendar.rows, "2026-02-30")).toBeNull();
+  expect(upcomingCalendarRows(calendar.rows, "2028-01-01")).toEqual([]);
 });

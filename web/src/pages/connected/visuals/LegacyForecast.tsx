@@ -2,6 +2,8 @@ import { Fragment, type ReactNode } from "react";
 import { PathChart } from "@/components/chart/PathChart";
 import { ChartTable } from "@/components/chart/ChartTable";
 import { TrendChart } from "@/components/chart/TrendChart";
+import { TRACE_HOST } from "@/pages/library/parts/TraceControl";
+import { containsReference } from "../publishedReport";
 import { amount, items, record, stringsIn, ticks, word } from "./visualData";
 
 interface GridColumn {
@@ -171,6 +173,26 @@ function ForecastTable({
 
 const FORECAST_LINES = ["Revenue", "Adj EBITDA", "Closing cash", "Closing debt"];
 
+const axisNumber = new Intl.NumberFormat("en-US", { maximumFractionDigits: 2 });
+const smallAxisNumber = new Intl.NumberFormat("en-US", {
+  notation: "scientific",
+  maximumFractionDigits: 2,
+});
+
+function forecastAxisLabel(value: number) {
+  return value !== 0 && Math.abs(value) < 0.01
+    ? smallAxisNumber.format(value)
+    : axisNumber.format(value);
+}
+
+function forecastTicks(values: (number | null)[], zero = false) {
+  const formatted = ticks(values, zero, forecastAxisLabel);
+  // Close but distinct values must not acquire identical labels through rounding.
+  return new Set(formatted.map(({ label }) => label)).size === formatted.length
+    ? formatted
+    : ticks(values, zero);
+}
+
 const caseLabels: Record<string, string> = {
   "Base case": "Base case",
   "Downside case": "Downside case",
@@ -238,7 +260,7 @@ function ForecastTrends({
             key={label}
             periods={periods}
             series={series}
-            yTicks={ticks(values)}
+            yTicks={forecastTicks(values)}
             note={units || undefined}
             table={perCase.map(({ name, cells }) => ({
               name,
@@ -321,7 +343,67 @@ export function forecastCaseOptions(model: unknown) {
     period: latestPeriod,
     value: values.at(-1),
     units: word(cashflow.units) || "Units not recorded",
+    description: caseDescription(name, stringsIn(cashflow.notes)),
   }));
+}
+
+function caseDescription(name: string, notes: string[]) {
+  const prefix = name === "Downside shock" ? "Downside case is" : `${name} is`;
+  return notes.find((note) => note.startsWith(prefix) && !containsReference(note));
+}
+
+function scopePassages(cashflow: Record<string, unknown>) {
+  const notes = stringsIn(cashflow.notes).filter((note) => note.startsWith("Base case is"));
+  const limits = stringsIn(cashflow.limits).filter((limit) =>
+    /unreviewed|not analytical review|base period|base interest|not comparable|not modelled|standalone|perimeter|machine input.*zero/i.test(
+      limit,
+    ),
+  );
+  return [...new Set([...notes, ...limits])].flatMap((passage) =>
+    // Keep complete recorded sentences; source-bearing sentences remain in the full record.
+    passage
+      .split(/(?<=[.!?])\s+(?=[A-Z])/u)
+      .filter((sentence) => !containsReference(sentence) && !/\bCP-[A-Z0-9]+\b/u.test(sentence)),
+  );
+}
+
+export function ForecastScope({
+  model,
+  source,
+}: {
+  model: unknown;
+  source?: (label: string) => ReactNode;
+}) {
+  const passages = scopePassages(record(record(model).cashflow));
+  return (
+    <section
+      className="grid gap-3 rounded-ds-md border border-border-hairline bg-surface-subtle p-5"
+      aria-label="Model scope and basis"
+    >
+      <h3 className="font-display text-h3">Model scope and basis</h3>
+      <p className="text-small text-text-tertiary">
+        Selected qualifications from the recorded model. Full notes and limitations follow the model
+        tables.
+      </p>
+      {passages.length ? (
+        <div className="grid gap-3 lg:grid-cols-2">
+          {passages.map((passage, index) => (
+            <div key={index} className={TRACE_HOST}>
+              <p className="max-w-prose pr-8 text-small text-text-secondary">{passage}</p>
+              <div className="absolute right-0 top-0">
+                {source?.(`Model scope qualification ${String(index + 1)}`)}
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <p className="text-small text-text-secondary">
+          No qualifications are available in this summary. Review the full model notes and
+          assumptions before interpreting the cases.
+        </p>
+      )}
+    </section>
+  );
 }
 
 export function CashProxy({
@@ -348,7 +430,7 @@ export function CashProxy({
   );
   const rows = series.map(({ name, cells }) => ({ label: name, cells }));
   const values = series.flatMap((item) => item.values);
-  if (periods.length < 2 || !values.some((value) => value !== null)) return null;
+  if (periods.length < 2 || series.length === 0) return null;
   const table = { head: ["Case", ...periods], rows };
   const unit = word(raw.units);
   return (
@@ -360,16 +442,24 @@ export function CashProxy({
           subtitle={unit}
           periods={periods}
           series={series}
-          yTicks={ticks(values, true, (v) =>
-            new Intl.NumberFormat("en-US", { maximumFractionDigits: 2 }).format(v),
-          )}
+          yTicks={forecastTicks(values, true)}
           table={table}
         />
       </div>
       <div className="grid min-w-0 content-start gap-4">
         <section className="grid min-w-0 gap-3 rounded-xl border border-border-hairline bg-surface-card p-5">
           <h3 className="font-display text-h4">Scenario comparison</h3>
-          <ChartTable caption="Scenario comparison" {...table} />
+          <ChartTable
+            caption="Scenario comparison"
+            head={table.head}
+            rows={allSeries.map(({ name, cells }) => ({
+              label: name,
+              cells,
+              current: name === selectedCase,
+              end: source,
+            }))}
+            endHeading={source ? "Source" : undefined}
+          />
         </section>
         {note}
       </div>

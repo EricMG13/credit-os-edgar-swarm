@@ -732,6 +732,7 @@ async function checkCharts(report, artifacts, channel, page) {
   await section("Changes").click();
   await report.getByText("No earlier run to compare.", { exact: true }).waitFor();
   await section("Modules").click();
+  await checkCompactModules(report, page, channel);
   const modules = report.getByRole("navigation", { name: "Modules and sections" });
   await modules.getByRole("link", { name: /^Liquidity, Delivered/u }).waitFor();
   await modules.getByRole("link", { name: /^Refinancing & LME, Delivered/u }).waitFor();
@@ -746,6 +747,45 @@ async function checkCharts(report, artifacts, channel, page) {
   await checkForecastEvidence(report, artifacts, channel, page);
   await checkForecastRunCharts(report, page, sourceHref);
   await checkReportEvidence(report, page, channel);
+}
+
+async function checkCompactModules(report, page, channel) {
+  const desktop = page.viewportSize();
+  const select = report.getByRole("combobox", { name: "Module", exact: true });
+  const navigation = report.getByRole("navigation", { name: "Modules and sections" });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await select.selectOption("CP-1");
+  assert.equal(await navigation.isVisible(), false);
+  await report
+    .locator("summary")
+    .filter({ hasText: /^On this page$/u })
+    .click();
+  const jump = report.getByRole("combobox", { name: "Jump to section" });
+  const first = await jump.locator("option").nth(1).getAttribute("value");
+  assert.ok(first);
+  await jump.selectOption(first);
+  await page.waitForFunction((id) => document.activeElement?.id === id, first);
+  await page.waitForFunction(() => document.documentElement.scrollWidth === 390);
+  await page.screenshot({ path: path.join(artifacts, `${channel}-modules-mobile.png`) });
+  await page.setViewportSize({ width: 1000, height: 844 });
+  assert.equal(await select.isVisible(), true);
+  assert.equal(await navigation.isVisible(), false);
+  await page.setViewportSize({ width: 1001, height: 844 });
+  assert.equal(await select.isVisible(), false);
+  assert.equal(await navigation.isVisible(), true);
+  await page.setViewportSize(desktop);
+}
+
+async function checkForecastPresentation(report, page, channel) {
+  const scope = report.getByRole("region", { name: "Model scope and basis" });
+  await scope.getByText(/conditional illustration/u).waitFor();
+  await report.getByRole("heading", { name: "Forecast cases", exact: true }).waitFor();
+  const comparison = report.getByRole("table", { name: "Scenario comparison" });
+  await comparison.getByRole("rowheader", { name: "Base case", exact: true }).waitFor();
+  await comparison.getByRole("rowheader", { name: "Downside shock", exact: true }).waitFor();
+  assert.equal(await comparison.getByRole("rowheader").count(), 2);
+  await scope.scrollIntoViewIfNeeded();
+  await page.screenshot({ path: path.join(artifacts, `${channel}-forecast.png`) });
 }
 
 async function checkDebtEvidence(report, modules, artifacts, channel, page) {
@@ -815,6 +855,7 @@ async function checkPortfolioEvidence(report, modules, artifacts, channel, page)
 }
 
 async function checkForecastEvidence(report, artifacts, channel, page) {
+  await checkForecastPresentation(report, page, channel);
   const revenue = report.getByRole("figure", { name: "Revenue", exact: true });
   await revenue.locator("svg.recharts-surface").first().waitFor();
   const sourceSwitch = report.getByRole("switch");
@@ -860,6 +901,12 @@ async function checkForecastEvidence(report, artifacts, channel, page) {
   await downsideCase.focus();
   await downsideCase.press("Space");
   assert.ok(await downsideCase.isChecked());
+  const comparison = report.getByRole("table", { name: "Scenario comparison" });
+  assert.equal(await comparison.getByRole("rowheader").count(), 2);
+  assert.equal(
+    await comparison.getByRole("row", { name: /Downside shock/u }).getAttribute("aria-current"),
+    "true",
+  );
   await ebitdaRow.getByRole("cell", { name: "252", exact: true }).waitFor();
   assert.equal(await ebitdaRow.getByRole("cell", { name: "315", exact: true }).count(), 0);
   const cashProxy = report.getByRole("figure", { name: "Cash proxy by scenario", exact: true });
@@ -1015,6 +1062,8 @@ async function checkBrowserRun(browser, service, workspace, channel, brand) {
       "instrument-quotes",
       "portfolio-limits",
       "revenue",
+      "forecast",
+      "modules-mobile",
       "evidence",
       "evidence-record",
     ].map((view) => `${channel}-${view}.png`),
@@ -1039,6 +1088,8 @@ async function checkBrowserRun(browser, service, workspace, channel, brand) {
       "dated instrument quotes, decision and recovery qualification",
       "selected workbook attestation, portfolio limits and proposal qualification",
       "forecast chart and model",
+      "forecast qualifications precede cases and all-case comparison remains visible",
+      "compact module and first-section navigation at 390px with complementary 1000/1001px breakpoints",
       "chart source control visible on hover with Show sources off",
       "shared Base and Downside case selection updates cash proxy and exact model values",
       "evidence bookmark retains identity after reorder and rejects old ordinal addresses",

@@ -79,6 +79,24 @@ export function buildCalendar(entries: OutputEntry[], folder: string) {
   return { rows, gaps };
 }
 
+export function upcomingCalendarRows(rows: CalendarRow[], asOf: string | null) {
+  if (!asOf || !/^\d{4}-\d{2}-\d{2}$/u.test(asOf)) return null;
+  const timestamp = Date.parse(`${asOf}T00:00:00Z`);
+  if (!Number.isFinite(timestamp) || new Date(timestamp).toISOString().slice(0, 10) !== asOf) {
+    return null;
+  }
+  return rows
+    .filter(({ cells, to }) => !isHistoricalStatus(cells[4] ?? "") && to >= timestamp)
+    .map((row) => ({
+      ...row,
+      timingWithinRecordedPeriod: row.from < timestamp && timestamp <= row.to,
+    }));
+}
+
+function isHistoricalStatus(status: string) {
+  return status === "Historical" || status.startsWith("Historical — ");
+}
+
 function EventSource({ href, name }: { href: string; name: string }) {
   return (
     <PublishedSource href={href} name={name} linkLabel={`Source for ${name}`}>

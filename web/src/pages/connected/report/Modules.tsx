@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Button } from "@/components/base/buttons/button";
 import { StatusBadge } from "@/components/status/StatusBadge";
 import { ModuleNav, type NavSection } from "@/pages/library/parts/ModuleNav";
-import { card, heading } from "../layout";
+import { card, field, heading } from "../layout";
 import { ReportFindings, findingBlocks } from "../ReportContent";
 import {
   evidencePath,
@@ -79,8 +79,63 @@ function Navigator({
     });
   }
   const [active, setActive] = useState(sections[0]?.key ?? null);
+  const [mobileSection, setMobileSection] = useState("");
+  const moduleHref = (id: string) => `#modules/${encodeURIComponent(id)}`;
+  const sectionNavigate = (id: string) => {
+    const target = document.getElementById(id);
+    target?.focus();
+    target?.scrollIntoView({ block: "start" });
+    setActive(id);
+  };
   return (
     <aside className="self-start rounded-xl border border-border-hairline bg-surface-card py-2 min-[1001px]:sticky min-[1001px]:top-4">
+      <div className="grid gap-2 px-3 pb-2 min-[1001px]:hidden">
+        <label className="grid gap-1 text-sm text-text-secondary">
+          Module
+          <select
+            aria-label="Module"
+            className={field}
+            value={current}
+            onChange={(event) => {
+              const href = moduleHref(event.currentTarget.value);
+              window.location.href = href;
+            }}
+          >
+            {view.modules.map((item) => (
+              <option key={item.id} value={item.id}>
+                {item.name} · {item.state}
+              </option>
+            ))}
+          </select>
+        </label>
+        {sections.length > 0 && (
+          <details>
+            <summary className="cursor-pointer py-2 text-sm font-medium text-action">
+              On this page
+            </summary>
+            <label className="grid gap-1 pt-1 text-sm text-text-secondary">
+              Jump to section
+              <select
+                aria-label="Jump to section"
+                className={field}
+                value={mobileSection}
+                onChange={(event) => {
+                  const id = event.currentTarget.value;
+                  setMobileSection("");
+                  if (id) sectionNavigate(id);
+                }}
+              >
+                <option value="">Choose a section</option>
+                {sections.map((section) => (
+                  <option key={section.key} value={section.key}>
+                    {section.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </details>
+        )}
+      </div>
       <ModuleNav
         issuer={run.issuer}
         run={run.folder}
@@ -88,13 +143,9 @@ function Navigator({
         modules={view.modules}
         sections={sections}
         active={active}
-        hrefFor={(id) => `#modules/${encodeURIComponent(id)}`}
-        onSection={(id) => {
-          const target = document.getElementById(id);
-          target?.focus();
-          target?.scrollIntoView({ block: "start" });
-          setActive(id);
-        }}
+        hrefFor={moduleHref}
+        className="max-[1001px]:hidden"
+        onSection={sectionNavigate}
       />
     </aside>
   );
