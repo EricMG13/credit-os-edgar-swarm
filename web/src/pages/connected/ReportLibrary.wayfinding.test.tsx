@@ -298,6 +298,19 @@ describe("report wayfinding", () => {
     expect(current.map((link) => link.textContent)).toEqual(["Overview"]);
   });
 
+  it("keeps the reader on Forecast when the skip link is activated", async () => {
+    useSnapshot();
+    open("#forecast");
+    const nav = await screen.findByRole("navigation", { name: "Report sections" });
+    fireEvent.click(screen.getByRole("link", { name: "Skip to content" }));
+    const current = within(nav)
+      .getAllByRole("link")
+      .filter((link) => link.getAttribute("aria-current") === "page");
+    expect(current.map((link) => link.textContent)).toEqual(["Forecast"]);
+    expect(window.location.hash).toBe("#forecast");
+    expect(document.activeElement).toBe(screen.getByRole("main"));
+  });
+
   it("keeps the six report tabs at least 44px tall on a phone", async () => {
     useSnapshot();
     open("");

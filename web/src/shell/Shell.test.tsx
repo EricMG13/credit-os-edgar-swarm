@@ -1,4 +1,4 @@
-import { render, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { PageHeader } from "./PageHeader";
 import { Shell, type Area } from "./Shell";
 
@@ -28,6 +28,15 @@ describe("Shell", () => {
     const links = within(rail).getAllByRole("link");
     expect(links.map((a) => a.getAttribute("aria-label"))).toEqual(AREAS.map(([, name]) => name));
     expect(links.map((a) => a.getAttribute("href"))).toEqual(AREAS.map(([, , href]) => href));
+  });
+
+  it("moves focus to main on activation and leaves the URL hash alone", () => {
+    window.history.replaceState(null, "", "/#/library");
+    render(<Shell current="library">content</Shell>);
+    fireEvent.click(screen.getByRole("link", { name: "Skip to content" }));
+    expect(document.activeElement).toBe(screen.getByRole("main"));
+    expect(window.location.hash).toBe("#/library");
+    window.history.replaceState(null, "", "/");
   });
 
   it("keeps each rail link at least 44px tall on a phone", () => {

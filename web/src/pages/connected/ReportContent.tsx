@@ -41,6 +41,16 @@ export function richParts(value: string): ReactNode {
   });
 }
 
+/** The text richParts draws, without its marks. */
+export function plainText(value: string): string {
+  return value
+    .replace(
+      /\*\*([^*]+)\*\*|`([^`]+)`/g,
+      (_, bold: string | undefined, code: string | undefined) => bold ?? code ?? "",
+    )
+    .replaceAll("\\|", "|");
+}
+
 function matchingDownload(run: PublishedRun, entry: OutputEntry) {
   const linked =
     entry.selected && run.evidence.handoffs.find((item) => item.module === entry.output.module);
@@ -232,13 +242,13 @@ export function PublishedTable({
       ((line: number, name: string) => (
         <TraceControl trace={traceAt(line)} label={`Show sources for ${name}`} />
       )));
+  // A wide table scrolls sideways: it is a named, focusable region so the keyboard can reach it.
+  const scrolls =
+    columns.length >= 5 ? { role: "region", "aria-label": tableHeading || "Table" } : {};
   return (
     <div
-      role="region"
-      // The read-only region scrolls horizontally by keyboard when columns overflow.
-      // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex
-      tabIndex={0}
-      aria-label={tableHeading || "Table"}
+      {...scrolls}
+      tabIndex={columns.length >= 5 ? 0 : undefined}
       className="relative min-w-0 overflow-x-auto rounded-ds-md border border-border-hairline"
     >
       <table className="w-full border-collapse text-sm">
@@ -638,7 +648,7 @@ export function ReportFindings({
                 typedModuleTable(entry.output.module, section.heading, block, key)) || (
                 <PublishedTable
                   table={block}
-                  heading={section.heading}
+                  heading={plainText(drawingTitle(section.heading))}
                   traceAt={key}
                   rowHref={(line) => evidencePath(run.folder, entry, line)}
                 />

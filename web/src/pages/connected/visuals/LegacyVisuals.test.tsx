@@ -624,3 +624,22 @@ it("spans a lone card and the last card of an odd count across both columns", ()
   expect(cardOf("Interest")).not.toHaveClass("lg:col-span-2");
   expect(cardOf("Debt maturities")).not.toHaveClass("lg:col-span-2");
 });
+
+it("keeps the heading level on a period chart with a negative value", () => {
+  const sections = fixture(
+    ["Period", "Free cash flow", "Reporting unit", "Basis and limitation"],
+    [
+      ["FY2028", "250.00", "US$m", "Issuer statement"],
+      ["FY2029", "-40.00", "US$m", "Issuer statement"],
+    ],
+  );
+  render(
+    <LegacyVisuals
+      headingLevel="h3"
+      output={{ charts: [{ title: "Free cash flow", table: 20, unit: "US$m", columns: [1] }] }}
+      sections={sections}
+    />,
+  );
+  expect(screen.getByRole("heading", { name: "Free cash flow", level: 3 })).toBeInTheDocument();
+  expect(screen.queryByRole("heading", { level: 4 })).toBeNull();
+});

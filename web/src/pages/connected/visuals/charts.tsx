@@ -100,6 +100,7 @@ function periods(table: SourceTable, descriptor: Descriptor, frame: Frame) {
         {frame.actions}
         <TrendChart
           title={frame.title}
+          as={frame.as}
           note={frame.note}
           periods={groups}
           series={series}

@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { useRef, type ReactNode } from "react";
 import { BookOpen01, Cube01, Grid01, PlayCircle, Signal01 } from "@untitledui/icons";
 import { NavButton } from "@/components/application/app-navigation/base-components/nav-button";
 
@@ -33,10 +33,16 @@ export function Shell({
           const section = sections.find((entry) => entry.area === item.area);
           return section ? [{ ...item, href: section.href }] : [];
         });
+  const main = useRef<HTMLElement>(null);
   return (
     <div className="flex h-screen min-h-0 flex-col bg-surface-canvas text-text-primary min-[768px]:flex-row">
       <a
         href="#main"
+        // The app routes on the URL hash, so the link moves focus and leaves the hash alone.
+        onClick={(event) => {
+          event.preventDefault();
+          main.current?.focus();
+        }}
         className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50 focus:rounded-md focus:bg-surface-card focus:px-3 focus:py-2 focus:text-text-primary focus:outline-2 focus:outline-offset-2 focus:outline-focus-ring"
       >
         Skip to content
@@ -70,6 +76,7 @@ export function Shell({
       </aside>
       <main
         id="main"
+        ref={main}
         tabIndex={-1}
         className={`relative min-h-0 min-w-0 flex-1 overflow-y-auto focus:outline-none${bleed ? "" : " p-4 sm:p-8"}`}
       >

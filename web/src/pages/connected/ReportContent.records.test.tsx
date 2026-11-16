@@ -210,19 +210,47 @@ describe("wide tables pin their first column", () => {
 });
 
 describe("scrollable table wrappers", () => {
-  const table: Table = {
+  const columns = (count: number): Table => ({
     type: "table",
-    headers: ["Item", "Value"],
+    headers: Array.from({ length: count }, (_, i) => `H${String(i)}`),
     line: 1,
-    rows: [{ line: 2, cells: ["Row", "1"] }],
-  };
-  it("is a focusable region named by the section heading", () => {
-    render(<PublishedTable table={table} heading="Net debt data" />);
+    rows: [{ line: 2, cells: Array.from({ length: count }, (_, i) => `v${String(i)}`) }],
+  });
+  it("is a focusable region named by the section heading at five columns", () => {
+    render(<PublishedTable table={columns(5)} heading="Net debt data" />);
     expect(screen.getByRole("region", { name: "Net debt data" })).toHaveAttribute("tabindex", "0");
   });
   it("is named Table when the caller passes no heading", () => {
-    render(<PublishedTable table={table} />);
+    render(<PublishedTable table={columns(5)} />);
     expect(screen.getByRole("region", { name: "Table" })).toHaveAttribute("tabindex", "0");
+  });
+  it("gives a narrow table no role, no tab stop and no label", () => {
+    const { container } = render(<PublishedTable table={columns(4)} heading="Net debt data" />);
+    expect(screen.queryByRole("region")).toBeNull();
+    expect(container.querySelector("[tabindex]")).toBeNull();
+    expect(container.querySelector("[aria-label]")).toBeNull();
+  });
+  it("labels the region with the heading as drawn, without Markdown marks", () => {
+    const section: Section = {
+      heading: "Chart data: **Net** `debt`",
+      level: 3,
+      line: 40,
+      blocks: [columns(5)],
+    };
+    const entry: OutputEntry = {
+      selected: true,
+      output: { id: "o", module: "CP-1", label: "o", href: "", sha256: "o".repeat(64) },
+      sections: [FINDINGS, section],
+    };
+    render(
+      <ReportFindings
+        snapshot={{ chips: {} } as Snapshot}
+        run={{ folder: "f", issuer: "I", asOf: "2026-10-31" } as PublishedRun}
+        entry={entry}
+        entryIndex={0}
+      />,
+    );
+    expect(screen.getByRole("region", { name: "Net debt" })).toBeInTheDocument();
   });
 });
 
