@@ -267,7 +267,7 @@ function EvidenceGaps({
                   className="border-t border-border-hairline align-top"
                 >
                   <th scope="row" className="px-4 py-3 font-medium text-text-primary">
-                    {gap.title || section.heading}
+                    {plainModuleNames(gap.title || section.heading)}
                   </th>
                   <td className="px-4 py-3">
                     {moduleName(entry.output.module)}
@@ -285,7 +285,7 @@ function EvidenceGaps({
                     )}
                   </td>
                   <td className="max-w-xl whitespace-pre-wrap px-4 py-3 text-text-secondary">
-                    {gap.details || "No additional detail recorded."}
+                    {plainModuleNames(gap.details) || "No additional detail recorded."}
                   </td>
                   <td className="px-4 py-3">
                     <a

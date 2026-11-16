@@ -5,10 +5,16 @@ export type Table = { type: "table"; line: number; headers: string[]; rows: Row[
 type Paragraph = { type: "text"; line: number; end: number; text: string };
 export type Block = Table | Paragraph | { type: "equity"; line: number; text?: string };
 export type Section = { heading: string; level: number; line: number; blocks: Block[] };
-/** Drops the code from "Name (CP-x)" in handoff text; a code in a file name or bare in a sentence stays. */
+const FILE_EXTENSIONS = "jsonl?|x?html?|xml|pdf|docx?|xlsx?|xlsm|csv|tsv|pptx?|txt|md|zip";
+// A file name ahead before the next ";", ",", "|" or line end: the code belongs to a stored name.
+const FILE_AHEAD = new RegExp(String.raw`^[^;,|\n]*\.(?:${FILE_EXTENSIONS})\b`, "i");
+/** Drops the code from "Name (CP-x)" in handoff text; a code inside a stored file name or bare in a sentence stays. */
 export function plainModuleNames(text: string) {
-  return text.replace(/ \(CP-[A-Za-z0-9]+\)(?!\.\w)/g, "");
+  return text.replace(/ \(CP-[A-Za-z0-9]+\)/g, (code, at: number) =>
+    FILE_AHEAD.test(text.slice(at + code.length)) ? code : "",
+  );
 }
+export const CONFIDENCE_INPUTS = "Confidence inputs";
 export const FORECAST_INPUTS = "Forecast inputs (machine-readable)";
 type FigureRef = Record<string, unknown> & { table: number };
 type Output = {
@@ -449,8 +455,10 @@ export function readParagraph(text: string) {
   return { body: read, basis: citations.length ? citations.join(" ") : null };
 }
 
-const FILE_REFERENCE =
-  /(?<![\w.-])[\w-]+(?:\.[\w-]+)*\.(?:jsonl?|x?html?|xml|pdf|docx?|xlsx?|xlsm|csv|tsv|pptx?|txt|md|zip)\b/i;
+const FILE_REFERENCE = new RegExp(
+  String.raw`(?<![\w.-])[\w-]+(?:\.[\w-]+)*\.(?:${FILE_EXTENSIONS})\b`,
+  "i",
+);
 const LONG_HASH = /\b(?=[0-9a-f]*[a-f])[0-9a-f]{32,}\b/i;
 const REGISTER_ID = /\bCP-[A-Z0-9]+-(?:GAP|MON|FACT|CALC|EVID|SRC|ASSUMPTION)-[A-Z0-9-]+\b/i;
 

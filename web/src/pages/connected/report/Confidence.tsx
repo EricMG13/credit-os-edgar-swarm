@@ -1,14 +1,12 @@
 import type { ReactNode } from "react";
 import type { Metric } from "@/pages/library/slice";
-import type { OutputEntry, Snapshot } from "../publishedReport";
+import { CONFIDENCE_INPUTS, type OutputEntry, type Snapshot } from "../publishedReport";
 import { MetricGrid } from "./MetricGrid";
-
-const INPUTS = "Confidence inputs";
 
 /** The line of the handoff's Confidence inputs table, so the tile's trace opens those inputs. */
 function inputsLine(entry: OutputEntry) {
   for (const section of entry.sections) {
-    if (section.heading !== INPUTS) continue;
+    if (section.heading !== CONFIDENCE_INPUTS) continue;
     const table = section.blocks.find((block) => block.type === "table");
     if (table) return table.line;
   }

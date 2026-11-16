@@ -209,7 +209,7 @@ describe("connected run start", () => {
       target: { value: "advanced" },
     });
     advanceToContext();
-    expect(screen.queryByRole("checkbox", { name: /CP-MODEL/ })).toBeNull();
+    expect(screen.queryByRole("checkbox", { name: "Cash flow model" })).toBeNull();
     fireEvent.click(screen.getByRole("checkbox", { name: "Source readiness" }));
     fireEvent.click(screen.getByRole("button", { name: "Review run" }));
     await screen.findByRole("button", { name: "Submit, spend up to USD 40.00" });

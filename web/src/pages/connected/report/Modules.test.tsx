@@ -1,5 +1,5 @@
-import { render, screen, within } from "@testing-library/react";
-import { expect, it } from "vitest";
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
+import { afterEach, expect, it } from "vitest";
 import type { OutputEntry, PublishedRun, Snapshot } from "../publishedReport";
 import type { buildReportView } from "../reportView";
 import { Modules } from "./Modules";
@@ -221,4 +221,165 @@ it("skips no heading level on a module page that draws a relationship map", () =
   levels.forEach((level, at) => {
     expect(level).toBeLessThanOrEqual((levels[at - 1] ?? 1) + 1);
   });
+});
+
+afterEach(cleanup);
+
+const CODE = /\(CP-[A-Za-z0-9]+\)/;
+type Sections = OutputEntry["sections"];
+
+function renderSections(sections: Sections, extra: Partial<OutputEntry["output"]> = {}) {
+  const entry = output("c", true);
+  entry.output = { ...entry.output, module: "CP-2", ...extra };
+  entry.sections = sections;
+  const props = fixture([]);
+  props.view.modules[0] = { ...props.view.modules[0], outputs: [entry] } as View["modules"][number];
+  props.view.entries = [entry];
+  return render(<Modules {...props} module="CP-2" />);
+}
+
+const FINDINGS: Sections[number] = { heading: "Findings", level: 2, line: 1, blocks: [] };
+
+it("drops the code of a named module from a row's trace drawer statement", async () => {
+  renderSections([
+    FINDINGS,
+    {
+      heading: "Cash position",
+      level: 3,
+      line: 3,
+      blocks: [
+        {
+          type: "table",
+          line: 4,
+          headers: ["Item", "Amount", "Source"],
+          rows: [
+            {
+              line: 6,
+              cells: [
+                "Cash runway",
+                "14 months",
+                "Financial foundation (CP-1); filing.pdf, page 3",
+              ],
+            },
+          ],
+        },
+      ],
+    },
+  ]);
+  expect(document.body.textContent).not.toMatch(CODE);
+  fireEvent.click(screen.getByRole("button", { name: "Show sources for Cash runway" }));
+  const drawer = await screen.findByRole("dialog");
+  expect(drawer.textContent).toContain("Financial foundation");
+  expect(drawer.textContent).toContain("filing.pdf, page 3");
+  expect(drawer.textContent).not.toMatch(CODE);
+});
+
+it("drops the code of a named module from a paragraph's trace drawer statement", async () => {
+  renderSections([
+    FINDINGS,
+    {
+      heading: "Credit implication",
+      level: 3,
+      line: 3,
+      blocks: [
+        {
+          type: "text",
+          line: 4,
+          end: 5,
+          text: "Cash covers the year, as Liquidity (CP-2D) sets out.\nBasis: Liquidity (CP-2D)",
+        },
+      ],
+    },
+  ]);
+  fireEvent.click(screen.getByRole("button", { name: "Show sources for this passage" }));
+  const drawer = await screen.findByRole("dialog");
+  expect(drawer.textContent).toContain("as Liquidity sets out");
+  expect(drawer.textContent).not.toMatch(CODE);
+});
+
+it("drops the code from a calculation node's source in the trace drawer", async () => {
+  renderSections([
+    FINDINGS,
+    {
+      heading: "Key findings",
+      level: 3,
+      line: 3,
+      blocks: [
+        {
+          type: "text",
+          line: 4,
+          end: 5,
+          text: "Contractual principal is USD 25,068 million.\nBasis: calculation C05",
+        },
+      ],
+    },
+    {
+      heading: "Calculations",
+      level: 2,
+      line: 20,
+      blocks: [
+        {
+          type: "table",
+          line: 21,
+          headers: ["ID", "Calculation", "Inputs", "Result", "Source"],
+          rows: [
+            {
+              line: 23,
+              cells: [
+                "C05",
+                "Contractual principal",
+                "24880 +188",
+                "25068",
+                "Financial foundation (CP-1); filing.pdf, pages 73-73",
+              ],
+            },
+          ],
+        },
+      ],
+    },
+  ]);
+  fireEvent.click(screen.getByRole("button", { name: "Show sources for this passage" }));
+  const drawer = await screen.findByRole("dialog");
+  expect(drawer.textContent).toContain("Contractual principal");
+  expect(drawer.textContent).toContain("filing.pdf, pages 73-73");
+  expect(drawer.textContent).not.toMatch(CODE);
+});
+
+it("names a row's trace control without the code in the Module cell", () => {
+  renderSections([
+    FINDINGS,
+    {
+      heading: "What changed: the analysis",
+      level: 3,
+      line: 3,
+      blocks: [
+        {
+          type: "table",
+          line: 4,
+          headers: ["Module", "Status", "Cause", "Why"],
+          rows: [
+            { line: 6, cells: ["Liquidity (CP-2D)", "Unchanged", "None", "Nothing differs."] },
+          ],
+        },
+      ],
+    },
+  ]);
+  expect(screen.getByRole("button", { name: "Show sources for Liquidity" })).toBeInTheDocument();
+  const coded = screen
+    .getAllByRole("button")
+    .map((button) => button.getAttribute("aria-label") ?? button.textContent)
+    .filter((name) => CODE.test(name));
+  expect(coded).toEqual([]);
+});
+
+it("opens the confidence tile's trace on the inputs the score was computed from", async () => {
+  renderModule({ confidence: { value: 72, band: "Medium" } });
+  const tile = screen.getByText("Confidence score").closest("li");
+  fireEvent.click(
+    within(tile as HTMLElement).getByRole("button", { name: "Show sources for this figure" }),
+  );
+  const drawer = await screen.findByRole("dialog");
+  expect(drawer.textContent).not.toContain("Basis was not recorded for this item");
+  expect(drawer.textContent).toContain("Coverage");
+  expect(drawer.textContent).toContain("High");
 });

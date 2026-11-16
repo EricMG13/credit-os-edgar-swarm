@@ -261,4 +261,20 @@ describe("plainModuleNames", () => {
     expect(plainModuleNames("Report (CP-1).pdf, page 3")).toBe("Report (CP-1).pdf, page 3");
     expect(plainModuleNames("The CP-2 view is unchanged")).toBe("The CP-2 view is unchanged");
   });
+
+  it.each([
+    ["Deck (CP-1) Q3.pdf, page 3", "Deck (CP-1) Q3.pdf, page 3"],
+    ["Model (CP-2)_v2.xlsx", "Model (CP-2)_v2.xlsx"],
+    ["Report (CP-1)-final.pdf", "Report (CP-1)-final.pdf"],
+    ["Data room (CP-1)/deck.pdf", "Data room (CP-1)/deck.pdf"],
+    ["Credit is stable; Liquidity (CP-2D) is ample.", "Credit is stable; Liquidity is ample."],
+    ["Basis: Financial foundation (CP-1)", "Basis: Financial foundation"],
+    ["Liquidity (CP-2D) shows cover of 2.5x.", "Liquidity shows cover of 2.5x."],
+    [
+      "Financial foundation (CP-1); TDG_2024-09-30_10-K_tdg-20240930.htm.jsonl, pages 73–73",
+      "Financial foundation; TDG_2024-09-30_10-K_tdg-20240930.htm.jsonl, pages 73–73",
+    ],
+  ])("keeps a stored file name and drops a module code beside it: %j", (input, expected) => {
+    expect(plainModuleNames(input)).toBe(expected);
+  });
 });

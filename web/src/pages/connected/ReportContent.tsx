@@ -19,6 +19,7 @@ import {
   evidencePath,
   evidenceHref,
   evidenceToken,
+  CONFIDENCE_INPUTS,
   FORECAST_INPUTS,
   methodNote,
   publishedHref,
@@ -157,7 +158,7 @@ function buildTrace(
     statement:
       section.heading === FORECAST_INPUTS
         ? "The model calculation uses the inputs recorded in this handoff."
-        : statement.replaceAll("**", "").replaceAll("`", ""),
+        : plainModuleNames(statement.replaceAll("**", "").replaceAll("`", "")),
     derivation: {
       ...node("Evidence retained with this item", ""),
       children: [
@@ -168,12 +169,15 @@ function buildTrace(
           return source ? [node(source, "", sourceCitationNote(chip))] : [];
         }),
         ...(!basis && !chips.length
-          ? [
-              // Recorded inputs are not a gap: only a missing basis carries no value.
-              section.heading === FORECAST_INPUTS
-                ? node("Recorded forecast inputs", "")
-                : node("Basis was not recorded for this item", null),
-            ]
+          ? section.heading === CONFIDENCE_INPUTS && block.type === "table"
+            ? // The score is computed from the handoff's own inputs table: show its rows as written.
+              block.rows.map((item) => node(item.cells[0] ?? "", item.cells[1] ?? ""))
+            : [
+                // Recorded inputs are not a gap: only a missing basis carries no value.
+                section.heading === FORECAST_INPUTS
+                  ? node("Recorded forecast inputs", "")
+                  : node("Basis was not recorded for this item", null),
+              ]
           : []),
       ],
     },
@@ -241,7 +245,7 @@ export function PublishedTable({
     rowSource ??
     (traceAt &&
       ((line: number, name: string) => (
-        <TraceControl trace={traceAt(line)} label={`Show sources for ${name}`} />
+        <TraceControl trace={traceAt(line)} label={`Show sources for ${plainModuleNames(name)}`} />
       )));
   // A wide table scrolls sideways: it is a named, focusable region so the keyboard can reach it.
   const scrolls =

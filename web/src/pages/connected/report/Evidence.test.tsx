@@ -274,7 +274,7 @@ it("keeps filtered summary counts, alternate handoffs and source identities acro
   expect(
     screen.getByRole("link", { name: "Financial foundation · Saved alternate" }),
   ).toHaveAttribute("href", `/report/case#evidence/alternate~${"a".repeat(64)}`);
-  expect(screen.queryByRole("link", { name: /CP-2G/ })).toBeNull();
+  expect(screen.queryByRole("link", { name: /Forward credit model/ })).toBeNull();
   summary.unmount();
   const sources = renderEvidence(entries, "sources/CP-1", evidence);
   expect(screen.getByText("Issuer filing")).toBeVisible();
@@ -388,3 +388,73 @@ it("preserves citation identity, warnings and exact source links without inventi
   expect(item("Source identity missing").queryByText(hash)).toBeNull();
   expect(item("Empty filename").queryByText("Do not coerce empty to missing")).toBeNull();
 });
+
+const CODE = /\(CP-[A-Za-z0-9]+\)/;
+
+it("drops the code of a named module from a gap row's recorded detail", () => {
+  const entry = evidenceEntry("CP-1", "out", true, [
+    {
+      type: "table",
+      line: 5,
+      headers: ["Gap", "Severity", "Effect"],
+      rows: [{ line: 7, cells: ["No facility headroom", "High", "Limits Liquidity (CP-2D)"] }],
+    },
+  ]);
+  renderGaps([entry]);
+  expect(document.body.textContent).toContain("Limits Liquidity");
+  expect(document.body.textContent).not.toMatch(CODE);
+});
+
+it("draws a handoff's Sources row with the file name as stored", () => {
+  const entry = evidenceEntry("CP-1", "out", true, []);
+  entry.sections = [
+    {
+      heading: "Sources",
+      level: 2,
+      line: 4,
+      blocks: [
+        {
+          type: "table",
+          line: 5,
+          headers: ["Source document name", "Use"],
+          rows: [{ line: 7, cells: ["Deck (CP-1) Q3.pdf", "Liquidity figures"] }],
+        },
+      ],
+    },
+  ];
+  renderEvidence([entry], `out~${"a".repeat(64)}`);
+  expect(screen.getByRole("cell", { name: "Deck (CP-1) Q3.pdf" })).toBeInTheDocument();
+});
+
+it.each(["Deck Q3.pdf", "Deck (CP-1) Q3.pdf"])(
+  "lists the source record of a figure whose Basis names %j",
+  (name) => {
+    const entry = evidenceEntry("CP-1", "out", true, []);
+    entry.sections = [
+      { heading: "Findings", level: 2, line: 1, blocks: [] },
+      {
+        heading: "Key findings",
+        level: 3,
+        line: 3,
+        blocks: [
+          { type: "text", line: 4, end: 5, text: `Cash covers the year.\nBasis: ${name}, page 3` },
+        ],
+      },
+    ];
+    const evidence = {
+      ...emptyEvidence,
+      sources: [
+        {
+          name,
+          type: "PDF",
+          documentDate: "2026-10-31",
+          readBy: ["CP-1"],
+          sha256: "source-digest",
+        },
+      ],
+    } as unknown as PublishedRun["evidence"];
+    renderEvidence([entry], `out~${"a".repeat(64)}-4`, evidence);
+    expect(screen.getByRole("heading", { name: "Derivation" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Source records" })).toBeInTheDocument();
+  },
+);
