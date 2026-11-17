@@ -1,6 +1,6 @@
 import { Fragment, useState, type ReactNode } from "react";
 import { Button } from "@/components/base/buttons/button";
-import { containsReference } from "../publishedReport";
+import { containsReference, readerText } from "../publishedReport";
 import type { Grid } from "./LegacyForecast";
 import { word } from "./visualData";
 
@@ -10,7 +10,11 @@ function Qualification({ text, label, source }: { text: string; label: string; s
   return (
     <div className="mt-2 max-w-sm whitespace-normal text-left text-small font-normal text-text-secondary">
       <p className="font-semibold">{label}</p>
-      <p>{containsReference(text) ? "Recorded qualification: review the model evidence." : text}</p>
+      <p>
+        {containsReference(text)
+          ? "Recorded qualification: review the model evidence."
+          : readerText(text)}
+      </p>
       {source?.(label)}
     </div>
   );
@@ -44,6 +48,22 @@ function unpopulated(row: Grid["rows"][number]) {
 }
 
 const NOT_AVAILABLE = "n.a.";
+
+const PERIOD_WORDS: Record<string, string> = {
+  "PF LTM": "Pro forma last twelve months",
+  "Prior LTM": "Prior last twelve months",
+  LTM: "Last twelve months",
+  PYTD: "Prior-year to date",
+  YTD: "Year to date",
+};
+
+/** A column label with its period shorthand spelled out, for a sentence; the table header keeps the label. */
+function spelledOut(label: string) {
+  return label.replace(
+    /\b(?:PF LTM|Prior LTM|LTM|PYTD|YTD)\b/g,
+    (token) => PERIOD_WORDS[token] ?? token,
+  );
+}
 
 function emptyColumns(grid: Grid) {
   return grid.columns.flatMap((_, index) =>
@@ -95,7 +115,7 @@ function ForecastCell({
   showReason: boolean;
 }) {
   const display = word(cell.display);
-  const reason = word(cell.reason);
+  const reason = readerText(word(cell.reason));
   const exact = word(cell.exact);
   return (
     <td
@@ -164,7 +184,7 @@ function ForecastColumns({ grid }: { grid: Grid }) {
             colSpan={group.span}
             className="px-3 py-2 text-center whitespace-nowrap"
           >
-            {group.label}
+            {readerText(group.label)}
           </th>
         ))}
       </tr>
@@ -266,7 +286,7 @@ export function ForecastTable({
           note={
             showColumns
               ? null
-              : `These columns have no recorded values: ${empty.map((index) => inputGrid.columns[index]?.label ?? "").join(", ")}.`
+              : `These columns have no recorded values: ${empty.map((index) => spelledOut(inputGrid.columns[index]?.label ?? "")).join(", ")}.`
           }
           label={
             showColumns

@@ -533,8 +533,19 @@ const FILE_REFERENCE = new RegExp(
 const LONG_HASH = /\b(?=[0-9a-f]*[a-f])[0-9a-f]{32,}\b/i;
 const REGISTER_ID = /\bCP-[A-Z0-9]+-(?:GAP|MON|FACT|CALC|EVID|SRC|ASSUMPTION)-[A-Z0-9-]+\b/i;
 
+// A gap id "(G12)" and a run code "20261117-094923-01". A module code is not a reference here: a
+// findings page draws it as the module's name (`readerText`, D-13 part 2), so it is not held back.
+const GAP_ID = /\(G\d+\)/;
+const RUN_CODE = /\b\d{8}-\d{6}-\d{2}\b/;
+
 export function containsReference(text: string) {
-  return FILE_REFERENCE.test(text) || LONG_HASH.test(text) || REGISTER_ID.test(text);
+  return (
+    FILE_REFERENCE.test(text) ||
+    LONG_HASH.test(text) ||
+    REGISTER_ID.test(text) ||
+    GAP_ID.test(text) ||
+    RUN_CODE.test(text)
+  );
 }
 
 const INTERMODULE =

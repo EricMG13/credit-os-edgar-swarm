@@ -63,7 +63,9 @@ function EvidenceLocation({
           section.heading === FORECAST_INPUTS &&
           section.blocks.some((block) => block.line === line)),
     )
-    .map(({ section }) => section);
+    .map(({ section }) => section)
+    // The title line of a handoff is the module's code: it heads nothing, and the card names the module.
+    .filter((section) => section.level > 1 || section.blocks.length > 0);
   const visible =
     line === undefined
       ? sections
@@ -71,7 +73,9 @@ function EvidenceLocation({
   return visible.length ? (
     visible.map((section) => (
       <section key={section.line} className="grid gap-3 border-t border-border-hairline pt-3">
-        <h3 className="font-semibold text-text-primary">{richParts(section.heading)}</h3>
+        <h3 className="font-semibold text-text-primary">
+          {section.level === 1 ? moduleName(entry.output.module) : richParts(section.heading)}
+        </h3>
         {section.blocks.map((block) => {
           if (block.type === "equity")
             return block.text ? (

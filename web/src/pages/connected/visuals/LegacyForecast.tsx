@@ -4,7 +4,7 @@ import { PathChart } from "@/components/chart/PathChart";
 import { ChartTable } from "@/components/chart/ChartTable";
 import { TrendChart } from "@/components/chart/TrendChart";
 import { TRACE_HOST } from "@/pages/library/parts/TraceControl";
-import { containsReference } from "../publishedReport";
+import { containsReference, readerText } from "../publishedReport";
 import { amount, items, record, stringsIn, ticks, word } from "./visualData";
 
 interface GridColumn {
@@ -282,7 +282,8 @@ export function forecastCaseOptions(model: unknown) {
 
 function caseDescription(name: string, notes: string[]) {
   const prefix = name === "Downside shock" ? "Downside case is" : `${name} is`;
-  return notes.find((note) => note.startsWith(prefix) && !containsReference(note));
+  const found = notes.find((note) => note.startsWith(prefix) && !containsReference(note));
+  return found && readerText(found);
 }
 
 function scopePassages(cashflow: Record<string, unknown>) {
@@ -457,7 +458,7 @@ export function LegacyForecast({
           {notes.length > 0 && (
             <ul className="list-disc pl-5">
               {notes.map((note, index) => (
-                <li key={index}>{note}</li>
+                <li key={index}>{readerText(note)}</li>
               ))}
             </ul>
           )}
@@ -466,7 +467,7 @@ export function LegacyForecast({
               <h4 className="font-display text-h4">Model limitations</h4>
               <ul className="list-disc pl-5">
                 {limits.map((limit, index) => (
-                  <li key={index}>{limit}</li>
+                  <li key={index}>{readerText(limit)}</li>
                 ))}
               </ul>
             </section>

@@ -204,7 +204,7 @@ it.each([20, 0, 22.5, 22])(
     const calendar = buildCalendar([handoff], "current");
     expect(calendar.rows).toEqual([]);
     expect(calendar.gaps).toHaveLength(1);
-    expect(calendar.gaps[0]?.reason).toBe("The handoff does not identify each event row.");
+    expect(calendar.gaps[0]?.reason).toBe("The event table does not identify each event row.");
     expect(calendar.gaps[0]?.href).toContain(`~${"2".repeat(64)}-20`);
   },
 );

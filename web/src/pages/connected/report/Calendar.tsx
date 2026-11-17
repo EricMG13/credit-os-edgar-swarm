@@ -9,6 +9,7 @@ import {
   containsReference,
   evidencePath,
   type OutputEntry,
+  readerText,
   type Table,
 } from "../publishedReport";
 import { EVENT_HEADERS, eventLane, eventRecords } from "../visuals/EventLane";
@@ -35,7 +36,7 @@ function validatedEvents(table: SourceTable, block: Table) {
     lines.some((line) => !Number.isSafeInteger(line) || line <= table.line) ||
     new Set(lines).size !== lines.length
   ) {
-    return { problem: "The handoff does not identify each event row." };
+    return { problem: "The event table does not identify each event row." };
   }
   return { events };
 }
@@ -194,7 +195,7 @@ export function Calendar({ calendar }: { calendar: ReturnType<typeof buildCalend
           <h3 className={heading}>{title}</h3>
           <p>{owner}</p>
           <p role="note">
-            {containsReference(reason) ? "The handoff records a date gap in Evidence." : reason}
+            {containsReference(reason) ? "A date gap is recorded in Evidence." : readerText(reason)}
           </p>
           <EventSource href={href} name={title} />
         </section>
