@@ -1,9 +1,9 @@
 state: running
-updated: 2026-11-17T21:33:22Z
-done: Opened audit/final-sweep from 5e1d98b3 at the owner's request. Recorded the scope, protected behavior, caps and gates.
-next: Measure the current tree, reconcile the 17 sweep rows with current callers and record candidates before changes.
-blocked: None for discovery. Stage 5 has outstanding acceptance checks that must be reconciled before sweep acceptance.
-reports: docs/audit/2026-11-16-final/output/6-sweep/CONTRACT.md and register.md
+updated: 2026-11-17T21:42:20Z
+done: Stage 6 branch pushed. Scope and measurements recorded. Reconciled 17 inherited rows and nine related observations. First reviewed change, SW-02, integrated with two fewer shared-to-page dependencies and byte-identical stylesheets.
+next: Finish review and integration of SW-01 and SW-03, measure the History row projection, and decide the remaining bounded candidates. Repeat checks against the updated stage 5 tip.
+blocked: None for the sweep work in progress. Final acceptance depends on the remaining stage 5 fidelity and combined gates. The current script-suite attempt timed out in nested builds and is recorded in the measurement evidence.
+reports: docs/audit/2026-11-16-final/output/6-sweep/CONTRACT.md, register.md, discovery.md and measurements.md
 
 The named sweep skill, fallow CLI and historical model choices are unavailable.
-Use the stage 6 fallback with installed tools and inherited Codex workers under R7.
+The stage 6 fallback uses installed tools and inherited Codex workers under R7.
