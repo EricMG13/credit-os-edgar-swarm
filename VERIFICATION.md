@@ -4,6 +4,21 @@ Keep one running record here. A pass applies only to the stated scope. Earlier v
 engine is in [EricMG13/final-workflow](https://github.com/EricMG13/final-workflow)'s
 `VERIFICATION.md`, which also keeps the retained runs this copy leaves out.
 
+## 2026-11-17 — Final audit T18 Forecast recovery (audit/repair-2)
+
+- Scope: optional contextual Forecast traces; exact model qualification ledger on Evidence Record;
+  recorded drivers/shock/facilities; desktop long tokens; assigned Forecast Low/Info display fixes.
+  No analytical calculation, Python, prompt, handoff or protected Signal source changed.
+- Test first: eight recovery tests, a Downside containment test, three confidence/caption cases and
+  the invalid-grid Record-link assertion each failed before their corresponding production fix.
+- Passed: 333 affected tests, then 40 focused after final source metadata; 743 caller/Signal tests; lint, format, typecheck, knip, duplication,
+  build, 70 script tests, pinned-uv quality gate and native Chrome/Edge offline file gates.
+- Unchanged C4-002/003/025/026 probes passed. Native Chrome 157 and Edge 155 checked synthetic
+  source tokens, the ledger, selected-case figures and seven intercepted states each, with no
+  outside hosts or page errors. Exact scopes and original expected-text changes: [T18 report](docs/audit/2026-11-16-final/output/5-repair/T18.md).
+- Early independent source/context findings were reproduced red and addressed within the still-open fourth round; final code pin `f7f1e011`. Fresh final verdicts remain with the lead.
+- Not verified: fresh independent primary/adversarial final verdicts, final combined branch and live cases.
+
 ## 2026-11-17 — Run state from one reading of the event log; a delivered run is finished (branch `claude/jolly-gauss-0erxtn`)
 
 Scope: how a run's end and its modules' states are read from `events.jsonl` (`run_events.progress`, used by `inbox/runs.outcome` and `inbox/activity.module_states`), the new module state `stopped` in the React run pages and the static library's run steps, the run page's `held_reason`, and CP-OS's relaunch of a folder that already holds a completion record (`owners/cpos.py`). Launcher options, caps, budget, checkers and delivery files unchanged. No provider was called and no paid run was made.
@@ -966,32 +981,3 @@ Scope: presentation only, all under `web/`; no backend, handoff, provider or mod
   `affdcadd30fece8505fabe1fc32412ce83ebc8dead650fe8f33724dd130fcaf1`.
   Clean macOS extraction passed Chrome (`20261115-164826-01`) and Edge
   (`20261115-164833-01`). Windows work-PC proof and publication are pending.
-
-## 2026-11-15 — Downside case comparison
-
-- The retained Caesars CP-2A handoff supplied an unstressed control and three
-  named shocks. Chrome and Edge matched the cover-watch result of −31.3278 USD
-  million free cash flow and 1.22x all-in cover across chart, table and row trace.
-  The 720 px layout passed after the trace tooltip closed. The report still has
-  the same pre-existing horizontal overflow at 390 px.
-- Confidence review verified reordered columns, ambiguous control and shock
-  inputs, negative and zero geometry, cross-currency rejection and missing
-  net debt. Focused web (80) and Python (15) tests, quality, lint and build passed.
-- Candidate `203c547` SHA-256
-  `697bdea7f42e71c7454d0f19ea0cb82b31ad891dead59a34658bc54c4d32a58f`.
-  Clean macOS extraction passed Chrome (`20261115-164043-01`) and Edge
-  (`20261115-164051-01`). Windows work-PC proof and publication are pending.
-
-## 2026-11-15 — Module readiness and monitoring records
-
-- The retained Caesars replay in macOS Chrome and Edge showed six CP-0 readiness
-  decisions (five with limitations, one conditional) and eight CP-2 triggers.
-  The USD 1,502 million liquidity threshold and the unresolved covenant basis
-  match the handoffs. Both browsers checked section jumps and row trace focus.
-- Confidence review checked the combined and split register columns, module
-  ownership, unavailable thresholds and preservation of source qualifications.
-  Focused web (927) and Python (15) tests, quality, lint, format and build passed.
-- Candidate `c96d161` SHA-256
-  `5b0599d74f0ccbedd122c8920f8deaf225f4494eef309c7ee4c19c957cae86df`.
-  Clean extraction passed macOS Chrome (`20261115-162914-01`) and Edge
-  (`20261115-162922-01`). Windows work-PC proof and publication are pending.

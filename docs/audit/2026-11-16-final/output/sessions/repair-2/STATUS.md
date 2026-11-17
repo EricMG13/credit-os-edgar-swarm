@@ -1,9 +1,9 @@
 state: running
-updated: 2026-11-17T17:50Z
+updated: 2026-11-17T18:28Z
 done: all previously pushed tasks remain preserved at f9453f27; lead took over after the user-required two hours without a push (last original push 15:32:06Z, checked origin at 17:32:14Z).
-next: T18 recovery implementation passes 128 focused tests, typecheck and changed-file lint after eight test-first failures plus a Downside wrap failure. Run source probes, caller/Signal checks and branch gates; then fresh last-round review. T22 remains untouched and follows T18.
+next: T18 recovery implementation and assigned Forecast Low/Info batch ready for fresh final-round primary/adversarial review: 333 affected tests, 743 callers/Signal tests, native Chrome/Edge file and source/state proofs, unchanged C4-002/003/025/026 probes and code gates passed; final source-context/Record-link follow-up passes 40 focused tests, lint and typecheck. Final fourth-round code pin f7f1e011 includes all confirmed early primary/adversarial feedback; both reviewers must check this pin, not claim the early eaf0a879 passed. T22 remains untouched and follows T18 on a separate fresh worker.
 blocked: prior T18/T22 worktree code/reports were never pushed and are unavailable; recover from repository evidence only.
-reports: original reports below; new recovery reports will be output/5-repair/T18.md and T22.md.
+reports: output/5-repair/T18.md and batch-forecast.md added for recovery; original reports below remain preserved. T22 recovery report is pending its separate worker.
 
 ## Takeover constraints
 
