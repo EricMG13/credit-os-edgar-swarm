@@ -613,10 +613,11 @@ function parenthesizedGap(text: string) {
   });
 }
 
-// Page locators have no page-number length limit. In "eleven pp. 3 quarters", the count
-// and duration continue an ordinary percentage-point sentence; no number-word vocabulary is
-// needed. Explicit locator cues take precedence. Word fragments, S&P and p.p. are excluded
-// at the token boundary; "front page 2025" names a headline, not a document locator.
+// Page locators have no page-number length limit. A word before "pp" and an uninterrupted
+// count/duration phrase after it can continue a percentage-point quantity. Duration modifiers
+// have no word-count limit, but punctuation ends that phrase; bare/parenthesized locators
+// have no preceding quantity. Explicit locator cues take precedence. Word fragments, S&P and
+// p.p. are excluded at the token boundary; "front page 2025" is a headline, not a locator.
 function pageCitation(text: string) {
   return [...text.matchAll(/(?<![\w&.-])(p|pg|pp|pages?)\.?\s*(\d+)\b/gi)].some((match) => {
     const before = text.slice(0, match.index);
@@ -625,7 +626,10 @@ function pageCitation(text: string) {
     if (/\b(?:see|at|on|as)\s*$/i.test(before)) return true;
     if (marker === "pp") {
       if (/\d\s*$/.test(before)) return false;
-      if (/^\s+(?:\p{L}+\s+)?(?:days?|weeks?|months?|quarters?|years?)\b/iu.test(after))
+      if (
+        /\p{L}\s*$/u.test(before) &&
+        /^\s+(?:\p{L}+(?:-\p{L}+)*\s+)*(?:days?|weeks?|months?|quarters?|years?)\b/iu.test(after)
+      )
         return false;
     }
     return !(marker === "page" && /\bfront\s+$/i.test(before));
