@@ -28,6 +28,7 @@ import {
   actionBias,
   buildReportView,
   foundationMetrics,
+  headlineSources,
   moduleBottomLines,
   runLimitations,
   type MetricKey,
@@ -205,7 +206,10 @@ function Overview({
       entryIndex={foundation ? view.entries.indexOf(foundation) : -1}
     />
   ) : (
-    <HeadlineFigures catalogue={view.catalogue} />
+    <HeadlineFigures
+      catalogue={view.catalogue}
+      sources={headlineSources(foundation, view.catalogue, run.folder)}
+    />
   );
   return (
     <>

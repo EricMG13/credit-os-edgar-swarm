@@ -4,6 +4,7 @@ import { exactDifference } from "./signal";
 import {
   blocked,
   containsReference,
+  evidencePath,
   methodNote,
   outputEntries,
   passages,
@@ -363,6 +364,74 @@ export function foundationMetrics(entry: OutputEntry, catalogue: CatalogueRun | 
     ...principal(entry, date, run),
     ...maturityTotal(entry, date, run),
   ];
+}
+
+/** Where a headline figure sits in the Financial foundation handoff: the Evidence address of its
+ * row, the period the row states and, for a figure the module says it did not supply, its words. */
+export type HeadlineSource = { href: string; period: string; reason?: string };
+
+/** The CP-1 chart table and column heading each headline figure is quoted from: `_METRICS` of
+ * `credit_os_catalogue.py`, where an adjusted heading stands in for the reported one. */
+const HEADLINE_CELLS = {
+  net_leverage: ["leverage", /^Net debt \/ /],
+  leverage: ["leverage", /^Total debt \/ /],
+  coverage: ["interest cover", / \/ cash interest$/],
+  revenue: ["revenue and EBITDA", /^Revenue$/],
+  adjusted_ebitda: ["revenue and EBITDA", /^Adjusted EBITDA$/],
+  cash: ["liquidity", /^Cash$/],
+} as const;
+
+type Figure = CatalogueRun["metrics"][string];
+
+/** A headline figure the catalogue gives a value: a zero is a figure, an empty string is none. */
+export const stated = (figure: Figure | undefined): figure is Figure & { value: string | number } =>
+  figure?.value != null && figure.value !== "";
+
+/** The row of a headline figure's chart table that states `period`, and that row's cell in the
+ * figure's column; nothing when the table, the one column or the one row is not there. */
+function headlineRow(
+  entry: OutputEntry,
+  [chart, heading]: readonly [string, RegExp],
+  period: string,
+) {
+  const table = namedTable(entry, `Chart data: ${chart}`, ["Period"]);
+  if (!table) return undefined;
+  const at = table.headers.indexOf("Period");
+  const columns = table.headers.flatMap((name, i) => (heading.test(name) ? [i] : []));
+  const row = namedRow(table, ({ cells }) => cells[at] === period);
+  const [column] = columns;
+  const cell = columns.length === 1 && column !== undefined ? row?.cells[column] : undefined;
+  return row && cell !== undefined ? { line: row.line, cell } : undefined;
+}
+
+/**
+ * The handoff row each headline figure is read from, by metric key, so its tile can open the
+ * trace; and, for a figure the catalogue lacks, the row where the module says it did not supply
+ * it, at the period the other figures carry. No entry where the row is not found, or states
+ * another value: a tile keeps no trace rather than one that disagrees with it.
+ */
+export function headlineSources(
+  entry: OutputEntry | undefined,
+  catalogue: CatalogueRun | undefined,
+  folder: string,
+) {
+  const sources: Record<string, HeadlineSource> = {};
+  if (!entry || !catalogue || entry.output.module !== "CP-1" || blocked(entry)) return sources;
+  const tiles = Object.entries(HEADLINE_CELLS).map(([key, where]) => {
+    const figure = catalogue.metrics[key];
+    return { key, where, figure: stated(figure) ? figure : undefined };
+  });
+  const common = tiles.find(({ figure }) => figure?.period)?.figure?.period;
+  for (const { key, where, figure } of tiles) {
+    const period = figure ? figure.period : common;
+    const found = period ? headlineRow(entry, where, period) : undefined;
+    if (!period || !found) continue;
+    const href = evidencePath(folder, entry, found.line);
+    if (figure && found.cell === String(figure.value)) sources[key] = { href, period };
+    else if (!figure && found.cell.startsWith("Not supplied"))
+      sources[key] = { href, period, reason: found.cell };
+  }
+  return sources;
 }
 
 export function traceKey(entry: OutputEntry, line: number) {

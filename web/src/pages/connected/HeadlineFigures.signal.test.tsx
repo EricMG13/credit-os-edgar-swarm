@@ -144,7 +144,11 @@ describe("revenue and cash cards", () => {
         })}
       />,
     );
+    // A figure the catalogue lacks keeps its place as a stated gap (C3-020) instead of dropping out.
     expect(screen.getAllByRole("term").map((el) => el.textContent)).toEqual([
+      "Net leverage",
+      "Gross leverage",
+      "Interest coverage",
       "Revenue",
       "Adjusted EBITDA",
       "Cash",
