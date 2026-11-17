@@ -319,7 +319,6 @@ export function ReviewSheet({
             rows={[
               ["Issuer", identity.issuer_name],
               ["As-of date", run.as_of],
-              ["Reporting currency", run.reporting_currency],
               ["Submitted by", answers.submitted_by],
             ]}
           />
@@ -381,6 +380,13 @@ export function ReviewSheet({
             <p className="text-sm text-text-secondary">
               The research module will search the web. The issuer&apos;s name and the questions it
               researches go to OpenAI&apos;s search.
+            </p>
+          )}
+          {summary.web_lookup === true && (
+            <p className="text-sm text-text-secondary">
+              The research module may read Yahoo Finance pages. Their addresses name what it looks
+              up, such as the issuer&apos;s ticker, so Yahoo sees which issuer is researched; no
+              document is sent.
             </p>
           )}
         </Block>

@@ -392,6 +392,14 @@ _ADD_EXECUTED = (
 _ADD_QUOTES = "Add observed quotes under Observed quotes, or a quotes file."
 _CP4_LIVE = "legal documents declared %r (entered by user)"
 
+
+def no_legal_documents(context: RunContext) -> bool:
+    """The context declares no legal documents, so CP-4 has no executed governing document and
+    stops at its source gate. One rule for the forecast's CP-4 rules and the launcher's routing,
+    instructions and acceptance of CP-4 (`cpos_launch._layout`, `_instructions`, `checker`)."""
+    return context.attachments.legal_documents == "none"
+
+
 # ponytail: the Will refuse wording below is provisional; A-live (Covenant & Refinancing, legal
 # documents `none`) records what CP-4 and its consumers do and sets the final text.
 RULES: tuple[Rule, ...] = (
@@ -463,19 +471,6 @@ RULES: tuple[Rule, ...] = (
         "observed offline",
     ),
     Rule(
-        "cp2d-non-usd",
-        "CP-2D",
-        lambda f: f.context.run.reporting_currency != "USD",
-        "limited",
-        "The reporting currency is not USD, and CP-2D builds its bridge in USD millions.",
-        "No file needed; read CP-2D amounts in the reporting currency as stated in its handoff.",
-        "owner-path: src/deploy_workflow/owners/cp2d.py _usd_millions; METHODOLOGY-REVIEW.md "
-        "'preserve foreign-currency and unavailable-facility limitations' (the CP-2D method "
-        "text sent has a Currency and Scale column on T2E.5 and says nothing of a USD "
-        "restatement)",
-        "observed offline",
-    ),
-    Rule(
         "cp2h-no-ratings",
         "CP-2H",
         lambda f: not f.context.ratings and f.kind("ratings") is None,
@@ -521,7 +516,7 @@ RULES: tuple[Rule, ...] = (
     Rule(
         "cp4-declared-none",
         "CP-4",
-        lambda f: f.legal == "none",
+        lambda f: no_legal_documents(f.context),
         "will_refuse",
         "No agreement is chosen among the documents, so CP-4 stops with "
         '"No executed governing document".',
@@ -555,7 +550,7 @@ RULES: tuple[Rule, ...] = (
         "cp4-declared-draft-or-primary-no-executed-agreement",
         "CP-4",
         lambda f: (
-            f.legal != "none"
+            not no_legal_documents(f.context)
             and (f.legal == "draft" or f.run_type == "primary")
             and not f.executed_agreement
         ),
@@ -569,7 +564,11 @@ RULES: tuple[Rule, ...] = (
     Rule(
         "cp4-only-amendment",
         "CP-4",
-        lambda f: f.legal != "none" and f.kind("amendment") is not None and not f.kind(*AGREEMENTS),
+        lambda f: (
+            not no_legal_documents(f.context)
+            and f.kind("amendment") is not None
+            and not f.kind(*AGREEMENTS)
+        ),
         "limited",
         "Only an amendment is recognised and the base agreement not recognised, so the amendment "
         "alone cannot show the covenants it changes.",
@@ -583,7 +582,7 @@ RULES: tuple[Rule, ...] = (
         "cp4-governing-terms-rest-on-final-om",
         "CP-4",
         lambda f: (
-            f.legal != "none"
+            not no_legal_documents(f.context)
             and f.run_type in ("secondary", "research")
             and not f.kind(*AGREEMENTS)
             and (om := f.kind("offering_memorandum")) is not None

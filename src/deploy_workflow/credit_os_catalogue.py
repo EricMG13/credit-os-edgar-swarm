@@ -222,14 +222,13 @@ def pinned_context(folder: Path, issues: list[str]) -> RunContext | None:
 
 
 def context_values(context: RunContext | None) -> dict[str, str]:
-    """Ticker, sector, country, currency and period of the run's context; empty without one."""
+    """Ticker, sector, country and period of the run's context; empty without one."""
     if context is None:
         return {}
     found = {
         "ticker": context.identity.ticker,
         "sector": context.identity.sector,
         "country": context.identity.country,
-        "reporting_currency": context.run.reporting_currency,
         "current_period": context.run.current_period,
     }
     return {key: value.strip() for key, value in found.items() if value.strip()}
@@ -389,8 +388,9 @@ def delivery_fields(
     sources: dict[str, Any],
     issues: list[str],
     verified: Mapping[str, Any] | None = None,
-) -> tuple[list[dict[str, Any]], dict[str, dict[str, str]]]:
-    """The run's verified delivery as one artifact, and the metrics its CP-1 handoff states.
+) -> tuple[list[dict[str, Any]], dict[str, dict[str, str]], str]:
+    """The run's verified delivery as one artifact, the metrics its CP-1 handoff states, and the
+    run's currency (the ISO code of CP-1's money unit; empty when CP-1 states none).
 
     ``verified`` is the delivery this build already verified (``Library.deliveries``), used as is
     and never changed; without it the delivery is verified here."""
@@ -415,7 +415,7 @@ def delivery_fields(
             text = raw.decode("utf-8", errors="replace")
     except (Refused, OSError) as error:
         issues.append(f"{name}: delivery not catalogued ({error})")
-        return [], {}
+        return [], {}, ""
     delivered = f"runs/{name}/{relative}"
     mode = view.get("mode")
     artifact = {
@@ -437,7 +437,20 @@ def delivery_fields(
     artifacts = [artifact]
     if published:
         artifacts.append(model_artifact(artifact, delivered, files))
-    return artifacts, metrics
+    return artifacts, metrics, cp1_currency(text)
+
+
+def cp1_currency(text: str) -> str:
+    """The ISO code of the currency CP-1's statements are printed in, from CP-1's money unit
+    (`US$m` is USD, `GBPm` is GBP); empty when CP-1 states no single currency. Never the context's
+    `reporting_currency` (docs/rulings/2026-11-16-reporting-currency-from-sources.md)."""
+    # Imported here: cpos_cp1_check imports this module (period_order), so a top-level import loops.
+    from deploy_workflow.owners.cpos_cp1_check import money_unit
+
+    unit = money_unit(text)
+    if unit is None:
+        return ""
+    return "USD" if unit == "US$m" else unit.removesuffix("m")
 
 
 def run_record(
@@ -453,7 +466,7 @@ def run_record(
     period, period_kind = period_fields(context)
     summary, gaps = summary_fields(run)
     title = pathway_title(run["pathway"])
-    artifacts, metrics = delivery_fields(workspace, run, sources, issues, verified)
+    artifacts, metrics, currency = delivery_fields(workspace, run, sources, issues, verified)
     return {
         "id": name,
         "issuer": context.get("ticker") or run["issuer_id"].upper(),
@@ -462,7 +475,7 @@ def run_record(
         "workflow": title,
         "sector": context.get("sector", ""),
         "country": context.get("country", ""),
-        "currency": context.get("reporting_currency", ""),
+        "currency": currency,
         "date": run["as_of"],
         "period": period,
         "period_kind": period_kind,

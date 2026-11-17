@@ -1097,3 +1097,19 @@ def test_a_run_beside_an_unreadable_record_resolves_and_its_own_bad_record_is_re
     assert refused.status == 500 and b"{not json" not in refused.body  # today's reply to ValueError
     assert refused.body != missing.body
     assert (bad.read_bytes(), bad.stat().st_mtime_ns) == before
+
+
+def test_a_eur_context_reviewed_on_the_service_has_no_item_about_us_dollars(svc):
+    """docs/rulings/2026-11-16-reporting-currency-from-sources.md: CP-2D works in the currency the
+    statements state, so a EUR issuer's summary carries no USD item."""
+    sid = svc.new()
+    svc.upload(sid, "notes/a.txt", b"Net sales were 100.")
+    answers = answers_for(modules=["CP-0", "CP-1", "CP-2D"])
+    answers["context"]["run"]["reporting_currency"] = "EUR"
+    got = svc.call("POST", f"/api/submissions/{sid}/summary", answers)
+    assert got.status == 200
+    summary = got.json()
+    assert summary["error"] == "", summary
+    text = json.dumps(summary)
+    assert "USD millions" not in text and "US$" not in text
+    assert "in USD" not in text and "not USD" not in text

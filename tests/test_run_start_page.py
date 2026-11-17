@@ -544,6 +544,9 @@ def test_the_three_levels_build_the_same_context_for_the_same_answers(page):
 def test_basic_builds_the_defaults_the_form_had(page):
     expected = json.loads(json.dumps(RESEARCH_MINIMAL))
     expected["run"]["cutoff"] = expected["run"]["as_of"]  # The form writes the cutoff, never blank.
+    # The form does not ask the reporting currency
+    # (ruling 2026-11-16-reporting-currency-from-sources).
+    del expected["run"]["reporting_currency"]
     expected["identity"]["issue_classification"] = (
         "high_yield"  # The form asks it; the file did not.
     )
@@ -905,6 +908,53 @@ def test_the_review_draws_the_launchers_lookup_statement_as_text(page):
     assert 'Lookup: on: <img src=x onerror="window.pwned=1"> (marker)' in seen["drawn"]
     assert "SEC: sec.gov lookups will be refused: A is not set" in seen["drawn"]
     assert seen["images"] == 0 and seen["pwned"] is False
+
+
+YAHOO = (
+    "Yahoo FinanceThe research module may read Yahoo Finance pages. Their addresses name what it "
+    "looks up, such as the issuer's ticker, so Yahoo sees which issuer is researched; no document "
+    "is sent."
+)
+
+
+@pytest.mark.parametrize(
+    ("kind", "drop", "model", "shown"),
+    [
+        ("public", "", "gpt", True),
+        ("public", "", "claude", True),
+        ("private", "", "gpt", False),
+        ("public", "CP-DR", "gpt", False),
+    ],
+)
+def test_the_review_names_yahoo_and_the_ticker_exactly_when_the_lookup_is_on(
+    page, kind, drop, model, shown
+):
+    """The service's ``web_lookup`` decides: a public case's research module looks up by default,
+    on any model; a private case's does not, nor a run that leaves the research module out."""
+    seen = page.run(f"""
+    level('advanced');
+    await issuer('credit_snapshot', [file('annual.txt', {json.dumps(REPORT)})]);
+    pick('data-k="case_kind"', {json.dumps(kind)});
+    pick('data-c="model"', {json.dumps(model)});
+    const box = document.querySelector('[data-c="mod"][value={json.dumps(drop)}]');
+    if (box) {{ box.checked = false; change(box); }}
+    const S = await review();
+    const facts = $('rv-facts').textContent;
+    // The page script's summary is the page's own SUMMARY: read it before the older-service
+    // case deletes a field, and return only what is asserted (the harness refuses an `error` key).
+    const kept = {{problem: S.error, modules: S.modules, lookup: S.web_lookup}};
+    delete SUMMARY.web_lookup;  // an older service, which sends none
+    renderFacts(build());
+    return {{...kept, facts, older: $('rv-facts').textContent}};
+    """)
+    assert seen["problem"] == ""
+    assert ("CP-DR" in seen["modules"]) is (drop != "CP-DR")
+    assert seen["lookup"] is shown
+    assert seen["facts"].count(YAHOO) == (1 if shown else 0)
+    assert ("Yahoo" in seen["facts"]) is shown
+    assert "Yahoo" not in seen["older"]
+    if shown:  # a Claude run that looks up is not said to read only its files
+        assert "reads only its files" not in seen["facts"]
 
 
 def test_the_page_offers_the_lite_credit_assessment_and_the_service_reviews_its_five_modules(page):

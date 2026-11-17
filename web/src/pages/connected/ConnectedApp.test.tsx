@@ -41,6 +41,7 @@ function testingFetch(
   summary: typeof plan & {
     lookup?: string[];
     web_search?: boolean;
+    web_lookup?: boolean;
     omitted_titles?: string[];
     prior?: Summary["prior"];
   } = plan,
@@ -310,7 +311,13 @@ describe("connected run start", () => {
     const body = JSON.parse(rawAnswers as string) as unknown;
     expect(body).toEqual({
       context: {
-        run: { ...context.run, as_of: "2026-10-31", cutoff: "2026-10-31" },
+        // No reporting_currency: the template's USD is not sent (ruling 2026-11-16).
+        run: {
+          pathway: context.run.pathway,
+          case_kind: context.run.case_kind,
+          as_of: "2026-10-31",
+          cutoff: "2026-10-31",
+        },
         identity: { issuer_name: "Synthetic Générale", issuer_id: "synthetic-generale" },
       },
       modules: [],
@@ -449,6 +456,32 @@ describe("connected run start", () => {
     it("says nothing about web search when the summary does not say", async () => {
       const sheet = await reviewSheet(plan);
       expect(sheet).not.toHaveTextContent(/search the web/);
+    });
+  });
+
+  describe("Yahoo Finance statement", () => {
+    const SENTENCE =
+      "The research module may read Yahoo Finance pages. Their addresses name what it looks up, such as the issuer's ticker, so Yahoo sees which issuer is researched; no document is sent.";
+    const research = { ...plan, modules: ["CP-0", "CP-DR"] };
+
+    it("names Yahoo and the ticker once when the research module will use its lookup", async () => {
+      const sheet = await reviewSheet({ ...research, web_lookup: true, model: "claude" });
+      expect(within(sheet).getAllByText(SENTENCE)).toHaveLength(1);
+    });
+
+    it("says nothing about Yahoo when the lookup is off", async () => {
+      const sheet = await reviewSheet({ ...research, web_lookup: false, web_search: true });
+      expect(sheet).not.toHaveTextContent(/Yahoo|ticker/);
+    });
+
+    it("says nothing about Yahoo when the research module is left out", async () => {
+      const sheet = await reviewSheet({ ...plan, web_lookup: false });
+      expect(sheet).not.toHaveTextContent(/Yahoo|ticker/);
+    });
+
+    it("says nothing about Yahoo when the summary does not say", async () => {
+      const sheet = await reviewSheet(research);
+      expect(sheet).not.toHaveTextContent(/Yahoo|ticker/);
     });
   });
 
@@ -2624,7 +2657,6 @@ describe("connected run start: the Basic run sends what it sent before", () => {
           cutoff: "2026-10-31",
           pathway: "credit_snapshot",
           case_kind: "synthetic",
-          reporting_currency: "USD",
         },
         identity: { issuer_name: "Synthetic Générale", issuer_id: "synthetic-generale" },
         research_questions: [{ text: entered, focus_module: "" }],
@@ -2636,6 +2668,21 @@ describe("connected run start: the Basic run sends what it sent before", () => {
       effort: "balanced",
       submitted_by: "Ana L",
     });
+  });
+
+  it("N8b asks for no reporting currency and sends none: the library reads CP-1's", async () => {
+    // docs/rulings/2026-11-16-reporting-currency-from-sources.md: the template's USD is not shown.
+    const fetchMock = testingFetch();
+    render(<ConnectedApp path="/start" mode="synthetic" />);
+    await fillInputs();
+    expect(screen.queryByLabelText("Reporting currency")).toBeNull();
+    await advanceToPurpose();
+    advanceToContext();
+    fireEvent.click(screen.getByRole("button", { name: "Review run" }));
+    await screen.findByRole("button", { name: "Submit run" });
+    expect(screen.queryByText("Reporting currency")).toBeNull();
+    const body = sentBody(fetchMock) as { context: { run: Record<string, unknown> } };
+    expect(Object.keys(body.context.run)).not.toContain("reporting_currency");
   });
 
   it("N9 sends the pathway's modules without the left-out ones, the rest as in N8", async () => {
@@ -2687,7 +2734,6 @@ describe("connected run start: the Basic run sends what it sent before", () => {
           pathway: "distressed_restructuring",
           run_type: "research",
           case_kind: "synthetic",
-          reporting_currency: "USD",
         },
         identity: { issuer_name: "Synthetic Générale", issuer_id: "synthetic-generale" },
       },
