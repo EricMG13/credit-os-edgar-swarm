@@ -1,0 +1,19 @@
+
+> credit-os-web@0.0.0 proof:connected
+> node scripts/connected-proof.mjs
+
+Browser proof artifacts: /workspace/audit-final-sweep/proof-artifacts/run-uBN4CP
+overview mobile: 6 headline cards fit at 375px
+Google Chrome 157.0.8103.78 completed run 20261117-215832-01
+✔ Google Chrome uploads, submits and opens a finished legacy report (36453.8263ms)
+overview mobile: 6 headline cards fit at 375px
+Microsoft Edge 155.0.4283.62 completed run 20261117-215907-01
+✔ Microsoft Edge uploads, submits and opens a finished legacy report (41242.497225ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 2
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 77701.744601

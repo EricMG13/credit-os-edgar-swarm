@@ -59,3 +59,57 @@ discovery base. This checkpoint precedes the final sweep comparison.
 
 Not verified: accepted-sweep after measurements, combined gates and final
 offline proof remain pending.
+
+## Controlled source comparison
+
+The before app source is `bb94ddce`. The after build used `e40eabe1` and
+the measurement helper pin `22926bd1`. The later stage 5 evidence commit
+`ba3df7d5` adds documentation with those same repair inputs. The same Node,
+npm, locked dependencies, measurement scripts and scan scopes were used
+for these two arms.
+
+| Measurement | Repaired base | Integrated sweep | Change |
+| --- | ---: | ---: | ---: |
+| Production source lines in measured scope | 280,090 | 280,045 | −45 net |
+| Suppression directives | 104 | 104 | 0 |
+| Knip issues | 0 | 0 | 0 |
+| Web jscpd files | 633 | 633 | 0 |
+| Web jscpd clones | 287 | 285 | −2 |
+| Web duplicate lines | 2,805 (2.46%) | 2,785 (2.45%) | −20 |
+| Python jscpd files | 275 | 275 | 0 |
+| Python clones and duplicate lines | 250 / 2,935 | 250 / 2,935 | 0 |
+| Static assets raw / gzip bytes | 1,609,887 / 447,782 | 1,609,630 / 447,820 | −257 / +38 |
+| Connected assets raw / gzip bytes | 1,594,131 / 476,612 | 1,593,930 / 476,585 | −201 / −27 |
+| Entire dist raw / gzip bytes | 3,561,822 / 1,271,138 | 3,561,364 / 1,271,151 | −458 / +13 |
+| ReportLibrary raw / gzip bytes | 693,316 / 205,030 | 693,126 / 205,014 | −190 / −16 |
+| Shared component imports of a page module | 2 | 0 | −2 |
+| Earlier History row serialized data, paired fixture | 2,168 B | 109 B | −95.0% |
+| Current History row serialized data, paired fixture | 2,195 B | 75 B | −96.6% |
+| Slowest median synthetic render, Forecast | 974.582 ms | 1,114.761 ms | +140.179 ms observed |
+| History route median in those same samples | 911.977 ms | 932.542 ms | +20.565 ms observed |
+| Exact fast Python cases | 6,286 | 6,286 | 0 |
+
+The source diff adds 21 and removes 66 production lines over nine files.
+The measured scope also includes source-adjacent tests, which are identical
+between these arms. The two Python measurement scripts outside that scope
+were repaired separately and regenerate all three retained before records
+byte for byte. The gzip sizes sum individual file sizes and do not represent
+network transfers.
+
+The render harness used native Chrome 157, 26 default synthetic report
+routes, three fresh contexts per route and the same navigation-to-heading
+and two-frame wait. Both runs exited 0 with zero outside application
+requests. The local deny proxy blocked browser background requests
+(445 before and 447 after). Concurrent test load varied between arms.
+The sampled times describe the two runs and do not establish a speedup or
+regression. The paired History row proof establishes the retained-data
+change with the same requests and markup. It does not measure heap use or
+network throughput.
+
+The exact fast Python shard durations sum to 389.293 seconds after versus
+284.643 seconds in the original repaired-base sequence. The slowest
+after case was the audit quality-gate test at 11.584 seconds. The base's
+slowest individual case was 4.162 seconds. Different concurrent host
+work prevents attributing test-time movement to this sweep.
+See [raw measurements](evidence/integrated/bundle/) and
+[the Python verification](evidence/integrated/python/report.md).

@@ -1,0 +1,57 @@
+{
+  "webJscpd": {
+    "columns": [
+      "name",
+      "files",
+      "lines",
+      "tokens",
+      "clones",
+      "duplicateLines",
+      "duplicateTokens"
+    ],
+    "before": [
+      "Total:",
+      "633",
+      "113807",
+      "817962",
+      "287",
+      "2805 (2.46%)",
+      "19879 (2.43%)"
+    ],
+    "after": [
+      "Total:",
+      "633",
+      "113763",
+      "817799",
+      "285",
+      "2785 (2.45%)",
+      "19777 (2.42%)"
+    ]
+  },
+  "pythonJscpd": {
+    "before": {
+      "clones": 250,
+      "duplicatedLines": 2935,
+      "duplicatedTokens": 19420,
+      "lines": 156588,
+      "newClones": 0,
+      "newDuplicatedLines": 0,
+      "percentage": 1.8743454159961173,
+      "percentageTokens": 1.8170658223205298,
+      "sources": 275,
+      "tokens": 1068756
+    },
+    "after": {
+      "clones": 250,
+      "duplicatedLines": 2935,
+      "duplicatedTokens": 19420,
+      "lines": 156587,
+      "newClones": 0,
+      "newDuplicatedLines": 0,
+      "percentage": 1.8743573859898972,
+      "percentageTokens": 1.817072623021992,
+      "sources": 275,
+      "tokens": 1068752
+    }
+  }
+}
