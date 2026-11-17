@@ -37,7 +37,9 @@ whole files. What the missing packs would have supplied comes from the old upstr
 version instead:
 
 1. Take `head` from `<copy>/docs/work-pc/manifest.json` (first sync: `04e7221`) and
-   download that commit's ZIP: `https://github.com/EricMG13/RBOT-HTML/archive/<head>.zip`.
+   download that commit's ZIP from the source repository in the adaptations log.
+   The audit handoff uses `https://github.com/EricMG13/credit-os2/archive/<head>.zip`;
+   the historical baseline uses `https://github.com/EricMG13/RBOT-HTML/archive/<head>.zip`.
    `check <old download> --manifest <copy>/docs/work-pc/manifest.json` must print
    `identical` (first sync: `--manifest docs/work-pc/baselines/04e7221.json`).
 2. Package changes: compare `pyproject.toml` and `uv.lock` in the old and the new download.
