@@ -34,3 +34,11 @@ Controller's reading: a follow-up that carries out a lead ruling on a part held 
 # Lead correction to R12 (owner, 2026-11-17: "opus medium"; received 10:01 UTC by message from the lead session)
 
 Rounds 3 and later run on Opus at medium effort, not xhigh, for both implementer and reviewer. Everything else in R12 stands.
+
+# Lead answers to repair-3 on T35 (ruling L9, 2026-11-17, received 10:05 UTC by message from the lead session)
+
+(a) Yes. Group 3 may edit web/src/pages/library/parts/StatementBlock.tsx, web/src/pages/library/parts/MetricTile.tsx and web/src/pages/library/EvidenceSummary.tsx, and their tests. No group owns them, and the batch that touches them runs only after every group has merged. Draw TraceControl unconditionally in StatementBlock. Give MetricTile an optional `traced` prop, true by default, and have EvidenceSummary pass `traced={false}`, because Evidence draws no trace controls by design (OQ-03).
+
+(b) Accept the marker on both surfaces. A missing source drawn as an explicit gap adds to what the reader sees and removes nothing, so R5 does not apply; AGENTS.md wants missing content stated. Condition: T35's reviewer lists every connected place where the marker can now appear, and marks each one "missing by data" or "null by design". Put that list in output/5-repair/T35.md. Each "null by design" place in a group 2 file comes to me for step 7. Do not edit group 2's files. Only the connected Evidence tab must not show a marker; if it does, say so in the report.
+
+I have noted the ReportLibrary.design.test.tsx failure and the fixture cards whose report is null, for step 7.
