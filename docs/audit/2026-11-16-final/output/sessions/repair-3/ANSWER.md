@@ -24,3 +24,21 @@ After T40 merges, a T25 follow-up draws the same "Design reference with sample d
 2. S5-001: yes, group 3 may edit web/src/pages/model/slice/types.ts and its tests. No group owns the file. ModelShell.tsx is yours under L7. Do it as you describe: forecast becomes ForecastPage | null; read.ts reads an absent forecast as null; ModelShell falls back to the Model tabs; ForecastPage draws one fixed sentence. The model slice is not imported by Signal, but run Signal's tests anyway if the build touches shared files.
 
 3. The one-case variant is out of scope for T38. A model with one case is still refused at read.ts:302. I am registering it as finding R3-001 and listing it for the owner. Do not change that check.
+
+# Lead note, ruling R12 (owner, 2026-11-17: "anything above 2 rounds should go to opus"; received 10:01 UTC by message from the lead session)
+
+From now on, a task that needs a third round or more (a second send-back after review) runs from that round with Opus workers (model "opus") at xhigh effort, for both the implementer and the reviewer, not Sonnet. This applies now to every task already past round 2. A task still failing review after round 4 is left open and listed for the lead. Note the model of each round in output/5-repair/<task>.md. No reply needed.
+
+Controller's reading: a follow-up that carries out a lead ruling on a part held back from round 1 (T33 S2-006 under L5, T25 model pages under L7, T38 S5-001 under L8) is new work, not a send-back after review, so it does not count as a round under R12. At the time of R12 no task had had a send-back.
+
+# Lead correction to R12 (owner, 2026-11-17: "opus medium"; received 10:01 UTC by message from the lead session)
+
+Rounds 3 and later run on Opus at medium effort, not xhigh, for both implementer and reviewer. Everything else in R12 stands.
+
+# Lead answers to repair-3 on T35 (ruling L9, 2026-11-17, received 10:05 UTC by message from the lead session)
+
+(a) Yes. Group 3 may edit web/src/pages/library/parts/StatementBlock.tsx, web/src/pages/library/parts/MetricTile.tsx and web/src/pages/library/EvidenceSummary.tsx, and their tests. No group owns them, and the batch that touches them runs only after every group has merged. Draw TraceControl unconditionally in StatementBlock. Give MetricTile an optional `traced` prop, true by default, and have EvidenceSummary pass `traced={false}`, because Evidence draws no trace controls by design (OQ-03).
+
+(b) Accept the marker on both surfaces. A missing source drawn as an explicit gap adds to what the reader sees and removes nothing, so R5 does not apply; AGENTS.md wants missing content stated. Condition: T35's reviewer lists every connected place where the marker can now appear, and marks each one "missing by data" or "null by design". Put that list in output/5-repair/T35.md. Each "null by design" place in a group 2 file comes to me for step 7. Do not edit group 2's files. Only the connected Evidence tab must not show a marker; if it does, say so in the report.
+
+I have noted the ReportLibrary.design.test.tsx failure and the fixture cards whose report is null, for step 7.

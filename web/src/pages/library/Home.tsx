@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { BookOpen01 } from "@untitledui/icons";
 import { EmptyState } from "@/components/application/empty-state/empty-state";
 import { Button } from "@/components/base/buttons/button";
@@ -128,33 +128,39 @@ function Layout({ home }: { home: LibraryHome }) {
   const [layout, setLayout] = useState<"cards" | "list">("cards");
   const narrowed = applied(filters) > 0;
   const shown = home.cards.filter((card) => (isIssuer(card) ? matches(card, filters) : !narrowed));
+  /** The bar's first input is the search field. */
+  const bar = useRef<HTMLDivElement>(null);
   const clear = () => {
     setFilters(NO_FILTERS);
     setBands(NO_BANDS);
+    // "Clear filters" goes with the no-match state it sits in; the focus it held goes to the search.
+    bar.current?.querySelector("input")?.focus();
   };
   return (
     <>
-      <FilterBar
-        filters={home.filters}
-        values={filters}
-        onChange={setFilters}
-        appliedLabel={appliedLabel(home.filters.appliedLabels, appliedWithBands(filters, bands))}
-      >
-        <ButtonGroup
-          aria-label="Layout"
-          size="sm"
-          disallowEmptySelection
-          selectedKeys={[layout]}
-          onSelectionChange={(keys) => {
-            const [key] = keys;
-            if (key === "cards") setBands(NO_BANDS);
-            if (key === "cards" || key === "list") setLayout(key);
-          }}
+      <div ref={bar} className="contents">
+        <FilterBar
+          filters={home.filters}
+          values={filters}
+          onChange={setFilters}
+          appliedLabel={appliedLabel(home.filters.appliedLabels, appliedWithBands(filters, bands))}
         >
-          <ButtonGroupItem id="cards">Cards</ButtonGroupItem>
-          <ButtonGroupItem id="list">List</ButtonGroupItem>
-        </ButtonGroup>
-      </FilterBar>
+          <ButtonGroup
+            aria-label="Layout"
+            size="sm"
+            disallowEmptySelection
+            selectedKeys={[layout]}
+            onSelectionChange={(keys) => {
+              const [key] = keys;
+              if (key === "cards") setBands(NO_BANDS);
+              if (key === "cards" || key === "list") setLayout(key);
+            }}
+          >
+            <ButtonGroupItem id="cards">Cards</ButtonGroupItem>
+            <ButtonGroupItem id="list">List</ButtonGroupItem>
+          </ButtonGroup>
+        </FilterBar>
+      </div>
       {layout === "list" ? (
         <>
           <RangeFilters home={home} bands={bands} onChange={setBands} />

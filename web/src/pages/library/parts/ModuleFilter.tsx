@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { FilterLines } from "@untitledui/icons";
 import { EmptyState } from "@/components/application/empty-state/empty-state";
 import { Button } from "@/components/base/buttons/button";
@@ -9,21 +9,27 @@ import { SUBSECTION_HEADING } from "./heading";
 /**
  * The module filter of an Evidence tab whose content is delivered per module: page state, in memory,
  * so a tab starts at "All". Its options are the delivered module names; what is compared is the id.
+ * `clear` is the empty state's way back: the button that runs it goes with the state, so it hands
+ * the focus to the filter that caused the state.
  */
 export function useModuleFilter(options: readonly Reader[]) {
   const [name, setName] = useState(ALL);
+  const slot = useRef<HTMLDivElement>(null);
   return {
     chosen: options.find((option) => option.name === name) ?? null,
     clear: () => {
       setName(ALL);
+      slot.current?.querySelector("button")?.focus();
     },
     control: (
-      <FilterSelect
-        name="Module"
-        options={options.map((option) => option.name)}
-        value={name}
-        onChange={setName}
-      />
+      <div ref={slot} className="contents">
+        <FilterSelect
+          name="Module"
+          options={options.map((option) => option.name)}
+          value={name}
+          onChange={setName}
+        />
+      </div>
     ),
   };
 }
