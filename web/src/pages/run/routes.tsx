@@ -4,7 +4,7 @@
 // `readSlice(useSource().run)`. Edit only this folder and fixtures/run.json.
 import type { Route } from "../route-table";
 import { useSource } from "../source";
-import { ActivityPage } from "./activity/ActivityPage";
+import { ActivityPage, RunsIndex } from "./activity/ActivityPage";
 import { readSlice } from "./slice";
 import { StartPage } from "./start/StartPage";
 
@@ -33,6 +33,11 @@ export const routes: readonly Route[] = [
     layout: "bleed",
     home: "/run/activity",
     render: () => <ActivityPage run={null} />,
+  },
+  {
+    path: "/run/runs",
+    title: "Runs",
+    render: () => <RunsIndex />,
   },
   {
     path: "/run/activity/:run",
