@@ -627,7 +627,7 @@ RULES: tuple[Rule, ...] = (
         "No portfolio workbook chosen: the committee's portfolio posture states that the fund's "
         "mandate and limits were not supplied, so sizing within them is not tested.",
         "Add the fund's workbook, in the layout of the portfolio template, and choose it under "
-        "Issuer and dates.",
+        "Portfolio workbook on the More context step.",
         _CP6A_GATE,
         "per method",
     ),
@@ -661,7 +661,7 @@ RULES: tuple[Rule, ...] = (
         "A portfolio workbook or the fund's portfolio export is among the documents but is not "
         "chosen as the portfolio workbook; the modules are told it is there and how its checks "
         "came out.",
-        "Choose it as the portfolio workbook under Issuer and dates, or remove it.",
+        "Choose it under Portfolio workbook on the More context step, or remove it.",
         _FOUND,
         "observed offline",
         detail=_workbook_names,

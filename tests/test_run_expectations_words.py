@@ -103,6 +103,27 @@ def test_rule_sentences_are_the_reader_words(rule_id: str) -> None:
     assert (BY_ID[rule_id].reason, BY_ID[rule_id].fix) == (reason, fix)
 
 
+PORTFOLIO_FIXES = {
+    "portfolio-workbook-none": (
+        "Add the fund's workbook, in the layout of the portfolio template, and choose it under "
+        "Portfolio workbook on the More context step."
+    ),
+    "portfolio-workbook-not-chosen": (
+        "Choose it under Portfolio workbook on the More context step, or remove it."
+    ),
+}
+
+
+@pytest.mark.parametrize("rule_id", sorted(PORTFOLIO_FIXES))
+def test_a_portfolio_workbook_fix_names_the_control_and_its_step(rule_id: str) -> None:
+    assert BY_ID[rule_id].fix == PORTFOLIO_FIXES[rule_id]
+
+
+@pytest.mark.parametrize("rule", rx.RULES, ids=lambda r: r.key)
+def test_no_fix_names_a_section_the_start_page_does_not_have(rule: rx.Rule) -> None:
+    assert "Issuer and dates" not in rule.fix
+
+
 RAW = (
     "entered by user",
     "declared",
