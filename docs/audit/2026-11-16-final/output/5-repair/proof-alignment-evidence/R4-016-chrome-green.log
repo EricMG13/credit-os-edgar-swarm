@@ -1,0 +1,10 @@
+✔ offline proof accepts only local resource schemes and loopback hosts (1.98804ms)
+✔ context guard blocks requests, redirects, popups and WebSockets before network (1049.90178ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 2
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1581.250326

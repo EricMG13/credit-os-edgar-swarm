@@ -102,6 +102,16 @@ context attempts plus **7 / 8** native denials. Those four files have the
 `frozen-` prefix. Counts describe observed attempts, not successful outbound
 connections: the denial proxy forwards none.
 
+## Independent review and separate evidence Low
+
+The fresh security/caller/default-expectation review accepts the frozen two-file
+harness code: **PASS, 0 High / 0 Medium / 0 Low**. Its exact report is retained as
+`proof-alignment-evidence/harness-independent-review.md`. Its one separate Low,
+**R4-016**, concerns startup cleanup in the retained browser-evidence probe;
+[the separate repair record](proof-alignment-R4-016.md) records the unchanged
+missing-browser command improving from exit 124 to prompt expected exit 1,
+both real-browser probes passing, and the frozen code remaining unchanged.
+
 ## Product blocker retained
 
 After all aligned Forecast, responsive, refinancing, source-list and hash checks
@@ -150,12 +160,12 @@ is smaller and preserves browser navigation better than fetching and rewriting
 every response/redirect. Guard exports plus script-only registration allow the
 portable tests to import the actual functions without launching the full proof.
 The named historical confidence-review/rewrite-tournament tools are unavailable;
-fresh independent review remains the lead's next step after the stable commit.
+the fresh independent harness review passes as recorded above.
 
 Not verified: a complete green connected journey is blocked by the separately
 reported synthetic execution classification defect, so the later Record,
 script-check, download/hash, paired Changes and final library assertions have
-not yet completed; fresh review and accepted runtime/T22/R4-012 integration,
+not yet completed; artifact-only R4-016 rereview and accepted runtime/T22/R4-012 integration,
 original finding probes, full combined fidelity/frontend/Python/weekly/Windows
 gates, release packaging, real providers, paid/live runs, real Submit, seats and
 Teams remain outside this harness task.

@@ -182,6 +182,48 @@
       "portable_sha256": "e65f4a10f72fb012f5fc8e15108ee3ec4386af07488f4b76e1cd21311b15fe7a",
       "raw_bytes": 49,
       "portable_bytes": 48
+    },
+    {
+      "file": "R4-016-startup-red.log",
+      "raw_sha256": "d883263d08259a4e5ce73ea37201449523c71d9658a664026aa4de538a85e7d4",
+      "portable_sha256": "d883263d08259a4e5ce73ea37201449523c71d9658a664026aa4de538a85e7d4",
+      "raw_bytes": 1497,
+      "portable_bytes": 1497
+    },
+    {
+      "file": "R4-016-startup-green.log",
+      "raw_sha256": "a253b945444fb79ea7a2360f7f1b1452f1473e4f629e4e1e09cd37ed657264f7",
+      "portable_sha256": "a253b945444fb79ea7a2360f7f1b1452f1473e4f629e4e1e09cd37ed657264f7",
+      "raw_bytes": 851,
+      "portable_bytes": 851
+    },
+    {
+      "file": "R4-016-chrome-green.log",
+      "raw_sha256": "ae619490624ad2d3db2fb012abbb8217f34853ff49effd8b55356b117a3277d1",
+      "portable_sha256": "ae619490624ad2d3db2fb012abbb8217f34853ff49effd8b55356b117a3277d1",
+      "raw_bytes": 299,
+      "portable_bytes": 299
+    },
+    {
+      "file": "R4-016-edge-green.log",
+      "raw_sha256": "ff0f2cbe978f9c68708d29423b5107c450909ec35eb37350e5553a08fb0b720c",
+      "portable_sha256": "ff0f2cbe978f9c68708d29423b5107c450909ec35eb37350e5553a08fb0b720c",
+      "raw_bytes": 301,
+      "portable_bytes": 301
+    },
+    {
+      "file": "R4-016-eslint-green.log",
+      "raw_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "portable_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "raw_bytes": 0,
+      "portable_bytes": 0
+    },
+    {
+      "file": "R4-016-format-green.log",
+      "raw_sha256": "17aa973d3f004560237d9a95171210b0671deff23d61628eecf7322ff5938f20",
+      "portable_sha256": "17aa973d3f004560237d9a95171210b0671deff23d61628eecf7322ff5938f20",
+      "raw_bytes": 66,
+      "portable_bytes": 66
     }
   ]
 }

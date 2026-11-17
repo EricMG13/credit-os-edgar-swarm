@@ -48,15 +48,17 @@ test("context guard blocks requests, redirects, popups and WebSockets before net
       '<a target="_blank" href="https://example.invalid/popup">Open</a>',
     );
   });
-  await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
-  const proxy = await createOfflineProxy();
-  const browser = await chromium.launch({
-    ...(process.env.CHROME_PATH
-      ? { executablePath: process.env.CHROME_PATH }
-      : { channel: "chrome" }),
-    proxy: proxy.settings,
-  });
+  let proxy;
+  let browser;
   try {
+    await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
+    proxy = await createOfflineProxy();
+    browser = await chromium.launch({
+      ...(process.env.CHROME_PATH
+        ? { executablePath: process.env.CHROME_PATH }
+        : { channel: "chrome" }),
+      proxy: proxy.settings,
+    });
     const context = await browser.newContext({ serviceWorkers: "block" });
     const guard = await installOfflineGuard(context);
     const page = await context.newPage();
@@ -101,10 +103,11 @@ test("context guard blocks requests, redirects, popups and WebSockets before net
     );
     await context.close();
   } finally {
-    await browser.close();
-    await proxy.close();
-    await new Promise((resolve, reject) =>
-      server.close((error) => (error ? reject(error) : resolve())),
-    );
+    await browser?.close();
+    await proxy?.close();
+    if (server.listening)
+      await new Promise((resolve, reject) =>
+        server.close((error) => (error ? reject(error) : resolve())),
+      );
   }
 });
