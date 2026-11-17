@@ -1,0 +1,1952 @@
+diff --git a/docs/audit/2026-11-16-final/output/5-repair/T09.md b/docs/audit/2026-11-16-final/output/5-repair/T09.md
+new file mode 100644
+index 0000000..b18a01b
+--- /dev/null
++++ b/docs/audit/2026-11-16-final/output/5-repair/T09.md
+@@ -0,0 +1,118 @@
++# T09: document refusals name the file and mark its row; Issuer ID never merges two issuers
++
++Model: Sonnet 5.5, medium effort, round 1. BASE: edebd9d817e97a9480fda8d6a8bf11714d179731.
++
++## Findings
++- J2-003 (with C2-011, J2-007): the service's single refusal text is now turned into one reader sentence
++  and the named file's row is marked "Ignored" with that sentence beside it. The file name keeps its own case;
++  a 0-byte file reads "empty.txt is empty (0 bytes)."; the decoder text is gone.
++  Limit: the service stops at its first unreadable file, so one refusal still names one file (listing every
++  problem at once needs a service change, which is outside T09's files; not done).
++- J5-004 (with C2-014): `issuerIdFor` (plain.ts). At review time, if the name's usual (cut at 40) ID is 40 long and
++  not hand-typed or carried, the page looks up the latest run under that ID. Same issuer name (letters and digits
++  compared) keeps the usual ID, so repeated runs keep their ID. A different issuer gets the first 31 characters, a hyphen and
++  an 8-hex code from its whole name (40 characters, matches `[a-z0-9][a-z0-9-]{0,39}`, the service's rule in
++  `service.py` `_ISSUER`). The slug rule itself is unchanged, so no existing ID moves. An owner run with no
++  recorded name counts as the same issuer. A failed lookup fails the review (no silent merge).
++  C2-014: a help line under Issuer ID states the rule. Transliterating Ø and similar was not done: it would change
++  existing issuers' IDs.
++- `issuerSlug` lives in `web/src/pages/connected/api.ts` (outside my files); I did not change it.
++
++## Files
++`web/src/pages/connected/StartRun.tsx`, `web/src/pages/connected/start/plain.ts`, `web/src/pages/connected/start/plain.test.ts`.
++
++## Tests
++`start/plain.test.ts`: `issuerIdFor` (4 tests), `documentRefusal` (6). Before the repair: 10 failed, 150 passed
++(the new functions did not exist). After: 160 passed. No existing test changed.
++`cd web && timeout 300 npx vitest run src/pages/connected`: 51 files, 1039 tests passed.
++
++## Probes (outputs in docs/audit/2026-11-16-final/output/5-repair/T09/before-*, after-*)
++All are `output` probes; all exit 0 both times.
++- j2-003 (8762): before `alerts: ["Cannot read annual-report.pdf: 'utf-8' codec can't decode byte 0x89 ..."]`,
++  `row badges: ["Selected","Selected","Selected"]`, REPRODUCED. After `alerts: ["annual-report.pdf cannot be read: its contents are not a PDF file."]`,
++  `["Ignored","Selected","Selected"]`, NOT REPRODUCED.
++- j2-documents-step-mistakes (8762), J2-007: before `alerts: ["Empty.txt has no extractable text (scanned image?)"]`, `rows: ["empty.txt / Selected / Remove"]`.
++  After `alerts: ["empty.txt is empty (0 bytes)."]`, `rows: ["empty.txt / Ignored / empty.txt is empty (0 bytes). / Remove"]`.
++- p04-document-types (C2_PORT=8749): notes.docx before `Cannot read notes.docx: File is not a zip file`, row `Selected`; after
++  `notes.docx cannot be read: its contents are not a docx file.`, row `notes.docx | Ignored | ...`. empty.txt after `empty.txt is empty (0 bytes).`.
++  image.png: `The uploaded documents: no readable issuer file` before; after `None of the selected documents could be read as an issuer filing. Choose a filing in a supported format.` (no row named, none marked).
++- j5-004 (8765): before IDs `["northbridge-synthetic-group-internationa","northbridge-synthetic-group-internationa"]`, one card, search "Holdings" gives
++  "No issuers match these filters.", REPRODUCED. After IDs `["northbridge-synthetic-group-internationa","northbridge-synthetic-group-int-518e588e"]`,
++  cards `[Finance plc, Holdings Limited]` `["1 run","1 run"]`, search "Holdings" finds the Holdings card, NOT REPRODUCED.
++  (Not done: naming the issuer on each Report history row; that is another surface.)
++- p05-identity (8749): ends with the same `TimeoutError ... 'Go back to Documents'` before and after (an existing step of the probe that is
++  not touched by this task); `idHelpText` still prints "Issuer ID" because the probe reads the label, the help line is a sibling paragraph.
++
++## Walks and gates
++T07 walks (carried-work, case-date, leave-and-return, payload, random-steps) and T08 walk-t08 (C2_PORT=8749): all exit 0, 0 lines starting FAIL.
++`npm --prefix web run lint`, `format:check` (after prettier on the test file), `typecheck`, `unused`: clean. No Python changed.
++
++## Round 2
++
++Model: Sonnet 5.5, medium effort. The owner's instruction (T07 to T10 implementers run on Sonnet at medium effort)
++overrides the model line of ruling L18, which named Sonnet xhigh. Ruling L18 (option b): the one check at the one
++place every route passes is in `src/deploy_workflow/run_start/submissions.py`. R1-015 (runs already merged under one
++ID before T09) stays as it is, after the audit.
++
++### Findings addressed
++- J5-004 / C2-014, ruling L18. Service: `refuse_filed_elsewhere` (submissions.py) refuses an Issuer ID that runs hold
++  under a different issuer name, with the sentence `Issuer ID "x" is already filed under "H", a different issuer from
++  "N". Use another Issuer ID for this issuer.` Names are compared by `issuer_key` (NFKD, lower case, marks dropped, only
++  a-z and 0-9), the same reduction as the page's `issuerKey`. It runs in the summary (`_summarise`) and in `digest`,
++  which Submit's `_record_for` calls before it saves a record, so a hand-typed ID, a carried ID with a changed name and an
++  ID filed between review and Submit all stop; scheduler.py needed no change. An ID is free when no run holds it, when any
++  run under it carries this name or no name (the same issuer re-submitting is accepted), and an ID already shared by two
++  issuers still accepts either of them. An unreadable record file is skipped, as `prior.issuer` skips it (documented
++  fail-open; the rest of the check is not).
++- Page (plain.ts, StartRun.tsx): the holder of every ID built from a name is looked up, not only 40-character ones
++  (review findings 1 and the adversarial finding 1: a cut on a word boundary and a short name that collides). The holder name
++  comes from `/api/issuers/<id>` (`issuer_name`), one request, not `getPriorInputs`; a failed lookup falls back to the usual
++  ID because the service now refuses a clash. The ID is settled before "Carry over from latest run" looks up and locks it,
++  so a different issuer no longer carries another's run and the issuer's own suffixed runs are found. The review sheet says
++  `Issuer ID <id> was used for this run because <usual> is already filed under <holder>, a different issuer.` (a line
++  under the sheet; ReviewSheet.tsx is not mine). A service refusal (summary or Submit) is shown on the Issuer ID field in
++  reader words naming the holder, with a button `Use <suffixed ID>`; a refusal at Submit clears the review and returns to
++  Documents.
++- J2-003 review finding 2 (High): `discardDocument` now reads through the same `readDocuments(draft)` as every other read,
++  so removing one bad file names the next one in a reader sentence and the removed file does not come back as an Ignored row.
++- Review finding 3 (Medium): the document sentence is `X could not be read.` plus a reason only where the service's message
++  states it (a decode failure: "its text could not be decoded."; "not a zip file": "its contents are not a valid zip
++  archive."). The false "not a <ext> file" and the "a xlsx" are gone.
++- Review finding 4: `web/node_modules` removed from the branch (`git rm --cached`); the local symlink stays, untracked.
++
++### Tests (written first)
++- Python, `tests/test_run_start_submissions.py` (13 new: 9 `issuer_key` pinned cases, hand-typed ID, carried ID with a
++  changed name, the two Northbridge long names with the suffixed ID free, a short name that collides, same issuer accepted
++  however typed, an already-merged ID) and `tests/test_run_start_scheduler.py` (an ID filed between review and Submit is
++  refused and nothing starts; the same issuer re-submitting under its own ID is accepted). Before the repair: 16 failed
++  (`issuer_key` and the refusal did not exist), 1 passed. After: 252 passed, 3 skipped (submissions, scheduler, prior); with
++  `test_run_start_service.py`, `test_inbox_scheduler.py`, `test_pathway_tiers.py` and `test_react_frontend.py` all pass.
++- Vitest, `start/plain.test.ts`: `issuerKey` (the same 9 literal cases as Python), `filedElsewhere`/`issuerIdRefusal` (4),
++  `issuerIdFor` for a short name and a word-boundary cut, `documentRefusal` rewritten for the true sentences. Before: 15
++  failed. After: 174 passed. `ConnectedApp.test.tsx`: the one test that pins the request order of a submission now lists the
++  holder lookup (`/api/issuers/synthetic-generale`) and its call indices move by one (outside the files named in the task;
++  it is the test of StartRun.tsx, and the new request is the L18 lookup). `npx vitest run src/pages/connected`: 51 files,
++  1053 tests passed. An earlier run failed 131 tests because an unmocked lookup failed the review; fixed by the fallback above.
++- Walks (saved here): `walk-remove-bad-file.cjs` (8762): base build exit 1 (`before-walk-remove-bad-file.txt`: raw decoder text
++  returns and annual-report.pdf reappears as Ignored), repair exit 0. `walk-issuer-id.cjs` (8765): suffixed ID, holder named on
++  the review sheet, hand-typed ID refused on the field with the offer, offer taken, carry over finds Finance's own run:
++  exit 0 on the repair; not run on the base (the field refusal and offer do not exist there).
++
++### Probes, walks and gates (exit codes)
++- J5-004 probe (8765, under its lock): exit 0, NOT REPRODUCED, IDs `northbridge-synthetic-group-internationa` and
++  `northbridge-synthetic-group-int-518e588e`. Scratch copy with the two word-boundary names ("... Internation Holdings
++  Limited" / "... Internation Finance plc"): exit 0, NOT REPRODUCED, IDs `northbridge-synthetic-group-internation` (39) and
++  `northbridge-synthetic-group-int-5098e1ab`, two cards. Outputs `after2-j5-004*.txt`.
++- J2 probes (8762): j2-003 exit 0, `annual-report.pdf could not be read: its text could not be decoded.`, badges
++  Ignored/Selected/Selected; j2-documents-step-mistakes exit 0, `empty.txt is empty (0 bytes).`.
++- T07 walks (carried-work, case-date, leave-and-return, payload, random-steps) and T08 walk-t08 (C2_PORT 8749): all exit 0,
++  0 lines starting FAIL.
++- `npm --prefix web run lint`, `format:check`, `typecheck`, `unused`: exit 0; `npm --prefix web run build`: exit 0.
++- `uv run python tools/quality_gate.py --base edebd9d8`: exit 0, 0 findings, 326 lines in scope.
++- `git show --stat HEAD` shows no `web/node_modules` entry other than its deletion.
++
++Not verified: that two issuers whose suffixed ID is also taken by a third issuer are told apart (the 8-hex code collides,
++not constructed; the page then offers no second suffix and says to type another ID); the page on an ID already shared by two
++issuers before T09 (service accepts either; page suffixes by the latest run's name, R1-015); the Report history row naming;
++every-problem-at-once for several unreadable files (service limit); walk-issuer-id on the base build; the full vitest suite
++and the full pytest suite.
+diff --git a/docs/audit/2026-11-16-final/output/5-repair/T09/after-j2-003.txt b/docs/audit/2026-11-16-final/output/5-repair/T09/after-j2-003.txt
+new file mode 100644
+index 0000000..2a66b2d
+--- /dev/null
++++ b/docs/audit/2026-11-16-final/output/5-repair/T09/after-j2-003.txt
+@@ -0,0 +1,4 @@
++alerts: ["annual-report.pdf cannot be read: its contents are not a PDF file."]
++row badges after Inspect: ["Ignored","Selected","Selected"]
++NOT REPRODUCED
++blocked requests: 0; page errors: 0
+diff --git a/docs/audit/2026-11-16-final/output/5-repair/T09/after-j2-mistakes.txt b/docs/audit/2026-11-16-final/output/5-repair/T09/after-j2-mistakes.txt
+new file mode 100644
+index 0000000..39073aa
+--- /dev/null
++++ b/docs/audit/2026-11-16-final/output/5-repair/T09/after-j2-mistakes.txt
+@@ -0,0 +1,31 @@
++
++## J2-006 wrong type alone: setup.exe
++alerts: ["None of the selected documents could be read as an issuer filing. Choose a filing in a supported format."]
++status: ["0 documents inspected, 0 ignored."]
++rows: ["setup.exe / Selected / Remove"]
++remove buttons: ["Remove setup.exe"]
++
++## J2-006 wrong types beside a good file: setup.exe, photo.png, northbridge-filing.txt
++alerts: []
++status: ["1 document inspected, 2 ignored."]
++rows: ["setup.exe / Ignored / Will not be read / Remove","photo.png / Ignored / Will not be read / Remove","northbridge-filing.txt / Inspected / unrecognised / Remove"]
++remove buttons: ["Remove setup.exe","Remove photo.png","Remove northbridge-filing.txt"]
++
++## J2-007 empty file alone: empty.txt (0 bytes)
++alerts: ["empty.txt is empty (0 bytes)."]
++status: ["0 documents inspected, 1 ignored."]
++rows: ["empty.txt / Ignored / empty.txt is empty (0 bytes). / Remove"]
++remove buttons: ["Remove empty.txt"]
++
++## J2-004 same file chosen twice (same name)
++alerts: ["Choose documents with distinct file names."]
++status: []
++rows: ["northbridge-filing.txt / Selected / Remove","northbridge-filing.txt / Selected / Remove"]
++remove buttons: ["Remove northbridge-filing.txt","Remove northbridge-filing.txt"]
++
++## J2-005 same bytes under two names
++alerts: []
++status: ["2 documents inspected, 0 ignored."]
++rows: ["northbridge-filing.txt / Inspected / unrecognised / Remove","copy-of-filing.txt / Inspected / unrecognised / Remove"]
++remove buttons: ["Remove northbridge-filing.txt","Remove copy-of-filing.txt"]
++blocked requests: 0; page errors: 0
+diff --git a/docs/audit/2026-11-16-final/output/5-repair/T09/after-j5-004.txt b/docs/audit/2026-11-16-final/output/5-repair/T09/after-j5-004.txt
+new file mode 100644
+index 0000000..17feefe
+--- /dev/null
++++ b/docs/audit/2026-11-16-final/output/5-repair/T09/after-j5-004.txt
+@@ -0,0 +1,3 @@
++RESULT NOT REPRODUCED: Issuer IDs on the review sheets: ["northbridge-synthetic-group-internationa","northbridge-synthetic-group-int-518e588e"] (40 characters); Library cards: ["Northbridge Synthetic Group International Finance plc","Northbridge Synthetic Group International Holdings Limited"] ["1 run","1 run"]; search "Holdings": "Northbridge Synthetic Group International Holdings Limited | NORTHBRIDGE-SYNTHETIC-GROUP-INTERNATIONA | Full credit assessment · 2025-03-31 | Net leverage | 2.25x | -0.75x vs FY2023 | better | FY2024 | Gross leverage | 2.80x | -0.95x vs FY2023 | better | FY2024 | Interest coverage | 4.00x | +0.80x vs FY2023 | better | FY2024 | Revenue | $2,250m | +$150m vs FY2023 | better | FY2024 | Cash | $275m | -$25m vs FY2023 | FY2024 | Open report | 1 run"; each report's own header: ["Northbridge Synthetic Group International Holdings Limited","Northbridge Synthetic Group International Finance plc"]; history rows (no issuer name on them): "| Full credit assessment | As of 31 March 2025 | Finished | Open overview | What changed"
++R8 blocked requests: 0 
++console problems: 0; page errors: 0; failed: 0; http>=400: 0
+diff --git a/docs/audit/2026-11-16-final/output/5-repair/T09/after-p04.json b/docs/audit/2026-11-16-final/output/5-repair/T09/after-p04.json
+new file mode 100644
+index 0000000..4498ac1
+--- /dev/null
++++ b/docs/audit/2026-11-16-final/output/5-repair/T09/after-p04.json
+@@ -0,0 +1,150 @@
++[probe] proof.serve up on http://127.0.0.1:8749 (root /tmp/cs-C2/r-DCmBnD)
++[probe] proof.serve on http://127.0.0.1:8749 stopped
++{
++  "cases": {
++    "png": {
++      "rowsAfterAdd": [
++        "image.png\n\nSelected\nRemove"
++      ],
++      "noDocsText": 0,
++      "continueDisabled": false,
++      "notice": [
++        "None of the selected documents could be read as an issuer filing. Choose a filing in a supported format."
++      ],
++      "status": [
++        "0 documents inspected, 0 ignored."
++      ],
++      "rowsAfterInspect": [
++        "image.png | Selected | Remove"
++      ]
++    },
++    "docx": {
++      "rowsAfterAdd": [
++        "notes.docx\n\nSelected\nRemove"
++      ],
++      "noDocsText": 0,
++      "continueDisabled": false,
++      "notice": [
++        "notes.docx cannot be read: its contents are not a docx file."
++      ],
++      "status": [
++        "0 documents inspected, 1 ignored."
++      ],
++      "rowsAfterInspect": [
++        "notes.docx | Ignored | notes.docx cannot be read: its contents are not a docx file. | Remove"
++      ]
++    },
++    "empty": {
++      "rowsAfterAdd": [
++        "empty.txt\n\nSelected\nRemove"
++      ],
++      "noDocsText": 0,
++      "continueDisabled": false,
++      "notice": [
++        "empty.txt is empty (0 bytes)."
++      ],
++      "status": [
++        "0 documents inspected, 1 ignored."
++      ],
++      "rowsAfterInspect": [
++        "empty.txt | Ignored | empty.txt is empty (0 bytes). | Remove"
++      ]
++    },
++    "big52": {
++      "rowsAfterAdd": [
++        "big52.txt\n\nSelected\nRemove"
++      ],
++      "noDocsText": 0,
++      "continueDisabled": false,
++      "notice": [
++        "a file is at most 50 MB"
++      ],
++      "status": [
++        ""
++      ],
++      "rowsAfterInspect": [
++        "big52.txt | Selected | Remove"
++      ]
++    },
++    "filing+png+docx": {
++      "rowsAfterAdd": [
++        "northbridge-filing.txt\n\nSelected\nRemove",
++        "image.png\n\nSelected\nRemove",
++        "notes.docx\n\nSelected\nRemove"
++      ],
++      "noDocsText": 0,
++      "continueDisabled": false,
++      "notice": [
++        "notes.docx cannot be read: its contents are not a docx file."
++      ],
++      "status": [
++        "0 documents inspected, 1 ignored."
++      ],
++      "rowsAfterInspect": [
++        "northbridge-filing.txt | Selected | Remove",
++        "image.png | Selected | Remove",
++        "notes.docx | Ignored | notes.docx cannot be read: its contents are not a docx file. | Remove"
++      ]
++    },
++    "same-name-twice": {
++      "rowsAfterAdd": [
++        "dup.txt\n\nSelected\nRemove",
++        "dup.txt\n\nSelected\nRemove"
++      ],
++      "noDocsText": 0,
++      "continueDisabled": false,
++      "notice": [
++        "Choose documents with distinct file names."
++      ],
++      "status": [
++        ""
++      ],
++      "rowsAfterInspect": [
++        "dup.txt | Selected | Remove",
++        "dup.txt | Selected | Remove"
++      ]
++    },
++    "hidden": {
++      "rowsAfterAdd": [],
++      "noDocsText": 1,
++      "continueDisabled": true
++    }
++  },
++  "log": {
++    "blocked": [],
++    "console": [
++      "error: Failed to load resource: the server responded with a status of 400 (Bad Request)"
++    ],
++    "pageerrors": [],
++    "failed": [],
++    "bad": [
++      "400 POST /api/submissions/e74712d91cad4953a9645543498f6597/files?name=big52.txt"
++    ],
++    "requests": [
++      "GET /connected/context",
++      "POST /api/submissions",
++      "POST /api/submissions/4970ee5d245fe7059c83848bc3bfc7c8/files?name=image.png",
++      "GET /api/submissions/4970ee5d245fe7059c83848bc3bfc7c8/reading",
++      "GET /connected/context",
++      "POST /api/submissions",
++      "POST /api/submissions/4c2e59726982b45cc5efb84fd8631831/files?name=notes.docx",
++      "GET /api/submissions/4c2e59726982b45cc5efb84fd8631831/reading",
++      "GET /connected/context",
++      "POST /api/submissions",
++      "POST /api/submissions/ef7c7499966adeeb19403b9061532b7b/files?name=empty.txt",
++      "GET /api/submissions/ef7c7499966adeeb19403b9061532b7b/reading",
++      "GET /connected/context",
++      "POST /api/submissions",
++      "POST /api/submissions/e74712d91cad4953a9645543498f6597/files?name=big52.txt",
++      "GET /connected/context",
++      "POST /api/submissions",
++      "POST /api/submissions/e9113f140afc58c7f4db61d5fb4f5a2f/files?name=northbridge-filing.txt",
++      "POST /api/submissions/e9113f140afc58c7f4db61d5fb4f5a2f/files?name=image.png",
++      "POST /api/submissions/e9113f140afc58c7f4db61d5fb4f5a2f/files?name=notes.docx",
++      "GET /api/submissions/e9113f140afc58c7f4db61d5fb4f5a2f/reading",
++      "GET /connected/context",
++      "GET /connected/context"
++    ],
++    "notes": []
++  }
++}
+diff --git a/docs/audit/2026-11-16-final/output/5-repair/T09/after-p05.json b/docs/audit/2026-11-16-final/output/5-repair/T09/after-p05.json
+new file mode 100644
+index 0000000..a6ec1e9
+--- /dev/null
++++ b/docs/audit/2026-11-16-final/output/5-repair/T09/after-p05.json
+@@ -0,0 +1,69 @@
++[probe] proof.serve up on http://127.0.0.1:8749 (root /tmp/cs-C2/r-IBhHW6)
++[probe] proof.serve on http://127.0.0.1:8749 stopped
++{
++ "slug": {
++  "Société Générale S.A.": "societe-generale-s-a",
++  "Ørsted A/S": "rsted-a-s",
++  "Эрикссон": "",
++  "日本電信電話": "",
++  "A": "a",
++  "  Trailing  ": "trailing",
++  "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
++  "Nokia Oyj (2025)": "nokia-oyj-2025"
++ },
++ "native": {
++  "cyrillicIdMessage": {
++   "valid": false,
++   "message": "Please fill out this field.",
++   "pattern": "[a-z0-9][a-z0-9\\-]{0,39}",
++   "required": true
++  },
++  "upperCaseIdMessage": {
++   "valid": false,
++   "message": "Please match the requested format.",
++   "pattern": "[a-z0-9][a-z0-9\\-]{0,39}",
++   "required": true
++  },
++  "idHelpText": "Issuer ID",
++  "afterContinueInvalidId": {
++   "headings": [
++    "Documents",
++    "Readiness"
++   ],
++   "alerts": [],
++   "focus": "input \"Issuer ID\""
++  },
++  "afterContinueEmptyName": {
++   "alerts": [],
++   "focus": "input \"Issuer name\"",
++   "nameMessage": {
++    "valid": false,
++    "message": "Please fill out this field.",
++    "pattern": "",
++    "required": true
++   }
++  },
++  "afterContinueBlankName": {
++   "alerts": [],
++   "focus": "input \"As-of date\"",
++   "headings": [
++    "Documents",
++    "Readiness"
++   ],
++   "problemBtn": []
++  }
++ },
++ "analyst": {},
++ "error": "TimeoutError: locator.click: Timeout 15000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('button', { name: 'Go back to Documents' })\u001b[22m\n",
++ "log": {
++  "blocked": [],
++  "console": [],
++  "pageerrors": [],
++  "failed": [],
++  "bad": [],
++  "requests": [
++   "GET /connected/context"
++  ],
++  "notes": []
++ }
++}
+diff --git a/docs/audit/2026-11-16-final/output/5-repair/T09/after-walk-issuer-id.txt b/docs/audit/2026-11-16-final/output/5-repair/T09/after-walk-issuer-id.txt
+new file mode 100644
+index 0000000..5133ae2
+--- /dev/null
++++ b/docs/audit/2026-11-16-final/output/5-repair/T09/after-walk-issuer-id.txt
+@@ -0,0 +1,11 @@
++ok   1: Finance gets a suffixed ID  ["northbridge-synthetic-group-int-518e588e"]
++ok   1: the review sheet names the holder of the usual ID  ["nthetic Group International Finance plc Issuer ID northbridge-synthetic-group-int-518e588e As-of date 2025-06-30 Issue classification Not given Submitted by Ana L Documents read northbridge-credit-agreement.txt · credit agreement · executed · found 'Credit Agreement' on page 1 northbridge-filing.txt"]
++ok   2: Submit is not reached; the Issuer ID field shows the refusal  ["se date Issuer name Issuer ID Issuer ID northbridge-synthetic-group-internationa is already used for Northbridge Synthetic Group International Holdings Limited, a different issuer. Use eastmoor-synthetic-utilities-pl-0a1652a5 for Eastmoor Synthetic Utilities plc, or type another Issuer ID. Use eastmoor-synthetic-utilities-pl-0a1652a5 Letters a–z, digits and hyphens, up to 40 characters. As-of date Issue classification Choose classificat"]
++ok   2: the suffixed ID is offered  [["Use eastmoor-synthetic-utilities-pl-0a1652a5"]]
++ok   2: the field is marked invalid  [undefined]
++ok   2: taking the offer fills the field  ["eastmoor-synthetic-utilities-pl-0a1652a5"]
++ok   2: the review sheet opens with the taken ID  ["eastmoor-synthetic-utilities-pl-0a1652a5"]
++ok   3: carry over from latest run carries Finance run (not Holdings) under the suffixed ID  [{"idField":"northbridge-synthetic-group-int-518e588e","intro":"Issuer and case date Starting from run 20261117-143102-01. Review the copied answers, add dates, and inspect its available documents. It did not record which files you chose for the agreement and the portfolio workbook: choose them again on More context. Issuer name Issuer ID Letters a–z, digits and"}]
++R8 blocked requests: 0 
++console problems: 0; page errors: 0; failed: 0; http>=400: 0
++exit=0
+diff --git a/docs/audit/2026-11-16-final/output/5-repair/T09/after-walk-remove-bad-file.txt b/docs/audit/2026-11-16-final/output/5-repair/T09/after-walk-remove-bad-file.txt
+new file mode 100644
+index 0000000..a426796
+--- /dev/null
++++ b/docs/audit/2026-11-16-final/output/5-repair/T09/after-walk-remove-bad-file.txt
+@@ -0,0 +1,8 @@
++ok   first refusal names annual-report.pdf in a reader sentence  [["annual-report.pdf could not be read: its text could not be decoded."]]
++ok   annual-report.pdf row is marked Ignored  [["annual-report.pdf Ignored annual-report.pdf could not be read: its text could not be decoded. Remove","holdings.xlsx Selected Remove","northbridge-filing.txt Selected Remove"]]
++ok   after Remove: the next refusal names holdings.xlsx in a reader sentence  [["holdings.xlsx could not be read: its text could not be decoded."]]
++ok   after Remove: annual-report.pdf is gone and does not reappear as Ignored  [["holdings.xlsx Ignored holdings.xlsx could not be read: its text could not be decoded. Remove","northbridge-filing.txt Selected Remove"]]
++ok   after Remove: holdings.xlsx is the Ignored row  [["holdings.xlsx Ignored holdings.xlsx could not be read: its text could not be decoded. Remove","northbridge-filing.txt Selected Remove"]]
++ok   after the last bad file is removed: no refusal and only the readable file remains  [{"a":[],"r":["northbridge-filing.txt Inspected unrecognised Remove"]}]
++blocked requests: 0; page errors: 0
++exit=0
+diff --git a/docs/audit/2026-11-16-final/output/5-repair/T09/after2-j2-003-unreadable-document-message.txt b/docs/audit/2026-11-16-final/output/5-repair/T09/after2-j2-003-unreadable-document-message.txt
+new file mode 100644
+index 0000000..a100974
+--- /dev/null
++++ b/docs/audit/2026-11-16-final/output/5-repair/T09/after2-j2-003-unreadable-document-message.txt
+@@ -0,0 +1,4 @@
++alerts: ["annual-report.pdf could not be read: its text could not be decoded."]
++row badges after Inspect: ["Ignored","Selected","Selected"]
++NOT REPRODUCED
++blocked requests: 0; page errors: 0
+diff --git a/docs/audit/2026-11-16-final/output/5-repair/T09/after2-j2-documents-step-mistakes.txt b/docs/audit/2026-11-16-final/output/5-repair/T09/after2-j2-documents-step-mistakes.txt
+new file mode 100644
+index 0000000..39073aa
+--- /dev/null
++++ b/docs/audit/2026-11-16-final/output/5-repair/T09/after2-j2-documents-step-mistakes.txt
+@@ -0,0 +1,31 @@
++
++## J2-006 wrong type alone: setup.exe
++alerts: ["None of the selected documents could be read as an issuer filing. Choose a filing in a supported format."]
++status: ["0 documents inspected, 0 ignored."]
++rows: ["setup.exe / Selected / Remove"]
++remove buttons: ["Remove setup.exe"]
++
++## J2-006 wrong types beside a good file: setup.exe, photo.png, northbridge-filing.txt
++alerts: []
++status: ["1 document inspected, 2 ignored."]
++rows: ["setup.exe / Ignored / Will not be read / Remove","photo.png / Ignored / Will not be read / Remove","northbridge-filing.txt / Inspected / unrecognised / Remove"]
++remove buttons: ["Remove setup.exe","Remove photo.png","Remove northbridge-filing.txt"]
++
++## J2-007 empty file alone: empty.txt (0 bytes)
++alerts: ["empty.txt is empty (0 bytes)."]
++status: ["0 documents inspected, 1 ignored."]
++rows: ["empty.txt / Ignored / empty.txt is empty (0 bytes). / Remove"]
++remove buttons: ["Remove empty.txt"]
++
++## J2-004 same file chosen twice (same name)
++alerts: ["Choose documents with distinct file names."]
++status: []
++rows: ["northbridge-filing.txt / Selected / Remove","northbridge-filing.txt / Selected / Remove"]
++remove buttons: ["Remove northbridge-filing.txt","Remove northbridge-filing.txt"]
++
++## J2-005 same bytes under two names
++alerts: []
++status: ["2 documents inspected, 0 ignored."]
++rows: ["northbridge-filing.txt / Inspected / unrecognised / Remove","copy-of-filing.txt / Inspected / unrecognised / Remove"]
++remove buttons: ["Remove northbridge-filing.txt","Remove copy-of-filing.txt"]
++blocked requests: 0; page errors: 0
+diff --git a/docs/audit/2026-11-16-final/output/5-repair/T09/after2-j5-004-word-boundary.txt b/docs/audit/2026-11-16-final/output/5-repair/T09/after2-j5-004-word-boundary.txt
+new file mode 100644
+index 0000000..d3c5a4f
+--- /dev/null
++++ b/docs/audit/2026-11-16-final/output/5-repair/T09/after2-j5-004-word-boundary.txt
+@@ -0,0 +1,4 @@
++RESULT NOT REPRODUCED: Issuer IDs on the review sheets: ["northbridge-synthetic-group-internation","northbridge-synthetic-group-int-5098e1ab"] (39 characters); Library cards: ["Northbridge Synthetic Group Internation Finance plc","Northbridge Synthetic Group Internation Holdings Limited"] ["1 run","1 run"]; search "Holdings": "Northbridge Synthetic Group Internation Holdings Limited | NORTHBRIDGE-SYNTHETIC-GROUP-INTERNATION | Full credit assessment · 2025-03-31 | Net leverage | 2.25x | -0.75x vs FY2023 | better | FY2024 | Gross leverage | 2.80x | -0.95x vs FY2023 | better | FY2024 | Interest coverage | 4.00x | +0.80x vs FY2023 | better | FY2024 | Revenue | $2,250m | +$150m vs FY2023 | better | FY2024 | Cash | $275m | -$25m vs FY2023 | FY2024 | Open report | 1 run"; each report's own header: ["Northbridge Synthetic Group Internation Holdings Limited","Northbridge Synthetic Group Internation Finance plc"]; history rows (no issuer name on them): "| Full credit assessment | As of 31 March 2025 | Finished | Open overview | What changed"
++R8 blocked requests: 0 
++console problems: 0; page errors: 0; failed: 0; http>=400: 0
++exit=0
+diff --git a/docs/audit/2026-11-16-final/output/5-repair/T09/after2-j5-004.txt b/docs/audit/2026-11-16-final/output/5-repair/T09/after2-j5-004.txt
+new file mode 100644
+index 0000000..17feefe
+--- /dev/null
++++ b/docs/audit/2026-11-16-final/output/5-repair/T09/after2-j5-004.txt
+@@ -0,0 +1,3 @@
++RESULT NOT REPRODUCED: Issuer IDs on the review sheets: ["northbridge-synthetic-group-internationa","northbridge-synthetic-group-int-518e588e"] (40 characters); Library cards: ["Northbridge Synthetic Group International Finance plc","Northbridge Synthetic Group International Holdings Limited"] ["1 run","1 run"]; search "Holdings": "Northbridge Synthetic Group International Holdings Limited | NORTHBRIDGE-SYNTHETIC-GROUP-INTERNATIONA | Full credit assessment · 2025-03-31 | Net leverage | 2.25x | -0.75x vs FY2023 | better | FY2024 | Gross leverage | 2.80x | -0.95x vs FY2023 | better | FY2024 | Interest coverage | 4.00x | +0.80x vs FY2023 | better | FY2024 | Revenue | $2,250m | +$150m vs FY2023 | better | FY2024 | Cash | $275m | -$25m vs FY2023 | FY2024 | Open report | 1 run"; each report's own header: ["Northbridge Synthetic Group International Holdings Limited","Northbridge Synthetic Group International Finance plc"]; history rows (no issuer name on them): "| Full credit assessment | As of 31 March 2025 | Finished | Open overview | What changed"
++R8 blocked requests: 0 
++console problems: 0; page errors: 0; failed: 0; http>=400: 0
+diff --git a/docs/audit/2026-11-16-final/output/5-repair/T09/before-j2-003.txt b/docs/audit/2026-11-16-final/output/5-repair/T09/before-j2-003.txt
+new file mode 100644
+index 0000000..92748f7
+--- /dev/null
++++ b/docs/audit/2026-11-16-final/output/5-repair/T09/before-j2-003.txt
+@@ -0,0 +1,4 @@
++alerts: ["Cannot read annual-report.pdf: 'utf-8' codec can't decode byte 0x89 in position 0: invalid start byte"]
++row badges after Inspect: ["Selected","Selected","Selected"]
++REPRODUCED: one Python decoder message for annual-report.pdf only; holdings.xlsx is not mentioned; every row still reads Selected.
++blocked requests: 0; page errors: 0
+diff --git a/docs/audit/2026-11-16-final/output/5-repair/T09/before-j2-mistakes.txt b/docs/audit/2026-11-16-final/output/5-repair/T09/before-j2-mistakes.txt
+new file mode 100644
+index 0000000..7dcd8a9
+--- /dev/null
++++ b/docs/audit/2026-11-16-final/output/5-repair/T09/before-j2-mistakes.txt
+@@ -0,0 +1,31 @@
++
++## J2-006 wrong type alone: setup.exe
++alerts: ["The uploaded documents: no readable issuer file"]
++status: []
++rows: ["setup.exe / Selected / Remove"]
++remove buttons: ["Remove setup.exe"]
++
++## J2-006 wrong types beside a good file: setup.exe, photo.png, northbridge-filing.txt
++alerts: []
++status: ["1 document inspected, 2 ignored."]
++rows: ["setup.exe / Ignored / Will not be read / Remove","photo.png / Ignored / Will not be read / Remove","northbridge-filing.txt / Inspected / unrecognised / Remove"]
++remove buttons: ["Remove setup.exe","Remove photo.png","Remove northbridge-filing.txt"]
++
++## J2-007 empty file alone: empty.txt (0 bytes)
++alerts: ["Empty.txt has no extractable text (scanned image?)"]
++status: []
++rows: ["empty.txt / Selected / Remove"]
++remove buttons: ["Remove empty.txt"]
++
++## J2-004 same file chosen twice (same name)
++alerts: ["Choose documents with distinct file names."]
++status: []
++rows: ["northbridge-filing.txt / Selected / Remove","northbridge-filing.txt / Selected / Remove"]
++remove buttons: ["Remove northbridge-filing.txt","Remove northbridge-filing.txt"]
++
++## J2-005 same bytes under two names
++alerts: []
++status: ["2 documents inspected, 0 ignored."]
++rows: ["northbridge-filing.txt / Inspected / unrecognised / Remove","copy-of-filing.txt / Inspected / unrecognised / Remove"]
++remove buttons: ["Remove northbridge-filing.txt","Remove copy-of-filing.txt"]
++blocked requests: 0; page errors: 0
+diff --git a/docs/audit/2026-11-16-final/output/5-repair/T09/before-j5-004.txt b/docs/audit/2026-11-16-final/output/5-repair/T09/before-j5-004.txt
+new file mode 100644
+index 0000000..74008b6
+--- /dev/null
++++ b/docs/audit/2026-11-16-final/output/5-repair/T09/before-j5-004.txt
+@@ -0,0 +1,3 @@
++RESULT REPRODUCED: Issuer IDs on the review sheets: ["northbridge-synthetic-group-internationa","northbridge-synthetic-group-internationa"] (40 characters); Library cards: ["Northbridge Synthetic Group International Finance plc"] ["2 runs"]; search "Holdings": "No issuers match these filters."; each report's own header: ["Northbridge Synthetic Group International Holdings Limited","Northbridge Synthetic Group International Finance plc"]; history rows (no issuer name on them): "| Full credit assessment | As of 30 June 2025 | Open overview | What changed | Full credit assessment | As of 31 March 2025 | Finished | Open overview | What changed"
++R8 blocked requests: 0 
++console problems: 0; page errors: 0; failed: 0; http>=400: 0
+diff --git a/docs/audit/2026-11-16-final/output/5-repair/T09/before-p04.json b/docs/audit/2026-11-16-final/output/5-repair/T09/before-p04.json
+new file mode 100644
+index 0000000..577932b
+--- /dev/null
++++ b/docs/audit/2026-11-16-final/output/5-repair/T09/before-p04.json
+@@ -0,0 +1,154 @@
++[probe] proof.serve up on http://127.0.0.1:8749 (root /tmp/cs-C2/r-InHGE3)
++[probe] proof.serve on http://127.0.0.1:8749 stopped
++{
++  "cases": {
++    "png": {
++      "rowsAfterAdd": [
++        "image.png\n\nSelected\nRemove"
++      ],
++      "noDocsText": 0,
++      "continueDisabled": false,
++      "notice": [
++        "The uploaded documents: no readable issuer file"
++      ],
++      "status": [
++        ""
++      ],
++      "rowsAfterInspect": [
++        "image.png | Selected | Remove"
++      ]
++    },
++    "docx": {
++      "rowsAfterAdd": [
++        "notes.docx\n\nSelected\nRemove"
++      ],
++      "noDocsText": 0,
++      "continueDisabled": false,
++      "notice": [
++        "Cannot read notes.docx: File is not a zip file"
++      ],
++      "status": [
++        ""
++      ],
++      "rowsAfterInspect": [
++        "notes.docx | Selected | Remove"
++      ]
++    },
++    "empty": {
++      "rowsAfterAdd": [
++        "empty.txt\n\nSelected\nRemove"
++      ],
++      "noDocsText": 0,
++      "continueDisabled": false,
++      "notice": [
++        "Empty.txt has no extractable text (scanned image?)"
++      ],
++      "status": [
++        ""
++      ],
++      "rowsAfterInspect": [
++        "empty.txt | Selected | Remove"
++      ]
++    },
++    "big52": {
++      "rowsAfterAdd": [
++        "big52.txt\n\nSelected\nRemove"
++      ],
++      "noDocsText": 0,
++      "continueDisabled": false,
++      "notice": [
++        "a file is at most 50 MB"
++      ],
++      "status": [
++        ""
++      ],
++      "rowsAfterInspect": [
++        "big52.txt | Selected | Remove"
++      ]
++    },
++    "filing+png+docx": {
++      "rowsAfterAdd": [
++        "northbridge-filing.txt\n\nSelected\nRemove",
++        "image.png\n\nSelected\nRemove",
++        "notes.docx\n\nSelected\nRemove"
++      ],
++      "noDocsText": 0,
++      "continueDisabled": false,
++      "notice": [
++        "Cannot read notes.docx: File is not a zip file"
++      ],
++      "status": [
++        ""
++      ],
++      "rowsAfterInspect": [
++        "northbridge-filing.txt | Selected | Remove",
++        "image.png | Selected | Remove",
++        "notes.docx | Selected | Remove"
++      ]
++    },
++    "same-name-twice": {
++      "rowsAfterAdd": [
++        "dup.txt\n\nSelected\nRemove",
++        "dup.txt\n\nSelected\nRemove"
++      ],
++      "noDocsText": 0,
++      "continueDisabled": false,
++      "notice": [
++        "Choose documents with distinct file names."
++      ],
++      "status": [
++        ""
++      ],
++      "rowsAfterInspect": [
++        "dup.txt | Selected | Remove",
++        "dup.txt | Selected | Remove"
++      ]
++    },
++    "hidden": {
++      "rowsAfterAdd": [],
++      "noDocsText": 1,
++      "continueDisabled": true
++    }
++  },
++  "log": {
++    "blocked": [],
++    "console": [
++      "warning: Launcher flag not shown to the analyst: --sources the uploaded documents: no readable issuer file",
++      "warning: Launcher flag not shown to the analyst: --sources: cannot read notes.docx: File is not a zip file",
++      "warning: Launcher flag not shown to the analyst: --sources: empty.txt has no extractable text (scanned image?)",
++      "error: Failed to load resource: the server responded with a status of 400 (Bad Request)",
++      "warning: Launcher flag not shown to the analyst: --sources: cannot read notes.docx: File is not a zip file"
++    ],
++    "pageerrors": [],
++    "failed": [],
++    "bad": [
++      "400 POST /api/submissions/44d135e20074000d56f184bf296b75ec/files?name=big52.txt"
++    ],
++    "requests": [
++      "GET /connected/context",
++      "POST /api/submissions",
++      "POST /api/submissions/2031a1e82035c0345d093fbe0b100d0f/files?name=image.png",
++      "GET /api/submissions/2031a1e82035c0345d093fbe0b100d0f/reading",
++      "GET /connected/context",
++      "POST /api/submissions",
++      "POST /api/submissions/2b85d2d8f136b230e85abdcb21008f67/files?name=notes.docx",
++      "GET /api/submissions/2b85d2d8f136b230e85abdcb21008f67/reading",
++      "GET /connected/context",
++      "POST /api/submissions",
++      "POST /api/submissions/02e142c89a59fcfd8d5110a7c2f8ff9d/files?name=empty.txt",
++      "GET /api/submissions/02e142c89a59fcfd8d5110a7c2f8ff9d/reading",
++      "GET /connected/context",
++      "POST /api/submissions",
++      "POST /api/submissions/44d135e20074000d56f184bf296b75ec/files?name=big52.txt",
++      "GET /connected/context",
++      "POST /api/submissions",
++      "POST /api/submissions/a7b41b9b840104f03582aa528c7d102a/files?name=northbridge-filing.txt",
++      "POST /api/submissions/a7b41b9b840104f03582aa528c7d102a/files?name=image.png",
++      "POST /api/submissions/a7b41b9b840104f03582aa528c7d102a/files?name=notes.docx",
++      "GET /api/submissions/a7b41b9b840104f03582aa528c7d102a/reading",
++      "GET /connected/context",
++      "GET /connected/context"
++    ],
++    "notes": []
++  }
++}
+diff --git a/docs/audit/2026-11-16-final/output/5-repair/T09/before-p05.json b/docs/audit/2026-11-16-final/output/5-repair/T09/before-p05.json
+new file mode 100644
+index 0000000..134508a
+--- /dev/null
++++ b/docs/audit/2026-11-16-final/output/5-repair/T09/before-p05.json
+@@ -0,0 +1,69 @@
++[probe] proof.serve up on http://127.0.0.1:8749 (root /tmp/cs-C2/r-E9rQ5c)
++[probe] proof.serve on http://127.0.0.1:8749 stopped
++{
++ "slug": {
++  "Société Générale S.A.": "societe-generale-s-a",
++  "Ørsted A/S": "rsted-a-s",
++  "Эрикссон": "",
++  "日本電信電話": "",
++  "A": "a",
++  "  Trailing  ": "trailing",
++  "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
++  "Nokia Oyj (2025)": "nokia-oyj-2025"
++ },
++ "native": {
++  "cyrillicIdMessage": {
++   "valid": false,
++   "message": "Please fill out this field.",
++   "pattern": "[a-z0-9][a-z0-9\\-]{0,39}",
++   "required": true
++  },
++  "upperCaseIdMessage": {
++   "valid": false,
++   "message": "Please match the requested format.",
++   "pattern": "[a-z0-9][a-z0-9\\-]{0,39}",
++   "required": true
++  },
++  "idHelpText": "Issuer ID",
++  "afterContinueInvalidId": {
++   "headings": [
++    "Documents",
++    "Readiness"
++   ],
++   "alerts": [],
++   "focus": "input \"Issuer ID\""
++  },
++  "afterContinueEmptyName": {
++   "alerts": [],
++   "focus": "input \"Issuer name\"",
++   "nameMessage": {
++    "valid": false,
++    "message": "Please fill out this field.",
++    "pattern": "",
++    "required": true
++   }
++  },
++  "afterContinueBlankName": {
++   "alerts": [],
++   "focus": "input \"As-of date\"",
++   "headings": [
++    "Documents",
++    "Readiness"
++   ],
++   "problemBtn": []
++  }
++ },
++ "analyst": {},
++ "error": "TimeoutError: locator.click: Timeout 15000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('button', { name: 'Go back to Documents' })\u001b[22m\n",
++ "log": {
++  "blocked": [],
++  "console": [],
++  "pageerrors": [],
++  "failed": [],
++  "bad": [],
++  "requests": [
++   "GET /connected/context"
++  ],
++  "notes": []
++ }
++}
+diff --git a/docs/audit/2026-11-16-final/output/5-repair/T09/before-walk-remove-bad-file.txt b/docs/audit/2026-11-16-final/output/5-repair/T09/before-walk-remove-bad-file.txt
+new file mode 100644
+index 0000000..ba8266f
+--- /dev/null
++++ b/docs/audit/2026-11-16-final/output/5-repair/T09/before-walk-remove-bad-file.txt
+@@ -0,0 +1,8 @@
++FAIL first refusal names annual-report.pdf in a reader sentence  [["annual-report.pdf cannot be read: its contents are not a PDF file."]]
++ok   annual-report.pdf row is marked Ignored  [["annual-report.pdf Ignored annual-report.pdf cannot be read: its contents are not a PDF file. Remove","holdings.xlsx Selected Remove","northbridge-filing.txt Selected Remove"]]
++FAIL after Remove: the next refusal names holdings.xlsx in a reader sentence  [["Cannot read holdings.xlsx: 'utf-8' codec can't decode byte 0x89 in position 11: invalid start byte"]]
++FAIL after Remove: annual-report.pdf is gone and does not reappear as Ignored  [["holdings.xlsx Selected Remove","northbridge-filing.txt Selected Remove","annual-report.pdf Ignored annual-report.pdf cannot be read: its contents are not a PDF file. Remove"]]
++FAIL after Remove: holdings.xlsx is the Ignored row  [["holdings.xlsx Selected Remove","northbridge-filing.txt Selected Remove","annual-report.pdf Ignored annual-report.pdf cannot be read: its contents are not a PDF file. Remove"]]
++ok   after the last bad file is removed: no refusal and only the readable file remains  [{"a":[],"r":["northbridge-filing.txt Inspected unrecognised Remove"]}]
++blocked requests: 0; page errors: 0
++exit=1
+diff --git a/docs/audit/2026-11-16-final/output/5-repair/T09/walk-issuer-id.cjs b/docs/audit/2026-11-16-final/output/5-repair/T09/walk-issuer-id.cjs
+new file mode 100644
+index 0000000..9e0bb8e
+--- /dev/null
++++ b/docs/audit/2026-11-16-final/output/5-repair/T09/walk-issuer-id.cjs
+@@ -0,0 +1,84 @@
++// T09 round 2 walk (J5-004, ruling L18): an Issuer ID is one issuer's, at every route.
++//  1. Holdings runs under the usual (cut) ID; Finance, with the same first 40 characters, gets a suffixed ID and the
++//     review sheet says which issuer holds the usual one.
++//  2. A third issuer types the Holdings ID by hand: the review is refused on the Issuer ID field with a reader
++//     sentence naming the holder; the page offers the suffixed ID; taking the offer reaches the review sheet.
++//  3. "Carry over from latest run" on the Finance name looks up the suffixed ID: it carries Finance's run, not Holdings'.
++// Exit 1 when a check fails, 0 when every check holds. Port 8765 (lock: /tmp/repair1-port-8765.lock):
++//   timeout 900 flock /tmp/repair1-port-8765.lock timeout 600 node docs/audit/2026-11-16-final/output/5-repair/T09/walk-issuer-id.cjs
++"use strict";
++const lib = require("../../3-journeys/J5/probes/_j5lib.cjs");
++
++const failures = [];
++function check(label, ok, seen) {
++  console.log(`${ok ? "ok  " : "FAIL"} ${label}  [${JSON.stringify(seen)}]`);
++  if (!ok) failures.push(label);
++}
++const main = async (page) => (await page.locator("main").innerText()).replace(/\s+/g, " ");
++const HOLDINGS = "Northbridge Synthetic Group International Holdings Limited";
++const FINANCE = "Northbridge Synthetic Group International Finance plc";
++const USUAL = "northbridge-synthetic-group-internationa";
++
++lib.segment("t09-id", async ({ page, origin }) => {
++  const a = await lib.submitRun(page, origin, { issuer: HOLDINGS, asOf: "2025-03-31" });
++  await lib.waitEnded(origin, a);
++  await lib.waitPublished(origin, a);
++
++  let sheet = "";
++  const b = await lib.submitRun(page, origin, {
++    issuer: FINANCE,
++    asOf: "2025-06-30",
++    onReview: async (p) => {
++      await p.waitForTimeout(500);
++      sheet = await main(p);
++    },
++  });
++  await lib.waitEnded(origin, b);
++  await lib.waitPublished(origin, b);
++  const id = /Issuer ID\s+(northbridge-synthetic-group-int-[0-9a-f]{8})/.exec(sheet)?.[1];
++  check("1: Finance gets a suffixed ID", Boolean(id), id);
++  check(
++    "1: the review sheet names the holder of the usual ID",
++    sheet.includes(`${USUAL} is already filed under ${HOLDINGS}, a different issuer.`),
++    sheet.slice(sheet.indexOf("Issuer ID") - 40, sheet.indexOf("Issuer ID") + 260),
++  );
++
++  // 2. a hand-typed ID filed under another issuer
++  let failed = "";
++  try {
++    await lib.submitRun(page, origin, {
++      issuer: "Eastmoor Synthetic Utilities plc",
++      asOf: "2025-06-30",
++      onDocuments: async (p) => {
++        await p.getByLabel("Issuer ID", { exact: true }).fill(USUAL);
++      },
++    });
++  } catch (error) {
++    failed = String(error).slice(0, 80);
++  }
++  const text = await main(page);
++  const sentence = `Issuer ID ${USUAL} is already used for ${HOLDINGS}, a different issuer.`;
++  check("2: Submit is not reached; the Issuer ID field shows the refusal", Boolean(failed) && text.includes(sentence), text.slice(Math.max(0, text.indexOf("Issuer ID") - 20), text.indexOf("Issuer ID") + 420));
++  const offer = page.getByRole("button", { name: /^Use [a-z0-9-]+-[0-9a-f]{8}$/ });
++  check("2: the suffixed ID is offered", (await offer.count()) === 1, await offer.allInnerTexts());
++  check("2: the field is marked invalid", (await page.locator('[data-field="issuer_id"]').getAttribute("aria-invalid")) === "true");
++  await offer.click();
++  const taken = await page.getByLabel("Issuer ID", { exact: true }).inputValue();
++  check("2: taking the offer fills the field", /^eastmoor-[a-z0-9-]+-[0-9a-f]{8}$/.test(taken), taken);
++  await page.getByRole("button", { name: "Continue to purpose", exact: true }).click();
++  await page.getByRole("button", { name: "Continue to context", exact: true }).click();
++  await page.getByRole("button", { name: "Review run", exact: true }).click();
++  await page.getByRole("button", { name: "Submit run", exact: true }).waitFor();
++  check("2: the review sheet opens with the taken ID", (await main(page)).includes(`Issuer ID ${taken}`), taken);
++
++  // 3. carry over: the issuer's own run, found under the settled ID
++  await page.goto(origin + "/start");
++  await page.getByLabel("Issuer name", { exact: true }).fill(FINANCE);
++  await page.getByRole("button", { name: "Carry over from latest run", exact: true }).click();
++  await page.waitForTimeout(1500);
++  const carried = await main(page);
++  const idField = await page.getByLabel("Issuer ID", { exact: true }).inputValue();
++  check("3: carry over from latest run carries Finance run (not Holdings) under the suffixed ID", idField === id && carried.includes(`Starting from run ${b}.`), { idField, intro: carried.slice(carried.indexOf("Issuer and case date"), carried.indexOf("Issuer and case date") + 300) });
++}).then(() => {
++  process.exit(failures.length ? 1 : process.exitCode || 0);
++});
+diff --git a/docs/audit/2026-11-16-final/output/5-repair/T09/walk-remove-bad-file.cjs b/docs/audit/2026-11-16-final/output/5-repair/T09/walk-remove-bad-file.cjs
+new file mode 100644
+index 0000000..c2fbcb6
+--- /dev/null
++++ b/docs/audit/2026-11-16-final/output/5-repair/T09/walk-remove-bad-file.cjs
+@@ -0,0 +1,62 @@
++// T09 round 2 walk (J2-003, review finding 2): remove one unreadable file while another unreadable file
++// remains. The page must keep naming the next file in a reader sentence (no decoder text), the removed file
++// must not come back as an "Ignored" row, and removing the last bad file must leave the readable one.
++// Exit 1 when a check fails (it does on the base commit), 0 when every check holds.
++//   timeout 600 flock /tmp/repair1-port-8762.lock node docs/audit/2026-11-16-final/output/5-repair/T09/walk-remove-bad-file.cjs
++"use strict";
++const fs = require("node:fs");
++const L = require("../../3-journeys/J2/probes/_j2lib.cjs");
++
++const dir = "/tmp/jr/t09-walk-input";
++fs.rmSync(dir, { recursive: true, force: true });
++fs.mkdirSync(dir, { recursive: true });
++fs.writeFileSync(`${dir}/annual-report.pdf`, Buffer.from("\x89PNG\r\n\x1a\n", "latin1"));
++fs.writeFileSync(`${dir}/holdings.xlsx`, fs.readFileSync(`${L.REPO}/proof/northbridge-portfolio.xlsx`).subarray(0, 300));
++const pick = (name, type) => ({ name, mimeType: type, buffer: fs.readFileSync(`${dir}/${name}`) });
++
++const failures = [];
++function check(label, ok, seen) {
++  console.log(`${ok ? "ok  " : "FAIL"} ${label}  [${JSON.stringify(seen)}]`);
++  if (!ok) failures.push(label);
++}
++const rows = (page) =>
++  page.locator("[aria-label='Documents added'] li").evaluateAll((els) => els.map((e) => e.innerText.replace(/\s+/g, " ").trim()));
++const alerts = (page) => page.locator("[role=alert]").evaluateAll((els) => els.map((e) => e.textContent.trim()));
++const RAW = /codec|decode byte|position \d+|Cannot read/;
++
++L.run("t09-walk", async ({ page, origin }) => {
++  await page.goto(origin + "/start");
++  await page.getByLabel("Issuer name", { exact: true }).waitFor();
++  await L.fillIssuer(page);
++  await page.getByLabel("Documents", { exact: true }).setInputFiles([
++    pick("annual-report.pdf", "application/pdf"),
++    pick("holdings.xlsx", L.XLSX),
++    L.caseFile("northbridge-filing.txt"),
++  ]);
++  await page.getByRole("button", { name: "Inspect documents", exact: true }).click();
++  await L.sleep(2500);
++  let a = await alerts(page);
++  let r = await rows(page);
++  check("first refusal names annual-report.pdf in a reader sentence", a.length === 1 && /^annual-report\.pdf could not be read/.test(a[0]) && !RAW.test(a[0]), a);
++  check("annual-report.pdf row is marked Ignored", r.some((x) => /^annual-report\.pdf.*Ignored/.test(x)), r);
++
++  await page.getByRole("button", { name: /Remove/ }).first().click();
++  await L.sleep(2500);
++  a = await alerts(page);
++  r = await rows(page);
++  check("after Remove: the next refusal names holdings.xlsx in a reader sentence", a.length === 1 && /^holdings\.xlsx could not be read/.test(a[0]) && !RAW.test(a[0]), a);
++  check("after Remove: annual-report.pdf is gone and does not reappear as Ignored", !r.some((x) => /annual-report/.test(x)), r);
++  check("after Remove: holdings.xlsx is the Ignored row", r.some((x) => /^holdings\.xlsx.*Ignored/.test(x)), r);
++
++  await page.locator("[aria-label='Documents added'] li", { hasText: "holdings.xlsx" }).getByRole("button", { name: /Remove/ }).click();
++  await L.sleep(2500);
++  a = await alerts(page);
++  r = await rows(page);
++  check("after the last bad file is removed: no refusal and only the readable file remains", a.length === 0 && r.length === 1 && /northbridge-filing/.test(r[0]), { a, r });
++}).then(
++  () => process.exit(failures.length ? 1 : 0),
++  (error) => {
++    console.log(`FAIL walk broke: ${error}`);
++    process.exit(1);
++  },
++);
+diff --git a/src/deploy_workflow/run_start/submissions.py b/src/deploy_workflow/run_start/submissions.py
+index 8d9e14a..adaae43 100644
+--- a/src/deploy_workflow/run_start/submissions.py
++++ b/src/deploy_workflow/run_start/submissions.py
+@@ -26,6 +26,7 @@ from typing import Any, BinaryIO, TypedDict
+ 
+ from deploy_vii.contracts import PATHWAY_CAP_USD
+ from deploy_workflow.context import load_context
++from deploy_workflow.inbox import runs
+ from deploy_workflow.inbox.filing import safe_name
+ from deploy_workflow.inbox.layout import MAX_ISSUER_ID, Layout
+ from deploy_workflow.inbox.runs import EFFORTS, MODELS, config_for
+@@ -617,6 +618,42 @@ def context_bytes(answers: Answers) -> bytes:
+         raise Refused("the context holds text that cannot be stored (a lone surrogate)") from None
+ 
+ 
++def issuer_key(name: str) -> str:
++    """An issuer name reduced to the letters and digits that tell two issuers apart.
++
++    The page reduces a name the same way (``issuerKey`` in ``start/plain.ts``) and the two are
++    pinned by the same literal cases: NFKD, lower case, marks dropped, then only a-z and 0-9."""
++    text = unicodedata.normalize("NFKD", name).lower()
++    text = "".join(ch for ch in text if not unicodedata.category(ch).startswith("M"))
++    return re.sub(r"[^a-z0-9]+", "", text)
++
++
++def refuse_filed_elsewhere(layout: Layout, answers: Answers) -> None:
++    """``Refused`` when the Issuer ID is already filed under another issuer's name.
++
++    An ID is one issuer's. Runs record the name they were filed under; the ID is free when no run
++    holds it, or when any run under it carries this name (compared by ``issuer_key``) or no name,
++    so the same issuer keeps its ID, and an ID that two issuers already share (merged before this
++    check) still takes either of them. Otherwise the latest run's name is the holder named. An
++    unreadable record file is skipped, as `prior.issuer` skips it. Both the summary and
++    ``digest`` (which Submit compares with the approval) call this, so no route passes it by."""
++    identity = answers["context"].get("identity")
++    if not isinstance(identity, dict):
++        return
++    issuer_id, name = identity.get("issuer_id"), identity.get("issuer_name")
++    if not isinstance(issuer_id, str) or not isinstance(name, str):
++        return
++    held = [r for r in runs.load_readable(layout)[0] if r.issuer_id == issuer_id]
++    mine = issuer_key(name)
++    if not held or any(not r.issuer_name or issuer_key(r.issuer_name) == mine for r in held):
++        return
++    holder = max(held, key=lambda r: (r.as_of, r.id)).issuer_name
++    raise Refused(
++        f'Issuer ID "{issuer_id}" is already filed under "{holder}", a different issuer from '
++        f'"{name.strip()}". Use another Issuer ID for this issuer.'
++    )
++
++
+ def _digest(root: Path, answers: Answers) -> str:
+     files = []
+     for rel in sorted(_stored(root, strict=True)):
+@@ -655,6 +692,7 @@ def digest(layout: Layout, sid: str, answers: Answers) -> str:
+     ``level`` and ``submitted_by`` are not covered: they change what the page shows, not the run.
+     The approval's digest is this one with the earlier run named at approval folded in (`bound`)."""
+     answers = validated(answers)
++    refuse_filed_elsewhere(layout, answers)
+     root = files_folder(layout, sid)
+     value = _digest(root, answers)
+     if not root.is_dir():  # a seal renamed the folder before the walk: it saw nothing
+@@ -791,6 +829,7 @@ def _summarise(layout: Layout, sid: str, answers: Answers) -> dict[str, Any]:
+                     return {"error": _CHANGED}
+                 run = load_context(context_bytes(answers))
+                 refuse_deactivated(run.run.pathway)
++                refuse_filed_elsewhere(layout, answers)
+                 cap = PATHWAY_CAP_USD[run.run.pathway]
+                 if len(run.identity.issuer_id) > MAX_ISSUER_ID:
+                     raise Refused(
+diff --git a/tests/test_run_start_scheduler.py b/tests/test_run_start_scheduler.py
+index 92bc161..e9d5b26 100644
+--- a/tests/test_run_start_scheduler.py
++++ b/tests/test_run_start_scheduler.py
+@@ -769,3 +769,53 @@ def test_a_full_queue_refuses_a_submission_before_sealing_it(root, fake_env, mon
+     w.step()
+     assert w.submit(sid, answers, digest).status == "queued"
+     w.close()
++
++
++def test_an_id_filed_between_review_and_submit_is_refused_and_nothing_starts(root, fake_env):
++    fake_env({"sleep": 30})
++    answers = answers_for()
++    sid = upload(root)
++    d = approved(root, sid, answers)  # the page reviewed: "acme" was free for Acme Corp
++    runs.save(
++        layout(root),
++        Record(
++            "20261109-000009-01",
++            PATHWAY,
++            "Another Issuer plc",
++            "finished",
++            "t",
++            issuer_id="acme",
++            issuer_name="Another Issuer plc",
++            as_of="2026-11-08",
++        ),
++    )
++    w = Scheduler(settings(root))
++    with pytest.raises(Refused, match='already filed under "Another Issuer plc"'):
++        w.submit(sid, answers, d)
++    assert [r.id for r in load_all(layout(root))] == ["20261109-000009-01"]
++    assert not list(layout(root).drops.iterdir())
++    assert (layout(root).uploads / sid / "files").is_dir()  # unsealed: the files are still open
++    w.close()
++
++
++def test_the_same_issuer_resubmitting_under_its_own_id_is_accepted(root, fake_env):
++    fake_env({"sleep": 30})
++    answers = answers_for()
++    layout(root).state.mkdir(parents=True, exist_ok=True)
++    runs.save(
++        layout(root),
++        Record(
++            "20261108-000001-01",
++            PATHWAY,
++            "Acme Corp",
++            "finished",
++            "t",
++            issuer_id="acme",
++            issuer_name="Acme Corp",
++            as_of="2026-11-08",
++        ),
++    )
++    sid = upload(root)
++    w = Scheduler(settings(root))
++    assert w.submit(sid, answers, approved(root, sid, answers)).status == "queued"
++    w.close()
+diff --git a/tests/test_run_start_submissions.py b/tests/test_run_start_submissions.py
+index 9013051..b463777 100644
+--- a/tests/test_run_start_submissions.py
++++ b/tests/test_run_start_submissions.py
+@@ -18,6 +18,7 @@ import pytest
+ from library_fixtures import make_run
+ from test_cpos_launch import context_file, issuer_folder
+ 
++from deploy_workflow.inbox import runs
+ from deploy_workflow.inbox.layout import Layout, ensure_layout
+ from deploy_workflow.owners import cpos_launch
+ from deploy_workflow.owners.cpos_launch import prepare, read_documents
+@@ -1716,3 +1717,134 @@ def test_two_names_that_agree_for_eighty_characters_are_both_kept(layout):
+     folder = files_folder(layout, sid)
+     assert (folder / first).read_bytes() == b"one"
+     assert (folder / second).read_bytes() == b"two"
++
++
++# ---- T09 round 2 (J5-004): an Issuer ID filed under one issuer is refused for another ----
++
++# The same literal cases are pinned in web/src/pages/connected/start/plain.test.ts (`issuerKey`):
++# the page and the service must reduce a name the same way.
++ISSUER_KEY_CASES = [
++    ("Acme Corp", "acmecorp"),
++    ("ACME  corp.", "acmecorp"),
++    ("Åre Group A/S", "aregroupas"),
++    ("Straße Holdings plc", "straeholdingsplc"),
++    ("Ørsted A/S", "rstedas"),
++    ("Ａｃｍｅ Ｃｏｒｐ", "acmecorp"),
++    ("Nestlé S.A. 2", "nestlesa2"),
++    ("İstanbul Ltd", "istanbulltd"),
++    ("  ", ""),
++]
++
++
++@pytest.mark.parametrize(("name", "key"), ISSUER_KEY_CASES)
++def test_issuer_key_matches_the_pages_reduction(name, key):
++    assert submissions.issuer_key(name) == key
++
++
++def file_run(
++    layout: Layout, run_id: str, issuer_id: str, issuer_name: str, as_of: str = "2026-01-01"
++):
++    runs.save(
++        layout,
++        runs.Record(
++            run_id,
++            "credit_snapshot",
++            issuer_name,
++            "finished",
++            "t",
++            issuer_id=issuer_id,
++            issuer_name=issuer_name,
++            as_of=as_of,
++        ),
++    )
++
++
++def named(tmp_path: Path, issuer_id: str, issuer_name: str) -> Answers:
++    answers = answers_for(tmp_path)
++    answers["context"]["identity"].update(issuer_id=issuer_id, issuer_name=issuer_name)
++    return answers
++
++
++def test_a_hand_typed_id_filed_under_another_issuer_is_refused_by_summary_and_digest(
++    layout, tmp_path
++):
++    file_run(layout, "20260101-000001-01", "acme", "Acme Corp")
++    sid, _ = upload_issuer(layout, tmp_path)
++    answers = named(tmp_path, "acme", "Eastmoor Synthetic Utilities plc")
++    got = summary(layout, sid, answers)
++    assert "digest" not in got
++    assert got["error"] == (
++        'Issuer ID "acme" is already filed under "Acme Corp", a different issuer from '
++        '"Eastmoor Synthetic Utilities plc". Use another Issuer ID for this issuer.'
++    )
++    with pytest.raises(Refused, match="already filed under"):
++        digest(layout, sid, answers)
++
++
++def test_a_carried_id_whose_name_was_then_changed_is_refused(layout, tmp_path):
++    file_run(layout, "20260101-000001-01", "acme", "Acme Corp")
++    sid, _ = upload_issuer(layout, tmp_path)
++    got = summary(layout, sid, named(tmp_path, "acme", "Acme Holdings Ltd"))
++    assert 'already filed under "Acme Corp"' in got["error"]
++
++
++def test_the_two_northbridge_long_names_do_not_share_an_id(layout, tmp_path):
++    long_id = "northbridge-synthetic-group-internationa"
++    file_run(
++        layout,
++        "20260101-000001-01",
++        long_id,
++        "Northbridge Synthetic Group International Holdings Limited",
++    )
++    sid, _ = upload_issuer(layout, tmp_path)
++    got = summary(
++        layout,
++        sid,
++        named(tmp_path, long_id, "Northbridge Synthetic Group International Finance plc"),
++    )
++    assert "already filed under" in got["error"] and "digest" not in got
++    # ... the suffixed ID the page offers is free.
++    free = named(
++        tmp_path,
++        "northbridge-synthetic-group-int-518e588e",
++        "Northbridge Synthetic Group International Finance plc",
++    )
++    assert summary(layout, sid, free)["error"] == ""
++
++
++def test_a_short_name_that_collides_is_refused(layout, tmp_path):
++    file_run(
++        layout,
++        "20260101-000001-01",
++        "northbridge-synthetic-group-investments",
++        "Northbridge Synthetic Group Investments Holdings Limited",
++    )
++    sid, _ = upload_issuer(layout, tmp_path)
++    got = summary(
++        layout,
++        sid,
++        named(
++            tmp_path,
++            "northbridge-synthetic-group-investments",
++            "Northbridge Synthetic Group Investments",
++        ),
++    )
++    assert "already filed under" in got["error"]
++
++
++def test_the_same_issuer_under_its_own_id_is_accepted_however_it_is_typed(layout, tmp_path):
++    file_run(layout, "20260101-000001-01", "acme", "Acme Corp")
++    file_run(layout, "20260101-000002-01", "nameless", "")
++    sid, _ = upload_issuer(layout, tmp_path)
++    assert summary(layout, sid, named(tmp_path, "acme", "ACME  corp."))["error"] == ""
++    assert summary(layout, sid, named(tmp_path, "nameless", "Anything Plc"))["error"] == ""
++    assert summary(layout, sid, named(tmp_path, "unused-id", "Anything Plc"))["error"] == ""
++
++
++def test_an_id_already_merged_before_the_check_accepts_either_of_its_issuers(layout, tmp_path):
++    file_run(layout, "20260101-000001-01", "acme", "Acme Corp", "2026-01-01")
++    file_run(layout, "20260101-000002-01", "acme", "Acme Finance plc", "2026-02-01")
++    sid, _ = upload_issuer(layout, tmp_path)
++    assert summary(layout, sid, named(tmp_path, "acme", "Acme Corp"))["error"] == ""
++    assert summary(layout, sid, named(tmp_path, "acme", "Acme Finance plc"))["error"] == ""
++    assert "already filed under" in summary(layout, sid, named(tmp_path, "acme", "Other"))["error"]
+diff --git a/web/src/pages/connected/ConnectedApp.test.tsx b/web/src/pages/connected/ConnectedApp.test.tsx
+index d3ba029..33e0830 100644
+--- a/web/src/pages/connected/ConnectedApp.test.tsx
++++ b/web/src/pages/connected/ConnectedApp.test.tsx
+@@ -308,11 +308,12 @@ describe("connected run start", () => {
+       "/api/submissions/sub-1/files?name=Credit%20%26%20facts.html",
+       "/api/submissions/sub-1/reading",
+       "/api/submissions/sub-1/reading",
++      "/api/issuers/synthetic-generale", // who holds the name's usual Issuer ID (T09)
+       "/api/submissions/sub-1/summary",
+     ]);
+     expect(fetchMock.mock.calls[2]?.[1]).toMatchObject({ method: "POST", body: file });
+-    expect(fetchMock.mock.calls[5]?.[1]?.headers).toMatchObject({ "X-Shown-Cap": "25" });
+-    const rawAnswers = fetchMock.mock.calls[5]?.[1]?.body;
++    expect(fetchMock.mock.calls[6]?.[1]?.headers).toMatchObject({ "X-Shown-Cap": "25" });
++    const rawAnswers = fetchMock.mock.calls[6]?.[1]?.body;
+     expect(typeof rawAnswers).toBe("string");
+     const body = JSON.parse(rawAnswers as string) as unknown;
+     expect(body).toEqual({
+@@ -336,7 +337,7 @@ describe("connected run start", () => {
+     expect(submit).toBeDisabled();
+     approve();
+     await confirmSynthetic(submit);
+-    const rawSubmit = fetchMock.mock.calls[6]?.[1]?.body;
++    const rawSubmit = fetchMock.mock.calls[7]?.[1]?.body;
+     expect(typeof rawSubmit).toBe("string");
+     expect(JSON.parse(rawSubmit as string)).toEqual({
+       answers: body,
+diff --git a/web/src/pages/connected/StartRun.tsx b/web/src/pages/connected/StartRun.tsx
+index 077f32d..4db199c 100644
+--- a/web/src/pages/connected/StartRun.tsx
++++ b/web/src/pages/connected/StartRun.tsx
+@@ -77,11 +77,14 @@ import {
+   CASE_KINDS,
+   CONTEXT_DETAILS,
+   documentDescription,
++  documentRefusal,
+   EFFORTS,
+   ISSUE_CLASSES,
+   ISSUE_CLASSIFICATION,
+   ISSUER_DETAILS,
+   ISSUER_ID,
++  issuerIdFor,
++  issuerIdRefusal,
+   ISSUER_LIST_BOXES,
+   ISSUER_TEXT_BOXES,
+   LEGAL_CHOICES,
+@@ -147,6 +150,7 @@ const PATHWAY_CARDS = Object.entries(PATHWAYS).map(([id, pathway]) => ({
+ 
+ type FieldKey =
+   | "issuer_name"
++  | "issuer_id"
+   | "submitted_by"
+   | "cutoff"
+   | "current_period"
+@@ -172,6 +176,8 @@ class FieldProblem extends Error {
+     readonly field: FieldKey,
+     message: string,
+     readonly others?: readonly string[],
++    /** For `issuer_id`: the free Issuer ID the page offers in its place. */
++    readonly offer?: string,
+   ) {
+     super(message);
+   }
+@@ -201,7 +207,9 @@ function refusedField(
+ 
+ /** The step a control is drawn on: the issuer name and analyst name on Documents, the rest on Context. */
+ export function stepOfField(field: FieldKey): FormStep {
+-  return field === "issuer_name" || field === "submitted_by" ? "documents" : "context";
++  return field === "issuer_name" || field === "issuer_id" || field === "submitted_by"
++    ? "documents"
++    : "context";
+ }
+ 
+ function problemAttrs(problem: FieldProblem | undefined, field: FieldKey) {
+@@ -257,6 +265,22 @@ type Forms = {
+   assumptions?: AssumptionsForm;
+ };
+ type LatestIssuerInputs = { run: string; prior: PriorInputs };
++/** The ID the review settled for a typed name, and the issuer that holds the name's usual ID. */
++type SettledSlug = { name: string; id: string; holder?: string };
++
++/**
++ * The name an ID is filed under (the latest run's), or undefined when no run holds it or the
++ * lookup failed: the service refuses an ID filed under another issuer at the summary and at Submit,
++ * so a failed lookup cannot merge two issuers.
++ */
++async function holderOf(issuerId: string): Promise<string | undefined> {
++  try {
++    const latest: { latest_run: string; issuer_name?: string } = await getLatestIssuerRun(issuerId);
++    return latest.latest_run ? (latest.issuer_name ?? "") : undefined;
++  } catch {
++    return undefined;
++  }
++}
+ 
+ async function latestIssuerInputs(issuer: string): Promise<LatestIssuerInputs | null> {
+   const latest = await getLatestIssuerRun(issuer);
+@@ -326,6 +350,9 @@ type IntakeView = {
+   rowsOf: (kind: RowKind) => Row[];
+   changeRows: (kind: RowKind, rows: Row[]) => void;
+   problem?: FieldProblem;
++  /** On the review sheet: why the Issuer ID is not the usual one for the name; "" when it is. */
++  idNote: string;
++  useIssuerId: (id: string) => void;
+   focusProblem: () => void;
+   changeModel: (value: string) => void;
+   changeEffort: (value: string) => void;
+@@ -345,6 +372,8 @@ function useIntakeIdentityState(
+   const [context, setContext] = useState<Context>(() => startingContext(template, initial?.prior));
+   const [purposeTouched, setPurposeTouched] = useState(Boolean(initial?.prior.context));
+   const [customSlug, setCustomSlug] = useState(initial?.prior.issuer_id);
++  // The ID the review settled for a typed name whose usual ID another issuer already holds.
++  const [settledSlug, setSettledSlug] = useState<SettledSlug>();
+   const [newestOverride, setNewestOverride] = useState<string>();
+   return {
+     copy,
+@@ -361,6 +390,8 @@ function useIntakeIdentityState(
+     setPurposeTouched,
+     customSlug,
+     setCustomSlug,
++    settledSlug,
++    setSettledSlug,
+     newestOverride,
+     setNewestOverride,
+   };
+@@ -513,6 +544,7 @@ function shownCapText(cap: number | null) {
+ function intakeRunDetails({
+   context,
+   customSlug,
++  settledSlug,
+   caps,
+   files,
+   copy,
+@@ -523,6 +555,7 @@ function intakeRunDetails({
+ }: {
+   context: Context;
+   customSlug?: string;
++  settledSlug?: SettledSlug;
+   caps: Record<string, string>;
+   files: File[];
+   copy?: { prior: PriorInputs };
+@@ -536,7 +569,10 @@ function intakeRunDetails({
+   return {
+     run,
+     identity,
+-    issuerId: customSlug ?? issuerSlug(identity.issuer_name),
++    issuerId:
++      customSlug ??
++      (settledSlug?.name === identity.issuer_name.trim() ? settledSlug.id : undefined) ??
++      issuerSlug(identity.issuer_name),
+     requested: pathwayModules(run.pathway),
+     cap: selectedCap ? Number(selectedCap) : null,
+     earnings: run.pathway === "earnings_update",
+@@ -744,21 +780,41 @@ function DocumentFields({
+         </label>
+         <FieldMessage problem={view.problem} field="issuer_name" />
+       </div>
+-      <label className={label}>
+-        {ISSUER_ID}
+-        <input
+-          className={field}
+-          required
+-          pattern="[a-z0-9][a-z0-9\-]{0,39}"
+-          maxLength={40}
+-          placeholder="e.g. northbridge-group-plc"
+-          value={view.issuerId}
+-          readOnly={!!view.copy}
+-          onChange={(event) => {
+-            view.changeIssuerId(event.target.value);
+-          }}
+-        />
+-      </label>
++      <div className="grid content-start gap-1">
++        <label className={label}>
++          {ISSUER_ID}
++          <input
++            className={field}
++            required
++            pattern="[a-z0-9][a-z0-9\-]{0,39}"
++            maxLength={40}
++            placeholder="e.g. northbridge-group-plc"
++            {...problemAttrs(view.problem, "issuer_id")}
++            value={view.issuerId}
++            readOnly={!!view.copy}
++            onChange={(event) => {
++              view.changeIssuerId(event.target.value);
++            }}
++          />
++        </label>
++        <FieldMessage problem={view.problem} field="issuer_id" />
++        {view.problem?.field === "issuer_id" && view.problem.offer && (
++          <div>
++            <Button
++              color="secondary"
++              size="sm"
++              onPress={() => {
++                view.useIssuerId(view.problem?.offer ?? "");
++              }}
++            >
++              {`Use ${view.problem.offer}`}
++            </Button>
++          </div>
++        )}
++        <p className="text-sm text-text-secondary">
++          Letters a–z, digits and hyphens, up to 40 characters.
++        </p>
++      </div>
+       <div className="grid content-start gap-1">
+         <label className={label}>
+           As-of date
+@@ -1401,6 +1457,8 @@ function IntakeForm({
+     setPurposeTouched,
+     customSlug,
+     setCustomSlug,
++    settledSlug,
++    setSettledSlug,
+     newestOverride,
+     setNewestOverride,
+   } = identityState;
+@@ -1476,6 +1534,7 @@ function IntakeForm({
+     intakeRunDetails({
+       context,
+       customSlug,
++      settledSlug,
+       caps,
+       files,
+       copy,
+@@ -1508,7 +1567,7 @@ function IntakeForm({
+     key: K,
+     value: Context["identity"][K],
+   ) {
+-    if (key === "issuer_name") clearProblem("issuer_name");
++    if (key === "issuer_name") clearProblem("issuer_name", "issuer_id");
+     setContext((previous) => ({ ...previous, identity: { ...previous.identity, [key]: value } }));
+   }
+ 
+@@ -1595,9 +1654,31 @@ function IntakeForm({
+       }
+       draft.copied = true;
+     }
+-    const result = await getReading(draft.id);
++    return { draft, result: await readDocuments(draft) };
++  }
++
++  /**
++   * What the service reads from the draft's documents. A refusal that names a file is shown as one
++   * sentence with that file's row marked Ignored; every route that reads goes through here.
++   */
++  async function readDocuments(draft: Draft) {
++    const known = [
++      ...[...draft.uploaded].map(([file, stored]) => ({ name: stored, size: file.size })),
++      ...(copy?.prior.files ?? []),
++    ];
++    const result = await getReading(draft.id).catch((failure: unknown) => {
++      if (!(failure instanceof RequestError)) throw failure;
++      const { file, sentence } = documentRefusal(failure.message, known);
++      if (!file && sentence === failure.message) throw failure;
++      setReading({
++        documents: [],
++        ignored: file ? [{ source: file, reason: sentence }] : [],
++        error: "",
++      });
++      throw new Error(sentence);
++    });
+     setReading(result);
+-    return { draft, result };
++    return result;
+   }
+ 
+   async function discardDocument(name: string, file?: File) {
+@@ -1618,7 +1699,7 @@ function IntakeForm({
+           Object.entries(previous).filter(([, chosen]) => chosen !== (stored || name)),
+         ),
+       );
+-      if (draft && stored) setReading(await getReading(draft.id));
++      if (draft && stored) await readDocuments(draft);
+     });
+   }
+ 
+@@ -1636,7 +1717,9 @@ function IntakeForm({
+   }
+ 
+   async function copyLatestWork() {
+-    const latest = await latestIssuerInputs(issuerId);
++    // The ID is settled before the lookup: another issuer's run must not be carried, and the ID
++    // locked by the carry is the one the review would use.
++    const latest = await latestIssuerInputs(await settleIssuerId());
+     if (!latest) {
+       setPriorNote("No earlier run was found for this issuer.");
+       return;
+@@ -1674,7 +1757,27 @@ function IntakeForm({
+     await withDraft("copy", copyLatestWork);
+   }
+ 
+-  function makeAnswers(result: Reading, details: Record<string, unknown>): Answers {
++  /**
++   * The ID for the typed name: the usual one, unless a run of another issuer already holds it, for
++   * any name of any length. A typed or carried ID is the analyst's own; the service checks it.
++   */
++  async function settleIssuerId() {
++    const name = identity.issuer_name.trim();
++    if (customSlug !== undefined) return issuerId;
++    const usual = issuerSlug(name);
++    const holder = await holderOf(usual);
++    const id = issuerIdFor(name, holder);
++    setSettledSlug({ name, id, ...(id === usual || !holder ? {} : { holder }) });
++    return id;
++  }
++
++  /** A refusal of an ID filed under another issuer, as a problem on the Issuer ID field. */
++  function idProblem(failure: unknown) {
++    const refusal = failure instanceof RequestError ? issuerIdRefusal(failure.message) : undefined;
++    return refusal && new FieldProblem("issuer_id", refusal.sentence, undefined, refusal.offer);
++  }
++
++  function makeAnswers(result: Reading, details: Record<string, unknown>, id: string): Answers {
+     if (run.cutoff && run.cutoff > run.as_of)
+       throw new FieldProblem("cutoff", "Research cutoff must be on or before the as-of date.");
+     const available = new Set(result.documents.map(storedName));
+@@ -1694,7 +1797,7 @@ function IntakeForm({
+         ...context,
+         ...details,
+         run: { ...run, cutoff: run.cutoff || run.as_of },
+-        identity: { ...identity, issuer_name: identity.issuer_name.trim(), issuer_id: issuerId },
++        identity: { ...identity, issuer_name: identity.issuer_name.trim(), issuer_id: id },
+         ...(context.attachments
+           ? {
+               attachments: {
+@@ -1772,11 +1875,11 @@ function IntakeForm({
+     const { draft, result } = await refreshDocuments();
+     if (!result.documents.length)
+       throw new Error("The service could not read any of the selected documents.");
+-    const answers = makeAnswers(result, details);
++    const answers = makeAnswers(result, details, await settleIssuerId());
+     const noteAt = noteIndex(details, analystNote);
+     const shownCap = capForPathway(caps, answers.context.run.pathway);
+     const summary = await getSummary(draft.id, answers, shownCap).catch((failure: unknown) => {
+-      throw refusedField(failure, requested, noteAt) ?? failure;
++      throw idProblem(failure) ?? refusedField(failure, requested, noteAt) ?? failure;
+     });
+     requireSummaryCap(summary, shownCap);
+     if (!summary.digest) throw new Error("The service did not issue an approval for this run.");
+@@ -1883,6 +1986,8 @@ function IntakeForm({
+           setAccepted(new Set());
+           setApproved(false);
+           setSubmitUncertain(false);
++          const taken = idProblem(failure);
++          if (taken) throw taken;
+           setError(`${asSentence(errorText(failure))} Review the run again before submitting.`);
+         } else {
+           setSubmitUncertain(true);
+@@ -2091,7 +2196,7 @@ function IntakeForm({
+       changeRun(key, value);
+     },
+     changeIssuerId: (value) => {
+-      clearProblem("issuer_name");
++      clearProblem("issuer_name", "issuer_id");
+       setCustomSlug(value);
+     },
+     changeSubmittedBy: (value) => {
+@@ -2128,6 +2233,14 @@ function IntakeForm({
+     },
+     toggleModule,
+     problem: fieldError,
++    idNote:
++      review && settledSlug?.holder && review.answers.context.identity.issuer_id === settledSlug.id
++        ? `Issuer ID ${settledSlug.id} was used for this run because ${issuerSlug(settledSlug.name)} is already filed under ${settledSlug.holder}, a different issuer.`
++        : "",
++    useIssuerId: (id) => {
++      clearProblem("issuer_id");
++      setCustomSlug(id);
++    },
+     focusProblem: () => {
+       if (fieldError) focusField(fieldError.field);
+     },
+@@ -2312,6 +2425,7 @@ function IntakePanels(props: IntakePanelsProps) {
+             capAvailable={Boolean(cap)}
+             synthetic={synthetic}
+             ready={ready}
++            idNote={view.idNote}
+             onAccept={onAccept}
+             onApprove={onApprove}
+             onEdit={onEdit}
+@@ -2353,12 +2467,14 @@ function ReviewConfirmation({
+   capAvailable,
+   synthetic,
+   ready,
++  idNote,
+   onAccept,
+   onApprove,
+   onEdit,
+   onModules,
+   onSubmit,
+ }: {
++  idNote: string;
+   review: Review;
+   accepted: Set<string>;
+   approved: boolean;
+@@ -2401,6 +2517,7 @@ function ReviewConfirmation({
+         onModules={onModules}
+         onAccept={onAccept}
+       />
++      {idNote && <p className="text-sm text-text-secondary">{idNote}</p>}
+       {blocker && (
+         <p id="run-submit-blocker" className="text-sm text-text-secondary">
+           {blocker}
+diff --git a/web/src/pages/connected/start/plain.test.ts b/web/src/pages/connected/start/plain.test.ts
+index 08f95a8..48bca42 100644
+--- a/web/src/pages/connected/start/plain.test.ts
++++ b/web/src/pages/connected/start/plain.test.ts
+@@ -1,5 +1,15 @@
+ import { type MockInstance } from "vitest";
+-import { comparisonCaveat, lookupSentence, refusalLines, refusalProblems } from "./plain";
++import {
++  comparisonCaveat,
++  documentRefusal,
++  filedElsewhere,
++  issuerIdFor,
++  issuerIdRefusal,
++  issuerKey,
++  lookupSentence,
++  refusalLines,
++  refusalProblems,
++} from "./plain";
+ 
+ const LOOKUP_LINES: [string, string][] = [
+   [
+@@ -460,3 +470,156 @@ describe("refusalProblems: each problem with the control that sets its path", ()
+     expect(refusalProblems("valuation.basis: is required.", lite)[0]?.field).toBe("valuation");
+   });
+ });
++
++const HOLDINGS = "Northbridge Synthetic Group International Holdings Limited";
++const FINANCE = "Northbridge Synthetic Group International Finance plc";
++
++describe("issuerIdFor", () => {
++  it("keeps the usual ID when no other issuer holds it", () => {
++    expect(issuerIdFor(HOLDINGS, undefined)).toBe("northbridge-synthetic-group-internationa");
++    expect(issuerIdFor("Northbridge Group plc", undefined)).toBe("northbridge-group-plc");
++  });
++  it("keeps the usual ID for the issuer that already holds it", () => {
++    expect(issuerIdFor(HOLDINGS, HOLDINGS)).toBe("northbridge-synthetic-group-internationa");
++    expect(issuerIdFor(HOLDINGS, ` ${HOLDINGS.toUpperCase()} `)).toBe(
++      "northbridge-synthetic-group-internationa",
++    );
++  });
++  it("gives a different issuer with the same first 40 characters its own valid ID", () => {
++    const id = issuerIdFor(FINANCE, HOLDINGS);
++    expect(id).not.toBe(issuerIdFor(HOLDINGS, undefined));
++    expect(id).toMatch(/^[a-z0-9][a-z0-9-]{0,39}$/);
++    expect(id.startsWith("northbridge-synthetic-group-")).toBe(true);
++    expect(issuerIdFor(FINANCE, HOLDINGS)).toBe(id);
++    expect(issuerIdFor(HOLDINGS, FINANCE)).not.toBe(id);
++  });
++  it("separates a short name or a word-boundary cut that another issuer holds", () => {
++    const short = issuerIdFor("Acme Finance", "Acme Corp");
++    expect(short).toMatch(/^acme-finance-[0-9a-f]{8}$/);
++    const cut = "Northbridge Synthetic Group Internation Holdings Limited";
++    expect(issuerIdFor(cut, undefined)).toBe("northbridge-synthetic-group-internation");
++    const other = issuerIdFor("Northbridge Synthetic Group Internation Finance plc", cut);
++    expect(other).toMatch(/^[a-z0-9][a-z0-9-]{0,39}$/);
++    expect(other).not.toBe("northbridge-synthetic-group-internation");
++  });
++  it("treats an owner with no recorded name as the same issuer", () => {
++    expect(issuerIdFor(HOLDINGS, "")).toBe("northbridge-synthetic-group-internationa");
++  });
++});
++
++describe("documentRefusal", () => {
++  const files = [
++    { name: "annual-report.pdf", size: 8 },
++    { name: "empty.txt", size: 0 },
++    { name: "scan.txt", size: 20 },
++  ];
++  it("names an unreadable file in plain words, with no decoder text", () => {
++    const got = documentRefusal(
++      "Cannot read annual-report.pdf: 'utf-8' codec can't decode byte 0x89 in position 0: invalid start byte",
++      files,
++    );
++    expect(got.file).toBe("annual-report.pdf");
++    expect(got.sentence).toBe(
++      "annual-report.pdf could not be read: its text could not be decoded.",
++    );
++    expect(got.sentence).not.toMatch(/codec|byte|utf|PDF file/);
++  });
++  it("keeps the file name's own case and says an empty file is empty", () => {
++    expect(documentRefusal("Empty.txt has no extractable text (scanned image?)", files)).toEqual({
++      file: "empty.txt",
++      sentence: "empty.txt is empty (0 bytes).",
++    });
++  });
++  it("keeps the scanned-image hint for a file that has bytes", () => {
++    expect(
++      documentRefusal("--sources: scan.txt has no extractable text (scanned image?)", files),
++    ).toEqual({
++      file: "scan.txt",
++      sentence: "scan.txt has no text that can be read; it may be a scanned image.",
++    });
++  });
++  it("says only what the service's message states, never a file type it did not report", () => {
++    expect(documentRefusal("Cannot read notes.docx: File is not a zip file", []).sentence).toBe(
++      "notes.docx could not be read: its contents are not a valid zip archive.",
++    );
++    // A Latin-1 text file, a truncated workbook or an encrypted PDF are not "not a txt/xlsx/PDF file".
++    for (const [name, detail] of [
++      [
++        "notes.txt",
++        "'utf-8' codec can't decode byte 0xe9 in position 4: invalid continuation byte",
++      ],
++      ["holdings.xlsx", "File is not a zip file"],
++      ["deck.pdf", "File has not been decrypted"],
++    ] as const) {
++      const got = documentRefusal(`Cannot read ${name}: ${detail}`, []);
++      expect(got.file).toBe(name);
++      expect(got.sentence).not.toMatch(/not a (txt|xlsx|PDF|a) file/);
++      expect(got.sentence.startsWith(`${name} could not be read`)).toBe(true);
++    }
++    expect(documentRefusal("Cannot read deck.pdf: File has not been decrypted", []).sentence).toBe(
++      "deck.pdf could not be read.",
++    );
++  });
++  it("marks no row when no file is named", () => {
++    const got = documentRefusal("The uploaded documents: no readable issuer file", files);
++    expect(got.file).toBeUndefined();
++    expect(got.sentence).toMatch(/^None of the selected documents/);
++  });
++  it("returns any other text unchanged", () => {
++    expect(documentRefusal("Something else.", files)).toEqual({ sentence: "Something else." });
++  });
++});
++
++// The same literal cases as `ISSUER_KEY_CASES` in tests/test_run_start_submissions.py: the page and
++// the service must reduce an issuer name the same way.
++describe("issuerKey", () => {
++  it.each([
++    ["Acme Corp", "acmecorp"],
++    ["ACME  corp.", "acmecorp"],
++    ["Åre Group A/S", "aregroupas"],
++    ["Straße Holdings plc", "straeholdingsplc"],
++    ["Ørsted A/S", "rstedas"],
++    ["Ａｃｍｅ Ｃｏｒｐ", "acmecorp"],
++    ["Nestlé S.A. 2", "nestlesa2"],
++    ["İstanbul Ltd", "istanbulltd"],
++    ["  ", ""],
++  ])("reduces %s to %s", (name, key) => {
++    expect(issuerKey(name)).toBe(key);
++  });
++});
++
++describe("issuerIdRefusal", () => {
++  const message =
++    'Issuer ID "acme" is already filed under "Acme Corp", a different issuer from "Eastmoor Plc". Use another Issuer ID for this issuer.';
++  it("reads the service's refusal back into the holder and the name", () => {
++    expect(filedElsewhere(message)).toEqual({
++      id: "acme",
++      holder: "Acme Corp",
++      name: "Eastmoor Plc",
++    });
++    expect(filedElsewhere("Something else.")).toBeUndefined();
++    expect(
++      filedElsewhere(
++        'Issuer ID "a" is already filed under "Say "hi" Ltd", a different issuer from "B". Use another Issuer ID for this issuer.',
++      )?.holder,
++    ).toBe('Say "hi" Ltd');
++  });
++  it("gives a reader sentence and offers the suffixed ID", () => {
++    const got = issuerIdRefusal(message);
++    expect(got?.offer).toBe(issuerIdFor("Eastmoor Plc", "Acme Corp"));
++    expect(got?.sentence).toBe(
++      `Issuer ID acme is already used for Acme Corp, a different issuer. Use ${got?.offer ?? ""} for Eastmoor Plc, or type another Issuer ID.`,
++    );
++  });
++  it("offers nothing when the suffixed ID is the one just refused", () => {
++    const id = issuerIdFor("Eastmoor Plc", "Acme Corp");
++    const again = `Issuer ID "${id}" is already filed under "Acme Corp", a different issuer from "Eastmoor Plc". Use another Issuer ID for this issuer.`;
++    expect(issuerIdRefusal(again)?.offer).toBeUndefined();
++    expect(issuerIdRefusal(again)?.sentence).toBe(
++      `Issuer ID ${id} is already used for Acme Corp, a different issuer. Type another Issuer ID.`,
++    );
++  });
++  it("leaves any other refusal alone", () => {
++    expect(issuerIdRefusal("Anything else.")).toBeUndefined();
++  });
++});
+diff --git a/web/src/pages/connected/start/plain.ts b/web/src/pages/connected/start/plain.ts
+index 58185c4..edcb605 100644
+--- a/web/src/pages/connected/start/plain.ts
++++ b/web/src/pages/connected/start/plain.ts
+@@ -1,4 +1,4 @@
+-import { moduleName, serviceText, type DocumentRecord } from "../api";
++import { issuerSlug, moduleName, serviceText, type DocumentRecord } from "../api";
+ import { ASSUMPTIONS_TITLE, PINS } from "./assumptions";
+ import { ROW_SPECS, type RowField, type RowKind } from "./rows";
+ import {
+@@ -482,3 +482,109 @@ function splitRefusal(error: string): { path: string; line: string; text: string
+     return { path, line: `${found.parts.join(" · ")}: ${text}`, text };
+   });
+ }
++
++/**
++ * An issuer name reduced to the letters and digits that tell two issuers apart. The service
++ * reduces a name the same way (`issuer_key` in `run_start/submissions.py`); the two are pinned by
++ * the same literal cases.
++ */
++export const issuerKey = (name: string) =>
++  name
++    .normalize("NFKD")
++    .toLowerCase()
++    .replace(/\p{Mark}/gu, "")
++    .replace(/[^a-z0-9]+/g, "");
++
++/** A short stable code from the whole name (FNV-1a), so a long name's cut ID can be told apart. */
++function nameCode(name: string) {
++  let hash = 0x811c9dc5;
++  for (const char of issuerKey(name)) hash = Math.imul(hash ^ char.charCodeAt(0), 0x01000193);
++  return (hash >>> 0).toString(16).padStart(8, "0");
++}
++
++/**
++ * The Issuer ID for a typed name. `ownerName` is the issuer name of the existing run that already
++ * holds the name's usual ID (undefined when none does). The usual ID stays for its own issuer, so a
++ * repeated run keeps its ID; a different issuer whose long name is cut to the same ID gets the
++ * first 31 characters plus a code from its whole name, so two issuers never share one ID.
++ */
++export function issuerIdFor(name: string, ownerName: string | undefined) {
++  const usual = issuerSlug(name);
++  if (!ownerName || issuerKey(ownerName) === issuerKey(name)) return usual;
++  return `${usual.slice(0, 31).replace(/-+$/, "")}-${nameCode(name)}`;
++}
++
++const FILED_ELSEWHERE =
++  /^Issuer ID "([^"]+)" is already filed under "(.*)", a different issuer from "(.*)"\. Use another Issuer ID for this issuer\.$/s;
++
++/** The service's refusal of an Issuer ID that another issuer holds, taken apart; else undefined. */
++export function filedElsewhere(message: string) {
++  const [, id = "", holder = "", name = ""] = FILED_ELSEWHERE.exec(message) ?? [];
++  return id ? { id, holder, name } : undefined;
++}
++
++/**
++ * That refusal in reader words, with the suffixed ID the page can offer instead (none when it is
++ * the one just refused); undefined for any other message.
++ */
++export function issuerIdRefusal(message: string): { sentence: string; offer?: string } | undefined {
++  const found = filedElsewhere(message);
++  if (!found) return undefined;
++  const offered = issuerIdFor(found.name, found.holder);
++  const offer = offered === found.id ? undefined : offered;
++  const head = `Issuer ID ${found.id} is already used for ${found.holder}, a different issuer.`;
++  return {
++    sentence: offer
++      ? `${head} Use ${offer} for ${found.name}, or type another Issuer ID.`
++      : `${head} Type another Issuer ID.`,
++    ...(offer ? { offer } : {}),
++  };
++}
++
++const REFUSED_FILE = /^(?:--sources:\s*)?cannot read (.+?): [\s\S]*$/i;
++const NO_TEXT = /^(?:--sources:\s*)?(.+?) has no extractable text \(scanned image\?\)$/i;
++const NO_FILE = /no readable issuer file\s*$/i;
++
++/** The kind of problem, only where the service's message states it; else a full stop. */
++function unreadableBecause(message: string) {
++  if (/codec can't decode|UnicodeDecodeError/i.test(message))
++    return ": its text could not be decoded.";
++  if (/not a zip file/i.test(message)) return ": its contents are not a valid zip archive.";
++  return ".";
++}
++
++/**
++ * A document refusal from the service in reader words: the file it names (as the analyst's own file
++ * is called, so its row can be marked) and one sentence with no parser text. Text that is not a
++ * document refusal comes back unchanged with no file.
++ */
++export function documentRefusal(
++  message: string,
++  files: readonly { name: string; size?: number }[],
++): { file?: string; sentence: string } {
++  const named = (found: string) =>
++    files.find((file) => file.name.toLowerCase() === found.toLowerCase());
++  const cannot = REFUSED_FILE.exec(message);
++  if (cannot) {
++    const file = named(cannot[1] ?? "")?.name ?? cannot[1] ?? "";
++    return { file, sentence: `${file} could not be read${unreadableBecause(cannot[0])}` };
++  }
++  const empty = NO_TEXT.exec(message);
++  if (empty) {
++    const match = named(empty[1] ?? "");
++    const file = match?.name ?? empty[1] ?? "";
++    return {
++      file,
++      sentence:
++        match?.size === 0
++          ? `${file} is empty (0 bytes).`
++          : `${file} has no text that can be read; it may be a scanned image.`,
++    };
++  }
++  if (NO_FILE.test(message))
++    return {
++      sentence:
++        "None of the selected documents could be read as an issuer filing. Choose a filing in a supported format.",
++    };
++  return { sentence: message };
++}
