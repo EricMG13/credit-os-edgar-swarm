@@ -127,3 +127,89 @@ later connected report/chart follow-ups, full frontend gates and connected proof
 combined browser fidelity, full Python/weekly/Windows CI, live providers and Teams
 cards. The static-pair review report contains its own native Chrome/Edge checks;
 this task exercised the combined candidate through targeted offline tests only.
+
+## Phase 2: report and chart/shared follow-ups after `d988f71a`
+
+This continues the same local-only review candidate. The report and chart/shared
+follow-ups below are now included. Original repair group acceptance, T18 recovery,
+the runtime follow-up and the documentation contract remain separate lead work.
+No original repair branch was changed or promoted.
+
+| Lead-owned source commit | Local candidate commit |
+| :--- | :--- |
+| Report `9ad50265` | `b4cef728` |
+| Report `0af85674` | `47cbe0a3` |
+| Report `ed76e94f` | `eab77eab` |
+| Report `b8bb7319` | `da9491a7` |
+| Report `54d36d85` | `998e51a6` |
+| Report `a752a690` | `1dcd1174` |
+| Report `153a3191` | `c3964e13` |
+| Charts/shared `8843674e` | `daacef9d` |
+| Charts/shared `170f205f` | `0135aa22` |
+| Charts/shared `c46da409` | `4c13de2c` |
+| Charts/shared `d26a0bf7` | `53e679e7` |
+| Charts/shared `3e6ea0d8` | `67144f04` |
+| Charts/shared `7c87b299` | `db8afca4` |
+| Charts/shared `54a8e198` | `f2e21370` |
+| Charts/shared `5963e081` | `f77f2f88` |
+| Charts/shared `7cc8cad0` | `cb5c0c9b` |
+| Integration import cleanup | `a8a1d4d6` |
+
+Skipped dependency commits `fe2d381a`, `2a5af229` and `0a918fa7`: their required
+source changes were already present through the full shell/Evidence originals
+and report `9ad50265`. No runtime milestone or documentation-contract draft was
+included. The source-review tip for this phase is `a8a1d4d6`.
+
+### Phase 2 conflicts
+
+- `report/BreakPoints.tsx`: retained batch a's `breakRows` function, the `ranked`
+  distinction and unordered retained rows. Added the report follow-up's
+  `scenarioShareLabel` to the displayed row text and cash-interest basis label.
+  Only an authored first-break ranking is sorted; the row-order regression passes.
+- `LibraryIndex.tsx`: retained the shell's CreditView, source-safe prose handling,
+  `asOfDate`, saved query/layout filters, custom loading/error handling and all
+  associated imports. Added the report follow-up's lazy figure-source lookup and
+  `requestSource` wiring with its keyed HeadlineFigures. Both sets of behaviour
+  remain. The first lint/type runs exposed an incoming unused `useResource`
+  import: the shell uses its own loader and `isUnreachable`. Removed that unused
+  import only in `a8a1d4d6`, after the affected report tests passed; the subsequent
+  full lint/type/format checks pass.
+
+`publishedReport.ts` merged cleanly: it retains the report's date/view text changes
+and the charts' common `containsReference` predicate. The Evidence half of C5-025,
+batch a's Record delivery/source fields, approved-summary metadata and R4-004's
+same-approved-wording rendering remain present. The 37-file caption-token commit
+merged cleanly in Forecast, Evidence and ModuleNav, retaining their behaviour.
+No test expected value, timeout, skip, gate, threshold or configuration changed
+while resolving this phase; no new product repair was added.
+
+### Phase 2 checks
+
+Commands use the same pinned environment and `timeout 300`; each Vitest command
+uses `--maxWorkers=1`. These are affected-file checks, not a repeated whole suite.
+
+| Command/check | Exit | Result |
+| :--- | ---: | :--- |
+| Initial full lint/typecheck | 1 | Only the unused incoming LibraryIndex import |
+| Final `npm --prefix web run lint` | 0 | No warnings |
+| Final `npm --prefix web run typecheck` | 0 | No type errors |
+| Final `npm --prefix web run format:check` | 0 | All matched files formatted |
+| Default `uv run --no-sync python tools/quality_gate.py --json` | 0 | 0 findings, 35 changed Python files, 3,219 lines in scope |
+| Report audit follow-ups, lazy card tracing, wayfinding, Record old/new, BreakPoints and ReportLibrary design | 0 | 7 files, 79 tests passed |
+| Chart cleanup/scroll cues, metric composition, table missing values, HeadlineFigures signals, legacy visuals/units and new style regressions | 0 | 12 files, 112 tests passed |
+| Signal tests and compact ModuleNav regression | 0 | 35 files, 635 tests passed; Signal code untouched |
+| Remaining changed published-report/report-view/findings, Calendar, Downside, Forecast basis, Modules, Securities and Overview caller tests | 0 | 12 files, 200 tests passed |
+| `git diff --check` | 0 | No whitespace errors |
+
+Phase 2 therefore checks 66 distinct Vitest files and 1,026 tests. No Python source
+changed in this phase; the preceding phase's service tests remain its Python
+behaviour evidence. Protected Signal directories, prompts and proof handoffs have
+no changes in the phase 2 diff. Independent fresh review may use the committed tip
+above; this local integration does not itself accept either lead chunk or either
+original repair group.
+
+Not verified: original group acceptance and later recovered T18/T22 commits;
+runtime and documentation-contract follow-ups; the complete combined frontend
+gates, connected proof and browser fidelity; full Python, weekly and Windows CI;
+live providers and Teams cards. Review remains local and no branch was pushed or
+promoted by this task.
