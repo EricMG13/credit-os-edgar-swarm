@@ -5,8 +5,9 @@ import type { StartDraft } from "../slice";
 
 type Step = Extract<StartDraft, { step: "started" }>;
 
-/** The Run started panel: the info alert holds the cap bar and the two links (the kit Alert's
- *  action slot takes any node), and a line on closing the page. Nothing animates. */
+/** The Run started panel: the info alert holds the saved-example line, the cap bar and the two
+ *  links (the kit Alert's action slot takes any node), and a line on closing the page in a live
+ *  run. Nothing animates. */
 export function Started({ issuer, draft }: { issuer: string; draft: Step }) {
   return (
     <div className="flex flex-col gap-4">
@@ -26,10 +27,13 @@ export function Started({ issuer, draft }: { issuer: string; draft: Step }) {
         }
       >
         {draft.text}
+        <span className="mt-1 block">
+          This page shows a saved example, so no run was started and nothing was spent.
+        </span>
       </Alert>
       <p className="text-sm text-text-tertiary">
-        You can close this page. The run carries on, and its library appears under {issuer} when it
-        finishes.
+        In a live run you can close this page: the run carries on, and its library appears under{" "}
+        {issuer} when it finishes.
       </p>
     </div>
   );

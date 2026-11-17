@@ -1,3 +1,4 @@
+import { Callout } from "@/components/alert/Alert";
 import type { LoadResult, SliceKey } from "./data";
 import { Kit } from "./pages/Kit";
 import { areaOf, matchRoute, routeTable, type RouteTable } from "./pages/route-table";
@@ -5,6 +6,21 @@ import { SourceContext } from "./pages/source";
 import { useHashRoute } from "./route";
 import { PageHeader } from "./shell/PageHeader";
 import { Shell } from "./shell/Shell";
+
+/**
+ * The static app is a design reference fed by saved samples (OQ-01), so a page that draws them says
+ * so, once, ahead of the page. A bleed page keeps its own padding, so the note takes the same.
+ */
+function DesignReference({ bleed = false }: { bleed?: boolean }) {
+  return (
+    <div className={bleed ? "px-8 pt-8" : "mb-6"}>
+      <Callout title="Design reference with sample data">
+        This page shows a saved example. Its names and figures are samples, and it is not connected
+        to the run service, so nothing here starts a run or spends money.
+      </Callout>
+    </div>
+  );
+}
 
 function Library({ result }: { result: LoadResult }) {
   return (
@@ -82,10 +98,14 @@ function Page({ result, table, route }: { result: LoadResult; table: RouteTable;
         </Shell>
       );
     }
+    // Signal keeps its own frame, and the model pages draw their own Sample data badge and own the
+    // top of main. A group with no slice has no sample to label.
+    const sample = slice.kind === "ok" && (area === "library" || area === "run");
     if (matched.route.layout === "bleed") {
       return (
         <Shell current={area} bleed>
           <SourceContext.Provider value={result.data}>
+            {sample ? <DesignReference bleed /> : null}
             {matched.route.render(matched.params)}
           </SourceContext.Provider>
         </Shell>
@@ -94,6 +114,7 @@ function Page({ result, table, route }: { result: LoadResult; table: RouteTable;
     return (
       <Shell current={area}>
         <SourceContext.Provider value={result.data}>
+          {sample ? <DesignReference /> : null}
           <PageHeader title={matched.route.title} />
           <div className="mt-6">{matched.route.render(matched.params)}</div>
         </SourceContext.Provider>
@@ -103,6 +124,7 @@ function Page({ result, table, route }: { result: LoadResult; table: RouteTable;
   if (route === "/kit") {
     return (
       <Shell current="kit">
+        <DesignReference />
         <Kit />
       </Shell>
     );

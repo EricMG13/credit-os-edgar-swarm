@@ -59,12 +59,12 @@ describe("Start (frame 06)", () => {
     if (paid === undefined) throw new Error("fixture has no start draft");
     paid.amount = "USD 99.00";
     show("/run/start/start", slice);
-    expect(document.querySelector("strong")).toBeNull();
-    expect(
-      screen.getByText(
-        "It can spend up to USD 20.00 and stops there. You confirm once more before anything is spent.",
-      ),
-    ).toBeVisible();
+    // The page's design-reference note has a bold title of its own, so look in the sentence only.
+    const sentence = screen.getByText(
+      "It can spend up to USD 20.00 and stops there. You confirm once more before anything is spent.",
+    );
+    expect(sentence.querySelector("strong")).toBeNull();
+    expect(sentence).toBeVisible();
   });
 
   it("draws Submit as the one button with the exact label and no Next link", () => {
@@ -187,10 +187,10 @@ describe("Run started (frame 08)", () => {
     );
   });
 
-  it("says the page can be closed", () => {
+  it("says a live run can be closed", () => {
     expect(
       screen.getByText(
-        "You can close this page. The run carries on, and its library appears under TransDigm Group when it finishes.",
+        "In a live run you can close this page: the run carries on, and its library appears under TransDigm Group when it finishes.",
       ),
     ).toBeVisible();
   });
