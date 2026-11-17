@@ -107,7 +107,9 @@ it("shows the recorded build rejection and keeps its raw table in Evidence", () 
   };
   render(<Forecast view={view} run={run} />);
   expect(screen.getByRole("heading", { name: "Figures" })).toBeInTheDocument();
-  expect(screen.getByText("Sent back by the build.")).toBeInTheDocument();
+  expect(
+    screen.getByText("The chart data did not fit the required table form, so no chart is drawn."),
+  ).toBeInTheDocument();
   expect(screen.getByRole("link", { name: "Source table" })).toHaveAttribute(
     "href",
     `/report/current#evidence/Covenants~${"d".repeat(64)}-21`,

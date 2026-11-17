@@ -200,7 +200,8 @@ def test_a_block_with_facilities_publishes_the_answer_key():
     assert limits[1] == "Synthetic; not analytical review."
     assert limits[2] == (
         "Cash interest on the stated facilities and scheduled repayment are computed from the "
-        "facility terms the CP-2G handoff stated; the analyst's repayment assumption is not used."
+        "facility terms the Forward credit model stated; the analyst's repayment assumption is not "
+        "used."
     )
     assert limits[3] == (
         "Debt of 50 is not in a stated facility; it bears interest at the analyst's assumed rate "
@@ -476,7 +477,9 @@ def test_a_block_without_facilities_is_byte_identical_to_main():
     for name in sorted(files):
         digest.update(name.encode())
         digest.update(files[name])
-    assert digest.hexdigest() == "e5017389abc2c878a0b0bae323a50bcbadf35c3a08f676f277c1505b9d047089"
+    # Re-pinned when T16 reworded the published limit sentence (no tool or module code in it).
+    # With the earlier sentence the same files digested to e5017389abc2c878a0b0bae323a50bcb...
+    assert digest.hexdigest() == "d7d8e097220c7571015eb48ba17679a95aee2c31c4f41366b7225ff63bff50df"
 
 
 # --- boundaries carried from review -------------------------------------------------------------

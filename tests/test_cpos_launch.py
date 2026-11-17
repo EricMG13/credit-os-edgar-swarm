@@ -4752,7 +4752,7 @@ def test_cp_model_without_cp2g_publishes_a_model_from_cp1s_block(tmp_path, provi
     exact = json.loads((folder / "forecast_exact.json").read_text())
     assert exact["consumed"] == {"CP-1.md": cp1}  # no CP-2G handoff was consumed
     assert list(exact["outputs"]) == ["REFERENCE"]  # no case and no shock
-    assert "run-rate inputs the CP-1 handoff stated" in exact["scope_limits"][0]
+    assert "run-rate inputs Financial foundation stated" in exact["scope_limits"][0]
     first = exact["outputs"]["REFERENCE"]["years"][0]  # the hand-written year 1 of the base case
     assert [first[n]["amount"] for n in ("revenue", "ebitda", "fcf", "closing_debt")] == [
         "1050",
@@ -5144,7 +5144,9 @@ def test_the_library_shows_every_computed_case_in_order(tmp_path, provider, caps
     assert [c["exact"] for c in other["cells"][:3]] == ["1100", "1210", "1331"]
     assert [c["exact"] for c in other["cells"][3:6]] == ["1000", "1000", "1000"]
     assert [c["exact"] for c in revenue["cells"][-6:-3]] == ["1050", "1092", "1124.76"]
-    assert grid["limits"][0].startswith("Every figure is Python's arithmetic")
+    assert grid["limits"][0].startswith(
+        "Every figure is arithmetic over inputs the Forward credit model stated"
+    )
 
 
 def test_a_run_without_cp2g_lists_no_model(tmp_path, provider, capsys):
