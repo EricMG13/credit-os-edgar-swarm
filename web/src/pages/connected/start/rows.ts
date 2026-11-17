@@ -26,6 +26,8 @@ type RowSpec = {
   title: string;
   section: string;
   add: string;
+  /** What the maximum counts, for the sentence beside a disabled Add button. */
+  plural: string;
   max: number;
   fields: readonly RowField[];
   summary: (row: Row) => string;
@@ -92,6 +94,7 @@ const VALUATION_SPECS: Pick<Record<RowKind, RowSpec>, "peer_names" | "peers" | "
     title: "Peer",
     section: "Peers",
     add: "Add peer",
+    plural: "peers",
     max: 30,
     fields: group("", PEER_NAME, PEER_TICKER),
     summary: peerSummary,
@@ -100,6 +103,7 @@ const VALUATION_SPECS: Pick<Record<RowKind, RowSpec>, "peer_names" | "peers" | "
     title: "Peer",
     section: "Peers",
     add: "Add peer",
+    plural: "peers",
     max: 30,
     fields: group(
       "",
@@ -116,6 +120,7 @@ const VALUATION_SPECS: Pick<Record<RowKind, RowSpec>, "peer_names" | "peers" | "
     title: "Precedent",
     section: "Precedents",
     add: "Add precedent",
+    plural: "precedents",
     max: 30,
     fields: group(
       "",
@@ -134,6 +139,7 @@ const SCENARIO_SPEC: RowSpec = {
   title: "Scenario",
   section: "Downside scenarios",
   add: "Add scenario",
+  plural: "scenarios",
   max: 4,
   fields: group(
     "",
@@ -164,6 +170,7 @@ export const ROW_SPECS: Record<RowKind, RowSpec> = {
     title: "Facility",
     section: "Facilities and deal terms",
     add: "Add facility",
+    plural: "facilities",
     max: 20,
     fields: [
       ...group(
@@ -229,6 +236,7 @@ export const ROW_SPECS: Record<RowKind, RowSpec> = {
     title: "Quote",
     section: "Observed quotes",
     add: "Add quote",
+    plural: "quotes",
     max: 40,
     fields: group(
       "",
@@ -273,6 +281,7 @@ export const ROW_SPECS: Record<RowKind, RowSpec> = {
     title: "Rating",
     section: "Ratings",
     add: "Add rating",
+    plural: "ratings",
     max: 20,
     fields: group(
       "",
@@ -310,6 +319,7 @@ export const ROW_SPECS: Record<RowKind, RowSpec> = {
     title: "Question",
     section: "Research questions",
     add: "Add research question",
+    plural: "research questions",
     max: 10,
     fields: group(
       "",

@@ -174,7 +174,7 @@ function Marker({
       data-event-category={category}
       data-event-precision={precision}
       data-active={lit}
-      className="flex size-3.5 items-center justify-center rounded-ds-full data-[active=true]:ring-2 data-[active=true]:ring-focus max-[480px]:pointer-events-none"
+      className="flex size-6 items-center justify-center rounded-ds-full data-[active=true]:ring-2 data-[active=true]:ring-focus max-[480px]:pointer-events-none"
       onClick={() => {
         focusRow(rowId);
       }}
@@ -285,7 +285,7 @@ function YearStrip({
                 aria-label={`${String(year)}, ${events.length === 1 ? "1 event" : `${String(events.length)} events`}`}
                 className="grid gap-1"
               >
-                <div className="flex max-w-24 flex-wrap gap-0.5">
+                <div className="flex max-w-[6.5rem] flex-wrap gap-0.5">
                   {events.map((event) => (
                     <Marker
                       key={event.index}

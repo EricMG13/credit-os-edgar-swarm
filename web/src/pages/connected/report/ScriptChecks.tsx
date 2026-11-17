@@ -5,6 +5,13 @@ import type { ScriptCheckOutcome, ScriptCheckRecord } from "../publishedReport";
 
 const meaningful = (value: string | null) => (value === "all" || value === "" ? null : value);
 
+/** Text without the markdown marks the service leaves on a register or a reason: backticks and heading hashes. */
+const plain = (text: string) =>
+  text
+    .replaceAll("`", "")
+    .replace(/(^|\s)#{2,6}\s+/g, "$1")
+    .trim();
+
 function groupOutcomes(outcomes: ScriptCheckOutcome[]) {
   const groups = new Map<string, ScriptCheckOutcome[]>();
   for (const outcome of outcomes) {
@@ -50,25 +57,22 @@ function CheckField({ label, value }: { label: string; value: string | number | 
 function CheckCard({ group }: { group: ScriptCheckOutcome[] }) {
   const outcome = group[0];
   if (!outcome) return null;
-  const registers = group.flatMap(({ register }) => (register ? [register] : []));
+  const registers = group.flatMap(({ register }) => (register ? [plain(register)] : []));
   const named = meaningful(outcome.figure) ?? meaningful(outcome.row);
-  const title =
-    named ??
-    (group.length > 1 ? `${String(registers.length)} registers` : (registers[0] ?? "Check"));
+  // A card is headed by its register and the figure checked: the figure alone is often "columns".
+  const where = group.length > 1 ? `${String(registers.length)} registers` : registers[0];
+  const title = [where, named && plain(named)].filter(Boolean).join(" \u00b7 ") || "Check";
   const recomputed = [outcome.recomputed, outcome.recomputedLabel]
     .filter((value) => value !== null)
     .join(" ");
   return (
-    <section
-      className="grid gap-3 rounded-ds-md border border-border-hairline p-4"
-      aria-label={`${title}: ${outcome.status}`}
-    >
+    <section className="grid gap-3 rounded-ds-md border border-border-hairline p-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <h4 className="font-semibold">{title}</h4>
         <CheckStatus status={outcome.status} />
       </div>
       <dl className="grid gap-3 sm:grid-cols-2">
-        <CheckField label="Reason" value={outcome.reason} />
+        <CheckField label="Reason" value={outcome.reason && plain(outcome.reason)} />
         {group.length > 1 && registers.length > 0 ? (
           <div className="grid gap-1">
             <dt className="text-sm text-text-secondary">Registers</dt>

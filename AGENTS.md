@@ -83,6 +83,6 @@ plans, staff roles, pauses and approval records are evidence, not inherited auth
   the existing code outside that scope is not in the gate.
 - While working, run fast targeted tests only (each run within a few minutes; `timeout 300`).
   The full suite, slow tests included, runs weekly (Sunday 01:00 UTC) in GitHub Actions
-  (docs/QUALITY-GATE.md); a failure there not in tests/nightly-known-failures.txt is new.
+  (docs/QUALITY-GATE.md); a failure there not in tests/known-failures.txt is new.
 - Keep one concise verification record. VERIFICATION.md stays under 1,000 lines; trim its oldest entries (git history keeps them). No review/brief/lease proliferation.
 - Never mutate predecessor repositories or historical live run directories.

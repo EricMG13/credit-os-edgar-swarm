@@ -94,6 +94,52 @@ describe("connected report Changes", () => {
     expect(screen.queryByText("No earlier run to compare.")).toBeNull();
   });
 
+  it.each([
+    ["a missing comparison", null],
+    ["a comparison not produced", { first_run: false, pack: null, note: "Changes: not produced" }],
+    ["an unreadable comparison", { first_run: false, problem: "Unreadable: pack.json" }],
+  ] as const)("offers the Overview and the comparison evidence on %s", (_state, change) => {
+    renderChanges(change);
+    expect(screen.getByRole("link", { name: "Open the Overview" })).toHaveAttribute(
+      "href",
+      "#overview",
+    );
+    expect(screen.getByRole("link", { name: "Review comparison evidence" })).toHaveAttribute(
+      "href",
+      "#evidence/record",
+    );
+  });
+
+  it("draws a first run's single Overview action and no evidence link", () => {
+    renderChanges({ first_run: true });
+    expect(screen.getAllByRole("link", { name: "Open the Overview" })).toHaveLength(1);
+    expect(screen.queryByRole("link", { name: "Review comparison evidence" })).toBeNull();
+  });
+
+  it("lets the change cards stand on the page, not inside the section's card", () => {
+    const measures = [
+      {
+        key: "net_leverage",
+        label: "Net leverage",
+        prior: { value: "3", unit: "x", period: "FY2025" },
+        current: { value: "2", unit: "x", period: "FY2026" },
+        difference: -1,
+        unit: "x",
+      },
+    ];
+    renderChanges({ pack: { measures } });
+    const heading = screen.getByRole("heading", { name: "Changes since the last run" });
+    expect(screen.getByText("Net leverage").closest("li")).not.toBeNull();
+    expect(heading.closest("section")?.className).not.toMatch(/shadow-1|rounded-ds-lg/);
+    expect(screen.queryByRole("link", { name: "Open the Overview" })).toBeNull();
+  });
+
+  it("keeps a sentence-only state in its card", () => {
+    renderChanges(null);
+    const heading = screen.getByRole("heading", { name: "Changes since the last run" });
+    expect(heading.closest("section")?.className).toMatch(/shadow-1/);
+  });
+
   it("draws an h2 and skips no heading level, charts included", () => {
     const { container } = renderChanges({
       pack: {

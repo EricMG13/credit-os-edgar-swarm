@@ -65,6 +65,24 @@ it("keeps source names in Evidence when a published gap names a source file", ()
   );
 });
 
+it("draws a chart gap reason in the reader's words, a module code as the module's name", () => {
+  render(
+    <LegacyVisuals
+      output={{
+        chartGaps: [
+          { title: "Triggers", table: 20, gap: "Not established: CP-4 gives no trigger text" },
+          { title: "Cover", table: 21, gap: "Not established: see Filing p.12 (CP-4)" },
+        ],
+      }}
+      evidenceHref={(line) => `#evidence/0-${String(line)}`}
+    />,
+  );
+  const notes = screen.getAllByRole("note");
+  expect(notes[0]).toHaveTextContent("Not established: Legal & covenants gives no trigger text");
+  expect(notes[1]).toHaveTextContent("Not established: see Filing p.12 (Legal & covenants)");
+  expect(document.body.textContent).not.toMatch(/CP-\d/);
+});
+
 it("renders the published model cell displays, cases, dates and reasons", () => {
   const model = {
     cashflow: {
@@ -269,7 +287,11 @@ it("keeps portfolio limits as records when the descriptor supplies no validated 
     />,
   );
   expect(screen.queryByRole("figure", { name: "Portfolio limits" })).toBeNull();
-  expect(screen.getByRole("note")).toHaveTextContent("validated portfolio basis");
+  expect(screen.getByRole("note")).toHaveTextContent(
+    "The portfolio limits could not be checked against the mandate for this run.",
+  );
+  expect(screen.getByText("Not established for this run")).toBeInTheDocument();
+  expect(document.body.textContent).not.toMatch(/Source table available|portfolio basis/);
   const table = within(screen.getByRole("table", { name: "Portfolio limits" }));
   expect(table.getByRole("cell", { name: "0.00" })).toBeInTheDocument();
   expect(table.getByRole("cell", { name: "Not supplied: no proposal" })).toBeInTheDocument();
