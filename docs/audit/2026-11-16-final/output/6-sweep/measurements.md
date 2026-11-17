@@ -3,7 +3,7 @@
 The starting measurement source is `5e1d98b37305a9da59fb6944740ff17b721051af`.
 The isolated build reproduced all 36 files from the stage 5 native proof
 build byte for byte. The final comparison will share the accepted repair tip
-on both sides. The seal on that tip, after measurements and sweep gates are
+on both sides. The updated base, after measurements and sweep gates are
 pending.
 
 | Measure | Stage 0 reference | Discovery base |
