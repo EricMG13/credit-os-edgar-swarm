@@ -329,3 +329,30 @@ One entry per task: the reviewer was a fresh Sonnet agent at xhigh effort that d
   - No committed test renders the connected matrix through ModuleTable.
   - Inert tab stops and touch are moot under R14.
 - Info: StatementBlock's L9a rule and MatrixBlock's L9b rule differ only in a case the app never reaches. The `rows.length > 0` guard is unreachable.
+
+## T27, round 2 (owner rulings R14 and R16 narrowed the scope to titles and scroll)
+
+- Reviewed: net change 39f9875^2..bc092b5 (round 2 implementer Sonnet). Verdict: PASS. Merged onto audit/repair-3.
+- Scope held:
+  - Titles are `<page> — <subject> — Credit OS`, with only words already on the page.
+  - Scroll resets to the top on a route change, and Back and Forward restore the offset.
+  - No focus move and no live region remain. Shell.tsx is identical to the tip.
+  - The round 1 Medium (the `main` outline) is moot under R14. The focus half is dropped under R14 and the announcement under R16.
+- The App.tsx conflict with the T25 follow-up kept the shared DesignReferenceNote; T25's 39 tests pass unedited.
+- T41's Run started focus survives: s6-submit-focus.mjs exits 0.
+- From file:, `replaceState` adds no history entry and fires no hashchange.
+- On the tip's source the new test fails 28 of 28; at HEAD 28 of 28 pass.
+- Probes:
+  - Title and scroll lines all pass.
+  - S3-001.mjs and j6-focus-lost-after-tab-activation.cjs exit 1 on the dropped focus and announcement halves only.
+  - j6-low-checks.cjs exits 2 at the Kit rail link T25 removed.
+  - j6-scroll-carried-across-pages.cjs exits 1 on its own baseline. Playwright's click scrolls first; with a non-scrolling click the probe reports "not reproduced".
+- Gates the reviewer saw:
+  - lint 0, format:check 0, typecheck 0, build 0.
+  - vitest: 124 files, 3,036 tests, Signal included, at the default timeout.
+  - file-check.mjs 0 (138 PASS).
+  - route-visits and fixture-data: 19 of 19.
+- Low, for the lead's batch:
+  - Back restore drifts +32 px per round trip on the Model Statements page and the Kit, because Chromium's scroll anchoring adds late chart growth and the scroll listener stores it. `overflow-anchor: none` on `main` removes the drift. The other 21 scrollable routes restore exactly.
+  - The `offsets` Map is never pruned.
+- Info: Signal pages share "Signal — Credit OS", and the run start steps share one title.
