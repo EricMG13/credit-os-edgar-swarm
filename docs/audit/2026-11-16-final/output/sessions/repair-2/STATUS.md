@@ -1,5 +1,5 @@
 state: running
-updated: 2026-11-17T09:36Z
+updated: 2026-11-17T09:45Z
 done: branch audit/repair-2 cut from audit/final-repairs ca0db16; environment checked (uv 0.12.5, uv sync, npm ci, a worktree sharing web/node_modules passes typecheck, lint, format:check, vitest and build; c4-probe-027 runs in 26 s on a custom port); worker brief written
 next: T13 finishing C3-029 in charts.tsx periods() (controller added it: group 2 file, T13 precedes T19; T19 touches only imports and stack()); T14 finishing C3-028; T19 under review; T15 and T16 start when T14 is merged
 blocked: none
@@ -13,7 +13,7 @@ reports: docs/audit/2026-11-16-final/output/sessions/repair-2/worker-brief.md
 | T16 | T14 | waiting |
 | T17 | T14, T15, T16 | waiting |
 | T18 | T16 | waiting |
-| T19 | - | under review (review 1 and adversarial) |
+| T19 | - | reviewed PASS (review 1 and adversarial; C4-004, X1-024, X1-019 closed); held for merge after T18, then re-checked with T13's charts.tsx change |
 | T20 | T16 | waiting |
 | T21 | T14, T16 | waiting |
 | T22 | T16, T18 | waiting |
