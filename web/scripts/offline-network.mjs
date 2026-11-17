@@ -4,6 +4,19 @@ import { createServer } from "node:http";
 // R8: install before any page exists, so popup initial requests share the same guard.
 export function isLoopbackRequest(address) {
   const url = new URL(address);
+  if (["chrome:", "edge:"].includes(url.protocol)) {
+    const localPath = url.searchParams.get("path") ?? "";
+    return (
+      url.host === "fileicon" &&
+      url.pathname === "/" &&
+      !url.username &&
+      !url.password &&
+      !url.hash &&
+      url.searchParams.size === 1 &&
+      /^(?:\/(?![/\\])|[A-Za-z]:[/\\](?![/\\]))/u.test(localPath) &&
+      !/[\u0000-\u001f\u007f]/u.test(localPath)
+    );
+  }
   if (url.protocol === "blob:") return isLoopbackRequest(url.pathname);
   if (url.protocol === "file:") return url.hostname === "" || url.hostname === "localhost";
   if (["data:", "about:"].includes(url.protocol)) return true;

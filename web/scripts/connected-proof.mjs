@@ -1283,7 +1283,42 @@ async function checkCompactLibrary(page, endpoint, run) {
   assert.deepEqual(Object.keys(index.workspace), ["runs"]);
   const found = Object.values(index.workspace.runs).find((item) => item.folder === run);
   assert.ok(found);
-  assert.deepEqual(Object.keys(found).sort(), ["folder", "issuerKey", "pathway"]);
+  // C1-025/C3-001 adds only the designated card paragraph and its exact provenance.
+  assert.deepEqual(Object.keys(found).sort(), ["folder", "issuerKey", "lead", "pathway"]);
+  const snapshot = await page.request.get(
+    new URL(`/connected/snapshot?run=${encodeURIComponent(run)}`, endpoint).href,
+    { maxRedirects: 0 },
+  );
+  assert.equal(snapshot.status(), 200);
+  const { workspace } = await snapshot.json();
+  const matched = Object.entries(workspace.runs).find(([, item]) => item.folder === run);
+  assert.ok(matched);
+  const [key, published] = matched;
+  assert.equal(found.issuerKey, published.issuerKey);
+  assert.equal(found.pathway, published.pathway);
+  const output = workspace.outputs[published.modules["CP-6"].default];
+  assert.ok(output);
+  assert.equal(output.id, published.modules["CP-6"].default);
+  assert.equal(output.run, key);
+  assert.equal(output.module, "CP-6");
+  assert.match(output.sha256, /^[0-9a-f]{64}$/u);
+  const paragraph = workspace.handoffs[output.sha256]
+    .find((section) => section.heading === "Bottom line" && section.level === 3)
+    ?.blocks.find((block) => block.type === "text");
+  assert.ok(paragraph);
+  assert.deepEqual(found.lead, {
+    module: "CP-6",
+    output: output.id,
+    sha256: output.sha256,
+    line: paragraph.line,
+    text: paragraph.text,
+  });
+  assert.equal(found.lead.text, "The synthetic issuer shows one observed item.");
+  assert.ok(Number.isInteger(found.lead.line) && found.lead.line > 0);
+  assert.ok(
+    JSON.stringify(found.lead).length < 2000,
+    "The card contains one paragraph, not a handoff",
+  );
   assert.ok(index.catalogue.real.some((item) => item.id === run));
 }
 
