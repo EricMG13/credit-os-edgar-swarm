@@ -15,6 +15,10 @@ import {
   containsReference,
   readParagraph,
   readerText,
+  getSnapshot,
+  outputEntries,
+  evidenceHref,
+  resolveEvidenceLocation,
   reportPath,
   runPathway,
   type CatalogueRun,
@@ -23,6 +27,9 @@ import {
 import { HeadlineFigures } from "./HeadlineFigures";
 import { isUnreachable } from "./useResource";
 import { asOfDate } from "./runFigures";
+import { headlineSources } from "./reportView";
+import { traceForLine } from "./ReportContent";
+import { useResource } from "./useResource";
 
 type LibraryFilters = { query: string; sector: string; pathway: string; layout: "cards" | "list" };
 
@@ -60,6 +67,37 @@ function CreditView({ run }: { run: LibraryIndex["workspace"]["runs"][string] | 
       </Button>
     </div>
   );
+}
+
+async function figureSource(catalogue: CatalogueRun, key: string, signal: AbortSignal) {
+  const snapshot = await getSnapshot(signal, catalogue.id);
+  if (!snapshot) return null;
+  const candidates = Object.entries(snapshot.workspace.runs).filter(
+    ([, run]) => run.folder === catalogue.id,
+  );
+  const matching = snapshot.catalogue.real.filter((item) => item.id === catalogue.id);
+  const metric = matching.length === 1 ? matching[0]?.metrics[key] : undefined;
+  const shown = catalogue.metrics[key];
+  if (
+    JSON.stringify([metric?.value ?? null, metric?.unit ?? null, metric?.period ?? null]) !==
+    JSON.stringify([shown?.value ?? null, shown?.unit ?? null, shown?.period ?? null])
+  )
+    return null;
+  const [found] = candidates;
+  if (candidates.length !== 1 || !found) return null;
+  const [routeKey, run] = found;
+  const entries = outputEntries(snapshot, run, routeKey);
+  const foundations = entries.filter((entry) => entry.selected && entry.output.module === "CP-1");
+  if (foundations.length !== 1) return null;
+  const source = headlineSources(foundations[0], catalogue, run.folder)[key];
+  if (!source) return null;
+  const prefix = evidenceHref(run.folder, "");
+  const location = source.href.startsWith(prefix)
+    ? resolveEvidenceLocation(entries, source.href.slice(prefix.length))
+    : undefined;
+  if (!location || location.line === undefined) return null;
+  const trace = traceForLine(snapshot, location.entry, location.index, location.line);
+  return trace ? { trace, href: source.href } : null;
 }
 
 function MatchRuns({
@@ -188,7 +226,11 @@ function MatchRuns({
                 <time dateTime={newest.date}>{asOfDate(newest.date)}</time>
               </p>
               <CreditView run={byFolder.get(newest.id)} />
-              <HeadlineFigures catalogue={newest} />
+              <HeadlineFigures
+                key={newest.id}
+                catalogue={newest}
+                requestSource={(key, signal) => figureSource(newest, key, signal)}
+              />
               {linked ? (
                 <div className="flex flex-wrap items-center gap-3">
                   <Button href={reportPath(linked.id)} color="secondary" iconTrailing={ArrowRight}>
