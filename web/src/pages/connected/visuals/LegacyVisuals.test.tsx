@@ -287,7 +287,11 @@ it("keeps portfolio limits as records when the descriptor supplies no validated 
     />,
   );
   expect(screen.queryByRole("figure", { name: "Portfolio limits" })).toBeNull();
-  expect(screen.getByRole("note")).toHaveTextContent("validated portfolio basis");
+  expect(screen.getByRole("note")).toHaveTextContent(
+    "The portfolio limits could not be checked against the mandate for this run.",
+  );
+  expect(screen.getByText("Not established for this run")).toBeInTheDocument();
+  expect(document.body.textContent).not.toMatch(/Source table available|portfolio basis/);
   const table = within(screen.getByRole("table", { name: "Portfolio limits" }));
   expect(table.getByRole("cell", { name: "0.00" })).toBeInTheDocument();
   expect(table.getByRole("cell", { name: "Not supplied: no proposal" })).toBeInTheDocument();
