@@ -5,9 +5,7 @@ const ADDED = "At least one document added";
 const READABLE = "Every document can be read";
 const PURPOSE = "Purpose chosen";
 const APPROVED = "Summary approved";
-const SERVICE = "Model service reachable";
-const CAP = "Spending cap set";
-const SIX = [ADDED, READABLE, PURPOSE, APPROVED, SERVICE, CAP];
+const ALL_FOUR = [ADDED, READABLE, PURPOSE, APPROVED];
 type Frame = {
   id: string;
   current: string;
@@ -15,7 +13,7 @@ type Frame = {
   states: string[];
   position: string;
   notMet: [string, string[]] | null;
-  met: [string, string[]];
+  met: [string, string[]] | null;
   previous: string | null;
   next: string;
   nextTo: string | null;
@@ -32,7 +30,7 @@ const FRAMES: Frame[] = [
     states: [NOW, NOT_STARTED, NOT_STARTED, NOT_STARTED, NOT_STARTED],
     position: "Step 1 of 5",
     notMet: ["4", [ADDED, READABLE, PURPOSE, APPROVED]],
-    met: ["2", [SERVICE, CAP]],
+    met: null,
     previous: null,
     next: "Next",
     nextTo: null,
@@ -45,7 +43,7 @@ const FRAMES: Frame[] = [
     states: [NOW, NOT_STARTED, NOT_STARTED, NOT_STARTED, NOT_STARTED],
     position: "Step 1 of 5",
     notMet: ["3", [READABLE, PURPOSE, APPROVED]],
-    met: ["3", [ADDED, SERVICE, CAP]],
+    met: ["1", [ADDED]],
     previous: null,
     next: "Next",
     nextTo: null,
@@ -58,7 +56,7 @@ const FRAMES: Frame[] = [
     states: [DONE, NOW, NOT_STARTED, NOT_STARTED, NOT_STARTED],
     position: "Step 2 of 5",
     notMet: ["1", [APPROVED]],
-    met: ["5", [ADDED, READABLE, PURPOSE, SERVICE, CAP]],
+    met: ["3", [ADDED, READABLE, PURPOSE]],
     previous: "#/run/start/documents",
     next: "Next",
     nextTo: "#/run/start/confirm",
@@ -71,7 +69,7 @@ const FRAMES: Frame[] = [
     states: [DONE, DONE, NOW, NOT_STARTED, NOT_STARTED],
     position: "Step 3 of 5",
     notMet: ["1", [APPROVED]],
-    met: ["5", [ADDED, READABLE, PURPOSE, SERVICE, CAP]],
+    met: ["3", [ADDED, READABLE, PURPOSE]],
     previous: "#/run/start/purpose",
     next: "Approve summary",
     nextTo: "#/run/start/context",
@@ -84,7 +82,7 @@ const FRAMES: Frame[] = [
     states: [DONE, DONE, DONE, NOW, NOT_STARTED],
     position: "Step 4 of 5",
     notMet: null,
-    met: ["6", SIX],
+    met: ["4", ALL_FOUR],
     previous: "#/run/start/confirm",
     next: "Next",
     nextTo: "#/run/start/start",
@@ -97,7 +95,7 @@ const FRAMES: Frame[] = [
     states: [DONE, DONE, DONE, DONE, NOW],
     position: "Step 5 of 5",
     notMet: null,
-    met: ["6", SIX],
+    met: ["4", ALL_FOUR],
     previous: "#/run/start/context",
     next: "Submit, spend up to USD 25.00",
     nextTo: "#/run/start/started",
@@ -141,12 +139,19 @@ describe.each(FRAMES)("Run start, draft $id", (f) => {
         within(panel).getByText("What still has to be true before the run can start."),
       ).toBeVisible();
     }
-    const met = within(panel).getByRole("list", { name: `Met ${f.met[0]}` });
-    expect(
-      within(met)
-        .getAllByRole("listitem")
-        .map((li) => li.textContent),
-    ).toEqual(f.met[1]);
+    if (f.met === null) {
+      // Nothing is met: no empty Met group is drawn, and no item claims the page is connected.
+      expect(within(panel).queryByRole("heading", { level: 3, name: /^Met/ })).toBeNull();
+    } else {
+      const met = within(panel).getByRole("list", { name: `Met ${f.met[0]}` });
+      expect(
+        within(met)
+          .getAllByRole("listitem")
+          .map((li) => li.textContent),
+      ).toEqual(f.met[1]);
+    }
+    expect(within(panel).queryByText("Model service reachable")).toBeNull();
+    expect(within(panel).queryByText("Spending cap set")).toBeNull();
     expect(within(panel).getByText("Spending cap for this run")).toBeVisible();
     expect(within(panel).getByRole("progressbar")).toHaveAttribute("aria-valuenow", "0");
     expect(within(panel).getByRole("progressbar")).toHaveAccessibleName("USD 0.00 of USD 25.00");
@@ -248,7 +253,7 @@ describe("readiness items", () => {
     show("/run/start/documents", fixture.slice);
     const panel = screen.getByRole("complementary", { name: "Readiness" });
     const items = within(panel).getAllByRole("listitem");
-    expect(items).toHaveLength(6);
+    expect(items).toHaveLength(4);
     items.forEach((li) => {
       expect(li.querySelector("svg")).toBeNull();
     });
@@ -258,11 +263,11 @@ describe("readiness items", () => {
 
   it("two items with the same text are both drawn", () => {
     const source = structuredClone(fixture.slice) as {
-      drafts: { id: string; readiness: { met: { items: string[] } } }[];
+      drafts: { id: string; readiness: { met: { count: string; items: string[] } } }[];
     };
     const d = source.drafts.find((x) => x.id === "documents");
     if (d === undefined) throw new Error("fixture has no documents draft");
-    d.readiness.met.items = ["Spending cap set", "Spending cap set", "Spending cap set"];
+    d.readiness.met = { count: "3", items: ["Same", "Same", "Same"] };
     const spy = vi.spyOn(console, "error").mockImplementation(() => undefined);
     show("/run/start/documents", source);
     const met = screen.getByRole("list", { name: "Met 3" });

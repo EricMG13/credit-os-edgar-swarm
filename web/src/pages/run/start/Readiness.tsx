@@ -49,7 +49,9 @@ export function Readiness({
       {data.notMet.items.length > 0 ? (
         <ItemGroup state="Not met" count={data.notMet.count} items={data.notMet.items} />
       ) : null}
-      <ItemGroup state="Met" count={data.met.count} items={data.met.items} />
+      {data.met.items.length > 0 ? (
+        <ItemGroup state="Met" count={data.met.count} items={data.met.items} />
+      ) : null}
       <div className="flex flex-col gap-2">
         <p className="text-sm font-medium text-text-secondary">{capTitle}</p>
         {data.cap ? (

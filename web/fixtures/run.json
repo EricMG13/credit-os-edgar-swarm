@@ -20,7 +20,7 @@
               "Summary approved"
             ]
           },
-          "met": { "count": "2", "items": ["Model service reachable", "Spending cap set"] },
+          "met": { "count": "0", "items": [] },
           "cap": { "label": "USD 0.00 of USD 25.00", "value": 0, "max": 25 }
         },
         "step": "documents",
@@ -40,10 +40,7 @@
             "count": "3",
             "items": ["Every document can be read", "Purpose chosen", "Summary approved"]
           },
-          "met": {
-            "count": "3",
-            "items": ["At least one document added", "Model service reachable", "Spending cap set"]
-          },
+          "met": { "count": "1", "items": ["At least one document added"] },
           "cap": { "label": "USD 0.00 of USD 25.00", "value": 0, "max": 25 }
         },
         "step": "documents",
@@ -110,14 +107,8 @@
           "line": "What still has to be true before the run can start.",
           "notMet": { "count": "1", "items": ["Summary approved"] },
           "met": {
-            "count": "5",
-            "items": [
-              "At least one document added",
-              "Every document can be read",
-              "Purpose chosen",
-              "Model service reachable",
-              "Spending cap set"
-            ]
+            "count": "3",
+            "items": ["At least one document added", "Every document can be read", "Purpose chosen"]
           },
           "cap": { "label": "USD 0.00 of USD 25.00", "value": 0, "max": 25 }
         },
@@ -162,14 +153,8 @@
           "line": "What still has to be true before the run can start.",
           "notMet": { "count": "1", "items": ["Summary approved"] },
           "met": {
-            "count": "5",
-            "items": [
-              "At least one document added",
-              "Every document can be read",
-              "Purpose chosen",
-              "Model service reachable",
-              "Spending cap set"
-            ]
+            "count": "3",
+            "items": ["At least one document added", "Every document can be read", "Purpose chosen"]
           },
           "cap": { "label": "USD 0.00 of USD 25.00", "value": 0, "max": 25 }
         },
@@ -218,14 +203,12 @@
           "line": "Everything the run needs is in place.",
           "notMet": { "count": "0", "items": [] },
           "met": {
-            "count": "6",
+            "count": "4",
             "items": [
               "At least one document added",
               "Every document can be read",
               "Purpose chosen",
-              "Summary approved",
-              "Model service reachable",
-              "Spending cap set"
+              "Summary approved"
             ]
           },
           "cap": { "label": "USD 0.00 of USD 25.00", "value": 0, "max": 25 }
@@ -245,14 +228,12 @@
           "line": "Everything the run needs is in place.",
           "notMet": { "count": "0", "items": [] },
           "met": {
-            "count": "6",
+            "count": "4",
             "items": [
               "At least one document added",
               "Every document can be read",
               "Purpose chosen",
-              "Summary approved",
-              "Model service reachable",
-              "Spending cap set"
+              "Summary approved"
             ]
           },
           "cap": { "label": "USD 0.00 of USD 25.00", "value": 0, "max": 25 }
@@ -287,14 +268,12 @@
           "line": "Everything the run needs is in place.",
           "notMet": { "count": "0", "items": [] },
           "met": {
-            "count": "6",
+            "count": "4",
             "items": [
               "At least one document added",
               "Every document can be read",
               "Purpose chosen",
-              "Summary approved",
-              "Model service reachable",
-              "Spending cap set"
+              "Summary approved"
             ]
           },
           "cap": { "label": "USD 0.00 of USD 25.00", "value": 0, "max": 25 }
