@@ -1,13 +1,13 @@
-state: running
-updated: 2026-11-17T10:04Z
+state: blocked
+updated: 2026-11-17T10:07Z
 done: branch audit/repair-2 cut from audit/final-repairs ca0db16; environment checked (uv 0.12.5, uv sync, npm ci, a worktree sharing web/node_modules passes typecheck, lint, format:check, vitest and build; c4-probe-027 runs in 26 s on a custom port); worker brief written
-next: T13 under review 1 and adversarial review; T14 under review; then merge T13 and T14 in order and start T15 and T16 together; rulings R12 and its correction (rounds 3+ on Opus, medium) recorded in the worker brief
-blocked: none. For the lead, not blocking: T13 leaves the negative-value branch of periods() in charts.tsx without the Basis column (C3-029), because the fix needs web/src/components/chart/TrendChart.tsx, which no group owns; synthetic data does not reach that branch
+next: every other task continues: T13 fix round 1 (round 2, Sonnet: mixed decimal-comma column, lakh grouping) in visualData.ts; T14 under review; then merge T13 and T14 and start T15 and T16
+blocked: only two T13 (C3-029) residuals, asked of the lead by message: may group 2 change web/src/components/chart/ChartTable.tsx (Basis cell nowrap, off-screen; D-32) and web/src/components/chart/TrendChart.tsx (negative-value period charts lack the Basis column)? Unblocked by an answer; if no, T13 merges with both listed open. Also a Low ruling: should gap ids, run codes and lowercase module codes join the containsReference predicate?
 reports: docs/audit/2026-11-16-final/output/sessions/repair-2/worker-brief.md
 
 | Task | Starts after | State |
 | :--- | :--- | :--- |
-| T13 | - | under review (C4-028 closed, measured; C3-029 closed for every probed form, TrendChart branch open) |
+| T13 | - | fix round 1 (round 2, Sonnet): review 1 PASS, adversarial CHANGES NEEDED (mixed decimal-comma column, lakh grouping); two X1 residuals asked of the lead |
 | T14 | - | under review (all 8 findings reported closed, C3-028 with ReportContent.tsx) |
 | T15 | T14 | waiting |
 | T16 | T14 | waiting |
