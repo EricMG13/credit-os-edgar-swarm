@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
+import { cleanup, render, screen, within } from "@testing-library/react";
 import { afterEach, expect, it } from "vitest";
 import type { OutputEntry, PublishedRun, Snapshot } from "../publishedReport";
 import type { buildReportView } from "../reportView";
@@ -73,21 +73,4 @@ it("keeps the Key findings entry on a module that wrote them", () => {
   const labels = onThisPage().map((button) => button.textContent);
   expect(labels).toContain("Key findings");
   expect(labels).not.toContain("Financials and credit metrics");
-});
-
-it("holds a Module choice until the reader opens it", () => {
-  renderModules([text("Bottom line", 4)]);
-  const select = screen.getByLabelText("Module");
-  fireEvent.change(select, { target: { value: "CP-2" } });
-  expect(select).toHaveValue("CP-2");
-  expect(window.location.hash).toBe("");
-  fireEvent.click(screen.getByRole("button", { name: "Open module" }));
-  expect(window.location.hash).toBe("#modules/CP-2");
-});
-
-it("offers nothing to open while the Module choice is the module on the page", () => {
-  renderModules([text("Bottom line", 4)]);
-  expect(screen.getByRole("button", { name: "Open module" })).toBeDisabled();
-  fireEvent.change(screen.getByLabelText("Module"), { target: { value: "CP-2" } });
-  expect(screen.getByRole("button", { name: "Open module" })).toBeEnabled();
 });

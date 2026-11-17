@@ -82,8 +82,7 @@ function historyEntry() {
 
 /**
  * The shell's `main` scrolls, so the browser restores nothing on its own. A new address opens its
- * page at the top, and focus goes to the page's heading when the control that had it has gone with
- * the old page. Back and Forward return to the offset the reader left in that entry.
+ * page at the top; Back and Forward return to the offset the reader left in that entry.
  */
 function useReportPlace(root: RefObject<HTMLElement | null>, hash: string, ready: boolean) {
   const left = useRef(new Map<string, number>());
@@ -112,12 +111,6 @@ function useReportPlace(root: RefObject<HTMLElement | null>, hash: string, ready
     if (main) {
       main.scrollTop = back ?? 0;
       offset.current = main.scrollTop;
-    }
-    const focus = document.activeElement;
-    const heading = root.current?.querySelector("h2");
-    if (back === undefined && heading && (focus === null || focus === document.body)) {
-      heading.tabIndex = -1;
-      heading.focus({ preventScroll: true });
     }
   }, [hash, ready, root]);
 }

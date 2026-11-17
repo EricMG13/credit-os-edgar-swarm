@@ -6,7 +6,6 @@ import {
   render,
   screen,
   waitFor,
-  within,
 } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { ConnectedApp } from "./ConnectedApp";
@@ -106,10 +105,10 @@ afterEach(() => {
   window.history.replaceState(null, "", "/");
 });
 
-// The shell's `main` is what scrolls, so each page of the report starts at its top, with focus
-// on its heading, and Back returns to the place the reader left.
+// The shell's `main` is what scrolls, so each page of the report starts at its top and Back
+// returns to the place the reader left.
 describe("report page changes", () => {
-  it("opens the page for a new address at its top with focus on its heading", async () => {
+  it("opens the page for a new address at its top", async () => {
     open("#modules/CP-1");
     await screen.findByLabelText("Module");
     const main = screen.getByRole("main");
@@ -119,31 +118,9 @@ describe("report page changes", () => {
       window.location.hash = "#changes";
     });
     await waitFor(() => {
-      expect(document.activeElement?.tagName).toBe("H2");
+      expect(main.scrollTop).toBe(0);
     }, SETTLE);
-    expect(document.activeElement).toBe(main.querySelector("h2"));
-    expect(main.scrollTop).toBe(0);
-  });
-
-  it("leaves focus on a control that kept it", async () => {
-    open("#modules/CP-1");
-    await screen.findByLabelText("Module");
-    const tabs = screen.getByRole("navigation", { name: "Report sections" });
-    const changes = within(tabs).getByRole("link", { name: "Changes" });
-    changes.focus();
-    act(() => {
-      window.location.hash = "#changes";
-    });
-    await waitFor(() => {
-      expect(document.title).toMatch(/^Changes/);
-    }, SETTLE);
-    expect(document.activeElement).toBe(changes);
-  });
-
-  it("does not take focus when the report first opens", async () => {
-    open("#modules/CP-1");
-    await screen.findByLabelText("Module");
-    expect(document.activeElement).toBe(document.body);
+    expect(window.location.hash).toBe("#changes");
   });
 
   it("returns to the place the reader left when they go Back", async () => {
