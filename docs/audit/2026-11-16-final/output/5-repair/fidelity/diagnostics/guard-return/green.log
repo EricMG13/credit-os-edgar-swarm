@@ -1,0 +1,13 @@
+✔ capture refuses an old root without executing its proof module (74.030495ms)
+✔ capture validates FID_ATTACH before any browser launch (160.007804ms)
+✔ pairedSnapshot reads a direct loopback response and never follows a redirect (42.506724ms)
+✔ capture run-state API reads direct responses and never follows a redirect (33.55154ms)
+✔ both direct network readers reject a non-loopback initial URL before a request (0.875571ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 5
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 622.967259

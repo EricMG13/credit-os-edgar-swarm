@@ -1,0 +1,4 @@
+PASS actual packager SOURCE_PATHS git archive at 63c4a7f7a855f094e289fb985d7a58a072968fcd; validate_source succeeds
+PASS web/scripts/offline-network.mjs included, bytes identical, SHA256 5d30207b8eafcb48339df06cbb2f36b26afafc667ebc5733f399e9deea7bfcb3
+PASS packaged proof + unit caller imports resolve; audit-only capture tests remain outside release script suite
+No package installation, browser, provider, build invocation, or release bundle creation performed by this control
