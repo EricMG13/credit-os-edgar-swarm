@@ -273,3 +273,26 @@ One entry per task: the reviewer was a fresh Sonnet agent at xhigh effort that d
   - Ten index links share the name "TransDigm Group" (one issuer in the fixture).
   - Ended includes the Finished run; CM-090 says "ended without a report".
 - Integration: T27's route-change focus must keep the Run started title focused after Submit, then Confirm. T27 round 2 checks this on the merged tip.
+
+## T38 follow-up under ruling L8 (S5-001)
+
+- Commit reviewed: 5c0dad1. Verdict: PASS. Merged onto audit/repair-3.
+- On the parent source the new tests fail 19 of 25; the 6 that pass are controls.
+- Reader:
+  - Only `forecast` became nullable.
+  - Each of the other ten run keys is still refused when missing, and unknown keys are still refused.
+  - Malformed forecasts (`{}`, strings, arrays, missing tabs, periods or walk) are refused with a named path. Absent and `null` both read as null.
+  - A present forecast reads back equal to the fixture.
+  - The two-case check (read.ts:309-311) is byte-for-byte unchanged: R3-001, for the owner.
+- There are two readers of `run.forecast`, ForecastPage.tsx and ModelShell.tsx, and both handle null.
+- The no-forecast Forecast address draws the Model tabs. The breadcrumb, the "Open the financial model" button and the T25 note are unchanged.
+- "No forecast was published for this run." is fixed wording (L8, CM-067).
+- p-noforecast.mjs: the no-forecast run is listed and draws on all six addresses. The one-case and missing-headline variants stay refused.
+- Gates the reviewer saw:
+  - build 0, lint 0, format:check 0, typecheck 0.
+  - vitest: model, RunFrame, App and shell, 34 files, 896 tests, at the default timeout.
+  - file-check.mjs 0.
+- Low:
+  - The library's disabled tab says "No forecast for this run", the model page "No forecast was published for this run". A wording choice.
+  - The Show sources switch is drawn on the sentence page with nothing to reveal, the same class as C5-005.
+  - A forecast with neither tabs nor periods gets the generic nullableRecord message.
