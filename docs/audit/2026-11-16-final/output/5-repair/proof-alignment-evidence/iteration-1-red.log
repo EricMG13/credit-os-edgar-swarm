@@ -1,0 +1,45 @@
+
+> credit-os-web@0.0.0 proof:connected
+> node scripts/connected-proof.mjs
+
+Browser proof artifacts: /workspace/audit-proof-alignment/proof-artifacts/run-pTBy9z
+
+✖ Google Chrome uploads, submits and opens a finished legacy report (31171.060858ms)
+
+✖ Microsoft Edge uploads, submits and opens a finished legacy report (29655.354232ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 0
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 60832.277837
+
+✖ failing tests:
+
+test at scripts/connected-proof.mjs:1505:3
+✖ Google Chrome uploads, submits and opens a finished legacy report (31171.060858ms)
+  locator.boundingBox: Timeout 15000ms exceeded.
+  Call log:
+  [2m  - waiting for getByRole('region', { name: 'Run activity', exact: true }).getByRole('group', { name: 'Modules', exact: true })[22m
+
+      at checkActivity (/workspace/audit-proof-alignment/web/scripts/connected-proof.mjs:469:52)
+      at async checkBrowserRun (/workspace/audit-proof-alignment/web/scripts/connected-proof.mjs:1366:3)
+      at async TestContext.<anonymous> (/workspace/audit-proof-alignment/web/scripts/connected-proof.mjs:1524:18) {
+    log: [ "  - waiting for getByRole('region', { name: 'Run activity', exact: true }).getByRole('group', { name: 'Modules', exact: true })" ],
+    name: 'TimeoutError'
+  }
+
+test at scripts/connected-proof.mjs:1505:3
+✖ Microsoft Edge uploads, submits and opens a finished legacy report (29655.354232ms)
+  locator.boundingBox: Timeout 15000ms exceeded.
+  Call log:
+  [2m  - waiting for getByRole('region', { name: 'Run activity', exact: true }).getByRole('group', { name: 'Modules', exact: true })[22m
+
+      at checkActivity (/workspace/audit-proof-alignment/web/scripts/connected-proof.mjs:469:52)
+      at async checkBrowserRun (/workspace/audit-proof-alignment/web/scripts/connected-proof.mjs:1366:3)
+      at async TestContext.<anonymous> (/workspace/audit-proof-alignment/web/scripts/connected-proof.mjs:1524:18) {
+    log: [ "  - waiting for getByRole('region', { name: 'Run activity', exact: true }).getByRole('group', { name: 'Modules', exact: true })" ],
+    name: 'TimeoutError'
+  }

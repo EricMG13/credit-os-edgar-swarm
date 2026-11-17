@@ -1,0 +1,482 @@
+{
+  "non_loopback_requests": 0,
+  "attempts": [],
+  "proxy_blocks": [
+    {
+      "target": "http://clients2.google.com/time/1/current?cup2key=ML-DSA-44-10:B8JtyG3FplTLwLfBkyf-va-OjgZ5Xx95p1n6BGxCDGQ&cup2hreq=e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "method": "GET"
+    },
+    {
+      "target": "www.gstatic.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.google.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "accounts.google.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.google.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.google.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.google.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.google.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.google.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.google.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.google.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.google.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.google.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.google.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.google.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.google.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "accounts.google.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.google.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.google.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.google.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.google.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "content-autofill.googleapis.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.google.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.google.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "content-autofill.googleapis.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.google.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.google.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "content-autofill.googleapis.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "content-autofill.googleapis.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "content-autofill.googleapis.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.google.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "accounts.google.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.google.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.google.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.google.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "content-autofill.googleapis.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.google.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.google.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "content-autofill.googleapis.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.google.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.google.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "content-autofill.googleapis.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.google.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.google.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "content-autofill.googleapis.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "content-autofill.googleapis.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "accounts.google.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.google.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.google.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.google.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "content-autofill.googleapis.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.google.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.google.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.google.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.google.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.google.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.google.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.google.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.google.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.google.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.google.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.google.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.google.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.google.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.google.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.google.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "content-autofill.googleapis.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.google.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.google.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.google.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.google.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "content-autofill.googleapis.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.google.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.google.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.google.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "content-autofill.googleapis.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.google.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "content-autofill.googleapis.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.google.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.google.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "content-autofill.googleapis.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.google.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.google.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "content-autofill.googleapis.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.google.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.google.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "content-autofill.googleapis.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.google.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.google.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.google.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.google.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.google.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "content-autofill.googleapis.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.google.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.google.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "content-autofill.googleapis.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.google.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.google.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.google.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.google.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.google.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.google.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.google.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.google.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.google.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "content-autofill.googleapis.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.google.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.google.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.google.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.google.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.google.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.google.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.google.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "content-autofill.googleapis.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.google.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.google.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.google.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.google.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "update.googleapis.com:443",
+      "method": "CONNECT"
+    }
+  ]
+}
