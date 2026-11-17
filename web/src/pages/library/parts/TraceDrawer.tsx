@@ -1,9 +1,34 @@
 import { Button } from "@/components/base/buttons/button";
 import { SlideoutMenu } from "@/components/application/slideout-menus/slideout-menu";
+import { citedSourceNames } from "@/pages/connected/sourceFiles";
 import type { Trace } from "../slice";
 import { DerivationTree } from "./DerivationTree";
 
 const CAPTION = "text-xs font-medium text-text-tertiary";
+
+/** The supplied files a trace cites, named with their cited pages as plain text: never a link (decision 9). */
+function CitedSources({ links }: { links: readonly { href: string }[] }) {
+  const names = citedSourceNames(links);
+  if (names.length === 0) return null;
+  return (
+    <div className="flex flex-col gap-1.5">
+      <span className={CAPTION}>Cited sources</span>
+      <ul className="grid gap-1 text-small text-text-secondary">
+        {names.map(({ path, text }) => (
+          <li key={path} className="wrap-anywhere">
+            {text}
+          </li>
+        ))}
+      </ul>
+      {links.some(({ href }) => href.includes("?page=")) && (
+        <p className="text-xs text-text-tertiary">
+          Pages follow the source supplied to this run and may differ from the filing’s printed
+          pages.
+        </p>
+      )}
+    </div>
+  );
+}
 
 /** The sources of one figure: its statement and how it was derived. The one place audit material shows on a run page. */
 export function TraceDrawer({
@@ -56,6 +81,7 @@ export function TraceDrawer({
             <p className="text-small text-text-secondary">{trace.qualification}</p>
           </div>
         )}
+        <CitedSources links={trace.sourceLinks ?? []} />
       </SlideoutMenu.Content>
       <SlideoutMenu.Footer className="flex justify-end gap-3">
         <Button color="secondary" slot="close">

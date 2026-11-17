@@ -46,16 +46,17 @@ function titleLine(sections: Section[]) {
     ?.line;
 }
 
-const LIST_MARKER = /^[ \t]*- +/;
-const FENCE_LINE = /^[ \t]*```[^\n]*$/;
+const LIST_MARKER = /^([ \t]*)- +/;
+// \x60 is a backtick: a literal one would mislead the class scanner of the static gate.
+const FENCE_LINE = /^[ \t]*\x60{3}[^\n]*$/;
 const NAMED_HASH = /^(\S.*?) ([a-f0-9]{64})$/;
 
-/** A handoff line as written, without the Markdown that carried it: list markers and code fences. */
+/** A handoff line as written, without its Markdown: list markers (indentation kept) and code fences. */
 function withoutMarkdown(text: string) {
   return text
     .split("\n")
     .filter((item) => !FENCE_LINE.test(item))
-    .map((item) => item.replace(LIST_MARKER, ""))
+    .map((item) => item.replace(LIST_MARKER, "$1"))
     .join("\n");
 }
 

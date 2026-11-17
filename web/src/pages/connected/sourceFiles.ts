@@ -21,6 +21,24 @@ function citedPageLabel(query: string) {
   return first === last ? `page ${String(first)}` : `pages ${String(first)}–${String(last)}`;
 }
 
+/**
+ * The supplied sources a trace cites, as text: each file's name and the pages cited, read from the
+ * bridge addresses the trace already carries (decision 9: listed only, never opened).
+ */
+export function citedSourceNames(links: readonly { href: string }[]) {
+  const sources = new Map<string, { name: string; pages: string | null }>();
+  for (const { href } of links) {
+    const [path = "", query] = href.split("?", 2);
+    const pages = query === undefined ? null : citedPageLabel(`?${query}`);
+    const name = decodeURIComponent(path.slice(path.lastIndexOf("/") + 1));
+    sources.set(path, { name, pages: pages ?? sources.get(path)?.pages ?? null });
+  }
+  return [...sources].map(([path, { name, pages }]) => ({
+    path,
+    text: pages ? `${name}, cited ${pages}` : name,
+  }));
+}
+
 /** The bridge's address for this exact run, filename and digest, when the source carries it. */
 function attestedSource(folder: string, source: SourceFileReference) {
   const name = source.file ?? source.name;
