@@ -1,6 +1,6 @@
 state: running
-updated: 2026-11-17T09:15Z
-done: T01 round 1 (55572433): reviewer PASS, adversarial CHANGES NEEDED (Medium R-1: /library/data.js served raw keeps catalogue.workspace from an older data.js). T03 implemented (0e302ecb), in review. T11 implemented (bc1b19b2), in review. Lead ruling L4 (09:04Z): T02 may change src/deploy_workflow/inbox/runs.py; T07 may precede T02. Owner (09:10Z): up to 10 agents at once.
-next: T01 round-2 implementer (R-1, R-4); T02 and T12 implementers running; T03 and T11 reviewers running; T04 after T03 merges; T07 after T01 merges
+updated: 2026-11-17T09:26Z
+done: implemented, in review: T01 round 2 (dd8acc5d, reviewer and adversarial), T02 (a3e2dcb0, reviewer and adversarial; lead ruling L4: runs.py granted, T07 may precede T02), T11 (bc1b19b2, reviewer). T03 round 1 (0e302ecb) reviewed CHANGES NEEDED (Medium: negative exit codes, library-rebuild note); round 2 implementing. Owner: up to 10 agents at once.
+next: T12 implementer running; merge T01, T02, T11 as each passes review; then T07 (after T01) and T04 (after T03)
 blocked: none
 reports: docs/audit/2026-11-16-final/output/sessions/repair-1/WORKER-NOTES.md
