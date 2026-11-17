@@ -1,7 +1,7 @@
 state: running
-updated: 2026-11-17T14:37Z
+updated: 2026-11-17T14:38Z
 done: merged T13 (301b20a), T14 (a6bf5d2), T15 (d9c1fce), T16 (f40b916), T17 (cc1a717) with --no-ff in tasks.md order. After T17: typecheck, lint, format:check 0; vitest src/pages/connected and src/pages/signal 98 files, 1851 tests, 0 (a first run had 1 load failure, the re-run 0). Reviewed and held: T19, T20, T21, T23. T24 withdrawn (R14)
-next: T16 round 4 (last under R12); T17 and T18 implementing (Opus medium) from local base 84c2e9d (audit/repair-2 with T16 through round 3; T16's round 4 touches only RunCharts.tsx); T21 under review; T22 starts after T18. Merge order stays T16, T17, T18, T19, T20, T21, T22, T23
+next: T18 round 2 (Opus medium); T22 implementing (Opus medium) from local base 48c4bb6 (audit/repair-2 with T18 round 1; T18 still merges first). Then merge in order: T18, T19, T20, T21, T22, T23; then the pull request into audit/final-repairs
 blocked: none (lead ruling L16: T16 holds back a page-citing chart-gap reason as See Evidence. beside the gap's own status field or the standard missing form, in a round 3 after the current reviews; the 0,000 evidence fix is listed in T19.md for the lead's batch)
 reports: docs/audit/2026-11-16-final/output/sessions/repair-2/worker-brief.md
 
@@ -16,6 +16,6 @@ reports: docs/audit/2026-11-16-final/output/sessions/repair-2/worker-brief.md
 | T19 | - | reviewed PASS after round 2 (Opus medium): C4-004, X1-024, X1-019, R2-003 closed; held for merge after T18. For the lead (Low): a zero written 0,000 counts as decimal-comma evidence under T13's rule |
 | T20 | T16 | reviewed PASS after round 3 (reviews 5 and 6, Opus medium): C4-007 closed; lead ruling L17 keeps the base withholding (R2-004 Info); held for merge after T19 |
 | T21 | T14, T16 | reviewed PASS after round 2: C5-009, C5-010, C5-011 (OQ-04), J3-007 closed; C5-002 withdrawn (R14); held for merge after T20 |
-| T22 | T16, T18 | waiting (C5-007 and J5-002 withdrawn under R14) |
+| T22 | T16, T18 | implementing (Opus medium), base 48c4bb6 (C5-007 and J5-002 withdrawn under R14) |
 | T23 | - | reviewed PASS (C5-012 closed); held for merge after T22 |
 | T24 | T21 | withdrawn under R14 (C5-034, keyboard focus); report written |
