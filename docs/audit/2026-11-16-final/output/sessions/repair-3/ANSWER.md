@@ -30,3 +30,7 @@ After T40 merges, a T25 follow-up draws the same "Design reference with sample d
 From now on, a task that needs a third round or more (a second send-back after review) runs from that round with Opus workers (model "opus") at xhigh effort, for both the implementer and the reviewer, not Sonnet. This applies now to every task already past round 2. A task still failing review after round 4 is left open and listed for the lead. Note the model of each round in output/5-repair/<task>.md. No reply needed.
 
 Controller's reading: a follow-up that carries out a lead ruling on a part held back from round 1 (T33 S2-006 under L5, T25 model pages under L7, T38 S5-001 under L8) is new work, not a send-back after review, so it does not count as a round under R12. At the time of R12 no task had had a send-back.
+
+# Lead correction to R12 (owner, 2026-11-17: "opus medium"; received 10:01 UTC by message from the lead session)
+
+Rounds 3 and later run on Opus at medium effort, not xhigh, for both implementer and reviewer. Everything else in R12 stands.
