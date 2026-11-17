@@ -65,6 +65,24 @@ it("keeps source names in Evidence when a published gap names a source file", ()
   );
 });
 
+it("draws a chart gap reason in the reader's words, a module code as the module's name", () => {
+  render(
+    <LegacyVisuals
+      output={{
+        chartGaps: [
+          { title: "Triggers", table: 20, gap: "Not established: CP-4 gives no trigger text" },
+          { title: "Cover", table: 21, gap: "Not established: see Filing p.12 (CP-4)" },
+        ],
+      }}
+      evidenceHref={(line) => `#evidence/0-${String(line)}`}
+    />,
+  );
+  const notes = screen.getAllByRole("note");
+  expect(notes[0]).toHaveTextContent("Not established: Legal & covenants gives no trigger text");
+  expect(notes[1]).toHaveTextContent("Not established: see Filing p.12 (Legal & covenants)");
+  expect(document.body.textContent).not.toMatch(/CP-\d/);
+});
+
 it("renders the published model cell displays, cases, dates and reasons", () => {
   const model = {
     cashflow: {

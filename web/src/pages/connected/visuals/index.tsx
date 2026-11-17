@@ -5,7 +5,7 @@ import { chartsWithQualifications } from "./drawnQualifications";
 import { ChartTable } from "@/components/chart/ChartTable";
 import { ChartWithTable } from "@/components/chart/ChartWithTable";
 import { TRACE_HOST } from "@/pages/library/parts/TraceControl";
-import { containsReference } from "../publishedReport";
+import { containsReference, readerText } from "../publishedReport";
 import { PublishedSource } from "../report/PublishedTrace";
 import { usePortfolioBasis } from "../report/PortfolioBasis";
 import { portfolioLimits } from "./PortfolioLimits";
@@ -145,7 +145,10 @@ export function LegacyVisuals({
         entry(first, (wide) => (
           <section key={key} className={`${TRACE_HOST} grid min-w-0 gap-2${box}${wide}`}>
             <Heading className="font-display text-h4 first-letter:uppercase">{title}</Heading>
-            <GapPanel role="note" reason={link && containsReference(gap) ? "See Evidence." : gap} />
+            <GapPanel
+              role="note"
+              reason={link && containsReference(gap) ? "See Evidence." : readerText(gap)}
+            />
             {actions}
           </section>
         )),
