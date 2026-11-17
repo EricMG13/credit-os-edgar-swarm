@@ -447,3 +447,80 @@ R4-013 repair/review/integration; group 2 PR/CI/actual-final acceptance; full co
 gates, connected proof, browser/download-byte fidelity and release packaging;
 Windows/weekly/full Python, live providers, paid execution, seat, real Submit and
 Teams. No branch was pushed or promoted by this integration.
+
+## Phase 6: reviewed T22 confidence recovery and original group 2 milestone
+
+The lead gave GO to merge original group 2 `170704a1` after both fresh primary
+and adversarial round-2 reviews accepted code `5b5610fe` with zero remaining
+High/Medium/Low findings. Read both reports at
+`/workspace/scratch/t22-round2-{primary,adversarial}-review.md`. The original
+group's PR/CI/lead acceptance is still separate; this phase starts at `620521d5`
+and does not promote the candidate or modify the original worktree.
+
+| Source milestone | Candidate commit |
+| :--- | :--- |
+| Original group 2 merge `170704a1` | merge `338cdafe` |
+| T22 initial code `12e53e21` and reports `4b948312` | Same source commits, inherited through `338cdafe` |
+| Reviewed T22 round-2 code `5b5610fe` and reports `4726ebd0` | Same source commits, inherited through `338cdafe` |
+| Original group's R4-001 backport `ee69c684` | Same source commit, inherited through `338cdafe`; equivalent repair already present from Evidence `bcf9dff7` as `13123339` |
+| C5-025/T22 assertion consequence | `c058ab98` |
+
+### Phase 6 conflict and named assertion consequence
+
+Only `ReportContent.tsx` conflicted, in `buildTrace` setup and citation children.
+Kept the lead's source-free placeholder handling, ordinary table source grouping,
+denominator wording, reader-text work and existing citation helper. Added the
+reviewed optional confidence projection/type, accepted input/method groups,
+confidence-only placeholder filtering and exact source qualification. Confidence
+traces use the full section's filtered citation list so later-block citations
+are retained; ordinary table traces keep their existing per-row groups. The
+remaining T22 source/store/chip/enrichment changes merged cleanly and retain
+exact source identity validation. T18's final context and the Record qualification
+ledger are unchanged. No scorer, method, calculation or analytical text changed.
+
+The first caller run had one finding-required structural assertion consequence:
+lead `report.auditFollowups.test.tsx` expected Coverage `0.75` and Timeliness
+`0.80` as root derivation nodes. Approved T22 places accepted rows under
+`Recorded confidence inputs`. `c058ab98` requires exactly that single root group
+and retains both exact ordered label/value pairs in its children. This also
+keeps the original no-placeholder coverage. No value, count, timeout, skip,
+configuration or gate was relaxed; no product repair was invented.
+
+### Phase 6 checks
+
+| Check | Exit/result |
+| :--- | :--- |
+| Confidence projection/authority oracle, store, chips and actual verified-source bridge Python files | 0; five files / 509 tests passed |
+| Initial actual frontend callers: Confidence, ReportContent family, LibraryIndex trace, source files, Evidence/Modules/Overview and T18 Forecast | 1; 18 files, 194 passed and the one structural assertion above failed |
+| Assertion consequence plus Confidence recovery and ReportContent records | 0; three files / 45 tests passed; resolves the only failure, so all 195 tests across the 18 distinct files now pass |
+| Full frontend lint, format and typecheck before the test-only consequence | 0 for all |
+| Final changed-test ESLint/Prettier | 0 for both |
+| Typecheck after the assertion consequence | 0 |
+| Default main-based Python quality gate, no base override | 0; 41 files / 4,706 scoped lines, zero findings |
+| Protected scorer/prompts/proof handoffs/Signal phase diff | Empty; no Signal import of the changed connected report helpers |
+| Product/test range whitespace and working-tree `git diff --check` | 0 for both |
+| Complete phase range `git diff --check 620521d5..HEAD` | 2; nine whitespace findings in eight imported raw historical T22 evidence logs, preserved as captured |
+
+The complete-range whitespace findings are EOF blank lines in
+`t22-affected-web.txt`, `t22-final-focused.txt`, `t22-lint.txt`,
+`t22-red-real-placeholder.txt`, `t22-red-split-qualification.txt`,
+`t22-red-web.txt` and `t22-types.txt`, plus two pytest RED blank lines with spaces
+in `t22-red-python.txt`. They are confined to `evidence/t22/`; their captured
+bytes were not silently rewritten. No gate configuration or exclusion changed.
+
+Evidence commands/results are retained under
+`/workspace/scratch/integrate-stage5-t22-*`. They use uv exactly 0.12.5 with
+`--no-sync`, explicit candidate PYTHONPATH, `timeout 300` and one Vitest worker.
+The final focused formatting check corrected only the newly added assertion's
+line wrapping; initial scratch checks with the wrong cwd were corrected and are
+not acceptance evidence. No unrelated Signal run was repeated: source search
+found no affected caller and the final full gate remains the lead's work.
+Fresh source reviews provide the confidence/simplification evidence for the
+original functions; this integration preserves their design while retaining
+the lead's existing ordinary-table grouping.
+
+Not verified: historical raw-log whitespace remains as
+listed; R4-012 repair/final review/integration and proof-harness alignment;
+original group 2 PR/CI/actual-final acceptance; final combined full gates,
+connected proof and browser/handoff fidelity; Windows/weekly/full Python,
+provider/live/paid/seat/real Submit/Teams. No branch was pushed or promoted.
