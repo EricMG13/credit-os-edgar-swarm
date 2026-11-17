@@ -61,8 +61,6 @@ it("draws the model notes, limitations and case group by module name, with no mo
       "Every figure is arithmetic over inputs the Forward credit model stated; the inputs, not the arithmetic, are unreviewed. Not analytical review.",
     ),
   ).toBeInTheDocument();
-  expect(
-    screen.getByRole("columnheader", { name: "Downside (Forward credit model drivers)" }),
-  ).toBeInTheDocument();
+  expect(screen.getByRole("columnheader", { name: "Downside drivers" })).toBeInTheDocument();
   expect(document.body.textContent).not.toMatch(/\bCP-[A-Z0-9]+\b/);
 });

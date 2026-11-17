@@ -1,7 +1,7 @@
 state: running
-updated: 2026-11-17T17:32Z
+updated: 2026-11-17T17:50Z
 done: all previously pushed tasks remain preserved at f9453f27; lead took over after the user-required two hours without a push (last original push 15:32:06Z, checked origin at 17:32:14Z).
-next: recover remaining T18 round4 and T22 sequentially, test first and fresh review; then final branch gates and PR into audit/final-repairs.
+next: T18 recovery implementation passes 128 focused tests, typecheck and changed-file lint after eight test-first failures plus a Downside wrap failure. Run source probes, caller/Signal checks and branch gates; then fresh last-round review. T22 remains untouched and follows T18.
 blocked: prior T18/T22 worktree code/reports were never pushed and are unavailable; recover from repository evidence only.
 reports: original reports below; new recovery reports will be output/5-repair/T18.md and T22.md.
 

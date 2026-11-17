@@ -36,6 +36,7 @@ import {
 } from "../ReportContent";
 import { ArtifactDownloads } from "./ArtifactDownloads";
 import { ReportRecord } from "./Record";
+import { RecordedModelQualifications, type ForecastModel } from "./ForecastRecord";
 import { ScriptChecks } from "./ScriptChecks";
 
 const BARE_MODULE_CODE = /^CP-[A-Z0-9]+$/;
@@ -383,7 +384,9 @@ function EvidenceGaps({
         </div>
       ) : (
         <p className="mt-4 text-text-secondary">
-          {module ? `No recorded gaps for ${moduleName(module)}.` : "This run lists no gaps."}
+          {module
+            ? `No module-written gaps for ${moduleName(module)}.`
+            : "The module handoffs list no gaps."}
         </p>
       )}
     </section>
@@ -713,6 +716,7 @@ export function ReportEvidence({
   target,
   comparison,
   mode,
+  models = [],
 }: {
   snapshot: Snapshot;
   run: PublishedRun;
@@ -720,6 +724,7 @@ export function ReportEvidence({
   target?: string;
   comparison?: ReactNode;
   mode: Mode;
+  models?: ForecastModel[];
 }) {
   const checks = run.evidence.scriptChecks ?? [];
   const { module, invalidTraceAddress, tab, selectedIndex, entry, selectedModule, line } =
@@ -775,7 +780,12 @@ export function ReportEvidence({
       {tab === "Trace" && !entry && (!module || module === "CP-8") && comparison}
       {tab === "Gaps" && <EvidenceGaps run={run} entries={entries} module={module} />}
       {tab === "Script checks" && <ScriptChecks records={checks} module={module} />}
-      {tab === "Record" && <ReportRecord run={run} entries={entries} module={module} mode={mode} />}
+      {tab === "Record" && (
+        <>
+          <ReportRecord run={run} entries={entries} module={module} mode={mode} />
+          <RecordedModelQualifications models={models} />
+        </>
+      )}
     </div>
   );
 }

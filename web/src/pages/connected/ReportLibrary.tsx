@@ -484,6 +484,7 @@ function ReportPage({
               snapshot={snapshot}
               run={run}
               entries={view.entries}
+              models={view.models}
               target={parts.join("/")}
               mode={mode}
               comparison={<ComparisonMeasures change={change} />}
