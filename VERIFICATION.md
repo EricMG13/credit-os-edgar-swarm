@@ -4,6 +4,16 @@ Keep one running record here. A pass applies only to the stated scope. Earlier v
 engine is in [EricMG13/final-workflow](https://github.com/EricMG13/final-workflow)'s
 `VERIFICATION.md`, which also keeps the retained runs this copy leaves out.
 
+## 2026-11-17 — PR 3: the review sheet shows every input Submit sends (branch `claude/review-sheet-every-input`)
+
+Scope: a presentation change to the connected start page's review sheet (`web/src/pages/connected/start/ReviewSheet.tsx`, new `start/reviewInputs.ts`), with labels moved unchanged from `StartRun.tsx` into `start/plain.ts` and `start/rows.ts`. What Submit sends, the reviewed-summary digest, the caps, limit acceptance and the service are unchanged; no Python changed. No provider was called.
+- Owner, 2026-11-16: the review sheet shows every input the analyst approves, in plain words.
+- Changed: the sheet adds the issuer ID and issue classification, the legal documents and the three file boxes, Issuer details, Context details (each facility, quote, rating and research question, the analyst's note among the questions), Valuation and peers, Module options and Scenario assumptions, and shows the form level, model and effort and turns per module at every level. Labels come from the page's own sources (`plain.ts`, `rows.ts`, `valuation.ts`, `assumptions.ts`); module lists use names, never the forecast. A blank or unsent input reads `Not given`, never 0. The form version (`context.schema`) is sent and not drawn.
+- Fidelity check, scope the review sheet of a Full credit assessment at the Basic and Advanced levels, synthetic inputs: V1–V26 in `ConnectedApp.test.tsx` assert each input's label and value as hand-written strings; 26 failed before the change (at the sheet lookup) and pass after. V27 asserts that no text on the sheet or its limits matches braces, `snake_case` keys, module codes, ids or `context/1`. It passed before and after (a guard). The N8 and N9 request bodies are unchanged and pass. One older assertion (Basic hides turns, model and effort) now asserts they are shown, under the owner's rule.
+- Browser check (scratch Playwright script, not committed; Chrome for Testing 153 on the synthetic `proof.serve`): an Advanced run with inputs in every group. The service accepted the summary. Every key of the sent body appears on the sheet with its value, except `context.schema` and the five new-issue facility boxes, which are sent blank and not drawn for a run that is not a new issue. The sheet text has no raw pattern.
+- Commands, exit 0 on 366bdb1: `npm --prefix web ci`; `npm --prefix web run` lint, format:check, typecheck, unused, duplication (1.57%), build; the start-page tests (`ConnectedApp.test.tsx` and `start/`, 382); `tools/quality_gate.py` (0 findings, no Python changed). Pending at this commit: the full `npm --prefix web run test` (the first run, on 50dd42a, failed only by V27's 5 s timeout, fixed in 366bdb1) and `pytest -m browser tests/test_run_start_page.py`.
+- Not verified: `proof:connected` (it needs branded Google Chrome and Microsoft Edge; this container has Chrome for Testing only, linked at `/opt/google/chrome/chrome`, and no Edge); other pathways in a browser; a live or paid run; the full weekly suite.
+
 ## 2026-11-17 — PR 2: a run in the currency its source files report in (branch `claude/reporting-currency`)
 
 Scope: the whole branch against `main` 0bca1822. That covers the two entries below (PRs 44 and 46, merged into this branch) and the work listed here. Ruling: `docs/rulings/2026-11-16-reporting-currency-from-sources.md`. No provider was called and no paid run was made. The proof is synthetic: retained, canned module answers, labelled as such.
@@ -947,51 +957,3 @@ Scope: presentation only, all under `web/`; no backend, handoff, provider or mod
   reload, the portfolio table and its qualification, and the original CP-2 file hash.
   Focused tests passed (70 web and 15 Python), with clean lint, format, build and
   quality gate results. The work-PC browser proof and ZIP publication are pending.
-
-## 2026-11-15 — Credit OS 2 React issuer report redesign
-
-- Upstream GitHub main was verified at RBOT-HTML `fc010a7`. Engine files and
-  Python/workspace pins match that commit. React and its lockfile are preserved.
-- Read-only Caesars replay, macOS Chrome 157.0.8103.78 and Edge 157.0.4341.60.
-  Verified five report views, 12 retained handoffs, eight chart descriptors,
-  seven event lanes, seven maps and the explicit portfolio chart gap.
-- Fidelity checks used 3,962 US$m 2030 maturities, the original CP-2 hash,
-  C11/C14 lineage, and 464.86 versus 647.95 US$m FY2027 forecast bases.
-  Narrow report views fit at 720 px; Escape returned focus from the trace.
-- Confidence review checked run and output identity, qualified forecasts, zero
-  versus missing, comparable units and same-run artifact downloads. Fixed the
-  driver-only downside label, lost module filter, chart qualification,
-  methodology files in the package, and responsive overflow.
-- The 91-figure map documents available producers and table/gap states. The
-  browser evidence covers delivered cases and fixtures, not every pathway or
-  a new paid run. The Caesars replay remains a labelled test preview.
-- Candidate source `df9902b` and ZIP digest
-  `f0e0dde8da058c9d8e739bfc7d9265e7234b7295cc4efec849a9093281912507`.
-  A clean extraction passed the full 14-module synthetic workflow in macOS
-  Chrome (run `20261115-152941-01`) and Edge (run `20261115-152946-01`).
-  Both verified the exact handoff download. Package validation confirmed the
-  14 synthetic handoffs and excluded retained issuer data and credentials.
-  The extracted proof uses its own fixtures and made no provider calls.
-- Paired CP-8 proof used the RBOT-HTML synthetic lite-assessment publisher with
-  an earlier-format prior. macOS Chrome and Edge checked the exact −1.40x
-  leverage change, the withheld cash difference, maturity gap, module
-  explanation, and Evidence reload and back/forward. Targeted tests also cover
-  same-period revisions, mismatched pair identity, maturity zero versus missing,
-  and the distinction between missing, unreadable and first-run comparisons.
-- Work-PC proof is pending. Keep the ZIP local until both Windows browsers pass.
-
-## 2026-11-15 — Unified React frontend on RBOT-HTML
-
-- The RBOT-HTML engine under `src/`, Python pin and lock inputs match `9d040f8`.
-  The new entry point uses the same scheduler, run approval, spend cap and publisher.
-- Chrome 157.0.8103.78 and Edge 157.0.4341.60 on macOS completed synthetic Northbridge
-  from upload and approval to a finished report with original handoff download.
-  Both showed CP-1 debt maturities, its FY2027 gap, and calculated base revenue of 1,050.
-- Focused Python tests passed (369). Adapter quality gate reported zero findings.
-  Report checks exposed and corrected duplicate dating, retained-folder routing,
-  and event and relationship figures appearing among forecast charts.
-- The synthetic proof covers one full pathway with canned model responses.
-  Native Claude medium preflight could plan the pathway offline. The available
-  OpenRouter credential did not supply the direct Anthropic key it requires, and
-  the available sample pack lacks the evidence for a complete analytical report.
-  See [React workflow](docs/react-workflow.md).
