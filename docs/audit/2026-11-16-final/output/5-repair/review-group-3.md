@@ -136,3 +136,21 @@ One entry per task: the reviewer was a fresh Sonnet agent at xhigh effort that d
   - At 390 px the 14 px reason widens the Forecast tab, so the tab strip grows from two rows to three. 13 px (`text-caption`) keeps two rows and is still within D-30. A one-line choice for the lead.
   - The reason test checks classes, not the rendered colour or size.
 - Info: `cursor-not-allowed` now sits on the inner span only.
+
+## T30 (S1-006, S2-014, S4-005)
+
+- Commit reviewed: 61fc0f2. Verdict: PASS. Merged onto audit/repair-3.
+- On the parent source all 5 new tests fail on the focus assertion; at HEAD all pass. No existing test changed.
+- Focus targets are the first-named options in each suggested change: the search box on Home and the Module filter button on Evidence.
+- The focus ring shows on the moved focus (D-34).
+- The `display: contents` wrappers change nothing. Across 20 comparisons at 1440 and 390 px, bounding rects, accessibility tree, roles, landmarks and screenshot hashes are identical.
+- `clear` has one caller per component, and no mount, effect or tab-change path calls it.
+- The "Show all gaps" fix is within S4-005's cause: Gaps shares the same hook.
+- Gates the reviewer saw:
+  - build 0, lint 0, format:check 0, typecheck 0, duplication 0 (1.58%).
+  - vitest: src/pages/library and linkStyle, 29 files, 882 tests, exit 0.
+  - Probes: S1 and S2 clear-filters-focus.mjs 0 (focus on the search input); S4 focus-after-clear 0 (focus on the Module button).
+- Low:
+  - S1-006's second clause ("Clear filters" is missing from output/0-baseline/clickables.jsonl) is an audit artifact outside group 3's files. It is passed to the lead.
+  - Focusing the search field may raise the soft keyboard on a phone.
+  - `querySelector` couples to the first input and button of FilterBar and FilterSelect. Both new tests would catch a change.
