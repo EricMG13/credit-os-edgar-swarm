@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { RequestError } from "./api";
-import { errorText, isUnreachable } from "./useResource";
+import { asSentence, errorText, isUnreachable } from "./useResource";
 
 describe("errorText", () => {
   it("says the service cannot be reached for a fetch that never arrived, in any browser's words", () => {
@@ -29,5 +29,16 @@ describe("errorText", () => {
     expect(isUnreachable(bug)).toBe(false);
     expect(errorText(bug)).toBe(bug.message);
     expect(errorText("boom")).toBe("The request failed. Try again.");
+  });
+});
+
+describe("asSentence", () => {
+  it("capitalises a service fragment and ends it with a full stop, once", () => {
+    expect(asSentence("documents or answers changed after approval")).toBe(
+      "Documents or answers changed after approval.",
+    );
+    expect(asSentence("Reload the page.")).toBe("Reload the page.");
+    expect(asSentence(" unknown submission ")).toBe("Unknown submission.");
+    expect(asSentence("")).toBe("");
   });
 });

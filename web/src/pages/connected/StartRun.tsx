@@ -11,7 +11,9 @@ import {
 import { File05, Folder } from "@untitledui/icons";
 import { FileUpload } from "@/components/application/file-upload/file-upload-base";
 import { Badge } from "@/components/base/badges/badges";
+import { Alert } from "@/components/alert/Alert";
 import { Button } from "@/components/base/buttons/button";
+import { Skeleton } from "@/components/gap/Skeleton";
 import { PurposeCards } from "../run/start/Purpose";
 import { SubmitConfirmation } from "../run/start/Start";
 import { Stepper } from "../run/start/Stepper";
@@ -96,7 +98,7 @@ import {
   storedName,
   TICKER,
 } from "./start/plain";
-import { errorText, useResource } from "./useResource";
+import { asSentence, errorText, isUnreachable, useResource } from "./useResource";
 import { PageHeader } from "../../shell/PageHeader";
 
 const FORM_STEPS = {
@@ -123,6 +125,9 @@ const STEP_GUIDANCE: Record<FormStep, string> = {
   context: "Optional. You can continue if the documents provide all the context.",
 };
 
+const EARNINGS_CONTEXT_GUIDANCE =
+  "Current period and Prior period are required for Earnings Update. Everything else here is optional: you can continue if the documents provide all the context.";
+
 const PATHWAY_DESCRIPTIONS: Record<string, string> = {
   lite_credit_assessment: "Review the issuer's fundamentals, credit drivers and downside.",
   credit_snapshot: "Assess the issuer, downside, covenants, refinancing and forward cash flow.",
@@ -144,6 +149,8 @@ type FieldKey =
   | "issuer_name"
   | "submitted_by"
   | "cutoff"
+  | "current_period"
+  | "prior_period"
   | "legal_documents"
   | "agreement"
   | "deal_terms"
@@ -871,6 +878,44 @@ function ContextFields({ view }: { view: IntakeView }) {
   );
 }
 
+/** A reporting period: required, and marked so, only when the pathway compares two periods. */
+function PeriodField({
+  view,
+  field: key,
+  title,
+  placeholder,
+}: {
+  view: IntakeView;
+  field: "current_period" | "prior_period";
+  title: string;
+  placeholder: string;
+}) {
+  return (
+    <div className="grid content-start gap-1">
+      <label className={label}>
+        {view.earnings ? (
+          <>
+            {title} <span className="font-normal text-text-tertiary">(required)</span>
+          </>
+        ) : (
+          title
+        )}
+        <input
+          className={field}
+          aria-required={view.earnings || undefined}
+          {...problemAttrs(view.problem, key)}
+          placeholder={placeholder}
+          value={view.run[key] ?? ""}
+          onChange={(event) => {
+            view.changeRun(key, event.target.value.trim().toLowerCase());
+          }}
+        />
+      </label>
+      <FieldMessage problem={view.problem} field={key} />
+    </div>
+  );
+}
+
 function ContextInputFields({ view }: { view: IntakeView }) {
   return (
     <>
@@ -921,30 +966,13 @@ function ContextInputFields({ view }: { view: IntakeView }) {
         </label>
         <FieldMessage problem={view.problem} field="cutoff" />
       </div>
-      <label className={label}>
-        Current period
-        <input
-          className={field}
-          required={view.earnings}
-          placeholder="q3-2026"
-          value={view.run.current_period ?? ""}
-          onChange={(event) => {
-            view.changeRun("current_period", event.target.value.trim().toLowerCase());
-          }}
-        />
-      </label>
-      <label className={label}>
-        Prior period
-        <input
-          className={field}
-          required={view.earnings}
-          placeholder="q2-2026"
-          value={view.run.prior_period ?? ""}
-          onChange={(event) => {
-            view.changeRun("prior_period", event.target.value.trim().toLowerCase());
-          }}
-        />
-      </label>
+      <PeriodField
+        view={view}
+        field="current_period"
+        title="Current period"
+        placeholder="q3-2026"
+      />
+      <PeriodField view={view} field="prior_period" title="Prior period" placeholder="q2-2026" />
       <SelectField
         title={LEGAL_DOCUMENTS}
         value={view.legal}
@@ -1297,7 +1325,7 @@ export function StartRun({
     },
     [from],
   );
-  const { value, error } = useResource(load);
+  const { value, error, unreachable, retry } = useResource(load);
 
   return (
     <>
@@ -1306,17 +1334,34 @@ export function StartRun({
         title="Start a run"
         badges={mode === "synthetic" ? <Badge color="brand">Synthetic test</Badge> : undefined}
       />
-      <p className="mt-3 text-sm text-text-secondary">
-        Choose the documents and purpose, then review what will run.
-      </p>
       {value ? (
-        <IntakeForm mode={mode} navigate={navigate} {...value} />
+        <>
+          <p className="mt-3 text-sm text-text-secondary">
+            Choose the documents and purpose, then review what will run.
+          </p>
+          <IntakeForm mode={mode} navigate={navigate} {...value} />
+        </>
       ) : error ? (
-        <ErrorNotice>{error}</ErrorNotice>
+        <div className="mt-6">
+          <Alert
+            tone="error"
+            title={
+              unreachable ? "The service cannot be reached" : "The run options could not be loaded"
+            }
+            action={
+              <Button size="sm" color="secondary" onPress={retry}>
+                Try again
+              </Button>
+            }
+          >
+            The run options could not be loaded. Try again, or ask whoever runs the service to check
+            it.
+          </Alert>
+        </div>
       ) : (
-        <p role="status" className="mt-6 text-text-secondary">
-          Loading run options…
-        </p>
+        <div role="status" aria-label="Loading run options" className="mt-6">
+          <Skeleton lines={4} />
+        </div>
       )}
     </>
   );
@@ -1448,6 +1493,7 @@ function IntakeForm({
 
   function changeRun(key: keyof Context["run"], value: string) {
     if (key === "pathway") invalidateReview();
+    if (key === "current_period" || key === "prior_period") clearProblem(key);
     setContext((previous) => ({ ...previous, run: { ...previous.run, [key]: value } }));
   }
 
@@ -1635,6 +1681,13 @@ function IntakeForm({
     const chosen = (key: Attachment) => available.has(attachments[key] ?? "");
     if (legal !== "none" && !chosen("agreement"))
       throw new FieldProblem("agreement", "Choose the uploaded file that is the agreement.");
+    if (earnings) {
+      for (const [key, title] of [
+        ["current_period", "Current period"],
+        ["prior_period", "Prior period"],
+      ] as const)
+        if (!run[key]) throw new FieldProblem(key, `${title} is required for Earnings Update.`);
+    }
     const advanced = level === "advanced";
     return {
       context: {
@@ -1830,10 +1883,10 @@ function IntakeForm({
           setAccepted(new Set());
           setApproved(false);
           setSubmitUncertain(false);
-          setError(`${errorText(failure)} Review the run again before submitting.`);
+          setError(`${asSentence(errorText(failure))} Review the run again before submitting.`);
         } else {
           setSubmitUncertain(true);
-          setError(`${errorText(failure)} Retrying Submit run is safe.`);
+          setError(lostSubmitText(failure));
         }
       }
     });
@@ -2225,7 +2278,11 @@ function IntakePanels(props: IntakePanelsProps) {
         <div className="@container grid gap-5">
           <Stepper
             step={review ? "start" : step}
-            steps={STEPPER_STEPS}
+            steps={STEPPER_STEPS.map((item) =>
+              item.key === "context" && view.earnings
+                ? { ...item, note: "Periods required" }
+                : item,
+            )}
             onSelect={
               busy === undefined && !submitUncertain
                 ? (key) => {
@@ -2240,7 +2297,7 @@ function IntakePanels(props: IntakePanelsProps) {
               : `Step ${String(FORM_STEP_KEYS.indexOf(step) + 1)} of ${String(STEP_TOTAL)} · ${title}`}
           </p>
         </div>
-        {error && <RefusalNotice lines={refusalLines(error)} />}
+        {error && !review && <RefusalNotice lines={refusalLines(error)} />}
         {otherProblems.length > 0 && <RefusalNotice lines={otherProblems} />}
         {review ? (
           <ReviewConfirmation
@@ -2249,6 +2306,7 @@ function IntakePanels(props: IntakePanelsProps) {
             approved={approved}
             checksComplete={checksComplete}
             busy={busy}
+            error={error}
             submitUncertain={submitUncertain}
             capText={capText}
             capAvailable={Boolean(cap)}
@@ -2289,6 +2347,7 @@ function ReviewConfirmation({
   approved,
   checksComplete,
   busy,
+  error,
   submitUncertain,
   capText,
   capAvailable,
@@ -2305,6 +2364,7 @@ function ReviewConfirmation({
   approved: boolean;
   checksComplete: boolean;
   busy?: "review" | "submit" | "documents" | "copy";
+  error: string;
   submitUncertain: boolean;
   capText: string | null;
   capAvailable: boolean;
@@ -2367,6 +2427,7 @@ function ReviewConfirmation({
         </p>
       </div>
       <p className="text-sm text-text-secondary min-[1041px]:hidden">{ready}</p>
+      {error && <ErrorNotice>{error}</ErrorNotice>}
       <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
         <span className="text-sm text-text-tertiary">
           Step {STEP_TOTAL} of {STEP_TOTAL}
@@ -2382,6 +2443,18 @@ function ReviewConfirmation({
       </div>
     </div>
   );
+}
+
+/**
+ * What the analyst reads when the Submit request got no answer. The service starts one run for a
+ * submission and returns that run when the same submission arrives again (`scheduler.submit`), so a
+ * repeat is safe; the page cannot know whether the first one arrived, and says so.
+ */
+function lostSubmitText(failure: unknown) {
+  const lead = isUnreachable(failure)
+    ? "The page lost contact with the service, so it cannot tell whether the run started."
+    : `${asSentence(errorText(failure))} The run may or may not have started.`;
+  return `${lead} Submitting again is safe. The service starts one run for this approval and returns that run if it already exists.`;
 }
 
 function submitBlocker(undecided: number, approved: boolean) {
@@ -2469,7 +2542,11 @@ function InputStepForm({
         >
           {title}
         </h2>
-        <p className="text-sm text-text-secondary">{STEP_GUIDANCE[view.step]}</p>
+        <p className="text-sm text-text-secondary">
+          {view.step === "context" && view.earnings
+            ? EARNINGS_CONTEXT_GUIDANCE
+            : STEP_GUIDANCE[view.step]}
+        </p>
       </div>
       <fieldset
         disabled={view.busy !== undefined}

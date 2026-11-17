@@ -405,7 +405,7 @@ describe("connected run start", () => {
     const submit = await screen.findByRole("button", { name: "Submit run" });
     approve();
     await confirmSynthetic(submit);
-    expect(await screen.findByRole("alert")).toHaveTextContent("Retrying Submit run is safe");
+    expect(await screen.findByRole("alert")).toHaveTextContent("Submitting again is safe");
     expect(screen.getByRole("button", { name: "Edit issuer and documents" })).toBeDisabled();
     await confirmSynthetic(submit);
     await vi.waitFor(() => {
@@ -816,10 +816,10 @@ describe("connected run start", () => {
     fireEvent.click(screen.getByRole("radio", { name: "Earnings Update" }));
     expect(screen.getByLabelText("Run purpose")).toHaveValue("earnings");
     advanceToContext();
-    expect(screen.getByLabelText("Current period")).toBeRequired();
-    expect(screen.getByLabelText("Prior period")).toBeRequired();
-    fireEvent.change(screen.getByLabelText("Current period"), { target: { value: "q3-2026" } });
-    fireEvent.change(screen.getByLabelText("Prior period"), { target: { value: "q2-2026" } });
+    expect(screen.getByLabelText(/^Current period/)).toBeRequired();
+    expect(screen.getByLabelText(/^Prior period/)).toBeRequired();
+    fireEvent.change(screen.getByLabelText(/^Current period/), { target: { value: "q3-2026" } });
+    fireEvent.change(screen.getByLabelText(/^Prior period/), { target: { value: "q2-2026" } });
     fireEvent.change(screen.getByLabelText("Management EBITDA bridge"), {
       target: { value: file.name },
     });
@@ -2368,7 +2368,7 @@ describe("connected run start limits as decisions", () => {
     approve();
     fireEvent.click(screen.getByRole("button", { name: "Submit, spend up to USD 25.00" }));
     fireEvent.click(await screen.findByRole("button", { name: "Start run, up to USD 25.00" }));
-    expect(await screen.findByRole("alert")).toHaveTextContent("Retrying Submit run is safe.");
+    expect(await screen.findByRole("alert")).toHaveTextContent("Submitting again is safe.");
     expect(screen.queryAllByRole("button", { name: /^Go back to/ })).toHaveLength(0);
     for (const name of ["Edit issuer and documents", "Edit purpose and modules", "Edit context"])
       expect(screen.getByRole("button", { name })).toBeDisabled();
@@ -3207,8 +3207,8 @@ describe("connected run start: module choices sent", () => {
   });
 
   const earningsPeriods = () => {
-    fireEvent.change(screen.getByLabelText("Current period"), { target: { value: "q3-2026" } });
-    fireEvent.change(screen.getByLabelText("Prior period"), { target: { value: "q2-2026" } });
+    fireEvent.change(screen.getByLabelText(/^Current period/), { target: { value: "q3-2026" } });
+    fireEvent.change(screen.getByLabelText(/^Prior period/), { target: { value: "q2-2026" } });
   };
 
   const kept = (pathway: RegExp, left: string, expected: string[]) => async () => {
@@ -4572,5 +4572,113 @@ describe("connected run start: carrying an earlier run keeps what it recorded (C
     advanceToContext();
     await screen.findByRole("heading", { name: "More context" });
     expect(screen.getByLabelText("Legal documents")).toHaveValue("none");
+  });
+});
+
+describe("T08: run options, Submit failures and required periods", () => {
+  it("says the run options could not be loaded in a fixed sentence with Try again, and no intro (C2-004)", async () => {
+    let calls = 0;
+    testingFetch(plan, undefined, {
+      "/connected/context": () => {
+        calls += 1;
+        return Promise.resolve(
+          calls === 1
+            ? Response.json({ error: "boom: internal" }, { status: 500 })
+            : Response.json({ ...context, submission_caps_usd: submissionCaps }),
+        );
+      },
+    });
+    render(<ConnectedApp path="/start" mode="synthetic" />);
+    const alert = await screen.findByRole("alert");
+    expect(alert).toHaveTextContent("The run options could not be loaded");
+    expect(alert).not.toHaveTextContent("boom");
+    expect(screen.queryByText(/Choose the documents and purpose/)).toBeNull();
+    fireEvent.click(within(alert).getByRole("button", { name: "Try again" }));
+    expect(await screen.findByLabelText("Issuer name")).toBeInTheDocument();
+    expect(screen.getByText(/Choose the documents and purpose/)).toBeInTheDocument();
+  });
+
+  it("draws a skeleton, not a sentence, while the run options load (C2-004)", () => {
+    testingFetch(plan, undefined, { "/connected/context": () => new Promise<Response>(() => {}) });
+    render(<ConnectedApp path="/start" mode="synthetic" />);
+    expect(screen.queryByText("Loading run options…")).toBeNull();
+    expect(screen.queryByText(/Choose the documents and purpose/)).toBeNull();
+    expect(screen.getByRole("status", { name: "Loading run options" })).toBeInTheDocument();
+  });
+
+  it.each([
+    [
+      400,
+      "documents or answers changed after approval",
+      "Documents or answers changed after approval.",
+    ],
+    [404, "unknown submission", "Unknown submission."],
+  ])(
+    "writes a refused Submit (%i) as capitalised sentences (C2-006)",
+    async (status, error, text) => {
+      testingFetch(plan, Response.json({ error }, { status }));
+      render(<ConnectedApp path="/start" mode="synthetic" />);
+      await review();
+      const submit = await screen.findByRole("button", { name: "Submit run" });
+      approve();
+      await confirmSynthetic(submit);
+      expect(await screen.findByRole("alert")).toHaveTextContent(
+        `${text} Review the run again before submitting.`,
+      );
+    },
+  );
+
+  it("draws a lost Submit beside the Submit button and does not claim nothing was started (J2-013, C2-006)", async () => {
+    testingFetch(plan, () => {
+      throw new TypeError("Failed to fetch");
+    });
+    render(<ConnectedApp path="/start" mode="synthetic" />);
+    await review();
+    const submit = await screen.findByRole("button", { name: "Submit run" });
+    approve();
+    await confirmSynthetic(submit);
+    const alert = await screen.findByRole("alert");
+    expect(screen.getAllByRole("alert")).toHaveLength(1);
+    expect(alert.nextElementSibling).toContainElement(submit);
+    expect(alert).toHaveTextContent(
+      "The page lost contact with the service, so it cannot tell whether the run started. Submitting again is safe. The service starts one run for this approval and returns that run if it already exists.",
+    );
+    expect(alert.textContent).not.toMatch(/try again|Failed to fetch/i);
+  });
+
+  it("marks Current period and Prior period required for Earnings Update and reports them in the page (J1-004)", async () => {
+    testingFetch({ ...plan, cap: "20" });
+    render(<ConnectedApp path="/start" mode="synthetic" />);
+    await fillInputs();
+    await advanceToPurpose();
+    fireEvent.click(screen.getByRole("radio", { name: "Earnings Update" }));
+    advanceToContext();
+    expect(screen.getByText(/^Current period and Prior period are required/)).toBeInTheDocument();
+    expect(screen.queryByText(/^Optional\. You can continue/)).toBeNull();
+    expect(screen.getByLabelText("Current period (required)")).not.toHaveAttribute("required");
+    fireEvent.click(screen.getByRole("button", { name: "Review run" }));
+    const alert = await screen.findByRole("alert");
+    expect(alert).toHaveTextContent("Current period is required for Earnings Update.");
+    expect(screen.getByLabelText("Current period (required)")).toHaveAttribute(
+      "aria-invalid",
+      "true",
+    );
+    fireEvent.change(screen.getByLabelText("Current period (required)"), {
+      target: { value: "q3-2026" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Review run" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Prior period is required for Earnings Update.",
+    );
+  });
+
+  it("keeps the Optional step text on a pathway with no required periods (J1-004)", async () => {
+    testingFetch();
+    render(<ConnectedApp path="/start" mode="synthetic" />);
+    await fillInputs();
+    await advanceToPurpose();
+    advanceToContext();
+    expect(screen.getByText(/^Optional\. You can continue/)).toBeInTheDocument();
+    expect(screen.getByLabelText("Current period")).not.toBeRequired();
   });
 });
