@@ -1,3 +1,4 @@
+import { useContext, useEffect, useState } from "react";
 import type { ReactNode } from "react";
 import type {
   ButtonProps as AriaButtonProps,
@@ -8,6 +9,7 @@ import {
   Button as AriaButton,
   Tooltip as AriaTooltip,
   TooltipTrigger as AriaTooltipTrigger,
+  TooltipTriggerStateContext,
 } from "react-aria-components";
 import { cx } from "@/utils/cx";
 
@@ -28,6 +30,43 @@ export interface TooltipProps
    */
   delay?: number;
 }
+
+/**
+ * Whether a tooltip may be drawn: the trigger state is open and one animation frame has passed
+ * since it opened (a tooltip already open when it mounts is drawn at once).
+ *
+ * React Aria closes a tooltip on any scroll of an ancestor of its trigger. Keyboard focus that
+ * scrolls the trigger into view makes the browser raise that scroll event in the next frame,
+ * before that frame's animation-frame callbacks, so a tooltip drawn at once is closed again by
+ * the scroll the same focus caused. Drawn after that frame, it is placed against the trigger's
+ * final position and no scroll event of the focus is left to close it.
+ */
+function useOpenAfterFrame(isOpen: boolean): boolean {
+  const [isReady, setReady] = useState(isOpen);
+  useEffect(() => {
+    if (!isOpen) return undefined;
+    const frame = requestAnimationFrame(() => {
+      setReady(true);
+    });
+    return () => {
+      cancelAnimationFrame(frame);
+      setReady(false);
+    };
+  }, [isOpen]);
+  return isOpen && isReady;
+}
+
+const SettledTooltip = (props: AriaTooltipProps) => {
+  const state = useContext(TooltipTriggerStateContext);
+  const isOpen = useOpenAfterFrame(state?.isOpen ?? false);
+  return state === null ? (
+    <AriaTooltip {...props} />
+  ) : (
+    <TooltipTriggerStateContext value={{ ...state, isOpen }}>
+      <AriaTooltip {...props} />
+    </TooltipTriggerStateContext>
+  );
+};
 
 export const Tooltip = ({
   title,
@@ -60,7 +99,7 @@ export const Tooltip = ({
     >
       {children}
 
-      <AriaTooltip
+      <SettledTooltip
         {...tooltipProps}
         offset={offset}
         placement={placement}
@@ -90,7 +129,7 @@ export const Tooltip = ({
             )}
           </div>
         )}
-      </AriaTooltip>
+      </SettledTooltip>
     </AriaTooltipTrigger>
   );
 };
