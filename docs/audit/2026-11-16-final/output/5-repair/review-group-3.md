@@ -376,3 +376,26 @@ One entry per task: the reviewer was a fresh Sonnet agent at xhigh effort that d
   - Timeline treats `action: null` as a slot. No caller passes it.
   - Overview passes `trace` through to Timeline items, which ignore it.
 - Info: the control narrows the date text column by about 44 px at 1440 px.
+
+## T37 (S3-005, S3-006 with C3-025; S3-006's narrow-screen picker dropped under R14)
+
+- Commit reviewed: 3a8a871. Verdict: PASS. Merged onto audit/repair-3.
+- On the parent source the new tests fail 7 of 8. The one that passes ("lists every module until typed") passes either way by design.
+- S3-005: the order is now bottom line, Key findings, Contrary evidence, What would change the view, Limitations, then the typed records. "On this page" follows the same order (AGENTS.md, CM-004, CM-005, D-11).
+- No module text changed. Across all 30 fixture module pages the multisets of text leaves and headings are identical before and after. On the two pages with bodies, exactly one block (Limitations) moved.
+- The six Module.test.tsx edits change only where Limitations and its controls appear; no expected text or value changed.
+- S3-006 and C3-025:
+  - The kit Input with a search icon (approved source, D-08), as in FilterBar.tsx, narrows the module list by name. No match shows "No module matches", and clearing restores all 13.
+  - The connected Modules page gets the same search; it was checked on proof.serve at 1440 px.
+  - At 1,001 px and up the layout is unchanged.
+- p15 (C3) still exits 1 on `overview.svgCharts` 0 alone. That is C3-024 (T17, group 2); the navigator half now passes.
+- Gates the reviewer saw:
+  - build 0, lint 0, format:check 0, typecheck 0.
+  - vitest: 3 files, 110 tests at the default timeout; library and connected 1,907 of 1,908.
+  - The 1 is ConnectedApp.test.tsx "lists a run that ended without a report", a race under load. It is unrelated to T37 and passes alone (185).
+  - Probes: S3-005 0, S3-006 0.
+- Low:
+  - For the lead: at 481 to 1,000 px (a desktop window snapped to half of a 1,920 px screen is 960 px), the navigator still comes first with no picker. R14 covers 480 px and below only, so the lead should say whether the picker stays dropped in that band.
+  - The search sits at the top while the list it narrows is at the bottom of the navigator.
+  - Inner spaces are not collapsed in the match.
+  - Typing another module's name hides the current module's entry until the field is cleared.
