@@ -562,13 +562,15 @@ function readChangeView(value: unknown, path: string, traces: Traces): ChangeVie
 
 const DATE_STATES = Object.keys(STATUS_SETS["Dated records"]) as DateState[];
 
-function readDate(value: unknown, path: string): DatedItem {
+/** A date's `trace` is optional: an absent key reads as `null`; a present one is read as any item's trace. */
+function readDate(value: unknown, path: string, traces: Traces): DatedItem {
   const d = rec(value, path);
   return {
     date: str(d, "date", path),
     state: oneOf(d, "state", path, DATE_STATES),
     title: str(d, "title", path),
     text: str(d, "text", path),
+    trace: Object.hasOwn(d, "trace") ? traceKey(d, "trace", path, traces) : null,
   };
 }
 
@@ -660,7 +662,7 @@ function readOverview(value: unknown, path: string, traces: Traces): Overview {
     changeView: optionalView(o, "changeView", path, traces),
     dates: some(
       unique(
-        list(o, "dates", path, readDate),
+        list(o, "dates", path, (d, p) => readDate(d, p, traces)),
         child(path, "dates"),
         (d) => `${d.date}|${d.title}`,
         "title",
