@@ -125,8 +125,9 @@ export type Run = {
   spent: string | null;
   settled_spent?: string | null;
   held?: string | null;
-  /** Why the service holds the queue or ended runs (Run activity's `held`); absent from an older
-   * service. A run whose process ended stays "running" until the library is rebuilt. */
+  /** Why the service holds this run (Run activity's `held` note): sent while it is queued, or
+   * kept "running" after its log ended (a library that could not be rebuilt); else "". Absent
+   * from an older service. */
   held_reason?: string;
   events: RunEvent[] | null;
 };

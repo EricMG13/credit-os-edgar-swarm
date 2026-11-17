@@ -17,7 +17,7 @@ from deploy_workflow.library_index import Refused, read_inside
 from deploy_workflow.model.budget import BudgetError, exact_sum, read_reservation_snapshot
 from deploy_workflow.model.pricing import money_text
 from deploy_workflow.owners.cpos_launch import METHODS
-from deploy_workflow.run_events import EVENTS, read_events
+from deploy_workflow.run_events import EVENTS, progress, read_events
 
 _MODULE_EVENTS = frozenset({"module_started", "module_accepted", "draft_rejected"})
 _RUN_EVENTS = frozenset(
@@ -84,6 +84,17 @@ def _feed(directory: Path, modules: set[str]) -> list[dict[str, str]] | None:
         if isinstance(raw, dict) and (item := _milestone(raw, modules)) is not None
     ]
     return milestones[-_FEED_LIMIT:]
+
+
+def _log_ended(directory: Path) -> bool:
+    """Whether the run's log shows its launch ended: delivered, or a stop no later start followed.
+    Read from the log, not the process: probing a PID the scheduler's ``Popen`` tracks could reap
+    it and take its exit status (``runs.alive``)."""
+    try:
+        state = progress(e for e in read_events(directory / EVENTS) if isinstance(e, dict))
+    except (OSError, ValueError):
+        return False  # display only: no readable log is no sign of an end
+    return state.delivered or state.stop is not None
 
 
 def _manifest(directory: Path) -> dict[str, Any]:
@@ -315,9 +326,12 @@ def reply(layout: Layout, run_id: str) -> http_base.Reply:
             "cap": _cap(manifest, shown.get("cap")),
             **usage,
             "stalled": shown.get("stalled", False),
-            # The listing's `held` (`held` here is the reserved amount, from `_usage`): why the
-            # service holds the queue or ended runs, so a run kept "running" says why.
-            "held_reason": _held(layout),
+            # The listing's `held` (`held` here is the reserved amount, from `_usage`), for a run
+            # that waits on the service: queued, or kept "running" after its log ended (a
+            # library that could not be rebuilt); none for a run that is running.
+            "held_reason": _shown(layout, _held(layout))
+            if record.status == "queued" or (record.status == "running" and _log_ended(directory))
+            else "",
             "modules": modules,
             "events": _feed(directory, {code for code, _ in modules}),
         },

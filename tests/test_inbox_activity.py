@@ -92,6 +92,25 @@ def test_a_stop_ends_the_running_module_and_a_relaunch_runs_it_again():
     assert dict(module_states("earnings_update", report))["Report"] == "stopped"
 
 
+def test_one_module_runs_at_a_time_and_delivery_ends_one_not_produced():
+    """CP-OS runs modules in turn: a start ends the one before it (a launch killed mid-module and
+    relaunched), and delivery ends one still running (CP-8 not produced, which the run survives)."""
+    events = [
+        {"event": "module_started", "module": "CP-0"},
+        {"event": "module_started", "module": "CP-1"},  # the relaunch after a kill
+    ]
+    states = dict(module_states("relative_value", events))
+    assert (states["CP-0"], states["CP-1"]) == ("stopped", "running")
+    cp8 = [
+        {"event": "module_started", "module": "CP-8"},
+        {"event": "changes_not_produced", "reason": "not accepted"},
+        {"event": "delivery_started"},
+        {"event": "delivered"},
+    ]
+    states = dict(module_states("relative_value", cp8))
+    assert (states["CP-8"], states["Report"]) == ("stopped", "done")
+
+
 def test_spend_counts_settled_charges_and_full_unknown_holds(tmp_path):
     run_dir = tmp_path / "run" / "live"
     budget = Budget(Decimal(20), run_dir)

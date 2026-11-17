@@ -32,11 +32,17 @@ class Progress:
     stop: str | None  # the reason of a ``stopped`` that no later start followed
 
 
+def _ended(states: Mapping[str, ModuleState]) -> dict[str, ModuleState]:
+    return {module: "stopped" if state == "running" else state for module, state in states.items()}
+
+
 def progress(events: Iterable[Mapping[str, Any]]) -> Progress:
-    """The one reading of the log, in order. A module runs from ``module_started`` until
-    ``module_accepted`` (done) or the run's ``stopped`` (stopped); the Report entry likewise from
-    ``delivery_started`` until ``delivered`` or ``stopped``. One log spans every launch of a run
-    folder, so a later start (a relaunch) runs a module again and ends the earlier stop."""
+    """The one reading of the log, in order. CP-OS runs one module at a time, so a module runs
+    from ``module_started`` until ``module_accepted`` (done), or until the run's ``stopped``, the
+    next ``module_started`` or ``delivery_started`` (stopped: it was not finished; a CP-8 not
+    produced is one). The Report entry likewise runs from ``delivery_started`` until ``delivered``
+    or ``stopped``. One log spans every launch of a run folder, so a later start (a relaunch) runs
+    a module again and ends the earlier stop."""
     modules: dict[str, ModuleState] = {}
     report: ModuleState = "waiting"
     delivered = False
@@ -45,15 +51,17 @@ def progress(events: Iterable[Mapping[str, Any]]) -> Progress:
         name = event.get("event")
         if name == "stopped":
             stop = str(event.get("reason", ""))
-            modules = {m: "stopped" if s == "running" else s for m, s in modules.items()}
+            modules = _ended(modules)
             report = "stopped" if report == "running" else report
-        elif name in ("module_started", "module_accepted"):
-            modules[str(event.get("module"))] = "running" if name == "module_started" else "done"
-        elif name in ("delivery_started", "delivered"):
-            report = "running" if name == "delivery_started" else "done"
-            delivered = delivered or name == "delivered"
-        if name in ("module_started", "delivery_started"):
-            stop = None
+        elif name == "module_started":
+            modules, stop = _ended(modules), None
+            modules[str(event.get("module"))] = "running"
+        elif name == "module_accepted":
+            modules[str(event.get("module"))] = "done"
+        elif name == "delivery_started":
+            modules, report, stop = _ended(modules), "running", None
+        elif name == "delivered":
+            report, delivered = "done", True
     return Progress(modules, report, delivered, stop)
 
 

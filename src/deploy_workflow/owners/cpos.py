@@ -58,7 +58,7 @@ from deploy_workflow.handoff_delivery import (
     verify_delivery,
     verify_files,
 )
-from deploy_workflow.library_index import completion_records, delivery_folder
+from deploy_workflow.library_index import Refused, completion_records, delivery_folder
 from deploy_workflow.model.budget import BudgetExhausted
 from deploy_workflow.model.configs import CONFIGS, ModelConfig
 from deploy_workflow.model.run_lock import RunDirBusy, _single_writer
@@ -540,6 +540,12 @@ def run_handoffs(  # noqa: C901, PLR0912, PLR0913, PLR0915 -- legacy orchestrato
         _put(directory / "identity.json", json.dumps(identity, sort_keys=True).encode())
         delivered = _recorded_delivery(directory)  # after the identity: same request, or refused
         if delivered is not None:
+            if request.execution != "live-provider":
+                # A replay checks bytes by delivering them; a finished folder cannot take it.
+                raise ValueError(
+                    "cpos_delivered: the folder already holds its delivery; replay into a new "
+                    "folder to check the bytes"
+                )
             print(
                 f"Delivered: {delivered.relative_to(directory)} (recorded by the earlier launch of "
                 "this run; no new call, the delivery is left as it is)",
@@ -762,8 +768,14 @@ def _recorded_delivery(directory: Path) -> Path | None:
             "cpos_delivered: the folder holds more than one completion record; start a new run"
         )
     [(_, record)] = records
-    # A record that names no receipt matches no folder: Refused, a ValueError, says so.
-    folder, _ = delivery_folder(directory, str(record.get("delivery_sha256")), receipt_hash=True)
+    try:  # a record that names no receipt matches no folder
+        folder, _ = delivery_folder(
+            directory, str(record.get("delivery_sha256")), receipt_hash=True
+        )
+    except Refused as error:
+        raise ValueError(
+            f"cpos_delivered: {error}; the folder is finished, start a new run"
+        ) from error
     return directory / folder / "delivery.json"
 
 
@@ -920,8 +932,15 @@ def run_live_handoffs(  # noqa: PLR0913 -- the explicit paid entry point takes e
     except BaseException as stop:
         # Documented fail-open: a release failure must not mask the stop it follows; it is
         # recorded as a note on the propagating exception.
-        if isinstance(stop, Exception) and not isinstance(stop, RunDirBusy):
+        if (
+            isinstance(stop, Exception)
+            and executor is not None
+            and not isinstance(stop, RunDirBusy)
+        ):
             # A refused second invocation never held the folder; the running run owns its log.
+            # Its executor is refused first when its settings differ from the running one's
+            # (identity_mismatch on live/loop.json, before the folder lock); a stop recorded
+            # then would end the running module in the log (run_events.progress).
             append_event(directory, "stopped", reason=stop_reason(stop))
         try:
             _release(adapter, executor)

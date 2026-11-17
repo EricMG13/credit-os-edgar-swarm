@@ -7632,6 +7632,51 @@ def test_a_delivered_run_is_finished_and_its_relaunch_delivers_nothing_again(
     assert "recorded by the earlier launch of this run; no new call" in printed.err
 
 
+def test_a_second_launch_refused_at_its_settings_records_no_stop_in_the_running_runs_log(
+    tmp_path, provider, capsys
+):
+    """A second launch with other loop settings is refused at live/loop.json before the folder
+    lock; its stop, once written, ended the running module in the log (run_events.progress)."""
+    from deploy_workflow.model.run_lock import _single_writer
+
+    argv = compacting_run(tmp_path, provider)
+    assert main(argv) == 0
+    out = tmp_path / "out"
+    before = read_events(out / "events.jsonl")
+    with _single_writer(out):  # the first launch, still running
+        assert main([*argv, "--max-turns", "40"]) == 1
+    assert "identity_mismatch" in capsys.readouterr().err
+    assert read_events(out / "events.jsonl") == before
+
+
+def test_a_replay_into_a_delivered_folder_is_refused_not_passed_unchecked(tmp_path, provider):
+    """A replay checks bytes by delivering them; into a finished folder it would check nothing."""
+    from deploy_workflow.owners.cpos import run_handoffs
+
+    assert main(compacting_run(tmp_path, provider)) == 0
+    out = tmp_path / "out"
+    plan = json.loads((out / "workflow.json").read_text())
+    plan["execution"], plan["provider_cap_usd"] = "synthetic", "0"  # non-live: no provider cap
+    manifest = out / "synthetic.json"
+    manifest.write_text(json.dumps(plan))
+    answers = {
+        path.parts[-3]: path.read_bytes() for path in (out / "requests").glob("*/*/1.response.md")
+    }
+    replay = tmp_path / "replay"
+
+    def again() -> Path:
+        return run_handoffs(
+            manifest,
+            replay,
+            execute=lambda task: answers[task.module_id],
+            check=lambda task, raw: (),
+        )
+
+    assert again().is_file()
+    with pytest.raises(ValueError, match="cpos_delivered: the folder already holds its delivery"):
+        again()
+
+
 def test_a_folder_already_holding_two_completion_records_is_refused(tmp_path, provider, capsys):
     argv = compacting_run(tmp_path, provider)
     assert main(argv) == 0
