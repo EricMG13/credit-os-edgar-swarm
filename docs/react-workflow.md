@@ -78,7 +78,8 @@ npm --prefix web run proof:connected
 Playwright launches the installed branded browsers. Set `CHROME_PATH` or `EDGE_PATH`
 to the corresponding executable if it is installed in a nonstandard location.
 Success is two passing tests and exit code 0. Each browser uses a separate temporary
-workspace and uploads the same synthetic Northbridge filing and portfolio workbook.
+workspace and uploads the same synthetic Northbridge filing, portfolio workbook and
+credit agreement.
 It checks the five-step Run page, drop zone and Readiness panel, inspects both
 documents, selects the workbook in the form, cancels the paid confirmation with
 submission blocked, and completes the synthetic confirmation. It checks recorded
@@ -107,15 +108,27 @@ The bundled proof runs independently of development fixtures and local issuer da
 
 ## Open the interface
 
-Run the service against a short, local workflow workspace. Use a new folder for the
-manual synthetic proof. Enter `Northbridge Synthetic Group` and `2025-03-31`,
-then choose Full credit assessment (RBOT's Credit Snapshot pathway). Upload
-`proof/northbridge-filing.txt` and `proof/northbridge-portfolio.xlsx`, click
-Continue to purpose, choose Full credit assessment, then select Review inputs and
-Approve summary. In More context, select `northbridge-portfolio.xlsx` under
-Portfolio workbook. Select Review run, acknowledge the checks, approve the
-summary and select Submit run. In the confirmation dialog, choose Start
-synthetic run. Open the report from Run activity when it finishes.
+Run the service against a short, local workflow workspace. Use a new, empty folder for
+the manual synthetic proof. On the Documents step enter `Northbridge Synthetic Group` as
+the issuer name, `2025-03-31` as the as-of date and your name under Your name (the run
+cannot start without it). Upload `proof/northbridge-filing.txt`,
+`proof/northbridge-portfolio.xlsx` and `proof/northbridge-credit-agreement.txt`, then
+select Continue to purpose, choose Full credit assessment (RBOT's Credit Snapshot
+pathway) and select Continue to context. In More context, select
+`northbridge-portfolio.xlsx` under Portfolio workbook, set Legal documents to Executed
+agreement and select `northbridge-credit-agreement.txt` under The agreement. Select
+Review run. On the review sheet, tick each item under Limits to decide, tick the checkbox
+that begins "Approve: I have read this summary" and select Submit run. In the
+confirmation dialog, choose Start synthetic run. Open the report from Run activity when
+it finishes.
+
+The synthetic proof also runs without the agreement. Skip that upload and leave Legal
+documents at No agreement: the review sheet lists a Will refuse limit on Legal &
+covenants ("No executed governing document"). Accept it with the other limits and the run
+still finishes, with Legal & covenants delivered as Not assessable. The other modules
+answer with fixed synthetic text, so the modules the sheet lists under Also affects show
+no sign of the limit. The synthetic launcher takes the first run of an issuer only, so
+start the service on a new empty folder for each run.
 
 ```sh
 PYTHONPATH=src uv run --locked python -m proof.serve --root /path/to/empty-proof-folder

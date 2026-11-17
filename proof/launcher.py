@@ -20,6 +20,57 @@ PORTFOLIO = Path(__file__).with_name("northbridge-portfolio.xlsx")
 AGREEMENT = Path(__file__).with_name("northbridge-credit-agreement.txt")
 HANDOFFS = Path(__file__).with_name("handoffs")
 
+NO_DOCUMENT = "Not supplied: no executed governing document"
+EDGES = ("From", "Relationship", "Edge type", "To", "Evidence")
+EVENTS = (
+    "Event date",
+    "Date precision",
+    "Published",
+    "Event",
+    "Status",
+    "Source",
+    "Credit relevance",
+)
+CHART = ("Test", "Threshold", "Current", "Headroom", "Direction", "Reporting unit")
+
+
+def _table(head: tuple[str, ...], row: tuple[str, ...]) -> str:
+    return "\n".join(f"| {' | '.join(cells)} |" for cells in (head, ("---",) * len(head), row))
+
+
+# What a model writes when CP-4's source gate stops it (`cpos_launch._SOURCE_GATE`): front matter
+# that says Blocked, a Bottom line that begins `Not assessable: `, the gate register and each fixed
+# report selector once with one not-assessable row. It is the reply only for a run that declares no
+# legal documents; a run that supplies an agreement gets the canned CP-4 handoff.
+BLOCKED_FRONT = ("---", "module_id: CP-4", "module_status: Blocked", "---")
+BLOCKED_SECTIONS = {
+    "T4.1 Source gate register": _table(
+        ("Document", "Status", "Limitation"), (NO_DOCUMENT, "Blocked", "Source gate")
+    ),
+    "Chart data: covenant headroom": _table(
+        (*CHART, "Basis and limitation"), (*[NO_DOCUMENT] * 5, "x", "Not assessable.")
+    ),
+    "Events: Legal": _table(EVENTS, (NO_DOCUMENT,) * len(EVENTS)),
+    "Confidence inputs": _table(("Input", "Value"), ("Not assessable", NO_DOCUMENT)),
+    "Map: legal entities": _table(EDGES, (NO_DOCUMENT,) * len(EDGES)),
+    "Map: intercreditor": _table(EDGES, (NO_DOCUMENT,) * len(EDGES)),
+}
+BLOCKED_BOTTOM_LINE = (
+    "Not assessable: no executed governing document was supplied, so the covenants, their "
+    "capacity and headroom and the lenders' protection are not established for this run."
+)
+BLOCKED_CP4 = "\n".join(
+    [
+        *("## Findings", "", "### Bottom line", "", BLOCKED_BOTTOM_LINE, ""),
+        *(line for h, t in BLOCKED_SECTIONS.items() for line in (f"### {h}", "", t, "")),
+        *("## Calculations", "", "None.", "", "## Gaps", "", f"- {NO_DOCUMENT}.", ""),
+        *("## Next module", "", "The orchestrator selects the next module."),
+    ]
+)
+# With no legal documents the report's Capital structure goes to CP-3 (`cpos_launch._layout`); the
+# canned CP-3 handoff has none, so its reply carries this section, the canned CP-4 one.
+CAPITAL_STRUCTURE = "### Capital structure\n\n| Item | Value |\n| --- | --- |\n| Observed | 1 |\n"
+
 
 def verify_upload(sources: Path, context: Path) -> str:
     """Bind the canned replies to exactly the synthetic filing in the scheduler drop."""
@@ -55,22 +106,35 @@ def reject_network(*_args: object, **_kwargs: object) -> None:
     raise RuntimeError("outbound network is disabled in the synthetic CP-OS launcher")
 
 
-def canned_handoff(context: dict[str, Any], case: str) -> str:
+def canned_handoff(context: dict[str, Any], case: str, *, gated: bool = False) -> str:
+    """The synthetic reply for one module: its canned handoff. In a run that declares no legal
+    documents (``gated``), CP-4 gets the blocked handoff its source gate requires and CP-3, which
+    then owns the report's Capital structure, gets that section as well."""
     module = context["module_id"]
     if not re.fullmatch(r"CP-[A-Z0-9]+", module):
         raise ValueError("unexpected module in the synthetic request")
-    findings = (HANDOFFS / f"{module}.md").read_text(encoding="utf-8")
+    blocked = module == "CP-4" and gated
+    findings = BLOCKED_CP4 if blocked else (HANDOFFS / f"{module}.md").read_text(encoding="utf-8")
+    if module == "CP-3" and gated:
+        findings = findings.replace(
+            "\n## Calculations", f"\n{CAPITAL_STRUCTURE}\n## Calculations", 1
+        )
     sources = [f"- {name} {digest}" for name, digest in context["sources"].items()]
     sources.extend(f"- {name} {entry['sha256']}" for name, entry in context["handoffs"].items())
     return "\n".join(
-        [f"# {module}", "", "## Request", case, "", "## Sources", "", *sources, "", findings]
+        [
+            *(BLOCKED_FRONT if blocked else ()),
+            *(f"# {module}", "", "## Request", case, "", "## Sources", "", *sources, "", findings),
+        ]
     )
 
 
 def run_engine(argv: list[str]) -> int:
+    from deploy_workflow.context import load_context
     from deploy_workflow.model.adapter import AdapterReply, LiveAdapter
     from deploy_workflow.model.turn import ToolCall, Turn, TurnRequest, Usage
     from deploy_workflow.owners import cpos_launch
+    from deploy_workflow.run_expectations import no_legal_documents
 
     args = cpos_launch._parser().parse_args(argv)
     if os.environ.get("OPENAI_API_KEY") != DUMMY_KEY or args.config not in {
@@ -81,6 +145,7 @@ def run_engine(argv: list[str]) -> int:
     if args.out is None or not args.no_library or not args.live:
         raise ValueError("synthetic proof requires a scheduler output and library ownership")
     digest = verify_upload(args.sources, args.context)
+    gated = no_legal_documents(load_context(args.context.read_bytes()))
     workbook = args.sources / PORTFOLIO.name
     workbook_digest = (
         hashlib.sha256(workbook.read_bytes()).hexdigest() if workbook.is_file() else None
@@ -111,7 +176,7 @@ def run_engine(argv: list[str]) -> int:
             raise ValueError("CP-OS request did not retain the uploaded workbook digest")
         if context["run"] != run.model_dump(mode="json"):
             raise ValueError("CP-OS request did not retain the submitted run identity")
-        text = canned_handoff(context, f"{run.issuer_name} as of {run.as_of}.")
+        text = canned_handoff(context, f"{run.issuer_name} as of {run.as_of}.", gated=gated)
         usage = Usage(
             input_tokens=0,
             cached_read_tokens=0,

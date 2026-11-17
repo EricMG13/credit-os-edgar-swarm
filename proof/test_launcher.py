@@ -39,7 +39,8 @@ def test_accepts_the_synthetic_agreement_only_byte_identical(tmp_path):
         verify_upload(tmp_path, context)
 
 
-def test_real_scheduler_exports_the_submitted_run(monkeypatch):
+@pytest.mark.parametrize("legal", ["executed", "none"])
+def test_real_scheduler_exports_the_submitted_run(monkeypatch, legal):
     monkeypatch.setattr(sys, "dont_write_bytecode", True)
     monkeypatch.setenv("OPENAI_API_KEY", DUMMY_KEY)
     from deploy_workflow.inbox.runs import cap_of, load_all
@@ -56,6 +57,7 @@ def test_real_scheduler_exports_the_submitted_run(monkeypatch):
         pathway="credit_snapshot", as_of="2025-04-30", cutoff="", case_kind="synthetic"
     )
     data["identity"].update(issuer_name="Example Synthetic Group", issuer_id="example")
+    data["attachments"]["legal_documents"] = legal
     short_temp = None if sys.platform == "win32" else "/tmp"
     with tempfile.TemporaryDirectory(prefix="cos-proof-", dir=short_temp) as root:
         scheduler = Scheduler(Settings(Path(root), launcher=launcher))
@@ -93,7 +95,7 @@ def test_real_scheduler_exports_the_submitted_run(monkeypatch):
             assert record.cap == "25"
             assert cap_of(record) == Decimal(25)
             assert "Charged:  USD 0" in log
-            assert_exported_report(layout, submitted.id)
+            assert_exported_report(layout, submitted.id, legal)
         finally:
             for child in scheduler._children.values():
                 if child.poll() is None:
@@ -102,7 +104,7 @@ def test_real_scheduler_exports_the_submitted_run(monkeypatch):
             scheduler.close()
 
 
-def assert_exported_report(layout, run_id):
+def assert_exported_report(layout, run_id, legal):
     output = layout.runs / run_id
     request = json.loads(next((output / "requests").glob("CP-0/*/1.request.json")).read_text())
     assert request["run"]["as_of"] == "2025-04-30"
@@ -126,6 +128,25 @@ def assert_exported_report(layout, run_id):
     [model] = [model for model in export["workspace"]["models"] if model["cashflow"]]
     [revenue] = [row for row in model["cashflow"]["rows"] if row["label"] == "Revenue"]
     assert "1050" in [cell["exact"] for cell in revenue["cells"]]
+    assert_legal_handoffs(layout, reader, legal)
+
+
+def assert_legal_handoffs(layout, reader, legal):
+    """A run that declares no legal documents stops CP-4 at its source gate (a blocked handoff the
+    checker accepts at once) and CP-3 delivers the report's Capital structure; a run that supplies
+    an agreement keeps CP-4's own findings and its Capital structure."""
+    delivered = {
+        row["module"]: (layout.engine / "library" / row["href"]).read_text()
+        for row in reader["evidence"]["handoffs"]
+    }
+    assert len(delivered) == 14
+    gated = legal == "none"
+    assert ("module_status: Blocked" in delivered["CP-4"]) == gated
+    assert ("Not assessable: no executed governing document was supplied" in delivered["CP-4"]) == (
+        gated
+    )
+    assert ("### Capital structure" in delivered["CP-3"]) == gated
+    assert ("### Capital structure" in delivered["CP-4"]) == (not gated)
 
 
 def test_browser_proof_refuses_an_existing_workspace(tmp_path, monkeypatch):
