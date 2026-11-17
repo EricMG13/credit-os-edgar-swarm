@@ -42,9 +42,13 @@ function moduleGroups(run: PublishedRun, entries: OutputEntry[]) {
   return groups;
 }
 
-/** The run record's delivery events, in words; the record holds no library-admission state. */
+/**
+ * The run record's delivery events, in words; the record holds no library-admission state. A log
+ * the service could not read (`events: null`) is not a log without a delivery.
+ */
 function deliveryFigure(run: Run) {
-  const events = run.events ?? [];
+  const events = run.events;
+  if (events === null) return "The run's event log could not be read.";
   const delivered = events.find(({ kind }) => kind === "delivered");
   if (delivered) return `Report delivered ${stamp(delivered.at)}`;
   const started = events.find(({ kind }) => kind === "delivery_started");

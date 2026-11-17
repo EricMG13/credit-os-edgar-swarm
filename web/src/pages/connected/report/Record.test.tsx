@@ -143,6 +143,15 @@ describe("the delivery line", () => {
     showRecord({});
     expect(await screen.findByText(words)).toBeVisible();
     expect(screen.getByText("Delivery")).toBeVisible();
+    expect(screen.queryByText("The run's event log could not be read.")).toBeNull();
+  });
+
+  it("says the event log could not be read, not that no delivery was recorded, when it is null", async () => {
+    serve({ events: null });
+    showRecord({});
+    expect(await screen.findByText("The run's event log could not be read.")).toBeVisible();
+    expect(screen.getByText("Delivery")).toBeVisible();
+    expect(screen.queryByText("No delivery recorded")).toBeNull();
   });
 
   it("does not say no delivery is recorded before the run record has answered", () => {
