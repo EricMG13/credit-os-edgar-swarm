@@ -1,9 +1,12 @@
 """T22: display the score's accepted inputs without another score calculation."""
 
+import hashlib
+
 import pytest
 from credit_os import store
 
 from deploy_workflow import confidence
+from deploy_workflow.credit_os_chips import chips
 
 ROWS = [
     ("Directly Sourced", "8"),
@@ -96,3 +99,97 @@ def test_projection_ignores_a_fenced_example_and_never_fills_missing_or_blocked_
         "confidence": {"missing": "the module was blocked, so no score is computed"}
     }
     assert store.confidence_fields(b"## Findings\n### Bottom line\nOlder handoff.") == {}
+
+
+def test_projection_keeps_the_exact_source_qualification_when_other_markdown_is_unstructured():
+    qualification = (
+        "Counts cover FY2025 audited standalone evidence only; overseas subsidiaries are excluded."
+    )
+    text = (
+        "## Findings\n### Earlier supporting table\n| Claim | Value |\n| --- | --- |\n"
+        "| Malformed earlier row |\n"
+        + handoff().replace("| Input | Value |", qualification + "\n| Input | Value |")
+    )
+    sections, error = store.structured(text.encode(), False)
+    assert error == "Malformed table at line 5"
+    assert sections[0]["heading"] == "Unstructured handoff"
+    output = store.confidence_fields(text.encode())
+    assert output["confidence"] == {"value": 89, "band": "High"}
+    assert output["confidenceTrace"]["section"] == {
+        "heading": "Confidence inputs",
+        "level": 3,
+        "line": 7,
+        "blocks": [{"type": "text", "line": 8, "end": 8, "text": qualification}],
+    }
+
+
+def test_source_projection_uses_the_scorers_fence_and_heading_rules_for_windows_text():
+    text = handoff().replace(
+        "### Confidence inputs",
+        "### Confidence inputs   \nExact qualification before the table.",
+    )
+    text += (
+        "\n```md\n### Fenced example\nExample qualification, not the recorded scope.\n```\n"
+        "Exact qualification after the table.\n# Next section\nUnrelated next-section prose.\n"
+    )
+    output = store.confidence_fields(text.replace("\n", "\r\n").encode("utf-8-sig"))
+    assert output["confidence"] == {"value": 89, "band": "High"}
+    section = output["confidenceTrace"]["section"]
+    assert section["heading"] == "Confidence inputs"
+    assert [block["text"] for block in section["blocks"]] == [
+        "Exact qualification before the table.",
+        "Exact qualification after the table.",
+    ]
+
+
+def test_projection_keeps_only_the_authoritative_sections_prose_and_its_citation_chips(tmp_path):
+    before = (
+        "## Findings\n### Earlier supporting table\n"
+        "| Claim | Value |\n| --- | --- |\n| Malformed earlier row |\n"
+        "Basis: Earlier.pdf, page 2.\n"
+        "```md\n### Confidence inputs\nFenced example qualification.\n```\n"
+    )
+    text = before + handoff().replace(
+        "| Input | Value |",
+        "Exact standalone qualification.\nBasis: Annual.pdf, page 7.\n\n| Input | Value |",
+    )
+    text += "\n\nLater input qualification.\n### Limitations\nUnrelated limitation.\n"
+    sections, error = store.structured(text.encode(), False)
+    assert error
+    output = store.confidence_fields(text.encode())
+    projected = output["confidenceTrace"]["section"]
+    assert [block["text"] for block in projected["blocks"]] == [
+        "Exact standalone qualification.\nBasis: Annual.pdf, page 7.",
+        "Later input qualification.",
+    ]
+    source_text = b'{"page": 7, "text": "Exact annual source excerpt."}\n'
+    source_hash = hashlib.sha256(source_text).hexdigest()
+    source_dir = tmp_path / "runs" / "run-a" / "source-text"
+    source_dir.mkdir(parents=True)
+    (source_dir / "Annual.pdf").write_bytes(source_text)
+    inventory = store.parse_source(
+        "### Complete supplied inventory and provenance\n"
+        "| Label | Exact supplied source name | Exact sha256 |\n| --- | --- | --- |\n"
+        f"| K | Annual.pdf | {source_hash} |\n"
+    )
+    snapshot = {
+        "outputs": {
+            "run-a/CP-0.md": {"module": "CP-0", "sha256": "b"},
+            "run-a/CP-1.md": {
+                "module": "CP-1",
+                "sha256": "a",
+                **output,
+                "parseError": error,
+            },
+        },
+        "handoffs": {"a": sections, "b": inventory},
+    }
+    citations = chips(tmp_path, snapshot)
+    key = f"run-a/CP-1.md:{projected['blocks'][0]['line']}"
+    assert key in citations
+    (citation,) = citations[key]
+    assert citation["file"] == "Annual.pdf"
+    assert citation["sha256"] == source_hash
+    assert citation["source"] == "K"
+    assert citation["page"] == 7
+    assert citation["excerpt"] == "Exact annual source excerpt."

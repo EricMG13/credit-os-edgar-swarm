@@ -758,6 +758,35 @@ def handoff_files(run_dir: Path) -> dict[Path, Handoff]:
     return found
 
 
+def confidence_section(text: str) -> dict[str, Any]:
+    """Keep source prose and line identity from the already accepted score section.
+
+    The scorer's unchanged heading/fence rules select the section even if another Markdown
+    table made the general parser refuse the handoff. Input rows remain in ``inputs``.
+    """
+    lines, fenced = confidence_score._lines(text)
+    start = next(
+        i
+        for i, line in enumerate(lines)
+        if line == f"### {confidence_score.HEADING}" and not fenced[i]
+    )
+    end = next(
+        (i for i in range(start + 1, len(lines)) if not fenced[i] and lines[i].startswith("#")),
+        len(lines),
+    )
+    original = text.splitlines()
+    blocks: list[dict[str, Any]] = []
+    for i in range(start + 1, end):
+        if fenced[i] or not lines[i].strip() or lines[i].startswith("|"):
+            continue
+        if blocks and blocks[-1]["end"] == i:
+            blocks[-1]["text"] += "\n" + original[i]
+            blocks[-1]["end"] = i + 1
+        else:
+            blocks.append({"type": "text", "line": i + 1, "end": i + 1, "text": original[i]})
+    return {"heading": confidence_score.HEADING, "level": 3, "line": start + 1, "blocks": blocks}
+
+
 def confidence_trace(text: str) -> dict[str, Any]:
     """Present accepted inputs and the existing method; never calculate another score.
 
@@ -806,6 +835,7 @@ def confidence_trace(text: str) -> dict[str, Any]:
             {"label": name, "value": value} for name, value in confidence_score.inputs(text).items()
         ],
         "method": [{"label": label, "value": value} for label, value in method],
+        "section": confidence_section(text),
     }
 
 

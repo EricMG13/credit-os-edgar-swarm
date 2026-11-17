@@ -293,7 +293,9 @@ export function traceForLine(snapshot: Snapshot, entry: OutputEntry, _index: num
 
 /** A scored handoff may be accepted even when its input rows are not a Markdown table. */
 export function traceForConfidence(snapshot: Snapshot, entry: OutputEntry): Trace | undefined {
-  const section = entry.sections.find((item) => item.heading === CONFIDENCE_INPUTS);
+  const section =
+    entry.sections.find((item) => item.heading === CONFIDENCE_INPUTS) ??
+    entry.output.confidenceTrace?.section;
   const block = section?.blocks[0];
   if (section && block)
     return buildTrace(snapshot, entry, section, block, block.line, traceTarget(entry, block.line));

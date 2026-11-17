@@ -191,3 +191,63 @@ it("keeps qualifications and citations from later blocks of a split accepted inp
   expect(drawer).toHaveTextContent("audit.pdf p.9");
   expect(drawer).toHaveTextContent("Later input qualification.");
 });
+
+it("retains source qualification and exact citations when another table makes the handoff unstructured", async () => {
+  const { entry, snapshot } = fixture();
+  const qualification =
+    "Counts cover FY2025 audited standalone evidence only; overseas subsidiaries are excluded.";
+  Object.assign(entry.output.confidenceTrace ?? {}, {
+    section: {
+      heading: "Confidence inputs",
+      level: 3,
+      line: 8,
+      blocks: [
+        { type: "text", line: 9, end: 10, text: `${qualification}\nBasis: annual.pdf, page 7.` },
+      ],
+    },
+  });
+  entry.output.parseError = "Malformed table at line 7";
+  entry.sections = [
+    {
+      heading: "Unstructured handoff",
+      level: 1,
+      line: 1,
+      blocks: [
+        {
+          type: "text",
+          line: 1,
+          end: 30,
+          text: `### Earlier supporting table\nUnrelated earlier passage.\n### Confidence inputs\n${qualification}`,
+        },
+      ],
+    },
+  ];
+  snapshot.chips[`${entry.output.id}:9`] = [
+    {
+      label: "annual.pdf p.7",
+      source: "annual.pdf p.7",
+      file: "annual.pdf",
+      sha256: "b".repeat(64),
+      href: `/connected/sources/run-a/${"b".repeat(64)}/annual.pdf`,
+      pageHref: `/connected/sources/run-a/${"b".repeat(64)}/annual.pdf?page=7`,
+      quote: "Exact source quotation.",
+      excerpt: "Exact source quotation.",
+      reason: "Recorded qualification for FY2025.",
+    },
+  ];
+  render(
+    <ModuleConfidence entry={entry} snapshot={snapshot} run={{ folder: "run-a" }} entryIndex={0} />,
+  );
+  fireEvent.click(screen.getByRole("button", { name: "Show sources for this figure" }));
+  const drawer = await screen.findByRole("dialog");
+  expect(drawer).toHaveTextContent(qualification);
+  expect(drawer).toHaveTextContent("annual.pdf, cited page 7");
+  expect(drawer).toHaveTextContent("Exact source quotation.");
+  expect(drawer).toHaveTextContent("Recorded qualification for FY2025.");
+  expect(drawer).not.toHaveTextContent("Unrelated earlier passage.");
+  expect(drawer).toHaveTextContent("89 out of 100 · High");
+  expect(within(drawer).getByRole("link", { name: "Open in Evidence" })).toHaveAttribute(
+    "href",
+    expect.stringContaining(`run-a%2FCP-1.md~${"a".repeat(64)}`),
+  );
+});

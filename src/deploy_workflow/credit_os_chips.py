@@ -697,11 +697,23 @@ def chips(workspace: Path, store: dict[str, Any]) -> dict[str, list[dict[str, An
     result: dict[str, list[dict[str, Any]]] = {}
     for output_id, record in outputs.items():
         folder = output_id.split("/", 1)[0]
+        sections = parsed.get(record["sha256"]) or []
         result |= chips_for_output(
             workspace / "runs" / folder,
             output_id,
             record["module"],
-            parsed.get(record["sha256"]) or [],
+            sections,
             by_run.get(folder, {}),
         )
+        confidence_section = record.get("confidenceTrace", {}).get("section")
+        if confidence_section and not any(
+            section["heading"] == confidence_section["heading"] for section in sections
+        ):
+            result |= chips_for_output(
+                workspace / "runs" / folder,
+                output_id,
+                record["module"],
+                [confidence_section],
+                by_run.get(folder, {}),
+            )
     return result

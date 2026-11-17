@@ -66,6 +66,8 @@ type Output = {
   confidenceTrace?: {
     inputs: { label: string; value: string }[];
     method: { label: string; value: string }[];
+    /** Exact source prose/locators, selected with the accepted scorer's section rules. */
+    section?: Section;
   };
 };
 export type OutputEntry = { output: Output; sections: Section[]; selected: boolean };
