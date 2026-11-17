@@ -1,21 +1,21 @@
 state: running
-updated: 2026-11-17T10:55Z
+updated: 2026-11-17T11:00Z
 done: branch audit/repair-2 cut from audit/final-repairs ca0db16; environment checked (uv 0.12.5, uv sync, npm ci, a worktree sharing web/node_modules passes typecheck, lint, format:check, vitest and build; c4-probe-027 runs in 26 s on a custom port); worker brief written
-next: T13 round 2 extension (column evidence in the other chart kinds); T15 fix round 1 (round 2, Sonnet: gap tile claims, reference guard, period lookup); T16 under review 1 and adversarial; T17, T18, T20, T21 start when T15 and T16 are reviewed
+next: owner ruling R14 (desktop and mouse only) applied: T24 withdrawn; T14 drops its keyboard-only parts (C3-002 focus, C3-004, C5-006) in round 2 before merging; T21 drops C5-002, T22 drops C5-007 and J5-002. Tasks now merge with git merge --no-ff in tasks.md order (T15 and T16 are built on T14's commits, so a squash merge could re-add what T14 drops). T13 round 2 under review; T15 round 2 fixer; T16 under review
 blocked: none (lead ruling L14 on T16: its next round rewords cashflow.py LTM_NOTE and cell reasons and maps lower-case module codes to names in readerText; Securities.tsx and visuals/index.tsx go to the lead's batch; Downside.tsx:234 to T18)
 reports: docs/audit/2026-11-16-final/output/sessions/repair-2/worker-brief.md
 
 | Task | Starts after | State |
 | :--- | :--- | :--- |
 | T13 | - | round 2 under review 3 and adversarial review 4 (round 2 fix: column and pooled decimal-comma reading in all chart kinds but stack(), lakh grouping, ChartTable Basis wrap, TrendChart detailTable, R2-001 chart column) |
-| T14 | - | reviewed PASS (C3-002, C3-003, C4-034, J3-001, C3-004, C5-006, C3-005, C3-028 closed); held for merge after T13. Note for the lead: CM-005 and probe p19's header still describe the pre-OQ-02 order |
+| T14 | - | round 2: dropping the keyboard-only parts under R14 (C3-002 focus half, C3-004, C5-006); keeps C3-003, C4-034, J3-001, C3-005, C3-028 |
 | T15 | T14 | fix round 1 (round 2, Sonnet): both reviews CHANGES NEEDED on the gap tile (Medium: a supplied but unquoted figure drawn as Not supplied; reason without the reference guard) |
 | T16 | T14 | under review 1 and adversarial (C3-006, C5-008 closed; C4-001 closed on its probes with residuals outside group 2 asked of the lead; R2-001 gap ids and run codes added) |
 | T17 | T14, T15, T16 | waiting |
 | T18 | T16 | waiting |
 | T19 | - | reviewed PASS (C4-004, X1-024, X1-019 closed); round 2 for R2-003 (stack() decimal-comma column evidence) after T13 merges; merges after T18 |
 | T20 | T16 | waiting |
-| T21 | T14, T16 | waiting |
-| T22 | T16, T18 | waiting |
+| T21 | T14, T16 | waiting (C5-002 withdrawn under R14) |
+| T22 | T16, T18 | waiting (C5-007 and J5-002 withdrawn under R14) |
 | T23 | - | reviewed PASS (C5-012 closed); held for merge after T22 |
-| T24 | T21 | waiting |
+| T24 | T21 | withdrawn under R14 (C5-034, keyboard focus); report written |
