@@ -2,7 +2,7 @@ import { Button } from "@/components/base/buttons/button";
 import { ArrowRight } from "@untitledui/icons";
 import { SourceFileLinks } from "@/pages/library/parts/SourceFileLinks";
 import { sourceCitationNote, sourceFileLinks } from "../sourceFiles";
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { DownloadButton } from "@/pages/library/parts/DownloadButton";
 import { DerivationTree } from "@/pages/library/parts/DerivationTree";
 import { RunTabLink } from "@/pages/library/parts/RunFrame";
@@ -536,34 +536,48 @@ function EvidenceNavigation({
   selectedModule?: string;
   checks: ScriptCheckRecord[];
 }) {
+  // A module chosen in the list is applied on request, so the arrow keys can browse the options.
+  // The choice is dropped when the filter in force changes by another route.
+  const inForce = selectedModule ?? "";
+  const [asked, setAsked] = useState({ of: inForce, value: inForce });
+  const chosen = asked.of === inForce ? asked.value : inForce;
   return (
     <>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h2 className="font-display text-h2">Evidence</h2>
-        <label className="grid gap-1 text-sm">
-          Module
-          <select
-            className={field}
-            value={selectedModule ?? ""}
-            onChange={(event) => {
-              window.location.assign(
-                `#evidence/${tabRoute(tab)}${event.target.value ? `/${event.target.value}` : ""}`,
-              );
+        <div className="flex items-end gap-2">
+          <label className="grid gap-1 text-sm">
+            Module
+            <select
+              className={field}
+              value={chosen}
+              onChange={(event) => {
+                setAsked({ of: inForce, value: event.target.value });
+              }}
+            >
+              <option value="">All modules</option>
+              {[
+                ...new Set([
+                  ...entries.map((item) => item.output.module),
+                  ...checks.map((record) => record.module),
+                ]),
+              ].map((id) => (
+                <option value={id} key={id}>
+                  {moduleName(id)}
+                </option>
+              ))}
+            </select>
+          </label>
+          <Button
+            color="secondary"
+            isDisabled={chosen === inForce}
+            onPress={() => {
+              window.location.assign(`#evidence/${tabRoute(tab)}${chosen ? `/${chosen}` : ""}`);
             }}
           >
-            <option value="">All modules</option>
-            {[
-              ...new Set([
-                ...entries.map((item) => item.output.module),
-                ...checks.map((record) => record.module),
-              ]),
-            ].map((id) => (
-              <option value={id} key={id}>
-                {moduleName(id)}
-              </option>
-            ))}
-          </select>
-        </label>
+            Apply filter
+          </Button>
+        </div>
       </div>
       <nav
         aria-label="Evidence sections"

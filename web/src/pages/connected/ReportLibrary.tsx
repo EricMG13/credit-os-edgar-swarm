@@ -1,5 +1,5 @@
 import { ArrowRight } from "@untitledui/icons";
-import { useCallback, useEffect, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useRef, useSyncExternalStore, type RefObject } from "react";
 import { Badge } from "@/components/base/badges/badges";
 import { Button } from "@/components/base/buttons/button";
 import { StatusBadge } from "@/components/status/StatusBadge";
@@ -67,6 +67,60 @@ function listenHash(fn: () => void) {
 
 const readHash = () => window.location.hash;
 const tabHref = (tab: ReportTab) => `#${tab}`;
+
+let entryCount = 0;
+/** The history entry on screen, named in its state so that Back can find where the reader left it. */
+function historyEntry() {
+  const state: unknown = window.history.state;
+  const named = typeof state === "object" && state !== null && "reportEntry" in state;
+  if (named && typeof state.reportEntry === "string") return state.reportEntry;
+  entryCount += 1;
+  const id = `${String(Date.now())}-${String(entryCount)}`;
+  window.history.replaceState({ ...(named ? state : null), reportEntry: id }, "");
+  return id;
+}
+
+/**
+ * The shell's `main` scrolls, so the browser restores nothing on its own. A new address opens its
+ * page at the top, and focus goes to the page's heading when the control that had it has gone with
+ * the old page. Back and Forward return to the offset the reader left in that entry.
+ */
+function useReportPlace(root: RefObject<HTMLElement | null>, hash: string, ready: boolean) {
+  const left = useRef(new Map<string, number>());
+  const shown = useRef<string | null>(null);
+  const offset = useRef(0);
+  useEffect(() => {
+    const main = root.current?.closest("main");
+    if (!main) return;
+    const follow = () => {
+      offset.current = main.scrollTop;
+    };
+    main.addEventListener("scroll", follow);
+    return () => {
+      main.removeEventListener("scroll", follow);
+    };
+  }, [root]);
+  useEffect(() => {
+    if (!ready) return;
+    const id = historyEntry();
+    const previous = shown.current;
+    shown.current = id;
+    if (previous === null || previous === id) return;
+    left.current.set(previous, offset.current);
+    const main = root.current?.closest("main");
+    const back = left.current.get(id);
+    if (main) {
+      main.scrollTop = back ?? 0;
+      offset.current = main.scrollTop;
+    }
+    const focus = document.activeElement;
+    const heading = root.current?.querySelector("h2");
+    if (back === undefined && heading && (focus === null || focus === document.body)) {
+      heading.tabIndex = -1;
+      heading.focus({ preventScroll: true });
+    }
+  }, [hash, ready, root]);
+}
 
 function ReportNav({ tab, modules }: { tab: Tab; modules: number }) {
   return (
@@ -440,6 +494,8 @@ export function ReportReader({ id, mode }: { id: string; mode: Mode }) {
   const catalogue = value?.catalogue.real.find((entry) => entry.id === id);
   const run = found ? found[1] : null;
   const issuer = run ? catalogue?.name || run.issuerHeading || run.issuer : null;
+  const root = useRef<HTMLDivElement>(null);
+  useReportPlace(root, hash, Boolean(run));
   const page = tab === "calendar" ? "Issuer calendar" : tabs.find(([name]) => name === tab)?.[1];
   useEffect(() => {
     if (!issuer || !page) return;
@@ -449,7 +505,7 @@ export function ReportReader({ id, mode }: { id: string; mode: Mode }) {
     };
   }, [issuer, page]);
   return (
-    <div className="mx-auto w-full max-w-[96rem]" data-sources={sources ? "on" : "off"}>
+    <div ref={root} className="mx-auto w-full max-w-[96rem]" data-sources={sources ? "on" : "off"}>
       <Breadcrumb>Report</Breadcrumb>
       <ReaderHeader
         run={run}

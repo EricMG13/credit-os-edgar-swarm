@@ -57,6 +57,7 @@ function Navigator({
   figureTableLines: readonly number[];
 }) {
   const allSections = entry ? findingBlocks(entry.sections, entry, figureTableLines, true) : [];
+  // A module that wrote no Key findings has its first table section listed under its own title.
   const firstFinding =
     allSections.find(({ heading }) => heading === "Key findings") ??
     allSections.find(({ heading }) => sectionIcon(heading) === "records");
@@ -70,13 +71,7 @@ function Navigator({
       watch ??
       (current === "CP-0" && heading === "Source-readiness summary" ? "Readiness by area" : null);
     if (icon === "records" && item !== firstFinding && !extra) return [];
-    return [
-      {
-        label: extra ?? (item === firstFinding ? "Key findings" : drawingTitle(heading)),
-        key: `finding-${String(line)}`,
-        icon: item === firstFinding && !extra ? ("findings" as const) : icon,
-      },
-    ];
+    return [{ label: extra ?? drawingTitle(heading), key: `finding-${String(line)}`, icon }];
   });
   if (
     entry &&
@@ -152,6 +147,8 @@ function Navigator({
     };
   }, [sectionKeys]);
   const [mobileSection, setMobileSection] = useState("");
+  // A module chosen in the list is opened on request, so the arrow keys can browse the options.
+  const [chosen, setChosen] = useState(current);
   const moduleHref = (id: string) => `#modules/${encodeURIComponent(id)}`;
   const sectionNavigate = (id: string) => {
     const target = document.getElementById(id);
@@ -166,24 +163,34 @@ function Navigator({
       className="self-start rounded-xl border border-border-hairline bg-surface-card py-2 min-[1001px]:sticky min-[1001px]:top-4"
     >
       <div className="grid gap-2 px-3 pb-2 min-[1001px]:hidden">
-        <label className="grid gap-1 text-sm text-text-secondary">
-          Module
-          <select
-            aria-label="Module"
-            className={field}
-            value={current}
-            onChange={(event) => {
-              const href = moduleHref(event.currentTarget.value);
-              window.location.href = href;
+        <div className="flex items-end gap-2">
+          <label className="grid min-w-0 flex-1 gap-1 text-sm text-text-secondary">
+            Module
+            <select
+              aria-label="Module"
+              className={field}
+              value={chosen}
+              onChange={(event) => {
+                setChosen(event.currentTarget.value);
+              }}
+            >
+              {view.modules.map((item) => (
+                <option key={item.id} value={item.id}>
+                  {item.name} · {item.state}
+                </option>
+              ))}
+            </select>
+          </label>
+          <Button
+            color="secondary"
+            isDisabled={chosen === current}
+            onPress={() => {
+              window.location.assign(moduleHref(chosen));
             }}
           >
-            {view.modules.map((item) => (
-              <option key={item.id} value={item.id}>
-                {item.name} · {item.state}
-              </option>
-            ))}
-          </select>
-        </label>
+            Open module
+          </Button>
+        </div>
         {sections.length > 0 && (
           <details>
             <summary className="cursor-pointer py-2 text-sm font-medium text-action">
