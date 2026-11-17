@@ -29,11 +29,11 @@ interface WaterfallChartProps {
   table: { head: string[]; rows: TableRowData[]; endHeading?: string };
 }
 
-// Tokens for the three waterfall colours come later; one named constant each until then.
-const TOTAL_COLOR = "var(--color-chart-1)";
-const UP_COLOR = "var(--color-brand-400)";
-const DOWN_COLOR = "var(--color-chart-3)";
-const COLORS: Record<Kind, string> = { total: TOTAL_COLOR, up: UP_COLOR, down: DOWN_COLOR };
+const COLORS: Record<Kind, string> = {
+  total: "var(--color-waterfall-total)",
+  up: "var(--color-waterfall-up)",
+  down: "var(--color-waterfall-down)",
+};
 
 const LABEL_FILL = "var(--color-text-primary)";
 const NA_FILL = "var(--color-text-tertiary)";

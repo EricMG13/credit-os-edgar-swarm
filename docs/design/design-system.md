@@ -489,6 +489,18 @@ Other scales:
 | Magnitude (one hue, light to dark) | `#99A3FF`, `#6676FF`, `#3348FF`, `#001AFF`, `#0012B2` |
 | Above and below a baseline | `#994A34`, `#E5704D`, `#DDDFE2` (neutral midpoint), `#6676FF`, `#001AFF` |
 
+A waterfall (a walk between totals) has three kinds of column, one token each (owner, 2026-11-17,
+OQ-09), so no colour in the chart is a local constant. Total and down are series slots; up is a
+lighter step of the same Ultramarine, so a rise reads as part of the walk it adds to:
+
+| Token | Colour | Hex | Column |
+| :--- | :--- | :--- | :--- |
+| `waterfall-total` | Ultramarine (slot 1) | `#001AFF` | A total, drawn from the baseline |
+| `waterfall-up` | Ultramarine L3 (`brand-400`) | `#4D5FFF` | A step up |
+| `waterfall-down` | Reef D4 (slot 3) | `#994A34` | A step down |
+
+The legend names each kind in words; no status colour is used.
+
 Marks follow the source chart (review 2, ruling 5), read on the Untitled UI line and bar
 charts page on 2026-11-13: horizontal gridlines only, solid, in `border-hairline`; bars up to
 32px wide (16px on a narrow screen) with 6px top corners; in a stack only the top segment is
