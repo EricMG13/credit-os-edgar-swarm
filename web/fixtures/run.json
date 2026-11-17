@@ -656,9 +656,9 @@
         "line": null,
         "alert": {
           "title": "The run failed",
-          "text": "Financial analysis stopped after three attempts because the model service returned no usable answer. Two modules finished and are kept. Starting again goes through Start and asks before it spends.",
-          "action": { "label": "Review and start again", "href": "#/run/start/start" },
-          "alt": { "label": "Open what finished", "href": "#/" }
+          "text": "Financial analysis stopped after three attempts because the model service returned no usable answer. Two modules finished and are kept.",
+          "action": { "label": "Open what finished", "href": "#/" },
+          "alt": null
         },
         "open": null,
         "spend": {
@@ -947,9 +947,9 @@
         "line": null,
         "alert": {
           "title": "The run was interrupted",
-          "text": "The run stopped at 14:56 while Covenants was running. Five modules finished and are kept. Resuming goes through Start and asks before it spends.",
-          "action": { "label": "Review and resume", "href": "#/run/start/start" },
-          "alt": { "label": "Open what finished", "href": "#/" }
+          "text": "The run stopped at 14:56 while Covenants was running. Five modules finished and are kept.",
+          "action": { "label": "Open what finished", "href": "#/" },
+          "alt": null
         },
         "open": null,
         "spend": {

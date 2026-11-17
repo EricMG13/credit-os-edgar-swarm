@@ -422,9 +422,9 @@ describe("committed fixture, run activity", () => {
     const failed = run("failed");
     expect(failed.alert).toEqual({
       title: "The run failed",
-      text: "Financial analysis stopped after three attempts because the model service returned no usable answer. Two modules finished and are kept. Starting again goes through Start and asks before it spends.",
-      action: { label: "Review and start again", href: "#/run/start/start" },
-      alt: { label: "Open what finished", href: "#/" },
+      text: "Financial analysis stopped after three attempts because the model service returned no usable answer. Two modules finished and are kept.",
+      action: { label: "Open what finished", href: "#/" },
+      alt: null,
     });
     expect(steps("failed")[2]).toMatchObject({ state: "Not assessable" });
     expect(steps("failed")[3]).toMatchObject({ state: "Not run", detail: "Did not run." });
@@ -457,10 +457,8 @@ describe("committed fixture, run activity", () => {
     expect(rejected.spend.bar?.value).toBe(0);
     expect(rejected.feed.map((e) => e.state)).toEqual(["Rejected", "Queued"]);
     const interrupted = run("interrupted");
-    expect(interrupted.alert?.action).toEqual({
-      label: "Review and resume",
-      href: "#/run/start/start",
-    });
+    expect(interrupted.alert?.action).toEqual({ label: "Open what finished", href: "#/" });
+    expect(interrupted.alert?.alt).toBeNull();
     expect(steps("interrupted")[5]).toMatchObject({ name: "Covenants", state: "Interrupted" });
     expect(interrupted.feed[0]?.state).toBe("Interrupted");
   });
@@ -571,8 +569,8 @@ describe("rejects, run activity", () => {
     );
   });
   it("an alert action with an outside address", () => {
-    expect(reason(editRun("failed", ["alert", "alt", "href"], "http://x.test/"))).toBe(
-      'run.runs[4].alert.alt.href: expected an address starting with "#/"',
+    expect(reason(editRun("capped", ["alert", "alt", "href"], "http://x.test/"))).toBe(
+      'run.runs[5].alert.alt.href: expected an address starting with "#/"',
     );
   });
   it("an unknown run state, record kind and module word", () => {
