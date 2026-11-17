@@ -8,7 +8,7 @@
         "previous": null,
         "next": "purpose",
         "nextLabel": "Next",
-        "nextBlocked": "Add at least one document to continue.",
+        "nextBlocked": "Add at least one document to continue. This page is a saved example, so nothing can be added here.",
         "readiness": {
           "line": "What still has to be true before the run can start.",
           "notMet": {
@@ -33,7 +33,7 @@
         "previous": null,
         "next": "purpose",
         "nextLabel": "Next",
-        "nextBlocked": "Replace or remove the unreadable file to continue.",
+        "nextBlocked": "Replace or remove the unreadable file to continue. This page is a saved example, so nothing can be replaced or removed here.",
         "readiness": {
           "line": "What still has to be true before the run can start.",
           "notMet": {

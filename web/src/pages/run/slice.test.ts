@@ -69,7 +69,9 @@ describe("committed fixture", () => {
       progress: { label: "100%", value: 100, max: 100 },
       reason: null,
     });
-    expect(docs.nextBlocked).toBe("Replace or remove the unreadable file to continue.");
+    expect(docs.nextBlocked).toBe(
+      "Replace or remove the unreadable file to continue. This page is a saved example, so nothing can be replaced or removed here.",
+    );
     const purpose = by("purpose");
     if (purpose?.step !== "purpose") throw new Error("step");
     expect(purpose.chosen).toBe("full-review");

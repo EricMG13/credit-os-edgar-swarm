@@ -34,7 +34,8 @@ const FRAMES: Frame[] = [
     previous: null,
     next: "Next",
     nextTo: null,
-    blocked: "Add at least one document to continue.",
+    blocked:
+      "Add at least one document to continue. This page is a saved example, so nothing can be added here.",
   },
   {
     id: "documents",
@@ -47,7 +48,8 @@ const FRAMES: Frame[] = [
     previous: null,
     next: "Next",
     nextTo: null,
-    blocked: "Replace or remove the unreadable file to continue.",
+    blocked:
+      "Replace or remove the unreadable file to continue. This page is a saved example, so nothing can be replaced or removed here.",
   },
   {
     id: "purpose",
