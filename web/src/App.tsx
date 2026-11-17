@@ -170,32 +170,14 @@ function entryOf(created: { current: number }): string {
 }
 
 /**
- * The link in the new page that leads where the one the reader used did, drawn again as the current
- * page: the tab or module that was chosen. `used` is gone with the old page, but still has its href.
- */
-function usedAgain(main: HTMLElement, used: Element | null): HTMLElement | null {
-  const href = used?.getAttribute("href");
-  if (href === undefined || href === null) return null;
-  const current = main.querySelectorAll<HTMLElement>("a[aria-current=page]");
-  return [...current].find((link) => link.getAttribute("href") === href) ?? null;
-}
-
-/**
  * What a page load would give the reader that a hash route does not: the page's name in the tab
- * and the history list, the top of the page (or, on Back and Forward, the place that entry was left
- * at), somewhere for keyboard focus to start, and the page's name said by a screen reader.
+ * and the history list, and the top of the page (or, on Back and Forward, the place that entry was
+ * left at).
  *
- * `main` is the one scroller and is never remounted, so it keeps the previous page's offset and a
- * link that disappears with the page leaves focus on the body. After a route change (never on the
- * first load) focus stays where the new page has put it (the item pages focus their row); else it
- * goes to the link the reader used if the new page draws it again (the next Tab is then the next
- * tab); else to `main`. The new title goes to the returned polite live region.
+ * `main` is the one scroller and is never remounted, so it would keep the previous page's offset.
  */
 function useRouteChange(route: string, title: string) {
-  const announcer = useRef<HTMLParagraphElement>(null);
   const shown = useRef<{ route: string; entry: string } | null>(null);
-  const arrival = useRef<{ used: Element | null } | null>(null);
-  const focused = useRef<Element | null>(null);
   const offsets = useRef(new Map<string, number>());
   const created = useRef(0);
 
@@ -209,12 +191,6 @@ function useRouteChange(route: string, title: string) {
     const main = document.getElementById("main");
     if (main === null || shown.current?.route === route) return;
     const entry = entryOf(created);
-    // The old page, and the link that held focus, are already out of the document: focus is on the
-    // body, so the link is the last element that took focus.
-    const active = document.activeElement;
-    const used = active === document.body ? focused.current : active;
-    arrival.current = shown.current === null ? null : { used };
-    focused.current = null;
     shown.current = { route, entry };
     main.scrollTop = offsets.current.get(entry) ?? 0;
   }, [route]);
@@ -225,41 +201,16 @@ function useRouteChange(route: string, title: string) {
     const remember = () => {
       if (shown.current !== null) offsets.current.set(shown.current.entry, main.scrollTop);
     };
-    const noteFocus = (event: FocusEvent) => {
-      focused.current = event.target instanceof Element ? event.target : null;
-    };
     main.addEventListener("scroll", remember);
-    document.addEventListener("focusin", noteFocus);
     return () => {
       main.removeEventListener("scroll", remember);
-      document.removeEventListener("focusin", noteFocus);
     };
   }, []);
-
-  useEffect(() => {
-    const main = document.getElementById("main");
-    if (arrival.current === null || main === null) return;
-    const { used } = arrival.current;
-    arrival.current = null;
-    const now = document.activeElement;
-    if (now === used || !main.contains(now)) {
-      const link = usedAgain(main, used);
-      (link ?? main).focus({ preventScroll: true });
-    }
-    if (announcer.current !== null) announcer.current.textContent = title;
-  }, [route, title]);
-
-  return announcer;
 }
 
 export function App({ result, table = routeTable }: { result: LoadResult; table?: RouteTable }) {
   const route = useHashRoute();
   const title = useMemo(() => pageTitle(result, table, route), [result, table, route]);
-  const announcer = useRouteChange(route, title);
-  return (
-    <>
-      <Page result={result} table={table} route={route} />
-      <p ref={announcer} aria-live="polite" aria-atomic="true" className="sr-only" />
-    </>
-  );
+  useRouteChange(route, title);
+  return <Page result={result} table={table} route={route} />;
 }
