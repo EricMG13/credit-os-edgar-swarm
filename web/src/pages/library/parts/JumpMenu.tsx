@@ -20,6 +20,8 @@ const NAME = "Jump to an item";
 const ICON = { Figures: Hash02, Calculations: Calculator, Gaps: AlertTriangle } as const;
 const KEY =
   "rounded-ds-xs border border-border-hairline bg-surface-card px-1.5 text-xs font-medium text-text-tertiary";
+/** The shortcut hint is for a keyboard; a narrow layout is a touch layout and draws none. */
+const SHORTCUT_KEY = `${KEY} max-sm:hidden`;
 
 /** The shortcut as the reader's system names it: ⌘K on an Apple system, Ctrl K elsewhere. */
 function shortcutLabel(): string {
@@ -36,7 +38,7 @@ function isTyping(target: EventTarget | null): boolean {
 
 /**
  * The "Jump to an item" field of an Evidence page and the menu it opens (the mock's command menu):
- * the items of the run in their groups, filtered by what is typed against each label, opened with
+ * the items of the run in their groups, filtered by what is typed against each label and detail, opened with
  * the arrow keys and Enter or a click, closed with Escape. The shortcut (Ctrl+K or ⌘K) is held only
  * while this is mounted, which is while an Evidence page is shown, and never taken from a text field.
  */
@@ -100,7 +102,7 @@ export function JumpMenu({
       >
         <SearchLg aria-hidden="true" className="size-4 flex-none" />
         <span className="grow text-left">{NAME}</span>
-        <span className={KEY}>{shortcutLabel()}</span>
+        <span className={SHORTCUT_KEY}>{shortcutLabel()}</span>
       </button>
       <ModalOverlay
         isOpen={open}
@@ -126,7 +128,7 @@ export function JumpMenu({
                   ref={focusSearch}
                   className="min-w-0 grow bg-transparent text-md text-text-primary outline-hidden"
                 />
-                <span aria-hidden="true" className={KEY}>
+                <span aria-hidden="true" className={SHORTCUT_KEY}>
                   {shortcutLabel()}
                 </span>
               </SearchField>
@@ -157,7 +159,7 @@ export function JumpMenu({
                               <ListBoxItem
                                 key={index}
                                 id={String(index)}
-                                textValue={item.label}
+                                textValue={`${item.label} ${item.detail}`}
                                 className="mx-2 flex min-h-10 cursor-pointer items-center gap-2 rounded-lg px-2.5 py-2 text-sm font-medium text-text-primary outline-hidden data-focused:bg-surface-subtle"
                               >
                                 <Icon
@@ -165,7 +167,7 @@ export function JumpMenu({
                                   className="size-4 flex-none text-text-tertiary"
                                 />
                                 {item.label}
-                                <span className="font-normal text-text-tertiary">
+                                <span className="font-normal whitespace-nowrap text-text-tertiary">
                                   {item.detail}
                                 </span>
                               </ListBoxItem>,
