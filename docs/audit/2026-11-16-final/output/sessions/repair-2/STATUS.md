@@ -1,4 +1,24 @@
 state: running
+updated: 2026-11-17T17:32Z
+done: all previously pushed tasks remain preserved at f9453f27; lead took over after the user-required two hours without a push (last original push 15:32:06Z, checked origin at 17:32:14Z).
+next: recover remaining T18 round4 and T22 sequentially, test first and fresh review; then final branch gates and PR into audit/final-repairs.
+blocked: prior T18/T22 worktree code/reports were never pushed and are unavailable; recover from repository evidence only.
+reports: original reports below; new recovery reports will be output/5-repair/T18.md and T22.md.
+
+## Takeover constraints
+
+- Original snapshots and all decided R1–R17/L1–L18 stay fixed; R12 last-round cap applies.
+- T18 is recovery of its unfinished fourth round, not authorization for a fifth repair loop.
+- Requested historical models unavailable; available inherited Codex workers used with separate
+  fresh review (R7/session fallback). No claimed Sonnet/Opus execution.
+- Lead batches are on separate branches; source-page R4-001, approval labels, report wording,
+  fonts and runtime metadata are already handled there. Do not duplicate unrelated work.
+- No Signal, methods, prompts, calculations, canned handoffs or module-written text changes.
+- No provider, seat, real Submit, Teams or application-network call. Synthetic proof only.
+
+## Preserved prior status
+
+state: running
 updated: 2026-11-17T15:32Z
 done: 10 of 12 tasks merged into audit/repair-2 with --no-ff: T13 (301b20a), T14 (a6bf5d2), T15 (d9c1fce), T16 (f40b916), T17 (cc1a717), T19 (de7ffa9), T20 (6201240), T21 (e1d1540), T23 (74323f7); T24 withdrawn under R14 (no code). T19, T20, T21 and T23 were merged ahead of T18 and T22 at the owner's request to push all work; they share no file with T18 or T22, so only the merge order differs from tasks.md. T22 is reviewed (PASS) and held for merge after T18. On the merged tree (cb5a658): typecheck, lint, format:check, knip 0; vitest src/pages/connected, src/components, src/pages/model, src/pages/library, src/pages/signal 177 files, 3806 tests, 0; static gate (test:file:gates) 0; quality_gate 0 and T16's pytest files 860 passed (after the T16 merge)
 next: T18 round 4 (Opus medium, the last under R12): review 5 PASS, adversarial review 6 CHANGES NEEDED (trend-chart drawers ignore the selected case; facilities notice under the recorded drivers table). Then its reviews, merge T18 and T22, rerun the gates, push, and open the pull request into audit/final-repairs
