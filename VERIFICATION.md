@@ -14,7 +14,7 @@ Scope: a presentation change to the connected start page's review sheet (`web/sr
 - Commands, exit 0 on 366bdb1: `npm --prefix web ci`; `npm --prefix web run` lint, format:check, typecheck, test (173 files, 3,944 tests), unused, duplication (1.57%), build; `tools/quality_gate.py` (0 findings, no Python changed). The first full test run, on 50dd42a, failed only by V27 timing out at 6.97 s against the 5 s default under load; 366bdb1 gives V27 20 s.
 - Not verified:
   - `proof:connected`: it needs branded Google Chrome and Microsoft Edge; this container has Chrome for Testing only (`/opt/google/chrome/chrome` links to it) and no Edge.
-  - `pytest -m browser tests/test_run_start_page.py`: in this container each test's headless Chrome `--dump-dom` call against the service hung to its 120 s timeout (Chrome renders a trivial page in 0.6 s). That file drives the older start page (`docs/templates/context-form.html`), which this branch does not change.
+  - `pytest -m browser tests/test_run_start_page.py`: in this container the run did not finish: its first 12 tests failed at about two minutes each, and the first, run alone, failed because its headless Chrome `--dump-dom` call against the service hung to the 120 s timeout (Chrome renders a trivial page in 0.6 s). That file drives the older start page (`docs/templates/context-form.html`), which this branch does not change.
   - Other pathways in a browser; a live or paid run; the full weekly suite.
 
 ## 2026-11-17 — PR 2: a run in the currency its source files report in (branch `claude/reporting-currency`)
