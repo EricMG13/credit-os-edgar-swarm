@@ -72,6 +72,19 @@ function NoRun({ draft }: { draft: StartDraft | undefined }) {
   );
 }
 
+/** A run's own labels are free text, so unlike the shared Badge's one-line chips they wrap inside
+ *  the row and break an unbroken word; a long label stays whole and in view. */
+function Labels({ labels }: { labels: readonly string[] }) {
+  return labels.map((label, i) => (
+    <Badge
+      key={`${label}-${String(i)}`}
+      className="size-auto max-w-full rounded-2xl whitespace-normal wrap-anywhere"
+    >
+      {label}
+    </Badge>
+  ));
+}
+
 function Trail({ issuer }: { issuer: string }) {
   return (
     <nav aria-label="Breadcrumb" className="text-sm text-text-tertiary">
@@ -91,9 +104,7 @@ function Unreadable({ run }: { run: Extract<ActivityRecord, { kind: "unreadable"
         badges={
           <>
             <StatusBadge set="Activity that cannot be read" state="State not known" />
-            {run.labels.map((label, i) => (
-              <Badge key={`${label}-${String(i)}`}>{label}</Badge>
-            ))}
+            <Labels labels={run.labels} />
           </>
         }
       />
@@ -153,9 +164,7 @@ function Run({ run }: { run: RunRecord }) {
         badges={
           <>
             <StatusBadge set="Run states" state={run.state} live={live} />
-            {run.labels.map((label, i) => (
-              <Badge key={`${label}-${String(i)}`}>{label}</Badge>
-            ))}
+            <Labels labels={run.labels} />
           </>
         }
         actions={
