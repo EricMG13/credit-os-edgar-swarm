@@ -96,7 +96,7 @@ it("keeps the handoff's row order for the break points table, as a list that ran
   });
   const chart = screen.getByRole("figure", { name: "EBITDA break points" });
   expect(chart.querySelector("ol")).toBeNull();
-  const order = (nodes: HTMLElement[]) => nodes.map((node) => node.textContent?.slice(0, 5));
+  const order = (nodes: HTMLElement[]) => nodes.map((node) => node.textContent.slice(0, 5));
   expect(order(within(chart).getAllByRole("listitem"))).toEqual(["FCF r", "Cover", "Net l"]);
   fireEvent.click(within(chart).getByRole("radio", { name: "Table" }));
   expect(order(within(chart).getAllByRole("row").slice(1))).toEqual(["FCF r", "Cover", "Net l"]);

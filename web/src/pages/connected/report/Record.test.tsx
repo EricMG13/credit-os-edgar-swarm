@@ -139,7 +139,7 @@ describe("the delivery line", () => {
     ],
     ["never started", [], "No delivery recorded"],
   ] as const)("says %s from the run record's events", async (_state, events, words) => {
-    serve({ events: [...events] } as Partial<Run>);
+    serve({ events: [...events] });
     showRecord({});
     expect(await screen.findByText(words)).toBeVisible();
     expect(screen.getByText("Delivery")).toBeVisible();
