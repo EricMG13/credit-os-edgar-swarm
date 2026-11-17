@@ -1,3 +1,4 @@
+import { Table as KitTable } from "@/components/application/table/table";
 import { Button } from "@/components/base/buttons/button";
 import { ArrowRight } from "@untitledui/icons";
 import { ChartWithTable } from "@/components/chart/ChartWithTable";
@@ -18,7 +19,10 @@ import { PublishedSource } from "./PublishedTrace";
 
 type EventLocation = { owner: string; href: string };
 type CalendarRow = EventLocation & { cells: string[]; from: number; to: number };
-type CalendarGap = EventLocation & { title: string; reason: string };
+type UnplacedEvent = { href: string; cells: string[] };
+type CalendarGap = EventLocation & { title: string; reason: string; unplaced?: UnplacedEvent[] };
+
+const UNPLACED_REASON = "The recorded dates or precision could not be plotted.";
 
 function eventDisplay(cells: string[]) {
   return cells.map((text, index) =>
@@ -27,9 +31,11 @@ function eventDisplay(cells: string[]) {
 }
 
 function validatedEvents(table: SourceTable, block: Table) {
-  const events = eventRecords(table);
-  if (events.length !== block.rows.length) {
-    return { problem: "The recorded dates or precision could not be plotted." };
+  if (
+    table.headers.join("\0") !== EVENT_HEADERS.join("\0") ||
+    table.rows.length !== block.rows.length
+  ) {
+    return { problem: UNPLACED_REASON };
   }
   const lines = block.rows.map(({ line }) => line);
   if (
@@ -38,7 +44,21 @@ function validatedEvents(table: SourceTable, block: Table) {
   ) {
     return { problem: "The event table does not identify each event row." };
   }
-  return { events };
+  return { events: eventRecords(table) };
+}
+
+function unplacedEvents(
+  events: ReturnType<typeof eventRecords>,
+  block: Table,
+  entry: OutputEntry,
+  folder: string,
+) {
+  const placed = new Set(events.map(({ index }) => index));
+  return block.rows.flatMap((row, index) =>
+    placed.has(index)
+      ? []
+      : [{ href: evidencePath(folder, entry, row.line), cells: eventDisplay(row.cells) }],
+  );
 }
 
 function calendarRows(
@@ -77,24 +97,30 @@ export function buildCalendar(entries: OutputEntry[], folder: string) {
     const seen = new Set<number>();
     for (const descriptor of output.events) {
       const title = word(descriptor.lane);
-      const table = tables.get(descriptor.table);
-      if (!title || !table || table.line <= 0 || seen.has(table.line)) continue;
-      const block = blocks.find((item) => item.type === "table" && item.line === table.line);
-      if (block?.type !== "table") continue;
-      seen.add(table.line);
-      const href = evidencePath(folder, entry, table.line);
+      if (!title || descriptor.table <= 0 || seen.has(descriptor.table)) continue;
+      const block = blocks.find((item) => item.type === "table" && item.line === descriptor.table);
+      if (block?.type !== "table" || !block.rows.length) continue;
+      seen.add(block.line);
+      const href = evidencePath(folder, entry, block.line);
       const gap = word(descriptor.gap);
       if (gap) {
         gaps.push({ owner, href, title, reason: gap });
         continue;
       }
       if (!assessable) continue;
+      const table = tables.get(block.line);
+      if (!table) {
+        gaps.push({ owner, href, title, reason: "The event table could not be read." });
+        continue;
+      }
       const { events, problem } = validatedEvents(table, block);
       if (!events) {
         gaps.push({ owner, href, title, reason: problem });
         continue;
       }
       rows.push(...calendarRows(events, block, entry, folder, owner));
+      const unplaced = unplacedEvents(events, block, entry, folder);
+      if (unplaced.length) gaps.push({ owner, href, title, reason: UNPLACED_REASON, unplaced });
     }
   });
   rows.sort((a, b) => a.from - b.from || a.to - b.to);
@@ -176,6 +202,38 @@ function CalendarFigure({ rows }: { rows: CalendarRow[] }) {
   );
 }
 
+function UnplacedTable({ owner, events }: { owner: string; events: UnplacedEvent[] }) {
+  const shown = (text: string | undefined) => text || "Not recorded";
+  return (
+    <KitTable aria-label="Events not placed on the calendar" size="sm">
+      <KitTable.Header>
+        <KitTable.Head id="event" isRowHeader label="Event" />
+        <KitTable.Head id="date" label="Recorded date" />
+        <KitTable.Head id="precision" label="Date precision" />
+        <KitTable.Head id="published" label="Published" />
+        <KitTable.Head id="status" label="Status" />
+        <KitTable.Head id="relevance" label="Credit relevance" />
+        <KitTable.Head id="evidence" label="Evidence" />
+      </KitTable.Header>
+      <KitTable.Body items={events.map((event) => ({ ...event, id: event.href }))}>
+        {({ id, href, cells }) => (
+          <KitTable.Row id={id}>
+            <KitTable.Cell>{shown(cells[3])}</KitTable.Cell>
+            <KitTable.Cell>{shown(cells[0])}</KitTable.Cell>
+            <KitTable.Cell>{shown(cells[1])}</KitTable.Cell>
+            <KitTable.Cell>{shown(cells[2])}</KitTable.Cell>
+            <KitTable.Cell>{shown(cells[4])}</KitTable.Cell>
+            <KitTable.Cell>{shown(cells[6])}</KitTable.Cell>
+            <KitTable.Cell>
+              <EventSource href={href} name={`${shown(cells[3])} · ${owner}`} />
+            </KitTable.Cell>
+          </KitTable.Row>
+        )}
+      </KitTable.Body>
+    </KitTable>
+  );
+}
+
 export function Calendar({ calendar }: { calendar: ReturnType<typeof buildCalendar> }) {
   return (
     <>
@@ -188,16 +246,24 @@ export function Calendar({ calendar }: { calendar: ReturnType<typeof buildCalend
       {calendar.rows.length ? (
         <CalendarFigure rows={calendar.rows} />
       ) : (
-        <p className={card}>No dated events were published for this run.</p>
+        <p className={card}>
+          {calendar.gaps.length
+            ? "No published event could be placed on the calendar; the events and date gaps are listed below."
+            : "No dated events were published for this run."}
+        </p>
       )}
-      {calendar.gaps.map(({ owner, href, title, reason }) => (
+      {calendar.gaps.map(({ owner, href, title, reason, unplaced }) => (
         <section className={`${TRACE_HOST} ${card}`} key={href}>
           <h3 className={heading}>{title}</h3>
           <p>{owner}</p>
           <p role="note">
             {containsReference(reason) ? "A date gap is recorded in Evidence." : readerText(reason)}
           </p>
-          <EventSource href={href} name={title} />
+          {unplaced ? (
+            <UnplacedTable owner={owner} events={unplaced} />
+          ) : (
+            <EventSource href={href} name={title} />
+          )}
         </section>
       ))}
     </>
