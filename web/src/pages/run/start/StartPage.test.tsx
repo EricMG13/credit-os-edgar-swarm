@@ -261,6 +261,20 @@ describe("readiness items", () => {
     expect(within(panel).getByRole("heading", { level: 3, name: "Not met 3" })).toBeVisible();
   });
 
+  it("are rows divided by hairlines, not bordered boxes nested in a card (S6-023, D-21, D-23)", () => {
+    show("/run/start/documents", fixture.slice);
+    const panel = screen.getByRole("complementary", { name: "Readiness" });
+    for (const list of within(panel).getAllByRole("list")) {
+      expect(list).toHaveClass("divide-y", "divide-border-hairline");
+    }
+    for (const li of within(panel).getAllByRole("listitem")) {
+      expect(li.className).not.toMatch(/\bborder\b|rounded|\bbg-/);
+    }
+    for (const group of Array.from(panel.querySelectorAll("section"))) {
+      expect(group.className).not.toMatch(/\bborder\b|rounded|\bbg-/);
+    }
+  });
+
   it("two items with the same text are both drawn", () => {
     const source = structuredClone(fixture.slice) as {
       drafts: { id: string; readiness: { met: { count: string; items: string[] } } }[];

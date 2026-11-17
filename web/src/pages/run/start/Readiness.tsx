@@ -8,16 +8,13 @@ type Group = "Not met" | "Met";
 function ItemGroup({ state, count, items }: { state: Group; count: string; items: string[] }) {
   const id = useId();
   return (
-    <section className="flex flex-col gap-2 rounded-ds-md bg-surface-subtle p-3">
+    <section className="flex flex-col gap-1">
       <h3 id={id} className="flex items-center gap-2 text-sm font-semibold text-text-primary">
         <StatusBadge set="Met or not met" state={state} /> <span>{count}</span>
       </h3>
-      <ul aria-labelledby={id} className="flex flex-col gap-2">
+      <ul aria-labelledby={id} className="flex flex-col divide-y divide-border-hairline">
         {items.map((item, i) => (
-          <li
-            key={`${String(i)}-${item}`}
-            className="rounded-ds-md border border-border-hairline bg-surface-card p-2 text-sm font-medium text-text-primary"
-          >
+          <li key={`${String(i)}-${item}`} className="py-2 text-sm font-medium text-text-primary">
             {item}
           </li>
         ))}
