@@ -15,6 +15,7 @@ Hostile or unusual inputs no roadmap line names (ruling R3). Registered, not rep
 | C5-020 | Low | C5 | An address naming a module that is not in the run filters the page to nothing while the Module select still reads "All modules". |  |
 | C5-021 | Low | C5 | ArtifactDownloads draws any href the listing returns, including a foreign https address. |  |
 | C5-027 | Low | C5 | A calculation id defined twice, or nested deeper than 8, silently disappears from a drawer's derivation. |  |
+| R4-005 | Low | C4 | Chart unit parser accepts an unrecognised unit ending in m as millions. |  |
 | S1-012 | Low | S1 | The no-data, unreadable-data and no-such-page states are one bare grey sentence; different causes read alike and the reader's internal reason is drawn raw. |  |
 | S1-013 | Low | S1 | Any schema other than credit-os-data/1 is reported as "written by a newer version", and the schema text is kept but never shown. |  |
 | S1-016 | Low | S1 | The top-level `issuers` list is read only by an unreachable branch of App.tsx, yet one malformed entry turns every page into "Library data is missing". |  |
@@ -26,6 +27,11 @@ Hostile or unusual inputs no roadmap line names (ruling R3). Registered, not rep
 | S6-019 | Low | S6 | One invalid string makes every run page a bare message that prints the validator's path text, and no run page can be read. |  |
 | C4-018 | Info | C4 | Two columns with the same case name, or more than six cases, silently lose the cash proxy chart or the case cards. |  |
 | J5-006 | Info | J5 | At 390 px a 184-character issuer name fills 504 of the 844 px of the first screen on every report page, and the browser title is 207 characters; the name wraps everywhere without clipping. |  |
+| R1-002 | Info | C2 | A hand-built module list holding CP-8 passes the server's module check at Submit and is refused by the launcher at launch. |  |
+| R1-005 | Info | C1 | A data.js with no final ';' makes the service answer 500. |  |
+| R1-006 | Info | C1 | A data.js with two 'catalogue' keys, the first holding 'workspace', is served as read. |  |
+| R1-010 | Info | C1 | A hand-edited event log can make the Teams card count a left-out module. |  |
+| R1-011 | Info | C2 | A crafted Submit body can put CP-MODEL on a pathway that publishes no forecast; Submit accepts any known module on any pathway. |  |
 | X1-008 | Info | X1 | Five components throw on out-of-contract props, and only the connected app has an error boundary around them. | S4-022 |
 | X1-010 | Info | X1 | Timeline keys each item by date and title, so two items with the same date and title collide. |  |
 | X1-022 | Info | X1 | Only four of eleven chart kinds check that the table's figures equal the chart's figures. |  |

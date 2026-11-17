@@ -174,3 +174,40 @@ row CT-028 names S2, but S2 offers no such control.
 
 Recommendation: keep every item and add the missing rows to the matrices; correct CT-028's
 section. No screen changes.
+
+## OQ-14. A model with one case (raised during stage 5)
+
+Finding: R3-001. The static Model reader refuses a whole run when its model delivers one case
+instead of two (`web/src/pages/model/slice/read.ts:302`), so none of the run's Model pages can be
+read. The Model pages compare two cases by design. Repair T38 makes a run with no forecast readable
+(S5-001), but leaves this check as it is.
+
+Options: 1. show the run, and say on the Forecast page that the model delivered one case; 2. keep
+refusing it.
+
+Recommendation: option 1. It matches S5-001's repair: a missing part is stated, not a reason to hide
+the run. The static app is a design reference (OQ-01), so this is Info and can wait for the owner.
+
+## OQ-15. Why a run stopped at the checker (raised during stage 5)
+
+Finding: R1-012, with the product half of J1-002 and the remaining half of J5-001. When the checker
+rejects a module's draft and the run stops, the run page now says "Not assessable" and that the run
+stopped after the checks rejected the draft (T04). It cannot say why, for example that no
+executed agreement was chosen. The engine records only `stopped: checker` and `draft_rejected` events
+with no reason. The cause exists only in the checker's instruction to the model, which must not be
+drawn on a reader page.
+
+Options: 1. the engine records a short reader-safe reason with each rejection and stop
+(`src/deploy_workflow/model/handoff.py`, `src/deploy_workflow/owners/cpos_launch.py`) and run
+activity passes it on: a change to what the orchestrator records, outside this audit; 2. leave it.
+
+Recommendation: option 1, as separate work after the audit. A run that has the documents it needs
+is not affected, and T12 makes the documented synthetic path finish.
+
+## Owner ruling on OQ-14 and OQ-15 (R15)
+
+Owner, 2026-11-17: "everything else is fine ... 4. OQ-15 - your recommendation". OQ-14 is decided as recommended: a one-case model run is shown, with a stated gap on its Forecast page (R3-001, Low and Info batch). OQ-15 is decided as recommended: the engine records a short reader-safe reason with each checker rejection and stop, as separate work after the audit (R1-012, deferred; listed in the work-PC prompt and the summary). Teams run cards are implemented and checked only on the work PC (R1-009 and the Teams items go to the work-PC prompt).
+
+## B0-006, the legacy pages (R17)
+
+Owner, 2026-11-17: "agreed". Both legacy pages stay for this hand-over. They work offline. The connected app does not open the old library page, but it reads `library/data.js` and links `library/downloads/`, which the legacy library's build writes (`apps/issuer-library/update_library.py`), and the build also writes the old page. The Python context checks (`src/deploy_vii/context.py`) and five test files rely on the legacy form. After the audit: separate the data build from the old page, and move the form's rules into Python, before either is removed.

@@ -52,7 +52,7 @@ Every content-matrix (CM) and control-matrix (CT) row as each section marked it,
 | - | C2 | not accounted for by any matrix row |  |
 | - | C2 | not accounted for by any matrix row | C2-019: batch |
 | - | C2 | not accounted for by any matrix row | C2-010: batch; C2-023: batch |
-| - | C2 | not accounted for by any matrix row | C2-025: batch |
+| - | C2 | not accounted for by any matrix row | C2-025: deferred |
 | - | C2 | not accounted for by any matrix row |  |
 | CM-001 | C3 | shown as required |  |
 | CM-001 | S3 | shown as required |  |
@@ -271,7 +271,7 @@ Every content-matrix (CM) and control-matrix (CT) row as each section marked it,
 | CM-071 | C4 | shown as required |  |
 | CM-071 | S3 | missing |  |
 | CM-071 | S5 | shown as required |  |
-| CM-072 | C5 | shown as required | C5-006: repair (C3-004) |
+| CM-072 | C5 | shown as required | C5-006: rejected (C3-004) |
 | CM-072 | S4 | shown but wrong place or form |  |
 | CM-073 | C5 | shown as required | C5-024: batch |
 | CM-073 | S4 | shown but wrong place or form |  |
@@ -281,7 +281,7 @@ Every content-matrix (CM) and control-matrix (CT) row as each section marked it,
 | CM-075 | S4 | shown as required |  |
 | CM-076 | C5 | shown but wrong place or form | C5-013: batch |
 | CM-076 | S4 | shown but wrong place or form |  |
-| CM-077 | C5 | shown as required | C5-014: batch; C5-015: batch |
+| CM-077 | C5 | shown as required | C5-014: batch; C5-015: rejected |
 | CM-078 | C5 | shown but wrong place or form | C5-017: batch |
 | CM-078 | S4 | shown as required |  |
 | CM-079 | C5 | shown but wrong place or form | C5-003: repair; C5-004: repair (C4-003) |
@@ -313,10 +313,10 @@ Every content-matrix (CM) and control-matrix (CT) row as each section marked it,
 | CM-088 | S6 | shown but wrong place or form |  |
 | CM-089 | C1 | shown as required | C1-018: batch |
 | CM-089 | S6 | shown but wrong place or form |  |
-| CM-090 | C1 | shown as required | C1-003: repair; C1-006: repair |
+| CM-090 | C1 | shown as required | C1-003: repair; C1-006: rejected |
 | CM-090 | S6 | shown but wrong place or form |  |
 | CM-091 | C1 | correctly not shown |  |
-| CM-091 | C2 | correctly not shown | C2-025: batch |
+| CM-091 | C2 | correctly not shown | C2-025: deferred |
 | CM-091 | S6 | correctly not shown |  |
 | CM-092 | C1 | shown as required | C1-005: repair |
 | CM-092 | C5 | missing | C5-033: batch |
@@ -1072,15 +1072,15 @@ Every content-matrix (CM) and control-matrix (CT) row as each section marked it,
 | CT-042 | S6 | not reachable here |  |
 | CT-043 | C1 | shown but wrong place or form | C1-007: repair; C1-019: batch |
 | CT-043 | S2 | decides more than the row |  |
-| CT-044 | C3 | shown but wrong place or form | C3-002: repair; C3-004: repair; C3-025: repair (S3-006) |
+| CT-044 | C3 | shown but wrong place or form | C3-002: repair; C3-004: rejected; C3-025: repair (S3-006) |
 | CT-044 | S3 | decides less than the row |  |
 | CT-045 | C4 | shown as required |  |
 | CT-045 | S5 | decidable as required |  |
-| CT-046 | C5 | shown as required | C5-006: repair (C3-004) |
+| CT-046 | C5 | shown as required | C5-006: rejected (C3-004) |
 | CT-046 | S4 | decides less than the row |  |
 | CT-047 | C3 | shown but wrong place or form | C3-001: repair |
 | CT-047 | C4 | shown as required |  |
-| CT-047 | C5 | shown as required | C5-034: repair |
+| CT-047 | C5 | shown as required | C5-034: rejected |
 | CT-047 | S2 | decides less than the row |  |
 | CT-047 | S3 | decides less than the row |  |
 | CT-047 | S4 | decidable as required |  |
