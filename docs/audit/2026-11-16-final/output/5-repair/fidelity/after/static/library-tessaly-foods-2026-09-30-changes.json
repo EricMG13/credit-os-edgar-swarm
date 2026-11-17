@@ -1,0 +1,60 @@
+{
+  "screen": {"id":"library--tessaly-foods--2026-09-30--changes","surface":"static","address":"/library/tessaly-foods/2026-09-30/changes","extra":false,"variant":null},
+  "page": {"title":"Changes — Tessaly Foods — As of 30 Sep 2026 — Credit OS","headings":["Tessaly Foods","No earlier run to compare"]},
+  "counts": {"textRuns":20,"figures":2,"figuresByKind":{"card":2},"tableViewFigures":0,"chartTableViews":0,"tables":0,"tableRows":0,"sourceLines":0,"drawerLines":0,"limitationSentences":1,"marks":1,"images":0,"traceControls":0,"traceDrawers":0,"traceUnavailable":0,"traceErrors":0,"coverageGap":0},
+  "expandedDisclosures": 0,
+  "outline": [
+    {"section":"","kind":"text","text":"Design reference with sample data"},
+    {"section":"","kind":"text","text":"This page shows a saved example. Its names and figures are samples, and it is not connected to the run service, so nothing here starts a run or spends money."},
+    {"section":"","kind":"link","text":"Library"},
+    {"section":"Tessaly Foods","kind":"heading","text":"Tessaly Foods"},
+    {"section":"Tessaly Foods","kind":"text","text":"As of 30 Sep 2026"},
+    {"section":"Tessaly Foods","kind":"text","text":"Monitoring update"},
+    {"section":"Tessaly Foods","kind":"text","text":"Finished"},
+    {"section":"Tessaly Foods","kind":"text","text":"Show sources"},
+    {"section":"Tessaly Foods","kind":"link","text":"Report history"},
+    {"section":"Tessaly Foods","kind":"link","text":"New run"},
+    {"section":"Tessaly Foods","kind":"link","text":"Overview"},
+    {"section":"Tessaly Foods","kind":"link","text":"Changes"},
+    {"section":"Tessaly Foods","kind":"link","text":"Modules"},
+    {"section":"Tessaly Foods","kind":"link","text":"2"},
+    {"section":"Tessaly Foods","kind":"text","text":"Forecast"},
+    {"section":"Tessaly Foods","kind":"text","text":"No forecast for this run"},
+    {"section":"Tessaly Foods","kind":"link","text":"Evidence"},
+    {"section":"Tessaly Foods > No earlier run to compare","kind":"heading","text":"No earlier run to compare"},
+    {"section":"Tessaly Foods > No earlier run to compare","kind":"paragraph","text":"This is the first run on Tessaly Foods. What changed will appear here after the next run."},
+    {"section":"Tessaly Foods > No earlier run to compare","kind":"link","text":"Open the Overview"}
+  ],
+  "tables": [],
+  "figures": [
+    {"kind":"card","text":"As of 30 Sep 2026","tokens":["30","2026"],"section":"Tessaly Foods","label":"Monitoring update","period":"As of 30 Sep 2026","unit":null,"basis":null,"beside":"As of 30 Sep 2026 | Monitoring update | Finished"},
+    {"kind":"card","text":"2","tokens":["2"],"section":"Tessaly Foods","label":"Modules","period":null,"unit":null,"basis":null,"beside":"Modules | 2"}
+  ],
+  "sources": [],
+  "limitations": [
+    {"via":"text","section":"","text":"This page shows a saved example. Its names and figures are samples, and it is not connected to the run service, so nothing here starts a run or spends money."}
+  ],
+  "marks": [
+    {"in":null,"tag":"div","attrs":{"data-featured-icon":"true"}}
+  ],
+  "controls": [
+    {"role":"switch","name":"Show sources","checked":false,"selected":null,"pressed":null}
+  ],
+  "links": [
+    {"text":"Library","href":"#/library/home"},
+    {"text":"Report history","href":"#/library/tessaly-foods/history"},
+    {"text":"New run","href":"#/run/start"},
+    {"text":"Overview","href":"#/library/tessaly-foods/2026-09-30/overview"},
+    {"text":"Changes","href":"#/library/tessaly-foods/2026-09-30/changes"},
+    {"text":"Modules 2","href":"#/library/tessaly-foods/2026-09-30/modules/business-profile"},
+    {"text":"Evidence","href":"#/library/tessaly-foods/2026-09-30/evidence/summary"},
+    {"text":"Open the Overview","href":"#/library/tessaly-foods/2026-09-30/overview"}
+  ],
+  "images": [],
+  "screenReaderOnly": [],
+  "coverage": {"innerText":3,"captured":3,"optionsNotDrawn":0,"selected":0,"typed":0,"screenReaderOnly":0},
+  "chartTableViews": [],
+  "sourceDrawers": [],
+  "unavailableSourceControls": [],
+  "sourceControlErrors": []
+}

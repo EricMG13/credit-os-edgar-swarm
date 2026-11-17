@@ -1,0 +1,54 @@
+{
+  "screen": {"id":"library--ardenne-cable--history","surface":"static","address":"/library/ardenne-cable/history","extra":true,"variant":null},
+  "page": {"title":"Report history — Ardenne Cable — Credit OS","headings":["Ardenne Cable"]},
+  "counts": {"textRuns":18,"figures":6,"figuresByKind":{"paragraph":1,"card":5},"tableViewFigures":0,"chartTableViews":0,"tables":0,"tableRows":0,"sourceLines":0,"drawerLines":0,"limitationSentences":1,"marks":0,"images":0,"traceControls":0,"traceDrawers":0,"traceUnavailable":0,"traceErrors":0,"coverageGap":0},
+  "expandedDisclosures": 0,
+  "outline": [
+    {"section":"","kind":"text","text":"Design reference with sample data"},
+    {"section":"","kind":"text","text":"This page shows a saved example. Its names and figures are samples, and it is not connected to the run service, so nothing here starts a run or spends money."},
+    {"section":"","kind":"link","text":"Library"},
+    {"section":"Ardenne Cable","kind":"heading","text":"Ardenne Cable"},
+    {"section":"Ardenne Cable","kind":"link","text":"Open latest report"},
+    {"section":"Ardenne Cable","kind":"link","text":"New run"},
+    {"section":"Ardenne Cable","kind":"paragraph","text":"Report history: two runs since March 2026"},
+    {"section":"Ardenne Cable","kind":"item","text":"Run as of 30 Sep 2026"},
+    {"section":"Ardenne Cable","kind":"item","text":"Ran 9 Nov 2026"},
+    {"section":"Ardenne Cable","kind":"item","text":"Failed"},
+    {"section":"Ardenne Cable","kind":"item","text":"Full review"},
+    {"section":"Ardenne Cable","kind":"item","text":"The run failed before any module was accepted. Nothing from it is shown in the library."},
+    {"section":"Ardenne Cable","kind":"item","text":"Run as of 31 Mar 2026"},
+    {"section":"Ardenne Cable","kind":"item","text":"Ran 12 May 2026"},
+    {"section":"Ardenne Cable","kind":"item","text":"Finished"},
+    {"section":"Ardenne Cable","kind":"item","text":"Full review"},
+    {"section":"Ardenne Cable","kind":"item","text":"Stable: subscriber losses are offset by pricing; leverage is flat at 5.2x."},
+    {"section":"Ardenne Cable","kind":"link","text":"Open report"}
+  ],
+  "tables": [],
+  "figures": [
+    {"kind":"paragraph","text":"Report history: two runs since March 2026","tokens":["2026"],"section":"Ardenne Cable","label":null,"period":null,"unit":null,"basis":null},
+    {"kind":"card","text":"Run as of 30 Sep 2026","tokens":["30","2026"],"section":"Ardenne Cable","label":"Failed","period":"Ran 9 Nov 2026","unit":null,"basis":null,"beside":"Run as of 30 Sep 2026 | Ran 9 Nov 2026 | Failed | Full review | The run failed before any module was accepted. Nothing from it is shown in the library."},
+    {"kind":"card","text":"Ran 9 Nov 2026","tokens":["9","2026"],"section":"Ardenne Cable","label":"Failed","period":"Run as of 30 Sep 2026","unit":null,"basis":null,"beside":"Run as of 30 Sep 2026 | Ran 9 Nov 2026 | Failed | Full review | The run failed before any module was accepted. Nothing from it is shown in the library."},
+    {"kind":"card","text":"Run as of 31 Mar 2026","tokens":["31","2026"],"section":"Ardenne Cable","label":"Finished","period":"Ran 12 May 2026","unit":null,"basis":null,"beside":"Run as of 31 Mar 2026 | Ran 12 May 2026 | Finished | Full review | Stable: subscriber losses are offset by pricing; leverage is flat at 5.2x. | Open report"},
+    {"kind":"card","text":"Ran 12 May 2026","tokens":["12","2026"],"section":"Ardenne Cable","label":"Finished","period":"Run as of 31 Mar 2026","unit":null,"basis":null,"beside":"Run as of 31 Mar 2026 | Ran 12 May 2026 | Finished | Full review | Stable: subscriber losses are offset by pricing; leverage is flat at 5.2x. | Open report"},
+    {"kind":"card","text":"Stable: subscriber losses are offset by pricing; leverage is flat at 5.2x.","tokens":["5.2x"],"section":"Ardenne Cable","label":"Full review","period":"Run as of 31 Mar 2026","unit":"x","basis":null,"beside":"Run as of 31 Mar 2026 | Ran 12 May 2026 | Finished | Full review | Stable: subscriber losses are offset by pricing; leverage is flat at 5.2x. | Open report"}
+  ],
+  "sources": [],
+  "limitations": [
+    {"via":"text","section":"","text":"This page shows a saved example. Its names and figures are samples, and it is not connected to the run service, so nothing here starts a run or spends money."}
+  ],
+  "marks": [],
+  "controls": [],
+  "links": [
+    {"text":"Library","href":"#/library/home"},
+    {"text":"Open latest report","href":"#/library/ardenne-cable/2026-03-31/overview"},
+    {"text":"New run","href":"#/run/start"},
+    {"text":"Open report","href":"#/library/ardenne-cable/2026-03-31/overview"}
+  ],
+  "images": [],
+  "screenReaderOnly": [],
+  "coverage": {"innerText":10,"captured":10,"optionsNotDrawn":0,"selected":0,"typed":0,"screenReaderOnly":0},
+  "chartTableViews": [],
+  "sourceDrawers": [],
+  "unavailableSourceControls": [],
+  "sourceControlErrors": []
+}

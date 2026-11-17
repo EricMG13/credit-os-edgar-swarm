@@ -1,0 +1,45 @@
+{
+  "screen": {"id":"library--tessaly-foods--history","surface":"static","address":"/library/tessaly-foods/history","extra":true,"variant":null},
+  "page": {"title":"Report history — Tessaly Foods — Credit OS","headings":["Tessaly Foods"]},
+  "counts": {"textRuns":13,"figures":2,"figuresByKind":{"card":2},"tableViewFigures":0,"chartTableViews":0,"tables":0,"tableRows":0,"sourceLines":0,"drawerLines":0,"limitationSentences":1,"marks":0,"images":0,"traceControls":0,"traceDrawers":0,"traceUnavailable":0,"traceErrors":0,"coverageGap":0},
+  "expandedDisclosures": 0,
+  "outline": [
+    {"section":"","kind":"text","text":"Design reference with sample data"},
+    {"section":"","kind":"text","text":"This page shows a saved example. Its names and figures are samples, and it is not connected to the run service, so nothing here starts a run or spends money."},
+    {"section":"","kind":"link","text":"Library"},
+    {"section":"Tessaly Foods","kind":"heading","text":"Tessaly Foods"},
+    {"section":"Tessaly Foods","kind":"link","text":"Open latest report"},
+    {"section":"Tessaly Foods","kind":"link","text":"New run"},
+    {"section":"Tessaly Foods","kind":"paragraph","text":"Report history: one run"},
+    {"section":"Tessaly Foods","kind":"item","text":"Run as of 30 Sep 2026"},
+    {"section":"Tessaly Foods","kind":"item","text":"Ran 4 Nov 2026"},
+    {"section":"Tessaly Foods","kind":"item","text":"Finished"},
+    {"section":"Tessaly Foods","kind":"item","text":"Monitoring update"},
+    {"section":"Tessaly Foods","kind":"item","text":"Weakening: the springing covenant is likely to be tested at the December quarter end."},
+    {"section":"Tessaly Foods","kind":"link","text":"Open report"}
+  ],
+  "tables": [],
+  "figures": [
+    {"kind":"card","text":"Run as of 30 Sep 2026","tokens":["30","2026"],"section":"Tessaly Foods","label":"Finished","period":"Ran 4 Nov 2026","unit":null,"basis":null,"beside":"Run as of 30 Sep 2026 | Ran 4 Nov 2026 | Finished | Monitoring update | Weakening: the springing covenant is likely to be tested at the December quarter end. | Open report"},
+    {"kind":"card","text":"Ran 4 Nov 2026","tokens":["4","2026"],"section":"Tessaly Foods","label":"Finished","period":"Run as of 30 Sep 2026","unit":null,"basis":null,"beside":"Run as of 30 Sep 2026 | Ran 4 Nov 2026 | Finished | Monitoring update | Weakening: the springing covenant is likely to be tested at the December quarter end. | Open report"}
+  ],
+  "sources": [],
+  "limitations": [
+    {"via":"text","section":"","text":"This page shows a saved example. Its names and figures are samples, and it is not connected to the run service, so nothing here starts a run or spends money."}
+  ],
+  "marks": [],
+  "controls": [],
+  "links": [
+    {"text":"Library","href":"#/library/home"},
+    {"text":"Open latest report","href":"#/library/tessaly-foods/2026-09-30/overview"},
+    {"text":"New run","href":"#/run/start"},
+    {"text":"Open report","href":"#/library/tessaly-foods/2026-09-30/overview"}
+  ],
+  "images": [],
+  "screenReaderOnly": [],
+  "coverage": {"innerText":4,"captured":4,"optionsNotDrawn":0,"selected":0,"typed":0,"screenReaderOnly":0},
+  "chartTableViews": [],
+  "sourceDrawers": [],
+  "unavailableSourceControls": [],
+  "sourceControlErrors": []
+}

@@ -1,0 +1,32 @@
+connected: service at http://127.0.0.1:8851/, root /tmp/fid-oz2N6b
+connected: synthetic run 20261117-214127-01 finished
+connected overview: 231 runs, 67 figures, 46 drawers -> overview.json
+connected changes: 25 runs, 3 figures, 0 drawers -> changes.json
+connected modules--default: 224 runs, 112 figures, 42 drawers -> modules-default.json
+connected modules--CP-0: 94 runs, 24 figures, 9 drawers -> modules-cp-0.json
+connected modules--CP-1: 224 runs, 112 figures, 42 drawers -> modules-cp-1.json
+connected modules--CP-1A: 119 runs, 30 figures, 17 drawers -> modules-cp-1a.json
+connected modules--CP-DR: 95 runs, 26 figures, 10 drawers -> modules-cp-dr.json
+connected modules--CP-4: 125 runs, 45 figures, 19 drawers -> modules-cp-4.json
+connected modules--CP-2: 78 runs, 10 figures, 10 drawers -> modules-cp-2.json
+connected modules--CP-2A: 146 runs, 40 figures, 22 drawers -> modules-cp-2a.json
+connected modules--CP-2E: 241 runs, 105 figures, 21 drawers -> modules-cp-2e.json
+connected modules--CP-2D: 116 runs, 40 figures, 15 drawers -> modules-cp-2d.json
+connected modules--CP-2G: 59 runs, 7 figures, 5 drawers -> modules-cp-2g.json
+connected modules--CP-3C: 109 runs, 38 figures, 13 drawers -> modules-cp-3c.json
+connected modules--CP-3: 175 runs, 46 figures, 19 drawers -> modules-cp-3.json
+connected modules--CP-5: 66 runs, 8 figures, 7 drawers -> modules-cp-5.json
+connected modules--CP-6: 144 runs, 47 figures, 18 drawers -> modules-cp-6.json
+connected forecast: 877 runs, 542 figures, 96 drawers -> forecast.json
+connected forecast--case-downside-shock: 876 runs, 541 figures, 96 drawers -> forecast-case-downside-shock.json
+connected evidence--summary: 71 runs, 8 figures, 0 drawers -> evidence-summary.json
+connected evidence--trace: 61 runs, 4 figures, 0 drawers -> evidence-trace.json
+connected evidence--sources: 47 runs, 10 figures, 0 drawers -> evidence-sources.json
+connected evidence--gaps: 34 runs, 4 figures, 0 drawers -> evidence-gaps.json
+connected evidence--checks: 1478 runs, 439 figures, 0 drawers -> evidence-checks.json
+connected evidence--record: 483 runs, 130 figures, 0 drawers -> evidence-record.json
+connected history: 28 runs, 5 figures, 0 drawers -> history.json
+connected calendar: 288 runs, 154 figures, 36 drawers -> calendar.json
+connected changes--paired-run-fixture: 53 runs, 22 figures, 3 drawers -> changes-paired-run-fixture.json
+connected changes--paired-run-fixture--presentation-table: 53 runs, 15 figures, 3 drawers -> changes-paired-run-fixture-presentation-table.json
+connected: 29 screens (25 asked for), 2634 figures, 79 source lines on screen, 6653 in source drawers, 241 limitation sentences

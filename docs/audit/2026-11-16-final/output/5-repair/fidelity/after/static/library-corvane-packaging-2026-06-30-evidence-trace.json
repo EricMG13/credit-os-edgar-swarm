@@ -1,0 +1,80 @@
+{
+  "screen": {"id":"library--corvane-packaging--2026-06-30--evidence--trace","surface":"static","address":"/library/corvane-packaging/2026-06-30/evidence/trace","extra":false,"variant":null},
+  "page": {"title":"Evidence — Trace — Corvane Packaging — As of 30 Jun 2026 — Credit OS","headings":["Corvane Packaging","Evidence","Nothing is traced in this run"]},
+  "counts": {"textRuns":32,"figures":5,"figuresByKind":{"card":5},"tableViewFigures":0,"chartTableViews":0,"tables":0,"tableRows":0,"sourceLines":0,"drawerLines":0,"limitationSentences":2,"marks":1,"images":0,"traceControls":0,"traceDrawers":0,"traceUnavailable":0,"traceErrors":0,"coverageGap":0},
+  "expandedDisclosures": 0,
+  "outline": [
+    {"section":"","kind":"text","text":"Design reference with sample data"},
+    {"section":"","kind":"text","text":"This page shows a saved example. Its names and figures are samples, and it is not connected to the run service, so nothing here starts a run or spends money."},
+    {"section":"","kind":"link","text":"Library"},
+    {"section":"Corvane Packaging","kind":"heading","text":"Corvane Packaging"},
+    {"section":"Corvane Packaging","kind":"text","text":"As of 30 Jun 2026"},
+    {"section":"Corvane Packaging","kind":"text","text":"Full review"},
+    {"section":"Corvane Packaging","kind":"text","text":"Finished"},
+    {"section":"Corvane Packaging","kind":"link","text":"Report history"},
+    {"section":"Corvane Packaging","kind":"link","text":"New run"},
+    {"section":"Corvane Packaging","kind":"link","text":"Overview"},
+    {"section":"Corvane Packaging","kind":"link","text":"Changes"},
+    {"section":"Corvane Packaging","kind":"link","text":"Modules"},
+    {"section":"Corvane Packaging","kind":"link","text":"2"},
+    {"section":"Corvane Packaging","kind":"text","text":"Forecast"},
+    {"section":"Corvane Packaging","kind":"text","text":"No forecast for this run"},
+    {"section":"Corvane Packaging","kind":"link","text":"Evidence"},
+    {"section":"Corvane Packaging > Evidence","kind":"heading","text":"Evidence"},
+    {"section":"Corvane Packaging > Evidence","kind":"paragraph","text":"Where every figure and claim in this run comes from."},
+    {"section":"Corvane Packaging > Evidence","kind":"control","text":"Module: All"},
+    {"section":"Corvane Packaging > Evidence","kind":"select","text":"All"},
+    {"section":"Corvane Packaging > Evidence","kind":"control","text":"Jump to an item"},
+    {"section":"Corvane Packaging > Evidence","kind":"control","text":"Ctrl K"},
+    {"section":"Corvane Packaging > Evidence","kind":"link","text":"Summary"},
+    {"section":"Corvane Packaging > Evidence","kind":"link","text":"Trace"},
+    {"section":"Corvane Packaging > Evidence","kind":"link","text":"0"},
+    {"section":"Corvane Packaging > Evidence","kind":"link","text":"Sources"},
+    {"section":"Corvane Packaging > Evidence","kind":"link","text":"1"},
+    {"section":"Corvane Packaging > Evidence","kind":"link","text":"Gaps"},
+    {"section":"Corvane Packaging > Evidence","kind":"link","text":"1"},
+    {"section":"Corvane Packaging > Evidence","kind":"link","text":"Record"},
+    {"section":"Corvane Packaging > Evidence > Nothing is traced in this run","kind":"heading","text":"Nothing is traced in this run"},
+    {"section":"Corvane Packaging > Evidence > Nothing is traced in this run","kind":"paragraph","text":"The handoffs of this run were not traced item by item, so no paragraph, row or figure lists its sources here."}
+  ],
+  "tables": [],
+  "figures": [
+    {"kind":"card","text":"As of 30 Jun 2026","tokens":["30","2026"],"section":"Corvane Packaging","label":"Full review","period":"As of 30 Jun 2026","unit":null,"basis":null,"beside":"As of 30 Jun 2026 | Full review | Finished"},
+    {"kind":"card","text":"2","tokens":["2"],"section":"Corvane Packaging","label":"Modules","period":null,"unit":null,"basis":null,"beside":"Modules | 2"},
+    {"kind":"card","text":"0","tokens":["0"],"section":"Corvane Packaging > Evidence","label":"Trace","period":null,"unit":null,"basis":null,"beside":"Trace | 0"},
+    {"kind":"card","text":"1","tokens":["1"],"section":"Corvane Packaging > Evidence","label":"Sources","period":null,"unit":null,"basis":null,"beside":"Sources | 1"},
+    {"kind":"card","text":"1","tokens":["1"],"section":"Corvane Packaging > Evidence","label":"Gaps","period":null,"unit":null,"basis":null,"beside":"Gaps | 1"}
+  ],
+  "sources": [],
+  "limitations": [
+    {"via":"text","section":"","text":"This page shows a saved example. Its names and figures are samples, and it is not connected to the run service, so nothing here starts a run or spends money."},
+    {"via":"text","section":"Corvane Packaging > Evidence > Nothing is traced in this run","text":"The handoffs of this run were not traced item by item, so no paragraph, row or figure lists its sources here."}
+  ],
+  "marks": [
+    {"in":null,"tag":"div","attrs":{"data-featured-icon":"true"}}
+  ],
+  "controls": [
+    {"role":"select","name":"All Business profile Source readiness","value":"All","options":[" ","All","Business profile","Source readiness"]}
+  ],
+  "links": [
+    {"text":"Library","href":"#/library/home"},
+    {"text":"Report history","href":"#/library/corvane-packaging/history"},
+    {"text":"New run","href":"#/run/start"},
+    {"text":"Overview","href":"#/library/corvane-packaging/2026-06-30/overview"},
+    {"text":"Changes","href":"#/library/corvane-packaging/2026-06-30/changes"},
+    {"text":"Modules 2","href":"#/library/corvane-packaging/2026-06-30/modules/business-profile"},
+    {"text":"Evidence","href":"#/library/corvane-packaging/2026-06-30/evidence/summary"},
+    {"text":"Summary","href":"#/library/corvane-packaging/2026-06-30/evidence/summary"},
+    {"text":"Trace 0","href":"#/library/corvane-packaging/2026-06-30/evidence/trace"},
+    {"text":"Sources 1","href":"#/library/corvane-packaging/2026-06-30/evidence/sources"},
+    {"text":"Gaps 1","href":"#/library/corvane-packaging/2026-06-30/evidence/gaps"},
+    {"text":"Record","href":"#/library/corvane-packaging/2026-06-30/evidence/record"}
+  ],
+  "images": [],
+  "screenReaderOnly": [],
+  "coverage": {"innerText":6,"captured":6,"optionsNotDrawn":0,"selected":0,"typed":0,"screenReaderOnly":0},
+  "chartTableViews": [],
+  "sourceDrawers": [],
+  "unavailableSourceControls": [],
+  "sourceControlErrors": []
+}

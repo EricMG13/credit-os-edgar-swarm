@@ -1,0 +1,61 @@
+{
+  "screen": {"id":"library--transdigm--activity-interrupted--changes","surface":"static","address":"/library/transdigm/activity-interrupted/changes","extra":false,"variant":null},
+  "page": {"title":"Changes — TransDigm Group — As of Q3 FY2026 — Credit OS","headings":["TransDigm Group","No earlier run to compare"]},
+  "counts": {"textRuns":20,"figures":2,"figuresByKind":{"card":2},"tableViewFigures":0,"chartTableViews":0,"tables":0,"tableRows":0,"sourceLines":0,"drawerLines":0,"limitationSentences":2,"marks":1,"images":0,"traceControls":0,"traceDrawers":0,"traceUnavailable":0,"traceErrors":0,"coverageGap":0},
+  "expandedDisclosures": 0,
+  "outline": [
+    {"section":"","kind":"text","text":"Design reference with sample data"},
+    {"section":"","kind":"text","text":"This page shows a saved example. Its names and figures are samples, and it is not connected to the run service, so nothing here starts a run or spends money."},
+    {"section":"","kind":"link","text":"Library"},
+    {"section":"TransDigm Group","kind":"heading","text":"TransDigm Group"},
+    {"section":"TransDigm Group","kind":"text","text":"As of Q3 FY2026"},
+    {"section":"TransDigm Group","kind":"text","text":"Full review"},
+    {"section":"TransDigm Group","kind":"text","text":"Interrupted"},
+    {"section":"TransDigm Group","kind":"text","text":"Show sources"},
+    {"section":"TransDigm Group","kind":"link","text":"Report history"},
+    {"section":"TransDigm Group","kind":"link","text":"New run"},
+    {"section":"TransDigm Group","kind":"link","text":"Overview"},
+    {"section":"TransDigm Group","kind":"link","text":"Changes"},
+    {"section":"TransDigm Group","kind":"link","text":"Modules"},
+    {"section":"TransDigm Group","kind":"link","text":"13"},
+    {"section":"TransDigm Group","kind":"text","text":"Forecast"},
+    {"section":"TransDigm Group","kind":"text","text":"No forecast for this run"},
+    {"section":"TransDigm Group","kind":"link","text":"Evidence"},
+    {"section":"TransDigm Group > No earlier run to compare","kind":"heading","text":"No earlier run to compare"},
+    {"section":"TransDigm Group > No earlier run to compare","kind":"paragraph","text":"This saved example has no earlier run on the same pathway to compare."},
+    {"section":"TransDigm Group > No earlier run to compare","kind":"link","text":"Open the Overview"}
+  ],
+  "tables": [],
+  "figures": [
+    {"kind":"card","text":"As of Q3 FY2026","tokens":["3","2026"],"section":"TransDigm Group","label":"Full review","period":"As of Q3 FY2026","unit":null,"basis":null,"beside":"As of Q3 FY2026 | Full review | Interrupted"},
+    {"kind":"card","text":"13","tokens":["13"],"section":"TransDigm Group","label":"Modules","period":null,"unit":null,"basis":null,"beside":"Modules | 13"}
+  ],
+  "sources": [],
+  "limitations": [
+    {"via":"text","section":"","text":"This page shows a saved example. Its names and figures are samples, and it is not connected to the run service, so nothing here starts a run or spends money."},
+    {"via":"text","section":"TransDigm Group > No earlier run to compare","text":"This saved example has no earlier run on the same pathway to compare."}
+  ],
+  "marks": [
+    {"in":null,"tag":"div","attrs":{"data-featured-icon":"true"}}
+  ],
+  "controls": [
+    {"role":"switch","name":"Show sources","checked":false,"selected":null,"pressed":null}
+  ],
+  "links": [
+    {"text":"Library","href":"#/library/home"},
+    {"text":"Report history","href":"#/library/transdigm/history"},
+    {"text":"New run","href":"#/run/start"},
+    {"text":"Overview","href":"#/library/transdigm/activity-interrupted/overview"},
+    {"text":"Changes","href":"#/library/transdigm/activity-interrupted/changes"},
+    {"text":"Modules 13","href":"#/library/transdigm/activity-interrupted/modules/documentation-review"},
+    {"text":"Evidence","href":"#/library/transdigm/activity-interrupted/evidence/summary"},
+    {"text":"Open the Overview","href":"#/library/transdigm/activity-interrupted/overview"}
+  ],
+  "images": [],
+  "screenReaderOnly": [],
+  "coverage": {"innerText":3,"captured":3,"optionsNotDrawn":0,"selected":0,"typed":0,"screenReaderOnly":0},
+  "chartTableViews": [],
+  "sourceDrawers": [],
+  "unavailableSourceControls": [],
+  "sourceControlErrors": []
+}

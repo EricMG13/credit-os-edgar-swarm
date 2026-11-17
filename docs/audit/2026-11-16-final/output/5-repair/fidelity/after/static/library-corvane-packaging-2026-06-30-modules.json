@@ -1,0 +1,92 @@
+{
+  "screen": {"id":"library--corvane-packaging--2026-06-30--modules","surface":"static","address":"/library/corvane-packaging/2026-06-30/modules","extra":false,"variant":null},
+  "page": {"title":"Modules — Business profile — Corvane Packaging — As of 30 Jun 2026 — Credit OS","headings":["Corvane Packaging","Business profile","Volumes have recovered across the three largest customers.","Key findings","Limitations 1"]},
+  "counts": {"textRuns":36,"figures":3,"figuresByKind":{"card":3},"tableViewFigures":0,"chartTableViews":0,"tables":0,"tableRows":0,"sourceLines":0,"drawerLines":0,"limitationSentences":3,"marks":6,"images":0,"traceControls":3,"traceDrawers":0,"traceUnavailable":3,"traceErrors":0,"coverageGap":0},
+  "expandedDisclosures": 0,
+  "outline": [
+    {"section":"","kind":"text","text":"Design reference with sample data"},
+    {"section":"","kind":"text","text":"This page shows a saved example. Its names and figures are samples, and it is not connected to the run service, so nothing here starts a run or spends money."},
+    {"section":"","kind":"link","text":"Library"},
+    {"section":"Corvane Packaging","kind":"heading","text":"Corvane Packaging"},
+    {"section":"Corvane Packaging","kind":"text","text":"As of 30 Jun 2026"},
+    {"section":"Corvane Packaging","kind":"text","text":"Full review"},
+    {"section":"Corvane Packaging","kind":"text","text":"Finished"},
+    {"section":"Corvane Packaging","kind":"text","text":"Show sources"},
+    {"section":"Corvane Packaging","kind":"link","text":"Report history"},
+    {"section":"Corvane Packaging","kind":"link","text":"New run"},
+    {"section":"Corvane Packaging","kind":"link","text":"Overview"},
+    {"section":"Corvane Packaging","kind":"link","text":"Changes"},
+    {"section":"Corvane Packaging","kind":"link","text":"Modules"},
+    {"section":"Corvane Packaging","kind":"link","text":"2"},
+    {"section":"Corvane Packaging","kind":"text","text":"Forecast"},
+    {"section":"Corvane Packaging","kind":"text","text":"No forecast for this run"},
+    {"section":"Corvane Packaging","kind":"link","text":"Evidence"},
+    {"section":"Corvane Packaging","kind":"text","text":"On this page"},
+    {"section":"Corvane Packaging","kind":"control","text":"Bottom line"},
+    {"section":"Corvane Packaging","kind":"control","text":"Key findings"},
+    {"section":"Corvane Packaging","kind":"control","text":"Limitations"},
+    {"section":"Corvane Packaging","kind":"text","text":"Modules in this run"},
+    {"section":"Corvane Packaging","kind":"link","text":"Business profile"},
+    {"section":"Corvane Packaging","kind":"link","text":"Source readiness"},
+    {"section":"Corvane Packaging > Business profile","kind":"heading","text":"Business profile"},
+    {"section":"Corvane Packaging > Business profile","kind":"text","text":"Delivered"},
+    {"section":"Corvane Packaging > Business profile","kind":"text","text":"Bottom line"},
+    {"section":"Corvane Packaging > Business profile > Volumes have recovered across the three largest customers.","kind":"heading","text":"Volumes have recovered across the three largest customers."},
+    {"section":"Corvane Packaging > Business profile > Volumes have recovered across the three largest customers.","kind":"paragraph","text":"Rigid packaging volumes are back above last year’s level, and the customer base is spread across food, drink and household brands."},
+    {"section":"Corvane Packaging > Business profile > Key findings","kind":"heading","text":"Key findings"},
+    {"section":"Corvane Packaging > Business profile > Key findings","kind":"item","text":"01"},
+    {"section":"Corvane Packaging > Business profile > Key findings","kind":"item","text":"Volumes have recovered"},
+    {"section":"Corvane Packaging > Business profile > Key findings","kind":"item","text":"Volumes grew in each of the last three quarters."},
+    {"section":"Corvane Packaging > Business profile > Limitations 1","kind":"heading","text":"Limitations 1"},
+    {"section":"Corvane Packaging > Business profile > Limitations 1","kind":"link","text":"See this module’s gaps in Evidence"},
+    {"section":"Corvane Packaging > Business profile > Limitations 1","kind":"item","text":"Customer contract terms come from management presentations."}
+  ],
+  "tables": [],
+  "figures": [
+    {"kind":"card","text":"As of 30 Jun 2026","tokens":["30","2026"],"section":"Corvane Packaging","label":"Full review","period":"As of 30 Jun 2026","unit":null,"basis":null,"beside":"As of 30 Jun 2026 | Full review | Finished"},
+    {"kind":"card","text":"2","tokens":["2"],"section":"Corvane Packaging","label":"Modules","period":null,"unit":null,"basis":null,"beside":"Modules | 2"},
+    {"kind":"card","text":"01","tokens":["01"],"section":"Corvane Packaging > Business profile > Key findings","label":"Volumes have recovered","period":null,"unit":null,"basis":null,"beside":"01 | Volumes have recovered | Volumes grew in each of the last three quarters."}
+  ],
+  "sources": [],
+  "limitations": [
+    {"via":"text","section":"","text":"This page shows a saved example. Its names and figures are samples, and it is not connected to the run service, so nothing here starts a run or spends money."},
+    {"via":"section","section":"Corvane Packaging > Business profile > Limitations 1","text":"See this module’s gaps in Evidence"},
+    {"via":"section","section":"Corvane Packaging > Business profile > Limitations 1","text":"Customer contract terms come from management presentations."}
+  ],
+  "marks": [
+    {"in":null,"tag":"div","attrs":{"data-input-wrapper":"true","data-input-size":"md"}},
+    {"in":null,"tag":"span","attrs":{"data-module-name":"true"},"text":"Business profile"},
+    {"in":null,"tag":"span","attrs":{"data-module-name":"true"},"text":"Source readiness"},
+    {"in":null,"tag":"div","attrs":{"data-section":"bottom-line"},"text":"Bottom lineVolumes have recovered across the three largest customers.Rigid packa"},
+    {"in":null,"tag":"div","attrs":{"data-section":"findings"},"text":"Key findings01Volumes have recoveredVolumes grew in each of the last three quart"},
+    {"in":null,"tag":"div","attrs":{"data-section":"limitations"},"text":"Limitations1See this module’s gaps in EvidenceCustomer contract terms come from "}
+  ],
+  "controls": [
+    {"role":"switch","name":"Show sources","checked":false,"selected":null,"pressed":null},
+    {"role":"select","name":"Business profileSource readiness","value":"Business profile","options":[" ","Business profile","Source readiness"]},
+    {"role":"select","name":"Bottom lineKey findingsLimitations","value":"Bottom line","options":[" ","Bottom line","Key findings","Limitations"]}
+  ],
+  "links": [
+    {"text":"Library","href":"#/library/home"},
+    {"text":"Report history","href":"#/library/corvane-packaging/history"},
+    {"text":"New run","href":"#/run/start"},
+    {"text":"Overview","href":"#/library/corvane-packaging/2026-06-30/overview"},
+    {"text":"Changes","href":"#/library/corvane-packaging/2026-06-30/changes"},
+    {"text":"Modules 2","href":"#/library/corvane-packaging/2026-06-30/modules/business-profile"},
+    {"text":"Evidence","href":"#/library/corvane-packaging/2026-06-30/evidence/summary"},
+    {"text":"Business profile","href":"#/library/corvane-packaging/2026-06-30/modules/business-profile"},
+    {"text":"Source readiness","href":"#/library/corvane-packaging/2026-06-30/modules/source-readiness"},
+    {"text":"See this module’s gaps in Evidence","href":"#/library/corvane-packaging/2026-06-30/evidence/gaps"}
+  ],
+  "images": [],
+  "screenReaderOnly": [],
+  "coverage": {"innerText":5,"captured":5,"optionsNotDrawn":0,"selected":0,"typed":0,"screenReaderOnly":0},
+  "chartTableViews": [],
+  "sourceDrawers": [],
+  "unavailableSourceControls": [
+    {"n":1,"control":"Show sources for the bottom line: no source recorded","ariaDisabled":"true","disabled":false,"tooltip":"No source recorded","opensDialog":false},
+    {"n":2,"control":"Show sources for this finding: no source recorded","ariaDisabled":"true","disabled":false,"tooltip":"No source recorded","opensDialog":false},
+    {"n":3,"control":"Show sources for this limitation: no source recorded","ariaDisabled":"true","disabled":false,"tooltip":"No source recorded","opensDialog":false}
+  ],
+  "sourceControlErrors": []
+}
