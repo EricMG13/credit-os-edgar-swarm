@@ -28,6 +28,11 @@ No filing, credential or key is committed. The packs, contexts and the root stay
 3. Full run: the same workflow with `args {root, repo, concurrency: 10}`. It claims batches of
    up to `concurrency` issuers, runs one Sonnet analyst (high effort) per issuer, records the
    outcome in the ledger, rebuilds the library once per batch, and stops when nothing is pending.
+   A cloud container is reclaimed when the session ends, and the root goes with it. To keep the
+   outputs, also pass `results: WORKTREE` (a git worktree on a results branch) and `trailer`
+   (the closing lines of each commit message). After each batch a runner copies the run folders
+   without `inputs/` and `source-text/` (the filing copies), the library and `plan.json` there,
+   commits and pushes. A failed save is logged; the next batch saves everything again.
 4. Second pass: `args {root, repo, secondPass: true}` claims the `failed` issuers once more. It
    is explicit; the first pass never retries them. The launcher resumes the run folder.
 5. Resume after a stop: start the same workflow again. `running` claims older than an hour (set

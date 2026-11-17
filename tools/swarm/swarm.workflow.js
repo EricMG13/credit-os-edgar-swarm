@@ -7,6 +7,10 @@
 //   args.limit         stop after this many issuers are claimed (pilot: 5); default no limit
 //   args.secondPass    true: claim `failed` issuers instead of `pending` ones
 //   args.stale_seconds running claims older than this return to pending; default 3600
+//   args.results       optional: a git worktree on a results branch; after each batch the run
+//                      folders (without inputs/ and source-text/, the filing copies), the library
+//                      and plan.json are copied there, committed and pushed
+//   args.trailer       optional: the closing lines of each results commit message
 //
 // The script has no shell: every ledger, verify and update_library command runs inside a small
 // "runner" agent. The controller (this script) is the only ledger writer; analysts never are.
@@ -20,6 +24,7 @@ export const meta = {
     { title: 'Analyse', detail: 'one Sonnet analyst per issuer' },
     { title: 'Verify and record', detail: 'relaunch check, ledger done or fail' },
     { title: 'Library', detail: 'update_library once per batch' },
+    { title: 'Save', detail: 'commit and push the batch to the results branch' },
   ],
 }
 
@@ -29,10 +34,20 @@ const concurrency = Number(args.concurrency ?? 10)
 const limit = args.limit === undefined || args.limit === null ? Infinity : Number(args.limit)
 const staleSeconds = Number(args.stale_seconds ?? 3600)
 const secondPass = args.secondPass === true
+const { results, trailer } = args
 
 const q = (s) => `'${String(s).replace(/'/g, `'\\''`)}'`
 const tool = (script, rest) => `cd ${q(repo)} && uv run python tools/swarm/${script} ${rest} 2>&1`
 const ledger = (rest) => tool('ledger.py', `--root ${q(root)} ${rest}`)
+
+// Every save copies all runs again, so a save that failed is made good by the next one.
+const save = (message) =>
+  `(set -eo pipefail; cd ${q(results)}; rm -rf runs library; ` +
+  `tar -C ${q(root)}/_engine --exclude='runs/*/inputs' --exclude='runs/*/source-text' -cf - runs library` +
+  ` | tar -xf -; cp ${q(root)}/swarm/plan.json plan.json; ` +
+  `git add -A; git diff --cached --quiet || git commit -q -m ${q(message)}` +
+  `${trailer ? ` -m ${q(trailer)}` : ''}; ` +
+  `for i in 1 2 3 4; do git push -q origin HEAD && exit 0; sleep $((i * 4)); done; exit 1) 2>&1`
 
 const RUN_SCHEMA = {
   type: 'object',
@@ -187,6 +202,15 @@ while (claimed < limit) {
   )
   if (!lib || lib.exit_code !== 0) {
     throw new Error(`update_library failed: ${lib ? lib.stdout : 'runner returned nothing'}`)
+  }
+
+  if (results) {
+    phase('Save')
+    const message = `Swarm results after batch ${batches}: ${published} published, ${failed} failed in this run`
+    const saved = await run(`save batch ${batches}`, 'Save', save(message))
+    if (!saved || saved.exit_code !== 0) {
+      log(`save after batch ${batches} failed: ${saved ? saved.stdout.trim() : 'runner returned nothing'}`)
+    }
   }
 }
 
