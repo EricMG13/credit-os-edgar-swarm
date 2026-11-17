@@ -350,9 +350,13 @@ it("ends the loading state for a resolved null snapshot", async () => {
 it("shows a snapshot error without admitting a report or remaining in loading", async () => {
   vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("Snapshot unavailable")));
   render(<ConnectedApp path="/report/northbridge-2026" mode="synthetic" />);
-  expect(await screen.findByRole("alert")).toHaveTextContent("Snapshot unavailable");
+  // C3-007 (D-31): the alert names what happened in a fixed sentence, never the raw error text,
+  // and offers a way on; no report is admitted (no report sections).
+  const alert = await screen.findByRole("alert");
+  expect(alert).toHaveTextContent("The report could not be loaded");
+  expect(alert).not.toHaveTextContent("Snapshot unavailable");
   expect(screen.queryByText("Loading report…")).toBeNull();
-  expect(screen.queryByRole("link", { name: "Run activity" })).toBeNull();
+  expect(screen.queryByRole("navigation", { name: "Report sections" })).toBeNull();
 });
 
 const CODED_CELL = "Liquidity (CP-2D)";

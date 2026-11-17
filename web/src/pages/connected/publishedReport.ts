@@ -1,4 +1,4 @@
-import { moduleName, pathwayName } from "./api";
+import { moduleName, pathwayName, RequestError } from "./api";
 
 export type Row = { line: number; cells: string[] };
 export type Table = { type: "table"; line: number; headers: string[]; rows: Row[] };
@@ -180,6 +180,9 @@ export type PublishedRun = {
     steps: { module: string; started?: string | null; accepted?: string | null }[];
   } | null;
   changes?: Changes | null;
+  /** The methods that changed since this run ran, one "<module>: <detail>" line each (the store's
+   * `method_changes`); none or empty when the run is on today's methods. */
+  methodChanges?: string[] | null;
   evidence: {
     scriptChecks?: ScriptCheckRecord[];
     sources: Source[];
@@ -260,7 +263,8 @@ export async function getLibraryIndex(signal: AbortSignal): Promise<LibraryIndex
 export async function getSnapshot(signal: AbortSignal, folder?: string): Promise<Snapshot | null> {
   const query = folder === undefined ? "" : `?run=${encodeURIComponent(folder)}`;
   const response = await fetch(`/connected/snapshot${query}`, { cache: "no-store", signal });
-  if (!response.ok) throw new Error("The published report could not be loaded.");
+  if (!response.ok)
+    throw new RequestError("The published report could not be loaded.", response.status);
   return (await response.json()) as Snapshot | null;
 }
 
@@ -464,6 +468,40 @@ export function passages(sections: Section[]) {
   return classifySections(sections)
     .filter(({ role }) => role === "passage")
     .map(({ section }) => section);
+}
+
+/** The heading of the first H3 under a handoff's `## Findings`; none without one. */
+function firstFinding(sections: Section[]) {
+  const start = sections.findIndex(({ level, heading }) => level === 2 && heading === "Findings");
+  if (start < 0) return undefined;
+  for (const section of sections.slice(start + 1)) {
+    if (section.level <= 2) return undefined;
+    if (section.level === 3) return section.heading;
+  }
+  return undefined;
+}
+
+/** A handoff the build could not read (`Shapes.isUnstructured` of the issuer library). */
+const unstructured = (sections: Section[]) =>
+  sections.length === 1 &&
+  sections[0]?.level === 1 &&
+  sections[0].heading === "Unstructured handoff";
+
+/**
+ * The labels Report history and the run frame give a run. "Earlier format" (ruling H7): any of its
+ * handoffs, every saved output of every module, has a `## Findings` whose first H3 is not
+ * `### Bottom line`; a handoff the page does not hold or the build could not read says nothing.
+ * "Earlier methods" (Amendment 2026-11-11): the store lists methods changed since the run ran.
+ */
+export function runLabels(entries: OutputEntry[], run: Pick<PublishedRun, "methodChanges">) {
+  const earlierFormat = entries.some(
+    ({ sections }) =>
+      sections.length > 0 && !unstructured(sections) && firstFinding(sections) !== "Bottom line",
+  );
+  return [
+    ...(earlierFormat ? ["Earlier format"] : []),
+    ...(run.methodChanges?.length ? ["Earlier methods"] : []),
+  ];
 }
 
 export function blocked(entry: OutputEntry) {
