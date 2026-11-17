@@ -81,10 +81,34 @@ it("draws a column written only in three-decimal commas as thousands, the ambigu
   expect(figure.getAllByText(/^\d,000$/).length).toBeGreaterThan(0);
 });
 
-it("does not read a neighbouring column as decimal commas because one column is", () => {
+it("reads every column drawn on one axis with decimal commas when one of them is written so", () => {
   const figure = drawn(
     "Leverage",
     { columns: [1, 2] },
+    table(
+      [
+        "Period",
+        "Total debt / EBITDA",
+        "Net debt / EBITDA",
+        "Reporting unit",
+        "Basis and limitation",
+      ],
+      [
+        ["FY2023", "3,75", "3,000", "x", "Gross debt includes finance leases."],
+        ["FY2024", "2,800", "2,250", "x", "Synthetic."],
+      ],
+    ),
+  );
+  const numbers = axisNumbers();
+  expect(numbers.length).toBeGreaterThan(2);
+  expect(Math.max(...numbers)).toBeLessThan(10);
+  expect(figure.getAllByText("3,000").length).toBeGreaterThan(0);
+});
+
+it("does not read a column that is not drawn as decimal commas because another column is", () => {
+  const figure = drawn(
+    "Gross debt",
+    { columns: [2] },
     table(
       ["Period", "Total debt / EBITDA", "Gross debt", "Reporting unit", "Basis and limitation"],
       [
