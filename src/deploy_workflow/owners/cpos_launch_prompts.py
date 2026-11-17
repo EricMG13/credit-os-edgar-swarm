@@ -12,6 +12,7 @@ from deploy_workflow.credit_os_chips import MODULE_NAMES
 from deploy_workflow.handoff_delivery import MarkdownRoute
 from deploy_workflow.owners import cp2g, cpos_forecast
 from deploy_workflow.owners import cpos_cp1_check as cp1_check
+from deploy_workflow.owners.cpos_cp1_statements import StatementSpec
 from deploy_workflow.owners.cpos_launch_tables import (
     MONEY,
     OwnerTable,
@@ -448,7 +449,7 @@ PERIOD_REQUIRED_BLOCK = (
 )
 
 
-def _fixed_rows(spec: cp1_check.StatementSpec) -> str:
+def _fixed_rows(spec: StatementSpec) -> str:
     optional = f"; optional {', '.join(f'`{r}`' for r in spec.optional)}" if spec.optional else ""
     return f"`### {spec.heading}`: {', '.join(f'`{r}`' for r in spec.fixed)}{optional}"
 

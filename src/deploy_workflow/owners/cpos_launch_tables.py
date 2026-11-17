@@ -26,7 +26,11 @@ MONEY = cp1_check.MONEY  # CP-1's money tables' unit, resolved per handoff by `m
 # term for CP-1 (docs/rulings/2026-11-16-reporting-currency-from-sources.md).
 MONEY_UNIT_RULE = (
     "The money unit is the unit of Financial foundation's statements: `US$m` when they are in "
-    "USD, else their currency code and `m` (`GBPm`, `EURm`, `CHFm`), in millions."
+    "USD, else their currency code and `m` (`GBPm`, `EURm`, `CHFm`), in millions. "
+    "A debt instrument in another currency enters at Financial foundation's T4.18 `Reporting "
+    "Currency Amount`; an amount it does not state in its statements' currency is `Not supplied: "
+    "<reason>`, and a total that needs it is not calculable with that reason, never partial. "
+    "Never convert at a rate of your own."
 )
 CHART_TABLES: dict[str, tuple[str, tuple[str, ...], str]] = {
     "S.1": ("Chart data: leverage", ("Total debt / EBITDA", "Net debt / EBITDA"), "x"),

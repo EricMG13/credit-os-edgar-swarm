@@ -412,7 +412,9 @@ def test_p2_a_chf_run_is_delivered_and_shown_in_francs(chf):
 
 
 @pytest.mark.browser
-def test_p3_no_stated_amount_and_no_stated_rate_leaves_the_total_not_calculable(gbp_no_rate, gbp):
+def test_p3_delivery_and_the_library_carry_and_draw_the_not_calculable_total_the_fixture_writes(
+    gbp_no_rate, gbp
+):
     reason = (
         "Not supplied: not calculable, the Dollar notes have neither a stated GBP amount nor a "
         "stated rate"
@@ -453,6 +455,11 @@ ALLOWED = (
     (r"(?<=Senior )USD(?= 100 )", "the Dollar notes' `Currency` cell (page text)"),
     (r"(?<=Currency )USD(?= Reporting Currency Amount 100)", "its `Currency` cell (static page)"),
     (r'(?<="field": "c7",\n {10}"amount": null,\n {10}"text": ")USD', "its `Currency` cell (view)"),
+    # `chart_unit` is the money class's tag in the delivery request (`HandoffRoute.chart_unit`,
+    # "x" | "US$m" | "%"), the same for every run whatever its currency. It is a scale and
+    # decimals class, not a unit: no displayed value reads it. Renaming it is parked (final review
+    # of PR 2, 2026-11-16; the strict xfail that stood here could never pass).
+    (r'(?<="chart_unit": ")US\$m(?=")', "the request's money class tag (scale and decimals)"),
 )
 
 
@@ -468,6 +475,9 @@ def us_dollar_hits(built: Built) -> list[str]:
     allowed cells are out: the delivered files, the library's run data (not its design catalogue,
     `workspace.visuals`, which is the same for every run) and every page read."""
     texts = {f"delivered {p.name}": p.read_text("utf-8") for p in built.delivery.glob("*")}
+    texts.update(
+        {f"request {p.name}": p.read_text("utf-8") for p in built.out.glob("delivery-*.json")}
+    )
     data = built.data()
     del data["workspace"]["visuals"]
     texts["library data.js"] = json.dumps(data, ensure_ascii=False)
@@ -489,28 +499,3 @@ def test_p6_the_gbp_and_chf_runs_show_no_us_dollar_beyond_the_allowed_cells(gbp,
     for built in (gbp, chf):
         spend = [line for line in built.stdout.splitlines() if "USD" in line or "US$" in line]
         assert [line.split(":")[0] for line in spend] == ["Cap", "Charged"]
-
-
-# OPEN FINDING for the PR 2 controller (not fixed here): `chart_unit` is the money class's tag in
-# the delivery request (`handoff_delivery.HandoffRoute.chart_unit`, "x" | "US$m" | "%"), so the
-# request of every run, whatever its currency, says `US$m`. No displayed value reads it. Strict
-# xfail: it turns red, and must be removed, when the tag is renamed or the controller rules it fine.
-@pytest.mark.xfail(strict=True, reason="chart_unit is a money-class tag that reads US$m")
-@pytest.mark.browser
-@pytest.mark.parametrize("code", ["GBP", "CHF"])
-def test_p6_the_delivery_request_names_no_us_dollar_unit_for_a_non_usd_run(
-    code, provider, tmp_path_factory, capsys
-):
-    """`delivery-<hash>.json`, the request the delivery was verified against, is a delivered file
-    of the run. Its CP-1 chart routes (liquidity, debt maturities) name the unit `US$m`."""
-    built = build(code, True, provider, tmp_path_factory, capsys)
-    (request,) = built.out.glob("delivery-*.json")
-    units = {
-        route["heading"]: route["chart_unit"]
-        for route in json.loads(request.read_text("utf-8"))["layout"]["routes"]
-        if route["module_id"] == "CP-1" and route.get("chart_unit") not in (None, "x", "%")
-    }
-    assert units == {
-        "Chart data: liquidity": f"{code}m",
-        "Chart data: debt maturities": f"{code}m",
-    }

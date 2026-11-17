@@ -8745,6 +8745,26 @@ def test_the_instructions_of_the_three_money_modules_define_the_money_unit(tmp_p
     assert text.count(MONEY_UNIT_DEFINITION) == 1
 
 
+MONEY_UNIT_FOREIGN_FACILITY = (
+    "A debt instrument in another currency enters at Financial foundation's T4.18 `Reporting "
+    "Currency Amount`; an amount it does not state in its statements' currency is `Not supplied: "
+    "<reason>`, and a total that needs it is not calculable with that reason, never partial. "
+    "Never convert at a rate of your own."
+)
+
+
+@pytest.mark.parametrize("module", sorted(MONEY_TABLES))
+def test_the_instructions_of_the_three_money_modules_say_how_a_foreign_facility_enters(
+    tmp_path, module
+):
+    # Final review M1 (docs/rulings/2026-11-16-reporting-currency-from-sources.md): CP-3C and
+    # CP-4C were never told, and CP-3C's method says to convert upstream.
+    prepared, *_ = good_task(tmp_path, module)
+    text = (tmp_path / "out" / prepared.plan.instructions[module].path).read_text()
+    assert text.count(MONEY_UNIT_FOREIGN_FACILITY) == 1
+    assert text.count(MONEY_UNIT_DEFINITION + " " + MONEY_UNIT_FOREIGN_FACILITY) == 1
+
+
 def test_cp1_check_block_is_unchanged_by_the_money_unit_definition():
     assert MONEY_UNIT_DEFINITION not in cpos_launch.CP1_CHECK_BLOCK
     # The same ruling's method-text change (branch claude/reporting-currency-method-text) widened

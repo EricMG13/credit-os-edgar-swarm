@@ -24,6 +24,7 @@ from deploy_vii.live.schema import exact_json, json_object
 from deploy_vii.readiness import shape_issues
 from deploy_workflow.method_scripts import currency_of
 from deploy_workflow.owners import cp2g
+from deploy_workflow.owners.cpos_cp1_statements import money_unit
 from deploy_workflow.owners.cpos_facilities import Facility, Schedule, schedule
 from deploy_workflow.prose_checks import FORECAST_HEADING, ISO_4217, reader_passages
 
@@ -561,6 +562,12 @@ def parse(source_text: str, cp1_text: str, source: str = "CP-2G") -> ForecastInp
         raise ValueError("CP-1: a layer-1 forecast states no shock and no cases")
     if source == "CP-1" and inputs.facilities:
         raise ValueError("CP-1: a layer-1 forecast states no facilities")
+    run = _cp1_currency(cp1_text)
+    if inputs.currency is not None and run is not None and inputs.currency != run:
+        raise ValueError(
+            f"{source}: the block states `currency` `{inputs.currency}`, but CP-1's statements "
+            f"are in `{run}`; state `currency` as `{run}`"
+        )
     _check_base(inputs, cp1_text, source, stated)
     if inputs.facilities:
         _check_facilities(inputs, inputs.facilities, cp1_text, stated)
@@ -585,7 +592,7 @@ def _check_facilities(
 ) -> None:
     """Each facility is in the block's currency, each stated term is printed in CP-1, the
     balances fit the base debt, and no case names a driver the schedule replaces."""
-    code = inputs.currency or UNSTATED_CURRENCY
+    code = _facility_currency(inputs, cp1_text)
     _check_facility_currencies(facilities, cp1_text, code)
     for number, facility in enumerate(facilities, 1):
         balance = stated.get(f"facility {number} balance", facility.balance)
@@ -625,10 +632,49 @@ def _check_facilities(
             )
 
 
+def _cp1_currency(cp1_text: str) -> str | None:
+    """The ISO 4217 code of CP-1's money unit (`US$m` is USD, `GBPm` is GBP), or None when CP-1
+    states no single currency in its statements."""
+    unit = money_unit(cp1_text)
+    if unit is None:
+        return None
+    return "USD" if unit == "US$m" else unit.removesuffix("m")
+
+
+def _facility_currency(inputs: ForecastInputs, cp1_text: str) -> str:
+    """The currency the facilities are checked against: the block's `currency` (refused in `parse`
+    when it is not CP-1's), else CP-1's money unit's. Where CP-1 states none either, the block
+    cannot be read as USD against a T4.18 that is not in one known currency: that block is refused
+    and asked to state `currency`; a T4.18 in one known currency is that currency, and none is USD
+    (`UNSTATED_CURRENCY`, as before)."""
+    if inputs.currency is not None:
+        return inputs.currency
+    run = _cp1_currency(cp1_text)
+    if run is not None:
+        return run
+    codes = {currency for _, currency in _t418_rows(cp1_text)}
+    if not codes:
+        return UNSTATED_CURRENCY
+    only = next(iter(codes)) if len(codes) == 1 else None
+    if only is not None:
+        return only
+    raise ValueError(
+        "CP-2G: the block states no `currency`, CP-1's statements state no single currency, and "
+        "T4.18 holds instruments not in one known currency; state `currency` as the three-letter "
+        "code of the currency CP-1 reports its figures in"
+    )
+
+
+# CP-1's own T4.18 row (REF_CP-1_STEPS step 6, when carrying values are not disclosed): not an
+# instrument, so its `Currency` cell says `Not applicable` and must not decide the table's mode.
+_FINANCING_ADJUSTMENT = "financing cost adjustment"
+
+
 def _t418_rows(cp1_text: str) -> list[tuple[str, str | None]]:
     """Each row of CP-1's T4.18 (a table with `Instrument` and `Currency` columns): its instrument
     name as compared (trimmed, emphasis removed, casefolded) and the ISO 4217 code its `Currency`
-    cell states, or None when the cell states no single code."""
+    cell states, or None when the cell states no single code. The method's `Financing cost
+    adjustment` row is not an instrument and is left out."""
     found: list[tuple[str, str | None]] = []
     for header, *rows in _tables(cp1_text):
         labels = [_plain(cell) for cell in header]
@@ -638,7 +684,7 @@ def _t418_rows(cp1_text: str) -> list[tuple[str, str | None]]:
         found += [
             (_plain(row[at]).casefold(), currency_of(row[currency]))
             for row in rows
-            if len(row) > max(at, currency)
+            if len(row) > max(at, currency) and _plain(row[at]).casefold() != _FINANCING_ADJUSTMENT
         ]
     return found
 
@@ -654,7 +700,7 @@ def _currency_refusal(name: str, rows: list[tuple[str, str | None]], code: str) 
     stated = [currency for row_name, currency in rows if row_name == key]
     if stated and stated[0] is not None:
         return (
-            f"CP-2G: facility `{name}` is in `{stated[0]}` in CP-1's T4.18, not the block's "
+            f"CP-2G: facility `{name}` is in `{stated[0]}` in CP-1's T4.18, not the run's "
             f"`{code}`; {_LEAVE_OUT}"
         )
     why = (
@@ -820,6 +866,7 @@ def model_files(
     """The five files `credit_os/cashflow.py` reads for a model, from the CP-1 handoff and the
     forecast source's (CP-2G's, or CP-1's own for a layer-1 forecast: then `handoff` is `cp1`)."""
     inputs = parse(handoff.decode("utf-8"), cp1.decode("utf-8"), source)
+    currency = inputs.currency or _cp1_currency(cp1.decode("utf-8")) or UNSTATED_CURRENCY
     operands = cp2g.Operands(
         **{
             key: cp2g.Val(None if o.amount is None else Decimal(o.amount), o.reason)
@@ -905,12 +952,12 @@ def model_files(
                 if inputs.scale is None
                 else {
                     "scale": inputs.scale,
-                    "units": f"{inputs.currency or UNSTATED_CURRENCY} millions",
+                    "units": f"{currency} millions",
                 }
             ),
             "scope_limits": [
                 LIMIT if source == "CP-2G" else LAYER1_LIMIT,
-                *([scale_limit(inputs.currency)] if inputs.scale == 1000 else []),
+                *([scale_limit(currency)] if inputs.scale == 1000 else []),
                 *inputs.scope_limits,
                 *limits,
             ],
