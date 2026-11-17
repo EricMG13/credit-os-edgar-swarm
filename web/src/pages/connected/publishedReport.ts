@@ -590,19 +590,47 @@ const LONG_HASH = /\b(?=[0-9a-f]*[a-f])[0-9a-f]{32,}\b/i;
 const REGISTER_ID = /\bCP-[A-Z0-9]+-(?:GAP|MON|FACT|CALC|EVID|SRC|ASSUMPTION)-[A-Z0-9-]+\b/i;
 
 // A gap id as the modules spell a gap, the report-wide id after the empty-set mark ("∅ G12",
-// "∅ G12 n.m.", "∅ [G12]"), and a run code. Parenthesized ids need a gap or reference
-// context in their clause: "Group of Seven (G7)" is ordinary prose. A module code is not a
-// reference here: a findings page draws it as the module's
+// "∅ G12 n.m.", "∅ [G12]"), and a run code. A parenthesized id is an annotation unless its
+// adjacent text names a group, instrument or mathematical quantity. An earlier "gap" in the
+// clause cannot turn that label into a citation. A module code is not a reference here: a
+// findings page draws it as the module's
 // name (`readerText`, D-13 part 2), so it is not held back.
 const GAP_ID = /∅\s*\[?G\d+\b/;
-const PARENTHESIZED_GAP =
-  /^\s*\(G\d+\)\s*$|\b(?:gaps?|see|missing|unavailable|not (?:disclosed|supplied|stated|established|reported))\b(?:[^.!?;\n]|\.(?=\d))*\(G\d+\)/i;
 const RUN_CODE = /\b\d{8}-\d{6}-\d{2}\b/;
 
-// Page locators, including "p12" and "pg. 12". Numeric/spelled quantities before "pp" are
-// percentage points; word fragments, S&P, p.p. and four-digit years are not page locators.
-const PAGE_CITATION =
-  /(?<![\w&.-])(?:p|pg|(?<!(?:\d|\b(?:one|two|three|four|five|six|seven|eight|nine|ten))\s*)pp|pages?)\.?\s*\d{1,3}(?!\d)/i;
+function parenthesizedGap(text: string) {
+  return [...text.matchAll(/\(G\d+\)/gi)].some((match) => {
+    const before = text.slice(0, match.index);
+    const after = text.slice(match.index + match[0].length);
+    const namedLabel =
+      /(?:\bgroup of \p{L}+(?:-\p{L}+)?|\b(?:economies|currencies)|\b(?:series|class|gen|tranche)\s+[\w-]+(?:\s+[\w-]+)?)\s*$/iu.test(
+        before,
+      );
+    const definedQuantity =
+      /^\s*(?:=|equals?\b)/i.test(after) ||
+      /(?:^|[,;:=]|\b(?:is|equals?))\s*\d+(?:\.\d+)?x\s*$/i.test(before);
+    return !namedLabel && !definedQuantity;
+  });
+}
+
+// Page locators have no page-number length limit. In "eleven pp. 3 quarters", the count
+// and duration continue an ordinary percentage-point sentence; no number-word vocabulary is
+// needed. Explicit locator cues take precedence. Word fragments, S&P and p.p. are excluded
+// at the token boundary; "front page 2025" names a headline, not a document locator.
+function pageCitation(text: string) {
+  return [...text.matchAll(/(?<![\w&.-])(p|pg|pp|pages?)\.?\s*(\d+)\b/gi)].some((match) => {
+    const before = text.slice(0, match.index);
+    const after = text.slice(match.index + match[0].length);
+    const marker = match[1]?.toLowerCase();
+    if (/\b(?:see|at|on|as)\s*$/i.test(before)) return true;
+    if (marker === "pp") {
+      if (/\d\s*$/.test(before)) return false;
+      if (/^\s+(?:\p{L}+\s+)?(?:days?|weeks?|months?|quarters?|years?)\b/iu.test(after))
+        return false;
+    }
+    return !(marker === "page" && /\bfront\s+$/i.test(before));
+  });
+}
 
 export function containsReference(text: string) {
   return (
@@ -610,8 +638,8 @@ export function containsReference(text: string) {
     LONG_HASH.test(text) ||
     REGISTER_ID.test(text) ||
     GAP_ID.test(text) ||
-    PARENTHESIZED_GAP.test(text) ||
-    PAGE_CITATION.test(text) ||
+    parenthesizedGap(text) ||
+    pageCitation(text) ||
     RUN_CODE.test(text)
   );
 }
