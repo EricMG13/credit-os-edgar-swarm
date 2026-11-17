@@ -29,6 +29,7 @@ _REGISTRY = "issuers.json"
 DEFAULT_MAX_TURNS = 32
 _TURNS = (1, 64)  # the range submissions.validated accepts
 _PRIOR = re.compile(r"[A-Za-z0-9][A-Za-z0-9_.-]*")  # a run folder name, or `none`
+FORECAST_CODE = "CP-MODEL"  # in a module list: publish the forecast (cpos_launch.py)
 MODELS = ("gpt", "claude")
 EFFORTS = ("fast", "balanced", "high")
 # The only launches the service makes: (model, effort) -> (launcher --config, --balanced or not).
@@ -240,10 +241,19 @@ def config_for(model: str, effort: str) -> str:
     return launch_options(model, effort)[0]
 
 
+def known_module(name: object) -> bool:
+    """Whether ``name`` may stand in the launcher's ``--modules``: a method, or the forecast code.
+
+    The launcher takes CP-MODEL there to mean "publish the forecast" (it makes no model call and
+    has no method of its own; cpos_launch.py, owner 2026-11-11), and the run start page puts it in
+    every list it sends. Nothing else is added: CP-8 stays what ``METHODS`` already makes it."""
+    return isinstance(name, str) and (name in METHODS or name == FORECAST_CODE)
+
+
 def _check_options(record: Record) -> None:
-    """``ValueError`` unless the record's modules are method names, its turns a whole number in
-    range and its model and effort known: a hand-edited record must not put an option of its own
-    into the launcher's argv."""
+    """``ValueError`` unless the record's modules are method names or the forecast code, its
+    turns a whole number in range and its model and effort known: a hand-edited record must not
+    put an option of its own into the launcher's argv."""
     for field, allowed in (("model", MODELS), ("effort", EFFORTS)):
         value = getattr(record, field)
         if not isinstance(value, str) or value not in allowed:
@@ -251,7 +261,7 @@ def _check_options(record: Record) -> None:
                 f"run {record.id}: {field} {value!r} is not one of {', '.join(allowed)}"
             )
     for name in record.modules:
-        if not isinstance(name, str) or name not in METHODS:
+        if not known_module(name):
             raise ValueError(f"run {record.id}: {name!r} is not a module")
     if not isinstance(record.prior, str) or (record.prior and not _PRIOR.fullmatch(record.prior)):
         raise ValueError(f"run {record.id}: prior {record.prior!r} is not a run folder name")

@@ -319,7 +319,7 @@ class Scheduler:
             except ValueError as refusal:
                 raise submissions.Refused(str(refusal)) from refusal
             for name in answers["modules"]:
-                if name not in cpos_launch.METHODS:
+                if not runs.known_module(name):
                     raise submissions.Refused(f"unknown module {name}")
             if len(self._with_status("queued")) >= MAX_QUEUED:
                 raise submissions.Refused("too many runs are waiting; try again later")
