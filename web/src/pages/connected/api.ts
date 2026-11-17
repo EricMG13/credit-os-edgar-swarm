@@ -8,7 +8,7 @@ export type Context = {
     cutoff?: string;
     pathway: string;
     case_kind: string;
-    reporting_currency: string;
+    reporting_currency?: string;
     current_period?: string;
     prior_period?: string;
   };

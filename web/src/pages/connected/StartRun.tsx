@@ -711,19 +711,6 @@ function DocumentFields({
           </p>
         )}
       </div>
-      <label className={label}>
-        Reporting currency
-        <input
-          className={field}
-          required
-          pattern="[A-Z]{3}"
-          maxLength={3}
-          value={view.run.reporting_currency}
-          onChange={(event) => {
-            view.changeRun("reporting_currency", event.target.value.toUpperCase());
-          }}
-        />
-      </label>
       <SelectField
         title="Issue classification"
         value={view.identity.issue_classification ?? ""}
@@ -2477,13 +2464,17 @@ function today() {
 
 function startingContext(template: Context, prior?: PriorInputs): Context {
   const source = prior?.context ?? template;
+  // The run's currency is the one CP-1's statements print, so a value the template or an earlier
+  // run holds is neither shown nor sent (docs/rulings/2026-11-16-reporting-currency-from-sources.md).
+  const heldRun = { ...source.run };
+  delete heldRun.reporting_currency;
   const pathway = Object.hasOwn(PATHWAYS, source.run.pathway)
     ? source.run.pathway
     : "credit_snapshot";
   return {
     ...source,
     run: {
-      ...source.run,
+      ...heldRun,
       as_of: today(),
       pathway,
       ...(pathway === "earnings_update"

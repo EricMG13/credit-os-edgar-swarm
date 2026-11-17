@@ -471,19 +471,6 @@ RULES: tuple[Rule, ...] = (
         "observed offline",
     ),
     Rule(
-        "cp2d-non-usd",
-        "CP-2D",
-        lambda f: f.context.run.reporting_currency != "USD",
-        "limited",
-        "The reporting currency is not USD, and CP-2D builds its bridge in USD millions.",
-        "No file needed; read CP-2D amounts in the reporting currency as stated in its handoff.",
-        "owner-path: src/deploy_workflow/owners/cp2d.py _usd_millions; METHODOLOGY-REVIEW.md "
-        "'preserve foreign-currency and unavailable-facility limitations' (the CP-2D method "
-        "text sent has a Currency and Scale column on T2E.5 and says nothing of a USD "
-        "restatement)",
-        "observed offline",
-    ),
-    Rule(
         "cp2h-no-ratings",
         "CP-2H",
         lambda f: not f.context.ratings and f.kind("ratings") is None,
