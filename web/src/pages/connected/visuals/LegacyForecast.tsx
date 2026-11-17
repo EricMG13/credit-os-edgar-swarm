@@ -104,6 +104,7 @@ function SelectedForecastTable({
       group: forecastCaseLabel(column.group, downsideNote),
     })),
   };
+  const groups = [...new Set(displayed.columns.map((column) => column.group))];
   return (
     <ForecastTable
       grid={displayed}
@@ -113,7 +114,8 @@ function SelectedForecastTable({
         source &&
         ((name, selection) =>
           source(name, {
-            groups: [...new Set(displayed.columns.map((column) => column.group))],
+            case: groups.length === 1 ? groups[0] : "",
+            groups,
             ...selection,
           }))
       }

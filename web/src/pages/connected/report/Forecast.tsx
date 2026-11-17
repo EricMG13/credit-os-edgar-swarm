@@ -44,7 +44,8 @@ function forecastHandoff(model: Model, entries: OutputEntry[], folder: string) {
       (model.sources.some(
         (item) => item.sha256 === output.sha256 && (!item.output || item.output === output.id),
       ) ||
-        (model.runFolder === folder &&
+        (model.sources.length === 0 &&
+          model.runFolder === folder &&
           model.download.endsWith("/annual.md") &&
           output.href === model.download.replace(/annual\.md$/, "CP-2G.md"))),
   );

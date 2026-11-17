@@ -7,6 +7,7 @@ import type { buildReportView } from "../reportView";
 import { Forecast } from "./Forecast";
 import { ReportEvidence } from "./Evidence";
 import { PublishedTraceProvider } from "./PublishedTrace";
+import { forecastTraceContext, RecordedForecastAssumptions } from "./ForecastRecord";
 
 type View = ReturnType<typeof buildReportView>;
 const digest = "a".repeat(64);
@@ -181,6 +182,68 @@ it("states missing or ambiguous forecast trace loss while preserving published f
   expect(screen.getByRole("figure", { name: "Revenue" })).toBeInTheDocument();
 });
 
+it("refuses a filename companion whose hash conflicts with retained model source identity", () => {
+  const { view, model, source } = fixture();
+  model.download = "/saved/run/annual.md";
+  source.output.href = "/saved/run/CP-2G.md";
+  source.output.sha256 = "b".repeat(64);
+  render(<Forecast view={view} run={run} />);
+  expect(screen.getByText(/Forecast source details are not available/)).toBeInTheDocument();
+  expect(screen.queryByText("Recorded growth.")).toBeNull();
+  expect(screen.getByRole("figure", { name: "Revenue" })).toBeInTheDocument();
+  expect(document.querySelector(`a[href*="${"b".repeat(64)}-72"]`)).toBeNull();
+});
+
+it("keeps the exact legacy filename companion when no source identity was retained", () => {
+  const { view, model, source } = fixture();
+  model.sources = [];
+  model.download = "/saved/run/annual.md";
+  source.output.href = "/saved/run/CP-2G.md";
+  render(<Forecast view={view} run={run} />);
+  expect(screen.queryByText(/Forecast source details are not available/)).toBeNull();
+  expect(screen.getByText("Recorded growth.")).toBeInTheDocument();
+});
+
+it("labels raw recorded monetary assumptions in their original currency and scale", () => {
+  const document = {
+    ...input,
+    currency: "GBP",
+    scale: 1000,
+    base_drivers: {
+      dividends: {
+        values: ["20000", "20000"],
+        category: "Analyst Interpretation",
+        rationale: "Retained dividend.",
+        limitation: null,
+      },
+    },
+    facilities: [
+      {
+        name: "Recorded bond",
+        balance: "600000",
+        annual_amortisation: "50000",
+        fixed_rate_pct: "5.1250",
+      },
+    ],
+  };
+  render(<RecordedForecastAssumptions document={document} />);
+  for (const region of ["Recorded forecast drivers", "Recorded facilities"])
+    expect(
+      within(screen.getByRole("region", { name: region })).getByText(/Amounts.*GBP thousands/),
+    ).toBeInTheDocument();
+  expect(screen.getAllByText("20000")).toHaveLength(2);
+  expect(screen.getByText("600000")).toBeInTheDocument();
+  expect(screen.getByText("5.1250")).toBeInTheDocument();
+  expect(
+    screen.getByRole("columnheader", { name: "2025 · 2025-04-01 to 2026-03-31" }),
+  ).toBeInTheDocument();
+  const trace = forecastTraceContext(fixture().model, document, "Dividends assumptions", {
+    case: "Base case",
+    inputPath: ["base_drivers", "dividends"],
+  });
+  expect(trace.details.find(({ label }) => label === "years")?.value).toContain("2025-04-01");
+});
+
 it("traces a trend to the actual figure and selected case instead of generic JSON", () => {
   const { view } = fixture();
   render(
@@ -217,6 +280,131 @@ it("traces a trend to the actual figure and selected case instead of generic JSO
   expect(drawer.getByText(/Revenue.*Downside shock.*FY2026E.*840/)).toBeInTheDocument();
   expect(drawer.queryByText(/Revenue.*Base case.*FY2026E.*1050/)).toBeNull();
   expect(drawer.getByText("0.20")).toBeInTheDocument();
+});
+
+it("binds an Other forecast table row to its own case instead of the globally selected Base", () => {
+  const { view, model } = fixture();
+  model.cashflow.other = {
+    columns: model.cashflow.columns
+      .slice(0, 2)
+      .map((column) => ({ ...column, group: "Downside (CP-2G drivers)" })),
+    rows: model.cashflow.rows.map((row) => ({ ...row, cells: row.cells.slice(0, 2) })),
+  };
+  render(
+    <PublishedTraceProvider
+      snapshot={snapshot}
+      folder="run"
+      entries={view.entries}
+      route="forecast"
+    >
+      <Forecast view={view} run={run} />
+    </PublishedTraceProvider>,
+  );
+  fireEvent.click(
+    within(screen.getByRole("region", { name: "Other forecast cases" })).getByRole("button", {
+      name: "Show sources for Revenue",
+    }),
+  );
+  const drawer = within(screen.getByRole("dialog"));
+  expect(
+    drawer.getByRole("heading", { level: 2, name: "Revenue · Downside drivers" }),
+  ).toBeInTheDocument();
+  expect(drawer.getByText(/Revenue.*Downside drivers.*FY2026E.*1050/)).toBeInTheDocument();
+  expect(drawer.queryByText(/Revenue.*Base case/)).toBeNull();
+});
+
+it.each([true, false])(
+  "selects retained own-downside driver paths for the main downside (shock: %s)",
+  (shock) => {
+    const { model } = fixture();
+    model.cashflow.notes = [
+      shock
+        ? "Downside case is the stress case: a shock applied to the model's own downside drivers."
+        : "Downside case is CP-2G's own downside drivers; no CP-2A shock was supplied.",
+    ];
+    const document = {
+      ...input,
+      downside_drivers: {
+        revenue_growth: {
+          values: ["0.01", "0.01"],
+          category: "Analyst Interpretation",
+          rationale: "Recorded own-downside growth.",
+          limitation: null,
+        },
+      },
+      downside_shock: shock ? input.downside_shock : null,
+    };
+    const trace = forecastTraceContext(model, document, "Revenue", {
+      case: shock ? "Downside shock" : "Downside case",
+      row: "Revenue",
+    });
+    expect(
+      trace.details.find(({ label }) => label === "downside_drivers.revenue_growth")?.value,
+    ).toContain('"0.01"');
+    expect(trace.details.some(({ label }) => label === "base_drivers.revenue_growth")).toBe(false);
+    expect(trace.details.some(({ label }) => label === "downside_shock.ebitda_decline")).toBe(
+      shock,
+    );
+  },
+);
+
+it("preserves a retained historical stress explicitly recorded on base drivers", () => {
+  const { model } = fixture();
+  const document = {
+    ...input,
+    downside_drivers: {
+      revenue_growth: {
+        values: ["0.01", "0.01"],
+        category: "Analyst Interpretation",
+        rationale: "Separately recorded downside.",
+        limitation: null,
+      },
+    },
+  };
+  const trace = forecastTraceContext(model, document, "Revenue", {
+    case: "Downside shock",
+    row: "Revenue",
+  });
+  expect(
+    trace.details.find(({ label }) => label === "base_drivers.revenue_growth")?.value,
+  ).toContain('"0.05"');
+  expect(trace.details.some(({ label }) => label === "downside_drivers.revenue_growth")).toBe(
+    false,
+  );
+});
+
+it("retains the recorded facility fields behind debt, interest and cash figures", () => {
+  const { model } = fixture();
+  const document = {
+    ...input,
+    facilities: [
+      {
+        name: "Recorded fixed facility",
+        balance: "600",
+        fixed_rate_pct: "6.00",
+        annual_amortisation: "50",
+        maturity: "2028-03-31",
+      },
+    ],
+  };
+  for (const row of [
+    "Closing debt",
+    "Interest",
+    "Closing cash",
+    "Cash proxy (not issuer free cash flow)",
+  ]) {
+    const trace = forecastTraceContext(model, document, row, { case: "Base case", row });
+    expect(trace.details.find(({ label }) => label === "facilities.0.name")?.value).toBe(
+      "Recorded fixed facility",
+    );
+    expect(trace.details.find(({ label }) => label === "facilities.0.balance")?.value).toBe("600");
+    expect(
+      trace.details.find(({ label }) => label === "facilities.0.annual_amortisation")?.value,
+    ).toBe("50");
+    expect(trace.details.find(({ label }) => label === "facilities.0.fixed_rate_pct")?.value).toBe(
+      "6.00",
+    );
+  }
 });
 
 it("shows recorded drivers and the downside shock with a separate facilities notice", () => {

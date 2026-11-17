@@ -77,6 +77,18 @@ const DRIVER_FIELDS: Record<string, string[]> = {
   "Closing debt": ["debt_repayment"],
 };
 
+/** The retained reader note distinguishes pre-ruling stress on base from stress on own drivers. */
+function caseDriverGroup(name: string, downsideNote: string) {
+  if (name === "Base case") return "base_drivers";
+  if (name === "Upside case") return "upside_drivers";
+  if (name === "Downside drivers" || name === "Downside stress (shock on downside drivers)")
+    return "downside_drivers";
+  if (name === "Downside stress (shock on base drivers)") return "base_drivers";
+  if (name !== "Downside case" && name !== "Downside shock") return null;
+  if (downsideNote.includes("own downside drivers")) return "downside_drivers";
+  return downsideNote.includes("base-case drivers") ? "base_drivers" : null;
+}
+
 function selectedValues(model: ForecastModel, rowName: string, selection: ForecastSelection) {
   const cashflow = record(model.cashflow);
   const downside = stringsIn(cashflow.notes).find((note) => note.startsWith("Downside case is"));
@@ -112,48 +124,76 @@ export function forecastTraceContext(
 ): PublishedTraceContext {
   const rowName = selection.row ?? (name.includes("Cash proxy") ? CASH_PROXY : name);
   const values = selectedValues(model, rowName, selection);
+  const downsideNote =
+    stringsIn(record(model.cashflow).notes).find((note) => note.startsWith("Downside case is")) ??
+    "";
   const details: PublishedTraceContext["details"] = [];
-  const add = (path: string[]) =>
-    details.push({ label: path.join("."), value: scalar(atPath(document, path)) });
+  const paths = new Set<string>();
+  const add = (path: string[]) => {
+    const label = path.join(".");
+    if (paths.has(label)) return;
+    paths.add(label);
+    details.push({ label, value: scalar(atPath(document, path)) });
+  };
+  let missingBasis = false;
   if (selection.inputPath) add(selection.inputPath);
   else {
     const base = record(document.base);
     for (const key of BASE_FIELDS[rowName] ?? Object.keys(base)) add(["base", key]);
-    const cases =
-      selection.groups ??
-      (selection.case
-        ? [selection.case]
-        : rawGroups(model).flatMap((grid) =>
-            grid.columns.map((column) =>
-              forecastCaseLabel(
-                column.group,
-                stringsIn(record(model.cashflow).notes).find((note) =>
-                  note.startsWith("Downside case is"),
-                ),
-              ),
-            ),
-          ));
-    const groups = [
-      "base_drivers",
-      ...(cases.includes("Upside case") ? ["upside_drivers"] : []),
-      ...(cases.includes("Downside drivers") ? ["downside_drivers"] : []),
-    ];
-    for (const group of groups) {
-      const drivers = record(document[group]);
-      for (const key of DRIVER_FIELDS[rowName] ?? Object.keys(drivers))
-        if (Object.hasOwn(drivers, key)) add([group, key]);
+    const forecastCases = rawGroups(model).flatMap((grid) =>
+      grid.columns
+        .filter((column) => /^FY\d+E$/.test(column.label))
+        .map((column) => forecastCaseLabel(column.group, downsideNote)),
+    );
+    const cases = (selection.groups ?? (selection.case ? [selection.case] : forecastCases)).filter(
+      (name) => forecastCases.includes(name),
+    );
+    for (const name of new Set(cases)) {
+      const group = caseDriverGroup(name, downsideNote);
+      if (!group) {
+        missingBasis = true;
+        details.push({ label: `${name} driver basis was not recorded`, value: null });
+        continue;
+      }
+      const baseDrivers = record(document.base_drivers);
+      if (group !== "base_drivers" && document[group] == null) {
+        missingBasis = true;
+        details.push({ label: `${name}: ${group} fields were not recorded`, value: null });
+        continue;
+      }
+      const overrides = group === "base_drivers" ? {} : record(document[group]);
+      const keys = DRIVER_FIELDS[rowName] ?? [
+        ...new Set([...Object.keys(baseDrivers), ...Object.keys(overrides)]),
+      ];
+      for (const key of keys) {
+        const chosen = overrides[key] != null ? group : "base_drivers";
+        if (Object.hasOwn(record(document[chosen]), key)) add([chosen, key]);
+      }
     }
-    if (cases.includes("Downside shock"))
+    if (
+      cases.some(
+        (name) => name === "Downside shock" || name.startsWith("Downside stress (shock on "),
+      )
+    )
       for (const key of Object.keys(record(document.downside_shock))) add(["downside_shock", key]);
-    add(["years"]);
+    if (cases.some((name) => name === "Downside shock" || name === "Downside case"))
+      details.push({ label: "Recorded downside basis", value: downsideNote || null });
+    if (/\b(?:cash|debt|interest|liquidity|leverage|repayment|facility)\b/i.test(rowName))
+      items(document.facilities).forEach((facility, index) => {
+        for (const key of Object.keys(record(facility))) add(["facilities", String(index), key]);
+      });
   }
+  add(["years"]);
   for (const key of ["currency", "scale"]) if (Object.hasOwn(document, key)) add([key]);
   return {
     heading: `${name}${selection.case ? ` · ${selection.case}` : ""}${selection.period ? ` · ${selection.period}` : ""}`,
     statement: [rowName, selection.case, selection.text, ...values].filter(Boolean).join(" · "),
     details,
     qualification:
-      "Values and input fields are retained as recorded. Input arrays follow their recorded planning years; no value is recomputed in this drawer.",
+      "Values and input fields are retained as recorded. Input arrays follow their recorded planning years; no value is recomputed in this drawer." +
+      (missingBasis
+        ? " A driver basis was not recorded for one or more displayed groups; no driver path is asserted for those groups."
+        : ""),
   };
 }
 
@@ -182,6 +222,17 @@ function percent(value: unknown) {
   return Number.isFinite(number) ? `${(number * 100).toFixed(2)}%` : "n.a.";
 }
 
+function recordedAmountUnits(document: Record<string, unknown>) {
+  // cpos_forecast._unit_of/_to_millions: input scale 1 is millions; 1000 is thousands.
+  // These are captions for the original inputs, never a conversion to model display units.
+  const currency = word(document.currency) || "currency not recorded";
+  const scale = document.scale;
+  const magnitude = scale === 1000 ? "thousands" : scale === 1 ? "millions" : null;
+  return magnitude
+    ? `Amounts: ${currency} ${magnitude} (recorded scale ${String(scale)}).`
+    : `Amounts: ${currency}; scale ${scalar(scale) ?? "not recorded"}.`;
+}
+
 export function RecordedForecastAssumptions({
   document,
   source,
@@ -202,6 +253,7 @@ export function RecordedForecastAssumptions({
   );
   const shock = record(document.downside_shock);
   const facilities = items(document.facilities);
+  const amountUnits = recordedAmountUnits(document);
   return (
     <div className="grid min-w-0 gap-5 wrap-anywhere">
       <section aria-label="Recorded forecast drivers" className={`${card} min-w-0`}>
@@ -209,6 +261,9 @@ export function RecordedForecastAssumptions({
         <p className="text-small text-text-secondary">
           Driver values below are the module's recorded fractions or amounts, in their stated
           planning years.
+        </p>
+        <p className="text-small text-text-secondary">
+          {amountUnits} Fractions are shown as recorded.
         </p>
         {drivers.length ? (
           <div className="overflow-x-auto">
@@ -219,7 +274,10 @@ export function RecordedForecastAssumptions({
                   {[
                     "Driver",
                     "Case",
-                    ...years.map((year) => scalar(year.year) ?? "Planning year not recorded"),
+                    ...years.map(
+                      (year) =>
+                        `${scalar(year.year) ?? "Planning year not recorded"} · ${word(year.start) || "Start not recorded"} to ${word(year.end) || "End not recorded"}`,
+                    ),
                     "Category",
                     "Rationale",
                     "Limitation",
@@ -287,6 +345,9 @@ export function RecordedForecastAssumptions({
       </section>
       <section aria-label="Recorded facilities" className={`${card} min-w-0`}>
         <h3 className={heading}>Recorded facilities</h3>
+        <p className="text-small text-text-secondary">
+          {amountUnits} Other fields are shown as recorded.
+        </p>
         {facilities.length ? (
           <ul className="grid gap-4">
             {facilities.map((facility, index) => (
