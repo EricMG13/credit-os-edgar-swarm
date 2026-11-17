@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { ConnectedApp } from "./ConnectedApp";
 import { SelectField, carriedModules, stepOfField } from "./StartRun";
@@ -80,6 +80,11 @@ async function fillInputs() {
   typeName();
 }
 
+/** A run carried from an earlier one comes back with its dates blank; the analyst enters the case date. */
+function typeDate() {
+  fireEvent.change(screen.getByLabelText("As-of date"), { target: { value: "2026-10-31" } });
+}
+
 function typeName() {
   fireEvent.change(screen.getByLabelText("Your name"), { target: { value: "Ana L" } });
 }
@@ -157,6 +162,7 @@ describe("connected run start", () => {
     const { container } = render(<ConnectedApp path="/start" mode="synthetic" />);
     const issuer = await screen.findByLabelText("Issuer name");
     fireEvent.change(issuer, { target: { value: "Synthetic Générale" } });
+    fireEvent.change(screen.getByLabelText("As-of date"), { target: { value: "2026-10-31" } });
     const action = screen.getByRole("button", { name: "Continue to purpose" });
     expect(action).toBeDisabled();
     expect(screen.getByRole("progressbar", { name: "USD 0.00 of USD 25.00" })).toHaveAttribute(
@@ -915,7 +921,7 @@ describe("connected run start", () => {
       modules: ["CP-0"],
       context: {
         ...context,
-        run: { ...context.run, as_of: "2025-03-31" },
+        run: { ...context.run, as_of: "" },
         identity: { ...context.identity, sector: "Gaming" },
       },
       files: [{ name: file.name, size: file.size }],
@@ -933,12 +939,7 @@ describe("connected run start", () => {
     expect(await screen.findByLabelText("Issuer name")).toHaveValue("Northbridge");
     expect(screen.getByLabelText("Issuer ID")).toHaveAttribute("readonly");
     expect(screen.getByLabelText("Your name")).toHaveValue("");
-    expect(screen.getByLabelText("As-of date").getAttribute("value")).toMatch(
-      /^\d{4}-\d{2}-\d{2}$/,
-    );
-    expect(
-      screen.getByText("Set to today for the new run. The earlier run used 2025-03-31."),
-    ).toBeInTheDocument();
+    expect(screen.getByLabelText("As-of date")).toHaveValue("");
     fireEvent.change(screen.getByLabelText("As-of date"), { target: { value: "2026-09-29" } });
     typeName();
     await advanceToPurpose();
@@ -1058,6 +1059,7 @@ describe("connected run start", () => {
     });
     render(<ConnectedApp path="/start" search="?from=earlier" mode="synthetic" />);
     expect(await screen.findByLabelText("Issuer name")).toHaveValue("Northbridge");
+    typeDate();
     typeName();
     await advanceToPurpose();
     advanceToContext();
@@ -1337,6 +1339,7 @@ describe("connected run start: Module options and Valuation as fields", () => {
     });
     render(<ConnectedApp path="/start" search="?from=earlier" mode="synthetic" />);
     expect(await screen.findByLabelText("Issuer name")).toHaveValue("Northbridge");
+    typeDate();
     await advanceToPurpose();
     advanceToContext();
     const shown = peers();
@@ -1543,6 +1546,7 @@ describe("connected run start: Scenario assumptions as fields", () => {
     });
     render(<ConnectedApp path="/start" search="?from=earlier" mode="synthetic" />);
     expect(await screen.findByLabelText("Issuer name")).toHaveValue("Northbridge");
+    typeDate();
     await advanceToPurpose();
     advanceToContext();
     expect(
@@ -2570,6 +2574,7 @@ describe("connected run start: what an acceptance carries to", () => {
     fireEvent.click(screen.getByRole("button", { name: "Edit issuer and documents" }));
     fireEvent.click(screen.getByRole("button", { name: "Carry over from latest run" }));
     await screen.findByRole("button", { name: "This is a different issuer" });
+    typeDate();
     typeName();
     await advanceToPurpose();
     advanceToContext();
@@ -2786,7 +2791,7 @@ describe("connected run start: readiness after going back, and repeated announce
     level: "basic",
     max_turns: 32,
     modules: [],
-    context: { ...context, run: { ...context.run, as_of: "2025-03-31" } },
+    context: { ...context, run: { ...context.run, as_of: "" } },
     files: [{ name: file.name, size: file.size }],
   };
 
@@ -2845,6 +2850,7 @@ describe("connected run start: readiness after going back, and repeated announce
     fireEvent.click(screen.getByRole("button", { name: "Carry over from latest run" }));
     await screen.findByRole("button", { name: "This is a different issuer" });
     expect(rowOf("Purpose chosen")).toHaveTextContent("Not met");
+    typeDate();
     await advanceToPurpose();
     advanceToContext();
     fireEvent.click(screen.getByRole("button", { name: "Go back to Documents" }));
@@ -2939,15 +2945,6 @@ describe("connected run start: readiness after going back, and repeated announce
     await waitFor(() => expect(pressed).toBeEnabled());
     expect(pressed).toHaveTextContent("This is a different issuer");
     expect(document.activeElement).not.toBe(pressed);
-  });
-
-  it("stops saying the date was set to today once the analyst changes it", async () => {
-    testingFetch(plan, undefined, { "/api/runs/earlier/inputs": earlier });
-    render(<ConnectedApp path="/start" search="?from=earlier" mode="synthetic" />);
-    const line = "Set to today for the new run. The earlier run used 2025-03-31.";
-    expect(await screen.findByText(line)).toBeInTheDocument();
-    fireEvent.change(screen.getByLabelText("As-of date"), { target: { value: "2025-06-30" } });
-    expect(screen.queryByText(line)).toBeNull();
   });
 });
 
@@ -4118,4 +4115,462 @@ describe("connected run start: the review sheet shows every input Submit sends",
       expect(shownText).not.toMatch(/context\/1|true|false|null|undefined|NaN/);
     }
   }, 20_000);
+});
+
+/** An earlier Northbridge run as the service describes it to a new form, and the lookups that find it. */
+const earlierRun = {
+  issuer_id: "northbridge",
+  issuer_name: "Northbridge",
+  level: "basic",
+  max_turns: 32,
+  modules: [],
+  context: { ...context, run: { ...context.run, as_of: "" } },
+  files: [{ name: file.name, size: file.size }],
+};
+const latestRun = {
+  "/api/issuers/northbridge": { latest_run: "latest-case", runs: 1, latest_as_of: "2025-03-31" },
+  "/api/runs/latest-case/inputs": earlierRun,
+};
+
+describe("connected run start: an example issuer is a hint, not a value (J2-002)", () => {
+  it("opens with the issuer name and ID empty and the example as the placeholder", async () => {
+    testingFetch();
+    render(<ConnectedApp path="/start" mode="synthetic" />);
+    const name = await screen.findByLabelText("Issuer name");
+    expect(name).toBeRequired();
+    expect(name).toHaveValue("");
+    expect(name).toHaveAttribute("placeholder", "e.g. Northbridge Group plc");
+    const id = screen.getByLabelText("Issuer ID");
+    expect(id).toBeRequired();
+    expect(id).toHaveValue("");
+    expect(id).toHaveAttribute("placeholder", "e.g. northbridge-group-plc");
+  });
+});
+
+describe("connected run start: the case date is the analyst's to enter (J2-002, J1-015)", () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+  const dated = (day: Date) => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(day);
+  };
+
+  it("opens a new form with the as-of date empty and required, and nothing said about it", async () => {
+    dated(new Date(2026, 10, 17, 12));
+    testingFetch();
+    render(<ConnectedApp path="/start" mode="synthetic" />);
+    const date = await screen.findByLabelText("As-of date");
+    expect(date).toBeRequired();
+    expect(date).toHaveValue("");
+    expect(screen.queryByText(/Set to today/)).toBeNull();
+  });
+
+  it("asks for the date before the form goes on, and takes the one entered", async () => {
+    const fetchMock = testingFetch();
+    render(<ConnectedApp path="/start" mode="synthetic" />);
+    fireEvent.change(await screen.findByLabelText("Issuer name"), {
+      target: { value: "Synthetic Générale" },
+    });
+    fireEvent.change(screen.getByLabelText("Documents"), { target: { files: [file] } });
+    fireEvent.click(screen.getByRole("button", { name: "Continue to purpose" }));
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 60));
+    });
+    expect(screen.getByRole("heading", { name: "Documents" })).toBeInTheDocument();
+    expect(fetchMock.mock.calls.some(([path]) => path === "/api/submissions")).toBe(false);
+    fireEvent.change(screen.getByLabelText("As-of date"), { target: { value: "2026-10-31" } });
+    await advanceToPurpose();
+  });
+
+  it("opens empty again once the analyst says it is a different issuer", async () => {
+    dated(new Date(2026, 10, 17, 12));
+    testingFetch(plan, undefined, latestRun);
+    render(<ConnectedApp path="/start" mode="synthetic" />);
+    fireEvent.change(await screen.findByLabelText("Issuer name"), {
+      target: { value: "Northbridge" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Carry over from latest run" }));
+    await screen.findByText(/Starting from run latest-case/);
+    fireEvent.click(await screen.findByRole("button", { name: "This is a different issuer" }));
+    expect(screen.getByLabelText("As-of date")).toHaveValue("");
+    expect(screen.queryByText(/Set to today/)).toBeNull();
+  });
+
+  it("opens Start from this run with the as-of date empty and required, the service's blank date", async () => {
+    dated(new Date(2026, 10, 17, 12));
+    testingFetch(plan, undefined, { "/api/runs/earlier/inputs": earlierRun });
+    render(<ConnectedApp path="/start" search="?from=earlier" mode="synthetic" />);
+    expect(await screen.findByLabelText("Issuer name")).toHaveValue("Northbridge");
+    const date = screen.getByLabelText("As-of date");
+    expect(date).toHaveValue("");
+    expect(date).toBeRequired();
+    expect(screen.queryByText(/Set to today/)).toBeNull();
+  });
+
+  it("carries the latest run with the as-of date empty and required", async () => {
+    dated(new Date(2026, 10, 17, 12));
+    testingFetch(plan, undefined, latestRun);
+    render(<ConnectedApp path="/start" mode="synthetic" />);
+    fireEvent.change(await screen.findByLabelText("Issuer name"), {
+      target: { value: "Northbridge" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Carry over from latest run" }));
+    await screen.findByText(/Starting from run latest-case/);
+    const date = screen.getByLabelText("As-of date");
+    expect(date).toHaveValue("");
+    expect(date).toBeRequired();
+    expect(screen.queryByText(/Set to today/)).toBeNull();
+  });
+
+  it("sends the same request bodies and digest once the date is entered", async () => {
+    const fetchMock = testingFetch();
+    render(<ConnectedApp path="/start" mode="synthetic" navigate={vi.fn()} />);
+    await review();
+    const submit = await screen.findByRole("button", { name: "Submit run" });
+    approve();
+    await confirmSynthetic(submit);
+    await vi.waitFor(() => {
+      expect(fetchMock.mock.calls.some(([path]) => path.endsWith("/submit"))).toBe(true);
+    });
+    const bodyTo = (suffix: string) => {
+      const body = fetchMock.mock.calls.find(([path]) => path.endsWith(suffix))?.[1]?.body;
+      return JSON.parse(typeof body === "string" ? body : "null") as unknown;
+    };
+    const answers = {
+      context: {
+        run: {
+          as_of: "2026-10-31",
+          pathway: "credit_snapshot",
+          case_kind: "synthetic",
+          cutoff: "2026-10-31",
+        },
+        identity: { issuer_name: "Synthetic Générale", issuer_id: "synthetic-generale" },
+      },
+      modules: [],
+      max_turns: 32,
+      level: "basic",
+      model: "gpt",
+      effort: "balanced",
+      submitted_by: "Ana L",
+    };
+    expect(bodyTo("/summary")).toEqual(answers);
+    expect(bodyTo("/submit")).toEqual({ answers, digest: "server-approved" });
+  });
+});
+
+describe("connected run start: leaving the form without losing it (C2-002)", () => {
+  const away = () => {
+    const event = new Event("beforeunload", { cancelable: true });
+    window.dispatchEvent(event);
+    return event.defaultPrevented;
+  };
+  const settle = () =>
+    act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 60));
+    });
+
+  it("gives each step its own history entry, so Back and Forward move between steps", async () => {
+    testingFetch();
+    render(<ConnectedApp path="/start" mode="synthetic" />);
+    await fillInputs();
+    await advanceToPurpose();
+    window.history.back();
+    expect(await screen.findByRole("heading", { name: "Documents" })).toHaveFocus();
+    expect(screen.getByLabelText("Issuer name")).toHaveValue("Synthetic Générale");
+    expect(screen.getByLabelText("Your name")).toHaveValue("Ana L");
+    expect(screen.getByRole("list", { name: "Documents added" })).toHaveTextContent(file.name);
+    window.history.forward();
+    expect(await screen.findByRole("heading", { name: "Purpose" })).toBeInTheDocument();
+    advanceToContext();
+    expect(await screen.findByRole("heading", { name: "More context" })).toBeInTheDocument();
+    window.history.back();
+    expect(await screen.findByRole("heading", { name: "Purpose" })).toBeInTheDocument();
+  });
+
+  it("gives the Previous button an entry too, so Back retraces it", async () => {
+    testingFetch();
+    render(<ConnectedApp path="/start" mode="synthetic" />);
+    await fillInputs();
+    await advanceToPurpose();
+    advanceToContext();
+    await screen.findByRole("heading", { name: "More context" });
+    fireEvent.click(screen.getByRole("button", { name: "Previous" }));
+    await screen.findByRole("heading", { name: "Purpose" });
+    window.history.back();
+    expect(await screen.findByRole("heading", { name: "More context" })).toBeInTheDocument();
+  });
+
+  it("returns from the review sheet to More context with the typed note kept", async () => {
+    const fetchMock = testingFetch();
+    render(<ConnectedApp path="/start" mode="synthetic" />);
+    await fillInputs();
+    await advanceToPurpose();
+    advanceToContext();
+    fireEvent.change(await screen.findByLabelText("Anything the analysis should know"), {
+      target: { value: "Check the 2028 maturities." },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Review run" }));
+    await screen.findByRole("button", { name: "Submit run" });
+    window.history.back();
+    expect(await screen.findByRole("heading", { name: "More context" })).toBeInTheDocument();
+    expect(screen.getByLabelText("Anything the analysis should know")).toHaveValue(
+      "Check the 2028 maturities.",
+    );
+    expect(screen.queryByRole("button", { name: "Submit run" })).toBeNull();
+    // Forward does not rebuild a review the page no longer holds: it stays on More context.
+    window.history.forward();
+    await settle();
+    expect(screen.getByRole("heading", { name: "More context" })).toBeInTheDocument();
+    expect(fetchMock.mock.calls.filter(([path]) => path.endsWith("/summary"))).toHaveLength(1);
+  });
+
+  it("passes over the entry of a review that was left by an Edit button", async () => {
+    testingFetch();
+    render(<ConnectedApp path="/start" mode="synthetic" />);
+    await review();
+    await screen.findByRole("button", { name: "Submit run" });
+    fireEvent.click(screen.getByRole("button", { name: "Edit issuer and documents" }));
+    await screen.findByRole("heading", { name: "Documents" });
+    window.history.back();
+    expect(await screen.findByRole("heading", { name: "More context" })).toBeInTheDocument();
+  });
+
+  it("does not move Forward onto a step whose documents were changed after it", async () => {
+    testingFetch();
+    render(<ConnectedApp path="/start" mode="synthetic" />);
+    await fillInputs();
+    await advanceToPurpose();
+    window.history.back();
+    await screen.findByRole("heading", { name: "Documents" });
+    const other = new File(["more"], "More facts.html", { type: "text/html" });
+    fireEvent.change(screen.getByLabelText("Documents"), { target: { files: [other] } });
+    window.history.forward();
+    await settle();
+    expect(screen.getByRole("heading", { name: "Documents" })).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Purpose" })).toBeNull();
+  });
+
+  it("asks before the page is left once the form holds a document or an answer, not before", async () => {
+    testingFetch();
+    const { unmount } = render(<ConnectedApp path="/start" mode="synthetic" />);
+    await screen.findByLabelText("Issuer name");
+    expect(away()).toBe(false);
+    fireEvent.change(screen.getByLabelText("Issuer name"), { target: { value: "Synthetic" } });
+    expect(away()).toBe(true);
+    fireEvent.change(screen.getByLabelText("Issuer name"), { target: { value: "" } });
+    expect(away()).toBe(false);
+    fireEvent.change(screen.getByLabelText("Documents"), { target: { files: [file] } });
+    expect(away()).toBe(true);
+    unmount();
+    expect(away()).toBe(false);
+  });
+
+  const carriedOver = { "/api/submissions/sub-1/carry": { carried: [file.name], kept: [] } };
+
+  it("asks once Start from this run has carried its documents, with nothing typed", async () => {
+    testingFetch(plan, undefined, { "/api/runs/earlier/inputs": earlierRun, ...carriedOver });
+    render(<ConnectedApp path="/start" search="?from=earlier" mode="synthetic" />);
+    await screen.findByLabelText("Issuer name");
+    expect(away()).toBe(false);
+    fireEvent.click(screen.getByRole("button", { name: "Inspect documents" }));
+    expect(await screen.findByRole("list", { name: "Documents added" })).toHaveTextContent(
+      file.name,
+    );
+    expect(screen.getByLabelText("Your name")).toHaveValue("");
+    expect(away()).toBe(true);
+  });
+
+  it("asks once Carry over from latest run has carried its documents, with nothing typed", async () => {
+    testingFetch(plan, undefined, { ...latestRun, ...carriedOver });
+    render(<ConnectedApp path="/start" mode="synthetic" />);
+    fireEvent.change(await screen.findByLabelText("Issuer name"), {
+      target: { value: "Northbridge" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Carry over from latest run" }));
+    await screen.findByText(/Starting from run latest-case/);
+    expect(away()).toBe(false);
+    fireEvent.click(screen.getByRole("button", { name: "Inspect documents" }));
+    await screen.findByRole("list", { name: "Documents added" });
+    expect(away()).toBe(true);
+  });
+
+  it.each([
+    ["on the Purpose step", false],
+    ["on and past the Purpose step", true],
+  ])(
+    "asks only if a purpose was chosen, once every document was taken out again: %s",
+    async (_name, chosen) => {
+      let held = true;
+      testingFetch(plan, undefined, {
+        "/api/submissions/sub-1/reading": () =>
+          Promise.resolve(
+            Response.json({ documents: held ? plan.documents : [], ignored: [], error: "" }),
+          ),
+      });
+      render(<ConnectedApp path="/start" mode="synthetic" />);
+      await fillInputs();
+      await advanceToPurpose();
+      if (chosen) advanceToContext();
+      fireEvent.click(await screen.findByRole("button", { name: "Go back to Documents" }));
+      held = false;
+      fireEvent.click(await screen.findByRole("button", { name: `Remove ${file.name}` }));
+      await screen.findByText("No documents yet.");
+      fireEvent.change(screen.getByLabelText("Issuer name"), { target: { value: "" } });
+      fireEvent.change(screen.getByLabelText("Your name"), { target: { value: "" } });
+      expect(away()).toBe(chosen);
+    },
+  );
+
+  it("does not ask once Submit has started the run, and makes no second draft", async () => {
+    const fetchMock = testingFetch();
+    let askedAtNavigation: boolean | undefined;
+    const navigate = vi.fn(() => {
+      askedAtNavigation = away();
+    });
+    render(<ConnectedApp path="/start" mode="synthetic" navigate={navigate} />);
+    await review();
+    const submit = await screen.findByRole("button", { name: "Submit run" });
+    approve();
+    expect(away()).toBe(true);
+    await confirmSynthetic(submit);
+    await vi.waitFor(() => {
+      expect(navigate).toHaveBeenCalledWith("/run/test-run");
+    });
+    expect(askedAtNavigation).toBe(false);
+    expect(fetchMock.mock.calls.filter(([path]) => path === "/api/submissions")).toHaveLength(1);
+  });
+
+  it("sends the same answers and digest after Back and a second review", async () => {
+    const fetchMock = testingFetch();
+    render(<ConnectedApp path="/start" mode="synthetic" navigate={vi.fn()} />);
+    await review();
+    await screen.findByRole("button", { name: "Submit run" });
+    window.history.back();
+    await screen.findByRole("heading", { name: "More context" });
+    fireEvent.click(screen.getByRole("button", { name: "Review run" }));
+    const submit = await screen.findByRole("button", { name: "Submit run" });
+    approve();
+    await confirmSynthetic(submit);
+    await vi.waitFor(() => {
+      expect(fetchMock.mock.calls.some(([path]) => path.endsWith("/submit"))).toBe(true);
+    });
+    const sent = fetchMock.mock.calls.find(([path]) => path.endsWith("/submit"))?.[1]?.body;
+    expect(JSON.parse(typeof sent === "string" ? sent : "null")).toMatchObject({
+      digest: plan.digest,
+      answers: {
+        submitted_by: "Ana L",
+        context: {
+          identity: { issuer_name: "Synthetic Générale", issuer_id: "synthetic-generale" },
+        },
+      },
+    });
+  });
+});
+
+describe("connected run start: carrying an earlier run keeps what it recorded (C2-003)", () => {
+  const recorded = (attachments?: Record<string, unknown>) => ({
+    issuer_id: "northbridge",
+    issuer_name: "Northbridge",
+    level: "basic",
+    max_turns: 32,
+    modules: [],
+    context: { ...context, run: { ...context.run, as_of: "" }, attachments },
+    files: [{ name: file.name, size: file.size }],
+  });
+  const roles = {
+    legal_documents: "executed",
+    portfolio_workbook: true,
+    management_bridge: false,
+    prior_case: false,
+  };
+  const carried = { carried: [file.name], kept: [] as string[] };
+  const latest = {
+    "/api/issuers/northbridge": { latest_run: "latest-case", runs: 1, latest_as_of: "2025-03-31" },
+    "/api/submissions/sub-1/carry": carried,
+  };
+
+  async function contextStepFrom(inputs: object) {
+    const fetchMock = testingFetch(plan, undefined, {
+      "/api/runs/earlier/inputs": inputs,
+      "/api/submissions/sub-1/carry": carried,
+    });
+    render(<ConnectedApp path="/start" search="?from=earlier" mode="synthetic" />);
+    await screen.findByLabelText("Issuer name");
+    typeDate();
+    typeName();
+    await advanceToPurpose();
+    advanceToContext();
+    await screen.findByRole("heading", { name: "More context" });
+    return fetchMock;
+  }
+
+  it("opens the Legal documents choice the earlier run recorded and asks for the file again", async () => {
+    const fetchMock = await contextStepFrom(recorded(roles));
+    expect(screen.getByLabelText("Legal documents")).toHaveValue("executed");
+    expect(screen.getByLabelText("The agreement")).toHaveValue("");
+    fireEvent.click(screen.getByRole("button", { name: "Review run" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Choose the uploaded file that is the agreement.",
+    );
+    expect(fetchMock.mock.calls.some(([path]) => path.endsWith("/summary"))).toBe(false);
+  });
+
+  it("says which file choices the earlier run did not record, and only those it had", async () => {
+    testingFetch(plan, undefined, { "/api/runs/earlier/inputs": recorded(roles) });
+    render(<ConnectedApp path="/start" search="?from=earlier" mode="synthetic" />);
+    expect(await screen.findByText(/Starting from run earlier\./)).toHaveTextContent(
+      "Starting from run earlier. Review the copied answers, add dates, and inspect its available documents. " +
+        "It did not record which files you chose for the agreement and the portfolio workbook: choose them again on More context.",
+    );
+    cleanup();
+    vi.unstubAllGlobals();
+    testingFetch(plan, undefined, {
+      "/api/runs/earlier/inputs": recorded({
+        ...roles,
+        legal_documents: "none",
+        portfolio_workbook: false,
+      }),
+    });
+    render(<ConnectedApp path="/start" search="?from=earlier" mode="synthetic" />);
+    expect(await screen.findByText(/Starting from run earlier\./)).not.toHaveTextContent(
+      "did not record",
+    );
+  });
+
+  it.each([
+    ["no attachments recorded", undefined, "none"],
+    ["a choice the page does not offer", { ...roles, legal_documents: "signed" }, "none"],
+    ["a draft agreement", { ...roles, legal_documents: "draft" }, "draft"],
+  ])("applies only what was recorded: %s", async (_name, attachments, expected) => {
+    await contextStepFrom(recorded(attachments));
+    expect(screen.getByLabelText("Legal documents")).toHaveValue(expected);
+    expect(screen.queryByLabelText("The agreement") === null).toBe(expected === "none");
+  });
+
+  it("applies the recorded choice when the latest run is carried by the button, and not after a different issuer", async () => {
+    testingFetch(plan, undefined, { ...latest, "/api/runs/latest-case/inputs": recorded(roles) });
+    render(<ConnectedApp path="/start" mode="synthetic" />);
+    fireEvent.change(await screen.findByLabelText("Issuer name"), {
+      target: { value: "Northbridge" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Carry over from latest run" }));
+    await screen.findByText(/Starting from run latest-case/);
+    typeDate();
+    typeName();
+    await advanceToPurpose();
+    advanceToContext();
+    await screen.findByRole("heading", { name: "More context" });
+    expect(screen.getByLabelText("Legal documents")).toHaveValue("executed");
+    fireEvent.click(screen.getByRole("button", { name: "Previous" }));
+    fireEvent.click(screen.getByRole("button", { name: "Previous" }));
+    fireEvent.click(await screen.findByRole("button", { name: "This is a different issuer" }));
+    fireEvent.change(screen.getByLabelText("Issuer name"), { target: { value: "Other Issuer" } });
+    fireEvent.change(screen.getByLabelText("As-of date"), { target: { value: "2026-10-31" } });
+    fireEvent.change(screen.getByLabelText("Documents"), { target: { files: [file] } });
+    await advanceToPurpose();
+    advanceToContext();
+    await screen.findByRole("heading", { name: "More context" });
+    expect(screen.getByLabelText("Legal documents")).toHaveValue("none");
+  });
 });

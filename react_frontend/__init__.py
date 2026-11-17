@@ -336,6 +336,20 @@ def _connected_report_reply(layout: Layout, path: str, url: SplitResult) -> http
     return None
 
 
+def _form_template(*, synthetic: bool) -> dict[str, Any]:
+    """The context the start form opens from: the example case's settings, without its issuer.
+
+    The issuer is the analyst's to name, so its name and ID reach the form empty and the form
+    shows an example only as a placeholder (audit J2-002)."""
+    template: dict[str, Any] = json.loads(
+        (PROJECT / "cases/context/research-minimal.json").read_bytes()
+    )
+    template["identity"].update(issuer_name="", issuer_id="")
+    if synthetic:
+        template["run"]["case_kind"] = "synthetic"
+    return template
+
+
 def _handler(
     dist: Path, page: bytes, context: dict[str, Any], *, read_only: bool = False
 ) -> type[service.Handler]:
@@ -430,9 +444,7 @@ def make_server(  # noqa: PLR0913 - explicit launcher, mode and server options
     dist = (web or PROJECT / "web" / "dist").resolve()
     signal_link = service.signal_link(signal_url) if signal_url else ""
     page = _read_page(dist, synthetic=synthetic, signal_url=signal_link)
-    context = json.loads((PROJECT / "cases/context/research-minimal.json").read_bytes())
-    if synthetic:
-        context["run"]["case_kind"] = "synthetic"
+    context = _form_template(synthetic=synthetic)
     settings = (  # Teams cards are for real runs only: a synthetic service never posts
         Settings(root, teams=teams.config_from_environment(teams.CONNECTED_PAGES))
         if launcher is None

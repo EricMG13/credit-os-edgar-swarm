@@ -1,0 +1,26 @@
+# The two probes that cannot pass on the repaired page, re-run on the round 2 build (2026-11-17). Not edited.
+
+=== j2-001-leave-mid-form.cjs (under the 8762 lock) ===
+before leaving (More context, note typed): url=/start step="3 / More context / Optional / Current step" issuer="(not on this step)" files=[] notices=[]
+browser Back from step 3 -> /start (a step earlier would be /start)
+browser Forward: url=/start step="3 / More context / Optional / Current step" issuer="(not on this step)" files=[] notices=[]
+blocked requests: 0; page errors: 0
+...
+locator.click: Timeout 15000ms exceeded.
+[2m  - waiting for getByRole('link', { name: 'Start a run', exact: true }).first()[22m
+    "  - waiting for getByRole('link', { name: 'Start a run', exact: true }).first()"
+  name: 'TimeoutError'
+exit 1
+
+=== p10-navigation.cjs (C2_PORT=8747) ===
+ "dialogs": [
+  "beforeunload: "
+ ],
+ "arrivedFromRuns": "/start",
+ "historyLength": 5,
+ "error": "TimeoutError: page.reload: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for navigation until \"load\"\u001b[22m\n",
+exit 0
+ "afterBackAtStep3": {
+  "url": "/start",
+  "h2": [
+   "Purpose",

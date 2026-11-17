@@ -97,10 +97,28 @@ def test_react_page_routes_serve_the_build(hosted: _Server, web: Path) -> None:
         assert request(hosted, path)[0] == 404
 
 
+def _form_template() -> dict[str, Any]:
+    """The example case the start form opens from: its settings, but no issuer (J2-002)."""
+    template = json.loads((PROJECT / "cases/context/research-minimal.json").read_bytes())
+    template["identity"].update(issuer_name="", issuer_id="")
+    return template
+
+
+def test_start_form_template_names_no_issuer(hosted: _Server) -> None:
+    sent = json.loads(request(hosted, "/connected/context")[1])
+    assert sent["identity"]["issuer_name"] == ""
+    assert sent["identity"]["issuer_id"] == ""
+    assert "Northbridge" not in json.dumps(sent["identity"])
+    example = json.loads((PROJECT / "cases/context/research-minimal.json").read_bytes())
+    assert example["identity"]["issuer_name"] == "Northbridge Group"  # the file itself is unchanged
+    assert {k: v for k, v in sent["identity"].items() if k not in ("issuer_name", "issuer_id")} == {
+        k: v for k, v in example["identity"].items() if k not in ("issuer_name", "issuer_id")
+    }
+
+
 def test_same_origin_service_and_submit_gate(hosted: _Server) -> None:
-    context = json.loads((PROJECT / "cases/context/research-minimal.json").read_bytes())
     assert json.loads(request(hosted, "/connected/context")[1]) == {
-        **context,
+        **_form_template(),
         "submission_caps_usd": {pathway: str(cap) for pathway, cap in PATHWAY_CAP_USD.items()},
     }
     assert request(hosted, "/connected/context", headers={"Origin": "http://other.test"})[0] == 403
@@ -675,7 +693,7 @@ def test_synthetic_mode_uses_the_explicit_launcher(
             page = request(server, "/")[1]
             assert b'credit-os-mode" content="synthetic"' in page
             assert b'credit-os-signal-url"' not in page
-            expected = json.loads((PROJECT / "cases/context/research-minimal.json").read_bytes())
+            expected = _form_template()
             expected["run"]["case_kind"] = "synthetic"
             expected["submission_caps_usd"] = {
                 pathway: str(cap) for pathway, cap in PATHWAY_CAP_USD.items()

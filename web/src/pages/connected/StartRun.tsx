@@ -1,6 +1,7 @@
 import {
   useCallback,
   useEffect,
+  useEffectEvent,
   useId,
   useRef,
   useState,
@@ -112,6 +113,9 @@ const STEPPER_STEPS = [
 ] as const;
 const STEP_TOTAL = STEPPER_STEPS.length;
 const FORM_STEP_KEYS = Object.keys(FORM_STEPS) as FormStep[];
+/** Where the analyst is: one of the three form steps, or the review sheet after them. */
+type Place = FormStep | "review";
+const PLACES: readonly Place[] = [...FORM_STEP_KEYS, "review"];
 const STEP_GUIDANCE: Record<FormStep, string> = {
   documents:
     "Add annual and interim reports, the credit agreement and any other material the analysis should read.",
@@ -259,8 +263,7 @@ type IntakeView = {
   step: FormStep;
   busy?: "review" | "submit" | "documents" | "copy";
   canRead: boolean;
-  copy?: { run: string };
-  priorAsOf: string;
+  copy?: { run: string; prior: PriorInputs };
   priorNote: string;
   identity: Context["identity"];
   issuerId: string;
@@ -356,13 +359,13 @@ function useIntakeIdentityState(
   };
 }
 
-function useIntakeDocumentsState() {
+function useIntakeDocumentsState(initial?: { run: string; prior: PriorInputs }) {
   const [files, setFiles] = useState<File[]>([]);
   const [reading, setReading] = useState<Reading>();
   const [uploaded, setUploaded] = useState(new Map<File, string>());
   const [ignoredCopies, setIgnoredCopies] = useState<string[]>([]);
   const [attachments, setAttachments] = useState<Partial<Record<Attachment, string>>>({});
-  const [legal, setLegal] = useState("none");
+  const [legal, setLegal] = useState(() => carriedLegal(initial?.prior));
   const [forms, setForms] = useState<Forms>({});
   const [rows, setRows] = useState<Partial<Record<RowKind, Row[]>>>({});
   const [analystNote, setAnalystNote] = useState("");
@@ -538,6 +541,61 @@ function intakeRunDetails({
   };
 }
 
+/** The place a history entry of this form stands for; `undefined` for any other entry. */
+function placeOf(state: unknown): Place | undefined {
+  if (typeof state !== "object" || state === null || !("startRun" in state)) return undefined;
+  return PLACES.find((place) => place === state.startRun);
+}
+
+/**
+ * Each step and the review sheet is a history entry, so the browser's Back and Forward move
+ * between them with everything typed kept. `show` moves the form to a place and says whether it
+ * could; an entry the form cannot show, such as a review it no longer holds, is passed over.
+ */
+function useStepHistory(place: Place, show: (target: Place) => boolean) {
+  const entry = useRef(place);
+  const arrive = useEffectEvent((target: Place) => {
+    if (target !== place && !show(target)) {
+      window.history.back();
+      return;
+    }
+    entry.current = target;
+  });
+  useEffect(() => {
+    window.history.replaceState({ startRun: entry.current }, "");
+    const listen = (event: PopStateEvent) => {
+      const target = placeOf(event.state);
+      if (target) arrive(target);
+    };
+    window.addEventListener("popstate", listen);
+    return () => {
+      window.removeEventListener("popstate", listen);
+    };
+  }, []);
+  useEffect(() => {
+    if (entry.current === place) return;
+    entry.current = place;
+    window.history.pushState({ startRun: place }, "");
+  }, [place]);
+}
+
+/**
+ * While the form holds work, leaving the page (a link, Reload, closing the tab) asks the browser
+ * to confirm. Once Submit has started the run the page moves on without asking.
+ */
+function useLeaveWarning(holdsWork: boolean, submitted: RefObject<boolean>) {
+  useEffect(() => {
+    if (!holdsWork) return;
+    const warn = (event: BeforeUnloadEvent) => {
+      if (!submitted.current) event.preventDefault();
+    };
+    window.addEventListener("beforeunload", warn);
+    return () => {
+      window.removeEventListener("beforeunload", warn);
+    };
+  }, [holdsWork, submitted]);
+}
+
 function StepFields({
   view,
   folderInput,
@@ -656,12 +714,7 @@ function DocumentFields({
       </FileUpload.Root>
       <div className="grid gap-2 sm:col-span-2">
         <h3 className="font-semibold">Issuer and case date</h3>
-        {view.copy && (
-          <p className="text-sm text-text-secondary">
-            Starting from run {view.copy.run}. Review the copied answers, add dates, and inspect its
-            available documents.
-          </p>
-        )}
+        {view.copy && <p className="text-sm text-text-secondary">{carriedIntro(view.copy)}</p>}
         {view.priorNote && (
           <p role="status" className="text-sm text-text-secondary">
             {view.priorNote}
@@ -674,6 +727,7 @@ function DocumentFields({
           <input
             className={field}
             required
+            placeholder="e.g. Northbridge Group plc"
             {...problemAttrs(view.problem, "issuer_name")}
             value={view.identity.issuer_name}
             onChange={(event) => {
@@ -690,6 +744,7 @@ function DocumentFields({
           required
           pattern="[a-z0-9][a-z0-9\-]{0,39}"
           maxLength={40}
+          placeholder="e.g. northbridge-group-plc"
           value={view.issuerId}
           readOnly={!!view.copy}
           onChange={(event) => {
@@ -710,11 +765,6 @@ function DocumentFields({
             }}
           />
         </label>
-        {view.priorAsOf && (
-          <p className="text-sm text-text-tertiary">
-            Set to today for the new run. The earlier run used {view.priorAsOf}.
-          </p>
-        )}
       </div>
       <SelectField
         title={ISSUE_CLASSIFICATION}
@@ -1288,7 +1338,7 @@ function IntakeForm({
   mode: Mode;
 }) {
   const identityState = useIntakeIdentityState(template, initial, warning);
-  const documentState = useIntakeDocumentsState();
+  const documentState = useIntakeDocumentsState(initial);
   const runOptions = useIntakeRunOptions(initial);
   const reviewState = useIntakeReviewState();
   const {
@@ -1370,6 +1420,8 @@ function IntakeForm({
   const folderInput = useRef<HTMLInputElement>(null);
   // The control that had focus when a busy state began; busy fieldsets disable it and drop focus.
   const focusedBefore = useRef<{ node: HTMLElement; text: string } | null>(null);
+  // Set when Submit has started the run, so leaving the page for it is not warned about.
+  const submitted = useRef(false);
   // The step heading takes focus only after the step changes, never on first render.
   const [moved, setMoved] = useState(false);
   // Counts finished inspections, so a repeated result is announced again.
@@ -1560,7 +1612,7 @@ function IntakeForm({
     setRows({});
     setAnalystNote("");
     setAttachments({});
-    setLegal("none");
+    setLegal(carriedLegal(prior));
     setIgnoredCopies([]);
     setNewestOverride(undefined);
     setReading(undefined);
@@ -1765,6 +1817,7 @@ function IntakeForm({
           review.summary.digest,
           review.cap,
         );
+        submitted.current = true;
         navigate(`/run/${encodeURIComponent(id)}`);
       } catch (failure) {
         if (failure instanceof RequestError && [400, 404].includes(failure.status)) {
@@ -1903,6 +1956,15 @@ function IntakeForm({
     goTo(target);
   }
 
+  /** Moves to a place the browser's Back or Forward named; false when the form cannot show it. */
+  function showPlace(target: Place) {
+    // A review is made by Review run and not kept once left, and a step past Documents needs
+    // documents that were read: Forward to either is passed over.
+    if (target === "review" || (target !== "documents" && reading === undefined)) return false;
+    editReviewedInputs(target);
+    return true;
+  }
+
   function changeReviewedModules(next: string[]) {
     editReviewedInputs("context");
     setModules(next);
@@ -1925,7 +1987,6 @@ function IntakeForm({
     busy,
     canRead,
     copy,
-    priorAsOf: run.as_of === today() ? (copy?.prior.context?.run.as_of ?? "") : "",
     priorNote,
     identity,
     issuerId,
@@ -2035,6 +2096,18 @@ function IntakeForm({
     )
       remembered.node.focus();
   }, [busy]);
+
+  // Documents carried from an earlier run count as much as chosen ones. A legal or module choice
+  // is made on More context, which opens only once a purpose has been chosen.
+  const holdsWork =
+    documentRows.length > 0 ||
+    purposeChosen ||
+    review !== undefined ||
+    submittedBy.trim() !== "" ||
+    analystNote.trim() !== "" ||
+    identity.issuer_name !== (copy?.prior.issuer_name ?? template.identity.issuer_name);
+  useLeaveWarning(holdsWork, submitted);
+  useStepHistory(review ? "review" : step, showPlace);
 
   return (
     <IntakePanels
@@ -2456,13 +2529,6 @@ function newestPeriod(reading?: Reading) {
   );
 }
 
-function today() {
-  const now = new Date();
-  const month = String(now.getMonth() + 1).padStart(2, "0");
-  const day = String(now.getDate()).padStart(2, "0");
-  return `${String(now.getFullYear())}-${month}-${day}`;
-}
-
 function startingContext(template: Context, prior?: PriorInputs): Context {
   const source = prior?.context ?? template;
   // The run's currency is the one CP-1's statements print, so a value the template or an earlier
@@ -2476,7 +2542,8 @@ function startingContext(template: Context, prior?: PriorInputs): Context {
     ...source,
     run: {
       ...heldRun,
-      as_of: today(),
+      // The case date is the analyst's to enter: every entry path opens without one.
+      as_of: "",
       pathway,
       ...(pathway === "earnings_update"
         ? { run_type: "earnings" }
@@ -2490,6 +2557,30 @@ function startingContext(template: Context, prior?: PriorInputs): Context {
       issuer_id: prior?.issuer_id ?? source.identity.issuer_id,
     },
   };
+}
+
+/** The Legal documents choice an earlier run recorded, when the page still offers it. */
+function carriedLegal(prior?: PriorInputs) {
+  const recorded = prior?.context?.attachments?.legal_documents ?? "none";
+  return Object.hasOwn(LEGAL_CHOICES, recorded) ? recorded : "none";
+}
+
+/**
+ * The page's own line when it starts from an earlier run. The run recorded an agreement choice and
+ * a yes for each other file box it used, but not which file filled them: that is said, not guessed.
+ */
+function carriedIntro({ run, prior }: { run: string; prior: PriorInputs }) {
+  const intro = `Starting from run ${run}. Review the copied answers, add dates, and inspect its available documents.`;
+  const recorded = prior.context?.attachments;
+  const roles = [
+    ...(carriedLegal(prior) === "none" ? [] : ["agreement"]),
+    ...Object.entries(ATTACHMENTS)
+      .filter(([key]) => recorded?.[key as keyof typeof ATTACHMENTS] === true)
+      .map(([, title]) => title.charAt(0).toLowerCase() + title.slice(1)),
+  ].map((role) => `the ${role}`);
+  if (!roles.length || prior.error || !prior.files.length) return intro;
+  const list = new Intl.ListFormat("en", { type: "conjunction" }).format(roles);
+  return `${intro} It did not record which files you chose for ${list}: choose them again on More context.`;
 }
 
 export function carriedModules(prior?: PriorInputs) {
