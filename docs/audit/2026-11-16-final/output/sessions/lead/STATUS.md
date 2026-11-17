@@ -1,3 +1,75 @@
+## Lead checkpoint 2026-11-17T22:50:09Z
+
+Stage 7 uses executable source `a987af9b` in `/workspace/audit-final`.
+Stage 6 is complete. The separate Stage 7 documentation candidate is
+`/workspace/stage7-docs` at `f951092b` plus pending evidence copies.
+
+Both checkout and release ZIP native file gates passed all 138 checks.
+Chrome and Edge connected proof passed on both builds. Recreated all
+379 historical connected screenshots. The final replay captured 399
+distinct frames and accounted for the four approved retirements. A
+separate native Chrome test matched the checkout and ZIP across 84
+distinct route/width pairs and all 12 sentinel PNGs. The focused Run
+Activity captures matched both widths in the same clock minute. See
+`/workspace/scratch/stage7-connected-screens`.
+
+The full-source ZIP preflight found two evidence directories with case-only
+names. Their two diagnostic files now live under `probes/r4-015/` with
+identical blob hashes and current evidence links updated. The corrected
+local archive census found no Windows path-name conflicts and verified
+the launcher uses CRLF. The runtime ZIP and application sources are
+unchanged. The two rehearsals and the exact prompt bytes are retained.
+
+Fresh frontend coverage and the full static replay are active. Both
+initial shard 8 failures are retained; each failing test file passed
+on its own unchanged. Finish the native blob merge, retain the static
+evidence, write the gates, screen comparison, summary and verification
+entry, and seal the exported-byte manifest. Push the final audit branch,
+then open the PR into `main` and leave it unmerged. Verify the GitHub
+source archive matches the manifest and the PR names the actual archive.
+
+## Lead checkpoint 2026-11-17T22:43:13Z
+
+Stage 7 is in progress on the frozen merged source `a987af9b`.
+Actual root `/workspace/audit-final` remains on that commit while
+read-only verification runs. The documentation-only candidate is isolated
+at `/workspace/stage7-docs`, checkpoint `ec74f073`.
+
+Locked uv and npm setup, production npm audit, lint, format, typecheck,
+unused, duplication, build, all 73 npm script tests, 6,285 Python checks
+plus the existing skip, 573 Node checks, default quality and checkout
+native Chrome/Edge connected proof passed. The frontend uses native
+coverage partitions and the 80% unchanged global threshold. First shard
+8 hit the original case-choice timeout under simultaneous browser load.
+A quiet repeat passed that file and exposed a different test failure.
+Record and resolve through exact small partitions with native merge.
+Static and connected screenshot schedulers are at completed boundaries
+while those focused cases are checked. The checkout native file gate
+is pending. All command evidence is under `/workspace/scratch/stage7-*`.
+
+The release ZIP on tested source is
+`delivery/credit-os2-react.zip`, SHA-256
+`db51d1996b3913ef77a6e51ba3281554cb7c3be33f95ffaf2a966b2544a7088e`.
+Both archived native browsers and all 138 direct file checks passed with
+the hashes unchanged. The independent CSS control reproduced both
+builds. The archive's generated-output scan creates a larger connected
+stylesheet; guarded Forecast PNGs at both widths match.
+The full before/after native screen and offline comparisons are active.
+
+The finished first-time prompt uses 54 exact requirement rows. The
+first fresh read-only rehearsal stopped correctly and exposed a
+transitive-metadata harness gap. The second covered the complete lock
+catalog, identified the intended Python/npm version gaps, produced the
+table and stopped with all download hashes unchanged. GitHub archive
+preflight confirmed the Windows launcher is exported CRLF. The standalone
+handoff manifest must hash the final exported bytes, excluding the
+work-PC pack directory. Refresh that manifest after the final reports.
+The actual work PC, Windows and owner-only checks remain unverified.
+
+Stage 5 and 6 are closed. After stage 7 gates, launch the final audit PR
+into main and leave it open. The final PR and full-source archive link
+have not been created.
+
 ## Lead checkpoint 2026-11-17T22:24Z
 
 **Stage 6 complete.** [PR #59](https://github.com/EricMG13/credit-os2/pull/59) passed both

@@ -1,0 +1,19 @@
+
+> credit-os-web@0.0.0 proof:connected
+> node scripts/connected-proof.mjs
+
+Browser proof artifacts: /workspace/audit-final/proof-artifacts/run-PuufSy
+overview mobile: 6 headline cards fit at 375px
+Google Chrome 157.0.8103.78 completed run 20261117-223320-01
+✔ Google Chrome uploads, submits and opens a finished legacy report (40591.185123ms)
+overview mobile: 6 headline cards fit at 375px
+Microsoft Edge 155.0.4283.62 completed run 20261117-223403-01
+✔ Microsoft Edge uploads, submits and opens a finished legacy report (62360.012958ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 2
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 102968.987321
