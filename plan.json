@@ -1,0 +1,1829 @@
+{
+  "schema": "swarm-plan/1",
+  "issuers": [
+    {
+      "issuer_id": "american-airlines-inc",
+      "name": "AMERICAN AIRLINES, INC.",
+      "cik": "4515",
+      "ticker": "-",
+      "pack": "/home/user/secdata/data/2026-11-05/packs/4515-american-airlines-inc",
+      "context": "/home/user/secdata/data/2026-11-05/contexts/4515-american-airlines-inc.json",
+      "run_folder": "/home/user/swarm-root/_engine/runs/swarm-american-airlines-inc",
+      "status": "pending",
+      "attempts": 0
+    },
+    {
+      "issuer_id": "caci",
+      "name": "CACI INTERNATIONAL INC /DE/",
+      "cik": "16058",
+      "ticker": "CACI",
+      "pack": "/home/user/secdata/data/2026-11-05/packs/16058-caci-international-inc-de-caci",
+      "context": "/home/user/secdata/data/2026-11-05/contexts/16058-caci-international-inc-de-caci.json",
+      "run_folder": "/home/user/swarm-root/_engine/runs/swarm-caci",
+      "status": "pending",
+      "attempts": 0
+    },
+    {
+      "issuer_id": "chdn",
+      "name": "Churchill Downs Inc",
+      "cik": "20212",
+      "ticker": "CHDN",
+      "pack": "/home/user/secdata/data/2026-11-05/packs/20212-churchill-downs-inc-chdn",
+      "context": "/home/user/secdata/data/2026-11-05/contexts/20212-churchill-downs-inc-chdn.json",
+      "run_folder": "/home/user/swarm-root/_engine/runs/swarm-chdn",
+      "status": "pending",
+      "attempts": 0
+    },
+    {
+      "issuer_id": "magn",
+      "name": "Magnera Corp",
+      "cik": "41719",
+      "ticker": "MAGN",
+      "pack": "/home/user/secdata/data/2026-11-05/packs/41719-magnera-corp-magn",
+      "context": "/home/user/secdata/data/2026-11-05/contexts/41719-magnera-corp-magn.json",
+      "run_folder": "/home/user/swarm-root/_engine/runs/swarm-magn",
+      "status": "pending",
+      "attempts": 0
+    },
+    {
+      "issuer_id": "gtn",
+      "name": "GRAY MEDIA, INC",
+      "cik": "43196",
+      "ticker": "GTN, GTN-A",
+      "pack": "/home/user/secdata/data/2026-11-05/packs/43196-gray-media-inc-gtn-gtn-a",
+      "context": "/home/user/secdata/data/2026-11-05/contexts/43196-gray-media-inc-gtn-gtn-a.json",
+      "run_folder": "/home/user/swarm-root/_engine/runs/swarm-gtn",
+      "status": "pending",
+      "attempts": 0
+    },
+    {
+      "issuer_id": "dy",
+      "name": "DYCOM INDUSTRIES INC",
+      "cik": "67215",
+      "ticker": "DY",
+      "pack": "/home/user/secdata/data/2026-11-05/packs/67215-dycom-industries-inc-dy",
+      "context": "/home/user/secdata/data/2026-11-05/contexts/67215-dycom-industries-inc-dy.json",
+      "run_folder": "/home/user/swarm-root/_engine/runs/swarm-dy",
+      "status": "pending",
+      "attempts": 0
+    },
+    {
+      "issuer_id": "thc",
+      "name": "TENET HEALTHCARE CORP",
+      "cik": "70318",
+      "ticker": "THC",
+      "pack": "/home/user/secdata/data/2026-11-05/packs/70318-tenet-healthcare-corp-thc",
+      "context": "/home/user/secdata/data/2026-11-05/contexts/70318-tenet-healthcare-corp-thc.json",
+      "run_folder": "/home/user/swarm-root/_engine/runs/swarm-thc",
+      "status": "pending",
+      "attempts": 0
+    },
+    {
+      "issuer_id": "oln",
+      "name": "OLIN Corp",
+      "cik": "74303",
+      "ticker": "OLN",
+      "pack": "/home/user/secdata/data/2026-11-05/packs/74303-olin-corp-oln",
+      "context": "/home/user/secdata/data/2026-11-05/contexts/74303-olin-corp-oln.json",
+      "run_folder": "/home/user/swarm-root/_engine/runs/swarm-oln",
+      "status": "pending",
+      "attempts": 0
+    },
+    {
+      "issuer_id": "pbi",
+      "name": "PITNEY BOWES INC /DE/",
+      "cik": "78814",
+      "ticker": "PBI, PBI-PB",
+      "pack": "/home/user/secdata/data/2026-11-05/packs/78814-pitney-bowes-inc-de-pbi-pbi-pb",
+      "context": "/home/user/secdata/data/2026-11-05/contexts/78814-pitney-bowes-inc-de-pbi-pbi-pb.json",
+      "run_folder": "/home/user/swarm-root/_engine/runs/swarm-pbi",
+      "status": "pending",
+      "attempts": 0
+    },
+    {
+      "issuer_id": "sci",
+      "name": "SERVICE CORP INTERNATIONAL",
+      "cik": "89089",
+      "ticker": "SCI",
+      "pack": "/home/user/secdata/data/2026-11-05/packs/89089-service-corp-international-sci",
+      "context": "/home/user/secdata/data/2026-11-05/contexts/89089-service-corp-international-sci.json",
+      "run_folder": "/home/user/swarm-root/_engine/runs/swarm-sci",
+      "status": "pending",
+      "attempts": 0
+    },
+    {
+      "issuer_id": "vsec",
+      "name": "VSE CORP",
+      "cik": "102752",
+      "ticker": "VSEC, VSECU",
+      "pack": "/home/user/secdata/data/2026-11-05/packs/102752-vse-corp-vsec-vsecu",
+      "context": "/home/user/secdata/data/2026-11-05/contexts/102752-vse-corp-vsec-vsecu.json",
+      "run_folder": "/home/user/swarm-root/_engine/runs/swarm-vsec",
+      "status": "pending",
+      "attempts": 0
+    },
+    {
+      "issuer_id": "whr",
+      "name": "WHIRLPOOL CORP /DE/",
+      "cik": "106640",
+      "ticker": "WHR, WHR-PA",
+      "pack": "/home/user/secdata/data/2026-11-05/packs/106640-whirlpool-corp-de-whr-whr-pa",
+      "context": "/home/user/secdata/data/2026-11-05/contexts/106640-whirlpool-corp-de-whr-whr-pa.json",
+      "run_folder": "/home/user/swarm-root/_engine/runs/swarm-whr",
+      "status": "pending",
+      "attempts": 0
+    },
+    {
+      "issuer_id": "val",
+      "name": "Valaris Ltd",
+      "cik": "314808",
+      "ticker": "VAL, VAL-WT",
+      "pack": "/home/user/secdata/data/2026-11-05/packs/314808-valaris-ltd-val-val-wt",
+      "context": "/home/user/secdata/data/2026-11-05/contexts/314808-valaris-ltd-val-val-wt.json",
+      "run_folder": "/home/user/swarm-root/_engine/runs/swarm-val",
+      "status": "pending",
+      "attempts": 0
+    },
+    {
+      "issuer_id": "mur",
+      "name": "MURPHY OIL CORP",
+      "cik": "717423",
+      "ticker": "MUR",
+      "pack": "/home/user/secdata/data/2026-11-05/packs/717423-murphy-oil-corp-mur",
+      "context": "/home/user/secdata/data/2026-11-05/contexts/717423-murphy-oil-corp-mur.json",
+      "run_folder": "/home/user/swarm-root/_engine/runs/swarm-mur",
+      "status": "pending",
+      "attempts": 0
+    },
+    {
+      "issuer_id": "clf",
+      "name": "CLEVELAND-CLIFFS INC.",
+      "cik": "764065",
+      "ticker": "CLF",
+      "pack": "/home/user/secdata/data/2026-11-05/packs/764065-cleveland-cliffs-inc-clf",
+      "context": "/home/user/secdata/data/2026-11-05/contexts/764065-cleveland-cliffs-inc-clf.json",
+      "run_folder": "/home/user/swarm-root/_engine/runs/swarm-clf",
+      "status": "pending",
+      "attempts": 0
+    },
+    {
+      "issuer_id": "ehc",
+      "name": "Encompass Health Corp",
+      "cik": "785161",
+      "ticker": "EHC",
+      "pack": "/home/user/secdata/data/2026-11-05/packs/785161-encompass-health-corp-ehc",
+      "context": "/home/user/secdata/data/2026-11-05/contexts/785161-encompass-health-corp-ehc.json",
+      "run_folder": "/home/user/swarm-root/_engine/runs/swarm-ehc",
+      "status": "pending",
+      "attempts": 0
+    },
+    {
+      "issuer_id": "vsat",
+      "name": "VIASAT INC",
+      "cik": "797721",
+      "ticker": "VSAT",
+      "pack": "/home/user/secdata/data/2026-11-05/packs/797721-viasat-inc-vsat",
+      "context": "/home/user/secdata/data/2026-11-05/contexts/797721-viasat-inc-vsat.json",
+      "run_folder": "/home/user/swarm-root/_engine/runs/swarm-vsat",
+      "status": "pending",
+      "attempts": 0
+    },
+    {
+      "issuer_id": "nwl",
+      "name": "NEWELL BRANDS INC.",
+      "cik": "814453",
+      "ticker": "NWL",
+      "pack": "/home/user/secdata/data/2026-11-05/packs/814453-newell-brands-inc-nwl",
+      "context": "/home/user/secdata/data/2026-11-05/contexts/814453-newell-brands-inc-nwl.json",
+      "run_folder": "/home/user/swarm-root/_engine/runs/swarm-nwl",
+      "status": "pending",
+      "attempts": 0
+    },
+    {
+      "issuer_id": "fico",
+      "name": "FAIR ISAAC CORP",
+      "cik": "814547",
+      "ticker": "FICO",
+      "pack": "/home/user/secdata/data/2026-11-05/packs/814547-fair-isaac-corp-fico",
+      "context": "/home/user/secdata/data/2026-11-05/contexts/814547-fair-isaac-corp-fico.json",
+      "run_folder": "/home/user/swarm-root/_engine/runs/swarm-fico",
+      "status": "pending",
+      "attempts": 0
+    },
+    {
+      "issuer_id": "ccl",
+      "name": "Carnival Corp Ltd.",
+      "cik": "815097",
+      "ticker": "CCL",
+      "pack": "/home/user/secdata/data/2026-11-05/packs/815097-carnival-corp-ltd-ccl",
+      "context": "/home/user/secdata/data/2026-11-05/contexts/815097-carnival-corp-ltd-ccl.json",
+      "run_folder": "/home/user/swarm-root/_engine/runs/swarm-ccl",
+      "status": "pending",
+      "attempts": 0
+    },
+    {
+      "issuer_id": "cohr",
+      "name": "COHERENT CORP.",
+      "cik": "820318",
+      "ticker": "COHR",
+      "pack": "/home/user/secdata/data/2026-11-05/packs/820318-coherent-corp-cohr",
+      "context": "/home/user/secdata/data/2026-11-05/contexts/820318-coherent-corp-cohr.json",
+      "run_folder": "/home/user/swarm-root/_engine/runs/swarm-cohr",
+      "status": "pending",
+      "attempts": 0
+    },
+    {
+      "issuer_id": "chscp",
+      "name": "CHS INC",
+      "cik": "823277",
+      "ticker": "CHSCP, CHSCO, CHSCN, CHSCM, CHSCL",
+      "pack": "/home/user/secdata/data/2026-11-05/packs/823277-chs-inc-chscp-chsco-chscn-chscm-chscl",
+      "context": "/home/user/secdata/data/2026-11-05/contexts/823277-chs-inc-chscp-chsco-chscn-chscm-chscl.json",
+      "run_folder": "/home/user/swarm-root/_engine/runs/swarm-chscp",
+      "status": "pending",
+      "attempts": 0
+    },
+    {
+      "issuer_id": "ese",
+      "name": "ESCO TECHNOLOGIES INC",
+      "cik": "866706",
+      "ticker": "ESE",
+      "pack": "/home/user/secdata/data/2026-11-05/packs/866706-esco-technologies-inc-ese",
+      "context": "/home/user/secdata/data/2026-11-05/contexts/866706-esco-technologies-inc-ese.json",
+      "run_folder": "/home/user/swarm-root/_engine/runs/swarm-ese",
+      "status": "pending",
+      "attempts": 0
+    },
+    {
+      "issuer_id": "bhc",
+      "name": "Bausch Health Companies Inc.",
+      "cik": "885590",
+      "ticker": "BHC",
+      "pack": "/home/user/secdata/data/2026-11-05/packs/885590-bausch-health-companies-inc-bhc",
+      "context": "/home/user/secdata/data/2026-11-05/contexts/885590-bausch-health-companies-inc-bhc.json",
+      "run_folder": "/home/user/swarm-root/_engine/runs/swarm-bhc",
+      "status": "pending",
+      "attempts": 0
+    },
+    {
+      "issuer_id": "sm",
+      "name": "SM Energy Co",
+      "cik": "893538",
+      "ticker": "SM",
+      "pack": "/home/user/secdata/data/2026-11-05/packs/893538-sm-energy-co-sm",
+      "context": "/home/user/secdata/data/2026-11-05/contexts/893538-sm-energy-co-sm.json",
+      "run_folder": "/home/user/swarm-root/_engine/runs/swarm-sm",
+      "status": "pending",
+      "attempts": 0
+    },
+    {
+      "issuer_id": "tigo",
+      "name": "MILLICOM INTERNATIONAL CELLULAR SA",
+      "cik": "912958",
+      "ticker": "TIGO, MLCMF",
+      "pack": "/home/user/secdata/data/2026-11-05/packs/912958-millicom-international-cellular-sa-tigo",
+      "context": "/home/user/secdata/data/2026-11-05/contexts/912958-millicom-international-cellular-sa-tigo.json",
+      "run_folder": "/home/user/swarm-root/_engine/runs/swarm-tigo",
+      "status": "pending",
+      "attempts": 0
+    },
+    {
+      "issuer_id": "bdc",
+      "name": "BELDEN INC.",
+      "cik": "913142",
+      "ticker": "BDC",
+      "pack": "/home/user/secdata/data/2026-11-05/packs/913142-belden-inc-bdc",
+      "context": "/home/user/secdata/data/2026-11-05/contexts/913142-belden-inc-bdc.json",
+      "run_folder": "/home/user/swarm-root/_engine/runs/swarm-bdc",
+      "status": "pending",
+      "attempts": 0
+    },
+    {
+      "issuer_id": "ego",
+      "name": "ELDORADO GOLD CORP /FI",
+      "cik": "918608",
+      "ticker": "EGO",
+      "pack": "/home/user/secdata/data/2026-11-05/packs/918608-eldorado-gold-corp-fi-ego",
+      "context": "/home/user/secdata/data/2026-11-05/contexts/918608-eldorado-gold-corp-fi-ego.json",
+      "run_folder": "/home/user/swarm-root/_engine/runs/swarm-ego",
+      "status": "pending",
+      "attempts": 0
+    },
+    {
+      "issuer_id": "penn",
+      "name": "PENN Entertainment, Inc.",
+      "cik": "921738",
+      "ticker": "PENN",
+      "pack": "/home/user/secdata/data/2026-11-05/packs/921738-penn-entertainment-inc-penn",
+      "context": "/home/user/secdata/data/2026-11-05/contexts/921738-penn-entertainment-inc-penn.json",
+      "run_folder": "/home/user/swarm-root/_engine/runs/swarm-penn",
+      "status": "pending",
+      "attempts": 0
+    },
+    {
+      "issuer_id": "dva",
+      "name": "DAVITA INC.",
+      "cik": "927066",
+      "ticker": "DVA",
+      "pack": "/home/user/secdata/data/2026-11-05/packs/927066-davita-inc-dva",
+      "context": "/home/user/secdata/data/2026-11-05/contexts/927066-davita-inc-dva.json",
+      "run_folder": "/home/user/swarm-root/_engine/runs/swarm-dva",
+      "status": "pending",
+      "attempts": 0
+    },
+    {
+      "issuer_id": "svc",
+      "name": "Service Properties Trust",
+      "cik": "945394",
+      "ticker": "SVC",
+      "pack": "/home/user/secdata/data/2026-11-05/packs/945394-service-properties-trust-svc",
+      "context": "/home/user/secdata/data/2026-11-05/contexts/945394-service-properties-trust-svc.json",
+      "run_folder": "/home/user/swarm-root/_engine/runs/swarm-svc",
+      "status": "pending",
+      "attempts": 0
+    },
+    {
+      "issuer_id": "matv",
+      "name": "Mativ Holdings, Inc.",
+      "cik": "1000623",
+      "ticker": "MATV",
+      "pack": "/home/user/secdata/data/2026-11-05/packs/1000623-mativ-holdings-inc-matv",
+      "context": "/home/user/secdata/data/2026-11-05/contexts/1000623-mativ-holdings-inc-matv.json",
+      "run_folder": "/home/user/swarm-root/_engine/runs/swarm-matv",
+      "status": "pending",
+      "attempts": 0
+    },
+    {
+      "issuer_id": "otex",
+      "name": "OPEN TEXT CORP",
+      "cik": "1002638",
+      "ticker": "OTEX",
+      "pack": "/home/user/secdata/data/2026-11-05/packs/1002638-open-text-corp-otex",
+      "context": "/home/user/secdata/data/2026-11-05/contexts/1002638-open-text-corp-otex.json",
+      "run_folder": "/home/user/swarm-root/_engine/runs/swarm-otex",
+      "status": "pending",
+      "attempts": 0
+    },
+    {
+      "issuer_id": "cmco",
+      "name": "COLUMBUS MCKINNON CORP",
+      "cik": "1005229",
+      "ticker": "CMCO",
+      "pack": "/home/user/secdata/data/2026-11-05/packs/1005229-columbus-mckinnon-corp-cmco",
+      "context": "/home/user/secdata/data/2026-11-05/contexts/1005229-columbus-mckinnon-corp-cmco.json",
+      "run_folder": "/home/user/swarm-root/_engine/runs/swarm-cmco",
+      "status": "pending",
+      "attempts": 0
+    },
+    {
+      "issuer_id": "pds",
+      "name": "PRECISION DRILLING Corp",
+      "cik": "1013605",
+      "ticker": "PDS",
+      "pack": "/home/user/secdata/data/2026-11-05/packs/1013605-precision-drilling-corp-pds",
+      "context": "/home/user/secdata/data/2026-11-05/contexts/1013605-precision-drilling-corp-pds.json",
+      "run_folder": "/home/user/swarm-root/_engine/runs/swarm-pds",
+      "status": "pending",
+      "attempts": 0
+    },
+    {
+      "issuer_id": "irm",
+      "name": "IRON MOUNTAIN INC",
+      "cik": "1020569",
+      "ticker": "IRM",
+      "pack": "/home/user/secdata/data/2026-11-05/packs/1020569-iron-mountain-inc-irm",
+      "context": "/home/user/secdata/data/2026-11-05/contexts/1020569-iron-mountain-inc-irm.json",
+      "run_folder": "/home/user/swarm-root/_engine/runs/swarm-irm",
+      "status": "pending",
+      "attempts": 0
+    },
+    {
+      "issuer_id": "dxpe",
+      "name": "DXP ENTERPRISES INC",
+      "cik": "1020710",
+      "ticker": "DXPE",
+      "pack": "/home/user/secdata/data/2026-11-05/packs/1020710-dxp-enterprises-inc-dxpe",
+      "context": "/home/user/secdata/data/2026-11-05/contexts/1020710-dxp-enterprises-inc-dxpe.json",
+      "run_folder": "/home/user/swarm-root/_engine/runs/swarm-dxpe",
+      "status": "pending",
+      "attempts": 0
+    },
+    {
+      "issuer_id": "gel",
+      "name": "GENESIS ENERGY LP",
+      "cik": "1022321",
+      "ticker": "GEL",
+      "pack": "/home/user/secdata/data/2026-11-05/packs/1022321-genesis-energy-lp-gel",
+      "context": "/home/user/secdata/data/2026-11-05/contexts/1022321-genesis-energy-lp-gel.json",
+      "run_folder": "/home/user/swarm-root/_engine/runs/swarm-gel",
+      "status": "pending",
+      "attempts": 0
+    },
+    {
+      "issuer_id": "mms",
+      "name": "MAXIMUS, INC.",
+      "cik": "1032220",
+      "ticker": "MMS",
+      "pack": "/home/user/secdata/data/2026-11-05/packs/1032220-maximus-inc-mms",
+      "context": "/home/user/secdata/data/2026-11-05/contexts/1032220-maximus-inc-mms.json",
+      "run_folder": "/home/user/swarm-root/_engine/runs/swarm-mms",
+      "status": "pending",
+      "attempts": 0
+    },
+    {
+      "issuer_id": "bmrn",
+      "name": "BIOMARIN PHARMACEUTICAL INC",
+      "cik": "1048477",
+      "ticker": "BMRN",
+      "pack": "/home/user/secdata/data/2026-11-05/packs/1048477-biomarin-pharmaceutical-inc-bmrn",
+      "context": "/home/user/secdata/data/2026-11-05/contexts/1048477-biomarin-pharmaceutical-inc-bmrn.json",
+      "run_folder": "/home/user/swarm-root/_engine/runs/swarm-bmrn",
+      "status": "pending",
+      "attempts": 0
+    },
+    {
+      "issuer_id": "cnx",
+      "name": "CNX Resources Corp",
+      "cik": "1070412",
+      "ticker": "CNX",
+      "pack": "/home/user/secdata/data/2026-11-05/packs/1070412-cnx-resources-corp-cnx",
+      "context": "/home/user/secdata/data/2026-11-05/contexts/1070412-cnx-resources-corp-cnx.json",
+      "run_folder": "/home/user/swarm-root/_engine/runs/swarm-cnx",
+      "status": "pending",
+      "attempts": 0
+    },
+    {
+      "issuer_id": "cnc",
+      "name": "CENTENE CORP",
+      "cik": "1071739",
+      "ticker": "CNC",
+      "pack": "/home/user/secdata/data/2026-11-05/packs/1071739-centene-corp-cnc",
+      "context": "/home/user/secdata/data/2026-11-05/contexts/1071739-centene-corp-cnc.json",
+      "run_folder": "/home/user/swarm-root/_engine/runs/swarm-cnc",
+      "status": "pending",
+      "attempts": 0
+    },
+    {
+      "issuer_id": "crl",
+      "name": "CHARLES RIVER LABORATORIES INTERNATIONAL, INC.",
+      "cik": "1100682",
+      "ticker": "CRL",
+      "pack": "/home/user/secdata/data/2026-11-05/packs/1100682-charles-river-laboratories-international",
+      "context": "/home/user/secdata/data/2026-11-05/contexts/1100682-charles-river-laboratories-international.json",
+      "run_folder": "/home/user/swarm-root/_engine/runs/swarm-crl",
+      "status": "pending",
+      "attempts": 0
+    },
+    {
+      "issuer_id": "entg",
+      "name": "ENTEGRIS INC",
+      "cik": "1101302",
+      "ticker": "ENTG",
+      "pack": "/home/user/secdata/data/2026-11-05/packs/1101302-entegris-inc-entg",
+      "context": "/home/user/secdata/data/2026-11-05/contexts/1101302-entegris-inc-entg.json",
+      "run_folder": "/home/user/swarm-root/_engine/runs/swarm-entg",
+      "status": "pending",
+      "attempts": 0
+    },
+    {
+      "issuer_id": "tac",
+      "name": "TRANSALTA CORP",
+      "cik": "1144800",
+      "ticker": "TAC, TSLTF, TRNTF, TACPF",
+      "pack": "/home/user/secdata/data/2026-11-05/packs/1144800-transalta-corp-tac-tsltf-trntf-tacpf",
+      "context": "/home/user/secdata/data/2026-11-05/contexts/1144800-transalta-corp-tac-tsltf-trntf-tacpf.json",
+      "run_folder": "/home/user/swarm-root/_engine/runs/swarm-tac",
+      "status": "pending",
+      "attempts": 0
+    },
+    {
+      "issuer_id": "aap",
+      "name": "ADVANCE AUTO PARTS INC",
+      "cik": "1158449",
+      "ticker": "AAP",
+      "pack": "/home/user/secdata/data/2026-11-05/packs/1158449-advance-auto-parts-inc-aap",
+      "context": "/home/user/secdata/data/2026-11-05/contexts/1158449-advance-auto-parts-inc-aap.json",
+      "run_folder": "/home/user/swarm-root/_engine/runs/swarm-aap",
+      "status": "pending",
+      "attempts": 0
+    },
+    {
+      "issuer_id": "jblu",
+      "name": "JETBLUE AIRWAYS CORP",
+      "cik": "1158463",
+      "ticker": "JBLU",
+      "pack": "/home/user/secdata/data/2026-11-05/packs/1158463-jetblue-airways-corp-jblu",
+      "context": "/home/user/secdata/data/2026-11-05/contexts/1158463-jetblue-airways-corp-jblu.json",
+      "run_folder": "/home/user/swarm-root/_engine/runs/swarm-jblu",
+      "status": "pending",
+      "attempts": 0
+    },
+    {
+      "issuer_id": "nbr",
+      "name": "NABORS INDUSTRIES LTD",
+      "cik": "1163739",
+      "ticker": "NBR",
+      "pack": "/home/user/secdata/data/2026-11-05/packs/1163739-nabors-industries-ltd-nbr",
+      "context": "/home/user/secdata/data/2026-11-05/contexts/1163739-nabors-industries-ltd-nbr.json",
+      "run_folder": "/home/user/swarm-root/_engine/runs/swarm-nbr",
+      "status": "pending",
+      "attempts": 0
+    },
+    {
+      "issuer_id": "moh",
+      "name": "MOLINA HEALTHCARE, INC.",
+      "cik": "1179929",
+      "ticker": "MOH",
+      "pack": "/home/user/secdata/data/2026-11-05/packs/1179929-molina-healthcare-inc-moh",
+      "context": "/home/user/secdata/data/2026-11-05/contexts/1179929-molina-healthcare-inc-moh.json",
+      "run_folder": "/home/user/swarm-root/_engine/runs/swarm-moh",
+      "status": "pending",
+      "attempts": 0
+    },
+    {
+      "issuer_id": "qxo",
+      "name": "QXO, Inc.",
+      "cik": "1236275",
+      "ticker": "QXO, QXO-PB",
+      "pack": "/home/user/secdata/data/2026-11-05/packs/1236275-qxo-inc-qxo-qxo-pb",
+      "context": "/home/user/secdata/data/2026-11-05/contexts/1236275-qxo-inc-qxo-qxo-pb.json",
+      "run_folder": "/home/user/swarm-root/_engine/runs/swarm-qxo",
+      "status": "pending",
+      "attempts": 0
+    },
+    {
+      "issuer_id": "cmpr",
+      "name": "CIMPRESS plc",
+      "cik": "1262976",
+      "ticker": "CMPR",
+      "pack": "/home/user/secdata/data/2026-11-05/packs/1262976-cimpress-plc-cmpr",
+      "context": "/home/user/secdata/data/2026-11-05/contexts/1262976-cimpress-plc-cmpr.json",
+      "run_folder": "/home/user/swarm-root/_engine/runs/swarm-cmpr",
+      "status": "pending",
+      "attempts": 0
+    },
+    {
+      "issuer_id": "cco-holdings-llc",
+      "name": "CCO HOLDINGS LLC",
+      "cik": "1271833",
+      "ticker": "-",
+      "pack": "/home/user/secdata/data/2026-11-05/packs/1271833-cco-holdings-llc",
+      "context": "/home/user/secdata/data/2026-11-05/contexts/1271833-cco-holdings-llc.json",
+      "run_folder": "/home/user/swarm-root/_engine/runs/swarm-cco-holdings-llc",
+      "status": "pending",
+      "attempts": 0
+    },
+    {
+      "issuer_id": "bte",
+      "name": "BAYTEX ENERGY CORP.",
+      "cik": "1279495",
+      "ticker": "BTE",
+      "pack": "/home/user/secdata/data/2026-11-05/packs/1279495-baytex-energy-corp-bte",
+      "context": "/home/user/secdata/data/2026-11-05/contexts/1279495-baytex-energy-corp-bte.json",
+      "run_folder": "/home/user/swarm-root/_engine/runs/swarm-bte",
+      "status": "pending",
+      "attempts": 0
+    },
+    {
+      "issuer_id": "mxl",
+      "name": "MAXLINEAR, INC",
+      "cik": "1288469",
+      "ticker": "MXL",
+      "pack": "/home/user/secdata/data/2026-11-05/packs/1288469-maxlinear-inc-mxl",
+      "context": "/home/user/secdata/data/2026-11-05/contexts/1288469-maxlinear-inc-mxl.json",
+      "run_folder": "/home/user/swarm-root/_engine/runs/swarm-mxl",
+      "status": "pending",
+      "attempts": 0
+    },
+    {
+      "issuer_id": "novelis-inc",
+      "name": "Novelis Inc.",
+      "cik": "1304280",
+      "ticker": "-",
+      "pack": "/home/user/secdata/data/2026-11-05/packs/1304280-novelis-inc",
+      "context": "/home/user/secdata/data/2026-11-05/contexts/1304280-novelis-inc.json",
+      "run_folder": "/home/user/swarm-root/_engine/runs/swarm-novelis-inc",
+      "status": "pending",
+      "attempts": 0
+    },
+    {
+      "issuer_id": "bldr",
+      "name": "Builders FirstSource, Inc.",
+      "cik": "1316835",
+      "ticker": "BLDR",
+      "pack": "/home/user/secdata/data/2026-11-05/packs/1316835-builders-firstsource-inc-bldr",
+      "context": "/home/user/secdata/data/2026-11-05/contexts/1316835-builders-firstsource-inc-bldr.json",
+      "run_folder": "/home/user/swarm-root/_engine/runs/swarm-bldr",
+      "status": "pending",
+      "attempts": 0
+    },
+    {
+      "issuer_id": "ncl-corp-ltd",
+      "name": "NCL CORP Ltd.",
+      "cik": "1318742",
+      "ticker": "-",
+      "pack": "/home/user/secdata/data/2026-11-05/packs/1318742-ncl-corp-ltd",
+      "context": "/home/user/secdata/data/2026-11-05/contexts/1318742-ncl-corp-ltd.json",
+      "run_folder": "/home/user/swarm-root/_engine/runs/swarm-ncl-corp-ltd",
+      "status": "pending",
+      "attempts": 0
+    },
+    {
+      "issuer_id": "hbm",
+      "name": "Hudbay Minerals Inc.",
+      "cik": "1322422",
+      "ticker": "HBM",
+      "pack": "/home/user/secdata/data/2026-11-05/packs/1322422-hudbay-minerals-inc-hbm",
+      "context": "/home/user/secdata/data/2026-11-05/contexts/1322422-hudbay-minerals-inc-hbm.json",
+      "run_folder": "/home/user/swarm-root/_engine/runs/swarm-hbm",
+      "status": "pending",
+      "attempts": 0
+    },
+    {
+      "issuer_id": "cco",
+      "name": "Clear Channel Outdoor Holdings, Inc.",
+      "cik": "1334978",
+      "ticker": "-",
+      "pack": "/home/user/secdata/data/2026-11-05/packs/1334978-clear-channel-outdoor-holdings-inc",
+      "context": "/home/user/secdata/data/2026-11-05/contexts/1334978-clear-channel-outdoor-holdings-inc.json",
+      "run_folder": "/home/user/swarm-root/_engine/runs/swarm-cco",
+      "status": "pending",
+      "attempts": 0
+    },
+    {
+      "issuer_id": "kbr",
+      "name": "KBR, INC.",
+      "cik": "1357615",
+      "ticker": "KBR",
+      "pack": "/home/user/secdata/data/2026-11-05/packs/1357615-kbr-inc-kbr",
+      "context": "/home/user/secdata/data/2026-11-05/contexts/1357615-kbr-inc-kbr.json",
+      "run_folder": "/home/user/swarm-root/_engine/runs/swarm-kbr",
+      "status": "pending",
+      "attempts": 0
+    },
+    {
+      "issuer_id": "hri",
+      "name": "HERC HOLDINGS INC",
+      "cik": "1364479",
+      "ticker": "HRI",
+      "pack": "/home/user/secdata/data/2026-11-05/packs/1364479-herc-holdings-inc-hri",
+      "context": "/home/user/secdata/data/2026-11-05/contexts/1364479-herc-holdings-inc-hri.json",
+      "run_folder": "/home/user/swarm-root/_engine/runs/swarm-hri",
+      "status": "pending",
+      "attempts": 0
+    },
+    {
+      "issuer_id": "cvi",
+      "name": "CVR ENERGY INC",
+      "cik": "1376139",
+      "ticker": "CVI",
+      "pack": "/home/user/secdata/data/2026-11-05/packs/1376139-cvr-energy-inc-cvi",
+      "context": "/home/user/secdata/data/2026-11-05/contexts/1376139-cvr-energy-inc-cvi.json",
+      "run_folder": "/home/user/swarm-root/_engine/runs/swarm-cvi",
+      "status": "pending",
+      "attempts": 0
+    },
+    {
+      "issuer_id": "ats",
+      "name": "ATS Corp /ATS",
+      "cik": "1394832",
+      "ticker": "ATS",
+      "pack": "/home/user/secdata/data/2026-11-05/packs/1394832-ats-corp-ats-ats",
+      "context": "/home/user/secdata/data/2026-11-05/contexts/1394832-ats-corp-ats-ats.json",
+      "run_folder": "/home/user/swarm-root/_engine/runs/swarm-ats",
+      "status": "pending",
+      "attempts": 0
+    },
+    {
+      "issuer_id": "opln",
+      "name": "OPENLANE, Inc.",
+      "cik": "1395942",
+      "ticker": "OPLN",
+      "pack": "/home/user/secdata/data/2026-11-05/packs/1395942-openlane-inc-opln",
+      "context": "/home/user/secdata/data/2026-11-05/contexts/1395942-openlane-inc-opln.json",
+      "run_folder": "/home/user/swarm-root/_engine/runs/swarm-opln",
+      "status": "pending",
+      "attempts": 0
+    },
+    {
+      "issuer_id": "alsn",
+      "name": "Allison Transmission Holdings Inc",
+      "cik": "1411207",
+      "ticker": "ALSN",
+      "pack": "/home/user/secdata/data/2026-11-05/packs/1411207-allison-transmission-holdings-inc-alsn",
+      "context": "/home/user/secdata/data/2026-11-05/contexts/1411207-allison-transmission-holdings-inc-alsn.json",
+      "run_folder": "/home/user/swarm-root/_engine/runs/swarm-alsn",
+      "status": "pending",
+      "attempts": 0
+    },
+    {
+      "issuer_id": "amc",
+      "name": "AMC ENTERTAINMENT HOLDINGS, INC.",
+      "cik": "1411579",
+      "ticker": "AMC",
+      "pack": "/home/user/secdata/data/2026-11-05/packs/1411579-amc-entertainment-holdings-inc-amc",
+      "context": "/home/user/secdata/data/2026-11-05/contexts/1411579-amc-entertainment-holdings-inc-amc.json",
+      "run_folder": "/home/user/swarm-root/_engine/runs/swarm-amc",
+      "status": "pending",
+      "attempts": 0
+    },
+    {
+      "issuer_id": "gmab",
+      "name": "GENMAB A/S",
+      "cik": "1434265",
+      "ticker": "GMAB, GNMSF",
+      "pack": "/home/user/secdata/data/2026-11-05/packs/1434265-genmab-a-s-gmab-gnmsf",
+      "context": "/home/user/secdata/data/2026-11-05/contexts/1434265-genmab-a-s-gmab-gnmsf.json",
+      "run_folder": "/home/user/swarm-root/_engine/runs/swarm-gmab",
+      "status": "pending",
+      "attempts": 0
+    },
+    {
+      "issuer_id": "xyz",
+      "name": "Block, Inc.",
+      "cik": "1512673",
+      "ticker": "XYZ, BSQKZ",
+      "pack": "/home/user/secdata/data/2026-11-05/packs/1512673-block-inc-xyz-bsqkz",
+      "context": "/home/user/secdata/data/2026-11-05/contexts/1512673-block-inc-xyz-bsqkz.json",
+      "run_folder": "/home/user/swarm-root/_engine/runs/swarm-xyz",
+      "status": "pending",
+      "attempts": 0
+    },
+    {
+      "issuer_id": "amcx",
+      "name": "AMC Global Media Inc.",
+      "cik": "1514991",
+      "ticker": "AMCX",
+      "pack": "/home/user/secdata/data/2026-11-05/packs/1514991-amc-global-media-inc-amcx",
+      "context": "/home/user/secdata/data/2026-11-05/contexts/1514991-amc-global-media-inc-amcx.json",
+      "run_folder": "/home/user/swarm-root/_engine/runs/swarm-amcx",
+      "status": "pending",
+      "attempts": 0
+    },
+    {
+      "issuer_id": "alks",
+      "name": "Alkermes plc.",
+      "cik": "1520262",
+      "ticker": "ALKS",
+      "pack": "/home/user/secdata/data/2026-11-05/packs/1520262-alkermes-plc-alks",
+      "context": "/home/user/secdata/data/2026-11-05/contexts/1520262-alkermes-plc-alks.json",
+      "run_folder": "/home/user/swarm-root/_engine/runs/swarm-alks",
+      "status": "pending",
+      "attempts": 0
+    },
+    {
+      "issuer_id": "trip",
+      "name": "TripAdvisor, Inc.",
+      "cik": "1526520",
+      "ticker": "TRIP",
+      "pack": "/home/user/secdata/data/2026-11-05/packs/1526520-tripadvisor-inc-trip",
+      "context": "/home/user/secdata/data/2026-11-05/contexts/1526520-tripadvisor-inc-trip.json",
+      "run_folder": "/home/user/swarm-root/_engine/runs/swarm-trip",
+      "status": "pending",
+      "attempts": 0
+    },
+    {
+      "issuer_id": "post",
+      "name": "Post Holdings, Inc.",
+      "cik": "1530950",
+      "ticker": "POST",
+      "pack": "/home/user/secdata/data/2026-11-05/packs/1530950-post-holdings-inc-post",
+      "context": "/home/user/secdata/data/2026-11-05/contexts/1530950-post-holdings-inc-post.json",
+      "run_folder": "/home/user/swarm-root/_engine/runs/swarm-post",
+      "status": "pending",
+      "attempts": 0
+    },
+    {
+      "issuer_id": "sun",
+      "name": "Sunoco LP",
+      "cik": "1552275",
+      "ticker": "SUN",
+      "pack": "/home/user/secdata/data/2026-11-05/packs/1552275-sunoco-lp-sun",
+      "context": "/home/user/secdata/data/2026-11-05/contexts/1552275-sunoco-lp-sun.json",
+      "run_folder": "/home/user/swarm-root/_engine/runs/swarm-sun",
+      "status": "pending",
+      "attempts": 0
+    },
+    {
+      "issuer_id": "cstm",
+      "name": "CONSTELLIUM SE",
+      "cik": "1563411",
+      "ticker": "CSTM",
+      "pack": "/home/user/secdata/data/2026-11-05/packs/1563411-constellium-se-cstm",
+      "context": "/home/user/secdata/data/2026-11-05/contexts/1563411-constellium-se-cstm.json",
+      "run_folder": "/home/user/swarm-root/_engine/runs/swarm-cstm",
+      "status": "pending",
+      "attempts": 0
+    },
+    {
+      "issuer_id": "pbf-holding-co-llc",
+      "name": "PBF Holding Co LLC",
+      "cik": "1566011",
+      "ticker": "-",
+      "pack": "/home/user/secdata/data/2026-11-05/packs/1566011-pbf-holding-co-llc",
+      "context": "/home/user/secdata/data/2026-11-05/contexts/1566011-pbf-holding-co-llc.json",
+      "run_folder": "/home/user/swarm-root/_engine/runs/swarm-pbf-holding-co-llc",
+      "status": "pending",
+      "attempts": 0
+    },
+    {
+      "issuer_id": "ccs",
+      "name": "Century Communities, Inc.",
+      "cik": "1576940",
+      "ticker": "CCS",
+      "pack": "/home/user/secdata/data/2026-11-05/packs/1576940-century-communities-inc-ccs",
+      "context": "/home/user/secdata/data/2026-11-05/contexts/1576940-century-communities-inc-ccs.json",
+      "run_folder": "/home/user/swarm-root/_engine/runs/swarm-ccs",
+      "status": "pending",
+      "attempts": 0
+    },
+    {
+      "issuer_id": "esi",
+      "name": "Element Solutions Inc",
+      "cik": "1590714",
+      "ticker": "ESI",
+      "pack": "/home/user/secdata/data/2026-11-05/packs/1590714-element-solutions-inc-esi",
+      "context": "/home/user/secdata/data/2026-11-05/contexts/1590714-element-solutions-inc-esi.json",
+      "run_folder": "/home/user/swarm-root/_engine/runs/swarm-esi",
+      "status": "pending",
+      "attempts": 0
+    },
+    {
+      "issuer_id": "czr",
+      "name": "Caesars Entertainment, Inc.",
+      "cik": "1590895",
+      "ticker": "CZR",
+      "pack": "/home/user/secdata/data/2026-11-05/packs/1590895-caesars-entertainment-inc-czr",
+      "context": "/home/user/secdata/data/2026-11-05/contexts/1590895-caesars-entertainment-inc-czr.json",
+      "run_folder": "/home/user/swarm-root/_engine/runs/swarm-czr",
+      "status": "pending",
+      "attempts": 0
+    },
+    {
+      "issuer_id": "mgni",
+      "name": "MAGNITE, INC.",
+      "cik": "1595974",
+      "ticker": "MGNI",
+      "pack": "/home/user/secdata/data/2026-11-05/packs/1595974-magnite-inc-mgni",
+      "context": "/home/user/secdata/data/2026-11-05/contexts/1595974-magnite-inc-mgni.json",
+      "run_folder": "/home/user/swarm-root/_engine/runs/swarm-mgni",
+      "status": "pending",
+      "attempts": 0
+    },
+    {
+      "issuer_id": "wfrd",
+      "name": "Weatherford International plc",
+      "cik": "1603923",
+      "ticker": "WFRD",
+      "pack": "/home/user/secdata/data/2026-11-05/packs/1603923-weatherford-international-plc-wfrd",
+      "context": "/home/user/secdata/data/2026-11-05/contexts/1603923-weatherford-international-plc-wfrd.json",
+      "run_folder": "/home/user/swarm-root/_engine/runs/swarm-wfrd",
+      "status": "pending",
+      "attempts": 0
+    },
+    {
+      "issuer_id": "w",
+      "name": "Wayfair Inc.",
+      "cik": "1616707",
+      "ticker": "W",
+      "pack": "/home/user/secdata/data/2026-11-05/packs/1616707-wayfair-inc-w",
+      "context": "/home/user/secdata/data/2026-11-05/contexts/1616707-wayfair-inc-w.json",
+      "run_folder": "/home/user/swarm-root/_engine/runs/swarm-w",
+      "status": "pending",
+      "attempts": 0
+    },
+    {
+      "issuer_id": "brsl",
+      "name": "Brightstar Lottery PLC",
+      "cik": "1619762",
+      "ticker": "BRSL",
+      "pack": "/home/user/secdata/data/2026-11-05/packs/1619762-brightstar-lottery-plc-brsl",
+      "context": "/home/user/secdata/data/2026-11-05/contexts/1619762-brightstar-lottery-plc-brsl.json",
+      "run_folder": "/home/user/swarm-root/_engine/runs/swarm-brsl",
+      "status": "pending",
+      "attempts": 0
+    },
+    {
+      "issuer_id": "cc",
+      "name": "Chemours Co",
+      "cik": "1627223",
+      "ticker": "CC",
+      "pack": "/home/user/secdata/data/2026-11-05/packs/1627223-chemours-co-cc",
+      "context": "/home/user/secdata/data/2026-11-05/contexts/1627223-chemours-co-cc.json",
+      "run_folder": "/home/user/swarm-root/_engine/runs/swarm-cc",
+      "status": "pending",
+      "attempts": 0
+    },
+    {
+      "issuer_id": "flut",
+      "name": "Flutter Entertainment plc",
+      "cik": "1635327",
+      "ticker": "FLUT",
+      "pack": "/home/user/secdata/data/2026-11-05/packs/1635327-flutter-entertainment-plc-flut",
+      "context": "/home/user/secdata/data/2026-11-05/contexts/1635327-flutter-entertainment-plc-flut.json",
+      "run_folder": "/home/user/swarm-root/_engine/runs/swarm-flut",
+      "status": "pending",
+      "attempts": 0
+    },
+    {
+      "issuer_id": "hgv",
+      "name": "Hilton Grand Vacations Inc.",
+      "cik": "1674168",
+      "ticker": "HGV",
+      "pack": "/home/user/secdata/data/2026-11-05/packs/1674168-hilton-grand-vacations-inc-hgv",
+      "context": "/home/user/secdata/data/2026-11-05/contexts/1674168-hilton-grand-vacations-inc-hgv.json",
+      "run_folder": "/home/user/swarm-root/_engine/runs/swarm-hgv",
+      "status": "pending",
+      "attempts": 0
+    },
+    {
+      "issuer_id": "cvna",
+      "name": "CARVANA CO.",
+      "cik": "1690820",
+      "ticker": "CVNA",
+      "pack": "/home/user/secdata/data/2026-11-05/packs/1690820-carvana-co-cvna",
+      "context": "/home/user/secdata/data/2026-11-05/contexts/1690820-carvana-co-cvna.json",
+      "run_folder": "/home/user/swarm-root/_engine/runs/swarm-cvna",
+      "status": "pending",
+      "attempts": 0
+    },
+    {
+      "issuer_id": "ske",
+      "name": "Skeena Resources Ltd",
+      "cik": "1713748",
+      "ticker": "SKE",
+      "pack": "/home/user/secdata/data/2026-11-05/packs/1713748-skeena-resources-ltd-ske",
+      "context": "/home/user/secdata/data/2026-11-05/contexts/1713748-skeena-resources-ltd-ske.json",
+      "run_folder": "/home/user/swarm-root/_engine/runs/swarm-ske",
+      "status": "pending",
+      "attempts": 0
+    },
+    {
+      "issuer_id": "ahco",
+      "name": "AdaptHealth Corp.",
+      "cik": "1725255",
+      "ticker": "AHCO",
+      "pack": "/home/user/secdata/data/2026-11-05/packs/1725255-adapthealth-corp-ahco",
+      "context": "/home/user/secdata/data/2026-11-05/contexts/1725255-adapthealth-corp-ahco.json",
+      "run_folder": "/home/user/swarm-root/_engine/runs/swarm-ahco",
+      "status": "pending",
+      "attempts": 0
+    },
+    {
+      "issuer_id": "elan",
+      "name": "Elanco Animal Health Inc",
+      "cik": "1739104",
+      "ticker": "ELAN",
+      "pack": "/home/user/secdata/data/2026-11-05/packs/1739104-elanco-animal-health-inc-elan",
+      "context": "/home/user/secdata/data/2026-11-05/contexts/1739104-elanco-animal-health-inc-elan.json",
+      "run_folder": "/home/user/swarm-root/_engine/runs/swarm-elan",
+      "status": "pending",
+      "attempts": 0
+    },
+    {
+      "issuer_id": "baly",
+      "name": "Bally's Corp",
+      "cik": "1747079",
+      "ticker": "BALY",
+      "pack": "/home/user/secdata/data/2026-11-05/packs/1747079-bally-s-corp-baly",
+      "context": "/home/user/secdata/data/2026-11-05/contexts/1747079-bally-s-corp-baly.json",
+      "run_folder": "/home/user/swarm-root/_engine/runs/swarm-baly",
+      "status": "pending",
+      "attempts": 0
+    },
+    {
+      "issuer_id": "kgs",
+      "name": "Kodiak Gas Services, Inc.",
+      "cik": "1767042",
+      "ticker": "KGS",
+      "pack": "/home/user/secdata/data/2026-11-05/packs/1767042-kodiak-gas-services-inc-kgs",
+      "context": "/home/user/secdata/data/2026-11-05/contexts/1767042-kodiak-gas-services-inc-kgs.json",
+      "run_folder": "/home/user/swarm-root/_engine/runs/swarm-kgs",
+      "status": "pending",
+      "attempts": 0
+    },
+    {
+      "issuer_id": "crwv",
+      "name": "CoreWeave, Inc.",
+      "cik": "1769628",
+      "ticker": "CRWV",
+      "pack": "/home/user/secdata/data/2026-11-05/packs/1769628-coreweave-inc-crwv",
+      "context": "/home/user/secdata/data/2026-11-05/contexts/1769628-coreweave-inc-crwv.json",
+      "run_folder": "/home/user/swarm-root/_engine/runs/swarm-crwv",
+      "status": "pending",
+      "attempts": 0
+    },
+    {
+      "issuer_id": "gfl",
+      "name": "GFL Environmental Inc.",
+      "cik": "1780232",
+      "ticker": "GFL",
+      "pack": "/home/user/secdata/data/2026-11-05/packs/1780232-gfl-environmental-inc-gfl",
+      "context": "/home/user/secdata/data/2026-11-05/contexts/1780232-gfl-environmental-inc-gfl.json",
+      "run_folder": "/home/user/swarm-root/_engine/runs/swarm-gfl",
+      "status": "pending",
+      "attempts": 0
+    },
+    {
+      "issuer_id": "apg",
+      "name": "APi Group Corp",
+      "cik": "1796209",
+      "ticker": "APG",
+      "pack": "/home/user/secdata/data/2026-11-05/packs/1796209-api-group-corp-apg",
+      "context": "/home/user/secdata/data/2026-11-05/contexts/1796209-api-group-corp-apg.json",
+      "run_folder": "/home/user/swarm-root/_engine/runs/swarm-apg",
+      "status": "pending",
+      "attempts": 0
+    },
+    {
+      "issuer_id": "ccc",
+      "name": "CCC Intelligent Solutions Holdings Inc.",
+      "cik": "1818201",
+      "ticker": "CCC",
+      "pack": "/home/user/secdata/data/2026-11-05/packs/1818201-ccc-intelligent-solutions-holdings-inc-c",
+      "context": "/home/user/secdata/data/2026-11-05/contexts/1818201-ccc-intelligent-solutions-holdings-inc-c.json",
+      "run_folder": "/home/user/swarm-root/_engine/runs/swarm-ccc",
+      "status": "pending",
+      "attempts": 0
+    },
+    {
+      "issuer_id": "evcm",
+      "name": "EverCommerce Inc.",
+      "cik": "1853145",
+      "ticker": "EVCM",
+      "pack": "/home/user/secdata/data/2026-11-05/packs/1853145-evercommerce-inc-evcm",
+      "context": "/home/user/secdata/data/2026-11-05/contexts/1853145-evercommerce-inc-evcm.json",
+      "run_folder": "/home/user/swarm-root/_engine/runs/swarm-evcm",
+      "status": "pending",
+      "attempts": 0
+    },
+    {
+      "issuer_id": "vsts",
+      "name": "Vestis Corp",
+      "cik": "1967649",
+      "ticker": "VSTS",
+      "pack": "/home/user/secdata/data/2026-11-05/packs/1967649-vestis-corp-vsts",
+      "context": "/home/user/secdata/data/2026-11-05/contexts/1967649-vestis-corp-vsts.json",
+      "run_folder": "/home/user/swarm-root/_engine/runs/swarm-vsts",
+      "status": "pending",
+      "attempts": 0
+    },
+    {
+      "issuer_id": "amtm",
+      "name": "Amentum Holdings, Inc.",
+      "cik": "2011286",
+      "ticker": "AMTM",
+      "pack": "/home/user/secdata/data/2026-11-05/packs/2011286-amentum-holdings-inc-amtm",
+      "context": "/home/user/secdata/data/2026-11-05/contexts/2011286-amentum-holdings-inc-amtm.json",
+      "run_folder": "/home/user/swarm-root/_engine/runs/swarm-amtm",
+      "status": "pending",
+      "attempts": 0
+    },
+    {
+      "issuer_id": "unit",
+      "name": "Uniti Group Inc.",
+      "cik": "2020795",
+      "ticker": "UNIT",
+      "pack": "/home/user/secdata/data/2026-11-05/packs/2020795-uniti-group-inc-unit",
+      "context": "/home/user/secdata/data/2026-11-05/contexts/2020795-uniti-group-inc-unit.json",
+      "run_folder": "/home/user/swarm-root/_engine/runs/swarm-unit",
+      "status": "pending",
+      "attempts": 0
+    },
+    {
+      "issuer_id": "krmn",
+      "name": "Karman Holdings Inc.",
+      "cik": "2040127",
+      "ticker": "KRMN",
+      "pack": "/home/user/secdata/data/2026-11-05/packs/2040127-karman-holdings-inc-krmn",
+      "context": "/home/user/secdata/data/2026-11-05/contexts/2040127-karman-holdings-inc-krmn.json",
+      "run_folder": "/home/user/swarm-root/_engine/runs/swarm-krmn",
+      "status": "pending",
+      "attempts": 0
+    },
+    {
+      "issuer_id": "prmb",
+      "name": "Primo Brands Corp",
+      "cik": "2042694",
+      "ticker": "PRMB",
+      "pack": "/home/user/secdata/data/2026-11-05/packs/2042694-primo-brands-corp-prmb",
+      "context": "/home/user/secdata/data/2026-11-05/contexts/2042694-primo-brands-corp-prmb.json",
+      "run_folder": "/home/user/swarm-root/_engine/runs/swarm-prmb",
+      "status": "pending",
+      "attempts": 0
+    },
+    {
+      "issuer_id": "q",
+      "name": "Qnity Electronics, Inc.",
+      "cik": "2058873",
+      "ticker": "Q",
+      "pack": "/home/user/secdata/data/2026-11-05/packs/2058873-qnity-electronics-inc-q",
+      "context": "/home/user/secdata/data/2026-11-05/contexts/2058873-qnity-electronics-inc-q.json",
+      "run_folder": "/home/user/swarm-root/_engine/runs/swarm-q",
+      "status": "pending",
+      "attempts": 0
+    }
+  ],
+  "skipped": [
+    {
+      "cik": "1520697",
+      "name": "Acadia Healthcare Company, Inc.",
+      "reason": "no pack folder for CIK 1520697"
+    },
+    {
+      "cik": "75252",
+      "name": "Accendra Health Inc/Va/",
+      "reason": "no pack folder for CIK 75252"
+    },
+    {
+      "cik": "712034",
+      "name": "ACCO BRANDS Corp",
+      "reason": "no pack folder for CIK 712034"
+    },
+    {
+      "cik": "1604028",
+      "name": "Advanced Drainage Systems, Inc.",
+      "reason": "no pack folder for CIK 1604028"
+    },
+    {
+      "cik": "868857",
+      "name": "Aecom",
+      "reason": "no pack folder for CIK 868857"
+    },
+    {
+      "cik": "1759824",
+      "name": "Alta Equipment Group Inc.",
+      "reason": "no pack folder for CIK 1759824"
+    },
+    {
+      "cik": "6201",
+      "name": "American Airlines Group Inc.",
+      "reason": "no pack folder for CIK 6201"
+    },
+    {
+      "cik": "1047127",
+      "name": "Amkor Technology, Inc.",
+      "reason": "no pack folder for CIK 1047127"
+    },
+    {
+      "cik": "1739445",
+      "name": "Arcosa, Inc.",
+      "reason": "no pack folder for CIK 1739445"
+    },
+    {
+      "cik": "1823794",
+      "name": "ARKO Corp.",
+      "reason": "no pack folder for CIK 1823794"
+    },
+    {
+      "cik": "1144980",
+      "name": "Asbury Automotive Group Inc",
+      "reason": "no pack folder for CIK 1144980"
+    },
+    {
+      "cik": "1674862",
+      "name": "Ashland Inc.",
+      "reason": "no pack folder for CIK 1674862"
+    },
+    {
+      "cik": "1018963",
+      "name": "Ati Inc",
+      "reason": "no pack folder for CIK 1018963"
+    },
+    {
+      "cik": "1122976",
+      "name": "Avient Corp",
+      "reason": "no pack folder for CIK 1122976"
+    },
+    {
+      "cik": "1069183",
+      "name": "Axon Enterprise, Inc.",
+      "reason": "no pack folder for CIK 1069183"
+    },
+    {
+      "cik": "1278027",
+      "name": "B&G Foods, Inc.",
+      "reason": "no pack folder for CIK 1278027"
+    },
+    {
+      "cik": "1860742",
+      "name": "Bausch & Lomb Corp",
+      "reason": "no pack folder for CIK 1860742"
+    },
+    {
+      "cik": "915840",
+      "name": "Beazer Homes Usa Inc",
+      "reason": "no pack folder for CIK 915840"
+    },
+    {
+      "cik": "1772016",
+      "name": "Bellring Brands, Inc.",
+      "reason": "no pack folder for CIK 1772016"
+    },
+    {
+      "cik": "906553",
+      "name": "Boyd Gaming Corp",
+      "reason": "no pack folder for CIK 906553"
+    },
+    {
+      "cik": "1525221",
+      "name": "Bristow Group Inc.",
+      "reason": "no pack folder for CIK 1525221"
+    },
+    {
+      "cik": "1486957",
+      "name": "BWX Technologies, Inc.",
+      "reason": "no pack folder for CIK 1486957"
+    },
+    {
+      "cik": "1683606",
+      "name": "Cars.com Inc.",
+      "reason": "no pack folder for CIK 1683606"
+    },
+    {
+      "cik": "1486159",
+      "name": "Chord Energy Corp",
+      "reason": "no pack folder for CIK 1486159"
+    },
+    {
+      "cik": "936395",
+      "name": "Ciena Corp",
+      "reason": "no pack folder for CIK 936395"
+    },
+    {
+      "cik": "822818",
+      "name": "Clean Harbors Inc",
+      "reason": "no pack folder for CIK 822818"
+    },
+    {
+      "cik": "215466",
+      "name": "Coeur Mining, Inc.",
+      "reason": "no pack folder for CIK 215466"
+    },
+    {
+      "cik": "22444",
+      "name": "COMMERCIAL METALS Co",
+      "reason": "no pack folder for CIK 22444"
+    },
+    {
+      "cik": "1345122",
+      "name": "Compass Group Diversified Holdings LLC",
+      "reason": "no pack folder for CIK 1345122"
+    },
+    {
+      "cik": "1227654",
+      "name": "Compass Minerals International Inc",
+      "reason": "no pack folder for CIK 1227654"
+    },
+    {
+      "cik": "23194",
+      "name": "Comstock Resources Inc",
+      "reason": "no pack folder for CIK 23194"
+    },
+    {
+      "cik": "1856525",
+      "name": "Core & Main, Inc.",
+      "reason": "no pack folder for CIK 1856525"
+    },
+    {
+      "cik": "1839341",
+      "name": "Core Scientific, Inc./tx",
+      "reason": "no pack folder for CIK 1839341"
+    },
+    {
+      "cik": "1070985",
+      "name": "CoreCivic, Inc.",
+      "reason": "no pack folder for CIK 1070985"
+    },
+    {
+      "cik": "25445",
+      "name": "Crane NXT, Co.",
+      "reason": "no pack folder for CIK 25445"
+    },
+    {
+      "cik": "1334036",
+      "name": "Crocs, Inc.",
+      "reason": "no pack folder for CIK 1334036"
+    },
+    {
+      "cik": "1628369",
+      "name": "Cushman & Wakefield Ltd.",
+      "reason": "no pack folder for CIK 1628369"
+    },
+    {
+      "cik": "1425292",
+      "name": "Cvr Partners, Lp",
+      "reason": "no pack folder for CIK 1425292"
+    },
+    {
+      "cik": "27996",
+      "name": "Deluxe Corp",
+      "reason": "no pack folder for CIK 27996"
+    },
+    {
+      "cik": "28823",
+      "name": "DIEBOLD NIXDORF, Inc",
+      "reason": "no pack folder for CIK 28823"
+    },
+    {
+      "cik": "1075415",
+      "name": "Diversified Healthcare Trust",
+      "reason": "no pack folder for CIK 1075415"
+    },
+    {
+      "cik": "868780",
+      "name": "Dorman Products, Inc.",
+      "reason": "no pack folder for CIK 868780"
+    },
+    {
+      "cik": "1825088",
+      "name": "Dream Finders Homes, Inc.",
+      "reason": "no pack folder for CIK 1825088"
+    },
+    {
+      "cik": "1096752",
+      "name": "EDGEWELL PERSONAL CARE Co",
+      "reason": "no pack folder for CIK 1096752"
+    },
+    {
+      "cik": "1872789",
+      "name": "Embecta Corp.",
+      "reason": "no pack folder for CIK 1872789"
+    },
+    {
+      "cik": "1367644",
+      "name": "Emergent BioSolutions Inc.",
+      "reason": "no pack folder for CIK 1367644"
+    },
+    {
+      "cik": "1632790",
+      "name": "Energizer Holdings, Inc.",
+      "reason": "no pack folder for CIK 1632790"
+    },
+    {
+      "cik": "1289308",
+      "name": "EnerSys",
+      "reason": "no pack folder for CIK 1289308"
+    },
+    {
+      "cik": "1877322",
+      "name": "ESAB Corp",
+      "reason": "no pack folder for CIK 1877322"
+    },
+    {
+      "cik": "890564",
+      "name": "Everforth Inc",
+      "reason": "no pack folder for CIK 890564"
+    },
+    {
+      "cik": "1888447",
+      "name": "Excelerate Energy, Inc.",
+      "reason": "no pack folder for CIK 1888447"
+    },
+    {
+      "cik": "922358",
+      "name": "Ferrellgas Partners L P",
+      "reason": "no pack folder for CIK 922358"
+    },
+    {
+      "cik": "1210677",
+      "name": "First Advantage Corp",
+      "reason": "no pack folder for CIK 1210677"
+    },
+    {
+      "cik": "37785",
+      "name": "Fmc Corp",
+      "reason": "no pack folder for CIK 37785"
+    },
+    {
+      "cik": "1406587",
+      "name": "Forestar Group Inc.",
+      "reason": "no pack folder for CIK 1406587"
+    },
+    {
+      "cik": "1965040",
+      "name": "Fortrea Holdings Inc.",
+      "reason": "no pack folder for CIK 1965040"
+    },
+    {
+      "cik": "42582",
+      "name": "Goodyear Tire & Rubber Co /Oh/",
+      "reason": "no pack folder for CIK 42582"
+    },
+    {
+      "cik": "861459",
+      "name": "Granite Construction Inc",
+      "reason": "no pack folder for CIK 861459"
+    },
+    {
+      "cik": "50725",
+      "name": "Griffon Corp",
+      "reason": "no pack folder for CIK 50725"
+    },
+    {
+      "cik": "1031203",
+      "name": "Group 1 Automotive Inc",
+      "reason": "no pack folder for CIK 1031203"
+    },
+    {
+      "cik": "1428336",
+      "name": "Healthequity, Inc.",
+      "reason": "no pack folder for CIK 1428336"
+    },
+    {
+      "cik": "47129",
+      "name": "Hertz Corp",
+      "reason": "no pack folder for CIK 47129"
+    },
+    {
+      "cik": "48287",
+      "name": "Hni Corp",
+      "reason": "no pack folder for CIK 48287"
+    },
+    {
+      "cik": "1482512",
+      "name": "Hudson Pacific Properties, Inc.",
+      "reason": "no pack folder for CIK 1482512"
+    },
+    {
+      "cik": "2029118",
+      "name": "Infinity Natural Resources, Inc.",
+      "reason": "no pack folder for CIK 2029118"
+    },
+    {
+      "cik": "1653477",
+      "name": "Ingevity Corp",
+      "reason": "no pack folder for CIK 1653477"
+    },
+    {
+      "cik": "1580905",
+      "name": "Installed Building Products, Inc.",
+      "reason": "no pack folder for CIK 1580905"
+    },
+    {
+      "cik": "1145197",
+      "name": "Insulet Corp",
+      "reason": "no pack folder for CIK 1145197"
+    },
+    {
+      "cik": "811596",
+      "name": "Kaiser Aluminum Corp",
+      "reason": "no pack folder for CIK 811596"
+    },
+    {
+      "cik": "1692787",
+      "name": "Kinetik Holdings Inc.",
+      "reason": "no pack folder for CIK 1692787"
+    },
+    {
+      "cik": "2052568",
+      "name": "Legence Corp.",
+      "reason": "no pack folder for CIK 2052568"
+    },
+    {
+      "cik": "1580670",
+      "name": "LGI Homes, Inc.",
+      "reason": "no pack folder for CIK 1580670"
+    },
+    {
+      "cik": "750004",
+      "name": "Light & Wonder, Inc.",
+      "reason": "no pack folder for CIK 750004"
+    },
+    {
+      "cik": "1512499",
+      "name": "Lindblad Expeditions Holdings, Inc.",
+      "reason": "no pack folder for CIK 1512499"
+    },
+    {
+      "cik": "1023128",
+      "name": "Lithia Motors Inc",
+      "reason": "no pack folder for CIK 1023128"
+    },
+    {
+      "cik": "1335258",
+      "name": "Live Nation Entertainment, Inc.",
+      "reason": "no pack folder for CIK 1335258"
+    },
+    {
+      "cik": "18926",
+      "name": "Lumen Technologies, Inc.",
+      "reason": "no pack folder for CIK 18926"
+    },
+    {
+      "cik": "1941365",
+      "name": "MasterBrand, Inc.",
+      "reason": "no pack folder for CIK 1941365"
+    },
+    {
+      "cik": "1520006",
+      "name": "Matador Resources Co",
+      "reason": "no pack folder for CIK 1520006"
+    },
+    {
+      "cik": "2046386",
+      "name": "Medline Inc.",
+      "reason": "no pack folder for CIK 2046386"
+    },
+    {
+      "cik": "1333274",
+      "name": "Mercer International Inc.",
+      "reason": "no pack folder for CIK 1333274"
+    },
+    {
+      "cik": "789570",
+      "name": "MGM Resorts International",
+      "reason": "no pack folder for CIK 789570"
+    },
+    {
+      "cik": "2017206",
+      "name": "Millrose Properties, Inc.",
+      "reason": "no pack folder for CIK 2017206"
+    },
+    {
+      "cik": "67887",
+      "name": "Moog Inc.",
+      "reason": "no pack folder for CIK 67887"
+    },
+    {
+      "cik": "1350593",
+      "name": "Mueller Water Products, Inc.",
+      "reason": "no pack folder for CIK 1350593"
+    },
+    {
+      "cik": "1974138",
+      "name": "NCR Atleos Corp",
+      "reason": "no pack folder for CIK 1974138"
+    },
+    {
+      "cik": "1690680",
+      "name": "Newmark Group, Inc.",
+      "reason": "no pack folder for CIK 1690680"
+    },
+    {
+      "cik": "1142417",
+      "name": "Nexstar Media Group, Inc.",
+      "reason": "no pack folder for CIK 1142417"
+    },
+    {
+      "cik": "73756",
+      "name": "Oceaneering International Inc",
+      "reason": "no pack folder for CIK 73756"
+    },
+    {
+      "cik": "1014739",
+      "name": "Option Care Health, Inc.",
+      "reason": "no pack folder for CIK 1014739"
+    },
+    {
+      "cik": "1402829",
+      "name": "Orion Group Holdings Inc",
+      "reason": "no pack folder for CIK 1402829"
+    },
+    {
+      "cik": "1019849",
+      "name": "Penske Automotive Group, Inc.",
+      "reason": "no pack folder for CIK 1019849"
+    },
+    {
+      "cik": "1826470",
+      "name": "Petco Health & Wellness Company, Inc.",
+      "reason": "no pack folder for CIK 1826470"
+    },
+    {
+      "cik": "1968915",
+      "name": "Phinia Inc.",
+      "reason": "no pack folder for CIK 1968915"
+    },
+    {
+      "cik": "1808834",
+      "name": "PROG Holdings, Inc.",
+      "reason": "no pack folder for CIK 1808834"
+    },
+    {
+      "cik": "857005",
+      "name": "Ptc Inc.",
+      "reason": "no pack folder for CIK 857005"
+    },
+    {
+      "cik": "315852",
+      "name": "Range Resources Corp",
+      "reason": "no pack folder for CIK 315852"
+    },
+    {
+      "cik": "1511337",
+      "name": "RLJ Lodging Trust",
+      "reason": "no pack folder for CIK 1511337"
+    },
+    {
+      "cik": "1315098",
+      "name": "Roblox Corp",
+      "reason": "no pack folder for CIK 1315098"
+    },
+    {
+      "cik": "1929561",
+      "name": "RXO, Inc.",
+      "reason": "no pack folder for CIK 1929561"
+    },
+    {
+      "cik": "1034054",
+      "name": "Sba Communications Corp",
+      "reason": "no pack folder for CIK 1034054"
+    },
+    {
+      "cik": "1571123",
+      "name": "Science Applications International Corp",
+      "reason": "no pack folder for CIK 1571123"
+    },
+    {
+      "cik": "825542",
+      "name": "Scotts Miracle-Gro Co",
+      "reason": "no pack folder for CIK 825542"
+    },
+    {
+      "cik": "1012100",
+      "name": "Sealed Air Corp/De",
+      "reason": "no pack folder for CIK 1012100"
+    },
+    {
+      "cik": "1477294",
+      "name": "Sensata Technologies Holding plc",
+      "reason": "no pack folder for CIK 1477294"
+    },
+    {
+      "cik": "849869",
+      "name": "Silgan Holdings Inc",
+      "reason": "no pack folder for CIK 849869"
+    },
+    {
+      "cik": "1564408",
+      "name": "Snap Inc",
+      "reason": "no pack folder for CIK 1564408"
+    },
+    {
+      "cik": "1697500",
+      "name": "Solaris Energy Infrastructure, Inc.",
+      "reason": "no pack folder for CIK 1697500"
+    },
+    {
+      "cik": "2064953",
+      "name": "Solstice Advanced Materials Inc.",
+      "reason": "no pack folder for CIK 2064953"
+    },
+    {
+      "cik": "1206264",
+      "name": "Somnigroup International Inc.",
+      "reason": "no pack folder for CIK 1206264"
+    },
+    {
+      "cik": "1043509",
+      "name": "Sonic Automotive Inc",
+      "reason": "no pack folder for CIK 1043509"
+    },
+    {
+      "cik": "1514705",
+      "name": "SunCoke Energy, Inc.",
+      "reason": "no pack folder for CIK 1514705"
+    },
+    {
+      "cik": "96943",
+      "name": "Teleflex Inc",
+      "reason": "no pack folder for CIK 96943"
+    },
+    {
+      "cik": "97216",
+      "name": "Terex Corp",
+      "reason": "no pack folder for CIK 97216"
+    },
+    {
+      "cik": "730263",
+      "name": "Thor Industries Inc",
+      "reason": "no pack folder for CIK 730263"
+    },
+    {
+      "cik": "1556739",
+      "name": "Thryv Holdings, Inc.",
+      "reason": "no pack folder for CIK 1556739"
+    },
+    {
+      "cik": "98222",
+      "name": "Tidewater Inc",
+      "reason": "no pack folder for CIK 98222"
+    },
+    {
+      "cik": "842633",
+      "name": "Trimas Corp",
+      "reason": "no pack folder for CIK 842633"
+    },
+    {
+      "cik": "937098",
+      "name": "Trinet Group, Inc.",
+      "reason": "no pack folder for CIK 937098"
+    },
+    {
+      "cik": "99780",
+      "name": "Trinity Industries Inc",
+      "reason": "no pack folder for CIK 99780"
+    },
+    {
+      "cik": "1116942",
+      "name": "Ttm Technologies Inc",
+      "reason": "no pack folder for CIK 1116942"
+    },
+    {
+      "cik": "77543",
+      "name": "Tutor Perini Corp",
+      "reason": "no pack folder for CIK 77543"
+    },
+    {
+      "cik": "1447669",
+      "name": "Twilio Inc",
+      "reason": "no pack folder for CIK 1447669"
+    },
+    {
+      "cik": "746838",
+      "name": "Unisys Corp",
+      "reason": "no pack folder for CIK 746838"
+    },
+    {
+      "cik": "100517",
+      "name": "United Airlines Holdings, Inc.",
+      "reason": "no pack folder for CIK 100517"
+    },
+    {
+      "cik": "933036",
+      "name": "Upbound Group, Inc.",
+      "reason": "no pack folder for CIK 933036"
+    },
+    {
+      "cik": "812011",
+      "name": "Vail Resorts Inc",
+      "reason": "no pack folder for CIK 812011"
+    },
+    {
+      "cik": "1674910",
+      "name": "Valvoline Inc",
+      "reason": "no pack folder for CIK 1674910"
+    },
+    {
+      "cik": "2067876",
+      "name": "Versant Media Group, Inc.",
+      "reason": "no pack folder for CIK 2067876"
+    },
+    {
+      "cik": "1040765",
+      "name": "Vornado Realty Lp",
+      "reason": "no pack folder for CIK 1040765"
+    },
+    {
+      "cik": "879526",
+      "name": "WABASH NATIONAL Corp",
+      "reason": "no pack folder for CIK 879526"
+    },
+    {
+      "cik": "1309108",
+      "name": "WEX Inc.",
+      "reason": "no pack folder for CIK 1309108"
+    },
+    {
+      "cik": "110471",
+      "name": "Wolverine World Wide Inc /De/",
+      "reason": "no pack folder for CIK 110471"
+    },
+    {
+      "cik": "1722684",
+      "name": "Wyndham Hotels & Resorts, Inc.",
+      "reason": "no pack folder for CIK 1722684"
+    },
+    {
+      "cik": "108772",
+      "name": "Xerox Corp",
+      "reason": "no pack folder for CIK 108772"
+    },
+    {
+      "cik": "1770450",
+      "name": "Xerox Holdings Corp",
+      "reason": "no pack folder for CIK 1770450"
+    },
+    {
+      "cik": "1166003",
+      "name": "XPO, Inc.",
+      "reason": "no pack folder for CIK 1166003"
+    },
+    {
+      "cik": "877212",
+      "name": "Zebra Technologies Corp",
+      "reason": "no pack folder for CIK 877212"
+    },
+    {
+      "cik": "1084048",
+      "name": "Ziff Davis, Inc.",
+      "reason": "no pack folder for CIK 1084048"
+    },
+    {
+      "cik": "1617553",
+      "name": "Ziprecruiter, Inc.",
+      "reason": "no pack folder for CIK 1617553"
+    }
+  ]
+}
