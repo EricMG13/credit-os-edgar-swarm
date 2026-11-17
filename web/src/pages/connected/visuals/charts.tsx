@@ -47,8 +47,19 @@ function indices(table: SourceTable, values: unknown[]): number[] | null {
   return result;
 }
 
-function valuesIn(table: SourceTable, columns: number[]) {
-  return columns.flatMap((index) => table.rows.map((row) => cellAmount(table, row, index)));
+/** The numbers of cells that state one measure in one unit, each read with the others. */
+function scopeAmounts(cells: string[]) {
+  return cells.map((cell) => cellAmount(cell, cells));
+}
+
+/** One column's numbers: a period series, a bridge, a yield curve or a recovery column. */
+function columnAmounts(table: SourceTable, column: number) {
+  return scopeAmounts(table.rows.map((row) => row[column] ?? ""));
+}
+
+/** One row's numbers in `columns`: a bullet, range or paired row has its own measure and unit. */
+function rowAmounts(row: string[], columns: number[]) {
+  return scopeAmounts(columns.map((column) => row[column] ?? ""));
 }
 
 function chartCells(table: SourceTable, columns: number[]) {
@@ -69,16 +80,6 @@ function unitsMatch(table: SourceTable, unit: string, columns: number[]) {
   );
 }
 
-/**
- * The table as the chart reads it. Columns drawn on one axis share one number convention: when one of
- * them is written with decimal commas, all of them are.
- */
-function readingTable(table: SourceTable, columns: number[]): SourceTable {
-  return columns.some((column) => table.decimalComma?.has(column))
-    ? { ...table, decimalComma: new Set(columns) }
-    : table;
-}
-
 function periods(table: SourceTable, descriptor: Descriptor, frame: Frame) {
   const columns = indices(table, items(descriptor.columns));
   if (
@@ -90,9 +91,8 @@ function periods(table: SourceTable, descriptor: Descriptor, frame: Frame) {
   )
     return null;
   const groups = table.rows.map((row) => row[0] ?? "");
-  const reading = readingTable(table, columns);
   const series = columns.map((column) => {
-    const values = table.rows.map((row) => cellAmount(reading, row, column));
+    const values = columnAmounts(table, column);
     return {
       name: table.headers[column] ?? "",
       values,
@@ -150,10 +150,11 @@ function waterfall(table: SourceTable, descriptor: Descriptor, frame: Frame) {
   const labels = table.rows.map((row) => row[0] ?? "");
   if (!distinct(labels)) return null;
   const steps: WaterfallStep[] = [];
+  const amounts = columnAmounts(table, column);
   let running = 0;
   for (const [index, row] of table.rows.entries()) {
     const text = row[column] ?? "";
-    const value = cellAmount(table, row, column);
+    const value = amounts[index] ?? null;
     const label = labels[index] ?? "";
     if (value === null) return null;
     const last = index === table.rows.length - 1;
@@ -207,8 +208,8 @@ function paired(table: SourceTable, descriptor: Descriptor, frame: Frame) {
     ? [earlier, later]
     : [table.headers[prior] ?? "", table.headers[current] ?? ""];
   if (!distinct(names)) return null;
-  const reading = readingTable(table, [prior, current]);
-  const values = valuesIn(reading, [prior, current]);
+  const pairs = table.rows.map((row) => rowAmounts(row, [prior, current]));
+  const values = pairs.flat();
   if (values.every((value) => value === null)) return null;
   const sharedUnit = unitsMatch(table, word(descriptor.unit), [prior, current]);
   if (
@@ -225,8 +226,8 @@ function paired(table: SourceTable, descriptor: Descriptor, frame: Frame) {
         axis={bounds(values)}
         rows={table.rows.map((row, i) => ({
           label: labels[i] ?? "",
-          from: cellAmount(reading, row, prior),
-          to: cellAmount(reading, row, current),
+          from: pairs[i]?.[0] ?? null,
+          to: pairs[i]?.[1] ?? null,
           text: `${row[priorPeriod] ?? ""} ${row[prior] ?? ""} → ${row[currentPeriod] ?? ""} ${row[current] ?? ""}`,
         }))}
         table={chartTable(table)}
@@ -237,7 +238,7 @@ function paired(table: SourceTable, descriptor: Descriptor, frame: Frame) {
     return null;
   const series = [prior, current].map((column, at) => {
     const cells = table.rows.map((row) => row[column] ?? "");
-    const positions = table.rows.map((row) => cellAmount(reading, row, column));
+    const positions = pairs.map((pair) => pair[at] ?? null);
     return {
       name: names[at] ?? "",
       values: positions,
@@ -272,10 +273,10 @@ function range(table: SourceTable, descriptor: Descriptor, frame: Frame) {
   ]);
   if (slots === null) return null;
   const [label = 0, issuer = 1, low = 2, median = 3, high = 4] = slots;
-  const reading = readingTable(table, [issuer, low, median, high]);
+  const amounts = table.rows.map((row) => rowAmounts(row, [issuer, low, median, high]));
   if (
     !chartCells(table, [issuer, low, median, high]) ||
-    valuesIn(reading, [issuer, low, median, high]).every((value) => value === null) ||
+    amounts.flat().every((value) => value === null) ||
     !distinct(table.rows.map((row) => row[label] ?? ""))
   )
     return null;
@@ -284,24 +285,22 @@ function range(table: SourceTable, descriptor: Descriptor, frame: Frame) {
       {...frame}
       rangeLabel={`${table.headers[low] ?? ""} to ${table.headers[high] ?? ""}`}
       emphasised={0}
-      rows={table.rows.map((row) => {
-        const lower = cellAmount(reading, row, low);
-        const upper = cellAmount(reading, row, high);
-        const markers = [issuer, median].map((i) => {
-          const value = cellAmount(reading, row, i);
-          return {
-            name: table.headers[i] ?? "",
-            value,
-            text: value === null ? null : (row[i] ?? null),
-          };
+      rows={table.rows.map((row, at) => {
+        const [issuerValue = null, lower = null, medianValue = null, upper = null] =
+          amounts[at] ?? [];
+        const marker = (i: number, value: number | null) => ({
+          name: table.headers[i] ?? "",
+          value,
+          text: value === null ? null : (row[i] ?? null),
         });
+        const markers = [marker(issuer, issuerValue), marker(median, medianValue)];
         return {
           label: row[label] ?? "",
           rangeText: `${row[low] ?? ""} to ${row[high] ?? ""} · ${row.at(-2) ?? ""}`,
           range:
             lower === null || upper === null || lower > upper ? null : { low: lower, high: upper },
           markers,
-          axis: bounds([lower, upper, ...markers.map((marker) => marker.value)]),
+          axis: bounds([lower, upper, issuerValue, medianValue]),
         };
       })}
       table={chartTable(table)}
@@ -321,9 +320,10 @@ function scatter(table: SourceTable, descriptor: Descriptor, frame: Frame) {
   const [label = 0, date = 1, yieldAt = 2] = slots;
   if (!chartCells(table, [yieldAt]) || !unitsMatch(table, word(descriptor.unit), [yieldAt]))
     return null;
-  const points = table.rows.map((row) => {
+  const yields = columnAmounts(table, yieldAt);
+  const points = table.rows.map((row, at) => {
     const x = maturityDate(row[date] ?? "");
-    const y = cellAmount(table, row, yieldAt);
+    const y = yields[at] ?? null;
     return {
       name: row[label] ?? "",
       x,
@@ -440,10 +440,8 @@ function bullet(table: SourceTable, descriptor: Descriptor, frame: Frame) {
   if (!labels?.length || slots === null) return null;
   const [current = 2, threshold = 1, direction = 4] = slots;
   if (!chartCells(table, [current, threshold])) return null;
-  const reading = readingTable(table, [current, threshold]);
   const rows = table.rows.flatMap((row) => {
-    const value = cellAmount(reading, row, current);
-    const target = cellAmount(reading, row, threshold);
+    const [value = null, target = null] = rowAmounts(row, [current, threshold]);
     if (target === null || target < 0 || (value !== null && value < 0)) return [];
     const unit = row.at(-2) ?? "";
     const label = labels.map((index) => row[index] ?? "").join(" · ");
@@ -487,10 +485,13 @@ function recovery(table: SourceTable, descriptor: Descriptor, frame: Frame) {
     if (byScenario?.has(name)) return null;
     byScenario?.set(name, row);
   }
+  const scope = table.rows.map((row) => row[column] ?? "");
   const series = names.map((name) => {
     const found = groups.map((group) => sourceRows.get(group)?.get(name));
     const texts = found.map((row) => row?.[column] ?? "");
-    const values = found.map((row) => (row === undefined ? null : cellAmount(table, row, column)));
+    const values = found.map((row) =>
+      row === undefined ? null : cellAmount(row[column] ?? "", scope),
+    );
     return { name, values, labels: texts.map((value, i) => (values[i] === null ? null : value)) };
   });
   const values = series.flatMap((entry) => entry.values);

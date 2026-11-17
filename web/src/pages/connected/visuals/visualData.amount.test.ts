@@ -1,16 +1,9 @@
 import { expect, it } from "vitest";
-import { amount, cellAmount, decimalCommaColumns, type SourceTable } from "./visualData";
+import { amount, cellAmount } from "./visualData";
 
-/** A cell of a column that the table's other cells prove is written with decimal commas. */
-const decimalColumn: SourceTable = {
-  line: 1,
-  headers: ["Period", "Total debt / EBITDA"],
-  rows: [],
-  decimalComma: new Set([1]),
-};
-const inDecimalColumn = (cell: string) => cellAmount(decimalColumn, ["FY2023", cell], 1);
-const inPlainColumn = (cell: string) =>
-  cellAmount({ ...decimalColumn, decimalComma: undefined }, ["FY2023", cell], 1);
+/** A cell read with the other cells of its measure: here `3,75` proves the decimal comma. */
+const inDecimalColumn = (cell: string) => cellAmount(cell, ["3,75", cell]);
+const inPlainColumn = (cell: string) => cellAmount(cell, ["2.80", cell]);
 
 it.each([
   ["2.80", 2.8],
@@ -98,82 +91,43 @@ it.each(["1.234,56", "1,2,3", "3,", ",5", "3,75x", "n/a", ""])(
   },
 );
 
-it("reads a cell with no column evidence as it always did, three digits after the comma as thousands", () => {
+it("reads a cell with no evidence in its scope as it always did, three digits after the comma as thousands", () => {
   expect(amount("2,800")).toBe(2800);
   expect(inPlainColumn("2,800")).toBe(2800);
-  expect(cellAmount({ ...decimalColumn, decimalComma: new Set([2]) }, ["FY2023", "2,800"], 1)).toBe(
-    2800,
-  );
+  expect(cellAmount("2,800", ["2,800", "3,750"])).toBe(2800);
 });
 
-it("is not taken for a column flag when mapped over cells, which passes the index second", () => {
+it("is not taken for a scope when mapped over cells, which passes the index second", () => {
   expect(["2,800", "3,75", "1,250"].map(amount)).toEqual([2800, 3.75, 1250]);
 });
 
 it.each([
+  [["3,75", "2,800"], true],
+  [["2,800", "0,375"], true],
+  [["12,5", "1,250"], true],
+  [["3,750", "2,800"], false],
+  [["1,250", "12,345"], false],
+  [["1,250,000", "3.75"], false],
+  [["21,00,000", "1,23,456"], false],
+  [["3.75", "2.80"], false],
+] as const)("reads 2,800 as a decimal comma in the scope %j: %s", (scope, decimal) => {
+  expect(cellAmount("2,800", scope)).toBe(decimal ? 2.8 : 2800);
+});
+
+// Review 4 issue 2: English grouping in the same scope contradicts the decimal comma, so nothing flips.
+it.each([
   [
-    [
-      ["FY2023", "3,75"],
-      ["FY2024", "2,800"],
-    ],
-    [1],
+    ["1,250,000", "1,250", "3,75", "2,800.5"],
+    [1250000, 1250, 3.75, 2800.5],
   ],
   [
-    [
-      ["FY2023", "2,800"],
-      ["FY2024", "0,375"],
-    ],
-    [1],
+    ["3,75", "1,250", "21,00,000"],
+    [3.75, 1250, 2100000],
   ],
   [
-    [
-      ["FY2023", "12,5"],
-      ["FY2024", "1,250"],
-    ],
-    [1],
+    ["2,800", "3,75", "1,250.5"],
+    [2800, 3.75, 1250.5],
   ],
-  [
-    [
-      ["FY2023", "3,750"],
-      ["FY2024", "2,800"],
-    ],
-    [],
-  ],
-  [
-    [
-      ["FY2023", "1,250"],
-      ["FY2024", "12,345"],
-    ],
-    [],
-  ],
-  [
-    [
-      ["FY2023", "1,250,000"],
-      ["FY2024", "3.75"],
-    ],
-    [],
-  ],
-  [
-    [
-      ["FY2023", "21,00,000"],
-      ["FY2024", "1,23,456"],
-    ],
-    [],
-  ],
-  [
-    [
-      ["FY2023", "3.75"],
-      ["FY2024", "2.80"],
-    ],
-    [],
-  ],
-  [
-    [
-      ["FY2023", "3,75", "1,250"],
-      ["FY2024", "2,800", "2,800"],
-    ],
-    [1],
-  ],
-] as const)("finds the columns that prove the decimal comma in %j: %j", (rows, expected) => {
-  expect([...decimalCommaColumns(rows.map((row) => [...row]))]).toEqual(expected);
+] as const)("does not flip the scope %j, which also holds English grouping", (scope, values) => {
+  expect(scope.map((cell) => cellAmount(cell, scope))).toEqual(values);
 });

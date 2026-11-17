@@ -81,7 +81,7 @@ it("draws a column written only in three-decimal commas as thousands, the ambigu
   expect(figure.getAllByText(/^\d,000$/).length).toBeGreaterThan(0);
 });
 
-it("reads every column drawn on one axis with decimal commas when one of them is written so", () => {
+it("reads each series with its own cells: one series written with decimal commas does not flip another", () => {
   const figure = drawn(
     "Leverage",
     { columns: [1, 2] },
@@ -99,9 +99,8 @@ it("reads every column drawn on one axis with decimal commas when one of them is
       ],
     ),
   );
-  const numbers = axisNumbers();
-  expect(numbers.length).toBeGreaterThan(2);
-  expect(Math.max(...numbers)).toBeLessThan(10);
+  // Net debt (3,000 and 2,250) is read as thousands, so the axis runs in thousands.
+  expect(figure.getAllByText("1,000").length).toBeGreaterThan(0);
   expect(figure.getAllByText("3,000").length).toBeGreaterThan(0);
 });
 

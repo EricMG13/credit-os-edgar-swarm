@@ -1,4 +1,4 @@
-import { containsReference } from "../publishedReport";
+import { containsReference, readerText } from "../publishedReport";
 
 export function record(value: unknown): Record<string, unknown> {
   return value !== null && typeof value === "object" && !Array.isArray(value)
@@ -29,8 +29,6 @@ export interface SourceTable {
   rowLines?: (number | undefined)[];
   rowSource?: (line: number, label: string) => ReactNode;
   evidenceInDrawer?: boolean;
-  /** The columns written with decimal commas; `cellAmount` reads their cells with it. */
-  decimalComma?: ReadonlySet<number>;
 }
 
 export function publishedTables(sections: unknown) {
@@ -55,13 +53,7 @@ export function publishedTables(sections: unknown) {
         const rowLines = sourceRows.map(({ line: at }) =>
           typeof at === "number" && Number.isSafeInteger(at) && at > 0 ? at : undefined,
         );
-        tables.set(line, {
-          line,
-          headers,
-          rows: cells,
-          rowLines,
-          decimalComma: decimalCommaColumns(cells),
-        });
+        tables.set(line, { line, headers, rows: cells, rowLines });
       }
     }
   }
@@ -90,24 +82,18 @@ export function amount(cell: string): number | null {
   return readAmount(cell, false);
 }
 
-/**
- * A table cell's number, read with its column's convention. In a column written with decimal commas
- * ("3,75" beside "2,800") one comma and three digits is a decimal comma, 2.8; a column written only
- * in three-decimal commas proves nothing and is read as thousands, as `amount` does.
- */
-export function cellAmount(table: SourceTable, row: string[], column: number): number | null {
-  return readAmount(row[column] ?? "", table.decimalComma?.has(column) === true);
-}
+// Only a decimal comma reads "3,75"; only English grouping reads "1,250,000" or "2,800.5".
+const onlyDecimalComma = (cell: string) => DECIMAL_COMMA.test(cell) && !COMMA_GROUPS.test(cell);
+const onlyGrouping = (cell: string) => COMMA_GROUPS.test(cell) && !DECIMAL_COMMA.test(cell);
 
-/** The columns holding a comma that cannot group thousands ("3,75"): they are written with decimal commas. */
-export function decimalCommaColumns(rows: string[][]): ReadonlySet<number> {
-  const columns = new Set<number>();
-  for (const row of rows) {
-    row.forEach((cell, column) => {
-      if (DECIMAL_COMMA.test(cell) && !COMMA_GROUPS.test(cell)) columns.add(column);
-    });
-  }
-  return columns;
+/**
+ * A cell's number read with `scope`, the cells that state the same measure in the same unit. When a
+ * cell of the scope can only be a decimal comma ("3,75") and none can only be English grouping, one
+ * comma and three digits ("2,800") is a decimal comma too, 2.8. Otherwise, a scope written only in
+ * three-decimal commas included, the cell is read as `amount` reads it.
+ */
+export function cellAmount(cell: string, scope: readonly string[]): number | null {
+  return readAmount(cell, scope.some(onlyDecimalComma) && !scope.some(onlyGrouping));
 }
 
 export function sharePosition(cell: string) {
@@ -196,15 +182,15 @@ export function ticks(
 
 const BASIS_COLUMN = /^Basis and limitation$/i;
 const DRAWER_COLUMN = /^(?:Source|Evidence)$/i;
-// What `containsReference` leaves out: a gap id "(G12)", a run code "20261117-094923-01", a module code
-// "CP-2A" in either case.
-const GAP_OR_RUN_OR_MODULE = /\(G\d+\)|\b\d{8}-\d{6}-\d{2}\b|\bCP-[A-Z0-9]+\b/iu;
+// What `containsReference` leaves out: a gap id "(G12)" and a run code "20261117-094923-01". A module
+// code is not held back; `readerText` draws it as the module's name.
+const GAP_OR_RUN = /\(G\d+\)|\b\d{8}-\d{6}-\d{2}\b/u;
 
 /**
- * The Table form of a published chart table. The limitation text stays beside the figures; only the
- * columns of source references go to the row's trace drawer, and a limitation that itself names a
- * source, a gap id, a run code or a module code is left to the drawer too (as `chartDrawsVerbatim`
- * does for the prose).
+ * The Table form of a published chart table. The limitation text stays beside the figures, its module
+ * codes drawn as module names; only the columns of source references go to the row's trace drawer,
+ * and a limitation that itself names a source, a gap id or a run code is left to the drawer too (as
+ * `chartDrawsVerbatim` does for the prose).
  */
 export function chartTable(table: SourceTable, columns = table.headers.map((_, index) => index)) {
   const inDrawer = table.evidenceInDrawer === true;
@@ -213,10 +199,10 @@ export function chartTable(table: SourceTable, columns = table.headers.map((_, i
     : columns;
   const cell = (row: string[], column: number) => {
     const text = row[column] ?? "";
-    const named = containsReference(text) || GAP_OR_RUN_OR_MODULE.test(text);
-    return inDrawer && BASIS_COLUMN.test(table.headers[column] ?? "") && named
+    if (!inDrawer || !BASIS_COLUMN.test(table.headers[column] ?? "")) return text || null;
+    return containsReference(text) || GAP_OR_RUN.test(text)
       ? "Qualification recorded in Evidence."
-      : text || null;
+      : readerText(text) || null;
   };
   return {
     head: visible.map((index) => table.headers[index] ?? ""),

@@ -36,7 +36,7 @@ it("keeps the Basis and limitation column when the caller names its columns", ()
   expect(shown[0]?.cells).toEqual(["3.75", "Gross debt includes finance leases."]);
 });
 
-it.each(["Gross debt per annual.txt p.12", "Gross debt as CP-2A restated it"])(
+it.each(["Gross debt per annual.txt p.12"])(
   "keeps a limitation that names %s out of the table form while the sources are in the drawer",
   (limitation) => {
     const named: SourceTable = {
@@ -51,11 +51,9 @@ it.each(["Gross debt per annual.txt p.12", "Gross debt as CP-2A restated it"])(
 it.each([
   "Lease detail not disclosed (G12).",
   "Basis as run 20261117-094923-01.",
-  "Restated by cp-2a for FY2024.",
-  "Gross debt as CP-1C restated it",
   "See (G3) and (G31)",
 ])(
-  "keeps a limitation that names a gap id, run code or module code, %s, out of the table form",
+  "keeps a limitation that names a gap id or run code, %s, out of the table form",
   (limitation) => {
     const named: SourceTable = {
       ...table,
