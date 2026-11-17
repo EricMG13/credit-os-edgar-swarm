@@ -41,6 +41,10 @@ Rounds 1 and 2 of a task run on Sonnet. From round 3 on (a second send-back afte
 implementer and the reviewers run on Opus at `medium` effort (owner correction, 2026-11-17: "opus medium"). A task still failing review after round 4
 is left open and listed for the lead. Each report names the model of each round.
 
+Owner instruction (2026-11-17, in this session): for T07 to T10, implementers run on Sonnet at
+`medium` effort and reviewers on Opus at `medium` effort, in every round. (T07 round 2's implementer
+had already started on Sonnet at `xhigh` and was left to finish.)
+
 ## Worktree set-up (implementer, once)
 
 Your worktree is a separate checkout; the main checkout is `/home/user/credit-os2`.
