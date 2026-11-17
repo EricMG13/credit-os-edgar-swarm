@@ -5,7 +5,7 @@ import { getRun, moduleName, type Mode, type Run } from "../api";
 import { card, heading } from "../layout";
 import { PublishedTable } from "../ReportContent";
 import { publishedHref, type OutputEntry, type PublishedRun } from "../publishedReport";
-import { elapsedFigure, spendFigure } from "../runFigures";
+import { elapsedFigure, spendFigure, stamp } from "../runFigures";
 import { useResource } from "../useResource";
 
 const EXECUTION: Record<NonNullable<Run["execution"]>, string> = {
@@ -42,6 +42,16 @@ function moduleGroups(run: PublishedRun, entries: OutputEntry[]) {
   return groups;
 }
 
+/** The run record's delivery events, in words; the record holds no library-admission state. */
+function deliveryFigure(run: Run) {
+  const events = run.events ?? [];
+  const delivered = events.find(({ kind }) => kind === "delivered");
+  if (delivered) return `Report delivered ${stamp(delivered.at)}`;
+  const started = events.find(({ kind }) => kind === "delivery_started");
+  if (started) return `Report delivery started ${stamp(started.at)}; not finished`;
+  return "No delivery recorded";
+}
+
 function RunTotals({
   value,
   mode,
@@ -70,6 +80,10 @@ function RunTotals({
         {elapsed && <dd className="text-sm text-text-tertiary">{elapsed.note}</dd>}
       </div>
       <div className="grid content-start gap-1">
+        <dt className="text-sm text-text-tertiary">Delivery</dt>
+        <dd className="font-semibold">{value ? deliveryFigure(value) : missing}</dd>
+      </div>
+      <div className="grid content-start gap-1">
         <dt className="text-sm text-text-tertiary">Cap usage</dt>
         <dd className="font-semibold tabular-nums">{spend?.value ?? missing}</dd>
         <dd>
@@ -90,35 +104,40 @@ function RunTotals({
 function ModuleRecord({
   group,
   folder,
+  name,
   synthetic,
 }: {
   group: RecordModule;
   folder: string;
+  name: string;
   synthetic: boolean;
 }) {
+  const callsTitle = synthetic ? "Synthetic adapter responses" : "Model calls";
   return (
     <div className="mt-3 grid min-w-0 gap-4">
       {group.steps.length > 0 && (
-        <PublishedTable
-          evidence
-          table={{
-            type: "table",
-            line: 0,
-            headers: ["Started (UTC)", "Accepted (UTC)"],
-            rows: group.steps.map((step, line) => ({
-              line,
-              cells: [step.started || "", step.accepted || ""],
-            })),
-          }}
-        />
+        <section className="grid gap-2">
+          <h4 className="font-semibold">Started and accepted</h4>
+          <PublishedTable
+            evidence
+            table={{
+              type: "table",
+              line: 0,
+              headers: ["Started (UTC)", "Accepted (UTC)"],
+              rows: group.steps.map((step, line) => ({
+                line,
+                cells: [step.started || "", step.accepted || ""],
+              })),
+            }}
+          />
+        </section>
       )}
       {group.calls.length > 0 && (
         <section className="grid gap-2">
-          <h5 className="font-semibold">
-            {synthetic ? "Synthetic adapter responses" : "Model calls"}
-          </h5>
+          <h4 className="font-semibold">{callsTitle}</h4>
           <PublishedTable
             evidence
+            heading={`${name}: ${callsTitle}`}
             table={{
               type: "table",
               line: 0,
@@ -155,7 +174,7 @@ function ModuleRecord({
       })}
       {group.issues.map(({ output }) => (
         <div key={output.id} className="grid gap-1 text-sm text-text-secondary wrap-anywhere">
-          <h5 className="font-semibold">{output.label} · Handoff issues</h5>
+          <h4 className="font-semibold">{output.label} · Handoff issues</h4>
           {output.parseError && <p>{output.parseError}</p>}
           {output.issue?.split("; ").map((issue, i) => (
             <p key={i}>{issue}</p>
@@ -231,7 +250,12 @@ export function ReportRecord({
                 </span>
               )}
             </summary>
-            <ModuleRecord group={group} folder={run.folder} synthetic={synthetic} />
+            <ModuleRecord
+              group={group}
+              folder={run.folder}
+              name={id ? moduleName(id) : "Unassigned calls"}
+              synthetic={synthetic}
+            />
           </details>
         ))}
       </section>
