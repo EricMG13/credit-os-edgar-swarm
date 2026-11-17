@@ -29,3 +29,21 @@ One entry per task: the reviewer was a fresh Sonnet agent at xhigh effort that d
   - An "ok" run slice with no drafts shows StartPage's "No draft has this address" at `/run/start`. That wording is in StartPage.tsx, which is outside the group's files.
   - New run from Halden's report shows the fixture draft's TransDigm breadcrumb. That comes from the fixture data; T25 (OQ-01) labels the static pages as a design reference.
   - `#/run/start/` with a trailing slash now draws the first draft instead of Page not found.
+
+## T33, S2-005 part (S2-006 follows under ruling L5)
+
+- Commit reviewed: fac83bf. Verdict: PASS. Merged onto audit/repair-3.
+- Confirmed cause: the point column is fit-content under `items-start`, and the badge's `size-max` widens it to 446 px at 390 px. The register's "inner span" does not exist.
+- The one-class repair (`max-w-full` on the column) brings the column, sentence and badge to 276 px at 390 px. Rows at 520 px and up are unchanged.
+- The new test fails on the parent source and passes at HEAD.
+- The reviewer could not check out parent files in the worktree (harness denied), so it ran the parent source from a `git archive` copy in scratch.
+- The 48 px page scroll left at 390 px is the Limitations header row (T36's S2-004/S3-003), not the badge.
+- Gates the reviewer saw:
+  - lint 0, format:check 0, typecheck 0, duplication 0, unused 0, build 0.
+  - vitest: 5 files, 138 tests, exit 0, on re-run after one load-related failure in routes.test.tsx.
+  - Probe long-qualifier.mjs 0 ("ok" at 1440, 390 and 320 px).
+- Low:
+  - The new test asserts class names, so it detects change rather than layout. A layout check would belong in web/scripts (open-from-disk), outside the task's files.
+  - The test copies the fixture loader from Overview.test.tsx.
+  - An unbroken qualifier token (a URL or an id) would still overflow. That is outside S2-005.
+- Info: the register's cause for S2-005 should name the column's width, not an inner span.
