@@ -300,7 +300,7 @@ it("withholds a catalogue-only report and its actions", async () => {
   render(<ConnectedApp path="/report/northbridge-2026" mode="synthetic" />);
   expect(await screen.findByText("No report was published for this run.")).toBeInTheDocument();
   expect(screen.getByRole("heading", { name: "Credit report" })).toBeInTheDocument();
-  expect(screen.queryByRole("link", { name: "Run activity" })).toBeNull();
+  expect(within(screen.getByRole("main")).queryByRole("link", { name: "Run activity" })).toBeNull();
   expect(screen.queryByRole("switch", { name: "Show sources" })).toBeNull();
   expect(screen.queryByRole("navigation", { name: "Report sections" })).toBeNull();
 });
@@ -357,6 +357,7 @@ it("shows a snapshot error without admitting a report or remaining in loading", 
   expect(alert).not.toHaveTextContent("Snapshot unavailable");
   expect(screen.queryByText("Loading report…")).toBeNull();
   expect(screen.queryByRole("navigation", { name: "Report sections" })).toBeNull();
+  expect(within(screen.getByRole("main")).queryByRole("link", { name: "Run activity" })).toBeNull();
 });
 
 const CODED_CELL = "Liquidity (CP-2D)";
