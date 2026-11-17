@@ -43,7 +43,7 @@ export function breakPointView(entry: OutputEntry) {
             { name: `Cash-interest increase (k = ${rate})`, column: 3 },
           ]
         : [];
-    return { table: retained, bases, test: 1, status: 4 };
+    return { table: retained, bases, test: 1, status: 4, ranked: false };
   }
   const ranked = RANKINGS.map((title) =>
     namedTable(entry, title, ["Break point", REQUIRED_DECLINE]),
@@ -56,7 +56,7 @@ export function breakPointView(entry: OutputEntry) {
     ranking.headers.join("|") === `Break point|${REQUIRED_DECLINE}` ||
     ranking.headers.join("|") === `Rank|Break point|${REQUIRED_DECLINE}`;
   const bases = compatible ? [{ name: REQUIRED_DECLINE, column }] : [];
-  return { table: ranking, bases, test, status: undefined };
+  return { table: ranking, bases, test, status: undefined, ranked: true };
 }
 
 function threshold(text: string) {
@@ -77,27 +77,30 @@ function trace(href: (line: number) => string, line: number, name: string) {
   );
 }
 
-function orderedRows(table: Table, basis: Basis, test: number, status?: number) {
-  return table.rows
-    .map(({ line, cells }) => {
-      const text = cells[basis.column] ?? "";
-      return {
-        line,
-        label: publicText(cells[test] ?? ""),
-        text: publicText(text),
-        status: status === undefined ? null : publicText(cells[status] ?? ""),
-        value: threshold(text),
-      };
-    })
-    .sort(
-      (first, second) =>
-        (first.value ?? Infinity) - (second.value ?? Infinity) || first.line - second.line,
-    );
+/** The table's rows as written; only a module-written first-break ranking is ordered by decline. */
+function breakRows(table: Table, basis: Basis, test: number, ranked: boolean, status?: number) {
+  const rows = table.rows.map(({ line, cells }) => {
+    const text = cells[basis.column] ?? "";
+    return {
+      line,
+      label: publicText(cells[test] ?? ""),
+      text: publicText(text),
+      status: status === undefined ? null : publicText(cells[status] ?? ""),
+      value: threshold(text),
+    };
+  });
+  return ranked
+    ? rows.sort(
+        (first, second) =>
+          (first.value ?? Infinity) - (second.value ?? Infinity) || first.line - second.line,
+      )
+    : rows;
 }
 
-function RankBars({ rows }: { rows: ReturnType<typeof orderedRows> }) {
+function RankBars({ rows, ranked }: { rows: ReturnType<typeof breakRows>; ranked: boolean }) {
+  const List = ranked ? "ol" : "ul";
   return (
-    <ol className="grid gap-3">
+    <List className="grid gap-3">
       {rows.map(({ label, line, text, status, value }) => (
         <li key={line} className="grid min-w-0 gap-1.5 border-b border-border-hairline pb-3">
           <div className="flex flex-wrap items-baseline justify-between gap-x-4 text-sm">
@@ -122,7 +125,7 @@ function RankBars({ rows }: { rows: ReturnType<typeof orderedRows> }) {
           </div>
         </li>
       ))}
-    </ol>
+    </List>
   );
 }
 
@@ -135,7 +138,7 @@ export function BreakPoints({
 }) {
   const [index, setIndex] = useState(0);
   const basis = data.bases[index];
-  const rows = basis ? orderedRows(data.table, basis, data.test, data.status) : [];
+  const rows = basis ? breakRows(data.table, basis, data.test, data.ranked, data.status) : [];
   const chart = Boolean(
     basis && rows.some(({ value }) => value !== null) && distinct(rows.map(({ label }) => label)),
   );
@@ -167,7 +170,7 @@ export function BreakPoints({
           subtitle={basis?.name}
           note="Longer bars indicate a smaller EBITDA decline to the break point."
           actions={trace(href, data.table.line, title)}
-          chart={<RankBars rows={rows} />}
+          chart={<RankBars rows={rows} ranked={data.ranked} />}
           table={{
             head:
               data.status === undefined
