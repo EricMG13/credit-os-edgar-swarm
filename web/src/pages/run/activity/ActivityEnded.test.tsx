@@ -33,7 +33,7 @@ const CASES: Case[] = [
     id: "capped",
     word: "Capped",
     role: "status",
-    title: "The run reached its USD 20.00 cap",
+    title: "The run reached its USD 25.00 cap",
     text: "Nine modules finished and are in the library. Recovery was stopped part-way and three modules did not run. A new run has its own cap.",
     action: ["Open what finished", "#/"],
     alt: ["Start a new run", "#/run/start/no-documents"],
@@ -109,8 +109,8 @@ describe("Run activity, ended modules", () => {
     expect(count("Not assessable")).toBe(1);
     expect(count("Not run")).toBe(3);
     const spend = screen.getAllByRole("progressbar")[0] as HTMLElement;
-    expect(spend.getAttribute("aria-valuenow")).toBe("20");
-    expect(spend.getAttribute("aria-valuemax")).toBe("20");
+    expect(spend.getAttribute("aria-valuenow")).toBe("25");
+    expect(spend.getAttribute("aria-valuemax")).toBe("25");
   });
 
   it("interrupted: 7 Not run and 1 Interrupted", () => {

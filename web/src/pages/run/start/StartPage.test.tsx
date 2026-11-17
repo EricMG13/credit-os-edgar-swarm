@@ -99,7 +99,7 @@ const FRAMES: Frame[] = [
     notMet: null,
     met: ["6", SIX],
     previous: "#/run/start/context",
-    next: "Submit, spend up to USD 20.00",
+    next: "Submit, spend up to USD 25.00",
     nextTo: "#/run/start/started",
     blocked: null,
   },
@@ -149,7 +149,7 @@ describe.each(FRAMES)("Run start, draft $id", (f) => {
     ).toEqual(f.met[1]);
     expect(within(panel).getByText("Spending cap for this run")).toBeVisible();
     expect(within(panel).getByRole("progressbar")).toHaveAttribute("aria-valuenow", "0");
-    expect(within(panel).getByRole("progressbar")).toHaveAccessibleName("USD 0.00 of USD 20.00");
+    expect(within(panel).getByRole("progressbar")).toHaveAccessibleName("USD 0.00 of USD 25.00");
   });
 
   it("draws Previous, the position and Next as the slice says", () => {

@@ -92,9 +92,9 @@ describe("committed fixture", () => {
     expect(context.note).toBe("");
     const start = by("start");
     if (start?.step !== "start") throw new Error("step");
-    expect(start.nextLabel).toBe("Submit, spend up to USD 20.00");
-    expect(start.paid.amount).toBe("USD 20.00");
-    expect(start.confirm.action).toBe("Start run, up to USD 20.00");
+    expect(start.nextLabel).toBe("Submit, spend up to USD 25.00");
+    expect(start.paid.amount).toBe("USD 25.00");
+    expect(start.confirm.action).toBe("Start run, up to USD 25.00");
     expect(start.confirm.started).toBe("started");
     expect(start.readiness.line).toBe("Everything the run needs is in place.");
     const started = by("started");
@@ -102,7 +102,7 @@ describe("committed fixture", () => {
     expect(started.title).toBe("Run started");
     expect(started.activity).toBe("running");
     expect(started.next).toBeNull();
-    expect(started.cap).toEqual({ label: "USD 0.00 of USD 20.00", value: 0, max: 20 });
+    expect(started.cap).toEqual({ label: "USD 0.00 of USD 25.00", value: 0, max: 25 });
   });
 
   it("keeps a null value as null and a zero bar as 0", () => {
@@ -304,7 +304,7 @@ function steps(id: string) {
   if (m.kind !== "steps") throw new Error("not steps");
   return m.steps;
 }
-const SPEND = (label: string, value: number) => ({ label, value, max: 20 });
+const SPEND = (label: string, value: number) => ({ label, value, max: 25 });
 
 describe("committed fixture, run activity", () => {
   it("holds eleven records in order and a current run", () => {
@@ -334,7 +334,7 @@ describe("committed fixture, run activity", () => {
       line: null,
       alert: null,
       open: null,
-      spend: { value: "USD 7.40", bar: SPEND("USD 7.40 of USD 20.00", 7.4) },
+      spend: { value: "USD 7.40", bar: SPEND("USD 7.40 of USD 25.00", 7.4) },
       finished: { value: "5 of 13", bar: { label: "5 of 13 modules", value: 5, max: 13 } },
       elapsed: { value: "16 min 12 s", note: "Started today at 14:38" },
     });
@@ -367,7 +367,7 @@ describe("committed fixture, run activity", () => {
     expect(r.feed[6]).toEqual({
       who: "Run",
       time: "14:38",
-      text: "Started. 13 modules queued, cap USD 20.00.",
+      text: "Started. 13 modules queued, cap USD 25.00.",
       state: "Queued",
     });
     const q = run("queued");
@@ -380,7 +380,7 @@ describe("committed fixture, run activity", () => {
       {
         who: "Run",
         time: "14:37",
-        text: "Submitted and queued. 13 modules, cap USD 20.00.",
+        text: "Submitted and queued. 13 modules, cap USD 25.00.",
         state: "Queued",
       },
     ]);
@@ -435,7 +435,7 @@ describe("committed fixture, run activity", () => {
       state: "Failed",
     });
     const capped = run("capped");
-    expect(capped.spend.bar).toEqual(SPEND("USD 20.00 of USD 20.00", 20));
+    expect(capped.spend.bar).toEqual(SPEND("USD 25.00 of USD 25.00", 25));
     expect(capped.alert?.action).toEqual({ label: "Open what finished", href: "#/" });
     expect(capped.alert?.alt).toEqual({
       label: "Start a new run",
@@ -673,7 +673,7 @@ describe("rejects, run activity", () => {
     expect(reason(editRun("running", ["spend", "value"], undefined))).toBe(
       "run.runs[0].spend.value: expected a string or null",
     );
-    expect(reason(editRun("running", ["spend", "bar", "value"], 21))).toBe(
+    expect(reason(editRun("running", ["spend", "bar", "value"], 26))).toBe(
       "run.runs[0].spend.bar.value: expected a number from 0 to max",
     );
   });

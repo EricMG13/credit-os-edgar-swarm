@@ -96,7 +96,7 @@ describe("Confirm (frame 04)", () => {
     }
     expect(screen.getByText("TransDigm Group Incorporated")).toBeVisible();
     expect(screen.getByText("Q3 FY2026, nine months to 28 June 2026")).toBeVisible();
-    expect(screen.getByText("USD 20.00")).toBeVisible();
+    expect(screen.getByText("USD 25.00")).toBeVisible();
   });
 
   it("draws a null value as n.a., never 0 or a dash", () => {
