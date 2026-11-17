@@ -1,6 +1,6 @@
-state: blocked
-updated: 2026-11-17T09:32Z
-done: T02 implemented (a3e2dcb0), reviewer PASS; T03 round 2 (688bb9a) in review; T01 round 2 (dd8acc5d) in review; T11 round 2 implementing; T12 (8c576641) in review.
-next: merge each task as it passes review; T07 after T01 merges; T04 after T03 merges
-blocked: T02's merge only. Its reviewer found a Medium outside T02's files: src/deploy_workflow/inbox/teams.py:457 progress counts CP-MODEL in record.modules, so a Teams card reads 13/14 modules for a complete run, now reachable because of T02. Asked the lead (message, 09:32Z) whether T02 may change teams.py (progress only) and tests/test_inbox_teams.py. Unblocked by the lead's answer, by message or output/sessions/repair-1/ANSWER.md.
+state: running
+updated: 2026-11-17T09:33Z
+done: T02 implemented (a3e2dcb0), reviewer PASS. Lead ruling L6 (09:33Z): T02 may change src/deploy_workflow/inbox/teams.py (progress only) and tests/test_inbox_teams.py to leave the forecast code out of the Teams total (new finding R1-003, repaired in T02); T01 follow-up repairs the OSError path in catalogue issue text, credit_os_catalogue.py:220,417 (R1-001, repaired in T01); CP-8 in a hand-built list is parked (R1-002).
+next: T02 round 2 (R1-003) once its adversarial review returns; T01 round 3 (R1-001) once its round-2 reviews return; T03 round 2, T12 in review; T11 round 2 implementing; T07 after T01 merges; T04 after T03 merges
+blocked: none
 reports: docs/audit/2026-11-16-final/output/sessions/repair-1/WORKER-NOTES.md
