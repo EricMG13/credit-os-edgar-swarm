@@ -48,7 +48,10 @@ describe("Library home, Cards side", () => {
   it("draws the delivered subtitle and a primary Start a run link to the run page", () => {
     renderHome(fixture.slice);
     expect(screen.getByText("Five issuers, each opening on its latest finished run")).toBeVisible();
-    expect(screen.getByRole("link", { name: "Start a run" })).toHaveAttribute("href", "#/run");
+    expect(screen.getByRole("link", { name: "Start a run" })).toHaveAttribute(
+      "href",
+      "#/run/start",
+    );
   });
 
   it("draws the filter bar: search, three selects, and no filter applied", () => {
@@ -144,7 +147,7 @@ describe("Library home, Cards side", () => {
         if (attr.name !== "class" && attr.name !== "style") expect(attr.value).not.toMatch(audit);
         if (attr.name === "href") {
           expect(attr.value).toMatch(
-            /^#\/(run|library\/[a-z-]+\/(history|\d{4}-\d{2}-\d{2}\/overview))$/,
+            /^#\/(run\/start|library\/[a-z-]+\/(history|\d{4}-\d{2}-\d{2}\/overview))$/,
           );
         }
       }
@@ -173,10 +176,15 @@ describe("Library home, Cards side", () => {
     expect(screen.queryByRole("grid", { name: "Issuers" })).toBeNull();
   });
 
-  it("says the data file holds no library pages when it has no library member, under the h1", () => {
+  it("says the build is a design reference holding no reports when it has no library member, under the h1", () => {
     renderHome(undefined);
     expect(screen.getByRole("heading", { level: 1, name: "Library" })).toBeVisible();
-    expect(screen.getByText("This data file holds no library pages")).toBeVisible();
+    expect(screen.getByRole("heading", { level: 2, name: "No runs yet" })).toBeVisible();
+    expect(screen.getByText(/This build is a design reference and holds no reports/)).toBeVisible();
+    expect(screen.getByRole("link", { name: "Start a run" })).toHaveAttribute(
+      "href",
+      "#/run/start",
+    );
     expect(screen.queryByText("Library data is missing")).toBeNull();
   });
 
@@ -253,7 +261,10 @@ describe("Library home, other states", () => {
         "A run reads an issuer’s files and writes its report here. Start one to add the first issuer.",
       ),
     ).toBeVisible();
-    expect(screen.getByRole("link", { name: "Start a run" })).toHaveAttribute("href", "#/run");
+    expect(screen.getByRole("link", { name: "Start a run" })).toHaveAttribute(
+      "href",
+      "#/run/start",
+    );
     expect(screen.queryByRole("textbox", { name: "Search issuers" })).toBeNull();
   });
 });

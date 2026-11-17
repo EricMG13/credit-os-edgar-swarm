@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { FilterLines } from "@untitledui/icons";
 import { EmptyState } from "@/components/application/empty-state/empty-state";
 import { Button } from "@/components/base/buttons/button";
@@ -7,23 +7,36 @@ import { ALL, FilterSelect } from "./FilterBar";
 import { SUBSECTION_HEADING } from "./heading";
 
 /**
- * The module filter of an Evidence tab whose content is delivered per module: page state, in memory,
- * so a tab starts at "All". Its options are the delivered module names; what is compared is the id.
+ * The module filter of the Evidence pages, held above their five tabs: page state, in memory, so a
+ * choice stays when another tab opens and a run starts at "All". Its options are the delivered module
+ * names; what is compared is the id. `address` names the item an address opens (`null` for a tab with
+ * none): reaching a new one starts the filter at "All" again, so the row the address names is drawn.
+ * `clear` is the empty state's way back: the button that runs it goes with the state, so it hands
+ * the focus to the filter that caused the state.
  */
-export function useModuleFilter(options: readonly Reader[]) {
+export function useModuleFilter(options: readonly Reader[], address: string | null = null) {
   const [name, setName] = useState(ALL);
+  const [seen, setSeen] = useState(address);
+  if (address !== seen) {
+    setSeen(address);
+    if (address !== null) setName(ALL);
+  }
+  const slot = useRef<HTMLDivElement>(null);
   return {
     chosen: options.find((option) => option.name === name) ?? null,
     clear: () => {
       setName(ALL);
+      slot.current?.querySelector("button")?.focus();
     },
     control: (
-      <FilterSelect
-        name="Module"
-        options={options.map((option) => option.name)}
-        value={name}
-        onChange={setName}
-      />
+      <div ref={slot} className="contents">
+        <FilterSelect
+          name="Module"
+          options={options.map((option) => option.name)}
+          value={name}
+          onChange={setName}
+        />
+      </div>
     ),
   };
 }

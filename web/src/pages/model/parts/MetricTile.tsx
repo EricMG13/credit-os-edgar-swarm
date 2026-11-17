@@ -1,8 +1,8 @@
 import { InfoCircle } from "@untitledui/icons";
-import { Tooltip, TooltipTrigger } from "@/components/base/tooltip/tooltip";
 import { Missing } from "@/components/gap/Missing";
 import { Withheld } from "@/components/gap/Withheld";
 import type { Metric } from "../slice/types";
+import { PressTip } from "./StatementTable";
 import { TraceControl } from "./TraceControl";
 
 /**
@@ -17,14 +17,13 @@ export function MetricTile({ metric }: { metric: Metric }) {
       <div className="flex items-start justify-between gap-2">
         <div className="flex items-center gap-1.5">
           <p className="text-sm font-medium text-text-tertiary">{metric.label}</p>
-          <Tooltip title={metric.definition}>
-            <TooltipTrigger
-              aria-label={`About ${metric.label}`}
-              className="rounded-ds-xs text-text-tertiary focus-visible:outline-2 focus-visible:outline-solid focus-visible:outline-offset-2 focus-visible:outline-focus"
-            >
-              <InfoCircle aria-hidden="true" className="size-4" />
-            </TooltipTrigger>
-          </Tooltip>
+          <PressTip
+            title={metric.definition}
+            aria-label={`About ${metric.label}`}
+            className="rounded-ds-xs text-text-tertiary focus-visible:outline-2 focus-visible:outline-solid focus-visible:outline-offset-2 focus-visible:outline-focus"
+          >
+            <InfoCircle aria-hidden="true" className="size-4" />
+          </PressTip>
         </div>
         {metric.trace === null ? null : (
           <TraceControl href={metric.trace} label={`Show the sources for ${metric.label}`} />

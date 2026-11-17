@@ -1,4 +1,4 @@
-import { useId } from "react";
+import { useId, useState } from "react";
 import {
   AlertTriangle,
   Flag01,
@@ -6,8 +6,10 @@ import {
   LayersThree01,
   List,
   RefreshCw01,
+  SearchLg,
 } from "@untitledui/icons";
 import { Button, Link } from "react-aria-components";
+import { Input } from "@/components/base/input/input";
 import { STATUS_SETS } from "@/components/status/sets";
 import { StatusShape } from "@/components/status/shapes";
 import { cx } from "@/utils/cx";
@@ -42,9 +44,10 @@ export type NavSection = { key: string; label: string; icon: keyof typeof ICON }
 export type NavModule = { id: string; name: string; state: ModuleState };
 
 /**
- * The module page's navigator (N3): one vertical menu in two groups. The first moves to a section
- * of this page without changing the address; the second links every module of the run, each with
- * its state shape and word. Sticky from the wide layout, where it scrolls by itself when long.
+ * The module page's navigator (N3): a search at the top, then one vertical menu in two groups. The
+ * first moves to a section of this page without changing the address; the second links every
+ * module of the run, each with its state shape and word. The search narrows the second group by
+ * plain module name, in memory. Sticky from the wide layout, where it scrolls by itself when long.
  */
 export function ModuleNav({
   issuer,
@@ -69,6 +72,9 @@ export function ModuleNav({
 }) {
   const sectionsLabel = useId();
   const modulesLabel = useId();
+  const [search, setSearch] = useState("");
+  const wanted = search.trim().toLowerCase();
+  const listed = modules.filter((module) => module.name.toLowerCase().includes(wanted));
   const heading = "px-4 pt-3 pb-1 pl-4.75 text-xs font-medium text-text-tertiary";
   return (
     <nav
@@ -78,6 +84,9 @@ export function ModuleNav({
         className,
       )}
     >
+      <div className="px-4 pt-1 pb-2">
+        <Input icon={SearchLg} placeholder="Search modules" value={search} onChange={setSearch} />
+      </div>
       {sections.length === 0 ? null : (
         <>
           <span id={sectionsLabel} className={heading}>
@@ -107,23 +116,27 @@ export function ModuleNav({
       <span id={modulesLabel} className={cx(heading, sections.length > 0 && "mt-4")}>
         Modules in this run
       </span>
-      <ul aria-labelledby={modulesLabel}>
-        {modules.map((module) => (
-          <li key={module.id}>
-            <Link
-              href={hrefFor?.(module.id) ?? modulesHref(issuer, run, module.id)}
-              aria-label={`${module.name}, ${module.state}`}
-              aria-current={module.id === current ? "page" : undefined}
-              className={cx(ENTRY, "py-2", module.id === current && CURRENT)}
-            >
-              <span className={cx("mx-1 flex", MARK[module.state])}>
-                <StatusShape shape={STATUS_SETS["Module state"][module.state].shape} />
-              </span>
-              <span>{module.name}</span>
-            </Link>
-          </li>
-        ))}
-      </ul>
+      {listed.length === 0 ? (
+        <p className="px-4 py-2 text-small text-text-tertiary">No module matches</p>
+      ) : (
+        <ul aria-labelledby={modulesLabel}>
+          {listed.map((module) => (
+            <li key={module.id}>
+              <Link
+                href={hrefFor?.(module.id) ?? modulesHref(issuer, run, module.id)}
+                aria-label={`${module.name}, ${module.state}`}
+                aria-current={module.id === current ? "page" : undefined}
+                className={cx(ENTRY, "py-2", module.id === current && CURRENT)}
+              >
+                <span className={cx("mx-1 flex", MARK[module.state])}>
+                  <StatusShape shape={STATUS_SETS["Module state"][module.state].shape} />
+                </span>
+                <span>{module.name}</span>
+              </Link>
+            </li>
+          ))}
+        </ul>
+      )}
     </nav>
   );
 }

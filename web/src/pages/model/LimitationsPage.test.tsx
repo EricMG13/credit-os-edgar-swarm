@@ -134,7 +134,7 @@ describe("Limitations page", () => {
 
   it("draws the header badges, the action and the breadcrumb", () => {
     renderAt(fixtureSlice());
-    for (const text of ["As of 30 June 2025", "Annual review", "Finished", "Sample data"]) {
+    for (const text of ["As of 30 June 2025", "Annual review", "Finished"]) {
       expect(screen.getByText(text)).toBeInTheDocument();
     }
     expect(screen.getByRole("link", { name: "Back to the report" })).toHaveAttribute(
@@ -297,11 +297,12 @@ describe("Limitations page", () => {
     expect(screen.getByText("Not found for this run")).toBeInTheDocument();
   });
 
-  it("leaves an invalid slice to the app, naming the failing path", () => {
+  it("leaves an invalid slice to the app, in plain words and without the failing path", () => {
     renderAt(edited(["runs", 0, "limitations", "items", 0, "title"], 5));
     expect(screen.getByText("This part of the library could not be read")).toBeInTheDocument();
     expect(
-      screen.getByText("runs[0].limitations.items[0].title: expected a string"),
+      screen.getByText(/^The financial model for this run could not be shown/),
     ).toBeInTheDocument();
+    expect(screen.queryByText("runs[0].limitations.items[0].title: expected a string")).toBeNull();
   });
 });

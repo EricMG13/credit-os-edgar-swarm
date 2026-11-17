@@ -63,7 +63,7 @@ describe("Report history, a normal issuer", () => {
       "href",
       "#/library/halden-aerostructures/2026-09-30/overview",
     );
-    expect(screen.getByRole("link", { name: "New run" })).toHaveAttribute("href", "#/run");
+    expect(screen.getByRole("link", { name: "New run" })).toHaveAttribute("href", "#/run/start");
   });
 
   it("draws seven entries newest first with the mock's dates, states, pathways and sentences", () => {
@@ -155,7 +155,7 @@ describe("Report history, a normal issuer", () => {
 });
 
 describe("Report history, an issuer with no report yet", () => {
-  it("draws the mock's sentence with Back to the library and Start a run, and no feed", () => {
+  it("draws the mock's sentence with Back to the library and Start a run, and the failed run", () => {
     renderHistory("corvane-fasteners");
     expect(screen.getByRole("heading", { level: 1, name: "Corvane Fasteners" })).toBeVisible();
     expect(screen.getByText("One run, not finished")).toBeVisible();
@@ -169,8 +169,12 @@ describe("Report history, an issuer with no report yet", () => {
       "href",
       "#/library/home",
     );
-    expect(screen.getByRole("link", { name: "Start a run" })).toHaveAttribute("href", "#/run");
-    expect(screen.queryByRole("list")).toBeNull();
+    expect(screen.getByRole("link", { name: "Start a run" })).toHaveAttribute(
+      "href",
+      "#/run/start",
+    );
+    expect(entries()).toHaveLength(1);
+    expect(within(entries()[0] as HTMLElement).getByText("Failed")).toBeVisible();
     expect(screen.queryByRole("link", { name: "Open latest report" })).toBeNull();
   });
 });

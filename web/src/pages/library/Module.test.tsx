@@ -82,11 +82,11 @@ describe("Module, a delivered prose module", () => {
       ["H3", "Key findings"],
       ["H3", "Contrary evidence"],
       ["H3", "What would change the view"],
+      ["H3", "Limitations2"],
       ["H3", "Risks by probability and impact"],
       ["H3", "Indicators to watch"],
       ["H3", "Questions this module set out to answer"],
       ["H3", "How a programme delay reaches the credit"],
-      ["H3", "Limitations2"],
     ]);
   });
 
@@ -162,12 +162,12 @@ describe("Module, a delivered prose module", () => {
       "Show sources for this finding",
       "Show sources for the contrary evidence",
       "Show sources for the trigger",
+      "Show sources for this limitation",
+      "Show sources for this limitation",
       "Show sources for the risk matrix",
       ...Array<string>(5).fill("Show sources for this risk"),
       ...Array<string>(4).fill("Show sources for this indicator"),
       ...Array<string>(2).fill("Show sources for this answer"),
-      "Show sources for this limitation",
-      "Show sources for this limitation",
     ]);
     fireEvent.click(sourceButtons()[1] as HTMLElement);
     expect(
@@ -463,8 +463,8 @@ describe("Module, the navigator", () => {
       "Key findings",
       "Contrary evidence",
       "What would change the view",
-      "Records",
       "Limitations",
+      "Records",
     ]);
   });
 
@@ -878,9 +878,13 @@ describe("Module, the documentation tests", () => {
     expect(item).not.toHaveTextContent(/n\.a\./);
   });
 
-  it("draws no trace control where the mock draws none, and one where a test carries a trace", () => {
+  it("draws the missing-trace marker where a test has no trace, and a control where it carries one", () => {
     renderModule("capital-structure");
-    expect(within(tests()).queryAllByRole("button")).toHaveLength(0);
+    expect(
+      within(tests())
+        .getAllByRole("button")
+        .map((b) => b.getAttribute("aria-label")),
+    ).toEqual(Array<string>(4).fill("Show sources for this test: no source recorded"));
     cleanup();
     const library = withRecords((records) => {
       const group = ((records.find((r) => r["kind"] === "status") as Json)["groups"] as Json[])[0];
@@ -895,7 +899,10 @@ describe("Module, the documentation tests", () => {
       within(tests())
         .getAllByRole("button")
         .map((b) => b.getAttribute("aria-label")),
-    ).toEqual(["Show sources for this test"]);
+    ).toEqual([
+      "Show sources for this test",
+      ...Array<string>(3).fill("Show sources for this test: no source recorded"),
+    ]);
     expect(within(tests()).getByText("The certificate was due on 15 January.")).toBeVisible();
   });
 
@@ -961,9 +968,13 @@ describe("Module, the statement by year", () => {
     expect(screen.queryByRole("button", { name: /^(Bars|Figures)$/ })).toBeNull();
   });
 
-  it("draws a trace control only where the block carries a trace", () => {
+  it("draws the missing-trace marker where the block has no trace, and a control where it carries one", () => {
     renderModule("capital-structure");
-    expect(within(statement()).queryAllByRole("button")).toHaveLength(0);
+    expect(
+      within(statement())
+        .getAllByRole("button")
+        .map((b) => b.getAttribute("aria-label")),
+    ).toEqual(["Show sources for this table: no source recorded"]);
     cleanup();
     const library = withRecords((records) => {
       (records.find((r) => r["kind"] === "statement") as Json)["trace"] = "cs-net-debt";
@@ -1309,6 +1320,7 @@ describe("Module, the data module as a whole", () => {
     expect(sourceButtons().map((b) => b.getAttribute("aria-label"))).toEqual([
       "Show sources for the bottom line",
       ...Array<string>(3).fill("Show sources for this finding"),
+      ...Array<string>(3).fill("Show sources for this limitation"),
       ...Array<string>(6).fill("Show sources for this figure"),
       ...Array<string>(3).fill("Show sources for this measure"),
       "Show sources for the debt stack",
@@ -1318,7 +1330,8 @@ describe("Module, the data module as a whole", () => {
       "Show sources for the peer scatter",
       "Show sources for the peer range",
       ...Array<string>(7).fill("Show sources for this fact"),
-      ...Array<string>(3).fill("Show sources for this limitation"),
+      ...Array<string>(4).fill("Show sources for this test: no source recorded"),
+      "Show sources for this table: no source recorded",
     ]);
   });
 
@@ -1327,7 +1340,7 @@ describe("Module, the data module as a whole", () => {
     const toggle = screen.getByRole<HTMLInputElement>("switch", { name: "Show sources" });
     if (!toggle.checked) fireEvent.click(toggle);
     expect(container.querySelector("[data-sources]")).toHaveAttribute("data-sources", "on");
-    expect(sourceButtons()).toHaveLength(29);
+    expect(sourceButtons()).toHaveLength(34);
   });
 
   it("opens the drawer of the bottom line, a finding and a limitation by their own traces", () => {
@@ -1336,7 +1349,7 @@ describe("Module, the data module as a whole", () => {
     for (const [index, title] of [
       [0, "Sources for the capital structure bottom line"],
       [3, "Sources for the capacity finding"],
-      [28, "Sources for the lease schedule limitation"],
+      [6, "Sources for the lease schedule limitation"],
     ] as const) {
       fireEvent.click(buttons[index] as HTMLElement);
       expect(screen.getByRole("dialog", { name: title })).toBeVisible();
@@ -1379,6 +1392,7 @@ describe("Module, the navigator of the data module", () => {
     ).toEqual([
       "Bottom line",
       "Key findings",
+      "Limitations",
       "Headline figures",
       "Debt stack and maturities",
       "Headroom",
@@ -1386,7 +1400,6 @@ describe("Module, the navigator of the data module", () => {
       "Against peers",
       "Terms and tests",
       "Hedges",
-      "Limitations",
     ]);
   });
 });

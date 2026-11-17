@@ -1,4 +1,4 @@
-import { useId, type ReactNode } from "react";
+import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { Badge } from "@/components/base/badges/badges";
 import { ButtonGroup, ButtonGroupItem } from "@/components/base/button-group/button-group";
 import { Tooltip, TooltipTrigger } from "@/components/base/tooltip/tooltip";
@@ -18,7 +18,7 @@ const EMPTY = "w-[220px]";
 
 const LABEL: Record<RowKind, string> = {
   plain: "font-medium",
-  subtotal: "pl-7 font-normal text-text-secondary",
+  subtotal: "pl-4 font-normal text-text-secondary sm:pl-7",
   total: "font-semibold",
 };
 
@@ -45,20 +45,72 @@ function noteFor(column: StatementColumn, caseIndex: number): string | null {
   return column.note;
 }
 
-/** A reason is drawn as a tooltip on focus or hover and is the cell's accessible description. */
+/**
+ * A tooltip trigger a tap also opens, so a definition or a reason reaches a touch device. Hover and
+ * keyboard focus open the tooltip as before; a touch or assistive press toggles it, and a press
+ * anywhere else closes it.
+ */
+export function PressTip({
+  title,
+  className,
+  children,
+  ...aria
+}: {
+  title: string;
+  className: string;
+  children: ReactNode;
+  "aria-label"?: string;
+  "aria-describedby"?: string;
+}) {
+  const id = useId();
+  const [open, setOpen] = useState(false);
+  // The tooltip closes itself as a press starts; the toggle needs to know it was open before that.
+  const openAtPress = useRef(false);
+  useEffect(() => {
+    if (!open) return;
+    const away = (event: PointerEvent) => {
+      const own = document.getElementById(id);
+      if (!(event.target instanceof Node) || !own?.contains(event.target)) setOpen(false);
+    };
+    document.addEventListener("pointerdown", away);
+    return () => {
+      document.removeEventListener("pointerdown", away);
+    };
+  }, [open, id]);
+  return (
+    <Tooltip title={title} isOpen={open} onOpenChange={setOpen}>
+      <TooltipTrigger
+        {...aria}
+        id={id}
+        className={className}
+        onPressStart={() => {
+          openAtPress.current = open;
+        }}
+        onPress={(event) => {
+          if (event.pointerType === "touch" || event.pointerType === "virtual") {
+            setOpen(!openAtPress.current);
+          }
+        }}
+      >
+        {children}
+      </TooltipTrigger>
+    </Tooltip>
+  );
+}
+
+/** A reason is drawn as a tooltip on focus, hover or tap and is the cell's accessible description. */
 function Described({ reason, children }: { reason: string | null; children: ReactNode }) {
   const id = useId();
   if (reason === null) return <>{children}</>;
   return (
     <>
-      <Tooltip title={reason}>
-        <TooltipTrigger
-          aria-describedby={id}
-          className="cursor-help rounded-ds-xs focus-visible:outline-2 focus-visible:outline-solid focus-visible:outline-offset-2 focus-visible:outline-focus"
-        >
-          {children}
-        </TooltipTrigger>
-      </Tooltip>
+      <PressTip
+        title={reason}
+        aria-describedby={id}
+        className="cursor-help rounded-ds-xs focus-visible:outline-2 focus-visible:outline-solid focus-visible:outline-offset-2 focus-visible:outline-focus"
+      >
+        {children}
+      </PressTip>
       <span id={id} className="sr-only">
         {reason}
       </span>
@@ -119,12 +171,12 @@ function Table({
   const rowCount = statement.rows.length;
   return (
     <div className="relative overflow-x-auto">
-      <table className="w-full min-w-[1100px] table-fixed border-collapse text-body tabular-nums">
+      <table className="w-full table-fixed border-collapse text-body tabular-nums sm:min-w-[1100px]">
         <thead>
           <tr>
             <th
               scope="col"
-              className="sticky left-0 bg-surface-card px-3 py-2 text-left font-medium"
+              className="sticky left-0 w-32 bg-surface-card px-3 py-2 text-left font-medium sm:w-auto"
             >
               {statement.name}
             </th>

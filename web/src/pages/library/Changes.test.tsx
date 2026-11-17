@@ -187,7 +187,15 @@ describe("Changes, the Table side", () => {
     const heads = within(table)
       .getAllByRole("columnheader")
       .map((h) => h.textContent);
-    expect(heads).toEqual(["Change", "30 Jun 2026", "30 Sep 2026", "Sources"]);
+    expect(heads).toEqual([
+      "Change",
+      "30 Jun 2026",
+      "30 Sep 2026",
+      "Kind",
+      "Direction",
+      "Cause and effect",
+      "Sources",
+    ]);
     const rows = within(table).getAllByRole("row");
     expect(rows).toHaveLength(7);
     const cells = (row: HTMLElement) =>

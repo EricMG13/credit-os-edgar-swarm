@@ -1,10 +1,21 @@
+import { useEffect, useLayoutEffect, useMemo, useRef } from "react";
 import type { LoadResult, SliceKey } from "./data";
 import { Kit } from "./pages/Kit";
 import { areaOf, matchRoute, routeTable, type RouteTable } from "./pages/route-table";
 import { SourceContext } from "./pages/source";
 import { useHashRoute } from "./route";
+import { DesignReferenceNote } from "./shell/DesignReferenceNote";
 import { PageHeader } from "./shell/PageHeader";
 import { Shell } from "./shell/Shell";
+
+/** The note ahead of the page. A bleed page keeps its own padding, so the note takes the same. */
+function DesignReference({ bleed = false }: { bleed?: boolean }) {
+  return (
+    <div className={bleed ? "px-8 pt-8" : "mb-6"}>
+      <DesignReferenceNote />
+    </div>
+  );
+}
 
 function Library({ result }: { result: LoadResult }) {
   return (
@@ -82,10 +93,14 @@ function Page({ result, table, route }: { result: LoadResult; table: RouteTable;
         </Shell>
       );
     }
+    // Signal keeps its own frame, and the model pages own the top of main, so they draw the note in
+    // their own frame. A group with no slice has no sample to label.
+    const sample = slice.kind === "ok" && (area === "library" || area === "run");
     if (matched.route.layout === "bleed") {
       return (
         <Shell current={area} bleed>
           <SourceContext.Provider value={result.data}>
+            {sample ? <DesignReference bleed /> : null}
             {matched.route.render(matched.params)}
           </SourceContext.Provider>
         </Shell>
@@ -94,6 +109,7 @@ function Page({ result, table, route }: { result: LoadResult; table: RouteTable;
     return (
       <Shell current={area}>
         <SourceContext.Provider value={result.data}>
+          {sample ? <DesignReference /> : null}
           <PageHeader title={matched.route.title} />
           <div className="mt-6">{matched.route.render(matched.params)}</div>
         </SourceContext.Provider>
@@ -103,6 +119,7 @@ function Page({ result, table, route }: { result: LoadResult; table: RouteTable;
   if (route === "/kit") {
     return (
       <Shell current="kit">
+        <DesignReference />
         <Kit />
       </Shell>
     );
@@ -122,6 +139,78 @@ function Page({ result, table, route }: { result: LoadResult; table: RouteTable;
   );
 }
 
+const SITE = "Credit OS";
+
+/**
+ * The document title of what `Page` draws at `route`: the page's name, what it is about when the
+ * route says (the issuer, the run's date), then the app. The branches follow `Page`'s.
+ */
+function pageTitle(result: LoadResult, table: RouteTable, route: string): string {
+  const home = bareHome(route, table);
+  const matched = matchRoute(home ?? route, table.routes);
+  const words = (...parts: (string | undefined)[]) =>
+    [...parts, SITE].filter((part) => part !== undefined).join(" — ");
+  if (matched !== null && result.kind === "ok") {
+    return words(matched.route.title, matched.route.subject?.(matched.params, result.data));
+  }
+  if (matched !== null && home !== null) return words(matched.route.title);
+  if (route === "/kit") return words("Component kit");
+  if (matched !== null || route === "" || route === "/") return words("Library");
+  return words("Page not found");
+}
+
+/** The history entry now shown, named by a key in its history state so that Back finds it again. */
+function entryOf(created: { current: number }): string {
+  const state = window.history.state as { entry?: unknown } | null;
+  if (typeof state?.entry === "string") return state.entry;
+  created.current += 1;
+  const entry = `${String(Date.now())}.${String(created.current)}`;
+  window.history.replaceState({ ...state, entry }, "");
+  return entry;
+}
+
+/**
+ * What a page load would give the reader that a hash route does not: the page's name in the tab
+ * and the history list, and the top of the page (or, on Back and Forward, the place that entry was
+ * left at).
+ *
+ * `main` is the one scroller and is never remounted, so it would keep the previous page's offset.
+ */
+function useRouteChange(route: string, title: string) {
+  const shown = useRef<{ route: string; entry: string } | null>(null);
+  const offsets = useRef(new Map<string, number>());
+  const created = useRef(0);
+
+  useLayoutEffect(() => {
+    document.title = title;
+  }, [title]);
+
+  // Layout effects run before any page's own effect, so a page that scrolls itself into place
+  // (the item pages) does so after the reset, not before it.
+  useLayoutEffect(() => {
+    const main = document.getElementById("main");
+    if (main === null || shown.current?.route === route) return;
+    const entry = entryOf(created);
+    shown.current = { route, entry };
+    main.scrollTop = offsets.current.get(entry) ?? 0;
+  }, [route]);
+
+  useEffect(() => {
+    const main = document.getElementById("main");
+    if (main === null) return;
+    const remember = () => {
+      if (shown.current !== null) offsets.current.set(shown.current.entry, main.scrollTop);
+    };
+    main.addEventListener("scroll", remember);
+    return () => {
+      main.removeEventListener("scroll", remember);
+    };
+  }, []);
+}
+
 export function App({ result, table = routeTable }: { result: LoadResult; table?: RouteTable }) {
-  return <Page result={result} table={table} route={useHashRoute()} />;
+  const route = useHashRoute();
+  const title = useMemo(() => pageTitle(result, table, route), [result, table, route]);
+  useRouteChange(route, title);
+  return <Page result={result} table={table} route={route} />;
 }

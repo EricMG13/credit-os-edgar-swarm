@@ -25,7 +25,7 @@ function PointTile({ point }: { point: Point }) {
           <div className="max-w-50 flex-none">
             <CellValue cell={point.figure} figureClass={FIGURE} />
           </div>
-          <div className="flex min-w-0 flex-1 flex-col items-start gap-2">
+          <div className="flex max-w-full min-w-0 flex-1 flex-col items-start gap-2">
             <p className="text-body">{point.text}</p>
             <Badge size="sm" className="max-w-full whitespace-normal">
               {point.qualifier}
@@ -84,7 +84,12 @@ export function Overview({ issuer, run }: { issuer: string | undefined; run: str
                 <ChangeViewNote view={overview.changeView} label="Show sources for the triggers" />
               )}
               <Section title="Dates to watch">
-                <Timeline items={overview.dates} />
+                <Timeline
+                  items={overview.dates.map((item) => ({
+                    ...item,
+                    action: <TraceControl trace={item.trace} label="Show sources for this date" />,
+                  }))}
+                />
               </Section>
             </div>
           </div>

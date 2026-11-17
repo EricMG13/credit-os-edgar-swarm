@@ -45,10 +45,11 @@ describe("App", () => {
     expect(screen.queryByText("Library data is missing")).toBeNull();
   });
 
-  it("marks the current area in the rail", () => {
+  it("offers the component kit by its address only: no rail item, none marked current", () => {
     window.location.hash = "#/kit";
     render(<App result={{ kind: "missing" }} />);
-    expect(screen.getByRole("link", { name: "Kit" })).toHaveAttribute("aria-current", "page");
+    expect(screen.queryByRole("link", { name: "Kit" })).toBeNull();
+    expect(screen.queryAllByRole("link", { current: "page" })).toHaveLength(0);
   });
 
   it("says Page not found for an unknown hash, inside the shell", () => {

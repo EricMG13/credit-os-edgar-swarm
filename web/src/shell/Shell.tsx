@@ -1,7 +1,8 @@
 import { useRef, type ReactNode } from "react";
-import { BookOpen01, Cube01, Grid01, PlayCircle, Signal01 } from "@untitledui/icons";
+import { BookOpen01, Cube01, PlayCircle, Signal01 } from "@untitledui/icons";
 import { NavButton } from "@/components/application/app-navigation/base-components/nav-button";
 
+/** `kit` is a page of the shell with no rail item: #/kit is reached by its address only. */
 export type Area = "library" | "model" | "run" | "signal" | "kit";
 
 const ITEMS = [
@@ -9,7 +10,6 @@ const ITEMS = [
   { area: "model", label: "Model", href: "#/model", icon: Cube01 },
   { area: "run", label: "Run", href: "#/run", icon: PlayCircle },
   { area: "signal", label: "Signal", href: "#/signal", icon: Signal01 },
-  { area: "kit", label: "Kit", href: "#/kit", icon: Grid01 },
 ] as const;
 
 /** The slim icon rail and the page region on the canvas. */
