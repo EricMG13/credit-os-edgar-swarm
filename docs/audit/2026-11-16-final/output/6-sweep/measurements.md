@@ -2,9 +2,8 @@
 
 The starting measurement source is `5e1d98b37305a9da59fb6944740ff17b721051af`.
 The isolated build reproduced all 36 files from the stage 5 native proof
-build byte for byte. The final comparison will share the accepted repair tip
-on both sides. The updated base, after measurements and sweep gates remain
-pending.
+build byte for byte. The matched comparison below uses the accepted repair
+inputs on both sides.
 
 | Measure | Stage 0 reference | Discovery base |
 | --- | --- | --- |
@@ -57,10 +56,7 @@ the unchanged duplication gate. It exited 0 and reported 285 clones and
 clones, 20 fewer duplicate lines and 31 fewer net source lines than the
 discovery base. This checkpoint precedes the final sweep comparison.
 
-Not verified: accepted-sweep after measurements, combined gates and final
-offline proof remain pending.
-
-## Controlled source comparison
+## Matched source comparison
 
 The before app source is `bb94ddce`. The after build used `e40eabe1` and
 the measurement helper pin `22926bd1`. The later stage 5 evidence commit
@@ -70,7 +66,7 @@ for these two arms.
 
 | Measurement | Repaired base | Integrated sweep | Change |
 | --- | ---: | ---: | ---: |
-| Production source lines in measured scope | 280,090 | 280,045 | −45 net |
+| Tracked code lines, including adjacent tests | 280,090 | 280,045 | −45 net |
 | Suppression directives | 104 | 104 | 0 |
 | Knip issues | 0 | 0 | 0 |
 | Web jscpd files | 633 | 633 | 0 |
