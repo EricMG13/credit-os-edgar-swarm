@@ -2,7 +2,7 @@ import { Button } from "@/components/base/buttons/button";
 import { ArrowRight } from "@untitledui/icons";
 import { GapPanel } from "@/components/gap/GapPanel";
 import { sourceCitationNote, sourceFileLinks } from "./sourceFiles";
-import { useState, type ReactNode } from "react";
+import { Fragment, useState, type ReactNode } from "react";
 import { BottomLine } from "../library/parts/BottomLine";
 import { DownloadButton } from "../library/parts/DownloadButton";
 import { RunContext } from "../library/parts/RunContext";
@@ -579,14 +579,19 @@ function findingsLayout(
   const slot = (section: Section): [Section, Section?] =>
     section === keyFindings && contrary ? [section, contrary] : [section];
   const groups: (string | [Section, Section?])[] = [];
+  // The figures follow the prose passages and come before Limitations; a module with no
+  // Limitations passage or gap places them after its last passage.
+  let figuresAt: number | undefined;
   for (const name of PASSAGES) {
     const section = slotOf(name);
+    if (name === "Limitations" && (section || gaps.includes(name))) figuresAt = groups.length;
     if (section && section !== contrary) groups.push(slot(section));
     else if (!section && gaps.includes(name)) groups.push(name);
   }
+  figuresAt ??= groups.length;
   for (const section of sections)
     if (!PASSAGES.some((name) => slotOf(name) === section)) groups.push(slot(section));
-  return { sections, groups, drawnBottomLine: slotOf("Bottom line") !== undefined };
+  return { sections, groups, figuresAt, drawnBottomLine: slotOf("Bottom line") !== undefined };
 }
 
 function followingParagraphs(section: Section, entry: OutputEntry, folder: string) {
@@ -609,11 +614,13 @@ function EmptyFindings({
   entry,
   records,
   afterBottomLine,
+  beforeLimitations,
 }: {
   run: PublishedRun;
   entry: OutputEntry;
   records: Section[];
   afterBottomLine?: ReactNode;
+  beforeLimitations?: ReactNode;
 }) {
   return (
     <>
@@ -626,6 +633,7 @@ function EmptyFindings({
         </Button>
       </p>
       {afterBottomLine}
+      {beforeLimitations}
       <RecordsCard run={run} entry={entry} records={records} />
     </>
   );
@@ -639,6 +647,7 @@ export function ReportFindings({
   overview = false,
   overviewLabel,
   afterBottomLine,
+  beforeLimitations,
   judgement,
   figureTableLines,
   chartsDrawn = false,
@@ -650,12 +659,14 @@ export function ReportFindings({
   overview?: boolean;
   overviewLabel?: string;
   afterBottomLine?: ReactNode;
+  /** Drawn after the prose passages and before Limitations (after the last passage without one). */
+  beforeLimitations?: ReactNode;
   judgement?: string;
   figureTableLines?: readonly number[];
   chartsDrawn?: boolean;
 }) {
   const [activeTrace, setActiveTrace] = useState<string | null>(null);
-  const { sections, groups, drawnBottomLine } = findingsLayout(
+  const { sections, groups, figuresAt, drawnBottomLine } = findingsLayout(
     entry,
     figureTableLines,
     overview,
@@ -671,7 +682,13 @@ export function ReportFindings({
   const records = overview ? [] : recordSections(entry.sections, entry);
   if (!sections.length && !summary)
     return (
-      <EmptyFindings run={run} entry={entry} records={records} afterBottomLine={afterBottomLine} />
+      <EmptyFindings
+        run={run}
+        entry={entry}
+        records={records}
+        afterBottomLine={afterBottomLine}
+        beforeLimitations={beforeLimitations}
+      />
     );
   function drawSection(section: Section) {
     const first = section.blocks[0];
@@ -768,30 +785,31 @@ export function ReportFindings({
       </section>
     );
   }
+  const drawn = groups.map((group) => {
+    if (typeof group === "string")
+      return group === "Bottom line" && summary && !containsReference(summary.bottomLine) ? null : (
+        <section key={group} className={card}>
+          <h2 className={heading}>{group}</h2>
+          <GapPanel reason={MISSING_PASSAGE} />
+        </section>
+      );
+    const [section, contrary] = group;
+    if (!contrary) return drawSection(section);
+    return (
+      <div key={section.line} className="grid min-w-0 gap-4 lg:grid-cols-2">
+        {drawSection(section)}
+        {drawSection(contrary)}
+      </div>
+    );
+  });
+  if (beforeLimitations)
+    drawn.splice(figuresAt, 0, <Fragment key="before-limitations">{beforeLimitations}</Fragment>);
   return (
     <RunContext.Provider value={{ traces, open: setActiveTrace }}>
       <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-4">
         {summary && <FindingsSummary summary={summary} entry={entry} summaryTrace={summaryTrace} />}
         {!hasBottomLine && afterBottomLine}
-        {groups.map((group) => {
-          if (typeof group === "string")
-            return group === "Bottom line" &&
-              summary &&
-              !containsReference(summary.bottomLine) ? null : (
-              <section key={group} className={card}>
-                <h2 className={heading}>{group}</h2>
-                <GapPanel reason={MISSING_PASSAGE} />
-              </section>
-            );
-          const [section, contrary] = group;
-          if (!contrary) return drawSection(section);
-          return (
-            <div key={section.line} className="grid min-w-0 gap-4 lg:grid-cols-2">
-              {drawSection(section)}
-              {drawSection(contrary)}
-            </div>
-          );
-        })}
+        {drawn}
         <RecordsCard run={run} entry={entry} records={records} />
       </div>
       {active && (

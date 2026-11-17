@@ -81,7 +81,9 @@ function Navigator({
       entry.output.events?.length ||
       entry.output.maps?.length)
   ) {
-    const at = sections[0]?.icon === "bottom-line" ? 1 : 0;
+    // The page draws the figures after its prose passages, before Limitations.
+    const prose = new Set<NavSection["icon"]>(["bottom-line", "findings", "contrary"]);
+    const at = sections.map(({ icon }) => prose.has(icon)).lastIndexOf(true) + 1;
     sections.splice(at, 0, {
       label: "Figures and records",
       key: "module-figures",
@@ -323,27 +325,29 @@ function ModuleFindings({
             snapshot={snapshot}
             folder={run.folder}
           />
-          <div id="module-figures" tabIndex={-1} className="grid min-w-0 gap-4">
-            {downside && <Downside data={downside} href={evidenceHref} />}
-            {breaks && <BreakPoints data={breaks} href={evidenceHref} />}
-            {macro && <MacroSensitivity data={macro} href={evidenceHref} />}
-            {securities && (
-              <Securities
-                data={securities}
-                href={evidenceHref}
-                runUnit={runMoneyUnit(view.catalogue)}
-              />
-            )}
-            <LegacyVisuals
-              output={entry.output}
-              sections={entry.sections}
-              primary={entry.output.module === "CP-1" ? "Debt maturities" : undefined}
-              cards
-              headingLevel="h3"
-              evidenceHref={evidenceHref}
-            />
-          </div>
         </>
+      }
+      beforeLimitations={
+        <div id="module-figures" tabIndex={-1} className="grid min-w-0 gap-4">
+          {downside && <Downside data={downside} href={evidenceHref} />}
+          {breaks && <BreakPoints data={breaks} href={evidenceHref} />}
+          {macro && <MacroSensitivity data={macro} href={evidenceHref} />}
+          {securities && (
+            <Securities
+              data={securities}
+              href={evidenceHref}
+              runUnit={runMoneyUnit(view.catalogue)}
+            />
+          )}
+          <LegacyVisuals
+            output={entry.output}
+            sections={entry.sections}
+            primary={entry.output.module === "CP-1" ? "Debt maturities" : undefined}
+            cards
+            headingLevel="h3"
+            evidenceHref={evidenceHref}
+          />
+        </div>
       }
     />
   );

@@ -174,14 +174,17 @@ describe("report wayfinding", () => {
     const bottom = document.getElementById("finding-10");
     const figures = document.getElementById("module-figures");
     if (!bottom || !figures) throw new Error("targets missing");
-    expect(bottom.contains(figures)).toBe(true);
+    // The figures follow the prose passages and no longer sit inside the Bottom line section, so
+    // nest them by hand to keep covering the rule for an entry that holds another.
+    expect(bottom.contains(figures)).toBe(false);
+    bottom.append(figures);
     act(() => {
       spy.callback([
         { target: bottom, isIntersecting: true },
         { target: figures, isIntersecting: true },
       ]);
     });
-    expect(marks()).toEqual([null, "location", null, null]);
+    expect(marks()).toEqual([null, null, "location", null]);
     act(() => {
       spy.callback([{ target: figures, isIntersecting: false }]);
     });
