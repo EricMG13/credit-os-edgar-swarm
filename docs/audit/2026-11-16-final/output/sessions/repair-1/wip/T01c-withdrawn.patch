@@ -1,0 +1,204 @@
+diff --git a/src/deploy_workflow/inbox/scheduler.py b/src/deploy_workflow/inbox/scheduler.py
+index 3f6e4b9..4b83cd6 100644
+--- a/src/deploy_workflow/inbox/scheduler.py
++++ b/src/deploy_workflow/inbox/scheduler.py
+@@ -542,7 +542,10 @@ class Scheduler:
+                 _, differs = filing.issuer_folder(self.layout, record.issuer_id, record.issuer_name)
+             except ValueError as error:  # a corrupt issuer registry; the report stays in its run
+                 self._logger.exception("run %s could not be filed", record.id)
+-                return replace(ended, status="failed", reason=f"could not be filed: {error}")
++                # The kind only: the page serves the reason as written and the text names a path.
++                return replace(
++                    ended, status="failed", reason=f"could not be filed: {type(error).__name__}"
++                )
+             # Kept in memory at once: if the save below fails, the retry must not file it again.
+             record.report = filed.relative_to(self.layout.root).as_posix()
+             record.name_differs = differs
+@@ -636,7 +639,7 @@ class Scheduler:
+             # Documented fail-open: a hand-edited or wrongly typed field must not stop the poll for
+             # every other run. Logged with the run's ID; the record is failed and uses no slot.
+             self._logger.exception("run %s cannot be built into a command", record.id)
+-            reason = f"could not be started: {error}"
++            reason = f"could not be started: {type(error).__name__}"
+             self._put(
+                 replace(record, status="failed", reason=reason, ended_at=self._utc(self.now()))
+             )
+@@ -655,9 +658,10 @@ class Scheduler:
+             # Documented fail-open: one record that cannot be turned into a command or started (a
+             # hand-edited or wrongly typed field raises ValueError or TypeError, not only OSError)
+             # must not stop the poll for every other run. The traceback is logged with the run's
+-            # ID and the record is marked failed with the error text; nothing else is hidden.
++            # ID and the record is marked failed with the error's kind (the page serves the reason
++            # as written and the operating system's text names a path); the log keeps the rest.
+             self._logger.exception("run %s could not be started", record.id)
+-            reason = f"could not be started: {error}"
++            reason = f"could not be started: {type(error).__name__}"
+             self._put(
+                 replace(running, status="failed", reason=reason, ended_at=self._utc(self.now()))
+             )
+@@ -672,7 +676,7 @@ class Scheduler:
+                 raise
+             # The process has ended; the next poll reaps it through the Popen kept in _children.
+             self._stopped[record.id] = (
+-                f"stopped by the scheduler: its record could not be saved ({error})"
++                f"stopped by the scheduler: its record could not be saved ({type(error).__name__})"
+             )
+             self._logger.exception("run %s: its process ID could not be saved", record.id)
+         return True
+diff --git a/tests/test_inbox_scheduler.py b/tests/test_inbox_scheduler.py
+index d14c74d..53942a1 100644
+--- a/tests/test_inbox_scheduler.py
++++ b/tests/test_inbox_scheduler.py
+@@ -848,13 +848,138 @@ def test_a_start_that_raises_oserror_fails_the_run_and_counts_toward_the_day(
+     for _ in range(4):
+         w.step()
+     record = _only(root)
+-    assert (
+-        record.status == "failed" and record.reason == "could not be started: cannot create the log"
+-    )
++    assert record.status == "failed" and record.reason == "could not be started: OSError"
+     assert record.started_at and record.ended_at
+     assert w._started_today() == 1
+ 
+ 
++# R1-013 (ruling L13): the run's stored reason is served as written by /activity.js and
++# /api/runs/<id>, so it names an error's kind and never the operating system's text, which carries
++# an absolute path. The service's log keeps the full error. The prefixes are the ones
++# react_frontend/run_activity.py matches to give /connected/activity its reader sentence.
++_SERVER_PATH = "/srv/credit/_engine/launchers/run.py"
++_SERVER_LOG = "/srv/credit/_engine/logs/20261109-000001-01.log"
++
++
++def _no_path(text: str) -> None:
++    for leak in ("/srv/credit", "[Errno", "Permission denied", "No such file", "Is a directory"):
++        assert leak not in text
++
++
++@pytest.mark.parametrize(
++    ("error", "kind"),
++    [
++        (FileNotFoundError(errno.ENOENT, "No such file", _SERVER_PATH), "FileNotFoundError"),
++        (PermissionError(errno.EACCES, "Permission denied", _SERVER_PATH), "PermissionError"),
++        (IsADirectoryError(errno.EISDIR, "Is a directory", _SERVER_LOG), "IsADirectoryError"),
++        (OSError(errno.ENOSPC, "No space left on device", _SERVER_LOG), "OSError"),
++        (ValueError(f"launcher {_SERVER_PATH!r} is not a launcher"), "ValueError"),
++        (TypeError(f"{_SERVER_PATH}: expected str, got int"), "TypeError"),
++    ],
++)
++def test_r1_013_a_start_that_fails_stores_the_error_kind_and_no_path(
++    root, fake_env, monkeypatch, error, kind
++):
++    fake_env({"events": DELIVERED})
++
++    def refuse(*_a: Any, **_k: Any) -> Any:
++        raise error
++
++    monkeypatch.setattr(_runs(), "start", refuse)
++    w = Scheduler(settings(root))
++    submit_run(w, root)
++    for _ in range(3):
++        w.step()
++    record = _only(root)
++    assert record.status == "failed" and record.reason == f"could not be started: {kind}"
++    _no_path(activity_js(root))
++    assert "/srv/credit" in _log(root)  # the service's log keeps the full error
++
++
++def test_r1_013_a_launcher_that_is_not_there_stores_no_path(root):
++    missing = root / "nowhere" / "launcher"
++    w = Scheduler(settings(root, launcher=(str(missing),)))
++    submit_run(w, root)
++    for _ in range(3):
++        w.step()
++    record = _only(root)
++    assert record.status == "failed" and record.reason == "could not be started: FileNotFoundError"
++    assert str(root) not in activity_js(root) and "[Errno" not in activity_js(root)
++    assert str(missing) in _log(root)
++
++
++@pytest.mark.parametrize(
++    ("error", "kind"),
++    [
++        (ValueError(f"run X: prior {_SERVER_PATH!r} is not a run folder name"), "ValueError"),
++        (TypeError(f"{_SERVER_LOG}: expected str, got int"), "TypeError"),
++    ],
++)
++def test_r1_013_a_record_that_cannot_become_a_command_stores_the_error_kind_and_no_path(
++    root, fake_env, monkeypatch, error, kind
++):
++    fake_env({"events": DELIVERED})
++
++    def refuse(*_a: Any, **_k: Any) -> Any:
++        raise error
++
++    monkeypatch.setattr(_runs(), "command", refuse)
++    w = Scheduler(settings(root))
++    submit_run(w, root)
++    for _ in range(3):
++        w.step()
++    record = _only(root)
++    assert record.status == "failed" and record.reason == f"could not be started: {kind}"
++    assert record.started_at == "" and record.ended_at  # it used no slot
++    _no_path(activity_js(root))
++    assert "/srv/credit" in _log(root)
++
++
++@pytest.mark.parametrize(
++    ("error", "kind"),
++    [
++        (PermissionError(errno.EACCES, "Permission denied", _SERVER_PATH), "PermissionError"),
++        (OSError(errno.ENOSPC, "No space left on device", _SERVER_PATH), "OSError"),
++    ],
++)
++def test_r1_013_a_run_whose_record_cannot_be_saved_stores_the_error_kind_and_no_path(
++    root, fake_env, monkeypatch, error, kind
++):
++    fake_env({"events": DELIVERED, "sleep": 1})
++    started = _track_starts(monkeypatch)
++    _once(monkeypatch, "save", error, lambda lay, r: r.status == "running" and r.pid)
++    w = Scheduler(settings(root))
++    try:
++        submit_run(w, root)
++        go(w)
++        pump(w, lambda: status(root) not in (["running"], ["queued"]), limit=10)
++        record = _only(root)
++        assert record.status == "failed"
++        assert record.reason == f"stopped by the scheduler: its record could not be saved ({kind})"
++        _no_path(activity_js(root))
++        assert _SERVER_PATH in _log(root)
++    finally:
++        _wait_all(started)
++        w.close()
++
++
++def test_r1_013_a_report_that_cannot_be_filed_stores_the_error_kind_and_no_path(root, fake_env):
++    """filing raises ValueError(f"{path} is not a map ...") for an issuer registry that is valid
++    JSON but not a map: the stored reason must not carry that path (filing.py is not changed:
++    R1-014)."""
++    fake_env({"events": DELIVERED, "sleep": 1, "report_page": True})
++    w = Scheduler(settings(root))
++    submit_run(w, root)
++    go(w)
++    registry = root / "_engine/state/issuers.json"
++    registry.write_text("[]", encoding="utf-8")
++    pump(w, lambda: status(root) != ["running"], limit=10)
++    record = _only(root)
++    assert record.status == "failed" and record.reason == "could not be filed: ValueError"
++    assert str(root) not in activity_js(root)
++    assert str(registry) in _log(root)  # the service's log keeps the full error
++
++
+ def test_a_pid_save_that_fails_with_oserror_stops_the_child_and_never_restarts_the_run(
+     root, fake_env, monkeypatch
+ ):
+@@ -1099,9 +1224,7 @@ def test_l6_a_run_stopped_because_its_record_cannot_be_saved_says_so(root, fake_
+         pump(w, lambda: status(root) not in (["running"], ["queued"]), limit=10)
+         record = _only(root)
+         assert record.status == "failed"
+-        assert record.reason == (
+-            "stopped by the scheduler: its record could not be saved (state folder is full)"
+-        )
++        assert record.reason == "stopped by the scheduler: its record could not be saved (OSError)"
+     finally:
+         _wait_all(started)
+         w.close()

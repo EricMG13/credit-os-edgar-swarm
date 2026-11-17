@@ -13,6 +13,7 @@ import {
   getActivity,
   moduleName,
   pathwayName,
+  serviceText,
   type Activity,
   type EndedRun,
   type LiveRun,
@@ -44,18 +45,27 @@ const texts = (...parts: (string | false)[]) =>
   parts.filter((part): part is string => Boolean(part));
 /** Why a run is not moving, and the name warning: the card and the waiting row both say them. */
 const notes = (run: LiveRun) =>
-  texts(run.reason, run.name_differs && "Issuer name differs from earlier runs");
+  texts(serviceText(run.reason), run.name_differs && "Issuer name differs from earlier runs");
 
-/** The list, re-read while the page is open; a failed read is shown as unreadable, never as empty. */
+/**
+ * The list, re-read while the page is open. A read that fails is never shown as an empty list:
+ * the last good list stays and `failed` says the latest read did not work.
+ */
 function useActivity() {
-  const [activity, setActivity] = useState<Activity | "unreadable">();
+  const [read, setRead] = useState<Activity>();
+  const [failed, setFailed] = useState(false);
   useEffect(() => {
     const controller = new AbortController();
     let timer: ReturnType<typeof setTimeout> | undefined;
     async function poll() {
       const next = await getActivity(controller.signal).catch(() => null);
       if (controller.signal.aborted) return;
-      setActivity(next && Array.isArray(next.runs) ? next : "unreadable");
+      if (next && Array.isArray(next.runs)) {
+        setRead(next);
+        setFailed(false);
+      } else {
+        setFailed(true);
+      }
       timer = setTimeout(() => void poll(), RELOAD_MS);
     }
     void poll();
@@ -64,7 +74,7 @@ function useActivity() {
       clearTimeout(timer);
     };
   }, []);
-  return activity;
+  return { read, failed };
 }
 
 function Tally({ counts }: { counts: [string, number][] }) {
@@ -137,7 +147,7 @@ function RunningCard({ run }: { run: LiveRun }) {
 
 function WaitingTable({ runs }: { runs: LiveRun[] }) {
   return (
-    <div className={`${panel} overflow-hidden`}>
+    <div className={`${panel} overflow-x-auto`}>
       <Table aria-label="Waiting runs" size="sm">
         <Table.Header>
           <Table.Head id="issuer" isRowHeader label="Issuer" />
@@ -171,7 +181,7 @@ function WaitingTable({ runs }: { runs: LiveRun[] }) {
 
 function EndedTable({ runs }: { runs: EndedRun[] }) {
   return (
-    <div className={`${panel} overflow-hidden`}>
+    <div className={`${panel} overflow-x-auto`}>
       <Table aria-label="Runs that ended without a report" size="sm">
         <Table.Header>
           <Table.Head id="issuer" isRowHeader label="Issuer" />
@@ -191,7 +201,7 @@ function EndedTable({ runs }: { runs: EndedRun[] }) {
                 <StatusBadge set="Run states" state={ENDED[run.status]} />
               </Table.Cell>
               <Table.Cell>{run.ended_at ? stamp(run.ended_at) : "Not recorded"}</Table.Cell>
-              <Table.Cell>{run.reason}</Table.Cell>
+              <Table.Cell>{serviceText(run.reason)}</Table.Cell>
             </Table.Row>
           )}
         </Table.Body>
@@ -230,8 +240,7 @@ function Empty({ title, children }: { title: string; children: string }) {
 
 /** What is running, waiting and ended without a report. A run's own page has its spend, modules and activity. */
 export function RunActivity() {
-  const activity = useActivity();
-  const read = typeof activity === "object" ? activity : undefined;
+  const { read, failed } = useActivity();
   const running = read?.runs.filter((run) => run.status === "running") ?? [];
   const waiting = read?.runs.filter((run) => run.status === "queued") ?? [];
   const ended = read?.ended ?? [];
@@ -261,20 +270,29 @@ export function RunActivity() {
         }
       />
       <div className="mt-6 grid gap-6">
-        {activity === undefined && (
+        {read === undefined && !failed && (
           <p role="status" className="text-text-secondary">
             Loading run activity…
           </p>
         )}
-        {activity === "unreadable" && (
-          <Empty title="Run activity could not be read">
-            Nothing is claimed about runs in progress, waiting or ended without a report. This page
-            reads it again every few seconds. Finished runs are in the library.
-          </Empty>
+        {failed && (
+          <Alert
+            tone={read ? "warning" : "error"}
+            title={read ? "Run activity could not be refreshed" : "Run activity could not be read"}
+            action={
+              <Button href="/" size="sm" color="secondary">
+                Open the library
+              </Button>
+            }
+          >
+            {read
+              ? `Showing the list as it was at ${stamp(read.updated)}. This page reads it again every few seconds.`
+              : "Nothing is claimed about runs in progress, waiting or ended without a report. This page reads it again every few seconds. Finished runs are in the library."}
+          </Alert>
         )}
         {read?.held && (
           <Alert tone="warning" title="Held by the service">
-            {read.held}
+            {serviceText(read.held)}
           </Alert>
         )}
         {read?.unreadable ? (
@@ -296,9 +314,7 @@ export function RunActivity() {
         {running.length + waiting.length > 0 && (
           <div
             className={
-              running.length && waiting.length
-                ? "grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_440px]"
-                : undefined
+              running.length && waiting.length ? "grid items-start gap-6 xl:grid-cols-2" : undefined
             }
           >
             {running.length > 0 && (

@@ -222,6 +222,14 @@ def scoped(snapshot: dict[str, Any], folder: str) -> dict[str, Any] | None:
     }
 
 
+def _problem(error: OSError | ValueError, relative: str) -> str:
+    """Why ``relative`` could not be used. A refusal's own words name only the name inside the
+    run; an OSError's text names the server's absolute path, so only its kind is kept."""
+    if isinstance(error, OSError):
+        return f"{relative} could not be read ({type(error).__name__})"
+    return str(error)
+
+
 def _load_source(root: Path, folder: str, identity: tuple[str, str], checked: Checked) -> None:
     name, digest = identity
     checked.inventory[name] = (name, digest)
@@ -229,7 +237,7 @@ def _load_source(root: Path, folder: str, identity: tuple[str, str], checked: Ch
         source = _source(root, folder, name, digest)
     except (OSError, ValueError) as error:
         actual = error.actual if isinstance(error, SourceMismatch) else None
-        checked.cache[name] = ({}, actual, str(error))
+        checked.cache[name] = ({}, actual, _problem(error, f"{folder}/inputs/{digest}"))
         return
     checked.available[name] = source
     checked.cache[name] = (source.pages, source.digest, source.problem)
@@ -244,7 +252,7 @@ def verified(root: Path, record: dict[str, Any]) -> Checked:
         result.authority = True
         pin_problem = None
     except (OSError, ValueError) as error:
-        pins, pin_problem = {}, str(error)
+        pins, pin_problem = {}, _problem(error, f"{folder}/workflow.json")
     for item in _published(record):
         item.pop("href", None)
         item.pop("sourceWarning", None)

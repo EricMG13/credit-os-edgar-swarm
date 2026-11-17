@@ -1,4 +1,4 @@
-import type { ActivityLine, Figure, ModuleWord } from "../run/slice-activity";
+import type { ActivityLine, Figure, ModuleStep, ModuleWord } from "../run/slice-activity";
 import { moduleName, type Run, type RunEvent } from "./api";
 
 function amount(text: string | null | undefined): number | undefined {
@@ -124,9 +124,52 @@ export function feedLines(run: Run): ActivityLine[] {
   return lines.reverse();
 }
 
-export function moduleWord(state: Run["modules"][number][1], live: boolean): ModuleWord {
+/** The word for a module's state. A module the run stopped at reads "Interrupted", unless the
+ * checks stopped the run there (`refused`): then it is the module the run could not assess. */
+export function moduleWord(
+  state: Run["modules"][number][1],
+  live: boolean,
+  refused = false,
+): ModuleWord {
   if (state === "done") return "Finished";
-  if (state === "stopped") return "Interrupted";
-  if (state === "running") return live ? "Running" : "Interrupted";
+  if (state === "running" && live) return "Running";
+  if (state === "stopped" || state === "running") return refused ? "Not assessable" : "Interrupted";
   return live ? "Queued" : "Not run";
+}
+
+/** A run with the kind of stop its log ended on (`stopped_by`: "checker", "provider",
+ * "interrupted" or "ruling"; empty for any other end), which the service sends beside `Run`. */
+type StoppedRun = Run & { stopped_by?: string };
+
+/** The module the checks stopped the run at: the last module its log started, in a failed run whose
+ * recorded stop was the checks'. A run that ended any other way (a model provider's call, the
+ * ruling, an interruption, a launcher that exited, a failure the scheduler found after a clean exit)
+ * has none. */
+function refusedModule(run: StoppedRun) {
+  if (run.status !== "failed" || run.stopped_by !== "checker") return;
+  return (run.events ?? []).filter((event) => event.kind === "module_started").at(-1)?.module;
+}
+
+function stoppedDetail(run: Run, code: string) {
+  const rejected = (run.events ?? []).filter(
+    (event) => event.kind === "draft_rejected" && event.module === code,
+  ).length;
+  if (rejected === 0) return "The run stopped here.";
+  const times = rejected === 1 ? "once" : `${String(rejected)} times`;
+  return `The run stopped here after the checks rejected its draft ${times}.`;
+}
+
+/** The run page's module rows. Only what the run's record shows is said: the module the checks
+ * stopped the run at, and how many drafts of it they rejected. */
+export function moduleSteps(run: StoppedRun, live: boolean): ModuleStep[] {
+  const refused = refusedModule(run);
+  return run.modules.map(([code, state]): ModuleStep => {
+    const word = moduleWord(state, live, code === refused);
+    return {
+      kind: "module",
+      name: moduleName(code),
+      state: word,
+      detail: word === "Not assessable" ? stoppedDetail(run, code) : null,
+    };
+  });
 }

@@ -1,7 +1,7 @@
 """The Credit OS catalogue built from the runs the Issuer Library lists. Reads files only.
 
 Credit OS's library screens read one JSON (``apps/issuer-library/credit_os/store.py``):
-``{"real": [run, ...], "sources": {...}, "workspace": ..., "issues": [...]}``.
+``{"real": [run, ...], "sources": {...}, "issues": [...]}``.
 A run here is a record ``library_index`` admitted, so every handoff is read through the delivery
 copy whose path and sha256 it verified, never from a folder it left out. A value the run does not
 state is left empty or absent, never filled in.
@@ -414,7 +414,10 @@ def delivery_fields(
             raw = read_pinned(folder, f"{relative}/CP-1.md", cp1["sha256"])
             text = raw.decode("utf-8", errors="replace")
     except (Refused, OSError) as error:
-        issues.append(f"{name}: delivery not catalogued ({error})")
+        # A refusal's reason is run-relative; an OSError's text holds the absolute path, so only
+        # its kind reaches the issue, which the library page and /connected/snapshot show.
+        why = str(error) if isinstance(error, Refused) else type(error).__name__
+        issues.append(f"{name}: delivery not catalogued ({why})")
         return [], {}, ""
     delivered = f"runs/{name}/{relative}"
     mode = view.get("mode")
@@ -514,7 +517,6 @@ def catalogue(workspace: Path, library: Library) -> dict[str, Any]:
         "sources": sources,
         "built_at": datetime.now(UTC).strftime("%d %b %Y, %H:%M:%S UTC"),
         "issues": issues,
-        "workspace": str(workspace),
         "live": False,
         "policy_locked": False,
     }

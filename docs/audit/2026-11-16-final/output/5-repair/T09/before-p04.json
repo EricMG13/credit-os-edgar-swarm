@@ -1,0 +1,154 @@
+[probe] proof.serve up on http://127.0.0.1:8749 (root /tmp/cs-C2/r-InHGE3)
+[probe] proof.serve on http://127.0.0.1:8749 stopped
+{
+  "cases": {
+    "png": {
+      "rowsAfterAdd": [
+        "image.png\n\nSelected\nRemove"
+      ],
+      "noDocsText": 0,
+      "continueDisabled": false,
+      "notice": [
+        "The uploaded documents: no readable issuer file"
+      ],
+      "status": [
+        ""
+      ],
+      "rowsAfterInspect": [
+        "image.png | Selected | Remove"
+      ]
+    },
+    "docx": {
+      "rowsAfterAdd": [
+        "notes.docx\n\nSelected\nRemove"
+      ],
+      "noDocsText": 0,
+      "continueDisabled": false,
+      "notice": [
+        "Cannot read notes.docx: File is not a zip file"
+      ],
+      "status": [
+        ""
+      ],
+      "rowsAfterInspect": [
+        "notes.docx | Selected | Remove"
+      ]
+    },
+    "empty": {
+      "rowsAfterAdd": [
+        "empty.txt\n\nSelected\nRemove"
+      ],
+      "noDocsText": 0,
+      "continueDisabled": false,
+      "notice": [
+        "Empty.txt has no extractable text (scanned image?)"
+      ],
+      "status": [
+        ""
+      ],
+      "rowsAfterInspect": [
+        "empty.txt | Selected | Remove"
+      ]
+    },
+    "big52": {
+      "rowsAfterAdd": [
+        "big52.txt\n\nSelected\nRemove"
+      ],
+      "noDocsText": 0,
+      "continueDisabled": false,
+      "notice": [
+        "a file is at most 50 MB"
+      ],
+      "status": [
+        ""
+      ],
+      "rowsAfterInspect": [
+        "big52.txt | Selected | Remove"
+      ]
+    },
+    "filing+png+docx": {
+      "rowsAfterAdd": [
+        "northbridge-filing.txt\n\nSelected\nRemove",
+        "image.png\n\nSelected\nRemove",
+        "notes.docx\n\nSelected\nRemove"
+      ],
+      "noDocsText": 0,
+      "continueDisabled": false,
+      "notice": [
+        "Cannot read notes.docx: File is not a zip file"
+      ],
+      "status": [
+        ""
+      ],
+      "rowsAfterInspect": [
+        "northbridge-filing.txt | Selected | Remove",
+        "image.png | Selected | Remove",
+        "notes.docx | Selected | Remove"
+      ]
+    },
+    "same-name-twice": {
+      "rowsAfterAdd": [
+        "dup.txt\n\nSelected\nRemove",
+        "dup.txt\n\nSelected\nRemove"
+      ],
+      "noDocsText": 0,
+      "continueDisabled": false,
+      "notice": [
+        "Choose documents with distinct file names."
+      ],
+      "status": [
+        ""
+      ],
+      "rowsAfterInspect": [
+        "dup.txt | Selected | Remove",
+        "dup.txt | Selected | Remove"
+      ]
+    },
+    "hidden": {
+      "rowsAfterAdd": [],
+      "noDocsText": 1,
+      "continueDisabled": true
+    }
+  },
+  "log": {
+    "blocked": [],
+    "console": [
+      "warning: Launcher flag not shown to the analyst: --sources the uploaded documents: no readable issuer file",
+      "warning: Launcher flag not shown to the analyst: --sources: cannot read notes.docx: File is not a zip file",
+      "warning: Launcher flag not shown to the analyst: --sources: empty.txt has no extractable text (scanned image?)",
+      "error: Failed to load resource: the server responded with a status of 400 (Bad Request)",
+      "warning: Launcher flag not shown to the analyst: --sources: cannot read notes.docx: File is not a zip file"
+    ],
+    "pageerrors": [],
+    "failed": [],
+    "bad": [
+      "400 POST /api/submissions/44d135e20074000d56f184bf296b75ec/files?name=big52.txt"
+    ],
+    "requests": [
+      "GET /connected/context",
+      "POST /api/submissions",
+      "POST /api/submissions/2031a1e82035c0345d093fbe0b100d0f/files?name=image.png",
+      "GET /api/submissions/2031a1e82035c0345d093fbe0b100d0f/reading",
+      "GET /connected/context",
+      "POST /api/submissions",
+      "POST /api/submissions/2b85d2d8f136b230e85abdcb21008f67/files?name=notes.docx",
+      "GET /api/submissions/2b85d2d8f136b230e85abdcb21008f67/reading",
+      "GET /connected/context",
+      "POST /api/submissions",
+      "POST /api/submissions/02e142c89a59fcfd8d5110a7c2f8ff9d/files?name=empty.txt",
+      "GET /api/submissions/02e142c89a59fcfd8d5110a7c2f8ff9d/reading",
+      "GET /connected/context",
+      "POST /api/submissions",
+      "POST /api/submissions/44d135e20074000d56f184bf296b75ec/files?name=big52.txt",
+      "GET /connected/context",
+      "POST /api/submissions",
+      "POST /api/submissions/a7b41b9b840104f03582aa528c7d102a/files?name=northbridge-filing.txt",
+      "POST /api/submissions/a7b41b9b840104f03582aa528c7d102a/files?name=image.png",
+      "POST /api/submissions/a7b41b9b840104f03582aa528c7d102a/files?name=notes.docx",
+      "GET /api/submissions/a7b41b9b840104f03582aa528c7d102a/reading",
+      "GET /connected/context",
+      "GET /connected/context"
+    ],
+    "notes": []
+  }
+}

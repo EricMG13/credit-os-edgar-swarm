@@ -1,5 +1,15 @@
 import { type MockInstance } from "vitest";
-import { comparisonCaveat, lookupSentence, refusalLines, refusalProblems } from "./plain";
+import {
+  comparisonCaveat,
+  documentRefusal,
+  filedElsewhere,
+  issuerIdFor,
+  issuerIdRefusal,
+  issuerKey,
+  lookupSentence,
+  refusalLines,
+  refusalProblems,
+} from "./plain";
 
 const LOOKUP_LINES: [string, string][] = [
   [
@@ -458,5 +468,197 @@ describe("refusalProblems: each problem with the control that sets its path", ()
       "assumptions",
     );
     expect(refusalProblems("valuation.basis: is required.", lite)[0]?.field).toBe("valuation");
+  });
+});
+
+const HOLDINGS = "Northbridge Synthetic Group International Holdings Limited";
+const FINANCE = "Northbridge Synthetic Group International Finance plc";
+
+describe("issuerIdFor", () => {
+  it("keeps the usual ID when no other issuer holds it", () => {
+    expect(issuerIdFor(HOLDINGS, undefined)).toBe("northbridge-synthetic-group-internationa");
+    expect(issuerIdFor("Northbridge Group plc", undefined)).toBe("northbridge-group-plc");
+  });
+  it("keeps the usual ID for the issuer that already holds it", () => {
+    expect(issuerIdFor(HOLDINGS, HOLDINGS)).toBe("northbridge-synthetic-group-internationa");
+    expect(issuerIdFor(HOLDINGS, ` ${HOLDINGS.toUpperCase()} `)).toBe(
+      "northbridge-synthetic-group-internationa",
+    );
+  });
+  it("gives a different issuer with the same first 40 characters its own valid ID", () => {
+    const id = issuerIdFor(FINANCE, HOLDINGS);
+    expect(id).not.toBe(issuerIdFor(HOLDINGS, undefined));
+    expect(id).toMatch(/^[a-z0-9][a-z0-9-]{0,39}$/);
+    expect(id.startsWith("northbridge-synthetic-group-")).toBe(true);
+    expect(issuerIdFor(FINANCE, HOLDINGS)).toBe(id);
+    expect(issuerIdFor(HOLDINGS, FINANCE)).not.toBe(id);
+  });
+  it("separates a short name or a word-boundary cut that another issuer holds", () => {
+    const short = issuerIdFor("Acme Finance", "Acme Corp");
+    expect(short).toMatch(/^acme-finance-[0-9a-f]{8}$/);
+    const cut = "Northbridge Synthetic Group Internation Holdings Limited";
+    expect(issuerIdFor(cut, undefined)).toBe("northbridge-synthetic-group-internation");
+    const other = issuerIdFor("Northbridge Synthetic Group Internation Finance plc", cut);
+    expect(other).toMatch(/^[a-z0-9][a-z0-9-]{0,39}$/);
+    expect(other).not.toBe("northbridge-synthetic-group-internation");
+  });
+  it("treats an owner with no recorded name as the same issuer", () => {
+    expect(issuerIdFor(HOLDINGS, "")).toBe("northbridge-synthetic-group-internationa");
+  });
+});
+
+describe("documentRefusal", () => {
+  const files = [
+    { name: "annual-report.pdf", size: 8 },
+    { name: "empty.txt", size: 0 },
+    { name: "scan.txt", size: 20 },
+  ];
+  it("names an unreadable file in plain words, with no decoder text", () => {
+    const got = documentRefusal(
+      "Cannot read annual-report.pdf: 'utf-8' codec can't decode byte 0x89 in position 0: invalid start byte",
+      files,
+    );
+    expect(got.file).toBe("annual-report.pdf");
+    expect(got.sentence).toBe("annual-report.pdf could not be read.");
+    expect(got.sentence).not.toMatch(/codec|byte|utf|PDF file|decoded/);
+  });
+  it("gives the decoding reason only for a text file; a damaged workbook or PDF is only unreadable", () => {
+    // The service reads anything that is not a PDF or a workbook by its magic bytes as UTF-8 text
+    // (`_pages` in model/handoff.py), so a damaged workbook or PDF fails with the decoder's text.
+    const decode = "'utf-8' codec can't decode byte 0x9c in position 10: invalid start byte";
+    for (const name of ["holdings.xlsx", "deck.pdf", "photo.png"])
+      expect(documentRefusal(`Cannot read ${name}: ${decode}`, []).sentence).toBe(
+        `${name} could not be read.`,
+      );
+    for (const name of ["notes.txt", "data.CSV", "page.html"])
+      expect(documentRefusal(`Cannot read ${name}: ${decode}`, []).sentence).toBe(
+        `${name} could not be read: its text could not be decoded.`,
+      );
+  });
+  it("keeps the file name's own case and says an empty file is empty", () => {
+    expect(documentRefusal("Empty.txt has no extractable text (scanned image?)", files)).toEqual({
+      file: "empty.txt",
+      sentence: "empty.txt is empty (0 bytes).",
+    });
+  });
+  it("keeps the scanned-image hint for a file that has bytes", () => {
+    expect(
+      documentRefusal("--sources: scan.txt has no extractable text (scanned image?)", files),
+    ).toEqual({
+      file: "scan.txt",
+      sentence: "scan.txt has no text that can be read; it may be a scanned image.",
+    });
+  });
+  it("says only what the service's message states, never a file type it did not report", () => {
+    expect(documentRefusal("Cannot read notes.docx: File is not a zip file", []).sentence).toBe(
+      "notes.docx could not be read: its contents are not a valid zip archive.",
+    );
+    // A Latin-1 text file, a truncated workbook or an encrypted PDF are not "not a txt/xlsx/PDF file".
+    for (const [name, detail] of [
+      [
+        "notes.txt",
+        "'utf-8' codec can't decode byte 0xe9 in position 4: invalid continuation byte",
+      ],
+      ["holdings.xlsx", "'utf-8' codec can't decode byte 0x9c in position 10: invalid start byte"],
+      ["deck.pdf", "File has not been decrypted"],
+    ] as const) {
+      const got = documentRefusal(`Cannot read ${name}: ${detail}`, []);
+      expect(got.file).toBe(name);
+      expect(got.sentence).not.toMatch(/not a (txt|xlsx|PDF|a) file/);
+      expect(got.sentence.startsWith(`${name} could not be read`)).toBe(true);
+    }
+    expect(documentRefusal("Cannot read deck.pdf: File has not been decrypted", []).sentence).toBe(
+      "deck.pdf could not be read.",
+    );
+  });
+  it("marks no row when no file is named", () => {
+    const got = documentRefusal("The uploaded documents: no readable issuer file", files);
+    expect(got.file).toBeUndefined();
+    expect(got.sentence).toMatch(/^None of the selected documents/);
+  });
+  it("returns any other text unchanged", () => {
+    expect(documentRefusal("Something else.", files)).toEqual({ sentence: "Something else." });
+  });
+});
+
+// The same literal cases as `ISSUER_KEY_CASES` in tests/test_run_start_submissions.py: the page and
+// the service must reduce an issuer name the same way.
+describe("issuerKey", () => {
+  it.each([
+    ["Acme Corp", "acmecorp"],
+    ["ACME  corp.", "acmecorp"],
+    ["Åre Group A/S", "aregroupas"],
+    ["Straße Holdings plc", "straßeholdingsplc"],
+    ["Ørsted A/S", "ørstedas"],
+    ["Ａｃｍｅ Ｃｏｒｐ", "acmecorp"],
+    ["Nestlé S.A. 2", "nestlesa2"],
+    ["İstanbul Ltd", "istanbulltd"],
+    ["  ", ""],
+    ["中国银行 Ltd", "中国银行ltd"],
+    ["中国建设银行 Ltd", "中国建设银行ltd"],
+    ["Газпром ПАО", "газпромпао"],
+    ["Йога-Центр", "иогацентр"],
+  ])("reduces %s to %s", (name, key) => {
+    expect(issuerKey(name)).toBe(key);
+  });
+});
+
+describe("issuerIdRefusal", () => {
+  const refused = (id: string, holder: string, name: string) =>
+    `Issuer ID "${id}" is filed under the name "${holder}", not "${name}". If that is this issuer under another name, type that name; otherwise use another Issuer ID.`;
+  const message = refused("acme", "Acme Corp", "Eastmoor Plc");
+  const ifSame = "If that is this issuer under another name, type that name.";
+  it("reads the service's refusal back into the holder and the name", () => {
+    expect(filedElsewhere(message)).toEqual({
+      id: "acme",
+      holder: "Acme Corp",
+      name: "Eastmoor Plc",
+    });
+    expect(filedElsewhere("Something else.")).toBeUndefined();
+    expect(filedElsewhere(refused("a", 'Say "hi" Ltd', "B"))?.holder).toBe('Say "hi" Ltd');
+  });
+  it("says only what is known: the ID is filed under that name", () => {
+    const got = issuerIdRefusal(message);
+    expect(
+      got?.sentence.startsWith(`Issuer ID acme is filed under the name "Acme Corp". ${ifSame}`),
+    ).toBe(true);
+    expect(got?.sentence).not.toMatch(/different issuer/);
+  });
+  it("offers the name's usual ID when it is free, not the suffixed one", () => {
+    const got = issuerIdRefusal(message);
+    expect(got?.offer).toBe("eastmoor-plc");
+    expect(got?.sentence).toBe(
+      `Issuer ID acme is filed under the name "Acme Corp". ${ifSame} Otherwise use eastmoor-plc for Eastmoor Plc, or type another Issuer ID.`,
+    );
+    // The usual ID is held by this issuer itself (another spelling of its name).
+    expect(issuerIdRefusal(message, "EASTMOOR  plc")?.offer).toBe("eastmoor-plc");
+  });
+  it("offers the suffixed ID only when the usual ID is held by a different issuer", () => {
+    const got = issuerIdRefusal(message, "Eastmoor Group");
+    expect(got?.offer).toBe(issuerIdFor("Eastmoor Plc", "Eastmoor Group"));
+    expect(got?.offer).toMatch(/^eastmoor-plc-[0-9a-f]{8}$/);
+    // The refused ID is the usual one: the holder is the usual ID's holder.
+    const usual = issuerIdRefusal(refused("eastmoor-plc", "Eastmoor Group", "Eastmoor Plc"));
+    expect(usual?.offer).toBe(got?.offer);
+  });
+  it("offers nothing when the offer is the ID just refused", () => {
+    const id = issuerIdFor("Eastmoor Plc", "Acme Corp");
+    const again = refused(id, "Acme Corp", "Eastmoor Plc");
+    expect(issuerIdRefusal(again, "Acme Corp")?.offer).toBeUndefined();
+    expect(issuerIdRefusal(again, "Acme Corp")?.sentence).toBe(
+      `Issuer ID ${id} is filed under the name "Acme Corp". ${ifSame} Otherwise type another Issuer ID.`,
+    );
+  });
+  it("never offers an invalid ID for a name with no Latin letters or digits", () => {
+    const got = issuerIdRefusal(refused("issuer-1", "中国银行", "中国建设银行"), "Other");
+    expect(got?.offer).toBeUndefined();
+    expect(got?.sentence).toBe(
+      `Issuer ID issuer-1 is filed under the name "中国银行". ${ifSame} Otherwise type an Issuer ID of your own for 中国建设银行.`,
+    );
+    expect(issuerIdFor("中国建设银行 Ltd", "中国银行 Ltd")).toMatch(/^[a-z0-9][a-z0-9-]{0,39}$/);
+    expect(issuerIdFor("中国建设银行", "中国银行")).toBe("");
+  });
+  it("leaves any other refusal alone", () => {
+    expect(issuerIdRefusal("Anything else.")).toBeUndefined();
   });
 });

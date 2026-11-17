@@ -1,4 +1,4 @@
-import { moduleName, serviceText, type DocumentRecord } from "../api";
+import { issuerSlug, moduleName, serviceText, type DocumentRecord } from "../api";
 import { ASSUMPTIONS_TITLE, PINS } from "./assumptions";
 import { ROW_SPECS, type RowField, type RowKind } from "./rows";
 import {
@@ -481,4 +481,131 @@ function splitRefusal(error: string): { path: string; line: string; text: string
     if (unknown.found) console.warn(`Refusal shown in plain words: ${problem}`);
     return { path, line: `${found.parts.join(" · ")}: ${text}`, text };
   });
+}
+
+/**
+ * An issuer name reduced to the letters and digits that tell two issuers apart. The service
+ * reduces a name the same way (`issuer_key` in `run_start/submissions.py`); the two are pinned by
+ * the same literal cases: NFKD, lower case, then only Unicode letters and digits kept (marks go,
+ * so "é" is "e"; "ø" and "ß" stay). Node and Python carry different Unicode versions, so about 37
+ * recent characters are letters in one and not the other; no table hides that, and the service's
+ * answer is the one that counts.
+ */
+export const issuerKey = (name: string) =>
+  name
+    .normalize("NFKD")
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}]+/gu, "");
+
+/** A short stable code from the whole name (FNV-1a), so a long name's cut ID can be told apart. */
+function nameCode(name: string) {
+  let hash = 0x811c9dc5;
+  for (const char of issuerKey(name))
+    hash = Math.imul(hash ^ (char.codePointAt(0) ?? 0), 0x01000193);
+  return (hash >>> 0).toString(16).padStart(8, "0");
+}
+
+/**
+ * The Issuer ID for a typed name. `ownerName` is the issuer name of the existing run that already
+ * holds the name's usual ID (undefined when none does). The usual ID stays for its own issuer, so a
+ * repeated run keeps its ID; a different issuer whose long name is cut to the same ID gets the
+ * first 31 characters plus a code from its whole name, so two issuers never share one ID. A name
+ * with no Latin letters or digits has no usual ID (empty): none is made up for it.
+ */
+export function issuerIdFor(name: string, ownerName: string | undefined) {
+  const usual = issuerSlug(name);
+  if (!usual || !ownerName || issuerKey(ownerName) === issuerKey(name)) return usual;
+  return `${usual.slice(0, 31).replace(/-+$/, "")}-${nameCode(name)}`;
+}
+
+const FILED_ELSEWHERE =
+  /^Issuer ID "([^"]+)" is filed under the name "(.*)", not "(.*)"\. If that is this issuer under another name, type that name; otherwise use another Issuer ID\.$/s;
+
+/** The service's refusal of an Issuer ID that another issuer holds, taken apart; else undefined. */
+export function filedElsewhere(message: string) {
+  const [, id = "", holder = "", name = ""] = FILED_ELSEWHERE.exec(message) ?? [];
+  return id ? { id, holder, name } : undefined;
+}
+
+/**
+ * That refusal in reader words, with the ID the page can offer instead; undefined for any other
+ * message. `usualHolder` is the name the usual ID of the typed name is filed under (undefined when
+ * free; it is the refused holder when the refused ID is the usual one). The usual ID is offered
+ * when it is free or this issuer's own; the suffixed ID only when another issuer holds the usual
+ * one; nothing when it is the ID just refused, and for a name with no usual ID the analyst is asked
+ * to type one.
+ */
+export function issuerIdRefusal(
+  message: string,
+  usualHolder?: string,
+): { sentence: string; offer?: string } | undefined {
+  const found = filedElsewhere(message);
+  if (!found) return undefined;
+  const usual = issuerSlug(found.name);
+  const offered = issuerIdFor(found.name, found.id === usual ? found.holder : usualHolder);
+  const offer = offered && offered !== found.id ? offered : undefined;
+  const head = `Issuer ID ${found.id} is filed under the name "${found.holder}". If that is this issuer under another name, type that name.`;
+  const tail = offer
+    ? ` Otherwise use ${offer} for ${found.name}, or type another Issuer ID.`
+    : usual
+      ? " Otherwise type another Issuer ID."
+      : ` Otherwise type an Issuer ID of your own for ${found.name}.`;
+  return { sentence: head + tail, ...(offer ? { offer } : {}) };
+}
+
+const REFUSED_FILE = /^(?:--sources:\s*)?cannot read (.+?): [\s\S]*$/i;
+const NO_TEXT = /^(?:--sources:\s*)?(.+?) has no extractable text \(scanned image\?\)$/i;
+const NO_FILE = /no readable issuer file\s*$/i;
+
+const TEXT_FILE = /\.(txt|text|md|csv|tsv|json|jsonl|html?|xml|log)$/i;
+const WORKBOOK_FILE = /\.(xlsx|xlsm|xls)$/i;
+
+/**
+ * The kind of problem, only where the service's message states it and it is true of the file type:
+ * a decode failure is about the text of a text file (any other file the service reads as text when
+ * it is not a PDF or workbook, so a damaged workbook or PDF reports one too, and says only that it
+ * could not be read); else a full stop.
+ */
+function unreadableBecause(message: string, file: string) {
+  if (/codec can't decode|UnicodeDecodeError/i.test(message))
+    return TEXT_FILE.test(file) ? ": its text could not be decoded." : ".";
+  if (/not a zip file/i.test(message) && !WORKBOOK_FILE.test(file))
+    return ": its contents are not a valid zip archive.";
+  return ".";
+}
+
+/**
+ * A document refusal from the service in reader words: the file it names (as the analyst's own file
+ * is called, so its row can be marked) and one sentence with no parser text. Text that is not a
+ * document refusal comes back unchanged with no file.
+ */
+export function documentRefusal(
+  message: string,
+  files: readonly { name: string; size?: number }[],
+): { file?: string; sentence: string } {
+  const named = (found: string) =>
+    files.find((file) => file.name.toLowerCase() === found.toLowerCase());
+  const cannot = REFUSED_FILE.exec(message);
+  if (cannot) {
+    const file = named(cannot[1] ?? "")?.name ?? cannot[1] ?? "";
+    return { file, sentence: `${file} could not be read${unreadableBecause(cannot[0], file)}` };
+  }
+  const empty = NO_TEXT.exec(message);
+  if (empty) {
+    const match = named(empty[1] ?? "");
+    const file = match?.name ?? empty[1] ?? "";
+    return {
+      file,
+      sentence:
+        match?.size === 0
+          ? `${file} is empty (0 bytes).`
+          : `${file} has no text that can be read; it may be a scanned image.`,
+    };
+  }
+  if (NO_FILE.test(message))
+    return {
+      sentence:
+        "None of the selected documents could be read as an issuer filing. Choose a filing in a supported format.",
+    };
+  return { sentence: message };
 }
