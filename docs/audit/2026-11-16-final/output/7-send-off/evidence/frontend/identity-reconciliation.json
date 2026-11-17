@@ -1,0 +1,28 @@
+{
+  "definition": "worktree-relative file path + 1-based in-file test ordinal + full test name",
+  "originalDynamicCollectionEvidence": "/workspace/scratch/final-frontend-coverage/collection.json",
+  "expectedFiles": 308,
+  "expectedTests": 5259,
+  "executed": {
+    "files": 308,
+    "tests": 5259,
+    "uniqueFiles": 308,
+    "uniqueTests": 5259,
+    "missingFiles": [],
+    "extraFiles": [],
+    "missingTests": [],
+    "extraTests": [],
+    "notPassed": []
+  },
+  "reported": {
+    "files": 308,
+    "tests": 5259,
+    "uniqueFiles": 308,
+    "uniqueTests": 5259,
+    "missingFiles": [],
+    "extraFiles": [],
+    "missingTests": [],
+    "extraTests": [],
+    "notPassed": []
+  }
+}
