@@ -203,3 +203,26 @@ One entry per task: the reviewer was a fresh Sonnet agent at xhigh effort that d
   - On the shipped build, Home's "Start a run" lands on `#/run/start` showing "No run data in this library" with no control. Keeping the button stands only if the Low batch gives StartPage.tsx:82 a sentence and a link back (S6-026). Otherwise drop "start one to add the first issuer" and the button on the shipped Home. The batch brief should name `#/run/start` explicitly. This becomes Medium if S6-026 does not land.
   - The descriptions are two sentences where D-31 says one, and "build" is a builder word.
   - The two changed tests pin the new sentence by prefix only.
+
+## T25 follow-up under ruling L7 (model pages labelled)
+
+- Commit reviewed: f33f9a1. Verdict: PASS. Merged onto audit/repair-3.
+- On the parent source the new tests fail 17 of 23. The 6 that pass are "not drawn" guards. At HEAD all 23 pass.
+- New file web/src/shell/DesignReferenceNote.tsx:
+  - The cycle claim is verified: App → route-table → model/routes → model pages → RunPage → ModelShell.
+  - Exporting the note from Shell.tsx was the other route. The reviewer prefers the named file.
+  - The words are identical to T25's.
+- The "Sample data" badge was dropped, under L7, and the note carries all it said. Rendering 122 addresses before and after, only the 6 model run forms differ: one badge span out, one note in. The LimitationsPage.test.tsx edit removes only the "Sample data" token. The guard "leaves out the sample badge when the run is not a sample" still passes unedited.
+- Model pages:
+  - Each of the 8 model addresses shows exactly one note, as the first child of the p-8 frame. The shipped empty build shows none.
+  - The three p-8 first-child tests and T25's 39 App.designReference tests pass unedited.
+  - At 390 px, `main` overflows by 2 px (front) and 120 px (statements) with or without the note. The note does not cause it.
+- Gates the reviewer saw:
+  - lint 0, format:check 0, typecheck 0, build 0, unused 0, duplication 0.
+  - vitest: model, App, shell and route-table, 29 files, 881 tests. Signal: 34 files, 630 tests. All at the default timeout.
+  - Probes: s6-saved-example-label.mjs 0; j6-static-submit-claims-run-started.cjs 0.
+- Low:
+  - The report's file counts are wrong (29 and 34 files, not 101 and 119); the test counts are right.
+  - The Rounds line is ambiguous (the controller tidies it).
+  - `header.sample` is still validated by the model reader but no longer drawn.
+- Info: RunPage.tsx's not-found and unreadable frames draw no note. That is within L7's named scope, and those states show no sample.
