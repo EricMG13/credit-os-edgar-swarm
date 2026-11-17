@@ -85,10 +85,9 @@ source. Its pages state no date, so the lookup marks them undated. Its price-his
 their own dates, while its statistics pages show current figures, which a case with an earlier
 research cutoff must not use. Its news pages syndicate third-party articles, the reason `nasdaq.com`
 was removed, so a figure from a Yahoo news page is not used without the original publisher.
-These rules are not yet told to the module (`WEB_LOOKUP_RULES` does not name Yahoo) and no check
-enforces them: a Yahoo page is checked as any undated page, so a statistics page's current figure
-cited with another Source type passes the checks in a case with an earlier cutoff. Telling the
-module, or checking it, is a follow-up.
+`WEB_LOOKUP_RULES` tells the module these rules. No check enforces them: a Yahoo page is checked as
+any undated page, so a statistics page's current figure passes the checks in a case with an earlier
+cutoff, whatever its Source type. A mechanical check is a follow-up for the owner to decide.
 
 What Yahoo sees, on each request the research module makes to it:
 
@@ -341,7 +340,10 @@ Governed by instruction in `WEB_LOOKUP_RULES` only, not caught mechanically:
 - quoted spans under 12 characters, a figure split across short quotes, Markdown blockquotes, and
   paraphrase without quote marks;
 - later-event figures in prose outside TDR.6;
-- SEC facts filed after the cutoff.
+- SEC facts filed after the cutoff;
+- a `finance.yahoo.com` page: Source type `Other` with a `## Gaps` limitation, no current figure
+  from a quote or statistics page unless it states its own date on or before the cutoff, and no
+  figure from a news page without the original publisher (amendment 2026-11-17).
 
 ## Fetched text is data
 
