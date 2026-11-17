@@ -1,0 +1,50 @@
+
+ RUN  v4.1.12 /workspace/audit-synthetic-classification
+
+ ❯ web/src/pages/connected/ReportLibrary.design.test.tsx (0 test)
+ ❯ web/src/pages/connected/report/Record.finalAudit.test.tsx (0 test)
+ ❯ web/src/pages/connected/RuntimeMetadata.test.tsx (0 test)
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  web/src/pages/connected/ReportLibrary.design.test.tsx [ web/src/pages/connected/ReportLibrary.design.test.tsx ]
+Error: Cannot find package '@/components/base/buttons/button' imported from /workspace/audit-synthetic-classification/web/src/pages/connected/ConnectedApp.tsx
+ ❯ web/src/pages/connected/ConnectedApp.tsx:2:1
+      1| import { lazy, Suspense, useEffect } from "react";
+      2| import { Button } from "@/components/base/buttons/button";
+       | ^
+      3| import { Skeleton } from "@/components/gap/Skeleton";
+      4| import { PageHeader } from "../../shell/PageHeader";
+ ❯ web/src/pages/connected/ReportLibrary.design.test.tsx:3:1
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  web/src/pages/connected/RuntimeMetadata.test.tsx [ web/src/pages/connected/RuntimeMetadata.test.tsx ]
+Error: Cannot find package '@/components/base/buttons/button' imported from /workspace/audit-synthetic-classification/web/src/pages/connected/report/Record.tsx
+ ❯ web/src/pages/connected/report/Record.tsx:2:1
+      1| import { useCallback } from "react";
+      2| import { Button } from "@/components/base/buttons/button";
+       | ^
+      3| import { Badge } from "@/components/base/badges/badges";
+      4| import { ProgressBar } from "@/components/base/progress-indicators/pro…
+ ❯ web/src/pages/connected/RuntimeMetadata.test.tsx:5:1
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  web/src/pages/connected/report/Record.finalAudit.test.tsx [ web/src/pages/connected/report/Record.finalAudit.test.tsx ]
+Error: Cannot find package '@/components/base/buttons/button' imported from /workspace/audit-synthetic-classification/web/src/pages/connected/report/Record.tsx
+ ❯ web/src/pages/connected/report/Record.tsx:2:1
+      1| import { useCallback } from "react";
+      2| import { Button } from "@/components/base/buttons/button";
+       | ^
+      3| import { Badge } from "@/components/base/badges/badges";
+      4| import { ProgressBar } from "@/components/base/progress-indicators/pro…
+ ❯ web/src/pages/connected/report/Record.finalAudit.test.tsx:5:1
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  3 failed (3)
+      Tests  no tests
+   Start at  19:23:12
+   Duration  731ms (transform 130ms, setup 0ms, import 0ms, tests 0ms, environment 0ms)

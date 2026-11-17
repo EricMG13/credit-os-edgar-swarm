@@ -16,6 +16,7 @@ from deploy_vii.registry import dependencies, plan
 from deploy_workflow.inbox import runs
 from deploy_workflow.inbox.layout import Layout
 from deploy_workflow.library_index import Refused, json_object, run_identity, same_identity
+from deploy_workflow.model.record import CallRecord
 from deploy_workflow.owners.cpos import request_fingerprint
 from deploy_workflow.run_events import EVENTS, progress
 
@@ -29,6 +30,7 @@ _FILE_BYTES = 4 * 1024 * 1024
 _TOTAL_BYTES = 32 * 1024 * 1024
 _PUBLICATION_BYTES = 64 * 1024 * 1024
 _EXPORT = "window.CREDIT_OS_DATA="
+_EXECUTIONS = frozenset({"host-session", "retained-response-replay", "synthetic", "live-provider"})
 
 
 def _sha(raw: bytes) -> str:
@@ -94,6 +96,52 @@ def _workflow(reader: _Reads, record: runs.Record) -> dict[str, Any]:
     if not isinstance(workflow.get("instructions"), dict):
         raise Refused("workflow instructions are not recorded")
     return workflow
+
+
+def _adapter_execution(reader: _Reads, record: runs.Record) -> str:
+    try:
+        lines = reader.raw("live/calls.jsonl").splitlines()
+    except FileNotFoundError:
+        return "live-provider"  # A legacy or not-yet-started run retains its prepared route.
+    if len(lines) > 1000:
+        raise Refused("too many execution call records")
+    calls = [CallRecord.model_validate_json(line) for line in lines if line.strip()]
+    if not any(
+        call.reported_model == "synthetic" or call.request_id == "synthetic" for call in calls
+    ):
+        return "live-provider"
+    workflow = _workflow(reader, record)
+    identity = workflow["run"]
+    for call in calls:
+        if (
+            call.reported_model != "synthetic"
+            or call.request_id != "synthetic"
+            or call.run_id != identity["run_id"]
+            or call.case_id != record.issuer_id
+            or call.pathway != record.pathway
+            or call.config_id != runs.config_for(record.model, record.effort)
+            or call.module_id not in workflow["instructions"]
+        ):
+            raise Refused("synthetic adapter call provenance is inconsistent")
+    return "synthetic"
+
+
+def execution(directory: Path, record: runs.Record, manifest: dict[str, Any]) -> str | None:
+    """Prefer exact recorded adapter provenance to a plan's nominal provider route.
+
+    Case kind describes issuer data, so it cannot classify model execution. The proof adapter
+    records both model and request identity as exactly ``synthetic``; every call must agree and
+    belong to the pinned workflow. Mixed, malformed or unbound evidence is an explicit unknown.
+    """
+    mode = manifest.get("execution")
+    if not isinstance(mode, str) or mode not in _EXECUTIONS:
+        return None
+    if mode != "live-provider":
+        return mode
+    try:
+        return _adapter_execution(_Reads(directory), record)
+    except (Refused, OSError, ValueError, KeyError, TypeError, RecursionError):
+        return None
 
 
 def _selection(reader: _Reads, workflow: dict[str, Any]) -> dict[str, dict[str, Any]]:
