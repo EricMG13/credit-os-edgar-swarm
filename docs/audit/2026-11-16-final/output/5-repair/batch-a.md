@@ -10,8 +10,8 @@ Overview action, a sentence-only card, the selector with three moves, a ranking'
 
 | Outcome | Findings |
 | :--- | :--- |
-| repaired (9) | B0-002, C2-019, C3-017, C3-018, C3-021, C3-031 (C4-023 merged in), C4-031, C4-036, C5-014 |
-| repaired in part, the rest open (3) | C4-021, C5-033, J1-007 |
+| repaired (8) | B0-002, C2-019, C3-017, C3-018, C3-031 (C4-023 merged in), C4-031, C4-036, C5-014 |
+| repaired in part, the rest open (4) | C3-021, C4-021, C5-033, J1-007 |
 | open (1) | C4-011 |
 | closed by R14 (1) | C4-014 (J5-009 merged in); commit left in place |
 | closed by R16 (2) | C5-015, C5-016; commits left in place |
@@ -34,12 +34,20 @@ Test: `RowEditor.test.tsx` "says why the add button is disabled at the maximum, 
 (failed first). Commit 924b8c4.
 
 ### J1-007 repaired in part
-Text repaired: the two Checks that said "under Issuer and dates" (a section the page does not have)
-now say "under Portfolio workbook on the More context step" (`src/deploy_workflow/run_expectations.py`,
-rules `portfolio-workbook-none` and `portfolio-workbook-not-chosen`). The control is the Portfolio
-workbook select in `ContextInputFields`, drawn on the More context step.
-Test: `tests/test_run_expectations_words.py` (exact fix text for both rules, and no rule fix names
-"Issuer and dates"); four cases failed first. Commit b088080.
+Text repaired: the two Checks that said "under Issuer and dates" (a section the connected page does not
+have) are in `src/deploy_workflow/run_expectations.py`, rules `portfolio-workbook-none` and
+`portfolio-workbook-not-chosen`. Round 1 (b088080) named the step "More context", which is right for the
+connected page and wrong for the legacy form (`docs/templates/context-form.html`, kept by R17), where
+the same select is on Issuer and dates and the form draws the service's `fix` text beside a button for
+its own step (review RV-1, Medium). Round 2 names only the control. Both pages label the select
+"Portfolio workbook" (connected `ATTACHMENTS.portfolio_workbook` in `start/plain.ts`, drawn by
+`SelectField` in `StartRun.tsx`; legacy `ATTACH` title in the form, drawn as the select's `<label>`).
+The sentences are now "Add the fund's workbook, in the layout of the portfolio template, and choose it
+as the Portfolio workbook." and "Choose it as the Portfolio workbook, or remove it." The form was not
+edited.
+Test: `tests/test_run_expectations_words.py` (exact fix text for both rules, no "step" and no "More
+context" in either, and no rule fix names "Issuer and dates"); the two round-2 cases failed first.
+Commits b088080 (round 1), b4f16fd (round 2).
 Open: the go-to-step button. It needs `ReviewSheet.tsx` / `StartRun.tsx`, not in this chunk's list.
 `web/src/pages/connected/ConnectedApp.test.tsx` still carries "Issuer and dates" in a canned service
 reply (lines 2222, 2234); it is a fixture string, not asserted wording of the service, and was not
@@ -61,12 +69,13 @@ trace control in one flex row, as `FindingParagraph` does. File: `report/Overvie
 Test: `report/OverviewModules.test.tsx` (new; failed first). Commit 602adb3.
 Noticed, not changed (module-written or C4 wording): the row's gap reason still says "handoff".
 
-### C3-021 repaired (Changes page); Overview part not in this chunk
+### C3-021 repaired in part (Changes page done; Overview figure tiles open, not in this chunk)
 When the comparison has rows the section is no longer a card: the heading, the Cards/Table switch and
 the change cards stand on the page; a sentence-only state keeps its card. File: `report/Changes.tsx`.
 Tests: `Changes.test.tsx` "lets the change cards stand on the page" and "keeps a sentence-only state in
 its card". Open: the Overview figure tiles inside the fallback Bottom line card (HeadlineFigures /
-ReportContent, not in the list). Commit 3585d85.
+ReportContent, not in the list); counted under "repaired in part" since round 2 (review RV-2).
+Commit 3585d85.
 
 ### C3-031 repaired (C4-023 merged in)
 `FxShocks` draws the "Compare with the 5% move" select only when there are two or more alternatives; with
@@ -137,6 +146,12 @@ Done in `report/Record.tsx`: a "Delivery" item in the run totals from the run re
 delivered <time>", "Report delivery started <time>; not finished", "No delivery recorded", and loading or
 unavailable while the record is pending); the Started/Accepted times table is named "Started and
 accepted". Tests: `Record.test.tsx` (delivered, started only, never started, pending). Commit f1e1e53.
+Round 2 (review RV-4): a run whose event log could not be read (`events: null`, which the service sends
+when the log is unreadable; `[]` means a log without a delivery) drew "No delivery recorded", so missing
+read as zero. `deliveryFigure` now returns "The run's event log could not be read." for `null` and keeps
+"No delivery recorded" for a log that holds no delivery event. Tests: `Record.test.tsx` gains "says the
+event log could not be read, not that no delivery was recorded, when it is null" (failed first) and the
+"never started" and other log cases now also assert that sentence is absent. Commit 0877bbd.
 Open: library admission and retained-versus-executed. Neither is in the run record the page receives,
 and `outputEntries` drops outputs whose `run` differs from the report's, so Record cannot show a retained
 output. That needs service data (a source change outside this chunk).
@@ -172,13 +187,43 @@ run above was also using the machine, showed six failures in `src/pages/signal/s
 test timed out at 5 s, the rest followed). That file passes alone (12 tests) and in the full run above.
 No Signal or shared code was changed.
 
-Not verified: no browser run of any changed screen (no probe from `docs/audit/.../probes/` was re-run
+## Round 2 (Sonnet 5.5): J1-007, C5-033, counts
+
+Repairs the review's Medium (RV-1) and Lows RV-2 and RV-4; RV-3 (work closed by R14 and R16) is left for the
+lead, as instructed.
+
+| Item | Files | Test | Commit |
+| :--- | :--- | :--- | :--- |
+| J1-007 / RV-1 | `src/deploy_workflow/run_expectations.py` | `tests/test_run_expectations_words.py` (`PORTFOLIO_FIXES`, `test_a_portfolio_workbook_fix_names_the_control_only`; the old sentences were asserted only there) | b4f16fd |
+| C5-033 / RV-4 | `web/src/pages/connected/report/Record.tsx` | `web/src/pages/connected/report/Record.test.tsx` | 0877bbd |
+| C3-021 / RV-2 | this report (counts: 8 repaired, 4 in part, 1 open, 1 R14, 2 R16 = 16) | none applies | the commit holding this report |
+
+`docs/templates/context-form.html` was not edited. `web/src/pages/connected/ConnectedApp.test.tsx` lines
+2222 and 2234 still carry "Issuer and dates" in a canned service reply; it is not asserted wording and was
+not edited.
+
+| Round 2 check | Exit |
+| :--- | :--- |
+| `uv run pytest tests/test_run_expectations_words.py tests/test_portfolio_workbook.py tests/test_context_form.py tests/test_run_start_submissions.py -q` | 0 (330 passed, 3 skipped) |
+| `uv run python tools/quality_gate.py --base origin/audit/final-repairs` | 0 (0 findings, 2 changed files, 28 lines in scope) |
+| `npm --prefix web run lint` | 0 |
+| `npm --prefix web run format:check` | 0 |
+| `npm --prefix web run typecheck` | 0 |
+| `npx vitest run src/pages/connected/report/Record.test.tsx` (9 tests) | 0 |
+| `npx vitest run src/pages/connected/ConnectedApp.test.tsx src/pages/connected/report` (25 files, 485 tests) | 0 |
+
+Each ran under `timeout 300` with its exit code taken from the command itself. The two new Python cases and
+the new vitest case each failed before their repair. `tests/test_run_start_page.py` (browser tests) was not
+run in round 2; the review ran it (153 passed, 3 failed on the base too: the 375 px window tests).
+
+Not verified: the legacy start form's rendering of the two reworded Checks was read from its source and
+not drawn (round 2); no browser run of any changed screen (no probe from `docs/audit/.../probes/` was re-run
 against `proof.serve`), so layout claims are untested at pixel level: the Changes page without a card,
 the flex row on Overview, the Add-button sentence beside its button, the Delivery item in the Record
 totals, the single-line yield label (open) and the 24 px markers (closed by R14); the
-`tests/test_cpos_launch.py` and `tests/test_document_key.py` runs did not finish, and
-`tests/test_run_start_page.py` and `tests/test_context_form.py`, which also import `run_expectations`,
-were not run; the full Python suite and the weekly job were not run; no fidelity check was recorded in
+`tests/test_cpos_launch.py` and `tests/test_document_key.py` runs did not finish in round 1 (the review
+ran `test_cpos_launch.py` in parts, all passing); `tests/test_context_form.py` ran in round 2 (passed),
+`tests/test_run_start_page.py` (browser) did not run in round 2; the full Python suite and the weekly job were not run; no fidelity check was recorded in
 `VERIFICATION.md` for the presentation changes (that file is not in this chunk's list); the Record
-"Delivery" wording and the "Loading the portfolio limits." line were chosen by this session and have
-not been read by the owner.
+"Delivery" wording (including "The run's event log could not be read.") and the "Loading the portfolio
+limits." line were chosen by this session and have not been read by the owner.
