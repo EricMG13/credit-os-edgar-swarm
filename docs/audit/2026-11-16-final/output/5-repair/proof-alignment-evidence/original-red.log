@@ -1,0 +1,52 @@
+
+> credit-os-web@0.0.0 proof:connected
+> node scripts/connected-proof.mjs
+
+Browser proof artifacts: /workspace/review-connected-integration/proof-artifacts/run-YsIVnY
+
+✖ Google Chrome uploads, submits and opens a finished legacy report (5787.216017ms)
+
+✖ Microsoft Edge uploads, submits and opens a finished legacy report (3000.250246ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 0
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 8792.780684
+
+✖ failing tests:
+
+test at scripts/connected-proof.mjs:1419:3
+✖ Google Chrome uploads, submits and opens a finished legacy report (5787.216017ms)
+  locator.click: Error: strict mode violation: getByRole('link', { name: 'Start a run', exact: true }) resolved to 2 elements:
+      1) <a data-rac="" tabindex="0" href="/start" data-react-aria-pressable="true" class="group relative inline-flex h-max cursor-pointer items-center justify-center whitespace-nowrap outline-brand transition duration-100 ease-linear focus-visible:outline-2 focus-visible:outline-offset-2 disabled:cursor-not-allowed disabled:opacity-50 *:data-icon:pointer-events-none *:data-icon:size-5 *:data-icon:shrink-0 *:data-icon:transition-inherit-all gap-1 rounded-lg px-3.5 py-2.5 text-sm font-semibold before:round…>…</a> aka getByRole('link', { name: 'Start a run' }).first()
+      2) <a data-rac="" tabindex="0" href="/start" data-react-aria-pressable="true" class="group relative inline-flex h-max cursor-pointer items-center justify-center whitespace-nowrap outline-brand transition duration-100 ease-linear before:absolute focus-visible:outline-2 focus-visible:outline-offset-2 disabled:cursor-not-allowed disabled:opacity-50 *:data-icon:pointer-events-none *:data-icon:size-5 *:data-icon:shrink-0 *:data-icon:transition-inherit-all gap-1 rounded-lg px-3.5 py-2.5 text-sm font-semib…>…</a> aka locator('footer').getByRole('link', { name: 'Start a run' })
+
+  Call log:
+  [2m  - waiting for getByRole('link', { name: 'Start a run', exact: true })[22m
+
+      at checkRunDocuments (/workspace/review-connected-integration/web/scripts/connected-proof.mjs:103:70)
+      at submit (/workspace/review-connected-integration/web/scripts/connected-proof.mjs:320:9)
+      at checkBrowserRun (/workspace/review-connected-integration/web/scripts/connected-proof.mjs:1270:21)
+      at async TestContext.<anonymous> (/workspace/review-connected-integration/web/scripts/connected-proof.mjs:1432:18) {
+    log: [ "  - waiting for getByRole('link', { name: 'Start a run', exact: true })" ]
+  }
+
+test at scripts/connected-proof.mjs:1419:3
+✖ Microsoft Edge uploads, submits and opens a finished legacy report (3000.250246ms)
+  locator.click: Error: strict mode violation: getByRole('link', { name: 'Start a run', exact: true }) resolved to 2 elements:
+      1) <a data-rac="" tabindex="0" href="/start" data-react-aria-pressable="true" class="group relative inline-flex h-max cursor-pointer items-center justify-center whitespace-nowrap outline-brand transition duration-100 ease-linear focus-visible:outline-2 focus-visible:outline-offset-2 disabled:cursor-not-allowed disabled:opacity-50 *:data-icon:pointer-events-none *:data-icon:size-5 *:data-icon:shrink-0 *:data-icon:transition-inherit-all gap-1 rounded-lg px-3.5 py-2.5 text-sm font-semibold before:round…>…</a> aka getByRole('link', { name: 'Start a run' }).first()
+      2) <a data-rac="" tabindex="0" href="/start" data-react-aria-pressable="true" class="group relative inline-flex h-max cursor-pointer items-center justify-center whitespace-nowrap outline-brand transition duration-100 ease-linear before:absolute focus-visible:outline-2 focus-visible:outline-offset-2 disabled:cursor-not-allowed disabled:opacity-50 *:data-icon:pointer-events-none *:data-icon:size-5 *:data-icon:shrink-0 *:data-icon:transition-inherit-all gap-1 rounded-lg px-3.5 py-2.5 text-sm font-semib…>…</a> aka locator('footer').getByRole('link', { name: 'Start a run' })
+
+  Call log:
+  [2m  - waiting for getByRole('link', { name: 'Start a run', exact: true })[22m
+
+      at checkRunDocuments (/workspace/review-connected-integration/web/scripts/connected-proof.mjs:103:70)
+      at submit (/workspace/review-connected-integration/web/scripts/connected-proof.mjs:320:9)
+      at checkPaidConfirmation (/workspace/review-connected-integration/web/scripts/connected-proof.mjs:368:11)
+      at async checkBrowserRun (/workspace/review-connected-integration/web/scripts/connected-proof.mjs:1269:3)
+      at async TestContext.<anonymous> (/workspace/review-connected-integration/web/scripts/connected-proof.mjs:1432:18) {
+    log: [ "  - waiting for getByRole('link', { name: 'Start a run', exact: true })" ]
+  }
