@@ -4,6 +4,19 @@ Keep one running record here. A pass applies only to the stated scope. Earlier v
 engine is in [EricMG13/final-workflow](https://github.com/EricMG13/final-workflow)'s
 `VERIFICATION.md`, which also keeps the retained runs this copy leaves out.
 
+## 2026-11-17 — PR 3: the review sheet shows every input Submit sends (branch `claude/review-sheet-every-input`)
+
+Scope: a presentation change to the connected start page's review sheet (`web/src/pages/connected/start/ReviewSheet.tsx`, new `start/reviewInputs.ts`), with labels moved unchanged from `StartRun.tsx` into `start/plain.ts` and `start/rows.ts`. What Submit sends, the reviewed-summary digest, the caps, limit acceptance and the service are unchanged; no Python changed. No provider was called.
+- Owner, 2026-11-16: the review sheet shows every input the analyst approves, in plain words.
+- Changed: the sheet adds the issuer ID and issue classification, the legal documents and the three file boxes, Issuer details, Context details (each facility, quote, rating and research question, the analyst's note among the questions), Valuation and peers, Module options and Scenario assumptions, and shows the form level, model and effort and turns per module at every level. Labels come from the page's own sources (`plain.ts`, `rows.ts`, `valuation.ts`, `assumptions.ts`); module lists use names, never the forecast. A blank or unsent input reads `Not given`, never 0. The form version (`context.schema`) is sent and not drawn.
+- Fidelity check, scope the review sheet of a Full credit assessment at the Basic and Advanced levels, synthetic inputs: V1–V26 in `ConnectedApp.test.tsx` assert each input's label and value as hand-written strings; 26 failed before the change (at the sheet lookup) and pass after. V27 asserts that no text on the sheet or its limits matches braces, `snake_case` keys, module codes, ids or `context/1`. It passed before and after (a guard). The N8 and N9 request bodies are unchanged and pass. One older assertion (Basic hides turns, model and effort) now asserts they are shown, under the owner's rule.
+- Browser check (scratch Playwright script, not committed; Chrome for Testing 153 on the synthetic `proof.serve`): an Advanced run with inputs in every group. The service accepted the summary. Every key of the sent body appears on the sheet with its value, except `context.schema` and the five new-issue facility boxes, which are sent blank and not drawn for a run that is not a new issue. The sheet text has no raw pattern.
+- Commands, exit 0 on 366bdb1: `npm --prefix web ci`; `npm --prefix web run` lint, format:check, typecheck, test (173 files, 3,944 tests), unused, duplication (1.57%), build; `tools/quality_gate.py` (0 findings, no Python changed). The first full test run, on 50dd42a, failed only by V27 timing out at 6.97 s against the 5 s default under load; 366bdb1 gives V27 20 s.
+- Not verified:
+  - `proof:connected`: it needs branded Google Chrome and Microsoft Edge; this container has Chrome for Testing only (`/opt/google/chrome/chrome` links to it) and no Edge.
+  - `pytest -m browser tests/test_run_start_page.py`: in this container the run did not finish: its first 12 tests failed at about two minutes each, and the first, run alone, failed because its headless Chrome `--dump-dom` call against the service hung to the 120 s timeout (Chrome renders a trivial page in 0.6 s). That file drives the older start page (`docs/templates/context-form.html`), which this branch does not change.
+  - Other pathways in a browser; a live or paid run; the full weekly suite.
+
 ## 2026-11-17 — Browser proof declares an executed agreement (branch `claude/proof-cp4-gate`)
 
 Scope: `proof:connected` on main 4f8a375a. Synthetic fixtures and the proof script only; no product code changed, no provider called.
@@ -101,7 +114,6 @@ reviewed.
 - Not verified: library and report views on live output; CP-3D on dated RV Book quotes; the cell
   separator on a live page; Copilot's billing of summaries; other issuers; Windows; the full suite;
   on this branch, the browser-marked tests, the connected proof and the web gates on Node 24.
-
 
 ## 2026-11-17 — PR 2: a run in the currency its source files report in (branch `claude/reporting-currency`)
 
@@ -969,21 +981,3 @@ Scope: presentation only, all under `web/`; no backend, handoff, provider or mod
   Clean extraction passed macOS Chrome (`20261115-161013-01`) and Edge
   (`20261115-161020-01`). The paired proof contains the hash and ten screenshots.
   Windows work-PC proof and publication remain pending.
-
-## 2026-11-15 — Paired browser proof tied to the candidate ZIP
-
-- The Windows guide verifies the companion checksum and extracts into a fresh
-  local folder. The runner records the exact archive hash, source commit, host
-  platform and release, run IDs, browser versions and screenshot names together.
-  Windows synthetic workspaces use the short extraction path.
-- Confidence review checked invalid provenance and a failing second browser.
-  The latter returned exit 1, left Chrome's individual record, and wrote no
-  paired proof. The Python quality gate, focused Python tests (15), lint and
-  formatting passed.
-- Candidate `3712f2a`, ZIP SHA-256
-  `df2e529a8ea938989646d68f62711cfe4ac85335cd39f1d0979ecb602e00a044`.
-  A clean macOS extraction passed in Chrome (`20261115-160346-01`) and Edge
-  (`20261115-160352-01`). Verified `proof.json` against the ZIP, the exact
-  individual records and all eight screenshots. The React assets are identical
-  to the preceding candidate. Windows work-PC proof and publication are pending.
-

@@ -469,6 +469,21 @@ describe("connected run start", () => {
       expect(within(sheet).getAllByText(SENTENCE)).toHaveLength(1);
     });
 
+    it("draws the Yahoo sentence once, directly after the OpenAI sentence", async () => {
+      const openai =
+        "The research module will search the web. The issuer's name and the questions it researches go to OpenAI's search.";
+      const sheet = await reviewSheet({
+        ...research,
+        web_search: true,
+        web_lookup: true,
+        model: "claude",
+      });
+      const first = within(sheet).getByText(openai);
+      const second = within(sheet).getByText(SENTENCE);
+      expect(within(sheet).getAllByText(SENTENCE)).toHaveLength(1);
+      expect(first.nextElementSibling).toBe(second);
+    });
+
     it("says nothing about Yahoo when the lookup is off", async () => {
       const sheet = await reviewSheet({ ...research, web_lookup: false, web_search: true });
       expect(sheet).not.toHaveTextContent(/Yahoo|ticker/);
@@ -500,8 +515,9 @@ describe("connected run start", () => {
     expect(sheet).toHaveTextContent("Off, because this is a synthetic case.");
     expect(sheet).not.toHaveTextContent(/CP-\d|--web-lookup|20261116-083145-01/);
     expect(screen.queryByText("Reviewed inputs")).toBeNull();
-    expect(screen.queryByText("Turns per module")).toBeNull();
-    expect(screen.queryByText("Model and effort")).toBeNull();
+    // Below Advanced the fixed model, effort and turns are sent too, so the sheet shows them.
+    expect(screen.getByText("Turns per module")).toBeInTheDocument();
+    expect(screen.getByText("Model and effort")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Edit inputs" })).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: "Edit purpose and modules" }));
     expect(screen.getByRole("heading", { name: "Purpose" })).toHaveFocus();
@@ -3491,4 +3507,578 @@ describe("connected run start: the analyst note's refusal", () => {
     });
     expect(note).toHaveAccessibleDescription(noteLine);
   });
+});
+
+describe("connected run start: the review sheet shows every input Submit sends", () => {
+  // The shape of the service's own template (cases/context/research-minimal.json): every part of
+  // the context, so each part is sent. The short template above carries only run and identity.
+  const fullTemplate = {
+    schema: "context/1",
+    run: { ...context.run, run_type: "research", current_period: "", prior_period: "" },
+    identity: {
+      issuer_name: "",
+      issuer_id: "",
+      borrower_name: "",
+      parent_name: "",
+      guarantors: [],
+      aliases: [],
+      listed_equity: false,
+      ticker: "",
+      sector: "",
+      country: "",
+      sponsor: "",
+    },
+    deal_terms: [],
+    quotes: [],
+    ratings: [],
+    valuation: {
+      peer_source: "cp_dr_public",
+      basis: "auto",
+      issuer_market: {
+        market_cap_m: "",
+        net_debt_m: "",
+        ev_m: "",
+        ebitda_basis: "LTM",
+        as_of: "",
+        source: "",
+      },
+      peers: [],
+      precedents: [],
+      user_multiple: { value: "", basis: "LTM", rationale: "" },
+    },
+    assumptions: { cp2a: null, cp2d: null, cp2e: null, cp3c: null, cp3d: null, cp4c: null },
+    attachments: {
+      portfolio_workbook: false,
+      prior_case: false,
+      management_bridge: false,
+      legal_documents: "executed",
+    },
+    research_questions: [],
+  };
+  const NOTE = "Compare the covenant package with the last amendment.";
+  const QUESTION = "How much of 2025 adjusted EBITDA is run-rate cost savings?";
+
+  type Steps = {
+    documents?: () => void;
+    purpose?: () => void;
+    more?: () => void;
+    advanced?: boolean;
+    template?: Record<string, unknown>;
+    summary?: Parameters<typeof testingFetch>[0];
+  };
+
+  /** Fills the start page, applies each step's own inputs, and opens the review. */
+  async function sheetAfter(steps: Steps = {}) {
+    const { template = fullTemplate, summary = plan } = steps;
+    const fetchMock = testingFetch(summary, undefined, {
+      "/connected/context": { ...template, submission_caps_usd: submissionCaps },
+    });
+    render(<ConnectedApp path="/start" mode="synthetic" />);
+    await fillInputs();
+    steps.documents?.();
+    await advanceToPurpose();
+    if (steps.advanced) pick("Run form level", "advanced");
+    steps.purpose?.();
+    advanceToContext();
+    steps.more?.();
+    fireEvent.click(screen.getByRole("button", { name: "Review run" }));
+    await screen.findByRole("button", { name: "Submit run" });
+    return { sheet: screen.getByRole("region", { name: "What will run" }), fetchMock };
+  }
+
+  function pick(name: string, value: string, scope: HTMLElement = document.body) {
+    fireEvent.change(within(scope).getByLabelText(name), { target: { value } });
+  }
+  const region = (name: string) => screen.getByRole("region", { name });
+  function addRow(section: string, button: string, values: Record<string, string>) {
+    fireEvent.click(within(region(section)).getByRole("button", { name: button }));
+    for (const [name, value] of Object.entries(values)) pick(name, value, region(section));
+  }
+  /** The values the sheet shows beside `label` inside `scope`, in order. */
+  const shown = (scope: HTMLElement, label: string) =>
+    within(scope)
+      .queryAllByText(label, { selector: "dt" })
+      .map((term) => term.nextElementSibling?.textContent);
+  const part = (scope: HTMLElement, name: string) => within(scope).getByRole("group", { name });
+
+  const describeIssuer = () => {
+    pick("Borrower (legal entity)", "Northbridge Holdings LLC");
+    pick("Parent", "Northbridge Group plc");
+    pick("Sector", "Industrials");
+    pick("Country", "United States");
+    pick("Sponsor", "Harbour Peak Capital");
+    pick("Other names in the filings", "Northbridge\nNBG Holdings");
+    pick("Guarantors", "Northbridge Operations Ltd");
+    fireEvent.click(screen.getByRole("checkbox", { name: "Listed equity" }));
+    pick("Ticker", "NBG");
+  };
+  const addFacility = (extra: Record<string, string> = {}) => {
+    addRow("Facilities and deal terms", "Add facility", {
+      "Facility ID": "tlb-2031",
+      Instrument: "Term loan B",
+      Currency: "USD",
+      "Size (m)": "1250",
+      "Floor (%)": "0.50",
+      "As-of": "2026-10-01",
+      Provider: "Lead arranger",
+      ...extra,
+    });
+  };
+  const addQuoteRatingQuestion = () => {
+    addRow("Observed quotes", "Add quote", {
+      "Facility ID": "tlb-2031",
+      Bid: "98.50",
+      "As-of": "2026-10-20",
+      Provider: "Dealer run",
+    });
+    addRow("Ratings", "Add rating", { Agency: "S&P", Rating: "B+", Outlook: "Stable" });
+    addRow("Research questions", "Add research question", {
+      Question: QUESTION,
+      "Focus module": "CP-2",
+    });
+    pick("Anything the analysis should know", NOTE);
+  };
+  const peerFiguresAndOwnMultiple = () => {
+    pick("Peer source", "user_comps");
+    addRow("Peers", "Add peer", {
+      Name: "Harbour Industrial",
+      Ticker: "HBI",
+      "EV (m)": "4200",
+      "EBITDA (m)": "520",
+      Source: "Company filings",
+    });
+    pick("Valuation basis", "user_multiple");
+    pick("Multiple (x)", "8.5", region("Your own multiple"));
+    pick("Multiple basis", "NTM", region("Your own multiple"));
+    pick("Rationale", "Sector median less a size discount", region("Your own multiple"));
+  };
+  const chooseModuleOptions = () => {
+    pick("Relative value mode", "clo_screening");
+    fireEvent.click(screen.getByRole("checkbox", { name: "Deep Debate" }));
+  };
+  const pinDownsideAndRates = () => {
+    fireEvent.click(screen.getByRole("checkbox", { name: "Pin Downside" }));
+    pick("EBITDA decline (%)", "20", region("Downside"));
+    pick("Interest increase (%)", "15", region("Downside"));
+    pick("Rationale", "Committee stress cases", region("Downside"));
+    fireEvent.click(screen.getByRole("checkbox", { name: "Pin Rates, FX & hedging" }));
+    pick("Rate shocks (bps)", "100, 200", region("Rates, FX & hedging"));
+    pick("FX shocks (%)", "10", region("Rates, FX & hedging"));
+    pick("Rationale", "House scenarios", region("Rates, FX & hedging"));
+  };
+  const chooseAttachments = () => {
+    pick("Legal documents", "draft");
+    pick("The agreement", file.name);
+    pick("Management EBITDA bridge", file.name);
+  };
+
+  it("V1 keeps the inputs it showed before: issuer, as-of date, analyst, pathway, case kind, cutoff", async () => {
+    const { sheet } = await sheetAfter({
+      purpose: () => {
+        pick("Case kind", "private");
+      },
+      more: () => {
+        pick("Research cutoff", "2026-09-30");
+      },
+    });
+    const issuer = part(sheet, "Issuer and documents");
+    expect(shown(issuer, "Issuer")).toEqual(["Synthetic Générale"]);
+    expect(shown(issuer, "As-of date")).toEqual(["2026-10-31"]);
+    expect(shown(issuer, "Submitted by")).toEqual(["Ana L"]);
+    const purpose = part(sheet, "Purpose and modules");
+    expect(shown(purpose, "Pathway")).toEqual(["Full credit assessment"]);
+    expect(shown(purpose, "Case kind")).toEqual(["Private"]);
+    expect(shown(part(sheet, "Context"), "Research cutoff")).toEqual(["2026-09-30"]);
+  });
+
+  it("V2 shows the issuer ID and the issue classification", async () => {
+    const { sheet } = await sheetAfter({
+      documents: () => {
+        pick("Issuer ID", "synthetic-generale-sa");
+        pick("Issue classification", "high_yield");
+      },
+    });
+    const issuer = part(sheet, "Issuer and documents");
+    expect(shown(issuer, "Issuer ID")).toEqual(["synthetic-generale-sa"]);
+    expect(shown(issuer, "Issue classification")).toEqual(["High yield"]);
+  });
+
+  it("V3 reads an issue classification left unchosen as not given", async () => {
+    const { sheet } = await sheetAfter();
+    expect(shown(part(sheet, "Issuer and documents"), "Issue classification")).toEqual([
+      "Not given",
+    ]);
+  });
+
+  it("V4 shows the run purpose, the form level, and the model, effort and turns below Advanced", async () => {
+    const { sheet } = await sheetAfter({
+      purpose: () => {
+        pick("Run purpose", "secondary");
+      },
+    });
+    const purpose = part(sheet, "Purpose and modules");
+    expect(shown(purpose, "Purpose")).toEqual(["Trading (secondary)"]);
+    expect(shown(purpose, "Form level")).toEqual(["Basic"]);
+    const advanced = part(sheet, "Advanced choices");
+    expect(shown(advanced, "Model and effort")).toEqual(["GPT Sol · Balanced"]);
+    expect(shown(advanced, "Turns per module")).toEqual(["32"]);
+    expect(advanced).toHaveTextContent("Fixed below the Advanced form level.");
+  });
+
+  it("V5 reads a purpose the context does not carry as not given", async () => {
+    const { sheet } = await sheetAfter({ template: context });
+    expect(shown(part(sheet, "Purpose and modules"), "Purpose")).toEqual(["Not given"]);
+  });
+
+  it("V6 shows the Advanced model, effort and turns as chosen, with no fixed note", async () => {
+    const { sheet } = await sheetAfter({
+      advanced: true,
+      summary: { ...plan, model: "claude", effort: "high" },
+      more: () => {
+        pick("Model", "claude");
+        pick("Reasoning effort", "high");
+        pick("Turns per module", "48");
+      },
+    });
+    expect(shown(part(sheet, "Purpose and modules"), "Form level")).toEqual(["Advanced"]);
+    const advanced = part(sheet, "Advanced choices");
+    expect(shown(advanced, "Model and effort")).toEqual(["Claude Opus · High"]);
+    expect(shown(advanced, "Turns per module")).toEqual(["48"]);
+    expect(advanced).not.toHaveTextContent("Fixed below");
+  });
+
+  it("V7 shows the periods, and a blank period as not given, never 0", async () => {
+    const { sheet } = await sheetAfter({
+      more: () => {
+        pick("Current period", "q3-2026");
+      },
+    });
+    const more = part(sheet, "Context");
+    expect(shown(more, "Current period")).toEqual(["q3-2026"]);
+    expect(shown(more, "Prior period")).toEqual(["Not given"]);
+  });
+
+  it("V8 shows the legal documents and whether each attachment is among the documents", async () => {
+    const { sheet } = await sheetAfter({ advanced: true, more: chooseAttachments });
+    const more = part(sheet, "Context");
+    expect(shown(more, "Legal documents")).toEqual(["Draft agreement"]);
+    expect(shown(more, "Management EBITDA bridge")).toEqual(["Among the documents"]);
+    expect(shown(more, "Portfolio workbook")).toEqual(["Not given"]);
+    expect(shown(more, "Prior decision record")).toEqual(["Not given"]);
+  });
+
+  it("V9 reads attachments the context does not carry as not given", async () => {
+    const { sheet } = await sheetAfter({ template: context });
+    const more = part(sheet, "Context");
+    expect(shown(more, "Legal documents")).toEqual(["Not given"]);
+    expect(shown(more, "Management EBITDA bridge")).toEqual(["Not given"]);
+  });
+
+  it("V10 shows each Issuer details box by its label", async () => {
+    const { sheet } = await sheetAfter({ more: describeIssuer });
+    const details = part(sheet, "Issuer details");
+    expect(shown(details, "Borrower (legal entity)")).toEqual(["Northbridge Holdings LLC"]);
+    expect(shown(details, "Parent")).toEqual(["Northbridge Group plc"]);
+    expect(shown(details, "Sector")).toEqual(["Industrials"]);
+    expect(shown(details, "Country")).toEqual(["United States"]);
+    expect(shown(details, "Sponsor")).toEqual(["Harbour Peak Capital"]);
+    expect(shown(details, "Other names in the filings")).toEqual(["Northbridge, NBG Holdings"]);
+    expect(shown(details, "Guarantors")).toEqual(["Northbridge Operations Ltd"]);
+    expect(shown(details, "Listed equity")).toEqual(["Yes"]);
+    expect(shown(details, "Ticker")).toEqual(["NBG"]);
+  });
+
+  it("V11 reads blank Issuer details as not given, and an unlisted issuer as No with no ticker", async () => {
+    const { sheet } = await sheetAfter();
+    const details = part(sheet, "Issuer details");
+    expect(shown(details, "Sector")).toEqual(["Not given"]);
+    expect(shown(details, "Guarantors")).toEqual(["Not given"]);
+    expect(shown(details, "Listed equity")).toEqual(["No"]);
+    expect(shown(details, "Ticker")).toEqual([]);
+  });
+
+  it("V12 shows each facility box, a blank box as not given, and no new-issue box", async () => {
+    const { sheet } = await sheetAfter({
+      more: () => {
+        addFacility();
+      },
+    });
+    const facility = part(part(sheet, "Context details"), "Facility 1");
+    expect(shown(facility, "Facility ID")).toEqual(["tlb-2031"]);
+    expect(shown(facility, "Instrument")).toEqual(["Term loan B"]);
+    expect(shown(facility, "Currency")).toEqual(["USD"]);
+    expect(shown(facility, "Size (m)")).toEqual(["1250"]);
+    expect(shown(facility, "Floor (%)")).toEqual(["0.50"]);
+    expect(shown(facility, "Coupon (%)")).toEqual(["Not given"]);
+    expect(shown(facility, "Maturity")).toEqual(["Not given"]);
+    expect(shown(facility, "As-of")).toEqual(["2026-10-01"]);
+    expect(shown(facility, "Provider")).toEqual(["Lead arranger"]);
+    expect(shown(facility, "Tenor (years)")).toEqual([]);
+  });
+
+  it("V13 shows a new issue's tenor and pricing talk", async () => {
+    const { sheet } = await sheetAfter({
+      purpose: () => {
+        pick("Run purpose", "primary");
+      },
+      more: () => {
+        addFacility({
+          "Tenor (years)": "7",
+          "Talk spread low (bps)": "325",
+          "Talk spread high (bps)": "350",
+        });
+      },
+    });
+    const facility = part(part(sheet, "Context details"), "Facility 1");
+    expect(shown(facility, "Tenor (years)")).toEqual(["7"]);
+    expect(shown(facility, "Talk spread low (bps)")).toEqual(["325"]);
+    expect(shown(facility, "Talk spread high (bps)")).toEqual(["350"]);
+    expect(shown(facility, "Talk OID low")).toEqual(["Not given"]);
+  });
+
+  it("V14 shows each quote, rating and research question, the note among the questions", async () => {
+    const { sheet } = await sheetAfter({ more: addQuoteRatingQuestion });
+    const details = part(sheet, "Context details");
+    const quote = part(details, "Quote 1");
+    expect(shown(quote, "Facility ID")).toEqual(["tlb-2031"]);
+    expect(shown(quote, "Kind")).toEqual(["Observed"]);
+    expect(shown(quote, "Bid")).toEqual(["98.50"]);
+    expect(shown(quote, "Ask")).toEqual(["Not given"]);
+    expect(shown(quote, "As-of")).toEqual(["2026-10-20"]);
+    expect(shown(quote, "Provider")).toEqual(["Dealer run"]);
+    const rating = part(details, "Rating 1");
+    expect(shown(rating, "Agency")).toEqual(["S&P"]);
+    expect(shown(rating, "Scope")).toEqual(["Issuer"]);
+    expect(shown(rating, "Rating")).toEqual(["B+"]);
+    expect(shown(rating, "Outlook")).toEqual(["Stable"]);
+    expect(shown(rating, "As-of")).toEqual(["Not given"]);
+    const question = part(details, "Question 1");
+    expect(shown(question, "Question")).toEqual([QUESTION]);
+    expect(shown(question, "Focus module")).toEqual(["Fundamental credit"]);
+    const note = part(details, "Question 2");
+    expect(shown(note, "Question")).toEqual([NOTE]);
+    expect(shown(note, "Focus module")).toEqual(["Any"]);
+  });
+
+  it("V15 reads a row section with no rows as not given", async () => {
+    const { sheet } = await sheetAfter();
+    const details = part(sheet, "Context details");
+    for (const section of [
+      "Facilities and deal terms",
+      "Observed quotes",
+      "Ratings",
+      "Research questions",
+    ])
+      expect(part(details, section)).toHaveTextContent(`${section}Not given`);
+  });
+
+  it("V16 shows the valuation the template sends at the Basic level", async () => {
+    const { sheet } = await sheetAfter();
+    const valuation = part(sheet, "Valuation and peers");
+    expect(shown(valuation, "Peer source")).toEqual(["Research finds public peers (default)"]);
+    expect(shown(valuation, "Valuation basis")).toEqual(["Automatic"]);
+    expect(within(valuation).queryByRole("group", { name: "Peers" })).toBeNull();
+  });
+
+  it("V17 shows peer figures and the analyst's own multiple", async () => {
+    const { sheet } = await sheetAfter({ advanced: true, more: peerFiguresAndOwnMultiple });
+    const valuation = part(sheet, "Valuation and peers");
+    expect(shown(valuation, "Peer source")).toEqual(["I'll give peer figures"]);
+    expect(shown(valuation, "Valuation basis")).toEqual(["My own multiple"]);
+    const peer = part(part(valuation, "Peers"), "Peer 1");
+    expect(shown(peer, "Name")).toEqual(["Harbour Industrial"]);
+    expect(shown(peer, "Ticker")).toEqual(["HBI"]);
+    expect(shown(peer, "EV (m)")).toEqual(["4200"]);
+    expect(shown(peer, "EBITDA (m)")).toEqual(["520"]);
+    expect(shown(peer, "As-of")).toEqual(["Not given"]);
+    expect(shown(peer, "Source")).toEqual(["Company filings"]);
+    const multiple = part(valuation, "Your own multiple");
+    expect(shown(multiple, "Multiple (x)")).toEqual(["8.5"]);
+    expect(shown(multiple, "Multiple basis")).toEqual(["NTM (next twelve months)"]);
+    expect(shown(multiple, "Rationale")).toEqual(["Sector median less a size discount"]);
+  });
+
+  it("V18 shows a named peer list by name and ticker only, and each precedent", async () => {
+    const { sheet } = await sheetAfter({
+      advanced: true,
+      more: () => {
+        pick("Peer source", "user_list");
+        addRow("Peers", "Add peer", { Name: "Harbour Industrial", Ticker: "HBI" });
+        pick("Valuation basis", "precedents");
+        addRow("Precedents", "Add precedent", {
+          Target: "Northgate Tools",
+          Date: "2025-06-30",
+          "EV (m)": "2400",
+          "EBITDA (m)": "300",
+          Source: "Press release",
+        });
+      },
+    });
+    const valuation = part(sheet, "Valuation and peers");
+    expect(shown(valuation, "Peer source")).toEqual(["I'll name the peers"]);
+    expect(shown(valuation, "Valuation basis")).toEqual(["Precedents"]);
+    const peer = part(part(valuation, "Peers"), "Peer 1");
+    expect(shown(peer, "Name")).toEqual(["Harbour Industrial"]);
+    expect(shown(peer, "Ticker")).toEqual(["HBI"]);
+    expect(shown(peer, "EV (m)")).toEqual([]);
+    const precedent = part(part(valuation, "Precedents"), "Precedent 1");
+    expect(shown(precedent, "Target")).toEqual(["Northgate Tools"]);
+    expect(shown(precedent, "Acquirer")).toEqual(["Not given"]);
+    expect(shown(precedent, "Date")).toEqual(["2025-06-30"]);
+    expect(shown(precedent, "EV (m)")).toEqual(["2400"]);
+    expect(shown(precedent, "EBITDA (m)")).toEqual(["300"]);
+    expect(shown(precedent, "Source")).toEqual(["Press release"]);
+  });
+
+  it("V19 shows the issuer's market values", async () => {
+    const { sheet } = await sheetAfter({
+      advanced: true,
+      more: () => {
+        pick("Valuation basis", "issuer_trading");
+        pick("Market cap (m)", "3100");
+        pick("Net debt (m)", "1900");
+        pick("Market data as-of", "2026-10-30");
+        pick("Market data source", "Exchange close");
+      },
+    });
+    const valuation = part(sheet, "Valuation and peers");
+    expect(shown(valuation, "Valuation basis")).toEqual(["Issuer's own trading multiple"]);
+    const market = part(valuation, "Issuer market values");
+    expect(shown(market, "Market cap (m)")).toEqual(["3100"]);
+    expect(shown(market, "Net debt (m)")).toEqual(["1900"]);
+    expect(shown(market, "Enterprise value (m)")).toEqual(["Not given"]);
+    expect(shown(market, "EBITDA basis")).toEqual(["LTM (last twelve months)"]);
+    expect(shown(market, "Market data as-of")).toEqual(["2026-10-30"]);
+    expect(shown(market, "Market data source")).toEqual(["Exchange close"]);
+  });
+
+  it("V20 reads a valuation the context does not carry as not given", async () => {
+    const { sheet } = await sheetAfter({ template: context, advanced: true });
+    expect(part(sheet, "Valuation and peers")).toHaveTextContent("Not given");
+  });
+
+  it("V21 shows the module options by their labels", async () => {
+    const { sheet } = await sheetAfter({ advanced: true, more: chooseModuleOptions });
+    const options = part(sheet, "Module options");
+    expect(shown(options, "Relative value mode")).toEqual(["CLO Screening"]);
+    expect(shown(options, "Deep Debate")).toEqual(["On"]);
+  });
+
+  it("V22 shows module options a carried context sends, even below Advanced", async () => {
+    const { sheet } = await sheetAfter({
+      template: { ...fullTemplate, module_options: { cp3_mode: "", cp6_deep_debate: false } },
+    });
+    const options = part(sheet, "Module options");
+    expect(shown(options, "Relative value mode")).toEqual(["Let the module decide (default)"]);
+    expect(shown(options, "Deep Debate")).toEqual(["Off"]);
+  });
+
+  it("V23 reads unsent module options as not given at Advanced, and leaves them out below it", async () => {
+    const { sheet } = await sheetAfter({ advanced: true });
+    const options = part(sheet, "Module options");
+    expect(within(options).getByText("Not given")).toBeInTheDocument();
+    expect(shown(options, "Relative value mode")).toEqual([]);
+    cleanup();
+    vi.unstubAllGlobals();
+    const basic = await sheetAfter();
+    expect(within(basic.sheet).queryByRole("group", { name: "Module options" })).toBeNull();
+  });
+
+  it("V24 shows each pinned assumption by module name, and an unpinned one as not given", async () => {
+    const { sheet } = await sheetAfter({ advanced: true, more: pinDownsideAndRates });
+    const assumptions = part(sheet, "Scenario assumptions");
+    const downside = part(assumptions, "Downside");
+    expect(shown(downside, "Rationale")).toEqual(["Committee stress cases"]);
+    const scenario = part(downside, "Scenario 1");
+    expect(shown(scenario, "EBITDA decline (%)")).toEqual(["20"]);
+    expect(shown(scenario, "Interest increase (%)")).toEqual(["15"]);
+    const rates = part(assumptions, "Rates, FX & hedging");
+    expect(shown(rates, "Rate shocks (bps)")).toEqual(["100, 200"]);
+    expect(shown(rates, "FX shocks (%)")).toEqual(["10"]);
+    expect(shown(rates, "Hedge ratio (%)")).toEqual(["Not given"]);
+    expect(shown(rates, "Rationale")).toEqual(["House scenarios"]);
+    expect(part(assumptions, "Liquidity")).toHaveTextContent("LiquidityNot given");
+    expect(part(assumptions, "Refinancing & LME")).toHaveTextContent("Not given");
+    expect(within(assumptions).queryByRole("group", { name: "Recovery & fulcrum" })).toBeNull();
+  });
+
+  it("V25 shows a pin a carried context holds for a module this pathway does not run", async () => {
+    const { sheet } = await sheetAfter({
+      template: {
+        ...fullTemplate,
+        assumptions: {
+          ...fullTemplate.assumptions,
+          cp4c: { ev_multiple: "6.5", rationale: "Distressed comps" },
+        },
+      },
+    });
+    const recovery = part(part(sheet, "Scenario assumptions"), "Recovery & fulcrum");
+    expect(shown(recovery, "EV multiple")).toEqual(["6.5"]);
+    expect(shown(recovery, "Rationale")).toEqual(["Distressed comps"]);
+  });
+
+  it("V26 shows the modules by name, the left-out ones, and never the forecast", async () => {
+    const run = pathwayModules("credit_snapshot").filter((code) => code !== "CP-6");
+    const { sheet, fetchMock } = await sheetAfter({
+      advanced: true,
+      summary: { ...plan, modules: run },
+      more: () => {
+        fireEvent.click(screen.getByRole("checkbox", { name: "Committee decision" }));
+      },
+    });
+    expect(sentSummary(fetchMock)).toMatchObject({ modules: run });
+    const purpose = part(sheet, "Purpose and modules");
+    expect(within(purpose).getByRole("heading", { name: "Modules (13)" })).toBeInTheDocument();
+    expect(within(purpose).getByText("Fundamental credit")).toBeInTheDocument();
+    expect(purpose).toHaveTextContent("Left out: Committee decision");
+    expect(purpose).not.toHaveTextContent("Cash flow model");
+  });
+
+  // Fills every group so the check covers every block: slower than the default 5 s under load.
+  it("V27 shows no raw data: no braces, keys, module codes, ids or the form's version", async () => {
+    const { sheet, fetchMock } = await sheetAfter({
+      advanced: true,
+      summary: {
+        ...plan,
+        modules: pathwayModules("credit_snapshot"),
+        prior: { id: "20261116-083145-01", as_of: "2025-03-31", pathway: "credit_snapshot" },
+        changes: "CP-8 compares with the credit_snapshot run (20261116-083145-01)",
+        omitted: ["liquidity-runway"],
+        omitted_titles: ["Liquidity runway"],
+        items: [
+          {
+            id: "CP-4:declared-none",
+            scope: "CP-4",
+            outcome: "will_refuse",
+            reason: "No agreement is chosen among the documents.",
+          },
+        ],
+      },
+      documents: () => {
+        pick("Issue classification", "investment_grade");
+      },
+      more: () => {
+        chooseAttachments();
+        describeIssuer();
+        addFacility();
+        addQuoteRatingQuestion();
+        peerFiguresAndOwnMultiple();
+        chooseModuleOptions();
+        pinDownsideAndRates();
+      },
+    });
+    const sent = sentSummary(fetchMock);
+    expect(sent.context.schema).toBe("context/1");
+    expect(JSON.stringify(sent)).toContain("investment_grade");
+    for (const shownText of [
+      sheet.textContent,
+      screen.getByRole("region", { name: "Limits to decide" }).textContent,
+    ]) {
+      expect(shownText).not.toMatch(/[{}[\]]/);
+      expect(shownText).not.toMatch(/\b[a-z][a-z0-9]*_[a-z0-9_]+\b/);
+      expect(shownText).not.toMatch(/\bCP-[A-Z0-9]+\b/);
+      expect(shownText).not.toMatch(/20261116-083145-01|declared-none|sub-1|server-approved/);
+      expect(shownText).not.toMatch(/context\/1|true|false|null|undefined|NaN/);
+    }
+  }, 20_000);
 });

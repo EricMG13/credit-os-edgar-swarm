@@ -8,6 +8,8 @@ export type RowKind =
   | "peers"
   | "precedents"
   | "scenarios";
+/** The row editors the More context step draws under Context details, in order. */
+export const CONTEXT_ROW_KINDS = ["deal_terms", "quotes", "ratings", "research_questions"] as const;
 export type RowField = {
   key: string;
   label: string;
