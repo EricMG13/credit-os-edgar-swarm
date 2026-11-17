@@ -27,7 +27,7 @@ environment facts and its rules for this group; `AGENTS.md` and the audit `READM
 ## Rounds and models (ruling R12, owner, 2026-11-17)
 
 Rounds 1 and 2 of a task run on Sonnet. From round 3 on (a second send-back after review), the
-implementer and the reviewers run on Opus at `xhigh`. A task still failing review after round 4
+implementer and the reviewers run on Opus at `medium` effort (owner correction, 2026-11-17: "opus medium"). A task still failing review after round 4
 is left open and listed for the lead. Each report names the model of each round.
 
 ## Worktree set-up (implementer, once)
