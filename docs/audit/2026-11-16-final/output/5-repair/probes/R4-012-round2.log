@@ -1,0 +1,96 @@
+Baseline a30247eb: unchanged independent actual-caller probe, exit 1
+{"pass":false,"expected":false,"actual":true,"text":"A gap remains between the Group of Seven (G7) economies.","actualCell":"Qualification recorded in Evidence.","expectedCell":"A gap remains between the Group of Seven (G7) economies."}
+{"pass":false,"expected":false,"actual":true,"text":"The margin rose eleven pp. 3 quarters running.","actualCell":"Qualification recorded in Evidence.","expectedCell":"The margin rose eleven pp. 3 quarters running."}
+{"pass":true,"expected":false,"actual":false,"text":"No series is available for the Group of Seven (G7) economies.","actualCell":"No series is available for the Group of Seven (G7) economies.","expectedCell":"No series is available for the Group of Seven (G7) economies."}
+{"pass":false,"expected":true,"actual":false,"text":"Lease detail not available (G12).","actualCell":"Lease detail not available (G12).","expectedCell":"Qualification recorded in Evidence."}
+{"pass":false,"expected":true,"actual":false,"text":"Threshold unknown (G12).","actualCell":"Threshold unknown (G12).","expectedCell":"Qualification recorded in Evidence."}
+{"pass":false,"expected":true,"actual":false,"text":"(G12).","actualCell":"(G12).","expectedCell":"Qualification recorded in Evidence."}
+{"pass":false,"expected":true,"actual":false,"text":"See p. 1000 for the covenant.","actualCell":"See p. 1000 for the covenant.","expectedCell":"Qualification recorded in Evidence."}
+{"pass":false,"expected":true,"actual":false,"text":"See pages 1024–1026 for the covenant.","actualCell":"See pages 1024–1026 for the covenant.","expectedCell":"Qualification recorded in Evidence."}
+{"failures":7}
+
+Final 02fefa34: unchanged independent actual-caller probe, exit 0
+{"pass":true,"expected":false,"actual":false,"text":"A gap remains between the Group of Seven (G7) economies.","actualCell":"A gap remains between the Group of Seven (G7) economies.","expectedCell":"A gap remains between the Group of Seven (G7) economies."}
+{"pass":true,"expected":false,"actual":false,"text":"The margin rose eleven pp. 3 quarters running.","actualCell":"The margin rose eleven pp. 3 quarters running.","expectedCell":"The margin rose eleven pp. 3 quarters running."}
+{"pass":true,"expected":false,"actual":false,"text":"No series is available for the Group of Seven (G7) economies.","actualCell":"No series is available for the Group of Seven (G7) economies.","expectedCell":"No series is available for the Group of Seven (G7) economies."}
+{"pass":true,"expected":true,"actual":true,"text":"Lease detail not available (G12).","actualCell":"Qualification recorded in Evidence.","expectedCell":"Qualification recorded in Evidence."}
+{"pass":true,"expected":true,"actual":true,"text":"Threshold unknown (G12).","actualCell":"Qualification recorded in Evidence.","expectedCell":"Qualification recorded in Evidence."}
+{"pass":true,"expected":true,"actual":true,"text":"(G12).","actualCell":"Qualification recorded in Evidence.","expectedCell":"Qualification recorded in Evidence."}
+{"pass":true,"expected":true,"actual":true,"text":"See p. 1000 for the covenant.","actualCell":"Qualification recorded in Evidence.","expectedCell":"Qualification recorded in Evidence."}
+{"pass":true,"expected":true,"actual":true,"text":"See pages 1024–1026 for the covenant.","actualCell":"Qualification recorded in Evidence.","expectedCell":"Qualification recorded in Evidence."}
+{"failures":0}
+
+New actual-caller tests before production edits: Vitest exit 1, 32 failed / 12 passed (44)
+
+ RUN  v4.1.12 /workspace/audit-reference-round2/web
+
+ ❯ src/pages/connected/publishedReport.reference-round2.test.tsx (44 tests | 32 failed) 878ms
+   × retains the ordinary chart qualification: A gap remains between the Group of Seven (G7) economies. 7ms
+   × retains the ordinary chart qualification: The margin rose eleven pp. 3 quarters running. 1ms
+   × retains the ordinary chart qualification: The margin rose one hundred pp. 3 quarters running. 0ms
+   × retains the ordinary chart qualification: A gap remains between the Group of Seven (G7). 0ms
+   × retains the ordinary chart qualification: A gap remains between the G20 economies (G20). 0ms
+   × keeps the actual chart citation in Evidence: Lease detail not available (G12). 0ms
+   × keeps the actual chart citation in Evidence: Threshold unknown (G12). 0ms
+   × keeps the actual chart citation in Evidence: Threshold absent (G12). 0ms
+   × keeps the actual chart citation in Evidence: Lease detail pending (G12). 0ms
+   × keeps the actual chart citation in Evidence: (G12). 0ms
+   × keeps the actual chart citation in Evidence: (G12); 0ms
+   × keeps the actual chart citation in Evidence: See p. 1000 for the covenant. 0ms
+   × keeps the actual chart citation in Evidence: See pages 1024–1026 for the covenant. 1ms
+   × keeps the actual chart citation in Evidence: See page 2025 for the covenant. 0ms
+   × keeps the actual chart citation in Evidence: The covenant is on p. 1000. 0ms
+   × keeps the actual chart citation in Evidence: The trigger is on pp. 1024–1026. 0ms
+   × retains the full ordinary passage and its trace: A gap remains between the Group of Seven (G7) economies. 50ms
+   × retains the full ordinary passage and its trace: The margin rose eleven pp. 3 quarters running. 6ms
+   × retains the full ordinary passage and its trace: The margin rose one hundred pp. 3 quarters running. 4ms
+   × retains the full ordinary passage and its trace: A gap remains between the Group of Seven (G7). 4ms
+   × retains the full ordinary passage and its trace: A gap remains between the G20 economies (G20). 4ms
+   × holds back the actual plain-table citation with its trace: Lease detail not available (G12). 139ms
+   × holds back the actual plain-table citation with its trace: Threshold unknown (G12). 51ms
+   × holds back the actual plain-table citation with its trace: Threshold absent (G12). 106ms
+   × holds back the actual plain-table citation with its trace: Lease detail pending (G12). 77ms
+   × holds back the actual plain-table citation with its trace: (G12). 33ms
+   × holds back the actual plain-table citation with its trace: (G12); 30ms
+   × holds back the actual plain-table citation with its trace: See p. 1000 for the covenant. 33ms
+   × holds back the actual plain-table citation with its trace: See pages 1024–1026 for the covenant. 32ms
+   × holds back the actual plain-table citation with its trace: See page 2025 for the covenant. 38ms
+   × holds back the actual plain-table citation with its trace: The covenant is on p. 1000. 38ms
+   × holds back the actual plain-table citation with its trace: The trigger is on pp. 1024–1026. 37ms
+
+
+Final focused: Vitest exit 0
+ Test Files  7 passed (7)
+      Tests  253 passed (253)
+   Start at  18:57:17
+   Duration  11.83s (transform 702ms, setup 502ms, import 4.86s, tests 2.73s, environment 2.92s)
+
+Additional actual callers: Vitest exit 0
+ Test Files  10 passed (10)
+      Tests  123 passed (123)
+   Start at  18:57:43
+   Duration  18.30s (transform 978ms, setup 592ms, import 8.24s, tests 4.32s, environment 3.89s)
+
+Signal: Vitest exit 0 (existing React act warnings omitted)
+ Test Files  34 passed (34)
+      Tests  630 passed (630)
+   Start at  18:57:43
+   Duration  136.27s (transform 2.61s, setup 3.07s, import 44.55s, tests 65.61s, environment 17.52s)
+
+reference-round2-lint.log: exit 0
+> credit-os-web@0.0.0 lint
+> eslint --max-warnings=0 .
+
+reference-round2-format.log: exit 0
+> credit-os-web@0.0.0 format:check
+> prettier --check .
+
+Checking formatting...
+All matched files use Prettier code style!
+
+reference-round2-types.log: exit 0
+> credit-os-web@0.0.0 typecheck
+> tsc --noEmit
+
+reference-round2-quality.log: exit 0
+quality gate: 0 finding(s) in 0 changed file(s), 0 line(s) in scope

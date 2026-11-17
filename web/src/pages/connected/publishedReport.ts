@@ -597,11 +597,51 @@ const LONG_HASH = /\b(?=[0-9a-f]*[a-f])[0-9a-f]{32,}\b/i;
 const REGISTER_ID = /\bCP-[A-Z0-9]+-(?:GAP|MON|FACT|CALC|EVID|SRC|ASSUMPTION)-[A-Z0-9-]+\b/i;
 
 // A gap id as the modules spell a gap, the report-wide id after the empty-set mark ("∅ G12",
-// "∅ G12 n.m.", "∅ [G12]"), a parenthesized gap id, and a run code. Bare "G20" in a
-// sentence is not a gap id. Page locators also stay in Evidence. A module code is not a reference here: a findings page draws it as the module's
+// "∅ G12 n.m.", "∅ [G12]"), and a run code. A parenthesized id is an annotation unless its
+// adjacent text names a group, instrument or mathematical quantity. An earlier "gap" in the
+// clause cannot turn that label into a citation. A module code is not a reference here: a
+// findings page draws it as the module's
 // name (`readerText`, D-13 part 2), so it is not held back.
 const GAP_ID = /∅\s*\[?G\d+\b/;
 const RUN_CODE = /\b\d{8}-\d{6}-\d{2}\b/;
+
+function parenthesizedGap(text: string) {
+  return [...text.matchAll(/\(G\d+\)/gi)].some((match) => {
+    const before = text.slice(0, match.index);
+    const after = text.slice(match.index + match[0].length);
+    const namedLabel =
+      /(?:\bgroup of \p{L}+(?:-\p{L}+)?|\b(?:economies|currencies)|\b(?:series|class|gen|tranche)\s+[\w-]+(?:\s+[\w-]+)?)\s*$/iu.test(
+        before,
+      );
+    const definedQuantity =
+      /^\s*(?:=|equals?\b)/i.test(after) ||
+      /(?:^|[,;:=]|\b(?:is|equals?))\s*\d+(?:\.\d+)?x\s*$/i.test(before);
+    return !namedLabel && !definedQuantity;
+  });
+}
+
+// Page locators have no page-number length limit. A word before "pp" and an uninterrupted
+// count/duration phrase after it can continue a percentage-point quantity. Duration modifiers
+// have no word-count limit, but punctuation ends that phrase; bare/parenthesized locators
+// have no preceding quantity. Explicit locator cues take precedence. Word fragments, S&P and
+// p.p. are excluded at the token boundary; "front page 2025" is a headline, not a locator.
+function pageCitation(text: string) {
+  return [...text.matchAll(/(?<![\w&.-])(p|pg|pp|pages?)\.?\s*(\d+)\b/gi)].some((match) => {
+    const before = text.slice(0, match.index);
+    const after = text.slice(match.index + match[0].length);
+    const marker = match[1]?.toLowerCase();
+    if (/\b(?:see|at|on|as)\s*$/i.test(before)) return true;
+    if (marker === "pp") {
+      if (/\d\s*$/.test(before)) return false;
+      if (
+        /\p{L}\s*$/u.test(before) &&
+        /^\s+(?:\p{L}+(?:-\p{L}+)*\s+)*(?:days?|weeks?|months?|quarters?|years?)\b/iu.test(after)
+      )
+        return false;
+    }
+    return !(marker === "page" && /\bfront\s+$/i.test(before));
+  });
+}
 
 export function containsReference(text: string) {
   return (
@@ -609,8 +649,8 @@ export function containsReference(text: string) {
     LONG_HASH.test(text) ||
     REGISTER_ID.test(text) ||
     GAP_ID.test(text) ||
-    /\(G\d+\)/.test(text) ||
-    /\b(?:pp?\.|pages?)\s*\d+(?:\s*[-–]\s*\d+)?\b/i.test(text) ||
+    parenthesizedGap(text) ||
+    pageCitation(text) ||
     RUN_CODE.test(text)
   );
 }
