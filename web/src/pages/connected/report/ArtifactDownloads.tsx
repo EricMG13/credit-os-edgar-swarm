@@ -5,15 +5,17 @@ import { useResource } from "../useResource";
 
 type FileLink = { label: string; href: string };
 
+const NOT_LISTED = "The original model and calculation files could not be listed.";
+
 export function ArtifactDownloads({ folder }: { folder: string }) {
   const load = useCallback(
     async (signal: AbortSignal) => {
       const response = await fetch(`/connected/artifacts/${encodeURIComponent(folder)}`, {
         signal,
       });
-      if (!response.ok)
-        throw new Error("The original model and calculation files could not be listed.");
-      const data = (await response.json()) as { files: FileLink[] };
+      if (!response.ok) throw new Error(NOT_LISTED);
+      const data = (await response.json()) as { files?: FileLink[] };
+      if (!Array.isArray(data.files)) throw new Error(NOT_LISTED);
       return data.files;
     },
     [folder],
@@ -22,6 +24,11 @@ export function ArtifactDownloads({ folder }: { folder: string }) {
   return (
     <section className={card}>
       <h3 className={heading}>Model and calculation files</h3>
+      {!value && !error && (
+        <p role="status" className="text-text-secondary">
+          Loading the model and calculation files…
+        </p>
+      )}
       {error && <p role="status">{error}</p>}
       {value &&
         value.map(({ label, href }) => (

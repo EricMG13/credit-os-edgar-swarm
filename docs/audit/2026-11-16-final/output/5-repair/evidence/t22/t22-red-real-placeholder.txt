@@ -1,0 +1,48 @@
+
+ RUN  v4.1.12 /workspace/recovery-t22/web
+
+ ❯ src/pages/connected/report/Confidence.recovery.test.tsx (5 tests | 2 failed) 517ms
+   × replaces synthetic no-page placeholders with the exact scored inputs and existing method 318ms
+   × keeps real source identity, excerpt and qualification while dropping only placeholder chips 17ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/pages/connected/report/Confidence.recovery.test.tsx > replaces synthetic no-page placeholders with the exact scored inputs and existing method
+Error: expect(element).not.toHaveTextContent()
+
+Expected element not to have text content:
+  the row cites no page or register
+Received:
+  Confidence inputsFinancial foundation · Handoff line 11The statement89 out of 100 · HighHow it was derivedEvidence retained with this item Recorded confidence inputs Directly Sourced 8Calculated 2Assumption-Based 2Analyst Inference 0Weak Lineage 0Untraced 0Conflicting 0Insufficient Information 0Fields present 95Fields total 100Source gate passCRITICAL 0MATERIAL 0MINOR 1Confidence method Formula (0.6 × evidence quality + 0.4 × field coverage) × source-gate factor − finding penaltiesSource-gate factors pass 1.0; partial 0.7; fail 0.0Caps and rounding CRITICAL cap 39; MATERIAL cap 59; half to even.no page the row cites no page or registerCloseOpen in Evidence
+ ❯ src/pages/connected/report/Confidence.recovery.test.tsx:101:22
+     99|   expect(drawer).toHaveTextContent("0.6 × evidence quality + 0.4 × fie…
+    100|   expect(drawer).toHaveTextContent("89 out of 100 · High");
+    101|   expect(drawer).not.toHaveTextContent("the row cites no page or regis…
+       |                      ^
+    102|   expect(within(drawer).getByRole("link", { name: "Open in Evidence" }…
+    103|     "href",
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  src/pages/connected/report/Confidence.recovery.test.tsx > keeps real source identity, excerpt and qualification while dropping only placeholder chips
+AssertionError: expected '{"title":"Sources for Confidence inpu…' not to contain 'the row cites no page or register'
+
+Expected: "the row cites no page or register"
+Received: "{"title":"Sources for Confidence inputs","heading":"Confidence inputs","subtitle":"Financial foundation · Handoff line 11","statement":"89 out of 100 · High","derivation":{"label":"Evidence retained with this item","value":"","note":null,"children":[{"label":"Recorded confidence inputs","value":"","note":null,"children":[{"label":"Directly Sourced","value":"8","note":null,"children":[]},{"label":"Calculated","value":"2","note":null,"children":[]},{"label":"Assumption-Based","value":"2","note":null,"children":[]},{"label":"Analyst Inference","value":"0","note":null,"children":[]},{"label":"Weak Lineage","value":"0","note":null,"children":[]},{"label":"Untraced","value":"0","note":null,"children":[]},{"label":"Conflicting","value":"0","note":null,"children":[]},{"label":"Insufficient Information","value":"0","note":null,"children":[]},{"label":"Fields present","value":"95","note":null,"children":[]},{"label":"Fields total","value":"100","note":null,"children":[]},{"label":"Source gate","value":"pass","note":null,"children":[]},{"label":"CRITICAL","value":"0","note":null,"children":[]},{"label":"MATERIAL","value":"0","note":null,"children":[]},{"label":"MINOR","value":"1","note":null,"children":[]}]},{"label":"Confidence method","value":"","note":null,"children":[{"label":"Formula","value":"(0.6 × evidence quality + 0.4 × field coverage) × source-gate factor − finding penalties","note":null,"children":[]},{"label":"Source-gate factors","value":"pass 1.0; partial 0.7; fail 0.0","note":null,"children":[]},{"label":"Caps and rounding","value":"CRITICAL cap 39; MATERIAL cap 59; half to even.","note":null,"children":[]}]},{"label":"no page","value":"","note":"the row cites no page or register","children":[]},{"label":"annual.pdf p.7","value":"","note":"Recorded qualification for FY2025.","children":[]}]},"excerpt":{"quote":"Exact source quotation.","source":"annual.pdf p.7"},"qualification":null,"evidenceItem":"run-a%2FCP-1.md~aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa-11","sourceLinks":[{"label":"Open cited source page 7: annual.pdf","href":"/connected/sources/run-a/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb/annual.pdf?page=7"},{"label":"Open source file: annual.pdf","href":"/connected/sources/run-a/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb/annual.pdf"}]}"
+
+ ❯ src/pages/connected/report/Confidence.recovery.test.tsx:146:37
+    144|     ]),
+    145|   );
+    146|   expect(JSON.stringify(trace)).not.toContain("the row cites no page o…
+       |                                     ^
+    147| });
+    148|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 3 passed (5)
+   Start at  18:29:36
+   Duration  2.36s (transform 609ms, setup 78ms, import 1.28s, tests 517ms, environment 364ms)
+

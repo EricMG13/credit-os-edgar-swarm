@@ -1,0 +1,11 @@
+
+ RUN  v4.1.12 /workspace/recovery-t22-round2/web
+
+
+ Test Files  44 passed (44)
+      Tests  771 passed (771)
+   Start at  18:52:19
+   Duration  133.32s (transform 3.05s, setup 3.69s, import 45.18s, tests 56.70s, environment 21.15s)
+
+
+exit_code=0

@@ -1,12 +1,12 @@
 import { Button } from "@/components/base/buttons/button";
 import { ArrowRight } from "@untitledui/icons";
-import { SourceFileLinks } from "@/pages/library/parts/SourceFileLinks";
-import { sourceCitationNote, sourceFileLinks } from "../sourceFiles";
+import { citedSourcePages, sourceCitationNote } from "../sourceFiles";
 import type { ReactNode } from "react";
 import { DownloadButton } from "@/pages/library/parts/DownloadButton";
 import { DerivationTree } from "@/pages/library/parts/DerivationTree";
 import { RunTabLink } from "@/pages/library/parts/RunFrame";
 import type { TreeNode } from "@/pages/library/slice";
+import { Badge } from "@/components/base/badges/badges";
 import { StatusBadge } from "@/components/status/StatusBadge";
 import { moduleName, type Mode } from "../api";
 import { card, field, heading } from "../layout";
@@ -36,7 +36,46 @@ import {
 } from "../ReportContent";
 import { ArtifactDownloads } from "./ArtifactDownloads";
 import { ReportRecord } from "./Record";
+import { RecordedModelQualifications, type ForecastModel } from "./ForecastRecord";
 import { ScriptChecks } from "./ScriptChecks";
+
+const BARE_MODULE_CODE = /^CP-[A-Z0-9]+$/;
+
+/** The line of a handoff's own title: the first level-1 section headed by nothing but a module code. */
+function titleLine(sections: Section[]) {
+  return sections.find(({ level, heading }) => level === 1 && BARE_MODULE_CODE.test(heading.trim()))
+    ?.line;
+}
+
+const LIST_MARKER = /^([ \t]*)- +/;
+// \x60 is a backtick: a literal one would mislead the class scanner of the static gate.
+const FENCE_LINE = /^[ \t]*\x60{3}[^\n]*$/;
+const NAMED_HASH = /^(\S.*?) ([a-f0-9]{64})$/;
+
+/** A handoff line as written, without its Markdown: list markers (indentation kept) and code fences. */
+function withoutMarkdown(text: string) {
+  return text
+    .split("\n")
+    .filter((item) => !FENCE_LINE.test(item))
+    .map((item) => item.replace(LIST_MARKER, "$1"))
+    .join("\n");
+}
+
+/** One text block of a handoff: a "name hash" source line as a name with its hash in mono. */
+function HandoffText({ text }: { text: string }) {
+  const plain = withoutMarkdown(text);
+  const named = LIST_MARKER.test(text) ? NAMED_HASH.exec(plain) : null;
+  if (named)
+    return (
+      <div className="grid gap-0.5 text-sm">
+        <p className="font-medium wrap-anywhere text-text-primary">{named[1]}</p>
+        <code className="wrap-anywhere text-text-tertiary">{named[2]}</code>
+      </div>
+    );
+  return (
+    <p className="whitespace-pre-wrap wrap-anywhere text-text-secondary">{richParts(plain)}</p>
+  );
+}
 
 function rowView(table: Table, line: number | undefined) {
   const row = table.rows.find((item) => item.line === line);
@@ -54,6 +93,7 @@ function EvidenceLocation({
 }) {
   if (entry.output.parseError)
     return <p className="text-text-secondary">This handoff could not be read into sections.</p>;
+  const title = titleLine(entry.sections);
   const sections = classifySections(entry.sections)
     .filter(
       ({ role, section }) =>
@@ -63,7 +103,10 @@ function EvidenceLocation({
           section.heading === FORECAST_INPUTS &&
           section.blocks.some((block) => block.line === line)),
     )
-    .map(({ section }) => section);
+    .map(({ section }) => section)
+    // The title of a handoff is the module's code: with nothing under it, it heads nothing in the
+    // whole view and the card names the module. A location that points at it still draws it.
+    .filter((section) => section.line !== title || section.blocks.length > 0 || line !== undefined);
   const visible =
     line === undefined
       ? sections
@@ -71,7 +114,9 @@ function EvidenceLocation({
   return visible.length ? (
     visible.map((section) => (
       <section key={section.line} className="grid gap-3 border-t border-border-hairline pt-3">
-        <h3 className="font-semibold text-text-primary">{richParts(section.heading)}</h3>
+        <h3 className="font-semibold text-text-primary">
+          {section.line === title ? moduleName(entry.output.module) : richParts(section.heading)}
+        </h3>
         {section.blocks.map((block) => {
           if (block.type === "equity")
             return block.text ? (
@@ -107,12 +152,10 @@ function EvidenceLocation({
                 />
               ) : section.heading === FORECAST_INPUTS ? (
                 <pre className="max-h-100 overflow-auto rounded-ds-sm bg-surface-subtle p-3 text-xs whitespace-pre-wrap wrap-anywhere">
-                  {block.text}
+                  {withoutMarkdown(block.text).trim()}
                 </pre>
               ) : (
-                <p className="whitespace-pre-wrap wrap-anywhere text-text-secondary">
-                  {richParts(block.text)}
-                </p>
+                <HandoffText text={block.text} />
               )}
               {block.type === "table" && basis && (
                 <p className="text-sm text-text-secondary">{plainModuleNames(basis)}</p>
@@ -142,6 +185,7 @@ function EvidenceCitation({
   outputId: string;
 }) {
   const note = sourceCitationNote(chip);
+  const pages = citedSourcePages(outputId.split("/")[0] ?? "", chip);
   return (
     <li className="rounded-ds-sm border border-border-hairline p-3 text-sm text-text-secondary">
       <p className="font-medium text-text-primary">{chip.label}</p>
@@ -152,7 +196,15 @@ function EvidenceCitation({
           {chip.excerpt}
         </blockquote>
       )}
-      <SourceFileLinks links={sourceFileLinks(outputId.split("/")[0] ?? "", chip)} />
+      {pages && (
+        <>
+          <p>{pages}</p>
+          <p className="text-xs text-text-tertiary">
+            Pages follow the source supplied to this run and may differ from the filing’s printed
+            pages.
+          </p>
+        </>
+      )}
       {chip.sha256 && <code className="mt-1 block wrap-anywhere">{chip.sha256}</code>}
     </li>
   );
@@ -228,6 +280,26 @@ function TraceDetailsView({
   );
 }
 
+const RANKED = ["High", "Medium", "Low"] as const;
+
+/** Gaps in groups of stated severity: High, Medium, Low, any other stated term, then none stated. */
+function severityGroups<T extends { gap: GapRecord }>(items: T[]) {
+  const order = (severity: string | null) => {
+    const ranked = RANKED.indexOf(severity as (typeof RANKED)[number]);
+    return ranked >= 0 ? ranked : severity === null ? RANKED.length + 1 : RANKED.length;
+  };
+  const groups = new Map<string | null, T[]>();
+  for (const item of items)
+    groups.set(item.gap.severity, [...(groups.get(item.gap.severity) ?? []), item]);
+  return [...groups].sort(([a], [b]) => order(a) - order(b));
+}
+
+function GapSeverity({ severity }: { severity: string | null }) {
+  if (severity === "High" || severity === "Medium" || severity === "Low")
+    return <StatusBadge set="Gap severity" state={severity} />;
+  return severity ? severity : <span className="text-text-tertiary">Not recorded</span>;
+}
+
 function EvidenceGaps({
   run,
   entries,
@@ -265,50 +337,56 @@ function EvidenceGaps({
                 <th className="px-4 py-3 font-medium">Trace</th>
               </tr>
             </thead>
-            <tbody>
-              {items.map(({ entry, section, gap }) => (
-                <tr
-                  key={`${entry.output.id}-${String(gap.line)}`}
-                  className="border-t border-border-hairline align-top"
-                >
-                  <th scope="row" className="px-4 py-3 font-medium text-text-primary">
-                    {plainModuleNames(gap.title || section.heading)}
+            {severityGroups(items).map(([severity, rows]) => (
+              <tbody key={severity ?? ""}>
+                <tr className="border-t border-border-hairline bg-surface-subtle">
+                  <th scope="rowgroup" colSpan={5} className="px-4 py-2 text-left font-semibold">
+                    <span className="flex items-center gap-2">
+                      <GapSeverity severity={severity} />
+                      <Badge size="sm" color="gray">
+                        {String(rows.length)}
+                      </Badge>
+                    </span>
                   </th>
-                  <td className="px-4 py-3">
-                    {moduleName(entry.output.module)}
-                    {!entry.selected && ` · ${entry.output.label}`}
-                  </td>
-                  <td className="px-4 py-3">
-                    {gap.severity === "High" ||
-                    gap.severity === "Medium" ||
-                    gap.severity === "Low" ? (
-                      <StatusBadge set="Gap severity" state={gap.severity} />
-                    ) : gap.severity ? (
-                      gap.severity
-                    ) : (
-                      <span className="text-text-tertiary">Not recorded</span>
-                    )}
-                  </td>
-                  <td className="max-w-xl whitespace-pre-wrap px-4 py-3 text-text-secondary">
-                    {plainModuleNames(gap.details) || "No additional detail recorded."}
-                  </td>
-                  <td className="px-4 py-3">
-                    <Button
-                      href={evidencePath(run.folder, entry, gap.line)}
-                      color="link-gray"
-                      size="sm"
-                    >
-                      Open source
-                    </Button>
-                  </td>
                 </tr>
-              ))}
-            </tbody>
+                {rows.map(({ entry, section, gap }) => (
+                  <tr
+                    key={`${entry.output.id}-${String(gap.line)}`}
+                    className="border-t border-border-hairline align-top"
+                  >
+                    <th scope="row" className="px-4 py-3 font-medium text-text-primary">
+                      {plainModuleNames(gap.title || section.heading)}
+                    </th>
+                    <td className="px-4 py-3">
+                      {moduleName(entry.output.module)}
+                      {!entry.selected && ` · ${entry.output.label}`}
+                    </td>
+                    <td className="px-4 py-3">
+                      <GapSeverity severity={gap.severity} />
+                    </td>
+                    <td className="max-w-xl whitespace-pre-wrap px-4 py-3 text-text-secondary">
+                      {plainModuleNames(gap.details) || "No additional detail recorded."}
+                    </td>
+                    <td className="px-4 py-3">
+                      <Button
+                        href={evidencePath(run.folder, entry, gap.line)}
+                        color="link-gray"
+                        size="sm"
+                      >
+                        Open source
+                      </Button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            ))}
           </table>
         </div>
       ) : (
         <p className="mt-4 text-text-secondary">
-          {module ? `No recorded gaps for ${moduleName(module)}.` : "This run lists no gaps."}
+          {module
+            ? `No module-written gaps for ${moduleName(module)}.`
+            : "The module handoffs list no gaps."}
         </p>
       )}
     </section>
@@ -415,9 +493,7 @@ function EvidenceSummary({
 function EvidenceSources({
   sourceGroups,
   module,
-  folder,
 }: {
-  folder: string;
   sourceGroups: SourceGroup[];
   module?: string;
 }) {
@@ -451,7 +527,6 @@ function EvidenceSources({
                       .filter(Boolean)
                       .join(" · ")}
                   </p>
-                  <SourceFileLinks links={sourceFileLinks(folder, source)} />
                   {source.sourceWarning && <p>{source.sourceWarning}</p>}
                   {source.sha256 && (
                     <code className="wrap-anywhere text-text-tertiary">{source.sha256}</code>
@@ -641,6 +716,7 @@ export function ReportEvidence({
   target,
   comparison,
   mode,
+  models = [],
 }: {
   snapshot: Snapshot;
   run: PublishedRun;
@@ -648,6 +724,7 @@ export function ReportEvidence({
   target?: string;
   comparison?: ReactNode;
   mode: Mode;
+  models?: ForecastModel[];
 }) {
   const checks = run.evidence.scriptChecks ?? [];
   const { module, invalidTraceAddress, tab, selectedIndex, entry, selectedModule, line } =
@@ -687,8 +764,12 @@ export function ReportEvidence({
           </p>
         </section>
       )}
-      {tab === "Sources" && (
-        <EvidenceSources sourceGroups={sourceGroups} module={module} folder={run.folder} />
+      {tab === "Sources" && <EvidenceSources sourceGroups={sourceGroups} module={module} />}
+      {tab === "Trace" && !entry && !invalidTraceAddress && (
+        <p className="text-text-secondary">
+          Choose Show sources beside a paragraph, row or figure on another page to see here how it
+          was derived, or open a handoff below.
+        </p>
       )}
       {showHandoffs(tab, entry, invalidTraceAddress) && (
         <EvidenceHandoffs entries={entries} module={module} run={run} />
@@ -699,7 +780,12 @@ export function ReportEvidence({
       {tab === "Trace" && !entry && (!module || module === "CP-8") && comparison}
       {tab === "Gaps" && <EvidenceGaps run={run} entries={entries} module={module} />}
       {tab === "Script checks" && <ScriptChecks records={checks} module={module} />}
-      {tab === "Record" && <ReportRecord run={run} entries={entries} module={module} mode={mode} />}
+      {tab === "Record" && (
+        <>
+          <ReportRecord run={run} entries={entries} module={module} mode={mode} />
+          <RecordedModelQualifications models={models} />
+        </>
+      )}
     </div>
   );
 }

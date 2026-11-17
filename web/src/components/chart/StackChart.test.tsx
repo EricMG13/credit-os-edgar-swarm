@@ -162,14 +162,10 @@ describe("StackChart check", () => {
   it("throws on a repeated name", () => {
     throwsOn(<StackChart title="T" parts={[one, one]} table={table} />, /distinct/);
   });
-  it("throws on a zero or negative value", () => {
-    throwsOn(
-      <StackChart title="T" parts={[one, { ...two, value: 0 }]} table={table} />,
-      /"B".*more than zero/,
-    );
+  it("throws on a negative value", () => {
     throwsOn(
       <StackChart title="T" parts={[one, { ...two, value: -1 }]} table={table} />,
-      /"B".*more than zero/,
+      /"B".*zero or more/,
     );
   });
   it("throws when only some parts carry a share", () => {

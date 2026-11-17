@@ -2,7 +2,7 @@ import { Button } from "@/components/base/buttons/button";
 import { ArrowRight } from "@untitledui/icons";
 import { GapPanel } from "@/components/gap/GapPanel";
 import { sourceCitationNote, sourceFileLinks } from "./sourceFiles";
-import { useState, type ReactNode } from "react";
+import { Fragment, useState, type ReactNode } from "react";
 import { BottomLine } from "../library/parts/BottomLine";
 import { DownloadButton } from "../library/parts/DownloadButton";
 import { RunContext } from "../library/parts/RunContext";
@@ -107,12 +107,20 @@ export function traceDetails(
   const chipsAt = (at: number) => snapshot.chips[`${entry.output.id}:${String(at)}`] ?? [];
   const row = block.type === "table" ? block.rows.find((item) => item.line === line) : null;
   const tableRows = block.type === "table" && block.line === line ? block.rows : [];
+  const confidenceLines =
+    section.heading === CONFIDENCE_INPUTS
+      ? section.blocks.flatMap((item) => [
+          item.line,
+          ...(item.type === "table" ? item.rows.map((row) => row.line) : []),
+        ])
+      : [];
   const chips = [
     ...new Map(
-      [...chipsAt(line), ...tableRows.flatMap((item) => chipsAt(item.line))].map((chip) => [
-        JSON.stringify(chip),
-        chip,
-      ]),
+      [
+        ...chipsAt(line),
+        ...tableRows.flatMap((item) => chipsAt(item.line)),
+        ...confidenceLines.flatMap(chipsAt),
+      ].map((chip) => [JSON.stringify(chip), chip]),
     ).values(),
   ];
   const statement =
@@ -143,6 +151,32 @@ export function traceDetails(
   return { chips, statement, basis };
 }
 
+function confidenceNodes(entry: OutputEntry, block?: Block): TreeNode[] {
+  const recorded = entry.output.confidenceTrace;
+  const inputs =
+    recorded?.inputs ??
+    (block?.type === "table"
+      ? block.rows.map(({ cells }) => ({ label: cells[0] ?? "", value: cells[1] ?? "" }))
+      : []);
+  const group = (label: string, rows: { label: string; value: string }[]): TreeNode => ({
+    label,
+    value: "",
+    note: null,
+    children: rows.map((row) => ({ ...row, note: null, children: [] })),
+  });
+  return [
+    group("Recorded confidence inputs", inputs),
+    ...(recorded ? [group("Confidence method", recorded.method)] : []),
+  ];
+}
+
+function confidenceStatement(entry: OutputEntry) {
+  const score = entry.output.confidence;
+  return score && !("missing" in score)
+    ? `${String(score.value)} out of 100 · ${score.band}`
+    : "Confidence inputs";
+}
+
 function buildTrace(
   snapshot: Snapshot,
   entry: OutputEntry,
@@ -151,7 +185,25 @@ function buildTrace(
   line: number,
   target: string,
 ): Trace {
-  const { chips, statement, basis } = traceDetails(snapshot, entry, section, block, line);
+  const details = traceDetails(snapshot, entry, section, block, line);
+  const { statement, basis } = details;
+  const confidence = section.heading === CONFIDENCE_INPUTS;
+  // These generated placeholders carry no citation. Keep every real citation or qualification.
+  const chips = details.chips.filter(
+    (chip) =>
+      !(
+        confidence &&
+        chip.label === "no page" &&
+        (chip.source === null || chip.source === "no page") &&
+        chip.reason === "the row cites no page or register" &&
+        !chip.file &&
+        !chip.sha256 &&
+        !chip.quote &&
+        !chip.excerpt &&
+        !chip.href &&
+        !chip.pageHref
+      ),
+  );
   const node = (label: string, value: string | null, note: string | null = null): TreeNode => ({
     label,
     value,
@@ -163,29 +215,28 @@ function buildTrace(
     title: `Sources for ${section.heading}`,
     heading: section.heading,
     subtitle: `${moduleName(entry.output.module)} · Handoff line ${String(line)}`,
-    statement:
-      section.heading === FORECAST_INPUTS
+    statement: confidence
+      ? confidenceStatement(entry)
+      : section.heading === FORECAST_INPUTS
         ? "The model calculation uses the inputs recorded in this handoff."
         : plainModuleNames(statement.replaceAll("**", "").replaceAll("`", "")),
     derivation: {
       ...node("Evidence retained with this item", ""),
       children: [
+        ...(confidence ? confidenceNodes(entry, block) : []),
         ...(basis ? [node("Basis", plainModuleNames(basis))] : []),
         ...calculationNodes(entry, basis ?? "", line),
         ...chips.flatMap((chip) => {
           const source = chip.source ?? chip.label;
           return source ? [node(source, "", sourceCitationNote(chip))] : [];
         }),
-        ...(!basis && !chips.length
-          ? section.heading === CONFIDENCE_INPUTS && block.type === "table"
-            ? // The score is computed from the handoff's own inputs table: show its rows as written.
-              block.rows.map((item) => node(item.cells[0] ?? "", item.cells[1] ?? ""))
-            : [
-                // Recorded inputs are not a gap: only a missing basis carries no value.
-                section.heading === FORECAST_INPUTS
-                  ? node("Recorded forecast inputs", "")
-                  : node("Basis was not recorded for this item", null),
-              ]
+        ...(!confidence && !basis && !chips.length
+          ? [
+              // Recorded inputs are not a gap: only a missing basis carries no value.
+              section.heading === FORECAST_INPUTS
+                ? node("Recorded forecast inputs", "")
+                : node("Basis was not recorded for this item", null),
+            ]
           : []),
       ],
     },
@@ -195,7 +246,22 @@ function buildTrace(
           source: excerpt.source ?? excerpt.label ?? "Source name unavailable",
         }
       : null,
-    qualification: null,
+    qualification: confidence
+      ? section.blocks
+          .flatMap((item) =>
+            item.type === "text" && !item.text.startsWith("```")
+              ? [
+                  item.text
+                    .split("\n")
+                    .filter((text) => !text.startsWith("|"))
+                    .join("\n")
+                    .trim(),
+                ]
+              : [],
+          )
+          .filter(Boolean)
+          .join("\n\n") || null
+      : null,
     evidenceItem: target,
     sourceLinks: [
       ...new Map(
@@ -223,6 +289,32 @@ export function traceForLine(snapshot: Snapshot, entry: OutputEntry, _index: num
   return (
     found && buildTrace(snapshot, entry, found.section, found.block, line, traceTarget(entry, line))
   );
+}
+
+/** A scored handoff may be accepted even when its input rows are not a Markdown table. */
+export function traceForConfidence(snapshot: Snapshot, entry: OutputEntry): Trace | undefined {
+  const section =
+    entry.sections.find((item) => item.heading === CONFIDENCE_INPUTS) ??
+    entry.output.confidenceTrace?.section;
+  const block = section?.blocks[0];
+  if (section && block)
+    return buildTrace(snapshot, entry, section, block, block.line, traceTarget(entry, block.line));
+  if (!entry.output.confidenceTrace) return undefined;
+  return {
+    title: "Sources for Confidence inputs",
+    heading: CONFIDENCE_INPUTS,
+    subtitle: `${moduleName(entry.output.module)} · ${entry.output.label}`,
+    statement: confidenceStatement(entry),
+    derivation: {
+      label: "Evidence retained with this item",
+      value: "",
+      note: null,
+      children: confidenceNodes(entry),
+    },
+    excerpt: null,
+    qualification: null,
+    evidenceItem: traceTarget(entry),
+  };
 }
 
 export function PublishedTable({
@@ -579,14 +671,19 @@ function findingsLayout(
   const slot = (section: Section): [Section, Section?] =>
     section === keyFindings && contrary ? [section, contrary] : [section];
   const groups: (string | [Section, Section?])[] = [];
+  // The figures follow the prose passages and come before Limitations; a module with no
+  // Limitations passage or gap places them after its last passage.
+  let figuresAt: number | undefined;
   for (const name of PASSAGES) {
     const section = slotOf(name);
+    if (name === "Limitations" && (section || gaps.includes(name))) figuresAt = groups.length;
     if (section && section !== contrary) groups.push(slot(section));
     else if (!section && gaps.includes(name)) groups.push(name);
   }
+  figuresAt ??= groups.length;
   for (const section of sections)
     if (!PASSAGES.some((name) => slotOf(name) === section)) groups.push(slot(section));
-  return { sections, groups, drawnBottomLine: slotOf("Bottom line") !== undefined };
+  return { sections, groups, figuresAt, drawnBottomLine: slotOf("Bottom line") !== undefined };
 }
 
 function followingParagraphs(section: Section, entry: OutputEntry, folder: string) {
@@ -609,11 +706,13 @@ function EmptyFindings({
   entry,
   records,
   afterBottomLine,
+  beforeLimitations,
 }: {
   run: PublishedRun;
   entry: OutputEntry;
   records: Section[];
   afterBottomLine?: ReactNode;
+  beforeLimitations?: ReactNode;
 }) {
   return (
     <>
@@ -626,6 +725,7 @@ function EmptyFindings({
         </Button>
       </p>
       {afterBottomLine}
+      {beforeLimitations}
       <RecordsCard run={run} entry={entry} records={records} />
     </>
   );
@@ -639,6 +739,7 @@ export function ReportFindings({
   overview = false,
   overviewLabel,
   afterBottomLine,
+  beforeLimitations,
   judgement,
   figureTableLines,
   chartsDrawn = false,
@@ -650,12 +751,14 @@ export function ReportFindings({
   overview?: boolean;
   overviewLabel?: string;
   afterBottomLine?: ReactNode;
+  /** Drawn after the prose passages and before Limitations (after the last passage without one). */
+  beforeLimitations?: ReactNode;
   judgement?: string;
   figureTableLines?: readonly number[];
   chartsDrawn?: boolean;
 }) {
   const [activeTrace, setActiveTrace] = useState<string | null>(null);
-  const { sections, groups, drawnBottomLine } = findingsLayout(
+  const { sections, groups, figuresAt, drawnBottomLine } = findingsLayout(
     entry,
     figureTableLines,
     overview,
@@ -671,7 +774,13 @@ export function ReportFindings({
   const records = overview ? [] : recordSections(entry.sections, entry);
   if (!sections.length && !summary)
     return (
-      <EmptyFindings run={run} entry={entry} records={records} afterBottomLine={afterBottomLine} />
+      <EmptyFindings
+        run={run}
+        entry={entry}
+        records={records}
+        afterBottomLine={afterBottomLine}
+        beforeLimitations={beforeLimitations}
+      />
     );
   function drawSection(section: Section) {
     const first = section.blocks[0];
@@ -768,30 +877,31 @@ export function ReportFindings({
       </section>
     );
   }
+  const drawn = groups.map((group) => {
+    if (typeof group === "string")
+      return group === "Bottom line" && summary && !containsReference(summary.bottomLine) ? null : (
+        <section key={group} className={card}>
+          <h2 className={heading}>{group}</h2>
+          <GapPanel reason={MISSING_PASSAGE} />
+        </section>
+      );
+    const [section, contrary] = group;
+    if (!contrary) return drawSection(section);
+    return (
+      <div key={section.line} className="grid min-w-0 gap-4 lg:grid-cols-2">
+        {drawSection(section)}
+        {drawSection(contrary)}
+      </div>
+    );
+  });
+  if (beforeLimitations)
+    drawn.splice(figuresAt, 0, <Fragment key="before-limitations">{beforeLimitations}</Fragment>);
   return (
     <RunContext.Provider value={{ traces, open: setActiveTrace }}>
       <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-4">
         {summary && <FindingsSummary summary={summary} entry={entry} summaryTrace={summaryTrace} />}
         {!hasBottomLine && afterBottomLine}
-        {groups.map((group) => {
-          if (typeof group === "string")
-            return group === "Bottom line" &&
-              summary &&
-              !containsReference(summary.bottomLine) ? null : (
-              <section key={group} className={card}>
-                <h2 className={heading}>{group}</h2>
-                <GapPanel reason={MISSING_PASSAGE} />
-              </section>
-            );
-          const [section, contrary] = group;
-          if (!contrary) return drawSection(section);
-          return (
-            <div key={section.line} className="grid min-w-0 gap-4 lg:grid-cols-2">
-              {drawSection(section)}
-              {drawSection(contrary)}
-            </div>
-          );
-        })}
+        {drawn}
         <RecordsCard run={run} entry={entry} records={records} />
       </div>
       {active && (

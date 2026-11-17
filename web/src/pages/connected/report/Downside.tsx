@@ -146,7 +146,7 @@ export function Downside({
   const selected = alternatives.find(({ id }) => id === chosen) ?? alternatives[0];
   const records = control && selected ? comparison(matrix, control.id, selected.id) : [];
   return (
-    <section aria-label="Downside scenarios" className={`${card} min-w-0`}>
+    <section aria-label="Downside scenarios" className={`${card} min-w-0 wrap-anywhere`}>
       <h3 className={heading}>Downside scenarios</h3>
       {control && selected ? (
         <>
@@ -166,7 +166,7 @@ export function Downside({
               ))}
             </select>
           </label>
-          <div className={`${TRACE_HOST} grid gap-2 text-sm`}>
+          <div className={`${TRACE_HOST} grid min-w-0 gap-2 text-sm`}>
             <dl className="grid gap-2 sm:grid-cols-2">
               {(
                 [
@@ -180,7 +180,7 @@ export function Downside({
               )
                 .filter(([, value]) => value)
                 .map(([key, value]) => (
-                  <div key={key}>
+                  <div key={key} className="min-w-0">
                     <dt className="font-medium">{key}</dt>
                     <dd>{readerDetail(value)}</dd>
                   </div>

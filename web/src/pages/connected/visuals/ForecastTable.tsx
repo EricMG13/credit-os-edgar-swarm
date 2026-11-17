@@ -1,8 +1,9 @@
 import { Fragment, useState, type ReactNode } from "react";
 import { Button } from "@/components/base/buttons/button";
-import { containsReference } from "../publishedReport";
+import { containsReference, readerText } from "../publishedReport";
 import type { Grid } from "./LegacyForecast";
 import { word } from "./visualData";
+import type { ForecastSource } from "../report/ForecastRecord";
 
 type Source = ((label: string) => ReactNode) | undefined;
 
@@ -10,7 +11,11 @@ function Qualification({ text, label, source }: { text: string; label: string; s
   return (
     <div className="mt-2 max-w-sm whitespace-normal text-left text-small font-normal text-text-secondary">
       <p className="font-semibold">{label}</p>
-      <p>{containsReference(text) ? "Recorded qualification: review the model evidence." : text}</p>
+      <p>
+        {containsReference(text)
+          ? "Recorded qualification: review the model evidence."
+          : readerText(text)}
+      </p>
       {source?.(label)}
     </div>
   );
@@ -44,6 +49,22 @@ function unpopulated(row: Grid["rows"][number]) {
 }
 
 const NOT_AVAILABLE = "n.a.";
+
+const PERIOD_WORDS: Record<string, string> = {
+  "PF LTM": "Pro forma last twelve months",
+  "Prior LTM": "Prior last twelve months",
+  LTM: "Last twelve months",
+  PYTD: "Prior-year to date",
+  YTD: "Year to date",
+};
+
+/** A column label with its period shorthand spelled out, for a sentence; the table header keeps the label. */
+function spelledOut(label: string) {
+  return label.replace(
+    /\b(?:PF LTM|Prior LTM|LTM|PYTD|YTD)\b/g,
+    (token) => PERIOD_WORDS[token] ?? token,
+  );
+}
 
 function emptyColumns(grid: Grid) {
   return grid.columns.flatMap((_, index) =>
@@ -90,12 +111,14 @@ function Disclosure({
 function ForecastCell({
   cell,
   showReason,
+  evidenceOnlyQualifications,
 }: {
   cell: Record<string, unknown>;
   showReason: boolean;
+  evidenceOnlyQualifications?: boolean;
 }) {
   const display = word(cell.display);
-  const reason = word(cell.reason);
+  const reason = readerText(word(cell.reason));
   const exact = word(cell.exact);
   return (
     <td
@@ -105,8 +128,10 @@ function ForecastCell({
     >
       {display}
       {showReason && reason && (
-        <span className="mt-1 block min-w-40 max-w-56 whitespace-normal text-left text-small text-text-tertiary">
-          {containsReference(reason) ? "Reason recorded in model evidence." : reason}
+        <span className="mt-1 block min-w-40 max-w-56 wrap-anywhere whitespace-normal text-left text-small text-text-tertiary">
+          {evidenceOnlyQualifications || containsReference(reason)
+            ? "Reason recorded in model evidence."
+            : reason}
         </span>
       )}
     </td>
@@ -117,10 +142,14 @@ function ForecastRows({
   grid,
   rows,
   expanded,
+  source,
+  evidenceOnlyQualifications,
 }: {
   grid: Grid;
   rows: Grid["rows"];
   expanded: boolean;
+  source?: ForecastSource;
+  evidenceOnlyQualifications?: boolean;
 }) {
   return (
     <tbody>
@@ -136,12 +165,18 @@ function ForecastRows({
           <tr className={`border-b border-border-hairline ${row.total ? "font-semibold" : ""}`}>
             <th
               scope="row"
-              className="sticky left-0 w-48 min-w-36 max-w-48 bg-surface-card px-3 py-2 text-left whitespace-normal sm:w-64 sm:max-w-64"
+              className="sticky left-0 w-48 min-w-36 max-w-48 bg-surface-card px-3 py-2 text-left wrap-anywhere whitespace-normal sm:w-64 sm:max-w-64"
             >
               {row.label}
+              {source?.(row.label, { row: row.label })}
             </th>
             {row.cells.map((cell, position) => (
-              <ForecastCell key={position} cell={cell} showReason={expanded && unpopulated(row)} />
+              <ForecastCell
+                key={position}
+                cell={cell}
+                showReason={expanded && unpopulated(row)}
+                evidenceOnlyQualifications={evidenceOnlyQualifications}
+              />
             ))}
           </tr>
         </Fragment>
@@ -164,7 +199,7 @@ function ForecastColumns({ grid }: { grid: Grid }) {
             colSpan={group.span}
             className="px-3 py-2 text-center whitespace-nowrap"
           >
-            {group.label}
+            {readerText(group.label)}
           </th>
         ))}
       </tr>
@@ -189,11 +224,13 @@ export function ForecastTable({
   title,
   limits,
   source,
+  evidenceOnlyQualifications,
 }: {
   grid: Grid;
   title: string;
   limits: string[];
-  source?: (label: string) => ReactNode;
+  source?: ForecastSource;
+  evidenceOnlyQualifications?: boolean;
 }) {
   const [expanded, setExpanded] = useState(false);
   const [showColumns, setShowColumns] = useState(false);
@@ -258,7 +295,13 @@ export function ForecastTable({
         <table className="w-full border-collapse text-small">
           <caption className="sr-only">{title}</caption>
           <ForecastColumns grid={grid} />
-          <ForecastRows grid={grid} rows={rows} expanded={expanded || !canCollapse} />
+          <ForecastRows
+            grid={grid}
+            rows={rows}
+            expanded={expanded || !canCollapse}
+            source={evidenceOnlyQualifications ? source : undefined}
+            evidenceOnlyQualifications={evidenceOnlyQualifications}
+          />
         </table>
       </div>
       {canHideColumns && (
@@ -266,7 +309,7 @@ export function ForecastTable({
           note={
             showColumns
               ? null
-              : `These columns have no recorded values: ${empty.map((index) => inputGrid.columns[index]?.label ?? "").join(", ")}.`
+              : `These columns have no recorded values: ${empty.map((index) => spelledOut(inputGrid.columns[index]?.label ?? "")).join(", ")}.`
           }
           label={
             showColumns

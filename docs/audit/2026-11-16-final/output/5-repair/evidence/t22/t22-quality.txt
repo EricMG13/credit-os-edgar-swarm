@@ -1,0 +1,1 @@
+quality gate: 0 finding(s) in 12 changed file(s), 497 line(s) in scope

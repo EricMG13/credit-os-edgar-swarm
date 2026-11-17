@@ -1,0 +1,9 @@
+
+ RUN  v4.1.12 /workspace/repair-2/web
+
+
+ Test Files  5 passed (5)
+      Tests  67 passed (67)
+   Start at  19:03:04
+   Duration  22.02s (transform 1.72s, setup 479ms, import 8.68s, tests 8.51s, environment 3.18s)
+

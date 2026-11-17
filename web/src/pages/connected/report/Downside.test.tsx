@@ -56,6 +56,19 @@ function entry(shock: string, stressedCash: string): OutputEntry {
   };
 }
 
+it("contains unbroken scenario anchors and scope text within the desktop report", () => {
+  const data = downsideView(entry("0.10 (10%)", "50.00"));
+  if (!data) throw new Error("Test scenario matrix was rejected");
+  const selected = data.cases[1];
+  if (!selected) throw new Error("Test scenario missing");
+  selected.anchor = `Anchor${"y".repeat(150)}`;
+  selected.scope = `Left out ${"z".repeat(150)}`;
+  render(<Downside data={data} href={(line) => `#evidence/0-${String(line)}`} />);
+  expect(screen.getByRole("region", { name: "Downside scenarios" }).className).toMatch(
+    /wrap-anywhere/,
+  );
+});
+
 it("joins the selected scenario by its identifier and keeps conflicting currencies in the source table", () => {
   const source = entry("0.10 (10%)", "-1.20 (-EUR 1.20 million)");
   const data = downsideView(source);

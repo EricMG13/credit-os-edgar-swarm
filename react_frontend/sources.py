@@ -340,7 +340,13 @@ def _refresh(snapshot: dict[str, Any], key: str, record: dict[str, Any], root: P
         if old.rpartition(":")[0] in outputs:
             del chips[old]
     for oid, output in outputs.items():
-        for row in _rows(parsed.get(output["sha256"], [])):
+        sections = parsed.get(output["sha256"], [])
+        confidence_section = output.get("confidenceTrace", {}).get("section")
+        if confidence_section and not any(
+            section["heading"] == confidence_section["heading"] for section in sections
+        ):
+            sections = [*sections, confidence_section]
+        for row in _rows(sections):
             if not row.cells:
                 continue
             found = native.chips_for_cells(row, output["module"], pages)

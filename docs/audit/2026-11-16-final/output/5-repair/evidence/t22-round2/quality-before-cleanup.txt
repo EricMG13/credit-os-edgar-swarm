@@ -1,0 +1,42 @@
+docs/audit/2026-11-16-final/output/5-repair/evidence/t22-round2/adversarial-fixture.py:2: format FMT ruff format would change
+docs/audit/2026-11-16-final/output/5-repair/evidence/t22-round2/adversarial-fixture.py:2: ruff I001 Import block is un-sorted or un-formatted
+docs/audit/2026-11-16-final/output/5-repair/evidence/t22-round2/adversarial-fixture.py:8: format FMT ruff format would change
+docs/audit/2026-11-16-final/output/5-repair/evidence/t22-round2/adversarial-fixture.py:9: format FMT ruff format would change
+docs/audit/2026-11-16-final/output/5-repair/evidence/t22-round2/adversarial-fixture.py:10: format FMT ruff format would change
+docs/audit/2026-11-16-final/output/5-repair/evidence/t22-round2/adversarial-fixture.py:11: format FMT ruff format would change
+docs/audit/2026-11-16-final/output/5-repair/evidence/t22-round2/adversarial-fixture.py:12: format FMT ruff format would change
+docs/audit/2026-11-16-final/output/5-repair/evidence/t22-round2/adversarial-fixture.py:13: format FMT ruff format would change
+docs/audit/2026-11-16-final/output/5-repair/evidence/t22-round2/adversarial-fixture.py:14: format FMT ruff format would change
+docs/audit/2026-11-16-final/output/5-repair/evidence/t22-round2/adversarial-fixture.py:14: ruff E501 Line too long (107 > 100)
+docs/audit/2026-11-16-final/output/5-repair/evidence/t22-round2/adversarial-fixture.py:15: format FMT ruff format would change
+docs/audit/2026-11-16-final/output/5-repair/evidence/t22-round2/adversarial-fixture.py:16: format FMT ruff format would change
+docs/audit/2026-11-16-final/output/5-repair/evidence/t22-round2/adversarial-fixture.py:17: format FMT ruff format would change
+docs/audit/2026-11-16-final/output/5-repair/evidence/t22-round2/adversarial-fixture.py:18: format FMT ruff format would change
+docs/audit/2026-11-16-final/output/5-repair/evidence/t22-round2/adversarial-fixture.py:19: format FMT ruff format would change
+docs/audit/2026-11-16-final/output/5-repair/evidence/t22-round2/adversarial-fixture.py:21: format FMT ruff format would change
+docs/audit/2026-11-16-final/output/5-repair/evidence/t22-round2/adversarial-fixture.py:21: ruff E501 Line too long (149 > 100)
+docs/audit/2026-11-16-final/output/5-repair/evidence/t22-round2/adversarial-fixture.py:22: format FMT ruff format would change
+docs/audit/2026-11-16-final/output/5-repair/evidence/t22-round2/adversarial-fixture.py:22: mypy var-annotated Need type annotation for "result"  [var-annotated]
+docs/audit/2026-11-16-final/output/5-repair/evidence/t22-round2/adversarial-fixture.py:22: ruff C408 Unnecessary `dict()` call (rewrite as a literal)
+docs/audit/2026-11-16-final/output/5-repair/evidence/t22-round2/adversarial-fixture.py:22: ruff C408 Unnecessary `dict()` call (rewrite as a literal)
+docs/audit/2026-11-16-final/output/5-repair/evidence/t22-round2/adversarial-fixture.py:22: ruff C408 Unnecessary `dict()` call (rewrite as a literal)
+docs/audit/2026-11-16-final/output/5-repair/evidence/t22-round2/adversarial-fixture.py:22: ruff E501 Line too long (159 > 100)
+docs/audit/2026-11-16-final/output/5-repair/evidence/t22-round2/adversarial-fixture.py:23: format FMT ruff format would change
+docs/audit/2026-11-16-final/output/5-repair/evidence/t22-round2/adversarial-fixture.py:23: mypy index Value of type "dict[str, dict[Any, Any]] | dict[str, object] | str | None" is not indexable  [index]
+docs/audit/2026-11-16-final/output/5-repair/evidence/t22-round2/adversarial-fixture.py:23: mypy index Unsupported target for indexed assignment ("object | Any")  [index]
+docs/audit/2026-11-16-final/output/5-repair/evidence/t22-round2/adversarial-fixture.py:23: mypy index Invalid index type "str" for "str"; expected type "SupportsIndex | slice[SupportsIndex | None, SupportsIndex | None, SupportsIndex | None]"  [index]
+docs/audit/2026-11-16-final/output/5-repair/evidence/t22-round2/adversarial-fixture.py:24: format FMT ruff format would change
+docs/audit/2026-11-16-final/output/5-repair/evidence/t22-round2/adversarial-fixture.py:24: ruff E501 Line too long (112 > 100)
+docs/audit/2026-11-16-final/output/5-repair/evidence/t22-round2/adversarial-fixture.py:25: format FMT ruff format would change
+docs/audit/2026-11-16-final/output/5-repair/evidence/t22-round2/adversarial-fixture.py:25: ruff C408 Unnecessary `dict()` call (rewrite as a literal)
+docs/audit/2026-11-16-final/output/5-repair/evidence/t22-round2/adversarial-fixture.py:25: ruff E501 Line too long (130 > 100)
+docs/audit/2026-11-16-final/output/5-repair/evidence/t22-round2/adversarial-fixture.py:26: format FMT ruff format would change
+docs/audit/2026-11-16-final/output/5-repair/evidence/t22-round2/source-citation-fixture.py:87: ruff C408 Unnecessary `dict()` call (rewrite as a literal)
+docs/audit/2026-11-16-final/output/5-repair/evidence/t22-round2/source-citation-fixture.py:92: ruff C408 Unnecessary `dict()` call (rewrite as a literal)
+tests/test_react_sources.py:148: format FMT ruff format would change
+tests/test_react_sources.py:149: format FMT ruff format would change
+tests/test_react_sources.py:150: format FMT ruff format would change
+tests/test_react_sources.py:151: format FMT ruff format would change
+quality gate: 39 finding(s) in 16 changed file(s), 867 line(s) in scope
+
+exit_code=1

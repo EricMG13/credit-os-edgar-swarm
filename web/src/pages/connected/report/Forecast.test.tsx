@@ -92,6 +92,29 @@ it("draws the designated run figure with a same-output trace even when no model 
   expect(screen.queryByText("Operating model")).toBeNull();
 });
 
+it("spells out a ratio chart caption while retaining its stored x unit", () => {
+  const ratio = entry("CP-2G", "Interest cover", { value: "3.10" });
+  const descriptor = ratio.output.charts?.[0];
+  const table = ratio.sections[0]?.blocks[0];
+  if (!descriptor || table?.type !== "table") throw new Error("Missing ratio fixture");
+  descriptor.unit = "x";
+  table.headers[1] = "Interest cover";
+  for (const row of table.rows) row.cells[2] = "x";
+  const view: View = {
+    catalogue: undefined,
+    lead: undefined,
+    entries: [ratio],
+    models: [],
+    modules: [{ id: "CP-2G", name: "Forward credit model", state: "Delivered", outputs: [ratio] }],
+  };
+  render(<Forecast view={view} run={run} />);
+  expect(
+    within(screen.getByRole("figure", { name: "Interest cover" })).getByText("x (times)"),
+  ).toBeInTheDocument();
+  expect(descriptor.unit).toBe("x");
+  expect(table.rows[0]?.cells[2]).toBe("x");
+});
+
 it("shows the recorded build rejection and keeps its raw table in Evidence", () => {
   const returned = entry("CP-4", "Covenants", { value: "725" });
   returned.output.charts = [];
@@ -107,7 +130,9 @@ it("shows the recorded build rejection and keeps its raw table in Evidence", () 
   };
   render(<Forecast view={view} run={run} />);
   expect(screen.getByRole("heading", { name: "Figures" })).toBeInTheDocument();
-  expect(screen.getByText("Sent back by the build.")).toBeInTheDocument();
+  expect(
+    screen.getByText("The chart data did not fit the required table form, so no chart is drawn."),
+  ).toBeInTheDocument();
   expect(screen.getByRole("link", { name: "Source table" })).toHaveAttribute(
     "href",
     `/report/current#evidence/Covenants~${"d".repeat(64)}-21`,
