@@ -19,7 +19,12 @@ import { TRACE_HOST, TraceControl } from "./parts/TraceControl";
 import { SECTION_HEADING, SUBSECTION_HEADING } from "./parts/heading";
 import { evidenceHref } from "./parts/links";
 
-/** The sections a delivered module has, in page order: the navigator's first group. */
+/**
+ * The sections a delivered module has, in page order: the navigator's first group. The reading
+ * order is bottom line, key findings, contrary evidence and what would change the view, limitations,
+ * then the typed records, figures and tables (CM-005), so the limitations that qualify the figures
+ * come before them.
+ */
 function sectionsOf(body: DeliveredBody): NavSection[] {
   const named = (key: NavSection["icon"], label: string): NavSection => ({
     key,
@@ -31,8 +36,8 @@ function sectionsOf(body: DeliveredBody): NavSection[] {
     ...(body.findings.length === 0 ? [] : [named("findings", "Key findings")]),
     ...(body.contrary === null ? [] : [named("contrary", "Contrary evidence")]),
     ...(body.changeView === null ? [] : [named("change-view", "What would change the view")]),
-    ...recordSections(body.records),
     ...(body.limitations.items.length === 0 ? [] : [named("limitations", "Limitations")]),
+    ...recordSections(body.records),
   ];
 }
 
@@ -91,7 +96,6 @@ function Prose({ body, gapsHref }: { body: DeliveredBody; gapsHref: string }) {
           />
         </Target>
       )}
-      {body.records.length === 0 ? null : <Records blocks={body.records} />}
       {body.limitations.items.length === 0 ? null : (
         <Target id="limitations">
           <Limitations
@@ -101,6 +105,7 @@ function Prose({ body, gapsHref }: { body: DeliveredBody; gapsHref: string }) {
           />
         </Target>
       )}
+      {body.records.length === 0 ? null : <Records blocks={body.records} />}
     </>
   );
 }

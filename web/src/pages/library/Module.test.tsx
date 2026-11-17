@@ -82,11 +82,11 @@ describe("Module, a delivered prose module", () => {
       ["H3", "Key findings"],
       ["H3", "Contrary evidence"],
       ["H3", "What would change the view"],
+      ["H3", "Limitations2"],
       ["H3", "Risks by probability and impact"],
       ["H3", "Indicators to watch"],
       ["H3", "Questions this module set out to answer"],
       ["H3", "How a programme delay reaches the credit"],
-      ["H3", "Limitations2"],
     ]);
   });
 
@@ -162,12 +162,12 @@ describe("Module, a delivered prose module", () => {
       "Show sources for this finding",
       "Show sources for the contrary evidence",
       "Show sources for the trigger",
+      "Show sources for this limitation",
+      "Show sources for this limitation",
       "Show sources for the risk matrix",
       ...Array<string>(5).fill("Show sources for this risk"),
       ...Array<string>(4).fill("Show sources for this indicator"),
       ...Array<string>(2).fill("Show sources for this answer"),
-      "Show sources for this limitation",
-      "Show sources for this limitation",
     ]);
     fireEvent.click(sourceButtons()[1] as HTMLElement);
     expect(
@@ -463,8 +463,8 @@ describe("Module, the navigator", () => {
       "Key findings",
       "Contrary evidence",
       "What would change the view",
-      "Records",
       "Limitations",
+      "Records",
     ]);
   });
 
@@ -1320,6 +1320,7 @@ describe("Module, the data module as a whole", () => {
     expect(sourceButtons().map((b) => b.getAttribute("aria-label"))).toEqual([
       "Show sources for the bottom line",
       ...Array<string>(3).fill("Show sources for this finding"),
+      ...Array<string>(3).fill("Show sources for this limitation"),
       ...Array<string>(6).fill("Show sources for this figure"),
       ...Array<string>(3).fill("Show sources for this measure"),
       "Show sources for the debt stack",
@@ -1331,7 +1332,6 @@ describe("Module, the data module as a whole", () => {
       ...Array<string>(7).fill("Show sources for this fact"),
       ...Array<string>(4).fill("Show sources for this test: no source recorded"),
       "Show sources for this table: no source recorded",
-      ...Array<string>(3).fill("Show sources for this limitation"),
     ]);
   });
 
@@ -1349,7 +1349,7 @@ describe("Module, the data module as a whole", () => {
     for (const [index, title] of [
       [0, "Sources for the capital structure bottom line"],
       [3, "Sources for the capacity finding"],
-      [33, "Sources for the lease schedule limitation"],
+      [6, "Sources for the lease schedule limitation"],
     ] as const) {
       fireEvent.click(buttons[index] as HTMLElement);
       expect(screen.getByRole("dialog", { name: title })).toBeVisible();
@@ -1392,6 +1392,7 @@ describe("Module, the navigator of the data module", () => {
     ).toEqual([
       "Bottom line",
       "Key findings",
+      "Limitations",
       "Headline figures",
       "Debt stack and maturities",
       "Headroom",
@@ -1399,7 +1400,6 @@ describe("Module, the navigator of the data module", () => {
       "Against peers",
       "Terms and tests",
       "Hedges",
-      "Limitations",
     ]);
   });
 });

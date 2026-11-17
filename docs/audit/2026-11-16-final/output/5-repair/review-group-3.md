@@ -356,3 +356,70 @@ One entry per task: the reviewer was a fresh Sonnet agent at xhigh effort that d
   - Back restore drifts +32 px per round trip on the Model Statements page and the Kit, because Chromium's scroll anchoring adds late chart growth and the scroll listener stores it. `overflow-anchor: none` on `main` removes the drift. The other 21 scrollable routes restore exactly.
   - The `offsets` Map is never pruned.
 - Info: Signal pages share "Signal — Credit OS", and the run start steps share one title.
+
+## T33 follow-up under ruling L5 (S2-006)
+
+- Commit reviewed: b3f1b19. Verdict: PASS. Merged onto audit/repair-3.
+- On the parent source the new tests fail 13 of 15; the 2 that pass pin behaviour that stays.
+- `DatedItem.trace`:
+  - An absent key reads as null, and an explicit null too. A prototype-held key is ignored.
+  - A wrong type is refused with a named path.
+  - A key the run lacks is refused through the same `traceKey` every other passage uses, so TraceControl cannot throw at draw time.
+- Timeline.tsx: an entry with no action draws exactly as before. The whole Kit page rendered in jsdom is byte-identical before and after (170,314 bytes). The `TRACE_HOST` import follows ChartFrame.tsx's precedent.
+- Overview: one control per date (4 of 4). The fixture dates draw the "no source recorded" marker, and a real trace draws a working control that opens its drawer. Both are checked at 1440 px.
+- The two changed Overview.test.tsx assertions follow the finding (a marker per date; the capped run's markers 12 → 14).
+- Gates the reviewer saw:
+  - lint 0, format:check 0, typecheck 0, build 0.
+  - vitest: 14 files, 418 tests; Signal 34 files, 630 tests; library, components, model, connected, Kit and App 150 files, 3,165 tests. All at the default timeout.
+  - Probes: dates-no-trace 0 (`[1,1,1,1]`), long-qualifier 0, S3-002 0, S3-007 0.
+- Low:
+  - Timeline treats `action: null` as a slot. No caller passes it.
+  - Overview passes `trace` through to Timeline items, which ignore it.
+- Info: the control narrows the date text column by about 44 px at 1440 px.
+
+## T37 (S3-005, S3-006 with C3-025; S3-006's narrow-screen picker dropped under R14)
+
+- Commit reviewed: 3a8a871. Verdict: PASS. Merged onto audit/repair-3.
+- On the parent source the new tests fail 7 of 8. The one that passes ("lists every module until typed") passes either way by design.
+- S3-005: the order is now bottom line, Key findings, Contrary evidence, What would change the view, Limitations, then the typed records. "On this page" follows the same order (AGENTS.md, CM-004, CM-005, D-11).
+- No module text changed. Across all 30 fixture module pages the multisets of text leaves and headings are identical before and after. On the two pages with bodies, exactly one block (Limitations) moved.
+- The six Module.test.tsx edits change only where Limitations and its controls appear; no expected text or value changed.
+- S3-006 and C3-025:
+  - The kit Input with a search icon (approved source, D-08), as in FilterBar.tsx, narrows the module list by name. No match shows "No module matches", and clearing restores all 13.
+  - The connected Modules page gets the same search; it was checked on proof.serve at 1440 px.
+  - At 1,001 px and up the layout is unchanged.
+- p15 (C3) still exits 1 on `overview.svgCharts` 0 alone. That is C3-024 (T17, group 2); the navigator half now passes.
+- Gates the reviewer saw:
+  - build 0, lint 0, format:check 0, typecheck 0.
+  - vitest: 3 files, 110 tests at the default timeout; library and connected 1,907 of 1,908.
+  - The 1 is ConnectedApp.test.tsx "lists a run that ended without a report", a race under load. It is unrelated to T37 and passes alone (185).
+  - Probes: S3-005 0, S3-006 0.
+- Low:
+  - For the lead: at 481 to 1,000 px (a desktop window snapped to half of a 1,920 px screen is 960 px), the navigator still comes first with no picker. R14 covers 480 px and below only, so the lead should say whether the picker stays dropped in that band.
+  - The search sits at the top while the list it narrows is at the bottom of the navigator.
+  - Inner spaces are not collapsed in the match.
+  - Typing another module's name hides the current module's entry until the field is cleared.
+
+## T39 (S4-006, S4-008, S4-009; S4-007 dropped under R14), round 1
+
+- Commit reviewed: f96c8d6 (implementer Sonnet). Verdict: FAIL, two Medium. Sent back to a fresh Sonnet implementer for round 2.
+- M1 (Medium), Evidence.tsx:69-72: the reset key `${item}/${restarts}` leaves out the tab. The Trace table carries gap ids, so `trace/G-03` → `gaps/G-03` keeps a held module and hides G-03. The base commit drew it. This is reachable through "Open in Evidence" for the Peer comparison limitation and the jump menu.
+- M2 (Medium), Evidence.tsx:23-41: on runs that deliver `trace.emptyText` ("not traced item by item"), the per-module tile "Traced items 0" states a measured zero and drops the delivered qualification. That breaks missing versus zero.
+- What passed:
+  - The per-module Summary counts equal independent fixture counts on all 39 module-run combinations; a real 0 draws as 0.
+  - Filtered Record rows equal the unfiltered rows exactly.
+  - "4 of 13 modules shown" comes from `calls.rows.length` and `run.modules.length`.
+  - The Code column is gone with every figure unchanged.
+  - The filter is held on all five tabs, with item addresses resetting except in M1.
+  - The two changed tests follow OQ-10.
+  - On the parent source the new tests fail 11 of 17.
+- Gates the reviewer saw:
+  - build 0, lint 0, format:check 0, typecheck 0, duplication 0 (1.84%, same as base).
+  - vitest: 41 files, 969 tests.
+  - Probes: filter-scope, module-codes, record-partial and focus-after-clear all exit 0.
+- Low, for the lead's batch:
+  - At All the tile says "Calculations"; under a module it says "Traced items" (S4-001 relabel).
+  - The Timings note "Six of thirteen shown" stays above a single filtered row.
+  - Brevane's "1 of 2 modules shown" sits beside its delivered "One of one shown".
+  - Evidence.tsx copies EvidenceSources.tsx's "reads" predicate.
+  - Record rows match modules by name.

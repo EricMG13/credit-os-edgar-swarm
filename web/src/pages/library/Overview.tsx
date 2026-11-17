@@ -84,7 +84,12 @@ export function Overview({ issuer, run }: { issuer: string | undefined; run: str
                 <ChangeViewNote view={overview.changeView} label="Show sources for the triggers" />
               )}
               <Section title="Dates to watch">
-                <Timeline items={overview.dates} />
+                <Timeline
+                  items={overview.dates.map((item) => ({
+                    ...item,
+                    action: <TraceControl trace={item.trace} label="Show sources for this date" />,
+                  }))}
+                />
               </Section>
             </div>
           </div>
