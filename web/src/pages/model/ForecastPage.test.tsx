@@ -185,13 +185,13 @@ describe("Forecast page: what drives each case", () => {
     ).toEqual(["Range over five years", "Base case assumption", "Downside case assumption"]);
   });
 
-  it("draws a strip on five rows and two markers on four, none for the missing value or range", () => {
+  it("draws a strip on five rows and two markers on five, none for a missing value, and no strip for a missing range", () => {
     renderAt(fixtureSlice());
     const chart = figure(DRIVERS);
     const row = (label: string) =>
       must(within(chart).getByText(label).closest<HTMLElement>("[data-row]"));
     expect(chart.querySelectorAll("[data-range]")).toHaveLength(5);
-    expect(chart.querySelectorAll("[data-marker]")).toHaveLength(8);
+    expect(chart.querySelectorAll("[data-marker]")).toHaveLength(10);
     const wc = row("Working capital days");
     expect(wc.querySelector("[data-range]")).not.toBeNull();
     expect(wc.querySelector("[data-marker]")).toBeNull();
@@ -200,7 +200,7 @@ describe("Forecast page: what drives each case", () => {
     ).toEqual(["n.a.", "n.a."]);
     const after = row("Aftermarket share of revenue");
     expect(after.querySelector("[data-range]")).toBeNull();
-    expect(after.querySelector("[data-marker]")).toBeNull();
+    expect(after.querySelectorAll("[data-marker]")).toHaveLength(2);
     expect(after.querySelectorAll("[data-missing]")).toHaveLength(0);
   });
 
@@ -239,18 +239,18 @@ describe("Forecast page: what drives each case", () => {
   it("draws both markers of a row in full colour, and the chosen case's wider and taller", () => {
     renderAt(fixtureSlice());
     const markers = () => [...figure(DRIVERS).querySelectorAll("[data-marker]")];
-    expect(markers()).toHaveLength(8);
+    expect(markers()).toHaveLength(10);
     const weight = (name: string) =>
       markers()
         .filter((m) => m.getAttribute("data-name") === name)
         .map((m) => m.classList.contains("w-1.5") && m.classList.contains("h-7"));
-    expect(weight("Base case assumption")).toEqual([true, true, true, true]);
-    expect(weight("Downside case assumption")).toEqual([false, false, false, false]);
+    expect(weight("Base case assumption")).toEqual([true, true, true, true, true]);
+    expect(weight("Downside case assumption")).toEqual([false, false, false, false, false]);
     for (const m of markers()) expect(m.className).not.toMatch(/opacity/);
     choose("Downside case");
-    expect(markers()).toHaveLength(8);
-    expect(weight("Base case assumption")).toEqual([false, false, false, false]);
-    expect(weight("Downside case assumption")).toEqual([true, true, true, true]);
+    expect(markers()).toHaveLength(10);
+    expect(weight("Base case assumption")).toEqual([false, false, false, false, false]);
+    expect(weight("Downside case assumption")).toEqual([true, true, true, true, true]);
   });
 
   it("sets the other case's values in the tertiary colour, the chosen case's not", () => {
