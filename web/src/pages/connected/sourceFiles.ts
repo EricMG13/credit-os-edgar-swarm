@@ -21,19 +21,35 @@ function citedPageLabel(query: string) {
   return first === last ? `page ${String(first)}` : `pages ${String(first)}–${String(last)}`;
 }
 
+/** The bridge's address for this exact run, filename and digest, when the source carries it. */
+function attestedSource(folder: string, source: SourceFileReference) {
+  const name = source.file ?? source.name;
+  if (!name || !source.sha256 || !/^[a-f0-9]{64}$/.test(source.sha256)) return null;
+  const base = `/connected/sources/${sourceSegment(folder)}/${source.sha256}/${sourceSegment(name)}`;
+  if (source.href !== base) return null;
+  const page = source.pageHref?.startsWith(base) ? source.pageHref.slice(base.length) : "";
+  return { name, base, pageLabel: page ? citedPageLabel(page) : null };
+}
+
 /** Only links attested by the bridge for this exact run, filename and digest are drawn. */
 export function sourceFileLinks(folder: string, source: SourceFileReference) {
-  const name = source.file ?? source.name;
-  if (!name || !source.sha256 || !/^[a-f0-9]{64}$/.test(source.sha256)) return [];
-  const base = `/connected/sources/${sourceSegment(folder)}/${source.sha256}/${sourceSegment(name)}`;
-  if (source.href !== base) return [];
+  const attested = attestedSource(folder, source);
+  if (!attested) return [];
+  const { name, base, pageLabel } = attested;
   const links = [{ label: `Open source file: ${name}`, href: base }];
-  const page = source.pageHref?.slice(base.length);
-  const pageLabel = page ? citedPageLabel(page) : null;
-  if (source.pageHref?.startsWith(base) && pageLabel) {
+  if (pageLabel && source.pageHref) {
     links.unshift({ label: `Open cited source ${pageLabel}: ${name}`, href: source.pageHref });
   }
   return links;
+}
+
+/**
+ * The pages a citation names in the source supplied to this run, as text (decision 9: source files
+ * are listed only, never opened from the report). Null when the bridge attests no page range.
+ */
+export function citedSourcePages(folder: string, source: SourceFileReference) {
+  const pageLabel = attestedSource(folder, source)?.pageLabel;
+  return pageLabel ? `Cited ${pageLabel}` : null;
 }
 
 export function sourceCitationNote(chip: { reason: string | null; quote_found?: boolean | null }) {
