@@ -6,7 +6,7 @@ import {
   createOfflineProxy,
   installOfflineGuard,
   isLoopbackRequest,
-} from "../../../../../../web/scripts/connected-proof.mjs";
+} from "../../../../../../web/scripts/offline-network.mjs";
 
 test("offline proof accepts only local resource schemes and loopback hosts", () => {
   for (const url of [

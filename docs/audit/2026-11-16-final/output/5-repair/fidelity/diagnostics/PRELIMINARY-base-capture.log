@@ -1,0 +1,4 @@
+connected: service at http://127.0.0.1:8857/, root /tmp/fid-kyMCTq
+connected: synthetic run 20261117-193022-01 finished
+connected overview: 231 runs, 67 figures, 46 drawers -> overview.json
+connected: 1 screens (1 asked for), 67 figures, 0 source lines on screen, 335 in source drawers, 25 limitation sentences

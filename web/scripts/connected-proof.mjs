@@ -2,13 +2,13 @@ import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import { spawn } from "node:child_process";
 import { cp, mkdir, mkdtemp, readdir, readFile, rm, writeFile } from "node:fs/promises";
-import { createServer } from "node:http";
 import { arch, release } from "node:os";
 import path from "node:path";
 import { createInterface } from "node:readline";
 import { after, test } from "node:test";
 import { pathToFileURL } from "node:url";
 import { chromium } from "playwright";
+import { createOfflineProxy, installOfflineGuard } from "./offline-network.mjs";
 
 const project = path.resolve(import.meta.dirname, "../..");
 const runAsScript = process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href;
@@ -53,88 +53,6 @@ if (runAsScript)
       );
     }
   });
-
-// R8: install before any page exists, so popup initial requests share the same guard.
-export function isLoopbackRequest(address) {
-  const url = new URL(address);
-  if (url.protocol === "blob:") return isLoopbackRequest(url.pathname);
-  if (url.protocol === "file:") return url.hostname === "" || url.hostname === "localhost";
-  if (["data:", "about:"].includes(url.protocol)) return true;
-  if (!["http:", "https:", "ws:", "wss:"].includes(url.protocol)) return false;
-  return (
-    url.hostname === "localhost" ||
-    url.hostname === "[::1]" ||
-    /^127(?:\.\d{1,3}){3}$/u.test(url.hostname)
-  );
-}
-
-// Playwright routes do not intercept every redirected request. The browser proxy
-// terminates those requests locally, without DNS lookup or an upstream connection.
-export async function createOfflineProxy() {
-  const attempts = [];
-  const server = createServer((request, response) => {
-    attempts.push({ target: request.url, method: request.method });
-    response.writeHead(403);
-    response.end("Blocked by the offline proof");
-  });
-  const sockets = new Set();
-  server.on("connection", (socket) => {
-    sockets.add(socket);
-    socket.once("close", () => sockets.delete(socket));
-  });
-  server.on("connect", (request, socket) => {
-    attempts.push({ target: request.url, method: "CONNECT" });
-    socket.end("HTTP/1.1 403 Forbidden\r\nConnection: close\r\n\r\n");
-  });
-  await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
-  return {
-    attempts,
-    settings: {
-      server: `http://127.0.0.1:${String(server.address().port)}`,
-      bypass: "localhost,127.0.0.1,[::1]",
-    },
-    async close() {
-      for (const socket of sockets) socket.destroy();
-      await new Promise((resolve, reject) =>
-        server.close((error) => (error ? reject(error) : resolve())),
-      );
-    },
-  };
-}
-
-export async function installOfflineGuard(context) {
-  const attempts = [];
-  context.on("request", (request) => {
-    if (!isLoopbackRequest(request.url()))
-      attempts.push({
-        url: request.url(),
-        method: request.method(),
-        resource: request.resourceType(),
-      });
-  });
-  await context.route("**/*", async (route) => {
-    const request = route.request();
-    if (isLoopbackRequest(request.url())) {
-      await route.fallback();
-      return;
-    }
-    await route.abort("blockedbyclient");
-  });
-  await context.routeWebSocket("**/*", (socket) => {
-    if (isLoopbackRequest(socket.url())) {
-      socket.connectToServer();
-      return;
-    }
-    attempts.push({ url: socket.url(), method: "GET", resource: "websocket" });
-    socket.close();
-  });
-  return {
-    attempts,
-    assertOffline() {
-      assert.deepEqual(attempts, [], "Non-loopback requests attempted during the offline proof");
-    },
-  };
-}
 
 async function startService(workspace) {
   const child = spawn(python, ["-m", "proof.serve", "--root", workspace, "--port", "0"], {
@@ -1365,7 +1283,42 @@ async function checkCompactLibrary(page, endpoint, run) {
   assert.deepEqual(Object.keys(index.workspace), ["runs"]);
   const found = Object.values(index.workspace.runs).find((item) => item.folder === run);
   assert.ok(found);
-  assert.deepEqual(Object.keys(found).sort(), ["folder", "issuerKey", "pathway"]);
+  // C1-025/C3-001 adds only the designated card paragraph and its exact provenance.
+  assert.deepEqual(Object.keys(found).sort(), ["folder", "issuerKey", "lead", "pathway"]);
+  const snapshot = await page.request.get(
+    new URL(`/connected/snapshot?run=${encodeURIComponent(run)}`, endpoint).href,
+    { maxRedirects: 0 },
+  );
+  assert.equal(snapshot.status(), 200);
+  const { workspace } = await snapshot.json();
+  const matched = Object.entries(workspace.runs).find(([, item]) => item.folder === run);
+  assert.ok(matched);
+  const [key, published] = matched;
+  assert.equal(found.issuerKey, published.issuerKey);
+  assert.equal(found.pathway, published.pathway);
+  const output = workspace.outputs[published.modules["CP-6"].default];
+  assert.ok(output);
+  assert.equal(output.id, published.modules["CP-6"].default);
+  assert.equal(output.run, key);
+  assert.equal(output.module, "CP-6");
+  assert.match(output.sha256, /^[0-9a-f]{64}$/u);
+  const paragraph = workspace.handoffs[output.sha256]
+    .find((section) => section.heading === "Bottom line" && section.level === 3)
+    ?.blocks.find((block) => block.type === "text");
+  assert.ok(paragraph);
+  assert.deepEqual(found.lead, {
+    module: "CP-6",
+    output: output.id,
+    sha256: output.sha256,
+    line: paragraph.line,
+    text: paragraph.text,
+  });
+  assert.equal(found.lead.text, "The synthetic issuer shows one observed item.");
+  assert.ok(Number.isInteger(found.lead.line) && found.lead.line > 0);
+  assert.ok(
+    JSON.stringify(found.lead).length < 2000,
+    "The card contains one paragraph, not a handoff",
+  );
   assert.ok(index.catalogue.real.some((item) => item.id === run));
 }
 
