@@ -1,11 +1,17 @@
 import { Button } from "@/components/base/buttons/button";
 import { ArrowRight } from "@untitledui/icons";
 import { heading } from "../layout";
-import { blocked, evidencePath, type OutputEntry } from "../publishedReport";
+import { blocked, evidencePath, type OutputEntry, readerText } from "../publishedReport";
 import type { buildReportView } from "../reportView";
 import { LegacyVisuals } from "../visuals";
 
 const CHART_PREFIX = "Chart data: ";
+
+/** A gap as the page draws it: the module's reason as written, with a module code named as the module. */
+function drawnGap(figure: Record<string, unknown>) {
+  const { gap } = figure;
+  return typeof gap === "string" ? { ...figure, gap: readerText(gap) } : figure;
+}
 
 function returnedCharts(entry: OutputEntry, coveredLines: Set<number>) {
   const problems = new Set(entry.output.issue?.split("; "));
@@ -19,7 +25,7 @@ function returnedCharts(entry: OutputEntry, coveredLines: Set<number>) {
       {
         title: name.charAt(0).toUpperCase() + name.slice(1),
         table: block.line,
-        gap: "Sent back by the build.",
+        gap: "The chart data did not fit the required table form, so no chart is drawn.",
       },
     ];
   });
@@ -42,7 +48,7 @@ function chartOutput(entry: OutputEntry) {
             gap: summary?.limitation || "Module not assessable.",
           }))
         : []),
-    ],
+    ].map(drawnGap),
   };
 }
 

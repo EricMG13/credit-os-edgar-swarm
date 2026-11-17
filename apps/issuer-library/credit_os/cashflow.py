@@ -67,8 +67,8 @@ FORECAST_CASES = (
 STRESS_ON_DOWNSIDE_DRIVERS = "Downside stress (shock on downside drivers)"
 NO_VALUE = "the model's source table has no value for this period"
 PRINTED_DASH = "printed as \u2014 in the source"
-PRIOR_MISSING = "prior-year period not in the handoffs"
-COMPONENT_MISSING = "a component is not in the handoffs"
+PRIOR_MISSING = "prior-year period not stated in the analysis"
+COMPONENT_MISSING = "a component is not stated in the analysis"
 REASON_PHRASES = {
     "NOT_SOURCED": "not reported in the source",
     "NOT_STATED": COMPONENT_MISSING,
@@ -77,7 +77,9 @@ REASON_PHRASES = {
     "PRIOR_PERIOD_MISSING": PRIOR_MISSING,
     "REGISTER_DATE_DIFFERS": "secured-debt carrying values are recorded at another date",
     "UNCLASSIFIED_ROW": "the debt register has a row that cannot be classified",
-    "WINDOW_MISSING": "last-twelve-months Adj EBITDA cannot be built from the handoffs",
+    "WINDOW_MISSING": (
+        "last-twelve-months Adj EBITDA cannot be built from the figures the analysis states"
+    ),
 }
 LTM_NEEDED = "needs last-twelve-months Adj EBITDA for this quarter, which is not recorded"
 DEBT_TOTAL_NEEDED = "needs quarter-end total carrying debt, which the model does not derive"
@@ -127,8 +129,9 @@ HISTORY_NOTES = (
     CASHFLOW_NOTES[3],
 )
 LTM_NOTE = (
-    "LTM is the last fiscal year when that is the latest period CP-1 labels; otherwise the last "
-    "fiscal year plus the year to date less the prior year to date."
+    "Last twelve months is the last fiscal year when that is the latest period Financial "
+    "foundation labels; otherwise the last fiscal year plus the year to date less the prior year "
+    "to date."
 )
 HISTORY_LIMIT_COUNT = 200
 HISTORY_LIMIT_CHARS = 2000

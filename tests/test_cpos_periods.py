@@ -1412,9 +1412,14 @@ PINNED_FILES = {  # sha256 of the files before `column` existed: a block without
     # c3691af45dd03b055f5a70b512ba359e409c96477b53ea0043b1fb9df825ace4. W1 reworded the PF reason
     # (its cells of this file, nothing else): the pin before it was
     # 7c4c73bc4084a4e68473b8ae5e348c50b9833073a75dc5fa9256dda5596e02ad.
-    "calculation.json": "a771bf82fda009bf7855a9b5cc152d07570ed28fc67e4aadf0c1886b8fd61618",
+    # T16 reworded the published limit sentence (no tool or module code in it), which changes
+    # these two files only (forecast_exact.json holds the sentence, calculation.json its hash).
+    # With the earlier sentence put back the files digest to the pins before it:
+    # calculation.json a771bf82fda009bf7855a9b5cc152d07570ed28fc67e4aadf0c1886b8fd61618,
+    # forecast_exact.json 0e27b0a291c29ad6c8e72713190adfaf7b955fc9b178db9aea27a1c9cc831303.
+    "calculation.json": "e0fe7e22c69fbfc39e70053f2dc6f3e32f540f772f2640589e3bd441f0cc32c8",
     "forecast.md": "fb1471c434a81a15af24362b963077f77c88f83f54cdac2648395a067bea43ea",
-    "forecast_exact.json": "0e27b0a291c29ad6c8e72713190adfaf7b955fc9b178db9aea27a1c9cc831303",
+    "forecast_exact.json": "296952fc8672a7d7b53b602ac5ea9ffbe527d0a00b2a1497b707434e87e4422a",
     "quarter.md": "2ebd4cd19a8d654820261be9ed74bfecc81da5ebf89b39fbc2d963434a49e74f",
 }
 

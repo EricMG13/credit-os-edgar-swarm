@@ -1,6 +1,7 @@
 import { Button } from "@/components/base/buttons/button";
 import { ArrowRight } from "@untitledui/icons";
 import { useState, type ReactNode } from "react";
+import { moduleName } from "../api";
 import { card, field, heading, label } from "../layout";
 import {
   containsReference,
@@ -8,6 +9,7 @@ import {
   FORECAST_INPUTS,
   type OutputEntry,
   type PublishedRun,
+  readerText,
   withUnit,
 } from "../publishedReport";
 import { namedRow, namedTable, type buildReportView } from "../reportView";
@@ -110,14 +112,15 @@ function BasisNote({
       <h3 className={heading}>{fiscal ? `${fiscal} base case basis` : "Model basis"}</h3>
       {bridge && (
         <p>
-          The calculation gives <strong>{bridge.value.toFixed(2)}</strong> cash proxy. The handoff
-          gives <strong>{bridge.original.toFixed(2)}</strong> free cash flow. The displayed
-          difference is <strong>{withUnit(bridge.difference.toFixed(2), bridge.unit)}</strong>.
+          The calculation gives <strong>{bridge.value.toFixed(2)}</strong> cash proxy. The{" "}
+          {moduleName("CP-2G")} gives <strong>{bridge.original.toFixed(2)}</strong> free cash flow.
+          The displayed difference is{" "}
+          <strong>{withUnit(bridge.difference.toFixed(2), bridge.unit)}</strong>.
         </p>
       )}
       {bridge && (
         <div className="flex flex-wrap gap-3">
-          <PublishedSource href={href(bridge.fcfLine)} name="Handoff free cash flow">
+          <PublishedSource href={href(bridge.fcfLine)} name="Forward credit model free cash flow">
             Free cash flow basis
           </PublishedSource>
           <PublishedSource href={href(bridge.inflowLine)} name="Recorded difference">
@@ -125,7 +128,7 @@ function BasisNote({
           </PublishedSource>
         </div>
       )}
-      <p>{limitation}</p>
+      <p>{readerText(limitation)}</p>
     </section>
   );
 }
@@ -240,7 +243,7 @@ function ForecastAssumptions({
       <details className={card}>
         <summary className="cursor-pointer font-semibold">Forecast assumptions</summary>
         {model.register.intro && !containsReference(model.register.intro) && (
-          <p>{model.register.intro}</p>
+          <p>{readerText(model.register.intro)}</p>
         )}
         <PublishedTable
           table={{
@@ -267,7 +270,7 @@ function ForecastAssumptions({
           size="sm"
           iconTrailing={ArrowRight}
         >
-          Open the forward credit handoff
+          Open the model evidence
         </Button>
       </details>
     )
