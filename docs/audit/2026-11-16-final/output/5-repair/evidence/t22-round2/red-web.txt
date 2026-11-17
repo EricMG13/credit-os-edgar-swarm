@@ -1,0 +1,30 @@
+
+ RUN  v4.1.12 /workspace/recovery-t22-round2/web
+
+ ❯ src/pages/connected/report/Confidence.recovery.test.tsx (6 tests | 1 failed) 1248ms
+   × retains source qualification and exact citations when another table makes the handoff unstructured 157ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/pages/connected/report/Confidence.recovery.test.tsx > retains source qualification and exact citations when another table makes the handoff unstructured
+Error: expect(element).toHaveTextContent()
+
+Expected element to have text content:
+  Counts cover FY2025 audited standalone evidence only; overseas subsidiaries are excluded.
+Received:
+  Confidence inputsFinancial foundation · Retained outputThe statement89 out of 100 · HighHow it was derivedEvidence retained with this item Recorded confidence inputs Directly Sourced 8Calculated 2Assumption-Based 2Analyst Inference 0Weak Lineage 0Untraced 0Conflicting 0Insufficient Information 0Fields present 95Fields total 100Source gate passCRITICAL 0MATERIAL 0MINOR 1Confidence method Formula (0.6 × evidence quality + 0.4 × field coverage) × source-gate factor − finding penaltiesSource-gate factors pass 1.0; partial 0.7; fail 0.0Caps and rounding CRITICAL cap 39; MATERIAL cap 59; half to even.CloseOpen in Evidence
+ ❯ src/pages/connected/report/Confidence.recovery.test.tsx:222:18
+    220|   fireEvent.click(screen.getByRole("button", { name: "Show sources for…
+    221|   const drawer = await screen.findByRole("dialog");
+    222|   expect(drawer).toHaveTextContent(qualification);
+       |                  ^
+    223|   expect(drawer).toHaveTextContent("annual.pdf, cited page 7");
+    224|   expect(drawer).toHaveTextContent("Exact source quotation.");
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 5 passed (6)
+   Start at  18:43:28
+   Duration  4.39s (transform 928ms, setup 169ms, import 2.05s, tests 1.25s, environment 740ms)
