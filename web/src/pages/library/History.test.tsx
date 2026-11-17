@@ -63,7 +63,7 @@ describe("Report history, a normal issuer", () => {
       "href",
       "#/library/halden-aerostructures/2026-09-30/overview",
     );
-    expect(screen.getByRole("link", { name: "New run" })).toHaveAttribute("href", "#/run");
+    expect(screen.getByRole("link", { name: "New run" })).toHaveAttribute("href", "#/run/start");
   });
 
   it("draws seven entries newest first with the mock's dates, states, pathways and sentences", () => {
@@ -169,7 +169,10 @@ describe("Report history, an issuer with no report yet", () => {
       "href",
       "#/library/home",
     );
-    expect(screen.getByRole("link", { name: "Start a run" })).toHaveAttribute("href", "#/run");
+    expect(screen.getByRole("link", { name: "Start a run" })).toHaveAttribute(
+      "href",
+      "#/run/start",
+    );
     expect(screen.queryByRole("list")).toBeNull();
     expect(screen.queryByRole("link", { name: "Open latest report" })).toBeNull();
   });

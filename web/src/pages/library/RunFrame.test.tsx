@@ -68,7 +68,7 @@ describe("RunFrame header", () => {
       "href",
       "#/library/halden-aerostructures/history",
     );
-    expect(screen.getByRole("link", { name: "New run" })).toHaveAttribute("href", "#/run");
+    expect(screen.getByRole("link", { name: "New run" })).toHaveAttribute("href", "#/run/start");
     expect(screen.getByText("Page body")).toBeVisible();
   });
 });
