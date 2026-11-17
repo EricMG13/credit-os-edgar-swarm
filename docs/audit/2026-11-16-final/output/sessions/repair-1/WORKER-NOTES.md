@@ -26,6 +26,10 @@ environment facts and its rules for this group; `AGENTS.md` and the audit `READM
 - Owner ruling R13 (2026-11-17): "path leakage is fine this is internal company app". A server
   path in served data, on a page or in text is not a defect; do not spend a round on one and do not
   raise one as a review finding. A leaked secret still is a defect.
+- Owner ruling R14 (2026-11-17): "only pc, no need for keyboard". The app runs only on desktop PCs
+  with a mouse. A finding that shows only at 480 px or less, on touch, or with the keyboard alone
+  (focus, tab order, arrow keys, focus rings) is not a defect: do not spend a round on one or raise
+  one as a review finding. Screen-reader, contrast and colour findings stay.
 
 ## Rounds and models (ruling R12, owner, 2026-11-17)
 
