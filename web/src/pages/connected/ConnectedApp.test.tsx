@@ -3992,6 +3992,7 @@ describe("connected run start: the review sheet shows every input Submit sends",
     expect(purpose).not.toHaveTextContent("Cash flow model");
   });
 
+  // Fills every group so the check covers every block: slower than the default 5 s under load.
   it("V27 shows no raw data: no braces, keys, module codes, ids or the form's version", async () => {
     const { sheet, fetchMock } = await sheetAfter({
       advanced: true,
@@ -4037,5 +4038,5 @@ describe("connected run start: the review sheet shows every input Submit sends",
       expect(shownText).not.toMatch(/20261116-083145-01|declared-none|sub-1|server-approved/);
       expect(shownText).not.toMatch(/context\/1|true|false|null|undefined|NaN/);
     }
-  });
+  }, 20_000);
 });
