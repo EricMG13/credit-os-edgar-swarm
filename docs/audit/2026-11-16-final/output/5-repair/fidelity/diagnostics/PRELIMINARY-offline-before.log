@@ -1,0 +1,211 @@
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: R8: each context needs the reviewed guard before creating a page
+    at file:///workspace/audit-fidelity-alignment/[eval1]:4:8
+    at ModuleJob.run (node:internal/modules/esm/module_job:561:25)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async node:internal/modules/esm/loader:223:26
+    at async ModuleLoader.executeModuleJob (node:internal/modules/esm/loader:220:20)
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5) {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: '// Fidelity capture for stage 5 step 9 of the final audit: what the reader sees, screen by screen.\n' +
+    '//\n' +
+    '// Usage (from the repository root):\n' +
+    '//   timeout 600 node docs/audit/2026-11-16-final/output/5-repair/fidelity/capture.mjs <outDir> [--surface connected|static|both]\n' +
+    '// Environment:\n' +
+    '//   CHROMIUM_PATH     browser executable (default: the chromium headless shell under /opt/pw-browsers)\n' +
+    '//   FID_PORT          port of the synthetic service (default 8851)\n' +
+    '//   FID_CONCURRENCY   pages captured at once, each in its own browser context (default 3)\n' +
+    '//   ONLY              capture only the screens whose id contains this text (a development aid)\n' +
+    '//   FID_ATTACH, FID_RUN   development aid: use a service that is already running, with a finished run\n' +
+    '//\n' +
+    '// Two surfaces, captured separately and written to <outDir>/connected/ and <outDir>/static/:\n' +
+    '//   connected: `proof.serve` on its own new root under /tmp/fid-<n>, one synthetic run completed the way\n' +
+    "//              web/scripts/connected-proof.mjs does it, then the report's screens. The service is stopped\n" +
+    '//              at the end.\n' +
+    "//   static:    web/dist/index.html opened from disk, with the fixture data that stage 0's crawl used: a copy\n" +
+    '//              of web/dist in a temporary folder whose data.js is written by web/scripts/fixture-data.mjs\n' +
+    '//              from web/fixtures/*.json. web/dist itself is not touched.\n' +
+    "// Besides each screen's default state the script captures: every chart in its Table view, every\n" +
+    '// <details> and closed disclosure opened, the source drawer behind every "Show sources" control, each\n' +
+    '// other case of a Forecast case / Case choice (as its own screen), and the Table presentation of a\n' +
+    '// Cards/Table choice (as its own screen). The connected Changes page of the real run has no earlier run to\n' +
+    '// compare, so it is also captured with an earlier run injected into the snapshot (a labelled fixture).\n' +
+    '// <outDir>/index.json is rebuilt from the screen files on disk, so a surface captured in an earlier run\n' +
+    '// stays listed. Nothing here calls a provider; the synthetic service substitutes canned responses.\n' +
+    "// Exit code 1: a screen failed, a screen's text was not fully captured, or a source control did not open.\n" +
+    'import { execFileSync, spawn } from "node:child_process";\n' +
+    'import { createHash } from "node:crypto";\n' +
+    'import {\n' +
+    '  cpSync,\n' +
+    '  existsSync,\n' +
+    '  mkdirSync,\n' +
+    '  mkdtempSync,\n' +
+    '  readFileSync,\n' +
+    '  readdirSync,\n' +
+    '  rmSync,\n' +
+    '  writeFileSync,\n' +
+    '} from "node:fs";\n' +
+    'import { createRequire } from "node:module";\n' +
+    'import path from "node:path";\n' +
+    'import { createInterface } from "node:readline";\n' +
+    'import { pathToFileURL } from "node:url";\n' +
+    '\n' +
+    'const repo = process.env.REPO_ROOT ? path.resolve(process.env.REPO_ROOT) : process.cwd();\n' +
+    'const web = path.join(repo, "web");\n' +
+    'if (!existsSync(path.join(web, "dist", "index.html"))) {\n' +
+    '  throw new Error(`Run from the repository root with web/dist built (not found under ${repo})`);\n' +
+    '}\n' +
+    'const require = createRequire(path.join(web, "package.json"));\n' +
+    'const { chromium } = require("playwright");\n' +
+    '\n' +
+    'const args = process.argv.slice(2);\n' +
+    'const flag = (name) => {\n' +
+    '  const at = args.indexOf(name);\n' +
+    '  return at === -1 ? null : (args.splice(at, 2)[1] ?? null);\n' +
+    '};\n' +
+    'const surfaceArg = flag("--surface") ?? "both";\n' +
+    'if (!["connected", "static", "both"].includes(surfaceArg)) throw new Error(`--surface ${surfaceArg}`);\n' +
+    'if (args.length !== 1) throw new Error("Usage: capture.mjs <outDir> [--surface connected|static|both]");\n' +
+    'const outDir = path.resolve(args[0]);\n' +
+    'const PORT = Number(process.env.FID_PORT ?? 8851);\n' +
+    'const CONCURRENCY = Number(process.env.FID_CONCURRENCY ?? 3);\n' +
+    'const ONLY = process.env.ONLY ?? null;\n' +
+    'const VIEWPORT = { width: 1440, height: 900 };\n' +
+    'const LOOP_CAP = 1000;\n' +
+    'let RULES = [];\n' +
+    '// Everything this script starts or creates outside <outDir> is undone on exit, a signal included.\n' +
+    'const cleanups = [];\n' +
+    'const runCleanups = () => {\n' +
+    '  for (const undo of cleanups.splice(0).reverse()) {\n' +
+    '    try {\n' +
+    '      undo();\n' +
+    '    } catch {\n' +
+    '      // best effort: the process is ending\n' +
+    '    }\n' +
+    '  }\n' +
+    '};\n' +
+    'process.on("exit", runCleanups);\n' +
+    'for (const signal of ["SIGINT", "SIGTERM"]) process.once(signal, () => process.exit(130));\n' +
+    '\n' +
+    '// ---- in the page ---------------------------------------------------------------------------------\n' +
+    '// One self-contained function (Playwright sends its source to the page). It reads what is drawn: the\n' +
+    '// visible text in reading order under its headings, the tables, every figure with what sits beside\n' +
+    '// it, the chart marks, the controls and the links.\n' +
+    'function extractInPage(opts) {\n' +
+    '  // Whitespace collapsed, then the times and run ids rewritten (opts.rules), so that everything derived\n' +
+    '  // from a drawn value is derived from the same normalised text.\n' +
+    '  const rules = opts.rules.map(([src, flags, to]) => [new RegExp(src, flags), to]);\n' +
+    '  const clean = (s) => rules.reduce((acc, [re, to]) => acc.replace(re, to), (s ?? "").replace(/[\\s\\u00a0]+/g, " ").trim());\n' +
+    '  const vis = (el) => el.checkVisibility({ checkVisibilityCSS: true });\n' +
+    '  const DIGIT = /\\d/;\n' +
+    '  const MISSING = /^(?:n\\.a\\.?|na|[—–-]|not (?:supplied|calculated|available|assessable|established)\\b|withheld\\b)/i;\n' +
+    '  const PERIOD =\n' +
+    '    /(?:\\bFY\\s?\\d{2,4}[EAFP]?\\b|\\b[HQ][1-4]\\s?(?:FY)?\\d{2,4}\\b|\\b\\d{4}-Q[1-4]\\b|\\b(?:PF )?LTM\\b|\\bP?YTD\\b|\\b(?:19|20)\\d{2}[EAFP]?\\b|\\bYear to\\b|\\bAs of\\b)/i;\n' +
+    '  const PERIOD_ONLY =\n' +
+    '    /^(?:(?:PF )?LTM|[HQ][1-4] ?(?:FY)?\\d{2,4}|FY ?\\d{2,4}[EAFP]?|(?:19|20)\\d{2}[EAFP]?|\\d{4}-Q[1-4]|Year to .+|Latest twelve months to .+|To \\d.+|As of .+)$/i;\n' +
+    '  const UNIT =\n' +
+    '    /(?:US\\$\\s?(?:m|bn)\\b|USD\\s?(?:m|bn|million|billion)\\b|[$£€]\\s?(?:m|bn)\\b|\\b[A-Z]{3}\\s?(?:m|bn|million|billion)\\b|%|\\bbps\\b|\\bpts\\b|\\bmonths?\\b|\\byears?\\b|\\bdays?\\b|units not recorded|per cent|\\bx\\b)/i;\n' +
+    '  const BASIS =\n' +
+    '    /\\b(?:basis|company-adjusted|adjusted|reported|defined|estimated?|management|disclosure|derived|calculated|pro forma|run-rate|as defined|synthetic)\\b/i;\n' +
+    '  const LIMIT_HEAD =\n' +
+    '    /limitation|qualification|\\bgaps?\\b|not (?:assessable|established|supplied|available)|could not establish/i;\n' +
+    '  const LIMIT_TEXT =\n' +
+    '    /^(?:not (?:supplied|calculated|assessable|established|available|analytical review|recorded)|units not recorded|withheld)|\\b(?:could not|cannot|was not|were not|is not|are not|not (?:recorded|stated|supplied|assessable|established)|no (?:earlier|recorded|retained|credit view)|unavailable|missing|withheld)\\b/i;\n' +
+    '  const SOURCE_TEXT =\n' +
+    '    /^(?:basis\\b|sources?\\s*[:\\u00b7])|\\b[\\w.-]+\\.(?:txt|pdf|xlsx?|md|json|html?)\\b|\\bp\\.\\s?\\d+\\b|\\bpage\\s\\d+\\b|\\bhandoff line\\b/i;\n' +
+    '  const NUMBER =\n' +
+    '    /[+\\-−–]?\\s?(?:US\\$|USD\\s?|EUR\\s?|GBP\\s?|[$€£¥])?\\(?\\d[\\d,]*(?:\\.\\d+)?\\)?(?:\\s?(?:%|x\\b|×|bps\\b|pts\\b|bn\\b|mm\\b|m\\b|k\\b|million\\b|billion\\b|months?\\b|years?\\b|days?\\b))?/g;\n' +
+    '  const SKIP = new Set([\n' +
+    '    "script", "style", "template", "noscript", "title", "desc", "defs", "clippath",\n' +
+    '    "lineargradient", "mask", "pattern", "symbol", "option", "datalist",\n' +
+    '  ]);\n' +
+    '  const DATA_NOISE = new Set([\n' +
+    '    "data-rac", "data-react-aria-pressable", "data-icon", "data-text", "data-shape", "data-sources",\n' +
+    '    "data-current", "data-orientation", "data-selected", "data-testid", "data-a11y-ignore",\n' +
+    '    "data-expanded", "data-focused", "data-focus-visible", "data-hovered", "data-pressed",\n' +
+    '    "data-disabled", "data-state", "data-open", "data-placement", "data-trigger", "data-entering",\n' +
+    '    "data-exiting", "data-loading", "data-slot", "data-audit-i", "data-collection",\n' +
+    '  ]);\n' +
+    '\n' +
+    '  const labelledBy = (el) => {\n' +
+    '    const ids = el.getAttribute("aria-labelledby");\n' +
+    '    if (!ids) return null;\n' +
+    '    const text = ids\n' +
+    '      .split(/\\s+/)\n' +
+    '      .map((id) => clean(document.getElementById(id)?.textContent))\n' +
+    '      .filter(Boolean)\n' +
+    '      .join(" ");\n' +
+    '    return text || null;\n' +
+    '  };\n' +
+    '  const nameOf = (el) =>\n' +
+    '    el.getAttribute("aria-label") ||\n' +
+    '    labelledBy(el) ||\n' +
+    '    clean(el.labels?.[0]?.innerText) ||\n' +
+    '    clean(el.innerText).slice(0, 80) ||\n' +
+    '    null;\n' +
+    '  const figureLabel = (el) => {\n' +
+    '    const f = el.closest("figure,[role=figure]");\n' +
+    '    return f ? f.getAttribute("aria-label") || labelledBy(f) || clean(f.querySelector("h1,h2,h3,h4,h5,h6")?.textContent) || null : null;\n' +
+    '  };\n' +
+    '  const isSrOnly = (el) => {\n' +
+    '    const cs = getComputedStyle(el);\n' +
+    '    if (cs.position !== "absolute") return false;\n' +
+    '    const r = el.getBoundingClientRect();\n' +
+    '    return r.width <= 1.5 && r.height <= 1.5 && (cs.overflow !== "visible" || cs.clipPath !== "none" || cs.clip !== "auto");\n' +
+    '  };\n' +
+    '  const round = (v) => (/^-?\\d+\\.\\d{4,}$/.test(v) ? String(Number(Number(v).toFixed(3))) : v);\n' +
+    '  const unitOf = (text) => {\n' +
+    '    for (const t of tokens(text)) {\n' +
+    '      const u = t.replace(/[+\\-−–()]/g, "").replace(/\\d[\\d,]*(?:\\.\\d+)?/g, "").trim();\n' +
+    '      if (u) return u;\n' +
+    '    }\n' +
+    '    return null;\n' +
+    '  };\n' +
+    '  const tokens = (text) => [...text.matchAll(NUMBER)].map((m) => clean(m[0])).filter((t) => DIGIT.test(t));\n' +
+    '\n' +
+    '  const extract = (root, slim) => {\n' +
+    '    const runs = [];\n' +
+    '    const headingEls = [];\n' +
+    '    const srOnly = [];\n' +
+    '    const optionDigits = { n: 0 };\n' +
+    '    let buf = [];\n' +
+    '    let bufBlock = null;\n' +
+    '    let path = [];\n' +
+    '    const section = () => path.map((h) => h.text.slice(0, 80)).join(" > ");\n' +
+    '    const emit = (kind, text, el, extra) => {\n' +
+    '      const t = clean(text);\n' +
+    '      if (t) runs.push({ kind, text: t, section: section(), el, ...extra });\n' +
+    '    };\n' +
+    '    const flush = () => {\n' +
+    '      if (buf.length) emit("text", buf.join(""), bufBlock);\n' +
+    '      buf = [];\n' +
+    '      bufBlock = null;\n' +
+    '    };\n' +
+    '    const svgRuns = (svg) => {\n' +
+    '      for (const t of svg.querySelectorAll("text")) {\n' +
+    '        if (!vis(t)) continue;\n' +
+    '        const spans = [...t.querySelectorAll("tspan")];\n' +
+    '        const text = spans.length > 1 ? spans.map((s) => s.textContent).join(" ") : t.textContent;\n' +
+    '        const attrs = {};\n' +
+    '        for (const a of t.attributes) if (a.name.startsWith("data-") && !DATA_NOISE.has(a.name)) attrs[a.name] = a.value;\n' +
+    '        emit("chart-text", text, t, { attrs });\n' +
+    '      }\n' +
+    '    };\n' +
+    '    const walk = (el, block) => {\n' +
+    '      for (const node of el.childNodes) {\n' +
+    '        if (node.nodeType === 3) {\n' +
+    '          buf.push(node.data);\n' +
+    '          bufBlock ??= block;\n' +
+    '          continue;\n' +
+    '        }\n' +
+    '        if (no'... 48450 more characters,
+  expected: /installOfflineGuard\(context\)/u,
+  operator: 'match',
+  diff: 'simple'
+}
+
+Node.js v24.22.1

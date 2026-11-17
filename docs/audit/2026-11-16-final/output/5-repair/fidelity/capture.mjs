@@ -1,7 +1,7 @@
 // Fidelity capture for stage 5 step 9 of the final audit: what the reader sees, screen by screen.
 //
 // Usage (from the repository root):
-//   timeout 600 node docs/audit/2026-11-16-final/output/5-repair/fidelity/capture.mjs <outDir> [--surface connected|static|both]
+//   timeout 300 node docs/audit/2026-11-16-final/output/5-repair/fidelity/capture.mjs <outDir> [--surface connected|static|both]
 // Environment:
 //   CHROMIUM_PATH     browser executable (default: the chromium headless shell under /opt/pw-browsers)
 //   FID_PORT          port of the synthetic service (default 8851)
@@ -48,6 +48,10 @@ if (!existsSync(path.join(web, "dist", "index.html"))) {
 }
 const require = createRequire(path.join(web, "package.json"));
 const { chromium } = require("playwright");
+// The reviewed proof module has an import-safe entry point; reuse its R8 guard.
+const { createOfflineProxy, installOfflineGuard, isLoopbackRequest } = await import(
+  pathToFileURL(path.join(web, "scripts", "connected-proof.mjs")).href
+);
 
 const args = process.argv.slice(2);
 const flag = (name) => {
@@ -64,6 +68,7 @@ const ONLY = process.env.ONLY ?? null;
 const VIEWPORT = { width: 1440, height: 900 };
 const LOOP_CAP = 1000;
 let RULES = [];
+const offlineContexts = [];
 // Everything this script starts or creates outside <outDir> is undone on exit, a signal included.
 const cleanups = [];
 const runCleanups = () => {
@@ -487,9 +492,9 @@ function extractInPage(opts) {
 // ---- page driving --------------------------------------------------------------------------------
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
-async function launch() {
+async function launch(proxy) {
   const fromEnv = process.env.CHROMIUM_PATH;
-  if (fromEnv) return chromium.launch({ executablePath: fromEnv });
+  if (fromEnv) return chromium.launch({ executablePath: fromEnv, proxy });
   const root = process.env.PLAYWRIGHT_BROWSERS_PATH ?? "/opt/pw-browsers";
   const shells = existsSync(root)
     ? readdirSync(root)
@@ -499,13 +504,15 @@ async function launch() {
         .map((d) => path.join(root, d, "chrome-headless-shell-linux64", "chrome-headless-shell"))
         .filter((p) => existsSync(p))
     : [];
-  return shells.length ? chromium.launch({ executablePath: shells[0] }) : chromium.launch();
+  return shells.length ? chromium.launch({ executablePath: shells[0], proxy }) : chromium.launch({ proxy });
 }
 
 async function newWorkers(browser, n) {
   return Promise.all(
     Array.from({ length: n }, async () => {
-      const context = await browser.newContext({ viewport: VIEWPORT, deviceScaleFactor: 1, reducedMotion: "reduce" });
+      const context = await browser.newContext({ viewport: VIEWPORT, deviceScaleFactor: 1, reducedMotion: "reduce", serviceWorkers: "block" });
+      const guard = await installOfflineGuard(context);
+      offlineContexts.push(guard);
       const page = await context.newPage();
       page.setDefaultTimeout(15000);
       return { context, page };
@@ -822,7 +829,7 @@ function startService(root) {
   const [cmd, ...pre] = existsSync(venv) ? [venv] : ["uv", "run", "--no-sync", "python"];
   const child = spawn(cmd, [...pre, "-m", "proof.serve", "--root", root, "--port", String(PORT)], {
     cwd: repo,
-    env: { ...process.env, PYTHONPATH: path.join(repo, "src") },
+    env: { ...process.env, PYTHONPATH: [path.join(repo, "src"), path.join(repo, "apps", "issuer-library"), repo].join(path.delimiter) },
     stdio: ["ignore", "pipe", "pipe"],
   });
   const lines = createInterface({ input: child.stdout });
@@ -1042,6 +1049,7 @@ async function captureConnected(browser) {
   let service = null;
   let root = null;
   let endpoint = process.env.FID_ATTACH ?? null;
+  if (endpoint && !isLoopbackRequest(endpoint)) throw new Error("FID_ATTACH must be loopback");
   let run = process.env.FID_RUN ?? null;
   const workers = await newWorkers(browser, CONCURRENCY);
   try {
@@ -1213,15 +1221,44 @@ async function captureStatic(browser) {
 
 // ---- main ----------------------------------------------------------------------------------------
 mkdirSync(outDir, { recursive: true });
-const browser = await launch();
-let failures = 0;
-const browserVersion = browser.version();
+// Measure native browser traffic separately; the local proxy denies every upstream request.
+const blankProxy = await createOfflineProxy();
+let blankBrowser;
+let blankGuard;
 try {
+  blankBrowser = await launch(blankProxy.settings);
+  const context = await blankBrowser.newContext({ serviceWorkers: "block" });
+  blankGuard = await installOfflineGuard(context);
+  const blank = await context.newPage();
+  await blank.goto("about:blank");
+  await sleep(1000);
+} finally {
+  await blankBrowser?.close();
+  await blankProxy.close();
+  writeFileSync(path.join(outDir, `offline-blank-${surfaceArg}.json`), toJson({
+    contextAttempts: blankGuard?.attempts ?? [],
+    proxyBlocks: blankProxy.attempts,
+  }));
+}
+blankGuard.assertOffline();
+const proxy = await createOfflineProxy();
+let browser;
+let failures = 0;
+let browserVersion;
+try {
+  browser = await launch(proxy.settings);
+  browserVersion = browser.version();
   if (surfaceArg !== "static") failures += await captureConnected(browser);
   if (surfaceArg !== "connected") failures += await captureStatic(browser);
 } finally {
-  await browser.close();
+  await browser?.close();
+  await proxy.close();
+  writeFileSync(path.join(outDir, `offline-${surfaceArg}.json`), toJson({
+    contextAttempts: offlineContexts.flatMap((guard) => guard.attempts),
+    proxyBlocks: proxy.attempts,
+  }));
 }
+for (const guard of offlineContexts) guard.assertOffline();
 const surfaces = writeIndex({ ...treeInfo(), runtime: { node: process.version, browser: browserVersion } });
 for (const [name, s] of Object.entries(surfaces)) {
   console.log(
