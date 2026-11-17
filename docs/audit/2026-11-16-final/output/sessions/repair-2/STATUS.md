@@ -1,3 +1,16 @@
+state: done
+updated: 2026-11-17T19:06Z
+done: all original group2 tasks preserved; T18 recovered final fourth-round code f7f1e011 plus reports82c331f4 has fresh primary/adversarial PASS. T22 recovered initial12e53e21, fixed first review return at5b5610fe plus reports4726ebd0; both fresh final reviews PASS0H/M/L. R4-001 reviewed citation-range fix backported as ee69c684 before acceptance. Combined branch170704a1 merged cleanly.
+next: lead opens PR into audit/final-repairs, confirms CI green and reviews/merges there; then completes remaining lead-batch integration and full combined fidelity/gates/proof. Never merge main.
+blocked: none for this group; the separate lead shared-reference regression R4-012 and proof alignment remain outside this group's source tree.
+reports: output/5-repair/T18.md, batch-forecast.md, T22.md, T22-round2.md, repair-2-completion.md and reviews/t18-*,reviews/t22-round2-*.
+
+## Combined verification after recovered tasks
+
+Observed all exits0: 5 focused frontend files/67 tests; 501 Python confidence/store/chips/verified-source caller tests; default Python quality gate0 (15files/865scopedlines); full frontend lint,format:check,typecheck. Backport Evidence.t21-fix1 independently4testsPASS. First attempted Vitest invocation used repo root and could not resolve alias; corrected web cwd run passed and is the acceptance evidence. No assertion or gate changed for the combined merge. Implementation and independent source/native proof scopes remain in the per-task reports. Protected scorer, Signal, prompts and canned handoffs unchanged. Full combined frontend gates/proof/fidelity belong to lead after all batches. Fresh review primary/adversarial reports copied above.
+
+## Preserved earlier checkpoints
+
 state: running
 updated: 2026-11-17T18:28Z
 done: all previously pushed tasks remain preserved at f9453f27; lead took over after the user-required two hours without a push (last original push 15:32:06Z, checked origin at 17:32:14Z).
