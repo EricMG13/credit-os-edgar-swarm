@@ -1,8 +1,8 @@
 state: running
-updated: 2026-11-17T12:39Z
+updated: 2026-11-17T12:40Z
 done: merged T13 (301b20a), T14 (a6bf5d2), T15 (d9c1fce) with --no-ff in tasks.md order; on the merged tree typecheck, lint, format:check 0 and vitest src/pages/connected plus src/components/chart 78 files, 1366 tests, 0. Reviewed and held: T19 (round 2 for R2-003 next), T23. T24 withdrawn (R14)
 next: owner instruction (about 12:20 UTC): every implementer and reviewer from now on runs on Opus at medium effort. T19 round 2 for R2-003 (Opus medium; T13 merged into its worktree, 0562aaf); T16 round 2 fixer (started on Sonnet before the instruction) finishing, then Opus reviewers; T17, T18, T20, T21 start when T16 is merged
-blocked: none (question to the lead on T16's c4-probe-001 page-citation line; default (a) keep the module-written reason whole and list it for the owner under R5)
+blocked: none (lead ruling L16: T16 holds back a page-citing chart-gap reason as See Evidence. beside the gap's own status field or the standard missing form, in a round 3 after the current reviews; the 0,000 evidence fix is listed in T19.md for the lead's batch)
 reports: docs/audit/2026-11-16-final/output/sessions/repair-2/worker-brief.md
 
 | Task | Starts after | State |
