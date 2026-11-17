@@ -1,0 +1,26 @@
+{
+  "chrome": {
+    "browser": "157.0.8103.78",
+    "checks": {
+      "exact source file/hash/page links": true,
+      "exact source excerpt in native drawer": true,
+      "native filename and cited page": true,
+      "exact confidence qualification in native drawer": true,
+      "exact original handoff hash and line identity": true,
+      "unrelated source passages excluded": true,
+      "zero external hosts and page errors": true
+    }
+  },
+  "edge": {
+    "browser": "155.0.4283.62",
+    "checks": {
+      "exact source file/hash/page links": true,
+      "exact source excerpt in native drawer": true,
+      "native filename and cited page": true,
+      "exact confidence qualification in native drawer": true,
+      "exact original handoff hash and line identity": true,
+      "unrelated source passages excluded": true,
+      "zero external hosts and page errors": true
+    }
+  }
+}

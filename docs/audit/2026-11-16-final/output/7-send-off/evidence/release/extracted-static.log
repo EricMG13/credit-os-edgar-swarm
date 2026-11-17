@@ -1,0 +1,139 @@
+browser: /tmp/sw-file-qNzNRb/chrome-with-offline-proxy
+PASS referenced assets are sound: 3 found
+PASS every url() in the stylesheet is relative and exists
+PASS every colour, shadow, radius and size class has a rule
+PASS data.js present: the library home page at the default address
+PASS component kit, no injected style: expects "Component kit"
+PASS data.js deleted: expects "Library data is missing"
+PASS schema credit-os-data/2: expects "This library was written by a newer version"
+PASS data.js with one issuer: the library home page at the default address
+PASS kit page: every column header and button has an accessible name
+PASS kit page: 2 keyboard-focused invalid fields draw the focus colour rgb(0, 26, 255)
+PASS kit page: the link button has role link and its label as name (disabled one too, announced disabled and skipped by Tab from the second link) and a keyboard-focused one draws a 2px rgb(0, 26, 255) outline
+PASS route library /library/home
+PASS route library /library/:issuer/history as /library/halden-aerostructures/history
+PASS route library /library/:issuer/history as /library/corvane-fasteners/history
+PASS route library /library/:issuer/history as /library/brevane-marine/history
+PASS route library /library/:issuer/:run/overview as /library/halden-aerostructures/2026-09-30/overview
+PASS route library /library/:issuer/:run/overview as /library/halden-aerostructures/2026-06-30/overview
+PASS route library /library/:issuer/:run/overview as /library/halden-aerostructures/2026-03-31/overview
+PASS route library /library/:issuer/:run/overview as /library/halden-aerostructures/2025-09-30/overview
+PASS route library /library/:issuer/:run/overview as /library/brevane-marine/r-0412/overview
+PASS route library /library/:issuer/:run/changes as /library/halden-aerostructures/2026-09-30/changes
+PASS route library /library/:issuer/:run/changes as /library/halden-aerostructures/2026-06-30/changes
+PASS route library /library/:issuer/:run/changes as /library/halden-aerostructures/2026-03-31/changes
+PASS route library /library/:issuer/:run/changes as /library/halden-aerostructures/2025-09-30/changes
+PASS route library /library/:issuer/:run/changes as /library/brevane-marine/r-0412/changes
+PASS route library /library/:issuer/:run/modules as /library/halden-aerostructures/2026-09-30/modules
+PASS route library /library/:issuer/:run/modules as /library/halden-aerostructures/2026-06-30/modules
+PASS route library /library/:issuer/:run/modules/:module as /library/halden-aerostructures/2026-09-30/modules/business-profile
+PASS route library /library/:issuer/:run/modules/:module as /library/halden-aerostructures/2026-09-30/modules/capital-structure
+PASS route library /library/:issuer/:run/modules/:module as /library/halden-aerostructures/2026-09-30/modules/recovery
+PASS route library /library/:issuer/:run/modules/:module as /library/halden-aerostructures/2026-03-31/modules/forecast
+PASS route library /library/:issuer/:run/modules/:module as /library/halden-aerostructures/2026-06-30/modules/capital-structure
+PASS route library /library/:issuer/:run/modules/:module as /library/halden-aerostructures/2026-09-30/modules/no-such-module
+PASS route library /library/:issuer/:run/modules/:module as /library/brevane-marine/r-0412/modules/source-readiness
+PASS route library /library/:issuer/:run/evidence as /library/halden-aerostructures/2026-09-30/evidence
+PASS route library /library/:issuer/:run/evidence as /library/halden-aerostructures/2026-06-30/evidence
+PASS route library /library/:issuer/:run/evidence/summary as /library/halden-aerostructures/2026-09-30/evidence/summary
+PASS route library /library/:issuer/:run/evidence/summary as /library/halden-aerostructures/2026-06-30/evidence/summary
+PASS route library /library/:issuer/:run/evidence/summary as /library/halden-aerostructures/2026-03-31/evidence/summary
+PASS route library /library/:issuer/:run/evidence/summary as /library/halden-aerostructures/2025-09-30/evidence/summary
+PASS route library /library/:issuer/:run/evidence/sources as /library/halden-aerostructures/2026-09-30/evidence/sources
+PASS route library /library/:issuer/:run/evidence/sources as /library/halden-aerostructures/2026-06-30/evidence/sources
+PASS route library /library/:issuer/:run/evidence/sources as /library/halden-aerostructures/2026-03-31/evidence/sources
+PASS route library /library/:issuer/:run/evidence/sources as /library/halden-aerostructures/2025-09-30/evidence/sources
+PASS route library /library/:issuer/:run/evidence/trace as /library/halden-aerostructures/2026-09-30/evidence/trace
+PASS route library /library/:issuer/:run/evidence/trace as /library/halden-aerostructures/2026-06-30/evidence/trace
+PASS route library /library/:issuer/:run/evidence/trace as /library/halden-aerostructures/2026-03-31/evidence/trace
+PASS route library /library/:issuer/:run/evidence/trace as /library/halden-aerostructures/2025-09-30/evidence/trace
+PASS route library /library/:issuer/:run/evidence/trace/:item as /library/halden-aerostructures/2026-09-30/evidence/trace/T-0014
+PASS route library /library/:issuer/:run/evidence/trace/:item as /library/halden-aerostructures/2026-09-30/evidence/trace/T-0042
+PASS route library /library/:issuer/:run/evidence/trace/:item as /library/halden-aerostructures/2026-09-30/evidence/trace/T-9999
+PASS route library /library/:issuer/:run/evidence/trace/:item as /library/halden-aerostructures/2026-06-30/evidence/trace/T-0014
+PASS route library /library/:issuer/:run/evidence/gaps/:item as /library/halden-aerostructures/2026-09-30/evidence/gaps/G-03
+PASS route library /library/:issuer/:run/evidence/gaps/:item as /library/halden-aerostructures/2026-09-30/evidence/gaps/G-99
+PASS route library /library/:issuer/:run/evidence/gaps/:item as /library/halden-aerostructures/2026-06-30/evidence/gaps/G-03
+PASS route library /library/:issuer/:run/evidence/record as /library/halden-aerostructures/2026-09-30/evidence/record
+PASS route library /library/:issuer/:run/evidence/record as /library/halden-aerostructures/2026-06-30/evidence/record
+PASS route library /library/:issuer/:run/evidence/record as /library/halden-aerostructures/2026-03-31/evidence/record
+PASS route library /library/:issuer/:run/evidence/record as /library/halden-aerostructures/2025-09-30/evidence/record
+PASS route library /library/:issuer/:run/evidence/gaps as /library/halden-aerostructures/2026-09-30/evidence/gaps
+PASS route library /library/:issuer/:run/evidence/gaps as /library/halden-aerostructures/2026-06-30/evidence/gaps
+PASS route library /library/:issuer/:run/evidence/gaps as /library/halden-aerostructures/2026-03-31/evidence/gaps
+PASS route library /library/:issuer/:run/evidence/gaps as /library/halden-aerostructures/2025-09-30/evidence/gaps
+PASS route library bare address /
+PASS route model /model/runs
+PASS route model /model/:issuer/:run/front as /model/transdigm/2025-06-30/front
+PASS route model /model/:issuer/:run/analysis as /model/transdigm/2025-06-30/analysis
+PASS route model /model/:issuer/:run/statements as /model/transdigm/2025-06-30/statements
+PASS route model /model/:issuer/:run/portfolio-fit as /model/transdigm/2025-06-30/portfolio-fit
+PASS route model /model/:issuer/:run/limitations as /model/transdigm/2025-06-30/limitations
+PASS route model /model/:issuer/:run/forecast as /model/transdigm/2025-06-30/forecast
+PASS route model bare address /model
+PASS route run /run/start
+PASS route run /run/start/:draft as /run/start/no-documents
+PASS route run /run/start/:draft as /run/start/documents
+PASS route run /run/start/:draft as /run/start/purpose
+PASS route run /run/start/:draft as /run/start/confirm
+PASS route run /run/start/:draft as /run/start/context
+PASS route run /run/start/:draft as /run/start/start
+PASS route run /run/start/:draft as /run/start/started
+PASS route run /run/activity
+PASS route run /run/runs
+PASS route run /run/activity/:run as /run/activity/running
+PASS route run /run/activity/:run as /run/activity/queued
+PASS route run /run/activity/:run as /run/activity/starting
+PASS route run /run/activity/:run as /run/activity/finished
+PASS route run /run/activity/:run as /run/activity/failed
+PASS route run /run/activity/:run as /run/activity/capped
+PASS route run /run/activity/:run as /run/activity/rejected
+PASS route run /run/activity/:run as /run/activity/interrupted
+PASS route run /run/activity/:run as /run/activity/many-modules
+PASS route run /run/activity/:run as /run/activity/none
+PASS route run /run/activity/:run as /run/activity/unreadable
+PASS route run bare address /run
+PASS route signal /signal/:scene/feed/:view as /signal/main/feed/for-you
+PASS route signal /signal/:scene/feed/:view as /signal/main/feed/latest
+PASS route signal /signal/:scene/feed/:view as /signal/main/feed/saved
+PASS route signal /signal/:scene/feed/:view as /signal/reader/feed/for-you
+PASS route signal /signal/:scene/feed/:view as /signal/reader/feed/latest
+PASS route signal /signal/:scene/feed/:view as /signal/ai-on/feed/for-you
+PASS route signal /signal/:scene/feed/:view as /signal/no-name/feed/for-you
+PASS route signal /signal/:scene/feed/:view as /signal/no-topics/feed/for-you
+PASS route signal /signal/:scene/feed/:view as /signal/not-checked/feed/for-you
+PASS route signal /signal/:scene/feed/:view as /signal/loading/feed/for-you
+PASS route signal /signal/:scene/feed/:view as /signal/unreachable/feed/for-you
+PASS route signal /signal/:scene/feed/:view as /signal/no-sources/feed/for-you
+PASS route signal /signal/:scene/feed/:view as /signal/nothing-followed/feed/for-you
+PASS route signal /signal/:scene/feed/:view as /signal/no-sources/feed/latest
+PASS route signal /signal/:scene/feed/:view as /signal/nothing-followed/feed/saved
+PASS route signal /signal/:scene/feed/:view as /signal/not-checked/feed/latest
+PASS route signal /signal/:scene/topic/:topic as /signal/main/topic/shipping
+PASS route signal /signal/:scene/topic/:topic as /signal/main/topic/telecoms
+PASS route signal /signal/:scene/group/:group as /signal/main/group/leveraged-credit
+PASS route signal /signal/:scene/group/:group as /signal/main/group/shipping-desk
+PASS route signal /signal/:scene/group/:group as /signal/reader/group/leveraged-credit
+PASS route signal /signal/:scene/group/:group/thread/:thread as /signal/main/group/leveraged-credit/thread/corvane-thread
+PASS route signal /signal/:scene/group/:group/thread/:thread as /signal/main/group/leveraged-credit/thread/packaging-note
+PASS route signal /signal/:scene/group/:group/thread/:thread as /signal/main/group/leveraged-credit/thread/brightwell-thread
+PASS route signal /signal/:scene/group/:group/thread/:thread as /signal/reader/group/leveraged-credit/thread/corvane-thread
+PASS route signal /signal/:scene/digest/:digest as /signal/main/digest/weekly-brief
+PASS route signal /signal/:scene/digest/:digest as /signal/main/digest/daily-ratings
+PASS route signal /signal/:scene/digest/:digest as /signal/ai-on/digest/weekly-brief
+PASS route signal /signal/:scene/digest/:digest as /signal/ai-on/digest/daily-ratings
+PASS route signal /signal/:scene/settings/:section as /signal/main/settings/groups
+PASS route signal /signal/:scene/settings/:section as /signal/main/settings/sources
+PASS route signal /signal/:scene/settings/:section as /signal/main/settings/thread-rules
+PASS route signal /signal/:scene/settings/:section as /signal/main/settings/notifications
+PASS route signal /signal/:scene/settings/:section as /signal/main/settings/topics
+PASS route signal /signal/:scene/settings/:section as /signal/main/settings/digests
+PASS route signal /signal/:scene/settings/:section as /signal/main/settings/ai
+PASS route signal /signal/:scene/settings/:section as /signal/ai-on/settings/ai
+PASS route signal /signal/:scene/settings/:section as /signal/ai-capped/settings/ai
+PASS route signal /signal/:scene/settings/:section as /signal/reader/settings/topics
+PASS route signal /signal/:scene/settings/:section as /signal/reader/settings/notifications
+PASS route signal /signal/:scene/settings/:section as /signal/reader/settings/groups
+PASS route signal bare address /signal
+PASS route visits: an unknown hash expects "Page not found"
+PASS violation canary: an inline <style> must be reported

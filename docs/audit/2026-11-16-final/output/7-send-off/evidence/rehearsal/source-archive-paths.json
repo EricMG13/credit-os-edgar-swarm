@@ -1,0 +1,31 @@
+{
+  "original_commit": "a987af9b9ca5072d28f2e1f9e1dc5269c6c1858f",
+  "prior_archive_validation_exit": 1,
+  "prior_collision": [
+    "docs/audit/2026-11-16-final/output/5-repair/probes/R4-015/",
+    "docs/audit/2026-11-16-final/output/5-repair/probes/r4-015/"
+  ],
+  "impact": "Case-insensitive extraction can combine both directories, leaving an archive path census that differs from its manifest.",
+  "documentation_repairs": [
+    {
+      "from": "docs/audit/2026-11-16-final/output/5-repair/probes/R4-015/chrome-record-diagnostic.json",
+      "to": "docs/audit/2026-11-16-final/output/5-repair/probes/r4-015/chrome-record-diagnostic.json",
+      "sha256": "51ed3b8dbe3cdef1a49b663bf0a22b2a2e7db19e8948c0f084ab43d254c2a279"
+    },
+    {
+      "from": "docs/audit/2026-11-16-final/output/5-repair/probes/R4-015/msedge-record-diagnostic.json",
+      "to": "docs/audit/2026-11-16-final/output/5-repair/probes/r4-015/msedge-record-diagnostic.json",
+      "sha256": "21169663c6eece232d46d71c1e37f9ea5b68e36530f43f69f48c440f3c60dbbb"
+    }
+  ],
+  "corrected_local_archive_validation_exit": 0,
+  "corrected_local_archive": {
+    "commit": "f951092b122bc70ba704b49c0588c24d25ebb928",
+    "archive_sha256": "159ff229800b5af803e18e19580f063904083ad4f0db86dd85671222a7599379",
+    "archive_bytes": 37609705,
+    "regular_files": 3617,
+    "relative_path_max": 152,
+    "windows_case_or_name_conflicts": 0,
+    "windows_launcher_crlf": 17
+  }
+}

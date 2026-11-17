@@ -1,0 +1,235 @@
+{
+  "scopes": {
+    "tracked": {
+      "files": 3583,
+      "candidateCount": 19,
+      "pathHits": 590,
+      "pathFiles": 57
+    },
+    "checkout-dist": {
+      "files": 36,
+      "candidateCount": 0,
+      "pathHits": 0,
+      "pathFiles": 0
+    },
+    "release-zip": {
+      "files": 1400,
+      "candidateCount": 0,
+      "pathHits": 253,
+      "pathFiles": 6
+    }
+  },
+  "records": {
+    "tracked": {
+      "candidates": [
+        {
+          "path": "docs/work-pc/syncs/003_2026-11-11_e7ed261-cac9cf1/changes.patch",
+          "line": 11451,
+          "kind": "openai-or-stripe-key",
+          "length": 49,
+          "matchSha256": "af436ad996ce358f2ce797f40d86592507576786eea8d87c96525b7ae3faf011"
+        },
+        {
+          "path": "tests/model/test_adapter.py",
+          "line": 44,
+          "kind": "openai-or-stripe-key",
+          "length": 29,
+          "matchSha256": "850a48c6f4c93d90701a978577d5ef081a17131210c7482465c621d292df7182"
+        },
+        {
+          "path": "tests/model/test_copilot_adapter.py",
+          "line": 971,
+          "kind": "quoted-secret-assignment",
+          "length": 42,
+          "matchSha256": "c65fbae399acf935d8711924249a81c56c59a4f38163d48214f7b2da2ab2ce14"
+        },
+        {
+          "path": "tests/model/test_loop.py",
+          "line": 1315,
+          "kind": "openai-or-stripe-key",
+          "length": 31,
+          "matchSha256": "3dba54a09e0be628140ec284aa8b20de53456da06d5b2e9577c7181373dab953"
+        },
+        {
+          "path": "tests/model/test_loop.py",
+          "line": 1857,
+          "kind": "openai-or-stripe-key",
+          "length": 33,
+          "matchSha256": "7ea47b3e3b33f4a664d3d0fee763ecd68810df32a3354964dea56f8f3bd4bae6"
+        },
+        {
+          "path": "tests/model/test_loop.py",
+          "line": 1905,
+          "kind": "openai-or-stripe-key",
+          "length": 33,
+          "matchSha256": "7ea47b3e3b33f4a664d3d0fee763ecd68810df32a3354964dea56f8f3bd4bae6"
+        },
+        {
+          "path": "tests/model/test_loop.py",
+          "line": 1315,
+          "kind": "quoted-secret-assignment",
+          "length": 50,
+          "matchSha256": "70170b015c912d8e3459593f4c73e80fbb2149e57d381f437b1900ca2b4c37d4"
+        },
+        {
+          "path": "tests/model/test_o5_done_when.py",
+          "line": 54,
+          "kind": "openai-or-stripe-key",
+          "length": 31,
+          "matchSha256": "3dba54a09e0be628140ec284aa8b20de53456da06d5b2e9577c7181373dab953"
+        },
+        {
+          "path": "tests/model/test_o5_done_when.py",
+          "line": 359,
+          "kind": "openai-or-stripe-key",
+          "length": 32,
+          "matchSha256": "d045b7d14811e8aebb0dea1353d7d3a113b958de5d32bbb4b1ef22ac57421722"
+        },
+        {
+          "path": "tests/model/test_o5_done_when.py",
+          "line": 360,
+          "kind": "openai-or-stripe-key",
+          "length": 32,
+          "matchSha256": "7aeded2136a08917d357a4d4aeb66ef9c6c263283ace8e22b267543171938ac7"
+        },
+        {
+          "path": "tests/model/test_o5_done_when.py",
+          "line": 359,
+          "kind": "quoted-secret-assignment",
+          "length": 54,
+          "matchSha256": "97a6d615e59ec0e2bfba13e2b0a46f145bba14f7be7ff2061783e50fbc95257f"
+        },
+        {
+          "path": "tests/model/test_o5_done_when.py",
+          "line": 360,
+          "kind": "quoted-secret-assignment",
+          "length": 55,
+          "matchSha256": "1c8f4c9530453925444e82bbd707b88c7fe3ffea6745a91cde0d80571fccd34d"
+        },
+        {
+          "path": "tests/model/test_providers.py",
+          "line": 48,
+          "kind": "openai-or-stripe-key",
+          "length": 33,
+          "matchSha256": "7ea47b3e3b33f4a664d3d0fee763ecd68810df32a3354964dea56f8f3bd4bae6"
+        },
+        {
+          "path": "tests/model/test_record.py",
+          "line": 1251,
+          "kind": "openai-or-stripe-key",
+          "length": 33,
+          "matchSha256": "7ea47b3e3b33f4a664d3d0fee763ecd68810df32a3354964dea56f8f3bd4bae6"
+        },
+        {
+          "path": "tests/model/test_redact.py",
+          "line": 210,
+          "kind": "openai-or-stripe-key",
+          "length": 36,
+          "matchSha256": "c9ad96177953cffdb5e3bb51c5f7e6e90bd2dbb738c5da711cff6de131b7a2d3"
+        },
+        {
+          "path": "tests/model/test_redact.py",
+          "line": 213,
+          "kind": "openai-or-stripe-key",
+          "length": 36,
+          "matchSha256": "c9ad96177953cffdb5e3bb51c5f7e6e90bd2dbb738c5da711cff6de131b7a2d3"
+        },
+        {
+          "path": "tests/model/test_redact.py",
+          "line": 134,
+          "kind": "quoted-secret-assignment",
+          "length": 41,
+          "matchSha256": "40c88514cbc35f3f237dfa9143f2db19fe4dba66ce5dcdeab324832dd6fd91f2"
+        },
+        {
+          "path": "tests/model/test_redact.py",
+          "line": 136,
+          "kind": "quoted-secret-assignment",
+          "length": 45,
+          "matchSha256": "0690eb4820aad4ab8439f3ec03e33de3aea68e4f79b589f96a3bf0b79b591883"
+        },
+        {
+          "path": "tests/test_run_start_service.py",
+          "line": 38,
+          "kind": "openai-or-stripe-key",
+          "length": 49,
+          "matchSha256": "af436ad996ce358f2ce797f40d86592507576786eea8d87c96525b7ae3faf011"
+        }
+      ],
+      "absolutePathOccurrences": {
+        "METHODOLOGY-REVIEW.md": 29,
+        "docs/audit/2026-11-16-final/output/2-sections/C3/report.md": 1,
+        "docs/audit/2026-11-16-final/output/2-sections/C4/report.md": 1,
+        "docs/audit/2026-11-16-final/output/2-sections/C5/probes/downloads.sh": 1,
+        "docs/audit/2026-11-16-final/output/2-sections/S1/evidence/trailing-slash.txt": 1,
+        "docs/audit/2026-11-16-final/output/2-sections/S1/findings.jsonl": 1,
+        "docs/audit/2026-11-16-final/output/2-sections/S1/probes/trailing-slash.mjs": 1,
+        "docs/audit/2026-11-16-final/output/2-sections/S2/probes/odd-addresses.mjs": 1,
+        "docs/audit/2026-11-16-final/output/3-journeys/J6/journey.md": 2,
+        "docs/audit/2026-11-16-final/output/4-register/register.jsonl": 1,
+        "docs/audit/2026-11-16-final/output/4-register/verify/BRIEF.md": 1,
+        "docs/audit/2026-11-16-final/output/5-repair/BATCH-BRIEF.md": 1,
+        "docs/audit/2026-11-16-final/output/5-repair/T01-review-2-adversarial.md": 1,
+        "docs/audit/2026-11-16-final/output/5-repair/T01-review-2.md": 1,
+        "docs/audit/2026-11-16-final/output/5-repair/T01-review-3-adversarial.md": 1,
+        "docs/audit/2026-11-16-final/output/5-repair/T01-review-3.md": 4,
+        "docs/audit/2026-11-16-final/output/5-repair/T01-review-4-adversarial.md": 1,
+        "docs/audit/2026-11-16-final/output/5-repair/T01-review-adversarial.md": 1,
+        "docs/audit/2026-11-16-final/output/5-repair/T01.md": 2,
+        "docs/audit/2026-11-16-final/output/5-repair/T01b-review-adversarial.md": 1,
+        "docs/audit/2026-11-16-final/output/5-repair/T01b-review.md": 1,
+        "docs/audit/2026-11-16-final/output/5-repair/T03-review-2.md": 1,
+        "docs/audit/2026-11-16-final/output/5-repair/T03-review.md": 1,
+        "docs/audit/2026-11-16-final/output/5-repair/T04-review-2.md": 3,
+        "docs/audit/2026-11-16-final/output/5-repair/T04-review.md": 1,
+        "docs/audit/2026-11-16-final/output/5-repair/T05-review.md": 1,
+        "docs/audit/2026-11-16-final/output/5-repair/T08/probe-output.txt": 2,
+        "docs/audit/2026-11-16-final/output/5-repair/T09-review-adversarial.md": 1,
+        "docs/audit/2026-11-16-final/output/5-repair/T09-review.md": 1,
+        "docs/audit/2026-11-16-final/output/5-repair/T16.md": 1,
+        "docs/audit/2026-11-16-final/output/5-repair/T33.md": 1,
+        "docs/audit/2026-11-16-final/output/5-repair/T35.md": 1,
+        "docs/audit/2026-11-16-final/output/5-repair/batch-inventory.json": 1,
+        "docs/audit/2026-11-16-final/output/5-repair/closure-planning-63a12ceb.json": 2,
+        "docs/audit/2026-11-16-final/output/5-repair/fidelity/compare-after.json": 11,
+        "docs/audit/2026-11-16-final/output/5-repair/fidelity/compare-before.json": 11,
+        "docs/audit/2026-11-16-final/output/5-repair/fidelity/proof-local-consequences.test.mjs": 2,
+        "docs/audit/2026-11-16-final/output/sessions/repair-1/WORKER-NOTES.md": 2,
+        "docs/audit/2026-11-16-final/output/sessions/repair-2/worker-brief.md": 1,
+        "docs/audit/2026-11-16-final/output/sessions/repair-3/WORKERS.md": 1,
+        "docs/audit/2026-11-16-final/output/sessions/sections-static/worker-notes.md": 1,
+        "docs/audit/2026-11-16-final/stages/7-send-off.md": 3,
+        "docs/reuse/selected-methods/manifest.json": 210,
+        "docs/rulings/2026-11-04-live-module-tests.md": 1,
+        "docs/rulings/2026-11-05-live-loop-tests.md": 1,
+        "docs/sweeps/2026-11-13-optimisation-review/findings.json": 48,
+        "docs/work-pc/syncs/045_2026-11-13_fdd2b23-5182a5a/changes.patch": 66,
+        "docs/work-pc/syncs/057_2026-11-13_6d3b64f-c9aa244/changes.patch": 48,
+        "docs/work-pc/syncs/060_2026-11-13_088090f-1cdfb86/changes.patch": 2,
+        "docs/work-pc/syncs/062_2026-11-13_0ababbe-73aec77/changes.patch": 5,
+        "docs/work-pc/syncs/070_2026-11-15_a561bc7-d7090cb/changes.patch": 52,
+        "src/deploy_workflow/model/copilot_adapter.py": 4,
+        "src/deploy_workflow/model/redact.py": 8,
+        "tests/model/test_copilot_adapter.py": 22,
+        "tests/model/test_redact.py": 18,
+        "tests/test_credit_os_store.py": 1,
+        "tests/test_react_frontend.py": 1
+      }
+    },
+    "checkout-dist": {
+      "candidates": [],
+      "absolutePathOccurrences": {}
+    },
+    "release-zip": {
+      "candidates": [],
+      "absolutePathOccurrences": {
+        "METHODOLOGY-REVIEW.md": 29,
+        "docs/reuse/selected-methods/manifest.json": 210,
+        "docs/rulings/2026-11-04-live-module-tests.md": 1,
+        "docs/rulings/2026-11-05-live-loop-tests.md": 1,
+        "src/deploy_workflow/model/copilot_adapter.py": 4,
+        "src/deploy_workflow/model/redact.py": 8
+      }
+    }
+  }
+}

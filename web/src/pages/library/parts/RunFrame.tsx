@@ -61,11 +61,19 @@ export function RunTabLink({
       </Badge>
     );
   if (href === null) {
+    // Only the label is disabled: the reason it gives carries information, so it is read text.
     return (
-      <span aria-disabled="true" className={cx(TAB, size, "cursor-not-allowed text-text-disabled")}>
-        {label}
-        {badge}
-        {hint === undefined ? null : <span className="text-xs font-normal">{hint}</span>}
+      <span className={cx(TAB, size)}>
+        <span
+          aria-disabled="true"
+          className="inline-flex cursor-not-allowed items-center gap-1.5 text-text-disabled"
+        >
+          {label}
+          {badge}
+        </span>
+        {hint === undefined ? null : (
+          <span className="text-small font-normal text-text-tertiary">{hint}</span>
+        )}
       </span>
     );
   }
@@ -96,7 +104,13 @@ function RunTabs({ issuer, run, tab }: { issuer: string; run: Run; tab: RunTab }
       <RunTabLink href={overviewHref(issuer, run.id)} current={here("overview")} label="Overview" />
       <RunTabLink href={changesHref(issuer, run.id)} current={here("changes")} label="Changes" />
       <RunTabLink
-        href={head.firstModule === null ? null : modulesHref(issuer, run.id, head.firstModule)}
+        href={
+          head.firstModule === null
+            ? run.loading
+              ? modulesHref(issuer, run.id)
+              : null
+            : modulesHref(issuer, run.id, head.firstModule)
+        }
         current={here("modules")}
         label="Modules"
         count={head.tabs.modulesCount}
@@ -160,7 +174,45 @@ function RunHeader({
 const BAR = "rounded-ds-xs bg-surface-subtle";
 
 /** The static skeleton of a run still loading (States mock, "Any run page"): nothing moves. */
-function RunSkeleton() {
+function RunSkeleton({ tab }: { tab: RunTab }) {
+  if (tab === "modules")
+    return (
+      <div
+        aria-busy="true"
+        data-loading-page="modules"
+        className="grid items-start gap-10 min-[1001px]:grid-cols-[240px_minmax(0,1fr)]"
+      >
+        <div className="flex flex-col gap-4">
+          {["w-full h-10", "w-3/4 h-4", "w-4/5 h-4", "w-2/3 h-4"].map((size) => (
+            <div key={size} className={cx(BAR, size)} />
+          ))}
+        </div>
+        <div className="flex flex-col gap-6">
+          <div className={cx(BAR, "h-8 w-1/2")} />
+          <div className={cx(BAR, "h-32 w-full rounded-xl")} />
+          <div className={cx(BAR, "h-4 w-4/5")} />
+          <div className={cx(BAR, "h-4 w-3/4")} />
+        </div>
+      </div>
+    );
+  if (tab === "evidence")
+    return (
+      <div aria-busy="true" data-loading-page="evidence" className="flex flex-col gap-6">
+        <div className={cx(BAR, "h-8 w-1/3")} />
+        <div className="flex gap-4 border-b border-border-hairline pb-4">
+          {["w-20", "w-24", "w-16", "w-12"].map((width) => (
+            <div key={width} className={cx(BAR, "h-6", width)} />
+          ))}
+        </div>
+        <div className="flex flex-col divide-y divide-border-hairline rounded-xl border border-border-hairline bg-surface-card px-4">
+          {["w-3/4", "w-4/5", "w-2/3"].map((width) => (
+            <div key={width} className="py-4">
+              <div className={cx(BAR, "h-4", width)} />
+            </div>
+          ))}
+        </div>
+      </div>
+    );
   const metric = (title: string, value: string, note: string) => (
     <div className="flex flex-col gap-2 rounded-xl border border-border-subtle bg-surface-card p-5 shadow-xs">
       <div className={cx(BAR, "h-3.5", title)} />
@@ -178,7 +230,7 @@ function RunSkeleton() {
     </div>
   );
   return (
-    <div aria-busy="true" className="flex flex-col gap-6">
+    <div aria-busy="true" data-loading-page="overview" className="flex flex-col gap-6">
       <div className={cx(BAR, "h-33 rounded-[10px]")} />
       <div className="grid grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-4">
         {metric("w-1/2", "w-[70%]", "w-4/5")}
@@ -293,12 +345,17 @@ function RunScope({
           <RunHeader
             issuer={issuerId}
             head={run.head}
-            sources={<SourcesSwitch isSelected={sources} onChange={setSources} />}
+            sources={
+              // Evidence draws no trace control, so the switch would have nothing to show there.
+              tab === "evidence" ? null : (
+                <SourcesSwitch isSelected={sources} onChange={setSources} />
+              )
+            }
           />
           <RunTabs issuer={issuerId} run={run} tab={tab} />
         </div>
         {run.loading ? (
-          <RunSkeleton />
+          <RunSkeleton tab={tab} />
         ) : typeof children === "function" ? (
           children(run, issuerId)
         ) : (

@@ -1,8 +1,7 @@
 import { Button } from "@/components/base/buttons/button";
 import { ArrowRight } from "@untitledui/icons";
-import { useRef, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Alert } from "@/components/alert/Alert";
-import { Blocked } from "@/components/gap/Blocked";
 import { StatusBadge } from "@/components/status/StatusBadge";
 import type { BlockedBody, DeliveredBody, LoadedRun, Module as ModuleData } from "./slice";
 import { BottomLine } from "./parts/BottomLine";
@@ -19,7 +18,12 @@ import { TRACE_HOST, TraceControl } from "./parts/TraceControl";
 import { SECTION_HEADING, SUBSECTION_HEADING } from "./parts/heading";
 import { evidenceHref } from "./parts/links";
 
-/** The sections a delivered module has, in page order: the navigator's first group. */
+/**
+ * The sections a delivered module has, in page order: the navigator's first group. The reading
+ * order is bottom line, key findings, contrary evidence and what would change the view, limitations,
+ * then the typed records, figures and tables (CM-005), so the limitations that qualify the figures
+ * come before them.
+ */
 function sectionsOf(body: DeliveredBody): NavSection[] {
   const named = (key: NavSection["icon"], label: string): NavSection => ({
     key,
@@ -31,8 +35,8 @@ function sectionsOf(body: DeliveredBody): NavSection[] {
     ...(body.findings.length === 0 ? [] : [named("findings", "Key findings")]),
     ...(body.contrary === null ? [] : [named("contrary", "Contrary evidence")]),
     ...(body.changeView === null ? [] : [named("change-view", "What would change the view")]),
-    ...recordSections(body.records),
     ...(body.limitations.items.length === 0 ? [] : [named("limitations", "Limitations")]),
+    ...recordSections(body.records),
   ];
 }
 
@@ -91,7 +95,6 @@ function Prose({ body, gapsHref }: { body: DeliveredBody; gapsHref: string }) {
           />
         </Target>
       )}
-      {body.records.length === 0 ? null : <Records blocks={body.records} />}
       {body.limitations.items.length === 0 ? null : (
         <Target id="limitations">
           <Limitations
@@ -101,6 +104,7 @@ function Prose({ body, gapsHref }: { body: DeliveredBody; gapsHref: string }) {
           />
         </Target>
       )}
+      {body.records.length === 0 ? null : <Records blocks={body.records} />}
     </>
   );
 }
@@ -117,15 +121,11 @@ function BlockedModule({
 }) {
   return (
     <div className="flex flex-col gap-3">
-      {state === "Not assessable" ? (
-        <Blocked reason={body.reason} />
-      ) : (
-        <div className="flex flex-wrap items-center gap-2">
-          <StatusBadge set="Module state" state={state} />
-          <p className="text-small text-text-secondary">{body.reason}</p>
-        </div>
-      )}
-      <p className="max-w-[72ch] text-small text-text-secondary">{body.note}</p>
+      <StatusBadge set="Module state" state={state} />
+      <BottomLine
+        text={{ label: "Bottom line", lead: body.reason, rest: body.note, trace: null }}
+        level={SUBSECTION_HEADING}
+      />
       <Button
         className="w-fit"
         href={gapsHref}
@@ -158,8 +158,33 @@ function ModuleView({
   const Heading = SECTION_HEADING;
   const content = useRef<HTMLDivElement>(null);
   const body = module.body;
-  const sections = body.kind === "delivered" ? sectionsOf(body) : [];
+  const sections = useMemo(
+    () =>
+      body.kind === "delivered"
+        ? sectionsOf(body)
+        : [{ key: "bottom-line", label: "Bottom line", icon: "bottom-line" as const }],
+    [body],
+  );
   const [active, setActive] = useState<string | null>(sections[0]?.key ?? null);
+  useEffect(() => {
+    const node = content.current;
+    const scroller = node?.closest("main");
+    if (!node || !scroller) return;
+    const update = () => {
+      if (scroller.clientHeight === 0) return;
+      const top = scroller.getBoundingClientRect().top + 24;
+      let current = sections[0]?.key ?? null;
+      for (const target of node.querySelectorAll<HTMLElement>("[data-section]")) {
+        if (target.getBoundingClientRect().top <= top) current = target.dataset["section"] ?? null;
+      }
+      setActive(current);
+    };
+    update();
+    scroller.addEventListener("scroll", update, { passive: true });
+    return () => {
+      scroller.removeEventListener("scroll", update);
+    };
+  }, [sections]);
   const gapsHref = evidenceHref(issuer, run.id, "gaps");
   const goTo = (key: string) => {
     const target = content.current?.querySelector<HTMLElement>(`[data-section="${key}"]`);
@@ -199,7 +224,9 @@ function ModuleView({
         {body.kind === "delivered" ? (
           <Prose body={body} gapsHref={gapsHref} />
         ) : (
-          <BlockedModule body={body} state={module.state} gapsHref={gapsHref} />
+          <Target id="bottom-line">
+            <BlockedModule body={body} state={module.state} gapsHref={gapsHref} />
+          </Target>
         )}
       </div>
     </div>

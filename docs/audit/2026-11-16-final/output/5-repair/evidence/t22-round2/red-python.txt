@@ -1,0 +1,57 @@
+......FF                                                                 [100%]
+=================================== FAILURES ===================================
+_ test_projection_keeps_the_exact_source_qualification_when_other_markdown_is_unstructured _
+
+    def test_projection_keeps_the_exact_source_qualification_when_other_markdown_is_unstructured():
+        qualification = (
+            "Counts cover FY2025 audited standalone evidence only; "
+            "overseas subsidiaries are excluded."
+        )
+        text = (
+            "## Findings\n### Earlier supporting table\n| Claim | Value |\n| --- | --- |\n"
+            "| Malformed earlier row |\n"
+            + handoff().replace("| Input | Value |", qualification + "\n| Input | Value |")
+        )
+        sections, error = store.structured(text.encode(), False)
+        assert error == "Malformed table at line 5"
+        assert sections[0]["heading"] == "Unstructured handoff"
+        output = store.confidence_fields(text.encode())
+        assert output["confidence"] == {"value": 89, "band": "High"}
+>       assert output["confidenceTrace"]["section"] == {
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+            "heading": "Confidence inputs",
+            "level": 3,
+            "line": 7,
+            "blocks": [{"type": "text", "line": 8, "end": 8, "text": qualification}],
+        }
+E       KeyError: 'section'
+
+tests/test_confidence_trace_projection.py:117: KeyError
+_ test_projection_keeps_only_the_authoritative_sections_prose_and_its_citation_chips _
+
+tmp_path = PosixPath('/tmp/pytest-of-agent/pytest-53/test_projection_keeps_only_the0')
+
+    def test_projection_keeps_only_the_authoritative_sections_prose_and_its_citation_chips(tmp_path):
+        before = (
+            "## Findings\n### Earlier supporting table\n"
+            "| Claim | Value |\n| --- | --- |\n| Malformed earlier row |\n"
+            "Basis: Earlier.pdf, page 2.\n"
+            "```md\n### Confidence inputs\nFenced example qualification.\n```\n"
+        )
+        text = before + handoff().replace(
+            "| Input | Value |",
+            "Exact standalone qualification.\nBasis: Annual.pdf, page 7.\n\n| Input | Value |",
+        )
+        text += "\n\nLater input qualification.\n### Limitations\nUnrelated limitation.\n"
+        sections, error = store.structured(text.encode(), False)
+        assert error
+        output = store.confidence_fields(text.encode())
+>       projected = output["confidenceTrace"]["section"]
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       KeyError: 'section'
+
+tests/test_confidence_trace_projection.py:140: KeyError
+=========================== short test summary info ============================
+FAILED tests/test_confidence_trace_projection.py::test_projection_keeps_the_exact_source_qualification_when_other_markdown_is_unstructured
+FAILED tests/test_confidence_trace_projection.py::test_projection_keeps_only_the_authoritative_sections_prose_and_its_citation_chips
+2 failed, 6 passed in 0.16s

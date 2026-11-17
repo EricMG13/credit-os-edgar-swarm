@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { useEffect, type ReactNode } from "react";
 import { EmptyState } from "@/components/application/empty-state/empty-state";
 import { PageHeader } from "@/shell/PageHeader";
 import { useSource } from "../../source";
@@ -30,9 +30,25 @@ function Notice({ title, description }: { title: string; description: string }) 
 }
 
 /**
+ * What the reader is told of a run that could not be read: one fixed sentence. The reason the
+ * reader found, a field path, is for the analyst and goes to the console.
+ */
+function Unreadable({ reason }: { reason: string }) {
+  useEffect(() => {
+    console.warn(`Financial model not shown: ${reason}`);
+  }, [reason]);
+  return (
+    <Notice
+      title="This part of the library could not be read"
+      description="The financial model for this run could not be shown. Open All financial models to see the available records."
+    />
+  );
+}
+
+/**
  * The run a Model route's address names, inside the Model shell. A run the reader held as
- * unreadable draws why; an issuer or run the slice does not hold draws the not found state. App
- * has already refused an invalid slice.
+ * unreadable draws that it could not be read; an issuer or run the slice does not hold draws the
+ * not found state. App has already refused an invalid slice.
  */
 export function RunPage({
   params,
@@ -55,7 +71,7 @@ export function RunPage({
         description="The library holds no financial model for this issuer and run."
       />
     ) : (
-      <Notice title="This part of the library could not be read" description={unreadable.reason} />
+      <Unreadable reason={unreadable.reason} />
     );
   }
   return (

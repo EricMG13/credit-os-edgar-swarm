@@ -1,0 +1,30 @@
+{
+  "retainedRows": {
+    "current": {
+      "bytes": 75,
+      "keys": [
+        "labels",
+        "modules"
+      ]
+    },
+    "earlier": {
+      "bytes": 109,
+      "keys": [
+        "labels",
+        "modules"
+      ]
+    }
+  },
+  "earlierReplyBytes": 2168,
+  "historyDomSha256": "401826a2b7edb2525f428d9fce43a877fe198838c018cf332ccb490a2849d313",
+  "requests": [
+    {
+      "url": "/connected/snapshot?run=acme",
+      "cache": "no-store"
+    },
+    {
+      "url": "/connected/snapshot?run=acme-2025",
+      "cache": "no-store"
+    }
+  ]
+}

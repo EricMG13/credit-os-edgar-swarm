@@ -156,7 +156,7 @@ describe("connected library and report design", () => {
     north.metrics = { leverage: { value: "965", unit: "US$m", period: "2026-06-30" } };
     useSnapshot(snapshot);
     render(<ConnectedApp path="/" mode="synthetic" />);
-    const value = await screen.findByText("$965m");
+    const value = await screen.findByText("US$965m");
     expect(value).toHaveClass("whitespace-nowrap");
     const grid = value.closest("dl");
     expect(grid).toHaveClass("grid-cols-[repeat(auto-fit,minmax(9rem,1fr))]");
@@ -269,7 +269,7 @@ describe("connected library and report design", () => {
     render(<ConnectedApp path="/report/northbridge-2026" mode="synthetic" />);
     expect(await screen.findByRole("heading", { name: "Dates to watch" })).toBeInTheDocument();
     expect(screen.getByText("Refinancing maturity")).toBeInTheDocument();
-    expect(screen.getByText("2027-03-15 · day")).toBeInTheDocument();
+    expect(screen.getByText("2027-03-15")).toBeInTheDocument();
     expect(screen.getByText("Scheduled")).toBeInTheDocument();
     const evidence = screen
       .getAllByRole("link", { name: "Evidence" })
@@ -300,7 +300,7 @@ it("withholds a catalogue-only report and its actions", async () => {
   render(<ConnectedApp path="/report/northbridge-2026" mode="synthetic" />);
   expect(await screen.findByText("No report was published for this run.")).toBeInTheDocument();
   expect(screen.getByRole("heading", { name: "Credit report" })).toBeInTheDocument();
-  expect(screen.queryByRole("link", { name: "Run activity" })).toBeNull();
+  expect(within(screen.getByRole("main")).queryByRole("link", { name: "Run activity" })).toBeNull();
   expect(screen.queryByRole("switch", { name: "Show sources" })).toBeNull();
   expect(screen.queryByRole("navigation", { name: "Report sections" })).toBeNull();
 });
@@ -339,6 +339,20 @@ it.each([
   expect(await screen.findByRole("heading", { name: expected, level: 1 })).toBeInTheDocument();
 });
 
+it("C1-032 keeps the report-data loading skeleton static while its request is pending", async () => {
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(() => new Promise<Response>(() => {})),
+  );
+  render(<ConnectedApp path="/report/northbridge-2026" mode="synthetic" />);
+  const message = await screen.findByText("Loading report…");
+  const status = message.parentElement;
+  if (!status) throw new Error("missing report loading status");
+  expect(status).toHaveAttribute("role", "status");
+  expect(status.querySelectorAll(".bg-surface-subtle").length).toBeGreaterThan(1);
+  expect(status.querySelector('[class*="animate-"]')).toBeNull();
+});
+
 it("ends the loading state for a resolved null snapshot", async () => {
   useSnapshot(null);
   render(<ConnectedApp path="/report/absent" mode="synthetic" />);
@@ -350,9 +364,16 @@ it("ends the loading state for a resolved null snapshot", async () => {
 it("shows a snapshot error without admitting a report or remaining in loading", async () => {
   vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("Snapshot unavailable")));
   render(<ConnectedApp path="/report/northbridge-2026" mode="synthetic" />);
-  expect(await screen.findByRole("alert")).toHaveTextContent("Snapshot unavailable");
+  // C3-007 (D-31): the alert names what happened in a fixed sentence, never the raw error text,
+  // and offers a way on; no report is admitted (no report sections).
+  const alert = await screen.findByRole("alert");
+  expect(alert).toHaveTextContent("The report could not be loaded");
+  expect(alert).not.toHaveTextContent("Snapshot unavailable");
   expect(screen.queryByText("Loading report…")).toBeNull();
-  expect(screen.queryByRole("link", { name: "Run activity" })).toBeNull();
+  expect(screen.queryByRole("navigation", { name: "Report sections" })).toBeNull();
+  expect(
+    within(screen.getByRole("main")).getByRole("link", { name: "Run activity" }),
+  ).toHaveAttribute("href", "/run/northbridge-2026");
 });
 
 const CODED_CELL = "Liquidity (CP-2D)";

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import errno
 import hashlib
 import json
 import os
@@ -14,6 +15,7 @@ from typing import Any
 from urllib.parse import quote, urlsplit
 
 import pytest
+from credit_os import store
 
 from deploy_workflow import http_base
 from deploy_workflow.inbox import runs
@@ -93,6 +95,61 @@ def test_exact_original_and_native_page_identity(published: tuple[Layout, dict[s
     assert "sandbox" in response.headers["Content-Security-Policy"]
     page = sources.reply(urlsplit(chip["pageHref"]), layout.runs, enriched)
     assert page.body == _pages(NAME, RAW)[1].encode() == RAW[12000:]
+
+
+def test_confidence_sources_survive_the_bridge_refresh_after_generic_parse_failure(
+    published: tuple[Layout, dict[str, Any]],
+) -> None:
+    layout, snapshot = published
+    qualification = (
+        "Counts cover FY2025 audited standalone evidence only; overseas subsidiaries are excluded."
+    )
+    text = "\n".join(
+        [
+            "## Findings",
+            "### Earlier supporting table",
+            "| Claim | Value |",
+            "| --- | --- |",
+            "| Malformed earlier row |",
+            "### Confidence inputs",
+            qualification,
+            f"Basis: {NAME}, page 2.",
+            "| Input | Value |",
+            "| --- | --- |",
+            "| Directly Sourced | 8 |",
+            "| Calculated | 2 |",
+            "| Assumption-Based | 2 |",
+            "| Analyst Inference | 0 |",
+            "| Weak Lineage | 0 |",
+            "| Untraced | 0 |",
+            "| Conflicting | 0 |",
+            "| Insufficient Information | 0 |",
+            "| Fields present | 95 |",
+            "| Fields total | 100 |",
+            "| Source gate | pass |",
+            "| CRITICAL | 0 |",
+            "| MATERIAL | 0 |",
+            "| MINOR | 1 |",
+        ]
+    )
+    raw = text.encode()
+    sections, error = store.structured(raw, False)
+    assert error == "Malformed table at line 5"
+    assert sections[0]["heading"] == "Unstructured handoff"
+    output = snapshot["workspace"]["outputs"][OUTPUT]
+    output.update(store.confidence_fields(raw))
+    snapshot["workspace"]["handoffs"][HANDOFF] = sections
+    enriched = sources.enrich(snapshot, layout.runs)
+    assert enriched["workspace"]["outputs"][OUTPUT]["confidence"] == {"value": 89, "band": "High"}
+    [chip] = enriched["chips"][f"{OUTPUT}:7"]
+    assert chip["file"] == NAME and chip["sha256"] == SHA
+    assert chip["hash_matches_inventory"] is True
+    assert chip["href"] == _link() and chip["pageHref"] == _link() + "?page=2"
+    assert chip["excerpt"] == RAW[12000:].decode()
+    assert (
+        enriched["workspace"]["outputs"][OUTPUT]["confidenceTrace"]["section"]["blocks"][0]["text"]
+        == qualification + f"\nBasis: {NAME}, page 2."
+    )
 
 
 def test_pdf_form_text_reaches_source_page_without_changing_original(
@@ -281,6 +338,39 @@ def test_failed_original_keeps_pinned_identity_and_specific_problem(
     assert ("sha256" if tampered else "missing") in chip["reason"]
     assert "inventory" not in chip["reason"]
     assert chip["excerpt"] is None and "href" not in chip and "pageHref" not in chip
+
+
+@pytest.mark.parametrize(
+    ("code", "kind"), [(errno.EACCES, "PermissionError"), (errno.EIO, "OSError")]
+)
+@pytest.mark.parametrize("unreadable", ["inputs", "workflow"])
+def test_an_unreadable_file_is_named_by_kind_and_run_name_never_by_server_path(
+    published: tuple[Layout, dict[str, Any]],
+    monkeypatch: pytest.MonkeyPatch,
+    unreadable: str,
+    code: int,
+    kind: str,
+) -> None:
+    """The operating system's text for a failed read names the file by its absolute path; the
+    snapshot (sourceWarning and the chip's reason) says the kind and the name inside the run."""
+    layout, snapshot = published
+    name = f"{FOLDER}/inputs/{SHA}" if unreadable == "inputs" else f"{FOLDER}/workflow.json"
+    read_bytes = Path.read_bytes
+
+    def read(path: Path) -> bytes:
+        if path.name == name.rpartition("/")[2]:
+            raise OSError(code, os.strerror(code), str(path))
+        return read_bytes(path)
+
+    monkeypatch.setattr(Path, "read_bytes", read)
+    warning = f"{name} could not be read ({kind})"
+    enriched = sources.enrich(snapshot, layout.runs)
+    [source] = enriched["workspace"]["runs"]["run-key"]["evidence"]["sources"]
+    assert source["sourceWarning"] == warning and "href" not in source
+    if unreadable == "inputs":
+        [chip] = enriched["chips"][f"{OUTPUT}:2"]
+        assert chip["reason"] == warning
+    assert str(layout.root) not in json.dumps(enriched)
 
 
 def test_only_correlated_native_aliases_are_retained(

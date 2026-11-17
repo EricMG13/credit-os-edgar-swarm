@@ -1,5 +1,5 @@
 interface LoadingIndicatorProps {
-  /** Text shown below the spinner; it also names the status for assistive technology. */
+  /** Text shown below the spinner, in the status region so it is announced; it also names the region. */
   label: string;
 }
 
@@ -32,9 +32,7 @@ export const LoadingIndicator = ({ label }: LoadingIndicatorProps) => {
           strokeLinecap="round"
         />
       </svg>
-      <span aria-hidden="true" className="text-sm font-medium text-secondary">
-        {label}
-      </span>
+      <span className="text-sm font-medium text-secondary">{label}</span>
     </div>
   );
 };

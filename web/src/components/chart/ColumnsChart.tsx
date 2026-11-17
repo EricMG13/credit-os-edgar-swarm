@@ -134,7 +134,7 @@ function BarMark({
         x={x + width / 2}
         y={top - LABEL_GAP - raise}
         textAnchor="middle"
-        fontSize={12}
+        fontSize={13}
         fill={LABEL_FILL}
       >
         {label}
@@ -185,7 +185,7 @@ function MissingMarks({
               x={centre - total / 2 + i * (barSize + barGap) + barSize / 2}
               y={area.y + area.height - LABEL_GAP}
               textAnchor="middle"
-              fontSize={12}
+              fontSize={13}
               fill={NA_FILL}
             >
               n.a.
@@ -273,6 +273,7 @@ function Chart({
       categories={groups}
       yTicks={yTicks}
       barGap={barGap}
+      extraTop={narrow ? MIDDLE_RAISE : 0}
       tooltip={(props) => (
         <ColumnsTooltip {...props} groups={groups} head={table.head} rows={table.rows} />
       )}
@@ -319,27 +320,21 @@ function Chart({
 
 /** Amounts side by side on one zero baseline: maturities by year, recovery by class and case. */
 export function ColumnsChart({
-  title,
-  as,
-  note,
-  subtitle,
-  actions,
   groups,
   series,
   yTicks,
   table,
   detailTable,
+  ...frame
 }: ColumnsChartProps) {
   check({ groups, series, table });
   return (
     <ChartWithTable
-      title={title}
-      as={as}
-      note={note}
-      subtitle={subtitle}
-      actions={actions}
+      {...frame}
       table={detailTable ?? table}
-      chart={<Chart title={title} groups={groups} series={series} yTicks={yTicks} table={table} />}
+      chart={
+        <Chart title={frame.title} groups={groups} series={series} yTicks={yTicks} table={table} />
+      }
     />
   );
 }

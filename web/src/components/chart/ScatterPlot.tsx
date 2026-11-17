@@ -52,7 +52,7 @@ interface ScatterPlotProps {
   detailTable?: ScatterPlotProps["table"];
 }
 
-const LABEL = { fontSize: 12, fill: "var(--color-text-secondary)" };
+const LABEL = { fontSize: 13, fill: "var(--color-text-secondary)" };
 
 function checkPair(p: ScatterPoint, which: "x" | "y", axis: ScatterAxis) {
   const value = p[which];
@@ -237,7 +237,7 @@ function Chart({
                         x={cx - 12}
                         y={cy + 14}
                         textAnchor="end"
-                        fontSize={12}
+                        fontSize={13}
                         fontWeight={500}
                         fill="var(--color-text-primary)"
                       >
@@ -261,7 +261,7 @@ function Chart({
       </ResponsiveContainer>
       {names.length >= 2 ? <ScatterLegend names={names} styles={styles} /> : null}
       {missing.length === 0 ? null : (
-        <p className="text-xs font-medium text-text-tertiary">
+        <p className="text-caption font-medium text-text-tertiary">
           Not plotted:{" "}
           {missing
             .map((p) => {
@@ -280,28 +280,20 @@ function Chart({
 
 /** Two measures against each other, one mark per issuer; the issuer stands out. */
 export function ScatterPlot({
-  title,
-  as,
-  note,
-  subtitle,
-  actions,
   x,
   y,
   othersName,
   points,
   table,
   detailTable,
+  ...frame
 }: ScatterPlotProps) {
   check({ x, y, points, table });
   return (
     <ChartWithTable
-      title={title}
-      as={as}
-      note={note}
-      subtitle={subtitle}
-      actions={actions}
+      {...frame}
       table={detailTable ?? table}
-      chart={<Chart title={title} x={x} y={y} othersName={othersName} points={points} />}
+      chart={<Chart title={frame.title} x={x} y={y} othersName={othersName} points={points} />}
     />
   );
 }

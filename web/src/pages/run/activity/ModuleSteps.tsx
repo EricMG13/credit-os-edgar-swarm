@@ -155,7 +155,7 @@ export function ModuleSteps({ steps, live }: { steps: ModuleStep[]; live: boolea
                   <span className="text-sm text-pretty text-text-tertiary">{detail}</span>
                 )}
                 {waiting ? (
-                  <div aria-hidden="true" className="flex max-w-80 flex-col gap-1.5 pt-1.5">
+                  <div aria-hidden="true" className="flex max-w-80 flex-col gap-2 pt-2">
                     <div className="activity-skel queued-shimmer w-[90%]" />
                     <div className="activity-skel queued-shimmer w-[60%]" />
                   </div>

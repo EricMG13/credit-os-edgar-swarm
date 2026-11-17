@@ -1,0 +1,38 @@
+{
+  "url": "about:blank",
+  "non_loopback_requests": 0,
+  "proxy_blocks": [
+    {
+      "target": "http://edge.microsoft.com/browsernetworktime/time/1/current?cup2key=2:-UlmmR7hprSRTfzZlQ3rdql0Gw4pt3zy8yHWSXjnr1k&cup2hreq=e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "method": "GET"
+    },
+    {
+      "target": "edge.microsoft.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "edge.microsoft.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "edge.microsoft.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.bing.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.bing.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.bing.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.bing.com:443",
+      "method": "CONNECT"
+    }
+  ]
+}

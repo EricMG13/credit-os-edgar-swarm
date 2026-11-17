@@ -1,0 +1,242 @@
+START collection-files attempt 1 2026-11-17T22:31:02.949Z
+END collection-files exit 0 436 ms
+Native selection: 308 original file identities. Pin a987af9b9ca5072d28f2e1f9e1dc5269c6c1858f digest 722e365a7cf43ae465be40629df1a99e113a45b397879e678774ec5bad095d6e.
+START shard-7 attempt 1 2026-11-17T22:31:03.440Z
+END shard-7 exit 1 93273 ms
+RESULT {"index":7,"files":38,"total":757,"passed":757,"exit":1,"durationMs":93273,"originalPartialThreshold":"ERROR: Coverage for lines (42.88%) does not meet global threshold (80%)"}
+START shard-8 attempt 1 2026-11-17T22:32:36.849Z
+END shard-8 exit 1 152271 ms
+file:///workspace/scratch/stage7-frontend/run.mjs:93
+    !fs.existsSync(`${blobDir}/shard-${index}.json`)) throw new Error(`Unexpected shard ${index} result`);
+                                                            ^
+
+Error: Unexpected shard 8 result
+    at verifyShard (file:///workspace/scratch/stage7-frontend/run.mjs:93:61)
+    at next (file:///workspace/scratch/stage7-frontend/run.mjs:127:42)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async file:///workspace/scratch/stage7-frontend/run.mjs:136:3
+
+Node.js v24.22.1
+Native selection: 308 original file identities. Pin a987af9b9ca5072d28f2e1f9e1dc5269c6c1858f digest 722e365a7cf43ae465be40629df1a99e113a45b397879e678774ec5bad095d6e.
+START shard-8 attempt 2 2026-11-17T22:41:36.795Z
+END shard-8 exit 1 97404 ms
+file:///workspace/scratch/stage7-frontend/run.mjs:93
+    !fs.existsSync(`${blobDir}/shard-${index}.json`)) throw new Error(`Unexpected shard ${index} result`);
+                                                            ^
+
+Error: Unexpected shard 8 result
+    at verifyShard (file:///workspace/scratch/stage7-frontend/run.mjs:93:61)
+    at next (file:///workspace/scratch/stage7-frontend/run.mjs:127:42)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async file:///workspace/scratch/stage7-frontend/run.mjs:136:3
+
+Node.js v24.22.1
+Native selection: 308 original file identities. Pin a987af9b9ca5072d28f2e1f9e1dc5269c6c1858f digest 722e365a7cf43ae465be40629df1a99e113a45b397879e678774ec5bad095d6e.
+START shard-8-case-choice attempt 1 2026-11-17T22:43:59.161Z
+END shard-8-case-choice exit 1 9091 ms
+RESULT {"index":"8-case-choice","files":1,"total":3,"passed":3,"exit":1,"durationMs":9091,"originalPartialThreshold":"ERROR: Coverage for lines (13.63%) does not meet global threshold (80%)"}
+START shard-8-run-reasons attempt 1 2026-11-17T22:44:08.350Z
+END shard-8-run-reasons exit 1 5282 ms
+RESULT {"index":"8-run-reasons","files":1,"total":3,"passed":3,"exit":1,"durationMs":5282,"originalPartialThreshold":"ERROR: Coverage for lines (3.61%) does not meet global threshold (80%)"}
+Native selection: 308 original file identities. Pin a987af9b9ca5072d28f2e1f9e1dc5269c6c1858f digest 722e365a7cf43ae465be40629df1a99e113a45b397879e678774ec5bad095d6e.
+START shard-3 attempt 1 2026-11-17T22:44:48.435Z
+END shard-3 exit 1 178617 ms
+RESULT {"index":3,"files":39,"total":851,"passed":851,"exit":1,"durationMs":178617,"originalPartialThreshold":"ERROR: Coverage for lines (54.86%) does not meet global threshold (80%)"}
+START shard-8-rest-1 attempt 1 2026-11-17T22:47:47.219Z
+END shard-8-rest-1 exit 1 36458 ms
+RESULT {"index":"8-rest-1","files":12,"total":201,"passed":201,"exit":1,"durationMs":36458,"originalPartialThreshold":"ERROR: Coverage for lines (40.01%) does not meet global threshold (80%)"}
+START shard-1 attempt 1 2026-11-17T22:48:23.798Z
+END shard-1 exit 1 181125 ms
+RESULT {"index":1,"files":39,"total":613,"passed":613,"exit":1,"durationMs":181125,"originalPartialThreshold":"ERROR: Coverage for lines (55.84%) does not meet global threshold (80%)"}
+START shard-8-rest-2 attempt 1 2026-11-17T22:51:25.091Z
+END shard-8-rest-2 exit 1 32058 ms
+RESULT {"index":"8-rest-2","files":12,"total":67,"passed":67,"exit":1,"durationMs":32058,"originalPartialThreshold":"ERROR: Coverage for lines (26.55%) does not meet global threshold (80%)"}
+START shard-2 attempt 1 2026-11-17T22:51:57.264Z
+END shard-2 exit 1 121721 ms
+RESULT {"index":2,"files":39,"total":527,"passed":527,"exit":1,"durationMs":121721,"originalPartialThreshold":"ERROR: Coverage for lines (57.56%) does not meet global threshold (80%)"}
+START shard-8-rest-3 attempt 1 2026-11-17T22:53:59.112Z
+END shard-8-rest-3 exit 1 48564 ms
+RESULT {"index":"8-rest-3","files":12,"total":166,"passed":166,"exit":1,"durationMs":48564,"originalPartialThreshold":"ERROR: Coverage for lines (31.29%) does not meet global threshold (80%)"}
+START shard-4 attempt 1 2026-11-17T22:54:47.767Z
+START shard-6 attempt 1 2026-11-17T22:54:47.796Z
+END shard-4 exit 1 132856 ms
+RESULT {"index":4,"files":39,"total":560,"passed":560,"exit":1,"durationMs":132856,"originalPartialThreshold":"ERROR: Coverage for lines (65.22%) does not meet global threshold (80%)"}
+END shard-6 exit 1 136447 ms
+RESULT {"index":6,"files":38,"total":516,"passed":516,"exit":1,"durationMs":136447,"originalPartialThreshold":"ERROR: Coverage for lines (59.73%) does not meet global threshold (80%)"}
+START shard-5 attempt 1 2026-11-17T22:57:04.339Z
+END shard-5 exit 1 262991 ms
+RESULT {"index":5,"files":38,"total":995,"passed":995,"exit":1,"durationMs":262991,"originalPartialThreshold":"ERROR: Coverage for lines (74.9%) does not meet global threshold (80%)"}
+START merge attempt 1 2026-11-17T23:01:27.806Z
+END merge exit 0 6707 ms
+{
+  "pin": "a987af9b9ca5072d28f2e1f9e1dc5269c6c1858f",
+  "beforeHead": "a987af9b9ca5072d28f2e1f9e1dc5269c6c1858f",
+  "afterHead": "a987af9b9ca5072d28f2e1f9e1dc5269c6c1858f",
+  "webTreeStable": true,
+  "webInputs": 693,
+  "webDigest": "722e365a7cf43ae465be40629df1a99e113a45b397879e678774ec5bad095d6e",
+  "node": "v24.22.1",
+  "dependencies": {
+    "vitest": "4.1.12",
+    "@vitest/coverage-v8": "4.1.12"
+  },
+  "freshNativeShards": 7,
+  "freshNativeBlobs": 12,
+  "splitShard": 8,
+  "reusedNativeBlobs": 0,
+  "files": 308,
+  "tests": 5259,
+  "passed": 5259,
+  "failed": 0,
+  "skippedPendingTodo": 0,
+  "signalFiles": 34,
+  "signalTests": 630,
+  "exactSelectionMatch": true,
+  "nativeMergeExit": 0,
+  "nativeMergeDurationMs": 6707,
+  "configuredGlobalLineThreshold": 80,
+  "originalGlobalCoverageThresholdPassed": true,
+  "coverageFiles": 325,
+  "coverage": {
+    "lines": {
+      "total": 10146,
+      "covered": 9912,
+      "skipped": 0,
+      "pct": 97.69
+    },
+    "statements": {
+      "total": 11748,
+      "covered": 11285,
+      "skipped": 0,
+      "pct": 96.05
+    },
+    "functions": {
+      "total": 3965,
+      "covered": 3884,
+      "skipped": 0,
+      "pct": 97.95
+    },
+    "branches": {
+      "total": 11551,
+      "covered": 10371,
+      "skipped": 0,
+      "pct": 89.78
+    },
+    "branchesTrue": {
+      "total": 0,
+      "covered": 0,
+      "skipped": 0,
+      "pct": "Unknown"
+    }
+  },
+  "shards": [
+    {
+      "index": 1,
+      "files": 39,
+      "total": 613,
+      "passed": 613,
+      "exit": 1,
+      "durationMs": 181125,
+      "originalPartialThreshold": "ERROR: Coverage for lines (55.84%) does not meet global threshold (80%)"
+    },
+    {
+      "index": 2,
+      "files": 39,
+      "total": 527,
+      "passed": 527,
+      "exit": 1,
+      "durationMs": 121721,
+      "originalPartialThreshold": "ERROR: Coverage for lines (57.56%) does not meet global threshold (80%)"
+    },
+    {
+      "index": 3,
+      "files": 39,
+      "total": 851,
+      "passed": 851,
+      "exit": 1,
+      "durationMs": 178617,
+      "originalPartialThreshold": "ERROR: Coverage for lines (54.86%) does not meet global threshold (80%)"
+    },
+    {
+      "index": 4,
+      "files": 39,
+      "total": 560,
+      "passed": 560,
+      "exit": 1,
+      "durationMs": 132856,
+      "originalPartialThreshold": "ERROR: Coverage for lines (65.22%) does not meet global threshold (80%)"
+    },
+    {
+      "index": 5,
+      "files": 38,
+      "total": 995,
+      "passed": 995,
+      "exit": 1,
+      "durationMs": 262991,
+      "originalPartialThreshold": "ERROR: Coverage for lines (74.9%) does not meet global threshold (80%)"
+    },
+    {
+      "index": 6,
+      "files": 38,
+      "total": 516,
+      "passed": 516,
+      "exit": 1,
+      "durationMs": 136447,
+      "originalPartialThreshold": "ERROR: Coverage for lines (59.73%) does not meet global threshold (80%)"
+    },
+    {
+      "index": 7,
+      "files": 38,
+      "total": 757,
+      "passed": 757,
+      "exit": 1,
+      "durationMs": 93273,
+      "originalPartialThreshold": "ERROR: Coverage for lines (42.88%) does not meet global threshold (80%)"
+    },
+    {
+      "index": "8-case-choice",
+      "files": 1,
+      "total": 3,
+      "passed": 3,
+      "exit": 1,
+      "durationMs": 9091,
+      "originalPartialThreshold": "ERROR: Coverage for lines (13.63%) does not meet global threshold (80%)"
+    },
+    {
+      "index": "8-run-reasons",
+      "files": 1,
+      "total": 3,
+      "passed": 3,
+      "exit": 1,
+      "durationMs": 5282,
+      "originalPartialThreshold": "ERROR: Coverage for lines (3.61%) does not meet global threshold (80%)"
+    },
+    {
+      "index": "8-rest-1",
+      "files": 12,
+      "total": 201,
+      "passed": 201,
+      "exit": 1,
+      "durationMs": 36458,
+      "originalPartialThreshold": "ERROR: Coverage for lines (40.01%) does not meet global threshold (80%)"
+    },
+    {
+      "index": "8-rest-2",
+      "files": 12,
+      "total": 67,
+      "passed": 67,
+      "exit": 1,
+      "durationMs": 32058,
+      "originalPartialThreshold": "ERROR: Coverage for lines (26.55%) does not meet global threshold (80%)"
+    },
+    {
+      "index": "8-rest-3",
+      "files": 12,
+      "total": 166,
+      "passed": 166,
+      "exit": 1,
+      "durationMs": 48564,
+      "originalPartialThreshold": "ERROR: Coverage for lines (31.29%) does not meet global threshold (80%)"
+    }
+  ]
+}

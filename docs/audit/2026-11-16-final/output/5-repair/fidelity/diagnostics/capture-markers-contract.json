@@ -1,0 +1,321 @@
+{
+  "scope": "Local actual-component capture CLI contract proof; not a final application AFTER capture or fidelity acceptance",
+  "base": "5e1d98b37305a9da59fb6944740ff17b721051af",
+  "codeCommit": "d08bca8a3d3e2fef7b1a12c8c815c8bc4012f7ab",
+  "findings": ["T35/S3-007", "T33/S2-006 follow-up described in T35"],
+  "unchangedCaptureSHA256": "9966181de39bbce5cdadf26f8e3bd437ac705af793bcb14b2b1b17601943991b",
+  "repairedCaptureSHA256": "7922e7d1ff34d27870b3435d3719a432f8a6a039edf03c5b4c7406f15a026969",
+  "testSHA256": "3094f7d0624878ba0574ca6c5016841b2a6612a417f8f4eacc078b8a2941e92d",
+  "red": {
+    "exit": 1,
+    "counts": {
+      "textRuns": 1,
+      "figures": 0,
+      "figuresByKind": {},
+      "tableViewFigures": 0,
+      "chartTableViews": 0,
+      "tables": 0,
+      "tableRows": 0,
+      "sourceLines": 0,
+      "drawerLines": 8,
+      "limitationSentences": 0,
+      "marks": 0,
+      "images": 0,
+      "traceControls": 2,
+      "traceDrawers": 1,
+      "traceErrors": 1,
+      "coverageGap": 0
+    },
+    "sourceControlError": {
+      "control": "Show sources for this missing finding: no source recorded",
+      "drawer": null,
+      "error": "locator.waitFor: Timeout 3000ms exceeded."
+    },
+    "applicationContextAttempts": 0,
+    "nativeProxyDeniedAttempts": 69,
+    "raw": "/workspace/scratch/capture-markers-red/mixed.json"
+  },
+  "green": {
+    "testCommandExit": 0,
+    "tests": 7,
+    "passed": 7,
+    "skipped": 0,
+    "durationMs": 145556.997168,
+    "cases": [
+      {
+        "case": "mixed",
+        "exit": 0,
+        "counts": {
+          "traceControls": 2,
+          "traceDrawers": 1,
+          "traceUnavailable": 1,
+          "traceErrors": 0,
+          "drawerLines": 8,
+          "coverageGap": 0
+        },
+        "unavailableSourceControls": [
+          {
+            "n": 2,
+            "control": "Show sources for this missing finding: no source recorded",
+            "ariaDisabled": "true",
+            "disabled": false,
+            "tooltip": "No source recorded",
+            "opensDialog": false
+          }
+        ],
+        "sourceControlErrors": [],
+        "applicationContextAttempts": 0,
+        "nativeProxyDeniedAttempts": 68
+      },
+      {
+        "case": "broken-active",
+        "exit": 1,
+        "counts": {
+          "traceControls": 2,
+          "traceDrawers": 0,
+          "traceUnavailable": 1,
+          "traceErrors": 1,
+          "drawerLines": 0,
+          "coverageGap": 0
+        },
+        "unavailableSourceControls": [
+          {
+            "n": 2,
+            "control": "Show sources for this missing finding: no source recorded",
+            "ariaDisabled": "true",
+            "disabled": false,
+            "tooltip": "No source recorded",
+            "opensDialog": false
+          }
+        ],
+        "sourceControlErrors": [
+          {
+            "n": 1,
+            "control": "Show sources for this sourced finding",
+            "error": "locator.waitFor: Timeout 3000ms exceeded."
+          }
+        ],
+        "applicationContextAttempts": 0,
+        "nativeProxyDeniedAttempts": 69
+      },
+      {
+        "case": "ambiguous-disabled",
+        "exit": 1,
+        "counts": {
+          "traceControls": 2,
+          "traceDrawers": 1,
+          "traceUnavailable": 0,
+          "traceErrors": 1,
+          "drawerLines": 8,
+          "coverageGap": 0
+        },
+        "unavailableSourceControls": [],
+        "sourceControlErrors": [
+          {
+            "n": 2,
+            "control": "Show sources for an unexplained disabled control",
+            "error": "Source control does not match the disabled MissingTrace marker"
+          }
+        ],
+        "applicationContextAttempts": 0,
+        "nativeProxyDeniedAttempts": 68
+      },
+      {
+        "case": "enabled-marker",
+        "exit": 1,
+        "counts": {
+          "traceControls": 2,
+          "traceDrawers": 1,
+          "traceUnavailable": 0,
+          "traceErrors": 1,
+          "drawerLines": 8,
+          "coverageGap": 0
+        },
+        "unavailableSourceControls": [],
+        "sourceControlErrors": [
+          {
+            "n": 2,
+            "control": "Show sources for this missing finding: no source recorded",
+            "error": "Source control does not match the disabled MissingTrace marker"
+          }
+        ],
+        "applicationContextAttempts": 0,
+        "nativeProxyDeniedAttempts": 69
+      },
+      {
+        "case": "native-disabled",
+        "exit": 1,
+        "counts": {
+          "traceControls": 2,
+          "traceDrawers": 1,
+          "traceUnavailable": 0,
+          "traceErrors": 1,
+          "drawerLines": 8,
+          "coverageGap": 0
+        },
+        "unavailableSourceControls": [],
+        "sourceControlErrors": [
+          {
+            "n": 2,
+            "control": "Show sources for this missing finding: no source recorded",
+            "error": "Source control does not match the disabled MissingTrace marker"
+          }
+        ],
+        "applicationContextAttempts": 0,
+        "nativeProxyDeniedAttempts": 67
+      },
+      {
+        "case": "wrong-tooltip",
+        "exit": 1,
+        "counts": {
+          "traceControls": 2,
+          "traceDrawers": 1,
+          "traceUnavailable": 0,
+          "traceErrors": 1,
+          "drawerLines": 8,
+          "coverageGap": 0
+        },
+        "unavailableSourceControls": [],
+        "sourceControlErrors": [
+          {
+            "n": 2,
+            "control": "Show sources for this missing finding: no source recorded",
+            "error": "Unexpected MissingTrace tooltip: Unexpected tooltip"
+          }
+        ],
+        "applicationContextAttempts": 0,
+        "nativeProxyDeniedAttempts": 69
+      },
+      {
+        "case": "opening-marker",
+        "exit": 1,
+        "counts": {
+          "traceControls": 2,
+          "traceDrawers": 1,
+          "traceUnavailable": 0,
+          "traceErrors": 1,
+          "drawerLines": 8,
+          "coverageGap": 0
+        },
+        "unavailableSourceControls": [],
+        "sourceControlErrors": [
+          {
+            "n": 2,
+            "control": "Show sources for this missing finding: no source recorded",
+            "error": "MissingTrace marker opened a dialog"
+          }
+        ],
+        "applicationContextAttempts": 0,
+        "nativeProxyDeniedAttempts": 68
+      }
+    ],
+    "rawDirectory": "/workspace/scratch/capture-markers-green",
+    "unchangedComparatorConsumedMixedCapture": true,
+    "unchangedComparatorRetainedOriginalSourceStatement": true
+  },
+  "originalActiveDrawer": {
+    "parsedJSONExactlyEqualBeforeAfter": true,
+    "canonicalJSON": "UTF-8, sorted object keys, compact separators, Unicode unescaped",
+    "sha256": "11fd53c0e69dbd5bff23db2c2ee1d19dbef368a6741042628e267cc2ab89851f",
+    "record": {
+      "n": 1,
+      "control": "Show sources for this sourced finding",
+      "drawer": {
+        "title": "Sources for cash conversion",
+        "outline": [
+          {
+            "section": "Working capital USD 71m",
+            "kind": "heading",
+            "text": "Working capital USD 71m"
+          },
+          {
+            "section": "Working capital USD 71m",
+            "kind": "paragraph",
+            "text": "Cash flow and liquidity · finding · as of 30 Sep 2026"
+          },
+          {
+            "section": "Working capital USD 71m",
+            "kind": "text",
+            "text": "The statement"
+          },
+          {
+            "section": "Working capital USD 71m",
+            "kind": "paragraph",
+            "text": "Working capital absorbed USD 71m as inventory was built for the engine ramp."
+          },
+          {
+            "section": "Working capital USD 71m",
+            "kind": "text",
+            "text": "How it was derived"
+          },
+          {
+            "section": "Working capital USD 71m",
+            "kind": "item",
+            "text": "Result Working capital USD 71m"
+          },
+          {
+            "section": "Working capital USD 71m",
+            "kind": "text",
+            "text": "Qualification"
+          },
+          {
+            "section": "Working capital USD 71m",
+            "kind": "paragraph",
+            "text": "Source details for the 1 counted sources were not recorded in this saved example."
+          },
+          {
+            "section": "Working capital USD 71m",
+            "kind": "control",
+            "text": "Close"
+          },
+          {
+            "section": "Working capital USD 71m",
+            "kind": "text",
+            "text": "Open in Evidence"
+          }
+        ],
+        "tables": [],
+        "links": [
+          {
+            "text": "Open in Evidence",
+            "href": "#/evidence/trace/T-0042"
+          }
+        ]
+      }
+    }
+  },
+  "checks": {
+    "guardTests": {
+      "exit": 0,
+      "passed": 8
+    },
+    "comparatorSelftest": {
+      "exit": 0,
+      "planted": 28,
+      "reported": 28
+    },
+    "immutableBaseline": {
+      "files": 126,
+      "changed": [],
+      "manifest": "diagnostics/baseline-sha256.json"
+    },
+    "syntax": "passed both scripts",
+    "eslint": "passed both scripts",
+    "prettier": "passed new test and changed captureTraces body",
+    "diffCheck": "passed",
+    "qualityGate": {
+      "exit": 0,
+      "uv": "0.12.5",
+      "changedPythonFiles": 0,
+      "findings": 0
+    },
+    "applicationPathsChanged": []
+  },
+  "notVerified": [
+    "Full merged connected/static AFTER capture",
+    "Final-source fidelity comparison/diff and presentation acceptance",
+    "Post-merge frontend/package/Windows gates",
+    "Dialogs delayed beyond keyboard-event/two-animation-frame observation",
+    "Paid/provider/live execution, seats, real Submit, Teams or outside applications"
+  ]
+}

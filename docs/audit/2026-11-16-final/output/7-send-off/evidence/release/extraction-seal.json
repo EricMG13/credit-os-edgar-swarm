@@ -1,0 +1,10 @@
+{
+  "originalArchiveSha256": "db51d1996b3913ef77a6e51ba3281554cb7c3be33f95ffaf2a966b2544a7088e",
+  "membersRechecked": 1400,
+  "mismatchedMembers": [],
+  "distMembers": 36,
+  "extractionPath": "/workspace/scratch/stage7-release/extracted",
+  "manifestFileSha256": "7a3bead61363239af053bd66d765aa65aa5c0151480882d2d24be56608131d7f",
+  "newFilesDuringProof": "Isolated .venv, web/node_modules, Python caches and proof-artifacts only; originals are unchanged.",
+  "alsoCheckedAfterStaticGate": true
+}

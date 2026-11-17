@@ -1,0 +1,7 @@
+ RUN  v4.1.12 /workspace/audit-sweep-history-state/web
+
+
+ Test Files  2 passed (2)
+      Tests  15 passed (15)
+   Start at  21:43:30
+   Duration  6.25s (transform 1.27s, setup 158ms, import 3.51s, tests 1.46s, environment 843ms)

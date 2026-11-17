@@ -1,0 +1,430 @@
+
+> credit-os-web@0.0.0 test
+> vitest run --coverage --shard=2/8 --maxWorkers=1 --coverage.processingConcurrency=1 --reporter=default --reporter=blob --reporter=json --outputFile.blob=/workspace/scratch/stage6-integrated-frontend/blobs/shard-2.json --outputFile.json=/workspace/scratch/stage6-integrated-frontend/shard-2.json --coverage.reportsDirectory=/workspace/scratch/stage6-integrated-frontend/coverage-2
+
+
+ RUN  v4.1.12 /workspace/audit-final-sweep/web
+      Coverage enabled with v8
+
+ ✓ src/pages/Kit7e.test.tsx (19 tests) 15349ms
+     ✓ opens from its trigger with header, scrolling body and pinned footer  1981ms
+     ✓ moves focus into the dialog and closes by the close button  1317ms
+     ✓ closes by Escape and by its footer action  1571ms
+     ✓ opens and closes in 200ms or less on the slide-in classes  723ms
+     ✓ moves on the design system's curve, never linear  998ms
+     ✓ draws the footer's top rule in the hairline token, not a name outside the design system  646ms
+     ✓ is named by its visible title  797ms
+     ✓ draws the close button's focus outline as a solid line  791ms
+     ✓ shows a warning confirmation stating the cap  587ms
+     ✓ shows a form dialog with one input and no warning style  667ms
+     ✓ Start run caps its panel at 400px  649ms
+     ✓ Rename issuer caps its panel at 400px  637ms
+     ✓ names the form dialog by its heading  731ms
+     ✓ Start run closes by Cancel and by Escape  876ms
+     ✓ Rename issuer closes by Cancel and by Escape  794ms
+     ✓ lists four steps with one current step and a word for each state  403ms
+     ✓ sits on a card surface  481ms
+     ✓ marks complete with a check and the rest with their number  690ms
+ ✓ src/pages/connected/visuals/EventLane.test.tsx (42 tests) 7994ms
+   ✓ draws one marker and one list item per event, each marker pointing at a distinct row  815ms
+   ✓ opens details one row at a time or all together, closed by default  863ms
+   ✓ moves focus from a marker to its row and links hover both ways  473ms
+   ✓ hides and restores a category in strip, list, year groups and gaps  423ms
+   ✓ keeps open details across toggling and says so when every category is off  328ms
+   ✓ lets a row's own button close it while all details are shown  425ms
+   ✓ closes every row on Hide all details, including one clicked while all were shown  672ms
+ ✓ src/pages/model/parts/ModelShell.designReference.test.tsx (16 tests) 3332ms
+     ✓ is drawn once on the front page, naming the saved example  373ms
+     ✓ is drawn once on the statements page, naming the saved example  612ms
+     ✓ is the first thing in the page's own frame on the statements page  571ms
+     ✓ is the first thing in the page's own frame on the forecast page  330ms
+ ✓ src/pages/signal/sources.test.tsx (10 tests) 3407ms
+     ✓ draws the heading, the intro line and the columns the mock draws  671ms
+     ✓ sorts by Source, State and Health by the delivered ranks, both ways, with aria-sort  1502ms
+ ✓ src/pages/connected/ReportLibrary.wayfinding.test.tsx (14 tests) 4672ms
+     ✓ marks the section in the top third of the scroll container, and no other  2062ms
+     ✓ keeps a clicked entry until the reader scrolls, then lets the observer take over  418ms
+     ✓ selects the last entry when an observer notice follows the bottom scroll  316ms
+ ✓ src/pages/connected/report/Forecast.basis.test.tsx (19 tests) 3865ms
+   ✓ preserves the recorded bridge and its exact source lines  737ms
+   ✓ links forecast inputs only to an unambiguous JSON block: {"sections":1,"blocks":1,"linked":true}  430ms
+stderr | src/pages/library/RunFrame.test.tsx > Trace drawer > closes on the header Close and returns focus to the control
+An update to $05a50f7d78b03ad9$export$8c610744efcf8a1d inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to $05a50f7d78b03ad9$export$8c610744efcf8a1d inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(Button) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(Button) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | src/pages/library/RunFrame.test.tsx > Trace drawer > closes on the footer Close and returns focus to the control
+An update to $05a50f7d78b03ad9$export$8c610744efcf8a1d inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to $05a50f7d78b03ad9$export$8c610744efcf8a1d inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to $05a50f7d78b03ad9$export$8c610744efcf8a1d inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(Button) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(Button) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | src/pages/library/RunFrame.test.tsx > Trace drawer > closes on Escape and returns focus to the control
+An update to $05a50f7d78b03ad9$export$8c610744efcf8a1d inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to $05a50f7d78b03ad9$export$8c610744efcf8a1d inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to $05a50f7d78b03ad9$export$8c610744efcf8a1d inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(Button) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(Button) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ src/pages/library/RunFrame.test.tsx (29 tests) 3889ms
+     ✓ draws the Library link, the h1 name, the three badges and both actions as in the mock  463ms
+     ✓ closes on the footer Close and returns focus to the control  452ms
+     ✓ closes on Escape and returns focus to the control  423ms
+stderr | src/pages/model/parts/TraceControl.drawer.test.tsx > A Model trace control opens the library's trace drawer in place (S5-004) > opens from the keyboard and returns focus to the control when Escape closes it
+An update to $05a50f7d78b03ad9$export$8c610744efcf8a1d inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to $05a50f7d78b03ad9$export$8c610744efcf8a1d inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | src/pages/model/parts/TraceControl.drawer.test.tsx > A Model trace control opens the library's trace drawer in place (S5-004) > returns focus to the control when Close is pressed
+An update to $05a50f7d78b03ad9$export$8c610744efcf8a1d inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to $05a50f7d78b03ad9$export$8c610744efcf8a1d inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to $05a50f7d78b03ad9$export$8c610744efcf8a1d inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ src/pages/model/parts/TraceControl.drawer.test.tsx (6 tests) 2973ms
+     ✓ opens the drawer on a press and does not leave the page  335ms
+     ✓ opens from the keyboard and returns focus to the control when Escape closes it  563ms
+     ✓ keeps the chosen case and the address when the drawer opens  1786ms
+ ✓ src/pages/run/activity/ActivityPage.test.tsx (35 tests) 2513ms
+     ✓ has one h1 with the issuer, the run state and the labels  331ms
+ ✓ src/pages/connected/visuals/LegacyVisuals.values.test.tsx (9 tests) 1871ms
+   ✓ draws a value written with a decimal comma at that value, not at 375  481ms
+   ✓ shows each period's unit and Basis and limitation in the Table form of a period chart with a negative value  516ms
+ ✓ src/pages/library/parts/LibraryPage.absent.test.tsx (29 tests) 1424ms
+     ✓ /library/home draws its h1, a designed empty state and a way forward  366ms
+ ✓ src/pages/connected/libraryStates.test.tsx (9 tests) 1289ms
+     ✓ is the empty state: icon, title, one sentence and the next action  649ms
+ ❯ src/pages/connected/report.auditFollowups.test.tsx (17 tests | 1 failed) 1033ms
+   ✓ C3-012 J1-009 orders the modules and Evidence by the recorded plan, keeping comparison on Changes 10ms
+   ✓ C1-014 names the chosen module in the browser title  352ms
+   ✓ C3-012 keeps an earlier comparison-module address on Changes 142ms
+   × C1-014 C5-005 names the Evidence page and hides its ineffective source switch 103ms
+   ✓ J3-017 uses History for the history tab and names the issuer in its breadcrumb 121ms
+   ✓ C1-032 keeps a visible loading sentence in a page-shaped report skeleton 10ms
+   ✓ T17 residual identifies an unpublished report's known issuer in its page title 11ms
+   ✓ C3-015 C3-027 J1-009 names and attributes the lead view and its continuation 107ms
+   ✓ J3-019 labels the source toggle by the highlight it actually controls 122ms
+   ✓ C3-016 C3-021 keeps a referenced lead in its band with figures outside it 38ms
+   ✓ C5-025 groups real row citations and omits no-page boilerplate from source-free tables 2ms
+   ✓ J3-015 states the confidence score denominator without changing its value 5ms
+   ✓ C5-025 ties each real table citation to its exact row 1ms
+   ✓ J5-005 preserves the ruled first-run sentence and explains its decision time 4ms
+   ✓ C1-023 uses the long as-of date on the report 1ms
+   ✓ C4-013 uses canonical money units without altering digits or signs 0ms
+   ✓ C3-011 gives positive comparison movements their sign 1ms
+ ✓ src/pages/connected/report/Calendar.unplaced-rows.test.tsx (8 tests) 1034ms
+   ✓ draws no source reference from any cell of an unplaced row and keeps its source control  393ms
+   ✓ plots the readable rows and lists a row of the wrong cell count as unreadable  427ms
+ ✓ src/pages/connected/report/ScriptChecks.test.tsx (8 tests) 870ms
+   ✓ has no tab or panel for missing records and falls back from checks to Summary  401ms
+ ✓ src/components/chart/ColumnsChart.check.test.tsx (14 tests) 762ms
+     ✓ raises the middle label 16px above where an outer label would sit  443ms
+ ✓ src/pages/model/ForecastPage.noForecast.test.tsx (4 tests) 1032ms
+     ✓ is not drawn for a run that has a forecast, which draws its cases  564ms
+ ✓ src/pages/run/routes.firstDraft.test.tsx (4 tests) 960ms
+     ✓ draws the first draft under the title Start a run, not Run activity  757ms
+ ✓ src/pages/connected/report/Confidence.recovery.test.tsx (6 tests) 961ms
+   ✓ replaces synthetic no-page placeholders with the exact scored inputs and existing method  436ms
+ ✓ src/pages/connected/report/BreakPoints.test.tsx (5 tests) 738ms
+ ✓ src/pages/connected/report/Calendar.bad-date.test.tsx (4 tests) 573ms
+   ✓ plots the valid events and lists an event whose date cannot be placed with its recorded date  471ms
+stderr | src/components/card/cards.test.tsx > MetricCard > shows the definition in a tooltip on a named info trigger
+An update to $05a50f7d78b03ad9$export$8c610744efcf8a1d inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to $05a50f7d78b03ad9$export$8c610744efcf8a1d inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(Button) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(Button) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ src/components/card/cards.test.tsx (15 tests) 630ms
+stderr | src/pages/library/parts/TraceControl.missing.test.tsx > keeps the marker reachable by keyboard and tells assistive technology it opens nothing
+An update to $05a50f7d78b03ad9$export$8c610744efcf8a1d inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to $05a50f7d78b03ad9$export$8c610744efcf8a1d inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(Button) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(Button) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ src/pages/library/parts/TraceControl.missing.test.tsx (8 tests) 406ms
+ ✓ src/components/chart/ChartFrame.test.tsx (9 tests) 353ms
+ ✓ src/components/metric/finalAudit.test.tsx (3 tests) 303ms
+ ✓ src/components/status/StatusBadge.test.tsx (8 tests) 342ms
+ ✓ src/components/timeline/Timeline.action.test.tsx (3 tests) 298ms
+ ✓ src/pages/connected/HeadlineFigures.signal.test.tsx (5 tests) 359ms
+ ✓ src/pages/library/readEvidence.test.ts (74 tests) 336ms
+ ✓ src/pages/connected/reportView.earnings.test.tsx (3 tests) 306ms
+ ✓ src/pages/connected/visuals/charts.stackComma.test.tsx (4 tests) 323ms
+ ✓ src/pages/run/activity/Summary.test.tsx (2 tests) 162ms
+ ✓ src/pages/connected/reportView.test.ts (35 tests) 102ms
+ ✓ src/pages/library/readJump.test.ts (10 tests) 57ms
+ ✓ src/pages/signal/sources-slice.test.ts (22 tests) 50ms
+ ✓ src/pages/model/slice/read-sections.zero.test.ts (2 tests) 14ms
+ ✓ src/pages/connected/api.finalAudit.test.ts (3 tests) 12ms
+ ✓ src/pages/connected/runFigures.finalAudit.test.ts (12 tests) 6ms
+ ✓ src/pages/model/fixtureFinalAudit.test.ts (2 tests) 4ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/pages/connected/report.auditFollowups.test.tsx > C1-014 C5-005 names the Evidence page and hides its ineffective source switch
+AssertionError: expected 'Credit OS' to be 'Evidence: Sources — Acme — Credit OS' // Object.is equality
+
+Expected: "Evidence: Sources — Acme — Credit OS"
+Received: "Credit OS"
+
+ ❯ src/pages/connected/report.auditFollowups.test.tsx:150:26
+    148|   reader(snapshot, "#evidence/sources");
+    149|   await screen.findByRole("heading", { name: "Sources" });
+    150|   expect(document.title).toBe("Evidence: Sources — Acme — Credit OS");
+       |                          ^
+    151|   expect(screen.queryByRole("switch")).toBeNull();
+    152| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 38 passed (39)
+      Tests  1 failed | 526 passed (527)
+   Start at  22:03:09
+   Duration  143.81s (transform 4.40s, setup 3.28s, import 43.11s, tests 64.61s, environment 19.66s)
+
+JSON report written to /workspace/scratch/stage6-integrated-frontend/shard-2.json
+blob report written to /workspace/scratch/stage6-integrated-frontend/blobs/shard-2.json

@@ -65,7 +65,7 @@ describe("readSlice, Evidence Record", () => {
       ["Capital structure", "Delivered with gaps", "5.6", "16.0", "10.4"],
       ["Recovery", "Not assessable", "14.4", null, null],
       ["Peer comparison", "Delivered with gaps", "16.8", "25.6", "8.8"],
-      ["Forecast", "Delivered", "26.4", "37.6", "11.2"],
+      ["Forward credit view", "Delivered", "26.4", "37.6", "11.2"],
     ]);
     expect(record?.timings.note).toBe(
       "From start to accepted, 13 Nov 2026. Six of thirteen shown.",
@@ -89,9 +89,9 @@ describe("readSlice, Evidence Record", () => {
       ],
     ]);
     expect(record?.spend.progress).toEqual({
-      text: "USD 11.40 of USD 20.00",
+      text: "USD 11.40 of USD 25.00",
       value: 11.4,
-      max: 20,
+      max: 25,
     });
     expect(record?.calls.count).toBe("41");
     expect(record?.calls.rows.map((r) => r.label)).toEqual([
@@ -106,15 +106,15 @@ describe("readSlice, Evidence Record", () => {
       ["Source register", "Every module", "212", "registers/sources.md"],
       ["Calculation register", "Financial kernel", "148", "registers/calculations.md"],
       ["Gap ledger", "Every module", "7", "registers/gaps.md"],
-      ["Assumption register", "Forecast", "23", "registers/assumptions.md"],
+      ["Assumption register", "Forward credit view", "23", "registers/assumptions.md"],
       ["Withheld register", "Delivery", "2", "registers/withheld.md"],
     ]);
-    expect(record?.registers.downloadAll.href).not.toBeNull();
+    expect(record?.registers.downloadAll.href).toBeNull();
     expect(record?.registers.rows.map((r) => r.href === null)).toEqual([
-      false,
-      false,
-      false,
-      false,
+      true,
+      true,
+      true,
+      true,
       true,
     ]);
   });
@@ -126,7 +126,9 @@ describe("readSlice, Evidence Record", () => {
       ["Not run", null, null],
     ]);
     expect(runs[2]?.record.registers.downloadAll.href).toBeNull();
-    expect(runs[2]?.record.registers.downloadAll.reason).toContain("not packed");
+    expect(runs[2]?.record.registers.downloadAll.reason).toContain(
+      "not included in this saved example",
+    );
   });
 
   const broken: [string, (e: Evidence) => void, string][] = [
@@ -171,7 +173,7 @@ describe("readSlice, Evidence Record", () => {
     ],
     [
       "a spend above its cap",
-      (e) => (e.record.spend.progress["value"] = 21),
+      (e) => (e.record.spend.progress["value"] = 26),
       "record.spend.progress.value",
     ],
     [

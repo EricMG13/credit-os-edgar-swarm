@@ -25,9 +25,9 @@ function FileRow({ file, reasonId }: { file: Files[number]; reasonId: string }) 
         bad && "ring-2 ring-error",
       )}
     >
-      <div aria-hidden="true" className="relative size-10 shrink-0">
-        <div className="absolute top-0 left-[7px] h-[38px] w-[27px] rounded-tl rounded-tr-[10px] rounded-b border-[1.5px] border-container bg-primary" />
-        <div className="absolute top-[18px] left-px h-4 min-w-[26px] rounded-[2px] bg-text-secondary px-[3px] text-center text-[9px] leading-4 font-bold tracking-[.02em] text-white">
+      <div aria-hidden="true" className="relative size-8 shrink-0">
+        <div className="absolute top-0 left-1 h-8 w-6 rounded-tl rounded-tr-lg rounded-b border border-container bg-primary" />
+        <div className="absolute top-4 left-0 h-4 min-w-6 rounded bg-text-secondary px-1 text-center text-caption leading-4 font-bold tracking-wide text-white">
           {file.kind}
         </div>
       </div>
@@ -38,7 +38,7 @@ function FileRow({ file, reasonId }: { file: Files[number]; reasonId: string }) 
               <span className="sr-only">{`${file.kind} file: `}</span>
               {file.name}
             </p>
-            <div className="mt-0.5 flex flex-wrap items-center gap-2 text-sm text-tertiary">
+            <div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-tertiary">
               <span className="tabular-nums">{file.size}</span>
               <hr className="h-3 w-px rounded-full border-none bg-border-primary" />
               <StatusBadge set="File state" state={file.state} />
@@ -62,16 +62,22 @@ function FileRow({ file, reasonId }: { file: Files[number]; reasonId: string }) 
           </div>
         )}
         {file.reason === null ? null : (
-          <p className={cx("mt-1.5 text-sm", bad ? "text-error-primary" : "text-secondary")}>
+          <p className={cx("mt-2 text-sm", bad ? "text-error-primary" : "text-secondary")}>
             {file.reason}
           </p>
         )}
         {bad ? (
-          <div className="mt-1.5 flex gap-3">
+          <div className="mt-2 flex gap-3">
             <Button color="link-color" size="sm" isDisabled aria-describedby={reasonId}>
               Replace file
             </Button>
-            <Button color="link-destructive" size="sm" isDisabled aria-describedby={reasonId}>
+            <Button
+              color="link-destructive"
+              size="sm"
+              isDisabled
+              aria-label={`Remove file ${file.name}`}
+              aria-describedby={reasonId}
+            >
               Remove
             </Button>
           </div>
@@ -92,9 +98,8 @@ function DropZone({ reasonId }: { reasonId: string }) {
           <Button color="link-color" size="md" isDisabled aria-describedby={reasonId}>
             Click to upload
           </Button>
-          <span className="text-sm">or drag and drop</span>
         </div>
-        <p className="text-xs">PDF, DOCX, HTML or XLSX, up to 50 MB each</p>
+        <p className="text-caption">Up to 50 MB per file</p>
       </div>
     </div>
   );

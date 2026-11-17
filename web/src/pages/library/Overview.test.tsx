@@ -70,16 +70,20 @@ describe("Overview, the mock's run", () => {
     renderOverview("2026-09-30");
     expect(tiles().map((tile) => tile.textContent)).toEqual([
       "Revenue, USD m2,105Year to 30 Sep 2026",
-      "EBITDA margin23.1%Company-adjusted basis",
-      "Net leverage4.6xNet debt to EBITDA",
-      "Interest cover2.4xEBITDA to cash interest",
-      "Liquidity, USD m412Cash and undrawn facility",
+      "EBITDA margin23.1%Company-adjusted EBITDA, year to 30 Sep 2026",
+      "Net leverage4.6xNet debt to company-adjusted EBITDA, year to 30 Sep 2026",
+      "Interest cover2.4xCompany-adjusted EBITDA to cash interest, year to 30 Sep 2026",
+      "Liquidity, USD m412Cash and undrawn facility, as of 30 Sep 2026",
       "Recovery, senior notesn.a.not availableRecovery was not assessable",
     ]);
     expect(within(tiles()[5] as HTMLElement).getByText("n.a.").parentElement).toHaveClass(
       "text-text-tertiary",
     );
-    expect(within(tiles()[5] as HTMLElement).queryByRole("button")).toBeNull();
+    expect(
+      within(tiles()[5] as HTMLElement)
+        .getAllByRole("button")
+        .map((b) => b.getAttribute("aria-label")),
+    ).toEqual(["Show sources for this figure: no source recorded"]);
   });
 
   it("draws For and against: h2, its note, two h3 columns of three tiles each", () => {
@@ -102,7 +106,7 @@ describe("Overview, the mock's run", () => {
     expect(
       within(sides[0]?.parentElement as HTMLElement).getAllByRole("listitem")[0]?.textContent,
     ).toBe(
-      "4.6xNet leverage fell from 4.9x a year earlier as EBITDA grew faster than debt.Reported",
+      "4.6xNet leverage fell from 4.9x since 30 June 2026 as EBITDA grew faster than debt.Company-adjusted",
     );
   });
 
@@ -112,13 +116,13 @@ describe("Overview, the mock's run", () => {
       "H1",
       "H2",
       "H2",
-      "H3",
-      "H3",
-      "H2",
       "H2",
       "H2",
       "H3",
       "H3",
+      "H3",
+      "H3",
+      "H2",
       "H3",
       "H3",
       "H2",
@@ -268,7 +272,7 @@ describe("Overview, fix round 1", () => {
     renderOverview("2026-09-30");
     const metric = tiles()[5] as HTMLElement;
     const cases: [HTMLElement, HTMLElement, string][] = [
-      [within(metric).getByText("n.a."), metric, "text-[30px]/[38px]"],
+      [within(metric).getByText("n.a."), metric, "text-metric"],
     ];
     cleanup();
     renderOverview("2026-03-31");
@@ -298,7 +302,7 @@ describe("Overview, findings, what would change the view and dates", () => {
     renderOverview("2026-09-30");
     expect(screen.getByRole("heading", { level: 2, name: "Key findings" })).toBeVisible();
     expect(findings().map((item) => item.textContent)).toEqual([
-      "01Deleveraging is real but slowLeverage fell by 0.3x in the year. Almost all of it came from EBITDA growth; net debt rose after the Corvane Fasteners purchase.",
+      "01Deleveraging is real but slowLeverage fell by 0.3x since 30 June 2026. Almost all of it came from EBITDA growth; net debt rose after the Corvane Fasteners purchase.",
       "02Cash conversion lags marginWorking capital absorbed USD 71m as inventory was built for the engine ramp. Free cash flow covered interest but little else.",
       "03Pricing power sits in the aftermarketSole-source parts carry most of the profit. Original-equipment contracts are fixed-price and thinner than peers.",
       "04The 2028 notes are the first real testThe term loan and secured notes run to 2030 and 2031. The unsecured notes come first and rank behind both.",
@@ -343,7 +347,7 @@ describe("Overview, findings, what would change the view and dates", () => {
     ).toBeVisible();
   });
 
-  it("draws the four dates with their state words, shapes that differ by state, and no trace", () => {
+  it("draws the four dates with their state words, shapes that differ by state, and the missing-trace marker", () => {
     renderOverview("2026-09-30");
     expect(screen.getByRole("heading", { level: 2, name: "Dates to watch" })).toBeVisible();
     const dates = within(screen.getByRole("region", { name: "Dates to watch" })).getAllByRole(
@@ -364,7 +368,11 @@ describe("Overview, findings, what would change the view and dates", () => {
       ]).size,
     ).toBe(3);
     expect(mark(dates[2] as HTMLElement)).toBe(mark(dates[3] as HTMLElement));
-    for (const item of dates) expect(within(item).queryByRole("button")).toBeNull();
+    for (const item of dates) {
+      const control = within(item).getByRole("button");
+      expect(control).toHaveAccessibleName("Show sources for this date: no source recorded");
+      expect(control).toHaveAttribute("aria-disabled", "true");
+    }
   });
 
   it("sets findings left of the note and dates from the large width, stacked below it", () => {
@@ -373,14 +381,22 @@ describe("Overview, findings, what would change the view and dates", () => {
     expect(grid).toHaveClass("grid-cols-1", "lg:grid-cols-[minmax(0,1fr)_360px]");
   });
 
-  it("draws the capped run's lower half with no trace control", () => {
+  it("draws the capped run's lower half with the missing-trace marker and no trace control", () => {
     renderOverview("2026-03-31");
     expect(findings()).toHaveLength(2);
     expect(screen.getByText("Not yet formed")).toBeVisible();
-    expect(screen.queryAllByRole("button", { name: /^Show sources for/ })).toHaveLength(0);
-    expect(
-      within(screen.getByRole("region", { name: "Dates to watch" })).getAllByRole("listitem"),
-    ).toHaveLength(2);
+    const marks = screen.queryAllByRole("button", { name: /^Show sources for/ });
+    // 12 before the dates carried a control; the run's 2 dates each draw the marker too.
+    expect(marks).toHaveLength(14);
+    for (const mark of marks) {
+      expect(mark.getAttribute("aria-label")).toMatch(/: no source recorded$/);
+      expect(mark).toHaveAttribute("aria-disabled", "true");
+    }
+    const dates = within(screen.getByRole("region", { name: "Dates to watch" })).getAllByRole(
+      "listitem",
+    );
+    expect(dates).toHaveLength(2);
+    for (const item of dates) expect(within(item).getAllByRole("button")).toHaveLength(1);
   });
 });
 
@@ -426,7 +442,7 @@ describe("Overview, modules and limitations", () => {
     }
   });
 
-  it("collapses a repeated state into one plain item with its names and a chevron", () => {
+  it("collapses a repeated state into one plain item with its names, no chevron; the linked items carry one", () => {
     renderOverview("2026-03-31");
     expect(items().map((item) => item.querySelector("a") === null)).toEqual([
       true,
@@ -442,7 +458,7 @@ describe("Overview, modules and limitations", () => {
     );
     const chevrons = (item: HTMLElement | undefined) =>
       item?.querySelectorAll("svg[aria-hidden='true'].text-text-tertiary").length;
-    expect(items().map(chevrons)).toEqual([1, 0, 0, 0, 0, 0, 0]);
+    expect(items().map(chevrons)).toEqual([0, 1, 1, 1, 1, 1, 1]);
   });
 
   it("draws the capped run's modules as its own story: nine delivered, four not run", () => {
@@ -454,7 +470,7 @@ describe("Overview, modules and limitations", () => {
       "Financial performance",
       "Cash flow and liquidity",
       "Recovery",
-      "Forecast",
+      "Forward credit view",
     ]) {
       const item = items().find((el) => el.textContent.startsWith(title)) as HTMLElement;
       expect(within(item).getByText("Not run")).toBeVisible();
@@ -487,7 +503,7 @@ describe("Overview, modules and limitations", () => {
       "Financial performance",
       "Cash flow and liquidity",
       "Recovery",
-      "Forecast",
+      "Forward credit view",
     ]);
     // Sweep ruling SW-01: the Modules tab counts the modules the run lists (as the mock's "Modules 13"
     // beside "12 of 13 delivered"), here the delivered ones and the four not run.
@@ -524,10 +540,17 @@ describe("Overview, modules and limitations", () => {
     expect(within(region).getAllByRole("listitem")).toHaveLength(4);
   });
 
-  it("draws the capped run's limitations with no trace control and its long sentence in full", () => {
+  it("draws the capped run's limitations with the missing-trace marker and its long sentence in full", () => {
     renderOverview("2026-03-31");
     const region = screen.getByRole("region", { name: "Limitations" });
-    expect(within(region).queryByRole("button", { name: /^Show sources/ })).toBeNull();
+    const marks = within(region).getAllByRole("button", { name: /^Show sources/ });
+    for (const mark of marks) {
+      expect(mark).toHaveAttribute(
+        "aria-label",
+        "Show sources for this limitation: no source recorded",
+      );
+      expect(mark).toHaveAttribute("aria-disabled", "true");
+    }
     expect(
       within(region).getByText(/the nine modules delivered do not stand in for them\.$/),
     ).toBeVisible();

@@ -1,0 +1,4 @@
+react_frontend/run_metadata.py:109: format FMT ruff format would change
+react_frontend/run_metadata.py:109: ruff E501 Line too long (103 > 100)
+react_frontend/run_metadata.py:110: format FMT ruff format would change
+quality gate: 3 finding(s) in 41 changed file(s), 4871 line(s) in scope

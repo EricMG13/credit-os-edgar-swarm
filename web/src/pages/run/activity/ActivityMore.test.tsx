@@ -139,7 +139,9 @@ describe("Run activity, cannot be read", () => {
 
   it("draws the Runs trail the other run records draw", () => {
     const trail = screen.getByRole("navigation", { name: "Breadcrumb" });
-    expect(within(trail).getByRole("link", { name: "Runs" }).getAttribute("href")).toBe("#/run");
+    expect(within(trail).getByRole("link", { name: "Runs" }).getAttribute("href")).toBe(
+      "#/run/runs",
+    );
     expect(trail.textContent).toBe("Runs / TransDigm Group");
   });
 
@@ -182,7 +184,7 @@ describe("Run activity, the group's home address", () => {
     expect(screen.getByRole("heading", { level: 1 }).textContent).toBe("TransDigm Group");
     expect(screen.getByText("USD 7.40")).toBeTruthy();
     expect(screen.getByText("5 of 13")).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Stop run" })).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Stop run" })).toBeNull();
   });
 
   it("current null draws No run to watch", () => {

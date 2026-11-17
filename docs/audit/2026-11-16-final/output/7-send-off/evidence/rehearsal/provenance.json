@@ -1,0 +1,45 @@
+{
+  "first": {
+    "outcome": "approval stop; transitive metadata incomplete",
+    "sourceFiles": 3587,
+    "beforeManifestSha256": "dd5c3a817bd6119eb7cc75393cfd0183ba4d392186c981151ac7c1251f8ae801",
+    "afterManifestSha256": "dd5c3a817bd6119eb7cc75393cfd0183ba4d392186c981151ac7c1251f8ae801",
+    "adaptedCreated": false,
+    "selectedFiles": {
+      "docs/work-pc/WORK-PC-INIT-PROMPT.md": "f34263f66f350360d009939e08f21ca630ed64f67b4ac0953958fa0017b53193",
+      "uv.lock": "6b22d3e43d8cf7fed9a04f3654f456d0f23d736508ee5e55d1fcd9f339d81637",
+      "web/package-lock.json": "e412cb3c7d5a3715ae4f8a7d549eb38fd6406e9b2e1501e3426b66377e576ab5"
+    },
+    "metadataRequestResults": {
+      "200": 80,
+      "404": 568
+    },
+    "artifactRequests": 0
+  },
+  "completeIndex": {
+    "outcome": "complete read-only metadata inventory and approval stop",
+    "sourceFiles": 3588,
+    "beforeManifestSha256": "d800da724b8a3e9760273e38c20b63545444b94eba89b471fe679839d75d7dcc",
+    "afterManifestSha256": "d800da724b8a3e9760273e38c20b63545444b94eba89b471fe679839d75d7dcc",
+    "adaptedCreated": false,
+    "selectedFiles": {
+      "docs/work-pc/WORK-PC-INIT-PROMPT.md": "f34263f66f350360d009939e08f21ca630ed64f67b4ac0953958fa0017b53193",
+      "uv.lock": "6b22d3e43d8cf7fed9a04f3654f456d0f23d736508ee5e55d1fcd9f339d81637",
+      "web/package-lock.json": "e412cb3c7d5a3715ae4f8a7d549eb38fd6406e9b2e1501e3426b66377e576ab5"
+    },
+    "metadataRequestResults": {
+      "200": 620,
+      "404": 13
+    },
+    "artifactRequests": 0,
+    "archiveCommit": "2bf421280d225045e48b076d5ec4410687717ed3",
+    "gap-table.md": {
+      "sha256": "4ce2b8ed312cd949ec81e62dfec47a56a0057475d4826f1c84d56b4c5e9a11ed",
+      "path": "/workspace/scratch/stage7-dry-run-v2/agent/gap-table.md"
+    },
+    "package-metadata.json": {
+      "sha256": "c17efab5eddf5accc27e4065077ef7fffac8408b54681eacc2db20b2a9238a86",
+      "path": "/workspace/scratch/stage7-dry-run-v2/agent/package-metadata.json"
+    }
+  }
+}

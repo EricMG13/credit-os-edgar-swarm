@@ -1,0 +1,198 @@
+{
+  "checkout": {
+    "hosts": [
+      {
+        "host": "bit.ly",
+        "sites": {
+          "connected-assets/ReportLibrary-Bv51ihfT.js": 1
+        },
+        "meaning": "Immer error explanation text; no loader."
+      },
+      {
+        "host": "react.dev",
+        "sites": {
+          "connected-assets/connected-Bvt_QFAJ.js": 2
+        },
+        "meaning": "Minified React error explanation text; no loader."
+      },
+      {
+        "host": "redux-toolkit.js.org",
+        "sites": {
+          "connected-assets/ReportLibrary-Bv51ihfT.js": 1
+        },
+        "meaning": "Minified Redux toolkit error explanation text; no loader."
+      },
+      {
+        "host": "redux.js.org",
+        "sites": {
+          "connected-assets/ReportLibrary-Bv51ihfT.js": 1
+        },
+        "meaning": "Minified Redux error explanation text; no loader."
+      },
+      {
+        "host": "tailwindcss.com",
+        "sites": {
+          "connected-assets/style-DSotP3OC.css": 1
+        },
+        "meaning": "Stylesheet licence header; no loader."
+      },
+      {
+        "host": "www.w3.org",
+        "sites": {
+          "connected-assets/ReportLibrary-Bv51ihfT.js": 1,
+          "connected-assets/connected-Bvt_QFAJ.js": 18
+        },
+        "meaning": "XML/SVG/MathML namespace literals in libraries; no loader."
+      }
+    ],
+    "entryPolicy": [
+      "default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self'; font-src 'self'; connect-src 'none'; base-uri 'none'; form-action 'none'"
+    ],
+    "localTargets": [
+      [
+        "connected-assets/style-DSotP3OC.css",
+        "../fonts/SchibstedGrotesk-SemiBold.woff2",
+        "local file exists"
+      ],
+      [
+        "connected-assets/style-DSotP3OC.css",
+        "../fonts/SchibstedGrotesk-Bold.woff2",
+        "local file exists"
+      ],
+      [
+        "connected-assets/style-DSotP3OC.css",
+        "../fonts/Geist-Regular.woff2",
+        "local file exists"
+      ],
+      [
+        "connected-assets/style-DSotP3OC.css",
+        "../fonts/Geist-Medium.woff2",
+        "local file exists"
+      ],
+      [
+        "connected-assets/style-DSotP3OC.css",
+        "../fonts/Geist-SemiBold.woff2",
+        "local file exists"
+      ],
+      [
+        "connected-assets/style-DSotP3OC.css",
+        "../fonts/GeistMono-Regular.woff2",
+        "local file exists"
+      ],
+      [
+        "connected-assets/style-DSotP3OC.css",
+        "../fonts/GeistMono-Medium.woff2",
+        "local file exists"
+      ],
+      [
+        "script",
+        "./connected-assets/connected-Bvt_QFAJ.js",
+        "local file exists"
+      ],
+      [
+        "link/stylesheet",
+        "./connected-assets/style-DSotP3OC.css",
+        "local file exists"
+      ]
+    ],
+    "otherLoaderCandidates": []
+  },
+  "archive": {
+    "hosts": [
+      {
+        "host": "bit.ly",
+        "sites": {
+          "connected-assets/ReportLibrary-Bv51ihfT.js": 1
+        },
+        "meaning": "Immer error explanation text; no loader."
+      },
+      {
+        "host": "react.dev",
+        "sites": {
+          "connected-assets/connected-Bvt_QFAJ.js": 2
+        },
+        "meaning": "Minified React error explanation text; no loader."
+      },
+      {
+        "host": "redux-toolkit.js.org",
+        "sites": {
+          "connected-assets/ReportLibrary-Bv51ihfT.js": 1
+        },
+        "meaning": "Minified Redux toolkit error explanation text; no loader."
+      },
+      {
+        "host": "redux.js.org",
+        "sites": {
+          "connected-assets/ReportLibrary-Bv51ihfT.js": 1
+        },
+        "meaning": "Minified Redux error explanation text; no loader."
+      },
+      {
+        "host": "tailwindcss.com",
+        "sites": {
+          "connected-assets/style-CAXYJFez.css": 1
+        },
+        "meaning": "Stylesheet licence header; no loader."
+      },
+      {
+        "host": "www.w3.org",
+        "sites": {
+          "connected-assets/ReportLibrary-Bv51ihfT.js": 1,
+          "connected-assets/connected-Bvt_QFAJ.js": 18
+        },
+        "meaning": "XML/SVG/MathML namespace literals in libraries; no loader."
+      }
+    ],
+    "entryPolicy": [
+      "default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self'; font-src 'self'; connect-src 'none'; base-uri 'none'; form-action 'none'"
+    ],
+    "localTargets": [
+      [
+        "connected-assets/style-CAXYJFez.css",
+        "../fonts/SchibstedGrotesk-SemiBold.woff2",
+        "local file exists"
+      ],
+      [
+        "connected-assets/style-CAXYJFez.css",
+        "../fonts/SchibstedGrotesk-Bold.woff2",
+        "local file exists"
+      ],
+      [
+        "connected-assets/style-CAXYJFez.css",
+        "../fonts/Geist-Regular.woff2",
+        "local file exists"
+      ],
+      [
+        "connected-assets/style-CAXYJFez.css",
+        "../fonts/Geist-Medium.woff2",
+        "local file exists"
+      ],
+      [
+        "connected-assets/style-CAXYJFez.css",
+        "../fonts/Geist-SemiBold.woff2",
+        "local file exists"
+      ],
+      [
+        "connected-assets/style-CAXYJFez.css",
+        "../fonts/GeistMono-Regular.woff2",
+        "local file exists"
+      ],
+      [
+        "connected-assets/style-CAXYJFez.css",
+        "../fonts/GeistMono-Medium.woff2",
+        "local file exists"
+      ],
+      [
+        "script",
+        "./connected-assets/connected-Bvt_QFAJ.js",
+        "local file exists"
+      ],
+      [
+        "link/stylesheet",
+        "./connected-assets/style-CAXYJFez.css",
+        "local file exists"
+      ]
+    ],
+    "otherLoaderCandidates": []
+  }
+}

@@ -30,16 +30,18 @@ from deploy_workflow.prose_checks import FORECAST_HEADING, ISO_4217, reader_pass
 
 HEADING = FORECAST_HEADING
 SCHEMA_VERSION = "cpos-forecast-inputs/1"
+# The modules are named as the issuer library names them (`credit_os_chips.MODULE_NAMES`; a test
+# compares), because this text is drawn to the reader: no module code, tool or pipeline step.
 LIMIT = (
-    "Every figure is Python's arithmetic over inputs the CP-2G handoff stated; the inputs, not "
+    "Every figure is arithmetic over inputs the Forward credit model stated; the inputs, not "
     "the arithmetic, are unreviewed. Not analytical review."
 )
 # Owner, 2026-11-11: a forecast works from layer 1 and is better with CP-2G. Without CP-2G the
 # source is CP-1's run-rate block, and the published limit says so.
 LAYER1_LIMIT = (
-    "Every figure is Python's arithmetic over run-rate inputs the CP-1 handoff stated, from the "
-    "financial foundation's own figures; no CP-2G model, case or shock was run. The inputs, not "
-    "the arithmetic, are unreviewed. Not analytical review."
+    "Every figure is arithmetic over run-rate inputs Financial foundation stated, from its own "
+    "figures; no Forward credit model, case or shock was run. The inputs, not the arithmetic, "
+    "are unreviewed. Not analytical review."
 )
 SOURCES = ("CP-2G", "CP-1")
 # A block that predates `currency` states none and is read as USD, the only currency the field's
@@ -54,8 +56,8 @@ def scale_limit(currency: str | None = None) -> str:
     code = currency or UNSTATED_CURRENCY
     return (
         f"The forecast inputs state base amounts, amount drivers and facility amounts in {code} "
-        "thousands, as CP-1 prints them (scale 1000); Python divided each by 1,000 before any "
-        f"calculation. Every figure here is {code} millions."
+        "thousands, as Financial foundation prints them (scale 1000); each was divided by 1,000 "
+        f"before any calculation. Every figure here is {code} millions."
     )
 
 
@@ -734,7 +736,8 @@ def _check_facility_currencies(facilities: tuple[Facility, ...], cp1_text: str, 
 _FACILITY_YEAR = ("opening", "rate", "interest", "repaid", "closing")
 FACILITY_LIMIT = (
     "Cash interest on the stated facilities and scheduled repayment are computed from the "
-    "facility terms the CP-2G handoff stated; the analyst's repayment assumption is not used."
+    "facility terms the Forward credit model stated; the analyst's repayment assumption is not "
+    "used."
 )
 
 

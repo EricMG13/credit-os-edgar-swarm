@@ -30,6 +30,13 @@ const record: ScriptCheckRecord = {
   outcomes: [outcome],
 };
 
+/** A check card is named by its heading (C5-015: a card is not a landmark). */
+function cardOf(name: string) {
+  const card = screen.getByRole("heading", { name }).closest("section");
+  if (!card) throw new Error(`no card headed ${name}`);
+  return card;
+}
+
 function show(records?: ScriptCheckRecord[], target = "checks/CP-1") {
   const run = {
     folder: "run",
@@ -62,7 +69,8 @@ it.each([undefined, []])(
 
 it("renders accepted record identity, exact figures, zero tolerance and status without rounding", () => {
   show([record]);
-  const group = screen.getByRole("region", { name: "Net debt: disagreed" });
+  const group = cardOf("T2.1 \u00b7 Net debt");
+  expect(within(group).getByText("disagreed")).toBeVisible();
   expect(within(group).getByText("0.00")).toBeVisible();
   expect(within(group).getByText("0 exact US$m")).toBeVisible();
   expect(within(group).getByText("0")).toBeVisible();
@@ -100,11 +108,12 @@ it("groups repeated register checks but keeps different numeric and missing valu
       ],
     },
   ]);
-  const group = screen.getByRole("region", { name: "2 registers: not checked" });
+  const group = cardOf("2 registers");
+  expect(within(group).getByText("not checked")).toBeVisible();
   expect(within(group).getByText("T1")).toBeVisible();
   expect(within(group).getByText("T2")).toBeVisible();
   expect(within(group).queryByText("Recomputed")).toBeNull();
-  expect(screen.getAllByRole("region", { name: "Net debt: disagreed" })).toHaveLength(3);
+  expect(screen.getAllByRole("heading", { name: "T2.1 \u00b7 Net debt" })).toHaveLength(3);
   expect(screen.getByText("0.125 exact US$m")).toBeVisible();
 });
 
@@ -126,5 +135,56 @@ it("keeps unknown statuses and hostile text literal, and filters modules without
   expect(
     screen.getByText("No script-check record is held for Committee decision."),
   ).toBeInTheDocument();
-  expect(screen.queryByRole("region", { name: /Net debt/ })).toBeNull();
+  expect(screen.queryByRole("heading", { name: /Net debt/ })).toBeNull();
+});
+
+it("heads a check by its register and the figure checked, not by the figure alone", () => {
+  show([
+    {
+      ...record,
+      outcomes: [
+        { ...outcome, figure: "columns", row: "all", register: "T4.10", status: "not checked" },
+        { ...outcome, figure: "Headroom: all", register: "T4C.4", status: "not checked" },
+        { ...outcome, figure: "all", row: "all", register: "T4.11", status: "not checked" },
+      ],
+    },
+  ]);
+  const titles = screen.getAllByRole("heading", { level: 4 }).map((node) => node.textContent);
+  expect(titles).toEqual(["T4.10 \u00b7 columns", "T4C.4 \u00b7 Headroom: all", "T4.11"]);
+});
+
+it("draws no markdown marks in a register or a reason", () => {
+  show([
+    {
+      ...record,
+      outcomes: [
+        {
+          ...outcome,
+          figure: "all",
+          row: "all",
+          register: "`### Recovery waterfall`",
+          reason: "CP-3 states no value for Low: `Not supplied: not stated`",
+          status: "not checked",
+        },
+      ],
+    },
+  ]);
+  const card = cardOf("Recovery waterfall");
+  expect(
+    within(card).getByText("CP-3 states no value for Low: Not supplied: not stated"),
+  ).toBeVisible();
+  expect(document.body.textContent).not.toMatch(/[`#]/);
+});
+
+it("makes no landmark of a check card", () => {
+  show([
+    {
+      ...record,
+      outcomes: [
+        outcome,
+        { ...outcome, figure: "columns", register: "T4.10", status: "not checked" },
+      ],
+    },
+  ]);
+  expect(screen.queryByRole("region", { name: /not checked|disagreed/ })).toBeNull();
 });

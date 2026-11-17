@@ -1,0 +1,7 @@
+[probe] proof.serve up on http://127.0.0.1:8750 (root /tmp/cs-C2/r-iqXCNv)
+ok   50 drafts exist  [50]
+FAIL the form reaches Purpose with 50 abandoned drafts  [["too many unfinished submissions; try again later"]]
+ok   the fresh draft is kept  [null]
+ok   the draft with an approval issued is kept  [null]
+ok   the count stays at or under 50  [50]
+[probe] proof.serve on http://127.0.0.1:8750 stopped

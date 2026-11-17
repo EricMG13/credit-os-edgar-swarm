@@ -131,6 +131,21 @@ export type Run = {
    * kept "running" after its log ended (a library that could not be rebuilt); else "". Absent
    * from an older service. */
   held_reason?: string;
+  /** The recorded cause of the engine's last stop; absent from an older service. */
+  stopped_by?: string;
+  /** Exact non-ready items in the approved summary; null/absent for historical records. */
+  approved_summary_limits?: ReadinessItem[] | null;
+  /** Existing accepted-response records, not a claim about paid calls or analytical completion. */
+  module_outputs?:
+    | {
+        module: string;
+        assessment: "not-assessable" | "readable" | null;
+        provenance: "retained-response" | "new-response" | null;
+        response_sha256: string | null;
+      }[]
+    | null;
+  /** Membership in the current admitted publication; no admission timestamp is inferred. */
+  library_admission?: "listed" | "not-listed" | null;
   events: RunEvent[] | null;
 };
 
@@ -160,7 +175,14 @@ export type Activity = {
   unreadable?: number;
 };
 
-type ReportEntry = { id: string; issuer: string; asOf: string; pathway: string };
+type ReportEntry = {
+  id: string;
+  issuer: string;
+  asOf: string;
+  pathway: string;
+  /** Designated published outputs explicitly marked not assessable; absent in older replies. */
+  not_assessable?: string[];
+};
 export class RequestError extends Error {
   constructor(
     message: string,
@@ -232,7 +254,7 @@ export const removeDocument = (id: string, name: string) =>
 export const getPriorInputs = (run: string) =>
   request<PriorInputs>(`/api/runs/${encodeURIComponent(run)}/inputs`, undefined, true);
 export const getLatestIssuerRun = (issuer: string) =>
-  request<{ latest_run: string; runs: number; latest_as_of: string }>(
+  request<{ latest_run: string; runs: number; latest_as_of: string; issuer_name?: string }>(
     `/api/issuers/${encodeURIComponent(issuer)}`,
   );
 export const carryDocuments = (id: string, run: string) =>

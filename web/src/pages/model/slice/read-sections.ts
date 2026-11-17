@@ -98,7 +98,7 @@ const published = nullableRecord(
 /** The members the second half of the Model page adds to the statements page. */
 export const sections = {
   bridges: arrayOf(bridge),
-  comparison,
+  comparison: (value: unknown, path: string) => (value === null ? null : comparison(value, path)),
   debt: object<StatementsPage["debt"]>({ stack, maturities: columns }),
   recovery: columns,
   gap: object({ title: text, reason: text }),
@@ -246,7 +246,8 @@ function checkStack(s: Stack, path: string): void {
     "a name no other part has",
   );
   s.parts.forEach((p, i) => {
-    if (!(p.value > 0)) fail(`${at(`${path}.parts`, i)}.value`, "expected a number above zero");
+    if (!(p.value >= 0))
+      fail(`${at(`${path}.parts`, i)}.value`, "expected a number of zero or more");
   });
   exactly(s.head, 3, `${path}.head`, "entries, the label, amount and share headings");
 }
@@ -299,7 +300,8 @@ export function checkSections(
   page.bridges.forEach((b, i) => {
     checkBridge(b, cases, at(child(path, "bridges"), i));
   });
-  checkComparison(page.comparison, child(path, "comparison"));
+  if (page.comparison !== null) checkComparison(page.comparison, child(path, "comparison"));
+  else if (cases.length === 2) fail(child(path, "comparison"), "expected an object");
   checkStack(page.debt.stack, child(path, "debt.stack"));
   checkColumns(page.debt.maturities, child(path, "debt.maturities"));
   checkColumns(page.recovery, child(path, "recovery"));

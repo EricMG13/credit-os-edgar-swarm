@@ -1,0 +1,47 @@
+Using CPython 3.13.15
+Creating virtual environment at: .venv
+Resolved 39 packages in 2ms
+   Building deploy-workflow @ file:///workspace/scratch/stage7-release/extracted
+   Building issuer-library @ file:///workspace/scratch/stage7-release/extracted/apps/issuer-library
+      Built deploy-workflow @ file:///workspace/scratch/stage7-release/extracted
+      Built issuer-library @ file:///workspace/scratch/stage7-release/extracted/apps/issuer-library
+Prepared 2 packages in 802ms
+Installed 38 packages in 273ms
+ + annotated-types==0.8.0
+ + anyio==4.16.0
+ + ast-serialize==0.13.1
+ + certifi==2026.10.23
+ + click==8.5.1
+ + deploy-workflow==0.1.0 (from file:///workspace/scratch/stage7-release/extracted)
+ + et-xmlfile==2.0.0
+ + github-copilot-sdk==1.0.28
+ + grimp==3.20
+ + h11==0.16.0
+ + httpcore==1.0.9
+ + httpx==0.28.1
+ + hypothesis==6.170.5
+ + idna==3.20
+ + import-linter==2.16
+ + iniconfig==2.3.1
+ + issuer-library==0.1.0 (from file:///workspace/scratch/stage7-release/extracted/apps/issuer-library)
+ + librt==0.16.0
+ + markdown-it-py==4.3.0
+ + mdurl==0.1.2
+ + mypy==2.4.0
+ + mypy-extensions==1.1.0
+ + openpyxl==3.1.5
+ + packaging==26.3
+ + pathspec==1.1.1
+ + pluggy==1.7.0
+ + pydantic==2.14.1
+ + pydantic-core==2.50.1
+ + pygments==2.21.0
+ + pypdf==6.21.2
+ + pytest==9.1.1
+ + python-dateutil==4.0.0
+ + rich==15.0.0
+ + ruff==0.17.1
+ + sortedcontainers==2.4.0
+ + typing-extensions==4.16.0
+ + typing-inspection==0.4.4
+ + tzdata==2026.6

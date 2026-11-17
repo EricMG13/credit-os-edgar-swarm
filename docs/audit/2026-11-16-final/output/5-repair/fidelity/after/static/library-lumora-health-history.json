@@ -1,0 +1,45 @@
+{
+  "screen": {"id":"library--lumora-health--history","surface":"static","address":"/library/lumora-health/history","extra":true,"variant":null},
+  "page": {"title":"Report history — Lumora Health — Credit OS","headings":["Lumora Health"]},
+  "counts": {"textRuns":13,"figures":2,"figuresByKind":{"card":2},"tableViewFigures":0,"chartTableViews":0,"tables":0,"tableRows":0,"sourceLines":0,"drawerLines":0,"limitationSentences":1,"marks":0,"images":0,"traceControls":0,"traceDrawers":0,"traceUnavailable":0,"traceErrors":0,"coverageGap":0},
+  "expandedDisclosures": 0,
+  "outline": [
+    {"section":"","kind":"text","text":"Design reference with sample data"},
+    {"section":"","kind":"text","text":"This page shows a saved example. Its names and figures are samples, and it is not connected to the run service, so nothing here starts a run or spends money."},
+    {"section":"","kind":"link","text":"Library"},
+    {"section":"Lumora Health","kind":"heading","text":"Lumora Health"},
+    {"section":"Lumora Health","kind":"link","text":"Open latest report"},
+    {"section":"Lumora Health","kind":"link","text":"New run"},
+    {"section":"Lumora Health","kind":"paragraph","text":"Report history: one run"},
+    {"section":"Lumora Health","kind":"item","text":"Run as of 30 Sep 2026"},
+    {"section":"Lumora Health","kind":"item","text":"Ran 10 Nov 2026"},
+    {"section":"Lumora Health","kind":"item","text":"Capped"},
+    {"section":"Lumora Health","kind":"item","text":"Full review"},
+    {"section":"Lumora Health","kind":"item","text":"The run stopped at its cost cap before the modules that form the view had finished."},
+    {"section":"Lumora Health","kind":"link","text":"Open report"}
+  ],
+  "tables": [],
+  "figures": [
+    {"kind":"card","text":"Run as of 30 Sep 2026","tokens":["30","2026"],"section":"Lumora Health","label":"Capped","period":"Ran 10 Nov 2026","unit":null,"basis":null,"beside":"Run as of 30 Sep 2026 | Ran 10 Nov 2026 | Capped | Full review | The run stopped at its cost cap before the modules that form the view had finished. | Open report"},
+    {"kind":"card","text":"Ran 10 Nov 2026","tokens":["10","2026"],"section":"Lumora Health","label":"Capped","period":"Run as of 30 Sep 2026","unit":null,"basis":null,"beside":"Run as of 30 Sep 2026 | Ran 10 Nov 2026 | Capped | Full review | The run stopped at its cost cap before the modules that form the view had finished. | Open report"}
+  ],
+  "sources": [],
+  "limitations": [
+    {"via":"text","section":"","text":"This page shows a saved example. Its names and figures are samples, and it is not connected to the run service, so nothing here starts a run or spends money."}
+  ],
+  "marks": [],
+  "controls": [],
+  "links": [
+    {"text":"Library","href":"#/library/home"},
+    {"text":"Open latest report","href":"#/library/lumora-health/2026-09-30/overview"},
+    {"text":"New run","href":"#/run/start"},
+    {"text":"Open report","href":"#/library/lumora-health/2026-09-30/overview"}
+  ],
+  "images": [],
+  "screenReaderOnly": [],
+  "coverage": {"innerText":4,"captured":4,"optionsNotDrawn":0,"selected":0,"typed":0,"screenReaderOnly":0},
+  "chartTableViews": [],
+  "sourceDrawers": [],
+  "unavailableSourceControls": [],
+  "sourceControlErrors": []
+}

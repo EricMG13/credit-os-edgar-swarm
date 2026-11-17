@@ -1,0 +1,75 @@
+
+> credit-os-web@0.0.0 proof:connected
+> node scripts/connected-proof.mjs
+
+Browser proof artifacts: /workspace/audit-proof-alignment/proof-artifacts/run-tSXV7e
+overview mobile: 6 headline cards fit at 375px
+
+✖ Google Chrome uploads, submits and opens a finished legacy report (19001.134336ms)
+overview mobile: 6 headline cards fit at 375px
+
+✖ Microsoft Edge uploads, submits and opens a finished legacy report (24039.970196ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 0
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 43047.688176
+
+✖ failing tests:
+
+test at scripts/connected-proof.mjs:1544:3
+✖ Google Chrome uploads, submits and opens a finished legacy report (19001.134336ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+
+    [
+      'FCF reaches zero\n10%\nCalculated',
+      'Cover reaches watch level\n15%\nAnalyst watch level, not a covenant',
+  +   'Net leverage watch level\n32%\nDocumentary gap'
+    ]
+
+      at checkDownsideThresholds (file:///workspace/audit-proof-alignment/web/scripts/connected-proof.mjs:820:10)
+      at runNextTicks (node:internal/process/task_queues:65:5)
+      at process.processImmediate (node:internal/timers:541:9)
+      at async checkDownside (file:///workspace/audit-proof-alignment/web/scripts/connected-proof.mjs:811:3)
+      at async checkCharts (file:///workspace/audit-proof-alignment/web/scripts/connected-proof.mjs:944:3)
+      at async checkBrowserRun (file:///workspace/audit-proof-alignment/web/scripts/connected-proof.mjs:1424:3)
+      at async TestContext.<anonymous> (file:///workspace/audit-proof-alignment/web/scripts/connected-proof.mjs:1578:18)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: [Array],
+    expected: [Array],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/connected-proof.mjs:1544:3
+✖ Microsoft Edge uploads, submits and opens a finished legacy report (24039.970196ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+
+    [
+      'FCF reaches zero\n10%\nCalculated',
+      'Cover reaches watch level\n15%\nAnalyst watch level, not a covenant',
+  +   'Net leverage watch level\n32%\nDocumentary gap'
+    ]
+
+      at checkDownsideThresholds (file:///workspace/audit-proof-alignment/web/scripts/connected-proof.mjs:820:10)
+      at async checkDownside (file:///workspace/audit-proof-alignment/web/scripts/connected-proof.mjs:811:3)
+      at async checkCharts (file:///workspace/audit-proof-alignment/web/scripts/connected-proof.mjs:944:3)
+      at async checkBrowserRun (file:///workspace/audit-proof-alignment/web/scripts/connected-proof.mjs:1424:3)
+      at async TestContext.<anonymous> (file:///workspace/audit-proof-alignment/web/scripts/connected-proof.mjs:1578:18)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: [Array],
+    expected: [Array],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }

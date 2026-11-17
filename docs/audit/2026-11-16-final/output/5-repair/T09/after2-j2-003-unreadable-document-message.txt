@@ -1,0 +1,4 @@
+alerts: ["annual-report.pdf could not be read: its text could not be decoded."]
+row badges after Inspect: ["Ignored","Selected","Selected"]
+NOT REPRODUCED
+blocked requests: 0; page errors: 0

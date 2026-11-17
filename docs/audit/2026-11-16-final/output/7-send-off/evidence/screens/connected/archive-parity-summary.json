@@ -1,0 +1,283 @@
+{
+  "1440": {
+    "selectedRoutes": [
+      "/",
+      "/?layout=list",
+      "/report/20261117-223546-01",
+      "/report/20261117-223546-01#calendar",
+      "/report/20261117-223546-01#changes",
+      "/report/20261117-223546-01#evidence/checks",
+      "/report/20261117-223546-01#evidence/gaps",
+      "/report/20261117-223546-01#evidence/record",
+      "/report/20261117-223546-01#evidence/record/CP-1",
+      "/report/20261117-223546-01#evidence/sources",
+      "/report/20261117-223546-01#evidence/summary",
+      "/report/20261117-223546-01#evidence/trace",
+      "/report/20261117-223546-01#forecast",
+      "/report/20261117-223546-01#history",
+      "/report/20261117-223546-01#modules",
+      "/report/20261117-223546-01#modules/CP-0",
+      "/report/20261117-223546-01#modules/CP-1",
+      "/report/20261117-223546-01#modules/CP-1A",
+      "/report/20261117-223546-01#modules/CP-2",
+      "/report/20261117-223546-01#modules/CP-2A",
+      "/report/20261117-223546-01#modules/CP-2D",
+      "/report/20261117-223546-01#modules/CP-2E",
+      "/report/20261117-223546-01#modules/CP-2G",
+      "/report/20261117-223546-01#modules/CP-3",
+      "/report/20261117-223546-01#modules/CP-3C",
+      "/report/20261117-223546-01#modules/CP-4",
+      "/report/20261117-223546-01#modules/CP-5",
+      "/report/20261117-223546-01#modules/CP-6",
+      "/report/20261117-223546-01#modules/CP-DR",
+      "/report/20261117-223546-01#overview",
+      "/report/a%2Fb",
+      "/report/no-such-run",
+      "/run/20000101-000000-01",
+      "/run/20261117-223546-01",
+      "/runs",
+      "/start",
+      "/start?from=20261117-223546-01"
+    ],
+    "completedPairs": 35,
+    "matchedTitle": 35,
+    "matchedPolicy": 35,
+    "matchedText": 35,
+    "matchedLayout": 34,
+    "matchedPNG": 5,
+    "PNGTotal": 5,
+    "appOutside": 0,
+    "pageErrors": 0,
+    "runExit": 1,
+    "nativeProxyDenials": 311,
+    "proxyFailures": [],
+    "failures": [
+      {
+        "side": "checkout",
+        "width": 1440,
+        "address": "/report/no-such-run",
+        "message": "locator.waitFor: Timeout 12000ms exceeded."
+      },
+      {
+        "side": "checkout",
+        "width": 1440,
+        "address": "/run/20000101-000000-01",
+        "message": "locator.waitFor: Timeout 12000ms exceeded."
+      },
+      {
+        "side": "archive",
+        "width": 1440,
+        "address": "/report/no-such-run",
+        "message": "locator.waitFor: Timeout 12000ms exceeded."
+      },
+      {
+        "side": "archive",
+        "width": 1440,
+        "address": "/run/20000101-000000-01",
+        "message": "locator.waitFor: Timeout 12000ms exceeded."
+      }
+    ],
+    "differences": [
+      {
+        "address": "/runs",
+        "width": 1440,
+        "matchedBefore": true,
+        "matchedText": true,
+        "matchedLayout": false,
+        "matchedTitle": true,
+        "matchedPolicy": true,
+        "matchedPNG": null
+      }
+    ]
+  },
+  "390": {
+    "selectedRoutes": [
+      "/",
+      "/?layout=list",
+      "/report/20261117-223546-01",
+      "/report/20261117-223546-01#calendar",
+      "/report/20261117-223546-01#changes",
+      "/report/20261117-223546-01#evidence/checks",
+      "/report/20261117-223546-01#evidence/gaps",
+      "/report/20261117-223546-01#evidence/record",
+      "/report/20261117-223546-01#evidence/record/CP-1",
+      "/report/20261117-223546-01#evidence/sources",
+      "/report/20261117-223546-01#evidence/summary",
+      "/report/20261117-223546-01#evidence/trace",
+      "/report/20261117-223546-01#forecast",
+      "/report/20261117-223546-01#history",
+      "/report/20261117-223546-01#modules",
+      "/report/20261117-223546-01#modules/CP-0",
+      "/report/20261117-223546-01#modules/CP-1",
+      "/report/20261117-223546-01#modules/CP-1A",
+      "/report/20261117-223546-01#modules/CP-2",
+      "/report/20261117-223546-01#modules/CP-2A",
+      "/report/20261117-223546-01#modules/CP-2D",
+      "/report/20261117-223546-01#modules/CP-2E",
+      "/report/20261117-223546-01#modules/CP-2G",
+      "/report/20261117-223546-01#modules/CP-3",
+      "/report/20261117-223546-01#modules/CP-3C",
+      "/report/20261117-223546-01#modules/CP-4",
+      "/report/20261117-223546-01#modules/CP-5",
+      "/report/20261117-223546-01#modules/CP-6",
+      "/report/20261117-223546-01#modules/CP-DR",
+      "/report/20261117-223546-01#overview",
+      "/report/a%2Fb",
+      "/report/no-such-run",
+      "/run/20000101-000000-01",
+      "/run/20261117-223546-01",
+      "/runs",
+      "/start",
+      "/start?from=20261117-223546-01"
+    ],
+    "completedPairs": 35,
+    "matchedTitle": 35,
+    "matchedPolicy": 35,
+    "matchedText": 35,
+    "matchedLayout": 34,
+    "matchedPNG": 5,
+    "PNGTotal": 5,
+    "appOutside": 0,
+    "pageErrors": 0,
+    "runExit": 1,
+    "nativeProxyDenials": 311,
+    "proxyFailures": [],
+    "failures": [
+      {
+        "side": "checkout",
+        "width": 390,
+        "address": "/report/no-such-run",
+        "message": "locator.waitFor: Timeout 12000ms exceeded."
+      },
+      {
+        "side": "checkout",
+        "width": 390,
+        "address": "/run/20000101-000000-01",
+        "message": "locator.waitFor: Timeout 12000ms exceeded."
+      },
+      {
+        "side": "archive",
+        "width": 390,
+        "address": "/report/no-such-run",
+        "message": "locator.waitFor: Timeout 12000ms exceeded."
+      },
+      {
+        "side": "archive",
+        "width": 390,
+        "address": "/run/20000101-000000-01",
+        "message": "locator.waitFor: Timeout 12000ms exceeded."
+      }
+    ],
+    "differences": [
+      {
+        "address": "/runs",
+        "width": 390,
+        "matchedBefore": true,
+        "matchedText": true,
+        "matchedLayout": false,
+        "matchedTitle": true,
+        "matchedPolicy": true,
+        "matchedPNG": null
+      }
+    ]
+  },
+  "activity": {
+    "selectedRoutes": [
+      "/runs"
+    ],
+    "completedPairs": 2,
+    "matchedTitle": 2,
+    "matchedPolicy": 2,
+    "matchedText": 2,
+    "matchedLayout": 2,
+    "matchedPNG": 2,
+    "PNGTotal": 2,
+    "appOutside": 0,
+    "pageErrors": 0,
+    "runExit": 0,
+    "nativeProxyDenials": 24,
+    "proxyFailures": [],
+    "failures": [],
+    "differences": []
+  },
+  "no-agreement": {
+    "selectedRoutes": [
+      "/report/20261117-223326-01",
+      "/run/20261117-223326-01"
+    ],
+    "completedPairs": 4,
+    "matchedTitle": 4,
+    "matchedPolicy": 4,
+    "matchedText": 4,
+    "matchedLayout": 4,
+    "matchedPNG": 0,
+    "PNGTotal": 0,
+    "appOutside": 0,
+    "pageErrors": 0,
+    "runExit": 0,
+    "nativeProxyDenials": 38,
+    "proxyFailures": [],
+    "failures": [],
+    "differences": []
+  },
+  "retained-failure": {
+    "selectedRoutes": [
+      "/report/20261117-223143-01",
+      "/run/20261117-223143-01"
+    ],
+    "completedPairs": 4,
+    "matchedTitle": 4,
+    "matchedPolicy": 4,
+    "matchedText": 4,
+    "matchedLayout": 4,
+    "matchedPNG": 0,
+    "PNGTotal": 0,
+    "appOutside": 0,
+    "pageErrors": 0,
+    "runExit": 0,
+    "nativeProxyDenials": 32,
+    "proxyFailures": [],
+    "failures": [],
+    "differences": []
+  },
+  "sample": {
+    "selectedRoutes": [
+      "/report/20261117-223546-01#forecast"
+    ],
+    "completedPairs": 2,
+    "matchedTitle": 2,
+    "matchedPolicy": 2,
+    "matchedText": 2,
+    "matchedLayout": 2,
+    "matchedPNG": 2,
+    "PNGTotal": 2,
+    "appOutside": 0,
+    "pageErrors": 0,
+    "runExit": null,
+    "nativeProxyDenials": 27,
+    "proxyFailures": [],
+    "failures": [],
+    "differences": []
+  },
+  "supplement": {
+    "selectedRoutes": [
+      "/report/20261117-223546-01#evidence/20261117-223546-01%2Fdeliveries%2Ff51ce84b1bd80e3ecbdd6ebffe688c25fbb526141c08d46e769ba5da8b556b96%2FCP-6.md~a2036ccd10e54e59fc8bdb3b8361c723fb2ec4d65cb8374ad7d3f8e8c7b8f0c0-28",
+      "/report/no-such-run",
+      "/run/20000101-000000-01"
+    ],
+    "completedPairs": 6,
+    "matchedTitle": 6,
+    "matchedPolicy": 6,
+    "matchedText": 6,
+    "matchedLayout": 6,
+    "matchedPNG": 0,
+    "PNGTotal": 0,
+    "appOutside": 0,
+    "pageErrors": 0,
+    "runExit": 0,
+    "nativeProxyDenials": 44,
+    "proxyFailures": [],
+    "failures": [],
+    "differences": []
+  }
+}

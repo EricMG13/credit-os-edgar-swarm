@@ -113,7 +113,9 @@ it("keeps recorded gaps as reasons and leaves a mismatched precision unplotted",
   ]);
   render(<Calendar calendar={buildCalendar([gap, invalid], "current")} />);
   expect(screen.getByText("No review date was assigned.")).toBeInTheDocument();
-  expect(screen.getByText(/recorded dates or precision could not be plotted/)).toBeInTheDocument();
+  expect(
+    screen.getByText(/recorded event name, status, date or precision could not be plotted/),
+  ).toBeInTheDocument();
   expect(screen.getByRole("link", { name: "Source for Decision and watch" })).toHaveAttribute(
     "href",
     `/report/current#evidence/CP-6-1~${"6".repeat(64)}-20`,
@@ -204,7 +206,7 @@ it.each([20, 0, 22.5, 22])(
     const calendar = buildCalendar([handoff], "current");
     expect(calendar.rows).toEqual([]);
     expect(calendar.gaps).toHaveLength(1);
-    expect(calendar.gaps[0]?.reason).toBe("The handoff does not identify each event row.");
+    expect(calendar.gaps[0]?.reason).toBe("The event table does not identify each event row.");
     expect(calendar.gaps[0]?.href).toContain(`~${"2".repeat(64)}-20`);
   },
 );

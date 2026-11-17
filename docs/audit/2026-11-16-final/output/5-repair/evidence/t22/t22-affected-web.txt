@@ -1,0 +1,9 @@
+
+ RUN  v4.1.12 /workspace/recovery-t22/web
+
+
+ Test Files  43 passed (43)
+      Tests  762 passed (762)
+   Start at  18:30:07
+   Duration  147.73s (transform 4.15s, setup 3.85s, import 49.28s, tests 68.17s, environment 19.97s)
+

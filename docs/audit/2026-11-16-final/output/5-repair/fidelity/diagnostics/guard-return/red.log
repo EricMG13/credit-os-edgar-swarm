@@ -1,0 +1,143 @@
+✖ capture refuses an old root without executing its proof module (108.208136ms)
+✖ capture validates FID_ATTACH before any browser launch (80.769094ms)
+✖ pairedSnapshot reads a direct loopback response and never follows a redirect (30.005359ms)
+✖ capture run-state API reads direct responses and never follows a redirect (25.555955ms)
+✖ both direct network readers reject a non-loopback initial URL before a request (0.862742ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 0
+ℹ fail 5
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 640.964468
+
+✖ failing tests:
+
+test at web/scripts/fidelity-network.test.mjs:69:1
+✖ capture refuses an old root without executing its proof module (108.208136ms)
+  AssertionError [ERR_ASSERTION]: The input was expected to not match the regular expression /OLD_PROOF_TOP_LEVEL_EXECUTED/u. Input:
+  
+  'OLD_PROOF_TOP_LEVEL_EXECUTED\n' +
+    'file:///workspace/audit-fidelity-guard-return/docs/audit/2026-11-16-final/output/5-repair/fidelity/capture.mjs:1225\n' +
+    'const blankProxy = await createOfflineProxy();\n' +
+    '                         ^\n' +
+    '\n' +
+    'TypeError: createOfflineProxy is not a function\n' +
+    '    at file:///workspace/audit-fidelity-guard-return/docs/audit/2026-11-16-final/output/5-repair/fidelity/capture.mjs:1225:26\n' +
+    '\n' +
+    'Node.js v24.22.1\n'
+  
+      at TestContext.<anonymous> (file:///workspace/audit-fidelity-guard-return/web/scripts/fidelity-network.test.mjs:77:12)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'OLD_PROOF_TOP_LEVEL_EXECUTED\nfile:///workspace/audit-fidelity-guard-return/docs/audit/2026-11-16-final/output/5-repair/fidelity/capture.mjs:1225\nconst blankProxy = await createOfflineProxy();\n                         ^\n\nTypeError: createOfflineProxy is not a function\n    at file:///workspace/audit-fidelity-guard-return/docs/audit/2026-11-16-final/output/5-repair/fidelity/capture.mjs:1225:26\n\nNode.js v24.22.1\n',
+    expected: /OLD_PROOF_TOP_LEVEL_EXECUTED/u,
+    operator: 'doesNotMatch',
+    diff: 'simple'
+  }
+
+test at web/scripts/fidelity-network.test.mjs:85:1
+✖ capture validates FID_ATTACH before any browser launch (80.769094ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /FID_ATTACH must be loopback/u. Input:
+  
+  '/tmp/fidelity-network-HpHyva/web/node_modules/playwright/index.js:1\n' +
+    'exports.chromium = { launch() { throw new Error("BROWSER_LAUNCH_ATTEMPTED"); } };\n' +
+    '                                      ^\n' +
+    '\n' +
+    'Error: BROWSER_LAUNCH_ATTEMPTED\n' +
+    '    at Object.launch (/tmp/fidelity-network-HpHyva/web/node_modules/playwright/index.js:1:39)\n' +
+    '    at launch (file:///workspace/audit-fidelity-guard-return/docs/audit/2026-11-16-final/output/5-repair/fidelity/capture.mjs:507:91)\n' +
+    '    at file:///workspace/audit-fidelity-guard-return/docs/audit/2026-11-16-final/output/5-repair/fidelity/capture.mjs:1229:24\n' +
+    '    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n' +
+    '\n' +
+    'Node.js v24.22.1\n'
+  
+      at TestContext.<anonymous> (file:///workspace/audit-fidelity-guard-return/web/scripts/fidelity-network.test.mjs:102:12)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: '/tmp/fidelity-network-HpHyva/web/node_modules/playwright/index.js:1\nexports.chromium = { launch() { throw new Error("BROWSER_LAUNCH_ATTEMPTED"); } };\n                                      ^\n\nError: BROWSER_LAUNCH_ATTEMPTED\n    at Object.launch (/tmp/fidelity-network-HpHyva/web/node_modules/playwright/index.js:1:39)\n    at launch (file:///workspace/audit-fidelity-guard-return/docs/audit/2026-11-16-final/output/5-repair/fidelity/capture.mjs:507:91)\n    at file:///workspace/audit-fidelity-guard-return/docs/audit/2026-11-16-final/output/5-repair/fidelity/capture.mjs:1229:24\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n\nNode.js v24.22.1\n',
+    expected: /FID_ATTACH must be loopback/u,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at web/scripts/fidelity-network.test.mjs:148:1
+✖ pairedSnapshot reads a direct loopback response and never follows a redirect (30.005359ms)
+  AssertionError [ERR_ASSERTION]: Node fetch must never visit the loopback redirect receiver
+  + actual - expected
+  
+  + [
+  +   '/redirect-receiver'
+  + ]
+  - []
+  
+      at file:///workspace/audit-fidelity-guard-return/web/scripts/fidelity-network.test.mjs:159:12
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async withLoopbackServers (file:///workspace/audit-fidelity-guard-return/web/scripts/fidelity-network.test.mjs:139:5)
+      at async TestContext.<anonymous> (file:///workspace/audit-fidelity-guard-return/web/scripts/fidelity-network.test.mjs:149:3)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: [ '/redirect-receiver' ],
+    expected: [],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at web/scripts/fidelity-network.test.mjs:164:1
+✖ capture run-state API reads direct responses and never follows a redirect (25.555955ms)
+  AssertionError [ERR_ASSERTION]: APIRequestContext must never visit the loopback redirect receiver
+  + actual - expected
+  
+  + [
+  +   '/redirect-receiver'
+  + ]
+  - []
+  
+      at file:///workspace/audit-fidelity-guard-return/web/scripts/fidelity-network.test.mjs:177:14
+      at async withLoopbackServers (file:///workspace/audit-fidelity-guard-return/web/scripts/fidelity-network.test.mjs:139:5)
+      at async TestContext.<anonymous> (file:///workspace/audit-fidelity-guard-return/web/scripts/fidelity-network.test.mjs:167:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: [ '/redirect-receiver' ],
+    expected: [],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at web/scripts/fidelity-network.test.mjs:185:1
+✖ both direct network readers reject a non-loopback initial URL before a request (0.862742ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /loopback/u. Input:
+  
+  'Error: REQUEST_ATTEMPTED'
+  
+      at async TestContext.<anonymous> (file:///workspace/audit-fidelity-guard-return/web/scripts/fidelity-network.test.mjs:188:3)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: Error: REQUEST_ATTEMPTED
+        at Object.get (file:///workspace/audit-fidelity-guard-return/web/scripts/fidelity-network.test.mjs:187:55)
+        at eval (eval at <anonymous> (file:///workspace/audit-fidelity-guard-return/web/scripts/fidelity-network.test.mjs:34:22), <anonymous>:3:64)
+        at eval (eval at <anonymous> (file:///workspace/audit-fidelity-guard-return/web/scripts/fidelity-network.test.mjs:34:22), <anonymous>:5:16)
+        at TestContext.<anonymous> (file:///workspace/audit-fidelity-guard-return/web/scripts/fidelity-network.test.mjs:188:24)
+        at Test.runInAsyncScope (node:async_hooks:227:14)
+        at Test.run (node:internal/test_runner/test:1402:25)
+        at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+        at Test.postRun (node:internal/test_runner/test:1542:19)
+        at Test.run (node:internal/test_runner/test:1467:12)
+        at async Test.processPendingSubtests (node:internal/test_runner/test:974:7),
+    expected: /loopback/u,
+    operator: 'rejects',
+    diff: 'simple'
+  }

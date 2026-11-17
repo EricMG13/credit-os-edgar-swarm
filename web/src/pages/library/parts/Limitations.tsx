@@ -1,52 +1,16 @@
 import { Button as KitButton } from "@/components/base/buttons/button";
 import { ArrowRight } from "@untitledui/icons";
 import { ChevronDown, ChevronUp } from "@untitledui/icons";
-import { useEffect, useRef, useState } from "react";
 import { Button, Disclosure, DisclosurePanel } from "react-aria-components";
-import { cx } from "@/utils/cx";
 import type { Limitations as LimitationsData } from "../slice";
 import type { SECTION_HEADING, SUBSECTION_HEADING } from "./heading";
 import { TRACE_HOST, TraceControl } from "./TraceControl";
 
-/**
- * One limitation. Text longer than three lines is cut there with a Show all control, found by
- * measuring the clamped text (the observer fires again when the width changes); it prints in full.
- */
+/** One complete limitation; the surrounding card owns the only collapse control. */
 function Limitation({ text, trace }: LimitationsData["items"][number]) {
-  const [open, setOpen] = useState(false);
-  const [overflows, setOverflows] = useState(false);
-  const clamped = useRef<HTMLSpanElement>(null);
-  useEffect(() => {
-    const el = clamped.current;
-    if (el === null || open) return;
-    const watch = new ResizeObserver(() => {
-      setOverflows(el.scrollHeight > el.clientHeight);
-    });
-    watch.observe(el);
-    return () => {
-      watch.disconnect();
-    };
-  }, [open]);
   return (
     <li className={`${TRACE_HOST} flex max-w-[86ch] items-start gap-3`}>
-      <span className="flex flex-1 flex-col items-start gap-1">
-        <span ref={clamped} className={cx(!open && "line-clamp-3 print:line-clamp-none")}>
-          {text}
-        </span>
-        {overflows ? (
-          <KitButton
-            aria-expanded={open}
-            onPress={() => {
-              setOpen(!open);
-            }}
-            className="print:hidden"
-            color="link-gray"
-            size="sm"
-          >
-            {open ? "Show less" : "Show all"}
-          </KitButton>
-        ) : null}
-      </span>
+      <span className="min-w-0 flex-1 wrap-anywhere">{text}</span>
       <TraceControl trace={trace} label="Show sources for this limitation" />
     </li>
   );
@@ -75,24 +39,30 @@ export function Limitations({
       <Disclosure defaultExpanded className="flex flex-col gap-4">
         {({ isExpanded }) => (
           <>
-            <div className="flex items-center justify-between gap-3">
+            <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
               <Heading
                 tabIndex={-1}
                 className="flex items-center gap-2 rounded-ds-xs text-body font-semibold outline-hidden focus-visible:ring-2 focus-visible:ring-brand"
               >
                 Limitations
-                <span className="rounded-ds-full border border-border-hairline bg-surface-subtle px-2 py-0.5 text-xs font-medium text-text-secondary tabular-nums">
+                <span className="rounded-ds-full border border-border-hairline bg-surface-subtle px-2 py-0.5 text-caption font-medium text-text-secondary tabular-nums">
                   {limitations.count}
                 </span>
               </Heading>
-              <div className="flex items-center gap-4">
-                <KitButton href={gapsHref} color="link-gray" size="sm" iconTrailing={ArrowRight}>
+              <div className="flex min-w-0 items-center gap-4">
+                <KitButton
+                  href={gapsHref}
+                  color="link-gray"
+                  size="sm"
+                  iconTrailing={ArrowRight}
+                  className="whitespace-normal"
+                >
                   {limitations.gapsLink.label}
                 </KitButton>
                 <Button
                   slot="trigger"
                   aria-label={isExpanded ? "Collapse limitations" : "Expand limitations"}
-                  className="flex size-8 cursor-pointer items-center justify-center rounded-lg text-text-tertiary outline-hidden hover:bg-surface-subtle focus-visible:ring-2 focus-visible:ring-brand"
+                  className="flex size-8 shrink-0 cursor-pointer items-center justify-center rounded-lg text-text-tertiary outline-hidden hover:bg-surface-subtle focus-visible:ring-2 focus-visible:ring-brand"
                 >
                   {isExpanded ? (
                     <ChevronUp aria-hidden="true" className="size-4" />

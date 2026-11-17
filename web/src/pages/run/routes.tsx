@@ -3,15 +3,63 @@
 // to visit each in a browser, and a test fails if it cannot see one. A page reads its data with
 // `readSlice(useSource().run)`. Edit only this folder and fixtures/run.json.
 import type { Route } from "../route-table";
-import { ActivityPage } from "./activity/ActivityPage";
+import { EmptyState } from "@/components/application/empty-state/empty-state";
+import { useSource } from "../source";
+import { ActivityPage, RunsIndex } from "./activity/ActivityPage";
+import { readSlice } from "./slice";
 import { StartPage } from "./start/StartPage";
+import { STEPS } from "./start/Stepper";
 
 export { readSlice } from "./slice";
 
+/** The saved form's actual step and issuer, including the default first draft. */
+const startSubject: NonNullable<Route["subject"]> = (params, data) => {
+  const slice = readSlice(data.run);
+  if (slice.kind !== "ok") return undefined;
+  const draft =
+    params["draft"] === undefined
+      ? slice.data.drafts[0]
+      : slice.data.drafts.find((item) => item.id === params["draft"]);
+  if (draft === undefined) return undefined;
+  const step =
+    draft.step === "started" ? draft.title : STEPS.find((item) => item.key === draft.step)?.title;
+  return [step, draft.issuer].filter((word) => word !== undefined).join(" — ");
+};
+
+/** A new run begins at the slice's first draft; its id is the data's, so no link needs to know it. */
+function NewRun() {
+  const slice = readSlice(useSource().run);
+  if (slice.kind !== "ok")
+    return (
+      <EmptyState>
+        <EmptyState.Header>
+          <EmptyState.FeaturedIcon />
+        </EmptyState.Header>
+        <EmptyState.Content>
+          <EmptyState.Title>No run data in this library</EmptyState.Title>
+          <EmptyState.Description>This library holds no saved run forms.</EmptyState.Description>
+        </EmptyState.Content>
+        <EmptyState.Footer>
+          <a href="#/" className="text-small text-text-link">
+            Back to the Library
+          </a>
+        </EmptyState.Footer>
+      </EmptyState>
+    );
+  return <StartPage draft={slice.data.drafts[0]?.id ?? ""} />;
+}
+
 export const routes: readonly Route[] = [
+  {
+    path: "/run/start",
+    title: "Start a run",
+    subject: startSubject,
+    render: () => <NewRun />,
+  },
   {
     path: "/run/start/:draft",
     title: "Start a run",
+    subject: startSubject,
     render: (params) => <StartPage draft={params["draft"] ?? ""} />,
   },
   {
@@ -20,6 +68,11 @@ export const routes: readonly Route[] = [
     layout: "bleed",
     home: "/run/activity",
     render: () => <ActivityPage run={null} />,
+  },
+  {
+    path: "/run/runs",
+    title: "Runs",
+    render: () => <RunsIndex />,
   },
   {
     path: "/run/activity/:run",

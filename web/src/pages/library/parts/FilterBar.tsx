@@ -1,7 +1,7 @@
 import { SearchLg } from "@untitledui/icons";
 import { Input } from "@/components/base/input/input";
 import { Select } from "@/components/base/select/select";
-import type { ReactNode } from "react";
+import { type ReactNode, useId } from "react";
 import type { LibraryHome } from "../slice";
 
 export const ALL = "all";
@@ -68,12 +68,17 @@ export function FilterBar({
   /** Controls drawn at the right end, after the applied label. */
   children?: ReactNode;
 }) {
+  const searchId = useId();
   return (
-    <div className="flex flex-wrap items-center gap-3">
-      <div className="w-[280px] max-w-full">
+    <div className="flex flex-wrap items-end gap-3">
+      <div className="flex w-[280px] max-w-full flex-col gap-1.5">
+        <label htmlFor={searchId} className="text-sm font-medium text-secondary">
+          Search issuers
+        </label>
         <Input
+          id={searchId}
+          aria-label="Search issuers"
           icon={SearchLg}
-          placeholder="Search issuers"
           value={values.search}
           onChange={(search) => {
             onChange({ ...values, search });

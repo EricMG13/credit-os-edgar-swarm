@@ -23,9 +23,9 @@ function Row({ item }: { item: Entry }) {
       </span>
       <span className="flex items-center gap-2">
         {item.badge}
-        {item.module === null ? (
+        {item.module === null ? null : (
           <ChevronRight aria-hidden="true" className="size-4 text-text-tertiary" />
-        ) : null}
+        )}
       </span>
     </>
   );

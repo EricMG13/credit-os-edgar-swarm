@@ -1,0 +1,29 @@
+F                                                                        [100%]
+=================================== FAILURES ===================================
+____ test_actual_synthetic_adapter_is_classified_at_the_settled_record_api _____
+
+actual_run = (Layout(root=PosixPath('/tmp/pytest-of-agent/pytest-66/test_actual_synthetic_adapter_0/case')), Record(id='20261117-19...]}]), PosixPath('/tmp/pytest-of-agent/pytest-66/test_actual_synthetic_adapter_0/case/_engine/runs/20261117-192016-01'))
+
+    def test_actual_synthetic_adapter_is_classified_at_the_settled_record_api(
+        actual_run: tuple[Layout, runs.Record, Path],
+    ) -> None:
+        layout, record, directory = actual_run
+        workflow = json.loads((directory / "workflow.json").read_bytes())
+        assert workflow["execution"] == "live-provider"  # The prepared engine route, not its adapter.
+        calls = [json.loads(line) for line in (directory / "live/calls.jsonl").read_text().splitlines()]
+        assert len(calls) == 14
+        assert {call["reported_model"] for call in calls} == {"synthetic"}
+        assert {call["request_id"] for call in calls} == {"synthetic"}
+        body = reply(layout, record.id).body
+        assert body["status"] == "finished"
+        assert body["library_admission"] == "listed"
+>       assert body["execution"] == "synthetic"
+E       AssertionError: assert 'live-provider' == 'synthetic'
+E
+E         - synthetic
+E         + live-provider
+
+tests/test_react_runtime_identity.py:76: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_react_runtime_identity.py::test_actual_synthetic_adapter_is_classified_at_the_settled_record_api
+1 failed in 5.38s

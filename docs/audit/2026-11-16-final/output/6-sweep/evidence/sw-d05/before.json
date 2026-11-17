@@ -1,0 +1,32 @@
+{
+  "retainedRows": {
+    "current": {
+      "bytes": 2195,
+      "keys": [
+        "catalogue",
+        "chips",
+        "workspace"
+      ]
+    },
+    "earlier": {
+      "bytes": 2168,
+      "keys": [
+        "catalogue",
+        "chips",
+        "workspace"
+      ]
+    }
+  },
+  "earlierReplyBytes": 2168,
+  "historyDomSha256": "401826a2b7edb2525f428d9fce43a877fe198838c018cf332ccb490a2849d313",
+  "requests": [
+    {
+      "url": "/connected/snapshot?run=acme",
+      "cache": "no-store"
+    },
+    {
+      "url": "/connected/snapshot?run=acme-2025",
+      "cache": "no-store"
+    }
+  ]
+}

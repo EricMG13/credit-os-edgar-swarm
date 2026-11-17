@@ -1,0 +1,243 @@
+# T07 round 2: the walks' output, taken on this machine on 2026-11-17 (C2_PORT=8747, one walk at a time, each on its own fresh service).
+# Part 1: HEAD f400e0ea (round 1) StartRun.tsx. Part 2: the round 2 StartRun.tsx. Same walk files in both.
+
+################ PART: before ################
+
+=== before / walk-case-date ===
+[probe] proof.serve up on http://127.0.0.1:8747 (root /tmp/cs-C2/r-OitYCD)
+FAIL a new form: the as-of date is empty  [2026-11-17]
+ok   a new form: the as-of date is required
+ok   a new form: no line says the date was set to today
+FAIL Continue with no date stays on Documents, the date asked for and focused, no request made  [{"step":"Purpose","asked":false}]
+FAIL Continue with no date: the section ran to its end  [TimeoutError: locator.fill: Timeout 15000ms exceeded.
+Call log:
+[2m  - waiting for getByRole('textbox', { name: 'As-of date', exact: true })[22m
+]
+ok   Review run with the date emptied does not open a review  [{"step":"More context"}]
+ok   Review run with the date emptied names the as-of date  [["Issuer and case date · As-of date: required."]]
+ok   Start from this run: the as-of date opens on today's date  [{"value":"2026-11-17","today":"2026-11-17"}]
+note Start from this run, against the real service: the "Set to today" line is drawn: false 
+ok   changing the date leaves no such line
+[probe] proof.serve on http://127.0.0.1:8747 stopped
+ok   walk-case-date: no page error, console error or blocked request  [{"pageerrors":[],"console":[],"blocked":[]}]
+walk-case-date: 3 check(s) FAILED
+exit 1
+
+=== before / walk-carried-work ===
+[probe] proof.serve up on http://127.0.0.1:8747 (root /tmp/cs-C2/r-IK1eky)
+ok   Start from this run, nothing done yet: Reload raises no confirmation
+FAIL Start from this run, its documents carried and no name typed: Reload asks first  [{"carried":3,"named":""}]
+ok   Carry over from latest run, nothing else typed: Reload raises no confirmation
+FAIL Carry over from latest run, its documents carried: Reload asks first  [{"carried":3}]
+[probe] proof.serve on http://127.0.0.1:8747 stopped
+ok   walk-carried-work: no page error, console error or blocked request  [{"pageerrors":[],"console":[],"blocked":[]}]
+walk-carried-work: 2 check(s) FAILED
+exit 1
+
+=== before / walk-leave-and-return ===
+[probe] proof.serve up on http://127.0.0.1:8747 (root /tmp/cs-C2/r-bZ2trs)
+ok   a new form opens with the issuer name empty
+ok   an untouched form: Reload raises no confirmation  [[]]
+ok   an untouched form: the Library link leaves at once, no confirmation  [{"dialogs":[],"url":"/"}]
+ok   at the third step the address is still /start and the step is More context  [{"step":"More context","url":"/start"}]
+ok   Back from More context shows Purpose and stays on /start  [{"step":"Purpose","url":"/start"}]
+ok   Back again shows Documents with the issuer, the name and both files kept  [{"issuer":"Northbridge Synthetic Group","rows":2}]
+ok   Forward shows Purpose
+ok   Forward again shows More context with the note kept
+ok   moving between steps with Back and Forward raises no confirmation  [[]]
+ok   Previous, then Back three times, retraces Purpose, More context, Purpose, Documents  [["Purpose","More context","Purpose","Documents"]]
+ok   Library link with work: one confirmation was raised and dismissing it keeps the form  [{"dialogs":["beforeunload"],"url":"/start","issuer":"Northbridge Synthetic Group","rows":2}]
+ok   Library link, confirmation accepted: the page leaves for the Library  [{"dialogs":["beforeunload"],"url":"/"}]
+ok   Back after leaving shows a blank Documents form (what the confirmation warned about)  [{"step":"Documents","issuer":"","rows":0}]
+ok   Reload with work: one confirmation; dismissed, the form keeps its issuer and file  [{"dialogs":["beforeunload"],"dismissedReload":"TimeoutError: page.reload: Timeout 4000ms exceeded.\nCall log","issuer":"Northbridge Synthetic Group","rows":1}]
+ok   Reload with work, confirmation accepted: a blank form  [{"dialogs":["beforeunload"],"issuer":"","rows":0}]
+ok   closing the page with work: one confirmation, and dismissing it keeps the page open  [{"dialogs":["beforeunload"],"closed":false}]
+ok   a complete Submit raises no confirmation and reaches the run page  [{"dialogs":[],"url":"/run/20261117-120157-01"}]
+ok   Back from the run page opens a blank form and raises no confirmation (not restored: the draft was consumed)  [{"dialogs":[],"url":"/start","issuer":""}]
+ok   Forward to the run page raises no confirmation  [{"dialogs":[],"url":"/run/20261117-120157-01"}]
+[probe] proof.serve on http://127.0.0.1:8747 stopped
+ok   walk-leave-and-return: no page error, console error or blocked request  [{"pageerrors":[],"console":[],"blocked":[]}]
+walk-leave-and-return: every check held
+exit 0
+
+=== before / walk-payload ===
+[probe] proof.serve up on http://127.0.0.1:8747 (root /tmp/cs-C2/r-zKh5An)
+[probe] proof.serve on http://127.0.0.1:8747 stopped
+ok   walk-payload straight through: no page error, console error or blocked request  [{"pageerrors":[],"console":[],"blocked":[]}]
+[probe] proof.serve up on http://127.0.0.1:8747 (root /tmp/cs-C2/r-tinlz5)
+[probe] proof.serve on http://127.0.0.1:8747 stopped
+ok   walk-payload with a Back and a second review: no page error, console error or blocked request  [{"pageerrors":[],"console":[],"blocked":[]}]
+straight through: summaries=1 submits=1 as_of=2025-03-31 cutoff=2025-03-31
+straight through: /summary body sha256=c4dd8c498daff13e0f628e00ef7bd03ce5bd96b0e601ab0aaf99c143738902c7
+straight through: /submit body sha256=d0ab781f827aa7f4644673911b1d59b560265091323323e76ecc2cda5e4bfbfe
+straight through: digest=510d4ad009db539798421209b813440af668b1a78aabb91933a1927a3f9ab865
+ok   straight through: the typed date is what is sent, as as_of and as cutoff
+ok   straight through: Submit binds the digest the review issued, and sends the summary's answers  [{"digest":true}]
+ok   straight through: exactly one /submit
+with a Back and a second review: summaries=2 submits=1 as_of=2025-03-31 cutoff=2025-03-31
+with a Back and a second review: /summary body sha256=c4dd8c498daff13e0f628e00ef7bd03ce5bd96b0e601ab0aaf99c143738902c7
+with a Back and a second review: /submit body sha256=d0ab781f827aa7f4644673911b1d59b560265091323323e76ecc2cda5e4bfbfe
+with a Back and a second review: digest=510d4ad009db539798421209b813440af668b1a78aabb91933a1927a3f9ab865
+ok   with a Back and a second review: the typed date is what is sent, as as_of and as cutoff
+ok   with a Back and a second review: Submit binds the digest the review issued, and sends the summary's answers  [{"digest":true}]
+ok   with a Back and a second review: exactly one /submit
+ok   a Back and a second review change nothing: the same /summary body, /submit body and digest
+walk-payload: every check held
+exit 0
+
+=== before / walk-random-steps ===
+[probe] proof.serve up on http://127.0.0.1:8747 (root /tmp/cs-C2/r-O3Tb71)
+seed 1 (from Documents): forward:Documents->Documents | previous: TimeoutError: locator.click: Timeout 2000ms exceeded.
+Call l | previous:Documents->Documents | back: LEFT /start -> /runs (Back from the first entry)
+seed 2 (from Documents): continue:Documents->Purpose | edit:Purpose->Purpose | forward:Purpose->Purpose | stepper:Purpose->Purpose | stepper:Purpose->Purpose | stepper:Purpose->Purpose | back:Purpose->Documents | review:Documents->Documents | previous: TimeoutError: locator.click: Timeout 2000ms exceeded.
+Call l | previous:Documents->Documents | continue:Documents->Purpose | stepper:Purpose->Purpose | edit:Purpose->Purpose | back:Purpose->Documents | edit:Documents->Documents | forward:Documents->Purpose | previous:Purpose->Documents | continue:Documents->Purpose | back:Purpose->Documents | continue:Documents->Purpose | continue:Purpose->More context | stepper:More context->More context | previous:More context->Purpose
+seed 3 (from Documents): continue:Documents->Purpose | back:Purpose->Documents | continue:Documents->Purpose | back:Purpose->Documents | previous: TimeoutError: locator.click: Timeout 2000ms exceeded.
+Call l | previous:Documents->Documents | stepper: TimeoutError: locator.click: Timeout 2000ms exceeded.
+Call l | stepper:Documents->Documents | review:Documents->Documents | back: LEFT /start -> /runs (Back from the first entry)
+seed 4 (from Documents): continue:Documents->Purpose | continue:Purpose->More context | previous:More context->Purpose | back:Purpose->More context | continue:More context->More context | back:More context->Purpose | stepper:Purpose->Purpose | review:Purpose->Purpose | previous:Purpose->Documents | continue:Documents->Purpose | back:Purpose->Documents | edit:Documents->Documents | review:Documents->Documents | review:Documents->Documents | continue:Documents->Purpose | previous:Purpose->Documents | back:Documents->Purpose | edit:Purpose->Purpose | continue:Purpose->More context | forward:More context->More context | continue:More context->More context | review:More context->Review and start
+seed 5 (from Documents): previous: TimeoutError: locator.click: Timeout 2000ms exceeded.
+Call l | previous:Documents->Documents | review:Documents->Documents | edit:Documents->Documents | continue:Documents->Purpose | back:Purpose->Documents | forward:Documents->Purpose | forward:Purpose->Purpose | review:Purpose->Purpose | back:Purpose->Documents | forward:Documents->Purpose | back:Purpose->Documents | stepper: TimeoutError: locator.click: Timeout 2000ms exceeded.
+Call l | stepper:Documents->Documents | back: LEFT /start -> /runs (Back from the first entry)
+seed 6 (from Documents): review:Documents->Documents | stepper: TimeoutError: locator.click: Timeout 2000ms exceeded.
+Call l | stepper:Documents->Documents | continue:Documents->Purpose | stepper:Purpose->Purpose | continue:Purpose->More context | previous:More context->Purpose | review:Purpose->Purpose | previous:Purpose->Documents | back:Documents->Purpose | back:Purpose->More context | stepper:More context->More context | back:More context->Purpose | previous:Purpose->Documents | review:Documents->Documents | previous: TimeoutError: locator.click: Timeout 2000ms exceeded.
+Call l | previous:Documents->Documents | review:Documents->Documents | previous: TimeoutError: locator.click: Timeout 2000ms exceeded.
+Call l | previous:Documents->Documents | forward:Documents->Documents | back:Documents->Purpose | edit:Purpose->Purpose | edit:Purpose->Purpose | edit:Purpose->Purpose
+seed 7 (from Documents): review:Documents->Documents | forward:Documents->Documents | forward:Documents->Documents | previous: TimeoutError: locator.click: Timeout 2000ms exceeded.
+Call l | previous:Documents->Documents | previous: TimeoutError: locator.click: Timeout 2000ms exceeded.
+Call l | previous:Documents->Documents | continue:Documents->Purpose | back:Purpose->Documents | review:Documents->Documents | back: LEFT /start -> /runs (Back from the first entry)
+seed 8 (from Documents): edit:Documents->Documents | previous: TimeoutError: locator.click: Timeout 2000ms exceeded.
+Call l | previous:Documents->Documents | continue:Documents->Purpose | review:Purpose->Purpose | continue:Purpose->More context | previous:More context->Purpose | continue:Purpose->More context | edit:More context->More context | previous:More context->Purpose | back:Purpose->More context | forward:More context->Purpose | stepper:Purpose->Purpose | review:Purpose->Purpose | continue:Purpose->More context | stepper:More context->More context | previous:More context->Purpose | continue:Purpose->More context | forward:More context->More context | forward:More context->More context | stepper:More context->More context | forward:More context->More context | stepper:More context->More context
+seed 1 (from More context): forward:More context->More context | previous:More context->Purpose | back:Purpose->More context | review:More context->Review and start | back:Review and start->More context | review:More context->Review and start | review:Review and start->Review and start | review:Review and start->Review and start | back:Review and start->More context | previous:More context->Purpose | edit:Purpose->Purpose | review:Purpose->Purpose | forward:Purpose->Purpose | forward:Purpose->Purpose | back:Purpose->More context | previous:More context->Purpose | previous:Purpose->Documents | review:Documents->Documents | edit:Documents->Documents | back:Documents->Purpose | back:Purpose->More context | previous:More context->Purpose | stepper:Purpose->Purpose | back:Purpose->More context
+seed 2 (from More context): forward:More context->More context | review:More context->Review and start | back:Review and start->More context | stepper:More context->More context | edit:More context->More context | edit:More context->More context | back:More context->Purpose | review:Purpose->Purpose | previous:Purpose->Documents | continue:Documents->Purpose | edit:Purpose->Purpose | review:Purpose->Purpose | back:Purpose->Documents | review:Documents->Documents | back:Documents->Purpose | previous:Purpose->Documents | forward:Documents->Documents | back:Documents->Purpose | forward:Purpose->Documents | continue:Documents->Purpose | stepper:Purpose->Purpose | review:Purpose->Purpose | previous:Purpose->Documents | stepper: TimeoutError: locator.click: Timeout 2000ms exceeded.
+Call l | stepper:Documents->Documents
+seed 3 (from More context): continue:More context->More context | back:More context->Purpose | continue:Purpose->More context | back:More context->Purpose | review:Purpose->Purpose | stepper:Purpose->Purpose | continue:Purpose->More context | review:More context->Review and start | back:Review and start->More context | forward:More context->More context | stepper:More context->More context | review:More context->Review and start | edit:Review and start->Documents | back:Documents->More context | forward:More context->More context | previous:More context->Purpose | back:Purpose->More context | continue:More context->More context | review:More context->Review and start | edit:Review and start->Documents | review:Documents->Documents | review:Documents->Documents | back:Documents->More context | review:More context->Review and start
+seed 4 (from More context): previous:More context->Purpose | continue:Purpose->More context | review:More context->Review and start | back:Review and start->More context | forward:More context->More context | back:More context->Purpose | edit:Purpose->Purpose | review:Purpose->Purpose | previous:Purpose->Documents | forward:Documents->Documents | back:Documents->Purpose | review:Purpose->Purpose | review:Purpose->Purpose | review:Purpose->Purpose | continue:Purpose->More context | previous:More context->Purpose | back:Purpose->More context | review:More context->Review and start | forward:Review and start->Review and start | forward:Review and start->Review and start | forward:Review and start->Review and start | review:Review and start->Review and start | review:Review and start->Review and start | review:Review and start->Review and start
+seed 5 (from More context): previous:More context->Purpose | review:Purpose->Purpose | review:Purpose->Purpose | forward:Purpose->Purpose | back:Purpose->More context | back:More context->Purpose | forward:Purpose->More context | review:More context->Review and start | back:Review and start->More context | forward:More context->More context | back:More context->Purpose | edit:Purpose->Purpose | continue:Purpose->More context | back:More context->Purpose | review:Purpose->Purpose | previous:Purpose->Documents | review:Documents->Documents | back:Documents->Purpose | review:Purpose->Purpose | review:Purpose->Purpose | back:Purpose->Documents | review:Documents->Documents | forward:Documents->Purpose | previous:Purpose->Documents
+seed 6 (from More context): review:More context->Review and start | stepper:Review and start->Review and start | back:Review and start->More context | continue:More context->More context | edit:More context->More context | forward:More context->More context | review:More context->Review and start | review:Review and start->Review and start | previous:Review and start->Review and start | back:Review and start->More context | back:More context->Purpose | edit:Purpose->Purpose | back:Purpose->Documents | previous: TimeoutError: locator.click: Timeout 2000ms exceeded.
+Call l | previous:Documents->Documents | review:Documents->Documents | previous: TimeoutError: locator.click: Timeout 2000ms exceeded.
+Call l | previous:Documents->Documents | review:Documents->Documents | previous: TimeoutError: locator.click: Timeout 2000ms exceeded.
+Call l | previous:Documents->Documents | forward:Documents->Purpose | back:Purpose->Documents | review:Documents->Documents | review:Documents->Documents | review:Documents->Documents | continue:Documents->Purpose
+ok   after each of 265 actions the step shown is the history entry's, /start is kept and typed values are intact  [{"problems":0}]
+[probe] proof.serve on http://127.0.0.1:8747 stopped
+ok   walk-random-steps: no page error, console error or blocked request  [{"pageerrors":[],"console":[],"blocked":[]}]
+walk-random-steps: every check held
+exit 0
+
+################ PART: after ################
+
+=== after / walk-case-date ===
+[probe] proof.serve up on http://127.0.0.1:8747 (root /tmp/cs-C2/r-EHgdOz)
+ok   a new form: the as-of date is empty  []
+ok   a new form: the as-of date is required
+ok   a new form: no line says the date was set to today
+ok   Continue with no date stays on Documents, the date asked for and focused, no request made  [{"step":"Documents","asked":true}]
+ok   with a date entered the form goes on to Purpose
+ok   Review run with the date emptied does not open a review  [{"step":"More context"}]
+ok   Review run with the date emptied names the as-of date  [["Issuer and case date · As-of date: required."]]
+ok   Start from this run: the as-of date opens on today's date  [{"value":"2026-11-17","today":"2026-11-17"}]
+note Start from this run, against the real service: the "Set to today" line is drawn: false 
+ok   changing the date leaves no such line
+[probe] proof.serve on http://127.0.0.1:8747 stopped
+ok   walk-case-date: no page error, console error or blocked request  [{"pageerrors":[],"console":[],"blocked":[]}]
+walk-case-date: every check held
+exit 0
+
+=== after / walk-carried-work ===
+[probe] proof.serve up on http://127.0.0.1:8747 (root /tmp/cs-C2/r-H891tf)
+ok   Start from this run, nothing done yet: Reload raises no confirmation
+ok   Start from this run, its documents carried and no name typed: Reload asks first  [{"carried":3,"named":""}]
+ok   Carry over from latest run, nothing else typed: Reload raises no confirmation
+ok   Carry over from latest run, its documents carried: Reload asks first  [{"carried":3}]
+[probe] proof.serve on http://127.0.0.1:8747 stopped
+ok   walk-carried-work: no page error, console error or blocked request  [{"pageerrors":[],"console":[],"blocked":[]}]
+walk-carried-work: every check held
+exit 0
+
+=== after / walk-leave-and-return ===
+[probe] proof.serve up on http://127.0.0.1:8747 (root /tmp/cs-C2/r-otVsC5)
+ok   a new form opens with the issuer name empty
+ok   an untouched form: Reload raises no confirmation  [[]]
+ok   an untouched form: the Library link leaves at once, no confirmation  [{"dialogs":[],"url":"/"}]
+ok   at the third step the address is still /start and the step is More context  [{"step":"More context","url":"/start"}]
+ok   Back from More context shows Purpose and stays on /start  [{"step":"Purpose","url":"/start"}]
+ok   Back again shows Documents with the issuer, the name and both files kept  [{"issuer":"Northbridge Synthetic Group","rows":2}]
+ok   Forward shows Purpose
+ok   Forward again shows More context with the note kept
+ok   moving between steps with Back and Forward raises no confirmation  [[]]
+ok   Previous, then Back three times, retraces Purpose, More context, Purpose, Documents  [["Purpose","More context","Purpose","Documents"]]
+ok   Library link with work: one confirmation was raised and dismissing it keeps the form  [{"dialogs":["beforeunload"],"url":"/start","issuer":"Northbridge Synthetic Group","rows":2}]
+ok   Library link, confirmation accepted: the page leaves for the Library  [{"dialogs":["beforeunload"],"url":"/"}]
+ok   Back after leaving shows a blank Documents form (what the confirmation warned about)  [{"step":"Documents","issuer":"","rows":0}]
+ok   Reload with work: one confirmation; dismissed, the form keeps its issuer and file  [{"dialogs":["beforeunload"],"dismissedReload":"TimeoutError: page.reload: Timeout 4000ms exceeded.\nCall log","issuer":"Northbridge Synthetic Group","rows":1}]
+ok   Reload with work, confirmation accepted: a blank form  [{"dialogs":["beforeunload"],"issuer":"","rows":0}]
+ok   closing the page with work: one confirmation, and dismissing it keeps the page open  [{"dialogs":["beforeunload"],"closed":false}]
+ok   a complete Submit raises no confirmation and reaches the run page  [{"dialogs":[],"url":"/run/20261117-120628-01"}]
+ok   Back from the run page opens a blank form and raises no confirmation (not restored: the draft was consumed)  [{"dialogs":[],"url":"/start","issuer":""}]
+ok   Forward to the run page raises no confirmation  [{"dialogs":[],"url":"/run/20261117-120628-01"}]
+[probe] proof.serve on http://127.0.0.1:8747 stopped
+ok   walk-leave-and-return: no page error, console error or blocked request  [{"pageerrors":[],"console":[],"blocked":[]}]
+walk-leave-and-return: every check held
+exit 0
+
+=== after / walk-payload ===
+[probe] proof.serve up on http://127.0.0.1:8747 (root /tmp/cs-C2/r-2TKzxZ)
+[probe] proof.serve on http://127.0.0.1:8747 stopped
+ok   walk-payload straight through: no page error, console error or blocked request  [{"pageerrors":[],"console":[],"blocked":[]}]
+[probe] proof.serve up on http://127.0.0.1:8747 (root /tmp/cs-C2/r-POCZKv)
+[probe] proof.serve on http://127.0.0.1:8747 stopped
+ok   walk-payload with a Back and a second review: no page error, console error or blocked request  [{"pageerrors":[],"console":[],"blocked":[]}]
+straight through: summaries=1 submits=1 as_of=2025-03-31 cutoff=2025-03-31
+straight through: /summary body sha256=c4dd8c498daff13e0f628e00ef7bd03ce5bd96b0e601ab0aaf99c143738902c7
+straight through: /submit body sha256=d0ab781f827aa7f4644673911b1d59b560265091323323e76ecc2cda5e4bfbfe
+straight through: digest=510d4ad009db539798421209b813440af668b1a78aabb91933a1927a3f9ab865
+ok   straight through: the typed date is what is sent, as as_of and as cutoff
+ok   straight through: Submit binds the digest the review issued, and sends the summary's answers  [{"digest":true}]
+ok   straight through: exactly one /submit
+with a Back and a second review: summaries=2 submits=1 as_of=2025-03-31 cutoff=2025-03-31
+with a Back and a second review: /summary body sha256=c4dd8c498daff13e0f628e00ef7bd03ce5bd96b0e601ab0aaf99c143738902c7
+with a Back and a second review: /submit body sha256=d0ab781f827aa7f4644673911b1d59b560265091323323e76ecc2cda5e4bfbfe
+with a Back and a second review: digest=510d4ad009db539798421209b813440af668b1a78aabb91933a1927a3f9ab865
+ok   with a Back and a second review: the typed date is what is sent, as as_of and as cutoff
+ok   with a Back and a second review: Submit binds the digest the review issued, and sends the summary's answers  [{"digest":true}]
+ok   with a Back and a second review: exactly one /submit
+ok   a Back and a second review change nothing: the same /summary body, /submit body and digest
+walk-payload: every check held
+exit 0
+
+=== after / walk-random-steps ===
+[probe] proof.serve up on http://127.0.0.1:8747 (root /tmp/cs-C2/r-GyFJfl)
+seed 1 (from Documents): forward:Documents->Documents | previous: TimeoutError: locator.click: Timeout 2000ms exceeded.
+Call l | previous:Documents->Documents | back: LEFT /start -> /runs (Back from the first entry)
+seed 2 (from Documents): continue:Documents->Purpose | edit:Purpose->Purpose | forward:Purpose->Purpose | stepper:Purpose->Purpose | stepper:Purpose->Purpose | stepper:Purpose->Purpose | back:Purpose->Documents | review:Documents->Documents | previous: TimeoutError: locator.click: Timeout 2000ms exceeded.
+Call l | previous:Documents->Documents | continue:Documents->Purpose | stepper:Purpose->Purpose | edit:Purpose->Purpose | back:Purpose->Documents | edit:Documents->Documents | forward:Documents->Purpose | previous:Purpose->Documents | continue:Documents->Purpose | back:Purpose->Documents | continue:Documents->Purpose | continue:Purpose->More context | stepper:More context->More context | previous:More context->Purpose
+seed 3 (from Documents): continue:Documents->Purpose | back:Purpose->Documents | continue:Documents->Purpose | back:Purpose->Documents | previous: TimeoutError: locator.click: Timeout 2000ms exceeded.
+Call l | previous:Documents->Documents | stepper: TimeoutError: locator.click: Timeout 2000ms exceeded.
+Call l | stepper:Documents->Documents | review:Documents->Documents | back: LEFT /start -> /runs (Back from the first entry)
+seed 4 (from Documents): continue:Documents->Purpose | continue:Purpose->More context | previous:More context->Purpose | back:Purpose->More context | continue:More context->More context | back:More context->Purpose | stepper:Purpose->Purpose | review:Purpose->Purpose | previous:Purpose->Documents | continue:Documents->Purpose | back:Purpose->Documents | edit:Documents->Documents | review:Documents->Documents | review:Documents->Documents | continue:Documents->Purpose | previous:Purpose->Documents | back:Documents->Purpose | edit:Purpose->Purpose | continue:Purpose->More context | forward:More context->More context | continue:More context->More context | review:More context->Review and start
+seed 5 (from Documents): previous: TimeoutError: locator.click: Timeout 2000ms exceeded.
+Call l | previous:Documents->Documents | review:Documents->Documents | edit:Documents->Documents | continue:Documents->Purpose | back:Purpose->Documents | forward:Documents->Purpose | forward:Purpose->Purpose | review:Purpose->Purpose | back:Purpose->Documents | forward:Documents->Purpose | back:Purpose->Documents | stepper: TimeoutError: locator.click: Timeout 2000ms exceeded.
+Call l | stepper:Documents->Documents | back: LEFT /start -> /runs (Back from the first entry)
+seed 6 (from Documents): review:Documents->Documents | stepper: TimeoutError: locator.click: Timeout 2000ms exceeded.
+Call l | stepper:Documents->Documents | continue:Documents->Purpose | stepper:Purpose->Purpose | continue:Purpose->More context | previous:More context->Purpose | review:Purpose->Purpose | previous:Purpose->Documents | back:Documents->Purpose | back:Purpose->More context | stepper:More context->More context | back:More context->Purpose | previous:Purpose->Documents | review:Documents->Documents | previous: TimeoutError: locator.click: Timeout 2000ms exceeded.
+Call l | previous:Documents->Documents | review:Documents->Documents | previous: TimeoutError: locator.click: Timeout 2000ms exceeded.
+Call l | previous:Documents->Documents | forward:Documents->Documents | back:Documents->Purpose | edit:Purpose->Purpose | edit:Purpose->Purpose | edit:Purpose->Purpose
+seed 7 (from Documents): review:Documents->Documents | forward:Documents->Documents | forward:Documents->Documents | previous: TimeoutError: locator.click: Timeout 2000ms exceeded.
+Call l | previous:Documents->Documents | previous: TimeoutError: locator.click: Timeout 2000ms exceeded.
+Call l | previous:Documents->Documents | continue:Documents->Purpose | back:Purpose->Documents | review:Documents->Documents | back: LEFT /start -> /runs (Back from the first entry)
+seed 8 (from Documents): edit:Documents->Documents | previous: TimeoutError: locator.click: Timeout 2000ms exceeded.
+Call l | previous:Documents->Documents | continue:Documents->Purpose | review:Purpose->Purpose | continue:Purpose->More context | previous:More context->Purpose | continue:Purpose->More context | edit:More context->More context | previous:More context->Purpose | back:Purpose->More context | forward:More context->Purpose | stepper:Purpose->Purpose | review:Purpose->Purpose | continue:Purpose->More context | stepper:More context->More context | previous:More context->Purpose | continue:Purpose->More context | forward:More context->More context | forward:More context->More context | stepper:More context->More context | forward:More context->More context | stepper:More context->More context
+seed 1 (from More context): forward:More context->More context | previous:More context->Purpose | back:Purpose->More context | review:More context->Review and start | back:Review and start->More context | review:More context->Review and start | review:Review and start->Review and start | review:Review and start->Review and start | back:Review and start->More context | previous:More context->Purpose | edit:Purpose->Purpose | review:Purpose->Purpose | forward:Purpose->Purpose | forward:Purpose->Purpose | back:Purpose->More context | previous:More context->Purpose | previous:Purpose->Documents | review:Documents->Documents | edit:Documents->Documents | back:Documents->Purpose | back:Purpose->More context | previous:More context->Purpose | stepper:Purpose->Purpose | back:Purpose->More context
+seed 2 (from More context): forward:More context->More context | review:More context->Review and start | back:Review and start->More context | stepper:More context->More context | edit:More context->More context | edit:More context->More context | back:More context->Purpose | review:Purpose->Purpose | previous:Purpose->Documents | continue:Documents->Purpose | edit:Purpose->Purpose | review:Purpose->Purpose | back:Purpose->Documents | review:Documents->Documents | back:Documents->Purpose | previous:Purpose->Documents | forward:Documents->Documents | back:Documents->Purpose | forward:Purpose->Documents | continue:Documents->Purpose | stepper:Purpose->Purpose | review:Purpose->Purpose | previous:Purpose->Documents | stepper: TimeoutError: locator.click: Timeout 2000ms exceeded.
+Call l | stepper:Documents->Documents
+seed 3 (from More context): continue:More context->More context | back:More context->Purpose | continue:Purpose->More context | back:More context->Purpose | review:Purpose->Purpose | stepper:Purpose->Purpose | continue:Purpose->More context | review:More context->Review and start | back:Review and start->More context | forward:More context->More context | stepper:More context->More context | review:More context->Review and start | edit:Review and start->Documents | back:Documents->More context | forward:More context->More context | previous:More context->Purpose | back:Purpose->More context | continue:More context->More context | review:More context->Review and start | edit:Review and start->Documents | review:Documents->Documents | review:Documents->Documents | back:Documents->More context | review:More context->Review and start
+seed 4 (from More context): previous:More context->Purpose | continue:Purpose->More context | review:More context->Review and start | back:Review and start->More context | forward:More context->More context | back:More context->Purpose | edit:Purpose->Purpose | review:Purpose->Purpose | previous:Purpose->Documents | forward:Documents->Documents | back:Documents->Purpose | review:Purpose->Purpose | review:Purpose->Purpose | review:Purpose->Purpose | continue:Purpose->More context | previous:More context->Purpose | back:Purpose->More context | review:More context->Review and start | forward:Review and start->Review and start | forward:Review and start->Review and start | forward:Review and start->Review and start | review:Review and start->Review and start | review:Review and start->Review and start | review:Review and start->Review and start
+seed 5 (from More context): previous:More context->Purpose | review:Purpose->Purpose | review:Purpose->Purpose | forward:Purpose->Purpose | back:Purpose->More context | back:More context->Purpose | forward:Purpose->More context | review:More context->Review and start | back:Review and start->More context | forward:More context->More context | back:More context->Purpose | edit:Purpose->Purpose | continue:Purpose->More context | back:More context->Purpose | review:Purpose->Purpose | previous:Purpose->Documents | review:Documents->Documents | back:Documents->Purpose | review:Purpose->Purpose | review:Purpose->Purpose | back:Purpose->Documents | review:Documents->Documents | forward:Documents->Purpose | previous:Purpose->Documents
+seed 6 (from More context): review:More context->Review and start | stepper:Review and start->Review and start | back:Review and start->More context | continue:More context->More context | edit:More context->More context | forward:More context->More context | review:More context->Review and start | review:Review and start->Review and start | previous:Review and start->Review and start | back:Review and start->More context | back:More context->Purpose | edit:Purpose->Purpose | back:Purpose->Documents | previous: TimeoutError: locator.click: Timeout 2000ms exceeded.
+Call l | previous:Documents->Documents | review:Documents->Documents | previous: TimeoutError: locator.click: Timeout 2000ms exceeded.
+Call l | previous:Documents->Documents | review:Documents->Documents | previous: TimeoutError: locator.click: Timeout 2000ms exceeded.
+Call l | previous:Documents->Documents | forward:Documents->Purpose | back:Purpose->Documents | review:Documents->Documents | review:Documents->Documents | review:Documents->Documents | continue:Documents->Purpose
+ok   after each of 265 actions the step shown is the history entry's, /start is kept and typed values are intact  [{"problems":0}]
+[probe] proof.serve on http://127.0.0.1:8747 stopped
+ok   walk-random-steps: no page error, console error or blocked request  [{"pageerrors":[],"console":[],"blocked":[]}]
+walk-random-steps: every check held
+exit 0

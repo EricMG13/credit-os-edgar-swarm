@@ -1,0 +1,574 @@
+
+ RUN  v4.1.12 /workspace/audit-final-web-consequences/web
+
+ × src/pages/library/parts/MetricTile.yearChange.test.tsx > draws the year comparator, with the tone as a visible word and a shape on a tile that has one 73ms
+   → Unable to find an element with the text: /\+\$5m vs FY2023/. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<ul>[39m
+      [36m<li[39m
+        [33mclass[39m=[32m"group/trace relative min-w-0 rounded-ds-sm border border-border-subtle bg-surface-card p-6 shadow-xs"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex flex-col gap-2"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex items-start justify-between gap-2"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex min-w-0 items-center gap-2"[39m
+            [36m>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"text-sm text-text-tertiary"[39m
+              [36m>[39m
+                [0mLeverage[0m
+              [36m</p>[39m
+            [36m</div>[39m
+            [36m<button[39m
+              [33maria-disabled[39m=[32m"true"[39m
+              [33maria-label[39m=[32m"Show sources for this figure: no source recorded"[39m
+              [33mclass[39m=[32m"outline-hidden relative flex size-7 flex-none items-center justify-center rounded-ds-sm border bg-transparent focus-visible:ring-2 focus-visible:ring-offset-2 max-[480px]:after:absolute max-[480px]:after:-inset-[9px] cursor-default border-dashed border-border-gap text-gap-text focus-visible:ring-focus"[39m
+              [33mdata-rac[39m=[32m""[39m
+              [33mdata-react-aria-pressable[39m=[32m"true"[39m
+              [33mid[39m=[32m"react-aria-_r_1_"[39m
+              [33mtabindex[39m=[32m"0"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"size-4"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mheight[39m=[32m"24"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"2"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"24"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M14 11H8m2 4H8m8-8H8m12 5V6.8c0-1.68 0-2.52-.327-3.162a3 3 0 0 0-1.311-1.311C17.72 2 16.88 2 15.2 2H8.8c-1.68 0-2.52 0-3.162.327a3 3 0 0 0-1.311 1.311C4 4.28 4 5.12 4 6.8v10.4c0 1.68 0 2.52.327 3.162a3 3 0 0 0 1.311 1.311C6.28 22 7.12 22 8.8 22H12m4-6 5 5m0-5-5 5"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+            [36m</button>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex min-h-11 flex-wrap items-end justify-between gap-3"[39m
+          [36m>[39m
+            [36m<div>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"font-body text-metric tabular-nums text-text-primary font-semibold"[39m
+              [36m>[39m
+                [0m4.4x[0m
+              [36m</span>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"flex min-w-0 flex-wrap items-center gap-x-1 text-sm tabular-nums text-error-text"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"size-4 shrink-0"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mheight[39m=[32m"24"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"2"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"24"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M12 19V5m0 0-7 7m7-7 7 7"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0m+0.2x vs FY2023[0m
+            [36m<span[39m
+              [33mclass[39m=[32m"inline-flex items-center gap-1"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"shrink-0"[39m
+                [33mdata-shape[39m=[32m"diamond"[39m
+                [33mheight[39m=[32m"10"[39m
+                [33mviewBox[39m=[32m"0 0 10 10"[39m
+                [33mwidth[39m=[32m"10"[39m
+              [36m>[39m
+                [36m<polygon[39m
+                  [33mfill[39m=[32m"currentColor"[39m
+                  [33mpoints[39m=[32m"5,0 10,5 5,10 0,5"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0mworse[0m
+            [36m</span>[39m
+          [36m</p>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"text-sm text-text-tertiary"[39m
+          [36m>[39m
+            [0m2024-12-31[0m
+          [36m</span>[39m
+        [36m</div>[39m
+      [36m</li>[39m
+      [36m<li[39m
+        [33mclass[39m=[32m"group/trace relative min-w-0 rounded-ds-sm border border-border-subtle bg-surface-card p-6 shadow-xs"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex flex-col gap-2"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex items-start justify-between gap-2"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex min-w-0 items-center gap-2"[39m
+            [36m>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"text-sm text-text-tertiary"[39m
+              [36m>[39m
+                [0mPrincipal[0m
+              [36m</p>[39m
+            [36m</div>[39m
+            [36m<button[39m
+              [33maria-disabled[39m=[32m"true"[39m
+              [33maria-label[39m=[32m"Show sources for this figure: no source recorded"[39m
+              [33mclass[39m=[32m"outline-hidden relative flex size-7 flex-none items-center justify-center rounded-ds-sm border bg-transparent focus-visible:ring-2 focus-visible:ring-offset-2 max-[480px]:after:absolute max-[480px]:after:-inset-[9px] cursor-default border-dashed border-border-gap text-gap-text focus-visible:ring-focus"[39m
+              [33mdata-rac[39m=[32m""[39m
+              [33mdata-react-aria-pressable[39m=[32m"true"[39m
+              [33mid[39m=[32m"react-aria-_r_4_"[39m
+              [33mtabindex[39m=[32m"0"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"size-4"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mheight[39m=[32m"24"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"2"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"24"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M14 11H8m2 4H8m8-8H8m12 5V6.8c0-1.68 0-2.52-.327-3.162a3 3 0 0 0-1.311-1.311C17.72 2 16.88 2 15.2 2H8.8c-1.68 0-2.52 0-3.162.327a3 3 0 0 0-1.311 1.311C4 4.28 4 5.12 4 6.8v10.4c0 1.68 0 2.52.327 3.162a3 3 0 0 0 1.311 1.311C6.28 22 7.12 22 8.8 22H12m4-6 5 5m0-5-5 5"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+            [36m</button>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex min-h-11 flex-wrap items-end justify-between gap-3"[39m
+          [36m>[39m
+            [36m<div>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"font-body text-metric tabular-nums text-text-primary font-semibold"[39m
+              [36m>[39m
+                [0m9m[0m
+              [36m</span>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"flex min-w-0 flex-wrap items-center gap-x-1 text-sm tabular-nums text-text-secondary"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"size-4 shrink-0"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mheight[39m=[32m"24"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"2"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"24"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M12 19V5m0 0-7 7m7-7 7 7"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0m+US$5m vs FY2023[0m
+          [36m</p>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"text-sm text-text-tertiary"[39m
+          [36m>[39m
+            [0mn[0m
+          [36m</span>[39m
+        [36m</div>[39m
+      [36m</li>[39m
+      [36m<li[39m
+        [33mclass[39m=[32m"group/trace relative min-w-0 rounded-ds-sm border border-border-subtle bg-surface-card p-6 shadow-xs"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex flex-col gap-2"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex items-start justify-between gap-2"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex min-w-0 items-center gap-2"[39m
+            [36m>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"text-sm text-text-tertiary"[39m
+              [36m>[39m
+                [0mOther[0m
+              [36m</p>[39m
+            [36m</div>[39m
+            [36m<button[39m
+              [33maria-disabled[39m=[32m"true"[39m
+              [33maria-label[39m=[32m"Show sources for this figure: no source recorded"[39m
+              [33mclass[39m=[32m"outline-hidden relative flex size-7 flex-none items-center justify-center rounded-ds-sm border bg-transparent focus-visible:ring-2 focus-visible:ring-offset-2 max-[480px]:after:absolute max-[480px]:after:-inset-[9px] cursor-default border-dashed border-border-gap text-gap-text focus-visible:ring-focus"[39m
+              [33mdata-rac[39m=[32m""[39m
+              [33mdata-react-aria-pressable[39m=[32m"true"[39m
+              [33mid[39m=[32m"react-aria-_r_7_"[39m
+              [33mtabindex[39m=[32m"0"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"size-4"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mheight[39m=[32m"24"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"2"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"24"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M14 11H8m2 4H8m8-8H8m12 5V6.8c0-1.68 0-2.52-.327-3.162a3 3 0 0 0-1.311-1.311C17.72 2 16.88 2 15.2 2H8.8c-1.68 0-2.52 0-3.162.327a3 3 0 0 0-1.311 1.311C4 4.28 4 5.12 4 6.8v10.4c0 1.68 0 2.52.327 3.162a3 3 0 0 0 1.311 1.311C6.28 22 7.12 22 8.8 22H12m4-6 5 5m0-5-5 5"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+            [36m</button>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex min-h-11 flex-wrap items-end justify-between gap-3"[39m
+          [36m>[39m
+            [36m<div>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"font-body text-metric tabular-nums text-text-primary font-semibold"[39m
+              [36m>[39m
+                [0m1x[0m
+              [36m</span>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"text-sm text-text-tertiary"[39m
+          [36m>[39m
+            [0mn[0m
+          [36m</span>[39m
+        [36m</div>[39m
+      [36m</li>[39m
+    [36m</ul>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ × src/pages/connected/linkStyle.test.ts > no page draws a link as blue underlined text 38ms
+   → expected [ Array(1) ] to deeply equal []
+ ✓ src/pages/connected/linkStyle.test.ts > pages draw links in link-gray, not the action blue link-color 9ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/pages/connected/linkStyle.test.ts > no page draws a link as blue underlined text
+AssertionError: expected [ Array(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "connected/visuals/LegacyForecast.tsx:514",
++ ]
+
+ ❯ src/pages/connected/linkStyle.test.ts:27:17
+     25|     });
+     26|   }
+     27|   expect(found).toEqual([]);
+       |                 ^
+     28| });
+     29|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  src/pages/library/parts/MetricTile.yearChange.test.tsx > draws the year comparator, with the tone as a visible word and a shape on a tile that has one
+TestingLibraryElementError: Unable to find an element with the text: /\+\$5m vs FY2023/. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<ul>[39m
+      [36m<li[39m
+        [33mclass[39m=[32m"group/trace relative min-w-0 rounded-ds-sm border border-border-subtle bg-surface-card p-6 shadow-xs"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex flex-col gap-2"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex items-start justify-between gap-2"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex min-w-0 items-center gap-2"[39m
+            [36m>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"text-sm text-text-tertiary"[39m
+              [36m>[39m
+                [0mLeverage[0m
+              [36m</p>[39m
+            [36m</div>[39m
+            [36m<button[39m
+              [33maria-disabled[39m=[32m"true"[39m
+              [33maria-label[39m=[32m"Show sources for this figure: no source recorded"[39m
+              [33mclass[39m=[32m"outline-hidden relative flex size-7 flex-none items-center justify-center rounded-ds-sm border bg-transparent focus-visible:ring-2 focus-visible:ring-offset-2 max-[480px]:after:absolute max-[480px]:after:-inset-[9px] cursor-default border-dashed border-border-gap text-gap-text focus-visible:ring-focus"[39m
+              [33mdata-rac[39m=[32m""[39m
+              [33mdata-react-aria-pressable[39m=[32m"true"[39m
+              [33mid[39m=[32m"react-aria-_r_1_"[39m
+              [33mtabindex[39m=[32m"0"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"size-4"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mheight[39m=[32m"24"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"2"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"24"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M14 11H8m2 4H8m8-8H8m12 5V6.8c0-1.68 0-2.52-.327-3.162a3 3 0 0 0-1.311-1.311C17.72 2 16.88 2 15.2 2H8.8c-1.68 0-2.52 0-3.162.327a3 3 0 0 0-1.311 1.311C4 4.28 4 5.12 4 6.8v10.4c0 1.68 0 2.52.327 3.162a3 3 0 0 0 1.311 1.311C6.28 22 7.12 22 8.8 22H12m4-6 5 5m0-5-5 5"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+            [36m</button>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex min-h-11 flex-wrap items-end justify-between gap-3"[39m
+          [36m>[39m
+            [36m<div>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"font-body text-metric tabular-nums text-text-primary font-semibold"[39m
+              [36m>[39m
+                [0m4.4x[0m
+              [36m</span>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"flex min-w-0 flex-wrap items-center gap-x-1 text-sm tabular-nums text-error-text"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"size-4 shrink-0"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mheight[39m=[32m"24"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"2"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"24"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M12 19V5m0 0-7 7m7-7 7 7"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0m+0.2x vs FY2023[0m
+            [36m<span[39m
+              [33mclass[39m=[32m"inline-flex items-center gap-1"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"shrink-0"[39m
+                [33mdata-shape[39m=[32m"diamond"[39m
+                [33mheight[39m=[32m"10"[39m
+                [33mviewBox[39m=[32m"0 0 10 10"[39m
+                [33mwidth[39m=[32m"10"[39m
+              [36m>[39m
+                [36m<polygon[39m
+                  [33mfill[39m=[32m"currentColor"[39m
+                  [33mpoints[39m=[32m"5,0 10,5 5,10 0,5"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0mworse[0m
+            [36m</span>[39m
+          [36m</p>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"text-sm text-text-tertiary"[39m
+          [36m>[39m
+            [0m2024-12-31[0m
+          [36m</span>[39m
+        [36m</div>[39m
+      [36m</li>[39m
+      [36m<li[39m
+        [33mclass[39m=[32m"group/trace relative min-w-0 rounded-ds-sm border border-border-subtle bg-surface-card p-6 shadow-xs"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex flex-col gap-2"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex items-start justify-between gap-2"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex min-w-0 items-center gap-2"[39m
+            [36m>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"text-sm text-text-tertiary"[39m
+              [36m>[39m
+                [0mPrincipal[0m
+              [36m</p>[39m
+            [36m</div>[39m
+            [36m<button[39m
+              [33maria-disabled[39m=[32m"true"[39m
+              [33maria-label[39m=[32m"Show sources for this figure: no source recorded"[39m
+              [33mclass[39m=[32m"outline-hidden relative flex size-7 flex-none items-center justify-center rounded-ds-sm border bg-transparent focus-visible:ring-2 focus-visible:ring-offset-2 max-[480px]:after:absolute max-[480px]:after:-inset-[9px] cursor-default border-dashed border-border-gap text-gap-text focus-visible:ring-focus"[39m
+              [33mdata-rac[39m=[32m""[39m
+              [33mdata-react-aria-pressable[39m=[32m"true"[39m
+              [33mid[39m=[32m"react-aria-_r_4_"[39m
+              [33mtabindex[39m=[32m"0"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"size-4"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mheight[39m=[32m"24"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"2"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"24"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M14 11H8m2 4H8m8-8H8m12 5V6.8c0-1.68 0-2.52-.327-3.162a3 3 0 0 0-1.311-1.311C17.72 2 16.88 2 15.2 2H8.8c-1.68 0-2.52 0-3.162.327a3 3 0 0 0-1.311 1.311C4 4.28 4 5.12 4 6.8v10.4c0 1.68 0 2.52.327 3.162a3 3 0 0 0 1.311 1.311C6.28 22 7.12 22 8.8 22H12m4-6 5 5m0-5-5 5"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+            [36m</button>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex min-h-11 flex-wrap items-end justify-between gap-3"[39m
+          [36m>[39m
+            [36m<div>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"font-body text-metric tabular-nums text-text-primary font-semibold"[39m
+              [36m>[39m
+                [0m9m[0m
+              [36m</span>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"flex min-w-0 flex-wrap items-center gap-x-1 text-sm tabular-nums text-text-secondary"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"size-4 shrink-0"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mheight[39m=[32m"24"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"2"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"24"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M12 19V5m0 0-7 7m7-7 7 7"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0m+US$5m vs FY2023[0m
+          [36m</p>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"text-sm text-text-tertiary"[39m
+          [36m>[39m
+            [0mn[0m
+          [36m</span>[39m
+        [36m</div>[39m
+      [36m</li>[39m
+      [36m<li[39m
+        [33mclass[39m=[32m"group/trace relative min-w-0 rounded-ds-sm border border-border-subtle bg-surface-card p-6 shadow-xs"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"flex flex-col gap-2"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex items-start justify-between gap-2"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex min-w-0 items-center gap-2"[39m
+            [36m>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"text-sm text-text-tertiary"[39m
+              [36m>[39m
+                [0mOther[0m
+              [36m</p>[39m
+            [36m</div>[39m
+            [36m<button[39m
+              [33maria-disabled[39m=[32m"true"[39m
+              [33maria-label[39m=[32m"Show sources for this figure: no source recorded"[39m
+              [33mclass[39m=[32m"outline-hidden relative flex size-7 flex-none items-center justify-center rounded-ds-sm border bg-transparent focus-visible:ring-2 focus-visible:ring-offset-2 max-[480px]:after:absolute max-[480px]:after:-inset-[9px] cursor-default border-dashed border-border-gap text-gap-text focus-visible:ring-focus"[39m
+              [33mdata-rac[39m=[32m""[39m
+              [33mdata-react-aria-pressable[39m=[32m"true"[39m
+              [33mid[39m=[32m"react-aria-_r_7_"[39m
+              [33mtabindex[39m=[32m"0"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"size-4"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mheight[39m=[32m"24"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"2"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"24"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M14 11H8m2 4H8m8-8H8m12 5V6.8c0-1.68 0-2.52-.327-3.162a3 3 0 0 0-1.311-1.311C17.72 2 16.88 2 15.2 2H8.8c-1.68 0-2.52 0-3.162.327a3 3 0 0 0-1.311 1.311C4 4.28 4 5.12 4 6.8v10.4c0 1.68 0 2.52.327 3.162a3 3 0 0 0 1.311 1.311C6.28 22 7.12 22 8.8 22H12m4-6 5 5m0-5-5 5"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+            [36m</button>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"flex min-h-11 flex-wrap items-end justify-between gap-3"[39m
+          [36m>[39m
+            [36m<div>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"font-body text-metric tabular-nums text-text-primary font-semibold"[39m
+              [36m>[39m
+                [0m1x[0m
+              [36m</span>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"text-sm text-text-tertiary"[39m
+          [36m>[39m
+            [0mn[0m
+          [36m</span>[39m
+        [36m</div>[39m
+      [36m</li>[39m
+    [36m</ul>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ Object.getElementError ../../audit-final/web/node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../audit-final/web/node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../audit-final/web/node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../audit-final/web/node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/pages/library/parts/MetricTile.yearChange.test.tsx:44:24
+     42|   expect(change.querySelector('[data-shape="diamond"]')).not.toBeNull(…
+     43|   expect(change.className).toContain("text-error-text");
+     44|   const plain = screen.getByText(/\+\$5m vs FY2023/);
+       |                        ^
+     45|   expect(plain.textContent).not.toMatch(/better|worse|unchanged/);
+     46|   expect(plain.querySelector("[data-shape]")).toBeNull();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  2 failed | 1 passed (3)
+   Start at  21:33:46
+   Duration  2.13s (transform 172ms, setup 152ms, import 767ms, tests 124ms, environment 863ms)
+

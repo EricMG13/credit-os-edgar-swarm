@@ -1,0 +1,15 @@
+{
+  "contextAttempts": [],
+  "proxyBlocks": [
+    {"target":"http://clients2.google.com/time/1/current?cup2key=ML-DSA-44-10:uTvzPJcOJhPkC3wv_yLySPdha5f0mu_lSCqZuh3UAvM&cup2hreq=e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855","method":"GET"},
+    {"target":"www.gstatic.com:443","method":"CONNECT"},
+    {"target":"www.google.com:443","method":"CONNECT"},
+    {"target":"accounts.google.com:443","method":"CONNECT"},
+    {"target":"www.google.com:443","method":"CONNECT"},
+    {"target":"www.google.com:443","method":"CONNECT"},
+    {"target":"www.google.com:443","method":"CONNECT"},
+    {"target":"www.google.com:443","method":"CONNECT"},
+    {"target":"accounts.google.com:443","method":"CONNECT"},
+    {"target":"www.google.com:443","method":"CONNECT"}
+  ]
+}

@@ -56,6 +56,19 @@ function entry(shock: string, stressedCash: string): OutputEntry {
   };
 }
 
+it("contains unbroken scenario anchors and scope text within the desktop report", () => {
+  const data = downsideView(entry("0.10 (10%)", "50.00"));
+  if (!data) throw new Error("Test scenario matrix was rejected");
+  const selected = data.cases[1];
+  if (!selected) throw new Error("Test scenario missing");
+  selected.anchor = `Anchor${"y".repeat(150)}`;
+  selected.scope = `Left out ${"z".repeat(150)}`;
+  render(<Downside data={data} href={(line) => `#evidence/0-${String(line)}`} />);
+  expect(screen.getByRole("region", { name: "Downside scenarios" }).className).toMatch(
+    /wrap-anywhere/,
+  );
+});
+
 it("joins the selected scenario by its identifier and keeps conflicting currencies in the source table", () => {
   const source = entry("0.10 (10%)", "-1.20 (-EUR 1.20 million)");
   const data = downsideView(source);
@@ -101,4 +114,18 @@ it("does not plot a module marked not established", () => {
       output: { ...source.output, state: { established: false, declared: null } },
     }),
   ).toBeNull();
+});
+
+it("J3-016 labels the chosen stress and displays both shock quantities as percentages", () => {
+  const data = downsideView(entry("0.10 (10%)", "10"));
+  if (!data) throw new Error("Test scenario matrix was rejected");
+  render(<Downside data={data} href={(line) => `#evidence/${String(line)}`} />);
+  expect(
+    screen.getByRole("combobox", { name: "Stress case to compare with the unstressed control" }),
+  ).toBeInTheDocument();
+  const decline = screen.getByText("EBITDA decline").closest("div");
+  const interest = screen.getByText("Cash-interest increase").closest("div");
+  expect(decline).toHaveTextContent("10%");
+  expect(decline).not.toHaveTextContent("0.10");
+  expect(interest).toHaveTextContent("0%");
 });

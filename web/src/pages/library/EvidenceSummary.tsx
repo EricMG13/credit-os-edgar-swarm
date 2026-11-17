@@ -46,7 +46,7 @@ export function EvidenceSummary({
       <section aria-label="Counts">
         <ul className="grid grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-4">
           {counts.map((count) => (
-            <MetricTile key={count.label} metric={count} />
+            <MetricTile key={count.label} metric={count} traced={false} />
           ))}
         </ul>
       </section>

@@ -84,7 +84,7 @@ describe("Forecast page: the shell and the cases", () => {
       ["H3", DRIVERS],
       ["H3", COVER],
       ["H3", PATHS],
-      ["H2", "Cash flow in FY26"],
+      ["H2", "Cash flow: FY26, US$m"],
       ["H3", WALK],
     ]);
   });
@@ -138,7 +138,11 @@ describe("Forecast page: the shell and the cases", () => {
 
   it("draws the choice line and the two cards, the first chosen", () => {
     renderAt(fixtureSlice());
-    expect(screen.getByText("Choose a case: every chart below follows it.")).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "Interest cover, the cash flow walk and the highlighted driver markers follow the chosen case. EBITDA by case shows both cases.",
+      ),
+    ).toBeInTheDocument();
     expect(screen.getByRole("radio", { name: "Base case" })).toBeChecked();
     expect(screen.getByRole("radio", { name: "Downside case" })).not.toBeChecked();
     expect(
@@ -185,13 +189,13 @@ describe("Forecast page: what drives each case", () => {
     ).toEqual(["Range over five years", "Base case assumption", "Downside case assumption"]);
   });
 
-  it("draws a strip on five rows and two markers on four, none for the missing value or range", () => {
+  it("draws a strip on five rows and two markers on five, none for a missing value, and no strip for a missing range", () => {
     renderAt(fixtureSlice());
     const chart = figure(DRIVERS);
     const row = (label: string) =>
       must(within(chart).getByText(label).closest<HTMLElement>("[data-row]"));
     expect(chart.querySelectorAll("[data-range]")).toHaveLength(5);
-    expect(chart.querySelectorAll("[data-marker]")).toHaveLength(8);
+    expect(chart.querySelectorAll("[data-marker]")).toHaveLength(10);
     const wc = row("Working capital days");
     expect(wc.querySelector("[data-range]")).not.toBeNull();
     expect(wc.querySelector("[data-marker]")).toBeNull();
@@ -200,7 +204,7 @@ describe("Forecast page: what drives each case", () => {
     ).toEqual(["n.a.", "n.a."]);
     const after = row("Aftermarket share of revenue");
     expect(after.querySelector("[data-range]")).toBeNull();
-    expect(after.querySelector("[data-marker]")).toBeNull();
+    expect(after.querySelectorAll("[data-marker]")).toHaveLength(2);
     expect(after.querySelectorAll("[data-missing]")).toHaveLength(0);
   });
 
@@ -239,18 +243,18 @@ describe("Forecast page: what drives each case", () => {
   it("draws both markers of a row in full colour, and the chosen case's wider and taller", () => {
     renderAt(fixtureSlice());
     const markers = () => [...figure(DRIVERS).querySelectorAll("[data-marker]")];
-    expect(markers()).toHaveLength(8);
+    expect(markers()).toHaveLength(10);
     const weight = (name: string) =>
       markers()
         .filter((m) => m.getAttribute("data-name") === name)
         .map((m) => m.classList.contains("w-1.5") && m.classList.contains("h-7"));
-    expect(weight("Base case assumption")).toEqual([true, true, true, true]);
-    expect(weight("Downside case assumption")).toEqual([false, false, false, false]);
+    expect(weight("Base case assumption")).toEqual([true, true, true, true, true]);
+    expect(weight("Downside case assumption")).toEqual([false, false, false, false, false]);
     for (const m of markers()) expect(m.className).not.toMatch(/opacity/);
     choose("Downside case");
-    expect(markers()).toHaveLength(8);
-    expect(weight("Base case assumption")).toEqual([false, false, false, false]);
-    expect(weight("Downside case assumption")).toEqual([true, true, true, true]);
+    expect(markers()).toHaveLength(10);
+    expect(weight("Base case assumption")).toEqual([false, false, false, false, false]);
+    expect(weight("Downside case assumption")).toEqual([true, true, true, true, true]);
   });
 
   it("sets the other case's values in the tertiary colour, the chosen case's not", () => {
@@ -271,12 +275,19 @@ describe("Forecast page: what drives each case", () => {
 
   it("holds the five columns of the table with n.a. in the same cells", () => {
     renderAt(fixtureSlice());
-    expect(tableRows(DRIVERS)).toEqual(DRIVER_TABLE.map((r) => [...r]));
+    expect(tableRows(DRIVERS)).toEqual(DRIVER_TABLE.map((r) => [...r, "Source not recorded"]));
     expect(
       within(figure(DRIVERS))
         .getAllByRole("columnheader")
         .map((h) => h.textContent),
-    ).toEqual(["Driver, FY26", "Range low", "Range high", "Base case", "Downside case"]);
+    ).toEqual([
+      "Driver, FY26",
+      "Range low",
+      "Range high",
+      "Base case",
+      "Downside case",
+      "Show sources",
+    ]);
   });
 });
 
@@ -321,13 +332,23 @@ describe("Forecast page: interest cover and EBITDA by case", () => {
 
   it("holds both cases in each table, with n.a. where the mock has it", () => {
     renderAt(fixtureSlice());
-    expect(tableRows(COVER)).toEqual(COVER_TABLE.map((r) => [...r]));
-    expect(tableRows(PATHS)).toEqual(PATH_TABLE.map((r) => [...r]));
+    expect(tableRows(COVER)).toEqual(COVER_TABLE.map((r) => [...r, "Source not recorded"]));
+    expect(tableRows(PATHS)).toEqual(PATH_TABLE.map((r) => [...r, "Source not recorded"]));
     expect(
       within(figure(PATHS))
         .getAllByRole("columnheader")
         .map((h) => h.textContent),
-    ).toEqual(["EBITDA as defined", "FY22", "FY23", "FY24", "LTM", "FY25E", "FY26E", "FY27E"]);
+    ).toEqual([
+      "EBITDA as defined",
+      "FY22",
+      "FY23",
+      "FY24",
+      "LTM",
+      "FY25E",
+      "FY26E",
+      "FY27E",
+      "Show sources",
+    ]);
   });
 
   it("draws the basis lines under the charts", () => {
@@ -388,7 +409,7 @@ describe("Forecast page: cash flow in FY26", () => {
         .getAllByRole("listitem")
         .map((li) => li.textContent),
     ).toEqual(["Total", "Cash out (minus)"]);
-    expect(within(figure(WALK)).getByText("FY26, USD millions")).toBeInTheDocument();
+    expect(within(figure(WALK)).getByText("FY26, US$m")).toBeInTheDocument();
     expect(
       within(figure(WALK)).getByText(
         "Other cash items were not forecast: the slot stays empty and is not counted as zero.",
@@ -398,12 +419,12 @@ describe("Forecast page: cash flow in FY26", () => {
 
   it("holds both cases in the table, n.a. for Other in both", () => {
     renderAt(fixtureSlice());
-    expect(tableRows(WALK)).toEqual(WALK_TABLE.map((r) => [...r]));
+    expect(tableRows(WALK)).toEqual(WALK_TABLE.map((r) => [...r, "Source not recorded"]));
     expect(
       within(figure(WALK))
         .getAllByRole("columnheader")
         .map((h) => h.textContent),
-    ).toEqual(["FY26, USD millions", "Base case", "Downside case"]);
+    ).toEqual(["FY26, US$m", "Base case", "Downside case", "Show sources"]);
   });
 
   it("sets the walk and the side column in the auto-fit grid, the table side having three columns", () => {
@@ -527,11 +548,14 @@ describe("Forecast page: sources, tables and states", () => {
       "limitations.href: expected a string",
     ],
   ] as const)(
-    "leaves an invalid slice with %s to the app, naming the failing path",
+    "leaves an invalid slice with %s to the app, in plain words and without the failing path",
     (_n, steps, value, reason) => {
       renderAt(edited(steps, value));
       expect(screen.getByText("This part of the library could not be read")).toBeInTheDocument();
-      expect(screen.getByText(`runs[0].forecast.${reason}`)).toBeInTheDocument();
+      expect(
+        screen.getByText(/^The financial model for this run could not be shown/),
+      ).toBeInTheDocument();
+      expect(screen.queryByText(`runs[0].forecast.${reason}`)).toBeNull();
     },
   );
 });

@@ -1,0 +1,300 @@
+{
+  "python": {
+    "shard_seconds": {
+      "changed-01": 5.004,
+      "changed-02": 15.09,
+      "changed-03": 28.751,
+      "changed-04": 14.919,
+      "changed-05": 12.689,
+      "ci-01": 7.397,
+      "ci-02": 99.979,
+      "ci-03": 55.908,
+      "ci-04": 10.292,
+      "ci-05": 35.368,
+      "ci-06": 49.591,
+      "ci-07": 31.571,
+      "ci-08": 22.734
+    },
+    "slowest_nodes": [
+      {
+        "file": "tests.test_final_audit_tools",
+        "name": "test_cumulative_audit_helpers_pass_the_default_quality_gate",
+        "seconds": 11.584,
+        "scope": "changed outside CI",
+        "shard": "changed-05"
+      },
+      {
+        "file": "tests.model.test_loop",
+        "name": "test_a_narrative_repair_says_to_call_read_inputs_again",
+        "seconds": 5.932,
+        "scope": "CI",
+        "shard": "ci-03"
+      },
+      {
+        "file": "tests.test_inbox_scheduler",
+        "name": "test_a_submission_is_run_by_the_real_launcher_and_listed",
+        "seconds": 5.407,
+        "scope": "CI",
+        "shard": "ci-05"
+      },
+      {
+        "file": "tests.model.test_loop",
+        "name": "test_read_inputs_is_offered_when_the_step_has_inputs",
+        "seconds": 5.368,
+        "scope": "CI",
+        "shard": "ci-03"
+      },
+      {
+        "file": "proof.test_launcher",
+        "name": "test_real_scheduler_exports_the_submitted_run[none]",
+        "seconds": 5.049,
+        "scope": "changed outside CI",
+        "shard": "changed-02"
+      },
+      {
+        "file": "proof.test_launcher",
+        "name": "test_real_scheduler_exports_the_submitted_run[executed]",
+        "seconds": 4.713,
+        "scope": "changed outside CI",
+        "shard": "changed-02"
+      },
+      {
+        "file": "tests.test_react_runtime_identity",
+        "name": "test_completed_engine_responses_supply_their_exact_verified_metadata",
+        "seconds": 4.211,
+        "scope": "changed outside CI",
+        "shard": "changed-04"
+      },
+      {
+        "file": "tests.test_cpos_launch",
+        "name": "test_no_text_sent_to_a_model_gives_usd_as_its_only_example",
+        "seconds": 4.106,
+        "scope": "CI",
+        "shard": "ci-02"
+      },
+      {
+        "file": "tests.model.test_loop",
+        "name": "test_the_seventeenth_refused_submit_is_the_call_limit",
+        "seconds": 3.648,
+        "scope": "CI",
+        "shard": "ci-03"
+      },
+      {
+        "file": "tests.test_inbox_scheduler",
+        "name": "test_a_restart_adopts_a_live_run_and_starts_no_duplicate",
+        "seconds": 3.445,
+        "scope": "CI",
+        "shard": "ci-05"
+      },
+      {
+        "file": "tests.model.test_loop",
+        "name": "test_another_workflow_error_is_not_inputs_too_large[identity_mismatch]",
+        "seconds": 3.402,
+        "scope": "CI",
+        "shard": "ci-03"
+      },
+      {
+        "file": "tests.test_changes",
+        "name": "test_a_run_with_a_prior_run_gives_cp8_alone_the_earlier_handoffs_and_delivers_the_pack",
+        "seconds": 3.392,
+        "scope": "CI",
+        "shard": "ci-07"
+      },
+      {
+        "file": "tests.model.test_loop",
+        "name": "test_another_workflow_error_is_not_inputs_too_large[bad_arguments]",
+        "seconds": 3.242,
+        "scope": "CI",
+        "shard": "ci-03"
+      },
+      {
+        "file": "tests.test_cpos_launch",
+        "name": "test_web_search_follows_the_ruling_and_reaches_only_the_research_module",
+        "seconds": 3.171,
+        "scope": "CI",
+        "shard": "ci-02"
+      },
+      {
+        "file": "tests.test_changes",
+        "name": "test_a_cp8_that_is_not_accepted_loses_only_itself_and_the_run_says_why",
+        "seconds": 2.653,
+        "scope": "CI",
+        "shard": "ci-07"
+      }
+    ],
+    "node_count": 6286,
+    "scope": "pytest JUnit test case time, including setup, call and teardown",
+    "scope_total_seconds": 389.293
+  },
+  "frontend": {
+    "shard_ms": {
+      "1/8": 232432,
+      "2/8": 123079,
+      "3/8": 101195,
+      "4/8": 123858,
+      "5/8": 241572,
+      "6/8": 126898,
+      "7/8": 83447,
+      "8/8": 94877
+    },
+    "shard_sum_ms": 1127358,
+    "parallel_wall_ms": 1128767.0,
+    "slowest_nodes": [
+      {
+        "file": "/workspace/audit-final-sweep/web/src/pages/connected/ConnectedApp.test.tsx",
+        "name": "connected run start: the review sheet shows every input Submit sends V27 shows no raw data: no braces, keys, module codes, ids or the form's version",
+        "ms": 5628.454761999994,
+        "shard": "shard-5"
+      },
+      {
+        "file": "/workspace/audit-final-sweep/web/src/pages/signal/frame.test.tsx",
+        "name": "the Signal frame renders every declared path with every fixture parameter set",
+        "ms": 4788.685239,
+        "shard": "shard-6"
+      },
+      {
+        "file": "/workspace/audit-final-sweep/web/src/pages/library/Module.test.tsx",
+        "name": "Module, a delivered prose module opens the drawer of each passage's own module-level trace",
+        "ms": 2780.950053,
+        "shard": "shard-5"
+      },
+      {
+        "file": "/workspace/audit-final-sweep/web/src/pages/model/case-choice.test.tsx",
+        "name": "S5-010 keeps the chosen case across Model, Forecast and intervening pages, separately per run",
+        "ms": 2526.608747,
+        "shard": "shard-8"
+      },
+      {
+        "file": "/workspace/audit-final-sweep/web/src/pages/connected/ReportLibrary.wayfinding.test.tsx",
+        "name": "report wayfinding marks the section in the top third of the scroll container, and no other",
+        "ms": 2082.847215,
+        "shard": "shard-2"
+      },
+      {
+        "file": "/workspace/audit-final-sweep/web/src/pages/connected/ConnectedApp.test.tsx",
+        "name": "connected activity and reports waits for report publication after the run has finished",
+        "ms": 2045.0368790000066,
+        "shard": "shard-5"
+      },
+      {
+        "file": "/workspace/audit-final-sweep/web/src/pages/connected/ConnectedApp.test.tsx",
+        "name": "connected run start: Module options and Valuation as fields K6 sends precedents only for a basis that uses them",
+        "ms": 1951.0202979999958,
+        "shard": "shard-5"
+      },
+      {
+        "file": "/workspace/audit-final-sweep/web/src/pages/model/StatementsPage.test.tsx",
+        "name": "Model page: the statements describes a missing cell by its reason, shows it on focus, and draws it n.a., never 0",
+        "ms": 1924.1196799999998,
+        "shard": "shard-1"
+      },
+      {
+        "file": "/workspace/audit-final-sweep/web/src/pages/model/StatementsSections.test.tsx",
+        "name": "Model page: bridges draws the headings in order: h2 sections, h3 chart titles, h4 comparison panels",
+        "ms": 1759.7403170000002,
+        "shard": "shard-1"
+      },
+      {
+        "file": "/workspace/audit-final-sweep/web/src/pages/signal/facts.test.tsx",
+        "name": "one fact, one value S6: the feed's Comment count is the count of the thread it opens",
+        "ms": 1714.3208770000006,
+        "shard": "shard-1"
+      },
+      {
+        "file": "/workspace/audit-final-sweep/web/src/pages/signal/topics-digests.test.tsx",
+        "name": "Digests (frame 5) changes every field in memory and keeps the values when moving between sections",
+        "ms": 1697.8042690000002,
+        "shard": "shard-5"
+      },
+      {
+        "file": "/workspace/audit-final-sweep/web/src/pages/connected/ConnectedApp.test.tsx",
+        "name": "connected activity and reports reads the published handoff, keeps citations in Evidence, and links the matching download",
+        "ms": 1692.351655999999,
+        "shard": "shard-5"
+      },
+      {
+        "file": "/workspace/audit-final-sweep/web/src/pages/connected/ConnectedApp.test.tsx",
+        "name": "connected run start: Module options and Valuation as fields K5 sends the analyst's own multiple, and blanks it when the basis changes",
+        "ms": 1667.214393000002,
+        "shard": "shard-5"
+      },
+      {
+        "file": "/workspace/audit-final-sweep/web/src/pages/signal/sources.test.tsx",
+        "name": "Sources (frame 3) sorts by Source, State and Health by the delivered ranks, both ways, with aria-sort",
+        "ms": 1649.1966889999994,
+        "shard": "shard-2"
+      },
+      {
+        "file": "/workspace/audit-final-sweep/web/src/pages/model/parts/TraceControl.drawer.test.tsx",
+        "name": "On the Statements page a trace control keeps the reader's place keeps the chosen case and the address when the drawer opens",
+        "ms": 1643.7426770000002,
+        "shard": "shard-2"
+      }
+    ],
+    "slowest_files": [
+      {
+        "file": "/workspace/audit-final-sweep/web/src/pages/connected/ConnectedApp.test.tsx",
+        "ms": 124136.06958007812
+      },
+      {
+        "file": "/workspace/audit-final-sweep/web/src/pages/library/Module.test.tsx",
+        "ms": 26953.44921875
+      },
+      {
+        "file": "/workspace/audit-final-sweep/web/src/pages/model/StatementsPage.test.tsx",
+        "ms": 25016.63623046875
+      },
+      {
+        "file": "/workspace/audit-final-sweep/web/src/pages/model/StatementsSections.test.tsx",
+        "ms": 18184.421630859375
+      },
+      {
+        "file": "/workspace/audit-final-sweep/web/src/pages/model/ForecastPage.test.tsx",
+        "ms": 11443.28564453125
+      },
+      {
+        "file": "/workspace/audit-final-sweep/web/src/pages/Kit7e.test.tsx",
+        "ms": 11327.53515625
+      },
+      {
+        "file": "/workspace/audit-final-sweep/web/src/pages/signal/controls.test.tsx",
+        "ms": 11179.32177734375
+      },
+      {
+        "file": "/workspace/audit-final-sweep/web/src/pages/library/EvidenceTrace.test.tsx",
+        "ms": 10865.45361328125
+      },
+      {
+        "file": "/workspace/audit-final-sweep/web/src/pages/library/Home.test.tsx",
+        "ms": 10466.94091796875
+      },
+      {
+        "file": "/workspace/audit-final-sweep/web/src/pages/signal/frame.test.tsx",
+        "ms": 8709.685302734375
+      },
+      {
+        "file": "/workspace/audit-final-sweep/web/src/pages/Kit.test.tsx",
+        "ms": 8315.489013671875
+      },
+      {
+        "file": "/workspace/audit-final-sweep/web/src/pages/signal/thread.test.tsx",
+        "ms": 7848.032958984375
+      },
+      {
+        "file": "/workspace/audit-final-sweep/web/src/pages/connected/visuals/EventLane.test.tsx",
+        "ms": 7047.738037109375
+      },
+      {
+        "file": "/workspace/audit-final-sweep/web/src/pages/library/Overview.test.tsx",
+        "ms": 6854.554931640625
+      },
+      {
+        "file": "/workspace/audit-final-sweep/web/src/pages/model/AnalysisPage.test.tsx",
+        "ms": 6771.484130859375
+      }
+    ],
+    "node_count": 5259,
+    "file_count": 308,
+    "scope": "native Vitest JSON assertion durations and file test start/end, all 8 coverage shards"
+  }
+}

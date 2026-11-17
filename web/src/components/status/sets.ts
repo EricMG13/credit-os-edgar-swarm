@@ -60,7 +60,7 @@ export const STATUS_SETS = {
     Ready: ["filled circle", "success"],
     "Ready with limitations": ["triangle", "warning"],
     Conditional: ["half-filled circle", "info"],
-    "Not ready": ["slashed circle", "neutral"],
+    "Not ready": ["hollow square", "neutral"],
   }),
   "Security recommendation": set({
     Preferred: ["filled circle", "success"],

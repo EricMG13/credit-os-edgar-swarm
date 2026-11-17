@@ -61,11 +61,16 @@
   /* Chart palette: six series in a fixed order, then Other */
   --color-chart-1: #001aff;
   --color-chart-2: #827bcc;
-  --color-chart-3: #994a34;
+  --color-chart-3: #331911;
   --color-chart-4: #b28b00;
   --color-chart-5: #0f8048;
   --color-chart-6: #8c9900;
   --color-chart-other: #7f848d;
+
+  /* Waterfall: the three kinds of column in a walk between totals */
+  --color-waterfall-total: var(--color-chart-1);
+  --color-waterfall-up: var(--color-brand-400);
+  --color-waterfall-down: var(--color-chart-3);
 
   /* Ultramarine: 50 = L9, 100 = L8, 200 = L7, 300 = L5, 400 = L3, 500 = L1, 600 = base,
      700 = D2, 800 = D4, 900 = D6, 950 = D8 */

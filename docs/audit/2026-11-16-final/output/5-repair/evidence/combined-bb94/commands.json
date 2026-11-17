@@ -1,0 +1,74 @@
+[
+  {
+    "pin": "bb94ddceff3a1f02c7239ebca72de285df79c607",
+    "shard": "4/8",
+    "command": "timeout 300 npm --prefix web run test -- --shard=4/8 --maxWorkers=1 --coverage.processingConcurrency=1 --reporter=default --reporter=blob --reporter=json --outputFile.blob=/workspace/scratch/final-frontend-coverage-bb94ddce/blobs/shard-4.json --outputFile.json=/workspace/scratch/final-frontend-coverage-bb94ddce/shard-4.json --coverage.reportsDirectory=/workspace/scratch/final-frontend-coverage-bb94ddce/coverage-4",
+    "code": 1,
+    "signal": null,
+    "start": "2026-11-17T21:46:05.799Z",
+    "durationMs": 122185
+  },
+  {
+    "pin": "bb94ddceff3a1f02c7239ebca72de285df79c607",
+    "shard": "6/8",
+    "command": "timeout 300 npm --prefix web run test -- --shard=6/8 --maxWorkers=1 --coverage.processingConcurrency=1 --reporter=default --reporter=blob --reporter=json --outputFile.blob=/workspace/scratch/final-frontend-coverage-bb94ddce/blobs/shard-6.json --outputFile.json=/workspace/scratch/final-frontend-coverage-bb94ddce/shard-6.json --coverage.reportsDirectory=/workspace/scratch/final-frontend-coverage-bb94ddce/coverage-6",
+    "code": 1,
+    "signal": null,
+    "start": "2026-11-17T21:48:08.079Z",
+    "durationMs": 120946
+  },
+  {
+    "pin": "bb94ddceff3a1f02c7239ebca72de285df79c607",
+    "shard": "1/8",
+    "command": "timeout 300 npm --prefix web run test -- --shard=1/8 --maxWorkers=1 --coverage.processingConcurrency=1 --reporter=default --reporter=blob --reporter=json --outputFile.blob=/workspace/scratch/final-frontend-coverage-bb94ddce/blobs/shard-1.json --outputFile.json=/workspace/scratch/final-frontend-coverage-bb94ddce/shard-1.json --coverage.reportsDirectory=/workspace/scratch/final-frontend-coverage-bb94ddce/coverage-1",
+    "code": 1,
+    "signal": null,
+    "start": "2026-11-17T21:50:09.110Z",
+    "durationMs": 146281
+  },
+  {
+    "pin": "bb94ddceff3a1f02c7239ebca72de285df79c607",
+    "shard": "2/8",
+    "command": "timeout 300 npm --prefix web run test -- --shard=2/8 --maxWorkers=1 --coverage.processingConcurrency=1 --reporter=default --reporter=blob --reporter=json --outputFile.blob=/workspace/scratch/final-frontend-coverage-bb94ddce/blobs/shard-2.json --outputFile.json=/workspace/scratch/final-frontend-coverage-bb94ddce/shard-2.json --coverage.reportsDirectory=/workspace/scratch/final-frontend-coverage-bb94ddce/coverage-2",
+    "code": 1,
+    "signal": null,
+    "start": "2026-11-17T21:52:35.479Z",
+    "durationMs": 103378
+  },
+  {
+    "pin": "bb94ddceff3a1f02c7239ebca72de285df79c607",
+    "shard": "3/8",
+    "command": "timeout 300 npm --prefix web run test -- --shard=3/8 --maxWorkers=1 --coverage.processingConcurrency=1 --reporter=default --reporter=blob --reporter=json --outputFile.blob=/workspace/scratch/final-frontend-coverage-bb94ddce/blobs/shard-3.json --outputFile.json=/workspace/scratch/final-frontend-coverage-bb94ddce/shard-3.json --coverage.reportsDirectory=/workspace/scratch/final-frontend-coverage-bb94ddce/coverage-3",
+    "code": 1,
+    "signal": null,
+    "start": "2026-11-17T21:54:18.937Z",
+    "durationMs": 96391
+  },
+  {
+    "pin": "bb94ddceff3a1f02c7239ebca72de285df79c607",
+    "shard": "5/8",
+    "command": "timeout 300 npm --prefix web run test -- --shard=5/8 --maxWorkers=1 --coverage.processingConcurrency=1 --reporter=default --reporter=blob --reporter=json --outputFile.blob=/workspace/scratch/final-frontend-coverage-bb94ddce/blobs/shard-5.json --outputFile.json=/workspace/scratch/final-frontend-coverage-bb94ddce/shard-5.json --coverage.reportsDirectory=/workspace/scratch/final-frontend-coverage-bb94ddce/coverage-5",
+    "code": 1,
+    "signal": null,
+    "start": "2026-11-17T21:55:55.399Z",
+    "durationMs": 263041
+  },
+  {
+    "pin": "bb94ddceff3a1f02c7239ebca72de285df79c607",
+    "shard": "7/8",
+    "command": "timeout 300 npm --prefix web run test -- --shard=7/8 --maxWorkers=1 --coverage.processingConcurrency=1 --reporter=default --reporter=blob --reporter=json --outputFile.blob=/workspace/scratch/final-frontend-coverage-bb94ddce/blobs/shard-7.json --outputFile.json=/workspace/scratch/final-frontend-coverage-bb94ddce/shard-7.json --coverage.reportsDirectory=/workspace/scratch/final-frontend-coverage-bb94ddce/coverage-7",
+    "code": 1,
+    "signal": null,
+    "start": "2026-11-17T22:00:18.544Z",
+    "durationMs": 146884
+  },
+  {
+    "pin": "bb94ddceff3a1f02c7239ebca72de285df79c607",
+    "shard": "8/8",
+    "command": "timeout 300 npm --prefix web run test -- --shard=8/8 --maxWorkers=1 --coverage.processingConcurrency=1 --reporter=default --reporter=blob --reporter=json --outputFile.blob=/workspace/scratch/final-frontend-coverage-bb94ddce/blobs/shard-8.json --outputFile.json=/workspace/scratch/final-frontend-coverage-bb94ddce/shard-8.json --coverage.reportsDirectory=/workspace/scratch/final-frontend-coverage-bb94ddce/coverage-8",
+    "code": 1,
+    "signal": null,
+    "start": "2026-11-17T22:02:45.535Z",
+    "durationMs": 137280
+  }
+]

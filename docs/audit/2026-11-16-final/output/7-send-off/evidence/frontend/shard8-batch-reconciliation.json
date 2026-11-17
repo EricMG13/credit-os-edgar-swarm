@@ -1,0 +1,77 @@
+{
+  "expectedFiles": 38,
+  "observedFiles": 38,
+  "expectedTests": 440,
+  "observedTests": 440,
+  "exactIdentityMatch": true,
+  "batches": [
+    {
+      "label": "8-case-choice",
+      "files": [
+        "src/pages/model/case-choice.test.tsx"
+      ],
+      "tests": 3
+    },
+    {
+      "label": "8-run-reasons",
+      "files": [
+        "src/pages/connected/runReasons.test.tsx"
+      ],
+      "tests": 3
+    },
+    {
+      "label": "8-rest-1",
+      "files": [
+        "src/App.routeChange.test.tsx",
+        "src/ConnectedLoadBoundary.test.tsx",
+        "src/components/alert/Alert.test.tsx",
+        "src/components/application/table/table.missing.test.tsx",
+        "src/components/chart/ChartTable.test.tsx",
+        "src/components/chart/TrendChart.test.tsx",
+        "src/pages/connected/ReportContent.findings.test.tsx",
+        "src/pages/connected/ReportLibrary.place.test.tsx",
+        "src/pages/connected/RuntimeMetadata.test.tsx",
+        "src/pages/connected/moduleCodes.test.ts",
+        "src/pages/connected/publishedReport.reference-last.test.tsx",
+        "src/pages/connected/publishedReport.reference.test.tsx"
+      ],
+      "tests": 201
+    },
+    {
+      "label": "8-rest-2",
+      "files": [
+        "src/pages/connected/report/ArtifactDownloads.states.test.tsx",
+        "src/pages/connected/report/Changes.colour.test.tsx",
+        "src/pages/connected/report/Evidence.t21-fix1.test.tsx",
+        "src/pages/connected/report/Forecast.test.tsx",
+        "src/pages/connected/report/Record.test.tsx",
+        "src/pages/connected/runActivity.states.test.tsx",
+        "src/pages/connected/runFigures.test.ts",
+        "src/pages/connected/start/ReviewSheet.test.tsx",
+        "src/pages/connected/start/rows.test.ts",
+        "src/pages/connected/visuals/LegacyForecast.test.tsx",
+        "src/pages/connected/visuals/visualData.moduleCode.test.ts",
+        "src/pages/library/Evidence.reviewTails.test.tsx"
+      ],
+      "tests": 67
+    },
+    {
+      "label": "8-rest-3",
+      "files": [
+        "src/pages/library/History.runs.test.tsx",
+        "src/pages/library/Home.clearFocus.test.tsx",
+        "src/pages/library/Home.startRun.test.tsx",
+        "src/pages/library/parts/recordNav.test.ts",
+        "src/pages/library/readRecord.test.ts",
+        "src/pages/model/ForecastPage.test.tsx",
+        "src/pages/model/one-case.test.tsx",
+        "src/pages/run/start/Started.focus.test.tsx",
+        "src/pages/signal/messages.test.tsx",
+        "src/shell/Shell.test.tsx",
+        "src/styles/chart-lightness.test.ts",
+        "src/styles/project-caption.test.ts"
+      ],
+      "tests": 166
+    }
+  ]
+}

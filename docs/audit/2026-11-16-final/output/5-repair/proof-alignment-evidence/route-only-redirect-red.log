@@ -1,0 +1,37 @@
+✔ offline proof accepts only local resource schemes and loopback hosts (1.25225ms)
+✖ context guard blocks requests, redirects, popups and WebSockets before network (864.919609ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 1
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1310.20281
+
+✖ failing tests:
+
+test at web/scripts/connected-proof-network.test.mjs:32:1
+✖ context guard blocks requests, redirects, popups and WebSockets before network (864.919609ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+
+    [
+      'https://example.invalid/fetch',
+      'https://example.invalid/popup',
+  -   'https://example.invalid/redirected',
+      'wss://example.invalid/socket'
+    ]
+
+      at TestContext.<anonymous> (file:///workspace/audit-proof-alignment/web/scripts/connected-proof-network.test.mjs:66:12)
+      at runNextTicks (node:internal/process/task_queues:65:5)
+      at process.processImmediate (node:internal/timers:541:9)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: [ 'https://example.invalid/fetch', 'https://example.invalid/popup', 'wss://example.invalid/socket' ],
+    expected: [ 'https://example.invalid/fetch', 'https://example.invalid/popup', 'https://example.invalid/redirected', 'wss://example.invalid/socket' ],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }

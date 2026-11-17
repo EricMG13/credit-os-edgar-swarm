@@ -1,0 +1,60 @@
+{
+  "before": {
+    "source": "/workspace/sweep-stage0-reference",
+    "staticAssets": {
+      "THIRD-PARTY-NOTICES.md": "a7136792bd8d2a04071df4e61bd1b1c910c40d7d7b455d4f0ca242a3fd82fed5",
+      "assets/index-CLQd3tzT.js": "30b3124401723fffa6d27a4b94f627b68f5383981691bb52f9a4c87bf8ff6cad",
+      "assets/style-CZvAa0DA.css": "81965165e81aaf1a212c953edf4d351f2ea9eff10210457295a21476b43fc54e",
+      "data.js": "e5369b296ee699049b5c2e67c7c7b7d223fd895a1dbd6f5cbba845ae9c817f24",
+      "fonts/Geist-Medium.woff2": "ed653645d0ea78ec2aeda9d705158e9c6b323efe507e0ab25cc483ae9182e97d",
+      "fonts/Geist-Regular.woff2": "12e7c80de776bc74044973a26bb96842ca4bfe9e16fc6128fa5c6420e8e1d8fc",
+      "fonts/Geist-SemiBold.woff2": "162dcce19c895344a8eeee8482017d975f8e555d90da21d4343e31e8c9334d79",
+      "fonts/GeistMono-Medium.woff2": "b016f0d4235f40bfb246363f3cad04a90b88fe35b67ce764be9391b5fa57791a",
+      "fonts/GeistMono-Regular.woff2": "67b27e8a75395c074cc23656acf208ccd69e674da4cad2c7d6dfa254272ad7e8",
+      "fonts/OFL-Geist.txt": "055f91395bbf674dc6e1ef4a06ca5bd43d6080eb34dfb53be0831aa950457722",
+      "fonts/OFL-GeistMono.txt": "055f91395bbf674dc6e1ef4a06ca5bd43d6080eb34dfb53be0831aa950457722",
+      "fonts/OFL-SchibstedGrotesk.txt": "851b03806ddbd92890a59a8512a883ff231587f9bef037895efa544a0f250432",
+      "fonts/SchibstedGrotesk-Bold.woff2": "cb3017aa6302a4f3deb7a658d9a26979d6bdf8d7fbfb4fc771bfe6b86a21ccf9",
+      "fonts/SchibstedGrotesk-SemiBold.woff2": "dce16ebaba351bfeea864c53f8336836d79723fda36d16981363451a76b2afa8",
+      "index.html": "4d65c34b4868adfa8865c84b5977c29a359595510f6ce31f8e9257a0d13c160b",
+      "symbol.svg": "36a427efaefa48bb4e232ca501a358484ed751714b6411ee672b45a0f575f1a9"
+    },
+    "placeholderData": "e5369b296ee699049b5c2e67c7c7b7d223fd895a1dbd6f5cbba845ae9c817f24",
+    "fixtureData": "94e7bc20982c09ea02028786464f5c96ff7aa553f5174e6236a8ac4972113bb6",
+    "fixtureSource": {
+      "library.json": "c8899af3a96c8342391400a1c6ae833f87e3d9408eef2ab1f2f95f6a65c2508a",
+      "model.json": "445ea5dbf52baf960983d492cde68feb145b7fd2dff6395ec5f795f252a4994f",
+      "run.json": "a49cc084940b3f9296d190f16b15e2d90fd5c3af4398413496e21aa1fcce2c92",
+      "signal.json": "17ac974214cac6cafb860152ef5eec44d80eaecdae26109c8c71ba3fb3dc77c0"
+    }
+  },
+  "after": {
+    "source": "/workspace/scratch/stage7-release/extracted",
+    "staticAssets": {
+      "THIRD-PARTY-NOTICES.md": "a7136792bd8d2a04071df4e61bd1b1c910c40d7d7b455d4f0ca242a3fd82fed5",
+      "assets/index-5wt_9EAf.js": "d5baa053fc21cdc0e1a7209456d657b422b42e5b7fe1ed2f96467598cd2ab0d9",
+      "assets/style-Di29dHHt.css": "091279aa82212520f593eb11a0ad72468ed4ea67c4ddcbae67a962dfd0e32336",
+      "data.js": "e5369b296ee699049b5c2e67c7c7b7d223fd895a1dbd6f5cbba845ae9c817f24",
+      "fonts/Geist-Medium.woff2": "ed653645d0ea78ec2aeda9d705158e9c6b323efe507e0ab25cc483ae9182e97d",
+      "fonts/Geist-Regular.woff2": "12e7c80de776bc74044973a26bb96842ca4bfe9e16fc6128fa5c6420e8e1d8fc",
+      "fonts/Geist-SemiBold.woff2": "162dcce19c895344a8eeee8482017d975f8e555d90da21d4343e31e8c9334d79",
+      "fonts/GeistMono-Medium.woff2": "b016f0d4235f40bfb246363f3cad04a90b88fe35b67ce764be9391b5fa57791a",
+      "fonts/GeistMono-Regular.woff2": "67b27e8a75395c074cc23656acf208ccd69e674da4cad2c7d6dfa254272ad7e8",
+      "fonts/OFL-Geist.txt": "055f91395bbf674dc6e1ef4a06ca5bd43d6080eb34dfb53be0831aa950457722",
+      "fonts/OFL-GeistMono.txt": "055f91395bbf674dc6e1ef4a06ca5bd43d6080eb34dfb53be0831aa950457722",
+      "fonts/OFL-SchibstedGrotesk.txt": "851b03806ddbd92890a59a8512a883ff231587f9bef037895efa544a0f250432",
+      "fonts/SchibstedGrotesk-Bold.woff2": "cb3017aa6302a4f3deb7a658d9a26979d6bdf8d7fbfb4fc771bfe6b86a21ccf9",
+      "fonts/SchibstedGrotesk-SemiBold.woff2": "dce16ebaba351bfeea864c53f8336836d79723fda36d16981363451a76b2afa8",
+      "index.html": "4bca67821b56c37eb9288d0605c0ec51bfbee0e5a4fdaaf686a8000046e54d19",
+      "symbol.svg": "36a427efaefa48bb4e232ca501a358484ed751714b6411ee672b45a0f575f1a9"
+    },
+    "placeholderData": "e5369b296ee699049b5c2e67c7c7b7d223fd895a1dbd6f5cbba845ae9c817f24",
+    "fixtureData": "bc97b1ee4d6bc43da80b003b7bc1a34d74c90f40872e4407414f0a2e73bbc655",
+    "fixtureSource": {
+      "library.json": "22a3a3003de84aa32773259e71cc96aa3a831c3e7398f84145ff5cd548eb91cc",
+      "model.json": "b2b14cf3016aef2d6097038519abcf1c900a70cc90260e6c76b384c56b0bf9ab",
+      "run.json": "c42c2cbd3739e1b6d9913e895ebd43d99c8f517bbdc05000c08af6584d32dd6e",
+      "signal.json": "17ac974214cac6cafb860152ef5eec44d80eaecdae26109c8c71ba3fb3dc77c0"
+    }
+  }
+}

@@ -1,0 +1,984 @@
+{
+  "scope": "Actual real-scheduler run with proof.launcher network-denied synthetic adapter; HTTP probe uses copied retained run, read-only synthetic server and stub asset only; no provider or Teams execution.",
+  "run_id": "20261117-191900-01",
+  "workflow_execution": "live-provider",
+  "workflow_run": {
+    "schema_version": "run/2",
+    "run_id": "example-2025-04-30-credit_snapshot-sol-medium",
+    "issuer_id": "example",
+    "issuer_name": "Example Synthetic Group",
+    "as_of": "2025-04-30",
+    "method_version": "deploy-v-r14",
+    "case_kind": "synthetic",
+    "pathway": "credit_snapshot",
+    "requested_modules": [
+      "CP-0",
+      "CP-1",
+      "CP-1A",
+      "CP-DR",
+      "CP-2",
+      "CP-2A",
+      "CP-2D",
+      "CP-2E",
+      "CP-2G",
+      "CP-4",
+      "CP-3C",
+      "CP-3",
+      "CP-5",
+      "CP-6"
+    ]
+  },
+  "identity_matches": true,
+  "artifact_sha256": {
+    "workflow.json": "00e91acb64d2dbf1d3af1c0e5ffe89aa119e079db6681f39716314bf625d0fa6",
+    "identity.json": "bba093a4549949b001ceb18666a65fefa6422fd6125b5e30b9835c65fb6e9542",
+    "live/calls.jsonl": "16e5177263f6a23af689ce64146de603b3be5820355330db53a808ec3a3572bc"
+  },
+  "http": {
+    "path": "/connected/activity/20261117-191900-01",
+    "status": 200,
+    "cache_control": "no-store"
+  },
+  "settled_record_api": {
+    "id": "20261117-191900-01",
+    "issuer_name": "Example Synthetic Group",
+    "as_of": "2025-04-30",
+    "pathway": "credit_snapshot",
+    "status": "finished",
+    "reason": "",
+    "stopped_by": "",
+    "claimed_at": "2026-11-17T19:19:00Z",
+    "started_at": "2026-11-17T19:19:00Z",
+    "ended_at": "2026-11-17T19:19:04Z",
+    "submitted_by": "Proof T",
+    "observed_at": "2026-11-17T19:25:32Z",
+    "approved_summary_limits": [
+      {
+        "id": "run:run-financials-management-claims",
+        "scope": "run",
+        "outcome": "check",
+        "reason": "No filed financial report is recognised among the files, so financials are management claims, not filed statements.",
+        "fix": "Add the filed annual or quarterly report.",
+        "basis": "docs/reuse/selected-methods/skills/cp-0-source-readiness/SKILL.md Source hierarchy: '1 \u2014 controlling/primary filings, executed legal documents and official schedules; 2 \u2014 issuer/agency releases, presentations, certificates and reports;'",
+        "evidence": "per method",
+        "counted": true,
+        "inherited_from": []
+      },
+      {
+        "id": "CP-1:cp1-no-financial-report-recognised",
+        "scope": "CP-1",
+        "outcome": "check",
+        "reason": "No file is recognised as a financial report, earnings release or offering document with financial pages.",
+        "fix": "Add the financial report to the documents.",
+        "basis": "prompts/CP-1.md item 1: 'Preserve every source row's label, sign, unit, quantity type, entity, period and locator' (CP-1 reads statement rows from the sources)",
+        "evidence": "per method",
+        "counted": true,
+        "inherited_from": []
+      },
+      {
+        "id": "CP-4:cp4-declared-executed-none-recognised",
+        "scope": "CP-4",
+        "outcome": "check",
+        "reason": "You said the agreement is executed, but no file is recognised as an executed credit agreement or indenture.",
+        "fix": "Add the executed agreement to the documents and choose it under Legal documents, or leave out CP-4.",
+        "basis": "docs/reuse/selected-methods/skills/cp-4-legal-covenant-interpreter/references/REF_CP-4_STEPS.md line 31: 'Blocked: No executed governing document.'",
+        "evidence": "per method",
+        "counted": true,
+        "inherited_from": []
+      },
+      {
+        "id": "CP-3:cp3-no-quotes-no-talk",
+        "scope": "CP-3",
+        "outcome": "gap",
+        "reason": "No quotes and no price talk were entered, and no quotes file is recognised.",
+        "fix": "Add observed quotes under Observed quotes, or a quotes file.",
+        "basis": "docs/reuse/selected-methods/skills/cp-3-relative-value-security-selection/SKILL.md line 405: 'RV conclusions require current market evidence'",
+        "evidence": "per method",
+        "counted": true,
+        "inherited_from": []
+      }
+    ],
+    "module_outputs": [
+      {
+        "module": "CP-0",
+        "assessment": "readable",
+        "provenance": "new-response",
+        "response_sha256": "b976fb14e22e0116d1502c0d7e5cdebd8aab6bbe33b897de9bb8efb85ef248d0"
+      },
+      {
+        "module": "CP-1",
+        "assessment": "readable",
+        "provenance": "new-response",
+        "response_sha256": "15667af7050fe617da9877d70057f842ee62089dad9b71ad301e0980457af4fa"
+      },
+      {
+        "module": "CP-1A",
+        "assessment": "readable",
+        "provenance": "new-response",
+        "response_sha256": "ac0e22b46fbe61401a26e135d25bb36765054858365340eee4567ec3ece97bfa"
+      },
+      {
+        "module": "CP-DR",
+        "assessment": "readable",
+        "provenance": "new-response",
+        "response_sha256": "0ce6ed73a5f32e3a01e7d46031ab25d7638afed9fa34db2a258979c921e5eed2"
+      },
+      {
+        "module": "CP-4",
+        "assessment": "readable",
+        "provenance": "new-response",
+        "response_sha256": "acf00849b4f8c775f77964d01ca24861994fc57a5b878b1363ff96aa974a1d1a"
+      },
+      {
+        "module": "CP-2",
+        "assessment": "readable",
+        "provenance": "new-response",
+        "response_sha256": "9085a4a605d56176c1d43901cdfbe6687cda3a3e9b34b174e4333fc65780e198"
+      },
+      {
+        "module": "CP-2A",
+        "assessment": "readable",
+        "provenance": "new-response",
+        "response_sha256": "5a5f59302a9ed34fda69eb1be2254fdc9a978af00af16d760c774b7af7b33a6c"
+      },
+      {
+        "module": "CP-2E",
+        "assessment": "readable",
+        "provenance": "new-response",
+        "response_sha256": "a3bd393788879c05545d20fe82f8d9cfc92b900830c21f8ef6cac4c5a51e7dd9"
+      },
+      {
+        "module": "CP-2D",
+        "assessment": "readable",
+        "provenance": "new-response",
+        "response_sha256": "7cdb18c455aeb786a0595ac5a99304ee68d764f442c9f3d9a7e8a052a661158d"
+      },
+      {
+        "module": "CP-2G",
+        "assessment": "readable",
+        "provenance": "new-response",
+        "response_sha256": "03163c141f5b113627e7030bc9cb6322010d0bbf69e24def2bc72d76925ba548"
+      },
+      {
+        "module": "CP-3C",
+        "assessment": "readable",
+        "provenance": "new-response",
+        "response_sha256": "337b6283b5e61ef163e3f05d3e6a2d6d0e0f7417755739f3a9e7cf2fb1446e18"
+      },
+      {
+        "module": "CP-3",
+        "assessment": "readable",
+        "provenance": "new-response",
+        "response_sha256": "fd396f3788340b1a35c08872f22a4e6bd3ea0836d66d505e46f189477197479b"
+      },
+      {
+        "module": "CP-5",
+        "assessment": "readable",
+        "provenance": "new-response",
+        "response_sha256": "8ab1605d1aa9a899287a527c4d54993d87938cdf6d14a473f054a96b4a033a78"
+      },
+      {
+        "module": "CP-6",
+        "assessment": "readable",
+        "provenance": "new-response",
+        "response_sha256": "fc8d5e4452881009a37d582ba7244b574b3d6aaa2c286f2eb7ca79cb9ab5dd79"
+      }
+    ],
+    "library_admission": "listed",
+    "execution": "synthetic",
+    "cap": "25",
+    "spent": "0.00000000",
+    "settled_spent": "0.00000000",
+    "held": "0",
+    "stalled": false,
+    "held_reason": "",
+    "modules": [
+      [
+        "CP-0",
+        "done"
+      ],
+      [
+        "CP-1",
+        "done"
+      ],
+      [
+        "CP-1A",
+        "done"
+      ],
+      [
+        "CP-DR",
+        "done"
+      ],
+      [
+        "CP-4",
+        "done"
+      ],
+      [
+        "CP-2",
+        "done"
+      ],
+      [
+        "CP-2A",
+        "done"
+      ],
+      [
+        "CP-2E",
+        "done"
+      ],
+      [
+        "CP-2D",
+        "done"
+      ],
+      [
+        "CP-2G",
+        "done"
+      ],
+      [
+        "CP-3C",
+        "done"
+      ],
+      [
+        "CP-3",
+        "done"
+      ],
+      [
+        "CP-5",
+        "done"
+      ],
+      [
+        "CP-6",
+        "done"
+      ],
+      [
+        "Report",
+        "done"
+      ]
+    ],
+    "events": [
+      {
+        "kind": "module_started",
+        "at": "2026-11-17T19:19:02Z",
+        "module": "CP-0"
+      },
+      {
+        "kind": "module_accepted",
+        "at": "2026-11-17T19:19:02Z",
+        "module": "CP-0"
+      },
+      {
+        "kind": "module_started",
+        "at": "2026-11-17T19:19:02Z",
+        "module": "CP-1"
+      },
+      {
+        "kind": "module_accepted",
+        "at": "2026-11-17T19:19:02Z",
+        "module": "CP-1"
+      },
+      {
+        "kind": "module_started",
+        "at": "2026-11-17T19:19:02Z",
+        "module": "CP-1A"
+      },
+      {
+        "kind": "module_accepted",
+        "at": "2026-11-17T19:19:02Z",
+        "module": "CP-1A"
+      },
+      {
+        "kind": "module_started",
+        "at": "2026-11-17T19:19:02Z",
+        "module": "CP-DR"
+      },
+      {
+        "kind": "module_accepted",
+        "at": "2026-11-17T19:19:02Z",
+        "module": "CP-DR"
+      },
+      {
+        "kind": "module_started",
+        "at": "2026-11-17T19:19:02Z",
+        "module": "CP-4"
+      },
+      {
+        "kind": "module_accepted",
+        "at": "2026-11-17T19:19:02Z",
+        "module": "CP-4"
+      },
+      {
+        "kind": "module_started",
+        "at": "2026-11-17T19:19:02Z",
+        "module": "CP-2"
+      },
+      {
+        "kind": "module_accepted",
+        "at": "2026-11-17T19:19:02Z",
+        "module": "CP-2"
+      },
+      {
+        "kind": "module_started",
+        "at": "2026-11-17T19:19:02Z",
+        "module": "CP-2A"
+      },
+      {
+        "kind": "module_accepted",
+        "at": "2026-11-17T19:19:02Z",
+        "module": "CP-2A"
+      },
+      {
+        "kind": "module_started",
+        "at": "2026-11-17T19:19:02Z",
+        "module": "CP-2E"
+      },
+      {
+        "kind": "module_accepted",
+        "at": "2026-11-17T19:19:02Z",
+        "module": "CP-2E"
+      },
+      {
+        "kind": "module_started",
+        "at": "2026-11-17T19:19:02Z",
+        "module": "CP-2D"
+      },
+      {
+        "kind": "module_accepted",
+        "at": "2026-11-17T19:19:02Z",
+        "module": "CP-2D"
+      },
+      {
+        "kind": "module_started",
+        "at": "2026-11-17T19:19:02Z",
+        "module": "CP-2G"
+      },
+      {
+        "kind": "module_accepted",
+        "at": "2026-11-17T19:19:02Z",
+        "module": "CP-2G"
+      },
+      {
+        "kind": "module_started",
+        "at": "2026-11-17T19:19:02Z",
+        "module": "CP-3C"
+      },
+      {
+        "kind": "module_accepted",
+        "at": "2026-11-17T19:19:02Z",
+        "module": "CP-3C"
+      },
+      {
+        "kind": "module_started",
+        "at": "2026-11-17T19:19:02Z",
+        "module": "CP-3"
+      },
+      {
+        "kind": "module_accepted",
+        "at": "2026-11-17T19:19:03Z",
+        "module": "CP-3"
+      },
+      {
+        "kind": "module_started",
+        "at": "2026-11-17T19:19:03Z",
+        "module": "CP-5"
+      },
+      {
+        "kind": "module_accepted",
+        "at": "2026-11-17T19:19:03Z",
+        "module": "CP-5"
+      },
+      {
+        "kind": "module_started",
+        "at": "2026-11-17T19:19:03Z",
+        "module": "CP-6"
+      },
+      {
+        "kind": "module_accepted",
+        "at": "2026-11-17T19:19:03Z",
+        "module": "CP-6"
+      },
+      {
+        "kind": "delivery_started",
+        "at": "2026-11-17T19:19:03Z"
+      },
+      {
+        "kind": "delivered",
+        "at": "2026-11-17T19:19:03Z"
+      }
+    ]
+  },
+  "calls": [
+    {
+      "schema_version": "model-call/1",
+      "run_id": "example-2025-04-30-credit_snapshot-sol-medium",
+      "case_id": "example",
+      "pathway": "credit_snapshot",
+      "module_id": "CP-0",
+      "step_id": "markdown-1",
+      "attempt": 0,
+      "call_index": 0,
+      "config_id": "sol-medium",
+      "provider": "openai",
+      "requested_model": "gpt-6.1-sol",
+      "reported_model": "synthetic",
+      "requested_effort": "medium",
+      "invocation_digest": "a721994c39e9e085df8f39d1332560ca86191acecd00c6b8d4660a520268ce7f",
+      "request_id": "synthetic",
+      "http_status": 200,
+      "started_at": "2026-11-17T19:19:02.172487Z",
+      "first_byte_at": null,
+      "finished_at": "2026-11-17T19:19:02.173439Z",
+      "input_tokens": 0,
+      "cached_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "output_tokens": 0,
+      "reasoning_tokens": 0,
+      "reserved_usd": "5.730000",
+      "settled_usd": "0",
+      "cost_status": "computed",
+      "tool_calls": [
+        {
+          "name": "write_handoff",
+          "arguments_sha256": "e2e26ae12d00bc5cec511d4519badfeb2e7222e40f3c8acfc36f7cdf6ca61bac",
+          "result_bytes": null,
+          "refusal_code": null
+        }
+      ],
+      "submit_sha256": null,
+      "error_class": null,
+      "error": null,
+      "compactions": null
+    },
+    {
+      "schema_version": "model-call/1",
+      "run_id": "example-2025-04-30-credit_snapshot-sol-medium",
+      "case_id": "example",
+      "pathway": "credit_snapshot",
+      "module_id": "CP-1",
+      "step_id": "markdown-1",
+      "attempt": 0,
+      "call_index": 0,
+      "config_id": "sol-medium",
+      "provider": "openai",
+      "requested_model": "gpt-6.1-sol",
+      "reported_model": "synthetic",
+      "requested_effort": "medium",
+      "invocation_digest": "9f0acbedcaf27d13546e3fe88fa53d3b0c441077d090719fe212226f610e7d2e",
+      "request_id": "synthetic",
+      "http_status": 200,
+      "started_at": "2026-11-17T19:19:02.222404Z",
+      "first_byte_at": null,
+      "finished_at": "2026-11-17T19:19:02.223504Z",
+      "input_tokens": 0,
+      "cached_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "output_tokens": 0,
+      "reasoning_tokens": 0,
+      "reserved_usd": "5.730000",
+      "settled_usd": "0",
+      "cost_status": "computed",
+      "tool_calls": [
+        {
+          "name": "write_handoff",
+          "arguments_sha256": "02ed48bb832b74655403ab8c260cab442dc86168f366e0a018a261d0f4db8744",
+          "result_bytes": null,
+          "refusal_code": null
+        }
+      ],
+      "submit_sha256": null,
+      "error_class": null,
+      "error": null,
+      "compactions": null
+    },
+    {
+      "schema_version": "model-call/1",
+      "run_id": "example-2025-04-30-credit_snapshot-sol-medium",
+      "case_id": "example",
+      "pathway": "credit_snapshot",
+      "module_id": "CP-1A",
+      "step_id": "markdown-1",
+      "attempt": 0,
+      "call_index": 0,
+      "config_id": "sol-medium",
+      "provider": "openai",
+      "requested_model": "gpt-6.1-sol",
+      "reported_model": "synthetic",
+      "requested_effort": "high",
+      "invocation_digest": "fd0bafd1670b1a2d719a7c9879bb0a0798ac5f5fb3dbb2df598a1ff867eabb0e",
+      "request_id": "synthetic",
+      "http_status": 200,
+      "started_at": "2026-11-17T19:19:02.321552Z",
+      "first_byte_at": null,
+      "finished_at": "2026-11-17T19:19:02.322627Z",
+      "input_tokens": 0,
+      "cached_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "output_tokens": 0,
+      "reasoning_tokens": 0,
+      "reserved_usd": "5.730000",
+      "settled_usd": "0",
+      "cost_status": "computed",
+      "tool_calls": [
+        {
+          "name": "write_handoff",
+          "arguments_sha256": "490ce5646127f1af3ef826f94bc8dce66e6497dc92aa0e6f74247d441303f2d2",
+          "result_bytes": null,
+          "refusal_code": null
+        }
+      ],
+      "submit_sha256": null,
+      "error_class": null,
+      "error": null,
+      "compactions": null
+    },
+    {
+      "schema_version": "model-call/1",
+      "run_id": "example-2025-04-30-credit_snapshot-sol-medium",
+      "case_id": "example",
+      "pathway": "credit_snapshot",
+      "module_id": "CP-DR",
+      "step_id": "markdown-1",
+      "attempt": 0,
+      "call_index": 0,
+      "config_id": "sol-medium",
+      "provider": "openai",
+      "requested_model": "gpt-6.1-sol",
+      "reported_model": "synthetic",
+      "requested_effort": "medium",
+      "invocation_digest": "9aa686f69fc640d253fb859084225e195109208e3a43a90fc21a9743dff8714f",
+      "request_id": "synthetic",
+      "http_status": 200,
+      "started_at": "2026-11-17T19:19:02.419174Z",
+      "first_byte_at": null,
+      "finished_at": "2026-11-17T19:19:02.420170Z",
+      "input_tokens": 0,
+      "cached_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "output_tokens": 0,
+      "reasoning_tokens": 0,
+      "reserved_usd": "5.730000",
+      "settled_usd": "0",
+      "cost_status": "computed",
+      "tool_calls": [
+        {
+          "name": "write_handoff",
+          "arguments_sha256": "d724b85c0de685e911fb335e9a8690e89b1fea09165920fa531372e34ad82d7b",
+          "result_bytes": null,
+          "refusal_code": null
+        }
+      ],
+      "submit_sha256": null,
+      "error_class": null,
+      "error": null,
+      "compactions": null
+    },
+    {
+      "schema_version": "model-call/1",
+      "run_id": "example-2025-04-30-credit_snapshot-sol-medium",
+      "case_id": "example",
+      "pathway": "credit_snapshot",
+      "module_id": "CP-4",
+      "step_id": "markdown-1",
+      "attempt": 0,
+      "call_index": 0,
+      "config_id": "sol-medium",
+      "provider": "openai",
+      "requested_model": "gpt-6.1-sol",
+      "reported_model": "synthetic",
+      "requested_effort": "high",
+      "invocation_digest": "a62339f1b0ac140ad51bfe7b74c6df1c4399c5a2456b35b199646a3da31dea97",
+      "request_id": "synthetic",
+      "http_status": 200,
+      "started_at": "2026-11-17T19:19:02.493889Z",
+      "first_byte_at": null,
+      "finished_at": "2026-11-17T19:19:02.499349Z",
+      "input_tokens": 0,
+      "cached_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "output_tokens": 0,
+      "reasoning_tokens": 0,
+      "reserved_usd": "5.730000",
+      "settled_usd": "0",
+      "cost_status": "computed",
+      "tool_calls": [
+        {
+          "name": "write_handoff",
+          "arguments_sha256": "1ea6f1705723e262d66f6070f93c03f7828ebdd20ccbb10f9400110e15d3ba66",
+          "result_bytes": null,
+          "refusal_code": null
+        }
+      ],
+      "submit_sha256": null,
+      "error_class": null,
+      "error": null,
+      "compactions": null
+    },
+    {
+      "schema_version": "model-call/1",
+      "run_id": "example-2025-04-30-credit_snapshot-sol-medium",
+      "case_id": "example",
+      "pathway": "credit_snapshot",
+      "module_id": "CP-2",
+      "step_id": "markdown-1",
+      "attempt": 0,
+      "call_index": 0,
+      "config_id": "sol-medium",
+      "provider": "openai",
+      "requested_model": "gpt-6.1-sol",
+      "reported_model": "synthetic",
+      "requested_effort": "high",
+      "invocation_digest": "a6666afc850152d76a6fe1129fe59ccba62de7ad42e1f8b6d9695c676d0af973",
+      "request_id": "synthetic",
+      "http_status": 200,
+      "started_at": "2026-11-17T19:19:02.604716Z",
+      "first_byte_at": null,
+      "finished_at": "2026-11-17T19:19:02.605707Z",
+      "input_tokens": 0,
+      "cached_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "output_tokens": 0,
+      "reasoning_tokens": 0,
+      "reserved_usd": "5.730000",
+      "settled_usd": "0",
+      "cost_status": "computed",
+      "tool_calls": [
+        {
+          "name": "write_handoff",
+          "arguments_sha256": "79fccd9020f12aedce1f89dd44af9ce694cfd94b75e95e9237696f4e384037da",
+          "result_bytes": null,
+          "refusal_code": null
+        }
+      ],
+      "submit_sha256": null,
+      "error_class": null,
+      "error": null,
+      "compactions": null
+    },
+    {
+      "schema_version": "model-call/1",
+      "run_id": "example-2025-04-30-credit_snapshot-sol-medium",
+      "case_id": "example",
+      "pathway": "credit_snapshot",
+      "module_id": "CP-2A",
+      "step_id": "markdown-1",
+      "attempt": 0,
+      "call_index": 0,
+      "config_id": "sol-medium",
+      "provider": "openai",
+      "requested_model": "gpt-6.1-sol",
+      "reported_model": "synthetic",
+      "requested_effort": "high",
+      "invocation_digest": "d5a150d26142efdfc57c79cb4866ac4ebc676afea7172a06ede22011abe6c17f",
+      "request_id": "synthetic",
+      "http_status": 200,
+      "started_at": "2026-11-17T19:19:02.659293Z",
+      "first_byte_at": null,
+      "finished_at": "2026-11-17T19:19:02.660319Z",
+      "input_tokens": 0,
+      "cached_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "output_tokens": 0,
+      "reasoning_tokens": 0,
+      "reserved_usd": "5.730000",
+      "settled_usd": "0",
+      "cost_status": "computed",
+      "tool_calls": [
+        {
+          "name": "write_handoff",
+          "arguments_sha256": "4c77c3c05ca69157a1adeb7fd226e70e9ba150fa183d666f562135a30abb3b63",
+          "result_bytes": null,
+          "refusal_code": null
+        }
+      ],
+      "submit_sha256": null,
+      "error_class": null,
+      "error": null,
+      "compactions": null
+    },
+    {
+      "schema_version": "model-call/1",
+      "run_id": "example-2025-04-30-credit_snapshot-sol-medium",
+      "case_id": "example",
+      "pathway": "credit_snapshot",
+      "module_id": "CP-2E",
+      "step_id": "markdown-1",
+      "attempt": 0,
+      "call_index": 0,
+      "config_id": "sol-medium",
+      "provider": "openai",
+      "requested_model": "gpt-6.1-sol",
+      "reported_model": "synthetic",
+      "requested_effort": "medium",
+      "invocation_digest": "eeee62ddee5bab26daa50d2782b48839cdb91764a03ea749156a1c0dca90b386",
+      "request_id": "synthetic",
+      "http_status": 200,
+      "started_at": "2026-11-17T19:19:02.720649Z",
+      "first_byte_at": null,
+      "finished_at": "2026-11-17T19:19:02.722056Z",
+      "input_tokens": 0,
+      "cached_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "output_tokens": 0,
+      "reasoning_tokens": 0,
+      "reserved_usd": "5.730000",
+      "settled_usd": "0",
+      "cost_status": "computed",
+      "tool_calls": [
+        {
+          "name": "write_handoff",
+          "arguments_sha256": "ec7b56f30b94b9b205f1760649d18ad3ffbdb398fd78d45b50c9676d352b23b3",
+          "result_bytes": null,
+          "refusal_code": null
+        }
+      ],
+      "submit_sha256": null,
+      "error_class": null,
+      "error": null,
+      "compactions": null
+    },
+    {
+      "schema_version": "model-call/1",
+      "run_id": "example-2025-04-30-credit_snapshot-sol-medium",
+      "case_id": "example",
+      "pathway": "credit_snapshot",
+      "module_id": "CP-2D",
+      "step_id": "markdown-1",
+      "attempt": 0,
+      "call_index": 0,
+      "config_id": "sol-medium",
+      "provider": "openai",
+      "requested_model": "gpt-6.1-sol",
+      "reported_model": "synthetic",
+      "requested_effort": "medium",
+      "invocation_digest": "a5acd89209bd5fd10e82a656609a18b0f4366b8e35d0a72086cdc64685ef221e",
+      "request_id": "synthetic",
+      "http_status": 200,
+      "started_at": "2026-11-17T19:19:02.832597Z",
+      "first_byte_at": null,
+      "finished_at": "2026-11-17T19:19:02.833596Z",
+      "input_tokens": 0,
+      "cached_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "output_tokens": 0,
+      "reasoning_tokens": 0,
+      "reserved_usd": "5.730000",
+      "settled_usd": "0",
+      "cost_status": "computed",
+      "tool_calls": [
+        {
+          "name": "write_handoff",
+          "arguments_sha256": "b21779f8e8bbf2ad98dbc39086089b6aa0882e5c929d177542d1738f289719c8",
+          "result_bytes": null,
+          "refusal_code": null
+        }
+      ],
+      "submit_sha256": null,
+      "error_class": null,
+      "error": null,
+      "compactions": null
+    },
+    {
+      "schema_version": "model-call/1",
+      "run_id": "example-2025-04-30-credit_snapshot-sol-medium",
+      "case_id": "example",
+      "pathway": "credit_snapshot",
+      "module_id": "CP-2G",
+      "step_id": "markdown-1",
+      "attempt": 0,
+      "call_index": 0,
+      "config_id": "sol-medium",
+      "provider": "openai",
+      "requested_model": "gpt-6.1-sol",
+      "reported_model": "synthetic",
+      "requested_effort": "medium",
+      "invocation_digest": "0f9a920b50344c329b9373597c155e57ffdb97f369c7f05dc499d7e1ea53cb1b",
+      "request_id": "synthetic",
+      "http_status": 200,
+      "started_at": "2026-11-17T19:19:02.886799Z",
+      "first_byte_at": null,
+      "finished_at": "2026-11-17T19:19:02.888718Z",
+      "input_tokens": 0,
+      "cached_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "output_tokens": 0,
+      "reasoning_tokens": 0,
+      "reserved_usd": "5.730000",
+      "settled_usd": "0",
+      "cost_status": "computed",
+      "tool_calls": [
+        {
+          "name": "write_handoff",
+          "arguments_sha256": "38f891ee9c4bb346a3f8f43d75cc920f2f98fc2d8750cebf11b9c15d6fbb3e64",
+          "result_bytes": null,
+          "refusal_code": null
+        }
+      ],
+      "submit_sha256": null,
+      "error_class": null,
+      "error": null,
+      "compactions": null
+    },
+    {
+      "schema_version": "model-call/1",
+      "run_id": "example-2025-04-30-credit_snapshot-sol-medium",
+      "case_id": "example",
+      "pathway": "credit_snapshot",
+      "module_id": "CP-3C",
+      "step_id": "markdown-1",
+      "attempt": 0,
+      "call_index": 0,
+      "config_id": "sol-medium",
+      "provider": "openai",
+      "requested_model": "gpt-6.1-sol",
+      "reported_model": "synthetic",
+      "requested_effort": "high",
+      "invocation_digest": "e36543b478e8ce2b48198dc9e02555fd1c70a20bfce913947f25b9fb57bfa1e3",
+      "request_id": "synthetic",
+      "http_status": 200,
+      "started_at": "2026-11-17T19:19:02.948489Z",
+      "first_byte_at": null,
+      "finished_at": "2026-11-17T19:19:02.949659Z",
+      "input_tokens": 0,
+      "cached_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "output_tokens": 0,
+      "reasoning_tokens": 0,
+      "reserved_usd": "5.730000",
+      "settled_usd": "0",
+      "cost_status": "computed",
+      "tool_calls": [
+        {
+          "name": "write_handoff",
+          "arguments_sha256": "6ce94e695de29956928e3bb8ebf86a63f7c0ed743a5ddf6a487a57decfc768fd",
+          "result_bytes": null,
+          "refusal_code": null
+        }
+      ],
+      "submit_sha256": null,
+      "error_class": null,
+      "error": null,
+      "compactions": null
+    },
+    {
+      "schema_version": "model-call/1",
+      "run_id": "example-2025-04-30-credit_snapshot-sol-medium",
+      "case_id": "example",
+      "pathway": "credit_snapshot",
+      "module_id": "CP-3",
+      "step_id": "markdown-1",
+      "attempt": 0,
+      "call_index": 0,
+      "config_id": "sol-medium",
+      "provider": "openai",
+      "requested_model": "gpt-6.1-sol",
+      "reported_model": "synthetic",
+      "requested_effort": "high",
+      "invocation_digest": "7f9828c06fd537c1f1610e5c3b7fdd2d764d3a171087424cf0b45b2f029a158f",
+      "request_id": "synthetic",
+      "http_status": 200,
+      "started_at": "2026-11-17T19:19:03.036329Z",
+      "first_byte_at": null,
+      "finished_at": "2026-11-17T19:19:03.037981Z",
+      "input_tokens": 0,
+      "cached_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "output_tokens": 0,
+      "reasoning_tokens": 0,
+      "reserved_usd": "5.730000",
+      "settled_usd": "0",
+      "cost_status": "computed",
+      "tool_calls": [
+        {
+          "name": "write_handoff",
+          "arguments_sha256": "679923c5e96c8d36661cf4dca2e45c94d1dd6f12d447963d24c04d789bbf96c7",
+          "result_bytes": null,
+          "refusal_code": null
+        }
+      ],
+      "submit_sha256": null,
+      "error_class": null,
+      "error": null,
+      "compactions": null
+    },
+    {
+      "schema_version": "model-call/1",
+      "run_id": "example-2025-04-30-credit_snapshot-sol-medium",
+      "case_id": "example",
+      "pathway": "credit_snapshot",
+      "module_id": "CP-5",
+      "step_id": "markdown-1",
+      "attempt": 0,
+      "call_index": 0,
+      "config_id": "sol-medium",
+      "provider": "openai",
+      "requested_model": "gpt-6.1-sol",
+      "reported_model": "synthetic",
+      "requested_effort": "medium",
+      "invocation_digest": "c94a61c07b894d0db5a36d92cead606831125492678bf739ba1c35d2656741f9",
+      "request_id": "synthetic",
+      "http_status": 200,
+      "started_at": "2026-11-17T19:19:03.153767Z",
+      "first_byte_at": null,
+      "finished_at": "2026-11-17T19:19:03.154915Z",
+      "input_tokens": 0,
+      "cached_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "output_tokens": 0,
+      "reasoning_tokens": 0,
+      "reserved_usd": "5.730000",
+      "settled_usd": "0",
+      "cost_status": "computed",
+      "tool_calls": [
+        {
+          "name": "write_handoff",
+          "arguments_sha256": "5b0f3e82603360770b1d1d7d45acbd835efaa16f82e92aa610e5b04249bfa5e8",
+          "result_bytes": null,
+          "refusal_code": null
+        }
+      ],
+      "submit_sha256": null,
+      "error_class": null,
+      "error": null,
+      "compactions": null
+    },
+    {
+      "schema_version": "model-call/1",
+      "run_id": "example-2025-04-30-credit_snapshot-sol-medium",
+      "case_id": "example",
+      "pathway": "credit_snapshot",
+      "module_id": "CP-6",
+      "step_id": "markdown-1",
+      "attempt": 0,
+      "call_index": 0,
+      "config_id": "sol-medium",
+      "provider": "openai",
+      "requested_model": "gpt-6.1-sol",
+      "reported_model": "synthetic",
+      "requested_effort": "high",
+      "invocation_digest": "9daebe754ac0cedbe3697205aae82b8227abc521394ae6dc82db99b294074bdd",
+      "request_id": "synthetic",
+      "http_status": 200,
+      "started_at": "2026-11-17T19:19:03.213668Z",
+      "first_byte_at": null,
+      "finished_at": "2026-11-17T19:19:03.214849Z",
+      "input_tokens": 0,
+      "cached_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "output_tokens": 0,
+      "reasoning_tokens": 0,
+      "reserved_usd": "5.730000",
+      "settled_usd": "0",
+      "cost_status": "computed",
+      "tool_calls": [
+        {
+          "name": "write_handoff",
+          "arguments_sha256": "bf598871836594603d87a98ab72eda71b258332e8510df37fab6c4f0c1a335bb",
+          "result_bytes": null,
+          "refusal_code": null
+        }
+      ],
+      "submit_sha256": null,
+      "error_class": null,
+      "error": null,
+      "compactions": null
+    }
+  ]
+}

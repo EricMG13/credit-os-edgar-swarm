@@ -86,7 +86,9 @@ describe("Model page: the two cases", () => {
   it("draws the choice line and two cards, the first chosen", () => {
     renderAt(fixtureSlice());
     expect(
-      screen.getByText("Choose a case: the forecast columns and every chart below follow it."),
+      screen.getByText(
+        "The forecast columns and cash flow bridges follow the chosen case. The other charts show both cases or the balance sheet date.",
+      ),
     ).toBeInTheDocument();
     const group = screen.getByRole("radiogroup", { name: "Case" });
     const radios = within(group).getAllByRole("radio");
@@ -131,10 +133,12 @@ describe("Model page: the two cases", () => {
       event.preventDefault();
     });
     fireEvent.click(link);
-    expect(screen.getByRole("radio", { name: "Base case" })).toBeChecked();
+    // The press opens the trace drawer, which hides the page behind it from the accessibility tree.
+    const radio = (name: string) => screen.getByRole("radio", { name, hidden: true });
+    expect(radio("Base case")).toBeChecked();
     fireEvent.click(second.querySelector("label") as HTMLElement);
-    expect(screen.getByRole("radio", { name: "Downside case" })).toBeChecked();
-    expect(screen.getByRole("radio", { name: "Base case" })).not.toBeChecked();
+    expect(radio("Downside case")).toBeChecked();
+    expect(radio("Base case")).not.toBeChecked();
   });
 
   it("draws a case's note under its card only when it has one", () => {
@@ -158,7 +162,7 @@ describe("Model page: the statements", () => {
   it("draws the heading line, the Figures and Bars choice, four tabs and the basis line", () => {
     renderAt(fixtureSlice());
     expect(
-      screen.getByText("USD millions unless a unit is shown. Fiscal years end 30 September."),
+      screen.getByText("US$m unless a unit is shown. Fiscal years end 30 September."),
     ).toBeInTheDocument();
     expect(
       screen.getByText(
@@ -521,13 +525,16 @@ describe("Model page: the statements", () => {
     expect(screen.getByText("Not found for this run")).toBeInTheDocument();
   });
 
-  it("names the failing path when the statements are not readable", () => {
+  it("draws the plain notice, not the failing path, when the statements are not readable", () => {
     const { slice, run } = draft();
     must(must(run.statements.statements[0]).rows[0]).cells[2] = { kind: "figure", text: "7,940" };
     renderAt(slice);
     expect(screen.getByText("This part of the library could not be read")).toBeInTheDocument();
     expect(
-      screen.getByText("runs[0].statements.statements[0].rows[0].cells[2].pos: missing"),
+      screen.getByText(/^The financial model for this run could not be shown/),
     ).toBeInTheDocument();
+    expect(
+      screen.queryByText("runs[0].statements.statements[0].rows[0].cells[2].pos: missing"),
+    ).toBeNull();
   });
 });

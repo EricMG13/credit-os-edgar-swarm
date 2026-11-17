@@ -124,8 +124,8 @@ it("keeps an unlocated price in its card without using it in the comparison", ()
 
 // docs/rulings/2026-11-16-reporting-currency-from-sources.md: the quotes stay US market quotes.
 it.each([
-  ["GBPm", "Market levels are US market quotes in US dollars; this run reports in £m."],
-  ["CHFm", "Market levels are US market quotes in US dollars; this run reports in CHF m."],
+  ["GBPm", "Market levels are US market quotes in US dollars; this run reports in GBPm."],
+  ["CHFm", "Market levels are US market quotes in US dollars; this run reports in CHFm."],
 ])("notes on a %s run that its market levels are US market quotes", (runUnit, text) => {
   const view = securityView(dataset("1 Oct 2026", [basis("2026-10-01")]), "2026-10-02");
   if (!view) throw new Error("missing security review");
@@ -166,10 +166,22 @@ it.each(["GBP millions", "CHF millions", "EUR millions"])(
       screen.getByRole("figure", { name: "Last-trade prices and yields" }),
     ).toBeInTheDocument();
     expect(
-      screen.queryByText("The handoff does not supply a pair of comparable last trades."),
+      screen.queryByText("No pair of comparable last trades is supplied for this run."),
     ).toBeNull();
   },
 );
+
+it("says in the reader's words that no pair of comparable last trades is supplied", () => {
+  const view = securityView(
+    dataset("1 Oct 2026", [basis("2026-10-01", "GBP thousands")]),
+    "2026-10-02",
+  );
+  if (!view) throw new Error("missing security review");
+  render(<Securities data={view} href={(line) => `#evidence/5-${String(line)}`} />);
+  const note = screen.getByText("No pair of comparable last trades is supplied for this run.");
+  expect(note).toHaveAttribute("role", "note");
+  expect(document.body.textContent).not.toMatch(/handoff/i);
+});
 
 it.each(["GBP thousands", "£ millions", "GBPm", "gbp millions", "GBP millions and EUR millions"])(
   "withholds the price chart when the amounts are stated as %s",

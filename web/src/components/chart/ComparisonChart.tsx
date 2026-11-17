@@ -169,7 +169,7 @@ export function ComparisonChart({
                 <div key={p.measure} data-panel="" className="flex min-w-0 flex-col gap-2.5">
                   <Panel className="text-small font-medium text-text-secondary">{p.measure}</Panel>
                   <div
-                    className={`grid items-center gap-x-3 gap-y-2.5 text-small ${p.texts.some((text) => (text?.length ?? 0) > 12) ? "grid-cols-[72px_minmax(0,1fr)_minmax(56px,min(33%,9rem))]" : "grid-cols-[72px_minmax(0,1fr)_56px]"}`}
+                    className={`grid items-center gap-x-3 gap-y-2.5 text-small ${p.texts.some((text) => (text?.length ?? 0) > 12) ? "grid-cols-[72px_minmax(0,1fr)_minmax(56px,min(33%,9rem))]" : "grid-cols-[72px_minmax(0,1fr)_minmax(56px,max-content)]"}`}
                   >
                     {cases.map((c, i) => (
                       <Row

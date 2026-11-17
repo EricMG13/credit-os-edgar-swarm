@@ -1,11 +1,38 @@
 import { Button } from "@/components/base/buttons/button";
 import { ArrowRight } from "@untitledui/icons";
 import { heading } from "../layout";
-import { blocked, evidencePath, type OutputEntry } from "../publishedReport";
+import {
+  blocked,
+  containsReference,
+  evidencePath,
+  type OutputEntry,
+  readerText,
+} from "../publishedReport";
 import type { buildReportView } from "../reportView";
 import { LegacyVisuals } from "../visuals";
 
 const CHART_PREFIX = "Chart data: ";
+
+// A page citation: "p.12", "p 12", "(p12)", "pp. 12-14", "pg. 12", "page 12", "pages 12 to 14",
+// also after a year ("2025 page 83"). Not a page: a "pp" after a number is percentage points
+// ("fell 2 pp. 3", "two pp. 3"); a "p" inside a word or after "&", "." or "-" ("app. 3", "S&P. 3",
+// "p.p. 3", "one-page"); a four-digit number is a year ("front page 2025").
+const PAGE_CITATION =
+  /(?<![\w&.-])(?:p|pg|(?<!(?:\d|\b(?:one|two|three|four|five|six|seven|eight|nine|ten))\s*)pp|pages?)\.?\s*\d{1,3}(?!\d)/i;
+
+const citesSource = (text: string) => PAGE_CITATION.test(text) || containsReference(text);
+
+/**
+ * A gap as the page draws it. A reason that cites a page or holds another source reference is held
+ * back as "See Evidence." (L16): the gap panel still states the figure is missing, and the figure's
+ * trace control reaches the reason unchanged. Any other reason is drawn whole, with a module code
+ * named as the module.
+ */
+function drawnGap(figure: Record<string, unknown>) {
+  const { gap } = figure;
+  if (typeof gap !== "string") return figure;
+  return { ...figure, gap: citesSource(gap) ? "See Evidence." : readerText(gap) };
+}
 
 function returnedCharts(entry: OutputEntry, coveredLines: Set<number>) {
   const problems = new Set(entry.output.issue?.split("; "));
@@ -19,7 +46,7 @@ function returnedCharts(entry: OutputEntry, coveredLines: Set<number>) {
       {
         title: name.charAt(0).toUpperCase() + name.slice(1),
         table: block.line,
-        gap: "Sent back by the build.",
+        gap: "The chart data did not fit the required table form, so no chart is drawn.",
       },
     ];
   });
@@ -37,12 +64,19 @@ function chartOutput(entry: OutputEntry) {
       ...chartGaps,
       ...returnedCharts(entry, coveredLines),
       ...(withheld
-        ? charts.map((chart) => ({
-            ...chart,
-            gap: summary?.limitation || "Module not assessable.",
-          }))
+        ? charts.map((chart) =>
+            // A held-back limitation is reached through the figure's trace control, so that control
+            // opens the limitation's own line rather than the chart's data table.
+            summary?.limitation
+              ? {
+                  ...chart,
+                  gap: summary.limitation,
+                  ...(citesSource(summary.limitation) && { table: summary.line }),
+                }
+              : { ...chart, gap: "Module not assessable." },
+          )
         : []),
-    ],
+    ].map(drawnGap),
   };
 }
 

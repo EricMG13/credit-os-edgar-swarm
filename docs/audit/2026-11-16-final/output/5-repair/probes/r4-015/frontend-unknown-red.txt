@@ -1,0 +1,32 @@
+
+ RUN  v4.1.12 /workspace/audit-synthetic-classification/web
+
+ ❯ src/pages/connected/report/Record.finalAudit.test.tsx (11 tests | 2 failed) 442ms
+   × keeps settled unknown execution (null) distinct from the synthetic service mode 13ms
+   × keeps settled unknown execution (undefined) distinct from the synthetic service mode 10ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/pages/connected/report/Record.finalAudit.test.tsx > keeps settled unknown execution (null) distinct from the synthetic service mode
+ FAIL  src/pages/connected/report/Record.finalAudit.test.tsx > keeps settled unknown execution (undefined) distinct from the synthetic service mode
+Error: expect(element).toHaveTextContent()
+
+Expected element to have text content:
+  Unavailable
+Received:
+  Run typeSynthetic test
+ ❯ src/pages/connected/report/Record.finalAudit.test.tsx:81:56
+     79|     render(<ReportRecord run={run} entries={[]} mode="synthetic" />);
+     80|     await screen.findByText("Original execution provenance is not reco…
+     81|     expect(screen.getByText("Run type").parentElement).toHaveTextConte…
+       |                                                        ^
+     82|     expect(screen.queryByText("Synthetic test")).toBeNull();
+     83|     const module = screen.getByText("Liquidity", { exact: true }).clos…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 9 passed (11)
+   Start at  19:25:19
+   Duration  2.49s (transform 435ms, setup 103ms, import 1.27s, tests 442ms, environment 489ms)

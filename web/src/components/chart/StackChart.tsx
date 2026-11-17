@@ -16,9 +16,12 @@ import { assignSeries, type SeriesStyle } from "./series";
 
 export interface StackPart {
   name: string;
-  /** Position only: the segment's length is its value over the row's total. */
-  value: number;
-  /** The exact amount, as drawn. */
+  /**
+   * Position only: the segment's length is its value over the row's total. A part of zero, or of
+   * null (the source states no balance), is a legend row and draws no segment.
+   */
+  value: number | null;
+  /** The exact amount, as drawn; for a null value, the source's own words. */
   text: string;
   /** The exact share, as drawn; given for every part or for none. */
   share?: string;
@@ -48,14 +51,19 @@ function keyOf(i: number): string {
   return `s${String(i)}`;
 }
 
+/** A part with a balance above zero draws a segment and takes a swatch; any other is a legend row. */
+function isDrawn(part: StackPart): part is StackPart & { value: number } {
+  return part.value !== null && part.value > 0;
+}
+
 function check({ parts, table }: Pick<StackChartProps, "parts" | "table">) {
   if (parts.length === 0) throw new Error("a stack needs at least one part");
   const repeated = parts.find((p, i) => parts.findIndex((o) => o.name === p.name) !== i);
   if (repeated !== undefined)
     throw new Error(`part names must be distinct: "${repeated.name}" repeats`);
-  const bad = parts.find((p) => !(p.value > 0));
+  const bad = parts.find((p) => p.value !== null && !(p.value >= 0));
   if (bad !== undefined) {
-    throw new Error(`part "${bad.name}": a segment's value must be more than zero`);
+    throw new Error(`part "${bad.name}": a value must be zero or more`);
   }
   const shared = parts.filter((p) => p.share !== undefined).length;
   if (shared !== 0 && shared !== parts.length) {
@@ -130,7 +138,11 @@ function StackTooltip({ active, parts }: TooltipContentProps & { parts: StackPar
   );
 }
 
-/** Rank order down the rows; the amount in medium weight, the share in the tertiary text colour. */
+/**
+ * Rank order down the rows; the amount in medium weight, the share in the tertiary text colour. A
+ * part that draws no segment has no swatch, and a balance the source does not state shows the
+ * source's words in the tertiary text colour.
+ */
 function RankedLegend({ parts, styles }: { parts: StackPart[]; styles: Map<string, SeriesStyle> }) {
   const share = parts.some((p) => p.share !== undefined);
   return (
@@ -140,11 +152,19 @@ function RankedLegend({ parts, styles }: { parts: StackPart[]; styles: Map<strin
     >
       {parts.map((p) => (
         <li key={p.name} className="col-span-full grid grid-cols-subgrid items-center">
-          <svg width="12" height="12" aria-hidden="true">
-            <rect width="12" height="12" rx="2" fill={styles.get(p.name)?.color} />
-          </svg>
+          {isDrawn(p) ? (
+            <svg width="12" height="12" aria-hidden="true">
+              <rect width="12" height="12" rx="2" fill={styles.get(p.name)?.color} />
+            </svg>
+          ) : (
+            <span aria-hidden="true" className="size-3" />
+          )}
           <span className="text-text-primary">{p.name}</span>
-          <b className="text-right font-medium tabular-nums text-text-primary">{p.text}</b>
+          <b
+            className={`text-right font-medium tabular-nums ${p.value === null ? "text-text-tertiary" : "text-text-primary"}`}
+          >
+            {p.text}
+          </b>
           {p.share === undefined ? null : (
             <b className="text-right font-medium tabular-nums text-text-tertiary">{p.share}</b>
           )}
@@ -156,7 +176,12 @@ function RankedLegend({ parts, styles }: { parts: StackPart[]; styles: Map<strin
 
 function Chart({ title, parts }: Pick<StackChartProps, "title" | "parts">) {
   const styles = assignSeries(parts.map((p) => p.name));
-  const row = { row: title, ...Object.fromEntries(parts.map((p, i) => [keyOf(i), p.value])) };
+  const row = {
+    row: title,
+    ...Object.fromEntries(parts.flatMap((p, i) => (isDrawn(p) ? [[keyOf(i), p.value]] : []))),
+  };
+  // The rounded end belongs to the last segment drawn, wherever the parts without one sit.
+  const end = parts.reduce((last, p, i) => (isDrawn(p) ? i : last), -1);
   return (
     <div className="flex flex-col gap-6 [&_.recharts-surface:focus-visible]:outline-2 [&_.recharts-surface:focus-visible]:outline-solid [&_.recharts-surface:focus-visible]:outline-offset-2 [&_.recharts-surface:focus-visible]:outline-focus">
       <ResponsiveContainer width="100%" height={ROW_HEIGHT}>
@@ -174,6 +199,7 @@ function Chart({ title, parts }: Pick<StackChartProps, "title" | "parts">) {
             content={(props) => <StackTooltip {...props} parts={parts} />}
           />
           {parts.map((p, i) => {
+            if (!isDrawn(p)) return null;
             const style = styles.get(p.name);
             if (style === undefined) throw new Error(`no style for part "${p.name}"`);
             return (
@@ -186,12 +212,7 @@ function Chart({ title, parts }: Pick<StackChartProps, "title" | "parts">) {
                 barSize={BAR}
                 isAnimationActive={false}
                 shape={(shape: BarShapeProps) => (
-                  <Segment
-                    shape={shape}
-                    style={style}
-                    name={p.name}
-                    last={i === parts.length - 1}
-                  />
+                  <Segment shape={shape} style={style} name={p.name} last={i === end} />
                 )}
               />
             );
@@ -204,26 +225,13 @@ function Chart({ title, parts }: Pick<StackChartProps, "title" | "parts">) {
 }
 
 /** One bar split into ranked parts, such as debt by instrument. */
-export function StackChart({
-  title,
-  as,
-  note,
-  subtitle,
-  actions,
-  parts,
-  table,
-  detailTable,
-}: StackChartProps) {
+export function StackChart({ parts, table, detailTable, ...frame }: StackChartProps) {
   check({ parts, table });
   return (
     <ChartWithTable
-      title={title}
-      as={as}
-      note={note}
-      subtitle={subtitle}
-      actions={actions}
+      {...frame}
       table={detailTable ?? table}
-      chart={<Chart title={title} parts={parts} />}
+      chart={<Chart title={frame.title} parts={parts} />}
     />
   );
 }

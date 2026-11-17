@@ -1,0 +1,49 @@
+
+> credit-os-web@0.0.0 proof:connected
+> node scripts/connected-proof.mjs
+
+Browser proof artifacts: /workspace/audit-proof-alignment/proof-artifacts/run-5XxyfZ
+overview mobile: 6 headline cards fit at 375px
+
+✖ Google Chrome uploads, submits and opens a finished legacy report (41407.60672ms)
+overview mobile: 6 headline cards fit at 375px
+
+✖ Microsoft Edge uploads, submits and opens a finished legacy report (35461.721179ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 0
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 76897.807661
+
+✖ failing tests:
+
+test at scripts/connected-proof.mjs:1551:3
+✖ Google Chrome uploads, submits and opens a finished legacy report (41407.60672ms)
+  locator.waitFor: Timeout 15000ms exceeded.
+  Call log:
+  [2m  - waiting for locator('main').getByRole('region', { name: 'Instrument decisions', exact: true }).getByRole('figure', { name: 'Last-trade prices and yields', exact: true }).getByText('US$88.12', { exact: true }) to be visible[22m
+
+      at checkSecurities (/workspace/audit-proof-alignment/web/scripts/connected-proof.mjs:929:55)
+      at async checkCharts (/workspace/audit-proof-alignment/web/scripts/connected-proof.mjs:953:3)
+      at async checkBrowserRun (/workspace/audit-proof-alignment/web/scripts/connected-proof.mjs:1431:3)
+      at async TestContext.<anonymous> (/workspace/audit-proof-alignment/web/scripts/connected-proof.mjs:1585:18) {
+    log: [ "  - waiting for locator('main').getByRole('region', { name: 'Instrument decisions', exact: true }).getByRole('figure', { name: 'Last-trade prices and yields', exact: true }).getByText('US$88.12', { exact: true }) to be visible" ],
+    name: 'TimeoutError'
+  }
+
+test at scripts/connected-proof.mjs:1551:3
+✖ Microsoft Edge uploads, submits and opens a finished legacy report (35461.721179ms)
+  locator.waitFor: Timeout 15000ms exceeded.
+  Call log:
+  [2m  - waiting for locator('main').getByRole('region', { name: 'Instrument decisions', exact: true }).getByRole('figure', { name: 'Last-trade prices and yields', exact: true }).getByText('US$88.12', { exact: true }) to be visible[22m
+
+      at checkSecurities (/workspace/audit-proof-alignment/web/scripts/connected-proof.mjs:929:55)
+      at async checkCharts (/workspace/audit-proof-alignment/web/scripts/connected-proof.mjs:953:3)
+      at async checkBrowserRun (/workspace/audit-proof-alignment/web/scripts/connected-proof.mjs:1431:3)
+      at async TestContext.<anonymous> (/workspace/audit-proof-alignment/web/scripts/connected-proof.mjs:1585:18) {
+    log: [ "  - waiting for locator('main').getByRole('region', { name: 'Instrument decisions', exact: true }).getByRole('figure', { name: 'Last-trade prices and yields', exact: true }).getByText('US$88.12', { exact: true }) to be visible" ],
+    name: 'TimeoutError'
+  }

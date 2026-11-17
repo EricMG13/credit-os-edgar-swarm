@@ -1,0 +1,51 @@
+
+> credit-os-web@0.0.0 proof:connected
+> node scripts/connected-proof.mjs
+
+Browser proof artifacts: /workspace/audit-proof-alignment/proof-artifacts/run-vq0vlS
+overview mobile: 6 headline cards fit at 375px
+
+✖ Google Chrome uploads, submits and opens a finished legacy report (54249.620115ms)
+overview mobile: 6 headline cards fit at 375px
+
+✖ Microsoft Edge uploads, submits and opens a finished legacy report (46551.946804ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 0
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 100897.78376
+
+✖ failing tests:
+
+test at scripts/connected-proof.mjs:1578:3
+✖ Google Chrome uploads, submits and opens a finished legacy report (54249.620115ms)
+  locator.waitFor: Timeout 15000ms exceeded.
+  Call log:
+  [2m  - waiting for locator('main').getByRole('columnheader', { name: 'Adapter status', exact: true }) to be visible[22m
+
+      at checkRecord (/workspace/audit-proof-alignment/web/scripts/connected-proof.mjs:557:83)
+      at async checkReportEvidence (/workspace/audit-proof-alignment/web/scripts/connected-proof.mjs:1287:3)
+      at async checkCharts (/workspace/audit-proof-alignment/web/scripts/connected-proof.mjs:978:3)
+      at async checkBrowserRun (/workspace/audit-proof-alignment/web/scripts/connected-proof.mjs:1458:3)
+      at async TestContext.<anonymous> (/workspace/audit-proof-alignment/web/scripts/connected-proof.mjs:1613:18) {
+    log: [ "  - waiting for locator('main').getByRole('columnheader', { name: 'Adapter status', exact: true }) to be visible" ],
+    name: 'TimeoutError'
+  }
+
+test at scripts/connected-proof.mjs:1578:3
+✖ Microsoft Edge uploads, submits and opens a finished legacy report (46551.946804ms)
+  locator.waitFor: Timeout 15000ms exceeded.
+  Call log:
+  [2m  - waiting for locator('main').getByRole('columnheader', { name: 'Adapter status', exact: true }) to be visible[22m
+
+      at checkRecord (/workspace/audit-proof-alignment/web/scripts/connected-proof.mjs:557:83)
+      at async checkReportEvidence (/workspace/audit-proof-alignment/web/scripts/connected-proof.mjs:1287:3)
+      at async checkCharts (/workspace/audit-proof-alignment/web/scripts/connected-proof.mjs:978:3)
+      at async checkBrowserRun (/workspace/audit-proof-alignment/web/scripts/connected-proof.mjs:1458:3)
+      at async TestContext.<anonymous> (/workspace/audit-proof-alignment/web/scripts/connected-proof.mjs:1613:18) {
+    log: [ "  - waiting for locator('main').getByRole('columnheader', { name: 'Adapter status', exact: true }) to be visible" ],
+    name: 'TimeoutError'
+  }

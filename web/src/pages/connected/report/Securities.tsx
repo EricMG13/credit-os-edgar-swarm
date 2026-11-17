@@ -271,7 +271,7 @@ export function Securities({
           }
         />
       ) : records.length ? (
-        <p role="note">The handoff does not supply a pair of comparable last trades.</p>
+        <p role="note">No pair of comparable last trades is supplied for this run.</p>
       ) : null}
       {outcomes && (
         <details className="min-w-0">

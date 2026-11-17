@@ -19,8 +19,10 @@ describe("Documents, no documents (frame 01)", () => {
       ),
     ).toBeVisible();
     expect(screen.getByText(/Click to upload/)).toBeVisible();
-    expect(screen.getByText("or drag and drop")).toBeInTheDocument();
-    expect(screen.getByText("PDF, DOCX, HTML or XLSX, up to 50 MB each")).toBeVisible();
+    // The zone is inert, so it does not invite a drop (S6-027), and it names no file types (S6-025).
+    expect(screen.queryByText(/drag and drop/)).toBeNull();
+    expect(screen.getByText("Up to 50 MB per file")).toBeVisible();
+    expect(screen.queryByText(/PDF, DOCX/)).toBeNull();
   });
 
   it("draws the empty state with a disabled action", () => {
@@ -105,7 +107,13 @@ describe("Documents, with files (frame 02)", () => {
     expect(screen.getAllByRole("button", { name: "Replace file" })).toHaveLength(1);
     const bad = within(rows()[4] as HTMLElement);
     expect(bad.getByRole("button", { name: "Replace file" })).toBeDisabled();
-    expect(bad.getByRole("button", { name: "Remove" })).toBeDisabled();
+    expect(bad.queryByRole("button", { name: "Remove" })).toBeNull();
+    // The text button names its file, so two removers do not share one generic name (S6-029).
+    const text = bad.getByRole("button", {
+      name: "Remove file Investor presentation, scanned.pdf",
+    });
+    expect(text).toBeDisabled();
+    expect(text).toHaveTextContent("Remove");
   });
 
   it("names each remove control by its file, disabled, with the reason as description", () => {

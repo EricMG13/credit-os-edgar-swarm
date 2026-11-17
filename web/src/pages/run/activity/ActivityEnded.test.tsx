@@ -24,18 +24,18 @@ const CASES: Case[] = [
     word: "Failed",
     role: "alert",
     title: "The run failed",
-    text: "Financial analysis stopped after three attempts because the model service returned no usable answer. Two modules finished and are kept. Starting again goes through Start and asks before it spends.",
-    action: ["Review and start again", "#/run/start/start"],
-    alt: ["Open what finished", "#/"],
+    text: "Financial analysis stopped after three attempts because the model service returned no usable answer. Two modules finished and are kept.",
+    action: ["Open what finished", "#/library/transdigm/activity-failed/overview"],
+    alt: null,
     shape: "diamond",
   },
   {
     id: "capped",
     word: "Capped",
     role: "status",
-    title: "The run reached its USD 20.00 cap",
+    title: "The run reached its USD 25.00 cap",
     text: "Nine modules finished and are in the library. Recovery was stopped part-way and three modules did not run. A new run has its own cap.",
-    action: ["Open what finished", "#/"],
+    action: ["Open what finished", "#/library/transdigm/activity-capped/overview"],
     alt: ["Start a new run", "#/run/start/no-documents"],
     shape: "triangle",
   },
@@ -54,9 +54,9 @@ const CASES: Case[] = [
     word: "Interrupted",
     role: "status",
     title: "The run was interrupted",
-    text: "The run stopped at 14:56 while Covenants was running. Five modules finished and are kept. Resuming goes through Start and asks before it spends.",
-    action: ["Review and resume", "#/run/start/start"],
-    alt: ["Open what finished", "#/"],
+    text: "The run stopped at 14:56 while Covenants was running. Five modules finished and are kept.",
+    action: ["Open what finished", "#/library/transdigm/activity-interrupted/overview"],
+    alt: null,
     shape: "pause bars",
   },
 ];
@@ -109,8 +109,8 @@ describe("Run activity, ended modules", () => {
     expect(count("Not assessable")).toBe(1);
     expect(count("Not run")).toBe(3);
     const spend = screen.getAllByRole("progressbar")[0] as HTMLElement;
-    expect(spend.getAttribute("aria-valuenow")).toBe("20");
-    expect(spend.getAttribute("aria-valuemax")).toBe("20");
+    expect(spend.getAttribute("aria-valuenow")).toBe("25");
+    expect(spend.getAttribute("aria-valuemax")).toBe("25");
   });
 
   it("interrupted: 7 Not run and 1 Interrupted", () => {
@@ -150,7 +150,9 @@ describe("Run activity, finished", () => {
   it("has no alert and the Open the library link in the heading", () => {
     expect(screen.queryByRole("alert")).toBeNull();
     expect(screen.queryByRole("status")).toBeNull();
-    expect(link("Open the library").getAttribute("href")).toBe("#/");
+    expect(link("Open the library").getAttribute("href")).toBe(
+      "#/library/transdigm/activity-finished/overview",
+    );
     expect(head()?.contains(link("Open the library"))).toBe(true);
   });
 

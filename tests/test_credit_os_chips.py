@@ -496,7 +496,7 @@ def test_a_positive_number_is_found_inside_a_range_but_not_as_a_negative(tmp_pat
 
 ALIASES = ("March filing", "June filing", "Annual filing", "Annual PDF", "Settings")
 ALTERNATE_PDF = ("Annual PDF",)
-NOTE_ANNUAL = "alias 'Annual' → 'Annual filing' (Annual PDF marked alternate in CP-0)"
+NOTE_ANNUAL = "alias 'Annual' → 'Annual filing' (Annual PDF marked alternate in Source readiness)"
 
 
 def aliased(text):

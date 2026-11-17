@@ -1,0 +1,8 @@
+FAIL first refusal names annual-report.pdf in a reader sentence  [["annual-report.pdf cannot be read: its contents are not a PDF file."]]
+ok   annual-report.pdf row is marked Ignored  [["annual-report.pdf Ignored annual-report.pdf cannot be read: its contents are not a PDF file. Remove","holdings.xlsx Selected Remove","northbridge-filing.txt Selected Remove"]]
+FAIL after Remove: the next refusal names holdings.xlsx in a reader sentence  [["Cannot read holdings.xlsx: 'utf-8' codec can't decode byte 0x89 in position 11: invalid start byte"]]
+FAIL after Remove: annual-report.pdf is gone and does not reappear as Ignored  [["holdings.xlsx Selected Remove","northbridge-filing.txt Selected Remove","annual-report.pdf Ignored annual-report.pdf cannot be read: its contents are not a PDF file. Remove"]]
+FAIL after Remove: holdings.xlsx is the Ignored row  [["holdings.xlsx Selected Remove","northbridge-filing.txt Selected Remove","annual-report.pdf Ignored annual-report.pdf cannot be read: its contents are not a PDF file. Remove"]]
+ok   after the last bad file is removed: no refusal and only the readable file remains  [{"a":[],"r":["northbridge-filing.txt Inspected unrecognised Remove"]}]
+blocked requests: 0; page errors: 0
+exit=1

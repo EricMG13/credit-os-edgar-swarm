@@ -25,18 +25,19 @@ type TabTypeColors<T> = T extends "horizontal" ? HorizontalTypes : VerticalTypes
 type TabType = HorizontalTypes | VerticalTypes;
 
 // Styles for different types of tab
-const getTabStyles = ({ isFocusVisible, isSelected, isHovered }: AriaTabRenderProps) => ({
-  underline: cx(
-    "rounded-none border-b-2 border-transparent outline-focus-ring",
+// The selected tab is told by its action colour and its 2px line. Hover changes the text colour
+// alone, to a darker neutral, so a hovered tab never reads as a second selected one (D-27).
+const getTabStyles = ({ isFocusVisible, isSelected, isHovered }: AriaTabRenderProps) => {
+  const state = cx(
     isFocusVisible && "outline-2 -outline-offset-2",
-    (isSelected || isHovered) && "border-fg-brand-primary_alt text-brand-secondary",
-  ),
-  line: cx(
-    "rounded-none border-l-2 border-transparent outline-focus-ring",
-    isFocusVisible && "outline-2 -outline-offset-2",
-    (isSelected || isHovered) && "border-fg-brand-primary_alt text-brand-secondary",
-  ),
-});
+    isSelected && "border-fg-brand-primary_alt text-brand-secondary",
+    isHovered && !isSelected && "text-secondary",
+  );
+  return {
+    underline: cx("rounded-none border-b-2 border-transparent outline-focus-ring", state),
+    line: cx("rounded-none border-l-2 border-transparent outline-focus-ring", state),
+  };
+};
 
 const sizes = {
   sm: {

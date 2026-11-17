@@ -758,14 +758,99 @@ def handoff_files(run_dir: Path) -> dict[Path, Handoff]:
     return found
 
 
+def confidence_section(text: str) -> dict[str, Any]:
+    """Keep source prose and line identity from the already accepted score section.
+
+    The scorer's unchanged heading/fence rules select the section even if another Markdown
+    table made the general parser refuse the handoff. Input rows remain in ``inputs``.
+    """
+    lines, fenced = confidence_score._lines(text)
+    start = next(
+        i
+        for i, line in enumerate(lines)
+        if line == f"### {confidence_score.HEADING}" and not fenced[i]
+    )
+    end = next(
+        (i for i in range(start + 1, len(lines)) if not fenced[i] and lines[i].startswith("#")),
+        len(lines),
+    )
+    original = text.splitlines()
+    blocks: list[dict[str, Any]] = []
+    for i in range(start + 1, end):
+        if fenced[i] or not lines[i].strip() or lines[i].startswith("|"):
+            continue
+        if blocks and blocks[-1]["end"] == i:
+            blocks[-1]["text"] += "\n" + original[i]
+            blocks[-1]["end"] = i + 1
+        else:
+            blocks.append({"type": "text", "line": i + 1, "end": i + 1, "text": original[i]})
+    return {"heading": confidence_score.HEADING, "level": 3, "line": start + 1, "blocks": blocks}
+
+
+def confidence_trace(text: str) -> dict[str, Any]:
+    """Present accepted inputs and the existing method; never calculate another score.
+
+    Use the scorer's parser, not the general Markdown parser: it accepts an absent separator
+    and rows separated by prose. The formula's explanatory text mirrors the unchanged scorer.
+    """
+    weights = "; ".join(
+        f"{name} {confidence_score.LINEAGE_WEIGHTS[name.casefold()]:.1f}"
+        for name in confidence_score.LINEAGE_ROWS
+    )
+    gates = "; ".join(f"{name} {value:.1f}" for name, value in confidence_score.SOURCE_GATE.items())
+    penalties = "; ".join(
+        f"{name.upper()} {value}" for name, value in confidence_score.PENALTIES.items()
+    )
+    method = [
+        (
+            "Formula",
+            (
+                "(0.6 × evidence quality + 0.4 × field coverage) × source-gate factor "
+                "− finding penalties"
+            ),
+        ),
+        (
+            "Evidence quality",
+            (
+                "Sum of each lineage count × its weight, divided by the total "
+                "claim count, × 100. No claims gives evidence quality 0."
+            ),
+        ),
+        ("Lineage weights", weights),
+        ("Field coverage", "Fields present / Fields total × 100."),
+        ("Source-gate factors", gates),
+        ("Finding penalties", f"{penalties} points per finding"),
+        (
+            "Caps and rounding",
+            (
+                "Clamp to 0–100. Any CRITICAL finding caps the score at 39 "
+                "(Blocked); otherwise any MATERIAL finding caps it at 59 (Restricted). "
+                "Otherwise Passed. Round to the nearest integer, half to even."
+            ),
+        ),
+        ("Bands", "80–100 High; 60–79 Medium; 40–59 Low; 0–39 Insufficient Information"),
+    ]
+    return {
+        "inputs": [
+            {"label": name, "value": value} for name, value in confidence_score.inputs(text).items()
+        ],
+        "method": [{"label": label, "value": value} for label, value in method],
+        "section": confidence_section(text),
+    }
+
+
 def confidence_fields(raw: bytes) -> dict[str, Any]:
     """`confidence` for an output whose handoff has a `### Confidence inputs` section: the score
     Python computes from it, or why there is none. A handoff without the section (every earlier
     run) gets no field at all. Lossy decoding only touches bytes that cannot be in the table."""
-    result = confidence_score.from_handoff(raw.decode("utf-8-sig", "replace"))
+    text = raw.decode("utf-8-sig", "replace")
+    result = confidence_score.from_handoff(text)
     if isinstance(result, confidence_score.Refused):
         return {} if result.absent else {"confidence": {"missing": result.shown}}
-    return {"confidence": {"value": result.value, "band": result.band}}
+    return {
+        "confidence": {"value": result.value, "band": result.band},
+        "confidenceTrace": confidence_trace(text),
+    }
 
 
 class Handoffs:

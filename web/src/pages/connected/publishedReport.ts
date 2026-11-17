@@ -1,4 +1,6 @@
-import { moduleName, pathwayName } from "./api";
+import { moduleName, pathwayName, RequestError } from "./api";
+import { asOfDate } from "./runFigures";
+import { changeText } from "./signal";
 
 export type Row = { line: number; cells: string[] };
 export type Table = { type: "table"; line: number; headers: string[]; rows: Row[] };
@@ -14,26 +16,33 @@ export function plainModuleNames(text: string) {
     FILE_AHEAD.test(text.slice(at + code.length)) ? code : "",
   );
 }
-// A standalone run of module codes ("CP-1" or "CP-1/CP-2"): nothing path-like or word-like touches it.
+// A standalone run of module codes ("CP-1" or "CP-1/CP-2", in either case): nothing path-like or
+// word-like touches it.
 const STANDALONE_CODES =
-  /(?<![\w\-\\/.])CP-[A-Z0-9]+(?:\/CP-[A-Z0-9]+)*(?![\w\-\\/])(?!\.[A-Za-z])/g;
+  /(?<![\w\-\\/.])CP-[A-Z0-9]+(?:\/CP-[A-Z0-9]+)*(?![\w\-\\/])(?!\.[A-Za-z])/gi;
 // A bracketed code after text: " (CP-x)".
-const BRACKETED_CODE = / \((CP-[A-Za-z0-9]+)\)/g;
+const BRACKETED_CODE = / \((CP-[A-Za-z0-9]+)\)/gi;
+/** The module's name for a code in either case; a code the page does not know stays as written. */
+function nameOfCode(code: string) {
+  const name = moduleName(code.toUpperCase());
+  return name === code.toUpperCase() ? code : name;
+}
 /**
  * Findings-page text: a " (CP-x)" right after that module's own name is dropped, after any other
  * words it becomes " (<module name>)" (an unknown code stays), then each standalone known code
- * becomes the module's name. A code inside a stored file name stays.
+ * becomes the module's name. A code inside a stored file name stays. A code in lower case ("cp-2a")
+ * reads as the upper-case code does; a gap id or a run code is not a module code (`containsReference`).
  */
 export function readerText(text: string) {
   const bracketed = text.replace(BRACKETED_CODE, (match, code: string, at: number) => {
-    const name = moduleName(code);
+    const name = nameOfCode(code);
     if (name === code || FILE_AHEAD.test(text.slice(at + match.length))) return match;
     return text.slice(0, at).toLowerCase().endsWith(name.toLowerCase()) ? "" : ` (${name})`;
   });
   return bracketed.replace(STANDALONE_CODES, (run, at: number, whole: string) => {
     const kept = whole.slice(0, at).endsWith(" (") && whole[at + run.length] === ")";
     if (kept && FILE_AHEAD.test(whole.slice(at + run.length + 1))) return run;
-    return run.replace(/CP-[A-Z0-9]+/g, moduleName);
+    return run.replace(/CP-[A-Z0-9]+/gi, nameOfCode);
   });
 }
 export const CONFIDENCE_INPUTS = "Confidence inputs";
@@ -55,6 +64,13 @@ type Output = {
   events?: FigureRef[];
   maps?: FigureRef[];
   confidence?: { value: number; band: string } | { missing: string };
+  /** Exact inputs accepted by the scorer and its method, projected from the same handoff bytes. */
+  confidenceTrace?: {
+    inputs: { label: string; value: string }[];
+    method: { label: string; value: string }[];
+    /** Exact source prose/locators, selected with the accepted scorer's section rules. */
+    section?: Section;
+  };
 };
 export type OutputEntry = { output: Output; sections: Section[]; selected: boolean };
 type Link = { href: string; label: string };
@@ -173,6 +189,9 @@ export type PublishedRun = {
     steps: { module: string; started?: string | null; accepted?: string | null }[];
   } | null;
   changes?: Changes | null;
+  /** The methods that changed since this run ran, one "<module>: <detail>" line each (the store's
+   * `method_changes`); none or empty when the run is on today's methods. */
+  methodChanges?: string[] | null;
   evidence: {
     scriptChecks?: ScriptCheckRecord[];
     sources: Source[];
@@ -239,7 +258,13 @@ export type Snapshot = {
 export type LibraryIndex = {
   catalogue: Snapshot["catalogue"];
   workspace: {
-    runs: Record<string, Pick<PublishedRun, "folder" | "issuerKey" | "pathway">>;
+    runs: Record<
+      string,
+      Pick<PublishedRun, "folder" | "issuerKey" | "pathway"> & {
+        /** Exact selected credit-view paragraph; its Basis line and original source identity remain intact. */
+        lead?: { module: string; output: string; sha256: string; line: number; text: string };
+      }
+    >;
   };
   preview?: Snapshot["preview"];
 };
@@ -253,7 +278,8 @@ export async function getLibraryIndex(signal: AbortSignal): Promise<LibraryIndex
 export async function getSnapshot(signal: AbortSignal, folder?: string): Promise<Snapshot | null> {
   const query = folder === undefined ? "" : `?run=${encodeURIComponent(folder)}`;
   const response = await fetch(`/connected/snapshot${query}`, { cache: "no-store", signal });
-  if (!response.ok) throw new Error("The published report could not be loaded.");
+  if (!response.ok)
+    throw new RequestError("The published report could not be loaded.", response.status);
   return (await response.json()) as Snapshot | null;
 }
 
@@ -295,18 +321,21 @@ export function runPathway(run: Pick<PublishedRun, "pathway">, catalogue?: Catal
 }
 
 export function runTiming(run: Pick<PublishedRun, "asOf" | "period">) {
-  if (/^As of\s/i.test(run.period)) return run.period;
-  const date = run.asOf ? `As of ${run.asOf}` : "";
+  if (/^As of\s/i.test(run.period))
+    return run.period.replace(
+      /^(As of\s+)(\d{4}-\d{2}-\d{2})\b/i,
+      (_, prefix: string, date: string) => `${prefix}${asOfDate(date)}`,
+    );
+  const date = run.asOf ? `As of ${asOfDate(run.asOf)}` : "";
   return [date, run.period !== run.asOf ? run.period : ""].filter(Boolean).join(" · ");
 }
 
 const moneyUnit = /^(USD|US\$|[A-Z]{3})(?: millions|m)$/;
-const symbols: Record<string, string> = { USD: "$", US$: "$", GBP: "£", EUR: "€" };
-const moneySymbol = (code: string) => symbols[code] ?? `${code} `;
+const moneySymbol = (code: string) => (code === "USD" || code === "US$" ? "US$" : `${code} `);
 
 export function unitLabel(unit: string) {
   const code = moneyUnit.exec(unit)?.[1];
-  return code ? `${moneySymbol(code)}m` : unit;
+  return code ? `${code === "USD" || code === "US$" ? "US$" : code}m` : unit;
 }
 
 export function withUnit(value: string | number, unit?: string | null) {
@@ -378,7 +407,7 @@ function comparisonDifference(
     comparable && samePeriod && measure.difference != null && Number(measure.difference) !== 0;
   const delta =
     comparable && measure.difference != null && (purpose === "evidence" || !samePeriod)
-      ? withUnit(measure.difference, measure.unit)
+      ? changeText(String(measure.difference), measure.unit)
       : "—";
   return { revision, delta };
 }
@@ -459,6 +488,40 @@ export function passages(sections: Section[]) {
     .map(({ section }) => section);
 }
 
+/** The heading of the first H3 under a handoff's `## Findings`; none without one. */
+function firstFinding(sections: Section[]) {
+  const start = sections.findIndex(({ level, heading }) => level === 2 && heading === "Findings");
+  if (start < 0) return undefined;
+  for (const section of sections.slice(start + 1)) {
+    if (section.level <= 2) return undefined;
+    if (section.level === 3) return section.heading;
+  }
+  return undefined;
+}
+
+/** A handoff the build could not read (`Shapes.isUnstructured` of the issuer library). */
+const unstructured = (sections: Section[]) =>
+  sections.length === 1 &&
+  sections[0]?.level === 1 &&
+  sections[0].heading === "Unstructured handoff";
+
+/**
+ * The labels Report history and the run frame give a run. "Earlier format" (ruling H7): any of its
+ * handoffs, every saved output of every module, has a `## Findings` whose first H3 is not
+ * `### Bottom line`; a handoff the page does not hold or the build could not read says nothing.
+ * "Earlier methods" (Amendment 2026-11-11): the store lists methods changed since the run ran.
+ */
+export function runLabels(entries: OutputEntry[], run: Pick<PublishedRun, "methodChanges">) {
+  const earlierFormat = entries.some(
+    ({ sections }) =>
+      sections.length > 0 && !unstructured(sections) && firstFinding(sections) !== "Bottom line",
+  );
+  return [
+    ...(earlierFormat ? ["Earlier format"] : []),
+    ...(run.methodChanges?.length ? ["Earlier methods"] : []),
+  ];
+}
+
 export function blocked(entry: OutputEntry) {
   const first = classifySections(entry.sections).find(
     ({ section }) => section.level === 3 && section.blocks.length > 0,
@@ -533,8 +596,63 @@ const FILE_REFERENCE = new RegExp(
 const LONG_HASH = /\b(?=[0-9a-f]*[a-f])[0-9a-f]{32,}\b/i;
 const REGISTER_ID = /\bCP-[A-Z0-9]+-(?:GAP|MON|FACT|CALC|EVID|SRC|ASSUMPTION)-[A-Z0-9-]+\b/i;
 
+// A gap id as the modules spell a gap, the report-wide id after the empty-set mark ("∅ G12",
+// "∅ G12 n.m.", "∅ [G12]"), and a run code. A parenthesized id is an annotation unless its
+// adjacent text names a group, instrument or mathematical quantity. An earlier "gap" in the
+// clause cannot turn that label into a citation. A module code is not a reference here: a
+// findings page draws it as the module's
+// name (`readerText`, D-13 part 2), so it is not held back.
+const GAP_ID = /∅\s*\[?G\d+\b/;
+const RUN_CODE = /\b\d{8}-\d{6}-\d{2}\b/;
+
+function parenthesizedGap(text: string) {
+  return [...text.matchAll(/\(G\d+\)/gi)].some((match) => {
+    const before = text.slice(0, match.index);
+    const after = text.slice(match.index + match[0].length);
+    const namedLabel =
+      /(?:\bgroup of \p{L}+(?:-\p{L}+)?|\b(?:economies|currencies)|\b(?:series|class|gen|tranche)\s+[\w-]+(?:\s+[\w-]+)?)\s*$/iu.test(
+        before,
+      );
+    const definedQuantity =
+      /^\s*(?:=|equals?\b)/i.test(after) ||
+      /(?:^|[,;:=]|\b(?:is|equals?))\s*\d+(?:\.\d+)?x\s*$/i.test(before);
+    return !namedLabel && !definedQuantity;
+  });
+}
+
+// Page locators have no page-number length limit. A word before "pp" and an uninterrupted
+// count/duration phrase after it can continue a percentage-point quantity. Duration modifiers
+// have no word-count limit, but punctuation ends that phrase; bare/parenthesized locators
+// have no preceding quantity. Explicit locator cues take precedence. Word fragments, S&P and
+// p.p. are excluded at the token boundary; "front page 2025" is a headline, not a locator.
+function pageCitation(text: string) {
+  return [...text.matchAll(/(?<![\w&.-])(p|pg|pp|pages?)\.?\s*(\d+)\b/gi)].some((match) => {
+    const before = text.slice(0, match.index);
+    const after = text.slice(match.index + match[0].length);
+    const marker = match[1]?.toLowerCase();
+    if (/\b(?:see|at|on|as)\s*$/i.test(before)) return true;
+    if (marker === "pp") {
+      if (/\d\s*$/.test(before)) return false;
+      if (
+        /\p{L}\s*$/u.test(before) &&
+        /^\s+(?:\p{L}+(?:-\p{L}+)*\s+)*(?:days?|weeks?|months?|quarters?|years?)\b/iu.test(after)
+      )
+        return false;
+    }
+    return !(marker === "page" && /\bfront\s+$/i.test(before));
+  });
+}
+
 export function containsReference(text: string) {
-  return FILE_REFERENCE.test(text) || LONG_HASH.test(text) || REGISTER_ID.test(text);
+  return (
+    FILE_REFERENCE.test(text) ||
+    LONG_HASH.test(text) ||
+    REGISTER_ID.test(text) ||
+    GAP_ID.test(text) ||
+    parenthesizedGap(text) ||
+    pageCitation(text) ||
+    RUN_CODE.test(text)
+  );
 }
 
 const INTERMODULE =

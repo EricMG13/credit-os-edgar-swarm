@@ -1,0 +1,223 @@
+
+> credit-os-web@0.0.0 test
+> vitest run --coverage --shard=8/8 --maxWorkers=1 --coverage.processingConcurrency=1 --reporter=default --reporter=blob --reporter=json --outputFile.blob=/workspace/scratch/stage7-frontend/blobs/shard-8.json --outputFile.json=/workspace/scratch/stage7-frontend/shard-8.json --coverage.reportsDirectory=/workspace/scratch/stage7-frontend/coverage-8
+
+
+ RUN  v4.1.12 /workspace/audit-final/web
+      Coverage enabled with v8
+
+ ✓ src/pages/model/case-choice.test.tsx (3 tests) 4207ms
+   ✓ S5-010 keeps the chosen case across Model, Forecast and intervening pages, separately per run  3228ms
+   ✓ S5-011 names the Model views that follow the choice  654ms
+   ✓ S5-020 takes the cash flow heading's period from the supplied walk  322ms
+stderr | src/pages/model/ForecastPage.test.tsx > Forecast page: sources, tables and states > leaves an invalid slice with a tab to the app, in plain words and without the failing path
+Financial model not shown: runs[0].forecast.tabs[0].href: expected a string
+
+stderr | src/pages/model/ForecastPage.test.tsx > Forecast page: sources, tables and states > leaves an invalid slice with a driver row to the app, in plain words and without the failing path
+Financial model not shown: runs[0].forecast.drivers.rows[0].axis.min: expected a number
+
+stderr | src/pages/model/ForecastPage.test.tsx > Forecast page: sources, tables and states > leaves an invalid slice with an interest cover point to the app, in plain words and without the failing path
+Financial model not shown: runs[0].forecast.interestCover.cases[0].values[0]: expected a number
+
+stderr | src/pages/model/ForecastPage.test.tsx > Forecast page: sources, tables and states > leaves an invalid slice with an EBITDA label to the app, in plain words and without the failing path
+Financial model not shown: runs[0].forecast.ebitda.series[0].labels[0]: expected a string or null
+
+stderr | src/pages/model/ForecastPage.test.tsx > Forecast page: sources, tables and states > leaves an invalid slice with a walk step to the app, in plain words and without the failing path
+Financial model not shown: runs[0].forecast.walk.caseSteps[0][0].to: expected a number
+
+stderr | src/pages/model/ForecastPage.test.tsx > Forecast page: sources, tables and states > leaves an invalid slice with the gap to the app, in plain words and without the failing path
+Financial model not shown: runs[0].forecast.gap.reason: expected a string
+
+stderr | src/pages/model/ForecastPage.test.tsx > Forecast page: sources, tables and states > leaves an invalid slice with the note to the app, in plain words and without the failing path
+Financial model not shown: runs[0].forecast.watch.text: expected a string
+
+stderr | src/pages/model/ForecastPage.test.tsx > Forecast page: sources, tables and states > leaves an invalid slice with the limitations item to the app, in plain words and without the failing path
+Financial model not shown: runs[0].forecast.limitations.href: expected a string
+
+ ✓ src/pages/model/ForecastPage.test.tsx (39 tests) 11524ms
+     ✓ orders the headings h1 (the issuer), h2 (the sections), h3 (the chart titles)  1091ms
+     ✓ draws the run tabs with the delivered counts and marks Forecast current  316ms
+     ✓ draws the action 'Open the financial model' to the front page, and the Forecast breadcrumb  358ms
+     ✓ draws the choice line and the two cards, the first chosen  305ms
+     ✓ draws a strip on five rows and two markers on five, none for a missing value, and no strip for a missing range  462ms
+     ✓ draws both markers of a row in full colour, and the chosen case's wider and taller  492ms
+     ✓ sets the other case's values in the tertiary colour, the chosen case's not  445ms
+     ✓ holds the five columns of the table with n.a. in the same cells  507ms
+     ✓ draws the chosen case's line only, labelled from the mock, breaking at FY23  316ms
+     ✓ follows the chosen case: the downside line, with the same break  562ms
+     ✓ draws both EBITDA lines whichever case is chosen, with Last actual marked  518ms
+     ✓ holds both cases in each table, with n.a. where the mock has it  535ms
+     ✓ draws the base walk, then the downside walk when that case is chosen  435ms
+     ✓ draws the missing Other step as n.a. with no column, in both cases  436ms
+     ✓ holds both cases in the table, n.a. for Other in both  480ms
+     ✓ draws the limitations item as a link to the limitations page with its sentence  304ms
+     ✓ gives every trace control its own name and the address only as href  309ms
+     ✓ draws no trace control where the slice gives no address  301ms
+     ✓ puts no table on the canvas: every table is inside a card, and none shows until chosen  512ms
+ ✓ src/pages/model/one-case.test.tsx (12 tests) 4036ms
+     ✓ keeps the front page readable  713ms
+     ✓ keeps the statements page readable  651ms
+     ✓ states the absent second case beside the authored forecast  325ms
+     ✓ does not invent a second case for the side by side chart  819ms
+     ✓ shows a one-case run without a delivered binary comparison: null  412ms
+     ✓ shows a one-case run without a delivered binary comparison: undefined  429ms
+ ✓ src/App.routeChange.test.tsx (28 tests) 3070ms
+     ✓ at #/model/transdigm/2025-06-30/forecast reads "Forecast — TransDigm Group — As of 30 June 2025 — Credit OS"  423ms
+     ✓ at #/kit reads "Component kit — Credit OS"  417ms
+     ✓ with no data file at { kind: 'missing' } reads "#/kit"  302ms
+ ✓ src/pages/library/Home.startRun.test.tsx (5 tests) 1974ms
+     ✓ the library home  806ms
+     ✓ an issuer's report  680ms
+ ✓ src/pages/connected/visuals/LegacyForecast.test.tsx (13 tests) 1885ms
+   ✓ labels absent units as not recorded in the case data and model  337ms
+   ✓ compares every case while the chart follows the selection, including zero and missing  336ms
+stderr | src/pages/library/Home.clearFocus.test.tsx > Library home, focus after Clear filters > moves focus to the search field when the cards have no match
+An update to ForwardRef(Button) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(Button) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | src/pages/library/Home.clearFocus.test.tsx > Library home, focus after Clear filters > moves focus to the search field when the list has no match
+An update to ForwardRef(Button) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(Button) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ src/pages/library/Home.clearFocus.test.tsx (2 tests) 874ms
+     ✓ moves focus to the search field when the cards have no match  414ms
+     ✓ moves focus to the search field when the list has no match  457ms
+ ✓ src/pages/library/Evidence.reviewTails.test.tsx (3 tests) 682ms
+   ✓ distinguishes the filtered timing rows from the unchanged full timing-record note  452ms
+ ✓ src/components/chart/TrendChart.test.tsx (20 tests) 1344ms
+ ❯ src/pages/connected/runReasons.test.tsx (3 tests | 1 failed) 900ms
+     × names modules in Run activity's ended table, held note and waiting note 501ms
+     ✓ names modules in a running card's note 42ms
+     ✓ names modules in a run page's reason and held note  354ms
+ ✓ src/pages/connected/ReportLibrary.place.test.tsx (2 tests) 973ms
+     ✓ opens the page for a new address at its top  841ms
+ ✓ src/pages/connected/publishedReport.reference-last.test.tsx (27 tests) 1230ms
+ ✓ src/pages/run/start/Started.focus.test.tsx (4 tests) 798ms
+     ✓ lands on the Run started title, not on the document body  415ms
+ ✓ src/pages/connected/report/Forecast.test.tsx (5 tests) 832ms
+   ✓ draws the designated run figure with a same-output trace even when no model was published  517ms
+ ✓ src/pages/connected/runActivity.states.test.tsx (4 tests) 754ms
+ ✓ src/pages/connected/publishedReport.reference.test.tsx (56 tests) 446ms
+ ✓ src/pages/signal/messages.test.tsx (16 tests) 752ms
+ ✓ src/pages/connected/report/Record.test.tsx (9 tests) 681ms
+ ✓ src/shell/Shell.test.tsx (17 tests) 593ms
+ ✓ src/pages/connected/ReportContent.findings.test.tsx (4 tests) 397ms
+ ✓ src/pages/connected/start/ReviewSheet.test.tsx (5 tests) 607ms
+ ✓ src/components/application/table/table.missing.test.tsx (1 test) 250ms
+ ✓ src/pages/connected/report/ArtifactDownloads.states.test.tsx (7 tests) 266ms
+ ✓ src/pages/connected/RuntimeMetadata.test.tsx (10 tests) 536ms
+ ✓ src/pages/library/History.runs.test.tsx (8 tests) 505ms
+ ✓ src/pages/connected/report/Evidence.t21-fix1.test.tsx (4 tests) 319ms
+ ✓ src/components/chart/ChartTable.test.tsx (14 tests) 373ms
+ ✓ src/components/alert/Alert.test.tsx (4 tests) 169ms
+ ✓ src/ConnectedLoadBoundary.test.tsx (1 test) 247ms
+ ✓ src/pages/connected/report/Changes.colour.test.tsx (4 tests) 113ms
+ ✓ src/pages/library/readRecord.test.ts (21 tests) 81ms
+ ✓ src/pages/connected/moduleCodes.test.ts (34 tests) 6ms
+ ✓ src/pages/connected/visuals/visualData.moduleCode.test.ts (5 tests) 6ms
+ ✓ src/styles/project-caption.test.ts (37 tests) 7ms
+ ✓ src/pages/library/parts/recordNav.test.ts (4 tests) 5ms
+ ✓ src/pages/connected/runFigures.test.ts (6 tests) 5ms
+ ✓ src/pages/connected/start/rows.test.ts (2 tests) 3ms
+ ✓ src/styles/chart-lightness.test.ts (1 test) 3ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/pages/connected/runReasons.test.tsx > a reason the service wrote is drawn in the reader's words > names modules in Run activity's ended table, held note and waiting note
+TestingLibraryElementError: Unable to find an element with the text: not listed: the delivery does not record Financial foundation's handoff and Liquidity is missing. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<section[39m
+  [33maria-label[39m=[32m"Ended without a report"[39m
+  [33mclass[39m=[32m"grid min-w-0 content-start gap-3"[39m
+[36m>[39m
+  [36m<h2[39m
+    [33mclass[39m=[32m"font-display text-h3 text-text-primary"[39m
+  [36m>[39m
+    [0mEnded without a report[0m
+  [36m</h2>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"rounded-ds-lg border border-border-subtle bg-surface-card shadow-1 overflow-x-auto"[39m
+  [36m>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"overflow-x-auto"[39m
+    [36m>[39m
+      [36m<template />[39m
+      [36m<span[39m
+        [33mdata-focus-scope-start[39m=[32m"true"[39m
+        [33mhidden[39m=[32m""[39m
+      [36m/>[39m
+      [36m<table[39m
+        [33maria-describedby[39m=[32m""[39m
+        [33maria-label[39m=[32m"Runs that ended without a report"[39m
+        [33mclass[39m=[32m"w-full overflow-x-hidden"[39m
+        [33mdata-rac[39m=[32m""[39m
+        [33mid[39m=[32m"react-aria-_r_5_"[39m
+        [33mrole[39m=[32m"grid"[39m
+        [33mtabindex[39m=[32m"0"[39m
+      [36m/>[39m
+      [36m<span[39m
+        [33mdata-focus-scope-end[39m=[32m"true"[39m
+        [33mhidden[39m=[32m""[39m
+      [36m/>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</section>[39m
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/pages/connected/runReasons.test.tsx:61:26
+     59|     render(<ConnectedApp path="/runs" mode="synthetic" />);
+     60|     const ended = await screen.findByRole("region", { name: "Ended wit…
+     61|     expect(within(ended).getByText(`not listed: ${PLAIN}`)).toBeVisibl…
+       |                          ^
+     62|     expect(screen.getByText("held while Financial foundation is rebuil…
+     63|     expect(screen.getByText("waiting for Financial foundation")).toBeV…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 37 passed (38)
+      Tests  1 failed | 439 passed (440)
+   Start at  22:41:37
+   Duration  96.24s (transform 2.74s, setup 2.64s, import 26.51s, tests 41.45s, environment 16.03s)
+
+JSON report written to /workspace/scratch/stage7-frontend/shard-8.json
+blob report written to /workspace/scratch/stage7-frontend/blobs/shard-8.json

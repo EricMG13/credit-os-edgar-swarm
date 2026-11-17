@@ -1,0 +1,4 @@
+alerts: ["annual-report.pdf cannot be read: its contents are not a PDF file."]
+row badges after Inspect: ["Ignored","Selected","Selected"]
+NOT REPRODUCED
+blocked requests: 0; page errors: 0

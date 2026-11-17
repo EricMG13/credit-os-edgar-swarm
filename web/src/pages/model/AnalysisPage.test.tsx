@@ -198,13 +198,13 @@ describe("Analysis page", () => {
     fireEvent.click(within(chart).getByRole("radio", { name: "Table" }));
     const row = within(within(chart).getByRole("row", { name: /Secured net leverage/ }));
     expect(row.getAllByRole("cell").map((c) => c.textContent.replace("not available", ""))).toEqual(
-      ["n.a.", "Covenant limit 7.25x"],
+      ["n.a.", "Covenant limit 7.25x", "Source not recorded"],
     );
     expect(
       within(chart)
         .getAllByRole("columnheader")
         .map((h) => h.textContent),
-    ).toEqual(["Measure", "Latest twelve months", "Level that matters"]);
+    ).toEqual(["Measure", "Latest twelve months", "Level that matters", "Show sources"]);
   });
 
   it("draws the segment dumbbells with the legend, and one mark only for the acquired businesses", () => {
@@ -457,11 +457,14 @@ describe("Analysis page", () => {
       "limitations.items[0].text: expected a string",
     ],
   ] as const)(
-    "leaves an invalid slice with %s to the app, naming the failing path",
+    "leaves an invalid slice with %s to the app, in plain words and without the failing path",
     (_n, steps, value, reason) => {
       renderAt(edited(steps, value));
       expect(screen.getByText("This part of the library could not be read")).toBeInTheDocument();
-      expect(screen.getByText(`runs[0].analysis.${reason}`)).toBeInTheDocument();
+      expect(
+        screen.getByText(/^The financial model for this run could not be shown/),
+      ).toBeInTheDocument();
+      expect(screen.queryByText(`runs[0].analysis.${reason}`)).toBeNull();
     },
   );
 });

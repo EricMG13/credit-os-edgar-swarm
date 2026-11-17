@@ -1,0 +1,107 @@
+
+> credit-os-web@0.0.0 test:scripts
+> node --test "scripts/*.test.mjs"
+
+✔ a complete page has no problems (3.373368ms)
+✔ an empty stylesheet is a problem (0.615709ms)
+✔ a missing stylesheet is a problem (0.680686ms)
+✔ stylesheet path /assets/a.css is a problem (0.637562ms)
+✔ stylesheet path https://example.com/a.css is a problem (0.520645ms)
+✔ stylesheet path //example.com/a.css is a problem (0.57686ms)
+✔ stylesheet path file:///a.css is a problem (1.636008ms)
+✔ a script path starting with / is a problem (0.969061ms)
+✔ a page without a stylesheet is a problem (0.636019ms)
+✔ a stylesheet with an existing relative font has no font problems (1.125177ms)
+✔ a stylesheet url to a missing font is a problem (0.930604ms)
+✔ stylesheet url /fonts/a.woff2 is a problem (2.735787ms)
+✔ stylesheet url https://example.com/a.woff2 is a problem (1.681155ms)
+✔ stylesheet url data:font/woff2;base64,AA is a problem (0.556529ms)
+✔ a class with a rule in the stylesheet passes (2.42622ms)
+✔ a class with no rule is reported with its file (0.596129ms)
+✔ a variant-prefixed class is checked by its escaped selector (0.362808ms)
+✔ escaped dots, slashes, percents and brackets in selectors are read back (0.221203ms)
+✔ hex escapes in selectors are read back (0.235966ms)
+✔ a colon inside a bracketed variant does not hide the utility (0.164558ms)
+✔ strings that are not colour, shadow, radius or size classes are ignored (0.144287ms)
+✔ every utility family is checked (0.668108ms)
+✔ test files are not scanned (0.424621ms)
+✔ an allowlisted token is skipped (0.421135ms)
+✔ a class inside a template interpolation is checked (0.160943ms)
+✔ a class in a template nested in an interpolation is checked (0.144337ms)
+✔ a template token next to an interpolation is not a class (0.173451ms)
+✔ a lone backtick in a comment does not open a template (0.102023ms)
+✔ a class named only in a comment is not checked (0.848661ms)
+✔ two slashes inside a string are not a comment (0.12578ms)
+✔ outline-hidden with a focus-visible width and no style is a hidden outline (0.224869ms)
+✔ a TooltipTrigger without an outline style is reported with its file (0.732295ms)
+✔ the project's own TooltipTriggers all draw a focus outline (9.478879ms)
+✔ offline proof accepts only local resource schemes and loopback hosts (1.723831ms)
+✔ context guard records and aborts external requests and WebSockets (3.390374ms)
+✔ denial proxy terminates HTTP and CONNECT locally without an upstream (21.615346ms)
+✔ capture refuses an old root without executing its proof module (78.802309ms)
+✔ capture validates FID_ATTACH before any browser launch (67.705509ms)
+✔ pairedSnapshot reads a direct loopback response and never follows a redirect (32.14974ms)
+✔ capture run-state API reads direct responses and never follows a redirect (25.862122ms)
+✔ both direct network readers reject a non-loopback initial URL before a request (0.665895ms)
+✔ the committed fixtures are accepted and data.js holds exactly what they hold (132.982649ms)
+✔ four empty fixtures give the schema and no issuers, and no slice (49.539287ms)
+✔ data.js carries exactly the slices the fixtures have, and the library's issuers (43.585151ms)
+✔ a fixture that has an unknown top-level key fails and names its file (72.694007ms)
+✔ a fixture that carries issuers outside library.json fails and names its file (59.221933ms)
+✔ a fixture that is an array fails and names its file (49.346858ms)
+✔ a fixture that is null fails and names its file (70.541679ms)
+✔ a fixture that is a string fails and names its file (61.278809ms)
+✔ a fixture that is broken JSON fails and names its file (39.268691ms)
+✔ a fixture that has a malformed params entry fails and names its file (32.518416ms)
+✔ a missing fixture file fails and names it (39.982638ms)
+✔ a __proto__ key and script-breaking text in a slice survive as written (38.702713ms)
+✔ an image under 4 kB is emitted as a file, never as a data: URL (265.639835ms)
+✔ an empty file is retried until the first line is complete (2.405469ms)
+✔ a first line counts only once a newline follows it (1.122874ms)
+✔ a missing file is waited for (0.856222ms)
+✔ EBUSY, EPERM and EACCES reads are retried (1.490298ms)
+✔ any other read error is thrown at once, unchanged (1.090705ms)
+✔ when the budget runs out the error names what was last seen (1.197777ms)
+✔ a first line that is not a port from 1 to 65535 is not ready (2.29329ms)
+✔ the last allowed wait is followed by one more read (0.479464ms)
+✔ a first line that is a number but not whole digits is not ready (1.031727ms)
+✔ file-check builds into CREDIT_OS_OUT_DIR when it is set, not into dist/ (11756.552257ms)
+✔ open-from-disk: no browser and CI unset exits 77 with the reason (38.184256ms)
+✔ open-from-disk: no browser and CI=true exits 1 with the reason (182.262595ms)
+✔ file-check: 77 is a skip, one clear line, exit 0 (11344.026406ms)
+✔ file-check: CI=true with no browser is a failure, never a skip (10881.713276ms)
+✔ file-check: a browser check that really fails exits 1 and is never reported as a skip (29724.980513ms)
+✔ a browser that hangs fails the check after the timeout, with the reason (13195.735159ms)
+✖ built dist/index.html carries exactly the pinned content security policy (0.770623ms)
+✔ a group that declares a home also gets a bare-address visit (2.585141ms)
+✔ a group with no home gets no bare-address visit (0.5765ms)
+✔ Not built yet fails a bare address only; a page may contain those words (0.239792ms)
+✔ every visit needs exactly one h1 (0.253082ms)
+✔ a failure text and an injected style are reported (0.117818ms)
+✔ the default address of a library with a home must be one real page (0.214013ms)
+✔ libraryDeclaresHome reads the library group's routes.tsx (1.083424ms)
+ℹ tests 78
+ℹ suites 0
+ℹ pass 77
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 77894.576028
+
+✖ failing tests:
+
+test at scripts/policy.test.mjs:10:1
+✖ built dist/index.html carries exactly the pinned content security policy (0.770623ms)
+  Error: ENOENT: no such file or directory, open '/workspace/audit-fidelity-guard-return/web/dist/index.html'
+      at readFileSync (node:fs:483:20)
+      at TestContext.<anonymous> (file:///workspace/audit-fidelity-guard-return/web/scripts/policy.test.mjs:11:16)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'open',
+    path: '/workspace/audit-fidelity-guard-return/web/dist/index.html'
+  }

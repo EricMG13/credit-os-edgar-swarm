@@ -1,7 +1,5 @@
 import { useId, useState } from "react";
 import { RadioButton, RadioField, RadioGroup, Text } from "react-aria-components";
-import { FileCheck02 } from "@untitledui/icons";
-import { FeaturedIcon } from "@/components/foundations/featured-icon/featured-icon";
 import { cx } from "@/utils/cx";
 import type { StartDraft } from "../slice";
 
@@ -59,14 +57,13 @@ export function PurposeCards({
               cx(
                 "block cursor-pointer rounded-xl bg-primary ring-1 ring-secondary ring-inset outline-none",
                 isSelected && "ring-2 ring-brand",
-                isFocusVisible && "outline-2 outline-offset-2 outline-brand",
+                isFocusVisible && "outline-2 outline-solid outline-offset-2 outline-brand",
               )
             }
           >
             {({ isSelected }) => (
               <>
                 <div className="flex items-center gap-3 rounded-t-xl border-b border-border-hairline py-3 pr-5 pl-3">
-                  <FeaturedIcon icon={FileCheck02} color="brand" size="sm" />
                   <span className="text-md font-semibold text-secondary">{p.title}</span>
                   <span
                     aria-hidden="true"
@@ -88,7 +85,7 @@ export function PurposeCards({
                   className="flex items-start justify-between gap-4 p-4"
                 >
                   <p className="min-w-0 text-sm text-tertiary">{p.description}</p>
-                  <span className="max-w-1/3 shrink-0 rounded-md bg-primary px-1.5 py-0.5 text-xs font-medium text-secondary ring-1 ring-primary ring-inset">
+                  <span className="max-w-1/3 shrink-0 rounded-md bg-primary px-1.5 py-0.5 text-caption font-medium text-secondary ring-1 ring-primary ring-inset">
                     {p.modules}
                   </span>
                 </Text>

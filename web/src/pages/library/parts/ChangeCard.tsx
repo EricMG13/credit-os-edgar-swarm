@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { Badge } from "@/components/base/badges/badges";
 import type { Change } from "../slice";
 import { CellValue } from "./CellValue";
@@ -19,7 +20,7 @@ function Direction({ change }: { change: Change }) {
   if (change.change === null) return null;
   return (
     <span
-      className={`inline-flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 self-end rounded-ds-xs bg-surface-subtle px-1.5 py-1 text-xs font-medium ${TONE_CLASS[change.tone ?? "flat"]}`}
+      className={`inline-flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 self-end rounded-ds-xs bg-surface-subtle px-1.5 py-1 text-caption font-medium ${TONE_CLASS[change.tone ?? "flat"]}`}
     >
       {change.direction === "none" ? null : <DirectionMark direction={change.direction} />}
       {change.change}
@@ -33,13 +34,20 @@ function Direction({ change }: { change: Change }) {
  * measure, its value with the earlier value beside it, then cause and effect. The mark is the
  * delivered one, never worked out from the figures.
  */
-export function ChangeCard({ change, source }: { change: Change; source?: ReactNode }) {
+export function ChangeCard(props: { change: Change; source?: ReactNode }) {
+  const { change, source } = props;
+  // A supplied source slot belongs to its caller, including an explicitly empty slot.
+  const control = Object.hasOwn(props, "source") ? (
+    source
+  ) : (
+    <TraceControl trace={change.trace} label="Show sources for this change" />
+  );
   return (
     <li
       className={`${TRACE_HOST} flex min-w-0 flex-col gap-4 rounded-lg border border-border-hairline bg-surface-card p-6`}
     >
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <span className={source || change.trace ? "ml-9" : undefined}>
+        <span className={control ? "ml-9" : undefined}>
           <Badge size="sm">{change.kind}</Badge>
         </span>
         <Direction change={change} />
@@ -48,7 +56,7 @@ export function ChangeCard({ change, source }: { change: Change; source?: ReactN
         <strong className="text-small font-medium text-text-tertiary">{change.measure}</strong>
         <div className="flex flex-wrap items-baseline gap-x-1.5">
           <CellValue cell={change.current} figureClass={VALUE} weight="font-medium" />
-          <span className="flex items-baseline gap-1 text-xs text-text-tertiary">
+          <span className="flex items-baseline gap-1 text-caption text-text-tertiary">
             from <InlineCell cell={change.from} />
           </span>
         </div>
@@ -56,13 +64,7 @@ export function ChangeCard({ change, source }: { change: Change; source?: ReactN
       <p className="border-t border-border-hairline pt-3 text-small text-text-secondary">
         <span className="font-semibold text-text-primary">{change.cause}</span> {change.effect}
       </p>
-      <span className="absolute top-5 left-5">
-        {source ??
-          (change.trace && (
-            <TraceControl trace={change.trace} label="Show sources for this change" />
-          ))}
-      </span>
+      <span className="absolute top-5 left-5">{control}</span>
     </li>
   );
 }
-import type { ReactNode } from "react";

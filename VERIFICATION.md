@@ -4,6 +4,64 @@ Keep one running record here. A pass applies only to the stated scope. Earlier v
 engine is in [EricMG13/final-workflow](https://github.com/EricMG13/final-workflow)'s
 `VERIFICATION.md`, which also keeps the retained runs this copy leaves out.
 
+## 2026-11-17 — Stage 7 final audit handoff
+
+- Application source `a987af9b`. Stage 7 adds audit evidence and work-PC documents.
+- Locked setup, Python quality, 6,285 fast Python passes with one existing skip,
+  573 Node checks, 5,259 frontend passes at 97.69% lines and 73 script checks.
+- Native Chrome and Edge synthetic proof and 138 native file checks passed on
+  both the checkout and the checksummed runtime ZIP. The screenshot reports
+  record paired baseline and final states and the independent ZIP comparison.
+- The work-PC rehearsal stopped at the two missing pins with the source unchanged.
+  Actual Windows setup, live or paid runs, real Submit and Teams remain unverified.
+- [Final gates](docs/audit/2026-11-16-final/output/7-send-off/gates.md) ·
+  [Audit summary](docs/audit/2026-11-16-final/output/SUMMARY.md)
+
+## 2026-11-17 — Stage 6 sweep
+
+- Scope: six reviewed refactors on the repaired app, with the same tests, public routes,
+  handoffs and protected inputs. Nine production files add 21 and remove 66 lines.
+- Passed: 5,259 frontend tests including 630 Signal tests, native 97.69% lines,
+  6,285 Python tests plus one existing skip, 573 Node checks, both quality gates,
+  73 script checks, 138 native file checks, and synthetic Chrome and Edge proof.
+- Measured: 20 fewer duplicated frontend lines. Paired History row data 2,168 to
+  109 bytes with the same requests and markup.
+- Source pins, retry outcomes and limits: [sweep report](docs/audit/2026-11-16-final/output/6-sweep/report.md).
+
+## 2026-11-17 final audit presentation fidelity
+
+On repair tree `bb94ddce`, rebuilt both surfaces and captured connected
+synthetic Northbridge and the static fixture with native Chrome 157.0.8103.78
+at 1440 by 900. Both captures exited 0. Checked 267 distinct screens
+(29 connected, 238 static), 654 sourced drawers, 419 explicit missing-source
+markers and zero coverage gaps, trace errors or outside application-context
+attempts. The immutable comparator and baseline matched 126 stored hashes.
+Its 28 self-test cases passed. The full comparison covered 7,761 entries.
+The unmodified diff exited 1, reporting seven new differences, fourteen
+omissions and 352 not-found items. Each is explained in
+`docs/audit/2026-11-16-final/output/5-repair/fidelity/after-report.md`
+and the item readbacks, including scoped event counts, retained drawer basis
+and inputs, static sample notices and unchanged call totals. Static had no
+difference flags. Browser background proxy denials are counted separately.
+This evidence covers values, units, periods, source statements and
+qualifications in the captured screens. Other browsers, CSS presentation,
+remaining controls, work-PC and real-run behavior were outside this check.
+
+## 2026-11-17 — Final audit T18 Forecast recovery (audit/repair-2)
+
+- Scope: optional contextual Forecast traces; exact model qualification ledger on Evidence Record;
+  recorded drivers/shock/facilities; desktop long tokens; assigned Forecast Low/Info display fixes.
+  No analytical calculation, Python, prompt, handoff or protected Signal source changed.
+- Test first: eight recovery tests, a Downside containment test, three confidence/caption cases and
+  the invalid-grid Record-link assertion each failed before their corresponding production fix.
+- Passed: 333 affected tests, then 40 focused after final source metadata; 743 caller/Signal tests; lint, format, typecheck, knip, duplication,
+  build, 70 script tests, pinned-uv quality gate and native Chrome/Edge offline file gates.
+- Unchanged C4-002/003/025/026 probes passed. Native Chrome 157 and Edge 155 checked synthetic
+  source tokens, the ledger, selected-case figures and seven intercepted states each, with no
+  outside hosts or page errors. Exact scopes and original expected-text changes: [T18 report](docs/audit/2026-11-16-final/output/5-repair/T18.md).
+- Early independent source/context findings were reproduced red and addressed within the still-open fourth round; final code pin `f7f1e011`. Fresh final verdicts remain with the lead.
+- Not verified: fresh independent primary/adversarial final verdicts, final combined branch and live cases.
+
 ## 2026-11-17 — Run state from one reading of the event log; a delivered run is finished (branch `claude/jolly-gauss-0erxtn`)
 
 Scope: how a run's end and its modules' states are read from `events.jsonl` (`run_events.progress`, used by `inbox/runs.outcome` and `inbox/activity.module_states`), the new module state `stopped` in the React run pages and the static library's run steps, the run page's `held_reason`, and CP-OS's relaunch of a folder that already holds a completion record (`owners/cpos.py`). Launcher options, caps, budget, checkers and delivery files unchanged. No provider was called and no paid run was made.
@@ -937,61 +995,3 @@ Scope: presentation only, all under `web/`; no backend, handoff, provider or mod
   `79b6b93b02754cbfebc493f297bf4c4be06796f411f00df26d4a5b4fa1a79080`.
   Clean macOS extraction passed Chrome (`20261115-170434-01`) and Edge
   (`20261115-170442-01`). Windows work-PC proof and publication are pending.
-
-## 2026-11-15 — Rate and currency sensitivity
-
-- The read-only Caesars handoff's 100 bp shock adds USD 59.68 million
-  annual cash interest and moves all-in cover from 1.52x to 1.48x. Both
-  browsers checked the distinct calculation traces, hedge terms, FX gap and
-  dated events at 390 px. The hedged cash impact remains unestablished.
-- Confidence review checked mixed currencies, zero versus missing net interest,
-  before/after quote alignment, and the reported shock basis. Focused web
-  (85) and Python (15) tests, quality, lint, format and build passed.
-- Candidate `944bc5e` SHA-256
-  `8c2c14f4448697e51529a98cdd424b233417bce799aab95b998e94539b4176c6`.
-  Clean macOS extraction passed Chrome (`20261115-165617-01`) and Edge
-  (`20261115-165625-01`). Windows work-PC proof and publication are pending.
-
-## 2026-11-15 — Downside break points and narrow report layout
-
-- Retained Caesars showed the first break at 17.86% EBITDA decline with
-  interest held and 15.55% under the recorded cash-interest shock. Both
-  browsers verified the analyst-watch qualification, unresolved break
-  values, six leading and two lagging flags, and the original calculation.
-- Confidence review checked share spelling, zero, reversed rank, unknown
-  values, source focus, and the table header's containing block. Both
-  macOS browsers saw all five report routes at 390 px. Focused web (940)
-  and Python (15) tests, quality, lint, format and build passed.
-- Candidate `ecef6fc` SHA-256
-  `affdcadd30fece8505fabe1fc32412ce83ebc8dead650fe8f33724dd130fcaf1`.
-  Clean macOS extraction passed Chrome (`20261115-164826-01`) and Edge
-  (`20261115-164833-01`). Windows work-PC proof and publication are pending.
-
-## 2026-11-15 — Downside case comparison
-
-- The retained Caesars CP-2A handoff supplied an unstressed control and three
-  named shocks. Chrome and Edge matched the cover-watch result of −31.3278 USD
-  million free cash flow and 1.22x all-in cover across chart, table and row trace.
-  The 720 px layout passed after the trace tooltip closed. The report still has
-  the same pre-existing horizontal overflow at 390 px.
-- Confidence review verified reordered columns, ambiguous control and shock
-  inputs, negative and zero geometry, cross-currency rejection and missing
-  net debt. Focused web (80) and Python (15) tests, quality, lint and build passed.
-- Candidate `203c547` SHA-256
-  `697bdea7f42e71c7454d0f19ea0cb82b31ad891dead59a34658bc54c4d32a58f`.
-  Clean macOS extraction passed Chrome (`20261115-164043-01`) and Edge
-  (`20261115-164051-01`). Windows work-PC proof and publication are pending.
-
-## 2026-11-15 — Module readiness and monitoring records
-
-- The retained Caesars replay in macOS Chrome and Edge showed six CP-0 readiness
-  decisions (five with limitations, one conditional) and eight CP-2 triggers.
-  The USD 1,502 million liquidity threshold and the unresolved covenant basis
-  match the handoffs. Both browsers checked section jumps and row trace focus.
-- Confidence review checked the combined and split register columns, module
-  ownership, unavailable thresholds and preservation of source qualifications.
-  Focused web (927) and Python (15) tests, quality, lint, format and build passed.
-- Candidate `c96d161` SHA-256
-  `5b0599d74f0ccbedd122c8920f8deaf225f4494eef309c7ee4c19c957cae86df`.
-  Clean extraction passed macOS Chrome (`20261115-162914-01`) and Edge
-  (`20261115-162922-01`). Windows work-PC proof and publication are pending.

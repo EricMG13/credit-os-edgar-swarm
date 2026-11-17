@@ -1,0 +1,754 @@
+{
+  "build_files": {
+    "THIRD-PARTY-NOTICES.md": {
+      "gzip": 1397,
+      "raw": 4475,
+      "sha256": "a7136792bd8d2a04071df4e61bd1b1c910c40d7d7b455d4f0ca242a3fd82fed5"
+    },
+    "assets/index-CtbvFvFb.js": {
+      "gzip": 427688,
+      "raw": 1485270,
+      "sha256": "f4730b936967150bd33f50ecf14f23b7d1e31d38851c4b414e7dc96cb169399c"
+    },
+    "assets/style-Di29dHHt.css": {
+      "gzip": 20094,
+      "raw": 124617,
+      "sha256": "091279aa82212520f593eb11a0ad72468ed4ea67c4ddcbae67a962dfd0e32336"
+    },
+    "connected-assets/Check-Dq8szrpk.js": {
+      "gzip": 261,
+      "raw": 339,
+      "sha256": "be650c2bace46feec8836e7fc465c4ed46eda83872697fd5402a4af1428d022d"
+    },
+    "connected-assets/ConnectedApp-CVGCzuk4.js": {
+      "gzip": 35395,
+      "raw": 107086,
+      "sha256": "72a8b21ad207d0e774210319d1179703f1c8761ea944cbb24ac0e4f0c3796b8d"
+    },
+    "connected-assets/HeadlineFigures-BxqujAAB.js": {
+      "gzip": 28204,
+      "raw": 83697,
+      "sha256": "1facfa1424b8bc1926be4b7827207e199f014531b01d94a38aca1c2635750adc"
+    },
+    "connected-assets/LibraryIndex-BXwh6_iw.js": {
+      "gzip": 3317,
+      "raw": 8819,
+      "sha256": "2c8b87ff4297c34665f39054af3139e58e7663d40e375bef50bdd9216b7cbedc"
+    },
+    "connected-assets/Missing-CFBr7TKm.js": {
+      "gzip": 2060,
+      "raw": 4648,
+      "sha256": "41f696e4d8e06cfc05c96baaece010fbd894fd4914d5a38b8a86642b8ac6f8b4"
+    },
+    "connected-assets/Modal-DbIp1xvH.js": {
+      "gzip": 8619,
+      "raw": 23328,
+      "sha256": "43ff3338dc2f30d971ca89ef8fcfc7ab72aebf0068ce112d04ed237a17f63f3e"
+    },
+    "connected-assets/ReportLibrary-DfvYEqB6.js": {
+      "gzip": 205033,
+      "raw": 693313,
+      "sha256": "e81f033ac41f1653e521ad933d8f8a0a934de46b2ec339c37182ff58eed9ad83"
+    },
+    "connected-assets/RunActivity-2siQs28t.js": {
+      "gzip": 2748,
+      "raw": 7672,
+      "sha256": "21d7e6061f5ad359e1bfc8ade506fc80e3f0db60e6ab31a7a1b90d96fa378e8a"
+    },
+    "connected-assets/RunProgress-DT10yqF2.js": {
+      "gzip": 4327,
+      "raw": 12053,
+      "sha256": "1df18ebdb77da12f60ed93e1d2f243665e1cc970aedcd8fe87575b367d2be4b0"
+    },
+    "connected-assets/StartRun-Bz85yxtv.js": {
+      "gzip": 37865,
+      "raw": 114722,
+      "sha256": "d492a82e9c2983de3892c508f08b7738a70dea055c7aded94d60cb5aaa292ba7"
+    },
+    "connected-assets/api-DRJQlZSb.js": {
+      "gzip": 4726,
+      "raw": 13373,
+      "sha256": "5171e7bac4ec2c954c6d20083777721863f9b48ab872f0b8b77beb76288f8b26"
+    },
+    "connected-assets/connected--iGsdWdA.js": {
+      "gzip": 70938,
+      "raw": 227420,
+      "sha256": "30496421d5cb9c1d9c25c917cb84b28ff2b428295b92d8f70605b7a073eb9ba3"
+    },
+    "connected-assets/empty-state-BGywBso_.js": {
+      "gzip": 685,
+      "raw": 1560,
+      "sha256": "7fb4f408d7b3882baf9ad38a9bdbd58df334465e0e715c5ffc3b6f5caaab72a8"
+    },
+    "connected-assets/featured-icon-lYbXRGz-.js": {
+      "gzip": 11748,
+      "raw": 37587,
+      "sha256": "d6810a7de67d65b7013262293b3e29614e5a218bff96014d7b111af2621a9dd4"
+    },
+    "connected-assets/progress-indicators-KS44ADvU.js": {
+      "gzip": 568,
+      "raw": 939,
+      "sha256": "dbca43dbbc7313116a51a19a6f0564a373f78e8d22243f3f00a6c672f865a83e"
+    },
+    "connected-assets/style-DSotP3OC.css": {
+      "gzip": 20050,
+      "raw": 124617,
+      "sha256": "fdf00bce342ad90c31d21ed6bfb51870bff6766a4552acd517fe1ca9cf74f026"
+    },
+    "connected-assets/table-BHIvngR5.js": {
+      "gzip": 37418,
+      "raw": 126635,
+      "sha256": "a97e68dea99366be550f8a1b179def5e130db0e892c55fe8d8025101ed2e9853"
+    },
+    "connected-assets/useResource-CU3CYKLk.js": {
+      "gzip": 508,
+      "raw": 844,
+      "sha256": "2317e62557d95f933eeb2754709261fcbdc83622415c1f74851a1a8c938278d1"
+    },
+    "connected-assets/useSlot-Bn8PHKH_.js": {
+      "gzip": 2132,
+      "raw": 5476,
+      "sha256": "26cf002fc0d573fdb5f1cb11ec8d084e136f94a8f49f0be0a55827ffe339b790"
+    },
+    "connected.html": {
+      "gzip": 377,
+      "raw": 687,
+      "sha256": "a2a7557e33f80fba9639488c4c0b54122f723c3c5f67bcb774029b207ff6ab34"
+    },
+    "data.js": {
+      "gzip": 89,
+      "raw": 69,
+      "sha256": "e5369b296ee699049b5c2e67c7c7b7d223fd895a1dbd6f5cbba845ae9c817f24"
+    },
+    "fonts/Geist-Medium.woff2": {
+      "gzip": 46497,
+      "raw": 46464,
+      "sha256": "ed653645d0ea78ec2aeda9d705158e9c6b323efe507e0ab25cc483ae9182e97d"
+    },
+    "fonts/Geist-Regular.woff2": {
+      "gzip": 45261,
+      "raw": 45228,
+      "sha256": "12e7c80de776bc74044973a26bb96842ca4bfe9e16fc6128fa5c6420e8e1d8fc"
+    },
+    "fonts/Geist-SemiBold.woff2": {
+      "gzip": 46337,
+      "raw": 46304,
+      "sha256": "162dcce19c895344a8eeee8482017d975f8e555d90da21d4343e31e8c9334d79"
+    },
+    "fonts/GeistMono-Medium.woff2": {
+      "gzip": 51902,
+      "raw": 51864,
+      "sha256": "b016f0d4235f40bfb246363f3cad04a90b88fe35b67ce764be9391b5fa57791a"
+    },
+    "fonts/GeistMono-Regular.woff2": {
+      "gzip": 50802,
+      "raw": 50764,
+      "sha256": "67b27e8a75395c074cc23656acf208ccd69e674da4cad2c7d6dfa254272ad7e8"
+    },
+    "fonts/OFL-Geist.txt": {
+      "gzip": 1953,
+      "raw": 4383,
+      "sha256": "055f91395bbf674dc6e1ef4a06ca5bd43d6080eb34dfb53be0831aa950457722"
+    },
+    "fonts/OFL-GeistMono.txt": {
+      "gzip": 1953,
+      "raw": 4383,
+      "sha256": "055f91395bbf674dc6e1ef4a06ca5bd43d6080eb34dfb53be0831aa950457722"
+    },
+    "fonts/OFL-SchibstedGrotesk.txt": {
+      "gzip": 1964,
+      "raw": 4405,
+      "sha256": "851b03806ddbd92890a59a8512a883ff231587f9bef037895efa544a0f250432"
+    },
+    "fonts/SchibstedGrotesk-Bold.woff2": {
+      "gzip": 48617,
+      "raw": 48612,
+      "sha256": "cb3017aa6302a4f3deb7a658d9a26979d6bdf8d7fbfb4fc771bfe6b86a21ccf9"
+    },
+    "fonts/SchibstedGrotesk-SemiBold.woff2": {
+      "gzip": 48878,
+      "raw": 48908,
+      "sha256": "dce16ebaba351bfeea864c53f8336836d79723fda36d16981363451a76b2afa8"
+    },
+    "index.html": {
+      "gzip": 460,
+      "raw": 832,
+      "sha256": "a4a75edd8587042547f8a988c17565f526986a86f46ff66ddb122b8172cfed92"
+    },
+    "symbol.svg": {
+      "gzip": 254,
+      "raw": 426,
+      "sha256": "36a427efaefa48bb4e232ca501a358484ed751714b6411ee672b45a0f575f1a9"
+    }
+  },
+  "build_totals": {
+    "connected_assets": {
+      "files": 19,
+      "gzip": 476602,
+      "raw": 1594128
+    },
+    "dist": {
+      "files": 36,
+      "gzip": 1271125,
+      "raw": 3561819
+    },
+    "js_css": {
+      "files": 22,
+      "gzip": 924473,
+      "raw": 3204084
+    },
+    "static_assets": {
+      "files": 2,
+      "gzip": 447782,
+      "raw": 1609887
+    }
+  },
+  "commit": "5e1d98b37305a9da59fb6944740ff17b721051af",
+  "gzip": "sum of per-file gzip level 6, mtime=0",
+  "scope": "tracked code incl. tests under src,react_frontend,apps/issuer-library,proof,tools,web; excludes signal path segments",
+  "source_lines_by_extension": {
+    ".cjs": 9619,
+    ".css": 2628,
+    ".html": 97,
+    ".js": 6708,
+    ".mjs": 3860,
+    ".py": 156623,
+    ".ts": 23295,
+    ".tsx": 77260
+  },
+  "source_lines_total": 280090,
+  "suppression_count_total": 104,
+  "suppression_counts": {
+    "eslint_disable": 4,
+    "prettier_ignore": 0,
+    "ruff_format_skip": 24,
+    "ruff_noqa": 73,
+    "ts_expect_error": 0,
+    "ts_ignore": 0,
+    "ts_nocheck": 0,
+    "type_ignore": 3
+  },
+  "suppression_scope": "Python comment tokens; JS/TS/CSS textual directive patterns; includes intentional test sites; excludes configs",
+  "suppression_sites": [
+    [
+      "apps/issuer-library/credit_os/store.py",
+      1664,
+      "ruff_noqa"
+    ],
+    [
+      "react_frontend/__init__.py",
+      441,
+      "ruff_noqa"
+    ],
+    [
+      "react_frontend/__init__.py",
+      475,
+      "ruff_noqa"
+    ],
+    [
+      "src/deploy_vii/canonical_kpis.py",
+      298,
+      "ruff_noqa"
+    ],
+    [
+      "src/deploy_vii/canonical_tables.py",
+      794,
+      "ruff_noqa"
+    ],
+    [
+      "src/deploy_vii/canonical_tables.py",
+      842,
+      "ruff_noqa"
+    ],
+    [
+      "src/deploy_vii/charts.py",
+      229,
+      "ruff_noqa"
+    ],
+    [
+      "src/deploy_vii/charts.py",
+      716,
+      "ruff_noqa"
+    ],
+    [
+      "src/deploy_vii/financial_reconciliation.py",
+      146,
+      "ruff_noqa"
+    ],
+    [
+      "src/deploy_vii/inputs/portfolio.py",
+      953,
+      "ruff_noqa"
+    ],
+    [
+      "src/deploy_vii/inputs/portfolio_export.py",
+      289,
+      "ruff_noqa"
+    ],
+    [
+      "src/deploy_vii/live/prompts.py",
+      1206,
+      "ruff_noqa"
+    ],
+    [
+      "src/deploy_vii/live/submission.py",
+      1032,
+      "ruff_noqa"
+    ],
+    [
+      "src/deploy_vii/narrative.py",
+      288,
+      "ruff_noqa"
+    ],
+    [
+      "src/deploy_vii/narrative.py",
+      406,
+      "ruff_noqa"
+    ],
+    [
+      "src/deploy_vii/narrative_projection.py",
+      99,
+      "ruff_noqa"
+    ],
+    [
+      "src/deploy_vii/period_reconciliation.py",
+      107,
+      "ruff_noqa"
+    ],
+    [
+      "src/deploy_vii/preparation.py",
+      329,
+      "ruff_noqa"
+    ],
+    [
+      "src/deploy_vii/readiness.py",
+      441,
+      "ruff_noqa"
+    ],
+    [
+      "src/deploy_vii/statement_output.py",
+      81,
+      "ruff_noqa"
+    ],
+    [
+      "src/deploy_vii/statement_validation.py",
+      338,
+      "ruff_noqa"
+    ],
+    [
+      "src/deploy_workflow/changes.py",
+      206,
+      "ruff_noqa"
+    ],
+    [
+      "src/deploy_workflow/changes.py",
+      742,
+      "ruff_noqa"
+    ],
+    [
+      "src/deploy_workflow/financial_workflow.py",
+      752,
+      "ruff_noqa"
+    ],
+    [
+      "src/deploy_workflow/financial_workflow.py",
+      877,
+      "ruff_noqa"
+    ],
+    [
+      "src/deploy_workflow/financial_workflow.py",
+      2070,
+      "ruff_noqa"
+    ],
+    [
+      "src/deploy_workflow/financial_workflow.py",
+      2718,
+      "ruff_noqa"
+    ],
+    [
+      "src/deploy_workflow/handoff_delivery.py",
+      433,
+      "ruff_noqa"
+    ],
+    [
+      "src/deploy_workflow/handoff_delivery.py",
+      460,
+      "ruff_noqa"
+    ],
+    [
+      "src/deploy_workflow/host.py",
+      983,
+      "ruff_noqa"
+    ],
+    [
+      "src/deploy_workflow/host.py",
+      1294,
+      "ruff_noqa"
+    ],
+    [
+      "src/deploy_workflow/inbox/filing.py",
+      76,
+      "ruff_noqa"
+    ],
+    [
+      "src/deploy_workflow/inbox/runs.py",
+      315,
+      "ruff_format_skip"
+    ],
+    [
+      "src/deploy_workflow/inbox/scheduler.py",
+      416,
+      "ruff_noqa"
+    ],
+    [
+      "src/deploy_workflow/inbox/teams.py",
+      618,
+      "ruff_noqa"
+    ],
+    [
+      "src/deploy_workflow/inbox/teams.py",
+      757,
+      "ruff_noqa"
+    ],
+    [
+      "src/deploy_workflow/markdown_delivery.py",
+      919,
+      "ruff_noqa"
+    ],
+    [
+      "src/deploy_workflow/method_scripts.py",
+      143,
+      "ruff_noqa"
+    ],
+    [
+      "src/deploy_workflow/method_scripts.py",
+      995,
+      "ruff_noqa"
+    ],
+    [
+      "src/deploy_workflow/method_scripts.py",
+      1086,
+      "ruff_noqa"
+    ],
+    [
+      "src/deploy_workflow/model/adapter.py",
+      416,
+      "ruff_format_skip"
+    ],
+    [
+      "src/deploy_workflow/model/adapter.py",
+      423,
+      "ruff_format_skip"
+    ],
+    [
+      "src/deploy_workflow/model/adapter.py",
+      452,
+      "ruff_format_skip"
+    ],
+    [
+      "src/deploy_workflow/model/adapter.py",
+      470,
+      "ruff_format_skip"
+    ],
+    [
+      "src/deploy_workflow/model/copilot_adapter.py",
+      88,
+      "ruff_format_skip"
+    ],
+    [
+      "src/deploy_workflow/model/copilot_adapter.py",
+      525,
+      "ruff_format_skip"
+    ],
+    [
+      "src/deploy_workflow/model/copilot_adapter.py",
+      621,
+      "ruff_format_skip"
+    ],
+    [
+      "src/deploy_workflow/model/copilot_adapter.py",
+      876,
+      "ruff_noqa"
+    ],
+    [
+      "src/deploy_workflow/model/copilot_adapter.py",
+      897,
+      "ruff_format_skip"
+    ],
+    [
+      "src/deploy_workflow/model/copilot_adapter.py",
+      973,
+      "ruff_format_skip"
+    ],
+    [
+      "src/deploy_workflow/model/copilot_adapter.py",
+      978,
+      "ruff_format_skip"
+    ],
+    [
+      "src/deploy_workflow/model/copilot_adapter.py",
+      990,
+      "ruff_format_skip"
+    ],
+    [
+      "src/deploy_workflow/model/copilot_adapter.py",
+      1012,
+      "ruff_format_skip"
+    ],
+    [
+      "src/deploy_workflow/model/copilot_adapter.py",
+      1016,
+      "ruff_format_skip"
+    ],
+    [
+      "src/deploy_workflow/model/copilot_adapter.py",
+      1029,
+      "ruff_noqa"
+    ],
+    [
+      "src/deploy_workflow/model/handoff.py",
+      576,
+      "ruff_noqa"
+    ],
+    [
+      "src/deploy_workflow/model/handoff.py",
+      917,
+      "ruff_noqa"
+    ],
+    [
+      "src/deploy_workflow/model/handoff.py",
+      1133,
+      "ruff_noqa"
+    ],
+    [
+      "src/deploy_workflow/model/handoff.py",
+      1571,
+      "ruff_noqa"
+    ],
+    [
+      "src/deploy_workflow/model/handoff.py",
+      1580,
+      "ruff_noqa"
+    ],
+    [
+      "src/deploy_workflow/model/handoff.py",
+      1694,
+      "ruff_noqa"
+    ],
+    [
+      "src/deploy_workflow/model/loop.py",
+      493,
+      "ruff_format_skip"
+    ],
+    [
+      "src/deploy_workflow/model/loop.py",
+      611,
+      "ruff_format_skip"
+    ],
+    [
+      "src/deploy_workflow/model/loop.py",
+      757,
+      "ruff_format_skip"
+    ],
+    [
+      "src/deploy_workflow/model/loop.py",
+      1031,
+      "ruff_noqa"
+    ],
+    [
+      "src/deploy_workflow/model_handoff_delivery.py",
+      982,
+      "ruff_noqa"
+    ],
+    [
+      "src/deploy_workflow/model_handoff_delivery.py",
+      1064,
+      "ruff_noqa"
+    ],
+    [
+      "src/deploy_workflow/owner_workflow.py",
+      1078,
+      "ruff_noqa"
+    ],
+    [
+      "src/deploy_workflow/owner_workflow.py",
+      1109,
+      "ruff_noqa"
+    ],
+    [
+      "src/deploy_workflow/owner_workflow.py",
+      2489,
+      "ruff_noqa"
+    ],
+    [
+      "src/deploy_workflow/owners/cp1c.py",
+      1398,
+      "ruff_noqa"
+    ],
+    [
+      "src/deploy_workflow/owners/cp1c.py",
+      3004,
+      "ruff_noqa"
+    ],
+    [
+      "src/deploy_workflow/owners/cp2e.py",
+      1498,
+      "ruff_format_skip"
+    ],
+    [
+      "src/deploy_workflow/owners/cp2e.py",
+      1536,
+      "ruff_format_skip"
+    ],
+    [
+      "src/deploy_workflow/owners/cp2e.py",
+      1566,
+      "ruff_format_skip"
+    ],
+    [
+      "src/deploy_workflow/owners/cp2e.py",
+      1935,
+      "ruff_format_skip"
+    ],
+    [
+      "src/deploy_workflow/owners/cp2h.py",
+      389,
+      "ruff_format_skip"
+    ],
+    [
+      "src/deploy_workflow/owners/cp2h.py",
+      393,
+      "ruff_format_skip"
+    ],
+    [
+      "src/deploy_workflow/owners/cp3d.py",
+      71,
+      "ruff_noqa"
+    ],
+    [
+      "src/deploy_workflow/owners/cpos.py",
+      38,
+      "ruff_noqa"
+    ],
+    [
+      "src/deploy_workflow/owners/cpos.py",
+      251,
+      "ruff_noqa"
+    ],
+    [
+      "src/deploy_workflow/owners/cpos.py",
+      416,
+      "ruff_noqa"
+    ],
+    [
+      "src/deploy_workflow/owners/cpos.py",
+      854,
+      "ruff_noqa"
+    ],
+    [
+      "src/deploy_workflow/owners/cpos.py",
+      947,
+      "ruff_noqa"
+    ],
+    [
+      "src/deploy_workflow/owners/cpos.py",
+      959,
+      "ruff_noqa"
+    ],
+    [
+      "src/deploy_workflow/owners/cpos_launch.py",
+      43,
+      "ruff_noqa"
+    ],
+    [
+      "src/deploy_workflow/owners/cpos_launch.py",
+      839,
+      "ruff_noqa"
+    ],
+    [
+      "src/deploy_workflow/owners/cpos_launch.py",
+      872,
+      "ruff_noqa"
+    ],
+    [
+      "src/deploy_workflow/owners/cpos_launch.py",
+      971,
+      "ruff_noqa"
+    ],
+    [
+      "src/deploy_workflow/owners/cpos_launch.py",
+      1021,
+      "ruff_noqa"
+    ],
+    [
+      "src/deploy_workflow/owners/cpos_periods.py",
+      876,
+      "ruff_format_skip"
+    ],
+    [
+      "src/deploy_workflow/pdf_headers.py",
+      101,
+      "ruff_noqa"
+    ],
+    [
+      "src/deploy_workflow/portfolio_workbook.py",
+      85,
+      "ruff_noqa"
+    ],
+    [
+      "src/deploy_workflow/research/dossier.py",
+      17,
+      "ruff_noqa"
+    ],
+    [
+      "src/deploy_workflow/research/webfetch.py",
+      513,
+      "ruff_noqa"
+    ],
+    [
+      "src/deploy_workflow/run_expectations.py",
+      748,
+      "ruff_noqa"
+    ],
+    [
+      "src/deploy_workflow/run_start/submissions.py",
+      135,
+      "type_ignore"
+    ],
+    [
+      "src/deploy_workflow/workflow.py",
+      699,
+      "ruff_noqa"
+    ],
+    [
+      "tools/synthetic_portfolio_exports.py",
+      29,
+      "type_ignore"
+    ],
+    [
+      "tools/synthetic_portfolio_workbooks.py",
+      26,
+      "type_ignore"
+    ],
+    [
+      "web/src/components/chart/PathChart.tsx",
+      343,
+      "eslint_disable"
+    ],
+    [
+      "web/src/pages/connected/visuals/EdgeMap.tsx",
+      121,
+      "eslint_disable"
+    ],
+    [
+      "web/src/pages/connected/visuals/ForecastTable.tsx",
+      293,
+      "eslint_disable"
+    ],
+    [
+      "web/src/pages/connected/visuals/visualData.ts",
+      185,
+      "eslint_disable"
+    ]
+  ]
+}

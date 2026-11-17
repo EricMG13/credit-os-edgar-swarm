@@ -1,8 +1,8 @@
 /** Every link in the library group is a hash link, built here so the address scheme lives in one place. */
 const seg = encodeURIComponent;
 
-/** The run start page, the target of "Start a run" and "New run". */
-export const RUN_START = "#/run";
+/** The run start page, the target of "Start a run" and "New run": the run group's first draft. */
+export const RUN_START = "#/run/start";
 
 /** The library home, the target of every "Library" and "Back to the library" link. */
 export const LIBRARY_HOME = "#/library/home";
@@ -28,8 +28,8 @@ export const changesHref = (issuer: string, run: string): string =>
   `#/library/${seg(issuer)}/${seg(run)}/changes`;
 
 /** A module's page, the target of the Modules tab. */
-export const modulesHref = (issuer: string, run: string, module: string): string =>
-  `#/library/${seg(issuer)}/${seg(run)}/modules/${seg(module)}`;
+export const modulesHref = (issuer: string, run: string, module?: string): string =>
+  `#/library/${seg(issuer)}/${seg(run)}/modules${module === undefined ? "" : `/${seg(module)}`}`;
 
 /** One page of a run's Evidence section: its Summary, Trace, Sources, Gaps or Record tab. */
 export const evidenceHref = (

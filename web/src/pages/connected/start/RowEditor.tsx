@@ -29,6 +29,8 @@ export function RowEditor({
   const spec = ROW_SPECS[kind];
   const base = useId();
   const errorId = `${base}-error`;
+  const maxId = `${base}-max`;
+  const full = rows.length >= spec.max;
   // Each row keeps one identity while it is in the list, so its open state and input ids
   // follow the row, not its position. The identity is not part of the row that is sent.
   const [ids, setIds] = useState<number[]>(() => rows.map((_, at) => at));
@@ -108,8 +110,10 @@ export function RowEditor({
             color="secondary"
             ref={addButton}
             data-field={kind}
-            isDisabled={rows.length >= spec.max}
-            aria-describedby={error ? errorId : undefined}
+            isDisabled={full}
+            aria-describedby={
+              [full && maxId, error && errorId].filter(Boolean).join(" ") || undefined
+            }
             onPress={() => {
               nextId.current += 1;
               setRemoved((previous) => ({ text: "", count: previous.count }));
@@ -121,6 +125,11 @@ export function RowEditor({
             {spec.add}
           </Button>
         </div>
+        {full && (
+          <p id={maxId} className="text-sm text-text-secondary">
+            At most {spec.max} {spec.plural}.
+          </p>
+        )}
         <p role="status" className="text-sm text-text-secondary empty:hidden">
           {removed.text ? <span key={removed.count}>{removed.text}</span> : null}
         </p>
@@ -243,7 +252,7 @@ export function RowInput({
           {item.label}
         </label>
         {item.required && (
-          <span className="text-xs font-medium whitespace-nowrap text-text-secondary">
+          <span className="text-caption font-medium whitespace-nowrap text-text-secondary">
             Required
           </span>
         )}
@@ -284,7 +293,7 @@ export function RowInput({
         />
       )}
       {hintText && (
-        <p id={hint} className="text-xs text-text-secondary">
+        <p id={hint} className="text-caption text-text-secondary">
           {hintText}
         </p>
       )}

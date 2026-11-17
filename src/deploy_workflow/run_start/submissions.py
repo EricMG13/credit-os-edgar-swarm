@@ -17,18 +17,19 @@ import secrets
 import shutil
 import tempfile
 import threading
+import time
 import unicodedata
 import uuid
 from collections.abc import Collection
-from decimal import Decimal
 from pathlib import Path, PurePath
 from typing import Any, BinaryIO, TypedDict
 
 from deploy_vii.contracts import PATHWAY_CAP_USD
 from deploy_workflow.context import load_context
+from deploy_workflow.inbox import runs
 from deploy_workflow.inbox.filing import safe_name
 from deploy_workflow.inbox.layout import MAX_ISSUER_ID, Layout
-from deploy_workflow.inbox.runs import EFFORTS, MODELS, config_for
+from deploy_workflow.inbox.runs import EFFORTS, MODELS, approved_summary_limits, config_for
 from deploy_workflow.inbox.startup import STANDING_RULING
 from deploy_workflow.model.adapter import KEY_VARIABLES
 from deploy_workflow.model.handoff import settled_web_lookup
@@ -43,11 +44,15 @@ from deploy_workflow.owners.cpos_launch import (
     web_search_on,
 )
 from deploy_workflow.platform_io import regular_open
+from deploy_workflow.run_expectations import Item
 
 MAX_FILE = 50 * 1024 * 1024
 MAX_FILES = 500
 MAX_TOTAL = 512 * 1024 * 1024
 STALE_SECONDS = 24 * 3600
+# A draft untouched for this long (no upload, removal or reading) may be removed to make room
+# when the open ceiling is reached; the page leaves a draft behind whenever a form is abandoned.
+IDLE_SECONDS = 2 * 3600
 # Ceiling on unsubmitted submissions at once: a peer cannot make more folders than this.
 MAX_OPEN = 50
 # Ceiling on the bytes held by all unsubmitted uploads together (stored plus in flight), so the
@@ -170,12 +175,36 @@ def _open_folders(layout: Layout) -> list[Path]:
     ]
 
 
+def _make_room(layout: Layout) -> None:
+    """Remove the oldest abandoned drafts, as many as the ceiling needs (held under ``_LOCK``).
+
+    A draft is abandoned when nothing has touched it for ``IDLE_SECONDS``. One with an upload in
+    flight or an approval issued (the analyst reached the review) is never removed here; the
+    24-hour sweep still ends those."""
+    now = time.time()
+    idle = sorted(
+        (folder.stat().st_mtime, folder)
+        for folder in _open_folders(layout)
+        if folder.name not in _PENDING
+        and not (folder / _ISSUED).exists()
+        and now - folder.stat().st_mtime >= IDLE_SECONDS
+    )
+    excess = len(_open_folders(layout)) - MAX_OPEN + 1
+    for _, folder in idle[: max(excess, 0)]:
+        _remove(folder)
+
+
 def new(layout: Layout) -> str:
     """A fresh submission: 32 hex characters, with an empty ``uploads/<id>/files``."""
     sid = secrets.token_hex(16)
     with _LOCK:
         if len(_open_folders(layout)) >= MAX_OPEN:
-            raise Refused("too many unfinished submissions; try again later")
+            _make_room(layout)
+        if len(_open_folders(layout)) >= MAX_OPEN:
+            raise Refused(
+                "too many unfinished submissions; continue an existing form, or try again after "
+                "an unused draft has been idle for 2 hours (24 hours if it reached review)"
+            )
         (layout.uploads / sid / "files").mkdir(parents=True)
     return sid
 
@@ -590,7 +619,13 @@ def carry(layout: Layout, sid: str, source: Path) -> dict[str, list[str]]:
 
 def reading(layout: Layout, sid: str) -> dict[str, Any]:
     """What the launcher makes of each uploaded file; its refusal comes back as ``error``."""
-    root = files_folder(layout, sid)
+    with _LOCK:
+        root = files_folder(layout, sid)
+        try:
+            _touch(root.parent)  # lookup and refresh must precede any idle-eviction decision
+        except OSError as error:
+            log.warning("could not refresh submission %s (%s)", sid, error)
+            raise Refused("the submission could not be kept active; try again") from error
     try:
         _stored(root, strict=True)
         got = read_documents(root)
@@ -615,6 +650,47 @@ def context_bytes(answers: Answers) -> bytes:
         return text.encode("utf-8")
     except UnicodeEncodeError:
         raise Refused("the context holds text that cannot be stored (a lone surrogate)") from None
+
+
+def issuer_key(name: str) -> str:
+    """An issuer name reduced to the letters and digits that tell two issuers apart.
+
+    The page reduces a name the same way (``issuerKey`` in ``start/plain.ts``) and the two are
+    pinned by the same literal cases: NFKD, lower case, marks dropped, then only Unicode letters
+    and digits kept, so names in any script keep their own letters (and "ß" and "ø" stay, as no
+    decomposition removes them). Known limit: Python and Node carry different Unicode versions, so
+    about 37 recent characters are letters in one and not in the other; two names that differ
+    only in such a character may compare differently on the page and here. The service's answer
+    is the one that counts, and no table is kept to hide the difference."""
+    text = unicodedata.normalize("NFKD", name).lower()
+    return "".join(ch for ch in text if unicodedata.category(ch)[0] in "LN")
+
+
+def refuse_filed_elsewhere(layout: Layout, answers: Answers) -> None:
+    """``Refused`` when the Issuer ID is already filed under another issuer's name.
+
+    An ID is one issuer's. Runs record the name they were filed under; the ID is free when no run
+    holds it, or when any run under it carries this name (compared by ``issuer_key``) or no name,
+    so the same issuer keeps its ID, and an ID that two issuers already share (merged before this
+    check) still takes either of them. Otherwise the latest run's name is the holder named. An
+    unreadable record file is skipped, as `prior.issuer` skips it. Both the summary and
+    ``digest`` (which Submit compares with the approval) call this, so no route passes it by."""
+    identity = answers["context"].get("identity")
+    if not isinstance(identity, dict):
+        return
+    issuer_id, name = identity.get("issuer_id"), identity.get("issuer_name")
+    if not isinstance(issuer_id, str) or not isinstance(name, str):
+        return
+    held = [r for r in runs.load_readable(layout)[0] if r.issuer_id == issuer_id]
+    mine = issuer_key(name)
+    if not held or any(not r.issuer_name or issuer_key(r.issuer_name) == mine for r in held):
+        return
+    holder = max(held, key=lambda r: (r.as_of, r.id)).issuer_name
+    raise Refused(
+        f'Issuer ID "{issuer_id}" is filed under the name "{holder}", not "{name.strip()}". '
+        "If that is this issuer under another name, type that name; "
+        "otherwise use another Issuer ID."
+    )
 
 
 def _digest(root: Path, answers: Answers) -> str:
@@ -655,6 +731,7 @@ def digest(layout: Layout, sid: str, answers: Answers) -> str:
     ``level`` and ``submitted_by`` are not covered: they change what the page shows, not the run.
     The approval's digest is this one with the earlier run named at approval folded in (`bound`)."""
     answers = validated(answers)
+    refuse_filed_elsewhere(layout, answers)
     root = files_folder(layout, sid)
     value = _digest(root, answers)
     if not root.is_dir():  # a seal renamed the folder before the walk: it saw nothing
@@ -708,13 +785,14 @@ def issued(layout: Layout, sid: str) -> str:
 
 
 _CAP_LINE = "cap="
+_LIMITS_LINE = "limits="
 
 
 def issued_prior(layout: Layout, sid: str) -> str:
     """The earlier run the latest summary named (a run folder name, or ``none`` for a first run);
     empty when there is none. It is part of the issued digest."""
     lines = _issued_lines(layout, sid)
-    return lines[1] if len(lines) > 1 and not lines[1].startswith(_CAP_LINE) else ""
+    return lines[1] if len(lines) > 1 and not lines[1].startswith((_CAP_LINE, _LIMITS_LINE)) else ""
 
 
 def issued_cap(layout: Layout, sid: str) -> str:
@@ -724,10 +802,38 @@ def issued_cap(layout: Layout, sid: str) -> str:
     return next((x.removeprefix(_CAP_LINE) for x in lines[1:] if x.startswith(_CAP_LINE)), "")
 
 
-def _record_issued(layout: Layout, sid: str, value: str, prior: str = "", cap: str = "") -> None:
+def issued_summary_limits(layout: Layout, sid: str) -> list[Item] | None:
+    """The exact non-ready decision items beside the latest issued digest; None for old metadata."""
+    encoded = next(
+        (
+            line.removeprefix(_LIMITS_LINE)
+            for line in _issued_lines(layout, sid)
+            if line.startswith(_LIMITS_LINE)
+        ),
+        None,
+    )
+    if encoded is None:
+        return None
+    try:
+        return approved_summary_limits(json.loads(bytes.fromhex(encoded).decode("utf-8")))
+    except (ValueError, UnicodeError) as error:
+        raise Refused(
+            "approved summary limits could not be read; review the summary again"
+        ) from error
+
+
+def _record_issued(layout: Layout, sid: str, result: dict[str, Any]) -> None:
     """Replace the submission's issued digest (and the earlier run and the cap the summary showed)
     with ``value`` (none when empty), under the lock."""
     folder = _folder(layout, sid)
+    value = result.get("digest", "")
+    prior, cap = result.get("prior_choice", ""), result.get("cap", "")
+    limits = [
+        item
+        for item in result.get("items", [])
+        if item["outcome"] in ("will_refuse", "gap", "limited", "check")
+    ]
+    encoded = json.dumps(approved_summary_limits(limits), ensure_ascii=False).encode("utf-8").hex()
     with _LOCK:
         if not folder.is_dir():  # the scheduler's release removed it after the check above
             raise Refused("unknown submission")
@@ -737,7 +843,7 @@ def _record_issued(layout: Layout, sid: str, value: str, prior: str = "", cap: s
             return
         temp = folder / f".issued-{uuid.uuid4().hex}"
         try:
-            lines = (value, prior, _CAP_LINE + cap if cap else "")
+            lines = (value, prior, _CAP_LINE + cap if cap else "", _LIMITS_LINE + encoded)
             temp.write_text("".join(f"{x}\n" for x in lines if x), encoding="ascii")
             os.replace(temp, path)
         finally:
@@ -760,9 +866,7 @@ def summary(layout: Layout, sid: str, answers: Answers) -> dict[str, Any]:
     result = _summarise(layout, sid, answers)
     digest_issued = result.get("digest", "")
     try:
-        _record_issued(
-            layout, sid, digest_issued, result.get("prior_choice", ""), result.get("cap", "")
-        )
+        _record_issued(layout, sid, result)
     except Refused:
         if digest_issued:  # a digest was made for a submission that is not there: not possible
             raise
@@ -791,6 +895,7 @@ def _summarise(layout: Layout, sid: str, answers: Answers) -> dict[str, Any]:
                     return {"error": _CHANGED}
                 run = load_context(context_bytes(answers))
                 refuse_deactivated(run.run.pathway)
+                refuse_filed_elsewhere(layout, answers)
                 cap = PATHWAY_CAP_USD[run.run.pathway]
                 if len(run.identity.issuer_id) > MAX_ISSUER_ID:
                     raise Refused(

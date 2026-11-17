@@ -8,7 +8,6 @@ import { StatusBadge } from "@/components/status/StatusBadge";
 import { PageHeader } from "@/shell/PageHeader";
 import { useSource } from "../../source";
 import { TextLink } from "../TextLink";
-import { NOT_CONNECTED } from "../reasons";
 import { readSlice } from "../slice";
 import type { StartDraft } from "../slice-start";
 import type { ActivityRecord, RunRecord } from "../slice-activity";
@@ -51,6 +50,9 @@ function Empty({
   );
 }
 
+const NOTHING_STARTED =
+  "Nothing is running and no run has been started here yet. A run appears on this page as soon as you submit it.";
+
 function NoRun({ draft }: { draft: StartDraft | undefined }) {
   return (
     <Empty
@@ -64,18 +66,28 @@ function NoRun({ draft }: { draft: StartDraft | undefined }) {
         )
       }
     >
-      <EmptyState.Description>
-        Nothing is running and no run has been started here yet. A run appears on this page as soon
-        as you submit it.
-      </EmptyState.Description>
+      <EmptyState.Description>{NOTHING_STARTED}</EmptyState.Description>
     </Empty>
   );
+}
+
+/** A run's own labels are free text, so unlike the shared Badge's one-line chips they wrap inside
+ *  the row and break an unbroken word; a long label stays whole and in view. */
+function Labels({ labels }: { labels: readonly string[] }) {
+  return labels.map((label, i) => (
+    <Badge
+      key={`${label}-${String(i)}`}
+      className="size-auto max-w-full rounded-2xl whitespace-normal wrap-anywhere"
+    >
+      {label}
+    </Badge>
+  ));
 }
 
 function Trail({ issuer }: { issuer: string }) {
   return (
     <nav aria-label="Breadcrumb" className="text-sm text-text-tertiary">
-      <TextLink href="#/run">Runs</TextLink>
+      <TextLink href="#/run/runs">Runs</TextLink>
       {` / ${issuer}`}
     </nav>
   );
@@ -91,9 +103,7 @@ function Unreadable({ run }: { run: Extract<ActivityRecord, { kind: "unreadable"
         badges={
           <>
             <StatusBadge set="Activity that cannot be read" state="State not known" />
-            {run.labels.map((label, i) => (
-              <Badge key={`${label}-${String(i)}`}>{label}</Badge>
-            ))}
+            <Labels labels={run.labels} />
           </>
         }
       />
@@ -153,9 +163,7 @@ function Run({ run }: { run: RunRecord }) {
         badges={
           <>
             <StatusBadge set="Run states" state={run.state} live={live} />
-            {run.labels.map((label, i) => (
-              <Badge key={`${label}-${String(i)}`}>{label}</Badge>
-            ))}
+            <Labels labels={run.labels} />
           </>
         }
         actions={
@@ -163,15 +171,6 @@ function Run({ run }: { run: RunRecord }) {
             <Button href={run.open.href} size="lg" color="primary">
               {run.open.label}
             </Button>
-          ) : live ? (
-            <div className="flex max-w-xs flex-col items-start gap-2">
-              <Button color="secondary" isDisabled aria-describedby="stop-reason">
-                Stop run
-              </Button>
-              <span id="stop-reason" className="text-sm text-text-secondary">
-                {NOT_CONNECTED}
-              </span>
-            </div>
           ) : null
         }
       />
@@ -198,7 +197,19 @@ function Run({ run }: { run: RunRecord }) {
 /** One run's activity: the run the address names, or (no id) the one the slice names as current. */
 export function ActivityPage({ run: id }: { run: string | null }) {
   const slice = readSlice(useSource().run);
-  if (slice.kind !== "ok") return <Empty title="No run data in this library" />;
+  if (slice.kind !== "ok")
+    return (
+      <Empty
+        title="No run data in this library"
+        action={
+          <Button href="#/" color="secondary">
+            Back to the library
+          </Button>
+        }
+      >
+        <EmptyState.Description>This library holds no run records.</EmptyState.Description>
+      </Empty>
+    );
   const wanted = id ?? slice.data.current;
   const record = slice.data.runs.find((r) => r.id === wanted);
   if (wanted === null) return <NoRun draft={slice.data.drafts[0]} />;
@@ -213,4 +224,95 @@ export function ActivityPage({ run: id }: { run: string | null }) {
   if (record.kind === "unreadable") return <Unreadable key={record.id} run={record} />;
   // The key keeps one run's opened groups from carrying over to another run's page.
   return <Run key={record.id} run={record} />;
+}
+
+type Listed = Exclude<ActivityRecord, { kind: "none" }>;
+
+// CM-090's three groups, then the runs whose record cannot be read: their state is not known, so
+// they are neither in progress nor ended. A group whose heading names the state draws no state
+// badge on its rows; the ended group's rows do, as the states differ within it.
+const GROUPS: readonly { id: string; title: string; has: (run: Listed) => boolean }[] = [
+  {
+    id: "runs-in-progress",
+    title: "In progress",
+    has: (run) => run.kind === "run" && run.state === "Running",
+  },
+  {
+    id: "runs-queue",
+    title: "Queue",
+    has: (run) => run.kind === "run" && run.state === "Queued",
+  },
+  {
+    id: "runs-ended",
+    title: "Ended",
+    has: (run) => run.kind === "run" && run.state !== "Running" && run.state !== "Queued",
+  },
+  { id: "runs-unreadable", title: "State not known", has: (run) => run.kind === "unreadable" },
+];
+
+function RunRow({ run, ended }: { run: Listed; ended: boolean }) {
+  return (
+    <li className="flex flex-wrap items-center gap-x-3 gap-y-2 py-3 first:pt-0 last:pb-0">
+      <TextLink href={`#/run/activity/${run.id}`}>{run.issuer}</TextLink>
+      {ended && run.kind === "run" ? <StatusBadge set="Run states" state={run.state} /> : null}
+      <Labels labels={run.labels} />
+      {run.kind === "run" ? (
+        <span className="text-sm text-text-tertiary">{run.elapsed.note}</span>
+      ) : null}
+    </li>
+  );
+}
+
+function NoRuns({ title, draft }: { title: string; draft?: StartDraft | undefined }) {
+  return (
+    <EmptyState>
+      <EmptyState.Header>
+        <EmptyState.FeaturedIcon />
+      </EmptyState.Header>
+      <EmptyState.Content>
+        <EmptyState.Title>{title}</EmptyState.Title>
+        {draft === undefined ? null : (
+          <EmptyState.Description>{NOTHING_STARTED}</EmptyState.Description>
+        )}
+      </EmptyState.Content>
+      {draft === undefined ? null : (
+        <EmptyState.Footer>
+          <Button href={`#/run/start/${draft.id}`} size="lg" color="primary">
+            Start a run
+          </Button>
+        </EmptyState.Footer>
+      )}
+    </EmptyState>
+  );
+}
+
+/** Every run the slice lists, each linking to its activity page: the page the Runs breadcrumb
+ *  opens. It draws the slice's own fields only (issuer, state, labels and time line). */
+export function RunsIndex() {
+  const slice = readSlice(useSource().run);
+  if (slice.kind !== "ok") return <NoRuns title="No run data in this library" />;
+  const runs = slice.data.runs.filter((r): r is Listed => r.kind !== "none");
+  if (runs.length === 0) return <NoRuns title="No runs yet" draft={slice.data.drafts[0]} />;
+  return (
+    <div className="flex flex-col gap-8">
+      {GROUPS.map(({ id, title, has }) => {
+        const members = runs.filter(has);
+        if (members.length === 0) return null;
+        return (
+          <section key={id} aria-labelledby={id}>
+            <h2 id={id} className="mb-4 font-display text-h3 text-text-primary">
+              {title}
+            </h2>
+            <Card>
+              <ul>
+                {members.map((run) => (
+                  <RunRow key={run.id} run={run} ended={id === "runs-ended"} />
+                ))}
+              </ul>
+            </Card>
+          </section>
+        );
+      })}
+    </div>
+  );
 }
