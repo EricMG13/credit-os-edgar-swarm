@@ -280,28 +280,20 @@ function Chart({
 
 /** Two measures against each other, one mark per issuer; the issuer stands out. */
 export function ScatterPlot({
-  title,
-  as,
-  note,
-  subtitle,
-  actions,
   x,
   y,
   othersName,
   points,
   table,
   detailTable,
+  ...frame
 }: ScatterPlotProps) {
   check({ x, y, points, table });
   return (
     <ChartWithTable
-      title={title}
-      as={as}
-      note={note}
-      subtitle={subtitle}
-      actions={actions}
+      {...frame}
       table={detailTable ?? table}
-      chart={<Chart title={title} x={x} y={y} othersName={othersName} points={points} />}
+      chart={<Chart title={frame.title} x={x} y={y} othersName={othersName} points={points} />}
     />
   );
 }

@@ -320,27 +320,21 @@ function Chart({
 
 /** Amounts side by side on one zero baseline: maturities by year, recovery by class and case. */
 export function ColumnsChart({
-  title,
-  as,
-  note,
-  subtitle,
-  actions,
   groups,
   series,
   yTicks,
   table,
   detailTable,
+  ...frame
 }: ColumnsChartProps) {
   check({ groups, series, table });
   return (
     <ChartWithTable
-      title={title}
-      as={as}
-      note={note}
-      subtitle={subtitle}
-      actions={actions}
+      {...frame}
       table={detailTable ?? table}
-      chart={<Chart title={title} groups={groups} series={series} yTicks={yTicks} table={table} />}
+      chart={
+        <Chart title={frame.title} groups={groups} series={series} yTicks={yTicks} table={table} />
+      }
     />
   );
 }
