@@ -118,7 +118,7 @@ const run = { folder: "current" } as PublishedRun;
 it("preserves the recorded bridge and its exact source lines", () => {
   render(<Forecast view={basisView()} run={run} />);
   expect(screen.getByText(/The calculation gives/)).toHaveTextContent(
-    "The calculation gives 10.00 cash proxy. The Forward credit model gives 15.00 free cash flow. The displayed difference is US$5.00m.",
+    "The calculation gives US$10.00m cash proxy. The Forward credit model gives US$15.00m free cash flow. The displayed difference is US$5.00m.",
   );
   expect(screen.getByRole("link", { name: "Free cash flow basis" })).toHaveAttribute(
     "href",
@@ -133,7 +133,7 @@ it("preserves the recorded bridge and its exact source lines", () => {
 it("preserves a zero-valued bridge", () => {
   render(<Forecast view={basisView({ original: "0", difference: "0", value: "0" })} run={run} />);
   expect(screen.getByText(/The calculation gives/)).toHaveTextContent(
-    "The calculation gives 0.00 cash proxy.",
+    "The calculation gives $0.00m cash proxy.",
   );
   expect(screen.getByRole("link", { name: "Difference basis" })).toBeInTheDocument();
 });
@@ -204,19 +204,19 @@ it.each([
 it.each([
   [
     "GBP millions",
-    "The calculation gives 10.00 cash proxy. The Forward credit model gives 15.00 free cash flow. The displayed difference is GBP 5.00m.",
+    "The calculation gives GBP 10.00m cash proxy. The Forward credit model gives GBP 15.00m free cash flow. The displayed difference is GBP 5.00m.",
   ],
   [
     "CHF millions",
-    "The calculation gives 10.00 cash proxy. The Forward credit model gives 15.00 free cash flow. The displayed difference is CHF 5.00m.",
+    "The calculation gives CHF 10.00m cash proxy. The Forward credit model gives CHF 15.00m free cash flow. The displayed difference is CHF 5.00m.",
   ],
   [
     "EUR millions",
-    "The calculation gives 10.00 cash proxy. The Forward credit model gives 15.00 free cash flow. The displayed difference is EUR 5.00m.",
+    "The calculation gives EUR 10.00m cash proxy. The Forward credit model gives EUR 15.00m free cash flow. The displayed difference is EUR 5.00m.",
   ],
   [
     "USD millions",
-    "The calculation gives 10.00 cash proxy. The Forward credit model gives 15.00 free cash flow. The displayed difference is US$5.00m.",
+    "The calculation gives US$10.00m cash proxy. The Forward credit model gives US$15.00m free cash flow. The displayed difference is US$5.00m.",
   ],
 ])("shows the bridge of a model recorded in %s with that unit", (units, text) => {
   render(<Forecast view={basisView({ units })} run={run} />);

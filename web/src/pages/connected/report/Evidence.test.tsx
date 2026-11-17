@@ -221,7 +221,7 @@ describe("published evidence gaps", () => {
 
   it("handles empty lists and an unknown module filter without showing another module's rows", () => {
     const empty = renderGaps([]);
-    expect(screen.getByText("No recorded gaps for Financial foundation.")).toBeVisible();
+    expect(screen.getByText("No module-written gaps for Financial foundation.")).toBeVisible();
     empty.unmount();
     renderGaps(
       [
@@ -231,7 +231,7 @@ describe("published evidence gaps", () => {
       ],
       "CP-unknown",
     );
-    expect(screen.getByText("No recorded gaps for CP-unknown.")).toBeVisible();
+    expect(screen.getByText("No module-written gaps for CP-unknown.")).toBeVisible();
     expect(screen.queryByText("Different module gap.")).toBeNull();
   });
 });

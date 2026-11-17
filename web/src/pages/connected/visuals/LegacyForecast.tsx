@@ -6,6 +6,7 @@ import { TrendChart } from "@/components/chart/TrendChart";
 import { TRACE_HOST } from "@/pages/library/parts/TraceControl";
 import { containsReference, readerText, unitLabel } from "../publishedReport";
 import { amount, items, record, stringsIn, ticks, word } from "./visualData";
+import type { ForecastSource } from "../report/ForecastRecord";
 
 interface GridColumn {
   label: string;
@@ -67,13 +68,15 @@ function SelectedForecastTable({
   downsideNote,
   limits,
   source,
+  evidenceOnlyQualifications,
 }: {
   grid: Grid;
   title: string;
   selectedCase?: string;
   downsideNote?: string;
   limits: string[];
-  source?: (label: string) => ReactNode;
+  source?: ForecastSource;
+  evidenceOnlyQualifications?: boolean;
 }) {
   const selectedIndexes = inputGrid.columns.flatMap((column, index) => {
     const caseLabel = forecastCaseLabel(column.group, downsideNote);
@@ -94,7 +97,31 @@ function SelectedForecastTable({
               .filter((cell) => cell !== undefined),
           })),
         };
-  return <ForecastTable grid={grid} title={title} limits={limits} source={source} />;
+  const displayed = {
+    ...grid,
+    columns: grid.columns.map((column) => ({
+      ...column,
+      group: forecastCaseLabel(column.group, downsideNote),
+    })),
+  };
+  const groups = [...new Set(displayed.columns.map((column) => column.group))];
+  return (
+    <ForecastTable
+      grid={displayed}
+      title={title}
+      limits={limits}
+      source={
+        source &&
+        ((name, selection) =>
+          source(name, {
+            case: groups.length === 1 ? groups[0] : "",
+            groups,
+            ...selection,
+          }))
+      }
+      evidenceOnlyQualifications={evidenceOnlyQualifications}
+    />
+  );
 }
 
 const FORECAST_LINES = ["Revenue", "Adj EBITDA", "Closing cash", "Closing debt"];
@@ -125,7 +152,7 @@ const caseLabels: Record<string, string> = {
   "Downside (CP-2G drivers)": "Downside drivers",
 };
 
-function forecastCaseLabel(group: string, downsideNote = "") {
+export function forecastCaseLabel(group: string, downsideNote = "") {
   if (
     group === "Downside case" &&
     downsideNote.startsWith("Downside case is the stress case: a shock applied")
@@ -155,7 +182,7 @@ function ForecastTrends({
 }: {
   grid: Grid;
   units: string;
-  source?: (label: string) => ReactNode;
+  source?: ForecastSource;
   selectedCase?: string;
   downsideNote?: string;
 }) {
@@ -185,7 +212,7 @@ function ForecastTrends({
           return { name, cells };
         });
         const series = perCase.map(({ name, cells }) => ({
-          name,
+          name: forecastCaseLabel(name, downsideNote),
           values: cells.map((cell) => (cell?.status === "value" ? amount(word(cell.exact)) : null)),
         }));
         const values = series.flatMap((entry) => entry.values);
@@ -193,14 +220,14 @@ function ForecastTrends({
         return (
           <TrendChart
             title={label}
-            actions={source?.(label)}
+            actions={source?.(label, { case: selectedCase, row: label, periods })}
             key={label}
             periods={periods}
             series={series}
             yTicks={forecastTicks(values)}
             note={note}
             table={perCase.map(({ name, cells }) => ({
-              name,
+              name: forecastCaseLabel(name, downsideNote),
               cells: cells.map(displayForecastCell),
             }))}
           />
@@ -247,6 +274,7 @@ export function cashProxyCases(grid: Grid, other: Grid | null, downsideNote = ""
       cell?.status === "value" ? amount(word(cell.exact)) : null,
     );
     return {
+      group,
       name: forecastCaseLabel(group, downsideNote),
       values,
       labels: values.map((value, index) =>
@@ -256,6 +284,7 @@ export function cashProxyCases(grid: Grid, other: Grid | null, downsideNote = ""
         const value = values[index];
         return typeof value === "number" ? twoPlaces.format(value) : word(cell?.reason) || null;
       }),
+      reasons: matching.map((cell) => word(cell?.reason)),
     };
   });
   return { periods, series, rows: series.map(({ name, cells }) => ({ label: name, cells })) };
@@ -271,12 +300,13 @@ export function forecastCaseOptions(model: unknown) {
     stringsIn(cashflow.notes).find((note) => note.startsWith("Downside case is")),
   );
   const latestPeriod = periods.at(-1);
-  return series.map(({ name, values }) => ({
+  return series.map(({ group, name, values, reasons }) => ({
     name,
     period: latestPeriod,
     value: values.at(-1),
     units: word(cashflow.units) || "Units not recorded",
-    description: caseDescription(name, stringsIn(cashflow.notes)),
+    description: caseDescription(group, stringsIn(cashflow.notes)),
+    ...(values.at(-1) === null && reasons.at(-1) ? { reason: reasons.at(-1) } : {}),
   }));
 }
 
@@ -301,31 +331,25 @@ function scopePassages(cashflow: Record<string, unknown>) {
   );
 }
 
-export function ForecastScope({
-  model,
-  source,
-}: {
-  model: unknown;
-  source?: (label: string) => ReactNode;
-}) {
+export function ForecastScope({ model, source }: { model: unknown; source?: ForecastSource }) {
   const passages = scopePassages(record(record(model).cashflow));
   return (
     <section
-      className="grid gap-3 rounded-ds-md border border-border-hairline bg-surface-subtle p-5"
+      className="grid min-w-0 gap-3 wrap-anywhere rounded-ds-md border border-border-hairline bg-surface-subtle p-5"
       aria-label="Model scope and basis"
     >
       <h3 className="font-display text-h3">Model scope and basis</h3>
       <p className="text-small text-text-tertiary">
-        Selected qualifications from the recorded model. Full notes and limitations follow the model
-        tables.
+        Selected qualifications from the recorded model. Full notes and limitations are in Evidence,
+        under Record.
       </p>
       {passages.length ? (
         <div className="grid gap-3 lg:grid-cols-2">
           {passages.map((passage, index) => (
-            <div key={index} className={TRACE_HOST}>
+            <div key={index} className={`${TRACE_HOST} min-w-0`}>
               <p className="max-w-prose pr-12 text-small text-text-secondary sm:pr-8">{passage}</p>
               <div className="absolute right-0 top-0">
-                {source?.(`Model scope qualification ${String(index + 1)}`)}
+                {source?.(`Model scope qualification ${String(index + 1)}`, { text: passage })}
               </div>
             </div>
           ))}
@@ -344,11 +368,13 @@ export function CashProxy({
   model,
   note,
   source,
+  sourceFor,
   selectedCase,
 }: {
   model: unknown;
   note?: ReactNode;
   source?: ReactNode;
+  sourceFor?: ForecastSource;
   selectedCase?: string;
 }) {
   const raw = record(record(model).cashflow);
@@ -369,7 +395,9 @@ export function CashProxy({
       <div className="min-w-0 rounded-xl border border-border-hairline bg-surface-card p-5">
         <PathChart
           title="Cash proxy by scenario"
-          actions={source}
+          actions={
+            sourceFor?.("Cash proxy by scenario", { row: CASH_PROXY, case: "", periods }) ?? source
+          }
           subtitle={unit}
           periods={periods}
           series={series}
@@ -388,11 +416,15 @@ export function CashProxy({
               label: name,
               cells,
               current: name === selectedCase,
-              end: source,
+              end: sourceFor?.(`${name} cash proxy`, { case: name, row: CASH_PROXY }) ?? source,
             }))}
-            endHeading={source ? "Source" : undefined}
+            endHeading={source || sourceFor ? "Source" : undefined}
           />
         </section>
+        <p className="text-small text-text-tertiary">
+          Cash proxy chart and comparison values are shown to 2 decimals. The model table retains
+          its recorded display.
+        </p>
         {note}
       </div>
     </div>
@@ -404,11 +436,13 @@ export function LegacyForecast({
   summary,
   source,
   selectedCase,
+  evidenceOnlyQualifications = false,
 }: {
   model?: unknown;
   summary?: ReactNode;
-  source?: (label: string) => ReactNode;
+  source?: ForecastSource;
   selectedCase?: string;
+  evidenceOnlyQualifications?: boolean;
 }) {
   const published = record(model);
   const cashflow = record(published.cashflow);
@@ -419,7 +453,7 @@ export function LegacyForecast({
   const units = word(cashflow.units);
   if (model === null || model === undefined) return null;
   return (
-    <section className="grid gap-4">
+    <section className="grid min-w-0 gap-4 wrap-anywhere">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h3 className="font-display text-h3">Cash flow model</h3>
         {source?.("Cash flow model")}
@@ -438,7 +472,8 @@ export function LegacyForecast({
             downsideNote={notes.find((note) => note.startsWith("Downside case is"))}
           />
           <SelectedForecastTable
-            limits={limits}
+            limits={evidenceOnlyQualifications ? [] : limits}
+            evidenceOnlyQualifications={evidenceOnlyQualifications}
             source={source}
             grid={grid}
             title="Cash flow model"
@@ -447,7 +482,8 @@ export function LegacyForecast({
           />
           {other && (
             <SelectedForecastTable
-              limits={limits}
+              limits={evidenceOnlyQualifications ? [] : limits}
+              evidenceOnlyQualifications={evidenceOnlyQualifications}
               source={source}
               grid={other}
               title="Other forecast cases"
@@ -455,14 +491,14 @@ export function LegacyForecast({
               downsideNote={notes.find((note) => note.startsWith("Downside case is"))}
             />
           )}
-          {notes.length > 0 && (
+          {!evidenceOnlyQualifications && notes.length > 0 && (
             <ul className="list-disc pl-5">
               {notes.map((note, index) => (
                 <li key={index}>{readerText(note)}</li>
               ))}
             </ul>
           )}
-          {limits.length > 0 && (
+          {!evidenceOnlyQualifications && limits.length > 0 && (
             <section className="grid gap-2">
               <h4 className="font-display text-h4">Model limitations</h4>
               <ul className="list-disc pl-5">
@@ -473,6 +509,11 @@ export function LegacyForecast({
             </section>
           )}
         </>
+      )}
+      {evidenceOnlyQualifications && (
+        <a className="text-action underline" href="#evidence/record">
+          Model notes and limitations
+        </a>
       )}
     </section>
   );

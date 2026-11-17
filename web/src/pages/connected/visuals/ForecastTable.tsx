@@ -3,6 +3,7 @@ import { Button } from "@/components/base/buttons/button";
 import { containsReference, readerText } from "../publishedReport";
 import type { Grid } from "./LegacyForecast";
 import { word } from "./visualData";
+import type { ForecastSource } from "../report/ForecastRecord";
 
 type Source = ((label: string) => ReactNode) | undefined;
 
@@ -110,9 +111,11 @@ function Disclosure({
 function ForecastCell({
   cell,
   showReason,
+  evidenceOnlyQualifications,
 }: {
   cell: Record<string, unknown>;
   showReason: boolean;
+  evidenceOnlyQualifications?: boolean;
 }) {
   const display = word(cell.display);
   const reason = readerText(word(cell.reason));
@@ -125,8 +128,10 @@ function ForecastCell({
     >
       {display}
       {showReason && reason && (
-        <span className="mt-1 block min-w-40 max-w-56 whitespace-normal text-left text-small text-text-tertiary">
-          {containsReference(reason) ? "Reason recorded in model evidence." : reason}
+        <span className="mt-1 block min-w-40 max-w-56 wrap-anywhere whitespace-normal text-left text-small text-text-tertiary">
+          {evidenceOnlyQualifications || containsReference(reason)
+            ? "Reason recorded in model evidence."
+            : reason}
         </span>
       )}
     </td>
@@ -137,10 +142,14 @@ function ForecastRows({
   grid,
   rows,
   expanded,
+  source,
+  evidenceOnlyQualifications,
 }: {
   grid: Grid;
   rows: Grid["rows"];
   expanded: boolean;
+  source?: ForecastSource;
+  evidenceOnlyQualifications?: boolean;
 }) {
   return (
     <tbody>
@@ -156,12 +165,18 @@ function ForecastRows({
           <tr className={`border-b border-border-hairline ${row.total ? "font-semibold" : ""}`}>
             <th
               scope="row"
-              className="sticky left-0 w-48 min-w-36 max-w-48 bg-surface-card px-3 py-2 text-left whitespace-normal sm:w-64 sm:max-w-64"
+              className="sticky left-0 w-48 min-w-36 max-w-48 bg-surface-card px-3 py-2 text-left wrap-anywhere whitespace-normal sm:w-64 sm:max-w-64"
             >
               {row.label}
+              {source?.(row.label, { row: row.label })}
             </th>
             {row.cells.map((cell, position) => (
-              <ForecastCell key={position} cell={cell} showReason={expanded && unpopulated(row)} />
+              <ForecastCell
+                key={position}
+                cell={cell}
+                showReason={expanded && unpopulated(row)}
+                evidenceOnlyQualifications={evidenceOnlyQualifications}
+              />
             ))}
           </tr>
         </Fragment>
@@ -209,11 +224,13 @@ export function ForecastTable({
   title,
   limits,
   source,
+  evidenceOnlyQualifications,
 }: {
   grid: Grid;
   title: string;
   limits: string[];
-  source?: (label: string) => ReactNode;
+  source?: ForecastSource;
+  evidenceOnlyQualifications?: boolean;
 }) {
   const [expanded, setExpanded] = useState(false);
   const [showColumns, setShowColumns] = useState(false);
@@ -278,7 +295,13 @@ export function ForecastTable({
         <table className="w-full border-collapse text-small">
           <caption className="sr-only">{title}</caption>
           <ForecastColumns grid={grid} />
-          <ForecastRows grid={grid} rows={rows} expanded={expanded || !canCollapse} />
+          <ForecastRows
+            grid={grid}
+            rows={rows}
+            expanded={expanded || !canCollapse}
+            source={evidenceOnlyQualifications ? source : undefined}
+            evidenceOnlyQualifications={evidenceOnlyQualifications}
+          />
         </table>
       </div>
       {canHideColumns && (

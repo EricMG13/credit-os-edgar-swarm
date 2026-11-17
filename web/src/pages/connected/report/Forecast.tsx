@@ -1,12 +1,11 @@
 import { Button } from "@/components/base/buttons/button";
 import { ArrowRight } from "@untitledui/icons";
-import { useState, type ReactNode } from "react";
+import { useState } from "react";
 import { moduleName } from "../api";
 import { card, field, heading, label } from "../layout";
 import {
   containsReference,
   evidencePath,
-  FORECAST_INPUTS,
   type OutputEntry,
   type PublishedRun,
   readerText,
@@ -27,6 +26,12 @@ import {
 } from "../visuals/LegacyForecast";
 import { RunCharts } from "./RunCharts";
 import { PublishedSource } from "./PublishedTrace";
+import {
+  forecastInput,
+  forecastTraceContext,
+  RecordedForecastAssumptions,
+  type ForecastSource,
+} from "./ForecastRecord";
 
 type Model = ReturnType<typeof buildReportView>["models"][number];
 /** A model's recorded money unit: the currency code and "millions"
@@ -40,20 +45,12 @@ function forecastHandoff(model: Model, entries: OutputEntry[], folder: string) {
       (model.sources.some(
         (item) => item.sha256 === output.sha256 && (!item.output || item.output === output.id),
       ) ||
-        (model.runFolder === folder &&
+        (model.sources.length === 0 &&
+          model.runFolder === folder &&
           model.download.endsWith("/annual.md") &&
           output.href === model.download.replace(/annual\.md$/, "CP-2G.md"))),
   );
   return matches.length === 1 ? matches[0] : undefined;
-}
-
-function inputsLine(entry: OutputEntry) {
-  const inputs = entry.sections.filter(({ heading }) => heading === FORECAST_INPUTS);
-  if (inputs.length !== 1) return;
-  const blocks = inputs
-    .flatMap(({ blocks }) => blocks)
-    .filter((block) => block.type === "text" && block.text.startsWith("```json\n"));
-  return blocks.length === 1 ? blocks[0]?.line : undefined;
 }
 
 function recordedBridge(
@@ -113,9 +110,10 @@ function BasisNote({
       <h3 className={heading}>{fiscal ? `${fiscal} base case basis` : "Model basis"}</h3>
       {bridge && (
         <p>
-          The calculation gives <strong>{bridge.value.toFixed(2)}</strong> cash proxy. The{" "}
-          {moduleName("CP-2G")} gives <strong>{bridge.original.toFixed(2)}</strong> free cash flow.
-          The displayed difference is{" "}
+          The calculation gives <strong>{withUnit(bridge.value.toFixed(2), bridge.unit)}</strong>{" "}
+          cash proxy. The {moduleName("CP-2G")} gives{" "}
+          <strong>{withUnit(bridge.original.toFixed(2), bridge.unit)}</strong> free cash flow. The
+          displayed difference is{" "}
           <strong>{withUnit(bridge.difference.toFixed(2), bridge.unit)}</strong>.
         </p>
       )}
@@ -143,14 +141,14 @@ function ForecastCases({
   caseOptions: ReturnType<typeof forecastCaseOptions>;
   selectedCase: string | undefined;
   setChosenCase: (name: string) => void;
-  source: ((name: string) => ReactNode) | undefined;
+  source: ForecastSource | undefined;
 }) {
   return (
     caseOptions.length > 1 && (
       <section
         id="forecast-cases"
         tabIndex={-1}
-        className="flex scroll-mt-4 flex-col gap-4 focus:outline-2 focus:outline-offset-2 focus:outline-focus"
+        className="flex min-w-0 scroll-mt-4 flex-col gap-4 wrap-anywhere focus:outline-2 focus:outline-offset-2 focus:outline-focus"
         aria-labelledby="forecast-case-heading"
       >
         <div className="flex flex-wrap items-baseline justify-between gap-2">
@@ -161,11 +159,15 @@ function ForecastCases({
             The cash proxy and forecast charts follow the selected case.
           </p>
         </div>
-        <div role="radiogroup" aria-label="Forecast case" className="grid gap-4 sm:grid-cols-2">
-          {caseOptions.map(({ name, period, value, units, description }) => (
+        <div
+          role="radiogroup"
+          aria-label="Forecast case"
+          className="grid min-w-0 gap-4 sm:grid-cols-2"
+        >
+          {caseOptions.map(({ name, period, value, units, description, reason }) => (
             <div
               key={name}
-              className={`relative flex flex-col gap-2 rounded-ds-md border bg-surface-card px-3 py-2.5 ${
+              className={`relative flex min-w-0 flex-col gap-2 wrap-anywhere rounded-ds-md border bg-surface-card px-3 py-2.5 ${
                 selectedCase === name
                   ? "border-action bg-surface-selected"
                   : "border-border-hairline"
@@ -195,7 +197,7 @@ function ForecastCases({
                     <span className="font-display text-h3 tabular-nums">
                       {typeof value === "number"
                         ? new Intl.NumberFormat("en-US", { maximumFractionDigits: 2 }).format(value)
-                        : "Not available"}
+                        : "n.a."}
                     </span>
                     <span className="block text-text-tertiary">
                       Cash proxy {period ? `· ${period}` : ""}
@@ -204,9 +206,23 @@ function ForecastCases({
                     <span className="mt-2 block text-small text-text-secondary">
                       {description || "Case description not recorded."}
                     </span>
+                    {reason && (
+                      <span className="mt-2 block text-small text-text-secondary">
+                        {readerText(reason)}
+                      </span>
+                    )}
+                    <span className="mt-1 block text-small text-text-tertiary">
+                      Card values shown to 2 decimals; model table retains recorded display.
+                    </span>
                   </span>
                 </label>
-                <div className="absolute right-2.5 bottom-2.5">{source?.(name)}</div>
+                <div className="absolute right-2.5 bottom-2.5">
+                  {source?.(name, {
+                    case: name,
+                    period,
+                    row: "Cash proxy (not issuer free cash flow)",
+                  })}
+                </div>
               </div>
             </div>
           ))}
@@ -221,11 +237,13 @@ function ForecastAssumptions({
   handoff,
   run,
   href,
+  source,
 }: {
   model: Model;
   handoff: OutputEntry | undefined;
   run: PublishedRun;
   href: (line: number) => string;
+  source?: ForecastSource;
 }) {
   const register = model.register;
   const assumptions =
@@ -239,42 +257,50 @@ function ForecastAssumptions({
     );
     return row && href(row.line);
   }
+  const inputs = forecastInput(handoff);
+  const meaningful = register?.rows.some(
+    (row) => !row.some((cell) => /Not supplied: nothing to report/i.test(cell)),
+  );
+  if (!inputs && !register) return null;
   return (
-    model.register && (
-      <details className={card}>
-        <summary className="cursor-pointer font-semibold">Forecast assumptions</summary>
-        {model.register.intro && !containsReference(model.register.intro) && (
-          <p>{readerText(model.register.intro)}</p>
-        )}
-        <PublishedTable
-          table={{
-            type: "table",
-            line: 0,
-            headers: model.register.headers,
-            rows: model.register.rows.map((cells, line) => ({ cells, line })),
-          }}
-          rowHref={(line) => assumptionHref(model.register?.rows[line] ?? [])}
-          rowSource={(line, name) => {
-            const link = assumptionHref(model.register?.rows[line] ?? []);
-            return (
-              link && (
-                <PublishedSource name={name} href={link}>
-                  Assumption source
-                </PublishedSource>
-              )
-            );
-          }}
-        />
-        <Button
-          href={handoff ? evidencePath(run.folder, handoff) : "#evidence/trace/CP-2G"}
-          color="link-gray"
-          size="sm"
-          iconTrailing={ArrowRight}
-        >
-          Open the model evidence
-        </Button>
-      </details>
-    )
+    <details open className="grid min-w-0 gap-4 wrap-anywhere">
+      <summary className="cursor-pointer font-semibold">Forecast assumptions</summary>
+      {inputs && <RecordedForecastAssumptions document={inputs.value} source={source} />}
+      {meaningful && model.register && (
+        <div className={card}>
+          {model.register.intro && !containsReference(model.register.intro) && (
+            <p>{readerText(model.register.intro)}</p>
+          )}
+          <PublishedTable
+            table={{
+              type: "table",
+              line: 0,
+              headers: model.register.headers,
+              rows: model.register.rows.map((cells, line) => ({ cells, line })),
+            }}
+            rowHref={(line) => assumptionHref(model.register?.rows[line] ?? [])}
+            rowSource={(line, name) => {
+              const link = assumptionHref(model.register?.rows[line] ?? []);
+              return (
+                link && (
+                  <PublishedSource name={name} href={link}>
+                    Assumption source
+                  </PublishedSource>
+                )
+              );
+            }}
+          />
+          <Button
+            href={handoff ? evidencePath(run.folder, handoff) : "#evidence/trace/CP-2G"}
+            color="link-gray"
+            size="sm"
+            iconTrailing={ArrowRight}
+          >
+            Open the model evidence
+          </Button>
+        </div>
+      )}
+    </details>
   );
 }
 
@@ -341,7 +367,7 @@ function forecastSections(model: Model | undefined, hasCases: boolean): Forecast
   return [
     ...(hasCases ? [{ id: "forecast-cases", label: "Cases" }] : []),
     ...(model ? [{ id: "forecast-model", label: "Cash flow model" }] : []),
-    ...(model?.register ? [{ id: "forecast-assumptions", label: "Assumptions" }] : []),
+    ...(model ? [{ id: "forecast-assumptions", label: "Assumptions" }] : []),
     { id: "forecast-run-charts", label: "Run charts" },
   ];
 }
@@ -357,7 +383,7 @@ function ForecastContent({
 }: {
   model?: Model;
   selectedCase?: string;
-  source: ((name: string) => ReactNode) | undefined;
+  source: ForecastSource | undefined;
   handoff: OutputEntry | undefined;
   href: (line: number) => string;
   view: ReturnType<typeof buildReportView>;
@@ -375,24 +401,31 @@ function ForecastContent({
             model={model}
             selectedCase={selectedCase}
             source={source}
+            evidenceOnlyQualifications
             summary={
               <CashProxy
                 model={model}
                 selectedCase={selectedCase}
-                source={source?.("Cash proxy by scenario")}
+                sourceFor={source}
                 note={<BasisNote model={model} handoff={handoff} href={href} />}
               />
             }
           />
         </div>
       )}
-      {model?.register && (
+      {model && (
         <div
           id="forecast-assumptions"
           tabIndex={-1}
           className="scroll-mt-4 focus:outline-2 focus:outline-offset-2 focus:outline-focus"
         >
-          <ForecastAssumptions model={model} handoff={handoff} run={run} href={href} />
+          <ForecastAssumptions
+            model={model}
+            handoff={handoff}
+            run={run}
+            href={href}
+            source={source}
+          />
         </div>
       )}
       <div
@@ -424,12 +457,19 @@ export function Forecast({
   const handoff = model && forecastHandoff(model, entries, run.folder);
   const href = (line: number) =>
     handoff ? evidencePath(run.folder, handoff, line) : "#evidence/summary";
-  const input = handoff && inputsLine(handoff);
-  const source =
-    input === undefined
+  const input = forecastInput(handoff);
+  const source: ForecastSource | undefined =
+    !input || !model
       ? undefined
-      : (name: string) => (
-          <PublishedSource name={name} href={href(input)}>
+      : (name, selection = {}) => (
+          <PublishedSource
+            name={name}
+            href={href(input.line)}
+            context={forecastTraceContext(model, input.value, name, {
+              case: selectedCase,
+              ...selection,
+            })}
+          >
             Forecast inputs
           </PublishedSource>
         );
@@ -451,6 +491,13 @@ export function Forecast({
         )}
       </header>
       {!model && <p className={card}>No forecast model was published from this run’s files.</p>}
+      {model && !input && (
+        <p className={`${card} min-w-0 wrap-anywhere`}>
+          Forecast source details are not available: the model could not be matched to one readable
+          recorded-input block in its saved evidence. Published figures remain available; inspect
+          the saved model and its sources in Evidence before relying on them.
+        </p>
+      )}
       {models.length > 1 && (
         <label className={`${label} max-w-xs`}>
           Published model
@@ -464,7 +511,14 @@ export function Forecast({
             {models.map((item, index) => (
               <option value={index} key={item.id}>
                 Model {index + 1}
-                {item.mode ? ` · ${item.mode}` : ""}
+                {` · ${
+                  forecastCaseOptions(item)
+                    .map(({ name }) => name)
+                    .join(", ") || "Cases not recorded"
+                }`}
+                {run.asOf
+                  ? ` · ${new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" }).format(new Date(`${run.asOf}T00:00:00Z`))}`
+                  : ""}
               </option>
             ))}
           </select>
