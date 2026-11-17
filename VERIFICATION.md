@@ -4,6 +4,16 @@ Keep one running record here. A pass applies only to the stated scope. Earlier v
 engine is in [EricMG13/final-workflow](https://github.com/EricMG13/final-workflow)'s
 `VERIFICATION.md`, which also keeps the retained runs this copy leaves out.
 
+## 2026-11-17 — Browser proof declares an executed agreement (branch `claude/proof-cp4-gate`)
+
+Scope: `proof:connected` on main 4f8a375a. Synthetic fixtures and the proof script only; no product code changed, no provider called.
+- Broke: `proof:connected` failed (`pass 0, fail 2`, `AssertionError: stopped: checker`, run `failed`; reproduced by the PR manager, not re-run here) from d64bdf81 (#45). CP-4's acceptance now enforces its source gate: a run declaring no legal documents must write the blocked handoff. The proof declared none and its canned CP-4 is a full analysis.
+- Refused alternative: blocking the canned CP-4. The proof's calendar asserts 37 rows and 9 "Synthetic note" rows (`web/scripts/connected-proof.mjs`, checkCalendar), 4 rows from each of 9 handoffs including CP-4; a blocked CP-4 gives 34 and 8, and drops the covenant chart and maps. Ruling (PR manager, coordinator): declare the agreement instead; no assertion is changed.
+- Fix: `proof/northbridge-credit-agreement.txt` (fictional; "Credit Agreement" / "EXECUTION VERSION"); `verify_upload` accepts the filing plus optionally the workbook and the agreement, each byte-checked; the script uploads it and sets Legal documents to Executed and The agreement to that file. No assertion edited; no document-count assertion changed.
+- `guess_kind` reads the file as `credit_agreement`, executed True, so `cp4-declared-executed-none-recognised` cannot fire (checked on the fixture, not on the run's forecast page).
+- Results: `npm --prefix web run proof:connected` exit 0, pass 2 fail 0 (Chrome 157, Edge 157). `proof/test_launcher.py` 4 passed (one added). `tests/test_cpos_launch.py -m "not live and not browser"` 938 passed. Quality gate (tools/quality_gate.py) exit 0.
+- Not verified: the forecast page of the proof run (limits shown) was not read; the before-fix failure was not re-run in this worktree.
+
 ## 2026-11-16 — Module test and repair routine: offline, one live Deep run on Claude Opus medium, then the market-data modules on GitHub Copilot GPT Sol (repairs ported onto `main` `4f8a375a` by branch `claude/module-routine-repairs`, from `e6028846`)
 
 Scope: offline gates and the canned browser proof on `main` `a438cb9f` plus the routine's repairs;
@@ -91,6 +101,7 @@ reviewed.
 - Not verified: library and report views on live output; CP-3D on dated RV Book quotes; the cell
   separator on a live page; Copilot's billing of summaries; other issuers; Windows; the full suite;
   on this branch, the browser-marked tests, the connected proof and the web gates on Node 24.
+
 
 ## 2026-11-17 — PR 2: a run in the currency its source files report in (branch `claude/reporting-currency`)
 
@@ -976,21 +987,3 @@ Scope: presentation only, all under `web/`; no backend, handoff, provider or mod
   individual records and all eight screenshots. The React assets are identical
   to the preceding candidate. Windows work-PC proof and publication are pending.
 
-## 2026-11-15 — Latest RBOT-HTML and additional chart contracts
-
-- Verified upstream at `b8cf4ca`. The engine, native library and Python pins match it.
-  The React lockfile is unchanged. [Upstream method and portfolio verification](https://github.com/EricMG13/RBOT-HTML/blob/b8cf4ca58083e1a822fb45515cd7ce63ce467834/VERIFICATION.md)
-- The new native validator recognizes the supplied holdings, market data, mandate, exposure
-  and constraints. Validation failed for both the May exposure date and the October
-  Caesars date. React now offers the workbook selection for Full credit assessment.
-- Confidence review reproduced intermittent-data chart fallback and dropped recovery
-  columns. Both macOS browsers verified ten plots and one mixed-unit record from the
-  native descriptor parser, with exact zero, no-quote and recovery gaps. The figures
-  used synthetic handoffs. Caesars separately passed 23 retained descriptor checks.
-- Restored the newly required CP-2E and CP-3 registers in the synthetic handoffs.
-  Candidate source `3cb2b40` and ZIP SHA-256
-  `e2c984bf061d7b571cdc20b1f0d046032abf184ae20f4becf00120db1690811c`.
-  The clean extraction passed macOS Chrome (`20261115-155903-01`) and Edge
-  (`20261115-155910-01`), including the signed bridge and missing funding commitment.
-  Python (285), web (302), quality, typecheck, formatting and build checks passed.
-  Windows work-PC proof and publication remain pending.
