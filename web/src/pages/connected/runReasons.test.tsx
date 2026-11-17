@@ -58,7 +58,7 @@ describe("a reason the service wrote is drawn in the reader's words", () => {
     });
     render(<ConnectedApp path="/runs" mode="synthetic" />);
     const ended = await screen.findByRole("region", { name: "Ended without a report" });
-    expect(within(ended).getByText(`not listed: ${PLAIN}`)).toBeVisible();
+    expect(await within(ended).findByText(`not listed: ${PLAIN}`)).toBeVisible();
     expect(screen.getByText("held while Financial foundation is rebuilt")).toBeVisible();
     expect(screen.getByText("waiting for Financial foundation")).toBeVisible();
     expect(document.body).not.toHaveTextContent(/\bCP-/);

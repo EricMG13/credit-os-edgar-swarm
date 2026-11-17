@@ -326,9 +326,14 @@ def test_a_restart_starts_a_queued_submission_once_and_keeps_unsubmitted_uploads
     second.close()
 
 
-def test_a_restart_between_record_and_rename_finishes_the_move(root, fake_env, monkeypatch):
+@pytest.mark.parametrize("override", [None, "2026-11-10"])
+def test_a_restart_between_record_and_rename_finishes_the_move(
+    root, fake_env, monkeypatch, override
+):
     fake_env({"sleep": 30})
     answers = answers_for()
+    if override is not None:
+        answers["newest_document_date"] = override
     sid = upload(root)
     d = approved(root, sid, answers)
     first = Scheduler(settings(root))
@@ -346,6 +351,12 @@ def test_a_restart_between_record_and_rename_finishes_the_move(root, fake_env, m
     monkeypatch.setattr(scheduler_module.os, "rename", real_rename)
     [saved] = load_all(layout(root))
     assert saved.status == "queued"
+    if override is not None:
+        assert saved.newest_document_date == override
+        assert any(
+            item["id"] == "form:newest-document-date"
+            for item in saved.approved_summary_limits or []
+        )
     assert not (drops / saved.id).exists()
     first.close()
     second = Scheduler(settings(root))
@@ -354,6 +365,28 @@ def test_a_restart_between_record_and_rename_finishes_the_move(root, fake_env, m
     pump(second, lambda: [r.status for r in load_all(layout(root))] == ["running"])
     assert len(load_all(layout(root))) == 1
     second.close()
+
+
+def test_submit_refuses_a_document_date_that_differs_from_the_approval(root):
+    sid = upload(root)
+    answers = answers_for(newest_document_date="2026-11-10")
+    digest = approved(root, sid, answers)
+    scheduler = Scheduler(settings(root))
+    try:
+        for changed in (answers_for(), answers_for(newest_document_date="2026-11-11")):
+            with pytest.raises(Refused, match="documents or answers changed after approval"):
+                scheduler.submit(sid, changed, digest)
+        assert load_all(layout(root)) == []
+        record = scheduler.submit(sid, answers, digest)
+        [limit] = [
+            item
+            for item in record.approved_summary_limits or []
+            if item["id"] == "form:newest-document-date"
+        ]
+        assert "2026-11-10" in limit["reason"]
+        assert load_all(layout(root))[0].approved_summary_limits == record.approved_summary_limits
+    finally:
+        scheduler.close()
 
 
 def test_a_record_saved_before_this_change_still_loads(root):

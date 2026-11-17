@@ -19,8 +19,8 @@ from deploy_vii.contracts import PATHWAY_CAP_USD, PathwayId
 from deploy_workflow import platform_io
 from deploy_workflow.inbox.layout import Layout
 from deploy_workflow.owners.cpos_launch import METHODS
-from deploy_workflow.run_expectations import Item
 from deploy_workflow.run_events import EVENTS, progress, read_events
+from deploy_workflow.run_expectations import Item
 
 log = logging.getLogger(__name__)
 
@@ -77,6 +77,7 @@ class Record:
     cap: str = ""  # USD the approved summary showed (`cap_of`); "": written before per-pathway caps
     # Exact decision items from the issued summary; None means a record predates this metadata.
     approved_summary_limits: list[Item] | None = None
+    newest_document_date: str = ""  # Optional approved override for sealed-upload recovery.
 
 
 def approved_summary_limits(value: object) -> list[Item] | None:

@@ -49,6 +49,8 @@ failure is 500 ``{"error": "the service failed; see its log"}`` (its cause goes 
     Body: the answers object ``{"context", "modules", "max_turns", "level", "submitted_by",
     "model", "effort"}``. ``model`` is "gpt" or "claude", ``effort`` "fast", "balanced" or "high";
     other than "gpt" and "balanced" only at the "advanced" level.
+    An optional ``newest_document_date`` in YYYY-MM-DD form overrides the date inferred from the
+    uploaded documents and is covered by the digest. A date after the as-of date adds a limit.
     ``submitted_by`` is the analyst's name: a first name, a space, then one or two capital initials
     ("Eric G", "Eric MG"); anything else, an empty name included, is refused with the form to use.
     200 ``{"error": "", "digest", "modules", "items", "documents", "ignored", "omitted",

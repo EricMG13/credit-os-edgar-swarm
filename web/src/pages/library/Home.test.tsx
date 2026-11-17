@@ -15,11 +15,14 @@ const fixture = JSON.parse(
     "utf8",
   ),
 ) as { issuers: LibraryData["issuers"]; slice: Slice };
+const runFixture = JSON.parse(
+  readFileSync(path.resolve(import.meta.dirname, "..", "..", "..", "fixtures", "run.json"), "utf8"),
+) as { slice: unknown };
 
 const fresh = (): Slice => structuredClone(fixture.slice);
 
-function renderHome(library: unknown) {
-  const data: LibraryData = { schema: "credit-os-data/1", issuers: fixture.issuers, library };
+function renderHome(library: unknown, run: unknown = runFixture.slice) {
+  const data: LibraryData = { schema: "credit-os-data/1", issuers: fixture.issuers, library, run };
   const route = routes.find((r) => r.path === "/library/home");
   if (route === undefined) throw new Error("no /library route");
   return render(<SourceContext.Provider value={data}>{route.render({})}</SourceContext.Provider>);
@@ -176,15 +179,16 @@ describe("Library home, Cards side", () => {
     expect(screen.queryByRole("grid", { name: "Issuers" })).toBeNull();
   });
 
-  it("says the build is a design reference holding no reports when it has no library member, under the h1", () => {
+  it("explains how to start a run when this design reference has no library member", () => {
     renderHome(undefined);
     expect(screen.getByRole("heading", { level: 1, name: "Library" })).toBeVisible();
     expect(screen.getByRole("heading", { level: 2, name: "No runs yet" })).toBeVisible();
-    expect(screen.getByText(/This build is a design reference and holds no reports/)).toBeVisible();
-    expect(screen.getByRole("link", { name: "Start a run" })).toHaveAttribute(
-      "href",
-      "#/run/start",
-    );
+    expect(
+      screen.getByText(
+        "This build is a design reference and holds no reports. Open the connected run service to start a run and add the first issuer.",
+      ),
+    ).toBeVisible();
+    expect(screen.queryByRole("link", { name: "Start a run" })).toBeNull();
     expect(screen.queryByText("Library data is missing")).toBeNull();
   });
 
@@ -266,6 +270,21 @@ describe("Library home, other states", () => {
       "#/run/start",
     );
     expect(screen.queryByRole("textbox", { name: "Search issuers" })).toBeNull();
+  });
+
+  it("does not send an empty loaded library into a run form when no draft exists", () => {
+    const slice = fresh();
+    slice.home = { ...slice.home, subtitle: "No issuers yet", cards: [] };
+    const run = structuredClone(runFixture.slice) as { drafts: unknown[] };
+    run.drafts = [];
+    renderHome(slice, run);
+
+    expect(
+      screen.getByText(
+        "This build is a design reference and holds no reports. Open the connected run service to start a run and add the first issuer.",
+      ),
+    ).toBeVisible();
+    expect(screen.queryByRole("link", { name: "Start a run" })).toBeNull();
   });
 });
 

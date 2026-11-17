@@ -369,6 +369,8 @@ def module_outputs(directory: Path, record: runs.Record) -> list[dict[str, str |
 
 def library_admission(layout: Layout, record: runs.Record) -> str | None:
     """Current scoped publication membership; no claim about an admission timestamp."""
+    if record.status in ("queued", "running"):
+        return "not-listed"
     try:
         raw = _Reads(layout.engine, _PUBLICATION_BYTES).raw("library/data.js", _PUBLICATION_BYTES)
         assignment = raw.decode("utf-8").rstrip()
@@ -384,13 +386,8 @@ def library_admission(layout: Layout, record: runs.Record) -> str | None:
             return None
         if not scoped or not listed:
             return "not-listed"
-        if (scoped[0].get("pathway"), listed[0].get("name"), listed[0].get("date")) != (
-            record.pathway,
-            record.issuer_name,
-            record.as_of,
-        ):
-            return None
-        return "listed"
+        published = scoped[0].get("pathway"), listed[0].get("name"), listed[0].get("date")
+        return "listed" if published == (record.pathway, record.issuer_name, record.as_of) else None
     except (Refused, OSError, ValueError, KeyError, TypeError, AttributeError, RecursionError):
         # A malformed optional publication is an explicit unknown, not a missing run record.
         return None

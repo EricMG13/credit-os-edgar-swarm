@@ -44,4 +44,21 @@ describe("#/run/start", () => {
     expect(screen.getByText("This library holds no saved run forms.")).toBeVisible();
     expect(screen.getByRole("link", { name: "Back to the Library" })).toHaveAttribute("href", "#/");
   });
+
+  it("explains when valid run data contains no saved forms", () => {
+    const slice = structuredClone(fixture.slice) as Drafts & {
+      runs: unknown[];
+      current: string | null;
+    };
+    slice.drafts = [];
+    slice.runs = [];
+    slice.current = null;
+
+    show("/run/start", slice);
+
+    expect(screen.getByRole("heading", { level: 2, name: "No saved run forms" })).toBeVisible();
+    expect(screen.getByText("This library holds no saved run forms.")).toBeVisible();
+    expect(screen.queryByText("No draft has this address")).toBeNull();
+    expect(screen.getByRole("link", { name: "Back to the Library" })).toHaveAttribute("href", "#/");
+  });
 });

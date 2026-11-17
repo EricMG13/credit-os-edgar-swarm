@@ -2034,6 +2034,7 @@ function IntakeForm({
       model: advanced ? model : "gpt",
       effort: advanced ? effort : "balanced",
       submitted_by: submittedBy.trim(),
+      ...(newestOverride ? { newest_document_date: newestOverride } : {}),
     };
   }
 
@@ -2104,33 +2105,19 @@ function IntakeForm({
     );
     requireSummaryCap(summary, shownCap);
     if (!summary.digest) throw new Error("The service did not issue an approval for this run.");
-    const newestDate = newestOverride ?? newestPeriod(result);
-    const dateLimitation =
-      newestDate && run.as_of < newestDate
-        ? [
-            {
-              id: "form:newest-document-date",
-              scope: "run",
-              outcome: "limited",
-              reason: `The as-of date (${run.as_of}) is before your newest document (${newestDate}). Modules may set this document aside.`,
-              fix: "Use an as-of date on or after the newest document date.",
-            },
-          ]
-        : [];
-    const items = [...summary.items, ...dateLimitation];
     const reviewed = reviewedRef.current;
     reviewedRef.current = null;
     setAccepted(
       reviewed?.pathway === answers.context.run.pathway &&
         reviewed.issuerId === answers.context.identity.issuer_id
-        ? carryAccepted(reviewed.items, reviewed.accepted, items)
+        ? carryAccepted(reviewed.items, reviewed.accepted, summary.items)
         : new Set(),
     );
     setApproved(false);
     setReview({
       id: draft.id,
       answers,
-      summary: { ...summary, items },
+      summary,
       cap: shownCap,
       attachmentNames: { portfolio_workbook: attachments.portfolio_workbook },
     });

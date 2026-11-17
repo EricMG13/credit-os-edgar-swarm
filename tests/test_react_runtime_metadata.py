@@ -219,6 +219,7 @@ def publication(layout: Layout, *, listed: bool) -> None:
         ("finished", True, True, "listed"),
         ("finished", True, False, "not-listed"),
         ("running", True, True, "not-listed"),
+        ("queued", False, False, "not-listed"),
         ("finished", False, False, None),
     ],
 )
@@ -232,6 +233,24 @@ def test_library_admission_uses_actual_scoped_membership(
     if present:
         publication(layout, listed=listed)
     assert reply(layout, "case").body["library_admission"] == expected
+
+
+@pytest.mark.parametrize("status", ["queued", "running"])
+def test_pending_activity_does_not_read_the_library(tmp_path, monkeypatch, status):
+    from react_frontend import run_metadata
+
+    layout, _, _ = runtime(tmp_path)
+    record = runs.load_readable(layout)[0][0]
+    record.status = status
+    runs.save(layout, record)
+    original = run_metadata._Reads.raw
+
+    def read(reader, relative, *args):
+        assert relative != "library/data.js"
+        return original(reader, relative, *args)
+
+    monkeypatch.setattr(run_metadata._Reads, "raw", read)
+    assert reply(layout, "case").body["library_admission"] == "not-listed"
 
 
 def selection(directory: Path, workflow: dict[str, Any], response: Path) -> None:
@@ -309,6 +328,9 @@ def test_metadata_caps_are_exercised_with_small_inputs(tmp_path: Path) -> None:
 
 def test_publication_link_and_bad_json_are_unknown_not_not_listed(tmp_path: Path) -> None:
     layout, _, _ = runtime(tmp_path)
+    record = runs.load_readable(layout)[0][0]
+    record.status = "finished"
+    runs.save(layout, record)
     publication(layout, listed=False)
     path = layout.engine / "library/data.js"
     valid = path.read_bytes()
@@ -323,6 +345,9 @@ def test_publication_link_and_bad_json_are_unknown_not_not_listed(tmp_path: Path
 
 def test_unreadable_publication_shape_does_not_hide_the_run_record(tmp_path: Path) -> None:
     layout, _, _ = runtime(tmp_path)
+    record = runs.load_readable(layout)[0][0]
+    record.status = "finished"
+    runs.save(layout, record)
     publication(layout, listed=False)
     path = layout.engine / "library/data.js"
     value = json.loads(path.read_text().removeprefix("window.CREDIT_OS_DATA=").removesuffix(";"))
