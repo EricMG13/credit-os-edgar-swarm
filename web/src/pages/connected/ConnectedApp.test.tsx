@@ -461,7 +461,7 @@ describe("connected run start", () => {
 
   describe("Yahoo Finance statement", () => {
     const SENTENCE =
-      "The research module may read Yahoo Finance pages. Each page address holds the issuer's ticker, so Yahoo sees which issuer is researched; no document is sent.";
+      "The research module may read Yahoo Finance pages. Their addresses name what it looks up, such as the issuer's ticker, so Yahoo sees which issuer is researched; no document is sent.";
     const research = { ...plan, modules: ["CP-0", "CP-DR"] };
 
     it("names Yahoo and the ticker once when the research module will use its lookup", async () => {

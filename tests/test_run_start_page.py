@@ -911,24 +911,31 @@ def test_the_review_draws_the_launchers_lookup_statement_as_text(page):
 
 
 YAHOO = (
-    "Yahoo FinanceThe research module may read Yahoo Finance pages. Each page address holds the "
-    "issuer's ticker, so Yahoo sees which issuer is researched; no document is sent."
+    "Yahoo FinanceThe research module may read Yahoo Finance pages. Their addresses name what it "
+    "looks up, such as the issuer's ticker, so Yahoo sees which issuer is researched; no document "
+    "is sent."
 )
 
 
 @pytest.mark.parametrize(
-    ("kind", "drop", "shown"),
-    [("public", "", True), ("private", "", False), ("public", "CP-DR", False)],
+    ("kind", "drop", "model", "shown"),
+    [
+        ("public", "", "gpt", True),
+        ("public", "", "claude", True),
+        ("private", "", "gpt", False),
+        ("public", "CP-DR", "gpt", False),
+    ],
 )
 def test_the_review_names_yahoo_and_the_ticker_exactly_when_the_lookup_is_on(
-    page, kind, drop, shown
+    page, kind, drop, model, shown
 ):
-    """The service's ``web_lookup`` decides: a public case's research module looks up by default;
-    a private case's does not, nor a run that leaves the research module out."""
+    """The service's ``web_lookup`` decides: a public case's research module looks up by default,
+    on any model; a private case's does not, nor a run that leaves the research module out."""
     seen = page.run(f"""
     level('advanced');
     await issuer('credit_snapshot', [file('annual.txt', {json.dumps(REPORT)})]);
     pick('data-k="case_kind"', {json.dumps(kind)});
+    pick('data-c="model"', {json.dumps(model)});
     const box = document.querySelector('[data-c="mod"][value={json.dumps(drop)}]');
     if (box) {{ box.checked = false; change(box); }}
     const S = await review();
@@ -941,9 +948,11 @@ def test_the_review_names_yahoo_and_the_ticker_exactly_when_the_lookup_is_on(
     assert seen["error"] == ""
     assert ("CP-DR" in seen["modules"]) is (drop != "CP-DR")
     assert seen["lookup"] is shown
-    assert (YAHOO in seen["facts"]) is shown
-    assert seen["facts"].count("Yahoo") == (2 if shown else 0)
+    assert seen["facts"].count(YAHOO) == (1 if shown else 0)
+    assert ("Yahoo" in seen["facts"]) is shown
     assert "Yahoo" not in seen["older"]
+    if shown:  # a Claude run that looks up is not said to read only its files
+        assert "reads only its files" not in seen["facts"]
 
 
 def test_the_page_offers_the_lite_credit_assessment_and_the_service_reviews_its_five_modules(page):

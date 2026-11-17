@@ -85,13 +85,19 @@ source. Its pages state no date, so the lookup marks them undated. Its price-his
 their own dates, while its statistics pages show current figures, which a case with an earlier
 research cutoff must not use. Its news pages syndicate third-party articles, the reason `nasdaq.com`
 was removed, so a figure from a Yahoo news page is not used without the original publisher.
+These rules are not yet told to the module (`WEB_LOOKUP_RULES` does not name Yahoo) and no check
+enforces them: a Yahoo page is checked as any undated page, so a statistics page's current figure
+cited with another Source type passes the checks in a case with an earlier cutoff. Telling the
+module, or checking it, is a follow-up.
 
 What Yahoo sees, on each request the research module makes to it:
 
-- the page address, which carries the issuer's ticker (for example `/quote/ACME/`), so Yahoo sees
-  which issuer is researched;
+- the page address, which the module chooses and which names what it looks up: normally the
+  issuer's ticker (for example `/quote/ACME/`), or a peer's, or a search for the issuer's name, so
+  Yahoo sees which issuer is researched;
 - the machine's network address, as every listed host does;
-- exactly these three headers, verbatim (on a hop to a subdomain, `Host` names that subdomain):
+- exactly these three headers, verbatim (`Host` names the host requested: a subdomain on a hop
+  to one, and `finance.yahoo.com.` for an address written with a trailing dot):
 
   ```
   Host: finance.yahoo.com
@@ -120,7 +126,8 @@ Header audit, 2026-11-17, of `main` at `4f8a375a`, by reading the code and by te
   request, so no TLS session or connection is shared between requests. The TLS handshake names the
   host requested, as for any https host.
 - The `User-Agent` names the software, not a person, the project's owner or the machine, and is the
-  same for all 29 hosts. It is recorded, not changed.
+  same for every listed host except `sec.gov` hosts, which receive the contact string instead. It
+  is recorded, not changed.
 - Tests (`tests/test_weblookup.py`): `test_a_yahoo_fetch_sends_three_headers_and_never_the_sec_contact`
   (a fake connection, a Yahoo redirect that sets a cookie, the contact string set),
   `test_a_yahoo_request_on_the_wire_is_the_request_line_and_three_headers` (the bytes a real

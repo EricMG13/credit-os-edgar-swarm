@@ -384,8 +384,9 @@ export function ReviewSheet({
           )}
           {summary.web_lookup === true && (
             <p className="text-sm text-text-secondary">
-              The research module may read Yahoo Finance pages. Each page address holds the
-              issuer&apos;s ticker, so Yahoo sees which issuer is researched; no document is sent.
+              The research module may read Yahoo Finance pages. Their addresses name what it looks
+              up, such as the issuer&apos;s ticker, so Yahoo sees which issuer is researched; no
+              document is sent.
             </p>
           )}
         </Block>
