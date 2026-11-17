@@ -51,17 +51,44 @@ function chartView(entry: OutputEntry): View {
   };
 }
 
-it("draws a chart gap that cites a page as a pointer to Evidence, not as the cited sentence", () => {
-  const entry = chartEntry([
-    {
-      title: "Rating trigger headroom",
-      table: 41,
-      gap: "Not established: see Filing p.12 for the trigger text (CP-4).",
-    },
-  ]);
+// A chart-gap reason is module-written text: delivery draws it whole, with only a module code
+// named as the module (`readerText`). Nothing is removed from it, and a page citation stays.
+const GAP_REASONS = [
+  [
+    "Not established: see Filing p.12 for the trigger text (CP-4).",
+    "Not established: see Filing p.12 for the trigger text (Legal & covenants).",
+  ],
+  [
+    "The 2027 to 2029 maturities are not stated; the company gives amounts for the next two years only (annual report p. 83), so the profile stops at 2026.",
+    "The 2027 to 2029 maturities are not stated; the company gives amounts for the next two years only (annual report p. 83), so the profile stops at 2026.",
+  ],
+  [
+    "Coverage fell 2 pp. 3 quarters in a row, so no trend is drawn.",
+    "Coverage fell 2 pp. 3 quarters in a row, so no trend is drawn.",
+  ],
+  [
+    "Not established: see Filing page 12 for the trigger text.",
+    "Not established: see Filing page 12 for the trigger text.",
+  ],
+] as const;
+
+it.each(GAP_REASONS)("draws the chart gap reason %s whole", (stored, drawn) => {
+  const entry = chartEntry([{ title: "Rating trigger headroom", table: 41, gap: stored }]);
   render(<Forecast view={chartView(entry)} run={run} />);
-  expect(screen.getByText("See Evidence.")).toBeInTheDocument();
-  expect(document.body.textContent).not.toMatch(/Filing p\.12|\bCP-/);
+  expect(screen.getByRole("note")).toHaveTextContent(drawn);
+  expect(screen.getByRole("note").textContent).toBe(drawn);
+  expect(screen.queryByText("See Evidence.")).toBeNull();
+});
+
+it("draws a withheld module's limitation whole as the reason of its chart", () => {
+  const limitation =
+    "No covenant document was supplied, so no test can be drawn; the only sight of the covenant is a summary on p. 4 of the annual report.";
+  const entry = chartEntry([]);
+  entry.output.state = { established: false, declared: null };
+  entry.output.summary = { bottomLine: "", confidence: "", limitation, line: 5 };
+  entry.output.charts = [{ title: "Rating trigger headroom", table: 41 }];
+  render(<Forecast view={chartView(entry)} run={run} />);
+  expect(screen.getByRole("note").textContent).toBe(limitation);
 });
 
 it("names a module by its name in a chart gap that cites no page", () => {

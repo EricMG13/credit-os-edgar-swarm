@@ -6,13 +6,11 @@ import type { buildReportView } from "../reportView";
 import { LegacyVisuals } from "../visuals";
 
 const CHART_PREFIX = "Chart data: ";
-const PAGE_REFERENCE = /\bpp?\.\s*\d/;
 
-/** A gap as the page draws it: the reason names a module, and a reason that cites a page points to Evidence. */
+/** A gap as the page draws it: the module's reason as written, with a module code named as the module. */
 function drawnGap(figure: Record<string, unknown>) {
   const { gap } = figure;
-  if (typeof gap !== "string") return figure;
-  return { ...figure, gap: PAGE_REFERENCE.test(gap) ? "See Evidence." : readerText(gap) };
+  return typeof gap === "string" ? { ...figure, gap: readerText(gap) } : figure;
 }
 
 function returnedCharts(entry: OutputEntry, coveredLines: Set<number>) {

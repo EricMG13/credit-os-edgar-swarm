@@ -1553,8 +1553,9 @@ def test_the_history_notes_and_limits_replace_the_quarter_and_pro_forma_notes():
     grid = store.read_cashflow(FILES, None)[0]
     assert store.Q1_NOTE not in grid["notes"]
     assert (
-        "LTM is the last fiscal year when that is the latest period CP-1 labels; otherwise the "
-        "last fiscal year plus the year to date less the prior year to date."
+        "Last twelve months is the last fiscal year when that is the latest period Financial "
+        "foundation labels; otherwise the last fiscal year plus the year to date less the prior "
+        "year to date."
     ) in grid["notes"]
     assert grid["limits"] == ["Every figure is Python's arithmetic.", *HISTORY["limits"]]
 
@@ -1628,8 +1629,9 @@ def test_the_history_page_labels_and_notes_carry_no_other_issuers_wording():
     ]
     assert grid["notes"] == [
         (
-            "LTM is the last fiscal year when that is the latest period CP-1 labels; otherwise "
-            "the last fiscal year plus the year to date less the prior year to date."
+            "Last twelve months is the last fiscal year when that is the latest period Financial "
+            "foundation labels; otherwise the last fiscal year plus the year to date less the "
+            "prior year to date."
         ),
         BASE_NOTE,
         (

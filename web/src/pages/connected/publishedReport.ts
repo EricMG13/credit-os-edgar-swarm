@@ -14,26 +14,33 @@ export function plainModuleNames(text: string) {
     FILE_AHEAD.test(text.slice(at + code.length)) ? code : "",
   );
 }
-// A standalone run of module codes ("CP-1" or "CP-1/CP-2"): nothing path-like or word-like touches it.
+// A standalone run of module codes ("CP-1" or "CP-1/CP-2", in either case): nothing path-like or
+// word-like touches it.
 const STANDALONE_CODES =
-  /(?<![\w\-\\/.])CP-[A-Z0-9]+(?:\/CP-[A-Z0-9]+)*(?![\w\-\\/])(?!\.[A-Za-z])/g;
+  /(?<![\w\-\\/.])CP-[A-Z0-9]+(?:\/CP-[A-Z0-9]+)*(?![\w\-\\/])(?!\.[A-Za-z])/gi;
 // A bracketed code after text: " (CP-x)".
-const BRACKETED_CODE = / \((CP-[A-Za-z0-9]+)\)/g;
+const BRACKETED_CODE = / \((CP-[A-Za-z0-9]+)\)/gi;
+/** The module's name for a code in either case; a code the page does not know stays as written. */
+function nameOfCode(code: string) {
+  const name = moduleName(code.toUpperCase());
+  return name === code.toUpperCase() ? code : name;
+}
 /**
  * Findings-page text: a " (CP-x)" right after that module's own name is dropped, after any other
  * words it becomes " (<module name>)" (an unknown code stays), then each standalone known code
- * becomes the module's name. A code inside a stored file name stays.
+ * becomes the module's name. A code inside a stored file name stays. A code in lower case ("cp-2a")
+ * reads as the upper-case code does; a gap id or a run code is not a module code (`containsReference`).
  */
 export function readerText(text: string) {
   const bracketed = text.replace(BRACKETED_CODE, (match, code: string, at: number) => {
-    const name = moduleName(code);
+    const name = nameOfCode(code);
     if (name === code || FILE_AHEAD.test(text.slice(at + match.length))) return match;
     return text.slice(0, at).toLowerCase().endsWith(name.toLowerCase()) ? "" : ` (${name})`;
   });
   return bracketed.replace(STANDALONE_CODES, (run, at: number, whole: string) => {
     const kept = whole.slice(0, at).endsWith(" (") && whole[at + run.length] === ")";
     if (kept && FILE_AHEAD.test(whole.slice(at + run.length + 1))) return run;
-    return run.replace(/CP-[A-Z0-9]+/g, moduleName);
+    return run.replace(/CP-[A-Z0-9]+/gi, nameOfCode);
   });
 }
 export const CONFIDENCE_INPUTS = "Confidence inputs";
@@ -533,9 +540,11 @@ const FILE_REFERENCE = new RegExp(
 const LONG_HASH = /\b(?=[0-9a-f]*[a-f])[0-9a-f]{32,}\b/i;
 const REGISTER_ID = /\bCP-[A-Z0-9]+-(?:GAP|MON|FACT|CALC|EVID|SRC|ASSUMPTION)-[A-Z0-9-]+\b/i;
 
-// A gap id "(G12)" and a run code "20261117-094923-01". A module code is not a reference here: a
-// findings page draws it as the module's name (`readerText`, D-13 part 2), so it is not held back.
-const GAP_ID = /\(G\d+\)/;
+// A gap id as the modules spell a gap, the report-wide id after the empty-set mark ("∅ G12",
+// "∅ G12 n.m.", "∅ [G12]"), and a run code "20261117-094923-01". "(G7)" or "G20" in a sentence is
+// not a gap id. A module code is not a reference here: a findings page draws it as the module's
+// name (`readerText`, D-13 part 2), so it is not held back.
+const GAP_ID = /∅\s*\[?G\d+\b/;
 const RUN_CODE = /\b\d{8}-\d{6}-\d{2}\b/;
 
 export function containsReference(text: string) {
