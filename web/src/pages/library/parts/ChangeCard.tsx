@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { Badge } from "@/components/base/badges/badges";
 import type { Change } from "../slice";
 import { CellValue } from "./CellValue";
@@ -65,4 +66,3 @@ export function ChangeCard({ change, source }: { change: Change; source?: ReactN
     </li>
   );
 }
-import type { ReactNode } from "react";
