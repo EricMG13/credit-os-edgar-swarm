@@ -133,7 +133,7 @@ it("preserves the recorded bridge and its exact source lines", () => {
 it("preserves a zero-valued bridge", () => {
   render(<Forecast view={basisView({ original: "0", difference: "0", value: "0" })} run={run} />);
   expect(screen.getByText(/The calculation gives/)).toHaveTextContent(
-    "The calculation gives $0.00m cash proxy.",
+    "The calculation gives US$0.00m cash proxy.",
   );
   expect(screen.getByRole("link", { name: "Difference basis" })).toBeInTheDocument();
 });

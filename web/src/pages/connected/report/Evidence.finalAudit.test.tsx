@@ -177,7 +177,7 @@ it("gives empty Sources and Gaps an icon, a title and an explanation", () => {
   show("gaps");
   const gapTitle = screen.getByRole("heading", { name: "No gaps recorded" });
   expect(gapTitle.closest("section")?.querySelector("svg")).not.toBeNull();
-  expect(screen.getByText("This run lists no gaps.")).toBeVisible();
+  expect(screen.getByText("The module handoffs list no gaps.")).toBeVisible();
 });
 
 it("uses the ruled source groups and states missing dates, types and all-module readership", () => {
