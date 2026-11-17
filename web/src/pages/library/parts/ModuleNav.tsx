@@ -111,7 +111,7 @@ export function ModuleNav({
       window.removeEventListener("scroll", alignAfterScroll, true);
     };
   }, [current, wanted]);
-  const heading = "px-4 pt-3 pb-1 pl-4.75 text-xs font-medium text-text-tertiary";
+  const heading = "px-4 pt-3 pb-1 pl-4.75 text-caption font-medium text-text-tertiary";
   return (
     <nav
       ref={menu}
