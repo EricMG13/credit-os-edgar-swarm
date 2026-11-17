@@ -42,6 +42,14 @@ function check({ head, rows, endHeading }: Pick<ChartTableProps, "head" | "rows"
   }
 }
 
+/** The one column of sentences: it wraps and reads from the left; every figure column stays as it is. */
+const PROSE_COLUMN = /^Basis and limitation$/i;
+
+function headAlign(index: number, heading: string) {
+  if (index === 0) return "sticky left-0 bg-surface-card text-left";
+  return PROSE_COLUMN.test(heading) ? "text-left" : "text-right";
+}
+
 function Cell({ cell }: { cell: TableCell }) {
   if (cell === null) return <Missing />;
   if (typeof cell === "string") return <>{cell}</>;
@@ -76,7 +84,7 @@ export function ChartTable({ caption, head, rows, endHeading }: ChartTableProps)
               <th
                 key={i}
                 scope="col"
-                className={`px-3 py-2 font-medium whitespace-nowrap text-text-tertiary ${i === 0 ? "sticky left-0 bg-surface-card text-left" : "text-right"}`}
+                className={`px-3 py-2 font-medium whitespace-nowrap text-text-tertiary ${headAlign(i, h)}`}
               >
                 {h}
               </th>
@@ -102,7 +110,10 @@ export function ChartTable({ caption, head, rows, endHeading }: ChartTableProps)
                 {row.label}
               </th>
               {row.cells.map((cell, i) => (
-                <td key={i} className="px-3 py-2 text-right tabular-nums whitespace-nowrap">
+                <td
+                  key={i}
+                  className={`px-3 py-2 ${PROSE_COLUMN.test(head[i + 1] ?? "") ? "text-left whitespace-normal" : "text-right tabular-nums whitespace-nowrap"}`}
+                >
                   <Cell cell={cell} />
                 </td>
               ))}

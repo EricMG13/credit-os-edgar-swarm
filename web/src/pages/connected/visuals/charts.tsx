@@ -12,6 +12,7 @@ import { WaterfallChart, type WaterfallStep } from "@/components/chart/Waterfall
 import {
   amount,
   bounds,
+  cellAmount,
   chartTable,
   distinct,
   items,
@@ -80,7 +81,7 @@ function periods(table: SourceTable, descriptor: Descriptor, frame: Frame) {
     return null;
   const groups = table.rows.map((row) => row[0] ?? "");
   const series = columns.map((column) => {
-    const values = table.rows.map((row) => amount(row[column] ?? ""));
+    const values = table.rows.map((row) => cellAmount(table, row, column));
     return {
       name: table.headers[column] ?? "",
       values,
@@ -109,6 +110,7 @@ function periods(table: SourceTable, descriptor: Descriptor, frame: Frame) {
             name: entry.name,
             cells: table.rows.map((row) => row[columns[at] ?? 0] || null),
           }))}
+          detailTable={chartTable(table)}
         />
       </>
     );

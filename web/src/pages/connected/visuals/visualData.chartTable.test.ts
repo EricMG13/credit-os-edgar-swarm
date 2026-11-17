@@ -48,6 +48,39 @@ it.each(["Gross debt per annual.txt p.12", "Gross debt as CP-2A restated it"])(
   },
 );
 
+it.each([
+  "Lease detail not disclosed (G12).",
+  "Basis as run 20261117-094923-01.",
+  "Restated by cp-2a for FY2024.",
+  "Gross debt as CP-1C restated it",
+  "See (G3) and (G31)",
+])(
+  "keeps a limitation that names a gap id, run code or module code, %s, out of the table form",
+  (limitation) => {
+    const named: SourceTable = {
+      ...table,
+      rows: [["FY2023", "3.75", "3.00", "x", limitation, "annual.txt"]],
+    };
+    expect(chartTable(named).rows[0]?.cells.at(-1)).toBe("Qualification recorded in Evidence.");
+    expect(chartTable({ ...named, evidenceInDrawer: false }).rows[0]?.cells).toContain(limitation);
+  },
+);
+
+it.each([
+  "Gross debt at 2024 year end includes finance leases.",
+  "Covenant headroom of 12.5x on a net basis.",
+  "Run-rate EBITDA, cash-flow-based, pre-IFRS 16.",
+  "Rated A (stable) at 31 December 2024; 20241231 balance.",
+  "Tier-2 capital, 2026-12-31 maturity, USD 1,250 million.",
+  "Group G7 comparison, 12-34-56 reference-free.",
+])("keeps ordinary text beside the figures: %s", (limitation) => {
+  const plain: SourceTable = {
+    ...table,
+    rows: [["FY2023", "3.75", "3.00", "x", limitation, "annual.txt"]],
+  };
+  expect(chartTable(plain).rows[0]?.cells.at(-1)).toBe(limitation);
+});
+
 it("still leaves the Source and Evidence columns to the drawer", () => {
   const { head } = chartTable({ ...table, headers: [...headers.slice(0, 5), "Evidence"] });
   expect(head).not.toContain("Evidence");

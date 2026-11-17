@@ -29,6 +29,8 @@ export interface SourceTable {
   rowLines?: (number | undefined)[];
   rowSource?: (line: number, label: string) => ReactNode;
   evidenceInDrawer?: boolean;
+  /** The columns written with decimal commas; `cellAmount` reads their cells with it. */
+  decimalComma?: ReadonlySet<number>;
 }
 
 export function publishedTables(sections: unknown) {
@@ -53,26 +55,59 @@ export function publishedTables(sections: unknown) {
         const rowLines = sourceRows.map(({ line: at }) =>
           typeof at === "number" && Number.isSafeInteger(at) && at > 0 ? at : undefined,
         );
-        tables.set(line, { line, headers, rows: cells, rowLines });
+        tables.set(line, {
+          line,
+          headers,
+          rows: cells,
+          rowLines,
+          decimalComma: decimalCommaColumns(cells),
+        });
       }
     }
   }
   return tables;
 }
 
-// A comma is a thousands separator only between groups of exactly three digits ("1,250"); one comma
-// anywhere else is a decimal comma ("3,75"); any other placement is not a number.
-const COMMA_GROUPS = /^-?[1-9]\d{0,2}(?:,\d{3})+(?:\.\d+)?$/;
+// A comma groups digits only in threes ("1,250") or, in the Indian lakh and crore grouping, in a
+// last three and pairs before it ("21,00,000"); one other comma between digits is a decimal comma
+// ("3,75"); any other placement is not a number.
+const COMMA_GROUPS = /^-?(?:[1-9]\d{0,2}(?:,\d{3})+|[1-9]\d?(?:,\d{2})+,\d{3})(?:\.\d+)?$/;
 const DECIMAL_COMMA = /^-?\d+,\d+$/;
 const PLAIN_NUMBER = /^-?\d+(?:\.\d+)?$/;
 
-export function amount(cell: string): number | null {
+function readAmount(cell: string, decimalComma: boolean): number | null {
   let text = cell;
-  if (COMMA_GROUPS.test(cell)) text = cell.replaceAll(",", "");
-  else if (DECIMAL_COMMA.test(cell)) text = cell.replace(",", ".");
+  if (DECIMAL_COMMA.test(cell) && (decimalComma || !COMMA_GROUPS.test(cell)))
+    text = cell.replace(",", ".");
+  else if (COMMA_GROUPS.test(cell)) text = cell.replaceAll(",", "");
   if (!PLAIN_NUMBER.test(text)) return null;
   const value = Number(text);
   return Number.isFinite(value) ? value : null;
+}
+
+/** A cell's number with no column to ask: one comma and three digits ("2,800") is a thousands group. */
+export function amount(cell: string): number | null {
+  return readAmount(cell, false);
+}
+
+/**
+ * A table cell's number, read with its column's convention. In a column written with decimal commas
+ * ("3,75" beside "2,800") one comma and three digits is a decimal comma, 2.8; a column written only
+ * in three-decimal commas proves nothing and is read as thousands, as `amount` does.
+ */
+export function cellAmount(table: SourceTable, row: string[], column: number): number | null {
+  return readAmount(row[column] ?? "", table.decimalComma?.has(column) === true);
+}
+
+/** The columns holding a comma that cannot group thousands ("3,75"): they are written with decimal commas. */
+export function decimalCommaColumns(rows: string[][]): ReadonlySet<number> {
+  const columns = new Set<number>();
+  for (const row of rows) {
+    row.forEach((cell, column) => {
+      if (DECIMAL_COMMA.test(cell) && !COMMA_GROUPS.test(cell)) columns.add(column);
+    });
+  }
+  return columns;
 }
 
 export function sharePosition(cell: string) {
@@ -161,12 +196,15 @@ export function ticks(
 
 const BASIS_COLUMN = /^Basis and limitation$/i;
 const DRAWER_COLUMN = /^(?:Source|Evidence)$/i;
-const MODULE_CODE = /\bCP-[A-Z0-9]+\b/u;
+// What `containsReference` leaves out: a gap id "(G12)", a run code "20261117-094923-01", a module code
+// "CP-2A" in either case.
+const GAP_OR_RUN_OR_MODULE = /\(G\d+\)|\b\d{8}-\d{6}-\d{2}\b|\bCP-[A-Z0-9]+\b/iu;
 
 /**
  * The Table form of a published chart table. The limitation text stays beside the figures; only the
  * columns of source references go to the row's trace drawer, and a limitation that itself names a
- * source or a module code is left to the drawer too (as `chartDrawsVerbatim` does for the prose).
+ * source, a gap id, a run code or a module code is left to the drawer too (as `chartDrawsVerbatim`
+ * does for the prose).
  */
 export function chartTable(table: SourceTable, columns = table.headers.map((_, index) => index)) {
   const inDrawer = table.evidenceInDrawer === true;
@@ -175,7 +213,7 @@ export function chartTable(table: SourceTable, columns = table.headers.map((_, i
     : columns;
   const cell = (row: string[], column: number) => {
     const text = row[column] ?? "";
-    const named = containsReference(text) || MODULE_CODE.test(text);
+    const named = containsReference(text) || GAP_OR_RUN_OR_MODULE.test(text);
     return inDrawer && BASIS_COLUMN.test(table.headers[column] ?? "") && named
       ? "Qualification recorded in Evidence."
       : text || null;

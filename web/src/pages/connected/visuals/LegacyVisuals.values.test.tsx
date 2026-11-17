@@ -40,6 +40,79 @@ it("draws a value written with a decimal comma at that value, not at 375", () =>
   expect(figure.getAllByText("3,75").length).toBeGreaterThan(0);
 });
 
+function axisNumbers() {
+  return [...document.querySelectorAll("svg text")]
+    .map((node) => node.textContent)
+    .filter((text) => /^\d+(?:\.\d+)?$/.test(text))
+    .map(Number);
+}
+
+it("draws 2,800 beside 3,75 as 2.8, the column proving the decimal comma", () => {
+  const figure = drawn(
+    "Leverage",
+    { columns: [1] },
+    table(
+      ["Period", "Total debt / EBITDA", "Reporting unit", "Basis and limitation"],
+      [
+        ["FY2023", "3,75", "x", "Gross debt includes finance leases."],
+        ["FY2024", "2,800", "x", "Synthetic."],
+      ],
+    ),
+  );
+  const numbers = axisNumbers();
+  expect(numbers.length).toBeGreaterThan(2);
+  expect(Math.max(...numbers)).toBeLessThan(10);
+  expect(figure.getAllByText("3,75").length).toBeGreaterThan(0);
+  expect(figure.getAllByText("2,800").length).toBeGreaterThan(0);
+});
+
+it("draws a column written only in three-decimal commas as thousands, the ambiguity it cannot settle", () => {
+  const figure = drawn(
+    "Leverage",
+    { columns: [1] },
+    table(
+      ["Period", "Total debt / EBITDA", "Reporting unit", "Basis and limitation"],
+      [
+        ["FY2023", "3,750", "x", "Gross debt includes finance leases."],
+        ["FY2024", "2,800", "x", "Synthetic."],
+      ],
+    ),
+  );
+  expect(figure.getAllByText(/^\d,000$/).length).toBeGreaterThan(0);
+});
+
+it("does not read a neighbouring column as decimal commas because one column is", () => {
+  const figure = drawn(
+    "Leverage",
+    { columns: [1, 2] },
+    table(
+      ["Period", "Total debt / EBITDA", "Gross debt", "Reporting unit", "Basis and limitation"],
+      [
+        ["FY2023", "3,75", "1,250", "x", "Gross debt includes finance leases."],
+        ["FY2024", "2,800", "2,800", "x", "Synthetic."],
+      ],
+    ),
+  );
+  expect(figure.getAllByText(/^\d,000$/).length).toBeGreaterThan(0);
+});
+
+it("draws an Indian lakh grouping at its value", () => {
+  const figure = drawn(
+    "Debt",
+    { columns: [1] },
+    table(
+      ["Period", "Gross debt", "Reporting unit", "Basis and limitation"],
+      [
+        ["FY2023", "21,00,000", "x", "Synthetic."],
+        ["FY2024", "1,23,456", "x", "Synthetic."],
+      ],
+    ),
+  );
+  expect(figure.getAllByText("21,00,000").length).toBeGreaterThan(0);
+  // The axis runs to 2,500,000 for a bar at 2,100,000 and one at 123,456.
+  expect(figure.getByText("2,500,000")).toBeInTheDocument();
+});
+
 it("shows each period's unit and Basis and limitation in the Table form of a period chart", () => {
   const figure = drawn(
     "Leverage",
@@ -80,4 +153,32 @@ it("shows each row's Basis and limitation in the Table form beside its figures",
   expect(within(grid).getByRole("columnheader", { name: "Basis and limitation" })).toBeVisible();
   expect(within(grid).getAllByRole("cell", { name: "Reported, before leases." })).toHaveLength(2);
   expect(within(grid).getByRole("cell", { name: "Synthetic." })).toBeVisible();
+});
+
+it("shows each period's unit and Basis and limitation in the Table form of a period chart with a negative value", () => {
+  const figure = drawn(
+    "Leverage",
+    { columns: [1, 2] },
+    table(
+      [
+        "Period",
+        "Net debt / EBITDA",
+        "Total debt / EBITDA",
+        "Reporting unit",
+        "Basis and limitation",
+      ],
+      [
+        ["FY2023", "-0.50", "3.75", "x", "Net cash; gross debt includes finance leases."],
+        ["FY2024", "1.20", "2.80", "x", "Synthetic."],
+      ],
+    ),
+  );
+  fireEvent.click(figure.getByRole("radio", { name: "Table" }));
+  const grid = figure.getByRole("table", { name: "Leverage" });
+  expect(within(grid).getByRole("columnheader", { name: "Basis and limitation" })).toBeVisible();
+  expect(within(grid).getByRole("columnheader", { name: "Reporting unit" })).toBeVisible();
+  expect(
+    within(grid).getByRole("cell", { name: "Net cash; gross debt includes finance leases." }),
+  ).toBeVisible();
+  expect(within(grid).getByRole("cell", { name: "-0.50" })).toBeVisible();
 });
