@@ -244,6 +244,12 @@ it("retains a cell qualification even when its calculation grid cannot be drawn"
   if (!cell) throw new Error("Missing retained cell fixture");
   cell.display = "";
   cell.reason = "Retain the exact qualification from malformed-grid-source.pdf p.12";
+  const forecast = render(<Forecast view={view} run={run} />);
+  expect(screen.getByRole("link", { name: "Model notes and limitations" })).toHaveAttribute(
+    "href",
+    "#evidence/record",
+  );
+  forecast.unmount();
   vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("not available")));
   render(
     <ReportEvidence

@@ -489,11 +489,6 @@ export function LegacyForecast({
               downsideNote={notes.find((note) => note.startsWith("Downside case is"))}
             />
           )}
-          {evidenceOnlyQualifications && (
-            <a className="text-action underline" href="#evidence/record">
-              Model notes and limitations
-            </a>
-          )}
           {!evidenceOnlyQualifications && notes.length > 0 && (
             <ul className="list-disc pl-5">
               {notes.map((note, index) => (
@@ -512,6 +507,11 @@ export function LegacyForecast({
             </section>
           )}
         </>
+      )}
+      {evidenceOnlyQualifications && (
+        <a className="text-action underline" href="#evidence/record">
+          Model notes and limitations
+        </a>
       )}
     </section>
   );
