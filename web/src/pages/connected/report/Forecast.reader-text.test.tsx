@@ -63,7 +63,18 @@ const HELD_BACK = [
   "The trigger text is not stated in the summary; see the Filing, pages 12 to 14.",
   "The trigger text is cited only as pp. 12-14 of the Filing.",
   "Not established: the trigger is in NB-agreement.pdf.",
+  "The trigger text is not stated; see p 12 of the Filing.",
+  "The trigger text is cited only as pp 12 of the Filing.",
+  "The trigger text is not stated; see pg. 12 of the Filing.",
+  "The trigger text is cited at pg 12 of the Filing.",
+  "The trigger text is not stated in the summary (p12).",
+  "Page 7 of the Filing gives the trigger text.",
+  "The maturities are in the annual report 2025 page 83, so the profile stops at 2026.",
+  "The covenant is set out in the accounts at 31 December 2025 p. 12, not in the summary.",
 ] as const;
+
+// The gap table's own line: the figure's trace control opens it in the Evidence drawer.
+const GAP_LINE = `/report/current#evidence/legal~${"d".repeat(64)}-41`;
 
 const DRAWN_WHOLE = [
   [
@@ -73,6 +84,23 @@ const DRAWN_WHOLE = [
   [
     "Margin rose 150bp, 1.5 pp. 2 years running; leverage of 3.2x at FY2025 is the only point.",
     "Margin rose 150bp, 1.5 pp. 2 years running; leverage of 3.2x at FY2025 is the only point.",
+  ],
+  ["Coverage fell 1.5 pp, so no trend is drawn.", "Coverage fell 1.5 pp, so no trend is drawn."],
+  [
+    "Coverage fell 2 p.p. 3 quarters in a row; two pp. 3 quarters before that.",
+    "Coverage fell 2 p.p. 3 quarters in a row; two pp. 3 quarters before that.",
+  ],
+  [
+    "Rated by S&P. 2025 outlook stable; cut by S&P. 3 notches since.",
+    "Rated by S&P. 2025 outlook stable; cut by S&P. 3 notches since.",
+  ],
+  [
+    "The front page 2025 headline and the one-page 2026 outlook give no series.",
+    "The front page 2025 headline and the one-page 2026 outlook give no series.",
+  ],
+  [
+    "The homepage 2 years ago quoted 3% p.a. 5% later; app. 3 years of data.",
+    "The homepage 2 years ago quoted 3% p.a. 5% later; app. 3 years of data.",
   ],
   [
     "No headroom series before 2024 was supplied (CP-4).",
@@ -85,11 +113,8 @@ it.each(HELD_BACK)("holds back the referencing chart gap reason %s as a stated g
   render(<Forecast view={chartView(entry)} run={run} />);
   expect(screen.getByRole("note").textContent).toBe("See Evidence.");
   expect(screen.getByText("Not established for this run")).toBeInTheDocument();
-  expect(screen.getByRole("link", { name: "Source table" })).toHaveAttribute(
-    "href",
-    expect.stringContaining("#evidence/"),
-  );
-  expect(document.body.textContent).not.toMatch(/\bp(?:p|age)?s?\.?\s*\d|\.pdf/);
+  expect(screen.getByRole("link", { name: "Source table" })).toHaveAttribute("href", GAP_LINE);
+  expect(document.body.textContent).not.toMatch(/\bp(?:p|g|age)?s?\.?\s*\d|\.pdf/i);
 });
 
 it.each(DRAWN_WHOLE)("draws the chart gap reason %s whole", (stored, drawn) => {
@@ -100,16 +125,27 @@ it.each(DRAWN_WHOLE)("draws the chart gap reason %s whole", (stored, drawn) => {
   expect(screen.queryByText("See Evidence.")).toBeNull();
 });
 
-it("holds back a withheld module's page-citing limitation as the reason of its chart", () => {
+it("holds back a withheld module's page-citing limitation and traces the figure to it", () => {
   const limitation =
     "No covenant document was supplied, so no test can be drawn; the only sight of the covenant is a summary on p. 4 of the annual report.";
   const entry = chartEntry([]);
   entry.output.state = { established: false, declared: null };
   entry.output.summary = { bottomLine: "", confidence: "", limitation, line: 5 };
-  entry.output.charts = [{ title: "Rating trigger headroom", table: 41 }];
+  entry.output.charts = [{ title: "Rating trigger headroom", table: 21 }];
+  entry.sections.unshift({
+    heading: "Reader summary",
+    level: 2,
+    line: 3,
+    blocks: [{ type: "text", line: 5, end: 5, text: limitation }],
+  });
   render(<Forecast view={chartView(entry)} run={run} />);
   expect(screen.getByRole("note").textContent).toBe("See Evidence.");
   expect(screen.getByText("Not established for this run")).toBeInTheDocument();
+  // The trace control opens the limitation's own line, not the chart's data table (line 21).
+  expect(screen.getByRole("link", { name: "Source table" })).toHaveAttribute(
+    "href",
+    `/report/current#evidence/legal~${"d".repeat(64)}-5`,
+  );
 });
 
 it("draws a withheld module's limitation whole when it cites no page", () => {
@@ -120,6 +156,7 @@ it("draws a withheld module's limitation whole when it cites no page", () => {
   entry.output.charts = [{ title: "Rating trigger headroom", table: 41 }];
   render(<Forecast view={chartView(entry)} run={run} />);
   expect(screen.getByRole("note").textContent).toBe(limitation);
+  expect(screen.getByRole("link", { name: "Source table" })).toHaveAttribute("href", GAP_LINE);
 });
 
 it("names a module by its name in a chart gap that cites no page", () => {

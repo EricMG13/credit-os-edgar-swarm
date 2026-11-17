@@ -13,9 +13,14 @@ import { LegacyVisuals } from "../visuals";
 
 const CHART_PREFIX = "Chart data: ";
 
-// A page citation: "p.12", "p. 83", "pp. 12-14", "page 12", "pages 12 to 14". A "pp." after a
-// number is percentage points ("fell 2 pp. 3 quarters"), not pages.
-const PAGE_CITATION = /(?<!\d\s*)\b(?:pp?\.|pages?)\s*\d/i;
+// A page citation: "p.12", "p 12", "(p12)", "pp. 12-14", "pg. 12", "page 12", "pages 12 to 14",
+// also after a year ("2025 page 83"). Not a page: a "pp" after a number is percentage points
+// ("fell 2 pp. 3", "two pp. 3"); a "p" inside a word or after "&", "." or "-" ("app. 3", "S&P. 3",
+// "p.p. 3", "one-page"); a four-digit number is a year ("front page 2025").
+const PAGE_CITATION =
+  /(?<![\w&.-])(?:p|pg|(?<!(?:\d|\b(?:one|two|three|four|five|six|seven|eight|nine|ten))\s*)pp|pages?)\.?\s*\d{1,3}(?!\d)/i;
+
+const citesSource = (text: string) => PAGE_CITATION.test(text) || containsReference(text);
 
 /**
  * A gap as the page draws it. A reason that cites a page or holds another source reference is held
@@ -26,8 +31,7 @@ const PAGE_CITATION = /(?<!\d\s*)\b(?:pp?\.|pages?)\s*\d/i;
 function drawnGap(figure: Record<string, unknown>) {
   const { gap } = figure;
   if (typeof gap !== "string") return figure;
-  const cites = PAGE_CITATION.test(gap) || containsReference(gap);
-  return { ...figure, gap: cites ? "See Evidence." : readerText(gap) };
+  return { ...figure, gap: citesSource(gap) ? "See Evidence." : readerText(gap) };
 }
 
 function returnedCharts(entry: OutputEntry, coveredLines: Set<number>) {
@@ -60,10 +64,17 @@ function chartOutput(entry: OutputEntry) {
       ...chartGaps,
       ...returnedCharts(entry, coveredLines),
       ...(withheld
-        ? charts.map((chart) => ({
-            ...chart,
-            gap: summary?.limitation || "Module not assessable.",
-          }))
+        ? charts.map((chart) =>
+            // A held-back limitation is reached through the figure's trace control, so that control
+            // opens the limitation's own line rather than the chart's data table.
+            summary?.limitation
+              ? {
+                  ...chart,
+                  gap: summary.limitation,
+                  ...(citesSource(summary.limitation) && { table: summary.line }),
+                }
+              : { ...chart, gap: "Module not assessable." },
+          )
         : []),
     ].map(drawnGap),
   };
