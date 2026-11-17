@@ -15,6 +15,42 @@ Scope: how a run's end and its modules' states are read from `events.jsonl` (`ru
 - Fidelity check: the static run steps (labelled and compact) rendered in Chromium with `screen.css`: the stopped step reads "Interrupted" with the warning mark on the neutral card, amber in the compact bar, 2 of 4 done. The built React run page served by `react_frontend` (synthetic mode) over a run held "running" after a `stopped` event: "Held by the service" with the note, CP-1 "Interrupted", "1 of 3" modules.
 - Review: one independent read-only review of the diff. Confirmed and fixed: the refused second launcher's `stopped` (now acted on by `progress`); `held_reason` was the service-wide note on any live run's page, unscrubbed; CP-8 not produced left running after delivery. Also taken: a non-live replay into a delivered folder passed unchecked (now refused); the missing-delivery refusal now says to start a new run. Left: a relaunch of a delivered folder with other loop settings stops at `loop.json` before the delivered check (exit 1, nothing written to the log now); a delivered run killed before its `delivered` line keeps its Report running in the log (the scheduler's exit-0 rule covers its own launches). Rewrite comparison for `progress`, `outcome`, `_recorded_delivery`: a table-driven `progress` was no shorter or clearer; kept.
 - Not verified: `pytest -m browser` (Chrome cannot start in this sandbox; `test_run_start_page.py` timed out), the full suite, a live run, Teams cards with a stopped module (they count done modules only).
+## 2026-11-17 — CP-DR may read finance.yahoo.com (PR #52, merged to `main` as `859b3ae1`)
+
+Scope: the research module's web allowlist and its statement on both start pages: `src/deploy_workflow/research/`, `src/deploy_workflow/run_start/`, `src/deploy_workflow/model/`, `docs/rulings/`, `docs/audit/`, `docs/templates/` (older start page), `web/src/pages/connected/start/` (review sheet) and their tests. No provider was called and nothing was fetched from a Yahoo host.
+- Owner, 2026-11-16: "Use public source like yahoo finance for cp-dr. We want information on all modules". Owner, 2026-11-17, asked with the exposure put plainly: "Yes, allow it".
+- Changed: `finance.yahoo.com` alone joins the allowlist (28 to 29 domains; `yahoo.com` and other Yahoo hosts are not added). The summary gains `web_lookup`, the launcher's own setting for the run; both start pages say, exactly when it is true, that the research module may read Yahoo Finance pages, that their addresses name what it looks up and that no document is sent. The research instruction tells the module how a Yahoo page is cited (Source type `Other`, a Gaps line, undated, current figures not used for an earlier cutoff). The ruling `docs/rulings/2026-11-13-cpdr-web-lookup.md` records the amendment, what Yahoo sees (three headers) and the header audit; `docs/audit/2026-11-16-final/README.md` rule R8 records the exception.
+- Fidelity check (presentation, as the PR body states it): `vitest run src/pages/connected/ConnectedApp.test.tsx` for the connected review sheet; for the older page a Playwright probe from disk (`file://`, no service) showed the Yahoo row once with `web_lookup` true and never with false, absent, a string or the research module left out; the browser-marked tests were then run locally by the PR manager.
+- Reviews: one independent adversarial review (first verdict request changes; three Medium, fixed and re-checked with probes: the older page's test could never pass, the Yahoo citation rules were not told to the module, a Claude run "reads only its files" sat beside the Yahoo row). After the send-back, the PR manager's combined run on the first head (4863dfa1) found six browser tests failing (four new Yahoo tests returning an `error` key the harness refuses; two existing "stay in view" tests broken because the new row made the card taller). Fix round 738d40a9 (Approve/Submit sticky in the older page; the test returns only asserted fields) was re-reviewed (Opus `mx-precise`: pass, one Info held for the end batch) and re-verified.
+- Commands on head 2c508753, run by the PR manager: `npm --prefix web run proof:connected` exit 0, pass 2 / fail 0 (Chrome 157, Edge 157); `pytest -m browser` on `tests/test_run_start_page.py`, `tests/test_reporting_currency_proof.py`, `tests/test_cpos_launch.py` 173 passed; CI both checks green. As recorded in the PR body (at 4863dfa, the author's run): `tests/test_weblookup.py` 241 passed, `tests/test_web_lookup_tools.py` 264, `tests/test_run_start_submissions.py` 164 (3 skipped), `tests/test_run_start_service.py` 97, `tests/test_cpos_launch.py` 938, `tools/quality_gate.py` 0 findings, `lint-imports` 3 contracts kept, web typecheck and lint exit 0, vitest 156 on the connected page file. The header audit is by test: a Yahoo request on the wire is the request line and three headers, and redirects to consent hosts are refused.
+- Not verified: anything fetched from a live Yahoo host (consent redirects, script-drawn pages, whether pages state no date); a mechanical check of the Yahoo citation rules (none exists; follow-up for the owner); a live CP-DR run; the full suite (weekly CI).
+
+## 2026-11-16 — Keep the library and the scheduler working beside an unreadable run record (PR #39, merged to `main` as `82f0fceb`)
+
+Scope: backend ordering and admission code, no presentation change and no web change: `react_frontend/admission.py`, `src/deploy_workflow/inbox/` (runs, scheduler), `src/deploy_workflow/run_start/` (prior, service) and their tests.
+- Owner's instruction: one unreadable run record (`state/<run id>.json`) used to fail every library reply and stop the scheduler. Now only the affected run is strict. The library hides that run's folder; the scheduler starts, never writes or deletes the file, reserves the id, counts one running slot and one daily start for it, keeps sealed uploads while any record is unreadable and ignores a readable copy with the same run id (`runs.name_key`, case and Unicode form). Run lookups refuse only that run. With no unreadable file nothing changes. `load_all` still raises.
+- Reviews (adversarial, ordering code): two High findings in two rounds (a readable copy carrying the bad file's id could overwrite it and start its run; the same through Unicode form), both fixed; the final re-review was clean (six mutants of the comparison caught, four hard limits held, 707 name pairs sharing one key).
+- Commands as recorded in the PR body, on head 0919f266: `uv run pytest` over admission, inbox scheduler and runs, prior, service, react frontend and run activity tests exit 0 (332 passed); `tools/quality_gate.py` exit 0. 507 changed lines, 12 files. One existing test replaced on purpose.
+- Not verified: the whole Python suite and the web suite; Windows or a case-distinct file system; a real restart after repairing a file; a real launcher process; hundreds of bad files. Left as is: the page of the run whose own record is unreadable shows a generic failure and logs a traceback each poll. Predates the change (for the owner): `/library/` is served without admission; the comparison module can choose an unaccepted run folder; the folder lock leaks if start-up raises; a stray readable record is tracked under its id; `_load` does not check a record's id against its file name.
+
+## 2026-11-16 — Run activity: no absolute path in a run's reason; an unreadable record no longer fails the list (PR #36, merged to `main` as `e70380c5`)
+
+Scope: the connected Run activity page and its service reply: `react_frontend/run_activity.py`, `src/deploy_workflow/inbox/runs.py` (read-only `load_readable`), `web/src/pages/connected/` (`RunActivity.tsx`, `api.ts`) and their tests. Scheduler, `load_all` and admission unchanged.
+- Changed: a run's reason (ended list, running list, single-run reply) no longer shows an absolute path: the bare service root reads "the service folder" and any other absolute path keeps its last segment (POSIX, Windows, network shares; a quoted path is cut whole). File names, URLs and relative paths stay. One unreadable run record no longer fails the list or a single-run page; the list sends an `unreadable` count and the page says "Some run records could not be read", and the empty state no longer claims nothing is running beside one. The skip is a documented fail-open on a display path; not logged because the page polls every 5 seconds.
+- Review: one adversarial review, three Medium (a spaced folder name kept its tail; a non-text id still failed the list; the page said nothing was running beside unreadable records), fixed and re-reviewed clean with mutation checks.
+- Fidelity check (presentation): not recorded in the PR body beyond the web tests below.
+- Commands as recorded in the PR body, on 9c459b17: `uv run pytest` on `tests/test_react_frontend.py`, `tests/test_react_run_activity.py`, `tests/test_run_start_scheduler.py` exit 0 (112 passed); `tools/quality_gate.py` 0; web `lint`, `format:check`, `typecheck`, `unused`, `duplication` exit 0; `npm test` exit 0 (3,507 tests). All 19 reason texts the scheduler writes come out as intended; a 100,000-character reason costs 32 to 44 ms.
+- Not verified: Windows (paths tested as strings); an unquoted path with a space in a folder name, an apostrophe path in single quotes and a path after `file://`, `<`, `{`, a backtick or curly quotes still show (by ruling); a page with both an unreadable record and a listed run; `/sweep refactoring discover`, `confidence-review`, `rewrite-tournament` and the browser proof were not run; with one bad record file admission still fails library replies and the scheduler refuses to start (predates this PR; PR #39 addresses it).
+
+## 2026-11-16 — Run activity: list runs that ended without a report (PR #34, merged to `main` as `94110a54`)
+
+Scope: PR 3 (Task 9) of `docs/superpowers/plans/2026-11-16-connected-reader-high-gaps.md`: `react_frontend/run_activity.py`, `web/src/pages/connected/` (`RunActivity.tsx`, `api.ts`), their tests and the plan. Task 10 is dropped (the Start flow has no Confirm step).
+- Changed: `GET /connected/activity` gains `ended` (the 20 latest runs that failed, hit the cap, were rejected or were interrupted; seven fields each, no spend, folders or file lists) and `ended_total`. The page adds a third group, "Ended without a report", with issuer linked to the run's page, pathway, state, end time and reason; the tally shows the real total and the group says "Showing the latest 20 of N." when cut; a run with no end time shows "Not recorded". A reason is sent without the service's root directory on the ended list, the running list and the single-run reply.
+- Reviews: task review approved; whole-branch adversarial review two Medium (the tally showed 20 for ever; a Windows OS-error path was not stripped), fixed and re-reviewed with mutation checks; a last test-only fix made the path test platform independent.
+- Fidelity check (presentation): not recorded in the PR body beyond the web tests below.
+- Commands as recorded in the PR body: `uv run pytest tests/test_react_frontend.py tests/test_react_run_activity.py` 29 passed on the head; `tools/quality_gate.py` 0 findings; web `lint`, `format:check`, `typecheck`, `unused`, `duplication` and `npm test` (163 files, 3,506 tests) exit 0 on the last commit that changed `web/`, before the rebase onto 3c96a3a2. The list is read-only (about 35 ms per poll at 1,000 saved records). 451 changed lines.
+- Not verified: Windows (path cases are simulated strings); `/sweep refactoring discover`, `confidence-review`, `rewrite-tournament` and the browser proof were not run; a path outside the service root, a file name under it, the bare root with nothing after it and a root in a different drive-letter case are still sent in a reason; a hand-edited record with a non-text reason or end time fails the whole list.
+
 ## 2026-11-17 — PR 3: the review sheet shows every input Submit sends (branch `claude/review-sheet-every-input`)
 
 Scope: a presentation change to the connected start page's review sheet (`web/src/pages/connected/start/ReviewSheet.tsx`, new `start/reviewInputs.ts`), with labels moved unchanged from `StartRun.tsx` into `start/plain.ts` and `start/rows.ts`. What Submit sends, the reviewed-summary digest, the caps, limit acceptance and the service are unchanged; no Python changed. No provider was called.
@@ -959,36 +995,3 @@ Scope: presentation only, all under `web/`; no backend, handoff, provider or mod
   `5b0599d74f0ccbedd122c8920f8deaf225f4494eef309c7ee4c19c957cae86df`.
   Clean extraction passed macOS Chrome (`20261115-162914-01`) and Edge
   (`20261115-162922-01`). Windows work-PC proof and publication are pending.
-
-## 2026-11-15 — Keyboard source traces for figures and calendar rows
-
-- Both macOS browsers opened the Caesars Watchlist passage, maturity chart
-  and calendar row by keyboard. Escape returned focus to the exact control
-  and kept the selected Table view. Modules and Forecast opened the same maturity
-  source. The Evidence route reloaded with the 3,962 US$m maturity and the original
-  quarterly filing reference. The calendar table fit the 720 px viewport.
-- Confidence review reproduced lost focus and the reset Table view. Checked
-  same-run row identities, deduplicated exact source records, both trace dismissal
-  and deep-link navigation, and chart stability during module route changes.
-  Focused web (305) and Python (15) tests, quality, lint, format and build passed.
-- Candidate `3104896` SHA-256
-  `f30be0c81281f0b7fa560ed148e26099018c98cf08837dd6ddd39e61a1070c4b`.
-  Clean extraction passed macOS Chrome (`20261115-161824-01`) and Edge
-  (`20261115-161832-01`), with paired proof. Windows work-PC proof and
-  publication are pending.
-
-## 2026-11-15 — Cross-module issuer calendar
-
-- Both macOS browsers checked 69 retained Caesars calendar rows, split into 46
-  historical and 23 scheduled events. Exact dates, publication dates, precision
-  and row traces matched the native handoffs. Both displayed the authored watch
-  gap, opened the source by keyboard, reloaded the route and fit 720 px.
-- Confidence review checked duplicate descriptors, coincident independent rows,
-  retained alternatives, incompatible dates and source text placement. The
-  synthetic path checked a scenario quarter and nine distinct same-day entries.
-  Focused web (53) and Python (15) tests, quality, lint, format and build passed.
-- Candidate `2611797` SHA-256
-  `0c89b8bbe33df260a6d7e8da45d2d8a174adddb1bc97c70650eb037ac5da92ff`.
-  Clean extraction passed macOS Chrome (`20261115-161013-01`) and Edge
-  (`20261115-161020-01`). The paired proof contains the hash and ten screenshots.
-  Windows work-PC proof and publication remain pending.
