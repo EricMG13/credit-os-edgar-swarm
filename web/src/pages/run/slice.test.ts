@@ -667,6 +667,27 @@ describe("rejects, run activity", () => {
       "run.runs[10].alert.text: expected no module code",
     );
   });
+  it.each([
+    "CP-DR",
+    "CP-MODEL",
+    "CP-L10",
+    "CP-OS",
+    "cp-1a",
+    "CP-1A",
+    "Peer set from CP-DR is ready",
+  ])("a module code of any shape is refused where it is read: %s (S6-018)", (code) => {
+    expect(reason(editRun("running", ["feed", 0, "text"], code))).toBe(
+      "run.runs[0].feed[0].text: expected no module code",
+    );
+    expect(reason(edit("documents", ["readiness", "notMet"], { count: "1", items: [code] }))).toBe(
+      "run.drafts[1].readiness.notMet.items[0]: expected no module code",
+    );
+  });
+  it("words that only start like a module code are kept (S6-018)", () => {
+    for (const word of ["Capped", "CP", "cpu-bound", "Step CP"]) {
+      expect(readSlice(editRun("running", ["feed", 0, "text"], word)).kind).toBe("ok");
+    }
+  });
   it("a missing figure value and a bad bar", () => {
     expect(reason(editRun("running", ["spend", "value"], undefined))).toBe(
       "run.runs[0].spend.value: expected a string or null",
