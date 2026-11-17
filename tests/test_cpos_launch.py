@@ -6731,6 +6731,53 @@ def test_checker_rejects_a_reader_number_the_handoff_does_not_hold(tmp_path):
     assert not any("Prose check 9" in i for i in issues)
 
 
+# Live run, TransDigm as of 2024-09-30 (2026-11-16): CP-1D's bullet and calculation rows, exact.
+# 22,967 / 3,871 = 5.9331 and 22,967 / 4,088 = 5.6181, so the effect is 0.315x; no calculation
+# gives 0.39x, which only the note in D44's Result cell writes.
+CP1D_STOCK_BULLET = (
+    "- Stock and deferred compensation is challenged, not accepted: it is genuinely non-cash, but "
+    "it is the largest add-back at USD 217 million, recurs in every period and is part of the "
+    "compensation cost of the business. The cash-flow reconciliation confirms the non-cash "
+    "character, so it does not affect the cash test. It does affect leverage, because the restated "
+    "figure is an earnings measure; carrying it at nil in the supported figure lifts pro forma net "
+    "leverage by about 0.39x on its own relative to an add-back view."
+)
+CP1D_STOCK_ROWS = (
+    "| ID | Calculation | Inputs | Result | Period and unit | Source |\n"
+    "|---|---|---|---|---|---|\n"
+    "| D43 | Quality-adjusted EBITDA accepting stock compensation | 3871 + 217 | 4088 "
+    "| FY2024, USD millions | calculation D1 |\n"
+    "| D44 | Stock compensation effect on pro forma net leverage "
+    "| 5.9331 − 22967 / 4088 (5.6181) "
+    "| 0.3150 (about 0.39x measured against the 5.50x issuer basis less other items; see note) "
+    "| FY2024 pro forma, x | calculation D43 |"
+)
+
+
+def cp1d_stock_handoff(tmp_path, bullet: str, rows: str):
+    """A CP-1D answer with `bullet` in Key findings and `rows` after its Calculations table."""
+    prepared, task, context = good_task(tmp_path, "CP-1D")
+    raw = answer(context, list(prepared.plan.layout.routes))
+    assert "### Key findings\n\n" in raw and "\n\n## Gaps" in raw
+    raw = raw.replace("### Key findings\n\n", f"### Key findings\n\n{bullet}\n\n", 1)
+    raw = raw.replace("\n\n## Gaps", f"\n\n{rows}\n\n## Gaps", 1)
+    return _checked_handoff(task, raw.encode(), checker(prepared.layout))
+
+
+def test_checker_sends_back_a_prose_figure_held_only_in_a_note_inside_a_table_cell(tmp_path):
+    issues = cp1d_stock_handoff(tmp_path, CP1D_STOCK_BULLET, CP1D_STOCK_ROWS)
+    assert any(i.startswith("Fidelity check, line ") and '"0.39x"' in i for i in issues), issues
+
+
+def test_checker_accepts_a_prose_figure_the_table_states_as_its_value(tmp_path):
+    bullet = CP1D_STOCK_BULLET.replace("about 0.39x", "about 0.32x")
+    note = "0.3150 (about 0.39x measured against the 5.50x issuer basis less other items; see note)"
+    assert note in CP1D_STOCK_ROWS
+    issues = cp1d_stock_handoff(tmp_path, bullet, CP1D_STOCK_ROWS.replace(note, "0.3150 (0.32x)"))
+    assert not any("0.32x" in i or "0.39x" in i for i in issues), issues
+    assert not any(i.startswith("Fidelity check") for i in issues), issues
+
+
 def test_high_modules_outside_the_run_are_refused(tmp_path, capsys):
     assert main([*launch(tmp_path), "--modules", "CP-4", "--high-modules", "CP-1A"]) == 2
     assert "CP-1A" in capsys.readouterr().err
