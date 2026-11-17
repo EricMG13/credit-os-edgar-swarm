@@ -8,9 +8,9 @@ import logging
 import os
 import shutil
 import tempfile
-import unicodedata
 import threading
 import time
+import unicodedata
 from collections.abc import Iterator
 from pathlib import Path
 
@@ -36,7 +36,6 @@ from deploy_workflow.run_start.submissions import (
     summary,
     sweep,
 )
-
 
 AS_ROOT = hasattr(os, "geteuid") and os.geteuid() == 0  # no geteuid on Windows
 
@@ -251,6 +250,25 @@ def test_the_summary_is_the_launchers_forecast(layout, tmp_path):
     assert s["ignored"] == list(expected.ignored)
     assert s["prior"] is None  # no earlier run is listed: the approval names a first run
     assert s["digest"] == submissions.bound(digest(layout, sid, answers), "none")
+
+
+def test_the_summary_records_the_latest_detected_document_date(layout, tmp_path):
+    sid, _ = upload_issuer(layout, tmp_path)
+    put(layout, sid, "earlier.txt", b"FORM 10-Q\nQuarter ended March 31, 2025")
+    put(layout, sid, "later.txt", b"FORM 10-Q\nQuarter ended June 30, 2025")
+    answers = answers_for(tmp_path)
+    result = summary(layout, sid, answers)
+    assert result["error"] == ""
+    [limit] = [item for item in result["items"] if item["id"] == "form:newest-document-date"]
+    assert limit["outcome"] == "limited"
+    assert "(2025-03-31) is before your newest document (2025-06-30)" in limit["reason"]
+    assert limit in (submissions.issued_summary_limits(layout, sid) or [])
+
+    answers["newest_document_date"] = "2025-03-31"
+    overridden = summary(layout, sid, answers)
+    assert overridden["error"] == ""
+    assert all(item["id"] != "form:newest-document-date" for item in overridden["items"])
+    assert overridden["digest"] != result["digest"]
 
 
 def full_assessment_summary(layout, tmp_path, workbook: bytes | None) -> dict[str, object]:
@@ -546,6 +564,9 @@ def test_a_file_landing_while_the_summary_is_made_gives_no_digest(layout, tmp_pa
         {"submitted_by": "Er1c G"},
         {"submitted_by": "-Eric G"},
         {"submitted_by": "Eric G\n"},
+        {"newest_document_date": None},
+        {"newest_document_date": "20261118"},
+        {"newest_document_date": "2026-02-29"},
     ],
 )
 def test_hostile_answers_are_refusals_not_exceptions(layout, tmp_path, change):

@@ -407,6 +407,30 @@ it("retains the recorded facility fields behind debt, interest and cash figures"
   }
 });
 
+it("shows repayment drivers in the interest trace", () => {
+  const { model } = fixture();
+  const document = {
+    ...input,
+    base_drivers: {
+      ...input.base_drivers,
+      debt_repayment: {
+        values: ["20", "0"],
+        category: "Analyst Interpretation",
+        rationale: "Recorded repayments.",
+        limitation: null,
+      },
+    },
+  };
+  const trace = forecastTraceContext(model, document, "Interest", {
+    case: "Base case",
+    row: "Interest",
+    period: "FY2027E",
+  });
+  expect(
+    trace.details.find(({ label }) => label === "base_drivers.debt_repayment")?.value,
+  ).toContain('"20"');
+});
+
 it("shows recorded drivers and the downside shock with a separate facilities notice", () => {
   const { view } = fixture();
   render(<Forecast view={view} run={run} />);

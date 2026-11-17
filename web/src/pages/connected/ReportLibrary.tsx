@@ -167,14 +167,17 @@ function ReportNav({ tab, modules }: { tab: Tab; modules: number }) {
   );
 }
 
-/** The modules a run ran, by plain name in run order, and its labels; read from the run's own
- * published snapshot (another run's record in this one carries only its date and pathway). */
-function runDetails(snapshot: Snapshot, folder: string) {
-  const found = Object.entries(snapshot.workspace.runs).find(
-    ([, record]) => record.folder === folder && Object.hasOwn(record, "modules"),
-  );
-  if (!found) return null;
-  const [key, run] = found;
+/** Use compact history metadata when the scoped snapshot only retains the row's summary. */
+function runDetails(snapshot: Snapshot, key: string, run: PublishedRun) {
+  if (run.history)
+    return {
+      modules: run.history.modules.map(moduleName),
+      labels: [
+        ...(run.history.earlierFormat ? ["Earlier format"] : []),
+        ...(run.history.earlierMethods ? ["Earlier methods"] : []),
+      ],
+    };
+  if (!Object.hasOwn(run, "modules")) return null;
   const modules = moduleOrder(run).filter((id) => run.modules[id]?.outputs.length);
   return {
     modules: modules.map(moduleName),
@@ -182,39 +185,30 @@ function runDetails(snapshot: Snapshot, folder: string) {
   };
 }
 
-function modulesRun(details: ReturnType<typeof runDetails> | undefined, error: string) {
+function modulesRun(details: ReturnType<typeof runDetails>) {
   if (details) {
     const count = details.modules.length;
+    if (count === 0) return "0 modules run";
     return `${String(count)} ${count === 1 ? "module" : "modules"} run: ${details.modules.join(", ")}`;
   }
-  if (details === null || error) return "The modules this run ran could not be read.";
-  return "Reading the modules this run ran…";
+  return "The modules this run ran could not be read.";
 }
 
 function HistoryRow({
   record,
   catalogue,
-  held,
+  details,
 }: {
   record: PublishedRun;
   catalogue: CatalogueRun | undefined;
-  /** This page's snapshot when the row is the run on screen; another run's is fetched. */
-  held: Snapshot | null;
+  details: ReturnType<typeof runDetails>;
 }) {
-  const load = useCallback(
-    async (signal: AbortSignal) => {
-      const snapshot = held ?? (await getSnapshot(signal, record.folder));
-      return snapshot ? runDetails(snapshot, record.folder) : null;
-    },
-    [held, record.folder],
-  );
-  const { value: details, error } = useResource(load);
   return (
     <li className="flex flex-wrap items-center justify-between gap-4 border-t border-border-hairline pt-3">
       <div className="grid gap-1">
         <p className="font-semibold">{runPathway(record, catalogue) || "Credit report"}</p>
         <p className="text-sm text-text-secondary">{runTiming(record)}</p>
-        <p className="text-sm text-text-secondary">{modulesRun(details, error)}</p>
+        <p className="text-sm text-text-secondary">{modulesRun(details)}</p>
       </div>
       <div className="flex flex-wrap items-center gap-3">
         <StatusBadge set="Run states" state="Finished" />
@@ -230,8 +224,8 @@ function HistoryRow({
 
 /** One row per published run of the issuer, newest first; every run listed here is finished. */
 function RunHistory({ snapshot, run }: { snapshot: Snapshot; run: PublishedRun }) {
-  const records = Object.values(snapshot.workspace.runs).filter(
-    (record) => record === run || Boolean(run.issuerKey && record.issuerKey === run.issuerKey),
+  const records = Object.entries(snapshot.workspace.runs).filter(
+    ([, record]) => record === run || Boolean(run.issuerKey && record.issuerKey === run.issuerKey),
   );
   const byFolder = new Map(snapshot.catalogue.real.map((item) => [item.id, item]));
   return (
@@ -239,13 +233,13 @@ function RunHistory({ snapshot, run }: { snapshot: Snapshot; run: PublishedRun }
       <h2 className={heading}>Report history</h2>
       <ul className="grid gap-3">
         {records
-          .sort((a, b) => (b.asOf ?? "").localeCompare(a.asOf ?? ""))
-          .map((record) => (
+          .sort(([, a], [, b]) => (b.asOf ?? "").localeCompare(a.asOf ?? ""))
+          .map(([key, record]) => (
             <HistoryRow
-              key={record.folder}
+              key={key}
               record={record}
               catalogue={byFolder.get(record.folder)}
-              held={record === run ? snapshot : null}
+              details={runDetails(snapshot, key, record)}
             />
           ))}
       </ul>

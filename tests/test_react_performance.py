@@ -114,6 +114,13 @@ def test_scope_keeps_history_metadata_and_only_valid_comparison_content() -> Non
         "issuerKey": "issuer",
         "pathway": "other",
         "period": "Q1",
+        "modules": {
+            "CP-1": {"outputs": ["history/CP-1.md", "other/CP-1.md"]},
+            "CP-2": {"outputs": ["history/CP-2.md"]},
+            "CP-3": {"outputs": []},
+        },
+        "record": {"steps": [{"module": "CP-2"}, {"module": "CP-1"}, {"module": "CP-3"}]},
+        "methodChanges": ["CP-2: example method change"],
     }
     unrelated = {
         "folder": "other",
@@ -123,8 +130,9 @@ def test_scope_keeps_history_metadata_and_only_valid_comparison_content() -> Non
     }
     outputs = {
         f"{folder}/CP-1.md": {"run": f"{folder}-key", "module": "CP-1", "sha256": folder[0] * 64}
-        for folder in ("earlier", "current", "other")
+        for folder in ("earlier", "current", "history", "other")
     }
+    outputs["history/CP-2.md"] = {"run": "history-key", "module": "CP-2", "sha256": "2" * 64}
     snapshot = {
         "catalogue": {
             "real": [
@@ -143,6 +151,15 @@ def test_scope_keeps_history_metadata_and_only_valid_comparison_content() -> Non
             "handoffs": {
                 folder[0] * 64: [{"heading": folder, "level": 2, "line": 1, "blocks": []}]
                 for folder in ("earlier", "current", "other")
+            }
+            | {
+                "h" * 64: [
+                    {"heading": "Request", "level": 2, "blocks": []},
+                    {"heading": "Inputs", "level": 3, "blocks": [{"type": "text", "text": "x"}]},
+                    {"heading": "Findings", "level": 2, "blocks": []},
+                    {"heading": "Bottom line", "level": 3, "blocks": []},
+                ],
+                "2" * 64: [{"heading": "Unstructured handoff", "level": 1, "blocks": []}],
             },
             "models": [],
         },
@@ -158,6 +175,11 @@ def test_scope_keeps_history_metadata_and_only_valid_comparison_content() -> Non
         "issuerKey": "issuer",
         "pathway": "other",
         "period": "Q1",
+        "history": {
+            "modules": ["CP-2", "CP-1"],
+            "earlierFormat": False,
+            "earlierMethods": True,
+        },
     }
     assert set(scoped["workspace"]["outputs"]) == {"earlier/CP-1.md", "current/CP-1.md"}
     assert set(scoped["workspace"]["handoffs"]) == {"e" * 64, "c" * 64}
@@ -173,6 +195,10 @@ def test_scope_keeps_history_metadata_and_only_valid_comparison_content() -> Non
         },
     }
     assert sources.scoped(duplicate, FOLDER) is None
+    snapshot["workspace"]["handoffs"]["h" * 64][-1]["heading"] = "Reader summary"
+    older = sources.scoped(snapshot, FOLDER)
+    assert older is not None
+    assert older["workspace"]["runs"]["history-key"]["history"]["earlierFormat"] is True
 
 
 @pytest.mark.parametrize(

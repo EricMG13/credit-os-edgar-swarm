@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { ReportLibrary } from "./LibraryIndex";
 import { RunActivity } from "./RunActivity";
@@ -185,7 +185,9 @@ describe("Run progress batch findings", () => {
       await screen.findByRole("heading", { name: "Modules and report delivery" }),
     ).toBeVisible();
     expect(screen.getByText("31 March 2026")).toBeVisible();
-    expect(document.title).toBe("Northbridge run — Credit OS");
+    await waitFor(() => {
+      expect(document.title).toBe("Northbridge run — Credit OS");
+    });
   });
 
   it("J2-015 explains a queued run's wait without inventing a count or queue position", async () => {

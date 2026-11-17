@@ -12,6 +12,25 @@ import { STEPS } from "./start/Stepper";
 
 export { readSlice } from "./slice";
 
+function EmptyStart({ title }: { title: string }) {
+  return (
+    <EmptyState>
+      <EmptyState.Header>
+        <EmptyState.FeaturedIcon />
+      </EmptyState.Header>
+      <EmptyState.Content>
+        <EmptyState.Title>{title}</EmptyState.Title>
+        <EmptyState.Description>This library holds no saved run forms.</EmptyState.Description>
+      </EmptyState.Content>
+      <EmptyState.Footer>
+        <a href="#/" className="text-small text-text-link">
+          Back to the Library
+        </a>
+      </EmptyState.Footer>
+    </EmptyState>
+  );
+}
+
 /** The saved form's actual step and issuer, including the default first draft. */
 const startSubject: NonNullable<Route["subject"]> = (params, data) => {
   const slice = readSlice(data.run);
@@ -29,24 +48,10 @@ const startSubject: NonNullable<Route["subject"]> = (params, data) => {
 /** A new run begins at the slice's first draft; its id is the data's, so no link needs to know it. */
 function NewRun() {
   const slice = readSlice(useSource().run);
-  if (slice.kind !== "ok")
-    return (
-      <EmptyState>
-        <EmptyState.Header>
-          <EmptyState.FeaturedIcon />
-        </EmptyState.Header>
-        <EmptyState.Content>
-          <EmptyState.Title>No run data in this library</EmptyState.Title>
-          <EmptyState.Description>This library holds no saved run forms.</EmptyState.Description>
-        </EmptyState.Content>
-        <EmptyState.Footer>
-          <a href="#/" className="text-small text-text-link">
-            Back to the Library
-          </a>
-        </EmptyState.Footer>
-      </EmptyState>
-    );
-  return <StartPage draft={slice.data.drafts[0]?.id ?? ""} />;
+  if (slice.kind !== "ok") return <EmptyStart title="No run data in this library" />;
+  const firstDraft = slice.data.drafts[0];
+  if (firstDraft === undefined) return <EmptyStart title="No saved run forms" />;
+  return <StartPage draft={firstDraft.id} />;
 }
 
 export const routes: readonly Route[] = [

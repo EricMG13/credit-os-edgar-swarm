@@ -53,7 +53,7 @@ function snapshot({
   folder?: string;
   lead?: string;
   methodChanges?: string[];
-  others?: Pick<PublishedRun, "folder" | "issuerKey" | "pathway" | "asOf" | "period">[];
+  others?: Pick<PublishedRun, "folder" | "issuerKey" | "pathway" | "asOf" | "period" | "history">[];
 } = {}) {
   const run = {
     folder,
@@ -249,11 +249,10 @@ it("gives every Report history row its modules run, its status and its labels", 
     pathway: "credit_snapshot",
     asOf: "2025-03-31",
     period: "FY2024",
+    history: { modules: ["CP-2", "CP-8"], earlierFormat: true, earlierMethods: true },
   };
-  serve({
+  const fetch = serve({
     [SNAPSHOT]: () => json(snapshot({ others: [older] })),
-    "/connected/snapshot?run=acme-2025": () =>
-      json(snapshot({ folder: "acme-2025", lead: "Reader summary", methodChanges: ["CP-2: x"] })),
   });
   open("#history");
   const section = (await screen.findByRole("heading", { name: "Report history" })).closest(
@@ -275,4 +274,7 @@ it("gives every Report history row its modules run, its status and its labels", 
   );
   expect(within(earlier).getByText("Finished")).toBeInTheDocument();
   expect(within(earlier).getByText("Earlier methods")).toBeInTheDocument();
+  expect(
+    fetch.mock.calls.map(([url]) => url).filter((url) => url.startsWith("/connected/snapshot")),
+  ).toEqual([SNAPSHOT]);
 });

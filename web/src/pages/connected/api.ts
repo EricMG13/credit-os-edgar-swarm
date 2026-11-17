@@ -51,6 +51,7 @@ export type Answers = {
   model: string;
   effort: string;
   submitted_by: string;
+  newest_document_date?: string;
 };
 export type PriorInputs = {
   issuer_id: string;

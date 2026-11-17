@@ -276,17 +276,18 @@ class Scheduler:
         """The approval digest of the sealed files as ``submit`` computed it (the digest ignores the
         ``context.json`` it wrote there); "" when that cannot be recomputed (it then fails)."""
         try:
-            answers = submissions.validated(
-                {
-                    "context": json.loads((sealed / "context.json").read_bytes()),
-                    "modules": list(record.modules),
-                    "max_turns": record.max_turns,
-                    "level": record.level,
-                    "model": record.model,
-                    "effort": record.effort,
-                    "submitted_by": record.submitted_by,
-                }
-            )
+            saved = {
+                "context": json.loads((sealed / "context.json").read_bytes()),
+                "modules": list(record.modules),
+                "max_turns": record.max_turns,
+                "level": record.level,
+                "model": record.model,
+                "effort": record.effort,
+                "submitted_by": record.submitted_by,
+            }
+            if record.newest_document_date:
+                saved["newest_document_date"] = record.newest_document_date
+            answers = submissions.validated(saved)
         except (OSError, ValueError):  # no or unreadable context.json: it changed
             return ""
         try:
@@ -339,11 +340,9 @@ class Scheduler:
         # context.json is made here from the answers; a left-over one (an earlier cut-short
         # attempt) is ours, since an upload may not carry that name.
         (sealed / "context.json").unlink(missing_ok=True)
-        prior = submissions.issued_prior(self.layout, sid)
-        current = submissions.bound(submissions.digest(self.layout, sid, answers), prior)
-        if not approved_digest or not (
-            approved_digest == submissions.issued(self.layout, sid) == current
-        ):
+        approval = submissions.issued_approval(self.layout, sid)
+        current = submissions.bound(submissions.digest(self.layout, sid, answers), approval.prior)
+        if not approved_digest or not (approved_digest == approval.digest == current):
             raise submissions.Refused(
                 "the documents or answers changed after approval; review the summary again"
             )
@@ -351,7 +350,7 @@ class Scheduler:
         # The cap the approved summary showed is the run's; a table changed since (or a summary
         # made before per-pathway caps, which records none) needs a new summary.
         cap = str(PATHWAY_CAP_USD[context["run"]["pathway"]])
-        if submissions.issued_cap(self.layout, sid) != cap:
+        if approval.cap != cap:
             raise submissions.Refused(
                 f"the run's cap is now USD {cap}, not the one the summary showed; review the "
                 "summary again"
@@ -375,9 +374,10 @@ class Scheduler:
             effort=answers["effort"],
             submitted_by=answers["submitted_by"],
             digest=current,
-            prior=prior,
+            prior=approval.prior,
             cap=cap,
-            approved_summary_limits=submissions.issued_summary_limits(self.layout, sid),
+            approved_summary_limits=approval.limits(),
+            newest_document_date=answers.get("newest_document_date", ""),
         )
         self._put(record)
         return record

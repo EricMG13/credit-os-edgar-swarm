@@ -73,7 +73,8 @@ const BASE_FIELDS: Record<string, string[]> = {
 const DRIVER_FIELDS: Record<string, string[]> = {
   Revenue: ["revenue_growth"],
   "Adj EBITDA": ["revenue_growth", "ebitda_margin"],
-  Interest: ["interest_rate"],
+  // Interest in later years depends on earlier repayments through opening debt.
+  Interest: ["interest_rate", "debt_repayment"],
   "Closing debt": ["debt_repayment"],
 };
 

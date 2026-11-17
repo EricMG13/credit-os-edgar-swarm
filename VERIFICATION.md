@@ -4,6 +4,22 @@ Keep one running record here. A pass applies only to the stated scope. Earlier v
 engine is in [EricMG13/final-workflow](https://github.com/EricMG13/final-workflow)'s
 `VERIFICATION.md`, which also keeps the retained runs this copy leaves out.
 
+## 2026-11-17 — Post-audit app repairs
+
+- Re-ran connected sections C1–C5 and static sections S2 and S6. All 2,374 focused
+  frontend tests and 553 focused backend tests passed. The build and 125 offline
+  route visits passed. The Python quality gate passed in an isolated checkout
+  containing the patch. ESLint and Prettier passed on changed web files.
+- On macOS Chrome, the accepted newest-document warning matched the saved
+  metadata and Evidence Record. The static build guided readers to the connected
+  service when no draft was available and opened the sample form when one was.
+- Chrome and Edge passed the connected synthetic flow after the browser check
+  began waiting for the Evidence Summary tab to become active.
+- Confidence review checked digest compatibility, changed overrides, restart
+  recovery, approval snapshot consistency, History output ownership and labels,
+  prior repayment inputs, and the empty-draft boundary. The rewrite tournament
+  retained the ordered History metadata scan and date limit calculation.
+
 ## 2026-11-17 — Stage 7 final audit handoff
 
 - Application source `a987af9b`. Stage 7 adds audit evidence and work-PC documents.
@@ -981,17 +997,3 @@ Scope: presentation only, all under `web/`; no backend, handoff, provider or mod
   `8a2cd284e9b023c7138c973fcce0986a41067d7e9e6ad3b33c14213a8ddb3626`.
   Clean macOS extraction passed Chrome (`20261115-172022-01`) and Edge
   (`20261115-172031-01`). Windows work-PC proof and publication are pending.
-
-## 2026-11-15 — Security decisions and last trades
-
-- Both macOS browsers checked six retained Caesars decisions, two observed
-  bond prices ($93.28 and $84.94), exact yields (8.063520% and 9.318398%),
-  original quote and row traces, recovery qualifications, and year-precision
-  maturities. The module fit at 390 px with both tables open.
-- Confidence review checked future, impossible and conflicting quote dates,
-  missing locators, and unquoted rows. Targeted web (103) and Python (15)
-  tests, quality, lint, format and build passed.
-- Candidate `2c971bc` SHA-256
-  `79b6b93b02754cbfebc493f297bf4c4be06796f411f00df26d4a5b4fa1a79080`.
-  Clean macOS extraction passed Chrome (`20261115-170434-01`) and Edge
-  (`20261115-170442-01`). Windows work-PC proof and publication are pending.

@@ -176,6 +176,7 @@ export type ScriptCheckRecord = {
 };
 
 export type PublishedRun = {
+  history?: { modules: string[]; earlierFormat: boolean; earlierMethods: boolean };
   folder: string;
   issuer: string;
   issuerKey?: string | null;

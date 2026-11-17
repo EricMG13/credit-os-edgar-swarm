@@ -47,13 +47,16 @@ describe("a library page on the shipped build, which holds no reports", () => {
       expect(state).toBeVisible();
       expect(main).toHaveTextContent(/design reference/);
       expect(main).toHaveTextContent(/holds no reports/);
-      // The way forward: the home starts a run, every other page goes back to the library.
-      const link = within(main).getByRole(
-        "link",
-        isHome ? { name: "Start a run" } : { name: "Back to the library" },
-      );
-      expect(link).toHaveAttribute("href", isHome ? "#/run/start" : "#/library/home");
-      expect(within(main).getAllByRole("link")).toHaveLength(1);
+      // The offline sample cannot start a run. Other absent pages return to the library.
+      if (isHome) {
+        expect(main).toHaveTextContent(/Open the connected run service to start a run/);
+        expect(within(main).queryByRole("link", { name: "Start a run" })).toBeNull();
+        expect(within(main).queryByRole("link", { name: "Back to the library" })).toBeNull();
+      } else {
+        const link = within(main).getByRole("link", { name: "Back to the library" });
+        expect(link).toHaveAttribute("href", "#/library/home");
+        expect(within(main).getAllByRole("link")).toHaveLength(1);
+      }
     },
   );
 

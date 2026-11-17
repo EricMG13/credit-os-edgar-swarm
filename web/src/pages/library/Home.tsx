@@ -14,6 +14,8 @@ import {
 import { IssuerList, NO_BANDS, type Bands } from "./parts/IssuerList";
 import { IssuerCard, LoadingCard } from "./parts/IssuerCard";
 import { LibraryPage } from "./parts/LibraryPage";
+import { useSource } from "../source";
+import { readSlice } from "../run/slice";
 import { PAGE_NAME, PageTitle } from "./parts/PageTitle";
 import { RUN_START } from "./parts/links";
 import {
@@ -50,9 +52,9 @@ const NO_RUNS =
 
 /** The shipped build holds no library at all (OQ-01: a design reference), which the reader is told. */
 const NO_LIBRARY =
-  "This build is a design reference and holds no reports. Reports are written by runs on the run service; start one to add the first issuer.";
+  "This build is a design reference and holds no reports. Open the connected run service to start a run and add the first issuer.";
 
-function NoRuns({ description }: { description: string }) {
+function NoRuns({ description, canStart = true }: { description: string; canStart?: boolean }) {
   return (
     <EmptyState>
       <EmptyState.Header>
@@ -62,9 +64,11 @@ function NoRuns({ description }: { description: string }) {
         <EmptyState.Title>No runs yet</EmptyState.Title>
         <EmptyState.Description>{description}</EmptyState.Description>
       </EmptyState.Content>
-      <EmptyState.Footer>
-        <Button href={RUN_START}>Start a run</Button>
-      </EmptyState.Footer>
+      {canStart ? (
+        <EmptyState.Footer>
+          <Button href={RUN_START}>Start a run</Button>
+        </EmptyState.Footer>
+      ) : null}
     </EmptyState>
   );
 }
@@ -206,8 +210,13 @@ function Layout({ home }: { home: LibraryHome }) {
 
 /** The library home: the delivered cards, narrowed in memory by search and three filters. */
 export function Home() {
+  const run = readSlice(useSource().run);
+  const canStart = run.kind === "ok" && run.data.drafts.length > 0;
   return (
-    <LibraryPage title={PAGE_NAME.home} absent={<NoRuns description={NO_LIBRARY} />}>
+    <LibraryPage
+      title={PAGE_NAME.home}
+      absent={<NoRuns description={NO_LIBRARY} canStart={false} />}
+    >
       {({ home }) => (
         <div className="flex flex-col gap-8">
           <div className="flex flex-wrap items-start gap-4 border-b border-secondary pb-4">
@@ -217,7 +226,11 @@ export function Home() {
             </div>
             {home.cards.length === 0 ? null : <Button href={RUN_START}>Start a run</Button>}
           </div>
-          {home.cards.length === 0 ? <NoRuns description={NO_RUNS} /> : <Layout home={home} />}
+          {home.cards.length === 0 ? (
+            <NoRuns description={canStart ? NO_RUNS : NO_LIBRARY} canStart={canStart} />
+          ) : (
+            <Layout home={home} />
+          )}
         </div>
       )}
     </LibraryPage>

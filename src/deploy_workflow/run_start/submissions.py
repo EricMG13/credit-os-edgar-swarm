@@ -21,8 +21,10 @@ import time
 import unicodedata
 import uuid
 from collections.abc import Collection
+from dataclasses import dataclass
+from datetime import date
 from pathlib import Path, PurePath
-from typing import Any, BinaryIO, TypedDict
+from typing import Any, BinaryIO, NotRequired, TypedDict
 
 from deploy_vii.contracts import PATHWAY_CAP_USD
 from deploy_workflow.context import load_context
@@ -36,8 +38,8 @@ from deploy_workflow.model.handoff import settled_web_lookup
 from deploy_workflow.owners.cpos import web_search_run
 from deploy_workflow.owners.cpos_launch import (
     NO_PRIOR,
-    _lookup_lines,
     LaunchRefused,
+    _lookup_lines,
     prepare,
     read_documents,
     refuse_deactivated,
@@ -74,6 +76,7 @@ ANALYST_NAME_RULE = (
     "or two initials, for example Eric MG."
 )
 _KEYS = {"context", "modules", "max_turns", "level", "submitted_by", "model", "effort"}
+_NEWEST_DOCUMENT_DATE = "newest_document_date"
 DEFAULT_MODEL, DEFAULT_EFFORT = "gpt", "balanced"  # the only pair below the Advanced level
 _ADVANCED = "advanced"
 _CLAUDE_UNAVAILABLE = "Claude Opus is not available on this service"
@@ -103,12 +106,25 @@ class Answers(TypedDict):
     submitted_by: str
     model: str  # "gpt" | "claude"; anything but "gpt" needs Advanced
     effort: str  # "fast" | "balanced" | "high"; anything but "balanced" needs Advanced
+    newest_document_date: NotRequired[str]  # The analyst's override, when supplied.
+
+
+def _validate_newest_document_date(value: object) -> None:
+    if isinstance(value, str) and re.fullmatch(r"[0-9]{4}-[0-9]{2}-[0-9]{2}", value):
+        try:
+            date.fromisoformat(value)
+            return
+        except ValueError:
+            pass
+    raise Refused("Date of your newest file must be a valid date in YYYY-MM-DD form.")
 
 
 def validated(answers: object) -> Answers:
     """``answers`` as an ``Answers``, or ``Refused`` with a plain sentence."""
-    if not isinstance(answers, dict) or set(answers) != _KEYS:
+    if not isinstance(answers, dict) or set(answers) - {_NEWEST_DOCUMENT_DATE} != _KEYS:
         raise Refused(f"the answers need exactly these parts: {', '.join(sorted(_KEYS))}")
+    if _NEWEST_DOCUMENT_DATE in answers:
+        _validate_newest_document_date(answers[_NEWEST_DOCUMENT_DATE])
     if not isinstance(answers["context"], dict):
         raise Refused("the context must be an object")
     modules = answers["modules"]
@@ -711,6 +727,8 @@ def _digest(root: Path, answers: Answers) -> str:
         "model": answers["model"],
         "effort": answers["effort"],
     }
+    if "newest_document_date" in answers:
+        covered["newest_document_date"] = answers["newest_document_date"]
     text = json.dumps(covered, sort_keys=True, ensure_ascii=True, separators=(",", ":"))
     return hashlib.sha256(text.encode("ascii")).hexdigest()
 
@@ -726,7 +744,7 @@ def bound(value: str, prior: str) -> str:
 
 def digest(layout: Layout, sid: str, answers: Answers) -> str:
     """SHA-256 over the context, each stored file's name and hash, the modules, the turns, the model
-    and the effort.
+    the effort and the analyst's newest-document date override when one was supplied.
 
     ``level`` and ``submitted_by`` are not covered: they change what the page shows, not the run.
     The approval's digest is this one with the earlier run named at approval folded in (`bound`)."""
@@ -780,46 +798,63 @@ def _issued_lines(layout: Layout, sid: str) -> list[str]:
 
 def issued(layout: Layout, sid: str) -> str:
     """The digest the latest summary of this submission returned; empty when there is none."""
-    lines = _issued_lines(layout, sid)
-    return lines[0] if lines else ""
+    return issued_approval(layout, sid).digest
 
 
 _CAP_LINE = "cap="
 _LIMITS_LINE = "limits="
 
 
+@dataclass(frozen=True)
+class IssuedApproval:
+    digest: str
+    prior: str
+    cap: str
+    encoded_limits: str | None
+
+    def limits(self) -> list[Item] | None:
+        if self.encoded_limits is None:
+            return None
+        try:
+            raw = bytes.fromhex(self.encoded_limits).decode("utf-8")
+            return approved_summary_limits(json.loads(raw))
+        except (ValueError, UnicodeError) as error:
+            raise Refused(
+                "approved summary limits could not be read; review the summary again"
+            ) from error
+
+
+def issued_approval(layout: Layout, sid: str) -> IssuedApproval:
+    """Read the current approval from one atomic version of the issued file."""
+    lines = _issued_lines(layout, sid)
+    prior = (
+        lines[1] if len(lines) > 1 and not lines[1].startswith((_CAP_LINE, _LIMITS_LINE)) else ""
+    )
+    return IssuedApproval(
+        digest=lines[0] if lines else "",
+        prior=prior,
+        cap=next((x.removeprefix(_CAP_LINE) for x in lines[1:] if x.startswith(_CAP_LINE)), ""),
+        encoded_limits=next(
+            (x.removeprefix(_LIMITS_LINE) for x in lines[1:] if x.startswith(_LIMITS_LINE)), None
+        ),
+    )
+
+
 def issued_prior(layout: Layout, sid: str) -> str:
     """The earlier run the latest summary named (a run folder name, or ``none`` for a first run);
     empty when there is none. It is part of the issued digest."""
-    lines = _issued_lines(layout, sid)
-    return lines[1] if len(lines) > 1 and not lines[1].startswith((_CAP_LINE, _LIMITS_LINE)) else ""
+    return issued_approval(layout, sid).prior
 
 
 def issued_cap(layout: Layout, sid: str) -> str:
     """The USD cap the latest summary showed; empty when there is none (a summary made before
     per-pathway caps records none, ruling 2026-11-15-pathway-tiers-and-caps)."""
-    lines = _issued_lines(layout, sid)
-    return next((x.removeprefix(_CAP_LINE) for x in lines[1:] if x.startswith(_CAP_LINE)), "")
+    return issued_approval(layout, sid).cap
 
 
 def issued_summary_limits(layout: Layout, sid: str) -> list[Item] | None:
     """The exact non-ready decision items beside the latest issued digest; None for old metadata."""
-    encoded = next(
-        (
-            line.removeprefix(_LIMITS_LINE)
-            for line in _issued_lines(layout, sid)
-            if line.startswith(_LIMITS_LINE)
-        ),
-        None,
-    )
-    if encoded is None:
-        return None
-    try:
-        return approved_summary_limits(json.loads(bytes.fromhex(encoded).decode("utf-8")))
-    except (ValueError, UnicodeError) as error:
-        raise Refused(
-            "approved summary limits could not be read; review the summary again"
-        ) from error
+    return issued_approval(layout, sid).limits()
 
 
 def _record_issued(layout: Layout, sid: str, result: dict[str, Any]) -> None:
@@ -873,6 +908,32 @@ def summary(layout: Layout, sid: str, answers: Answers) -> dict[str, Any]:
         # An error answer for an unknown submission has no issued digest to clear; the answer
         # (the refusal text) is still returned unchanged.
     return result
+
+
+def _document_date_limits(
+    answers: Answers, as_of: str, documents: tuple[dict[str, Any], ...]
+) -> list[Item]:
+    newest = answers.get("newest_document_date") or max(
+        (doc["period_end"] for doc in documents if doc.get("period_end")), default=""
+    )
+    if newest <= as_of:
+        return []
+    return [
+        Item(
+            id="form:newest-document-date",
+            scope="run",
+            outcome="limited",
+            reason=(
+                f"The as-of date ({as_of}) is before your newest document ({newest}). "
+                "Modules may set this document aside."
+            ),
+            fix="Use an as-of date on or after the newest document date.",
+            basis="Date of your newest file",
+            evidence="observed offline",
+            counted=True,
+            inherited_from=[],
+        )
+    ]
 
 
 def _summarise(layout: Layout, sid: str, answers: Answers) -> dict[str, Any]:
@@ -942,7 +1003,10 @@ def _summarise(layout: Layout, sid: str, answers: Answers) -> dict[str, Any]:
                 },
                 "error": "",
                 "modules": list(prepared.ordered),
-                "items": list(prepared.expectations),
+                "items": [
+                    *prepared.expectations,
+                    *_document_date_limits(answers, run.run.as_of, prepared.documents),
+                ],
                 "documents": list(prepared.documents),
                 "ignored": list(prepared.ignored),
                 "omitted": list(prepared.omitted),

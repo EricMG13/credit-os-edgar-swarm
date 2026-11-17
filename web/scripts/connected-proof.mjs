@@ -473,7 +473,9 @@ async function checkRecord(report, page, channel) {
     path: path.join(artifacts, `${channel}-evidence-record.png`),
     fullPage: true,
   });
-  await nav.getByRole("link", { name: "Summary", exact: true }).click();
+  const summary = nav.getByRole("link", { name: "Summary", exact: true });
+  await summary.click();
+  await summary.and(nav.locator('[aria-current="page"]')).waitFor();
   await report.getByRole("heading", { name: "Handoffs", exact: true }).waitFor();
   await report.getByRole("combobox", { name: "Module", exact: true }).selectOption("");
   await page.waitForURL((url) => url.hash === "#evidence/summary");

@@ -1000,9 +1000,28 @@ describe("connected run start", () => {
       },
       files: [{ name: file.name, size: file.size }],
     };
+    let summaries = 0;
     const fetchMock = testingFetch(plan, undefined, {
       "/api/runs/earlier/inputs": prior,
       "/api/submissions/sub-1/carry": { carried: [file.name], kept: [] },
+      "/api/submissions/sub-1/summary": () =>
+        Promise.resolve(
+          Response.json({
+            ...plan,
+            items:
+              ++summaries === 1
+                ? [
+                    {
+                      id: "form:newest-document-date",
+                      scope: "run",
+                      outcome: "limited",
+                      reason:
+                        "The as-of date (2026-09-29) is before your newest document (2026-09-30).",
+                    },
+                  ]
+                : [],
+          }),
+        ),
       "/api/submissions/sub-1/reading": {
         documents: [{ source: file.name, kind: "annual_report", period_end: "2026-09-30" }],
         ignored: [],
@@ -4327,7 +4346,13 @@ describe("connected run start: the case date is the analyst's to enter (J2-002, 
   it("sends the same request bodies and digest once the date is entered", async () => {
     const fetchMock = testingFetch();
     render(<ConnectedApp path="/start" mode="synthetic" navigate={vi.fn()} />);
-    await review();
+    await fillInputs();
+    await advanceToPurpose();
+    advanceToContext();
+    fireEvent.change(screen.getByLabelText("Date of your newest file"), {
+      target: { value: "2026-10-30" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Review run" }));
     const submit = await screen.findByRole("button", { name: "Submit run" });
     approve();
     await confirmSynthetic(submit);
@@ -4354,6 +4379,7 @@ describe("connected run start: the case date is the analyst's to enter (J2-002, 
       model: "gpt",
       effort: "balanced",
       submitted_by: "Ana L",
+      newest_document_date: "2026-10-30",
     };
     expect(bodyTo("/summary")).toEqual(answers);
     expect(bodyTo("/submit")).toEqual({ answers, digest: "server-approved" });
