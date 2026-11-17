@@ -38,7 +38,7 @@ function FileRow({ file, reasonId }: { file: Files[number]; reasonId: string }) 
               <span className="sr-only">{`${file.kind} file: `}</span>
               {file.name}
             </p>
-            <div className="mt-0.5 flex flex-wrap items-center gap-2 text-sm text-tertiary">
+            <div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-tertiary">
               <span className="tabular-nums">{file.size}</span>
               <hr className="h-3 w-px rounded-full border-none bg-border-primary" />
               <StatusBadge set="File state" state={file.state} />
@@ -62,12 +62,12 @@ function FileRow({ file, reasonId }: { file: Files[number]; reasonId: string }) 
           </div>
         )}
         {file.reason === null ? null : (
-          <p className={cx("mt-1.5 text-sm", bad ? "text-error-primary" : "text-secondary")}>
+          <p className={cx("mt-2 text-sm", bad ? "text-error-primary" : "text-secondary")}>
             {file.reason}
           </p>
         )}
         {bad ? (
-          <div className="mt-1.5 flex gap-3">
+          <div className="mt-2 flex gap-3">
             <Button color="link-color" size="sm" isDisabled aria-describedby={reasonId}>
               Replace file
             </Button>
