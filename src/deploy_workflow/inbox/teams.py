@@ -54,7 +54,7 @@ from deploy_vii import report_view
 from deploy_workflow import platform_io
 from deploy_workflow.inbox import activity
 from deploy_workflow.inbox.layout import Layout
-from deploy_workflow.inbox.runs import TEAMS_WEBHOOK_VARIABLE, Record, cap_of
+from deploy_workflow.inbox.runs import TEAMS_WEBHOOK_VARIABLE, Record, Status, cap_of
 from deploy_workflow.inbox.startup import StartupRefused
 from deploy_workflow.inbox.teams_brand import BAND, ICONS, LOCKUP, PILLS, SHAPES
 from deploy_workflow.run_events import EVENTS, read_events
@@ -75,7 +75,7 @@ _STALE = timedelta(hours=2)  # a run card not posted by then is dropped, with a 
 _RETRY_AFTER = timedelta(minutes=1)
 _TIMEOUT = 10  # seconds: the post runs in the polling thread, between polls
 _TIME = "%Y-%m-%dT%H:%M:%SZ"
-_ENDED = ("finished", "capped", "failed", "interrupted", "rejected")
+_ENDED: tuple[Status, ...] = ("finished", "capped", "failed", "interrupted", "rejected")
 _STOPPED = _ENDED[1:]
 # Status -> the word its pill and shape say, after web/src/components/status/sets.ts ("Run states").
 _STATES: Mapping[str, str] = {

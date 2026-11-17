@@ -89,8 +89,12 @@ export type Summary = Reading & {
   effort: string;
 };
 
+// Held to `deploy_workflow.inbox.runs.Status` and `deploy_workflow.run_events.ModuleState` by
+// tests/test_react_frontend.py: the service sends these words and no others.
 export type RunStatus =
   "queued" | "running" | "finished" | "failed" | "capped" | "rejected" | "interrupted";
+/** A module's (or the Report's) state; "stopped": the run stopped while it ran. */
+export type ModuleState = "waiting" | "running" | "done" | "stopped";
 export type RunEvent = {
   at: string;
   kind:
@@ -111,7 +115,7 @@ export type Run = {
   issuer_name: string;
   as_of: string;
   pathway: string;
-  modules: [string, "done" | "running" | "waiting"][];
+  modules: [string, ModuleState][];
   stalled?: boolean;
   started_at?: string;
   ended_at?: string;
@@ -123,6 +127,10 @@ export type Run = {
   spent: string | null;
   settled_spent?: string | null;
   held?: string | null;
+  /** Why the service holds this run (Run activity's `held` note): sent while it is queued, or
+   * kept "running" after its log ended (a library that could not be rebuilt); else "". Absent
+   * from an older service. */
+  held_reason?: string;
   events: RunEvent[] | null;
 };
 

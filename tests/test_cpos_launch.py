@@ -8079,10 +8079,99 @@ def test_an_unreadable_compaction_note_still_flags_the_module(tmp_path, provider
     assert main(argv) == 0
     (note,) = (tmp_path / "out/requests/CP-4").glob("*/*.compaction.json")
     note.write_text("{not json")
+    # A launch killed before its completion record: the relaunch resumes and reads the note again
+    # (a delivered run is not resumed; see the test below).
+    (completed,) = (tmp_path / "out").glob("completed-*.json")
+    completed.unlink()
     capsys.readouterr()
     assert main(argv) == 0
     out = capsys.readouterr().out
     assert "Review: CP-4 was written after GitHub Copilot summarised its context;" in out
+
+
+def test_a_delivered_run_is_finished_and_its_relaunch_delivers_nothing_again(
+    tmp_path, provider, capsys, monkeypatch
+):
+    """Delivering again added a second completion record whenever the bytes differed (a changed
+    rendering, a forecast that now passes), and the library refuses a run with two as ambiguous."""
+    argv = compacting_run(tmp_path, provider)
+    assert main(argv) == 0
+    out = tmp_path / "out"
+    (completed,) = out.glob("completed-*.json")
+    receipt = json.loads(completed.read_text())["delivery_sha256"]
+    capsys.readouterr()
+    provider.answer = lambda context: pytest.fail("a delivered run made a call")
+    monkeypatch.setattr(
+        "deploy_workflow.owners.cpos.delivery_files",
+        lambda *args: pytest.fail("a delivered run was delivered again"),
+    )
+    assert main(argv) == 0
+    printed = capsys.readouterr()
+    assert list(out.glob("completed-*.json")) == [completed]
+    (folder,) = (out / "deliveries").iterdir()
+    assert hashlib.sha256((folder / "delivery.json").read_bytes()).hexdigest() == receipt
+    assert f"Delivery: {folder / 'delivery.json'}" in printed.out
+    assert "recorded by the earlier launch of this run; no new call" in printed.err
+
+
+def test_a_second_launch_refused_at_its_settings_records_no_stop_in_the_running_runs_log(
+    tmp_path, provider, capsys
+):
+    """A second launch with other loop settings is refused at live/loop.json before the folder
+    lock; its stop, once written, ended the running module in the log (run_events.progress)."""
+    from deploy_workflow.model.run_lock import _single_writer
+
+    argv = compacting_run(tmp_path, provider)
+    assert main(argv) == 0
+    out = tmp_path / "out"
+    before = read_events(out / "events.jsonl")
+    with _single_writer(out):  # the first launch, still running
+        assert main([*argv, "--max-turns", "40"]) == 1
+    assert "identity_mismatch" in capsys.readouterr().err
+    assert read_events(out / "events.jsonl") == before
+
+
+def test_a_replay_into_a_delivered_folder_is_refused_not_passed_unchecked(tmp_path, provider):
+    """A replay checks bytes by delivering them; into a finished folder it would check nothing."""
+    from deploy_workflow.owners.cpos import run_handoffs
+
+    assert main(compacting_run(tmp_path, provider)) == 0
+    out = tmp_path / "out"
+    plan = json.loads((out / "workflow.json").read_text())
+    plan["execution"], plan["provider_cap_usd"] = "synthetic", "0"  # non-live: no provider cap
+    manifest = out / "synthetic.json"
+    manifest.write_text(json.dumps(plan))
+    answers = {
+        path.parts[-3]: path.read_bytes() for path in (out / "requests").glob("*/*/1.response.md")
+    }
+    replay = tmp_path / "replay"
+
+    def again() -> Path:
+        return run_handoffs(
+            manifest,
+            replay,
+            execute=lambda task: answers[task.module_id],
+            check=lambda task, raw: (),
+        )
+
+    assert again().is_file()
+    with pytest.raises(ValueError, match="cpos_delivered: the folder already holds its delivery"):
+        again()
+
+
+def test_a_folder_already_holding_two_completion_records_is_refused(tmp_path, provider, capsys):
+    argv = compacting_run(tmp_path, provider)
+    assert main(argv) == 0
+    (completed,) = (tmp_path / "out").glob("completed-*.json")
+    record = json.loads(completed.read_text())
+    record["cp_forecast_published"] = not record["cp_forecast_published"]
+    raw = json.dumps(record, indent=2).encode()
+    (tmp_path / "out" / f"completed-{hashlib.sha256(raw).hexdigest()}.json").write_bytes(raw)
+    capsys.readouterr()
+    assert main(argv) == 1
+    assert "cpos_delivered: the folder holds more than one completion record" in (
+        capsys.readouterr().err
+    )
 
 
 def test_a_stopped_run_still_lists_the_modules_written_after_a_compaction(
