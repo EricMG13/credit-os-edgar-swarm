@@ -1,3 +1,5 @@
+import { containsReference } from "../publishedReport";
+
 export function record(value: unknown): Record<string, unknown> {
   return value !== null && typeof value === "object" && !Array.isArray(value)
     ? (value as Record<string, unknown>)
@@ -58,9 +60,18 @@ export function publishedTables(sections: unknown) {
   return tables;
 }
 
+// A comma is a thousands separator only between groups of exactly three digits ("1,250"); one comma
+// anywhere else is a decimal comma ("3,75"); any other placement is not a number.
+const COMMA_GROUPS = /^-?[1-9]\d{0,2}(?:,\d{3})+(?:\.\d+)?$/;
+const DECIMAL_COMMA = /^-?\d+,\d+$/;
+const PLAIN_NUMBER = /^-?\d+(?:\.\d+)?$/;
+
 export function amount(cell: string): number | null {
-  if (!/^-?\d[\d,]*(?:\.\d+)?$/.test(cell)) return null;
-  const value = Number(cell.replaceAll(",", ""));
+  let text = cell;
+  if (COMMA_GROUPS.test(cell)) text = cell.replaceAll(",", "");
+  else if (DECIMAL_COMMA.test(cell)) text = cell.replace(",", ".");
+  if (!PLAIN_NUMBER.test(text)) return null;
+  const value = Number(text);
   return Number.isFinite(value) ? value : null;
 }
 
@@ -148,12 +159,27 @@ export function ticks(
   });
 }
 
+const BASIS_COLUMN = /^Basis and limitation$/i;
+const DRAWER_COLUMN = /^(?:Source|Evidence)$/i;
+const MODULE_CODE = /\bCP-[A-Z0-9]+\b/u;
+
+/**
+ * The Table form of a published chart table. The limitation text stays beside the figures; only the
+ * columns of source references go to the row's trace drawer, and a limitation that itself names a
+ * source or a module code is left to the drawer too (as `chartDrawsVerbatim` does for the prose).
+ */
 export function chartTable(table: SourceTable, columns = table.headers.map((_, index) => index)) {
-  const visible = table.evidenceInDrawer
-    ? columns.filter(
-        (index) => !/^(?:Source|Evidence|Basis and limitation)$/i.test(table.headers[index] ?? ""),
-      )
+  const inDrawer = table.evidenceInDrawer === true;
+  const visible = inDrawer
+    ? columns.filter((index) => !DRAWER_COLUMN.test(table.headers[index] ?? ""))
     : columns;
+  const cell = (row: string[], column: number) => {
+    const text = row[column] ?? "";
+    const named = containsReference(text) || MODULE_CODE.test(text);
+    return inDrawer && BASIS_COLUMN.test(table.headers[column] ?? "") && named
+      ? "Qualification recorded in Evidence."
+      : text || null;
+  };
   return {
     head: visible.map((index) => table.headers[index] ?? ""),
     endHeading: "Source",
@@ -162,7 +188,7 @@ export function chartTable(table: SourceTable, columns = table.headers.map((_, i
       const line = table.rowLines?.[index];
       return {
         label,
-        cells: visible.slice(1).map((column) => row[column] || null),
+        cells: visible.slice(1).map((column) => cell(row, column)),
         end: line === undefined ? undefined : table.rowSource?.(line, label),
       };
     }),
