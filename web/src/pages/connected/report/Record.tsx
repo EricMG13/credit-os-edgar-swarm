@@ -114,7 +114,7 @@ function RunTotals({
   const spend = value && spendFigure(value);
   const runType = value?.execution
     ? EXECUTION[value.execution]
-    : mode === "synthetic"
+    : pending && mode === "synthetic"
       ? EXECUTION.synthetic
       : null;
   const missing = pending ? "Loading…" : "Unavailable";
@@ -160,9 +160,16 @@ function ModuleRecord({
   group: RecordModule;
   folder: string;
   name: string;
-  synthetic: boolean;
+  synthetic: boolean | null;
 }) {
-  const callsTitle = synthetic ? "Synthetic adapter responses" : "Model calls";
+  const callsTitle =
+    synthetic === null
+      ? "Recorded responses"
+      : synthetic
+        ? "Synthetic adapter responses"
+        : "Model calls";
+  const statusTitle =
+    synthetic === null ? "Recorded status" : synthetic ? "Adapter status" : "HTTP status";
   return (
     <div className="mt-3 grid min-w-0 gap-4">
       {group.steps.length > 0 && (
@@ -193,13 +200,7 @@ function ModuleRecord({
             table={{
               type: "table",
               line: 0,
-              headers: [
-                "Attempt",
-                "Started (UTC)",
-                synthetic ? "Adapter status" : "HTTP status",
-                "Error class",
-                "Settled USD",
-              ],
+              headers: ["Attempt", "Started (UTC)", statusTitle, "Error class", "Settled USD"],
               rows: group.calls.map((call, line) => ({
                 line,
                 cells: [
@@ -251,7 +252,11 @@ export function ReportRecord({
   const load = useCallback((signal: AbortSignal) => getRun(run.folder, signal), [run.folder]);
   const { value, error } = useResource(load);
   const groups = [...moduleGroups(run, entries)].filter(([id]) => !module || id === module);
-  const synthetic = value?.execution ? value.execution === "synthetic" : mode === "synthetic";
+  const synthetic = value?.execution
+    ? value.execution === "synthetic"
+    : value || error
+      ? null
+      : mode === "synthetic";
   const recorded: (Run & { approved_summary_limits?: ReadinessItem[] | null }) | undefined = value;
   const approvedLimits = recorded?.approved_summary_limits;
   return (

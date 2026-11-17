@@ -1,0 +1,8 @@
+
+ RUN  v4.1.12 /workspace/audit-synthetic-classification/web
+
+
+ Test Files  4 passed (4)
+      Tests  55 passed (55)
+   Start at  19:28:16
+   Duration  9.79s (transform 1.09s, setup 247ms, import 3.73s, tests 3.58s, environment 1.77s)

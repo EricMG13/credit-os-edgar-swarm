@@ -72,6 +72,43 @@ it("uses the run's own execution rather than the service mode and names empty ca
   expect(within(module).queryByLabelText("Empty in the handoff")).toBeNull();
 });
 
+it.each([null, undefined])(
+  "keeps settled unknown execution (%s) distinct from the synthetic service mode",
+  async (execution) => {
+    response({ ...record, execution });
+    render(<ReportRecord run={run} entries={[]} mode="synthetic" />);
+    await screen.findByText("Original execution provenance is not recorded in this run record.");
+    expect(screen.getByText("Run type").parentElement).toHaveTextContent("Unavailable");
+    expect(screen.queryByText("Synthetic test")).toBeNull();
+    const module = screen.getByText("Liquidity", { exact: true }).closest("details");
+    if (!module) throw new Error("Missing module record");
+    module.open = true;
+    expect(within(module).getByRole("heading", { name: "Recorded responses" })).toBeVisible();
+    expect(within(module).getByRole("columnheader", { name: "Recorded status" })).toBeVisible();
+    expect(within(module).queryByText("Model calls")).toBeNull();
+    expect(within(module).queryByText("Synthetic adapter responses")).toBeNull();
+  },
+);
+
+it.each([
+  ["synthetic", "Synthetic test", "Synthetic adapter responses", "Adapter status"],
+  ["host-session", "Host session", "Model calls", "HTTP status"],
+  ["retained-response-replay", "Retained response replay", "Model calls", "HTTP status"],
+] as const)(
+  "keeps settled %s labels and recorded call values",
+  async (execution, label, title, status) => {
+    response({ ...record, execution });
+    render(<ReportRecord run={run} entries={[]} mode="live" />);
+    expect(await screen.findByText(label)).toBeVisible();
+    const module = screen.getByText("Liquidity", { exact: true }).closest("details");
+    if (!module) throw new Error("Missing module record");
+    module.open = true;
+    expect(within(module).getByRole("heading", { name: title })).toBeVisible();
+    expect(within(module).getByRole("columnheader", { name: status })).toBeVisible();
+    expect(within(module).getByText("5.10")).toBeVisible();
+  },
+);
+
 it("shows the service's record failure as an explicit explanation", async () => {
   vi.stubGlobal("fetch", () =>
     Promise.resolve(

@@ -19,7 +19,7 @@ from deploy_workflow.model.pricing import money_text
 from deploy_workflow.owners.cpos_launch import METHODS
 from deploy_workflow.run_events import EVENTS, progress, read_events
 
-from .run_metadata import library_admission, module_outputs
+from .run_metadata import execution, library_admission, module_outputs
 
 _MODULE_EVENTS = frozenset({"module_started", "module_accepted", "draft_rejected"})
 _RUN_EVENTS = frozenset(
@@ -29,7 +29,6 @@ _FEED_LIMIT = 80
 _ENDED: tuple[runs.Status, ...] = ("failed", "capped", "rejected", "interrupted")
 _ENDED_SHOWN = 20
 _PUBLISHED = "window.RUN_ACTIVITY="  # how deploy_workflow.inbox.activity.write opens the file
-_EXECUTIONS = frozenset({"host-session", "retained-response-replay", "synthetic", "live-provider"})
 
 
 def _usage(directory: Path) -> dict[str, str | None]:
@@ -412,7 +411,6 @@ def reply(layout: Layout, run_id: str) -> http_base.Reply:
     states = shown.get("modules", activity.module_states(record.pathway, []))
     manifest = _manifest(directory)
     modules = _planned(manifest, states)
-    execution = manifest.get("execution")
     return http_base.Reply(
         200,
         {
@@ -431,9 +429,7 @@ def reply(layout: Layout, run_id: str) -> http_base.Reply:
             "approved_summary_limits": record.approved_summary_limits,
             "module_outputs": module_outputs(directory, record),
             "library_admission": library_admission(layout, record),
-            "execution": execution
-            if isinstance(execution, str) and execution in _EXECUTIONS
-            else None,
+            "execution": execution(directory, record, manifest),
             "cap": _cap(manifest, shown.get("cap")),
             **usage,
             "stalled": shown.get("stalled", False),
