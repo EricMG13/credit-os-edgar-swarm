@@ -7,6 +7,7 @@ spend nothing. Every wait has a limit, and the ``root`` fixture kills any run st
 from __future__ import annotations
 
 import dataclasses
+import errno
 import gc
 import json
 import re
@@ -332,9 +333,12 @@ def test_r6_a_failed_rebuild_changes_nothing_and_is_retried(root, fake_env, monk
     assert len(list((root / "issuers").iterdir())) == 1
 
 
-@pytest.mark.parametrize("error", [RuntimeError("surprise"), TypeError("surprise")])
+@pytest.mark.parametrize(
+    ("error", "kind"),
+    [(RuntimeError("surprise"), "RuntimeError"), (TypeError("surprise"), "TypeError")],
+)
 def test_an_unexpected_rebuild_error_does_not_stop_the_scheduler(
-    root, fake_env, monkeypatch, error
+    root, fake_env, monkeypatch, error, kind
 ):
     fake_env({"report": True, "report_page": True, "events": DELIVERED})
     good = cpos_launch.update_library_at
@@ -352,7 +356,7 @@ def test_an_unexpected_rebuild_error_does_not_stop_the_scheduler(
         assert "surprise" in _log(root)
         for _ in range(3):
             w.step()  # returns; the run ended but stays unfiled
-        assert "the library could not be rebuilt (surprise); ended runs wait for it" in (
+        assert f"the library could not be rebuilt ({kind}); ended runs wait for it" in (
             activity_js(root)
         )
         assert status(root) == ["running"]
@@ -360,6 +364,28 @@ def test_an_unexpected_rebuild_error_does_not_stop_the_scheduler(
         monkeypatch.setattr(cpos_launch, "update_library_at", good)
         pump(w, lambda: status(root) == ["finished"])
         assert len(list((root / "issuers").rglob("*.html"))) == 1
+    finally:
+        w.close()
+
+
+def test_a_rebuild_error_reaches_the_held_note_as_its_kind_and_the_log_in_full(root, monkeypatch):
+    """/activity.js is served as written, so the held note carries no path: the operating system's
+    text for a failed read names the file by its absolute path, and only watcher.log keeps it."""
+    unreadable = root / "runs" / "20261116-090000-01" / "inputs" / ("a" * 64)
+
+    def broken(_workspace: Path) -> None:
+        raise PermissionError(errno.EACCES, "Permission denied", str(unreadable))
+
+    monkeypatch.setattr(cpos_launch, "update_library_at", broken)
+    w = Scheduler(settings(root))
+    try:
+        w.step()
+        served = activity_js(root)
+        assert (
+            "the library could not be rebuilt (PermissionError); ended runs wait for it" in served
+        )
+        assert str(root) not in served and "Permission denied" not in served
+        assert f"Permission denied: '{unreadable}'" in _log(root)
     finally:
         w.close()
 
@@ -940,7 +966,7 @@ def test_f5_the_page_says_why_ended_runs_wait_when_the_library_cannot_be_rebuilt
         started[0].wait(timeout=10)
         for _ in range(3):
             w.step()
-        assert "the library could not be rebuilt (library is a link); ended runs wait for it" in (
+        assert "the library could not be rebuilt (ValueError); ended runs wait for it" in (
             activity_js(root)
         )
         monkeypatch.setattr(
@@ -976,7 +1002,8 @@ def test_f5_both_notices_are_joined_with_a_semicolon(root, fake_env, monkeypatch
             w.step()
         text = activity_js(root)
         assert (
-            "the library could not be rebuilt (locked); ended runs wait for it; daily limit" in text
+            "the library could not be rebuilt (OSError); ended runs wait for it; daily limit"
+            in text
         )
     finally:
         _wait_all(started)
