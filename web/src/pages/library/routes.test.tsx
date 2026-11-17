@@ -108,7 +108,7 @@ describe("the library routes adopt the shell", () => {
       />,
     );
     expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
-    expect(screen.getByText("This data file holds no library pages")).toBeVisible();
+    expect(screen.getByText(/This build is a design reference and holds no reports/)).toBeVisible();
   });
 
   it("keeps one h1 when the library member is invalid", () => {
