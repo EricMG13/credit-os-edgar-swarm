@@ -29,7 +29,6 @@ import { isUnreachable } from "./useResource";
 import { asOfDate } from "./runFigures";
 import { headlineSources } from "./reportView";
 import { traceForLine } from "./ReportContent";
-import { useResource } from "./useResource";
 
 type LibraryFilters = { query: string; sector: string; pathway: string; layout: "cards" | "list" };
 
