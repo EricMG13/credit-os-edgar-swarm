@@ -41,6 +41,7 @@ function testingFetch(
   summary: typeof plan & {
     lookup?: string[];
     web_search?: boolean;
+    web_lookup?: boolean;
     omitted_titles?: string[];
     prior?: Summary["prior"];
   } = plan,
@@ -455,6 +456,32 @@ describe("connected run start", () => {
     it("says nothing about web search when the summary does not say", async () => {
       const sheet = await reviewSheet(plan);
       expect(sheet).not.toHaveTextContent(/search the web/);
+    });
+  });
+
+  describe("Yahoo Finance statement", () => {
+    const SENTENCE =
+      "The research module may read Yahoo Finance pages. Their addresses name what it looks up, such as the issuer's ticker, so Yahoo sees which issuer is researched; no document is sent.";
+    const research = { ...plan, modules: ["CP-0", "CP-DR"] };
+
+    it("names Yahoo and the ticker once when the research module will use its lookup", async () => {
+      const sheet = await reviewSheet({ ...research, web_lookup: true, model: "claude" });
+      expect(within(sheet).getAllByText(SENTENCE)).toHaveLength(1);
+    });
+
+    it("says nothing about Yahoo when the lookup is off", async () => {
+      const sheet = await reviewSheet({ ...research, web_lookup: false, web_search: true });
+      expect(sheet).not.toHaveTextContent(/Yahoo|ticker/);
+    });
+
+    it("says nothing about Yahoo when the research module is left out", async () => {
+      const sheet = await reviewSheet({ ...plan, web_lookup: false });
+      expect(sheet).not.toHaveTextContent(/Yahoo|ticker/);
+    });
+
+    it("says nothing about Yahoo when the summary does not say", async () => {
+      const sheet = await reviewSheet(research);
+      expect(sheet).not.toHaveTextContent(/Yahoo|ticker/);
     });
   });
 

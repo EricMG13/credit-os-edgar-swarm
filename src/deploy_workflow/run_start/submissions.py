@@ -31,6 +31,7 @@ from deploy_workflow.inbox.layout import MAX_ISSUER_ID, Layout
 from deploy_workflow.inbox.runs import EFFORTS, MODELS, config_for
 from deploy_workflow.inbox.startup import STANDING_RULING
 from deploy_workflow.model.adapter import KEY_VARIABLES
+from deploy_workflow.model.handoff import settled_web_lookup
 from deploy_workflow.owners.cpos import web_search_run
 from deploy_workflow.owners.cpos_launch import (
     NO_PRIOR,
@@ -847,6 +848,13 @@ def _summarise(layout: Layout, sid: str, answers: Answers) -> dict[str, Any]:
                 # default rule, no case hosts and the run folder not yet started. The SEC line
                 # names the variable, never its value.
                 "lookup": list(_lookup_lines(prepared, "default", (), os.environ)),
+                # Whether the research module will have the lookup tools (fetch_page, the SEC
+                # tools) in that run: the launcher's own rule under the same setting, so the
+                # review can say what a lookup sends (finance.yahoo.com sees the ticker).
+                "web_lookup": settled_web_lookup(
+                    "default", prepared.ordered, prepared.plan.run.case_kind, None
+                )
+                == "on",
                 # Whether the research module searches the web, from the launcher's own rule
                 # (`web_search_on`, the one behind its `Web:` line), for the review to state.
                 "web_search": web_search_on(prepared, config, STANDING_RULING),

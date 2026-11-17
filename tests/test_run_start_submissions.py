@@ -1629,6 +1629,33 @@ def test_a_run_without_the_research_module_states_no_web_search(layout, tmp_path
     )
 
 
+@pytest.mark.parametrize(
+    ("case", "on"),
+    [
+        (("public", {}), True),
+        (("public", {"level": "advanced", "model": "claude"}), True),  # on any model
+        (("private", {}), False),
+        (("synthetic", {}), False),
+        (("public", {"modules": ["CP-0", "CP-1"]}), False),  # the research module left out
+    ],
+)
+def test_the_summary_says_whether_the_research_module_will_use_its_lookup(
+    layout, tmp_path, monkeypatch, case, on
+):
+    """``web_lookup`` is what the review's Yahoo statement shows on: true exactly when the run
+    Submit starts gives the research module its lookup tools, as the launcher's own line says."""
+    kind, change = case
+    monkeypatch.delenv(SEC_AGENT, raising=False)
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "present")
+    sid, _ = upload_issuer(layout, tmp_path)
+    answers = answers_for(tmp_path, **change)
+    answers["context"]["run"]["case_kind"] = kind  # type: ignore[index]
+    result = summary(layout, sid, answers)
+    assert result["error"] == ""
+    assert result["web_lookup"] is on
+    assert any(line.startswith("Lookup:   on") for line in result["lookup"]) is on
+
+
 def test_the_summary_names_each_omitted_report_section_by_its_title(layout, tmp_path):
     from deploy_vii.report_view import _spec_of
 
