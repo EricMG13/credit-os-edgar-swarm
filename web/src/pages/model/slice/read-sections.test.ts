@@ -297,10 +297,10 @@ const stackCases: Case[] = [
     `${S}.parts[1].name: expected a name no other part has`,
   ],
   [
-    "a segment of zero",
+    "a negative segment",
     [...STM, "debt", "stack", "parts", 0, "value"],
-    0,
-    `${S}.parts[0].value: expected a number above zero`,
+    -1,
+    `${S}.parts[0].value: expected a number of zero or more`,
   ],
   [
     "a part without an amount",

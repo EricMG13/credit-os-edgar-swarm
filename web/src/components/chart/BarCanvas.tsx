@@ -24,6 +24,8 @@ interface BarCanvasProps {
   yTicks: YTick[];
   /** Left to recharts' own gap when not given. */
   barGap?: number;
+  /** Pixels above the usual room over the plot, for labels the marks lift higher than usual. */
+  extraTop?: number;
   tooltip: (props: BarTooltipProps) => ReactNode;
   /** The legend, drawn under the plot; null for none. */
   legend: ReactNode;
@@ -39,6 +41,7 @@ export function BarCanvas({
   categories,
   yTicks,
   barGap,
+  extraTop = 0,
   tooltip,
   legend,
   children,
@@ -50,7 +53,7 @@ export function BarCanvas({
         <BarChart
           title={title}
           data={data}
-          margin={{ top: 24, right: 24, bottom: 0, left: 0 }}
+          margin={{ top: 24 + extraTop, right: 24, bottom: 0, left: 0 }}
           {...(barGap === undefined ? {} : { barGap })}
           barCategoryGap="20%"
         >

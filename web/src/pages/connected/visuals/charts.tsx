@@ -1,10 +1,8 @@
 import type { ReactNode } from "react";
 import { BulletChart } from "@/components/chart/BulletChart";
-import { ChartWithTable } from "@/components/chart/ChartWithTable";
 import { ColumnsChart } from "@/components/chart/ColumnsChart";
 import { DumbbellChart } from "@/components/chart/DumbbellChart";
 import { RangeStripChart } from "@/components/chart/RangeStripChart";
-import { seriesColors } from "@/components/chart/RowChart";
 import { ScatterPlot } from "@/components/chart/ScatterPlot";
 import { StackChart } from "@/components/chart/StackChart";
 import { TrendChart } from "@/components/chart/TrendChart";
@@ -357,63 +355,24 @@ function stack(table: SourceTable, descriptor: Descriptor, frame: Frame) {
   const [label = 0, column = 3] = slots;
   if (!chartCells(table, [column]) || !unitsMatch(table, word(descriptor.unit), [column]))
     return null;
-  const entries = table.rows.map((row) => {
+  // Every facility is a part, in rank order. One without a balance above zero is a legend row and
+  // draws no segment, so the key names each colour and every facility left out of the plot.
+  const parts = table.rows.map((row) => {
     const text = row[column] ?? "";
     return { name: row[label] ?? "", value: amount(text), text };
   });
   if (
-    !distinct(entries.map((entry) => entry.name)) ||
-    entries.some((entry) => (entry.value ?? 0) < 0)
+    !distinct(parts.map((part) => part.name)) ||
+    parts.some((part) => (part.value ?? 0) < 0) ||
+    !parts.some((part) => (part.value ?? 0) > 0)
   )
     return null;
-  const parts = entries.flatMap((entry) =>
-    entry.value !== null && entry.value > 0 ? [{ ...entry, value: entry.value }] : [],
-  );
-  if (parts.length === 0) return null;
-  if (parts.length === entries.length) {
-    return (
-      <StackChart
-        {...frame}
-        parts={parts}
-        table={chartTable(table, [label, column])}
-        detailTable={chartTable(table)}
-      />
-    );
-  }
-  const colors = seriesColors(entries.map((entry) => entry.name));
   return (
-    <ChartWithTable
+    <StackChart
       {...frame}
-      table={chartTable(table)}
-      chart={
-        <div className="grid gap-3">
-          <div
-            aria-label="Facilities with a stated positive balance"
-            role="group"
-            className="flex h-8 gap-0.5 overflow-hidden rounded-ds-sm"
-          >
-            {entries.map((entry, index) =>
-              entry.value === null || entry.value === 0 ? null : (
-                <i
-                  key={entry.name}
-                  role="img"
-                  aria-label={`${entry.name} ${entry.text}`}
-                  title={`${entry.name} ${entry.text}`}
-                  style={{ flex: `${String(entry.value)} 1 0`, backgroundColor: colors[index] }}
-                />
-              ),
-            )}
-          </div>
-          <ul className="grid gap-1 text-small">
-            {entries.map((entry) => (
-              <li className="flex justify-between gap-3" key={entry.name}>
-                <strong>{entry.name}</strong>
-                <span>{entry.text}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      }
+      parts={parts}
+      table={chartTable(table, [label, column])}
+      detailTable={chartTable(table)}
     />
   );
 }

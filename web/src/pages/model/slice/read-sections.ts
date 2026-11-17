@@ -246,7 +246,8 @@ function checkStack(s: Stack, path: string): void {
     "a name no other part has",
   );
   s.parts.forEach((p, i) => {
-    if (!(p.value > 0)) fail(`${at(`${path}.parts`, i)}.value`, "expected a number above zero");
+    if (!(p.value >= 0))
+      fail(`${at(`${path}.parts`, i)}.value`, "expected a number of zero or more");
   });
   exactly(s.head, 3, `${path}.head`, "entries, the label, amount and share headings");
 }
