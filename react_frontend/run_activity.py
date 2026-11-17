@@ -293,6 +293,14 @@ def _in_readers_words(reason: str) -> str:
     return _REBUILD_NOTE.sub(lambda note: _NOT_REBUILT + (" " if note["more"] else ""), reason)
 
 
+def _stopped_by(reason: str) -> str:
+    """The kind of stop the run's log ended on, when the scheduler stored one the page has a
+    sentence for (``_STOPS``); else empty. The page words a module's stop by it: a checker stop is
+    the module the checks refused."""
+    stopped = _STOPPED.fullmatch(reason)
+    return stopped["kind"] if stopped and stopped["kind"] in _STOPS else ""
+
+
 def _shown(layout: Layout, reason: str) -> str:
     """A reason in the reader's words, and without absolute paths, from the service's own root
     folder."""
@@ -409,6 +417,7 @@ def reply(layout: Layout, run_id: str) -> http_base.Reply:
             "pathway": record.pathway,
             "status": record.status,
             "reason": _shown(layout, record.reason),
+            "stopped_by": _stopped_by(record.reason),
             "claimed_at": record.claimed_at,
             "started_at": record.started_at,
             "ended_at": record.ended_at,

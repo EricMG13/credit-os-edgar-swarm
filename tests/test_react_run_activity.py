@@ -171,6 +171,30 @@ def test_an_ended_runs_reason_reaches_the_page_in_the_readers_words(tmp_path, st
     assert reply(layout, "ended").body["reason"] == shown
 
 
+@pytest.mark.parametrize(
+    ("stored", "kind"),
+    [
+        ("stopped: checker", "checker"),
+        ("stopped: provider", "provider"),
+        ("stopped: interrupted", "interrupted"),
+        ("stopped: ruling", "ruling"),
+        ("stopped: other", ""),
+        ("stopped: a kind this page does not know", ""),
+        ("launcher exited 2; see logs/ended.log", ""),
+        (f"not listed: {_REFUSED}", ""),
+        ("expected one deliveries/*/delivery.json, found 2", ""),
+        ("", ""),
+    ],
+)
+def test_the_run_page_is_told_what_kind_of_stop_ended_a_run(tmp_path, stored, kind):
+    """The page words a module's stop by the kind of stop (a checker stop is the module the checks
+    refused); a failure the scheduler found after a clean exit, or one with no kind, names none."""
+    layout = Layout(tmp_path)
+    _save_ended(layout, "failed", stored)
+
+    assert reply(layout, "ended").body["stopped_by"] == kind
+
+
 @pytest.mark.parametrize("code", [2, 3221225786, -9, -1073741510])
 def test_a_launcher_exit_reaches_the_page_in_the_readers_words(tmp_path, code):
     """The stored text is what ``runs.outcome`` writes, so a signal-killed launcher (a negative
