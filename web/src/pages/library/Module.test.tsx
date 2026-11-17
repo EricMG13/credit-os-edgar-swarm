@@ -968,9 +968,13 @@ describe("Module, the statement by year", () => {
     expect(screen.queryByRole("button", { name: /^(Bars|Figures)$/ })).toBeNull();
   });
 
-  it("draws a trace control only where the block carries a trace", () => {
+  it("draws the missing-trace marker where the block has no trace, and a control where it carries one", () => {
     renderModule("capital-structure");
-    expect(within(statement()).queryAllByRole("button")).toHaveLength(0);
+    expect(
+      within(statement())
+        .getAllByRole("button")
+        .map((b) => b.getAttribute("aria-label")),
+    ).toEqual(["Show sources for this table: no source recorded"]);
     cleanup();
     const library = withRecords((records) => {
       (records.find((r) => r["kind"] === "statement") as Json)["trace"] = "cs-net-debt";
@@ -1326,6 +1330,7 @@ describe("Module, the data module as a whole", () => {
       "Show sources for the peer range",
       ...Array<string>(7).fill("Show sources for this fact"),
       ...Array<string>(4).fill("Show sources for this test: no source recorded"),
+      "Show sources for this table: no source recorded",
       ...Array<string>(3).fill("Show sources for this limitation"),
     ]);
   });
@@ -1335,7 +1340,7 @@ describe("Module, the data module as a whole", () => {
     const toggle = screen.getByRole<HTMLInputElement>("switch", { name: "Show sources" });
     if (!toggle.checked) fireEvent.click(toggle);
     expect(container.querySelector("[data-sources]")).toHaveAttribute("data-sources", "on");
-    expect(sourceButtons()).toHaveLength(33);
+    expect(sourceButtons()).toHaveLength(34);
   });
 
   it("opens the drawer of the bottom line, a finding and a limitation by their own traces", () => {
@@ -1344,7 +1349,7 @@ describe("Module, the data module as a whole", () => {
     for (const [index, title] of [
       [0, "Sources for the capital structure bottom line"],
       [3, "Sources for the capacity finding"],
-      [32, "Sources for the lease schedule limitation"],
+      [33, "Sources for the lease schedule limitation"],
     ] as const) {
       fireEvent.click(buttons[index] as HTMLElement);
       expect(screen.getByRole("dialog", { name: title })).toBeVisible();

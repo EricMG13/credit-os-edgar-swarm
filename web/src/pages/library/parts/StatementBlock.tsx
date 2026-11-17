@@ -27,11 +27,7 @@ export function StatementBlock({
       <Section
         title={block.title}
         level={SUBSECTION_HEADING}
-        actions={
-          block.trace === null ? undefined : (
-            <TraceControl trace={block.trace} label="Show sources for this table" />
-          )
-        }
+        actions={<TraceControl trace={block.trace} label="Show sources for this table" />}
       >
         <div className="overflow-x-auto">
           <table className="min-w-full border-collapse text-body">
