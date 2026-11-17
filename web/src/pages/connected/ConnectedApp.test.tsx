@@ -1763,6 +1763,43 @@ describe("connected activity and reports", () => {
     expect(screen.queryByRole("region", { name: "Ended without a report" })).toBeNull();
   });
 
+  it("says why a held run still reads running and shows the module the stop ended", async () => {
+    const reason = "the library could not be rebuilt (disk full); ended runs wait for it";
+    vi.stubGlobal(
+      "fetch",
+      vi.fn((path: string) => {
+        if (path !== "/connected/activity/test-run") throw new Error(`Unexpected request ${path}`);
+        return Promise.resolve(
+          Response.json({
+            id: "test-run",
+            status: "running",
+            issuer_name: report.issuer,
+            pathway: report.pathway,
+            modules: [
+              ["CP-0", "done"],
+              ["CP-1", "stopped"],
+              ["Report", "waiting"],
+            ],
+            as_of: report.asOf,
+            cap: "25",
+            spent: "0",
+            started_at: "2026-10-31T17:31:00Z",
+            observed_at: "2026-10-31T17:35:00Z",
+            events: [{ kind: "stopped", at: "2026-10-31T17:32:01Z" }],
+            held_reason: reason,
+            reason: "",
+          }),
+        );
+      }),
+    );
+    render(<ConnectedApp path="/run/test-run" mode="synthetic" />);
+    const alert = await screen.findByText(reason);
+    expect(alert.closest("[role]")).toHaveTextContent("Held by the service");
+    const modules = screen.getByRole("heading", { name: "Modules" }).closest("section, div");
+    expect(modules).toHaveTextContent(/Interrupted/);
+    expect(screen.getByRole("progressbar", { name: "1 of 2 modules" })).toBeInTheDocument();
+  });
+
   it("waits for report publication after the run has finished", async () => {
     let reportRequests = 0;
     vi.stubGlobal(

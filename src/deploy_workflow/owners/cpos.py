@@ -58,6 +58,7 @@ from deploy_workflow.handoff_delivery import (
     verify_delivery,
     verify_files,
 )
+from deploy_workflow.library_index import completion_records, delivery_folder
 from deploy_workflow.model.budget import BudgetExhausted
 from deploy_workflow.model.configs import CONFIGS, ModelConfig
 from deploy_workflow.model.run_lock import RunDirBusy, _single_writer
@@ -537,6 +538,14 @@ def run_handoffs(  # noqa: C901, PLR0912, PLR0913, PLR0915 -- legacy orchestrato
     directory.mkdir(parents=True, exist_ok=True)
     with _single_writer(directory):
         _put(directory / "identity.json", json.dumps(identity, sort_keys=True).encode())
+        delivered = _recorded_delivery(directory)  # after the identity: same request, or refused
+        if delivered is not None:
+            print(
+                f"Delivered: {delivered.relative_to(directory)} (recorded by the earlier launch of "
+                "this run; no new call, the delivery is left as it is)",
+                file=sys.stderr,
+            )
+            return delivered
         for raw in (
             *sources.values(),
             *instructions.values(),
@@ -547,14 +556,7 @@ def run_handoffs(  # noqa: C901, PLR0912, PLR0913, PLR0915 -- legacy orchestrato
         handoffs: dict[str, bytes] = {}
         selected: dict[str, str] = {}
         changes: HandoffInput | None = None
-        not_produced = _recorded_not_produced(directory)  # an earlier launch's decision stands
-        if not_produced is not None:
-            ordered = tuple(m for m in ordered if m != "CP-8")
-            print(
-                f"{NOT_PRODUCED}{not_produced} (recorded by the earlier launch of this run; "
-                "no new call, the delivery is left as it is)",
-                file=sys.stderr,
-            )
+        not_produced: str | None = None
         for module_id in ordered:
             _refuse_pins_of_replayed(request.retained_handoffs, handoffs)
             spec = request.retained_handoffs.get(module_id)
@@ -746,18 +748,23 @@ def _cp8_unaccepted(error: BaseException) -> bool:
     )
 
 
-def _recorded_not_produced(directory: Path) -> str | None:
-    """The reason an earlier launch of this run folder recorded for delivering without CP-8, or
-    None. A relaunch keeps that decision: it makes no new call for CP-8."""
-    for path in sorted(directory.glob("completed-*.json")):
-        try:
-            note = json.loads(path.read_bytes()).get("changes")
-        except (OSError, ValueError, AttributeError) as error:
-            log.warning("completion record %s is unreadable (%s)", path.name, error)
-            continue
-        if isinstance(note, str) and note.startswith(NOT_PRODUCED):
-            return note.removeprefix(NOT_PRODUCED)
-    return None
+def _recorded_delivery(directory: Path) -> Path | None:
+    """The receipt of the delivery an earlier launch of this run folder completed, or None. A
+    delivered run is finished: its relaunch makes no call and keeps every decision it recorded
+    (CP-8 not produced, the forecast withheld). Delivering again would add a second completion
+    record whenever the bytes differ (changed rendering, or a forecast that now passes), and the
+    library lists a run with two as ambiguous, so neither delivery would be shown."""
+    records = completion_records(directory)
+    if not records:
+        return None
+    if len(records) > 1:
+        raise ValueError(
+            "cpos_delivered: the folder holds more than one completion record; start a new run"
+        )
+    [(_, record)] = records
+    # A record that names no receipt matches no folder: Refused, a ValueError, says so.
+    folder, _ = delivery_folder(directory, str(record.get("delivery_sha256")), receipt_hash=True)
+    return directory / folder / "delivery.json"
 
 
 def _module_execution(

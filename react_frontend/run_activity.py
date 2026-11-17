@@ -24,7 +24,7 @@ _RUN_EVENTS = frozenset(
     {"delivery_started", "delivered", "stopped", "changes_not_produced", "model_not_published"}
 )
 _FEED_LIMIT = 80
-_ENDED = ("failed", "capped", "rejected", "interrupted")
+_ENDED: tuple[runs.Status, ...] = ("failed", "capped", "rejected", "interrupted")
 _ENDED_SHOWN = 20
 _PUBLISHED = "window.RUN_ACTIVITY="  # how deploy_workflow.inbox.activity.write opens the file
 _EXECUTIONS = frozenset({"host-session", "retained-response-replay", "synthetic", "live-provider"})
@@ -315,6 +315,9 @@ def reply(layout: Layout, run_id: str) -> http_base.Reply:
             "cap": _cap(manifest, shown.get("cap")),
             **usage,
             "stalled": shown.get("stalled", False),
+            # The listing's `held` (`held` here is the reserved amount, from `_usage`): why the
+            # service holds the queue or ended runs, so a run kept "running" says why.
+            "held_reason": _held(layout),
             "modules": modules,
             "events": _feed(directory, {code for code, _ in modules}),
         },

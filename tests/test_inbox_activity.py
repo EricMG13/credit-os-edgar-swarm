@@ -74,6 +74,24 @@ def test_report_entry_follows_delivery_events():
     assert running["Report"] == "running" and done["Report"] == "done"
 
 
+def test_a_stop_ends_the_running_module_and_a_relaunch_runs_it_again():
+    """The log is read in order: the run's stop ends what was running (it used to stay running
+    for good); a later launch's start runs it again; an accepted module stays done."""
+    started = {"event": "module_started", "module": "CP-1"}
+    events = [
+        {"event": "module_started", "module": "CP-0"},
+        {"event": "module_accepted", "module": "CP-0"},
+        started,
+        {"event": "stopped", "reason": "provider"},
+    ]
+    stopped = dict(module_states("earnings_update", events))
+    assert (stopped["CP-0"], stopped["CP-1"], stopped["CP-5"]) == ("done", "stopped", "waiting")
+    assert stopped["Report"] == "waiting"
+    assert dict(module_states("earnings_update", [*events, started]))["CP-1"] == "running"
+    report = [{"event": "delivery_started"}, {"event": "stopped", "reason": "other"}]
+    assert dict(module_states("earnings_update", report))["Report"] == "stopped"
+
+
 def test_spend_counts_settled_charges_and_full_unknown_holds(tmp_path):
     run_dir = tmp_path / "run" / "live"
     budget = Budget(Decimal(20), run_dir)

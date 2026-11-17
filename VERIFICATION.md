@@ -4,6 +4,18 @@ Keep one running record here. A pass applies only to the stated scope. Earlier v
 engine is in [EricMG13/final-workflow](https://github.com/EricMG13/final-workflow)'s
 `VERIFICATION.md`, which also keeps the retained runs this copy leaves out.
 
+## 2026-11-17 — Run state from one reading of the event log; a delivered run is finished (branch `claude/jolly-gauss-0erxtn`)
+
+Scope: how a run's end and its modules' states are read from `events.jsonl` (`run_events.progress`, used by `inbox/runs.outcome` and `inbox/activity.module_states`), the new module state `stopped` in the React run pages and the static library's run steps, the run page's `held_reason`, and CP-OS's relaunch of a folder that already holds a completion record (`owners/cpos.py`). Launcher options, caps, budget, checkers and delivery files unchanged. No provider was called and no paid run was made.
+- Owner, 2026-11-17: asked to find the app's implicit state machines, then "do it" to the fixes proposed from that inventory.
+- Changed: (1) the log is read once, in order: a `stopped` ends the running module and Report (`stopped`; before, a stopped module read `running` for good), a later start runs it again; the run's end is the last stop no start followed (before: the first stop in a log shared by every launch); exit 0 is finished (a live launch returns 0 only once it delivered; before, a lost `delivered` line made it "failed: launcher exited 0"), and the scheduler still requires the library to list the run. (2) `stopped` reads "Interrupted" in React (`moduleWord`, Run activity) and in the static library (`runSteps`, amber segment, warning mark). (3) The single-run reply carries the scheduler's hold note as `held_reason` (`held` there is the reserved amount); the run page shows it while the run is live, so a run held "running" by a failed library rebuild says why. (4) A run folder with a completion record is finished: a relaunch returns its delivery with no call and writes nothing; one with two records is refused (`cpos_delivered`). Before, a relaunch whose completion bytes differed (changed rendering, a forecast that now passes) wrote a second record and the library refused the run as ambiguous. This generalises the 2026-11-12 rule that a relaunch after CP-8 was not produced "leaves the delivery as it is, makes no new call and says so"; `_recorded_not_produced` is removed. (5) `tests/test_react_frontend.py` holds `RunStatus`, `EndedRun` and `ModuleState` in `web/src/pages/connected/api.ts` to the Python literals; the Python status-set copies are typed with `Status`.
+- Not changed, by decision: a module whose request was saved but whose response was not stays `cpos_interrupted` on relaunch. The request may have been paid; the executor keeps its own re-entry marker; a capped folder cannot continue anyway (the cap is pinned). Recovery remains a new run.
+- Tests: new cases for stop/relaunch ordering, last-stop and exit-0 outcomes, `held_reason` and a stopped module in the reply, the TS/Python contract, a delivered run's relaunch (no call, no `delivery_files` call, one record) and a folder with two records; the two CP-OS tests fail on the previous `cpos.py` and pass now. `test_an_unreadable_compaction_note_still_flags_the_module` now removes the completion record first (a launch killed before it), since a delivered run is no longer resumed.
+- Commands, exit 0: `tools/quality_gate.py` (0 findings); pytest `test_cpos_launch` (908 passed, 1 skipped paid), `test_changes`, `test_cp8_comparison`, `test_library_index`, `test_credit_os_store`, `test_handoff_loop`, `test_cpos_cp1_check`, `test_inbox_runs`, `test_inbox_activity`, `test_inbox_scheduler`, `test_inbox_teams`, `test_react_frontend`, `test_react_admission`, `test_run_start_submissions`, `test_context_form`; `node --test components.test.cjs` (134); `npx vitest run src/pages/connected src/pages/run src/components` (1,467); `tsc --noEmit`; eslint and prettier on the changed files; `node scripts/build.mjs`.
+- Fidelity check: the static run steps (labelled and compact) rendered in Chromium with `screen.css`: the stopped step reads "Interrupted" with the warning mark on the neutral card, amber in the compact bar, 2 of 4 done. The built React run page served by `react_frontend` (synthetic mode) over a run held "running" after a `stopped` event: "Held by the service" with the note, CP-1 "Interrupted", "1 of 3" modules.
+- Review: an independent read-only review of the diff was running at this commit; its result is recorded with any follow-up commit.
+- Not verified: `pytest -m browser` (Chrome cannot start in this sandbox; `test_run_start_page.py` timed out), the full suite, a live run, Teams cards with a stopped module (they count done modules only).
+
 ## 2026-11-16 — Earnings Update runs CP-1A (branch `claude/earnings-update-cp1a`)
 
 Scope: the `earnings_update` preset and its copies (`src/deploy_vii/contracts.py`, `web/src/pages/connected/api.ts`, `docs/templates/context-form.html` `PATHWAYS` and `RUN_ORDER`) and the tests that pin them; ruling `docs/rulings/2026-11-16-earnings-update-cp1a.md`. Caps, launcher, registry, method files and delivery code unchanged. No provider was called.
@@ -945,51 +957,3 @@ Scope: presentation only, all under `web/`; no backend, handoff, provider or mod
   the available sample pack lacks the evidence for a complete analytical report.
   See [React workflow](docs/react-workflow.md).
 
-## 2026-11-15 — Restructure, second part: removals, method provenance, CP-3C and CP-6A, review (branch `claude/busy-dijkstra-bgex9m`, PR #126)
-
-Scope is **offline only**. No provider or model was called. No model has written a CP-3C or CP-6A
-handoff for the full credit assessment under the new instructions: that needs the owner's paid run.
-This entry follows the one below and its checks supersede that entry's totals.
-
-- Removed, code that no used entry point, journal registry, rule list or test reaches (5,181 lines,
-  no test removed): the Deploy VII earnings owner runtime (`earnings_workflow.py` 4,604 to 689
-  lines; `compose_delta` and what it reaches stay for CP-1B), `owner_workflow`'s JSON-lines
-  transport and `python -m` entry, CP-OS's `navigation`/`verify_navigation`, and 85 uncalled reader
-  and compute definitions in 16 module files. Checked independently: no kept top-level definition
-  changed (AST, docstrings aside), no removed name is referenced, no undefined name in `src`,
-  `apps` or `tools`. Launcher offline preparation, 10 runs over 7 pathways on synthetic input:
-  identical before and after each stage. Kept for the owner's decision: the `OwnerWorkflow` journal
-  chain (`model_testing`, `run_pathway`, `model.loop`), which a 2026-11-13 ruling and `tests/model`
-  still rely on.
-- Method provenance: `manifest.json` gives `source_revision` with its basis for 15 more files; 19
-  files say "not recorded at import; bytes pinned by sha256" (cp-os was not reachable; two of them
-  had been attributed to cp-os `b57a344` wrongly); a `project_files` list registers the three
-  project method files; three unregistered CP-3B duplicates removed after a byte comparison. No
-  method file's sha256 changed. `tests/test_methodology_selection.py` has no known differences left.
-- Full credit assessment (ruling `docs/rulings/2026-11-15-full-assessment-cp3c-cp6a.md`):
-  `credit_snapshot` adds CP-2D and CP-3C. CP-6's scope section no longer cuts T6E.4, T6E.6, T6E.7
-  and T6E.11 (project file, sha256 `617c887c18dd`); CP-6's instructions gain `CP6A_BLOCK` on both
-  pathways that run CP-6; `posture_issues` refuses a non-blocked CP-6 handoff without
-  `### Portfolio posture` and the method's `Final Sizing Posture:` first sentence. Launcher prepared
-  offline for the 7 active pathways before and after: only `credit_snapshot` (two new modules, CP-6)
-  and `portfolio_decision` (CP-6) differ. Fidelity check, synthetic fixture only: default library
-  build identical apart from `built_at` and the workspace path; with two hand-made SYNTHETIC
-  handoffs, `tests/test_library_full_assessment_browser.py` checks CP-6's and CP-3C's pages against
-  the Markdown. Prompt-size ceiling for the pathway raised to 1,483,647 characters (the owner's
-  1,340,000 plus the measured addition): for the owner to confirm. Cost is estimated, not measured.
-- Review: eight reviewers, one per slice, no high-severity finding. Fixed: Signal imports without
-  `credit_os` and names missing brand files at start-up; three permission skips no longer call
-  `os.geteuid` where it is absent (Windows); a failed pack prune no longer blocks the pack commit;
-  the bundle test starts a Python on the bundle's two import roots and finds the library and engine
-  inside it (Linux; not the Windows package). Gate: lines moved verbatim count as moved only in a
-  file the change adds, and code that only moved is still checked with ruff's `F` rules.
-- Open after review: delivery's call item reads a section named `Final Sizing Posture`, not the new
-  `### Portfolio posture` (the library page shows it; settle after a paid run); `posture_issues`
-  checks the first sentence only; no test pins that `OwnerWorkflow.open` refuses a retained
-  JSON-lines run; no test runs `compose_delta`.
-- Checks on the final head: the CI fast list 4,631 passed, 6 skipped, known failures deselected;
-  node page tests 567 passed; quality gate 0 findings; `lint-imports` 3 contracts kept. GitHub Actions,
-  full weekly suite on `7cba8c6` (before the removals): 5,956 passed, 1 failed, a test that read
-  one packet of a two-write reply; the test now reads to the close.
-- Not verified: the full weekly suite on the final head (re-run requested); `Smoke-test.ps1` and
-  the Windows package on Windows; the pack workflow on GitHub Actions. Oldest two entries trimmed.

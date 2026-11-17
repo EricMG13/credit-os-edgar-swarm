@@ -7,14 +7,54 @@ replays and verify scripts pass nothing and so never gain this file.
 import json
 import os
 import warnings
+from collections.abc import Iterable, Mapping
+from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 from deploy_workflow.model.adapter import LivePauseInForce
 from deploy_workflow.model.budget import BudgetExhausted, OverrunStop, RunStopped
 
 EVENTS = "events.jsonl"
+
+# A module's (or the Report's) state in a run, as `progress` reads it from the log.
+ModuleState = Literal["waiting", "running", "done", "stopped"]
+
+
+@dataclass(frozen=True)
+class Progress:
+    """What a run's event log says (see ``progress``)."""
+
+    modules: Mapping[str, ModuleState]  # each module the log names, in the order first started
+    report: ModuleState
+    delivered: bool  # some launch delivered
+    stop: str | None  # the reason of a ``stopped`` that no later start followed
+
+
+def progress(events: Iterable[Mapping[str, Any]]) -> Progress:
+    """The one reading of the log, in order. A module runs from ``module_started`` until
+    ``module_accepted`` (done) or the run's ``stopped`` (stopped); the Report entry likewise from
+    ``delivery_started`` until ``delivered`` or ``stopped``. One log spans every launch of a run
+    folder, so a later start (a relaunch) runs a module again and ends the earlier stop."""
+    modules: dict[str, ModuleState] = {}
+    report: ModuleState = "waiting"
+    delivered = False
+    stop: str | None = None
+    for event in events:
+        name = event.get("event")
+        if name == "stopped":
+            stop = str(event.get("reason", ""))
+            modules = {m: "stopped" if s == "running" else s for m, s in modules.items()}
+            report = "stopped" if report == "running" else report
+        elif name in ("module_started", "module_accepted"):
+            modules[str(event.get("module"))] = "running" if name == "module_started" else "done"
+        elif name in ("delivery_started", "delivered"):
+            report = "running" if name == "delivery_started" else "done"
+            delivered = delivered or name == "delivered"
+        if name in ("module_started", "delivery_started"):
+            stop = None
+    return Progress(modules, report, delivered, stop)
 
 
 def append_event(directory: Path, event: str, **fields: str | int) -> None:

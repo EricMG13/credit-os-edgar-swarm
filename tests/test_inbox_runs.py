@@ -141,6 +141,20 @@ def test_alive_for_this_process_and_not_for_an_exited_one():
             None,
             ("interrupted", "the run's process ended without a result"),
         ),
+        # Exit 0 is a delivery whose `delivered` line the advisory log lost (it said "failed").
+        ([("module_started", {"module": "CP-0"})], 0, ("finished", "")),
+        # The stop the log ends on decides, not the first: one log spans every launch.
+        (
+            [("stopped", {"reason": "provider"}), ("stopped", {"reason": "budget"})],
+            1,
+            ("capped", "stopped at the cap"),
+        ),
+        # A later launch started again after the stop and was then cut short: not that stop.
+        (
+            [("stopped", {"reason": "budget"}), ("module_started", {"module": "CP-0"})],
+            None,
+            ("interrupted", "the run's process ended without a result"),
+        ),
     ],
 )
 def test_outcome(layout, events, exit_code, expected):

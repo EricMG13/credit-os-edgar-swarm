@@ -1,11 +1,13 @@
 import json
 import os
+import re
 import threading
 from collections.abc import Iterator, Mapping
 from decimal import Decimal
 from http.client import HTTPConnection
 from pathlib import Path
 from tempfile import TemporaryDirectory
+from typing import get_args
 
 import pytest
 
@@ -13,7 +15,7 @@ from deploy_workflow.inbox import activity, runs, startup
 from deploy_workflow.inbox.layout import Layout, ensure_layout
 from deploy_workflow.inbox.scheduler import Scheduler
 from deploy_workflow.model.budget import Budget
-from deploy_workflow.run_events import EVENTS, append_event
+from deploy_workflow.run_events import EVENTS, ModuleState, append_event
 from deploy_workflow.run_start.service import _Server
 from deploy_vii.contracts import PATHWAY_CAP_USD
 from react_frontend import make_server, run_activity
@@ -148,9 +150,36 @@ def test_activity_uses_the_pinned_cap_and_curates_native_events(hosted: _Server)
     assert record["modules"] == [["CP-0", "done"], ["CP-1", "waiting"], ["Report", "waiting"]]
     assert [event["kind"] for event in record["events"]] == ["module_started", "module_accepted"]
     assert set(record["events"][0]) == {"kind", "at", "module"}
+    assert record["held_reason"] == ""
+    # A stop ends the module that was running, and the service's hold reaches the run page.
+    append_event(directory, "module_started", module="CP-1")
+    append_event(directory, "stopped", reason="provider")
+    held = "the library could not be rebuilt (disk full); ended runs wait for it"
+    activity.write(layout, {"updated": "", "held": held, "runs": []})
+    record = json.loads(request(hosted, "/connected/activity/activity")[1])
+    assert record["modules"] == [["CP-0", "done"], ["CP-1", "stopped"], ["Report", "waiting"]]
+    assert record["held_reason"] == held
     (directory / EVENTS).write_text("invalid event\n{}\n", encoding="utf-8")
     assert json.loads(request(hosted, "/connected/activity/activity")[1])["events"] is None
     assert request(hosted, "/connected/activity/unknown")[0] == 404
+
+
+def test_the_react_pages_status_words_are_the_services() -> None:
+    """The React pages copy the run statuses and module states the service sends (api.ts); a word
+    missing there breaks a lookup table, one the service never sends is a dead branch."""
+    api = (Path(__file__).parents[1] / "web/src/pages/connected/api.ts").read_text("utf-8")
+
+    def union(pattern: str) -> list[str]:
+        match = re.search(pattern, api)
+        assert match is not None, pattern
+        return re.findall(r'"(\w+)"', match[1])
+
+    statuses = list(get_args(runs.Status))
+    assert union(r"export type RunStatus =([^;]*);") == statuses
+    ended = [s for s in statuses if s not in ("queued", "running", "finished")]
+    assert union(r"export type EndedRun = [^&]*& \{\s*status:([^;]*);") == ended
+    assert union(r"export type ModuleState =([^;]*);") == list(get_args(ModuleState))
+    assert list(run_activity._ENDED) == ended
 
 
 def test_activity_list_shows_runs_in_progress_without_spend_or_file_names(hosted: _Server) -> None:
