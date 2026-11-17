@@ -273,6 +273,7 @@ function Chart({
       categories={groups}
       yTicks={yTicks}
       barGap={barGap}
+      extraTop={narrow ? MIDDLE_RAISE : 0}
       tooltip={(props) => (
         <ColumnsTooltip {...props} groups={groups} head={table.head} rows={table.rows} />
       )}

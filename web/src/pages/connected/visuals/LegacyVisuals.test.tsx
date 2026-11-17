@@ -423,10 +423,22 @@ it("keeps unstated stack balances out of the plot while retaining their stated r
     ],
   );
   render(<LegacyVisuals output={output} sections={sections} />);
-  const figure = within(screen.getByRole("figure", { name: "Debt stack" }));
-  expect(figure.getAllByRole("img")).toHaveLength(1);
-  expect(figure.getByRole("img")).toHaveAccessibleName("Senior secured 1,200");
-  expect(figure.getByText("Not supplied: balance not stated")).toBeInTheDocument();
+  const element = screen.getByRole("figure", { name: "Debt stack" });
+  const figure = within(element);
+  // One segment is drawn; C4-004: every facility is named in a ranked legend, and only the drawn
+  // one carries the swatch that ties its colour to its name.
+  expect(
+    [...element.querySelectorAll("[data-segment]")].map((s) => s.getAttribute("data-part")),
+  ).toEqual(["Senior secured"]);
+  const rows = figure.getAllByRole("listitem");
+  expect(
+    rows.map((li) => [...li.children].map((c) => c.textContent).filter((t) => t !== "")),
+  ).toEqual([
+    ["Senior secured", "1,200"],
+    ["Senior notes", "0"],
+    ["Subordinated notes", "Not supplied: balance not stated"],
+  ]);
+  expect(rows.map((li) => li.querySelector("svg") !== null)).toEqual([true, false, false]);
   fireEvent.click(figure.getByRole("radio", { name: "Table" }));
   expect(figure.getByRole("row", { name: /Senior notes/ })).toHaveTextContent("0");
   expect(figure.getByRole("table")).toHaveTextContent("Not supplied: no balance");
