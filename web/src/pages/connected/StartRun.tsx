@@ -77,11 +77,15 @@ import {
   CASE_KINDS,
   CONTEXT_DETAILS,
   documentDescription,
+  documentRefusal,
   EFFORTS,
   ISSUE_CLASSES,
   ISSUE_CLASSIFICATION,
   ISSUER_DETAILS,
   ISSUER_ID,
+  issuerIdFor,
+  filedElsewhere,
+  issuerIdRefusal,
   ISSUER_LIST_BOXES,
   ISSUER_TEXT_BOXES,
   LEGAL_CHOICES,
@@ -147,6 +151,7 @@ const PATHWAY_CARDS = Object.entries(PATHWAYS).map(([id, pathway]) => ({
 
 type FieldKey =
   | "issuer_name"
+  | "issuer_id"
   | "submitted_by"
   | "cutoff"
   | "current_period"
@@ -172,6 +177,8 @@ class FieldProblem extends Error {
     readonly field: FieldKey,
     message: string,
     readonly others?: readonly string[],
+    /** For `issuer_id`: the free Issuer ID the page offers in its place. */
+    readonly offer?: string,
   ) {
     super(message);
   }
@@ -201,7 +208,9 @@ function refusedField(
 
 /** The step a control is drawn on: the issuer name and analyst name on Documents, the rest on Context. */
 export function stepOfField(field: FieldKey): FormStep {
-  return field === "issuer_name" || field === "submitted_by" ? "documents" : "context";
+  return field === "issuer_name" || field === "issuer_id" || field === "submitted_by"
+    ? "documents"
+    : "context";
 }
 
 function problemAttrs(problem: FieldProblem | undefined, field: FieldKey) {
@@ -257,6 +266,22 @@ type Forms = {
   assumptions?: AssumptionsForm;
 };
 type LatestIssuerInputs = { run: string; prior: PriorInputs };
+/** The ID the review settled for a typed name, and the issuer that holds the name's usual ID. */
+type SettledSlug = { name: string; id: string; holder?: string };
+
+/**
+ * The name an ID is filed under (the latest run's), or undefined when no run holds it or the
+ * lookup failed: the service refuses an ID filed under another issuer at the summary and at Submit,
+ * so a failed lookup cannot merge two issuers.
+ */
+async function holderOf(issuerId: string): Promise<string | undefined> {
+  try {
+    const latest: { latest_run: string; issuer_name?: string } = await getLatestIssuerRun(issuerId);
+    return latest.latest_run ? (latest.issuer_name ?? "") : undefined;
+  } catch {
+    return undefined;
+  }
+}
 
 async function latestIssuerInputs(issuer: string): Promise<LatestIssuerInputs | null> {
   const latest = await getLatestIssuerRun(issuer);
@@ -326,6 +351,9 @@ type IntakeView = {
   rowsOf: (kind: RowKind) => Row[];
   changeRows: (kind: RowKind, rows: Row[]) => void;
   problem?: FieldProblem;
+  /** On the review sheet: why the Issuer ID is not the usual one for the name; "" when it is. */
+  idNote: string;
+  useIssuerId: (id: string) => void;
   focusProblem: () => void;
   changeModel: (value: string) => void;
   changeEffort: (value: string) => void;
@@ -345,6 +373,8 @@ function useIntakeIdentityState(
   const [context, setContext] = useState<Context>(() => startingContext(template, initial?.prior));
   const [purposeTouched, setPurposeTouched] = useState(Boolean(initial?.prior.context));
   const [customSlug, setCustomSlug] = useState(initial?.prior.issuer_id);
+  // The ID the review settled for a typed name whose usual ID another issuer already holds.
+  const [settledSlug, setSettledSlug] = useState<SettledSlug>();
   const [newestOverride, setNewestOverride] = useState<string>();
   return {
     copy,
@@ -361,6 +391,8 @@ function useIntakeIdentityState(
     setPurposeTouched,
     customSlug,
     setCustomSlug,
+    settledSlug,
+    setSettledSlug,
     newestOverride,
     setNewestOverride,
   };
@@ -513,6 +545,7 @@ function shownCapText(cap: number | null) {
 function intakeRunDetails({
   context,
   customSlug,
+  settledSlug,
   caps,
   files,
   copy,
@@ -523,6 +556,7 @@ function intakeRunDetails({
 }: {
   context: Context;
   customSlug?: string;
+  settledSlug?: SettledSlug;
   caps: Record<string, string>;
   files: File[];
   copy?: { prior: PriorInputs };
@@ -536,7 +570,10 @@ function intakeRunDetails({
   return {
     run,
     identity,
-    issuerId: customSlug ?? issuerSlug(identity.issuer_name),
+    issuerId:
+      customSlug ??
+      (settledSlug?.name === identity.issuer_name.trim() ? settledSlug.id : undefined) ??
+      issuerSlug(identity.issuer_name),
     requested: pathwayModules(run.pathway),
     cap: selectedCap ? Number(selectedCap) : null,
     earnings: run.pathway === "earnings_update",
@@ -744,21 +781,41 @@ function DocumentFields({
         </label>
         <FieldMessage problem={view.problem} field="issuer_name" />
       </div>
-      <label className={label}>
-        {ISSUER_ID}
-        <input
-          className={field}
-          required
-          pattern="[a-z0-9][a-z0-9\-]{0,39}"
-          maxLength={40}
-          placeholder="e.g. northbridge-group-plc"
-          value={view.issuerId}
-          readOnly={!!view.copy}
-          onChange={(event) => {
-            view.changeIssuerId(event.target.value);
-          }}
-        />
-      </label>
+      <div className="grid content-start gap-1">
+        <label className={label}>
+          {ISSUER_ID}
+          <input
+            className={field}
+            required
+            pattern="[a-z0-9][a-z0-9\-]{0,39}"
+            maxLength={40}
+            placeholder="e.g. northbridge-group-plc"
+            {...problemAttrs(view.problem, "issuer_id")}
+            value={view.issuerId}
+            readOnly={!!view.copy}
+            onChange={(event) => {
+              view.changeIssuerId(event.target.value);
+            }}
+          />
+        </label>
+        <FieldMessage problem={view.problem} field="issuer_id" />
+        {view.problem?.field === "issuer_id" && view.problem.offer && (
+          <div>
+            <Button
+              color="secondary"
+              size="sm"
+              onPress={() => {
+                view.useIssuerId(view.problem?.offer ?? "");
+              }}
+            >
+              {`Use ${view.problem.offer}`}
+            </Button>
+          </div>
+        )}
+        <p className="text-sm text-text-secondary">
+          Letters a–z, digits and hyphens, up to 40 characters.
+        </p>
+      </div>
       <div className="grid content-start gap-1">
         <label className={label}>
           As-of date
@@ -1401,6 +1458,8 @@ function IntakeForm({
     setPurposeTouched,
     customSlug,
     setCustomSlug,
+    settledSlug,
+    setSettledSlug,
     newestOverride,
     setNewestOverride,
   } = identityState;
@@ -1476,6 +1535,7 @@ function IntakeForm({
     intakeRunDetails({
       context,
       customSlug,
+      settledSlug,
       caps,
       files,
       copy,
@@ -1508,7 +1568,7 @@ function IntakeForm({
     key: K,
     value: Context["identity"][K],
   ) {
-    if (key === "issuer_name") clearProblem("issuer_name");
+    if (key === "issuer_name") clearProblem("issuer_name", "issuer_id");
     setContext((previous) => ({ ...previous, identity: { ...previous.identity, [key]: value } }));
   }
 
@@ -1595,9 +1655,31 @@ function IntakeForm({
       }
       draft.copied = true;
     }
-    const result = await getReading(draft.id);
+    return { draft, result: await readDocuments(draft) };
+  }
+
+  /**
+   * What the service reads from the draft's documents. A refusal that names a file is shown as one
+   * sentence with that file's row marked Ignored; every route that reads goes through here.
+   */
+  async function readDocuments(draft: Draft) {
+    const known = [
+      ...[...draft.uploaded].map(([file, stored]) => ({ name: stored, size: file.size })),
+      ...(copy?.prior.files ?? []),
+    ];
+    const result = await getReading(draft.id).catch((failure: unknown) => {
+      if (!(failure instanceof RequestError)) throw failure;
+      const { file, sentence } = documentRefusal(failure.message, known);
+      if (!file && sentence === failure.message) throw failure;
+      setReading({
+        documents: [],
+        ignored: file ? [{ source: file, reason: sentence }] : [],
+        error: "",
+      });
+      throw new Error(sentence);
+    });
     setReading(result);
-    return { draft, result };
+    return result;
   }
 
   async function discardDocument(name: string, file?: File) {
@@ -1618,7 +1700,7 @@ function IntakeForm({
           Object.entries(previous).filter(([, chosen]) => chosen !== (stored || name)),
         ),
       );
-      if (draft && stored) setReading(await getReading(draft.id));
+      if (draft && stored) await readDocuments(draft);
     });
   }
 
@@ -1636,7 +1718,9 @@ function IntakeForm({
   }
 
   async function copyLatestWork() {
-    const latest = await latestIssuerInputs(issuerId);
+    // The ID is settled before the lookup: another issuer's run must not be carried, and the ID
+    // locked by the carry is the one the review would use.
+    const latest = await latestIssuerInputs(await settleIssuerId());
     if (!latest) {
       setPriorNote("No earlier run was found for this issuer.");
       return;
@@ -1674,7 +1758,34 @@ function IntakeForm({
     await withDraft("copy", copyLatestWork);
   }
 
-  function makeAnswers(result: Reading, details: Record<string, unknown>): Answers {
+  /**
+   * The ID for the typed name: the usual one, unless a run of another issuer already holds it, for
+   * any name of any length. A typed or carried ID is the analyst's own; the service checks it.
+   */
+  async function settleIssuerId() {
+    const name = identity.issuer_name.trim();
+    if (customSlug !== undefined) return issuerId;
+    const usual = issuerSlug(name);
+    const holder = await holderOf(usual);
+    const id = issuerIdFor(name, holder);
+    setSettledSlug({ name, id, ...(id === usual || !holder ? {} : { holder }) });
+    return id;
+  }
+
+  /**
+   * A refusal of an ID filed under another issuer, as a problem on the Issuer ID field. When the
+   * refused ID is not the name's usual one, who holds the usual one decides what is offered.
+   */
+  async function idProblem(failure: unknown) {
+    const found = failure instanceof RequestError ? filedElsewhere(failure.message) : undefined;
+    if (!(failure instanceof RequestError) || !found) return undefined;
+    const usual = issuerSlug(found.name);
+    const usualHolder = usual && usual !== found.id ? await holderOf(usual) : undefined;
+    const refusal = issuerIdRefusal(failure.message, usualHolder);
+    return refusal && new FieldProblem("issuer_id", refusal.sentence, undefined, refusal.offer);
+  }
+
+  function makeAnswers(result: Reading, details: Record<string, unknown>, id: string): Answers {
     if (run.cutoff && run.cutoff > run.as_of)
       throw new FieldProblem("cutoff", "Research cutoff must be on or before the as-of date.");
     const available = new Set(result.documents.map(storedName));
@@ -1694,7 +1805,7 @@ function IntakeForm({
         ...context,
         ...details,
         run: { ...run, cutoff: run.cutoff || run.as_of },
-        identity: { ...identity, issuer_name: identity.issuer_name.trim(), issuer_id: issuerId },
+        identity: { ...identity, issuer_name: identity.issuer_name.trim(), issuer_id: id },
         ...(context.attachments
           ? {
               attachments: {
@@ -1772,12 +1883,14 @@ function IntakeForm({
     const { draft, result } = await refreshDocuments();
     if (!result.documents.length)
       throw new Error("The service could not read any of the selected documents.");
-    const answers = makeAnswers(result, details);
+    const answers = makeAnswers(result, details, await settleIssuerId());
     const noteAt = noteIndex(details, analystNote);
     const shownCap = capForPathway(caps, answers.context.run.pathway);
-    const summary = await getSummary(draft.id, answers, shownCap).catch((failure: unknown) => {
-      throw refusedField(failure, requested, noteAt) ?? failure;
-    });
+    const summary = await getSummary(draft.id, answers, shownCap).catch(
+      async (failure: unknown) => {
+        throw (await idProblem(failure)) ?? refusedField(failure, requested, noteAt) ?? failure;
+      },
+    );
     requireSummaryCap(summary, shownCap);
     if (!summary.digest) throw new Error("The service did not issue an approval for this run.");
     const newestDate = newestOverride ?? newestPeriod(result);
@@ -1883,6 +1996,8 @@ function IntakeForm({
           setAccepted(new Set());
           setApproved(false);
           setSubmitUncertain(false);
+          const taken = await idProblem(failure);
+          if (taken) throw taken;
           setError(`${asSentence(errorText(failure))} Review the run again before submitting.`);
         } else {
           setSubmitUncertain(true);
@@ -2091,7 +2206,7 @@ function IntakeForm({
       changeRun(key, value);
     },
     changeIssuerId: (value) => {
-      clearProblem("issuer_name");
+      clearProblem("issuer_name", "issuer_id");
       setCustomSlug(value);
     },
     changeSubmittedBy: (value) => {
@@ -2128,6 +2243,14 @@ function IntakeForm({
     },
     toggleModule,
     problem: fieldError,
+    idNote:
+      review && settledSlug?.holder && review.answers.context.identity.issuer_id === settledSlug.id
+        ? `Issuer ID ${settledSlug.id} was used for this run because ${issuerSlug(settledSlug.name)} is filed under the name "${settledSlug.holder}". If that is this issuer under another name, type that name.`
+        : "",
+    useIssuerId: (id) => {
+      clearProblem("issuer_id");
+      setCustomSlug(id);
+    },
     focusProblem: () => {
       if (fieldError) focusField(fieldError.field);
     },
@@ -2312,6 +2435,7 @@ function IntakePanels(props: IntakePanelsProps) {
             capAvailable={Boolean(cap)}
             synthetic={synthetic}
             ready={ready}
+            idNote={view.idNote}
             onAccept={onAccept}
             onApprove={onApprove}
             onEdit={onEdit}
@@ -2353,12 +2477,14 @@ function ReviewConfirmation({
   capAvailable,
   synthetic,
   ready,
+  idNote,
   onAccept,
   onApprove,
   onEdit,
   onModules,
   onSubmit,
 }: {
+  idNote: string;
   review: Review;
   accepted: Set<string>;
   approved: boolean;
@@ -2401,6 +2527,7 @@ function ReviewConfirmation({
         onModules={onModules}
         onAccept={onAccept}
       />
+      {idNote && <p className="text-sm text-text-secondary">{idNote}</p>}
       {blocker && (
         <p id="run-submit-blocker" className="text-sm text-text-secondary">
           {blocker}

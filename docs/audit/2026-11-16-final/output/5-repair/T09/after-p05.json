@@ -1,0 +1,69 @@
+[probe] proof.serve up on http://127.0.0.1:8749 (root /tmp/cs-C2/r-IBhHW6)
+[probe] proof.serve on http://127.0.0.1:8749 stopped
+{
+ "slug": {
+  "Société Générale S.A.": "societe-generale-s-a",
+  "Ørsted A/S": "rsted-a-s",
+  "Эрикссон": "",
+  "日本電信電話": "",
+  "A": "a",
+  "  Trailing  ": "trailing",
+  "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+  "Nokia Oyj (2025)": "nokia-oyj-2025"
+ },
+ "native": {
+  "cyrillicIdMessage": {
+   "valid": false,
+   "message": "Please fill out this field.",
+   "pattern": "[a-z0-9][a-z0-9\\-]{0,39}",
+   "required": true
+  },
+  "upperCaseIdMessage": {
+   "valid": false,
+   "message": "Please match the requested format.",
+   "pattern": "[a-z0-9][a-z0-9\\-]{0,39}",
+   "required": true
+  },
+  "idHelpText": "Issuer ID",
+  "afterContinueInvalidId": {
+   "headings": [
+    "Documents",
+    "Readiness"
+   ],
+   "alerts": [],
+   "focus": "input \"Issuer ID\""
+  },
+  "afterContinueEmptyName": {
+   "alerts": [],
+   "focus": "input \"Issuer name\"",
+   "nameMessage": {
+    "valid": false,
+    "message": "Please fill out this field.",
+    "pattern": "",
+    "required": true
+   }
+  },
+  "afterContinueBlankName": {
+   "alerts": [],
+   "focus": "input \"As-of date\"",
+   "headings": [
+    "Documents",
+    "Readiness"
+   ],
+   "problemBtn": []
+  }
+ },
+ "analyst": {},
+ "error": "TimeoutError: locator.click: Timeout 15000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('button', { name: 'Go back to Documents' })\u001b[22m\n",
+ "log": {
+  "blocked": [],
+  "console": [],
+  "pageerrors": [],
+  "failed": [],
+  "bad": [],
+  "requests": [
+   "GET /connected/context"
+  ],
+  "notes": []
+ }
+}

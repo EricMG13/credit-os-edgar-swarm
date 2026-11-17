@@ -308,11 +308,12 @@ describe("connected run start", () => {
       "/api/submissions/sub-1/files?name=Credit%20%26%20facts.html",
       "/api/submissions/sub-1/reading",
       "/api/submissions/sub-1/reading",
+      "/api/issuers/synthetic-generale", // who holds the name's usual Issuer ID (T09)
       "/api/submissions/sub-1/summary",
     ]);
     expect(fetchMock.mock.calls[2]?.[1]).toMatchObject({ method: "POST", body: file });
-    expect(fetchMock.mock.calls[5]?.[1]?.headers).toMatchObject({ "X-Shown-Cap": "25" });
-    const rawAnswers = fetchMock.mock.calls[5]?.[1]?.body;
+    expect(fetchMock.mock.calls[6]?.[1]?.headers).toMatchObject({ "X-Shown-Cap": "25" });
+    const rawAnswers = fetchMock.mock.calls[6]?.[1]?.body;
     expect(typeof rawAnswers).toBe("string");
     const body = JSON.parse(rawAnswers as string) as unknown;
     expect(body).toEqual({
@@ -336,7 +337,7 @@ describe("connected run start", () => {
     expect(submit).toBeDisabled();
     approve();
     await confirmSynthetic(submit);
-    const rawSubmit = fetchMock.mock.calls[6]?.[1]?.body;
+    const rawSubmit = fetchMock.mock.calls[7]?.[1]?.body;
     expect(typeof rawSubmit).toBe("string");
     expect(JSON.parse(rawSubmit as string)).toEqual({
       answers: body,
@@ -390,6 +391,64 @@ describe("connected run start", () => {
       );
     },
   );
+
+  const refusedId = (id: string, holder: string) =>
+    `Issuer ID "${id}" is filed under the name "${holder}", not "Synthetic Générale". If that is this issuer under another name, type that name; otherwise use another Issuer ID.`;
+
+  it.each([
+    // The refused ID is the name's usual one: the suffixed ID is offered.
+    ["synthetic-generale", /^Use synthetic-generale-[0-9a-f]{8}$/],
+    // A typed ID that is not the usual one, the usual one being free: the usual ID is offered.
+    ["legacy-id", /^Use synthetic-generale$/],
+  ])(
+    "a refusal of Issuer ID %s at Submit clears the review and shows it on the field with its offer",
+    async (id, offerName) => {
+      const response = Response.json({ error: refusedId(id, "Other Co") }, { status: 400 });
+      testingFetch(plan, response);
+      const navigate = vi.fn();
+      render(<ConnectedApp path="/start" mode="synthetic" navigate={navigate} />);
+      await review();
+      const submit = await screen.findByRole("button", { name: "Submit run" });
+      approve();
+      await confirmSynthetic(submit);
+      expect(
+        await screen.findByText(
+          new RegExp(
+            `^Issuer ID ${id} is filed under the name "Other Co"\\. If that is this issuer`,
+          ),
+        ),
+      ).toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: "Submit run" })).toBeNull();
+      expect(screen.getByRole("heading", { name: "Documents" })).toBeInTheDocument();
+      expect(screen.getByLabelText("Issuer ID", { exact: true })).toHaveAttribute(
+        "aria-invalid",
+        "true",
+      );
+      expect(screen.getByRole("button", { name: offerName })).toBeInTheDocument();
+      expect(screen.queryByText(/different issuer/)).toBeNull();
+      expect(navigate).not.toHaveBeenCalled();
+    },
+  );
+
+  it("tells the reader on the review sheet why a suffixed Issuer ID was used, saying only what is known", async () => {
+    testingFetch(plan, undefined, {
+      "/api/issuers/synthetic-generale": {
+        latest_run: "r1",
+        runs: 1,
+        latest_as_of: "2026-01-01",
+        issuer_name: "Other Co",
+      },
+    });
+    render(<ConnectedApp path="/start" mode="synthetic" />);
+    await review();
+    await screen.findByRole("button", { name: "Submit run" });
+    expect(
+      screen.getByText(
+        /^Issuer ID synthetic-generale-[0-9a-f]{8} was used for this run because synthetic-generale is filed under the name "Other Co"\. If that is this issuer under another name, type that name\.$/,
+      ),
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/different issuer\./)).toBeNull();
+  });
 
   it("retries an uncertain submission with the same stored answers and digest", async () => {
     let attempts = 0;

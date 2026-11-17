@@ -1,0 +1,12 @@
+ok   1: Finance gets a suffixed ID  ["northbridge-synthetic-group-int-518e588e"]
+ok   1: the review sheet names the holder of the usual ID  ["nthetic Group International Finance plc Issuer ID northbridge-synthetic-group-int-518e588e As-of date 2025-06-30 Issue classification Not given Submitted by Ana L Documents read northbridge-credit-agreement.txt · credit agreement · executed · found 'Credit Agreement' on page 1 northbridge-filing.txt"]
+ok   2: Submit is not reached; the Issuer ID field shows the refusal  ["se date Issuer name Issuer ID Issuer ID northbridge-synthetic-group-internationa is filed under the name \"Northbridge Synthetic Group International Holdings Limited\". If that is this issuer under another name, type that name. Otherwise use eastmoor-synthetic-utilities-plc for Eastmoor Synthetic Utilities plc, or type another Issuer ID. Use eastmoor-synthetic-utilities-plc Letters a–z, digits and hyphens, up to 40 characters. As-of date "]
+ok   2: the name's usual ID is offered (it is free), not a suffixed one  [["Use eastmoor-synthetic-utilities-plc"]]
+ok   2: the field is marked invalid  [undefined]
+ok   2: taking the offer fills the field  ["eastmoor-synthetic-utilities-plc"]
+ok   2: the review sheet opens with the taken ID  ["eastmoor-synthetic-utilities-plc"]
+ok   3: carry over from latest run carries Finance run (not Holdings) under the suffixed ID  [{"idField":"northbridge-synthetic-group-int-518e588e","intro":"Issuer and case date Starting from run 20261117-150134-01. Review the copied answers, add dates, and inspect its available documents. It did not record which files you chose for the agreement and the portfolio workbook: choose them again on More context. Issuer name Issuer ID Letters a–z, digits and"}]
+ok   4: Submit is not reached; the Issuer ID field asks for an ID of the analyst's own  ["se date Issuer name Issuer ID Issuer ID northbridge-synthetic-group-internationa is filed under the name \"Northbridge Synthetic Group International Holdings Limited\". If that is this issuer under another name, type that name. Otherwise type an Issuer ID of your own for 中国银行. Letters a–z, digits and hyphens, up to 40 characters. As-of date Issue classification Choose classification Investment grade High yield Your name First name and ini"]
+ok   4: no ID is offered  [[]]
+R8 blocked requests: 0 
+console problems: 0; page errors: 0; failed: 0; http>=400: 0

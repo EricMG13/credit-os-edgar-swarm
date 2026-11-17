@@ -26,6 +26,7 @@ from typing import Any, BinaryIO, TypedDict
 
 from deploy_vii.contracts import PATHWAY_CAP_USD
 from deploy_workflow.context import load_context
+from deploy_workflow.inbox import runs
 from deploy_workflow.inbox.filing import safe_name
 from deploy_workflow.inbox.layout import MAX_ISSUER_ID, Layout
 from deploy_workflow.inbox.runs import EFFORTS, MODELS, config_for
@@ -617,6 +618,47 @@ def context_bytes(answers: Answers) -> bytes:
         raise Refused("the context holds text that cannot be stored (a lone surrogate)") from None
 
 
+def issuer_key(name: str) -> str:
+    """An issuer name reduced to the letters and digits that tell two issuers apart.
+
+    The page reduces a name the same way (``issuerKey`` in ``start/plain.ts``) and the two are
+    pinned by the same literal cases: NFKD, lower case, marks dropped, then only Unicode letters
+    and digits kept, so names in any script keep their own letters (and "ß" and "ø" stay, as no
+    decomposition removes them). Known limit: Python and Node carry different Unicode versions, so
+    about 37 recent characters are letters in one and not in the other; two names that differ
+    only in such a character may compare differently on the page and here. The service's answer
+    is the one that counts, and no table is kept to hide the difference."""
+    text = unicodedata.normalize("NFKD", name).lower()
+    return "".join(ch for ch in text if unicodedata.category(ch)[0] in "LN")
+
+
+def refuse_filed_elsewhere(layout: Layout, answers: Answers) -> None:
+    """``Refused`` when the Issuer ID is already filed under another issuer's name.
+
+    An ID is one issuer's. Runs record the name they were filed under; the ID is free when no run
+    holds it, or when any run under it carries this name (compared by ``issuer_key``) or no name,
+    so the same issuer keeps its ID, and an ID that two issuers already share (merged before this
+    check) still takes either of them. Otherwise the latest run's name is the holder named. An
+    unreadable record file is skipped, as `prior.issuer` skips it. Both the summary and
+    ``digest`` (which Submit compares with the approval) call this, so no route passes it by."""
+    identity = answers["context"].get("identity")
+    if not isinstance(identity, dict):
+        return
+    issuer_id, name = identity.get("issuer_id"), identity.get("issuer_name")
+    if not isinstance(issuer_id, str) or not isinstance(name, str):
+        return
+    held = [r for r in runs.load_readable(layout)[0] if r.issuer_id == issuer_id]
+    mine = issuer_key(name)
+    if not held or any(not r.issuer_name or issuer_key(r.issuer_name) == mine for r in held):
+        return
+    holder = max(held, key=lambda r: (r.as_of, r.id)).issuer_name
+    raise Refused(
+        f'Issuer ID "{issuer_id}" is filed under the name "{holder}", not "{name.strip()}". '
+        "If that is this issuer under another name, type that name; "
+        "otherwise use another Issuer ID."
+    )
+
+
 def _digest(root: Path, answers: Answers) -> str:
     files = []
     for rel in sorted(_stored(root, strict=True)):
@@ -655,6 +697,7 @@ def digest(layout: Layout, sid: str, answers: Answers) -> str:
     ``level`` and ``submitted_by`` are not covered: they change what the page shows, not the run.
     The approval's digest is this one with the earlier run named at approval folded in (`bound`)."""
     answers = validated(answers)
+    refuse_filed_elsewhere(layout, answers)
     root = files_folder(layout, sid)
     value = _digest(root, answers)
     if not root.is_dir():  # a seal renamed the folder before the walk: it saw nothing
@@ -791,6 +834,7 @@ def _summarise(layout: Layout, sid: str, answers: Answers) -> dict[str, Any]:
                     return {"error": _CHANGED}
                 run = load_context(context_bytes(answers))
                 refuse_deactivated(run.run.pathway)
+                refuse_filed_elsewhere(layout, answers)
                 cap = PATHWAY_CAP_USD[run.run.pathway]
                 if len(run.identity.issuer_id) > MAX_ISSUER_ID:
                     raise Refused(

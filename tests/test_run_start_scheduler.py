@@ -769,3 +769,53 @@ def test_a_full_queue_refuses_a_submission_before_sealing_it(root, fake_env, mon
     w.step()
     assert w.submit(sid, answers, digest).status == "queued"
     w.close()
+
+
+def test_an_id_filed_between_review_and_submit_is_refused_and_nothing_starts(root, fake_env):
+    fake_env({"sleep": 30})
+    answers = answers_for()
+    sid = upload(root)
+    d = approved(root, sid, answers)  # the page reviewed: "acme" was free for Acme Corp
+    runs.save(
+        layout(root),
+        Record(
+            "20261109-000009-01",
+            PATHWAY,
+            "Another Issuer plc",
+            "finished",
+            "t",
+            issuer_id="acme",
+            issuer_name="Another Issuer plc",
+            as_of="2026-11-08",
+        ),
+    )
+    w = Scheduler(settings(root))
+    with pytest.raises(Refused, match='filed under the name "Another Issuer plc"'):
+        w.submit(sid, answers, d)
+    assert [r.id for r in load_all(layout(root))] == ["20261109-000009-01"]
+    assert not list(layout(root).drops.iterdir())
+    assert (layout(root).uploads / sid / "files").is_dir()  # unsealed: the files are still open
+    w.close()
+
+
+def test_the_same_issuer_resubmitting_under_its_own_id_is_accepted(root, fake_env):
+    fake_env({"sleep": 30})
+    answers = answers_for()
+    layout(root).state.mkdir(parents=True, exist_ok=True)
+    runs.save(
+        layout(root),
+        Record(
+            "20261108-000001-01",
+            PATHWAY,
+            "Acme Corp",
+            "finished",
+            "t",
+            issuer_id="acme",
+            issuer_name="Acme Corp",
+            as_of="2026-11-08",
+        ),
+    )
+    sid = upload(root)
+    w = Scheduler(settings(root))
+    assert w.submit(sid, answers, approved(root, sid, answers)).status == "queued"
+    w.close()
