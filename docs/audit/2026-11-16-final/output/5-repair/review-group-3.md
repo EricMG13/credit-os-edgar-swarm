@@ -154,3 +154,30 @@ One entry per task: the reviewer was a fresh Sonnet agent at xhigh effort that d
   - S1-006's second clause ("Clear filters" is missing from output/0-baseline/clickables.jsonl) is an audit artifact outside group 3's files. It is passed to the lead.
   - Focusing the search field may raise the soft keyboard on a phone.
   - `querySelector` couples to the first input and button of FilterBar and FilterSelect. Both new tests would catch a change.
+
+## T40 (S5-002, S5-004, S5-005, S5-008)
+
+- Commit reviewed: 0b916a4. Verdict: PASS. Merged onto audit/repair-3.
+- Against the parent source the six new test files fail 18 of 20. The 2 that pass are the Ctrl-click and keyboard-focus cases, which hold either way.
+- Existing test changes:
+  - The unreadable-notice tests in RunPage, AnalysisPage, ForecastPage, PortfolioFitPage, LimitationsPage, StatementsSections and StatementsPage asserted the raw field path; they now assert the fixed sentence and no path.
+  - RunsIndexPage asserted the slug and run id.
+  - None was loosened, and no figure, period or unit was edited.
+- S5-004 behaviour (OQ-10), checked in Chromium:
+  - Enter or a click opens TraceDrawer in place, and the address, case choice and scroll stay as they were.
+  - Escape, Close and the backdrop return focus to the control. Tab stays inside the dialog.
+  - Ctrl, Shift and middle clicks follow the link.
+  - TraceDrawer.tsx is untouched.
+- S5-005: at 390 px the label column is 128 px and 132 px is left for figures. Widths of 640 px and up are identical to the parent.
+- S5-008: PressTip opens on tap and closes on a second tap, a tap elsewhere or Escape. Hover and keyboard behaviour are identical to the parent.
+- p-trace-nav.mjs exits 1 only at its final `page.goBack()`, because the page no longer navigates away. Its output before that shows the repaired state.
+- Gates the reviewer saw:
+  - build 0, lint 0, format:check 0, typecheck 0, unused 0.
+  - vitest: src/pages/model 22 files, 709 tests; App, Shell, worked-example, route-table, RunFrame and Signal 39 files, 775 tests. All exit 0 at the default timeout.
+  - Probes: p-noforecast 0, p-narrow-390 0, p-touch-tooltips 0.
+- Medium, passed to the lead, not sent back: the drawer is thin. It shows the item name, a fixed sentence, an "Item" row repeating the label, and Open in Evidence; on the static build Evidence also ends in "No such issuer" (S5-003, OQ-01). CM-008 (source, page, quote, calculation steps) needs trace content in the model slice: slice/read.ts, types.ts, fixtures/model.json and delivery. None of those is in T40's files, so no fresh implementer can repair it there.
+- Low:
+  - PressTip lives in StatementTable.tsx and MetricTile.tsx imports it, because of the file list.
+  - The StatementsPage case test leaves the drawer open and needs `hidden: true`. That is setup, not a weakening.
+  - The Unreadable sentence "The other financial models ... are not affected" can mislead when two runs are unreadable.
+  - Unreadable-slice tests now print one console.warn each.
