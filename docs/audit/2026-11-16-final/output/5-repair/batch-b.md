@@ -264,3 +264,5 @@ not on the Securities page of the connected build, and with whatever font that C
 `npm run build`, `test:file` or file-check, and no `params` entries were added for the new issuers'
 history or run routes, so the build's route visits do not reach them; the full vitest suite and the
 slow tests were not run; the two `readRecord.test.ts` assertions were not changed.
+
+Follow-up edit (owner, 2026-11-17: "update to $25"): `web/src/pages/library/readRecord.test.ts` lines 92-94 now pin "USD 11.40 of USD 25.00" and `max: 25`, and line 174 uses a spend of 26 as "above its cap" (all three are the Full run Halden 2026-09-30, cap USD 25); after it `vitest run src/pages/library src/pages/signal` exited 0 (61 files, 1503 tests) and `node --test web/scripts/fixture-data.test.mjs` exited 0 (12 tests).
