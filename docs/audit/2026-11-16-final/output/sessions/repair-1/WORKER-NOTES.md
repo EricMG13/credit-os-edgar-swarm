@@ -71,6 +71,12 @@ the controller so no two running tasks share them.
 A C1 probe reuses any service already answering at `C1_BASE`; make sure the one answering is
 your own worktree's (stop stale services you started: `pkill -f "proof.serve.*--port <port>"`).
 
+Fixed-port probes (J1 8761, J2 8762, J5 8765, C5 8735) may be wanted by two tasks at once, so
+always run them under a lock on the port, which queues you behind the other user:
+`timeout 900 flock /tmp/repair1-port-<port>.lock timeout 600 node <probe>`.
+The machine has 4 cores and up to 10 agents run at once (owner, 2026-11-17). A probe or test
+that times out under load is re-run once before it is read as a failure; say so in the report.
+
 ## Gates (stage 5 step 3, lead's note 5)
 
 - `web/` changes: `npm --prefix web run lint`, `npm --prefix web run format:check`,
