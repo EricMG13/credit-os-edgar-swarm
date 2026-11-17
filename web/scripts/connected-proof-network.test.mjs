@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { request } from "node:http";
 import { test } from "node:test";
-import { createOfflineProxy, installOfflineGuard, isLoopbackRequest } from "./connected-proof.mjs";
+import { createOfflineProxy, installOfflineGuard, isLoopbackRequest } from "./offline-network.mjs";
 
 test("offline proof accepts only local resource schemes and loopback hosts", () => {
   for (const url of [

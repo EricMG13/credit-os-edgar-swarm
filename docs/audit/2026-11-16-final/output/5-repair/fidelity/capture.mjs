@@ -48,9 +48,9 @@ if (!existsSync(path.join(web, "dist", "index.html"))) {
 }
 const require = createRequire(path.join(web, "package.json"));
 const { chromium } = require("playwright");
-// The reviewed proof module has an import-safe entry point; reuse its R8 guard.
+// Import only the pure guard module: an older proof script may run tests on import.
 const { createOfflineProxy, installOfflineGuard, isLoopbackRequest } = await import(
-  pathToFileURL(path.join(web, "scripts", "connected-proof.mjs")).href
+  pathToFileURL(path.join(web, "scripts", "offline-network.mjs")).href
 );
 
 const args = process.argv.slice(2);
@@ -60,6 +60,9 @@ const flag = (name) => {
 };
 const surfaceArg = flag("--surface") ?? "both";
 if (!["connected", "static", "both"].includes(surfaceArg)) throw new Error(`--surface ${surfaceArg}`);
+if (process.env.FID_ATTACH && !isLoopbackRequest(process.env.FID_ATTACH)) {
+  throw new Error("FID_ATTACH must be loopback");
+}
 if (args.length !== 1) throw new Error("Usage: capture.mjs <outDir> [--surface connected|static|both]");
 const outDir = path.resolve(args[0]);
 const PORT = Number(process.env.FID_PORT ?? 8851);
@@ -913,7 +916,11 @@ async function submitSyntheticRun(page, endpoint) {
   const open = page.getByRole("link", { name: "Open report", exact: true });
   const stopped = page.getByRole("status").filter({ hasText: /^(Failed|Capped|Rejected|Interrupted)$/u });
   await open.or(stopped).waitFor({ timeout: 90000 });
-  const state = await (await page.request.get(new URL(`/api/runs/${run}`, endpoint).href)).json();
+  const stateUrl = new URL(`/api/runs/${run}`, endpoint).href;
+  if (!isLoopbackRequest(stateUrl)) throw new Error("Run-state URL must be loopback");
+  const stateResponse = await page.request.get(stateUrl, { maxRedirects: 0 });
+  if (stateResponse.status() !== 200) throw new Error(`Run-state request failed: ${stateResponse.status()}`);
+  const state = await stateResponse.json();
   if (state.status !== "finished") throw new Error(`The synthetic run ended as ${state.status}: ${state.reason ?? ""}`);
   return run;
 }
@@ -923,7 +930,11 @@ async function submitSyntheticRun(page, endpoint) {
 // checkChangesTrace in web/scripts/connected-proof.mjs. This is a fixture injected in the browser, not a run.
 async function pairedSnapshot(endpoint, id) {
   const digest = (value) => sha256(value);
-  const snapshot = await (await fetch(new URL("/connected/snapshot", endpoint))).json();
+  const url = new URL("/connected/snapshot", endpoint);
+  if (!isLoopbackRequest(url.href)) throw new Error("Snapshot URL must be loopback");
+  const response = await fetch(url, { redirect: "error" });
+  if (response.status !== 200) throw new Error(`Snapshot request failed: ${response.status}`);
+  const snapshot = await response.json();
   const [key, current] = Object.entries(snapshot.workspace.runs).find(([, r]) => r.folder === id);
   const prior = {
     ...current,
@@ -1049,7 +1060,6 @@ async function captureConnected(browser) {
   let service = null;
   let root = null;
   let endpoint = process.env.FID_ATTACH ?? null;
-  if (endpoint && !isLoopbackRequest(endpoint)) throw new Error("FID_ATTACH must be loopback");
   let run = process.env.FID_RUN ?? null;
   const workers = await newWorkers(browser, CONCURRENCY);
   try {
