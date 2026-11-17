@@ -1,0 +1,150 @@
+
+ RUN  v4.1.12 /workspace/audit-final-web-consequences/web
+
+stderr | src/pages/connected/report/Forecast.recovery.test.tsx > keeps the full model qualification ledger once on Evidence Record, not on Forecast
+An update to ReportRecord inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ReportRecord inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ src/pages/connected/report/Forecast.recovery.test.tsx > keeps the full model qualification ledger once on Evidence Record, not on Forecast 1902ms
+ ✓ src/pages/connected/report/Forecast.recovery.test.tsx > states missing or ambiguous forecast trace loss while preserving published figures 487ms
+ ✓ src/pages/connected/report/Forecast.recovery.test.tsx > refuses a filename companion whose hash conflicts with retained model source identity 893ms
+ ✓ src/pages/connected/report/Forecast.recovery.test.tsx > keeps the exact legacy filename companion when no source identity was retained 710ms
+ ✓ src/pages/connected/report/Forecast.recovery.test.tsx > labels raw recorded monetary assumptions in their original currency and scale 134ms
+ ✓ src/pages/connected/report/Forecast.recovery.test.tsx > traces a trend to the actual figure and selected case instead of generic JSON 3312ms
+ ✓ src/pages/connected/report/Forecast.recovery.test.tsx > binds an Other forecast table row to its own case instead of the globally selected Base 1154ms
+ ✓ src/pages/connected/report/Forecast.recovery.test.tsx > selects retained own-downside driver paths for the main downside (shock: true) 1ms
+ ✓ src/pages/connected/report/Forecast.recovery.test.tsx > selects retained own-downside driver paths for the main downside (shock: false) 0ms
+ ✓ src/pages/connected/report/Forecast.recovery.test.tsx > preserves a retained historical stress explicitly recorded on base drivers 0ms
+ ✓ src/pages/connected/report/Forecast.recovery.test.tsx > retains the recorded facility fields behind debt, interest and cash figures 9ms
+stderr | src/pages/connected/report/Forecast.recovery.test.tsx > retains a cell qualification even when its calculation grid cannot be drawn
+An update to ReportRecord inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ReportRecord inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ src/pages/connected/report/Forecast.recovery.test.tsx > shows recorded drivers and the downside shock with a separate facilities notice 624ms
+ ✓ src/pages/connected/report/Forecast.recovery.test.tsx > retains a cell qualification even when its calculation grid cannot be drawn 331ms
+ ✓ src/pages/connected/report/Forecast.recovery.test.tsx > keeps the missing cash-proxy reason on its case card and explains its precision 641ms
+ ✓ src/pages/connected/report/Forecast.recovery.test.tsx > uses stored case names for descriptions and reader names for all column groups 2111ms
+ ✓ src/pages/connected/report/Forecast.recovery.test.tsx > names model choices by recorded cases and date, without builder mode jargon 626ms
+ ✓ src/pages/connected/report/Forecast.recovery.test.tsx > wraps recorded descriptions, model notes and qualifications at desktop widths 545ms
+ ✓ src/pages/connected/report/Forecast.reader-text.test.tsx > holds back the referencing chart gap reason Not established: see Filing p.12 for the trigger text (CP-4). as a stated gap 1352ms
+ ✓ src/pages/connected/report/Forecast.reader-text.test.tsx > holds back the referencing chart gap reason The 2027 to 2029 maturities are not stated; the company gives amounts for the next two years only (annual report p. 83), so the profile stops at 2026. as a stated gap 222ms
+ ✓ src/pages/connected/report/Forecast.reader-text.test.tsx > holds back the referencing chart gap reason Not established: see Filing page 12 for the trigger text. as a stated gap 120ms
+ ✓ src/pages/connected/report/Forecast.reader-text.test.tsx > holds back the referencing chart gap reason The trigger text is not stated in the summary; see the Filing, pages 12 to 14. as a stated gap 190ms
+ ✓ src/pages/connected/report/Forecast.reader-text.test.tsx > holds back the referencing chart gap reason The trigger text is cited only as pp. 12-14 of the Filing. as a stated gap 108ms
+ ✓ src/pages/connected/report/Forecast.reader-text.test.tsx > holds back the referencing chart gap reason Not established: the trigger is in NB-agreement.pdf. as a stated gap 122ms
+ ✓ src/pages/connected/report/Forecast.reader-text.test.tsx > holds back the referencing chart gap reason The trigger text is not stated; see p 12 of the Filing. as a stated gap 247ms
+ ✓ src/pages/connected/report/Forecast.reader-text.test.tsx > holds back the referencing chart gap reason The trigger text is cited only as pp 12 of the Filing. as a stated gap 287ms
+ ✓ src/pages/connected/report/Forecast.reader-text.test.tsx > holds back the referencing chart gap reason The trigger text is not stated; see pg. 12 of the Filing. as a stated gap 166ms
+ ✓ src/pages/connected/report/Forecast.reader-text.test.tsx > holds back the referencing chart gap reason The trigger text is cited at pg 12 of the Filing. as a stated gap 184ms
+ ✓ src/pages/connected/report/Forecast.reader-text.test.tsx > holds back the referencing chart gap reason The trigger text is not stated in the summary (p12). as a stated gap 146ms
+ ✓ src/pages/connected/report/Forecast.reader-text.test.tsx > holds back the referencing chart gap reason Page 7 of the Filing gives the trigger text. as a stated gap 75ms
+ ✓ src/pages/connected/report/Forecast.reader-text.test.tsx > holds back the referencing chart gap reason The maturities are in the annual report 2025 page 83, so the profile stops at 2026. as a stated gap 93ms
+ ✓ src/pages/connected/report/Forecast.reader-text.test.tsx > holds back the referencing chart gap reason The covenant is set out in the accounts at 31 December 2025 p. 12, not in the summary. as a stated gap 106ms
+ ✓ src/pages/connected/report/Forecast.reader-text.test.tsx > draws the chart gap reason Coverage fell 2 pp. 3 quarters in a row, so no trend is drawn. whole 87ms
+ ✓ src/pages/connected/report/Forecast.reader-text.test.tsx > draws the chart gap reason Margin rose 150bp, 1.5 pp. 2 years running; leverage of 3.2x at FY2025 is the only point. whole 61ms
+ ✓ src/pages/connected/report/Forecast.reader-text.test.tsx > draws the chart gap reason Coverage fell 1.5 pp, so no trend is drawn. whole 52ms
+ ✓ src/pages/connected/report/Forecast.reader-text.test.tsx > draws the chart gap reason Coverage fell 2 p.p. 3 quarters in a row; two pp. 3 quarters before that. whole 74ms
+ ✓ src/pages/connected/report/Forecast.reader-text.test.tsx > draws the chart gap reason Rated by S&P. 2025 outlook stable; cut by S&P. 3 notches since. whole 94ms
+ ✓ src/pages/connected/report/Forecast.reader-text.test.tsx > draws the chart gap reason The front page 2025 headline and the one-page 2026 outlook give no series. whole 93ms
+ ✓ src/pages/connected/report/Forecast.reader-text.test.tsx > draws the chart gap reason The homepage 2 years ago quoted 3% p.a. 5% later; app. 3 years of data. whole 90ms
+ ✓ src/pages/connected/report/Forecast.reader-text.test.tsx > draws the chart gap reason No headroom series before 2024 was supplied (CP-4). whole 86ms
+ ✓ src/pages/connected/report/Forecast.reader-text.test.tsx > holds back a withheld module's page-citing limitation and traces the figure to it 151ms
+ ✓ src/pages/connected/report/Forecast.reader-text.test.tsx > draws a withheld module's limitation whole when it cites no page 105ms
+ ✓ src/pages/connected/report/Forecast.reader-text.test.tsx > names a module by its name in a chart gap that cites no page 43ms
+ ✓ src/pages/connected/report/Forecast.reader-text.test.tsx > says why a chart was left out without describing the build 94ms
+ ✓ src/pages/connected/report/Forecast.reader-text.test.tsx > labels the way to the forward credit evidence by the model, not by a hand-over 119ms
+ ✓ src/pages/connected/visuals/LegacyForecast.axes.test.tsx > formats Caesars-scale axes without altering series or recorded table precision 197ms
+ ✓ src/pages/connected/visuals/LegacyForecast.axes.test.tsx > keeps zero and small signed axis values distinct 32ms
+ ✓ src/pages/connected/visuals/LegacyForecast.axes.test.tsx > starts a positive axis at zero rather than at the data minimum 53ms
+ ✓ src/pages/connected/visuals/LegacyForecast.axes.test.tsx > does not merge distinct ticks through display rounding 58ms
+ ✓ src/pages/connected/visuals/LegacyForecast.axes.test.tsx > omits chart captions when the handoff has no units 72ms
+ ✓ src/pages/connected/visuals/LegacyForecast.axes.test.tsx > labels every tick of 0.02 to 0.12 with the value it stands for 224ms
+ ✓ src/pages/connected/visuals/LegacyForecast.axes.test.tsx > labels every tick of 0.005 to 0.0125 with the value it stands for 304ms
+ ✓ src/pages/connected/visuals/LegacyForecast.axes.test.tsx > labels every tick of 1234.5 to 9876.5 with the value it stands for 43ms
+ ✓ src/pages/connected/visuals/LegacyForecast.axes.test.tsx > labels small forecast axes in plain decimals 163ms
+ ✓ src/pages/library/parts/MetricTile.yearChange.test.tsx > draws the year comparator, with the tone as a visible word and a shape on a tile that has one 403ms
+ ✓ src/pages/connected/linkStyle.test.ts > no page draws a link as blue underlined text 207ms
+ ✓ src/pages/connected/linkStyle.test.ts > pages draw links in link-gray, not the action blue link-color 49ms
+ ✓ src/pages/connected/visuals/LegacyForecast.test.tsx > offers the published Base and Downside cases with actual latest cash proxy values 15ms
+ ✓ src/pages/connected/visuals/LegacyForecast.test.tsx > labels absent units as not recorded in the case data and model 2385ms
+ ✓ src/pages/connected/visuals/LegacyForecast.test.tsx > applies the selected downside to forecast chart and model table 1641ms
+ ✓ src/pages/connected/visuals/LegacyForecast.test.tsx > draws every case on the cash proxy chart and table, emphasising the selected one 1134ms
+ ✓ src/pages/connected/visuals/LegacyForecast.test.tsx > draws all four scenarios, each named, with only the selected one emphasised 448ms
+ ✓ src/pages/connected/visuals/LegacyForecast.test.tsx > moves the emphasis when another case is selected 698ms
+ ✓ src/pages/connected/visuals/LegacyForecast.test.tsx > compares every case while the chart follows the selection, including zero and missing 1298ms
+ ✓ src/pages/connected/visuals/LegacyForecast.test.tsx > promotes exact scope qualifications and leaves source-bearing sentences out 314ms
+ ✓ src/pages/connected/visuals/LegacyForecast.test.tsx > does not invent missing qualifications or case descriptions 2ms
+ ✓ src/pages/connected/visuals/LegacyForecast.test.tsx > keeps all four recorded cases and puts scope before their selection 1403ms
+ ✓ src/pages/connected/visuals/LegacyForecast.test.tsx > retains other cases when the selected cash proxy is entirely missing 881ms
+ ✓ src/pages/connected/visuals/LegacyForecast.test.tsx > separates the name labels of scenarios that end close together 301ms
+ ✓ src/pages/connected/visuals/LegacyForecast.test.tsx > labels only the emphasised scenario's end value and keeps every scenario's name clear of it 394ms
+ ✓ src/pages/connected/report/Forecast.test.tsx > draws the designated run figure with a same-output trace even when no model was published 2606ms
+ ✓ src/pages/connected/report/Forecast.test.tsx > spells out a ratio chart caption while retaining its stored x unit 247ms
+ ✓ src/pages/connected/report/Forecast.test.tsx > shows the recorded build rejection and keeps its raw table in Evidence 56ms
+ ✓ src/pages/connected/report/Forecast.test.tsx > provides local section jumps only for visible Forecast content 447ms
+ ✓ src/pages/connected/report/Forecast.test.tsx > omits section jumps when those Forecast sections are not present 11ms
+ ✓ src/pages/connected/report/Forecast.basis.test.tsx > preserves the recorded bridge and its exact source lines 2301ms
+ ✓ src/pages/connected/report/Forecast.basis.test.tsx > preserves a zero-valued bridge 716ms
+ ✓ src/pages/connected/report/Forecast.basis.test.tsx > C4-013 labels Forecast case cards with the report's canonical money unit 648ms
+ ✓ src/pages/connected/report/Forecast.basis.test.tsx > retains the limitation but withholds an unsupported bridge: {"units":"EUR thousands"} 650ms
+ ✓ src/pages/connected/report/Forecast.basis.test.tsx > retains the limitation but withholds an unsupported bridge: {"units":""} 457ms
+ ✓ src/pages/connected/report/Forecast.basis.test.tsx > retains the limitation but withholds an unsupported bridge: {"original":"Not supplied"} 383ms
+ ✓ src/pages/connected/report/Forecast.basis.test.tsx > retains the limitation but withholds an unsupported bridge: {"difference":"6"} 802ms
+ ✓ src/pages/connected/report/Forecast.basis.test.tsx > retains the limitation but withholds an unsupported bridge: {"value":"NaN"} 499ms
+ ✓ src/pages/connected/report/Forecast.basis.test.tsx > retains the limitation but withholds an unsupported bridge: {"duplicate":true} 469ms
+ ✓ src/pages/connected/report/Forecast.basis.test.tsx > retains the limitation but withholds an unsupported bridge: {"omit":true} 481ms
+ ✓ src/pages/connected/report/Forecast.basis.test.tsx > links forecast inputs only to an unambiguous JSON block: {"sections":1,"blocks":1,"linked":true} 1157ms
+ ✓ src/pages/connected/report/Forecast.basis.test.tsx > links forecast inputs only to an unambiguous JSON block: {"sections":0,"blocks":1,"linked":false} 578ms
+ ✓ src/pages/connected/report/Forecast.basis.test.tsx > links forecast inputs only to an unambiguous JSON block: {"sections":2,"blocks":1,"linked":false} 363ms
+ ✓ src/pages/connected/report/Forecast.basis.test.tsx > links forecast inputs only to an unambiguous JSON block: {"sections":1,"blocks":0,"linked":false} 704ms
+ ✓ src/pages/connected/report/Forecast.basis.test.tsx > links forecast inputs only to an unambiguous JSON block: {"sections":1,"blocks":2,"linked":false} 542ms
+ ✓ src/pages/connected/report/Forecast.basis.test.tsx > shows the bridge of a model recorded in GBP millions with that unit 506ms
+ ✓ src/pages/connected/report/Forecast.basis.test.tsx > shows the bridge of a model recorded in CHF millions with that unit 740ms
+ ✓ src/pages/connected/report/Forecast.basis.test.tsx > shows the bridge of a model recorded in EUR millions with that unit 373ms
+ ✓ src/pages/connected/report/Forecast.basis.test.tsx > shows the bridge of a model recorded in USD millions with that unit 541ms
+ ✓ src/pages/connected/visuals/LegacyForecast.finalAuditUnits.test.tsx > uses the same canonical money unit on the model header and every forecast chart 2223ms
+ ✓ src/pages/connected/visuals/LegacyForecast.reader-text.test.tsx > draws the model notes, limitations and case group by module name, with no module code 965ms
+ ✓ src/pages/library/parts/MetricTile.traced.test.tsx > draws the missing-trace marker on a tile with no trace by default 1020ms
+ ✓ src/pages/library/parts/MetricTile.traced.test.tsx > draws no trace control and no marker when traced is false, as on the Evidence page 43ms
+
+ Test Files  11 passed (11)
+      Tests  97 passed (97)
+   Start at  21:34:11
+   Duration  142.18s (transform 4.07s, setup 3.93s, import 55.75s, tests 51.34s, environment 23.96s)
+
