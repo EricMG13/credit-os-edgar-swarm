@@ -129,9 +129,9 @@ describe("Evidence, Record", () => {
 
   it("draws the spend as the bar with the delivered text, and the delivered sentence", () => {
     renderRecord(FULL);
-    const bar = screen.getByRole("progressbar", { name: "USD 11.40 of USD 20.00" });
+    const bar = screen.getByRole("progressbar", { name: "USD 11.40 of USD 25.00" });
     expect(bar).toHaveAttribute("aria-valuenow", "11.4");
-    expect(bar).toHaveAttribute("aria-valuemax", "20");
+    expect(bar).toHaveAttribute("aria-valuemax", "25");
     expect(
       screen.getByText(
         "The run finished inside its cap. Spend by module is in the model calls register below.",

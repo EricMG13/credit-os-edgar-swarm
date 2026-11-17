@@ -1898,7 +1898,7 @@
                 },
                 "spend": {
                   "title": "Spend against the cap",
-                  "progress": { "text": "USD 11.40 of USD 20.00", "value": 11.4, "max": 20 },
+                  "progress": { "text": "USD 11.40 of USD 25.00", "value": 11.4, "max": 25 },
                   "note": "The run finished inside its cap. Spend by module is in the model calls register below."
                 },
                 "calls": {
@@ -4634,7 +4634,7 @@
                 },
                 "spend": {
                   "title": "Spend against the cap",
-                  "progress": { "text": "USD 9.80 of USD 20.00", "value": 9.8, "max": 20 },
+                  "progress": { "text": "USD 9.80 of USD 25.00", "value": 9.8, "max": 25 },
                   "note": "The run finished inside its cap. Four modules did not run, so their calls are not listed."
                 },
                 "calls": {
@@ -5572,7 +5572,7 @@
                 },
                 "spend": {
                   "title": "Spend against the cap",
-                  "progress": { "text": "USD 10.25 of USD 20.00", "value": 10.25, "max": 20 },
+                  "progress": { "text": "USD 10.25 of USD 25.00", "value": 10.25, "max": 25 },
                   "note": "The run finished inside its cap. Spend by module is in the model calls register below."
                 },
                 "calls": {
@@ -6145,7 +6145,7 @@
                 },
                 "spend": {
                   "title": "Spend against the cap",
-                  "progress": { "text": "USD 10.25 of USD 20.00", "value": 10.25, "max": 20 },
+                  "progress": { "text": "USD 10.25 of USD 25.00", "value": 10.25, "max": 25 },
                   "note": "The run finished inside its cap. Spend by module is in the model calls register below."
                 },
                 "calls": {
