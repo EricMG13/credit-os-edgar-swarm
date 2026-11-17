@@ -18,7 +18,7 @@ pending.
 | Whole build, raw and gzip | 3,414,790 and 1,223,473 | 3,561,819 and 1,271,125 across 36 files |
 | ReportLibrary chunk, raw and gzip | 660,688 and 193,989 | 693,313 and 205,033 |
 | Frontend test selection and line coverage | 3,950 tests in 173 files, 96.59% | 5,259 tests in 308 files, 97.69%, two stage 5 failures |
-| Synthetic report render timing | No comparable isolated timing recorded | Repeated cold route samples in progress |
+| Synthetic report render timing | No comparable isolated timing recorded | Forecast was slowest at a 4.733 s median across three cold-context samples |
 
 The web numbers use the pinned jscpd 5.4.1 gate with the existing include
 scope and threshold. Python uses the same installed detector on the sweep
@@ -36,6 +36,13 @@ The retained frontend run's slowest file, `ConnectedApp.test.tsx`, took
 129.529 seconds. The eight shards took 610.131 seconds wall time and 1,013.375
 seconds in aggregate. Host load and the different test selections limit
 timing comparisons.
+
+Native Chrome sampled 26 synthetic report routes three times each, from
+navigation through the expected heading and two animation frames. The
+application made zero outside requests. The local denial proxy denied 418
+browser background requests. Variable host load limits the timing to a
+starting measurement. The [measurement procedure](evidence/before/summary.md)
+and saved samples support repetition against the accepted repair tip.
 
 The stored stage 0 unused and duplication results used Node 22 and a smaller
 source tree. Its bundle sizes, source lines and suppression counts in the
