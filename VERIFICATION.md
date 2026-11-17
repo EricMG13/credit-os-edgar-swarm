@@ -33,8 +33,8 @@ reviewed.
      proof's name line is on `main` since `951bcda0`; `finance.yahoo.com` is a separate PR. Gates
      on the branch: 550 targeted tests (submissions, service, React frontend, web lookup) and 486
      in the related start-page and lookup files passed, quality gate 0 findings, `web` typecheck,
-     lint, prettier and vitest (3,917) exit 0 on Node 22; browser-marked tests and the connected
-     proof are run on the branch after the PR opens.
+     lint, prettier and vitest (3,917) exit 0 on Node 22; one independent review: pass with Lows,
+     none High or Medium. Browser-marked tests and the connected proof run after the PR opens.
 - Live run: 18 of 20 modules accepted, then **stopped at the cap** before CP-5 (USD 35.62 settled;
   the next call's hold would pass USD 40). No module failed; 11 drafts were sent back once and
   corrected on the next write (page locators in prose, figures not backed by tables, unit-less
