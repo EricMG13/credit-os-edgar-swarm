@@ -323,3 +323,66 @@ lead's separately assigned R4-012 repair; runtime
 metadata, contract/docs and T22 integration; group 2 PR/actual-final acceptance;
 complete combined gates, connected proof and browser fidelity; full
 Python/weekly/Windows CI; provider/live/Submit/Teams.
+
+## Phase 4: reviewed runtime metadata and actual engine identity
+
+The lead gave explicit GO after the separate coordination-docs milestone
+`3a19962a` on `audit/final-coordination` was committed and pushed. This candidate
+remains local-only. The fresh independent runtime follow-up review accepts
+`76d57bc6`, with zero remaining High/Medium/Low runtime findings, 88 tests,
+the actual fourteen-response/hash synthetic proof, and a clean default Python
+gate. Its full report is retained on coordination at
+`output/5-repair/reviews/runtime-contract-review.md`.
+
+| Runtime own source commit | Candidate commit |
+| :--- | :--- |
+| Backend `1f05c06e` | `5f5f093f` |
+| Frontend `30a522e9` | `761df468` |
+| Report `e825f90f` | `bd7d3b22` |
+| R4-011 identity fix/test/report `76d57bc6` | `ff93a150` |
+
+All four cherry-picks were clean; no conflict resolution or new test expectation
+was needed. Record's approved-limit reader wording, prior delivery fields and
+T18's separate Evidence qualification handling remain intact. The sole incoming
+existing assertion change is explicitly documented by C5-033 in the runtime
+report: the Record region-name list adds `Response provenance` while retaining
+both exact named module call tables. The R4-011 fixture changes the fabricated
+same-ID pair to the actual analytical identity and adds its actual engine pin;
+it retains the source/request/acceptance rejection checks.
+
+Signal source search found no caller/import of `connected/api`, RunProgress,
+RuntimeMetadata or `run_metadata` in the protected Signal directories. They have
+no changes, and the immediately preceding combined candidate's 630 Signal tests
+passed; no unrelated duplicate Signal suite is counted as a new runtime run.
+No prompts, methods, calculations, module-written handoffs, proof handoffs,
+Teams code or package/configuration changed in this phase. This task adds only
+the reviewed metadata adapter/display and its exact identity repair.
+
+| Phase 4 check | Exit/result |
+| :--- | :--- |
+| Runtime Python metadata/identity/library/run-activity callers | Recovered complete output: 88 passed in 16.69 seconds |
+| Explicit RuntimeMetadata, Record/Record.finalAudit, runStates, runFigures/runFigures.finalAudit and shellFinalAudit callers | 0; seven files / 82 tests passed |
+| Full frontend lint/format/typecheck | Recovered complete output: no ESLint or TypeScript errors; all matched files formatted |
+| Default main-based Python quality gate | Recovered complete JSON: 38 files / 4,176 scoped lines, zero findings |
+| Protected paths, Signal caller search and `git diff --check` | No phase changes/callers; whitespace exit 0 |
+
+The same uv/PYTHONPATH, 300-second bound and one-worker Vitest rules apply.
+The environment restart preserved all six original logs with successful terminal
+output, but not the original tool exit records. The restored frontend log reports
+seven files / 60 tests without naming its files. Only that missing caller-scope
+evidence was rerun, using the explicit seven-file list above and retaining exit 0
+and the exact command in `integrate-stage5-runtime-web-explicit.json`; the older
+60-test result is not counted as a second verification set. The other completed
+checks were not repeated. The available executable is
+`/workspace/audit-tooling/bin/uv`, verified as exactly uv 0.12.5.
+Evidence logs use `/workspace/scratch/integrate-stage5-runtime-*`. Integration
+does not add a new function beyond the reviewed sources and makes no paid/live,
+seat, real Submit, Teams or external-app call. Named review/tournament tools
+remain unavailable; the source workers' direct doubt tracing/simplification and
+fresh review are retained, while final combined confidence/fidelity belong to
+the lead.
+
+Not verified: the original interrupted calls' tool exit records; R4-012's five untouched failures;
+contract/docs R4-014 and T22 R4-013 repairs/reviews/integration; group 2 PR/CI and
+actual-final promotion; full combined gates/proof/fidelity, Windows/weekly/full
+Python and provider/live/Submit/Teams behavior.
