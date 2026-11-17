@@ -4,6 +4,25 @@ Keep one running record here. A pass applies only to the stated scope. Earlier v
 engine is in [EricMG13/final-workflow](https://github.com/EricMG13/final-workflow)'s
 `VERIFICATION.md`, which also keeps the retained runs this copy leaves out.
 
+## 2026-11-17 final audit presentation fidelity
+
+On repair tree `bb94ddce`, rebuilt both surfaces and captured connected
+synthetic Northbridge and the static fixture with native Chrome 157.0.8103.78
+at 1440 by 900. Both captures exited 0. Checked 267 distinct screens
+(29 connected, 238 static), 654 sourced drawers, 419 explicit missing-source
+markers and zero coverage gaps, trace errors or outside application-context
+attempts. The immutable comparator and baseline matched 126 stored hashes.
+Its 28 self-test cases passed. The full comparison covered 7,761 entries.
+The unmodified diff exited 1, reporting seven new differences, fourteen
+omissions and 352 not-found items. Each is explained in
+`docs/audit/2026-11-16-final/output/5-repair/fidelity/after-report.md`
+and the item readbacks, including scoped event counts, retained drawer basis
+and inputs, static sample notices and unchanged call totals. Static had no
+difference flags. Browser background proxy denials are counted separately.
+This evidence covers values, units, periods, source statements and
+qualifications in the captured screens. Other browsers, CSS presentation,
+remaining controls, work-PC and real-run behavior were outside this check.
+
 ## 2026-11-17 — Final audit T18 Forecast recovery (audit/repair-2)
 
 - Scope: optional contextual Forecast traces; exact model qualification ledger on Evidence Record;
@@ -966,18 +985,3 @@ Scope: presentation only, all under `web/`; no backend, handoff, provider or mod
   `8c2c14f4448697e51529a98cdd424b233417bce799aab95b998e94539b4176c6`.
   Clean macOS extraction passed Chrome (`20261115-165617-01`) and Edge
   (`20261115-165625-01`). Windows work-PC proof and publication are pending.
-
-## 2026-11-15 — Downside break points and narrow report layout
-
-- Retained Caesars showed the first break at 17.86% EBITDA decline with
-  interest held and 15.55% under the recorded cash-interest shock. Both
-  browsers verified the analyst-watch qualification, unresolved break
-  values, six leading and two lagging flags, and the original calculation.
-- Confidence review checked share spelling, zero, reversed rank, unknown
-  values, source focus, and the table header's containing block. Both
-  macOS browsers saw all five report routes at 390 px. Focused web (940)
-  and Python (15) tests, quality, lint, format and build passed.
-- Candidate `ecef6fc` SHA-256
-  `affdcadd30fece8505fabe1fc32412ce83ebc8dead650fe8f33724dd130fcaf1`.
-  Clean macOS extraction passed Chrome (`20261115-164826-01`) and Edge
-  (`20261115-164833-01`). Windows work-PC proof and publication are pending.

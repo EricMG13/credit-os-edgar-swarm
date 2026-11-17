@@ -1,0 +1,92 @@
+{
+  "screen": {"id":"library--ardenne-cable--2026-03-31--modules--business-profile","surface":"static","address":"/library/ardenne-cable/2026-03-31/modules/business-profile","extra":false,"variant":null},
+  "page": {"title":"Modules — Business profile — Ardenne Cable — As of 31 Mar 2026 — Credit OS","headings":["Ardenne Cable","Business profile","Pricing offsets the loss of subscribers.","Key findings","Limitations 1"]},
+  "counts": {"textRuns":36,"figures":3,"figuresByKind":{"card":3},"tableViewFigures":0,"chartTableViews":0,"tables":0,"tableRows":0,"sourceLines":0,"drawerLines":0,"limitationSentences":3,"marks":6,"images":0,"traceControls":3,"traceDrawers":0,"traceUnavailable":3,"traceErrors":0,"coverageGap":0},
+  "expandedDisclosures": 0,
+  "outline": [
+    {"section":"","kind":"text","text":"Design reference with sample data"},
+    {"section":"","kind":"text","text":"This page shows a saved example. Its names and figures are samples, and it is not connected to the run service, so nothing here starts a run or spends money."},
+    {"section":"","kind":"link","text":"Library"},
+    {"section":"Ardenne Cable","kind":"heading","text":"Ardenne Cable"},
+    {"section":"Ardenne Cable","kind":"text","text":"As of 31 Mar 2026"},
+    {"section":"Ardenne Cable","kind":"text","text":"Full review"},
+    {"section":"Ardenne Cable","kind":"text","text":"Finished"},
+    {"section":"Ardenne Cable","kind":"text","text":"Show sources"},
+    {"section":"Ardenne Cable","kind":"link","text":"Report history"},
+    {"section":"Ardenne Cable","kind":"link","text":"New run"},
+    {"section":"Ardenne Cable","kind":"link","text":"Overview"},
+    {"section":"Ardenne Cable","kind":"link","text":"Changes"},
+    {"section":"Ardenne Cable","kind":"link","text":"Modules"},
+    {"section":"Ardenne Cable","kind":"link","text":"2"},
+    {"section":"Ardenne Cable","kind":"text","text":"Forecast"},
+    {"section":"Ardenne Cable","kind":"text","text":"No forecast for this run"},
+    {"section":"Ardenne Cable","kind":"link","text":"Evidence"},
+    {"section":"Ardenne Cable","kind":"text","text":"On this page"},
+    {"section":"Ardenne Cable","kind":"control","text":"Bottom line"},
+    {"section":"Ardenne Cable","kind":"control","text":"Key findings"},
+    {"section":"Ardenne Cable","kind":"control","text":"Limitations"},
+    {"section":"Ardenne Cable","kind":"text","text":"Modules in this run"},
+    {"section":"Ardenne Cable","kind":"link","text":"Business profile"},
+    {"section":"Ardenne Cable","kind":"link","text":"Source readiness"},
+    {"section":"Ardenne Cable > Business profile","kind":"heading","text":"Business profile"},
+    {"section":"Ardenne Cable > Business profile","kind":"text","text":"Delivered"},
+    {"section":"Ardenne Cable > Business profile","kind":"text","text":"Bottom line"},
+    {"section":"Ardenne Cable > Business profile > Pricing offsets the loss of subscribers.","kind":"heading","text":"Pricing offsets the loss of subscribers."},
+    {"section":"Ardenne Cable > Business profile > Pricing offsets the loss of subscribers.","kind":"paragraph","text":"Broadband subscribers fell over the year, and price rises on the remaining base covered the loss of revenue."},
+    {"section":"Ardenne Cable > Business profile > Key findings","kind":"heading","text":"Key findings"},
+    {"section":"Ardenne Cable > Business profile > Key findings","kind":"item","text":"01"},
+    {"section":"Ardenne Cable > Business profile > Key findings","kind":"item","text":"Pricing carries revenue"},
+    {"section":"Ardenne Cable > Business profile > Key findings","kind":"item","text":"Revenue per subscriber rose by more than subscriber numbers fell."},
+    {"section":"Ardenne Cable > Business profile > Limitations 1","kind":"heading","text":"Limitations 1"},
+    {"section":"Ardenne Cable > Business profile > Limitations 1","kind":"link","text":"See this module’s gaps in Evidence"},
+    {"section":"Ardenne Cable > Business profile > Limitations 1","kind":"item","text":"Churn comes from management presentations."}
+  ],
+  "tables": [],
+  "figures": [
+    {"kind":"card","text":"As of 31 Mar 2026","tokens":["31","2026"],"section":"Ardenne Cable","label":"Full review","period":"As of 31 Mar 2026","unit":null,"basis":null,"beside":"As of 31 Mar 2026 | Full review | Finished"},
+    {"kind":"card","text":"2","tokens":["2"],"section":"Ardenne Cable","label":"Modules","period":null,"unit":null,"basis":null,"beside":"Modules | 2"},
+    {"kind":"card","text":"01","tokens":["01"],"section":"Ardenne Cable > Business profile > Key findings","label":"Pricing carries revenue","period":null,"unit":null,"basis":null,"beside":"01 | Pricing carries revenue | Revenue per subscriber rose by more than subscriber numbers fell."}
+  ],
+  "sources": [],
+  "limitations": [
+    {"via":"text","section":"","text":"This page shows a saved example. Its names and figures are samples, and it is not connected to the run service, so nothing here starts a run or spends money."},
+    {"via":"section","section":"Ardenne Cable > Business profile > Limitations 1","text":"See this module’s gaps in Evidence"},
+    {"via":"section","section":"Ardenne Cable > Business profile > Limitations 1","text":"Churn comes from management presentations."}
+  ],
+  "marks": [
+    {"in":null,"tag":"div","attrs":{"data-input-wrapper":"true","data-input-size":"md"}},
+    {"in":null,"tag":"span","attrs":{"data-module-name":"true"},"text":"Business profile"},
+    {"in":null,"tag":"span","attrs":{"data-module-name":"true"},"text":"Source readiness"},
+    {"in":null,"tag":"div","attrs":{"data-section":"bottom-line"},"text":"Bottom linePricing offsets the loss of subscribers.Broadband subscribers fell ov"},
+    {"in":null,"tag":"div","attrs":{"data-section":"findings"},"text":"Key findings01Pricing carries revenueRevenue per subscriber rose by more than su"},
+    {"in":null,"tag":"div","attrs":{"data-section":"limitations"},"text":"Limitations1See this module’s gaps in EvidenceChurn comes from management presen"}
+  ],
+  "controls": [
+    {"role":"switch","name":"Show sources","checked":false,"selected":null,"pressed":null},
+    {"role":"select","name":"Business profileSource readiness","value":"Business profile","options":[" ","Business profile","Source readiness"]},
+    {"role":"select","name":"Bottom lineKey findingsLimitations","value":"Bottom line","options":[" ","Bottom line","Key findings","Limitations"]}
+  ],
+  "links": [
+    {"text":"Library","href":"#/library/home"},
+    {"text":"Report history","href":"#/library/ardenne-cable/history"},
+    {"text":"New run","href":"#/run/start"},
+    {"text":"Overview","href":"#/library/ardenne-cable/2026-03-31/overview"},
+    {"text":"Changes","href":"#/library/ardenne-cable/2026-03-31/changes"},
+    {"text":"Modules 2","href":"#/library/ardenne-cable/2026-03-31/modules/business-profile"},
+    {"text":"Evidence","href":"#/library/ardenne-cable/2026-03-31/evidence/summary"},
+    {"text":"Business profile","href":"#/library/ardenne-cable/2026-03-31/modules/business-profile"},
+    {"text":"Source readiness","href":"#/library/ardenne-cable/2026-03-31/modules/source-readiness"},
+    {"text":"See this module’s gaps in Evidence","href":"#/library/ardenne-cable/2026-03-31/evidence/gaps"}
+  ],
+  "images": [],
+  "screenReaderOnly": [],
+  "coverage": {"innerText":5,"captured":5,"optionsNotDrawn":0,"selected":0,"typed":0,"screenReaderOnly":0},
+  "chartTableViews": [],
+  "sourceDrawers": [],
+  "unavailableSourceControls": [
+    {"n":1,"control":"Show sources for the bottom line: no source recorded","ariaDisabled":"true","disabled":false,"tooltip":"No source recorded","opensDialog":false},
+    {"n":2,"control":"Show sources for this finding: no source recorded","ariaDisabled":"true","disabled":false,"tooltip":"No source recorded","opensDialog":false},
+    {"n":3,"control":"Show sources for this limitation: no source recorded","ariaDisabled":"true","disabled":false,"tooltip":"No source recorded","opensDialog":false}
+  ],
+  "sourceControlErrors": []
+}

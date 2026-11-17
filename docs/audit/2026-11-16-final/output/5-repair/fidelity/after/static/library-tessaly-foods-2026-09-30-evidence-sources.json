@@ -1,0 +1,94 @@
+{
+  "screen": {"id":"library--tessaly-foods--2026-09-30--evidence--sources","surface":"static","address":"/library/tessaly-foods/2026-09-30/evidence/sources","extra":false,"variant":null},
+  "page": {"title":"Evidence — Sources — Tessaly Foods — As of 30 Sep 2026 — Credit OS","headings":["Tessaly Foods","Evidence"]},
+  "counts": {"textRuns":38,"figures":10,"figuresByKind":{"card":10},"tableViewFigures":0,"chartTableViews":0,"tables":0,"tableRows":0,"sourceLines":1,"drawerLines":0,"limitationSentences":1,"marks":0,"images":1,"traceControls":0,"traceDrawers":0,"traceUnavailable":0,"traceErrors":0,"coverageGap":0},
+  "expandedDisclosures": 0,
+  "outline": [
+    {"section":"","kind":"text","text":"Design reference with sample data"},
+    {"section":"","kind":"text","text":"This page shows a saved example. Its names and figures are samples, and it is not connected to the run service, so nothing here starts a run or spends money."},
+    {"section":"","kind":"link","text":"Library"},
+    {"section":"Tessaly Foods","kind":"heading","text":"Tessaly Foods"},
+    {"section":"Tessaly Foods","kind":"text","text":"As of 30 Sep 2026"},
+    {"section":"Tessaly Foods","kind":"text","text":"Monitoring update"},
+    {"section":"Tessaly Foods","kind":"text","text":"Finished"},
+    {"section":"Tessaly Foods","kind":"link","text":"Report history"},
+    {"section":"Tessaly Foods","kind":"link","text":"New run"},
+    {"section":"Tessaly Foods","kind":"link","text":"Overview"},
+    {"section":"Tessaly Foods","kind":"link","text":"Changes"},
+    {"section":"Tessaly Foods","kind":"link","text":"Modules"},
+    {"section":"Tessaly Foods","kind":"link","text":"2"},
+    {"section":"Tessaly Foods","kind":"text","text":"Forecast"},
+    {"section":"Tessaly Foods","kind":"text","text":"No forecast for this run"},
+    {"section":"Tessaly Foods","kind":"link","text":"Evidence"},
+    {"section":"Tessaly Foods > Evidence","kind":"heading","text":"Evidence"},
+    {"section":"Tessaly Foods > Evidence","kind":"paragraph","text":"Where every figure and claim in this run comes from."},
+    {"section":"Tessaly Foods > Evidence","kind":"control","text":"Module: All"},
+    {"section":"Tessaly Foods > Evidence","kind":"select","text":"All"},
+    {"section":"Tessaly Foods > Evidence","kind":"control","text":"Jump to an item"},
+    {"section":"Tessaly Foods > Evidence","kind":"control","text":"Ctrl K"},
+    {"section":"Tessaly Foods > Evidence","kind":"link","text":"Summary"},
+    {"section":"Tessaly Foods > Evidence","kind":"link","text":"Trace"},
+    {"section":"Tessaly Foods > Evidence","kind":"link","text":"0"},
+    {"section":"Tessaly Foods > Evidence","kind":"link","text":"Sources"},
+    {"section":"Tessaly Foods > Evidence","kind":"link","text":"1"},
+    {"section":"Tessaly Foods > Evidence","kind":"link","text":"Gaps"},
+    {"section":"Tessaly Foods > Evidence","kind":"link","text":"1"},
+    {"section":"Tessaly Foods > Evidence","kind":"link","text":"Record"},
+    {"section":"Tessaly Foods > Evidence","kind":"item","text":"PDF"},
+    {"section":"Tessaly Foods > Evidence","kind":"item","text":"quarterly-report-q3-2026.pdf"},
+    {"section":"Tessaly Foods > Evidence","kind":"item","text":"1.8 MB · 32 pages"},
+    {"section":"Tessaly Foods > Evidence","kind":"item","text":"Read in full"},
+    {"section":"Tessaly Foods > Evidence","kind":"item","text":"Read by 1 module"},
+    {"section":"Tessaly Foods > Evidence","kind":"item","text":"BP"},
+    {"section":"Tessaly Foods > Evidence","kind":"item","text":"SHA-256"},
+    {"section":"Tessaly Foods > Evidence","kind":"item","text":"24a81eb9e52249f77447098ad5796847bbb41140654909de4f8f2434aacc697b"}
+  ],
+  "tables": [],
+  "figures": [
+    {"kind":"card","text":"As of 30 Sep 2026","tokens":["30","2026"],"section":"Tessaly Foods","label":"Monitoring update","period":"As of 30 Sep 2026","unit":null,"basis":null,"beside":"As of 30 Sep 2026 | Monitoring update | Finished"},
+    {"kind":"card","text":"2","tokens":["2"],"section":"Tessaly Foods","label":"Modules","period":null,"unit":null,"basis":null,"beside":"Modules | 2"},
+    {"kind":"card","text":"0","tokens":["0"],"section":"Tessaly Foods > Evidence","label":"Trace","period":null,"unit":null,"basis":null,"beside":"Trace | 0"},
+    {"kind":"card","text":"1","tokens":["1"],"section":"Tessaly Foods > Evidence","label":"Sources","period":null,"unit":null,"basis":null,"beside":"Sources | 1"},
+    {"kind":"card","text":"1","tokens":["1"],"section":"Tessaly Foods > Evidence","label":"Gaps","period":null,"unit":null,"basis":null,"beside":"Gaps | 1"},
+    {"kind":"card","text":"quarterly-report-q3-2026.pdf","tokens":["3","-2026"],"section":"Tessaly Foods > Evidence","label":"Read in full","period":null,"unit":null,"basis":null,"beside":"quarterly-report-q3-2026.pdf | 1.8 MB · 32 pages | Read in full"},
+    {"kind":"card","text":"1.8 MB · 32 pages","tokens":["1.8","32"],"section":"Tessaly Foods > Evidence","label":"Read in full","period":"quarterly-report-q3-2026.pdf","unit":null,"basis":null,"beside":"quarterly-report-q3-2026.pdf | 1.8 MB · 32 pages | Read in full"},
+    {"kind":"card","text":"Read by 1 module","tokens":["1"],"section":"Tessaly Foods > Evidence","label":"BP","period":null,"unit":null,"basis":null,"beside":"Read by 1 module | BP"},
+    {"kind":"card","text":"SHA-256","tokens":["-256"],"section":"Tessaly Foods > Evidence","label":null,"period":null,"unit":null,"basis":null,"beside":"SHA-256 | 24a81eb9e52249f77447098ad5796847bbb41140654909de4f8f2434aacc697b"},
+    {"kind":"card","text":"24a81eb9e52249f77447098ad5796847bbb41140654909de4f8f2434aacc697b","tokens":["24","81","9","52249","77447098","5796847","41140654909","4","8","2434","697"],"section":"Tessaly Foods > Evidence","label":null,"period":null,"unit":null,"basis":null,"beside":"SHA-256 | 24a81eb9e52249f77447098ad5796847bbb41140654909de4f8f2434aacc697b"}
+  ],
+  "sources": [
+    {"via":"text","section":"Tessaly Foods > Evidence","text":"quarterly-report-q3-2026.pdf"}
+  ],
+  "limitations": [
+    {"via":"text","section":"","text":"This page shows a saved example. Its names and figures are samples, and it is not connected to the run service, so nothing here starts a run or spends money."}
+  ],
+  "marks": [],
+  "controls": [
+    {"role":"select","name":"All Business profile Source readiness","value":"All","options":[" ","All","Business profile","Source readiness"]}
+  ],
+  "links": [
+    {"text":"Library","href":"#/library/home"},
+    {"text":"Report history","href":"#/library/tessaly-foods/history"},
+    {"text":"New run","href":"#/run/start"},
+    {"text":"Overview","href":"#/library/tessaly-foods/2026-09-30/overview"},
+    {"text":"Changes","href":"#/library/tessaly-foods/2026-09-30/changes"},
+    {"text":"Modules 2","href":"#/library/tessaly-foods/2026-09-30/modules/business-profile"},
+    {"text":"Evidence","href":"#/library/tessaly-foods/2026-09-30/evidence/summary"},
+    {"text":"Summary","href":"#/library/tessaly-foods/2026-09-30/evidence/summary"},
+    {"text":"Trace 0","href":"#/library/tessaly-foods/2026-09-30/evidence/trace"},
+    {"text":"Sources 1","href":"#/library/tessaly-foods/2026-09-30/evidence/sources"},
+    {"text":"Gaps 1","href":"#/library/tessaly-foods/2026-09-30/evidence/gaps"},
+    {"text":"Record","href":"#/library/tessaly-foods/2026-09-30/evidence/record"}
+  ],
+  "images": [
+    {"name":"Business profile","in":"Evidence"}
+  ],
+  "screenReaderOnly": [
+    "Source files"
+  ],
+  "coverage": {"innerText":23,"captured":23,"optionsNotDrawn":0,"selected":0,"typed":0,"screenReaderOnly":0},
+  "chartTableViews": [],
+  "sourceDrawers": [],
+  "unavailableSourceControls": [],
+  "sourceControlErrors": []
+}

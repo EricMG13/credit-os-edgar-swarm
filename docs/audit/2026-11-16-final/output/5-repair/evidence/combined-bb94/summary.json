@@ -1,0 +1,177 @@
+{
+  "pin": "bb94ddceff3a1f02c7239ebca72de285df79c607",
+  "previousPin": "5e1d98b37305a9da59fb6944740ff17b721051af",
+  "sourceUnchangedDuringRerun": true,
+  "sourceFiles": 643,
+  "sourceDigest": "608c57837cf86449aa96955881b5dd1f4cefb88016db92c76840cd517e9982d3",
+  "freshNativeShards": 8,
+  "reusedNativeBlobs": 0,
+  "files": 308,
+  "tests": 5259,
+  "passed": 5259,
+  "failed": 0,
+  "skippedPendingTodo": 0,
+  "signalFiles": 34,
+  "signalTests": 630,
+  "exactSelectionMatch": true,
+  "missingExtraDuplicateFiles": [
+    0,
+    0,
+    0
+  ],
+  "missingExtraDuplicateTests": [
+    0,
+    0,
+    0
+  ],
+  "nativeMergeExit": 0,
+  "configuredGlobalLineThreshold": 80,
+  "originalGlobalCoverageThresholdPassed": true,
+  "coverageFiles": 325,
+  "coverage": {
+    "lines": {
+      "total": 10146,
+      "covered": 9912,
+      "skipped": 0,
+      "pct": 97.69
+    },
+    "statements": {
+      "total": 11748,
+      "covered": 11285,
+      "skipped": 0,
+      "pct": 96.05
+    },
+    "functions": {
+      "total": 3965,
+      "covered": 3884,
+      "skipped": 0,
+      "pct": 97.95
+    },
+    "branches": {
+      "total": 11556,
+      "covered": 10375,
+      "skipped": 0,
+      "pct": 89.78
+    },
+    "branchesTrue": {
+      "total": 0,
+      "covered": 0,
+      "skipped": 0,
+      "pct": "Unknown"
+    }
+  },
+  "shards": [
+    {
+      "index": 1,
+      "pin": "bb94ddceff3a1f02c7239ebca72de285df79c607",
+      "files": 39,
+      "total": 613,
+      "passed": 613,
+      "failed": 0,
+      "pending": 0,
+      "todo": 0,
+      "exit": 1,
+      "durationMs": 146281,
+      "coverageFiles": 325,
+      "partialThresholdError": "ERROR: Coverage for lines (55.84%) does not meet global threshold (80%)"
+    },
+    {
+      "index": 2,
+      "pin": "bb94ddceff3a1f02c7239ebca72de285df79c607",
+      "files": 39,
+      "total": 527,
+      "passed": 527,
+      "failed": 0,
+      "pending": 0,
+      "todo": 0,
+      "exit": 1,
+      "durationMs": 103378,
+      "coverageFiles": 325,
+      "partialThresholdError": "ERROR: Coverage for lines (57.57%) does not meet global threshold (80%)"
+    },
+    {
+      "index": 3,
+      "pin": "bb94ddceff3a1f02c7239ebca72de285df79c607",
+      "files": 39,
+      "total": 851,
+      "passed": 851,
+      "failed": 0,
+      "pending": 0,
+      "todo": 0,
+      "exit": 1,
+      "durationMs": 96391,
+      "coverageFiles": 325,
+      "partialThresholdError": "ERROR: Coverage for lines (54.86%) does not meet global threshold (80%)"
+    },
+    {
+      "index": 4,
+      "pin": "bb94ddceff3a1f02c7239ebca72de285df79c607",
+      "files": 39,
+      "total": 560,
+      "passed": 560,
+      "failed": 0,
+      "pending": 0,
+      "todo": 0,
+      "exit": 1,
+      "durationMs": 122185,
+      "coverageFiles": 325,
+      "partialThresholdError": "ERROR: Coverage for lines (65.22%) does not meet global threshold (80%)"
+    },
+    {
+      "index": 5,
+      "pin": "bb94ddceff3a1f02c7239ebca72de285df79c607",
+      "files": 38,
+      "total": 995,
+      "passed": 995,
+      "failed": 0,
+      "pending": 0,
+      "todo": 0,
+      "exit": 1,
+      "durationMs": 263041,
+      "coverageFiles": 325,
+      "partialThresholdError": "ERROR: Coverage for lines (74.9%) does not meet global threshold (80%)"
+    },
+    {
+      "index": 6,
+      "pin": "bb94ddceff3a1f02c7239ebca72de285df79c607",
+      "files": 38,
+      "total": 516,
+      "passed": 516,
+      "failed": 0,
+      "pending": 0,
+      "todo": 0,
+      "exit": 1,
+      "durationMs": 120946,
+      "coverageFiles": 325,
+      "partialThresholdError": "ERROR: Coverage for lines (59.73%) does not meet global threshold (80%)"
+    },
+    {
+      "index": 7,
+      "pin": "bb94ddceff3a1f02c7239ebca72de285df79c607",
+      "files": 38,
+      "total": 757,
+      "passed": 757,
+      "failed": 0,
+      "pending": 0,
+      "todo": 0,
+      "exit": 1,
+      "durationMs": 146884,
+      "coverageFiles": 325,
+      "partialThresholdError": "ERROR: Coverage for lines (42.88%) does not meet global threshold (80%)"
+    },
+    {
+      "index": 8,
+      "pin": "bb94ddceff3a1f02c7239ebca72de285df79c607",
+      "files": 38,
+      "total": 440,
+      "passed": 440,
+      "failed": 0,
+      "pending": 0,
+      "todo": 0,
+      "exit": 1,
+      "durationMs": 137280,
+      "coverageFiles": 325,
+      "partialThresholdError": "ERROR: Coverage for lines (54.38%) does not meet global threshold (80%)"
+    }
+  ]
+}

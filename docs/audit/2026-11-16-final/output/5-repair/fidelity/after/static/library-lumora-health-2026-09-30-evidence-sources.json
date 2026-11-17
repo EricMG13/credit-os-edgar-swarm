@@ -1,0 +1,94 @@
+{
+  "screen": {"id":"library--lumora-health--2026-09-30--evidence--sources","surface":"static","address":"/library/lumora-health/2026-09-30/evidence/sources","extra":false,"variant":null},
+  "page": {"title":"Evidence — Sources — Lumora Health — As of 30 Sep 2026 — Credit OS","headings":["Lumora Health","Evidence"]},
+  "counts": {"textRuns":38,"figures":10,"figuresByKind":{"card":10},"tableViewFigures":0,"chartTableViews":0,"tables":0,"tableRows":0,"sourceLines":1,"drawerLines":0,"limitationSentences":1,"marks":0,"images":1,"traceControls":0,"traceDrawers":0,"traceUnavailable":0,"traceErrors":0,"coverageGap":0},
+  "expandedDisclosures": 0,
+  "outline": [
+    {"section":"","kind":"text","text":"Design reference with sample data"},
+    {"section":"","kind":"text","text":"This page shows a saved example. Its names and figures are samples, and it is not connected to the run service, so nothing here starts a run or spends money."},
+    {"section":"","kind":"link","text":"Library"},
+    {"section":"Lumora Health","kind":"heading","text":"Lumora Health"},
+    {"section":"Lumora Health","kind":"text","text":"As of 30 Sep 2026"},
+    {"section":"Lumora Health","kind":"text","text":"Full review"},
+    {"section":"Lumora Health","kind":"text","text":"Capped"},
+    {"section":"Lumora Health","kind":"link","text":"Report history"},
+    {"section":"Lumora Health","kind":"link","text":"New run"},
+    {"section":"Lumora Health","kind":"link","text":"Overview"},
+    {"section":"Lumora Health","kind":"link","text":"Changes"},
+    {"section":"Lumora Health","kind":"link","text":"Modules"},
+    {"section":"Lumora Health","kind":"link","text":"13"},
+    {"section":"Lumora Health","kind":"text","text":"Forecast"},
+    {"section":"Lumora Health","kind":"text","text":"No forecast for this run"},
+    {"section":"Lumora Health","kind":"link","text":"Evidence"},
+    {"section":"Lumora Health > Evidence","kind":"heading","text":"Evidence"},
+    {"section":"Lumora Health > Evidence","kind":"paragraph","text":"Where every figure and claim in this run comes from."},
+    {"section":"Lumora Health > Evidence","kind":"control","text":"Module: All"},
+    {"section":"Lumora Health > Evidence","kind":"select","text":"All"},
+    {"section":"Lumora Health > Evidence","kind":"control","text":"Jump to an item"},
+    {"section":"Lumora Health > Evidence","kind":"control","text":"Ctrl K"},
+    {"section":"Lumora Health > Evidence","kind":"link","text":"Summary"},
+    {"section":"Lumora Health > Evidence","kind":"link","text":"Trace"},
+    {"section":"Lumora Health > Evidence","kind":"link","text":"0"},
+    {"section":"Lumora Health > Evidence","kind":"link","text":"Sources"},
+    {"section":"Lumora Health > Evidence","kind":"link","text":"1"},
+    {"section":"Lumora Health > Evidence","kind":"link","text":"Gaps"},
+    {"section":"Lumora Health > Evidence","kind":"link","text":"1"},
+    {"section":"Lumora Health > Evidence","kind":"link","text":"Record"},
+    {"section":"Lumora Health > Evidence","kind":"item","text":"PDF"},
+    {"section":"Lumora Health > Evidence","kind":"item","text":"financial-statements-2026.pdf"},
+    {"section":"Lumora Health > Evidence","kind":"item","text":"3.2 MB · 74 pages"},
+    {"section":"Lumora Health > Evidence","kind":"item","text":"Read in full"},
+    {"section":"Lumora Health > Evidence","kind":"item","text":"Read by 1 module"},
+    {"section":"Lumora Health > Evidence","kind":"item","text":"BP"},
+    {"section":"Lumora Health > Evidence","kind":"item","text":"SHA-256"},
+    {"section":"Lumora Health > Evidence","kind":"item","text":"c3b95c4613d4e80d86e13edb2a4bb43ab6ffb678d4048b39d62c0fa6fdae5f42"}
+  ],
+  "tables": [],
+  "figures": [
+    {"kind":"card","text":"As of 30 Sep 2026","tokens":["30","2026"],"section":"Lumora Health","label":"Full review","period":"As of 30 Sep 2026","unit":null,"basis":null,"beside":"As of 30 Sep 2026 | Full review | Capped"},
+    {"kind":"card","text":"13","tokens":["13"],"section":"Lumora Health","label":"Modules","period":null,"unit":null,"basis":null,"beside":"Modules | 13"},
+    {"kind":"card","text":"0","tokens":["0"],"section":"Lumora Health > Evidence","label":"Trace","period":null,"unit":null,"basis":null,"beside":"Trace | 0"},
+    {"kind":"card","text":"1","tokens":["1"],"section":"Lumora Health > Evidence","label":"Sources","period":null,"unit":null,"basis":null,"beside":"Sources | 1"},
+    {"kind":"card","text":"1","tokens":["1"],"section":"Lumora Health > Evidence","label":"Gaps","period":null,"unit":null,"basis":null,"beside":"Gaps | 1"},
+    {"kind":"card","text":"financial-statements-2026.pdf","tokens":["-2026"],"section":"Lumora Health > Evidence","label":"Read in full","period":null,"unit":null,"basis":null,"beside":"financial-statements-2026.pdf | 3.2 MB · 74 pages | Read in full"},
+    {"kind":"card","text":"3.2 MB · 74 pages","tokens":["3.2","74"],"section":"Lumora Health > Evidence","label":"Read in full","period":"financial-statements-2026.pdf","unit":null,"basis":null,"beside":"financial-statements-2026.pdf | 3.2 MB · 74 pages | Read in full"},
+    {"kind":"card","text":"Read by 1 module","tokens":["1"],"section":"Lumora Health > Evidence","label":"BP","period":null,"unit":null,"basis":null,"beside":"Read by 1 module | BP"},
+    {"kind":"card","text":"SHA-256","tokens":["-256"],"section":"Lumora Health > Evidence","label":null,"period":null,"unit":null,"basis":null,"beside":"SHA-256 | c3b95c4613d4e80d86e13edb2a4bb43ab6ffb678d4048b39d62c0fa6fdae5f42"},
+    {"kind":"card","text":"c3b95c4613d4e80d86e13edb2a4bb43ab6ffb678d4048b39d62c0fa6fdae5f42","tokens":["3","95","4613","4","80","86","13","2","4","43","6","678","4048","39","62","0","6","5","42"],"section":"Lumora Health > Evidence","label":null,"period":null,"unit":null,"basis":null,"beside":"SHA-256 | c3b95c4613d4e80d86e13edb2a4bb43ab6ffb678d4048b39d62c0fa6fdae5f42"}
+  ],
+  "sources": [
+    {"via":"text","section":"Lumora Health > Evidence","text":"financial-statements-2026.pdf"}
+  ],
+  "limitations": [
+    {"via":"text","section":"","text":"This page shows a saved example. Its names and figures are samples, and it is not connected to the run service, so nothing here starts a run or spends money."}
+  ],
+  "marks": [],
+  "controls": [
+    {"role":"select","name":"All Business profile Industry and competition Financial performance Cash flow and liquidity Covenants and documentation Management and governance Environmental, social and governance Capital structure Peer comparison Recovery Rating outlook Forward credit view Credit snapshot","value":"All","options":[" ","All","Business profile","Industry and competition","Financial performance","Cash flow and liquidity","Covenants and documentation","Management and governance","Environmental, social and governance","Capital structure","Peer comparison","Recovery","Rating outlook","Forward credit view","Credit snapshot"]}
+  ],
+  "links": [
+    {"text":"Library","href":"#/library/home"},
+    {"text":"Report history","href":"#/library/lumora-health/history"},
+    {"text":"New run","href":"#/run/start"},
+    {"text":"Overview","href":"#/library/lumora-health/2026-09-30/overview"},
+    {"text":"Changes","href":"#/library/lumora-health/2026-09-30/changes"},
+    {"text":"Modules 13","href":"#/library/lumora-health/2026-09-30/modules/business-profile"},
+    {"text":"Evidence","href":"#/library/lumora-health/2026-09-30/evidence/summary"},
+    {"text":"Summary","href":"#/library/lumora-health/2026-09-30/evidence/summary"},
+    {"text":"Trace 0","href":"#/library/lumora-health/2026-09-30/evidence/trace"},
+    {"text":"Sources 1","href":"#/library/lumora-health/2026-09-30/evidence/sources"},
+    {"text":"Gaps 1","href":"#/library/lumora-health/2026-09-30/evidence/gaps"},
+    {"text":"Record","href":"#/library/lumora-health/2026-09-30/evidence/record"}
+  ],
+  "images": [
+    {"name":"Business profile","in":"Evidence"}
+  ],
+  "screenReaderOnly": [
+    "Source files"
+  ],
+  "coverage": {"innerText":30,"captured":30,"optionsNotDrawn":0,"selected":0,"typed":0,"screenReaderOnly":0},
+  "chartTableViews": [],
+  "sourceDrawers": [],
+  "unavailableSourceControls": [],
+  "sourceControlErrors": []
+}
