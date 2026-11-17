@@ -2,9 +2,10 @@
 
 This branch is a review candidate only: `audit/review-connected-integration`.
 Nothing was pushed, promoted, or merged into `audit/final-repairs` or `main`.
-The two original repair branches remain unaccepted running sessions. Their pushed
-snapshots were combined locally to expose integration conflicts; this does not
-complete T18 or T22 or take either task over.
+At the first snapshot, the two original repair branches were unaccepted running
+sessions. Their pushed snapshots were combined locally to expose integration
+conflicts. Later phases below record their separate acceptance and the reviewed
+T18/T22 recovery; the initial snapshot did not complete or take over either task.
 
 Base: `ad5d55ac`. Its first-parent chain after reviewed batch integration
 `152fdeef` is `adf0aa5b`, `ea81c2c3`, `9296bd24`, `a0ba38b8`, `47ea2e2a`,
@@ -594,3 +595,65 @@ connected proof, native-browser/handoff fidelity and actual-final promotion;
 historical raw-log whitespace remains as listed; Windows/weekly/full Python,
 unlimited natural-language citation forms, analytical correctness,
 provider/live/paid/seat/real Submit/Teams. No branch was pushed or promoted.
+
+## Phase 8: reviewed synthetic classification and strict connected proof
+
+The lead gave GO for R4-015 `01a163ab` after both fresh primary/adversarial
+reviews reported zero High/Medium/Low findings. Read
+`/workspace/scratch/R4-015-{primary,adversarial}-review.md`. The lead separately
+accepted proof tip `3df13dc4`: frozen core `f251fbc7` has an independent PASS,
+and `/workspace/scratch/R4-016-review.md` accepts the retained browser-probe
+cleanup with zero High/Medium/Low findings. This candidate remains local; the
+lead owns any later fast-forward and canonical native proof on actual final.
+
+| Reviewed source milestone | Candidate commit |
+| :--- | :--- |
+| R4-015 classification `01a163ab` | merge `f034d750` |
+| Proof tip `3df13dc4` | merge `67ade28d` |
+| Frozen harness `f251fbc7`, report `0b0af426`, retained-probe cleanup `3df13dc4` | Same source commits, inherited through `67ade28d` |
+
+Both merges were clean. All five R4-015 product/test files compare byte-for-byte
+with reviewed `01a163ab`; both actual harness files compare byte-for-byte with
+frozen `f251fbc7`. No merge resolution, expected-value edit or new product code
+was needed. Record retains known live, synthetic, retained and host-session
+behavior plus the reviewed pending-versus-settled unknown distinction and neutral
+labels. Its exact timing, source, response, approved-limit and delivery fields
+remain intact. The harness retains exact synthetic/Adapter status/200 assertions
+and the settled synthetic API check; the earlier native RED is not relabelled
+as a passing proof.
+
+The unsafe fidelity-guard branch was not merged. R4-017/R4-018's pure-helper and
+redirect return remains separately owned and awaiting review/GO; this task did
+not duplicate that helper move or alter another branch/worktree.
+
+### Phase 8 checks
+
+| Check | Exit/result |
+| :--- | :--- |
+| Actual runtime identity/HTTP, runtime metadata, activity, React service and synthetic proof-launcher Python callers | 0; five files / 195 tests passed |
+| Record, Record final-audit, RuntimeMetadata and reused Record download contracts | 0; four files / 40 tests passed |
+| Offline proof network unit tests | 0; three passed, none skipped or cancelled |
+| Full frontend lint, format and typecheck | 0 for all |
+| Default main-based Python quality gate, no base override | 0; 41 files / 4,909 scoped lines, zero findings |
+| Main harness and retained browser-probe `node --check` | 0 for both |
+| Exact reviewed product/test and frozen harness comparisons | Empty diffs; 0 for both |
+| Protected source/calculation/prompt/handoff/Signal phase diff | Empty; only connected Record reads the changed execution field |
+| Complete phase range and working-tree `git diff --check` | 0; no new raw-log whitespace warnings in this phase |
+| Accepted actual-final `94c9ea57` ancestry | 0; remains a candidate ancestor |
+
+Evidence commands/results use
+`/workspace/scratch/integrate-stage5-classification-*` and
+`/workspace/scratch/integrate-stage5-proof-network.*`. Python uses exact uv
+0.12.5, `--no-sync` and the candidate's explicit three-part PYTHONPATH. Every
+long command uses `timeout 300`; Vitest uses one worker. The network tests issue
+only local proxy requests and mock-context attempts; importing the reviewed
+harness does not run its browser journey. No native browser or canonical proof
+was run in this phase. Source workers' direct confidence/simplification and
+fresh reviews remain the design evidence; the clean merges add no function.
+
+Not verified: the strict canonical Chrome/Edge connected proof after promotion
+on actual-final's own environment; R4-017/R4-018 fidelity-helper return/review;
+additive coordination audit-data/helper copying, final combined full gates and
+browser/handoff fidelity, Windows/weekly/full Python; earlier historical log
+whitespace and page-title timing under the full gate; provider/live/paid/seat/
+real Submit/Teams. No branch was pushed or promoted by this integration.
