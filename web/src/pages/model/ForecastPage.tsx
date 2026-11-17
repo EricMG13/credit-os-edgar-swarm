@@ -8,12 +8,11 @@ import { TraceControl } from "./parts/TraceControl";
 import { CoverCard, PathsCard, WalkCard } from "./sections/ForecastCharts";
 import { StripsCard } from "./sections/PortfolioCharts";
 import { SectionHeading, gapReason, pairGrid } from "./sections/shared";
-import type { ModelRun } from "./slice/types";
+import type { ForecastPage as Forecast, ModelRun } from "./slice/types";
 
 /** The case is in-memory page state; the first case is the default. */
-function Body({ run }: { run: ModelRun }) {
+function Body({ run, page }: { run: ModelRun; page: Forecast }) {
   const [chosen, setChosen] = useState(0);
-  const page = run.forecast;
   return (
     <>
       <section className="flex flex-col gap-4">
@@ -71,7 +70,15 @@ function Body({ run }: { run: ModelRun }) {
 export function ForecastPage({ params }: { params: Record<string, string> }) {
   return (
     <RunPage params={params} current="forecast">
-      {(run) => <Body key={runKey(run)} run={run} />}
+      {(run) =>
+        run.forecast === null ? (
+          <p className="max-w-[72ch] text-body text-text-secondary">
+            No forecast was published for this run.
+          </p>
+        ) : (
+          <Body key={runKey(run)} run={run} page={run.forecast} />
+        )
+      }
     </RunPage>
   );
 }

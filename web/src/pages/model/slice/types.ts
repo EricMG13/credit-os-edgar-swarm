@@ -22,7 +22,8 @@ export type ModelRun = {
   statements: StatementsPage;
   portfolioFit: PortfolioFitPage;
   limitations: LimitationsPage;
-  forecast: ForecastPage;
+  /** `null` for a run that published no forecast (a lite run, a short snapshot). */
+  forecast: ForecastPage | null;
 };
 
 /** A word of the status kit's "Run states" set. */
