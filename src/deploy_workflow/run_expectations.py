@@ -395,8 +395,8 @@ _CP4_LIVE = "legal documents declared %r (entered by user)"
 
 def no_legal_documents(context: RunContext) -> bool:
     """The context declares no legal documents, so CP-4 has no executed governing document and
-    stops at its source gate. One rule for the forecast (`cp4-declared-none`) and the launcher's
-    acceptance of CP-4 (`cpos_launch.checker`)."""
+    stops at its source gate. One rule for the forecast's CP-4 rules and the launcher's routing,
+    instructions and acceptance of CP-4 (`cpos_launch._layout`, `_instructions`, `checker`)."""
     return context.attachments.legal_documents == "none"
 
 
@@ -563,7 +563,7 @@ RULES: tuple[Rule, ...] = (
         "cp4-declared-draft-or-primary-no-executed-agreement",
         "CP-4",
         lambda f: (
-            f.legal != "none"
+            not no_legal_documents(f.context)
             and (f.legal == "draft" or f.run_type == "primary")
             and not f.executed_agreement
         ),
@@ -577,7 +577,11 @@ RULES: tuple[Rule, ...] = (
     Rule(
         "cp4-only-amendment",
         "CP-4",
-        lambda f: f.legal != "none" and f.kind("amendment") is not None and not f.kind(*AGREEMENTS),
+        lambda f: (
+            not no_legal_documents(f.context)
+            and f.kind("amendment") is not None
+            and not f.kind(*AGREEMENTS)
+        ),
         "limited",
         "Only an amendment is recognised and the base agreement not recognised, so the amendment "
         "alone cannot show the covenants it changes.",
@@ -591,7 +595,7 @@ RULES: tuple[Rule, ...] = (
         "cp4-governing-terms-rest-on-final-om",
         "CP-4",
         lambda f: (
-            f.legal != "none"
+            not no_legal_documents(f.context)
             and f.run_type in ("secondary", "research")
             and not f.kind(*AGREEMENTS)
             and (om := f.kind("offering_memorandum")) is not None

@@ -507,15 +507,20 @@ FORECAST_SCOPE = (
 
 
 def _layout(
-    run: Run, ordered: tuple[str, ...], aliases: tuple[str, ...], config: str, *, forecast: bool
+    run: Run, ordered: tuple[str, ...], config: str, *, forecast: bool, context: RunContext
 ) -> tuple[MarkdownLayout, tuple[str, ...]]:
     preset = next(p for p in pathways() if p.id == run.pathway)
     routes: list[MarkdownRoute] = []
     omitted: list[str] = []
+    # With no legal documents CP-4 stops at its source gate (`checker`), so a block that lists a
+    # later owner present in the run goes to that owner (owner, 2026-11-16: capital-structure).
+    gated = no_legal_documents(context)
     for block_id in preset.blocks:
         spec = _spec_of(block_id)
-        owners = BLOCK_OWNERS.get(block_id, spec.producers)
-        owner = next((m for m in owners if m in ordered), None)
+        present = [m for m in BLOCK_OWNERS.get(block_id, spec.producers) if m in ordered]
+        if gated and "CP-4" in present[:-1]:
+            present.remove("CP-4")
+        owner = next(iter(present), None)
         if owner == "CP-1" and block_id in CHART_BLOCKS:
             routes += [_chart_route(block_id, figure) for figure in STRIP_FIGURES[block_id]]
             continue
@@ -558,7 +563,7 @@ def _layout(
         routes=tuple(routes),
         scope=scope,
         title=f"{run.issuer_name} — {preset.title}",
-        issuer_aliases=aliases,
+        issuer_aliases=tuple(a for a in context.identity.aliases if a.strip()),
         front=(),
     )
     return layout, tuple(omitted)
@@ -745,8 +750,8 @@ def _instructions(
     module: str,
     routes: Sequence[MarkdownRoute],
     *,
-    run_type: str,  # Plan 3 (Primary scope) reads these two; no instruction byte uses them yet.
-    legal_documents: str,
+    # CP-4's source gate reads its legal documents; Plan 3 (Primary scope) will read its run type.
+    context: RunContext,
 ) -> bytes:
     asked: list[MarkdownRoute | OwnerTable] = [r for r in routes if r.module_id == module]
     # A report selector named like a reader passage (CP-2's `Key findings`) is that passage: it
@@ -771,7 +776,8 @@ def _instructions(
         "Any issuer named in the method is an example, never evidence for this run.\n\n"
         f"Source `{CONTEXT_SOURCE_ID}` holds the user's dated settings and inputs for this run. It "
         "is not issuer evidence. Do not treat a value it leaves blank as zero.\n\n"
-        "Find what this module needs with search_source, then read only those pages. Do not read "
+        + (f"{_SOURCE_GATE}\n\n" if module == "CP-4" and no_legal_documents(context) else "")
+        + "Find what this module needs with search_source, then read only those pages. Do not read "
         "whole filings: reads stop once this module's context is full.\n\n"
         "Use calculate for all new arithmetic. Keep exact amounts, units, currencies, periods, "
         "source locators and limitations. Absent evidence stays an explicit gap.\n\n"
@@ -1095,19 +1101,9 @@ def _prepare(  # noqa: PLR0913, PLR0915 - `prepare`'s body: one keyword per sett
         declared=settings.attachments.portfolio_workbook,
         run_date=run.as_of,
     )
-    aliases = tuple(a for a in settings.identity.aliases if a.strip())
     forecast = "CP-1" in ordered and (model_wanted or "CP-2G" in ordered)
-    layout, omitted = _layout(run, ordered, aliases, config, forecast=forecast)
-    texts = {
-        m: _instructions(
-            run,
-            m,
-            layout.routes,
-            run_type=settings.run.run_type,
-            legal_documents=settings.attachments.legal_documents,
-        )
-        for m in ordered
-    }
+    layout, omitted = _layout(run, ordered, config, forecast=forecast, context=settings)
+    texts = {m: _instructions(run, m, layout.routes, context=settings) for m in ordered}
     options = settings.module_options
     peer_pack = settings.valuation.peer_source == "cp_dr_public" and {"CP-DR", "CP-1C"} <= set(
         ordered
