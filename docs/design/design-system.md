@@ -311,7 +311,7 @@ Shadcnblocks piece redrawn on React Aria, which is redrawn to look like its sour
 | Input | Label, hint, error with message, disabled; the source's `md` size | UUI <https://www.untitledui.com/react/components/inputs> |
 | Select | Default, focus, disabled, invalid | UUI <https://www.untitledui.com/react/components/select> |
 | File upload | Drop zone; per-file progress, complete, failed with retry | UUI <https://www.untitledui.com/react/components/file-uploaders> |
-| Tabs | Selected in Ultramarine with a 2px line (underline when horizontal, side line when vertical); count badge neutral | UUI <https://www.untitledui.com/react/components/tabs> |
+| Tabs | Selected in Ultramarine with a 2px line (underline when horizontal, side line when vertical); hover on an unselected tab darkens its text to `text-secondary` and draws no line, so a hovered tab never reads as selected; count badge neutral | UUI <https://www.untitledui.com/react/components/tabs> |
 | Chart or Table toggle | The source's joined button group, single selection, with the selected segment as the source shows it, in these colours | UUI <https://www.untitledui.com/react/components/button-groups> |
 | Sidebar navigation | Light, in the variant the map names; selected item `surface-selected` with Ultramarine text and icon, hover `surface-subtle`, counts as neutral count badges | UUI <https://www.untitledui.com/react/components/sidebar-navigations> |
 | Card and tile | Card (`radius-lg`, padding 32, `shadow-1`) and tile (`radius-md`, padding 24), written here on the tokens. A card may hold a group of source components or a chart. A metric is the source's metric card, one card per metric, never a joined strip | This system; metric card UUI <https://www.untitledui.com/react/components/metrics> |
