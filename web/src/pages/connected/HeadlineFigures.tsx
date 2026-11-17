@@ -1,7 +1,7 @@
 import { Missing } from "@/components/gap/Missing";
 import { TRACE_HOST } from "@/pages/library/parts/TraceControl";
 import type { CatalogueRun } from "./publishedReport";
-import { readerText, withUnit } from "./publishedReport";
+import { containsReference, readerText, withUnit } from "./publishedReport";
 import { PublishedSource } from "./report/PublishedTrace";
 import { YearChange } from "./report/YearChange";
 import { stated, type HeadlineSource } from "./reportView";
@@ -30,7 +30,21 @@ function TileSource({ name, source }: { name: string; source?: HeadlineSource })
   ) : null;
 }
 
-/** A figure the module did not supply: n.a. in its place with the module's reason, never a zero. */
+/** Delivery's own words for a figure the tile does not quote: they say nothing of the module. */
+const NOT_SHOWN = "Not shown here";
+
+/**
+ * What a gap tile says. The module's own reason only where the handoff row it was looked up in
+ * says `Not supplied`; a reason that carries a source reference is left to the trace drawer. Any
+ * other tile, the card that holds only the catalogue included, says only that it shows no figure:
+ * the catalogue also lacks a figure the module supplied but it could not quote.
+ */
+function gapWords(source?: HeadlineSource) {
+  if (source?.reason === undefined) return NOT_SHOWN;
+  return containsReference(source.reason) ? "Not supplied" : readerText(source.reason);
+}
+
+/** A figure the tile does not quote: n.a. in its place, never a zero, with the trace to its row. */
 function GapTile({ name, source }: { name: string; source?: HeadlineSource }) {
   return (
     <div className={tile}>
@@ -38,9 +52,7 @@ function GapTile({ name, source }: { name: string; source?: HeadlineSource }) {
       <dd className="mt-1 font-display text-h3 whitespace-nowrap">
         <Missing />
       </dd>
-      <dd className="text-sm text-text-secondary">
-        {source?.reason ? readerText(source.reason) : "Not supplied"}
-      </dd>
+      <dd className="text-sm wrap-anywhere text-text-secondary">{gapWords(source)}</dd>
       {source && <dd className="text-sm text-text-secondary">{source.period}</dd>}
       <TileSource name={name} source={source} />
     </div>
