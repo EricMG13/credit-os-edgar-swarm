@@ -40,7 +40,7 @@ const search = () => within(nav()).getByRole("textbox", { name: "Search modules"
 const moduleNames = () =>
   within(nav())
     .queryAllByRole("link")
-    .map((link) => link.querySelector("span:last-child")?.textContent ?? "");
+    .map((link) => link.querySelector("[data-module-name]")?.textContent ?? "");
 const type = (value: string) => {
   fireEvent.change(search(), { target: { value } });
 };
