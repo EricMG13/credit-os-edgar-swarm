@@ -120,6 +120,7 @@ function periods(table: SourceTable, descriptor: Descriptor, frame: Frame) {
       series={series}
       yTicks={ticks(values, true)}
       table={chartTable(table, [0, ...columns])}
+      detailTable={chartTable(table)}
     />
   );
 }

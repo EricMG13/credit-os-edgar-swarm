@@ -40,6 +40,28 @@ it("draws a value written with a decimal comma at that value, not at 375", () =>
   expect(figure.getAllByText("3,75").length).toBeGreaterThan(0);
 });
 
+it("shows each period's unit and Basis and limitation in the Table form of a period chart", () => {
+  const figure = drawn(
+    "Leverage",
+    { columns: [1] },
+    table(
+      ["Period", "Total debt / EBITDA", "Reporting unit", "Basis and limitation"],
+      [
+        ["FY2023", "3.75", "x", "Gross debt includes finance leases."],
+        ["FY2024", "2.80", "x", "Synthetic."],
+      ],
+    ),
+  );
+  fireEvent.click(figure.getByRole("radio", { name: "Table" }));
+  const grid = figure.getByRole("table", { name: "Leverage" });
+  expect(within(grid).getByRole("columnheader", { name: "Basis and limitation" })).toBeVisible();
+  expect(within(grid).getByRole("columnheader", { name: "Reporting unit" })).toBeVisible();
+  expect(
+    within(grid).getByRole("cell", { name: "Gross debt includes finance leases." }),
+  ).toBeVisible();
+  expect(within(grid).getByRole("cell", { name: "Synthetic." })).toBeVisible();
+});
+
 it("shows each row's Basis and limitation in the Table form beside its figures", () => {
   const figure = drawn(
     "EBITDA bridge",
