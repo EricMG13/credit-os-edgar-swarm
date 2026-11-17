@@ -1,5 +1,5 @@
 state: running
-updated: 2026-11-17T14:54Z
+updated: 2026-11-17T14:59Z
 done: merged with --no-ff: T13 (301b20a), T14 (a6bf5d2), T15 (d9c1fce), T16 (f40b916), T17 (cc1a717), then at the owner's request to push all work T19 (de7ffa9), T20 (6201240), T21 (e1d1540), T23 (74323f7) ahead of T18 and T22 (they share no file with T18 or T22; only the merge order differs from tasks.md). On the merged tree (cb5a658) typecheck, lint, format:check and knip 0; vitest src/pages/connected, src/components, src/pages/model, src/pages/library, src/pages/signal 177 files, 3806 tests, 0; static gate (test:file:gates) 0. T24 withdrawn (R14)
 next: T18 round 2 and T22 implementer (Opus medium) still editing in their worktrees; then their reviews, merges, and the pull request into audit/final-repairs
 blocked: none (lead ruling L16: T16 holds back a page-citing chart-gap reason as See Evidence. beside the gap's own status field or the standard missing form, in a round 3 after the current reviews; the 0,000 evidence fix is listed in T19.md for the lead's batch)
@@ -16,6 +16,6 @@ reports: docs/audit/2026-11-16-final/output/sessions/repair-2/worker-brief.md
 | T19 | - | merged de7ffa9: C4-004, X1-024, X1-019, R2-003 closed |
 | T20 | T16 | merged 6201240: C4-007 closed (L17; R2-004 Info open) |
 | T21 | T14, T16 | merged e1d1540: C5-009, J3-013, C5-010, C5-011, J3-007, C5-036 closed; C5-002 withdrawn (R14) |
-| T22 | T16, T18 | implementing (Opus medium), base 48c4bb6 (C5-007 and J5-002 withdrawn under R14) |
+| T22 | T16, T18 | implemented a47a421 (C5-003 with J4-005, J3-015: confidence drawer states method and inputs); C5-007, J5-002 withdrawn (R14); under review 1 and adversarial review 2 (Opus medium) |
 | T23 | - | merged 74323f7: C5-012 closed |
 | T24 | T21 | withdrawn under R14 (C5-034, keyboard focus); report written |
