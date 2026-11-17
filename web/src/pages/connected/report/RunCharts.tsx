@@ -1,11 +1,34 @@
 import { Button } from "@/components/base/buttons/button";
 import { ArrowRight } from "@untitledui/icons";
 import { heading } from "../layout";
-import { blocked, evidencePath, type OutputEntry } from "../publishedReport";
+import {
+  blocked,
+  containsReference,
+  evidencePath,
+  type OutputEntry,
+  readerText,
+} from "../publishedReport";
 import type { buildReportView } from "../reportView";
 import { LegacyVisuals } from "../visuals";
 
 const CHART_PREFIX = "Chart data: ";
+
+// A page citation: "p.12", "p. 83", "pp. 12-14", "page 12", "pages 12 to 14". A "pp." after a
+// number is percentage points ("fell 2 pp. 3 quarters"), not pages.
+const PAGE_CITATION = /(?<!\d\s*)\b(?:pp?\.|pages?)\s*\d/i;
+
+/**
+ * A gap as the page draws it. A reason that cites a page or holds another source reference is held
+ * back as "See Evidence." (L16): the gap panel still states the figure is missing, and the figure's
+ * trace control reaches the reason unchanged. Any other reason is drawn whole, with a module code
+ * named as the module.
+ */
+function drawnGap(figure: Record<string, unknown>) {
+  const { gap } = figure;
+  if (typeof gap !== "string") return figure;
+  const cites = PAGE_CITATION.test(gap) || containsReference(gap);
+  return { ...figure, gap: cites ? "See Evidence." : readerText(gap) };
+}
 
 function returnedCharts(entry: OutputEntry, coveredLines: Set<number>) {
   const problems = new Set(entry.output.issue?.split("; "));
@@ -19,7 +42,7 @@ function returnedCharts(entry: OutputEntry, coveredLines: Set<number>) {
       {
         title: name.charAt(0).toUpperCase() + name.slice(1),
         table: block.line,
-        gap: "Sent back by the build.",
+        gap: "The chart data did not fit the required table form, so no chart is drawn.",
       },
     ];
   });
@@ -42,7 +65,7 @@ function chartOutput(entry: OutputEntry) {
             gap: summary?.limitation || "Module not assessable.",
           }))
         : []),
-    ],
+    ].map(drawnGap),
   };
 }
 

@@ -38,6 +38,14 @@ import { ArtifactDownloads } from "./ArtifactDownloads";
 import { ReportRecord } from "./Record";
 import { ScriptChecks } from "./ScriptChecks";
 
+const BARE_MODULE_CODE = /^CP-[A-Z0-9]+$/;
+
+/** The line of a handoff's own title: the first level-1 section headed by nothing but a module code. */
+function titleLine(sections: Section[]) {
+  return sections.find(({ level, heading }) => level === 1 && BARE_MODULE_CODE.test(heading.trim()))
+    ?.line;
+}
+
 function rowView(table: Table, line: number | undefined) {
   const row = table.rows.find((item) => item.line === line);
   return row ? { ...table, rows: [row] } : table;
@@ -54,6 +62,7 @@ function EvidenceLocation({
 }) {
   if (entry.output.parseError)
     return <p className="text-text-secondary">This handoff could not be read into sections.</p>;
+  const title = titleLine(entry.sections);
   const sections = classifySections(entry.sections)
     .filter(
       ({ role, section }) =>
@@ -63,7 +72,10 @@ function EvidenceLocation({
           section.heading === FORECAST_INPUTS &&
           section.blocks.some((block) => block.line === line)),
     )
-    .map(({ section }) => section);
+    .map(({ section }) => section)
+    // The title of a handoff is the module's code: with nothing under it, it heads nothing in the
+    // whole view and the card names the module. A location that points at it still draws it.
+    .filter((section) => section.line !== title || section.blocks.length > 0 || line !== undefined);
   const visible =
     line === undefined
       ? sections
@@ -71,7 +83,9 @@ function EvidenceLocation({
   return visible.length ? (
     visible.map((section) => (
       <section key={section.line} className="grid gap-3 border-t border-border-hairline pt-3">
-        <h3 className="font-semibold text-text-primary">{richParts(section.heading)}</h3>
+        <h3 className="font-semibold text-text-primary">
+          {section.line === title ? moduleName(entry.output.module) : richParts(section.heading)}
+        </h3>
         {section.blocks.map((block) => {
           if (block.type === "equity")
             return block.text ? (
