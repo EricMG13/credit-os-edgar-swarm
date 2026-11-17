@@ -1861,3 +1861,57 @@ def test_an_id_already_merged_before_the_check_accepts_either_of_its_issuers(lay
     assert summary(layout, sid, named(tmp_path, "acme", "Acme Corp"))["error"] == ""
     assert summary(layout, sid, named(tmp_path, "acme", "Acme Finance plc"))["error"] == ""
     assert "filed under the name" in summary(layout, sid, named(tmp_path, "acme", "Other"))["error"]
+
+
+def _age(layout: Layout, sid: str, seconds: float) -> None:
+    then = time.time() - seconds
+    os.utime(layout.uploads / sid, (then, then))
+
+
+def test_at_the_ceiling_an_abandoned_draft_makes_room_for_a_new_form(layout, monkeypatch):
+    monkeypatch.setattr(submissions, "MAX_OPEN", 2)
+    old, fresh = new(layout), new(layout)
+    put(layout, old, "a.txt")
+    _age(layout, old, submissions.IDLE_SECONDS + 60)
+    added = new(layout)
+    assert not (layout.uploads / old).exists()
+    assert (layout.uploads / fresh).is_dir() and (layout.uploads / added).is_dir()
+
+
+def test_a_recently_used_draft_is_never_made_room_from(layout, monkeypatch):
+    monkeypatch.setattr(submissions, "MAX_OPEN", 2)
+    one, two = new(layout), new(layout)
+    put(layout, one, "a.txt")
+    _age(layout, one, submissions.IDLE_SECONDS - 60)
+    with pytest.raises(Refused, match="too many unfinished submissions"):
+        new(layout)
+    assert (layout.uploads / one / "files" / "a.txt").is_file() and (layout.uploads / two).is_dir()
+
+
+def test_a_draft_with_an_approval_issued_is_never_made_room_from(layout, monkeypatch):
+    monkeypatch.setattr(submissions, "MAX_OPEN", 1)
+    sid = new(layout)
+    (layout.uploads / sid / "issued").write_text("0" * 64 + "\n")
+    _age(layout, sid, submissions.IDLE_SECONDS + 60)
+    with pytest.raises(Refused, match="too many unfinished submissions"):
+        new(layout)
+    assert (layout.uploads / sid / "issued").is_file()
+
+
+def test_a_draft_with_an_upload_in_flight_is_never_made_room_from(layout, monkeypatch):
+    monkeypatch.setattr(submissions, "MAX_OPEN", 1)
+    sid = new(layout)
+    _age(layout, sid, submissions.IDLE_SECONDS + 60)
+    monkeypatch.setitem(submissions._PENDING, sid, {"tmp": ("a.txt", 1)})
+    with pytest.raises(Refused, match="too many unfinished submissions"):
+        new(layout)
+
+
+def test_reading_the_documents_keeps_a_draft_live(layout, monkeypatch):
+    monkeypatch.setattr(submissions, "MAX_OPEN", 1)
+    sid = new(layout)
+    put(layout, sid, "a.txt")
+    _age(layout, sid, submissions.IDLE_SECONDS + 60)
+    reading(layout, sid)
+    with pytest.raises(Refused, match="too many unfinished submissions"):
+        new(layout)
