@@ -910,6 +910,42 @@ def test_the_review_draws_the_launchers_lookup_statement_as_text(page):
     assert seen["images"] == 0 and seen["pwned"] is False
 
 
+YAHOO = (
+    "Yahoo FinanceThe research module may read Yahoo Finance pages. Each page address holds the "
+    "issuer's ticker, so Yahoo sees which issuer is researched; no document is sent."
+)
+
+
+@pytest.mark.parametrize(
+    ("kind", "drop", "shown"),
+    [("public", "", True), ("private", "", False), ("public", "CP-DR", False)],
+)
+def test_the_review_names_yahoo_and_the_ticker_exactly_when_the_lookup_is_on(
+    page, kind, drop, shown
+):
+    """The service's ``web_lookup`` decides: a public case's research module looks up by default;
+    a private case's does not, nor a run that leaves the research module out."""
+    seen = page.run(f"""
+    level('advanced');
+    await issuer('credit_snapshot', [file('annual.txt', {json.dumps(REPORT)})]);
+    pick('data-k="case_kind"', {json.dumps(kind)});
+    const box = document.querySelector('[data-c="mod"][value={json.dumps(drop)}]');
+    if (box) {{ box.checked = false; change(box); }}
+    const S = await review();
+    const facts = $('rv-facts').textContent;
+    delete SUMMARY.web_lookup;  // an older service, which sends none
+    renderFacts(build());
+    return {{error: S.error, modules: S.modules, lookup: S.web_lookup, facts,
+      older: $('rv-facts').textContent}};
+    """)
+    assert seen["error"] == ""
+    assert ("CP-DR" in seen["modules"]) is (drop != "CP-DR")
+    assert seen["lookup"] is shown
+    assert (YAHOO in seen["facts"]) is shown
+    assert seen["facts"].count("Yahoo") == (2 if shown else 0)
+    assert "Yahoo" not in seen["older"]
+
+
 def test_the_page_offers_the_lite_credit_assessment_and_the_service_reviews_its_five_modules(page):
     """The lite credit assessment (CP-0, CP-1, CP-1A, CP-2, CP-2A) is the first pathway offered,
     then Full and Deep, then the five purpose pathways (ruling 2026-11-15-pathway-tiers-and-caps).

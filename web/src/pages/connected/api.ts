@@ -82,6 +82,8 @@ export type Summary = Reading & {
   changes: string;
   lookup?: string[];
   web_search?: boolean;
+  /** The research module will have the lookup tools; absent from an older service. */
+  web_lookup?: boolean;
   prior?: { id: string; as_of: string; pathway: string } | null;
   model: string;
   effort: string;
