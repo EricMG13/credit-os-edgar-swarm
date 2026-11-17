@@ -4,6 +4,16 @@ Keep one running record here. A pass applies only to the stated scope. Earlier v
 engine is in [EricMG13/final-workflow](https://github.com/EricMG13/final-workflow)'s
 `VERIFICATION.md`, which also keeps the retained runs this copy leaves out.
 
+## 2026-11-17 — Browser proof declares an executed agreement (branch `claude/proof-cp4-gate`)
+
+Scope: `proof:connected` on main 4f8a375a. Synthetic fixtures and the proof script only; no product code changed, no provider called.
+- Broke: `proof:connected` failed (`pass 0, fail 2`, `AssertionError: stopped: checker`, run `failed`; reproduced by the PR manager, not re-run here) from d64bdf81 (#45). CP-4's acceptance now enforces its source gate: a run declaring no legal documents must write the blocked handoff. The proof declared none and its canned CP-4 is a full analysis.
+- Refused alternative: blocking the canned CP-4. The proof's calendar asserts 37 rows and 9 "Synthetic note" rows (`web/scripts/connected-proof.mjs`, checkCalendar), 4 rows from each of 9 handoffs including CP-4; a blocked CP-4 gives 34 and 8, and drops the covenant chart and maps. Ruling (PR manager, coordinator): declare the agreement instead; no assertion is changed.
+- Fix: `proof/northbridge-credit-agreement.txt` (fictional; "Credit Agreement" / "EXECUTION VERSION"); `verify_upload` accepts the filing plus optionally the workbook and the agreement, each byte-checked; the script uploads it and sets Legal documents to Executed and The agreement to that file. No assertion edited; no document-count assertion changed.
+- `guess_kind` reads the file as `credit_agreement`, executed True, so `cp4-declared-executed-none-recognised` cannot fire (checked on the fixture, not on the run's forecast page).
+- Results: `npm --prefix web run proof:connected` exit 0, pass 2 fail 0 (Chrome 157, Edge 157). `proof/test_launcher.py` 4 passed (one added). `tests/test_cpos_launch.py -m "not live and not browser"` 938 passed. Quality gate (tools/quality_gate.py) exit 0.
+- Not verified: the forecast page of the proof run (limits shown) was not read; the before-fix failure was not re-run in this worktree.
+
 ## 2026-11-17 — PR 2: a run in the currency its source files report in (branch `claude/reporting-currency`)
 
 Scope: the whole branch against `main` 0bca1822. That covers the two entries below (PRs 44 and 46, merged into this branch) and the work listed here. Ruling: `docs/rulings/2026-11-16-reporting-currency-from-sources.md`. No provider was called and no paid run was made. The proof is synthetic: retained, canned module answers, labelled as such.
@@ -979,19 +989,3 @@ Scope: presentation only, all under `web/`; no backend, handoff, provider or mod
   same-period revisions, mismatched pair identity, maturity zero versus missing,
   and the distinction between missing, unreadable and first-run comparisons.
 - Work-PC proof is pending. Keep the ZIP local until both Windows browsers pass.
-
-## 2026-11-15 — Unified React frontend on RBOT-HTML
-
-- The RBOT-HTML engine under `src/`, Python pin and lock inputs match `9d040f8`.
-  The new entry point uses the same scheduler, run approval, spend cap and publisher.
-- Chrome 157.0.8103.78 and Edge 157.0.4341.60 on macOS completed synthetic Northbridge
-  from upload and approval to a finished report with original handoff download.
-  Both showed CP-1 debt maturities, its FY2027 gap, and calculated base revenue of 1,050.
-- Focused Python tests passed (369). Adapter quality gate reported zero findings.
-  Report checks exposed and corrected duplicate dating, retained-folder routing,
-  and event and relationship figures appearing among forecast charts.
-- The synthetic proof covers one full pathway with canned model responses.
-  Native Claude medium preflight could plan the pathway offline. The available
-  OpenRouter credential did not supply the direct Anthropic key it requires, and
-  the available sample pack lacks the evidence for a complete analytical report.
-  See [React workflow](docs/react-workflow.md).
