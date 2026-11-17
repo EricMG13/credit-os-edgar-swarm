@@ -14,6 +14,95 @@ Scope: `proof:connected` on main 4f8a375a. Synthetic fixtures and the proof scri
 - Results: `npm --prefix web run proof:connected` exit 0, pass 2 fail 0 (Chrome 157, Edge 157). `proof/test_launcher.py` 4 passed (one added). `tests/test_cpos_launch.py -m "not live and not browser"` 938 passed. Quality gate (tools/quality_gate.py) exit 0.
 - Not verified: the forecast page of the proof run (limits shown) was not read; the before-fix failure was not re-run in this worktree.
 
+## 2026-11-16 — Module test and repair routine: offline, one live Deep run on Claude Opus medium, then the market-data modules on GitHub Copilot GPT Sol (repairs ported onto `main` `4f8a375a` by branch `claude/module-routine-repairs`, from `e6028846`)
+
+Scope: offline gates and the canned browser proof on `main` `a438cb9f` plus the routine's repairs;
+one **live** launch from the React launcher (`python -m react_frontend`, Submit on an approved
+summary, standing ruling `2026-11-11-run-start-submit.md`), Deep credit assessment, Claude Opus at
+Fast (all medium, `opus-medium`), cap USD 40, the retained TDG FY2024 public files (as of
+2024-09-30, legal documents `none`), run `20261116-185348-01` in `~/cos-live/tdg-deep-20261116b`
+(outside the repo). Owner: "run the module test and repair routine offline then live", "Use opus
+medium anthropic key", "Deep, cap USD 40". One case and route; outputs are candidates until
+reviewed.
+
+- Offline, `main`: CP-OS tests 1,696 passed; React 129; library 245 (1 skipped, screenshot);
+  `web` gates exit 0 (171 files, 3,663 tests); `tools/quality_gate.py` 0 findings. The connected
+  browser proof **failed** in Chrome and Edge: PR #40 made the analyst's name required and the proof
+  never types it (`main` types it since `951bcda0`). CLI dry launch of the same Deep run: 20
+  modules, cap USD 40, exit 0, no provider.
+- Repaired, ported onto `main` `4f8a375a` by branch `claude/module-routine-repairs` (tests first:
+  5 of its 9 new tests failed on `main`; the other 4 are guards that pass before and after):
+  1. Uploaded names over 80 characters lost their extension (`safe_name` cut), so the TDG annual
+     report PDF (84 characters) was stored without `.pdf` and silently ignored by the launcher; two
+     long names agreeing for 80 characters overwrote each other. Now the last part keeps its suffix
+     and gains 8 hex of its SHA-256 (`run_start/submissions.py`); in the routine the launcher then
+     read all five files. 2. Issuer ID `pattern` was invalid under the `v` flag (console error,
+     native check skipped); now `[a-z0-9][a-z0-9\-]{0,39}` on the start page #42 rebuilt
+     (`StartRun.tsx`). 3. CP-DR's web page text ran table cells together (`Sep 30, 20241,398.32`);
+     cells are now separated by ` | `. The routine's other two repairs are not in this branch: the
+     proof's name line is on `main` since `951bcda0`; `finance.yahoo.com` is a separate PR. Gates
+     on the branch: 550 targeted tests (submissions, service, React frontend, web lookup) and 486
+     in the related start-page and lookup files passed, quality gate 0 findings, `web` typecheck,
+     lint, prettier and vitest (3,917) exit 0 on Node 22; one independent review: pass with Lows,
+     none High or Medium. Browser-marked tests and the connected proof run after the PR opens.
+- Live run: 18 of 20 modules accepted, then **stopped at the cap** before CP-5 (USD 35.62 settled;
+  the next call's hold would pass USD 40). No module failed; 11 drafts were sent back once and
+  corrected on the next write (page locators in prose, figures not backed by tables, unit-less
+  figures, chart-data wording). Handoff chain: every request's upstream hash equals that module's
+  accepted response (0 mismatches). Method-script checks: none sent back on any accepted handoff
+  (for example CP-4 46 agreed, CP-1B 32, CP-1D 12, CP-1 7). Run activity drew the run as Capped,
+  18 of 20, Evidence validation Interrupted, Committee decision and Report Not run; no report was
+  published, so the library and report views were not checked on live output.
+- Market test data: the owner's Bloomberg aerospace loan sheet transcribed (five TransDigm tranches,
+  nine peers, four index rows; 147 figures, each found in the OCR text) and **re-dated from
+  2026-06-27 to 2024-09-30 at the owner's instruction** ("This is a test just updated the figures to
+  make it run"); typed quotes for term loans J–N, ratings Moody's Ba3, S&P BB- (facility).
+- Module-output run (ruling `2026-11-16-tdg-subset-copilot-sol.md`, temp folder
+  `~/cos-live/tdg-subset-sol`, scratch driver): 13 Opus answers reused, CP-2H, CP-3D,
+  CP-3C, CP-4C, CP-3, CP-5, CP-6 on `copilot-sol-medium`: **7 of 7 accepted, USD 4.51**, 104 handoff
+  pins 0 mismatches, answer key 13 of 15 (the two misses are sound choices: CP-3 used the Ba and
+  Ba/B indices, −4 and −169 bp, correct; CP-3C declined the quotes after CP-3D's block). GPT Sol on
+  OpenAI was refused (no credits, USD 0).
+- Fixes, ranked (owner, 2026-11-16: modules that need the RV Book will have it at deployment):
+  1. High. **CP-4 acceptance must enforce its source gate.** CP-4 concluded covenant capacity and
+     compliance (5.50x against 7.25x) from the 10-K's summary with no executed agreement, though its
+     method says "Blocked: No executed governing document. STOP" and the launcher forecast "Will
+     refuse"; CP-OS accepted it. **Done: #45, merged `d64bdf81`** (refused unless Blocked when no
+     agreement is declared; CP-3 then writes Capital structure; CP-4 told its gate; review pass after
+     one fix round). Open: rerun CP-4 with the agreements in `~/cos-live/tdg-agreements`.
+  2. High, owner's call. **Opus medium does not finish Full or Deep under its cap** (Full's twelve
+     modules before CP-5 cost USD 25.91 against 25; Deep needs about 43 against 40), so an ordinary
+     run stops with no report. **Owner: "Default Full and Deep to GPT Sol"**: the start page already
+     does (2026-11-12 amendment); OpenAI has no credits, so the default cannot run until topped up.
+  3. Medium. **A wrong prose figure passed every check**: CP-1D says compensation lifts leverage
+     "about 0.39x"; its own formula gives 22,967/3,871 − 22,967/4,088 = 0.315x (CP-5 caught it as
+     minor). **Done: #47, merged `4f8a375a`**: a note in a table cell backed it; such a note now
+     holds only a restatement of its cell's value (review pass).
+  4. Medium. **Late requests are too large for Copilot**: first prompts CP-5 about 252,000 tokens
+     (plus 32,000 output, over the 272,000 limit), CP-6 224,000, CP-3 209,000; Copilot summarised all
+     three. No figure was lost this time (every CP-5 and CP-6 figure traces upstream). Smaller inputs
+     to CP-3, CP-5, CP-6 also remove fix 5's cause and cut Opus cost (fix 2).
+  5. Medium. **Summaries Copilot does not bill are invisible to the cap** (CP-3, CP-6): hold an
+     allowance per summary, or stop it happening (fix 4).
+  6. Medium, deployment setting. **Set `DEPLOY_WORKFLOW_SEC_USER_AGENT`**: without it CP-1C found no
+     peers and CP-DR's SEC lookups were refused; the launcher readiness could say so.
+  7. Check at deployment. Only CP-3's instructions say the Sector RV Book is current; CP-3D requires
+     dated quotes and blocked on the re-dated sheet. If RV Book rows carry no quote date, CP-3D,
+     CP-3C and CP-2H may block while CP-3 proceeds; then give them CP-3's policy.
+  8. Low, one batch after the final phase: GPT Sol writes calculator results at 37 decimals in tables
+     (34 lines in CP-3C, CP-5, CP-6; Opus none); a `.pdf.` name loses its suffix; `# Market quotes
+     as of` is not read as a quotes file; `_row_has_cell` is not reset at `table`; the review sheet
+     shows codes and "Will refuse wording open until A-live."; favicon 404.
+- No fix needed: CP-3D and CP-3C market inference, CP-3's comparisons and CP-2H's facility ratings
+  get the RV Book at deployment (CP-3 already worked fully on the test sheet). Leverage 6.02x and
+  5.50x are two labelled bases, not a conflict: CP-1 states both (reported EBITDA, and EBITDA As
+  Defined, the revolver test's measure) and the gap; this corrects the earlier note. CP-4C Not
+  Applicable is right (no distress trigger). The library leaves out runs with reused answers by design.
+- Not verified: library and report views on live output; CP-3D on dated RV Book quotes; the cell
+  separator on a live page; Copilot's billing of summaries; other issuers; Windows; the full suite;
+  on this branch, the browser-marked tests, the connected proof and the web gates on Node 24.
+
+
 ## 2026-11-17 — PR 2: a run in the currency its source files report in (branch `claude/reporting-currency`)
 
 Scope: the whole branch against `main` 0bca1822. That covers the two entries below (PRs 44 and 46, merged into this branch) and the work listed here. Ruling: `docs/rulings/2026-11-16-reporting-currency-from-sources.md`. No provider was called and no paid run was made. The proof is synthetic: retained, canned module answers, labelled as such.
@@ -898,94 +987,3 @@ Scope: presentation only, all under `web/`; no backend, handoff, provider or mod
   individual records and all eight screenshots. The React assets are identical
   to the preceding candidate. Windows work-PC proof and publication are pending.
 
-## 2026-11-15 — Latest RBOT-HTML and additional chart contracts
-
-- Verified upstream at `b8cf4ca`. The engine, native library and Python pins match it.
-  The React lockfile is unchanged. [Upstream method and portfolio verification](https://github.com/EricMG13/RBOT-HTML/blob/b8cf4ca58083e1a822fb45515cd7ce63ce467834/VERIFICATION.md)
-- The new native validator recognizes the supplied holdings, market data, mandate, exposure
-  and constraints. Validation failed for both the May exposure date and the October
-  Caesars date. React now offers the workbook selection for Full credit assessment.
-- Confidence review reproduced intermittent-data chart fallback and dropped recovery
-  columns. Both macOS browsers verified ten plots and one mixed-unit record from the
-  native descriptor parser, with exact zero, no-quote and recovery gaps. The figures
-  used synthetic handoffs. Caesars separately passed 23 retained descriptor checks.
-- Restored the newly required CP-2E and CP-3 registers in the synthetic handoffs.
-  Candidate source `3cb2b40` and ZIP SHA-256
-  `e2c984bf061d7b571cdc20b1f0d046032abf184ae20f4becf00120db1690811c`.
-  The clean extraction passed macOS Chrome (`20261115-155903-01`) and Edge
-  (`20261115-155910-01`), including the signed bridge and missing funding commitment.
-  Python (285), web (302), quality, typecheck, formatting and build checks passed.
-  Windows work-PC proof and publication remain pending.
-
-## 2026-11-15 — Published run charts in Forecast
-
-- Forecast takes figures and stated gaps from the current module output. Each
-  chart keeps the owning module and same handoff-line trace used in Modules.
-  The collection works without a calculation model. Native chart rejections
-  keep their diagnostic text in Evidence Record.
-- Confidence review checked alternate output identity, non-assessable charts,
-  recorded build rejections, zero versus a missing value, and cited gap text.
-  No dated event lanes or relationship maps entered the Forecast collection.
-- The retained Caesars case showed eight figures in Chrome and Edge on macOS.
-  Both kept the portfolio gap, the FY2027 cash-basis reconciliation, and the
-  2030 maturity of 3,962 US$m through the chart table and Evidence reload.
-  Both layouts fit 720 px. See `proof-artifacts/caesars-forecast-run-charts/`.
-- Source `47cbd8b`, ZIP SHA-256 `70d1414ead1682be2791ced60b314cca7b2abdec2350034442513ad09027c4f2`.
-  Extracted-package synthetic runs passed in macOS Chrome (`20261115-154748-01`)
-  and Edge (`20261115-154754-01`). Targeted web tests passed (73) and Python
-  passed (15). Lint, format, typecheck, build and quality gate passed.
-  Windows work-PC proof and publication are pending.
-
-## 2026-11-15 — Portfolio evidence and all retained Caesars figures
-
-- The pinned portfolio validator at RBOT-HTML `fc010a7` rejects the supplied two-sheet
-  workbook and accepts the repository template. The dated May exposure was outside the
-  October Caesars case. No supplied portfolio files were included in the ZIP.
-- Confidence review reproduced a plot from numeric limits alone. The connected reader now
-  shows the source table, with a validation gap, when no validated portfolio basis is
-  published. Tests preserve 0.00, the exact limit and the reason when no proposal exists.
-  The existing portfolio chart component passed its synthetic component checks. The
-  native snapshot still has no validated portfolio basis to bind a positive PD.1 case.
-- The retained Caesars replay on macOS Chrome and Edge checked eight plotted financial
-  charts, six dated event lanes, seven maps, two authored gaps and the source links and
-  visible table rows of all 21 figures. Records are under
-  `proof-artifacts/caesars-figure-audit/`. The preview served an isolated copy with
-  same-origin POST and DELETE returning 405.
-- Candidate `425655b` SHA-256 `44bcf35e6bd4172a874cadbc363e60e92762be0a07af0467d755fef144e07df5`.
-  The extracted ZIP passed on macOS Chrome 157.0.8103.78 (run `20261115-153911-01`)
-  and Edge 157.0.4341.60 (run `20261115-153916-01`). Both checked chart-source route
-  reload, the portfolio table and its qualification, and the original CP-2 file hash.
-  Focused tests passed (70 web and 15 Python), with clean lint, format, build and
-  quality gate results. The work-PC browser proof and ZIP publication are pending.
-
-## 2026-11-15 — Credit OS 2 React issuer report redesign
-
-- Upstream GitHub main was verified at RBOT-HTML `fc010a7`. Engine files and
-  Python/workspace pins match that commit. React and its lockfile are preserved.
-- Read-only Caesars replay, macOS Chrome 157.0.8103.78 and Edge 157.0.4341.60.
-  Verified five report views, 12 retained handoffs, eight chart descriptors,
-  seven event lanes, seven maps and the explicit portfolio chart gap.
-- Fidelity checks used 3,962 US$m 2030 maturities, the original CP-2 hash,
-  C11/C14 lineage, and 464.86 versus 647.95 US$m FY2027 forecast bases.
-  Narrow report views fit at 720 px; Escape returned focus from the trace.
-- Confidence review checked run and output identity, qualified forecasts, zero
-  versus missing, comparable units and same-run artifact downloads. Fixed the
-  driver-only downside label, lost module filter, chart qualification,
-  methodology files in the package, and responsive overflow.
-- The 91-figure map documents available producers and table/gap states. The
-  browser evidence covers delivered cases and fixtures, not every pathway or
-  a new paid run. The Caesars replay remains a labelled test preview.
-- Candidate source `df9902b` and ZIP digest
-  `f0e0dde8da058c9d8e739bfc7d9265e7234b7295cc4efec849a9093281912507`.
-  A clean extraction passed the full 14-module synthetic workflow in macOS
-  Chrome (run `20261115-152941-01`) and Edge (run `20261115-152946-01`).
-  Both verified the exact handoff download. Package validation confirmed the
-  14 synthetic handoffs and excluded retained issuer data and credentials.
-  The extracted proof uses its own fixtures and made no provider calls.
-- Paired CP-8 proof used the RBOT-HTML synthetic lite-assessment publisher with
-  an earlier-format prior. macOS Chrome and Edge checked the exact −1.40x
-  leverage change, the withheld cash difference, maturity gap, module
-  explanation, and Evidence reload and back/forward. Targeted tests also cover
-  same-period revisions, mismatched pair identity, maturity zero versus missing,
-  and the distinction between missing, unreadable and first-run comparisons.
-- Work-PC proof is pending. Keep the ZIP local until both Windows browsers pass.
