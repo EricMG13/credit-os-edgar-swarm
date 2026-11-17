@@ -89,9 +89,9 @@ describe("readSlice, Evidence Record", () => {
       ],
     ]);
     expect(record?.spend.progress).toEqual({
-      text: "USD 11.40 of USD 20.00",
+      text: "USD 11.40 of USD 25.00",
       value: 11.4,
-      max: 20,
+      max: 25,
     });
     expect(record?.calls.count).toBe("41");
     expect(record?.calls.rows.map((r) => r.label)).toEqual([
@@ -171,7 +171,7 @@ describe("readSlice, Evidence Record", () => {
     ],
     [
       "a spend above its cap",
-      (e) => (e.record.spend.progress["value"] = 21),
+      (e) => (e.record.spend.progress["value"] = 26),
       "record.spend.progress.value",
     ],
     [

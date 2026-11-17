@@ -30,7 +30,7 @@ describe("Run activity, running", () => {
     expect(screen.getByText("USD 7.40")).toBeTruthy();
     expect(screen.getByText("5 of 13")).toBeTruthy();
     expect(screen.getByText("16 min 12 s")).toBeTruthy();
-    expect(screen.getByText("USD 7.40 of USD 20.00")).toBeTruthy();
+    expect(screen.getByText("USD 7.40 of USD 25.00")).toBeTruthy();
     expect(screen.getByText("5 of 13 modules")).toBeTruthy();
     expect(screen.getByText("Started today at 14:38")).toBeTruthy();
     const bars = screen.getAllByRole("progressbar");
@@ -72,7 +72,7 @@ describe("Run activity, running", () => {
     expect(lines[0]?.querySelector("time")?.hasAttribute("datetime")).toBe(false);
     expect(feed.querySelectorAll(".feed-rise")).toHaveLength(1);
     expect(lines[0]?.closest(".feed-rise")).not.toBeNull();
-    expect(lines[6]?.textContent).toContain("Started. 13 modules queued, cap USD 20.00.");
+    expect(lines[6]?.textContent).toContain("Started. 13 modules queued, cap USD 25.00.");
   });
 
   it("disables Stop run and says why", () => {
@@ -221,6 +221,6 @@ describe("Run activity, a missing figure", () => {
     showFixture("/run/activity/starting");
     expect(screen.getByText("No module has reported yet")).toBeTruthy();
     const bars = screen.getAllByRole("progressbar");
-    expect(bars.map((b) => b.getAttribute("aria-valuemax"))).toEqual(["20"]);
+    expect(bars.map((b) => b.getAttribute("aria-valuemax"))).toEqual(["25"]);
   });
 });

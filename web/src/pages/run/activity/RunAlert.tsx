@@ -14,7 +14,7 @@ const MARK = {
 
 // The mock's featured-outline mark: two rings round the shape, at 0.3 and 0.1 opacity.
 const RINGS =
-  "relative m-2.5 flex size-5 flex-none items-center justify-center before:absolute before:top-1/2 before:left-1/2 before:size-7 before:-translate-x-1/2 before:-translate-y-1/2 before:rounded-full before:border-2 before:border-current before:opacity-30 before:content-[''] after:absolute after:top-1/2 after:left-1/2 after:size-[38px] after:-translate-x-1/2 after:-translate-y-1/2 after:rounded-full after:border-2 after:border-current after:opacity-10 after:content-['']";
+  "relative m-2.5 flex size-5 flex-none items-center justify-center before:absolute before:top-1/2 before:left-1/2 before:size-7 before:-translate-x-1/2 before:-translate-y-1/2 before:rounded-full before:border-2 before:border-current before:opacity-30 before:content-[''] after:absolute after:top-1/2 after:left-1/2 after:size-10 after:-translate-x-1/2 after:-translate-y-1/2 after:rounded-full after:border-2 after:border-current after:opacity-10 after:content-['']";
 
 /**
  * The alert of an ended run, marked with the run state's own shape. Failed says "alert";

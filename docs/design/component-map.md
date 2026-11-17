@@ -350,7 +350,7 @@ across sets, with the same meaning. The sets it defines are status, run states, 
 states, dated records, answer state, met or not met, and freshness.
 
 One set is not yet in the design system: a module's state on R7 (on Overview, and the change
-state per module on Changes). It takes shapes from the design system's ten by meaning, each
+state per module on Changes). It takes shapes from the design system's eleven by meaning, each
 state distinct within the set; the design system fixes them before the D1a mocks.
 
 | State | Kit | Notes |

@@ -41,7 +41,7 @@ function WithBar({ caption, figure }: { caption: string; figure: Figure }) {
 /** Spend, modules finished and elapsed time, formatted by the caller. */
 export function Summary({
   run,
-  spendCaption = "Spend",
+  spendCaption = "Spend and cap",
 }: {
   run: Pick<RunRecord, "spend" | "finished" | "elapsed">;
   spendCaption?: string;

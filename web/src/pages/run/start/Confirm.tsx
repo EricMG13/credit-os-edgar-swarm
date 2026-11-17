@@ -17,7 +17,7 @@ export function Confirm({ groups }: { groups: Groups }) {
         </div>
         <StatusBadge set="Approval" state="Awaiting your approval" />
       </div>
-      <div className="flex flex-col gap-7">
+      <div className="flex flex-col gap-8">
         {groups.map((group) => (
           <section key={group.name} className="flex flex-col gap-2">
             <h3 className="text-caption text-text-tertiary">{group.name}</h3>

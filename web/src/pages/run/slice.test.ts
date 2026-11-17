@@ -69,7 +69,9 @@ describe("committed fixture", () => {
       progress: { label: "100%", value: 100, max: 100 },
       reason: null,
     });
-    expect(docs.nextBlocked).toBe("Replace or remove the unreadable file to continue.");
+    expect(docs.nextBlocked).toBe(
+      "Replace or remove the unreadable file to continue. This page is a saved example, so nothing can be replaced or removed here.",
+    );
     const purpose = by("purpose");
     if (purpose?.step !== "purpose") throw new Error("step");
     expect(purpose.chosen).toBe("full-review");
@@ -92,9 +94,9 @@ describe("committed fixture", () => {
     expect(context.note).toBe("");
     const start = by("start");
     if (start?.step !== "start") throw new Error("step");
-    expect(start.nextLabel).toBe("Submit, spend up to USD 20.00");
-    expect(start.paid.amount).toBe("USD 20.00");
-    expect(start.confirm.action).toBe("Start run, up to USD 20.00");
+    expect(start.nextLabel).toBe("Submit, spend up to USD 25.00");
+    expect(start.paid.amount).toBe("USD 25.00");
+    expect(start.confirm.action).toBe("Start run, up to USD 25.00");
     expect(start.confirm.started).toBe("started");
     expect(start.readiness.line).toBe("Everything the run needs is in place.");
     const started = by("started");
@@ -102,7 +104,7 @@ describe("committed fixture", () => {
     expect(started.title).toBe("Run started");
     expect(started.activity).toBe("running");
     expect(started.next).toBeNull();
-    expect(started.cap).toEqual({ label: "USD 0.00 of USD 20.00", value: 0, max: 20 });
+    expect(started.cap).toEqual({ label: "USD 0.00 of USD 25.00", value: 0, max: 25 });
   });
 
   it("keeps a null value as null and a zero bar as 0", () => {
@@ -304,7 +306,7 @@ function steps(id: string) {
   if (m.kind !== "steps") throw new Error("not steps");
   return m.steps;
 }
-const SPEND = (label: string, value: number) => ({ label, value, max: 20 });
+const SPEND = (label: string, value: number) => ({ label, value, max: 25 });
 
 describe("committed fixture, run activity", () => {
   it("holds eleven records in order and a current run", () => {
@@ -334,7 +336,7 @@ describe("committed fixture, run activity", () => {
       line: null,
       alert: null,
       open: null,
-      spend: { value: "USD 7.40", bar: SPEND("USD 7.40 of USD 20.00", 7.4) },
+      spend: { value: "USD 7.40", bar: SPEND("USD 7.40 of USD 25.00", 7.4) },
       finished: { value: "5 of 13", bar: { label: "5 of 13 modules", value: 5, max: 13 } },
       elapsed: { value: "16 min 12 s", note: "Started today at 14:38" },
     });
@@ -367,7 +369,7 @@ describe("committed fixture, run activity", () => {
     expect(r.feed[6]).toEqual({
       who: "Run",
       time: "14:38",
-      text: "Started. 13 modules queued, cap USD 20.00.",
+      text: "Started. 13 modules queued, cap USD 25.00.",
       state: "Queued",
     });
     const q = run("queued");
@@ -380,7 +382,7 @@ describe("committed fixture, run activity", () => {
       {
         who: "Run",
         time: "14:37",
-        text: "Submitted and queued. 13 modules, cap USD 20.00.",
+        text: "Submitted and queued. 13 modules, cap USD 25.00.",
         state: "Queued",
       },
     ]);
@@ -422,9 +424,9 @@ describe("committed fixture, run activity", () => {
     const failed = run("failed");
     expect(failed.alert).toEqual({
       title: "The run failed",
-      text: "Financial analysis stopped after three attempts because the model service returned no usable answer. Two modules finished and are kept. Starting again goes through Start and asks before it spends.",
-      action: { label: "Review and start again", href: "#/run/start/start" },
-      alt: { label: "Open what finished", href: "#/" },
+      text: "Financial analysis stopped after three attempts because the model service returned no usable answer. Two modules finished and are kept.",
+      action: { label: "Open what finished", href: "#/" },
+      alt: null,
     });
     expect(steps("failed")[2]).toMatchObject({ state: "Not assessable" });
     expect(steps("failed")[3]).toMatchObject({ state: "Not run", detail: "Did not run." });
@@ -435,7 +437,7 @@ describe("committed fixture, run activity", () => {
       state: "Failed",
     });
     const capped = run("capped");
-    expect(capped.spend.bar).toEqual(SPEND("USD 20.00 of USD 20.00", 20));
+    expect(capped.spend.bar).toEqual(SPEND("USD 25.00 of USD 25.00", 25));
     expect(capped.alert?.action).toEqual({ label: "Open what finished", href: "#/" });
     expect(capped.alert?.alt).toEqual({
       label: "Start a new run",
@@ -457,10 +459,8 @@ describe("committed fixture, run activity", () => {
     expect(rejected.spend.bar?.value).toBe(0);
     expect(rejected.feed.map((e) => e.state)).toEqual(["Rejected", "Queued"]);
     const interrupted = run("interrupted");
-    expect(interrupted.alert?.action).toEqual({
-      label: "Review and resume",
-      href: "#/run/start/start",
-    });
+    expect(interrupted.alert?.action).toEqual({ label: "Open what finished", href: "#/" });
+    expect(interrupted.alert?.alt).toBeNull();
     expect(steps("interrupted")[5]).toMatchObject({ name: "Covenants", state: "Interrupted" });
     expect(interrupted.feed[0]?.state).toBe("Interrupted");
   });
@@ -571,8 +571,8 @@ describe("rejects, run activity", () => {
     );
   });
   it("an alert action with an outside address", () => {
-    expect(reason(editRun("failed", ["alert", "alt", "href"], "http://x.test/"))).toBe(
-      'run.runs[4].alert.alt.href: expected an address starting with "#/"',
+    expect(reason(editRun("capped", ["alert", "alt", "href"], "http://x.test/"))).toBe(
+      'run.runs[5].alert.alt.href: expected an address starting with "#/"',
     );
   });
   it("an unknown run state, record kind and module word", () => {
@@ -669,11 +669,32 @@ describe("rejects, run activity", () => {
       "run.runs[10].alert.text: expected no module code",
     );
   });
+  it.each([
+    "CP-DR",
+    "CP-MODEL",
+    "CP-L10",
+    "CP-OS",
+    "cp-1a",
+    "CP-1A",
+    "Peer set from CP-DR is ready",
+  ])("a module code of any shape is refused where it is read: %s (S6-018)", (code) => {
+    expect(reason(editRun("running", ["feed", 0, "text"], code))).toBe(
+      "run.runs[0].feed[0].text: expected no module code",
+    );
+    expect(reason(edit("documents", ["readiness", "notMet"], { count: "1", items: [code] }))).toBe(
+      "run.drafts[1].readiness.notMet.items[0]: expected no module code",
+    );
+  });
+  it("words that only start like a module code are kept (S6-018)", () => {
+    for (const word of ["Capped", "CP", "cpu-bound", "Step CP"]) {
+      expect(readSlice(editRun("running", ["feed", 0, "text"], word)).kind).toBe("ok");
+    }
+  });
   it("a missing figure value and a bad bar", () => {
     expect(reason(editRun("running", ["spend", "value"], undefined))).toBe(
       "run.runs[0].spend.value: expected a string or null",
     );
-    expect(reason(editRun("running", ["spend", "bar", "value"], 21))).toBe(
+    expect(reason(editRun("running", ["spend", "bar", "value"], 26))).toBe(
       "run.runs[0].spend.bar.value: expected a number from 0 to max",
     );
   });

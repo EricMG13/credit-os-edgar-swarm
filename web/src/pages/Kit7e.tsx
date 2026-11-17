@@ -73,7 +73,8 @@ export function KitOverlays() {
                           Start a paid run
                         </h3>
                         <p className="text-small text-text-secondary">
-                          This run costs money and cannot be undone. It stops at the cap of USD 20.
+                          This run costs money and cannot be undone. It stops at the Full cap of USD
+                          25.
                         </p>
                       </div>
                       <div className="flex gap-3">

@@ -442,7 +442,7 @@ describe("Overview, modules and limitations", () => {
     }
   });
 
-  it("collapses a repeated state into one plain item with its names and a chevron", () => {
+  it("collapses a repeated state into one plain item with its names, no chevron; the linked items carry one", () => {
     renderOverview("2026-03-31");
     expect(items().map((item) => item.querySelector("a") === null)).toEqual([
       true,
@@ -458,7 +458,7 @@ describe("Overview, modules and limitations", () => {
     );
     const chevrons = (item: HTMLElement | undefined) =>
       item?.querySelectorAll("svg[aria-hidden='true'].text-text-tertiary").length;
-    expect(items().map(chevrons)).toEqual([1, 0, 0, 0, 0, 0, 0]);
+    expect(items().map(chevrons)).toEqual([0, 1, 1, 1, 1, 1, 1]);
   });
 
   it("draws the capped run's modules as its own story: nine delivered, four not run", () => {

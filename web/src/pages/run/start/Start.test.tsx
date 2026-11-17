@@ -7,7 +7,7 @@ afterEach(() => {
   cleanup();
 });
 
-const SUBMIT = "Submit, spend up to USD 20.00";
+const SUBMIT = "Submit, spend up to USD 25.00";
 
 describe("Start (frame 06)", () => {
   beforeEach(() => {
@@ -38,15 +38,15 @@ describe("Start (frame 06)", () => {
     expect(
       screen.getByRole("heading", { level: 3, name: "Submit starts a paid run" }).parentElement,
     ).toHaveTextContent(
-      "Submit starts a paid runIt can spend up to USD 20.00 and stops there. You confirm once more before anything is spent.",
+      "Submit starts a paid runIt can spend up to USD 25.00 and stops there. You confirm once more before anything is spent.",
     );
   });
 
   it("draws the amount in the paid sentence in bold, and the sentence whole", () => {
-    const strong = screen.getByText("USD 20.00", { selector: "strong" });
+    const strong = screen.getByText("USD 25.00", { selector: "strong" });
     expect(strong).not.toHaveClass("text-text-primary"); // keeps the sentence's colour
     expect(strong.parentElement).toHaveTextContent(
-      "It can spend up to USD 20.00 and stops there. You confirm once more before anything is spent.",
+      "It can spend up to USD 25.00 and stops there. You confirm once more before anything is spent.",
     );
   });
 
@@ -61,7 +61,7 @@ describe("Start (frame 06)", () => {
     show("/run/start/start", slice);
     // The page's design-reference note has a bold title of its own, so look in the sentence only.
     const sentence = screen.getByText(
-      "It can spend up to USD 20.00 and stops there. You confirm once more before anything is spent.",
+      "It can spend up to USD 25.00 and stops there. You confirm once more before anything is spent.",
     );
     expect(sentence.querySelector("strong")).toBeNull();
     expect(sentence).toBeVisible();
@@ -78,12 +78,12 @@ describe("Start (frame 06)", () => {
     const dialog = screen.getByRole("dialog", { name: "Start a paid run?" });
     expect(
       within(dialog).getByText(
-        "This run can spend up to USD 20.00 and stops when it reaches that cap. Once it starts, what it has spent cannot be taken back.",
+        "This run can spend up to USD 25.00 and stops when it reaches that cap. Once it starts, what it has spent cannot be taken back.",
       ),
     ).toBeVisible();
     expect(within(dialog).getByRole("button", { name: "Cancel" })).toBeEnabled();
     expect(
-      within(dialog).getByRole("button", { name: "Start run, up to USD 20.00" }),
+      within(dialog).getByRole("button", { name: "Start run, up to USD 25.00" }),
     ).toBeEnabled();
   });
 
@@ -91,7 +91,7 @@ describe("Start (frame 06)", () => {
     fireEvent.click(screen.getByRole("button", { name: SUBMIT }));
     const dialog = screen.getByRole("dialog");
     const cancel = within(dialog).getByRole("button", { name: "Cancel" });
-    const start = within(dialog).getByRole("button", { name: "Start run, up to USD 20.00" });
+    const start = within(dialog).getByRole("button", { name: "Start run, up to USD 25.00" });
     const actions = start.parentElement;
     expect(actions).toBe(cancel.parentElement);
     expect(actions).toHaveClass("flex-col");
@@ -135,7 +135,7 @@ describe("Start (frame 06)", () => {
 
   it("navigates to the started draft on confirm", () => {
     fireEvent.click(screen.getByRole("button", { name: SUBMIT }));
-    fireEvent.click(screen.getByRole("button", { name: "Start run, up to USD 20.00" }));
+    fireEvent.click(screen.getByRole("button", { name: "Start run, up to USD 25.00" }));
     expect(window.location.hash).toBe("#/run/start/started");
   });
 
@@ -158,7 +158,7 @@ describe("Run started (frame 08)", () => {
     expect(within(alert).getByText("Run started")).toBeVisible();
     expect(
       within(alert).getByText(
-        "13 modules will read 4 documents for a full credit review of TransDigm Group. Spending stops at USD 20.00.",
+        "13 modules will read 4 documents for a full credit review of TransDigm Group. Spending stops at USD 25.00.",
       ),
     ).toBeVisible();
   });
@@ -176,7 +176,7 @@ describe("Run started (frame 08)", () => {
 
   it("draws the cap bar and the two links", () => {
     const alert = screen.getByRole("status");
-    expect(within(alert).getByRole("progressbar", { name: "USD 0.00 of USD 20.00" })).toBeVisible();
+    expect(within(alert).getByRole("progressbar", { name: "USD 0.00 of USD 25.00" })).toBeVisible();
     expect(within(alert).getByRole("link", { name: "Watch run activity" })).toHaveAttribute(
       "href",
       "#/run/activity/running",
