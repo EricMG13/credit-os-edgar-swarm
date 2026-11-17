@@ -157,12 +157,12 @@ class KeyIndex(NamedTuple):
         if len(chosen) != 1:
             left = ", ".join(repr(c) for c in chosen) or "none"
             fits = ", ".join(repr(c) for c in candidates)
-            note = f"alias '{word}' fits {fits}; CP-0 roles leave {left}"
+            note = f"alias '{word}' fits {fits}; {MODULE_NAMES['CP-0']} roles leave {left}"
             return Resolved(None, note, word)
         skipped = [c for c in candidates if c != chosen[0]]
         note = f"alias '{word}' → '{chosen[0]}'"
         if skipped:
-            note += f" ({', '.join(skipped)} marked alternate in CP-0)"
+            note += f" ({', '.join(skipped)} marked alternate in {MODULE_NAMES['CP-0']})"
         return Resolved(chosen[0], note, word)
 
 
@@ -261,7 +261,7 @@ def basis_file_locators(
         span = span_text(first, last)
         if file not in files:
             label = f"{file} p.{span} · not in inventory"
-            note = "the Basis file is not in the CP-0 inventory"
+            note = f"the Basis file is not in the {MODULE_NAMES['CP-0']} inventory"
             result.append(locator("gap", page=first, page_end=last, label=label, note=note))
         elif (key := files[file]) is None:
             label = f"{file} p.{span} · ambiguous"

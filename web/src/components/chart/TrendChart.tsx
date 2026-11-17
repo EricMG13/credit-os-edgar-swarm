@@ -9,7 +9,7 @@ import {
   type TooltipContentProps,
 } from "recharts";
 import { ChartFrame } from "./ChartFrame";
-import { ChartTable } from "./ChartTable";
+import { ChartTable, type TableRowData } from "./ChartTable";
 import { Mark } from "./marks";
 import { SeriesLine } from "./SeriesLine";
 import { assignSeries, SERIES, type SeriesStyle } from "./series";
@@ -38,6 +38,8 @@ interface TrendChartProps {
   table: TableRow[];
   /** The y-axis ticks and their labels, supplied by the caller. Without them the axis has no labels. */
   yTicks?: YTick[];
+  /** The Table form's own table, one row per period, when it carries more than the series' figures. */
+  detailTable?: { head: string[]; rows: TableRowData[]; endHeading?: string };
 }
 
 export interface YTick {
@@ -182,6 +184,7 @@ export function TrendChart({
   table,
   yTicks,
   actions,
+  detailTable,
 }: TrendChartProps) {
   check({ periods, series, table });
   return (
@@ -192,8 +195,9 @@ export function TrendChart({
         ) : (
           <ChartTable
             caption={title}
-            head={[title, ...periods]}
-            rows={table.map((row) => ({ label: row.name, cells: row.cells }))}
+            head={detailTable?.head ?? [title, ...periods]}
+            rows={detailTable?.rows ?? table.map((row) => ({ label: row.name, cells: row.cells }))}
+            endHeading={detailTable?.endHeading}
           />
         )
       }
