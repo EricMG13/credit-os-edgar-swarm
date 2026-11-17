@@ -7,7 +7,9 @@ The link style, currency-display test, issued-record fixture and full fidelity
 capture are tracked as stage 5 work. Sweep results will be verified against the
 updated repair tip before the sweep is accepted. Measure each sweep change
 against a base with the same repair changes so that the sweep receives credit
-only for its own effect.
+only for its own effect. The repaired application and test source used for
+the final comparison is `bb94ddceff3a1f02c7239ebca72de285df79c607`.
+Later repair-base documentation commits carry the same application inputs.
 
 Review `src/`, `react_frontend/`, `apps/issuer-library/`, `proof/`, `tools/` and
 `web/` in service-to-client order. Check all 17 sweep rows from the repair
