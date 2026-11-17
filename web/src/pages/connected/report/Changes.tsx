@@ -132,7 +132,7 @@ export function Changes({
     );
   return (
     <>
-      <section className={card}>
+      <section className={rows.length > 0 ? "grid gap-4" : card}>
         <h2 className={heading}>Changes since the last run</h2>
         {change?.problem ? (
           <p>
@@ -143,6 +143,16 @@ export function Changes({
         ) : !change?.pack ? (
           <p>{note}</p>
         ) : null}
+        {(change?.problem || !change?.pack) && (
+          <div className="flex flex-wrap items-center gap-3">
+            <Button href="#overview" color="secondary" size="sm">
+              Open the Overview
+            </Button>
+            <Button href="#evidence/record" color="link-gray" size="sm" iconTrailing={ArrowRight}>
+              Review comparison evidence
+            </Button>
+          </div>
+        )}
         {rows.length > 0 && (
           <>
             <div className="flex justify-end">

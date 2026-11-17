@@ -192,6 +192,12 @@ export function ReportRecord({
             {run.changes.note}
           </p>
         )}
+        {run.changes?.problem && (
+          <p className="text-sm wrap-anywhere">
+            <span className="text-text-tertiary">Comparison problem: </span>
+            {run.changes.problem}
+          </p>
+        )}
         <RunTotals
           value={value}
           mode={mode}
