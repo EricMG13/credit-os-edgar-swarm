@@ -524,3 +524,73 @@ listed; R4-012 repair/final review/integration and proof-harness alignment;
 original group 2 PR/CI/actual-final acceptance; final combined full gates,
 connected proof and browser/handoff fidelity; Windows/weekly/full Python,
 provider/live/paid/seat/real Submit/Teams. No branch was pushed or promoted.
+
+## Phase 7: final reviewed R4-012 and accepted group 2 ancestry
+
+The lead gave GO for the complete final R4-012 chain after the mandatory fresh
+review accepted exact code `78a6baab` with zero remaining High/Medium/Low findings.
+Read `/workspace/scratch/reference-last-review.md`; the lead also independently
+ran the unchanged nine-case/45-boundary probe successfully. This is the final
+authorized R12 return; this integration adds no repair loop. The lead confirmed
+group 2 PR 58 was CI-green and merged at 19:12:23 as actual-final `94c9ea57`.
+Both milestones are integrated locally; the candidate remains unpromoted.
+
+| Source milestone | Candidate commit |
+| :--- | :--- |
+| R4-012 final tip `cfac2839` | merge `32f7f65a` |
+| Predicate code `a30247eb`, `02fefa34`, `78a6baab`; reports `05da92cf`, `cfac2839` | Same source commits, inherited through `32f7f65a` |
+| Accepted actual-final `94c9ea57` / PR 58 source completion `37ad6561` | merge `3e4bc4ee` |
+
+Both merges were clean. `publishedReport.ts` keeps T22's complete optional
+`confidenceTrace` input/method/section type while adding only the reviewed
+reference-boundary behavior. Its unrelated parser, currency and reader-text work
+is retained. The actual-final merge contributes only thirteen completion-doc,
+review and captured-log files because all reviewed product commits were already
+present. An ancestry check confirms `94c9ea57` is now a candidate ancestor, ready
+for a later authorized fast-forward; no actual-final worktree was changed here.
+No new expectation or conflict resolution was needed in this phase.
+
+### Phase 7 checks
+
+| Check | Exit/result |
+| :--- | :--- |
+| Final reference, Forecast reader-text and chart Basis callers plus T22 confidence, lead report follow-ups and exact citation-range controls | Initial exit 1; eleven files / 306 passed and one unchanged page-title timing assertion failed |
+| Unchanged report follow-ups file alone | 0; 17 passed, resolving that sole intermittent assertion; all 307 tests across the eleven distinct files now pass |
+| Unchanged eight-case original predicate/chart probe | 0; eight cases, no failures |
+| Unchanged nine-case actual-boundary probe | 0; all 45 predicate/chart/FindingParagraph/PublishedTable/ForecastScope checks pass |
+| Full frontend lint | 0 |
+| Full frontend format and typecheck | 0 for both |
+| Python, protected scorer/prompts/proof handoffs/Signal and T22 ReportContent/Confidence/MetricGrid phase diff | Empty |
+| Product/test range whitespace and working-tree `git diff --check` | 0 for both |
+| Complete phase range `git diff --check 135d2d19..HEAD` | 2; four EOF blank-line findings in imported raw group-2 completion logs |
+
+The newly imported raw-log whitespace is confined to
+`completion-evidence/group2/repair2-final-lint.log`, `repair2-final-types.log`,
+`repair2-r4-001-backport.log` and `repair2-t18-t22-combined-web.log`. The nine
+earlier historical T22 log findings from phase 6 also remain preserved. No raw
+evidence bytes, assertions, thresholds, gate configuration or test selection
+rules were changed to hide either set of warnings.
+
+Commands/results are retained under
+`/workspace/scratch/integrate-stage5-reference-*`. Tests use `timeout 300` and
+one worker; both unchanged local Vite/React probes use `timeout 60`. No Python
+code changed, so phase 6's default gate still covers the identical Python tree;
+it was not repeated. No Signal caller of the reference helper was found in the
+reviewed source searches, and no unrelated broad suite was repeated. The source
+worker's direct confidence/simplification review and fresh final review remain
+the design evidence; this clean merge writes no new production function.
+
+The initial extra caller failure was C1-014/C5-005: after the Sources heading
+appeared, the immediate `document.title` assertion briefly read `Credit OS`
+rather than the exact expected Evidence title. The unchanged file passes alone.
+Its assertion, timeout, fixture, and `ReportLibrary.tsx` title effect have no phase
+change; no test or product edit was made. The original 280 R4-012 cases all pass,
+as do the T22/source controls. This records the timing-sensitive result rather
+than hiding it behind the later successful rerun.
+
+Not verified: page-title timing under the eventual combined full gate; proof-harness alignment and
+additive coordination audit-data/helper copying; final combined full gates,
+connected proof, native-browser/handoff fidelity and actual-final promotion;
+historical raw-log whitespace remains as listed; Windows/weekly/full Python,
+unlimited natural-language citation forms, analytical correctness,
+provider/live/paid/seat/real Submit/Teams. No branch was pushed or promoted.
