@@ -15,6 +15,7 @@ import {
   moduleName,
   pathwayName,
   RequestError,
+  serviceText,
   type Mode,
   type Run,
   type RunStatus,
@@ -126,10 +127,10 @@ export function RunProgress({ id, mode }: { id: string; mode: Mode }) {
       )}
       {run ? (
         <section aria-label="Run activity" className="mt-6 grid gap-6">
-          {run.reason && <ErrorNotice>{run.reason}</ErrorNotice>}
+          {run.reason && <ErrorNotice>{serviceText(run.reason)}</ErrorNotice>}
           {live && run.held_reason && (
             <Alert tone="warning" title="Held by the service">
-              {run.held_reason}
+              {serviceText(run.held_reason)}
             </Alert>
           )}
           {run.stalled && (

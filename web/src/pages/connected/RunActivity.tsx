@@ -13,6 +13,7 @@ import {
   getActivity,
   moduleName,
   pathwayName,
+  serviceText,
   type Activity,
   type EndedRun,
   type LiveRun,
@@ -44,7 +45,7 @@ const texts = (...parts: (string | false)[]) =>
   parts.filter((part): part is string => Boolean(part));
 /** Why a run is not moving, and the name warning: the card and the waiting row both say them. */
 const notes = (run: LiveRun) =>
-  texts(run.reason, run.name_differs && "Issuer name differs from earlier runs");
+  texts(serviceText(run.reason), run.name_differs && "Issuer name differs from earlier runs");
 
 /** The list, re-read while the page is open; a failed read is shown as unreadable, never as empty. */
 function useActivity() {
@@ -191,7 +192,7 @@ function EndedTable({ runs }: { runs: EndedRun[] }) {
                 <StatusBadge set="Run states" state={ENDED[run.status]} />
               </Table.Cell>
               <Table.Cell>{run.ended_at ? stamp(run.ended_at) : "Not recorded"}</Table.Cell>
-              <Table.Cell>{run.reason}</Table.Cell>
+              <Table.Cell>{serviceText(run.reason)}</Table.Cell>
             </Table.Row>
           )}
         </Table.Body>
@@ -274,7 +275,7 @@ export function RunActivity() {
         )}
         {read?.held && (
           <Alert tone="warning" title="Held by the service">
-            {read.held}
+            {serviceText(read.held)}
           </Alert>
         )}
         {read?.unreadable ? (

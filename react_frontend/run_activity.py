@@ -202,9 +202,101 @@ def _plain_reason(root: str, sep: str, reason: str) -> str:
     return _ABSOLUTE.sub(_last_segment, _QUOTED.sub(_quoted_last_segment, reason))
 
 
+_TRY_AGAIN = "To try again, choose Start from this run on the run's page."
+_REPEATS = "If it ends the same way again, ask whoever runs the service to check the run's"
+_ASK_LOG = f"{_REPEATS} log."
+_ASK_RECORD = f"{_REPEATS} record."
+# The scheduler writes the details of a failure of its own (a start, a filing, a save, a rebuild)
+# to the service's log, not to the run's log (``logs/<run>.log`` holds only the launcher's output).
+_SERVICE_LOG_THEN_TRY_AGAIN = (
+    "Ask whoever runs the service to check the service's log, then choose Start from this run on "
+    "the run's page."
+)
+_NO_REASON = (
+    f"The run ended before it finished, and the service recorded no reason. {_TRY_AGAIN} {_ASK_LOG}"
+)
+_UNCLASSIFIED = (
+    f"The run stopped for a reason the service did not classify. {_TRY_AGAIN} {_ASK_LOG}"
+)
+_NOT_LISTED = (
+    "The run finished, but the library would not list it, so it has no report. "
+    f"{_TRY_AGAIN} {_ASK_RECORD}"
+)
+_DELIVERIES = (
+    "The run finished, but the service did not find exactly one delivery for it, so it has no "
+    f"report. {_TRY_AGAIN} {_ASK_RECORD}"
+)
+_NOT_FILED = (
+    "The run finished, but the service could not file its report. Ask whoever runs the service "
+    "to check the service's log before starting it again."
+)
+_NOT_STARTED = f"The run could not be started, so it did not run. {_SERVICE_LOG_THEN_TRY_AGAIN}"
+_NOT_SAVED = (
+    "The service stopped this run because it could not save the run's record. "
+    f"{_SERVICE_LOG_THEN_TRY_AGAIN}"
+)
+_NO_CONTEXT = f"The run's submission record was missing, so it was not started. {_TRY_AGAIN}"
+_NOT_REBUILT = (
+    "The library could not be rebuilt, so runs that have ended wait to be filed. The service "
+    "tries again on each check; if this stays, ask whoever runs the service to check the "
+    "service's log."
+)
+_STOPPED = re.compile(r"stopped: (?P<kind>.*)", re.DOTALL)  # ``outcome``: the log's stop kind
+_STOPS = {  # the kinds ``run_events.stop_reason`` writes (budget ends as "capped", not here)
+    "provider": (
+        "The run stopped because of a problem with a model provider call, not because it "
+        f"reached the spending cap. {_TRY_AGAIN}"
+    ),
+    "checker": f"The run stopped because a module's answer did not pass the checks. {_TRY_AGAIN}",
+    "interrupted": f"The run was interrupted before it finished. {_TRY_AGAIN}",
+    "ruling": (  # ``LivePauseInForce``: the recorded approval of paid model calls is not in place
+        "The run stopped because the approval that lets the service make paid model calls was not "
+        "in place for this setup. Starting it again will stop the same way until whoever runs the "
+        "service puts it in place."
+    ),
+}
+# The scheduler's other failure reasons (``runs.outcome``, ``Scheduler``), each with the
+# reader's sentence. The stored text, with its exit code, log path, file and module codes, stays
+# in the run record.
+_REASONS = (
+    (re.compile(r"launcher exited -?\d+; see logs/\S+\.log"), _NO_REASON),  # -N: signal N
+    (re.compile(r"not listed: .*", re.DOTALL), _NOT_LISTED),
+    (re.compile(r"expected one deliveries/\*/delivery\.json, found \d+"), _DELIVERIES),
+    (re.compile(r"could not be filed: .*", re.DOTALL), _NOT_FILED),
+    (re.compile(r"could not be started: .*", re.DOTALL), _NOT_STARTED),
+    (
+        re.compile(r"stopped by the scheduler: its record could not be saved .*", re.DOTALL),
+        _NOT_SAVED,
+    ),
+    (
+        re.compile(r"no context\.json in _engine/drops/\S+; submit it again from the run page"),
+        _NO_CONTEXT,
+    ),
+)
+
+
+# The held note's rebuild failure, with the library's error in parentheses (``Scheduler``). The
+# scheduler joins its held notes with "; ", so another note may follow it.
+_REBUILD_NOTE = re.compile(
+    r"the library could not be rebuilt \(.*?\); ended runs wait for it(?P<more>; )?", re.DOTALL
+)
+
+
+def _in_readers_words(reason: str) -> str:
+    """A failure reason or held note the scheduler wrote, as what happened and what to do; any
+    other text as stored."""
+    if stopped := _STOPPED.fullmatch(reason):
+        return _STOPS.get(stopped["kind"], _UNCLASSIFIED)
+    for pattern, text in _REASONS:
+        if pattern.fullmatch(reason):
+            return text
+    return _REBUILD_NOTE.sub(lambda note: _NOT_REBUILT + (" " if note["more"] else ""), reason)
+
+
 def _shown(layout: Layout, reason: str) -> str:
-    """A reason without absolute paths, from the service's own root folder."""
-    return _plain_reason(str(layout.root.resolve()), os.sep, reason)
+    """A reason in the reader's words, and without absolute paths, from the service's own root
+    folder."""
+    return _plain_reason(str(layout.root.resolve()), os.sep, _in_readers_words(reason))
 
 
 _TEXT_FIELDS = (
@@ -227,9 +319,11 @@ def _texts_are_strings(record: runs.Record) -> bool:
 def listing(layout: Layout) -> http_base.Reply:
     """The runs that are running or waiting, and the latest that ended without a report.
 
-    Spend, run folders and absolute paths are not sent. A reason is sent as stored with the root
-    prefix removed and any other absolute path cut to its last segment, so a file name can appear in
-    it: it tells the operator which file to look at.
+    Spend, run folders and absolute paths are not sent. A failure reason or held note the
+    scheduler wrote (an exit code and log path, a library refusal, a failed library rebuild) is
+    sent as a sentence for the reader; any other
+    reason is sent as stored with the root prefix removed and any other absolute path cut to its
+    last segment, so a file name can appear in it. The stored reason stays in the run record.
     """
     # Documented fail-open (display only): a record file that cannot be read, or whose text fields
     # are not strings, is left out of the list and counted in ``unreadable``. The scheduler skips a
@@ -249,7 +343,7 @@ def listing(layout: Layout) -> http_base.Reply:
         200,
         {
             "updated": snapshot["updated"],
-            "held": snapshot["held"],
+            "held": _shown(layout, snapshot["held"]),
             "runs": [
                 {
                     "id": shown["id"],

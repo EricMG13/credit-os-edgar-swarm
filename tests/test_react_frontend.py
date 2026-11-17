@@ -362,8 +362,12 @@ def test_activity_sends_a_reason_without_the_service_root(hosted: _Server) -> No
     ended = {run["id"]: run["reason"] for run in listing["ended"]}
     single = json.loads(request(hosted, "/connected/activity/p-path")[1])["reason"]
 
-    relative = Path("_engine") / "state" / "issuers.json"
-    assert ended["p-path"] == f"could not be filed: {relative} is bad"
+    # A reason the scheduler wrote is sent as the reader's sentence, with no path in it; any other
+    # reason (the running run's below) is sent as stored with the root removed.
+    assert ended["p-path"] == (
+        "The run finished, but the service could not file its report. Ask whoever runs the "
+        "service to check the service's log before starting it again."
+    )
     assert single == ended["p-path"]
     assert ended["q-plain"] == "Provider error"
     assert listing["runs"][0]["reason"] == f"waiting on {Path('inbox') / 'a.pdf'}"
