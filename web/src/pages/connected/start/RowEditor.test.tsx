@@ -72,6 +72,21 @@ it("stops adding at the maximum and states a requirement", () => {
   ).toBeInTheDocument();
 });
 
+it("says why the add button is disabled at the maximum, and only then", () => {
+  const max = ROW_SPECS.deal_terms.max;
+  const rows = Array.from({ length: max }, () => emptyRow("deal_terms"));
+  const { rerender } = render(
+    <RowEditor kind="deal_terms" rows={rows} onChange={vi.fn()} primary />,
+  );
+  const add = screen.getByRole("button", { name: "Add facility" });
+  expect(add).toBeDisabled();
+  expect(screen.getByText(`At most ${String(max)} facilities.`)).toBeInTheDocument();
+  expect(add).toHaveAccessibleDescription(`At most ${String(max)} facilities.`);
+  rerender(<RowEditor kind="deal_terms" rows={rows.slice(1)} onChange={vi.fn()} primary />);
+  expect(screen.queryByText(/At most/)).toBeNull();
+  expect(screen.getByRole("button", { name: "Add facility" })).toBeEnabled();
+});
+
 it("shows a held value that is not among the options", () => {
   const { rerender } = render(
     <RowEditor
