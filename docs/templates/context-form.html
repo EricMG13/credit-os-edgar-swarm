@@ -355,7 +355,7 @@ fieldset[aria-invalid=true] .card{border-color:var(--red-border)}
 .rv-card h3{font:600 15px/22px 'Red Hat Display',system-ui,sans-serif;color:var(--text-primary)}
 .rv-card .lead{max-width:none;margin:8px 0 0;font-size:var(--fs-body);line-height:19px}
 .rv-card .rv-facts{margin-top:14px;gap:8px 16px;line-height:19px}
-.rv-go{margin-top:16px;padding-top:16px;border-top:1px solid var(--border-secondary)}
+.rv-go{position:sticky;bottom:0;margin:16px 0 -20px;padding:16px 0 20px;border-top:1px solid var(--border-secondary);border-radius:0 0 var(--radius-card) var(--radius-card);background:var(--gray-50)}
 .rv-go .start-confirm{margin-top:0}
 .rv-go .primary-action{width:100%;height:44px;padding:0 16px;justify-content:center;margin-top:12px;font:600 15px/20px 'Red Hat Text',system-ui,sans-serif}
 #submitnote{display:block;margin-top:8px;font-size:var(--fs-compact);line-height:18px}
@@ -1840,7 +1840,7 @@ function errorStage(text) {
   if (/\b(modules?|turns|level|model|effort|Claude Opus)\b/i.test(text)) return 'pathway';
   return '';
 }
-let SUMMARY = null;        // {key, answers, error, digest, modules, items, documents, ignored, omitted, changes, lookup} for the answers and files held
+let SUMMARY = null;        // {key, answers, error, digest, modules, items, documents, ignored, omitted, changes, lookup, web_lookup} for the answers and files held
 let SUMMARY_BUSY = false;
 let RENDERED = null;       // the summary the module table was built for
 let RENDERED_KEY = '';     // the page's own rule items that table was built from (pageKey)
@@ -1972,7 +1972,8 @@ function renderFacts(o) {
     rows.push(['Pathway', PATHS[o.run.pathway].label], ['Issuer', o.identity.issuer_name + (o.identity.issuer_id ? ' (' + o.identity.issuer_id + ')' : '')], ['Dates', dates],
       ['Files', SUMMARY.documents.length + ' read' + (SUMMARY.ignored.length ? ', ' + SUMMARY.ignored.length + ' not read' : '')],
       ['Cap', `USD ${SUMMARY.cap} for this run, the ${PATHS[o.run.pathway].label.toLowerCase()}'s cap`],
-      ...(SUMMARY.modules.includes('CP-DR') ? [['Web search', webSearches(o.run.case_kind, (SUMMARY.answers || {}).model) ? 'Yes: the research module searches the web' + (o.run.case_kind === 'private' ? "; the issuer's name and what it researches go to OpenAI's search" : '') : (o.run.case_kind !== 'synthetic' ? 'No: web search is offered on GPT Sol only, so this Claude run reads only its files' : 'No: a synthetic case reads only its files')]] : []), ['Report sections not filled', SUMMARY.omitted.length ? SUMMARY.omitted.join(', ') : 'none'],
+      ...(SUMMARY.modules.includes('CP-DR') ? [['Web search', webSearches(o.run.case_kind, (SUMMARY.answers || {}).model) ? 'Yes: the research module searches the web' + (o.run.case_kind === 'private' ? "; the issuer's name and what it researches go to OpenAI's search" : '') : (o.run.case_kind !== 'synthetic' ? 'No: web search is offered on GPT Sol only, so this Claude run ' + (SUMMARY.web_lookup === true ? 'does not search the web' : 'reads only its files') : 'No: a synthetic case reads only its files')]] : []),
+      ...(SUMMARY.web_lookup === true ? [['Yahoo Finance', "The research module may read Yahoo Finance pages. Their addresses name what it looks up, such as the issuer's ticker, so Yahoo sees which issuer is researched; no document is sent."]] : []), ['Report sections not filled', SUMMARY.omitted.length ? SUMMARY.omitted.join(', ') : 'none'],
       ...(SUMMARY.changes ? [['Changes', SUMMARY.changes]] : []));
     // What was sent, whatever the level now is: a setting made at Advanced still binds the run at Basic.
     const sent = SUMMARY.answers || {}, left = runOf(o.run.pathway).filter(m => Array.isArray(sent.modules) && sent.modules.length && !sent.modules.includes(m));

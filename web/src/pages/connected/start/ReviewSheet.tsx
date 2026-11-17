@@ -451,6 +451,13 @@ export function ReviewSheet({
               researches go to OpenAI&apos;s search.
             </p>
           )}
+          {summary.web_lookup === true && (
+            <p className="text-sm text-text-secondary">
+              The research module may read Yahoo Finance pages. Their addresses name what it looks
+              up, such as the issuer&apos;s ticker, so Yahoo sees which issuer is researched; no
+              document is sent.
+            </p>
+          )}
         </Block>
         {inputBlocks.map(
           ({ group, drawn }) =>

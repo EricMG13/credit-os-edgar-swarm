@@ -160,6 +160,7 @@ async function uploadRunDocuments(page) {
       "northbridge-portfolio.xlsx",
       "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     ],
+    ["northbridge-credit-agreement.txt", "text/plain"],
   ];
   const uploaded = files.map(([name]) =>
     page.waitForResponse(
@@ -255,6 +256,12 @@ async function approveRunInputs(page, paidPreview) {
   await page
     .getByRole("combobox", { name: "Portfolio workbook", exact: true })
     .selectOption({ label: "northbridge-portfolio.xlsx" });
+  await page
+    .getByRole("combobox", { name: "Legal documents", exact: true })
+    .selectOption("executed");
+  await page
+    .getByRole("combobox", { name: "The agreement", exact: true })
+    .selectOption({ label: "northbridge-credit-agreement.txt" });
   const ratings = page.getByRole("region", { name: "Ratings", exact: true });
   await ratings.getByRole("button", { name: "Add rating", exact: true }).click();
   await ratings.getByLabel("Agency", { exact: true }).selectOption("Moody's");
