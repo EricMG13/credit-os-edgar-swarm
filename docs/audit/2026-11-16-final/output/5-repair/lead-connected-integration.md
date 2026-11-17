@@ -657,3 +657,74 @@ additive coordination audit-data/helper copying, final combined full gates and
 browser/handoff fidelity, Windows/weekly/full Python; earlier historical log
 whitespace and page-title timing under the full gate; provider/live/paid/seat/
 real Submit/Teams. No branch was pushed or promoted by this integration.
+
+## Phase 9: final reviewed pure guard and local proof consequences
+
+The lead gave GO for `bffc2732` after the fresh final review at
+`/workspace/scratch/fidelity-guard-final-review.md` accepted exact code `8f4ba250`
+with zero High/Medium/Low findings. The lead's independent second read also
+accepted the pure import, redirect readers, local file-icon boundary and exact
+CP-6 lead identity/text assertions. This phase starts at `b97e9ea2`; the lead
+had already fast-forwarded actual final to that preceding milestone. Root owns
+the next promotion and canonical native proof. No final capture is run here.
+
+| Reviewed source milestone | Candidate commit |
+| :--- | :--- |
+| Final proof/fidelity return `bffc2732` | merge `d077360c` |
+| Retained baseline/tools `3e6bc4ee`, guard ancestry `738433b8`, repaired pure import/redirect code `63c4a7f7`, report `5881baa9`, final local consequences `8f4ba250`, report `bffc2732` | Same source commits, inherited through `d077360c`; accepted final behavior is the reviewed `8f4ba250` code |
+
+The merge was clean. Six reviewed code/test files compare byte-for-byte with
+the frozen final code. The retained browser probe auto-merged only its import
+to `offline-network.mjs`; its already accepted R4-016 startup/cleanup body stays
+intact. No application, Python, protected Signal, prompt, calculation, handoff,
+package-manifest or packager source changed. No expected value or integration
+assertion was edited. The authorized compact-lead proof consequence maps to
+C1-008/C3-001/J4-001 and C1-025, retaining exact paragraph bytes and provenance;
+R4-019 recognizes only the narrowly validated local browser file-icon address.
+
+### Phase 9 checks
+
+| Check | Exit/result |
+| :--- | :--- |
+| Original guard + audit pure-import/redirect + local-icon/compact-lead tests | 0; 12 passed, none skipped or cancelled |
+| Original frontend script suite | 0; 73 passed, none skipped or cancelled |
+| Unchanged comparator self-test | 0; all 28 planted changes reported |
+| Full frontend lint, format and typecheck | 0 for all |
+| Both audit test files with explicit web ESLint config | 0 |
+| Default main-based Python quality gate | 0; unchanged 41 files / 4,909 scoped lines, zero findings |
+| Capture syntax and changed code/test whitespace | 0 |
+| R4-016 missing-browser cleanup control | Expected natural exit 1 in 0.43 seconds, preserving the missing-executable error; five-second timeout not reached |
+| Six reviewed code/test files versus final frozen pin | Empty diff; exit 0 |
+| Immutable before/comparator manifest | All 126 SHA-256 values match the local files, recorded before/after manifests and retained source `3e6bc4ee` |
+| Actual packager SOURCE_PATHS archive and validate_source | 0; 1,519 archive entries validate; pure helper and both packaged callers have exact source bytes |
+| Complete phase range whitespace | Exit 2; 36 findings in eight retained raw diagnostic logs; changed code/test check remains 0 |
+
+The pure helper's packaged SHA-256 is
+`417557253458f8da5f4deb07aab5a50b90f2910bc776ab3706be196b706d492e`.
+The archive check uses the actual unchanged packager's source selection and
+validation without installing dependencies, building a release or writing a
+release bundle. The 126 immutable entries exclude the intentionally repaired
+capture script; no baseline/comparator bytes changed. Comparator tests mutate
+only temporary copies. Boundary tests use local listeners and request/launch
+stubs, and no native browser or analytical run was launched by this integration.
+
+The new raw whitespace findings are confined to `fidelity/diagnostics/`:
+guard-return `lint.log`, `red-final.log`, `red.log`, `typecheck.log`; and
+proof-local-consequences `lint.log`, `native-observed-before.log`, `red.log`,
+`typecheck.log`. Those captured logs and earlier raw-log warnings remain intact.
+No gate configuration, threshold, timeout or exclusion changed.
+
+Evidence uses `/workspace/scratch/integrate-stage5-guard-*`. Long commands use
+`timeout 300`; Python uses exact uv 0.12.5, `--no-sync` and explicit candidate
+PYTHONPATH. No unrelated frontend/Signal/Python behavior suite was repeated.
+The reviewed source design and clean merge need no new integration function.
+For the later additive coordination copy, the candidate's current fidelity
+directory, pure helper and packaged callers remain authoritative: the older
+coordination capture must not overwrite this reviewed return.
+
+Not verified: the next canonical native Chrome/Edge proof on actual final;
+final AFTER capture/comparison and browser/handoff fidelity acceptance; additive
+coordination audit-data/helper copying and full combined gates; earlier raw-log
+whitespace and page-title timing under the full gate; Windows/weekly/full Python,
+provider/live/paid/seat/real Submit/Teams. No root worktree, source branch, final
+branch or main was mutated, pushed or promoted by this task.
