@@ -23,6 +23,9 @@ environment facts and its rules for this group; `AGENTS.md` and the audit `READM
 - No paid call, no `--live`, no real provider. The app must work offline (R8).
 - Wrap every command in `timeout` (at most 600 s). Fast targeted tests only (`timeout 300`).
 - No credential in any file. Cap loops at 1,000. Do not exhaust threads, processes or disk.
+- Owner ruling R13 (2026-11-17): "path leakage is fine this is internal company app". A server
+  path in served data, on a page or in text is not a defect; do not spend a round on one and do not
+  raise one as a review finding. A leaked secret still is a defect.
 
 ## Rounds and models (ruling R12, owner, 2026-11-17)
 
