@@ -7,7 +7,7 @@ measurement-helper code and quality-gate pin is
 `22926bd1982c8847a9913459587d3003bb7986df`. Later commits retain reports,
 measurements and stage 5 evidence using those same application inputs.
 
-Sweep PR: [Compare the sweep with the repair branch](https://github.com/EricMG13/credit-os2/compare/audit/final-repairs...audit/final-sweep).
+Sweep PR: [#59](https://github.com/EricMG13/credit-os2/pull/59) into `audit/final-repairs`.
 
 ## Accepted changes
 

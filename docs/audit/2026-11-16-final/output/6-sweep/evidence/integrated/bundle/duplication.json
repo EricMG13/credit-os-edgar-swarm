@@ -53,5 +53,37 @@
       "sources": 275,
       "tokens": 1068752
     }
-  }
+  },
+  "pairChanges": {
+    "web": {
+      "removed": [
+        [
+          "components/chart/ColumnsChart.tsx",
+          "components/chart/ScatterPlot.tsx",
+          10,
+          51,
+          "75fdcad68379ad9694781336b53213eba4d77eec32a4ff12b36b7582683a764a"
+        ],
+        [
+          "components/chart/ColumnsChart.tsx",
+          "components/chart/StackChart.tsx",
+          10,
+          51,
+          "75fdcad68379ad9694781336b53213eba4d77eec32a4ff12b36b7582683a764a"
+        ]
+      ],
+      "added": []
+    },
+    "python": {
+      "removed": [],
+      "added": []
+    }
+  },
+  "pairKey": [
+    "firstPath",
+    "secondPath",
+    "lines",
+    "tokens",
+    "fragmentSha256"
+  ]
 }
