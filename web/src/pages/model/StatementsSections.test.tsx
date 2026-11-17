@@ -414,17 +414,20 @@ describe("Model page: audit material and unreadable data", () => {
     expect(within(chart).getAllByRole("link")).toHaveLength(1);
   });
 
-  it("names the failing path when a bridge step is not drawable", () => {
+  it("draws the plain notice, not the failing path, when a bridge step is not drawable", () => {
     const { slice, page } = draft();
     const bridge = must((page["bridges"] as { caseSteps: { to: number }[][] }[])[0]);
     must(must(bridge.caseSteps[0])[1]).to = 100;
     renderAt(slice);
     expect(screen.getByText("This part of the library could not be read")).toBeInTheDocument();
     expect(
-      screen.getByText(
+      screen.getByText(/^The financial model for this run could not be shown/),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText(
         "runs[0].statements.bridges[0].caseSteps[0][1].to: expected a position at or above from for an increase",
       ),
-    ).toBeInTheDocument();
+    ).toBeNull();
   });
 });
 

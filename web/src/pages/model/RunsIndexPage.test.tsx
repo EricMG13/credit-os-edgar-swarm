@@ -99,8 +99,8 @@ describe("Runs index page", () => {
     const items = within(screen.getByRole("main")).getAllByRole("listitem");
     expect(items).toHaveLength(2);
     expect(items[0]).toHaveTextContent("TransDigm Group");
-    expect(items[1]).toHaveTextContent("transdigm");
-    expect(items[1]).toHaveTextContent("2024-12-31");
+    expect(items[1]).toHaveTextContent("A financial model");
+    expect(items[1]).not.toHaveTextContent("2024-12-31");
     expect(items[1]).toHaveTextContent("Could not be read");
     expect(within(must(items[1])).getByRole("link")).toHaveAttribute(
       "href",
