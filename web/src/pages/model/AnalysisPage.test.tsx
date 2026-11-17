@@ -457,11 +457,14 @@ describe("Analysis page", () => {
       "limitations.items[0].text: expected a string",
     ],
   ] as const)(
-    "leaves an invalid slice with %s to the app, naming the failing path",
+    "leaves an invalid slice with %s to the app, in plain words and without the failing path",
     (_n, steps, value, reason) => {
       renderAt(edited(steps, value));
       expect(screen.getByText("This part of the library could not be read")).toBeInTheDocument();
-      expect(screen.getByText(`runs[0].analysis.${reason}`)).toBeInTheDocument();
+      expect(
+        screen.getByText(/^The financial model for this run could not be shown/),
+      ).toBeInTheDocument();
+      expect(screen.queryByText(`runs[0].analysis.${reason}`)).toBeNull();
     },
   );
 });

@@ -6,7 +6,10 @@ import { readSlice } from "./slice/read";
 
 /** The group's home: every run the slice holds, each a link to that run's front page. */
 export function RunsIndexPage() {
-  const slice = readSlice(useSource().model);
+  const source = useSource();
+  const slice = readSlice(source.model);
+  /** An unreadable run has no header, so the library's own name for its issuer stands in. */
+  const names = new Map(source.issuers.map((issuer) => [issuer.id, issuer.name]));
   // App refuses an invalid slice before a page is drawn; one that arrives anyway is a fault, not
   // an empty library.
   if (slice.kind === "invalid") throw new Error(slice.reason);
@@ -44,8 +47,9 @@ export function RunsIndexPage() {
                 href={`${runAddress(run.issuer, run.run)}/front`}
                 className="flex flex-col gap-1 rounded-lg border border-border-hairline bg-surface-card p-4 outline-focus focus-visible:outline-2 focus-visible:outline-offset-2"
               >
-                <span className="font-display text-h3 text-text-primary">{run.issuer}</span>
-                <span className="text-small text-text-secondary">{run.run}</span>
+                <span className="font-display text-h3 text-text-primary">
+                  {names.get(run.issuer) ?? "A financial model"}
+                </span>
                 <span className="text-small text-text-secondary">Could not be read</span>
               </a>
             </li>

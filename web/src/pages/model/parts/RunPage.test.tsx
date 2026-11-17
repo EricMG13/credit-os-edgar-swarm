@@ -81,7 +81,15 @@ describe("Show sources is session-wide state: it survives route changes and the 
   });
 });
 
-describe("An unreadable run's page draws why it could not be read", () => {
+describe("An unreadable run's page draws that it could not be read", () => {
+  // The page sends the reader's reason to the console for the analyst.
+  beforeEach(() => {
+    vi.spyOn(console, "warn").mockImplementation(() => undefined);
+  });
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   function withBadSecond() {
     const slice = twoRuns({ issuer: "transdigm", run: "2024-12-31" }) as {
       runs: { header: Record<string, unknown> }[];
@@ -91,14 +99,16 @@ describe("An unreadable run's page draws why it could not be read", () => {
   }
 
   it.each(["front", "analysis", "statements", "portfolio-fit", "limitations", "forecast"])(
-    "draws the reason on the %s page, with one h1 and the way back",
+    "draws the plain notice on the %s page, with one h1 and the way back",
     (page) => {
       open(withBadSecond(), `#/model/transdigm/2024-12-31/${page}`);
       expect(screen.getAllByRole("heading", { level: 1 }).map((h) => h.textContent)).toEqual([
         "Financial model",
       ]);
       expect(screen.getByText("This part of the library could not be read")).toBeInTheDocument();
-      expect(screen.getByText("runs[1].header.asOf: expected a string")).toBeInTheDocument();
+      expect(
+        screen.getByText(/^The financial model for this run could not be shown/),
+      ).toBeInTheDocument();
       expect(screen.getByRole("link", { name: "All financial models" })).toHaveAttribute(
         "href",
         "#/model/runs",
