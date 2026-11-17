@@ -370,7 +370,7 @@ Within a set every state has a different shape; no two states differ by colour o
 | Dated records | Past: filled circle, neutral. Next: half-filled circle, action. Later: ring, neutral |
 | Answer state | Answered: filled circle, success. Partly answered: half-filled circle, info. Not answered: ring, neutral |
 | Met or not met | Met: filled circle, success. Not met: triangle, warning |
-| Source readiness | Ready: filled circle, success. Ready with limitations: triangle, warning. Conditional: half-filled circle, info. Not ready: slashed circle, neutral |
+| Source readiness | Ready: filled circle, success. Ready with limitations: triangle, warning. Conditional: half-filled circle, info. Not ready: diamond, error |
 | Security recommendation | Preferred: filled circle, success. Neutral: ring, neutral. Avoid: cross, error. Requires More Work: triangle, warning |
 | Freshness | Checked: filled circle, success. Not checked yet: ring, neutral |
 | Module state | Delivered: filled circle, success. Delivered with gaps: dashed ring, gap colours. Not assessable: slashed circle, neutral. Not run (only in a run that has ended): ring, neutral |
@@ -386,9 +386,9 @@ Healthy, Past, Answered, Met, Checked, Delivered and Read in full; the half-fill
 Running, Proposed, Next, Partly answered, Uploading and Awaiting your approval; the ring is
 Info, Queued, Quiet, Later, Not answered, Not checked yet, Low, Check and Not run; the triangle is
 Warning, Capped, Not met, Medium, Limited, Read in part and Changed; the diamond is Error, Failed,
-Failing, High, Will refuse and Unreadable; the square is Approved and Unchanged; the pause bars are
-Interrupted and Paused; the dashed ring is a gap, Gap, Delivered with gaps and State not known. Two
-states that share a shape never appear in one list together.
+Failing, High, Will refuse, Unreadable and Not ready; the square is Approved and Unchanged; the
+pause bars are Interrupted and Paused; the dashed ring is a gap, Gap, Delivered with gaps and State
+not known. Two states that share a shape never appear in one list together.
 
 The sets added at review 2 (ruling 7), and why each shape:
 
@@ -405,6 +405,9 @@ The sets added at review 2 (ruling 7), and why each shape:
 - **"Unreadable" is one state with one word** for a file that could not be read or was
   rejected at run start; the sentence beside it says which. It is the diamond, not the run
   state's cross.
+- **"Not ready" is the diamond** (owner, 2026-11-17, OQ-09): a source the review cannot rely on
+  is a problem. It no longer shares the slashed circle with "Not assessable", which keeps that
+  shape alone.
 - **A module that fails inside a run reads "Not assessable"** with its sentence; "Failed" and
   the diamond on a run page stay the run's.
 - **"Not run" and "Queued" share the ring** and never meet: Queued exists only in a live run,
