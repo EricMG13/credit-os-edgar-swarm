@@ -130,9 +130,9 @@
           "asOf": "As of 30 Sep 2026",
           "pathway": "Monitoring update",
           "progress": {
-            "text": "6 of 6 modules",
-            "value": 6,
-            "max": 6
+            "text": "2 of 2 modules",
+            "value": 2,
+            "max": 2
           },
           "href": null,
           "measures": {
@@ -167,9 +167,9 @@
           "asOf": "As of 31 Mar 2026",
           "pathway": "Full review",
           "progress": {
-            "text": "13 of 13 modules",
-            "value": 13,
-            "max": 13
+            "text": "2 of 2 modules",
+            "value": 2,
+            "max": 2
           },
           "href": null,
           "measures": {
@@ -5792,8 +5792,8 @@
         "name": "Corvane Packaging",
         "history": {
           "subtitle": "Report history: two runs since June 2026",
-          "latest": null,
-          "empty": "No report for this issuer is held in this library yet.",
+          "latest": "2026-06-30",
+          "empty": null,
           "entries": [
             {
               "asOf": "30 Sep 2026",
@@ -5810,20 +5810,503 @@
               "state": "Finished",
               "pathway": "Full review",
               "text": "Improving: volume recovery and a cleared 2027 maturity leave two years of runway.",
-              "report": null,
+              "report": "2026-06-30",
               "changes": null
             }
           ]
         },
-        "runs": []
+        "runs": [
+          {
+            "id": "2026-06-30",
+            "head": {
+              "issuerName": "Corvane Packaging",
+              "asOf": "As of 30 Jun 2026",
+              "pathway": "Full review",
+              "state": "Finished",
+              "tabs": {
+                "modulesCount": "2"
+              },
+              "firstModule": "business-profile",
+              "forecastHref": null
+            },
+            "loading": false,
+            "overview": {
+              "bottomLine": {
+                "label": "Bottom line",
+                "lead": "Improving: volume recovery and a cleared 2027 maturity leave two years of runway.",
+                "rest": "Volumes are back above last year’s level and the 2027 notes have been repaid, so no debt falls due for two years.",
+                "trace": null
+              },
+              "metricsLabel": "Headline figures",
+              "metrics": [
+                {
+                  "label": "Leverage",
+                  "value": {
+                    "kind": "value",
+                    "text": "2.1x",
+                    "at": 2.1
+                  },
+                  "note": "Reported EBITDA, year to 30 Jun 2026",
+                  "trace": null
+                },
+                {
+                  "label": "Net leverage",
+                  "value": {
+                    "kind": "value",
+                    "text": "0.0x",
+                    "at": 0
+                  },
+                  "note": "Reported EBITDA, year to 30 Jun 2026",
+                  "trace": null
+                },
+                {
+                  "label": "Interest cover",
+                  "value": {
+                    "kind": "value",
+                    "text": "7.8x",
+                    "at": 7.8
+                  },
+                  "note": "Reported EBITDA, year to 30 Jun 2026",
+                  "trace": null
+                }
+              ],
+              "sides": null,
+              "findings": [
+                {
+                  "number": "01",
+                  "lead": "The 2027 maturity is cleared",
+                  "body": "The notes due in 2027 were repaid from cash, and the next maturity is more than two years away.",
+                  "trace": null
+                }
+              ],
+              "changeView": null,
+              "dates": [
+                {
+                  "date": "28 Jul 2026",
+                  "state": "Past",
+                  "title": "Half-year results",
+                  "text": "Published; figures in this run are from them."
+                }
+              ],
+              "modules": {
+                "summary": "2 of 2 delivered",
+                "items": [
+                  {
+                    "title": "Business profile",
+                    "lead": "Volumes have recovered across the three largest customers.",
+                    "state": "Delivered",
+                    "module": "business-profile"
+                  },
+                  {
+                    "title": "Source readiness",
+                    "lead": "The one source file was read in full and pinned to this run.",
+                    "state": "Delivered",
+                    "module": "source-readiness"
+                  }
+                ]
+              },
+              "limitations": {
+                "count": "1",
+                "gapsLink": {
+                  "label": "See the 1 gap in Evidence"
+                },
+                "items": [
+                  {
+                    "text": "The repayment notice for the 2027 notes was not provided, so the repayment is taken from the company’s statement.",
+                    "trace": null
+                  }
+                ]
+              }
+            },
+            "changes": {
+              "kind": "none",
+              "title": "No earlier run to compare",
+              "text": "This is the first run on Corvane Packaging. What changed will appear here after the next run."
+            },
+            "modules": [
+              {
+                "id": "business-profile",
+                "name": "Business profile",
+                "state": "Delivered",
+                "body": {
+                  "kind": "delivered",
+                  "moduleKind": "prose",
+                  "bottomLine": {
+                    "label": "Bottom line",
+                    "lead": "Volumes have recovered across the three largest customers.",
+                    "rest": "Rigid packaging volumes are back above last year’s level, and the customer base is spread across food, drink and household brands.",
+                    "trace": null
+                  },
+                  "findings": [
+                    {
+                      "number": "01",
+                      "lead": "Volumes have recovered",
+                      "body": "Volumes grew in each of the last three quarters.",
+                      "trace": null
+                    }
+                  ],
+                  "contrary": null,
+                  "changeView": null,
+                  "records": [],
+                  "limitations": {
+                    "count": "1",
+                    "gapsLink": {
+                      "label": "See this module’s gaps in Evidence"
+                    },
+                    "items": [
+                      {
+                        "text": "Customer contract terms come from management presentations.",
+                        "trace": null
+                      }
+                    ]
+                  }
+                }
+              },
+              {
+                "id": "source-readiness",
+                "name": "Source readiness",
+                "state": "Delivered",
+                "body": {
+                  "kind": "delivered",
+                  "moduleKind": "data",
+                  "bottomLine": {
+                    "label": "Bottom line",
+                    "lead": "The one source file was read in full and pinned to this run.",
+                    "rest": "Nothing was left unread.",
+                    "trace": null
+                  },
+                  "findings": [],
+                  "contrary": null,
+                  "changeView": null,
+                  "records": [
+                    {
+                      "kind": "status",
+                      "nav": "Readiness",
+                      "title": "Readiness checks",
+                      "groups": [
+                        {
+                          "state": "Met",
+                          "count": "2",
+                          "items": [
+                            {
+                              "text": "Source file read in full",
+                              "note": null,
+                              "value": {
+                                "kind": "value",
+                                "text": "1 of 1 files",
+                                "at": null
+                              },
+                              "trace": null
+                            },
+                            {
+                              "text": "Source file pinned to this run",
+                              "note": null,
+                              "value": {
+                                "kind": "value",
+                                "text": "1 of 1 files",
+                                "at": null
+                              },
+                              "trace": null
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "kind": "facts",
+                      "nav": "Coverage",
+                      "title": "Coverage",
+                      "groups": [
+                        {
+                          "name": null,
+                          "rows": [
+                            {
+                              "label": "Source files",
+                              "value": {
+                                "kind": "value",
+                                "text": "1",
+                                "at": 1
+                              },
+                              "trace": null
+                            },
+                            {
+                              "label": "Read in full",
+                              "value": {
+                                "kind": "value",
+                                "text": "1",
+                                "at": 1
+                              },
+                              "trace": null
+                            },
+                            {
+                              "label": "As of",
+                              "value": {
+                                "kind": "value",
+                                "text": "30 Jun 2026",
+                                "at": null
+                              },
+                              "trace": null
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ],
+                  "limitations": {
+                    "count": "0",
+                    "gapsLink": {
+                      "label": "See this module’s gaps in Evidence"
+                    },
+                    "items": []
+                  }
+                }
+              }
+            ],
+            "evidence": {
+              "intro": "Where every figure and claim in this run comes from.",
+              "moduleFilter": [
+                {
+                  "id": "business-profile",
+                  "name": "Business profile",
+                  "initials": "BP"
+                },
+                {
+                  "id": "source-readiness",
+                  "name": "Source readiness",
+                  "initials": "SR"
+                }
+              ],
+              "tabs": {
+                "trace": "0",
+                "sources": "1",
+                "gaps": "1"
+              },
+              "record": {
+                "timings": {
+                  "title": "Module timings",
+                  "note": "From start to accepted, 2 Aug 2026. One of one shown.",
+                  "columns": ["Module", "State", "Started, min", "Accepted, min", "Took, min"],
+                  "rows": [
+                    {
+                      "module": "Business profile",
+                      "state": "Delivered",
+                      "started": {
+                        "kind": "value",
+                        "text": "0.0",
+                        "at": 0
+                      },
+                      "accepted": {
+                        "kind": "value",
+                        "text": "4.0",
+                        "at": 4
+                      },
+                      "took": {
+                        "kind": "value",
+                        "text": "4.0",
+                        "at": 4
+                      }
+                    }
+                  ],
+                  "emptyText": null
+                },
+                "hashes": {
+                  "title": "Hashes and instructions",
+                  "items": [
+                    {
+                      "label": "Method texts",
+                      "kind": "SHA-256",
+                      "value": "0e321ee27a8f4db73e810d7cc32f308eb964bb5abae562b315458b29e9d9ad67",
+                      "copyLabel": "Copy hash",
+                      "what": "The hash of the method texts"
+                    }
+                  ]
+                },
+                "spend": {
+                  "title": "Spend against the cap",
+                  "progress": {
+                    "text": "USD 10.25 of USD 25.00",
+                    "value": 10.25,
+                    "max": 25
+                  },
+                  "note": "The run finished inside its cap. Spend by module is in the model calls register below."
+                },
+                "calls": {
+                  "title": "Model calls",
+                  "count": "31",
+                  "note": "Calls, tokens and cost by module.",
+                  "columns": [
+                    "Module",
+                    "Code",
+                    "Calls",
+                    "Retries",
+                    "Tokens in",
+                    "Tokens out",
+                    "Cost, USD"
+                  ],
+                  "rows": [
+                    {
+                      "label": "Business profile",
+                      "cells": ["CP-1", "31", "3", "1,512,000", "79,800", "10.25"]
+                    }
+                  ],
+                  "total": {
+                    "label": "Total",
+                    "cells": ["All", "31", "3", "1,512,000", "79,800", "10.25"]
+                  }
+                },
+                "registers": {
+                  "title": "Registers as written",
+                  "count": "1",
+                  "note": "The registers each module wrote, unedited.",
+                  "columns": ["Register", "Written by", "Rows", "File", "Open"],
+                  "downloadAll": {
+                    "label": "Download all",
+                    "href": "downloads/corvane-packaging-2026-06-30-registers.zip",
+                    "reason": null
+                  },
+                  "rows": [
+                    {
+                      "name": "Gap ledger",
+                      "writtenBy": "Every module",
+                      "rows": "1",
+                      "file": "registers/gaps.md",
+                      "href": "downloads/corvane-packaging-2026-06-30-registers/gaps.md",
+                      "reason": null
+                    }
+                  ]
+                }
+              },
+              "jump": [],
+              "trace": {
+                "title": "Trace",
+                "description": "One row per traced paragraph, row or figure. Open a row to see how it was derived.",
+                "emptyText": "The handoffs of this run were not traced item by item, so no paragraph, row or figure lists its sources here.",
+                "columns": {
+                  "id": "Item",
+                  "item": "Statement",
+                  "value": "Value",
+                  "module": "Module",
+                  "kind": "Kind",
+                  "sources": "Sources"
+                },
+                "rows": []
+              },
+              "summary": {
+                "delivered": {
+                  "note": null,
+                  "progress": {
+                    "text": "2 of 2",
+                    "value": 2,
+                    "max": 2
+                  }
+                },
+                "counts": [
+                  {
+                    "label": "Source files",
+                    "value": {
+                      "kind": "value",
+                      "text": "1",
+                      "at": null
+                    },
+                    "note": "1 read in full",
+                    "trace": null
+                  },
+                  {
+                    "label": "Calculations",
+                    "value": {
+                      "kind": "value",
+                      "text": "0",
+                      "at": null
+                    },
+                    "note": "Not traced item by item in this run",
+                    "trace": null
+                  },
+                  {
+                    "label": "Gaps",
+                    "value": {
+                      "kind": "value",
+                      "text": "1",
+                      "at": null
+                    },
+                    "note": "1 medium",
+                    "trace": null
+                  }
+                ],
+                "run": {
+                  "code": "CRP-20260630-FR-0001",
+                  "hash": "b0464b5b350c037942093d3af969beb4a23dfb682b97a0939a88791cb0b2c475"
+                },
+                "take": {
+                  "text": "The module handoffs are the record this library was written from. Download them to read a module exactly as it was delivered.",
+                  "download": {
+                    "label": "Download handoffs",
+                    "href": "downloads/corvane-packaging-2026-06-30-handoffs.zip",
+                    "reason": null
+                  }
+                }
+              },
+              "gaps": {
+                "title": "Gaps",
+                "description": "What this run could not establish, by how much it bears on the view.",
+                "columns": {
+                  "id": "Gap",
+                  "gap": "What is missing",
+                  "module": "Module",
+                  "reason": "Effect on the view",
+                  "shownAs": "Shown as"
+                },
+                "groups": [
+                  {
+                    "severity": "Medium",
+                    "count": "1",
+                    "rows": [
+                      {
+                        "id": "G-01",
+                        "gap": "Repayment notice for the 2027 notes",
+                        "module": "Business profile",
+                        "moduleId": "business-profile",
+                        "reason": "The repayment is taken from the company’s statement.",
+                        "shownAs": "gap",
+                        "where": {
+                          "page": "overview",
+                          "label": "Shown under the Overview's limitations"
+                        }
+                      }
+                    ]
+                  }
+                ]
+              },
+              "sources": {
+                "files": [
+                  {
+                    "name": "interim-report-h1-2026.pdf",
+                    "kind": "PDF",
+                    "size": "2.9 MB · 54 pages",
+                    "state": "Read in full",
+                    "why": null,
+                    "readersLabel": "Read by 1 module",
+                    "readers": {
+                      "shown": ["business-profile"],
+                      "more": null
+                    },
+                    "hash": "d4ef07c5efbae1c8d2b6eff67a751842ba62445ab3295038e4b13014bcbec630"
+                  }
+                ],
+                "visible": 1,
+                "moreLabel": null
+              }
+            },
+            "traces": {}
+          }
+        ]
       },
       {
         "id": "tessaly-foods",
         "name": "Tessaly Foods",
         "history": {
           "subtitle": "Report history: one run",
-          "latest": null,
-          "empty": "No report for this issuer is held in this library yet.",
+          "latest": "2026-09-30",
+          "empty": null,
           "entries": [
             {
               "asOf": "30 Sep 2026",
@@ -5831,20 +6314,503 @@
               "state": "Finished",
               "pathway": "Monitoring update",
               "text": "Weakening: the springing covenant is likely to be tested at the December quarter end.",
-              "report": null,
+              "report": "2026-09-30",
               "changes": null
             }
           ]
         },
-        "runs": []
+        "runs": [
+          {
+            "id": "2026-09-30",
+            "head": {
+              "issuerName": "Tessaly Foods",
+              "asOf": "As of 30 Sep 2026",
+              "pathway": "Monitoring update",
+              "state": "Finished",
+              "tabs": {
+                "modulesCount": "2"
+              },
+              "firstModule": "business-profile",
+              "forecastHref": null
+            },
+            "loading": false,
+            "overview": {
+              "bottomLine": {
+                "label": "Bottom line",
+                "lead": "Weakening: private-label losses in the two largest retail accounts, a third consecutive quarter of negative free cash flow and a facility that is now 70% drawn mean the springing covenant is likely to be tested at the December quarter end, earlier than management has guided.",
+                "rest": "The update looks at what moved since the last run: sales to the two largest accounts, cash flow and the facility. The view rests on the facility staying drawn at about its present level.",
+                "trace": null
+              },
+              "metricsLabel": "Headline figures",
+              "metrics": [
+                {
+                  "label": "Leverage",
+                  "value": {
+                    "kind": "value",
+                    "text": "5.6x",
+                    "at": 5.6
+                  },
+                  "note": "Adjusted EBITDA (management definition), year to 30 Sep 2026",
+                  "trace": null
+                },
+                {
+                  "label": "Net leverage",
+                  "value": {
+                    "kind": "value",
+                    "text": "5.1x",
+                    "at": 5.1
+                  },
+                  "note": "Adjusted EBITDA (management definition). Period not recorded",
+                  "trace": null
+                },
+                {
+                  "label": "Interest cover",
+                  "value": {
+                    "kind": "value",
+                    "text": "1.9x",
+                    "at": 1.9
+                  },
+                  "note": "Reported EBITDA, year to 30 Sep 2026",
+                  "trace": null
+                }
+              ],
+              "sides": null,
+              "findings": [
+                {
+                  "number": "01",
+                  "lead": "The covenant is likely to be tested",
+                  "body": "With the facility 70% drawn, the springing covenant is likely to be tested at the December quarter end.",
+                  "trace": null
+                }
+              ],
+              "changeView": null,
+              "dates": [
+                {
+                  "date": "2 Nov 2026",
+                  "state": "Past",
+                  "title": "Third-quarter results",
+                  "text": "Published; figures in this run are from them."
+                }
+              ],
+              "modules": {
+                "summary": "2 of 2 delivered",
+                "items": [
+                  {
+                    "title": "Business profile",
+                    "lead": "The two largest retail accounts are moving to private label.",
+                    "state": "Delivered",
+                    "module": "business-profile"
+                  },
+                  {
+                    "title": "Source readiness",
+                    "lead": "The one source file was read in full and pinned to this run.",
+                    "state": "Delivered",
+                    "module": "source-readiness"
+                  }
+                ]
+              },
+              "limitations": {
+                "count": "1",
+                "gapsLink": {
+                  "label": "See the 1 gap in Evidence"
+                },
+                "items": [
+                  {
+                    "text": "The date the covenant is first tested rests on management’s guidance, which the facility agreement was not provided to confirm.",
+                    "trace": null
+                  }
+                ]
+              }
+            },
+            "changes": {
+              "kind": "none",
+              "title": "No earlier run to compare",
+              "text": "This is the first run on Tessaly Foods. What changed will appear here after the next run."
+            },
+            "modules": [
+              {
+                "id": "business-profile",
+                "name": "Business profile",
+                "state": "Delivered",
+                "body": {
+                  "kind": "delivered",
+                  "moduleKind": "prose",
+                  "bottomLine": {
+                    "label": "Bottom line",
+                    "lead": "The two largest retail accounts are moving to private label.",
+                    "rest": "Private-label losses in these two accounts, three quarters of negative free cash flow and a 70% drawn facility are what moved since the last run.",
+                    "trace": null
+                  },
+                  "findings": [
+                    {
+                      "number": "01",
+                      "lead": "Private-label losses",
+                      "body": "Sales to the two largest retail accounts fell as they moved volume to private label.",
+                      "trace": null
+                    }
+                  ],
+                  "contrary": null,
+                  "changeView": null,
+                  "records": [],
+                  "limitations": {
+                    "count": "1",
+                    "gapsLink": {
+                      "label": "See this module’s gaps in Evidence"
+                    },
+                    "items": [
+                      {
+                        "text": "Account-level sales come from management presentations.",
+                        "trace": null
+                      }
+                    ]
+                  }
+                }
+              },
+              {
+                "id": "source-readiness",
+                "name": "Source readiness",
+                "state": "Delivered",
+                "body": {
+                  "kind": "delivered",
+                  "moduleKind": "data",
+                  "bottomLine": {
+                    "label": "Bottom line",
+                    "lead": "The one source file was read in full and pinned to this run.",
+                    "rest": "Nothing was left unread.",
+                    "trace": null
+                  },
+                  "findings": [],
+                  "contrary": null,
+                  "changeView": null,
+                  "records": [
+                    {
+                      "kind": "status",
+                      "nav": "Readiness",
+                      "title": "Readiness checks",
+                      "groups": [
+                        {
+                          "state": "Met",
+                          "count": "2",
+                          "items": [
+                            {
+                              "text": "Source file read in full",
+                              "note": null,
+                              "value": {
+                                "kind": "value",
+                                "text": "1 of 1 files",
+                                "at": null
+                              },
+                              "trace": null
+                            },
+                            {
+                              "text": "Source file pinned to this run",
+                              "note": null,
+                              "value": {
+                                "kind": "value",
+                                "text": "1 of 1 files",
+                                "at": null
+                              },
+                              "trace": null
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "kind": "facts",
+                      "nav": "Coverage",
+                      "title": "Coverage",
+                      "groups": [
+                        {
+                          "name": null,
+                          "rows": [
+                            {
+                              "label": "Source files",
+                              "value": {
+                                "kind": "value",
+                                "text": "1",
+                                "at": 1
+                              },
+                              "trace": null
+                            },
+                            {
+                              "label": "Read in full",
+                              "value": {
+                                "kind": "value",
+                                "text": "1",
+                                "at": 1
+                              },
+                              "trace": null
+                            },
+                            {
+                              "label": "As of",
+                              "value": {
+                                "kind": "value",
+                                "text": "30 Sep 2026",
+                                "at": null
+                              },
+                              "trace": null
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ],
+                  "limitations": {
+                    "count": "0",
+                    "gapsLink": {
+                      "label": "See this module’s gaps in Evidence"
+                    },
+                    "items": []
+                  }
+                }
+              }
+            ],
+            "evidence": {
+              "intro": "Where every figure and claim in this run comes from.",
+              "moduleFilter": [
+                {
+                  "id": "business-profile",
+                  "name": "Business profile",
+                  "initials": "BP"
+                },
+                {
+                  "id": "source-readiness",
+                  "name": "Source readiness",
+                  "initials": "SR"
+                }
+              ],
+              "tabs": {
+                "trace": "0",
+                "sources": "1",
+                "gaps": "1"
+              },
+              "record": {
+                "timings": {
+                  "title": "Module timings",
+                  "note": "From start to accepted, 4 Nov 2026. One of one shown.",
+                  "columns": ["Module", "State", "Started, min", "Accepted, min", "Took, min"],
+                  "rows": [
+                    {
+                      "module": "Business profile",
+                      "state": "Delivered",
+                      "started": {
+                        "kind": "value",
+                        "text": "0.0",
+                        "at": 0
+                      },
+                      "accepted": {
+                        "kind": "value",
+                        "text": "4.0",
+                        "at": 4
+                      },
+                      "took": {
+                        "kind": "value",
+                        "text": "4.0",
+                        "at": 4
+                      }
+                    }
+                  ],
+                  "emptyText": null
+                },
+                "hashes": {
+                  "title": "Hashes and instructions",
+                  "items": [
+                    {
+                      "label": "Method texts",
+                      "kind": "SHA-256",
+                      "value": "c2e44d17f103f3256fb79bdb4031de4d7cc260a2f534721698b68af80488fa01",
+                      "copyLabel": "Copy hash",
+                      "what": "The hash of the method texts"
+                    }
+                  ]
+                },
+                "spend": {
+                  "title": "Spend against the cap",
+                  "progress": {
+                    "text": "USD 6.40 of USD 20.00",
+                    "value": 6.4,
+                    "max": 20
+                  },
+                  "note": "The run finished inside its cap. Spend by module is in the model calls register below."
+                },
+                "calls": {
+                  "title": "Model calls",
+                  "count": "31",
+                  "note": "Calls, tokens and cost by module.",
+                  "columns": [
+                    "Module",
+                    "Code",
+                    "Calls",
+                    "Retries",
+                    "Tokens in",
+                    "Tokens out",
+                    "Cost, USD"
+                  ],
+                  "rows": [
+                    {
+                      "label": "Business profile",
+                      "cells": ["CP-1", "31", "3", "1,512,000", "79,800", "6.40"]
+                    }
+                  ],
+                  "total": {
+                    "label": "Total",
+                    "cells": ["All", "31", "3", "1,512,000", "79,800", "6.40"]
+                  }
+                },
+                "registers": {
+                  "title": "Registers as written",
+                  "count": "1",
+                  "note": "The registers each module wrote, unedited.",
+                  "columns": ["Register", "Written by", "Rows", "File", "Open"],
+                  "downloadAll": {
+                    "label": "Download all",
+                    "href": "downloads/tessaly-foods-2026-09-30-registers.zip",
+                    "reason": null
+                  },
+                  "rows": [
+                    {
+                      "name": "Gap ledger",
+                      "writtenBy": "Every module",
+                      "rows": "1",
+                      "file": "registers/gaps.md",
+                      "href": "downloads/tessaly-foods-2026-09-30-registers/gaps.md",
+                      "reason": null
+                    }
+                  ]
+                }
+              },
+              "jump": [],
+              "trace": {
+                "title": "Trace",
+                "description": "One row per traced paragraph, row or figure. Open a row to see how it was derived.",
+                "emptyText": "The handoffs of this run were not traced item by item, so no paragraph, row or figure lists its sources here.",
+                "columns": {
+                  "id": "Item",
+                  "item": "Statement",
+                  "value": "Value",
+                  "module": "Module",
+                  "kind": "Kind",
+                  "sources": "Sources"
+                },
+                "rows": []
+              },
+              "summary": {
+                "delivered": {
+                  "note": null,
+                  "progress": {
+                    "text": "2 of 2",
+                    "value": 2,
+                    "max": 2
+                  }
+                },
+                "counts": [
+                  {
+                    "label": "Source files",
+                    "value": {
+                      "kind": "value",
+                      "text": "1",
+                      "at": null
+                    },
+                    "note": "1 read in full",
+                    "trace": null
+                  },
+                  {
+                    "label": "Calculations",
+                    "value": {
+                      "kind": "value",
+                      "text": "0",
+                      "at": null
+                    },
+                    "note": "Not traced item by item in this run",
+                    "trace": null
+                  },
+                  {
+                    "label": "Gaps",
+                    "value": {
+                      "kind": "value",
+                      "text": "1",
+                      "at": null
+                    },
+                    "note": "1 medium",
+                    "trace": null
+                  }
+                ],
+                "run": {
+                  "code": "TSF-20260930-MU-0001",
+                  "hash": "e487586750cd9b4f1cf3eca182d88bb3e99b10ff89c4a4f194802a8f4388cff1"
+                },
+                "take": {
+                  "text": "The module handoffs are the record this library was written from. Download them to read a module exactly as it was delivered.",
+                  "download": {
+                    "label": "Download handoffs",
+                    "href": "downloads/tessaly-foods-2026-09-30-handoffs.zip",
+                    "reason": null
+                  }
+                }
+              },
+              "gaps": {
+                "title": "Gaps",
+                "description": "What this run could not establish, by how much it bears on the view.",
+                "columns": {
+                  "id": "Gap",
+                  "gap": "What is missing",
+                  "module": "Module",
+                  "reason": "Effect on the view",
+                  "shownAs": "Shown as"
+                },
+                "groups": [
+                  {
+                    "severity": "Medium",
+                    "count": "1",
+                    "rows": [
+                      {
+                        "id": "G-01",
+                        "gap": "Facility agreement",
+                        "module": "Business profile",
+                        "moduleId": "business-profile",
+                        "reason": "The covenant test date rests on management’s guidance.",
+                        "shownAs": "gap",
+                        "where": {
+                          "page": "overview",
+                          "label": "Shown under the Overview's limitations"
+                        }
+                      }
+                    ]
+                  }
+                ]
+              },
+              "sources": {
+                "files": [
+                  {
+                    "name": "quarterly-report-q3-2026.pdf",
+                    "kind": "PDF",
+                    "size": "1.8 MB · 32 pages",
+                    "state": "Read in full",
+                    "why": null,
+                    "readersLabel": "Read by 1 module",
+                    "readers": {
+                      "shown": ["business-profile"],
+                      "more": null
+                    },
+                    "hash": "24a81eb9e52249f77447098ad5796847bbb41140654909de4f8f2434aacc697b"
+                  }
+                ],
+                "visible": 1,
+                "moreLabel": null
+              }
+            },
+            "traces": {}
+          }
+        ]
       },
       {
         "id": "ardenne-cable",
         "name": "Ardenne Cable",
         "history": {
           "subtitle": "Report history: two runs since March 2026",
-          "latest": null,
-          "empty": "No report for this issuer is held in this library yet.",
+          "latest": "2026-03-31",
+          "empty": null,
           "entries": [
             {
               "asOf": "30 Sep 2026",
@@ -5861,20 +6827,493 @@
               "state": "Finished",
               "pathway": "Full review",
               "text": "Stable: subscriber losses are offset by pricing; leverage is flat at 5.2x.",
-              "report": null,
+              "report": "2026-03-31",
               "changes": null
             }
           ]
         },
-        "runs": []
+        "runs": [
+          {
+            "id": "2026-03-31",
+            "head": {
+              "issuerName": "Ardenne Cable",
+              "asOf": "As of 31 Mar 2026",
+              "pathway": "Full review",
+              "state": "Finished",
+              "tabs": {
+                "modulesCount": "2"
+              },
+              "firstModule": "business-profile",
+              "forecastHref": null
+            },
+            "loading": false,
+            "overview": {
+              "bottomLine": {
+                "label": "Bottom line",
+                "lead": "Stable: subscriber losses are offset by pricing; leverage is flat at 5.2x.",
+                "rest": "Price rises have covered the loss of broadband subscribers for four quarters, and leverage has not moved over the year.",
+                "trace": null
+              },
+              "metricsLabel": "Headline figures",
+              "metrics": [
+                {
+                  "label": "Leverage",
+                  "value": {
+                    "kind": "value",
+                    "text": "5.2x",
+                    "at": 5.2
+                  },
+                  "note": "Reported EBITDA, year to 31 Mar 2026",
+                  "trace": null
+                },
+                {
+                  "label": "Net leverage",
+                  "value": {
+                    "kind": "value",
+                    "text": "4.8x",
+                    "at": 4.8
+                  },
+                  "note": "Reported EBITDA, year to 31 Mar 2026",
+                  "trace": null
+                }
+              ],
+              "sides": null,
+              "findings": [
+                {
+                  "number": "01",
+                  "lead": "Pricing carries revenue",
+                  "body": "Revenue per subscriber rose by more than subscriber numbers fell.",
+                  "trace": null
+                }
+              ],
+              "changeView": null,
+              "dates": [
+                {
+                  "date": "7 May 2026",
+                  "state": "Past",
+                  "title": "Full-year results",
+                  "text": "Published; figures in this run are from them."
+                }
+              ],
+              "modules": {
+                "summary": "2 of 2 delivered",
+                "items": [
+                  {
+                    "title": "Business profile",
+                    "lead": "Pricing offsets the loss of subscribers.",
+                    "state": "Delivered",
+                    "module": "business-profile"
+                  },
+                  {
+                    "title": "Source readiness",
+                    "lead": "The one source file was read in full and pinned to this run.",
+                    "state": "Delivered",
+                    "module": "source-readiness"
+                  }
+                ]
+              },
+              "limitations": {
+                "count": "1",
+                "gapsLink": {
+                  "label": "See the 1 gap in Evidence"
+                },
+                "items": [
+                  {
+                    "text": "The subscriber count by product was not provided, so churn is taken from the company’s statement.",
+                    "trace": null
+                  }
+                ]
+              }
+            },
+            "changes": {
+              "kind": "none",
+              "title": "No earlier run to compare",
+              "text": "This is the first run on Ardenne Cable. What changed will appear here after the next run."
+            },
+            "modules": [
+              {
+                "id": "business-profile",
+                "name": "Business profile",
+                "state": "Delivered",
+                "body": {
+                  "kind": "delivered",
+                  "moduleKind": "prose",
+                  "bottomLine": {
+                    "label": "Bottom line",
+                    "lead": "Pricing offsets the loss of subscribers.",
+                    "rest": "Broadband subscribers fell over the year, and price rises on the remaining base covered the loss of revenue.",
+                    "trace": null
+                  },
+                  "findings": [
+                    {
+                      "number": "01",
+                      "lead": "Pricing carries revenue",
+                      "body": "Revenue per subscriber rose by more than subscriber numbers fell.",
+                      "trace": null
+                    }
+                  ],
+                  "contrary": null,
+                  "changeView": null,
+                  "records": [],
+                  "limitations": {
+                    "count": "1",
+                    "gapsLink": {
+                      "label": "See this module’s gaps in Evidence"
+                    },
+                    "items": [
+                      {
+                        "text": "Churn comes from management presentations.",
+                        "trace": null
+                      }
+                    ]
+                  }
+                }
+              },
+              {
+                "id": "source-readiness",
+                "name": "Source readiness",
+                "state": "Delivered",
+                "body": {
+                  "kind": "delivered",
+                  "moduleKind": "data",
+                  "bottomLine": {
+                    "label": "Bottom line",
+                    "lead": "The one source file was read in full and pinned to this run.",
+                    "rest": "Nothing was left unread.",
+                    "trace": null
+                  },
+                  "findings": [],
+                  "contrary": null,
+                  "changeView": null,
+                  "records": [
+                    {
+                      "kind": "status",
+                      "nav": "Readiness",
+                      "title": "Readiness checks",
+                      "groups": [
+                        {
+                          "state": "Met",
+                          "count": "2",
+                          "items": [
+                            {
+                              "text": "Source file read in full",
+                              "note": null,
+                              "value": {
+                                "kind": "value",
+                                "text": "1 of 1 files",
+                                "at": null
+                              },
+                              "trace": null
+                            },
+                            {
+                              "text": "Source file pinned to this run",
+                              "note": null,
+                              "value": {
+                                "kind": "value",
+                                "text": "1 of 1 files",
+                                "at": null
+                              },
+                              "trace": null
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "kind": "facts",
+                      "nav": "Coverage",
+                      "title": "Coverage",
+                      "groups": [
+                        {
+                          "name": null,
+                          "rows": [
+                            {
+                              "label": "Source files",
+                              "value": {
+                                "kind": "value",
+                                "text": "1",
+                                "at": 1
+                              },
+                              "trace": null
+                            },
+                            {
+                              "label": "Read in full",
+                              "value": {
+                                "kind": "value",
+                                "text": "1",
+                                "at": 1
+                              },
+                              "trace": null
+                            },
+                            {
+                              "label": "As of",
+                              "value": {
+                                "kind": "value",
+                                "text": "31 Mar 2026",
+                                "at": null
+                              },
+                              "trace": null
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ],
+                  "limitations": {
+                    "count": "0",
+                    "gapsLink": {
+                      "label": "See this module’s gaps in Evidence"
+                    },
+                    "items": []
+                  }
+                }
+              }
+            ],
+            "evidence": {
+              "intro": "Where every figure and claim in this run comes from.",
+              "moduleFilter": [
+                {
+                  "id": "business-profile",
+                  "name": "Business profile",
+                  "initials": "BP"
+                },
+                {
+                  "id": "source-readiness",
+                  "name": "Source readiness",
+                  "initials": "SR"
+                }
+              ],
+              "tabs": {
+                "trace": "0",
+                "sources": "1",
+                "gaps": "1"
+              },
+              "record": {
+                "timings": {
+                  "title": "Module timings",
+                  "note": "From start to accepted, 12 May 2026. One of one shown.",
+                  "columns": ["Module", "State", "Started, min", "Accepted, min", "Took, min"],
+                  "rows": [
+                    {
+                      "module": "Business profile",
+                      "state": "Delivered",
+                      "started": {
+                        "kind": "value",
+                        "text": "0.0",
+                        "at": 0
+                      },
+                      "accepted": {
+                        "kind": "value",
+                        "text": "4.0",
+                        "at": 4
+                      },
+                      "took": {
+                        "kind": "value",
+                        "text": "4.0",
+                        "at": 4
+                      }
+                    }
+                  ],
+                  "emptyText": null
+                },
+                "hashes": {
+                  "title": "Hashes and instructions",
+                  "items": [
+                    {
+                      "label": "Method texts",
+                      "kind": "SHA-256",
+                      "value": "5b7fc7bcfaf9f5e4194e947946583179becad9291b999be1acb2f53d26983260",
+                      "copyLabel": "Copy hash",
+                      "what": "The hash of the method texts"
+                    }
+                  ]
+                },
+                "spend": {
+                  "title": "Spend against the cap",
+                  "progress": {
+                    "text": "USD 10.25 of USD 25.00",
+                    "value": 10.25,
+                    "max": 25
+                  },
+                  "note": "The run finished inside its cap. Spend by module is in the model calls register below."
+                },
+                "calls": {
+                  "title": "Model calls",
+                  "count": "31",
+                  "note": "Calls, tokens and cost by module.",
+                  "columns": [
+                    "Module",
+                    "Code",
+                    "Calls",
+                    "Retries",
+                    "Tokens in",
+                    "Tokens out",
+                    "Cost, USD"
+                  ],
+                  "rows": [
+                    {
+                      "label": "Business profile",
+                      "cells": ["CP-1", "31", "3", "1,512,000", "79,800", "10.25"]
+                    }
+                  ],
+                  "total": {
+                    "label": "Total",
+                    "cells": ["All", "31", "3", "1,512,000", "79,800", "10.25"]
+                  }
+                },
+                "registers": {
+                  "title": "Registers as written",
+                  "count": "1",
+                  "note": "The registers each module wrote, unedited.",
+                  "columns": ["Register", "Written by", "Rows", "File", "Open"],
+                  "downloadAll": {
+                    "label": "Download all",
+                    "href": "downloads/ardenne-cable-2026-03-31-registers.zip",
+                    "reason": null
+                  },
+                  "rows": [
+                    {
+                      "name": "Gap ledger",
+                      "writtenBy": "Every module",
+                      "rows": "1",
+                      "file": "registers/gaps.md",
+                      "href": "downloads/ardenne-cable-2026-03-31-registers/gaps.md",
+                      "reason": null
+                    }
+                  ]
+                }
+              },
+              "jump": [],
+              "trace": {
+                "title": "Trace",
+                "description": "One row per traced paragraph, row or figure. Open a row to see how it was derived.",
+                "emptyText": "The handoffs of this run were not traced item by item, so no paragraph, row or figure lists its sources here.",
+                "columns": {
+                  "id": "Item",
+                  "item": "Statement",
+                  "value": "Value",
+                  "module": "Module",
+                  "kind": "Kind",
+                  "sources": "Sources"
+                },
+                "rows": []
+              },
+              "summary": {
+                "delivered": {
+                  "note": null,
+                  "progress": {
+                    "text": "2 of 2",
+                    "value": 2,
+                    "max": 2
+                  }
+                },
+                "counts": [
+                  {
+                    "label": "Source files",
+                    "value": {
+                      "kind": "value",
+                      "text": "1",
+                      "at": null
+                    },
+                    "note": "1 read in full",
+                    "trace": null
+                  },
+                  {
+                    "label": "Calculations",
+                    "value": {
+                      "kind": "value",
+                      "text": "0",
+                      "at": null
+                    },
+                    "note": "Not traced item by item in this run",
+                    "trace": null
+                  },
+                  {
+                    "label": "Gaps",
+                    "value": {
+                      "kind": "value",
+                      "text": "1",
+                      "at": null
+                    },
+                    "note": "1 medium",
+                    "trace": null
+                  }
+                ],
+                "run": {
+                  "code": "ARC-20260331-FR-0001",
+                  "hash": "d605d614a456b53b46aabd98e0be1c939e1590267fa4887de3bf3d77b9ebe9cc"
+                },
+                "take": {
+                  "text": "The module handoffs are the record this library was written from. Download them to read a module exactly as it was delivered.",
+                  "download": {
+                    "label": "Download handoffs",
+                    "href": "downloads/ardenne-cable-2026-03-31-handoffs.zip",
+                    "reason": null
+                  }
+                }
+              },
+              "gaps": {
+                "title": "Gaps",
+                "description": "What this run could not establish, by how much it bears on the view.",
+                "columns": {
+                  "id": "Gap",
+                  "gap": "What is missing",
+                  "module": "Module",
+                  "reason": "Effect on the view",
+                  "shownAs": "Shown as"
+                },
+                "groups": [
+                  {
+                    "severity": "Medium",
+                    "count": "1",
+                    "rows": [
+                      {
+                        "id": "G-01",
+                        "gap": "Subscriber count by product",
+                        "module": "Business profile",
+                        "moduleId": "business-profile",
+                        "reason": "Churn is taken from the company’s statement.",
+                        "shownAs": "gap",
+                        "where": {
+                          "page": "overview",
+                          "label": "Shown under the Overview's limitations"
+                        }
+                      }
+                    ]
+                  }
+                ]
+              },
+              "sources": {
+                "files": [
+                  {
+                    "name": "annual-report-2026.pdf",
+                    "kind": "PDF",
+                    "size": "3.6 MB · 88 pages",
+                    "state": "Read in full",
+                    "why": null,
+                    "readersLabel": "Read by 1 module",
+                    "readers": {
+                      "shown": ["business-profile"],
+                      "more": null
+                    },
+                    "hash": "59af5514ff048044c6dc4ac9d61105335350660fd30be507a9c34eeaf298332a"
+                  }
+                ],
+                "visible": 1,
+                "moreLabel": null
+              }
+            },
+            "traces": {}
+          }
+        ]
       },
       {
         "id": "lumora-health",
         "name": "Lumora Health",
         "history": {
           "subtitle": "Report history: one run",
-          "latest": null,
-          "empty": "No report for this issuer is held in this library yet.",
+          "latest": "2026-09-30",
+          "empty": null,
           "entries": [
             {
               "asOf": "30 Sep 2026",
@@ -5882,12 +7321,687 @@
               "state": "Capped",
               "pathway": "Full review",
               "text": "The run stopped at its cost cap before the modules that form the view had finished.",
-              "report": null,
+              "report": "2026-09-30",
               "changes": null
             }
           ]
         },
-        "runs": []
+        "runs": [
+          {
+            "id": "2026-09-30",
+            "head": {
+              "issuerName": "Lumora Health",
+              "asOf": "As of 30 Sep 2026",
+              "pathway": "Full review",
+              "state": "Capped",
+              "tabs": {
+                "modulesCount": "7"
+              },
+              "firstModule": "business-profile",
+              "forecastHref": null
+            },
+            "loading": false,
+            "overview": {
+              "bottomLine": {
+                "label": "Bottom line",
+                "lead": "Not established for this run: the run stopped at its cost cap before the modules that form the view had finished.",
+                "rest": "Seven of thirteen modules were delivered and can be read on their own pages. The figures below are those they established; the rest are not established for this run.",
+                "trace": null
+              },
+              "metricsLabel": "Headline figures",
+              "metrics": [
+                {
+                  "label": "Leverage",
+                  "value": {
+                    "kind": "gap",
+                    "reason": "No debt figure was delivered before the cap."
+                  },
+                  "note": "Net debt to EBITDA",
+                  "trace": null
+                },
+                {
+                  "label": "Net leverage",
+                  "value": {
+                    "kind": "gap",
+                    "reason": "No net debt figure was delivered before the cap."
+                  },
+                  "note": "Net debt to EBITDA",
+                  "trace": null
+                },
+                {
+                  "label": "Interest cover",
+                  "value": {
+                    "kind": "value",
+                    "text": "2.3x",
+                    "at": 2.3
+                  },
+                  "note": "Reported EBITDA, year to 30 Sep 2026",
+                  "trace": null
+                }
+              ],
+              "sides": null,
+              "findings": [
+                {
+                  "number": "01",
+                  "lead": "Seven modules can be read",
+                  "body": "The delivered modules cover the business, its market, earnings, cash flow, covenants, governance and sustainability.",
+                  "trace": null
+                }
+              ],
+              "changeView": null,
+              "dates": [
+                {
+                  "date": "5 Nov 2026",
+                  "state": "Past",
+                  "title": "Full-year results",
+                  "text": "Published; figures in this run are from them."
+                }
+              ],
+              "modules": {
+                "summary": "7 of 13 delivered",
+                "items": [
+                  {
+                    "title": "Business profile",
+                    "lead": "Outpatient clinics earn most of their income from a few insurer contracts.",
+                    "state": "Delivered",
+                    "module": "business-profile"
+                  },
+                  {
+                    "title": "Industry and competition",
+                    "lead": "Demand for outpatient care is growing and the main competitors are regional groups.",
+                    "state": "Delivered",
+                    "module": "industry-and-competition"
+                  },
+                  {
+                    "title": "Financial performance",
+                    "lead": "Revenue is growing and margins are steady.",
+                    "state": "Delivered",
+                    "module": "financial-performance"
+                  },
+                  {
+                    "title": "Cash flow and liquidity",
+                    "lead": "Cash flow covers interest but leaves little for repaying debt.",
+                    "state": "Delivered",
+                    "module": "cash-flow-and-liquidity"
+                  },
+                  {
+                    "title": "Covenants and documentation",
+                    "lead": "One maintenance covenant applies to the term loan.",
+                    "state": "Delivered",
+                    "module": "covenants-and-documentation"
+                  },
+                  {
+                    "title": "Management and governance",
+                    "lead": "The founders still hold a majority of the votes.",
+                    "state": "Delivered",
+                    "module": "management-and-governance"
+                  },
+                  {
+                    "title": "Environmental, social and governance",
+                    "lead": "Staffing is the main environmental, social and governance risk.",
+                    "state": "Delivered",
+                    "module": "environmental-social-and-governance"
+                  },
+                  {
+                    "title": "Six modules not run",
+                    "lead": "Capital structure, Peer comparison, Recovery, Rating outlook, Forecast and Credit snapshot did not run before the cost cap.",
+                    "state": "Not run",
+                    "module": null
+                  }
+                ]
+              },
+              "limitations": {
+                "count": "2",
+                "gapsLink": {
+                  "label": "See the 1 gap in Evidence"
+                },
+                "items": [
+                  {
+                    "text": "Six modules did not run before the cost cap, so no leverage, peer comparison, recovery or forecast is given for this run.",
+                    "trace": null
+                  },
+                  {
+                    "text": "Clinic-level visit data was not provided, so growth in visits is taken from the company’s statement.",
+                    "trace": null
+                  }
+                ]
+              }
+            },
+            "changes": {
+              "kind": "none",
+              "title": "No earlier run to compare",
+              "text": "This is the first run on Lumora Health. What changed will appear here after the next run."
+            },
+            "modules": [
+              {
+                "id": "business-profile",
+                "name": "Business profile",
+                "state": "Delivered",
+                "body": {
+                  "kind": "delivered",
+                  "moduleKind": "prose",
+                  "bottomLine": {
+                    "label": "Bottom line",
+                    "lead": "Outpatient clinics earn most of their income from a few insurer contracts.",
+                    "rest": "Visit volumes are rising and most clinics are leased.",
+                    "trace": null
+                  },
+                  "findings": [
+                    {
+                      "number": "01",
+                      "lead": "Contracts are concentrated",
+                      "body": "The three largest insurer contracts account for most of revenue.",
+                      "trace": null
+                    }
+                  ],
+                  "contrary": null,
+                  "changeView": null,
+                  "records": [],
+                  "limitations": {
+                    "count": "1",
+                    "gapsLink": {
+                      "label": "See this module’s gaps in Evidence"
+                    },
+                    "items": [
+                      {
+                        "text": "Contract terms come from management presentations.",
+                        "trace": null
+                      }
+                    ]
+                  }
+                }
+              },
+              {
+                "id": "industry-and-competition",
+                "name": "Industry and competition",
+                "state": "Delivered",
+                "body": {
+                  "kind": "delivered",
+                  "moduleKind": "prose",
+                  "bottomLine": {
+                    "label": "Bottom line",
+                    "lead": "Demand for outpatient care is growing and the main competitors are regional groups.",
+                    "rest": "Referral volumes keep rising, and the larger regional groups compete on waiting times rather than on price.",
+                    "trace": null
+                  },
+                  "findings": [
+                    {
+                      "number": "01",
+                      "lead": "Competition is local",
+                      "body": "Each clinic competes with two or three nearby providers.",
+                      "trace": null
+                    }
+                  ],
+                  "contrary": null,
+                  "changeView": null,
+                  "records": [],
+                  "limitations": {
+                    "count": "1",
+                    "gapsLink": {
+                      "label": "See this module’s gaps in Evidence"
+                    },
+                    "items": [
+                      {
+                        "text": "Local market shares are management estimates.",
+                        "trace": null
+                      }
+                    ]
+                  }
+                }
+              },
+              {
+                "id": "financial-performance",
+                "name": "Financial performance",
+                "state": "Delivered",
+                "body": {
+                  "kind": "delivered",
+                  "moduleKind": "prose",
+                  "bottomLine": {
+                    "label": "Bottom line",
+                    "lead": "Revenue is growing and margins are steady.",
+                    "rest": "Visit growth and fee increases lifted revenue, while staff costs rose at a similar rate.",
+                    "trace": null
+                  },
+                  "findings": [
+                    {
+                      "number": "01",
+                      "lead": "Margins hold",
+                      "body": "Staff cost growth is matched by fee increases.",
+                      "trace": null
+                    }
+                  ],
+                  "contrary": null,
+                  "changeView": null,
+                  "records": [],
+                  "limitations": {
+                    "count": "1",
+                    "gapsLink": {
+                      "label": "See this module’s gaps in Evidence"
+                    },
+                    "items": [
+                      {
+                        "text": "The split of margin by clinic is not given.",
+                        "trace": null
+                      }
+                    ]
+                  }
+                }
+              },
+              {
+                "id": "cash-flow-and-liquidity",
+                "name": "Cash flow and liquidity",
+                "state": "Delivered",
+                "body": {
+                  "kind": "delivered",
+                  "moduleKind": "prose",
+                  "bottomLine": {
+                    "label": "Bottom line",
+                    "lead": "Cash flow covers interest but leaves little for repaying debt.",
+                    "rest": "Operating cash flow after upkeep of the clinics is positive, and most new-clinic spending can be deferred.",
+                    "trace": null
+                  },
+                  "findings": [
+                    {
+                      "number": "01",
+                      "lead": "Capital spending is flexible",
+                      "body": "Most capital spending is for new clinics and can be deferred.",
+                      "trace": null
+                    }
+                  ],
+                  "contrary": null,
+                  "changeView": null,
+                  "records": [],
+                  "limitations": {
+                    "count": "1",
+                    "gapsLink": {
+                      "label": "See this module’s gaps in Evidence"
+                    },
+                    "items": [
+                      {
+                        "text": "The facility’s draw-down terms are summarised, not quoted.",
+                        "trace": null
+                      }
+                    ]
+                  }
+                }
+              },
+              {
+                "id": "covenants-and-documentation",
+                "name": "Covenants and documentation",
+                "state": "Delivered",
+                "body": {
+                  "kind": "delivered",
+                  "moduleKind": "prose",
+                  "bottomLine": {
+                    "label": "Bottom line",
+                    "lead": "One maintenance covenant applies to the term loan.",
+                    "rest": "It is tested each quarter; no view on its headroom is formed, because the capital structure module did not run.",
+                    "trace": null
+                  },
+                  "findings": [
+                    {
+                      "number": "01",
+                      "lead": "One covenant is tested",
+                      "body": "The covenant is tested each quarter on the company’s own figures.",
+                      "trace": null
+                    }
+                  ],
+                  "contrary": null,
+                  "changeView": null,
+                  "records": [],
+                  "limitations": {
+                    "count": "1",
+                    "gapsLink": {
+                      "label": "See this module’s gaps in Evidence"
+                    },
+                    "items": [
+                      {
+                        "text": "The covenant definitions come from a summary, not the agreement.",
+                        "trace": null
+                      }
+                    ]
+                  }
+                }
+              },
+              {
+                "id": "management-and-governance",
+                "name": "Management and governance",
+                "state": "Delivered",
+                "body": {
+                  "kind": "delivered",
+                  "moduleKind": "prose",
+                  "bottomLine": {
+                    "label": "Bottom line",
+                    "lead": "The founders still hold a majority of the votes.",
+                    "rest": "The board has three independent members, and the chair is not the chief executive.",
+                    "trace": null
+                  },
+                  "findings": [
+                    {
+                      "number": "01",
+                      "lead": "Control is concentrated",
+                      "body": "The founders can carry any shareholder vote.",
+                      "trace": null
+                    }
+                  ],
+                  "contrary": null,
+                  "changeView": null,
+                  "records": [],
+                  "limitations": {
+                    "count": "1",
+                    "gapsLink": {
+                      "label": "See this module’s gaps in Evidence"
+                    },
+                    "items": [
+                      {
+                        "text": "Related-party dealings are described only in the notes.",
+                        "trace": null
+                      }
+                    ]
+                  }
+                }
+              },
+              {
+                "id": "environmental-social-and-governance",
+                "name": "Environmental, social and governance",
+                "state": "Delivered",
+                "body": {
+                  "kind": "delivered",
+                  "moduleKind": "prose",
+                  "bottomLine": {
+                    "label": "Bottom line",
+                    "lead": "Staffing is the main environmental, social and governance risk.",
+                    "rest": "Inspection results are public and have been clean for the period.",
+                    "trace": null
+                  },
+                  "findings": [
+                    {
+                      "number": "01",
+                      "lead": "Staffing is the pressure point",
+                      "body": "Clinical roles take longer to fill than the company plans for.",
+                      "trace": null
+                    }
+                  ],
+                  "contrary": null,
+                  "changeView": null,
+                  "records": [],
+                  "limitations": {
+                    "count": "1",
+                    "gapsLink": {
+                      "label": "See this module’s gaps in Evidence"
+                    },
+                    "items": [
+                      {
+                        "text": "Inspection reports were not among the files provided.",
+                        "trace": null
+                      }
+                    ]
+                  }
+                }
+              }
+            ],
+            "evidence": {
+              "intro": "Where every figure and claim in this run comes from.",
+              "moduleFilter": [
+                {
+                  "id": "business-profile",
+                  "name": "Business profile",
+                  "initials": "BP"
+                },
+                {
+                  "id": "industry-and-competition",
+                  "name": "Industry and competition",
+                  "initials": "IC"
+                },
+                {
+                  "id": "financial-performance",
+                  "name": "Financial performance",
+                  "initials": "FP"
+                },
+                {
+                  "id": "cash-flow-and-liquidity",
+                  "name": "Cash flow and liquidity",
+                  "initials": "CL"
+                },
+                {
+                  "id": "covenants-and-documentation",
+                  "name": "Covenants and documentation",
+                  "initials": "CD"
+                },
+                {
+                  "id": "management-and-governance",
+                  "name": "Management and governance",
+                  "initials": "MG"
+                },
+                {
+                  "id": "environmental-social-and-governance",
+                  "name": "Environmental, social and governance",
+                  "initials": "ES"
+                }
+              ],
+              "tabs": {
+                "trace": "0",
+                "sources": "1",
+                "gaps": "1"
+              },
+              "record": {
+                "timings": {
+                  "title": "Module timings",
+                  "note": "From start to accepted, 10 Nov 2026. One of thirteen shown.",
+                  "columns": ["Module", "State", "Started, min", "Accepted, min", "Took, min"],
+                  "rows": [
+                    {
+                      "module": "Business profile",
+                      "state": "Delivered",
+                      "started": {
+                        "kind": "value",
+                        "text": "0.0",
+                        "at": 0
+                      },
+                      "accepted": {
+                        "kind": "value",
+                        "text": "4.0",
+                        "at": 4
+                      },
+                      "took": {
+                        "kind": "value",
+                        "text": "4.0",
+                        "at": 4
+                      }
+                    }
+                  ],
+                  "emptyText": null
+                },
+                "hashes": {
+                  "title": "Hashes and instructions",
+                  "items": [
+                    {
+                      "label": "Method texts",
+                      "kind": "SHA-256",
+                      "value": "eb42f6e3b43cc4a0d91bedc3789275d210cc2e855c92f20015db71fb55281fd6",
+                      "copyLabel": "Copy hash",
+                      "what": "The hash of the method texts"
+                    }
+                  ]
+                },
+                "spend": {
+                  "title": "Spend against the cap",
+                  "progress": {
+                    "text": "USD 24.60 of USD 25.00",
+                    "value": 24.6,
+                    "max": 25
+                  },
+                  "note": "The run stopped at its cap. Six modules did not run, so their calls are not listed."
+                },
+                "calls": {
+                  "title": "Model calls",
+                  "count": "31",
+                  "note": "Calls, tokens and cost by module.",
+                  "columns": [
+                    "Module",
+                    "Code",
+                    "Calls",
+                    "Retries",
+                    "Tokens in",
+                    "Tokens out",
+                    "Cost, USD"
+                  ],
+                  "rows": [
+                    {
+                      "label": "Business profile",
+                      "cells": ["CP-1", "31", "3", "1,512,000", "79,800", "5.10"]
+                    }
+                  ],
+                  "total": {
+                    "label": "Total",
+                    "cells": ["All", "31", "3", "1,512,000", "79,800", "24.60"]
+                  }
+                },
+                "registers": {
+                  "title": "Registers as written",
+                  "count": "1",
+                  "note": "The registers each module wrote, unedited.",
+                  "columns": ["Register", "Written by", "Rows", "File", "Open"],
+                  "downloadAll": {
+                    "label": "Download all",
+                    "href": "downloads/lumora-health-2026-09-30-registers.zip",
+                    "reason": null
+                  },
+                  "rows": [
+                    {
+                      "name": "Gap ledger",
+                      "writtenBy": "Every module",
+                      "rows": "1",
+                      "file": "registers/gaps.md",
+                      "href": "downloads/lumora-health-2026-09-30-registers/gaps.md",
+                      "reason": null
+                    }
+                  ]
+                }
+              },
+              "jump": [],
+              "trace": {
+                "title": "Trace",
+                "description": "One row per traced paragraph, row or figure. Open a row to see how it was derived.",
+                "emptyText": "The handoffs of this run were not traced item by item, so no paragraph, row or figure lists its sources here.",
+                "columns": {
+                  "id": "Item",
+                  "item": "Statement",
+                  "value": "Value",
+                  "module": "Module",
+                  "kind": "Kind",
+                  "sources": "Sources"
+                },
+                "rows": []
+              },
+              "summary": {
+                "delivered": {
+                  "note": "Six modules were not run: the run reached its cost cap",
+                  "progress": {
+                    "text": "7 of 13",
+                    "value": 7,
+                    "max": 13
+                  }
+                },
+                "counts": [
+                  {
+                    "label": "Source files",
+                    "value": {
+                      "kind": "value",
+                      "text": "1",
+                      "at": null
+                    },
+                    "note": "1 read in full",
+                    "trace": null
+                  },
+                  {
+                    "label": "Calculations",
+                    "value": {
+                      "kind": "value",
+                      "text": "0",
+                      "at": null
+                    },
+                    "note": "Not traced item by item in this run",
+                    "trace": null
+                  },
+                  {
+                    "label": "Gaps",
+                    "value": {
+                      "kind": "value",
+                      "text": "1",
+                      "at": null
+                    },
+                    "note": "1 medium",
+                    "trace": null
+                  }
+                ],
+                "run": {
+                  "code": "LMH-20260930-FR-0001",
+                  "hash": "8670c19665d31bac776182690963a65f6cf22b77b1dc11434aef58c5a83b2243"
+                },
+                "take": {
+                  "text": "The module handoffs are the record this library was written from. Download them to read a module exactly as it was delivered.",
+                  "download": {
+                    "label": "Download handoffs",
+                    "href": "downloads/lumora-health-2026-09-30-handoffs.zip",
+                    "reason": null
+                  }
+                }
+              },
+              "gaps": {
+                "title": "Gaps",
+                "description": "What this run could not establish, by how much it bears on the view.",
+                "columns": {
+                  "id": "Gap",
+                  "gap": "What is missing",
+                  "module": "Module",
+                  "reason": "Effect on the view",
+                  "shownAs": "Shown as"
+                },
+                "groups": [
+                  {
+                    "severity": "Medium",
+                    "count": "1",
+                    "rows": [
+                      {
+                        "id": "G-01",
+                        "gap": "Clinic-level visit data",
+                        "module": "Business profile",
+                        "moduleId": "business-profile",
+                        "reason": "Growth in visits is taken from the company’s statement.",
+                        "shownAs": "gap",
+                        "where": {
+                          "page": "overview",
+                          "label": "Shown under the Overview's limitations"
+                        }
+                      }
+                    ]
+                  }
+                ]
+              },
+              "sources": {
+                "files": [
+                  {
+                    "name": "financial-statements-2026.pdf",
+                    "kind": "PDF",
+                    "size": "3.2 MB · 74 pages",
+                    "state": "Read in full",
+                    "why": null,
+                    "readersLabel": "Read by 1 module",
+                    "readers": {
+                      "shown": ["business-profile"],
+                      "more": null
+                    },
+                    "hash": "c3b95c4613d4e80d86e13edb2a4bb43ab6ffb678d4048b39d62c0fa6fdae5f42"
+                  }
+                ],
+                "visible": 1,
+                "moreLabel": null
+              }
+            },
+            "traces": {}
+          }
+        ]
       },
       {
         "id": "corvane-fasteners",
