@@ -198,8 +198,18 @@ def test_not_supplied_is_absent(tmp_path):
     assert metrics["leverage"]["value"] == "6.57"
 
 
+def statement(currency: str) -> str:
+    """A CP-1 income statement whose fixed row states `currency` in its Unit cell."""
+    return (
+        "\n### T4.4 Income statement\n\n"
+        "| Line item | FY2024 | Unit | Basis | Source |\n"
+        "| --- | --- | --- | --- | --- |\n"
+        f"| EBITDA (Reported) | 100 | {currency} millions | Reported | Fixture. |\n"
+    )
+
+
 def test_identity_from_context(tmp_path):
-    run_dir = make_run(tmp_path, "run-a")
+    run_dir = make_run(tmp_path, "run-a", cp1_findings=statement("USD"))
     pin_context(run_dir, json.dumps(CONTEXT).encode())
     run = built(tmp_path)["real"][0]
     assert (run["issuer"], run["name"], run["sector"], run["country"]) == (
@@ -216,6 +226,25 @@ def test_identity_from_context(tmp_path):
     )
     assert run["summary"] == "CP-1 bottom line."
     assert run["gaps"] == ["Synthetic fixture only."]
+
+
+def test_the_currency_is_the_one_cp1_states_not_the_one_the_context_holds(tmp_path):
+    """docs/rulings/2026-11-16-reporting-currency-from-sources.md: GBP statements record GBP even
+    when the context says USD; USD statements record USD; no money unit records nothing."""
+    cases = {"gbp": ("GBP", "GBP"), "usd": ("USD", "USD"), "none": (None, "")}
+    for folder, (stated, recorded) in cases.items():
+        findings = "" if stated is None else statement(stated)
+        run_dir = make_run(tmp_path, folder, cp1_findings=findings, issuer_id=f"i-{folder}")
+        pin_context(run_dir, json.dumps(CONTEXT).encode())  # the context says USD in every case
+    runs = {run["id"]: run for run in built(tmp_path)["real"]}
+    assert {k: runs[k]["currency"] for k in cases} == {k: v[1] for k, v in cases.items()}
+
+
+def test_a_context_without_a_currency_still_gives_the_run_its_cp1_currency(tmp_path):
+    run_dir = make_run(tmp_path, "run-a", cp1_findings=statement("EUR"))
+    run = {k: v for k, v in CONTEXT["run"].items() if k != "reporting_currency"}
+    pin_context(run_dir, json.dumps({**CONTEXT, "run": run}).encode())
+    assert built(tmp_path)["real"][0]["currency"] == "EUR"
 
 
 def test_context_not_matching_its_pin_is_an_issue_with_empty_fields(tmp_path):
@@ -318,7 +347,7 @@ def published_forecast(tmp_path, report_page, extra=()):
     folder = tmp_path / "runs" / "r1" / "deliveries" / "d1"
     folder.mkdir(parents=True)
     (folder / "delivery.json").write_text(json.dumps({"cp_forecast_published": True}))
-    artifacts, _ = delivery_fields(
+    artifacts, _, _ = delivery_fields(
         tmp_path,
         {"id": "r1", "modules": []},
         {},

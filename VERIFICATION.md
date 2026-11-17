@@ -4,6 +4,57 @@ Keep one running record here. A pass applies only to the stated scope. Earlier v
 engine is in [EricMG13/final-workflow](https://github.com/EricMG13/final-workflow)'s
 `VERIFICATION.md`, which also keeps the retained runs this copy leaves out.
 
+## 2026-11-17 — PR 2: a run in the currency its source files report in (branch `claude/reporting-currency`)
+
+Scope: the whole branch against `main` 0bca1822. That covers the two entries below (PRs 44 and 46, merged into this branch) and the work listed here. Ruling: `docs/rulings/2026-11-16-reporting-currency-from-sources.md`. No provider was called and no paid run was made. The proof is synthetic: retained, canned module answers, labelled as such.
+- Owner, 2026-11-16: "it has to run run on any reported currency provided by the source files"; "modules should be currency agnostic, the source files dictate reporting currency"; on a facility with no reporting-currency amount: "the sources materials will contain a selected FX rate for the reporting. and that can be used to calculate it."
+- Money tables: CP-2D's liquidity bridge, CP-3C's refinancing need and CP-4C's value allocation take CP-1's money unit (`US$m` for USD, otherwise ISO code + `m`). They are told what it is, and told that a foreign instrument enters at T4.18's `Reporting Currency Amount`, otherwise `Not supplied`, never at a rate of their own. The issuer library accepts one money unit per table.
+- The currency is not asked: neither start page asks for or sends `run.reporting_currency`, which is optional in the context. The `cp2d-non-usd` rule and the US-dollar warnings are removed. The library's run currency comes from CP-1.
+- Forecast: the run's currency is CP-1's money unit. A CP-2G block stating another currency is refused. A facility whose T4.18 `Currency` is not the run's is refused, and its debt stays in the remainder at the interest-rate driver. CP-1's statement readers moved to `owners/cpos_cp1_statements.py` (a pure move; `.importlinter` gains membership only).
+- Reviews:
+  - Task reviews (mx-precise) on every task, PR 44 and PR 46.
+  - Money-path review (mx-adversary): one High, fixed. The forecast took its currency from CP-2G's block, defaulting to USD, so a USD 125 balance was scheduled as GBP.
+  - Whole-branch adversarial review (Opus 5.5; Fable unavailable): one Medium, fixed (CP-3C and CP-4C had no foreign-facility rule), and one Low on an ordinary USD input, fixed.
+  - Re-review: all fixed. Each reviewer's probe exits 1 on 2cf77df7 and 0 on 981cad96.
+  - Sweep (discover only): no High or Medium finding.
+- Fidelity check (`tests/test_reporting_currency_proof.py`, deep pathway, hand-written expected amounts):
+  - GBP and CHF runs go through the launcher's checks, delivery and the library with their own amounts (`£…m`, `CHF …m`).
+  - A facility with no stated amount and no stated rate shows a `Not supplied` total, never 0. The total is a fixture cell, since no code sums T4.18.
+  - The FX rate's locator appears only on Evidence.
+  - A USD run's delivered files and pages are byte-identical to `main`'s, after normalising timestamps, temp paths and hashes; the instruction files differ on purpose.
+- Correction to the PR 44 entry below: 14 of its 17 new cases failed before the change, not 9; three were added with the change.
+- Commands, exit 0 on 981cad96: all 9 browser-marked files exit 0 (changes 1, cpos_launch 12, library full assessment 3, library changes 8, library page 104 + 1 skipped, model shell 7, reporting-currency proof 5, run start page 152, signal page 13);
+  - `tools/quality_gate.py` (0 findings) and `lint-imports`;
+  - `tests/test_cpos_launch.py` (930 passed, 1 skipped);
+  - the facilities, scale, proof and CP-1 check tests (476 passed);
+  - on 943280ee (web unchanged since): `npm --prefix web run` lint, format:check, typecheck, test (3,909), unused, duplication, build and `proof:connected` (Chrome and Edge).
+- Not verified:
+  - no live or paid run, and no real non-USD issuer, so whether models follow the new text is unknown;
+  - CP-1 computing a total from T4.18;
+  - the full weekly suite.
+
+## 2026-11-16 — What the models are sent works in any currency (branch `claude/reporting-currency-method-text`, into `claude/reporting-currency`)
+
+Scope: method text and the launcher and repair text sent to models, under ruling `docs/rulings/2026-11-16-reporting-currency-from-sources.md`; the forecast's unit reader (`cpos_forecast._CURRENCY`) and facility check (`_check_facilities`). No rule id, selector or money-table unit changed; the one new check behaviour is the facility refusal below; the frozen non-CP-1 selector digest is unchanged. No provider was called.
+- Changed method text (new under the ruling, not copied from an earlier package; manifest named edits, METHODOLOGY-REVIEW rows): CP-1's step file (step 3: the presentation currency, a functional currency recorded in T4.2, conversion only at a rate the sources state; T4.18 gains `Reporting Currency Amount` and `FX Rate` (the rate only; its locator in `Source`) with their rules, the never-invent rule, amortisation in the instrument's currency, those cells plus the financing-cost row reconcile to `Total Debt`); CP-2D's SKILL Canon Core rule 11 (a foreign facility's debt balance at `Reporting Currency Amount`; its undrawn, commitment, amortisation or maturity amount only where CP-1 states it in the statements' currency, else `Not supplied`, never a partial total); CP-2A's stress copy and CP-8's method lose a USD default and three USD-only examples.
+- Changed launcher and repair text: `VOICE_RULES`, `PERIOD_TABLE_BLOCK`, `UNIT_EXAMPLE` (CP-1 check block and its unit refusal), the CP-1, CP-2E and CP-2G script notes and `prose_checks.FIGURE_ADVICE` show a GBP (and euro) example beside each USD one. `_CURRENCY` reads any ISO 4217 code in capitals, so `CHFk` is thousands; a scan of every table cell of the 408 tracked Markdown files (45,746 cells) found none whose reading changed.
+- PR 46 review (PR 2 controller; 1 High, 1 Medium, 2 Low), each fixed with its test red first: F1 `_check_facilities` refuses a facility whose T4.18 `Currency` is not the block's, naming it and its currency, and `FORECAST_BLOCK` tells CP-2G to leave it out (answer key: a GBP run, base debt 600, GBP term loan 250 at 6.00% and EUR notes EUR 400 = GBP 350; both rows refused, the GBP row alone accepted with year-1 interest 15.00 and unallocated debt 350); F2 rule 11 as above; F3 CP-1's check block: a figure in another currency is `Not supplied` "unless converted at a rate the sources state, as step 3 allows" (`CP1_CHECK_DIGEST` re-pinned); F4 `FX Rate and Source` renamed `FX Rate` so no locator is drawn outside Evidence.
+- PR 46 review round 2 (M1, Medium): the F1 check failed open (a facility named `EUR notes due 2030`, an `Instrument` `EUR notes (2030)`, a `Currency` cell `Euro`). Now T4.18's `Currency` is an ISO 4217 code, `FORECAST_BLOCK` asks for names copied exactly, and where any T4.18 row's currency does not read as the block's, every facility must match a block-currency row exactly (trimmed, emphasis removed, ignoring case) or is refused, named. Answer key (c)-(f) refused, (g)-(h) accepted, round 1's (a)-(b) unchanged; two round-1 cases (a `Currency` cell blank or `Not supplied`) now refuse their facility, as the ruling requires. Every retained live CP-1 handoff with a T4.18 (4 files) reads USD on every row, so none is affected.
+- Instruction sizes, each pathway's ceiling raised by its measured increase on the tree merged with base 943280e (+1,203 short_snapshot to +2,559 deep); method-text pins of CP-1, CP-2A, CP-2D and CP-8 recomputed. 9c685dd pins `CP1_CHECK_BLOCK`'s digest to show its money-unit sentence left CP-1's block alone; the widened unit example changes that block, so the test puts the example back before checking the pin, and F3 (below) re-pinned that digest for its added clause.
+- Tests, red on the base source and green here: `test_cp1_is_sent_each_instruments_reporting_currency_amount_and_never_invents_a_rate`, `test_cp2d_is_sent_one_currency_rule_for_its_liquidity_tables`, `test_no_text_sent_to_a_model_gives_usd_as_its_only_example` (one kept exemption: CP-4's illustrative covenant quote `$200m`), `test_cpos_scale.py` CHF cases.
+- Commands, exit 0 on the tree merged with base 943280e: `tools/quality_gate.py` (0 findings) and `--base origin/claude/reporting-currency` (CI's base; 0 findings); `pytest tests/test_cpos_launch.py tests/test_methodology_selection.py tests/test_method_scripts.py` (1,182 passed, 1 skipped); forecast tests `test_cpos_scale`, `test_cpos_periods`, `test_cpos_facilities`, `test_start_forecast_pathways`, `test_negative_cash_not_calculable`, `test_downside_follows_forward_model` (472 passed); `test_cpos_cp1_check`, `test_prose_checks`, `test_changes`, `test_context_form`, `test_context_module_options`, `test_credit_os_catalogue`, `test_run_expectations_words`, `test_run_start_service`, `test_inbox_activity` (1,521 passed, 1 skipped).
+- Not verified: no real model has read this text; no non-USD run (live or paid); the full weekly suite. Oldest entry trimmed.
+
+## 2026-11-16 — Report pages show a run's figures in its own currency (branch `claude/reporting-currency-report-pages`, into `claude/reporting-currency`, PR 2)
+
+Scope: the connected React report only (`web/src/pages/connected/reportView.ts`, `report/Forecast.tsx`, `report/Securities.tsx`, `report/Modules.tsx` and their tests); ruling `docs/rulings/2026-11-16-reporting-currency-from-sources.md`. No Python, method, launcher or library change; `withUnit` and `unitLabel` unchanged. No provider was called.
+- Owner, 2026-11-16: "it has to run run on any reported currency provided by the source files"; "the source files dictate reporting currency".
+- Changed: the Overview credit-metric tiles (liquidity, free cash flow, net debt, contractual principal, maturities) take the run's money unit, the one the catalogue records with the run's cash figure (CP-1's), else the one money unit (`US$m|[A-Z]{3}m`) the table states, and carry the row's unit into the value and year change; a row or schedule in another unit draws no tile. The Forecast basis note accepts `<ISO code> millions` and labels the difference with it. On a non-USD run the Instrument decisions card notes that market levels are US market quotes in US dollars.
+- Fidelity check: hand-written expected strings for GBP (`£1,250m`, `+£150m vs H1 2025`, `£5.00m`), CHF (`CHF 1,250m`, `CHF 5.00m`), EUR (`€5.00m`), mixed-unit tables and USD (`$1,250m`, `$5.00m`, the whole tile object); 9 new cases failed before the change, every USD case passed before and after. Two existing assertions pinned the superseded USD-only rule and change citing the ruling: the GBP maturity-schedule refusal now has its catalogue state the run's unit (`US$m`); the Forecast "unsupported unit" case uses `EUR thousands` for `EUR millions`.
+- Commands, exit 0: `npm --prefix web ci`; `npm --prefix web run` lint, format:check, typecheck, test (172 files, 3,906 tests), unused, duplication, build; `tools/quality_gate.py` (0 changed Python files).
+- Not verified: `proof:connected` (exit 1: it needs branded Google Chrome and Microsoft Edge, and this container has Chromium only; it stops at the brand check before any report page); a real non-USD run's pages. Oldest entry trimmed.
+- Follow-up (owner, 2026-11-16: "fix price chart"; branch `claude/reporting-currency-report-pages` restarted from `claude/reporting-currency` after #44 merged): the Instrument decisions price and yield chart accepts CP-3's last-trade basis line with its amounts in any `<ISO code> millions`, not only `USD millions`; the trades stay US market quotes. Tests: the chart drawn for GBP, CHF and EUR (prices `$99.00`, `$89.00`, yields `7.005000%`, `9.12%`), red before the change; withheld for `GBP thousands`, `£ millions`, `GBPm`, `gbp millions` and a line naming two currencies. `npm --prefix web ci` and `run` lint, format:check, typecheck, test (173 files, 3,917 tests), unused, duplication, build: exit 0. Not verified: a CP-3 handoff from a real non-USD run; `proof:connected` (Chromium only, as above).
+
 ## 2026-11-16 — Earnings Update runs CP-1A (branch `claude/earnings-update-cp1a`)
 
 Scope: the `earnings_update` preset and its copies (`src/deploy_vii/contracts.py`, `web/src/pages/connected/api.ts`, `docs/templates/context-form.html` `PATHWAYS` and `RUN_ORDER`) and the tests that pin them; ruling `docs/rulings/2026-11-16-earnings-update-cp1a.md`. Caps, launcher, registry, method files and delivery code unchanged. No provider was called.
@@ -944,52 +995,3 @@ Scope: presentation only, all under `web/`; no backend, handoff, provider or mod
   OpenRouter credential did not supply the direct Anthropic key it requires, and
   the available sample pack lacks the evidence for a complete analytical report.
   See [React workflow](docs/react-workflow.md).
-
-## 2026-11-15 — Restructure, second part: removals, method provenance, CP-3C and CP-6A, review (branch `claude/busy-dijkstra-bgex9m`, PR #126)
-
-Scope is **offline only**. No provider or model was called. No model has written a CP-3C or CP-6A
-handoff for the full credit assessment under the new instructions: that needs the owner's paid run.
-This entry follows the one below and its checks supersede that entry's totals.
-
-- Removed, code that no used entry point, journal registry, rule list or test reaches (5,181 lines,
-  no test removed): the Deploy VII earnings owner runtime (`earnings_workflow.py` 4,604 to 689
-  lines; `compose_delta` and what it reaches stay for CP-1B), `owner_workflow`'s JSON-lines
-  transport and `python -m` entry, CP-OS's `navigation`/`verify_navigation`, and 85 uncalled reader
-  and compute definitions in 16 module files. Checked independently: no kept top-level definition
-  changed (AST, docstrings aside), no removed name is referenced, no undefined name in `src`,
-  `apps` or `tools`. Launcher offline preparation, 10 runs over 7 pathways on synthetic input:
-  identical before and after each stage. Kept for the owner's decision: the `OwnerWorkflow` journal
-  chain (`model_testing`, `run_pathway`, `model.loop`), which a 2026-11-13 ruling and `tests/model`
-  still rely on.
-- Method provenance: `manifest.json` gives `source_revision` with its basis for 15 more files; 19
-  files say "not recorded at import; bytes pinned by sha256" (cp-os was not reachable; two of them
-  had been attributed to cp-os `b57a344` wrongly); a `project_files` list registers the three
-  project method files; three unregistered CP-3B duplicates removed after a byte comparison. No
-  method file's sha256 changed. `tests/test_methodology_selection.py` has no known differences left.
-- Full credit assessment (ruling `docs/rulings/2026-11-15-full-assessment-cp3c-cp6a.md`):
-  `credit_snapshot` adds CP-2D and CP-3C. CP-6's scope section no longer cuts T6E.4, T6E.6, T6E.7
-  and T6E.11 (project file, sha256 `617c887c18dd`); CP-6's instructions gain `CP6A_BLOCK` on both
-  pathways that run CP-6; `posture_issues` refuses a non-blocked CP-6 handoff without
-  `### Portfolio posture` and the method's `Final Sizing Posture:` first sentence. Launcher prepared
-  offline for the 7 active pathways before and after: only `credit_snapshot` (two new modules, CP-6)
-  and `portfolio_decision` (CP-6) differ. Fidelity check, synthetic fixture only: default library
-  build identical apart from `built_at` and the workspace path; with two hand-made SYNTHETIC
-  handoffs, `tests/test_library_full_assessment_browser.py` checks CP-6's and CP-3C's pages against
-  the Markdown. Prompt-size ceiling for the pathway raised to 1,483,647 characters (the owner's
-  1,340,000 plus the measured addition): for the owner to confirm. Cost is estimated, not measured.
-- Review: eight reviewers, one per slice, no high-severity finding. Fixed: Signal imports without
-  `credit_os` and names missing brand files at start-up; three permission skips no longer call
-  `os.geteuid` where it is absent (Windows); a failed pack prune no longer blocks the pack commit;
-  the bundle test starts a Python on the bundle's two import roots and finds the library and engine
-  inside it (Linux; not the Windows package). Gate: lines moved verbatim count as moved only in a
-  file the change adds, and code that only moved is still checked with ruff's `F` rules.
-- Open after review: delivery's call item reads a section named `Final Sizing Posture`, not the new
-  `### Portfolio posture` (the library page shows it; settle after a paid run); `posture_issues`
-  checks the first sentence only; no test pins that `OwnerWorkflow.open` refuses a retained
-  JSON-lines run; no test runs `compose_delta`.
-- Checks on the final head: the CI fast list 4,631 passed, 6 skipped, known failures deselected;
-  node page tests 567 passed; quality gate 0 findings; `lint-imports` 3 contracts kept. GitHub Actions,
-  full weekly suite on `7cba8c6` (before the removals): 5,956 passed, 1 failed, a test that read
-  one packet of a two-write reply; the test now reads to the close.
-- Not verified: the full weekly suite on the final head (re-run requested); `Smoke-test.ps1` and
-  the Windows package on Windows; the pack workflow on GitHub Actions. Oldest two entries trimmed.

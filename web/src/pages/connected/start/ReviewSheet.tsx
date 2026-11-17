@@ -319,7 +319,6 @@ export function ReviewSheet({
             rows={[
               ["Issuer", identity.issuer_name],
               ["As-of date", run.as_of],
-              ["Reporting currency", run.reporting_currency],
               ["Submitted by", answers.submitted_by],
             ]}
           />

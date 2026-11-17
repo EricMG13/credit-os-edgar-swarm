@@ -544,6 +544,9 @@ def test_the_three_levels_build_the_same_context_for_the_same_answers(page):
 def test_basic_builds_the_defaults_the_form_had(page):
     expected = json.loads(json.dumps(RESEARCH_MINIMAL))
     expected["run"]["cutoff"] = expected["run"]["as_of"]  # The form writes the cutoff, never blank.
+    # The form does not ask the reporting currency
+    # (ruling 2026-11-16-reporting-currency-from-sources).
+    del expected["run"]["reporting_currency"]
     expected["identity"]["issue_classification"] = (
         "high_yield"  # The form asks it; the file did not.
     )

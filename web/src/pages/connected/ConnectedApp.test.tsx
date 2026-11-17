@@ -310,7 +310,13 @@ describe("connected run start", () => {
     const body = JSON.parse(rawAnswers as string) as unknown;
     expect(body).toEqual({
       context: {
-        run: { ...context.run, as_of: "2026-10-31", cutoff: "2026-10-31" },
+        // No reporting_currency: the template's USD is not sent (ruling 2026-11-16).
+        run: {
+          pathway: context.run.pathway,
+          case_kind: context.run.case_kind,
+          as_of: "2026-10-31",
+          cutoff: "2026-10-31",
+        },
         identity: { issuer_name: "Synthetic Générale", issuer_id: "synthetic-generale" },
       },
       modules: [],
@@ -2587,7 +2593,6 @@ describe("connected run start: the Basic run sends what it sent before", () => {
           cutoff: "2026-10-31",
           pathway: "credit_snapshot",
           case_kind: "synthetic",
-          reporting_currency: "USD",
         },
         identity: { issuer_name: "Synthetic Générale", issuer_id: "synthetic-generale" },
         research_questions: [{ text: entered, focus_module: "" }],
@@ -2599,6 +2604,21 @@ describe("connected run start: the Basic run sends what it sent before", () => {
       effort: "balanced",
       submitted_by: "Ana L",
     });
+  });
+
+  it("N8b asks for no reporting currency and sends none: the library reads CP-1's", async () => {
+    // docs/rulings/2026-11-16-reporting-currency-from-sources.md: the template's USD is not shown.
+    const fetchMock = testingFetch();
+    render(<ConnectedApp path="/start" mode="synthetic" />);
+    await fillInputs();
+    expect(screen.queryByLabelText("Reporting currency")).toBeNull();
+    await advanceToPurpose();
+    advanceToContext();
+    fireEvent.click(screen.getByRole("button", { name: "Review run" }));
+    await screen.findByRole("button", { name: "Submit run" });
+    expect(screen.queryByText("Reporting currency")).toBeNull();
+    const body = sentBody(fetchMock) as { context: { run: Record<string, unknown> } };
+    expect(Object.keys(body.context.run)).not.toContain("reporting_currency");
   });
 
   it("N9 sends the pathway's modules without the left-out ones, the rest as in N8", async () => {
@@ -2650,7 +2670,6 @@ describe("connected run start: the Basic run sends what it sent before", () => {
           pathway: "distressed_restructuring",
           run_type: "research",
           case_kind: "synthetic",
-          reporting_currency: "USD",
         },
         identity: { issuer_name: "Synthetic Générale", issuer_id: "synthetic-generale" },
       },
