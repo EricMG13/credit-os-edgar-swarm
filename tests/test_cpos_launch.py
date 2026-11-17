@@ -1772,8 +1772,9 @@ UPSTREAM = (
 
 def good_task(tmp_path: Path, module: str = "CP-2", pathway: str | None = None):
     pathway = pathway or OWNER_PATHWAY.get(module, "covenant_refinancing")
+    settings = context_file(tmp_path, pathway)
     prepared = prepare(
-        context_file(tmp_path, pathway),
+        settings,
         issuer_folder(tmp_path),
         tmp_path / "out",
         config="sol-medium",
@@ -1784,7 +1785,7 @@ def good_task(tmp_path: Path, module: str = "CP-2", pathway: str | None = None):
         prepared.plan.run,
         module,
         b"",
-        {"annual.txt": b"Net sales", "context": b"{}"},
+        {"annual.txt": b"Net sales", "context": settings.read_bytes()},
         upstream,
         1,
         (),
@@ -1801,6 +1802,224 @@ def test_checker_accepts_a_complete_handoff(tmp_path):
     prepared, task, context = good_task(tmp_path, "CP-4")
     raw = answer(context, list(prepared.plan.layout.routes)).encode()
     assert _checked_handoff(task, raw, checker(prepared.layout)) == ()
+
+
+def legal_declared(task: HandoffTask, legal: str) -> HandoffTask:
+    """The task with its run context declaring `attachments.legal_documents` as ``legal``."""
+    data = json.loads(task.sources["context"])
+    data["attachments"]["legal_documents"] = legal
+    sources = {**task.sources, "context": json.dumps(data).encode()}
+    return dataclasses.replace(task, sources=sources)
+
+
+def source_gate_issues(issues: tuple[str, ...]) -> list[str]:
+    return [i for i in issues if "Blocked" in i and "No executed governing document" in i]
+
+
+# Live run 2026-11-16 (TDG, Deep, Opus medium, legal documents "none"): CP-4 wrote `Completed with
+# Limitations` from the 10-K's summary of the agreements, against REF_CP-4_STEPS line 31 ("Blocked:
+# No executed governing document. Output blocked message and STOP.") and the forecast's
+# `cp4-declared-none`.
+@pytest.mark.parametrize(
+    ("module", "legal", "status", "refused"),
+    [
+        ("CP-4", "none", "Completed with Limitations", True),
+        ("CP-4", "executed", "Completed with Limitations", False),
+        ("CP-4", "none", "Blocked", False),
+        ("CP-1", "none", "Completed with Limitations", False),
+    ],
+)
+def test_cp4_is_held_to_its_source_gate_when_the_context_declares_no_legal_documents(
+    tmp_path, module, legal, status, refused
+):
+    prepared, task, context = good_task(tmp_path, module)
+    task = legal_declared(task, legal)
+    front = f"---\nmodule_id: {module}\nmodule_status: {status}\n---\n"
+    raw = (front + answer(context, list(prepared.plan.layout.routes))).encode()
+    issues = source_gate_issues(_checked_handoff(task, raw, checker(prepared.layout)))
+    assert len(issues) == (1 if refused else 0)
+
+
+NO_DOCUMENT = "Not supplied: no executed governing document"
+EDGES = ("From", "Relationship", "Edge type", "To", "Evidence")
+CHART = ("Test", "Threshold", "Current", "Headroom", "Direction", "Reporting unit")
+EVENTS = ("Event date", "Date precision", "Published", "Event", "Status", "Source")
+
+
+def table(head: tuple[str, ...], row: tuple[str, ...]) -> str:
+    return "\n".join("| " + " | ".join(cells) + " |" for cells in (head, ("---",) * len(head), row))
+
+
+NOT_ASSESSABLE = table(("Item", "Status"), ("Not assessable", NO_DOCUMENT))
+# The blocked form CP-4 is sent (READER_PASSAGES, CONFIDENCE_RULE and the selector list in its
+# instructions): `module_status: Blocked`, a Bottom line that begins `Not assessable: `, the gate
+# register only, and each report selector once: its routed ones (a table selector with one
+# not-assessable row, a prose selector with one sentence) and these fixed-header tables.
+FIXED_SELECTORS = {
+    "Chart data: covenant headroom": table(
+        (*CHART, "Basis and limitation"), (*[NO_DOCUMENT] * 5, "x", "Not assessable.")
+    )
+    + "\n\nNo qualification.",
+    "Events: Legal": table((*EVENTS, "Credit relevance"), (NO_DOCUMENT,) * 7),
+    "Confidence inputs": table(("Input", "Value"), ("Not assessable", NO_DOCUMENT)),
+    "Map: legal entities": table(EDGES, (NO_DOCUMENT,) * 5),
+    "Map: intercreditor": table(EDGES, (NO_DOCUMENT,) * 5),
+}
+
+
+def blocked_cp4(context: dict, routes: list) -> str:
+    gate = table(("Document", "Status", "Limitation"), (NO_DOCUMENT, "Blocked", "Source gate"))
+    sentence = "Not assessable: no executed governing document was supplied."
+    routed = {r.heading: NOT_ASSESSABLE if r.kind == "table" else sentence for r in routes}
+    selectors = {**routed, **FIXED_SELECTORS}
+    sections = [part for h, t in selectors.items() for part in (f"### {h}", "", t, "")]
+    lines = [
+        *("---", "module_id: CP-4", "module_status: Blocked", "---", "# CP-4", ""),
+        *("## Request", "", f"{ISSUER} as of {AS_OF}.", "", "## Sources", ""),
+        f"- annual.txt {context['sources']['annual.txt']}",
+        f"- CP-1 {context['handoffs']['CP-1']['sha256']}",
+        *("", "## Findings", "", "### Bottom line", ""),
+        (
+            "Not assessable: no executed governing document was supplied, so the covenants, their "
+            "capacity and headroom and the lenders' protection are not established for this run."
+        ),
+        *("", "### T4.1 Source gate register", "", gate, "", *sections),
+        *("## Calculations", "", "None.", "", "## Gaps", "", "None.", ""),
+        *("## Next module", "", "The orchestrator selects the next module.", ""),
+    ]
+    return "\n".join(lines)
+
+
+# Covenant & Refinancing (six table selectors), Deep (the live run's pathway) and Distressed
+# (one prose selector).
+@pytest.mark.parametrize(
+    "pathway", ["covenant_refinancing", "deep_credit_assessment", "distressed_restructuring"]
+)
+def test_cp4_written_as_the_methods_blocked_message_is_accepted(tmp_path, pathway):
+    prepared, task, context = good_task(tmp_path, "CP-4", pathway)
+    task = legal_declared(task, "none")
+    routes = [r for r in prepared.plan.layout.routes if r.module_id == "CP-4"]
+    raw = blocked_cp4(context, routes).encode()
+    assert _checked_handoff(task, raw, checker(prepared.layout)) == ()
+
+
+def with_legal(context: Path, legal: str) -> Path:
+    """The context file, rewritten to declare `attachments.legal_documents` as ``legal``."""
+    data = json.loads(context.read_text())
+    data["attachments"]["legal_documents"] = legal
+    context.write_text(json.dumps(data))
+    return context
+
+
+def launched_blocked_cp4(sent: dict, routes: list) -> str:
+    """`blocked_cp4` as a launched run's CP-4 writes it: listing every source and handoff sent."""
+    text = blocked_cp4(sent, [r for r in routes if r.module_id == "CP-4"])
+    first = (
+        f"- annual.txt {sent['sources']['annual.txt']}\n- CP-1 {sent['handoffs']['CP-1']['sha256']}"
+    )
+    assert first in text
+    listed = [f"- {n} {h}" for n, h in sent["sources"].items()]
+    listed += [f"- {n} {h['sha256']}" for n, h in sent["handoffs"].items()]
+    return text.replace(first, "\n".join(listed))
+
+
+def filled_cp4(sent: dict, routes: list) -> str:
+    """A CP-4 that writes every selector as if it had an agreement (live run 2026-11-16)."""
+    return "---\nmodule_id: CP-4\nmodule_status: Completed with Limitations\n---\n" + answer(
+        sent, routes
+    )
+
+
+def run_declaring_legal(tmp_path: Path, provider, pathway: str, legal: str, cp4) -> int:
+    """`main` on a fake-provider run whose context declares ``legal``; CP-4 answers ``cp4``."""
+    argv = launch(tmp_path, "--live", "--ruling", str(RULING), pathway=pathway)
+    context = with_legal(tmp_path / "context.json", legal)
+    folder, preview = tmp_path / "issuer", tmp_path / "preview"
+    routes = list(
+        prepare(context, folder, preview, config="sol-medium", cap="15").plan.layout.routes
+    )
+    provider.answer = lambda sent: (
+        cp4(sent, routes)
+        if sent["module_id"] == "CP-4"
+        else forecast_answer(sent, routes, REAL_DECLINED_BLOCK)
+        if sent["module_id"] == "CP-2G"
+        else answer(sent, routes)
+    )
+    return main(argv)
+
+
+# Review of PR 45, finding 1 (owner-approved decision): with no legal documents declared CP-4 stops
+# at its source gate, so a block that lists a later owner in the run goes to that owner. Only
+# `capital-structure` lists one (CP-3); with an agreement declared the routing is unchanged.
+@pytest.mark.parametrize("pathway", ["credit_snapshot", "deep_credit_assessment"])
+@pytest.mark.parametrize(
+    ("legal", "owner"), [("none", "CP-3"), ("executed", "CP-4"), ("draft", "CP-4")]
+)
+def test_capital_structure_goes_to_cp3_only_when_cp4_stops_at_its_source_gate(
+    tmp_path, pathway, legal, owner
+):
+    context = with_legal(context_file(tmp_path, pathway), legal)
+    prepared = prepare(
+        context, issuer_folder(tmp_path), tmp_path / "out", config="sol-medium", cap="40"
+    )
+    routes = prepared.plan.layout.routes
+    assert [r.module_id for r in routes if r.block_id == "capital-structure"] == [owner]
+
+
+@pytest.mark.parametrize("pathway", ["credit_snapshot", "deep_credit_assessment"])
+def test_a_run_with_a_blocked_cp4_delivers_cp3s_capital_structure(
+    tmp_path, provider, capsys, pathway
+):
+    assert run_declaring_legal(tmp_path, provider, pathway, "none", launched_blocked_cp4) == 0
+    assert [c[0] for c in provider.calls].count("CP-4") == 1
+    receipt = next((tmp_path / "out" / "deliveries").glob("*/delivery.json"))
+    coverage = json.loads((receipt.parent / "coverage.json").read_text())["modules"]
+    placed = {
+        module: [e["blocks"] for e in entries if e["heading"] == "Capital structure"]
+        for module, entries in coverage.items()
+    }
+    assert placed["CP-3"] == [["capital-structure"]]
+    assert placed["CP-4"] == []
+    cp3 = (receipt.parent / "CP-3.md").read_text()
+    section = cp3.partition("### Capital structure\n")[2].partition("\n### ")[0]
+    assert "| Observed | 1 |" in section and "Not assessable" not in section
+    assert "### Capital structure" not in (receipt.parent / "CP-4.md").read_text()
+
+
+@pytest.mark.parametrize("pathway", ["credit_snapshot", "deep_credit_assessment"])
+def test_a_cp4_written_without_an_agreement_is_still_refused(tmp_path, provider, capsys, pathway):
+    assert run_declaring_legal(tmp_path, provider, pathway, "none", filled_cp4) == 1
+    assert [c[0] for c in provider.calls].count("CP-4") == 3
+    assert "CP-4 not accepted within bounds" in capsys.readouterr().err
+    assert not (tmp_path / "out" / "deliveries").exists()
+
+
+# main 39f1803f's CP-4 instructions for this input (Deep, legal documents `executed`): the source
+# gate leaves them byte-identical. #49 (merged as 39f1803f) changed CP-4's text on purpose (the
+# money-unit rule), so the value pinned at 0bca182 (a37cd27b...) was recomputed. Recompute only
+# when CP-4's instructions change on purpose, as for METHOD_TEXT_SHA256_AT_1B41E65.
+CP4_DEEP_EXECUTED_SHA256_AT_39F1803 = (
+    "284d83b0600b7022eeff7be8d3a9adebc115bb55c0d382129b845467b7507bab"
+)
+
+
+# Review of PR 45, finding 2: CP-4 learnt its gate only from a refusal, one full write later.
+def test_cp4_is_told_its_source_gate_only_when_no_legal_documents_are_declared(tmp_path):
+    texts = {}
+    for legal in ("none", "executed"):
+        base = tmp_path / legal
+        base.mkdir()
+        context = with_legal(context_file(base, "deep_credit_assessment"), legal)
+        prepared = prepare(
+            context, issuer_folder(base), base / "out", config="sol-medium", cap="40"
+        )
+        texts[legal] = (base / "out" / prepared.plan.instructions["CP-4"].path).read_text()
+    executed = hashlib.sha256(texts["executed"].encode()).hexdigest()
+    assert executed == CP4_DEEP_EXECUTED_SHA256_AT_39F1803
+    assert texts["none"] != texts["executed"]
+    assert "No executed governing document" in texts["none"]
+    assert cpos_launch._SOURCE_GATE in texts["none"]
+    assert cpos_launch._SOURCE_GATE not in texts["executed"]
 
 
 @pytest.mark.parametrize(
@@ -3855,7 +4074,10 @@ def test_only_the_first_three_pages_of_each_source_reach_the_guess(tmp_path, mon
     assert seen["short.md"] == ["Notes mature in 2030."]
 
 
-def test_the_declarations_do_not_change_any_instruction_byte(tmp_path):
+# Review of PR 45, finding 2: legal documents `none` now tells CP-4 its source gate. That paragraph
+# is the only byte the declarations change here: Covenant & Refinancing has no block CP-4 shares
+# with a later owner, so its routing does not move.
+def test_the_declarations_change_no_instruction_byte_but_cp4s_source_gate(tmp_path):
     def instructions(legal: str, run_type: str) -> dict[str, bytes]:
         out = tmp_path / legal / run_type
         context = declared_context(tmp_path / legal, "covenant_refinancing", legal_documents=legal)
@@ -3869,7 +4091,10 @@ def test_the_declarations_do_not_change_any_instruction_byte(tmp_path):
 
     (tmp_path / "executed").mkdir()
     (tmp_path / "none").mkdir()
-    assert instructions("executed", "research") == instructions("none", "secondary")
+    executed, none = instructions("executed", "research"), instructions("none", "secondary")
+    gate = f"{cpos_launch._SOURCE_GATE}\n\n".encode()
+    assert gate not in executed["CP-4"] and none["CP-4"].count(gate) == 1
+    assert {**none, "CP-4": none["CP-4"].replace(gate, b"")} == executed
 
 
 def without_of(prepared) -> list[dict]:
