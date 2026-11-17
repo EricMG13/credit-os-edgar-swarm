@@ -25,7 +25,10 @@ instruction.
 - Owner ruling R14 (2026-11-17): "only pc, no need for keyboard". The app runs only on desktop PCs
   with a mouse. A finding that shows only at 480 px or less, on touch, or with the keyboard alone
   (focus, tab order, arrow keys, focus rings) is no longer a defect: do not repair it, and record it
-  in the report as withdrawn under R14. Screen-reader, contrast and colour findings stay.
+  in the report as withdrawn under R14. Contrast and colour findings stay.
+- Owner ruling R16 (2026-11-17): "screen reader - not required". A finding that changes only what a
+  screen reader announces is no longer a defect. Raise no review issue and spend no round on
+  screen-reader names, live regions, landmarks or heading levels.
 - Do not change analytical methods, `prompts/`, calculations, canned handoffs under
   `proof/handoffs/`, or module-written text. Delivery adds no analysis: it only selects and
   orders module-written passages, every number and qualification exact. In
