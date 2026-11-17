@@ -14,6 +14,10 @@ const STICKY = "sticky left-0 bg-surface-card";
  * scroll inside the table's own region, so the page never scrolls sideways. The Bars view and the
  * trend column the predecessor had are not drawn (mock departure 5). A line the module marked
  * as emphasised is semibold, its figures only: a missing, withheld or gap cell keeps its own weight. The kit's ChartTable has no such line, so the table is drawn here.
+ *
+ * Where the caller gives `traceForRow`, each row carries its own control (or its own missing-trace
+ * marker) and the table-level control is not drawn: a "no source recorded" marker beside a table whose
+ * rows each have one would be wrong (ruling L9a). Without it, the table-level control or marker is drawn.
  */
 export function StatementBlock({
   block,
@@ -27,7 +31,11 @@ export function StatementBlock({
       <Section
         title={block.title}
         level={SUBSECTION_HEADING}
-        actions={<TraceControl trace={block.trace} label="Show sources for this table" />}
+        actions={
+          traceForRow ? undefined : (
+            <TraceControl trace={block.trace} label="Show sources for this table" />
+          )
+        }
       >
         <div className="overflow-x-auto">
           <table className="min-w-full border-collapse text-body">
