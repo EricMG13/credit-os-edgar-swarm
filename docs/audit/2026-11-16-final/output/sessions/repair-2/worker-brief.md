@@ -159,6 +159,9 @@ that round run on Opus at `medium` effort (lead correction to R12, 2026-11-17). 
 for the lead. Every section you add to a report states the round and the model that ran it, for
 example `## Fix round 2 (round 3, Opus)`.
 
+Owner instruction (2026-11-17, about 12:20 UTC): from now on every implementer, fixer and reviewer runs
+on Opus at `medium` effort, whatever the round. State the model in each section you add.
+
 ### Fixer (role digit 9)
 
 A fresh implementer for High and Medium review issues. Read the report including its reviews,
