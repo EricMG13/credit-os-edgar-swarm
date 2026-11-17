@@ -87,7 +87,8 @@ No provider is called; you are the model. Follow this order exactly.
    Stop on exit 0 (finished), 1 (stopped) or 2 (refused).
 3. Count the launcher attempts for each module (the first submission is 1). You may resubmit a
    module at most 2 times (3 attempts in all); if a module is rejected a third time, stop.
-4. Rules: no web, no network; no edits to the repository; write drafts only in ${c.drafts}/;
+4. Rules: no web, no network; no edits to the repository; write drafts, helper scripts and every
+   other scratch file only in ${c.drafts}/ (never the shared session scratchpad);
    do not read any other issuer's folder or draft; do not touch ${root}/swarm/plan.json (the
    ledger; the controller writes it). An accepted answer cannot be replaced.
 5. Reply with: issuer_id ${c.id}; exit_code, the last launcher exit code; attempts_by_module for

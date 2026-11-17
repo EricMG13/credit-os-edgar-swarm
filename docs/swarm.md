@@ -60,6 +60,6 @@ recorded `published`; the issuer is `failed`.
 ## Not verified
 
 - Answers are format-checked by the launcher only; no independent review of content is run.
-- The pilot compared 4 issuers; high was preferred on all 4 by a blind sampled review. Its token cost over medium is not measured.
+- The pilot compared 4 issuers; high was preferred on all 4 by a blind sampled review. High costs about 0.82M tokens per issuer without cache reads (first batch, 5 issuers); its cost over medium is not measured.
 - Ratings in `hy-list.md` are provisional.
-- `swarm.workflow.js` was syntax-checked with node, never run through the Workflow tool, so the agent schemas, the runner agents and `parallel` ordering are untested.
+- `swarm.workflow.js` ran one 5-issuer batch (2026-11-17, all published). On a 4-CPU machine the Workflow tool runs 2 agents at a time whatever `concurrency` says.
