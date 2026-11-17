@@ -386,3 +386,64 @@ Not verified: the original interrupted calls' tool exit records; R4-012's five u
 contract/docs R4-014 and T22 R4-013 repairs/reviews/integration; group 2 PR/CI and
 actual-final promotion; full combined gates/proof/fidelity, Windows/weekly/full
 Python and provider/live/Submit/Teams behavior.
+
+## Phase 5: approved contract/docs and R4-014 placement clarification
+
+The lead gave GO for the contract chunk and its narrow documentation follow-up
+after reading the original independent contract review and the fresh
+`/workspace/scratch/contract-doc-scope-review.md`. The original review had zero
+High/Medium findings; the follow-up accepts `e896e256` with zero High/Medium/Low
+findings and resolves its sole Low. The primary Evidence/download/internal-record
+authority remains decisions 9/10 and H4 of the unchanged owner ruling. This
+candidate stays local-only; neither actual-final nor main was changed.
+
+| Contract own source commit | Candidate commit |
+| :--- | :--- |
+| Source-icon and restart docs `1e66f273` | `06ab5157` |
+| Current matrices `6d89aa68` | `fb5ae23c` |
+| Record downloads and annual-input caption `eb50afb6` | `0ac0976b` |
+| Report and annual-only control `43ed1a76` | `4f11f8a1` |
+| Primary placement clarification `5c39a559` | `4c46a2f6` |
+| R4-014 design-doc clarification `e896e256` | `a108f655` |
+
+### Phase 5 conflict
+
+Only `Evidence.tsx` conflicted. The contract commit moved `ReportRecord` before
+the reused handoff/model downloads; T18 had added `RecordedModelQualifications`
+beside that record in a fragment at its old position. Moved that complete
+existing fragment to the new metadata-first position and removed its old copy.
+Both the current runtime Record fields and the unchanged full model qualification
+ledger remain, the latter exactly once. Summary/Trace offers, T18's precise
+module-written-gap wording and EmptyState structure remain intact. No assertion,
+expected value, timeout, skip or gate changed in this resolution. All other picks
+were clean, including the design-system automatic merge.
+
+### Phase 5 checks
+
+| Check | Exit/result |
+| :--- | :--- |
+| Evidence family, ArtifactDownloads states, Record family, Forecast recovery and RuntimeMetadata | 0; 11 files / 106 tests passed |
+| Full frontend lint | 0 |
+| Full frontend format and typecheck | 0 for both |
+| Saved R4-014 documentation-scope probe | 0; three rows, zero failures |
+| Probe `node --check` | 0 |
+| Matrix structure, original IDs and connected section retention | 0; current 347 content / 64 control rows, original 332 / 49 retained with matching headers and unique IDs |
+| Historical content/control SHA-256 | Both exact original hashes preserved |
+| Primary rulings, historical matrices/crosswalk, Signal, prompts, proof handoffs and runtime identity adapter | Empty phase diff |
+| `git diff --check` | 0 |
+
+Commands retained under `/workspace/scratch/integrate-stage5-contract-*` use
+`timeout 300`; Vitest uses one worker. The structural check preserves historical
+content hash `c50bba4ba27106e86ebccd330ae86898963da38bd6746e457d63a08929a48fad`
+and control hash `3bef212f8973cbe42c8bc3e322810047fe32bcc447c5c7c1f1e843c041bc8920`.
+No Python code changed, so the completed phase-4 default quality result applies
+without a duplicate run. No shared or Signal code changed; the preceding 630
+Signal tests remain the last combined Signal result. The conflict only relocates
+existing components and introduces no new function or design requiring another
+simplification pass. Final combined confidence/fidelity remain the lead's work.
+
+Not verified: R4-012's five unchanged failures and T22
+R4-013 repair/review/integration; group 2 PR/CI/actual-final acceptance; full combined
+gates, connected proof, browser/download-byte fidelity and release packaging;
+Windows/weekly/full Python, live providers, paid execution, seat, real Submit and
+Teams. No branch was pushed or promoted by this integration.
