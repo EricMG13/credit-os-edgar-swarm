@@ -31,7 +31,7 @@ const staleSeconds = Number(args.stale_seconds ?? 3600)
 const secondPass = args.secondPass === true
 
 const q = (s) => `'${String(s).replace(/'/g, `'\\''`)}'`
-const tool = (script, rest) => `cd ${q(repo)} && uv run python tools/swarm/${script} ${rest}`
+const tool = (script, rest) => `cd ${q(repo)} && uv run python tools/swarm/${script} ${rest} 2>&1`
 const ledger = (rest) => tool('ledger.py', `--root ${q(root)} ${rest}`)
 
 const RUN_SCHEMA = {
@@ -109,7 +109,10 @@ while (claimed < limit) {
   if (!next || next.exit_code !== 0) {
     throw new Error(`ledger next failed: ${next ? next.stdout : 'runner returned nothing'}`)
   }
-  const batch = JSON.parse(next.stdout)
+  // uv may print warnings (stderr is merged): the claim list is the JSON array that follows.
+  const start = next.stdout.indexOf('[')
+  if (start < 0) throw new Error(`ledger next printed no list: ${next.stdout}`)
+  const batch = JSON.parse(next.stdout.slice(start, next.stdout.lastIndexOf(']') + 1))
   if (batch.length === 0) break
   claimed += batch.length
   batches += 1
@@ -179,7 +182,7 @@ while (claimed < limit) {
   const lib = await run(
     'update_library',
     'Library',
-    `cd ${q(repo)} && uv run python apps/issuer-library/update_library.py --workspace ${q(root)}/_engine`,
+    `cd ${q(repo)} && uv run python apps/issuer-library/update_library.py --workspace ${q(root)}/_engine 2>&1`,
   )
   if (!lib || lib.exit_code !== 0) {
     throw new Error(`update_library failed: ${lib ? lib.stdout : 'runner returned nothing'}`)
@@ -187,4 +190,4 @@ while (claimed < limit) {
 }
 
 log(`batches ${batches}, claimed ${claimed}, published ${published}, failed ${failed}`)
-;({ batches, claimed, published, failed })
+return { batches, claimed, published, failed }
