@@ -1,0 +1,415 @@
+{
+  "qualification": "Counts cover FY2025 audited standalone evidence only; overseas subsidiaries are excluded.",
+  "sourceText": "## Findings\n### Earlier supporting table\n| Claim | Value |\n| --- | --- |\n| Malformed earlier row |\nBasis: Earlier.pdf, page 2.\n```md\n### Confidence inputs\nUnrelated fenced qualification.\n```\n### Confidence inputs\nCounts cover FY2025 audited standalone evidence only; overseas subsidiaries are excluded.\nBasis: Annual.txt, page 7.\n| Input | Value |\n| --- | --- |\n| Directly Sourced | 0008 |\n| Calculated | 2 |\n| Assumption-Based | 2 |\n| Analyst Inference | 0 |\n| Weak Lineage | 0 |\n| Untraced | 0 |\n| Conflicting | 0 |\n| Insufficient Information | 0 |\n| Fields present | 95 |\n| Fields total | 100 |\n| Source gate | pass |\n| CRITICAL | 0 |\n| MATERIAL | 0 |\n| MINOR | 1 |\n### Limitations\nUnrelated next-section limitation.",
+  "sourceHash": "203f46100829be542ac9a547dc205604fb2de4e351fa1bf7c5f78f01532c1861",
+  "parseError": "Malformed table at line 5",
+  "entry": {
+    "selected": true,
+    "output": {
+      "id": "run-a/CP-1.md",
+      "module": "CP-1",
+      "label": "Retained output",
+      "href": "",
+      "sha256": "0f5b87c5644caeb33bb33b2ac97b77c75d881900b1c22f478c93eca8d98585c5",
+      "parseError": "Malformed table at line 5",
+      "confidence": {
+        "value": 89,
+        "band": "High"
+      },
+      "confidenceTrace": {
+        "inputs": [
+          {
+            "label": "Directly Sourced",
+            "value": "0008"
+          },
+          {
+            "label": "Calculated",
+            "value": "2"
+          },
+          {
+            "label": "Assumption-Based",
+            "value": "2"
+          },
+          {
+            "label": "Analyst Inference",
+            "value": "0"
+          },
+          {
+            "label": "Weak Lineage",
+            "value": "0"
+          },
+          {
+            "label": "Untraced",
+            "value": "0"
+          },
+          {
+            "label": "Conflicting",
+            "value": "0"
+          },
+          {
+            "label": "Insufficient Information",
+            "value": "0"
+          },
+          {
+            "label": "Fields present",
+            "value": "95"
+          },
+          {
+            "label": "Fields total",
+            "value": "100"
+          },
+          {
+            "label": "Source gate",
+            "value": "pass"
+          },
+          {
+            "label": "CRITICAL",
+            "value": "0"
+          },
+          {
+            "label": "MATERIAL",
+            "value": "0"
+          },
+          {
+            "label": "MINOR",
+            "value": "1"
+          }
+        ],
+        "method": [
+          {
+            "label": "Formula",
+            "value": "(0.6 \u00d7 evidence quality + 0.4 \u00d7 field coverage) \u00d7 source-gate factor \u2212 finding penalties"
+          },
+          {
+            "label": "Evidence quality",
+            "value": "Sum of each lineage count \u00d7 its weight, divided by the total claim count, \u00d7 100. No claims gives evidence quality 0."
+          },
+          {
+            "label": "Lineage weights",
+            "value": "Directly Sourced 1.0; Calculated 0.9; Assumption-Based 0.5; Analyst Inference 0.4; Weak Lineage 0.3; Untraced 0.0; Conflicting 0.0; Insufficient Information 0.0"
+          },
+          {
+            "label": "Field coverage",
+            "value": "Fields present / Fields total \u00d7 100."
+          },
+          {
+            "label": "Source-gate factors",
+            "value": "pass 1.0; partial 0.7; fail 0.0"
+          },
+          {
+            "label": "Finding penalties",
+            "value": "CRITICAL 40; MATERIAL 15; MINOR 3 points per finding"
+          },
+          {
+            "label": "Caps and rounding",
+            "value": "Clamp to 0\u2013100. Any CRITICAL finding caps the score at 39 (Blocked); otherwise any MATERIAL finding caps it at 59 (Restricted). Otherwise Passed. Round to the nearest integer, half to even."
+          },
+          {
+            "label": "Bands",
+            "value": "80\u2013100 High; 60\u201379 Medium; 40\u201359 Low; 0\u201339 Insufficient Information"
+          }
+        ],
+        "section": {
+          "heading": "Confidence inputs",
+          "level": 3,
+          "line": 11,
+          "blocks": [
+            {
+              "type": "text",
+              "line": 12,
+              "end": 13,
+              "text": "Counts cover FY2025 audited standalone evidence only; overseas subsidiaries are excluded.\nBasis: Annual.txt, page 7."
+            }
+          ]
+        }
+      }
+    },
+    "sections": [
+      {
+        "heading": "Unstructured handoff",
+        "level": 1,
+        "line": 1,
+        "blocks": [
+          {
+            "type": "text",
+            "line": 1,
+            "end": 31,
+            "text": "## Findings\n### Earlier supporting table\n| Claim | Value |\n| --- | --- |\n| Malformed earlier row |\nBasis: Earlier.pdf, page 2.\n```md\n### Confidence inputs\nUnrelated fenced qualification.\n```\n### Confidence inputs\nCounts cover FY2025 audited standalone evidence only; overseas subsidiaries are excluded.\nBasis: Annual.txt, page 7.\n| Input | Value |\n| --- | --- |\n| Directly Sourced | 0008 |\n| Calculated | 2 |\n| Assumption-Based | 2 |\n| Analyst Inference | 0 |\n| Weak Lineage | 0 |\n| Untraced | 0 |\n| Conflicting | 0 |\n| Insufficient Information | 0 |\n| Fields present | 95 |\n| Fields total | 100 |\n| Source gate | pass |\n| CRITICAL | 0 |\n| MATERIAL | 0 |\n| MINOR | 1 |\n### Limitations\nUnrelated next-section limitation."
+          }
+        ]
+      }
+    ]
+  },
+  "snapshot": {
+    "workspace": {
+      "outputs": {
+        "run-a/CP-0.md": {
+          "module": "CP-0",
+          "sha256": "inventory"
+        },
+        "run-a/CP-1.md": {
+          "id": "run-a/CP-1.md",
+          "module": "CP-1",
+          "label": "Retained output",
+          "href": "",
+          "sha256": "0f5b87c5644caeb33bb33b2ac97b77c75d881900b1c22f478c93eca8d98585c5",
+          "parseError": "Malformed table at line 5",
+          "confidence": {
+            "value": 89,
+            "band": "High"
+          },
+          "confidenceTrace": {
+            "inputs": [
+              {
+                "label": "Directly Sourced",
+                "value": "0008"
+              },
+              {
+                "label": "Calculated",
+                "value": "2"
+              },
+              {
+                "label": "Assumption-Based",
+                "value": "2"
+              },
+              {
+                "label": "Analyst Inference",
+                "value": "0"
+              },
+              {
+                "label": "Weak Lineage",
+                "value": "0"
+              },
+              {
+                "label": "Untraced",
+                "value": "0"
+              },
+              {
+                "label": "Conflicting",
+                "value": "0"
+              },
+              {
+                "label": "Insufficient Information",
+                "value": "0"
+              },
+              {
+                "label": "Fields present",
+                "value": "95"
+              },
+              {
+                "label": "Fields total",
+                "value": "100"
+              },
+              {
+                "label": "Source gate",
+                "value": "pass"
+              },
+              {
+                "label": "CRITICAL",
+                "value": "0"
+              },
+              {
+                "label": "MATERIAL",
+                "value": "0"
+              },
+              {
+                "label": "MINOR",
+                "value": "1"
+              }
+            ],
+            "method": [
+              {
+                "label": "Formula",
+                "value": "(0.6 \u00d7 evidence quality + 0.4 \u00d7 field coverage) \u00d7 source-gate factor \u2212 finding penalties"
+              },
+              {
+                "label": "Evidence quality",
+                "value": "Sum of each lineage count \u00d7 its weight, divided by the total claim count, \u00d7 100. No claims gives evidence quality 0."
+              },
+              {
+                "label": "Lineage weights",
+                "value": "Directly Sourced 1.0; Calculated 0.9; Assumption-Based 0.5; Analyst Inference 0.4; Weak Lineage 0.3; Untraced 0.0; Conflicting 0.0; Insufficient Information 0.0"
+              },
+              {
+                "label": "Field coverage",
+                "value": "Fields present / Fields total \u00d7 100."
+              },
+              {
+                "label": "Source-gate factors",
+                "value": "pass 1.0; partial 0.7; fail 0.0"
+              },
+              {
+                "label": "Finding penalties",
+                "value": "CRITICAL 40; MATERIAL 15; MINOR 3 points per finding"
+              },
+              {
+                "label": "Caps and rounding",
+                "value": "Clamp to 0\u2013100. Any CRITICAL finding caps the score at 39 (Blocked); otherwise any MATERIAL finding caps it at 59 (Restricted). Otherwise Passed. Round to the nearest integer, half to even."
+              },
+              {
+                "label": "Bands",
+                "value": "80\u2013100 High; 60\u201379 Medium; 40\u201359 Low; 0\u201339 Insufficient Information"
+              }
+            ],
+            "section": {
+              "heading": "Confidence inputs",
+              "level": 3,
+              "line": 11,
+              "blocks": [
+                {
+                  "type": "text",
+                  "line": 12,
+                  "end": 13,
+                  "text": "Counts cover FY2025 audited standalone evidence only; overseas subsidiaries are excluded.\nBasis: Annual.txt, page 7."
+                }
+              ]
+            }
+          }
+        }
+      },
+      "handoffs": {
+        "0f5b87c5644caeb33bb33b2ac97b77c75d881900b1c22f478c93eca8d98585c5": [
+          {
+            "heading": "Unstructured handoff",
+            "level": 1,
+            "line": 1,
+            "blocks": [
+              {
+                "type": "text",
+                "line": 1,
+                "end": 31,
+                "text": "## Findings\n### Earlier supporting table\n| Claim | Value |\n| --- | --- |\n| Malformed earlier row |\nBasis: Earlier.pdf, page 2.\n```md\n### Confidence inputs\nUnrelated fenced qualification.\n```\n### Confidence inputs\nCounts cover FY2025 audited standalone evidence only; overseas subsidiaries are excluded.\nBasis: Annual.txt, page 7.\n| Input | Value |\n| --- | --- |\n| Directly Sourced | 0008 |\n| Calculated | 2 |\n| Assumption-Based | 2 |\n| Analyst Inference | 0 |\n| Weak Lineage | 0 |\n| Untraced | 0 |\n| Conflicting | 0 |\n| Insufficient Information | 0 |\n| Fields present | 95 |\n| Fields total | 100 |\n| Source gate | pass |\n| CRITICAL | 0 |\n| MATERIAL | 0 |\n| MINOR | 1 |\n### Limitations\nUnrelated next-section limitation."
+              }
+            ]
+          }
+        ],
+        "inventory": [
+          {
+            "heading": "Complete supplied inventory and provenance",
+            "level": 3,
+            "line": 1,
+            "blocks": [
+              {
+                "type": "table",
+                "line": 2,
+                "headers": [
+                  "Label",
+                  "Exact supplied source name",
+                  "Exact sha256"
+                ],
+                "rows": [
+                  {
+                    "line": 4,
+                    "cells": [
+                      "K",
+                      "Annual.txt",
+                      "203f46100829be542ac9a547dc205604fb2de4e351fa1bf7c5f78f01532c1861"
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "runs": {
+        "run-key": {
+          "folder": "run-a",
+          "modules": {
+            "CP-0": {
+              "outputs": [
+                "run-a/CP-0.md"
+              ]
+            },
+            "CP-1": {
+              "outputs": [
+                "run-a/CP-1.md"
+              ]
+            }
+          },
+          "evidence": {
+            "sources": [
+              {
+                "name": "Annual.txt",
+                "sha256": "203f46100829be542ac9a547dc205604fb2de4e351fa1bf7c5f78f01532c1861",
+                "href": "/connected/sources/run-a/203f46100829be542ac9a547dc205604fb2de4e351fa1bf7c5f78f01532c1861/Annual.txt"
+              }
+            ],
+            "unused": [],
+            "unrecorded": []
+          }
+        }
+      }
+    },
+    "chips": {
+      "run-a/CP-1.md:1": [
+        {
+          "kind": "gap",
+          "source": null,
+          "file": null,
+          "sha256": null,
+          "hash_matches_inventory": null,
+          "page": 2,
+          "page_end": null,
+          "quote": null,
+          "quote_found": null,
+          "excerpt": null,
+          "module": null,
+          "codes": [],
+          "line": 1,
+          "label": "p.2 \u00b7 no key",
+          "reason": "page cited without a source key",
+          "avatar": null,
+          "match": null,
+          "match_at": null
+        },
+        {
+          "kind": "issuer_page",
+          "source": "Annual.txt",
+          "file": "Annual.txt",
+          "sha256": "203f46100829be542ac9a547dc205604fb2de4e351fa1bf7c5f78f01532c1861",
+          "hash_matches_inventory": true,
+          "page": 7,
+          "page_end": null,
+          "quote": null,
+          "quote_found": null,
+          "excerpt": "Exact annual source excerpt.",
+          "module": null,
+          "codes": [],
+          "line": 1,
+          "label": null,
+          "reason": null,
+          "avatar": "Annual.txt",
+          "match": null,
+          "match_at": null,
+          "href": "/connected/sources/run-a/203f46100829be542ac9a547dc205604fb2de4e351fa1bf7c5f78f01532c1861/Annual.txt",
+          "pageHref": "/connected/sources/run-a/203f46100829be542ac9a547dc205604fb2de4e351fa1bf7c5f78f01532c1861/Annual.txt?page=7"
+        }
+      ],
+      "run-a/CP-1.md:12": [
+        {
+          "kind": "issuer_page",
+          "source": "Annual.txt",
+          "file": "Annual.txt",
+          "sha256": "203f46100829be542ac9a547dc205604fb2de4e351fa1bf7c5f78f01532c1861",
+          "hash_matches_inventory": true,
+          "page": 7,
+          "page_end": null,
+          "quote": null,
+          "quote_found": null,
+          "excerpt": "Exact annual source excerpt.",
+          "module": null,
+          "codes": [],
+          "line": 12,
+          "label": null,
+          "reason": null,
+          "avatar": "Annual.txt",
+          "match": null,
+          "match_at": null,
+          "href": "/connected/sources/run-a/203f46100829be542ac9a547dc205604fb2de4e351fa1bf7c5f78f01532c1861/Annual.txt",
+          "pageHref": "/connected/sources/run-a/203f46100829be542ac9a547dc205604fb2de4e351fa1bf7c5f78f01532c1861/Annual.txt?page=7"
+        }
+      ]
+    }
+  }
+}

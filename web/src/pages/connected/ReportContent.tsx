@@ -118,12 +118,20 @@ export function traceDetails(
     });
   const row = block.type === "table" ? block.rows.find((item) => item.line === line) : null;
   const tableRows = block.type === "table" && block.line === line ? block.rows : [];
+  const confidenceLines =
+    section.heading === CONFIDENCE_INPUTS
+      ? section.blocks.flatMap((item) => [
+          item.line,
+          ...(item.type === "table" ? item.rows.map((row) => row.line) : []),
+        ])
+      : [];
   const chips = [
     ...new Map(
-      [...chipsAt(line), ...tableRows.flatMap((item) => chipsAt(item.line))].map((chip) => [
-        JSON.stringify(chip),
-        chip,
-      ]),
+      [
+        ...chipsAt(line),
+        ...tableRows.flatMap((item) => chipsAt(item.line)),
+        ...confidenceLines.flatMap(chipsAt),
+      ].map((chip) => [JSON.stringify(chip), chip]),
     ).values(),
   ];
   const statement =
@@ -163,6 +171,32 @@ export function traceDetails(
   return { chips, statement, basis, chipGroups };
 }
 
+function confidenceNodes(entry: OutputEntry, block?: Block): TreeNode[] {
+  const recorded = entry.output.confidenceTrace;
+  const inputs =
+    recorded?.inputs ??
+    (block?.type === "table"
+      ? block.rows.map(({ cells }) => ({ label: cells[0] ?? "", value: cells[1] ?? "" }))
+      : []);
+  const group = (label: string, rows: { label: string; value: string }[]): TreeNode => ({
+    label,
+    value: "",
+    note: null,
+    children: rows.map((row) => ({ ...row, note: null, children: [] })),
+  });
+  return [
+    group("Recorded confidence inputs", inputs),
+    ...(recorded ? [group("Confidence method", recorded.method)] : []),
+  ];
+}
+
+function confidenceStatement(entry: OutputEntry) {
+  const score = entry.output.confidence;
+  return score && !("missing" in score)
+    ? `${String(score.value)} out of 100 · ${score.band}`
+    : "Confidence inputs";
+}
+
 function buildTrace(
   snapshot: Snapshot,
   entry: OutputEntry,
@@ -171,12 +205,24 @@ function buildTrace(
   line: number,
   target: string,
 ): Trace {
-  const { chips, statement, basis, chipGroups } = traceDetails(
-    snapshot,
-    entry,
-    section,
-    block,
-    line,
+  const details = traceDetails(snapshot, entry, section, block, line);
+  const { statement, basis, chipGroups } = details;
+  const confidence = section.heading === CONFIDENCE_INPUTS;
+  // These generated placeholders carry no citation. Keep every real citation or qualification.
+  const chips = details.chips.filter(
+    (chip) =>
+      !(
+        confidence &&
+        chip.label === "no page" &&
+        (chip.source === null || chip.source === "no page") &&
+        chip.reason === "the row cites no page or register" &&
+        !chip.file &&
+        !chip.sha256 &&
+        !chip.quote &&
+        !chip.excerpt &&
+        !chip.href &&
+        !chip.pageHref
+      ),
   );
   const node = (label: string, value: string | null, note: string | null = null): TreeNode => ({
     label,
@@ -194,31 +240,30 @@ function buildTrace(
     title: `Sources for ${section.heading}`,
     heading: section.heading,
     subtitle: `${moduleName(entry.output.module)} · Handoff line ${String(line)}`,
-    statement:
-      section.heading === FORECAST_INPUTS
+    statement: confidence
+      ? confidenceStatement(entry)
+      : section.heading === FORECAST_INPUTS
         ? "The model calculation uses the inputs recorded in this handoff."
         : plainModuleNames(statement.replaceAll("**", "").replaceAll("`", "")),
     derivation: {
       ...node("Evidence retained with this item", ""),
       children: [
+        ...(confidence ? confidenceNodes(entry, block) : []),
         ...(basis ? [node("Basis", plainModuleNames(basis))] : []),
         ...calculationNodes(entry, basis ?? "", line),
-        ...(chipGroups.length
+        ...(chipGroups.length && !confidence
           ? chipGroups.map((group) => ({
               ...node(group.label, ""),
               children: citationNodes(group.chips),
             }))
           : citationNodes(chips)),
-        ...(!basis && !chips.length
-          ? section.heading === CONFIDENCE_INPUTS && block.type === "table"
-            ? // The score is computed from the handoff's own inputs table: show its rows as written.
-              block.rows.map((item) => node(item.cells[0] ?? "", item.cells[1] ?? ""))
-            : [
-                // Recorded inputs are not a gap: only a missing basis carries no value.
-                section.heading === FORECAST_INPUTS
-                  ? node("Recorded forecast inputs", "")
-                  : node("Basis was not recorded for this item", null),
-              ]
+        ...(!confidence && !basis && !chips.length
+          ? [
+              // Recorded inputs are not a gap: only a missing basis carries no value.
+              section.heading === FORECAST_INPUTS
+                ? node("Recorded forecast inputs", "")
+                : node("Basis was not recorded for this item", null),
+            ]
           : []),
       ],
     },
@@ -228,7 +273,22 @@ function buildTrace(
           source: excerpt.source ?? excerpt.label ?? "Source name unavailable",
         }
       : null,
-    qualification: null,
+    qualification: confidence
+      ? section.blocks
+          .flatMap((item) =>
+            item.type === "text" && !item.text.startsWith("```")
+              ? [
+                  item.text
+                    .split("\n")
+                    .filter((text) => !text.startsWith("|"))
+                    .join("\n")
+                    .trim(),
+                ]
+              : [],
+          )
+          .filter(Boolean)
+          .join("\n\n") || null
+      : null,
     evidenceItem: target,
     sourceLinks: [
       ...new Map(
@@ -256,6 +316,32 @@ export function traceForLine(snapshot: Snapshot, entry: OutputEntry, _index: num
   return (
     found && buildTrace(snapshot, entry, found.section, found.block, line, traceTarget(entry, line))
   );
+}
+
+/** A scored handoff may be accepted even when its input rows are not a Markdown table. */
+export function traceForConfidence(snapshot: Snapshot, entry: OutputEntry): Trace | undefined {
+  const section =
+    entry.sections.find((item) => item.heading === CONFIDENCE_INPUTS) ??
+    entry.output.confidenceTrace?.section;
+  const block = section?.blocks[0];
+  if (section && block)
+    return buildTrace(snapshot, entry, section, block, block.line, traceTarget(entry, block.line));
+  if (!entry.output.confidenceTrace) return undefined;
+  return {
+    title: "Sources for Confidence inputs",
+    heading: CONFIDENCE_INPUTS,
+    subtitle: `${moduleName(entry.output.module)} · ${entry.output.label}`,
+    statement: confidenceStatement(entry),
+    derivation: {
+      label: "Evidence retained with this item",
+      value: "",
+      note: null,
+      children: confidenceNodes(entry),
+    },
+    excerpt: null,
+    qualification: null,
+    evidenceItem: traceTarget(entry),
+  };
 }
 
 export function PublishedTable({
