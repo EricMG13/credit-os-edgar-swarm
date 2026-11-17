@@ -59,7 +59,7 @@ export function PurposeCards({
               cx(
                 "block cursor-pointer rounded-xl bg-primary ring-1 ring-secondary ring-inset outline-none",
                 isSelected && "ring-2 ring-brand",
-                isFocusVisible && "outline-2 outline-offset-2 outline-brand",
+                isFocusVisible && "outline-2 outline-solid outline-offset-2 outline-brand",
               )
             }
           >
