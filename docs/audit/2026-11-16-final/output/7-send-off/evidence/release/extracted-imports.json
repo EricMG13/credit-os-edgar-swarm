@@ -1,0 +1,7 @@
+{
+  "credit_os": "/workspace/scratch/stage7-release/extracted/apps/issuer-library/credit_os/__init__.py",
+  "deploy_vii": "/workspace/scratch/stage7-release/extracted/src/deploy_vii/__init__.py",
+  "deploy_workflow": "/workspace/scratch/stage7-release/extracted/src/deploy_workflow/__init__.py",
+  "proof": "/workspace/scratch/stage7-release/extracted/proof/__init__.py",
+  "react_frontend": "/workspace/scratch/stage7-release/extracted/react_frontend/__init__.py"
+}

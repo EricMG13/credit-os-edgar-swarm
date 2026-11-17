@@ -1,0 +1,35 @@
+{
+  "command": "npm --prefix <scratch-source>/web run build",
+  "oneDifference": "/web/dist/ in root .gitignore",
+  "arms": {
+    "original_zip": {
+      "files": 36,
+      "connectedStyles": [
+        "connected-assets/style-CAXYJFez.css"
+      ]
+    },
+    "archive_without_gitignore": {
+      "files": 36,
+      "connectedStyles": [
+        "connected-assets/style-CAXYJFez.css"
+      ]
+    },
+    "archive_ignoring_generated_web_dist": {
+      "files": 36,
+      "connectedStyles": [
+        "connected-assets/style-DSotP3OC.css"
+      ]
+    },
+    "checkout": {
+      "files": 36,
+      "connectedStyles": [
+        "connected-assets/style-DSotP3OC.css"
+      ]
+    }
+  },
+  "noIgnoreMatchesPackagedBytes": true,
+  "ignoreDistMatchesCheckoutBytes": true,
+  "changedSharedKeysOnAddingIgnore": [
+    "connected.html"
+  ]
+}

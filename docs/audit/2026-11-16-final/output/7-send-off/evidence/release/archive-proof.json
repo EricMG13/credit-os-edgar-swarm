@@ -1,0 +1,17 @@
+{
+  "sourceCommit": "a987af9b9ca5072d28f2e1f9e1dc5269c6c1858f",
+  "zip": "/workspace/audit-final/delivery/credit-os2-react.zip",
+  "size": 7440549,
+  "sha256": "db51d1996b3913ef77a6e51ba3281554cb7c3be33f95ffaf2a966b2544a7088e",
+  "sourceCount": 1363,
+  "distCount": 36,
+  "files": 1400,
+  "extracted": "/workspace/scratch/stage7-release/extracted",
+  "assertions": [
+    "source bytes, exact keys, case-fold uniqueness and hashes verified before extraction",
+    "ZIP sidecar SHA-256 verified independently",
+    "every extracted file SHA-256 matches its archive entry",
+    "build contains two entry points and unchanged shipped public data placeholder",
+    "full development checkout files excluded by the packager contract"
+  ]
+}

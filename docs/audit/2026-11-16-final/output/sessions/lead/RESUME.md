@@ -1,3 +1,100 @@
+## Lead checkpoint 2026-11-17T22:24Z
+
+**Stage 6 complete.** [PR #59](https://github.com/EricMG13/credit-os2/pull/59) passed both
+GitHub check jobs at `a326492d` and merged into `audit/final-repairs` at
+`a987af9b9ca5072d28f2e1f9e1dc5269c6c1858f` on 2026-11-17T22:24:26Z. The actual repair worktree
+`/workspace/audit-final` is fast-forwarded to the merge and its tree
+matches the tested PR exactly. Main remains at `2b881075`.
+
+The sweep has six reviewed production changes. Nine files add 21 and
+remove 66 lines. Web duplication is 2,785 lines, down 20, and the History
+paired fixture retains 109 bytes instead of 2,168 with identical requests
+and markup. Frontend 5,259 passed at 97.69% lines, Python 6,285 passed with
+one existing conditional skip, Node 573 passed, both quality gates passed,
+73 script tests and 138 file checks passed, and native Chrome and Edge
+connected proof passed. Initial title and file-wrapper failures and the
+successful unchanged gate repeats remain in the report. Render measurements
+are observational due to host load. Read `output/6-sweep/report.md` and
+`measurements.md` on the repair branch.
+
+Stage 5 is closed in ancestor `ba3df7d5`, with 248 canonical and 88 alias
+closure annotations. Do not rebuild the live register. The remaining
+stage is 7, release validation and work-PC handoff starting from this
+merged repair tree. See `stages/7-send-off.md` and the previously retained
+`output/5-repair/sendoff-readonly-prep.md`. The final PR to main is still
+to be opened after that stage and is to remain unmerged.
+
+## Lead checkpoint 2026-11-17T22:10Z
+
+Stage 5 is closed. The reviewed application source `bb94ddce` and the
+fidelity, combined gate evidence and closed register are on
+`audit/final-repairs` at `ba3df7d5`. All 248 repair/batch outcomes and
+88 merged aliases have closure commits. Do not rebuild the annotated
+register. Full coverage is 97.69% with 5,259 passed, 630 in Signal. Python
+has 6,285 passes and one existing skip, native connected proof and 138
+file checks passed, and the 267-screen fidelity report explains the
+unchanged comparator's diff flags. The stage 5 report is
+`output/5-repair/report.md` on the repair branch.
+
+Stage 6 combines six reviewed changes and the measurement-helper quality
+fix. The repair evidence-only tip has been merged into the sweep branch.
+Current sweep `522a8188`, last executable source and measurement-tool pin
+`22926bd1`. Native proof, file gate, 73 script checks, build, static web
+gates, exact fast Python, Node and both quality gates passed. The fresh
+full frontend shards and paired render timings are in progress. The
+single Evidence-title failure passed unchanged on both pins in isolation
+and on the exact full shard retry. Record these attempts in the report.
+When all sweep checks and paired measurements are complete, open and
+attach the sweep PR into `audit/final-repairs`, wait for green CI and
+merge there under R9. Stage 7 remains to do.
+
+## Lead checkpoint 2026-11-17T21:44Z
+
+Stage 6 has started at the owner's request. The sweep branch is
+`audit/final-sweep` at `541c994a`, with its own worktree
+`/workspace/audit-final-sweep`. Contract, all 17 inherited rows and nine
+related observations, and matched-toolchain measurements are under
+`output/6-sweep/`. Reviewed SW-01, SW-02 and SW-03 are integrated. The unchanged
+duplication gate reports 285 clones and 2,785 duplicate lines, down two
+clones and 20 duplicate lines. The six-file code diff removes 31 net lines.
+The next items are a measured History row projection, the static readiness
+dead branch and an unused Python import. Re-run the combined gates and
+measurements against the accepted repairs before opening the sweep PR.
+
+Stage 5 branch `audit/final-repairs` is pinned at `bb94ddce` while fidelity
+and coverage are checked. The historical fixture, the missing-source
+collector and both frontend verification changes were reviewed and pushed.
+Actual pathway-tier tests passed 46/46. The R4-020 and C3-022 focused run
+passed 97/97, with three more cases independently verified. The refreshed
+connected fidelity capture passed all 29 screens. Full static capture and
+comparison remain open. Exact full coverage replay is assigned. The
+full script-check attempt timed out in nested builds and needs a bounded
+rerun. Earlier successful proof and the known conditional Python skip are
+preserved. Stage 5 closure and stage 7 remain pending.
+
+## Lead checkpoint 2026-11-17T21:35Z
+
+The owner asked to start stage 6. Branch `audit/final-sweep` is pushed from
+`5e1d98b37305a9da59fb6944740ff17b721051af` and has its own worktree at
+`/workspace/audit-final-sweep`, contract, status and first candidate register.
+Discovery and baseline measurement are active. Compare each sweep change on
+identical repair inputs. Final sweep acceptance waits for the updated repair
+tip and its checks.
+
+Stage 5 repair branch is `d6a09b9a`. The historical issued-record fixture and
+fidelity collector fixes passed fresh review and are integrated. The actual
+tree now passes all 46 pathway-tier tests. On `5e1d98b3`, Chrome and Edge
+connected proof passed. The complete frontend selection had 5,257 passes and
+two deterministic failures. The original global line coverage threshold passed
+at 97.69%. Both failures reproduced. The isolated link style and currency
+expectation patch is undergoing review. The full AFTER capture and comparison,
+combined gates and closure annotations remain open.
+
+Register now covers 523 source rows and 408 canonical findings. High 6,
+Medium 111, Low 206, Info 85. Repair 85, batch 163, sweep 17, deferred 6,
+parked 31, rejected 106. R4-020 is the Forecast Record link style. The C3-022
+currency and J5-010 issued fixture consequences do not add canonical findings.
+
 ## Lead checkpoint 2026-11-17T20:13Z
 
 ALLsource/application fixesnowreviewed. Actualfinal b97e9ea2 pushed containsalllead

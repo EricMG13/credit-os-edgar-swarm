@@ -1,0 +1,13 @@
+{
+  "coordination": "73846bb2edd996720397453b22512bc3cd493adc",
+  "repairBase": "a987af9b9ca5072d28f2e1f9e1dc5269c6c1858f",
+  "identical": 860,
+  "copied": [
+    "sessions/lead/RESUME.md",
+    "sessions/lead/STATUS.md"
+  ],
+  "preservedNewerRepairEvidence": [
+    "5-repair/fidelity/capture.mjs",
+    "5-repair/probes/contract-doc-scope.mjs"
+  ]
+}

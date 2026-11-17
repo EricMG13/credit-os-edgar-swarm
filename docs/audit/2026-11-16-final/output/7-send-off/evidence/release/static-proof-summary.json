@@ -1,0 +1,15 @@
+{
+  "exit": 0,
+  "passedChecks": 138,
+  "failedChecks": 0,
+  "proxyDenials": 1484,
+  "handledSocketResets": 2,
+  "unexpectedProxyFailures": [],
+  "denialMethods": {
+    "GET": 133,
+    "CONNECT": 1218,
+    "POST": 133
+  },
+  "gate": "node web/scripts/open-from-disk.mjs web/dist (extracted release)",
+  "candidateOriginalMembersUnchanged": 1400
+}

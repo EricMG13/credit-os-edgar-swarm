@@ -1,0 +1,52 @@
+Rehearsal platform: Linux x86_64
+/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python
+/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/uv
+/opt/codex/runtimes/codex-primary-runtime/dependencies/node/bin/node
+/opt/codex/runtimes/codex-primary-runtime/dependencies/node/bin/npm
+/usr/local/bin/git
+/usr/bin/sh
+/usr/bin/bash
+/usr/bin/dash
+/usr/bin/zsh
+/usr/bin/chromium
+/opt/codex/runtimes/codex-primary-runtime/dependencies/bin/override/pdftoppm
+/usr/bin/tesseract
+/usr/bin/gh
+cmd.exe: absent from PATH
+powershell.exe: absent from PATH
+powershell: absent from PATH
+pwsh: absent from PATH
+npm.cmd: absent from PATH
+google-chrome-stable: absent from PATH
+google-chrome: absent from PATH
+chrome: absent from PATH
+microsoft-edge-stable: absent from PATH
+microsoft-edge: absent from PATH
+msedge: absent from PATH
+Python 3.13.15
+Python 3.12.14
+uv 0.12.5 (x86_64-unknown-linux-gnu)
+uv 0.13.6 (x86_64-unknown-linux-gnu)
+v24.22.1
+11.9.0
+git version 2.52.0
+Chromium 156.0.8078.79 built on Debian GNU/Linux 13 (trixie)
+pdftoppm version 26.05.0
+tesseract 5.5.0
+gh version 2.46.0 (2025-01-13 Debian 2.46.0-3)
+read-only /workspace/scratch/stage7-dry-run-v2/download
+writable /workspace/scratch/stage7-dry-run-v2
+writable /workspace/scratch/stage7-dry-run-v2/agent
+writable /tmp
+http_proxy present (value omitted)
+https_proxy present (value omitted)
+no_proxy present (value omitted)
+HTTP_PROXY present (value omitted)
+HTTPS_PROXY present (value omitted)
+NO_PROXY present (value omitted)
+No .git in supplied download
+Adapted directory absent
+f34263f66f350360d009939e08f21ca630ed64f67b4ac0953958fa0017b53193  docs/work-pc/WORK-PC-INIT-PROMPT.md
+2261eafa8a6fae489ba930aa4d394158284df6d83732aa1903275804245c378f  docs/work-pc/audit-baseline.json
+6b22d3e43d8cf7fed9a04f3654f456d0f23d736508ee5e55d1fcd9f339d81637  uv.lock
+e412cb3c7d5a3715ae4f8a7d549eb38fd6406e9b2e1501e3426b66377e576ab5  web/package-lock.json
