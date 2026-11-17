@@ -1,0 +1,269 @@
+import { createHash } from "node:crypto";
+import { writeFileSync } from "node:fs";
+// T17: the report frame's error states (C3-007), its Earlier format and Earlier methods labels
+// (C3-008), key charts on Overview (C3-024), Report history rows (C1-007) and CP-8 kept off Overview
+// (C3-026).
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
+import { afterEach, expect, it, vi } from "vitest";
+import { ReportReader } from "./ReportLibrary";
+import type { Block, PublishedRun, Section, Snapshot } from "./publishedReport";
+
+const MAP = ["From", "Relationship", "Edge type", "To", "Evidence"];
+const text = (line: number, value: string): Block => ({
+  type: "text",
+  line,
+  end: line,
+  text: value,
+});
+const h = (heading: string, level: number, line: number, blocks: Block[] = []): Section => ({
+  heading,
+  level,
+  line,
+  blocks,
+});
+
+const cp2 = (lead = "Bottom line"): Section[] => [
+  h("Findings", 2, 1),
+  h(lead, 3, 3, [text(4, "Leverage is high but liquidity covers the next two years.")]),
+  h("Limitations", 3, 6, [text(7, "The forecast rests on one year of audited figures.")]),
+  h("Map: credit-risk transmission", 3, 10, [
+    {
+      type: "table",
+      line: 12,
+      headers: MAP,
+      rows: [
+        { line: 14, cells: ["Rates", "raise", "Analyst Interpretation", "Interest", "Note 4"] },
+      ],
+    },
+  ]),
+];
+const cp8: Section[] = [
+  h("Findings", 2, 1),
+  h("Bottom line", 3, 3, [text(4, "Leverage fell, and the credit view improved.")]),
+  h("Limitations", 3, 6, [text(7, "The earlier run did not state gross debt.")]),
+];
+
+const SHA2 = "b".repeat(64);
+const SHA8 = "c".repeat(64);
+
+function snapshot({
+  folder = "acme",
+  lead,
+  methodChanges,
+  others = [],
+}: {
+  folder?: string;
+  lead?: string;
+  methodChanges?: string[];
+  others?: Pick<PublishedRun, "folder" | "issuerKey" | "pathway" | "asOf" | "period">[];
+} = {}) {
+  const run = {
+    folder,
+    issuer: "Acme",
+    issuerKey: "acme",
+    asOf: "2026-03-31",
+    period: "FY2025",
+    pathway: "credit_snapshot",
+    modules: {
+      "CP-2": { outputs: [`${folder}/cp2`], default: `${folder}/cp2` },
+      "CP-8": { outputs: [`${folder}/cp8`], default: `${folder}/cp8` },
+    },
+    record: { steps: [{ module: "CP-2" }, { module: "CP-8" }] },
+    methodChanges,
+    evidence: { sources: [], unused: [], unrecorded: [], handoffs: [], downloads: [], zip: null },
+  };
+  const output = (module: string, sha256: string, extra = {}) => ({
+    id: `${folder}/${module.toLowerCase().replace("-", "")}`,
+    run: `${folder}Key`,
+    module,
+    sha256,
+    label: module,
+    href: "",
+    ...extra,
+  });
+  return {
+    catalogue: {
+      real: [
+        {
+          id: folder,
+          name: "Acme",
+          issuer: "Acme",
+          title: "",
+          date: "",
+          period: "FY2025",
+          sector: "",
+          metrics: {},
+        },
+      ],
+    },
+    workspace: {
+      runs: {
+        [`${folder}Key`]: run,
+        ...Object.fromEntries(others.map((other) => [`${other.folder}Key`, other])),
+      },
+      outputs: {
+        [`${folder}/cp2`]: output("CP-2", SHA2, {
+          maps: [{ title: "credit-risk transmission", table: 12 }],
+        }),
+        [`${folder}/cp8`]: output("CP-8", SHA8),
+      },
+      handoffs: { [SHA2]: cp2(lead), [SHA8]: cp8 },
+      models: [],
+    },
+    chips: {},
+  } as unknown as Snapshot;
+}
+
+const json = (body: unknown, status = 200) => Response.json(body, { status });
+
+function serve(routes: Record<string, () => Response | Promise<Response>>) {
+  const fetch = vi.fn((url: string) => {
+    const reply = routes[url];
+    return reply ? Promise.resolve(reply()) : Promise.resolve(json({ error: "not found" }, 404));
+  });
+  vi.stubGlobal("fetch", fetch);
+  return fetch;
+}
+
+function open(hash = "#overview") {
+  window.history.replaceState(null, "", `/${hash}`);
+  render(<ReportReader id="acme" mode="synthetic" />);
+}
+
+afterEach(() => {
+  cleanup();
+  vi.unstubAllGlobals();
+  window.history.replaceState(null, "", "/");
+});
+
+const SNAPSHOT = "/connected/snapshot?run=acme";
+const ACTIVITY = "/connected/activity/acme";
+const unknownReport = () => json({ error: "unknown report" }, 404);
+
+const observations = vi.hoisted(() => ({
+  byKind: new Map<string, { bytes: number; keys: string[] }>(),
+}));
+
+vi.mock("./useResource", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("./useResource")>();
+  return {
+    ...actual,
+    useResource<T>(load: (signal: AbortSignal) => Promise<T>) {
+      const result = actual.useResource(load);
+      const value: unknown = result.value;
+      if (value && typeof value === "object") {
+        let kind: string | undefined;
+        if ("workspace" in value) {
+          const snapshot = value as Snapshot;
+          kind = Object.hasOwn(snapshot.workspace.runs, "acme-2025Key") &&
+            !Object.hasOwn(snapshot.workspace.runs, "acmeKey") ? "earlier" : "current";
+        } else if ("modules" in value && "labels" in value && Array.isArray(value.labels)) {
+          kind = value.labels.includes("Earlier methods") ? "earlier" : "current";
+        }
+        if (kind)
+          observations.byKind.set(kind, {
+            bytes: Buffer.byteLength(JSON.stringify(value), "utf8"),
+            keys: Object.keys(value).sort(),
+          });
+      }
+      return result;
+    },
+  };
+});
+
+const priorPath = "/connected/snapshot?run=acme-2025";
+const older = {
+  folder: "acme-2025",
+  issuerKey: "acme",
+  pathway: "credit_snapshot",
+  asOf: "2025-03-31",
+  period: "FY2024",
+};
+const currentSnapshot = snapshot({ others: [older] });
+const earlierSnapshot = snapshot({
+  folder: "acme-2025",
+  lead: "Reader summary",
+  methodChanges: ["CP-2: x"],
+});
+
+type RequestRecord = { url: string; cache?: RequestCache; signal?: AbortSignal | null };
+function servePair(earlier: () => Response | Promise<Response>) {
+  observations.byKind.clear();
+  const requests: RequestRecord[] = [];
+  vi.stubGlobal("fetch", (url: string, init: RequestInit) => {
+    requests.push({ url, cache: init.cache, signal: init.signal });
+    if (url === SNAPSHOT) return Promise.resolve(json(currentSnapshot));
+    if (url === priorPath) return Promise.resolve(earlier());
+    return Promise.reject(new Error(`Unexpected request ${url}`));
+  });
+  return requests;
+}
+
+async function historyRows() {
+  const section = (await screen.findByRole("heading", { name: "Report history" })).closest("section")!;
+  const rows = within(section).getAllByRole("listitem");
+  expect(rows).toHaveLength(2);
+  return { section, current: rows[0]!, earlier: rows[1]! };
+}
+
+function assertRequests(requests: RequestRecord[]) {
+  expect(requests.map(({ url, cache, signal }) => ({ url, cache, abortable: signal instanceof AbortSignal }))).toEqual([
+    { url: SNAPSHOT, cache: "no-store", abortable: true },
+    { url: priorPath, cache: "no-store", abortable: true },
+  ]);
+}
+
+it("measures retained state in the unchanged paired history fixture", async () => {
+  let resolveEarlier: (value: Response) => void = () => {};
+  const reply = new Promise<Response>((resolve) => { resolveEarlier = resolve; });
+  const requests = servePair(() => reply);
+  open("#history");
+  const { section, current, earlier } = await historyRows();
+  expect(within(earlier).getByText("Reading the modules this run ran…")).toBeInTheDocument();
+  resolveEarlier(json(earlierSnapshot));
+  const modules = "2 modules run: Fundamental credit, Changes since the last run";
+  expect(await within(current).findByText(modules)).toBeInTheDocument();
+  expect(await within(earlier).findByText(modules)).toBeInTheDocument();
+  expect(within(current).getByText("Finished")).toBeInTheDocument();
+  expect(within(earlier).getByText("Finished")).toBeInTheDocument();
+  expect(current).not.toHaveTextContent("Earlier");
+  expect(within(earlier).getByText("Earlier methods")).toBeInTheDocument();
+  expect(within(earlier).getByText("Earlier format")).toBeInTheDocument();
+  assertRequests(requests);
+  expect(observations.byKind.size).toBe(2);
+  const evidence = {
+    retainedRows: Object.fromEntries(observations.byKind),
+    earlierReplyBytes: Buffer.byteLength(JSON.stringify(earlierSnapshot), "utf8"),
+    historyDomSha256: createHash("sha256").update(section.outerHTML).digest("hex"),
+    requests: requests.map(({ url, cache }) => ({ url, cache })),
+  };
+  writeFileSync(process.env.SW_D05_RESULT!, JSON.stringify(evidence, null, 2) + "\n");
+});
+
+it.each([
+  ["null response", () => json(null)],
+  ["snapshot without the requested run", () => json(snapshot({ folder: "different-run" }))],
+  ["service error", () => json({ error: "unavailable" }, 503)],
+  ["request rejection", () => Promise.reject(new TypeError("Failed to fetch"))],
+] as const)("keeps the unavailable text on %s", async (_name, response) => {
+  const requests = servePair(response);
+  open("#history");
+  const { earlier } = await historyRows();
+  expect(await within(earlier).findByText("The modules this run ran could not be read.")).toBeInTheDocument();
+  assertRequests(requests);
+});
+
+it("aborts the earlier snapshot request when leaving history", async () => {
+  const requests = servePair(() => new Promise<Response>(() => {}));
+  open("#history");
+  const { earlier } = await historyRows();
+  expect(within(earlier).getByText("Reading the modules this run ran…")).toBeInTheDocument();
+  assertRequests(requests);
+  expect(requests[1]!.signal?.aborted).toBe(false);
+  fireEvent(window, new HashChangeEvent("hashchange", { newURL: location.href }));
+  window.history.replaceState(null, "", "/#overview");
+  fireEvent(window, new HashChangeEvent("hashchange", { newURL: location.href }));
+  await screen.findByRole("heading", { name: "Overview" });
+  expect(requests[1]!.signal?.aborted).toBe(true);
+  expect(requests).toHaveLength(2);
+});
