@@ -76,9 +76,9 @@ function Block({
     <div
       role="group"
       aria-labelledby={titleId}
-      className="grid gap-3 rounded-lg bg-surface-subtle p-4"
+      className="grid min-w-0 gap-3 rounded-lg bg-surface-subtle p-4"
     >
-      <div className="flex items-center justify-between gap-3">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <h4 id={titleId} className="font-semibold text-text-primary">
           {title}
         </h4>
@@ -211,6 +211,7 @@ function LeaveOut({
       <Button
         color="secondary"
         size="sm"
+        className="max-w-full text-left whitespace-normal"
         isDisabled={disabled}
         onPress={() => {
           choice.onModules(kept);
@@ -292,7 +293,7 @@ function LimitsToDecide({
   const { groups, passive } = groupLimits(items);
   const decidedCount = groups.filter((group) => decided(group, accepted)).length;
   return (
-    <section aria-labelledby={titleId} className="grid gap-2">
+    <section aria-labelledby={titleId} className="grid min-w-0 gap-2 wrap-anywhere">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h3 id={titleId} className="font-semibold text-text-primary">
           Limits to decide
@@ -374,7 +375,15 @@ export function ReviewSheet({
   ];
   return (
     <>
-      <section aria-labelledby={titleId} className="grid gap-4">
+      {/* The decisions that block Submit come first; the echoed inputs follow. */}
+      <LimitsToDecide
+        items={summary.items}
+        accepted={accepted}
+        disabled={disabled}
+        onAccept={onAccept}
+        choice={choice}
+      />
+      <section aria-labelledby={titleId} className="grid min-w-0 gap-4 wrap-anywhere">
         <h3 id={titleId} className="font-semibold text-text-primary">
           What will run
         </h3>
@@ -484,13 +493,6 @@ export function ReviewSheet({
           )}
         </Block>
       </section>
-      <LimitsToDecide
-        items={summary.items}
-        accepted={accepted}
-        disabled={disabled}
-        onAccept={onAccept}
-        choice={choice}
-      />
     </>
   );
 }
