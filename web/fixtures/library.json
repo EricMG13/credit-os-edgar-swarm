@@ -6046,7 +6046,60 @@
                   "findings": [],
                   "contrary": null,
                   "changeView": null,
-                  "records": [],
+                  "records": [
+                    {
+                      "kind": "status",
+                      "nav": "Readiness",
+                      "title": "Readiness checks",
+                      "groups": [
+                        {
+                          "state": "Met",
+                          "count": "2",
+                          "items": [
+                            {
+                              "text": "Source file read in full",
+                              "note": null,
+                              "value": { "kind": "value", "text": "1 of 1 files", "at": null },
+                              "trace": null
+                            },
+                            {
+                              "text": "Source file pinned to this run",
+                              "note": null,
+                              "value": { "kind": "value", "text": "1 of 1 files", "at": null },
+                              "trace": null
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "kind": "facts",
+                      "nav": "Coverage",
+                      "title": "Coverage",
+                      "groups": [
+                        {
+                          "name": null,
+                          "rows": [
+                            {
+                              "label": "Source files",
+                              "value": { "kind": "value", "text": "1", "at": 1 },
+                              "trace": null
+                            },
+                            {
+                              "label": "Read in full",
+                              "value": { "kind": "value", "text": "1", "at": 1 },
+                              "trace": null
+                            },
+                            {
+                              "label": "As of",
+                              "value": { "kind": "value", "text": "31 Dec 2026", "at": null },
+                              "trace": null
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ],
                   "limitations": {
                     "count": "0",
                     "gapsLink": { "label": "See this module\u2019s gaps in Evidence" },

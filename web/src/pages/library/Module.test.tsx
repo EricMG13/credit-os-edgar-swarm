@@ -1654,6 +1654,21 @@ describe("Module, a data module that delivers no findings and no limitations", (
   });
 });
 
+describe("Module, the fixture's data module (S3-014)", () => {
+  it("draws its readiness checks and its coverage after the bottom line, not a bare band", () => {
+    renderRoute(PATH, { issuer: "brevane-marine", run: "r-0412", module: "source-readiness" });
+    const checks = region("Readiness checks");
+    expect(within(checks).getAllByRole("listitem").length).toBeGreaterThan(0);
+    expect(within(checks).getByText("Source file read in full")).toBeVisible();
+    const coverage = region("Coverage");
+    expect(within(coverage).getByText("Source files")).toBeVisible();
+    const entries = within(within(nav()).getAllByRole("list")[0] as HTMLElement)
+      .getAllByRole("button")
+      .map((s) => s.textContent);
+    expect(entries).toEqual(["Bottom line", "Readiness", "Coverage"]);
+  });
+});
+
 describe("Module, where the gaps link is drawn", () => {
   const brevane = () =>
     renderRoute(PATH, { issuer: "brevane-marine", run: "r-0412", module: "source-readiness" });
