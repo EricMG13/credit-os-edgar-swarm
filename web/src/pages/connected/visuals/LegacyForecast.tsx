@@ -511,7 +511,7 @@ export function LegacyForecast({
         </>
       )}
       {evidenceOnlyQualifications && (
-        <a className="text-action underline" href="#evidence/record">
+        <a className="text-secondary underline" href="#evidence/record">
           Model notes and limitations
         </a>
       )}
