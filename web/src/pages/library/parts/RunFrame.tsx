@@ -61,11 +61,19 @@ export function RunTabLink({
       </Badge>
     );
   if (href === null) {
+    // Only the label is disabled: the reason it gives carries information, so it is read text.
     return (
-      <span aria-disabled="true" className={cx(TAB, size, "cursor-not-allowed text-text-disabled")}>
-        {label}
-        {badge}
-        {hint === undefined ? null : <span className="text-xs font-normal">{hint}</span>}
+      <span className={cx(TAB, size)}>
+        <span
+          aria-disabled="true"
+          className="inline-flex cursor-not-allowed items-center gap-1.5 text-text-disabled"
+        >
+          {label}
+          {badge}
+        </span>
+        {hint === undefined ? null : (
+          <span className="text-small font-normal text-text-tertiary">{hint}</span>
+        )}
       </span>
     );
   }
@@ -293,7 +301,12 @@ function RunScope({
           <RunHeader
             issuer={issuerId}
             head={run.head}
-            sources={<SourcesSwitch isSelected={sources} onChange={setSources} />}
+            sources={
+              // Evidence draws no trace control, so the switch would have nothing to show there.
+              tab === "evidence" ? null : (
+                <SourcesSwitch isSelected={sources} onChange={setSources} />
+              )
+            }
           />
           <RunTabs issuer={issuerId} run={run} tab={tab} />
         </div>
