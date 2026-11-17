@@ -399,3 +399,27 @@ One entry per task: the reviewer was a fresh Sonnet agent at xhigh effort that d
   - The search sits at the top while the list it narrows is at the bottom of the navigator.
   - Inner spaces are not collapsed in the match.
   - Typing another module's name hides the current module's entry until the field is cleared.
+
+## T39 (S4-006, S4-008, S4-009; S4-007 dropped under R14), round 1
+
+- Commit reviewed: f96c8d6 (implementer Sonnet). Verdict: FAIL, two Medium. Sent back to a fresh Sonnet implementer for round 2.
+- M1 (Medium), Evidence.tsx:69-72: the reset key `${item}/${restarts}` leaves out the tab. The Trace table carries gap ids, so `trace/G-03` → `gaps/G-03` keeps a held module and hides G-03. The base commit drew it. This is reachable through "Open in Evidence" for the Peer comparison limitation and the jump menu.
+- M2 (Medium), Evidence.tsx:23-41: on runs that deliver `trace.emptyText` ("not traced item by item"), the per-module tile "Traced items 0" states a measured zero and drops the delivered qualification. That breaks missing versus zero.
+- What passed:
+  - The per-module Summary counts equal independent fixture counts on all 39 module-run combinations; a real 0 draws as 0.
+  - Filtered Record rows equal the unfiltered rows exactly.
+  - "4 of 13 modules shown" comes from `calls.rows.length` and `run.modules.length`.
+  - The Code column is gone with every figure unchanged.
+  - The filter is held on all five tabs, with item addresses resetting except in M1.
+  - The two changed tests follow OQ-10.
+  - On the parent source the new tests fail 11 of 17.
+- Gates the reviewer saw:
+  - build 0, lint 0, format:check 0, typecheck 0, duplication 0 (1.84%, same as base).
+  - vitest: 41 files, 969 tests.
+  - Probes: filter-scope, module-codes, record-partial and focus-after-clear all exit 0.
+- Low, for the lead's batch:
+  - At All the tile says "Calculations"; under a module it says "Traced items" (S4-001 relabel).
+  - The Timings note "Six of thirteen shown" stays above a single filtered row.
+  - Brevane's "1 of 2 modules shown" sits beside its delivered "One of one shown".
+  - Evidence.tsx copies EvidenceSources.tsx's "reads" predicate.
+  - Record rows match modules by name.
