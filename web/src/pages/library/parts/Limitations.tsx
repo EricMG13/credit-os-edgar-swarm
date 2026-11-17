@@ -75,7 +75,7 @@ export function Limitations({
       <Disclosure defaultExpanded className="flex flex-col gap-4">
         {({ isExpanded }) => (
           <>
-            <div className="flex items-center justify-between gap-3">
+            <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
               <Heading
                 tabIndex={-1}
                 className="flex items-center gap-2 rounded-ds-xs text-body font-semibold outline-hidden focus-visible:ring-2 focus-visible:ring-brand"
@@ -85,14 +85,20 @@ export function Limitations({
                   {limitations.count}
                 </span>
               </Heading>
-              <div className="flex items-center gap-4">
-                <KitButton href={gapsHref} color="link-gray" size="sm" iconTrailing={ArrowRight}>
+              <div className="flex min-w-0 items-center gap-4">
+                <KitButton
+                  href={gapsHref}
+                  color="link-gray"
+                  size="sm"
+                  iconTrailing={ArrowRight}
+                  className="whitespace-normal"
+                >
                   {limitations.gapsLink.label}
                 </KitButton>
                 <Button
                   slot="trigger"
                   aria-label={isExpanded ? "Collapse limitations" : "Expand limitations"}
-                  className="flex size-8 cursor-pointer items-center justify-center rounded-lg text-text-tertiary outline-hidden hover:bg-surface-subtle focus-visible:ring-2 focus-visible:ring-brand"
+                  className="flex size-8 shrink-0 cursor-pointer items-center justify-center rounded-lg text-text-tertiary outline-hidden hover:bg-surface-subtle focus-visible:ring-2 focus-visible:ring-brand"
                 >
                   {isExpanded ? (
                     <ChevronUp aria-hidden="true" className="size-4" />
