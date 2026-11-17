@@ -20,16 +20,18 @@ No filing, credential or key is committed. The packs, contexts and the root stay
 1. Prepare (offline; rerun any time, it keeps statuses):
    `uv run python tools/swarm/prepare.py --approved hy-list.md --packs packs/ --contexts contexts/ --root ROOT`
    It registers each issuer and writes `ROOT/swarm/plan.json`; read its `skipped` list.
-2. Pilot batch: start the Workflow `tools/swarm/swarm.workflow.js` with
-   `args = {root: ROOT, repo: REPO, concurrency: 5, limit: 5}`. Read the five run folders and the
+2. Pilot batch: launch the script with
+   `Workflow({scriptPath: 'tools/swarm/swarm.workflow.js', args: {root: ROOT, repo: REPO, concurrency: 5, limit: 5}})`.
+   The script has no shell, so each ledger, verify and `update_library` command runs inside a
+   small low-effort runner agent; the analysts are Sonnet agents at medium effort. Read the five run folders and the
    ledger (`uv run python tools/swarm/ledger.py --root ROOT status`) before going on.
-3. Full run: the same workflow with `args = {root, repo, concurrency: 10}`. It claims batches of
+3. Full run: the same workflow with `args {root, repo, concurrency: 10}`. It claims batches of
    up to `concurrency` issuers, runs one Sonnet analyst (medium effort) per issuer, records the
    outcome in the ledger, rebuilds the library once per batch, and stops when nothing is pending.
-4. Second pass: `args = {root, repo, secondPass: true}` claims the `failed` issuers once more. It
+4. Second pass: `args {root, repo, secondPass: true}` claims the `failed` issuers once more. It
    is explicit; the first pass never retries them. The launcher resumes the run folder.
 5. Resume after a stop: start the same workflow again. `running` claims older than an hour (set
-   with `ledger.py next --stale-seconds`) go back to `pending`; `published` stays published.
+   with `args.stale_seconds` or `ledger.py next --stale-seconds`) go back to `pending`; `published` stays published.
    Remove a `plan.json.lock` file only if no ledger command is running.
 
 One issuer by hand: `uv run python tools/swarm/run_issuer.py ISSUER_ID --root ROOT` prints the
@@ -60,4 +62,4 @@ recorded `published`; the issuer is `failed`.
 - Answers are format-checked by the launcher only; no independent review of content is run.
 - The pilot compared 4 issuers; quality of medium against high is not established.
 - Ratings in `hy-list.md` are provisional.
-- `swarm.workflow.js` was parsed, never run, and assumes the Workflow host API named in its header.
+- `swarm.workflow.js` was syntax-checked with node, never run through the Workflow tool, so the agent schemas, the runner agents and `parallel` ordering are untested.

@@ -1,122 +1,190 @@
 // EDGAR swarm: batches of Sonnet analysts take planned issuers through CP-OS host mode to CP-2.
 //
-// args: { root, repo, concurrency = 10, limit, secondPass = false }
-//   root         the shared root holding swarm/plan.json (written by tools/swarm/prepare.py)
-//   repo         the repository checkout to run uv in
-//   concurrency  analysts at a time (default 10)
-//   limit        stop after this many issuers have been claimed (pilot: 5); default no limit
-//   secondPass   claim `failed` issuers instead of `pending` ones
+// Launch: Workflow({scriptPath: 'tools/swarm/swarm.workflow.js', args: {...}})
+//   args.root          shared root holding swarm/plan.json (written by tools/swarm/prepare.py)
+//   args.repo          repository checkout to run uv in
+//   args.concurrency   issuers claimed (and analysts started) per batch; default 10
+//   args.limit         stop after this many issuers are claimed (pilot: 5); default no limit
+//   args.secondPass    true: claim `failed` issuers instead of `pending` ones
+//   args.stale_seconds running claims older than this return to pending; default 3600
 //
-// ASSUMED host API (the workflow-authoring skill was not available when this was written):
-// the default export receives { args, agent, shell }; agent(prompt, opts) resolves to the
-// analyst's final text; shell(command) resolves to { code, stdout, stderr }. Adjust the three
-// names below if the Workflow tool differs. The controller (this script) is the only ledger writer.
+// The script has no shell: every ledger, verify and update_library command runs inside a small
+// "runner" agent. The controller (this script) is the only ledger writer; analysts never are.
+
 export const meta = {
   name: 'edgar-swarm',
-  description: 'Run planned issuers through cpos_launch host mode to CP-2 in batches of Sonnet analysts',
-  args: ['root', 'repo', 'concurrency', 'limit', 'secondPass'],
+  description:
+    'Run planned issuers through cpos_launch host mode to CP-2 in batches of Sonnet analysts',
+  phases: [
+    { title: 'Claim', detail: 'ledger next' },
+    { title: 'Analyse', detail: 'one Sonnet analyst per issuer' },
+    { title: 'Verify and record', detail: 'relaunch check, ledger done or fail' },
+    { title: 'Library', detail: 'update_library once per batch' },
+  ],
 }
+
+const { root, repo } = args
+if (!root || !repo) throw new Error('args.root and args.repo are required')
+const concurrency = Number(args.concurrency ?? 10)
+const limit = args.limit === undefined || args.limit === null ? Infinity : Number(args.limit)
+const staleSeconds = Number(args.stale_seconds ?? 3600)
+const secondPass = args.secondPass === true
 
 const q = (s) => `'${String(s).replace(/'/g, `'\\''`)}'`
+const tool = (script, rest) => `cd ${q(repo)} && uv run python tools/swarm/${script} ${rest}`
+const ledger = (rest) => tool('ledger.py', `--root ${q(root)} ${rest}`)
 
-const BRIEF = (c) => `You answer CP-OS modules for one issuer, ${c.name} (issuer id ${c.issuer_id}).
+const RUN_SCHEMA = {
+  type: 'object',
+  properties: { exit_code: { type: 'integer' }, stdout: { type: 'string' } },
+  required: ['exit_code', 'stdout'],
+}
+
+const REPORT_SCHEMA = {
+  type: 'object',
+  properties: {
+    issuer_id: { type: 'string' },
+    exit_code: { type: 'integer' },
+    attempts_by_module: {
+      type: 'object',
+      properties: {
+        'CP-0': { type: 'integer' },
+        'CP-1': { type: 'integer' },
+        'CP-1A': { type: 'integer' },
+        'CP-2': { type: 'integer' },
+      },
+      required: ['CP-0', 'CP-1', 'CP-1A', 'CP-2'],
+    },
+    notes: { type: 'string' },
+  },
+  required: ['issuer_id', 'exit_code', 'attempts_by_module', 'notes'],
+}
+
+// One shell command through a runner agent; returns {exit_code, stdout} or null.
+const run = (label, phaseTitle, command) =>
+  agent(
+    `Run exactly this one shell command, with no other action, and reply with its exit code and ` +
+      `its standard output (stdout) unchanged. Do not fix, retry or explain anything.\n\n${command}`,
+    {
+      label,
+      phase: phaseTitle,
+      schema: RUN_SCHEMA,
+      model: 'sonnet',
+      effort: 'low',
+      agentType: 'general-purpose',
+    },
+  )
+
+const brief = (c) => `You answer CP-OS modules for one issuer, ${c.name} (issuer id ${c.id}).
 No provider is called; you are the model. Follow this order exactly.
 
-1. Read ${c.repo}/docs/templates/host-analyst-checklist.md and follow it for every answer.
-2. From ${c.repo} run this command (it prints; run it as given):
+1. Read ${repo}/docs/templates/host-analyst-checklist.md and follow it for every answer.
+2. From ${repo} run this command as given (it is the launcher, run from the repository root):
    ${c.command}
    Exit 3 means a module needs your answer: read the files named on its Source: and Handoff:
-   lines, write your draft under ${c.drafts}/ , work the checklist's "Before you submit" on the draft,
-   copy it to the Answer: path printed, and run the same command again. Exit 0 = finished.
-   Exit 1 = stopped. Exit 2 = refused. Stop on 0, 1 or 2.
+   lines, write your draft under ${c.drafts}/, work the checklist's "Before you submit" on the
+   draft, copy it to the Answer: path printed, and run the same command again.
+   Stop on exit 0 (finished), 1 (stopped) or 2 (refused).
 3. Count the launcher attempts for each module (the first submission is 1). You may resubmit a
-   module at most 2 times (3 attempts); if a module is rejected a third time, stop and report.
+   module at most 2 times (3 attempts in all); if a module is rejected a third time, stop.
 4. Rules: no web, no network; no edits to the repository; write drafts only in ${c.drafts}/;
-   do not read any other issuer's folder or draft; do not touch ${c.root}/swarm/plan.json
-   (the ledger; the controller writes it). An accepted answer cannot be replaced.
-5. Final reply, last line exactly this JSON and nothing after it:
-   {"issuer_id":"${c.issuer_id}","exit_code":<last launcher exit code>,"attempts_by_module":{"CP-0":<n>,"CP-1":<n>,"CP-1A":<n>,"CP-2":<n>},"notes":"<one sentence, defects you could not fix>"}
-   Before it, one line each for any answer defect you saw after acceptance.`
+   do not read any other issuer's folder or draft; do not touch ${root}/swarm/plan.json (the
+   ledger; the controller writes it). An accepted answer cannot be replaced.
+5. Reply with: issuer_id ${c.id}; exit_code, the last launcher exit code; attempts_by_module for
+   CP-0, CP-1, CP-1A and CP-2; notes, one sentence on any defect you saw but could not fix.`
 
-function parseReport(text, issuerId) {
-  const lines = String(text).trim().split('\n').reverse()
-  for (const line of lines) {
-    const t = line.trim()
-    if (!t.startsWith('{')) continue
-    let r
-    try { r = JSON.parse(t) } catch (e) { continue }
-    if (r.issuer_id === issuerId && Number.isInteger(r.exit_code) && r.attempts_by_module) return r
+let claimed = 0
+let published = 0
+let failed = 0
+let batches = 0
+
+while (claimed < limit) {
+  const n = Math.min(concurrency, limit - claimed)
+  phase('Claim')
+  const next = await run(
+    `claim ${n}`,
+    'Claim',
+    ledger(`next --n ${n} --stale-seconds ${staleSeconds}${secondPass ? ' --failed' : ''}`),
+  )
+  if (!next || next.exit_code !== 0) {
+    throw new Error(`ledger next failed: ${next ? next.stdout : 'runner returned nothing'}`)
   }
-  return null
-}
+  const batch = JSON.parse(next.stdout)
+  if (batch.length === 0) break
+  claimed += batch.length
+  batches += 1
+  if (claimed === limit) log(`limit ${limit} reached; issuers left pending stay pending`)
 
-export default async function main({ args, agent, shell }) {
-  const { root, repo } = args
-  if (!root || !repo) throw new Error('args.root and args.repo are required')
-  const concurrency = Number(args.concurrency ?? 10)
-  const limit = args.limit === undefined ? Infinity : Number(args.limit)
-  const py = (script, rest) => shell(`cd ${q(repo)} && uv run python tools/swarm/${script} ${rest}`)
-  const ledger = (rest) => py('ledger.py', `--root ${q(root)} ${rest}`)
-  const must = (r, what) => {
-    if (r.code !== 0) throw new Error(`${what} failed (exit ${r.code}): ${r.stderr || r.stdout}`)
-    return r.stdout
-  }
-
-  let claimed = 0
-  const tally = { published: 0, failed: 0, batches: 0 }
-  while (claimed < limit) {
-    const n = Math.min(concurrency, limit - claimed)
-    const batch = JSON.parse(must(await ledger(`next --n ${n}${args.secondPass ? ' --failed' : ''}`), 'ledger next'))
-    if (batch.length === 0) break
-    claimed += batch.length
-    tally.batches += 1
-
-    const outcomes = await Promise.all(batch.map(async (issuer) => {
-      const id = issuer.issuer_id
-      const command = must(await py('run_issuer.py', `${q(id)} --root ${q(root)}`), 'run_issuer')
-      const drafts = `${root}/swarm/drafts/${id}`
-      let text = ''
-      try {
-        text = await agent(
-          BRIEF({ name: issuer.name, issuer_id: id, repo, root, drafts, command: command.trim() }),
-          { model: 'sonnet', effort: 'medium' },
-        )
-      } catch (e) {
-        return { id, fail: `analyst agent failed: ${e && e.message ? e.message : e}` }
-      }
-      const report = parseReport(text, id)
-      if (report === null) return { id, fail: 'analyst gave no parseable final report' }
-      if (report.exit_code !== 0) {
-        return { id, fail: `launcher stopped, exit ${report.exit_code}: ${report.notes || ''}`, report }
-      }
-      const check = await py('run_issuer.py', `${q(id)} --root ${q(root)} verify`)
-      if (check.code !== 0) return { id, fail: `relaunch check failed: ${check.stderr.trim()}`, report }
-      return { id, report }
-    }))
-
-    // The controller records every outcome; analysts never write the ledger.
-    for (const o of outcomes) {
-      const by = o.report ? q(JSON.stringify(o.report.attempts_by_module)) : null
-      if (!o.fail) {
-        const r = await ledger(`done ${q(o.id)} --attempts-by-module ${by}`)
-        if (r.code === 0) { tally.published += 1; continue }
-        o.fail = `ledger refused done: ${r.stderr.trim()}` // for example over the retry cap
-      }
-      must(
-        await ledger(
-          `fail ${q(o.id)} --reason ${q(o.fail)}` +
-            (by ? ` --attempts-by-module ${by} --exit-code ${o.report.exit_code}` : ''),
-        ),
-        'ledger fail',
+  phase('Analyse')
+  const analysed = await parallel(
+    batch.map((issuer) => async () => {
+      const cmd = await run(`command ${issuer.issuer_id}`, 'Analyse', tool('run_issuer.py', `${q(issuer.issuer_id)} --root ${q(root)}`))
+      if (!cmd || cmd.exit_code !== 0) return { issuer, fail: 'could not build the launcher command' }
+      const report = await agent(
+        brief({
+          id: issuer.issuer_id,
+          name: issuer.name,
+          command: cmd.stdout.trim(),
+          drafts: `${root}/swarm/drafts/${issuer.issuer_id}`,
+        }),
+        {
+          label: issuer.issuer_id,
+          phase: 'Analyse',
+          schema: REPORT_SCHEMA,
+          model: 'sonnet',
+          effort: 'medium',
+          agentType: 'general-purpose',
+        },
       )
-      tally.failed += 1
-    }
+      return report ? { issuer, report } : { issuer, fail: 'analyst returned nothing' }
+    }),
+  )
 
-    must(
-      await shell(`cd ${q(repo)} && uv run python apps/issuer-library/update_library.py --workspace ${q(root)}/_engine`),
-      'update_library',
+  phase('Verify and record')
+  for (let i = 0; i < batch.length; i++) {
+    const id = batch[i].issuer_id
+    const outcome = analysed[i] ?? { issuer: batch[i], fail: 'analyst returned nothing' }
+    let reason = outcome.fail
+    const report = outcome.report
+    if (!reason && report.exit_code !== 0) {
+      reason = `launcher stopped, exit ${report.exit_code}: ${report.notes}`
+    }
+    if (!reason) {
+      const check = await run(`verify ${id}`, 'Verify and record', tool('run_issuer.py', `${q(id)} --root ${q(root)} verify`))
+      if (!check) reason = 'verify runner returned nothing'
+      else if (check.exit_code !== 0) reason = `relaunch check failed: ${check.stdout.trim()}`
+    }
+    const by = report ? q(JSON.stringify(report.attempts_by_module)) : null
+    if (!reason) {
+      const done = await run(`done ${id}`, 'Verify and record', ledger(`done ${q(id)} --attempts-by-module ${by}`))
+      if (done && done.exit_code === 0) {
+        published += 1
+        continue
+      }
+      reason = `ledger refused done: ${done ? done.stdout.trim() : 'runner returned nothing'}`
+    }
+    log(`${id} failed: ${reason}`)
+    const bad = await run(
+      `fail ${id}`,
+      'Verify and record',
+      ledger(`fail ${q(id)} --reason ${q(reason)}` + (by ? ` --attempts-by-module ${by} --exit-code ${report.exit_code}` : '')),
     )
+    if (!bad || bad.exit_code !== 0) {
+      throw new Error(`could not record ${id} as failed: ${bad ? bad.stdout : 'runner returned nothing'}`)
+    }
+    failed += 1
   }
-  const counts = must(await ledger('status'), 'ledger status')
-  return { ...tally, claimed, ledger: JSON.parse(counts) }
+
+  phase('Library')
+  const lib = await run(
+    'update_library',
+    'Library',
+    `cd ${q(repo)} && uv run python apps/issuer-library/update_library.py --workspace ${q(root)}/_engine`,
+  )
+  if (!lib || lib.exit_code !== 0) {
+    throw new Error(`update_library failed: ${lib ? lib.stdout : 'runner returned nothing'}`)
+  }
 }
+
+log(`batches ${batches}, claimed ${claimed}, published ${published}, failed ${failed}`)
+;({ batches, claimed, published, failed })
