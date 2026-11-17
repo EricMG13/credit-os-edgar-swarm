@@ -1994,11 +1994,12 @@ def test_a_cp4_written_without_an_agreement_is_still_refused(tmp_path, provider,
     assert not (tmp_path / "out" / "deliveries").exists()
 
 
-# main 0bca182's CP-4 instructions for this input (Deep, legal documents `executed`), from the
-# reviewer's probe45_instructions.py: the source gate leaves them byte-identical. Recompute only
+# main 39f1803f's CP-4 instructions for this input (Deep, legal documents `executed`): the source
+# gate leaves them byte-identical. #49 (merged as 39f1803f) changed CP-4's text on purpose (the
+# money-unit rule), so the value pinned at 0bca182 (a37cd27b...) was recomputed. Recompute only
 # when CP-4's instructions change on purpose, as for METHOD_TEXT_SHA256_AT_1B41E65.
-CP4_DEEP_EXECUTED_SHA256_AT_0BCA182 = (
-    "a37cd27b07c2fe636fd89da825424031ee45c49edd951e63c2231e79d6285d93"
+CP4_DEEP_EXECUTED_SHA256_AT_39F1803 = (
+    "284d83b0600b7022eeff7be8d3a9adebc115bb55c0d382129b845467b7507bab"
 )
 
 
@@ -2014,7 +2015,7 @@ def test_cp4_is_told_its_source_gate_only_when_no_legal_documents_are_declared(t
         )
         texts[legal] = (base / "out" / prepared.plan.instructions["CP-4"].path).read_text()
     executed = hashlib.sha256(texts["executed"].encode()).hexdigest()
-    assert executed == CP4_DEEP_EXECUTED_SHA256_AT_0BCA182
+    assert executed == CP4_DEEP_EXECUTED_SHA256_AT_39F1803
     assert texts["none"] != texts["executed"]
     assert "No executed governing document" in texts["none"]
     assert cpos_launch._SOURCE_GATE in texts["none"]
