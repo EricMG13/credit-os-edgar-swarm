@@ -31,7 +31,7 @@ function Toast({ outcome }: { outcome: Outcome }) {
     <div
       role={outcome.ok ? "status" : "alert"}
       className={cx(
-        "fixed right-8 bottom-8 z-50 flex max-w-md items-start gap-4 rounded-md border p-4 shadow-md",
+        "fixed right-4 bottom-20 left-4 z-50 flex max-w-md items-start gap-4 rounded-md border p-4 shadow-md min-[768px]:right-8 min-[768px]:bottom-8 min-[768px]:left-auto",
         tone,
       )}
     >
