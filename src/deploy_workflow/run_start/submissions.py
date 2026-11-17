@@ -21,7 +21,6 @@ import time
 import unicodedata
 import uuid
 from collections.abc import Collection
-from decimal import Decimal
 from pathlib import Path, PurePath
 from typing import Any, BinaryIO, TypedDict
 

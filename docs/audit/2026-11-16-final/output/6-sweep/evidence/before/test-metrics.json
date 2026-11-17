@@ -1,0 +1,300 @@
+{
+  "python": {
+    "shard_seconds": {
+      "ci-01": 8.029,
+      "ci-02": 82.767,
+      "ci-03": 32.184,
+      "ci-04": 3.74,
+      "ci-05": 22.523,
+      "ci-06": 39.823,
+      "ci-07": 21.51,
+      "ci-08": 18.778,
+      "changed-01": 3.346,
+      "changed-02": 10.152,
+      "changed-03": 26.782,
+      "changed-04": 10.913,
+      "changed-05": 4.096
+    },
+    "slowest_nodes": [
+      {
+        "file": "tests.model.test_loop",
+        "name": "test_a_narrative_repair_says_to_call_read_inputs_again",
+        "seconds": 4.162,
+        "scope": "CI",
+        "shard": "ci-03"
+      },
+      {
+        "file": "tests.test_cpos_launch",
+        "name": "test_no_text_sent_to_a_model_gives_usd_as_its_only_example",
+        "seconds": 3.648,
+        "scope": "CI",
+        "shard": "ci-02"
+      },
+      {
+        "file": "tests.test_react_runtime_identity",
+        "name": "test_completed_engine_responses_supply_their_exact_verified_metadata",
+        "seconds": 3.535,
+        "scope": "changed outside CI",
+        "shard": "changed-04"
+      },
+      {
+        "file": "tests.test_final_audit_tools",
+        "name": "test_cumulative_audit_helpers_pass_the_default_quality_gate",
+        "seconds": 3.287,
+        "scope": "changed outside CI",
+        "shard": "changed-05"
+      },
+      {
+        "file": "tests.test_inbox_scheduler",
+        "name": "test_a_restart_adopts_a_live_run_and_starts_no_duplicate",
+        "seconds": 3.216,
+        "scope": "CI",
+        "shard": "ci-05"
+      },
+      {
+        "file": "tests.test_inbox_scheduler",
+        "name": "test_a_submission_is_run_by_the_real_launcher_and_listed",
+        "seconds": 3.117,
+        "scope": "CI",
+        "shard": "ci-05"
+      },
+      {
+        "file": "tests.model.test_loop",
+        "name": "test_read_inputs_is_offered_when_the_step_has_inputs",
+        "seconds": 3.09,
+        "scope": "CI",
+        "shard": "ci-03"
+      },
+      {
+        "file": "proof.test_launcher",
+        "name": "test_real_scheduler_exports_the_submitted_run[executed]",
+        "seconds": 2.99,
+        "scope": "changed outside CI",
+        "shard": "changed-02"
+      },
+      {
+        "file": "proof.test_launcher",
+        "name": "test_real_scheduler_exports_the_submitted_run[none]",
+        "seconds": 2.791,
+        "scope": "changed outside CI",
+        "shard": "changed-02"
+      },
+      {
+        "file": "tests.test_cpos_launch",
+        "name": "test_a_deep_run_is_delivered_and_listed_by_the_library_with_every_module",
+        "seconds": 2.131,
+        "scope": "CI",
+        "shard": "ci-02"
+      },
+      {
+        "file": "tests.test_cpos_launch",
+        "name": "test_every_pathway_runs_end_to_end_to_a_verified_report[deep_credit_assessment]",
+        "seconds": 2.125,
+        "scope": "CI",
+        "shard": "ci-02"
+      },
+      {
+        "file": "tests.model.test_copilot_adapter",
+        "name": "test_slow_teardown_does_not_lose_the_reply",
+        "seconds": 2.016,
+        "scope": "CI",
+        "shard": "ci-03"
+      },
+      {
+        "file": "tests.test_cpos_launch",
+        "name": "test_in_the_deep_assessment_cp3_is_checked_against_the_t410_cp1c_wrote_in_the_run[420-True]",
+        "seconds": 1.978,
+        "scope": "CI",
+        "shard": "ci-02"
+      },
+      {
+        "file": "tests.test_cpos_launch",
+        "name": "test_a_run_with_a_blocked_cp4_delivers_cp3s_capital_structure[deep_credit_assessment]",
+        "seconds": 1.947,
+        "scope": "CI",
+        "shard": "ci-02"
+      },
+      {
+        "file": "tests.test_cpos_launch",
+        "name": "test_cpdr_open_web_limit_is_conditional_on_the_web_search_rules",
+        "seconds": 1.934,
+        "scope": "CI",
+        "shard": "ci-02"
+      }
+    ],
+    "node_count": 6286,
+    "scope": "pytest JUnit test case time, including setup, call and teardown",
+    "scope_total_seconds": 284.643
+  },
+  "frontend": {
+    "shard_ms": {
+      "2/8": 105225,
+      "1/8": 147846,
+      "3/8": 96379,
+      "4/8": 116956,
+      "6/8": 119519,
+      "5/8": 251419,
+      "7/8": 82263,
+      "8/8": 93768
+    },
+    "shard_sum_ms": 1013375,
+    "parallel_wall_ms": 610131.0,
+    "slowest_nodes": [
+      {
+        "file": "/workspace/audit-final/web/src/pages/connected/ConnectedApp.test.tsx",
+        "name": "connected run start: the review sheet shows every input Submit sends V27 shows no raw data: no braces, keys, module codes, ids or the form's version",
+        "ms": 5662.123342999999,
+        "shard": "shard-5"
+      },
+      {
+        "file": "/workspace/audit-final/web/src/pages/signal/frame.test.tsx",
+        "name": "the Signal frame renders every declared path with every fixture parameter set",
+        "ms": 4541.552544000001,
+        "shard": "shard-6"
+      },
+      {
+        "file": "/workspace/audit-final/web/src/pages/library/Module.test.tsx",
+        "name": "Module, a delivered prose module opens the drawer of each passage's own module-level trace",
+        "ms": 3102.4180419999993,
+        "shard": "shard-5"
+      },
+      {
+        "file": "/workspace/audit-final/web/src/pages/model/case-choice.test.tsx",
+        "name": "S5-010 keeps the chosen case across Model, Forecast and intervening pages, separately per run",
+        "ms": 2956.935087,
+        "shard": "shard-8"
+      },
+      {
+        "file": "/workspace/audit-final/web/src/pages/connected/ConnectedApp.test.tsx",
+        "name": "connected activity and reports waits for report publication after the run has finished",
+        "ms": 2046.0106610000003,
+        "shard": "shard-5"
+      },
+      {
+        "file": "/workspace/audit-final/web/src/pages/connected/ConnectedApp.test.tsx",
+        "name": "connected run start: Module options and Valuation as fields K6 sends precedents only for a basis that uses them",
+        "ms": 1932.3610770000014,
+        "shard": "shard-5"
+      },
+      {
+        "file": "/workspace/audit-final/web/src/pages/connected/ConnectedApp.test.tsx",
+        "name": "connected activity and reports reads the published handoff, keeps citations in Evidence, and links the matching download",
+        "ms": 1916.6661600000007,
+        "shard": "shard-5"
+      },
+      {
+        "file": "/workspace/audit-final/web/src/pages/connected/ReportLibrary.design.test.tsx",
+        "name": "connected library and report design filters by sector and pathway and keeps filters available to reset an empty result",
+        "ms": 1683.100414,
+        "shard": "shard-4"
+      },
+      {
+        "file": "/workspace/audit-final/web/src/pages/library/EvidenceTrace.test.tsx",
+        "name": "Evidence, Trace lists every row in the delivered order, the mock's seven among them as the mock words them",
+        "ms": 1656.522974,
+        "shard": "shard-4"
+      },
+      {
+        "file": "/workspace/audit-final/web/src/pages/connected/ConnectedApp.test.tsx",
+        "name": "connected run start: Module options and Valuation as fields K5 sends the analyst's own multiple, and blanks it when the basis changes",
+        "ms": 1655.6857519999976,
+        "shard": "shard-5"
+      },
+      {
+        "file": "/workspace/audit-final/web/src/pages/model/parts/RunPage.test.tsx",
+        "name": "Show sources is session-wide state: it survives route changes and the case resets stays on but resets the case between two runs whose names would join to one string (a/b + c, a + b/c)",
+        "ms": 1623.7549719999997,
+        "shard": "shard-6"
+      },
+      {
+        "file": "/workspace/audit-final/web/src/pages/connected/ConnectedApp.test.tsx",
+        "name": "connected run start: Module options and Valuation as fields K4 sends peer figures, and no peers once the source no longer takes them",
+        "ms": 1604.3882740000045,
+        "shard": "shard-5"
+      },
+      {
+        "file": "/workspace/audit-final/web/src/pages/signal/topics-digests.test.tsx",
+        "name": "Digests (frame 5) changes every field in memory and keeps the values when moving between sections",
+        "ms": 1557.18755,
+        "shard": "shard-5"
+      },
+      {
+        "file": "/workspace/audit-final/web/src/pages/library/Module.test.tsx",
+        "name": "Module, the navigator of the data module moves focus to the heading of the block each entry names",
+        "ms": 1503.3392000000022,
+        "shard": "shard-5"
+      },
+      {
+        "file": "/workspace/audit-final/web/src/pages/model/StatementsPage.test.tsx",
+        "name": "Model page: the statements describes a missing cell by its reason, shows it on focus, and draws it n.a., never 0",
+        "ms": 1412.091787999998,
+        "shard": "shard-1"
+      }
+    ],
+    "slowest_files": [
+      {
+        "file": "/workspace/audit-final/web/src/pages/connected/ConnectedApp.test.tsx",
+        "ms": 129528.96508789062
+      },
+      {
+        "file": "/workspace/audit-final/web/src/pages/library/Module.test.tsx",
+        "ms": 28680.09326171875
+      },
+      {
+        "file": "/workspace/audit-final/web/src/pages/model/StatementsPage.test.tsx",
+        "ms": 20150.73291015625
+      },
+      {
+        "file": "/workspace/audit-final/web/src/pages/model/StatementsSections.test.tsx",
+        "ms": 13158.85400390625
+      },
+      {
+        "file": "/workspace/audit-final/web/src/pages/model/ForecastPage.test.tsx",
+        "ms": 11462.764404296875
+      },
+      {
+        "file": "/workspace/audit-final/web/src/pages/Kit7e.test.tsx",
+        "ms": 10694.3642578125
+      },
+      {
+        "file": "/workspace/audit-final/web/src/pages/library/EvidenceTrace.test.tsx",
+        "ms": 10618.684814453125
+      },
+      {
+        "file": "/workspace/audit-final/web/src/pages/library/Home.test.tsx",
+        "ms": 10212.080810546875
+      },
+      {
+        "file": "/workspace/audit-final/web/src/pages/signal/controls.test.tsx",
+        "ms": 10131.2392578125
+      },
+      {
+        "file": "/workspace/audit-final/web/src/pages/signal/frame.test.tsx",
+        "ms": 8081.552490234375
+      },
+      {
+        "file": "/workspace/audit-final/web/src/pages/Kit.test.tsx",
+        "ms": 7855.512939453125
+      },
+      {
+        "file": "/workspace/audit-final/web/src/pages/signal/thread.test.tsx",
+        "ms": 6767.259033203125
+      },
+      {
+        "file": "/workspace/audit-final/web/src/pages/library/Overview.test.tsx",
+        "ms": 6623.510009765625
+      },
+      {
+        "file": "/workspace/audit-final/web/src/pages/library/routes.test.tsx",
+        "ms": 6123.179443359375
+      },
+      {
+        "file": "/workspace/audit-final/web/src/pages/connected/visuals/EventLane.test.tsx",
+        "ms": 5941.396484375
+      }
+    ],
+    "node_count": 5259,
+    "file_count": 308,
+    "scope": "native Vitest JSON assertion durations and file test start/end, all 8 coverage shards"
+  }
+}

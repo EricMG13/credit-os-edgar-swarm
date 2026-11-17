@@ -3,7 +3,6 @@ import type { ReactNode } from "react";
 import { StatusBadge } from "@/components/status/StatusBadge";
 import { STATUS_SETS } from "@/components/status/sets";
 import { StatusShape } from "@/components/status/shapes";
-import { TRACE_HOST } from "@/pages/library/parts/TraceControl";
 import { cx } from "@/utils/cx";
 
 type DatedState = keyof (typeof STATUS_SETS)["Dated records"];
@@ -41,7 +40,7 @@ export function Timeline({
             key={`${item.date}-${item.title}`}
             className={cx(
               "relative -ms-1.5 flex items-start gap-4",
-              item.action !== undefined && TRACE_HOST,
+              item.action !== undefined && "group/trace relative",
             )}
           >
             <span

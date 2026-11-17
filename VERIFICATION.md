@@ -4,6 +4,17 @@ Keep one running record here. A pass applies only to the stated scope. Earlier v
 engine is in [EricMG13/final-workflow](https://github.com/EricMG13/final-workflow)'s
 `VERIFICATION.md`, which also keeps the retained runs this copy leaves out.
 
+## 2026-11-17 — Stage 6 sweep
+
+- Scope: six reviewed refactors on the repaired app, with the same tests, public routes,
+  handoffs and protected inputs. Nine production files add 21 and remove 66 lines.
+- Passed: 5,259 frontend tests including 630 Signal tests, native 97.69% lines,
+  6,285 Python tests plus one existing skip, 573 Node checks, both quality gates,
+  73 script checks, 138 native file checks, and synthetic Chrome and Edge proof.
+- Measured: 20 fewer duplicated frontend lines. Paired History row data 2,168 to
+  109 bytes with the same requests and markup.
+- Source pins, retry outcomes and limits: [sweep report](docs/audit/2026-11-16-final/output/6-sweep/report.md).
+
 ## 2026-11-17 final audit presentation fidelity
 
 On repair tree `bb94ddce`, rebuilt both surfaces and captured connected

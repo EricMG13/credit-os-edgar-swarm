@@ -225,26 +225,13 @@ function Chart({ title, parts }: Pick<StackChartProps, "title" | "parts">) {
 }
 
 /** One bar split into ranked parts, such as debt by instrument. */
-export function StackChart({
-  title,
-  as,
-  note,
-  subtitle,
-  actions,
-  parts,
-  table,
-  detailTable,
-}: StackChartProps) {
+export function StackChart({ parts, table, detailTable, ...frame }: StackChartProps) {
   check({ parts, table });
   return (
     <ChartWithTable
-      title={title}
-      as={as}
-      note={note}
-      subtitle={subtitle}
-      actions={actions}
+      {...frame}
       table={detailTable ?? table}
-      chart={<Chart title={title} parts={parts} />}
+      chart={<Chart title={frame.title} parts={parts} />}
     />
   );
 }

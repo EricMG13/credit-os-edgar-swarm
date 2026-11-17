@@ -346,7 +346,6 @@ type IntakeView = {
   turns: string;
   model: string;
   effort: string;
-  capText: string | null;
   caps: Record<string, string>;
   synthetic: boolean;
   addFiles: (selected: Iterable<File> | null) => void;
@@ -2442,7 +2441,6 @@ function IntakeForm({
     turns,
     model,
     effort,
-    capText,
     caps,
     synthetic,
     addFiles,
