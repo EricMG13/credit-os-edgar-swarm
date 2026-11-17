@@ -43,10 +43,10 @@ Later batch outcomes remain linked from the repair report.
 | [T40](../5-repair/T40.md) | 3 | Model pages: unreadable run message, trace drawer in place, statements at 390 px, tap-reachable definitions | S5-002, S5-004 |
 | [T41](../5-repair/T41.md) | 3 | Static run pages: focus ring, focus after Submit, Runs breadcrumb, wrapping label chip | S6-007 |
 | [T42](../5-repair/T42.md) | 2 | Preserve every cited page range in a listed source identity | R4-001 |
-| T43 | 1 | Bind runtime display metadata to the actual scheduler and analytical run identities | R4-011 |
-| T44 | 2 | Preserve ordinary prose and mathematical labels in the shared source-reference predicate | R4-012 |
-| T45 | 1 | Keep actual synthetic run execution metadata truthful after loading | R4-015 |
-| T46 | 2 | Make fidelity capture dependency loading and direct reads safe offline | R4-017, R4-018 |
+| [T43](../5-repair/R4-011.md) | 1 | Bind runtime display metadata to the actual scheduler and analytical run identities | R4-011 |
+| [T44](../5-repair/R4-012-last-return.md) | 2 | Preserve ordinary prose and mathematical labels in the shared source-reference predicate | R4-012 |
+| [T45](../5-repair/R4-015.md) | 1 | Keep actual synthetic run execution metadata truthful after loading | R4-015 |
+| [T46](../5-repair/reviews/fidelity-guard-final-review.md) | 2 | Make fidelity capture dependency loading and direct reads safe offline | R4-017, R4-018 |
 
 The six accepted sweep changes and all retained candidate outcomes are
 in the [sweep register](../6-sweep/register.md). Withdrawn or ruled-out

@@ -9,5 +9,19 @@
   "preservedNewerRepairEvidence": [
     "5-repair/fidelity/capture.mjs",
     "5-repair/probes/contract-doc-scope.mjs"
-  ]
+  ],
+  "latestCoordinationCheckpoint": "3a8e3ee58eb4c5787896121c3c8fbd487c5c8ac6",
+  "latestCheckpointReconciliation": {
+    "sourceFiles": 864,
+    "identical": 862,
+    "missing": 0,
+    "preservedNewerRepairEvidence": [
+      "5-repair/fidelity/capture.mjs",
+      "5-repair/probes/contract-doc-scope.mjs"
+    ],
+    "stage7Updates": [
+      "Copy the connected and archive-path checkpoint into STATUS and RESUME",
+      "Apply the same evidence directory normalization to both branches"
+    ]
+  }
 }
