@@ -163,5 +163,17 @@
     "runtimeProtocolString": [],
     "workerConstructor": [],
     "httpOrWsSchemeInWoff2": []
+  },
+  "generatedFixtureHttpHostsByGroup": {
+    "before": {
+      "signal": {
+        "example.com": 31
+      }
+    },
+    "after": {
+      "signal": {
+        "example.com": 31
+      }
+    }
   }
 }

@@ -1,0 +1,65 @@
+{
+  "visits": 402,
+  "shards": 14,
+  "distinctOpenersSignatureRoutes": 323,
+  "duplicatesByOriginalSelectionRule": 79,
+  "actionDispositions": {
+    "clicked": 1123,
+    "active-confirmation-or-paid-action-outside-scope": 2,
+    "unclickable": 2
+  },
+  "appOtherHostRequests": 0,
+  "appOtherHostWebSockets": 0,
+  "appPageConsoleLocalFileErrors": 0,
+  "proxyErrors": 0,
+  "proxyResets": 0,
+  "proxyDenials": 1663,
+  "blankProxyDenials": 108,
+  "proxyDenialsByHost": {
+    "clients2.google.com": 14,
+    "www.gstatic.com": 14,
+    "www.google.com": 1576,
+    "accounts.google.com": 50,
+    "update.googleapis.com": 9
+  },
+  "otherActionRecords": [
+    {
+      "variant": "shipped",
+      "address": "#/kit",
+      "i": 69,
+      "role": "button",
+      "name": "Start run",
+      "tag": "button",
+      "disposition": "active-confirmation-or-paid-action-outside-scope"
+    },
+    {
+      "variant": "shipped",
+      "address": "#/kit",
+      "i": 71,
+      "role": "button",
+      "name": "Files",
+      "tag": "input",
+      "disposition": "unclickable",
+      "reason": "locator.click: Timeout 1500ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-audit-i=\"71\"]')\u001b[22m\n\u001b[2m    - locator resolved to <input multiple id=\"_r_3k_\" type=\"file\" tabindex=\"-1\" data-audit-i=\"71\" aria-label=\"Files\" class=\"peer sr-only\"/>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m    - element is visible, enabled and stable\u001b[22m\n\u001b[2m    - scrolling into view if needed\u001b[22m\n\u001b[2m    - done scrolling\u001b[22m\n\u001b[2m    - <span class=\"text-sm max-md:hidden\">or drag and drop</span> intercepts pointer events\u001b[22m\n\u001b[2m  - retrying click action\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m    - element is visible, enabled and stable\u001b[22m\n\u001b[2m    - scrolling into view if needed\u001b[22m\n\u001b[2m    - done scrolling\u001b[22m\n\u001b[2m    - <html lang=\"en\">"
+    },
+    {
+      "variant": "fixture",
+      "address": "#/kit",
+      "i": 69,
+      "role": "button",
+      "name": "Start run",
+      "tag": "button",
+      "disposition": "active-confirmation-or-paid-action-outside-scope"
+    },
+    {
+      "variant": "fixture",
+      "address": "#/kit",
+      "i": 71,
+      "role": "button",
+      "name": "Files",
+      "tag": "input",
+      "disposition": "unclickable",
+      "reason": "locator.click: Timeout 1500ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-audit-i=\"71\"]')\u001b[22m\n\u001b[2m    - locator resolved to <input multiple id=\"_r_3k_\" type=\"file\" tabindex=\"-1\" data-audit-i=\"71\" aria-label=\"Files\" class=\"peer sr-only\"/>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m    - element is visible, enabled and stable\u001b[22m\n\u001b[2m    - scrolling into view if needed\u001b[22m\n\u001b[2m    - done scrolling\u001b[22m\n\u001b[2m    - <span class=\"text-sm max-md:hidden\">or drag and drop</span> intercepts pointer events\u001b[22m\n\u001b[2m  - retrying click action\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m    - element is visible, enabled and stable\u001b[22m\n\u001b[2m    - scrolling into view if needed\u001b[22m\n\u001b[2m    - done scrolling\u001b[22m\n\u001b[2m    - <html lang=\"en\">"
+    }
+  ]
+}
