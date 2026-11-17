@@ -51,5 +51,11 @@ The current build uses Node 24.22.1 and npm 11.9.0. The older figures are
 historical context. Changes attributed to this sweep will use the same tools
 on both sides.
 
+The first three integrated sweep items at `1170026e` were checked with
+the unchanged duplication gate. It exited 0 and reported 285 clones and
+2,785 duplicate lines (2.45%) across the same 633 files. That is two fewer
+clones, 20 fewer duplicate lines and 31 fewer net source lines than the
+discovery base. This checkpoint precedes the final sweep comparison.
+
 Not verified: accepted-sweep after measurements, combined gates and final
 offline proof remain pending.
