@@ -81,11 +81,13 @@ it("lists every event when no date can be placed and does not claim none were pu
   expect(unplaced.getByText("Not recorded")).toBeInTheDocument();
 });
 
-it("states an event table it cannot read instead of dropping it", () => {
+it("plots the readable rows of an event table with a row it cannot read and lists that row", () => {
   const calendar = buildCalendar([handoff([fine, ["2025-07", "month"]])], "current");
-  expect(calendar.rows).toEqual([]);
-  expect(calendar.gaps.map(({ reason, href }) => [reason, href])).toEqual([
-    ["The event table could not be read.", `/report/current#evidence/CP-2D-1~${"2".repeat(64)}-20`],
+  expect(calendar.rows.map(({ cells }) => cells[3])).toEqual(["Fine"]);
+  expect(
+    calendar.gaps.map(({ reason, unplaced }) => [reason, unplaced?.map(({ href }) => href)]),
+  ).toEqual([
+    ["An event row could not be read.", [`/report/current#evidence/CP-2D-1~${"2".repeat(64)}-23`]],
   ]);
 });
 
