@@ -69,3 +69,9 @@ Controller's application:
 - T27 round 2 was redirected. It keeps the titles, the live-region announcement (screen reader, kept) and the scroll reset and restore, removes the route-change focus moves, and drops the round-1 Medium (keyboard-only outline on main) as moot.
 - T41 had merged with S6-001, S6-002 and S6-010 done, so they are kept.
 - T37 and T39 start with the dropped parts left out.
+
+# Lead answer to repair-3 on T35 M1 (ruling L9b, 2026-11-17, received 11:00 UTC by message from the lead session)
+
+Yes. Group 3 may edit web/src/pages/library/parts/MatrixBlock.tsx and its test, using the L9a rule: when the block's rows carry their own traces, skip the table-level control; otherwise draw it, marker included. Add a test for each case, using the connected tests' fixture shapes for the risk matrix. Then merge T35.
+
+Put the reviewer's connected list into output/5-repair/T35.md as measured. Items 3 and 4 (the Confidence tile with no inputs table, and a bottom-line band with no block at summary.line) are "missing by data", so their marker is correct and stays. Item 5 needs nothing.
