@@ -1,9 +1,9 @@
 diff --git a/docs/audit/2026-11-16-final/output/5-repair/T09.md b/docs/audit/2026-11-16-final/output/5-repair/T09.md
 new file mode 100644
-index 0000000..b18a01b
+index 0000000..c029283
 --- /dev/null
 +++ b/docs/audit/2026-11-16-final/output/5-repair/T09.md
-@@ -0,0 +1,118 @@
+@@ -0,0 +1,180 @@
 +# T09: document refusals name the file and mark its row; Issuer ID never merges two issuers
 +
 +Model: Sonnet 5.5, medium effort, round 1. BASE: edebd9d817e97a9480fda8d6a8bf11714d179731.
@@ -90,8 +90,8 @@ index 0000000..b18a01b
 +- Python, `tests/test_run_start_submissions.py` (13 new: 9 `issuer_key` pinned cases, hand-typed ID, carried ID with a
 +  changed name, the two Northbridge long names with the suffixed ID free, a short name that collides, same issuer accepted
 +  however typed, an already-merged ID) and `tests/test_run_start_scheduler.py` (an ID filed between review and Submit is
-+  refused and nothing starts; the same issuer re-submitting under its own ID is accepted). Before the repair: 16 failed
-+  (`issuer_key` and the refusal did not exist), 1 passed. After: 252 passed, 3 skipped (submissions, scheduler, prior); with
++  refused and nothing starts; the same issuer re-submitting under its own ID is accepted). Before the repair: 15 failed
++  (round 1's code; re-measured in round 3: `issuer_key` and the refusal did not exist), 2 passed. After: 252 passed, 3 skipped (submissions, scheduler, prior); with
 +  `test_run_start_service.py`, `test_inbox_scheduler.py`, `test_pathway_tiers.py` and `test_react_frontend.py` all pass.
 +- Vitest, `start/plain.test.ts`: `issuerKey` (the same 9 literal cases as Python), `filedElsewhere`/`issuerIdRefusal` (4),
 +  `issuerIdFor` for a short name and a word-boundary cut, `documentRefusal` rewritten for the true sentences. Before: 15
@@ -116,6 +116,68 @@ index 0000000..b18a01b
 +- `npm --prefix web run lint`, `format:check`, `typecheck`, `unused`: exit 0; `npm --prefix web run build`: exit 0.
 +- `uv run python tools/quality_gate.py --base edebd9d8`: exit 0, 0 findings, 326 lines in scope.
 +- `git show --stat HEAD` shows no `web/node_modules` entry other than its deletion.
++
++## Round 3
++
++Model: Sonnet 5.5, medium effort (owner instruction: T07 to T10 implementers run on Sonnet at medium effort).
++Base of the round: b0cbffc1. Round-2 reviews (`T09-review-2.md`, `T09-review-2-adversarial.md`) addressed as below.
++
++### Findings addressed
++- Adversarial 1 (Medium): `issuer_key` (submissions.py) and `issuerKey` (plain.ts) now keep Unicode letters and digits:
++  NFKD, lower case, then only `\p{L}`/`\p{N}` (Python: category L or N) kept; marks drop out because they are neither. So
++  "中国银行 Ltd" (`中国银行ltd`) and "中国建设银行 Ltd" (`中国建设银行ltd`) differ and no longer merge. Lower case, not full
++  case folding, is used on both sides so the two stay identical ("ß" and "ø" stay as letters: `straßeholdingsplc`,
++  `ørstedas`; "İ" gives "i"). Same literal cases on both sides, now including Газпром ПАО, Йога-Центр and the two Chinese names.
++  Limit documented in both docstrings: Python and Node carry different Unicode versions (37 recent characters differ), so two
++  names differing only in such a character may compare differently on the page and in the service; the service's answer counts;
++  no table is kept.
++- Standard 1 = adversarial 2 (Medium): `issuerIdRefusal(message, usualHolder)` offers the name's usual ID when it is free or
++  held by the same issuer, and the suffixed ID only when another issuer holds the usual one (or when the refused ID is the
++  usual one). The page looks up the usual ID's holder (`holderOf`) when the refused ID is not the usual one. Tests changed
++  because they pinned the old behaviour: unit test "gives a reader sentence and offers the suffixed ID" in `plain.test.ts` (now
++  "offers the name's usual ID when it is free, not the suffixed one", plus a suffixed-ID case); walk step 2 in
++  `T09/walk-issuer-id.cjs` (expected the suffixed offer `Use ...-[0-9a-f]{8}` and a suffixed taken ID, now `Use
++  eastmoor-synthetic-utilities-plc`).
++- Adversarial 3 (Low): a name with no Latin letters has no usual ID (`issuerIdFor` returns ""); the refusal then offers nothing
++  and says "Otherwise type an Issuer ID of your own for <name>."
++- Adversarial 5 and the standard note (Low): the service sentence is now `Issuer ID "x" is filed under the name "H", not
++  "N". If that is this issuer under another name, type that name; otherwise use another Issuer ID.` The page sentence and the
++  review-sheet note say the same (`Issuer ID x is filed under the name "H". If that is this issuer under another name, type
++  that name. Otherwise ...`; the note: `... was used for this run because <usual> is filed under the name "H". If that is
++  this issuer under another name, type that name.`). "A different issuer" is gone from both. Python tests that matched
++  "already filed under" now match "filed under the name" (same assertions otherwise).
++- Standard 2 (Low): "its text could not be decoded" only for text file types (txt, text, md, csv, tsv, json, jsonl, html, xml,
++  log); a damaged workbook or PDF (the service reads any non-PDF, non-workbook file as UTF-8, `_pages` in model/handoff.py, so
++  it fails with the decoder's text) says only "could not be read." The "not a zip file" reason is also not given for a
++  workbook. `plain.test.ts` now models the real service message (`'utf-8' codec can't decode byte 0x9c ...` for
++  holdings.xlsx) instead of "File is not a zip file".
++- Standard 3 (Low): two page-level tests in `ConnectedApp.test.tsx`: a refusal at Submit (refused ID the usual one, and a typed
++  ID with the usual one free) clears the review, returns to Documents, shows the sentence on the Issuer ID field
++  (aria-invalid) with its offer; and the review-sheet note.
++- Standard 4 (Low): the round-2 count above is corrected: round 1's code gives 15 failed, 2 passed (re-measured in a scratch
++  checkout of 46d9d25a with the round-2 test files).
++
++### Left
++- Adversarial 6 (fail-open on an unreadable or nameless legacy record): parked, unusual input.
++
++### Tests
++Written first; at the round-2 code they failed: Python submissions plus scheduler 13 failed, 233 passed (the new key cases, the
++non-Latin service test, the new wording); vitest `ConnectedApp.test.tsx` plus `start/` 18 failed (14 in plain.test.ts, the 3 new
++page tests, and one more in ConnectedApp.test.tsx, "asks once Start from this run...", not examined). After: pytest (submissions, scheduler, prior,
++service, react_frontend) 436 passed, 3 skipped; `npx vitest run src/pages/connected` 51 files, 1064 tests passed.
++
++### Probes, walks and gates (exit codes)
++- J5-004 probe (8765, lock): exit 0, NOT REPRODUCED, IDs `northbridge-synthetic-group-internationa` and
++  `northbridge-synthetic-group-int-518e588e` (`after3-j5-004.txt`).
++- walk-issuer-id (8765, lock), extended for items 2 and 3 (step 2 offers `Use eastmoor-synthetic-utilities-plc`; new step 4 for a
++  name with no Latin letters: refused, no `Use` button): exit 0, no FAIL (`after3-walk-issuer-id.txt`).
++- walk-remove-bad-file (8762, lock): exit 0 (`after3-walk-remove-bad-file.txt`; the damaged holdings.xlsx row now reads
++  "holdings.xlsx could not be read.").
++- J2 probes (8762, lock): j2-003 exit 0, `annual-report.pdf could not be read.`, badges Ignored/Selected/Selected;
++  j2-documents-step-mistakes exit 0 (`after3-j2-*.txt`).
++- T07 walks (carried-work, case-date, leave-and-return, payload, random-steps) and T08 walk-t08 (C2_PORT 8749): all exit 0, 0 lines starting FAIL.
++- `npm --prefix web run lint`, `format:check`, `typecheck`, `unused`: exit 0; `npm --prefix web run build`: exit 0.
++- `uv run python tools/quality_gate.py --base edebd9d8`: exit 0, 0 findings, 344 lines in scope.
 +
 +Not verified: that two issuers whose suffixed ID is also taken by a third issuer are told apart (the 8-hex code collides,
 +not constructed; the page then offers no second suffix and says to type another ID); the page on an ID already shared by two
@@ -506,6 +568,93 @@ index 0000000..17feefe
 +RESULT NOT REPRODUCED: Issuer IDs on the review sheets: ["northbridge-synthetic-group-internationa","northbridge-synthetic-group-int-518e588e"] (40 characters); Library cards: ["Northbridge Synthetic Group International Finance plc","Northbridge Synthetic Group International Holdings Limited"] ["1 run","1 run"]; search "Holdings": "Northbridge Synthetic Group International Holdings Limited | NORTHBRIDGE-SYNTHETIC-GROUP-INTERNATIONA | Full credit assessment · 2025-03-31 | Net leverage | 2.25x | -0.75x vs FY2023 | better | FY2024 | Gross leverage | 2.80x | -0.95x vs FY2023 | better | FY2024 | Interest coverage | 4.00x | +0.80x vs FY2023 | better | FY2024 | Revenue | $2,250m | +$150m vs FY2023 | better | FY2024 | Cash | $275m | -$25m vs FY2023 | FY2024 | Open report | 1 run"; each report's own header: ["Northbridge Synthetic Group International Holdings Limited","Northbridge Synthetic Group International Finance plc"]; history rows (no issuer name on them): "| Full credit assessment | As of 31 March 2025 | Finished | Open overview | What changed"
 +R8 blocked requests: 0 
 +console problems: 0; page errors: 0; failed: 0; http>=400: 0
+diff --git a/docs/audit/2026-11-16-final/output/5-repair/T09/after3-j2-003.txt b/docs/audit/2026-11-16-final/output/5-repair/T09/after3-j2-003.txt
+new file mode 100644
+index 0000000..17b7a98
+--- /dev/null
++++ b/docs/audit/2026-11-16-final/output/5-repair/T09/after3-j2-003.txt
+@@ -0,0 +1,4 @@
++alerts: ["annual-report.pdf could not be read."]
++row badges after Inspect: ["Ignored","Selected","Selected"]
++NOT REPRODUCED
++blocked requests: 0; page errors: 0
+diff --git a/docs/audit/2026-11-16-final/output/5-repair/T09/after3-j2-mistakes.txt b/docs/audit/2026-11-16-final/output/5-repair/T09/after3-j2-mistakes.txt
+new file mode 100644
+index 0000000..39073aa
+--- /dev/null
++++ b/docs/audit/2026-11-16-final/output/5-repair/T09/after3-j2-mistakes.txt
+@@ -0,0 +1,31 @@
++
++## J2-006 wrong type alone: setup.exe
++alerts: ["None of the selected documents could be read as an issuer filing. Choose a filing in a supported format."]
++status: ["0 documents inspected, 0 ignored."]
++rows: ["setup.exe / Selected / Remove"]
++remove buttons: ["Remove setup.exe"]
++
++## J2-006 wrong types beside a good file: setup.exe, photo.png, northbridge-filing.txt
++alerts: []
++status: ["1 document inspected, 2 ignored."]
++rows: ["setup.exe / Ignored / Will not be read / Remove","photo.png / Ignored / Will not be read / Remove","northbridge-filing.txt / Inspected / unrecognised / Remove"]
++remove buttons: ["Remove setup.exe","Remove photo.png","Remove northbridge-filing.txt"]
++
++## J2-007 empty file alone: empty.txt (0 bytes)
++alerts: ["empty.txt is empty (0 bytes)."]
++status: ["0 documents inspected, 1 ignored."]
++rows: ["empty.txt / Ignored / empty.txt is empty (0 bytes). / Remove"]
++remove buttons: ["Remove empty.txt"]
++
++## J2-004 same file chosen twice (same name)
++alerts: ["Choose documents with distinct file names."]
++status: []
++rows: ["northbridge-filing.txt / Selected / Remove","northbridge-filing.txt / Selected / Remove"]
++remove buttons: ["Remove northbridge-filing.txt","Remove northbridge-filing.txt"]
++
++## J2-005 same bytes under two names
++alerts: []
++status: ["2 documents inspected, 0 ignored."]
++rows: ["northbridge-filing.txt / Inspected / unrecognised / Remove","copy-of-filing.txt / Inspected / unrecognised / Remove"]
++remove buttons: ["Remove northbridge-filing.txt","Remove copy-of-filing.txt"]
++blocked requests: 0; page errors: 0
+diff --git a/docs/audit/2026-11-16-final/output/5-repair/T09/after3-j5-004.txt b/docs/audit/2026-11-16-final/output/5-repair/T09/after3-j5-004.txt
+new file mode 100644
+index 0000000..17feefe
+--- /dev/null
++++ b/docs/audit/2026-11-16-final/output/5-repair/T09/after3-j5-004.txt
+@@ -0,0 +1,3 @@
++RESULT NOT REPRODUCED: Issuer IDs on the review sheets: ["northbridge-synthetic-group-internationa","northbridge-synthetic-group-int-518e588e"] (40 characters); Library cards: ["Northbridge Synthetic Group International Finance plc","Northbridge Synthetic Group International Holdings Limited"] ["1 run","1 run"]; search "Holdings": "Northbridge Synthetic Group International Holdings Limited | NORTHBRIDGE-SYNTHETIC-GROUP-INTERNATIONA | Full credit assessment · 2025-03-31 | Net leverage | 2.25x | -0.75x vs FY2023 | better | FY2024 | Gross leverage | 2.80x | -0.95x vs FY2023 | better | FY2024 | Interest coverage | 4.00x | +0.80x vs FY2023 | better | FY2024 | Revenue | $2,250m | +$150m vs FY2023 | better | FY2024 | Cash | $275m | -$25m vs FY2023 | FY2024 | Open report | 1 run"; each report's own header: ["Northbridge Synthetic Group International Holdings Limited","Northbridge Synthetic Group International Finance plc"]; history rows (no issuer name on them): "| Full credit assessment | As of 31 March 2025 | Finished | Open overview | What changed"
++R8 blocked requests: 0 
++console problems: 0; page errors: 0; failed: 0; http>=400: 0
+diff --git a/docs/audit/2026-11-16-final/output/5-repair/T09/after3-walk-issuer-id.txt b/docs/audit/2026-11-16-final/output/5-repair/T09/after3-walk-issuer-id.txt
+new file mode 100644
+index 0000000..a2ff7f8
+--- /dev/null
++++ b/docs/audit/2026-11-16-final/output/5-repair/T09/after3-walk-issuer-id.txt
+@@ -0,0 +1,12 @@
++ok   1: Finance gets a suffixed ID  ["northbridge-synthetic-group-int-518e588e"]
++ok   1: the review sheet names the holder of the usual ID  ["nthetic Group International Finance plc Issuer ID northbridge-synthetic-group-int-518e588e As-of date 2025-06-30 Issue classification Not given Submitted by Ana L Documents read northbridge-credit-agreement.txt · credit agreement · executed · found 'Credit Agreement' on page 1 northbridge-filing.txt"]
++ok   2: Submit is not reached; the Issuer ID field shows the refusal  ["se date Issuer name Issuer ID Issuer ID northbridge-synthetic-group-internationa is filed under the name \"Northbridge Synthetic Group International Holdings Limited\". If that is this issuer under another name, type that name. Otherwise use eastmoor-synthetic-utilities-plc for Eastmoor Synthetic Utilities plc, or type another Issuer ID. Use eastmoor-synthetic-utilities-plc Letters a–z, digits and hyphens, up to 40 characters. As-of date "]
++ok   2: the name's usual ID is offered (it is free), not a suffixed one  [["Use eastmoor-synthetic-utilities-plc"]]
++ok   2: the field is marked invalid  [undefined]
++ok   2: taking the offer fills the field  ["eastmoor-synthetic-utilities-plc"]
++ok   2: the review sheet opens with the taken ID  ["eastmoor-synthetic-utilities-plc"]
++ok   3: carry over from latest run carries Finance run (not Holdings) under the suffixed ID  [{"idField":"northbridge-synthetic-group-int-518e588e","intro":"Issuer and case date Starting from run 20261117-150134-01. Review the copied answers, add dates, and inspect its available documents. It did not record which files you chose for the agreement and the portfolio workbook: choose them again on More context. Issuer name Issuer ID Letters a–z, digits and"}]
++ok   4: Submit is not reached; the Issuer ID field asks for an ID of the analyst's own  ["se date Issuer name Issuer ID Issuer ID northbridge-synthetic-group-internationa is filed under the name \"Northbridge Synthetic Group International Holdings Limited\". If that is this issuer under another name, type that name. Otherwise type an Issuer ID of your own for 中国银行. Letters a–z, digits and hyphens, up to 40 characters. As-of date Issue classification Choose classification Investment grade High yield Your name First name and ini"]
++ok   4: no ID is offered  [[]]
++R8 blocked requests: 0 
++console problems: 0; page errors: 0; failed: 0; http>=400: 0
+diff --git a/docs/audit/2026-11-16-final/output/5-repair/T09/after3-walk-remove-bad-file.txt b/docs/audit/2026-11-16-final/output/5-repair/T09/after3-walk-remove-bad-file.txt
+new file mode 100644
+index 0000000..7108b75
+--- /dev/null
++++ b/docs/audit/2026-11-16-final/output/5-repair/T09/after3-walk-remove-bad-file.txt
+@@ -0,0 +1,7 @@
++ok   first refusal names annual-report.pdf in a reader sentence  [["annual-report.pdf could not be read."]]
++ok   annual-report.pdf row is marked Ignored  [["annual-report.pdf Ignored annual-report.pdf could not be read. Remove","holdings.xlsx Selected Remove","northbridge-filing.txt Selected Remove"]]
++ok   after Remove: the next refusal names holdings.xlsx in a reader sentence  [["holdings.xlsx could not be read."]]
++ok   after Remove: annual-report.pdf is gone and does not reappear as Ignored  [["holdings.xlsx Ignored holdings.xlsx could not be read. Remove","northbridge-filing.txt Selected Remove"]]
++ok   after Remove: holdings.xlsx is the Ignored row  [["holdings.xlsx Ignored holdings.xlsx could not be read. Remove","northbridge-filing.txt Selected Remove"]]
++ok   after the last bad file is removed: no refusal and only the readable file remains  [{"a":[],"r":["northbridge-filing.txt Inspected unrecognised Remove"]}]
++blocked requests: 0; page errors: 0
 diff --git a/docs/audit/2026-11-16-final/output/5-repair/T09/before-j2-003.txt b/docs/audit/2026-11-16-final/output/5-repair/T09/before-j2-003.txt
 new file mode 100644
 index 0000000..92748f7
@@ -813,16 +962,19 @@ index 0000000..ba8266f
 +exit=1
 diff --git a/docs/audit/2026-11-16-final/output/5-repair/T09/walk-issuer-id.cjs b/docs/audit/2026-11-16-final/output/5-repair/T09/walk-issuer-id.cjs
 new file mode 100644
-index 0000000..9e0bb8e
+index 0000000..a08e4ba
 --- /dev/null
 +++ b/docs/audit/2026-11-16-final/output/5-repair/T09/walk-issuer-id.cjs
-@@ -0,0 +1,84 @@
+@@ -0,0 +1,104 @@
 +// T09 round 2 walk (J5-004, ruling L18): an Issuer ID is one issuer's, at every route.
 +//  1. Holdings runs under the usual (cut) ID; Finance, with the same first 40 characters, gets a suffixed ID and the
 +//     review sheet says which issuer holds the usual one.
 +//  2. A third issuer types the Holdings ID by hand: the review is refused on the Issuer ID field with a reader
 +//     sentence naming the holder; the page offers the suffixed ID; taking the offer reaches the review sheet.
++//     The offer is Eastmoor's own usual ID (free), not a suffixed one; the refusal says only that the ID is filed under
++//     the holder's name, and what to do if that is this issuer under another name (round 3).
 +//  3. "Carry over from latest run" on the Finance name looks up the suffixed ID: it carries Finance's run, not Holdings'.
++//  4. A name with no Latin letters types the Holdings ID: refused, no ID offered, the analyst is asked to type one.
 +// Exit 1 when a check fails, 0 when every check holds. Port 8765 (lock: /tmp/repair1-port-8765.lock):
 +//   timeout 900 flock /tmp/repair1-port-8765.lock timeout 600 node docs/audit/2026-11-16-final/output/5-repair/T09/walk-issuer-id.cjs
 +"use strict";
@@ -858,7 +1010,7 @@ index 0000000..9e0bb8e
 +  check("1: Finance gets a suffixed ID", Boolean(id), id);
 +  check(
 +    "1: the review sheet names the holder of the usual ID",
-+    sheet.includes(`${USUAL} is already filed under ${HOLDINGS}, a different issuer.`),
++    sheet.includes(`${USUAL} is filed under the name "${HOLDINGS}". If that is this issuer under another name, type that name.`),
 +    sheet.slice(sheet.indexOf("Issuer ID") - 40, sheet.indexOf("Issuer ID") + 260),
 +  );
 +
@@ -876,14 +1028,14 @@ index 0000000..9e0bb8e
 +    failed = String(error).slice(0, 80);
 +  }
 +  const text = await main(page);
-+  const sentence = `Issuer ID ${USUAL} is already used for ${HOLDINGS}, a different issuer.`;
++  const sentence = `Issuer ID ${USUAL} is filed under the name "${HOLDINGS}". If that is this issuer under another name, type that name.`;
 +  check("2: Submit is not reached; the Issuer ID field shows the refusal", Boolean(failed) && text.includes(sentence), text.slice(Math.max(0, text.indexOf("Issuer ID") - 20), text.indexOf("Issuer ID") + 420));
-+  const offer = page.getByRole("button", { name: /^Use [a-z0-9-]+-[0-9a-f]{8}$/ });
-+  check("2: the suffixed ID is offered", (await offer.count()) === 1, await offer.allInnerTexts());
++  const offer = page.getByRole("button", { name: /^Use eastmoor-synthetic-utilities-plc$/ });
++  check("2: the name's usual ID is offered (it is free), not a suffixed one", (await offer.count()) === 1, await offer.allInnerTexts());
 +  check("2: the field is marked invalid", (await page.locator('[data-field="issuer_id"]').getAttribute("aria-invalid")) === "true");
 +  await offer.click();
 +  const taken = await page.getByLabel("Issuer ID", { exact: true }).inputValue();
-+  check("2: taking the offer fills the field", /^eastmoor-[a-z0-9-]+-[0-9a-f]{8}$/.test(taken), taken);
++  check("2: taking the offer fills the field", taken === "eastmoor-synthetic-utilities-plc", taken);
 +  await page.getByRole("button", { name: "Continue to purpose", exact: true }).click();
 +  await page.getByRole("button", { name: "Continue to context", exact: true }).click();
 +  await page.getByRole("button", { name: "Review run", exact: true }).click();
@@ -898,6 +1050,23 @@ index 0000000..9e0bb8e
 +  const carried = await main(page);
 +  const idField = await page.getByLabel("Issuer ID", { exact: true }).inputValue();
 +  check("3: carry over from latest run carries Finance run (not Holdings) under the suffixed ID", idField === id && carried.includes(`Starting from run ${b}.`), { idField, intro: carried.slice(carried.indexOf("Issuer and case date"), carried.indexOf("Issuer and case date") + 300) });
++
++  // 4. a name with no Latin letters: no invalid ID is offered
++  let failed4 = "";
++  try {
++    await lib.submitRun(page, origin, {
++      issuer: "中国银行",
++      asOf: "2025-06-30",
++      onDocuments: async (p) => {
++        await p.getByLabel("Issuer ID", { exact: true }).fill(USUAL);
++      },
++    });
++  } catch (error) {
++    failed4 = String(error).slice(0, 80);
++  }
++  const text4 = await main(page);
++  check("4: Submit is not reached; the Issuer ID field asks for an ID of the analyst's own", Boolean(failed4) && text4.includes("Otherwise type an Issuer ID of your own for 中国银行."), text4.slice(Math.max(0, text4.indexOf("Issuer ID") - 20), text4.indexOf("Issuer ID") + 420));
++  check("4: no ID is offered", (await page.getByRole("button", { name: /^Use / }).count()) === 0, await page.getByRole("button", { name: /^Use / }).allInnerTexts());
 +}).then(() => {
 +  process.exit(failures.length ? 1 : process.exitCode || 0);
 +});
@@ -970,7 +1139,7 @@ index 0000000..c2fbcb6
 +  },
 +);
 diff --git a/src/deploy_workflow/run_start/submissions.py b/src/deploy_workflow/run_start/submissions.py
-index 8d9e14a..adaae43 100644
+index 8d9e14a..93eb652 100644
 --- a/src/deploy_workflow/run_start/submissions.py
 +++ b/src/deploy_workflow/run_start/submissions.py
 @@ -26,6 +26,7 @@ from typing import Any, BinaryIO, TypedDict
@@ -981,7 +1150,7 @@ index 8d9e14a..adaae43 100644
  from deploy_workflow.inbox.filing import safe_name
  from deploy_workflow.inbox.layout import MAX_ISSUER_ID, Layout
  from deploy_workflow.inbox.runs import EFFORTS, MODELS, config_for
-@@ -617,6 +618,42 @@ def context_bytes(answers: Answers) -> bytes:
+@@ -617,6 +618,47 @@ def context_bytes(answers: Answers) -> bytes:
          raise Refused("the context holds text that cannot be stored (a lone surrogate)") from None
  
  
@@ -989,10 +1158,14 @@ index 8d9e14a..adaae43 100644
 +    """An issuer name reduced to the letters and digits that tell two issuers apart.
 +
 +    The page reduces a name the same way (``issuerKey`` in ``start/plain.ts``) and the two are
-+    pinned by the same literal cases: NFKD, lower case, marks dropped, then only a-z and 0-9."""
++    pinned by the same literal cases: NFKD, lower case, marks dropped, then only Unicode letters
++    and digits kept, so names in any script keep their own letters (and "ß" and "ø" stay, as no
++    decomposition removes them). Known limit: Python and Node carry different Unicode versions, so
++    about 37 recent characters are letters in one and not in the other; two names that differ
++    only in such a character may compare differently on the page and here. The service's answer
++    is the one that counts, and no table is kept to hide the difference."""
 +    text = unicodedata.normalize("NFKD", name).lower()
-+    text = "".join(ch for ch in text if not unicodedata.category(ch).startswith("M"))
-+    return re.sub(r"[^a-z0-9]+", "", text)
++    return "".join(ch for ch in text if unicodedata.category(ch)[0] in "LN")
 +
 +
 +def refuse_filed_elsewhere(layout: Layout, answers: Answers) -> None:
@@ -1016,15 +1189,16 @@ index 8d9e14a..adaae43 100644
 +        return
 +    holder = max(held, key=lambda r: (r.as_of, r.id)).issuer_name
 +    raise Refused(
-+        f'Issuer ID "{issuer_id}" is already filed under "{holder}", a different issuer from '
-+        f'"{name.strip()}". Use another Issuer ID for this issuer.'
++        f'Issuer ID "{issuer_id}" is filed under the name "{holder}", not "{name.strip()}". '
++        "If that is this issuer under another name, type that name; "
++        "otherwise use another Issuer ID."
 +    )
 +
 +
  def _digest(root: Path, answers: Answers) -> str:
      files = []
      for rel in sorted(_stored(root, strict=True)):
-@@ -655,6 +692,7 @@ def digest(layout: Layout, sid: str, answers: Answers) -> str:
+@@ -655,6 +697,7 @@ def digest(layout: Layout, sid: str, answers: Answers) -> str:
      ``level`` and ``submitted_by`` are not covered: they change what the page shows, not the run.
      The approval's digest is this one with the earlier run named at approval folded in (`bound`)."""
      answers = validated(answers)
@@ -1032,7 +1206,7 @@ index 8d9e14a..adaae43 100644
      root = files_folder(layout, sid)
      value = _digest(root, answers)
      if not root.is_dir():  # a seal renamed the folder before the walk: it saw nothing
-@@ -791,6 +829,7 @@ def _summarise(layout: Layout, sid: str, answers: Answers) -> dict[str, Any]:
+@@ -791,6 +834,7 @@ def _summarise(layout: Layout, sid: str, answers: Answers) -> dict[str, Any]:
                      return {"error": _CHANGED}
                  run = load_context(context_bytes(answers))
                  refuse_deactivated(run.run.pathway)
@@ -1041,7 +1215,7 @@ index 8d9e14a..adaae43 100644
                  if len(run.identity.issuer_id) > MAX_ISSUER_ID:
                      raise Refused(
 diff --git a/tests/test_run_start_scheduler.py b/tests/test_run_start_scheduler.py
-index 92bc161..e9d5b26 100644
+index 92bc161..8a11a90 100644
 --- a/tests/test_run_start_scheduler.py
 +++ b/tests/test_run_start_scheduler.py
 @@ -769,3 +769,53 @@ def test_a_full_queue_refuses_a_submission_before_sealing_it(root, fake_env, mon
@@ -1069,7 +1243,7 @@ index 92bc161..e9d5b26 100644
 +        ),
 +    )
 +    w = Scheduler(settings(root))
-+    with pytest.raises(Refused, match='already filed under "Another Issuer plc"'):
++    with pytest.raises(Refused, match='filed under the name "Another Issuer plc"'):
 +        w.submit(sid, answers, d)
 +    assert [r.id for r in load_all(layout(root))] == ["20261109-000009-01"]
 +    assert not list(layout(root).drops.iterdir())
@@ -1099,7 +1273,7 @@ index 92bc161..e9d5b26 100644
 +    assert w.submit(sid, answers, approved(root, sid, answers)).status == "queued"
 +    w.close()
 diff --git a/tests/test_run_start_submissions.py b/tests/test_run_start_submissions.py
-index 9013051..b463777 100644
+index 9013051..4947218 100644
 --- a/tests/test_run_start_submissions.py
 +++ b/tests/test_run_start_submissions.py
 @@ -18,6 +18,7 @@ import pytest
@@ -1110,7 +1284,7 @@ index 9013051..b463777 100644
  from deploy_workflow.inbox.layout import Layout, ensure_layout
  from deploy_workflow.owners import cpos_launch
  from deploy_workflow.owners.cpos_launch import prepare, read_documents
-@@ -1716,3 +1717,134 @@ def test_two_names_that_agree_for_eighty_characters_are_both_kept(layout):
+@@ -1716,3 +1717,147 @@ def test_two_names_that_agree_for_eighty_characters_are_both_kept(layout):
      folder = files_folder(layout, sid)
      assert (folder / first).read_bytes() == b"one"
      assert (folder / second).read_bytes() == b"two"
@@ -1124,12 +1298,16 @@ index 9013051..b463777 100644
 +    ("Acme Corp", "acmecorp"),
 +    ("ACME  corp.", "acmecorp"),
 +    ("Åre Group A/S", "aregroupas"),
-+    ("Straße Holdings plc", "straeholdingsplc"),
-+    ("Ørsted A/S", "rstedas"),
++    ("Straße Holdings plc", "straßeholdingsplc"),
++    ("Ørsted A/S", "ørstedas"),
 +    ("Ａｃｍｅ Ｃｏｒｐ", "acmecorp"),
 +    ("Nestlé S.A. 2", "nestlesa2"),
 +    ("İstanbul Ltd", "istanbulltd"),
 +    ("  ", ""),
++    ("中国银行 Ltd", "中国银行ltd"),
++    ("中国建设银行 Ltd", "中国建设银行ltd"),
++    ("Газпром ПАО", "газпромпао"),
++    ("Йога-Центр", "иогацентр"),
 +]
 +
 +
@@ -1171,18 +1349,27 @@ index 9013051..b463777 100644
 +    got = summary(layout, sid, answers)
 +    assert "digest" not in got
 +    assert got["error"] == (
-+        'Issuer ID "acme" is already filed under "Acme Corp", a different issuer from '
-+        '"Eastmoor Synthetic Utilities plc". Use another Issuer ID for this issuer.'
++        'Issuer ID "acme" is filed under the name "Acme Corp", not "Eastmoor Synthetic Utilities '
++        'plc". If that is this issuer under another name, type that name; otherwise use another '
++        "Issuer ID."
 +    )
-+    with pytest.raises(Refused, match="already filed under"):
++    with pytest.raises(Refused, match="filed under the name"):
 +        digest(layout, sid, answers)
++
++
++def test_two_different_non_latin_names_are_different_issuers(layout, tmp_path):
++    file_run(layout, "20260101-000001-01", "issuer-1", "中国银行 Ltd")
++    sid, _ = upload_issuer(layout, tmp_path)
++    got = summary(layout, sid, named(tmp_path, "issuer-1", "中国建设银行 Ltd"))
++    assert 'filed under the name "中国银行 Ltd"' in got["error"]
++    assert not summary(layout, sid, named(tmp_path, "issuer-1", "中国银行  LTD"))["error"]
 +
 +
 +def test_a_carried_id_whose_name_was_then_changed_is_refused(layout, tmp_path):
 +    file_run(layout, "20260101-000001-01", "acme", "Acme Corp")
 +    sid, _ = upload_issuer(layout, tmp_path)
 +    got = summary(layout, sid, named(tmp_path, "acme", "Acme Holdings Ltd"))
-+    assert 'already filed under "Acme Corp"' in got["error"]
++    assert 'filed under the name "Acme Corp"' in got["error"]
 +
 +
 +def test_the_two_northbridge_long_names_do_not_share_an_id(layout, tmp_path):
@@ -1199,7 +1386,7 @@ index 9013051..b463777 100644
 +        sid,
 +        named(tmp_path, long_id, "Northbridge Synthetic Group International Finance plc"),
 +    )
-+    assert "already filed under" in got["error"] and "digest" not in got
++    assert "filed under the name" in got["error"] and "digest" not in got
 +    # ... the suffixed ID the page offers is free.
 +    free = named(
 +        tmp_path,
@@ -1226,7 +1413,7 @@ index 9013051..b463777 100644
 +            "Northbridge Synthetic Group Investments",
 +        ),
 +    )
-+    assert "already filed under" in got["error"]
++    assert "filed under the name" in got["error"]
 +
 +
 +def test_the_same_issuer_under_its_own_id_is_accepted_however_it_is_typed(layout, tmp_path):
@@ -1244,9 +1431,9 @@ index 9013051..b463777 100644
 +    sid, _ = upload_issuer(layout, tmp_path)
 +    assert summary(layout, sid, named(tmp_path, "acme", "Acme Corp"))["error"] == ""
 +    assert summary(layout, sid, named(tmp_path, "acme", "Acme Finance plc"))["error"] == ""
-+    assert "already filed under" in summary(layout, sid, named(tmp_path, "acme", "Other"))["error"]
++    assert "filed under the name" in summary(layout, sid, named(tmp_path, "acme", "Other"))["error"]
 diff --git a/web/src/pages/connected/ConnectedApp.test.tsx b/web/src/pages/connected/ConnectedApp.test.tsx
-index d3ba029..33e0830 100644
+index d3ba029..2ebbbe3 100644
 --- a/web/src/pages/connected/ConnectedApp.test.tsx
 +++ b/web/src/pages/connected/ConnectedApp.test.tsx
 @@ -308,11 +308,12 @@ describe("connected run start", () => {
@@ -1273,11 +1460,76 @@ index d3ba029..33e0830 100644
      expect(typeof rawSubmit).toBe("string");
      expect(JSON.parse(rawSubmit as string)).toEqual({
        answers: body,
+@@ -391,6 +392,64 @@ describe("connected run start", () => {
+     },
+   );
+ 
++  const refusedId = (id: string, holder: string) =>
++    `Issuer ID "${id}" is filed under the name "${holder}", not "Synthetic Générale". If that is this issuer under another name, type that name; otherwise use another Issuer ID.`;
++
++  it.each([
++    // The refused ID is the name's usual one: the suffixed ID is offered.
++    ["synthetic-generale", /^Use synthetic-generale-[0-9a-f]{8}$/],
++    // A typed ID that is not the usual one, the usual one being free: the usual ID is offered.
++    ["legacy-id", /^Use synthetic-generale$/],
++  ])(
++    "a refusal of Issuer ID %s at Submit clears the review and shows it on the field with its offer",
++    async (id, offerName) => {
++      const response = Response.json({ error: refusedId(id, "Other Co") }, { status: 400 });
++      testingFetch(plan, response);
++      const navigate = vi.fn();
++      render(<ConnectedApp path="/start" mode="synthetic" navigate={navigate} />);
++      await review();
++      const submit = await screen.findByRole("button", { name: "Submit run" });
++      approve();
++      await confirmSynthetic(submit);
++      expect(
++        await screen.findByText(
++          new RegExp(
++            `^Issuer ID ${id} is filed under the name "Other Co"\\. If that is this issuer`,
++          ),
++        ),
++      ).toBeInTheDocument();
++      expect(screen.queryByRole("button", { name: "Submit run" })).toBeNull();
++      expect(screen.getByRole("heading", { name: "Documents" })).toBeInTheDocument();
++      expect(screen.getByLabelText("Issuer ID", { exact: true })).toHaveAttribute(
++        "aria-invalid",
++        "true",
++      );
++      expect(screen.getByRole("button", { name: offerName })).toBeInTheDocument();
++      expect(screen.queryByText(/different issuer/)).toBeNull();
++      expect(navigate).not.toHaveBeenCalled();
++    },
++  );
++
++  it("tells the reader on the review sheet why a suffixed Issuer ID was used, saying only what is known", async () => {
++    testingFetch(plan, undefined, {
++      "/api/issuers/synthetic-generale": {
++        latest_run: "r1",
++        runs: 1,
++        latest_as_of: "2026-01-01",
++        issuer_name: "Other Co",
++      },
++    });
++    render(<ConnectedApp path="/start" mode="synthetic" />);
++    await review();
++    await screen.findByRole("button", { name: "Submit run" });
++    expect(
++      screen.getByText(
++        /^Issuer ID synthetic-generale-[0-9a-f]{8} was used for this run because synthetic-generale is filed under the name "Other Co"\. If that is this issuer under another name, type that name\.$/,
++      ),
++    ).toBeInTheDocument();
++    expect(screen.queryByText(/different issuer\./)).toBeNull();
++  });
++
+   it("retries an uncertain submission with the same stored answers and digest", async () => {
+     let attempts = 0;
+     const fetchMock = testingFetch(plan, () => {
 diff --git a/web/src/pages/connected/StartRun.tsx b/web/src/pages/connected/StartRun.tsx
-index 077f32d..4db199c 100644
+index 077f32d..291e961 100644
 --- a/web/src/pages/connected/StartRun.tsx
 +++ b/web/src/pages/connected/StartRun.tsx
-@@ -77,11 +77,14 @@ import {
+@@ -77,11 +77,15 @@ import {
    CASE_KINDS,
    CONTEXT_DETAILS,
    documentDescription,
@@ -1288,11 +1540,12 @@ index 077f32d..4db199c 100644
    ISSUER_DETAILS,
    ISSUER_ID,
 +  issuerIdFor,
++  filedElsewhere,
 +  issuerIdRefusal,
    ISSUER_LIST_BOXES,
    ISSUER_TEXT_BOXES,
    LEGAL_CHOICES,
-@@ -147,6 +150,7 @@ const PATHWAY_CARDS = Object.entries(PATHWAYS).map(([id, pathway]) => ({
+@@ -147,6 +151,7 @@ const PATHWAY_CARDS = Object.entries(PATHWAYS).map(([id, pathway]) => ({
  
  type FieldKey =
    | "issuer_name"
@@ -1300,7 +1553,7 @@ index 077f32d..4db199c 100644
    | "submitted_by"
    | "cutoff"
    | "current_period"
-@@ -172,6 +176,8 @@ class FieldProblem extends Error {
+@@ -172,6 +177,8 @@ class FieldProblem extends Error {
      readonly field: FieldKey,
      message: string,
      readonly others?: readonly string[],
@@ -1309,7 +1562,7 @@ index 077f32d..4db199c 100644
    ) {
      super(message);
    }
-@@ -201,7 +207,9 @@ function refusedField(
+@@ -201,7 +208,9 @@ function refusedField(
  
  /** The step a control is drawn on: the issuer name and analyst name on Documents, the rest on Context. */
  export function stepOfField(field: FieldKey): FormStep {
@@ -1320,7 +1573,7 @@ index 077f32d..4db199c 100644
  }
  
  function problemAttrs(problem: FieldProblem | undefined, field: FieldKey) {
-@@ -257,6 +265,22 @@ type Forms = {
+@@ -257,6 +266,22 @@ type Forms = {
    assumptions?: AssumptionsForm;
  };
  type LatestIssuerInputs = { run: string; prior: PriorInputs };
@@ -1343,7 +1596,7 @@ index 077f32d..4db199c 100644
  
  async function latestIssuerInputs(issuer: string): Promise<LatestIssuerInputs | null> {
    const latest = await getLatestIssuerRun(issuer);
-@@ -326,6 +350,9 @@ type IntakeView = {
+@@ -326,6 +351,9 @@ type IntakeView = {
    rowsOf: (kind: RowKind) => Row[];
    changeRows: (kind: RowKind, rows: Row[]) => void;
    problem?: FieldProblem;
@@ -1353,7 +1606,7 @@ index 077f32d..4db199c 100644
    focusProblem: () => void;
    changeModel: (value: string) => void;
    changeEffort: (value: string) => void;
-@@ -345,6 +372,8 @@ function useIntakeIdentityState(
+@@ -345,6 +373,8 @@ function useIntakeIdentityState(
    const [context, setContext] = useState<Context>(() => startingContext(template, initial?.prior));
    const [purposeTouched, setPurposeTouched] = useState(Boolean(initial?.prior.context));
    const [customSlug, setCustomSlug] = useState(initial?.prior.issuer_id);
@@ -1362,7 +1615,7 @@ index 077f32d..4db199c 100644
    const [newestOverride, setNewestOverride] = useState<string>();
    return {
      copy,
-@@ -361,6 +390,8 @@ function useIntakeIdentityState(
+@@ -361,6 +391,8 @@ function useIntakeIdentityState(
      setPurposeTouched,
      customSlug,
      setCustomSlug,
@@ -1371,7 +1624,7 @@ index 077f32d..4db199c 100644
      newestOverride,
      setNewestOverride,
    };
-@@ -513,6 +544,7 @@ function shownCapText(cap: number | null) {
+@@ -513,6 +545,7 @@ function shownCapText(cap: number | null) {
  function intakeRunDetails({
    context,
    customSlug,
@@ -1379,7 +1632,7 @@ index 077f32d..4db199c 100644
    caps,
    files,
    copy,
-@@ -523,6 +555,7 @@ function intakeRunDetails({
+@@ -523,6 +556,7 @@ function intakeRunDetails({
  }: {
    context: Context;
    customSlug?: string;
@@ -1387,7 +1640,7 @@ index 077f32d..4db199c 100644
    caps: Record<string, string>;
    files: File[];
    copy?: { prior: PriorInputs };
-@@ -536,7 +569,10 @@ function intakeRunDetails({
+@@ -536,7 +570,10 @@ function intakeRunDetails({
    return {
      run,
      identity,
@@ -1399,7 +1652,7 @@ index 077f32d..4db199c 100644
      requested: pathwayModules(run.pathway),
      cap: selectedCap ? Number(selectedCap) : null,
      earnings: run.pathway === "earnings_update",
-@@ -744,21 +780,41 @@ function DocumentFields({
+@@ -744,21 +781,41 @@ function DocumentFields({
          </label>
          <FieldMessage problem={view.problem} field="issuer_name" />
        </div>
@@ -1456,7 +1709,7 @@ index 077f32d..4db199c 100644
        <div className="grid content-start gap-1">
          <label className={label}>
            As-of date
-@@ -1401,6 +1457,8 @@ function IntakeForm({
+@@ -1401,6 +1458,8 @@ function IntakeForm({
      setPurposeTouched,
      customSlug,
      setCustomSlug,
@@ -1465,7 +1718,7 @@ index 077f32d..4db199c 100644
      newestOverride,
      setNewestOverride,
    } = identityState;
-@@ -1476,6 +1534,7 @@ function IntakeForm({
+@@ -1476,6 +1535,7 @@ function IntakeForm({
      intakeRunDetails({
        context,
        customSlug,
@@ -1473,7 +1726,7 @@ index 077f32d..4db199c 100644
        caps,
        files,
        copy,
-@@ -1508,7 +1567,7 @@ function IntakeForm({
+@@ -1508,7 +1568,7 @@ function IntakeForm({
      key: K,
      value: Context["identity"][K],
    ) {
@@ -1482,7 +1735,7 @@ index 077f32d..4db199c 100644
      setContext((previous) => ({ ...previous, identity: { ...previous.identity, [key]: value } }));
    }
  
-@@ -1595,9 +1654,31 @@ function IntakeForm({
+@@ -1595,9 +1655,31 @@ function IntakeForm({
        }
        draft.copied = true;
      }
@@ -1516,7 +1769,7 @@ index 077f32d..4db199c 100644
    }
  
    async function discardDocument(name: string, file?: File) {
-@@ -1618,7 +1699,7 @@ function IntakeForm({
+@@ -1618,7 +1700,7 @@ function IntakeForm({
            Object.entries(previous).filter(([, chosen]) => chosen !== (stored || name)),
          ),
        );
@@ -1525,7 +1778,7 @@ index 077f32d..4db199c 100644
      });
    }
  
-@@ -1636,7 +1717,9 @@ function IntakeForm({
+@@ -1636,7 +1718,9 @@ function IntakeForm({
    }
  
    async function copyLatestWork() {
@@ -1536,7 +1789,7 @@ index 077f32d..4db199c 100644
      if (!latest) {
        setPriorNote("No earlier run was found for this issuer.");
        return;
-@@ -1674,7 +1757,27 @@ function IntakeForm({
+@@ -1674,7 +1758,34 @@ function IntakeForm({
      await withDraft("copy", copyLatestWork);
    }
  
@@ -1555,9 +1808,16 @@ index 077f32d..4db199c 100644
 +    return id;
 +  }
 +
-+  /** A refusal of an ID filed under another issuer, as a problem on the Issuer ID field. */
-+  function idProblem(failure: unknown) {
-+    const refusal = failure instanceof RequestError ? issuerIdRefusal(failure.message) : undefined;
++  /**
++   * A refusal of an ID filed under another issuer, as a problem on the Issuer ID field. When the
++   * refused ID is not the name's usual one, who holds the usual one decides what is offered.
++   */
++  async function idProblem(failure: unknown) {
++    const found = failure instanceof RequestError ? filedElsewhere(failure.message) : undefined;
++    if (!(failure instanceof RequestError) || !found) return undefined;
++    const usual = issuerSlug(found.name);
++    const usualHolder = usual && usual !== found.id ? await holderOf(usual) : undefined;
++    const refusal = issuerIdRefusal(failure.message, usualHolder);
 +    return refusal && new FieldProblem("issuer_id", refusal.sentence, undefined, refusal.offer);
 +  }
 +
@@ -1565,7 +1825,7 @@ index 077f32d..4db199c 100644
      if (run.cutoff && run.cutoff > run.as_of)
        throw new FieldProblem("cutoff", "Research cutoff must be on or before the as-of date.");
      const available = new Set(result.documents.map(storedName));
-@@ -1694,7 +1797,7 @@ function IntakeForm({
+@@ -1694,7 +1805,7 @@ function IntakeForm({
          ...context,
          ...details,
          run: { ...run, cutoff: run.cutoff || run.as_of },
@@ -1574,7 +1834,7 @@ index 077f32d..4db199c 100644
          ...(context.attachments
            ? {
                attachments: {
-@@ -1772,11 +1875,11 @@ function IntakeForm({
+@@ -1772,12 +1883,14 @@ function IntakeForm({
      const { draft, result } = await refreshDocuments();
      if (!result.documents.length)
        throw new Error("The service could not read any of the selected documents.");
@@ -1582,22 +1842,27 @@ index 077f32d..4db199c 100644
 +    const answers = makeAnswers(result, details, await settleIssuerId());
      const noteAt = noteIndex(details, analystNote);
      const shownCap = capForPathway(caps, answers.context.run.pathway);
-     const summary = await getSummary(draft.id, answers, shownCap).catch((failure: unknown) => {
+-    const summary = await getSummary(draft.id, answers, shownCap).catch((failure: unknown) => {
 -      throw refusedField(failure, requested, noteAt) ?? failure;
-+      throw idProblem(failure) ?? refusedField(failure, requested, noteAt) ?? failure;
-     });
+-    });
++    const summary = await getSummary(draft.id, answers, shownCap).catch(
++      async (failure: unknown) => {
++        throw (await idProblem(failure)) ?? refusedField(failure, requested, noteAt) ?? failure;
++      },
++    );
      requireSummaryCap(summary, shownCap);
      if (!summary.digest) throw new Error("The service did not issue an approval for this run.");
-@@ -1883,6 +1986,8 @@ function IntakeForm({
+     const newestDate = newestOverride ?? newestPeriod(result);
+@@ -1883,6 +1996,8 @@ function IntakeForm({
            setAccepted(new Set());
            setApproved(false);
            setSubmitUncertain(false);
-+          const taken = idProblem(failure);
++          const taken = await idProblem(failure);
 +          if (taken) throw taken;
            setError(`${asSentence(errorText(failure))} Review the run again before submitting.`);
          } else {
            setSubmitUncertain(true);
-@@ -2091,7 +2196,7 @@ function IntakeForm({
+@@ -2091,7 +2206,7 @@ function IntakeForm({
        changeRun(key, value);
      },
      changeIssuerId: (value) => {
@@ -1606,13 +1871,13 @@ index 077f32d..4db199c 100644
        setCustomSlug(value);
      },
      changeSubmittedBy: (value) => {
-@@ -2128,6 +2233,14 @@ function IntakeForm({
+@@ -2128,6 +2243,14 @@ function IntakeForm({
      },
      toggleModule,
      problem: fieldError,
 +    idNote:
 +      review && settledSlug?.holder && review.answers.context.identity.issuer_id === settledSlug.id
-+        ? `Issuer ID ${settledSlug.id} was used for this run because ${issuerSlug(settledSlug.name)} is already filed under ${settledSlug.holder}, a different issuer.`
++        ? `Issuer ID ${settledSlug.id} was used for this run because ${issuerSlug(settledSlug.name)} is filed under the name "${settledSlug.holder}". If that is this issuer under another name, type that name.`
 +        : "",
 +    useIssuerId: (id) => {
 +      clearProblem("issuer_id");
@@ -1621,7 +1886,7 @@ index 077f32d..4db199c 100644
      focusProblem: () => {
        if (fieldError) focusField(fieldError.field);
      },
-@@ -2312,6 +2425,7 @@ function IntakePanels(props: IntakePanelsProps) {
+@@ -2312,6 +2435,7 @@ function IntakePanels(props: IntakePanelsProps) {
              capAvailable={Boolean(cap)}
              synthetic={synthetic}
              ready={ready}
@@ -1629,7 +1894,7 @@ index 077f32d..4db199c 100644
              onAccept={onAccept}
              onApprove={onApprove}
              onEdit={onEdit}
-@@ -2353,12 +2467,14 @@ function ReviewConfirmation({
+@@ -2353,12 +2477,14 @@ function ReviewConfirmation({
    capAvailable,
    synthetic,
    ready,
@@ -1644,7 +1909,7 @@ index 077f32d..4db199c 100644
    review: Review;
    accepted: Set<string>;
    approved: boolean;
-@@ -2401,6 +2517,7 @@ function ReviewConfirmation({
+@@ -2401,6 +2527,7 @@ function ReviewConfirmation({
          onModules={onModules}
          onAccept={onAccept}
        />
@@ -1653,7 +1918,7 @@ index 077f32d..4db199c 100644
          <p id="run-submit-blocker" className="text-sm text-text-secondary">
            {blocker}
 diff --git a/web/src/pages/connected/start/plain.test.ts b/web/src/pages/connected/start/plain.test.ts
-index 08f95a8..48bca42 100644
+index 08f95a8..77759ba 100644
 --- a/web/src/pages/connected/start/plain.test.ts
 +++ b/web/src/pages/connected/start/plain.test.ts
 @@ -1,5 +1,15 @@
@@ -1673,7 +1938,7 @@ index 08f95a8..48bca42 100644
  
  const LOOKUP_LINES: [string, string][] = [
    [
-@@ -460,3 +470,156 @@ describe("refusalProblems: each problem with the control that sets its path", ()
+@@ -460,3 +470,195 @@ describe("refusalProblems: each problem with the control that sets its path", ()
      expect(refusalProblems("valuation.basis: is required.", lite)[0]?.field).toBe("valuation");
    });
  });
@@ -1726,10 +1991,21 @@ index 08f95a8..48bca42 100644
 +      files,
 +    );
 +    expect(got.file).toBe("annual-report.pdf");
-+    expect(got.sentence).toBe(
-+      "annual-report.pdf could not be read: its text could not be decoded.",
-+    );
-+    expect(got.sentence).not.toMatch(/codec|byte|utf|PDF file/);
++    expect(got.sentence).toBe("annual-report.pdf could not be read.");
++    expect(got.sentence).not.toMatch(/codec|byte|utf|PDF file|decoded/);
++  });
++  it("gives the decoding reason only for a text file; a damaged workbook or PDF is only unreadable", () => {
++    // The service reads anything that is not a PDF or a workbook by its magic bytes as UTF-8 text
++    // (`_pages` in model/handoff.py), so a damaged workbook or PDF fails with the decoder's text.
++    const decode = "'utf-8' codec can't decode byte 0x9c in position 10: invalid start byte";
++    for (const name of ["holdings.xlsx", "deck.pdf", "photo.png"])
++      expect(documentRefusal(`Cannot read ${name}: ${decode}`, []).sentence).toBe(
++        `${name} could not be read.`,
++      );
++    for (const name of ["notes.txt", "data.CSV", "page.html"])
++      expect(documentRefusal(`Cannot read ${name}: ${decode}`, []).sentence).toBe(
++        `${name} could not be read: its text could not be decoded.`,
++      );
 +  });
 +  it("keeps the file name's own case and says an empty file is empty", () => {
 +    expect(documentRefusal("Empty.txt has no extractable text (scanned image?)", files)).toEqual({
@@ -1755,7 +2031,7 @@ index 08f95a8..48bca42 100644
 +        "notes.txt",
 +        "'utf-8' codec can't decode byte 0xe9 in position 4: invalid continuation byte",
 +      ],
-+      ["holdings.xlsx", "File is not a zip file"],
++      ["holdings.xlsx", "'utf-8' codec can't decode byte 0x9c in position 10: invalid start byte"],
 +      ["deck.pdf", "File has not been decrypted"],
 +    ] as const) {
 +      const got = documentRefusal(`Cannot read ${name}: ${detail}`, []);
@@ -1784,20 +2060,26 @@ index 08f95a8..48bca42 100644
 +    ["Acme Corp", "acmecorp"],
 +    ["ACME  corp.", "acmecorp"],
 +    ["Åre Group A/S", "aregroupas"],
-+    ["Straße Holdings plc", "straeholdingsplc"],
-+    ["Ørsted A/S", "rstedas"],
++    ["Straße Holdings plc", "straßeholdingsplc"],
++    ["Ørsted A/S", "ørstedas"],
 +    ["Ａｃｍｅ Ｃｏｒｐ", "acmecorp"],
 +    ["Nestlé S.A. 2", "nestlesa2"],
 +    ["İstanbul Ltd", "istanbulltd"],
 +    ["  ", ""],
++    ["中国银行 Ltd", "中国银行ltd"],
++    ["中国建设银行 Ltd", "中国建设银行ltd"],
++    ["Газпром ПАО", "газпромпао"],
++    ["Йога-Центр", "иогацентр"],
 +  ])("reduces %s to %s", (name, key) => {
 +    expect(issuerKey(name)).toBe(key);
 +  });
 +});
 +
 +describe("issuerIdRefusal", () => {
-+  const message =
-+    'Issuer ID "acme" is already filed under "Acme Corp", a different issuer from "Eastmoor Plc". Use another Issuer ID for this issuer.';
++  const refused = (id: string, holder: string, name: string) =>
++    `Issuer ID "${id}" is filed under the name "${holder}", not "${name}". If that is this issuer under another name, type that name; otherwise use another Issuer ID.`;
++  const message = refused("acme", "Acme Corp", "Eastmoor Plc");
++  const ifSame = "If that is this issuer under another name, type that name.";
 +  it("reads the service's refusal back into the holder and the name", () => {
 +    expect(filedElsewhere(message)).toEqual({
 +      id: "acme",
@@ -1805,33 +2087,55 @@ index 08f95a8..48bca42 100644
 +      name: "Eastmoor Plc",
 +    });
 +    expect(filedElsewhere("Something else.")).toBeUndefined();
-+    expect(
-+      filedElsewhere(
-+        'Issuer ID "a" is already filed under "Say "hi" Ltd", a different issuer from "B". Use another Issuer ID for this issuer.',
-+      )?.holder,
-+    ).toBe('Say "hi" Ltd');
++    expect(filedElsewhere(refused("a", 'Say "hi" Ltd', "B"))?.holder).toBe('Say "hi" Ltd');
 +  });
-+  it("gives a reader sentence and offers the suffixed ID", () => {
++  it("says only what is known: the ID is filed under that name", () => {
 +    const got = issuerIdRefusal(message);
-+    expect(got?.offer).toBe(issuerIdFor("Eastmoor Plc", "Acme Corp"));
++    expect(
++      got?.sentence.startsWith(`Issuer ID acme is filed under the name "Acme Corp". ${ifSame}`),
++    ).toBe(true);
++    expect(got?.sentence).not.toMatch(/different issuer/);
++  });
++  it("offers the name's usual ID when it is free, not the suffixed one", () => {
++    const got = issuerIdRefusal(message);
++    expect(got?.offer).toBe("eastmoor-plc");
 +    expect(got?.sentence).toBe(
-+      `Issuer ID acme is already used for Acme Corp, a different issuer. Use ${got?.offer ?? ""} for Eastmoor Plc, or type another Issuer ID.`,
++      `Issuer ID acme is filed under the name "Acme Corp". ${ifSame} Otherwise use eastmoor-plc for Eastmoor Plc, or type another Issuer ID.`,
++    );
++    // The usual ID is held by this issuer itself (another spelling of its name).
++    expect(issuerIdRefusal(message, "EASTMOOR  plc")?.offer).toBe("eastmoor-plc");
++  });
++  it("offers the suffixed ID only when the usual ID is held by a different issuer", () => {
++    const got = issuerIdRefusal(message, "Eastmoor Group");
++    expect(got?.offer).toBe(issuerIdFor("Eastmoor Plc", "Eastmoor Group"));
++    expect(got?.offer).toMatch(/^eastmoor-plc-[0-9a-f]{8}$/);
++    // The refused ID is the usual one: the holder is the usual ID's holder.
++    const usual = issuerIdRefusal(refused("eastmoor-plc", "Eastmoor Group", "Eastmoor Plc"));
++    expect(usual?.offer).toBe(got?.offer);
++  });
++  it("offers nothing when the offer is the ID just refused", () => {
++    const id = issuerIdFor("Eastmoor Plc", "Acme Corp");
++    const again = refused(id, "Acme Corp", "Eastmoor Plc");
++    expect(issuerIdRefusal(again, "Acme Corp")?.offer).toBeUndefined();
++    expect(issuerIdRefusal(again, "Acme Corp")?.sentence).toBe(
++      `Issuer ID ${id} is filed under the name "Acme Corp". ${ifSame} Otherwise type another Issuer ID.`,
 +    );
 +  });
-+  it("offers nothing when the suffixed ID is the one just refused", () => {
-+    const id = issuerIdFor("Eastmoor Plc", "Acme Corp");
-+    const again = `Issuer ID "${id}" is already filed under "Acme Corp", a different issuer from "Eastmoor Plc". Use another Issuer ID for this issuer.`;
-+    expect(issuerIdRefusal(again)?.offer).toBeUndefined();
-+    expect(issuerIdRefusal(again)?.sentence).toBe(
-+      `Issuer ID ${id} is already used for Acme Corp, a different issuer. Type another Issuer ID.`,
++  it("never offers an invalid ID for a name with no Latin letters or digits", () => {
++    const got = issuerIdRefusal(refused("issuer-1", "中国银行", "中国建设银行"), "Other");
++    expect(got?.offer).toBeUndefined();
++    expect(got?.sentence).toBe(
++      `Issuer ID issuer-1 is filed under the name "中国银行". ${ifSame} Otherwise type an Issuer ID of your own for 中国建设银行.`,
 +    );
++    expect(issuerIdFor("中国建设银行 Ltd", "中国银行 Ltd")).toMatch(/^[a-z0-9][a-z0-9-]{0,39}$/);
++    expect(issuerIdFor("中国建设银行", "中国银行")).toBe("");
 +  });
 +  it("leaves any other refusal alone", () => {
 +    expect(issuerIdRefusal("Anything else.")).toBeUndefined();
 +  });
 +});
 diff --git a/web/src/pages/connected/start/plain.ts b/web/src/pages/connected/start/plain.ts
-index 58185c4..edcb605 100644
+index 58185c4..a8bd424 100644
 --- a/web/src/pages/connected/start/plain.ts
 +++ b/web/src/pages/connected/start/plain.ts
 @@ -1,4 +1,4 @@
@@ -1840,7 +2144,7 @@ index 58185c4..edcb605 100644
  import { ASSUMPTIONS_TITLE, PINS } from "./assumptions";
  import { ROW_SPECS, type RowField, type RowKind } from "./rows";
  import {
-@@ -482,3 +482,109 @@ function splitRefusal(error: string): { path: string; line: string; text: string
+@@ -482,3 +482,130 @@ function splitRefusal(error: string): { path: string; line: string; text: string
      return { path, line: `${found.parts.join(" · ")}: ${text}`, text };
    });
  }
@@ -1848,19 +2152,22 @@ index 58185c4..edcb605 100644
 +/**
 + * An issuer name reduced to the letters and digits that tell two issuers apart. The service
 + * reduces a name the same way (`issuer_key` in `run_start/submissions.py`); the two are pinned by
-+ * the same literal cases.
++ * the same literal cases: NFKD, lower case, then only Unicode letters and digits kept (marks go,
++ * so "é" is "e"; "ø" and "ß" stay). Node and Python carry different Unicode versions, so about 37
++ * recent characters are letters in one and not the other; no table hides that, and the service's
++ * answer is the one that counts.
 + */
 +export const issuerKey = (name: string) =>
 +  name
 +    .normalize("NFKD")
 +    .toLowerCase()
-+    .replace(/\p{Mark}/gu, "")
-+    .replace(/[^a-z0-9]+/g, "");
++    .replace(/[^\p{L}\p{N}]+/gu, "");
 +
 +/** A short stable code from the whole name (FNV-1a), so a long name's cut ID can be told apart. */
 +function nameCode(name: string) {
 +  let hash = 0x811c9dc5;
-+  for (const char of issuerKey(name)) hash = Math.imul(hash ^ char.charCodeAt(0), 0x01000193);
++  for (const char of issuerKey(name))
++    hash = Math.imul(hash ^ (char.codePointAt(0) ?? 0), 0x01000193);
 +  return (hash >>> 0).toString(16).padStart(8, "0");
 +}
 +
@@ -1868,16 +2175,17 @@ index 58185c4..edcb605 100644
 + * The Issuer ID for a typed name. `ownerName` is the issuer name of the existing run that already
 + * holds the name's usual ID (undefined when none does). The usual ID stays for its own issuer, so a
 + * repeated run keeps its ID; a different issuer whose long name is cut to the same ID gets the
-+ * first 31 characters plus a code from its whole name, so two issuers never share one ID.
++ * first 31 characters plus a code from its whole name, so two issuers never share one ID. A name
++ * with no Latin letters or digits has no usual ID (empty): none is made up for it.
 + */
 +export function issuerIdFor(name: string, ownerName: string | undefined) {
 +  const usual = issuerSlug(name);
-+  if (!ownerName || issuerKey(ownerName) === issuerKey(name)) return usual;
++  if (!usual || !ownerName || issuerKey(ownerName) === issuerKey(name)) return usual;
 +  return `${usual.slice(0, 31).replace(/-+$/, "")}-${nameCode(name)}`;
 +}
 +
 +const FILED_ELSEWHERE =
-+  /^Issuer ID "([^"]+)" is already filed under "(.*)", a different issuer from "(.*)"\. Use another Issuer ID for this issuer\.$/s;
++  /^Issuer ID "([^"]+)" is filed under the name "(.*)", not "(.*)"\. If that is this issuer under another name, type that name; otherwise use another Issuer ID\.$/s;
 +
 +/** The service's refusal of an Issuer ID that another issuer holds, taken apart; else undefined. */
 +export function filedElsewhere(message: string) {
@@ -1886,32 +2194,49 @@ index 58185c4..edcb605 100644
 +}
 +
 +/**
-+ * That refusal in reader words, with the suffixed ID the page can offer instead (none when it is
-+ * the one just refused); undefined for any other message.
++ * That refusal in reader words, with the ID the page can offer instead; undefined for any other
++ * message. `usualHolder` is the name the usual ID of the typed name is filed under (undefined when
++ * free; it is the refused holder when the refused ID is the usual one). The usual ID is offered
++ * when it is free or this issuer's own; the suffixed ID only when another issuer holds the usual
++ * one; nothing when it is the ID just refused, and for a name with no usual ID the analyst is asked
++ * to type one.
 + */
-+export function issuerIdRefusal(message: string): { sentence: string; offer?: string } | undefined {
++export function issuerIdRefusal(
++  message: string,
++  usualHolder?: string,
++): { sentence: string; offer?: string } | undefined {
 +  const found = filedElsewhere(message);
 +  if (!found) return undefined;
-+  const offered = issuerIdFor(found.name, found.holder);
-+  const offer = offered === found.id ? undefined : offered;
-+  const head = `Issuer ID ${found.id} is already used for ${found.holder}, a different issuer.`;
-+  return {
-+    sentence: offer
-+      ? `${head} Use ${offer} for ${found.name}, or type another Issuer ID.`
-+      : `${head} Type another Issuer ID.`,
-+    ...(offer ? { offer } : {}),
-+  };
++  const usual = issuerSlug(found.name);
++  const offered = issuerIdFor(found.name, found.id === usual ? found.holder : usualHolder);
++  const offer = offered && offered !== found.id ? offered : undefined;
++  const head = `Issuer ID ${found.id} is filed under the name "${found.holder}". If that is this issuer under another name, type that name.`;
++  const tail = offer
++    ? ` Otherwise use ${offer} for ${found.name}, or type another Issuer ID.`
++    : usual
++      ? " Otherwise type another Issuer ID."
++      : ` Otherwise type an Issuer ID of your own for ${found.name}.`;
++  return { sentence: head + tail, ...(offer ? { offer } : {}) };
 +}
 +
 +const REFUSED_FILE = /^(?:--sources:\s*)?cannot read (.+?): [\s\S]*$/i;
 +const NO_TEXT = /^(?:--sources:\s*)?(.+?) has no extractable text \(scanned image\?\)$/i;
 +const NO_FILE = /no readable issuer file\s*$/i;
 +
-+/** The kind of problem, only where the service's message states it; else a full stop. */
-+function unreadableBecause(message: string) {
++const TEXT_FILE = /\.(txt|text|md|csv|tsv|json|jsonl|html?|xml|log)$/i;
++const WORKBOOK_FILE = /\.(xlsx|xlsm|xls)$/i;
++
++/**
++ * The kind of problem, only where the service's message states it and it is true of the file type:
++ * a decode failure is about the text of a text file (any other file the service reads as text when
++ * it is not a PDF or workbook, so a damaged workbook or PDF reports one too, and says only that it
++ * could not be read); else a full stop.
++ */
++function unreadableBecause(message: string, file: string) {
 +  if (/codec can't decode|UnicodeDecodeError/i.test(message))
-+    return ": its text could not be decoded.";
-+  if (/not a zip file/i.test(message)) return ": its contents are not a valid zip archive.";
++    return TEXT_FILE.test(file) ? ": its text could not be decoded." : ".";
++  if (/not a zip file/i.test(message) && !WORKBOOK_FILE.test(file))
++    return ": its contents are not a valid zip archive.";
 +  return ".";
 +}
 +
@@ -1929,7 +2254,7 @@ index 58185c4..edcb605 100644
 +  const cannot = REFUSED_FILE.exec(message);
 +  if (cannot) {
 +    const file = named(cannot[1] ?? "")?.name ?? cannot[1] ?? "";
-+    return { file, sentence: `${file} could not be read${unreadableBecause(cannot[0])}` };
++    return { file, sentence: `${file} could not be read${unreadableBecause(cannot[0], file)}` };
 +  }
 +  const empty = NO_TEXT.exec(message);
 +  if (empty) {
