@@ -148,7 +148,7 @@ only that report change with the message `<task>: review <1|2>`. Finish within 6
 
 Round 1 is the implementation and its reviews; each send-back after review starts the next round.
 Rounds 1 and 2 run on Sonnet at `xhigh`. From round 3 the implementer (fixer) and every reviewer of
-that round run on Opus at `xhigh`. A task still failing review after round 4 is left open and listed
+that round run on Opus at `medium` effort (lead correction to R12, 2026-11-17). A task still failing review after round 4 is left open and listed
 for the lead. Every section you add to a report states the round and the model that ran it, for
 example `## Fix round 2 (round 3, Opus)`.
 
