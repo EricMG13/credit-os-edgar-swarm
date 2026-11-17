@@ -423,3 +423,20 @@ One entry per task: the reviewer was a fresh Sonnet agent at xhigh effort that d
   - Brevane's "1 of 2 modules shown" sits beside its delivered "One of one shown".
   - Evidence.tsx copies EvidenceSources.tsx's "reads" predicate.
   - Record rows match modules by name.
+
+## T39, round 2
+
+- Reviewed: net change fb6dadd..3adcf75 (round 2 implementer Sonnet). Verdict: PASS. Merged onto audit/repair-3.
+- M1 is fixed at its cause: the reset key is `${page}/${item ?? ""}/${restarts}`. Checked by mouse:
+  - trace/G-03 → gaps/G-03, the reverse, the same address re-picked, and "Open in Evidence" from the Overview drawer all reset to All and draw the item.
+  - A plain tab change keeps the module.
+- M2 is fixed: when `trace.emptyText` is set, the middle tile is the run's delivered tile ("Calculations 0 — Not traced item by item in this run") at All and under a module, on all three untraced runs.
+- Independent fixture counts match the page on 9 module-run combinations. Record rows filtered equal unfiltered rows, 13 of 13. Everything round 1 passed still holds.
+- Round 2's tests fail 5 of 14 on the round 1 source and pass 14 of 14 at HEAD. No existing test or expected value changed in round 2.
+- Gates the reviewer saw:
+  - build 0, lint 0, format:check 0, typecheck 0, duplication 0 (1.97%).
+  - vitest: library and linkStyle, 45 files, 995 tests, at the default timeout.
+  - Probes: filter-scope, module-codes, record-partial and focus-after-clear all exit 0.
+- Low:
+  - The delivered middle tile is taken by position (`counts.slice(1, 2)`). That is right on every fixture run, but the slice reader does not fix the tile order. Finding it by the label "Calculations" would be sturdier.
+  - Round 1's L1 to L5 are carried to the lead's batch.
