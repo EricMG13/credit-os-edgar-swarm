@@ -176,10 +176,15 @@ describe("Library home, Cards side", () => {
     expect(screen.queryByRole("grid", { name: "Issuers" })).toBeNull();
   });
 
-  it("says the data file holds no library pages when it has no library member, under the h1", () => {
+  it("says the build is a design reference holding no reports when it has no library member, under the h1", () => {
     renderHome(undefined);
     expect(screen.getByRole("heading", { level: 1, name: "Library" })).toBeVisible();
-    expect(screen.getByText("This data file holds no library pages")).toBeVisible();
+    expect(screen.getByRole("heading", { level: 2, name: "No runs yet" })).toBeVisible();
+    expect(screen.getByText(/This build is a design reference and holds no reports/)).toBeVisible();
+    expect(screen.getByRole("link", { name: "Start a run" })).toHaveAttribute(
+      "href",
+      "#/run/start",
+    );
     expect(screen.queryByText("Library data is missing")).toBeNull();
   });
 
