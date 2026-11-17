@@ -197,9 +197,13 @@ describe("Show sources", () => {
     expect(control().className).toMatch(/in-data-\[sources=on\]:border-border-control/);
   });
 
-  it("draws no control for a null trace and throws for a key the run does not hold", () => {
+  it("draws the missing-trace marker for a null trace and throws for a key the run does not hold", () => {
     renderFrame();
-    expect(within(screen.getByTestId("plain")).queryByRole("button")).toBeNull();
+    expect(
+      within(screen.getByTestId("plain")).getByRole("button", {
+        name: "Show sources for this figure: no source recorded",
+      }),
+    ).toHaveAttribute("aria-disabled", "true");
     const slice = fresh();
     const runs = slice.issuers[0]?.runs as Run[];
     // The capped run's overview and changes point at no trace, so the slice stays valid without any.

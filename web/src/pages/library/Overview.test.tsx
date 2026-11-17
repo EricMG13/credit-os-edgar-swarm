@@ -79,7 +79,11 @@ describe("Overview, the mock's run", () => {
     expect(within(tiles()[5] as HTMLElement).getByText("n.a.").parentElement).toHaveClass(
       "text-text-tertiary",
     );
-    expect(within(tiles()[5] as HTMLElement).queryByRole("button")).toBeNull();
+    expect(
+      within(tiles()[5] as HTMLElement)
+        .getAllByRole("button")
+        .map((b) => b.getAttribute("aria-label")),
+    ).toEqual(["Show sources for this figure: no source recorded"]);
   });
 
   it("draws For and against: h2, its note, two h3 columns of three tiles each", () => {
@@ -373,11 +377,16 @@ describe("Overview, findings, what would change the view and dates", () => {
     expect(grid).toHaveClass("grid-cols-1", "lg:grid-cols-[minmax(0,1fr)_360px]");
   });
 
-  it("draws the capped run's lower half with no trace control", () => {
+  it("draws the capped run's lower half with the missing-trace marker and no trace control", () => {
     renderOverview("2026-03-31");
     expect(findings()).toHaveLength(2);
     expect(screen.getByText("Not yet formed")).toBeVisible();
-    expect(screen.queryAllByRole("button", { name: /^Show sources for/ })).toHaveLength(0);
+    const marks = screen.queryAllByRole("button", { name: /^Show sources for/ });
+    expect(marks).toHaveLength(12);
+    for (const mark of marks) {
+      expect(mark.getAttribute("aria-label")).toMatch(/: no source recorded$/);
+      expect(mark).toHaveAttribute("aria-disabled", "true");
+    }
     expect(
       within(screen.getByRole("region", { name: "Dates to watch" })).getAllByRole("listitem"),
     ).toHaveLength(2);
@@ -524,10 +533,17 @@ describe("Overview, modules and limitations", () => {
     expect(within(region).getAllByRole("listitem")).toHaveLength(4);
   });
 
-  it("draws the capped run's limitations with no trace control and its long sentence in full", () => {
+  it("draws the capped run's limitations with the missing-trace marker and its long sentence in full", () => {
     renderOverview("2026-03-31");
     const region = screen.getByRole("region", { name: "Limitations" });
-    expect(within(region).queryByRole("button", { name: /^Show sources/ })).toBeNull();
+    const marks = within(region).getAllByRole("button", { name: /^Show sources/ });
+    for (const mark of marks) {
+      expect(mark).toHaveAttribute(
+        "aria-label",
+        "Show sources for this limitation: no source recorded",
+      );
+      expect(mark).toHaveAttribute("aria-disabled", "true");
+    }
     expect(
       within(region).getByText(/the nine modules delivered do not stand in for them\.$/),
     ).toBeVisible();
