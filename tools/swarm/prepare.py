@@ -32,6 +32,7 @@ from deploy_workflow.inbox.layout import MAX_ISSUER_ID, ensure_layout
 
 SCHEMA = "swarm-plan/1"
 PLAN_RELATIVE = Path("swarm") / "plan.json"
+RUN_PREFIX = "swarm-"  # Run folders sit in ``<root>/_engine/runs``, where the library lists them.
 _CIK_PREFIX = re.compile(r"(\d+)-")
 
 
@@ -162,7 +163,7 @@ def prepare(approved: Path, packs: Path, contexts: Path, root: Path) -> dict[str
             skipped.append({**label, "cik": cik, "reason": reason})
             continue
         taken[found["issuer_id"]] = cik
-        folder, _ = filing.issuer_folder(layout, found["issuer_id"], found["name"])
+        filing.issuer_folder(layout, found["issuer_id"], found["name"])  # Registers the ID.
         entry: dict[str, Any] = {
             "issuer_id": found["issuer_id"],
             "name": found["name"],
@@ -170,7 +171,7 @@ def prepare(approved: Path, packs: Path, contexts: Path, root: Path) -> dict[str
             "ticker": row.get("Ticker", ""),
             "pack": str(sources[0].resolve()),
             "context": str(sources[1].resolve()),
-            "run_folder": str(folder),
+            "run_folder": str(layout.runs / f"{RUN_PREFIX}{found['issuer_id']}"),
             "status": "pending",
             "attempts": 0,
         }

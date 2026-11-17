@@ -52,7 +52,9 @@ def test_valid_issuers_are_registered_and_planned(inputs):
     for item in plan["issuers"]:
         assert item["status"] == "pending"
         assert Path(item["pack"]).is_dir() and Path(item["context"]).is_file()
-        assert Path(item["run_folder"]).parent == (inputs["root"] / "issuers").resolve()
+        # Hand-written: the library lists run folders under <root>/_engine/runs.
+        wanted = inputs["root"] / "_engine" / "runs" / f"swarm-{item['issuer_id']}"
+        assert Path(item["run_folder"]) == wanted.resolve()
     on_disk = json.loads((inputs["root"] / "swarm" / "plan.json").read_text(encoding="utf-8"))
     assert on_disk == plan
 
