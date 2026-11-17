@@ -16,3 +16,11 @@ Record the answer and the extra files in output/5-repair/T33.md.
 Take option A. Group 3 may edit web/src/pages/model/parts/ModelShell.tsx and its tests. No group owns it; the sweep that touches it runs only after every group has merged.
 
 After T40 merges, a T25 follow-up draws the same "Design reference with sample data" note inside the model frame, through ModelShell.tsx, and on RunsIndexPage.tsx, using the same words as the note on the other pages. Keep the existing tests as they are. If the "Sample data" badge then says the same thing twice, keep one of the two and name the choice in output/5-repair/T25.md.
+
+# Lead answers to repair-3 on T38 (ruling L8, 2026-11-17, received 09:44 UTC by message from the lead session)
+
+1. C5-005, the connected half (hiding Show sources on the connected Evidence tab): group 3 does not take it. ReportLibrary.tsx is group 2's file. I will repair it myself in lead step 7, after every group has merged, with its own test and review. In output/5-repair/T38.md, record that T38 closes the static half of C5-005 and S4-019 only.
+
+2. S5-001: yes, group 3 may edit web/src/pages/model/slice/types.ts and its tests. No group owns the file. ModelShell.tsx is yours under L7. Do it as you describe: forecast becomes ForecastPage | null; read.ts reads an absent forecast as null; ModelShell falls back to the Model tabs; ForecastPage draws one fixed sentence. The model slice is not imported by Signal, but run Signal's tests anyway if the build touches shared files.
+
+3. The one-case variant is out of scope for T38. A model with one case is still refused at read.ts:302. I am registering it as finding R3-001 and listing it for the owner. Do not change that check.
