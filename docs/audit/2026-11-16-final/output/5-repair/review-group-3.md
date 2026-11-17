@@ -47,3 +47,22 @@ One entry per task: the reviewer was a fresh Sonnet agent at xhigh effort that d
   - The test copies the fixture loader from Overview.test.tsx.
   - An unbroken qualifier token (a URL or an id) would still overflow. That is outside S2-005.
 - Info: the register's cause for S2-005 should name the column's width, not an inner span.
+
+## T29 (S1-005)
+
+- Commit reviewed: 305dc04. Verdict: PASS. Merged onto audit/repair-3.
+- Cause confirmed in react-aria-components 1.22.1: TooltipInner closes on any ancestor scroll and no prop turns that off. A one-frame hold-back of the drawn state is the smallest repair found.
+- The new test fails on the parent source (scratch copy; the harness denied a checkout in the worktree) and passes with the repair.
+- Every importer of the shared Tooltip was checked, Signal's NameChip included: none passes isOpen or defaultOpen, and every test that queries a tooltip after focus or hover uses findBy*.
+- Adversarial checks:
+  - jsdom: no rAF leak or state update after unmount; controlled open and close work.
+  - headless Chromium: the tooltip stayed open in 6 of 6 trials, and in 6 more trials under 4x and 8x CPU throttling.
+- Gates the reviewer saw:
+  - lint 0, format:check 0, typecheck 0, build 0.
+  - vitest: 9 files, 99 tests, exit 0.
+  - Signal: 34 files, 630 tests, exit 0, with `--testTimeout=120000 --maxWorkers=2` under load.
+  - Probe tooltip-scroll-close.mjs 0; step 1 now ends with the tooltip open.
+- Low:
+  - Neighbouring tooltips now swap with a gap of about one frame (21 ms) instead of 0 ms.
+  - Under StrictMode, in development only, a tooltip mounted open is missing for its first frame. No app caller mounts one open.
+- Info: a dead `state === null` branch; aria-describedby points at a tooltip that is not drawn for one frame.
