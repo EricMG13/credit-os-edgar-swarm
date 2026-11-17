@@ -14,6 +14,8 @@ it only re-checks those places.
 | `manifest.json` | The git blob hash of every file at the newest pack's `head`, that `head`, and `last_pack`, the highest pack number issued so far. |
 | `baselines/04e7221.json` | The same for `04e7221`, the version the work PC first adapted (first sync only). |
 | `WORK-PC-PROMPT.md` | The prompt for the work PC's assistant. |
+| `WORK-PC-INIT-PROMPT.md` | First-time setup from the full audit source archive, including the approval stop, native proof and release scope. |
+| `audit-baseline.json` | Standalone hash baseline for the audit handoff archive. It preserves the existing numbered pack history. |
 
 Packs chain: each starts at the `head` of the one before it. `NNN` numbers them in order;
 a number is issued once and never reused.
@@ -44,6 +46,12 @@ version instead:
 With git, the same range is `git diff <head of the copy's manifest> origin/main`.
 
 ## On the work PC, after downloading
+
+For a fresh audit handoff, use [the initialisation prompt](WORK-PC-INIT-PROMPT.md)
+with the full source archive linked in the audit PR. It explains the
+separately checksummed runtime ZIP, verified source and archive identities,
+and how to check the standalone baseline.
+
 
 Give the work PC's coding assistant the prompt in [`WORK-PC-PROMPT.md`](WORK-PC-PROMPT.md).
 It backs up the adapted copy, reads the new packs, and then runs:
