@@ -16,6 +16,9 @@ import {
   comparisonCaveat,
   documentDescription,
   EFFORTS,
+  ISSUE_CLASSES,
+  ISSUE_CLASSIFICATION,
+  ISSUER_ID,
   LEVELS,
   lookupSentence,
   MODELS,
@@ -24,14 +27,27 @@ import {
 } from "./plain";
 import { StatusBadge } from "@/components/status/StatusBadge";
 import { decided, groupLimits, leaveOut, type LimitGroup } from "./limits";
+import {
+  assumptionInputs,
+  attachmentFacts,
+  chosen,
+  contextDetails,
+  given,
+  issuerDetails,
+  moduleOptionInputs,
+  NOT_GIVEN,
+  valuationInputs,
+  type InputGroup,
+} from "./reviewInputs";
 
 type EditStep = "documents" | "purpose" | "context";
 
+/** Each term and its value; a fact whose value is `undefined` is left out. */
 function Facts({ rows }: { rows: readonly (readonly [string, string | number | undefined])[] }) {
   return (
     <dl className="grid gap-4 text-sm sm:grid-cols-2">
       {rows
-        .filter(([, value]) => value)
+        .filter(([, value]) => value !== undefined)
         .map(([term, value]) => (
           <div key={term}>
             <dt className="text-text-tertiary">{term}</dt>
@@ -55,10 +71,17 @@ function Block({
   disabled: boolean;
   children: ReactNode;
 }) {
+  const titleId = useId();
   return (
-    <div className="grid gap-3 rounded-lg bg-surface-subtle p-4">
+    <div
+      role="group"
+      aria-labelledby={titleId}
+      className="grid gap-3 rounded-lg bg-surface-subtle p-4"
+    >
       <div className="flex items-center justify-between gap-3">
-        <h4 className="font-semibold text-text-primary">{title}</h4>
+        <h4 id={titleId} className="font-semibold text-text-primary">
+          {title}
+        </h4>
         {edit && (
           <Button
             color="secondary"
@@ -73,6 +96,38 @@ function Block({
         )}
       </div>
       {children}
+    </div>
+  );
+}
+
+/** A group's facts, then its inner groups; a group with neither reads as not given. */
+function GroupBody({ group, depth }: { group: InputGroup; depth: number }) {
+  if (!group.facts.length && !group.groups.length)
+    return <p className="text-sm text-text-secondary">{NOT_GIVEN}</p>;
+  return (
+    <>
+      {group.facts.length > 0 && <Facts rows={group.facts} />}
+      {group.groups.map((inner) => (
+        <Inputs key={inner.title} group={inner} depth={depth} />
+      ))}
+    </>
+  );
+}
+
+/** An inner group: a section, a row or a module's pin, under its own heading. */
+function Inputs({ group, depth }: { group: InputGroup; depth: number }) {
+  const titleId = useId();
+  const Heading = depth === 0 ? "h5" : "h6";
+  return (
+    <div
+      role="group"
+      aria-labelledby={titleId}
+      className="grid gap-2 border-l border-border-hairline pl-3"
+    >
+      <Heading id={titleId} className="text-sm font-semibold text-text-primary">
+        {group.title}
+      </Heading>
+      <GroupBody group={group} depth={depth + 1} />
     </div>
   );
 }
@@ -308,6 +363,15 @@ export function ReviewSheet({
   const leftOut = answers.modules.length
     ? requested.filter((code) => !answers.modules.includes(code)).map(moduleName)
     : [];
+  const advanced = answers.level === "advanced";
+  // Valuation, Module options and Scenario assumptions are drawn only at the Advanced level.
+  const inputBlocks = [
+    { group: issuerDetails(answers.context), drawn: true },
+    { group: contextDetails(answers.context), drawn: true },
+    { group: valuationInputs(answers.context, advanced), drawn: advanced },
+    { group: moduleOptionInputs(answers.context, requested, advanced), drawn: advanced },
+    { group: assumptionInputs(answers.context, requested, advanced), drawn: advanced },
+  ];
   return (
     <>
       <section aria-labelledby={titleId} className="grid gap-4">
@@ -318,7 +382,9 @@ export function ReviewSheet({
           <Facts
             rows={[
               ["Issuer", identity.issuer_name],
-              ["As-of date", run.as_of],
+              [ISSUER_ID, identity.issuer_id],
+              ["As-of date", given(run.as_of)],
+              [ISSUE_CLASSIFICATION, chosen(ISSUE_CLASSES, identity.issue_classification)],
               ["Submitted by", answers.submitted_by],
             ]}
           />
@@ -339,8 +405,9 @@ export function ReviewSheet({
           <Facts
             rows={[
               ["Pathway", pathwayName(run.pathway)],
-              ["Purpose", PURPOSES[run.run_type as keyof typeof PURPOSES]],
+              ["Purpose", chosen(PURPOSES, run.run_type)],
               ["Case kind", choiceLabel(CASE_KINDS, run.case_kind)],
+              ["Form level", choiceLabel(LEVELS, answers.level)],
             ]}
           />
           <List
@@ -369,10 +436,12 @@ export function ReviewSheet({
         <Block title="Context" edit="context" {...block}>
           <Facts
             rows={[
-              ["Current period", run.current_period],
-              ["Prior period", run.prior_period],
-              ["Research cutoff", run.cutoff],
-              ["Changes", changes],
+              ["Current period", given(run.current_period)],
+              ["Prior period", given(run.prior_period)],
+              ["Research cutoff", given(run.cutoff)],
+              // The service's own sentence, not an input: drawn only when it wrote one.
+              ["Changes", changes || undefined],
+              ...attachmentFacts(answers.context),
             ]}
           />
           <List title="Source lookup" items={(summary.lookup ?? []).map(lookupSentence)} />
@@ -383,17 +452,30 @@ export function ReviewSheet({
             </p>
           )}
         </Block>
-        {answers.level === "advanced" && (
-          <Block title="Advanced choices" {...block}>
-            <Facts
-              rows={[
-                ["Model and effort", modelAndEffort(summary)],
-                ["Form level", LEVELS[answers.level as keyof typeof LEVELS]],
-                ["Turns per module", answers.max_turns],
-              ]}
-            />
-          </Block>
+        {inputBlocks.map(
+          ({ group, drawn }) =>
+            group && (
+              <Block
+                key={group.title}
+                title={group.title}
+                edit={drawn ? "context" : undefined}
+                {...block}
+              >
+                <GroupBody group={group} depth={0} />
+              </Block>
+            ),
         )}
+        <Block title="Advanced choices" {...block}>
+          <Facts
+            rows={[
+              ["Model and effort", modelAndEffort(summary)],
+              ["Turns per module", answers.max_turns],
+            ]}
+          />
+          {!advanced && (
+            <p className="text-sm text-text-secondary">Fixed below the Advanced form level.</p>
+          )}
+        </Block>
       </section>
       <LimitsToDecide
         items={summary.items}

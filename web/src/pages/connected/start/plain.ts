@@ -32,6 +32,28 @@ export const CASE_KINDS = {
 };
 export const MODELS = { gpt: "GPT Sol", claude: "Claude Opus" };
 export const EFFORTS = { fast: "Fast", balanced: "Balanced", high: "High" };
+/** Labels of boxes the screen draws in its own markup, read by the screen and by the review. */
+export const ISSUER_ID = "Issuer ID";
+export const ISSUE_CLASSIFICATION = "Issue classification";
+/** The Issue classification options; the screen adds its own blank "Choose classification". */
+export const ISSUE_CLASSES = { investment_grade: "Investment grade", high_yield: "High yield" };
+export const LEGAL_DOCUMENTS = "Legal documents";
+export const LEGAL_CHOICES = {
+  none: "No agreement",
+  executed: "Executed agreement",
+  draft: "Draft agreement",
+};
+/** The file boxes beside the agreement, by the key the run's attachments carry. */
+export const ATTACHMENTS = {
+  management_bridge: "Management EBITDA bridge",
+  portfolio_workbook: "Portfolio workbook",
+  prior_case: "Prior decision record",
+};
+export const LISTED_EQUITY = "Listed equity";
+export const TICKER = "Ticker";
+export const CONTEXT_DETAILS = "Context details";
+/** The Focus module choice that names no module. */
+export const ANY_FOCUS = "Any";
 
 /** An option's label for a stored value; a value the screen does not offer has none, so the fact that would show it is left out. */
 export function choiceLabel(choices: Readonly<Record<string, string>>, value: string) {
@@ -95,7 +117,7 @@ export function comparisonCaveat(changes: string) {
 }
 
 const ISSUER_CASE = "Issuer and case date";
-const ISSUER_DETAILS = "Issuer details";
+export const ISSUER_DETAILS = "Issuer details";
 
 /** The Issuer details boxes: key, label, example. The screen draws them and `refusalLines` names them. */
 export const ISSUER_TEXT_BOXES = [
@@ -121,16 +143,16 @@ const PLAIN_BOXES: Readonly<Record<string, readonly [section: string, label: str
   "run.current_period": ["", "Current period"],
   "run.prior_period": ["", "Prior period"],
   "identity.issuer_name": [ISSUER_CASE, "Issuer name"],
-  "identity.issuer_id": [ISSUER_CASE, "Issuer ID"],
-  "identity.issue_classification": [ISSUER_CASE, "Issue classification"],
+  "identity.issuer_id": [ISSUER_CASE, ISSUER_ID],
+  "identity.issue_classification": [ISSUER_CASE, ISSUE_CLASSIFICATION],
   ...Object.fromEntries(
     [...ISSUER_TEXT_BOXES, ...ISSUER_LIST_BOXES].map(([key, title]) => [
       `identity.${key}`,
       [ISSUER_DETAILS, title],
     ]),
   ),
-  "identity.ticker": [ISSUER_DETAILS, "Ticker"],
-  "attachments.legal_documents": ["", "Legal documents"],
+  "identity.ticker": [ISSUER_DETAILS, TICKER],
+  "attachments.legal_documents": ["", LEGAL_DOCUMENTS],
   "module_options.cp6_deep_debate": [MODULE_OPTIONS_TITLE, DEEP_DEBATE],
 };
 

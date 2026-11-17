@@ -50,7 +50,7 @@ import {
 } from "./start/assumptions";
 import { RowEditor } from "./start/RowEditor";
 import { ModuleOptionsFields } from "./start/ModuleOptionsFields";
-import { ROW_SPECS, sendableRows, type Row, type RowKind } from "./start/rows";
+import { CONTEXT_ROW_KINDS, ROW_SPECS, sendableRows, type Row, type RowKind } from "./start/rows";
 import {
   MODULE_OPTIONS_TITLE,
   readModuleOptions,
@@ -68,13 +68,23 @@ import { ANALYST_NAME_RULE, isAnalystName } from "./start/analystName";
 import { ReviewSheet } from "./start/ReviewSheet";
 import { StartReadiness } from "./start/StartReadiness";
 import {
+  ANY_FOCUS,
+  ATTACHMENTS,
   CASE_KIND_LABEL,
   CASE_KINDS,
+  CONTEXT_DETAILS,
   documentDescription,
   EFFORTS,
+  ISSUE_CLASSES,
+  ISSUE_CLASSIFICATION,
+  ISSUER_DETAILS,
+  ISSUER_ID,
   ISSUER_LIST_BOXES,
   ISSUER_TEXT_BOXES,
+  LEGAL_CHOICES,
+  LEGAL_DOCUMENTS,
   LEVELS,
+  LISTED_EQUITY,
   MODELS,
   PATHWAY_LABEL,
   PURPOSES,
@@ -83,6 +93,7 @@ import {
   refusalProblems,
   RUN_PURPOSE_LABEL,
   storedName,
+  TICKER,
 } from "./start/plain";
 import { errorText, useResource } from "./useResource";
 import { PageHeader } from "../../shell/PageHeader";
@@ -226,15 +237,9 @@ function requireSummaryCap(summary: Summary, shownCap: string) {
     throw new Error("The pathway cap changed while preparing this summary. Review the run again.");
 }
 
-const ATTACHMENTS = {
-  management_bridge: "Management EBITDA bridge",
-  portfolio_workbook: "Portfolio workbook",
-  prior_case: "Prior decision record",
-};
-const ROW_KINDS = ["deal_terms", "quotes", "ratings", "research_questions"] as const;
 /** The row editors of the Context step: each carries a `data-field` a refusal can name. */
-const isFieldRow = (kind: RowKind): kind is (typeof ROW_KINDS)[number] =>
-  (ROW_KINDS as readonly RowKind[]).includes(kind);
+const isFieldRow = (kind: RowKind): kind is (typeof CONTEXT_ROW_KINDS)[number] =>
+  (CONTEXT_ROW_KINDS as readonly RowKind[]).includes(kind);
 type Forms = {
   valuation?: ValuationForm;
   module_options?: ModuleOptionsForm;
@@ -679,7 +684,7 @@ function DocumentFields({
         <FieldMessage problem={view.problem} field="issuer_name" />
       </div>
       <label className={label}>
-        Issuer ID
+        {ISSUER_ID}
         <input
           className={field}
           required
@@ -712,13 +717,9 @@ function DocumentFields({
         )}
       </div>
       <SelectField
-        title="Issue classification"
+        title={ISSUE_CLASSIFICATION}
         value={view.identity.issue_classification ?? ""}
-        choices={{
-          "": "Choose classification",
-          investment_grade: "Investment grade",
-          high_yield: "High yield",
-        }}
+        choices={{ "": "Choose classification", ...ISSUE_CLASSES }}
         onChange={(value) => {
           view.changeIdentity("issue_classification", value);
         }}
@@ -895,9 +896,9 @@ function ContextInputFields({ view }: { view: IntakeView }) {
         />
       </label>
       <SelectField
-        title="Legal documents"
+        title={LEGAL_DOCUMENTS}
         value={view.legal}
-        choices={{ none: "No agreement", executed: "Executed agreement", draft: "Draft agreement" }}
+        choices={LEGAL_CHOICES}
         problem={view.problem}
         problemField="legal_documents"
         onChange={view.changeLegal}
@@ -950,7 +951,7 @@ function ContextInputFields({ view }: { view: IntakeView }) {
 function IssuerDetailsFields({ view }: { view: IntakeView }) {
   return (
     <details className="rounded-lg border border-border-hairline p-3 sm:col-span-2">
-      <summary className="cursor-pointer font-semibold">Issuer details</summary>
+      <summary className="cursor-pointer font-semibold">{ISSUER_DETAILS}</summary>
       <div className="mt-3 grid gap-4 sm:grid-cols-2">
         {ISSUER_TEXT_BOXES.map(([key, title, example]) => (
           <label key={key} className={label}>
@@ -993,11 +994,11 @@ function IssuerDetailsFields({ view }: { view: IntakeView }) {
               view.changeListedEquity(event.target.checked);
             }}
           />{" "}
-          Listed equity
+          {LISTED_EQUITY}
         </label>
         {view.identity.listed_equity && (
           <label className={label}>
-            Ticker
+            {TICKER}
             <input
               className={field}
               value={view.identity.ticker ?? ""}
@@ -1014,13 +1015,13 @@ function IssuerDetailsFields({ view }: { view: IntakeView }) {
 
 function StructuredContextFields({ view }: { view: IntakeView }) {
   const focusChoices = [
-    ["", "Any"] as const,
+    ["", ANY_FOCUS] as const,
     ...drawnModules(pathwayModules(view.run.pathway)).map((id) => [id, moduleName(id)] as const),
   ];
   return (
     <div className="grid gap-4 sm:col-span-2">
-      <h3 className="font-semibold">Context details</h3>
-      {ROW_KINDS.map((kind) => (
+      <h3 className="font-semibold">{CONTEXT_DETAILS}</h3>
+      {CONTEXT_ROW_KINDS.map((kind) => (
         <section key={kind} aria-labelledby={`rows-${kind}`} className="grid gap-2">
           <h4 id={`rows-${kind}`} className="text-sm font-semibold">
             {ROW_SPECS[kind].section}
@@ -1633,7 +1634,7 @@ function IntakeForm({
         context.assumptions,
         pathwayModules(run.pathway),
       );
-    for (const kind of ROW_KINDS) {
+    for (const kind of CONTEXT_ROW_KINDS) {
       const edited = rows[kind];
       if (edited) details[kind] = sendableRows(kind, edited, run.run_type === "primary");
     }
