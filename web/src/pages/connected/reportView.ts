@@ -4,6 +4,7 @@ import { exactDifference } from "./signal";
 import {
   blocked,
   containsReference,
+  evidencePath,
   methodNote,
   outputEntries,
   passages,
@@ -363,6 +364,115 @@ export function foundationMetrics(entry: OutputEntry, catalogue: CatalogueRun | 
     ...principal(entry, date, run),
     ...maturityTotal(entry, date, run),
   ];
+}
+
+/** Where a headline figure sits in the Financial foundation handoff: the Evidence address of its
+ * row and the period the row states. `reason` is the module's own cell, set only where the row
+ * says `Not supplied`; a source without it is a row the tile was looked up in, and says no such thing. */
+export type HeadlineSource = { href: string; period: string; reason?: string };
+
+/** The CP-1 chart table and column heading each headline figure is quoted from: `_METRICS` of
+ * `credit_os_catalogue.py`, where an adjusted heading stands in for the reported one. */
+const HEADLINE_CELLS = {
+  net_leverage: ["leverage", /^Net debt \/ /],
+  leverage: ["leverage", /^Total debt \/ /],
+  coverage: ["interest cover", / \/ cash interest$/],
+  revenue: ["revenue and EBITDA", /^Revenue$/],
+  adjusted_ebitda: ["revenue and EBITDA", /^Adjusted EBITDA$/],
+  cash: ["liquidity", /^Cash$/],
+} as const;
+
+type Figure = CatalogueRun["metrics"][string];
+
+/** A headline figure the catalogue gives a value: a zero is a figure, an empty string is none. */
+export const stated = (figure: Figure | undefined): figure is Figure & { value: string | number } =>
+  figure?.value != null && figure.value !== "";
+
+/** The sort key of a Period cell, as `period_order` of `credit_os_catalogue.py`: `FY2024`,
+ * `2024-09-30` or `FY2024 / 2024-09-30` (ordered by its date). The keys of one form compare as
+ * text in date order; nothing for any other text, an impossible date, or a year that disagrees
+ * with its date. */
+function periodOrder(cell: string) {
+  const year = /^FY(\d{4})$/.exec(cell);
+  if (year) return `1-${year[0].slice(2)}`;
+  const dated = /^FY(\d{4}) \/ (\d{4}-\d{2}-\d{2})$/.exec(cell);
+  const date = dated?.[2] ?? cell;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || (dated && dated[1] !== date.slice(0, 4)))
+    return undefined;
+  const [y = 0, m = 0, d = 0] = date.split("-").map(Number);
+  const day = new Date(0);
+  day.setUTCFullYear(y, m - 1, d);
+  return y > 0 && day.toISOString().startsWith(date) ? `2-${date}` : undefined;
+}
+
+/** The row of a chart table with the latest Period, chosen as `chart_rows` of
+ * `credit_os_catalogue.py` chooses it (by the period, whatever the order of the rows); nothing
+ * where the builder chooses none: a row whose cells do not match the headings or whose period
+ * cannot be ordered, periods of mixed forms, or a period that repeats. */
+function latestRow(table: Table, at: number) {
+  const ranked: { row: Row; key: string }[] = [];
+  for (const row of table.rows) {
+    const same = row.cells.length === table.headers.length;
+    const key = same ? periodOrder(row.cells[at] ?? "") : undefined;
+    if (key === undefined) return undefined;
+    ranked.push({ row, key });
+  }
+  const keys = ranked.map(({ key }) => key);
+  if (new Set(keys.map((key) => key[0])).size !== 1 || new Set(keys).size !== keys.length)
+    return undefined;
+  return ranked.reduce((latest, item) => (item.key > latest.key ? item : latest)).row;
+}
+
+/** The row of a headline figure's chart table, and that row's cell in the figure's column: the row
+ * that states `period`, or, with none, the chart's latest row. Nothing when the table, the one
+ * column or the one row is not there. */
+function headlineRow(
+  entry: OutputEntry,
+  [chart, heading]: readonly [string, RegExp],
+  period: string | undefined,
+) {
+  const table = namedTable(entry, `Chart data: ${chart}`, ["Period"]);
+  if (!table) return undefined;
+  const at = table.headers.indexOf("Period");
+  const columns = table.headers.flatMap((name, i) => (heading.test(name) ? [i] : []));
+  const row =
+    period === undefined
+      ? latestRow(table, at)
+      : namedRow(table, ({ cells }) => cells[at] === period);
+  const [column] = columns;
+  const cell = columns.length === 1 && column !== undefined ? row?.cells[column] : undefined;
+  return row && cell !== undefined
+    ? { line: row.line, cell, period: row.cells[at] ?? "" }
+    : undefined;
+}
+
+/**
+ * The handoff row each headline figure is read from, by metric key, so its tile can open the
+ * trace. For a figure the catalogue lacks it is the latest row of the figure's own chart, the row
+ * the catalogue builder passed over, with the module's words only where that row says `Not
+ * supplied`. No entry where a row is not found or states another value: a tile keeps no trace
+ * rather than one that disagrees with it.
+ */
+export function headlineSources(
+  entry: OutputEntry | undefined,
+  catalogue: CatalogueRun | undefined,
+  folder: string,
+) {
+  const sources: Record<string, HeadlineSource> = {};
+  if (!entry || !catalogue || entry.output.module !== "CP-1" || blocked(entry)) return sources;
+  for (const [key, where] of Object.entries(HEADLINE_CELLS)) {
+    const figure = catalogue.metrics[key];
+    const period = stated(figure) ? figure.period : undefined;
+    if (stated(figure) && !period) continue;
+    const found = headlineRow(entry, where, period ?? undefined);
+    if (!found) continue;
+    const href = evidencePath(folder, entry, found.line);
+    if (!stated(figure)) {
+      const said = found.cell.startsWith("Not supplied") ? { reason: found.cell } : {};
+      sources[key] = { href, period: found.period, ...said };
+    } else if (found.cell === String(figure.value)) sources[key] = { href, period: found.period };
+  }
+  return sources;
 }
 
 export function traceKey(entry: OutputEntry, line: number) {
