@@ -326,16 +326,24 @@ function modelQualifications(model: ForecastModel) {
   for (const text of stringsIn(data.notes)) add(text, "Model note");
   for (const text of stringsIn(data.limits)) add(text, "Whole model");
   const downside = stringsIn(data.notes).find((text) => text.startsWith("Downside case is"));
-  for (const grid of rawGroups(model))
-    for (const row of grid.rows)
-      row.cells.forEach((cell, index) => {
-        const column = grid.columns[index];
-        if (column)
-          add(
-            word(cell.reason),
-            `${row.label} · ${forecastCaseLabel(column.group, downside)} · ${column.label}`,
-          );
+  // The Evidence ledger must retain qualifications even if a grid fails the drawing checks.
+  for (const raw of [data, record(data.other)]) {
+    const columns = items(raw.columns).map(record);
+    for (const rawRow of items(raw.rows)) {
+      const row = record(rawRow);
+      items(row.cells).forEach((cell, index) => {
+        const column = columns[index];
+        add(
+          word(record(cell).reason),
+          [
+            word(row.label) || "Field not recorded",
+            forecastCaseLabel(word(column?.group), downside) || "Case not recorded",
+            word(column?.label) || "Period not recorded",
+          ].join(" · "),
+        );
       });
+    }
+  }
   return [...found].map(([text, scopes]) => ({ text, scope: [...scopes].join(" · ") }));
 }
 

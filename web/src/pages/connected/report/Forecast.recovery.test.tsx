@@ -222,6 +222,7 @@ it("traces a trend to the actual figure and selected case instead of generic JSO
 it("shows recorded drivers and the downside shock with a separate facilities notice", () => {
   const { view } = fixture();
   render(<Forecast view={view} run={run} />);
+  expect(screen.getByText("Forecast assumptions")).toBeInTheDocument();
   expect(screen.getByRole("table", { name: "Recorded forecast drivers" })).toBeInTheDocument();
   expect(screen.getByText("Recorded growth.")).toBeInTheDocument();
   expect(screen.getByText("20.00%")).toBeInTheDocument();
@@ -234,6 +235,29 @@ it("shows recorded drivers and the downside shock with a separate facilities not
       /facility-level/,
     ),
   ).toBeNull();
+});
+
+it("retains a cell qualification even when its calculation grid cannot be drawn", () => {
+  const { view, model } = fixture();
+  const row = model.cashflow.rows[0];
+  const cell = row?.cells[0];
+  if (!cell) throw new Error("Missing retained cell fixture");
+  cell.display = "";
+  cell.reason = "Retain the exact qualification from malformed-grid-source.pdf p.12";
+  vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("not available")));
+  render(
+    <ReportEvidence
+      snapshot={snapshot}
+      run={run}
+      entries={view.entries}
+      target="record"
+      mode="synthetic"
+      models={[model]}
+    />,
+  );
+  expect(
+    screen.getByText("Retain the exact qualification from malformed-grid-source.pdf p.12"),
+  ).toBeInTheDocument();
 });
 
 it("keeps the missing cash-proxy reason on its case card and explains its precision", () => {

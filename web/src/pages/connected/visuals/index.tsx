@@ -168,7 +168,7 @@ export function LegacyVisuals({
           </PublishedSource>
         )),
     };
-    const note = word(descriptor.unit) || undefined;
+    const note = descriptor.unit === "x" ? "x (times)" : word(descriptor.unit) || undefined;
     const frame = { title, note, actions, as: Heading };
     const chart = drawingChart({ category, descriptor, published, basis, link, table, frame });
     return [

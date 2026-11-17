@@ -259,12 +259,13 @@ function ForecastAssumptions({
   const meaningful = register?.rows.some(
     (row) => !row.some((cell) => /Not supplied: nothing to report/i.test(cell)),
   );
+  if (!inputs && !register) return null;
   return (
-    <div className="grid min-w-0 gap-4 wrap-anywhere">
+    <details open className="grid min-w-0 gap-4 wrap-anywhere">
+      <summary className="cursor-pointer font-semibold">Forecast assumptions</summary>
       {inputs && <RecordedForecastAssumptions document={inputs.value} source={source} />}
       {meaningful && model.register && (
-        <details className={card}>
-          <summary className="cursor-pointer font-semibold">Forecast assumptions</summary>
+        <div className={card}>
           {model.register.intro && !containsReference(model.register.intro) && (
             <p>{readerText(model.register.intro)}</p>
           )}
@@ -295,9 +296,9 @@ function ForecastAssumptions({
           >
             Open the model evidence
           </Button>
-        </details>
+        </div>
       )}
-    </div>
+    </details>
   );
 }
 
@@ -490,9 +491,9 @@ export function Forecast({
       {!model && <p className={card}>No forecast model was published from this run’s files.</p>}
       {model && !input && (
         <p className={`${card} min-w-0 wrap-anywhere`}>
-          Forecast source details are not available: no single matching model evidence with a
-          readable recorded-input block could be identified. Published figures remain available;
-          inspect the saved model and its sources in Evidence before relying on them.
+          Forecast source details are not available: the model could not be matched to one readable
+          recorded-input block in its saved evidence. Published figures remain available; inspect
+          the saved model and its sources in Evidence before relying on them.
         </p>
       )}
       {models.length > 1 && (
