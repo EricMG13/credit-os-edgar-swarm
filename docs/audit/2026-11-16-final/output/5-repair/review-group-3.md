@@ -83,3 +83,37 @@ One entry per task: the reviewer was a fresh Sonnet agent at xhigh effort that d
 - Low:
   - Start.test.tsx:62-66, the scoped `<strong>` assertion, is vacuous if the whole paid sentence becomes a `<strong>` (mutation check passed). Suggested: also assert `sentence.closest("strong")` is null.
   - `#/kit` draws the note even on the shipped build. This is deliberate (OQ-01) and pinned by a test.
+
+## T32 (S2-001, J6-006)
+
+- Commit reviewed: 41c5580. Verdict: PASS. Merged onto audit/repair-3.
+- On the parent source, 6 of the 8 new tests fail, plus the changed History.test.tsx case. With the repair all pass.
+- The Corvane Fasteners test in History.test.tsx asserted the defect (no list); it now asserts the one Failed run. Nothing else was loosened.
+- No Open report link is invented: all five empty issuers have `report: null`.
+- Page order is h1, subtitle, empty state with its two buttons, then the runs. No sideways scroll at 1440 or 390 px.
+- j6-home-cards-vs-history.cjs still exits 1. It flags any card page containing "No report yet". What remains is fixture content: cards say "Finished, 6 of 6 modules" while every entry has `report: null`, and Corvane Packaging, Tessaly Foods and Ardenne Cable hold Finished runs under "No report yet". J6-006's verify_note already calls it fixture content. Tracking: no register record covers these four cards. The lead should add a Low batch line, or note that this probe keeps exiting 1 until the fixture changes.
+- Gates the reviewer saw:
+  - build 0, lint 0, format:check 0, typecheck 0.
+  - vitest: 10 files, 435 tests, and src/pages/library 27 files, 883 tests, all exit 0, with `--testTimeout=120000 --maxWorkers=2`.
+  - Probes: history-hides-runs.mjs 0 (rows 2/2, 1/1, 2/2, 1/1).
+- Low:
+  - The RunFeed `<ol>` has no accessible name; `aria-label="Runs"` would add one.
+  - A History.runs.test.tsx title claims the buttons sit above the runs but does not assert it.
+  - The slice.ts:85-87 comment says `empty` is shown "in place of the feed"; it is now shown above it.
+
+## T36 (S3-003, S2-004)
+
+- Commit reviewed: d450524. Verdict: PASS. Merged onto audit/repair-3.
+- On the parent source the new test fails 4 of 5; the order guard passes both ways by design.
+- Tab and DOM order are unchanged. The Collapse button stays 32 x 32 with the same name. Focusing it no longer scrolls the page sideways at any width.
+- No Limitations control passes its card edge at 320, 390 or 480 px.
+- S3-003.mjs still exits 1, at 320 px only. The reviewer confirmed this independently: with the run header's New run link hidden, the page is 320/320. The link is S3-029 and S2-021 (disposition batch), RunFrame.tsx:152. The probe can reach 0 only after the Low batch repairs that link.
+- reflow.mjs: no 390 px line remains.
+- Gates the reviewer saw:
+  - build 0, lint 0, format:check 0, typecheck 0.
+  - vitest: 147 passed at the default timeout; src/pages/library 728 + 102 passed with long timeouts.
+- Low:
+  - The report says the row stays on one line at 480 px. It wraps there (correctly) and is one line from 520 to 560 px up.
+  - `min-w-0` is not load-bearing.
+  - The test checks classes only.
+- Info: ReportLibrary.design.test.tsx "filters by sector and pathway and keeps filters available to reset an empty result" fails on both the repaired and the parent tree. It is unrelated to T36, likely a timing failure under load. It is group 2's file and is passed to the lead.
