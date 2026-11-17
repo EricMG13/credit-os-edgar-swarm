@@ -296,3 +296,36 @@ One entry per task: the reviewer was a fresh Sonnet agent at xhigh effort that d
   - The library's disabled tab says "No forecast for this run", the model page "No forecast was published for this run". A wording choice.
   - The Show sources switch is drawn on the sentence page with nothing to reveal, the same class as C5-005.
   - A forecast with neither tabs nor periods gets the generic nullableRecord message.
+
+## T35 (S3-002, S3-007), with rulings L5, L9, L9a and L9b
+
+- Reviewed as a whole: 664dabc, merge 075007d, and 075007d..469b9fb (three Sonnet implementers). Verdict: PASS with conditions M1 and M2. The conditions were met under lead ruling L9b in 759ded2, which a second fresh reviewer passed. Merged onto audit/repair-3.
+- First review:
+  - On the pre-T35 source the new tests fail 11 of 15. The 4 that pass pin unchanged behaviour.
+  - The 9 changed existing assertions (Module 5, Overview 3, RunFrame 1) are exactly those that asserted "a null trace draws nothing". 162 others pass with the pre-T35 tests. Evidence.test.tsx is unchanged.
+- The marker:
+  - It is named "<label>: no source recorded", `aria-disabled` and opens nothing.
+  - A dashed gap-violet border and a file-with-cross icon keep it from being mistaken for a control.
+  - Its focus ring is 8.10:1 light and 11.36:1 navy.
+  - An unheld key still throws.
+- S3-002: `ring-focus-inverse` on navy, 11.36:1.
+- M1 (Medium): the connected risk matrix drew a false marker beside traced rows. L9b repair in MatrixBlock.tsx: skip the table-level control when the block has no trace and every row has one.
+  - That rule is narrower than L9b's words. A block with its own trace keeps its control, as the unchanged Module.test.tsx:240 pins for the static matrix.
+  - Second review: the connected render is now row controls only, and before L9b it carried the marker. The static render is unchanged. The new test fails 1 of 5 on 469b9fb.
+- M2: T35.md now holds the reviewer's measured L9(b) list.
+  - Statement tables: none since L9a.
+  - Risk matrix: none since L9b.
+  - Confidence tile and summary band: missing by data, the marker stays.
+  - Foundation tiles: not reachable.
+  - Connected Evidence tab: 0 markers across 21 pages of a synthetic run.
+- Gates the reviewers saw:
+  - build 0, lint 0, format:check 0, typecheck 0.
+  - S3-002 0, S3-007 0.
+  - vitest: library, Signal and components, 97 files, 1,895 tests; then library 35 files, 916 tests.
+  - Connected 950 tests pass with `--maxWorkers=1`. ReportLibrary.design.test.tsx "filters by sector and pathway..." fails at its 1 s findBy under load in whole-directory runs, and passes alone and with one worker. Nothing in it reaches T35's components; it is already with the lead.
+- Low:
+  - ChangeCard.tsx:61 still draws nothing for a null trace (batch).
+  - An Overview assertion checks no count (batch).
+  - No committed test renders the connected matrix through ModuleTable.
+  - Inert tab stops and touch are moot under R14.
+- Info: StatementBlock's L9a rule and MatrixBlock's L9b rule differ only in a case the app never reaches. The `rows.length > 0` guard is unreachable.
