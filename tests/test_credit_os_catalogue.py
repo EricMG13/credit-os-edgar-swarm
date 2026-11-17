@@ -6,6 +6,7 @@ import json
 from decimal import Decimal
 from pathlib import Path
 
+import pytest
 from hypothesis import given, settings
 from hypothesis import strategies as st
 from library_fixtures import make_run, method
@@ -124,7 +125,9 @@ def test_catalogue_lists_only_library_runs(tmp_path):
     (broken / "workflow.json").unlink()  # library_index leaves a non-launcher run out
     result = built(tmp_path)
     assert [run["id"] for run in result["real"]] == ["run-a"]
-    assert result["workspace"] == str(tmp_path)
+    # The server's folder is not part of what the library publishes.
+    assert "workspace" not in result
+    assert str(tmp_path) not in json.dumps(result)
 
 
 def test_metrics_quote_the_handoff_row(tmp_path):
@@ -263,6 +266,55 @@ def test_context_the_rules_refuse_is_an_issue_with_empty_fields(tmp_path):
     result = built(tmp_path)
     assert result["real"][0]["sector"] == ""
     assert any("context not used" in i for i in result["issues"])
+
+
+@pytest.mark.parametrize(
+    ("schema", "pinned_sha", "reason"),
+    [
+        ("context/1", "0" * 64, f"inputs/{'0' * 64} no longer has its recorded sha256"),
+        ("other", None, "schema: must be 'context/1'."),
+    ],
+)
+def test_a_refused_context_keeps_its_path_free_reason(tmp_path, schema, pinned_sha, reason):
+    """Only a refusal reaches this issue, and its reason names no server path: the reader keeps it
+    (lead ruling L6b), so the analyst sees what to fix in the context."""
+    run_dir = make_run(tmp_path, "run-a")
+    pin_context(run_dir, json.dumps({**CONTEXT, "schema": schema}).encode(), pinned_sha=pinned_sha)
+    (issue,) = built(tmp_path)["issues"]
+    assert issue.startswith("run-a: context not used (") and reason in issue
+    assert str(tmp_path) not in issue
+
+
+def test_a_refused_delivery_issue_keeps_its_path_free_reason(tmp_path):
+    """A handoff that fails its recorded hash is refused with a run-relative reason, kept as is."""
+    run_dir = make_run(tmp_path, "run-a")
+    (delivery,) = (run_dir / "deliveries").iterdir()
+    library = build_library(tmp_path, tmp_path / "library", method())
+    (delivery / "CP-1.md").write_text("# changed after the build\n")
+    (issue,) = catalogue(tmp_path, library)["issues"]
+    assert issue == (
+        f"run-a: delivery not catalogued (deliveries/{delivery.name}/CP-1.md"
+        " no longer has its recorded sha256)"
+    )
+
+
+def test_an_unreadable_handoff_issue_names_the_error_kind_not_the_path(tmp_path, monkeypatch):
+    """A locked or unreadable handoff raises an OSError whose text holds the file's absolute path.
+    The issue is published to the browser, so it names the kind of error and nothing of where."""
+    make_run(tmp_path, "run-a")
+    library = build_library(tmp_path, tmp_path / "library", method())
+    read_bytes = Path.read_bytes
+
+    def locked(self: Path) -> bytes:
+        if self.name == "CP-1.md":
+            raise PermissionError(13, "Permission denied", str(self))
+        return read_bytes(self)
+
+    monkeypatch.setattr(Path, "read_bytes", locked)
+    result = catalogue(tmp_path, library)
+    assert result["issues"] == ["run-a: delivery not catalogued (PermissionError)"]
+    assert str(tmp_path) not in json.dumps(result)
+    assert result["real"][0]["id"] == "run-a"  # the run is still listed, without its artifacts
 
 
 def test_run_without_context_leaves_fields_empty(tmp_path):

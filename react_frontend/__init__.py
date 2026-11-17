@@ -54,15 +54,21 @@ def _read_publication(path: Path) -> tuple[bytes, dict[str, Any] | None]:
     raw = http_base.read_regular(path)
     if raw is None:
         return b"null", None
+    encoded, snapshot = _decode_publication(raw)
+    if any(not isinstance(snapshot.get(key), dict) for key in EXPORT_KEYS):
+        raise ValueError("invalid issuer library snapshot")
+    return encoded, snapshot
+
+
+def _decode_publication(raw: bytes) -> tuple[bytes, dict[str, Any]]:
+    """The assignment's JSON object and its original bytes; anything else is refused."""
     assignment = raw.decode("utf-8").rstrip()
     if not assignment.startswith(EXPORT_PREFIX) or not assignment.endswith(";"):
         raise ValueError("invalid issuer library export")
     encoded = assignment[len(EXPORT_PREFIX) : -1]
     snapshot = json.loads(encoded, parse_constant=_invalid_json)
-    if not isinstance(snapshot, dict) or any(
-        not isinstance(snapshot.get(key), dict) for key in EXPORT_KEYS
-    ):
-        raise ValueError("invalid issuer library snapshot")
+    if not isinstance(snapshot, dict):
+        raise TypeError("invalid issuer library snapshot")
     return encoded.encode("utf-8"), snapshot
 
 
@@ -75,7 +81,33 @@ def _visible_scope(layout: Layout, folder: str | None) -> tuple[bytes, dict[str,
     if admitted is None:
         return b"null", None
     visible = sources.enrich(admitted, layout.runs)
+    visible["catalogue"] = _without_workspace(visible["catalogue"])
     return json.dumps(visible, ensure_ascii=False).encode("utf-8"), visible
+
+
+def _without_workspace(catalogue: dict[str, Any]) -> dict[str, Any]:
+    """The catalogue without ``workspace``: an older build wrote the service's folder there, and
+    nothing reads it. Every reply that sends the catalogue drops it here."""
+    return {key: value for key, value in catalogue.items() if key != "workspace"}
+
+
+def _library_data(reply: http_base.Reply) -> http_base.Reply:
+    """The library page's data.js without the ``catalogue.workspace`` an older build wrote.
+
+    Recognised by its assignment, not its path, so every spelling of the path is covered. A file
+    without the key is answered as read; one that begins with the assignment and is not a JSON
+    object is refused, as the snapshot refuses it."""
+    body = reply.body
+    if not (isinstance(body, bytes) and body.startswith(EXPORT_PREFIX.encode("ascii"))):
+        return reply
+    _, snapshot = _decode_publication(body)
+    catalogue = snapshot.get("catalogue")
+    if not (isinstance(catalogue, dict) and "workspace" in catalogue):
+        return reply
+    # The builder's own form (update_library.embedded_json): ASCII, and no "<" to open a tag.
+    kept = {**snapshot, "catalogue": _without_workspace(catalogue)}
+    text = json.dumps(kept, ensure_ascii=True, allow_nan=False).replace("<", "\\u003c")
+    return http_base.Reply(reply.status, f"{EXPORT_PREFIX}{text};\n".encode("ascii"), reply.headers)
 
 
 def _admitted_scope(layout: Layout, folder: str | None) -> dict[str, Any] | None:
@@ -368,6 +400,10 @@ def _handler(
                     response.headers["Cache-Control"] = "public, max-age=31536000, immutable"
                 raise response
             super()._get(url)
+
+        def _file(self, base: Path, relative: str, *, direct: bool) -> http_base.Reply:
+            reply = super()._file(base, relative, direct=direct)
+            return _library_data(reply) if base == self._layout.engine / "library" else reply
 
         def _publication(self, folder: str | None = None) -> tuple[bytes, dict[str, Any] | None]:
             return _visible_scope(self._layout, folder)

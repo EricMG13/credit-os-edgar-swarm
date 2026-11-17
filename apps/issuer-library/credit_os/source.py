@@ -262,9 +262,14 @@ def sha256(path: Path) -> str:
 
 
 def describe(error: BaseException) -> str:
-    """An error as its type and a short reason; never the repr, which can hold file bytes."""
+    """An error as its type and a short reason; never the repr, which can hold file bytes.
+
+    An OSError's text holds the absolute path it failed on and the reason reaches the browser, so
+    it is named by its kind alone; this module's own UnreadableFile reasons hold no path."""
     if isinstance(error, UnicodeDecodeError):
         return f"UnicodeDecodeError: {error.reason}"
+    if isinstance(error, OSError) and not isinstance(error, UnreadableFile):
+        return type(error).__name__
     return f"{type(error).__name__}: {str(error)[:80]}"
 
 
