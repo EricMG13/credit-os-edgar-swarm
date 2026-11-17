@@ -133,7 +133,7 @@ def test_a_submission_is_run_by_the_real_launcher_and_listed(root, tmp_path, mon
             "level": "basic",
             "model": "gpt",
             "effort": "balanced",
-            "submitted_by": "analyst",
+            "submitted_by": "Ana L",
         }
     )
     got = submissions.summary(lay, sid, answers)
@@ -455,7 +455,7 @@ def _submit_advanced(w: Scheduler, root: Path, model: str, effort: str) -> Recor
             "level": "advanced",
             "model": model,
             "effort": effort,
-            "submitted_by": "analyst",
+            "submitted_by": "Ana L",
         }
     )
     lay = Layout(root)
@@ -528,7 +528,7 @@ def test_submit_refuses_claude_without_the_anthropic_key(root, monkeypatch):
         answers = submissions.validated(
             {
                 "context": body, "modules": [], "max_turns": 32, "level": "advanced",
-                "model": "claude", "effort": "high", "submitted_by": "analyst",
+                "model": "claude", "effort": "high", "submitted_by": "Ana L",
             }
         )  # fmt: skip
         lay = Layout(root)

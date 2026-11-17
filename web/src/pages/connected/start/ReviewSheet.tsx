@@ -2,22 +2,28 @@ import { useId, type ReactNode } from "react";
 import { Button } from "@/components/base/buttons/button";
 import {
   changesSentence,
+  drawnModules,
   moduleName,
+  pathwayModules,
   pathwayName,
   serviceText,
   type Answers,
   type Summary,
 } from "../api";
 import {
+  CASE_KINDS,
+  choiceLabel,
   comparisonCaveat,
   documentDescription,
+  EFFORTS,
   LEVELS,
   lookupSentence,
+  MODELS,
   PURPOSES,
   storedName,
 } from "./plain";
 import { StatusBadge } from "@/components/status/StatusBadge";
-import { decided, groupLimits, type LimitGroup } from "./limits";
+import { decided, groupLimits, leaveOut, type LimitGroup } from "./limits";
 
 type EditStep = "documents" | "purpose" | "context";
 
@@ -92,6 +98,19 @@ const OUTCOME_STATE = {
   check: "Check",
 } as const;
 
+/** The omitted report sections by title; an older service sends no titles, so only their count. */
+function omittedSentence({ omitted, omitted_titles }: Summary) {
+  if (omitted_titles?.length === omitted.length)
+    return `Report sections omitted · ${omitted_titles.join(", ")}`;
+  return `${String(omitted.length)} report section${omitted.length === 1 ? " is" : "s are"} not produced`;
+}
+
+/** Both labels, or nothing: half of the pair would mislead. */
+function modelAndEffort({ model, effort }: Summary) {
+  const labels = [choiceLabel(MODELS, model), choiceLabel(EFFORTS, effort)];
+  return labels.every(Boolean) ? labels.join(" · ") : undefined;
+}
+
 function scopeText(scope: string) {
   return scope === "run" ? "Whole run" : moduleName(scope);
 }
@@ -107,16 +126,64 @@ function moduleNames(items: readonly { scope: string }[]): string[] {
   return [...new Set(items.map((item) => scopeText(item.scope)))];
 }
 
+function nameList(names: readonly string[]): string {
+  if (names.length < 3) return names.join(" and ");
+  return `${names.slice(0, -1).join(", ")}, and ${names.at(-1) ?? ""}`;
+}
+
+type ModuleChoice = {
+  requested: readonly string[];
+  modules: readonly string[];
+  onModules: (modules: string[]) => void;
+};
+
+function LeaveOut({
+  group,
+  choice,
+  disabled,
+}: {
+  group: LimitGroup;
+  choice: ModuleChoice;
+  disabled: boolean;
+}) {
+  const kept = leaveOut(group, choice.requested, choice.modules);
+  if (!kept) return null;
+  const selected = choice.modules.length ? choice.modules : choice.requested;
+  const left = selected.filter((code) => !kept.includes(code));
+  const plural = left.length > 1;
+  return (
+    <div className="grid justify-items-start gap-1">
+      <Button
+        color="secondary"
+        size="sm"
+        isDisabled={disabled}
+        onPress={() => {
+          choice.onModules(kept);
+        }}
+      >
+        {`Leave out ${nameList(left.map(moduleName))}`}
+      </Button>
+      <p>
+        {plural
+          ? "The report sections of the modules left out are not filled, and a run with modules left out is not used as the earlier run in a later Changes comparison."
+          : "The report section of the module left out is not filled, and a run with modules left out is not used as the earlier run in a later Changes comparison."}
+      </p>
+    </div>
+  );
+}
+
 function LimitCard({
   group,
   accepted,
   disabled,
   onAccept,
+  choice,
 }: {
   group: LimitGroup;
   accepted: ReadonlySet<string>;
   disabled: boolean;
   onAccept: (ids: readonly string[], checked: boolean) => void;
+  choice: ModuleChoice;
 }) {
   const fixes = [...new Set(group.causes.map((cause) => cause.fix ?? "").filter(Boolean))];
   const refusing = moduleNames(group.consequences.filter((item) => item.outcome === "will_refuse"));
@@ -136,6 +203,7 @@ function LimitCard({
       ))}
       {refusing.length > 0 && <p>Will also refuse: {refusing.join(", ")}</p>}
       {affected.length > 0 && <p>Also affects: {affected.join(", ")}</p>}
+      <LeaveOut group={group} choice={choice} disabled={disabled} />
       <label className="flex items-center gap-2 font-semibold text-text-primary">
         <input
           type="checkbox"
@@ -157,11 +225,13 @@ function LimitsToDecide({
   accepted,
   disabled,
   onAccept,
+  choice,
 }: {
   items: Summary["items"];
   accepted: ReadonlySet<string>;
   disabled: boolean;
   onAccept: (ids: readonly string[], checked: boolean) => void;
+  choice: ModuleChoice;
 }) {
   const titleId = useId();
   const { groups, passive } = groupLimits(items);
@@ -189,6 +259,7 @@ function LimitsToDecide({
               accepted={accepted}
               disabled={disabled}
               onAccept={onAccept}
+              choice={choice}
             />
           ))}
         </ul>
@@ -215,12 +286,14 @@ export function ReviewSheet({
   accepted,
   onAccept,
   onEdit,
+  onModules,
   disabled,
 }: {
   review: { answers: Answers; summary: Summary };
   accepted: ReadonlySet<string>;
   onAccept: (ids: readonly string[], checked: boolean) => void;
   onEdit: (step: EditStep) => void;
+  onModules: (modules: string[]) => void;
   disabled: boolean;
 }) {
   const titleId = useId();
@@ -230,6 +303,11 @@ export function ReviewSheet({
     ? `Compared with the ${pathwayName(summary.prior.pathway)} run as of ${summary.prior.as_of}${comparisonCaveat(summary.changes)}`
     : changesSentence(summary.changes);
   const block = { onEdit, disabled };
+  const requested = pathwayModules(run.pathway);
+  const choice = { requested, modules: answers.modules, onModules };
+  const leftOut = answers.modules.length
+    ? requested.filter((code) => !answers.modules.includes(code)).map(moduleName)
+    : [];
   return (
     <>
       <section aria-labelledby={titleId} className="grid gap-4">
@@ -241,7 +319,6 @@ export function ReviewSheet({
             rows={[
               ["Issuer", identity.issuer_name],
               ["As-of date", run.as_of],
-              ["Reporting currency", run.reporting_currency],
               ["Submitted by", answers.submitted_by],
             ]}
           />
@@ -263,17 +340,30 @@ export function ReviewSheet({
             rows={[
               ["Pathway", pathwayName(run.pathway)],
               ["Purpose", PURPOSES[run.run_type as keyof typeof PURPOSES]],
-              ["Case kind", run.case_kind],
+              ["Case kind", choiceLabel(CASE_KINDS, run.case_kind)],
             ]}
           />
           <List
-            title={`Modules (${String(summary.modules.length)})`}
-            items={summary.modules.map(moduleName)}
+            title={`Modules (${String(drawnModules(summary.modules).length)})`}
+            items={drawnModules(summary.modules).map(moduleName)}
           />
+          {leftOut.length > 0 && (
+            <div className="flex flex-wrap items-center justify-between gap-3 text-sm text-text-secondary">
+              <p>Left out: {leftOut.join(", ")}</p>
+              <Button
+                color="secondary"
+                size="sm"
+                isDisabled={disabled}
+                onPress={() => {
+                  onModules([]);
+                }}
+              >
+                Put back
+              </Button>
+            </div>
+          )}
           {summary.omitted.length > 0 && (
-            <p className="text-sm text-text-secondary">
-              Report sections omitted · {serviceText(summary.omitted.join(", "))}
-            </p>
+            <p className="text-sm text-text-secondary">{omittedSentence(summary)}</p>
           )}
         </Block>
         <Block title="Context" edit="context" {...block}>
@@ -297,7 +387,7 @@ export function ReviewSheet({
           <Block title="Advanced choices" {...block}>
             <Facts
               rows={[
-                ["Model and effort", `${summary.model} · ${summary.effort}`],
+                ["Model and effort", modelAndEffort(summary)],
                 ["Form level", LEVELS[answers.level as keyof typeof LEVELS]],
                 ["Turns per module", answers.max_turns],
               ]}
@@ -310,6 +400,7 @@ export function ReviewSheet({
         accepted={accepted}
         disabled={disabled}
         onAccept={onAccept}
+        choice={choice}
       />
     </>
   );

@@ -95,6 +95,7 @@ const issuer = async (pathway, docs) => {
   pick('data-k="pathway"', pathway);
   await uploadFiles(docs);
   type('i-issuer_name', 'Acme Corp'); type('d-as_of', '2026-10-31');
+  type('submitter', 'Ana L');
   pick('data-k="issue_classification"', 'high_yield');
 };
 const summarised = async () => {
@@ -543,6 +544,9 @@ def test_the_three_levels_build_the_same_context_for_the_same_answers(page):
 def test_basic_builds_the_defaults_the_form_had(page):
     expected = json.loads(json.dumps(RESEARCH_MINIMAL))
     expected["run"]["cutoff"] = expected["run"]["as_of"]  # The form writes the cutoff, never blank.
+    # The form does not ask the reporting currency
+    # (ruling 2026-11-16-reporting-currency-from-sources).
+    del expected["run"]["reporting_currency"]
     expected["identity"]["issue_classification"] = (
         "high_yield"  # The form asks it; the file did not.
     )
@@ -1069,7 +1073,8 @@ def test_a_limit_must_be_ticked_before_approval_and_an_error_blocks_it(page):
     assert seen["approved"] == {"approve": False, "approved": True, "submit": False}
     assert seen["untick"] == {"approve": True, "approved": False, "submit": True}
     assert seen["after"]["error"] and "digest" not in seen["after"]
-    assert "80 characters" in seen["refusal"]["state"]  # the service's own sentence, as text
+    # the service's own sentence, as text
+    assert "first name and initial" in seen["refusal"]["state"]
     assert seen["refusal"]["gate"] == {"approve": True, "approved": False, "submit": True}
     assert seen["refusal"]["links"] == ["pathway"] and seen["refusal"]["ticks"] == 0
 
@@ -1300,6 +1305,7 @@ def test_upload_to_filed_report_with_the_real_launcher(
     choose('legal-file', 'credit-agreement.txt');
     // The canned answers name this issuer and date (tests/test_cpos_launch.py ISSUER, AS_OF).
     type('i-issuer_name', {json.dumps(ISSUER)}); type('d-as_of', {json.dumps(AS_OF)});
+    type('submitter', 'Ana L');
     pick('data-k="issue_classification"', 'high_yield');
     await review();
     tickAll(); approve();
@@ -1452,26 +1458,27 @@ _REVIEW_STATE = """
 _AS_OF_EARLY = f"""
     pick('data-k="pathway"', 'earnings_update');
     await uploadFiles([file('annual.txt', {json.dumps(REPORT)})]);
-    type('i-issuer_name', 'Acme Corp'); pick('data-k="issue_classification"', 'high_yield');
+    type('i-issuer_name', 'Acme Corp'); type('submitter', 'Ana L');
+    pick('data-k="issue_classification"', 'high_yield');
     type('d-current_period', 'fy-2025'); type('d-prior_period', 'fy-2024');
     type('d-as_of', '2025-06-30');"""
 _EXECUTED_ON_MEMO = f"""
     pick('data-k="pathway"', 'distressed_restructuring');
     await uploadFiles([file('annual.txt', {json.dumps(REPORT)}),
       file('memo.txt', {json.dumps(MEMO)})]);
-    type('i-issuer_name', 'Acme Corp'); type('d-as_of', '2026-10-31');
+    type('i-issuer_name', 'Acme Corp'); type('submitter', 'Ana L'); type('d-as_of', '2026-10-31');
     pick('data-k="issue_classification"', 'high_yield'); type('d-current_period', 'fy-2025');
     choose('legal-file', 'memo.txt');"""
 _LEGAL_NONE = f"""
     pick('data-k="pathway"', 'distressed_restructuring');
     await uploadFiles([file('annual.txt', {json.dumps(REPORT)})]);
-    type('i-issuer_name', 'Acme Corp'); type('d-as_of', '2026-10-31');
+    type('i-issuer_name', 'Acme Corp'); type('submitter', 'Ana L'); type('d-as_of', '2026-10-31');
     pick('data-k="issue_classification"', 'high_yield'); type('d-current_period', 'fy-2025');"""
 _ONE_PERIOD = f"""
     pick('data-k="pathway"', 'earnings_update');
     await uploadFiles([file('annual.txt', {json.dumps(REPORT)}),
       file('annual-copy.txt', {json.dumps(REPORT)})]);
-    type('i-issuer_name', 'Acme Corp'); type('d-as_of', '2026-10-31');
+    type('i-issuer_name', 'Acme Corp'); type('submitter', 'Ana L'); type('d-as_of', '2026-10-31');
     pick('data-k="issue_classification"', 'high_yield');
     type('d-current_period', 'fy-2025'); type('d-prior_period', 'fy-2024');"""
 
@@ -1535,7 +1542,7 @@ def test_the_earnings_comparison_claims_nothing_when_two_periods_are_recognised(
     pick('data-k="pathway"', 'earnings_update');
     await uploadFiles([file('annual.txt', {json.dumps(REPORT)}),
       file('prior.txt', {json.dumps(REPORT.replace("2025", "2024"))})]);
-    type('i-issuer_name', 'Acme Corp'); type('d-as_of', '2026-10-31');
+    type('i-issuer_name', 'Acme Corp'); type('submitter', 'Ana L'); type('d-as_of', '2026-10-31');
     pick('data-k="issue_classification"', 'high_yield');
     type('d-current_period', 'fy-2025'); type('d-prior_period', 'fy-2024');""",
     )
@@ -1622,7 +1629,7 @@ def test_a_finished_runs_report_and_submitter_show_when_the_library_is_served(
     )
     page, watcher = page_with_launcher(str(HERE / "fixtures/canned_provider_launcher.py"))
     page.run(f"""
-    level('basic'); type('submitter', 'Dana Reyes');
+    level('basic'); type('submitter', 'Dana R');
     pick('data-k="pathway"', 'credit_snapshot');
     {body}
     await uploadFiles([file('credit-agreement.txt', {json.dumps(AGREEMENT)})]);
@@ -1649,7 +1656,7 @@ def test_a_finished_runs_report_and_submitter_show_when_the_library_is_served(
     # Decision 10: a finished run is not in Run activity (live runs only); it is reached from the
     # library, through its Report history.
     dom = html.unescape(_served_dom(page, "/library/#CP-OS/activity"))
-    assert f'data-run="{record.id}"' not in dom and "submitted by Dana Reyes" not in dom
+    assert f'data-run="{record.id}"' not in dom and "submitted by Dana R" not in dom
     assert "reports/" not in dom
     dom = html.unescape(_served_dom(page, f"/library/#W-Report/history?c={record.id}"))
     # The history is a run timeline: the run is an entry named by its date and pathway (its code is
@@ -1804,7 +1811,7 @@ def test_choosing_another_agreement_file_clears_a_ticked_approval(page):
         f"""pick('data-k="pathway"', 'distressed_restructuring');
     await uploadFiles([file('annual.txt', {json.dumps(REPORT)}),
       file('agreement.txt', {json.dumps(AGREEMENT)}), file('memo.txt', {json.dumps(MEMO)})]);
-    type('i-issuer_name', 'Acme Corp'); type('d-as_of', '2026-10-31');
+    type('i-issuer_name', 'Acme Corp'); type('submitter', 'Ana L'); type('d-as_of', '2026-10-31');
     pick('data-k="issue_classification"', 'high_yield'); type('d-current_period', 'fy-2025');
     choose('legal-file', 'agreement.txt'); pick('data-k="legal_documents"', 'executed');""",
         "gotoStep('legal'); choose('legal-file', 'memo.txt');",
@@ -1816,7 +1823,8 @@ def test_choosing_another_agreement_file_clears_a_ticked_approval(page):
 EARNINGS = f"""pick('data-k="pathway"', 'earnings_update');
     await uploadFiles([file('annual.txt', {json.dumps(REPORT)}),
       file('prior.txt', {json.dumps(REPORT.replace("2025", "2024"))})]);
-    type('i-issuer_name', 'Acme Corp'); pick('data-k="issue_classification"', 'high_yield');
+    type('i-issuer_name', 'Acme Corp'); type('submitter', 'Ana L');
+    pick('data-k="issue_classification"', 'high_yield');
     type('d-current_period', 'fy-2025'); type('d-prior_period', 'fy-2024');
     type('d-as_of', '2026-10-31');"""
 
@@ -2850,7 +2858,7 @@ def test_the_notice_carry_keeps_the_analysts_own_name(page_from):
     got = page.run(
         NOTICE
         + """
-      type('submitter', 'Dana Reyes');
+      type('submitter', 'Dana R');
       type('i-issuer_name', 'Acme Corp'); type('i-issuer_id', 'acme');
       await waitNotice();
       $('issuer-carry').click();
@@ -2858,7 +2866,7 @@ def test_the_notice_carry_keeps_the_analysts_own_name(page_from):
       await settle(200);
       return {submitter: $('submitter').value, sent: answers().submitted_by};"""
     )
-    assert got["submitter"] == "Dana Reyes" and got["sent"] == "Dana Reyes", got
+    assert got["submitter"] == "Dana R" and got["sent"] == "Dana R", got
 
 
 def test_unreadable_answers_set_only_the_name_and_id_and_keep_what_was_typed(
@@ -2871,7 +2879,7 @@ def test_unreadable_answers_set_only_the_name_and_id_and_keep_what_was_typed(
         got = page.run(
             """
           pick('data-k="pathway"', 'earnings_update'); type('d-as_of', '2026-09-30');
-          type('submitter', 'Dana Reyes');
+          type('submitter', 'Dana R');
           await startFrom(RUN_ID);
           return {pathway: getV($('st-pathway'), 'pathway'), asOf: $('d-as_of').value,
                   who: $('submitter').value, id: $('i-issuer_id').value,
@@ -2879,7 +2887,7 @@ def test_unreadable_answers_set_only_the_name_and_id_and_keep_what_was_typed(
                   level: LEVEL};""".replace("RUN_ID", json.dumps(run_id))
         )
     assert got["pathway"] == "earnings_update" and got["asOf"] == "2026-09-30"
-    assert got["who"] == "Dana Reyes" and got["id"] == "acme" and got["name"] == "Acme Corp"
+    assert got["who"] == "Dana R" and got["id"] == "acme" and got["name"] == "Acme Corp"
     assert "and its answers" not in got["msg"] and "1 document carried over" in got["msg"]
 
 
