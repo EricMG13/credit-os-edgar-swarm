@@ -46,7 +46,14 @@ only to trace the extra field; the repair does not reproduce either parser.
 Confidence review checked that truncating the setup read cannot suppress the existing cap
 guard, that the historical write still drops both cap and limits, and that the unchanged
 refusal assertion now runs. The one-line prefix selection is the simplest local repair;
-there is no nontrivial function redesign requiring a rewrite tournament. A fresh reviewer
-must review the committed pin before integration.
+there is no nontrivial function redesign requiring a rewrite tournament.
+
+Fresh independent review of `3a51a3ee20221f109e505d3f69f13a391972ab9a`: **PASS**, no
+findings. The reviewer confirmed all original expectations and the two-line historical write
+are preserved, with no production parser or abstraction, and independently reran the
+historical pathway case plus six approved-limits cases: seven passed. The adversarial read
+confirmed a missing or reordered cap still fails the existing guard, and Scheduler checks
+the historical cap before reading Summary limits. This review record is a docs-only
+follow-up to the reviewed pin.
 
 Not verified: the complete final CI selection was not rerun here; browser/fidelity and release checks remain with the lead. No paid/provider/live execution, seat check, real Submit or Teams action ran. Signal, methods, prompts, calculations, canned handoffs and module text were not changed. Historical named review skills were unavailable; direct confidence and simplification review was used under R7.
