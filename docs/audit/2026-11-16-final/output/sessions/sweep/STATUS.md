@@ -1,7 +1,7 @@
 state: running
-updated: 2026-11-17T21:42:20Z
-done: Stage 6 branch pushed. Scope and measurements recorded. Reconciled 17 inherited rows and nine related observations. First reviewed change, SW-02, integrated with two fewer shared-to-page dependencies and byte-identical stylesheets.
-next: Finish review and integration of SW-01 and SW-03, measure the History row projection, and decide the remaining bounded candidates. Repeat checks against the updated stage 5 tip.
+updated: 2026-11-17T21:43:30Z
+done: Scope and baseline are pushed. Discovery covers all 17 inherited rows and nine related observations. Independently reviewed SW-01, SW-02 and SW-03 are integrated. Each affected suite passed in bounded runs.
+next: Verify the History row projection and two narrow dead-code candidates. Complete the updated repair baseline, then repeat the combined sweep gates and measurements.
 blocked: None for the sweep work in progress. Final acceptance depends on the remaining stage 5 fidelity and combined gates. The current script-suite attempt timed out in nested builds and is recorded in the measurement evidence.
 reports: docs/audit/2026-11-16-final/output/6-sweep/CONTRACT.md, register.md, discovery.md and measurements.md
 
