@@ -347,7 +347,7 @@ describe("Overview, findings, what would change the view and dates", () => {
     ).toBeVisible();
   });
 
-  it("draws the four dates with their state words, shapes that differ by state, and no trace", () => {
+  it("draws the four dates with their state words, shapes that differ by state, and the missing-trace marker", () => {
     renderOverview("2026-09-30");
     expect(screen.getByRole("heading", { level: 2, name: "Dates to watch" })).toBeVisible();
     const dates = within(screen.getByRole("region", { name: "Dates to watch" })).getAllByRole(
@@ -368,7 +368,11 @@ describe("Overview, findings, what would change the view and dates", () => {
       ]).size,
     ).toBe(3);
     expect(mark(dates[2] as HTMLElement)).toBe(mark(dates[3] as HTMLElement));
-    for (const item of dates) expect(within(item).queryByRole("button")).toBeNull();
+    for (const item of dates) {
+      const control = within(item).getByRole("button");
+      expect(control).toHaveAccessibleName("Show sources for this date: no source recorded");
+      expect(control).toHaveAttribute("aria-disabled", "true");
+    }
   });
 
   it("sets findings left of the note and dates from the large width, stacked below it", () => {
@@ -382,14 +386,17 @@ describe("Overview, findings, what would change the view and dates", () => {
     expect(findings()).toHaveLength(2);
     expect(screen.getByText("Not yet formed")).toBeVisible();
     const marks = screen.queryAllByRole("button", { name: /^Show sources for/ });
-    expect(marks).toHaveLength(12);
+    // 12 before the dates carried a control; the run's 2 dates each draw the marker too.
+    expect(marks).toHaveLength(14);
     for (const mark of marks) {
       expect(mark.getAttribute("aria-label")).toMatch(/: no source recorded$/);
       expect(mark).toHaveAttribute("aria-disabled", "true");
     }
-    expect(
-      within(screen.getByRole("region", { name: "Dates to watch" })).getAllByRole("listitem"),
-    ).toHaveLength(2);
+    const dates = within(screen.getByRole("region", { name: "Dates to watch" })).getAllByRole(
+      "listitem",
+    );
+    expect(dates).toHaveLength(2);
+    for (const item of dates) expect(within(item).getAllByRole("button")).toHaveLength(1);
   });
 });
 
