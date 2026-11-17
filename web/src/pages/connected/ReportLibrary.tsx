@@ -202,11 +202,13 @@ function HistoryRow({
   held: Snapshot | null;
 }) {
   const load = useCallback(
-    (signal: AbortSignal) => (held ? Promise.resolve(held) : getSnapshot(signal, record.folder)),
+    async (signal: AbortSignal) => {
+      const snapshot = held ?? (await getSnapshot(signal, record.folder));
+      return snapshot ? runDetails(snapshot, record.folder) : null;
+    },
     [held, record.folder],
   );
-  const { value, error } = useResource(load);
-  const details = value ? runDetails(value, record.folder) : value === null ? null : undefined;
+  const { value: details, error } = useResource(load);
   return (
     <li className="flex flex-wrap items-center justify-between gap-4 border-t border-border-hairline pt-3">
       <div className="grid gap-1">
