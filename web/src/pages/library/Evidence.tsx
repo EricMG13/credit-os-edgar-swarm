@@ -25,19 +25,25 @@ const count = (label: string, rows: number, note: string): Metric => ({
 /**
  * The Summary's three count tiles are the run's; with a module chosen they are instead the rows the
  * Sources, Trace and Gaps tabs draw for it, counted from those rows. The delivered notes under the
- * run's tiles are the run's too, so they are not drawn.
+ * run's tiles are the run's too, so they are not drawn. A run that delivers `trace.emptyText` was not
+ * traced item by item: its middle tile says so, and counting no Trace row for a module would turn that
+ * into a measured zero, so the middle tile stays as delivered and nothing is counted for it.
  */
 function summaryFor(evidence: EvidenceData, module: Reader): EvidenceData {
   const gaps = evidence.gaps.groups.flatMap((group) => group.rows);
   const files = evidence.sources.files.filter((file) => reads(file, module));
   const items = evidence.trace.rows.filter((row) => row.moduleId === module.id);
+  const traced =
+    evidence.trace.emptyText === null
+      ? [count("Traced items", items.length, `In ${module.name}`)]
+      : evidence.summary.counts.slice(1, 2);
   return {
     ...evidence,
     summary: {
       ...evidence.summary,
       counts: [
         count("Source files read", files.length, `By ${module.name}`),
-        count("Traced items", items.length, `In ${module.name}`),
+        ...traced,
         count("Gaps", gaps.filter((row) => row.moduleId === module.id).length, `In ${module.name}`),
       ],
     },
@@ -66,7 +72,8 @@ function EvidencePages({
   onSameAddress: () => void;
 }) {
   const { evidence } = run;
-  const address = `${item ?? ""}/${String(restarts)}`;
+  // The tab is part of the address: Trace and Gaps can both carry the same id, and each is its own row.
+  const address = `${page}/${item ?? ""}/${String(restarts)}`;
   const { chosen, clear, control } = useModuleFilter(
     evidence.moduleFilter,
     item === undefined ? null : address,

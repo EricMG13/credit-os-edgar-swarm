@@ -22,10 +22,14 @@ const data: LibraryData = {
 };
 const TABS = ["summary", "trace", "sources", "gaps", "record"] as const;
 
-function page(tab: (typeof TABS)[number], params: Record<string, string> = P) {
-  const found = routes.find((r) => r.path === `${BASE}/${tab}`);
-  if (found === undefined) throw new Error(`no ${tab} route`);
+function route(path: string, params: Record<string, string>) {
+  const found = routes.find((r) => r.path === `${BASE}/${path}`);
+  if (found === undefined) throw new Error(`no ${path} route`);
   return <SourceContext.Provider value={data}>{found.render(params)}</SourceContext.Provider>;
+}
+
+function page(tab: (typeof TABS)[number], params: Record<string, string> = P) {
+  return route(tab, params);
 }
 
 const filter = () => screen.getByRole("button", { name: /^Module:/ });
@@ -97,4 +101,71 @@ describe("the module filter on Evidence", () => {
     pick("All");
     expect(tiles()[0]).toBe("Source files9" + "7 read in full, 1 read in part, 1 unreadable");
   });
+});
+
+describe("an item address reached on another tab than the one the module was chosen on", () => {
+  // The Trace table of a run can carry the id a gap has, so the same id on two tabs is two addresses.
+  it("starts the Gaps address at All when the same id was open on Trace", () => {
+    const view = render(route("trace/:item", { ...P, item: "G-03" }));
+    pick("Business profile");
+    expect(filter()).toHaveTextContent("Module: Business profile");
+    view.rerender(route("gaps/:item", { ...P, item: "G-03" }));
+    expect(filter()).toHaveTextContent("Module: All");
+    const gaps = within(screen.getByRole("table", { name: "Gaps" }));
+    expect(gaps.getByRole("rowheader", { name: "G-03" })).toBeVisible();
+  });
+
+  it("starts the Trace address at All when the same id was open on Gaps", () => {
+    const view = render(route("gaps/:item", { ...P, item: "G-03" }));
+    pick("Business profile");
+    expect(filter()).toHaveTextContent("Module: Business profile");
+    view.rerender(route("trace/:item", { ...P, item: "G-03" }));
+    expect(filter()).toHaveTextContent("Module: All");
+  });
+
+  it("keeps the module while the tab changes to one with no item", () => {
+    const view = render(route("trace/:item", { ...P, item: "T-0104" }));
+    pick("Recovery");
+    view.rerender(page("gaps"));
+    expect(filter()).toHaveTextContent("Module: Recovery");
+  });
+});
+
+describe("the Summary of a run that was not traced item by item", () => {
+  // Three of the four fixture runs deliver `trace.emptyText`; their middle tile says "not traced",
+  // which is not a count of zero, so a module chosen leaves that tile as delivered.
+  const untraced = [
+    {
+      issuer: "halden-aerostructures",
+      run: "2026-03-31",
+      module: "Capital structure",
+      files: 2,
+      gaps: 1,
+    },
+    {
+      issuer: "halden-aerostructures",
+      run: "2025-09-30",
+      module: "Capital structure",
+      files: 1,
+      gaps: 2,
+    },
+    { issuer: "brevane-marine", run: "r-0412", module: "Business profile", files: 1, gaps: 1 },
+  ];
+
+  it.each(untraced)(
+    "keeps the delivered middle tile of $issuer $run under $module",
+    ({ issuer, run, module, files, gaps }) => {
+      render(page("summary", { issuer, run }));
+      const delivered = tiles()[1];
+      expect(delivered).toBe("Calculations0" + "Not traced item by item in this run");
+      pick(module);
+      expect(tiles()).toEqual([
+        `Source files read${String(files)}By ${module}`,
+        delivered,
+        `Gaps${String(gaps)}In ${module}`,
+      ]);
+      pick("All");
+      expect(tiles()[1]).toBe(delivered);
+    },
+  );
 });
