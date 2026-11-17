@@ -1,0 +1,256 @@
+diff --git a/docs/audit/2026-11-16-final/output/5-repair/T10.md b/docs/audit/2026-11-16-final/output/5-repair/T10.md
+new file mode 100644
+index 0000000..c9303f8
+--- /dev/null
++++ b/docs/audit/2026-11-16-final/output/5-repair/T10.md
+@@ -0,0 +1,44 @@
++# T10: abandoned forms must not use up the 50 unfinished drafts (C2-008)
++
++Model: Sonnet, medium effort. BASE: 6aea8e5230e6e32ce8070b0e9cd3b351570f6e02.
++
++## Cause
++`submissions.new()` refuses at `MAX_OPEN = 50` unsealed folders; only the 24-hour `STALE_SECONDS` sweep removes
++abandoned ones. The page makes a draft per form (`POST /api/submissions`) and the service has no route to release
++one (`service.py` is outside this task's files), so the page cannot release its draft.
++
++## Repair (service only, `submissions.py`)
++At the ceiling, `new()` first removes the oldest drafts idle for `IDLE_SECONDS` (2 hours), as many as needed, then
++refuses if still full. Never removed: a sealed (submitted) folder (not counted open at all), a draft with an
++upload in flight, a draft with an `issued` approval (it reached the review), any draft touched in the last 2 hours.
++`reading()` now touches the draft, as uploads and removals already do, so a form that is reading its documents is
++live. Submit's idempotence is unchanged (sealed/issued records are not touched). The limit stays at 50 and still
++refuses when 50 drafts are live. Why this and not a page change: no delete route exists and the page cannot be
++changed without one; counting liveness by idle time needs no new surface and only acts when the limit is hit.
++Residual: a form idle for over 2 hours at the limit, before reaching the review, can lose its draft (then
++"unknown submission"); a drafts that reached the review are kept until the 24-hour sweep.
++
++## Files
++`src/deploy_workflow/run_start/submissions.py`, `tests/test_run_start_submissions.py`, walk under `output/5-repair/T10/`.
++
++## Tests
++Five new tests at the end of `tests/test_run_start_submissions.py` (abandoned draft makes room; recent draft kept;
++issued draft kept; upload in flight kept; reading keeps a draft live). Before: 5 failed (no `IDLE_SECONDS`).
++After: `pytest -q tests/test_run_start_submissions.py tests/test_run_start_scheduler.py tests/test_run_start_service.py
++tests/test_react_frontend.py`: 430 passed, 3 skipped. No existing test changed.
++
++## Probe p22 (output, C2_PORT=8750)
++Exit 0 before and after. It makes 50 fresh drafts in seconds, so none is idle: after the repair it still prints
++`"alerts": ["too many unfinished submissions; try again later"]` (correct, 50 live drafts). It cannot show the
++repair, so a walk was saved: `T10/walk-abandoned-drafts.cjs` (50 drafts, all but two aged 3 hours; one fresh, one
++with an `issued` file). Base: exit 1, `FAIL the form reaches Purpose with 50 abandoned drafts [["too many
++unfinished submissions; try again later"]]` (`T10/before-walk.txt`). Repair: exit 0, all five checks ok, fresh and
++issued drafts kept, count 50 (`T10/after-walk.txt`).
++
++## Gates
++`quality_gate.py --base BASE`: 0 findings (one E501 fixed first). T07 walk-leave-and-return, walk-carried-work and
++T08 walk-t08: exit 0, no FAIL. T09 walk-issuer-id: no FAIL lines. No web file changed, so the web gates and vitest
++were not re-run.
++
++Not verified: the T09 walk's exit code itself (only its FAIL count); behaviour under concurrent Submit during
++eviction (both run under `_LOCK`; not stress-tested); web gates (no web change).
+diff --git a/docs/audit/2026-11-16-final/output/5-repair/T10/after-walk.txt b/docs/audit/2026-11-16-final/output/5-repair/T10/after-walk.txt
+new file mode 100644
+index 0000000..64e69cb
+--- /dev/null
++++ b/docs/audit/2026-11-16-final/output/5-repair/T10/after-walk.txt
+@@ -0,0 +1,7 @@
++[probe] proof.serve up on http://127.0.0.1:8750 (root /tmp/cs-C2/r-Is2CBo)
++ok   50 drafts exist  [50]
++ok   the form reaches Purpose with 50 abandoned drafts  [[]]
++ok   the fresh draft is kept  [null]
++ok   the draft with an approval issued is kept  [null]
++ok   the count stays at or under 50  [50]
++[probe] proof.serve on http://127.0.0.1:8750 stopped
+diff --git a/docs/audit/2026-11-16-final/output/5-repair/T10/before-walk.txt b/docs/audit/2026-11-16-final/output/5-repair/T10/before-walk.txt
+new file mode 100644
+index 0000000..f318cc9
+--- /dev/null
++++ b/docs/audit/2026-11-16-final/output/5-repair/T10/before-walk.txt
+@@ -0,0 +1,7 @@
++[probe] proof.serve up on http://127.0.0.1:8750 (root /tmp/cs-C2/r-iqXCNv)
++ok   50 drafts exist  [50]
++FAIL the form reaches Purpose with 50 abandoned drafts  [["too many unfinished submissions; try again later"]]
++ok   the fresh draft is kept  [null]
++ok   the draft with an approval issued is kept  [null]
++ok   the count stays at or under 50  [50]
++[probe] proof.serve on http://127.0.0.1:8750 stopped
+diff --git a/docs/audit/2026-11-16-final/output/5-repair/T10/walk-abandoned-drafts.cjs b/docs/audit/2026-11-16-final/output/5-repair/T10/walk-abandoned-drafts.cjs
+new file mode 100644
+index 0000000..c000bb2
+--- /dev/null
++++ b/docs/audit/2026-11-16-final/output/5-repair/T10/walk-abandoned-drafts.cjs
+@@ -0,0 +1,41 @@
++// T10 walk (C2-008): 50 unfinished drafts, all abandoned for more than 2 hours (their folders aged on disk),
++// must not stop a new form; a fresh draft (just made) and a draft that reached the review's summary must stay.
++// Exit 1 when a check fails (it does on the base commit), 0 when every check holds.
++//   C2_PORT=8750 node docs/audit/2026-11-16-final/output/5-repair/T10/walk-abandoned-drafts.cjs
++"use strict";
++const L = require("../../2-sections/C2/probes/lib.cjs");
++const fs = require("node:fs");
++const path = require("node:path");
++const uploads = () => path.join(L.root(), "_engine", "uploads");
++const ids = () => fs.readdirSync(uploads()).filter((n) => /^[0-9a-f]{32}$/.test(n));
++const failures = [];
++const check = (label, ok, seen) => { console.log(`${ok ? "ok  " : "FAIL"} ${label}  [${JSON.stringify(seen)}]`); if (!ok) failures.push(label); };
++(async () => {
++  const log = L.newLog();
++  const browser = await L.launch();
++  try {
++    const ctx = await L.context(browser, { log });
++    const origin = { Origin: L.BASE };
++    let made = 0;
++    while (ids().length < 50 && made < 60) { const r = await fetch(`${L.BASE}/api/submissions`, { method: "POST", headers: origin }); if (!r.ok) break; made += 1; }
++    check("50 drafts exist", ids().length === 50, ids().length);
++    const keep = ids()[0]; // stays fresh: a live form
++    const issued = ids()[1]; // reached the review: carries an issued approval
++    fs.writeFileSync(path.join(uploads(), issued, "issued"), "0".repeat(64) + "\n");
++    const old = Date.now() / 1000 - 3 * 3600;
++    for (const id of ids()) if (id !== keep) fs.utimesSync(path.join(uploads(), id), old, old);
++    const p = await ctx.newPage();
++    L.watch(p, log);
++    await p.goto(`${L.BASE}/start`);
++    await p.getByRole("textbox", { name: "Issuer name", exact: true }).waitFor();
++    await L.fillIdentity(p); await L.addFiles(p, ["filing"]);
++    await p.getByRole("button", { name: "Continue to purpose" }).click();
++    await p.getByRole("heading", { name: "Purpose", exact: true }).waitFor({ timeout: 5000 }).catch(() => {});
++    const alerts = await p.locator("[role=alert]").allInnerTexts();
++    check("the form reaches Purpose with 50 abandoned drafts", (await p.getByRole("heading", { name: "Purpose", exact: true }).count()) === 1, alerts);
++    check("the fresh draft is kept", ids().includes(keep), null);
++    check("the draft with an approval issued is kept", ids().includes(issued), null);
++    check("the count stays at or under 50", ids().length <= 50, ids().length);
++  } catch (e) { check("walk ran", false, String(e).slice(0, 300)); } finally { await browser.close(); }
++  process.exit(failures.length ? 1 : 0);
++})();
+diff --git a/src/deploy_workflow/run_start/submissions.py b/src/deploy_workflow/run_start/submissions.py
+index 93eb652..53ce475 100644
+--- a/src/deploy_workflow/run_start/submissions.py
++++ b/src/deploy_workflow/run_start/submissions.py
+@@ -7,6 +7,7 @@ a path outside the submission's own ``files`` folder. A refusal leaves no file b
+ 
+ from __future__ import annotations
+ 
++import contextlib
+ import hashlib
+ import io
+ import json
+@@ -17,6 +18,7 @@ import secrets
+ import shutil
+ import tempfile
+ import threading
++import time
+ import unicodedata
+ import uuid
+ from collections.abc import Collection
+@@ -49,6 +51,9 @@ MAX_FILE = 50 * 1024 * 1024
+ MAX_FILES = 500
+ MAX_TOTAL = 512 * 1024 * 1024
+ STALE_SECONDS = 24 * 3600
++# A draft untouched for this long (no upload, removal or reading) may be removed to make room
++# when the open ceiling is reached; the page leaves a draft behind whenever a form is abandoned.
++IDLE_SECONDS = 2 * 3600
+ # Ceiling on unsubmitted submissions at once: a peer cannot make more folders than this.
+ MAX_OPEN = 50
+ # Ceiling on the bytes held by all unsubmitted uploads together (stored plus in flight), so the
+@@ -171,10 +176,31 @@ def _open_folders(layout: Layout) -> list[Path]:
+     ]
+ 
+ 
++def _make_room(layout: Layout) -> None:
++    """Remove the oldest abandoned drafts, as many as the ceiling needs (held under ``_LOCK``).
++
++    A draft is abandoned when nothing has touched it for ``IDLE_SECONDS``. One with an upload in
++    flight or an approval issued (the analyst reached the review) is never removed here; the
++    24-hour sweep still ends those."""
++    now = time.time()
++    idle = sorted(
++        (folder.stat().st_mtime, folder)
++        for folder in _open_folders(layout)
++        if folder.name not in _PENDING
++        and not (folder / _ISSUED).exists()
++        and now - folder.stat().st_mtime >= IDLE_SECONDS
++    )
++    excess = len(_open_folders(layout)) - MAX_OPEN + 1
++    for _, folder in idle[: max(excess, 0)]:
++        _remove(folder)
++
++
+ def new(layout: Layout) -> str:
+     """A fresh submission: 32 hex characters, with an empty ``uploads/<id>/files``."""
+     sid = secrets.token_hex(16)
+     with _LOCK:
++        if len(_open_folders(layout)) >= MAX_OPEN:
++            _make_room(layout)
+         if len(_open_folders(layout)) >= MAX_OPEN:
+             raise Refused("too many unfinished submissions; try again later")
+         (layout.uploads / sid / "files").mkdir(parents=True)
+@@ -592,6 +618,8 @@ def carry(layout: Layout, sid: str, source: Path) -> dict[str, list[str]]:
+ def reading(layout: Layout, sid: str) -> dict[str, Any]:
+     """What the launcher makes of each uploaded file; its refusal comes back as ``error``."""
+     root = files_folder(layout, sid)
++    with contextlib.suppress(OSError):
++        _touch(root.parent)  # a form that is reading its documents is live
+     try:
+         _stored(root, strict=True)
+         got = read_documents(root)
+diff --git a/tests/test_run_start_submissions.py b/tests/test_run_start_submissions.py
+index 4947218..13c9a84 100644
+--- a/tests/test_run_start_submissions.py
++++ b/tests/test_run_start_submissions.py
+@@ -1861,3 +1861,57 @@ def test_an_id_already_merged_before_the_check_accepts_either_of_its_issuers(lay
+     assert summary(layout, sid, named(tmp_path, "acme", "Acme Corp"))["error"] == ""
+     assert summary(layout, sid, named(tmp_path, "acme", "Acme Finance plc"))["error"] == ""
+     assert "filed under the name" in summary(layout, sid, named(tmp_path, "acme", "Other"))["error"]
++
++
++def _age(layout: Layout, sid: str, seconds: float) -> None:
++    then = time.time() - seconds
++    os.utime(layout.uploads / sid, (then, then))
++
++
++def test_at_the_ceiling_an_abandoned_draft_makes_room_for_a_new_form(layout, monkeypatch):
++    monkeypatch.setattr(submissions, "MAX_OPEN", 2)
++    old, fresh = new(layout), new(layout)
++    put(layout, old, "a.txt")
++    _age(layout, old, submissions.IDLE_SECONDS + 60)
++    added = new(layout)
++    assert not (layout.uploads / old).exists()
++    assert (layout.uploads / fresh).is_dir() and (layout.uploads / added).is_dir()
++
++
++def test_a_recently_used_draft_is_never_made_room_from(layout, monkeypatch):
++    monkeypatch.setattr(submissions, "MAX_OPEN", 2)
++    one, two = new(layout), new(layout)
++    put(layout, one, "a.txt")
++    _age(layout, one, submissions.IDLE_SECONDS - 60)
++    with pytest.raises(Refused, match="too many unfinished submissions"):
++        new(layout)
++    assert (layout.uploads / one / "files" / "a.txt").is_file() and (layout.uploads / two).is_dir()
++
++
++def test_a_draft_with_an_approval_issued_is_never_made_room_from(layout, monkeypatch):
++    monkeypatch.setattr(submissions, "MAX_OPEN", 1)
++    sid = new(layout)
++    (layout.uploads / sid / "issued").write_text("0" * 64 + "\n")
++    _age(layout, sid, submissions.IDLE_SECONDS + 60)
++    with pytest.raises(Refused, match="too many unfinished submissions"):
++        new(layout)
++    assert (layout.uploads / sid / "issued").is_file()
++
++
++def test_a_draft_with_an_upload_in_flight_is_never_made_room_from(layout, monkeypatch):
++    monkeypatch.setattr(submissions, "MAX_OPEN", 1)
++    sid = new(layout)
++    _age(layout, sid, submissions.IDLE_SECONDS + 60)
++    monkeypatch.setitem(submissions._PENDING, sid, {"tmp": ("a.txt", 1)})
++    with pytest.raises(Refused, match="too many unfinished submissions"):
++        new(layout)
++
++
++def test_reading_the_documents_keeps_a_draft_live(layout, monkeypatch):
++    monkeypatch.setattr(submissions, "MAX_OPEN", 1)
++    sid = new(layout)
++    put(layout, sid, "a.txt")
++    _age(layout, sid, submissions.IDLE_SECONDS + 60)
++    reading(layout, sid)
++    with pytest.raises(Refused, match="too many unfinished submissions"):
++        new(layout)
