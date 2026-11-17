@@ -62,6 +62,11 @@ type Output = {
   events?: FigureRef[];
   maps?: FigureRef[];
   confidence?: { value: number; band: string } | { missing: string };
+  /** Exact inputs accepted by the scorer and its method, projected from the same handoff bytes. */
+  confidenceTrace?: {
+    inputs: { label: string; value: string }[];
+    method: { label: string; value: string }[];
+  };
 };
 export type OutputEntry = { output: Output; sections: Section[]; selected: boolean };
 type Link = { href: string; label: string };
