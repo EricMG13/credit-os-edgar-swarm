@@ -1,5 +1,5 @@
 import type { ReactElement } from "react";
-import { SLICE_KEYS, type SliceKey } from "../data";
+import { SLICE_KEYS, type LibraryData, type SliceKey } from "../data";
 import { readSlice as readLibrary, routes as libraryRoutes } from "./library/routes";
 import { readSlice as readModel, routes as modelRoutes } from "./model/routes";
 import { readSlice as readRun, routes as runRoutes } from "./run/routes";
@@ -25,12 +25,17 @@ import { readSlice as readSignal, routes as signalRoutes } from "./signal/routes
  * - it keeps focus rings inside `main`: the unpadded `main` clips an outline at its edge, so use
  *   inner padding or an inset ring.
  * Absent means the padded layout with the title as the h1.
+ *
+ * `subject` is what the page is about, for its document title (the tab and the history list): the
+ * title "Overview" is followed by the issuer and the run's date. It reads the data file the way the
+ * page does and returns `undefined` when the address names nothing the data file holds.
  */
 export type Route = {
   path: string;
   home?: string;
   layout?: "bleed";
   title: string;
+  subject?: (params: Record<string, string>, data: LibraryData) => string | undefined;
   render: (params: Record<string, string>) => ReactElement;
 };
 
