@@ -1,6 +1,6 @@
-state: running
-updated: 2026-11-17 09:12 UTC
-done: branch audit/repair-3 cut from audit/final-repairs ca0db16; environment ready (uv 0.12.5, web deps, build, probe launch checked); worker brief written
-next: implementers running for T25, T26, T29 (since 08:58) and T33, T34, T36, T38, T40 (since 09:08), each in its own worktree; owner raised the cap to 10 concurrent agents (2026-11-17). Waiting on merges: T27 and T41 after T25; T28 after T27; T30 and T32 after T26; T31 after T30; T35 after T33; T37 after T27; T39 after T27 and T30. Merges onto audit/repair-3 in tasks.md order after a fresh review.
-blocked: none
+state: blocked
+updated: 2026-11-17 09:30 UTC
+done: implementers finished T26, T34 and T33's S2-005 part (each committed in its worktree; reviews running). Still implementing: T25, T29, T36, T38, T40.
+next: review and merge in tasks.md order; start T27, T41 once T25 merges and T30, T32 once T26 merges. Every task except T33's S2-006 and T35 continues while this question is open.
+blocked: T33 finding S2-006 (Dates to watch carry no trace control), and T35 behind it (T35 shares slice.ts with T33 and runs after it). The repair needs files outside group 3's list: (1) web/src/components/timeline/Timeline.tsx, which is in no group's list; its items take plain-string title and text with no slot for a control; only Overview.tsx, Kit.tsx and the kit and card tests use it; Signal does not. (2) Either web/fixtures/library.json, whose four `dates` arrays carry no trace key (choosing each date's module trace is a data decision), or an exemption. Options: A, add an optional `trace` key to DatedItem (slice.ts, read.ts), an optional per-item slot in Timeline.tsx, and one TraceControl per entry in Overview.tsx; fixtures unchanged, so an entry without a trace draws T35's missing-trace marker. B, A plus trace keys on the fixture dates. C, record that dates are exempt (finding's own alternative; the owner's call). Recommendation: A, with T35 run first so the follow-up uses its marker. To unblock, answer in output/sessions/repair-3/ANSWER.md on audit/repair-3 or by message: may group 3 edit Timeline.tsx (A), also the fixture dates (B), or take C; and may T35 run before the S2-006 follow-up?
 reports: docs/audit/2026-11-16-final/output/sessions/repair-3/WORKERS.md
