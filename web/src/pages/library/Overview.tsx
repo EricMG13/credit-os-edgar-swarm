@@ -25,7 +25,7 @@ function PointTile({ point }: { point: Point }) {
           <div className="max-w-50 flex-none">
             <CellValue cell={point.figure} figureClass={FIGURE} />
           </div>
-          <div className="flex min-w-0 flex-1 flex-col items-start gap-2">
+          <div className="flex max-w-full min-w-0 flex-1 flex-col items-start gap-2">
             <p className="text-body">{point.text}</p>
             <Badge size="sm" className="max-w-full whitespace-normal">
               {point.qualifier}

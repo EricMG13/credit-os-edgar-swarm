@@ -3,12 +3,25 @@
 // to visit each in a browser, and a test fails if it cannot see one. A page reads its data with
 // `readSlice(useSource().run)`. Edit only this folder and fixtures/run.json.
 import type { Route } from "../route-table";
+import { useSource } from "../source";
 import { ActivityPage } from "./activity/ActivityPage";
+import { readSlice } from "./slice";
 import { StartPage } from "./start/StartPage";
 
 export { readSlice } from "./slice";
 
+/** A new run begins at the slice's first draft; its id is the data's, so no link needs to know it. */
+function NewRun() {
+  const slice = readSlice(useSource().run);
+  return <StartPage draft={slice.kind === "ok" ? (slice.data.drafts[0]?.id ?? "") : ""} />;
+}
+
 export const routes: readonly Route[] = [
+  {
+    path: "/run/start",
+    title: "Start a run",
+    render: () => <NewRun />,
+  },
   {
     path: "/run/start/:draft",
     title: "Start a run",

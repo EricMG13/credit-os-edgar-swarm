@@ -43,6 +43,10 @@ export function Start({ recap, paid }: Pick<Step, "recap" | "paid">) {
   );
 }
 
+/** The dialog's own line: this page shows a saved example, so confirming starts nothing. */
+const SAVED_EXAMPLE_SUBMIT =
+  "This page shows a saved example: confirming starts no run and spends nothing.";
+
 /** Submit and its one confirmation. Confirming only moves to the started snapshot: nothing is
  *  sent, stored or spent, because this page shows saved examples. */
 export function Submit({
@@ -58,6 +62,7 @@ export function Submit({
     <SubmitConfirmation
       label={label}
       confirm={confirm}
+      note={SAVED_EXAMPLE_SUBMIT}
       isDisabled={blocked !== undefined}
       describedBy={blocked?.id}
       onConfirm={() => {
@@ -70,6 +75,7 @@ export function Submit({
 export function SubmitConfirmation({
   label,
   confirm,
+  note,
   isDisabled,
   describedBy,
   className,
@@ -77,6 +83,8 @@ export function SubmitConfirmation({
 }: {
   label: string;
   confirm: Pick<Step["confirm"], "title" | "text" | "action">;
+  /** A line after the confirmation text, for a page whose Submit spends nothing. */
+  note?: string;
   isDisabled: boolean;
   describedBy?: string;
   className?: string;
@@ -113,6 +121,9 @@ export function SubmitConfirmation({
                       {confirm.title}
                     </Heading>
                     <p className="text-sm text-text-tertiary">{confirm.text}</p>
+                    {note === undefined ? null : (
+                      <p className="mt-2 text-sm font-medium text-text-secondary">{note}</p>
+                    )}
                   </div>
                 </div>
                 <div className="flex flex-col gap-3 sm:flex-row">
