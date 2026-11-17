@@ -10,3 +10,9 @@ Do not change the fixture's dates. The static app is a design reference (OQ-01),
 Yes, T35 may run before the S2-006 follow-up. slice.ts is shared with Signal, so run Signal's tests after each change to it.
 
 Record the answer and the extra files in output/5-repair/T33.md.
+
+# Lead answer to repair-3 (ruling L7, 2026-11-17, received 09:41 UTC by message from the lead session)
+
+Take option A. Group 3 may edit web/src/pages/model/parts/ModelShell.tsx and its tests. No group owns it; the sweep that touches it runs only after every group has merged.
+
+After T40 merges, a T25 follow-up draws the same "Design reference with sample data" note inside the model frame, through ModelShell.tsx, and on RunsIndexPage.tsx, using the same words as the note on the other pages. Keep the existing tests as they are. If the "Sample data" badge then says the same thing twice, keep one of the two and name the choice in output/5-repair/T25.md.
