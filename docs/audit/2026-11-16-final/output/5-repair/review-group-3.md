@@ -66,3 +66,20 @@ One entry per task: the reviewer was a fresh Sonnet agent at xhigh effort that d
   - Neighbouring tooltips now swap with a gap of about one frame (21 ms) instead of 0 ms.
   - Under StrictMode, in development only, a tooltip mounted open is missing for its first frame. No app caller mounts one open.
 - Info: a dead `state === null` branch; aria-describedby points at a tooltip that is not drawn for one frame.
+
+## T25 (S6-003, J6-010, S1-004, X1-018); model-page labels follow under ruling L7
+
+- Commit reviewed: 82d668e. Verdict: PASS. Merged onto audit/repair-3.
+- Against the parent source (scratch copy), the three new test files fail 39 of 45. The 6 that pass are guards that hold either way. With the repair, 187 tests pass.
+- SubmitConfirmation's new optional `note`: the connected StartRun passes none, so its dialog DOM is unchanged.
+- `#/kit` still opens by address, with no rail item marked current.
+- The shipped build (empty data.js) shows no note on any populated hash. Signal and model pages show none; library, run and kit pages show exactly one.
+- kit-in-rail.mjs exits 1 because it times out clicking the removed Kit link. That is the probe expecting the defect.
+- The Run started closing line ("In a live run you can close this page") is within OQ-01: the old sentence was part of the false claim that S6-003 and J6-010 quote.
+- Gates the reviewer saw:
+  - lint 0, format:check 0, typecheck 0, open-from-disk.mjs 0.
+  - vitest: 187, 830, 345 and 204 passed, with `--testTimeout=120000 --maxWorkers=2` under load.
+  - Probes: s6-saved-example-label.mjs 0 (17 of 17 pages); j6-static-submit-claims-run-started.cjs 0.
+- Low:
+  - Start.test.tsx:62-66, the scoped `<strong>` assertion, is vacuous if the whole paid sentence becomes a `<strong>` (mutation check passed). Suggested: also assert `sentence.closest("strong")` is null.
+  - `#/kit` draws the note even on the shipped build. This is deliberate (OQ-01) and pinned by a test.
