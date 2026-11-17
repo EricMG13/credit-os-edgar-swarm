@@ -1180,7 +1180,7 @@
                         { "cells": ["Leases", "Schedule n.a.", "USD 298m"], "emphasis": false },
                         { "cells": ["Other", "Due 2027", "USD 40m"], "emphasis": false }
                       ],
-                      "footnotes": ["Basis: drawn amounts at face value; leases as reported."],
+                      "footnotes": ["Drawn amounts at face value; leases as reported."],
                       "trace": "cs-debt-stack"
                     },
                     {

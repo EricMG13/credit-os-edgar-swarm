@@ -1074,9 +1074,7 @@ describe("Module, the debt stack, maturities and headroom tables", () => {
       ["Other", "Due 2027", "USD 40m"],
     ]);
     expect(
-      within(card("Debt stack")).getByText(
-        "Basis: drawn amounts at face value; leases as reported.",
-      ),
+      within(card("Debt stack")).getByText("Drawn amounts at face value; leases as reported."),
     ).toBeVisible();
     expect(
       within(card("Debt stack"))
