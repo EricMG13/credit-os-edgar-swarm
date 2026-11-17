@@ -13,6 +13,7 @@ import {
   at,
   fail,
   is,
+  nullableRecord,
   object,
   oneOf,
   orNull,
@@ -294,10 +295,16 @@ const runFields = object<ModelRun>({
   statements,
   portfolioFit,
   limitations,
-  forecast,
+  forecast: nullableRecord(["tabs", "periods"], forecast),
 });
+
+/** A run with no forecast may leave the key out; `object` needs every key, so it reads as null. */
+function withForecastKey(value: unknown): unknown {
+  const isRun = typeof value === "object" && value !== null && !Array.isArray(value);
+  return isRun && !Object.hasOwn(value, "forecast") ? { ...value, forecast: null } : value;
+}
 const run: Reader<ModelRun> = (value, path) => {
-  const read = runFields(value, path);
+  const read = runFields(withForecastKey(value), path);
   if (read.cases.length === 0) fail(child(path, "cases"), "expected at least one case");
   if (read.cases.length !== 2) {
     fail(child(path, "cases"), "expected two cases, the side by side chart draws two");
@@ -313,7 +320,7 @@ const run: Reader<ModelRun> = (value, path) => {
   checkStatements(read.statements, read.cases.length, child(path, "statements"));
   checkSections(read.statements, read.cases, child(path, "statements"));
   checkStatementNames(read.statements, read.cases, child(path, "cases"), child(path, "statements"));
-  checkForecast(read.forecast, read.cases, child(path, "forecast"));
+  if (read.forecast !== null) checkForecast(read.forecast, read.cases, child(path, "forecast"));
   return read;
 };
 const sliceFields = object<{ runs: unknown[] }>({ runs: arrayOf((value) => value) });

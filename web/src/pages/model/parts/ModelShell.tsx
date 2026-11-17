@@ -49,6 +49,8 @@ export function ModelShell({
 }) {
   const base = runAddress(run.issuer, run.run);
   const { header, links } = run;
+  /** A run with no forecast has no library tabs for its Forecast form, which draws the Model's. */
+  const forecastTabs = current === FORECAST ? run.forecast?.tabs : undefined;
   return (
     <ShowSources>
       <div className="flex flex-col gap-5 p-8">
@@ -92,8 +94,8 @@ export function ModelShell({
           }
         />
         <nav aria-label="Pages" className="flex flex-wrap gap-4 border-b border-border-hairline">
-          {current === FORECAST ? (
-            run.forecast.tabs.map((tab) => (
+          {forecastTabs !== undefined ? (
+            forecastTabs.map((tab) => (
               <a
                 key={tab.label}
                 href={tab.href}
