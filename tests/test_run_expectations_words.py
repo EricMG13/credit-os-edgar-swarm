@@ -103,20 +103,24 @@ def test_rule_sentences_are_the_reader_words(rule_id: str) -> None:
     assert (BY_ID[rule_id].reason, BY_ID[rule_id].fix) == (reason, fix)
 
 
+# The connected page draws the Portfolio workbook select on its More context step; the legacy form
+# (docs/templates/context-form.html, kept by README ruling R17) draws it on Issuer and dates. Both
+# label it "Portfolio workbook", so the sentence names the control and no step.
 PORTFOLIO_FIXES = {
     "portfolio-workbook-none": (
-        "Add the fund's workbook, in the layout of the portfolio template, and choose it under "
-        "Portfolio workbook on the More context step."
+        "Add the fund's workbook, in the layout of the portfolio template, and choose it as the "
+        "Portfolio workbook."
     ),
-    "portfolio-workbook-not-chosen": (
-        "Choose it under Portfolio workbook on the More context step, or remove it."
-    ),
+    "portfolio-workbook-not-chosen": "Choose it as the Portfolio workbook, or remove it.",
 }
 
 
 @pytest.mark.parametrize("rule_id", sorted(PORTFOLIO_FIXES))
-def test_a_portfolio_workbook_fix_names_the_control_and_its_step(rule_id: str) -> None:
-    assert BY_ID[rule_id].fix == PORTFOLIO_FIXES[rule_id]
+def test_a_portfolio_workbook_fix_names_the_control_only(rule_id: str) -> None:
+    fix = BY_ID[rule_id].fix
+    assert fix == PORTFOLIO_FIXES[rule_id]
+    assert "step" not in fix
+    assert "More context" not in fix
 
 
 @pytest.mark.parametrize("rule", rx.RULES, ids=lambda r: r.key)
