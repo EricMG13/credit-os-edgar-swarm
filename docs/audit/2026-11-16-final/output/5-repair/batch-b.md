@@ -162,3 +162,105 @@ field, the toast, the readiness rows, the alert ring and the Documents step were
 only); no `npm run build` or `file-check` of the fixture build; the full vitest suite and the slow
 tests were not run; no Python changed, so the quality gate and Python tests were not run; the library
 fixture's USD 20.00 Evidence bars and the open findings above were not changed.
+
+## Chunk b2
+
+Four items on the same branch, committed and pushed one by one. Commits: `d2eabd2` (item 1),
+`6468d29` (item 2), `3e8b5ff` (item 4), `7f84b16` (item 3).
+
+**One test file fails and is outside this chunk's list.** Item 4 changes the Full cap in the fixture
+from 20 to 25; `web/src/pages/library/readRecord.test.ts` pins the old cap in two assertions and now
+fails 2 tests: lines 92 to 94 (`text: "USD 11.40 of USD 20.00"`, `max: 20`) and line 174 (a spend of 21
+as "above its cap"). They need `USD 25.00`, `max: 25` and a value above 25 (26). I did not edit that
+file: the brief limits this chunk to its listed files, and the edit was declined by the permission
+check when attempted. Nothing else in `web/src/pages/library` fails.
+
+### Outcomes
+
+| Item | Outcome | Files |
+| :--- | :--- | :--- |
+| 1. component-map count | repaired | `docs/design/component-map.md` |
+| 2. C4-011 yield wrap | repaired (wrap); four decimals left as authored | `web/src/components/chart/ComparisonChart.tsx`, `ComparisonChart.test.tsx` |
+| 3. J6-006 / S2-001 fixture side | repaired by giving the four issuers the report their cards describe | `web/fixtures/library.json` |
+| 4. RV-4 caps | repaired, with the readRecord.test.ts consequence above | `web/fixtures/library.json`, `web/src/pages/library/EvidenceRecord.test.tsx`, `web/src/pages/run/slice-start.ts` |
+
+**1.** Line 353 said the module state "takes shapes from the design system's ten by meaning"; it now
+says eleven. That is the only change. `docs/design/states-2.md` is untouched. No test applies.
+
+**2. C4-011.** The value column of each panel was a fixed 56px, and `wrap-anywhere` broke "7.0100%"
+after "7.0100" (measured in headless Chromium on a scratch page using the app's CSS: box 56 by 44 px,
+two lines; "USD 1,150m" broke the same way). The column is now `minmax(56px,max-content)`: 56px at
+least, as wide as its widest value. The same page after the change: "7.0100%" is one line (22 px high,
+column 57 px) at 1440 and at 390 px; the short-value panel is still 56 px; the over-12-character
+branch (`minmax(56px,min(33%,9rem))`, wrapping) is unchanged. No digit is changed. The four decimals
+are authored digits: `securityQuote` draws the first `yield N%` of the handoff's market text
+("yield 7.0100%, 7.01% rounded"), and the Securities test "shows the paired observed quote with all
+authored digits" pins "7.005000%". It stays as it is, and so do the decimals.
+Tests: `ComparisonChart.test.tsx`, a new case "sizes the value column to its widest value, so a unit
+stays on its number" (a 7-character yield pair; class and exact texts), failed before the change.
+Test edit: the layout case's pinned class `grid-cols-[72px_minmax(0,1fr)_56px]` is now
+`grid-cols-[72px_minmax(0,1fr)_minmax(56px,max-content)]`; the fixed 56px column was the defect, and
+the 56px minimum the mock sets is kept. jsdom cannot measure a wrap, so the class assertions stand in
+for it; the wrap itself was measured in Chromium as above.
+
+**3. J6-006 / S2-001, fixture side.** Cards that stop claiming a finished report were not an option:
+`Home.test.tsx` pins the Tessaly lead and the Running, Failed and Capped cards' notes ("Seven modules
+delivered; their findings can be read."), and it may not change. So the entries carry the report.
+Corvane Packaging (run 2026-06-30), Ardenne Cable (2026-03-31), Tessaly Foods (2026-09-30) and Lumora
+Health (2026-09-30) each hold one run in `runs`, the run their card describes; `history.latest`
+names it, `history.empty` is `null`, and the entry's `report` opens it (`report: null` stays on the
+Running, Failed and other entries). The pages now read: no "No report yet", the feed draws every run,
+one "Open report" each, and Overview, Changes, Modules and the Evidence tabs render for each run
+(checked with a temporary vitest render, since deleted).
+- Corvane, Ardenne and Tessaly runs are built from Brevane Marine's two-module run (Business profile
+  and Source readiness), with their own words, metrics (the cards' own figures), dates, gap, source
+  file, run code and hashes. Lumora's is a Capped run with seven delivered modules (Business profile,
+  Industry and competition, Financial performance, Cash flow and liquidity, Covenants and
+  documentation, Management and governance, Environmental, social and governance) and one
+  "Six modules not run" Overview item that opens no module, so its pinned card note holds. The leverage
+  and net leverage metrics are explicit gaps, as the card has none.
+- Two card edits, not pinned by any test: Ardenne's progress "13 of 13 modules" and Tessaly's
+  "6 of 6 modules" now read "2 of 2 modules" (value and max too), because their reports hold two
+  modules. Lumora's "7 of 13" and Corvane's "5 of 13" (the running run) already agree.
+- No card `href` changed: the cards still open the issuer's history. `fixtureAgreement.test.ts`
+  compares a card with its run only when `href` names a loaded run, so it does not compare these four
+  (Tessaly's "adjusted" basis would not pass it: its trace has no "company-adjusted" statement).
+- Tessaly's run is a "Monitoring update", which is not a pathway in
+  `docs/rulings/2026-11-15-pathway-tiers-and-caps.md`; its spend bar uses USD 20, the cap of the five
+  purpose pathways, spend 6.40. This is a choice, not a ruling: change it if Monitoring update
+  should carry another cap. The other runs use USD 25 (Full); Lumora's stopped at USD 24.60 of 25.00.
+- The invented module text is fixture content in the style of the Halden run's; none of it is a
+  module's written analysis.
+No test file is edited for this item; all of `src/pages/library` passes apart from the two
+readRecord.test.ts assertions above (they come from item 4, not from this item).
+The code half of S2-001 (History drawing its runs under "No report yet") is T32 in `History.tsx` and
+`RunFeed.tsx`, outside this chunk; with these reports the page no longer reaches that state for these
+four issuers, but the code defect is unchanged for an issuer that has runs and no report.
+
+**4. RV-4.** The four Evidence "Spend against the cap" bars (Halden 2026-09-30, 2026-03-31,
+2025-09-30 and Brevane Marine r-0412) read "of USD 25.00" with `max` 25; the spend values are
+unchanged. `EvidenceRecord.test.tsx` lines 132 and 134: the bar's name is "USD 11.40 of USD 25.00" and
+`aria-valuemax` is "25" (test edit: the first bar, the two pinned values only). `slice-start.ts:39`:
+the comment's example label reads "Submit, spend up to USD 25.00" (comment only). No test applies to
+the comment. Observation, not changed: the Halden 2026-03-31 Capped run's spend note still says "The
+run finished inside its cap", though the run stopped at its cap.
+
+### Checks
+
+All in the worktree with `PATH=$HOME/.local/bin:$PATH`.
+
+| Check | Exit |
+| :--- | ---: |
+| `npm --prefix web run lint` | 0 |
+| `npm --prefix web run format:check` | 0 |
+| `npm --prefix web run typecheck` | 0 |
+| `vitest run src/components/chart src/pages/library src/pages/connected/report/Securities.test.tsx src/pages/signal` (82 files, 1783 tests) | 1: 2 failures, both `readRecord.test.ts` (see above); 81 files and 1781 tests pass |
+| `node --test web/scripts/fixture-data.test.mjs` (12 tests) | 0 |
+| `tools/quality_gate.py` | not run: no Python changed |
+
+Not verified: no browser run of the fixture build or of the four new reports (they were rendered in
+jsdom only); the `ComparisonChart` wrap was measured in Chromium on a scratch page with the app's CSS,
+not on the Securities page of the connected build, and with whatever font that CSS loads; no
+`npm run build`, `test:file` or file-check, and no `params` entries were added for the new issuers'
+history or run routes, so the build's route visits do not reach them; the full vitest suite and the
+slow tests were not run; the two `readRecord.test.ts` assertions were not changed.
