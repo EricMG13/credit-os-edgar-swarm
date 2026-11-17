@@ -7,7 +7,7 @@ The audit PR identifies the separate full-source documentation archive.
 Its source and code match the verification pin. The runtime ZIP is the
 independent checksummed release candidate.
 
-The [final audit comparison](https://github.com/EricMG13/credit-os2/compare/main...audit/final-repairs) targets `main` and stays open for owner review. [Sweep PR #59](https://github.com/EricMG13/credit-os2/pull/59)
+The [final audit PR #60](https://github.com/EricMG13/credit-os2/pull/60) targets `main` and stays open for owner review. [Sweep PR #59](https://github.com/EricMG13/credit-os2/pull/59)
 passed both GitHub checks and merged into the repair branch at `a987af9b`.
 Repair group PRs [#56](https://github.com/EricMG13/credit-os2/pull/56),
 [#57](https://github.com/EricMG13/credit-os2/pull/57) and

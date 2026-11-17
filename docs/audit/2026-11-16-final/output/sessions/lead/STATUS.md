@@ -1,3 +1,14 @@
+## Stage 7 handoff 2026-11-17T23:02:18Z
+
+The verified application source is `a987af9b`. All scoped local gates,
+the connected and static offline checks, and the neutral work-PC
+rehearsal are documented in [the audit summary](../../SUMMARY.md).
+
+[Final audit PR #60](https://github.com/EricMG13/credit-os2/pull/60) targets `main` and stays open for the
+owner. Its body points to the full-source archive and separate runtime
+ZIP checksum. Work-PC verification, owner-only actions and the weekly
+full suite remain outside the completed cloud proof.
+
 ## Lead checkpoint 2026-11-17T22:50:09Z
 
 Stage 7 uses executable source `a987af9b` in `/workspace/audit-final`.
