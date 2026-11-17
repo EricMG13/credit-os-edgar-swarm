@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for CACI INTERNATIONAL INC /DE/ as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/c45a2f437dfcb1e8cec407d999dccfdc8c351bfdc0b78ae780c5cee1a241469d/1.response.md",
+    "CP-1": "requests/CP-1/f9e180a18b1c7e2acf3919c49dcb69bca2d7cac06623459c226f2e95381af24b/1.response.md",
+    "CP-1A": "requests/CP-1A/24ee007a80de4356bd0a0c661ef2f16a745072e3c420b22d71bd02877a6f3838/1.response.md",
+    "CP-2": "requests/CP-2/fdc03a9cbb0d592a066680f1f276fbb08a4e3d90894ec99be97aff8673c66122/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "c9997d8f2b43e663c3a871f1994c731a129eec1f6cb9aed315db394b6286db16",
+  "delivery_sha256": "aedafb34152349ac25e0601b873175dc4f3e2c74b1f1821f1f87825db4f26c48"
+}

@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for Magnera Corp as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "46328c881cda3b884534bb9d82387479cf67ab83525ba3706620ec778f418e03",
+    "CP-1.md": "2cfa5fc5a54060b4afeb3080f34399293f4877e7285cfabab0f86b9fc369e06c",
+    "CP-1A.md": "44f9b313e384d539f187098425638194c973c8f373cf2a376a8df430ff47a21e",
+    "CP-2.md": "646ccb7b69584effef9bd8a3f7de5ed775c691771f194b1ff2928e3f0056337c",
+    "coverage.json": "2fc4860dee61d1fd962d6014c3e53db02dc3ed704ab85db24f884a69cf71a38a",
+    "view.json": "28871602d16e4b02ffc970b720a1bf062ae460c52fe43c787509a352804e1aea",
+    "report-view.json": "4d23c4614fb58175348a2c47bd6619664c81523801661107770c376858b2c680"
+  }
+}

@@ -9,8 +9,18 @@
       "pack": "/home/user/secdata/data/2026-11-05/packs/4515-american-airlines-inc",
       "context": "/home/user/secdata/data/2026-11-05/contexts/4515-american-airlines-inc.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-american-airlines-inc",
-      "status": "pending",
-      "attempts": 0
+      "status": "published",
+      "attempts": 4,
+      "claims": 1,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "exit_code": 0,
+      "reason": null,
+      "finished_at": "2026-11-17T08:41:08+00:00"
     },
     {
       "issuer_id": "caci",
@@ -20,8 +30,18 @@
       "pack": "/home/user/secdata/data/2026-11-05/packs/16058-caci-international-inc-de-caci",
       "context": "/home/user/secdata/data/2026-11-05/contexts/16058-caci-international-inc-de-caci.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-caci",
-      "status": "pending",
-      "attempts": 0
+      "status": "published",
+      "attempts": 4,
+      "claims": 1,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "exit_code": 0,
+      "reason": null,
+      "finished_at": "2026-11-17T08:41:21+00:00"
     },
     {
       "issuer_id": "chdn",
@@ -31,8 +51,18 @@
       "pack": "/home/user/secdata/data/2026-11-05/packs/20212-churchill-downs-inc-chdn",
       "context": "/home/user/secdata/data/2026-11-05/contexts/20212-churchill-downs-inc-chdn.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-chdn",
-      "status": "pending",
-      "attempts": 0
+      "status": "published",
+      "attempts": 4,
+      "claims": 1,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "exit_code": 0,
+      "reason": null,
+      "finished_at": "2026-11-17T08:41:35+00:00"
     },
     {
       "issuer_id": "magn",
@@ -42,8 +72,18 @@
       "pack": "/home/user/secdata/data/2026-11-05/packs/41719-magnera-corp-magn",
       "context": "/home/user/secdata/data/2026-11-05/contexts/41719-magnera-corp-magn.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-magn",
-      "status": "pending",
-      "attempts": 0
+      "status": "published",
+      "attempts": 4,
+      "claims": 1,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "exit_code": 0,
+      "reason": null,
+      "finished_at": "2026-11-17T08:41:49+00:00"
     },
     {
       "issuer_id": "gtn",

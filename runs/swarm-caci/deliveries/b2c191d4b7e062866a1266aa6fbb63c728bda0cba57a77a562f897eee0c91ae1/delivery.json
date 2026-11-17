@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for CACI INTERNATIONAL INC /DE/ as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "23000f41869fb02494426d1fecd171b676e28f3ba497993cd9214d8a9437e160",
+    "CP-1.md": "2d3513c40bdb70837675122177bbf5db4b9a065b88306fa12db5e09b93a90480",
+    "CP-1A.md": "7a3048b9956654d382f422248d2c81f9063ac6b920b1bdf4262f459b4c3005a6",
+    "CP-2.md": "1720cae132411513f4e9d8d56adced035c54365f0befe1d5de052f6f6de5742b",
+    "coverage.json": "ac78ebdb6cf68f8ec1d5253ab313e2cee7de3645eaade6b81ed57f074985475d",
+    "view.json": "fcef3255ece396c53a711c56fea912af2d3597a300b6d496f34e8745ea63770b",
+    "report-view.json": "852ceac9912ce34aab0007ee96fa6f18c4e858813c39cb8b290c1b5530483036"
+  }
+}
