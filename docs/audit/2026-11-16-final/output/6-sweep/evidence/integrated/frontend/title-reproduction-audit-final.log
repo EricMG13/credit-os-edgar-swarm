@@ -1,0 +1,10 @@
+
+ RUN  v4.1.12 /workspace/audit-final/web
+
+ ✓ src/pages/connected/report.auditFollowups.test.tsx (17 tests) 651ms
+
+ Test Files  1 passed (1)
+      Tests  17 passed (17)
+   Start at  22:06:05
+   Duration  3.98s (transform 1.29s, setup 113ms, import 2.48s, tests 651ms, environment 558ms)
+

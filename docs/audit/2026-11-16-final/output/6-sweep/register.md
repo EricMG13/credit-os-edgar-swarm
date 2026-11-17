@@ -3,7 +3,7 @@
 Initial discovery covered all 17 inherited rows and nine related observations
 on `5e1d98b3`. The [discovery ledger](discovery.md) holds each row's evidence
 and proposed disposition. The tables record the disposition of each observation. Production changes
-have passed independent review. Combined gates are in progress.
+passed independent review and the complete combined gates.
 
 | Item | Source | Class | Current evidence | Outcome |
 | --- | --- | --- | --- | --- |

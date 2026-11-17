@@ -1,0 +1,14 @@
+{
+  "totalWallMs": 1128767,
+  "aggregateMs": 1127358,
+  "slowestFile": {
+    "file": "web/src/pages/connected/ConnectedApp.test.tsx",
+    "durationMs": 124136.06958007812
+  },
+  "slowestTest": {
+    "file": "web/src/pages/connected/ConnectedApp.test.tsx",
+    "test": "connected run start: the review sheet shows every input Submit sends V27 shows no raw data: no braces, keys, module codes, ids or the form's version",
+    "durationMs": 5628.454761999994
+  },
+  "nativeMergeDurationMs": 4351
+}

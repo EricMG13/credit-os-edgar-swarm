@@ -109,3 +109,14 @@ slowest individual case was 4.162 seconds. Different concurrent host
 work prevents attributing test-time movement to this sweep.
 See [raw measurements](evidence/integrated/bundle/) and
 [the Python verification](evidence/integrated/python/report.md).
+
+The full frontend selection was 5,259 cases in 308 files on both arms.
+Native merged global lines were 97.69% on both. The sweep's accepted
+shards totalled 1,127.358 seconds of command time
+versus 1,136.386 for the fresh repaired-base shards. The
+sweep's slowest file was `ConnectedApp.test.tsx` at
+124.136 seconds. Its slowest case,
+the V27 review sheet case, took 5.628
+seconds. The first failed shard and unchanged repeat are retained
+separately. Differences in scheduling and load limit timing attribution.
+[Frontend test record](evidence/integrated/frontend/report.md)
