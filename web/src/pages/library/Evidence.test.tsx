@@ -107,9 +107,9 @@ describe("the Evidence frame", () => {
     ).toHaveAttribute("aria-current", "page");
   });
 
-  it("draws no module filter on Summary, where it would narrow nothing, but the jump field", () => {
+  it("draws the module filter on Summary, at All, and the jump field (S4-006: one filter on all five tabs)", () => {
     renderEvidence("2026-09-30");
-    expect(screen.queryByRole("button", { name: /Module/ })).toBeNull();
+    expect(screen.getByRole("button", { name: /^Module: All/ })).toBeVisible();
     expect(screen.getByRole("button", { name: /^Jump to an item/ })).toBeVisible();
   });
 
