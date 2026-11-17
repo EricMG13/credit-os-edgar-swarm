@@ -117,3 +117,22 @@ One entry per task: the reviewer was a fresh Sonnet agent at xhigh effort that d
   - `min-w-0` is not load-bearing.
   - The test checks classes only.
 - Info: ReportLibrary.design.test.tsx "filters by sector and pathway and keeps filters available to reset an empty result" fails on both the repaired and the parent tree. It is unrelated to T36, likely a timing failure under load. It is group 2's file and is passed to the lead.
+
+## T38, first part: S3-011, and C5-005/S4-019 static half (S5-001 follows under L8; the connected half of C5-005 is the lead's under L8)
+
+- Commit reviewed: 68c38da. Verdict: PASS. Merged onto audit/repair-3.
+- On the parent source, 2 of the 7 new tests fail, the two that fail for the cause; the other 5 are controls.
+- The reason text is now `text-text-tertiary` at 14 px: 5.26:1 on the canvas per design-rubric D-33, at or above D-30's 13 px floor. The accessibility tree is identical before and after ("Forecast No forecast for this run").
+- RunTabLink's connected callers always pass an href, so the changed branch is static only and the connected tabs are unchanged.
+- The Show sources switch is hidden on all five Evidence sub-tabs. It is still present on Overview, Changes and Modules, with the same trace-control counts, and its state survives tab changes.
+- Probes:
+  - S3-011 exit 1 → 0.
+  - S4 inert-switch: switch drawn 1 → 0.
+  - C5 switch-inert-on-evidence.cjs 0: the connected surface is unchanged, as held.
+- Gates the reviewer saw:
+  - lint 0, format:check 0, typecheck 0.
+  - vitest: src/pages/library 872 passed; connected files 319 of 320. The 1 is a findBy timeout under load; ConnectedApp.test.tsx alone passes 185.
+- Low:
+  - At 390 px the 14 px reason widens the Forecast tab, so the tab strip grows from two rows to three. 13 px (`text-caption`) keeps two rows and is still within D-30. A one-line choice for the lead.
+  - The reason test checks classes, not the rendered colour or size.
+- Info: `cursor-not-allowed` now sits on the inner span only.
