@@ -1,0 +1,60 @@
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_ test_confidence_sources_survive_the_bridge_refresh_after_generic_parse_failure _
+
+published = (Layout(root=PosixPath('/tmp/pytest-of-agent/pytest-59/test_confidence_sources_surviv0')), {'catalogue': {'real': [{'i...aaaaaa': [{'heading': 'Unstructured handoff', 'level': 1, 'line': 1, 'blocks': [...]}]}}, 'activity': {}, 'chips': {}})
+
+    def test_confidence_sources_survive_the_bridge_refresh_after_generic_parse_failure(
+        published: tuple[Layout, dict[str, Any]],
+    ) -> None:
+        layout, snapshot = published
+        qualification = (
+            "Counts cover FY2025 audited standalone evidence only; overseas subsidiaries are excluded."
+        )
+        text = "\n".join(
+            [
+                "## Findings",
+                "### Earlier supporting table",
+                "| Claim | Value |",
+                "| --- | --- |",
+                "| Malformed earlier row |",
+                "### Confidence inputs",
+                qualification,
+                f"Basis: {NAME}, page 2.",
+                "| Input | Value |",
+                "| --- | --- |",
+                "| Directly Sourced | 8 |",
+                "| Calculated | 2 |",
+                "| Assumption-Based | 2 |",
+                "| Analyst Inference | 0 |",
+                "| Weak Lineage | 0 |",
+                "| Untraced | 0 |",
+                "| Conflicting | 0 |",
+                "| Insufficient Information | 0 |",
+                "| Fields present | 95 |",
+                "| Fields total | 100 |",
+                "| Source gate | pass |",
+                "| CRITICAL | 0 |",
+                "| MATERIAL | 0 |",
+                "| MINOR | 1 |",
+            ]
+        )
+        raw = text.encode()
+        sections, error = store.structured(raw, False)
+        assert error == "Malformed table at line 5"
+        assert sections[0]["heading"] == "Unstructured handoff"
+        output = snapshot["workspace"]["outputs"][OUTPUT]
+        output.update(store.confidence_fields(raw))
+        snapshot["workspace"]["handoffs"][HANDOFF] = sections
+        enriched = sources.enrich(snapshot, layout.runs)
+        assert enriched["workspace"]["outputs"][OUTPUT]["confidence"] == {"value": 89, "band": "High"}
+>       [chip] = enriched["chips"][f"{OUTPUT}:7"]
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       KeyError: 'retained-01/CP-1.md:7'
+
+tests/test_react_sources.py:143: KeyError
+=========================== short test summary info ============================
+FAILED tests/test_react_sources.py::test_confidence_sources_survive_the_bridge_refresh_after_generic_parse_failure
+1 failed in 2.31s
+
+exit_code=1

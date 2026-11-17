@@ -1,0 +1,344 @@
+
+ RUN  v4.1.12 /workspace/recovery-t22/web
+
+ ❯ src/pages/connected/report/Confidence.recovery.test.tsx (4 tests | 4 failed) 365ms
+   × replaces synthetic no-page placeholders with the exact scored inputs and existing method 247ms
+   × opens authoritative accepted inputs when the generic Markdown parser found no table 34ms
+   × keeps real source identity, excerpt and qualification while dropping only placeholder chips 7ms
+   × shows a published zero unchanged and never substitutes missing inputs for zero 76ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/pages/connected/report/Confidence.recovery.test.tsx > replaces synthetic no-page placeholders with the exact scored inputs and existing method
+TestingLibraryElementError: Unable to find an element with the text: Directly Sourced. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<section[39m
+  [33maria-label[39m=[32m"Sources for Confidence inputs"[39m
+  [33mclass[39m=[32m"relative flex size-full flex-col items-start gap-6 overflow-y-auto bg-primary ring-1 ring-secondary_alt outline-hidden"[39m
+  [33mdata-rac[39m=[32m""[39m
+  [33mrole[39m=[32m"dialog"[39m
+  [33mtabindex[39m=[32m"-1"[39m
+[36m>[39m
+  [36m<header[39m
+    [33mclass[39m=[32m"relative z-1 w-full px-4 pt-6 md:px-6"[39m
+  [36m>[39m
+    [36m<h2[39m
+      [33mclass[39m=[32m"pr-10 text-lg font-semibold text-text-primary"[39m
+    [36m>[39m
+      [0mConfidence inputs[0m
+    [36m</h2>[39m
+    [36m<p[39m
+      [33mclass[39m=[32m"text-small text-text-tertiary"[39m
+    [36m>[39m
+      [0mFinancial foundation · Handoff line 11[0m
+    [36m</p>[39m
+    [36m<button[39m
+      [33maria-label[39m=[32m"Close"[39m
+      [33mclass[39m=[32m"flex cursor-pointer items-center justify-center rounded-lg p-2 transition duration-100 ease-linear focus:outline-hidden size-9 text-fg-quaternary hover:bg-primary_hover hover:text-fg-quaternary_hover focus-visible:outline-2 focus-visible:outline-offset-2 outline-focus-ring absolute top-3 right-3 shrink-0 focus-visible:outline-solid"[39m
+      [33mdata-rac[39m=[32m""[39m
+      [33mdata-react-aria-pressable[39m=[32m"true"[39m
+      [33mid[39m=[32m"react-aria-_r_6_"[39m
+      [33mslot[39m=[32m"close"[39m
+      [33mtabindex[39m=[32m"0"[39m
+      [33mtype[39m=[32m"button"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"shrink-0 transition-inherit-all size-5"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mheight[39m=[32m"24"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"2"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"24"[39m
+      [36m>[39m
+        [36m<path[39m
+          [33md[39m=[32m"M17 7 7 17M7 7l10 10"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+    [36m</button>[39m
+  [36m</header>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"flex size-full flex-col gap-6 overflow-y-auto overscroll-auto px-4 md:px-6"[39m
+  [36m>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex flex-col gap-1.5"[39m
+    [36m>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"text-xs font-medium text-text-tertiary"[39m
+      [36m>[39m
+        [0mThe statement[0m
+      [36m</span>[39m
+      [36m<p[39m
+        [33mclass[39m=[32m"text-body text-text-primary"[39m
+      [36m>[39m
+        [0mConfidence inputs[0m
+      [36m</p>[39m
+    [36m</div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"flex flex-col gap-1.5"[39m
+    [36m>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"text-xs font-medium text-text-tertiary"[39m
+      [36m>[39m
+        [0mHow it was derived[0m
+      [36m</span>[39m
+      [36m<ul>[39m
+        [36m<li>[39m
+          [36m<details[39m
+            [33mclass[39m=[32m"group/branch"[39m
+            [33mopen[39m=[32m""[39m
+          [36m>[39m
+            [36m<summary[39m
+              [33mclass[39m=[32m"flex items-start gap-2 rounded-ds-xs px-2 py-1.5 cursor-pointer list-none outline-hidden hover:bg-surface-subtle focus-visible:ring-2 focus-visible:ring-brand [&::-webkit-details-marker]:hidden"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"mt-0.5 size-4 flex-none text-text-tertiary transition-transform duration-150 group-open/branch:rotate-90 motion-reduce:transition-none"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mheight[39m=[32m"24"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"2"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"24"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"m9 18 6-6-6-6"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"flex min-w-0 flex-col text-small font-semibold text-text-primary"[39m
+              [36m>[39m
+                [36m<span>[39m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"font-medium text-text-tertiary"[39m
+                  [36m>[39m
+                    [0mEvidence retained with this item[0m
+                  [36m</span>[39m
+                  [0m [0m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"wrap-anywhere"[39m
+                  [36m/>[39m
+                [36m</span>[39m
+              [36m</span>[39m
+            [36m</summary>[39m
+            [36m<ul[39m
+              [33mclass[39m=[32m"ml-4 border-l border-border-hairline pl-2"[39m
+            [36m>[39m
+              [36m<li[39m
+                [33mclass[39m=[32m"flex items-start gap-2 rounded-ds-xs px-2 py-1.5"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"w-4 flex-none"[39m
+                [36m/>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"flex min-w-0 flex-col text-small font-semibold text-text-primary"[39m
+                [36m>[39m
+                  [36m<span>[39m
+                    [36m<span[39m
+                      [33mclass[39m=[32m"font-medium text-text-tertiary"[39m
+                    [36m>[39m
+                      [0mno page[0m
+                    [36m</span>[39m
+                    [0m [0m
+                    [36m<span[39m
+                      [33mclass[39m=[32m"wrap-anywhere"[39m
+                    [36m/>[39m
+                  [36m</span>[39m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"font-mono text-mono font-normal break-words text-text-tertiary"[39m
+                  [36m>[39m
+                    [0mthe row cites no page or register[0m
+                  [36m</span>[39m
+                [36m</span>[39m
+              [36m</li>[39m
+            [36m</ul>[39m
+          [36m</details>[39m
+        [36m</li>[39m
+      [36m</ul>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+  [36m<footer[39m
+    [33mclass[39m=[32m"w-full p-4 shadow-[inset_0px_1px_0px_0px] shadow-border-hairline md:px-6 flex justify-end gap-3"[39m
+  [36m>[39m
+    [36m<button[39m
+      [33mclass[39m=[32m"group relative inline-flex h-max cursor-pointer items-center justify-center whitespace-nowrap outline-brand transition duration-100 ease-linear before:absolute focus-visible:outline-2 focus-visible:outline-offset-2 disabled:cursor-not-allowed disabled:opacity-50 *:data-icon:pointer-events-none *:data-icon:size-5 *:data-icon:shrink-0 *:data-icon:transition-inherit-all gap-1 rounded-lg px-3.5 py-2.5 text-sm font-semibold before:rounded-[7px] data-icon-only:p-2.5 bg-primary text-secondary shadow-xs-skeuomorphic ring-1 ring-primary ring-inset hover:bg-primary_hover hover:text-secondary_hover data-loading:bg-primary_hover *:data-icon:text-fg-quaternary hover:*:data-icon:text-fg-quaternary_hover"[39m
+      [33mdata-rac[39m=[32m""[39m
+      [33mdata-react-aria-pressable[39m=[32m"true"[39m
+      [33mid[39m=[32m"react-aria-_r_8_"[39m
+      [33mslot[39m=[32m"close"[39m
+      [33mtabindex[39m=[32m"0"[39m
+      [33mtype[39m=[32m"button"[39m
+    [36m>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"transition-inherit-all px-0.5"[39m
+        [33mdata-text[39m=[32m"true"[39m
+      [36m>[39m
+        [0mClose[0m
+      [36m</span>[39m
+    [36m</button>[39m
+    [36m<a[39m
+      [33mclass[39m=[32m"group relative inline-flex h-max cursor-pointer items-center justify-center whitespace-nowrap outline-brand transition duration-100 ease-linear focus-visible:outline-2 focus-visible:outline-offset-2 disabled:cursor-not-allowed disabled:opacity-50 *:data-icon:pointer-events-none *:data-icon:size-5 *:data-icon:shrink-0 *:data-icon:transition-inherit-all gap-1 rounded-lg px-3.5 py-2.5 text-sm font-semibold before:rounded-[7px] data-icon-only:p-2.5 bg-brand-solid text-white shadow-xs-skeuomorphic ring-1 ring-transparent ring-inset hover:bg-brand-solid_hover data-loading:bg-brand-solid_hover before:absolute before:inset-px before:border before:border-white/12 before:mask-b-from-0% *:data-icon:text-white/60 hover:*:data-icon:text-white/70"[39m
+      [33mdata-rac[39m=[32m""[39m
+      [33mdata-react-aria-pressable[39m=[32m"true"[39m
+      [33mhref[39m=[32m"/report/run-a#evidence/run-a%2FCP-1.md~aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa-11"[39m
+      [33mtabindex[39m=[32m"0"[39m
+    [36m>[39m
+      [36m<span[39m
+        [33mclass[39m=[32m"transition-inherit-all px-0.5"[39m
+        [33mdata-text[39m=[32m"true"[39m
+      [36m>[39m
+        [0mOpen in Evidence[0m
+      [36m</span>[39m
+    [36m</a>[39m
+  [36m</footer>[39m
+[36m</section>[39m
+ ❯ Object.getElementError ../../credit-os2/web/node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../credit-os2/web/node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../credit-os2/web/node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../credit-os2/web/node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/pages/connected/report/Confidence.recovery.test.tsx:43:32
+     41|   const drawer = await screen.findByRole("dialog");
+     42|   for (const { label, value } of inputs) {
+     43|     const row = within(drawer).getByText(label, { exact: true }).paren…
+       |                                ^
+     44|     expect(row).toHaveTextContent(value);
+     45|   }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  src/pages/connected/report/Confidence.recovery.test.tsx > opens authoritative accepted inputs when the generic Markdown parser found no table
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name "Show sources for this figure"
+
+Here are the accessible roles:
+
+  list:
+
+  Name "":
+  [36m<ul[39m
+    [33mclass[39m=[32m"grid gap-3 sm:grid-cols-2 xl:grid-cols-[repeat(auto-fit,minmax(12rem,1fr))]"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  listitem:
+
+  Name "":
+  [36m<li[39m
+    [33mclass[39m=[32m"group/trace relative flex min-w-0 flex-col gap-2 rounded-xl border border-border-subtle bg-surface-card p-5 shadow-xs"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<ul[39m
+      [33mclass[39m=[32m"grid gap-3 sm:grid-cols-2 xl:grid-cols-[repeat(auto-fit,minmax(12rem,1fr))]"[39m
+    [36m>[39m
+      [36m<li[39m
+        [33mclass[39m=[32m"group/trace relative flex min-w-0 flex-col gap-2 rounded-xl border border-border-subtle bg-surface-card p-5 shadow-xs"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"pr-9 text-sm font-medium text-text-tertiary"[39m
+        [36m>[39m
+          [0mConfidence score[0m
+        [36m</span>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"min-h-9.5"[39m
+        [36m>[39m
+          [36m<div>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"text-[30px]/[38px] tabular-nums text-text-primary font-semibold"[39m
+            [36m>[39m
+              [0m89[0m
+            [36m</span>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"text-sm text-text-tertiary"[39m
+        [36m>[39m
+          [0mHigh[0m
+        [36m</span>[39m
+        [36m<span[39m
+          [33mclass[39m=[32m"absolute top-3.5 right-3.5"[39m
+        [36m/>[39m
+      [36m</li>[39m
+    [36m</ul>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ Object.getElementError ../../credit-os2/web/node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ ../../credit-os2/web/node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ ../../credit-os2/web/node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ ../../credit-os2/web/node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ src/pages/connected/report/Confidence.recovery.test.tsx:55:26
+     53|   const { entry, snapshot } = fixture(true);
+     54|   render(<ModuleConfidence entry={entry} snapshot={snapshot} run={{ fo…
+     55|   fireEvent.click(screen.getByRole("button", { name: "Show sources for…
+       |                          ^
+     56|   const drawer = await screen.findByRole("dialog");
+     57|   expect(drawer).toHaveTextContent("Fields present 95");
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  src/pages/connected/report/Confidence.recovery.test.tsx > keeps real source identity, excerpt and qualification while dropping only placeholder chips
+AssertionError: expected [ { label: 'no page', …(3) }, …(1) ] to deeply equal ArrayContaining{…}
+
+- Expected
++ Received
+
+- ArrayContaining [
+-   ObjectContaining {
+-     "label": "Recorded confidence inputs",
++ [
++   {
++     "children": [],
++     "label": "no page",
++     "note": "the row cites no page or register",
++     "value": "",
++   },
++   {
++     "children": [],
++     "label": "annual.pdf p.7",
++     "note": "Recorded qualification for FY2025.",
++     "value": "",
+    },
+  ]
+
+ ❯ src/pages/connected/report/Confidence.recovery.test.tsx:70:38
+     68|   });
+     69|   const trace = traceForLine(snapshot, entry, 0, 11);
+     70|   expect(trace?.derivation.children).toEqual(expect.arrayContaining([e…
+       |                                      ^
+     71|   expect(JSON.stringify(trace)).toContain("Recorded qualification for …
+     72|   expect(trace?.excerpt?.quote).toBe("Exact source quotation.");
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  src/pages/connected/report/Confidence.recovery.test.tsx > shows a published zero unchanged and never substitutes missing inputs for zero
+Error: expect(element).toHaveTextContent()
+
+Expected element to have text content:
+  0 out of 100 · Insufficient Information
+Received:
+  Confidence inputsFinancial foundation · Handoff line 11The statementConfidence inputsHow it was derivedEvidence retained with this item no page the row cites no page or registerCloseOpen in Evidence
+ ❯ src/pages/connected/report/Confidence.recovery.test.tsx:82:45
+     80|   render(<ModuleConfidence entry={entry} snapshot={snapshot} run={{ fo…
+     81|   fireEvent.click(screen.getByRole("button", { name: "Show sources for…
+     82|   expect(await screen.findByRole("dialog")).toHaveTextContent("0 out o…
+       |                                             ^
+     83| });
+     84|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed (4)
+   Start at  18:26:17
+   Duration  2.75s (transform 566ms, setup 134ms, import 1.48s, tests 365ms, environment 516ms)
+

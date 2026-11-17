@@ -1,0 +1,31 @@
+
+ RUN  v4.1.12 /workspace/recovery-t22/web
+
+ ❯ src/pages/connected/report/Confidence.recovery.test.tsx (5 tests | 1 failed) 663ms
+   × keeps qualifications and citations from later blocks of a split accepted inputs section 43ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/pages/connected/report/Confidence.recovery.test.tsx > keeps qualifications and citations from later blocks of a split accepted inputs section
+Error: expect(element).toHaveTextContent()
+
+Expected element to have text content:
+  Counts cover FY2025 audited evidence only.
+Received:
+  Confidence inputsFinancial foundation · Handoff line 11The statement89 out of 100 · HighHow it was derivedEvidence retained with this item Recorded confidence inputs Directly Sourced 8Calculated 2Assumption-Based 2Analyst Inference 0Weak Lineage 0Untraced 0Conflicting 0Insufficient Information 0Fields present 95Fields total 100Source gate passCRITICAL 0MATERIAL 0MINOR 1Confidence method Formula (0.6 × evidence quality + 0.4 × field coverage) × source-gate factor − finding penaltiesSource-gate factors pass 1.0; partial 0.7; fail 0.0Caps and rounding CRITICAL cap 39; MATERIAL cap 59; half to even.CloseOpen in Evidence
+ ❯ src/pages/connected/report/Confidence.recovery.test.tsx:171:18
+    169|   fireEvent.click(screen.getByRole("button", { name: "Show sources for…
+    170|   const drawer = await screen.findByRole("dialog");
+    171|   expect(drawer).toHaveTextContent("Counts cover FY2025 audited eviden…
+       |                  ^
+    172|   expect(drawer).toHaveTextContent("audit.pdf p.9");
+    173|   expect(drawer).toHaveTextContent("Later input qualification.");
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 4 passed (5)
+   Start at  18:28:25
+   Duration  2.05s (transform 284ms, setup 75ms, import 865ms, tests 663ms, environment 341ms)
+

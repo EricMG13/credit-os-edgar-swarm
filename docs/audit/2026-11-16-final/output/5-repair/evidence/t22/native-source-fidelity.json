@@ -1,0 +1,2871 @@
+{
+  "run": "20261117-183309-01",
+  "results": [
+    {
+      "brand": "Chrome",
+      "version": "157.0.8103.78",
+      "module": "CP-0",
+      "score": {
+        "value": 89,
+        "band": "High"
+      },
+      "inputs": [
+        {
+          "label": "Directly Sourced",
+          "value": "8"
+        },
+        {
+          "label": "Calculated",
+          "value": "2"
+        },
+        {
+          "label": "Assumption-Based",
+          "value": "2"
+        },
+        {
+          "label": "Analyst Inference",
+          "value": "0"
+        },
+        {
+          "label": "Weak Lineage",
+          "value": "0"
+        },
+        {
+          "label": "Untraced",
+          "value": "0"
+        },
+        {
+          "label": "Conflicting",
+          "value": "0"
+        },
+        {
+          "label": "Insufficient Information",
+          "value": "0"
+        },
+        {
+          "label": "Fields present",
+          "value": "95"
+        },
+        {
+          "label": "Fields total",
+          "value": "100"
+        },
+        {
+          "label": "Source gate",
+          "value": "pass"
+        },
+        {
+          "label": "CRITICAL",
+          "value": "0"
+        },
+        {
+          "label": "MATERIAL",
+          "value": "0"
+        },
+        {
+          "label": "MINOR",
+          "value": "1"
+        }
+      ],
+      "method": [
+        {
+          "label": "Formula",
+          "value": "(0.6 × evidence quality + 0.4 × field coverage) × source-gate factor − finding penalties"
+        },
+        {
+          "label": "Evidence quality",
+          "value": "Sum of each lineage count × its weight, divided by the total claim count, × 100. No claims gives evidence quality 0."
+        },
+        {
+          "label": "Lineage weights",
+          "value": "Directly Sourced 1.0; Calculated 0.9; Assumption-Based 0.5; Analyst Inference 0.4; Weak Lineage 0.3; Untraced 0.0; Conflicting 0.0; Insufficient Information 0.0"
+        },
+        {
+          "label": "Field coverage",
+          "value": "Fields present / Fields total × 100."
+        },
+        {
+          "label": "Source-gate factors",
+          "value": "pass 1.0; partial 0.7; fail 0.0"
+        },
+        {
+          "label": "Finding penalties",
+          "value": "CRITICAL 40; MATERIAL 15; MINOR 3 points per finding"
+        },
+        {
+          "label": "Caps and rounding",
+          "value": "Clamp to 0–100. Any CRITICAL finding caps the score at 39 (Blocked); otherwise any MATERIAL finding caps it at 59 (Restricted). Otherwise Passed. Round to the nearest integer, half to even."
+        },
+        {
+          "label": "Bands",
+          "value": "80–100 High; 60–79 Medium; 40–59 Low; 0–39 Insufficient Information"
+        }
+      ],
+      "source": "/report/20261117-183309-01#evidence/20261117-183309-01%2Fdeliveries%2Ff51ce84b1bd80e3ecbdd6ebffe688c25fbb526141c08d46e769ba5da8b556b96%2FCP-0.md~84fc7c28723d20b240e0d7c402af27f2be7b9688fb5ef61ed84775786bc0b714-37"
+    },
+    {
+      "brand": "Chrome",
+      "version": "157.0.8103.78",
+      "module": "CP-1",
+      "score": {
+        "value": 89,
+        "band": "High"
+      },
+      "inputs": [
+        {
+          "label": "Directly Sourced",
+          "value": "8"
+        },
+        {
+          "label": "Calculated",
+          "value": "2"
+        },
+        {
+          "label": "Assumption-Based",
+          "value": "2"
+        },
+        {
+          "label": "Analyst Inference",
+          "value": "0"
+        },
+        {
+          "label": "Weak Lineage",
+          "value": "0"
+        },
+        {
+          "label": "Untraced",
+          "value": "0"
+        },
+        {
+          "label": "Conflicting",
+          "value": "0"
+        },
+        {
+          "label": "Insufficient Information",
+          "value": "0"
+        },
+        {
+          "label": "Fields present",
+          "value": "95"
+        },
+        {
+          "label": "Fields total",
+          "value": "100"
+        },
+        {
+          "label": "Source gate",
+          "value": "pass"
+        },
+        {
+          "label": "CRITICAL",
+          "value": "0"
+        },
+        {
+          "label": "MATERIAL",
+          "value": "0"
+        },
+        {
+          "label": "MINOR",
+          "value": "1"
+        }
+      ],
+      "method": [
+        {
+          "label": "Formula",
+          "value": "(0.6 × evidence quality + 0.4 × field coverage) × source-gate factor − finding penalties"
+        },
+        {
+          "label": "Evidence quality",
+          "value": "Sum of each lineage count × its weight, divided by the total claim count, × 100. No claims gives evidence quality 0."
+        },
+        {
+          "label": "Lineage weights",
+          "value": "Directly Sourced 1.0; Calculated 0.9; Assumption-Based 0.5; Analyst Inference 0.4; Weak Lineage 0.3; Untraced 0.0; Conflicting 0.0; Insufficient Information 0.0"
+        },
+        {
+          "label": "Field coverage",
+          "value": "Fields present / Fields total × 100."
+        },
+        {
+          "label": "Source-gate factors",
+          "value": "pass 1.0; partial 0.7; fail 0.0"
+        },
+        {
+          "label": "Finding penalties",
+          "value": "CRITICAL 40; MATERIAL 15; MINOR 3 points per finding"
+        },
+        {
+          "label": "Caps and rounding",
+          "value": "Clamp to 0–100. Any CRITICAL finding caps the score at 39 (Blocked); otherwise any MATERIAL finding caps it at 59 (Restricted). Otherwise Passed. Round to the nearest integer, half to even."
+        },
+        {
+          "label": "Bands",
+          "value": "80–100 High; 60–79 Medium; 40–59 Low; 0–39 Insufficient Information"
+        }
+      ],
+      "source": "/report/20261117-183309-01#evidence/20261117-183309-01%2Fdeliveries%2Ff51ce84b1bd80e3ecbdd6ebffe688c25fbb526141c08d46e769ba5da8b556b96%2FCP-1.md~eacd31f382417f384eba4e23572961e529188cdab32c8cef8436b9ba3bc48a77-161"
+    },
+    {
+      "brand": "Chrome",
+      "version": "157.0.8103.78",
+      "module": "CP-1A",
+      "score": {
+        "value": 89,
+        "band": "High"
+      },
+      "inputs": [
+        {
+          "label": "Directly Sourced",
+          "value": "8"
+        },
+        {
+          "label": "Calculated",
+          "value": "2"
+        },
+        {
+          "label": "Assumption-Based",
+          "value": "2"
+        },
+        {
+          "label": "Analyst Inference",
+          "value": "0"
+        },
+        {
+          "label": "Weak Lineage",
+          "value": "0"
+        },
+        {
+          "label": "Untraced",
+          "value": "0"
+        },
+        {
+          "label": "Conflicting",
+          "value": "0"
+        },
+        {
+          "label": "Insufficient Information",
+          "value": "0"
+        },
+        {
+          "label": "Fields present",
+          "value": "95"
+        },
+        {
+          "label": "Fields total",
+          "value": "100"
+        },
+        {
+          "label": "Source gate",
+          "value": "pass"
+        },
+        {
+          "label": "CRITICAL",
+          "value": "0"
+        },
+        {
+          "label": "MATERIAL",
+          "value": "0"
+        },
+        {
+          "label": "MINOR",
+          "value": "1"
+        }
+      ],
+      "method": [
+        {
+          "label": "Formula",
+          "value": "(0.6 × evidence quality + 0.4 × field coverage) × source-gate factor − finding penalties"
+        },
+        {
+          "label": "Evidence quality",
+          "value": "Sum of each lineage count × its weight, divided by the total claim count, × 100. No claims gives evidence quality 0."
+        },
+        {
+          "label": "Lineage weights",
+          "value": "Directly Sourced 1.0; Calculated 0.9; Assumption-Based 0.5; Analyst Inference 0.4; Weak Lineage 0.3; Untraced 0.0; Conflicting 0.0; Insufficient Information 0.0"
+        },
+        {
+          "label": "Field coverage",
+          "value": "Fields present / Fields total × 100."
+        },
+        {
+          "label": "Source-gate factors",
+          "value": "pass 1.0; partial 0.7; fail 0.0"
+        },
+        {
+          "label": "Finding penalties",
+          "value": "CRITICAL 40; MATERIAL 15; MINOR 3 points per finding"
+        },
+        {
+          "label": "Caps and rounding",
+          "value": "Clamp to 0–100. Any CRITICAL finding caps the score at 39 (Blocked); otherwise any MATERIAL finding caps it at 59 (Restricted). Otherwise Passed. Round to the nearest integer, half to even."
+        },
+        {
+          "label": "Bands",
+          "value": "80–100 High; 60–79 Medium; 40–59 Low; 0–39 Insufficient Information"
+        }
+      ],
+      "source": "/report/20261117-183309-01#evidence/20261117-183309-01%2Fdeliveries%2Ff51ce84b1bd80e3ecbdd6ebffe688c25fbb526141c08d46e769ba5da8b556b96%2FCP-1A.md~de1dec37f57a4bc59f945666a5e69a3b6e172a7a2b957911b94111b4305c203b-72"
+    },
+    {
+      "brand": "Chrome",
+      "version": "157.0.8103.78",
+      "module": "CP-2",
+      "score": {
+        "value": 89,
+        "band": "High"
+      },
+      "inputs": [
+        {
+          "label": "Directly Sourced",
+          "value": "8"
+        },
+        {
+          "label": "Calculated",
+          "value": "2"
+        },
+        {
+          "label": "Assumption-Based",
+          "value": "2"
+        },
+        {
+          "label": "Analyst Inference",
+          "value": "0"
+        },
+        {
+          "label": "Weak Lineage",
+          "value": "0"
+        },
+        {
+          "label": "Untraced",
+          "value": "0"
+        },
+        {
+          "label": "Conflicting",
+          "value": "0"
+        },
+        {
+          "label": "Insufficient Information",
+          "value": "0"
+        },
+        {
+          "label": "Fields present",
+          "value": "95"
+        },
+        {
+          "label": "Fields total",
+          "value": "100"
+        },
+        {
+          "label": "Source gate",
+          "value": "pass"
+        },
+        {
+          "label": "CRITICAL",
+          "value": "0"
+        },
+        {
+          "label": "MATERIAL",
+          "value": "0"
+        },
+        {
+          "label": "MINOR",
+          "value": "1"
+        }
+      ],
+      "method": [
+        {
+          "label": "Formula",
+          "value": "(0.6 × evidence quality + 0.4 × field coverage) × source-gate factor − finding penalties"
+        },
+        {
+          "label": "Evidence quality",
+          "value": "Sum of each lineage count × its weight, divided by the total claim count, × 100. No claims gives evidence quality 0."
+        },
+        {
+          "label": "Lineage weights",
+          "value": "Directly Sourced 1.0; Calculated 0.9; Assumption-Based 0.5; Analyst Inference 0.4; Weak Lineage 0.3; Untraced 0.0; Conflicting 0.0; Insufficient Information 0.0"
+        },
+        {
+          "label": "Field coverage",
+          "value": "Fields present / Fields total × 100."
+        },
+        {
+          "label": "Source-gate factors",
+          "value": "pass 1.0; partial 0.7; fail 0.0"
+        },
+        {
+          "label": "Finding penalties",
+          "value": "CRITICAL 40; MATERIAL 15; MINOR 3 points per finding"
+        },
+        {
+          "label": "Caps and rounding",
+          "value": "Clamp to 0–100. Any CRITICAL finding caps the score at 39 (Blocked); otherwise any MATERIAL finding caps it at 59 (Restricted). Otherwise Passed. Round to the nearest integer, half to even."
+        },
+        {
+          "label": "Bands",
+          "value": "80–100 High; 60–79 Medium; 40–59 Low; 0–39 Insufficient Information"
+        }
+      ],
+      "source": "/report/20261117-183309-01#evidence/20261117-183309-01%2Fdeliveries%2Ff51ce84b1bd80e3ecbdd6ebffe688c25fbb526141c08d46e769ba5da8b556b96%2FCP-2.md~18373046a3d5c8449d3df147a2245dfbfb4f72f6a313d2321c7e2d3cad46e18b-48"
+    },
+    {
+      "brand": "Chrome",
+      "version": "157.0.8103.78",
+      "module": "CP-2A",
+      "score": {
+        "value": 89,
+        "band": "High"
+      },
+      "inputs": [
+        {
+          "label": "Directly Sourced",
+          "value": "8"
+        },
+        {
+          "label": "Calculated",
+          "value": "2"
+        },
+        {
+          "label": "Assumption-Based",
+          "value": "2"
+        },
+        {
+          "label": "Analyst Inference",
+          "value": "0"
+        },
+        {
+          "label": "Weak Lineage",
+          "value": "0"
+        },
+        {
+          "label": "Untraced",
+          "value": "0"
+        },
+        {
+          "label": "Conflicting",
+          "value": "0"
+        },
+        {
+          "label": "Insufficient Information",
+          "value": "0"
+        },
+        {
+          "label": "Fields present",
+          "value": "95"
+        },
+        {
+          "label": "Fields total",
+          "value": "100"
+        },
+        {
+          "label": "Source gate",
+          "value": "pass"
+        },
+        {
+          "label": "CRITICAL",
+          "value": "0"
+        },
+        {
+          "label": "MATERIAL",
+          "value": "0"
+        },
+        {
+          "label": "MINOR",
+          "value": "1"
+        }
+      ],
+      "method": [
+        {
+          "label": "Formula",
+          "value": "(0.6 × evidence quality + 0.4 × field coverage) × source-gate factor − finding penalties"
+        },
+        {
+          "label": "Evidence quality",
+          "value": "Sum of each lineage count × its weight, divided by the total claim count, × 100. No claims gives evidence quality 0."
+        },
+        {
+          "label": "Lineage weights",
+          "value": "Directly Sourced 1.0; Calculated 0.9; Assumption-Based 0.5; Analyst Inference 0.4; Weak Lineage 0.3; Untraced 0.0; Conflicting 0.0; Insufficient Information 0.0"
+        },
+        {
+          "label": "Field coverage",
+          "value": "Fields present / Fields total × 100."
+        },
+        {
+          "label": "Source-gate factors",
+          "value": "pass 1.0; partial 0.7; fail 0.0"
+        },
+        {
+          "label": "Finding penalties",
+          "value": "CRITICAL 40; MATERIAL 15; MINOR 3 points per finding"
+        },
+        {
+          "label": "Caps and rounding",
+          "value": "Clamp to 0–100. Any CRITICAL finding caps the score at 39 (Blocked); otherwise any MATERIAL finding caps it at 59 (Restricted). Otherwise Passed. Round to the nearest integer, half to even."
+        },
+        {
+          "label": "Bands",
+          "value": "80–100 High; 60–79 Medium; 40–59 Low; 0–39 Insufficient Information"
+        }
+      ],
+      "source": "/report/20261117-183309-01#evidence/20261117-183309-01%2Fdeliveries%2Ff51ce84b1bd80e3ecbdd6ebffe688c25fbb526141c08d46e769ba5da8b556b96%2FCP-2A.md~bf10c4bc43b35c6b71be2771d5b4f07312a3a9c3699c85d3d624346e071f4d65-43"
+    },
+    {
+      "brand": "Chrome",
+      "version": "157.0.8103.78",
+      "module": "CP-2D",
+      "score": {
+        "value": 89,
+        "band": "High"
+      },
+      "inputs": [
+        {
+          "label": "Directly Sourced",
+          "value": "8"
+        },
+        {
+          "label": "Calculated",
+          "value": "2"
+        },
+        {
+          "label": "Assumption-Based",
+          "value": "2"
+        },
+        {
+          "label": "Analyst Inference",
+          "value": "0"
+        },
+        {
+          "label": "Weak Lineage",
+          "value": "0"
+        },
+        {
+          "label": "Untraced",
+          "value": "0"
+        },
+        {
+          "label": "Conflicting",
+          "value": "0"
+        },
+        {
+          "label": "Insufficient Information",
+          "value": "0"
+        },
+        {
+          "label": "Fields present",
+          "value": "95"
+        },
+        {
+          "label": "Fields total",
+          "value": "100"
+        },
+        {
+          "label": "Source gate",
+          "value": "pass"
+        },
+        {
+          "label": "CRITICAL",
+          "value": "0"
+        },
+        {
+          "label": "MATERIAL",
+          "value": "0"
+        },
+        {
+          "label": "MINOR",
+          "value": "1"
+        }
+      ],
+      "method": [
+        {
+          "label": "Formula",
+          "value": "(0.6 × evidence quality + 0.4 × field coverage) × source-gate factor − finding penalties"
+        },
+        {
+          "label": "Evidence quality",
+          "value": "Sum of each lineage count × its weight, divided by the total claim count, × 100. No claims gives evidence quality 0."
+        },
+        {
+          "label": "Lineage weights",
+          "value": "Directly Sourced 1.0; Calculated 0.9; Assumption-Based 0.5; Analyst Inference 0.4; Weak Lineage 0.3; Untraced 0.0; Conflicting 0.0; Insufficient Information 0.0"
+        },
+        {
+          "label": "Field coverage",
+          "value": "Fields present / Fields total × 100."
+        },
+        {
+          "label": "Source-gate factors",
+          "value": "pass 1.0; partial 0.7; fail 0.0"
+        },
+        {
+          "label": "Finding penalties",
+          "value": "CRITICAL 40; MATERIAL 15; MINOR 3 points per finding"
+        },
+        {
+          "label": "Caps and rounding",
+          "value": "Clamp to 0–100. Any CRITICAL finding caps the score at 39 (Blocked); otherwise any MATERIAL finding caps it at 59 (Restricted). Otherwise Passed. Round to the nearest integer, half to even."
+        },
+        {
+          "label": "Bands",
+          "value": "80–100 High; 60–79 Medium; 40–59 Low; 0–39 Insufficient Information"
+        }
+      ],
+      "source": "/report/20261117-183309-01#evidence/20261117-183309-01%2Fdeliveries%2Ff51ce84b1bd80e3ecbdd6ebffe688c25fbb526141c08d46e769ba5da8b556b96%2FCP-2D.md~d5e662a5cc87b3af8e7fd445f5d1603f64fbf78260ebf46595c7b57ab9de859f-55"
+    },
+    {
+      "brand": "Chrome",
+      "version": "157.0.8103.78",
+      "module": "CP-2E",
+      "score": {
+        "value": 89,
+        "band": "High"
+      },
+      "inputs": [
+        {
+          "label": "Directly Sourced",
+          "value": "8"
+        },
+        {
+          "label": "Calculated",
+          "value": "2"
+        },
+        {
+          "label": "Assumption-Based",
+          "value": "2"
+        },
+        {
+          "label": "Analyst Inference",
+          "value": "0"
+        },
+        {
+          "label": "Weak Lineage",
+          "value": "0"
+        },
+        {
+          "label": "Untraced",
+          "value": "0"
+        },
+        {
+          "label": "Conflicting",
+          "value": "0"
+        },
+        {
+          "label": "Insufficient Information",
+          "value": "0"
+        },
+        {
+          "label": "Fields present",
+          "value": "95"
+        },
+        {
+          "label": "Fields total",
+          "value": "100"
+        },
+        {
+          "label": "Source gate",
+          "value": "pass"
+        },
+        {
+          "label": "CRITICAL",
+          "value": "0"
+        },
+        {
+          "label": "MATERIAL",
+          "value": "0"
+        },
+        {
+          "label": "MINOR",
+          "value": "1"
+        }
+      ],
+      "method": [
+        {
+          "label": "Formula",
+          "value": "(0.6 × evidence quality + 0.4 × field coverage) × source-gate factor − finding penalties"
+        },
+        {
+          "label": "Evidence quality",
+          "value": "Sum of each lineage count × its weight, divided by the total claim count, × 100. No claims gives evidence quality 0."
+        },
+        {
+          "label": "Lineage weights",
+          "value": "Directly Sourced 1.0; Calculated 0.9; Assumption-Based 0.5; Analyst Inference 0.4; Weak Lineage 0.3; Untraced 0.0; Conflicting 0.0; Insufficient Information 0.0"
+        },
+        {
+          "label": "Field coverage",
+          "value": "Fields present / Fields total × 100."
+        },
+        {
+          "label": "Source-gate factors",
+          "value": "pass 1.0; partial 0.7; fail 0.0"
+        },
+        {
+          "label": "Finding penalties",
+          "value": "CRITICAL 40; MATERIAL 15; MINOR 3 points per finding"
+        },
+        {
+          "label": "Caps and rounding",
+          "value": "Clamp to 0–100. Any CRITICAL finding caps the score at 39 (Blocked); otherwise any MATERIAL finding caps it at 59 (Restricted). Otherwise Passed. Round to the nearest integer, half to even."
+        },
+        {
+          "label": "Bands",
+          "value": "80–100 High; 60–79 Medium; 40–59 Low; 0–39 Insufficient Information"
+        }
+      ],
+      "source": "/report/20261117-183309-01#evidence/20261117-183309-01%2Fdeliveries%2Ff51ce84b1bd80e3ecbdd6ebffe688c25fbb526141c08d46e769ba5da8b556b96%2FCP-2E.md~d9c9dd63b420e9eedc42d909df2ef7e096980ca5dbb56326314ad36eee3dca39-47"
+    },
+    {
+      "brand": "Chrome",
+      "version": "157.0.8103.78",
+      "module": "CP-2G",
+      "score": {
+        "value": 89,
+        "band": "High"
+      },
+      "inputs": [
+        {
+          "label": "Directly Sourced",
+          "value": "8"
+        },
+        {
+          "label": "Calculated",
+          "value": "2"
+        },
+        {
+          "label": "Assumption-Based",
+          "value": "2"
+        },
+        {
+          "label": "Analyst Inference",
+          "value": "0"
+        },
+        {
+          "label": "Weak Lineage",
+          "value": "0"
+        },
+        {
+          "label": "Untraced",
+          "value": "0"
+        },
+        {
+          "label": "Conflicting",
+          "value": "0"
+        },
+        {
+          "label": "Insufficient Information",
+          "value": "0"
+        },
+        {
+          "label": "Fields present",
+          "value": "95"
+        },
+        {
+          "label": "Fields total",
+          "value": "100"
+        },
+        {
+          "label": "Source gate",
+          "value": "pass"
+        },
+        {
+          "label": "CRITICAL",
+          "value": "0"
+        },
+        {
+          "label": "MATERIAL",
+          "value": "0"
+        },
+        {
+          "label": "MINOR",
+          "value": "1"
+        }
+      ],
+      "method": [
+        {
+          "label": "Formula",
+          "value": "(0.6 × evidence quality + 0.4 × field coverage) × source-gate factor − finding penalties"
+        },
+        {
+          "label": "Evidence quality",
+          "value": "Sum of each lineage count × its weight, divided by the total claim count, × 100. No claims gives evidence quality 0."
+        },
+        {
+          "label": "Lineage weights",
+          "value": "Directly Sourced 1.0; Calculated 0.9; Assumption-Based 0.5; Analyst Inference 0.4; Weak Lineage 0.3; Untraced 0.0; Conflicting 0.0; Insufficient Information 0.0"
+        },
+        {
+          "label": "Field coverage",
+          "value": "Fields present / Fields total × 100."
+        },
+        {
+          "label": "Source-gate factors",
+          "value": "pass 1.0; partial 0.7; fail 0.0"
+        },
+        {
+          "label": "Finding penalties",
+          "value": "CRITICAL 40; MATERIAL 15; MINOR 3 points per finding"
+        },
+        {
+          "label": "Caps and rounding",
+          "value": "Clamp to 0–100. Any CRITICAL finding caps the score at 39 (Blocked); otherwise any MATERIAL finding caps it at 59 (Restricted). Otherwise Passed. Round to the nearest integer, half to even."
+        },
+        {
+          "label": "Bands",
+          "value": "80–100 High; 60–79 Medium; 40–59 Low; 0–39 Insufficient Information"
+        }
+      ],
+      "source": "/report/20261117-183309-01#evidence/20261117-183309-01%2Fdeliveries%2Ff51ce84b1bd80e3ecbdd6ebffe688c25fbb526141c08d46e769ba5da8b556b96%2FCP-2G.md~059a81de288c0747f7d015b04fb026666822638cb07e7365a12b349b90fbc7cc-38"
+    },
+    {
+      "brand": "Chrome",
+      "version": "157.0.8103.78",
+      "module": "CP-3",
+      "score": {
+        "value": 89,
+        "band": "High"
+      },
+      "inputs": [
+        {
+          "label": "Directly Sourced",
+          "value": "8"
+        },
+        {
+          "label": "Calculated",
+          "value": "2"
+        },
+        {
+          "label": "Assumption-Based",
+          "value": "2"
+        },
+        {
+          "label": "Analyst Inference",
+          "value": "0"
+        },
+        {
+          "label": "Weak Lineage",
+          "value": "0"
+        },
+        {
+          "label": "Untraced",
+          "value": "0"
+        },
+        {
+          "label": "Conflicting",
+          "value": "0"
+        },
+        {
+          "label": "Insufficient Information",
+          "value": "0"
+        },
+        {
+          "label": "Fields present",
+          "value": "95"
+        },
+        {
+          "label": "Fields total",
+          "value": "100"
+        },
+        {
+          "label": "Source gate",
+          "value": "pass"
+        },
+        {
+          "label": "CRITICAL",
+          "value": "0"
+        },
+        {
+          "label": "MATERIAL",
+          "value": "0"
+        },
+        {
+          "label": "MINOR",
+          "value": "1"
+        }
+      ],
+      "method": [
+        {
+          "label": "Formula",
+          "value": "(0.6 × evidence quality + 0.4 × field coverage) × source-gate factor − finding penalties"
+        },
+        {
+          "label": "Evidence quality",
+          "value": "Sum of each lineage count × its weight, divided by the total claim count, × 100. No claims gives evidence quality 0."
+        },
+        {
+          "label": "Lineage weights",
+          "value": "Directly Sourced 1.0; Calculated 0.9; Assumption-Based 0.5; Analyst Inference 0.4; Weak Lineage 0.3; Untraced 0.0; Conflicting 0.0; Insufficient Information 0.0"
+        },
+        {
+          "label": "Field coverage",
+          "value": "Fields present / Fields total × 100."
+        },
+        {
+          "label": "Source-gate factors",
+          "value": "pass 1.0; partial 0.7; fail 0.0"
+        },
+        {
+          "label": "Finding penalties",
+          "value": "CRITICAL 40; MATERIAL 15; MINOR 3 points per finding"
+        },
+        {
+          "label": "Caps and rounding",
+          "value": "Clamp to 0–100. Any CRITICAL finding caps the score at 39 (Blocked); otherwise any MATERIAL finding caps it at 59 (Restricted). Otherwise Passed. Round to the nearest integer, half to even."
+        },
+        {
+          "label": "Bands",
+          "value": "80–100 High; 60–79 Medium; 40–59 Low; 0–39 Insufficient Information"
+        }
+      ],
+      "source": "/report/20261117-183309-01#evidence/20261117-183309-01%2Fdeliveries%2Ff51ce84b1bd80e3ecbdd6ebffe688c25fbb526141c08d46e769ba5da8b556b96%2FCP-3.md~24eaffa7ea47c4a5e2393b18c3e6509509d7e9573318127443fea9386418b579-67"
+    },
+    {
+      "brand": "Chrome",
+      "version": "157.0.8103.78",
+      "module": "CP-3C",
+      "score": {
+        "value": 89,
+        "band": "High"
+      },
+      "inputs": [
+        {
+          "label": "Directly Sourced",
+          "value": "8"
+        },
+        {
+          "label": "Calculated",
+          "value": "2"
+        },
+        {
+          "label": "Assumption-Based",
+          "value": "2"
+        },
+        {
+          "label": "Analyst Inference",
+          "value": "0"
+        },
+        {
+          "label": "Weak Lineage",
+          "value": "0"
+        },
+        {
+          "label": "Untraced",
+          "value": "0"
+        },
+        {
+          "label": "Conflicting",
+          "value": "0"
+        },
+        {
+          "label": "Insufficient Information",
+          "value": "0"
+        },
+        {
+          "label": "Fields present",
+          "value": "95"
+        },
+        {
+          "label": "Fields total",
+          "value": "100"
+        },
+        {
+          "label": "Source gate",
+          "value": "pass"
+        },
+        {
+          "label": "CRITICAL",
+          "value": "0"
+        },
+        {
+          "label": "MATERIAL",
+          "value": "0"
+        },
+        {
+          "label": "MINOR",
+          "value": "1"
+        }
+      ],
+      "method": [
+        {
+          "label": "Formula",
+          "value": "(0.6 × evidence quality + 0.4 × field coverage) × source-gate factor − finding penalties"
+        },
+        {
+          "label": "Evidence quality",
+          "value": "Sum of each lineage count × its weight, divided by the total claim count, × 100. No claims gives evidence quality 0."
+        },
+        {
+          "label": "Lineage weights",
+          "value": "Directly Sourced 1.0; Calculated 0.9; Assumption-Based 0.5; Analyst Inference 0.4; Weak Lineage 0.3; Untraced 0.0; Conflicting 0.0; Insufficient Information 0.0"
+        },
+        {
+          "label": "Field coverage",
+          "value": "Fields present / Fields total × 100."
+        },
+        {
+          "label": "Source-gate factors",
+          "value": "pass 1.0; partial 0.7; fail 0.0"
+        },
+        {
+          "label": "Finding penalties",
+          "value": "CRITICAL 40; MATERIAL 15; MINOR 3 points per finding"
+        },
+        {
+          "label": "Caps and rounding",
+          "value": "Clamp to 0–100. Any CRITICAL finding caps the score at 39 (Blocked); otherwise any MATERIAL finding caps it at 59 (Restricted). Otherwise Passed. Round to the nearest integer, half to even."
+        },
+        {
+          "label": "Bands",
+          "value": "80–100 High; 60–79 Medium; 40–59 Low; 0–39 Insufficient Information"
+        }
+      ],
+      "source": "/report/20261117-183309-01#evidence/20261117-183309-01%2Fdeliveries%2Ff51ce84b1bd80e3ecbdd6ebffe688c25fbb526141c08d46e769ba5da8b556b96%2FCP-3C.md~c6596e43795520cd7fd8c9e6dc56b638ba44a2d0f2460bcaebff8c8a92b3cb67-56"
+    },
+    {
+      "brand": "Chrome",
+      "version": "157.0.8103.78",
+      "module": "CP-4",
+      "score": {
+        "value": 89,
+        "band": "High"
+      },
+      "inputs": [
+        {
+          "label": "Directly Sourced",
+          "value": "8"
+        },
+        {
+          "label": "Calculated",
+          "value": "2"
+        },
+        {
+          "label": "Assumption-Based",
+          "value": "2"
+        },
+        {
+          "label": "Analyst Inference",
+          "value": "0"
+        },
+        {
+          "label": "Weak Lineage",
+          "value": "0"
+        },
+        {
+          "label": "Untraced",
+          "value": "0"
+        },
+        {
+          "label": "Conflicting",
+          "value": "0"
+        },
+        {
+          "label": "Insufficient Information",
+          "value": "0"
+        },
+        {
+          "label": "Fields present",
+          "value": "95"
+        },
+        {
+          "label": "Fields total",
+          "value": "100"
+        },
+        {
+          "label": "Source gate",
+          "value": "pass"
+        },
+        {
+          "label": "CRITICAL",
+          "value": "0"
+        },
+        {
+          "label": "MATERIAL",
+          "value": "0"
+        },
+        {
+          "label": "MINOR",
+          "value": "1"
+        }
+      ],
+      "method": [
+        {
+          "label": "Formula",
+          "value": "(0.6 × evidence quality + 0.4 × field coverage) × source-gate factor − finding penalties"
+        },
+        {
+          "label": "Evidence quality",
+          "value": "Sum of each lineage count × its weight, divided by the total claim count, × 100. No claims gives evidence quality 0."
+        },
+        {
+          "label": "Lineage weights",
+          "value": "Directly Sourced 1.0; Calculated 0.9; Assumption-Based 0.5; Analyst Inference 0.4; Weak Lineage 0.3; Untraced 0.0; Conflicting 0.0; Insufficient Information 0.0"
+        },
+        {
+          "label": "Field coverage",
+          "value": "Fields present / Fields total × 100."
+        },
+        {
+          "label": "Source-gate factors",
+          "value": "pass 1.0; partial 0.7; fail 0.0"
+        },
+        {
+          "label": "Finding penalties",
+          "value": "CRITICAL 40; MATERIAL 15; MINOR 3 points per finding"
+        },
+        {
+          "label": "Caps and rounding",
+          "value": "Clamp to 0–100. Any CRITICAL finding caps the score at 39 (Blocked); otherwise any MATERIAL finding caps it at 59 (Restricted). Otherwise Passed. Round to the nearest integer, half to even."
+        },
+        {
+          "label": "Bands",
+          "value": "80–100 High; 60–79 Medium; 40–59 Low; 0–39 Insufficient Information"
+        }
+      ],
+      "source": "/report/20261117-183309-01#evidence/20261117-183309-01%2Fdeliveries%2Ff51ce84b1bd80e3ecbdd6ebffe688c25fbb526141c08d46e769ba5da8b556b96%2FCP-4.md~051155c5102cce3b2a7c4b020cb90975fcb6f1df5d38bd550c5ff0961ef53fb6-72"
+    },
+    {
+      "brand": "Chrome",
+      "version": "157.0.8103.78",
+      "module": "CP-5",
+      "score": {
+        "value": 89,
+        "band": "High"
+      },
+      "inputs": [
+        {
+          "label": "Directly Sourced",
+          "value": "8"
+        },
+        {
+          "label": "Calculated",
+          "value": "2"
+        },
+        {
+          "label": "Assumption-Based",
+          "value": "2"
+        },
+        {
+          "label": "Analyst Inference",
+          "value": "0"
+        },
+        {
+          "label": "Weak Lineage",
+          "value": "0"
+        },
+        {
+          "label": "Untraced",
+          "value": "0"
+        },
+        {
+          "label": "Conflicting",
+          "value": "0"
+        },
+        {
+          "label": "Insufficient Information",
+          "value": "0"
+        },
+        {
+          "label": "Fields present",
+          "value": "95"
+        },
+        {
+          "label": "Fields total",
+          "value": "100"
+        },
+        {
+          "label": "Source gate",
+          "value": "pass"
+        },
+        {
+          "label": "CRITICAL",
+          "value": "0"
+        },
+        {
+          "label": "MATERIAL",
+          "value": "0"
+        },
+        {
+          "label": "MINOR",
+          "value": "1"
+        }
+      ],
+      "method": [
+        {
+          "label": "Formula",
+          "value": "(0.6 × evidence quality + 0.4 × field coverage) × source-gate factor − finding penalties"
+        },
+        {
+          "label": "Evidence quality",
+          "value": "Sum of each lineage count × its weight, divided by the total claim count, × 100. No claims gives evidence quality 0."
+        },
+        {
+          "label": "Lineage weights",
+          "value": "Directly Sourced 1.0; Calculated 0.9; Assumption-Based 0.5; Analyst Inference 0.4; Weak Lineage 0.3; Untraced 0.0; Conflicting 0.0; Insufficient Information 0.0"
+        },
+        {
+          "label": "Field coverage",
+          "value": "Fields present / Fields total × 100."
+        },
+        {
+          "label": "Source-gate factors",
+          "value": "pass 1.0; partial 0.7; fail 0.0"
+        },
+        {
+          "label": "Finding penalties",
+          "value": "CRITICAL 40; MATERIAL 15; MINOR 3 points per finding"
+        },
+        {
+          "label": "Caps and rounding",
+          "value": "Clamp to 0–100. Any CRITICAL finding caps the score at 39 (Blocked); otherwise any MATERIAL finding caps it at 59 (Restricted). Otherwise Passed. Round to the nearest integer, half to even."
+        },
+        {
+          "label": "Bands",
+          "value": "80–100 High; 60–79 Medium; 40–59 Low; 0–39 Insufficient Information"
+        }
+      ],
+      "source": "/report/20261117-183309-01#evidence/20261117-183309-01%2Fdeliveries%2Ff51ce84b1bd80e3ecbdd6ebffe688c25fbb526141c08d46e769ba5da8b556b96%2FCP-5.md~54279e9dada33283626f8b894fd1cba40bc40be94f96f35f20a1d22540e64843-52"
+    },
+    {
+      "brand": "Chrome",
+      "version": "157.0.8103.78",
+      "module": "CP-6",
+      "score": {
+        "value": 89,
+        "band": "High"
+      },
+      "inputs": [
+        {
+          "label": "Directly Sourced",
+          "value": "8"
+        },
+        {
+          "label": "Calculated",
+          "value": "2"
+        },
+        {
+          "label": "Assumption-Based",
+          "value": "2"
+        },
+        {
+          "label": "Analyst Inference",
+          "value": "0"
+        },
+        {
+          "label": "Weak Lineage",
+          "value": "0"
+        },
+        {
+          "label": "Untraced",
+          "value": "0"
+        },
+        {
+          "label": "Conflicting",
+          "value": "0"
+        },
+        {
+          "label": "Insufficient Information",
+          "value": "0"
+        },
+        {
+          "label": "Fields present",
+          "value": "95"
+        },
+        {
+          "label": "Fields total",
+          "value": "100"
+        },
+        {
+          "label": "Source gate",
+          "value": "pass"
+        },
+        {
+          "label": "CRITICAL",
+          "value": "0"
+        },
+        {
+          "label": "MATERIAL",
+          "value": "0"
+        },
+        {
+          "label": "MINOR",
+          "value": "1"
+        }
+      ],
+      "method": [
+        {
+          "label": "Formula",
+          "value": "(0.6 × evidence quality + 0.4 × field coverage) × source-gate factor − finding penalties"
+        },
+        {
+          "label": "Evidence quality",
+          "value": "Sum of each lineage count × its weight, divided by the total claim count, × 100. No claims gives evidence quality 0."
+        },
+        {
+          "label": "Lineage weights",
+          "value": "Directly Sourced 1.0; Calculated 0.9; Assumption-Based 0.5; Analyst Inference 0.4; Weak Lineage 0.3; Untraced 0.0; Conflicting 0.0; Insufficient Information 0.0"
+        },
+        {
+          "label": "Field coverage",
+          "value": "Fields present / Fields total × 100."
+        },
+        {
+          "label": "Source-gate factors",
+          "value": "pass 1.0; partial 0.7; fail 0.0"
+        },
+        {
+          "label": "Finding penalties",
+          "value": "CRITICAL 40; MATERIAL 15; MINOR 3 points per finding"
+        },
+        {
+          "label": "Caps and rounding",
+          "value": "Clamp to 0–100. Any CRITICAL finding caps the score at 39 (Blocked); otherwise any MATERIAL finding caps it at 59 (Restricted). Otherwise Passed. Round to the nearest integer, half to even."
+        },
+        {
+          "label": "Bands",
+          "value": "80–100 High; 60–79 Medium; 40–59 Low; 0–39 Insufficient Information"
+        }
+      ],
+      "source": "/report/20261117-183309-01#evidence/20261117-183309-01%2Fdeliveries%2Ff51ce84b1bd80e3ecbdd6ebffe688c25fbb526141c08d46e769ba5da8b556b96%2FCP-6.md~a2036ccd10e54e59fc8bdb3b8361c723fb2ec4d65cb8374ad7d3f8e8c7b8f0c0-65"
+    },
+    {
+      "brand": "Chrome",
+      "version": "157.0.8103.78",
+      "module": "CP-DR",
+      "score": {
+        "value": 89,
+        "band": "High"
+      },
+      "inputs": [
+        {
+          "label": "Directly Sourced",
+          "value": "8"
+        },
+        {
+          "label": "Calculated",
+          "value": "2"
+        },
+        {
+          "label": "Assumption-Based",
+          "value": "2"
+        },
+        {
+          "label": "Analyst Inference",
+          "value": "0"
+        },
+        {
+          "label": "Weak Lineage",
+          "value": "0"
+        },
+        {
+          "label": "Untraced",
+          "value": "0"
+        },
+        {
+          "label": "Conflicting",
+          "value": "0"
+        },
+        {
+          "label": "Insufficient Information",
+          "value": "0"
+        },
+        {
+          "label": "Fields present",
+          "value": "95"
+        },
+        {
+          "label": "Fields total",
+          "value": "100"
+        },
+        {
+          "label": "Source gate",
+          "value": "pass"
+        },
+        {
+          "label": "CRITICAL",
+          "value": "0"
+        },
+        {
+          "label": "MATERIAL",
+          "value": "0"
+        },
+        {
+          "label": "MINOR",
+          "value": "1"
+        }
+      ],
+      "method": [
+        {
+          "label": "Formula",
+          "value": "(0.6 × evidence quality + 0.4 × field coverage) × source-gate factor − finding penalties"
+        },
+        {
+          "label": "Evidence quality",
+          "value": "Sum of each lineage count × its weight, divided by the total claim count, × 100. No claims gives evidence quality 0."
+        },
+        {
+          "label": "Lineage weights",
+          "value": "Directly Sourced 1.0; Calculated 0.9; Assumption-Based 0.5; Analyst Inference 0.4; Weak Lineage 0.3; Untraced 0.0; Conflicting 0.0; Insufficient Information 0.0"
+        },
+        {
+          "label": "Field coverage",
+          "value": "Fields present / Fields total × 100."
+        },
+        {
+          "label": "Source-gate factors",
+          "value": "pass 1.0; partial 0.7; fail 0.0"
+        },
+        {
+          "label": "Finding penalties",
+          "value": "CRITICAL 40; MATERIAL 15; MINOR 3 points per finding"
+        },
+        {
+          "label": "Caps and rounding",
+          "value": "Clamp to 0–100. Any CRITICAL finding caps the score at 39 (Blocked); otherwise any MATERIAL finding caps it at 59 (Restricted). Otherwise Passed. Round to the nearest integer, half to even."
+        },
+        {
+          "label": "Bands",
+          "value": "80–100 High; 60–79 Medium; 40–59 Low; 0–39 Insufficient Information"
+        }
+      ],
+      "source": "/report/20261117-183309-01#evidence/20261117-183309-01%2Fdeliveries%2Ff51ce84b1bd80e3ecbdd6ebffe688c25fbb526141c08d46e769ba5da8b556b96%2FCP-DR.md~5a1a83542d7b09542ebfe09a598c5700b9b484162e59ab94aed8835154283602-45"
+    },
+    {
+      "brand": "Chrome",
+      "externalRequests": 0,
+      "pageErrors": 0
+    },
+    {
+      "brand": "Edge",
+      "version": "155.0.4283.62",
+      "module": "CP-0",
+      "score": {
+        "value": 89,
+        "band": "High"
+      },
+      "inputs": [
+        {
+          "label": "Directly Sourced",
+          "value": "8"
+        },
+        {
+          "label": "Calculated",
+          "value": "2"
+        },
+        {
+          "label": "Assumption-Based",
+          "value": "2"
+        },
+        {
+          "label": "Analyst Inference",
+          "value": "0"
+        },
+        {
+          "label": "Weak Lineage",
+          "value": "0"
+        },
+        {
+          "label": "Untraced",
+          "value": "0"
+        },
+        {
+          "label": "Conflicting",
+          "value": "0"
+        },
+        {
+          "label": "Insufficient Information",
+          "value": "0"
+        },
+        {
+          "label": "Fields present",
+          "value": "95"
+        },
+        {
+          "label": "Fields total",
+          "value": "100"
+        },
+        {
+          "label": "Source gate",
+          "value": "pass"
+        },
+        {
+          "label": "CRITICAL",
+          "value": "0"
+        },
+        {
+          "label": "MATERIAL",
+          "value": "0"
+        },
+        {
+          "label": "MINOR",
+          "value": "1"
+        }
+      ],
+      "method": [
+        {
+          "label": "Formula",
+          "value": "(0.6 × evidence quality + 0.4 × field coverage) × source-gate factor − finding penalties"
+        },
+        {
+          "label": "Evidence quality",
+          "value": "Sum of each lineage count × its weight, divided by the total claim count, × 100. No claims gives evidence quality 0."
+        },
+        {
+          "label": "Lineage weights",
+          "value": "Directly Sourced 1.0; Calculated 0.9; Assumption-Based 0.5; Analyst Inference 0.4; Weak Lineage 0.3; Untraced 0.0; Conflicting 0.0; Insufficient Information 0.0"
+        },
+        {
+          "label": "Field coverage",
+          "value": "Fields present / Fields total × 100."
+        },
+        {
+          "label": "Source-gate factors",
+          "value": "pass 1.0; partial 0.7; fail 0.0"
+        },
+        {
+          "label": "Finding penalties",
+          "value": "CRITICAL 40; MATERIAL 15; MINOR 3 points per finding"
+        },
+        {
+          "label": "Caps and rounding",
+          "value": "Clamp to 0–100. Any CRITICAL finding caps the score at 39 (Blocked); otherwise any MATERIAL finding caps it at 59 (Restricted). Otherwise Passed. Round to the nearest integer, half to even."
+        },
+        {
+          "label": "Bands",
+          "value": "80–100 High; 60–79 Medium; 40–59 Low; 0–39 Insufficient Information"
+        }
+      ],
+      "source": "/report/20261117-183309-01#evidence/20261117-183309-01%2Fdeliveries%2Ff51ce84b1bd80e3ecbdd6ebffe688c25fbb526141c08d46e769ba5da8b556b96%2FCP-0.md~84fc7c28723d20b240e0d7c402af27f2be7b9688fb5ef61ed84775786bc0b714-37"
+    },
+    {
+      "brand": "Edge",
+      "version": "155.0.4283.62",
+      "module": "CP-1",
+      "score": {
+        "value": 89,
+        "band": "High"
+      },
+      "inputs": [
+        {
+          "label": "Directly Sourced",
+          "value": "8"
+        },
+        {
+          "label": "Calculated",
+          "value": "2"
+        },
+        {
+          "label": "Assumption-Based",
+          "value": "2"
+        },
+        {
+          "label": "Analyst Inference",
+          "value": "0"
+        },
+        {
+          "label": "Weak Lineage",
+          "value": "0"
+        },
+        {
+          "label": "Untraced",
+          "value": "0"
+        },
+        {
+          "label": "Conflicting",
+          "value": "0"
+        },
+        {
+          "label": "Insufficient Information",
+          "value": "0"
+        },
+        {
+          "label": "Fields present",
+          "value": "95"
+        },
+        {
+          "label": "Fields total",
+          "value": "100"
+        },
+        {
+          "label": "Source gate",
+          "value": "pass"
+        },
+        {
+          "label": "CRITICAL",
+          "value": "0"
+        },
+        {
+          "label": "MATERIAL",
+          "value": "0"
+        },
+        {
+          "label": "MINOR",
+          "value": "1"
+        }
+      ],
+      "method": [
+        {
+          "label": "Formula",
+          "value": "(0.6 × evidence quality + 0.4 × field coverage) × source-gate factor − finding penalties"
+        },
+        {
+          "label": "Evidence quality",
+          "value": "Sum of each lineage count × its weight, divided by the total claim count, × 100. No claims gives evidence quality 0."
+        },
+        {
+          "label": "Lineage weights",
+          "value": "Directly Sourced 1.0; Calculated 0.9; Assumption-Based 0.5; Analyst Inference 0.4; Weak Lineage 0.3; Untraced 0.0; Conflicting 0.0; Insufficient Information 0.0"
+        },
+        {
+          "label": "Field coverage",
+          "value": "Fields present / Fields total × 100."
+        },
+        {
+          "label": "Source-gate factors",
+          "value": "pass 1.0; partial 0.7; fail 0.0"
+        },
+        {
+          "label": "Finding penalties",
+          "value": "CRITICAL 40; MATERIAL 15; MINOR 3 points per finding"
+        },
+        {
+          "label": "Caps and rounding",
+          "value": "Clamp to 0–100. Any CRITICAL finding caps the score at 39 (Blocked); otherwise any MATERIAL finding caps it at 59 (Restricted). Otherwise Passed. Round to the nearest integer, half to even."
+        },
+        {
+          "label": "Bands",
+          "value": "80–100 High; 60–79 Medium; 40–59 Low; 0–39 Insufficient Information"
+        }
+      ],
+      "source": "/report/20261117-183309-01#evidence/20261117-183309-01%2Fdeliveries%2Ff51ce84b1bd80e3ecbdd6ebffe688c25fbb526141c08d46e769ba5da8b556b96%2FCP-1.md~eacd31f382417f384eba4e23572961e529188cdab32c8cef8436b9ba3bc48a77-161"
+    },
+    {
+      "brand": "Edge",
+      "version": "155.0.4283.62",
+      "module": "CP-1A",
+      "score": {
+        "value": 89,
+        "band": "High"
+      },
+      "inputs": [
+        {
+          "label": "Directly Sourced",
+          "value": "8"
+        },
+        {
+          "label": "Calculated",
+          "value": "2"
+        },
+        {
+          "label": "Assumption-Based",
+          "value": "2"
+        },
+        {
+          "label": "Analyst Inference",
+          "value": "0"
+        },
+        {
+          "label": "Weak Lineage",
+          "value": "0"
+        },
+        {
+          "label": "Untraced",
+          "value": "0"
+        },
+        {
+          "label": "Conflicting",
+          "value": "0"
+        },
+        {
+          "label": "Insufficient Information",
+          "value": "0"
+        },
+        {
+          "label": "Fields present",
+          "value": "95"
+        },
+        {
+          "label": "Fields total",
+          "value": "100"
+        },
+        {
+          "label": "Source gate",
+          "value": "pass"
+        },
+        {
+          "label": "CRITICAL",
+          "value": "0"
+        },
+        {
+          "label": "MATERIAL",
+          "value": "0"
+        },
+        {
+          "label": "MINOR",
+          "value": "1"
+        }
+      ],
+      "method": [
+        {
+          "label": "Formula",
+          "value": "(0.6 × evidence quality + 0.4 × field coverage) × source-gate factor − finding penalties"
+        },
+        {
+          "label": "Evidence quality",
+          "value": "Sum of each lineage count × its weight, divided by the total claim count, × 100. No claims gives evidence quality 0."
+        },
+        {
+          "label": "Lineage weights",
+          "value": "Directly Sourced 1.0; Calculated 0.9; Assumption-Based 0.5; Analyst Inference 0.4; Weak Lineage 0.3; Untraced 0.0; Conflicting 0.0; Insufficient Information 0.0"
+        },
+        {
+          "label": "Field coverage",
+          "value": "Fields present / Fields total × 100."
+        },
+        {
+          "label": "Source-gate factors",
+          "value": "pass 1.0; partial 0.7; fail 0.0"
+        },
+        {
+          "label": "Finding penalties",
+          "value": "CRITICAL 40; MATERIAL 15; MINOR 3 points per finding"
+        },
+        {
+          "label": "Caps and rounding",
+          "value": "Clamp to 0–100. Any CRITICAL finding caps the score at 39 (Blocked); otherwise any MATERIAL finding caps it at 59 (Restricted). Otherwise Passed. Round to the nearest integer, half to even."
+        },
+        {
+          "label": "Bands",
+          "value": "80–100 High; 60–79 Medium; 40–59 Low; 0–39 Insufficient Information"
+        }
+      ],
+      "source": "/report/20261117-183309-01#evidence/20261117-183309-01%2Fdeliveries%2Ff51ce84b1bd80e3ecbdd6ebffe688c25fbb526141c08d46e769ba5da8b556b96%2FCP-1A.md~de1dec37f57a4bc59f945666a5e69a3b6e172a7a2b957911b94111b4305c203b-72"
+    },
+    {
+      "brand": "Edge",
+      "version": "155.0.4283.62",
+      "module": "CP-2",
+      "score": {
+        "value": 89,
+        "band": "High"
+      },
+      "inputs": [
+        {
+          "label": "Directly Sourced",
+          "value": "8"
+        },
+        {
+          "label": "Calculated",
+          "value": "2"
+        },
+        {
+          "label": "Assumption-Based",
+          "value": "2"
+        },
+        {
+          "label": "Analyst Inference",
+          "value": "0"
+        },
+        {
+          "label": "Weak Lineage",
+          "value": "0"
+        },
+        {
+          "label": "Untraced",
+          "value": "0"
+        },
+        {
+          "label": "Conflicting",
+          "value": "0"
+        },
+        {
+          "label": "Insufficient Information",
+          "value": "0"
+        },
+        {
+          "label": "Fields present",
+          "value": "95"
+        },
+        {
+          "label": "Fields total",
+          "value": "100"
+        },
+        {
+          "label": "Source gate",
+          "value": "pass"
+        },
+        {
+          "label": "CRITICAL",
+          "value": "0"
+        },
+        {
+          "label": "MATERIAL",
+          "value": "0"
+        },
+        {
+          "label": "MINOR",
+          "value": "1"
+        }
+      ],
+      "method": [
+        {
+          "label": "Formula",
+          "value": "(0.6 × evidence quality + 0.4 × field coverage) × source-gate factor − finding penalties"
+        },
+        {
+          "label": "Evidence quality",
+          "value": "Sum of each lineage count × its weight, divided by the total claim count, × 100. No claims gives evidence quality 0."
+        },
+        {
+          "label": "Lineage weights",
+          "value": "Directly Sourced 1.0; Calculated 0.9; Assumption-Based 0.5; Analyst Inference 0.4; Weak Lineage 0.3; Untraced 0.0; Conflicting 0.0; Insufficient Information 0.0"
+        },
+        {
+          "label": "Field coverage",
+          "value": "Fields present / Fields total × 100."
+        },
+        {
+          "label": "Source-gate factors",
+          "value": "pass 1.0; partial 0.7; fail 0.0"
+        },
+        {
+          "label": "Finding penalties",
+          "value": "CRITICAL 40; MATERIAL 15; MINOR 3 points per finding"
+        },
+        {
+          "label": "Caps and rounding",
+          "value": "Clamp to 0–100. Any CRITICAL finding caps the score at 39 (Blocked); otherwise any MATERIAL finding caps it at 59 (Restricted). Otherwise Passed. Round to the nearest integer, half to even."
+        },
+        {
+          "label": "Bands",
+          "value": "80–100 High; 60–79 Medium; 40–59 Low; 0–39 Insufficient Information"
+        }
+      ],
+      "source": "/report/20261117-183309-01#evidence/20261117-183309-01%2Fdeliveries%2Ff51ce84b1bd80e3ecbdd6ebffe688c25fbb526141c08d46e769ba5da8b556b96%2FCP-2.md~18373046a3d5c8449d3df147a2245dfbfb4f72f6a313d2321c7e2d3cad46e18b-48"
+    },
+    {
+      "brand": "Edge",
+      "version": "155.0.4283.62",
+      "module": "CP-2A",
+      "score": {
+        "value": 89,
+        "band": "High"
+      },
+      "inputs": [
+        {
+          "label": "Directly Sourced",
+          "value": "8"
+        },
+        {
+          "label": "Calculated",
+          "value": "2"
+        },
+        {
+          "label": "Assumption-Based",
+          "value": "2"
+        },
+        {
+          "label": "Analyst Inference",
+          "value": "0"
+        },
+        {
+          "label": "Weak Lineage",
+          "value": "0"
+        },
+        {
+          "label": "Untraced",
+          "value": "0"
+        },
+        {
+          "label": "Conflicting",
+          "value": "0"
+        },
+        {
+          "label": "Insufficient Information",
+          "value": "0"
+        },
+        {
+          "label": "Fields present",
+          "value": "95"
+        },
+        {
+          "label": "Fields total",
+          "value": "100"
+        },
+        {
+          "label": "Source gate",
+          "value": "pass"
+        },
+        {
+          "label": "CRITICAL",
+          "value": "0"
+        },
+        {
+          "label": "MATERIAL",
+          "value": "0"
+        },
+        {
+          "label": "MINOR",
+          "value": "1"
+        }
+      ],
+      "method": [
+        {
+          "label": "Formula",
+          "value": "(0.6 × evidence quality + 0.4 × field coverage) × source-gate factor − finding penalties"
+        },
+        {
+          "label": "Evidence quality",
+          "value": "Sum of each lineage count × its weight, divided by the total claim count, × 100. No claims gives evidence quality 0."
+        },
+        {
+          "label": "Lineage weights",
+          "value": "Directly Sourced 1.0; Calculated 0.9; Assumption-Based 0.5; Analyst Inference 0.4; Weak Lineage 0.3; Untraced 0.0; Conflicting 0.0; Insufficient Information 0.0"
+        },
+        {
+          "label": "Field coverage",
+          "value": "Fields present / Fields total × 100."
+        },
+        {
+          "label": "Source-gate factors",
+          "value": "pass 1.0; partial 0.7; fail 0.0"
+        },
+        {
+          "label": "Finding penalties",
+          "value": "CRITICAL 40; MATERIAL 15; MINOR 3 points per finding"
+        },
+        {
+          "label": "Caps and rounding",
+          "value": "Clamp to 0–100. Any CRITICAL finding caps the score at 39 (Blocked); otherwise any MATERIAL finding caps it at 59 (Restricted). Otherwise Passed. Round to the nearest integer, half to even."
+        },
+        {
+          "label": "Bands",
+          "value": "80–100 High; 60–79 Medium; 40–59 Low; 0–39 Insufficient Information"
+        }
+      ],
+      "source": "/report/20261117-183309-01#evidence/20261117-183309-01%2Fdeliveries%2Ff51ce84b1bd80e3ecbdd6ebffe688c25fbb526141c08d46e769ba5da8b556b96%2FCP-2A.md~bf10c4bc43b35c6b71be2771d5b4f07312a3a9c3699c85d3d624346e071f4d65-43"
+    },
+    {
+      "brand": "Edge",
+      "version": "155.0.4283.62",
+      "module": "CP-2D",
+      "score": {
+        "value": 89,
+        "band": "High"
+      },
+      "inputs": [
+        {
+          "label": "Directly Sourced",
+          "value": "8"
+        },
+        {
+          "label": "Calculated",
+          "value": "2"
+        },
+        {
+          "label": "Assumption-Based",
+          "value": "2"
+        },
+        {
+          "label": "Analyst Inference",
+          "value": "0"
+        },
+        {
+          "label": "Weak Lineage",
+          "value": "0"
+        },
+        {
+          "label": "Untraced",
+          "value": "0"
+        },
+        {
+          "label": "Conflicting",
+          "value": "0"
+        },
+        {
+          "label": "Insufficient Information",
+          "value": "0"
+        },
+        {
+          "label": "Fields present",
+          "value": "95"
+        },
+        {
+          "label": "Fields total",
+          "value": "100"
+        },
+        {
+          "label": "Source gate",
+          "value": "pass"
+        },
+        {
+          "label": "CRITICAL",
+          "value": "0"
+        },
+        {
+          "label": "MATERIAL",
+          "value": "0"
+        },
+        {
+          "label": "MINOR",
+          "value": "1"
+        }
+      ],
+      "method": [
+        {
+          "label": "Formula",
+          "value": "(0.6 × evidence quality + 0.4 × field coverage) × source-gate factor − finding penalties"
+        },
+        {
+          "label": "Evidence quality",
+          "value": "Sum of each lineage count × its weight, divided by the total claim count, × 100. No claims gives evidence quality 0."
+        },
+        {
+          "label": "Lineage weights",
+          "value": "Directly Sourced 1.0; Calculated 0.9; Assumption-Based 0.5; Analyst Inference 0.4; Weak Lineage 0.3; Untraced 0.0; Conflicting 0.0; Insufficient Information 0.0"
+        },
+        {
+          "label": "Field coverage",
+          "value": "Fields present / Fields total × 100."
+        },
+        {
+          "label": "Source-gate factors",
+          "value": "pass 1.0; partial 0.7; fail 0.0"
+        },
+        {
+          "label": "Finding penalties",
+          "value": "CRITICAL 40; MATERIAL 15; MINOR 3 points per finding"
+        },
+        {
+          "label": "Caps and rounding",
+          "value": "Clamp to 0–100. Any CRITICAL finding caps the score at 39 (Blocked); otherwise any MATERIAL finding caps it at 59 (Restricted). Otherwise Passed. Round to the nearest integer, half to even."
+        },
+        {
+          "label": "Bands",
+          "value": "80–100 High; 60–79 Medium; 40–59 Low; 0–39 Insufficient Information"
+        }
+      ],
+      "source": "/report/20261117-183309-01#evidence/20261117-183309-01%2Fdeliveries%2Ff51ce84b1bd80e3ecbdd6ebffe688c25fbb526141c08d46e769ba5da8b556b96%2FCP-2D.md~d5e662a5cc87b3af8e7fd445f5d1603f64fbf78260ebf46595c7b57ab9de859f-55"
+    },
+    {
+      "brand": "Edge",
+      "version": "155.0.4283.62",
+      "module": "CP-2E",
+      "score": {
+        "value": 89,
+        "band": "High"
+      },
+      "inputs": [
+        {
+          "label": "Directly Sourced",
+          "value": "8"
+        },
+        {
+          "label": "Calculated",
+          "value": "2"
+        },
+        {
+          "label": "Assumption-Based",
+          "value": "2"
+        },
+        {
+          "label": "Analyst Inference",
+          "value": "0"
+        },
+        {
+          "label": "Weak Lineage",
+          "value": "0"
+        },
+        {
+          "label": "Untraced",
+          "value": "0"
+        },
+        {
+          "label": "Conflicting",
+          "value": "0"
+        },
+        {
+          "label": "Insufficient Information",
+          "value": "0"
+        },
+        {
+          "label": "Fields present",
+          "value": "95"
+        },
+        {
+          "label": "Fields total",
+          "value": "100"
+        },
+        {
+          "label": "Source gate",
+          "value": "pass"
+        },
+        {
+          "label": "CRITICAL",
+          "value": "0"
+        },
+        {
+          "label": "MATERIAL",
+          "value": "0"
+        },
+        {
+          "label": "MINOR",
+          "value": "1"
+        }
+      ],
+      "method": [
+        {
+          "label": "Formula",
+          "value": "(0.6 × evidence quality + 0.4 × field coverage) × source-gate factor − finding penalties"
+        },
+        {
+          "label": "Evidence quality",
+          "value": "Sum of each lineage count × its weight, divided by the total claim count, × 100. No claims gives evidence quality 0."
+        },
+        {
+          "label": "Lineage weights",
+          "value": "Directly Sourced 1.0; Calculated 0.9; Assumption-Based 0.5; Analyst Inference 0.4; Weak Lineage 0.3; Untraced 0.0; Conflicting 0.0; Insufficient Information 0.0"
+        },
+        {
+          "label": "Field coverage",
+          "value": "Fields present / Fields total × 100."
+        },
+        {
+          "label": "Source-gate factors",
+          "value": "pass 1.0; partial 0.7; fail 0.0"
+        },
+        {
+          "label": "Finding penalties",
+          "value": "CRITICAL 40; MATERIAL 15; MINOR 3 points per finding"
+        },
+        {
+          "label": "Caps and rounding",
+          "value": "Clamp to 0–100. Any CRITICAL finding caps the score at 39 (Blocked); otherwise any MATERIAL finding caps it at 59 (Restricted). Otherwise Passed. Round to the nearest integer, half to even."
+        },
+        {
+          "label": "Bands",
+          "value": "80–100 High; 60–79 Medium; 40–59 Low; 0–39 Insufficient Information"
+        }
+      ],
+      "source": "/report/20261117-183309-01#evidence/20261117-183309-01%2Fdeliveries%2Ff51ce84b1bd80e3ecbdd6ebffe688c25fbb526141c08d46e769ba5da8b556b96%2FCP-2E.md~d9c9dd63b420e9eedc42d909df2ef7e096980ca5dbb56326314ad36eee3dca39-47"
+    },
+    {
+      "brand": "Edge",
+      "version": "155.0.4283.62",
+      "module": "CP-2G",
+      "score": {
+        "value": 89,
+        "band": "High"
+      },
+      "inputs": [
+        {
+          "label": "Directly Sourced",
+          "value": "8"
+        },
+        {
+          "label": "Calculated",
+          "value": "2"
+        },
+        {
+          "label": "Assumption-Based",
+          "value": "2"
+        },
+        {
+          "label": "Analyst Inference",
+          "value": "0"
+        },
+        {
+          "label": "Weak Lineage",
+          "value": "0"
+        },
+        {
+          "label": "Untraced",
+          "value": "0"
+        },
+        {
+          "label": "Conflicting",
+          "value": "0"
+        },
+        {
+          "label": "Insufficient Information",
+          "value": "0"
+        },
+        {
+          "label": "Fields present",
+          "value": "95"
+        },
+        {
+          "label": "Fields total",
+          "value": "100"
+        },
+        {
+          "label": "Source gate",
+          "value": "pass"
+        },
+        {
+          "label": "CRITICAL",
+          "value": "0"
+        },
+        {
+          "label": "MATERIAL",
+          "value": "0"
+        },
+        {
+          "label": "MINOR",
+          "value": "1"
+        }
+      ],
+      "method": [
+        {
+          "label": "Formula",
+          "value": "(0.6 × evidence quality + 0.4 × field coverage) × source-gate factor − finding penalties"
+        },
+        {
+          "label": "Evidence quality",
+          "value": "Sum of each lineage count × its weight, divided by the total claim count, × 100. No claims gives evidence quality 0."
+        },
+        {
+          "label": "Lineage weights",
+          "value": "Directly Sourced 1.0; Calculated 0.9; Assumption-Based 0.5; Analyst Inference 0.4; Weak Lineage 0.3; Untraced 0.0; Conflicting 0.0; Insufficient Information 0.0"
+        },
+        {
+          "label": "Field coverage",
+          "value": "Fields present / Fields total × 100."
+        },
+        {
+          "label": "Source-gate factors",
+          "value": "pass 1.0; partial 0.7; fail 0.0"
+        },
+        {
+          "label": "Finding penalties",
+          "value": "CRITICAL 40; MATERIAL 15; MINOR 3 points per finding"
+        },
+        {
+          "label": "Caps and rounding",
+          "value": "Clamp to 0–100. Any CRITICAL finding caps the score at 39 (Blocked); otherwise any MATERIAL finding caps it at 59 (Restricted). Otherwise Passed. Round to the nearest integer, half to even."
+        },
+        {
+          "label": "Bands",
+          "value": "80–100 High; 60–79 Medium; 40–59 Low; 0–39 Insufficient Information"
+        }
+      ],
+      "source": "/report/20261117-183309-01#evidence/20261117-183309-01%2Fdeliveries%2Ff51ce84b1bd80e3ecbdd6ebffe688c25fbb526141c08d46e769ba5da8b556b96%2FCP-2G.md~059a81de288c0747f7d015b04fb026666822638cb07e7365a12b349b90fbc7cc-38"
+    },
+    {
+      "brand": "Edge",
+      "version": "155.0.4283.62",
+      "module": "CP-3",
+      "score": {
+        "value": 89,
+        "band": "High"
+      },
+      "inputs": [
+        {
+          "label": "Directly Sourced",
+          "value": "8"
+        },
+        {
+          "label": "Calculated",
+          "value": "2"
+        },
+        {
+          "label": "Assumption-Based",
+          "value": "2"
+        },
+        {
+          "label": "Analyst Inference",
+          "value": "0"
+        },
+        {
+          "label": "Weak Lineage",
+          "value": "0"
+        },
+        {
+          "label": "Untraced",
+          "value": "0"
+        },
+        {
+          "label": "Conflicting",
+          "value": "0"
+        },
+        {
+          "label": "Insufficient Information",
+          "value": "0"
+        },
+        {
+          "label": "Fields present",
+          "value": "95"
+        },
+        {
+          "label": "Fields total",
+          "value": "100"
+        },
+        {
+          "label": "Source gate",
+          "value": "pass"
+        },
+        {
+          "label": "CRITICAL",
+          "value": "0"
+        },
+        {
+          "label": "MATERIAL",
+          "value": "0"
+        },
+        {
+          "label": "MINOR",
+          "value": "1"
+        }
+      ],
+      "method": [
+        {
+          "label": "Formula",
+          "value": "(0.6 × evidence quality + 0.4 × field coverage) × source-gate factor − finding penalties"
+        },
+        {
+          "label": "Evidence quality",
+          "value": "Sum of each lineage count × its weight, divided by the total claim count, × 100. No claims gives evidence quality 0."
+        },
+        {
+          "label": "Lineage weights",
+          "value": "Directly Sourced 1.0; Calculated 0.9; Assumption-Based 0.5; Analyst Inference 0.4; Weak Lineage 0.3; Untraced 0.0; Conflicting 0.0; Insufficient Information 0.0"
+        },
+        {
+          "label": "Field coverage",
+          "value": "Fields present / Fields total × 100."
+        },
+        {
+          "label": "Source-gate factors",
+          "value": "pass 1.0; partial 0.7; fail 0.0"
+        },
+        {
+          "label": "Finding penalties",
+          "value": "CRITICAL 40; MATERIAL 15; MINOR 3 points per finding"
+        },
+        {
+          "label": "Caps and rounding",
+          "value": "Clamp to 0–100. Any CRITICAL finding caps the score at 39 (Blocked); otherwise any MATERIAL finding caps it at 59 (Restricted). Otherwise Passed. Round to the nearest integer, half to even."
+        },
+        {
+          "label": "Bands",
+          "value": "80–100 High; 60–79 Medium; 40–59 Low; 0–39 Insufficient Information"
+        }
+      ],
+      "source": "/report/20261117-183309-01#evidence/20261117-183309-01%2Fdeliveries%2Ff51ce84b1bd80e3ecbdd6ebffe688c25fbb526141c08d46e769ba5da8b556b96%2FCP-3.md~24eaffa7ea47c4a5e2393b18c3e6509509d7e9573318127443fea9386418b579-67"
+    },
+    {
+      "brand": "Edge",
+      "version": "155.0.4283.62",
+      "module": "CP-3C",
+      "score": {
+        "value": 89,
+        "band": "High"
+      },
+      "inputs": [
+        {
+          "label": "Directly Sourced",
+          "value": "8"
+        },
+        {
+          "label": "Calculated",
+          "value": "2"
+        },
+        {
+          "label": "Assumption-Based",
+          "value": "2"
+        },
+        {
+          "label": "Analyst Inference",
+          "value": "0"
+        },
+        {
+          "label": "Weak Lineage",
+          "value": "0"
+        },
+        {
+          "label": "Untraced",
+          "value": "0"
+        },
+        {
+          "label": "Conflicting",
+          "value": "0"
+        },
+        {
+          "label": "Insufficient Information",
+          "value": "0"
+        },
+        {
+          "label": "Fields present",
+          "value": "95"
+        },
+        {
+          "label": "Fields total",
+          "value": "100"
+        },
+        {
+          "label": "Source gate",
+          "value": "pass"
+        },
+        {
+          "label": "CRITICAL",
+          "value": "0"
+        },
+        {
+          "label": "MATERIAL",
+          "value": "0"
+        },
+        {
+          "label": "MINOR",
+          "value": "1"
+        }
+      ],
+      "method": [
+        {
+          "label": "Formula",
+          "value": "(0.6 × evidence quality + 0.4 × field coverage) × source-gate factor − finding penalties"
+        },
+        {
+          "label": "Evidence quality",
+          "value": "Sum of each lineage count × its weight, divided by the total claim count, × 100. No claims gives evidence quality 0."
+        },
+        {
+          "label": "Lineage weights",
+          "value": "Directly Sourced 1.0; Calculated 0.9; Assumption-Based 0.5; Analyst Inference 0.4; Weak Lineage 0.3; Untraced 0.0; Conflicting 0.0; Insufficient Information 0.0"
+        },
+        {
+          "label": "Field coverage",
+          "value": "Fields present / Fields total × 100."
+        },
+        {
+          "label": "Source-gate factors",
+          "value": "pass 1.0; partial 0.7; fail 0.0"
+        },
+        {
+          "label": "Finding penalties",
+          "value": "CRITICAL 40; MATERIAL 15; MINOR 3 points per finding"
+        },
+        {
+          "label": "Caps and rounding",
+          "value": "Clamp to 0–100. Any CRITICAL finding caps the score at 39 (Blocked); otherwise any MATERIAL finding caps it at 59 (Restricted). Otherwise Passed. Round to the nearest integer, half to even."
+        },
+        {
+          "label": "Bands",
+          "value": "80–100 High; 60–79 Medium; 40–59 Low; 0–39 Insufficient Information"
+        }
+      ],
+      "source": "/report/20261117-183309-01#evidence/20261117-183309-01%2Fdeliveries%2Ff51ce84b1bd80e3ecbdd6ebffe688c25fbb526141c08d46e769ba5da8b556b96%2FCP-3C.md~c6596e43795520cd7fd8c9e6dc56b638ba44a2d0f2460bcaebff8c8a92b3cb67-56"
+    },
+    {
+      "brand": "Edge",
+      "version": "155.0.4283.62",
+      "module": "CP-4",
+      "score": {
+        "value": 89,
+        "band": "High"
+      },
+      "inputs": [
+        {
+          "label": "Directly Sourced",
+          "value": "8"
+        },
+        {
+          "label": "Calculated",
+          "value": "2"
+        },
+        {
+          "label": "Assumption-Based",
+          "value": "2"
+        },
+        {
+          "label": "Analyst Inference",
+          "value": "0"
+        },
+        {
+          "label": "Weak Lineage",
+          "value": "0"
+        },
+        {
+          "label": "Untraced",
+          "value": "0"
+        },
+        {
+          "label": "Conflicting",
+          "value": "0"
+        },
+        {
+          "label": "Insufficient Information",
+          "value": "0"
+        },
+        {
+          "label": "Fields present",
+          "value": "95"
+        },
+        {
+          "label": "Fields total",
+          "value": "100"
+        },
+        {
+          "label": "Source gate",
+          "value": "pass"
+        },
+        {
+          "label": "CRITICAL",
+          "value": "0"
+        },
+        {
+          "label": "MATERIAL",
+          "value": "0"
+        },
+        {
+          "label": "MINOR",
+          "value": "1"
+        }
+      ],
+      "method": [
+        {
+          "label": "Formula",
+          "value": "(0.6 × evidence quality + 0.4 × field coverage) × source-gate factor − finding penalties"
+        },
+        {
+          "label": "Evidence quality",
+          "value": "Sum of each lineage count × its weight, divided by the total claim count, × 100. No claims gives evidence quality 0."
+        },
+        {
+          "label": "Lineage weights",
+          "value": "Directly Sourced 1.0; Calculated 0.9; Assumption-Based 0.5; Analyst Inference 0.4; Weak Lineage 0.3; Untraced 0.0; Conflicting 0.0; Insufficient Information 0.0"
+        },
+        {
+          "label": "Field coverage",
+          "value": "Fields present / Fields total × 100."
+        },
+        {
+          "label": "Source-gate factors",
+          "value": "pass 1.0; partial 0.7; fail 0.0"
+        },
+        {
+          "label": "Finding penalties",
+          "value": "CRITICAL 40; MATERIAL 15; MINOR 3 points per finding"
+        },
+        {
+          "label": "Caps and rounding",
+          "value": "Clamp to 0–100. Any CRITICAL finding caps the score at 39 (Blocked); otherwise any MATERIAL finding caps it at 59 (Restricted). Otherwise Passed. Round to the nearest integer, half to even."
+        },
+        {
+          "label": "Bands",
+          "value": "80–100 High; 60–79 Medium; 40–59 Low; 0–39 Insufficient Information"
+        }
+      ],
+      "source": "/report/20261117-183309-01#evidence/20261117-183309-01%2Fdeliveries%2Ff51ce84b1bd80e3ecbdd6ebffe688c25fbb526141c08d46e769ba5da8b556b96%2FCP-4.md~051155c5102cce3b2a7c4b020cb90975fcb6f1df5d38bd550c5ff0961ef53fb6-72"
+    },
+    {
+      "brand": "Edge",
+      "version": "155.0.4283.62",
+      "module": "CP-5",
+      "score": {
+        "value": 89,
+        "band": "High"
+      },
+      "inputs": [
+        {
+          "label": "Directly Sourced",
+          "value": "8"
+        },
+        {
+          "label": "Calculated",
+          "value": "2"
+        },
+        {
+          "label": "Assumption-Based",
+          "value": "2"
+        },
+        {
+          "label": "Analyst Inference",
+          "value": "0"
+        },
+        {
+          "label": "Weak Lineage",
+          "value": "0"
+        },
+        {
+          "label": "Untraced",
+          "value": "0"
+        },
+        {
+          "label": "Conflicting",
+          "value": "0"
+        },
+        {
+          "label": "Insufficient Information",
+          "value": "0"
+        },
+        {
+          "label": "Fields present",
+          "value": "95"
+        },
+        {
+          "label": "Fields total",
+          "value": "100"
+        },
+        {
+          "label": "Source gate",
+          "value": "pass"
+        },
+        {
+          "label": "CRITICAL",
+          "value": "0"
+        },
+        {
+          "label": "MATERIAL",
+          "value": "0"
+        },
+        {
+          "label": "MINOR",
+          "value": "1"
+        }
+      ],
+      "method": [
+        {
+          "label": "Formula",
+          "value": "(0.6 × evidence quality + 0.4 × field coverage) × source-gate factor − finding penalties"
+        },
+        {
+          "label": "Evidence quality",
+          "value": "Sum of each lineage count × its weight, divided by the total claim count, × 100. No claims gives evidence quality 0."
+        },
+        {
+          "label": "Lineage weights",
+          "value": "Directly Sourced 1.0; Calculated 0.9; Assumption-Based 0.5; Analyst Inference 0.4; Weak Lineage 0.3; Untraced 0.0; Conflicting 0.0; Insufficient Information 0.0"
+        },
+        {
+          "label": "Field coverage",
+          "value": "Fields present / Fields total × 100."
+        },
+        {
+          "label": "Source-gate factors",
+          "value": "pass 1.0; partial 0.7; fail 0.0"
+        },
+        {
+          "label": "Finding penalties",
+          "value": "CRITICAL 40; MATERIAL 15; MINOR 3 points per finding"
+        },
+        {
+          "label": "Caps and rounding",
+          "value": "Clamp to 0–100. Any CRITICAL finding caps the score at 39 (Blocked); otherwise any MATERIAL finding caps it at 59 (Restricted). Otherwise Passed. Round to the nearest integer, half to even."
+        },
+        {
+          "label": "Bands",
+          "value": "80–100 High; 60–79 Medium; 40–59 Low; 0–39 Insufficient Information"
+        }
+      ],
+      "source": "/report/20261117-183309-01#evidence/20261117-183309-01%2Fdeliveries%2Ff51ce84b1bd80e3ecbdd6ebffe688c25fbb526141c08d46e769ba5da8b556b96%2FCP-5.md~54279e9dada33283626f8b894fd1cba40bc40be94f96f35f20a1d22540e64843-52"
+    },
+    {
+      "brand": "Edge",
+      "version": "155.0.4283.62",
+      "module": "CP-6",
+      "score": {
+        "value": 89,
+        "band": "High"
+      },
+      "inputs": [
+        {
+          "label": "Directly Sourced",
+          "value": "8"
+        },
+        {
+          "label": "Calculated",
+          "value": "2"
+        },
+        {
+          "label": "Assumption-Based",
+          "value": "2"
+        },
+        {
+          "label": "Analyst Inference",
+          "value": "0"
+        },
+        {
+          "label": "Weak Lineage",
+          "value": "0"
+        },
+        {
+          "label": "Untraced",
+          "value": "0"
+        },
+        {
+          "label": "Conflicting",
+          "value": "0"
+        },
+        {
+          "label": "Insufficient Information",
+          "value": "0"
+        },
+        {
+          "label": "Fields present",
+          "value": "95"
+        },
+        {
+          "label": "Fields total",
+          "value": "100"
+        },
+        {
+          "label": "Source gate",
+          "value": "pass"
+        },
+        {
+          "label": "CRITICAL",
+          "value": "0"
+        },
+        {
+          "label": "MATERIAL",
+          "value": "0"
+        },
+        {
+          "label": "MINOR",
+          "value": "1"
+        }
+      ],
+      "method": [
+        {
+          "label": "Formula",
+          "value": "(0.6 × evidence quality + 0.4 × field coverage) × source-gate factor − finding penalties"
+        },
+        {
+          "label": "Evidence quality",
+          "value": "Sum of each lineage count × its weight, divided by the total claim count, × 100. No claims gives evidence quality 0."
+        },
+        {
+          "label": "Lineage weights",
+          "value": "Directly Sourced 1.0; Calculated 0.9; Assumption-Based 0.5; Analyst Inference 0.4; Weak Lineage 0.3; Untraced 0.0; Conflicting 0.0; Insufficient Information 0.0"
+        },
+        {
+          "label": "Field coverage",
+          "value": "Fields present / Fields total × 100."
+        },
+        {
+          "label": "Source-gate factors",
+          "value": "pass 1.0; partial 0.7; fail 0.0"
+        },
+        {
+          "label": "Finding penalties",
+          "value": "CRITICAL 40; MATERIAL 15; MINOR 3 points per finding"
+        },
+        {
+          "label": "Caps and rounding",
+          "value": "Clamp to 0–100. Any CRITICAL finding caps the score at 39 (Blocked); otherwise any MATERIAL finding caps it at 59 (Restricted). Otherwise Passed. Round to the nearest integer, half to even."
+        },
+        {
+          "label": "Bands",
+          "value": "80–100 High; 60–79 Medium; 40–59 Low; 0–39 Insufficient Information"
+        }
+      ],
+      "source": "/report/20261117-183309-01#evidence/20261117-183309-01%2Fdeliveries%2Ff51ce84b1bd80e3ecbdd6ebffe688c25fbb526141c08d46e769ba5da8b556b96%2FCP-6.md~a2036ccd10e54e59fc8bdb3b8361c723fb2ec4d65cb8374ad7d3f8e8c7b8f0c0-65"
+    },
+    {
+      "brand": "Edge",
+      "version": "155.0.4283.62",
+      "module": "CP-DR",
+      "score": {
+        "value": 89,
+        "band": "High"
+      },
+      "inputs": [
+        {
+          "label": "Directly Sourced",
+          "value": "8"
+        },
+        {
+          "label": "Calculated",
+          "value": "2"
+        },
+        {
+          "label": "Assumption-Based",
+          "value": "2"
+        },
+        {
+          "label": "Analyst Inference",
+          "value": "0"
+        },
+        {
+          "label": "Weak Lineage",
+          "value": "0"
+        },
+        {
+          "label": "Untraced",
+          "value": "0"
+        },
+        {
+          "label": "Conflicting",
+          "value": "0"
+        },
+        {
+          "label": "Insufficient Information",
+          "value": "0"
+        },
+        {
+          "label": "Fields present",
+          "value": "95"
+        },
+        {
+          "label": "Fields total",
+          "value": "100"
+        },
+        {
+          "label": "Source gate",
+          "value": "pass"
+        },
+        {
+          "label": "CRITICAL",
+          "value": "0"
+        },
+        {
+          "label": "MATERIAL",
+          "value": "0"
+        },
+        {
+          "label": "MINOR",
+          "value": "1"
+        }
+      ],
+      "method": [
+        {
+          "label": "Formula",
+          "value": "(0.6 × evidence quality + 0.4 × field coverage) × source-gate factor − finding penalties"
+        },
+        {
+          "label": "Evidence quality",
+          "value": "Sum of each lineage count × its weight, divided by the total claim count, × 100. No claims gives evidence quality 0."
+        },
+        {
+          "label": "Lineage weights",
+          "value": "Directly Sourced 1.0; Calculated 0.9; Assumption-Based 0.5; Analyst Inference 0.4; Weak Lineage 0.3; Untraced 0.0; Conflicting 0.0; Insufficient Information 0.0"
+        },
+        {
+          "label": "Field coverage",
+          "value": "Fields present / Fields total × 100."
+        },
+        {
+          "label": "Source-gate factors",
+          "value": "pass 1.0; partial 0.7; fail 0.0"
+        },
+        {
+          "label": "Finding penalties",
+          "value": "CRITICAL 40; MATERIAL 15; MINOR 3 points per finding"
+        },
+        {
+          "label": "Caps and rounding",
+          "value": "Clamp to 0–100. Any CRITICAL finding caps the score at 39 (Blocked); otherwise any MATERIAL finding caps it at 59 (Restricted). Otherwise Passed. Round to the nearest integer, half to even."
+        },
+        {
+          "label": "Bands",
+          "value": "80–100 High; 60–79 Medium; 40–59 Low; 0–39 Insufficient Information"
+        }
+      ],
+      "source": "/report/20261117-183309-01#evidence/20261117-183309-01%2Fdeliveries%2Ff51ce84b1bd80e3ecbdd6ebffe688c25fbb526141c08d46e769ba5da8b556b96%2FCP-DR.md~5a1a83542d7b09542ebfe09a598c5700b9b484162e59ab94aed8835154283602-45"
+    },
+    {
+      "brand": "Edge",
+      "externalRequests": 0,
+      "pageErrors": 0
+    }
+  ]
+}
