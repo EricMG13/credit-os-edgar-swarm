@@ -142,9 +142,9 @@ describe("Evidence, Record", () => {
   it("draws the model calls right-aligned with the mock's rows, n.a. for a missing count, and the delivered total", () => {
     renderRecord(FULL);
     const head = within(table("Model calls")).getAllByRole("columnheader");
+    // S4-008 (OQ-10): the delivered "Code" column of module codes is not drawn
     expect(head.map((h) => h.textContent)).toEqual([
       "Module",
-      "Code",
       "Calls",
       "Retries",
       "Tokens in",
@@ -152,13 +152,13 @@ describe("Evidence, Record", () => {
       "Cost, USD",
     ]);
     expect(textOf("Model calls")).toEqual([
-      ["Business profile", "CP-1A", "3", "0", "182,400", "9,150", "0.92"],
-      ["Capital structure", "CP-2C", "5", "1", "264,900", "14,720", "1.38"],
-      ["Recovery", "CP-3B", "2", "1", "58,300", "1,040", "0.27"],
-      ["Peer comparison", "CP-2E", "4", "0", "n.a.", "n.a.", "0.81"],
-      ["Total", "All", "41", "6", "n.a.", "n.a.", "11.40"],
+      ["Business profile", "3", "0", "182,400", "9,150", "0.92"],
+      ["Capital structure", "5", "1", "264,900", "14,720", "1.38"],
+      ["Recovery", "2", "1", "58,300", "1,040", "0.27"],
+      ["Peer comparison", "4", "0", "n.a.", "n.a.", "0.81"],
+      ["Total", "41", "6", "n.a.", "n.a.", "11.40"],
     ]);
-    // the mock's figures are right-aligned; its code and module are left
+    // the mock's figures are right-aligned; its module is left
     const first = within(table("Model calls")).getAllByRole("row")[1] as HTMLElement;
     expect(within(first).getAllByRole("cell")[1]).toHaveClass("tabular-nums");
     expect(table("Model calls").closest("section")).toHaveClass("rounded-xl");
