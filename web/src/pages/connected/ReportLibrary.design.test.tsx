@@ -357,7 +357,9 @@ it("shows a snapshot error without admitting a report or remaining in loading", 
   expect(alert).not.toHaveTextContent("Snapshot unavailable");
   expect(screen.queryByText("Loading report…")).toBeNull();
   expect(screen.queryByRole("navigation", { name: "Report sections" })).toBeNull();
-  expect(within(screen.getByRole("main")).queryByRole("link", { name: "Run activity" })).toBeNull();
+  expect(
+    within(screen.getByRole("main")).getByRole("link", { name: "Run activity" }),
+  ).toHaveAttribute("href", "/run/northbridge-2026");
 });
 
 const CODED_CELL = "Liquidity (CP-2D)";

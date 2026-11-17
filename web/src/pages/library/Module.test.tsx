@@ -1415,7 +1415,8 @@ describe("Module, a module that could not be delivered", () => {
       "The security package documents were not among the files provided, so recovery by class could not be assessed.",
     );
     expect(reason).toBeVisible();
-    expect(within(reason.parentElement as HTMLElement).getByText("Not assessable")).toBeVisible();
+    const blocked = screen.getByRole("region", { name: "Bottom line" }).parentElement;
+    expect(within(blocked as HTMLElement).getByText("Not assessable")).toBeVisible();
     expect(
       screen.getByText(/^Nothing from this module is shown and no figure elsewhere rests on it/),
     ).toBeVisible();
