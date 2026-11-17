@@ -69,7 +69,9 @@ From the worktree root, each in `timeout`:
 3. Check: the new test passes, the probes show the defect gone, the affected tests and the gates pass.
 4. Report to `docs/audit/2026-11-16-final/output/5-repair/<task id>.md`: findings, files changed, the test
    (with its failing-then-passing result), each probe with its exit code and a one-line before and after,
-   each gate with its exit code, each existing test changed and why, ending with a `Not verified:` line.
+   each gate with its exit code, each existing test changed and why, and a `Rounds:` line naming the round
+   and the implementer's model (for example `Rounds: 1, implementer Sonnet`; ruling R12: rounds 3 and 4 run on
+   Opus), ending with a `Not verified:` line. A follow-up round adds its own section and updates `Rounds:`.
 5. Commit everything in one commit on your worktree branch (`git add` the named paths only; never the
    `web/node_modules` link or `web/dist`). Message: `<task id>: <task title> (<finding ids, merged ids too>)`,
    then a blank line and the two attribution lines the controller gives you. Do not push.

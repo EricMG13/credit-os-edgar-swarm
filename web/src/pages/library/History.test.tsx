@@ -155,7 +155,7 @@ describe("Report history, a normal issuer", () => {
 });
 
 describe("Report history, an issuer with no report yet", () => {
-  it("draws the mock's sentence with Back to the library and Start a run, and no feed", () => {
+  it("draws the mock's sentence with Back to the library and Start a run, and the failed run", () => {
     renderHistory("corvane-fasteners");
     expect(screen.getByRole("heading", { level: 1, name: "Corvane Fasteners" })).toBeVisible();
     expect(screen.getByText("One run, not finished")).toBeVisible();
@@ -173,7 +173,8 @@ describe("Report history, an issuer with no report yet", () => {
       "href",
       "#/run/start",
     );
-    expect(screen.queryByRole("list")).toBeNull();
+    expect(entries()).toHaveLength(1);
+    expect(within(entries()[0] as HTMLElement).getByText("Failed")).toBeVisible();
     expect(screen.queryByRole("link", { name: "Open latest report" })).toBeNull();
   });
 });

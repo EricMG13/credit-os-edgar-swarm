@@ -34,6 +34,9 @@ function NoReport({ issuer, sentence }: { issuer: Issuer; sentence: string }) {
           <Button href={RUN_START}>Start a run</Button>
         </EmptyState.Footer>
       </EmptyState>
+      {issuer.history.entries.length === 0 ? null : (
+        <RunFeed issuer={issuer.id} history={issuer.history} />
+      )}
     </div>
   );
 }
@@ -67,7 +70,7 @@ function Feed({ issuer, latest }: { issuer: Issuer; latest: string }) {
   );
 }
 
-/** An issuer's runs, newest first; an issuer with nothing to read gets the "No report yet" state. */
+/** An issuer's runs, newest first; an issuer with no readable report gets the "No report yet" state above its runs. */
 export function History({ issuer: id }: { issuer: string | undefined }) {
   return (
     <LibraryPage title={PAGE_NAME.history}>

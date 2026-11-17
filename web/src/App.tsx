@@ -1,24 +1,18 @@
 import { useEffect, useLayoutEffect, useMemo, useRef } from "react";
-import { Callout } from "@/components/alert/Alert";
 import type { LoadResult, SliceKey } from "./data";
 import { Kit } from "./pages/Kit";
 import { areaOf, matchRoute, routeTable, type RouteTable } from "./pages/route-table";
 import { SourceContext } from "./pages/source";
 import { useHashRoute } from "./route";
+import { DesignReferenceNote } from "./shell/DesignReferenceNote";
 import { PageHeader } from "./shell/PageHeader";
 import { Shell } from "./shell/Shell";
 
-/**
- * The static app is a design reference fed by saved samples (OQ-01), so a page that draws them says
- * so, once, ahead of the page. A bleed page keeps its own padding, so the note takes the same.
- */
+/** The note ahead of the page. A bleed page keeps its own padding, so the note takes the same. */
 function DesignReference({ bleed = false }: { bleed?: boolean }) {
   return (
     <div className={bleed ? "px-8 pt-8" : "mb-6"}>
-      <Callout title="Design reference with sample data">
-        This page shows a saved example. Its names and figures are samples, and it is not connected
-        to the run service, so nothing here starts a run or spends money.
-      </Callout>
+      <DesignReferenceNote />
     </div>
   );
 }
@@ -99,8 +93,8 @@ function Page({ result, table, route }: { result: LoadResult; table: RouteTable;
         </Shell>
       );
     }
-    // Signal keeps its own frame, and the model pages draw their own Sample data badge and own the
-    // top of main. A group with no slice has no sample to label.
+    // Signal keeps its own frame, and the model pages own the top of main, so they draw the note in
+    // their own frame. A group with no slice has no sample to label.
     const sample = slice.kind === "ok" && (area === "library" || area === "run");
     if (matched.route.layout === "bleed") {
       return (
