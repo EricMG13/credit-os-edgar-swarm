@@ -101,12 +101,18 @@ describe("STATUS_SETS", () => {
     expect(slashed).toEqual(["Module state: Not assessable", "Change state: Not assessable"]);
   });
 
-  it("draws 'Not ready' as the diamond, the shape of a problem, not the slashed circle", () => {
+  it("gives 'Not ready' a shape of its own, in the neutral tone it had before (OQ-09)", () => {
     expect(STATUS_SETS["Source readiness"]["Not ready"]).toEqual({
-      shape: "diamond",
-      tone: "error",
+      shape: "hollow square",
+      tone: "neutral",
       word: "Not ready",
     });
+    const sharing = Object.entries(STATUS_SETS).flatMap(([name, set]) =>
+      Object.values(set)
+        .filter((s) => s.shape === "hollow square")
+        .map((s) => `${name}: ${s.word}`),
+    );
+    expect(sharing).toEqual(["Source readiness: Not ready"]);
   });
 
   it("shares only the slashed circle between module state and change state", () => {

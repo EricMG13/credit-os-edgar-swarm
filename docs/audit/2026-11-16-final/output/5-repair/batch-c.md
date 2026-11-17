@@ -1,7 +1,9 @@
 # Batch c: Low and Info repairs
 
 Branch `audit/lead-batch-c`, worktree `wt-batch-c`. Ten findings: seven repaired, three closed by owner
-rulings the lead sent while the batch ran (R14 twice, R16 once), none open.
+rulings the lead sent while the batch ran (R14 twice, R16 once), none open. Round 2 (below, after the round 1
+checks) repairs the review's R-1 (X1-017) and R-2 (design-system.md wording); R-3 (the stale comment at
+`web/src/pages/model/slice/types.ts:392`) is left for the lead and not touched.
 
 ## Outcomes
 
@@ -12,7 +14,7 @@ rulings the lead sent while the batch ran (R14 twice, R16 once), none open.
 | X1-011 | closed by R16 (lead message): the repair was already committed when the message came, left in place as told | 27e591d |
 | X1-002 | repaired | 664bb77 |
 | X1-009 | repaired (OQ-09) | d7afe32 |
-| X1-017 | repaired (OQ-09) | c0b4ed5 |
+| X1-017 | repaired (OQ-09); round 2 replaced the diamond with its own shape (review R-1) | c0b4ed5, round 2 commit below |
 | X1-026 | repaired (OQ-09) | 15b7c5a |
 | X1-006 | repaired | 6bd30c9 |
 | X1-023 | repaired | 6610053 |
@@ -38,21 +40,48 @@ scratch harness. Nothing of it is on the branch.
 
 - File: `web/src/components/application/tabs/tabs.tsx`. The selected tab keeps the Ultramarine text and the 2px
   line; a hovered, unselected tab changes its text to `text-secondary` only (horizontal and vertical).
-- Design system: the Tabs row (`docs/design/design-system.md`, component table) now says so.
+- Design system: the Tabs row (`docs/design/design-system.md`, component table) says "hover changes the text colour
+  only". Round 2 (review R-2) removed the token name and the "never reads as selected" wording from that row.
 - Test (new, written first, failed): `tabs.test.tsx`, both orientations: selected styling; hovered unselected has
   `text-secondary`, no line, not the selected colour; hovering the selected tab leaves it as it was.
 
-### X1-017: "Not ready" shares the slashed circle (OQ-09)
+### X1-017: "Not ready" has its own shape (OQ-09)
 
-- Files: `web/src/components/status/sets.ts` (`Not ready` is now `diamond`, `error`), `docs/design/design-system.md`
-  (Source readiness row, the shape recurrence sentence now lists Not ready under the diamond, and a rationale bullet).
-- Choice made by me: OQ-09 says "give Not ready its own shape". The design system fixes ten shapes, each with one
-  meaning, and `shapes.tsx` is outside my file list, so I used the existing shape that means what Not ready means:
-  the diamond, "Problem" (Failed, High, Will refuse and Unreadable use it). The tone changes from neutral to error
-  with it, because every diamond in the system is error-toned. If the owner wanted an eleventh shape, that is a
-  `shapes.tsx` change and a revised "ten shapes" line; the lead can reopen it.
-- Tests (written first, failed): in `sets.test.ts`, the slashed circle belongs to "Not assessable" and no other
-  state; Not ready is the diamond in error. The existing row-for-row test against the design system still passes.
+Round 1 (c0b4ed5) gave "Not ready" the Problem diamond in the error tone; the review failed it (R-1, Medium): the
+diamond is the shape of six other words, and the owner ruled a shape, not a tone. Round 2 (model Sonnet) repairs it.
+
+- Files: `web/src/components/status/shapes.tsx` (a name, "hollow square", in `SHAPES`, and its drawing in `DRAWINGS`),
+  `web/src/components/status/sets.ts` (`Not ready` is `hollow square`, `neutral`: the tone it had before chunk c;
+  `git diff origin/audit/final-repairs -- web/src/components/status/sets.ts` now changes the shape only,
+  `slashed circle` to `hollow square`), `docs/design/design-system.md`.
+  `StatusBadge.tsx`, `ModuleTable.tsx` and `Kit.tsx` are untouched: they read `STATUS_SETS`, which now carries the shape.
+- The shape: an outlined square in the ring's style (`fill="none"`, `currentColor` stroke 1.5, a `rect` at 0.75 with
+  side 8.5 so the outer edge fills the 10 by 10 box), the same size as the other nine 10px shapes. No other status
+  word uses it; it differs from the filled square (Approved, Unchanged) by being an outline and from the ring by its
+  corners. I drew the seven plain shapes next to each other at 6 times zoom in headless Chromium: it reads as the
+  ring's weight on a square.
+- The choice of shape is mine; the owner ruled only that "Not ready" has its own. The design system now says
+  "Not ready has its own shape (owner, 2026-11-17, OQ-09)" and then, unattributed, which shape it is.
+- `docs/design/design-system.md`: "ten status shapes" (Icons) and "Ten shapes" (Status shapes) are eleven, each with
+  the hollow square added; a row in the shapes table (`"Not ready", and nothing else`); the Source readiness row
+  reads `Not ready: hollow square, neutral`; the recurrence sentence takes Not ready off the diamond and says the
+  hollow square is Not ready alone; the diamond bullet that put the diamond under the owner's name is replaced by
+  the one-line "has its own shape" bullet.
+- Tests, written first and seen to fail (4 failures) before the code change, now pass:
+  - New, `sets.test.ts`: "gives 'Not ready' a shape of its own, in the neutral tone it had before (OQ-09)": the entry
+    is `hollow square`, `neutral`, and "hollow square" is found on no other state of any set.
+  - New, `StatusBadge.test.tsx`: "draws 'Not ready' with a shape no other status word draws (OQ-09)": renders every
+    state of every set and compares `data-shape` and the drawn markup with those of "Not ready".
+  - Existing tests that hard-coded ten, changed to the behaviour the ruling requires (each named):
+    1. `StatusBadge.test.tsx`, "has the ten shapes of the design system" is now "has the eleven shapes ..." with
+       `toHaveLength(11)` (was 10); the comment above the table parse says eleven.
+    2. `StatusBadge.test.tsx`, "draws each shape as different markup": `new Set(markup).size` is 11 (was 10).
+    3. `shapes.test.tsx`, the title "draws the other nine shapes 10 by 10" is now "other ten shapes"; the loop
+       reads `SHAPES`, so it now covers the new shape's 10 by 10 box; no expected value changed.
+    4. `sets.test.ts`, "draws 'Not ready' as the diamond ... not the slashed circle" (round 1's test of the defect
+       the review found) is replaced by the new test above; the slashed-circle test is unchanged.
+  - Unchanged and passing: `sets.test.ts` row-for-row against the design system (reads the new `Not ready: hollow
+    square, neutral` row), the one-shape-per-state-in-a-set test, `shapes.test.tsx` size test.
 
 ### X1-026: waterfall colours (OQ-09)
 
@@ -68,6 +97,9 @@ scratch harness. Nothing of it is on the branch.
   `var(--color-chart-1)`, `var(--color-chart-3)` and `var(--color-brand-400)`.
 - Tests added (written first, failed): legend swatches use the tokens; `theme.test.ts` checks the three tokens
   against the Waterfall table's hexes, following the `var()` chain.
+- Round 2 (review R-2): the two rationale sentences the owner did not give ("up is a lighter step of the same
+  Ultramarine, so a rise reads as part of the walk it adds to" and "The legend names each kind in words; no status
+  colour is used") are removed from `design-system.md`. The Waterfall table and its lead-in stay.
 
 ### X1-006: Alert wraps children in a p
 
@@ -122,16 +154,40 @@ region (the `aria-label` is kept; the kit's `getByRole("status", { name })` test
 
 No Python changed, so the quality gate and Python tests were not run. No paid call, no new dependency.
 
+## Round 2 checks (X1-017, review R-1 and R-2; model Sonnet), run in `wt-batch-c`
+
+Each under `timeout 300`, one at a time.
+
+| Check | Exit |
+| :--- | :--- |
+| New and changed tests before the code: `vitest run src/components/status` (4 failures, as intended) | 1 |
+| `vitest run src/components/status` after the code (3 files, 16 tests) | 0 |
+| `npm --prefix web run format:check` | 0 |
+| `npm --prefix web run typecheck` | 0 |
+| `npm --prefix web run lint` | 0 |
+| `vitest run src/components` (34 files, 376 tests) | 0 |
+| `vitest run src/pages/signal` (34 files, 630 tests) | 0 |
+| `vitest run src/pages/connected/report src/pages/connected/reportView.test.ts src/pages/connected/start/plain.test.ts` (ModuleTable's readiness groups and the readers of "Not ready": 22 files, 424 tests) | 0 |
+| `vitest run src/pages/Kit src/styles` (the Kit tests, `theme.test.ts`: 8 files, 107 tests) | 0 |
+| `vitest run src/pages/connected/ConnectedApp.test.tsx src/pages/library/Module.test.tsx` (2 files, 287 tests) | 0 |
+| Headless Chromium screenshot of the new shape beside six existing shapes at 10px, 6 times zoom (scratch file, not committed) | 0 |
+
+`ModuleTable.tsx`, `Kit.tsx` and `StatusBadge.tsx` were not edited. No Python changed; no paid call.
+
 ## Not verified:
 
 - The rest of `src/pages/connected/` (about 47 files) passed in one combined run that also had 8 failures, all in
   `ConnectedApp.test.tsx` and `ReportContent.records.test.tsx`; both pass when run alone. The machine was at load 10
   to 14 from other batches' test runs, which looks like timeouts, but I did not rerun the whole directory quietly.
   Top-level `src/*.test.tsx` and `src/shell` were not run.
-- No browser check of the changed components (select wrapping, tab hover, the track n.a., the diamond badge) and no
-  grayscale or contrast check of the diamond-in-error badge for Not ready; behaviour is asserted by class and DOM in
-  jsdom only. The Tailwind `wrap-anywhere` utility is the one the app already uses.
-- Whether the owner meant "its own shape" for Not ready to be a new eleventh shape (see X1-017).
+- No browser check of the changed components (select wrapping, tab hover, the track n.a.); behaviour is asserted by
+  class and DOM in jsdom only. The Tailwind `wrap-anywhere` utility is the one the app already uses. For the new
+  shape (round 2) the only look is one headless screenshot of the bare SVG at 10px, not of the badge on a page, and
+  no grayscale or contrast check of the neutral badge with the hollow square.
+- The hollow square is my pick of shape for "Not ready"; the owner did not name one (OQ-09 says only "its own
+  shape"), so the lead may want the owner to confirm it. Other design docs that mention the ten shapes
+  (`docs/design/states-2.md`, `component-map.md`) are outside this chunk's file list and were not edited.
+- R-3 (`web/src/pages/model/slice/types.ts:392`, a comment that says a null range draws no marker) is not repaired.
 - The static library (`apps/issuer-library`) and the Python build were not looked at for a second drawing of the
   Source readiness shapes; a grep of `src`, `apps` and `tests` found no shape table outside `web/`.
 - `npm run unused` (knip), `duplication` and the full `build`/file-open gates were not run.

@@ -10,7 +10,7 @@ const designSystem = readFileSync(
   "utf8",
 ).replace(/\r\n/g, "\n");
 
-// The "Status shapes" table lists the ten shapes, first column.
+// The "Status shapes" table lists the eleven shapes, first column.
 const tableStart = designSystem.indexOf("| Shape | Meaning |");
 const SHAPE_NAMES = designSystem
   .slice(tableStart)
@@ -20,8 +20,8 @@ const SHAPE_NAMES = designSystem
   .map((l) => (l.split("|")[1] ?? "").trim().toLowerCase());
 
 describe("status shapes", () => {
-  it("has the ten shapes of the design system", () => {
-    expect(SHAPE_NAMES).toHaveLength(10);
+  it("has the eleven shapes of the design system", () => {
+    expect(SHAPE_NAMES).toHaveLength(11);
     expect([...SHAPES].sort()).toEqual([...SHAPE_NAMES].sort());
   });
 
@@ -32,7 +32,7 @@ describe("status shapes", () => {
       unmount();
       return html;
     });
-    expect(new Set(markup).size).toBe(10);
+    expect(new Set(markup).size).toBe(11);
   });
 });
 
@@ -79,6 +79,28 @@ describe("StatusBadge", () => {
         expect(container.textContent, `${name}: ${state.word}`).toBe(state.word);
         expect(container.querySelector("svg")).toHaveAttribute("data-shape", state.shape);
         unmount();
+      }
+    }
+  });
+
+  it("draws 'Not ready' with a shape no other status word draws (OQ-09)", () => {
+    const shapeOf = (set: string, state: string) => {
+      const { container, unmount } = render(
+        <StatusBadge set={set as "Status"} state={state as "Success"} />,
+      );
+      const svg = container.querySelector("svg");
+      const drawn = { shape: svg?.getAttribute("data-shape"), markup: svg?.innerHTML };
+      unmount();
+      return drawn;
+    };
+    const notReady = shapeOf("Source readiness", "Not ready");
+    expect(notReady.shape).toBe("hollow square");
+    for (const [name, set] of Object.entries(STATUS_SETS)) {
+      for (const state of Object.values(set)) {
+        if (name === "Source readiness" && state.word === "Not ready") continue;
+        const other = shapeOf(name, state.word);
+        expect(other.shape, `${name}: ${state.word}`).not.toBe(notReady.shape);
+        expect(other.markup, `${name}: ${state.word}`).not.toBe(notReady.markup);
       }
     }
   });
