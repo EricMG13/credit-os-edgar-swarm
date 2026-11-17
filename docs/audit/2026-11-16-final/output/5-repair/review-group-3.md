@@ -226,3 +226,24 @@ One entry per task: the reviewer was a fresh Sonnet agent at xhigh effort that d
   - The Rounds line is ambiguous (the controller tidies it).
   - `header.sample` is still validated by the model reader but no longer drawn.
 - Info: RunPage.tsx's not-found and unreadable frames draw no note. That is within L7's named scope, and those states show no sample.
+
+## T27 (S1-002 with S2-003, S2-013, S3-001, S4-004, S4-020, S5-017, J6-011, J6-002, J6-003), round 1
+
+- Commit reviewed: a9aef12 (implementer Sonnet). Verdict: FAIL, one Medium. Sent back to a fresh Sonnet implementer for round 2.
+- Medium: Shell.tsx:81 glues `focus:outline-none` to a template literal, so Tailwind builds no rule. After every keyboard route change, `main` is focused with the browser's default outline (`outline: auto 1px`) around the content area. Before T27, only the skip link focused `main`.
+- What passed:
+  - On the parent source the new test fails 38 of 39 (the item-row guard passes); at HEAD 39 of 39 pass.
+  - No existing test, expected value, probe or config changed.
+  - Titles use only reader words already on the page and follow the connected app's `page — issuer — Credit OS` form.
+  - Focus rules hold on first load, when the page sets its own focus, on the same link, and on `main` otherwise. The skip link works. Typing does not lose focus.
+  - `replaceState` adds no history entry and keeps the hash. One polite live region, empty on first load.
+  - j6-scroll-carried-across-pages.cjs's Back value (2362) was verified to be where Playwright's click left the page, so the repair is correct and the probe baseline is wrong.
+- Gates the reviewer saw:
+  - lint 0, format:check 0, typecheck 0, build 0.
+  - vitest: 71 files, 2284 tests. Signal: 34 files, 630 tests.
+  - file-check.mjs 0 (137 PASS).
+  - Nine probes exit 0. j6-low-checks.cjs exits 2 at T25's removed Kit link; its line a shows six distinct titles.
+- Low, left to the lead's batch:
+  - The run start steps share one title and one announcement (needs run/routes.tsx subjects). Moving between Trace items gives identical titles.
+  - The `offsets` Map is never pruned.
+- Info: Signal pages are all titled "Signal — Credit OS". Signal's inner scroller was not checked.
