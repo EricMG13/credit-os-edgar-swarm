@@ -213,3 +213,113 @@ runtime and documentation-contract follow-ups; the complete combined frontend
 gates, connected proof and browser fidelity; full Python, weekly and Windows CI;
 live providers and Teams cards. Review remains local and no branch was pushed or
 promoted by this task.
+
+## Phase 3: accepted group 1, reviewed small/UI repairs and T18 review data
+
+The candidate remains local and review-only. Phase 3 starts at `d4b3db28`.
+The lead confirmed group 1 PR 57 was accepted, CI-green and merged into actual
+`audit/final-repairs` as `a11e4def`; that accepted milestone is now an ancestor of
+this candidate. The lead subsequently confirmed both fresh T18 reviews PASS on
+`f7f1e011`, accepting that code for local integration; group 2's PR and the lead's
+actual-final promotion remain separate decisions. Nothing in
+this task promotes this candidate to actual final, pushes a branch or changes main.
+
+| Source milestone/own commit | Candidate commit |
+| :--- | :--- |
+| Actual final `a11e4def` | merge `46d1ec94` |
+| T10 lease `f7110d90` and group 1 report `206239e6` | same source commits, inherited through `46d1ec94` |
+| Small L16 zero `0160cdc8` | `7cd8f10b` |
+| Small C1-032 loader `1c06c00c` | `615b39bf` |
+| Small S1-010 scroll `f187e3be` | `c165080d` |
+| Draft UI `8300688e` | `b2e30d7f` |
+| Draft report `b8b5de12` | `c1a03087` |
+| UI `614aebe9` | `52c6d453` |
+| UI `2eb06ef3` | `53bd9a33` |
+| UI `a83e0029` | `685fbd54` |
+| UI `5d366528` | `d7961192` |
+| UI test scope `10869661` | `93f709ec` |
+| UI explicit source slots `82679086` | `b43a8ea1` |
+| UI report `fbf1bedf` | `adcd852c` |
+| Group 2 takeover `7d503c5c` | same source commit, inherited through merge `70764685` |
+| T18 `6128728f` | same source commit, inherited through `70764685` |
+| T18 `eaf0a879` | same source commit, inherited through `70764685` |
+| T18 `3791c5d6` | same source commit, inherited through `70764685` |
+| T18 final code `f7f1e011` | same source commit, inherited through `70764685` |
+| T18 reports `82c331f4` | merge `70764685` |
+| C4-006 / T18 caller assertion consequences | `d309b859` |
+
+Skipped draft backend `3479e06a`: its lease fix is already inherited as the
+accepted `f7110d90`. Runtime metadata, contract/docs and T22 are waiting on the
+lead's explicit integration go-ahead and are not included by this phase.
+The lead supplied independent PASS for the report/charts and first two small
+repairs. Read the additional independent PASS reports at
+`/workspace/scratch/small-draft-ui-review.md` and
+`/workspace/scratch/ui-tail-review.md`; this integrator is not a fresh reviewer.
+
+### Phase 3 conflicts and finding-required expectations
+
+The actual-final merge had one conflict, reported to the lead before resolution:
+`library/Module.test.tsx` offered the old `reason.parentElement` query against
+the retained candidate's Bottom line band. Kept the already approved `66d8ec0b`
+query on the Bottom line region's parent, which contains the same exact
+`Not assessable` badge under S3-012. No assertion was removed or relaxed.
+No other production difference was introduced by that milestone except the
+accepted lease fix. The phase adds no Teams difference.
+
+The T18 merge had two conflicts, also reported before resolution:
+
+- `Evidence.tsx`: retained the reviewed EmptyState icon/title/description
+  structure, while applying T18's precise module-written-gap wording. This
+  avoids implying the separate compiled-model qualification ledger is empty.
+- `Forecast.basis.test.tsx`: combined T18 C4-006's units on all original bridge
+  amounts with report C4-013's already reviewed explicit `US$`, `GBP` and `EUR`
+  currency display. Values, zero, source-line tokens and unsupported-bridge
+  checks are unchanged.
+
+The initial affected-caller run then failed on two related assertions that had
+merged without textual conflicts. `d309b859` changes only `$0.00m` to `US$0.00m`
+under C4-006/C4-013, and the Evidence final-audit description from
+`This run lists no gaps.` to T18's `The module handoffs list no gaps.`. The zero
+and source-control assertion remain exact; the icon and title assertions remain.
+These are named finding-required consequences, not weaker tests or product fixes.
+
+That run also exposed five existing `Forecast.reader-text.test.tsx` cases where
+the accepted shared `containsReference` matcher withholds ordinary `pp.`/`p.p.`,
+`S&P.` and `front page`/`one-page` prose. The five independent expected strings
+remain untouched. The lead was sent the exact failures and owns any repair.
+No unreviewed production fix was invented here.
+
+### Phase 3 checks
+
+All long commands have `timeout 300`; Vitest has `--maxWorkers=1`. Python uses
+exact uv 0.12.5, `--no-sync` and this worktree's explicit three-part PYTHONPATH.
+No provider, live, seat, real Submit, Teams or external app call was made.
+
+| Check | Exit/result |
+| :--- | :--- |
+| Full frontend lint | 0 |
+| Full frontend Prettier check | 0 |
+| Full frontend typecheck | 0 |
+| Default main-based Python quality gate | 0; 35 files / 3,346 scoped lines, zero findings |
+| `test_run_start_submissions.py` | 0; 201 passed, one existing case-sensitive-disk skip |
+| Initial 16-file Forecast/visuals/Evidence/ReportLibrary callers | 1; 240 passed, seven failures described above |
+| Conflict consequence rerun | 0; two files / 31 tests passed |
+| UI/draft/App caller run | 0; 13 files / 521 tests passed |
+| Signal caller verification | 0; 34 files / 630 tests passed |
+| Final two assertion files' ESLint/Prettier checks | 0 for both |
+| Protected phase paths and whitespace | `git diff --check` 0; no Signal, prompts, canned proof handoff, calculation or Teams change in this phase |
+
+Logs are retained under `/workspace/scratch/integrate-stage5-*`. The three
+primary frontend runs cover 63 distinct files / 1,398 tests. With the two named
+assertion resolutions rerun, 1,393 pass and the five R4-012 cases remain failing.
+No new production function was written by
+this integration. Conflict handling keeps the existing components and reviewed
+money formatter, so no new design or abstraction needs a rewrite tournament.
+Combined confidence/simplification and browser fidelity remain the lead's later
+stage-5 work. `VERIFICATION.md` inherited from T18 has 983 lines at this point.
+
+Not verified: the five reference-matcher failures remain unresolved pending the
+lead's separately assigned R4-012 repair; runtime
+metadata, contract/docs and T22 integration; group 2 PR/actual-final acceptance;
+complete combined gates, connected proof and browser fidelity; full
+Python/weekly/Windows CI; provider/live/Submit/Teams.
