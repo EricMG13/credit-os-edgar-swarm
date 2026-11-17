@@ -8,20 +8,21 @@ import { PageHeader } from "../../shell/PageHeader";
 import { ModuleSteps } from "../run/activity/ModuleSteps";
 import { Feed } from "../run/activity/Feed";
 import { Summary } from "../run/activity/Summary";
+import { TextLink } from "../run/TextLink";
 import {
   getReport,
   getRun,
   isPendingReport,
-  moduleName,
   pathwayName,
   RequestError,
+  serviceText,
   type Mode,
   type Run,
   type RunStatus,
 } from "./api";
-import { Breadcrumb, ErrorNotice } from "./layout";
-import { elapsedFigure, feedLines, finishedFigure, moduleWord, spendFigure } from "./runFigures";
-import { errorText } from "./useResource";
+import { Breadcrumb } from "./layout";
+import { elapsedFigure, feedLines, finishedFigure, moduleSteps, spendFigure } from "./runFigures";
+import { isUnreachable } from "./useResource";
 
 const WORDS = {
   queued: "Queued",
@@ -34,43 +35,110 @@ const WORDS = {
 } as const satisfies Record<RunStatus, string>;
 const RESTARTABLE: readonly RunStatus[] = ["failed", "capped", "rejected", "interrupted"];
 
+const POLL_MS = 2000;
+/** How long a finished run's report may be missing before the page says none was published. */
+const REPORT_WAIT_MS = 10_000;
+
+/** How a read of the run, or of its report, failed. */
+type Problem = "missing" | "unreachable" | "failed";
+/** A finished run's report: not there yet, there, not there after the wait, or unreadable. */
+type ReportState = "pending" | "ready" | "absent" | "unreachable" | "failed";
+
+function problemOf(failure: unknown): Problem {
+  if (failure instanceof RequestError && failure.status === 404) return "missing";
+  return isUnreachable(failure) ? "unreachable" : "failed";
+}
+
+const UNREACHABLE = "The service cannot be reached";
+const RUN_PROBLEMS = {
+  missing: {
+    tone: "warning",
+    title: "This run was not found",
+    text: "The service has no run at this address. Check the address, or find the run in Run activity.",
+  },
+  unreachable: {
+    tone: "error",
+    title: UNREACHABLE,
+    text: "This page keeps trying and updates when the service answers.",
+  },
+  failed: {
+    tone: "error",
+    title: "The run could not be loaded",
+    text: "The service could not read this run. This page keeps trying.",
+  },
+} as const;
+const REPORT_PROBLEMS = {
+  absent: {
+    tone: "warning",
+    title: "No report was published for this run",
+    text: "The run finished, but the service has no published report for it.",
+  },
+  unreachable: {
+    tone: "error",
+    title: UNREACHABLE,
+    text: "The report could not be checked.",
+  },
+  failed: {
+    tone: "error",
+    title: "The report could not be loaded",
+    text: "The service could not read this run's report.",
+  },
+} as const;
+
 export function RunProgress({ id, mode }: { id: string; mode: Mode }) {
   const [run, setRun] = useState<Run>();
-  const [error, setError] = useState("");
-  const [reportReady, setReportReady] = useState(false);
+  // Reading the run and reading its report fail apart, so one poll never clears the other's
+  // alert: an alert that is removed and inserted again is announced again.
+  const [problem, setProblem] = useState<Problem>();
+  const [report, setReport] = useState<ReportState>("pending");
+  // Counts of presses of "Try again" (the run) and "Check again" (the report); each restarts the poll.
+  const [retries, setRetries] = useState(0);
+  const [rechecks, setRechecks] = useState(0);
   useEffect(() => {
     const controller = new AbortController();
     const { signal } = controller;
     let timer: ReturnType<typeof setTimeout> | undefined;
+    // Pressing "Check again" asks once and is answered at once; only the first look waits.
+    let finishedAt: number | undefined = rechecks > 0 ? 0 : undefined;
     const cancelled = () => signal.aborted;
+    const waitOver = () => Date.now() - (finishedAt ?? Date.now()) >= REPORT_WAIT_MS;
     function schedule() {
       if (!cancelled())
         timer = setTimeout(() => {
           void poll();
-        }, 2000);
+        }, POLL_MS);
+    }
+    async function reportState(giveUp: boolean): Promise<ReportState> {
+      try {
+        await getReport(id, signal);
+        return "ready";
+      } catch (failure) {
+        if (isPendingReport(failure)) return giveUp ? "absent" : "pending";
+        return isUnreachable(failure) ? "unreachable" : "failed";
+      }
     }
     async function poll() {
       try {
         const next = await getRun(id, signal);
         if (cancelled()) return;
         setRun(next);
-        setError("");
+        setProblem(undefined);
         if (next.status === "queued" || next.status === "running") {
           schedule();
         } else if (next.status === "finished") {
-          try {
-            await getReport(id, signal);
-            if (!cancelled()) setReportReady(true);
-          } catch (failure) {
-            if (cancelled()) return;
-            if (!isPendingReport(failure)) setError(errorText(failure));
-            schedule();
-          }
+          finishedAt ??= Date.now();
+          // Decided once per look: the same answer chooses the state and whether to look again.
+          const giveUp = waitOver();
+          const state = await reportState(giveUp);
+          if (cancelled()) return;
+          setReport(state);
+          if (state !== "ready" && state !== "absent" && !giveUp) schedule();
         }
       } catch (failure) {
         if (cancelled()) return;
-        setError(errorText(failure));
-        if (!(failure instanceof RequestError && failure.status === 404)) schedule();
+        const found = problemOf(failure);
+        setProblem(found);
+        if (found !== "missing") schedule();
       }
     }
     void poll();
@@ -78,18 +146,30 @@ export function RunProgress({ id, mode }: { id: string; mode: Mode }) {
       controller.abort();
       clearTimeout(timer);
     };
-  }, [id]);
+  }, [id, retries, rechecks]);
 
+  // The alert stays until the new answer arrives, so the button that was pressed keeps its place.
+  const tryAgain = () => {
+    setRetries((count) => count + 1);
+  };
+  const checkAgain = () => {
+    setRechecks((count) => count + 1);
+  };
   const restartable = run && RESTARTABLE.includes(run.status);
   const live = run?.status === "queued" || run?.status === "running";
   const lines = run ? feedLines(run) : [];
+  const runProblem = problem && RUN_PROBLEMS[problem];
+  const reportProblem =
+    run?.status === "finished" && report !== "pending" && report !== "ready"
+      ? REPORT_PROBLEMS[report]
+      : undefined;
   return (
     <>
       <Breadcrumb href="/runs" root="Run activity">
         {run?.issuer_name || "Run"}
       </Breadcrumb>
       <PageHeader
-        title={run?.issuer_name || "Run activity"}
+        title={run?.issuer_name || "Run"}
         badges={
           run && (
             <>
@@ -110,8 +190,10 @@ export function RunProgress({ id, mode }: { id: string; mode: Mode }) {
         }
         actions={
           <>
-            {reportReady && <Button href={`/report/${encodeURIComponent(id)}`}>Open report</Button>}
-            {(restartable || reportReady) && (
+            {report === "ready" && (
+              <Button href={`/report/${encodeURIComponent(id)}`}>Open report</Button>
+            )}
+            {(restartable || report === "ready" || report === "absent") && (
               <Button color="secondary" href={`/start?from=${encodeURIComponent(id)}`}>
                 Start from this run
               </Button>
@@ -119,17 +201,38 @@ export function RunProgress({ id, mode }: { id: string; mode: Mode }) {
           </>
         }
       />
-      {error && (
+      {runProblem && (
         <div className="mt-6">
-          <ErrorNotice>{error}</ErrorNotice>
+          <Alert
+            tone={runProblem.tone}
+            title={runProblem.title}
+            action={
+              problem === "missing" ? (
+                <TextLink href="/runs">Back to Run activity</TextLink>
+              ) : (
+                <Button size="sm" color="secondary" onPress={tryAgain}>
+                  Try again
+                </Button>
+              )
+            }
+          >
+            {runProblem.text}
+          </Alert>
         </div>
       )}
       {run ? (
         <section aria-label="Run activity" className="mt-6 grid gap-6">
-          {run.reason && <ErrorNotice>{run.reason}</ErrorNotice>}
+          {run.reason && (
+            <Alert
+              tone={run.status === "capped" ? "warning" : "error"}
+              title="Why this run ended without a report"
+            >
+              {serviceText(run.reason)}
+            </Alert>
+          )}
           {live && run.held_reason && (
             <Alert tone="warning" title="Held by the service">
-              {run.held_reason}
+              {serviceText(run.held_reason)}
             </Alert>
           )}
           {run.stalled && (
@@ -137,10 +240,23 @@ export function RunProgress({ id, mode }: { id: string; mode: Mode }) {
               No activity has been recorded in the last hour.
             </p>
           )}
-          {run.status === "finished" && !reportReady && (
+          {run.status === "finished" && report === "pending" && (
             <p role="status" className="text-sm text-text-secondary">
               Waiting for the report to become available…
             </p>
+          )}
+          {reportProblem && (
+            <Alert
+              tone={reportProblem.tone}
+              title={reportProblem.title}
+              action={
+                <Button size="sm" color="secondary" onPress={checkAgain}>
+                  Check again
+                </Button>
+              }
+            >
+              {reportProblem.text}
+            </Alert>
           )}
           <Summary
             spendCaption="Cap usage"
@@ -152,15 +268,7 @@ export function RunProgress({ id, mode }: { id: string; mode: Mode }) {
           />
           <div className="grid min-w-0 items-start gap-6 xl:grid-cols-2">
             <Card title="Modules">
-              <ModuleSteps
-                live={live}
-                steps={run.modules.map(([code, state]) => ({
-                  kind: "module",
-                  name: moduleName(code),
-                  state: moduleWord(state, live),
-                  detail: null,
-                }))}
-              />
+              <ModuleSteps live={live} steps={moduleSteps(run, live)} />
             </Card>
             <Card title="Activity">
               {run.events === null && (
@@ -177,7 +285,7 @@ export function RunProgress({ id, mode }: { id: string; mode: Mode }) {
           </div>
         </section>
       ) : (
-        !error && (
+        !problem && (
           <p role="status" className="mt-6 text-text-secondary">
             Loading run activity…
           </p>

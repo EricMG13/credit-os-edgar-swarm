@@ -319,7 +319,7 @@ class Scheduler:
             except ValueError as refusal:
                 raise submissions.Refused(str(refusal)) from refusal
             for name in answers["modules"]:
-                if name not in cpos_launch.METHODS:
+                if not runs.known_module(name):
                     raise submissions.Refused(f"unknown module {name}")
             if len(self._with_status("queued")) >= MAX_QUEUED:
                 raise submissions.Refused("too many runs are waiting; try again later")
@@ -416,7 +416,7 @@ class Scheduler:
             # Documented fail-open: the rebuild is display. Ended runs wait unfiled and the next
             # poll retries; the traceback is logged and the page says why. KeyboardInterrupt and
             # SystemExit (BaseException) still stop the scheduler.
-            self._rebuild_failed(f"library rebuild failed: {error}", f"{error}", exc=True)
+            self._rebuild_failed(f"library rebuild failed: {error}", type(error).__name__, exc=True)
             return None
         if library is None:
             self._rebuild_failed(
@@ -431,7 +431,9 @@ class Scheduler:
         return library
 
     def _rebuild_failed(self, log_text: str, error: str, *, exc: bool = False) -> None:
-        """Keep the page notice; write the log line only when the error differs from the last."""
+        """Keep the page notice (``error`` is its kind only: the page serves it as written, and the
+        operating system's text names the server's paths); write the log line, which keeps the
+        full error, only when it differs from the last."""
         self._rebuild_error = _REBUILD_FAILED.format(error)
         if log_text != self._logged_rebuild_error:
             self._logged_rebuild_error = log_text

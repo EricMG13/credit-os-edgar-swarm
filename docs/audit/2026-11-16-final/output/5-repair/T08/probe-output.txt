@@ -1,0 +1,209 @@
+=== p12-before ===
+[probe] proof.serve up on http://127.0.0.1:8748 (root /tmp/cs-C2/r-rwhRgG)
+[probe] proof.serve on http://127.0.0.1:8748 stopped
+{
+ "context": {
+  "loadingText": "Library\n / Start a run\nStart a run\nSynthetic test\n\nChoose the documents and purpose, then review what will run.\n\nLoading run options…",
+  "loadingRole": "status",
+  "500json": {
+   "alerts": [
+    "boom: internal"
+   ],
+   "main": "Library |  / Start a run | Start a run | Synthetic test |  | Choose the documents and purpose, then review what will run. |  | boom: internal",
+   "pageerrors": []
+  },
+  "500html": {
+   "alerts": [
+    "The service could not complete this request (500)."
+   ],
+   "main": "Library |  / Start a run | Start a run | Synthetic test |  | Choose the documents and purpose, then review what will run. |  | The service could not complete this request (500).",
+   "pageerrors": []
+  },
+  "200empty": {
+   "alerts": [
+    "This page could not be loaded. Reload to try again."
+   ],
+   "main": "Credit OS |  | This page could not be loaded. Reload to try again. |  | Reload page",
+   "pageerrors": []
+  },
+  "200nocaps": {
+   "alerts": [],
+   "main": "Library |  / Start a run | Start a run | Synthetic test |  | Choose the documents and purpose, then review what will run. |  | 1 | Documents | Add files | Current step | 2 | Purpose | Choose one",
+   "pageerrors": [],
+   "readiness": "Configured cap for paid runs /  / Unavailable",
+   "afterReview": {
+    "alerts": [
+     "The cap for this pathway is unavailable. Reload the form."
+    ],
+    "h2": "More context"
+   }
+  },
+  "abort": {
+   "alerts": [
+    "The service cannot be reached. Try again, or ask whoever runs the service to check it."
+   ]
+  }
+ },
+ "summary": {
+  "refusedField": {
+   "alerts": [
+    "Research cutoff: must not be later than run.As-of"
+   ],
+   "h2": "More context",
+   "focus": "input \"Research cutoff\"",
+   "problemButton": [
+    "1 problem to fix: Research cutoff: must not be later than run.As-of"
+   ]
+  },
+  "multi": {
+   "alerts": [
+    "Legal documents: needs an agreement\nRatings · Rating 1 · Rating: must not be empty",
+    "Issuer and case date · Issuer name: cannot be blank"
+   ],
+   "h2": "Documents",
+   "focus": "input \"Issuer name\"",
+   "problemButton": [
+    "1 problem to fix: Issuer and case date · Issuer name: cannot be blank"
+   ]
+  },
+  "stale": {
+   "alerts": [
+    "this page is out of date: it does not show this pathway's cap of USD 25. Reload the page."
+   ],
+   "h2": "More context",
+   "focus": "button \"Review run\"",
+   "problemButton": []
+  },
+  "server500": {
+   "alerts": [
+    "unexpected failure: Traceback (most recent call last): File \"/srv/app/x.py\", line 3"
+   ],
+   "h2": "More context",
+   "focus": "button \"Review run\"",
+   "problemButton": []
+  },
+  "noJson": {
+   "alerts": [
+    "The service could not complete this request (502)."
+   ],
+   "h2": "More context",
+   "focus": "button \"Review run\"",
+   "problemButton": []
+  },
+  "noDigest": {
+   "alerts": [
+    "The service did not issue an approval for this run."
+   ],
+   "h2": "More context",
+   "focus": "button \"Review run\"",
+   "problemButton": []
+  },
+  "capMismatch": {
+   "alerts": [
+    "The pathway cap changed while preparing this summary. Review the run again."
+   ],
+   "h2": "More context",
+   "focus": "button \"Review run\"",
+   "problemButton": []
+  }
+ },
+ "upload": {
+  "fail500": {
+   "alerts": [
+    "The service could not complete this request (500)."
+   ],
+   "rows": 2,
+   "requests": 1,
+   "focus": "button \"Inspect documents\"",
+   "busyStuck": "Inspect documents"
+  },
+  "createAbort": {
+   "alerts": [
+    "The service cannot be reached. Try again, or ask whoever runs the service to check it."
+   ],
+   "h2": "Documents"
+  }
+ },
+ "submit": {
+  "s400": {
+   "hits": 1,
+   "url": "/start",
+   "alerts": [
+    "documents or answers changed after approval Review the run again before submitting."
+   ],
+   "h2": "More context",
+   "focus": "h2 \"More context\""
+  },
+  "s404": {
+   "hits": 1,
+   "url": "/start",
+   "alerts": [
+    "unknown submission Review the run again before submitting."
+   ],
+   "h2": "More context",
+   "focus": "h2 \"More context\""
+  },
+  "s500": {
+   "hits": 1,
+   "url": "/start",
+   "alerts": [
+    "launcher failed Retrying Submit run is safe."
+   ],
+=== j2013-before ===
+{"alerts":[{"text":"The service cannot be reached. Try again, or ask whoever runs the service to check it. Retrying Submit run is safe.","top":-2912,"inViewport":false}],"viewportHeight":900,"mainScrollTop":3224,"active":"Submit run"}
+dialog still open: false | url: /start
+NOT REPRODUCED
+blocked requests: 0; page errors: 0
+exit 0
+=== j1004-before ===
+step intro: Optional. You can continue if the documents provide all the context.
+required controls: ["Current period","Prior period"]; labelled as required on the page: [false,false]
+after Review run: still on More context = true; in-page alerts = []; native message = Please fill out this field.
+DEFECT REPRODUCED: required fields are not marked, the step says Optional, and no in-page message appears
+exit 1
+=== p12-after ===
+[probe] proof.serve up on http://127.0.0.1:8748 (root /tmp/cs-C2/r-feNq96)
+[probe] proof.serve on http://127.0.0.1:8748 stopped
+{
+ "context": {
+  "loadingText": "Library\n / Start a run\nStart a run\nSynthetic test"
+ },
+ "summary": {},
+ "upload": {},
+ "submit": {},
+ "error": "TimeoutError: locator.evaluate: Timeout 15000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByText('Loading run options…')\u001b[22m\n",
+ "log": {
+  "blocked": [],
+  "console": [],
+  "pageerrors": [],
+  "failed": [],
+  "bad": [],
+  "requests": [
+   "GET /connected/context"
+  ],
+  "notes": []
+ }
+}
+=== j2013-after ===
+{"alerts":[{"text":"The page lost contact with the service, so it cannot tell whether the run started. Submitting again is safe. The service starts one run for this approval and returns that run if it already exists.","top":787,"inViewport":true}],"viewportHeight":900,"mainScrollTop":3158,"active":"Submit run"}
+dialog still open: false | url: /start
+NOT REPRODUCED
+blocked requests: 0; page errors: 0
+=== j1004-after ===
+node:internal/process/promises:394
+    triggerUncaughtException(err, true /* fromPromise */);
+    ^
+
+locator.innerText: Timeout 15000ms exceeded.
+Call log:
+[2m  - waiting for locator('main p').filter({ hasText: /^Optional\./ }).first()[22m
+
+    at /home/user/credit-os2/.claude/worktrees/agent-a695c68499424f15c/docs/audit/2026-11-16-final/output/3-journeys/J1/probes/j1-004-earnings-update-required-periods.cjs:8:89
+    at async main (/home/user/credit-os2/.claude/worktrees/agent-a695c68499424f15c/docs/audit/2026-11-16-final/output/3-journeys/J1/probes/_j1-common.cjs:112:14) {
+  log: [
+    "  - waiting for locator('main p').filter({ hasText: /^Optional\\./ }).first()"
+  ],
+  name: 'TimeoutError'
+}
+
+Node.js v22.23.4

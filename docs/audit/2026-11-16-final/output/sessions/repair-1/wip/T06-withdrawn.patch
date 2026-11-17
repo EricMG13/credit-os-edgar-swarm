@@ -1,0 +1,168 @@
+diff --git a/web/src/pages/connected/ConnectedApp.focus.test.tsx b/web/src/pages/connected/ConnectedApp.focus.test.tsx
+new file mode 100644
+index 0000000..f91263c
+--- /dev/null
++++ b/web/src/pages/connected/ConnectedApp.focus.test.tsx
+@@ -0,0 +1,125 @@
++import { useEffect } from "react";
++import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
++import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
++import { ConnectedApp } from "./ConnectedApp";
++
++// A page that manages its own focus, as the Start a run steps do: it puts focus on its heading
++// when it opens, and the shell must leave that alone.
++vi.mock("./StartRun", () => ({
++  StartRun: function StartRun() {
++    useEffect(() => {
++      document.getElementById("own-heading")?.focus();
++    }, []);
++    return (
++      <h2 id="own-heading" tabIndex={-1}>
++        Start a run
++      </h2>
++    );
++  },
++}));
++
++// The pages are lazy chunks; load them once up front so a slow first import cannot make a
++// focus assertion wait on the chunk instead of on the focus.
++beforeAll(async () => {
++  await Promise.all([
++    import("./LibraryIndex"),
++    import("./ReportLibrary"),
++    import("./RunActivity"),
++    import("./RunProgress"),
++  ]);
++}, 30_000);
++
++// Nothing the pages ask for ever arrives, so each page stays in its loading state: the focus has
++// to land and stay where it is whatever the page does next.
++beforeEach(() => {
++  vi.stubGlobal(
++    "fetch",
++    vi.fn(() => new Promise<Response>(() => undefined)),
++  );
++  window.location.hash = "";
++  (document.activeElement as HTMLElement | null)?.blur();
++});
++
++afterEach(() => {
++  cleanup();
++  vi.unstubAllGlobals();
++});
++
++const main = () => screen.getByRole("main");
++
++describe("a page opening in the connected app", () => {
++  it.each([
++    ["the library", "/"],
++    ["the run list", "/runs"],
++    ["a run", "/run/20261117-000000-77"],
++    ["a report", "/report/20261117-000000-77"],
++    ["an unknown address", "/nowhere"],
++  ])("moves keyboard focus to the page region for %s", async (_name, path) => {
++    render(<ConnectedApp path={path} mode="synthetic" />);
++    await waitFor(() => {
++      expect(document.activeElement).toBe(main());
++    });
++  });
++
++  it("leaves focus where the page itself put it", async () => {
++    render(<ConnectedApp path="/start" mode="synthetic" />);
++    const heading = await screen.findByRole("heading", { name: "Start a run" });
++    expect(document.activeElement).toBe(heading);
++  });
++
++  it("moves focus into the new page when the address changes under a control outside it", async () => {
++    const { rerender } = render(<ConnectedApp path="/nowhere" mode="synthetic" />);
++    await waitFor(() => {
++      expect(document.activeElement).toBe(main());
++    });
++    const rail = screen.getByRole("link", { name: "Run" });
++    rail.focus();
++    rerender(<ConnectedApp path="/elsewhere" mode="synthetic" />);
++    await waitFor(() => {
++      expect(document.activeElement).toBe(main());
++    });
++  });
++
++  it("does not take focus back from inside the page when it changes address", async () => {
++    const { rerender } = render(<ConnectedApp path="/nowhere" mode="synthetic" />);
++    await waitFor(() => {
++      expect(document.activeElement).toBe(main());
++    });
++    const control = within(main()).getByRole("link", { name: "Library" });
++    control.focus();
++    rerender(<ConnectedApp path="/elsewhere" mode="synthetic" />);
++    await act(async () => {
++      await Promise.resolve();
++    });
++    expect(document.activeElement).toBe(control);
++  });
++
++  it("does not move focus when only the hash changes inside a report", async () => {
++    render(<ConnectedApp path="/report/20261117-000000-77" mode="synthetic" />);
++    await waitFor(() => {
++      expect(document.activeElement).toBe(main());
++    });
++    // Focus lost to the body, as it is when the control that was pressed has gone.
++    (document.activeElement as HTMLElement).blur();
++    expect(document.activeElement).toBe(document.body);
++    await act(async () => {
++      window.location.hash = "#evidence";
++      window.dispatchEvent(new HashChangeEvent("hashchange"));
++      await Promise.resolve();
++    });
++    expect(document.activeElement).toBe(document.body);
++  });
++
++  it("keeps Skip to content working", async () => {
++    render(<ConnectedApp path="/nowhere" mode="synthetic" />);
++    await waitFor(() => {
++      expect(document.activeElement).toBe(main());
++    });
++    screen.getByRole("link", { name: "Run" }).focus();
++    expect(document.activeElement).not.toBe(main());
++    // A cancelled click is what stops the browser from changing the hash.
++    expect(fireEvent.click(screen.getByRole("link", { name: "Skip to content" }))).toBe(false);
++    expect(document.activeElement).toBe(main());
++    expect(window.location.hash).toBe("");
++  });
++});
+diff --git a/web/src/pages/connected/ConnectedApp.tsx b/web/src/pages/connected/ConnectedApp.tsx
+index 0b7d07f..a39d331 100644
+--- a/web/src/pages/connected/ConnectedApp.tsx
++++ b/web/src/pages/connected/ConnectedApp.tsx
+@@ -1,4 +1,4 @@
+-import { lazy, Suspense } from "react";
++import { lazy, Suspense, useEffect } from "react";
+ import { Button } from "@/components/base/buttons/button";
+ import { PageHeader } from "../../shell/PageHeader";
+ import { Shell, type Area } from "../../shell/Shell";
+@@ -26,6 +26,16 @@ function LoadingPage() {
+   );
+ }
+ 
++/**
++ * Puts keyboard focus on the page region, the place "Skip to content" goes to, so the next Tab
++ * reaches the page's first control instead of starting again at the skip link. A page that
++ * already holds focus inside the region (the Start a run steps do) keeps it.
++ */
++function focusPageRegion() {
++  const region = document.getElementById("main");
++  if (region && !region.contains(document.activeElement)) region.focus({ preventScroll: true });
++}
++
+ const SECTIONS: { area: Area; href: string }[] = [
+   { area: "library", href: "/" },
+   { area: "run", href: "/runs" },
+@@ -65,6 +75,9 @@ export function ConnectedApp({
+   const prior = new URLSearchParams(search).get("from");
+   const runs = path === "/runs" || path === "/runs/";
+   const current = start || run || runs ? "run" : "library";
++  // A new page takes focus when its path changes; a change of hash inside a report is not a new
++  // page, so the hash is not a dependency.
++  useEffect(focusPageRegion, [path]);
+   return (
+     <Shell current={current} sections={SECTIONS} symbol="/symbol.svg">
+       <Suspense fallback={<LoadingPage />}>

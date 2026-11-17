@@ -18,6 +18,7 @@ import pytest
 from library_fixtures import make_run
 from test_cpos_launch import context_file, issuer_folder
 
+from deploy_workflow.inbox import runs
 from deploy_workflow.inbox.layout import Layout, ensure_layout
 from deploy_workflow.owners import cpos_launch
 from deploy_workflow.owners.cpos_launch import prepare, read_documents
@@ -1716,3 +1717,201 @@ def test_two_names_that_agree_for_eighty_characters_are_both_kept(layout):
     folder = files_folder(layout, sid)
     assert (folder / first).read_bytes() == b"one"
     assert (folder / second).read_bytes() == b"two"
+
+
+# ---- T09 round 2 (J5-004): an Issuer ID filed under one issuer is refused for another ----
+
+# The same literal cases are pinned in web/src/pages/connected/start/plain.test.ts (`issuerKey`):
+# the page and the service must reduce a name the same way.
+ISSUER_KEY_CASES = [
+    ("Acme Corp", "acmecorp"),
+    ("ACME  corp.", "acmecorp"),
+    ("Åre Group A/S", "aregroupas"),
+    ("Straße Holdings plc", "straßeholdingsplc"),
+    ("Ørsted A/S", "ørstedas"),
+    ("Ａｃｍｅ Ｃｏｒｐ", "acmecorp"),
+    ("Nestlé S.A. 2", "nestlesa2"),
+    ("İstanbul Ltd", "istanbulltd"),
+    ("  ", ""),
+    ("中国银行 Ltd", "中国银行ltd"),
+    ("中国建设银行 Ltd", "中国建设银行ltd"),
+    ("Газпром ПАО", "газпромпао"),
+    ("Йога-Центр", "иогацентр"),
+]
+
+
+@pytest.mark.parametrize(("name", "key"), ISSUER_KEY_CASES)
+def test_issuer_key_matches_the_pages_reduction(name, key):
+    assert submissions.issuer_key(name) == key
+
+
+def file_run(
+    layout: Layout, run_id: str, issuer_id: str, issuer_name: str, as_of: str = "2026-01-01"
+):
+    runs.save(
+        layout,
+        runs.Record(
+            run_id,
+            "credit_snapshot",
+            issuer_name,
+            "finished",
+            "t",
+            issuer_id=issuer_id,
+            issuer_name=issuer_name,
+            as_of=as_of,
+        ),
+    )
+
+
+def named(tmp_path: Path, issuer_id: str, issuer_name: str) -> Answers:
+    answers = answers_for(tmp_path)
+    answers["context"]["identity"].update(issuer_id=issuer_id, issuer_name=issuer_name)
+    return answers
+
+
+def test_a_hand_typed_id_filed_under_another_issuer_is_refused_by_summary_and_digest(
+    layout, tmp_path
+):
+    file_run(layout, "20260101-000001-01", "acme", "Acme Corp")
+    sid, _ = upload_issuer(layout, tmp_path)
+    answers = named(tmp_path, "acme", "Eastmoor Synthetic Utilities plc")
+    got = summary(layout, sid, answers)
+    assert "digest" not in got
+    assert got["error"] == (
+        'Issuer ID "acme" is filed under the name "Acme Corp", not "Eastmoor Synthetic Utilities '
+        'plc". If that is this issuer under another name, type that name; otherwise use another '
+        "Issuer ID."
+    )
+    with pytest.raises(Refused, match="filed under the name"):
+        digest(layout, sid, answers)
+
+
+def test_two_different_non_latin_names_are_different_issuers(layout, tmp_path):
+    file_run(layout, "20260101-000001-01", "issuer-1", "中国银行 Ltd")
+    sid, _ = upload_issuer(layout, tmp_path)
+    got = summary(layout, sid, named(tmp_path, "issuer-1", "中国建设银行 Ltd"))
+    assert 'filed under the name "中国银行 Ltd"' in got["error"]
+    assert not summary(layout, sid, named(tmp_path, "issuer-1", "中国银行  LTD"))["error"]
+
+
+def test_a_carried_id_whose_name_was_then_changed_is_refused(layout, tmp_path):
+    file_run(layout, "20260101-000001-01", "acme", "Acme Corp")
+    sid, _ = upload_issuer(layout, tmp_path)
+    got = summary(layout, sid, named(tmp_path, "acme", "Acme Holdings Ltd"))
+    assert 'filed under the name "Acme Corp"' in got["error"]
+
+
+def test_the_two_northbridge_long_names_do_not_share_an_id(layout, tmp_path):
+    long_id = "northbridge-synthetic-group-internationa"
+    file_run(
+        layout,
+        "20260101-000001-01",
+        long_id,
+        "Northbridge Synthetic Group International Holdings Limited",
+    )
+    sid, _ = upload_issuer(layout, tmp_path)
+    got = summary(
+        layout,
+        sid,
+        named(tmp_path, long_id, "Northbridge Synthetic Group International Finance plc"),
+    )
+    assert "filed under the name" in got["error"] and "digest" not in got
+    # ... the suffixed ID the page offers is free.
+    free = named(
+        tmp_path,
+        "northbridge-synthetic-group-int-518e588e",
+        "Northbridge Synthetic Group International Finance plc",
+    )
+    assert summary(layout, sid, free)["error"] == ""
+
+
+def test_a_short_name_that_collides_is_refused(layout, tmp_path):
+    file_run(
+        layout,
+        "20260101-000001-01",
+        "northbridge-synthetic-group-investments",
+        "Northbridge Synthetic Group Investments Holdings Limited",
+    )
+    sid, _ = upload_issuer(layout, tmp_path)
+    got = summary(
+        layout,
+        sid,
+        named(
+            tmp_path,
+            "northbridge-synthetic-group-investments",
+            "Northbridge Synthetic Group Investments",
+        ),
+    )
+    assert "filed under the name" in got["error"]
+
+
+def test_the_same_issuer_under_its_own_id_is_accepted_however_it_is_typed(layout, tmp_path):
+    file_run(layout, "20260101-000001-01", "acme", "Acme Corp")
+    file_run(layout, "20260101-000002-01", "nameless", "")
+    sid, _ = upload_issuer(layout, tmp_path)
+    assert summary(layout, sid, named(tmp_path, "acme", "ACME  corp."))["error"] == ""
+    assert summary(layout, sid, named(tmp_path, "nameless", "Anything Plc"))["error"] == ""
+    assert summary(layout, sid, named(tmp_path, "unused-id", "Anything Plc"))["error"] == ""
+
+
+def test_an_id_already_merged_before_the_check_accepts_either_of_its_issuers(layout, tmp_path):
+    file_run(layout, "20260101-000001-01", "acme", "Acme Corp", "2026-01-01")
+    file_run(layout, "20260101-000002-01", "acme", "Acme Finance plc", "2026-02-01")
+    sid, _ = upload_issuer(layout, tmp_path)
+    assert summary(layout, sid, named(tmp_path, "acme", "Acme Corp"))["error"] == ""
+    assert summary(layout, sid, named(tmp_path, "acme", "Acme Finance plc"))["error"] == ""
+    assert "filed under the name" in summary(layout, sid, named(tmp_path, "acme", "Other"))["error"]
+
+
+def _age(layout: Layout, sid: str, seconds: float) -> None:
+    then = time.time() - seconds
+    os.utime(layout.uploads / sid, (then, then))
+
+
+def test_at_the_ceiling_an_abandoned_draft_makes_room_for_a_new_form(layout, monkeypatch):
+    monkeypatch.setattr(submissions, "MAX_OPEN", 2)
+    old, fresh = new(layout), new(layout)
+    put(layout, old, "a.txt")
+    _age(layout, old, submissions.IDLE_SECONDS + 60)
+    added = new(layout)
+    assert not (layout.uploads / old).exists()
+    assert (layout.uploads / fresh).is_dir() and (layout.uploads / added).is_dir()
+
+
+def test_a_recently_used_draft_is_never_made_room_from(layout, monkeypatch):
+    monkeypatch.setattr(submissions, "MAX_OPEN", 2)
+    one, two = new(layout), new(layout)
+    put(layout, one, "a.txt")
+    _age(layout, one, submissions.IDLE_SECONDS - 60)
+    with pytest.raises(Refused, match="too many unfinished submissions"):
+        new(layout)
+    assert (layout.uploads / one / "files" / "a.txt").is_file() and (layout.uploads / two).is_dir()
+
+
+def test_a_draft_with_an_approval_issued_is_never_made_room_from(layout, monkeypatch):
+    monkeypatch.setattr(submissions, "MAX_OPEN", 1)
+    sid = new(layout)
+    (layout.uploads / sid / "issued").write_text("0" * 64 + "\n")
+    _age(layout, sid, submissions.IDLE_SECONDS + 60)
+    with pytest.raises(Refused, match="too many unfinished submissions"):
+        new(layout)
+    assert (layout.uploads / sid / "issued").is_file()
+
+
+def test_a_draft_with_an_upload_in_flight_is_never_made_room_from(layout, monkeypatch):
+    monkeypatch.setattr(submissions, "MAX_OPEN", 1)
+    sid = new(layout)
+    _age(layout, sid, submissions.IDLE_SECONDS + 60)
+    monkeypatch.setitem(submissions._PENDING, sid, {"tmp": ("a.txt", 1)})
+    with pytest.raises(Refused, match="too many unfinished submissions"):
+        new(layout)
+
+
+def test_reading_the_documents_keeps_a_draft_live(layout, monkeypatch):
+    monkeypatch.setattr(submissions, "MAX_OPEN", 1)
+    sid = new(layout)
+    put(layout, sid, "a.txt")
+    _age(layout, sid, submissions.IDLE_SECONDS + 60)
+    reading(layout, sid)
+    with pytest.raises(Refused, match="too many unfinished submissions"):
+        new(layout)

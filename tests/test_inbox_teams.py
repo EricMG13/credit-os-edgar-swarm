@@ -18,7 +18,7 @@ from datetime import UTC, datetime, timedelta
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from types import SimpleNamespace
-from typing import Any, ClassVar
+from typing import Any, ClassVar, cast
 
 import pytest
 from inbox_fixtures import layout as layout_of
@@ -360,6 +360,111 @@ def test_progress_counts_accepted_modules_of_the_run(lay):
     )  # CP-MODEL is not shown
     assert teams.progress(lay, replace(run, modules=("CP-0", "CP-1"))) == (1, 2)
     assert teams.progress(lay, record("no-such-run"))[0] == 0
+
+
+def test_progress_total_leaves_the_forecast_code_out_of_a_leave_out_list(lay):
+    """R1-003: the run start page's explicit list holds CP-MODEL (publish the forecast; it has no
+    module row and no accepted event), so a finished run read one short of its total."""
+    modules = tuple(m for m in PATHWAY_MODULES["credit_snapshot"] if m != "CP-4")
+    assert "CP-MODEL" in modules
+    assert len(modules) == 14  # 13 analytical modules and the forecast code
+    run = record(modules=modules)
+    folder = lay.runs / run.id
+    folder.mkdir(parents=True)
+    for module in modules:
+        if module != "CP-MODEL":
+            append_event(folder, "module_accepted", module=module)
+    assert teams.progress(lay, run) == (13, 13)
+
+
+def accepted_run(lay: Layout, accepted: tuple[str, ...], **change: Any) -> Record:
+    """A record whose log holds a `module_accepted` event for each of ``accepted``."""
+    run = record(**change)
+    folder = lay.runs / run.id
+    folder.mkdir(parents=True)
+    for module in accepted:
+        append_event(folder, "module_accepted", module=module)
+    return run
+
+
+@pytest.mark.parametrize(
+    ("pathway", "left_out", "accepted", "expected"),
+    [
+        # The launcher's plan pulls CP-1A in as a producer although the preset list never names it,
+        # so it runs 11 modules (12 rows less CP-5) and 8 (9 rows less CP-6).
+        (
+            "relative_value",
+            "CP-5",
+            ("CP-0", "CP-1", "CP-1A", "CP-1C", "CP-DR", "CP-2", "CP-2D", "CP-2E")
+            + ("CP-3", "CP-3C", "CP-3D"),
+            (11, 11),
+        ),
+        (
+            "portfolio_decision",
+            "CP-6",
+            ("CP-0", "CP-1", "CP-1A", "CP-DR", "CP-2", "CP-2E", "CP-3", "CP-5"),
+            (8, 8),
+        ),
+    ],
+)
+def test_progress_total_counts_the_modules_the_launcher_runs_for_a_list(
+    lay, pathway, left_out, accepted, expected
+):
+    """R1-003: an explicit list names the preset's modules, not the producers the plan adds, so the
+    total is the plan's modules less the forecast code, not the list's length."""
+    modules = tuple(m for m in PATHWAY_MODULES[pathway] if m != left_out)
+    assert "CP-MODEL" in modules
+    assert "CP-1A" not in modules  # the producer is in the run, not in the list
+    run = accepted_run(lay, accepted, pathway=pathway, modules=modules)
+    assert teams.progress(lay, run) == expected
+
+
+def test_progress_total_for_the_forecast_code_alone_is_its_producers(lay):
+    """`--modules CP-MODEL` runs the forecast's producers (CP-0 and CP-1), nothing else."""
+    run = accepted_run(lay, ("CP-0", "CP-1"), modules=("CP-MODEL",))
+    assert teams.progress(lay, run) == (2, 2)
+
+
+def test_progress_total_counts_a_repeated_module_once(lay):
+    run = accepted_run(lay, ("CP-0", "CP-1"), modules=("CP-0", "CP-1", "CP-1", "CP-MODEL"))
+    assert teams.progress(lay, run) == (2, 2)
+
+
+def test_progress_total_falls_back_to_the_plan_rows_for_an_unknown_module(lay):
+    """A hand-edited record names a module the plan refuses; the card still gets a count."""
+    run = accepted_run(lay, ("CP-0",), modules=("CP-0", "CP-NOPE"))
+    assert teams.progress(lay, run) == (1, 14)  # the 14 rows of credit_snapshot
+
+
+def test_progress_total_falls_back_to_the_plan_rows_when_the_plan_cannot_read_the_list(lay):
+    """`plan` raises TypeError, not ValueError, for a list that is not one; still a count."""
+    run = accepted_run(lay, ("CP-0",))
+    assert teams.progress(lay, replace(run, modules=cast(Any, 5))) == (1, 14)
+
+
+# credit_snapshot less CP-4: the 13 modules its plan runs (the forecast code has no row).
+_SNAPSHOT_LESS_CP4 = ("CP-0", "CP-1", "CP-1A", "CP-DR", "CP-2", "CP-2A", "CP-2D", "CP-2E")
+_SNAPSHOT_LESS_CP4 += ("CP-2G", "CP-3C", "CP-3", "CP-5", "CP-6")
+
+
+@pytest.mark.parametrize(
+    ("cp8", "expected"),
+    [
+        # cpos_launch.prepare appends CP-8 when an earlier run of the issuer and pathway is
+        # listed: 14 modules run, CP-8 last.
+        ("module_started", (13, 14)),
+        ("module_accepted", (14, 14)),
+        # Its first call does not fit the cap: planned without CP-8, so the plan's 13 stand.
+        (None, (13, 13)),
+    ],
+)
+def test_progress_total_counts_cp8_when_the_run_starts_it(lay, cp8, expected):
+    """A leave-out list re-run: the record does not name CP-8; the run's own events do."""
+    modules = tuple(m for m in PATHWAY_MODULES["credit_snapshot"] if m != "CP-4")
+    run = accepted_run(lay, _SNAPSHOT_LESS_CP4, modules=modules)
+    if cp8 is not None:
+        append_event(lay.runs / run.id, cp8, module="CP-8")
+    assert teams.progress(lay, run) == expected
 
 
 @pytest.mark.parametrize(

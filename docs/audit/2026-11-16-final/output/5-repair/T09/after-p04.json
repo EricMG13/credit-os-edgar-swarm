@@ -1,0 +1,150 @@
+[probe] proof.serve up on http://127.0.0.1:8749 (root /tmp/cs-C2/r-DCmBnD)
+[probe] proof.serve on http://127.0.0.1:8749 stopped
+{
+  "cases": {
+    "png": {
+      "rowsAfterAdd": [
+        "image.png\n\nSelected\nRemove"
+      ],
+      "noDocsText": 0,
+      "continueDisabled": false,
+      "notice": [
+        "None of the selected documents could be read as an issuer filing. Choose a filing in a supported format."
+      ],
+      "status": [
+        "0 documents inspected, 0 ignored."
+      ],
+      "rowsAfterInspect": [
+        "image.png | Selected | Remove"
+      ]
+    },
+    "docx": {
+      "rowsAfterAdd": [
+        "notes.docx\n\nSelected\nRemove"
+      ],
+      "noDocsText": 0,
+      "continueDisabled": false,
+      "notice": [
+        "notes.docx cannot be read: its contents are not a docx file."
+      ],
+      "status": [
+        "0 documents inspected, 1 ignored."
+      ],
+      "rowsAfterInspect": [
+        "notes.docx | Ignored | notes.docx cannot be read: its contents are not a docx file. | Remove"
+      ]
+    },
+    "empty": {
+      "rowsAfterAdd": [
+        "empty.txt\n\nSelected\nRemove"
+      ],
+      "noDocsText": 0,
+      "continueDisabled": false,
+      "notice": [
+        "empty.txt is empty (0 bytes)."
+      ],
+      "status": [
+        "0 documents inspected, 1 ignored."
+      ],
+      "rowsAfterInspect": [
+        "empty.txt | Ignored | empty.txt is empty (0 bytes). | Remove"
+      ]
+    },
+    "big52": {
+      "rowsAfterAdd": [
+        "big52.txt\n\nSelected\nRemove"
+      ],
+      "noDocsText": 0,
+      "continueDisabled": false,
+      "notice": [
+        "a file is at most 50 MB"
+      ],
+      "status": [
+        ""
+      ],
+      "rowsAfterInspect": [
+        "big52.txt | Selected | Remove"
+      ]
+    },
+    "filing+png+docx": {
+      "rowsAfterAdd": [
+        "northbridge-filing.txt\n\nSelected\nRemove",
+        "image.png\n\nSelected\nRemove",
+        "notes.docx\n\nSelected\nRemove"
+      ],
+      "noDocsText": 0,
+      "continueDisabled": false,
+      "notice": [
+        "notes.docx cannot be read: its contents are not a docx file."
+      ],
+      "status": [
+        "0 documents inspected, 1 ignored."
+      ],
+      "rowsAfterInspect": [
+        "northbridge-filing.txt | Selected | Remove",
+        "image.png | Selected | Remove",
+        "notes.docx | Ignored | notes.docx cannot be read: its contents are not a docx file. | Remove"
+      ]
+    },
+    "same-name-twice": {
+      "rowsAfterAdd": [
+        "dup.txt\n\nSelected\nRemove",
+        "dup.txt\n\nSelected\nRemove"
+      ],
+      "noDocsText": 0,
+      "continueDisabled": false,
+      "notice": [
+        "Choose documents with distinct file names."
+      ],
+      "status": [
+        ""
+      ],
+      "rowsAfterInspect": [
+        "dup.txt | Selected | Remove",
+        "dup.txt | Selected | Remove"
+      ]
+    },
+    "hidden": {
+      "rowsAfterAdd": [],
+      "noDocsText": 1,
+      "continueDisabled": true
+    }
+  },
+  "log": {
+    "blocked": [],
+    "console": [
+      "error: Failed to load resource: the server responded with a status of 400 (Bad Request)"
+    ],
+    "pageerrors": [],
+    "failed": [],
+    "bad": [
+      "400 POST /api/submissions/e74712d91cad4953a9645543498f6597/files?name=big52.txt"
+    ],
+    "requests": [
+      "GET /connected/context",
+      "POST /api/submissions",
+      "POST /api/submissions/4970ee5d245fe7059c83848bc3bfc7c8/files?name=image.png",
+      "GET /api/submissions/4970ee5d245fe7059c83848bc3bfc7c8/reading",
+      "GET /connected/context",
+      "POST /api/submissions",
+      "POST /api/submissions/4c2e59726982b45cc5efb84fd8631831/files?name=notes.docx",
+      "GET /api/submissions/4c2e59726982b45cc5efb84fd8631831/reading",
+      "GET /connected/context",
+      "POST /api/submissions",
+      "POST /api/submissions/ef7c7499966adeeb19403b9061532b7b/files?name=empty.txt",
+      "GET /api/submissions/ef7c7499966adeeb19403b9061532b7b/reading",
+      "GET /connected/context",
+      "POST /api/submissions",
+      "POST /api/submissions/e74712d91cad4953a9645543498f6597/files?name=big52.txt",
+      "GET /connected/context",
+      "POST /api/submissions",
+      "POST /api/submissions/e9113f140afc58c7f4db61d5fb4f5a2f/files?name=northbridge-filing.txt",
+      "POST /api/submissions/e9113f140afc58c7f4db61d5fb4f5a2f/files?name=image.png",
+      "POST /api/submissions/e9113f140afc58c7f4db61d5fb4f5a2f/files?name=notes.docx",
+      "GET /api/submissions/e9113f140afc58c7f4db61d5fb4f5a2f/reading",
+      "GET /connected/context",
+      "GET /connected/context"
+    ],
+    "notes": []
+  }
+}

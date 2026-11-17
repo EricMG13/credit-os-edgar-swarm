@@ -16,10 +16,12 @@ from typing import Any, cast
 import pytest
 from inbox_fixtures import CONTEXT, layout, pump, settings
 
+from deploy_vii.contracts import PATHWAY_MODULES
 from deploy_workflow.inbox import runs
 from deploy_workflow.inbox import scheduler as scheduler_module
 from deploy_workflow.inbox.runs import Record, load_all
 from deploy_workflow.inbox.scheduler import Scheduler
+from deploy_workflow.owners import cpos_launch
 from deploy_workflow.run_start import submissions
 from deploy_workflow.run_start.submissions import Answers, Refused, context_bytes
 
@@ -383,6 +385,8 @@ HOSTILE_MODULES = {
     "cap": ["CP-0", "--cap", "1000"],
     "sources": ["CP-0", "--sources", "/etc"],
     "out": ["CP-0", "--out", "/tmp/x"],
+    "forecast_misspelt": ["CP-0", "cp-model"],  # only the exact forecast code is let through
+    "forecast_suffix": ["CP-0", "CP-MODEL2"],
 }
 
 
@@ -402,6 +406,45 @@ def test_a_module_that_is_not_a_method_is_refused_even_when_the_digest_was_issue
     assert load_all(layout(root)) == []
     assert (submissions.files_folder(layout(root), sid) / "a.txt").is_file()  # not sealed
     w.close()
+
+
+def test_a_list_holding_the_forecast_code_is_accepted_and_starts_a_run(root, fake_env):
+    """J1-001: the page puts CP-MODEL (publish the forecast; no model call) into every explicit
+    list it sends, and the launcher takes it there, so Submit must not refuse it as unknown."""
+    fake_env({"sleep": 30})
+    answers = answers_for(modules=["CP-0", "CP-1", "CP-MODEL"])
+    sid = upload(root)
+    w = Scheduler(settings(root))
+    record = w.submit(sid, answers, approved(root, sid, answers))
+    assert record.modules == ("CP-0", "CP-1", "CP-MODEL")
+    pump(w, lambda: [r.status for r in load_all(layout(root))] == ["running"])
+    w.close()
+
+
+def test_the_launcher_command_carries_the_forecast_code_in_the_module_list():
+    record = Record("r1", PATHWAY, "Acme", "queued", "t", modules=("CP-0", "CP-MODEL"))
+    argv = runs.command(
+        layout(Path("unused")), record, Path("c.json"), launcher=("L",), ruling=None
+    )
+    at = argv.index("--modules")
+    assert argv[at : at + 3] == ["--modules", "CP-0", "CP-MODEL"]
+
+
+def test_the_forecast_code_is_the_one_the_launcher_and_the_presets_use():
+    """J1-001 came from Submit, the launcher and the page disagreeing about CP-MODEL: pin them."""
+    assert runs.FORECAST_CODE == "CP-MODEL"
+    assert runs.FORECAST_CODE in cpos_launch.NOT_ANALYTICAL
+    assert runs.known_module("CP-MODEL")
+    for pathway, codes in PATHWAY_MODULES.items():
+        for code in codes:
+            assert runs.known_module(code), f"{pathway}: {code}"
+
+
+@pytest.mark.parametrize("name", ["--cap", "cp-model", "CP-NOPE"])
+def test_a_record_holding_an_unknown_module_cannot_become_a_command(name):
+    record = Record("r1", PATHWAY, "Acme", "queued", "t", modules=("CP-0", name))
+    with pytest.raises(ValueError, match="is not a module"):
+        runs.command(layout(Path("unused")), record, Path("c.json"), launcher=("L",), ruling=None)
 
 
 def test_a_digest_the_service_never_issued_is_refused(root, fake_env):
@@ -725,4 +768,54 @@ def test_a_full_queue_refuses_a_submission_before_sealing_it(root, fake_env, mon
     w.step()  # one starts, one slot frees up in the queue
     w.step()
     assert w.submit(sid, answers, digest).status == "queued"
+    w.close()
+
+
+def test_an_id_filed_between_review_and_submit_is_refused_and_nothing_starts(root, fake_env):
+    fake_env({"sleep": 30})
+    answers = answers_for()
+    sid = upload(root)
+    d = approved(root, sid, answers)  # the page reviewed: "acme" was free for Acme Corp
+    runs.save(
+        layout(root),
+        Record(
+            "20261109-000009-01",
+            PATHWAY,
+            "Another Issuer plc",
+            "finished",
+            "t",
+            issuer_id="acme",
+            issuer_name="Another Issuer plc",
+            as_of="2026-11-08",
+        ),
+    )
+    w = Scheduler(settings(root))
+    with pytest.raises(Refused, match='filed under the name "Another Issuer plc"'):
+        w.submit(sid, answers, d)
+    assert [r.id for r in load_all(layout(root))] == ["20261109-000009-01"]
+    assert not list(layout(root).drops.iterdir())
+    assert (layout(root).uploads / sid / "files").is_dir()  # unsealed: the files are still open
+    w.close()
+
+
+def test_the_same_issuer_resubmitting_under_its_own_id_is_accepted(root, fake_env):
+    fake_env({"sleep": 30})
+    answers = answers_for()
+    layout(root).state.mkdir(parents=True, exist_ok=True)
+    runs.save(
+        layout(root),
+        Record(
+            "20261108-000001-01",
+            PATHWAY,
+            "Acme Corp",
+            "finished",
+            "t",
+            issuer_id="acme",
+            issuer_name="Acme Corp",
+            as_of="2026-11-08",
+        ),
+    )
+    sid = upload(root)
+    w = Scheduler(settings(root))
+    assert w.submit(sid, answers, approved(root, sid, answers)).status == "queued"
     w.close()

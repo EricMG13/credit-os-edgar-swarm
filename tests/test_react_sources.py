@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import errno
 import hashlib
 import json
 import os
@@ -281,6 +282,39 @@ def test_failed_original_keeps_pinned_identity_and_specific_problem(
     assert ("sha256" if tampered else "missing") in chip["reason"]
     assert "inventory" not in chip["reason"]
     assert chip["excerpt"] is None and "href" not in chip and "pageHref" not in chip
+
+
+@pytest.mark.parametrize(
+    ("code", "kind"), [(errno.EACCES, "PermissionError"), (errno.EIO, "OSError")]
+)
+@pytest.mark.parametrize("unreadable", ["inputs", "workflow"])
+def test_an_unreadable_file_is_named_by_kind_and_run_name_never_by_server_path(
+    published: tuple[Layout, dict[str, Any]],
+    monkeypatch: pytest.MonkeyPatch,
+    unreadable: str,
+    code: int,
+    kind: str,
+) -> None:
+    """The operating system's text for a failed read names the file by its absolute path; the
+    snapshot (sourceWarning and the chip's reason) says the kind and the name inside the run."""
+    layout, snapshot = published
+    name = f"{FOLDER}/inputs/{SHA}" if unreadable == "inputs" else f"{FOLDER}/workflow.json"
+    read_bytes = Path.read_bytes
+
+    def read(path: Path) -> bytes:
+        if path.name == name.rpartition("/")[2]:
+            raise OSError(code, os.strerror(code), str(path))
+        return read_bytes(path)
+
+    monkeypatch.setattr(Path, "read_bytes", read)
+    warning = f"{name} could not be read ({kind})"
+    enriched = sources.enrich(snapshot, layout.runs)
+    [source] = enriched["workspace"]["runs"]["run-key"]["evidence"]["sources"]
+    assert source["sourceWarning"] == warning and "href" not in source
+    if unreadable == "inputs":
+        [chip] = enriched["chips"][f"{OUTPUT}:2"]
+        assert chip["reason"] == warning
+    assert str(layout.root) not in json.dumps(enriched)
 
 
 def test_only_correlated_native_aliases_are_retained(

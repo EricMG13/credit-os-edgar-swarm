@@ -1,0 +1,8 @@
+ok   first refusal names annual-report.pdf in a reader sentence  [["annual-report.pdf could not be read: its text could not be decoded."]]
+ok   annual-report.pdf row is marked Ignored  [["annual-report.pdf Ignored annual-report.pdf could not be read: its text could not be decoded. Remove","holdings.xlsx Selected Remove","northbridge-filing.txt Selected Remove"]]
+ok   after Remove: the next refusal names holdings.xlsx in a reader sentence  [["holdings.xlsx could not be read: its text could not be decoded."]]
+ok   after Remove: annual-report.pdf is gone and does not reappear as Ignored  [["holdings.xlsx Ignored holdings.xlsx could not be read: its text could not be decoded. Remove","northbridge-filing.txt Selected Remove"]]
+ok   after Remove: holdings.xlsx is the Ignored row  [["holdings.xlsx Ignored holdings.xlsx could not be read: its text could not be decoded. Remove","northbridge-filing.txt Selected Remove"]]
+ok   after the last bad file is removed: no refusal and only the readable file remains  [{"a":[],"r":["northbridge-filing.txt Inspected unrecognised Remove"]}]
+blocked requests: 0; page errors: 0
+exit=0

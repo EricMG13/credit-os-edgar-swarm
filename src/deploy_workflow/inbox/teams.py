@@ -51,10 +51,11 @@ from functools import partial
 from typing import Any
 
 from deploy_vii import report_view
+from deploy_vii.registry import plan
 from deploy_workflow import platform_io
 from deploy_workflow.inbox import activity
 from deploy_workflow.inbox.layout import Layout
-from deploy_workflow.inbox.runs import TEAMS_WEBHOOK_VARIABLE, Record, Status, cap_of
+from deploy_workflow.inbox.runs import FORECAST_CODE, TEAMS_WEBHOOK_VARIABLE, Record, Status, cap_of
 from deploy_workflow.inbox.startup import StartupRefused
 from deploy_workflow.inbox.teams_brand import BAND, ICONS, LOCKUP, PILLS, SHAPES
 from deploy_workflow.run_events import EVENTS, read_events
@@ -454,7 +455,17 @@ def progress(layout: Layout, record: Record) -> tuple[int, int]:
     except (OSError, ValueError):
         events = []  # fail-open, display only: no readable log reads as nothing done yet
     states = activity.module_states(record.pathway, events)[:-1]
-    total = len(record.modules) or len(states)
+    total = len(states)
+    if record.modules:
+        # The list's plan less the forecast code (no row), as cpos_launch.py plans it: producers
+        # count, a repeat once. The launcher may append CP-8 (an earlier run is listed and its
+        # call fits the cap); the record cannot say so, so a module the log shows started counts.
+        try:
+            planned = {name for name in plan(record.modules) if name != FORECAST_CODE}
+        except (ValueError, TypeError):
+            pass  # fail-open, display only: a list the plan refuses leaves the rows as the total
+        else:
+            total = len(planned | {name for name, state in states if state != "waiting"})
     return min(sum(state == "done" for _, state in states), total), total
 
 

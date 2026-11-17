@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { spendFigure } from "./runFigures";
+import { moduleWord, spendFigure } from "./runFigures";
 import type { Run } from "./api";
 
 const run: Run = {
@@ -17,6 +17,26 @@ const run: Run = {
   held: "7.00",
   events: [],
 };
+
+describe("moduleWord", () => {
+  it("reads the module a failed run stopped at as Not assessable, not Interrupted", () => {
+    expect(moduleWord("stopped", false, true)).toBe("Not assessable");
+    expect(moduleWord("running", false, true)).toBe("Not assessable");
+  });
+
+  it("keeps Interrupted for a stop the run itself did not fail on", () => {
+    expect(moduleWord("stopped", false)).toBe("Interrupted");
+    expect(moduleWord("stopped", false, false)).toBe("Interrupted");
+    expect(moduleWord("running", false)).toBe("Interrupted");
+  });
+
+  it("is unchanged for a module that finished, runs, waits or never ran", () => {
+    expect(moduleWord("done", false, true)).toBe("Finished");
+    expect(moduleWord("running", true)).toBe("Running");
+    expect(moduleWord("waiting", true)).toBe("Queued");
+    expect(moduleWord("waiting", false, true)).toBe("Not run");
+  });
+});
 
 describe("spendFigure", () => {
   it("shows settled charges and unresolved holds as cap usage", () => {

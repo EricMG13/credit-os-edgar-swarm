@@ -1,10 +1,12 @@
-import { useState, type Dispatch, type SetStateAction } from "react";
-import { ArrowRight } from "@untitledui/icons";
+import { useEffect, useState, type Dispatch, type SetStateAction } from "react";
+import { ArrowRight, BookOpen01 } from "@untitledui/icons";
+import { Alert } from "@/components/alert/Alert";
+import { EmptyState } from "@/components/application/empty-state/empty-state";
 import { Button } from "@/components/base/buttons/button";
 import { ButtonGroup, ButtonGroupItem } from "@/components/base/button-group/button-group";
 import { PageHeader } from "../../shell/PageHeader";
 import { TextLink } from "../run/TextLink";
-import { card, ErrorNotice, field, heading, label } from "./layout";
+import { card, field, heading, label } from "./layout";
 import {
   getLibraryIndex,
   reportPath,
@@ -13,7 +15,7 @@ import {
   type LibraryIndex,
 } from "./publishedReport";
 import { HeadlineFigures } from "./HeadlineFigures";
-import { useResource } from "./useResource";
+import { isUnreachable } from "./useResource";
 
 type LibraryFilters = { query: string; sector: string; pathway: string };
 
@@ -123,11 +125,7 @@ function MatchRuns({
         </ButtonGroup>
       </div>
       {cards.length === 0 ? (
-        <p className={card}>
-          {filters.query.trim() || filters.sector !== "all" || filters.pathway !== "all"
-            ? "No issuers match these filters."
-            : "No reports yet"}
-        </p>
+        <p className={card}>No issuers match these filters.</p>
       ) : layout === "cards" ? (
         <ul className="grid gap-4 lg:grid-cols-2">
           {cards.map(({ key, entries, newest, linked }) => (
@@ -202,40 +200,114 @@ function MatchRuns({
   );
 }
 
+/** How reading the library failed: the request never arrived, or the service could not give it. */
+type Problem = "unreachable" | "failed";
+const PROBLEMS = {
+  unreachable: {
+    title: "The service cannot be reached",
+    text: "The library could not be loaded. Try again, or ask whoever runs the service to check it.",
+  },
+  failed: {
+    title: "The library could not be loaded",
+    text: "The service could not read the published library. Try again, or ask whoever runs the service to check it.",
+  },
+} as const;
+
+/** The library index, asked for again by `retry`; a failure stays on screen until the next answer. */
+function useLibrary() {
+  const [value, setValue] = useState<LibraryIndex | null>();
+  const [problem, setProblem] = useState<Problem>();
+  const [attempts, setAttempts] = useState(0);
+  useEffect(() => {
+    const controller = new AbortController();
+    getLibraryIndex(controller.signal).then(
+      (index) => {
+        if (controller.signal.aborted) return;
+        setValue(index);
+        setProblem(undefined);
+      },
+      (failure: unknown) => {
+        if (!controller.signal.aborted)
+          setProblem(isUnreachable(failure) ? "unreachable" : "failed");
+      },
+    );
+    return () => {
+      controller.abort();
+    };
+  }, [attempts]);
+  const retry = () => {
+    setAttempts((count) => count + 1);
+  };
+  return { value, problem, retry };
+}
+
+function EmptyLibrary() {
+  return (
+    <EmptyState>
+      <EmptyState.Header>
+        <EmptyState.FeaturedIcon icon={BookOpen01} />
+      </EmptyState.Header>
+      <EmptyState.Content>
+        <EmptyState.Title>No reports yet</EmptyState.Title>
+        <EmptyState.Description>
+          A report appears here once a run has finished.
+        </EmptyState.Description>
+      </EmptyState.Content>
+      <EmptyState.Footer>
+        <Button href="/start" color="secondary">
+          Start a run
+        </Button>
+      </EmptyState.Footer>
+    </EmptyState>
+  );
+}
+
 export function ReportLibrary() {
-  const { value, error } = useResource(getLibraryIndex);
+  const { value, problem, retry } = useLibrary();
   const [filters, setFilters] = useState<LibraryFilters>({
     query: "",
     sector: "all",
     pathway: "all",
   });
+  // No index and an index with no report are one state; with nothing to filter, no filter is shown.
+  const empty = value === null || value?.catalogue.real.length === 0;
   return (
     <>
       <PageHeader title="Library" actions={<Button href="/start">Start a run</Button>} />
       <section className="mt-6 grid gap-4">
-        {error && <ErrorNotice>{error}</ErrorNotice>}
-        {value === undefined && !error && (
+        {problem && (
+          <Alert
+            tone="error"
+            title={PROBLEMS[problem].title}
+            action={
+              <Button size="sm" color="secondary" onPress={retry}>
+                Try again
+              </Button>
+            }
+          >
+            {PROBLEMS[problem].text}
+          </Alert>
+        )}
+        {value === undefined && !problem && (
           <p role="status" className="text-text-secondary">
             Loading reports…
           </p>
         )}
-        {value === null && <p className={card}>No reports yet</p>}
-        {value && (
+        {empty && <EmptyLibrary />}
+        {value && !empty && (
           <>
-            {value.catalogue.real.length > 0 && (
-              <label className={`${label} max-w-md`}>
-                Search issuers
-                <input
-                  type="search"
-                  value={filters.query}
-                  onChange={(event) => {
-                    const query = event.currentTarget.value;
-                    setFilters((previous) => ({ ...previous, query }));
-                  }}
-                  className={field}
-                />
-              </label>
-            )}
+            <label className={`${label} max-w-md`}>
+              Search issuers
+              <input
+                type="search"
+                value={filters.query}
+                onChange={(event) => {
+                  const query = event.currentTarget.value;
+                  setFilters((previous) => ({ ...previous, query }));
+                }}
+                className={field}
+              />
+            </label>
             <MatchRuns snapshot={value} filters={filters} setFilters={setFilters} />
           </>
         )}

@@ -8,9 +8,10 @@ from decimal import Decimal
 from http.client import HTTPConnection
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import get_args
+from typing import Any, get_args
 
 import pytest
+import update_library
 
 from deploy_vii.contracts import PATHWAY_CAP_USD
 from deploy_workflow.inbox import activity, runs, startup
@@ -96,10 +97,28 @@ def test_react_page_routes_serve_the_build(hosted: _Server, web: Path) -> None:
         assert request(hosted, path)[0] == 404
 
 
+def _form_template() -> dict[str, Any]:
+    """The example case the start form opens from: its settings, but no issuer (J2-002)."""
+    template = json.loads((PROJECT / "cases/context/research-minimal.json").read_bytes())
+    template["identity"].update(issuer_name="", issuer_id="")
+    return template
+
+
+def test_start_form_template_names_no_issuer(hosted: _Server) -> None:
+    sent = json.loads(request(hosted, "/connected/context")[1])
+    assert sent["identity"]["issuer_name"] == ""
+    assert sent["identity"]["issuer_id"] == ""
+    assert "Northbridge" not in json.dumps(sent["identity"])
+    example = json.loads((PROJECT / "cases/context/research-minimal.json").read_bytes())
+    assert example["identity"]["issuer_name"] == "Northbridge Group"  # the file itself is unchanged
+    assert {k: v for k, v in sent["identity"].items() if k not in ("issuer_name", "issuer_id")} == {
+        k: v for k, v in example["identity"].items() if k not in ("issuer_name", "issuer_id")
+    }
+
+
 def test_same_origin_service_and_submit_gate(hosted: _Server) -> None:
-    context = json.loads((PROJECT / "cases/context/research-minimal.json").read_bytes())
     assert json.loads(request(hosted, "/connected/context")[1]) == {
-        **context,
+        **_form_template(),
         "submission_caps_usd": {pathway: str(cap) for pathway, cap in PATHWAY_CAP_USD.items()},
     }
     assert request(hosted, "/connected/context", headers={"Origin": "http://other.test"})[0] == 403
@@ -362,8 +381,12 @@ def test_activity_sends_a_reason_without_the_service_root(hosted: _Server) -> No
     ended = {run["id"]: run["reason"] for run in listing["ended"]}
     single = json.loads(request(hosted, "/connected/activity/p-path")[1])["reason"]
 
-    relative = Path("_engine") / "state" / "issuers.json"
-    assert ended["p-path"] == f"could not be filed: {relative} is bad"
+    # A reason the scheduler wrote is sent as the reader's sentence, with no path in it; any other
+    # reason (the running run's below) is sent as stored with the root removed.
+    assert ended["p-path"] == (
+        "The run finished, but the service could not file its report. Ask whoever runs the "
+        "service to check the service's log before starting it again."
+    )
     assert single == ended["p-path"]
     assert ended["q-plain"] == "Provider error"
     assert listing["runs"][0]["reason"] == f"waiting on {Path('inbox') / 'a.pdf'}"
@@ -476,6 +499,166 @@ def test_reports_admission_and_reader_snapshot(hosted: _Server, root: Path) -> N
     assert request(hosted, "/connected/snapshot")[0] == 500
 
 
+@pytest.mark.parametrize("query", ["", "?run=demo"])
+def test_snapshot_sends_no_server_path_even_from_an_older_publication(
+    hosted: _Server, root: Path, query: str
+) -> None:
+    """An older data.js names the engine folder in catalogue.workspace; the snapshot drops it."""
+    scheduler = hosted.scheduler
+    assert isinstance(scheduler, Scheduler)
+    library = root / "_engine" / "library"
+    library.mkdir(exist_ok=True)
+    export = {
+        "catalogue": {
+            "real": [{"id": "demo", "name": "Émetteur", "date": "2026-10-31"}],
+            "workspace": str(root / "_engine"),
+            "built_at": "01 Nov 2026, 09:00:00 UTC",
+        },
+        "workspace": {"runs": {"run-key": {"folder": "demo", "pathway": "credit_snapshot"}}},
+        "activity": {"excluded": [], "issues": []},
+        "chips": {},
+    }
+    (library / "data.js").write_text(
+        f"window.CREDIT_OS_DATA={json.dumps(export)};\n", encoding="utf-8"
+    )
+    runs.save(
+        scheduler.layout,
+        runs.Record(
+            id="demo", pathway="credit_snapshot", folder="demo", status="finished", claimed_at=""
+        ),
+    )
+    status, body, _ = request(hosted, f"/connected/snapshot{query}")
+    assert status == 200
+    sent = json.loads(body)
+    assert "workspace" not in sent["catalogue"]
+    assert sent["catalogue"] == {
+        "real": export["catalogue"]["real"],
+        "built_at": export["catalogue"]["built_at"],
+    }
+    assert str(root) not in body.decode("utf-8")
+    assert sent["workspace"]["runs"] == export["workspace"]["runs"]
+
+
+PUBLICATION_PREFIX = "window.CREDIT_OS_DATA="
+
+
+def _publish(root: Path, workspace: str | None, *, without: tuple[str, ...] = ()) -> dict[str, Any]:
+    """Write library/data.js as the library builder writes it; ``workspace`` is an older build's.
+    ``without`` names top-level parts left out, as a hand-made file may."""
+    library = root / "_engine" / "library"
+    library.mkdir(parents=True, exist_ok=True)
+    catalogue = {"real": [{"id": "demo", "name": "Émetteur"}], "built_at": "01 Nov 2026"}
+    if workspace is not None:
+        catalogue["workspace"] = workspace
+    export: dict[str, Any] = {
+        "catalogue": catalogue,
+        "workspace": {"runs": {"run-key": {"folder": "demo", "pathway": "credit_snapshot"}}},
+        "activity": {"excluded": [], "issues": ["a < b"]},
+        "chips": {"output:1": [{"text": "<script>test</script>"}]},
+    }
+    export = {key: value for key, value in export.items() if key not in without}
+    text = update_library.embedded_json(export)
+    (library / "data.js").write_text(f"{PUBLICATION_PREFIX}{text};\n", encoding="utf-8")
+    (library / "index.html").write_text('<script src="data.js"></script>', encoding="utf-8")
+    return export
+
+
+def _served_as_built(export: dict[str, Any]) -> bytes:
+    """What the builder writes for ``export`` (update_library.build_into), as the page loads it."""
+    return f"{PUBLICATION_PREFIX}{update_library.embedded_json(export)};\n".encode("ascii")
+
+
+def _without_workspace(export: dict[str, Any]) -> dict[str, Any]:
+    """``export`` without the ``catalogue.workspace`` the test planted."""
+    catalogue = {k: v for k, v in export["catalogue"].items() if k != "workspace"}
+    return {**export, "catalogue": catalogue}
+
+
+@pytest.mark.parametrize("name", ["data.js", "/data.js", "%64ata.js", "./data.js", "x/../data.js"])
+def test_library_data_js_sends_no_server_path_from_an_older_publication(
+    hosted: _Server, root: Path, name: str
+) -> None:
+    """The library page's data file loses catalogue.workspace, whichever way its path is spelt, and
+    is otherwise the very bytes the builder writes."""
+    older = _publish(root, str(root / "_engine"))
+    on_disk = (root / "_engine" / "library" / "data.js").read_bytes()
+    status, body, headers = request(hosted, f"/library/{name}")
+    assert status == 200
+    assert "javascript" in headers["Content-Type"] and "Content-Security-Policy" in headers
+    assert str(root) not in body.decode("ascii")
+    assert body == _served_as_built(_without_workspace(older))
+    assert (root / "_engine" / "library" / "data.js").read_bytes() == on_disk
+
+
+@pytest.mark.parametrize("without", [("chips",), ("activity",), ("chips", "activity", "workspace")])
+def test_library_data_js_with_the_key_loses_only_the_key(
+    hosted: _Server, root: Path, without: tuple[str, ...]
+) -> None:
+    """The key is dropped from a publication that lacks parts the page itself tolerates."""
+    older = _publish(root, str(root / "_engine"), without=without)
+    status, body, _ = request(hosted, "/library/data.js")
+    assert (status, body) == (200, _served_as_built(_without_workspace(older)))
+
+
+HAND_MADE = json.dumps(
+    {"catalogue": {"real": [{"name": "Émetteur <b>"}]}, "workspace": {}},
+    indent=2,
+    ensure_ascii=False,
+)
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        f'{PUBLICATION_PREFIX}{{"catalogue":[]}};\n',
+        f'{PUBLICATION_PREFIX}{{"catalogue":"my workspace"}};\n',
+        f"{PUBLICATION_PREFIX}{{}};\n",
+        f'{PUBLICATION_PREFIX}{{"catalogue":{{"real":[]}},"workspace":{{}}}};',
+        f"{PUBLICATION_PREFIX}{HAND_MADE};\r\n",
+    ],
+)
+def test_library_data_js_without_the_key_is_served_as_read(
+    hosted: _Server, root: Path, text: str
+) -> None:
+    """A data file that parses and holds no catalogue.workspace is answered as it was read: nothing
+    is demanded of its other parts and its bytes are not rewritten."""
+    _publish(root, None)
+    publication = root / "_engine" / "library" / "data.js"
+    publication.write_bytes(text.encode("utf-8"))
+    assert request(hosted, "/library/data.js")[:2] == (200, text.encode("utf-8"))
+
+
+def test_library_files_without_a_server_path_are_served_as_written(
+    hosted: _Server, root: Path
+) -> None:
+    """A current data.js, the page that loads it and any other library file are not rewritten."""
+    _publish(root, None)
+    library = root / "_engine" / "library"
+    (library / "notes.txt").write_text("catalogue.workspace is not drawn", encoding="utf-8")
+    for name in ("data.js", "index.html", "notes.txt"):
+        status, body, _ = request(hosted, f"/library/{name}")
+        assert (status, body) == (200, (library / name).read_bytes())
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        f"{PUBLICATION_PREFIX}{{}};console.log(0);",
+        f'{PUBLICATION_PREFIX}{{"catalogue":{{"workspace":"/x"}}',
+        f'{PUBLICATION_PREFIX}{{"catalogue":{{"workspace":"/x"}},}};\n',
+        f"{PUBLICATION_PREFIX}[];\n",
+        f"{PUBLICATION_PREFIX};\n",
+    ],
+)
+def test_library_data_js_refuses_data_that_is_not_a_json_object(
+    hosted: _Server, root: Path, text: str
+) -> None:
+    """Data that begins with the assignment and cannot be read as a JSON object is refused."""
+    _publish(root, None)
+    (root / "_engine" / "library" / "data.js").write_text(text, encoding="utf-8")
+    assert request(hosted, "/library/data.js")[0] == 500
+
+
 def test_inherits_startup_checks_and_workspace_lock(
     hosted: _Server, root: Path, web: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -510,7 +693,7 @@ def test_synthetic_mode_uses_the_explicit_launcher(
             page = request(server, "/")[1]
             assert b'credit-os-mode" content="synthetic"' in page
             assert b'credit-os-signal-url"' not in page
-            expected = json.loads((PROJECT / "cases/context/research-minimal.json").read_bytes())
+            expected = _form_template()
             expected["run"]["case_kind"] = "synthetic"
             expected["submission_caps_usd"] = {
                 pathway: str(cap) for pathway, cap in PATHWAY_CAP_USD.items()
