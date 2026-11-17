@@ -1,4 +1,5 @@
 import { EmptyState } from "@/components/application/empty-state/empty-state";
+import { DesignReferenceNote } from "@/shell/DesignReferenceNote";
 import { PageHeader } from "@/shell/PageHeader";
 import { useSource } from "../source";
 import { runAddress } from "./runAddress";
@@ -19,6 +20,7 @@ export function RunsIndexPage() {
   const unnamed = unreadable.length - named.length;
   return (
     <div className="flex flex-col gap-8 p-8">
+      {slice.kind === "ok" ? <DesignReferenceNote /> : null}
       <PageHeader as="h1" title="Financial models" />
       {runs.length === 0 && unreadable.length === 0 ? (
         <EmptyState>
