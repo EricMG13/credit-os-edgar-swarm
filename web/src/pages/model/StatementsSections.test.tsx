@@ -177,8 +177,8 @@ describe("Model page: bridges", () => {
     expect(links.map((l) => l.getAttribute("aria-label"))).toEqual(
       [
         "Net debt, FY25E",
-        "Free cash flow, FY26",
-        "Free cash flow, FY27",
+        "Effect of free cash flow on net debt, FY26",
+        "Effect of free cash flow on net debt, FY27",
         "Acquisitions",
         "Shareholder returns",
         "Net debt, FY27E",
