@@ -251,11 +251,11 @@ describe("Module, the risk matrix", () => {
     expect(screen.getByRole("dialog", { name: "Sources for the risk matrix" })).toBeVisible();
   });
 
-  it("is one Records entry in the navigator, and moves focus to the first block's heading", () => {
+  it("is an entry in the navigator named by the block's heading, and moves focus to it", () => {
     renderModule("business-profile");
     const scroll = vi.fn();
     Element.prototype.scrollIntoView = scroll;
-    fireEvent.click(within(nav()).getByRole("button", { name: "Records" }));
+    fireEvent.click(within(nav()).getByRole("button", { name: "Risks by probability and impact" }));
     const heading = screen.getByRole("heading", { name: "Risks by probability and impact" });
     expect(scroll.mock.contexts[0]).toBe(heading.closest("[data-section]"));
     expect(heading).toHaveFocus();
@@ -428,7 +428,9 @@ describe("Module, the pathway", () => {
 describe("Module, records that sit side by side", () => {
   it("stack up to 1199px wide and go two-up from 1200px, like the chart pair", () => {
     renderModule("business-profile");
-    const row = region("Indicators to watch").parentElement as HTMLElement;
+    // Each prose block is a navigator target, so it sits in its own [data-section] wrapper.
+    const row = region("Indicators to watch").closest("[data-section]")
+      ?.parentElement as HTMLElement;
     expect(row).toHaveClass("grid-cols-1", "min-[1200px]:grid-cols-2");
     expect(row).not.toHaveClass("md:grid-cols-2", "min-[1001px]:grid-cols-2");
   });
@@ -453,7 +455,7 @@ describe("Module, the navigator", () => {
     );
   });
 
-  it("lists this module's sections, Records among them", () => {
+  it("lists this module's sections, its record blocks among them by their headings", () => {
     renderModule("business-profile");
     const sections = within(within(nav()).getAllByRole("list")[0] as HTMLElement).getAllByRole(
       "button",
@@ -463,7 +465,10 @@ describe("Module, the navigator", () => {
       "Key findings",
       "Contrary evidence",
       "What would change the view",
-      "Records",
+      "Risks by probability and impact",
+      "Indicators to watch",
+      "Questions this module set out to answer",
+      "How a programme delay reaches the credit",
       "Limitations",
     ]);
   });
