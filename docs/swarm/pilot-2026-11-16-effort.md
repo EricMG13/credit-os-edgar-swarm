@@ -30,7 +30,8 @@ All 8 runs ended with exit 0, every module accepted, a delivery written.
   defects; the launcher's run folders hold the accepted answers.
 - The earlier 118-issuer swarm's analyst effort was not recorded, so there is no baseline.
 
-## Decision pending
+## Decision (owner, 2026-11-17: "agreed")
 
-Owner to choose the swarm's analyst effort. If high shows no quality gain in the blind review,
-medium with a two-retry cap per module is the cheaper choice.
+Swarm analysts run Sonnet at **medium**, with a cap of 2 resubmissions per module; an issuer that
+exceeds it is marked `failed` in the ledger and retried in a second pass. Provisional: if the blind
+review of the 8 pilot pairs shows high is clearly more accurate, use high for CP-1A and CP-2 only.
