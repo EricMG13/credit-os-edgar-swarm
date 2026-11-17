@@ -24,14 +24,30 @@ All 8 runs ended with exit 0, every module accepted, a delivery written.
 
 ## Not established
 
-- Answer quality. No blind review of each medium/high pair against the checklist was run.
 - Token cost of high over medium.
 - Sample is 4 issuers, 8 runs, with the analysts' own reports as the source for attempts and
   defects; the launcher's run folders hold the accepted answers.
 - The earlier 118-issuer swarm's analyst effort was not recorded, so there is no baseline.
 
-## Decision (owner, 2026-11-17: "agreed")
+## Blind quality review (2026-11-17)
 
-Swarm analysts run Sonnet at **medium**, with a cap of 2 resubmissions per module; an issuer that
-exceeds it is marked `failed` in the ledger and retried in a second pass. Provisional: if the blind
-review of the 8 pilot pairs shows high is clearly more accurate, use high for CP-1A and CP-2 only.
+Four Opus reviewers (one per issuer) saw the medium and high answer sets as A and B, in random order,
+and checked sampled claims against the filings (at least 8 per module, 3 recomputed figures per
+module, "not supplied" claims searched in the sources).
+
+| Effort | Claims checked | Wrong | Unsupported | Medium or high severity |
+| --- | --- | --- | --- | --- |
+| medium | 106 | 11 | 12 | 11 |
+| high | 120 | 8 | 3 | 5 |
+
+High was preferred on all 4 issuers. Medium's American Airlines answer left regional D&A out of
+EBITDA (8.87x against 8.02x leverage, carried into CP-2) and called two lien rankings "not stated".
+High was not clean: its Caesars answer had 4 wrong claims against 1, yet was preferred for coverage.
+Limits: sampled claims, not full checks; high got about 14 more checks; no per-module breakdown.
+
+## Decision (owner, 2026-11-17: "set to high")
+
+Swarm analysts run Sonnet at **high** (this supersedes the earlier "agreed" decision for medium),
+with a cap of 2 resubmissions per module; an issuer that exceeds it is marked `failed` in the ledger
+and retried in a second pass. Token cost of high over medium is not measured: the first pilot batch
+(5 issuers) should record it.

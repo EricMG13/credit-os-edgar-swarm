@@ -132,7 +132,7 @@ while (claimed < limit) {
           phase: 'Analyse',
           schema: REPORT_SCHEMA,
           model: 'sonnet',
-          effort: 'medium',
+          effort: 'high',
           agentType: 'general-purpose',
         },
       )

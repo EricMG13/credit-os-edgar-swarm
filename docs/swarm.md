@@ -23,10 +23,10 @@ No filing, credential or key is committed. The packs, contexts and the root stay
 2. Pilot batch: launch the script with
    `Workflow({scriptPath: 'tools/swarm/swarm.workflow.js', args: {root: ROOT, repo: REPO, concurrency: 5, limit: 5}})`.
    The script has no shell, so each ledger, verify and `update_library` command runs inside a
-   small low-effort runner agent; the analysts are Sonnet agents at medium effort. Read the five run folders and the
+   small low-effort runner agent; the analysts are Sonnet agents at high effort. Read the five run folders and the
    ledger (`uv run python tools/swarm/ledger.py --root ROOT status`) before going on.
 3. Full run: the same workflow with `args {root, repo, concurrency: 10}`. It claims batches of
-   up to `concurrency` issuers, runs one Sonnet analyst (medium effort) per issuer, records the
+   up to `concurrency` issuers, runs one Sonnet analyst (high effort) per issuer, records the
    outcome in the ledger, rebuilds the library once per batch, and stops when nothing is pending.
 4. Second pass: `args {root, repo, secondPass: true}` claims the `failed` issuers once more. It
    is explicit; the first pass never retries them. The launcher resumes the run folder.
@@ -53,13 +53,13 @@ Only the controller (the workflow script) writes the ledger; analysts never do.
 
 ## Effort and retry decision
 
-Analysts run Sonnet at medium, owner-approved 2026-11-17 (`docs/swarm/pilot-2026-11-16-effort.md`).
+Analysts run Sonnet at high, owner-approved 2026-11-17 after the blind review (`docs/swarm/pilot-2026-11-16-effort.md`).
 A module may be resubmitted at most 2 times (3 launcher attempts). A module over that cannot be
 recorded `published`; the issuer is `failed`.
 
 ## Not verified
 
 - Answers are format-checked by the launcher only; no independent review of content is run.
-- The pilot compared 4 issuers; quality of medium against high is not established.
+- The pilot compared 4 issuers; high was preferred on all 4 by a blind sampled review. Its token cost over medium is not measured.
 - Ratings in `hy-list.md` are provisional.
 - `swarm.workflow.js` was syntax-checked with node, never run through the Workflow tool, so the agent schemas, the runner agents and `parallel` ordering are untested.
