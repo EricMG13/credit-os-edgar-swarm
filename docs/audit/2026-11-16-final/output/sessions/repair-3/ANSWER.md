@@ -48,3 +48,24 @@ I have noted the ReportLibrary.design.test.tsx failure and the fixture cards who
 Yes, make the one-line change in StatementBlock.tsx. When traceForRow is given, skip the table-level control; otherwise draw it, marker included. L9's "unconditionally" meant "draw a stated gap where a trace is missing". It did not mean "add a marker to a table whose rows each carry their own trace", so this follows the intent.
 
 Add a test for each case: with traceForRow there is no table-level control or marker and each row keeps its control; without traceForRow the static Capital structure table shows the marker. Then the reviewer checks that S3-007's probe still exits 0. Name this in output/5-repair/T35.md beside the reviewer's list of connected places.
+
+# Lead: owner ruling R14 (2026-11-17, received 10:59 UTC by message from the lead session)
+
+Owner: "only pc, no need for keyboard". The app runs only on desktop PCs with a mouse. A finding that shows only at 480 px or less, on touch, or with the keyboard alone (focus, tab order, arrow keys, focus rings) is no longer a defect. Screen-reader, contrast and colour findings stay.
+
+For group 3:
+- Withdraw T28 (S1-003) if it is not merged.
+- T27: drop S1-002's focus half; keep the route titles and the scroll reset.
+- T37: drop S3-006's narrow-screen picker; keep the navigator search and S3-005.
+- T39: drop S4-007 if it is not done; keep S4-006, S4-008 and S4-009.
+- T41: drop S6-001, S6-002 and S6-010 if they are not done; keep S6-007.
+- S3-011 (contrast) stays.
+- T29, T30, T33's S2-005 part, T35's S3-002 part, T36 and T40's S5-005 and S5-008 parts are merged or reviewed: keep them, do not revert.
+
+No round is spent on the dropped findings from now on. Record R14 in the affected task reports.
+
+Controller's application:
+- T28 was not started; it is withdrawn, and output/5-repair/T28.md records that.
+- T27 round 2 was redirected. It keeps the titles, the live-region announcement (screen reader, kept) and the scroll reset and restore, removes the route-change focus moves, and drops the round-1 Medium (keyboard-only outline on main) as moot.
+- T41 had merged with S6-001, S6-002 and S6-010 done, so they are kept.
+- T37 and T39 start with the dropped parts left out.

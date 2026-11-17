@@ -226,3 +226,50 @@ One entry per task: the reviewer was a fresh Sonnet agent at xhigh effort that d
   - The Rounds line is ambiguous (the controller tidies it).
   - `header.sample` is still validated by the model reader but no longer drawn.
 - Info: RunPage.tsx's not-found and unreadable frames draw no note. That is within L7's named scope, and those states show no sample.
+
+## T27 (S1-002 with S2-003, S2-013, S3-001, S4-004, S4-020, S5-017, J6-011, J6-002, J6-003), round 1
+
+- Commit reviewed: a9aef12 (implementer Sonnet). Verdict: FAIL, one Medium. Sent back to a fresh Sonnet implementer for round 2.
+- Medium: Shell.tsx:81 glues `focus:outline-none` to a template literal, so Tailwind builds no rule. After every keyboard route change, `main` is focused with the browser's default outline (`outline: auto 1px`) around the content area. Before T27, only the skip link focused `main`.
+- What passed:
+  - On the parent source the new test fails 38 of 39 (the item-row guard passes); at HEAD 39 of 39 pass.
+  - No existing test, expected value, probe or config changed.
+  - Titles use only reader words already on the page and follow the connected app's `page — issuer — Credit OS` form.
+  - Focus rules hold on first load, when the page sets its own focus, on the same link, and on `main` otherwise. The skip link works. Typing does not lose focus.
+  - `replaceState` adds no history entry and keeps the hash. One polite live region, empty on first load.
+  - j6-scroll-carried-across-pages.cjs's Back value (2362) was verified to be where Playwright's click left the page, so the repair is correct and the probe baseline is wrong.
+- Gates the reviewer saw:
+  - lint 0, format:check 0, typecheck 0, build 0.
+  - vitest: 71 files, 2284 tests. Signal: 34 files, 630 tests.
+  - file-check.mjs 0 (137 PASS).
+  - Nine probes exit 0. j6-low-checks.cjs exits 2 at T25's removed Kit link; its line a shows six distinct titles.
+- Low, left to the lead's batch:
+  - The run start steps share one title and one announcement (needs run/routes.tsx subjects). Moving between Trace items gives identical titles.
+  - The `offsets` Map is never pruned.
+- Info: Signal pages are all titled "Signal — Credit OS". Signal's inner scroller was not checked.
+
+## T41 (S6-001, S6-002, S6-007, S6-010)
+
+- Reviewed: 6f390d8 (first implementer) and 38c79f9..6f2fcf6 (second implementer). Verdict: PASS. Merged onto audit/repair-3.
+- Files: the controller cleared Started.tsx (T25's) and run/routes.tsx (T26's), both group 3's and both merged. For S6-007 the index option was taken; dropping the breadcrumb word would remove something the reader sees (R5).
+- Against pre-change copies:
+  - Part 1: 4 of 7 new tests fail; the 3 that pass are guards.
+  - Part 2: 28 of 45 fail. The 17 that pass are guards.
+  - The only existing test changed is ActivityMore.test.tsx:142 (`#/run` to `#/run/runs`). The timer-ban test is unchanged and passes.
+- S6-001: the focused Purpose card now paints a solid 2px #001AFF ring. The connected Start page, checked on proof.serve (synthetic, port 8732), gets the same ring.
+- S6-010: badges.tsx is unchanged; the label rows override `whitespace-nowrap` through className. With a 13x13-character unbroken label there is no overflow at 1440, 390 or 320 px, and Stop run stays in view.
+- S6-002: after Confirm, focus is on the Run started title; the next Tab reaches "Watch run activity". Uses no timer.
+- S6-007:
+  - `/run/runs` lists 10 runs in CM-090's groups. Every field comes from the slice, and each row links to `#/run/activity/<id>`.
+  - `#/run`, `#/run/activity` and `/run/start` are unchanged.
+  - All three empty states are tested.
+- Gates the reviewer saw:
+  - lint 0, format:check 0, typecheck 0, duplication 0, unused 0.
+  - vitest: run, shell and route-table 374 tests; StartRun and components 354; ConnectedApp 185; Signal 630.
+  - test:scripts 0. test:file:gates 0 (`PASS route run /run/runs`).
+  - Probes: s6-radio-focus, s6-submit-focus, s6-runs-link and s6-long-label all exit 0.
+- Low:
+  - The focused Run started title shows Chromium's default ring, not the 2px focus-token ring that StartRun.tsx:1157 and AnalysisCharts.tsx:7 use for focused headings. Batch fix: add `focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus` to the title's classes.
+  - Ten index links share the name "TransDigm Group" (one issuer in the fixture).
+  - Ended includes the Finished run; CM-090 says "ended without a report".
+- Integration: T27's route-change focus must keep the Run started title focused after Submit, then Confirm. T27 round 2 checks this on the merged tip.

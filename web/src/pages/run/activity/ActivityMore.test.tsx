@@ -139,7 +139,9 @@ describe("Run activity, cannot be read", () => {
 
   it("draws the Runs trail the other run records draw", () => {
     const trail = screen.getByRole("navigation", { name: "Breadcrumb" });
-    expect(within(trail).getByRole("link", { name: "Runs" }).getAttribute("href")).toBe("#/run");
+    expect(within(trail).getByRole("link", { name: "Runs" }).getAttribute("href")).toBe(
+      "#/run/runs",
+    );
     expect(trail.textContent).toBe("Runs / TransDigm Group");
   });
 
