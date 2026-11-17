@@ -373,10 +373,12 @@ function stack(table: SourceTable, descriptor: Descriptor, frame: Frame) {
     return null;
   // Every facility is a part, in rank order. One without a balance above zero is a legend row and
   // draws no segment, so the key names each colour and every facility left out of the plot.
-  const parts = table.rows.map((row) => {
-    const text = row[column] ?? "";
-    return { name: row[label] ?? "", value: amount(text), text };
-  });
+  const values = columnAmounts(table, column);
+  const parts = table.rows.map((row, i) => ({
+    name: row[label] ?? "",
+    value: values[i] ?? null,
+    text: row[column] ?? "",
+  }));
   if (
     !distinct(parts.map((part) => part.name)) ||
     parts.some((part) => (part.value ?? 0) < 0) ||
