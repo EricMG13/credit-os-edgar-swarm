@@ -126,12 +126,30 @@ describe("RangeStripChart", () => {
     expect(texts("Aftermarket share of revenue")).toEqual(["55%", "52%"]);
   });
 
-  it("draws no strip and no tick where the range is missing", () => {
+  it("draws a tick per case but no strip where the range is missing (X1-023)", () => {
     render(ui());
     const row = rowOf("Aftermarket share of revenue");
     expect(row.querySelector("[data-range]")).toBeNull();
-    expect(row.querySelector("[data-marker]")).toBeNull();
+    const ticks = [...row.querySelectorAll("[data-marker]")];
+    expect(ticks.map((t) => t.getAttribute("data-name"))).toEqual(CASES);
+    // The row's own axis is 0 to 100: positions 55 and 52.
+    expect(num(ticks[0] ?? null, "data-left")).toBeCloseTo(55, 5);
+    expect(num(ticks[1] ?? null, "data-left")).toBeCloseTo(52, 5);
+    expect(row.querySelector("[data-track-missing]")).toBeNull();
     expect(within(row).getByText("Range n.a.")).toBeVisible();
+  });
+
+  it("writes n.a. in the track where there is no range and no tick to draw", () => {
+    const first = DRIVERS[0] as RangeRow;
+    const bare = { ...first, range: null, markers: mk(null, null, null, null) };
+    const only = { head: DRIVER_TABLE.head, rows: DRIVER_TABLE.rows.slice(0, 1) };
+    render(<RangeStripChart title="T" rangeLabel="R" rows={[bare]} table={only} />);
+    const row = rowOf(first.label);
+    expect(row.querySelector("[data-range]")).toBeNull();
+    expect(row.querySelector("[data-marker]")).toBeNull();
+    expect(row.querySelector("[data-track-missing]")).toHaveTextContent("n.a.");
+    // The two value cells still say n.a. themselves.
+    expect(row.querySelectorAll("[data-missing]")).toHaveLength(2);
   });
 
   it("draws the strip and n.a. for both cases where the markers are missing", () => {
@@ -139,6 +157,7 @@ describe("RangeStripChart", () => {
     const row = rowOf("Working capital days");
     expect(row.querySelector("[data-range]")).not.toBeNull();
     expect(row.querySelector("[data-marker]")).toBeNull();
+    expect(row.querySelector("[data-track-missing]")).toBeNull();
     expect([...row.querySelectorAll("[data-missing]")].map((m) => m.textContent)).toEqual([
       "n.a.not available",
       "n.a.not available",

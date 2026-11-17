@@ -11,6 +11,7 @@ export const SHAPES = [
   "square",
   "cross",
   "pause bars",
+  "hollow square",
 ] as const;
 
 export type Shape = (typeof SHAPES)[number];
@@ -52,6 +53,17 @@ const DRAWINGS: Record<Shape, ReactElement> = {
       <rect x="1.5" y="1" width="2.5" height="8" fill="currentColor" />
       <rect x="6" y="1" width="2.5" height="8" fill="currentColor" />
     </>
+  ),
+  "hollow square": (
+    <rect
+      x="0.75"
+      y="0.75"
+      width="8.5"
+      height="8.5"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+    />
   ),
 };
 

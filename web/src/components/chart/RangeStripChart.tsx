@@ -15,7 +15,7 @@ export interface RangeRow {
   label: string;
   /** The exact text of the range, shown under the label. */
   rangeText: string;
-  /** Position only; null draws no strip. */
+  /** Position only; null draws no strip (the cases' markers are still drawn). */
   range: { low: number; high: number } | null;
   /** Position and exact text of each case; both null exactly where the value is missing. */
   markers: { name: string; value: number | null; text: string | null }[];
@@ -85,6 +85,12 @@ function check({
 /** The mock's 2px ring in the card surface keeps a marker readable over the strip. */
 const MARKER = "absolute -ml-0.5 rounded-sm ring-2 ring-surface-card";
 
+/** The strip's left edge and width, as percentages of the row's own axis. */
+function trackSpan(range: { low: number; high: number }, axis: { min: number; max: number }) {
+  const left = pct(range.low, axis.min, axis.max);
+  return { left, width: pct(range.high, axis.min, axis.max) - left };
+}
+
 function Track({
   row: r,
   colors,
@@ -94,18 +100,26 @@ function Track({
   colors: string[];
   emphasised: number | undefined;
 }) {
-  if (r.range === null) return null;
-  const left = pct(r.range.low, r.axis.min, r.axis.max);
-  const width = pct(r.range.high, r.axis.min, r.axis.max) - left;
+  // Nothing to draw: the track says so, where a drawn strip or tick would have stood.
+  if (r.range === null && r.markers.every((m) => m.value === null)) {
+    return (
+      <span data-track-missing="" className="absolute inset-y-0 left-0 flex items-center">
+        <Missing />
+      </span>
+    );
+  }
+  const strip = r.range === null ? null : trackSpan(r.range, r.axis);
   return (
     <>
-      <i
-        data-range=""
-        data-left={left}
-        data-width={width}
-        className="absolute top-2 h-3 rounded-ds-xs bg-action-subtle-hover"
-        style={{ left: `${String(left)}%`, width: `${String(width)}%` }}
-      />
+      {strip === null ? null : (
+        <i
+          data-range=""
+          data-left={strip.left}
+          data-width={strip.width}
+          className="absolute top-2 h-3 rounded-ds-xs bg-action-subtle-hover"
+          style={{ left: `${String(strip.left)}%`, width: `${String(strip.width)}%` }}
+        />
+      )}
       {r.markers.map((m, i) => {
         if (m.value === null) return null;
         const at = pct(m.value, r.axis.min, r.axis.max);

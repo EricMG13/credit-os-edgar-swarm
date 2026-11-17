@@ -69,7 +69,7 @@ export function Alert({ tone, title, children, action }: AlertProps) {
             <span className="sr-only">{TONE_WORD[tone]}: </span>
             {title}
           </strong>
-          {children ? <p className={`mt-0.5 text-sm ${t.text}`}>{children}</p> : null}
+          {children ? <div className={`mt-0.5 text-sm ${t.text}`}>{children}</div> : null}
           {action ? <div className="mt-2">{action}</div> : null}
         </div>
       </div>
@@ -93,7 +93,7 @@ export function Callout({ title, children }: CalloutProps) {
         </span>
         <strong className={`block leading-tight font-medium ${t.text}`}>{title}</strong>
       </div>
-      <p className={`mt-1 text-body ${t.text}`}>{children}</p>
+      <div className={`mt-1 text-body ${t.text}`}>{children}</div>
     </div>
   );
 }

@@ -144,6 +144,29 @@ describe("theme.css", () => {
     }
   });
 
+  it("defines the three waterfall tokens from the Waterfall table, each resolving to its hex", () => {
+    const rows = section("Chart palette", "##")
+      .split("\n")
+      .filter((l) => /^\|\s*`waterfall-/.test(l));
+    expect(rows.map((r) => /`(waterfall-[a-z]+)`/.exec(r)?.[1])).toEqual([
+      "waterfall-total",
+      "waterfall-up",
+      "waterfall-down",
+    ]);
+    for (const row of rows) {
+      const cells = row.split("|").map((c) => c.trim());
+      const name = need(/`(waterfall-[a-z]+)`/.exec(cells[1] ?? "")?.[1], "waterfall token");
+      const hex = need(/#[0-9A-Fa-f]{6}/.exec(cells[3] ?? "")?.[0], `${name} hex`);
+      let value = need(declared(`color-${name}`), `--color-${name}`);
+      for (let hops = 0; hops < 8; hops++) {
+        const next = /^var\(--([a-z0-9_-]+)\)$/.exec(value)?.[1];
+        if (next === undefined) break;
+        value = need(declared(next), `--${next}`);
+      }
+      expect(value.toUpperCase(), name).toBe(hex.toUpperCase());
+    }
+  });
+
   it("defines the radius, shadow and type tokens from the design system", () => {
     const space = section("Space, radius, elevation, borders", "##");
     const radii = [...space.matchAll(/\|\s*`radius-(xs|sm|md|lg|full)`\s*\|\s*([0-9]+px)/g)];
