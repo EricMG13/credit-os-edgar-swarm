@@ -2,7 +2,7 @@ import { render, screen, within } from "@testing-library/react";
 import { expect, it } from "vitest";
 import type { OutputEntry } from "../publishedReport";
 import { EVENT_HEADERS } from "../visuals/EventLane";
-import { buildCalendar, Calendar } from "./Calendar";
+import { buildCalendar, Calendar, upcomingCalendarRows } from "./Calendar";
 
 const HASH = "2".repeat(64);
 const evidence = (line: number) => `/report/current#evidence/CP-2D-1~${HASH}-${String(line)}`;
@@ -102,26 +102,80 @@ it("plots the readable rows and lists a row of the wrong cell count as unreadabl
   expect(grid.getByRole("row", { name: /RefDate/ })).toBeInTheDocument();
 });
 
-it("plots and lists each row of a table whose rows share a source line, and says so", () => {
+it.each([
+  ["share a source line", [22, 22]],
+  ["have no line of their own", [22, 0]],
+])("withholds every row of a table whose rows %s, as the base did", (_case, lines) => {
+  const second = [...fine.slice(0, 3), "Second", ...fine.slice(4)];
   const rows = [
-    { line: 22, cells: fine },
-    { line: 22, cells: [...fine.slice(0, 3), "Second", ...fine.slice(4)] },
-    { line: 22, cells: refDate },
-    { line: 0, cells: [...fine.slice(0, 3), "Unlined", ...fine.slice(4)] },
+    { line: lines[0] ?? 22, cells: fine },
+    { line: lines[1] ?? 22, cells: second },
+    { line: 24, cells: refDate },
   ];
   const calendar = buildCalendar([handoff(rows)], "current");
-  expect(calendar.rows.map(({ cells, href }) => [cells[3], href])).toEqual([
-    ["Fine", evidence(22)],
-    ["Second", evidence(22)],
-    ["Unlined", evidence(20)],
+  expect(calendar.rows).toEqual([]);
+  expect(calendar.gaps).toEqual([
+    {
+      owner: "Liquidity",
+      href: evidence(20),
+      title: "Financing",
+      reason: "The recorded dates or precision could not be plotted.",
+    },
   ]);
-  expect(calendar.gaps).toHaveLength(1);
-  expect(calendar.gaps[0]?.reason).toContain("The event table does not identify each event row.");
   render(<Calendar calendar={calendar} />);
-  const grid = unplacedGrid();
-  expect(grid.getAllByRole("row")).toHaveLength(2);
-  expect(grid.getByRole("link", { name: "Source for RefDate · Liquidity" })).toHaveAttribute(
+  expect(screen.queryByRole("grid", { name: "Events not placed on the calendar" })).toBeNull();
+  expect(screen.queryByText("Fine")).toBeNull();
+  expect(screen.queryByText("Second")).toBeNull();
+  expect(screen.getByRole("link", { name: "Source for Financing" })).toHaveAttribute(
     "href",
-    evidence(22),
+    evidence(20),
   );
+});
+
+it("withholds a table whose rows are not each identified when a row cannot be read", () => {
+  const rows = [
+    { line: 22, cells: fine },
+    { line: 22, cells: ["2025-07", "month"] },
+  ];
+  const calendar = buildCalendar([handoff(rows)], "current");
+  expect(calendar.rows).toEqual([]);
+  expect(calendar.gaps.map(({ reason, unplaced }) => [reason, unplaced])).toEqual([
+    ["The event table could not be read.", undefined],
+  ]);
+});
+
+it("keeps the lane of a plotted status and draws no reference from it", () => {
+  const historical = [...fine.slice(0, 4), "Historical — per annual-report-2024.pdf p.3"];
+  const scheduled = [
+    "2027-03-31",
+    "day",
+    "2024-11-07",
+    "Notes due",
+    "Scheduled — CP-2D-GAP-007 open",
+    "Filing p.1",
+    "Wall",
+  ];
+  const calendar = buildCalendar(
+    [handoff(numbered([[...historical, ...fine.slice(5)], scheduled]))],
+    "current",
+  );
+  expect(calendar.rows.map(({ cells }) => cells[4])).toEqual([
+    "Historical — See Evidence",
+    "Scheduled — See Evidence",
+  ]);
+  expect(upcomingCalendarRows(calendar.rows, "2026-01-01")?.map(({ cells }) => cells[3])).toEqual([
+    "Notes due",
+  ]);
+  render(<Calendar calendar={calendar} />);
+  expect(document.body.textContent).not.toMatch(/annual-report-2024\.pdf|CP-2D-GAP-007/);
+  expect(screen.getAllByText("Historical — See Evidence").length).toBeGreaterThan(0);
+});
+
+it("says events are listed only when a listed row is a readable event", () => {
+  render(<Calendar calendar={buildCalendar([handoff(numbered([["a", "b"]]))], "current")} />);
+  expect(screen.queryByText(/events and date gaps are listed below/)).toBeNull();
+  expect(
+    screen.getByText("No dates could be placed on the calendar; the date gaps are listed below."),
+  ).toBeInTheDocument();
+  expect(screen.getByRole("row", { name: /could not be read/ })).toBeInTheDocument();
 });

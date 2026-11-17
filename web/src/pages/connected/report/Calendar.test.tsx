@@ -187,7 +187,7 @@ it("selects upcoming dates by recorded spans and keeps partial-date precision an
 });
 
 it.each([20, 0, 22.5, 22])(
-  "plots events whose source rows are invalid or duplicated and says the table does not identify each row: %s",
+  "withholds events whose source rows are invalid or duplicated: %s",
   (line) => {
     const handoff = entry("CP-2D", [
       "2027-04-15",
@@ -202,10 +202,7 @@ it.each([20, 0, 22.5, 22])(
     if (block?.type !== "table" || !block.rows[0]) throw new Error("Missing table fixture");
     block.rows.push({ ...block.rows[0], line });
     const calendar = buildCalendar([handoff], "current");
-    expect(calendar.rows.map(({ href }) => href.slice(-3))).toEqual([
-      "-22",
-      line === 22 ? "-22" : "-20",
-    ]);
+    expect(calendar.rows).toEqual([]);
     expect(calendar.gaps).toHaveLength(1);
     expect(calendar.gaps[0]?.reason).toBe("The event table does not identify each event row.");
     expect(calendar.gaps[0]?.href).toContain(`~${"2".repeat(64)}-20`);

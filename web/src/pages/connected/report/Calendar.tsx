@@ -28,10 +28,12 @@ const UNIDENTIFIED_REASON = "The event table does not identify each event row.";
 const UNREADABLE_REASON = "An event row could not be read.";
 const UNREADABLE_ROW = "This row could not be read";
 
+/** A reference in a status keeps the lane before it, so the lane still reads (`isHistoricalStatus`). */
 function eventDisplay(cells: string[]) {
-  return cells.map((text, index) =>
-    [2, 3, 6].includes(index) && containsReference(text) ? "See Evidence" : text,
-  );
+  return cells.map((text, index) => {
+    if (![2, 3, 4, 6].includes(index) || !containsReference(text)) return text;
+    return index === 4 ? `${text.split(" — ")[0] ?? ""} — See Evidence` : "See Evidence";
+  });
 }
 
 function readableCells(cells: unknown): cells is string[] {
@@ -42,42 +44,53 @@ function readableCells(cells: unknown): cells is string[] {
   );
 }
 
-/** Each row's own Evidence line; a row without one of its own links to the table. */
-function rowLocations(block: Table, entry: OutputEntry, folder: string) {
-  const own = block.rows.map(({ line }) => Number.isSafeInteger(line) && line > block.line);
-  const counts = new Map<number, number>();
-  block.rows.forEach(({ line }) => counts.set(line, (counts.get(line) ?? 0) + 1));
-  return {
-    hrefs: block.rows.map(({ line }, index) =>
-      evidencePath(folder, entry, own[index] ? line : block.line),
-    ),
-    identified: block.rows.every(({ line }, index) => own[index] && counts.get(line) === 1),
-  };
+/** Whether every row has its own Evidence line, after the table's and shared with no other row. */
+function identifiesEachRow(block: Table) {
+  const lines = block.rows.map(({ line }) => line);
+  return (
+    lines.every((line) => Number.isSafeInteger(line) && line > block.line) &&
+    new Set(lines).size === lines.length
+  );
+}
+
+/** As at 1778835: a table whose rows are not each identified is withheld as a whole. */
+function unidentifiedReason(block: Table, placed: number) {
+  if (!block.rows.every(({ cells }) => readableCells(cells))) {
+    return "The event table could not be read.";
+  }
+  return placed === block.rows.length ? UNIDENTIFIED_REASON : UNPLACED_REASON;
 }
 
 function placeEvents(block: Table, entry: OutputEntry, folder: string, owner: string) {
-  const { hrefs, identified } = rowLocations(block, entry, folder);
   const readable = block.rows.flatMap(({ cells }, index) => (readableCells(cells) ? [index] : []));
   const events = eventRecords({
     line: block.line,
     headers: EVENT_HEADERS,
     rows: readable.map((index) => block.rows[index]?.cells ?? []),
   });
+  if (!identifiesEachRow(block)) {
+    return { rows: [], reason: unidentifiedReason(block, events.length), unplaced: [] };
+  }
+  const href = (index: number) =>
+    evidencePath(folder, entry, block.rows[index]?.line ?? block.line);
   const placed = new Set(events.map(({ index }) => readable[index]));
   const rows: CalendarRow[] = events.flatMap(({ index, from, to }) => {
     const at = readable[index] ?? -1;
     const row = block.rows[at];
-    return row ? [{ owner, href: hrefs[at] ?? "", cells: eventDisplay(row.cells), from, to }] : [];
+    return row ? [{ owner, href: href(at), cells: eventDisplay(row.cells), from, to }] : [];
   });
   const unplaced: UnplacedEvent[] = block.rows.flatMap(({ cells }, index) => {
     if (placed.has(index)) return [];
-    const href = hrefs[index] ?? "";
     return readableCells(cells)
-      ? [{ href, cells: cells.map((text) => (containsReference(text) ? "See Evidence" : text)) }]
-      : [{ href, cells: [], unreadable: true }];
+      ? [
+          {
+            href: href(index),
+            cells: cells.map((text) => (containsReference(text) ? "See Evidence" : text)),
+          },
+        ]
+      : [{ href: href(index), cells: [], unreadable: true }];
   });
   const reason = [
-    identified ? "" : UNIDENTIFIED_REASON,
     unplaced.some((event) => !event.unreadable) ? UNPLACED_REASON : "",
     unplaced.some((event) => event.unreadable) ? UNREADABLE_REASON : "",
   ]
@@ -259,7 +272,7 @@ export function Calendar({ calendar }: { calendar: ReturnType<typeof buildCalend
         <CalendarFigure rows={calendar.rows} />
       ) : (
         <p className={card}>
-          {calendar.gaps.some(({ unplaced }) => unplaced?.length)
+          {calendar.gaps.some(({ unplaced }) => unplaced?.some((event) => !event.unreadable))
             ? "No published event could be placed on the calendar; the events and date gaps are listed below."
             : calendar.gaps.length
               ? "No dates could be placed on the calendar; the date gaps are listed below."
