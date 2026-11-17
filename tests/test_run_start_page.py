@@ -940,12 +940,14 @@ def test_the_review_names_yahoo_and_the_ticker_exactly_when_the_lookup_is_on(
     if (box) {{ box.checked = false; change(box); }}
     const S = await review();
     const facts = $('rv-facts').textContent;
+    // The page script's summary is the page's own SUMMARY: read it before the older-service
+    // case deletes a field, and return only what is asserted (the harness refuses an `error` key).
+    const kept = {{problem: S.error, modules: S.modules, lookup: S.web_lookup}};
     delete SUMMARY.web_lookup;  // an older service, which sends none
     renderFacts(build());
-    return {{error: S.error, modules: S.modules, lookup: S.web_lookup, facts,
-      older: $('rv-facts').textContent}};
+    return {{...kept, facts, older: $('rv-facts').textContent}};
     """)
-    assert seen["error"] == ""
+    assert seen["problem"] == ""
     assert ("CP-DR" in seen["modules"]) is (drop != "CP-DR")
     assert seen["lookup"] is shown
     assert seen["facts"].count(YAHOO) == (1 if shown else 0)
