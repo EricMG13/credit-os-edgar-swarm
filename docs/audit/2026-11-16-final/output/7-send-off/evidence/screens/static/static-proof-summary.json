@@ -1,0 +1,135 @@
+{
+  "beforeCommit": "2b881075e51459592bb629ed8abe7ee24e4fa1d9",
+  "afterCommit": "a987af9b9ca5072d28f2e1f9e1dc5269c6c1858f",
+  "release": {
+    "sourceCommit": "a987af9b9ca5072d28f2e1f9e1dc5269c6c1858f",
+    "zip": "/workspace/audit-final/delivery/credit-os2-react.zip",
+    "size": 7440549,
+    "sha256": "db51d1996b3913ef77a6e51ba3281554cb7c3be33f95ffaf2a966b2544a7088e",
+    "sourceCount": 1363,
+    "distCount": 36,
+    "files": 1400,
+    "extracted": "/workspace/scratch/stage7-release/extracted",
+    "assertions": [
+      "source bytes, exact keys, case-fold uniqueness and hashes verified before extraction",
+      "ZIP sidecar SHA-256 verified independently",
+      "every extracted file SHA-256 matches its archive entry",
+      "build contains two entry points and unchanged shipped public data placeholder",
+      "full development checkout files excluded by the packager contract"
+    ]
+  },
+  "historicalScreens": 1222,
+  "finalOnlyStates": 768,
+  "historicalStatus": {
+    "different-pixels": 1218,
+    "retired-by-finding": 4
+  },
+  "finalOnlyStatus": {
+    "final-only": 768
+  },
+  "stateCounts": {
+    "different-pixels": 1218,
+    "final-only": 768,
+    "retired-by-finding": 4
+  },
+  "findingGroups": {
+    "S1-004 / T25": 1218,
+    "S1-019": 1192,
+    "T25 / OQ-01": 818,
+    "S1-002 / T27": 1218,
+    "S1-001 / T26": 28,
+    "S2-017": 20,
+    "J6-006 / S2-001 (7f84b16e, 41c5580a)": 25,
+    "X1-001": 404,
+    "S1-004 / T25; S1-015; X1-016": 22,
+    "S2-001 / T32": 32,
+    "S2-007 / T34; S2-023": 28,
+    "S4-001, S4-002, S4-003, S4-018": 586,
+    "S4-019 / T38 / OQ-03": 418,
+    "S4-003 / J6-001": 38,
+    "S4-006 / T39": 38,
+    "S4-006, S4-008, S4-009 / T39": 24,
+    "S1-007, S6-004; RV-4": 12,
+    "S3-005, S3-006 / T37; S3-012, S3-037": 306,
+    "S3-014": 4,
+    "S2-006 / T33; S2-025; S2-008": 54,
+    "S4-001, S4-002; S3-036": 313,
+    "S3-017, S3-018": 84,
+    "S3-037": 114,
+    "S3-005 / T37": 2,
+    "S3-007 / T35; S4-002": 69,
+    "S2-001, J6-006, J6-007, S6-008": 8,
+    "S5-001 / T38; S5-002, S5-004 / T40; S5-009 through S5-020 as applicable": 25,
+    "S1-011": 4,
+    "S6-003 / T25; S6-007 / T41; S6-008, S6-014, S6-016": 56,
+    "S1-007, S6-004": 37,
+    "S6-003 / T25; S6-017, S6-022 through S6-031": 37,
+    "S1-007 / S6-004; S6-003 / T25": 1,
+    "S2-002 / T31": 332,
+    "S5-016": 4,
+    "S6-026": 44
+  },
+  "armReports": {
+    "before": {
+      "shards": 16,
+      "executed": 1222,
+      "appRequests": 0,
+      "appWebSockets": 0,
+      "pageAndConsoleErrors": 0,
+      "proxyErrors": 0,
+      "proxyResets": 0,
+      "proxyDenials": 2691,
+      "blankProxyDenials": 124,
+      "proxyDenialsByHost": {
+        "clients2.google.com": 16,
+        "www.gstatic.com": 17,
+        "www.google.com": 2571,
+        "accounts.google.com": 75,
+        "update.googleapis.com": 12
+      }
+    },
+    "after": {
+      "shards": 26,
+      "executed": 1993,
+      "appRequests": 0,
+      "appWebSockets": 0,
+      "pageAndConsoleErrors": 0,
+      "proxyErrors": 0,
+      "proxyResets": 0,
+      "proxyDenials": 6395,
+      "blankProxyDenials": 205,
+      "proxyDenialsByHost": {
+        "clients2.google.com": 26,
+        "www.gstatic.com": 29,
+        "accounts.google.com": 115,
+        "www.google.com": 6213,
+        "update.googleapis.com": 12
+      }
+    }
+  },
+  "unresolved": [],
+  "uncitedDifferences": [],
+  "afterOrigins": {
+    "stage0-bare-hash": 4,
+    "stage0-screens": 1214,
+    "final-fixture-route": 644,
+    "verified-fidelity-variant": 6,
+    "observed-final-in-app-link": 118
+  },
+  "pairedByVariantAndWidth": {
+    "shipped:1440": {
+      "different-pixels": 208
+    },
+    "shipped:390": {
+      "different-pixels": 199
+    },
+    "fixture:1440": {
+      "different-pixels": 606,
+      "retired-by-finding": 3
+    },
+    "fixture:390": {
+      "different-pixels": 205,
+      "retired-by-finding": 1
+    }
+  }
+}
