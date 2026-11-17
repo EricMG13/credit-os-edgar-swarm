@@ -2,7 +2,7 @@ state: running
 updated: 2026-11-17T10:53Z
 done: branch audit/repair-2 cut from audit/final-repairs ca0db16; environment checked (uv 0.12.5, uv sync, npm ci, a worktree sharing web/node_modules passes typecheck, lint, format:check, vitest and build; c4-probe-027 runs in 26 s on a custom port); worker brief written
 next: T13 round 2 extension (column evidence in the other chart kinds); T15 fix round 1 (round 2, Sonnet: gap tile claims, reference guard, period lookup); T16 under review 1 and adversarial; T17, T18, T20, T21 start when T15 and T16 are reviewed
-blocked: none (lead ruling L11a: Table form sideways scroll accepted, registered R2-002 Low; stack() decimal-comma column evidence is R2-003 High, repaired in a T19 follow-up round after T13 merges; R2-001 split T13 chart column / T16 plain tables, lead folds the duplicate in step 8)
+blocked: none (lead ruling L14 on T16: its next round rewords cashflow.py LTM_NOTE and cell reasons and maps lower-case module codes to names in readerText; Securities.tsx and visuals/index.tsx go to the lead's batch; Downside.tsx:234 to T18)
 reports: docs/audit/2026-11-16-final/output/sessions/repair-2/worker-brief.md
 
 | Task | Starts after | State |
