@@ -36,26 +36,28 @@ export function ModuleBottomLines({
               </Button>
               <StatusBadge set="Module state" state={row.state} />
             </div>
-            {row.text !== null ? (
-              <p className="max-w-[65ch] text-body text-text-secondary">{row.text}</p>
-            ) : row.referenced ? (
-              <Button
-                color="link-gray"
-                size="sm"
+            <div className="flex items-start justify-start gap-3">
+              {row.text !== null ? (
+                <p className="max-w-[65ch] text-body text-text-secondary">{row.text}</p>
+              ) : row.referenced ? (
+                <Button
+                  color="link-gray"
+                  size="sm"
+                  href={evidencePath(run.folder, row.entry, row.line ?? undefined)}
+                >
+                  Read this bottom line in Evidence
+                </Button>
+              ) : (
+                <GapPanel reason="This module's handoff has no bottom line; its handoff is in Evidence." />
+              )}
+              <PublishedSource
                 href={evidencePath(run.folder, row.entry, row.line ?? undefined)}
+                name={row.name}
+                linkLabel={`Source for ${row.name}`}
               >
-                Read this bottom line in Evidence
-              </Button>
-            ) : (
-              <GapPanel reason="This module's handoff has no bottom line; its handoff is in Evidence." />
-            )}
-            <PublishedSource
-              href={evidencePath(run.folder, row.entry, row.line ?? undefined)}
-              name={row.name}
-              linkLabel={`Source for ${row.name}`}
-            >
-              View source
-            </PublishedSource>
+                View source
+              </PublishedSource>
+            </div>
           </li>
         ))}
       </ul>
