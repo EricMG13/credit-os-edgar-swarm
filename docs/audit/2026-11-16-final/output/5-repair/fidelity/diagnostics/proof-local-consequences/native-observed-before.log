@@ -1,0 +1,101 @@
+
+> credit-os-web@0.0.0 proof:connected
+> node scripts/connected-proof.mjs
+
+Browser proof artifacts: /workspace/audit-final/proof-artifacts/run-7fqgmb
+overview mobile: 6 headline cards fit at 375px
+
+✖ Google Chrome uploads, submits and opens a finished legacy report (34563.182618ms)
+overview mobile: 6 headline cards fit at 375px
+
+✖ Microsoft Edge uploads, submits and opens a finished legacy report (35329.76972ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 0
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 69898.876077
+
+✖ failing tests:
+
+test at scripts/connected-proof.mjs:1578:3
+✖ Google Chrome uploads, submits and opens a finished legacy report (34563.182618ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+    [
+      'folder',
+      'issuerKey',
+  +   'lead',
+      'pathway'
+    ]
+  
+      at checkCompactLibrary (file:///workspace/audit-final/web/scripts/connected-proof.mjs:1368:10)
+      at async checkBrowserRun (file:///workspace/audit-final/web/scripts/connected-proof.mjs:1473:3)
+      at async TestContext.<anonymous> (file:///workspace/audit-final/web/scripts/connected-proof.mjs:1613:18)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: [Array],
+    expected: [Array],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at scripts/connected-proof.mjs:1578:3
+✖ Microsoft Edge uploads, submits and opens a finished legacy report (35329.76972ms)
+  AggregateError: Proof and offline guard failed
+      at TestContext.<anonymous> (file:///workspace/audit-final/web/scripts/connected-proof.mjs:1647:17)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    [errors]: [
+      AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+      + actual - expected
+      
+        [
+          'folder',
+          'issuerKey',
+      +   'lead',
+          'pathway'
+        ]
+      
+          at checkCompactLibrary (file:///workspace/audit-final/web/scripts/connected-proof.mjs:1368:10)
+          at async checkBrowserRun (file:///workspace/audit-final/web/scripts/connected-proof.mjs:1473:3)
+          at async TestContext.<anonymous> (file:///workspace/audit-final/web/scripts/connected-proof.mjs:1613:18)
+          at async Test.run (node:internal/test_runner/test:1409:7)
+          at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+        generatedMessage: true,
+        code: 'ERR_ASSERTION',
+        actual: [Array],
+        expected: [Array],
+        operator: 'deepStrictEqual',
+        diff: 'simple'
+      },
+      AssertionError [ERR_ASSERTION]: Non-loopback requests attempted during the offline proof
+      + actual - expected
+      
+      + [
+      +   {
+      +     method: 'GET',
+      +     resource: 'image',
+      +     url: 'edge://fileicon/?path=%2Ftmp%2Fplaywright-artifacts-L5o3oy%2F712760fd-0bc0-4e76-9677-a327863eded5'
+      +   }
+      + ]
+      - []
+      
+          at Object.assertOffline (file:///workspace/audit-final/web/scripts/connected-proof.mjs:134:14)
+          at TestContext.<anonymous> (file:///workspace/audit-final/web/scripts/connected-proof.mjs:1644:16)
+          at async Test.run (node:internal/test_runner/test:1409:7)
+          at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+        generatedMessage: false,
+        code: 'ERR_ASSERTION',
+        actual: [Array],
+        expected: [],
+        operator: 'deepStrictEqual',
+        diff: 'simple'
+      }
+    ]
+  }
