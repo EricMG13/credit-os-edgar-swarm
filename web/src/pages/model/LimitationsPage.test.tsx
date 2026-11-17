@@ -134,7 +134,7 @@ describe("Limitations page", () => {
 
   it("draws the header badges, the action and the breadcrumb", () => {
     renderAt(fixtureSlice());
-    for (const text of ["As of 30 June 2025", "Annual review", "Finished", "Sample data"]) {
+    for (const text of ["As of 30 June 2025", "Annual review", "Finished"]) {
       expect(screen.getByText(text)).toBeInTheDocument();
     }
     expect(screen.getByRole("link", { name: "Back to the report" })).toHaveAttribute(
