@@ -136,3 +136,81 @@ the three 375 px tests and the one `ReportLibrary.design` test fail or flake in 
 as well, so this review cannot say they would pass on the work PC; the chunk's file list was not given to
 this review, so "no file outside the list" was judged against each finding's evidence paths, which every
 changed file matches; `VERIFICATION.md` was not checked (not in the chunk).
+
+## Round 2 review
+
+Reviewer: a fresh session that wrote neither round. Reviewed `audit/lead-batch-a` at 976e96b: the commits
+b4f16fd (J1-007), 0877bbd (C5-033) and 976e96b (`batch-a.md`), against the brief, README ruling R17 (the
+legacy run-start form stays in this release), the round 1 review above and `batch-a.md`. No code was changed
+by this review and nothing was pushed. The only file this review changes is this one.
+
+### Overall: PASS
+
+Review findings in round 2: High 0, Medium 0, Low 0, Info 1. RV-1 (Medium), RV-2 and RV-4 (Low) are closed.
+RV-3 (work closed by R14 and R16 still in the diff) is not a round 2 item; it stays with the lead, as the
+round 1 review and `batch-a.md` say.
+
+### Verdict per item
+
+| Item | Verdict |
+| :--- | :--- |
+| J1-007 / RV-1 | pass. Both fix sentences name only the control and no step: "Add the fund's workbook, in the layout of the portfolio template, and choose it as the Portfolio workbook." and "Choose it as the Portfolio workbook, or remove it." Both labels read in the source: connected `ATTACHMENTS.portfolio_workbook = "Portfolio workbook"` (`web/src/pages/connected/start/plain.ts:49`), drawn as the select's label by `SelectField` with `title={ATTACHMENTS[key]}` (`web/src/pages/connected/StartRun.tsx:939`; the file is in `web/src/pages/connected/`, not in `start/`, which `batch-a.md` does not say); legacy `ATTACH` entry `title:'Portfolio workbook'` (`docs/templates/context-form.html:902`), drawn as `<label for="f-portfolio">` by `renderAttachments` (line 2278). The legacy form keeps its step buttons ("Go to Issuer and dates" for both rules, `STAGE_OF_RULE` line 1833), so the sentence is now true beside the button on either page. The rule gates, `reason`, `severity`, `detail` and every other rule are unchanged (the diff is the two `fix` strings). The test asserts the exact text, no "step", no "More context" and, from round 1, that no rule fix names "Issuer and dates"; the two new parametrised cases fail on the pre-round-2 source and pass on the branch |
+| C5-033 / RV-4 | pass. `deliveryFigure` returns "The run's event log could not be read." only for `events === null`; "No delivery recorded" is reached only for a readable log (`[]` or other events) with neither a `delivered` nor a `delivery_started` event. `Run.events` is typed `RunEvent[] | null`, not optional (`api.ts:134`), and the service always sends the key (`react_frontend/run_activity.py:336`, `_feed`), so dropping `?? []` cannot reach `undefined.find`. The pending case (run record not yet answered) is unchanged and still tested. The null test fails on the pre-round-2 source ("Unable to find an element with the text: The run's event log could not be read.") and passes now; the three readable-log cases now also assert the new sentence is absent. Nothing else in `Record.tsx` changed (8 lines in one function and its comment) |
+| `batch-a.md` counts and C3-021 | pass. C3-021 moved from "repaired" to "repaired in part"; the table reads 8 repaired (B0-002, C2-019, C3-017, C3-018, C3-031, C4-031, C4-036, C5-014), 4 in part (C3-021, C4-021, C5-033, J1-007), 1 open (C4-011), 1 closed by R14 (C4-014), 2 closed by R16 (C5-015, C5-016): 16 ids, the same ids as the round 1 verdict table. The round 2 text, the check table, and the "28 lines in scope" and "330 passed, 3 skipped" figures were reproduced below |
+| No file outside those named | pass. `git diff e355ac3..976e96b --name-only` lists six files: this review, `batch-a.md`, `run_expectations.py`, `test_run_expectations_words.py`, `Record.tsx`, `Record.test.tsx`. b4f16fd touches 2 files, 0877bbd 2, 976e96b 1. `docs/templates/context-form.html` was not edited, so R17's legacy form is as it was |
+
+### Other tests or fixtures asserting the old sentences
+
+`grep -rIn` over the whole worktree (excluding `node_modules`, `.git`, `.venv`) for "under Issuer and dates",
+"More context step", "on the More context", "under Portfolio workbook", "Portfolio workbook on", "choose it
+under" and the old first sentence's tail. No test or fixture asserts either old portfolio sentence. What
+remains is not the service's wording:
+
+- `web/src/pages/connected/ConnectedApp.test.tsx:2222` and `:2234`: a canned service reply whose `fix` is
+  "Add the fund's workbook and choose it under Issuer and dates."; the test asserts that whatever the service
+  sends is drawn, with the id `run:workbook-none`, which is no rule's id. It passes (185 tests).
+- `docs/templates/context-form.html:1395, 1418` (and the patch copies under `docs/work-pc/syncs/`): the legacy
+  form's own client-side rules ("choose it under Issuer and dates"). They are right for that form, which has
+  an Issuer and dates group, and are not run_expectations text.
+- `tests/test_portfolio_workbook.py:471-530` and `tests/test_run_start_submissions.py:272` assert the rule ids
+  and outcomes, not the fix text.
+
+### Checks run
+
+All from `/tmp/claude-0/-home-user-credit-os2/625821d3-887b-573e-b79d-e0aafcff3023/scratchpad/wt-batch-a`
+at 976e96b with `PATH=$HOME/.local/bin:$PATH` (uv 0.12.5), each under `timeout 300`, run one after another.
+The exit code is the command's own: each was run with its output written to a file and its status echoed to
+that file.
+
+| Command | Exit | Result |
+| :--- | :--- | :--- |
+| `uv run pytest tests/test_run_expectations_words.py tests/test_portfolio_workbook.py tests/test_context_form.py tests/test_run_start_submissions.py -q` | 0 | 330 passed, 3 skipped (the three skips are "root reads any folder" twice and "case-sensitive disk" once) |
+| `uv run python tools/quality_gate.py --base origin/audit/final-repairs` | 0 | 0 findings, 2 changed files, 28 lines in scope |
+| `npm --prefix web run lint` | 0 | `eslint --max-warnings=0 .` clean |
+| `npm --prefix web run format:check` | 0 | Prettier clean |
+| `npm --prefix web run typecheck` | 0 | `tsc --noEmit` clean |
+| `npx vitest run src/pages/connected/report/Record.test.tsx` (from `web/`) | 0 | 1 file, 9 tests passed |
+| `npx vitest run src/pages/connected/ConnectedApp.test.tsx` (from `web/`) | 0 | 1 file, 185 tests passed |
+| New tests against the pre-round-2 source (a detached worktree of 879874d with `tests/test_run_expectations_words.py` and `Record.test.tsx` taken from 976e96b; removed after): `uv run pytest tests/test_run_expectations_words.py -q` | 1 | 2 failed (`test_a_portfolio_workbook_fix_names_the_control_only` for both rules), 55 passed |
+| the same detached worktree: `npx vitest run src/pages/connected/report/Record.test.tsx` | 1 | 1 failed (the null-log test), 8 passed |
+
+The two last rows are not acceptance proof for the repair; they show that the added tests exercise it.
+
+### Info
+
+- I-1: the new comment in `tests/test_run_expectations_words.py:106-108` cites "README ruling R17" without a
+  path; the ruling is in `docs/audit/2026-11-16-final/README.md`. It reads as a pointer to the repository
+  README. No change needed for the hand-over; the lead may shorten it to "kept in this release" at merge.
+
+Not verified: no browser run of either start page, so neither the Check text beside its button on the legacy
+form nor the connected review sheet was drawn, only read from the source and exercised by string tests; the
+connected page's own go-to-step button for these two Checks is `batch-a.md`'s open item and was not looked at;
+the `portfolio-workbook-not-chosen` rule has no pathway gate, so whether the Portfolio workbook select is
+drawn at every level and pathway where that Check can fire was not traced (the control is drawn for
+Advanced, Portfolio decision, Credit snapshot and Deep credit assessment, per `StartRun.tsx`; the sentence
+had the same reach before round 2); `tests/test_run_start_page.py` (browser tests) was not run in round 2
+(round 1 ran it: 153 passed, 3 failed, the same 3 as on the base: 375 px windows); the rest of the Record
+page and the other vitest files were not rerun (round 1 ran all of `src/pages/connected`; the only source
+change since is `deliveryFigure`); the full Python suite, Signal's tests and `tests/test_cpos_launch.py`
+were not run; RV-3 was not re-examined; whether the owner accepts the wording "The run's event log could not
+be read." is the owner's call (the session chose it).
