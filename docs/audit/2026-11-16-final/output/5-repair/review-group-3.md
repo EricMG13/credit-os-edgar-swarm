@@ -181,3 +181,25 @@ One entry per task: the reviewer was a fresh Sonnet agent at xhigh effort that d
   - The StatementsPage case test leaves the drawer open and needs `hidden: true`. That is setup, not a weakening.
   - The Unreadable sentence "The other financial models ... are not affected" can mislead when two runs are unreadable.
   - Unreadable-slice tests now print one console.warn each.
+
+## T31 (S2-002, S3-008, S4-013, J6-013)
+
+- Commit reviewed: c2349e8. Verdict: PASS. Merged onto audit/repair-3.
+- On the parent source the new test fails 28 of 29 (the route-count guard passes); at HEAD 29 of 29 pass.
+- Wording:
+  - It matches T25's terms and is true of the shipped build (data.js `{ issuers: [] }`; README lines 109 and 129). It adds no analysis.
+  - It meets D-31 (icon, title, sentence, action), CM-019, CM-036 and D-16.
+- Closed: S2-002, S3-008 and S4-013. All 14 library routes on the shipped build show a designed state.
+- J6-013 is closed only for the library third. Remaining:
+  - Model's "No model has been delivered yet" (RunsIndexPage.tsx:23) is S5-016, in the Low batch.
+  - Run's "No run data in this library" (StartPage.tsx:82, ActivityPage.tsx:201) is S6-026, in the Low batch. That covers 22 addresses, `#/run/start` among them.
+  - The reviewer suggests the register mark J6-013 closed in part.
+- j6-low-checks.cjs exits 2 as committed: its step b clicks the Kit rail link T25 removed. Step c, run from a scratch copy, exits 0. Library and History draw 1 control each with no overflow at 1440 or 390 px; Model and Run are unchanged.
+- Gates the reviewer saw:
+  - build 0, lint 0, format:check 0, typecheck 0, unused 0, duplication 0.
+  - vitest at the default timeout: 3 files, 136 tests; 19 files, 299 tests; src/pages/library 34 files, 930 tests.
+  - Probes: shipped-empty-state 0, S3-008 0, S4 shipped-empty 0.
+- Low:
+  - On the shipped build, Home's "Start a run" lands on `#/run/start` showing "No run data in this library" with no control. Keeping the button stands only if the Low batch gives StartPage.tsx:82 a sentence and a link back (S6-026). Otherwise drop "start one to add the first issuer" and the button on the shipped Home. The batch brief should name `#/run/start` explicitly. This becomes Medium if S6-026 does not land.
+  - The descriptions are two sentences where D-31 says one, and "build" is a builder word.
+  - The two changed tests pin the new sentence by prefix only.
