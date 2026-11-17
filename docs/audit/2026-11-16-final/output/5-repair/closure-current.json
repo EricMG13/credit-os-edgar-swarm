@@ -3252,8 +3252,8 @@
       "probe": "Run the retained offline connected proof through Evidence Record, preserving the Adapter status and settled Synthetic test assertions; actual artifact regression pending fresh repair.",
       "evidence": [
         "web/src/pages/connected/report/Record.tsx:ReportRecord",
-        "docs/audit/2026-11-16-final/output/5-repair/probes/R4-015/chrome-record-diagnostic.json",
-        "docs/audit/2026-11-16-final/output/5-repair/probes/R4-015/msedge-record-diagnostic.json"
+        "docs/audit/2026-11-16-final/output/5-repair/probes/r4-015/chrome-record-diagnostic.json",
+        "docs/audit/2026-11-16-final/output/5-repair/probes/r4-015/msedge-record-diagnostic.json"
       ],
       "status": "landed-reviewed",
       "closed_by": null,
