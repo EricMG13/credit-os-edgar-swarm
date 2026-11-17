@@ -67,9 +67,17 @@ BLOCKED_CP4 = "\n".join(
         *("## Next module", "", "The orchestrator selects the next module."),
     ]
 )
-# With no legal documents the report's Capital structure goes to CP-3 (`cpos_launch._layout`); the
-# canned CP-3 handoff has none, so its reply carries this section, the canned CP-4 one.
-CAPITAL_STRUCTURE = "### Capital structure\n\n| Item | Value |\n| --- | --- |\n| Observed | 1 |\n"
+
+
+def capital_structure() -> str:
+    """The `### Capital structure` section of the canned CP-4 handoff. With no legal documents the
+    report's Capital structure goes to CP-3 (`cpos_launch._layout`) and the canned CP-3 has none,
+    so its reply carries the canned CP-4 section, read here so the two cannot differ."""
+    text = (HANDOFFS / "CP-4.md").read_text(encoding="utf-8")
+    section = re.search(r"^### Capital structure\n.*?(?=^#{2,3} )", text, re.MULTILINE | re.DOTALL)
+    if section is None:
+        raise ValueError("the canned CP-4 handoff has no Capital structure section")
+    return section.group().rstrip() + "\n"
 
 
 def verify_upload(sources: Path, context: Path) -> str:
@@ -117,7 +125,7 @@ def canned_handoff(context: dict[str, Any], case: str, *, gated: bool = False) -
     findings = BLOCKED_CP4 if blocked else (HANDOFFS / f"{module}.md").read_text(encoding="utf-8")
     if module == "CP-3" and gated:
         findings = findings.replace(
-            "\n## Calculations", f"\n{CAPITAL_STRUCTURE}\n## Calculations", 1
+            "\n## Calculations", f"\n{capital_structure()}\n## Calculations", 1
         )
     sources = [f"- {name} {digest}" for name, digest in context["sources"].items()]
     sources.extend(f"- {name} {entry['sha256']}" for name, entry in context["handoffs"].items())

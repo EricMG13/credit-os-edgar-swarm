@@ -1,4 +1,5 @@
 import json
+import shutil
 import sys
 import tempfile
 import time
@@ -8,10 +9,14 @@ from pathlib import Path
 
 import pytest
 
-from proof import DUMMY_KEY, launcher_command
-from proof.launcher import AGREEMENT, FILING, verify_upload
+from proof import DUMMY_KEY, launcher, launcher_command
+from proof.launcher import AGREEMENT, FILING, HANDOFFS, canned_handoff, verify_upload
 
 PROJECT = Path(__file__).resolve().parents[1]
+MODULES = (
+    *("CP-0", "CP-1", "CP-1A", "CP-2", "CP-2A", "CP-2D", "CP-2E"),
+    *("CP-2G", "CP-3", "CP-3C", "CP-4", "CP-5", "CP-6", "CP-DR"),
+)
 
 
 def test_rejects_a_changed_or_additional_upload(tmp_path):
@@ -147,6 +152,72 @@ def assert_legal_handoffs(layout, reader, legal):
     )
     assert ("### Capital structure" in delivered["CP-3"]) == gated
     assert ("### Capital structure" in delivered["CP-4"]) == (not gated)
+
+
+def request_context(module):
+    """What a CP-OS request carries that the launcher reads: the module, sources and handoffs."""
+    return {
+        "module_id": module,
+        "sources": {FILING.name: "a" * 64},
+        "handoffs": {"CP-0": {"sha256": "b" * 64}},
+    }
+
+
+def canned(module):
+    """The canned handoff in the wrapper every reply has, written out apart from the launcher."""
+    text = (HANDOFFS / f"{module}.md").read_text(encoding="utf-8")
+    sources = f"- {FILING.name} {'a' * 64}\n- CP-0 {'b' * 64}"
+    return f"# {module}\n\n## Request\nCase.\n\n## Sources\n\n{sources}\n\n{text}"
+
+
+def capital_structure_of_cp4(handoffs=HANDOFFS):
+    """CP-4's `### Capital structure` section, cut out by its neighbouring headings."""
+    text = (handoffs / "CP-4.md").read_text(encoding="utf-8")
+    body = text.split("### Capital structure\n", 1)[1].split("### Chart data", 1)[0]
+    return "### Capital structure\n" + body.rstrip() + "\n"
+
+
+@pytest.mark.parametrize(
+    ("legal", "gated"), [("executed", False), ("draft", False), ("none", True)]
+)
+def test_replies_differ_from_the_canned_handoffs_only_when_no_legal_documents(legal, gated):
+    """With an agreement (or a draft one) every reply is the canned handoff; with none, CP-3 and
+    CP-4 differ and no other module does."""
+    from deploy_workflow.context import load_context
+    from deploy_workflow.run_expectations import no_legal_documents
+
+    data = json.loads((PROJECT / "cases/context/research-minimal.json").read_text())
+    data["attachments"]["legal_documents"] = legal
+    assert no_legal_documents(load_context(json.dumps(data).encode())) is gated
+    replies = {m: canned_handoff(request_context(m), "Case.", gated=gated) for m in MODULES}
+    assert {m for m in MODULES if replies[m] != canned(m)} == ({"CP-3", "CP-4"} if gated else set())
+    if not gated:
+        return
+    section = "### Capital structure\n\n| Item | Value |\n| --- | --- |\n| Observed | 1 |\n"
+    assert section in canned("CP-4")
+    assert capital_structure_of_cp4() == section
+    assert replies["CP-3"] == canned("CP-3").replace(
+        "\n## Calculations", f"\n{section}\n## Calculations", 1
+    )
+    blocked = replies["CP-4"]
+    assert blocked.startswith("---\nmodule_id: CP-4\nmodule_status: Blocked\n---\n# CP-4\n")
+    assert "### Bottom line\n\nNot assessable: no executed governing document was" in blocked
+    assert "### Capital structure" not in blocked
+
+
+def test_the_gated_cp3_section_is_read_from_the_canned_cp4(tmp_path, monkeypatch):
+    """One source: changing the canned CP-4 section changes what CP-3 delivers."""
+    handoffs = tmp_path / "handoffs"
+    shutil.copytree(HANDOFFS, handoffs)
+    cp4 = handoffs / "CP-4.md"
+    text = cp4.read_text(encoding="utf-8")
+    assert "| Observed | 1 |" in text
+    cp4.write_text(text.replace("| Observed | 1 |", "| Observed | 7 |"), encoding="utf-8")
+    monkeypatch.setattr(launcher, "HANDOFFS", handoffs)
+    reply = canned_handoff(request_context("CP-3"), "Case.", gated=True)
+    assert capital_structure_of_cp4(handoffs) in reply
+    assert "| Observed | 7 |" in reply
+    assert "| Observed | 1 |" not in reply
 
 
 def test_browser_proof_refuses_an_existing_workspace(tmp_path, monkeypatch):
