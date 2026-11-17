@@ -1,6 +1,6 @@
-state: blocked
-updated: 2026-11-17T09:03Z
-done: branch cut from audit/final-repairs ca0db16; environment set up; T02 implementer found the cause and stopped (no code change)
-next: T01 and T03 implementers running; T11 dispatched; T02 resumes on the lead's answer; other tasks continue in tasks.md order
-blocked: T02 only. NEEDS FILE src/deploy_workflow/inbox/runs.py (in no group's list). Cause: CP-MODEL is a real launch code (cpos_launch.py:1041-1043 publishes the forecast; the page keeps it in every explicit module list by design, and the approval digest binds the list), but two server checks test only cpos_launch.METHODS: scheduler.py:322 (Scheduler.submit, the refusal J1-001 shows) and runs.py:254 (_check_options, run before every launch). Repairing scheduler.py alone turns 'Submit refused' into 'run accepted, then failed: CP-MODEL is not a module'. Proposed: one known_module(name) helper in runs.py (name in METHODS or name == 'CP-MODEL'), used by both checks; hostile-module refusals unchanged. Unblocked by: the lead granting runs.py to T02 (or another ruling) in a message or output/sessions/repair-1/ANSWER.md. Question 2: may T07 (StartRun.tsx, react_frontend/__init__.py) start before T02 is merged, given T02 will not change StartRun.tsx or api.ts?
+state: running
+updated: 2026-11-17T09:04Z
+done: environment set up; T02 cause found (no code yet); lead ruling L4 received 09:04Z: (1) T02 may change src/deploy_workflow/inbox/runs.py and its tests (joins group 1 for T02), both checks accept CP-MODEL through one predicate, reusing an existing name set in cpos_launch.py if one fits; unknown or misspelt modules still refused; T02 gets the adversarial review. (2) T07 may start before T02 merges; if T02 later needs StartRun.tsx or api.ts it waits for T07.
+next: T01, T03, T11 implementers running; T02 resumes in the next free slot; T07 after T01 merges
+blocked: none
 reports: docs/audit/2026-11-16-final/output/sessions/repair-1/WORKER-NOTES.md
