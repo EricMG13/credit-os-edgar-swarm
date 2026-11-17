@@ -75,3 +75,9 @@ Controller's application:
 Yes. Group 3 may edit web/src/pages/library/parts/MatrixBlock.tsx and its test, using the L9a rule: when the block's rows carry their own traces, skip the table-level control; otherwise draw it, marker included. Add a test for each case, using the connected tests' fixture shapes for the risk matrix. Then merge T35.
 
 Put the reviewer's connected list into output/5-repair/T35.md as measured. Items 3 and 4 (the Confidence tile with no inputs table, and a bottom-line band with no block at summary.line) are "missing by data", so their marker is correct and stays. Item 5 needs nothing.
+
+# Lead: owner ruling R16 (2026-11-17, received 11:08 UTC by message from the lead session)
+
+Owner: "screen reader - not required". A finding that changes only what a screen reader announces is no longer a defect. For group 3: T27 round 2 drops "the announcement" and keeps the route titles and the scroll reset. Spend no round on screen-reader names, live regions or heading levels. Do not revert reviewed work that is already merged. Record R16 in the task reports.
+
+Controller's application: T27 round 2 was told to remove the live region and keep titles and scroll. Merged work is not reverted. T37 and T39 start without screen-reader-only parts.
