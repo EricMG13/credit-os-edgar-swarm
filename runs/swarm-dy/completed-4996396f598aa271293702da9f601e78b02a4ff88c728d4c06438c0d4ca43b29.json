@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for DYCOM INDUSTRIES INC as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/010b98bb3a3935dba10cba158a08db3b627b411b24e61cabec169c534db6b151/1.response.md",
+    "CP-1": "requests/CP-1/5fca1c24fe59ab56e953a7577b97241497fa9dc6c0ed9671eed22b6cd5081397/1.response.md",
+    "CP-1A": "requests/CP-1A/83ba394b63276be2d7924a2f50aec15fb00b457c75c5bb752ef5bbe3ec390174/1.response.md",
+    "CP-2": "requests/CP-2/bcb847389fffd71308cb878b6f3aac10f7c41455a77dd52984b33ce62d2e37f2/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "0e38c6e28fed41ec84682d73b21dd11a85fd89720a12c4428525b0aa5c4410ba",
+  "delivery_sha256": "a7892fb0afbd8b894fee8af417a27d70589631baf7b0bc6a1894e3d46934f596"
+}

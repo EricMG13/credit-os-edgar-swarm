@@ -93,8 +93,18 @@
       "pack": "/home/user/secdata/data/2026-11-05/packs/43196-gray-media-inc-gtn-gtn-a",
       "context": "/home/user/secdata/data/2026-11-05/contexts/43196-gray-media-inc-gtn-gtn-a.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-gtn",
-      "status": "pending",
-      "attempts": 0
+      "status": "published",
+      "attempts": 4,
+      "claims": 1,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "exit_code": 0,
+      "reason": null,
+      "finished_at": "2026-11-17T09:42:27+00:00"
     },
     {
       "issuer_id": "dy",
@@ -104,8 +114,18 @@
       "pack": "/home/user/secdata/data/2026-11-05/packs/67215-dycom-industries-inc-dy",
       "context": "/home/user/secdata/data/2026-11-05/contexts/67215-dycom-industries-inc-dy.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-dy",
-      "status": "pending",
-      "attempts": 0
+      "status": "published",
+      "attempts": 4,
+      "claims": 1,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "exit_code": 0,
+      "reason": null,
+      "finished_at": "2026-11-17T09:42:43+00:00"
     },
     {
       "issuer_id": "thc",
@@ -115,8 +135,18 @@
       "pack": "/home/user/secdata/data/2026-11-05/packs/70318-tenet-healthcare-corp-thc",
       "context": "/home/user/secdata/data/2026-11-05/contexts/70318-tenet-healthcare-corp-thc.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-thc",
-      "status": "pending",
-      "attempts": 0
+      "status": "published",
+      "attempts": 5,
+      "claims": 1,
+      "attempts_by_module": {
+        "CP-0": 2,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "exit_code": 0,
+      "reason": null,
+      "finished_at": "2026-11-17T09:42:58+00:00"
     },
     {
       "issuer_id": "oln",
@@ -126,8 +156,18 @@
       "pack": "/home/user/secdata/data/2026-11-05/packs/74303-olin-corp-oln",
       "context": "/home/user/secdata/data/2026-11-05/contexts/74303-olin-corp-oln.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-oln",
-      "status": "pending",
-      "attempts": 0
+      "status": "published",
+      "attempts": 4,
+      "claims": 1,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "exit_code": 0,
+      "reason": null,
+      "finished_at": "2026-11-17T09:43:13+00:00"
     },
     {
       "issuer_id": "pbi",

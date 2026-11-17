@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for OLIN Corp as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "2efc90315daf063c5230f804960ffb95fe863f2a0fd201da2904aee2ef83b5fd",
+    "CP-1.md": "b6dc17240b01843e3fe12ad0fbd6627e6c998ad8d563898ab54375bac9c1365e",
+    "CP-1A.md": "ddb8d38bb3ad369b77806b409140ccb03b94f8f243e28e84e4b0182b9360b69e",
+    "CP-2.md": "37b6be5550f736bc33a6d73cfe4d7b4ef3a5761daac3e5fedc721e21e479e815",
+    "coverage.json": "564a429bd749ce89041bbc8401a7de5e156281498b94d0c341b43ecfeb9939ea",
+    "view.json": "b1a8490a948f178b155e4d776a2e3ced85ced0e0eacef504b27eaf299d84d74c",
+    "report-view.json": "f8198357dc50b974c9cc55fd87fda4c23a32df32a5da35ad20103b9769845def"
+  }
+}

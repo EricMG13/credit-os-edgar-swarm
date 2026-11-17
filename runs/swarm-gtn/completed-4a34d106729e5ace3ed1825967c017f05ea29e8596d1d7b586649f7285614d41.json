@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for GRAY MEDIA, INC as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/197a01508a944d6919662cc3385bb842c2b35cb34eee5e4e7ee275f5fd775990/1.response.md",
+    "CP-1": "requests/CP-1/baadc6527c29f29292c7683db955a8a9c1b61777a95d59bd29dadce550edc31c/1.response.md",
+    "CP-1A": "requests/CP-1A/1d865eb6c6849af5986431b7216e16a89157d93d2679c4b0f46bb04ef6930a38/1.response.md",
+    "CP-2": "requests/CP-2/850dfa808701dbfc99fb9b4d1b8426111045295cd9d1b50882632d694cf3d347/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "59acbb8ce7d8fb9a89cc00e96a995152c1e159e93db7f6271516f2a08c5c03af",
+  "delivery_sha256": "21d39771a49f9b55a64f370b7ff6e8824e14c046d9e5f83e25cd838917616bfd"
+}

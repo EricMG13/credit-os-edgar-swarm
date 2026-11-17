@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for OLIN Corp as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/641d1c5b6a81a32172a2daed180e264709eb7cf1f3642e62d3932e7faeac098f/1.response.md",
+    "CP-1": "requests/CP-1/dbc3349ec611545b7dd0935c891cf0321333d520a29f09b4632c158cebecb193/1.response.md",
+    "CP-1A": "requests/CP-1A/430e45f21f2bf49b4379aa567413e5d2cfda0502d6f65829220537623beb26e0/1.response.md",
+    "CP-2": "requests/CP-2/15fb7f131f7ca5c9f4a4db879227ff4350772331adb6c7fe3f4a8d4bbdea32dc/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "24f2c2439d28c6fa1c1ab7e97670ad3338a4512b4cd822ef1058256cecaab1e8",
+  "delivery_sha256": "18ca198ccce052f3224b15844546dea3f86f5f62c752617852ef052a61d2c5fa"
+}
