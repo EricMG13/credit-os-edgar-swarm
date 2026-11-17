@@ -356,3 +356,23 @@ One entry per task: the reviewer was a fresh Sonnet agent at xhigh effort that d
   - Back restore drifts +32 px per round trip on the Model Statements page and the Kit, because Chromium's scroll anchoring adds late chart growth and the scroll listener stores it. `overflow-anchor: none` on `main` removes the drift. The other 21 scrollable routes restore exactly.
   - The `offsets` Map is never pruned.
 - Info: Signal pages share "Signal — Credit OS", and the run start steps share one title.
+
+## T33 follow-up under ruling L5 (S2-006)
+
+- Commit reviewed: b3f1b19. Verdict: PASS. Merged onto audit/repair-3.
+- On the parent source the new tests fail 13 of 15; the 2 that pass pin behaviour that stays.
+- `DatedItem.trace`:
+  - An absent key reads as null, and an explicit null too. A prototype-held key is ignored.
+  - A wrong type is refused with a named path.
+  - A key the run lacks is refused through the same `traceKey` every other passage uses, so TraceControl cannot throw at draw time.
+- Timeline.tsx: an entry with no action draws exactly as before. The whole Kit page rendered in jsdom is byte-identical before and after (170,314 bytes). The `TRACE_HOST` import follows ChartFrame.tsx's precedent.
+- Overview: one control per date (4 of 4). The fixture dates draw the "no source recorded" marker, and a real trace draws a working control that opens its drawer. Both are checked at 1440 px.
+- The two changed Overview.test.tsx assertions follow the finding (a marker per date; the capped run's markers 12 → 14).
+- Gates the reviewer saw:
+  - lint 0, format:check 0, typecheck 0, build 0.
+  - vitest: 14 files, 418 tests; Signal 34 files, 630 tests; library, components, model, connected, Kit and App 150 files, 3,165 tests. All at the default timeout.
+  - Probes: dates-no-trace 0 (`[1,1,1,1]`), long-qualifier 0, S3-002 0, S3-007 0.
+- Low:
+  - Timeline treats `action: null` as a slot. No caller passes it.
+  - Overview passes `trace` through to Timeline items, which ignore it.
+- Info: the control narrows the date text column by about 44 px at 1440 px.
