@@ -17,13 +17,14 @@
 //              of web/dist in a temporary folder whose data.js is written by web/scripts/fixture-data.mjs
 //              from web/fixtures/*.json. web/dist itself is not touched.
 // Besides each screen's default state the script captures: every chart in its Table view, every
-// <details> and closed disclosure opened, the source drawer behind every "Show sources" control, each
+// <details> and closed disclosure opened, the source drawer behind every active "Show sources" control,
+// the disabled marker where no source was recorded (separately, never as a drawer), each
 // other case of a Forecast case / Case choice (as its own screen), and the Table presentation of a
 // Cards/Table choice (as its own screen). The connected Changes page of the real run has no earlier run to
 // compare, so it is also captured with an earlier run injected into the snapshot (a labelled fixture).
 // <outDir>/index.json is rebuilt from the screen files on disk, so a surface captured in an earlier run
 // stays listed. Nothing here calls a provider; the synthetic service substitutes canned responses.
-// Exit code 1: a screen failed, a screen's text was not fully captured, or a source control did not open.
+// Exit code 1: a screen failed, a screen's text was not fully captured, or a source-control contract failed.
 import { execFileSync, spawn } from "node:child_process";
 import { createHash } from "node:crypto";
 import {
@@ -588,28 +589,76 @@ async function toTableViews(page) {
   return n;
 }
 
-// The drawer behind every "Show sources" control, opened with the keyboard and closed with Escape.
+// Every source control is accounted for: a full drawer, the explicit MissingTrace marker, or an error.
 async function captureTraces(page) {
   const sel = 'main button[aria-label^="Show sources"]';
   const total = await page.locator(sel).count();
   const out = [];
+  const unavailable = [];
+  const errors = [];
   for (let i = 0; i < Math.min(total, LOOP_CAP); i++) {
     const button = page.locator(sel).nth(i);
     const label = await button.getAttribute("aria-label");
-    let drawer = null;
-    let error;
     try {
-      await button.press("Enter", { timeout: 3000 });
-      await page.locator("[role=dialog]").first().waitFor({ timeout: 3000 });
-      drawer = await page.evaluate(extractInPage, { mode: "dialog", rules: RULES });
+      const ariaDisabled = await button.getAttribute("aria-disabled");
+      const disabled = await button.evaluate((el) => el.disabled);
+      const missing = label.endsWith(": no source recorded");
+      if (ariaDisabled === "true" || disabled || missing) {
+        if (!missing || ariaDisabled !== "true" || disabled)
+          throw new Error(
+            "Source control does not match the disabled MissingTrace marker",
+          );
+        // Keyboard focus exposes the real tooltip, including after focus has scrolled the control.
+        await button.press("Tab", { timeout: 3000 });
+        await button.focus();
+        const tooltip = page.getByRole("tooltip");
+        await tooltip.waitFor({ timeout: 3000 });
+        const text = await tooltip.innerText();
+        if (text !== "No source recorded")
+          throw new Error(`Unexpected MissingTrace tooltip: ${text}`);
+        await button.press("Enter", { timeout: 3000 });
+        // Let the keyboard event's React update and layout complete; this marker must open nothing.
+        await page.evaluate(
+          () =>
+            new Promise((resolve) =>
+              requestAnimationFrame(() => requestAnimationFrame(resolve)),
+            ),
+        );
+        if (await page.getByRole("dialog").count())
+          throw new Error("MissingTrace marker opened a dialog");
+        unavailable.push({
+          n: i + 1,
+          control: label,
+          ariaDisabled,
+          disabled,
+          tooltip: text,
+          opensDialog: false,
+        });
+      } else {
+        await button.press("Enter", { timeout: 3000 });
+        await page.locator("[role=dialog]").first().waitFor({ timeout: 3000 });
+        const drawer = await page.evaluate(extractInPage, {
+          mode: "dialog",
+          rules: RULES,
+        });
+        if (!drawer) throw new Error("Source dialog had no visible drawer");
+        out.push({ n: i + 1, control: label, drawer });
+      }
     } catch (e) {
-      error = String(e.message).split("\n")[0];
+      errors.push({
+        n: i + 1,
+        control: label,
+        error: String(e.message).split("\n")[0],
+      });
     }
     await page.keyboard.press("Escape");
-    await page.locator("[role=dialog]").first().waitFor({ state: "hidden", timeout: 3000 }).catch(() => {});
-    out.push({ n: i + 1, control: label, drawer, error });
+    await page
+      .locator("[role=dialog]")
+      .first()
+      .waitFor({ state: "hidden", timeout: 3000 })
+      .catch(() => {});
   }
-  return { total, items: out };
+  return { total, items: out, unavailable, errors };
 }
 
 // One screen: load, settle, open everything, read the page as drawn, then the Table view of every chart
@@ -726,7 +775,8 @@ function countsOf(rec) {
     images: v?.images.length ?? 0,
     traceControls: rec.traces.total,
     traceDrawers: drawers.length,
-    traceErrors: rec.traces.items.filter((t) => t.error).length,
+    traceUnavailable: rec.traces.unavailable.length,
+    traceErrors: rec.traces.errors.length,
     coverageGap: v ? v.coverage.innerText - (v.coverage.captured + v.coverage.selected + v.coverage.typed + v.coverage.optionsNotDrawn + v.coverage.screenReaderOnly) : null,
   };
 }
@@ -750,6 +800,8 @@ function writeScreen(dir, rec, normalise) {
     coverage: rec.view?.coverage ?? null,
     chartTableViews: rec.tableViews.map((f) => ({ figure: f.figure, outline: f.outline, tables: f.tables, figures: f.figures, marks: f.marks, sources: f.sources, limitations: f.limitations })),
     sourceDrawers: rec.traces.items,
+    unavailableSourceControls: rec.traces.unavailable,
+    sourceControlErrors: rec.traces.errors,
   });
   const file = `${slug(rec.id)}.json`;
   writeFileSync(path.join(dir, file), toJson(body));
@@ -814,6 +866,7 @@ function writeIndex(tree) {
       drawerLines: sum("drawerLines"),
       limitationSentences: sum("limitationSentences"),
       traceControls: sum("traceControls"),
+      traceUnavailable: rows.reduce((n, r) => n + (r.counts.traceUnavailable ?? 0), 0),
       traceErrors: sum("traceErrors"),
       screensWithCoverageGap: rows.filter((r) => r.counts.coverageGap !== 0).length,
     };
@@ -1281,7 +1334,7 @@ if (failures) {
 }
 for (const [name, s] of Object.entries(surfaces)) {
   if (s.screensWithCoverageGap || s.traceErrors) {
-    console.error(`${name}: ${s.screensWithCoverageGap} screen(s) with a coverage gap, ${s.traceErrors} source control(s) that did not open; see counts in index.json`);
+    console.error(`${name}: ${s.screensWithCoverageGap} screen(s) with a coverage gap, ${s.traceErrors} source control error(s); see counts in index.json`);
     process.exitCode = 1;
   }
 }
