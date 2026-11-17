@@ -29,7 +29,11 @@ environment facts and its rules for this group; `AGENTS.md` and the audit `READM
 - Owner ruling R14 (2026-11-17): "only pc, no need for keyboard". The app runs only on desktop PCs
   with a mouse. A finding that shows only at 480 px or less, on touch, or with the keyboard alone
   (focus, tab order, arrow keys, focus rings) is not a defect: do not spend a round on one or raise
-  one as a review finding. Screen-reader, contrast and colour findings stay.
+  one as a review finding. Contrast and colour findings stay.
+- Owner ruling R16 (2026-11-17): "screen reader - not required". A finding that changes only what a
+  screen reader announces (live regions, announcements, roles read aloud) is not a defect.
+- Owner ruling R15 (2026-11-17): Teams run cards are checked only on the work PC; no change to
+  src/deploy_workflow/inbox/teams.py or its tests in this session.
 
 ## Rounds and models (ruling R12, owner, 2026-11-17)
 
