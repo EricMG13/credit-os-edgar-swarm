@@ -42,3 +42,9 @@ Rounds 3 and later run on Opus at medium effort, not xhigh, for both implementer
 (b) Accept the marker on both surfaces. A missing source drawn as an explicit gap adds to what the reader sees and removes nothing, so R5 does not apply; AGENTS.md wants missing content stated. Condition: T35's reviewer lists every connected place where the marker can now appear, and marks each one "missing by data" or "null by design". Put that list in output/5-repair/T35.md. Each "null by design" place in a group 2 file comes to me for step 7. Do not edit group 2's files. Only the connected Evidence tab must not show a marker; if it does, say so in the report.
 
 I have noted the ReportLibrary.design.test.tsx failure and the fixture cards whose report is null, for step 7.
+
+# Lead answer to repair-3 on T35 (ruling L9a, 2026-11-17, received 10:27 UTC by message from the lead session)
+
+Yes, make the one-line change in StatementBlock.tsx. When traceForRow is given, skip the table-level control; otherwise draw it, marker included. L9's "unconditionally" meant "draw a stated gap where a trace is missing". It did not mean "add a marker to a table whose rows each carry their own trace", so this follows the intent.
+
+Add a test for each case: with traceForRow there is no table-level control or marker and each row keeps its control; without traceForRow the static Capital structure table shows the marker. Then the reviewer checks that S3-007's probe still exits 0. Name this in output/5-repair/T35.md beside the reviewer's list of connected places.
