@@ -288,9 +288,14 @@ it("C5-025 groups real row citations and omits no-page boilerplate from source-f
   snapshot.chips = { "current/CP-1:12": [noPage], "current/CP-1:13": [noPage] };
   const trace = traceForLine(snapshot, entry, 0, 11);
   expect(trace?.derivation.children.map(({ label, value }) => [label, value])).toEqual([
-    ["Coverage", "0.75"],
-    ["Timeliness", "0.80"],
+    ["Recorded confidence inputs", ""],
   ]);
+  expect(trace?.derivation.children[0]?.children.map(({ label, value }) => [label, value])).toEqual(
+    [
+      ["Coverage", "0.75"],
+      ["Timeliness", "0.80"],
+    ],
+  );
 });
 
 it("J3-015 states the confidence score denominator without changing its value", () => {
