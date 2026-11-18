@@ -4,6 +4,28 @@ Keep one running record here. A pass applies only to the stated scope. Earlier v
 engine is in [EricMG13/final-workflow](https://github.com/EricMG13/final-workflow)'s
 `VERIFICATION.md`, which also keeps the retained runs this copy leaves out.
 
+## 2026-11-18 — Module Bottom line confidence
+
+- Retained Caesars desktop preview. Verified 33/100 and 0/100 as Insufficient Information and 54/100 as Low, with distinct fills and the original confidence and prose traces. The tile remains available when the score has no rendered Bottom line. All 97 focused tests, build, lint and formatting passed. The Python gate passed with the untracked predecessor copy excluded.
+
+## 2026-11-18 — Forecast redesign
+
+- Desktop preview verified at 1440 × 900 and 1280 × 900. Cash flow and scenario comparison open together. Compared all 680 historical and forecast display cells with the retained Caesars calculation record, including periods, missing values and zeros.
+- In-app preview verified FY2029E scenario comparison, Growth rates, Chart or Table and the downside source drawer. Design review confirmed the stronger selected-control state after recapture. Claude Model handoff and RBOT-HTML `fc010a7` informed the layout.
+- 174 focused tests passed. Chrome and Edge completed the synthetic desktop proof in `run-ikJ2Lt`. Build, lint and formatting passed. The Python gate passed with the untracked predecessor copy excluded. Post-edit review retained exact row matching and the separate-grid fallback.
+
+## 2026-11-18 — Desktop Forecast case comparison
+
+- Retained Caesars, Chrome at 1440 × 900. The four FY2029E figures fit on one row, reducing the case section from 384 to 230 px. Each value matched the retained preview. The opening qualification and shared rounding note appeared once in the comparison. Verified all four source buttons, arrow-key case selection, active comparison row and downside trace.
+- The focused frontend suite passed 134 tests. Chrome and Edge passed desktop synthetic proof (run-1oq0zs). Build, formatting and changed-component lint passed. The unfiltered Python gate found 3,008 issues in the untracked predecessor copy; excluding it yielded zero. Post-edit review confirmed the model supplies a common period and unit, and only exact matches to visible qualification text are removed from case labels.
+
+## 2026-11-18 — Connected desktop findings and Forecast proof
+
+- Retained Caesars preview at 1440 × 900 in Chrome. Library identified the test preview in both layouts and labelled 4.19× using the retained debt cash-interest basis. Read-only intake and progress controls were checked.
+- All 49 limitations across 12 modules matched the previous preview in order, prose and trace labels. Chart index focused Run charts 16 px from the top, including on reload. The Evidence model register appeared for Forward credit model and was absent under Legal.
+- Chrome and Edge passed the desktop-only synthetic proof (run-DQdHfb), including both intake cost labels, the qualification immediately preceding case figures, the scope disclosure and scenario comparison. An earlier Edge run timed out loading intake. The complete rerun passed on both browsers.
+- 314 focused frontend and 94 backend tests passed, as did build, lint and formatting. The Python gate reported 3,008 findings in the untracked predecessor copy and zero on the changed project code. Post-edit review retained grouped rows and per-history-entry scroll offsets.
+
 ## 2026-11-18 — Forecast adversarial review
 
 - Exact recorded scope limits open their input trace. Generated notes link to Evidence Record. Assumption links require matching ordered headers and a unique full row. Jumps target available Forecast sections.
@@ -960,39 +982,3 @@ Scope: presentation only, all under `web/`; no backend, handoff, provider or mod
   `20261115-205932-01` and serves the same compiled JS and CSS. The engine and
   pins match the existing RBOT-HTML `b8cf4ca` baseline. Upstream advanced to
   `256101a`. Windows work-PC proof and publication are pending.
-
-## 2026-11-15 — Windows candidate and extracted-project checks
-
-- The archive had omitted the React design system and brand tokens used by
-  12 web test files. Confidence review traced those reads and verified the
-  revised ZIP contains both files byte for byte. The Windows guide now records
-  the retained Caesars result. Packaged application, proof inputs and pins
-  match the preceding candidate. The Python quality gate and 27 targeted tests
-  passed. Extracted `CI=1 npm run gates` passed locally (3,047 web tests,
-  70 script tests and the file-browser checks).
-- Candidate `9c9a924`, SHA-256
-  `f6def4b788135bfb583e11829e339c92d90df22c1657ddcebf71bb6c2097fbfd`.
-  Its verified clean extraction passed macOS Chrome (`20261115-173348-01`)
-  and Edge (`20261115-173359-01`). The same build replayed all five Caesars
-  views at 1,440 and 390 px, checked against the mock layouts and native data.
-  The replay restored the download copy after local preview startup and verified
-  the CP-2 hash, C11/C14 and 464.86 versus 647.95 US$m. Windows work-PC proof
-  and publication are pending.
-
-## 2026-11-15 — Portfolio limits from a validated fund export
-
-- Confidence review exercised the frozen source links and pinned bytes, plot
-  and table agreement, exact zero and zero maximum, report date and check
-  date, absent NAV, duplicate limits, minimum limits and exposure definitions
-  the holdings cannot corroborate. The targeted Python suite passed 103
-  tests. The changed-code quality gate and packaged web build passed.
-- The standard candidate `b532d3e` had SHA-256
-  `422d6a7769214b199aa7cfdf50511f52dcfeb617866a25a4a99701efcb5febcc`.
-  Its verified clean extraction passed full macOS Chrome
-  (`20261115-172838-01`) and Edge (`20261115-172847-01`) proof.
-- A separate synthetic upload used the same application with export fixtures
-  and a matching canned CP-6 handoff. Chrome (`20261115-172851-01`) and Edge
-  (`20261115-172902-01`) rendered 29.80% against 30.0% and 0.00% against
-  5.00% in Modules and Forecast. The 29.90% illustrative proposal stayed in
-  the original table. Both browsers showed the retained Caesars portfolio gap
-  at 390 px in both views. Windows work-PC proof and publication are pending.

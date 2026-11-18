@@ -8,7 +8,7 @@ import {
   waitFor,
   within,
 } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ConnectedApp } from "./ConnectedApp";
 import type { Snapshot } from "./publishedReport";
 
@@ -121,7 +121,17 @@ class FakeObserver {
   unobserve() {}
 }
 
+beforeEach(() => {
+  Object.defineProperty(HTMLElement.prototype, "scrollIntoView", {
+    configurable: true,
+    writable: true,
+
+    value: vi.fn(),
+  });
+});
+
 afterEach(() => {
+  Reflect.deleteProperty(HTMLElement.prototype, "scrollIntoView");
   cleanup();
   vi.unstubAllGlobals();
   observers.length = 0;

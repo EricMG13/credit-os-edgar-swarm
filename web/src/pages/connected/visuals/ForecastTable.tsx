@@ -251,18 +251,23 @@ export function ForecastTable({
   limits,
   source,
   evidenceOnlyQualifications,
+  statement = false,
+  keepColumns = false,
 }: {
   grid: Grid;
   title: string;
   limits: string[];
   source?: ForecastSource;
   evidenceOnlyQualifications?: boolean;
+  statement?: boolean;
+  keepColumns?: boolean;
 }) {
   const [expanded, setExpanded] = useState(false);
   const [showColumns, setShowColumns] = useState(false);
   const empty = emptyColumns(inputGrid);
   // Columns are only set aside when another column holds a value; a table with none is drawn whole.
   const canHideColumns =
+    !keepColumns &&
     empty.length > 0 &&
     inputGrid.rows.some((row) =>
       row.cells.some((cell, index) => !empty.includes(index) && !unpopulatedCell(cell)),
@@ -304,6 +309,31 @@ export function ForecastTable({
             source={source}
           />
         ))}
+      {/* The read-only region scrolls horizontally by keyboard when columns overflow. */}
+      <div
+        className={
+          statement
+            ? "max-h-[28rem] overflow-auto rounded-ds-md border border-border-hairline [&_thead]:sticky [&_thead]:top-0 [&_thead]:z-10 [&_thead]:bg-surface-subtle [&_thead_th:first-child[rowspan]]:sticky [&_thead_th:first-child[rowspan]]:left-0 [&_thead_th:first-child[rowspan]]:bg-surface-subtle"
+            : "overflow-x-auto"
+        }
+        role="region"
+        aria-label={title}
+        // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex
+        tabIndex={0}
+      >
+        <table className="w-full border-collapse text-small">
+          <caption className="sr-only">{title}</caption>
+          <ForecastColumns grid={grid} />
+          <ForecastRows
+            grid={grid}
+            rows={rows}
+            interestBasis={evidenceOnlyQualifications ? interest : []}
+            expanded={expanded || !canCollapse}
+            source={evidenceOnlyQualifications ? source : undefined}
+            evidenceOnlyQualifications={evidenceOnlyQualifications}
+          />
+        </table>
+      </div>
       {canCollapse && (
         <Disclosure
           note={`${String(missing)} rows have no recorded values in this view. Their missing-data reasons remain available.`}
@@ -318,22 +348,6 @@ export function ForecastTable({
           }}
         />
       )}
-      {/* The read-only region scrolls horizontally by keyboard when columns overflow. */}
-      {/* eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex */}
-      <div className="overflow-x-auto" role="region" aria-label={title} tabIndex={0}>
-        <table className="w-full border-collapse text-small">
-          <caption className="sr-only">{title}</caption>
-          <ForecastColumns grid={grid} />
-          <ForecastRows
-            grid={grid}
-            rows={rows}
-            interestBasis={evidenceOnlyQualifications ? interest : []}
-            expanded={expanded || !canCollapse}
-            source={evidenceOnlyQualifications ? source : undefined}
-            evidenceOnlyQualifications={evidenceOnlyQualifications}
-          />
-        </table>
-      </div>
       {canHideColumns && (
         <Disclosure
           note={

@@ -3,6 +3,7 @@ import { ArrowRight, BookOpen01, FileSearch02 } from "@untitledui/icons";
 import { Alert } from "@/components/alert/Alert";
 import { EmptyState } from "@/components/application/empty-state/empty-state";
 import { Skeleton } from "@/components/gap/Skeleton";
+import { Callout } from "@/components/alert/Alert";
 import { StatusBadge } from "@/components/status/StatusBadge";
 import { Badge } from "@/components/base/badges/badges";
 import { Button } from "@/components/base/buttons/button";
@@ -214,7 +215,9 @@ function MatchRuns({
               <header className="grid gap-1">
                 <h3 className={heading}>{newest.name}</h3>
                 {newest.sector && <p className="text-sm text-text-secondary">{newest.sector}</p>}
-                {byFolder.has(newest.id) ? (
+                {snapshot.preview && byFolder.has(newest.id) ? (
+                  <Badge color="brand">Test preview</Badge>
+                ) : byFolder.has(newest.id) ? (
                   <StatusBadge set="Module state" state="Delivered" />
                 ) : (
                   <Badge color="gray">No report published</Badge>
@@ -330,7 +333,7 @@ function useLibrary() {
   return { value, problem, retry };
 }
 
-function EmptyLibrary() {
+function EmptyLibrary({ readOnly }: { readOnly: boolean }) {
   return (
     <EmptyState>
       <EmptyState.Header>
@@ -342,16 +345,18 @@ function EmptyLibrary() {
           A report appears here once a run has finished.
         </EmptyState.Description>
       </EmptyState.Content>
-      <EmptyState.Footer>
-        <Button href="/start" color="secondary">
-          Start a run
-        </Button>
-      </EmptyState.Footer>
+      {!readOnly && (
+        <EmptyState.Footer>
+          <Button href="/start" color="secondary">
+            Start a run
+          </Button>
+        </EmptyState.Footer>
+      )}
     </EmptyState>
   );
 }
 
-export function ReportLibrary() {
+export function ReportLibrary({ readOnly = false }: { readOnly?: boolean }) {
   const { value, problem, retry } = useLibrary();
   const [filters, setFilters] = useState<LibraryFilters>(filtersFromAddress);
   useEffect(() => {
@@ -373,10 +378,14 @@ export function ReportLibrary() {
     window.history.replaceState(window.history.state, "", address);
   }, [filters]);
   // No index and an index with no report are one state; with nothing to filter, no filter is shown.
+  const canStart = !readOnly && !value?.preview;
   const empty = value === null || value?.catalogue.real.length === 0;
   return (
     <>
-      <PageHeader title="Library" actions={<Button href="/start">Start a run</Button>} />
+      <PageHeader
+        title="Library"
+        actions={canStart && <Button href="/start">Start a run</Button>}
+      />
       <section className="mt-6 grid gap-4">
         {problem && (
           <Alert
@@ -400,7 +409,8 @@ export function ReportLibrary() {
             ))}
           </div>
         )}
-        {empty && <EmptyLibrary />}
+        {value?.preview && <Callout title="Test preview">{value.preview.reason}</Callout>}
+        {empty && <EmptyLibrary readOnly={!canStart} />}
         {value && !empty && (
           <>
             <label className={`${label} max-w-md`}>

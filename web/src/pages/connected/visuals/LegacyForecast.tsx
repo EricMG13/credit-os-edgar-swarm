@@ -16,6 +16,7 @@ interface GridColumn {
 }
 
 interface GridRow {
+  kind?: string;
   label: string;
   band: string;
   total: boolean;
@@ -44,6 +45,7 @@ export function gridOf(raw: unknown): Grid | null {
     return {
       label: word(row.label),
       band: word(row.band),
+      kind: word(row.kind),
       total: row.total === true,
       cells: items(row.cells).map(record),
     };
@@ -173,7 +175,7 @@ function singleForecastRow(grid: Grid, label: string) {
   return matches.length === 1 ? matches[0] : undefined;
 }
 
-function ForecastTrends({
+export function ForecastTrends({
   grid,
   units,
   source,
@@ -331,7 +333,7 @@ export function ForecastScope({
 }: {
   model: unknown;
   source?: ForecastSource;
-  children?: ReactNode;
+  children?: (shownQualifications: string[]) => ReactNode;
 }) {
   const cashflow = record(record(model).cashflow);
   const base = scopePassages(
@@ -358,7 +360,7 @@ export function ForecastScope({
   return (
     <>
       {base.map(qualification)}
-      {children}
+      {children?.(base.map(({ text }) => text))}
       <section className="min-w-0 wrap-anywhere" aria-label="Model scope and basis">
         <details className="rounded-ds-md border border-border-hairline bg-surface-subtle px-4 py-3">
           <summary className="cursor-pointer font-semibold">Model scope and basis</summary>
@@ -383,61 +385,88 @@ export function CashProxy({
   source,
   sourceFor,
   selectedCase,
+  unified = false,
 }: {
   model: unknown;
   note?: ReactNode;
   source?: ReactNode;
   sourceFor?: ForecastSource;
   selectedCase?: string;
+  unified?: boolean;
 }) {
   const raw = record(record(model).cashflow);
   const grid = gridOf(raw);
-  if (!grid) return null;
-  const { periods, series } = cashProxyCases(
-    grid,
-    gridOf(raw.other),
-    stringsIn(raw.notes).find((note) => note.startsWith("Downside case is")),
+  const { periods, series } = grid
+    ? cashProxyCases(
+        grid,
+        gridOf(raw.other),
+        stringsIn(raw.notes).find((note) => note.startsWith("Downside case is")),
+      )
+    : { periods: [], series: [] };
+  if (!unified && (periods.length < 2 || series.length === 0)) return null;
+  const head = ["Case", ...periods];
+  const rows = series.map(({ name, cells }) => ({
+    label: name,
+    cells,
+    current: name === selectedCase,
+    end: sourceFor?.(`${name} cash proxy`, { case: name, row: CASH_PROXY }) ?? source,
+  }));
+  const endHeading = source || sourceFor ? "Source" : undefined;
+  const comparison = (
+    <ChartTable caption="Scenario comparison" head={head} rows={rows} endHeading={endHeading} />
   );
-  const rows = series.map(({ name, cells }) => ({ label: name, cells }));
-  const values = series.flatMap((item) => item.values);
-  if (periods.length < 2 || series.length === 0) return null;
-  const table = { head: ["Case", ...periods], rows };
-  const unit = word(raw.units);
+  const plot = periods.length > 1 && series.length > 0 && (
+    <PathChart
+      title="Cash proxy by scenario"
+      actions={
+        sourceFor?.("Cash proxy by scenario", { row: CASH_PROXY, case: "", periods }) ?? source
+      }
+      subtitle={word(raw.units)}
+      periods={periods}
+      series={series}
+      emphasis={series.some((item) => item.name === selectedCase) ? selectedCase : undefined}
+      yTicks={forecastTicks(
+        series.flatMap((item) => item.values),
+        true,
+      )}
+      table={
+        unified
+          ? { head, rows, endHeading }
+          : { head, rows: series.map(({ name, cells }) => ({ label: name, cells })) }
+      }
+      tableCaption={unified ? "Scenario comparison" : undefined}
+    />
+  );
+  const precision = (
+    <p className="text-small text-text-secondary">
+      Cash proxy figures are rounded to two decimal places. The statement keeps the recorded
+      display.
+    </p>
+  );
+  if (unified)
+    return (
+      <div className="grid min-w-0 content-start gap-4">
+        {plot ||
+          (series.length ? (
+            comparison
+          ) : (
+            <p className="text-text-secondary">No scenario cash proxy was recorded.</p>
+          ))}
+        {series.length > 0 && precision}
+        {note}
+      </div>
+    );
   return (
     <div className="grid min-w-0 gap-4 xl:grid-cols-[1.65fr_1fr]">
       <div className="min-w-0 rounded-xl border border-border-hairline bg-surface-card p-5">
-        <PathChart
-          title="Cash proxy by scenario"
-          actions={
-            sourceFor?.("Cash proxy by scenario", { row: CASH_PROXY, case: "", periods }) ?? source
-          }
-          subtitle={unit}
-          periods={periods}
-          series={series}
-          emphasis={series.some((item) => item.name === selectedCase) ? selectedCase : undefined}
-          yTicks={forecastTicks(values, true)}
-          table={table}
-        />
+        {plot}
       </div>
       <div className="grid min-w-0 content-start gap-4">
         <section className="grid min-w-0 gap-3 rounded-xl border border-border-hairline bg-surface-card p-5">
           <h3 className="font-display text-h4">Scenario comparison</h3>
-          <ChartTable
-            caption="Scenario comparison"
-            head={table.head}
-            rows={series.map(({ name, cells }) => ({
-              label: name,
-              cells,
-              current: name === selectedCase,
-              end: sourceFor?.(`${name} cash proxy`, { case: name, row: CASH_PROXY }) ?? source,
-            }))}
-            endHeading={source || sourceFor ? "Source" : undefined}
-          />
+          {comparison}
         </section>
-        <p className="text-small text-text-tertiary">
-          Cash proxy chart and comparison values are shown to 2 decimals. The model table retains
-          its recorded display.
-        </p>
+        {precision}
         {note}
       </div>
     </div>

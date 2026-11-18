@@ -253,12 +253,12 @@ def _report_entries(snapshot: dict[str, Any] | None) -> dict[str, dict[str, Any]
     return entries
 
 
-def _read_page(dist: Path, *, synthetic: bool, signal_url: str) -> bytes:
+def _read_page(dist: Path, *, synthetic: bool, signal_url: str, read_only: bool = False) -> bytes:
     connected = dist / "connected.html"
     page = (connected if connected.is_file() else dist / "index.html").read_bytes()
     if b"<head>" not in page or page.count(b"connect-src 'none'") != 1:
         raise ValueError("the React build must include its offline index policy")
-    mode = "synthetic" if synthetic else "live"
+    mode = "preview" if read_only else "synthetic" if synthetic else "live"
     metadata = (
         '<meta name="credit-os-backend" content="legacy">'
         f'<meta name="credit-os-mode" content="{mode}">'
@@ -455,7 +455,7 @@ def make_server(  # noqa: PLR0913 - explicit launcher, mode and server options
         raise ValueError("--port must be from 0 to 65535")
     dist = (web or PROJECT / "web" / "dist").resolve()
     signal_link = service.signal_link(signal_url) if signal_url else ""
-    page = _read_page(dist, synthetic=synthetic, signal_url=signal_link)
+    page = _read_page(dist, synthetic=synthetic, signal_url=signal_link, read_only=read_only)
     context = _form_template(synthetic=synthetic)
     settings = (  # Teams cards are for real runs only: a synthetic service never posts
         Settings(root, teams=teams.config_from_environment(teams.CONNECTED_PAGES))

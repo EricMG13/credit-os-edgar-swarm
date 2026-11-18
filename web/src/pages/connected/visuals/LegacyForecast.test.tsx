@@ -261,11 +261,17 @@ it("places all four recorded cases between the conditional base qualification an
   const scope = screen.getByRole("region", { name: "Model scope and basis" });
   const lead = screen.getAllByText("Base case is a conditional illustration.")[0];
   expect(lead?.parentElement?.nextElementSibling).toContainElement(choices);
+  expect(within(choices).queryByText("Base case is a conditional illustration.")).toBeNull();
   expect(choices.compareDocumentPosition(scope) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   expect(scope.querySelector("details")).not.toHaveAttribute("open");
   expect(
     within(scope).getByText("Base interest and forecast interest are not comparable."),
   ).toBeInTheDocument();
+  fireEvent.click(
+    within(screen.getByRole("figure", { name: "Cash proxy by scenario" })).getByRole("radio", {
+      name: "Table",
+    }),
+  );
   const comparison = within(screen.getByRole("table", { name: "Scenario comparison" }));
   expect(comparison.getAllByRole("rowheader").map((node) => node.textContent)).toEqual([
     "Base case",

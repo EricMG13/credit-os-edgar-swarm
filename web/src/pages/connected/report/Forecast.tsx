@@ -18,11 +18,13 @@ import {
   CashProxy,
   cashProxyCases,
   forecastCaseOptions,
+  forecastCaseLabel,
   ForecastScope,
   gridOf,
-  LegacyForecast,
+  ForecastTrends,
 } from "../visuals/LegacyForecast";
 import { RunCharts } from "./RunCharts";
+import { ForecastStatement } from "../visuals/ForecastStatement";
 import { PublishedSource } from "./PublishedTrace";
 import {
   forecastHandoff,
@@ -118,101 +120,92 @@ function BasisNote({
 
 function ForecastCases({
   caseOptions,
+  shownQualifications,
   selectedCase,
   setChosenCase,
   source,
 }: {
   caseOptions: ReturnType<typeof forecastCaseOptions>;
+  shownQualifications: string[];
   selectedCase: string | undefined;
   setChosenCase: (name: string) => void;
   source: ForecastSource | undefined;
 }) {
+  const [first] = caseOptions;
+  if (!first || caseOptions.length < 2) return null;
   return (
-    caseOptions.length > 1 && (
-      <section
-        id="forecast-cases"
-        tabIndex={-1}
-        className="flex min-w-0 scroll-mt-4 flex-col gap-4 wrap-anywhere focus:outline-2 focus:outline-offset-2 focus:outline-focus"
-        aria-labelledby="forecast-case-heading"
+    <section
+      id="forecast-cases"
+      tabIndex={-1}
+      className="grid min-w-0 scroll-mt-4 gap-3 wrap-anywhere focus:outline-2 focus:outline-offset-2 focus:outline-focus"
+      aria-labelledby="forecast-case-heading"
+    >
+      <div className="flex flex-wrap items-baseline justify-between gap-2">
+        <h3 id="forecast-case-heading" className="font-display text-h3">
+          Forecast cases
+        </h3>
+        <p id="forecast-case-measure" className="text-sm text-text-secondary">
+          Cash proxy{first.period && ` · ${first.period}`} · {unitLabel(first.units)}
+        </p>
+      </div>
+      <div
+        role="radiogroup"
+        aria-label="Forecast case"
+        aria-describedby="forecast-case-measure forecast-case-note"
+        className="grid min-w-0 overflow-hidden rounded-ds-md border border-border-hairline bg-border-hairline gap-px sm:grid-cols-2 xl:grid-cols-[repeat(auto-fit,minmax(13rem,1fr))]"
       >
-        <div className="flex flex-wrap items-baseline justify-between gap-2">
-          <h3 id="forecast-case-heading" className="font-display text-h3">
-            Forecast cases
-          </h3>
-          <p className="text-small text-text-tertiary">
-            The cash proxy and forecast charts follow the selected case.
-          </p>
-        </div>
-        <div
-          role="radiogroup"
-          aria-label="Forecast case"
-          className="grid min-w-0 gap-4 sm:grid-cols-2"
-        >
-          {caseOptions.map(({ name, period, value, units, description, reason }) => (
-            <div
-              key={name}
-              className={`relative flex min-w-0 flex-col gap-2 wrap-anywhere rounded-ds-md border bg-surface-card px-3 py-2.5 ${
-                selectedCase === name
-                  ? "border-action bg-surface-selected"
-                  : "border-border-hairline"
-              }`}
-            >
-              <div className={TRACE_HOST}>
-                <label className="block cursor-pointer has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-focus">
-                  <input
-                    type="radio"
-                    name="forecast-case"
-                    checked={selectedCase === name}
-                    onChange={() => {
-                      setChosenCase(name);
-                    }}
-                    className="sr-only"
-                  />
-                  <span className="flex items-baseline gap-2 text-sm font-semibold text-text-primary">
-                    {name}
-                    <span
-                      aria-hidden="true"
-                      className={`ml-auto size-4 flex-none self-center rounded-full border ${
-                        selectedCase === name ? "border-5 border-action" : "border-border-control"
-                      }`}
-                    />
-                  </span>
-                  <span className="mt-0.5 block pr-14 text-sm text-text-secondary sm:pr-7">
-                    <span className="font-display text-h3 tabular-nums">
-                      {typeof value === "number"
-                        ? new Intl.NumberFormat("en-US", { maximumFractionDigits: 2 }).format(value)
-                        : "n.a."}
-                    </span>
-                    <span className="block text-text-tertiary">
-                      Cash proxy {period ? `· ${period}` : ""}
-                      {` · ${unitLabel(units)}`}
-                    </span>
-                    <span className="mt-2 block text-small text-text-secondary">
-                      {description || "Case description not recorded."}
-                    </span>
-                    {reason && (
-                      <span className="mt-2 block text-small text-text-secondary">
-                        {readerText(reason)}
-                      </span>
-                    )}
-                    <span className="mt-1 block text-small text-text-tertiary">
-                      Card values shown to 2 decimals; model table retains recorded display.
-                    </span>
-                  </span>
-                </label>
-                <div className="absolute right-2.5 bottom-2.5">
-                  {source?.(name, {
-                    case: name,
-                    period,
-                    row: "Cash proxy (not issuer free cash flow)",
-                  })}
-                </div>
-              </div>
+        {caseOptions.map(({ name, period, value, description, reason }) => (
+          <div
+            key={name}
+            className={`${TRACE_HOST} relative min-w-0 ${selectedCase === name ? "bg-surface-selected" : "bg-surface-card"}`}
+          >
+            <label className="block h-full cursor-pointer px-4 py-2 has-[:focus-visible]:outline-2 has-[:focus-visible]:-outline-offset-2 has-[:focus-visible]:outline-focus">
+              <input
+                type="radio"
+                name="forecast-case"
+                checked={selectedCase === name}
+                onChange={() => {
+                  setChosenCase(name);
+                }}
+                className="sr-only"
+              />
+              <span className="flex items-center justify-between gap-2 text-sm font-semibold text-text-primary">
+                {name}
+                <span
+                  aria-hidden="true"
+                  className={`size-4 flex-none rounded-full border ${selectedCase === name ? "border-5 border-action" : "border-border-control"}`}
+                />
+              </span>
+              <span className="mt-1 block pr-8 font-display text-h3 tabular-nums">
+                {typeof value === "number"
+                  ? new Intl.NumberFormat("en-US", { maximumFractionDigits: 2 }).format(value)
+                  : "n.a."}
+              </span>
+              {(!description || !shownQualifications.includes(description)) && (
+                <span className="mt-2 block pr-7 text-small text-text-secondary">
+                  {description || "Case description not recorded."}
+                </span>
+              )}
+              {reason && (
+                <span className="mt-2 block pr-7 text-small text-text-secondary">
+                  {readerText(reason)}
+                </span>
+              )}
+            </label>
+            <div className="absolute right-2 bottom-2">
+              {source?.(name, {
+                case: name,
+                period,
+                row: "Cash proxy (not issuer free cash flow)",
+              })}
             </div>
-          ))}
-        </div>
-      </section>
-    )
+          </div>
+        ))}
+      </div>
+      <p id="forecast-case-note" className="text-small text-text-secondary">
+        Choose a case to update the model and charts. Figures are rounded to at most 2 decimals.
+      </p>
+    </section>
   );
 }
 
@@ -320,6 +313,43 @@ function forecastSections(
   ];
 }
 
+function ForecastTrendsSection({
+  model,
+  selectedCase,
+  source,
+}: {
+  model: Model;
+  selectedCase?: string;
+  source?: ForecastSource;
+}) {
+  const cashflow = record(model.cashflow);
+  const grid = gridOf(cashflow);
+  const other = gridOf(cashflow.other);
+  const downsideNote = stringsIn(cashflow.notes).find((note) =>
+    note.startsWith("Downside case is"),
+  );
+  if (!grid) return null;
+  const forecasts = other?.columns.some(
+    ({ group }) => forecastCaseLabel(group, downsideNote) === selectedCase,
+  )
+    ? other
+    : grid;
+  return (
+    <details className="mt-4 border-y border-border-hairline bg-surface-card px-4 py-3">
+      <summary className="cursor-pointer font-semibold">Cash flow trends by line item</summary>
+      <div className="mt-4">
+        <ForecastTrends
+          grid={forecasts}
+          units={word(cashflow.units)}
+          source={source}
+          selectedCase={selectedCase}
+          downsideNote={downsideNote}
+        />
+      </div>
+    </details>
+  );
+}
+
 function ForecastContent({
   model,
   selectedCase,
@@ -347,20 +377,27 @@ function ForecastContent({
           tabIndex={-1}
           className="scroll-mt-4 focus:outline-2 focus:outline-offset-2 focus:outline-focus"
         >
-          <LegacyForecast
-            model={model}
-            selectedCase={selectedCase}
-            source={source}
-            evidenceOnlyQualifications
-            summary={
+          <div className="grid min-w-0 items-start gap-6 xl:grid-cols-[minmax(0,1.22fr)_minmax(0,1fr)] [&_button[aria-checked=true]]:bg-brand-950 [&_button[aria-checked=true]]:text-white">
+            <div className="min-w-0 border-t-2 border-brand-950 bg-surface-card p-4">
+              <ForecastStatement model={model} selectedCase={selectedCase} source={source} />
+            </div>
+            <section
+              aria-label="Scenario comparison"
+              className="grid min-w-0 gap-3 border-t-2 border-brand-950 bg-surface-card p-4"
+            >
               <CashProxy
                 model={model}
                 selectedCase={selectedCase}
                 sourceFor={source}
                 note={<BasisNote model={model} handoff={handoff} href={href} />}
+                unified
               />
-            }
-          />
+            </section>
+          </div>
+          <ForecastTrendsSection model={model} selectedCase={selectedCase} source={source} />
+          <a className="mt-3 inline-block text-small text-action underline" href="#evidence/record">
+            Model notes and limitations
+          </a>
         </div>
       )}
       {assumptions && (
@@ -387,10 +424,12 @@ export function Forecast({
   view,
   run,
   section,
+  preview = false,
 }: {
   view: ReturnType<typeof buildReportView>;
   run: PublishedRun;
   section?: string;
+  preview?: boolean;
 }) {
   const [selected, setSelected] = useState(0);
   const [chosenCase, setChosenCase] = useState("");
@@ -439,13 +478,19 @@ export function Forecast({
   const sections = forecastSections(model, caseOptions.length > 1, assumptions !== null);
   return (
     <>
-      <header className="grid gap-2">
-        <h2 className="font-display text-h2">Forecast</h2>
+      <header className="flex flex-wrap items-center justify-between gap-3 rounded-ds-md bg-brand-950 px-5 py-3 text-white">
+        <div>
+          <h2 className="font-display text-h2">Forecast</h2>
+          <p className="text-small text-brand-100">
+            {run.issuerHeading || run.issuer}
+            {preview && " · Test preview"}
+          </p>
+        </div>
         {model && (
           <Button
             className="w-fit"
             href="#evidence/summary"
-            color="link-gray"
+            color="secondary"
             size="sm"
             iconTrailing={ArrowRight}
           >
@@ -496,12 +541,15 @@ export function Forecast({
       )}
       {model && (
         <ForecastScope model={model} source={source}>
-          <ForecastCases
-            caseOptions={caseOptions}
-            selectedCase={selectedCase}
-            setChosenCase={setChosenCase}
-            source={source}
-          />
+          {(shownQualifications) => (
+            <ForecastCases
+              shownQualifications={shownQualifications}
+              caseOptions={caseOptions}
+              selectedCase={selectedCase}
+              setChosenCase={setChosenCase}
+              source={source}
+            />
+          )}
         </ForecastScope>
       )}
       <ForecastContent

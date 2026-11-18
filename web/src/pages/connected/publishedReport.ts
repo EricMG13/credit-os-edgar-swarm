@@ -218,6 +218,7 @@ export type PublishedRun = {
   };
 };
 type Metric = {
+  basis?: string;
   value?: number | string | null;
   unit?: string | null;
   period?: string | null;

@@ -374,7 +374,7 @@ it("traces a trend to the actual figure and selected case instead of generic JSO
   expect(drawer.getByText("0.20")).toBeInTheDocument();
 });
 
-it("binds an Other forecast table row to its own case instead of the globally selected Base", () => {
+it("binds a selected additional scenario row to its own case", () => {
   const { view, model } = fixture();
   model.cashflow.other = {
     columns: model.cashflow.columns
@@ -392,8 +392,9 @@ it("binds an Other forecast table row to its own case instead of the globally se
       <Forecast view={view} run={run} />
     </PublishedTraceProvider>,
   );
+  fireEvent.click(screen.getByRole("radio", { name: /^Downside drivers/ }));
   fireEvent.click(
-    within(screen.getByRole("region", { name: "Other forecast cases" })).getByRole("button", {
+    within(screen.getByRole("region", { name: "Cash flow model" })).getByRole("button", {
       name: "Show sources for Revenue",
     }),
   );
@@ -403,6 +404,45 @@ it("binds an Other forecast table row to its own case instead of the globally se
   ).toBeInTheDocument();
   expect(drawer.getByText(/Revenue.*Downside drivers.*FY2026E.*1050/)).toBeInTheDocument();
   expect(drawer.queryByText(/Revenue.*Base case/)).toBeNull();
+});
+
+it("compares one period across cases and keeps accounts, ratios and growth rates separate", () => {
+  const { view, model } = fixture();
+  model.cashflow.rows.push(
+    {
+      label: "Interest coverage",
+      band: "Credit metrics",
+      kind: "multiple",
+      total: false,
+      cells: ["4.19x", "4.25x", "n.a.", "n.a."].map((display) => ({
+        display,
+        status: display === "n.a." ? "na" : "value",
+      })),
+    },
+    {
+      label: "Revenue YoY growth",
+      band: "Revenue",
+      kind: "percent",
+      total: false,
+      cells: ["5.0%", "4.0%", "0.0%", "4.0%"].map((display) => ({ display, status: "value" })),
+    },
+  );
+  render(<Forecast view={view} run={run} />);
+  const statement = () => within(screen.getByRole("table", { name: "Cash flow model" }));
+  const lines = within(screen.getByRole("radiogroup", { name: "Statement lines" }));
+  fireEvent.change(screen.getByLabelText("Statement columns"), { target: { value: "compare" } });
+  fireEvent.change(screen.getByLabelText("Comparison period"), { target: { value: "FY2026E" } });
+  expect(statement().getByRole("cell", { name: "1050" })).toBeInTheDocument();
+  expect(statement().getByRole("cell", { name: "840" })).toBeInTheDocument();
+  expect(statement().queryByRole("columnheader", { name: "FY2027E" })).toBeNull();
+  fireEvent.click(lines.getByRole("radio", { name: "Ratios" }));
+  expect(statement().getByRole("cell", { name: "4.19x" })).toBeInTheDocument();
+  expect(statement().getByRole("cell", { name: "n.a." })).toBeInTheDocument();
+  expect(statement().getByRole("columnheader", { name: "Downside shock" })).toBeInTheDocument();
+  expect(statement().queryByRole("rowheader", { name: "Revenue" })).toBeNull();
+  fireEvent.click(lines.getByRole("radio", { name: "Growth rates" }));
+  expect(statement().getByRole("cell", { name: "0.0%" })).toBeInTheDocument();
+  expect(statement().queryByRole("rowheader", { name: "Interest coverage" })).toBeNull();
 });
 
 it.each([true, false])(
@@ -584,7 +624,10 @@ it("keeps the missing cash-proxy reason on its case card and explains its precis
   const cases = within(screen.getByRole("radiogroup", { name: "Forecast case" }));
   expect(cases.getByText(missing)).toBeInTheDocument();
   expect(cases.getByText("n.a.")).toBeInTheDocument();
-  expect(cases.getAllByText(/to 2 decimals/)).toHaveLength(2);
+  expect(screen.getByRole("radiogroup", { name: "Forecast case" })).toHaveAccessibleDescription(
+    /Cash proxy.*2 decimals/,
+  );
+  expect(cases.queryByText(/2 decimals/)).toBeNull();
 });
 
 it("uses stored case names for descriptions and reader names for all column groups", () => {
