@@ -4,6 +4,28 @@ Keep one running record here. A pass applies only to the stated scope. Earlier v
 engine is in [EricMG13/final-workflow](https://github.com/EricMG13/final-workflow)'s
 `VERIFICATION.md`, which also keeps the retained runs this copy leaves out.
 
+## 2026-11-18 — Connected pages: first draw and report redraws
+
+- Scope: headless Chromium only, the two-run synthetic workspace, one shared Linux container.
+  No Chrome or Edge, no Windows, no real report, no run with an earlier run to compare.
+- Changed: the connected entry waits for the page's own file for at most 300 ms before the first
+  draw, so React's 300 ms fallback hold is not met when the file is already there, and asks for
+  the library index or the report once the file has loaded. The report page, its view, its
+  parts and the run charts are not redrawn when nothing they read has changed.
+- Medians of 5: report first content 497 to 306 ms, library 344 to 86 ms, the source highlight
+  switch on Forecast 234 to 17 ms. At four times CPU slowdown the report's file takes longer
+  than 300 ms and both builds take the same path (1,121 and 1,080 ms).
+- Fidelity check, by a second reviewer on fresh builds of both commits: text, titles, requests
+  and their order, alerts, console errors, tab order and PDF text are the same for the library
+  and both reports across every tab at 1440, 768 and 390 px, with the file delayed 0 to
+  1,500 ms, failing, and the first read failing nine ways. Generated element ids are one step
+  lower; every reference to one resolves. A first build that kept charts out of the page until
+  scrolled near, and one that kept library figure sources, failed the first review (chart text
+  not findable, stale sources) and were removed.
+- Commands: web `lint`, `format:check`, `typecheck`, `unused`, `duplication` exit 0; `npm test`
+  5,293 passed on the branch before the merge.
+- Not verified: Chrome and Edge on the work PC; a late portfolio basis in a browser.
+
 ## 2026-11-18 — Adversarial review of the performance changes; fonts, imports, publisher reuse
 
 - Scope: synthetic runs and fixtures on one shared Linux container. No provider call, no real
