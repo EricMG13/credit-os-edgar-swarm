@@ -60,7 +60,7 @@ def test_writes_static_library(tmp_path):
     # Only library/ is written; nothing else in the workspace changes, no temporary folder is left.
     assert {k: v for k, v in after.items() if not k.startswith("library/")} == before
     assert sorted(p.name for p in tmp_path.iterdir()) == ["library", "runs"]
-    for name in ("index.html", "data.js", "static-boot.js", "screen.css", "fonts/OFL.txt"):
+    for name in ("data.js",):
         assert (tmp_path / "library" / name).is_file()
     assert not [k for k in after if k.endswith(".test.cjs")]
     # The delivered report is retired (decision 1): no copy of it, no adapter, no reports list.
@@ -71,9 +71,6 @@ def test_writes_static_library(tmp_path):
     assert not [s for s in strings(data) if s.startswith("/files/")]
     assert "../runs/run-a/" in "\n".join(strings(data))
     assert not [s for s in strings(data) if "sha256=" in s and s.startswith("../")]
-    page = (tmp_path / "library/index.html").read_text(encoding="utf-8")
-    assert "default-src 'none'" in page and "connect-src 'none'" in page
-    assert re.findall(r'\b(?:src|href)="(?:https?:)?//', page) == []
 
 
 def test_the_runs_own_files_are_not_changed_or_copied(tmp_path):
@@ -128,7 +125,11 @@ def test_empty_workspace(tmp_path):
     library = update_library.update_library(tmp_path)
     assert library.runs == [] and library.excluded == []
     assert data_of(tmp_path)["catalogue"]["real"] == []
-    assert (tmp_path / "library/index.html").is_file()
+    assert sorted(
+        p.relative_to(tmp_path / "library").as_posix()
+        for p in (tmp_path / "library").rglob("*")
+        if p.is_file()
+    ) == ["data.js"]
 
 
 def test_unlisted_run_contributes_nothing(tmp_path):
@@ -161,7 +162,18 @@ def test_a_rebuild_replaces_the_library_whole(tmp_path):
     (tmp_path / "library/stale.txt").write_text("old")
     update_library.update_library(tmp_path)
     assert not (tmp_path / "library/stale.txt").exists()
-    assert (tmp_path / "library/index.html").is_file()
+    assert sorted(
+        p.relative_to(tmp_path / "library").as_posix()
+        for p in (tmp_path / "library").rglob("*")
+        if p.is_file()
+    ) == [
+        "data.js",
+        "downloads/run-a/CP-0.md",
+        "downloads/run-a/CP-1.md",
+        "downloads/run-a/handoffs.zip",
+        "downloads/run-a/instructions/CP-0.md",
+        "downloads/run-a/instructions/CP-1.md",
+    ]
     assert sorted(p.name for p in tmp_path.iterdir()) == ["library", "runs"]
 
 
@@ -180,6 +192,26 @@ def test_a_failed_build_keeps_the_previous_library(tmp_path, monkeypatch):
     assert sorted(p.name for p in tmp_path.iterdir()) == ["library", "runs"]
 
 
+def test_a_failed_build_recovers_the_previous_library_after_an_interrupted_swap(
+    tmp_path, monkeypatch
+):
+    make_run(tmp_path, "run-a")
+    update_library.update_library(tmp_path)
+    published = tmp_path / "library"
+    before = tree(published)
+    previous = tmp_path / ".library-old"
+    published.rename(previous)
+
+    def broken(*args):
+        raise RuntimeError("cannot build")
+
+    monkeypatch.setattr(update_library, "workspace_store", broken)
+    with pytest.raises(RuntimeError, match="cannot build"):
+        update_library.update_library(tmp_path)
+    assert tree(published) == before
+    assert not previous.exists()
+
+
 def test_the_command_reports_what_it_listed_and_why_others_are_not_shown(tmp_path, capsys):
     make_run(tmp_path, "run-a")
     (tmp_path / "runs/legacy").mkdir()
@@ -187,7 +219,7 @@ def test_the_command_reports_what_it_listed_and_why_others_are_not_shown(tmp_pat
     out = capsys.readouterr().out
     assert "Listed 1 run(s)." in out
     assert "  legacy: not a CP-OS launcher run (no workflow.json)" in out
-    assert str(tmp_path.resolve() / "library/index.html") in out
+    assert str(tmp_path.resolve() / "library/data.js") in out
 
 
 def test_a_missing_workspace_is_refused(tmp_path):

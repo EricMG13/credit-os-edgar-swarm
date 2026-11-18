@@ -4,6 +4,39 @@ Keep one running record here. A pass applies only to the stated scope. Earlier v
 engine is in [EricMG13/final-workflow](https://github.com/EricMG13/final-workflow)'s
 `VERIFICATION.md`, which also keeps the retained runs this copy leaves out.
 
+## 2026-11-18 — Copilot cutover, compact handoffs and connected publication
+
+- Astra's end-of-phase review and follow-up confirmed the pinned SDK disables background
+  compaction and autonomous continuations. The Opus hold prices one input token per serialized
+  byte plus runtime framing. Tests covered rejected direct HTTP routes, unavailable Luna effort
+  and disabled seat policy, first and later context checks, and the approved configuration and cap.
+- Confidence review exercised interrupted publication, stale uploads and on-disk edits to approved
+  inputs, including module list, model route and cap. A restart refused the changed queue entries
+  before dispatch. Failed capability checks opened the app offline with paid choices unavailable.
+- Read-only TDG inputs estimated CP-3 at 61,424, CP-5 at 48,098 and CP-6 at 50,061 initial tokens.
+  The prior full requests estimated 209,269, 252,017 and 223,679 respectively. These are serialized
+  request estimates. Offline tests passed an exact chunk through the continuation and validated
+  the resulting handoff. Unknown transport versions and source text with split credentials refused.
+- Clean extraction of ZIP SHA-256 `8b5c0a8f03f776a2fbc0a40b4882be419546d93e3daa04cecaaa60f6292ba1c7`
+  (local proof snapshot `08e281b9`) passed Chrome `20261118-020520-01` and Edge
+  `20261118-020552-01` on macOS. Both exercised intake, report pages and verified a downloaded
+  handoff against its published SHA-256. The old library URL redirected and its script returned
+  404. Zero non-loopback page requests. Static fixture checks passed.
+- The Python quality gate passed. Focused Python checks passed for launch, model, scheduler,
+  intake and publication. Embedded packaging verified that rebuilding removes retired files.
+- Follow-up confidence and Astra review checked the stored first-prompt estimate, the oversized
+  repair refusal before reservation, and the exact seat status in the review summary. A stale
+  picker cannot enable paid Submit. Passed 509 web and 402 targeted Python tests plus the repair check.
+- On macOS the pinned SDK 1.0.28 opened a local stdio connection to Copilot CLI 1.0.108 (protocol 3).
+  The isolated status check reported unauthenticated and created zero sessions.
+- Integrated with main `c1439225`. ZIP SHA-256 `593911cc8a84f6d2722daee9e7aa983564ef57b9ec0a735f50c79bfb8c2bf47d`
+  (proof snapshot `b7fcc73b`) passed clean-extraction Chrome `20261118-020828-01`
+  and Edge `20261118-020859-01` on macOS with zero non-loopback page requests.
+  Passed 232 targeted Python tests, 540 web tests, the quality gate, lint and typecheck.
+  Astra confirmed the merge retained the desktop styles and Copilot approval and cap checks.
+- Deployment-seat verification, the first authorized paid run and Windows work-PC acceptance
+  are pending. Native Copilot search stays unavailable pending evidence and cost verification.
+
 ## 2026-11-18 — Desktop review follow-up after PR #64
 
 - Astra reviewed the merged desktop diff. Fixed activity polling after a malformed response, source-run provenance for reused inputs, Forecast copy for missing calculations, and the retry action named by the service. Verified the regressions, exact source-run link and draft preservation, retained layout, 680 Forecast cells and three confidence scores in the live desktop checks. Chrome and Edge passed offline workflow proof (`run-ryqfCu`), and all 83 file routes rendered. 1,161 frontend and 42 Python tests, build, lint, formatting and the quality gate passed. Fallow passed against merged main with zero new findings and against the original base with 12 styling advisories for values already on that base.
@@ -960,40 +993,3 @@ Scope: presentation only, all under `web/`; no backend, handoff, provider or mod
   submission blocked. The separate synthetic preview completed
   `20261115-214052-01` with USD 0.00 spent and 14 of 14 modules finished.
   The ZIP stays local pending both browsers on the Windows work PC.
-
-## 2026-11-15 — RBOT-HTML 256101a and browser proof
-
-- Native backend and pins match upstream `256101a`. All 16 compiled React
-  files match the five-step Run candidate. The current upstream work-PC pack
-  and historical handoffs retain their original bytes.
-- Both browsers initially reached the new checker and failed on the old
-  synthetic CP-2E headers. The corrected fixture separates the chart data
-  from the native registers. Each browser verified the new completeness
-  records and native agreement on USD 500m unhedged debt, 62.5% and USD 5m
-  added interest. Confidence review also checked rejection of a renamed
-  header and an incorrect gross-interest value. Quality, 657 targeted
-  Python tests, 98 web tests and the build passed.
-- Candidate `8862b08` SHA-256
-  `0692c62a670c42e1af4d94c9d066920db09c4a5c53037467f6ad84574afea379`.
-  Clean macOS extraction passed Chrome (`20261115-210759-01`) and Edge
-  (`20261115-210811-01`). The offline preview completed
-  `20261115-210806-01`. Windows work-PC proof and publication are pending.
-
-## 2026-11-15 — Connected five-step Run intake
-
-- Compared the connected page with the Credit OS Run mock and kit. Documents,
-  Purpose, Confirm, More context and Start use the existing stepper, drop zone,
-  purpose cards, details list and side Readiness. The cap comes from the native
-  scheduler. At 390 px the compact stepper and uploader fit inside the form.
-- Confidence review checked drag and drop, duplicate stored names, valid
-  file attachment choices, back navigation, pre-approval refusal, expired
-  approval and identical retries. The native summary is requested after
-  More context and the final submit uses its exact answers and digest.
-  Targeted web (98) and Python (27) tests, quality, lint, format and build passed.
-- Candidate `cac625b`, SHA-256
-  `6fb94dabd80d044070e3ced0bb1850e4df2d3bcd321b4712185ae5f27060b2a3`.
-  Clean extraction passed Chrome (`20261115-210031-01`) and Edge
-  (`20261115-210040-01`) on macOS. The interactive offline preview completed
-  `20261115-205932-01` and serves the same compiled JS and CSS. The engine and
-  pins match the existing RBOT-HTML `b8cf4ca` baseline. Upstream advanced to
-  `256101a`. Windows work-PC proof and publication are pending.

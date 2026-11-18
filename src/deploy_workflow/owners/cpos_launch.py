@@ -84,8 +84,7 @@ from deploy_workflow.model.adapter import (
 from deploy_workflow.model.budget import Budget
 from deploy_workflow.model.configs import CONFIGS
 from deploy_workflow.model.handoff import (
-    BYTES_PER_TOKEN_BOUND,
-    REQUEST_OVERHEAD,
+    COMPACT_HANDOFF_MODULES,
     WEB_LOOKUP_MODULES,
     WEB_SEARCH_CALLS_PER_TURN,
     WEB_SEARCH_CASE_KINDS,
@@ -97,8 +96,10 @@ from deploy_workflow.model.handoff import (
     web_lookup_offered,
     web_search_offered,
 )
+from deploy_workflow.model.handoff_transport import compact_index
 from deploy_workflow.model.pricing import (
     ContextTooLong,
+    handoff_reservation_usd,
     price_of,
     request_reservation_usd,
     web_search_usd,
@@ -106,6 +107,7 @@ from deploy_workflow.model.pricing import (
 from deploy_workflow.model.turn import MODEL_EFFORTS, dump_json
 from deploy_workflow.owners import cpos_forecast
 from deploy_workflow.owners.cpos import (
+    _require_live_route,
     WEB_SEARCH_GRANT,
     HandoffPlan,
     HandoffTask,
@@ -844,20 +846,15 @@ def _cp8_hold(  # noqa: PLR0913 - the sizes of CP-8's first request
     earlier: Mapping[str, bytes],
     held: HandoffPlan | None,
 ) -> Decimal:
-    """What CP-8's first call counts against the cap, on its estimated first request (the loop's
-    own bound: the request's bytes over `BYTES_PER_TOKEN_BOUND`, plus its overhead). A call that
-    does not fit leaves CP-8 out of a new run (`_Cp8DoesNotFit`) and refuses a resumed one."""
+    """Price CP-8's estimated first request using the live loop's reservation rule.
+    A call that does not fit leaves CP-8 out of a new run and refuses a resumed one."""
     size = _cp8_request_bytes(instructions, ordered, earlier)
     words = (
         f"CP-8's first request (about {size:,} request bytes, estimated from the earlier run's "
         "handoff sizes because this run's are not written yet)"
     )
     try:
-        hold = request_reservation_usd(
-            price_of(config),
-            -(-size // BYTES_PER_TOKEN_BOUND) + REQUEST_OVERHEAD,
-            output_limit(config),
-        )
+        hold = handoff_reservation_usd(config, size, output_limit(config))
     except ContextTooLong as error:
         problem = f"{words} is over the model's context ({error})"
     else:
@@ -1604,7 +1601,10 @@ def _web_line(prepared: Prepared, config: str, ruling: Path | None) -> tuple[str
     if "CP-DR" not in prepared.ordered:
         return ()
     kind = prepared.plan.run.case_kind
-    if web_search_ruled(ruling) and CONFIGS[config].provider != "openai":
+    provider = CONFIGS[config].provider
+    if provider == "copilot":
+        return ("Web:      off: native Copilot web search is unavailable",)
+    if web_search_ruled(ruling) and provider != "openai":
         return ("Web:      off: web search is offered on GPT Sol only, not on this config",)
     if web_search_ruled(ruling) and kind not in WEB_SEARCH_CASE_KINDS:
         return (f"Web:      off: {kind} case",)
@@ -1650,10 +1650,22 @@ def _lookup_lines(
     return (head, *refused)
 
 
+def _first_prompt_bytes(
+    module: str, instructions: int, upstream: Sequence[str], earlier: Mapping[str, bytes]
+) -> int:
+    if module not in COMPACT_HANDOFF_MODULES:
+        return _cp8_request_bytes(instructions, upstream, earlier)
+    handoffs = {
+        name: earlier[path] for name in upstream if (path := f"{PRIOR_PREFIX}{name}.md") in earlier
+    }
+    indexed_size = len(dump_json(compact_index(handoffs)).encode()) if handoffs else 0
+    return instructions + REQUEST_ALLOWANCE + indexed_size
+
+
 def _first_prompt_lines(prepared: Prepared, config: str) -> tuple[str, ...]:
     """Readiness warnings, GitHub Copilot configs only: each module whose first prompt, estimated
-    in tokens, plus the output budget passes the share of the route's limit at which the runtime
-    starts to summarise its context. A warning only: nothing is refused.
+    in tokens, plus the output budget passes the advisory share of the known route limit.
+    The actual request is checked before it is sent.
 
     What can be estimated before the run: the instructions (exact) and the request's fixed part
     (`REQUEST_ALLOWANCE`). The handoffs a module is sent do not exist yet; where an earlier run
@@ -1675,7 +1687,7 @@ def _first_prompt_lines(prepared: Prepared, config: str) -> tuple[str, ...]:
         sent = [m for m in prepared.ordered if m in producers[module] and m != "CP-8"]
         instructions = (prepared.directory / prepared.plan.instructions[module].path).stat()
         tokens = copilot_route.prompt_tokens_estimate(
-            _cp8_request_bytes(instructions.st_size, sent, earlier)
+            _first_prompt_bytes(module, instructions.st_size, sent, earlier)
         )
         basis = "instructions only"
         if sent and earlier:
@@ -1687,7 +1699,7 @@ def _first_prompt_lines(prepared: Prepared, config: str) -> tuple[str, ...]:
             lines.append(
                 f"Context:  {module}: first prompt about {tokens:,} tokens ({basis}) plus "
                 f"{output_limit(config):,} output is over {share}% of the {limit:,}-token limit; "
-                "GitHub Copilot may summarise the context (recorded and charged)"
+                "the adapter checks the seat's limit before sending."
             )
     if unsized:
         lines.append(
@@ -1871,7 +1883,7 @@ def _refresh_library(directory: Path) -> None:
         )
         return
     if library is not None:
-        print(f"Library:  {workspace / 'library' / 'index.html'} ({len(library.runs)} run(s))")
+        print(f"Library:  {workspace / 'library' / 'data.js'} ({len(library.runs)} run(s))")
 
 
 def _record_own_pid() -> None:
@@ -1882,7 +1894,25 @@ def _record_own_pid() -> None:
     platform_io.write_atomic(Path(target), str(os.getpid()), sync=True)
 
 
-def main(argv: Sequence[str] | None = None) -> int:
+def _check_cli_route(config: str, live: bool, ruling: Path | None) -> None:
+    if live:
+        _require_live_route(config)
+    if live and ruling is None:
+        raise LaunchRefused(f"--live needs --ruling docs/rulings/<file>.md naming {config}")
+    if ruling is not None:
+        check_ruling(config, ruling)
+    if not live:
+        return
+    key = KEY_VARIABLES["copilot"]
+    if not (os.environ.get(key) or os.environ.get(COPILOT_GH_LOGIN_VARIABLE) == "1"):
+        raise LaunchRefused(
+            f"--live needs {key} (or {COPILOT_GH_LOGIN_VARIABLE}=1) in the launching environment"
+        )
+    if not Path(os.environ.get(COPILOT_RUNTIME_VARIABLE, "")).is_file():
+        raise LaunchRefused(f"--live needs {COPILOT_RUNTIME_VARIABLE} to name an existing file")
+
+
+def main(argv: Sequence[str] | None = None, *, allow_live: bool = True) -> int:
     try:  # first: a run that cannot be tracked must not start
         _record_own_pid()
     except OSError as error:
@@ -1890,26 +1920,9 @@ def main(argv: Sequence[str] | None = None) -> int:
         return 2
     args = _parser().parse_args(argv)
     try:
-        if args.live and args.ruling is None:
-            raise LaunchRefused(
-                f"--live needs --ruling docs/rulings/<file>.md naming {args.config}"
-            )
-        if args.ruling is not None:
-            check_ruling(args.config, args.ruling)
-        key = KEY_VARIABLES[CONFIGS[args.config].provider]
-        cli_login = CONFIGS[args.config].provider == "copilot" and (
-            os.environ.get(COPILOT_GH_LOGIN_VARIABLE) == "1"
-        )
-        if args.live and not (os.environ.get(key) or cli_login):
-            extra = (
-                f" (or {COPILOT_GH_LOGIN_VARIABLE}=1)"
-                if CONFIGS[args.config].provider == "copilot"
-                else ""
-            )
-            raise LaunchRefused(f"--live needs {key}{extra} in the launching environment")
-        copilot_live = args.live and CONFIGS[args.config].provider == "copilot"
-        if copilot_live and not Path(os.environ.get(COPILOT_RUNTIME_VARIABLE, "")).is_file():
-            raise LaunchRefused(f"--live needs {COPILOT_RUNTIME_VARIABLE} to name an existing file")
+        if args.live and not allow_live:
+            raise LaunchRefused("the embedded Windows launcher supports offline preparation only")
+        _check_cli_route(args.config, args.live, args.ruling)
         if args.balanced and args.high_modules:
             raise LaunchRefused("--balanced and --high-modules cannot be combined")
         if args.balanced or args.high_modules:

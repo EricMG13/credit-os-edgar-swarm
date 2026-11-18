@@ -34,7 +34,7 @@ REPO = HERE.parent
 FAKE = str(HERE / "fixtures" / "fake_launcher.py")
 CONTEXT = json.loads((HERE.parent / "cases/context/research-minimal.json").read_text("utf-8"))
 DELIVERED = [["delivered", {}]]
-KEY = KEY_VARIABLES[CONFIGS["sol-medium"].provider]
+KEY = KEY_VARIABLES[CONFIGS["copilot-sol-medium"].provider]
 STAMP = re.compile(r"\d{4}-\d\d-\d\dT\d\d:\d\d:\d\dZ")
 
 
@@ -53,6 +53,7 @@ def _kill_leftovers(layout: Layout) -> None:
 def root(monkeypatch: pytest.MonkeyPatch) -> Iterator[Path]:
     # pytest's tmp_path is longer than the 80-character root limit on macOS.
     monkeypatch.setenv(KEY, "test-key-not-real")
+    monkeypatch.setenv("COPILOT_CLI_PATH", FAKE)
     with tempfile.TemporaryDirectory(prefix="ib", dir="/tmp") as short:
         folder = Path(short).resolve()
         yield folder
@@ -100,7 +101,7 @@ def listed(request: pytest.FixtureRequest) -> Callable[..., None]:
 
 
 def settings(root: Path, **changes: Any) -> Settings:
-    changes = {"launcher": (sys.executable, FAKE), **changes}
+    changes = {"launcher": (sys.executable, FAKE), "copilot_models": None, **changes}
     return Settings(root, **changes)
 
 

@@ -49,8 +49,17 @@ CONFIGS: Mapping[str, ModelConfig] = MappingProxyType(
         "copilot-sol-medium": ModelConfig(
             "copilot-sol-medium", "copilot", "gpt-6.1-sol", "medium", frozenset()
         ),
+        "copilot-sol-high": ModelConfig(
+            "copilot-sol-high", "copilot", "gpt-6.1-sol", "high", frozenset()
+        ),
         "copilot-opus-medium": ModelConfig(
             "copilot-opus-medium", "copilot", "claude-opus-5.5", "medium", frozenset()
+        ),
+        "copilot-opus-high": ModelConfig(
+            "copilot-opus-high", "copilot", "claude-opus-5.5", "high", frozenset()
+        ),
+        "copilot-luna-xhigh": ModelConfig(
+            "copilot-luna-xhigh", "copilot", "gpt-6-luna", "xhigh", frozenset()
         ),
     }
 )

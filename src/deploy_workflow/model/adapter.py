@@ -356,9 +356,9 @@ def recorded_adapter(model: ModelSpec, recordings: Path) -> RecordedAdapter:
 
 
 class LiveAdapter:
-    """Every construction runs the R2 gate, so no instance exists without a passing ruling."""
+    """Historical HTTP adapter used with an injected transport for offline verification."""
 
-    def __init__(
+    def __init__(  # noqa: PLR0913 - retain the historical test adapter signature
         self,
         model: ModelSpec,
         ruling: Path,
@@ -371,6 +371,8 @@ class LiveAdapter:
         self._gate = check_live_gate(
             model, ruling, rulings_root=rulings_root
         )  # first: before any environment access
+        if transport is https_transport:
+            raise LivePauseInForce("direct HTTP model transport is retired; use Copilot CLI")
         self.config_id = model.config_id
         self._ruling = Path(ruling)
         self._model = model

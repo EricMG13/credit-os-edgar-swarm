@@ -43,7 +43,7 @@ PRICES_AS_OF = date(2026, 10, 31)  # provider-docs fetch date
 # model's rates (pricing page fetched 2026-11-10; cases/pricing/openai-web-search.json).
 WEB_SEARCH_USD_PER_CALL = Decimal("0.01")
 WEB_SEARCH_PRICES_AS_OF = date(2026, 11, 10)
-COPILOT_PRICES_AS_OF = date(2026, 11, 6)  # GitHub "Models and pricing" fetch date
+COPILOT_PRICES_AS_OF = date(2026, 11, 18)  # GitHub "Models and pricing" fetch date
 CostStatus = Literal["computed", "billed", "unknown"]
 
 
@@ -164,6 +164,31 @@ _OPUS = ModelPrice(
     cache_write_1h=Decimal(8),
     output=Decimal(20),
 )
+# Copilot bills from reported AI credits. These rates size the hold, including output that
+# the CLI cannot cap and the documented context ceiling, as for the Copilot Sol route.
+_COPILOT_SOL = replace(_SOL, reservation_output_tokens=128_000)
+_COPILOT_OPUS = ModelPrice(
+    input=Decimal(4),
+    cached_read=Decimal("0.20"),
+    cache_write=Decimal(8),
+    output=Decimal(20),
+    reservation_output_tokens=128_000,
+)
+_COPILOT_LUNA = ModelPrice(
+    input=Decimal("0.10"),
+    cached_read=Decimal("0.01"),
+    cache_write=Decimal("0.125"),
+    output=Decimal("0.50"),
+    max_input_tokens=272_000,
+    long_context_after=272_000,
+    long_input=Decimal("0.20"),
+    long_cached_read=Decimal("0.02"),
+    long_cache_write=Decimal("0.25"),
+    long_output=Decimal("0.75"),
+    max_context_tokens=1_050_000,
+    reservation_context_tokens=1_050_000,
+    reservation_output_tokens=128_000,
+)
 PRICES: Mapping[str, ModelPrice] = MappingProxyType(
     {
         "sol-medium": _SOL,
@@ -176,21 +201,11 @@ PRICES: Mapping[str, ModelPrice] = MappingProxyType(
             cache_write=Decimal("0.45"),  # none listed: reserved at input
             output=Decimal("1.80"),
         ),
-        # GitHub "Models and pricing", fetched 2026-11-06 (COPILOT_PRICES_AS_OF), lists _SOL's
-        # rates, long-context threshold and context ceiling (USD per 1M tokens); the hold adds the
-        # model maximum, cases/pilot-fixes/limits.json documented_max_output_tokens.
-        # test_copilot_table_rates pins every field, so a change to _SOL is checked against it.
-        "copilot-sol-medium": replace(_SOL, reservation_output_tokens=128_000),
-        # same source; Copilot lists one write rate (5), no 5 m / 1 h split; the hold uses
-        # Anthropic's 1 h rate (8) because the runtime's cache TTL is unverified
-        "copilot-opus-medium": ModelPrice(
-            input=Decimal(4),
-            cached_read=Decimal("0.20"),
-            cache_write=Decimal(8),
-            output=Decimal(20),
-            # the model maximum, cases/pilot-fixes/limits.json documented_max_output_tokens
-            reservation_output_tokens=128_000,
-        ),
+        "copilot-sol-medium": _COPILOT_SOL,
+        "copilot-sol-high": _COPILOT_SOL,
+        "copilot-opus-medium": _COPILOT_OPUS,
+        "copilot-opus-high": _COPILOT_OPUS,
+        "copilot-luna-xhigh": _COPILOT_LUNA,
     }
 )
 if set(PRICES) != set(CONFIG_PROVIDERS):
@@ -223,6 +238,16 @@ def _held_output(price: ModelPrice, max_output: int) -> int:
 def web_search_usd(calls: int) -> Decimal:
     """The fee for ``calls`` web searches; their content tokens are in the reply's usage."""
     return _count("calls", calls) * WEB_SEARCH_USD_PER_CALL
+
+
+def handoff_reservation_usd(config: str, request_bytes: int, max_output: int) -> Decimal:
+    """Price a serialized handoff request plus the tool and runtime framing allowance."""
+    size = _count("request_bytes", request_bytes)
+    # The retained Anthropic limits support one byte per token. Sol and Luna use a
+    # whole-context hold regardless of this size check. Other routes are historical.
+    bytes_per_token = 1 if config in {"copilot-opus-medium", "copilot-opus-high"} else 2
+    input_bound = -(-size // bytes_per_token) + 4096
+    return request_reservation_usd(price_of(config), input_bound, max_output)
 
 
 def request_reservation_usd(price: ModelPrice, input_bound: int, max_output: int) -> Decimal:

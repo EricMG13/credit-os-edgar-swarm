@@ -93,6 +93,8 @@ import {
   LEVELS,
   LISTED_EQUITY,
   MODELS,
+  copilotEfforts,
+  copilotPairVerified,
   PATHWAY_LABEL,
   PURPOSES,
   PURPOSE_STEP,
@@ -317,6 +319,7 @@ type IntakeView = {
   issuerNotice: string;
   changeNotice: string;
   repeatedContent: ReadonlyMap<File, string>;
+  copilotModels?: Record<string, string[]>;
   identity: Context["identity"];
   issuerId: string;
   submittedBy: string;
@@ -1077,7 +1080,7 @@ function PurposeFields({ view }: { view: IntakeView }) {
       <SelectField
         title={CASE_KIND_LABEL}
         value={view.run.case_kind}
-        help="Web research runs for public and private cases, never for a synthetic test case."
+        help="Public cases can use approved lookups. Native Copilot web search is unavailable."
         choices={CASE_KINDS}
         onChange={(value) => {
           view.changeRun("case_kind", value);
@@ -1411,13 +1414,30 @@ function AssumptionsSection({ view }: { view: IntakeView }) {
 
 function AdvancedOptionsFields({ view }: { view: IntakeView }) {
   if (view.level !== "advanced") return null;
+  const availableEfforts = copilotEfforts(view.copilotModels, view.model);
+  const modelChoices = copilotPairVerified(view.copilotModels, "luna", "xhigh")
+    ? MODELS
+    : { gpt: MODELS.gpt, claude: MODELS.claude };
+  const effortChoices = Object.fromEntries(
+    Object.entries(EFFORTS).filter(([key]) => availableEfforts.includes(key)),
+  );
+  if (!Object.keys(effortChoices).length) effortChoices.none = "No verified effort available";
+  const selectedEffort = effortChoices[view.effort]
+    ? view.effort
+    : (Object.keys(effortChoices)[0] ?? "");
   return (
     <>
-      <SelectField title="Model" value={view.model} choices={MODELS} onChange={view.changeModel} />
+      <SelectField
+        title="Model"
+        value={view.model}
+        choices={modelChoices}
+        onChange={view.changeModel}
+      />
       <SelectField
         title="Reasoning effort"
-        value={view.effort}
-        choices={EFFORTS}
+        value={selectedEffort}
+        choices={effortChoices}
+        disabled={!availableEfforts.length}
         onChange={view.changeEffort}
       />
       <div className="grid content-start gap-1">
@@ -1477,6 +1497,7 @@ export function SelectField({
   value,
   choices,
   onChange,
+  disabled = false,
   problem,
   problemField,
   help,
@@ -1485,6 +1506,7 @@ export function SelectField({
   value: string;
   choices: Readonly<Record<string, string>>;
   onChange: (value: string) => void;
+  disabled?: boolean;
   problem?: FieldProblem;
   problemField?: FieldKey;
   help?: string;
@@ -1499,6 +1521,7 @@ export function SelectField({
       {title}
       <select
         className={field}
+        disabled={disabled}
         {...(problemField ? problemAttrs(problem, problemField) : {})}
         aria-describedby={describedBy}
         value={value}
@@ -1701,6 +1724,7 @@ function contextFormValues(
 
 function IntakeForm({
   template,
+  copilotModels,
   caps,
   initial,
   warning,
@@ -1708,6 +1732,7 @@ function IntakeForm({
   mode,
 }: {
   template: Context;
+  copilotModels?: Record<string, string[]>;
   caps: Record<string, string>;
   initial?: { run: string; prior: PriorInputs };
   warning?: string;
@@ -2532,6 +2557,7 @@ function IntakeForm({
     issuerNotice,
     changeNotice,
     repeatedContent,
+    copilotModels,
     identity,
     issuerId,
     submittedBy,
@@ -2609,7 +2635,12 @@ function IntakeForm({
     changeAttachment,
     rowsOf,
     changeRows,
-    changeModel: setModel,
+    changeModel: (value) => {
+      setModel(value);
+      const valid = copilotEfforts(copilotModels, value);
+      const preferred = value === "luna" ? "xhigh" : "balanced";
+      setEffort(valid.includes(preferred) ? preferred : (valid[0] ?? preferred));
+    },
     changeEffort: setEffort,
     changeTurns: (value) => {
       clearProblem("turns");
@@ -2796,6 +2827,15 @@ function IntakePanels(props: IntakePanelsProps) {
             capText={capText}
             capAvailable={Boolean(cap)}
             synthetic={synthetic}
+            modelVerified={
+              synthetic ||
+              (review.summary.copilot_verified !== false &&
+                copilotPairVerified(
+                  view.copilotModels,
+                  review.answers.model,
+                  review.answers.effort,
+                ))
+            }
             ready={ready}
             idNote={view.idNote}
             onAccept={onAccept}
@@ -2871,6 +2911,7 @@ function ReviewNotes({ synthetic, idNote }: { synthetic: boolean; idNote: string
 }
 
 function ReviewSubmit({
+  modelVerified,
   synthetic,
   checksComplete,
   approved,
@@ -2883,6 +2924,7 @@ function ReviewSubmit({
 }: Pick<
   Parameters<typeof ReviewConfirmation>[0],
   | "synthetic"
+  | "modelVerified"
   | "checksComplete"
   | "approved"
   | "busy"
@@ -2895,7 +2937,10 @@ function ReviewSubmit({
   const submitLabel = submitLabelFor({ busy, synthetic, capText });
   const confirmation = confirmationFor(synthetic, capText);
   const submitDisabled =
-    !checksComplete || !approved || busy !== undefined || (!synthetic && !capAvailable);
+    !checksComplete ||
+    !approved ||
+    busy !== undefined ||
+    (!synthetic && (!capAvailable || !modelVerified));
   return (
     <>
       <div className="grid gap-1 border-t border-border-hairline pt-4">
@@ -2906,6 +2951,13 @@ function ReviewSubmit({
           <SubmissionCost synthetic={synthetic} capText={capText} />
         </p>
       </div>
+      {!synthetic && !modelVerified && (
+        <p className="text-sm text-text-secondary">
+          Paid Submit is unavailable because this model and effort pair is not verified for the
+          current Copilot CLI service. You can keep this offline review and return when a pair is
+          available.
+        </p>
+      )}
       <p className="text-caption text-text-tertiary tabular-nums min-[1041px]:hidden">{ready}</p>
       {error && <ErrorNotice>{error}</ErrorNotice>}
       <div className="flex justify-end">
@@ -2923,6 +2975,7 @@ function ReviewSubmit({
 }
 
 function ReviewConfirmation({
+  modelVerified,
   review,
   accepted,
   approved,
@@ -2941,6 +2994,7 @@ function ReviewConfirmation({
   onModules,
   onSubmit,
 }: {
+  modelVerified: boolean;
   idNote: string;
   review: Review;
   accepted: Set<string>;
@@ -2985,6 +3039,7 @@ function ReviewConfirmation({
         onApprove={onApprove}
       />
       <ReviewSubmit
+        modelVerified={modelVerified}
         synthetic={synthetic}
         checksComplete={checksComplete}
         approved={approved}
@@ -3170,15 +3225,17 @@ function newestPeriod(reading?: Reading) {
 
 function startingContext(template: Context, prior?: PriorInputs): Context {
   const source = prior?.context ?? template;
+  const safeSource = { ...source };
+  delete safeSource.copilot_models;
   // The run's currency is the one CP-1's statements print, so a value the template or an earlier
   // run holds is neither shown nor sent (docs/rulings/2026-11-16-reporting-currency-from-sources.md).
-  const heldRun = { ...source.run };
+  const heldRun = { ...safeSource.run };
   delete heldRun.reporting_currency;
-  const pathway = Object.hasOwn(PATHWAYS, source.run.pathway)
-    ? source.run.pathway
+  const pathway = Object.hasOwn(PATHWAYS, safeSource.run.pathway)
+    ? safeSource.run.pathway
     : "credit_snapshot";
   return {
-    ...source,
+    ...safeSource,
     run: {
       ...heldRun,
       // The case date is the analyst's to enter: every entry path opens without one.
@@ -3186,14 +3243,14 @@ function startingContext(template: Context, prior?: PriorInputs): Context {
       pathway,
       ...(pathway === "earnings_update"
         ? { run_type: "earnings" }
-        : source.run.run_type === "earnings"
+        : safeSource.run.run_type === "earnings"
           ? { run_type: "research" }
           : {}),
     },
     identity: {
-      ...source.identity,
-      issuer_name: prior?.issuer_name ?? source.identity.issuer_name,
-      issuer_id: prior?.issuer_id ?? source.identity.issuer_id,
+      ...safeSource.identity,
+      issuer_name: prior?.issuer_name ?? safeSource.identity.issuer_name,
+      issuer_id: prior?.issuer_id ?? safeSource.identity.issuer_id,
     },
   };
 }

@@ -62,13 +62,17 @@ def test_the_overall_timeout_is_the_keys() -> None:
     assert transport.OVERALL_S == _key()["overall_s"]
 
 
-def test_only_the_configs_the_key_names_set_a_context_limit() -> None:
-    """Guards the key's context claim: ContextTooLong can fire only where a price sets one."""
+def test_context_limits_cover_the_pinned_pilot_and_copilot_routes() -> None:
     limited = {c for c, price in PRICES.items() if price.max_input_tokens is not None}
-    # copilot-sol-medium carries the sol rates and limit (GitHub table, 2026-11-06)
-    assert limited - {"copilot-sol-medium"} == set(_key()["context_too_long_configs"])
-    assert PRICES["copilot-sol-medium"].max_input_tokens == PRICES["sol-medium"].max_input_tokens
+    copilot_limits = {
+        "copilot-sol-medium": 272_000,
+        "copilot-sol-high": 272_000,
+        "copilot-luna-xhigh": 272_000,
+    }
+    assert limited == set(_key()["context_too_long_configs"]) | copilot_limits.keys()
+    assert {config: PRICES[config].max_input_tokens for config in copilot_limits} == copilot_limits
     assert PRICES["copilot-opus-medium"].max_input_tokens is None
+    assert PRICES["copilot-opus-high"].max_input_tokens is None
 
 
 def _padded_sol_request(size: int) -> TurnRequest:

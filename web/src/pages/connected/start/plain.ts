@@ -30,8 +30,35 @@ export const CASE_KINDS = {
   private: "Private",
   synthetic: "Synthetic test case",
 };
-export const MODELS = { gpt: "GPT Sol", claude: "Claude Opus" };
-export const EFFORTS = { fast: "Fast", balanced: "Balanced", high: "High" };
+export const MODELS = { gpt: "GPT Sol", claude: "Claude Opus", luna: "GPT-6 Luna" };
+export const EFFORTS = { fast: "Fast", balanced: "Balanced", high: "High", xhigh: "Extra high" };
+export const LEGACY_COPILOT_MODELS = {
+  gpt: ["fast", "balanced", "high"],
+  claude: ["fast", "balanced", "high"],
+} as const;
+const COPILOT_MODEL_EFFORTS: Readonly<Record<string, readonly string[]>> = {
+  gpt: ["fast", "balanced", "high"],
+  claude: ["fast", "balanced", "high"],
+  luna: ["xhigh"],
+};
+
+/** Missing capability metadata is a legacy service; an explicit empty map stays unverified. */
+export function copilotEfforts(
+  models: Record<string, string[]> | undefined,
+  model: string,
+): string[] {
+  const available: Readonly<Record<string, readonly string[]>> = models ?? LEGACY_COPILOT_MODELS;
+  const supported = COPILOT_MODEL_EFFORTS[model] ?? [];
+  return supported.filter((effort) => available[model]?.includes(effort));
+}
+
+export function copilotPairVerified(
+  models: Record<string, string[]> | undefined,
+  model: string,
+  effort: string,
+): boolean {
+  return copilotEfforts(models, model).includes(effort);
+}
 /** Labels of boxes the screen draws in its own markup, read by the screen and by the review. */
 export const ISSUER_ID = "Issuer ID";
 export const ISSUE_CLASSIFICATION = "Issue classification";

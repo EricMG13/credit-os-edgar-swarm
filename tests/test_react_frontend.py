@@ -44,8 +44,7 @@ def root() -> Iterator[Path]:
 
 
 @pytest.fixture
-def hosted(root: Path, web: Path, monkeypatch: pytest.MonkeyPatch) -> Iterator[_Server]:
-    monkeypatch.setenv("OPENAI_API_KEY", "offline-test")
+def hosted(root: Path, web: Path) -> Iterator[_Server]:
     with make_server(root, web=web, signal_url="http://localhost:8766") as server:
         thread = threading.Thread(target=server.serve_forever)
         thread.start()
@@ -119,6 +118,7 @@ def test_start_form_template_names_no_issuer(hosted: _Server) -> None:
 def test_same_origin_service_and_submit_gate(hosted: _Server) -> None:
     assert json.loads(request(hosted, "/connected/context")[1]) == {
         **_form_template(),
+        "copilot_models": {},
         "submission_caps_usd": {pathway: str(cap) for pathway, cap in PATHWAY_CAP_USD.items()},
     }
     assert request(hosted, "/connected/context", headers={"Origin": "http://other.test"})[0] == 403
@@ -539,124 +539,31 @@ def test_snapshot_sends_no_server_path_even_from_an_older_publication(
     assert sent["workspace"]["runs"] == export["workspace"]["runs"]
 
 
-PUBLICATION_PREFIX = "window.CREDIT_OS_DATA="
-
-
-def _publish(root: Path, workspace: str | None, *, without: tuple[str, ...] = ()) -> dict[str, Any]:
-    """Write library/data.js as the library builder writes it; ``workspace`` is an older build's.
-    ``without`` names top-level parts left out, as a hand-made file may."""
-    library = root / "_engine" / "library"
-    library.mkdir(parents=True, exist_ok=True)
-    catalogue = {"real": [{"id": "demo", "name": "Émetteur"}], "built_at": "01 Nov 2026"}
-    if workspace is not None:
-        catalogue["workspace"] = workspace
-    export: dict[str, Any] = {
-        "catalogue": catalogue,
-        "workspace": {"runs": {"run-key": {"folder": "demo", "pathway": "credit_snapshot"}}},
-        "activity": {"excluded": [], "issues": ["a < b"]},
-        "chips": {"output:1": [{"text": "<script>test</script>"}]},
-    }
-    export = {key: value for key, value in export.items() if key not in without}
-    text = update_library.embedded_json(export)
-    (library / "data.js").write_text(f"{PUBLICATION_PREFIX}{text};\n", encoding="utf-8")
-    (library / "index.html").write_text('<script src="data.js"></script>', encoding="utf-8")
-    return export
-
-
-def _served_as_built(export: dict[str, Any]) -> bytes:
-    """What the builder writes for ``export`` (update_library.build_into), as the page loads it."""
-    return f"{PUBLICATION_PREFIX}{update_library.embedded_json(export)};\n".encode("ascii")
-
-
-def _without_workspace(export: dict[str, Any]) -> dict[str, Any]:
-    """``export`` without the ``catalogue.workspace`` the test planted."""
-    catalogue = {k: v for k, v in export["catalogue"].items() if k != "workspace"}
-    return {**export, "catalogue": catalogue}
-
-
-@pytest.mark.parametrize("name", ["data.js", "/data.js", "%64ata.js", "./data.js", "x/../data.js"])
-def test_library_data_js_sends_no_server_path_from_an_older_publication(
-    hosted: _Server, root: Path, name: str
-) -> None:
-    """The library page's data file loses catalogue.workspace, whichever way its path is spelt, and
-    is otherwise the very bytes the builder writes."""
-    older = _publish(root, str(root / "_engine"))
-    on_disk = (root / "_engine" / "library" / "data.js").read_bytes()
-    status, body, headers = request(hosted, f"/library/{name}")
-    assert status == 200
-    assert "javascript" in headers["Content-Type"] and "Content-Security-Policy" in headers
-    assert str(root) not in body.decode("ascii")
-    assert body == _served_as_built(_without_workspace(older))
-    assert (root / "_engine" / "library" / "data.js").read_bytes() == on_disk
-
-
-@pytest.mark.parametrize("without", [("chips",), ("activity",), ("chips", "activity", "workspace")])
-def test_library_data_js_with_the_key_loses_only_the_key(
-    hosted: _Server, root: Path, without: tuple[str, ...]
-) -> None:
-    """The key is dropped from a publication that lacks parts the page itself tolerates."""
-    older = _publish(root, str(root / "_engine"), without=without)
-    status, body, _ = request(hosted, "/library/data.js")
-    assert (status, body) == (200, _served_as_built(_without_workspace(older)))
-
-
-HAND_MADE = json.dumps(
-    {"catalogue": {"real": [{"name": "Émetteur <b>"}]}, "workspace": {}},
-    indent=2,
-    ensure_ascii=False,
-)
-
-
 @pytest.mark.parametrize(
-    "text",
-    [
-        f'{PUBLICATION_PREFIX}{{"catalogue":[]}};\n',
-        f'{PUBLICATION_PREFIX}{{"catalogue":"my workspace"}};\n',
-        f"{PUBLICATION_PREFIX}{{}};\n",
-        f'{PUBLICATION_PREFIX}{{"catalogue":{{"real":[]}},"workspace":{{}}}};',
-        f"{PUBLICATION_PREFIX}{HAND_MADE};\r\n",
-    ],
+    "path",
+    ["/library", "/library/", "/library/index.html", "/library.html"],
 )
-def test_library_data_js_without_the_key_is_served_as_read(
-    hosted: _Server, root: Path, text: str
+def test_legacy_library_entry_urls_redirect_to_the_connected_app(
+    hosted: _Server, path: str
 ) -> None:
-    """A data file that parses and holds no catalogue.workspace is answered as it was read: nothing
-    is demanded of its other parts and its bytes are not rewritten."""
-    _publish(root, None)
-    publication = root / "_engine" / "library" / "data.js"
-    publication.write_bytes(text.encode("utf-8"))
-    assert request(hosted, "/library/data.js")[:2] == (200, text.encode("utf-8"))
+    status, body, headers = request(hosted, path)
+    assert status == 308 and body == b"" and headers["Location"] == "/"
 
 
-def test_library_files_without_a_server_path_are_served_as_written(
+def test_legacy_library_assets_are_not_served_but_checked_downloads_are(
     hosted: _Server, root: Path
 ) -> None:
-    """A current data.js, the page that loads it and any other library file are not rewritten."""
-    _publish(root, None)
     library = root / "_engine" / "library"
-    (library / "notes.txt").write_text("catalogue.workspace is not drawn", encoding="utf-8")
-    for name in ("data.js", "index.html", "notes.txt"):
-        status, body, _ = request(hosted, f"/library/{name}")
-        assert (status, body) == (200, (library / name).read_bytes())
-
-
-@pytest.mark.parametrize(
-    "text",
-    [
-        f"{PUBLICATION_PREFIX}{{}};console.log(0);",
-        f'{PUBLICATION_PREFIX}{{"catalogue":{{"workspace":"/x"}}',
-        f'{PUBLICATION_PREFIX}{{"catalogue":{{"workspace":"/x"}},}};\n',
-        f"{PUBLICATION_PREFIX}[];\n",
-        f"{PUBLICATION_PREFIX};\n",
-    ],
-)
-def test_library_data_js_refuses_data_that_is_not_a_json_object(
-    hosted: _Server, root: Path, text: str
-) -> None:
-    """Data that begins with the assignment and cannot be read as a JSON object is refused."""
-    _publish(root, None)
-    (root / "_engine" / "library" / "data.js").write_text(text, encoding="utf-8")
-    assert request(hosted, "/library/data.js")[0] == 500
+    library.mkdir(parents=True, exist_ok=True)
+    (library / "views.js").write_text("legacy UI", encoding="utf-8")
+    download = library / "downloads" / "run-a" / "CP-1.md"
+    download.parent.mkdir(parents=True, exist_ok=True)
+    download.write_bytes(b"checked handoff")
+    assert request(hosted, "/library/views.js")[0] == 404
+    assert request(hosted, "/library/downloads/run-a/CP-1.md")[:2] == (
+        200,
+        b"checked handoff",
+    )
 
 
 def test_inherits_startup_checks_and_workspace_lock(
@@ -667,12 +574,10 @@ def test_inherits_startup_checks_and_workspace_lock(
         make_server(root, web=web),
     ):
         pytest.fail("two schedulers held the same lock")
-    monkeypatch.delenv("OPENAI_API_KEY")
-    with (
-        pytest.raises(startup.StartupRefused, match="OPENAI_API_KEY is not set"),
-        make_server(root, web=web),
-    ):
-        pytest.fail("started without the required key")
+    for name in ("COPILOT_GITHUB_TOKEN", "COPILOT_CLI_PATH", "COPILOT_USE_GH_LOGIN"):
+        monkeypatch.delenv(name, raising=False)
+    with make_server(root / "offline", web=web) as offline:
+        assert offline.scheduler.model_choices == {}
     with (
         pytest.raises(ValueError, match="synthetic mode"),
         make_server(root, web=web, launcher=("unspecified",)),
@@ -680,10 +585,7 @@ def test_inherits_startup_checks_and_workspace_lock(
         pytest.fail("accepted a launcher outside synthetic mode")
 
 
-def test_synthetic_mode_uses_the_explicit_launcher(
-    root: Path, web: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    monkeypatch.setenv("OPENAI_API_KEY", "offline-test")
+def test_synthetic_mode_uses_the_explicit_launcher(root: Path, web: Path) -> None:
     launcher = ("unused-by-test",)
     with make_server(root, web=web, launcher=launcher, synthetic=True) as server:
         assert server.scheduler.settings.launcher == launcher
@@ -695,6 +597,11 @@ def test_synthetic_mode_uses_the_explicit_launcher(
             assert b'credit-os-signal-url"' not in page
             expected = _form_template()
             expected["run"]["case_kind"] = "synthetic"
+            expected["copilot_models"] = {
+                "gpt": ["fast", "balanced", "high"],
+                "claude": ["fast", "balanced", "high"],
+                "luna": ["xhigh"],
+            }
             expected["submission_caps_usd"] = {
                 pathway: str(cap) for pathway, cap in PATHWAY_CAP_USD.items()
             }
@@ -941,3 +848,27 @@ def test_activity_list_counts_a_record_with_a_non_string_field(hosted: _Server, 
     assert status == 200
     assert listing["unreadable"] == 1
     assert [run["id"] for run in listing["ended"]] == ["d-failed"]
+
+
+def test_copilot_preflight_rpc_failure_still_launches_offline(
+    root: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    import sys
+
+    from copilot._jsonrpc import JsonRpcError
+
+    from react_frontend import __main__ as main
+
+    async def rejected(_adapter):
+        raise JsonRpcError(-32000, "private diagnostic")
+
+    launches = []
+    monkeypatch.setattr(main.CopilotAdapter, "seat_models", rejected)
+    monkeypatch.setattr(main, "serve", lambda path, **options: launches.append((path, options)))
+    monkeypatch.setattr(sys, "argv", ["react_frontend", "--root", str(root), "--copilot-preflight"])
+    main.main()
+    ((opened, options),) = launches
+    assert opened == root and options["copilot_models"] == {}
+    diagnostic = capsys.readouterr().err
+    assert "Copilot seat could not be verified" in diagnostic
+    assert "private diagnostic" not in diagnostic

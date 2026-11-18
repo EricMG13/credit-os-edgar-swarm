@@ -231,10 +231,12 @@ def test_a_failed_activity_write_is_logged_and_the_scheduler_goes_on(root, fake_
     assert (root / "_engine/activity.js").is_file()
 
 
-def test_start_up_refuses_without_the_provider_key(root, monkeypatch):
-    monkeypatch.delenv(KEY_VARIABLES[CONFIGS["sol-medium"].provider], raising=False)
-    with pytest.raises(StartupRefused, match="is not set in the launching environment"):
-        Scheduler(settings(root))
+def test_start_up_without_a_verified_seat_still_supports_local_reading(root):
+    service = Scheduler(settings(root, copilot_models={}))
+    try:
+        assert service.model_choices == {}
+    finally:
+        service.close()
 
 
 def test_longest_engine_path_fits_under_an_80_character_root(monkeypatch):
@@ -453,21 +455,13 @@ def _ruling_without(tmp_path: Path, config: str, monkeypatch: pytest.MonkeyPatch
     return copy
 
 
-@pytest.mark.parametrize("missing", ["sol-medium", "sol-high", "opus-medium", "opus-high"])
-def test_start_up_is_refused_when_the_ruling_lacks_one_of_the_four_configs(
+@pytest.mark.parametrize("missing", scheduler_module.runs.LAUNCH_CONFIGS)
+def test_start_up_is_refused_when_the_ruling_lacks_a_copilot_config(
     root, tmp_path, monkeypatch, missing
 ):
     copy = _ruling_without(tmp_path, missing, monkeypatch)
     with pytest.raises(StartupRefused, match=f"does not list '{missing}'"):
         Scheduler(settings(root, ruling=copy))
-
-
-def test_start_up_needs_the_openai_key_but_not_the_anthropic_key(root, monkeypatch):
-    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
-    Scheduler(settings(root)).close()
-    monkeypatch.delenv("OPENAI_API_KEY")
-    with pytest.raises(StartupRefused, match="OPENAI_API_KEY is not set"):
-        Scheduler(settings(root))
 
 
 def _submit_advanced(w: Scheduler, root: Path, model: str, effort: str) -> Record:
@@ -495,12 +489,13 @@ def _submit_advanced(w: Scheduler, root: Path, model: str, effort: str) -> Recor
 @pytest.mark.parametrize(
     ("model", "effort", "fragment"),
     [
-        ("gpt", "fast", ["--config", "sol-medium", "--cap"]),
-        ("gpt", "balanced", ["--config", "sol-medium", "--balanced", "--cap"]),
-        ("gpt", "high", ["--config", "sol-high", "--cap"]),
-        ("claude", "fast", ["--config", "opus-medium", "--cap"]),
-        ("claude", "balanced", ["--config", "opus-medium", "--balanced", "--cap"]),
-        ("claude", "high", ["--config", "opus-high", "--cap"]),
+        ("gpt", "fast", ["--config", "copilot-sol-medium", "--cap"]),
+        ("gpt", "balanced", ["--config", "copilot-sol-medium", "--balanced", "--cap"]),
+        ("gpt", "high", ["--config", "copilot-sol-high", "--cap"]),
+        ("claude", "fast", ["--config", "copilot-opus-medium", "--cap"]),
+        ("claude", "balanced", ["--config", "copilot-opus-medium", "--balanced", "--cap"]),
+        ("claude", "high", ["--config", "copilot-opus-high", "--cap"]),
+        ("luna", "xhigh", ["--config", "copilot-luna-xhigh", "--cap"]),
     ],
 )
 def test_a_submitted_model_and_effort_are_stored_and_launched(
@@ -545,26 +540,13 @@ def test_a_default_submission_stores_gpt_balanced(root):
     assert (record.model, record.effort) == ("gpt", "balanced")
 
 
-def test_submit_refuses_claude_without_the_anthropic_key(root, monkeypatch):
-    monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key-not-real")
-    w = Scheduler(settings(root))
+def test_submit_refuses_an_unverified_pair_without_sealing_the_draft(root):
+    w = Scheduler(settings(root, copilot_models={"gpt-6.1-sol": frozenset({"medium", "high"})}))
     try:
-        body = json.loads(json.dumps(CONTEXT))
-        body["run"]["as_of"] = "2026-11-09"
-        answers = submissions.validated(
-            {
-                "context": body, "modules": [], "max_turns": 32, "level": "advanced",
-                "model": "claude", "effort": "high", "submitted_by": "Ana L",
-            }
-        )  # fmt: skip
-        lay = Layout(root)
-        sid = submissions.new(lay)
-        (submissions.files_folder(lay, sid) / "a.txt").write_bytes(b"Net sales were 100.")
-        got = submissions.summary(lay, sid, answers)
-        monkeypatch.delenv("ANTHROPIC_API_KEY")
-        with pytest.raises(submissions.Refused, match="Claude Opus is not available"):
-            w.submit(sid, answers, str(got["digest"]))
+        with pytest.raises(submissions.Refused, match="unavailable on the Copilot seat"):
+            _submit_advanced(w, root, "claude", "high")
         assert load_all(layout(root)) == []
+        assert len(list(layout(root).uploads.glob("*/files/a.txt"))) == 1
     finally:
         w.close()
 
@@ -719,10 +701,10 @@ def test_there_is_no_held_note_when_every_record_is_readable(root):
         w.close()
 
 
-def test_start_up_writes_the_library_page_once_and_no_inbox(root):
+def test_start_up_creates_no_legacy_shortcut_and_leaves_existing_one_alone(root):
     Scheduler(settings(root)).close()
     page = root / "library.html"
-    assert 'http-equiv="refresh" content="0; url=_engine/library/index.html"' in page.read_text()
+    assert not page.exists()
     assert not (root / "inbox").exists()
     page.write_text("mine", encoding="utf-8")
     Scheduler(settings(root)).close()
@@ -1662,3 +1644,50 @@ def test_a_decomposed_bad_file_name_excludes_a_composed_copy_id(root, monkeypatc
 @pytest.mark.parametrize(("bad", "copy"), [("ABC-1", "abc-1"), ("abc-2", "ABC-2")])
 def test_case_differences_on_either_side_still_exclude_the_copy(root, monkeypatch, bad, copy):
     _shadowed(root, bad, copy, monkeypatch)
+
+
+def test_old_queued_approval_is_not_dispatched_on_copilot(root):
+    models = {"gpt-6.1-sol": frozenset({"medium", "high"})}
+    watcher = Scheduler(settings(root, copilot_models=models))
+    try:
+        record = submit_run(watcher, root)
+        watcher._put(dataclasses.replace(record, config=""))
+        watcher.step()
+        (saved,) = load_all(layout(root))
+        assert saved.status == "failed" and saved.pid == 0
+        assert "predates Copilot routing" in saved.reason
+        assert any((layout(root).drops / saved.id).glob("*.txt"))
+    finally:
+        watcher.close()
+
+
+@pytest.mark.parametrize("changed", ["source", "modules", "cap", "route"])
+def test_a_changed_queued_approval_is_refused_after_restart(root, monkeypatch, changed):
+    started = _track_starts(monkeypatch)
+    models = {"gpt-6.1-sol": frozenset({"medium", "high"})}
+    options = settings(root, copilot_models=models)
+    lay = layout(root)
+    watcher = Scheduler(options)
+    try:
+        record = submit_run(watcher, root)
+    finally:
+        watcher.close()
+    if changed == "source":
+        (source,) = (lay.drops / record.id).glob("*.txt")
+        source.write_bytes(b"changed after approval")
+    else:
+        changes = {
+            "modules": {"modules": ("CP-DR",)},
+            "cap": {"cap": "19"},
+            "route": {"effort": "high", "config": "copilot-sol-high", "level": "advanced"},
+        }
+        scheduler_module.runs.save(lay, dataclasses.replace(record, **changes[changed]))
+    watcher = Scheduler(options)
+    try:
+        watcher.step()
+    finally:
+        watcher.close()
+    (saved,) = load_all(lay)
+    assert saved.status == "failed" and saved.started_at == ""
+    assert "changed" in saved.reason
+    assert started == []

@@ -1,4 +1,4 @@
-"""Run real legacy CP-OS with a canned adapter reply for the browser proof."""
+"""Run CP-OS with a canned Copilot reply for the browser proof."""
 
 from __future__ import annotations
 
@@ -9,6 +9,7 @@ import re
 import socket
 import sys
 import tempfile
+from decimal import Decimal
 from pathlib import Path
 from typing import Any
 from unittest.mock import patch
@@ -139,17 +140,19 @@ def canned_handoff(context: dict[str, Any], case: str, *, gated: bool = False) -
 
 def run_engine(argv: list[str]) -> int:
     from deploy_workflow.context import load_context
-    from deploy_workflow.model.adapter import AdapterReply, LiveAdapter
+    from deploy_workflow.model.adapter import AdapterReply
+    from deploy_workflow.model.copilot_adapter import CopilotAdapter
     from deploy_workflow.model.turn import ToolCall, Turn, TurnRequest, Usage
     from deploy_workflow.owners import cpos_launch
     from deploy_workflow.run_expectations import no_legal_documents
 
     args = cpos_launch._parser().parse_args(argv)
-    if os.environ.get("OPENAI_API_KEY") != DUMMY_KEY or args.config not in {
-        "sol-medium",
-        "sol-high",
-    }:
-        raise ValueError("synthetic proof requires the browser proof service and GPT selection")
+    if os.environ.get("COPILOT_GITHUB_TOKEN") != DUMMY_KEY or not args.config.startswith(
+        "copilot-"
+    ):
+        raise ValueError(
+            "synthetic proof requires the browser proof service and a Copilot selection"
+        )
     if args.out is None or not args.no_library or not args.live:
         raise ValueError("synthetic proof requires a scheduler output and library ownership")
     digest = verify_upload(args.sources, args.context)
@@ -173,7 +176,7 @@ def run_engine(argv: list[str]) -> int:
     if run.pathway != "credit_snapshot" or args.prior != "none":
         raise ValueError("synthetic proof requires a first Credit Snapshot run")
 
-    def complete(_adapter: LiveAdapter, request: TurnRequest, **_kwargs: object) -> AdapterReply:
+    def complete(_adapter: CopilotAdapter, request: TurnRequest, **_kwargs: object) -> AdapterReply:
         context = json.loads(request.messages[1].text)
         if context["sources"].get(FILING.name) != digest:
             raise ValueError("CP-OS request did not retain the uploaded filing digest")
@@ -193,10 +196,10 @@ def run_engine(argv: list[str]) -> int:
             reasoning_tokens=0,
         )
         call = ToolCall("synthetic-browser-proof", "write_handoff", {"markdown": text})
-        turn = Turn("", (call,), usage, "tool_use", "synthetic", "synthetic", 200)
-        return AdapterReply("ok", turn, None, 200, None, None, 1, 2, usage)
+        turn = Turn("", (call,), usage, "tool_use", "synthetic", "synthetic", 200, Decimal(0))
+        return AdapterReply("ok", turn, None, 200, None, None, 1, 2, usage, Decimal(0))
 
-    with patch.object(LiveAdapter, "complete", complete):
+    with patch.object(CopilotAdapter, "complete", complete):
         return cpos_launch.main(argv)
 
 

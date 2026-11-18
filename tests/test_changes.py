@@ -41,6 +41,7 @@ from deploy_workflow.changes import (
     workspace_of,
 )
 from deploy_workflow.changes_check import cp8_issues, page_verdicts
+from deploy_workflow.inbox.startup import STANDING_RULING
 from deploy_workflow.owners.cpos import HandoffPlan
 from deploy_workflow.owners.cpos_launch import LaunchRefused, main, prepare
 from deploy_workflow.prose_checks import bottom_line_text, is_earlier_format
@@ -2077,23 +2078,22 @@ def test_a_first_run_delivers_no_pack_and_makes_no_cp8_call(tmp_path):
 
 
 def test_the_canned_launcher_delivers_the_pack_and_an_accepted_cp8_handoff(tmp_path, monkeypatch):
-    """The suite's canned provider (fixtures/canned_provider_launcher.py) answers CP-8 from the
-    pack CP-OS pinned; the real checker accepts it and the delivery carries the pack."""
-    spec = importlib.util.spec_from_file_location(
-        "canned_provider_launcher", ROOT / "tests/fixtures/canned_provider_launcher.py"
-    )
+    """The canned Copilot adapter answers CP-8 from the pinned pack and the checker accepts it."""
+    launcher = ROOT / "tests/fixtures/canned_provider_launcher.py"
+    spec = importlib.util.spec_from_file_location("canned_provider_launcher", launcher)
     assert spec is not None and spec.loader is not None
     canned = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(canned)
-    monkeypatch.setenv("OPENAI_API_KEY", "not-a-real-key")
+    monkeypatch.setenv("COPILOT_GITHUB_TOKEN", "not-a-real-key")
+    monkeypatch.setenv("COPILOT_CLI_PATH", str(launcher))
     workspace = tmp_path / "ws"
     make_run(workspace, PRIOR_ID, as_of="2024-12-31", pathway=PATHWAY, cp1_extra=PRIOR_TABLES)
     context, folder = snapshot_context(tmp_path)
     out = workspace / "runs/cur"
     argv = [
         *("--context", str(context), "--sources", str(folder)),
-        *("--config", "sol-medium", "--cap", "15", "--out", str(out)),
-        *("--live", "--ruling", str(RULING), "--no-library"),
+        *("--config", "copilot-sol-medium", "--cap", "15", "--out", str(out)),
+        *("--live", "--ruling", str(STANDING_RULING), "--no-library"),
     ]
     assert canned.main(argv) == 0
     receipt = next((out / "deliveries").glob("*/delivery.json"))

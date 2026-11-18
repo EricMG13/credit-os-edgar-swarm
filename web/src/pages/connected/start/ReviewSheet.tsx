@@ -491,6 +491,9 @@ export function ReviewSheet({
             ]}
           />
           <List title="Source lookup" items={(summary.lookup ?? []).map(lookupSentence)} />
+          {summary.copilot_search && summary.modules.includes("CP-DR") && (
+            <p className="text-sm text-text-secondary">{summary.copilot_search}</p>
+          )}
           {summary.web_search === true && (
             <p className="text-sm text-text-secondary">
               The research module will search the web. The issuer&apos;s name and the questions it

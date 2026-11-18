@@ -1,78 +1,73 @@
-# Running the models through GitHub Copilot
+# Run Credit OS through GitHub Copilot CLI
 
-`copilot-sol-medium` (`gpt-6.1-sol`) and `copilot-opus-medium` (`claude-opus-5.5`) call the
-models through the GitHub Copilot SDK (`github-copilot-sdk==1.0.28`, runtime 1.0.105) instead of
-a provider's HTTP API. CP-OS builds `CopilotAdapter` for these configurations and closes it
-(runtime process and kept sessions) when the run ends.
+Every live CP-OS call uses the local GitHub Copilot CLI runtime through the
+pinned Copilot SDK. The deployment seat must enable the models and reasoning
+efforts it offers. The connected app can browse reports and prepare runs
+offline.
 
-## 1. Enterprise policy (an administrator does this once)
+| Connected choice | CLI config | Runtime model |
+| --- | --- | --- |
+| GPT Sol, Fast or Balanced | `copilot-sol-medium` | `gpt-6.1-sol` |
+| GPT Sol, High | `copilot-sol-high` | `gpt-6.1-sol` |
+| Claude Opus, Fast or Balanced | `copilot-opus-medium` | `claude-opus-5.5` |
+| Claude Opus, High | `copilot-opus-high` | `claude-opus-5.5` |
+| GPT-6 Luna, Extra high | `copilot-luna-xhigh` | `gpt-6-luna` |
 
-- AI controls -> Copilot -> Features & clients -> Configure features & clients -> Clients ->
-  Copilot CLI: set it to **Enabled everywhere**, or **Let organizations decide** and enable it
-  for the organization that holds your seat.
-- Enable the two models at the enterprise level; the runtime lists only enabled models.
-- Get compliance sign-off first: every prompt carries issuer text (filings, covenants, figures)
-  that leaves this machine for GitHub and the model vendor.
+Balanced applies high on the selected modules in CP-OS's effort map. The
+seat must advertise medium and high for that choice.
 
-## 2. This machine
+## Set up the deployment seat
 
-```
+Enable Copilot CLI and the desired models in the enterprise's Copilot policy.
+Use the approved pinned SDK and local runtime. From the checkout:
+
+```bash
 uv sync --locked
 uv run python -m copilot download-runtime
 ```
 
-The second command is run once. It prints the cached runtime path; set `COPILOT_CLI_PATH` to the
-runtime executable it prints (on Windows, the `.exe`). Set `COPILOT_GITHUB_TOKEN` from a
-fine-grained token for your seat, in the launching environment only (no credential file). A
-token, when set, always wins (`use_logged_in_user=False`). Opt-in alternative: with no token, set
-`COPILOT_USE_GH_LOGIN=1` (exactly `1`) and the runtime authenticates with the account and OAuth
-token of the **gh CLI** (`gh auth token`), found once on the launching PATH; `gh auth switch`
-changes who pays. The Copilot CLI's own sign-in is not used. Any other value changes nothing, and a
-token, when set, wins. The runtime's gh does not see `GH_TOKEN`, `GITHUB_TOKEN` or `GH_CONFIG_DIR` from the launching
-shell (allowlist), so the payer is gh's stored active account (`gh auth status`), not a `GH_TOKEN`
-set in that shell. Each run's `loop.json` records `auth` (`token`, `gh-login` or `none`).
+Set `COPILOT_CLI_PATH` to the installed runtime executable. Provide
+`COPILOT_GITHUB_TOKEN` in the launching environment, or explicitly set
+`COPILOT_USE_GH_LOGIN=1` and use the active `gh` account. A supplied Copilot
+token takes priority. The run records the authentication mode.
 
-## 3. The ruling
+To start the connected app with the choices the deployment seat advertises:
 
-Live runs stay refused until a ruling file under `docs/rulings/` names the configuration. Write
-the file yourself, with these lines:
-
-```
-lifts: live-provider-pause
-by: user
-date: YYYY-MM-DD
-configs: copilot-sol-medium copilot-opus-medium
+```bash
+uv run --locked python -m react_frontend --root /path/to/workflow-folder --copilot-preflight
 ```
 
-## 4. Seat check (paid; run before the first real run)
+Preflight lists model capabilities. It creates no inference session and sends
+no issuer material. If verification fails, the app can still open and prepare
+runs. The runtime checks the selected model and effort again at dispatch.
 
-```
-uv run pytest tests/model/test_copilot_live.py -m live -q -s
-```
+## Launch and review
 
-It skips unless `COPILOT_CLI_PATH` and `COPILOT_GITHUB_TOKEN` (or `COPILOT_USE_GH_LOGIN=1`) are set, and it never runs
-in the normal suite or CI. It lists the models, runs one tool exchange through the real
-adapter and prints each reply's `finishReason` and its `billed_usd` against the price of the
-reply's own tokens (a unit error in the AI-unit conversion would be a 100x miss).
+For a prepared run use the chosen model configuration and the pathway cap:
 
-## 5. A run
-
-```
+```bash
 uv run python -m deploy_workflow.owners.cpos_launch --context ... --sources ... \
-  --config copilot-sol-medium --cap 50 --live --ruling docs/rulings/<file>.md
+  --config copilot-luna-xhigh --cap 25 --out runs/example
 ```
 
-Without `--live` nothing is sent. The launcher reports `COPILOT_GITHUB_TOKEN` as the key variable; `--live` also accepts
-`COPILOT_USE_GH_LOGIN=1` in its place (the gh CLI login, see section 2).
-Each exchange creates one working directory, `.copilot-home/<invocation>/<reservation>` (git-ignored),
-at its first call, named after that call's reservation; later calls of the exchange reuse it.
+Add `--live --ruling docs/rulings/<file>.md` only for a separately authorized
+paid CLI run. The ruling must name the configuration. In the connected app,
+Submit on the approved summary authorizes the run at the displayed pathway
+cap.
 
-## Not verified
+Finish or stop pre-cutover direct-provider jobs before upgrading. Review
+any pending legacy approval again before starting a run on Copilot.
+Historical recordings remain readable with their original model and provider.
 
-- The pinned model ids `gpt-6.1-sol` and `claude-opus-5.5` on a real seat.
-- `numToolCalls` and the event order on a real seat.
-- `copilotUsage.totalNanoAiu` is present, and 1 AI unit = $0.01 holds.
-- `max_output_tokens` is not enforceable on the runtime (holds cover it; the output is not capped).
-- The Windows runtime path and whether the allowlisted environment is enough there.
-- `stop()` and `force_stop()` timing on a real runtime.
-- The runtime dispatches a turn's custom tool calls concurrently (the seat check now exercises two calls in one turn).
+## Search and charging
+
+CP-DR can use the approved public lookup tools when the launcher offers them.
+Native Copilot web search is unavailable pending deployment proof of the
+search query and source records, usage accounting, and a spending bound for
+automatic follow-up calls. The SDK's session limit is a soft limit.
+
+Copilot charges are settled from runtime usage. Credit OS reserves for the
+runtime's possible output, including reasoning. The adapter disables background
+compaction and autonomous continuations, and checks the session context against
+limits returned by the seat. Check the intended seat,
+reported usage, and the Windows runtime under separate paid authorization.

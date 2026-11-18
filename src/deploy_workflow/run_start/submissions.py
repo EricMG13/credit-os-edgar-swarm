@@ -24,16 +24,15 @@ from collections.abc import Collection
 from dataclasses import dataclass
 from datetime import date
 from pathlib import Path, PurePath
-from typing import Any, BinaryIO, NotRequired, TypedDict
+from typing import Any, BinaryIO, NotRequired, TypedDict, cast
 
-from deploy_vii.contracts import PATHWAY_CAP_USD
+from deploy_vii.contracts import PATHWAY_CAP_USD, PathwayId
 from deploy_workflow.context import load_context
 from deploy_workflow.inbox import runs
 from deploy_workflow.inbox.filing import safe_name
 from deploy_workflow.inbox.layout import MAX_ISSUER_ID, Layout
 from deploy_workflow.inbox.runs import EFFORTS, MODELS, approved_summary_limits, config_for
 from deploy_workflow.inbox.startup import STANDING_RULING
-from deploy_workflow.model.adapter import KEY_VARIABLES
 from deploy_workflow.model.handoff import settled_web_lookup
 from deploy_workflow.owners.cpos import web_search_run
 from deploy_workflow.owners.cpos_launch import (
@@ -79,7 +78,6 @@ _KEYS = {"context", "modules", "max_turns", "level", "submitted_by", "model", "e
 _NEWEST_DOCUMENT_DATE = "newest_document_date"
 DEFAULT_MODEL, DEFAULT_EFFORT = "gpt", "balanced"  # the only pair below the Advanced level
 _ADVANCED = "advanced"
-_CLAUDE_UNAVAILABLE = "Claude Opus is not available on this service"
 _CHANGED = "the documents changed while the summary was being made; open the summary again"
 
 log = logging.getLogger(__name__)
@@ -104,8 +102,8 @@ class Answers(TypedDict):
     max_turns: int  # 32 unless Advanced changes it
     level: str  # "basic" | "standard" | "advanced"
     submitted_by: str
-    model: str  # "gpt" | "claude"; anything but "gpt" needs Advanced
-    effort: str  # "fast" | "balanced" | "high"; anything but "balanced" needs Advanced
+    model: str  # from runs.MODELS
+    effort: str  # from the selected model's offered choices
     newest_document_date: NotRequired[str]  # The analyst's override, when supplied.
 
 
@@ -141,6 +139,10 @@ def validated(answers: object) -> Answers:
         raise Refused(f"model is one of {', '.join(MODELS)}")
     if answers["effort"] not in EFFORTS:
         raise Refused(f"effort is one of {', '.join(EFFORTS)}")
+    try:
+        config_for(answers["model"], answers["effort"])
+    except ValueError:
+        raise Refused("the selected model does not offer that reasoning effort") from None
     chosen = (answers["model"], answers["effort"]) != (DEFAULT_MODEL, DEFAULT_EFFORT)
     if chosen and answers["level"] != _ADVANCED:
         raise Refused("the model and effort can be changed only at the Advanced level")
@@ -163,15 +165,6 @@ def is_analyst_name(text: str) -> bool:
         and 1 <= len(initials) <= _INITIALS_AT_MOST
         and all(letter.isalpha() and letter.isupper() for letter in initials)
     )
-
-
-def require_provider_key(answers: Answers) -> None:
-    """``Refused`` when the answers pick Claude and this service's environment has no Anthropic key.
-
-    Only presence is read; the key's value is never returned, logged or shown. Start-up requires
-    the OpenAI key but not this one, so its absence only makes Claude submissions refusable."""
-    if answers["model"] == "claude" and not os.environ.get(KEY_VARIABLES["anthropic"]):
-        raise Refused(_CLAUDE_UNAVAILABLE)
 
 
 def _open_folders(layout: Layout) -> list[Path]:
@@ -709,7 +702,11 @@ def refuse_filed_elsewhere(layout: Layout, answers: Answers) -> None:
     )
 
 
-def _digest(root: Path, answers: Answers) -> str:
+def folder_digest(root: Path, answers: Answers) -> str:
+    """Bind the current launch settings and source bytes in an upload or queued folder."""
+    run = answers["context"].get("run")
+    pathway = run.get("pathway") if isinstance(run, dict) else None
+    cap = PATHWAY_CAP_USD.get(cast(PathwayId, pathway)) if isinstance(pathway, str) else None
     files = []
     for rel in sorted(_stored(root, strict=True)):
         if rel == _CONTEXT_NAME:  # made from the answers (the scheduler writes it); never uploaded
@@ -726,6 +723,8 @@ def _digest(root: Path, answers: Answers) -> str:
         "max_turns": answers["max_turns"],
         "model": answers["model"],
         "effort": answers["effort"],
+        "config": config_for(answers["model"], answers["effort"]),
+        "cap": str(cap) if cap is not None else "",
     }
     if "newest_document_date" in answers:
         covered["newest_document_date"] = answers["newest_document_date"]
@@ -744,16 +743,16 @@ def bound(value: str, prior: str) -> str:
 
 def digest(layout: Layout, sid: str, answers: Answers) -> str:
     """SHA-256 over the context, each stored file's name and hash, the modules, the turns, the model
-    the effort and the analyst's newest-document date override when one was supplied.
+    and the effort, approved cap and the analyst's newest-document date override if supplied.
 
     ``level`` and ``submitted_by`` are not covered: they change what the page shows, not the run.
     The approval's digest is this one with the earlier run named at approval folded in (`bound`)."""
     answers = validated(answers)
     refuse_filed_elsewhere(layout, answers)
     root = files_folder(layout, sid)
-    value = _digest(root, answers)
+    value = folder_digest(root, answers)
     if not root.is_dir():  # a seal renamed the folder before the walk: it saw nothing
-        value = _digest(files_folder(layout, sid), answers)
+        value = folder_digest(files_folder(layout, sid), answers)
     return value
 
 
@@ -939,7 +938,6 @@ def _document_date_limits(
 def _summarise(layout: Layout, sid: str, answers: Answers) -> dict[str, Any]:
     try:
         answers = validated(answers)
-        require_provider_key(answers)
         config = config_for(answers["model"], answers["effort"])
     except Refused as refusal:
         return {"error": str(refusal)}
@@ -950,7 +948,7 @@ def _summarise(layout: Layout, sid: str, answers: Answers) -> dict[str, Any]:
         try:
             try:
                 try:
-                    before = _digest(files, answers)
+                    before = folder_digest(files, answers)
                 except OSError as error:
                     log.warning("summary %s: the files could not be read: %s", sid, error)
                     return {"error": _CHANGED}
@@ -980,7 +978,7 @@ def _summarise(layout: Layout, sid: str, answers: Answers) -> dict[str, Any]:
                         # earlier runs are: the launcher's own `_engine` folder.
                         workspace=layout.engine,
                     )
-                    after = _digest(files, answers)
+                    after = folder_digest(files, answers)
                 except OSError as error:  # a file went away while it was being read: it changed
                     log.warning("summary %s: the files could not be read: %s", sid, error)
                     return {"error": _CHANGED}
@@ -1027,6 +1025,14 @@ def _summarise(layout: Layout, sid: str, answers: Answers) -> dict[str, Any]:
                 # Whether the research module searches the web, from the launcher's own rule
                 # (`web_search_on`, the one behind its `Web:` line), for the review to state.
                 "web_search": web_search_on(prepared, config, STANDING_RULING),
+                **(
+                    {
+                        "copilot_search": "Copilot web search is unavailable. The research module "
+                        "can use approved public lookups when available."
+                    }
+                    if "CP-DR" in prepared.ordered and run.run.case_kind in {"public", "private"}
+                    else {}
+                ),
                 "model": answers["model"],
                 "effort": answers["effort"],
                 "cap": str(cap),

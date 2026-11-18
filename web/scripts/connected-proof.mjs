@@ -1465,6 +1465,13 @@ async function checkPublishedRun({ context, page, report, endpoint, run, publica
   await download.waitFor();
   const [file] = await Promise.all([page.waitForEvent("download"), download.click()]);
   assert.equal(file.suggestedFilename(), "CP-2.md");
+  const retired = await page.request.get(new URL("/library/index.html", endpoint).href, {
+    maxRedirects: 0,
+  });
+  assert.equal(retired.status(), 308);
+  assert.equal(retired.headers().location, "/");
+  const oldScript = await page.request.get(new URL("/library/views.js", endpoint).href);
+  assert.equal(oldScript.status(), 404);
   const bytes = await readFile(await file.path());
   assert.match(bytes.toString("utf8"), /The synthetic issuer shows one observed item\./u);
   const publication = await page.request.get(new URL("/connected/snapshot", endpoint).href, {
@@ -1542,7 +1549,7 @@ function browserProofRecord({ channel, brand, browserVersion, run }) {
       "paid cap confirmation and cancel without submission",
       "synthetic confirmation and exactly one submission",
       "run activity spend, module count, elapsed time and delivery feed",
-      "finished publication",
+      "finished publication and retired library pages unavailable",
       "compact library index, repeated issuer searches and report-scoped browser requests",
       "Run loads only connected route bundles without the report reader or offline app",
       "route-based JavaScript loads only after navigation (run, library, and report chunks)",
@@ -1619,7 +1626,7 @@ const browserCases = runAsScript
   : [];
 for (const [channel, brand, envName] of browserCases) {
   test(
-    `${brand} uploads, submits and opens a finished legacy report`,
+    `${brand} uploads, submits and opens a finished connected report`,
     { timeout: 120000 },
     async () => {
       const workspace = await mkdtemp(

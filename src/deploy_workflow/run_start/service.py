@@ -1,4 +1,4 @@
-"""The start page's HTTP service: the upload store and the scheduler behind one local address.
+"""The run intake API and scheduler behind one local address.
 
 The process holds the provider key and can start paid runs (each at its pathway's cap,
 ``PATHWAY_CAP_USD``), has no login and is reachable from other machines, so every request is
@@ -28,10 +28,6 @@ Requests. JSON answers carry ``Content-Type: application/json; charset=utf-8``. 
 ``{"error": "<plain sentence>"}`` with 400, an unknown submission or run is 404, an unexpected
 failure is 500 ``{"error": "the service failed; see its log"}`` (its cause goes to the log only).
 
-``GET /``
-    The start page (docs/templates/context-form.html) as served HTML, with a
-    ``Content-Security-Policy`` that allows only same-origin scripts, styles, fonts, images and
-    connections, plus the page's inline script and style (and ``data:`` images its CSS uses).
 ``POST /api/submissions``
     No body. 200 ``{"id": "<32 hex>"}``: a new, empty submission. 400 when too many are open.
 ``POST /api/submissions/<id>/files?name=<percent-encoded UTF-8 path>``
@@ -86,12 +82,11 @@ failure is 500 ``{"error": "the service failed; see its log"}`` (its cause goes 
     Body ``{"run": "<run id>"}``. 200 ``{"carried": [...], "kept": [...]}``: the run's stored
     files copied into the submission, a name already held kept. 404 for an unknown run or
     submission; 400 for a bad body, a run with no stored documents or any other refusal.
-``GET /library/<path>``
-    A read-only file under ``_engine/library``. The final path (``index.html`` appended for a
-    folder) is resolved with links followed and must be a regular file inside the library: 404 for
-    anything else, and for a path that does not decode as UTF-8. The type comes from the file name.
-    The page is served with ``connect-src 'none'; form-action 'none'; frame-ancestors 'self'`` and
-    ``X-Frame-Options: SAMEORIGIN``, so its own script cannot call this API.
+``GET /library/downloads/<path>``
+    A read-only file under ``_engine/library/downloads``. The final path (``index.html``
+    appended for a folder) must be a regular file inside that folder. Other legacy static-library
+    files are not served. The type comes from the file name. This response cannot call the intake
+    API.
 ``GET /activity.js``
     ``_engine/activity.js`` (the library's Run activity, loaded as ``../activity.js``), under the
     same rules and headers as a library file; it must itself be in ``_engine``.
@@ -107,7 +102,6 @@ wildcard address (``0.0.0.0``, ``::``, or any spelling that resolves to one) can
 from __future__ import annotations
 
 import argparse
-import html
 import logging
 import re
 import sys
@@ -123,7 +117,7 @@ from typing import Any, BinaryIO, cast
 from deploy_vii.contracts import DEACTIVATED_PATHWAYS, PATHWAY_CAP_USD
 from deploy_workflow import http_base
 from deploy_workflow.http_base import Body, Reply, refuse
-from deploy_workflow.inbox import activity, runs, startup, teams
+from deploy_workflow.inbox import activity, runs, teams
 from deploy_workflow.inbox.layout import Layout
 from deploy_workflow.inbox.scheduler import Scheduler, Settings
 from deploy_workflow.run_start import prior, submissions
@@ -165,15 +159,13 @@ _RUN_FIELDS = (
     "modules",
     "stalled",
 )
-_LIBRARY = "/library/"
+_DOWNLOADS = "/library/downloads/"
 SHOWN_CAP_HEADER = "X-Shown-Cap"  # the cap the page displays, sent with summary and submit
-_RAIL_MARKER = b"<!--rail-signal-->"  # in the start page, right after the activity link
 _HOSTNAME = re.compile(r"[a-z0-9](?:[a-z0-9.-]*[a-z0-9])?")
 
 
 class _Server(http_base.Server):
     scheduler: Scheduler
-    rail_signal: str = ""  # the validated rail anchor, or "" for none
 
     def connection_limits(self) -> tuple[int, int | None]:
         return MAX_CONNECTIONS, None  # no ceiling per remote address
@@ -240,21 +232,14 @@ class Handler(http_base.Handler):
 
     def _get(self, url: urllib.parse.SplitResult) -> None:
         path = url.path
-        if path == "/":
-            page = startup.FORM.read_bytes().replace(
-                _RAIL_MARKER, self._service.rail_signal.encode("ascii")
+        if path.startswith(_DOWNLOADS):
+            raise self._file(
+                self._layout.engine / "library" / "downloads",
+                path[len(_DOWNLOADS) :],
+                direct=False,
             )
-            raise Reply(
-                200,
-                page,
-                {
-                    "Content-Type": "text/html; charset=utf-8",
-                    "Content-Security-Policy": _POLICY,
-                    "X-Frame-Options": "DENY",
-                },
-            )
-        if path.startswith(_LIBRARY):
-            raise self._file(self._layout.engine / "library", path[len(_LIBRARY) :], direct=False)
+        if path.startswith("/library/"):
+            raise refuse(404, "not found")
         if path == "/activity.js":
             raise self._file(self._layout.engine, "activity.js", direct=True)
         found = _SUBMISSION.fullmatch(path)
@@ -328,7 +313,12 @@ class Handler(http_base.Handler):
         raise Reply(200, self._guarded(copy))
 
     def _summary(self, sid: str, answers: Any) -> dict[str, Any]:
-        return submissions.summary(self._layout, sid, answers)
+        result = submissions.summary(self._layout, sid, answers)
+        if result.get("digest"):
+            result["copilot_verified"] = self._service.scheduler.model_available(
+                result["model"], result["effort"]
+            )
+        return result
 
     def _submit(self, sid: str, body: Any) -> None:
         if not isinstance(body, dict) or not isinstance(body.get("digest"), str):
@@ -358,20 +348,8 @@ class Handler(http_base.Handler):
         return answer
 
     def _library_report(self, run_id: str) -> str:
-        """The library page's link for a finished run, as a path under ``/library/``.
-
-        The library no longer files report copies; its Reports history page shows the run
-        (``index.html#W-Report/history?c=<run>``). ``""`` when the library has no index yet (it is
-        rebuilt after a run ends)."""
-        index = self._layout.engine / "library" / "index.html"
-        try:
-            present = index.is_file() and not index.is_symlink()
-        except OSError as error:
-            log.info("run %s: library page not checked: %s", run_id, error)
-            return ""
-        if not present:
-            return ""
-        return f"index.html#W-Report/history?c={urllib.parse.quote(run_id, safe='')}"
+        """The connected report route for this finished run."""
+        return f"/report/{urllib.parse.quote(run_id, safe='')}"
 
     def _file(self, base: Path, relative: str, *, direct: bool) -> Reply:
         """A library file's reply: its page may not call this API and is framed only by itself."""
@@ -404,25 +382,15 @@ def signal_link(url: str) -> str:
     return f"http://{host}:{port}/"
 
 
-def _rail_anchor(url: str) -> str:
-    return (
-        f'<a id="rail-signal" href="{html.escape(url, quote=True)}" title="Signal">'
-        '<svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" '
-        'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
-        '<path d="M5 20v-4M10 20v-8M15 20V8M20 20V4"/></svg>'
-        '<span class="sr-only">Signal</span></a>'
-    )
-
-
 def make_server(
     scheduler: Scheduler, host: str, port: int, signal_url: str = ""
 ) -> ThreadingHTTPServer:
     """A server bound to ``host:port`` (port 0 picks one); not yet serving.
 
-    ``signal_url`` is validated here by ``signal_link`` (ValueError); it adds the rail link."""
-    link = signal_link(signal_url) if signal_url else ""  # a bad value raises before any socket
+    ``signal_url`` remains validated for callers that expose a Signal link in their own UI."""
+    if signal_url:
+        signal_link(signal_url)
     server = _Server((host, port), Handler)
-    server.rail_signal = _rail_anchor(link) if link else ""
     server.scheduler = scheduler
     return server
 

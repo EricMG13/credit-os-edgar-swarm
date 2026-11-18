@@ -44,17 +44,24 @@ def test_accepts_the_synthetic_agreement_only_byte_identical(tmp_path):
         verify_upload(tmp_path, context)
 
 
-@pytest.mark.parametrize("legal", ["executed", "none"])
-def test_real_scheduler_exports_the_submitted_run(monkeypatch, legal):
+@pytest.mark.parametrize(
+    ("legal", "model", "effort", "config"),
+    [
+        ("executed", "luna", "xhigh", "copilot-luna-xhigh"),
+        ("none", "gpt", "balanced", "copilot-sol-medium"),
+    ],
+)
+def test_real_scheduler_exports_the_submitted_run(monkeypatch, legal, model, effort, config):
     monkeypatch.setattr(sys, "dont_write_bytecode", True)
-    monkeypatch.setenv("OPENAI_API_KEY", DUMMY_KEY)
+    monkeypatch.setenv("COPILOT_GITHUB_TOKEN", DUMMY_KEY)
+    monkeypatch.setenv("COPILOT_CLI_PATH", str(Path(__file__)))
     from deploy_workflow.inbox.runs import cap_of, load_all
     from deploy_workflow.inbox.scheduler import Scheduler, Settings
     from deploy_workflow.model.adapter import KEY_VARIABLES
     from deploy_workflow.run_start import submissions
 
     for key in KEY_VARIABLES.values():
-        if key != "OPENAI_API_KEY":
+        if key != "COPILOT_GITHUB_TOKEN":
             monkeypatch.delenv(key, raising=False)
     launcher = launcher_command()
     data = json.loads((PROJECT / "cases/context/research-minimal.json").read_text())
@@ -65,7 +72,7 @@ def test_real_scheduler_exports_the_submitted_run(monkeypatch, legal):
     data["attachments"]["legal_documents"] = legal
     short_temp = None if sys.platform == "win32" else "/tmp"
     with tempfile.TemporaryDirectory(prefix="cos-proof-", dir=short_temp) as root:
-        scheduler = Scheduler(Settings(Path(root), launcher=launcher))
+        scheduler = Scheduler(Settings(Path(root), launcher=launcher, copilot_models=None))
         try:
             layout = scheduler.layout
             sid = submissions.new(layout)
@@ -79,9 +86,9 @@ def test_real_scheduler_exports_the_submitted_run(monkeypatch, legal):
                     "context": data,
                     "modules": [],
                     "max_turns": 32,
-                    "level": "basic",
-                    "model": "gpt",
-                    "effort": "balanced",
+                    "level": "advanced",
+                    "model": model,
+                    "effort": effort,
                     "submitted_by": "Proof T",
                 }
             )
@@ -98,6 +105,9 @@ def test_real_scheduler_exports_the_submitted_run(monkeypatch, legal):
             log = (layout.logs / f"{submitted.id}.log").read_text()
             assert record.status == "finished", (record.reason, log)
             assert record.cap == "25"
+            assert (record.config, record.effort) == (config, effort)
+            loop_record = layout.runs / record.id / "live" / "loop.json"
+            assert json.loads(loop_record.read_text())["config"] == config
             assert cap_of(record) == Decimal(25)
             assert "Charged:  USD 0" in log
             assert_exported_report(layout, submitted.id, legal)

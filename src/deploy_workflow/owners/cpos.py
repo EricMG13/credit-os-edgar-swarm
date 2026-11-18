@@ -450,6 +450,8 @@ def run_handoffs(  # noqa: C901, PLR0912, PLR0913, PLR0915 -- legacy orchestrato
     )
     if (request.execution == "live-provider") != live:
         raise ValueError("cpos_execution_mode: live mode requires the bounded live executor")
+    if live and isinstance(execute, HandoffExecutor):
+        _require_live_route(execute.adapter.config_id)
     if (
         live
         and isinstance(execute, HandoffExecutor)
@@ -786,20 +788,21 @@ def _module_execution(
     return {m: "retained-response-replay" if m in retained else request.execution for m in ordered}
 
 
+def _require_live_route(config: str) -> None:
+    if CONFIGS[config].provider != "copilot":
+        raise ValueError("live CP-OS runs require a Copilot configuration")
+
+
 def live_adapter_for(
     selected: "ModelConfig", ruling: Path, environ: Mapping[str, str], rulings_root: Path | None
 ) -> "LiveAdapter | CopilotAdapter":
-    """The adapter for one model configuration: the Copilot SDK adapter for a copilot provider,
-    else the HTTP adapter. A ``CopilotAdapter`` holds a runtime process and kept sessions:
-    its builder must ``close()`` it after the executor finishes."""
-    from deploy_workflow.model.adapter import LiveAdapter
+    """Build the sole live adapter. Its caller closes the runtime and its sessions."""
+    _require_live_route(selected.config_id)
     from deploy_workflow.model.copilot_adapter import CopilotAdapter
     from deploy_workflow.model.turn import ModelSpec
 
     spec = ModelSpec(selected.config_id, selected.provider, selected.model, selected.effort)
-    if selected.provider == "copilot":
-        return CopilotAdapter(spec, ruling, environ=environ, rulings_root=rulings_root)
-    return LiveAdapter(spec, ruling, environ=environ, rulings_root=rulings_root)
+    return CopilotAdapter(spec, ruling, environ=environ, rulings_root=rulings_root)
 
 
 def with_notes(error: BaseException) -> str:
@@ -1090,6 +1093,8 @@ def run_comparison(
     )
     if (request.execution == "live-provider") != live:
         raise ValueError("cpos_execution_mode: live mode requires the bounded live executor")
+    if live and isinstance(execute, HandoffExecutor):
+        _require_live_route(execute.adapter.config_id)
     if (
         live
         and isinstance(execute, HandoffExecutor)

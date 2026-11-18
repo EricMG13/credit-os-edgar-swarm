@@ -1,4 +1,4 @@
-"""What the service does once before polling: launch checks, the folder lock, log and page."""
+"""What the service does once before polling: launch checks, the folder lock, and log."""
 
 from __future__ import annotations
 
@@ -13,24 +13,14 @@ from deploy_vii.contracts import PATHWAY_CAP_USD
 from deploy_workflow.inbox import runs
 from deploy_workflow.inbox.layout import Layout
 from deploy_workflow.model.adapter import (
-    COPILOT_RUNTIME_VARIABLE,
-    KEY_VARIABLES,
     LivePauseInForce,
     check_ruling,
 )
 from deploy_workflow.model.configs import CONFIGS
 
 ROOT = Path(__file__).resolve().parents[3]
-# The start page the service serves.
-FORM = ROOT / "docs/templates/context-form.html"
 # The only ruling the service runs under; ``Settings.ruling`` defaults to it and start-up checks it.
 STANDING_RULING = ROOT / "docs/rulings/2026-11-11-run-start-submit.md"
-_PAGE = (
-    '<!doctype html>\n<html lang="en"><head><meta charset="utf-8">'
-    '<meta http-equiv="refresh" content="0; url=_engine/library/index.html">'
-    "<title>Issuer library</title></head><body>"
-    '<p><a href="_engine/library/index.html">Open the issuer library</a></p></body></html>\n'
-)
 
 
 # The caps the owner ruled, USD per run (docs/rulings/2026-11-15-pathway-tiers-and-caps.md),
@@ -54,8 +44,6 @@ class StartupRefused(ValueError):
 
 
 PACKAGE_LOGGER = "deploy_workflow.inbox"
-# The one provider whose key start-up does not require: no key only makes its submissions refusable.
-OPTIONAL_KEY_PROVIDER = "anthropic"
 
 
 class _RootHandler(logging.FileHandler):
@@ -98,9 +86,8 @@ def close_log(layout: Layout) -> None:
 def check_launchable(ruling: Path) -> None:
     """Refuse start-up unless every launch the service can make is allowed by the standing ruling.
 
-    All four configs of ``runs.LAUNCH_CONFIGS`` must be known and named by the ruling. The OpenAI
-    key is required; the Anthropic key is optional (without it a Claude submission is refused, see
-    ``submissions.require_provider_key``). Each run's cap is its pathway's (``runs.cap_of``,
+    All live choices must use the Copilot runtime and be named by the ruling.
+    Each run's cap is its pathway's (``runs.cap_of``,
     ruling 2026-11-15-pathway-tiers-and-caps), and no pathway's cap may pass the ruled figure
     in ``RULED_CAPS_USD``."""
     for pathway, cap in PATHWAY_CAP_USD.items():
@@ -119,18 +106,12 @@ def check_launchable(ruling: Path) -> None:
         )
     for config_id in runs.LAUNCH_CONFIGS:
         config = CONFIGS.get(config_id)
-        if config is None:
-            raise StartupRefused(f"unknown config {config_id!r}")
+        if config is None or config.provider != "copilot":
+            raise StartupRefused(f"unsupported live config {config_id!r}")
         try:
             check_ruling(config_id, ruling)
         except (LivePauseInForce, ValueError, OSError) as error:
             raise StartupRefused(f"live runs are not allowed: {error}") from error
-        key = KEY_VARIABLES[config.provider]
-        if config.provider != OPTIONAL_KEY_PROVIDER and not os.environ.get(key):
-            raise StartupRefused(f"{key} is not set in the launching environment")
-        runtime = Path(os.environ.get(COPILOT_RUNTIME_VARIABLE, ""))
-        if config.provider == "copilot" and not runtime.is_file():
-            raise StartupRefused(f"{COPILOT_RUNTIME_VARIABLE} must name an existing file")
 
 
 def take_lock(layout: Layout) -> IO[str]:
@@ -181,12 +162,3 @@ def release_lock(handle: IO[str]) -> None:
             msvcrt.locking(handle.fileno(), msvcrt.LK_UNLCK, 1)
     finally:
         handle.close()
-
-
-def write_pages(layout: Layout) -> None:
-    """The ``library.html`` page that opens the library; an existing one is never overwritten."""
-    try:
-        with (layout.root / "library.html").open("xb") as page:
-            page.write(_PAGE.encode())
-    except FileExistsError:
-        pass  # never overwritten

@@ -25,6 +25,8 @@ def test_keeps_runtime_and_compiled_assets_at_the_archive_root(tmp_path):
         source.writestr("uv.lock", "")
         source.writestr("web/package-lock.json", "{}")
         source.writestr("proof/northbridge-filing.txt", "synthetic")
+        source.writestr("apps/issuer-library/credit_os/web/index.html", "legacy design ref")
+        source.writestr("docs/templates/context-form.html", "retired form")
         validate_source(source)
         output = tmp_path / "candidate.zip"
         write_bundle(source, dist, output, "candidate")
@@ -37,6 +39,8 @@ def test_keeps_runtime_and_compiled_assets_at_the_archive_root(tmp_path):
             "web/dist/index.html",
             "SOURCE-COMMIT.txt",
         }
+        assert "apps/issuer-library/credit_os/web/index.html" not in archive.namelist()
+        assert "docs/templates/context-form.html" not in archive.namelist()
         assert archive.read("SOURCE-COMMIT.txt") == b"candidate\n"
 
 
@@ -45,3 +49,6 @@ def test_selected_sources_include_the_react_design_specs() -> None:
     with ZipFile(BytesIO(payload)) as archive:
         for name in ("docs/design/design-system.md", "docs/design/brand-tokens.md"):
             assert archive.read(name) == (PROJECT / name).read_bytes()
+        # The design-reference file remains in source history; write_bundle filters it.
+        assert "apps/issuer-library/credit_os/web/index.html" in archive.namelist()
+        assert "docs/COPILOT.md" in archive.namelist()

@@ -19,6 +19,7 @@ describe("connected pathway caps", () => {
       vi.fn().mockResolvedValue(
         Response.json({
           ...template,
+          copilot_models: { gpt: ["fast", "balanced"], luna: ["xhigh"] },
           submission_caps_usd: {
             credit_snapshot: "25",
             lite_credit_assessment: "15.00",
@@ -36,6 +37,7 @@ describe("connected pathway caps", () => {
 
     expect(result).toEqual({
       template,
+      copilotModels: { gpt: ["fast", "balanced"], luna: ["xhigh"] },
       caps: { credit_snapshot: "25", lite_credit_assessment: "15.00" },
     });
   });
