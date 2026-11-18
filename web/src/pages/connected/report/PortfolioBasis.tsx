@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useMemo, type ReactNode } from "react";
 import { useResource } from "../useResource";
 
 export interface PortfolioBasis {
@@ -48,13 +48,11 @@ export function PortfolioBasisProvider({
     [folder, enabled],
   );
   const { value, error } = useResource(load);
-  const answered = value?.folder === folder;
-  const answer: Answer = !enabled
-    ? NO_BASIS
-    : answered
-      ? { basis: value.basis?.folder === folder ? value.basis : null, loading: false }
-      : error
-        ? NO_BASIS
-        : LOADING;
+  const answer = useMemo<Answer>(() => {
+    if (!enabled) return NO_BASIS;
+    if (value?.folder === folder)
+      return { basis: value.basis?.folder === folder ? value.basis : null, loading: false };
+    return error ? NO_BASIS : LOADING;
+  }, [enabled, value, folder, error]);
   return <Context.Provider value={answer}>{children}</Context.Provider>;
 }

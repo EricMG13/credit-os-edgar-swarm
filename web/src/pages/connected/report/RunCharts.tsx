@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { Button } from "@/components/base/buttons/button";
 import { ArrowRight } from "@untitledui/icons";
 import { heading } from "../layout";
@@ -80,7 +81,7 @@ function chartOutput(entry: OutputEntry) {
   };
 }
 
-export function RunCharts({
+export const RunCharts = memo(function RunCharts({
   view,
   folder,
 }: {
@@ -123,4 +124,4 @@ export function RunCharts({
       )}
     </section>
   );
-}
+});

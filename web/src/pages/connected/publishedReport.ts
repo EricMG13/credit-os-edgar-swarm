@@ -1,3 +1,4 @@
+import { LIBRARY_ADDRESS, request, snapshotAddress } from "./ahead";
 import { moduleName, pathwayName, RequestError } from "./api";
 import { asOfDate } from "./runFigures";
 import { changeText } from "./signal";
@@ -272,14 +273,13 @@ export type LibraryIndex = {
 };
 
 export async function getLibraryIndex(signal: AbortSignal): Promise<LibraryIndex | null> {
-  const response = await fetch("/connected/library", { cache: "no-store", signal });
+  const response = await request(LIBRARY_ADDRESS, signal);
   if (!response.ok) throw new Error("The published library could not be loaded.");
   return (await response.json()) as LibraryIndex | null;
 }
 
 export async function getSnapshot(signal: AbortSignal, folder?: string): Promise<Snapshot | null> {
-  const query = folder === undefined ? "" : `?run=${encodeURIComponent(folder)}`;
-  const response = await fetch(`/connected/snapshot${query}`, { cache: "no-store", signal });
+  const response = await request(snapshotAddress(folder), signal);
   if (!response.ok)
     throw new RequestError("The published report could not be loaded.", response.status);
   return (await response.json()) as Snapshot | null;

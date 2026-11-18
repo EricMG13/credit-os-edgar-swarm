@@ -10,6 +10,20 @@ import {
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { ConnectedApp } from "./ConnectedApp";
 import type { Snapshot } from "./publishedReport";
+import type * as Identity from "./report/IdentityBand";
+import { IdentityBand } from "./report/IdentityBand";
+import type * as ReportView from "./reportView";
+import { buildReportView } from "./reportView";
+
+// Both are counted, unchanged: the view built from a report, and a part drawn on every tab.
+vi.mock("./reportView", async (original) => {
+  const real = await original<typeof ReportView>();
+  return { ...real, buildReportView: vi.fn(real.buildReportView) };
+});
+vi.mock("./report/IdentityBand", async (original) => {
+  const real = await original<typeof Identity>();
+  return { ...real, IdentityBand: vi.fn(real.IdentityBand) };
+});
 
 // The first render of the whole reader can pass the 1 s default on a busy machine.
 configure({ asyncUtilTimeout: 5000 });
@@ -103,6 +117,36 @@ afterEach(() => {
   cleanup();
   vi.unstubAllGlobals();
   window.history.replaceState(null, "", "/");
+});
+
+describe("report redrawing", () => {
+  it("does not redraw the open tab when the source icons are highlighted", async () => {
+    open("#modules/CP-1");
+    await screen.findByLabelText("Module");
+    const built = vi.mocked(buildReportView).mock.calls.length;
+    const drawn = vi.mocked(IdentityBand).mock.calls.length;
+    fireEvent.click(screen.getByRole("switch", { name: "Highlight source icons" }));
+    await waitFor(() => {
+      expect(document.querySelector('[data-sources="on"]')).not.toBeNull();
+    }, SETTLE);
+    expect(vi.mocked(IdentityBand).mock.calls).toHaveLength(drawn);
+    expect(vi.mocked(buildReportView).mock.calls).toHaveLength(built);
+    fireEvent.click(screen.getByRole("switch", { name: "Highlight source icons" }));
+  });
+
+  it("draws a newly opened tab from the view already built for the report", async () => {
+    open("#modules/CP-1");
+    await screen.findByLabelText("Module");
+    const built = vi.mocked(buildReportView).mock.calls.length;
+    const drawn = vi.mocked(IdentityBand).mock.calls.length;
+    act(() => {
+      window.location.hash = "#changes";
+    });
+    await waitFor(() => {
+      expect(vi.mocked(IdentityBand).mock.calls.length).toBeGreaterThan(drawn);
+    }, SETTLE);
+    expect(vi.mocked(buildReportView).mock.calls).toHaveLength(built);
+  });
 });
 
 // The shell's `main` is what scrolls, so each page of the report starts at its top and Back

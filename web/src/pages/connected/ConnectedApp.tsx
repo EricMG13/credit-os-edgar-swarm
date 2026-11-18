@@ -1,23 +1,55 @@
-import { lazy, Suspense, useEffect } from "react";
+import { lazy, Suspense, useEffect, type ComponentType } from "react";
 import { Button } from "@/components/base/buttons/button";
 import { Skeleton } from "@/components/gap/Skeleton";
 import { PageHeader } from "../../shell/PageHeader";
 import { Shell, type Area } from "../../shell/Shell";
+import { askAhead, LIBRARY_ADDRESS, snapshotAddress } from "./ahead";
 import type { Mode } from "./api";
 
-const ReportLibrary = lazy(() =>
-  import("./LibraryIndex").then(({ ReportLibrary }) => ({ default: ReportLibrary })),
-);
-const ReportReader = lazy(() =>
-  import("./ReportLibrary").then(({ ReportReader }) => ({ default: ReportReader })),
-);
-const RunActivity = lazy(() =>
-  import("./RunActivity").then(({ RunActivity }) => ({ default: RunActivity })),
-);
-const RunProgress = lazy(() =>
-  import("./RunProgress").then(({ RunProgress }) => ({ default: RunProgress })),
-);
-const StartRun = lazy(() => import("./StartRun").then(({ StartRun }) => ({ default: StartRun })));
+type PageFile<P> = { default: ComponentType<P> };
+
+/**
+ * A page kept in its own file, asked for once. Asked for ahead and already answered when first
+ * drawn, it is drawn in that drawing, or fails in it, with no loading state between; React keeps a
+ * loading state it has shown on screen for 300 ms however soon the file arrives. Drawn before the
+ * answer, it waits on that same request as any lazy page does.
+ */
+function page<P extends object>(load: () => Promise<ComponentType<P>>) {
+  type Answer = (file: (file: PageFile<P>) => void, failed: (failure: unknown) => void) => void;
+  let asked: Promise<PageFile<P>> | undefined;
+  let answered: Promise<PageFile<P>> | undefined;
+  // React draws an answer already given only when `then` answers as it is called.
+  const answer = (then: Answer) => {
+    answered = { then } as unknown as Promise<PageFile<P>>;
+  };
+  const ask = () => {
+    if (asked) return asked;
+    asked = load().then((component) => ({ default: component }));
+    asked.then(
+      (file) => {
+        answer((loaded) => {
+          loaded(file);
+        });
+      },
+      (failure: unknown) => {
+        answer((_, failed) => {
+          failed(failure);
+        });
+      },
+    );
+    return asked;
+  };
+  return Object.assign(
+    lazy(() => answered ?? ask()),
+    { ask },
+  );
+}
+
+const ReportLibrary = page(() => import("./LibraryIndex").then((file) => file.ReportLibrary));
+const ReportReader = page(() => import("./ReportLibrary").then((file) => file.ReportReader));
+const RunActivity = page(() => import("./RunActivity").then((file) => file.RunActivity));
+const RunProgress = page(() => import("./RunProgress").then((file) => file.RunProgress));
+const StartRun = page(() => import("./StartRun").then((file) => file.StartRun));
 
 function LoadingPage() {
   return (
@@ -60,6 +92,32 @@ function reportFolder(path: string) {
   }
 }
 
+const RUN = /^\/run\/([a-zA-Z0-9][a-zA-Z0-9_.-]{0,79})\/?$/;
+
+/**
+ * Asks, ahead of the first drawing, for the page file that drawing `path` will ask for, and for no
+ * other. The promise settles when that file has loaded or failed. Once the library or a report has
+ * loaded, what it reads first is asked for too, while the page is drawn.
+ */
+export function preloadPage(path: string, readOnly: boolean): Promise<unknown> {
+  const reads = (address: string) => () => {
+    askAhead(address);
+  };
+  const unloaded = () => undefined;
+  if (path === "/" || path === "/index.html")
+    return ReportLibrary.ask().then(reads(LIBRARY_ADDRESS), unloaded);
+  const start = path === "/start" || path === "/start/";
+  const runs = path === "/runs" || path === "/runs/";
+  const run = RUN.test(path);
+  if (readOnly && (start || runs || run)) return Promise.resolve();
+  if (start) return StartRun.ask().catch(unloaded);
+  if (runs) return RunActivity.ask().catch(unloaded);
+  if (run) return RunProgress.ask().catch(unloaded);
+  const report = reportFolder(path);
+  if (report === null) return Promise.resolve();
+  return ReportReader.ask().then(reads(snapshotAddress(report)), unloaded);
+}
+
 export function ConnectedApp({
   path,
   search = window.location.search,
@@ -73,7 +131,7 @@ export function ConnectedApp({
   readOnly?: boolean;
   navigate?: (path: string) => void;
 }) {
-  const run = /^\/run\/([a-zA-Z0-9][a-zA-Z0-9_.-]{0,79})\/?$/.exec(path)?.[1];
+  const run = RUN.exec(path)?.[1];
   const report = reportFolder(path);
   const start = path === "/start" || path === "/start/";
   const prior = new URLSearchParams(search).get("from");
