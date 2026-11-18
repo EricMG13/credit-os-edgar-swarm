@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for QXO, Inc. as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "ffb85fc512c998a8062881f8607b46e4b0f12066828db0fa8c2838076411b280",
+    "CP-1.md": "f05bec4b2f7a9a617c63c6b16253c6f51f01af734f3867893a1a2db6e6d51dc6",
+    "CP-1A.md": "f6d47ba571c8ed38f86a83633f4be97dfdf1c653d00bff7113f6ccd352beaa39",
+    "CP-2.md": "756fd31d99f849a12bae398059ea5fdb7d89ff95b0d998e3519d942fa5227f50",
+    "coverage.json": "85c54acec8b95321df490021f1bb23f54c5e2716d58b547624f16d9bf93fed46",
+    "view.json": "6b2cd91aad6debd5ec1f00c9f531a2569eb78ce60cdf8ab1a6afc7a284fe8cee",
+    "report-view.json": "265bd546478a04188a85e29e513aab7b03e729172a06052a1156f8bf15c52086"
+  }
+}

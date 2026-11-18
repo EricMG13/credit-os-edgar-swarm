@@ -1,0 +1,244 @@
+{
+  "run": {
+    "schema_version": "run/2",
+    "run_id": "cco-holdings-llc-2026-11-05-credit_snapshot-host",
+    "issuer_id": "cco-holdings-llc",
+    "issuer_name": "CCO HOLDINGS LLC",
+    "as_of": "2026-11-05",
+    "method_version": "deploy-v-r14",
+    "case_kind": "public",
+    "pathway": "credit_snapshot",
+    "requested_modules": [
+      "CP-0",
+      "CP-1",
+      "CP-1A",
+      "CP-2"
+    ]
+  },
+  "sources": {
+    "10-K_2025-12-31_ccoh-20251231.htm.jsonl": {
+      "path": "source-text/10-K_2025-12-31_ccoh-20251231.htm.jsonl",
+      "sha256": "98fc08971e7b602f253b4465dc2493c7d1fd2140d7f51b96e967ed5fb3218118"
+    },
+    "10-Q_2025-09-30_ccoh-20250930.htm.jsonl": {
+      "path": "source-text/10-Q_2025-09-30_ccoh-20250930.htm.jsonl",
+      "sha256": "bf1745dd3dbecf91195f9fef9fea0cafc9d8a639b8157c8bb3d02dd7240529a1"
+    },
+    "10-Q_2026-03-31_ccoh-20260331.htm.jsonl": {
+      "path": "source-text/10-Q_2026-03-31_ccoh-20260331.htm.jsonl",
+      "sha256": "213317fa77d5c45445d49d044bc961ab9dfa41083289474b65a9c5985c9bbe1b"
+    },
+    "10-Q_2026-06-30_ccoh-20260630.htm.jsonl": {
+      "path": "source-text/10-Q_2026-06-30_ccoh-20260630.htm.jsonl",
+      "sha256": "9af8d8232114d58e6ac96035eb67adc4aa9622876079128a14eacfcc389f347e"
+    },
+    "EX-99.1_2026-01-30_chtrex991earningsrelease12.htm.jsonl": {
+      "path": "source-text/EX-99.1_2026-01-30_chtrex991earningsrelease12.htm.jsonl",
+      "sha256": "cb5b5ac26ab78f0a85b295e8b2969a94081a4aecc513efb234aeefb51019e762"
+    },
+    "EX-99.1_2026-04-24_chtrex991earningsrelease33.htm.jsonl": {
+      "path": "source-text/EX-99.1_2026-04-24_chtrex991earningsrelease33.htm.jsonl",
+      "sha256": "483c56fedf60126a16d804e1d36760024be2164b76b1c1509864a6a063bd22be"
+    },
+    "EX-99.1_2026-07-24_chtrex991earningsrelease63.htm.jsonl": {
+      "path": "source-text/EX-99.1_2026-07-24_chtrex991earningsrelease63.htm.jsonl",
+      "sha256": "07d1723b22b814c108cba78554e38a4e4a76d8f38c9cdfecbd3804011635822c"
+    },
+    "context": {
+      "path": "../../../inputs/contexts/1271833-cco-holdings-llc.json",
+      "sha256": "1a68c05f8e4415af1307ec03597fe0b094afc35e94c83b63b62cbe99d897f95e"
+    }
+  },
+  "instructions": {
+    "CP-0": {
+      "path": "instructions/CP-0.md",
+      "sha256": "a9a821d0ca003a67b2d470efd8ef64bf8e6a77ef9e0fa71c1dec7cb20583b489"
+    },
+    "CP-1": {
+      "path": "instructions/CP-1.md",
+      "sha256": "dff703d3e0aebef7f8e5d00a84c436fa33a0c28117e9befdf6ed631fd2080d8a"
+    },
+    "CP-1A": {
+      "path": "instructions/CP-1A.md",
+      "sha256": "55040bb572c185c9d6ddb4729ec418e9ab7e00f7574297f5fc8e736731129c77"
+    },
+    "CP-2": {
+      "path": "instructions/CP-2.md",
+      "sha256": "8b09a55d61919e84c19357377ef3e894045e7c0bcb51aec75a9f33b82b289026"
+    }
+  },
+  "retained_handoffs": {},
+  "model": null,
+  "layout": {
+    "blocks": [
+      "key-findings",
+      "company-operating-model",
+      "model-chart-strip",
+      "financials-credit-metrics",
+      "strengths-weaknesses",
+      "company-profile",
+      "transaction-summary"
+    ],
+    "routes": [
+      {
+        "module_id": "CP-2",
+        "heading": "Key findings",
+        "kind": "prose",
+        "block_id": "key-findings",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company and operating model",
+        "kind": "table",
+        "block_id": "company-operating-model",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: leverage",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.1",
+        "value_columns": [
+          "Total debt / EBITDA",
+          "Net debt / EBITDA"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: interest cover",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.2",
+        "value_columns": [
+          "EBITDA / cash interest"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: liquidity",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.3",
+        "value_columns": [
+          "Cash",
+          "Undrawn committed facilities"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: debt maturities",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.4",
+        "value_columns": [
+          "Debt maturing"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Financials and credit metrics",
+        "kind": "table",
+        "block_id": "financials-credit-metrics",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-2",
+        "heading": "Strengths and weaknesses",
+        "kind": "prose",
+        "block_id": "strengths-weaknesses",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company profile",
+        "kind": "table",
+        "block_id": "company-profile",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Transaction summary and new debt issues",
+        "kind": "prose",
+        "block_id": "transaction-summary",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      }
+    ],
+    "scope": "User-launched Full credit assessment run for CCO HOLDINGS LLC as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+    "title": "CCO HOLDINGS LLC — Full credit assessment",
+    "question": null,
+    "issuer_aliases": []
+  },
+  "changes_note": "changes: first run of this pathway",
+  "selection": "explicit",
+  "execution": "host-session",
+  "max_attempts": 3,
+  "provider_cap_usd": "0"
+}

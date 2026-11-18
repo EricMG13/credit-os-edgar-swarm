@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for CIMPRESS plc as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "028e31a3e82855aedf0db796217ece1d76cd2cfc2b74079745bbc8f5df1ad463",
+    "CP-1.md": "db9a8c5efe0550bacc330db2d3909c134729d47fd8f1131b0822094a9bd582a7",
+    "CP-1A.md": "feca255750b8b92def6bbf562e1696afc08422948248224e5ad4bdf8e521134d",
+    "CP-2.md": "222608c3a1abced1ecc3ad05cfa9b9e6d516d8af3c44cdb360c84cad7ecc1df1",
+    "coverage.json": "f9d6a2e58911bb6eb63ffe00142213c9ab5440b5f7bdc33c50696bc9c48f6504",
+    "view.json": "f73535c51045536e6b1bd036f44501980281e8be052fccef6bde1e03bd592842",
+    "report-view.json": "1d1b3e51db78bbd6aeed91740bc8080bbf1aac214710d90a39f5971b1b3767dc"
+  }
+}

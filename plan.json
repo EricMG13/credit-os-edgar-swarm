@@ -1473,8 +1473,18 @@
       "pack": "/home/user/swarm-root/inputs/packs/1236275-qxo-inc-qxo-qxo-pb",
       "context": "/home/user/swarm-root/inputs/contexts/1236275-qxo-inc-qxo-qxo-pb.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-qxo",
-      "status": "pending",
-      "attempts": 0
+      "status": "published",
+      "attempts": 4,
+      "claims": 1,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "exit_code": 0,
+      "reason": null,
+      "finished_at": "2026-11-18T13:21:53+00:00"
     },
     {
       "issuer_id": "cmpr",
@@ -1484,8 +1494,18 @@
       "pack": "/home/user/swarm-root/inputs/packs/1262976-cimpress-plc-cmpr",
       "context": "/home/user/swarm-root/inputs/contexts/1262976-cimpress-plc-cmpr.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-cmpr",
-      "status": "pending",
-      "attempts": 0
+      "status": "published",
+      "attempts": 4,
+      "claims": 1,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "exit_code": 0,
+      "reason": null,
+      "finished_at": "2026-11-18T13:22:07+00:00"
     },
     {
       "issuer_id": "cco-holdings-llc",
@@ -1495,8 +1515,18 @@
       "pack": "/home/user/swarm-root/inputs/packs/1271833-cco-holdings-llc",
       "context": "/home/user/swarm-root/inputs/contexts/1271833-cco-holdings-llc.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-cco-holdings-llc",
-      "status": "pending",
-      "attempts": 0
+      "status": "published",
+      "attempts": 4,
+      "claims": 1,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "exit_code": 0,
+      "reason": null,
+      "finished_at": "2026-11-18T13:22:21+00:00"
     },
     {
       "issuer_id": "bgs-1278027",
@@ -1506,8 +1536,18 @@
       "pack": "/home/user/swarm-root/inputs/packs/1278027-b-g-foods-inc",
       "context": "/home/user/swarm-root/inputs/contexts/1278027-b-g-foods-inc.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-bgs-1278027",
-      "status": "pending",
-      "attempts": 0
+      "status": "published",
+      "attempts": 4,
+      "claims": 1,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "exit_code": 0,
+      "reason": null,
+      "finished_at": "2026-11-18T13:22:37+00:00"
     },
     {
       "issuer_id": "bte",

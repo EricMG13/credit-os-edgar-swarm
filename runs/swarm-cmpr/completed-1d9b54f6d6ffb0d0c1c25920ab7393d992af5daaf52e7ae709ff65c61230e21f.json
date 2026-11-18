@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for CIMPRESS plc as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/499e9b1ede8d5b7b432a3040d97f2b6acc7f232515119e588433e11bc57d7bfa/1.response.md",
+    "CP-1": "requests/CP-1/8bd4d8c0de4969c6c2727dcca5674336fe8af4d28af9765dfe1d7dbf3f3a3a72/1.response.md",
+    "CP-1A": "requests/CP-1A/1d3bf86abe9e0b958359a463df5c7759229c4156c459c005bf983913655563c7/1.response.md",
+    "CP-2": "requests/CP-2/8e1cdbf55c5901ee49a710ad5fb4c65e5d372567d9e8424e3f3caa8930194898/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "1c6cf2e0e4c4a40c21201dbd870057cf66ddcefb7fb270462c35728970419740",
+  "delivery_sha256": "d78935f4605ac38f245a41e85133ac0c131ae7f770deb0c5d497bad1961b5ad7"
+}
