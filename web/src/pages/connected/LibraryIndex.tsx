@@ -112,6 +112,42 @@ async function figureSource(catalogue: CatalogueRun, key: string, signal: AbortS
   const trace = traceForLine(snapshot, location.entry, location.index, location.line);
   return trace ? { trace, href: source.href } : null;
 }
+function LibraryFilter({
+  name,
+  choices,
+  value,
+  onChange,
+}: {
+  name: string;
+  choices: string[];
+  value: string;
+  onChange: (value: string) => void;
+}) {
+  return (
+    <label className={`${label} max-w-64`}>
+      {name}
+      <select
+        aria-label={name}
+        value={value}
+        onChange={(event) => {
+          onChange(event.currentTarget.value);
+        }}
+        className={field}
+      >
+        <option value="all">All</option>
+        {value !== "all" && !choices.includes(value) && (
+          <option value={value}>{value} (unavailable)</option>
+        )}
+        {choices.map((choice) => (
+          <option key={choice} value={choice}>
+            {choice}
+          </option>
+        ))}
+      </select>
+    </label>
+  );
+}
+
 function MatchRuns({
   snapshot,
   filters,
@@ -178,50 +214,22 @@ function MatchRuns({
               className={field}
             />
           </label>
-          <label className={`${label} max-w-64`}>
-            Sector
-            <select
-              aria-label="Sector"
-              value={filters.sector}
-              onChange={(event) => {
-                const sector = event.currentTarget.value;
-                setFilters((previous) => ({ ...previous, sector }));
-              }}
-              className={field}
-            >
-              <option value="all">All</option>
-              {filters.sector !== "all" && !sectors.includes(filters.sector) && (
-                <option value={filters.sector}>{filters.sector} (unavailable)</option>
-              )}
-              {sectors.map((sector) => (
-                <option key={sector} value={sector}>
-                  {sector}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className={`${label} max-w-64`}>
-            Pathway
-            <select
-              aria-label="Pathway"
-              value={filters.pathway}
-              onChange={(event) => {
-                const pathway = event.currentTarget.value;
-                setFilters((previous) => ({ ...previous, pathway }));
-              }}
-              className={field}
-            >
-              <option value="all">All</option>
-              {filters.pathway !== "all" && !pathways.includes(filters.pathway) && (
-                <option value={filters.pathway}>{filters.pathway} (unavailable)</option>
-              )}
-              {pathways.map((pathway) => (
-                <option key={pathway} value={pathway}>
-                  {pathway}
-                </option>
-              ))}
-            </select>
-          </label>
+          <LibraryFilter
+            name="Sector"
+            choices={sectors}
+            value={filters.sector}
+            onChange={(sector) => {
+              setFilters((previous) => ({ ...previous, sector }));
+            }}
+          />
+          <LibraryFilter
+            name="Pathway"
+            choices={pathways}
+            value={filters.pathway}
+            onChange={(pathway) => {
+              setFilters((previous) => ({ ...previous, pathway }));
+            }}
+          />
         </div>
         <ButtonGroup
           aria-label="Layout"

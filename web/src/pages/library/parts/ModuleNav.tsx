@@ -223,7 +223,7 @@ export function ModuleNav({
           <ul
             ref={results}
             aria-labelledby={modulesLabel}
-            className="min-[1001px]:min-h-11 min-[1001px]:shrink-[3] min-[1001px]:overflow-y-auto"
+            className="min-[1001px]:min-h-11 min-[1001px]:shrink-3 min-[1001px]:overflow-y-auto"
           >
             {listed.map((module) => (
               <li key={module.id}>

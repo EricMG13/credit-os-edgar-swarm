@@ -570,8 +570,8 @@ export function Forecast({
       {!model && <p className={card}>No forecast model was published for this run.</p>}
       {model && !input && (
         <p className={`${card} min-w-0 wrap-anywhere`}>
-          Forecast figures are available. The model could not be matched to a single readable record
-          of its inputs. Check the model and its sources in Evidence before relying on the figures.
+          The model could not be matched to a single readable record of its inputs. Check Evidence
+          for the model and its sources.
         </p>
       )}
       <PublishedModelSelect

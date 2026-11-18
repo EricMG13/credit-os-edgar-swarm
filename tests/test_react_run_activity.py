@@ -72,10 +72,10 @@ def test_activity_cap_missing_and_pinned_legacy_workflow_cap():
     assert _cap({"provider_cap_usd": "50.00"}, "25") == "50.00"
 
 
-_RETRY = "To try again, choose Start from this run on the run's page."
+_RETRY = "To try again, choose Use this run’s inputs on the run's page."
 _ASK = "If it ends the same way again, ask whoever runs the service to check the run's"
 _SERVICE_LOG_THEN_RETRY = (
-    "Ask whoever runs the service to check the service's log, then choose Start from this run on "
+    "Ask whoever runs the service to check the service's log, then choose Use this run’s inputs on "
     "the run's page."
 )
 _NO_REASON = (
