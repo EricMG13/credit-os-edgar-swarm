@@ -1,0 +1,256 @@
+{
+  "run": {
+    "schema_version": "run/2",
+    "run_id": "cde-215466-2026-11-18-credit_snapshot-host",
+    "issuer_id": "cde-215466",
+    "issuer_name": "Coeur Mining, Inc.",
+    "as_of": "2026-11-18",
+    "method_version": "deploy-v-r14",
+    "case_kind": "public",
+    "pathway": "credit_snapshot",
+    "requested_modules": [
+      "CP-0",
+      "CP-1",
+      "CP-1A",
+      "CP-2"
+    ]
+  },
+  "sources": {
+    "10-K_2024-12-31_cde.htm.jsonl": {
+      "path": "source-text/10-K_2024-12-31_cde.htm.jsonl",
+      "sha256": "05d003403f40be0fc6bc986b859acf7507bf7a7b1c9049aca2b90ea9c21c3f05"
+    },
+    "10-K_2025-12-31_cde.htm.jsonl": {
+      "path": "source-text/10-K_2025-12-31_cde.htm.jsonl",
+      "sha256": "a1fe4ff134a3f45cb2836efbd266884dfc6f97092f4c9406aae18ee487e63cc7"
+    },
+    "10-Q_2026-03-31_cde.htm.jsonl": {
+      "path": "source-text/10-Q_2026-03-31_cde.htm.jsonl",
+      "sha256": "458c34571e353b2acc1190134f16132eedb8bb0397d8ac9b7565f9f030a26eb1"
+    },
+    "10-Q_2026-06-30_cde.htm.jsonl": {
+      "path": "source-text/10-Q_2026-06-30_cde.htm.jsonl",
+      "sha256": "046a40d672b0f0c8dc32a81655c8bd22d773a5062e8c86d1c8629fa445b47006"
+    },
+    "10-Q_2026-09-30_cde.htm.jsonl": {
+      "path": "source-text/10-Q_2026-09-30_cde.htm.jsonl",
+      "sha256": "3d4d14a28b68273d7916682e11fd1dbe12b177d8058a9a0fad58d8bc79956913"
+    },
+    "EX99.1_2026-03-31_cde_a1q26earningsreleaseex-991-htm.htm.jsonl": {
+      "path": "source-text/EX99.1_2026-03-31_cde_a1q26earningsreleaseex-991-htm.htm.jsonl",
+      "sha256": "8dd5a393b7ff57f625d8b83e8c187bb6b0955e87172f5bc9a8ea1a4636dcaf47"
+    },
+    "EX99.1_2026-03-31_cde_a2q26inauguraldividendex-9-htm.htm.jsonl": {
+      "path": "source-text/EX99.1_2026-03-31_cde_a2q26inauguraldividendex-9-htm.htm.jsonl",
+      "sha256": "7a40c047a0fd3e04bac0a878451e71137bfe027159f86bb0b3708e993adc959c"
+    },
+    "EX99.1_2026-03-31_cde_ef20071153-ex99-1-htm.htm.jsonl": {
+      "path": "source-text/EX99.1_2026-03-31_cde_ef20071153-ex99-1-htm.htm.jsonl",
+      "sha256": "24b06d6d9a2ee2424194b0723229f27e3c9257cc5940de2a36d6ab015ece6084"
+    },
+    "EX99.1_2026-06-30_cde_a2q26earningsreleaseex-991-htm.htm.jsonl": {
+      "path": "source-text/EX99.1_2026-06-30_cde_a2q26earningsreleaseex-991-htm.htm.jsonl",
+      "sha256": "8a53b3b56eba0864750427747f42298f52baf89cbb11bd5738b36b64aa84b06f"
+    },
+    "EX99.1_2026-09-30_cde_a3q26earningsreleaseex-991-htm.htm.jsonl": {
+      "path": "source-text/EX99.1_2026-09-30_cde_a3q26earningsreleaseex-991-htm.htm.jsonl",
+      "sha256": "8d2e6d61b56643320b319b292481e66a56994f1835dee54fcf35688a5d07537f"
+    },
+    "context": {
+      "path": "../../../inputs/contexts/215466-coeur-mining-inc.json",
+      "sha256": "fa1a5e0526948d3dd3335336432ce579833f218d52387630ff09234462b8720b"
+    }
+  },
+  "instructions": {
+    "CP-0": {
+      "path": "instructions/CP-0.md",
+      "sha256": "50069cc1fd585e94c5e6cd681b5925e79e57cdfd39a40aa87cdd418aa08f0058"
+    },
+    "CP-1": {
+      "path": "instructions/CP-1.md",
+      "sha256": "7954a0e09a46980ff2d06fe0b5de43644aca5e336a44c199a5fe2aa91c41f0fc"
+    },
+    "CP-1A": {
+      "path": "instructions/CP-1A.md",
+      "sha256": "aafaadf01b280eec7c157c6408da319a1616124d3635ab2c497d04ae3b7e9a7b"
+    },
+    "CP-2": {
+      "path": "instructions/CP-2.md",
+      "sha256": "77105bb2b0a508e962326dfad3ae5fd9b8e5b5d9c0f79f6d425d92818930bc40"
+    }
+  },
+  "retained_handoffs": {},
+  "model": null,
+  "layout": {
+    "blocks": [
+      "key-findings",
+      "company-operating-model",
+      "model-chart-strip",
+      "financials-credit-metrics",
+      "strengths-weaknesses",
+      "company-profile",
+      "transaction-summary"
+    ],
+    "routes": [
+      {
+        "module_id": "CP-2",
+        "heading": "Key findings",
+        "kind": "prose",
+        "block_id": "key-findings",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company and operating model",
+        "kind": "table",
+        "block_id": "company-operating-model",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: leverage",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.1",
+        "value_columns": [
+          "Total debt / EBITDA",
+          "Net debt / EBITDA"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: interest cover",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.2",
+        "value_columns": [
+          "EBITDA / cash interest"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: liquidity",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.3",
+        "value_columns": [
+          "Cash",
+          "Undrawn committed facilities"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: debt maturities",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.4",
+        "value_columns": [
+          "Debt maturing"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Financials and credit metrics",
+        "kind": "table",
+        "block_id": "financials-credit-metrics",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-2",
+        "heading": "Strengths and weaknesses",
+        "kind": "prose",
+        "block_id": "strengths-weaknesses",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company profile",
+        "kind": "table",
+        "block_id": "company-profile",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Transaction summary and new debt issues",
+        "kind": "prose",
+        "block_id": "transaction-summary",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      }
+    ],
+    "scope": "User-launched Full credit assessment run for Coeur Mining, Inc. as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+    "title": "Coeur Mining, Inc. — Full credit assessment",
+    "question": null,
+    "issuer_aliases": []
+  },
+  "changes_note": "changes: first run of this pathway",
+  "selection": "explicit",
+  "execution": "host-session",
+  "max_attempts": 3,
+  "provider_cap_usd": "0"
+}

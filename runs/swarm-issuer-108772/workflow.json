@@ -1,0 +1,236 @@
+{
+  "run": {
+    "schema_version": "run/2",
+    "run_id": "issuer-108772-2026-11-18-credit_snapshot-host",
+    "issuer_id": "issuer-108772",
+    "issuer_name": "Xerox Corp",
+    "as_of": "2026-11-18",
+    "method_version": "deploy-v-r14",
+    "case_kind": "public",
+    "pathway": "credit_snapshot",
+    "requested_modules": [
+      "CP-0",
+      "CP-1",
+      "CP-1A",
+      "CP-2"
+    ]
+  },
+  "sources": {
+    "10-K_2024-12-31_xrx-20241231.htm.jsonl": {
+      "path": "source-text/10-K_2024-12-31_xrx-20241231.htm.jsonl",
+      "sha256": "7feadaeacdba2056351f3b6fa451718d0a975d778f8ada2b07315b3202b0d082"
+    },
+    "10-K_2025-12-31_xrx-20251231.htm.jsonl": {
+      "path": "source-text/10-K_2025-12-31_xrx-20251231.htm.jsonl",
+      "sha256": "9a3f813d924828f1b7d797af8da7a5ef15cd20354158f2cb606ad04ab04e3b1f"
+    },
+    "10-Q_2026-03-31_xrx-20260331.htm.jsonl": {
+      "path": "source-text/10-Q_2026-03-31_xrx-20260331.htm.jsonl",
+      "sha256": "f7db690229ad2f37021ede5f6c82f0e77ea2811a1d390fe25917b83e63aea88f"
+    },
+    "10-Q_2026-06-30_xrx-20260630.htm.jsonl": {
+      "path": "source-text/10-Q_2026-06-30_xrx-20260630.htm.jsonl",
+      "sha256": "52663691e8f3ced2f8a35e6e1576f98f8f351b2b15809429d3f39554e0a1453c"
+    },
+    "10-Q_2026-09-30_xrx-20260930.htm.jsonl": {
+      "path": "source-text/10-Q_2026-09-30_xrx-20260930.htm.jsonl",
+      "sha256": "0bee43d9f1f3367610dc24e2dc5d0026067b8b84f672c416d585d1e27999a0b4"
+    },
+    "context": {
+      "path": "../../../inputs/contexts/108772-xerox-corp.json",
+      "sha256": "2d04c71df3759b7fa725304bf0471aa823a2a15999a8e5bb7666ee69509b6a54"
+    }
+  },
+  "instructions": {
+    "CP-0": {
+      "path": "instructions/CP-0.md",
+      "sha256": "76ef702ad040432541803afcfbadfa1e69ede1f328ef655b8e9695af0924db98"
+    },
+    "CP-1": {
+      "path": "instructions/CP-1.md",
+      "sha256": "ea3ffe40787582cb1fccb4dcae8023958b51508ca84cc33766030e98f9f630c9"
+    },
+    "CP-1A": {
+      "path": "instructions/CP-1A.md",
+      "sha256": "cd0462586ef0c8d23707fd18bb25d4bd2770279705c8968297ffd2dcdd0ca5e8"
+    },
+    "CP-2": {
+      "path": "instructions/CP-2.md",
+      "sha256": "9e10811389d61bb13d69e11b990300419766d4fb7f1d133c6d3b4a3e7623eaa7"
+    }
+  },
+  "retained_handoffs": {},
+  "model": null,
+  "layout": {
+    "blocks": [
+      "key-findings",
+      "company-operating-model",
+      "model-chart-strip",
+      "financials-credit-metrics",
+      "strengths-weaknesses",
+      "company-profile",
+      "transaction-summary"
+    ],
+    "routes": [
+      {
+        "module_id": "CP-2",
+        "heading": "Key findings",
+        "kind": "prose",
+        "block_id": "key-findings",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company and operating model",
+        "kind": "table",
+        "block_id": "company-operating-model",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: leverage",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.1",
+        "value_columns": [
+          "Total debt / EBITDA",
+          "Net debt / EBITDA"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: interest cover",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.2",
+        "value_columns": [
+          "EBITDA / cash interest"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: liquidity",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.3",
+        "value_columns": [
+          "Cash",
+          "Undrawn committed facilities"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: debt maturities",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.4",
+        "value_columns": [
+          "Debt maturing"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Financials and credit metrics",
+        "kind": "table",
+        "block_id": "financials-credit-metrics",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-2",
+        "heading": "Strengths and weaknesses",
+        "kind": "prose",
+        "block_id": "strengths-weaknesses",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company profile",
+        "kind": "table",
+        "block_id": "company-profile",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Transaction summary and new debt issues",
+        "kind": "prose",
+        "block_id": "transaction-summary",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      }
+    ],
+    "scope": "User-launched Full credit assessment run for Xerox Corp as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+    "title": "Xerox Corp — Full credit assessment",
+    "question": null,
+    "issuer_aliases": []
+  },
+  "changes_note": "changes: first run of this pathway",
+  "selection": "explicit",
+  "execution": "host-session",
+  "max_attempts": 3,
+  "provider_cap_usd": "0"
+}

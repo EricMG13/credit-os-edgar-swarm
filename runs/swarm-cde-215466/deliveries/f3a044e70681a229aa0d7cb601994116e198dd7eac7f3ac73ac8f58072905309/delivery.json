@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for Coeur Mining, Inc. as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "267354b70d66d83cacc46e7ea7ff6da33c12051397117ff655b905f73d8c8d38",
+    "CP-1.md": "4ff68a0b555bcd6436e4f6a6785a7945e4e82ba51ecce20fbf0237a045854092",
+    "CP-1A.md": "ea35c7140eac975bf25a49a1a063d4580fbc8829fe12ca00ea144ec5b62e889e",
+    "CP-2.md": "6fc0156280beba0eaa38d034ee42219fc958d0813f0d61cbd27afc480dd09648",
+    "coverage.json": "98fb29e3648d6cf1f97b5eaa5d5a75db61275f82565005f9ff69bdd17b7d7e99",
+    "view.json": "1a0caf5f84d9d5f912e9a16970d655f31e7d334a69c9f07c4d95370e9661c7d1",
+    "report-view.json": "03ba71d1f3f20cef61a04d14c84d51a0381d31fc4dfcaee8013ce7b4777fdfd7"
+  }
+}

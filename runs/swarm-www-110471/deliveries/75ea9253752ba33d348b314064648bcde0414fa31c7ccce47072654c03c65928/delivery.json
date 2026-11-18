@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for Wolverine World Wide Inc /De/ as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "7e42c1e954da2a00dd71cdb5c6f58c69dafca0566196dafef254b6baf6b31450",
+    "CP-1.md": "5b45891c1f6c8e31ed1e8a47420db1b1c3b6a80dec0c32ace6576ec765513a25",
+    "CP-1A.md": "7891fc957ac35c11792161028b949f07bd36f0b4fbbcc3c7092cac6aa733e621",
+    "CP-2.md": "931a51041019a7a21ee3f33ea9c1252d65e98c40619312561410c2aa20ad8a48",
+    "coverage.json": "005ce110be64ff908156e4ff61563c6e474927ff2c7a414341e851d9b2687689",
+    "view.json": "201a16b9f50443b1efc1f57a52ac9d4d88f5f723003882a2db9617ca38420621",
+    "report-view.json": "8e2de1bf0333da603e7b118b7cbf137893bfad2e6b6c379af8e86672cc1017a2"
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for WHIRLPOOL CORP /DE/ as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "12ebeaf9beccb4edc2151ba97cd88ac849098b365cee2f149a5d01d1e34ec974",
+    "CP-1.md": "76c2983d7e4334fc07223ed65616b0c9e79df621192475e22b7d47ef8faf5965",
+    "CP-1A.md": "6c3ea7aacc410618f3041b98ae73ada494d3bd28143fb3d9e5dcaa5adab5509f",
+    "CP-2.md": "fbf530d3943e6dd4abc87229765ae51cfc107f7801900cdaea78cfc912141634",
+    "coverage.json": "7e47093650f082ffafaa33b77f25d64043bedc3022970f5a97d578c20d7ac9db",
+    "view.json": "67332a2c88e67654f4ee0415d9005768f2b445fd8ed63c45ba1fb32369300be3",
+    "report-view.json": "e8816317d22397e7faf99698da36eec4bd192542f97e5dfa088c8ba4c1de7dd1"
+  }
+}

@@ -393,8 +393,18 @@
       "pack": "/home/user/swarm-root/inputs/packs/106640-whirlpool-corp-de-whr-whr-pa",
       "context": "/home/user/swarm-root/inputs/contexts/106640-whirlpool-corp-de-whr-whr-pa.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-whr",
-      "status": "pending",
-      "attempts": 0
+      "status": "published",
+      "attempts": 4,
+      "claims": 1,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "exit_code": 0,
+      "reason": null,
+      "finished_at": "2026-11-18T13:22:46+00:00"
     },
     {
       "issuer_id": "issuer-108772",
@@ -404,8 +414,18 @@
       "pack": "/home/user/swarm-root/inputs/packs/108772-xerox-corp",
       "context": "/home/user/swarm-root/inputs/contexts/108772-xerox-corp.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-issuer-108772",
-      "status": "pending",
-      "attempts": 0
+      "status": "published",
+      "attempts": 4,
+      "claims": 1,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "exit_code": 0,
+      "reason": null,
+      "finished_at": "2026-11-18T13:23:02+00:00"
     },
     {
       "issuer_id": "www-110471",
@@ -415,8 +435,18 @@
       "pack": "/home/user/swarm-root/inputs/packs/110471-wolverine-world-wide-inc-de-www",
       "context": "/home/user/swarm-root/inputs/contexts/110471-wolverine-world-wide-inc-de-www.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-www-110471",
-      "status": "pending",
-      "attempts": 0
+      "status": "published",
+      "attempts": 4,
+      "claims": 1,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "exit_code": 0,
+      "reason": null,
+      "finished_at": "2026-11-18T13:23:16+00:00"
     },
     {
       "issuer_id": "cde-215466",
@@ -426,8 +456,18 @@
       "pack": "/home/user/swarm-root/inputs/packs/215466-coeur-mining-inc",
       "context": "/home/user/swarm-root/inputs/contexts/215466-coeur-mining-inc.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-cde-215466",
-      "status": "pending",
-      "attempts": 0
+      "status": "published",
+      "attempts": 4,
+      "claims": 1,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "exit_code": 0,
+      "reason": null,
+      "finished_at": "2026-11-18T13:23:31+00:00"
     },
     {
       "issuer_id": "val",
