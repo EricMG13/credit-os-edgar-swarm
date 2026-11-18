@@ -4,6 +4,36 @@ Keep one running record here. A pass applies only to the stated scope. Earlier v
 engine is in [EricMG13/final-workflow](https://github.com/EricMG13/final-workflow)'s
 `VERIFICATION.md`, which also keeps the retained runs this copy leaves out.
 
+## 2026-11-18 — Adversarial review of the performance changes; fonts, imports, publisher reuse
+
+- Scope: synthetic runs and fixtures on one shared Linux container. No provider call, no real
+  issuer file, no Windows. Each part was attacked by a separate reviewer given the diff only;
+  every confirmed defect was reproduced, corrected with a test, and its reproduction run again.
+- Merged change of the entry below, three confirmed: (1) a run recorded before the Copilot
+  cutover lost its module outputs on the run page (its workflow names the configuration without
+  `copilot-`); a record with no config now matches that name; (2) the 64 MB limit of the run
+  page's publication read was a check before the read (3 of 6,363 raced reads answered from a
+  larger file); the read is now bounded on the open handle; (3) the kept publication was keyed
+  on file identity and times, which do not show every change; it is keyed on the sha256 of the
+  bytes read each request. That costs time: publication requests at 30 runs take about 20 ms
+  (6 to 10 ms in the entry below, 110 to 150 ms before it).
+- Fonts and imports: `/fonts/*.woff2` and `/symbol.svg` are fresh for a day (a font replaced
+  under its name can be stale that long). Review: every file under `/fonts/` had the lifetime;
+  now only fonts, and the test asks for `data.js`. `model.handoff` no longer imports every
+  module owner: `react_frontend` 906 to 612 ms, `owners.cpos_launch` 966 to 688 ms (min of 3).
+- Publisher: handoff sections, chips and the cash-flow grid are reused between publications of
+  one process, by the sha256 of bytes read in that publication (256 MiB of pickled values, least
+  recently used first out). Every pinned file is still read and hashed each publication (362
+  files, 269 digests, as before). At 30 runs a repeat publication takes 1.6 to 1.9 s (3.9 to
+  4.1 s before). Review: a value pickle could not copy made a run unreadable, and a grid that
+  failed for a passing reason stayed missing until restart; both corrected. The reviewer's
+  scenarios (tampered, removed, renamed, changed source text) are byte-identical to the parent.
+- Commands: `tools/quality_gate.py` 0 findings; pytest on the server, proof, publisher, store,
+  chips, changes, handoff, model, inbox and quality-gate files 3,054 passed.
+- Not fixed: publication still grows with the number of runs (reads, hashes, 840 download
+  files at 30 runs). Not verified: a live run, real PDFs, Windows. One server test failed once
+  under load and passed in the next ten runs; it was not identified.
+
 ## 2026-11-18 — Performance review: source pages, publication reads, library index, PR checks
 
 - Scope: synthetic runs with canned replies on one Linux container (4 cores, shared with other
@@ -929,57 +959,3 @@ Scope: presentation only, all under `web/`; no backend, handoff, provider or mod
   This is source-snapshot proof; the previously held ZIP was not regenerated.
 - RBOT-HTML and pins still match `256101a`; React lock unchanged. Windows work
   PC acceptance remains pending. No ZIP publication, Signal work or tournaments.
-
-## 2026-11-16 — Connected admission, durable traces and Credit OS design
-
-- Scope: React reader and additive connected adapter only. Native RBOT-HTML
-  source, issuer-library engine and Python pins still match `256101a`; React
-  dependency lock remains unchanged. No provider execution, Signal work,
-  tournaments or publication.
-- Admission now applies to the snapshot consumed by the Library and report
-  reader, the report listing, forecast artifacts and portfolio attestation.
-  Managed running/queued/failed/capped/rejected/interrupted reports stay out;
-  native retained reports without scheduler records remain available, including
-  folders containing spaces and Unicode. Source publications are not changed.
-- Evidence links bind output identity, SHA-256 revision and exact paragraph,
-  table row or section line. Reordering cannot select another output. Old ordinal
-  links and missing revisions/rows show an unavailable state. Overview, Changes,
-  Modules, Forecast, calendar and Evidence use the same resolver.
-- Credit OS fidelity scope: original React components and Claude HTML exports
-  at `450f6406`, Library filters and Cards/List, Overview dates with traces,
-  Changes Cards/Table, Forecast case cards and shared chart/table selection,
-  source-control hover, existing Evidence navigation and expandable Record.
-  Gaps counts actual saved gap rows, preserves effects and delivered severity,
-  and filters explicit None records. Module-scoped counts and empty states agree.
-- Confidence review ranked identity/reordering, admission timing, exact data
-  preservation, null/zero budget display, filters and case-label matching.
-  Reproduced and repaired empty-result controls disappearing, deferred event
-  reads, Gap ID being mistaken for Gap, unknown severity being discarded, and
-  Downside shock selection differing from its raw Downside case column label.
-  Budget totals use one retained reservation snapshot and exact decimal sums;
-  unreadable journals remain unavailable, holds are separate from settled charges.
-  Native historical admission and invalidation of unversioned bookmarks are
-  deliberate. Browser/platform scope and retained source limitations stay explicit.
-- Checks before browser proof: 74 targeted Python tests, 1,425 frontend tests,
-  TypeScript, ESLint, formatting and the changed-code quality gate passed.
-  Fallow retains baseline findings plus complexity/duplication warnings in
-  touched code; the new unused export was removed. Browser results follow below.
-- Browser preparation found and fixed a duplicated-label locator in Record.
-  Visual inspection also required an explicit label for unrecorded model units;
-  the native synthetic model leaves units null, and the UI does not infer them.
-- Final clean-extraction browser proof: Chrome 157.0.8103.78 completed
-  `20261116-023525-01`; Edge 157.0.4341.60 completed `20261116-023541-01`.
-  Both passed all 30 recorded checks on macOS, including source hover with
-  Show sources off, Base/Downside selection (independent 315/252 fixture values),
-  exact source reload, output reorder and rejection of an old ordinal link.
-  Paired Changes uses an explicitly separate fixture, not a second analytical run.
-  The final null-unit change also passed 15 focused frontend tests.
-- Candidate source `ab6641058546f8dc9ccde1054a44ce9b0beb62d7`; SHA-256
-  `b0faadd99b3801d4c7ee922c0553b566196bd1c189cfdacc9913c43f7a783ce1`.
-  Proof retained at `proof-artifacts/run-EkSYga/proof.json`; logs and screenshots
-  are beside it. Preview run `20261116-023313-01` is synthetic and its 16 compiled
-  files match the final candidate. Opened the Forecast view in the app preview.
-  Browser retries corrected only test selectors and the paired fixture's digest
-  lookup; no native backend or analytical output changed.
-- The Windows release gate remains open. Keep the ZIP local until Chrome and
-  Edge both pass on the actual Windows work PC using `docs/react-workflow.md`.
