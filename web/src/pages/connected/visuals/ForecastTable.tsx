@@ -245,6 +245,176 @@ function ForecastColumns({ grid }: { grid: Grid }) {
   );
 }
 
+function visibleForecastGrid(inputGrid: Grid, keepColumns: boolean, showColumns: boolean) {
+  const empty = emptyColumns(inputGrid);
+  // Columns are only set aside when another column holds a value; a table with none is drawn whole.
+  const canHideColumns =
+    !keepColumns &&
+    empty.length > 0 &&
+    inputGrid.rows.some((row) =>
+      row.cells.some((cell, index) => !empty.includes(index) && !unpopulatedCell(cell)),
+    );
+  const grid =
+    canHideColumns && !showColumns
+      ? withColumns(
+          inputGrid,
+          inputGrid.columns.flatMap((_, index) => (empty.includes(index) ? [] : [index])),
+        )
+      : inputGrid;
+  return { grid, empty, canHideColumns };
+}
+
+function gridQualifications(
+  inputGrid: Grid,
+  limits: string[],
+  evidenceOnlyQualifications?: boolean,
+) {
+  const period = (evidenceOnlyQualifications ? [] : limits).filter((text) =>
+    text.startsWith("Base period is "),
+  );
+  const interest = [...new Set(limits.filter((text) => /^Base interest\b/i.test(text)))];
+  const footerInterest = evidenceOnlyQualifications ? [] : interest;
+  const bound = inputGrid.columns.flatMap((column, index) =>
+    period
+      .filter((text) => periodColumn(inputGrid, text) === index)
+      .map((text) => ({ label: column.label, text })),
+  );
+  const unbound = period.filter((text) => periodColumn(inputGrid, text) === undefined);
+  return { interest, footerInterest, bound, unbound };
+}
+
+function EmptyColumns({
+  grid: inputGrid,
+  empty,
+  shown: showColumns,
+  onToggle,
+}: {
+  grid: Grid;
+  empty: number[];
+  shown: boolean;
+  onToggle: () => void;
+}) {
+  return (
+    <Disclosure
+      note={
+        showColumns
+          ? null
+          : `These columns have no recorded values: ${empty.map((index) => spelledOut(inputGrid.columns[index]?.label ?? "")).join(", ")}.`
+      }
+      label={
+        showColumns
+          ? "Hide columns with no values"
+          : `Show ${String(empty.length)} columns with no values`
+      }
+      expanded={showColumns}
+      onToggle={onToggle}
+    />
+  );
+}
+
+function TableQualifications({
+  bound,
+  footerInterest,
+  source,
+}: {
+  bound: { label: string; text: string }[];
+  footerInterest: string[];
+  source?: ForecastSource;
+}) {
+  if (!bound.length && !footerInterest.length) return null;
+  return (
+    <ul aria-label="Qualifications" className="grid gap-2">
+      {bound.map(({ label, text }, at) => (
+        <li key={`period-${String(at)}`}>
+          <Qualification text={text} label={`${label} period qualification`} source={source} />
+        </li>
+      ))}
+      {footerInterest.map((text, at) => (
+        <li key={`interest-${String(at)}`}>
+          <Qualification text={text} label="Interest basis qualification" source={source} />
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+function visibleForecastRows(grid: Grid, expanded: boolean) {
+  const missing = grid.rows.filter(unpopulated).length;
+  const populated = grid.rows.filter((row) => !unpopulated(row));
+  const canCollapse = missing > 0 && populated.length > 0;
+  const rows = expanded || !canCollapse ? grid.rows : populated;
+  const interestShown = rows.some((row) => row.label === "Interest");
+  return { missing, canCollapse, rows, interestShown };
+}
+
+function ForecastGridRegion({
+  title,
+  grid,
+  rows,
+  statement,
+  expanded,
+  interest,
+  source,
+  evidenceOnlyQualifications,
+}: {
+  title: string;
+  grid: Grid;
+  rows: Grid["rows"];
+  statement: boolean;
+  expanded: boolean;
+  interest: string[];
+  source?: ForecastSource;
+  evidenceOnlyQualifications?: boolean;
+}) {
+  return (
+    <div
+      className={
+        statement
+          ? "max-h-[28rem] overflow-auto rounded-ds-md border border-border-hairline [&_thead]:sticky [&_thead]:top-0 [&_thead]:z-10 [&_thead]:bg-surface-subtle [&_thead_th:first-child[rowspan]]:sticky [&_thead_th:first-child[rowspan]]:left-0 [&_thead_th:first-child[rowspan]]:bg-surface-subtle"
+          : "overflow-x-auto"
+      }
+      role="region"
+      aria-label={title}
+      // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex
+      tabIndex={0}
+    >
+      <table className="w-full border-collapse text-small">
+        <caption className="sr-only">{title}</caption>
+        <ForecastColumns grid={grid} />
+        <ForecastRows
+          grid={grid}
+          rows={rows}
+          interestBasis={interest}
+          expanded={expanded}
+          source={source}
+          evidenceOnlyQualifications={evidenceOnlyQualifications}
+        />
+      </table>
+    </div>
+  );
+}
+
+function UnavailableRows({
+  missing,
+  expanded,
+  onToggle,
+}: {
+  missing: number;
+  expanded: boolean;
+  onToggle: () => void;
+}) {
+  return (
+    <Disclosure
+      note={`${String(missing)} rows have no recorded values in this view. Their missing-data reasons remain available.`}
+      label={
+        expanded ? "Hide unavailable rows" : `Show ${String(missing)} unavailable rows and reasons`
+      }
+      expanded={expanded}
+      onToggle={onToggle}
+    />
+  );
+}
+
 export function ForecastTable({
   grid: inputGrid,
   title,
@@ -264,37 +434,13 @@ export function ForecastTable({
 }) {
   const [expanded, setExpanded] = useState(false);
   const [showColumns, setShowColumns] = useState(false);
-  const empty = emptyColumns(inputGrid);
-  // Columns are only set aside when another column holds a value; a table with none is drawn whole.
-  const canHideColumns =
-    !keepColumns &&
-    empty.length > 0 &&
-    inputGrid.rows.some((row) =>
-      row.cells.some((cell, index) => !empty.includes(index) && !unpopulatedCell(cell)),
-    );
-  const grid =
-    canHideColumns && !showColumns
-      ? withColumns(
-          inputGrid,
-          inputGrid.columns.flatMap((_, index) => (empty.includes(index) ? [] : [index])),
-        )
-      : inputGrid;
-  const missing = grid.rows.filter(unpopulated).length;
-  const populated = grid.rows.filter((row) => !unpopulated(row));
-  const canCollapse = missing > 0 && populated.length > 0;
-  const rows = expanded || !canCollapse ? grid.rows : populated;
-  const period = (evidenceOnlyQualifications ? [] : limits).filter((text) =>
-    text.startsWith("Base period is "),
+  const { grid, empty, canHideColumns } = visibleForecastGrid(inputGrid, keepColumns, showColumns);
+  const { missing, canCollapse, rows, interestShown } = visibleForecastRows(grid, expanded);
+  const { interest, footerInterest, bound, unbound } = gridQualifications(
+    inputGrid,
+    limits,
+    evidenceOnlyQualifications,
   );
-  const interest = [...new Set(limits.filter((text) => /^Base interest\b/i.test(text)))];
-  const footerInterest = evidenceOnlyQualifications ? [] : interest;
-  const bound = inputGrid.columns.flatMap((column, index) =>
-    period
-      .filter((text) => periodColumn(inputGrid, text) === index)
-      .map((text) => ({ label: column.label, text })),
-  );
-  const interestShown = rows.some((row) => row.label === "Interest");
-  const unbound = period.filter((text) => periodColumn(inputGrid, text) === undefined);
   return (
     <div className="grid min-w-0 gap-3">
       {unbound.map((text, at) => (
@@ -309,39 +455,19 @@ export function ForecastTable({
             source={source}
           />
         ))}
-      {/* The read-only region scrolls horizontally by keyboard when columns overflow. */}
-      <div
-        className={
-          statement
-            ? "max-h-[28rem] overflow-auto rounded-ds-md border border-border-hairline [&_thead]:sticky [&_thead]:top-0 [&_thead]:z-10 [&_thead]:bg-surface-subtle [&_thead_th:first-child[rowspan]]:sticky [&_thead_th:first-child[rowspan]]:left-0 [&_thead_th:first-child[rowspan]]:bg-surface-subtle"
-            : "overflow-x-auto"
-        }
-        role="region"
-        aria-label={title}
-        // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex
-        tabIndex={0}
-      >
-        <table className="w-full border-collapse text-small">
-          <caption className="sr-only">{title}</caption>
-          <ForecastColumns grid={grid} />
-          <ForecastRows
-            grid={grid}
-            rows={rows}
-            interestBasis={evidenceOnlyQualifications ? interest : []}
-            expanded={expanded || !canCollapse}
-            source={evidenceOnlyQualifications ? source : undefined}
-            evidenceOnlyQualifications={evidenceOnlyQualifications}
-          />
-        </table>
-      </div>
+      <ForecastGridRegion
+        title={title}
+        grid={grid}
+        rows={rows}
+        statement={statement}
+        expanded={expanded || !canCollapse}
+        interest={evidenceOnlyQualifications ? interest : []}
+        source={evidenceOnlyQualifications ? source : undefined}
+        evidenceOnlyQualifications={evidenceOnlyQualifications}
+      />
       {canCollapse && (
-        <Disclosure
-          note={`${String(missing)} rows have no recorded values in this view. Their missing-data reasons remain available.`}
-          label={
-            expanded
-              ? "Hide unavailable rows"
-              : `Show ${String(missing)} unavailable rows and reasons`
-          }
+        <UnavailableRows
+          missing={missing}
           expanded={expanded}
           onToggle={() => {
             setExpanded(!expanded);
@@ -349,38 +475,20 @@ export function ForecastTable({
         />
       )}
       {canHideColumns && (
-        <Disclosure
-          note={
-            showColumns
-              ? null
-              : `These columns have no recorded values: ${empty.map((index) => spelledOut(inputGrid.columns[index]?.label ?? "")).join(", ")}.`
-          }
-          label={
-            showColumns
-              ? "Hide columns with no values"
-              : `Show ${String(empty.length)} columns with no values`
-          }
-          expanded={showColumns}
+        <EmptyColumns
+          grid={inputGrid}
+          empty={empty}
+          shown={showColumns}
           onToggle={() => {
             setShowColumns(!showColumns);
           }}
         />
       )}
-      {(bound.length > 0 || (interestShown && footerInterest.length > 0)) && (
-        <ul aria-label="Qualifications" className="grid gap-2">
-          {bound.map(({ label, text }, at) => (
-            <li key={`period-${String(at)}`}>
-              <Qualification text={text} label={`${label} period qualification`} source={source} />
-            </li>
-          ))}
-          {interestShown &&
-            footerInterest.map((text, at) => (
-              <li key={`interest-${String(at)}`}>
-                <Qualification text={text} label="Interest basis qualification" source={source} />
-              </li>
-            ))}
-        </ul>
-      )}
+      <TableQualifications
+        bound={bound}
+        footerInterest={interestShown ? footerInterest : []}
+        source={source}
+      />
     </div>
   );
 }

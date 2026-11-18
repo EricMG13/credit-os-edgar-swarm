@@ -797,32 +797,39 @@ export function ReportReader({ id, mode }: { id: string; mode: Mode }) {
   return <ReportReaderPage key={attempt} id={id} mode={mode} retry={retry} />;
 }
 
-function ReportReaderPage({ id, mode, retry }: { id: string; mode: Mode; retry: () => void }) {
-  const load = useCallback((signal: AbortSignal) => loadReport(signal, id), [id]);
-  const resource = useResource(load);
-  const loaded: Loaded | undefined =
-    resource.value ?? (resource.error ? { failure: "failed" } : undefined);
-  const value = loaded && "snapshot" in loaded ? loaded.snapshot : undefined;
-  const [sources, setSources] = useSourcesOn();
-  const hash = useSyncExternalStore(listenHash, readHash);
+function reportRoute(hash: string): { tab: Tab; parts: string[] } {
   const [route, ...parts] = hash.slice(1).split("/");
-  const tab =
-    route === "calendar"
-      ? route
-      : route === "modules" && parts[0] === "CP-8"
-        ? "changes"
-        : (tabs.find(([name]) => name === route)?.[0] ?? "overview");
+  if (route === "calendar") return { tab: route, parts };
+  if (route === "modules" && parts[0] === "CP-8") return { tab: "changes", parts };
+  return { tab: tabs.find(([name]) => name === route)?.[0] ?? "overview", parts };
+}
+
+function reportPublication(loaded: Loaded | undefined, id: string) {
+  const value = loaded && "snapshot" in loaded ? loaded.snapshot : undefined;
   const found = value && Object.entries(value.workspace.runs).find(([, run]) => run.folder === id);
   const catalogue = value?.catalogue.real.find((entry) => entry.id === id);
-  const run = found ? found[1] : null;
-  const issuer = run
-    ? catalogue?.name || run.issuerHeading || run.issuer
-    : loaded && "failure" in loaded && loaded.failure === "unpublished"
-      ? (loaded.run?.issuer_name ?? null)
-      : null;
-  const root = useRef<HTMLDivElement>(null);
-  useReportPlace(root, hash, Boolean(run));
-  const page = run ? readerPageName(tab, parts) : "Credit report";
+  const run = found?.[1] ?? null;
+  const labels =
+    value && found ? runLabels(outputEntries(value, found[1], found[0]), found[1]) : [];
+  return { value, found, run, catalogue, issuer: reportIssuer(run, catalogue, loaded), labels };
+}
+
+function reportIssuer(
+  run: PublishedRun | null,
+  catalogue: CatalogueRun | undefined,
+  loaded: Loaded | undefined,
+) {
+  if (run) return catalogue?.name || run.issuerHeading || run.issuer;
+  return unpublishedIssuer(loaded);
+}
+
+function unpublishedIssuer(loaded: Loaded | undefined) {
+  if (loaded && "failure" in loaded && loaded.failure === "unpublished")
+    return loaded.run?.issuer_name ?? null;
+  return null;
+}
+
+function useReportTitle(issuer: string | null, page: string) {
   useEffect(() => {
     if (!issuer || !page) return;
     document.title = `${page} — ${issuer} — Credit OS`;
@@ -830,6 +837,21 @@ function ReportReaderPage({ id, mode, retry }: { id: string; mode: Mode; retry: 
       document.title = "Credit OS";
     };
   }, [issuer, page]);
+}
+
+function ReportReaderPage({ id, mode, retry }: { id: string; mode: Mode; retry: () => void }) {
+  const load = useCallback((signal: AbortSignal) => loadReport(signal, id), [id]);
+  const resource = useResource(load);
+  const loaded: Loaded | undefined =
+    resource.value ?? (resource.error ? { failure: "failed" } : undefined);
+  const [sources, setSources] = useSourcesOn();
+  const hash = useSyncExternalStore(listenHash, readHash);
+  const { tab, parts } = reportRoute(hash);
+  const { value, found, run, catalogue, issuer, labels } = reportPublication(loaded, id);
+  const root = useRef<HTMLDivElement>(null);
+  useReportPlace(root, hash, Boolean(run));
+  const page = run ? readerPageName(tab, parts) : "Credit report";
+  useReportTitle(issuer, page);
   return (
     <div ref={root} className="mx-auto w-full max-w-[96rem]" data-sources={sources ? "on" : "off"}>
       <Breadcrumb>{issuer || "Report"}</Breadcrumb>
@@ -839,7 +861,7 @@ function ReportReaderPage({ id, mode, retry }: { id: string; mode: Mode; retry: 
         preview={value?.preview}
         mode={mode}
         id={id}
-        labels={value && found ? runLabels(outputEntries(value, found[1], found[0]), found[1]) : []}
+        labels={labels}
         sources={sources}
         setSources={setSources}
         evidence={tab === "evidence"}

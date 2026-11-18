@@ -41,22 +41,20 @@ function sectionIcon(heading: string): NavSection["icon"] {
   return heading === "Limitations" ? "limitations" : "records";
 }
 
-function Navigator({
-  view,
-  run,
-  current,
-  entry,
-  hasLocalFigures,
-  figureTableLines,
-}: {
-  view: ReturnType<typeof buildReportView>;
-  run: PublishedRun;
-  current: string;
-  entry?: OutputEntry;
-  hasLocalFigures: boolean;
-  figureTableLines: readonly number[];
-}) {
-  const allSections = entry ? findingBlocks(entry.sections, entry, figureTableLines, true) : [];
+function hasPublishedFigures(output: OutputEntry["output"]) {
+  return [output.charts, output.chartGaps, output.events, output.maps].some(
+    (records) => records?.length,
+  );
+}
+
+function navigatorSections(
+  entry: OutputEntry | undefined,
+  current: string,
+  hasLocalFigures: boolean,
+  figureTableLines: readonly number[],
+) {
+  if (!entry) return [];
+  const allSections = findingBlocks(entry.sections, entry, figureTableLines, true);
   // A module that wrote no Key findings has its first table section listed under its own title.
   const firstFinding =
     allSections.find(({ heading }) => heading === "Key findings") ??
@@ -73,14 +71,7 @@ function Navigator({
     if (icon === "records" && item !== firstFinding && !extra) return [];
     return [{ label: extra ?? drawingTitle(heading), key: `finding-${String(line)}`, icon }];
   });
-  if (
-    entry &&
-    (hasLocalFigures ||
-      entry.output.charts?.length ||
-      entry.output.chartGaps?.length ||
-      entry.output.events?.length ||
-      entry.output.maps?.length)
-  ) {
+  if (hasLocalFigures || hasPublishedFigures(entry.output)) {
     // The page draws the figures after its prose passages, before Limitations.
     const prose = new Set<NavSection["icon"]>(["bottom-line", "findings", "contrary"]);
     const at = sections.map(({ icon }) => prose.has(icon)).lastIndexOf(true) + 1;
@@ -90,8 +81,27 @@ function Navigator({
       icon: "records",
     });
   }
-  if (entry && recordSections(entry.sections, entry).length)
+  if (recordSections(entry.sections, entry).length)
     sections.push({ label: "Statements and records", key: RECORDS_ID, icon: "records" });
+  return sections;
+}
+
+function Navigator({
+  view,
+  run,
+  current,
+  entry,
+  hasLocalFigures,
+  figureTableLines,
+}: {
+  view: ReturnType<typeof buildReportView>;
+  run: PublishedRun;
+  current: string;
+  entry?: OutputEntry;
+  hasLocalFigures: boolean;
+  figureTableLines: readonly number[];
+}) {
+  const sections = navigatorSections(entry, current, hasLocalFigures, figureTableLines);
   const [active, setActive] = useState(sections[0]?.key ?? null);
   const aside = useRef<HTMLElement>(null);
   // A clicked entry stays until the reader's own scroll input, so the scroll it causes cannot undo it.

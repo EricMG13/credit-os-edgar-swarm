@@ -108,20 +108,29 @@ async function checkRunDocuments(page, channel, paidPreview) {
   // C1-002/T05 adds an empty-library action beside the existing header action.
   await page.locator("main footer").getByRole("link", { name: "Start a run", exact: true }).click();
   const stepper = page.getByRole("list", { name: "Steps in this run" });
+  await checkDesktopIntake(page, stepper);
+  await stepper.getByText(paidPreview ? "Paid step" : "No-cost test", { exact: true }).waitFor();
+  await page
+    .getByRole("complementary", { name: "Readiness", exact: true })
+    .getByText("USD 0.00 of USD 25.00", { exact: true })
+    .waitFor();
+  if (!paidPreview)
+    await page.screenshot({ path: path.join(artifacts, `${channel}-run-documents.png`) });
+  if (!desktopOnly) await checkMobileDocuments(page, channel, paidPreview);
+}
+
+async function checkDesktopIntake(page, stepper) {
   const current = stepper.locator('[aria-current="step"]');
   const readiness = page.getByRole("complementary", { name: "Readiness", exact: true });
   const dropZone = page.locator("[data-dropzone]");
   await dropZone.waitFor();
   await checkRunBundle(page);
   const [drop, side] = await Promise.all([dropZone.boundingBox(), readiness.boundingBox()]);
-  assert.ok(drop && side && side.x >= drop.x + drop.width, "Readiness sits beside the form");
+  assert.ok(drop, "Document drop zone has a box");
+  assert.ok(side, "Readiness has a box");
+  assert.ok(side.x >= drop.x + drop.width, "Readiness sits beside the form");
   assert.equal(await stepper.getByRole("listitem").count(), 4);
   assert.match(await current.innerText(), /Documents/u);
-  await stepper.getByText(paidPreview ? "Paid step" : "No-cost test", { exact: true }).waitFor();
-  await readiness.getByText("USD 0.00 of USD 25.00", { exact: true }).waitFor();
-  if (!paidPreview)
-    await page.screenshot({ path: path.join(artifacts, `${channel}-run-documents.png`) });
-  if (!desktopOnly) await checkMobileDocuments(page, channel, paidPreview);
 }
 
 async function checkRunBundle(page) {
@@ -1364,9 +1373,7 @@ async function checkLibrarySearch(context, endpoint) {
   }
 }
 
-async function checkBrowserRun(context, service, workspace, channel, brand) {
-  const page = await context.newPage();
-  page.setDefaultTimeout(15000);
+function recordBrowserRequests(page) {
   const errors = [];
   const publicationRequests = [];
   const scriptRequests = [];
@@ -1376,7 +1383,11 @@ async function checkBrowserRun(context, service, workspace, channel, brand) {
     if (url.pathname.startsWith("/connected/")) publicationRequests.push(url.pathname + url.search);
   });
   page.on("pageerror", (error) => errors.push(error.message));
-  await page.goto(new URL("/start", service.endpoint).href);
+  return { errors, publicationRequests, scriptRequests };
+}
+
+async function checkStartRoute(page, endpoint, scriptRequests, brand) {
+  await page.goto(new URL("/start", endpoint).href);
   await page.getByLabel("Issuer name", { exact: true }).waitFor();
   assert.ok(scriptRequests.some((path) => /connected-assets\/StartRun-[^/]+\.js$/u.test(path)));
   assert.ok(
@@ -1384,20 +1395,23 @@ async function checkBrowserRun(context, service, workspace, channel, brand) {
   );
   assert.ok(!scriptRequests.some((path) => /\/assets\/index-[^/]+\.js$/u.test(path)));
   scriptRequests.length = 0;
-  await page.goto(service.endpoint);
+  await page.goto(endpoint);
   const brands = await page.evaluate(() =>
     navigator.userAgentData?.brands.map(({ brand }) => brand),
   );
-  assert.ok(brands?.includes(brand), `Expected branded ${brand}, received ${String(brands)}`);
+  assert.ok(
+    (brands ?? []).includes(brand),
+    `Expected branded ${brand}, received ${String(brands)}`,
+  );
+}
 
-  await checkPaidConfirmation(context, service.endpoint, channel);
-  const run = await submit(page, channel);
+async function waitForFinishedRun(page, endpoint, workspace, channel, run) {
   const open = page.getByRole("link", { name: "Open report", exact: true });
   const stopped = page
     .getByRole("status")
     .filter({ hasText: /^(Failed|Capped|Rejected|Interrupted)$/u });
   await open.or(stopped).waitFor({ timeout: 60000 });
-  const state = await page.request.get(new URL(`/api/runs/${run}`, service.endpoint).href, {
+  const state = await page.request.get(new URL(`/api/runs/${run}`, endpoint).href, {
     maxRedirects: 0,
   });
   assert.equal(state.status(), 200);
@@ -1405,6 +1419,10 @@ async function checkBrowserRun(context, service, workspace, channel, brand) {
   assert.equal(completed.status, "finished", completed.reason ?? "The run did not finish.");
   await checkActivity(page, channel);
   await checkRateMethod(workspace, run);
+  return open;
+}
+
+async function checkFinishedReport(page, open, scriptRequests, channel, run) {
   await open.click();
   await page.waitForURL((url) => url.pathname === `/report/${run}`);
   await page.getByRole("heading", { name: "Overview" }).waitFor();
@@ -1436,6 +1454,10 @@ async function checkBrowserRun(context, service, workspace, channel, brand) {
   await report.getByRole("link", { name: "Overview", exact: true }).click();
   await checkCalendar(report, artifacts, channel, page);
   await checkCharts(report, artifacts, channel, page, run);
+  return report;
+}
+
+async function checkPublishedRun({ context, page, report, endpoint, run, publicationRequests }) {
   const download = report.getByRole("link", {
     name: "Download Fundamental credit",
     exact: true,
@@ -1445,13 +1467,12 @@ async function checkBrowserRun(context, service, workspace, channel, brand) {
   assert.equal(file.suggestedFilename(), "CP-2.md");
   const bytes = await readFile(await file.path());
   assert.match(bytes.toString("utf8"), /The synthetic issuer shows one observed item\./u);
-  const publication = await page.request.get(
-    new URL("/connected/snapshot", service.endpoint).href,
-    { maxRedirects: 0 },
-  );
-  await checkChangesTrace(context, service.endpoint, run);
-  await checkCompactLibrary(page, service.endpoint, run);
-  await checkLibrarySearch(context, service.endpoint);
+  const publication = await page.request.get(new URL("/connected/snapshot", endpoint).href, {
+    maxRedirects: 0,
+  });
+  await checkChangesTrace(context, endpoint, run);
+  await checkCompactLibrary(page, endpoint, run);
+  await checkLibrarySearch(context, endpoint);
   assert.ok(publicationRequests.includes("/connected/library"));
   assert.ok(publicationRequests.includes(`/connected/snapshot?run=${encodeURIComponent(run)}`));
   assert.ok(!publicationRequests.includes("/connected/snapshot"));
@@ -1465,17 +1486,31 @@ async function checkBrowserRun(context, service, workspace, channel, brand) {
   const designated = publishedWorkspace.outputs[published.modules["CP-2"].default];
   assert.equal(createHash("sha256").update(bytes).digest("hex"), designated.sha256);
   assert.equal(new URL(page.url()).pathname, `/report/${run}`);
-  assert.deepEqual(errors, []);
-  await page.screenshot({
-    path: path.join(artifacts, `${channel}-evidence.png`),
-    fullPage: true,
-  });
+}
+
+function browserProofRecord({ channel, brand, browserVersion, run }) {
+  const layout = desktopOnly
+    ? {
+        viewport: "desktop",
+        downside: "downside break-point ranking and watch timing",
+        forecast: "Desktop Forecast section jump",
+        modules: [],
+      }
+    : {
+        viewport: "desktop and mobile",
+        downside: "downside break-point ranking, watch timing, and narrow layout",
+        forecast:
+          "Forecast section jumps, full mobile reading width, 44px traces and separated chart period labels",
+        modules: [
+          "compact module and first-section navigation at 390px with complementary 1000/1001px breakpoints",
+        ],
+      };
   return {
     ...provenance,
     browser: brand,
-    version: context.browser().version(),
+    version: browserVersion,
     run,
-    viewport_scope: desktopOnly ? "desktop" : "desktop and mobile",
+    viewport_scope: layout.viewport,
     screenshots: [
       "run-documents",
       "run-mobile",
@@ -1518,23 +1553,15 @@ async function checkBrowserRun(context, service, workspace, channel, brand) {
       "financial chart, table and source trace reload",
       "readiness and monitoring records with source traces",
       "downside case comparison with signed cash flow and explicit gap",
-      desktopOnly
-        ? "downside break-point ranking and watch timing"
-        : "downside break-point ranking, watch timing, and narrow layout",
+      layout.downside,
       "rate and currency shocks with zero and unreported hedge outcomes",
       "native completeness and rate sensitivity checks agreed",
       "dated instrument quotes, decision and recovery qualification",
       "selected workbook attestation, portfolio limits and proposal qualification",
       "forecast chart and model",
-      desktopOnly
-        ? "Desktop Forecast section jump"
-        : "Forecast section jumps, full mobile reading width, 44px traces and separated chart period labels",
+      layout.forecast,
       "conditional base-case qualification immediately precedes cases, scope expands and the all-case comparison remains visible",
-      ...(desktopOnly
-        ? []
-        : [
-            "compact module and first-section navigation at 390px with complementary 1000/1001px breakpoints",
-          ]),
+      ...layout.modules,
       "chart source control visible on hover with Highlight source icons off",
       "shared Base and Downside case selection updates cash proxy and exact model values",
       "evidence bookmark retains identity after reorder and rejects old ordinal addresses",
@@ -1549,6 +1576,31 @@ async function checkBrowserRun(context, service, workspace, channel, brand) {
       "paired Changes fixture links only to its matched handoff row",
     ],
   };
+}
+
+async function checkBrowserRun(context, service, workspace, channel, brand) {
+  const page = await context.newPage();
+  page.setDefaultTimeout(15000);
+  const { errors, publicationRequests, scriptRequests } = recordBrowserRequests(page);
+  await checkStartRoute(page, service.endpoint, scriptRequests, brand);
+  await checkPaidConfirmation(context, service.endpoint, channel);
+  const run = await submit(page, channel);
+  const open = await waitForFinishedRun(page, service.endpoint, workspace, channel, run);
+  const report = await checkFinishedReport(page, open, scriptRequests, channel, run);
+  await checkPublishedRun({
+    context,
+    page,
+    report,
+    endpoint: service.endpoint,
+    run,
+    publicationRequests,
+  });
+  assert.deepEqual(errors, []);
+  await page.screenshot({
+    path: path.join(artifacts, `${channel}-evidence.png`),
+    fullPage: true,
+  });
+  return browserProofRecord({ channel, brand, browserVersion: context.browser().version(), run });
 }
 
 function launchBrowser(channel, envName, proxy) {

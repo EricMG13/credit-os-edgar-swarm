@@ -420,31 +420,93 @@ function ForecastContent({
   );
 }
 
-export function Forecast({
-  view,
+function ForecastHeading({
   run,
-  section,
-  preview = false,
+  preview,
+  hasModel,
 }: {
-  view: ReturnType<typeof buildReportView>;
   run: PublishedRun;
-  section?: string;
-  preview?: boolean;
+  preview: boolean;
+  hasModel: boolean;
 }) {
-  const [selected, setSelected] = useState(0);
-  const [chosenCase, setChosenCase] = useState("");
-  const { models, entries } = view;
-  const model = models[selected] ?? models[0];
-  const caseOptions = model ? forecastCaseOptions(model) : [];
-  const selectedCase = caseOptions.some(({ name }) => name === chosenCase)
-    ? chosenCase
-    : caseOptions[0]?.name;
-  const handoff = model && forecastHandoff(model, entries, run.folder);
-  const href = (line: number) =>
-    handoff ? evidencePath(run.folder, handoff, line) : "#evidence/summary";
-  const input = forecastInput(handoff);
+  return (
+    <header className="flex flex-wrap items-center justify-between gap-3 rounded-ds-md bg-brand-950 px-5 py-3 text-white">
+      <div>
+        <h2 className="font-display text-h2">Forecast</h2>
+        <p className="text-small text-brand-100">
+          {run.issuerHeading || run.issuer}
+          {preview && " · Test preview"}
+        </p>
+      </div>
+      {hasModel && (
+        <Button
+          className="w-fit"
+          href="#evidence/summary"
+          color="secondary"
+          size="sm"
+          iconTrailing={ArrowRight}
+        >
+          Forecast evidence and artifacts
+        </Button>
+      )}
+    </header>
+  );
+}
+
+function PublishedModelSelect({
+  models,
+  selected,
+  setSelected,
+  asOf,
+}: {
+  models: Model[];
+  selected: number;
+  setSelected: (index: number) => void;
+  asOf: PublishedRun["asOf"];
+}) {
+  if (models.length < 2) return null;
+  const date = asOf
+    ? new Intl.DateTimeFormat("en-GB", {
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+        timeZone: "UTC",
+      }).format(new Date(`${asOf}T00:00:00Z`))
+    : "";
+  return (
+    <label className={`${label} max-w-xs`}>
+      Published model
+      <select
+        className={field}
+        value={selected}
+        onChange={(event) => {
+          setSelected(Number(event.target.value));
+        }}
+      >
+        {models.map((item, index) => (
+          <option value={index} key={item.id}>
+            Model {index + 1}
+            {` · ${
+              forecastCaseOptions(item)
+                .map(({ name }) => name)
+                .join(", ") || "Cases not recorded"
+            }`}
+            {date && ` · ${date}`}
+          </option>
+        ))}
+      </select>
+    </label>
+  );
+}
+
+function forecastSources(
+  model: Model | undefined,
+  input: ReturnType<typeof forecastInput>,
+  href: (line: number) => string,
+  selectedCase: string | undefined,
+): ForecastSource {
   const inputLimits = new Set(items(input?.value.scope_limits));
-  const source: ForecastSource = (name, selection = {}) => {
+  return (name, selection = {}) => {
     const qualification = selection.recordedQualification;
     if (qualification !== undefined && !inputLimits.has(qualification)) {
       return (
@@ -471,6 +533,32 @@ export function Forecast({
       </PublishedSource>
     );
   };
+}
+
+export function Forecast({
+  view,
+  run,
+  section,
+  preview = false,
+}: {
+  view: ReturnType<typeof buildReportView>;
+  run: PublishedRun;
+  section?: string;
+  preview?: boolean;
+}) {
+  const [selected, setSelected] = useState(0);
+  const [chosenCase, setChosenCase] = useState("");
+  const { models, entries } = view;
+  const model = models[selected] ?? models[0];
+  const caseOptions = model ? forecastCaseOptions(model) : [];
+  const selectedCase = caseOptions.some(({ name }) => name === chosenCase)
+    ? chosenCase
+    : caseOptions[0]?.name;
+  const handoff = model && forecastHandoff(model, entries, run.folder);
+  const href = (line: number) =>
+    handoff ? evidencePath(run.folder, handoff, line) : "#evidence/summary";
+  const input = forecastInput(handoff);
+  const source = forecastSources(model, input, href, selectedCase);
   const assumptions =
     model && (input || model.register) ? (
       <ForecastAssumptions model={model} inputs={input} source={source} />
@@ -478,26 +566,7 @@ export function Forecast({
   const sections = forecastSections(model, caseOptions.length > 1, assumptions !== null);
   return (
     <>
-      <header className="flex flex-wrap items-center justify-between gap-3 rounded-ds-md bg-brand-950 px-5 py-3 text-white">
-        <div>
-          <h2 className="font-display text-h2">Forecast</h2>
-          <p className="text-small text-brand-100">
-            {run.issuerHeading || run.issuer}
-            {preview && " · Test preview"}
-          </p>
-        </div>
-        {model && (
-          <Button
-            className="w-fit"
-            href="#evidence/summary"
-            color="secondary"
-            size="sm"
-            iconTrailing={ArrowRight}
-          >
-            Forecast evidence and artifacts
-          </Button>
-        )}
-      </header>
+      <ForecastHeading run={run} preview={preview} hasModel={Boolean(model)} />
       {!model && <p className={card}>No forecast model was published from this run’s files.</p>}
       {model && !input && (
         <p className={`${card} min-w-0 wrap-anywhere`}>
@@ -506,32 +575,12 @@ export function Forecast({
           the saved model and its sources in Evidence before relying on them.
         </p>
       )}
-      {models.length > 1 && (
-        <label className={`${label} max-w-xs`}>
-          Published model
-          <select
-            className={field}
-            value={selected}
-            onChange={(event) => {
-              setSelected(Number(event.target.value));
-            }}
-          >
-            {models.map((item, index) => (
-              <option value={index} key={item.id}>
-                Model {index + 1}
-                {` · ${
-                  forecastCaseOptions(item)
-                    .map(({ name }) => name)
-                    .join(", ") || "Cases not recorded"
-                }`}
-                {run.asOf
-                  ? ` · ${new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" }).format(new Date(`${run.asOf}T00:00:00Z`))}`
-                  : ""}
-              </option>
-            ))}
-          </select>
-        </label>
-      )}
+      <PublishedModelSelect
+        models={models}
+        selected={selected}
+        setSelected={setSelected}
+        asOf={run.asOf}
+      />
       {sections.length > 1 && (
         <ForecastNavigation
           key={section ?? ""}
