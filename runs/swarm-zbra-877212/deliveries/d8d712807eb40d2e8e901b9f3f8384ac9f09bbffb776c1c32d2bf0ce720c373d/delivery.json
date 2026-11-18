@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for Zebra Technologies Corp as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "67b9c1309e2371b2fc8780d15ebbb3a3fe3a9148ba62c491c240fbf3c3e95606",
+    "CP-1.md": "ce8643cc37ce94d2eb1faa5f1adb489a422494a022480398a7424ab0693f1c9d",
+    "CP-1A.md": "6b496c2ee837c5e029f8639826ed13605138161482423e49aa276b9afc4dde57",
+    "CP-2.md": "f57ff258a9d348c09f8d6dafd0f7b596e187a9526e2001049e1d8946b465f9f0",
+    "coverage.json": "734f9b0d1c1452a205dfe828b80278aa016a0679941811c0a675b15c89b569c1",
+    "view.json": "54a7da9f37b4e31ad5a13cf8ec2aabce90e96842e604616cbc9b5f99b76fe840",
+    "report-view.json": "f5325e8c60a1d974005cfa9b03682815c7bfdb69f54b13ea507470b5a988d72c"
+  }
+}

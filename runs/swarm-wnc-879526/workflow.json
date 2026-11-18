@@ -1,0 +1,236 @@
+{
+  "run": {
+    "schema_version": "run/2",
+    "run_id": "wnc-879526-2026-11-18-credit_snapshot-host",
+    "issuer_id": "wnc-879526",
+    "issuer_name": "WABASH NATIONAL Corp",
+    "as_of": "2026-11-18",
+    "method_version": "deploy-v-r14",
+    "case_kind": "public",
+    "pathway": "credit_snapshot",
+    "requested_modules": [
+      "CP-0",
+      "CP-1",
+      "CP-1A",
+      "CP-2"
+    ]
+  },
+  "sources": {
+    "10-K_2024-12-31_wnc-20241231.htm.jsonl": {
+      "path": "source-text/10-K_2024-12-31_wnc-20241231.htm.jsonl",
+      "sha256": "1a025c9bb1343e50a890ef3abdb7bc82f8350deb4260b26b780f4cd4a1a37d5a"
+    },
+    "10-K_2025-12-31_wnc-20251231.htm.jsonl": {
+      "path": "source-text/10-K_2025-12-31_wnc-20251231.htm.jsonl",
+      "sha256": "25e9eafe1bd11c2f7033419f3855de2383b2af56457fb8eef60df933d5308887"
+    },
+    "10-Q_2026-03-31_wnc-20260331.htm.jsonl": {
+      "path": "source-text/10-Q_2026-03-31_wnc-20260331.htm.jsonl",
+      "sha256": "392508e6cf5b8272341fb63e31c50c5bf0ca033614f351593d562550c0787cfb"
+    },
+    "10-Q_2026-06-30_wnc-20260630.htm.jsonl": {
+      "path": "source-text/10-Q_2026-06-30_wnc-20260630.htm.jsonl",
+      "sha256": "8fc264a4956462decf16c9631e64d8d3f15ae9e2762136252a37aa538d5acdb9"
+    },
+    "10-Q_2026-09-30_wnc-20260930.htm.jsonl": {
+      "path": "source-text/10-Q_2026-09-30_wnc-20260930.htm.jsonl",
+      "sha256": "5cd0b1329218589fe74b878917f2d3086e0e867df136133f5d2b194c1668a82e"
+    },
+    "context": {
+      "path": "../../../inputs/contexts/879526-wabash-national-corp-wnc.json",
+      "sha256": "2ce37e191cb41f5af1270b8c5a9ee165b35cbd5f13a93a3b2797f81fe053c2f9"
+    }
+  },
+  "instructions": {
+    "CP-0": {
+      "path": "instructions/CP-0.md",
+      "sha256": "acbbb5b7c16e6fbe01bec540843162dcd34519361431225e2b3202ed63b26b27"
+    },
+    "CP-1": {
+      "path": "instructions/CP-1.md",
+      "sha256": "1c0555a4699f013c2da367ae7b8cbe8db35edc0ba4bd8c2e099a45e464549f3e"
+    },
+    "CP-1A": {
+      "path": "instructions/CP-1A.md",
+      "sha256": "c281c8adf966c3d5772581f3004fc7ef8469ac1f10db0a5ad03f51096bed3f7e"
+    },
+    "CP-2": {
+      "path": "instructions/CP-2.md",
+      "sha256": "41751294323f3f0d135629e511d3a171bba637373d8ac4cae433854c440b480a"
+    }
+  },
+  "retained_handoffs": {},
+  "model": null,
+  "layout": {
+    "blocks": [
+      "key-findings",
+      "company-operating-model",
+      "model-chart-strip",
+      "financials-credit-metrics",
+      "strengths-weaknesses",
+      "company-profile",
+      "transaction-summary"
+    ],
+    "routes": [
+      {
+        "module_id": "CP-2",
+        "heading": "Key findings",
+        "kind": "prose",
+        "block_id": "key-findings",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company and operating model",
+        "kind": "table",
+        "block_id": "company-operating-model",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: leverage",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.1",
+        "value_columns": [
+          "Total debt / EBITDA",
+          "Net debt / EBITDA"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: interest cover",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.2",
+        "value_columns": [
+          "EBITDA / cash interest"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: liquidity",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.3",
+        "value_columns": [
+          "Cash",
+          "Undrawn committed facilities"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: debt maturities",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.4",
+        "value_columns": [
+          "Debt maturing"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Financials and credit metrics",
+        "kind": "table",
+        "block_id": "financials-credit-metrics",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-2",
+        "heading": "Strengths and weaknesses",
+        "kind": "prose",
+        "block_id": "strengths-weaknesses",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company profile",
+        "kind": "table",
+        "block_id": "company-profile",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Transaction summary and new debt issues",
+        "kind": "prose",
+        "block_id": "transaction-summary",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      }
+    ],
+    "scope": "User-launched Full credit assessment run for WABASH NATIONAL Corp as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+    "title": "WABASH NATIONAL Corp — Full credit assessment",
+    "question": null,
+    "issuer_aliases": []
+  },
+  "changes_note": "changes: first run of this pathway",
+  "selection": "explicit",
+  "execution": "host-session",
+  "max_attempts": 3,
+  "provider_cap_usd": "0"
+}

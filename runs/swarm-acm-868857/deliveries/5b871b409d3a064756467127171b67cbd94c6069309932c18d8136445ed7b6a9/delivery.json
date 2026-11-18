@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for Aecom as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "07813ea2964b26f3ae07e1288203893819ca98fe2b4bea1f1277774eab915aa2",
+    "CP-1.md": "9fe68524f2a756b2827c009f262106c6dce1449b06548e1a68447086057e3c83",
+    "CP-1A.md": "4a234569021e9b3552635c3f0fd5c6328171ac4dbf5b9a11e302ca416798a42f",
+    "CP-2.md": "f6fa896ec58c1f822998f0da0469a1abe1b70bc19c03ab9365ea3a7d084129ab",
+    "coverage.json": "e35ccc2fa20cfac5093726e2a472296f92af71c61c7e91843c2d01bb9a40e16a",
+    "view.json": "5e09cc4507684b619fcb022c6100cbaad226f729668de67e4da622b7483afd69",
+    "report-view.json": "ca42b7b9c6f8d72e7d763c0ba82f739dfae0832546a79bc6c7926457586f6725"
+  }
+}

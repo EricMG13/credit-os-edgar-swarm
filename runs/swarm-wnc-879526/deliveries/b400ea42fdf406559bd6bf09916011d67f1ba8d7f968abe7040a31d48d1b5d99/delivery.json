@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for WABASH NATIONAL Corp as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "b8965f41421537265b543932c69c9e32645f786406cf40a9244d6d8c8494575a",
+    "CP-1.md": "74bbb9a256087af64d0abbe33274a36e052179db6f84b65c9ac30697a8921016",
+    "CP-1A.md": "ac9245a04a15ca11a93679e821a1d146b1ecbdb435e9bc42c3b64a492ba01450",
+    "CP-2.md": "0f8f594f4fa4e6fad72428536244eaa7d6c8c06609612c61f8f262511e33b2d2",
+    "coverage.json": "2df034f1a568ea27715f79f23e60db9d921e4b4d11a6a914a21f110015c9299b",
+    "view.json": "440cfdf8c6707f7ad0d7a55cc5294e94c54e8bb6fcd54a4dff543004a23462e1",
+    "report-view.json": "21e39ef86ed185a6912a64798582c2de52c602bf444a4c763f203f619ccdedfe"
+  }
+}

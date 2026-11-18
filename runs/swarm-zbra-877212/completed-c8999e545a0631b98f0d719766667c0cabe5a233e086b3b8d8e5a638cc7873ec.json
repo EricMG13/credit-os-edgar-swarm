@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for Zebra Technologies Corp as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/109f08b1db648414ff6ff16f91ab4bcd77515eb02e246b3c2435d54c01782e03/1.response.md",
+    "CP-1": "requests/CP-1/2374c0bcc1f7834e7d9493ab89487b973486a7d866f373921a2f8ef81001ff2a/1.response.md",
+    "CP-1A": "requests/CP-1A/aa1ee1bc2b8729bda895cccb4ad217aa189bfc4a5e1c6478da9d2e3e992295d7/1.response.md",
+    "CP-2": "requests/CP-2/0983b1e961d0daf0b13f1a3e84e83bd220e26614ae7eb19d11cc3c96e552b6bc/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "cfb8a0d3d9913e91cad1de84cd685f56fede30ee2ba66c21151b3194ddb257bc",
+  "delivery_sha256": "024ed6e41db365b31f7467dba0b2496940124eb2308ec71018629045f91119d2"
+}

@@ -1,0 +1,94 @@
+{
+  "checks": [
+    {
+      "figure": "columns",
+      "module": "CP-2",
+      "reason": "every declared column is present",
+      "recomputed": null,
+      "recomputed_label": null,
+      "register": "T2.1",
+      "row": "columns",
+      "script": "docs/reuse/selected-methods/scripts/completeness_check.py",
+      "stated": null,
+      "status": "agreed",
+      "tolerance": null,
+      "unit": null
+    },
+    {
+      "figure": "columns",
+      "module": "CP-2",
+      "reason": "every declared column is present",
+      "recomputed": null,
+      "recomputed_label": null,
+      "register": "T2.10",
+      "row": "columns",
+      "script": "docs/reuse/selected-methods/scripts/completeness_check.py",
+      "stated": null,
+      "status": "agreed",
+      "tolerance": null,
+      "unit": null
+    },
+    {
+      "figure": "all",
+      "module": "CP-2",
+      "reason": "not required in this transport (register scope or routing rule)",
+      "recomputed": null,
+      "recomputed_label": null,
+      "register": "T2.11",
+      "row": "all",
+      "script": "docs/reuse/selected-methods/scripts/completeness_check.py",
+      "stated": null,
+      "status": "not checked",
+      "tolerance": null,
+      "unit": null
+    },
+    {
+      "figure": "columns",
+      "module": "CP-2",
+      "reason": "every declared column is present",
+      "recomputed": null,
+      "recomputed_label": null,
+      "register": "T2.12",
+      "row": "columns",
+      "script": "docs/reuse/selected-methods/scripts/completeness_check.py",
+      "stated": null,
+      "status": "agreed",
+      "tolerance": null,
+      "unit": null
+    },
+    {
+      "figure": "placeholders",
+      "module": "CP-2",
+      "reason": "not a full analytical run by the method's blocklist (an explicit gap is this transport's answer, so recorded only): row 1 `Source / Limitation`: `10-Q_2026-10-03_zbra-20261003.htm.jsonl, pages 21\u201322; Quantitative threshold not available in provided materials: no company or covenant threshold is stated, so reported levels are the reference points`; row 2 `Source / Limitation`: `10-Q_2026-10-03_zbra-20261003.htm.jsonl, page 22; Financial foundation (CP-1); calculation FC-7; Quantitative threshold not available in provided materials: no company or covenant threshold is stated, so reported levels are the reference points`; row 3 `Source / Limitation`: `10-Q_2026-10-03_zbra-20261003.htm.jsonl, page 26; calculation FC-6; Quantitative threshold not available in provided materials: no company or covenant threshold is stated, so reported levels are the reference points`; row 4 `Source / Limitation`: `10-Q_2026-10-03_zbra-20261003.htm.jsonl, pages 2, 14; calculation FC-2; Quantitative threshold not available in provided materials: no company or covenant threshold is stated, so reported levels are the reference points`; row 5 `Source / Limitation`: `Financial foundation (CP-1); calculation FC-1; calculation FC-10; Quantitative threshold not available in provided materials: no company or covenant threshold is stated, so reported levels are the reference points`; row 6 `Source / Limitation`: `10-Q_2026-10-03_zbra-20261003.htm.jsonl, pages 15, 26; Quantitative threshold not available in provided materials: no company or covenant threshold is stated, so reported levels are the reference points` and 2 more",
+      "recomputed": null,
+      "recomputed_label": null,
+      "register": "T2.12",
+      "row": "placeholders",
+      "script": "docs/reuse/selected-methods/scripts/completeness_check.py",
+      "stated": null,
+      "status": "noted",
+      "tolerance": null,
+      "unit": null
+    },
+    {
+      "figure": "all",
+      "module": "CP-2",
+      "reason": "not required in this transport (register scope or routing rule)",
+      "recomputed": null,
+      "recomputed_label": null,
+      "register": "T2.7",
+      "row": "all",
+      "script": "docs/reuse/selected-methods/scripts/completeness_check.py",
+      "stated": null,
+      "status": "not checked",
+      "tolerance": null,
+      "unit": null
+    }
+  ],
+  "kind": "method-script-checks/1",
+  "module": "CP-2",
+  "response_sha256": "f57ff258a9d348c09f8d6dafd0f7b596e187a9526e2001049e1d8946b465f9f0",
+  "scripts": {
+    "docs/reuse/selected-methods/scripts/completeness_check.py": "a9841a74e4f851fd565c5f3cabc831835c4bc305ea40c28446790f8165d56056"
+  }
+}

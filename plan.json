@@ -753,8 +753,18 @@
       "pack": "/home/user/swarm-root/inputs/packs/868857-aecom",
       "context": "/home/user/swarm-root/inputs/contexts/868857-aecom.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-acm-868857",
-      "status": "pending",
-      "attempts": 0
+      "status": "published",
+      "attempts": 4,
+      "claims": 1,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "exit_code": 0,
+      "reason": null,
+      "finished_at": "2026-11-18T13:15:50+00:00"
     },
     {
       "issuer_id": "zbra-877212",
@@ -764,8 +774,18 @@
       "pack": "/home/user/swarm-root/inputs/packs/877212-zebra-technologies-corp-zbra",
       "context": "/home/user/swarm-root/inputs/contexts/877212-zebra-technologies-corp-zbra.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-zbra-877212",
-      "status": "pending",
-      "attempts": 0
+      "status": "published",
+      "attempts": 4,
+      "claims": 1,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "exit_code": 0,
+      "reason": null,
+      "finished_at": "2026-11-18T13:16:04+00:00"
     },
     {
       "issuer_id": "wnc-879526",
@@ -775,8 +795,18 @@
       "pack": "/home/user/swarm-root/inputs/packs/879526-wabash-national-corp-wnc",
       "context": "/home/user/swarm-root/inputs/contexts/879526-wabash-national-corp-wnc.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-wnc-879526",
-      "status": "pending",
-      "attempts": 0
+      "status": "published",
+      "attempts": 4,
+      "claims": 1,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "exit_code": 0,
+      "reason": null,
+      "finished_at": "2026-11-18T13:16:19+00:00"
     },
     {
       "issuer_id": "bhc",
@@ -786,8 +816,18 @@
       "pack": "/home/user/swarm-root/inputs/packs/885590-bausch-health-companies-inc-bhc",
       "context": "/home/user/swarm-root/inputs/contexts/885590-bausch-health-companies-inc-bhc.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-bhc",
-      "status": "pending",
-      "attempts": 0
+      "status": "published",
+      "attempts": 4,
+      "claims": 1,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "exit_code": 0,
+      "reason": null,
+      "finished_at": "2026-11-18T13:16:34+00:00"
     },
     {
       "issuer_id": "efor-890564",

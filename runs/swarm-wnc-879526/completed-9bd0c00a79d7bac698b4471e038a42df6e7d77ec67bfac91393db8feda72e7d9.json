@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for WABASH NATIONAL Corp as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/6c8d9a2576e446c500b8cea230c83dccc06eead90f0207e77152b62424db4fbb/1.response.md",
+    "CP-1": "requests/CP-1/d3514d758d676c39d2b1cb565b8c2fcdc5bc8f046fd95f6ad61b1b0cf30a97ee/1.response.md",
+    "CP-1A": "requests/CP-1A/e0298a9b229fe28ca2067dcb1343b5c6457cc31242c812aa2a744151e8e92c68/1.response.md",
+    "CP-2": "requests/CP-2/8f9f61fcd441019e5a10d05b8677ac648692700efe15f0273d1e9ee7df5fc3ba/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "099255f41dfeddc62de4b7777adaee9ca4ebc4a717d4e4e8748760ee09dedf7c",
+  "delivery_sha256": "22367f564c5d6799ca8b61f1523aabec9a7a4aa64bff104188f1b10cc72a8935"
+}
