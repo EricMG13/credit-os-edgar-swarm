@@ -6,22 +6,43 @@ import { Shell, type Area } from "../../shell/Shell";
 import { askAhead, LIBRARY_ADDRESS, snapshotAddress } from "./ahead";
 import type { Mode } from "./api";
 
+type PageFile<P> = { default: ComponentType<P> };
+
 /**
- * A page kept in its own file. Loaded ahead of the first drawing, it is drawn at once. A page first
- * drawn while its file is still loading shows the loading blocks, and React keeps those on screen
- * for 300 ms however soon the file arrives.
+ * A page kept in its own file, asked for once. Asked for ahead and already answered when first
+ * drawn, it is drawn in that drawing, or fails in it, with no loading state between; React keeps a
+ * loading state it has shown on screen for 300 ms however soon the file arrives. Drawn before the
+ * answer, it waits on that same request as any lazy page does.
  */
 function page<P extends object>(load: () => Promise<ComponentType<P>>) {
-  let Loaded: ComponentType<P> | undefined;
-  const Loading: ComponentType<P> = lazy(async () => ({ default: await load() }));
-  function Page(props: P) {
-    const Drawn = Loaded ?? Loading;
-    return <Drawn {...props} />;
-  }
-  const preload = async () => {
-    Loaded = await load();
+  type Answer = (file: (file: PageFile<P>) => void, failed: (failure: unknown) => void) => void;
+  let asked: Promise<PageFile<P>> | undefined;
+  let answered: Promise<PageFile<P>> | undefined;
+  // React draws an answer already given only when `then` answers as it is called.
+  const answer = (then: Answer) => {
+    answered = { then } as unknown as Promise<PageFile<P>>;
   };
-  return Object.assign(Page, { preload });
+  const ask = () => {
+    if (asked) return asked;
+    asked = load().then((component) => ({ default: component }));
+    asked.then(
+      (file) => {
+        answer((loaded) => {
+          loaded(file);
+        });
+      },
+      (failure: unknown) => {
+        answer((_, failed) => {
+          failed(failure);
+        });
+      },
+    );
+    return asked;
+  };
+  return Object.assign(
+    lazy(() => answered ?? ask()),
+    { ask },
+  );
 }
 
 const ReportLibrary = page(() => import("./LibraryIndex").then((file) => file.ReportLibrary));
@@ -74,21 +95,27 @@ function reportFolder(path: string) {
 const RUN = /^\/run\/([a-zA-Z0-9][a-zA-Z0-9_.-]{0,79})\/?$/;
 
 /**
- * Loads the page at `path` before the first drawing, and asks for what the library or a report
- * reads first while that page loads.
+ * Asks, ahead of the first drawing, for the page file that drawing `path` will ask for, and for no
+ * other. The promise settles when that file has loaded or failed. Once the library or a report has
+ * loaded, what it reads first is asked for too, while the page is drawn.
  */
-export function preloadPage(path: string) {
-  if (path === "/" || path === "/index.html") {
-    askAhead(LIBRARY_ADDRESS);
-    return ReportLibrary.preload();
-  }
-  if (path === "/start" || path === "/start/") return StartRun.preload();
-  if (path === "/runs" || path === "/runs/") return RunActivity.preload();
-  if (RUN.test(path)) return RunProgress.preload();
+export function preloadPage(path: string, readOnly: boolean): Promise<unknown> {
+  const reads = (address: string) => () => {
+    askAhead(address);
+  };
+  const unloaded = () => undefined;
+  if (path === "/" || path === "/index.html")
+    return ReportLibrary.ask().then(reads(LIBRARY_ADDRESS), unloaded);
+  const start = path === "/start" || path === "/start/";
+  const runs = path === "/runs" || path === "/runs/";
+  const run = RUN.test(path);
+  if (readOnly && (start || runs || run)) return Promise.resolve();
+  if (start) return StartRun.ask().catch(unloaded);
+  if (runs) return RunActivity.ask().catch(unloaded);
+  if (run) return RunProgress.ask().catch(unloaded);
   const report = reportFolder(path);
   if (report === null) return Promise.resolve();
-  askAhead(snapshotAddress(report));
-  return ReportReader.preload();
+  return ReportReader.ask().then(reads(snapshotAddress(report)), unloaded);
 }
 
 export function ConnectedApp({

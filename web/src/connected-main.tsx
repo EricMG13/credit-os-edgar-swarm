@@ -3,11 +3,17 @@ import { createRoot } from "react-dom/client";
 import { ConnectedLoadBoundary } from "./ConnectedLoadBoundary";
 import "./index.css";
 
+// How long React keeps a loading state it has shown before it draws what replaces it. A page file
+// that takes longer than this is no longer waited for, so the application is drawn, with its own
+// loading state for the page, when React would have drawn it.
+const LOADING_HELD_MS = 300;
+
 const container = document.getElementById("root");
 if (container === null) throw new Error("connected.html has no #root element");
 
 const mode = document.querySelector<HTMLMetaElement>('meta[name="credit-os-mode"]');
 const path = window.location.pathname;
+const readOnly = mode?.content === "preview";
 const root = createRoot(container);
 
 function draw(page: ReactNode) {
@@ -22,8 +28,9 @@ function Unloaded({ failure }: { failure: unknown }): never {
   throw failure;
 }
 
-// The application and the page at this address are loaded before the application is drawn. Drawn
-// as lazy components they would first show a loading state, which React keeps for 300 ms.
+// The application is drawn once its file and the file of the page at this address have loaded.
+// Drawn as pending lazy components they would each show a loading state first, and React holds the
+// page back while one is on screen.
 draw(
   <main className="mx-auto w-full max-w-[96rem] p-6">
     <p className="text-text-secondary" role="status" aria-live="polite">
@@ -31,14 +38,14 @@ draw(
     </p>
   </main>,
 );
+const held = new Promise((resolve) => setTimeout(resolve, LOADING_HELD_MS));
 import("./pages/connected/ConnectedApp").then(
   async ({ ConnectedApp, preloadPage }) => {
-    // A page that could not be loaded is asked for again when drawn, and fails there.
-    await preloadPage(path).catch(() => undefined);
+    await Promise.race([preloadPage(path, readOnly), held]);
     draw(
       <ConnectedApp
         path={path}
-        readOnly={mode?.content === "preview"}
+        readOnly={readOnly}
         mode={mode?.content === "synthetic" ? "synthetic" : "live"}
       />,
     );

@@ -2,12 +2,12 @@ import { checkDistinctSeries, seriesKey as keyOf, periodSeriesData } from "./ser
 import {
   CartesianGrid,
   LineChart,
+  ResponsiveContainer,
   Tooltip,
   XAxis,
   YAxis,
   type TooltipContentProps,
 } from "recharts";
-import { Plot } from "./Plot";
 import { ChartFrame } from "./ChartFrame";
 import { ChartTable, type TableRowData } from "./ChartTable";
 import { Mark } from "./marks";
@@ -150,7 +150,7 @@ function Chart({ title, periods, series, table, yTicks }: Omit<TrendChartProps, 
   const data = periodSeriesData(periods, series);
   return (
     <div className="flex flex-col gap-3 [&_.recharts-surface:focus-visible]:outline-2 [&_.recharts-surface:focus-visible]:outline-solid [&_.recharts-surface:focus-visible]:outline-offset-2 [&_.recharts-surface:focus-visible]:outline-focus">
-      <Plot height={HEIGHT}>
+      <ResponsiveContainer width="100%" height={HEIGHT}>
         <LineChart title={title} data={data} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
           <CartesianGrid vertical={false} stroke="var(--color-border-hairline)" />
           <XAxis dataKey="period" tickLine={false} axisLine={BASELINE} tick={TICK} tickMargin={8} />
@@ -168,7 +168,7 @@ function Chart({ title, periods, series, table, yTicks }: Omit<TrendChartProps, 
             );
           })}
         </LineChart>
-      </Plot>
+      </ResponsiveContainer>
       {series.length >= 2 ? <Legend names={series.map((s) => s.name)} styles={styles} /> : null}
     </div>
   );

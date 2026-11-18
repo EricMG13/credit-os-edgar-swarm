@@ -1,9 +1,15 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, expect, it, vi } from "vitest";
+import { ConnectedLoadBoundary } from "../../ConnectedLoadBoundary";
 import { askAhead, LIBRARY_ADDRESS, request, snapshotAddress } from "./ahead";
 import { ConnectedApp, preloadPage } from "./ConnectedApp";
 
 const INDEX = { catalogue: { real: [] }, workspace: { runs: {} } };
+
+// The run activity page's file cannot be loaded; every other page loads.
+vi.mock("./RunActivity", () => {
+  throw new Error("page file unavailable");
+});
 
 function serve() {
   const fetch = vi.fn<(address: string, init?: RequestInit) => Promise<Response>>(() =>
@@ -16,11 +22,24 @@ function serve() {
 afterEach(() => {
   cleanup();
   vi.unstubAllGlobals();
+  document.title = "Credit OS";
+});
+
+it("asks for nothing a read-only preview does not draw, nor at an address with no page", async () => {
+  const fetch = serve();
+  await preloadPage("/start", true);
+  await preloadPage("/runs/", true);
+  await preloadPage("/run/abc", true);
+  await preloadPage("/nowhere", false);
+  await preloadPage("/report/..%2Fx", false);
+  expect(fetch).not.toHaveBeenCalled();
+  render(<ConnectedApp path="/start" mode="synthetic" readOnly />);
+  expect(screen.getByRole("heading", { level: 1, name: "Read-only preview" })).toBeVisible();
 });
 
 it("draws a page loaded ahead in the first drawing, with no loading state, and reads its index once", async () => {
   const fetch = serve();
-  await preloadPage("/");
+  await preloadPage("/", false);
   expect(fetch.mock.calls).toEqual([[LIBRARY_ADDRESS, { cache: "no-store" }]]);
   render(<ConnectedApp path="/" mode="synthetic" />);
   expect(screen.queryByRole("status", { name: "Loading this page" })).toBeNull();
@@ -29,15 +48,36 @@ it("draws a page loaded ahead in the first drawing, with no loading state, and r
   expect(fetch).toHaveBeenCalledOnce();
 });
 
-it("asks ahead for the report at a report address, and for nothing at a run address", async () => {
+it("asks ahead for a report's snapshot only once the report page has loaded", async () => {
   const fetch = serve();
-  await preloadPage("/report/acme%202026");
-  await preloadPage("/runs");
-  await preloadPage("/nowhere");
+  const loaded = preloadPage("/report/acme%202026", true);
+  expect(fetch).not.toHaveBeenCalled();
+  await loaded;
   expect(fetch.mock.calls.map(([address]) => address)).toEqual([
     "/connected/snapshot?run=acme%202026",
   ]);
   expect(snapshotAddress()).toBe("/connected/snapshot");
+});
+
+it("fails in the first drawing when the page asked for ahead could not be loaded, and reads nothing", async () => {
+  const fetch = serve();
+  const errors = vi.spyOn(console, "error").mockImplementation(() => undefined);
+  try {
+    await preloadPage("/runs", false);
+    render(
+      <ConnectedLoadBoundary>
+        <ConnectedApp path="/runs" mode="synthetic" />
+      </ConnectedLoadBoundary>,
+    );
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      "This page could not be loaded. Reload to try again.",
+    );
+    // The application was never drawn, so the address's title was never set.
+    expect(document.title).toBe("Credit OS");
+    expect(fetch).not.toHaveBeenCalled();
+  } finally {
+    errors.mockRestore();
+  }
 });
 
 it("gives an answer asked for ahead to the first request only", async () => {

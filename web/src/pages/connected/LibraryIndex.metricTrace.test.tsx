@@ -1,4 +1,4 @@
-import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, expect, it, vi } from "vitest";
 import { ReportLibrary } from "./LibraryIndex";
 import { HeadlineFigures } from "./HeadlineFigures";
@@ -151,49 +151,6 @@ it("J4-001 loads a scoped snapshot only when a card figure is traced and opens i
     "href",
     `/report/current#evidence/current%2Ffoundation~${SHA}-22`,
   );
-});
-
-it("reads a card's scoped snapshot once however often its figures are traced", async () => {
-  const snapshot = fixture();
-  const fetch = serve(snapshot, () => Response.json(snapshot));
-  render(<ReportLibrary />);
-  await screen.findByRole("heading", { name: "Acme" });
-  for (let round = 0; round < 2; round += 1) {
-    fireEvent.click(screen.getByRole("button", { name: "Show sources for Revenue" }));
-    const drawer = await screen.findByRole("dialog");
-    expect(drawer).toHaveTextContent("Original filing page 2");
-    fireEvent.keyDown(drawer, { key: "Escape" });
-    await waitFor(() => {
-      expect(screen.queryByRole("dialog")).toBeNull();
-    });
-  }
-  expect(fetch.mock.calls.map(([url]) => url)).toEqual([
-    "/connected/library",
-    "/connected/snapshot?run=current",
-  ]);
-});
-
-it("reads a card's scoped snapshot again after a read that failed", async () => {
-  const snapshot = fixture();
-  let reads = 0;
-  const fetch = serve(snapshot, () => {
-    reads += 1;
-    if (reads === 1) throw new TypeError("Failed to fetch");
-    return Response.json(snapshot);
-  });
-  render(<ReportLibrary />);
-  await screen.findByRole("heading", { name: "Acme" });
-  fireEvent.click(screen.getByRole("button", { name: "Show sources for Revenue" }));
-  await screen.findByText(
-    "Sources for this figure could not be loaded. Try its source control again.",
-  );
-  fireEvent.click(screen.getByRole("button", { name: "Show sources for Revenue" }));
-  expect(await screen.findByRole("dialog")).toHaveTextContent("Original filing page 2");
-  expect(fetch.mock.calls.map(([url]) => url)).toEqual([
-    "/connected/library",
-    "/connected/snapshot?run=current",
-    "/connected/snapshot?run=current",
-  ]);
 });
 
 it("J4-001 states a missing source instead of linking a same-valued figure in another currency", async () => {

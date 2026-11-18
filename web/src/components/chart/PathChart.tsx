@@ -9,6 +9,7 @@ import {
   CartesianGrid,
   LineChart,
   ReferenceLine,
+  ResponsiveContainer,
   Tooltip,
   usePlotArea,
   useXAxisScale,
@@ -16,7 +17,6 @@ import {
   type TooltipContentProps,
   type XAxisTickContentProps,
 } from "recharts";
-import { Plot } from "./Plot";
 import { type TableCell, type TableRowData } from "./ChartTable";
 import { ChartWithTable } from "./ChartWithTable";
 import { SeriesLine } from "./SeriesLine";
@@ -347,7 +347,7 @@ function Chart({
     >
       <div className="min-w-[340px] min-[480px]:min-w-0">
         <div className="flex flex-col gap-3 [&_.recharts-surface:focus-visible]:outline-2 [&_.recharts-surface:focus-visible]:outline-solid [&_.recharts-surface:focus-visible]:outline-offset-2 [&_.recharts-surface:focus-visible]:outline-focus">
-          <Plot height={HEIGHT}>
+          <ResponsiveContainer width="100%" height={HEIGHT}>
             <LineChart
               title={title}
               data={data}
@@ -401,7 +401,7 @@ function Chart({
                 );
               })}
             </LineChart>
-          </Plot>
+          </ResponsiveContainer>
           {series.length >= 2 ? <Legend names={series.map((s) => s.name)} styles={styles} /> : null}
         </div>
       </div>

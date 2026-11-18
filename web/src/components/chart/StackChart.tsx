@@ -2,13 +2,13 @@ import type { ReactNode } from "react";
 import {
   Bar,
   BarChart,
+  ResponsiveContainer,
   Tooltip,
   XAxis,
   YAxis,
   type BarShapeProps,
   type TooltipContentProps,
 } from "recharts";
-import { Plot } from "./Plot";
 import { type TableRowData } from "./ChartTable";
 import { ChartWithTable } from "./ChartWithTable";
 import { ReadoutRow } from "./PathChart";
@@ -184,7 +184,7 @@ function Chart({ title, parts }: Pick<StackChartProps, "title" | "parts">) {
   const end = parts.reduce((last, p, i) => (isDrawn(p) ? i : last), -1);
   return (
     <div className="flex flex-col gap-6 [&_.recharts-surface:focus-visible]:outline-2 [&_.recharts-surface:focus-visible]:outline-solid [&_.recharts-surface:focus-visible]:outline-offset-2 [&_.recharts-surface:focus-visible]:outline-focus">
-      <Plot height={ROW_HEIGHT}>
+      <ResponsiveContainer width="100%" height={ROW_HEIGHT}>
         <BarChart
           title={title}
           layout="vertical"
@@ -218,7 +218,7 @@ function Chart({ title, parts }: Pick<StackChartProps, "title" | "parts">) {
             );
           })}
         </BarChart>
-      </Plot>
+      </ResponsiveContainer>
       <RankedLegend parts={parts} styles={styles} />
     </div>
   );
