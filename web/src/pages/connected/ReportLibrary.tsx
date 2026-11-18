@@ -1,7 +1,9 @@
 import { ArrowRight } from "@untitledui/icons";
 import {
+  memo,
   useCallback,
   useEffect,
+  useMemo,
   useRef,
   useState,
   useSyncExternalStore,
@@ -462,7 +464,8 @@ function ComparisonMeasuresTable({ rows }: { rows: ReturnType<typeof comparisonR
   );
 }
 
-function ReportPage({
+/** The open tab. It is drawn again only when the report, the run or the place in it changes. */
+const ReportPage = memo(function ReportPage({
   snapshot,
   run,
   routeKey,
@@ -479,7 +482,7 @@ function ReportPage({
   tab: Tab;
   mode: Mode;
 }) {
-  const view = buildReportView(snapshot, routeKey, run);
+  const view = useMemo(() => buildReportView(snapshot, routeKey, run), [snapshot, routeKey, run]);
   const calendar =
     tab === "overview" || tab === "calendar" ? buildCalendar(view.entries, run.folder) : null;
   const change = comparisonForRun(run, snapshot.workspace.runs);
@@ -542,7 +545,7 @@ function ReportPage({
       </PortfolioBasisProvider>
     </div>
   );
-}
+});
 
 function ReaderBadges({
   run,
@@ -845,7 +848,7 @@ function ReportReaderPage({ id, mode, retry }: { id: string; mode: Mode; retry: 
     resource.value ?? (resource.error ? { failure: "failed" } : undefined);
   const [sources, setSources] = useSourcesOn();
   const hash = useSyncExternalStore(listenHash, readHash);
-  const { tab, parts } = reportRoute(hash);
+  const { tab, parts } = useMemo(() => reportRoute(hash), [hash]);
   const { value, found, run, catalogue, issuer, labels } = reportPublication(loaded, id);
   const root = useRef<HTMLDivElement>(null);
   useReportPlace(root, hash, Boolean(run));

@@ -1,23 +1,34 @@
-import { lazy, Suspense, useEffect } from "react";
+import { lazy, Suspense, useEffect, type ComponentType } from "react";
 import { Button } from "@/components/base/buttons/button";
 import { Skeleton } from "@/components/gap/Skeleton";
 import { PageHeader } from "../../shell/PageHeader";
 import { Shell, type Area } from "../../shell/Shell";
+import { askAhead, LIBRARY_ADDRESS, snapshotAddress } from "./ahead";
 import type { Mode } from "./api";
 
-const ReportLibrary = lazy(() =>
-  import("./LibraryIndex").then(({ ReportLibrary }) => ({ default: ReportLibrary })),
-);
-const ReportReader = lazy(() =>
-  import("./ReportLibrary").then(({ ReportReader }) => ({ default: ReportReader })),
-);
-const RunActivity = lazy(() =>
-  import("./RunActivity").then(({ RunActivity }) => ({ default: RunActivity })),
-);
-const RunProgress = lazy(() =>
-  import("./RunProgress").then(({ RunProgress }) => ({ default: RunProgress })),
-);
-const StartRun = lazy(() => import("./StartRun").then(({ StartRun }) => ({ default: StartRun })));
+/**
+ * A page kept in its own file. Loaded ahead of the first drawing, it is drawn at once. A page first
+ * drawn while its file is still loading shows the loading blocks, and React keeps those on screen
+ * for 300 ms however soon the file arrives.
+ */
+function page<P extends object>(load: () => Promise<ComponentType<P>>) {
+  let Loaded: ComponentType<P> | undefined;
+  const Loading: ComponentType<P> = lazy(async () => ({ default: await load() }));
+  function Page(props: P) {
+    const Drawn = Loaded ?? Loading;
+    return <Drawn {...props} />;
+  }
+  const preload = async () => {
+    Loaded = await load();
+  };
+  return Object.assign(Page, { preload });
+}
+
+const ReportLibrary = page(() => import("./LibraryIndex").then((file) => file.ReportLibrary));
+const ReportReader = page(() => import("./ReportLibrary").then((file) => file.ReportReader));
+const RunActivity = page(() => import("./RunActivity").then((file) => file.RunActivity));
+const RunProgress = page(() => import("./RunProgress").then((file) => file.RunProgress));
+const StartRun = page(() => import("./StartRun").then((file) => file.StartRun));
 
 function LoadingPage() {
   return (
@@ -60,6 +71,26 @@ function reportFolder(path: string) {
   }
 }
 
+const RUN = /^\/run\/([a-zA-Z0-9][a-zA-Z0-9_.-]{0,79})\/?$/;
+
+/**
+ * Loads the page at `path` before the first drawing, and asks for what the library or a report
+ * reads first while that page loads.
+ */
+export function preloadPage(path: string) {
+  if (path === "/" || path === "/index.html") {
+    askAhead(LIBRARY_ADDRESS);
+    return ReportLibrary.preload();
+  }
+  if (path === "/start" || path === "/start/") return StartRun.preload();
+  if (path === "/runs" || path === "/runs/") return RunActivity.preload();
+  if (RUN.test(path)) return RunProgress.preload();
+  const report = reportFolder(path);
+  if (report === null) return Promise.resolve();
+  askAhead(snapshotAddress(report));
+  return ReportReader.preload();
+}
+
 export function ConnectedApp({
   path,
   search = window.location.search,
@@ -73,7 +104,7 @@ export function ConnectedApp({
   readOnly?: boolean;
   navigate?: (path: string) => void;
 }) {
-  const run = /^\/run\/([a-zA-Z0-9][a-zA-Z0-9_.-]{0,79})\/?$/.exec(path)?.[1];
+  const run = RUN.exec(path)?.[1];
   const report = reportFolder(path);
   const start = path === "/start" || path === "/start/";
   const prior = new URLSearchParams(search).get("from");

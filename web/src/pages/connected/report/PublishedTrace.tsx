@@ -1,6 +1,6 @@
 import { FileSearch02 } from "@untitledui/icons";
 import { Button } from "@/components/base/buttons/button";
-import { createContext, useContext, useState, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useState, type ReactNode } from "react";
 import { TraceButton } from "@/pages/library/parts/TraceControl";
 import { TraceDrawer } from "@/pages/library/parts/TraceDrawer";
 import type { Trace } from "@/pages/library/slice";
@@ -41,44 +41,47 @@ export function PublishedTraceProvider({
   });
   if (selection.route !== route) setSelection({ route, trace: null });
   const active = selection.route === route ? selection.trace : null;
-  const prefix = evidenceHref(folder, "");
-  const open: OpenTrace = (href, context) => {
-    if (!href.startsWith(prefix)) return null;
-    const location = resolveEvidenceLocation(entries, href.slice(prefix.length));
-    const line = location?.line;
-    if (!location || line === undefined || !handoffBlockAt(location.entry, line)) return null;
-    return () => {
-      const trace = traceForLine(snapshot, location.entry, location.index, line);
-      if (trace)
-        setSelection({
-          route,
-          trace: context
-            ? {
-                ...trace,
-                title: `Sources for ${context.heading}`,
-                heading: context.heading,
-                statement: context.statement,
-                derivation: {
-                  ...trace.derivation,
-                  children: [
-                    ...context.details.map(({ label, value }) => ({
-                      label,
-                      value,
-                      note: null,
-                      children: [],
-                    })),
-                    ...trace.derivation.children,
-                  ],
-                },
-                qualification:
-                  [...new Set([trace.qualification, context.qualification].filter(Boolean))].join(
-                    " ",
-                  ) || null,
-              }
-            : trace,
-        });
-    };
-  };
+  const open = useCallback<OpenTrace>(
+    (href, context) => {
+      const prefix = evidenceHref(folder, "");
+      if (!href.startsWith(prefix)) return null;
+      const location = resolveEvidenceLocation(entries, href.slice(prefix.length));
+      const line = location?.line;
+      if (!location || line === undefined || !handoffBlockAt(location.entry, line)) return null;
+      return () => {
+        const trace = traceForLine(snapshot, location.entry, location.index, line);
+        if (trace)
+          setSelection({
+            route,
+            trace: context
+              ? {
+                  ...trace,
+                  title: `Sources for ${context.heading}`,
+                  heading: context.heading,
+                  statement: context.statement,
+                  derivation: {
+                    ...trace.derivation,
+                    children: [
+                      ...context.details.map(({ label, value }) => ({
+                        label,
+                        value,
+                        note: null,
+                        children: [],
+                      })),
+                      ...trace.derivation.children,
+                    ],
+                  },
+                  qualification:
+                    [...new Set([trace.qualification, context.qualification].filter(Boolean))].join(
+                      " ",
+                    ) || null,
+                }
+              : trace,
+          });
+      };
+    },
+    [snapshot, folder, entries, route],
+  );
   return (
     <TraceContext.Provider value={open}>
       {children}

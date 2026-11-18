@@ -1,12 +1,6 @@
 import type { ReactNode } from "react";
-import {
-  BarChart,
-  CartesianGrid,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  type TooltipContentProps,
-} from "recharts";
+import { BarChart, CartesianGrid, Tooltip, XAxis, type TooltipContentProps } from "recharts";
+import { Plot } from "./Plot";
 import { useWrappedAxis, WrappedTick } from "./PathChart";
 import { BASELINE, HEIGHT, YAxisLabels, type YTick } from "./TrendChart";
 
@@ -49,7 +43,7 @@ export function BarCanvas({
   const axis = useWrappedAxis(categories, yTicks);
   return (
     <div className="flex flex-col gap-3 [&_.recharts-surface:focus-visible]:outline-2 [&_.recharts-surface:focus-visible]:outline-solid [&_.recharts-surface:focus-visible]:outline-offset-2 [&_.recharts-surface:focus-visible]:outline-focus">
-      <ResponsiveContainer width="100%" height={HEIGHT} onResize={axis.onResize}>
+      <Plot height={HEIGHT} onResize={axis.onResize}>
         <BarChart
           title={title}
           data={data}
@@ -71,7 +65,7 @@ export function BarCanvas({
           <Tooltip isAnimationActive={false} cursor={false} content={tooltip} />
           {children}
         </BarChart>
-      </ResponsiveContainer>
+      </Plot>
       {legend}
     </div>
   );

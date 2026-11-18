@@ -1,7 +1,6 @@
 import type { ReactNode } from "react";
 import {
   CartesianGrid,
-  ResponsiveContainer,
   Scatter,
   ScatterChart,
   Tooltip,
@@ -9,6 +8,7 @@ import {
   YAxis,
   type TooltipContentProps,
 } from "recharts";
+import { Plot } from "./Plot";
 import { type TableRowData } from "./ChartTable";
 import { ChartWithTable } from "./ChartWithTable";
 import { Mark } from "./marks";
@@ -206,7 +206,7 @@ function Chart({
   const missing = points.filter((p) => p.x === null || p.y === null);
   return (
     <div className="flex flex-col gap-3 [&_.recharts-surface:focus-visible]:outline-2 [&_.recharts-surface:focus-visible]:outline-solid [&_.recharts-surface:focus-visible]:outline-offset-2 [&_.recharts-surface:focus-visible]:outline-focus">
-      <ResponsiveContainer width="100%" height={HEIGHT + 24}>
+      <Plot height={HEIGHT + 24}>
         <ScatterChart title={title} margin={{ top: 8, right: 24, bottom: 0, left: 0 }}>
           <CartesianGrid vertical={false} stroke="var(--color-border-hairline)" />
           <Axes x={x} y={y} />
@@ -258,7 +258,7 @@ function Chart({
             }}
           />
         </ScatterChart>
-      </ResponsiveContainer>
+      </Plot>
       {names.length >= 2 ? <ScatterLegend names={names} styles={styles} /> : null}
       {missing.length === 0 ? null : (
         <p className="text-caption font-medium text-text-tertiary">

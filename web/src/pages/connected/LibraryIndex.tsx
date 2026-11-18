@@ -94,8 +94,27 @@ function resolveFigureSource(snapshot: Snapshot, catalogue: CatalogueRun, key: s
   return source ? { entries, source, folder: run.folder } : null;
 }
 
-async function figureSource(catalogue: CatalogueRun, key: string, signal: AbortSignal) {
-  const snapshot = await getSnapshot(signal, catalogue.id);
+const scopedReports = new WeakMap<LibraryIndex, Map<string, Promise<Snapshot | null>>>();
+
+/**
+ * A card's scoped report, read once for the library index on screen however many of its figures
+ * are traced; a read that failed is made again.
+ */
+function scopedReport(index: LibraryIndex, folder: string) {
+  const reports = scopedReports.get(index) ?? new Map<string, Promise<Snapshot | null>>();
+  scopedReports.set(index, reports);
+  const held = reports.get(folder);
+  if (held) return held;
+  const read = getSnapshot(new AbortController().signal, folder);
+  reports.set(folder, read);
+  read.catch(() => {
+    reports.delete(folder);
+  });
+  return read;
+}
+
+async function figureSource(index: LibraryIndex, catalogue: CatalogueRun, key: string) {
+  const snapshot = await scopedReport(index, catalogue.id);
   if (!snapshot) return null;
   if (
     metricIdentity(catalogueMetric(snapshot, catalogue.id, key)) !==
@@ -286,7 +305,7 @@ function MatchRuns({
               <HeadlineFigures
                 key={newest.id}
                 catalogue={newest}
-                requestSource={(key, signal) => figureSource(newest, key, signal)}
+                requestSource={(key) => figureSource(snapshot, newest, key)}
               />
               {linked && (
                 <div className="mt-auto flex flex-wrap items-center gap-3">
