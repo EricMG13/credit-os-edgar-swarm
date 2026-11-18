@@ -243,7 +243,7 @@ class Rig:
     def make(self, script: list[Step], **kwargs: Any) -> CopilotAdapter:
         self.client.script = script
         adapter = CopilotAdapter(
-            SPEC,
+            kwargs.pop("spec", SPEC),
             self.ruling,
             environ=kwargs.pop("environ", self.environ),
             clock=self.clock,
@@ -1259,10 +1259,10 @@ def test_a_compaction_in_a_timed_out_call_is_still_on_the_reply(rig: Rig) -> Non
     assert [c.kind for c in reply.compactions] == ["complete"]
 
 
-def test_compaction_stays_the_sdk_default(rig: Rig) -> None:
-    """Not disabled here: a module whose first prompt already exceeds the limit would fail."""
+def test_runtime_cannot_start_unreserved_background_model_calls(rig: Rig) -> None:
     call(rig.make(text_script()), request())
-    assert "infinite_sessions" not in rig.session.options
+    assert rig.session.options["infinite_sessions"] == {"enabled": False}
+    assert rig.session.options["autopilot"] == {"continuation_enabled": False}
 
 
 def test_a_compaction_call_exports_with_the_turns_own_billed_amount(
@@ -1531,3 +1531,74 @@ def test_a_release_leaves_another_modules_exchange_in_flight_alone(rig: Rig) -> 
     follow = call(adapter, request(*tool_turn_history(), tool_result), 1, digest=other)
     assert follow.kind == "ok"  # the other module's kept exchange still answers
     adapter.close()
+
+
+def test_seat_catalogue_does_not_open_an_inference_session(rig: Rig) -> None:
+    rig.client.models = [
+        {"id": "gpt-6.1-sol", "supportedReasoningEfforts": ["medium", None, "high"]},
+        {"id": "gpt-6-luna", "supportedReasoningEfforts": ["xhigh"]},
+        {"id": "unknown"},
+        {"id": "disabled", "supportedReasoningEfforts": ["high"], "policy": {"state": "disabled"}},
+    ]
+    adapter = rig.make([])
+    assert asyncio.run(adapter.seat_models()) == {
+        "gpt-6.1-sol": frozenset({"medium", "high"}),
+        "gpt-6-luna": frozenset({"xhigh"}),
+        "unknown": frozenset(),
+        "disabled": frozenset(),
+    }
+    assert rig.client.started == rig.client.stopped == 1
+    assert rig.client.sessions == []
+    assert not Path(rig.options[0].home).exists()
+
+
+@pytest.mark.parametrize(
+    ("efforts", "policy", "available"),
+    [
+        (None, None, False),
+        (["high"], None, False),
+        (["xhigh"], None, True),
+        (["xhigh"], "disabled", False),
+        (["xhigh"], "unconfigured", False),
+        (["xhigh"], "enabled", True),
+    ],
+)
+def test_luna_xhigh_requires_explicit_runtime_support(
+    rig: Rig, efforts: list[str] | None, policy: str | None, available: bool
+) -> None:
+    spec = ModelSpec("copilot-luna-xhigh", "copilot", "gpt-6-luna", "xhigh")
+    rig.ruling.write_text(
+        RULING_TEXT.replace("copilot-sol-medium", spec.config_id), encoding="utf-8"
+    )
+    listing: dict[str, Any] = {"id": spec.model, "supportedReasoningEfforts": efforts}
+    if policy is not None:
+        listing["policy"] = {"state": policy}
+    rig.client.models = [listing]
+    script = [said("ANSWER"), usage(model=spec.model, copilotUsage={"totalNanoAiu": 123}), Idle()]
+    adapter = rig.make(script, spec=spec)
+    reply = call(adapter, TurnRequest((SYSTEM, USER), (TOOL,), 1000, "xhigh"))
+    if available:
+        assert reply.kind == "ok"
+        assert rig.session.options["model"] == "gpt-6-luna"
+        assert rig.session.options["reasoning_effort"] == "xhigh"
+    else:
+        assert reply.kind == "not_sent" and reply.error_class == "EffortUnavailable"
+        assert rig.client.sessions == []
+
+
+def test_live_request_checks_catalogue_context_before_opening_a_session(rig: Rig) -> None:
+    rig.client.models[0]["capabilities"] = {"limits": {"max_context_window_tokens": 500}}
+    adapter = rig.make(text_script())
+    reply = call(adapter, request())
+    assert reply.kind == "not_sent" and reply.error_class == "ContextTooLong"
+    assert rig.client.sessions == []
+
+
+def test_continuation_checks_catalogue_limit_before_delivering_tool_results(rig: Rig) -> None:
+    rig.client.models[0]["capabilities"] = {"limits": {"max_prompt_tokens": 1000}}
+    adapter = rig.make(tool_script())
+    assert call(adapter, request()).kind == "ok"
+    tool_result = Message("tool", "x" * 6000, tool_call_id="c1")
+    reply = call(adapter, request(*tool_turn_history(), tool_result), 1)
+    assert reply.kind == "not_sent" and reply.error_class == "ContextTooLong"
+    assert rig.session.sent == [USER.text]

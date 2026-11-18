@@ -15,11 +15,14 @@ from zipfile import ZIP_DEFLATED, ZipFile, ZipInfo
 PROJECT = Path(__file__).resolve().parents[1]
 SOURCE_PATHS = (
     ".python-version",
+    "AGENTS.md",
     "METHODOLOGY-REVIEW.md",
     "README.md",
     "Run-React-Proof.cmd",
     "apps/issuer-library",
     "cases/context",
+    "docs/COPILOT.md",
+    "docs/QUALITY-GATE.md",
     "docs/design/brand-tokens.md",
     "docs/design/design-system.md",
     "docs/react-workflow.md",
@@ -79,6 +82,11 @@ def build_web(source: Path) -> Path:
 def write_bundle(source: ZipFile, dist: Path, output: Path, revision: str) -> None:
     with ZipFile(output, "w", ZIP_DEFLATED) as dest:
         for entry in source.infolist():
+            if entry.filename in {
+                "apps/issuer-library/credit_os/web/index.html",
+                "docs/templates/context-form.html",
+            }:
+                continue
             if not entry.is_dir():
                 dest.writestr(
                     ZipInfo(entry.filename, entry.date_time),

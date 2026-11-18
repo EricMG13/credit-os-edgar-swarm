@@ -1,14 +1,11 @@
-"""Update the Issuer Library: the static Credit OS library and issuer pages of completed runs.
+"""Publish a checked CP-OS snapshot for the connected issuer library.
 
     uv run python apps/issuer-library/update_library.py [--workspace FOLDER]
 
-Reads ``FOLDER/runs`` (default: this checkout; the Windows package needs ``--workspace``, which
-``Update library.cmd`` supplies) and writes only ``FOLDER/library/``: ``index.html`` with its
-scripts, styles, fonts and icons, ``data.js`` (the catalogue and the workspace store, as data) and
-``downloads/<run folder>/`` (the run's delivered handoffs and instruction files, byte for byte, one
-file each, and ``handoffs.zip`` for "Download all"). The runs' own files are never changed. The page
-opens from disk or served from the library folder: no network access. Which runs it lists is
-decided by ``deploy_workflow.library_index``. No analysis is run and no provider is called.
+Reads ``FOLDER/runs`` and atomically replaces only ``FOLDER/library/`` with ``data.js`` and
+``downloads/<run>/`` files copied byte for byte after their recorded hashes are verified. The
+React frontend serves this publication over localhost; no static page or delivered report is
+written here. Runs are never changed, no analysis is run, and no provider is called.
 """
 
 from __future__ import annotations
@@ -25,7 +22,6 @@ from typing import Any
 from urllib.parse import quote, unquote, urlsplit
 
 HERE = Path(__file__).resolve().parent
-WEB = HERE / "credit_os" / "web"
 PACKAGED = (HERE / "src").is_dir()  # The Windows package keeps the engine's src beside this file.
 ROOT = HERE if PACKAGED else HERE.parents[1]
 
@@ -44,19 +40,11 @@ from deploy_workflow.library_index import (
 )
 from deploy_workflow.run_events import read_events
 
-# Nothing is fetched: the page and the published models it frames come from its own folder, and no
-# request can leave it.
-POLICY = (
-    "default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; "
-    "img-src 'self' data:; frame-src 'self'; connect-src 'none'; base-uri 'none'; "
-    "form-action 'none'"
-)
-CSP_META = f'<meta http-equiv="Content-Security-Policy" content="{POLICY}">'
 FILES = "/files/"
 
 
 def relative_href(href: str) -> str:
-    """A server ``/files/...`` href as a path from ``library/index.html``, query removed."""
+    """A server ``/files/...`` href as a path relative to the published workspace."""
     path = unquote(urlsplit(href).path)[len(FILES) :]
     return "../" + quote(path, safe="/")
 
@@ -267,7 +255,6 @@ def handoff_zips(folder: Path, workspace: Path, store: dict[str, Any]) -> None:
 
 
 def build_into(folder: Path, workspace: Path, library: Library) -> None:
-    shutil.copytree(WEB, folder, ignore=shutil.ignore_patterns("*.test.cjs"), dirs_exist_ok=True)
     cat = catalogue(workspace, library)
     store = workspace_store(workspace, cat)
     run_records(workspace, store)
@@ -291,11 +278,6 @@ def build_into(folder: Path, workspace: Path, library: Library) -> None:
     (folder / "data.js").write_text(
         "window.CREDIT_OS_DATA=" + embedded_json(data) + ";\n", encoding="utf-8", newline="\n"
     )
-    page = folder / "index.html"
-    html = page.read_text(encoding="utf-8")
-    if "<head>" not in html:
-        raise Refused("Not written: the page template has no <head> to hold its policy")
-    page.write_text(html.replace("<head>", "<head>\n  " + CSP_META, 1), encoding="utf-8")
 
 
 def remove_folder(folder: Path) -> None:
@@ -319,12 +301,16 @@ def update_library(workspace: Path) -> Library:
     target = workspace / "library"
     if target.is_symlink() or (target.exists() and not target.is_dir()):
         raise Refused(f"Not written: {target} is a link or a file, not the library folder")
+    old = workspace / ".library-old"
+    # A process can exit after moving the current publication aside but before installing its
+    # replacement. Restore the last publication before attempting another build.
+    if not target.exists() and old.is_dir() and not old.is_symlink() and not old.is_junction():
+        old.rename(target)
     library = build_library(workspace, target)
     staging = Path(tempfile.mkdtemp(dir=workspace, prefix=".library-new-"))
-    old = workspace / ".library-old"
     try:
         build_into(staging, workspace, library)
-        staging.chmod(0o755)  # mkdtemp makes it owner-only; the page is shared like the reports.
+        staging.chmod(0o755)  # mkdtemp makes it owner-only; the publication is shared.
         remove_folder(old)
         had_library = target.exists()
         if had_library:
@@ -361,7 +347,7 @@ def main(argv: list[str] | None = None) -> int:
         print(f"Not shown: {len(library.excluded)} run folder(s).")
         for name, reason in library.excluded:
             print(f"  {name}: {reason}")
-    print(f"Open {args.workspace.resolve() / 'library' / 'index.html'}")
+    print(f"Published {args.workspace.resolve() / 'library' / 'data.js'}")
     return 0
 
 

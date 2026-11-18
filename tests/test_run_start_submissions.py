@@ -424,11 +424,10 @@ def test_the_summary_checks_the_cap_as_the_standing_ruling_will_run_it(
 
     monkeypatch.setattr(submissions, "prepare", watching)
     assert summary(layout, sid, answers_for(tmp_path))["error"] == ""
-    assert seen == [True]  # the standing ruling lists web-search and GPT Sol is OpenAI
+    assert seen == [False]  # Native Copilot search is unavailable pending qualification.
 
 
 def test_a_claude_summary_checks_the_cap_with_web_search_off(layout, tmp_path, monkeypatch):
-    # The ruling lists web-search, but search is OpenAI's hosted tool: a Claude run has none.
     monkeypatch.setenv("ANTHROPIC_API_KEY", "present")
     sid, _ = upload_issuer(layout, tmp_path)
     seen = []
@@ -440,7 +439,7 @@ def test_a_claude_summary_checks_the_cap_with_web_search_off(layout, tmp_path, m
     monkeypatch.setattr(submissions, "prepare", watching)
     answers = answers_for(tmp_path, level="advanced", model="claude")
     assert summary(layout, sid, answers)["error"] == ""
-    assert seen == [("opus-medium", False)]
+    assert seen == [("copilot-opus-medium", False)]
 
 
 def test_the_summary_is_for_the_module_list_the_digest_covers(layout, tmp_path):
@@ -1174,35 +1173,21 @@ def test_an_unknown_model_or_effort_is_refused_even_at_advanced(tmp_path, change
         submissions.validated(answers_for(tmp_path, level="advanced", **change))
 
 
-def test_a_claude_submission_is_refused_without_an_anthropic_key(layout, tmp_path, monkeypatch):
+@pytest.mark.parametrize(("model", "effort"), [("luna", "xhigh"), ("claude", "fast")])
+def test_advanced_prepares_offline_without_a_seat(layout, tmp_path, monkeypatch, model, effort):
     sid, _ = upload_issuer(layout, tmp_path)
-    answers = answers_for(tmp_path, level="advanced", model="claude", effort="high")
-    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
-    got = summary(layout, sid, answers)
-    assert got["error"] == "Claude Opus is not available on this service"
-    assert "digest" not in got
-    with pytest.raises(Refused, match="Claude Opus is not available on this service"):
-        submissions.require_provider_key(answers)
-    monkeypatch.setenv("ANTHROPIC_API_KEY", "")
-    with pytest.raises(Refused, match="not available"):
-        submissions.require_provider_key(answers)
-
-
-def test_a_claude_submission_is_accepted_with_an_anthropic_key_and_no_key_is_shown(
-    layout, tmp_path, monkeypatch
-):
-    sid, _ = upload_issuer(layout, tmp_path)
-    answers = answers_for(tmp_path, level="advanced", model="claude", effort="fast")
-    monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key-not-real")
+    answers = answers_for(tmp_path, level="advanced", model=model, effort=effort)
+    monkeypatch.delenv("COPILOT_GITHUB_TOKEN", raising=False)
+    monkeypatch.delenv("COPILOT_USE_GH_LOGIN", raising=False)
     got = summary(layout, sid, answers)
     assert got["error"] == "" and got["digest"]
-    assert "test-key-not-real" not in json.dumps(got)
-    submissions.require_provider_key(answers)
+    assert (got["model"], got["effort"]) == (model, effort)
 
 
-def test_a_gpt_submission_needs_no_anthropic_key(tmp_path, monkeypatch):
-    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
-    submissions.require_provider_key(answers_for(tmp_path))
+@pytest.mark.parametrize(("model", "effort"), [("luna", "balanced"), ("gpt", "xhigh")])
+def test_a_known_effort_for_the_wrong_model_is_refused(tmp_path, model, effort):
+    with pytest.raises(Refused, match="does not offer that reasoning effort"):
+        submissions.validated(answers_for(tmp_path, level="advanced", model=model, effort=effort))
 
 
 def test_the_digest_covers_the_model_and_effort(layout, tmp_path):
@@ -1622,16 +1607,16 @@ def web_search_of(layout, tmp_path, kind, monkeypatch, **change):
     return result["web_search"]
 
 
-def test_a_private_gpt_run_with_the_research_module_states_that_it_searches_the_web(
+def test_a_private_gpt_run_with_the_research_module_has_no_hosted_search(
     layout, tmp_path, monkeypatch
 ):
-    assert web_search_of(layout, tmp_path, "private", monkeypatch) is True
+    assert web_search_of(layout, tmp_path, "private", monkeypatch) is False
 
 
-def test_a_public_gpt_run_with_the_research_module_states_that_it_searches_the_web(
+def test_a_public_gpt_run_with_the_research_module_has_no_hosted_search(
     layout, tmp_path, monkeypatch
 ):
-    assert web_search_of(layout, tmp_path, "public", monkeypatch) is True
+    assert web_search_of(layout, tmp_path, "public", monkeypatch) is False
 
 
 def test_a_synthetic_case_summary_states_no_web_search(layout, tmp_path, monkeypatch):

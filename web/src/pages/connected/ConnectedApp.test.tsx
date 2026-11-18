@@ -1102,7 +1102,7 @@ describe("connected run start", () => {
     await advanceToPurpose();
     expect(
       screen.getByText(
-        "Web research runs for public and private cases, never for a synthetic test case.",
+        "Public cases can use approved lookups. Native Copilot web search is unavailable.",
       ),
     ).toBeInTheDocument();
     expect(
@@ -2195,6 +2195,26 @@ describe("connected activity and reports", () => {
       expect(screen.getByRole("heading", { name: "Page not found" })).toBeInTheDocument();
     },
   );
+
+  it("uses the summary's seat status when the picker advertised the pair earlier", async () => {
+    const fetchMock = testingFetch(plan, undefined, {
+      "/connected/context": {
+        ...context,
+        submission_caps_usd: submissionCaps,
+        copilot_models: { gpt: ["balanced"] },
+      },
+      "/api/submissions/sub-1/summary": { ...plan, copilot_verified: false },
+    });
+    render(<ConnectedApp path="/start" mode="live" />);
+    await review();
+    expect(
+      await screen.findByRole("button", { name: "Submit, spend up to USD 25.00" }),
+    ).toBeDisabled();
+    expect(
+      screen.getByText(/Paid Submit is unavailable because this model and effort pair/),
+    ).toBeVisible();
+    expect(fetchMock.mock.calls.some(([path]) => path.endsWith("/submit"))).toBe(false);
+  });
 
   it("uses the same reviewed submit in live mode with each limit accepted", async () => {
     const fetchMock = testingFetch({

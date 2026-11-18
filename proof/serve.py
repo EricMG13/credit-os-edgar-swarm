@@ -19,14 +19,13 @@ def main() -> None:
 
     from react_frontend import serve
 
-    # The legacy readiness check still requires a key. Give it a sentinel and
-    # remove other credentials known to its adapters from the child's environment.
-    os.environ["OPENAI_API_KEY"] = DUMMY_KEY
+    # The child validates the Copilot launch flags, then replaces complete with a canned reply.
+    os.environ["COPILOT_GITHUB_TOKEN"] = DUMMY_KEY
+    os.environ["COPILOT_CLI_PATH"] = str(Path(__file__).resolve())
     for key in (
+        "OPENAI_API_KEY",
         "ANTHROPIC_API_KEY",
         "OPENROUTER_API_KEY",
-        "COPILOT_GITHUB_TOKEN",
-        "COPILOT_CLI_PATH",
         "COPILOT_USE_GH_LOGIN",
     ):
         os.environ.pop(key, None)

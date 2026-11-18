@@ -1,7 +1,6 @@
-"""Start a CP-OS run with the bundled Python: the command-line launcher, unchanged.
+"""Prepare a CP-OS run with the embedded Windows Python.
 
-``Run workflow.cmd`` calls this and passes its arguments through. Without ``--live`` the launcher
-only prepares and reviews the run; ``--live`` with a ruling is the paid run (see the README).
+Run workflow.cmd forwards the launcher's offline preparation options.
 """
 
 import sys
@@ -9,4 +8,4 @@ import sys
 from deploy_workflow.owners.cpos_launch import main
 
 if __name__ == "__main__":
-    raise SystemExit(main(sys.argv[1:]))
+    raise SystemExit(main(sys.argv[1:], allow_live=False))

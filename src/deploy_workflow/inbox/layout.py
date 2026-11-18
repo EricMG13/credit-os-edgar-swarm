@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 MAX_ROOT = 80
-# The longest issuer ID the context form and the launcher accept (tests/test_context_form.py).
+# The longest issuer ID accepted by intake and the launcher.
 MAX_ISSUER_ID = 40
 
 

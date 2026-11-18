@@ -1,6 +1,8 @@
 import { type MockInstance } from "vitest";
 import {
   comparisonCaveat,
+  copilotEfforts,
+  copilotPairVerified,
   documentRefusal,
   filedElsewhere,
   issuerIdFor,
@@ -10,6 +12,18 @@ import {
   refusalLines,
   refusalProblems,
 } from "./plain";
+
+it("treats an absent capability map as legacy support but an empty map as unverified", () => {
+  expect(copilotPairVerified(undefined, "gpt", "balanced")).toBe(true);
+  expect(copilotPairVerified({}, "gpt", "balanced")).toBe(false);
+});
+
+it("limits Luna to the verified extra-high effort", () => {
+  expect(copilotEfforts({ luna: ["fast", "xhigh"] }, "luna")).toEqual(["xhigh"]);
+  expect(copilotPairVerified({ luna: ["fast", "xhigh"] }, "luna", "fast")).toBe(false);
+  expect(copilotPairVerified({ luna: ["xhigh"] }, "luna", "xhigh")).toBe(true);
+  expect(copilotEfforts({ gpt: ["fast", "xhigh"] }, "gpt")).toEqual(["fast"]);
+});
 
 const LOOKUP_LINES: [string, string][] = [
   [

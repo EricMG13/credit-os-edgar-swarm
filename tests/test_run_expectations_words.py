@@ -103,9 +103,8 @@ def test_rule_sentences_are_the_reader_words(rule_id: str) -> None:
     assert (BY_ID[rule_id].reason, BY_ID[rule_id].fix) == (reason, fix)
 
 
-# The connected page draws the Portfolio workbook select on its More context step; the legacy form
-# (docs/templates/context-form.html, kept by README ruling R17) draws it on Issuer and dates. Both
-# label it "Portfolio workbook", so the sentence names the control and no step.
+# The connected page labels this control "Portfolio workbook", so the sentence names the control
+# and not a particular step.
 PORTFOLIO_FIXES = {
     "portfolio-workbook-none": (
         "Add the fund's workbook, in the layout of the portfolio template, and choose it as the "

@@ -32,11 +32,12 @@ from deploy_workflow.model.adapter import (
     LivePauseInForce,
     check_ruling,
 )
+from deploy_workflow.model.configs import CONFIGS
 from deploy_workflow.model.handoff import _pages
 from deploy_workflow.model.providers import build
-from deploy_workflow.model.turn import Compaction, ToolCall, Turn, Usage, hosted_kind
+from deploy_workflow.model.turn import Compaction, ModelSpec, ToolCall, Turn, Usage, hosted_kind
+from deploy_workflow.owners import cpos, cpos_forecast, cpos_launch
 from deploy_workflow.owners import cpos_cp1_check as cp1_check
-from deploy_workflow.owners import cpos_forecast, cpos_launch
 from deploy_workflow.owners.cpos import (
     HandoffPlan,
     HandoffTask,
@@ -697,9 +698,39 @@ def answer(context: dict, plan_routes: list) -> str:
 
 @pytest.fixture
 def provider(monkeypatch):
-    """Fake provider that answers each module and records every call it receives."""
+    """Historical HTTP integration fake; it never creates a real transport or makes a request."""
     calls = []
     monkeypatch.setenv("OPENAI_API_KEY", "not-a-real-key")
+
+    # These old tests exercise ordering, persistence and delivery through the former HTTP route.
+    # Keep that route local to the fixture; real CLI routing is covered by the Copilot tests below.
+    monkeypatch.setattr(cpos, "_require_live_route", lambda config: None)
+    monkeypatch.setattr(cpos_launch, "_require_live_route", lambda config: None)
+
+    def historical_route(config, live, ruling):
+        if live and ruling is None:
+            raise LaunchRefused(f"--live needs --ruling docs/rulings/<file>.md naming {config}")
+        if ruling is not None:
+            check_ruling(config, ruling)
+        if live:
+            from deploy_workflow.model.adapter import KEY_VARIABLES
+
+            key = KEY_VARIABLES[CONFIGS[config].provider]
+            if not os.environ.get(key):
+                raise LaunchRefused(f"--live needs {key} in the launching environment")
+
+    monkeypatch.setattr(cpos_launch, "_check_cli_route", historical_route)
+
+    def historical_adapter(selected, ruling, environ, rulings_root):
+        return LiveAdapter(
+            ModelSpec(selected.config_id, selected.provider, selected.model, selected.effort),
+            ruling,
+            transport=lambda request: pytest.fail("the historical fake never uses HTTP transport"),
+            environ=environ,
+            rulings_root=rulings_root,
+        )
+
+    monkeypatch.setattr(cpos, "live_adapter_for", historical_adapter)
 
     def complete(self, request, **kwargs):
         context = json.loads(request.messages[1].text)
@@ -1048,9 +1079,33 @@ def with_case_kind(path: Path, kind: str) -> Path:
 STANDING = ROOT / "docs/rulings/2026-11-11-run-start-submit.md"
 
 
-def search_holds(tmp_path: Path, kind: str) -> tuple[Decimal, Decimal, list[str], str]:
+def historical_search_ruling(
+    tmp_path: Path,
+    monkeypatch,
+    *,
+    configs: str = "sol-medium opus-medium",
+    grant: bool = True,
+):
+    """A test-local copy of the retired OpenAI route grant used for historical behavior checks."""
+    from deploy_workflow.model import adapter
+
+    root = tmp_path / "historical-rulings"
+    root.mkdir(exist_ok=True)
+    ruling = root / "openai-search.md"
+    ruling.write_text(
+        "lifts: live-provider-pause\nby: user\ndate: 2026-11-05\n"
+        f"configs: {configs}{' web-search' if grant else ''}\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(adapter, "LIVE_RULINGS_ROOT", root)
+    return ruling
+
+
+def search_holds(
+    tmp_path: Path, kind: str, ruling: Path
+) -> tuple[Decimal, Decimal, list[str], str]:
     """The CP-DR hold without and with the ruling's search, the launcher's argv and its Web line."""
-    argv = launch(tmp_path, "--modules", "CP-DR", "--ruling", str(STANDING))
+    argv = launch(tmp_path, "--modules", "CP-DR", "--ruling", str(ruling))
     context = with_case_kind(tmp_path / "context.json", kind)
     holds = [
         prepare(
@@ -1067,9 +1122,12 @@ def search_holds(tmp_path: Path, kind: str) -> tuple[Decimal, Decimal, list[str]
     return holds[0], holds[1], argv, kind
 
 
-def test_a_synthetic_case_holds_no_search_fee_and_the_launcher_says_why(tmp_path, capsys):
+def test_a_synthetic_case_holds_no_search_fee_and_the_launcher_says_why(
+    tmp_path, capsys, monkeypatch
+):
     # One rule (model/handoff.py web_search_offered): the offline check holds what the loop holds.
-    plain, searching, argv, _ = search_holds(tmp_path, "synthetic")
+    ruling = historical_search_ruling(tmp_path, monkeypatch)
+    plain, searching, argv, _ = search_holds(tmp_path, "synthetic", ruling)
     assert searching == plain
     assert main(argv) == 0
     assert "Web:      off: synthetic case" in capsys.readouterr().out
@@ -1077,17 +1135,19 @@ def test_a_synthetic_case_holds_no_search_fee_and_the_launcher_says_why(tmp_path
 
 @pytest.mark.parametrize("kind", ["public", "private"])
 def test_a_public_or_private_case_holds_the_search_fee_and_the_launcher_says_it_searches(
-    tmp_path, capsys, kind
+    tmp_path, capsys, kind, monkeypatch
 ):
-    plain, searching, argv, _ = search_holds(tmp_path, kind)
+    ruling = historical_search_ruling(tmp_path, monkeypatch)
+    plain, searching, argv, _ = search_holds(tmp_path, kind, ruling)
     assert searching - plain == Decimal("0.16")
     assert main(argv) == 0
     assert "Web:      CP-DR searches the web" in capsys.readouterr().out
 
 
 def test_a_ruling_that_lists_web_search_makes_the_command_line_check_the_search_hold(
-    tmp_path, capsys
+    tmp_path, capsys, monkeypatch
 ):
+    no_search = historical_search_ruling(tmp_path, monkeypatch, configs="sol-medium", grant=False)
     base = launch(tmp_path, "--modules", "CP-DR")
     plain = prepare(
         tmp_path / "context.json",
@@ -1098,10 +1158,9 @@ def test_a_ruling_that_lists_web_search_makes_the_command_line_check_the_search_
         modules=("CP-DR",),
     )
     base[base.index("--cap") + 1] = str(plain.hold + Decimal("0.05"))
-    standing = ROOT / "docs/rulings/2026-11-11-run-start-submit.md"
-    assert main([*base, "--ruling", str(RULING)]) == 0  # no web-search in this ruling
+    assert main([*base, "--ruling", str(no_search)]) == 0  # no web-search in this ruling
     base[base.index("--out") + 1] = str(tmp_path / "out2")
-    assert main([*base, "--ruling", str(standing)]) == 2
+    assert main([*base, "--ruling", str(historical_search_ruling(tmp_path, monkeypatch))]) == 2
     assert "--cap" in capsys.readouterr().err
 
 
@@ -3789,8 +3848,6 @@ def test_six_handoff_headings_are_still_enforced(tmp_path):
     assert "## " + HEADINGS[4] in _checked_handoff(task, raw, checker(prepared.layout))[0]
 
 
-# runs/cpos-launch-live-001 is the retained attempt that the context bound below repairs.
-LIVE_CASE = ROOT / "runs/cpos-launch-live-002"
 LIVE_MODULES = {"CP-0", "CP-1", "CP-1A"}
 
 
@@ -3830,30 +3887,12 @@ def assert_live_evidence(out: Path, cap: Decimal) -> None:
     }
 
 
-@pytest.mark.live
-def test_live_launch_from_a_context_file_and_issuer_folder():
-    """Paid. Historical TDG FY2024 as of 2024-09-30; proves this launch path, not current credit.
-
-    Answers stay in the run folder, so a rerun rechecks them and sends nothing. Needs the provider
-    key in the environment and CPOS_LIVE_RULING naming a docs/rulings file that lists sol-medium.
-    """
-    ruling = os.environ.get("CPOS_LIVE_RULING")
-    if not ruling or not os.environ.get("OPENAI_API_KEY"):
-        pytest.skip("paid: set CPOS_LIVE_RULING and OPENAI_API_KEY to run")
-    # Its own folder: the launcher now asks for more, so answers retained in LIVE_CASE cannot be
-    # reused, and that retained run must not change. The USD 12 is the owner-approved maximum.
-    out = ROOT / "runs/cpos-reader-live-001"
-    cap = Decimal(12)
-    code = main(
-        [
-            *("--context", str(LIVE_CASE / "context.json")),
-            *("--sources", str(ROOT / "data/public-corpus/v1/TDG")),
-            *("--config", "sol-medium", "--cap", str(cap), "--modules", "CP-1", "CP-1A"),
-            *("--out", str(out), "--live", "--ruling", ruling),
-        ]
-    )
-    assert code == 0
-    assert_live_evidence(out, cap)
+def test_retained_direct_provider_evidence_is_readable():
+    """Recheck an optional retained TDG FY2024 run without opening a provider session."""
+    retained = os.environ.get("CPOS_RETAINED_DIRECT_RUN")
+    if not retained:
+        pytest.skip("historical verification: set CPOS_RETAINED_DIRECT_RUN to the retained folder")
+    assert_live_evidence(Path(retained), Decimal(12))
 
 
 COPILOT_RULING = (
@@ -3883,6 +3922,24 @@ def test_launcher_reports_copilot_key_variable(tmp_path, monkeypatch, capsys, co
     argv = copilot_argv(tmp_path, "copilot-sol-medium", "--live", "--ruling", str(copilot_ruling))
     assert main(argv) == 2
     assert "COPILOT_GITHUB_TOKEN" in capsys.readouterr().err
+
+
+def test_embedded_launcher_refuses_live_before_using_the_runtime(tmp_path, capsys):
+    argv = launch(tmp_path, "--live")
+    assert main(argv, allow_live=False) == 2
+    assert "embedded Windows launcher supports offline preparation only" in capsys.readouterr().err
+
+
+@pytest.mark.parametrize("config", ["sol-medium", "sol-high", "opus-medium", "deepseek-max"])
+def test_real_cli_refuses_historical_http_routes_without_the_legacy_fixture(
+    tmp_path, monkeypatch, capsys, config
+):
+    monkeypatch.setenv("OPENAI_API_KEY", "not-a-real-key")
+    argv = launch(tmp_path, "--live", "--ruling", str(RULING))
+    argv[argv.index("sol-medium")] = config
+    assert main(argv) == 2
+    assert "require a Copilot configuration" in capsys.readouterr().err
+    assert not (tmp_path / "out").exists()
 
 
 def test_launcher_names_both_copilot_credentials_when_neither_is_set(
@@ -4191,11 +4248,20 @@ def test_library_failure_keeps_the_run(tmp_path, monkeypatch, capsys, copilot_ru
 
 
 def test_refresh_library_loads_the_checkout_update_library(tmp_path, capsys):
-    """The real file-location loader, no stand-in: an empty workspace gets its library page."""
+    """The real file-location loader, no stand-in: an empty workspace gets its publication."""
     (tmp_path / "runs" / "x").mkdir(parents=True)
     cpos_launch._refresh_library(tmp_path / "runs" / "x")
-    assert (tmp_path / "library" / "index.html").is_file()
-    assert f"Library:  {tmp_path / 'library' / 'index.html'} (0 run(s))" in capsys.readouterr().out
+    assert (tmp_path / "library" / "data.js").is_file()
+    assert not (tmp_path / "library" / "index.html").exists()
+    printed = capsys.readouterr().out
+    assert "Library:" in printed and "(0 run(s))" in printed
+
+
+def library_browser_shell(index: Path) -> Path:
+    """Pair generated workspace data with the separately shipped static reader for browser tests."""
+    shell = ROOT / "apps/issuer-library/credit_os/web"
+    shutil.copytree(shell, index.parent, dirs_exist_ok=True)
+    return index
 
 
 def test_refresh_library_reports_a_real_refusal_and_keeps_going(tmp_path, capsys):
@@ -5187,7 +5253,10 @@ def test_the_forecast_tab_shows_the_model_only_for_the_run_that_published_one(
     text = (tmp_path / "library/data.js").read_text(encoding="utf-8")
     data = json.loads(text.removeprefix("window.CREDIT_OS_DATA=").rstrip().removesuffix(";"))
     (model,) = data["workspace"]["models"]
-    dom, console = visit(tmp_path / "library/index.html", f"#W-Forecast/{model['id']}?c={RUN_ID}")
+    dom, console = visit(
+        library_browser_shell(tmp_path / "library/index.html"),
+        f"#W-Forecast/{model['id']}?c={RUN_ID}",
+    )
     assert console == []
     assert "FY2025E" in dom and "1,050" in dom and "Downside" in dom
     assert "No forecast model was published" not in dom
@@ -5195,7 +5264,9 @@ def test_the_forecast_tab_shows_the_model_only_for_the_run_that_published_one(
     other.mkdir()
     code, _, seen = forecast_run(other, provider, capsys, None, modules=("CP-2A",))
     assert code == 0 and "Library not updated" not in seen.err
-    dom, console = visit(other / "library/index.html", f"#W-Forecast/none?c={RUN_ID}")
+    dom, console = visit(
+        library_browser_shell(other / "library/index.html"), f"#W-Forecast/none?c={RUN_ID}"
+    )
     assert console == []
     assert "No forecast model was published from this run’s files" in dom
 
@@ -5233,7 +5304,7 @@ def test_a_short_snapshot_run_in_the_library_is_listed_with_its_label_and_cp_l10
     data = json.loads(text.removeprefix("window.CREDIT_OS_DATA=").rstrip().removesuffix(";"))
     assert data["workspace"]["runs"][RUN_ID]["pathway"] == "short_snapshot"
     index = tmp_path / "library/index.html"
-    dom, console = visit(index, f"#W-Overview?c={RUN_ID}")
+    dom, console = visit(library_browser_shell(index), f"#W-Overview?c={RUN_ID}")
     assert console == []
     shown = re.sub(r"(?s)<(script|style)\b.*?</\1>|<[^>]+>|\s+", " ", dom)
     assert "Short credit snapshot" in shown  # the run label names the pathway as words
@@ -5289,7 +5360,7 @@ def test_each_pathways_run_reaches_the_library_screens(tmp_path, provider, capsy
     assert len(models) == forecast
     (delivery,) = (tmp_path / "runs" / RUN_ID / "deliveries").iterdir()
     pages = [
-        (tmp_path / "library/index.html", f"#W-{route}?c={RUN_ID}")
+        (library_browser_shell(tmp_path / "library/index.html"), f"#W-{route}?c={RUN_ID}")
         for route in (
             "Overview",
             "Reports/list",
@@ -5344,12 +5415,12 @@ def test_a_lite_run_fills_the_library_pages_and_its_forecast_page_states_the_gap
         "Forecast": f"#W-Forecast/none?c={RUN_ID}",
         "Evidence": f"#W-Evidence/sources?c={RUN_ID}",
     }.items():
-        dom, console = visit(index, route)
+        dom, console = visit(library_browser_shell(index), route)
         shown[name] = " ".join(re.sub(r"(?s)<(script|style)\b.*?</\1>|<[^>]+>", " ", dom).split())
         assert console == [], (name, console)
         assert UNFILLED.search(shown[name]) is None, (name, UNFILLED.findall(shown[name]))
         assert ISSUER in shown[name] and "Lite credit assessment" in shown[name], name
-    dom, _ = visit(index, f"#W-Overview/overview?c={RUN_ID}")
+    dom, _ = visit(library_browser_shell(index), f"#W-Overview/overview?c={RUN_ID}")
     # The lead is written by CP-2; the Overview no longer links its writer, so the trace
     # controls of the lead's key findings (the handoff file each was read from) are the evidence.
     lead = re.search(
@@ -5420,7 +5491,7 @@ def test_a_deep_run_fills_the_library_pages(tmp_path, provider, capsys):
         "Forecast": f"#W-Forecast/{model['id']}?c={RUN_ID}",
         "Evidence": f"#W-Evidence/sources?c={RUN_ID}",
     }.items():
-        dom, console = visit(index, route)
+        dom, console = visit(library_browser_shell(index), route)
         shown[name] = " ".join(re.sub(r"(?s)<(script|style)\b.*?</\1>|<[^>]+>", " ", dom).split())
         assert console == [], (name, console)
         assert UNFILLED.search(shown[name]) is None, (name, UNFILLED.findall(shown[name]))
@@ -6898,8 +6969,8 @@ def test_the_service_standing_ruling_lists_web_search_so_runs_from_the_page_sear
     from deploy_workflow.inbox.startup import STANDING_RULING
     from deploy_workflow.owners.cpos import web_search_ruled
 
-    assert web_search_ruled(STANDING_RULING)
-    assert not web_search_ruled(RULING)  # a ruling that lists only the config does not
+    assert not web_search_ruled(STANDING_RULING)  # standing Copilot route has no OpenAI grant
+    assert not web_search_ruled(RULING)  # historical ruling lists only the config
 
 
 def test_cp2g_is_told_how_to_state_facilities(tmp_path):
@@ -6923,13 +6994,14 @@ def test_cp2g_is_told_how_to_state_facilities(tmp_path):
     assert "`facilities`" not in texts["CP-1"]
 
 
-def test_web_search_is_ruled_for_openai_configs_only(monkeypatch):
+def test_web_search_is_ruled_for_openai_configs_only(monkeypatch, tmp_path):
     # The standing ruling lists web-search and both providers' configs; search is OpenAI's tool.
     from deploy_workflow.owners.cpos import web_search_run
 
-    assert web_search_run("sol-medium", STANDING) is True
-    assert web_search_run("opus-medium", STANDING) is False
-    assert web_search_run("opus-high", STANDING) is False
+    grant = historical_search_ruling(tmp_path, monkeypatch)
+    assert web_search_run("sol-medium", grant) is True
+    assert web_search_run("opus-medium", grant) is False
+    assert web_search_run("opus-high", grant) is False
     assert web_search_run("sol-medium", RULING) is False  # this ruling lists no web-search
     assert web_search_run("sol-medium", None) is False
 
@@ -6951,6 +7023,7 @@ def test_a_claude_run_under_a_ruling_that_lists_web_search_runs_with_search_off(
 
     monkeypatch.setattr(handoff, "HandoffExecutor", recording)
     monkeypatch.setattr(cpos, "live_adapter_for", lambda *args: object())
+    monkeypatch.setattr(cpos, "_require_live_route", lambda config: None)
     monkeypatch.setattr(cpos, "_release", lambda adapter, executor: None)
     prepared = prepare(
         context_file(tmp_path),
@@ -6960,12 +7033,13 @@ def test_a_claude_run_under_a_ruling_that_lists_web_search_runs_with_search_off(
         cap="15",
         modules=("CP-DR",),
     )
+    ruling = historical_search_ruling(tmp_path, monkeypatch)
     for config, searching in (("opus-medium", False), ("sol-medium", True)):
         with pytest.raises(Stop):
             cpos.run_live_handoffs(
                 prepared.manifest,
                 tmp_path / config,
-                ruling=STANDING,
+                ruling=ruling,
                 check=lambda *_: (),
                 config=config,
                 environ={},
@@ -6973,8 +7047,9 @@ def test_a_claude_run_under_a_ruling_that_lists_web_search_runs_with_search_off(
         assert seen["web_search"] is searching
 
 
-def test_a_claude_launch_says_search_is_off_and_holds_no_search_fee(tmp_path, capsys):
-    argv = launch(tmp_path, "--modules", "CP-DR", "--ruling", str(STANDING))
+def test_a_claude_launch_says_search_is_off_and_holds_no_search_fee(tmp_path, capsys, monkeypatch):
+    ruling = historical_search_ruling(tmp_path, monkeypatch, configs="opus-medium", grant=True)
+    argv = launch(tmp_path, "--modules", "CP-DR", "--ruling", str(ruling))
     argv[argv.index("sol-medium")] = "opus-medium"
     with_case_kind(tmp_path / "context.json", "public")
     plain = prepare(
@@ -6988,24 +7063,16 @@ def test_a_claude_launch_says_search_is_off_and_holds_no_search_fee(tmp_path, ca
     argv[argv.index("--cap") + 1] = str(plain.hold + Decimal("0.05"))  # a 0.16 fee would not fit
     assert main(argv) == 0
     out = capsys.readouterr().out
-    assert "Web:      off: web search is offered on GPT Sol only" in out
+    assert "Web:      off: web search is offered on GPT Sol only, not on this config" in out
     assert "CP-DR searches the web" not in out
 
 
 STANDING = ROOT / "docs/rulings/2026-11-11-run-start-submit.md"  # sol and opus configs
 
 
-@pytest.mark.parametrize(
-    ("config", "asked"),
-    [
-        ("opus-medium", 64000),
-        ("opus-high", 64000),
-        ("sol-medium", 32000),
-        ("sol-high", 32000),
-    ],
-)
-def test_the_launch_asks_anthropic_for_room_after_its_thinking(
-    tmp_path, monkeypatch, config, asked
+@pytest.mark.parametrize("config", ["copilot-opus-medium", "copilot-sol-medium"])
+def test_the_copilot_launch_uses_the_model_output_limit(
+    tmp_path, monkeypatch, config, copilot_ruling
 ):
     # A real run (tdg-proof-snapshot-opus-001, CP-4) lost its write_handoff call: Anthropic spends
     # thinking tokens out of the output limit, so 7,431 thinking plus the handoff did not fit in
@@ -7020,10 +7087,14 @@ def test_the_launch_asks_anthropic_for_room_after_its_thinking(
         raise RuntimeError("stop before any provider call")
 
     monkeypatch.setattr(cpos_launch, "run_live_handoffs", capture)
-    argv = launch(tmp_path, "--live", "--ruling", str(STANDING))
+    runtime = tmp_path / "copilot-runtime"
+    runtime.write_text("#!/bin/sh\n")
+    monkeypatch.setenv("COPILOT_CLI_PATH", str(runtime))
+    monkeypatch.setenv("COPILOT_GITHUB_TOKEN", "ghp_" + "Z" * 36)
+    argv = copilot_argv(tmp_path, config, "--live", "--ruling", str(copilot_ruling))
     argv[argv.index("--config") + 1] = config
     main(argv)
-    assert seen["max_output_tokens"] == asked
+    assert seen["max_output_tokens"] == 32000
 
 
 def test_the_offline_hold_follows_the_larger_anthropic_output_limit(tmp_path, monkeypatch):
@@ -8585,10 +8656,15 @@ def test_an_unknown_web_lookup_value_is_refused(tmp_path):
     assert stop.value.code == 2
 
 
-def test_the_live_run_is_handed_the_lookup_setting_hosts_and_cutoff(tmp_path, monkeypatch):
+def test_the_live_run_is_handed_the_lookup_setting_hosts_and_cutoff(
+    tmp_path, monkeypatch, copilot_ruling
+):
     from datetime import date
 
-    monkeypatch.setenv(cpos_launch.KEY_VARIABLES["openai"], "sk-test-" + "x" * 30)
+    monkeypatch.setenv("COPILOT_GITHUB_TOKEN", "ghp_" + "Z" * 36)
+    runtime = tmp_path / "copilot-runtime"
+    runtime.write_text("#!/bin/sh\n")
+    monkeypatch.setenv("COPILOT_CLI_PATH", str(runtime))
     seen = {}
 
     def fake_run(manifest, directory, **kwargs):
@@ -8596,8 +8672,9 @@ def test_the_live_run_is_handed_the_lookup_setting_hosts_and_cutoff(tmp_path, mo
         return directory / "delivery.json"
 
     monkeypatch.setattr(cpos_launch, "run_live_handoffs", fake_run)
-    argv = launch(
-        tmp_path, "--modules", "CP-DR", "--live", "--ruling", str(RULING), "--no-library",
+    argv = copilot_argv(
+        tmp_path, "copilot-sol-medium", "--modules", "CP-DR", "--live", "--ruling",
+        str(copilot_ruling), "--no-library",
         "--web-lookup", "on", "--web-host", "ir.example.com",
     )  # fmt: skip
     assert main(argv) == 0
@@ -8605,15 +8682,29 @@ def test_the_live_run_is_handed_the_lookup_setting_hosts_and_cutoff(tmp_path, mo
     assert seen["lookup_cutoff"] == date(2025, 3, 31)  # the as-of date: the context sets no cutoff
 
 
-def test_a_context_cutoff_before_the_as_of_date_is_the_lookup_cutoff(tmp_path, monkeypatch):
+def test_a_context_cutoff_before_the_as_of_date_is_the_lookup_cutoff(
+    tmp_path, monkeypatch, copilot_ruling
+):
     from datetime import date
 
-    monkeypatch.setenv(cpos_launch.KEY_VARIABLES["openai"], "sk-test-" + "x" * 30)
+    monkeypatch.setenv("COPILOT_GITHUB_TOKEN", "ghp_" + "Z" * 36)
+    runtime = tmp_path / "copilot-runtime"
+    runtime.write_text("#!/bin/sh\n")
+    monkeypatch.setenv("COPILOT_CLI_PATH", str(runtime))
     seen = {}
     monkeypatch.setattr(
         cpos_launch, "run_live_handoffs", lambda m, d, **k: seen.update(k) or d / "delivery.json"
     )
-    argv = launch(tmp_path, "--modules", "CP-DR", "--live", "--ruling", str(RULING), "--no-library")
+    argv = copilot_argv(
+        tmp_path,
+        "copilot-sol-medium",
+        "--modules",
+        "CP-DR",
+        "--live",
+        "--ruling",
+        str(copilot_ruling),
+        "--no-library",
+    )
     path = tmp_path / "context.json"
     data = json.loads(path.read_text())
     data["run"]["cutoff"] = "2025-01-15"

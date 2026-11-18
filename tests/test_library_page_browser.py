@@ -24,6 +24,7 @@ from library_fixtures import (
     inventory_text,
     make_run,
     method,
+    materialize_reference_ui,
 )
 from test_credit_os_catalogue import CHARTS
 
@@ -184,7 +185,9 @@ EARLIER_LEAD = (
 
 
 def visit(page: Path, route: str = "", width: int = 1280) -> tuple[str, list[str]]:
-    """The page's DOM after it ran, and its console messages."""
+    """The retained design-reference page DOM after it ran, and its console messages."""
+    if not page.is_file():
+        materialize_reference_ui(page.parent)
     done = subprocess.run(
         [
             chrome(),
@@ -208,6 +211,30 @@ def visit(page: Path, route: str = "", width: int = 1280) -> tuple[str, list[str
 @pytest.fixture(autouse=True)
 def stand_in_method(monkeypatch):
     monkeypatch.setattr("deploy_workflow.library_index.current_method", lambda: method())
+    publisher = update_library.update_library
+    real_run = subprocess.run
+
+    def build_reference(workspace):
+        result = publisher(workspace)
+        materialize_reference_ui(workspace / "library")
+        return result
+
+    monkeypatch.setattr(update_library, "update_library", build_reference)
+
+    def run_with_reference(*args, **kwargs):
+        result = real_run(*args, **kwargs)
+        command = args[0] if args else kwargs.get("args", ())
+        if isinstance(command, (list, tuple)) and any(
+            Path(part).name == "update_library.py" for part in command
+        ):
+            try:
+                workspace = Path(command[command.index("--workspace") + 1])
+            except (ValueError, IndexError):
+                return result
+            materialize_reference_ui(workspace / "library")
+        return result
+
+    monkeypatch.setattr(subprocess, "run", run_with_reference)
 
 
 def test_the_library_works_from_disk_without_any_request(tmp_path):
@@ -850,6 +877,8 @@ CODES_PROBE = """(async () => {
 
 
 def read_codes_probe(page: Path, run: str, start: str) -> dict:
+    if not page.exists():
+        materialize_reference_ui(page.parent)
     script = CODES_PROBE.replace("RUN", run).replace("START", start)
     (page.parent / "probe.js").write_text(script, encoding="utf-8")
     page.write_text(page.read_text().replace("</body>", '<script src="probe.js"></script></body>'))
@@ -1019,143 +1048,6 @@ def test_the_report_canvas_and_old_section_links(tmp_path):
     dom, console = visit(page, "#CP-1A/head?c=run-a")  # No CP-1A output in this run.
     assert console == []
     assert "No output found" in dom and "Not run in this run" not in dom
-
-
-FORM_PROBE = """<script>
-(() => {  // Its own scope: the form's script declares globals of its own.
-document.querySelector('[data-k="pathway"][value="credit_snapshot"]').checked = true;
-document.querySelector('[data-k="run_type"][value="secondary"]').checked = true;
-document.getElementById('f').dispatchEvent(new Event('change', {bubbles: true}));
-const radios = [...document.querySelectorAll('[data-k="pathway"]')];
-const shown = radios.filter(x => !x.closest('label').hidden).map(x => x.value);
-const out = document.createElement('pre');
-out.id = 'probe';
-const built = build();
-const other = JSON.parse(JSON.stringify(built));
-other.run.pathway = 'credit_snapshot';
-const warned = fill(other).filter(w => w.startsWith('run.pathway'));
-const same = fill(built).filter(w => w.startsWith('run.pathway'));
-const disabled = radios.filter(x => x.disabled).length;
-out.textContent = JSON.stringify({shown, disabled, built, warned, same});
-document.body.append(out);
-})();
-</script>
-</body>"""
-
-
-CUTOFF_PROBE = """<script>
-(() => {  // Its own scope: the form's script declares globals of its own.
-const asOf = document.getElementById('d-as_of'), cut = document.getElementById('d-cutoff');
-const type = (el, value) => {
-  el.value = value;
-  el.dispatchEvent(new Event('input', {bubbles: true}));
-};
-type(asOf, '2026-10-31');
-const followed = build().run.cutoff;
-type(cut, '2026-09-30');
-type(asOf, '2026-11-05');
-const kept = build().run.cutoff;
-type(cut, '');
-const cleared = build().run.cutoff;
-const file = JSON.parse(JSON.stringify(build()));
-file.run.as_of = '2026-08-31';
-file.run.cutoff = '';
-const notes = fill(file).filter(n => n.startsWith('run.cutoff'));
-const loaded = build().run.cutoff;
-const out = document.createElement('pre');
-out.id = 'probe';
-out.textContent = JSON.stringify({followed, kept, cleared, notes, loaded});
-document.body.append(out);
-})();
-</script>
-</body>"""
-
-
-def test_the_research_cutoff_follows_the_as_of_date_and_is_written(tmp_path):
-    # Session A, 2026-11-10: the modules read a blank cutoff in the pinned context as "information
-    # cutoff not supplied". The code reads blank as the as-of date, so the form writes that date.
-    page = tmp_path / "cutoff.html"
-    text = (ROOT / "docs/templates/context-form.html").read_text(encoding="utf-8")
-    page.write_text(text.replace("</body>", CUTOFF_PROBE, 1), encoding="utf-8")
-    dom, console = visit(page)
-    assert console == []
-    probe = json.loads(html.unescape(re.search(r'<pre id="probe">(.*?)</pre>', dom, re.DOTALL)[1]))
-    assert probe["followed"] == "2026-10-31"  # Follows the as-of date ...
-    assert probe["kept"] == "2026-09-30"  # ... until the analyst sets an earlier one ...
-    assert probe["cleared"] == "2026-11-05"  # ... and again once that is cleared.
-    assert probe["loaded"] == "2026-08-31" and len(probe["notes"]) == 1  # A blank file says so.
-
-
-SOURCES_PROBE = """<script>
-(() => {  // Its own scope: the form's script declares globals of its own.
-const pick = (attr, value) => {
-  document.querySelector(`[${attr}][value="${value}"]`).checked = true;
-  document.getElementById('f').dispatchEvent(new Event('change', {bubbles: true}));
-};
-const forecast = () => Object.fromEntries(readiness(build()).mods.map(m => [m.id, m]));
-pick('data-k="pathway"', 'distressed_restructuring');
-const peers = forecast();
-const asked = [...document.querySelectorAll('[data-chk]')].map(c => c.dataset.chk);
-pick('data-k="pathway"', 'earnings_update');
-// No bridge file is chosen: the attachment is false, and the forecast says so.
-const out = document.createElement('pre');
-out.id = 'probe';
-out.textContent = JSON.stringify({
-  source: build().valuation.peer_source,
-  asked,
-  research: peers['CP-DR'],
-  benchmark: peers['CP-1C'].status,
-  nobridge: forecast()['CP-1D'].status,
-});
-document.body.append(out);
-})();
-</script>
-</body>"""
-
-
-def test_the_research_module_supplies_the_peers_and_the_bridge_is_forecast_as_run(tmp_path):
-    # Owner, 2026-11-10: "Cp-dr supplies the peers, the user does not provide them unless they
-    # specifically want to in the context file." So the form never asks for peers' filings, and the
-    # research module's block in live run tdg-all-001 (no web-search grant in its ruling) is a note,
-    # not the analyst's to fix. That run's Earnings quality came back Restricted with no bridge.
-    page = tmp_path / "sources.html"
-    text = (ROOT / "docs/templates/context-form.html").read_text(encoding="utf-8")
-    page.write_text(text.replace("</body>", SOURCES_PROBE, 1), encoding="utf-8")
-    dom, console = visit(page)
-    assert console == []
-    probe = json.loads(html.unescape(re.search(r'<pre id="probe">(.*?)</pre>', dom, re.DOTALL)[1]))
-    assert probe["source"] == "cp_dr_public"  # The research module finds the peers by default ...
-    assert probe["asked"] and not any("peer" in item for item in probe["asked"])  # ... unasked.
-    research = probe["research"]
-    assert research["status"] == "information" and len(research["items"]) == 1
-    assert "web-search" in research["items"][0]["reason"]  # The ruling's grant, not the analyst's.
-    assert probe["benchmark"] == "ready"
-    assert probe["nobridge"] == "limited"
-
-
-def test_a_copy_of_the_page_marked_with_a_pathway_no_longer_fixes_it(tmp_path):
-    # The folder watcher once wrote such a copy into each inbox folder; the page's mark is ignored.
-    marked = (ROOT / "docs/templates/context-form.html").read_text(encoding="utf-8")
-    assert marked.count('<html lang="en">') == 1
-    marked = marked.replace('<html lang="en">', '<html lang="en" data-pathway="earnings_update">')
-    page = (
-        tmp_path / "probe.html"
-    )  # The form with a probe that tries another pathway and run type, then reads.
-    page.write_text(marked.replace("</body>", FORM_PROBE, 1), encoding="utf-8")
-    dom, console = visit(page)
-    assert console == []
-    probe = json.loads(html.unescape(re.search(r'<pre id="probe">(.*?)</pre>', dom, re.DOTALL)[1]))
-    # The page is served by the start service, not opened from a folder: the copy's
-    # data-pathway mark is ignored, every pathway is offered and none is disabled.
-    # the six, the lite credit assessment and the deep one
-    # (ruling 2026-11-15-pathway-tiers-and-caps)
-    assert len(probe["shown"]) == 8 and probe["disabled"] == 0
-    assert probe["built"]["run"]["pathway"] == "credit_snapshot"  # The probe's own choice held ...
-    # The probe's event targets the form, not the radio, so the run type stays at the
-    # pathway's default (research for the Full credit assessment).
-    assert probe["built"]["run"]["run_type"] == "research"
-    assert probe["warned"] == []  # A loaded context naming another pathway is not replaced.
-    assert probe["same"] == []
 
 
 @pytest.mark.parametrize("width", [1440, 1280])
@@ -1543,6 +1435,8 @@ def test_the_run_header_keeps_as_of_on_one_line_beside_the_start_link_when_serve
 def inject_probe(page: Path, script: str, config=None) -> None:
     """Add `script` to the built page; it reads `window.PROBE` (the `config`) and writes its JSON
     to <pre id="probe">."""
+    if not page.exists():
+        materialize_reference_ui(page.parent)
     (page.parent / "probe-config.js").write_text(
         "window.PROBE=" + json.dumps(config or {}) + ";", encoding="utf-8"
     )

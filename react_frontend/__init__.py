@@ -92,25 +92,6 @@ def _without_workspace(catalogue: dict[str, Any]) -> dict[str, Any]:
     return {key: value for key, value in catalogue.items() if key != "workspace"}
 
 
-def _library_data(reply: http_base.Reply) -> http_base.Reply:
-    """The library page's data.js without the ``catalogue.workspace`` an older build wrote.
-
-    Recognised by its assignment, not its path, so every spelling of the path is covered. A file
-    without the key is answered as read; one that begins with the assignment and is not a JSON
-    object is refused, as the snapshot refuses it."""
-    body = reply.body
-    if not (isinstance(body, bytes) and body.startswith(EXPORT_PREFIX.encode("ascii"))):
-        return reply
-    _, snapshot = _decode_publication(body)
-    catalogue = snapshot.get("catalogue")
-    if not (isinstance(catalogue, dict) and "workspace" in catalogue):
-        return reply
-    # The builder's own form (update_library.embedded_json): ASCII, and no "<" to open a tag.
-    kept = {**snapshot, "catalogue": _without_workspace(catalogue)}
-    text = json.dumps(kept, ensure_ascii=True, allow_nan=False).replace("<", "\\u003c")
-    return http_base.Reply(reply.status, f"{EXPORT_PREFIX}{text};\n".encode("ascii"), reply.headers)
-
-
 def _admitted_scope(layout: Layout, folder: str | None) -> dict[str, Any] | None:
     payload, snapshot = _read_publication(layout.engine / "library" / "data.js")
     del payload
@@ -315,7 +296,7 @@ def _connected_reply(
 ) -> http_base.Reply | None:
     path = url.path
     if path == "/connected/context":
-        return http_base.Reply(200, {**context, "submission_caps_usd": caps})
+        return http_base.Reply(200, {"copilot_models": {}, **context, "submission_caps_usd": caps})
     if match := RUN_ACTIVITY.fullmatch(path):  # one run by its ID, or the runs in progress
         return run_activity.reply(layout, match[1]) if match[1] else run_activity.listing(layout)
     if path == "/connected/library":
@@ -403,6 +384,8 @@ def _handler(
 
         def _get(self, url: SplitResult) -> None:
             path = url.path
+            if path in {"/library", "/library/", "/library/index.html", "/library.html"}:
+                raise http_base.Reply(308, b"", {"Location": "/"})
             if _app_page(path):
                 raise http_base.Reply(
                     200,
@@ -427,10 +410,6 @@ def _handler(
                 raise response
             super()._get(url)
 
-        def _file(self, base: Path, relative: str, *, direct: bool) -> http_base.Reply:
-            reply = super()._file(base, relative, direct=direct)
-            return _library_data(reply) if base == self._layout.engine / "library" else reply
-
         def _publication(self, folder: str | None = None) -> tuple[bytes, dict[str, Any] | None]:
             return _visible_scope(self._layout, folder)
 
@@ -447,6 +426,7 @@ def make_server(  # noqa: PLR0913 - explicit launcher, mode and server options
     synthetic: bool = False,
     signal_url: str = "",
     read_only: bool = False,
+    copilot_models: Mapping[str, frozenset[str]] | None = None,
 ) -> Iterator[service._Server]:
     """Hold the upstream scheduler for the lifetime of the React HTTP server."""
     if (synthetic and not launcher) or (not synthetic and launcher is not None):
@@ -458,11 +438,16 @@ def make_server(  # noqa: PLR0913 - explicit launcher, mode and server options
     page = _read_page(dist, synthetic=synthetic, signal_url=signal_link, read_only=read_only)
     context = _form_template(synthetic=synthetic)
     settings = (  # Teams cards are for real runs only: a synthetic service never posts
-        Settings(root, teams=teams.config_from_environment(teams.CONNECTED_PAGES))
+        Settings(
+            root,
+            teams=teams.config_from_environment(teams.CONNECTED_PAGES),
+            copilot_models=copilot_models or {},
+        )
         if launcher is None
-        else Settings(root, launcher=launcher, poll_seconds=0.2)
+        else Settings(root, launcher=launcher, poll_seconds=0.2, copilot_models=None)
     )
     scheduler = Scheduler(settings)
+    context["copilot_models"] = scheduler.model_choices
     try:
         with service.make_server(scheduler, "127.0.0.1", port, signal_link) as server:
             server.RequestHandlerClass = _handler(dist, page, context, read_only=read_only)
@@ -480,9 +465,16 @@ def serve(  # noqa: PLR0913 - match the server options
     launcher: tuple[str, ...] | None = None,
     synthetic: bool = False,
     signal_url: str = "",
+    copilot_models: Mapping[str, frozenset[str]] | None = None,
 ) -> None:
     with make_server(
-        root, web=web, port=port, launcher=launcher, synthetic=synthetic, signal_url=signal_url
+        root,
+        web=web,
+        port=port,
+        launcher=launcher,
+        synthetic=synthetic,
+        signal_url=signal_url,
+        copilot_models=copilot_models,
     ) as server:
         worker = threading.Thread(target=server.serve_forever)
         worker.start()

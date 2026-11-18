@@ -12,5 +12,6 @@ Copy-Item (Join-Path $Engine 'smoke-context.json') (Join-Path $Work 'context.jso
 if ($LASTEXITCODE -ne 0) { throw 'The offline run review failed' }
 & $Python -I -B -X utf8 (Join-Path $Engine 'update_library.py') --workspace $Work
 if ($LASTEXITCODE -ne 0) { throw 'The library update failed' }
-if (-not (Test-Path (Join-Path $Work 'library\index.html'))) { throw 'No library page was written' }
+if (-not (Test-Path (Join-Path $Work 'library\data.js'))) { throw 'No library publication was written' }
+if (Test-Path (Join-Path $Work 'library\index.html')) { throw 'A retired library page was written' }
 Write-Output "Smoke test passed. Workspace: $Work"

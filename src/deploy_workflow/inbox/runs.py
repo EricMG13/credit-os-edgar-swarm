@@ -9,7 +9,7 @@ import re
 import subprocess
 import sys
 import unicodedata
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from dataclasses import asdict, dataclass
 from decimal import Decimal, InvalidOperation
 from pathlib import Path
@@ -18,6 +18,7 @@ from typing import Literal, cast, get_args
 from deploy_vii.contracts import PATHWAY_CAP_USD, PathwayId
 from deploy_workflow import platform_io
 from deploy_workflow.inbox.layout import Layout
+from deploy_workflow.model.configs import CONFIGS
 from deploy_workflow.owners.cpos_launch import METHODS
 from deploy_workflow.run_events import EVENTS, progress, read_events
 from deploy_workflow.run_expectations import Item
@@ -31,19 +32,19 @@ DEFAULT_MAX_TURNS = 32
 _TURNS = (1, 64)  # the range submissions.validated accepts
 _PRIOR = re.compile(r"[A-Za-z0-9][A-Za-z0-9_.-]*")  # a run folder name, or `none`
 FORECAST_CODE = "CP-MODEL"  # in a module list: publish the forecast (cpos_launch.py)
-MODELS = ("gpt", "claude")
-EFFORTS = ("fast", "balanced", "high")
-# The only launches the service makes: (model, effort) -> (launcher --config, --balanced or not).
-# Every config named here must be named by the standing ruling; start-up checks all of them.
-_LAUNCHES: dict[tuple[str, str], tuple[str, bool]] = {
-    ("gpt", "fast"): ("sol-medium", False),
-    ("gpt", "balanced"): ("sol-medium", True),
-    ("gpt", "high"): ("sol-high", False),
-    ("claude", "fast"): ("opus-medium", False),
-    ("claude", "balanced"): ("opus-medium", True),
-    ("claude", "high"): ("opus-high", False),
+MODELS = ("gpt", "claude", "luna")
+EFFORTS = ("fast", "balanced", "high", "xhigh")
+# Service launch configurations. Every name is checked against the standing ruling at startup.
+_LAUNCHES: dict[tuple[str, str], str] = {
+    ("gpt", "fast"): "copilot-sol-medium",
+    ("gpt", "balanced"): "copilot-sol-medium",
+    ("gpt", "high"): "copilot-sol-high",
+    ("claude", "fast"): "copilot-opus-medium",
+    ("claude", "balanced"): "copilot-opus-medium",
+    ("claude", "high"): "copilot-opus-high",
+    ("luna", "xhigh"): "copilot-luna-xhigh",
 }
-LAUNCH_CONFIGS = tuple(dict.fromkeys(config for config, _ in _LAUNCHES.values()))
+LAUNCH_CONFIGS = tuple(dict.fromkeys(_LAUNCHES.values()))
 
 
 @dataclass
@@ -78,6 +79,7 @@ class Record:
     # Exact decision items from the issued summary; None means a record predates this metadata.
     approved_summary_limits: list[Item] | None = None
     newest_document_date: str = ""  # Optional approved override for sealed-upload recovery.
+    config: str = ""  # Copilot config shown when approved. Older records predate the cutover.
 
 
 def approved_summary_limits(value: object) -> list[Item] | None:
@@ -253,9 +255,22 @@ def alive(pid: int) -> bool:
 def launch_options(model: str, effort: str) -> tuple[str, bool]:
     """The launcher ``--config`` and whether ``--balanced`` follows it, for a model and effort."""
     try:
-        return _LAUNCHES[model, effort]
+        return _LAUNCHES[model, effort], effort == "balanced"
     except (KeyError, TypeError):
         raise ValueError(f"no launch for model {model!r} at effort {effort!r}") from None
+
+
+def available_choices(
+    models: Mapping[str, frozenset[str]] | None,
+) -> dict[str, list[str]]:
+    """Map a verified seat catalogue to intake choices. None is reserved for synthetic runs."""
+    choices: dict[str, list[str]] = {}
+    for (model, effort), config in _LAUNCHES.items():
+        selected = CONFIGS[config]
+        required = {selected.effort, "high"} if effort == "balanced" else {selected.effort}
+        if models is None or required <= models.get(selected.model, frozenset()):
+            choices.setdefault(model, []).append(effort)
+    return choices
 
 
 def config_for(model: str, effort: str) -> str:
@@ -282,6 +297,9 @@ def _check_options(record: Record) -> None:
             raise ValueError(
                 f"run {record.id}: {field} {value!r} is not one of {', '.join(allowed)}"
             )
+    config, _ = launch_options(record.model, record.effort)
+    if record.config and record.config != config:
+        raise ValueError("the recorded model configuration changed; review the run again")
     for name in record.modules:
         if not known_module(name):
             raise ValueError(f"run {record.id}: {name!r} is not a module")

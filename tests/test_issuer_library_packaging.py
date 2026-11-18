@@ -38,6 +38,7 @@ def offline(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> list[str]:
         *("engine/bridge.py", "engine/store.py", "engine/catalog.json", "engine/run_workflow.py"),
         *("update_library.py", "credit_os/store.py", "credit_os/catalog.json"),
         *("credit_os/web/index.html", "credit_os/web/static.test.cjs"),
+        "credit_os/web/brand/symbol.svg",
     ]:
         (app / name).parent.mkdir(parents=True, exist_ok=True)
         (app / name).write_text("x")
@@ -56,10 +57,7 @@ def offline(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> list[str]:
     (root / "docs/visualisations/catalogue.csv").write_text("id\nV1\n")
     (root / "docs/rulings").mkdir()
     (root / "docs/rulings/2026-11-09-inbox-automation.md").write_text("old ruling")
-    (root / "docs/rulings/2026-11-11-run-start-submit.md").write_text("ruling")
     (root / "docs/rulings/2026-11-04-live-module-tests.md").write_text("another ruling")
-    (root / "docs/templates").mkdir()
-    (root / "docs/templates/context-form.html").write_text('<html lang="en">')
     cache.mkdir()
     downloaded: list[str] = []
 
@@ -180,37 +178,22 @@ def test_the_package_ships_the_static_library_and_its_two_windows_wrappers(
         for p in (engine / "credit_os").rglob("*")
         if p.is_file()
     )
-    assert shipped == ["catalog.json", "store.py", "web/index.html"]  # Not the node tests.
+    assert shipped == ["catalog.json", "store.py", "web/brand/symbol.svg"]  # No page or node tests.
     # store.REPO is engine/ in the package, so visual_catalogue() reads this exact path.
     assert (engine / "docs/visualisations/catalogue.csv").read_text() == "id\nV1\n"
     assert not (engine / "static").exists()
     assert not (engine / "bridge.py").exists()  # The lean package has no server bridge.
-    # Only the run page's ruling ships; the scheduler passes it on every launch.
-    shipped_rulings = [p.name for p in (engine / "docs/rulings").iterdir()]
-    assert shipped_rulings == ["2026-11-11-run-start-submit.md"]
     assert (engine / "src/deploy_workflow/inbox/scheduler.py").read_text() == "SCHEDULER = 1"
-    assert (engine / "src").is_dir() and (engine / "docs/templates/context-form.html").is_file()
-    for name in ["Run workflow.cmd", "Update library.cmd", "Start run page.cmd"]:
+    assert (engine / "src").is_dir()
+    for name in ["Run workflow.cmd", "Start signal.cmd"]:
         raw = (target / name).read_bytes()
         assert raw.startswith(b"@echo off\r\n") and b"\n" not in raw.replace(b"\r\n", b"")
     run = (target / "Run workflow.cmd").read_text()
     python = '"%~dp0engine\\runtime\\python.exe" -I -B -X utf8'
     assert f'{python} "%~dp0engine\\run_workflow.py" %*' in run
-    update = (target / "Update library.cmd").read_text()
-    assert '--workspace "%WORKSPACE%"' in update
-    assert 'start "" "%WORKSPACE%\\library\\index.html"' in update
-    page = (target / "Start run page.cmd").read_text()
-    line = f'{python} -m deploy_workflow.run_start --root "%ROOT%" --host "%HOSTADDR%" --port 8765'
-    assert line in page
-    assert 'set "ROOT=%~1"' in page and "%FINAL_WORKFLOW_WORKSPACE%" in page
-    assert 'set "HOSTADDR=%~2"' in page  # The second argument is the address ...
-    assert (
-        'if not defined HOSTADDR set "HOSTADDR=127.0.0.1"' in page
-    )  # ... this machine's by default.
-    assert "exit /b 1" in page  # No root: the usage and a failure.
-    assert "API_KEY" not in page and "TOKEN" not in page  # It sets no key.
+    assert not (target / "Update library.cmd").exists()
+    assert not (target / "Start run page.cmd").exists()
     assert not (target / "Start watcher.cmd").exists()
-    assert "0.0.0.0" not in line
 
 
 def test_the_package_ships_the_signal_starter_and_its_page_files(
@@ -241,19 +224,42 @@ def test_the_package_ships_the_signal_starter_and_its_page_files(
         "signal.js",
     ]  # not the node test
     # signal.service finds the brand files at engine/credit_os/web, beside engine/src.
-    assert (target / "engine/credit_os/web/index.html").is_file()
+    assert (target / "engine/credit_os/web/brand/symbol.svg").is_file()
+    assert not (target / "engine/credit_os/web/index.html").exists()
 
 
-def test_the_package_ships_the_run_page_starter_and_the_new_ruling(
+def test_the_package_omits_the_retired_form_and_start_page_files(
     tmp_path: Path, offline: list[str]
 ) -> None:
     target = tmp_path / "windows-amd64"
-    target.mkdir()
+    engine = target / "engine"
+    (engine / "docs/templates").mkdir(parents=True)
+    (engine / "docs/rulings").mkdir(parents=True)
+    (engine / "credit_os/web").mkdir(parents=True)
+    for name in ("Update library.cmd", "Start run page.cmd"):
+        (target / name).write_text("legacy", encoding="utf-8")
+    for name in (
+        "engine/docs/templates/context-form.html",
+        "engine/docs/rulings/2026-11-11-run-start-submit.md",
+        "engine/credit_os/web/index.html",
+    ):
+        (target / name).write_text("legacy", encoding="utf-8")
     runtime.bundle(target, None)
-    assert (target / "Start run page.cmd").is_file()
-    assert not (target / "Start watcher.cmd").exists()
-    assert (target / "engine/docs/rulings/2026-11-11-run-start-submit.md").read_text() == "ruling"
-    assert not (target / "engine/docs/rulings/2026-11-09-inbox-automation.md").exists()
+    assert not (target / "Start run page.cmd").exists()
+    assert not (engine / "docs/templates/context-form.html").exists()
+    assert not (engine / "docs/rulings/2026-11-11-run-start-submit.md").exists()
+
+
+def test_bundle_refuses_to_purge_retired_files_through_a_linked_engine(tmp_path: Path) -> None:
+    target, outside = tmp_path / "windows-amd64", tmp_path / "outside"
+    target.mkdir()
+    (outside / "docs/templates").mkdir(parents=True)
+    retired = outside / "docs/templates/context-form.html"
+    retired.write_text("preserve", encoding="utf-8")
+    (target / "engine").symlink_to(outside, target_is_directory=True)
+    with pytest.raises(ValueError, match="Refusing"):
+        runtime.bundle(target, None)
+    assert retired.read_text(encoding="utf-8") == "preserve"
 
 
 def test_a_linked_engine_folder_is_refused_before_anything_is_deleted(tmp_path: Path) -> None:

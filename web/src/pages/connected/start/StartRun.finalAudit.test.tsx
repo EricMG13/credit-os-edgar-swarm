@@ -298,8 +298,40 @@ describe("final audit: connected intake", () => {
     ).toEqual(["Basic", "Advanced"]);
   });
 
+  it.each([{ efforts: [] }, { efforts: ["high"] }, { efforts: ["xhigh"] }])(
+    "offers Luna only when the seat advertises xhigh ($efforts)",
+    async ({ efforts }) => {
+      setup({
+        "/connected/context": {
+          ...context,
+          copilot_models: { gpt: ["balanced"], luna: efforts },
+          submission_caps_usd: caps,
+        },
+      });
+      await filledDocuments();
+      await purpose();
+      fireEvent.change(screen.getByLabelText("Run form level"), { target: { value: "advanced" } });
+      fireEvent.click(screen.getByRole("button", { name: "Continue to context" }));
+      const picker = await screen.findByLabelText("Model");
+      const luna = within(picker).queryByRole("option", { name: "GPT-6 Luna" });
+      if (!efforts.includes("xhigh")) {
+        expect(luna).toBeNull();
+        return;
+      }
+      expect(luna).toBeVisible();
+      fireEvent.change(picker, { target: { value: "luna" } });
+      expect(screen.getByLabelText("Reasoning effort")).toHaveValue("xhigh");
+      expect(screen.getByRole("option", { name: "Extra high" })).toBeVisible();
+    },
+  );
+
   it("C2-009 carries a historical Standard run as the Basic level actually offered on screen", async () => {
     const fetchMock = setup({
+      "/connected/context": {
+        ...context,
+        copilot_models: { gpt: ["balanced"] },
+        submission_caps_usd: caps,
+      },
       "/api/issuers/northbridge": {
         latest_run: "earlier",
         runs: 1,
@@ -309,7 +341,7 @@ describe("final audit: connected intake", () => {
       "/api/runs/earlier/inputs": {
         issuer_id: "northbridge",
         issuer_name: "Northbridge",
-        context,
+        context: { ...context, copilot_models: { claude: ["high"] } },
         level: "standard",
         modules: [],
         max_turns: 32,
@@ -331,7 +363,12 @@ describe("final audit: connected intake", () => {
     await screen.findByRole("button", { name: "Submit run" });
     const body = fetchMock.mock.calls.find(([path]) => path.endsWith("/summary"))?.[1]?.body;
     expect(typeof body).toBe("string");
-    expect((JSON.parse(body as string) as { level: string }).level).toBe("basic");
+    const posted = JSON.parse(body as string) as {
+      level: string;
+      context: Record<string, unknown>;
+    };
+    expect(posted.level).toBe("basic");
+    expect(posted.context).not.toHaveProperty("copilot_models");
   });
 
   it("C2-022 explains a reset requested-module choice when the pathway changes", async () => {
@@ -393,10 +430,11 @@ describe("final audit: connected intake", () => {
     expect(row).toHaveTextContent("annual.txt");
     expect(fetchMock.mock.calls.some(([path]) => path.endsWith("/summary"))).toBe(true);
     const body = fetchMock.mock.calls.find(([path]) => path.endsWith("/summary"))?.[1]?.body;
-    expect(
-      (JSON.parse(body as string) as { context: { attachments: { portfolio_workbook: boolean } } })
-        .context.attachments.portfolio_workbook,
-    ).toBe(true);
+    const posted = JSON.parse(body as string) as {
+      context: { attachments: { portfolio_workbook: boolean } } & Record<string, unknown>;
+    };
+    expect(posted.context.attachments.portfolio_workbook).toBe(true);
+    expect(posted.context).not.toHaveProperty("copilot_models");
   });
 
   it("J1-018 shows each service-provided pathway cap on its card", async () => {

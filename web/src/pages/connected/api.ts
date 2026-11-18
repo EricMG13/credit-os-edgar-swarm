@@ -85,6 +85,10 @@ export type Summary = Reading & {
   web_search?: boolean;
   /** The research module will have the lookup tools; absent from an older service. */
   web_lookup?: boolean;
+  /** Reader-facing native Copilot search status; absent on older services. */
+  copilot_search?: string;
+  /** Seat support for the exact reviewed pair. */
+  copilot_verified?: boolean;
   prior?: { id: string; as_of: string; pathway: string } | null;
   model: string;
   effort: string;
@@ -226,8 +230,15 @@ function postJson(payload: unknown): RequestInit {
 const submission = (id: string) => `/api/submissions/${encodeURIComponent(id)}`;
 
 export async function getContext(signal: AbortSignal) {
-  const { submission_caps_usd: amounts, ...template } = await request<
-    Context & { submission_caps_usd?: Record<string, string> }
+  const {
+    submission_caps_usd: amounts,
+    copilot_models: copilotModels,
+    ...template
+  } = await request<
+    Context & {
+      submission_caps_usd?: Record<string, string>;
+      copilot_models?: Record<string, string[]>;
+    }
   >("/connected/context", { signal });
   const caps = Object.fromEntries(
     Object.entries(amounts ?? {}).filter(
@@ -239,7 +250,7 @@ export async function getContext(signal: AbortSignal) {
         Number(amount) > 0,
     ),
   );
-  return { template, caps };
+  return { template, copilotModels, caps };
 }
 export const createSubmission = () =>
   request<{ id: string }>("/api/submissions", { method: "POST" });

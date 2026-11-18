@@ -22,9 +22,9 @@ import subprocess
 import sys
 import threading
 import time
-from collections.abc import Callable, Iterator
+from collections.abc import Callable, Iterator, Mapping
 from contextlib import contextmanager
-from dataclasses import dataclass, replace
+from dataclasses import dataclass, field, replace
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import IO, Any
@@ -71,6 +71,7 @@ class Settings:
     poll_seconds: float = 10
     ruling: Path = startup.STANDING_RULING
     teams: TeamsConfig | None = None  # Teams cards are posted only when the service sets this
+    copilot_models: Mapping[str, frozenset[str]] | None = field(default_factory=dict)
     launcher: tuple[str, ...] = (
         sys.executable,
         "-X",
@@ -132,6 +133,7 @@ class Scheduler:
         now: Callable[[], datetime] = _local_now,
     ) -> None:
         self.settings, self.clock, self.now = settings, clock, now
+        self.model_choices = runs.available_choices(settings.copilot_models)
         self.layout = layout.ensure_layout(settings.root)
         startup.check_launchable(settings.ruling)
         self._lock: IO[str] | None = startup.take_lock(self.layout)
@@ -168,7 +170,6 @@ class Scheduler:
         self._teams = (
             Notifier(self.layout, settings.teams, self._logger) if settings.teams else None
         )
-        startup.write_pages(self.layout)
         self._recover()
         self._rebuild()
 
@@ -259,7 +260,7 @@ class Scheduler:
         sealed = self._sealed(record)
         if not sealed.is_dir() or sealed.is_symlink():
             return
-        if self._sealed_digest(record, sealed) != record.digest or not record.digest:
+        if not record.digest or self._approval_digest(record, sealed) != record.digest:
             self._put(
                 replace(
                     record,
@@ -272,12 +273,14 @@ class Scheduler:
         os.rename(sealed, self.layout.drops / record.id)
         submissions.release(self.layout, record.submission)
 
-    def _sealed_digest(self, record: Record, sealed: Path) -> str:
-        """The approval digest of the sealed files as ``submit`` computed it (the digest ignores the
-        ``context.json`` it wrote there); "" when that cannot be recomputed (it then fails)."""
+    def _approval_digest(self, record: Record, folder: Path) -> str:
+        """Recreate the approved digest from the queued settings and current sources."""
         try:
+            context = folder / "context.json"
+            if folder.is_symlink() or context.is_symlink():
+                return ""
             saved = {
-                "context": json.loads((sealed / "context.json").read_bytes()),
+                "context": json.loads(context.read_bytes()),
                 "modules": list(record.modules),
                 "max_turns": record.max_turns,
                 "level": record.level,
@@ -288,14 +291,18 @@ class Scheduler:
             if record.newest_document_date:
                 saved["newest_document_date"] = record.newest_document_date
             answers = submissions.validated(saved)
-        except (OSError, ValueError):  # no or unreadable context.json: it changed
+            if record.config:
+                pathway = load_context(submissions.context_bytes(answers)).run.pathway
+                if pathway != record.pathway or record.cap != str(PATHWAY_CAP_USD[pathway]):
+                    return ""
+            submissions.refuse_filed_elsewhere(self.layout, answers)
+            return submissions.bound(submissions.folder_digest(folder, answers), record.prior)
+        except (OSError, ValueError, TypeError):
             return ""
-        try:
-            return submissions.bound(
-                submissions.digest(self.layout, record.submission, answers), record.prior
-            )
-        except submissions.Refused:
-            return ""
+
+    def model_available(self, model: str, effort: str) -> bool:
+        """Whether the verified launch seat offers this intake model and effort."""
+        return effort in self.model_choices.get(model, ())
 
     def submit(self, sid: str, answers: Answers, approved_digest: str) -> Record:
         """Start one run for an approved submission. Repeating a submission returns its record.
@@ -308,12 +315,15 @@ class Scheduler:
         by the next poll against the digest the record keeps."""
         with self.lock:
             answers = submissions.validated(answers)
-            submissions.require_provider_key(answers)
             if not isinstance(sid, str) or not _SID.fullmatch(sid):
                 raise submissions.Refused("unknown submission")
             for record in self._records.values():
                 if record.submission == sid:
                     return record
+            if not self.model_available(answers["model"], answers["effort"]):
+                raise submissions.Refused(
+                    "This model and effort are unavailable on the Copilot seat."
+                )
             try:  # a context the launcher would refuse, or a deactivated pathway, is a 400
                 run = load_context(submissions.context_bytes(answers)).run
                 cpos_launch.refuse_deactivated(run.pathway)
@@ -372,6 +382,7 @@ class Scheduler:
             level=answers["level"],
             model=answers["model"],
             effort=answers["effort"],
+            config=runs.config_for(answers["model"], answers["effort"]),
             submitted_by=answers["submitted_by"],
             digest=current,
             prior=approval.prior,
@@ -602,28 +613,37 @@ class Scheduler:
                 >= self.settings.max_running
             ):
                 break
+            if record.config and not self.model_available(record.model, record.effort):
+                self._limit_held = "Waiting for a Copilot seat that supports this model and effort."
+                continue
             with self._guard(f"run {record.id}"):
                 today += self._launch(record)
 
+    def _launch_approval_problem(self, record: Record) -> str:
+        if not record.submission or not record.digest:
+            return _OLD_WATCHER
+        if not record.config and self.settings.copilot_models is not None:
+            return "This approval predates Copilot routing. Open a new draft and review it."
+        return ""
+
+    def _drop_approval_problem(self, record: Record, drop: Path, context: Path) -> str:
+        if context.is_symlink() or not context.is_file():
+            return _NO_CONTEXT.format(record.id)
+        if record.config and self._approval_digest(record, drop) != record.digest:
+            return _CHANGED
+        return ""
+
     def _launch(self, record: Record) -> bool:
         """Start one run. True once it is recorded as started (and so counted for the day)."""
-        if not record.submission or not record.digest:
-            self._fail(record, _OLD_WATCHER)  # only Submit on an approved summary starts a run
+        if refusal := self._launch_approval_problem(record):
+            self._fail(record, refusal)
             return False
         drop = self.layout.drops / record.id
         if not os.path.lexists(drop) and self._sealed(record).is_dir():
             return False  # its move is not finished yet (a failed rename): _finish_moves retries
         context = drop / "context.json"
-        if context.is_symlink() or not context.is_file():
-            # A folder that has lost its context file: failed with the reason, never started.
-            self._put(
-                replace(
-                    record,
-                    status="failed",
-                    reason=_NO_CONTEXT.format(record.id),
-                    ended_at=self._utc(self.now()),
-                )
-            )
+        if refusal := self._drop_approval_problem(record, drop, context):
+            self._fail(record, refusal)
             return False
         try:
             runs.command(  # a record that cannot become a command fails here, before it is counted

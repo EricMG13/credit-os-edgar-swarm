@@ -73,6 +73,16 @@ describe("final audit: review wording", () => {
     ).toBeVisible();
     expect(screen.getByText("northbridge-portfolio.xlsx · unrecognised")).toBeVisible();
   });
+  it("shows Luna as GPT-6 Luna with extra-high effort and displays CP-DR search status", () => {
+    show({
+      modules: ["CP-DR"],
+      model: "luna",
+      effort: "xhigh",
+      copilot_search: "Copilot web search is unavailable for this run.",
+    });
+    expect(screen.getByText("GPT-6 Luna · Extra high")).toBeVisible();
+    expect(screen.getByText("Copilot web search is unavailable for this run.")).toBeVisible();
+  });
   it("C2-018 distinguishes one limit from its consequences", () => {
     show({
       items: [

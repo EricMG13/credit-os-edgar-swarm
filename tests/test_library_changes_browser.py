@@ -7,7 +7,13 @@ import re
 from pathlib import Path
 
 import pytest
-from library_fixtures import CITED, make_run, method, with_changes, without_report  # noqa: F401
+from library_fixtures import (
+    materialize_reference_ui,
+    make_run,
+    method,
+    with_changes,
+    without_report,
+)
 from test_credit_os_catalogue import CHARTS
 from test_library_page_browser import read_probe, visit
 
@@ -128,6 +134,14 @@ None.
 @pytest.fixture(autouse=True)
 def stand_in_method(monkeypatch):
     monkeypatch.setattr("deploy_workflow.library_index.current_method", lambda: method())
+    publisher = update_library.update_library
+
+    def build_reference(workspace):
+        result = publisher(workspace)
+        materialize_reference_ui(workspace / "library")
+        return result
+
+    monkeypatch.setattr(update_library, "update_library", build_reference)
 
 
 def run_of(workspace: Path, folder: str, **spec) -> Path:

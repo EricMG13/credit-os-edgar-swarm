@@ -1,8 +1,8 @@
 # Run Credit OS 2
 
 Credit OS 2 is based on RBOT-HTML `be953752`. It keeps that revision's Python pin,
-`pyproject.toml`, `uv.lock`, scheduler, calculations, provider configuration and library
-publication. The browser uses the Credit OS design system and React 19.3.0. Run intake,
+`pyproject.toml`, `uv.lock`, scheduler and calculation engine. Live runs use GitHub
+Copilot CLI and publish data and checked downloads for the connected library. The browser uses the Credit OS design system and React 19.3.0. Run intake,
 activity, library and report navigation live at one local address.
 The rail's Run item opens Run activity (`/runs`): the runs that are running and waiting, each
 linked to its own page (`/run/<id>`). Start a run is a button there and on Library.
@@ -158,8 +158,9 @@ PYTHONPATH=src uv run --locked python -m react_frontend --root /path/to/workflow
 ```
 
 In PowerShell, set `$env:PYTHONPATH = (Join-Path (Get-Location) 'src')` first, then run
-either command beginning with `uv`. Open the printed loopback address. Regular mode
-uses RBOT-HTML's existing provider-key checks, reviewed submission and run cap.
+either command beginning with `uv`. Open the printed loopback address. This starts the local reader and offline preparation. Add `--copilot-preflight`
+to verify the deployment seat and enable paid Submit for the advertised model
+and effort choices. [Copilot setup](COPILOT.md).
 
 The repository's `docs/design/react-module-coverage.md` maps the report modules
 to the React components and published data.
