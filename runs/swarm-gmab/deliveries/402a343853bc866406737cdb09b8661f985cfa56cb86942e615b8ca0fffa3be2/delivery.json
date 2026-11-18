@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for GENMAB A/S as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "2f4797130a76dc4038e5ced77002f71971938c1dd349b50e92b344ba3c8bf949",
+    "CP-1.md": "c3f360b8b9b2f76737a0692fb133cae8c1cb7eedd094c4e5640e51ed6c4cdaeb",
+    "CP-1A.md": "eea85e2c536672a480fee18155bd5cbd7778ae54a96857a24722b144f6a15ec6",
+    "CP-2.md": "8abe2903ce97d3acf83e45789567ce432365791704c05a361f73ff630a1ade07",
+    "coverage.json": "2cb8981f0887158c8c88b5d0aa5a9262d533606eb2617516d29e9bd3efcf8707",
+    "view.json": "1f3302e0720ff28d13b44511b0c35a2233fec09921ab9b293329b93457cdc6b1",
+    "report-view.json": "2aab5f860e25a410701e9e838786dd158062a1b8d432d5c0f24c1790391c8ba9"
+  }
+}

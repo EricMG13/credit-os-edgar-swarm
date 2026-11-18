@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for Healthequity, Inc. as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/1f6d57605100cfaf50b5c12fd589d4b6e95f4d538dda58718a943621bfbc9931/1.response.md",
+    "CP-1": "requests/CP-1/4e9b4ba81d803a09e4180a558917847e22dfcb81efa704e40981f10b82cc08b2/1.response.md",
+    "CP-1A": "requests/CP-1A/e7edb44e39c57d715d440fefc552879730f0c94f4aacc645599ef3cf8f604da2/1.response.md",
+    "CP-2": "requests/CP-2/14aa4c9ffa09d4eb68dc6813fa3b4a4af2ade5cb0add6b71710103746c5dc367/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "bcf5e250043d896d148a8e5b60627d612b2e6493665c877ba97fb086e447364f",
+  "delivery_sha256": "e8bce989314b4e33ed6df7127d5ed7737db91d08e80ea606c57808f7bed1e982"
+}

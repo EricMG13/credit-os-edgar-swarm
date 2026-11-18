@@ -1833,8 +1833,18 @@
       "pack": "/home/user/swarm-root/inputs/packs/1428336-healthequity-inc-hqy",
       "context": "/home/user/swarm-root/inputs/contexts/1428336-healthequity-inc-hqy.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-hqy-1428336",
-      "status": "pending",
-      "attempts": 0
+      "status": "published",
+      "attempts": 4,
+      "claims": 1,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "exit_code": 0,
+      "reason": null,
+      "finished_at": "2026-11-18T13:08:53+00:00"
     },
     {
       "issuer_id": "gmab",
@@ -1844,8 +1854,18 @@
       "pack": "/home/user/swarm-root/inputs/packs/1434265-genmab-a-s-gmab-gnmsf",
       "context": "/home/user/swarm-root/inputs/contexts/1434265-genmab-a-s-gmab-gnmsf.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-gmab",
-      "status": "pending",
-      "attempts": 0
+      "status": "published",
+      "attempts": 4,
+      "claims": 1,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "exit_code": 0,
+      "reason": null,
+      "finished_at": "2026-11-18T13:09:06+00:00"
     },
     {
       "issuer_id": "twlo-1447669",
@@ -1855,8 +1875,18 @@
       "pack": "/home/user/swarm-root/inputs/packs/1447669-twilio-inc-twlo",
       "context": "/home/user/swarm-root/inputs/contexts/1447669-twilio-inc-twlo.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-twlo-1447669",
-      "status": "pending",
-      "attempts": 0
+      "status": "published",
+      "attempts": 4,
+      "claims": 1,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "exit_code": 0,
+      "reason": null,
+      "finished_at": "2026-11-18T13:09:19+00:00"
     },
     {
       "issuer_id": "st-1477294",
@@ -1866,8 +1896,18 @@
       "pack": "/home/user/swarm-root/inputs/packs/1477294-sensata-technologies-holding-plc",
       "context": "/home/user/swarm-root/inputs/contexts/1477294-sensata-technologies-holding-plc.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-st-1477294",
-      "status": "pending",
-      "attempts": 0
+      "status": "published",
+      "attempts": 4,
+      "claims": 1,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "exit_code": 0,
+      "reason": null,
+      "finished_at": "2026-11-18T13:10:06+00:00"
     },
     {
       "issuer_id": "hpp-1482512",

@@ -1,0 +1,236 @@
+{
+  "run": {
+    "schema_version": "run/2",
+    "run_id": "twlo-1447669-2026-11-18-credit_snapshot-host",
+    "issuer_id": "twlo-1447669",
+    "issuer_name": "Twilio Inc",
+    "as_of": "2026-11-18",
+    "method_version": "deploy-v-r14",
+    "case_kind": "public",
+    "pathway": "credit_snapshot",
+    "requested_modules": [
+      "CP-0",
+      "CP-1",
+      "CP-1A",
+      "CP-2"
+    ]
+  },
+  "sources": {
+    "10-K_2024-12-31_twlo-20241231.htm.jsonl": {
+      "path": "source-text/10-K_2024-12-31_twlo-20241231.htm.jsonl",
+      "sha256": "afc80dae142f1e2c48131f9c9da01c49763830e7d85e3635b95dcb2c35324db8"
+    },
+    "10-K_2025-12-31_twlo-20251231.htm.jsonl": {
+      "path": "source-text/10-K_2025-12-31_twlo-20251231.htm.jsonl",
+      "sha256": "8c23a5b2267d10b1ed34358eff69987b9802fc03b69d28331c7a0b42d10c5fbd"
+    },
+    "10-Q_2026-03-31_twlo-20260331.htm.jsonl": {
+      "path": "source-text/10-Q_2026-03-31_twlo-20260331.htm.jsonl",
+      "sha256": "b2c45b905396faa88b0f483398b8f72b641b36e9f41b31733422513df8d665ee"
+    },
+    "10-Q_2026-06-30_twlo-20260630.htm.jsonl": {
+      "path": "source-text/10-Q_2026-06-30_twlo-20260630.htm.jsonl",
+      "sha256": "bb65df71688feef2fb4ef0ce49bb85c96817f8c06d5bf41bd9ced5745b5c97de"
+    },
+    "10-Q_2026-09-30_twlo-20260930.htm.jsonl": {
+      "path": "source-text/10-Q_2026-09-30_twlo-20260930.htm.jsonl",
+      "sha256": "b4d585ca5f8e62081a2705cc0ead0bc494604cbd967e8d301cf0f4b11f9b89fb"
+    },
+    "context": {
+      "path": "../../../inputs/contexts/1447669-twilio-inc-twlo.json",
+      "sha256": "ab4dd292a96d3fcf4196b2724fe378f0a34a145b74a074befa162937e55b1943"
+    }
+  },
+  "instructions": {
+    "CP-0": {
+      "path": "instructions/CP-0.md",
+      "sha256": "2ad3de638b64bc2718db102b4b8434abcf563ff7458f48a7228e437b3d2e8c2f"
+    },
+    "CP-1": {
+      "path": "instructions/CP-1.md",
+      "sha256": "4cc794d61e4194a2b8d164255090bfb4af8873407835fc61f932b2f9bc3b11b2"
+    },
+    "CP-1A": {
+      "path": "instructions/CP-1A.md",
+      "sha256": "e597345d071f0fcba5eee64a3bb5cdd1195a3d540e3490801530f05eaf97a093"
+    },
+    "CP-2": {
+      "path": "instructions/CP-2.md",
+      "sha256": "d055397da4396db7e304d753b3f4e705a7eb622e8ed4185083f786b94eb17e93"
+    }
+  },
+  "retained_handoffs": {},
+  "model": null,
+  "layout": {
+    "blocks": [
+      "key-findings",
+      "company-operating-model",
+      "model-chart-strip",
+      "financials-credit-metrics",
+      "strengths-weaknesses",
+      "company-profile",
+      "transaction-summary"
+    ],
+    "routes": [
+      {
+        "module_id": "CP-2",
+        "heading": "Key findings",
+        "kind": "prose",
+        "block_id": "key-findings",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company and operating model",
+        "kind": "table",
+        "block_id": "company-operating-model",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: leverage",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.1",
+        "value_columns": [
+          "Total debt / EBITDA",
+          "Net debt / EBITDA"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: interest cover",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.2",
+        "value_columns": [
+          "EBITDA / cash interest"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: liquidity",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.3",
+        "value_columns": [
+          "Cash",
+          "Undrawn committed facilities"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: debt maturities",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.4",
+        "value_columns": [
+          "Debt maturing"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Financials and credit metrics",
+        "kind": "table",
+        "block_id": "financials-credit-metrics",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-2",
+        "heading": "Strengths and weaknesses",
+        "kind": "prose",
+        "block_id": "strengths-weaknesses",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company profile",
+        "kind": "table",
+        "block_id": "company-profile",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Transaction summary and new debt issues",
+        "kind": "prose",
+        "block_id": "transaction-summary",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      }
+    ],
+    "scope": "User-launched Full credit assessment run for Twilio Inc as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+    "title": "Twilio Inc — Full credit assessment",
+    "question": null,
+    "issuer_aliases": []
+  },
+  "changes_note": "changes: first run of this pathway",
+  "selection": "explicit",
+  "execution": "host-session",
+  "max_attempts": 3,
+  "provider_cap_usd": "0"
+}
