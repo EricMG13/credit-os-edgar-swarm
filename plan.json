@@ -2733,8 +2733,18 @@
       "pack": "/home/user/swarm-root/inputs/packs/1965040-fortrea-holdings-inc-ftre",
       "context": "/home/user/swarm-root/inputs/contexts/1965040-fortrea-holdings-inc-ftre.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-ftre-1965040",
-      "status": "pending",
-      "attempts": 0
+      "status": "published",
+      "attempts": 4,
+      "claims": 1,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "exit_code": 0,
+      "reason": null,
+      "finished_at": "2026-11-18T13:30:25+00:00"
     },
     {
       "issuer_id": "vsts",
@@ -2744,8 +2754,18 @@
       "pack": "/home/user/swarm-root/inputs/packs/1967649-vestis-corp-vsts",
       "context": "/home/user/swarm-root/inputs/contexts/1967649-vestis-corp-vsts.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-vsts",
-      "status": "pending",
-      "attempts": 0
+      "status": "published",
+      "attempts": 4,
+      "claims": 1,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "exit_code": 0,
+      "reason": null,
+      "finished_at": "2026-11-18T13:30:38+00:00"
     },
     {
       "issuer_id": "phin-1968915",
@@ -2755,8 +2775,18 @@
       "pack": "/home/user/swarm-root/inputs/packs/1968915-phinia-inc",
       "context": "/home/user/swarm-root/inputs/contexts/1968915-phinia-inc.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-phin-1968915",
-      "status": "pending",
-      "attempts": 0
+      "status": "published",
+      "attempts": 4,
+      "claims": 1,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "exit_code": 0,
+      "reason": null,
+      "finished_at": "2026-11-18T13:30:53+00:00"
     },
     {
       "issuer_id": "natl-1974138",
@@ -2766,8 +2796,18 @@
       "pack": "/home/user/swarm-root/inputs/packs/1974138-ncr-atleos-corp",
       "context": "/home/user/swarm-root/inputs/contexts/1974138-ncr-atleos-corp.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-natl-1974138",
-      "status": "pending",
-      "attempts": 0
+      "status": "published",
+      "attempts": 4,
+      "claims": 1,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "exit_code": 0,
+      "reason": null,
+      "finished_at": "2026-11-18T13:31:07+00:00"
     },
     {
       "issuer_id": "amtm",

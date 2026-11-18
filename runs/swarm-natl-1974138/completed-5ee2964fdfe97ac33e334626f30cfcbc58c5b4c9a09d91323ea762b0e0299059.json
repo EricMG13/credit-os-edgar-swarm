@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for NCR Atleos Corp as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/d9424b8628dfa882825c89435fe50d13711610f75705ff24a3c22d4988c76fab/1.response.md",
+    "CP-1": "requests/CP-1/b8eb9385307eef7b0ed01e08d0c58a6ee3ffe0bc584abe83425965c1eedc51fc/1.response.md",
+    "CP-1A": "requests/CP-1A/167c4261f04517edf14260feefae6a8ed5105e8c8e67bc5b010a0afdbaedcd82/1.response.md",
+    "CP-2": "requests/CP-2/6a0db87cee73f36afa66e15d9558fb88de116bc48dc2178f0e8b5411183a5a1a/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "8e645e3c7d01026864b99316c5b12efc22aacf084f3419981f2c3b99ffbd0933",
+  "delivery_sha256": "da6b12f3836a975bd4fcf1d09f3490959b6b6dbd3448fced4002df28d056113f"
+}

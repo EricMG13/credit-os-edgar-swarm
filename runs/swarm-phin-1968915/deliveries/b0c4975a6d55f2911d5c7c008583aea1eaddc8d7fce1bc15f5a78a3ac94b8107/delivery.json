@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for Phinia Inc. as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "780228086984190df3093f457800d066451473f9fba2aa489be784059ee1f761",
+    "CP-1.md": "6e70542cc2205a162c56b14e268d355be95964442db77afc083cfed3497cf703",
+    "CP-1A.md": "f9ba87b037374b1969cbfb044829f515bd6092eb7b2582c56aa6c1b44dd7fe82",
+    "CP-2.md": "d9c5acf86ebce21c783fb8be4c6c69c7d2d4ded51b85b94ab1a1b907022360ee",
+    "coverage.json": "31aae40b62542a1913d48db48c9f27d11c584ac186dd48019bc88c177e3466f4",
+    "view.json": "42a6fbd69dd61b2a78f333169f9f163fed4228aaba6121f22c6636a52847ce2e",
+    "report-view.json": "d0eae787af93f308b8632acdd340ef9736aa04558e207ff5de03b7348d19b801"
+  }
+}

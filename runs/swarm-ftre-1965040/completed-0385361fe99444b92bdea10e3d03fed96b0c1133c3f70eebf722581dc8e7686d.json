@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for Fortrea Holdings Inc. as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/8d6aab98c95491e7e0fecdf20e461744e459f53a332c484b20766342feb99124/1.response.md",
+    "CP-1": "requests/CP-1/cd786f2b4c584161357ebf9558bb3e442f8e997f91ccecd882526e69b40b8f44/1.response.md",
+    "CP-1A": "requests/CP-1A/fdfb84b4d876ae555eaa76cf12d8b2dbc5f25ff788b36ec8650958fdf2e11033/1.response.md",
+    "CP-2": "requests/CP-2/9fb8af0929e2a7fa7b95e91af6fc2a4a0235b7df5510695b283712edf77d05a0/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "e77e27e3d2370b736996e7717982ac9d09182d62fe33203a64560e36ed4ecf60",
+  "delivery_sha256": "7b892468b9c0bdc57953a242f77e04eef7e45b8d37107900ad6326f5b82f4e6f"
+}

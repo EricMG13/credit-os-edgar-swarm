@@ -1,0 +1,244 @@
+{
+  "run": {
+    "schema_version": "run/2",
+    "run_id": "vsts-2026-11-05-credit_snapshot-host",
+    "issuer_id": "vsts",
+    "issuer_name": "Vestis Corp",
+    "as_of": "2026-11-05",
+    "method_version": "deploy-v-r14",
+    "case_kind": "public",
+    "pathway": "credit_snapshot",
+    "requested_modules": [
+      "CP-0",
+      "CP-1",
+      "CP-1A",
+      "CP-2"
+    ]
+  },
+  "sources": {
+    "10-K_2025-10-03_vsts-20251003.htm.jsonl": {
+      "path": "source-text/10-K_2025-10-03_vsts-20251003.htm.jsonl",
+      "sha256": "69acf45c43af00eb0ad3afdad499957974d6855c0a4c69b858d3f2f1a0defa4d"
+    },
+    "10-Q_2026-01-02_vsts-20260102.htm.jsonl": {
+      "path": "source-text/10-Q_2026-01-02_vsts-20260102.htm.jsonl",
+      "sha256": "637925692f36f8779f60ebbc11d3252e4fe1f1a5077b706d2e2b4b1b4f6edc05"
+    },
+    "10-Q_2026-04-03_vsts-20260403.htm.jsonl": {
+      "path": "source-text/10-Q_2026-04-03_vsts-20260403.htm.jsonl",
+      "sha256": "ba2978bcc5b4cdc3b18b43c2c9ae31ce0a31d87a366091d84bc271a3c594f858"
+    },
+    "10-Q_2026-07-03_vsts-20260703.htm.jsonl": {
+      "path": "source-text/10-Q_2026-07-03_vsts-20260703.htm.jsonl",
+      "sha256": "7db2f115581c382fda3a1a642c3240840cc03e0b4154737c2546ddd28c46a9af"
+    },
+    "EX-99.1_2026-02-10_vstsq1fy26earningsrelease-.htm.jsonl": {
+      "path": "source-text/EX-99.1_2026-02-10_vstsq1fy26earningsrelease-.htm.jsonl",
+      "sha256": "73cf4915cc22c7c9a6d41b209e21e1301c8d95ee51da8c8656b7c37a3072aacd"
+    },
+    "EX-99.1_2026-05-12_vstsq2fy26earningsrelease-.htm.jsonl": {
+      "path": "source-text/EX-99.1_2026-05-12_vstsq2fy26earningsrelease-.htm.jsonl",
+      "sha256": "e70477c8d46036f4ef7bd70b6551daa75ee805b6eb9bc6e0504e90f227edd1d1"
+    },
+    "EX-99.1_2026-08-11_vstsq3fy26earningsrelease-.htm.jsonl": {
+      "path": "source-text/EX-99.1_2026-08-11_vstsq3fy26earningsrelease-.htm.jsonl",
+      "sha256": "d2693610d697f7e33edfd6b5f9d57dc6906301a18a12d6a3feec8645e5a3af14"
+    },
+    "context": {
+      "path": "../../../inputs/contexts/1967649-vestis-corp-vsts.json",
+      "sha256": "c28ff4b5be1db183138bacbfdcd7f4640157e3a21bdc54358648d894f8fed07c"
+    }
+  },
+  "instructions": {
+    "CP-0": {
+      "path": "instructions/CP-0.md",
+      "sha256": "c04b860d0dea84705fcec693ae886aa3b697dd7974e12063b2d0c5a84ae123c3"
+    },
+    "CP-1": {
+      "path": "instructions/CP-1.md",
+      "sha256": "de5835ccd322a3a94d361b8273ad81f3a6ec715001e30e6f1456cae28f1f2642"
+    },
+    "CP-1A": {
+      "path": "instructions/CP-1A.md",
+      "sha256": "413586640b398053bf19db5fd471a4697462aec8ab89c9ce5592d24deb9a5092"
+    },
+    "CP-2": {
+      "path": "instructions/CP-2.md",
+      "sha256": "ef378799f3dacb25c71d34e2e9a55397985a3a58063ec39973e684aa784434a2"
+    }
+  },
+  "retained_handoffs": {},
+  "model": null,
+  "layout": {
+    "blocks": [
+      "key-findings",
+      "company-operating-model",
+      "model-chart-strip",
+      "financials-credit-metrics",
+      "strengths-weaknesses",
+      "company-profile",
+      "transaction-summary"
+    ],
+    "routes": [
+      {
+        "module_id": "CP-2",
+        "heading": "Key findings",
+        "kind": "prose",
+        "block_id": "key-findings",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company and operating model",
+        "kind": "table",
+        "block_id": "company-operating-model",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: leverage",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.1",
+        "value_columns": [
+          "Total debt / EBITDA",
+          "Net debt / EBITDA"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: interest cover",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.2",
+        "value_columns": [
+          "EBITDA / cash interest"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: liquidity",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.3",
+        "value_columns": [
+          "Cash",
+          "Undrawn committed facilities"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: debt maturities",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.4",
+        "value_columns": [
+          "Debt maturing"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Financials and credit metrics",
+        "kind": "table",
+        "block_id": "financials-credit-metrics",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-2",
+        "heading": "Strengths and weaknesses",
+        "kind": "prose",
+        "block_id": "strengths-weaknesses",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company profile",
+        "kind": "table",
+        "block_id": "company-profile",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Transaction summary and new debt issues",
+        "kind": "prose",
+        "block_id": "transaction-summary",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      }
+    ],
+    "scope": "User-launched Full credit assessment run for Vestis Corp as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+    "title": "Vestis Corp — Full credit assessment",
+    "question": null,
+    "issuer_aliases": []
+  },
+  "changes_note": "changes: first run of this pathway",
+  "selection": "explicit",
+  "execution": "host-session",
+  "max_attempts": 3,
+  "provider_cap_usd": "0"
+}

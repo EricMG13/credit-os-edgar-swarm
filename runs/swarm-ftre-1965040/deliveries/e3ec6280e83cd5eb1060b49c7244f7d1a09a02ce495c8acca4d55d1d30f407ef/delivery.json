@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for Fortrea Holdings Inc. as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "247198013151c6f841b8425725a60912d605fb02a7ccd66e4bfc2d95f1f3dfdd",
+    "CP-1.md": "374fd418135702cf0906278cc27afe524ce806beb7c7be7018ef2e45d34ff990",
+    "CP-1A.md": "ce215da37f1a10eb6a6ed724c2819e3b3321f3de47a87b56e91ed6e2c25092d9",
+    "CP-2.md": "e1912b9e9db1a18d5d3a6f9f9dc5f353103b54a161e2adad63ed043f3425ceba",
+    "coverage.json": "f3dfb75b640d2fb814b5963c4554e960980e35b03237376a24d5162962049981",
+    "view.json": "dd3939a3a21eef6fa465043398e71310d2cb510c88ab516d799824782430952a",
+    "report-view.json": "881c077c5dbe06b53086a95e4b79450dd367aa806d74dcaae346670a30f7de89"
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for Phinia Inc. as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/74090ef478da09410d7e70def31f251c356815b182dad1db710a0a78df4ca836/1.response.md",
+    "CP-1": "requests/CP-1/9d519f7b2e1da2194a2bc8bbe8b76f4d56feca9c00636ffa984af5cac2216a50/1.response.md",
+    "CP-1A": "requests/CP-1A/b69fea60a19b9b08baa192e65b6c1ff47501f45c37395422808fbf215b2f0c4a/1.response.md",
+    "CP-2": "requests/CP-2/cff7b4772af6f397fbd580d8738d5680765045c9606ac89ad86e98187d6f5df3/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "b836203b3f8147bc54aa5479177c575bdfd9c0c7059f6374146694a107e76d4a",
+  "delivery_sha256": "d82b2fcfe8482b29d1dc2a9c78f0b7e0a26ebc0e23c236620c8e0792cc4fc42f"
+}
