@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for Bristow Group Inc. as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/936caed4f52e0a7b5598ecc405f125e89ea536c477dd7565e9896cb7e869ced8/1.response.md",
+    "CP-1": "requests/CP-1/e1b05e0997535c28ab92fda955b87c45d5b615957adbe0369a12f69364de0e45/1.response.md",
+    "CP-1A": "requests/CP-1A/672a8b8b71fdae618f81bd9b02f57eed9a2b85072a8ddcdde6b4ce680fed4d5d/1.response.md",
+    "CP-2": "requests/CP-2/bddc337e155aad9fac7377b8173f00954e09258c780a815cb4c012c8dec925b8/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "a2716f03ba38aaf54330b67ff49e00131742e1c647a45a483da70864600db113",
+  "delivery_sha256": "cd582e3247f47adcc042b7d25f1c8729ce99f22e4485d07c8d499634493bb073"
+}

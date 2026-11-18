@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for Post Holdings, Inc. as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "6b4093d64109b06d52e73a329cfe5b00b62cb26a47420ce3187bf644bc531ec9",
+    "CP-1.md": "ae9154b6c1aca71c61ec30af0271d5b7971f51b43a5b2d890d0242d6820f3198",
+    "CP-1A.md": "2125b5546f92fdad62ebb96e75a875733143d6dce1e6406bd6812e93676741cb",
+    "CP-2.md": "9d3f8a36ff397609e58d2cd79b927d91bb3d91eb6d25b0f42c25a4fcafa061f5",
+    "coverage.json": "0ce4a4e15699139df688565dbab5f6794a951944a7ac68a9a960900bb0969bbd",
+    "view.json": "780c99a18f82fbcf5f87c1f3f192a9820050d70e3d6589acb499d03dd0108118",
+    "report-view.json": "258cde92e7cfe390f75dce310113575b9d479da17ce14c4b4d118a0893d11c73"
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for Sunoco LP as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/86b46d3f5d14011a1203468b248b5cf91a0f534632242f4221f637cdb07a4302/1.response.md",
+    "CP-1": "requests/CP-1/05570d491de1c953f755fb733afe01761c11e0dc5be6b0be495060b29cf4632c/1.response.md",
+    "CP-1A": "requests/CP-1A/721b29892bd0528f3d14db8e3ee8e8b2b9c928e60127bf4209de8c173826f8de/1.response.md",
+    "CP-2": "requests/CP-2/2da1ab8b19bea55c17c3c64ec76ac95cab6163fd8f0455eb0feaaea26cb6b3be/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "4398e131f390d2fe4e4e41a3089a596b1610fb41a88219bcdb79b4000116287d",
+  "delivery_sha256": "0fdea83d95e629afc1cf781c81f4c1c674a06a23d95c9f1516b7d38ca56a123a"
+}

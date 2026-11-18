@@ -2013,8 +2013,18 @@
       "pack": "/home/user/swarm-root/inputs/packs/1525221-bristow-group-inc",
       "context": "/home/user/swarm-root/inputs/contexts/1525221-bristow-group-inc.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-vtol-1525221",
-      "status": "pending",
-      "attempts": 0
+      "status": "published",
+      "attempts": 4,
+      "claims": 1,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "exit_code": 0,
+      "reason": null,
+      "finished_at": "2026-11-18T12:39:14+00:00"
     },
     {
       "issuer_id": "trip",
@@ -2024,8 +2034,18 @@
       "pack": "/home/user/swarm-root/inputs/packs/1526520-tripadvisor-inc-trip",
       "context": "/home/user/swarm-root/inputs/contexts/1526520-tripadvisor-inc-trip.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-trip",
-      "status": "pending",
-      "attempts": 0
+      "status": "published",
+      "attempts": 4,
+      "claims": 1,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "exit_code": 0,
+      "reason": null,
+      "finished_at": "2026-11-18T12:39:27+00:00"
     },
     {
       "issuer_id": "post",
@@ -2035,8 +2055,18 @@
       "pack": "/home/user/swarm-root/inputs/packs/1530950-post-holdings-inc-post",
       "context": "/home/user/swarm-root/inputs/contexts/1530950-post-holdings-inc-post.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-post",
-      "status": "pending",
-      "attempts": 0
+      "status": "published",
+      "attempts": 4,
+      "claims": 1,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "exit_code": 0,
+      "reason": null,
+      "finished_at": "2026-11-18T12:39:41+00:00"
     },
     {
       "issuer_id": "sun",
@@ -2046,8 +2076,18 @@
       "pack": "/home/user/swarm-root/inputs/packs/1552275-sunoco-lp-sun",
       "context": "/home/user/swarm-root/inputs/contexts/1552275-sunoco-lp-sun.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-sun",
-      "status": "pending",
-      "attempts": 0
+      "status": "published",
+      "attempts": 4,
+      "claims": 1,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "exit_code": 0,
+      "reason": null,
+      "finished_at": "2026-11-18T12:39:54+00:00"
     },
     {
       "issuer_id": "thry-1556739",

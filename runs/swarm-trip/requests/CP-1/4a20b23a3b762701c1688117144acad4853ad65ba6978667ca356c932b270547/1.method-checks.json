@@ -1,0 +1,123 @@
+{
+  "checks": [
+    {
+      "figure": "LTM: Revenue, continuing operations",
+      "module": "CP-1",
+      "reason": "LTM = Full-Year Component + Current Stub - Prior-Year Stub (REF_CP-1_08; the script's derive_periods)",
+      "recomputed": 1559.0999999999997,
+      "recomputed_label": null,
+      "register": "T4.8",
+      "row": "LTM: Revenue, continuing operations",
+      "script": "docs/reuse/selected-methods/skills/cp-1-canonical-data-foundation/scripts/credit_metrics.py",
+      "stated": "1,559.1",
+      "status": "agreed",
+      "tolerance": 0.1,
+      "unit": "USD m"
+    },
+    {
+      "figure": "LTM: Adjusted EBITDA, continuing operations",
+      "module": "CP-1",
+      "reason": "LTM = Full-Year Component + Current Stub - Prior-Year Stub (REF_CP-1_08; the script's derive_periods)",
+      "recomputed": 207.3,
+      "recomputed_label": null,
+      "register": "T4.8",
+      "row": "LTM: Adjusted EBITDA, continuing operations",
+      "script": "docs/reuse/selected-methods/skills/cp-1-canonical-data-foundation/scripts/credit_metrics.py",
+      "stated": "207.3",
+      "status": "agreed",
+      "tolerance": 0.1,
+      "unit": "USD m"
+    },
+    {
+      "figure": "LTM: EBITDA (Reported), continuing operations",
+      "module": "CP-1",
+      "reason": "LTM = Full-Year Component + Current Stub - Prior-Year Stub (REF_CP-1_08; the script's derive_periods)",
+      "recomputed": -272.6,
+      "recomputed_label": null,
+      "register": "T4.8",
+      "row": "LTM: EBITDA (Reported), continuing operations",
+      "script": "docs/reuse/selected-methods/skills/cp-1-canonical-data-foundation/scripts/credit_metrics.py",
+      "stated": "-272.6",
+      "status": "agreed",
+      "tolerance": 0.1,
+      "unit": "USD m"
+    },
+    {
+      "figure": "LTM: Cash interest paid",
+      "module": "CP-1",
+      "reason": "LTM = Full-Year Component + Current Stub - Prior-Year Stub (REF_CP-1_08; the script's derive_periods)",
+      "recomputed": 59.199999999999996,
+      "recomputed_label": null,
+      "register": "T4.8",
+      "row": "LTM: Cash interest paid",
+      "script": "docs/reuse/selected-methods/skills/cp-1-canonical-data-foundation/scripts/credit_metrics.py",
+      "stated": "59.2",
+      "status": "agreed",
+      "tolerance": 0.1,
+      "unit": "USD m"
+    },
+    {
+      "figure": "LTM: Operating cash flow, continuing operations",
+      "module": "CP-1",
+      "reason": "LTM = Full-Year Component + Current Stub - Prior-Year Stub (REF_CP-1_08; the script's derive_periods)",
+      "recomputed": 27.600000000000023,
+      "recomputed_label": null,
+      "register": "T4.8",
+      "row": "LTM: Operating cash flow, continuing operations",
+      "script": "docs/reuse/selected-methods/skills/cp-1-canonical-data-foundation/scripts/credit_metrics.py",
+      "stated": "27.6",
+      "status": "agreed",
+      "tolerance": 0.1,
+      "unit": "USD m"
+    },
+    {
+      "figure": "LTM: Capital expenditures, continuing operations",
+      "module": "CP-1",
+      "reason": "LTM = Full-Year Component + Current Stub - Prior-Year Stub (REF_CP-1_08; the script's derive_periods)",
+      "recomputed": 44.89999999999999,
+      "recomputed_label": null,
+      "register": "T4.8",
+      "row": "LTM: Capital expenditures, continuing operations",
+      "script": "docs/reuse/selected-methods/skills/cp-1-canonical-data-foundation/scripts/credit_metrics.py",
+      "stated": "44.9",
+      "status": "agreed",
+      "tolerance": 0.1,
+      "unit": "USD m"
+    },
+    {
+      "figure": "LTM: Free cash flow, continuing operations",
+      "module": "CP-1",
+      "reason": "LTM = Full-Year Component + Current Stub - Prior-Year Stub (REF_CP-1_08; the script's derive_periods)",
+      "recomputed": -17.30000000000001,
+      "recomputed_label": null,
+      "register": "T4.8",
+      "row": "LTM: Free cash flow, continuing operations",
+      "script": "docs/reuse/selected-methods/skills/cp-1-canonical-data-foundation/scripts/credit_metrics.py",
+      "stated": "-17.3",
+      "status": "agreed",
+      "tolerance": 0.1,
+      "unit": "USD m"
+    },
+    {
+      "figure": "all",
+      "module": "CP-1",
+      "reason": "its SKILL.md declares no completeness contract: SKILL.md has no `## Output profile` section",
+      "recomputed": null,
+      "recomputed_label": null,
+      "register": "",
+      "row": "all",
+      "script": "docs/reuse/selected-methods/scripts/completeness_check.py",
+      "stated": null,
+      "status": "not checked",
+      "tolerance": null,
+      "unit": null
+    }
+  ],
+  "kind": "method-script-checks/1",
+  "module": "CP-1",
+  "response_sha256": "40228c9fafc807776d76c400b7380f3e27261c5b821386fb248697e736af5d16",
+  "scripts": {
+    "docs/reuse/selected-methods/scripts/completeness_check.py": "a9841a74e4f851fd565c5f3cabc831835c4bc305ea40c28446790f8165d56056",
+    "docs/reuse/selected-methods/skills/cp-1-canonical-data-foundation/scripts/credit_metrics.py": "8f90ad05f99ffe09ea6f223cbd67827bb4ab36f4d243e12645eac628dbff9233"
+  }
+}
