@@ -50,15 +50,21 @@ uv run python -m deploy_workflow.owners.cpos_launch --context ... --sources ... 
   --config copilot-luna-xhigh --cap 25 --out runs/example
 ```
 
-CP-OS keeps up to two independent modules in flight at once (owner, 2026-11-18),
-each in its own Copilot session, so a run holds at most two sessions on the seat.
-Modules still start and are accepted in plan order, and the run's cap covers both:
-a call that would pass the cap only because the other module's hold is open waits
-for that call to settle. `--parallel-modules 1`, or `CREDIT_OS_PARALLEL_MODULES=1`
-in the launching environment (the run start service passes no flag), runs one
-module at a time as before; the most is 4. Two sessions on one seat, the seat's
-rate limits and a tool result that waits for an earlier module are not yet checked
-on a live run.
+A run keeps one module in flight at a time. `--parallel-modules N`, or
+`CREDIT_OS_PARALLEL_MODULES=N` in the launching environment (the run start
+service passes no flag), lets CP-OS keep up to `N` independent modules in flight
+at once, `N` from 2 to 4 (`docs/rulings/2026-11-18-parallel-modules.md`). Modules
+still start and are accepted in plan order, and the run's cap covers all of them:
+a call that would pass the cap only because another module's hold is open waits
+for that call to settle. The adapter serves every call from one loop thread and
+gives each module its own runtime client and session, so a run at width `N` holds
+up to `N` sessions on the seat.
+
+A width above 1 has not been run against a live provider. Not checked: several
+sessions of one run on one seat, the seat's rate limits, and a tool result that
+waits for an earlier module (a handler the runtime drops ends as an unknown
+charge, which stops the run). Leave the setting unset until a separately
+authorized paid run has checked them.
 
 Add `--live --ruling docs/rulings/<file>.md` only for a separately authorized
 paid CLI run. The ruling must name the configuration. In the connected app,

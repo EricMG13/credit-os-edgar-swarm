@@ -1845,7 +1845,8 @@ def _parser() -> argparse.ArgumentParser:
         type=int,
         choices=range(1, MAX_MODULE_WIDTH + 1),
         help="independent modules in flight at once, each one provider session: default "
-        f"{MODULE_WIDTH}, or {PARALLEL_VARIABLE} when set; 1 runs them one at a time",
+        f"{MODULE_WIDTH} (one at a time), or {PARALLEL_VARIABLE} when set; above 1 has not "
+        "been run against a live provider",
     )
     parser.add_argument(
         "--no-library",
@@ -1855,8 +1856,9 @@ def _parser() -> argparse.ArgumentParser:
     return parser
 
 
-# The launching environment's default for --parallel-modules, so the run start service, which
-# passes no such flag, can be held to one module at a time (set it to 1) without a code change.
+# The launching environment's setting for --parallel-modules, so the run start service, which
+# passes no such flag, can be given a width above one without a code change. Unset, a run keeps
+# one module at a time.
 PARALLEL_VARIABLE = "CREDIT_OS_PARALLEL_MODULES"
 
 
@@ -2007,8 +2009,8 @@ def main(argv: Sequence[str] | None = None, *, allow_live: bool = True) -> int:
         return 0
     if width > 1:
         print(
-            f"Parallel: up to {width} independent modules at once (--parallel-modules 1 or "
-            f"{PARALLEL_VARIABLE}=1 runs one at a time)",
+            f"Parallel: up to {width} independent modules at once, as asked "
+            f"(--parallel-modules or {PARALLEL_VARIABLE}); the default is one at a time",
             flush=True,
         )
     try:

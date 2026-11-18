@@ -30,7 +30,7 @@ from deploy_workflow.owners.cpos import (
     ModuleHalted,
     run_handoffs,
 )
-from deploy_workflow.run_events import EVENTS, progress, read_events
+from deploy_workflow.run_events import EVENTS, append_event, progress, read_events, stop_reason
 from proof import DUMMY_KEY, launcher
 from proof.launcher import FILING, canned_handoff
 
@@ -107,6 +107,14 @@ def case(tmp_path_factory) -> Case:
     return Case(tmp_path_factory.mktemp("case"))
 
 
+def _until(condition, what: str) -> None:
+    """Wait for ``condition`` (a state another thread reaches), failing after ``WAIT`` seconds."""
+    deadline = time.monotonic() + WAIT
+    while not condition():
+        assert time.monotonic() < deadline, f"timed out waiting for {what}"
+        time.sleep(0.005)
+
+
 def _tree(root: Path) -> dict[str, str]:
     return {
         p.relative_to(root).as_posix(): hashlib.sha256(p.read_bytes()).hexdigest()
@@ -175,17 +183,21 @@ def test_the_width_is_never_exceeded_and_a_module_starts_only_after_its_producer
 
 def test_a_module_that_finishes_while_others_are_started_is_still_accepted(case, monkeypatch):
     """A module can finish between the scheduler's starts and its wait. The modules after it
-    wait for it at their checks, so the scheduler must not wait for them alone: here CP-1
-    finishes while the scheduler is still starting modules, and CP-1A's check waits for CP-1."""
+    wait for it at their checks, so the scheduler must not wait for them alone: here the
+    scheduler is held after it started CP-1 and CP-1A until CP-1 has finished, and CP-1A's check
+    waits for CP-1."""
+    from concurrent.futures import wait
+
     from deploy_workflow.owners import cpos
 
     take_off = cpos._ModuleLoop._take_off
 
-    def slow_take_off(self, board, pool, width):
+    def held_take_off(self, board, pool, width):
         take_off(self, board, pool, width)
-        time.sleep(0.3)  # every module just started has answered by now
+        if "CP-1A" in self.flights and "CP-1" not in self.selected:
+            wait([self.flights["CP-1"][1]], timeout=WAIT)  # CP-1 has finished, unlanded
 
-    monkeypatch.setattr(cpos._ModuleLoop, "_take_off", slow_take_off)
+    monkeypatch.setattr(cpos._ModuleLoop, "_take_off", held_take_off)
     done: list[Path | Exception] = []
 
     def run() -> None:
@@ -303,7 +315,6 @@ def test_a_module_before_the_failed_one_still_finishes_and_is_accepted(case):
             raise RuntimeError("cpos_live_stopped: the provider stopped CP-1A")
         if task.module_id == "CP-1":
             assert failed.wait(WAIT)
-            time.sleep(0.05)
             task.proceed()  # a module before the failed one is not halted
         return case.answer(task)
 
@@ -345,24 +356,283 @@ def test_a_module_already_halted_makes_no_further_call(case):
     assert outcome == ["cpos_halted: CP-1A: a module before it in the plan was not accepted"]
 
 
-def test_an_observer_that_stops_the_run_stops_new_starts(case):
+@pytest.mark.parametrize("width", [1, 2])
+def test_a_run_an_observer_stopped_is_resumable(case, monkeypatch, width):
+    """`run_handoffs`: the observer "may stop for evidence review; resume rechecks the bytes".
+    The observer stops the run when CP-1 is accepted. At width 2 CP-1A is in flight then: it is
+    not halted, its answer is retained, nothing is announced or started after the stop, and the
+    relaunch reuses all three answers and delivers, as it does one at a time."""
+    from deploy_workflow.owners import cpos
+
+    land = cpos._ModuleLoop._land
+    stopped = threading.Event()  # the scheduler has taken in the observer's stop
+    calls = []
+
+    def watched_land(self, board):
+        land(self, board)
+        if self.failures:
+            stopped.set()
+
+    monkeypatch.setattr(cpos._ModuleLoop, "_land", watched_land)
+
+    def execute(task: HandoffTask) -> bytes:
+        calls.append(task.module_id)
+        if task.module_id == "CP-1A" and width > 1 and "CP-1A" not in stopped_once:
+            stopped_once.append("CP-1A")
+            assert stopped.wait(WAIT)  # still in flight after the run was stopped
+            task.proceed()  # its next paid call is not refused: it may finish
+        return case.answer(task)
+
+    stopped_once: list[str] = []
+
     def stop_at_cp1(task: HandoffTask, raw: bytes) -> None:
         if task.module_id == "CP-1":
             raise RuntimeError("evidence review")
 
-    out = case.root / "observer"
+    name = f"observer-{width}"
+    out = case.root / name
     with pytest.raises(RuntimeError, match="evidence review"):
         run_handoffs(
             case.manifest,
             out,
-            execute=case.answer,
+            execute=execute,
             check=case.check,
             on_handoff=stop_at_cp1,
             events=out,
+            width=width,
+        )
+    assert case.events(name, "module_accepted") == ["CP-0", "CP-1"]
+    started = ["CP-0", "CP-1"] if width == 1 else ["CP-0", "CP-1", "CP-1A"]
+    assert case.events(name, "module_started") == started and sorted(calls) == started
+
+    calls.clear()
+    assert case.run(name, execute, width).is_file()
+    assert set(calls) == set(case.ordered) - set(started)  # each started module's answer reused
+    assert case.events(name, "module_accepted")[2:] == list(case.ordered)
+
+
+def _held_until_the_scheduler_saw(monkeypatch, failed_module: str) -> threading.Event:
+    """Set once the scheduler has run a round of starts with ``failed_module``'s failed call
+    already finished: what it would start beside a known failure, it has started by then."""
+    from deploy_workflow.owners import cpos
+
+    take_off = cpos._ModuleLoop._take_off
+    seen = threading.Event()
+
+    def watched(self, board, pool, width):
+        known = failed_module in self.flights and self.flights[failed_module][1].done()
+        take_off(self, board, pool, width)
+        if known:
+            seen.set()
+
+    monkeypatch.setattr(cpos._ModuleLoop, "_take_off", watched)
+    return seen
+
+
+def test_nothing_starts_once_a_module_in_flight_has_failed(case, monkeypatch):
+    """CP-2A and CP-2E are in flight; CP-2E, the later one, fails while CP-2A is still running.
+    The failure is acted on then, not when CP-2A is accepted: CP-2D, next in the plan with its
+    producers accepted and a slot free, is never started, so width 2 starts (and pays for)
+    exactly the modules width 1 does in the same failure."""
+
+    def started(width: int) -> list[str]:
+        seen = _held_until_the_scheduler_saw(monkeypatch, "CP-2E")
+        calls = []
+
+        def execute(task: HandoffTask) -> bytes:
+            calls.append(task.module_id)
+            if task.module_id == "CP-2E":
+                raise RuntimeError("cpos_live_stopped: the provider refused CP-2E")
+            if task.module_id == "CP-2A" and width > 1:
+                assert seen.wait(WAIT)  # still in flight after the failure
+            return case.answer(task)
+
+        name = f"known-failure-{width}"
+        with pytest.raises(RuntimeError, match="the provider refused CP-2E"):
+            case.run(name, execute, width)
+        monkeypatch.undo()
+        assert sorted(calls) == sorted(case.events(name, "module_started"))
+        assert case.events(name, "module_accepted")[-1] == "CP-2A"
+        return case.events(name, "module_started")
+
+    one, two = started(1), started(2)
+    assert two == one
+    assert one[-2:] == ["CP-2A", "CP-2E"] and "CP-2D" not in two
+
+
+def test_a_failure_of_the_later_module_is_raised_when_the_earlier_one_is_accepted(case):
+    """CP-1A fails; CP-1 then finishes and is accepted. The failure found while CP-1 was still in
+    flight is the one raised, with nothing else started."""
+    failed = threading.Event()
+
+    def execute(task: HandoffTask) -> bytes:
+        if task.module_id == "CP-1A":
+            failed.set()
+            raise ValueError("cpos_module_failed: CP-1A: the checker refused it")
+        if task.module_id == "CP-1":
+            assert failed.wait(WAIT)
+        return case.answer(task)
+
+    with pytest.raises(ValueError, match="cpos_module_failed: CP-1A") as raised:
+        case.run("late-failure", execute, 2)
+    assert stop_reason(raised.value) == "checker"
+    assert case.events("late-failure", "module_started") == ["CP-0", "CP-1", "CP-1A"]
+
+
+def test_an_interrupt_halts_the_modules_in_flight(case):
+    """The scheduling thread is interrupted (here at CP-1's acceptance) while CP-1A is in
+    flight: the interrupt propagates at once, and CP-1A makes no further call."""
+    interrupted, finished = threading.Event(), threading.Event()
+    outcome = []
+
+    def execute(task: HandoffTask) -> bytes:
+        if task.module_id != "CP-1A":
+            return case.answer(task)
+        try:
+            assert interrupted.wait(WAIT)
+            task.proceed()  # what the executor asks before each paid exchange
+            outcome.append("went on")
+        except ModuleHalted:
+            outcome.append("halted")
+            raise
+        finally:
+            finished.set()
+        return case.answer(task)
+
+    def interrupt(task: HandoffTask, raw: bytes) -> None:
+        if task.module_id == "CP-1":
+            raise KeyboardInterrupt
+
+    out = case.root / "interrupted"
+    with pytest.raises(KeyboardInterrupt):
+        run_handoffs(
+            case.manifest,
+            out,
+            execute=execute,
+            check=case.check,
+            on_handoff=interrupt,
+            events=out,
             width=2,
         )
-    assert case.events("observer", "module_accepted") == ["CP-0", "CP-1"]
-    assert set(case.events("observer", "module_started")) <= {"CP-0", "CP-1", "CP-1A"}
+    interrupted.set()
+    assert finished.wait(WAIT)
+    assert outcome == ["halted"]
+
+
+def test_a_plan_with_retained_handoffs_runs_one_at_a_time_whatever_width_is_asked(case):
+    """A retained module is refused before any call once an accepted module contradicts its pin;
+    that order holds only one at a time, so such a plan is not run in parallel."""
+    from deploy_workflow.owners.cpos import HandoffPlan, RetainedHandoff
+
+    done = case.root / "to-retain"
+    case.run("to-retain", case.answer, 1)
+    pins = {}
+    for record in sorted((done / "requests").glob("*/*/1.request.json")):
+        asked = json.loads(record.read_text())
+        response = (record.parent / "1.response.md").read_bytes()
+        kept = case.manifest.parent / "retained" / f"{asked['module_id']}.md"
+        kept.parent.mkdir(exist_ok=True)
+        kept.write_bytes(response)
+        pins[asked["module_id"]] = RetainedHandoff(
+            path=f"retained/{kept.name}",
+            sha256=hashlib.sha256(response).hexdigest(),
+            source_hashes=asked["sources"],
+            upstream=asked["handoffs"],
+        )
+    plan = HandoffPlan.model_validate_json(case.manifest.read_bytes())
+    manifest = case.manifest.with_name("retained.json")
+    manifest.write_text(plan.model_copy(update={"retained_handoffs": pins}).model_dump_json())
+    threads = set()
+
+    def check(task: HandoffTask, raw: bytes) -> tuple[str, ...]:
+        threads.add(threading.current_thread().name)
+        return case.check(task, raw)
+
+    out = case.root / "retained-run"
+    receipt = run_handoffs(
+        manifest,
+        out,
+        execute=lambda task: pytest.fail("a retained answer was asked for again"),
+        check=check,
+        events=out,
+        width=2,
+    )
+    assert receipt.is_file()
+    assert threads == {threading.current_thread().name}
+    assert read_events(out / EVENTS)[0]["modules_at_once"] == 1
+
+
+def test_cp8_runs_last_and_alone_at_width_two(tmp_path):
+    """A lite run with an earlier lite run listed plans CP-8 last. At width 2 CP-1 and CP-1A are
+    in flight together, and CP-8 starts only when every other module is accepted, with nothing
+    else in flight, and is delivered. Synthetic answers: this proves the wiring, not analysis."""
+    from library_fixtures import make_run
+    from test_changes import PRIOR_TABLES, cp8_answer
+    from test_cpos_launch import LITE_MODULES, answer, context_file, issuer_folder
+
+    root = tmp_path / "ws"
+    make_run(
+        root,
+        "prior-1",
+        as_of="2024-12-31",
+        pathway="lite_credit_assessment",
+        cp1_extra=PRIOR_TABLES,
+    )
+    prepared = cpos_launch.prepare(
+        context_file(tmp_path, "lite_credit_assessment"),
+        issuer_folder(tmp_path),
+        root / "runs/cur",
+        config="sol-medium",
+        cap="15",
+    )
+    assert prepared.ordered == (*LITE_MODULES, "CP-8")
+    plan = json.loads(prepared.manifest.read_text())
+    plan["execution"], plan["provider_cap_usd"] = "synthetic", "0"
+    manifest = prepared.directory / "synthetic.json"
+    manifest.write_text(json.dumps(plan))
+    routes = list(prepared.plan.layout.routes)
+    out = tmp_path / "out"
+    together = threading.Barrier(2, timeout=WAIT)
+    lock = threading.Lock()
+    flying: set[str] = set()
+    at_cp8 = {}
+
+    def execute(task: HandoffTask) -> bytes:
+        with lock:
+            flying.add(task.module_id)
+        if task.module_id in ("CP-1", "CP-1A"):
+            together.wait()
+        if task.module_id == "CP-8":
+            accepted = [
+                e["module"] for e in read_events(out / EVENTS) if e["event"] == "module_accepted"
+            ]
+            at_cp8.update(flying=set(flying), accepted=accepted)
+        context = {
+            "module_id": task.module_id,
+            "sources": {n: hashlib.sha256(raw).hexdigest() for n, raw in task.sources.items()},
+            "handoffs": {
+                m: {"sha256": hashlib.sha256(raw).hexdigest(), "markdown": raw.decode()}
+                for m, raw in task.handoffs.items()
+            },
+        }
+        text = cp8_answer(context) if task.module_id == "CP-8" else answer(context, routes)
+        with lock:
+            flying.discard(task.module_id)
+        return text.encode()
+
+    receipt = run_handoffs(
+        manifest,
+        out,
+        execute=execute,
+        check=cpos_launch.checker(prepared.layout),
+        events=out,
+        width=2,
+    )
+    assert at_cp8 == {"flying": {"CP-8"}, "accepted": list(LITE_MODULES)}
+    assert (receipt.parent / "CP-8.md").is_file() and (receipt.parent / "changes.json").is_file()
+    names = [(e["event"], e.get("module")) for e in read_events(out / EVENTS)]
+    assert [m for e, m in names if e == "module_accepted"] == [*LITE_MODULES, "CP-8"]
+    assert names[0] == ("launch_started", None) and "changes_not_produced" not in dict(names)
 
 
 def test_a_width_outside_the_bound_is_refused(case):
@@ -375,58 +645,143 @@ def test_a_width_outside_the_bound_is_refused(case):
 # ---------------------------------------------------------------- the event log
 
 
-def test_progress_reads_two_running_modules():
-    def read(*events: tuple[str, str]) -> dict[str, str]:
-        return dict(progress({"event": e, "module": m} for e, m in events).modules)
+S, A, LAUNCH = "module_started", "module_accepted", ("launch_started", None)
 
-    started = (("module_started", "CP-0"), ("module_accepted", "CP-0"), ("module_started", "CP-1"))
-    assert read(*started, ("module_started", "CP-1A")) == {
+
+def _log(*pairs: tuple[str, str | None]) -> list[dict[str, str]]:
+    return [{"event": event, **({"module": module} if module else {})} for event, module in pairs]
+
+
+def test_progress_reads_two_running_modules():
+    started = (LAUNCH, (S, "CP-0"), (A, "CP-0"), (S, "CP-1"), (S, "CP-1A"))
+    assert dict(progress(_log(*started)).modules) == {
         "CP-0": "done",
         "CP-1": "running",
         "CP-1A": "running",
     }
-    assert read(*started, ("module_started", "CP-1A"), ("module_accepted", "CP-1A")) == {
+    assert dict(progress(_log(*started, (A, "CP-1A"))).modules) == {
         "CP-0": "done",
         "CP-1": "running",
         "CP-1A": "done",
     }
-    stopped = progress(
-        [
-            *({"event": e, "module": m} for e, m in started),
-            {"event": "module_started", "module": "CP-1A"},
-            {"event": "stopped", "reason": "provider"},
-        ]
-    )
+    stopped = progress([*_log(*started), {"event": "stopped", "reason": "provider"}])
     assert dict(stopped.modules) == {"CP-0": "done", "CP-1": "stopped", "CP-1A": "stopped"}
     assert stopped.stop == "provider"
 
 
-def test_progress_ends_what_a_killed_launch_left_running_when_the_run_is_relaunched():
-    """A killed launch writes no `stopped`. The relaunch starts the first module again: that
-    start of a module already started ends the two the first launch left running."""
-    killed = [
-        {"event": "module_started", "module": "CP-0"},
-        {"event": "module_accepted", "module": "CP-0"},
-        {"event": "module_started", "module": "CP-1"},
-        {"event": "module_started", "module": "CP-1A"},
-    ]
-    relaunch = [*killed, {"event": "module_started", "module": "CP-0"}]
-    assert dict(progress(relaunch).modules) == {
-        "CP-0": "running",
+def test_what_a_killed_launch_left_running_ends_at_the_next_launch_not_at_a_repeated_module():
+    """A killed launch writes no `stopped`. The relaunch's `launch_started` ends the two modules
+    it left running; the relaunch then starts modules the log already has, CP-1 and CP-1A both
+    in flight, and neither start ends the other."""
+    killed = (LAUNCH, (S, "CP-0"), (A, "CP-0"), (S, "CP-1"), (S, "CP-1A"))
+    assert dict(progress(_log(*killed, LAUNCH)).modules) == {
+        "CP-0": "done",
         "CP-1": "stopped",
         "CP-1A": "stopped",
     }
+    relaunched = _log(*killed, LAUNCH, (S, "CP-0"), (A, "CP-0"), (S, "CP-1"), (S, "CP-1A"))
+    assert dict(progress(relaunched).modules) == {
+        "CP-0": "done",
+        "CP-1": "running",
+        "CP-1A": "running",
+    }
+    killed_in_delivery = [*_log(LAUNCH, (S, "CP-0"), (A, "CP-0")), {"event": "delivery_started"}]
+    assert progress(killed_in_delivery).report == "running"
+    assert progress([*killed_in_delivery, *_log(LAUNCH)]).report == "stopped"
+
+
+def test_a_log_written_before_launches_were_recorded_reads_as_it_always_did():
+    """No `launch_started`: the one-at-a-time loop wrote the log, and every start ends the module
+    running before it (a launch killed mid-module and relaunched; CP-8 not produced)."""
+    assert dict(progress(_log((S, "CP-0"), (A, "CP-0"), (S, "CP-1"), (S, "CP-0"))).modules) == {
+        "CP-0": "running",
+        "CP-1": "stopped",
+    }
+    assert dict(progress(_log((S, "CP-0"), (S, "CP-1"))).modules) == {
+        "CP-0": "stopped",
+        "CP-1": "running",
+    }
+    # an old log continued by a launch that records itself: the old rule up to it, the new after
+    mixed = _log((S, "CP-0"), (A, "CP-0"), (S, "CP-1"), LAUNCH, (S, "CP-0"), (A, "CP-0"))
+    mixed += _log((S, "CP-1"), (S, "CP-1A"))
+    assert dict(progress(mixed).modules) == {"CP-0": "done", "CP-1": "running", "CP-1A": "running"}
+
+
+def test_each_launch_records_its_start_and_a_relaunch_at_width_two_shows_both_modules_running(case):
+    """End to end on the log `run_handoffs` writes: an earlier launch was killed with CP-1 and
+    CP-1A running. While both are in flight again in the relaunch at width 2, the activity page's
+    reading shows both running (it showed CP-1 stopped when a repeated start ended the others)."""
+    from deploy_workflow.inbox.activity import module_states
+
+    out = case.root / "relaunched"
+    for event, module in ((S, "CP-0"), (A, "CP-0"), (S, "CP-1"), (S, "CP-1A")):
+        append_event(out, event, module=module)  # the killed launch: no `stopped`
+    together = threading.Barrier(2, timeout=WAIT)
+    read = {}
+
+    def execute(task: HandoffTask) -> bytes:
+        if task.module_id in ("CP-1", "CP-1A"):
+            together.wait()
+            states = dict(module_states("credit_snapshot", read_events(out / EVENTS)))
+            read[task.module_id] = (states["CP-0"], states["CP-1"], states["CP-1A"])
+        return case.answer(task)
+
+    assert case.run("relaunched", execute, 2).is_file()
+    assert read == {m: ("done", "running", "running") for m in ("CP-1", "CP-1A")}
+    events = read_events(out / EVENTS)
+    assert events[4] == {"at": events[4]["at"], "event": "launch_started", "modules_at_once": 2}
+    assert [e["event"] for e in events].count("launch_started") == 1
+    final = dict(module_states("credit_snapshot", events))
+    assert set(final.values()) == {"done"}
+
+
+def test_a_failed_event_write_does_not_cut_another_threads_line(tmp_path, monkeypatch):
+    """Two modules in flight both write events. A write that fails is cut back to the size the
+    file had before it; another thread's line appended meanwhile must not be cut with it. Here
+    thread A's write is held at its sync until thread B has either reached the append lock or
+    finished its append, and then fails."""
+    from deploy_workflow import run_events
+
+    append_event(tmp_path, "first")
+    lock = run_events._APPENDING
+    progressed = threading.Event()
+    first = threading.current_thread()
+
+    class Watched:
+        def __enter__(self):
+            if threading.current_thread() is not first:
+                progressed.set()  # B is at the lock, behind A
+            return lock.__enter__()
+
+        def __exit__(self, *exc):
+            return lock.__exit__(*exc)
+
+    def second() -> None:
+        append_event(tmp_path, "second")
+        progressed.set()  # B finished: nothing held it
+
+    other = threading.Thread(target=second, daemon=True)
+    sync = run_events.os.fsync
+
+    def failing_sync(fd: int) -> None:
+        if threading.current_thread() is not first:
+            return sync(fd)
+        other.start()
+        assert progressed.wait(WAIT)
+        raise OSError("disk full")
+
+    monkeypatch.setattr(run_events, "_APPENDING", Watched())
+    monkeypatch.setattr(run_events.os, "fsync", failing_sync)
+    with pytest.warns(RuntimeWarning, match="run event not recorded: lost"):
+        append_event(tmp_path, "lost")
+    other.join(WAIT)
+    assert [e["event"] for e in read_events(tmp_path / EVENTS)] == ["first", "second"]
 
 
 def test_the_activity_page_states_show_both_running_modules():
     from deploy_workflow.inbox.activity import module_states
 
-    events = [
-        {"event": "module_started", "module": "CP-0"},
-        {"event": "module_accepted", "module": "CP-0"},
-        {"event": "module_started", "module": "CP-1"},
-        {"event": "module_started", "module": "CP-1A"},
-    ]
+    events = _log(LAUNCH, (S, "CP-0"), (A, "CP-0"), (S, "CP-1"), (S, "CP-1A"))
     states = dict(module_states("credit_snapshot", events))
     assert (states["CP-0"], states["CP-1"], states["CP-1A"]) == ("done", "running", "running")
     assert states["CP-DR"] == "waiting" and states["Report"] == "waiting"
@@ -484,17 +839,32 @@ def _in_thread(function) -> tuple[threading.Thread, list]:
         except Exception as error:  # noqa: BLE001 -- the caller asserts on it
             result.append(error)
 
-    thread = threading.Thread(target=run)
+    thread = threading.Thread(target=run, daemon=True)
     thread.start()
     return thread, result
+
+
+def _waiting(budget: Budget) -> threading.Event:
+    """Set when a reserve on ``budget`` starts to wait for another thread's hold. The reserve
+    holds the budget's lock until it waits, so whoever sees the event and then settles or
+    releases does so after the wait began."""
+    began = threading.Event()
+    wait = budget._changed.wait
+
+    def waiting(timeout: float | None = None) -> bool:
+        began.set()
+        return wait(timeout)
+
+    budget._changed.wait = waiting
+    return began
 
 
 def test_a_reserve_blocked_only_by_another_modules_hold_waits_for_its_settlement(tmp_path):
     budget = Budget(Decimal(10), tmp_path)
     budget.reserve("first", Decimal(6), config_id=CONFIG)
+    waiting = _waiting(budget)
     thread, result = _in_thread(lambda: budget.reserve("second", Decimal(6), config_id=CONFIG))
-    thread.join(0.3)
-    assert thread.is_alive() and not result  # waiting: neither refused nor held
+    assert waiting.wait(WAIT) and not result  # waiting: neither refused nor held
     assert budget.reserved == Decimal(6)
     assert not (tmp_path / "owner-run-audit/reservations/second").exists()
     budget.settle("first", Decimal(1))
@@ -524,26 +894,41 @@ def test_a_thread_never_waits_for_its_own_hold(tmp_path):
         budget.reserve("mine-too", Decimal(6), config_id=CONFIG)
 
 
-@pytest.mark.parametrize("ending", ["unknown", "abandoned", "overrun"])
-def test_a_waiting_reserve_stops_when_the_hold_it_waits_for_stops_the_run(tmp_path, ending):
+@pytest.mark.parametrize("ending", ["unknown", "abandoned", "overrun", "marker fault"])
+def test_a_waiting_reserve_stops_when_the_hold_it_waits_for_stops_the_run(
+    tmp_path, monkeypatch, ending
+):
+    from deploy_workflow.model import budget as budget_module
+
     budget = Budget(Decimal(10), tmp_path)
     budget.reserve("first", Decimal(6), config_id=CONFIG)
+    waiting = _waiting(budget)
     thread, result = _in_thread(lambda: budget.reserve("second", Decimal(6), config_id=CONFIG))
-    thread.join(0.2)
-    assert thread.is_alive()
+    assert waiting.wait(WAIT)
     if ending == "unknown":
         budget.settle("first", None)
     elif ending == "abandoned":
         budget.abandon()  # this thread's module ended without settling its hold
-    else:
+    elif ending == "overrun":
         with pytest.raises(RunStopped):
             budget.settle("first", Decimal(7))
-    thread.join(WAIT)
+    else:  # the settlement's marker cannot be written: the budget's state is unknown, it stops
+
+        def no_write(path: Path, payload: dict[str, object]) -> None:
+            raise OSError("disk full")
+
+        monkeypatch.setattr(budget_module, "_write_once", no_write)
+        with pytest.raises(OSError, match="disk full"):
+            budget.settle("first", Decimal(1))
+    thread.join(5)
+    assert not thread.is_alive(), "the waiting reserve was not told the run stopped"
     assert isinstance(result[0], RunStopped) and not isinstance(result[0], BudgetExhausted)
     assert not (tmp_path / "owner-run-audit/reservations/second").exists()
     if ending == "abandoned":
         assert budget.stop_kind == "crash_left"
         assert Budget(Decimal(10), tmp_path).stop_kind == "crash_left"  # as a reload reads it
+    if ending == "marker fault":
+        assert "a marker write failed" in str(result[0])
 
 
 # ---------------------------------------------------------------- the executor
@@ -649,9 +1034,10 @@ def test_two_module_runs_share_one_executor_one_lock_and_one_budget(tmp_path):
 
 
 def test_two_modules_under_a_cap_that_fits_one_hold_take_turns_and_both_finish(tmp_path):
-    """The cap fits one call's hold, not two. Through the executor the second module's call
-    waits for the first to settle instead of stopping the run at the cap, and the two calls
-    are never both open."""
+    """The cap fits one call's hold, not two. CP-1's call is held open until CP-1A's reserve is
+    waiting for it: CP-1A is neither refused at the cap nor sent while CP-1's hold is open, and
+    both modules finish."""
+    second: list = []
 
     class OneAtATime:
         config_id = "sol-medium"
@@ -664,7 +1050,11 @@ def test_two_modules_under_a_cap_that_fits_one_hold_take_turns_and_both_finish(t
             with self.gate:
                 self.inside += 1
                 self.most = max(self.most, self.inside)
-            time.sleep(0.1)
+            if not second:  # CP-1's call: start CP-1A and wait until its reserve waits
+                waiting = _waiting(executor.budget)
+                second.extend(_in_thread(lambda: executor(_task("CP-1A"))))
+                assert waiting.wait(WAIT)
+                assert len(executor.budget.unsettled) == 1  # CP-1A holds nothing while it waits
             with self.gate:
                 self.inside -= 1
             return _reply()
@@ -673,15 +1063,164 @@ def test_two_modules_under_a_cap_that_fits_one_hold_take_turns_and_both_finish(t
     executor = HandoffExecutor(
         tmp_path, adapter=adapter, cap_usd=Decimal(8), check=lambda task, raw: ()
     )
-    first, one = _in_thread(lambda: executor(_task("CP-1")))
-    second, two = _in_thread(lambda: executor(_task("CP-1A")))
-    first.join(WAIT)
-    second.join(WAIT)
-    assert one == [GOOD] and two == [GOOD]
+    assert executor(_task("CP-1")) == GOOD
+    thread, result = second
+    thread.join(WAIT)
+    assert result == [GOOD]
     hold = Decimal(executor.log.records()[0]["reserved_usd"])
     assert hold <= Decimal(8) < 2 * hold  # the premise: one hold fits, two do not
     assert adapter.most == 1
     assert executor.budget.reserved == 0 and executor.budget.spent < Decimal(1)
+
+
+def test_a_module_that_ends_with_its_hold_open_stops_the_module_waiting_for_it(
+    tmp_path, monkeypatch
+):
+    """A fault between CP-1's reserve and its call leaves its hold open (here the turn event
+    raises). CP-1A is waiting in reserve for that hold. The executor leaves the hold as a crash
+    leaves one when CP-1 ends, so CP-1A stops with the run instead of waiting for ever."""
+    from deploy_workflow.model import handoff
+
+    record = handoff.append_event
+    second: list = []
+
+    def faulty(directory: Path, event: str, **fields: str | int) -> None:
+        if event == "turn" and fields.get("module") == "CP-1":
+            waiting = _waiting(executor.budget)
+            second.extend(_in_thread(lambda: executor(_task("CP-1A"))))
+            assert waiting.wait(WAIT)
+            raise RuntimeError("fault after the reserve, before the call")
+        record(directory, event, **fields)
+
+    class Unused:
+        config_id = "sol-medium"
+        ruling = None
+
+        def complete(self, request, **_identity):
+            pytest.fail("no call is sent: CP-1 faulted before it and CP-1A is stopped")
+
+    monkeypatch.setattr(handoff, "append_event", faulty)
+    executor = HandoffExecutor(
+        tmp_path / "live",
+        adapter=Unused(),
+        cap_usd=Decimal(8),
+        check=lambda task, raw: (),
+        events=tmp_path,
+    )
+    with pytest.raises(RuntimeError, match="fault after the reserve"):
+        executor(_task("CP-1"))
+    thread, result = second
+    thread.join(5)
+    assert not thread.is_alive(), "CP-1A still waits for a hold nobody will settle"
+    assert isinstance(result[0], RunStopped), result
+    assert "left unsettled by a crash" in str(result[0])
+    assert executor.budget.stop_kind == "crash_left" and len(executor.budget.unsettled) == 1
+
+
+class Priced:
+    """A fake Copilot adapter whose charges the test sets: each call is billed ``usd`` against
+    the configuration's flat hold. ``hook(adapter, module, call index, canned answer)`` may
+    return another reply or raise."""
+
+    config_id = CONFIG
+    ruling = Path("fake-ruling")  # not None: the reply's billed amount is the charge
+
+    def __init__(self, case: Case, hook=None) -> None:
+        self.case, self.hook = case, hook
+        self.executor: HandoffExecutor | None = None
+
+    @staticmethod
+    def reply(markdown: str | None, usd: str = "0.10") -> AdapterReply:
+        usage = Usage(input_tokens=100, output_tokens=50)
+        calls = (
+            () if markdown is None else (ToolCall("w", "write_handoff", {"markdown": markdown}),)
+        )
+        kind = "tool_use" if calls else "end"
+        turn = Turn("thinking" if markdown is None else "", calls, usage, kind, "m", "test", 200)
+        return AdapterReply("ok", turn, None, 200, None, None, 1, 2, usage, Decimal(usd))
+
+    def complete(self, request, *, call_index, **_identity):
+        context = json.loads(request.messages[1].text)
+        good = canned_handoff(context, self.case.case, gated=True)
+        found = (
+            None if self.hook is None else self.hook(self, context["module_id"], call_index, good)
+        )
+        return self.reply(good) if found is None else found
+
+
+def _priced_run(case: Case, name: str, width: int, hook, cap: str = "25"):
+    """The synthetic plan through the real executor and budget; a stop is recorded in the event
+    log as `run_live_handoffs` records it. Returns the folder, the executor and the failure."""
+    out = case.root / name
+    adapter = Priced(case, hook)
+    executor = adapter.executor = HandoffExecutor(
+        out / "live", adapter=adapter, cap_usd=Decimal(cap), check=case.check, events=out
+    )
+    try:
+        run_handoffs(
+            case.manifest, out, execute=executor, check=case.check, events=out, width=width
+        )
+    except Exception as error:  # noqa: BLE001 -- returned to the test
+        append_event(out, "stopped", reason=stop_reason(error))
+        return out, executor, error
+    return out, executor, None
+
+
+def _status(case: Case, name: str) -> tuple[str, str]:
+    """The run start service's status for the run, from its event log (`inbox.runs.outcome`)."""
+    from types import SimpleNamespace
+
+    from deploy_workflow.inbox.runs import outcome
+
+    return outcome(SimpleNamespace(runs=case.root), SimpleNamespace(id=name), 1)
+
+
+@pytest.mark.parametrize("width", [1, 2])
+def test_an_overrun_is_reported_as_the_stop_whichever_module_meets_it_first(case, width):
+    """CP-1A's call overruns its hold. At width 2 CP-1, before it in the plan, is between two
+    calls then, and its next reserve is refused because the run is stopped. The run's reason is
+    the overrun (`budget`, status `capped`) at both widths, never the refusal that followed it.
+
+    The accepted sets differ, unavoidably: one at a time CP-1 had finished before CP-1A started;
+    at width 2 CP-1 still needed a call the stopped budget may not hold for."""
+    name = f"overrun-{width}"
+
+    def hook(adapter: Priced, module: str, index: int, good: str):
+        if module == "CP-1A":
+            return Priced.reply(good, usd="8.00")  # above the USD 7.17 hold
+        if module == "CP-1" and index == 0:
+            if width > 1:
+                _until(lambda: adapter.executor.budget.stop_kind == "overrun", "CP-1A's overrun")
+            return Priced.reply(None)  # no tool call: the loop asks again, a second call follows
+        return None
+
+    out, _, error = _priced_run(case, name, width, hook)
+    assert str(error).startswith("cpos_live_stopped") and "overrun=True" in str(error)
+    assert stop_reason(error) == "budget"
+    assert progress(read_events(out / EVENTS)).stop == "budget"
+    assert _status(case, name) == ("capped", "stopped at the cap")
+    accepted = case.events(name, "module_accepted")
+    if width == 1:
+        assert accepted == ["CP-0", "CP-1"] and not getattr(error, "__notes__", [])
+    else:
+        assert accepted == ["CP-0"]
+        (note,) = error.__notes__
+        assert note.startswith("CP-1 also stopped: the run is stopped:") and "overran" in note
+
+
+@pytest.mark.parametrize("width", [1, 2])
+def test_a_cap_stop_is_capped_at_every_width_with_the_same_modules_accepted(case, width):
+    """Each call is billed 0.10 and holds 7.17 against a cap of 7.40: CP-0, CP-1 and CP-1A fit
+    (0.20 spent + 7.17), CP-DR does not (0.30 + 7.17). At width 2 CP-1A's first reserve waits
+    for CP-1's hold instead of being refused, so the same modules are accepted and the run stops
+    at the same module, as `capped`."""
+    name = f"capped-{width}"
+    out, executor, error = _priced_run(case, name, width, None, cap="7.40")
+    assert isinstance(error, BudgetExhausted) and stop_reason(error) == "budget"
+    assert _status(case, name) == ("capped", "stopped at the cap")
+    assert case.events(name, "module_accepted") == ["CP-0", "CP-1", "CP-1A"]
+    assert executor.budget.spent == Decimal("0.30") and executor.budget.reserved == 0
+    assert len((out / "live" / "calls.jsonl").read_text().splitlines()) == 3  # none past the cap
 
 
 def test_a_halted_module_reserves_nothing_and_sends_nothing(tmp_path):
@@ -733,11 +1272,19 @@ def test_a_module_halted_while_it_waited_for_the_cap_releases_its_hold_unsent(tm
 # ---------------------------------------------------------------- the launcher's setting
 
 
-def test_the_launcher_default_is_two_and_the_environment_or_the_flag_sets_it():
+def test_the_default_is_one_module_at_a_time_and_a_width_above_one_is_asked_for():
+    """Unset, every entry point runs one module at a time, as before the change."""
+    import inspect
+
+    from deploy_workflow.owners import cpos
+
     width = cpos_launch.module_width
-    assert MODULE_WIDTH == 2
-    assert width(None, {}) == 2
-    assert width(None, {cpos_launch.PARALLEL_VARIABLE: "1"}) == 1
+    assert MODULE_WIDTH == 1
+    assert width(None, {}) == 1
+    assert width(None, {cpos_launch.PARALLEL_VARIABLE: " "}) == 1
+    assert inspect.signature(cpos.run_handoffs).parameters["width"].default == 1
+    assert inspect.signature(cpos.run_live_handoffs).parameters["module_width"].default == 1
+    assert width(None, {cpos_launch.PARALLEL_VARIABLE: "2"}) == 2
     assert width(3, {cpos_launch.PARALLEL_VARIABLE: "1"}) == 3
     for bad in ("0", "5", "two", "-1", "1.5"):
         with pytest.raises(cpos_launch.LaunchRefused, match="whole number from 1 to 4"):
@@ -745,7 +1292,7 @@ def test_the_launcher_default_is_two_and_the_environment_or_the_flag_sets_it():
     parser = cpos_launch._parser()
     base = ["--context", "c", "--sources", "s", "--config", CONFIG]
     assert parser.parse_args(base).parallel_modules is None
-    assert parser.parse_args([*base, "--parallel-modules", "1"]).parallel_modules == 1
+    assert parser.parse_args([*base, "--parallel-modules", "2"]).parallel_modules == 2
     with pytest.raises(SystemExit):
         parser.parse_args([*base, "--parallel-modules", "5"])
 
@@ -773,7 +1320,7 @@ def _launched(root: Path, width: str | None, monkeypatch) -> dict[str, str]:
     the library was built (`built_at`); the random
     call ids (the reservation markers' names and each response's `reservation_id`); and the order
     of the event and call log lines, and of the library's copy of the call log, which is the
-    order things happened in."""
+    order things happened in; and the event log's `launch_started` line, which states the width."""
     context, drop = workspace(root)
     out = root / "runs" / "example-run"
     argv = [
@@ -793,6 +1340,7 @@ def _launched(root: Path, width: str | None, monkeypatch) -> dict[str, str]:
         text = path.read_bytes()
         if name.endswith((EVENTS, "live/calls.jsonl")):
             lines = _CALL.sub("call-id", _TIME.sub("time", text.decode())).splitlines()
+            lines = [line for line in lines if '"launch_started"' not in line]  # states the width
             text = "\n".join(sorted(lines)).encode()
         elif name == "library/data.js":
             assert _CALLS.search(text.decode())
@@ -823,14 +1371,29 @@ def test_the_synthetic_run_is_the_same_tree_one_at_a_time_and_in_parallel(tmp_pa
     monkeypatch.delenv(cpos_launch.PARALLEL_VARIABLE, raising=False)
     serial = _launched(tmp_path / "serial", "1", monkeypatch)
     default = _launched(tmp_path / "default", None, monkeypatch)
+    two = _launched(tmp_path / "two", "2", monkeypatch)
     widest = _launched(tmp_path / "widest", str(MAX_MODULE_WIDTH), monkeypatch)
     assert any(name.startswith("runs/example-run/deliveries/") for name in serial)
     assert "library/data.js" in serial and len(serial) > 200
     assert serial == default
+    assert serial == two
     assert serial == widest
-    # and the default run did overlap: CP-1A started before CP-1 was accepted
-    events = read_events(tmp_path / "default" / "runs" / "example-run" / EVENTS)
-    names = [(e["event"], e.get("module")) for e in events]
+
+    def named(run: str) -> list[tuple[str, str | None]]:
+        events = read_events(tmp_path / run / "runs" / "example-run" / EVENTS)
+        return [(e["event"], e.get("module")) for e in events]
+
+    # the default run is one at a time: every module is accepted before the next one starts
+    marks = [n for n in named("default") if n[0] in ("module_started", "module_accepted")]
+    assert marks == [(e, m) for m in order for e in ("module_started", "module_accepted")]
+    widths = {
+        run: read_events(tmp_path / run / "runs" / "example-run" / EVENTS)[0]
+        for run in ("default", "two")
+    }
+    assert [widths[run]["modules_at_once"] for run in ("default", "two")] == [1, 2]
+    # and the width-2 run did overlap: CP-1A started before CP-1 was accepted
+    events = read_events(tmp_path / "two" / "runs" / "example-run" / EVENTS)
+    names = named("two")
     assert names.index(("module_started", "CP-1A")) < names.index(("module_accepted", "CP-1"))
     assert [m for e, m in names if e == "module_accepted"] == list(order)
     states = progress(events)

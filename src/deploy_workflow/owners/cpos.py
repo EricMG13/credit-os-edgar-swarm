@@ -62,7 +62,7 @@ from deploy_workflow.handoff_delivery import (
     verify_files,
 )
 from deploy_workflow.library_index import Refused, completion_records, delivery_folder
-from deploy_workflow.model.budget import BudgetExhausted
+from deploy_workflow.model.budget import BudgetExhausted, OverrunStop, RunStopped
 from deploy_workflow.model.configs import CONFIGS, ModelConfig
 from deploy_workflow.model.run_lock import RunDirBusy, _single_writer
 from deploy_workflow.owners import cpos_forecast
@@ -162,11 +162,12 @@ class ComparisonPlan(Contract):
         return self
 
 
-# How many modules CP-OS may have in flight at once (owner, 2026-11-18: independent modules may run
-# in parallel). Two captures the whole gain the pathways' dependency graphs allow; each module in
-# flight is one provider session, so the bound is also the run's provider concurrency. One is the
-# serial loop, unchanged.
-MODULE_WIDTH = 2
+# How many modules CP-OS may have in flight at once (docs/rulings/2026-11-18-parallel-modules.md).
+# The default is one, the serial loop, unchanged: a width above one is asked for explicitly and has
+# not been run against a live provider. Each module in flight is one provider session, so the width
+# is also the run's provider concurrency; two captures the gain the pathways' dependency graphs
+# allow.
+MODULE_WIDTH = 1
 MAX_MODULE_WIDTH = 4
 
 
@@ -519,6 +520,10 @@ class _ModuleLoop:
     failures: dict[str, Exception] = field(default_factory=dict)  # and each one that failed
 
     def run(self, width: int) -> None:
+        if self.events is not None:
+            # A launch boundary for the readers of the log (``run_events.progress``): what an
+            # earlier, killed launch left running ended before this one started anything.
+            append_event(self.events, "launch_started", modules_at_once=width)
         if width == 1:
             self._one_at_a_time()
         else:
@@ -626,11 +631,10 @@ class _ModuleLoop:
             self.on_handoff(task, raw)
 
     def _in_flight(self, width: int) -> None:
-        """Up to ``width`` modules at once (the class's rule). A module that fails, or an observer
-        that stops the run, ends the starts; modules already in flight end on their own, the ones
-        before the failed module accepted as usual, the ones after it halted at their next call
-        or check (``ModuleHalted``); then the failure of the earliest module in the plan is
-        raised, as the serial loop would have met it first."""
+        """Up to ``width`` modules at once (the class's rule). Once a module in flight is known to
+        have failed, nothing more starts. Modules already in flight end on their own: the ones
+        before the failed module are accepted as usual, the ones after it halt at their next call
+        or check (``ModuleHalted``). Then one failure is raised (``_cause``)."""
         board = _Board(self.ordered, self.handoffs)
         pool = ThreadPoolExecutor(max_workers=width, thread_name_prefix="cpos-module")
         try:
@@ -641,10 +645,9 @@ class _ModuleLoop:
                 # waited for.
                 flying = [future for _, future in self.flights.values() if not future.done()]
                 self._land(board)
-                if not self.failures and self.not_produced is None:
-                    started = set(self.flights)
-                    self._take_off(board, pool, width)
-                    flying += [self.flights[m][1] for m in self.flights.keys() - started]
+                started = set(self.flights)
+                self._take_off(board, pool, width)
+                flying += [self.flights[m][1] for m in self.flights.keys() - started]
                 if not flying:
                     break
                 wait(flying, return_when=FIRST_COMPLETED)
@@ -653,20 +656,36 @@ class _ModuleLoop:
             board.stop_after(None)
             pool.shutdown(wait=False, cancel_futures=True)
         if self.failures:
-            first = next(m for m in self.ordered if m in self.failures)
-            for module_id, error in self.failures.items():
-                if module_id != first:
-                    self.failures[first].add_note(f"{module_id} also stopped: {with_notes(error)}")
-            raise self.failures[first]
+            raise self._cause()
         if self.not_produced is None and set(self.selected) != set(self.ordered):
             raise ValueError("cpos_plan: a module was left with a producer that is not before it")
 
+    def _cause(self) -> Exception:
+        """The failure the launch raises, the others noted on it: that of the earliest failed
+        module in the plan, as the serial loop would have met it first. A module the budget
+        refused only because the run was already stopped (another module's unknown charge or
+        overrun) is not the cause while the module whose call stopped the run is among the
+        failed: the run's recorded reason is the stop itself, a cap or an overrun as ``budget``,
+        at any width."""
+        failed = [m for m in self.ordered if m in self.failures]
+        causes = [m for m in failed if not _stopped_by_another(self.failures[m])] or failed
+        cause = self.failures[causes[0]]
+        for module_id in failed:
+            if module_id != causes[0]:
+                cause.add_note(f"{module_id} also stopped: {with_notes(self.failures[module_id])}")
+        return cause
+
     def _take_off(self, board: _Board, pool: ThreadPoolExecutor, width: int) -> None:
         """Start the modules not yet started, in plan order, while a slot is free and the next
-        one's producers are all accepted. A module refused before its call fails the run."""
+        one's producers are all accepted. Nothing starts once a module is known to have failed
+        (asked again before each start: a slot a failed module left is not a free slot), or once
+        CP-8 is known not to be produced. A module refused before its call fails the run."""
         for module_id in self.ordered:
             if module_id in self.flights:
                 continue
+            self._note_failures(board)
+            if self.failures or self.not_produced is not None:
+                return
             if sum(not future.done() for _, future in self.flights.values()) >= width:
                 return
             if not self.producers[module_id] <= self.handoffs.keys():
@@ -683,36 +702,66 @@ class _ModuleLoop:
                 return
             self.flights[module_id] = task, pool.submit(self._work, task)
 
+    def _note_failures(self, board: _Board) -> None:
+        """Keep the failure of every module that has finished with one, wherever it is in the
+        plan, and halt the modules after it: a failure is acted on when it happens, not when the
+        modules before it have been accepted. A module that only halted has not failed, and a
+        CP-8 the run goes on without has not either (``_unaccepted``)."""
+        for module_id, (_, future) in self.flights.items():
+            if future.done() and module_id not in self.handoffs and module_id not in self.failures:
+                found = self._failure(module_id, future)
+                if found is not None:
+                    self.failures.setdefault(module_id, found)
+                    board.stop_after(module_id)
+
+    def _failure(self, module_id: str, future: Future[tuple[bytes, str]]) -> Exception | None:
+        found = future.exception()
+        if found is None or isinstance(found, ModuleHalted):
+            return None
+        if not isinstance(found, Exception):
+            raise found  # an interrupt raised on a module's thread is this launch's interrupt
+        return None if self._unaccepted(module_id, found) else found
+
     def _land(self, board: _Board) -> None:
         """Accept, in plan order, each finished module that every module before it has been
-        accepted ahead of; keep a failure and stop the modules after it. A module that finished
-        after a failed one is not accepted: its retained answer waits for a relaunch. Its own
-        failure is kept too, unless it only halted."""
+        accepted ahead of. A module that finished after a failed one is not accepted: its retained
+        answer waits for a relaunch.
+
+        An observer that stops the run at an accepted module (``on_handoff`` raising: an evidence
+        review) is a failure that leaves that module accepted. Nothing more starts and nothing
+        more is announced, but the modules still in flight are not halted: each finishes, its
+        answer is retained and is put on the board for the checks of the others in flight, so the
+        relaunch finds every started module's answer and resumes, as it does one at a time."""
+        self._note_failures(board)
+        quiet = False
         for module_id in self.ordered:
-            if module_id in self.failures:
-                break
-            if module_id in self.selected:
+            if module_id in self.handoffs:
+                quiet = quiet or module_id in self.failures  # the observer stopped the run here
                 continue
             flight = self.flights.get(module_id)
-            if flight is None or not flight[1].done():
+            if flight is None or not flight[1].done() or flight[1].exception() is not None:
                 break
             task, future = flight
-            try:
-                raw, path = future.result()
-                board.accept(module_id, raw)
-                self._accept(task, raw, path)
-            except Exception as error:  # noqa: BLE001 -- kept, and raised when the others end
-                if not self._unaccepted(module_id, error):
-                    self.failures[module_id] = error
-                    board.stop_after(module_id)
-                break
-        if not self.failures:
-            return
-        for module_id, (_, future) in self.flights.items():
-            if future.done() and module_id not in self.selected:
-                found = future.exception()
-                if isinstance(found, Exception) and not isinstance(found, ModuleHalted):
-                    self.failures.setdefault(module_id, found)
+            raw, path = future.result()
+            board.accept(module_id, raw)
+            if not quiet:
+                quiet = not self._announced(task, raw, path)
+
+    def _announced(self, task: HandoffTask, raw: bytes, path: str) -> bool:
+        """Record the acceptance and tell the observer; False when the observer stopped the run."""
+        try:
+            self._accept(task, raw, path)
+        except Exception as error:  # noqa: BLE001 -- kept, and raised when the others end
+            self.failures[task.module_id] = error
+            return False
+        return True
+
+
+def _stopped_by_another(error: Exception) -> bool:
+    """Whether a module failed only because the budget refused it a new hold on a run already
+    stopped: ``reserve`` raises a plain ``RunStopped`` for that. The module whose own call
+    stopped the run fails with that call's fault instead (the loop's ``cpos_live_stopped``)."""
+    return isinstance(error, RunStopped) and not isinstance(error, OverrunStop)
 
 
 def _refuse_decided_stale(
@@ -1147,8 +1196,7 @@ def run_live_handoffs(  # noqa: PLR0913 -- the explicit paid entry point takes e
     """Explicit paid entry point; callers supply an evidence/instruction checker.
 
     ``module_width`` is how many independent modules may be in flight at once, each one provider
-    session (``run_handoffs``); 1, the default here, runs them one at a time, and the launcher
-    asks for ``MODULE_WIDTH`` unless told otherwise.
+    session (``run_handoffs``); 1, the default here and in the launcher, runs them one at a time.
 
     ``web_lookup`` (``default``, ``on`` or ``off``), ``web_hosts`` (the case's own
     investor-relations hosts) and ``lookup_cutoff`` (the run's research cutoff; the as-of date

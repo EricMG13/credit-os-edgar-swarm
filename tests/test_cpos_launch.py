@@ -696,14 +696,31 @@ def answer(context: dict, plan_routes: list) -> str:
     return "\n".join(lines)
 
 
+def pytest_generate_tests(metafunc):
+    """Run each launcher test that uses the fake provider at one module at a time and at two at
+    once. A test marked `serial_calls` asserts the order of the fake's calls across modules, which
+    is the plan's order only one at a time (two modules in flight call in either order), so it
+    runs at width 1 only."""
+    if "provider" in metafunc.fixturenames:
+        serial = metafunc.definition.get_closest_marker("serial_calls") is not None
+        widths = (1,) if serial else (1, 2)
+        ids = [("one-at-a-time", "two-at-once")[width - 1] for width in widths]
+        metafunc.parametrize("provider", widths, indirect=True, ids=ids)
+
+
 @pytest.fixture
-def provider(monkeypatch):
+def provider(monkeypatch, request):
     """Historical HTTP integration fake; it never creates a real transport or makes a request."""
     calls = []
     monkeypatch.setenv("OPENAI_API_KEY", "not-a-real-key")
-    # These tests assert the order of the fake's calls, which is the plan's order only with one
-    # module at a time; modules in flight at once are tested in tests/test_cpos_parallel.py.
-    monkeypatch.setenv(cpos_launch.PARALLEL_VARIABLE, "1")
+    # Each test that takes this fixture runs twice (`pytest_generate_tests`): one module at a time,
+    # the default, and two at once. The width is the launching environment's setting, so it reaches
+    # every launch the test makes through `main`.
+    width = getattr(request, "param", 1)  # another file that borrows the fixture runs it once
+    if width == 1:
+        monkeypatch.delenv(cpos_launch.PARALLEL_VARIABLE, raising=False)
+    else:
+        monkeypatch.setenv(cpos_launch.PARALLEL_VARIABLE, str(width))
 
     # These old tests exercise ordering, persistence and delivery through the former HTTP route.
     # Keep that route local to the fixture; real CLI routing is covered by the Copilot tests below.
@@ -1521,6 +1538,7 @@ def test_the_short_snapshot_instructions_still_build_through_the_lower_level_fun
     assert tuple(texts) == SHORT_SNAPSHOT
 
 
+@pytest.mark.serial_calls  # asserts the calls came in plan order
 def test_the_lite_pathway_runs_end_to_end_to_a_verified_delivery_with_a_synthetic_provider(
     tmp_path, provider, capsys
 ):
@@ -1618,6 +1636,7 @@ def test_a_pathways_instructions_stay_within_their_size_budget(tmp_path, pathway
     )
 
 
+@pytest.mark.serial_calls  # asserts the calls came in plan order
 @pytest.mark.parametrize("pathway", sorted(PATHWAY_MODULES))
 def test_every_pathway_runs_end_to_end_to_a_verified_report(tmp_path, provider, capsys, pathway):
     argv = launch(tmp_path, "--live", "--ruling", str(RULING), pathway=pathway)
@@ -5380,6 +5399,7 @@ def test_each_pathways_run_reaches_the_library_screens(tmp_path, provider, capsy
         assert ISSUER in shown, route
 
 
+@pytest.mark.serial_calls  # asserts the calls came in plan order
 @pytest.mark.browser
 def test_a_lite_run_fills_the_library_pages_and_its_forecast_page_states_the_gap(
     tmp_path, provider, capsys
@@ -5452,6 +5472,7 @@ def _deep_run_in_the_library(tmp_path, provider, capsys) -> dict:
     return json.loads(text.removeprefix("window.CREDIT_OS_DATA=").rstrip().removesuffix(";"))
 
 
+@pytest.mark.serial_calls  # asserts the calls came in plan order
 def test_a_deep_run_is_delivered_and_listed_by_the_library_with_every_module(
     tmp_path, provider, capsys
 ):

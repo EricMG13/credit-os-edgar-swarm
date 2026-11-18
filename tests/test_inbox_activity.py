@@ -92,22 +92,16 @@ def test_a_stop_ends_the_running_module_and_a_relaunch_runs_it_again():
     assert dict(module_states("earnings_update", report))["Report"] == "stopped"
 
 
-def test_modules_may_run_at_once_and_a_relaunch_or_delivery_ends_one_left_running():
-    """CP-OS may run independent modules at once: another module's start leaves a module running.
-    The start of a module already started is a relaunch (a launch killed mid-module wrote no
-    stop) and ends what was left running; delivery ends one still running (CP-8 not produced,
-    which the run survives)."""
+def test_one_module_runs_at_a_time_and_delivery_ends_one_not_produced():
+    """A log with no `launch_started` was written by the one-at-a-time loop: a start ends the
+    module before it (a launch killed mid-module and relaunched), and delivery ends one still
+    running (CP-8 not produced, which the run survives)."""
     events = [
         {"event": "module_started", "module": "CP-0"},
-        {"event": "module_accepted", "module": "CP-0"},
-        {"event": "module_started", "module": "CP-1"},
-        {"event": "module_started", "module": "CP-1A"},
+        {"event": "module_started", "module": "CP-1"},  # the relaunch after a kill
     ]
     states = dict(module_states("relative_value", events))
-    assert (states["CP-0"], states["CP-1"], states["CP-1A"]) == ("done", "running", "running")
-    events.append({"event": "module_started", "module": "CP-0"})  # the relaunch after a kill
-    states = dict(module_states("relative_value", events))
-    assert (states["CP-0"], states["CP-1"], states["CP-1A"]) == ("running", "stopped", "stopped")
+    assert (states["CP-0"], states["CP-1"]) == ("stopped", "running")
     cp8 = [
         {"event": "module_started", "module": "CP-8"},
         {"event": "changes_not_produced", "reason": "not accepted"},
@@ -116,6 +110,26 @@ def test_modules_may_run_at_once_and_a_relaunch_or_delivery_ends_one_left_runnin
     ]
     states = dict(module_states("relative_value", cp8))
     assert (states["CP-8"], states["Report"]) == ("stopped", "done")
+
+
+def test_a_launch_that_records_its_start_may_run_modules_at_once():
+    """`launch_started` ends what a killed launch left running; after it another module's start
+    ends nothing, because independent modules may be in flight together."""
+    launch = {"event": "launch_started", "modules_at_once": 2}
+    events = [
+        launch,
+        {"event": "module_started", "module": "CP-0"},
+        {"event": "module_accepted", "module": "CP-0"},
+        {"event": "module_started", "module": "CP-1"},
+        {"event": "module_started", "module": "CP-1A"},
+    ]
+    states = dict(module_states("relative_value", events))
+    assert (states["CP-0"], states["CP-1"], states["CP-1A"]) == ("done", "running", "running")
+    states = dict(module_states("relative_value", [*events, launch]))  # killed, then relaunched
+    assert (states["CP-0"], states["CP-1"], states["CP-1A"]) == ("done", "stopped", "stopped")
+    again = [*events, launch, *events[1:]]  # the relaunch has both in flight again
+    states = dict(module_states("relative_value", again))
+    assert (states["CP-0"], states["CP-1"], states["CP-1A"]) == ("done", "running", "running")
 
 
 def test_spend_counts_settled_charges_and_full_unknown_holds(tmp_path):

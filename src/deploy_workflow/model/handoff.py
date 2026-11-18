@@ -1215,7 +1215,8 @@ class HandoffExecutor:
 
     Calls may overlap, one per thread, when CP-OS runs independent modules at once. They share the
     folder's writer lock, the one ``Budget`` (so the cap holds across them), the call log, the
-    redactor and the adapter, which keeps one isolated session per module; everything a module run
+    redactor and the adapter. The Copilot adapter serves every call from its one loop thread and
+    keeps a separate runtime client and session for each module's digest. Everything a module run
     has seen is per thread (``_PerModule``)."""
 
     # The first completed compaction of the module this thread ran last: the GitHub Copilot

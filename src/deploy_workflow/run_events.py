@@ -43,27 +43,34 @@ def _ended(states: Mapping[str, ModuleState]) -> dict[str, ModuleState]:
 def progress(events: Iterable[Mapping[str, Any]]) -> Progress:
     """The one reading of the log, in order. A module runs from ``module_started`` until
     ``module_accepted`` (done), or until the run's ``stopped`` or ``delivery_started`` (stopped: it
-    was not finished; a CP-8 not produced is one). CP-OS may run independent modules at once, so
-    another module's ``module_started`` leaves it running. The Report entry likewise runs from
+    was not finished; a CP-8 not produced is one). The Report entry likewise runs from
     ``delivery_started`` until ``delivered`` or ``stopped``. One log spans every launch of a run
-    folder and a launch starts each module once, so the start of a module the log already started
-    is a relaunch: it runs the module again, ends the earlier stop and ends whatever an earlier
-    launch left running (a launch that was killed wrote no ``stopped``)."""
+    folder, so a later start (a relaunch) runs a module again and ends the earlier stop.
+
+    A launch that was killed wrote no ``stopped``, so what it left running must end when the next
+    launch begins. A launch writes ``launch_started`` before it starts anything: that ends what
+    was running, and from then on another module's ``module_started`` ends nothing, because CP-OS
+    may run independent modules at once. A log written before that event existed has none, and
+    is read as it always was: every ``module_started`` ends the module running before it, which
+    is right for the one-at-a-time loop that wrote it."""
     modules: dict[str, ModuleState] = {}
     report: ModuleState = "waiting"
     delivered = False
     stop: str | None = None
+    launches = False  # the log names its launches
     for event in events:
         name = event.get("event")
-        if name == "stopped":
-            stop = str(event.get("reason", ""))
+        if name in ("stopped", "launch_started"):
             modules = _ended(modules)
             report = "stopped" if report == "running" else report
+            if name == "stopped":
+                stop = str(event.get("reason", ""))
+            else:
+                launches = True
         elif name == "module_started":
-            module = str(event.get("module"))
-            if module in modules:
+            if not launches:
                 modules = _ended(modules)
-            modules[module], stop = "running", None
+            modules[str(event.get("module"))], stop = "running", None
         elif name == "module_accepted":
             modules[str(event.get("module"))] = "done"
         elif name == "delivery_started":
