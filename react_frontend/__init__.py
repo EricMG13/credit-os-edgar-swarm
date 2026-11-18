@@ -31,8 +31,6 @@ REPORT_FOLDER = re.compile(r"[\w. -]+")
 REPORT_PREFIX = "/connected/report/"
 STATIC_FILES = {"/data.js", "/symbol.svg", "/THIRD-PARTY-NOTICES.md"}
 STATIC_DIRS = ("/assets/", "/connected-assets/", "/fonts/")
-EXPORT_PREFIX = "window.CREDIT_OS_DATA="
-EXPORT_KEYS = ("catalogue", "workspace", "activity", "chips")
 
 
 def _valid_report_folder(folder: str) -> bool:
@@ -44,33 +42,6 @@ def _report_page(path: str) -> bool:
     found = REPORT_PAGE.fullmatch(path)
     folder = unquote(found[1]) if found else ""
     return _valid_report_folder(folder)
-
-
-def _invalid_json(constant: str) -> None:
-    raise ValueError(f"invalid JSON constant {constant}")
-
-
-def _read_publication(path: Path) -> tuple[bytes, dict[str, Any] | None]:
-    """Decode the published assignment as JSON and retain the original JSON bytes."""
-    raw = http_base.read_regular(path)
-    if raw is None:
-        return b"null", None
-    encoded, snapshot = _decode_publication(raw)
-    if any(not isinstance(snapshot.get(key), dict) for key in EXPORT_KEYS):
-        raise ValueError("invalid issuer library snapshot")
-    return encoded, snapshot
-
-
-def _decode_publication(raw: bytes) -> tuple[bytes, dict[str, Any]]:
-    """The assignment's JSON object and its original bytes; anything else is refused."""
-    assignment = raw.decode("utf-8").rstrip()
-    if not assignment.startswith(EXPORT_PREFIX) or not assignment.endswith(";"):
-        raise ValueError("invalid issuer library export")
-    encoded = assignment[len(EXPORT_PREFIX) : -1]
-    snapshot = json.loads(encoded, parse_constant=_invalid_json)
-    if not isinstance(snapshot, dict):
-        raise TypeError("invalid issuer library snapshot")
-    return encoded.encode("utf-8"), snapshot
 
 
 def _visible_publication(layout: Layout) -> tuple[bytes, dict[str, Any] | None]:
@@ -93,8 +64,7 @@ def _without_workspace(catalogue: dict[str, Any]) -> dict[str, Any]:
 
 
 def _admitted_scope(layout: Layout, folder: str | None) -> dict[str, Any] | None:
-    payload, snapshot = _read_publication(layout.engine / "library" / "data.js")
-    del payload
+    snapshot = admission.published(layout)
     if snapshot is None:
         if folder is not None:
             raise http_base.refuse(404, "unknown report")
@@ -109,7 +79,7 @@ def _admitted_scope(layout: Layout, folder: str | None) -> dict[str, Any] | None
 
 
 def _library_index(layout: Layout) -> http_base.Reply:
-    _, snapshot = _read_publication(layout.engine / "library" / "data.js")
+    snapshot = admission.published(layout)
     if snapshot is None:
         return http_base.Reply(200, None)
     visible = admission.admitted(snapshot, layout)
@@ -122,10 +92,16 @@ def _library_index(layout: Layout) -> http_base.Reply:
         if lead is not None:
             kept["lead"] = lead
         runs[key] = kept
+    # Without each run's ``files``: every file of its run folder (about 40 kB a run, 95% of this
+    # reply), which no page of the library reads.
+    listed = [
+        {field: value for field, value in run.items() if field != "files"}
+        for run in visible["catalogue"].get("real", [])
+    ]
     return http_base.Reply(
         200,
         {
-            "catalogue": {"real": visible["catalogue"].get("real", [])},
+            "catalogue": {"real": listed},
             "workspace": {"runs": runs},
             "preview": visible.get("preview"),
         },
@@ -322,7 +298,7 @@ def _connected_report_reply(layout: Layout, path: str, url: SplitResult) -> http
         return http_base.Reply(200, {"basis": basis}, {"Cache-Control": "no-store"})
     if path == "/connected/reports" or path.startswith(REPORT_PREFIX):
         listing, run_id = _report_request(path)
-        _, snapshot = _read_publication(layout.engine / "library" / "data.js")
+        snapshot = admission.published(layout)
         if snapshot is not None:
             snapshot = admission.admitted(snapshot, layout)
         return _report_response(_report_entries(snapshot), listing, run_id)

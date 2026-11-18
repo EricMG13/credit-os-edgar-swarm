@@ -30,7 +30,7 @@ def _designated_output(
     output = workspace.get("outputs", {}).get(identifier)
     if (
         not isinstance(output, dict)
-        or output["module"] != code
+        or output.get("module") != code
         or output.get("run") not in (None, "", key)
     ):
         return None

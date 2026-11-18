@@ -4,6 +4,47 @@ Keep one running record here. A pass applies only to the stated scope. Earlier v
 engine is in [EricMG13/final-workflow](https://github.com/EricMG13/final-workflow)'s
 `VERIFICATION.md`, which also keeps the retained runs this copy leaves out.
 
+## 2026-11-18 — Performance review: source pages, publication reads, library index, PR checks
+
+- Scope: synthetic runs with canned replies on one Linux container (4 cores, shared with other
+  jobs). No provider call, no real issuer file, no Windows, no browser proof. Medians of 7
+  loopback requests unless stated. The PDF is a Chromium-printed text file, not a filing.
+- Source pages: `model.handoff._pages` now keeps the pages of bytes it has read, by their sha256,
+  in memory (50 million characters, least recently read first out). The reader still reads and
+  hashes the original on every request. One 250-page PDF source: report open 9.5 s to 41 ms after
+  the first open in a process (9.1 s); one cited page 9.8 s to 3 ms. A synthetic run with one
+  10-page PDF read it 46 times: 46.2 s to 3.9 s.
+- Publication: `admission.published` keeps the parsed `data.js` until the file's identity changes
+  (inode, size, modified and changed times); a file changed less than 2 s ago is not kept. At 30
+  runs (16.1 MB): library 116 to 9.5 ms, reports list 124 to 6.4, report entry 145 to 6.2, report
+  snapshot 155 to 45, finished run page 146 to 30, source download 112 to 5.7, portfolio basis
+  120 to 5.7. The kept object takes about 48 MB at that size.
+- Library index: the reply leaves out each run's `files` list, which no page reads: 1,306,297 to
+  92,407 bytes decoded at 30 runs (102,754 to 6,619 gzip).
+- PR checks: `checks.yml` now runs `tests/test_react_*.py`, `proof/test_launcher.py` and a `web`
+  job (lint, format, types, unused, duplication, component tests, build, script tests). At
+  2e48875 57 of 254 server tests failed or errored (run identifiers and a launcher signature
+  from the Copilot cutover) and `npm run unused` failed on one export; the tests and the export
+  are corrected. One server defect found by them: an output without `module` made the report
+  list and the library index answer 500 (`library_cards._designated_output`).
+- Commands: `tools/quality_gate.py` 0 findings; pytest on `tests/test_react_*.py`,
+  `proof/test_launcher.py`, `tests/test_handoff_loop.py`, `tests/test_handoff_transport.py`,
+  `tests/model`, `tests/test_quality_gate.py`, `tests/test_library_index.py`,
+  `tests/test_update_library.py` 1,377 passed; `tests/test_cpos_launch.py`, the run start and
+  inbox scheduler, runs and activity files 1,523 passed; web `lint`, `format:check`, `typecheck`,
+  `unused`, `duplication`, `test:scripts` exit 0. `npm test` (5,285 tests) passed before the
+  one-word web edit; after it the start-page files (281 tests) passed.
+- Confidence review, ranked: (1) a kept publication could go stale or be changed by a reply:
+  tests cover a swapped folder, a same-size rewrite in place, a missing file and every read
+  route against the shared object; (2) kept pages could bypass the hash check: the hash is taken
+  on each request before the lookup, and changed bytes are refused (test); (3) a caller could
+  edit kept pages: each call gets its own list (test); (4) the run page's admission lookup lost
+  a guard: the link and 64 MB checks stay, and a pending run still reads nothing (tests).
+- Not fixed: the publisher still rebuilds the whole library for each run end and each service
+  start, under the scheduler lock (0.12 s a run: 3.5 s at 30 runs), and `data.js` grows by about
+  0.5 MB a synthetic run. The profile is flat, so this needs per-run publication, a design choice.
+- Not verified: a live run, real PDFs, Windows, the web gates in GitHub Actions before this PR.
+
 ## 2026-11-18 — Copilot cutover, compact handoffs and connected publication
 
 - Astra's end-of-phase review and follow-up confirmed the pinned SDK disables background
@@ -942,54 +983,3 @@ Scope: presentation only, all under `web/`; no backend, handoff, provider or mod
   lookup; no native backend or analytical output changed.
 - The Windows release gate remains open. Keep the ZIP local until Chrome and
   Edge both pass on the actual Windows work PC using `docs/react-workflow.md`.
-
-## 2026-11-15 — Evidence Record and report traces
-
-- Viewed the Record tab with the existing Evidence tabs and module filter.
-  Run totals use RBOT-HTML's scheduler timestamps and spend journal. Module
-  timings, calls, instructions and hashes use the published record. Synthetic
-  adapter responses carry an explicit label, and unavailable totals remain
-  unavailable in retained reports without a scheduler record.
-- Verified the Overview passage, a specific Modules debt chart row, and the
-  Forecast model's pinned input block. A separate paired-run fixture checked
-  the Changes measure link and both maturity schedule sources. It confirmed
-  that a recorded zero opens the earlier row and that the current source
-  excludes the other maturity rows. The upload-to-report proof used actual
-  RBOT-HTML publication of the synthetic run. Confidence review checked
-  ambiguous row bindings, exact amounts and the selected delivery's handoff.
-- Fixed two browser proof issues. The debt locator now searches within the
-  chosen row, and the download check waits until Summary has switched tabs
-  and cleared the module filter.
-- Backend and pins match `256101a`. The quality gate, 68 targeted Python tests,
-  1,408 web tests, production build, lint and formatting passed.
-- Candidate `f495920049e6691bb00538ee8802c62eb82290a4` SHA-256
-  `228292e206f850acc376db101f5650a887d1018ef04df4c7b4d567a15cbf3c7d`.
-  Chrome 157.0.8103.78 (`20261115-223326-01`) and Edge 157.0.4341.60
-  (`20261115-223341-01`) each passed 27 checks from a clean macOS extraction.
-  The preview build's files match the candidate and the preview run is
-  `20261115-222925-01`. The ZIP stays local pending both work PC passes.
-
-## 2026-11-15 — Credit OS Run start and Run activity exports
-
-- Compared both screens with `Run start.dc.html` and `Run activity.dc.html` from
-  Credit OS design commit `450f6406e25d26e53cf8af87956e529dc8c67bb2`. Checked
-  the five-step layout, document picker, Readiness, paid warning dialog and the
-  activity summary and two panels against the browser captures. The reference's
-  Stop run control has no RBOT-HTML endpoint.
-- Confidence review checked that opening or canceling either dialog sends no
-  submission, final confirmation reuses the approved digest and uncertain retries
-  reuse the exact payload. Checked recorded zero spend, a historical USD 50.00
-  cap against the current USD 20.00 setting, missing event logs, private event
-  fields, elapsed time and report-only delivery. The digested summary receives
-  the optional analyst note as a native research question with line breaks
-  converted to spaces for the native table contract.
-- The RBOT-HTML backend and pins match `256101a`. Quality gate, 68 targeted
-  Python tests, 172 web tests, ESLint, Prettier and production build passed.
-- Candidate `f045f69768c4aed90cd23e7c9a7a41f2f7cf7af6` SHA-256
-  `af69e17f9d7f306fd2fda39223bd3af2accffad899976399b59f2b7cc7b7cb75`.
-  Clean macOS extraction passed Chrome 157.0.8103.78 (`20261115-214116-01`)
-  and Edge 157.0.4341.60 (`20261115-214130-01`). Each passed 24 checks
-  from upload through the published report. The paid dialog was exercised with
-  submission blocked. The separate synthetic preview completed
-  `20261115-214052-01` with USD 0.00 spent and 14 of 14 modules finished.
-  The ZIP stays local pending both browsers on the Windows work PC.

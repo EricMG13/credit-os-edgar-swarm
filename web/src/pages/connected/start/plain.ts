@@ -32,7 +32,7 @@ export const CASE_KINDS = {
 };
 export const MODELS = { gpt: "GPT Sol", claude: "Claude Opus", luna: "GPT-6 Luna" };
 export const EFFORTS = { fast: "Fast", balanced: "Balanced", high: "High", xhigh: "Extra high" };
-export const LEGACY_COPILOT_MODELS = {
+const LEGACY_COPILOT_MODELS = {
   gpt: ["fast", "balanced", "high"],
   claude: ["fast", "balanced", "high"],
 } as const;
