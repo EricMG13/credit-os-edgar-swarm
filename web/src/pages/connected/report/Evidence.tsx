@@ -37,7 +37,8 @@ import {
 } from "../ReportContent";
 import { ArtifactDownloads } from "./ArtifactDownloads";
 import { ReportRecord } from "./Record";
-import { RecordedModelQualifications, type ForecastModel } from "./ForecastRecord";
+import { namedTable } from "../reportView";
+import { forecastHandoff, RecordedModelQualifications, type ForecastModel } from "./ForecastRecord";
 import { ScriptChecks } from "./ScriptChecks";
 
 const BARE_MODULE_CODE = /^CP-[A-Z0-9]+$/;
@@ -833,6 +834,98 @@ function showHandoffs(tab: EvidenceTab, entry: OutputEntry | undefined, invalid:
   return tab === "Summary" || tab === "Record" || (tab === "Trace" && !entry && !invalid);
 }
 
+function assumptionSourceLines(
+  handoff: OutputEntry | undefined,
+  register: NonNullable<ForecastModel["register"]>,
+) {
+  const lines = new Map<string, number | null>();
+  const table = handoff && namedTable(handoff, register.heading, register.headers);
+  if (
+    !table ||
+    table.headers.length !== register.headers.length ||
+    !table.headers.every((header, index) => header === register.headers[index])
+  )
+    return lines;
+  for (const row of table.rows) {
+    if (row.cells.length !== register.headers.length) continue;
+    const key = JSON.stringify(row.cells);
+    lines.set(key, lines.has(key) ? null : row.line);
+  }
+  return lines;
+}
+
+function AssumptionRegister({
+  model,
+  entries,
+  folder,
+}: {
+  model: ForecastModel;
+  entries: OutputEntry[];
+  folder: string;
+}) {
+  const register = model.register;
+  if (!register) return null;
+  const handoff = forecastHandoff(model, entries, folder);
+  const lines = assumptionSourceLines(handoff, register);
+  return (
+    <section className={card} aria-label={`Assumption register: ${model.id}`}>
+      <h3 className={heading}>{register.heading}</h3>
+      <p>Model {model.id}</p>
+      {register.intro && <p>{register.intro}</p>}
+      {/* A recorded register can be wider than the viewport. */}
+      <div
+        role="region"
+        aria-label={register.heading}
+        // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex
+        tabIndex={0}
+        className="min-w-0 overflow-x-auto"
+      >
+        <table className="w-full border-collapse text-small">
+          <caption className="sr-only">{register.heading}</caption>
+          <thead>
+            <tr>
+              {register.headers.map((header, index) => (
+                <th key={index} scope="col" className="px-3 py-2 text-left">
+                  {header}
+                </th>
+              ))}
+              <th scope="col" className="px-3 py-2 text-left">
+                Evidence
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {register.rows.map((cells, index) => {
+              const line = lines.get(JSON.stringify(cells));
+              return (
+                <tr key={index} className="border-t border-border-hairline align-top">
+                  {cells.map((cell, i) => (
+                    <td key={i} className="px-3 py-2">
+                      {cell}
+                    </td>
+                  ))}
+                  <td className="px-3 py-2">
+                    {handoff && line != null ? (
+                      <a
+                        className="text-action underline"
+                        href={evidencePath(folder, handoff, line)}
+                      >
+                        Source row
+                      </a>
+                    ) : (
+                      "Source row not matched"
+                    )}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  );
+}
+
 export function ReportEvidence({
   snapshot,
   run,
@@ -910,7 +1003,19 @@ export function ReportEvidence({
       {tab === "Record" && (
         <>
           <ReportRecord run={run} entries={entries} module={module} mode={mode} />
-          <RecordedModelQualifications models={models} />
+          {(!module || module === "CP-2G") && (
+            <>
+              <RecordedModelQualifications models={models} />
+              {models.map((model) => (
+                <AssumptionRegister
+                  key={model.id}
+                  model={model}
+                  entries={entries}
+                  folder={run.folder}
+                />
+              ))}
+            </>
+          )}
         </>
       )}
       {showHandoffs(tab, entry, invalidTraceAddress) && (

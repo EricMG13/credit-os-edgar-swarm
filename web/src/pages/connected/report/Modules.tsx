@@ -303,17 +303,17 @@ function ModuleFindings({
       entryIndex={index}
       figureTableLines={figureTableLines}
       chartsDrawn
+      moduleConfidence={
+        <ModuleConfidence snapshot={snapshot} run={run} entry={entry} entryIndex={index} />
+      }
       afterBottomLine={
-        <>
-          <ModuleConfidence snapshot={snapshot} run={run} entry={entry} entryIndex={index} />
-          <MetricGrid
-            records={metrics}
-            entry={entry}
-            entryIndex={index}
-            snapshot={snapshot}
-            folder={run.folder}
-          />
-        </>
+        <MetricGrid
+          records={metrics}
+          entry={entry}
+          entryIndex={index}
+          snapshot={snapshot}
+          folder={run.folder}
+        />
       }
       beforeLimitations={
         <div id="module-figures" tabIndex={-1} className="grid min-w-0 gap-4">

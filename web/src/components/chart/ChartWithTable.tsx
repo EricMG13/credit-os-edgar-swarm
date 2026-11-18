@@ -11,6 +11,7 @@ interface ChartWithTableProps {
   /** The chart form; it is drawn while the Chart side of the toggle is shown. */
   chart: ReactNode;
   /** The table form of the same data, drawn while the Table side is shown. */
+  tableCaption?: string;
   table: { head: string[]; rows: TableRowData[]; endHeading?: string };
 }
 
@@ -23,6 +24,7 @@ export function ChartWithTable({
   actions,
   chart,
   table,
+  tableCaption,
 }: ChartWithTableProps) {
   return (
     <ChartFrame title={title} as={as} note={note} subtitle={subtitle} actions={actions}>
@@ -31,7 +33,7 @@ export function ChartWithTable({
           chart
         ) : (
           <ChartTable
-            caption={title}
+            caption={tableCaption ?? title}
             head={table.head}
             rows={table.rows}
             endHeading={table.endHeading}

@@ -64,11 +64,13 @@ export function ConnectedApp({
   path,
   search = window.location.search,
   mode,
+  readOnly = false,
   navigate = assign,
 }: {
   path: string;
   search?: string;
   mode: Mode;
+  readOnly?: boolean;
   navigate?: (path: string) => void;
 }) {
   const run = /^\/run\/([a-zA-Z0-9][a-zA-Z0-9_.-]{0,79})\/?$/.exec(path)?.[1];
@@ -90,10 +92,19 @@ export function ConnectedApp({
   }, [path, start, runs, run, report]);
   const current = start || run || runs ? "run" : "library";
   return (
-    <Shell current={current} sections={SECTIONS} symbol="/symbol.svg">
+    <Shell
+      current={current}
+      sections={readOnly ? SECTIONS.slice(0, 1) : SECTIONS}
+      symbol="/symbol.svg"
+    >
       <Suspense fallback={<LoadingPage />}>
         {path === "/" || path === "/index.html" ? (
-          <ReportLibrary />
+          <ReportLibrary readOnly={readOnly} />
+        ) : readOnly && current === "run" ? (
+          <PageHeader
+            title="Read-only preview"
+            actions={<Button href="/">Back to Library</Button>}
+          />
         ) : start ? (
           <StartRun key={prior} mode={mode} navigate={navigate} from={prior ?? undefined} />
         ) : runs ? (

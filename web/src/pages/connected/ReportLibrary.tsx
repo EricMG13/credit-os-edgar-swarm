@@ -136,11 +136,22 @@ function useReportPlace(root: RefObject<HTMLElement | null>, hash: string, ready
     const id = historyEntry();
     const previous = shown.current;
     shown.current = id;
-    if (previous === null || previous === id) return;
-    left.current.set(previous, offset.current);
+    if (previous === id) return;
+    if (previous !== null) left.current.set(previous, offset.current);
     const main = root.current?.closest("main");
     const back = left.current.get(id);
-    if (main) {
+    const section = {
+      "#overview/limitations": "overview-limitations",
+      "#overview/key-charts": "overview-key-charts",
+      "#overview/dates": "overview-dates",
+      "#forecast": "forecast-report-nav",
+      "#forecast/run-charts": "forecast-run-charts",
+    }[hash];
+    const target = section && document.getElementById(section);
+    if (target && back === undefined) {
+      target.focus({ preventScroll: true });
+      target.scrollIntoView({ block: "start" });
+    } else if (main && previous !== null) {
       main.scrollTop = back ?? 0;
       offset.current = main.scrollTop;
     }
@@ -150,8 +161,11 @@ function useReportPlace(root: RefObject<HTMLElement | null>, hash: string, ready
 function ReportNav({ tab, modules }: { tab: Tab; modules: number }) {
   return (
     <nav
+      id={tab === "forecast" ? "forecast-report-nav" : undefined}
+      // This landmark receives focus when opening Forecast.
+      tabIndex={tab === "forecast" ? -1 : undefined}
       aria-label="Report sections"
-      className="flex flex-wrap gap-3 border-b border-border-hairline"
+      className="flex scroll-mt-3 flex-wrap gap-3 border-b border-border-hairline"
     >
       {tabs.map(([key, title]) => (
         <RunTabLink
@@ -258,8 +272,10 @@ function KeyCharts({
   return (
     <section className="grid min-w-0 gap-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h2 className={heading}>Key charts</h2>
-        <Button href="#forecast" color="link-gray" size="sm" iconTrailing={ArrowRight}>
+        <h2 id="overview-key-charts" tabIndex={-1} className={heading}>
+          Key charts
+        </h2>
+        <Button href="#forecast/run-charts" color="link-gray" size="sm" iconTrailing={ArrowRight}>
           Chart index
         </Button>
       </div>
@@ -332,6 +348,12 @@ function Overview({
           </Button>
         )}
       </div>
+      <nav aria-label="Overview sections" className="flex flex-wrap items-center gap-4 text-sm">
+        <span className="text-text-secondary">On this page</span>
+        <TextLink href="#overview/limitations">Limitations</TextLink>
+        <TextLink href="#overview/key-charts">Key charts</TextLink>
+        {calendar.rows.length > 0 && <TextLink href="#overview/dates">Dates to watch</TextLink>}
+      </nav>
       {view.lead ? (
         <>
           <p className="text-sm text-text-secondary">
@@ -366,7 +388,9 @@ function Overview({
       {calendar.rows.length > 0 && (
         <section className={`${card} grid gap-3`}>
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <h2 className={heading}>Dates to watch</h2>
+            <h2 id="overview-dates" tabIndex={-1} className={heading}>
+              Dates to watch
+            </h2>
             <Button href="#calendar" color="link-gray" size="sm" iconTrailing={ArrowRight}>
               Open issuer calendar
             </Button>
@@ -496,7 +520,14 @@ function ReportPage({
               output={parts[1]}
             />
           )}
-          {tab === "forecast" && <Forecast run={run} view={view} />}
+          {tab === "forecast" && (
+            <Forecast
+              run={run}
+              view={view}
+              section={parts[0]}
+              preview={Boolean(snapshot.preview)}
+            />
+          )}
           {tab === "evidence" && (
             <ReportEvidence
               snapshot={snapshot}
@@ -591,9 +622,11 @@ function ReaderHeader({
               label="Highlight source icons"
             />
           )}
-          <Button color="secondary" href={`/run/${encodeURIComponent(id)}`}>
-            Run progress
-          </Button>
+          {!preview && (
+            <Button color="secondary" href={`/run/${encodeURIComponent(id)}`}>
+              Run progress
+            </Button>
+          )}
         </div>
       }
     />

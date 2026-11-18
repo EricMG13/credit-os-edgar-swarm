@@ -1,5 +1,14 @@
 import "@testing-library/jest-dom/vitest";
 
+// Report section links may focus and scroll to a landmark. jsdom has no scrolling layout.
+if (!Object.hasOwn(Element.prototype, "scrollIntoView")) {
+  Object.defineProperty(Element.prototype, "scrollIntoView", {
+    configurable: true,
+    writable: true,
+    value() {},
+  });
+}
+
 // jsdom has no layout. A chart's responsive container reads its size from ResizeObserver, so the
 // tests give every observed element a fixed size, as a laid-out browser would.
 class FixedResizeObserver implements ResizeObserver {

@@ -10,6 +10,7 @@ import { pathToFileURL } from "node:url";
 import { chromium } from "playwright";
 import { createOfflineProxy, installOfflineGuard } from "./offline-network.mjs";
 
+const desktopOnly = process.argv.includes("--desktop-only");
 const project = path.resolve(import.meta.dirname, "../..");
 const runAsScript = process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href;
 const sourceCommit = await readFile(path.join(project, "SOURCE-COMMIT.txt"), "utf8").then(
@@ -116,10 +117,11 @@ async function checkRunDocuments(page, channel, paidPreview) {
   assert.ok(drop && side && side.x >= drop.x + drop.width, "Readiness sits beside the form");
   assert.equal(await stepper.getByRole("listitem").count(), 4);
   assert.match(await current.innerText(), /Documents/u);
+  await stepper.getByText(paidPreview ? "Paid step" : "No-cost test", { exact: true }).waitFor();
   await readiness.getByText("USD 0.00 of USD 25.00", { exact: true }).waitFor();
   if (!paidPreview)
     await page.screenshot({ path: path.join(artifacts, `${channel}-run-documents.png`) });
-  await checkMobileDocuments(page, channel, paidPreview);
+  if (!desktopOnly) await checkMobileDocuments(page, channel, paidPreview);
 }
 
 async function checkRunBundle(page) {
@@ -777,6 +779,7 @@ async function checkDownsideThresholds(report, page) {
   const watches = report.getByRole("region", { name: "Monitoring sensitivities", exact: true });
   await watches.getByRole("img", { name: "Leading", exact: true }).waitFor();
   await watches.getByRole("img", { name: "Lagging", exact: true }).waitFor();
+  if (desktopOnly) return;
   const viewport = page.viewportSize();
   await page.setViewportSize({ width: 390, height: 844 });
   await page.waitForFunction(() => document.documentElement.scrollWidth === 390);
@@ -872,10 +875,13 @@ async function checkCharts(report, artifacts, channel, page, run) {
     report
       .getByRole("navigation", { name: "Report sections" })
       .getByRole("link", { name: name === "Modules" ? /^Modules(?: \d+)?$/u : name, exact: true });
+  await section("Overview").click();
+  await report.getByRole("link", { name: "Chart index", exact: true }).click();
+  await page.waitForFunction(() => document.activeElement?.id === "forecast-run-charts");
   await section("Changes").click();
   await report.getByText("No earlier run to compare.", { exact: true }).waitFor();
   await section("Modules").click();
-  await checkCompactModules(report, page, channel);
+  if (!desktopOnly) await checkCompactModules(report, page, channel);
   const modules = report.getByRole("navigation", { name: "Modules and sections" });
   await modules.getByRole("link", { name: /^Liquidity, Delivered/u }).waitFor();
   await modules.getByRole("link", { name: /^Refinancing & LME, Delivered/u }).waitFor();
@@ -922,13 +928,26 @@ async function checkCompactModules(report, page, channel) {
 
 async function checkForecastPresentation(report, page, channel) {
   const scope = report.getByRole("region", { name: "Model scope and basis" });
-  await scope.getByText(/conditional illustration/u).waitFor();
+  const cases = report.locator("#forecast-cases");
+  const qualification = cases
+    .locator("xpath=preceding-sibling::*[1]")
+    .getByText(/conditional illustration/u);
+  await qualification.waitFor();
+  assert.equal(await scope.locator("details").getAttribute("open"), null);
+  await scope.locator("summary").click();
+  await scope.getByText("Synthetic; not analytical review.", { exact: true }).waitFor();
+  await scope.getByRole("link", { name: "Full model notes and limitations" }).waitFor();
+  await scope.locator("summary").click();
   await report.getByRole("heading", { name: "Forecast cases", exact: true }).waitFor();
+  const chart = report.getByRole("figure", { name: "Cash proxy by scenario" });
+  await chart.getByRole("radio", { name: "Table", exact: true }).check();
   const comparison = report.getByRole("table", { name: "Scenario comparison" });
   await comparison.getByRole("rowheader", { name: "Base case", exact: true }).waitFor();
   await comparison.getByRole("rowheader", { name: "Downside shock", exact: true }).waitFor();
   assert.equal(await comparison.getByRole("rowheader").count(), 2);
-  await scope.scrollIntoViewIfNeeded();
+  await chart.getByRole("radio", { name: "Chart", exact: true }).check();
+  await report.getByRole("table", { name: "Cash flow model", exact: true }).waitFor();
+  await qualification.evaluate((element) => element.scrollIntoView({ block: "start" }));
   await page.screenshot({ path: path.join(artifacts, `${channel}-forecast.png`) });
 }
 
@@ -937,6 +956,7 @@ async function checkReadingLayout(report, page, channel) {
   const navigation = report.getByRole("navigation", { name: "Forecast sections", exact: true });
   await navigation.getByRole("button", { name: "Cash flow model", exact: true }).click();
   await page.waitForFunction(() => document.activeElement?.id === "forecast-model");
+  if (desktopOnly) return;
   await page.setViewportSize({ width: 390, height: 844 });
   await report
     .locator("summary")
@@ -1056,6 +1076,7 @@ async function checkPortfolioEvidence(report, modules, artifacts, channel, page)
 
 async function checkForecastEvidence(report, artifacts, channel, page) {
   await checkForecastPresentation(report, page, channel);
+  await report.getByText("Cash flow trends by line item", { exact: true }).click();
   const revenue = report.getByRole("figure", { name: "Revenue", exact: true });
   await revenue.locator("svg.recharts-surface").first().waitFor();
   const sourceSwitch = report.getByRole("switch");
@@ -1103,7 +1124,9 @@ async function checkForecastEvidence(report, artifacts, channel, page) {
   await downsideCase.focus();
   await downsideCase.press("Space");
   assert.ok(await downsideCase.isChecked());
-  const comparison = report.getByRole("table", { name: "Scenario comparison" });
+  const cashProxy = report.getByRole("figure", { name: "Cash proxy by scenario", exact: true });
+  await cashProxy.getByRole("radio", { name: "Table", exact: true }).check();
+  const comparison = cashProxy.getByRole("table", { name: "Scenario comparison" });
   assert.equal(await comparison.getByRole("rowheader").count(), 2);
   assert.equal(
     await comparison.getByRole("row", { name: /Downside shock/u }).getAttribute("aria-current"),
@@ -1111,17 +1134,15 @@ async function checkForecastEvidence(report, artifacts, channel, page) {
   );
   await ebitdaRow.getByRole("cell", { name: "252", exact: true }).waitFor();
   assert.equal(await ebitdaRow.getByRole("cell", { name: "315", exact: true }).count(), 0);
-  const cashProxy = report.getByRole("figure", { name: "Cash proxy by scenario", exact: true });
-  await cashProxy.getByRole("radio", { name: "Table", exact: true }).check();
-  await cashProxy.getByRole("row", { name: /Downside shock/u }).waitFor();
-  // cc836f5f: the cash proxy draws every case, emphasising the selected one.
-  assert.equal(await cashProxy.getByRole("row", { name: /Base case/u }).count(), 1);
-  assert.equal(await cashProxy.getByRole("row", { name: /Downside shock/u }).count(), 1);
   const baseCase = report.getByRole("radio", { name: /^Base case/u });
   await baseCase.focus();
   await baseCase.press("Space");
   await ebitdaRow.getByRole("cell", { name: "315", exact: true }).waitFor();
-  await cashProxy.getByRole("row", { name: /Base case/u }).waitFor();
+  await comparison.getByRole("row", { name: /Base case/u }).waitFor();
+  await report.getByLabel("Statement columns").selectOption("compare");
+  await report.getByLabel("Comparison period").selectOption({ index: 0 });
+  await ebitdaRow.getByRole("cell", { name: "315", exact: true }).waitFor();
+  await ebitdaRow.getByRole("cell", { name: "252", exact: true }).waitFor();
 }
 
 async function checkForecastRunCharts(report, page, sourceHref) {
@@ -1407,8 +1428,12 @@ async function checkBrowserRun(context, service, workspace, channel, brand) {
     fullPage: true,
   });
   await checkCompanyBand(report, channel);
-  await checkOverviewMobile(report, page, channel);
+  if (!desktopOnly) await checkOverviewMobile(report, page, channel);
   await checkOverviewTrace(report, page);
+  await report.getByRole("link", { name: "Chart index", exact: true }).click();
+  await page.waitForURL((url) => url.hash === "#forecast/run-charts");
+  await page.waitForFunction(() => document.activeElement?.id === "forecast-run-charts");
+  await report.getByRole("link", { name: "Overview", exact: true }).click();
   await checkCalendar(report, artifacts, channel, page);
   await checkCharts(report, artifacts, channel, page, run);
   const download = report.getByRole("link", {
@@ -1450,6 +1475,7 @@ async function checkBrowserRun(context, service, workspace, channel, brand) {
     browser: brand,
     version: context.browser().version(),
     run,
+    viewport_scope: desktopOnly ? "desktop" : "desktop and mobile",
     screenshots: [
       "run-documents",
       "run-mobile",
@@ -1471,7 +1497,9 @@ async function checkBrowserRun(context, service, workspace, channel, brand) {
       "evidence",
       "evidence-record",
       "evidence-script-checks",
-    ].map((view) => `${channel}-${view}.png`),
+    ]
+      .filter((view) => !desktopOnly || !view.endsWith("-mobile"))
+      .map((view) => `${channel}-${view}.png`),
     checks: [
       "upload",
       "four-step intake, document drop zone and responsive readiness panel",
@@ -1490,15 +1518,23 @@ async function checkBrowserRun(context, service, workspace, channel, brand) {
       "financial chart, table and source trace reload",
       "readiness and monitoring records with source traces",
       "downside case comparison with signed cash flow and explicit gap",
-      "downside break-point ranking, watch timing, and narrow layout",
+      desktopOnly
+        ? "downside break-point ranking and watch timing"
+        : "downside break-point ranking, watch timing, and narrow layout",
       "rate and currency shocks with zero and unreported hedge outcomes",
       "native completeness and rate sensitivity checks agreed",
       "dated instrument quotes, decision and recovery qualification",
       "selected workbook attestation, portfolio limits and proposal qualification",
       "forecast chart and model",
-      "Forecast section jumps, full mobile reading width, 44px traces and separated chart period labels",
-      "forecast qualifications precede cases and all-case comparison remains visible",
-      "compact module and first-section navigation at 390px with complementary 1000/1001px breakpoints",
+      desktopOnly
+        ? "Desktop Forecast section jump"
+        : "Forecast section jumps, full mobile reading width, 44px traces and separated chart period labels",
+      "conditional base-case qualification immediately precedes cases, scope expands and the all-case comparison remains visible",
+      ...(desktopOnly
+        ? []
+        : [
+            "compact module and first-section navigation at 390px with complementary 1000/1001px breakpoints",
+          ]),
       "chart source control visible on hover with Highlight source icons off",
       "shared Base and Downside case selection updates cash proxy and exact model values",
       "evidence bookmark retains identity after reorder and rejects old ordinal addresses",

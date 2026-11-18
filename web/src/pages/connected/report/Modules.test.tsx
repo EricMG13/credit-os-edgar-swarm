@@ -140,11 +140,28 @@ it("leads CP-1 with the module's own bottom line, not a sentence the app wrote",
   expect(screen.getByText(lead)).toBeVisible();
 });
 
-function renderModule(extra: Partial<OutputEntry["output"]>) {
+function renderModule(extra: Partial<OutputEntry["output"]>, withBottomLine = false) {
   const entry = output("c", true);
   entry.output = { ...entry.output, module: "CP-2", ...extra };
   entry.sections = [
     { heading: "Findings", level: 2, line: 1, blocks: [] },
+    ...(withBottomLine
+      ? [
+          {
+            heading: "Bottom line",
+            level: 3,
+            line: 2,
+            blocks: [
+              {
+                type: "text" as const,
+                line: 3,
+                end: 3,
+                text: "Reported liquidity covers the next payment.",
+              },
+            ],
+          },
+        ]
+      : []),
     {
       heading: "Confidence inputs",
       level: 3,
@@ -164,6 +181,20 @@ function renderModule(extra: Partial<OutputEntry["output"]>) {
   props.view.entries = [entry];
   return render(<Modules {...props} module="CP-2" />);
 }
+
+it("places a published zero and its confidence band beside the Bottom line with a separate trace", async () => {
+  renderModule({ confidence: { value: 0, band: "Insufficient Information" } }, true);
+  const bottomLine = within(screen.getByRole("region", { name: /^Bottom line$/ }));
+  const score = within(bottomLine.getByRole("group", { name: "Confidence score" }));
+  expect(bottomLine.getByRole("group", { name: "Confidence score" })).toHaveTextContent("0 / 100");
+  expect(score.getByText("Insufficient Information")).toBeVisible();
+  expect(screen.queryByText("Confidence score")).toBeNull();
+  expect(
+    bottomLine.getByRole("button", { name: "Show sources for the bottom line" }),
+  ).toBeVisible();
+  fireEvent.click(score.getByRole("button", { name: "Show sources for the confidence score" }));
+  expect(await screen.findByRole("dialog")).toHaveTextContent("Coverage");
+});
 
 it("shows the published confidence score with its band", () => {
   renderModule({ confidence: { value: 72, band: "Medium" } });

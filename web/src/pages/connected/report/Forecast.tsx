@@ -1,10 +1,9 @@
 import { Button } from "@/components/base/buttons/button";
 import { ArrowRight } from "@untitledui/icons";
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { moduleName } from "../api";
 import { card, field, heading, label } from "../layout";
 import {
-  containsReference,
   evidencePath,
   type OutputEntry,
   type PublishedRun,
@@ -13,20 +12,22 @@ import {
   withUnit,
 } from "../publishedReport";
 import { namedRow, namedTable, type buildReportView } from "../reportView";
-import { PublishedTable } from "../ReportContent";
-import { amount, record, stringsIn, word } from "../visuals/visualData";
+import { amount, items, record, stringsIn, word } from "../visuals/visualData";
 import { TRACE_HOST } from "@/pages/library/parts/TraceControl";
 import {
   CashProxy,
   cashProxyCases,
   forecastCaseOptions,
+  forecastCaseLabel,
   ForecastScope,
   gridOf,
-  LegacyForecast,
+  ForecastTrends,
 } from "../visuals/LegacyForecast";
 import { RunCharts } from "./RunCharts";
+import { ForecastStatement } from "../visuals/ForecastStatement";
 import { PublishedSource } from "./PublishedTrace";
 import {
+  forecastHandoff,
   forecastInput,
   forecastTraceContext,
   RecordedForecastAssumptions,
@@ -37,21 +38,6 @@ type Model = ReturnType<typeof buildReportView>["models"][number];
 /** A model's recorded money unit: the currency code and "millions"
  * (docs/rulings/2026-11-16-reporting-currency-from-sources.md). */
 const MILLIONS = /^[A-Z]{3} millions$/;
-
-function forecastHandoff(model: Model, entries: OutputEntry[], folder: string) {
-  const matches = entries.filter(
-    ({ output }) =>
-      output.module === "CP-2G" &&
-      (model.sources.some(
-        (item) => item.sha256 === output.sha256 && (!item.output || item.output === output.id),
-      ) ||
-        (model.sources.length === 0 &&
-          model.runFolder === folder &&
-          model.download.endsWith("/annual.md") &&
-          output.href === model.download.replace(/annual\.md$/, "CP-2G.md"))),
-  );
-  return matches.length === 1 ? matches[0] : undefined;
-}
 
 function recordedBridge(
   handoff: OutputEntry | undefined,
@@ -134,171 +120,118 @@ function BasisNote({
 
 function ForecastCases({
   caseOptions,
+  shownQualifications,
   selectedCase,
   setChosenCase,
   source,
 }: {
   caseOptions: ReturnType<typeof forecastCaseOptions>;
+  shownQualifications: string[];
   selectedCase: string | undefined;
   setChosenCase: (name: string) => void;
   source: ForecastSource | undefined;
 }) {
+  const [first] = caseOptions;
+  if (!first || caseOptions.length < 2) return null;
   return (
-    caseOptions.length > 1 && (
-      <section
-        id="forecast-cases"
-        tabIndex={-1}
-        className="flex min-w-0 scroll-mt-4 flex-col gap-4 wrap-anywhere focus:outline-2 focus:outline-offset-2 focus:outline-focus"
-        aria-labelledby="forecast-case-heading"
+    <section
+      id="forecast-cases"
+      tabIndex={-1}
+      className="grid min-w-0 scroll-mt-4 gap-3 wrap-anywhere focus:outline-2 focus:outline-offset-2 focus:outline-focus"
+      aria-labelledby="forecast-case-heading"
+    >
+      <div className="flex flex-wrap items-baseline justify-between gap-2">
+        <h3 id="forecast-case-heading" className="font-display text-h3">
+          Forecast cases
+        </h3>
+        <p id="forecast-case-measure" className="text-sm text-text-secondary">
+          Cash proxy{first.period && ` · ${first.period}`} · {unitLabel(first.units)}
+        </p>
+      </div>
+      <div
+        role="radiogroup"
+        aria-label="Forecast case"
+        aria-describedby="forecast-case-measure forecast-case-note"
+        className="grid min-w-0 overflow-hidden rounded-ds-md border border-border-hairline bg-border-hairline gap-px sm:grid-cols-2 xl:grid-cols-[repeat(auto-fit,minmax(13rem,1fr))]"
       >
-        <div className="flex flex-wrap items-baseline justify-between gap-2">
-          <h3 id="forecast-case-heading" className="font-display text-h3">
-            Forecast cases
-          </h3>
-          <p className="text-small text-text-tertiary">
-            The cash proxy and forecast charts follow the selected case.
-          </p>
-        </div>
-        <div
-          role="radiogroup"
-          aria-label="Forecast case"
-          className="grid min-w-0 gap-4 sm:grid-cols-2"
-        >
-          {caseOptions.map(({ name, period, value, units, description, reason }) => (
-            <div
-              key={name}
-              className={`relative flex min-w-0 flex-col gap-2 wrap-anywhere rounded-ds-md border bg-surface-card px-3 py-2.5 ${
-                selectedCase === name
-                  ? "border-action bg-surface-selected"
-                  : "border-border-hairline"
-              }`}
-            >
-              <div className={TRACE_HOST}>
-                <label className="block cursor-pointer has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-focus">
-                  <input
-                    type="radio"
-                    name="forecast-case"
-                    checked={selectedCase === name}
-                    onChange={() => {
-                      setChosenCase(name);
-                    }}
-                    className="sr-only"
-                  />
-                  <span className="flex items-baseline gap-2 text-sm font-semibold text-text-primary">
-                    {name}
-                    <span
-                      aria-hidden="true"
-                      className={`ml-auto size-4 flex-none self-center rounded-full border ${
-                        selectedCase === name ? "border-5 border-action" : "border-border-control"
-                      }`}
-                    />
-                  </span>
-                  <span className="mt-0.5 block pr-14 text-sm text-text-secondary sm:pr-7">
-                    <span className="font-display text-h3 tabular-nums">
-                      {typeof value === "number"
-                        ? new Intl.NumberFormat("en-US", { maximumFractionDigits: 2 }).format(value)
-                        : "n.a."}
-                    </span>
-                    <span className="block text-text-tertiary">
-                      Cash proxy {period ? `· ${period}` : ""}
-                      {` · ${unitLabel(units)}`}
-                    </span>
-                    <span className="mt-2 block text-small text-text-secondary">
-                      {description || "Case description not recorded."}
-                    </span>
-                    {reason && (
-                      <span className="mt-2 block text-small text-text-secondary">
-                        {readerText(reason)}
-                      </span>
-                    )}
-                    <span className="mt-1 block text-small text-text-tertiary">
-                      Card values shown to 2 decimals; model table retains recorded display.
-                    </span>
-                  </span>
-                </label>
-                <div className="absolute right-2.5 bottom-2.5">
-                  {source?.(name, {
-                    case: name,
-                    period,
-                    row: "Cash proxy (not issuer free cash flow)",
-                  })}
-                </div>
-              </div>
+        {caseOptions.map(({ name, period, value, description, reason }) => (
+          <div
+            key={name}
+            className={`${TRACE_HOST} relative min-w-0 ${selectedCase === name ? "bg-surface-selected" : "bg-surface-card"}`}
+          >
+            <label className="block h-full cursor-pointer px-4 py-2 has-[:focus-visible]:outline-2 has-[:focus-visible]:-outline-offset-2 has-[:focus-visible]:outline-focus">
+              <input
+                type="radio"
+                name="forecast-case"
+                checked={selectedCase === name}
+                onChange={() => {
+                  setChosenCase(name);
+                }}
+                className="sr-only"
+              />
+              <span className="flex items-center justify-between gap-2 text-sm font-semibold text-text-primary">
+                {name}
+                <span
+                  aria-hidden="true"
+                  className={`size-4 flex-none rounded-full border ${selectedCase === name ? "border-5 border-action" : "border-border-control"}`}
+                />
+              </span>
+              <span className="mt-1 block pr-8 font-display text-h3 tabular-nums">
+                {typeof value === "number"
+                  ? new Intl.NumberFormat("en-US", { maximumFractionDigits: 2 }).format(value)
+                  : "n.a."}
+              </span>
+              {(!description || !shownQualifications.includes(description)) && (
+                <span className="mt-2 block pr-7 text-small text-text-secondary">
+                  {description || "Case description not recorded."}
+                </span>
+              )}
+              {reason && (
+                <span className="mt-2 block pr-7 text-small text-text-secondary">
+                  {readerText(reason)}
+                </span>
+              )}
+            </label>
+            <div className="absolute right-2 bottom-2">
+              {source?.(name, {
+                case: name,
+                period,
+                row: "Cash proxy (not issuer free cash flow)",
+              })}
             </div>
-          ))}
-        </div>
-      </section>
-    )
+          </div>
+        ))}
+      </div>
+      <p id="forecast-case-note" className="text-small text-text-secondary">
+        Choose a case to update the model and charts. Figures are rounded to at most 2 decimals.
+      </p>
+    </section>
   );
 }
 
 function ForecastAssumptions({
   model,
-  handoff,
-  run,
-  href,
+  inputs,
   source,
 }: {
   model: Model;
-  handoff: OutputEntry | undefined;
-  run: PublishedRun;
-  href: (line: number) => string;
+  inputs: ReturnType<typeof forecastInput>;
   source?: ForecastSource;
 }) {
-  const register = model.register;
-  const assumptions =
-    register && handoff && namedTable(handoff, register.heading, register.headers);
-  function assumptionHref(cells: string[]) {
-    const row = namedRow(
-      assumptions || undefined,
-      (row) =>
-        row.cells.length === cells.length &&
-        row.cells.every((cell, index) => cell === cells[index]),
-    );
-    return row && href(row.line);
-  }
-  const inputs = forecastInput(handoff);
-  const meaningful = register?.rows.some(
-    (row) => !row.some((cell) => /Not supplied: nothing to report/i.test(cell)),
-  );
-  if (!inputs && !register) return null;
   return (
     <details open className="grid min-w-0 gap-4 wrap-anywhere">
       <summary className="cursor-pointer font-semibold">Forecast assumptions</summary>
       {inputs && <RecordedForecastAssumptions document={inputs.value} source={source} />}
-      {meaningful && model.register && (
-        <div className={card}>
-          {model.register.intro && !containsReference(model.register.intro) && (
-            <p>{readerText(model.register.intro)}</p>
-          )}
-          <PublishedTable
-            table={{
-              type: "table",
-              line: 0,
-              headers: model.register.headers,
-              rows: model.register.rows.map((cells, line) => ({ cells, line })),
-            }}
-            rowHref={(line) => assumptionHref(model.register?.rows[line] ?? [])}
-            rowSource={(line, name) => {
-              const link = assumptionHref(model.register?.rows[line] ?? []);
-              return (
-                link && (
-                  <PublishedSource name={name} href={link}>
-                    Assumption source
-                  </PublishedSource>
-                )
-              );
-            }}
-          />
-          <Button
-            href={handoff ? evidencePath(run.folder, handoff) : "#evidence/trace/CP-2G"}
-            color="link-gray"
-            size="sm"
-            iconTrailing={ArrowRight}
-          >
-            Open the model evidence
-          </Button>
-        </div>
+      {model.register && (
+        <Button
+          className="w-fit"
+          href="#evidence/record"
+          color="link-gray"
+          size="sm"
+          iconTrailing={ArrowRight}
+        >
+          Open the model evidence
+        </Button>
       )}
     </details>
   );
@@ -306,9 +239,14 @@ function ForecastAssumptions({
 
 type ForecastSection = { id: string; label: string };
 
-function ForecastNavigation({ sections }: { sections: ForecastSection[] }) {
-  const [mobileSection, setMobileSection] = useState("");
-  const [active, setActive] = useState(sections[0]?.id ?? "");
+function ForecastNavigation({
+  sections,
+  initialSection,
+}: {
+  sections: ForecastSection[];
+  initialSection?: string;
+}) {
+  const [active, setActive] = useState(initialSection ?? sections[0]?.id);
   const activeSection = sections.some(({ id }) => id === active) ? active : sections[0]?.id;
   function navigate(id: string) {
     const target = document.getElementById(id);
@@ -343,10 +281,9 @@ function ForecastNavigation({ sections }: { sections: ForecastSection[] }) {
           <select
             aria-label="Jump to section"
             className={field}
-            value={mobileSection}
+            value=""
             onChange={(event) => {
               const id = event.currentTarget.value;
-              setMobileSection("");
               if (id) navigate(id);
             }}
           >
@@ -363,13 +300,54 @@ function ForecastNavigation({ sections }: { sections: ForecastSection[] }) {
   );
 }
 
-function forecastSections(model: Model | undefined, hasCases: boolean): ForecastSection[] {
+function forecastSections(
+  model: Model | undefined,
+  hasCases: boolean,
+  hasAssumptions: boolean,
+): ForecastSection[] {
   return [
     ...(hasCases ? [{ id: "forecast-cases", label: "Cases" }] : []),
     ...(model ? [{ id: "forecast-model", label: "Cash flow model" }] : []),
-    ...(model ? [{ id: "forecast-assumptions", label: "Assumptions" }] : []),
+    ...(hasAssumptions ? [{ id: "forecast-assumptions", label: "Assumptions" }] : []),
     { id: "forecast-run-charts", label: "Run charts" },
   ];
+}
+
+function ForecastTrendsSection({
+  model,
+  selectedCase,
+  source,
+}: {
+  model: Model;
+  selectedCase?: string;
+  source?: ForecastSource;
+}) {
+  const cashflow = record(model.cashflow);
+  const grid = gridOf(cashflow);
+  const other = gridOf(cashflow.other);
+  const downsideNote = stringsIn(cashflow.notes).find((note) =>
+    note.startsWith("Downside case is"),
+  );
+  if (!grid) return null;
+  const forecasts = other?.columns.some(
+    ({ group }) => forecastCaseLabel(group, downsideNote) === selectedCase,
+  )
+    ? other
+    : grid;
+  return (
+    <details className="mt-4 border-y border-border-hairline bg-surface-card px-4 py-3">
+      <summary className="cursor-pointer font-semibold">Cash flow trends by line item</summary>
+      <div className="mt-4">
+        <ForecastTrends
+          grid={forecasts}
+          units={word(cashflow.units)}
+          source={source}
+          selectedCase={selectedCase}
+          downsideNote={downsideNote}
+        />
+      </div>
+    </details>
+  );
 }
 
 function ForecastContent({
@@ -378,6 +356,7 @@ function ForecastContent({
   source,
   handoff,
   href,
+  assumptions,
   view,
   run,
 }: {
@@ -386,6 +365,7 @@ function ForecastContent({
   source: ForecastSource | undefined;
   handoff: OutputEntry | undefined;
   href: (line: number) => string;
+  assumptions: ReactNode;
   view: ReturnType<typeof buildReportView>;
   run: PublishedRun;
 }) {
@@ -397,35 +377,36 @@ function ForecastContent({
           tabIndex={-1}
           className="scroll-mt-4 focus:outline-2 focus:outline-offset-2 focus:outline-focus"
         >
-          <LegacyForecast
-            model={model}
-            selectedCase={selectedCase}
-            source={source}
-            evidenceOnlyQualifications
-            summary={
+          <div className="grid min-w-0 items-start gap-6 xl:grid-cols-[minmax(0,1.22fr)_minmax(0,1fr)] [&_button[aria-checked=true]]:bg-brand-950 [&_button[aria-checked=true]]:text-white">
+            <div className="min-w-0 border-t-2 border-brand-950 bg-surface-card p-4">
+              <ForecastStatement model={model} selectedCase={selectedCase} source={source} />
+            </div>
+            <section
+              aria-label="Scenario comparison"
+              className="grid min-w-0 gap-3 border-t-2 border-brand-950 bg-surface-card p-4"
+            >
               <CashProxy
                 model={model}
                 selectedCase={selectedCase}
                 sourceFor={source}
                 note={<BasisNote model={model} handoff={handoff} href={href} />}
+                unified
               />
-            }
-          />
+            </section>
+          </div>
+          <ForecastTrendsSection model={model} selectedCase={selectedCase} source={source} />
+          <a className="mt-3 inline-block text-small text-action underline" href="#evidence/record">
+            Model notes and limitations
+          </a>
         </div>
       )}
-      {model && (
+      {assumptions && (
         <div
           id="forecast-assumptions"
           tabIndex={-1}
           className="scroll-mt-4 focus:outline-2 focus:outline-offset-2 focus:outline-focus"
         >
-          <ForecastAssumptions
-            model={model}
-            handoff={handoff}
-            run={run}
-            href={href}
-            source={source}
-          />
+          {assumptions}
         </div>
       )}
       <div
@@ -442,9 +423,13 @@ function ForecastContent({
 export function Forecast({
   view,
   run,
+  section,
+  preview = false,
 }: {
   view: ReturnType<typeof buildReportView>;
   run: PublishedRun;
+  section?: string;
+  preview?: boolean;
 }) {
   const [selected, setSelected] = useState(0);
   const [chosenCase, setChosenCase] = useState("");
@@ -458,31 +443,54 @@ export function Forecast({
   const href = (line: number) =>
     handoff ? evidencePath(run.folder, handoff, line) : "#evidence/summary";
   const input = forecastInput(handoff);
-  const source: ForecastSource | undefined =
-    !input || !model
-      ? undefined
-      : (name, selection = {}) => (
-          <PublishedSource
-            name={name}
-            href={href(input.line)}
-            context={forecastTraceContext(model, input.value, name, {
-              case: selectedCase,
-              ...selection,
-            })}
-          >
-            Forecast inputs
-          </PublishedSource>
-        );
-  const sections = forecastSections(model, caseOptions.length > 1);
+  const inputLimits = new Set(items(input?.value.scope_limits));
+  const source: ForecastSource = (name, selection = {}) => {
+    const qualification = selection.recordedQualification;
+    if (qualification !== undefined && !inputLimits.has(qualification)) {
+      return (
+        <PublishedSource
+          name={name}
+          href="#evidence/record"
+          linkLabel={`Read ${name} in Evidence Record`}
+        >
+          Read in Evidence Record
+        </PublishedSource>
+      );
+    }
+    if (!input || !model) return undefined;
+    return (
+      <PublishedSource
+        name={name}
+        href={href(input.line)}
+        context={forecastTraceContext(model, input.value, name, {
+          case: selectedCase,
+          ...selection,
+        })}
+      >
+        Forecast inputs
+      </PublishedSource>
+    );
+  };
+  const assumptions =
+    model && (input || model.register) ? (
+      <ForecastAssumptions model={model} inputs={input} source={source} />
+    ) : null;
+  const sections = forecastSections(model, caseOptions.length > 1, assumptions !== null);
   return (
     <>
-      <header className="grid gap-2">
-        <h2 className="font-display text-h2">Forecast</h2>
+      <header className="flex flex-wrap items-center justify-between gap-3 rounded-ds-md bg-brand-950 px-5 py-3 text-white">
+        <div>
+          <h2 className="font-display text-h2">Forecast</h2>
+          <p className="text-small text-brand-100">
+            {run.issuerHeading || run.issuer}
+            {preview && " · Test preview"}
+          </p>
+        </div>
         {model && (
           <Button
             className="w-fit"
             href="#evidence/summary"
-            color="link-gray"
+            color="secondary"
             size="sm"
             iconTrailing={ArrowRight}
           >
@@ -524,20 +532,33 @@ export function Forecast({
           </select>
         </label>
       )}
-      {sections.length > 1 && <ForecastNavigation sections={sections} />}
-      {model && <ForecastScope model={model} source={source} />}
-      <ForecastCases
-        caseOptions={caseOptions}
-        selectedCase={selectedCase}
-        setChosenCase={setChosenCase}
-        source={source}
-      />
+      {sections.length > 1 && (
+        <ForecastNavigation
+          key={section ?? ""}
+          sections={sections}
+          initialSection={section === "run-charts" ? "forecast-run-charts" : undefined}
+        />
+      )}
+      {model && (
+        <ForecastScope model={model} source={source}>
+          {(shownQualifications) => (
+            <ForecastCases
+              shownQualifications={shownQualifications}
+              caseOptions={caseOptions}
+              selectedCase={selectedCase}
+              setChosenCase={setChosenCase}
+              source={source}
+            />
+          )}
+        </ForecastScope>
+      )}
       <ForecastContent
         model={model}
         selectedCase={selectedCase}
         source={source}
         handoff={handoff}
         href={href}
+        assumptions={assumptions}
         view={view}
         run={run}
       />

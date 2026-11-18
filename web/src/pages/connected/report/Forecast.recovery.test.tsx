@@ -180,7 +180,99 @@ it("states missing or ambiguous forecast trace loss while preserving published f
   render(<Forecast view={view} run={run} />);
   expect(screen.getByText(/Forecast source details are not available/)).toBeInTheDocument();
   expect(screen.getByRole("figure", { name: "Revenue" })).toBeInTheDocument();
+  expect(screen.queryByRole("option", { name: "Assumptions" })).toBeNull();
 });
+
+it("ties promoted excerpts to the full recorded input and sends generated notes to Evidence Record", () => {
+  const { view, model } = fixture();
+  const recorded = "Retained sources are unreviewed. Standalone perimeter applies.";
+  model.cashflow.limits = [recorded];
+  const handoff = view.entries[0]?.sections[0]?.blocks[0];
+  if (handoff?.type !== "text") throw new Error("Missing forecast input fixture");
+  handoff.text = handoff.text.replace(
+    JSON.stringify(input),
+    JSON.stringify({
+      ...input,
+      scope_limits: [recorded],
+    }),
+  );
+  render(<Forecast view={view} run={run} />);
+  const note = screen.getByText("Base case is a conditional illustration.", { selector: "p" });
+  const group = note.parentElement;
+  if (!group) throw new Error("Missing base case qualification");
+  expect(within(group).getByRole("link")).toHaveAttribute("href", "#evidence/record");
+
+  const scope = screen.getByRole("region", { name: "Model scope and basis" });
+  fireEvent.click(within(scope).getByText("Model scope and basis"));
+  const excerpt = within(scope).getByText("Standalone perimeter applies.").parentElement;
+  if (!excerpt) throw new Error("Missing scope qualification");
+  expect(within(excerpt).getByRole("link")).toHaveAttribute("href", expect.stringContaining("-72"));
+  expect(
+    forecastTraceContext(model, { ...input, scope_limits: [recorded] }, "Scope", {
+      recordedQualification: recorded,
+    }),
+  ).toMatchObject({
+    statement: recorded,
+    details: [{ label: "scope_limits.0", value: recorded }],
+  });
+});
+
+it.each(["matching", "swapped headers", "duplicate row"])(
+  "links an assumption register row only to a unique exact source (%s)",
+  (variant) => {
+    const { view, source, model } = fixture();
+    const headers = ["Driver", "Basis"];
+    const cells = ["Interest", "Debt only"];
+    source.sections.push({
+      heading: "Assumption register",
+      level: 2,
+      line: 100,
+      blocks: [
+        {
+          type: "table",
+          line: 101,
+          headers: variant === "swapped headers" ? [...headers].reverse() : headers,
+          rows: [
+            { line: 103, cells },
+            ...(variant === "duplicate row" ? [{ line: 104, cells }] : []),
+          ],
+        },
+      ],
+    });
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(Response.json({})));
+    render(
+      <ReportEvidence
+        snapshot={snapshot}
+        run={run}
+        entries={view.entries}
+        target="record"
+        mode="synthetic"
+        models={[
+          {
+            ...model,
+            register: {
+              heading: "Assumption register",
+              intro: "Recorded basis",
+              headers,
+              rows: [cells],
+            },
+          },
+        ]}
+      />,
+    );
+    const region = within(screen.getByRole("region", { name: "Assumption register: model" }));
+    expect(region.getByRole("cell", { name: "Debt only" })).toBeInTheDocument();
+    if (variant === "matching") {
+      expect(region.getByRole("link", { name: "Source row" })).toHaveAttribute(
+        "href",
+        `/report/run#evidence/forward~${digest}-103`,
+      );
+    } else {
+      expect(region.queryByRole("link", { name: "Source row" })).toBeNull();
+      expect(region.getByText("Source row not matched")).toBeInTheDocument();
+    }
+  },
+);
 
 it("refuses a filename companion whose hash conflicts with retained model source identity", () => {
   const { view, model, source } = fixture();
@@ -282,7 +374,7 @@ it("traces a trend to the actual figure and selected case instead of generic JSO
   expect(drawer.getByText("0.20")).toBeInTheDocument();
 });
 
-it("binds an Other forecast table row to its own case instead of the globally selected Base", () => {
+it("binds a selected additional scenario row to its own case", () => {
   const { view, model } = fixture();
   model.cashflow.other = {
     columns: model.cashflow.columns
@@ -300,8 +392,9 @@ it("binds an Other forecast table row to its own case instead of the globally se
       <Forecast view={view} run={run} />
     </PublishedTraceProvider>,
   );
+  fireEvent.click(screen.getByRole("radio", { name: /^Downside drivers/ }));
   fireEvent.click(
-    within(screen.getByRole("region", { name: "Other forecast cases" })).getByRole("button", {
+    within(screen.getByRole("region", { name: "Cash flow model" })).getByRole("button", {
       name: "Show sources for Revenue",
     }),
   );
@@ -311,6 +404,45 @@ it("binds an Other forecast table row to its own case instead of the globally se
   ).toBeInTheDocument();
   expect(drawer.getByText(/Revenue.*Downside drivers.*FY2026E.*1050/)).toBeInTheDocument();
   expect(drawer.queryByText(/Revenue.*Base case/)).toBeNull();
+});
+
+it("compares one period across cases and keeps accounts, ratios and growth rates separate", () => {
+  const { view, model } = fixture();
+  model.cashflow.rows.push(
+    {
+      label: "Interest coverage",
+      band: "Credit metrics",
+      kind: "multiple",
+      total: false,
+      cells: ["4.19x", "4.25x", "n.a.", "n.a."].map((display) => ({
+        display,
+        status: display === "n.a." ? "na" : "value",
+      })),
+    },
+    {
+      label: "Revenue YoY growth",
+      band: "Revenue",
+      kind: "percent",
+      total: false,
+      cells: ["5.0%", "4.0%", "0.0%", "4.0%"].map((display) => ({ display, status: "value" })),
+    },
+  );
+  render(<Forecast view={view} run={run} />);
+  const statement = () => within(screen.getByRole("table", { name: "Cash flow model" }));
+  const lines = within(screen.getByRole("radiogroup", { name: "Statement lines" }));
+  fireEvent.change(screen.getByLabelText("Statement columns"), { target: { value: "compare" } });
+  fireEvent.change(screen.getByLabelText("Comparison period"), { target: { value: "FY2026E" } });
+  expect(statement().getByRole("cell", { name: "1050" })).toBeInTheDocument();
+  expect(statement().getByRole("cell", { name: "840" })).toBeInTheDocument();
+  expect(statement().queryByRole("columnheader", { name: "FY2027E" })).toBeNull();
+  fireEvent.click(lines.getByRole("radio", { name: "Ratios" }));
+  expect(statement().getByRole("cell", { name: "4.19x" })).toBeInTheDocument();
+  expect(statement().getByRole("cell", { name: "n.a." })).toBeInTheDocument();
+  expect(statement().getByRole("columnheader", { name: "Downside shock" })).toBeInTheDocument();
+  expect(statement().queryByRole("rowheader", { name: "Revenue" })).toBeNull();
+  fireEvent.click(lines.getByRole("radio", { name: "Growth rates" }));
+  expect(statement().getByRole("cell", { name: "0.0%" })).toBeInTheDocument();
+  expect(statement().queryByRole("rowheader", { name: "Interest coverage" })).toBeNull();
 });
 
 it.each([true, false])(
@@ -492,7 +624,10 @@ it("keeps the missing cash-proxy reason on its case card and explains its precis
   const cases = within(screen.getByRole("radiogroup", { name: "Forecast case" }));
   expect(cases.getByText(missing)).toBeInTheDocument();
   expect(cases.getByText("n.a.")).toBeInTheDocument();
-  expect(cases.getAllByText(/to 2 decimals/)).toHaveLength(2);
+  expect(screen.getByRole("radiogroup", { name: "Forecast case" })).toHaveAccessibleDescription(
+    /Cash proxy.*2 decimals/,
+  );
+  expect(cases.queryByText(/2 decimals/)).toBeNull();
 });
 
 it("uses stored case names for descriptions and reader names for all column groups", () => {

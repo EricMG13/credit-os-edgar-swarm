@@ -215,7 +215,7 @@ it("repeats the credit-risk transmission map under Key charts, with the chart in
   ).toBeInTheDocument();
   expect(within(section).getByRole("link", { name: "Chart index" })).toHaveAttribute(
     "href",
-    "#forecast",
+    "#forecast/run-charts",
   );
 });
 

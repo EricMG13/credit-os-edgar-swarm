@@ -50,6 +50,7 @@ interface PathChartProps {
    * rest in the neutral series colour.
    */
   emphasis?: string;
+  tableCaption?: string;
   table: { head: string[]; rows: TableRowData[]; endHeading?: string };
 }
 
@@ -421,6 +422,7 @@ export function PathChart({
   yTicks,
   emphasis,
   table,
+  tableCaption,
 }: PathChartProps) {
   check({ periods, series, divider, table });
   return (
@@ -431,6 +433,7 @@ export function PathChart({
       subtitle={subtitle}
       actions={actions}
       table={table}
+      tableCaption={tableCaption}
       chart={
         <Chart
           title={title}

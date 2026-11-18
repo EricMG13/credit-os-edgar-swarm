@@ -13,10 +13,13 @@ export function BottomLine({
   text,
   level,
   lead,
+  marker,
 }: {
   text: BottomLineText;
   level: Level;
   lead?: ReactNode;
+  /** A supplied marker replaces the decorative dot. Null leaves the space empty. */
+  marker?: ReactNode;
 }) {
   const Lead = level;
   return (
@@ -27,12 +30,16 @@ export function BottomLine({
         "flex items-start gap-3 rounded-[10px] bg-surface-inverse px-4 py-4 text-white sm:gap-4 sm:px-8 sm:py-6",
       )}
     >
-      <span
-        aria-hidden="true"
-        className="mt-0.5 flex size-6.5 flex-none items-center justify-center rounded-ds-full border border-white/20 bg-white/10 shadow-sm"
-      >
-        <span className="size-2 rounded-ds-full bg-white" />
-      </span>
+      {marker === undefined ? (
+        <span
+          aria-hidden="true"
+          className="mt-0.5 flex size-6.5 flex-none items-center justify-center rounded-ds-full border border-white/20 bg-white/10 shadow-sm"
+        >
+          <span className="size-2 rounded-ds-full bg-white" />
+        </span>
+      ) : (
+        marker
+      )}
       <div className="flex min-w-0 flex-1 flex-col gap-2">
         <span className="text-sm font-medium text-brand-100">{text.label}</span>
         <Lead

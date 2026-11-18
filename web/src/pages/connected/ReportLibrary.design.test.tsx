@@ -554,6 +554,8 @@ describe("the overview carries every module's bottom line and the run's limitati
     expect(within(lines).queryByText(/Credit is stable/)).toBeNull();
 
     const limits = screen.getByRole("region", { name: "Limitations" });
+    expect(within(limits).getByText("Lead limitation.")).not.toBeVisible();
+    for (const summary of limits.querySelectorAll("summary")) fireEvent.click(summary);
     const view = buildReportView(snapshot, "north", run);
     expect(runLimitations(view, run)).toHaveLength(3);
     expect(within(limits).getAllByRole("listitem")).toHaveLength(runLimitations(view, run).length);
@@ -604,6 +606,7 @@ describe("the overview carries every module's bottom line and the run's limitati
     const lines = await screen.findByRole("region", { name: "Bottom line by module" });
     expect(within(lines).getByText("Leverage is high.")).toBeVisible();
     const limits = screen.getByRole("region", { name: "Limitations" });
+    fireEvent.click(within(limits).getByText(/financial foundation \(1\)/iu));
     expect(within(limits).getByText("The 2025 accounts are unaudited.")).toBeVisible();
     expect(limits.textContent).not.toMatch(/No limitation is listed/);
   });

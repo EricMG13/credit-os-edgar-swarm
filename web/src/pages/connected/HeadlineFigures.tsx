@@ -167,8 +167,14 @@ export function HeadlineFigures({
   return (
     <>
       <dl className="grid grid-cols-[repeat(auto-fit,minmax(9rem,1fr))] gap-3">
-        {metricLabels.map(([key, name]) => {
+        {metricLabels.map(([key, defaultName]) => {
           const figure = catalogue?.metrics[key];
+          const debtCashInterest =
+            key === "coverage" &&
+            /^LTM reported EBITDA over LTM cash interest for debt(?: [\d.,]+)?(?:;|$)/iu.test(
+              figure?.basis ?? "",
+            );
+          const name = debtCashInterest ? "Reported EBITDA / cash interest on debt" : defaultName;
           const source = sources[key];
           const load = requestSource
             ? () => {

@@ -643,19 +643,52 @@ function findingsTraces(snapshot: Snapshot, entry: OutputEntry, sections: Sectio
   return traces;
 }
 
+const CONFIDENCE_MARK_TONES = new Map([
+  ["High", "bg-brand-500 text-white"],
+  ["Medium", "bg-brand-200 text-text-primary"],
+  ["Low", "bg-brand-50 text-text-primary"],
+  ["Insufficient Information", "bg-white/10 text-white"],
+]);
+const CONFIDENCE_MARK_TRACE = "module-confidence";
+
+function ConfidenceMark({ value, band, trace }: { value: number; band: string; trace?: string }) {
+  return (
+    <div
+      className="grid w-24 shrink-0 justify-items-center gap-1"
+      role="group"
+      aria-label="Confidence score"
+    >
+      <div
+        className={`grid w-full justify-items-center gap-0.5 rounded-ds-sm px-2 py-2 text-center ${CONFIDENCE_MARK_TONES.get(band) ?? "bg-white/10 text-white"}`}
+      >
+        <span className="text-xs font-medium">Confidence</span>
+        <span className="font-display text-h4 tabular-nums">
+          {value}
+          <span className="text-xs font-normal"> / 100</span>
+        </span>
+        <span className="text-xs leading-tight">{band}</span>
+      </div>
+      <TraceControl trace={trace} label="Show sources for the confidence score" onDark />
+    </div>
+  );
+}
+
 function FindingsSummary({
   summary,
   entry,
   summaryTrace,
+  marker,
 }: {
   summary: NonNullable<OutputEntry["output"]["summary"]>;
   entry: OutputEntry;
   summaryTrace: Trace | null | undefined | false;
+  marker?: ReactNode;
 }) {
   if (containsReference(summary.bottomLine)) return null;
   return (
     <BottomLine
       level="h3"
+      marker={marker}
       text={{
         label: "Bottom line",
         lead: readerText(summary.bottomLine),
@@ -769,6 +802,7 @@ export function ReportFindings({
   overview = false,
   overviewLabel,
   afterBottomLine,
+  moduleConfidence,
   beforeLimitations,
   judgement,
   figureTableLines,
@@ -781,6 +815,8 @@ export function ReportFindings({
   overview?: boolean;
   overviewLabel?: string;
   afterBottomLine?: ReactNode;
+  /** Modules supplies its confidence tile as a fallback for an unscored or absent Bottom line. */
+  moduleConfidence?: ReactNode;
   /** Drawn after the prose passages and before Limitations (after the last passage without one). */
   beforeLimitations?: ReactNode;
   judgement?: string;
@@ -800,6 +836,25 @@ export function ReportFindings({
   const summary = !hasBottomLine && entry.output.summary;
   const summaryTrace = summary && traceForLine(snapshot, entry, entryIndex, summary.line);
   if (summaryTrace) traces[key(summary.line)] = summaryTrace;
+  const score = moduleConfidence === undefined ? undefined : entry.output.confidence;
+  const showsBottomLine =
+    sections.some(
+      (section) => section.heading === "Bottom line" && section.blocks[0]?.type === "text",
+    ) || Boolean(summary && !containsReference(summary.bottomLine));
+  const scored = showsBottomLine && score && !("missing" in score) ? score : null;
+  const scoreTrace = scored && traceForConfidence(snapshot, entry);
+  if (scoreTrace) traces[CONFIDENCE_MARK_TRACE] = scoreTrace;
+  const marker = scored ? (
+    <ConfidenceMark {...scored} trace={scoreTrace ? CONFIDENCE_MARK_TRACE : undefined} />
+  ) : moduleConfidence === undefined ? undefined : null;
+  const trailingFigures = scored ? (
+    afterBottomLine
+  ) : (
+    <>
+      {moduleConfidence}
+      {afterBottomLine}
+    </>
+  );
   const active = activeTrace === null ? null : traces[activeTrace];
   const records = overview ? [] : recordSections(entry.sections, entry);
   if (!sections.length && !summary)
@@ -808,7 +863,7 @@ export function ReportFindings({
         run={run}
         entry={entry}
         records={records}
-        afterBottomLine={afterBottomLine}
+        afterBottomLine={trailingFigures}
         beforeLimitations={beforeLimitations}
       />
     );
@@ -825,6 +880,7 @@ export function ReportFindings({
         >
           <BottomLine
             level="h2"
+            marker={marker}
             lead={
               referenced ? (
                 <Button
@@ -855,7 +911,7 @@ export function ReportFindings({
               trace: key(first.line),
             }}
           />
-          {afterBottomLine}
+          {trailingFigures}
           {section.blocks.length > 1 && overview && (
             <details className="rounded-lg border border-border-hairline bg-surface-card px-5 py-3">
               <summary className="cursor-pointer font-medium">
@@ -918,7 +974,7 @@ export function ReportFindings({
             ) : null,
           )}
         </section>
-        {section.heading === "Bottom line" && afterBottomLine}
+        {section.heading === "Bottom line" && trailingFigures}
       </Fragment>
     );
   }
@@ -944,8 +1000,15 @@ export function ReportFindings({
   return (
     <RunContext.Provider value={{ traces, open: setActiveTrace }}>
       <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-4">
-        {summary && <FindingsSummary summary={summary} entry={entry} summaryTrace={summaryTrace} />}
-        {!hasBottomLine && afterBottomLine}
+        {summary && (
+          <FindingsSummary
+            summary={summary}
+            entry={entry}
+            summaryTrace={summaryTrace}
+            marker={marker}
+          />
+        )}
+        {!hasBottomLine && trailingFigures}
         {drawn}
         <RecordsCard run={run} entry={entry} records={records} />
       </div>

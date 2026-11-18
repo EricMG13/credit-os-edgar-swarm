@@ -91,6 +91,7 @@ function fixture(): Snapshot {
 
 afterEach(() => {
   cleanup();
+  window.history.replaceState(null, "", "/");
   vi.unstubAllGlobals();
 });
 
@@ -109,6 +110,27 @@ function serve(snapshot: Snapshot, source: () => Response | Promise<Response>) {
   vi.stubGlobal("fetch", fetch);
   return fetch;
 }
+
+it("qualifies retained coverage and keeps the preview reason visible in both layouts", async () => {
+  const snapshot = fixture();
+  const entry = snapshot.catalogue.real[0];
+  if (!entry) throw new Error("Missing catalogue fixture");
+  entry.metrics.coverage = {
+    value: "4.19",
+    unit: "x",
+    basis: "LTM reported EBITDA over LTM cash interest for debt 776; calculation C34",
+  };
+  snapshot.preview = { reason: "Retained test record." };
+  vi.stubGlobal("fetch", () => Promise.resolve(Response.json(snapshot)));
+  render(<ReportLibrary readOnly />);
+  await screen.findByText("Reported EBITDA / cash interest on debt");
+  expect(screen.queryByText("Delivered")).toBeNull();
+  expect(screen.queryByRole("link", { name: "Start a run" })).toBeNull();
+  expect(screen.getByText("Retained test record.")).toBeVisible();
+  fireEvent.click(screen.getByText("List", { exact: true }));
+  expect(await screen.findByRole("table")).toBeVisible();
+  expect(screen.getByText("Retained test record.")).toBeVisible();
+});
 
 it("J4-001 loads a scoped snapshot only when a card figure is traced and opens its exact row", async () => {
   const snapshot = fixture();

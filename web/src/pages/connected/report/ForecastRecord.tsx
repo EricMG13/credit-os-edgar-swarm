@@ -14,6 +14,21 @@ import { items, record, stringsIn, word } from "../visuals/visualData";
 import type { PublishedTraceContext } from "./PublishedTrace";
 
 export type ForecastModel = ReturnType<typeof buildReportView>["models"][number];
+export function forecastHandoff(model: ForecastModel, entries: OutputEntry[], folder: string) {
+  const matches = entries.filter(
+    ({ output }) =>
+      output.module === "CP-2G" &&
+      (model.sources.some(
+        (item) => item.sha256 === output.sha256 && (!item.output || item.output === output.id),
+      ) ||
+        (model.sources.length === 0 &&
+          model.runFolder === folder &&
+          model.download.endsWith("/annual.md") &&
+          output.href === model.download.replace(/annual\.md$/, "CP-2G.md"))),
+  );
+  return matches.length === 1 ? matches[0] : undefined;
+}
+
 export type ForecastSelection = {
   case?: string;
   row?: string;
@@ -22,6 +37,7 @@ export type ForecastSelection = {
   groups?: string[];
   text?: string;
   inputPath?: string[];
+  recordedQualification?: string;
 };
 export type ForecastSource = (name: string, selection?: ForecastSelection) => ReactNode;
 
@@ -123,6 +139,15 @@ export function forecastTraceContext(
   name: string,
   selection: ForecastSelection,
 ): PublishedTraceContext {
+  if (selection.recordedQualification !== undefined) {
+    const text = selection.recordedQualification;
+    const index = items(document.scope_limits).indexOf(text);
+    return {
+      heading: name,
+      statement: text,
+      details: index < 0 ? [] : [{ label: `scope_limits.${String(index)}`, value: text }],
+    };
+  }
   const rowName = selection.row ?? (name.includes("Cash proxy") ? CASH_PROXY : name);
   const values = selectedValues(model, rowName, selection);
   const downsideNote =
@@ -267,8 +292,15 @@ export function RecordedForecastAssumptions({
           {amountUnits} Fractions are shown as recorded.
         </p>
         {drivers.length ? (
-          <div className="overflow-x-auto">
-            <table className="w-full text-small">
+          // The wide read-only table must be reachable for keyboard scrolling.
+          <div
+            role="region"
+            aria-label="Forecast driver values by planning year"
+            // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex
+            tabIndex={0}
+            className="min-w-0 overflow-x-auto"
+          >
+            <table className="w-full border-collapse text-small [&_th:first-child]:sticky [&_th:first-child]:left-0 [&_th:first-child]:bg-surface-card">
               <caption className="sr-only">Recorded forecast drivers</caption>
               <thead>
                 <tr>
@@ -279,12 +311,11 @@ export function RecordedForecastAssumptions({
                       (year) =>
                         `${scalar(year.year) ?? "Planning year not recorded"} · ${word(year.start) || "Start not recorded"} to ${word(year.end) || "End not recorded"}`,
                     ),
-                    "Category",
                     "Rationale",
                     "Limitation",
                     "Source",
                   ].map((name, index) => (
-                    <th key={index} className="px-3 py-2 text-left">
+                    <th key={index} scope="col" className="px-3 py-2 text-left">
                       {name}
                     </th>
                   ))}
@@ -293,16 +324,17 @@ export function RecordedForecastAssumptions({
               <tbody>
                 {drivers.map(({ group, name, key, driver }) => (
                   <tr key={`${group}-${key}`} className="border-t border-border-hairline">
-                    <th className="px-3 py-2 text-left">{DRIVER_NAMES[key] ?? key}</th>
-                    <td className="px-3 py-2">{name}</td>
+                    <th scope="row" className="min-w-40 px-3 py-2 text-left">
+                      {DRIVER_NAMES[key] ?? key}
+                    </th>
+                    <td className="min-w-24 px-3 py-2">{name}</td>
                     {years.map((_, index) => (
-                      <td className="px-3 py-2 tabular-nums" key={index}>
+                      <td className="min-w-28 px-3 py-2 tabular-nums" key={index}>
                         {visible(Array.isArray(driver.values) ? driver.values[index] : null)}
                       </td>
                     ))}
-                    <td className="px-3 py-2">{visible(driver.category)}</td>
-                    <td className="max-w-sm px-3 py-2">{visible(driver.rationale)}</td>
-                    <td className="max-w-sm px-3 py-2">{visible(driver.limitation)}</td>
+                    <td className="min-w-56 max-w-sm px-3 py-2">{visible(driver.rationale)}</td>
+                    <td className="min-w-56 max-w-sm px-3 py-2">{visible(driver.limitation)}</td>
                     <td className="px-3 py-2">
                       {source?.(`${DRIVER_NAMES[key] ?? key} assumptions`, {
                         case: name,

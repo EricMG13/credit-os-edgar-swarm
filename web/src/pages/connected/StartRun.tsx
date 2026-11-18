@@ -2645,7 +2645,9 @@ function IntakePanels(props: IntakePanelsProps) {
             steps={STEPPER_STEPS.map((item) =>
               item.key === "context" && view.earnings
                 ? { ...item, note: "Periods required" }
-                : item,
+                : item.key === "start" && synthetic
+                  ? { ...item, note: "No-cost test" }
+                  : item,
             )}
             onSelect={
               busy === undefined && !submitUncertain

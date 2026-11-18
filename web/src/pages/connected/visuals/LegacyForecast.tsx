@@ -16,6 +16,7 @@ interface GridColumn {
 }
 
 interface GridRow {
+  kind?: string;
   label: string;
   band: string;
   total: boolean;
@@ -44,6 +45,7 @@ export function gridOf(raw: unknown): Grid | null {
     return {
       label: word(row.label),
       band: word(row.band),
+      kind: word(row.kind),
       total: row.total === true,
       cells: items(row.cells).map(record),
     };
@@ -173,7 +175,7 @@ function singleForecastRow(grid: Grid, label: string) {
   return matches.length === 1 ? matches[0] : undefined;
 }
 
-function ForecastTrends({
+export function ForecastTrends({
   grid,
   units,
   source,
@@ -316,51 +318,64 @@ function caseDescription(name: string, notes: string[]) {
   return found && readerText(found);
 }
 
-function scopePassages(cashflow: Record<string, unknown>) {
-  const notes = stringsIn(cashflow.notes).filter((note) => note.startsWith("Base case is"));
-  const limits = stringsIn(cashflow.limits).filter((limit) =>
-    /unreviewed|not analytical review|base period|base interest|not comparable|not modelled|standalone|perimeter|machine input.*zero/i.test(
-      limit,
-    ),
-  );
-  return [...new Set([...notes, ...limits])].flatMap((passage) =>
-    // Keep complete recorded sentences; source-bearing sentences remain in the full record.
-    passage
-      .split(/(?<=[.!?])\s+(?=[A-Z])/u)
-      .filter((sentence) => !containsReference(sentence) && !/\bCP-[A-Z0-9]+\b/u.test(sentence)),
+function scopePassages(passages: string[]) {
+  return [...new Set(passages)].flatMap((recorded) =>
+    [...new Set(recorded.split(/(?<=[.!?])\s+(?=[A-Z])/u))]
+      .filter((sentence) => !containsReference(sentence) && !/\bCP-[A-Z0-9]+\b/u.test(sentence))
+      .map((text) => ({ text, recorded })),
   );
 }
 
-export function ForecastScope({ model, source }: { model: unknown; source?: ForecastSource }) {
-  const passages = scopePassages(record(record(model).cashflow));
+export function ForecastScope({
+  model,
+  source,
+  children,
+}: {
+  model: unknown;
+  source?: ForecastSource;
+  children?: (shownQualifications: string[]) => ReactNode;
+}) {
+  const cashflow = record(record(model).cashflow);
+  const base = scopePassages(
+    stringsIn(cashflow.notes).filter((note) => note.startsWith("Base case is")),
+  );
+  const limits = scopePassages(
+    stringsIn(cashflow.limits).filter((limit) =>
+      /unreviewed|not analytical review|base period|base interest|not comparable|not modelled|standalone|perimeter|machine input.*zero/i.test(
+        limit,
+      ),
+    ),
+  );
+  function qualification({ text, recorded }: ReturnType<typeof scopePassages>[number]) {
+    return (
+      <div
+        key={JSON.stringify([recorded, text])}
+        className={`${TRACE_HOST} flex max-w-prose items-start gap-2`}
+      >
+        <p className="text-small text-text-secondary">{text}</p>
+        {source?.("Model scope qualification", { recordedQualification: recorded })}
+      </div>
+    );
+  }
   return (
-    <section
-      className="grid min-w-0 gap-3 wrap-anywhere rounded-ds-md border border-border-hairline bg-surface-subtle p-5"
-      aria-label="Model scope and basis"
-    >
-      <h3 className="font-display text-h3">Model scope and basis</h3>
-      <p className="text-small text-text-tertiary">
-        Selected qualifications from the recorded model. Full notes and limitations are in Evidence,
-        under Record.
-      </p>
-      {passages.length ? (
-        <div className="grid gap-3 lg:grid-cols-2">
-          {passages.map((passage, index) => (
-            <div key={index} className={`${TRACE_HOST} min-w-0`}>
-              <p className="max-w-prose pr-12 text-small text-text-secondary sm:pr-8">{passage}</p>
-              <div className="absolute right-0 top-0">
-                {source?.(`Model scope qualification ${String(index + 1)}`, { text: passage })}
-              </div>
-            </div>
-          ))}
-        </div>
-      ) : (
-        <p className="text-small text-text-secondary">
-          No qualifications are available in this summary. Review the full model notes and
-          assumptions before interpreting the cases.
-        </p>
-      )}
-    </section>
+    <>
+      {base.map(qualification)}
+      {children?.(base.map(({ text }) => text))}
+      <section className="min-w-0 wrap-anywhere" aria-label="Model scope and basis">
+        <details className="rounded-ds-md border border-border-hairline bg-surface-subtle px-4 py-3">
+          <summary className="cursor-pointer font-semibold">Model scope and basis</summary>
+          <div className="mt-3 grid gap-3">
+            {limits.map(qualification)}
+            {!limits.length && !base.length && (
+              <p>No qualifications are available in this summary.</p>
+            )}
+            <a className="w-fit text-action underline" href="#evidence/record">
+              Full model notes and limitations
+            </a>
+          </div>
+        </details>
+      </section>
+    </>
   );
 }
 
@@ -370,61 +385,88 @@ export function CashProxy({
   source,
   sourceFor,
   selectedCase,
+  unified = false,
 }: {
   model: unknown;
   note?: ReactNode;
   source?: ReactNode;
   sourceFor?: ForecastSource;
   selectedCase?: string;
+  unified?: boolean;
 }) {
   const raw = record(record(model).cashflow);
   const grid = gridOf(raw);
-  if (!grid) return null;
-  const { periods, series } = cashProxyCases(
-    grid,
-    gridOf(raw.other),
-    stringsIn(raw.notes).find((note) => note.startsWith("Downside case is")),
+  const { periods, series } = grid
+    ? cashProxyCases(
+        grid,
+        gridOf(raw.other),
+        stringsIn(raw.notes).find((note) => note.startsWith("Downside case is")),
+      )
+    : { periods: [], series: [] };
+  if (!unified && (periods.length < 2 || series.length === 0)) return null;
+  const head = ["Case", ...periods];
+  const rows = series.map(({ name, cells }) => ({
+    label: name,
+    cells,
+    current: name === selectedCase,
+    end: sourceFor?.(`${name} cash proxy`, { case: name, row: CASH_PROXY }) ?? source,
+  }));
+  const endHeading = source || sourceFor ? "Source" : undefined;
+  const comparison = (
+    <ChartTable caption="Scenario comparison" head={head} rows={rows} endHeading={endHeading} />
   );
-  const rows = series.map(({ name, cells }) => ({ label: name, cells }));
-  const values = series.flatMap((item) => item.values);
-  if (periods.length < 2 || series.length === 0) return null;
-  const table = { head: ["Case", ...periods], rows };
-  const unit = word(raw.units);
+  const plot = periods.length > 1 && series.length > 0 && (
+    <PathChart
+      title="Cash proxy by scenario"
+      actions={
+        sourceFor?.("Cash proxy by scenario", { row: CASH_PROXY, case: "", periods }) ?? source
+      }
+      subtitle={word(raw.units)}
+      periods={periods}
+      series={series}
+      emphasis={series.some((item) => item.name === selectedCase) ? selectedCase : undefined}
+      yTicks={forecastTicks(
+        series.flatMap((item) => item.values),
+        true,
+      )}
+      table={
+        unified
+          ? { head, rows, endHeading }
+          : { head, rows: series.map(({ name, cells }) => ({ label: name, cells })) }
+      }
+      tableCaption={unified ? "Scenario comparison" : undefined}
+    />
+  );
+  const precision = (
+    <p className="text-small text-text-secondary">
+      Cash proxy figures are rounded to two decimal places. The statement keeps the recorded
+      display.
+    </p>
+  );
+  if (unified)
+    return (
+      <div className="grid min-w-0 content-start gap-4">
+        {plot ||
+          (series.length ? (
+            comparison
+          ) : (
+            <p className="text-text-secondary">No scenario cash proxy was recorded.</p>
+          ))}
+        {series.length > 0 && precision}
+        {note}
+      </div>
+    );
   return (
     <div className="grid min-w-0 gap-4 xl:grid-cols-[1.65fr_1fr]">
       <div className="min-w-0 rounded-xl border border-border-hairline bg-surface-card p-5">
-        <PathChart
-          title="Cash proxy by scenario"
-          actions={
-            sourceFor?.("Cash proxy by scenario", { row: CASH_PROXY, case: "", periods }) ?? source
-          }
-          subtitle={unit}
-          periods={periods}
-          series={series}
-          emphasis={series.some((item) => item.name === selectedCase) ? selectedCase : undefined}
-          yTicks={forecastTicks(values, true)}
-          table={table}
-        />
+        {plot}
       </div>
       <div className="grid min-w-0 content-start gap-4">
         <section className="grid min-w-0 gap-3 rounded-xl border border-border-hairline bg-surface-card p-5">
           <h3 className="font-display text-h4">Scenario comparison</h3>
-          <ChartTable
-            caption="Scenario comparison"
-            head={table.head}
-            rows={series.map(({ name, cells }) => ({
-              label: name,
-              cells,
-              current: name === selectedCase,
-              end: sourceFor?.(`${name} cash proxy`, { case: name, row: CASH_PROXY }) ?? source,
-            }))}
-            endHeading={source || sourceFor ? "Source" : undefined}
-          />
+          {comparison}
         </section>
-        <p className="text-small text-text-tertiary">
-          Cash proxy chart and comparison values are shown to 2 decimals. The model table retains
-          its recorded display.
-        </p>
+        {precision}
         {note}
       </div>
     </div>
@@ -472,7 +514,7 @@ export function LegacyForecast({
             downsideNote={notes.find((note) => note.startsWith("Downside case is"))}
           />
           <SelectedForecastTable
-            limits={evidenceOnlyQualifications ? [] : limits}
+            limits={limits}
             evidenceOnlyQualifications={evidenceOnlyQualifications}
             source={source}
             grid={grid}
@@ -482,7 +524,7 @@ export function LegacyForecast({
           />
           {other && (
             <SelectedForecastTable
-              limits={evidenceOnlyQualifications ? [] : limits}
+              limits={limits}
               evidenceOnlyQualifications={evidenceOnlyQualifications}
               source={source}
               grid={other}
