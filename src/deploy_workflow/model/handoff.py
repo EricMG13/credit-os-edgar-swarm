@@ -48,7 +48,7 @@ from deploy_workflow.model.budget import Budget, OverrunStop, exact_sum
 from deploy_workflow.model.configs import CONFIGS
 from deploy_workflow.model.copilot import COMPACTION_SHARE, near_limit, prompt_tokens_estimate
 from deploy_workflow.model.handoff_transport import compact_index, read_handoff
-from deploy_workflow.model.loop import _caught, redacted_request, redacted_turn
+from deploy_workflow.model.loop_helpers import _caught, redacted_request, redacted_turn
 from deploy_workflow.model.pricing import (
     Priced,
     handoff_reservation_usd,
