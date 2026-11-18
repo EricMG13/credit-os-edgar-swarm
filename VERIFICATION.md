@@ -4,6 +4,19 @@ Keep one running record here. A pass applies only to the stated scope. Earlier v
 engine is in [EricMG13/final-workflow](https://github.com/EricMG13/final-workflow)'s
 `VERIFICATION.md`, which also keeps the retained runs this copy leaves out.
 
+## 2026-11-18 — Forecast adversarial review
+
+- Exact recorded scope limits open their input trace. Generated notes link to Evidence Record. Assumption links require matching ordered headers and a unique full row. Jumps target available Forecast sections.
+- Retained Caesars Chrome fidelity check preserved four interest basis rows, the original input wording in the trace, and all 17 register rows and source links. Driver scrolling stayed within a 390 px viewport.
+- The combined local checkout passed 1,457 connected frontend tests and 170 focused Python tests. The isolated Forecast patch passed all 1,456 C1–C5 tests, build, lint, formatting, and the Python import gate. Chrome and Edge passed the full synthetic flow on the isolated patch.
+- Confidence review checked split excerpts, missing inputs, ambiguous row identity and section availability. Rewrite comparison kept the exact-row index and exact-text membership check.
+
+## 2026-11-17 — Caesars Forecast desktop
+
+- Retained test preview, 1440 × 900 Chrome. The base-case qualification immediately precedes the four FY2029E cash proxies (US$m 496.85, 131.38, 684.03, 326.97). The first value is visible in the opening viewport.
+- The Interest and Interest coverage basis rows in both tables matched the retained limitation exactly. The trace included the original scope limit. Evidence reproduced all 17 register rows cell for cell, with 17 matched source-row links. Forecast omitted the register identifiers and production categories.
+- At desktop widths the driver table has a named keyboard scroll region and pinned driver names. Focused tests passed (183), as did TypeScript, changed-file ESLint, formatting and the connected build. The unfiltered Python gate reported 3,008 findings in the existing untracked predecessor copy; excluding only that copy produced zero findings. Scope is presentation fidelity for this run.
+
 ## 2026-11-17 — Post-audit app repairs
 
 - Re-ran connected sections C1–C5 and static sections S2 and S6. All 2,374 focused
@@ -983,17 +996,3 @@ Scope: presentation only, all under `web/`; no backend, handoff, provider or mod
   5.00% in Modules and Forecast. The 29.90% illustrative proposal stayed in
   the original table. Both browsers showed the retained Caesars portfolio gap
   at 390 px in both views. Windows work-PC proof and publication are pending.
-
-## 2026-11-15 — Portfolio limits from a validated workbook
-
-- The native synthetic run uploaded and selected the test workbook. Both
-  browsers showed 2.37% against 2.50% and 3.73% against 5.00% in Modules and
-  Forecast. The illustrative 2.40 proposal stayed in the original table.
-- Confidence review checked the frozen source hash, selected output, date,
-  mismatching limit data and authored gap. CSV exports still use the source
-  table. Both browsers retained the Caesars gap at 390 px in both views.
-  Targeted web (97) and Python (17) tests, quality, lint, format and build passed.
-- Candidate `eb1a5c1` SHA-256
-  `8a2cd284e9b023c7138c973fcce0986a41067d7e9e6ad3b33c14213a8ddb3626`.
-  Clean macOS extraction passed Chrome (`20261115-172022-01`) and Edge
-  (`20261115-172031-01`). Windows work-PC proof and publication are pending.

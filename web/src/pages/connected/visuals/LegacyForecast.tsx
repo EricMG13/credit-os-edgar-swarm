@@ -316,51 +316,64 @@ function caseDescription(name: string, notes: string[]) {
   return found && readerText(found);
 }
 
-function scopePassages(cashflow: Record<string, unknown>) {
-  const notes = stringsIn(cashflow.notes).filter((note) => note.startsWith("Base case is"));
-  const limits = stringsIn(cashflow.limits).filter((limit) =>
-    /unreviewed|not analytical review|base period|base interest|not comparable|not modelled|standalone|perimeter|machine input.*zero/i.test(
-      limit,
-    ),
-  );
-  return [...new Set([...notes, ...limits])].flatMap((passage) =>
-    // Keep complete recorded sentences; source-bearing sentences remain in the full record.
-    passage
-      .split(/(?<=[.!?])\s+(?=[A-Z])/u)
-      .filter((sentence) => !containsReference(sentence) && !/\bCP-[A-Z0-9]+\b/u.test(sentence)),
+function scopePassages(passages: string[]) {
+  return [...new Set(passages)].flatMap((recorded) =>
+    [...new Set(recorded.split(/(?<=[.!?])\s+(?=[A-Z])/u))]
+      .filter((sentence) => !containsReference(sentence) && !/\bCP-[A-Z0-9]+\b/u.test(sentence))
+      .map((text) => ({ text, recorded })),
   );
 }
 
-export function ForecastScope({ model, source }: { model: unknown; source?: ForecastSource }) {
-  const passages = scopePassages(record(record(model).cashflow));
+export function ForecastScope({
+  model,
+  source,
+  children,
+}: {
+  model: unknown;
+  source?: ForecastSource;
+  children?: ReactNode;
+}) {
+  const cashflow = record(record(model).cashflow);
+  const base = scopePassages(
+    stringsIn(cashflow.notes).filter((note) => note.startsWith("Base case is")),
+  );
+  const limits = scopePassages(
+    stringsIn(cashflow.limits).filter((limit) =>
+      /unreviewed|not analytical review|base period|base interest|not comparable|not modelled|standalone|perimeter|machine input.*zero/i.test(
+        limit,
+      ),
+    ),
+  );
+  function qualification({ text, recorded }: ReturnType<typeof scopePassages>[number]) {
+    return (
+      <div
+        key={JSON.stringify([recorded, text])}
+        className={`${TRACE_HOST} flex max-w-prose items-start gap-2`}
+      >
+        <p className="text-small text-text-secondary">{text}</p>
+        {source?.("Model scope qualification", { recordedQualification: recorded })}
+      </div>
+    );
+  }
   return (
-    <section
-      className="grid min-w-0 gap-3 wrap-anywhere rounded-ds-md border border-border-hairline bg-surface-subtle p-5"
-      aria-label="Model scope and basis"
-    >
-      <h3 className="font-display text-h3">Model scope and basis</h3>
-      <p className="text-small text-text-tertiary">
-        Selected qualifications from the recorded model. Full notes and limitations are in Evidence,
-        under Record.
-      </p>
-      {passages.length ? (
-        <div className="grid gap-3 lg:grid-cols-2">
-          {passages.map((passage, index) => (
-            <div key={index} className={`${TRACE_HOST} min-w-0`}>
-              <p className="max-w-prose pr-12 text-small text-text-secondary sm:pr-8">{passage}</p>
-              <div className="absolute right-0 top-0">
-                {source?.(`Model scope qualification ${String(index + 1)}`, { text: passage })}
-              </div>
-            </div>
-          ))}
-        </div>
-      ) : (
-        <p className="text-small text-text-secondary">
-          No qualifications are available in this summary. Review the full model notes and
-          assumptions before interpreting the cases.
-        </p>
-      )}
-    </section>
+    <>
+      {base.map(qualification)}
+      {children}
+      <section className="min-w-0 wrap-anywhere" aria-label="Model scope and basis">
+        <details className="rounded-ds-md border border-border-hairline bg-surface-subtle px-4 py-3">
+          <summary className="cursor-pointer font-semibold">Model scope and basis</summary>
+          <div className="mt-3 grid gap-3">
+            {limits.map(qualification)}
+            {!limits.length && !base.length && (
+              <p>No qualifications are available in this summary.</p>
+            )}
+            <a className="w-fit text-action underline" href="#evidence/record">
+              Full model notes and limitations
+            </a>
+          </div>
+        </details>
+      </section>
+    </>
   );
 }
 
@@ -472,7 +485,7 @@ export function LegacyForecast({
             downsideNote={notes.find((note) => note.startsWith("Downside case is"))}
           />
           <SelectedForecastTable
-            limits={evidenceOnlyQualifications ? [] : limits}
+            limits={limits}
             evidenceOnlyQualifications={evidenceOnlyQualifications}
             source={source}
             grid={grid}
@@ -482,7 +495,7 @@ export function LegacyForecast({
           />
           {other && (
             <SelectedForecastTable
-              limits={evidenceOnlyQualifications ? [] : limits}
+              limits={limits}
               evidenceOnlyQualifications={evidenceOnlyQualifications}
               source={source}
               grid={other}

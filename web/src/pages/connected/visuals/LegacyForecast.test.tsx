@@ -207,7 +207,7 @@ it("promotes exact scope qualifications and leaves source-bearing sentences out"
   expect(screen.getByText("Not analytical review.")).toBeInTheDocument();
   expect(screen.queryByText(/CP-2G/)).toBeNull();
   expect(screen.queryByText(/secret-file/)).toBeNull();
-  expect(screen.getAllByRole("link")).toHaveLength(7);
+  expect(screen.getAllByRole("link", { name: "Model scope qualification" })).toHaveLength(7);
 });
 
 it("does not invent missing qualifications or case descriptions", () => {
@@ -216,7 +216,7 @@ it("does not invent missing qualifications or case descriptions", () => {
   expect(forecastCaseOptions(model)[0]?.description).toBeUndefined();
 });
 
-it("keeps all four recorded cases and puts scope before their selection", () => {
+it("places all four recorded cases between the conditional base qualification and full scope", () => {
   const cashflow = {
     ...model.cashflow,
     notes: ["Base case is a conditional illustration.", ...model.cashflow.notes],
@@ -259,7 +259,10 @@ it("keeps all four recorded cases and puts scope before their selection", () => 
   expect(screen.queryByText("Two cases")).toBeNull();
   expect(within(choices).getAllByText("Case description not recorded.")).toHaveLength(2);
   const scope = screen.getByRole("region", { name: "Model scope and basis" });
-  expect(scope.compareDocumentPosition(choices) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  const lead = screen.getAllByText("Base case is a conditional illustration.")[0];
+  expect(lead?.parentElement?.nextElementSibling).toContainElement(choices);
+  expect(choices.compareDocumentPosition(scope) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  expect(scope.querySelector("details")).not.toHaveAttribute("open");
   expect(
     within(scope).getByText("Base interest and forecast interest are not comparable."),
   ).toBeInTheDocument();

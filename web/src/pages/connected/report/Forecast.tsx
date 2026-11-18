@@ -1,10 +1,9 @@
 import { Button } from "@/components/base/buttons/button";
 import { ArrowRight } from "@untitledui/icons";
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { moduleName } from "../api";
 import { card, field, heading, label } from "../layout";
 import {
-  containsReference,
   evidencePath,
   type OutputEntry,
   type PublishedRun,
@@ -13,8 +12,7 @@ import {
   withUnit,
 } from "../publishedReport";
 import { namedRow, namedTable, type buildReportView } from "../reportView";
-import { PublishedTable } from "../ReportContent";
-import { amount, record, stringsIn, word } from "../visuals/visualData";
+import { amount, items, record, stringsIn, word } from "../visuals/visualData";
 import { TRACE_HOST } from "@/pages/library/parts/TraceControl";
 import {
   CashProxy,
@@ -27,6 +25,7 @@ import {
 import { RunCharts } from "./RunCharts";
 import { PublishedSource } from "./PublishedTrace";
 import {
+  forecastHandoff,
   forecastInput,
   forecastTraceContext,
   RecordedForecastAssumptions,
@@ -37,21 +36,6 @@ type Model = ReturnType<typeof buildReportView>["models"][number];
 /** A model's recorded money unit: the currency code and "millions"
  * (docs/rulings/2026-11-16-reporting-currency-from-sources.md). */
 const MILLIONS = /^[A-Z]{3} millions$/;
-
-function forecastHandoff(model: Model, entries: OutputEntry[], folder: string) {
-  const matches = entries.filter(
-    ({ output }) =>
-      output.module === "CP-2G" &&
-      (model.sources.some(
-        (item) => item.sha256 === output.sha256 && (!item.output || item.output === output.id),
-      ) ||
-        (model.sources.length === 0 &&
-          model.runFolder === folder &&
-          model.download.endsWith("/annual.md") &&
-          output.href === model.download.replace(/annual\.md$/, "CP-2G.md"))),
-  );
-  return matches.length === 1 ? matches[0] : undefined;
-}
 
 function recordedBridge(
   handoff: OutputEntry | undefined,
@@ -234,71 +218,27 @@ function ForecastCases({
 
 function ForecastAssumptions({
   model,
-  handoff,
-  run,
-  href,
+  inputs,
   source,
 }: {
   model: Model;
-  handoff: OutputEntry | undefined;
-  run: PublishedRun;
-  href: (line: number) => string;
+  inputs: ReturnType<typeof forecastInput>;
   source?: ForecastSource;
 }) {
-  const register = model.register;
-  const assumptions =
-    register && handoff && namedTable(handoff, register.heading, register.headers);
-  function assumptionHref(cells: string[]) {
-    const row = namedRow(
-      assumptions || undefined,
-      (row) =>
-        row.cells.length === cells.length &&
-        row.cells.every((cell, index) => cell === cells[index]),
-    );
-    return row && href(row.line);
-  }
-  const inputs = forecastInput(handoff);
-  const meaningful = register?.rows.some(
-    (row) => !row.some((cell) => /Not supplied: nothing to report/i.test(cell)),
-  );
-  if (!inputs && !register) return null;
   return (
     <details open className="grid min-w-0 gap-4 wrap-anywhere">
       <summary className="cursor-pointer font-semibold">Forecast assumptions</summary>
       {inputs && <RecordedForecastAssumptions document={inputs.value} source={source} />}
-      {meaningful && model.register && (
-        <div className={card}>
-          {model.register.intro && !containsReference(model.register.intro) && (
-            <p>{readerText(model.register.intro)}</p>
-          )}
-          <PublishedTable
-            table={{
-              type: "table",
-              line: 0,
-              headers: model.register.headers,
-              rows: model.register.rows.map((cells, line) => ({ cells, line })),
-            }}
-            rowHref={(line) => assumptionHref(model.register?.rows[line] ?? [])}
-            rowSource={(line, name) => {
-              const link = assumptionHref(model.register?.rows[line] ?? []);
-              return (
-                link && (
-                  <PublishedSource name={name} href={link}>
-                    Assumption source
-                  </PublishedSource>
-                )
-              );
-            }}
-          />
-          <Button
-            href={handoff ? evidencePath(run.folder, handoff) : "#evidence/trace/CP-2G"}
-            color="link-gray"
-            size="sm"
-            iconTrailing={ArrowRight}
-          >
-            Open the model evidence
-          </Button>
-        </div>
+      {model.register && (
+        <Button
+          className="w-fit"
+          href="#evidence/record"
+          color="link-gray"
+          size="sm"
+          iconTrailing={ArrowRight}
+        >
+          Open the model evidence
+        </Button>
       )}
     </details>
   );
@@ -306,9 +246,14 @@ function ForecastAssumptions({
 
 type ForecastSection = { id: string; label: string };
 
-function ForecastNavigation({ sections }: { sections: ForecastSection[] }) {
-  const [mobileSection, setMobileSection] = useState("");
-  const [active, setActive] = useState(sections[0]?.id ?? "");
+function ForecastNavigation({
+  sections,
+  initialSection,
+}: {
+  sections: ForecastSection[];
+  initialSection?: string;
+}) {
+  const [active, setActive] = useState(initialSection ?? sections[0]?.id);
   const activeSection = sections.some(({ id }) => id === active) ? active : sections[0]?.id;
   function navigate(id: string) {
     const target = document.getElementById(id);
@@ -343,10 +288,9 @@ function ForecastNavigation({ sections }: { sections: ForecastSection[] }) {
           <select
             aria-label="Jump to section"
             className={field}
-            value={mobileSection}
+            value=""
             onChange={(event) => {
               const id = event.currentTarget.value;
-              setMobileSection("");
               if (id) navigate(id);
             }}
           >
@@ -363,11 +307,15 @@ function ForecastNavigation({ sections }: { sections: ForecastSection[] }) {
   );
 }
 
-function forecastSections(model: Model | undefined, hasCases: boolean): ForecastSection[] {
+function forecastSections(
+  model: Model | undefined,
+  hasCases: boolean,
+  hasAssumptions: boolean,
+): ForecastSection[] {
   return [
     ...(hasCases ? [{ id: "forecast-cases", label: "Cases" }] : []),
     ...(model ? [{ id: "forecast-model", label: "Cash flow model" }] : []),
-    ...(model ? [{ id: "forecast-assumptions", label: "Assumptions" }] : []),
+    ...(hasAssumptions ? [{ id: "forecast-assumptions", label: "Assumptions" }] : []),
     { id: "forecast-run-charts", label: "Run charts" },
   ];
 }
@@ -378,6 +326,7 @@ function ForecastContent({
   source,
   handoff,
   href,
+  assumptions,
   view,
   run,
 }: {
@@ -386,6 +335,7 @@ function ForecastContent({
   source: ForecastSource | undefined;
   handoff: OutputEntry | undefined;
   href: (line: number) => string;
+  assumptions: ReactNode;
   view: ReturnType<typeof buildReportView>;
   run: PublishedRun;
 }) {
@@ -413,19 +363,13 @@ function ForecastContent({
           />
         </div>
       )}
-      {model && (
+      {assumptions && (
         <div
           id="forecast-assumptions"
           tabIndex={-1}
           className="scroll-mt-4 focus:outline-2 focus:outline-offset-2 focus:outline-focus"
         >
-          <ForecastAssumptions
-            model={model}
-            handoff={handoff}
-            run={run}
-            href={href}
-            source={source}
-          />
+          {assumptions}
         </div>
       )}
       <div
@@ -442,9 +386,11 @@ function ForecastContent({
 export function Forecast({
   view,
   run,
+  section,
 }: {
   view: ReturnType<typeof buildReportView>;
   run: PublishedRun;
+  section?: string;
 }) {
   const [selected, setSelected] = useState(0);
   const [chosenCase, setChosenCase] = useState("");
@@ -458,22 +404,39 @@ export function Forecast({
   const href = (line: number) =>
     handoff ? evidencePath(run.folder, handoff, line) : "#evidence/summary";
   const input = forecastInput(handoff);
-  const source: ForecastSource | undefined =
-    !input || !model
-      ? undefined
-      : (name, selection = {}) => (
-          <PublishedSource
-            name={name}
-            href={href(input.line)}
-            context={forecastTraceContext(model, input.value, name, {
-              case: selectedCase,
-              ...selection,
-            })}
-          >
-            Forecast inputs
-          </PublishedSource>
-        );
-  const sections = forecastSections(model, caseOptions.length > 1);
+  const inputLimits = new Set(items(input?.value.scope_limits));
+  const source: ForecastSource = (name, selection = {}) => {
+    const qualification = selection.recordedQualification;
+    if (qualification !== undefined && !inputLimits.has(qualification)) {
+      return (
+        <PublishedSource
+          name={name}
+          href="#evidence/record"
+          linkLabel={`Read ${name} in Evidence Record`}
+        >
+          Read in Evidence Record
+        </PublishedSource>
+      );
+    }
+    if (!input || !model) return undefined;
+    return (
+      <PublishedSource
+        name={name}
+        href={href(input.line)}
+        context={forecastTraceContext(model, input.value, name, {
+          case: selectedCase,
+          ...selection,
+        })}
+      >
+        Forecast inputs
+      </PublishedSource>
+    );
+  };
+  const assumptions =
+    model && (input || model.register) ? (
+      <ForecastAssumptions model={model} inputs={input} source={source} />
+    ) : null;
+  const sections = forecastSections(model, caseOptions.length > 1, assumptions !== null);
   return (
     <>
       <header className="grid gap-2">
@@ -524,20 +487,30 @@ export function Forecast({
           </select>
         </label>
       )}
-      {sections.length > 1 && <ForecastNavigation sections={sections} />}
-      {model && <ForecastScope model={model} source={source} />}
-      <ForecastCases
-        caseOptions={caseOptions}
-        selectedCase={selectedCase}
-        setChosenCase={setChosenCase}
-        source={source}
-      />
+      {sections.length > 1 && (
+        <ForecastNavigation
+          key={section ?? ""}
+          sections={sections}
+          initialSection={section === "run-charts" ? "forecast-run-charts" : undefined}
+        />
+      )}
+      {model && (
+        <ForecastScope model={model} source={source}>
+          <ForecastCases
+            caseOptions={caseOptions}
+            selectedCase={selectedCase}
+            setChosenCase={setChosenCase}
+            source={source}
+          />
+        </ForecastScope>
+      )}
       <ForecastContent
         model={model}
         selectedCase={selectedCase}
         source={source}
         handoff={handoff}
         href={href}
+        assumptions={assumptions}
         view={view}
         run={run}
       />

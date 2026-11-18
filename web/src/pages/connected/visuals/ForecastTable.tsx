@@ -1,5 +1,6 @@
 import { Fragment, useState, type ReactNode } from "react";
 import { Button } from "@/components/base/buttons/button";
+import { TRACE_HOST } from "@/pages/library/parts/TraceControl";
 import { containsReference, readerText } from "../publishedReport";
 import type { Grid } from "./LegacyForecast";
 import { word } from "./visualData";
@@ -141,12 +142,14 @@ function ForecastCell({
 function ForecastRows({
   grid,
   rows,
+  interestBasis,
   expanded,
   source,
   evidenceOnlyQualifications,
 }: {
   grid: Grid;
   rows: Grid["rows"];
+  interestBasis: string[];
   expanded: boolean;
   source?: ForecastSource;
   evidenceOnlyQualifications?: boolean;
@@ -179,6 +182,29 @@ function ForecastRows({
               />
             ))}
           </tr>
+          {/^(?:Interest|Interest coverage(?: \(.*\))?)$/i.test(row.label) &&
+            interestBasis.map((text) => (
+              <tr key={text} className="bg-surface-subtle">
+                <th
+                  scope="row"
+                  className="sticky left-0 bg-surface-subtle px-3 py-2 text-left text-small font-medium"
+                >
+                  {row.label} basis
+                </th>
+                <td colSpan={grid.columns.length} className="px-3 py-2">
+                  <div
+                    className={`${TRACE_HOST} flex max-w-prose items-start gap-2 text-small text-text-secondary`}
+                  >
+                    <p>
+                      {containsReference(text)
+                        ? "See Evidence for the recorded interest basis."
+                        : readerText(text)}
+                    </p>
+                    {source?.(`${row.label} basis`, { recordedQualification: text })}
+                  </div>
+                </td>
+              </tr>
+            ))}
         </Fragment>
       ))}
     </tbody>
@@ -252,8 +278,11 @@ export function ForecastTable({
   const populated = grid.rows.filter((row) => !unpopulated(row));
   const canCollapse = missing > 0 && populated.length > 0;
   const rows = expanded || !canCollapse ? grid.rows : populated;
-  const period = limits.filter((text) => text.startsWith("Base period is "));
-  const interest = limits.filter((text) => text.startsWith("Base interest is "));
+  const period = (evidenceOnlyQualifications ? [] : limits).filter((text) =>
+    text.startsWith("Base period is "),
+  );
+  const interest = [...new Set(limits.filter((text) => /^Base interest\b/i.test(text)))];
+  const footerInterest = evidenceOnlyQualifications ? [] : interest;
   const bound = inputGrid.columns.flatMap((column, index) =>
     period
       .filter((text) => periodColumn(inputGrid, text) === index)
@@ -267,7 +296,7 @@ export function ForecastTable({
         <Qualification key={at} text={text} label="Base-period qualification" source={source} />
       ))}
       {!interestShown &&
-        interest.map((text, at) => (
+        footerInterest.map((text, at) => (
           <Qualification
             key={at}
             text={text}
@@ -298,6 +327,7 @@ export function ForecastTable({
           <ForecastRows
             grid={grid}
             rows={rows}
+            interestBasis={evidenceOnlyQualifications ? interest : []}
             expanded={expanded || !canCollapse}
             source={evidenceOnlyQualifications ? source : undefined}
             evidenceOnlyQualifications={evidenceOnlyQualifications}
@@ -322,7 +352,7 @@ export function ForecastTable({
           }}
         />
       )}
-      {(bound.length > 0 || (interestShown && interest.length > 0)) && (
+      {(bound.length > 0 || (interestShown && footerInterest.length > 0)) && (
         <ul aria-label="Qualifications" className="grid gap-2">
           {bound.map(({ label, text }, at) => (
             <li key={`period-${String(at)}`}>
@@ -330,7 +360,7 @@ export function ForecastTable({
             </li>
           ))}
           {interestShown &&
-            interest.map((text, at) => (
+            footerInterest.map((text, at) => (
               <li key={`interest-${String(at)}`}>
                 <Qualification text={text} label="Interest basis qualification" source={source} />
               </li>

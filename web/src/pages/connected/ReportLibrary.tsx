@@ -136,11 +136,16 @@ function useReportPlace(root: RefObject<HTMLElement | null>, hash: string, ready
     const id = historyEntry();
     const previous = shown.current;
     shown.current = id;
-    if (previous === null || previous === id) return;
-    left.current.set(previous, offset.current);
+    if (previous === id) return;
+    if (previous !== null) left.current.set(previous, offset.current);
     const main = root.current?.closest("main");
     const back = left.current.get(id);
-    if (main) {
+    const target =
+      hash === "#forecast/run-charts" && document.getElementById("forecast-run-charts");
+    if (target && back === undefined) {
+      target.focus({ preventScroll: true });
+      target.scrollIntoView({ block: "start" });
+    } else if (main && previous !== null) {
       main.scrollTop = back ?? 0;
       offset.current = main.scrollTop;
     }
@@ -259,7 +264,7 @@ function KeyCharts({
     <section className="grid min-w-0 gap-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h2 className={heading}>Key charts</h2>
-        <Button href="#forecast" color="link-gray" size="sm" iconTrailing={ArrowRight}>
+        <Button href="#forecast/run-charts" color="link-gray" size="sm" iconTrailing={ArrowRight}>
           Chart index
         </Button>
       </div>
@@ -496,7 +501,7 @@ function ReportPage({
               output={parts[1]}
             />
           )}
-          {tab === "forecast" && <Forecast run={run} view={view} />}
+          {tab === "forecast" && <Forecast run={run} view={view} section={parts[0]} />}
           {tab === "evidence" && (
             <ReportEvidence
               snapshot={snapshot}

@@ -922,13 +922,22 @@ async function checkCompactModules(report, page, channel) {
 
 async function checkForecastPresentation(report, page, channel) {
   const scope = report.getByRole("region", { name: "Model scope and basis" });
-  await scope.getByText(/conditional illustration/u).waitFor();
+  const cases = report.locator("#forecast-cases");
+  const qualification = cases
+    .locator("xpath=preceding-sibling::*[1]")
+    .getByText(/conditional illustration/u);
+  await qualification.waitFor();
+  assert.equal(await scope.locator("details").getAttribute("open"), null);
+  await scope.locator("summary").click();
+  await scope.getByText("Synthetic; not analytical review.", { exact: true }).waitFor();
+  await scope.getByRole("link", { name: "Full model notes and limitations" }).waitFor();
+  await scope.locator("summary").click();
   await report.getByRole("heading", { name: "Forecast cases", exact: true }).waitFor();
   const comparison = report.getByRole("table", { name: "Scenario comparison" });
   await comparison.getByRole("rowheader", { name: "Base case", exact: true }).waitFor();
   await comparison.getByRole("rowheader", { name: "Downside shock", exact: true }).waitFor();
   assert.equal(await comparison.getByRole("rowheader").count(), 2);
-  await scope.scrollIntoViewIfNeeded();
+  await qualification.evaluate((element) => element.scrollIntoView({ block: "start" }));
   await page.screenshot({ path: path.join(artifacts, `${channel}-forecast.png`) });
 }
 
@@ -1409,6 +1418,10 @@ async function checkBrowserRun(context, service, workspace, channel, brand) {
   await checkCompanyBand(report, channel);
   await checkOverviewMobile(report, page, channel);
   await checkOverviewTrace(report, page);
+  await report.getByRole("link", { name: "Chart index", exact: true }).click();
+  await page.waitForURL((url) => url.hash === "#forecast/run-charts");
+  await page.waitForFunction(() => document.activeElement?.id === "forecast-run-charts");
+  await report.getByRole("link", { name: "Overview", exact: true }).click();
   await checkCalendar(report, artifacts, channel, page);
   await checkCharts(report, artifacts, channel, page, run);
   const download = report.getByRole("link", {
