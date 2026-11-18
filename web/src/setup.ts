@@ -1,8 +1,8 @@
 import "@testing-library/jest-dom/vitest";
 
 // Report section links may focus and scroll to a landmark. jsdom has no scrolling layout.
-if (!Object.hasOwn(HTMLElement.prototype, "scrollIntoView")) {
-  Object.defineProperty(HTMLElement.prototype, "scrollIntoView", {
+if (!Object.hasOwn(Element.prototype, "scrollIntoView")) {
+  Object.defineProperty(Element.prototype, "scrollIntoView", {
     configurable: true,
     writable: true,
     value() {},
