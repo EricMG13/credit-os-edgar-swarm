@@ -23,6 +23,7 @@ import {
   reportPath,
   runPathway,
   type CatalogueRun,
+  type Snapshot,
   type LibraryIndex,
 } from "./publishedReport";
 import { HeadlineFigures } from "./HeadlineFigures";
@@ -69,37 +70,48 @@ function CreditView({ run }: { run: LibraryIndex["workspace"]["runs"][string] | 
   );
 }
 
-async function figureSource(catalogue: CatalogueRun, key: string, signal: AbortSignal) {
-  const snapshot = await getSnapshot(signal, catalogue.id);
-  if (!snapshot) return null;
-  const candidates = Object.entries(snapshot.workspace.runs).filter(
+function metricIdentity(metric: CatalogueRun["metrics"][string] | undefined) {
+  const { value = null, unit = null, period = null } = metric ?? {};
+  return JSON.stringify([value, unit, period]);
+}
+
+function catalogueMetric(snapshot: Snapshot, id: string, key: string) {
+  const matches = snapshot.catalogue.real.filter((item) => item.id === id);
+  return matches.length === 1 ? matches[0]?.metrics[key] : undefined;
+}
+
+function resolveFigureSource(snapshot: Snapshot, catalogue: CatalogueRun, key: string) {
+  const matches = Object.entries(snapshot.workspace.runs).filter(
     ([, run]) => run.folder === catalogue.id,
   );
-  const matching = snapshot.catalogue.real.filter((item) => item.id === catalogue.id);
-  const metric = matching.length === 1 ? matching[0]?.metrics[key] : undefined;
-  const shown = catalogue.metrics[key];
-  if (
-    JSON.stringify([metric?.value ?? null, metric?.unit ?? null, metric?.period ?? null]) !==
-    JSON.stringify([shown?.value ?? null, shown?.unit ?? null, shown?.period ?? null])
-  )
-    return null;
-  const [found] = candidates;
-  if (candidates.length !== 1 || !found) return null;
-  const [routeKey, run] = found;
+  const [match] = matches;
+  if (!match || matches.length !== 1) return null;
+  const [routeKey, run] = match;
   const entries = outputEntries(snapshot, run, routeKey);
   const foundations = entries.filter((entry) => entry.selected && entry.output.module === "CP-1");
   if (foundations.length !== 1) return null;
   const source = headlineSources(foundations[0], catalogue, run.folder)[key];
-  if (!source) return null;
-  const prefix = evidenceHref(run.folder, "");
-  const location = source.href.startsWith(prefix)
-    ? resolveEvidenceLocation(entries, source.href.slice(prefix.length))
-    : undefined;
+  return source ? { entries, source, folder: run.folder } : null;
+}
+
+async function figureSource(catalogue: CatalogueRun, key: string, signal: AbortSignal) {
+  const snapshot = await getSnapshot(signal, catalogue.id);
+  if (!snapshot) return null;
+  if (
+    metricIdentity(catalogueMetric(snapshot, catalogue.id, key)) !==
+    metricIdentity(catalogue.metrics[key])
+  )
+    return null;
+  const result = resolveFigureSource(snapshot, catalogue, key);
+  if (!result) return null;
+  const { entries, source, folder } = result;
+  const prefix = evidenceHref(folder, "");
+  if (!source.href.startsWith(prefix)) return null;
+  const location = resolveEvidenceLocation(entries, source.href.slice(prefix.length));
   if (!location || location.line === undefined) return null;
   const trace = traceForLine(snapshot, location.entry, location.index, location.line);
   return trace ? { trace, href: source.href } : null;
 }
-
 function MatchRuns({
   snapshot,
   filters,

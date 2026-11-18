@@ -61,6 +61,114 @@ function statementColumns(grid: Grid, selectedCase: string | undefined, downside
   }));
 }
 
+function displayedColumns(
+  grid: Grid,
+  selectedCase: string | undefined,
+  downsideNote: string,
+  requestedView: View,
+  requestedPeriod: string,
+) {
+  const columns = statementColumns(grid, selectedCase, downsideNote);
+  const projections = columns.filter(({ forecast }) => forecast);
+  const history = columns.filter(({ forecast }) => !forecast);
+  const selected = projections.filter(({ group }) => group === selectedCase);
+  const periods = [...new Set(projections.map(({ label }) => label))];
+  const period = periods.includes(requestedPeriod) ? requestedPeriod : periods.at(-1);
+  const canCompare = new Set(projections.map(({ group }) => group)).size > 1;
+  const selectedColumns = [selected, projections, history].find((group) => group.length) ?? [];
+  const views = new Map<View, typeof columns>([["selected", selectedColumns]]);
+  if (canCompare)
+    views.set(
+      "compare",
+      projections.filter(({ label }) => label === period),
+    );
+  if (history.length) views.set("history", history);
+  const view = views.has(requestedView) ? requestedView : "selected";
+  const visible = views.get(view) ?? selectedColumns;
+  return { selected, projections, history, periods, period, canCompare, view, visible };
+}
+
+function displayedRows(grid: Grid, requestedFamily: Family, visible: { index: number }[]) {
+  const rowsByFamily = new Map<Family, Grid["rows"]>();
+  for (const row of grid.rows) {
+    const family = familyOf(row);
+    const rows = rowsByFamily.get(family);
+    if (rows) rows.push(row);
+    else rowsByFamily.set(family, [row]);
+  }
+  const family = rowsByFamily.has(requestedFamily)
+    ? requestedFamily
+    : ((Object.keys(families) as Family[]).find((key) => rowsByFamily.has(key)) ?? "accounts");
+  const rows = (rowsByFamily.get(family) ?? []).map((row) => ({
+    ...row,
+    cells: visible.map(({ index }) => row.cells[index] ?? {}),
+  }));
+  return { rowsByFamily, family, rows };
+}
+
+function StatementPeriodControls({
+  view,
+  period,
+  periods,
+  hasSelected,
+  hasProjections,
+  hasHistory,
+  canCompare,
+  setView,
+  setPeriod,
+}: {
+  view: View;
+  period?: string;
+  periods: string[];
+  hasSelected: boolean;
+  hasProjections: boolean;
+  hasHistory: boolean;
+  canCompare: boolean;
+  setView: (view: View) => void;
+  setPeriod: (period: string) => void;
+}) {
+  return (
+    <>
+      <label className="grid gap-1 text-small text-text-secondary">
+        Statement columns
+        <select
+          className={field}
+          value={view}
+          onChange={(event) => {
+            setView(event.target.value as View);
+          }}
+        >
+          <option value="selected">
+            {hasSelected
+              ? "Selected case"
+              : hasProjections
+                ? "Forecast periods"
+                : "Recorded periods"}
+          </option>
+          {canCompare && <option value="compare">Compare scenarios</option>}
+          {hasHistory && hasProjections && <option value="history">Historical periods</option>}
+        </select>
+      </label>
+      {view === "compare" && (
+        <label className="grid gap-1 text-small text-text-secondary">
+          Comparison period
+          <select
+            className={field}
+            value={period}
+            onChange={(event) => {
+              setPeriod(event.target.value);
+            }}
+          >
+            {periods.map((label) => (
+              <option key={label}>{label}</option>
+            ))}
+          </select>
+        </label>
+      )}
+    </>
+  );
+}
+
 function StatementView({
   grid,
   title,
@@ -81,43 +189,9 @@ function StatementView({
   const [requestedFamily, setFamily] = useState<Family>("accounts");
   const [requestedView, setView] = useState<View>("selected");
   const [requestedPeriod, setPeriod] = useState("");
-  const columns = statementColumns(grid, selectedCase, downsideNote);
-  const projections = columns.filter(({ forecast }) => forecast);
-  const history = columns.filter(({ forecast }) => !forecast);
-  const selected = projections.filter(({ group }) => group === selectedCase);
-  const periods = [...new Set(projections.map(({ label }) => label))];
-  const period = periods.includes(requestedPeriod) ? requestedPeriod : periods.at(-1);
-  const canCompare = new Set(projections.map(({ group }) => group)).size > 1;
-  const view =
-    requestedView === "compare" && canCompare
-      ? "compare"
-      : requestedView === "history" && history.length
-        ? "history"
-        : "selected";
-  const visible =
-    view === "compare"
-      ? projections.filter(({ label }) => label === period)
-      : view === "history"
-        ? history
-        : selected.length
-          ? selected
-          : projections.length
-            ? projections
-            : history;
-  const rowsByFamily = new Map<Family, Grid["rows"]>();
-  for (const row of grid.rows) {
-    const family = familyOf(row);
-    const rows = rowsByFamily.get(family);
-    if (rows) rows.push(row);
-    else rowsByFamily.set(family, [row]);
-  }
-  const family = rowsByFamily.has(requestedFamily)
-    ? requestedFamily
-    : ((Object.keys(families) as Family[]).find((key) => rowsByFamily.has(key)) ?? "accounts");
-  const rows = (rowsByFamily.get(family) ?? []).map((row) => ({
-    ...row,
-    cells: visible.map(({ index }) => row.cells[index] ?? {}),
-  }));
+  const { selected, projections, history, periods, period, canCompare, view, visible } =
+    displayedColumns(grid, selectedCase, downsideNote, requestedView, requestedPeriod);
+  const { rowsByFamily, family, rows } = displayedRows(grid, requestedFamily, visible);
   const groups = [...new Set(visible.map(({ group }) => group))];
   return (
     <section className="grid min-w-0 content-start gap-3">
@@ -150,44 +224,17 @@ function StatementView({
             ))}
         </ButtonGroup>
 
-        <label className="grid gap-1 text-small text-text-secondary">
-          Statement columns
-          <select
-            className={field}
-            value={view}
-            onChange={(event) => {
-              setView(event.target.value as View);
-            }}
-          >
-            <option value="selected">
-              {selected.length
-                ? "Selected case"
-                : projections.length
-                  ? "Forecast periods"
-                  : "Recorded periods"}
-            </option>
-            {canCompare && <option value="compare">Compare scenarios</option>}
-            {history.length > 0 && projections.length > 0 && (
-              <option value="history">Historical periods</option>
-            )}
-          </select>
-        </label>
-        {view === "compare" && (
-          <label className="grid gap-1 text-small text-text-secondary">
-            Comparison period
-            <select
-              className={field}
-              value={period}
-              onChange={(event) => {
-                setPeriod(event.target.value);
-              }}
-            >
-              {periods.map((label) => (
-                <option key={label}>{label}</option>
-              ))}
-            </select>
-          </label>
-        )}
+        <StatementPeriodControls
+          view={view}
+          period={period}
+          periods={periods}
+          hasSelected={selected.length > 0}
+          hasProjections={projections.length > 0}
+          hasHistory={history.length > 0}
+          canCompare={canCompare}
+          setView={setView}
+          setPeriod={setPeriod}
+        />
       </div>
       <ForecastTable
         key={family}

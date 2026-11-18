@@ -783,6 +783,59 @@ function useIssuerNotice(issuerId: string, typedName: string) {
   return notice?.issuerId === issuerId ? notice.text : "";
 }
 
+function documentBadge({
+  repeat,
+  reason,
+  description,
+  pendingCopy,
+  copied,
+}: {
+  repeat?: string;
+  reason?: string;
+  description?: string;
+  pendingCopy: DocumentRow["pendingCopy"];
+  copied: DocumentRow["copied"];
+}) {
+  if (repeat) return { color: "error", text: "Repeated content" } as const;
+  if (reason) return { color: "error", text: "Ignored" } as const;
+  if (description) return { color: "success", text: "Inspected" } as const;
+  if (pendingCopy) return { color: "gray", text: "Will be copied" } as const;
+  return { color: "gray", text: copied ? "Copied" : "Selected" } as const;
+}
+
+function IntakeDocumentRow({ row, view }: { row: DocumentRow; view: IntakeView }) {
+  const { name, stored, file, pendingCopy, copied } = row;
+  const repeat = file ? view.repeatedContent.get(file) : undefined;
+  const reason = repeat ?? (stored ? view.ignored.get(stored) : undefined);
+  const description = stored ? view.inspected.get(stored) : undefined;
+  const badge = documentBadge({ repeat, reason, description, pendingCopy, copied });
+  return (
+    <li className="flex min-w-0 items-start gap-3 rounded-xl p-3 text-sm ring-1 ring-secondary ring-inset">
+      <File05 aria-hidden="true" className="mt-1 size-5 shrink-0 text-text-tertiary" />
+      <div className="min-w-0 flex-1">
+        <p className="font-medium wrap-anywhere">{name}</p>
+        <Badge size="sm" color={badge.color}>
+          {badge.text}
+        </Badge>
+        {(reason || description) && (
+          <p className="mt-1 wrap-anywhere text-text-secondary">{reason || description}</p>
+        )}
+      </div>
+      <Button
+        size="sm"
+        color="secondary"
+        aria-label={`Remove ${name}`}
+        isDisabled={view.busy !== undefined}
+        onPress={() => {
+          view.discardDocument(name, file);
+        }}
+      >
+        Remove
+      </Button>
+    </li>
+  );
+}
+
 function DocumentFields({
   view,
   folderInput,
@@ -838,51 +891,9 @@ function DocumentFields({
         </p>
         {view.documentRows.length > 0 ? (
           <FileUpload.List aria-label="Documents added">
-            {view.documentRows.map(({ name, stored, file, pendingCopy, copied }, index) => {
-              const repeat = file ? view.repeatedContent.get(file) : undefined;
-              const reason = repeat ?? (stored ? view.ignored.get(stored) : undefined);
-              const description = stored ? view.inspected.get(stored) : undefined;
-              return (
-                <li
-                  key={`${name}-${String(index)}`}
-                  className="flex min-w-0 items-start gap-3 rounded-xl p-3 text-sm ring-1 ring-secondary ring-inset"
-                >
-                  <File05 aria-hidden="true" className="mt-1 size-5 shrink-0 text-text-tertiary" />
-                  <div className="min-w-0 flex-1">
-                    <p className="font-medium wrap-anywhere">{name}</p>
-                    <Badge size="sm" color={reason ? "error" : description ? "success" : "gray"}>
-                      {repeat
-                        ? "Repeated content"
-                        : reason
-                          ? "Ignored"
-                          : description
-                            ? "Inspected"
-                            : pendingCopy
-                              ? "Will be copied"
-                              : copied
-                                ? "Copied"
-                                : "Selected"}
-                    </Badge>
-                    {(reason || description) && (
-                      <p className="mt-1 wrap-anywhere text-text-secondary">
-                        {reason || description}
-                      </p>
-                    )}
-                  </div>
-                  <Button
-                    size="sm"
-                    color="secondary"
-                    aria-label={`Remove ${name}`}
-                    isDisabled={view.busy !== undefined}
-                    onPress={() => {
-                      view.discardDocument(name, file);
-                    }}
-                  >
-                    Remove
-                  </Button>
-                </li>
-              );
-            })}
+            {view.documentRows.map((row, index) => (
+              <IntakeDocumentRow key={`${row.name}-${String(index)}`} row={row} view={view} />
+            ))}
           </FileUpload.List>
         ) : (
           <p className="text-sm text-text-secondary">No documents yet.</p>
@@ -1572,6 +1583,110 @@ export function StartRun({
   );
 }
 
+function issuerFieldsEdited(
+  identity: Context["identity"],
+  customSlug: string | undefined,
+  prior: PriorInputs | undefined,
+  initial: Context["identity"],
+) {
+  return (
+    (customSlug !== undefined && customSlug !== (prior?.issuer_id ?? initial.issuer_id)) ||
+    identity.issue_classification !==
+      (prior?.context?.identity.issue_classification ?? initial.issue_classification) ||
+    identity.issuer_name !== (prior?.issuer_name ?? initial.issuer_name)
+  );
+}
+
+function useIntakeSession() {
+  const draftRef = useRef<Draft | null>(null);
+  // Snapshot of the last review, made when the analyst leaves it by a stepper or Edit button.
+  // The next review uses it once, only for the same issuer id and pathway. "Carry over from
+  // latest run" and "This is a different issuer" clear it.
+  const reviewedRef = useRef<Reviewed | null>(null);
+  const activeRef = useRef(false);
+  // The control that had focus when a busy state began; busy fieldsets disable it and drop focus.
+  const focusedBeforeRef = useRef<{ node: HTMLElement; text: string } | null>(null);
+  // Set when Submit has started the run, so leaving the page for it is not warned about.
+  const submittedRef = useRef(false);
+  return { draftRef, reviewedRef, activeRef, focusedBeforeRef, submittedRef };
+}
+
+function useIntakeViewState() {
+  const folderInput = useRef<HTMLInputElement>(null);
+  // The step heading takes focus only after the step changes, never on first render.
+  const [moved, setMoved] = useState(false);
+  const [changeNotice, setChangeNotice] = useState("");
+  return { folderInput, moved, setMoved, changeNotice, setChangeNotice };
+}
+
+function useDocumentSelectionState() {
+  // Counts finished inspections, so a repeated result is announced again.
+  const [inspections, setInspections] = useState(0);
+  const [repeatedContent, setRepeatedContent] = useState<ReadonlyMap<File, string>>(new Map());
+  const selectionRevisionRef = useRef(0);
+  const contentQueueRef = useRef<Promise<void>>(Promise.resolve());
+  useEffect(
+    () => () => {
+      selectionRevisionRef.current += 1;
+    },
+    [],
+  );
+
+  return {
+    inspections,
+    setInspections,
+    repeatedContent,
+    setRepeatedContent,
+    selectionRevisionRef,
+    contentQueueRef,
+  };
+}
+
+function useIntakeFocus(
+  fieldError: IntakeView["problem"],
+  busy: IntakeView["busy"],
+  focusedBeforeRef: ReturnType<typeof useIntakeSession>["focusedBeforeRef"],
+) {
+  useEffect(() => {
+    if (fieldError && busy === undefined) focusField(fieldError.field);
+  }, [fieldError, busy]);
+
+  useEffect(() => {
+    if (busy !== undefined) return;
+    const remembered = focusedBeforeRef.current;
+    focusedBeforeRef.current = null;
+    if (
+      remembered?.node.isConnected &&
+      document.activeElement === document.body &&
+      !remembered.node.matches(":disabled") &&
+      accessibleText(remembered.node) === remembered.text
+    )
+      remembered.node.focus();
+  }, [busy, focusedBeforeRef]);
+}
+
+function reviewIssuerNote(
+  review: Review | undefined,
+  settledSlug: ReturnType<typeof useIntakeIdentityState>["settledSlug"],
+) {
+  return review &&
+    settledSlug?.holder &&
+    review.answers.context.identity.issuer_id === settledSlug.id
+    ? `Issuer ID ${settledSlug.id} was used for this run because ${issuerSlug(settledSlug.name)} is filed under the name "${settledSlug.holder}". If that is this issuer under another name, type that name.`
+    : "";
+}
+
+function contextFormValues(
+  forms: ReturnType<typeof useIntakeDocumentsState>["forms"],
+  context: Context,
+) {
+  return {
+    valuation: forms.valuation ?? readValuation(context.valuation),
+    moduleOptions: forms.module_options ?? readModuleOptions(context.module_options),
+    assumptions: forms.assumptions ?? readAssumptions(context.assumptions),
+  };
+}
+
 function IntakeForm({
   template,
   caps,
@@ -1665,31 +1780,16 @@ function IntakeForm({
     submitUncertain,
     setSubmitUncertain,
   } = reviewState;
-  const draftRef = useRef<Draft | null>(null);
-  // Snapshot of the last review, made when the analyst leaves it by a stepper or Edit button.
-  // The next review uses it once, only for the same issuer id and pathway. "Carry over from
-  // latest run" and "This is a different issuer" clear it.
-  const reviewedRef = useRef<Reviewed | null>(null);
-  const active = useRef(false);
-  const folderInput = useRef<HTMLInputElement>(null);
-  // The control that had focus when a busy state began; busy fieldsets disable it and drop focus.
-  const focusedBefore = useRef<{ node: HTMLElement; text: string } | null>(null);
-  // Set when Submit has started the run, so leaving the page for it is not warned about.
-  const submitted = useRef(false);
-  // The step heading takes focus only after the step changes, never on first render.
-  const [moved, setMoved] = useState(false);
-  // Counts finished inspections, so a repeated result is announced again.
-  const [inspections, setInspections] = useState(0);
-  const [changeNotice, setChangeNotice] = useState("");
-  const [repeatedContent, setRepeatedContent] = useState<ReadonlyMap<File, string>>(new Map());
-  const selectionRevision = useRef(0);
-  const contentQueue = useRef<Promise<void>>(Promise.resolve());
-  useEffect(
-    () => () => {
-      selectionRevision.current += 1;
-    },
-    [],
-  );
+  const { draftRef, reviewedRef, activeRef, focusedBeforeRef, submittedRef } = useIntakeSession();
+  const { folderInput, moved, setMoved, changeNotice, setChangeNotice } = useIntakeViewState();
+  const {
+    inspections,
+    setInspections,
+    repeatedContent,
+    setRepeatedContent,
+    selectionRevisionRef,
+    contentQueueRef,
+  } = useDocumentSelectionState();
 
   const { run, identity, issuerId, requested, cap, earnings, canRead, checksComplete, newest } =
     intakeRunDetails({
@@ -1749,9 +1849,9 @@ function IntakeForm({
     action: "review" | "documents" | "copy" | "submit",
     work: () => Promise<void>,
   ) {
-    if (active.current) return;
-    active.current = true;
-    focusedBefore.current =
+    if (activeRef.current) return;
+    activeRef.current = true;
+    focusedBeforeRef.current =
       document.activeElement instanceof HTMLElement
         ? { node: document.activeElement, text: accessibleText(document.activeElement) }
         : null;
@@ -1776,18 +1876,21 @@ function IntakeForm({
       }
       setError(draftErrorText(failure));
     } finally {
-      active.current = false;
+      activeRef.current = false;
       setBusy(undefined);
     }
   }
 
   /** Selection and inspection share one queue, so at most one file buffer is being hashed. */
-  function checkRepeatedDocuments(selected: readonly File[], revision = selectionRevision.current) {
-    const result = contentQueue.current.then(() =>
-      repeatedDocuments(selected, () => revision === selectionRevision.current),
+  function checkRepeatedDocuments(
+    selected: readonly File[],
+    revision = selectionRevisionRef.current,
+  ) {
+    const result = contentQueueRef.current.then(() =>
+      repeatedDocuments(selected, () => revision === selectionRevisionRef.current),
     );
     // Each caller handles its own error; a failed read must not prevent a later selection's check.
-    contentQueue.current = result.then(
+    contentQueueRef.current = result.then(
       () => undefined,
       () => undefined,
     );
@@ -1878,7 +1981,7 @@ function IntakeForm({
       if (file) {
         const remaining = files.filter((item) => item !== file);
         setFiles(remaining);
-        selectionRevision.current += 1;
+        selectionRevisionRef.current += 1;
         setRepeatedContent(await checkRepeatedDocuments(remaining));
       }
       setAttachments((previous) =>
@@ -1891,7 +1994,7 @@ function IntakeForm({
   }
 
   function addFiles(selected: Iterable<File> | null) {
-    if (active.current) return;
+    if (activeRef.current) return;
     const candidates = Array.from(selected ?? []).filter(
       (file) =>
         !fileName(file)
@@ -1914,13 +2017,13 @@ function IntakeForm({
       }
     }
     setFiles((previous) => [...previous, ...added]);
-    const revision = ++selectionRevision.current;
+    const revision = ++selectionRevisionRef.current;
     void checkRepeatedDocuments([...files, ...added], revision).then(
       (repeated) => {
-        if (revision === selectionRevision.current) setRepeatedContent(repeated);
+        if (revision === selectionRevisionRef.current) setRepeatedContent(repeated);
       },
       (failure: unknown) => {
-        if (revision === selectionRevision.current) setError(errorText(failure));
+        if (revision === selectionRevisionRef.current) setError(errorText(failure));
       },
     );
     if (added.length > 0) setReading(undefined);
@@ -1996,13 +2099,12 @@ function IntakeForm({
     return refusal && new FieldProblem("issuer_id", refusal.sentence, undefined, refusal.offer);
   }
 
-  function makeAnswers(result: Reading, details: Record<string, unknown>, id: string): Answers {
+  function checkResearchCutoff() {
     if (run.cutoff && run.cutoff > run.as_of)
       throw new FieldProblem("cutoff", "Research cutoff must be on or before the as-of date.");
-    const available = new Set(result.documents.map(storedName));
-    const chosen = (key: Attachment) => available.has(attachments[key] ?? "");
-    if (legal !== "none" && !chosen("agreement"))
-      throw new FieldProblem("agreement", "Choose the uploaded file that is the agreement.");
+  }
+
+  function checkEarningsPeriods() {
     if (earnings) {
       for (const [key, title] of [
         ["current_period", "Current period"],
@@ -2010,7 +2112,19 @@ function IntakeForm({
       ] as const)
         if (!run[key]) throw new FieldProblem(key, `${title} is required for Earnings Update.`);
     }
-    const advanced = level === "advanced";
+  }
+
+  function makeAnswers(result: Reading, details: Record<string, unknown>, id: string): Answers {
+    checkResearchCutoff();
+    const available = new Set(result.documents.map(storedName));
+    const chosen = (key: Attachment) => available.has(attachments[key] ?? "");
+    if (legal !== "none" && !chosen("agreement"))
+      throw new FieldProblem("agreement", "Choose the uploaded file that is the agreement.");
+    checkEarningsPeriods();
+    const runSettings =
+      level === "advanced"
+        ? { max_turns: Number(turns), model, effort }
+        : { max_turns: 32, model: "gpt", effort: "balanced" };
     return {
       context: {
         ...context,
@@ -2029,10 +2143,10 @@ function IntakeForm({
           : {}),
       },
       modules,
-      max_turns: advanced ? Number(turns) : 32,
+      max_turns: runSettings.max_turns,
       level,
-      model: advanced ? model : "gpt",
-      effort: advanced ? effort : "balanced",
+      model: runSettings.model,
+      effort: runSettings.effort,
       submitted_by: submittedBy.trim(),
       ...(newestOverride ? { newest_document_date: newestOverride } : {}),
     };
@@ -2047,6 +2161,12 @@ function IntakeForm({
     }
     if (!isAnalystName(submittedBy.trim()))
       throw new FieldProblem("submitted_by", ANALYST_NAME_RULE);
+    const details = reviewContextDetails();
+    checkRunRequirements(details);
+    return details;
+  }
+
+  function reviewContextDetails() {
     const details: Record<string, unknown> = {};
     if (forms.valuation) details.valuation = sendableValuation(forms.valuation);
     if (forms.module_options) {
@@ -2076,6 +2196,10 @@ function IntakeForm({
       const listed: unknown[] = Array.isArray(questions) ? questions : [];
       details.research_questions = [...listed, { text: note, focus_module: "" }];
     }
+    return details;
+  }
+
+  function checkRunRequirements(details: Record<string, unknown>) {
     if (run.run_type === "primary") {
       const deals = details.deal_terms ?? context.deal_terms;
       if (!Array.isArray(deals) || deals.length === 0)
@@ -2087,7 +2211,6 @@ function IntakeForm({
     if (level === "advanced" && (!/^\d+$/.test(turns) || Number(turns) < 1 || Number(turns) > 64)) {
       throw new FieldProblem("turns", "Turns per module must be a whole number from 1 to 64.");
     }
-    return details;
   }
 
   async function prepareReview() {
@@ -2124,7 +2247,7 @@ function IntakeForm({
   }
 
   async function makeReview() {
-    if (!canRead || active.current) return;
+    if (!canRead || activeRef.current) return;
     invalidateReview();
     await withDraft("review", prepareReview);
   }
@@ -2138,7 +2261,7 @@ function IntakeForm({
 
   async function advance(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (active.current) return;
+    if (activeRef.current) return;
     switch (step) {
       case "documents":
         if (!canRead) return;
@@ -2184,7 +2307,7 @@ function IntakeForm({
           review.summary.digest,
           review.cap,
         );
-        submitted.current = true;
+        submittedRef.current = true;
         navigate(`/run/${encodeURIComponent(id)}`);
       } catch (failure) {
         if (failure instanceof RequestError && [400, 404].includes(failure.status)) {
@@ -2285,7 +2408,7 @@ function IntakeForm({
     setTurns("32");
     setIgnoredCopies([]);
     setChangeNotice("");
-    selectionRevision.current += 1;
+    selectionRevisionRef.current += 1;
     setRepeatedContent(new Map());
     setNewestOverride(undefined);
     draftRef.current = null;
@@ -2408,9 +2531,7 @@ function IntakeForm({
     analystNote,
     newest,
     forms,
-    valuation: forms.valuation ?? readValuation(context.valuation),
-    moduleOptions: forms.module_options ?? readModuleOptions(context.module_options),
-    assumptions: forms.assumptions ?? readAssumptions(context.assumptions),
+    ...contextFormValues(forms, context),
     changeAssumptions: (next) => {
       clearProblem("assumptions");
       setForms((previous) => ({ ...previous, assumptions: next }));
@@ -2477,10 +2598,7 @@ function IntakeForm({
     },
     toggleModule,
     problem: fieldError,
-    idNote:
-      review && settledSlug?.holder && review.answers.context.identity.issuer_id === settledSlug.id
-        ? `Issuer ID ${settledSlug.id} was used for this run because ${issuerSlug(settledSlug.name)} is filed under the name "${settledSlug.holder}". If that is this issuer under another name, type that name.`
-        : "",
+    idNote: reviewIssuerNote(review, settledSlug),
     useIssuerId: (id) => {
       clearProblem("issuer_id");
       setCustomSlug(id);
@@ -2490,40 +2608,21 @@ function IntakeForm({
     },
   };
 
-  useEffect(() => {
-    if (fieldError && busy === undefined) focusField(fieldError.field);
-  }, [fieldError, busy]);
-
-  useEffect(() => {
-    if (busy !== undefined) return;
-    const remembered = focusedBefore.current;
-    focusedBefore.current = null;
-    if (
-      remembered?.node.isConnected &&
-      document.activeElement === document.body &&
-      !remembered.node.matches(":disabled") &&
-      accessibleText(remembered.node) === remembered.text
-    )
-      remembered.node.focus();
-  }, [busy]);
+  useIntakeFocus(fieldError, busy, focusedBeforeRef);
 
   // Documents carried from an earlier run count as much as chosen ones. A legal or module choice
   // is made on More context, which opens only once a purpose has been chosen.
-  const holdsWork =
-    documentRows.some((row) => !row.pendingCopy) ||
-    ignoredCopies.length > 0 ||
-    purposeChosen ||
-    review !== undefined ||
-    submittedBy.trim() !== "" ||
-    analystNote.trim() !== "" ||
-    run.as_of !== "" ||
-    (customSlug !== undefined &&
-      customSlug !== (copy?.prior.issuer_id ?? template.identity.issuer_id)) ||
-    identity.issue_classification !==
-      (copy?.prior.context?.identity.issue_classification ??
-        template.identity.issue_classification) ||
-    identity.issuer_name !== (copy?.prior.issuer_name ?? template.identity.issuer_name);
-  useLeaveWarning(holdsWork, submitted);
+  const holdsWork = [
+    documentRows.some((row) => !row.pendingCopy),
+    ignoredCopies.length > 0,
+    purposeChosen,
+    review !== undefined,
+    submittedBy.trim() !== "",
+    analystNote.trim() !== "",
+    run.as_of !== "",
+    issuerFieldsEdited(identity, customSlug, copy?.prior, template.identity),
+  ].some(Boolean);
+  useLeaveWarning(holdsWork, submittedRef);
   useStepHistory(review ? "review" : step, showPlace);
 
   return (
@@ -2709,6 +2808,104 @@ function IntakePanels(props: IntakePanelsProps) {
   );
 }
 
+function ReviewApproval({
+  blocker,
+  approved,
+  disabled,
+  onApprove,
+}: {
+  blocker: string;
+  approved: boolean;
+  disabled: boolean;
+  onApprove: (approved: boolean) => void;
+}) {
+  return (
+    <>
+      {blocker && (
+        <p id="run-submit-blocker" className="text-sm text-text-secondary">
+          {blocker}
+        </p>
+      )}
+      <label className="flex items-start gap-2 text-sm font-semibold">
+        <input
+          type="checkbox"
+          aria-describedby={blocker ? "run-submit-blocker" : undefined}
+          checked={approved}
+          disabled={disabled}
+          onChange={(event) => {
+            onApprove(event.target.checked);
+          }}
+        />
+        Approve: I have read this summary and want this run started
+      </label>
+    </>
+  );
+}
+
+function ReviewNotes({ synthetic, idNote }: { synthetic: boolean; idNote: string }) {
+  return (
+    <>
+      {synthetic && <p className="text-sm text-text-secondary">{SYNTHETIC_LIMITS}</p>}
+      {idNote && <p className="text-sm text-text-secondary">{idNote}</p>}
+    </>
+  );
+}
+
+function ReviewSubmit({
+  synthetic,
+  checksComplete,
+  approved,
+  busy,
+  capText,
+  capAvailable,
+  ready,
+  error,
+  onSubmit,
+}: Pick<
+  Parameters<typeof ReviewConfirmation>[0],
+  | "synthetic"
+  | "checksComplete"
+  | "approved"
+  | "busy"
+  | "capText"
+  | "capAvailable"
+  | "ready"
+  | "error"
+  | "onSubmit"
+>) {
+  const submitLabel = submitLabelFor({ busy, synthetic, capText });
+  const confirmation = confirmationFor(synthetic, capText);
+  const submitDisabled =
+    !checksComplete || !approved || busy !== undefined || (!synthetic && !capAvailable);
+  return (
+    <>
+      <div className="grid gap-1 border-t border-border-hairline pt-4">
+        <h3 className="text-md font-semibold text-text-primary">
+          {synthetic ? "Submit starts a synthetic test" : "Submit starts a paid run"}
+        </h3>
+        <p id="run-submit-cost" className="text-sm text-text-secondary">
+          <SubmissionCost synthetic={synthetic} capText={capText} />
+        </p>
+      </div>
+      <p className="text-sm text-text-secondary min-[1041px]:hidden">{ready}</p>
+      {error && <ErrorNotice>{error}</ErrorNotice>}
+      <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+        <span className="text-sm text-text-tertiary">
+          Step {STEP_TOTAL} of {STEP_TOTAL}
+        </span>
+        <SubmitConfirmation
+          className="w-full sm:w-auto"
+          label={submitLabel}
+          confirm={confirmation}
+          isDisabled={submitDisabled}
+          describedBy="run-submit-cost"
+          onConfirm={onSubmit}
+        />
+      </div>
+    </>
+  );
+}
+
 function ReviewConfirmation({
   review,
   accepted,
@@ -2746,10 +2943,7 @@ function ReviewConfirmation({
   onModules: (modules: string[]) => void;
   onSubmit: () => void;
 }) {
-  const submitLabel = submitLabelFor({ busy, synthetic, capText });
-  const confirmation = confirmationFor(synthetic, capText);
-  const submitDisabled =
-    !checksComplete || !approved || busy !== undefined || (!synthetic && !capAvailable);
+  const locked = busy !== undefined || submitUncertain;
   const { groups } = groupLimits(review.summary.items);
   const undecided = groups.filter((group) => !decided(group, accepted)).length;
   const blocker = submitBlocker(undecided, approved);
@@ -2766,54 +2960,30 @@ function ReviewConfirmation({
       <ReviewSheet
         review={review}
         accepted={accepted}
-        disabled={busy !== undefined || submitUncertain}
+        disabled={locked}
         onEdit={onEdit}
         onModules={onModules}
         onAccept={onAccept}
         synthetic={synthetic}
       />
-      {synthetic && <p className="text-sm text-text-secondary">{SYNTHETIC_LIMITS}</p>}
-      {idNote && <p className="text-sm text-text-secondary">{idNote}</p>}
-      {blocker && (
-        <p id="run-submit-blocker" className="text-sm text-text-secondary">
-          {blocker}
-        </p>
-      )}
-      <label className="flex items-start gap-2 text-sm font-semibold">
-        <input
-          type="checkbox"
-          aria-describedby={blocker ? "run-submit-blocker" : undefined}
-          checked={approved}
-          disabled={!checksComplete || busy !== undefined || submitUncertain}
-          onChange={(event) => {
-            onApprove(event.target.checked);
-          }}
-        />
-        Approve: I have read this summary and want this run started
-      </label>
-      <div className="grid gap-1 border-t border-border-hairline pt-4">
-        <h3 className="text-md font-semibold text-text-primary">
-          {synthetic ? "Submit starts a synthetic test" : "Submit starts a paid run"}
-        </h3>
-        <p id="run-submit-cost" className="text-sm text-text-secondary">
-          <SubmissionCost synthetic={synthetic} capText={capText} />
-        </p>
-      </div>
-      <p className="text-sm text-text-secondary min-[1041px]:hidden">{ready}</p>
-      {error && <ErrorNotice>{error}</ErrorNotice>}
-      <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
-        <span className="text-sm text-text-tertiary">
-          Step {STEP_TOTAL} of {STEP_TOTAL}
-        </span>
-        <SubmitConfirmation
-          className="w-full sm:w-auto"
-          label={submitLabel}
-          confirm={confirmation}
-          isDisabled={submitDisabled}
-          describedBy="run-submit-cost"
-          onConfirm={onSubmit}
-        />
-      </div>
+      <ReviewNotes synthetic={synthetic} idNote={idNote} />
+      <ReviewApproval
+        blocker={blocker}
+        approved={approved}
+        disabled={!checksComplete || locked}
+        onApprove={onApprove}
+      />
+      <ReviewSubmit
+        synthetic={synthetic}
+        checksComplete={checksComplete}
+        approved={approved}
+        busy={busy}
+        error={error}
+        capText={capText}
+        capAvailable={capAvailable}
+        ready={ready}
+        onSubmit={onSubmit}
+      />
     </div>
   );
 }

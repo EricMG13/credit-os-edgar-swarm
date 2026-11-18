@@ -1,4 +1,4 @@
-import { type ReactNode } from "react";
+import { type ComponentProps, type ReactNode } from "react";
 import { ForecastTable } from "./ForecastTable";
 import { PathChart } from "@/components/chart/PathChart";
 import { ChartTable } from "@/components/chart/ChartTable";
@@ -379,6 +379,45 @@ export function ForecastScope({
   );
 }
 
+function CashProxyPlot({
+  periods,
+  series,
+  units,
+  source,
+  sourceFor,
+  selectedCase,
+  table,
+  unified,
+}: {
+  periods: string[];
+  series: ReturnType<typeof cashProxyCases>["series"];
+  units: string;
+  source?: ReactNode;
+  sourceFor?: ForecastSource;
+  selectedCase?: string;
+  table: ComponentProps<typeof PathChart>["table"];
+  unified: boolean;
+}) {
+  return (
+    <PathChart
+      title="Cash proxy by scenario"
+      actions={
+        sourceFor?.("Cash proxy by scenario", { row: CASH_PROXY, case: "", periods }) ?? source
+      }
+      subtitle={units}
+      periods={periods}
+      series={series}
+      emphasis={series.some((item) => item.name === selectedCase) ? selectedCase : undefined}
+      yTicks={forecastTicks(
+        series.flatMap((item) => item.values),
+        true,
+      )}
+      table={table}
+      tableCaption={unified ? "Scenario comparison" : undefined}
+    />
+  );
+}
+
 export function CashProxy({
   model,
   note,
@@ -416,25 +455,19 @@ export function CashProxy({
     <ChartTable caption="Scenario comparison" head={head} rows={rows} endHeading={endHeading} />
   );
   const plot = periods.length > 1 && series.length > 0 && (
-    <PathChart
-      title="Cash proxy by scenario"
-      actions={
-        sourceFor?.("Cash proxy by scenario", { row: CASH_PROXY, case: "", periods }) ?? source
-      }
-      subtitle={word(raw.units)}
+    <CashProxyPlot
       periods={periods}
       series={series}
-      emphasis={series.some((item) => item.name === selectedCase) ? selectedCase : undefined}
-      yTicks={forecastTicks(
-        series.flatMap((item) => item.values),
-        true,
-      )}
+      units={word(raw.units)}
+      source={source}
+      sourceFor={sourceFor}
+      selectedCase={selectedCase}
       table={
         unified
           ? { head, rows, endHeading }
           : { head, rows: series.map(({ name, cells }) => ({ label: name, cells })) }
       }
-      tableCaption={unified ? "Scenario comparison" : undefined}
+      unified={unified}
     />
   );
   const precision = (

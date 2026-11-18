@@ -197,6 +197,96 @@ function confidenceStatement(entry: OutputEntry) {
     : "Confidence inputs";
 }
 
+type TraceDetails = ReturnType<typeof traceDetails>;
+type TraceChips = TraceDetails["chips"];
+
+function isConfidencePlaceholder(chip: TraceChips[number]) {
+  const { label, source, reason, file, sha256, quote, excerpt, href, pageHref } = chip;
+  return (
+    label === "no page" &&
+    (source === null || source === "no page") &&
+    reason === "the row cites no page or register" &&
+    ![file, sha256, quote, excerpt, href, pageHref].some(Boolean)
+  );
+}
+
+function traceNode(label: string, value: string | null, note: string | null = null): TreeNode {
+  return { label, value, note, children: [] };
+}
+
+const citationNodes = (items: TraceChips) =>
+  items.flatMap((chip) => {
+    const source = chip.source ?? chip.label;
+    return source ? [traceNode(source, "", sourceCitationNote(chip))] : [];
+  });
+
+function traceDerivation({
+  entry,
+  section,
+  block,
+  line,
+  details,
+  chips,
+  confidence,
+}: {
+  entry: OutputEntry;
+  section: Section;
+  block: Block;
+  line: number;
+  details: TraceDetails;
+  chips: TraceChips;
+  confidence: boolean;
+}) {
+  const { basis, chipGroups } = details;
+  return {
+    ...traceNode("Evidence retained with this item", ""),
+    children: [
+      ...(confidence ? confidenceNodes(entry, block) : []),
+      ...(basis ? [traceNode("Basis", plainModuleNames(basis))] : []),
+      ...calculationNodes(entry, basis ?? "", line),
+      ...traceCitations(chipGroups, chips, confidence),
+      ...basisFallback(section.heading, confidence, Boolean(basis), chips.length),
+    ],
+  };
+}
+
+function traceCitations(
+  groups: TraceDetails["chipGroups"],
+  chips: TraceChips,
+  confidence: boolean,
+) {
+  if (confidence || !groups.length) return citationNodes(chips);
+  return groups.map((group) => ({
+    ...traceNode(group.label, ""),
+    children: citationNodes(group.chips),
+  }));
+}
+
+function basisFallback(heading: string, confidence: boolean, hasBasis: boolean, chipCount: number) {
+  if (confidence || hasBasis || chipCount) return [];
+  // Recorded inputs are not a gap: only a missing basis carries no value.
+  return [
+    heading === FORECAST_INPUTS
+      ? traceNode("Recorded forecast inputs", "")
+      : traceNode("Basis was not recorded for this item", null),
+  ];
+}
+
+function confidenceQualification(section: Section) {
+  const paragraphs = section.blocks.flatMap((item) =>
+    item.type === "text" && !item.text.startsWith("```")
+      ? [
+          item.text
+            .split("\n")
+            .filter((text) => !text.startsWith("|"))
+            .join("\n")
+            .trim(),
+        ]
+      : [],
+  );
+  return paragraphs.filter(Boolean).join("\n\n") || null;
+}
+
 function buildTrace(
   snapshot: Snapshot,
   entry: OutputEntry,
@@ -206,36 +296,13 @@ function buildTrace(
   target: string,
 ): Trace {
   const details = traceDetails(snapshot, entry, section, block, line);
-  const { statement, basis, chipGroups } = details;
+  const { statement } = details;
   const confidence = section.heading === CONFIDENCE_INPUTS;
   // These generated placeholders carry no citation. Keep every real citation or qualification.
-  const chips = details.chips.filter(
-    (chip) =>
-      !(
-        confidence &&
-        chip.label === "no page" &&
-        (chip.source === null || chip.source === "no page") &&
-        chip.reason === "the row cites no page or register" &&
-        !chip.file &&
-        !chip.sha256 &&
-        !chip.quote &&
-        !chip.excerpt &&
-        !chip.href &&
-        !chip.pageHref
-      ),
-  );
-  const node = (label: string, value: string | null, note: string | null = null): TreeNode => ({
-    label,
-    value,
-    note,
-    children: [],
-  });
+  const chips = confidence
+    ? details.chips.filter((chip) => !isConfidencePlaceholder(chip))
+    : details.chips;
   const excerpt = chips.find((chip) => chip.excerpt);
-  const citationNodes = (items: typeof chips) =>
-    items.flatMap((chip) => {
-      const source = chip.source ?? chip.label;
-      return source ? [node(source, "", sourceCitationNote(chip))] : [];
-    });
   return {
     title: `Sources for ${section.heading}`,
     heading: section.heading,
@@ -245,50 +312,14 @@ function buildTrace(
       : section.heading === FORECAST_INPUTS
         ? "The model calculation uses the inputs recorded in this handoff."
         : plainModuleNames(statement.replaceAll("**", "").replaceAll("`", "")),
-    derivation: {
-      ...node("Evidence retained with this item", ""),
-      children: [
-        ...(confidence ? confidenceNodes(entry, block) : []),
-        ...(basis ? [node("Basis", plainModuleNames(basis))] : []),
-        ...calculationNodes(entry, basis ?? "", line),
-        ...(chipGroups.length && !confidence
-          ? chipGroups.map((group) => ({
-              ...node(group.label, ""),
-              children: citationNodes(group.chips),
-            }))
-          : citationNodes(chips)),
-        ...(!confidence && !basis && !chips.length
-          ? [
-              // Recorded inputs are not a gap: only a missing basis carries no value.
-              section.heading === FORECAST_INPUTS
-                ? node("Recorded forecast inputs", "")
-                : node("Basis was not recorded for this item", null),
-            ]
-          : []),
-      ],
-    },
+    derivation: traceDerivation({ entry, section, block, line, details, chips, confidence }),
     excerpt: excerpt
       ? {
           quote: excerpt.excerpt ?? "",
           source: excerpt.source ?? excerpt.label ?? "Source name unavailable",
         }
       : null,
-    qualification: confidence
-      ? section.blocks
-          .flatMap((item) =>
-            item.type === "text" && !item.text.startsWith("```")
-              ? [
-                  item.text
-                    .split("\n")
-                    .filter((text) => !text.startsWith("|"))
-                    .join("\n")
-                    .trim(),
-                ]
-              : [],
-          )
-          .filter(Boolean)
-          .join("\n\n") || null
-      : null,
+    qualification: confidence ? confidenceQualification(section) : null,
     evidenceItem: target,
     sourceLinks: [
       ...new Map(
@@ -679,12 +710,12 @@ function FindingsSummary({
   summaryTrace,
   marker,
 }: {
-  summary: NonNullable<OutputEntry["output"]["summary"]>;
+  summary: Summary;
   entry: OutputEntry;
   summaryTrace: Trace | null | undefined | false;
   marker?: ReactNode;
 }) {
-  if (containsReference(summary.bottomLine)) return null;
+  if (!summary || containsReference(summary.bottomLine)) return null;
   return (
     <BottomLine
       level="h3"
@@ -701,6 +732,35 @@ function FindingsSummary({
 
 const MISSING_PASSAGE = "Not established for this run. The module's handoff has no such passage.";
 
+type FindingGroup = string | [Section, Section?];
+
+function passageGroups(ordered: Map<string, Section>, gaps: string[], overview: boolean) {
+  const groups: FindingGroup[] = [];
+  const keyFindings = overview ? ordered.get("Key findings") : undefined;
+  const contrary = keyFindings && ordered.get("Contrary evidence and what would change the view");
+  for (const name of PASSAGES) {
+    const section = ordered.get(name);
+    if (!section) {
+      if (gaps.includes(name)) groups.push(name);
+      continue;
+    }
+    if (section !== contrary) groups.push(groupPassage(section, keyFindings, contrary));
+  }
+  const limitations = groups.findIndex(
+    (group) =>
+      group === "Limitations" || (typeof group !== "string" && group[0].heading === "Limitations"),
+  );
+  return { groups, figuresAt: limitations === -1 ? groups.length : limitations };
+}
+
+function groupPassage(
+  section: Section,
+  keyFindings?: Section,
+  contrary?: Section,
+): [Section, Section?] {
+  return section === keyFindings && contrary ? [section, contrary] : [section];
+}
+
 function findingsLayout(
   entry: OutputEntry,
   figureTableLines: readonly number[] | undefined,
@@ -709,44 +769,30 @@ function findingsLayout(
 ) {
   const slots = passages(entry.sections);
   const slotLines = new Set(slots.map((section) => section.line));
-  // Overview draws the run's limitations once, across modules (RunLimitations), not the lead's.
+  // Overview draws the run's limitations once, across modules, excluding the lead's.
   const found = findingBlocks(entry.sections, entry, figureTableLines, chartsDrawn).filter(
     (section) => !overview || (slotLines.has(section.line) && section.heading !== "Limitations"),
   );
-  const slotOf = (name: string) =>
-    found.find((section) => section.heading === name && slotLines.has(section.line));
-  const sections = [
-    ...PASSAGES.flatMap((name) => slotOf(name) ?? []),
-    ...found.filter((section) => !PASSAGES.some((name) => slotOf(name) === section)),
-  ];
-  const keyFindings = overview ? slotOf("Key findings") : undefined;
-  const contrary = keyFindings
-    ? slotOf("Contrary evidence and what would change the view")
-    : undefined;
-  // A passage whose content is drawn as a chart is present although it draws no text.
+  const ordered = new Map<string, Section>();
+  for (const name of PASSAGES) {
+    const section = found.find((item) => item.heading === name && slotLines.has(item.line));
+    if (section) ordered.set(name, section);
+  }
+  const present = new Set(ordered.values());
+  const extra = found.filter((section) => !present.has(section));
   const drawings = drawingLines(entry, figureTableLines);
   const charted = slots
     .filter((section) => section.blocks.some((block) => drawings.has(block.line)))
     .map((section) => section.heading);
-  const gaps = overview
-    ? []
-    : missingPassages(entry, [...PASSAGES.filter((name) => slotOf(name)), ...charted]);
-  const slot = (section: Section): [Section, Section?] =>
-    section === keyFindings && contrary ? [section, contrary] : [section];
-  const groups: (string | [Section, Section?])[] = [];
-  // The figures follow the prose passages and come before Limitations; a module with no
-  // Limitations passage or gap places them after its last passage.
-  let figuresAt: number | undefined;
-  for (const name of PASSAGES) {
-    const section = slotOf(name);
-    if (name === "Limitations" && (section || gaps.includes(name))) figuresAt = groups.length;
-    if (section && section !== contrary) groups.push(slot(section));
-    else if (!section && gaps.includes(name)) groups.push(name);
-  }
-  figuresAt ??= groups.length;
-  for (const section of sections)
-    if (!PASSAGES.some((name) => slotOf(name) === section)) groups.push(slot(section));
-  return { sections, groups, figuresAt, drawnBottomLine: slotOf("Bottom line") !== undefined };
+  const gaps = overview ? [] : missingPassages(entry, [...ordered.keys(), ...charted]);
+  const { groups, figuresAt } = passageGroups(ordered, gaps, overview);
+  const extraGroups: FindingGroup[] = extra.map((section) => [section]);
+  return {
+    sections: [...present, ...extra],
+    groups: [...groups, ...extraGroups],
+    figuresAt,
+    drawnBottomLine: ordered.has("Bottom line"),
+  };
 }
 
 function followingParagraphs(section: Section, entry: OutputEntry, folder: string) {
@@ -794,6 +840,301 @@ function EmptyFindings({
   );
 }
 
+type Summary = OutputEntry["output"]["summary"] | false;
+
+function confidencePresentation({
+  snapshot,
+  entry,
+  sections,
+  summary,
+  traces,
+  moduleConfidence,
+  afterBottomLine,
+}: {
+  snapshot: Snapshot;
+  entry: OutputEntry;
+  sections: Section[];
+  summary: Summary;
+  traces: Record<string, Trace>;
+  moduleConfidence?: ReactNode;
+  afterBottomLine?: ReactNode;
+}) {
+  if (moduleConfidence === undefined)
+    return { marker: undefined, trailingFigures: afterBottomLine };
+  const score = entry.output.confidence;
+  if (!score || "missing" in score || !showsBottomLine(sections, summary))
+    return {
+      marker: null,
+      trailingFigures: (
+        <>
+          {moduleConfidence}
+          {afterBottomLine}
+        </>
+      ),
+    };
+  const scoreTrace = traceForConfidence(snapshot, entry);
+  if (scoreTrace) traces[CONFIDENCE_MARK_TRACE] = scoreTrace;
+  return {
+    marker: <ConfidenceMark {...score} trace={scoreTrace ? CONFIDENCE_MARK_TRACE : undefined} />,
+    trailingFigures: afterBottomLine,
+  };
+}
+
+function showsBottomLine(sections: Section[], summary: Summary) {
+  return (
+    sections.some(
+      (section) => section.heading === "Bottom line" && section.blocks[0]?.type === "text",
+    ) || Boolean(summary && !containsReference(summary.bottomLine))
+  );
+}
+
+function renderFindingGroups(
+  groups: FindingGroup[],
+  drawSection: (section: Section) => ReactNode,
+  summary: Summary,
+  beforeLimitations: ReactNode,
+  figuresAt: number,
+) {
+  const drawn = groups.map((group) => {
+    if (typeof group === "string")
+      return group === "Bottom line" && summary && !containsReference(summary.bottomLine) ? null : (
+        <section key={group} className={card}>
+          <h2 className={heading}>{group}</h2>
+          <GapPanel reason={MISSING_PASSAGE} />
+        </section>
+      );
+    const [section, contrary] = group;
+    if (!contrary) return drawSection(section);
+    return (
+      <div key={section.line} className="grid min-w-0 gap-4 lg:grid-cols-2">
+        {drawSection(section)}
+        {drawSection(contrary)}
+      </div>
+    );
+  });
+  return beforeLimitations
+    ? [
+        ...drawn.slice(0, figuresAt),
+        <Fragment key="before-limitations">{beforeLimitations}</Fragment>,
+        ...drawn.slice(figuresAt),
+      ]
+    : drawn;
+}
+
+type FindingSectionProps = {
+  section: Section;
+  run: PublishedRun;
+  entry: OutputEntry;
+  overview: boolean;
+  overviewLabel?: string;
+  marker?: ReactNode;
+  judgement?: string;
+  trailingFigures?: ReactNode;
+};
+
+function BottomLinePassage({
+  section,
+  run,
+  entry,
+  overview,
+  overviewLabel,
+  marker,
+  judgement,
+  trailingFigures,
+  first,
+}: FindingSectionProps & { first: Extract<Block, { type: "text" }> }) {
+  const body = readParagraph(first.text).body;
+  const referenced = containsReference(body);
+  const prose = referenced ? "" : readerText(body.replaceAll("**", "").replaceAll("`", ""));
+  return (
+    <div
+      className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-3"
+      key={section.line}
+      id={`finding-${String(section.line)}`}
+      tabIndex={-1}
+    >
+      <BottomLine
+        level="h2"
+        marker={marker}
+        lead={
+          referenced ? (
+            <Button
+              href={evidencePath(run.folder, entry, first.line)}
+              color="link-gray"
+              size="sm"
+              iconTrailing={ArrowRight}
+              className="text-white hover:text-white"
+            >
+              Read this passage in Evidence
+            </Button>
+          ) : undefined
+        }
+        text={{
+          label: findingLabel(section, overviewLabel),
+          lead: referenced ? "" : (judgement ?? prose),
+          rest: judgement ? prose : "",
+          trace: traceKey(entry, first.line),
+        }}
+      />
+      {trailingFigures}
+      <BottomLineContinuation
+        section={section}
+        entry={entry}
+        folder={run.folder}
+        overview={overview}
+        overviewLabel={overviewLabel}
+      />
+    </div>
+  );
+}
+
+function BottomLineContinuation({
+  section,
+  entry,
+  folder,
+  overview,
+  overviewLabel,
+}: {
+  section: Section;
+  entry: OutputEntry;
+  folder: string;
+  overview: boolean;
+  overviewLabel?: string;
+}) {
+  if (!overview) {
+    return section.blocks.slice(1).some((block) => block.type === "text") ? (
+      <div className={card}>{followingParagraphs(section, entry, folder)}</div>
+    ) : null;
+  }
+  if (section.blocks.length < 2) return null;
+  return (
+    <details className="rounded-lg border border-border-hairline bg-surface-card px-5 py-3">
+      <summary className="cursor-pointer font-medium">
+        {overviewLabel ?? (entry.output.module === "CP-1B" ? "Earnings view" : "Credit view")},
+        continued
+      </summary>
+      <div className="mt-3 grid gap-3">{followingParagraphs(section, entry, folder)}</div>
+    </details>
+  );
+}
+
+function PassageBlock({
+  block,
+  section,
+  overview,
+  entry,
+  folder,
+}: {
+  block: Block;
+  section: Section;
+  overview: boolean;
+  entry: OutputEntry;
+  folder: string;
+}) {
+  const key = (line: number) => traceKey(entry, line);
+  if (block.type === "text")
+    return (
+      <FindingParagraph
+        block={block}
+        trace={key(block.line)}
+        href={evidencePath(folder, entry, block.line)}
+      />
+    );
+  if (block.type !== "table") return null;
+  return (
+    <div className="min-w-0">
+      {(!overview && typedModuleTable(entry.output.module, section.heading, block, key)) || (
+        <PublishedTable
+          table={block}
+          heading={plainText(drawingTitle(section.heading))}
+          traceAt={key}
+          rowHref={(line) => evidencePath(folder, entry, line)}
+        />
+      )}
+    </div>
+  );
+}
+
+function typedStandaloneTable(
+  { section, entry, overview }: FindingSectionProps,
+  first: Block | undefined,
+) {
+  if (overview || section.blocks.length !== 1 || first?.type !== "table") return null;
+  return typedModuleTable(entry.output.module, section.heading, first, (line) =>
+    traceKey(entry, line),
+  );
+}
+
+function FindingSection(props: FindingSectionProps) {
+  const { section, run, entry, overview, overviewLabel, trailingFigures } = props;
+  const first = section.blocks[0];
+  if (section.heading === "Bottom line" && first?.type === "text")
+    return <BottomLinePassage {...props} first={first} />;
+  const typed = typedStandaloneTable(props, first);
+  if (typed) {
+    return (
+      <div className={card} id={`finding-${String(section.line)}`} tabIndex={-1}>
+        {typed}
+      </div>
+    );
+  }
+  return (
+    <Fragment key={section.line}>
+      <section className={card} id={`finding-${String(section.line)}`} tabIndex={-1}>
+        <h2 className={`${heading} first-letter:uppercase`}>
+          {richParts(drawingTitle(findingLabel(section, overviewLabel)), readerText)}
+        </h2>
+        {section.blocks.map((block) => (
+          <PassageBlock
+            key={block.line}
+            block={block}
+            section={section}
+            overview={overview}
+            entry={entry}
+            folder={run.folder}
+          />
+        ))}
+      </section>
+      {section.heading === "Bottom line" && trailingFigures}
+    </Fragment>
+  );
+}
+
+function findingsEvidence(
+  snapshot: Snapshot,
+  entry: OutputEntry,
+  entryIndex: number,
+  sections: Section[],
+  drawnBottomLine: boolean,
+) {
+  const key = (line: number) => traceKey(entry, line);
+  const traces = findingsTraces(snapshot, entry, sections);
+  const summary = !drawnBottomLine && entry.output.summary;
+  const summaryTrace = summary && traceForLine(snapshot, entry, entryIndex, summary.line);
+  if (summaryTrace) traces[key(summary.line)] = summaryTrace;
+  return { traces, summary, summaryTrace };
+}
+
+function FindingsTraceDrawer({
+  trace,
+  folder,
+  onClose,
+}: {
+  trace: Trace | null | undefined;
+  folder: string;
+  onClose: () => void;
+}) {
+  if (!trace) return null;
+  return (
+    <TraceDrawer
+      trace={trace}
+      evidenceHref={evidenceHref(folder, trace.evidenceItem)}
+      isOpen
+      onClose={onClose}
+    />
+  );
+}
+
 export function ReportFindings({
   snapshot,
   run,
@@ -830,31 +1171,22 @@ export function ReportFindings({
     overview,
     chartsDrawn,
   );
-  const key = (line: number) => traceKey(entry, line);
-  const traces = findingsTraces(snapshot, entry, sections);
-  const hasBottomLine = drawnBottomLine;
-  const summary = !hasBottomLine && entry.output.summary;
-  const summaryTrace = summary && traceForLine(snapshot, entry, entryIndex, summary.line);
-  if (summaryTrace) traces[key(summary.line)] = summaryTrace;
-  const score = moduleConfidence === undefined ? undefined : entry.output.confidence;
-  const showsBottomLine =
-    sections.some(
-      (section) => section.heading === "Bottom line" && section.blocks[0]?.type === "text",
-    ) || Boolean(summary && !containsReference(summary.bottomLine));
-  const scored = showsBottomLine && score && !("missing" in score) ? score : null;
-  const scoreTrace = scored && traceForConfidence(snapshot, entry);
-  if (scoreTrace) traces[CONFIDENCE_MARK_TRACE] = scoreTrace;
-  const marker = scored ? (
-    <ConfidenceMark {...scored} trace={scoreTrace ? CONFIDENCE_MARK_TRACE : undefined} />
-  ) : moduleConfidence === undefined ? undefined : null;
-  const trailingFigures = scored ? (
-    afterBottomLine
-  ) : (
-    <>
-      {moduleConfidence}
-      {afterBottomLine}
-    </>
+  const { traces, summary, summaryTrace } = findingsEvidence(
+    snapshot,
+    entry,
+    entryIndex,
+    sections,
+    drawnBottomLine,
   );
+  const { marker, trailingFigures } = confidencePresentation({
+    snapshot,
+    entry,
+    sections,
+    summary,
+    traces,
+    moduleConfidence,
+    afterBottomLine,
+  });
   const active = activeTrace === null ? null : traces[activeTrace];
   const records = overview ? [] : recordSections(entry.sections, entry);
   if (!sections.length && !summary)
@@ -867,161 +1199,40 @@ export function ReportFindings({
         beforeLimitations={beforeLimitations}
       />
     );
-  function drawSection(section: Section) {
-    const first = section.blocks[0];
-    if (section.heading === "Bottom line" && first?.type === "text") {
-      const referenced = containsReference(readParagraph(first.text).body);
-      return (
-        <div
-          className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-3"
-          key={section.line}
-          id={`finding-${String(section.line)}`}
-          tabIndex={-1}
-        >
-          <BottomLine
-            level="h2"
-            marker={marker}
-            lead={
-              referenced ? (
-                <Button
-                  href={evidencePath(run.folder, entry, first.line)}
-                  color="link-gray"
-                  size="sm"
-                  iconTrailing={ArrowRight}
-                  className="text-white hover:text-white"
-                >
-                  Read this passage in Evidence
-                </Button>
-              ) : undefined
-            }
-            text={{
-              label: findingLabel(section, overviewLabel),
-              lead: referenced
-                ? ""
-                : (judgement ??
-                  readerText(
-                    readParagraph(first.text).body.replaceAll("**", "").replaceAll("`", ""),
-                  )),
-              rest:
-                judgement && !referenced
-                  ? readerText(
-                      readParagraph(first.text).body.replaceAll("**", "").replaceAll("`", ""),
-                    )
-                  : "",
-              trace: key(first.line),
-            }}
-          />
-          {trailingFigures}
-          {section.blocks.length > 1 && overview && (
-            <details className="rounded-lg border border-border-hairline bg-surface-card px-5 py-3">
-              <summary className="cursor-pointer font-medium">
-                {overviewLabel ??
-                  (entry.output.module === "CP-1B" ? "Earnings view" : "Credit view")}
-                , continued
-              </summary>
-              <div className="mt-3 grid gap-3">
-                {followingParagraphs(section, entry, run.folder)}
-              </div>
-            </details>
-          )}
-          {!overview && section.blocks.slice(1).some((block) => block.type === "text") && (
-            <div className={card}>{followingParagraphs(section, entry, run.folder)}</div>
-          )}
-        </div>
-      );
-    }
-    if (!overview && section.blocks.length === 1 && first?.type === "table") {
-      const typed = typedModuleTable(entry.output.module, section.heading, first, key);
-      if (typed) {
-        return (
-          <div
-            key={section.line}
-            className={card}
-            id={`finding-${String(section.line)}`}
-            tabIndex={-1}
-          >
-            {typed}
-          </div>
-        );
-      }
-    }
-    return (
-      <Fragment key={section.line}>
-        <section className={card} id={`finding-${String(section.line)}`} tabIndex={-1}>
-          <h2 className={`${heading} first-letter:uppercase`}>
-            {richParts(drawingTitle(findingLabel(section, overviewLabel)), readerText)}
-          </h2>
-          {section.blocks.map((block) =>
-            block.type === "table" ? (
-              <div className="min-w-0" key={block.line}>
-                {(!overview &&
-                  typedModuleTable(entry.output.module, section.heading, block, key)) || (
-                  <PublishedTable
-                    table={block}
-                    heading={plainText(drawingTitle(section.heading))}
-                    traceAt={key}
-                    rowHref={(line) => evidencePath(run.folder, entry, line)}
-                  />
-                )}
-              </div>
-            ) : block.type === "text" ? (
-              <FindingParagraph
-                key={block.line}
-                block={block}
-                trace={key(block.line)}
-                href={evidencePath(run.folder, entry, block.line)}
-              />
-            ) : null,
-          )}
-        </section>
-        {section.heading === "Bottom line" && trailingFigures}
-      </Fragment>
-    );
-  }
-  const drawn = groups.map((group) => {
-    if (typeof group === "string")
-      return group === "Bottom line" && summary && !containsReference(summary.bottomLine) ? null : (
-        <section key={group} className={card}>
-          <h2 className={heading}>{group}</h2>
-          <GapPanel reason={MISSING_PASSAGE} />
-        </section>
-      );
-    const [section, contrary] = group;
-    if (!contrary) return drawSection(section);
-    return (
-      <div key={section.line} className="grid min-w-0 gap-4 lg:grid-cols-2">
-        {drawSection(section)}
-        {drawSection(contrary)}
-      </div>
-    );
-  });
-  if (beforeLimitations)
-    drawn.splice(figuresAt, 0, <Fragment key="before-limitations">{beforeLimitations}</Fragment>);
+  const drawSection = (section: Section) => (
+    <FindingSection
+      key={section.line}
+      section={section}
+      run={run}
+      entry={entry}
+      overview={overview}
+      overviewLabel={overviewLabel}
+      marker={marker}
+      judgement={judgement}
+      trailingFigures={trailingFigures}
+    />
+  );
+  const drawn = renderFindingGroups(groups, drawSection, summary, beforeLimitations, figuresAt);
   return (
     <RunContext.Provider value={{ traces, open: setActiveTrace }}>
       <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-4">
-        {summary && (
-          <FindingsSummary
-            summary={summary}
-            entry={entry}
-            summaryTrace={summaryTrace}
-            marker={marker}
-          />
-        )}
-        {!hasBottomLine && trailingFigures}
+        <FindingsSummary
+          summary={summary}
+          entry={entry}
+          summaryTrace={summaryTrace}
+          marker={marker}
+        />
+        {!drawnBottomLine && trailingFigures}
         {drawn}
         <RecordsCard run={run} entry={entry} records={records} />
       </div>
-      {active && (
-        <TraceDrawer
-          trace={active}
-          evidenceHref={evidenceHref(run.folder, active.evidenceItem)}
-          isOpen
-          onClose={() => {
-            setActiveTrace(null);
-          }}
-        />
-      )}
+      <FindingsTraceDrawer
+        trace={active}
+        folder={run.folder}
+        onClose={() => {
+          setActiveTrace(null);
+        }}
+      />
     </RunContext.Provider>
   );
 }
