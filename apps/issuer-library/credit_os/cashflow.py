@@ -1738,7 +1738,13 @@ def cashflow_or_issues(
         None if ask.handoff is None else hashlib.sha256(ask.handoff.encode()).hexdigest(),
         CASHFLOW_CELL_BUDGET if ask.budget is None else ask.budget,
     )
-    cashflow, problem = derived(key, lambda: read_cashflow(present, ask.handoff, ask.budget))
+    # Only a grid is reused: a problem can be the moment's (no memory to lay the grid out), so
+    # the same bytes are tried again at the next publication.
+    cashflow, problem = derived(
+        key,
+        lambda: read_cashflow(present, ask.handoff, ask.budget),
+        current=lambda kept: kept[1] is None,
+    )
     if problem is not None:
         kind, text = problem
         issues.append(

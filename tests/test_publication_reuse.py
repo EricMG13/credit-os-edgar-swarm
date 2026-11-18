@@ -256,3 +256,43 @@ def test_nothing_is_kept_outside_a_publication():
         for _ in range(2):
             derived("key", lambda: made.append(1))
     assert len(made) == 3 and kept.hits == 1 and len(STORE) == 0
+
+
+def test_a_value_that_cannot_be_copied_is_returned_and_not_kept():
+    store = Derived()
+    deep: dict = {}
+    inner = deep
+    for _ in range(100_000):  # json.loads reads this depth; pickle cannot copy it
+        inner["mode"] = {}
+        inner = inner["mode"]
+    calls = []
+
+    def compute(value):
+        calls.append(1)
+        return value
+
+    for value in (deep, lambda: None):
+        calls.clear()
+        with reuse(store):
+            assert derived(("kind", id(value)), lambda v=value: compute(v)) is value
+            assert derived(("kind", id(value)), lambda v=value: compute(v)) is value
+        assert len(calls) == 2 and len(store) == 0
+
+
+def test_a_grid_that_could_not_be_laid_out_is_tried_again(monkeypatch):
+    """The same four files and handoff: a failure of the moment is not the answer for good."""
+    inputs = {name: name.encode() for name in cashflow.CASHFLOW_FILES}
+    files = dict.fromkeys(cashflow.CASHFLOW_FILES, "pinned")
+    answers = [(None, ("layout", "MemoryError: ")), ({"rows": []}, None), "not asked again"]
+    monkeypatch.setattr(cashflow, "read_cashflow", lambda *_: answers.pop(0))
+    ask = cashflow.GridAsk(None, None)
+    store = Derived()
+    with reuse(store):
+        issues: list[str] = []
+        assert cashflow.cashflow_or_issues("run", files, inputs, ask, issues) is None
+        assert issues == ["run: the cash flow model could not be laid out (MemoryError: )"]
+        for _ in range(2):
+            issues = []
+            assert cashflow.cashflow_or_issues("run", files, inputs, ask, issues) == {"rows": []}
+            assert issues == []
+    assert answers == ["not asked again"]

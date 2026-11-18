@@ -71,14 +71,21 @@ class Derived:
     ) -> T:
         """The value kept for ``key``, else ``compute()``, which is then kept. ``current`` is asked
         of a kept value whose key cannot name every input; when it says no, the value is computed
-        again. An exception from ``compute`` is raised and nothing is kept."""
+        again. An exception from ``compute`` is raised and nothing is kept; a value that cannot be
+        pickled is returned and not kept."""
         held = self._take(key)
         if held is not None:
             value: T = pickle.loads(held)  # bytes this process pickled itself
             if current is None or current(value):
                 return value
         value = compute()
-        self._keep(key, pickle.dumps(value, pickle.HIGHEST_PROTOCOL))
+        try:
+            held = pickle.dumps(value, pickle.HIGHEST_PROTOCOL)
+        except Exception:  # noqa: BLE001 - whatever stops the copy, the value stands
+            # A value that cannot be copied (nested too deep, not picklable, no memory for the
+            # copy) is the value computed all the same; it is computed again next time.
+            return value
+        self._keep(key, held)
         return value
 
 
