@@ -18,7 +18,7 @@ from deploy_workflow.inbox.layout import Layout
 from deploy_workflow.inbox.runs import Record, Status, cap_of
 from deploy_workflow.model.budget import BudgetError, exact_sum, read_reservation_snapshot
 from deploy_workflow.model.pricing import money_text
-from deploy_workflow.owners.cpos_launch import METHODS, NOT_ANALYTICAL
+from deploy_workflow.owners.cpos_launch_methods import METHODS, NOT_ANALYTICAL
 from deploy_workflow.run_events import EVENTS, progress, read_events
 
 log = logging.getLogger(__name__)

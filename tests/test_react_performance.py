@@ -354,6 +354,15 @@ def _verify_static_compression(server: Any, chunk: bytes) -> None:
     )
     assert status == 200 and identity == chunk and "Content-Encoding" not in headers
     assert headers["Vary"] == "Accept-Encoding"
+    # Stable names (not content-hashed): cached for a day, never immutable; data.js is not cached.
+    for stable in ("/fonts/text-regular.woff2", "/symbol.svg"):
+        status, body, headers = frontend.request(server, stable)
+        assert status == 200 and body == b"stable", stable
+        assert headers["Cache-Control"] == "public, max-age=86400", stable
+    status, body, headers = frontend.request(server, "/connected-assets/plain.js")
+    assert status == 200 and body == b"stable" and "Cache-Control" not in headers
+    status, _, headers = frontend.request(server, "/fonts/absent.woff2")
+    assert status == 404 and "max-age" not in headers.get("Cache-Control", "")
     status, html, _ = frontend.request(server, "/")
     assert status == 200 and b"connected</body>" in html
 
@@ -385,6 +394,10 @@ def test_http_source_download_only_checks_requested_file_and_rechecks_hash(
     (web / "connected-assets").mkdir()
     chunk = b"const report = 'content';\n" * 100
     (web / "connected-assets" / "app-a1b2c3d4.js").write_bytes(chunk)
+    (web / "connected-assets" / "plain.js").write_bytes(b"stable")
+    (web / "fonts").mkdir()
+    (web / "fonts" / "text-regular.woff2").write_bytes(b"stable")
+    (web / "symbol.svg").write_bytes(b"stable")
     read_calls: list[tuple[str, bool]] = []
     load = sources._source
 

@@ -19,7 +19,7 @@ from deploy_vii.contracts import PATHWAY_CAP_USD, PathwayId
 from deploy_workflow import platform_io
 from deploy_workflow.inbox.layout import Layout
 from deploy_workflow.model.configs import CONFIGS
-from deploy_workflow.owners.cpos_launch import METHODS
+from deploy_workflow.owners.cpos_launch_methods import METHODS
 from deploy_workflow.run_events import EVENTS, progress, read_events
 from deploy_workflow.run_expectations import Item
 
