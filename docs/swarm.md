@@ -33,6 +33,8 @@ No filing, credential or key is committed. The packs, contexts and the root stay
    (the closing lines of each commit message). After each batch a runner copies the run folders
    without `inputs/` and `source-text/` (the filing copies), the library and `plan.json` there,
    commits and pushes. A failed save is logged; the next batch saves everything again.
+   `effort` sets the analysts' effort (default `high`, the approved level; `xhigh` only on the
+   owner's instruction for that run).
 4. Second pass: `args {root, repo, secondPass: true}` claims the `failed` issuers once more. It
    is explicit; the first pass never retries them. The launcher resumes the run folder.
 5. Resume after a stop: start the same workflow again. `running` claims older than an hour (set

@@ -11,6 +11,7 @@
 //                      folders (without inputs/ and source-text/, the filing copies), the library
 //                      and plan.json are copied there, committed and pushed
 //   args.trailer       optional: the closing lines of each results commit message
+//   args.effort        analyst effort: low, medium, high, xhigh or max; default high
 //
 // The script has no shell: every ledger, verify and update_library command runs inside a small
 // "runner" agent. The controller (this script) is the only ledger writer; analysts never are.
@@ -35,6 +36,10 @@ const limit = args.limit === undefined || args.limit === null ? Infinity : Numbe
 const staleSeconds = Number(args.stale_seconds ?? 3600)
 const secondPass = args.secondPass === true
 const { results, trailer } = args
+const effort = args.effort ?? 'high'
+if (!['low', 'medium', 'high', 'xhigh', 'max'].includes(effort)) {
+  throw new Error(`args.effort must be low, medium, high, xhigh or max, not ${effort}`)
+}
 
 const q = (s) => `'${String(s).replace(/'/g, `'\\''`)}'`
 const tool = (script, rest) => `cd ${q(repo)} && uv run python tools/swarm/${script} ${rest}`
@@ -147,7 +152,7 @@ while (claimed < limit) {
           phase: 'Analyse',
           schema: REPORT_SCHEMA,
           model: 'sonnet',
-          effort: 'high',
+          effort,
           agentType: 'general-purpose',
         },
       )
