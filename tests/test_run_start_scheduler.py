@@ -744,17 +744,17 @@ def test_the_recheck_of_a_cut_short_move_never_touches_context_json(root, fake_e
     sid = _cut_short_submit(root, w, monkeypatch)
     context = layout(root).uploads / sid / "sealed" / "context.json"
     before = context.read_bytes()
-    real = submissions.digest
     seen = []
 
-    def killed(lay, s, answers):
+    def killed(folder, answers):
+        assert folder == context.parent
         seen.append(context.read_bytes())
         raise KeyboardInterrupt  # a kill inside the recheck
 
-    monkeypatch.setattr(submissions, "digest", killed)
-    with pytest.raises(KeyboardInterrupt):
-        w.step()
-    monkeypatch.setattr(submissions, "digest", real)
+    with monkeypatch.context() as recheck:
+        recheck.setattr(submissions, "folder_digest", killed)
+        with pytest.raises(KeyboardInterrupt):
+            w.step()
     assert seen == [before] and context.read_bytes() == before
     w.step()
     [record] = load_all(layout(root))

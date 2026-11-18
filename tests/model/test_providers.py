@@ -252,11 +252,16 @@ def test_max_output_over_cap_refused() -> None:
         build(SOL, _request(max_tokens=131073), KEY)
 
 
-def test_copilot_configs_admit_medium_only() -> None:
+def test_copilot_effort_is_validated_per_model() -> None:
     opus = ModelSpec("copilot-opus-medium", "copilot", "claude-opus-5.5", "medium")
+    luna = ModelSpec("copilot-luna-xhigh", "copilot", "gpt-6-luna", "xhigh")
     assert effort_for(opus) == "medium"
+    assert effort_for(opus, "high") == "high"  # Balanced runs raise selected modules to high.
+    assert effort_for(luna) == "xhigh"
     with pytest.raises(UnknownEffort):
-        effort_for(opus, "high")
+        effort_for(opus, "xhigh")
+    with pytest.raises(UnknownEffort):
+        effort_for(luna, "high")
     with pytest.raises(TurnError):
         ModelSpec("copilot-sol-medium", "copilot", "claude-opus-5.5", "medium")
 
