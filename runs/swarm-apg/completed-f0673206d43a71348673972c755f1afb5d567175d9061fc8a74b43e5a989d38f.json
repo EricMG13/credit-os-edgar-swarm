@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for APi Group Corp as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/5b00816d9a50786fd00ee23c49f18b7ae9e2a422cff9b8ec0f5afaedb2937483/1.response.md",
+    "CP-1": "requests/CP-1/0f97efa05c331f02209b74d481da0bd7110742c9d18224e1f9c591b12a0d2a45/1.response.md",
+    "CP-1A": "requests/CP-1A/02a10c40293a700a2eb0b21429ab249889ec716f4c3ba07c56050cf74b62490d/1.response.md",
+    "CP-2": "requests/CP-2/85c323eea24905d2cb5b030fa6a17e289bdfe31c114800955fc24ec672ae2c8e/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "e3639461f329f81739835e437918fc6e74bd58891b5c8f3cee63bed26c8bc4bd",
+  "delivery_sha256": "677216069d54ef56d36cdabcb9d1d1a88ee7406c7a817de4135de5b8c082b635"
+}

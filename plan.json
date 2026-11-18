@@ -2553,8 +2553,18 @@
       "pack": "/home/user/swarm-root/inputs/packs/1796209-api-group-corp-apg",
       "context": "/home/user/swarm-root/inputs/contexts/1796209-api-group-corp-apg.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-apg",
-      "status": "pending",
-      "attempts": 0
+      "status": "published",
+      "attempts": 4,
+      "claims": 1,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "exit_code": 0,
+      "reason": null,
+      "finished_at": "2026-11-18T13:11:08+00:00"
     },
     {
       "issuer_id": "prg-1808834",
@@ -2564,8 +2574,18 @@
       "pack": "/home/user/swarm-root/inputs/packs/1808834-prog-holdings-inc",
       "context": "/home/user/swarm-root/inputs/contexts/1808834-prog-holdings-inc.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-prg-1808834",
-      "status": "pending",
-      "attempts": 0
+      "status": "published",
+      "attempts": 4,
+      "claims": 1,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "exit_code": 0,
+      "reason": null,
+      "finished_at": "2026-11-18T13:11:22+00:00"
     },
     {
       "issuer_id": "ccc",
@@ -2575,8 +2595,18 @@
       "pack": "/home/user/swarm-root/inputs/packs/1818201-ccc-intelligent-solutions-holdings-inc-c",
       "context": "/home/user/swarm-root/inputs/contexts/1818201-ccc-intelligent-solutions-holdings-inc-c.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-ccc",
-      "status": "pending",
-      "attempts": 0
+      "status": "published",
+      "attempts": 4,
+      "claims": 1,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "exit_code": 0,
+      "reason": null,
+      "finished_at": "2026-11-18T13:11:37+00:00"
     },
     {
       "issuer_id": "arko-1823794",
@@ -2586,8 +2616,18 @@
       "pack": "/home/user/swarm-root/inputs/packs/1823794-arko-corp",
       "context": "/home/user/swarm-root/inputs/contexts/1823794-arko-corp.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-arko-1823794",
-      "status": "pending",
-      "attempts": 0
+      "status": "published",
+      "attempts": 4,
+      "claims": 1,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "exit_code": 0,
+      "reason": null,
+      "finished_at": "2026-11-18T13:11:53+00:00"
     },
     {
       "issuer_id": "dfh-1825088",

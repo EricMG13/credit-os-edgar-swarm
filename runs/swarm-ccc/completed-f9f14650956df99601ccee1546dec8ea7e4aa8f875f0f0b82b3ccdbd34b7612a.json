@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for CCC Intelligent Solutions Holdings Inc. as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/41d2ab873cc6077d19988e963d0fc3516ef317c5321171aa68db62fcb81fefaa/1.response.md",
+    "CP-1": "requests/CP-1/8a5186aba03aa65f0f84d079bdc00df944b06a48803970ba90a2f0dd8029f2db/1.response.md",
+    "CP-1A": "requests/CP-1A/04c3afee4ed914192398adc6de873ddbb875278dfd9ba867a14b2c621e228efc/1.response.md",
+    "CP-2": "requests/CP-2/c056715d289d46742e4090fdcf48616dc56da0f474421a8f646161eb2936d1a8/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "5652efb931f73256aa451e7513f12e603119a136546fc1740bd520a3982952f7",
+  "delivery_sha256": "4a78f4dc3819b67f218471ab5fa1c6dd534c24f4e6390a20f0b027a1bcdfff03"
+}

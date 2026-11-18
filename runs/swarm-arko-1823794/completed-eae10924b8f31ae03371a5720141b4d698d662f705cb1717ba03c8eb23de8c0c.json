@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for ARKO Corp. as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/af50a3503f292e1c823e1b8c04c04b4563ca11673f38dac0858f91cb61e03b08/1.response.md",
+    "CP-1": "requests/CP-1/774701f7fb8d9b8f3ab5c9695f53306880011dd0a6abead6405bd9626eaf03ce/1.response.md",
+    "CP-1A": "requests/CP-1A/06e34538db8f754ac9ef6b3eecdcbfb61ab386f826971dcb47fc01e2b1f5cb43/1.response.md",
+    "CP-2": "requests/CP-2/fd1fd681e69234a1f03abf463f0df62bad8c04e2b6bb3c02cc2276c7e49cf367/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "5fd6f4126233fcd1e76cd113e33558a76c36fb39945e915822c3018dd339982b",
+  "delivery_sha256": "400ea23099521b26f055991d11cd323129e058f576546964cfbfcb8b188d862b"
+}
