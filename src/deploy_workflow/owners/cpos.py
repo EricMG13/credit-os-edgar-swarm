@@ -18,11 +18,14 @@ import json
 import logging
 import re
 import sys
+import threading
 import warnings
-from collections.abc import Callable, Mapping, Sequence
-from dataclasses import dataclass, replace
+from collections.abc import Callable, Iterator, Mapping, Sequence
+from concurrent.futures import FIRST_COMPLETED, Future, ThreadPoolExecutor, wait
+from dataclasses import dataclass, field, replace
 from datetime import date
 from decimal import Decimal
+from functools import partial
 from pathlib import Path
 from types import MappingProxyType
 from typing import TYPE_CHECKING, Any, Literal
@@ -159,6 +162,23 @@ class ComparisonPlan(Contract):
         return self
 
 
+# How many modules CP-OS may have in flight at once (owner, 2026-11-18: independent modules may run
+# in parallel). Two captures the whole gain the pathways' dependency graphs allow; each module in
+# flight is one provider session, so the bound is also the run's provider concurrency. One is the
+# serial loop, unchanged.
+MODULE_WIDTH = 2
+MAX_MODULE_WIDTH = 4
+
+
+class ModuleHalted(RuntimeError):
+    """A module in flight that this launch can no longer accept: a module before it in the plan
+    was not accepted, and its own acceptance check reads that module's handoff."""
+
+
+def _proceed() -> None:
+    """Nothing stops a module that runs alone."""
+
+
 @dataclass(frozen=True)
 class HandoffTask:
     """Exact local model inputs; bytes and mapping proxies prevent in-place edits."""
@@ -172,8 +192,12 @@ class HandoffTask:
     feedback: tuple[str, ...]
     draft: bytes | None = None  # Explicit targeted repair; never automatic retry of a sent call.
     # Every handoff accepted so far in the run: read by the checker alone (prose check 7), so it
-    # is not in the request fingerprint.
+    # is not in the request fingerprint. With modules in flight at once it is still every module
+    # the plan lists before this one (``_Before``): reading it waits for them.
     accepted: Mapping[str, bytes] = MappingProxyType({})
+    # Raises ``ModuleHalted`` once the launch can no longer accept this module; the executor asks
+    # before each paid exchange, so a module in flight stops at its next call.
+    proceed: Callable[[], None] = _proceed
 
 
 def _pinned_inputs(base: Path, entries: Mapping[str, HandoffInput]) -> dict[str, bytes]:
@@ -390,6 +414,307 @@ def report_compaction(directory: Path, response_path: str, module: str) -> None:
         print(review_line(module, before if isinstance(before, int) else None), file=sys.stderr)
 
 
+class _Board:
+    """What the modules in flight share: the handoffs accepted so far and where the launch
+    stopped accepting. The scheduling thread writes; each module's thread reads and waits."""
+
+    def __init__(self, ordered: Sequence[str], handoffs: dict[str, bytes]) -> None:
+        self._index = {module_id: place for place, module_id in enumerate(ordered)}
+        self._ordered, self._handoffs = tuple(ordered), handoffs
+        self._changed = threading.Condition()
+        self._stopped = len(ordered)  # the place of the earliest module that was not accepted
+
+    def accept(self, module_id: str, raw: bytes) -> None:
+        with self._changed:
+            self._handoffs[module_id] = raw
+            self._changed.notify_all()
+
+    def stop_after(self, module_id: str | None) -> None:
+        """No module after ``module_id`` in the plan (after none: no module at all) can be
+        accepted in this launch."""
+        with self._changed:
+            place = -1 if module_id is None else self._index[module_id]
+            self._stopped = min(self._stopped, place)
+            self._changed.notify_all()
+
+    def proceed(self, module_id: str) -> None:
+        if self._stopped < self._index[module_id]:
+            raise ModuleHalted(
+                f"cpos_halted: {module_id}: a module before it in the plan was not accepted"
+            )
+
+    def before(self, module_id: str) -> dict[str, bytes]:
+        """The handoffs of every module the plan lists before ``module_id``, once all of them are
+        accepted; ``ModuleHalted`` when one of them will not be."""
+        earlier = self._ordered[: self._index[module_id]]
+        with self._changed:
+            self._changed.wait_for(
+                lambda: (
+                    self._stopped < self._index[module_id]
+                    or all(m in self._handoffs for m in earlier)
+                )
+            )
+            self.proceed(module_id)
+            return {m: self._handoffs[m] for m in earlier}
+
+
+class _Before(Mapping[str, bytes]):
+    """``HandoffTask.accepted`` of a module that may run beside others: the handoffs of every
+    module before it in plan order, which is exactly what the serial loop had accepted when it
+    reached the module. Reading waits until they are all accepted, so a check that reads them
+    (prose check 7) sees the same handoffs whichever module finished first; a check that does not
+    read them never waits."""
+
+    def __init__(self, board: _Board, module_id: str) -> None:
+        self._read = partial(board.before, module_id)
+        self._held: dict[str, bytes] | None = None
+
+    def _all(self) -> dict[str, bytes]:
+        if self._held is None:
+            self._held = self._read()
+        return self._held
+
+    def __getitem__(self, module_id: str) -> bytes:
+        return self._all()[module_id]
+
+    def __iter__(self) -> Iterator[str]:
+        return iter(self._all())
+
+    def __len__(self) -> int:
+        return len(self._all())
+
+
+_Flights = dict[str, tuple[HandoffTask, "Future[tuple[bytes, str]]"]]
+
+
+@dataclass
+class _ModuleLoop:
+    """The module loop of ``run_handoffs``: dispatch each module, retain and check its answer,
+    accept it. ``run(1)`` is the serial loop. ``run(width)`` keeps up to ``width`` modules in
+    flight, by one rule: modules start in plan order, each when every producer it is sent is
+    accepted and a slot is free; and modules are accepted in plan order. What a module is sent
+    (its producers' handoffs) and what its check may read (every handoff before it in the plan,
+    ``_Before``) are therefore the serial loop's, whichever module finishes first, and so are its
+    request fingerprint, attempts, feedback and accepted bytes, and the order of the starts and
+    acceptances in the event log. CP-8 is sent every other module, so it still runs last and
+    alone. The earliest module not yet accepted is always in flight and waits for nothing, so
+    the modules after it that wait for it at their checks cannot hold every slot for ever."""
+
+    request: HandoffPlan
+    directory: Path
+    ordered: tuple[str, ...]
+    producers: Mapping[str, set[str]]
+    sources: Mapping[str, bytes]
+    instructions: Mapping[str, bytes]
+    retained: Mapping[str, bytes]
+    execute: Callable[[HandoffTask], bytes]
+    check: Callable[[HandoffTask, bytes], tuple[str, ...]]
+    on_handoff: Callable[[HandoffTask, bytes], None] | None
+    events: Path | None
+    handoffs: dict[str, bytes] = field(default_factory=dict)
+    selected: dict[str, str] = field(default_factory=dict)
+    changes: HandoffInput | None = None  # CP-8's comparison pack, once built
+    not_produced: str | None = None  # why CP-8 was planned and not produced
+    flights: _Flights = field(default_factory=dict)  # each module started beside others
+    failures: dict[str, Exception] = field(default_factory=dict)  # and each one that failed
+
+    def run(self, width: int) -> None:
+        if width == 1:
+            self._one_at_a_time()
+        else:
+            self._in_flight(width)
+
+    def _one_at_a_time(self) -> None:
+        for module_id in self.ordered:
+            task = self._dispatch(module_id, MappingProxyType(dict(self.handoffs)), _proceed)
+            if task is None:
+                break
+            try:
+                raw, path = self._work(task)
+            except (ValueError, RuntimeError) as error:
+                if not self._unaccepted(module_id, error):
+                    raise
+                break
+            self.handoffs[module_id] = raw
+            self._accept(task, raw, path)
+
+    def _dispatch(
+        self, module_id: str, accepted: Mapping[str, bytes], proceed: Callable[[], None]
+    ) -> HandoffTask | None:
+        """The task of a module whose producers are all accepted, its start recorded; None for a
+        CP-8 whose comparison pack cannot be built (the reason is kept)."""
+        request, handoffs = self.request, self.handoffs
+        _refuse_pins_of_replayed(request.retained_handoffs, handoffs)
+        spec = request.retained_handoffs.get(module_id)
+        supplied = {m: handoffs[m] for m in self.ordered if m in self.producers[module_id]}
+        if spec is not None and spec.upstream != {m: _sha(raw) for m, raw in supplied.items()}:
+            raise ValueError(f"cpos_retained_stale: {module_id}")
+        # The earlier run's handoffs are for CP-8 alone: every other module is sent the run's own
+        # sources only.
+        task_sources = {k: v for k, v in self.sources.items() if not k.startswith(PRIOR_PREFIX)}
+        if module_id == "CP-8":
+            if request.prior is None:
+                raise ValueError("cpos_prior: CP-8 needs the pinned earlier run")
+            # Computed by Python from the earlier run's pinned handoffs and this run's accepted
+            # ones before CP-8 is called; it is also published as the delivery's changes.json.
+            try:
+                pack = pack_builder(
+                    request.prior,
+                    request.run.as_of.isoformat(),
+                    request.run.pathway,
+                    request.selection,
+                )(self.sources, supplied)
+            except (ValueError, ArithmeticError) as error:
+                # The one fail-open of CP-8 (see ``_unaccepted``): a handoff text the pack cannot
+                # read.
+                self.not_produced = f"the comparison pack could not be built ({error})"
+                return None
+            _put(self.directory / "inputs" / _sha(pack), pack)
+            self.changes = HandoffInput(path="inputs/" + _sha(pack), sha256=_sha(pack))
+            task_sources = {**self.sources, PACK_NAME: pack}
+        task = HandoffTask(
+            request.run,
+            module_id,
+            self.instructions[module_id],
+            MappingProxyType(task_sources),
+            MappingProxyType(supplied),
+            1,
+            (),
+            accepted=accepted,
+            proceed=proceed,
+        )
+        if self.events is not None:
+            append_event(self.events, "module_started", module=module_id)
+        return task
+
+    def _work(self, task: HandoffTask) -> tuple[bytes, str]:
+        """One module's exchange, on whichever thread runs it: it writes only under the module's
+        own request folder."""
+        return _handoff(
+            task,
+            self.directory,
+            self.execute,
+            _with_web_checks(self.execute, self.check),
+            self.request.max_attempts,
+            retained=self.retained.get(task.module_id),
+        )
+
+    def _unaccepted(self, module_id: str, error: BaseException) -> bool:
+        """Whether the run goes on to deliver without this module, the reason kept.
+
+        Fail-open, by design and only for CP-8 (owner, 2026-11-12): the comparison is optional to
+        completion, so a CP-8 that is not accepted within its bounds, or whose call does not fit
+        the cap, does not stop the run's delivery of everything the other modules produced. Any
+        other module's failure, and any other fault of CP-8's call (a provider stop, an overrun,
+        an interrupted call), still propagates. The reason is logged, recorded in the completion
+        record, the delivery manifest and a run event, and printed to stderr."""
+        if module_id != "CP-8" or not _cp8_unaccepted(error):
+            return False
+        self.not_produced = with_notes(error)
+        return True
+
+    def _accept(self, task: HandoffTask, raw: bytes, path: str) -> None:
+        self.selected[task.module_id] = path
+        if self.events is not None:
+            append_event(
+                self.events,
+                "module_accepted",
+                module=task.module_id,
+                **_compaction_flag(self.directory / path),
+            )
+        if self.on_handoff is not None:
+            self.on_handoff(task, raw)
+
+    def _in_flight(self, width: int) -> None:
+        """Up to ``width`` modules at once (the class's rule). A module that fails, or an observer
+        that stops the run, ends the starts; modules already in flight end on their own, the ones
+        before the failed module accepted as usual, the ones after it halted at their next call
+        or check (``ModuleHalted``); then the failure of the earliest module in the plan is
+        raised, as the serial loop would have met it first."""
+        board = _Board(self.ordered, self.handoffs)
+        pool = ThreadPoolExecutor(max_workers=width, thread_name_prefix="cpos-module")
+        try:
+            while True:
+                # Taken before landing: a module that finishes after this is still waited for,
+                # the wait returns at once and the next round lands it. Reading it after would
+                # leave it unlanded while the modules that wait for it at their checks are
+                # waited for.
+                flying = [future for _, future in self.flights.values() if not future.done()]
+                self._land(board)
+                if not self.failures and self.not_produced is None:
+                    started = set(self.flights)
+                    self._take_off(board, pool, width)
+                    flying += [self.flights[m][1] for m in self.flights.keys() - started]
+                if not flying:
+                    break
+                wait(flying, return_when=FIRST_COMPLETED)
+        finally:
+            # Also on an interrupt of this thread: no module in flight makes another call.
+            board.stop_after(None)
+            pool.shutdown(wait=False, cancel_futures=True)
+        if self.failures:
+            first = next(m for m in self.ordered if m in self.failures)
+            for module_id, error in self.failures.items():
+                if module_id != first:
+                    self.failures[first].add_note(f"{module_id} also stopped: {with_notes(error)}")
+            raise self.failures[first]
+        if self.not_produced is None and set(self.selected) != set(self.ordered):
+            raise ValueError("cpos_plan: a module was left with a producer that is not before it")
+
+    def _take_off(self, board: _Board, pool: ThreadPoolExecutor, width: int) -> None:
+        """Start the modules not yet started, in plan order, while a slot is free and the next
+        one's producers are all accepted. A module refused before its call fails the run."""
+        for module_id in self.ordered:
+            if module_id in self.flights:
+                continue
+            if sum(not future.done() for _, future in self.flights.values()) >= width:
+                return
+            if not self.producers[module_id] <= self.handoffs.keys():
+                return
+            try:
+                task = self._dispatch(
+                    module_id, _Before(board, module_id), partial(board.proceed, module_id)
+                )
+            except Exception as error:  # noqa: BLE001 -- kept, and raised when the others end
+                self.failures[module_id] = error
+                board.stop_after(module_id)
+                return
+            if task is None:
+                return
+            self.flights[module_id] = task, pool.submit(self._work, task)
+
+    def _land(self, board: _Board) -> None:
+        """Accept, in plan order, each finished module that every module before it has been
+        accepted ahead of; keep a failure and stop the modules after it. A module that finished
+        after a failed one is not accepted: its retained answer waits for a relaunch. Its own
+        failure is kept too, unless it only halted."""
+        for module_id in self.ordered:
+            if module_id in self.failures:
+                break
+            if module_id in self.selected:
+                continue
+            flight = self.flights.get(module_id)
+            if flight is None or not flight[1].done():
+                break
+            task, future = flight
+            try:
+                raw, path = future.result()
+                board.accept(module_id, raw)
+                self._accept(task, raw, path)
+            except Exception as error:  # noqa: BLE001 -- kept, and raised when the others end
+                if not self._unaccepted(module_id, error):
+                    self.failures[module_id] = error
+                    board.stop_after(module_id)
+                break
+        if not self.failures:
+            return
+        for module_id, (_, future) in self.flights.items():
+            if future.done() and module_id not in self.selected:
+                found = future.exception()
+                if isinstance(found, Exception) and not isinstance(found, ModuleHalted):
+                    self.failures.setdefault(module_id, found)
+
+
 def _refuse_decided_stale(
     ordered: Sequence[str],
     producers: Mapping[str, set[str]],
@@ -421,6 +746,7 @@ def run_handoffs(  # noqa: C901, PLR0912, PLR0913, PLR0915 -- legacy orchestrato
     check: Callable[[HandoffTask, bytes], tuple[str, ...]],
     on_handoff: Callable[[HandoffTask, bytes], None] | None = None,
     events: Path | None = None,
+    width: int = 1,
 ) -> Path:
     """CP-OS exchange: plan, retain, check, pass current handoffs, deliver.
 
@@ -439,7 +765,11 @@ def run_handoffs(  # noqa: C901, PLR0912, PLR0913, PLR0915 -- legacy orchestrato
     completion are appended to ``events.jsonl`` there; otherwise nothing is written.
     Their declared consumed inputs bound reuse planning; a checked published case
     does not trigger a new analytical build merely to satisfy a native producer.
+    ``width`` is how many modules may be in flight at once (``_ModuleLoop``): one is the
+    serial loop; more needs an ``execute`` that may be called from several threads.
     """
+    if not 1 <= width <= MAX_MODULE_WIDTH:
+        raise ValueError(f"cpos_width: between 1 and {MAX_MODULE_WIDTH} modules at once")
     request = HandoffPlan.model_validate_json(manifest.read_bytes())
     from deploy_workflow.model.adapter import LiveAdapter
     from deploy_workflow.model.copilot_adapter import CopilotAdapter
@@ -507,9 +837,6 @@ def run_handoffs(  # noqa: C901, PLR0912, PLR0913, PLR0915 -- legacy orchestrato
     if set(request.retained_handoffs) - set(ordered):
         raise ValueError("cpos_retained_inputs: handoff names must be selected analytical modules")
     sources = _pinned_inputs(manifest.parent, request.sources)
-    # The earlier run's handoffs are for CP-8 alone: every other module is sent the run's own
-    # sources only.
-    run_sources = {k: v for k, v in sources.items() if not k.startswith(PRIOR_PREFIX)}
     instructions = _pinned_inputs(manifest.parent, request.instructions)
     retained = _pinned_inputs(manifest.parent, request.retained_handoffs)
     # Each module is sent only its declared producers' handoffs (CP-5 every analyst before it).
@@ -561,80 +888,24 @@ def run_handoffs(  # noqa: C901, PLR0912, PLR0913, PLR0915 -- legacy orchestrato
             *model_raws.values(),
         ):
             _put(directory / "inputs" / _sha(raw), raw)
-        handoffs: dict[str, bytes] = {}
-        selected: dict[str, str] = {}
-        changes: HandoffInput | None = None
-        not_produced: str | None = None
-        for module_id in ordered:
-            _refuse_pins_of_replayed(request.retained_handoffs, handoffs)
-            spec = request.retained_handoffs.get(module_id)
-            supplied = {m: handoffs[m] for m in ordered if m in producers[module_id]}
-            if spec is not None and spec.upstream != {m: _sha(raw) for m, raw in supplied.items()}:
-                raise ValueError(f"cpos_retained_stale: {module_id}")
-            task_sources = run_sources
-            if module_id == "CP-8":
-                if request.prior is None:
-                    raise ValueError("cpos_prior: CP-8 needs the pinned earlier run")
-                # Computed by Python from the earlier run's pinned handoffs and this run's accepted
-                # ones before CP-8 is called; it is also published as the delivery's changes.json.
-                try:
-                    pack = pack_builder(
-                        request.prior,
-                        request.run.as_of.isoformat(),
-                        request.run.pathway,
-                        request.selection,
-                    )(sources, supplied)
-                except (ValueError, ArithmeticError) as error:
-                    # The one fail-open of CP-8 (see below): a handoff text the pack cannot read.
-                    not_produced = f"the comparison pack could not be built ({error})"
-                    break
-                _put(directory / "inputs" / _sha(pack), pack)
-                changes = HandoffInput(path="inputs/" + _sha(pack), sha256=_sha(pack))
-                task_sources = {**sources, PACK_NAME: pack}
-            task = HandoffTask(
-                request.run,
-                module_id,
-                instructions[module_id],
-                MappingProxyType(task_sources),
-                MappingProxyType(supplied),
-                1,
-                (),
-                accepted=MappingProxyType(dict(handoffs)),
-            )
-            if events is not None:
-                append_event(events, "module_started", module=module_id)
-            try:
-                raw, path = _handoff(
-                    task,
-                    directory,
-                    execute,
-                    _with_web_checks(execute, check),
-                    request.max_attempts,
-                    retained=retained.get(module_id),
-                )
-            except (ValueError, RuntimeError) as error:
-                # Fail-open, by design and only for CP-8 (owner, 2026-11-12): the comparison is
-                # optional to completion, so a CP-8 that is not accepted within its bounds, or
-                # whose call does not fit the cap, does not stop the run's delivery of everything
-                # the other modules produced. Any other module's failure, and any other fault of
-                # CP-8's call (a provider stop, an overrun, an interrupted call), still propagates.
-                # The reason is logged, recorded in the completion record, the delivery manifest
-                # and a run event, and printed to stderr.
-                if module_id != "CP-8" or not _cp8_unaccepted(error):
-                    raise
-                not_produced = with_notes(error)
-                break
-            handoffs[module_id] = raw
-            selected[module_id] = path
-            if events is not None:
-                append_event(
-                    events,
-                    "module_accepted",
-                    module=module_id,
-                    **_compaction_flag(directory / path),
-                )
-            if on_handoff is not None:
-                on_handoff(task, raw)
+        modules = _ModuleLoop(
+            request,
+            directory,
+            ordered,
+            producers,
+            sources,
+            instructions,
+            retained,
+            execute,
+            check,
+            on_handoff,
+            events,
+        )
+        # A retained module is refused before any call once an accepted module contradicts its pin
+        # (``_refuse_pins_of_replayed``): that order of refusal and call holds only one at a time.
+        modules.run(1 if request.retained_handoffs else width)
+        handoffs, selected = modules.handoffs, modules.selected
+        changes, not_produced = modules.changes, modules.not_produced
         layout = request.layout
         if "CP-8" in ordered and "CP-8" not in handoffs:
             ordered = tuple(m for m in ordered if m != "CP-8")
@@ -871,8 +1142,13 @@ def run_live_handoffs(  # noqa: PLR0913 -- the explicit paid entry point takes e
     web_lookup: str = "default",
     web_hosts: Sequence[str] = (),
     lookup_cutoff: date | None = None,
+    module_width: int = 1,
 ) -> Path:
     """Explicit paid entry point; callers supply an evidence/instruction checker.
+
+    ``module_width`` is how many independent modules may be in flight at once, each one provider
+    session (``run_handoffs``); 1, the default here, runs them one at a time, and the launcher
+    asks for ``MODULE_WIDTH`` unless told otherwise.
 
     ``web_lookup`` (``default``, ``on`` or ``off``), ``web_hosts`` (the case's own
     investor-relations hosts) and ``lookup_cutoff`` (the run's research cutoff; the as-of date
@@ -931,6 +1207,7 @@ def run_live_handoffs(  # noqa: PLR0913 -- the explicit paid entry point takes e
             check=check,
             on_handoff=on_handoff,
             events=directory,
+            width=module_width,
         )
     except BaseException as stop:
         # Documented fail-open: a release failure must not mask the stop it follows; it is

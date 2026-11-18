@@ -701,6 +701,9 @@ def provider(monkeypatch):
     """Historical HTTP integration fake; it never creates a real transport or makes a request."""
     calls = []
     monkeypatch.setenv("OPENAI_API_KEY", "not-a-real-key")
+    # These tests assert the order of the fake's calls, which is the plan's order only with one
+    # module at a time; modules in flight at once are tested in tests/test_cpos_parallel.py.
+    monkeypatch.setenv(cpos_launch.PARALLEL_VARIABLE, "1")
 
     # These old tests exercise ordering, persistence and delivery through the former HTTP route.
     # Keep that route local to the fixture; real CLI routing is covered by the Copilot tests below.

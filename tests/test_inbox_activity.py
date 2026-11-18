@@ -92,15 +92,22 @@ def test_a_stop_ends_the_running_module_and_a_relaunch_runs_it_again():
     assert dict(module_states("earnings_update", report))["Report"] == "stopped"
 
 
-def test_one_module_runs_at_a_time_and_delivery_ends_one_not_produced():
-    """CP-OS runs modules in turn: a start ends the one before it (a launch killed mid-module and
-    relaunched), and delivery ends one still running (CP-8 not produced, which the run survives)."""
+def test_modules_may_run_at_once_and_a_relaunch_or_delivery_ends_one_left_running():
+    """CP-OS may run independent modules at once: another module's start leaves a module running.
+    The start of a module already started is a relaunch (a launch killed mid-module wrote no
+    stop) and ends what was left running; delivery ends one still running (CP-8 not produced,
+    which the run survives)."""
     events = [
         {"event": "module_started", "module": "CP-0"},
-        {"event": "module_started", "module": "CP-1"},  # the relaunch after a kill
+        {"event": "module_accepted", "module": "CP-0"},
+        {"event": "module_started", "module": "CP-1"},
+        {"event": "module_started", "module": "CP-1A"},
     ]
     states = dict(module_states("relative_value", events))
-    assert (states["CP-0"], states["CP-1"]) == ("stopped", "running")
+    assert (states["CP-0"], states["CP-1"], states["CP-1A"]) == ("done", "running", "running")
+    events.append({"event": "module_started", "module": "CP-0"})  # the relaunch after a kill
+    states = dict(module_states("relative_value", events))
+    assert (states["CP-0"], states["CP-1"], states["CP-1A"]) == ("running", "stopped", "stopped")
     cp8 = [
         {"event": "module_started", "module": "CP-8"},
         {"event": "changes_not_produced", "reason": "not accepted"},

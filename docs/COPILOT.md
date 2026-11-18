@@ -50,6 +50,16 @@ uv run python -m deploy_workflow.owners.cpos_launch --context ... --sources ... 
   --config copilot-luna-xhigh --cap 25 --out runs/example
 ```
 
+CP-OS keeps up to two independent modules in flight at once (owner, 2026-11-18),
+each in its own Copilot session, so a run holds at most two sessions on the seat.
+Modules still start and are accepted in plan order, and the run's cap covers both:
+a call that would pass the cap only because the other module's hold is open waits
+for that call to settle. `--parallel-modules 1`, or `CREDIT_OS_PARALLEL_MODULES=1`
+in the launching environment (the run start service passes no flag), runs one
+module at a time as before; the most is 4. Two sessions on one seat, the seat's
+rate limits and a tool result that waits for an earlier module are not yet checked
+on a live run.
+
 Add `--live --ruling docs/rulings/<file>.md` only for a separately authorized
 paid CLI run. The ruling must name the configuration. In the connected app,
 Submit on the approved summary authorizes the run at the displayed pathway
