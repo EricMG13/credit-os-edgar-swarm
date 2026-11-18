@@ -9,6 +9,8 @@ The active reader is the connected React application described in [Run Credit OS
 - `data.js`, containing the catalogue, run store, activity and trace data;
 - `downloads/<run>/`, containing the original handoffs and instructions copied byte for byte only after their recorded SHA-256 values are checked, plus `handoffs.zip`.
 
+Every publication reads every file and checks every recorded hash again. Within one process (the scheduler publishes at each run end), what was parsed from bytes with a given SHA-256 is kept in memory and reused, at most 256 MiB, least recently used dropped first (`deploy_workflow.derived`); the published files are the same bytes either way.
+
 The publisher does not create an HTML page or copy a delivered report. It never changes run folders, performs analysis, or calls a provider. Its staging and swap preserve the previous publication if building the next one fails.
 
 CP-OS invokes the publication step after a run completes. For an existing workspace, it can also be run directly:

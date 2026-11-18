@@ -63,7 +63,8 @@ jobs:
             tests/test_http_base.py tests/test_methodology_selection.py \
             tests/test_portfolio_workbook.py tests/test_portfolio_export.py \
             tests/test_pathway_tiers.py \
-            tests/test_react_*.py proof/test_launcher.py
+            tests/test_react_*.py proof/test_launcher.py \
+            tests/test_publication_reuse.py
 
   web:
     name: connected application (lint, types, tests, build)

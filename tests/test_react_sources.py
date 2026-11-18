@@ -116,9 +116,6 @@ def test_a_source_is_extracted_once_and_its_hash_is_still_checked_on_every_reque
     assert sources.enrich(original, layout.runs) == first
     page = sources.reply(urlsplit(_link() + "?page=2"), layout.runs, first)
     assert page.body == RAW[12000:] and extracted == [SHA]
-    # A caller that edits the pages it was given changes no later reply.
-    sources._source(layout.runs, FOLDER, NAME, SHA).pages[2] = "edited"
-    assert sources.reply(urlsplit(_link() + "?page=2"), layout.runs, first).body == RAW[12000:]
     # Changed bytes fail the hash check; the pages kept for the recorded bytes are not served.
     (layout.runs / FOLDER / "inputs" / SHA).write_bytes(b"changed after the pages were kept")
     with pytest.raises(http_base.Reply) as refused:

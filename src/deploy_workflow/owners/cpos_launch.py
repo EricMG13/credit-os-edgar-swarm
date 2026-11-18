@@ -122,6 +122,7 @@ from deploy_workflow.owners.cpos_launch_methods import (
     _APPENDIX,
     _SCORE,
     METHODS,
+    NOT_ANALYTICAL,
     REGISTER_SCOPE,
     REGISTER_SCOPE_MODULES,
 )
@@ -286,7 +287,6 @@ PAGE_CHARS = 3000  # cp-os's page for an HTML filing: eight pages per read is at
 SOURCE_SUFFIXES = frozenset(
     {".pdf", ".htm", ".html", ".docx", ".txt", ".md", ".xlsx", ".csv", ".json", ".jsonl"}
 )
-NOT_ANALYTICAL = frozenset({"CP-MODEL", "CP-8"})  # In the presets; each has its own route.
 FIRST_PAGES = 3  # Pages of each source kept for the offline document guess (page 1 is the cover).
 Cover = tuple[str, tuple[str, ...]]  # A source's file name and its first pages.
 MAX_OUTPUT_TOKENS = 32000  # What the retained live campaigns ran with.

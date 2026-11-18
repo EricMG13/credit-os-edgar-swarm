@@ -31,6 +31,7 @@ REPORT_FOLDER = re.compile(r"[\w. -]+")
 REPORT_PREFIX = "/connected/report/"
 STATIC_FILES = {"/data.js", "/symbol.svg", "/THIRD-PARTY-NOTICES.md"}
 STATIC_DIRS = ("/assets/", "/connected-assets/", "/fonts/")
+STABLE_NAME_CACHE = "public, max-age=86400"
 
 
 def _valid_report_folder(folder: str) -> bool:
@@ -236,6 +237,18 @@ def _asset_path(dist: Path, path: str) -> tuple[Path, str, bool] | None:
     return None
 
 
+def _static_cache(path: str, relative: str) -> str | None:
+    """The Cache-Control of a static file: a hash-named build file never changes; a font or the
+    symbol keeps its name across releases, so it is fresh for a day only; any other gets none."""
+    if path.startswith(("/assets/", "/connected-assets/")) and re.search(
+        r"-[A-Za-z0-9_-]{8,}\.", relative
+    ):
+        return "public, max-age=31536000, immutable"
+    if path == "/symbol.svg" or (path.startswith("/fonts/") and relative.endswith(".woff2")):
+        return STABLE_NAME_CACHE
+    return None
+
+
 def _app_page(path: str) -> bool:
     return bool(
         path in {"/", "/index.html", "/start", "/runs"}
@@ -379,10 +392,8 @@ def _handler(
             if asset := _asset_path(dist, path):
                 base, relative, direct = asset
                 response = self._file(base, relative, direct=direct)
-                if path.startswith(("/assets/", "/connected-assets/")) and re.search(
-                    r"-[A-Za-z0-9_-]{8,}\.", relative
-                ):
-                    response.headers["Cache-Control"] = "public, max-age=31536000, immutable"
+                if cache := _static_cache(path, relative):
+                    response.headers["Cache-Control"] = cache
                 raise response
             super()._get(url)
 

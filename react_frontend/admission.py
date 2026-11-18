@@ -2,9 +2,8 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
-import os
-import time
 from pathlib import Path
 from typing import Any
 
@@ -14,14 +13,11 @@ from deploy_workflow.inbox.layout import Layout
 
 EXPORT_PREFIX = "window.CREDIT_OS_DATA="
 EXPORT_KEYS = ("catalogue", "workspace", "activity", "chips")
-# A file changed again within its timestamp's resolution keeps the same identity, so a publication
-# is kept only once it has been unchanged for longer than the coarsest resolution (FAT: 2 s).
-_SETTLED_NS = 2_000_000_000
-Identity = tuple[int, int, int, int]
-# The last publication parsed, with the file and the identity it was read under. One service
-# reads one publication, and parsing it on every request grew with every run it lists
-# (VERIFICATION.md 2026-11-18).
-_kept: tuple[Path, Identity, dict[str, Any]] | None = None
+# The last publication parsed, with the sha256 of the bytes it was parsed from. One service reads
+# one publication, and parsing it on every request grew with every run it lists
+# (VERIFICATION.md 2026-11-18). The file is read and hashed on every request: its timestamps do
+# not show every change (a rewrite in place under a restored time, a write through a mapping).
+_kept: tuple[str, dict[str, Any]] | None = None
 
 
 def _invalid_json(constant: str) -> None:
@@ -41,36 +37,24 @@ def _decoded(raw: bytes) -> dict[str, Any]:
     return snapshot
 
 
-def _identity(path: Path) -> Identity | None:
-    try:
-        found = os.stat(path, follow_symlinks=False)
-    except OSError:
-        return None
-    return found.st_ino, found.st_size, found.st_mtime_ns, found.st_ctime_ns
-
-
-def published(layout: Layout) -> dict[str, Any] | None:
+def published(layout: Layout, *, limit: int | None = None) -> dict[str, Any] | None:
     """The service's publication as its JSON object; None when there is none.
 
-    The object is shared between requests until the file changes: callers read it and build their
-    replies from copies. The publisher replaces the library folder, so a new publication is a new
-    file; a file rewritten in place is read again until it has settled."""
+    The object is shared between requests while the file's bytes stay the same: callers read it
+    and build their replies from copies. ``limit`` refuses a publication of more bytes."""
     global _kept
     path = layout.engine / "library" / "data.js"
-    before = _identity(path)
-    kept = _kept
-    if kept is not None and before is not None and kept[:2] == (path, before):
-        return kept[2]
-    raw = http_base.read_regular(path)
+    raw = http_base.read_regular(path, limit=None if limit is None else limit + 1)
     if raw is None:
         return None
+    if limit is not None and len(raw) > limit:
+        raise ValueError("issuer library export is over the size limit")
+    digest = hashlib.sha256(raw).hexdigest()
+    kept = _kept
+    if kept is not None and kept[0] == digest:
+        return kept[1]
     snapshot = _decoded(raw)
-    if (
-        before is not None
-        and before == _identity(path)  # the bytes read are the ones this identity names
-        and time.time_ns() - max(before[2], before[3]) > _SETTLED_NS
-    ):
-        _kept = (path, before, snapshot)
+    _kept = (digest, snapshot)
     return snapshot
 
 
