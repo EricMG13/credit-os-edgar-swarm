@@ -257,3 +257,30 @@ it("draws period and interest qualifications in one list", () => {
   expect(lists[0]).toHaveTextContent("PQ-TEXT");
   expect(lists[0]).toHaveTextContent("IQ-TEXT");
 });
+
+it("places the retained interest qualification and its source beside both applicable report rows", () => {
+  const grid = fixture();
+  const interestRow = grid.rows.find((row) => row.label === "Interest");
+  if (!interestRow) throw new Error("Missing Interest fixture");
+  grid.rows.push({ ...interestRow, label: "Interest coverage (Adj EBITDA / interest)" });
+  render(
+    <ForecastTable
+      grid={grid}
+      title="Model"
+      limits={[interest]}
+      evidenceOnlyQualifications
+      source={(name, selection) => (
+        <a href="#record" title={selection?.recordedQualification}>
+          {name}
+        </a>
+      )}
+    />,
+  );
+  for (const label of ["Interest", "Interest coverage (Adj EBITDA / interest)"]) {
+    const basis = screen.getByRole("rowheader", { name: label + " basis" }).closest("tr");
+    if (!basis) throw new Error("Missing basis row");
+    expect(basis.previousElementSibling?.querySelector("th")).toHaveTextContent(label);
+    expect(within(basis).getByText(interest)).toBeInTheDocument();
+    expect(within(basis).getByRole("link")).toHaveAttribute("title", interest);
+  }
+});

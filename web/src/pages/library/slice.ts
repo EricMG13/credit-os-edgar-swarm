@@ -156,8 +156,18 @@ export type ChangeView = { title: string; text: string; trace: string | null };
 /** The words of the Dated records set. */
 export type DateState = keyof (typeof STATUS_SETS)["Dated records"];
 
-/** One issuer date to watch: `date` is delivered text, never parsed. */
-export type DatedItem = { date: string; state: DateState; title: string; text: string };
+/**
+ * One issuer date to watch: `date` is delivered text, never parsed. `trace` is a key of the run's
+ * traces, or `null` for a date whose handoff recorded no source; the delivered key is optional and an
+ * absent key reads as `null`.
+ */
+export type DatedItem = {
+  date: string;
+  state: DateState;
+  title: string;
+  text: string;
+  trace: string | null;
+};
 
 /** The words of the Module state set. */
 export type ModuleState = keyof (typeof STATUS_SETS)["Module state"];

@@ -3,7 +3,7 @@
 lifts: live-provider-pause
 by: user
 date: 2026-11-11
-configs: sol-medium, sol-high, opus-medium, opus-high, web-search
+configs: copilot-sol-medium, copilot-sol-high, copilot-opus-medium, copilot-opus-high, copilot-luna-xhigh
 
 The user was asked: "The explicit paid action would become 'Submit after an approved summary',
 at the same USD 20 cap", and said: "2. Approved". On the service: "one users CLI will provide for
@@ -50,3 +50,12 @@ Amendment 2026-11-15 (caps per pathway): the owner said "restructure the pathway
 $25 and Lite $15" and chose a hard cap per pathway. The USD 20 per run folder above is now the run's
 pathway cap: Lite 15, Full 25, Deep 40, the five purpose pathways 20
 (`docs/rulings/2026-11-15-pathway-tiers-and-caps.md`). Nothing else in this ruling changes.
+
+
+Amendment 2026-11-18 (owner, “all routing should be through co-pilot CLI”): all live
+model calls use the GitHub Copilot CLI runtime. The named configurations replace the
+direct provider options for live use. Advanced adds GPT-6 Luna at Extra high.
+The approved per-pathway cap and the analyst's Submit action apply to every model.
+CP-DR retains the separately approved public lookup tools. Native Copilot search
+for public and private cases is pending deployment qualification of its evidence
+retention and spending bound. OpenAI-hosted search is retired for new runs.

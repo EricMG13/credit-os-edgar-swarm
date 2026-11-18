@@ -121,6 +121,9 @@ export function Changes({
             <EmptyState.Description>
               This is the first listed run for this issuer on this pathway.
             </EmptyState.Description>
+            <p className="reading-copy text-body text-text-secondary">
+              Only reports already listed when this run was made can be used for comparison.
+            </p>
           </EmptyState.Content>
           <EmptyState.Footer>
             <Button href="#overview" color="secondary">
@@ -132,7 +135,7 @@ export function Changes({
     );
   return (
     <>
-      <section className={card}>
+      <section className={rows.length > 0 ? "grid gap-4" : card}>
         <h2 className={heading}>Changes since the last run</h2>
         {change?.problem ? (
           <p>
@@ -143,6 +146,16 @@ export function Changes({
         ) : !change?.pack ? (
           <p>{note}</p>
         ) : null}
+        {(change?.problem || !change?.pack) && (
+          <div className="flex flex-wrap items-center gap-3">
+            <Button href="#overview" color="secondary" size="sm">
+              Open the Overview
+            </Button>
+            <Button href="#evidence/record" color="link-gray" size="sm" iconTrailing={ArrowRight}>
+              Review comparison evidence
+            </Button>
+          </div>
+        )}
         {rows.length > 0 && (
           <>
             <div className="flex justify-end">
@@ -281,15 +294,19 @@ function ComparedModules({
               <div className="mt-3 grid gap-3 sm:grid-cols-2">
                 <div>
                   <h3 className="font-semibold">Earlier</h3>
-                  <p>{side(item.ran_prior, item.prior_bottom_line)}</p>
+                  <p className="reading-copy text-body">
+                    {side(item.ran_prior, item.prior_bottom_line)}
+                  </p>
                 </div>
                 <div>
                   <h3 className="font-semibold">Current</h3>
-                  <p>{side(item.ran_current, item.current_bottom_line)}</p>
+                  <p className="reading-copy text-body">
+                    {side(item.ran_current, item.current_bottom_line)}
+                  </p>
                 </div>
               </div>
               {explanation.length > 0 && (
-                <p className="mt-2 text-sm text-text-secondary">
+                <p className="reading-copy mt-2 text-small text-text-secondary">
                   {readerText(explanation.join(" · "))}
                 </p>
               )}

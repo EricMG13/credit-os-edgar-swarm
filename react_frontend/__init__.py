@@ -14,11 +14,13 @@ from urllib.parse import SplitResult, parse_qs, unquote
 
 from deploy_workflow import http_base
 from deploy_workflow.inbox.layout import Layout
+from deploy_workflow.inbox import teams
 from deploy_workflow.inbox.scheduler import Scheduler, Settings
 from deploy_workflow.run_start import service
 from deploy_vii.contracts import PATHWAY_CAP_USD, PathwayId
 
 from . import admission, artifacts, portfolio, run_activity, sources
+from .library_cards import lead_summary, not_assessable_modules
 
 PROJECT = Path(__file__).resolve().parent.parent
 RUN_ID = re.compile(r"[0-9A-Za-z][0-9A-Za-z._-]{0,79}")
@@ -53,15 +55,21 @@ def _read_publication(path: Path) -> tuple[bytes, dict[str, Any] | None]:
     raw = http_base.read_regular(path)
     if raw is None:
         return b"null", None
+    encoded, snapshot = _decode_publication(raw)
+    if any(not isinstance(snapshot.get(key), dict) for key in EXPORT_KEYS):
+        raise ValueError("invalid issuer library snapshot")
+    return encoded, snapshot
+
+
+def _decode_publication(raw: bytes) -> tuple[bytes, dict[str, Any]]:
+    """The assignment's JSON object and its original bytes; anything else is refused."""
     assignment = raw.decode("utf-8").rstrip()
     if not assignment.startswith(EXPORT_PREFIX) or not assignment.endswith(";"):
         raise ValueError("invalid issuer library export")
     encoded = assignment[len(EXPORT_PREFIX) : -1]
     snapshot = json.loads(encoded, parse_constant=_invalid_json)
-    if not isinstance(snapshot, dict) or any(
-        not isinstance(snapshot.get(key), dict) for key in EXPORT_KEYS
-    ):
-        raise ValueError("invalid issuer library snapshot")
+    if not isinstance(snapshot, dict):
+        raise TypeError("invalid issuer library snapshot")
     return encoded.encode("utf-8"), snapshot
 
 
@@ -74,7 +82,14 @@ def _visible_scope(layout: Layout, folder: str | None) -> tuple[bytes, dict[str,
     if admitted is None:
         return b"null", None
     visible = sources.enrich(admitted, layout.runs)
+    visible["catalogue"] = _without_workspace(visible["catalogue"])
     return json.dumps(visible, ensure_ascii=False).encode("utf-8"), visible
+
+
+def _without_workspace(catalogue: dict[str, Any]) -> dict[str, Any]:
+    """The catalogue without ``workspace``: an older build wrote the service's folder there, and
+    nothing reads it. Every reply that sends the catalogue drops it here."""
+    return {key: value for key, value in catalogue.items() if key != "workspace"}
 
 
 def _admitted_scope(layout: Layout, folder: str | None) -> dict[str, Any] | None:
@@ -98,12 +113,15 @@ def _library_index(layout: Layout) -> http_base.Reply:
     if snapshot is None:
         return http_base.Reply(200, None)
     visible = admission.admitted(snapshot, layout)
-    runs = {
-        key: {
+    runs = {}
+    for key, record in visible["workspace"].get("runs", {}).items():
+        kept = {
             field: record[field] for field in ("folder", "issuerKey", "pathway") if field in record
         }
-        for key, record in visible["workspace"].get("runs", {}).items()
-    }
+        lead = lead_summary(visible["workspace"], record, key)
+        if lead is not None:
+            kept["lead"] = lead
+        runs[key] = kept
     return http_base.Reply(
         200,
         {
@@ -195,28 +213,36 @@ def _compressible(reply: http_base.Reply, path: str) -> bool:
     }
 
 
-def _report_entries(snapshot: dict[str, Any] | None) -> dict[str, dict[str, str]]:
+def _report_entries(snapshot: dict[str, Any] | None) -> dict[str, dict[str, Any]]:
     if snapshot is None:
         return {}
-    workspace_runs = {run["folder"]: run for run in snapshot["workspace"]["runs"].values()}
-    return {
-        run_id: {
+    workspace = snapshot["workspace"]
+    workspace_runs = {run["folder"]: (key, run) for key, run in workspace["runs"].items()}
+    entries = {}
+    for run in snapshot["catalogue"]["real"]:
+        run_id = run["id"]
+        if not _valid_report_folder(run_id) or run_id not in workspace_runs:
+            continue
+        key, record = workspace_runs[run_id]
+        entry: dict[str, Any] = {
             "id": run_id,
             "issuer": run["name"],
             "asOf": run["date"] or "",
-            "pathway": workspace_runs[run_id]["pathway"] or "",
+            "pathway": record["pathway"] or "",
         }
-        for run in snapshot["catalogue"]["real"]
-        if _valid_report_folder(run_id := run["id"]) and run_id in workspace_runs
-    }
+        blocked = not_assessable_modules(workspace, record, key)
+        if blocked:
+            entry["not_assessable"] = blocked
+        entries[run_id] = entry
+    return entries
 
 
-def _read_page(dist: Path, *, synthetic: bool, signal_url: str) -> bytes:
+def _read_page(dist: Path, *, synthetic: bool, signal_url: str, read_only: bool = False) -> bytes:
     connected = dist / "connected.html"
     page = (connected if connected.is_file() else dist / "index.html").read_bytes()
     if b"<head>" not in page or page.count(b"connect-src 'none'") != 1:
         raise ValueError("the React build must include its offline index policy")
-    mode = "synthetic" if synthetic else "live"
+    mode = "preview" if read_only else "synthetic" if synthetic else "live"
     metadata = (
         '<meta name="credit-os-backend" content="legacy">'
         f'<meta name="credit-os-mode" content="{mode}">'
@@ -273,7 +299,7 @@ def _connected_reply(
 ) -> http_base.Reply | None:
     path = url.path
     if path == "/connected/context":
-        return http_base.Reply(200, {**context, "submission_caps_usd": caps})
+        return http_base.Reply(200, {"copilot_models": {}, **context, "submission_caps_usd": caps})
     if match := RUN_ACTIVITY.fullmatch(path):  # one run by its ID, or the runs in progress
         return run_activity.reply(layout, match[1]) if match[1] else run_activity.listing(layout)
     if path == "/connected/library":
@@ -304,6 +330,20 @@ def _connected_report_reply(layout: Layout, path: str, url: SplitResult) -> http
             snapshot = admission.admitted(snapshot, layout)
         return _report_response(_report_entries(snapshot), listing, run_id)
     return None
+
+
+def _form_template(*, synthetic: bool) -> dict[str, Any]:
+    """The context the start form opens from: the example case's settings, without its issuer.
+
+    The issuer is the analyst's to name, so its name and ID reach the form empty and the form
+    shows an example only as a placeholder (audit J2-002)."""
+    template: dict[str, Any] = json.loads(
+        (PROJECT / "cases/context/research-minimal.json").read_bytes()
+    )
+    template["identity"].update(issuer_name="", issuer_id="")
+    if synthetic:
+        template["run"]["case_kind"] = "synthetic"
+    return template
 
 
 def _handler(
@@ -347,6 +387,8 @@ def _handler(
 
         def _get(self, url: SplitResult) -> None:
             path = url.path
+            if path in {"/library", "/library/", "/library/index.html", "/library.html"}:
+                raise http_base.Reply(308, b"", {"Location": "/"})
             if _app_page(path):
                 raise http_base.Reply(
                     200,
@@ -387,6 +429,7 @@ def make_server(  # noqa: PLR0913 - explicit launcher, mode and server options
     synthetic: bool = False,
     signal_url: str = "",
     read_only: bool = False,
+    copilot_models: Mapping[str, frozenset[str]] | None = None,
 ) -> Iterator[service._Server]:
     """Hold the upstream scheduler for the lifetime of the React HTTP server."""
     if (synthetic and not launcher) or (not synthetic and launcher is not None):
@@ -395,14 +438,19 @@ def make_server(  # noqa: PLR0913 - explicit launcher, mode and server options
         raise ValueError("--port must be from 0 to 65535")
     dist = (web or PROJECT / "web" / "dist").resolve()
     signal_link = service.signal_link(signal_url) if signal_url else ""
-    page = _read_page(dist, synthetic=synthetic, signal_url=signal_link)
-    context = json.loads((PROJECT / "cases/context/research-minimal.json").read_bytes())
-    if synthetic:
-        context["run"]["case_kind"] = "synthetic"
-    settings = (
-        Settings(root) if launcher is None else Settings(root, launcher=launcher, poll_seconds=0.2)
+    page = _read_page(dist, synthetic=synthetic, signal_url=signal_link, read_only=read_only)
+    context = _form_template(synthetic=synthetic)
+    settings = (  # Teams cards are for real runs only: a synthetic service never posts
+        Settings(
+            root,
+            teams=teams.config_from_environment(teams.CONNECTED_PAGES),
+            copilot_models=copilot_models or {},
+        )
+        if launcher is None
+        else Settings(root, launcher=launcher, poll_seconds=0.2, copilot_models=None)
     )
     scheduler = Scheduler(settings)
+    context["copilot_models"] = scheduler.model_choices
     try:
         with service.make_server(scheduler, "127.0.0.1", port, signal_link) as server:
             server.RequestHandlerClass = _handler(dist, page, context, read_only=read_only)
@@ -420,9 +468,16 @@ def serve(  # noqa: PLR0913 - match the server options
     launcher: tuple[str, ...] | None = None,
     synthetic: bool = False,
     signal_url: str = "",
+    copilot_models: Mapping[str, frozenset[str]] | None = None,
 ) -> None:
     with make_server(
-        root, web=web, port=port, launcher=launcher, synthetic=synthetic, signal_url=signal_url
+        root,
+        web=web,
+        port=port,
+        launcher=launcher,
+        synthetic=synthetic,
+        signal_url=signal_url,
+        copilot_models=copilot_models,
     ) as server:
         worker = threading.Thread(target=server.serve_forever)
         worker.start()

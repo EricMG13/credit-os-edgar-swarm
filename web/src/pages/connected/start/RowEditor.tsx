@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { Button } from "@/components/base/buttons/button";
 import { moduleName } from "../api";
 import { field, label } from "../layout";
@@ -13,6 +13,7 @@ export function RowEditor({
   primary,
   required,
   focusChoices,
+  openFirst,
   error,
 }: {
   kind: RowKind;
@@ -21,16 +22,20 @@ export function RowEditor({
   primary: boolean;
   required?: boolean;
   focusChoices?: Choices;
+  /** Draw the first row open when the editor appears. */
+  openFirst?: boolean;
   error?: string;
 }) {
   const spec = ROW_SPECS[kind];
   const base = useId();
   const errorId = `${base}-error`;
+  const maxId = `${base}-max`;
+  const full = rows.length >= spec.max;
   // Each row keeps one identity while it is in the list, so its open state and input ids
   // follow the row, not its position. The identity is not part of the row that is sent.
   const [ids, setIds] = useState<number[]>(() => rows.map((_, at) => at));
   const nextId = useRef(rows.length);
-  const [added, setAdded] = useState<number>();
+  const [added, setAdded] = useState<number | undefined>(openFirst ? 0 : undefined);
   // An id is missing only for the render between a change from outside and the next setIds; the
   // negative key is unique to the position, so no two rows share a key.
   const keys = rows.map((_, at) => ids[at] ?? -(at + 1));
@@ -105,8 +110,10 @@ export function RowEditor({
             color="secondary"
             ref={addButton}
             data-field={kind}
-            isDisabled={rows.length >= spec.max}
-            aria-describedby={error ? errorId : undefined}
+            isDisabled={full}
+            aria-describedby={
+              [full && maxId, error && errorId].filter(Boolean).join(" ") || undefined
+            }
             onPress={() => {
               nextId.current += 1;
               setRemoved((previous) => ({ text: "", count: previous.count }));
@@ -118,6 +125,11 @@ export function RowEditor({
             {spec.add}
           </Button>
         </div>
+        {full && (
+          <p id={maxId} className="text-sm text-text-secondary">
+            At most {spec.max} {spec.plural}.
+          </p>
+        )}
         <p role="status" className="text-sm text-text-secondary empty:hidden">
           {removed.text ? <span key={removed.count}>{removed.text}</span> : null}
         </p>
@@ -196,13 +208,22 @@ function RowItem({
   );
 }
 
-function RowInput({
+/** What a screen puts on a control so a refusal can be shown on it (`problemAttrs` in StartRun). */
+export type Marker = {
+  "data-field": string;
+  "aria-invalid"?: "true";
+  "aria-describedby"?: string;
+};
+
+export function RowInput({
   id,
   item,
   blank,
   value,
   options,
   onChange,
+  marker,
+  message,
 }: {
   id: string;
   item: RowField;
@@ -210,9 +231,14 @@ function RowInput({
   value: string;
   options?: readonly (readonly [string, string])[];
   onChange: (value: string) => void;
+  /** Set on the first control of a section that a refusal can name. */
+  marker?: Marker;
+  /** The refusal text, drawn under the control the marker is on. */
+  message?: ReactNode;
 }) {
   const hintText = item.hint ?? "";
   const hint = hintText ? `${id}-hint` : undefined;
+  const described = [hint, marker?.["aria-describedby"]].filter(Boolean).join(" ") || undefined;
   const offered = options ?? [];
   // A value the options do not list is still the value that is sent, so it is shown.
   const choices =
@@ -226,7 +252,7 @@ function RowInput({
           {item.label}
         </label>
         {item.required && (
-          <span className="text-xs font-medium whitespace-nowrap text-text-secondary">
+          <span className="text-caption font-medium whitespace-nowrap text-text-secondary">
             Required
           </span>
         )}
@@ -235,7 +261,8 @@ function RowInput({
         <select
           id={id}
           className={field}
-          aria-describedby={hint}
+          {...marker}
+          aria-describedby={described}
           aria-required={item.required ? "true" : undefined}
           value={value}
           onChange={(event) => {
@@ -256,7 +283,8 @@ function RowInput({
           type={item.kind === "date" ? "date" : "text"}
           inputMode={item.kind === "number" ? "decimal" : undefined}
           placeholder={item.placeholder}
-          aria-describedby={hint}
+          {...marker}
+          aria-describedby={described}
           aria-required={item.required ? "true" : undefined}
           value={value}
           onChange={(event) => {
@@ -265,10 +293,11 @@ function RowInput({
         />
       )}
       {hintText && (
-        <p id={hint} className="text-xs text-text-secondary">
+        <p id={hint} className="text-caption text-text-secondary">
           {hintText}
         </p>
       )}
+      {message}
     </div>
   );
 }

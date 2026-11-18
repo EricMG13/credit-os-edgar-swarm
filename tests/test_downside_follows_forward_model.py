@@ -71,23 +71,31 @@ def test_without_downside_drivers_the_shock_is_on_the_base_drivers_and_the_bytes
     assert "downside_basis" not in exact
     revenue = exact["outputs"]["DOWNSIDE"]["years"][0]["revenue"]["amount"]
     assert Decimal(revenue) == Decimal("8892.8")  # 7940 x 1.12, base growth
-    # Pinned from origin/main's output for the same block before the change.
+    # Pinned from origin/main's output for the same block before the change. T16 reworded the
+    # published limit sentence, which changes these two files only; with the earlier sentence put
+    # back they digest to the pins before it:
+    #   forecast_exact.json 01595b50efc9e010dacc47aa01ea2b052c5a2b4f22a0d7215079b8530e7177d7
+    #   calculation.json    e2c2cd687f2b3c7a6f423beba59543b4dd0d16e1af5964ea3fa04312ce1d2682
     assert sha(files["forecast_exact.json"]) == (
-        "01595b50efc9e010dacc47aa01ea2b052c5a2b4f22a0d7215079b8530e7177d7"
+        "e2c2f5854674b6d9143037789cab5f62e3c3477cfe43818c7e9c6dc67807a251"
     )
     assert sha(files["calculation.json"]) == (
-        "e2c2cd687f2b3c7a6f423beba59543b4dd0d16e1af5964ea3fa04312ce1d2682"
+        "a5705094b963f6992eb22012532076d5733db11389b308af781627495c7c932f"
     )
 
 
 def test_a_block_with_no_shock_publishes_the_bytes_it_always_did():
     files = model_files(CP1, block_with(downside_shock=None).encode())
     assert "downside_basis" not in json.loads(files["forecast_exact.json"])
+    # T16 reworded the published limit sentence, which changes these two files only; with the
+    # earlier sentence put back they digest to the pins before it:
+    #   forecast_exact.json 80ca308273bf8baf666c63f0c82e2e74fee70a2a13befe627c64ca0a8394a5d1
+    #   calculation.json    177de2661617322811f741e16b764dc13e70a572374adcc05094f483dba904bc
     assert sha(files["forecast_exact.json"]) == (
-        "80ca308273bf8baf666c63f0c82e2e74fee70a2a13befe627c64ca0a8394a5d1"
+        "c844816b9f61932044b6b2229fe9d138447e1bdbe959241e77a8949c4d51174a"
     )
     assert sha(files["calculation.json"]) == (
-        "177de2661617322811f741e16b764dc13e70a572374adcc05094f483dba904bc"
+        "3086e2265f3d133c45e599ac911572b37a9250fe950158445a39750c5322399a"
     )
 
 

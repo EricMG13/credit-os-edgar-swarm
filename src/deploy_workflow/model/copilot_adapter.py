@@ -17,6 +17,7 @@ import time
 from collections.abc import Awaitable, Callable, Mapping
 from dataclasses import dataclass, field
 from pathlib import Path
+from tempfile import TemporaryDirectory
 from typing import Any, Protocol, cast
 
 from deploy_workflow.model.adapter import (
@@ -32,12 +33,14 @@ from deploy_workflow.model.adapter import (
 )
 from deploy_workflow.model.copilot import (
     SESSION_ERROR,
+    TOKEN_LIMITS,
     TOOL_START,
     USAGE,
     _billed_usd,
     _usage,
     compactions,
     event_record,
+    prompt_tokens_estimate,
 )
 from deploy_workflow.model.providers import (
     MAX_OUTPUT_TOKENS,
@@ -279,6 +282,8 @@ class _State:
     session: SessionLike | None = None
     unsubscribe: Callable[[], None] | None = None
     tool_names: frozenset[str] = frozenset()
+    max_prompt_tokens: int | None = None
+    context_window_tokens: int | None = None
     history: tuple[Message, ...] = ()
     pending: dict[str, asyncio.Future[str]] = field(default_factory=dict)
     # (tool_call_id -> (tool_name, arguments)) of the handler invocations of the current call
@@ -355,13 +360,60 @@ def _plan_next(request: TurnRequest, state: _State) -> tuple[dict[str, str], str
     return answers, user
 
 
-def _check_model(models: list[dict[str, Any]], model: str, effort: str) -> None:
-    entry = next((m for m in models if m.get("id") == model), None)
-    if entry is None:
+def _listed_efforts(value: object) -> frozenset[str]:
+    return (
+        frozenset(e for e in value if isinstance(e, str))
+        if isinstance(value, list)
+        else frozenset()
+    )
+
+
+def _seat_catalogue(models: list[dict[str, Any]]) -> dict[str, frozenset[str]]:
+    catalogue: dict[str, frozenset[str]] = {}
+    for row in models:
+        name = row.get("id")
+        if isinstance(name, str):
+            policy = row.get("policy")
+            if policy is not None and (
+                not isinstance(policy, dict) or policy.get("state") != "enabled"
+            ):
+                catalogue[name] = frozenset()
+            else:
+                catalogue.setdefault(name, _listed_efforts(row.get("supportedReasoningEfforts")))
+    return catalogue
+
+
+def _check_model(models: list[dict[str, Any]], model: str, effort: str) -> dict[str, Any]:
+    efforts = _seat_catalogue(models).get(model)
+    if efforts is None:
         raise _Refuse("ModelUnavailable", f"the runtime does not list {model}")
-    efforts = entry.get("supportedReasoningEfforts")
-    if isinstance(efforts, list) and effort not in efforts:
+    if effort not in efforts:
         raise _Refuse("EffortUnavailable", f"{model} does not support effort {effort}")
+
+    row = next(item for item in models if item.get("id") == model)
+    capabilities = row.get("capabilities")
+    limits = capabilities.get("limits") if isinstance(capabilities, dict) else None
+    return limits if isinstance(limits, dict) else {}
+
+
+def _positive_limit(limits: dict[str, Any], key: str) -> int | None:
+    value = limits.get(key)
+    return value if type(value) is int and value > 0 else None
+
+
+def _guard_context(request: TurnRequest, state: _State) -> None:
+    estimate = prompt_tokens_estimate(len(dump_json(dataclasses.asdict(request)).encode()))
+    if state.max_prompt_tokens is not None and estimate > state.max_prompt_tokens:
+        raise _Refuse(
+            "ContextTooLong",
+            f"estimated input exceeds the seat's {state.max_prompt_tokens:,}-token limit",
+        )
+    window = state.context_window_tokens
+    if window is not None and estimate + request.max_output_tokens > window:
+        raise _Refuse(
+            "ContextTooLong",
+            f"estimated input and output exceed the seat's {window:,}-token window",
+        )
 
 
 def _usage_data(records: list[dict[str, Any]]) -> dict[str, Any] | None:
@@ -485,6 +537,21 @@ class CopilotAdapter:
     @property
     def gate(self) -> GateResult:
         return self._gate
+
+    async def seat_models(self) -> dict[str, frozenset[str]]:
+        """Read the runtime catalogue in an isolated client without creating a model session."""
+        creds = self._credentials()
+        if creds.runtime is None or (creds.token is None and creds.gh_dir is None):
+            return {}
+        with TemporaryDirectory(prefix="credit-os-copilot-seat-") as home:
+            client = self._factory(ClientOptions(creds.runtime, creds.token, home, creds.env))
+            try:
+                async with asyncio.timeout(15):
+                    await client.start()
+                    return _seat_catalogue(await client.list_models())
+            finally:
+                if await _attempt("stop", client.stop(), _STOP_S) is not None:
+                    await _attempt("force_stop", client.force_stop(), _FORCE_S)
 
     # -------------------------------------------------------- synchronous side
 
@@ -808,13 +875,16 @@ class CopilotAdapter:
         try:
             async with asyncio.timeout_at(deadline):
                 await client.start()
-                _check_model(await client.list_models(), self._model.model, call.effort)
+                model = self._model.model
+                limits = _check_model(await client.list_models(), model, call.effort)
+                state.max_prompt_tokens = _positive_limit(limits, "max_prompt_tokens")
+                state.context_window_tokens = _positive_limit(
+                    limits, "max_context_window_tokens"
+                ) or TOKEN_LIMITS.get(model)
+                _guard_context(call.request, state)
                 tools = [self._tool_def(spec, state) for spec in call.request.tools]
                 state.tool_names = frozenset(t.name for t in tools)
-                # No ``infinite_sessions`` option: the SDK default stays, so the runtime summarises
-                # ("compacts") the context at 80% of the model's limit. That is recorded and charged
-                # by the loop (``Compaction``), not disabled: a module whose first prompt already
-                # exceeds the limit would fail outright, and the readiness check only warns.
+                # Each provider exchange needs a separate budget hold.
                 state.session = await client.create_session(
                     model=self._model.model,
                     reasoning_effort=call.effort,
@@ -823,6 +893,8 @@ class CopilotAdapter:
                     available_tools=["custom:*"],
                     on_permission_request=reject_permission,
                     streaming=False,
+                    infinite_sessions={"enabled": False},
+                    autopilot={"continuation_enabled": False},
                     session_id=call.digest,
                 )
             state.unsubscribe = state.session.on(lambda event: self._on_event(state, event))
@@ -854,6 +926,7 @@ class CopilotAdapter:
                     raise _Refuse("SessionMissing", "no session for this exchange; never resent")
                 state = found
                 answers, nudge = _plan_next(call.request, state)
+                _guard_context(call.request, state)
             sent = True
             state.calls.clear()
             await self._deliver(state, answers, nudge, call.deadline)

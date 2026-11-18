@@ -138,6 +138,19 @@ describe("Kit", () => {
     expect(chart).toHaveAttribute("aria-checked", "false");
   });
 
+  it("keeps the Chart or Table toggle on one value when the selected segment is pressed again", () => {
+    render(<Kit />);
+    const group = screen.getByRole("region", { name: "Button group" });
+    const table = within(group).getByRole("radio", { name: "Table" });
+    fireEvent.click(table);
+    fireEvent.click(table);
+    expect(table).toHaveAttribute("aria-checked", "true");
+    expect(within(group).getByRole("radio", { name: "Chart" })).toHaveAttribute(
+      "aria-checked",
+      "false",
+    );
+  });
+
   it("shows the five gap states", () => {
     render(<Kit />);
     const gaps = screen.getByRole("region", { name: "Gap states" });

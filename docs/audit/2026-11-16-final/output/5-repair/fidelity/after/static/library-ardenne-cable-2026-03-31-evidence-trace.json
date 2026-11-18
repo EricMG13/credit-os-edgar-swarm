@@ -1,0 +1,80 @@
+{
+  "screen": {"id":"library--ardenne-cable--2026-03-31--evidence--trace","surface":"static","address":"/library/ardenne-cable/2026-03-31/evidence/trace","extra":false,"variant":null},
+  "page": {"title":"Evidence — Trace — Ardenne Cable — As of 31 Mar 2026 — Credit OS","headings":["Ardenne Cable","Evidence","Nothing is traced in this run"]},
+  "counts": {"textRuns":32,"figures":5,"figuresByKind":{"card":5},"tableViewFigures":0,"chartTableViews":0,"tables":0,"tableRows":0,"sourceLines":0,"drawerLines":0,"limitationSentences":2,"marks":1,"images":0,"traceControls":0,"traceDrawers":0,"traceUnavailable":0,"traceErrors":0,"coverageGap":0},
+  "expandedDisclosures": 0,
+  "outline": [
+    {"section":"","kind":"text","text":"Design reference with sample data"},
+    {"section":"","kind":"text","text":"This page shows a saved example. Its names and figures are samples, and it is not connected to the run service, so nothing here starts a run or spends money."},
+    {"section":"","kind":"link","text":"Library"},
+    {"section":"Ardenne Cable","kind":"heading","text":"Ardenne Cable"},
+    {"section":"Ardenne Cable","kind":"text","text":"As of 31 Mar 2026"},
+    {"section":"Ardenne Cable","kind":"text","text":"Full review"},
+    {"section":"Ardenne Cable","kind":"text","text":"Finished"},
+    {"section":"Ardenne Cable","kind":"link","text":"Report history"},
+    {"section":"Ardenne Cable","kind":"link","text":"New run"},
+    {"section":"Ardenne Cable","kind":"link","text":"Overview"},
+    {"section":"Ardenne Cable","kind":"link","text":"Changes"},
+    {"section":"Ardenne Cable","kind":"link","text":"Modules"},
+    {"section":"Ardenne Cable","kind":"link","text":"2"},
+    {"section":"Ardenne Cable","kind":"text","text":"Forecast"},
+    {"section":"Ardenne Cable","kind":"text","text":"No forecast for this run"},
+    {"section":"Ardenne Cable","kind":"link","text":"Evidence"},
+    {"section":"Ardenne Cable > Evidence","kind":"heading","text":"Evidence"},
+    {"section":"Ardenne Cable > Evidence","kind":"paragraph","text":"Where every figure and claim in this run comes from."},
+    {"section":"Ardenne Cable > Evidence","kind":"control","text":"Module: All"},
+    {"section":"Ardenne Cable > Evidence","kind":"select","text":"All"},
+    {"section":"Ardenne Cable > Evidence","kind":"control","text":"Jump to an item"},
+    {"section":"Ardenne Cable > Evidence","kind":"control","text":"Ctrl K"},
+    {"section":"Ardenne Cable > Evidence","kind":"link","text":"Summary"},
+    {"section":"Ardenne Cable > Evidence","kind":"link","text":"Trace"},
+    {"section":"Ardenne Cable > Evidence","kind":"link","text":"0"},
+    {"section":"Ardenne Cable > Evidence","kind":"link","text":"Sources"},
+    {"section":"Ardenne Cable > Evidence","kind":"link","text":"1"},
+    {"section":"Ardenne Cable > Evidence","kind":"link","text":"Gaps"},
+    {"section":"Ardenne Cable > Evidence","kind":"link","text":"1"},
+    {"section":"Ardenne Cable > Evidence","kind":"link","text":"Record"},
+    {"section":"Ardenne Cable > Evidence > Nothing is traced in this run","kind":"heading","text":"Nothing is traced in this run"},
+    {"section":"Ardenne Cable > Evidence > Nothing is traced in this run","kind":"paragraph","text":"The handoffs of this run were not traced item by item, so no paragraph, row or figure lists its sources here."}
+  ],
+  "tables": [],
+  "figures": [
+    {"kind":"card","text":"As of 31 Mar 2026","tokens":["31","2026"],"section":"Ardenne Cable","label":"Full review","period":"As of 31 Mar 2026","unit":null,"basis":null,"beside":"As of 31 Mar 2026 | Full review | Finished"},
+    {"kind":"card","text":"2","tokens":["2"],"section":"Ardenne Cable","label":"Modules","period":null,"unit":null,"basis":null,"beside":"Modules | 2"},
+    {"kind":"card","text":"0","tokens":["0"],"section":"Ardenne Cable > Evidence","label":"Trace","period":null,"unit":null,"basis":null,"beside":"Trace | 0"},
+    {"kind":"card","text":"1","tokens":["1"],"section":"Ardenne Cable > Evidence","label":"Sources","period":null,"unit":null,"basis":null,"beside":"Sources | 1"},
+    {"kind":"card","text":"1","tokens":["1"],"section":"Ardenne Cable > Evidence","label":"Gaps","period":null,"unit":null,"basis":null,"beside":"Gaps | 1"}
+  ],
+  "sources": [],
+  "limitations": [
+    {"via":"text","section":"","text":"This page shows a saved example. Its names and figures are samples, and it is not connected to the run service, so nothing here starts a run or spends money."},
+    {"via":"text","section":"Ardenne Cable > Evidence > Nothing is traced in this run","text":"The handoffs of this run were not traced item by item, so no paragraph, row or figure lists its sources here."}
+  ],
+  "marks": [
+    {"in":null,"tag":"div","attrs":{"data-featured-icon":"true"}}
+  ],
+  "controls": [
+    {"role":"select","name":"All Business profile Source readiness","value":"All","options":[" ","All","Business profile","Source readiness"]}
+  ],
+  "links": [
+    {"text":"Library","href":"#/library/home"},
+    {"text":"Report history","href":"#/library/ardenne-cable/history"},
+    {"text":"New run","href":"#/run/start"},
+    {"text":"Overview","href":"#/library/ardenne-cable/2026-03-31/overview"},
+    {"text":"Changes","href":"#/library/ardenne-cable/2026-03-31/changes"},
+    {"text":"Modules 2","href":"#/library/ardenne-cable/2026-03-31/modules/business-profile"},
+    {"text":"Evidence","href":"#/library/ardenne-cable/2026-03-31/evidence/summary"},
+    {"text":"Summary","href":"#/library/ardenne-cable/2026-03-31/evidence/summary"},
+    {"text":"Trace 0","href":"#/library/ardenne-cable/2026-03-31/evidence/trace"},
+    {"text":"Sources 1","href":"#/library/ardenne-cable/2026-03-31/evidence/sources"},
+    {"text":"Gaps 1","href":"#/library/ardenne-cable/2026-03-31/evidence/gaps"},
+    {"text":"Record","href":"#/library/ardenne-cable/2026-03-31/evidence/record"}
+  ],
+  "images": [],
+  "screenReaderOnly": [],
+  "coverage": {"innerText":6,"captured":6,"optionsNotDrawn":0,"selected":0,"typed":0,"screenReaderOnly":0},
+  "chartTableViews": [],
+  "sourceDrawers": [],
+  "unavailableSourceControls": [],
+  "sourceControlErrors": []
+}

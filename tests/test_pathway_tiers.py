@@ -210,7 +210,7 @@ def _answers(pathway: str) -> Answers:
         "level": "basic",
         "model": "gpt",
         "effort": "balanced",
-        "submitted_by": "analyst",
+        "submitted_by": "Ana L",
     }
     return cast(Answers, body)
 
@@ -248,7 +248,7 @@ def test_a_summary_issued_before_per_pathway_caps_must_be_made_again(root: Path)
     answers, sid = _answers(DEEP), _upload(root)
     got = submissions.summary(layout(root), sid, answers)
     issued = layout(root).uploads / sid / "issued"
-    digest, prior, cap_line = issued.read_text(encoding="ascii").split()
+    digest, prior, cap_line = issued.read_text(encoding="ascii").split()[:3]
     assert cap_line == "cap=40"
     issued.write_text(f"{digest}\n{prior}\n", encoding="ascii")  # as the earlier service wrote it
     w = Scheduler(settings(root))

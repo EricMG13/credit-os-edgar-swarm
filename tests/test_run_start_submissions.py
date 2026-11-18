@@ -8,9 +8,9 @@ import logging
 import os
 import shutil
 import tempfile
-import unicodedata
 import threading
 import time
+import unicodedata
 from collections.abc import Iterator
 from pathlib import Path
 
@@ -18,6 +18,7 @@ import pytest
 from library_fixtures import make_run
 from test_cpos_launch import context_file, issuer_folder
 
+from deploy_workflow.inbox import runs
 from deploy_workflow.inbox.layout import Layout, ensure_layout
 from deploy_workflow.owners import cpos_launch
 from deploy_workflow.owners.cpos_launch import prepare, read_documents
@@ -35,7 +36,6 @@ from deploy_workflow.run_start.submissions import (
     summary,
     sweep,
 )
-
 
 AS_ROOT = hasattr(os, "geteuid") and os.geteuid() == 0  # no geteuid on Windows
 
@@ -56,7 +56,7 @@ def answers_for(tmp_path: Path, **change: object) -> Answers:
         "level": "basic",
         "model": "gpt",
         "effort": "balanced",
-        "submitted_by": "analyst",
+        "submitted_by": "Ana L",
     }
     base.update(change)
     return base  # type: ignore[return-value]
@@ -252,6 +252,25 @@ def test_the_summary_is_the_launchers_forecast(layout, tmp_path):
     assert s["digest"] == submissions.bound(digest(layout, sid, answers), "none")
 
 
+def test_the_summary_records_the_latest_detected_document_date(layout, tmp_path):
+    sid, _ = upload_issuer(layout, tmp_path)
+    put(layout, sid, "earlier.txt", b"FORM 10-Q\nQuarter ended March 31, 2025")
+    put(layout, sid, "later.txt", b"FORM 10-Q\nQuarter ended June 30, 2025")
+    answers = answers_for(tmp_path)
+    result = summary(layout, sid, answers)
+    assert result["error"] == ""
+    [limit] = [item for item in result["items"] if item["id"] == "form:newest-document-date"]
+    assert limit["outcome"] == "limited"
+    assert "(2025-03-31) is before your newest document (2025-06-30)" in limit["reason"]
+    assert limit in (submissions.issued_summary_limits(layout, sid) or [])
+
+    answers["newest_document_date"] = "2025-03-31"
+    overridden = summary(layout, sid, answers)
+    assert overridden["error"] == ""
+    assert all(item["id"] != "form:newest-document-date" for item in overridden["items"])
+    assert overridden["digest"] != result["digest"]
+
+
 def full_assessment_summary(layout, tmp_path, workbook: bytes | None) -> dict[str, object]:
     """The summary of a full credit assessment, with the portfolio workbook chosen when given."""
     sid, _ = upload_issuer(layout, tmp_path)
@@ -405,11 +424,10 @@ def test_the_summary_checks_the_cap_as_the_standing_ruling_will_run_it(
 
     monkeypatch.setattr(submissions, "prepare", watching)
     assert summary(layout, sid, answers_for(tmp_path))["error"] == ""
-    assert seen == [True]  # the standing ruling lists web-search and GPT Sol is OpenAI
+    assert seen == [False]  # Native Copilot search is unavailable pending qualification.
 
 
 def test_a_claude_summary_checks_the_cap_with_web_search_off(layout, tmp_path, monkeypatch):
-    # The ruling lists web-search, but search is OpenAI's hosted tool: a Claude run has none.
     monkeypatch.setenv("ANTHROPIC_API_KEY", "present")
     sid, _ = upload_issuer(layout, tmp_path)
     seen = []
@@ -421,7 +439,7 @@ def test_a_claude_summary_checks_the_cap_with_web_search_off(layout, tmp_path, m
     monkeypatch.setattr(submissions, "prepare", watching)
     answers = answers_for(tmp_path, level="advanced", model="claude")
     assert summary(layout, sid, answers)["error"] == ""
-    assert seen == [("opus-medium", False)]
+    assert seen == [("copilot-opus-medium", False)]
 
 
 def test_the_summary_is_for_the_module_list_the_digest_covers(layout, tmp_path):
@@ -451,7 +469,9 @@ def test_the_digest_changes_with_a_file_the_context_the_modules_or_the_turns_onl
     base = answers_for(tmp_path)
     first = digest(layout, sid, base)
     assert len(first) == 64
-    assert digest(layout, sid, answers_for(tmp_path, level="advanced", submitted_by="x")) == first
+    assert (
+        digest(layout, sid, answers_for(tmp_path, level="advanced", submitted_by="Xan T")) == first
+    )
     assert digest(layout, sid, answers_for(tmp_path, max_turns=40)) != first
     assert digest(layout, sid, answers_for(tmp_path, modules=["CP-0"])) != first
     changed = answers_for(tmp_path)
@@ -531,6 +551,21 @@ def test_a_file_landing_while_the_summary_is_made_gives_no_digest(layout, tmp_pa
         {"level": "expert"},
         {"submitted_by": 5},
         {"submitted_by": "x" * 81},
+        {"submitted_by": ""},
+        {"submitted_by": "Eric"},
+        {"submitted_by": "Eric Garcia"},
+        {"submitted_by": "Eric g"},
+        {"submitted_by": "Eric MGH"},
+        {"submitted_by": "Eric M G"},
+        {"submitted_by": "Eric  G"},
+        {"submitted_by": " Eric G"},
+        {"submitted_by": "Eric G "},
+        {"submitted_by": "Er1c G"},
+        {"submitted_by": "-Eric G"},
+        {"submitted_by": "Eric G\n"},
+        {"newest_document_date": None},
+        {"newest_document_date": "20261118"},
+        {"newest_document_date": "2026-02-29"},
     ],
 )
 def test_hostile_answers_are_refusals_not_exceptions(layout, tmp_path, change):
@@ -1138,35 +1173,21 @@ def test_an_unknown_model_or_effort_is_refused_even_at_advanced(tmp_path, change
         submissions.validated(answers_for(tmp_path, level="advanced", **change))
 
 
-def test_a_claude_submission_is_refused_without_an_anthropic_key(layout, tmp_path, monkeypatch):
+@pytest.mark.parametrize(("model", "effort"), [("luna", "xhigh"), ("claude", "fast")])
+def test_advanced_prepares_offline_without_a_seat(layout, tmp_path, monkeypatch, model, effort):
     sid, _ = upload_issuer(layout, tmp_path)
-    answers = answers_for(tmp_path, level="advanced", model="claude", effort="high")
-    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
-    got = summary(layout, sid, answers)
-    assert got["error"] == "Claude Opus is not available on this service"
-    assert "digest" not in got
-    with pytest.raises(Refused, match="Claude Opus is not available on this service"):
-        submissions.require_provider_key(answers)
-    monkeypatch.setenv("ANTHROPIC_API_KEY", "")
-    with pytest.raises(Refused, match="not available"):
-        submissions.require_provider_key(answers)
-
-
-def test_a_claude_submission_is_accepted_with_an_anthropic_key_and_no_key_is_shown(
-    layout, tmp_path, monkeypatch
-):
-    sid, _ = upload_issuer(layout, tmp_path)
-    answers = answers_for(tmp_path, level="advanced", model="claude", effort="fast")
-    monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key-not-real")
+    answers = answers_for(tmp_path, level="advanced", model=model, effort=effort)
+    monkeypatch.delenv("COPILOT_GITHUB_TOKEN", raising=False)
+    monkeypatch.delenv("COPILOT_USE_GH_LOGIN", raising=False)
     got = summary(layout, sid, answers)
     assert got["error"] == "" and got["digest"]
-    assert "test-key-not-real" not in json.dumps(got)
-    submissions.require_provider_key(answers)
+    assert (got["model"], got["effort"]) == (model, effort)
 
 
-def test_a_gpt_submission_needs_no_anthropic_key(tmp_path, monkeypatch):
-    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
-    submissions.require_provider_key(answers_for(tmp_path))
+@pytest.mark.parametrize(("model", "effort"), [("luna", "balanced"), ("gpt", "xhigh")])
+def test_a_known_effort_for_the_wrong_model_is_refused(tmp_path, model, effort):
+    with pytest.raises(Refused, match="does not offer that reasoning effort"):
+        submissions.validated(answers_for(tmp_path, level="advanced", model=model, effort=effort))
 
 
 def test_the_digest_covers_the_model_and_effort(layout, tmp_path):
@@ -1561,6 +1582,19 @@ def test_two_submissions_carrying_from_one_run_both_end_with_the_runs_files(layo
     }  # the earlier run's own files stay
 
 
+@pytest.mark.parametrize(
+    "name",
+    ["Eric G", "Eric MG", "Jo L", "Anne-Marie D", "D'Arcy OB", "D\u2019Arcy O", "Zo\u00eb \u00c9"],
+)
+def test_an_analyst_name_is_a_first_name_and_one_or_two_initials(tmp_path, name):
+    assert submissions.validated(answers_for(tmp_path, submitted_by=name))["submitted_by"] == name
+
+
+def test_a_refused_analyst_name_says_the_form_to_use(tmp_path):
+    with pytest.raises(Refused, match="for example Eric G, or two initials, for example Eric MG"):
+        submissions.validated(answers_for(tmp_path, submitted_by="Eric Garcia"))
+
+
 def web_search_of(layout, tmp_path, kind, monkeypatch, **change):
     """The summary's ``web_search`` for a ``kind`` case under ``change``."""
     monkeypatch.delenv(SEC_AGENT, raising=False)
@@ -1573,16 +1607,16 @@ def web_search_of(layout, tmp_path, kind, monkeypatch, **change):
     return result["web_search"]
 
 
-def test_a_private_gpt_run_with_the_research_module_states_that_it_searches_the_web(
+def test_a_private_gpt_run_with_the_research_module_has_no_hosted_search(
     layout, tmp_path, monkeypatch
 ):
-    assert web_search_of(layout, tmp_path, "private", monkeypatch) is True
+    assert web_search_of(layout, tmp_path, "private", monkeypatch) is False
 
 
-def test_a_public_gpt_run_with_the_research_module_states_that_it_searches_the_web(
+def test_a_public_gpt_run_with_the_research_module_has_no_hosted_search(
     layout, tmp_path, monkeypatch
 ):
-    assert web_search_of(layout, tmp_path, "public", monkeypatch) is True
+    assert web_search_of(layout, tmp_path, "public", monkeypatch) is False
 
 
 def test_a_synthetic_case_summary_states_no_web_search(layout, tmp_path, monkeypatch):
@@ -1600,3 +1634,411 @@ def test_a_run_without_the_research_module_states_no_web_search(layout, tmp_path
     assert (
         web_search_of(layout, tmp_path, "private", monkeypatch, modules=["CP-0", "CP-1"]) is False
     )
+
+
+@pytest.mark.parametrize(
+    ("case", "on"),
+    [
+        (("public", {}), True),
+        (("public", {"level": "advanced", "model": "claude"}), True),  # on any model
+        (("private", {}), False),
+        (("synthetic", {}), False),
+        (("public", {"modules": ["CP-0", "CP-1"]}), False),  # the research module left out
+    ],
+)
+def test_the_summary_says_whether_the_research_module_will_use_its_lookup(
+    layout, tmp_path, monkeypatch, case, on
+):
+    """``web_lookup`` is what the review's Yahoo statement shows on: true exactly when the run
+    Submit starts gives the research module its lookup tools, as the launcher's own line says."""
+    kind, change = case
+    monkeypatch.delenv(SEC_AGENT, raising=False)
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "present")
+    sid, _ = upload_issuer(layout, tmp_path)
+    answers = answers_for(tmp_path, **change)
+    answers["context"]["run"]["case_kind"] = kind  # type: ignore[index]
+    result = summary(layout, sid, answers)
+    assert result["error"] == ""
+    assert result["web_lookup"] is on
+    assert any(line.startswith("Lookup:   on") for line in result["lookup"]) is on
+
+
+def test_the_summary_names_each_omitted_report_section_by_its_title(layout, tmp_path):
+    from deploy_vii.report_view import _spec_of
+
+    sid, _ = upload_issuer(layout, tmp_path)
+    s = summary(layout, sid, answers_for(tmp_path, modules=["CP-0", "CP-1"]))
+    assert s["error"] == "" and s["omitted"]  # a run with sections not produced
+    assert len(s["omitted_titles"]) == len(s["omitted"])
+    assert s["omitted_titles"] == [_spec_of(block_id).title for block_id in s["omitted"]]
+    assert all(title != block_id for title, block_id in zip(s["omitted_titles"], s["omitted"]))
+
+
+LONG_TDG = "TDG_FY2024_annual-report_SEC-PDF_0001260221-25-000008_a841225transdigmgroupbookm"
+
+
+def test_a_long_name_keeps_its_extension_and_is_stored(layout):
+    sid = new(layout)
+    stored = put(layout, sid, LONG_TDG + ".pdf")
+    assert stored.endswith(".pdf")
+    assert len(stored) <= 80
+    assert stored.startswith("TDG_FY2024_annual-report_SEC-PDF_0001260221-25-000008_a841225")
+    assert (files_folder(layout, sid) / stored).is_file()
+
+
+def test_a_long_named_file_is_read_not_ignored(layout):
+    sid = new(layout)
+    stored = put(layout, sid, LONG_TDG + ".txt", b"Revenue grew in fiscal 2024.\n")
+    got = reading(layout, sid)
+    assert got["error"] == ""
+    assert got["ignored"] == []
+    assert [d["source"] for d in got["documents"]] == [stored]
+    assert stored.endswith(".txt")
+
+
+def test_two_long_names_with_one_beginning_are_both_kept(layout):
+    sid = new(layout)
+    first = put(layout, sid, "A" * 78 + "x1.pdf", b"one")
+    second = put(layout, sid, "A" * 78 + "x2.pdf", b"two")
+    assert first != second
+    folder = files_folder(layout, sid)
+    assert (folder / first).read_bytes() == b"one"
+    assert (folder / second).read_bytes() == b"two"
+
+
+def test_a_name_of_eighty_characters_or_fewer_is_stored_as_it_is(layout):
+    sid = new(layout)
+    short = "TDG_2024-03-30_10-Q_0001260221-24-000046_tdg-20240330.htm"
+    assert put(layout, sid, short) == short
+    long_name = LONG_TDG + ".pdf"
+    assert put(layout, sid, long_name, b"a") == put(layout, sid, long_name, b"b")
+
+
+def test_two_names_that_agree_for_eighty_characters_are_both_kept(layout):
+    sid = new(layout)
+    first = put(layout, sid, "A" * 80 + "x1.pdf", b"one")
+    second = put(layout, sid, "A" * 80 + "x2.pdf", b"two")
+    assert first != second
+    assert len(first) <= 80 and len(second) <= 80
+    folder = files_folder(layout, sid)
+    assert (folder / first).read_bytes() == b"one"
+    assert (folder / second).read_bytes() == b"two"
+
+
+# ---- T09 round 2 (J5-004): an Issuer ID filed under one issuer is refused for another ----
+
+# The same literal cases are pinned in web/src/pages/connected/start/plain.test.ts (`issuerKey`):
+# the page and the service must reduce a name the same way.
+ISSUER_KEY_CASES = [
+    ("Acme Corp", "acmecorp"),
+    ("ACME  corp.", "acmecorp"),
+    ("Åre Group A/S", "aregroupas"),
+    ("Straße Holdings plc", "straßeholdingsplc"),
+    ("Ørsted A/S", "ørstedas"),
+    ("Ａｃｍｅ Ｃｏｒｐ", "acmecorp"),
+    ("Nestlé S.A. 2", "nestlesa2"),
+    ("İstanbul Ltd", "istanbulltd"),
+    ("  ", ""),
+    ("中国银行 Ltd", "中国银行ltd"),
+    ("中国建设银行 Ltd", "中国建设银行ltd"),
+    ("Газпром ПАО", "газпромпао"),
+    ("Йога-Центр", "иогацентр"),
+]
+
+
+@pytest.mark.parametrize(("name", "key"), ISSUER_KEY_CASES)
+def test_issuer_key_matches_the_pages_reduction(name, key):
+    assert submissions.issuer_key(name) == key
+
+
+def file_run(
+    layout: Layout, run_id: str, issuer_id: str, issuer_name: str, as_of: str = "2026-01-01"
+):
+    runs.save(
+        layout,
+        runs.Record(
+            run_id,
+            "credit_snapshot",
+            issuer_name,
+            "finished",
+            "t",
+            issuer_id=issuer_id,
+            issuer_name=issuer_name,
+            as_of=as_of,
+        ),
+    )
+
+
+def named(tmp_path: Path, issuer_id: str, issuer_name: str) -> Answers:
+    answers = answers_for(tmp_path)
+    answers["context"]["identity"].update(issuer_id=issuer_id, issuer_name=issuer_name)
+    return answers
+
+
+def test_a_hand_typed_id_filed_under_another_issuer_is_refused_by_summary_and_digest(
+    layout, tmp_path
+):
+    file_run(layout, "20260101-000001-01", "acme", "Acme Corp")
+    sid, _ = upload_issuer(layout, tmp_path)
+    answers = named(tmp_path, "acme", "Eastmoor Synthetic Utilities plc")
+    got = summary(layout, sid, answers)
+    assert "digest" not in got
+    assert got["error"] == (
+        'Issuer ID "acme" is filed under the name "Acme Corp", not "Eastmoor Synthetic Utilities '
+        'plc". If that is this issuer under another name, type that name; otherwise use another '
+        "Issuer ID."
+    )
+    with pytest.raises(Refused, match="filed under the name"):
+        digest(layout, sid, answers)
+
+
+def test_two_different_non_latin_names_are_different_issuers(layout, tmp_path):
+    file_run(layout, "20260101-000001-01", "issuer-1", "中国银行 Ltd")
+    sid, _ = upload_issuer(layout, tmp_path)
+    got = summary(layout, sid, named(tmp_path, "issuer-1", "中国建设银行 Ltd"))
+    assert 'filed under the name "中国银行 Ltd"' in got["error"]
+    assert not summary(layout, sid, named(tmp_path, "issuer-1", "中国银行  LTD"))["error"]
+
+
+def test_a_carried_id_whose_name_was_then_changed_is_refused(layout, tmp_path):
+    file_run(layout, "20260101-000001-01", "acme", "Acme Corp")
+    sid, _ = upload_issuer(layout, tmp_path)
+    got = summary(layout, sid, named(tmp_path, "acme", "Acme Holdings Ltd"))
+    assert 'filed under the name "Acme Corp"' in got["error"]
+
+
+def test_the_two_northbridge_long_names_do_not_share_an_id(layout, tmp_path):
+    long_id = "northbridge-synthetic-group-internationa"
+    file_run(
+        layout,
+        "20260101-000001-01",
+        long_id,
+        "Northbridge Synthetic Group International Holdings Limited",
+    )
+    sid, _ = upload_issuer(layout, tmp_path)
+    got = summary(
+        layout,
+        sid,
+        named(tmp_path, long_id, "Northbridge Synthetic Group International Finance plc"),
+    )
+    assert "filed under the name" in got["error"] and "digest" not in got
+    # ... the suffixed ID the page offers is free.
+    free = named(
+        tmp_path,
+        "northbridge-synthetic-group-int-518e588e",
+        "Northbridge Synthetic Group International Finance plc",
+    )
+    assert summary(layout, sid, free)["error"] == ""
+
+
+def test_a_short_name_that_collides_is_refused(layout, tmp_path):
+    file_run(
+        layout,
+        "20260101-000001-01",
+        "northbridge-synthetic-group-investments",
+        "Northbridge Synthetic Group Investments Holdings Limited",
+    )
+    sid, _ = upload_issuer(layout, tmp_path)
+    got = summary(
+        layout,
+        sid,
+        named(
+            tmp_path,
+            "northbridge-synthetic-group-investments",
+            "Northbridge Synthetic Group Investments",
+        ),
+    )
+    assert "filed under the name" in got["error"]
+
+
+def test_the_same_issuer_under_its_own_id_is_accepted_however_it_is_typed(layout, tmp_path):
+    file_run(layout, "20260101-000001-01", "acme", "Acme Corp")
+    file_run(layout, "20260101-000002-01", "nameless", "")
+    sid, _ = upload_issuer(layout, tmp_path)
+    assert summary(layout, sid, named(tmp_path, "acme", "ACME  corp."))["error"] == ""
+    assert summary(layout, sid, named(tmp_path, "nameless", "Anything Plc"))["error"] == ""
+    assert summary(layout, sid, named(tmp_path, "unused-id", "Anything Plc"))["error"] == ""
+
+
+def test_an_id_already_merged_before_the_check_accepts_either_of_its_issuers(layout, tmp_path):
+    file_run(layout, "20260101-000001-01", "acme", "Acme Corp", "2026-01-01")
+    file_run(layout, "20260101-000002-01", "acme", "Acme Finance plc", "2026-02-01")
+    sid, _ = upload_issuer(layout, tmp_path)
+    assert summary(layout, sid, named(tmp_path, "acme", "Acme Corp"))["error"] == ""
+    assert summary(layout, sid, named(tmp_path, "acme", "Acme Finance plc"))["error"] == ""
+    assert "filed under the name" in summary(layout, sid, named(tmp_path, "acme", "Other"))["error"]
+
+
+def _age(layout: Layout, sid: str, seconds: float) -> None:
+    then = time.time() - seconds
+    os.utime(layout.uploads / sid, (then, then))
+
+
+def test_at_the_ceiling_an_abandoned_draft_makes_room_for_a_new_form(layout, monkeypatch):
+    monkeypatch.setattr(submissions, "MAX_OPEN", 2)
+    old, fresh = new(layout), new(layout)
+    put(layout, old, "a.txt")
+    _age(layout, old, submissions.IDLE_SECONDS + 60)
+    added = new(layout)
+    assert not (layout.uploads / old).exists()
+    assert (layout.uploads / fresh).is_dir() and (layout.uploads / added).is_dir()
+
+
+def test_a_recently_used_draft_is_never_made_room_from(layout, monkeypatch):
+    monkeypatch.setattr(submissions, "MAX_OPEN", 2)
+    one, two = new(layout), new(layout)
+    put(layout, one, "a.txt")
+    _age(layout, one, submissions.IDLE_SECONDS - 60)
+    with pytest.raises(Refused, match="too many unfinished submissions"):
+        new(layout)
+    assert (layout.uploads / one / "files" / "a.txt").is_file() and (layout.uploads / two).is_dir()
+
+
+def test_a_draft_with_an_approval_issued_is_never_made_room_from(layout, monkeypatch):
+    monkeypatch.setattr(submissions, "MAX_OPEN", 1)
+    sid = new(layout)
+    (layout.uploads / sid / "issued").write_text("0" * 64 + "\n")
+    _age(layout, sid, submissions.IDLE_SECONDS + 60)
+    with pytest.raises(Refused, match="too many unfinished submissions"):
+        new(layout)
+    assert (layout.uploads / sid / "issued").is_file()
+
+
+def test_a_draft_with_an_upload_in_flight_is_never_made_room_from(layout, monkeypatch):
+    monkeypatch.setattr(submissions, "MAX_OPEN", 1)
+    sid = new(layout)
+    _age(layout, sid, submissions.IDLE_SECONDS + 60)
+    monkeypatch.setitem(submissions._PENDING, sid, {"tmp": ("a.txt", 1)})
+    with pytest.raises(Refused, match="too many unfinished submissions"):
+        new(layout)
+
+
+def test_reading_the_documents_keeps_a_draft_live(layout, monkeypatch):
+    monkeypatch.setattr(submissions, "MAX_OPEN", 1)
+    sid = new(layout)
+    put(layout, sid, "a.txt")
+    _age(layout, sid, submissions.IDLE_SECONDS + 60)
+    reading(layout, sid)
+    with pytest.raises(Refused, match="too many unfinished submissions"):
+        new(layout)
+
+
+def test_reading_cannot_lose_its_draft_between_lookup_and_refresh(layout, monkeypatch):
+    monkeypatch.setattr(submissions, "MAX_OPEN", 1)
+    sid = new(layout)
+    put(layout, sid, "a.txt")
+    _age(layout, sid, 3 * 3600)
+    touching, resume, ceiling_attempted, ceiling_done = (threading.Event() for _ in range(4))
+    lock = threading.Lock()
+    ceiling_waited: list[bool] = []
+    outcomes: dict[str, object] = {}
+    original_touch = submissions._touch
+
+    class ObservedLock:
+        def __enter__(self):
+            if threading.current_thread().name == "make-room":
+                acquired = lock.acquire(blocking=False)
+                ceiling_waited.append(not acquired)
+                ceiling_attempted.set()
+                if not acquired:
+                    lock.acquire()
+            else:
+                lock.acquire()
+
+        def __exit__(self, *args):
+            lock.release()
+
+    def paused_touch(folder):
+        touching.set()
+        assert resume.wait(5), "the test did not release the document reader"
+        original_touch(folder)
+
+    def read():
+        try:
+            outcomes["reading"] = reading(layout, sid)
+        except (Refused, OSError) as error:
+            outcomes["reading"] = error
+
+    def make_room():
+        try:
+            outcomes["new"] = new(layout)
+        except Refused as error:
+            outcomes["new"] = str(error)
+        finally:
+            ceiling_done.set()
+
+    monkeypatch.setattr(submissions, "_LOCK", ObservedLock())
+    monkeypatch.setattr(submissions, "_touch", paused_touch)
+    reader = threading.Thread(target=read, daemon=True)
+    creator = threading.Thread(target=make_room, name="make-room", daemon=True)
+    reader.start()
+    try:
+        assert touching.wait(5)
+        creator.start()
+        assert ceiling_attempted.wait(5)
+        if not ceiling_waited[0]:
+            assert ceiling_done.wait(5)
+    finally:
+        resume.set()
+        reader.join(5)
+        if creator.ident is not None:
+            creator.join(5)
+    assert not reader.is_alive() and not creator.is_alive()
+    assert outcomes["reading"]["error"] == ""
+    assert outcomes["reading"]["ignored"] == []
+    assert [item["source"] for item in outcomes["reading"]["documents"]] == ["a.txt"]
+    assert str(outcomes["new"]).startswith("too many unfinished submissions")
+    assert (layout.uploads / sid / "files" / "a.txt").read_bytes() == b"abc"
+
+
+def test_reading_reports_and_logs_a_failed_liveness_refresh(layout, monkeypatch, caplog):
+    sid = new(layout)
+
+    def failed_touch(folder):
+        raise OSError("controlled touch failure")
+
+    monkeypatch.setattr(submissions, "_touch", failed_touch)
+    with caplog.at_level(logging.WARNING), pytest.raises(Refused, match="could not be kept active"):
+        reading(layout, sid)
+    assert "controlled touch failure" in caplog.text
+    assert "could not refresh submission" in caplog.text
+
+
+def test_the_idle_ceiling_stays_at_two_hours_and_removes_only_the_oldest(layout, monkeypatch):
+    monkeypatch.setattr(submissions, "MAX_OPEN", 3)
+    youngest, middle, oldest = new(layout), new(layout), new(layout)
+    now = time.time()
+    monkeypatch.setattr(submissions.time, "time", lambda: now)
+    for sid, seconds in ((youngest, 7200), (middle, 9000), (oldest, 10800)):
+        os.utime(layout.uploads / sid, (now - seconds, now - seconds))
+    added = new(layout)
+    assert submissions.IDLE_SECONDS == 7200
+    assert not (layout.uploads / oldest).exists()
+    assert all((layout.uploads / sid).is_dir() for sid in (youngest, middle, added))
+    assert len(submissions._open_folders(layout)) == 3
+
+
+def test_idle_eviction_starts_at_exactly_two_hours(layout, monkeypatch):
+    monkeypatch.setattr(submissions, "MAX_OPEN", 1)
+    sid = new(layout)
+    now = time.time()
+    monkeypatch.setattr(submissions.time, "time", lambda: now)
+    os.utime(layout.uploads / sid, (now - 7199, now - 7199))
+    with pytest.raises(Refused, match="too many unfinished submissions"):
+        new(layout)
+    os.utime(layout.uploads / sid, (now - 7200, now - 7200))
+    added = new(layout)
+    assert not (layout.uploads / sid).exists()
+    assert (layout.uploads / added).is_dir()
+
+
+def test_a_full_active_ceiling_explains_how_to_recover(layout, monkeypatch):
+    monkeypatch.setattr(submissions, "MAX_OPEN", 1)
+    sid = new(layout)
+    with pytest.raises(Refused) as refused:
+        new(layout)
+    assert str(refused.value) == (
+        "too many unfinished submissions; continue an existing form, or try again after an unused "
+        "draft has been idle for 2 hours (24 hours if it reached review)"
+    )
+    assert (layout.uploads / sid / "files").is_dir()

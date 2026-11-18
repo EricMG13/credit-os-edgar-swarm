@@ -39,7 +39,7 @@ it("defaults to financial foundation and the designated output, retaining altern
     `/report/retained%20case#evidence/b~${"b".repeat(64)}`,
   );
   const saved = within(screen.getByRole("navigation", { name: "Saved outputs" }));
-  expect(saved.getByRole("link", { name: "Designated handoff" })).toHaveAttribute(
+  expect(saved.getByRole("link", { name: "Output used in report" })).toHaveAttribute(
     "aria-current",
     "page",
   );
@@ -48,11 +48,11 @@ it("defaults to financial foundation and the designated output, retaining altern
     "href",
     `/report/retained%20case#evidence/a~${"a".repeat(64)}`,
   );
-  expect(saved.getByRole("link", { name: "Retained output 1" })).toHaveAttribute(
+  expect(saved.getByRole("link", { name: "Saved output 1" })).toHaveAttribute(
     "aria-current",
     "page",
   );
-  expect(saved.getByRole("link", { name: "Designated handoff" })).not.toHaveAttribute(
+  expect(saved.getByRole("link", { name: "Output used in report" })).not.toHaveAttribute(
     "aria-current",
   );
 });
@@ -140,11 +140,28 @@ it("leads CP-1 with the module's own bottom line, not a sentence the app wrote",
   expect(screen.getByText(lead)).toBeVisible();
 });
 
-function renderModule(extra: Partial<OutputEntry["output"]>) {
+function renderModule(extra: Partial<OutputEntry["output"]>, withBottomLine = false) {
   const entry = output("c", true);
   entry.output = { ...entry.output, module: "CP-2", ...extra };
   entry.sections = [
     { heading: "Findings", level: 2, line: 1, blocks: [] },
+    ...(withBottomLine
+      ? [
+          {
+            heading: "Bottom line",
+            level: 3,
+            line: 2,
+            blocks: [
+              {
+                type: "text" as const,
+                line: 3,
+                end: 3,
+                text: "Reported liquidity covers the next payment.",
+              },
+            ],
+          },
+        ]
+      : []),
     {
       heading: "Confidence inputs",
       level: 3,
@@ -164,6 +181,20 @@ function renderModule(extra: Partial<OutputEntry["output"]>) {
   props.view.entries = [entry];
   return render(<Modules {...props} module="CP-2" />);
 }
+
+it("places a published zero and its confidence band beside the Bottom line with a separate trace", async () => {
+  renderModule({ confidence: { value: 0, band: "Insufficient Information" } }, true);
+  const bottomLine = within(screen.getByRole("region", { name: /^Bottom line$/ }));
+  const score = within(bottomLine.getByRole("group", { name: "Confidence score" }));
+  expect(bottomLine.getByRole("group", { name: "Confidence score" })).toHaveTextContent("0 / 100");
+  expect(score.getByText("Insufficient Information")).toBeVisible();
+  expect(screen.queryByText("Confidence score")).toBeNull();
+  expect(
+    bottomLine.getByRole("button", { name: "Show sources for the bottom line" }),
+  ).toBeVisible();
+  fireEvent.click(score.getByRole("button", { name: "Show sources for the confidence score" }));
+  expect(await screen.findByRole("dialog")).toHaveTextContent("Coverage");
+});
 
 it("shows the published confidence score with its band", () => {
   renderModule({ confidence: { value: 72, band: "Medium" } });
@@ -561,3 +592,70 @@ it("counts a passage drawn as a chart as present", () => {
   expect(screen.getByText("Limitations says so.")).toBeInTheDocument();
   expect(screen.queryByText(/The module's handoff has no such passage/)).not.toBeInTheDocument();
 });
+
+// docs/rulings/2026-11-16-reporting-currency-from-sources.md: the run's currency is CP-1's money
+// unit, which the catalogue records with the run's cash figure.
+it.each([
+  ["GBPm", "Market levels are US market quotes in US dollars; this run reports in GBPm."],
+  ["US$m", null],
+])(
+  "notes US market quotes on the security decisions of a %s run only when not USD",
+  (unit, text) => {
+    const entry = output("s", true);
+    entry.output = { ...entry.output, module: "CP-3", label: "Security selection" };
+    entry.sections = [
+      FINDINGS,
+      {
+        heading: "Security decision summary",
+        level: 3,
+        line: 2,
+        blocks: [
+          {
+            type: "table",
+            line: 4,
+            headers: [
+              "Instrument",
+              "Market level (1 Oct 2026)",
+              "Rank",
+              "Relative value",
+              "Recommendation",
+              "Source",
+            ],
+            rows: [
+              {
+                line: 6,
+                cells: [
+                  "Secured notes",
+                  "$99.00; yield 7.00%",
+                  "First lien",
+                  "Fair",
+                  "Neutral",
+                  "p.1",
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    ];
+    const props = fixture([]);
+    props.view.modules = [
+      { id: "CP-3", name: "Security selection", state: "Delivered", outputs: [entry] },
+    ];
+    props.view.entries = [entry];
+    props.view.catalogue = {
+      id: "first",
+      issuer: "A",
+      name: "A",
+      title: "",
+      date: "2026-11-01",
+      period: "",
+      sector: "",
+      metrics: { cash: { value: "1250", unit, period: "2026-06-30" } },
+    };
+    render(<Modules {...props} module="CP-3" />);
+    const decisions = screen.getByRole("region", { name: "Instrument decisions" });
+    if (text) expect(within(decisions).getByText(text)).toHaveAttribute("role", "note");
+    else expect(within(decisions).queryByText(/US market quotes/)).toBeNull();
+  },
+);

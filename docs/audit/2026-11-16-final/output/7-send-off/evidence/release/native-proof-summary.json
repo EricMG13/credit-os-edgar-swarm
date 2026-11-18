@@ -1,0 +1,25 @@
+{
+  "sourceCommit": "a987af9b9ca5072d28f2e1f9e1dc5269c6c1858f",
+  "zipSha256": "db51d1996b3913ef77a6e51ba3281554cb7c3be33f95ffaf2a966b2544a7088e",
+  "platform": "linux",
+  "osRelease": "6.18.57",
+  "artifacts": "/workspace/scratch/stage7-release/extracted/proof-artifacts/run-Gesls9",
+  "browsers": [
+    {
+      "channel": "chrome",
+      "version": "157.0.8103.78",
+      "run": "20261117-223409-01",
+      "appAttempts": 0,
+      "nativeProxyBlocks": 169,
+      "blankProxyBlocks": 7
+    },
+    {
+      "channel": "msedge",
+      "version": "155.0.4283.62",
+      "run": "20261117-223511-01",
+      "appAttempts": 0,
+      "nativeProxyBlocks": 209,
+      "blankProxyBlocks": 7
+    }
+  ]
+}

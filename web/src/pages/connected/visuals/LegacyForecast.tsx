@@ -1,11 +1,13 @@
-import { type ReactNode } from "react";
+import { type ComponentProps, type ReactNode } from "react";
 import { ForecastTable } from "./ForecastTable";
+import { Button } from "@/components/base/buttons/button";
 import { PathChart } from "@/components/chart/PathChart";
 import { ChartTable } from "@/components/chart/ChartTable";
 import { TrendChart } from "@/components/chart/TrendChart";
 import { TRACE_HOST } from "@/pages/library/parts/TraceControl";
-import { containsReference } from "../publishedReport";
+import { containsReference, readerText, unitLabel } from "../publishedReport";
 import { amount, items, record, stringsIn, ticks, word } from "./visualData";
+import type { ForecastSource } from "../report/ForecastRecord";
 
 interface GridColumn {
   label: string;
@@ -15,6 +17,7 @@ interface GridColumn {
 }
 
 interface GridRow {
+  kind?: string;
   label: string;
   band: string;
   total: boolean;
@@ -43,6 +46,7 @@ export function gridOf(raw: unknown): Grid | null {
     return {
       label: word(row.label),
       band: word(row.band),
+      kind: word(row.kind),
       total: row.total === true,
       cells: items(row.cells).map(record),
     };
@@ -67,13 +71,15 @@ function SelectedForecastTable({
   downsideNote,
   limits,
   source,
+  evidenceOnlyQualifications,
 }: {
   grid: Grid;
   title: string;
   selectedCase?: string;
   downsideNote?: string;
   limits: string[];
-  source?: (label: string) => ReactNode;
+  source?: ForecastSource;
+  evidenceOnlyQualifications?: boolean;
 }) {
   const selectedIndexes = inputGrid.columns.flatMap((column, index) => {
     const caseLabel = forecastCaseLabel(column.group, downsideNote);
@@ -94,7 +100,31 @@ function SelectedForecastTable({
               .filter((cell) => cell !== undefined),
           })),
         };
-  return <ForecastTable grid={grid} title={title} limits={limits} source={source} />;
+  const displayed = {
+    ...grid,
+    columns: grid.columns.map((column) => ({
+      ...column,
+      group: forecastCaseLabel(column.group, downsideNote),
+    })),
+  };
+  const groups = [...new Set(displayed.columns.map((column) => column.group))];
+  return (
+    <ForecastTable
+      grid={displayed}
+      title={title}
+      limits={limits}
+      source={
+        source &&
+        ((name, selection) =>
+          source(name, {
+            case: groups.length === 1 ? groups[0] : "",
+            groups,
+            ...selection,
+          }))
+      }
+      evidenceOnlyQualifications={evidenceOnlyQualifications}
+    />
+  );
 }
 
 const FORECAST_LINES = ["Revenue", "Adj EBITDA", "Closing cash", "Closing debt"];
@@ -125,7 +155,7 @@ const caseLabels: Record<string, string> = {
   "Downside (CP-2G drivers)": "Downside drivers",
 };
 
-function forecastCaseLabel(group: string, downsideNote = "") {
+export function forecastCaseLabel(group: string, downsideNote = "") {
   if (
     group === "Downside case" &&
     downsideNote.startsWith("Downside case is the stress case: a shock applied")
@@ -146,7 +176,7 @@ function singleForecastRow(grid: Grid, label: string) {
   return matches.length === 1 ? matches[0] : undefined;
 }
 
-function ForecastTrends({
+export function ForecastTrends({
   grid,
   units,
   source,
@@ -155,11 +185,11 @@ function ForecastTrends({
 }: {
   grid: Grid;
   units: string;
-  source?: (label: string) => ReactNode;
+  source?: ForecastSource;
   selectedCase?: string;
   downsideNote?: string;
 }) {
-  const note = units || undefined;
+  const note = unitLabel(units) || undefined;
   const forecastColumns = grid.columns.flatMap((column, index) =>
     /^FY\d+E$/.test(column.label) ? [{ ...column, index }] : [],
   );
@@ -185,7 +215,7 @@ function ForecastTrends({
           return { name, cells };
         });
         const series = perCase.map(({ name, cells }) => ({
-          name,
+          name: forecastCaseLabel(name, downsideNote),
           values: cells.map((cell) => (cell?.status === "value" ? amount(word(cell.exact)) : null)),
         }));
         const values = series.flatMap((entry) => entry.values);
@@ -193,14 +223,14 @@ function ForecastTrends({
         return (
           <TrendChart
             title={label}
-            actions={source?.(label)}
+            actions={source?.(label, { case: selectedCase, row: label, periods })}
             key={label}
             periods={periods}
             series={series}
             yTicks={forecastTicks(values)}
             note={note}
             table={perCase.map(({ name, cells }) => ({
-              name,
+              name: forecastCaseLabel(name, downsideNote),
               cells: cells.map(displayForecastCell),
             }))}
           />
@@ -247,6 +277,7 @@ export function cashProxyCases(grid: Grid, other: Grid | null, downsideNote = ""
       cell?.status === "value" ? amount(word(cell.exact)) : null,
     );
     return {
+      group,
       name: forecastCaseLabel(group, downsideNote),
       values,
       labels: values.map((value, index) =>
@@ -256,6 +287,7 @@ export function cashProxyCases(grid: Grid, other: Grid | null, downsideNote = ""
         const value = values[index];
         return typeof value === "number" ? twoPlaces.format(value) : word(cell?.reason) || null;
       }),
+      reasons: matching.map((cell) => word(cell?.reason)),
     };
   });
   return { periods, series, rows: series.map(({ name, cells }) => ({ label: name, cells })) };
@@ -271,71 +303,119 @@ export function forecastCaseOptions(model: unknown) {
     stringsIn(cashflow.notes).find((note) => note.startsWith("Downside case is")),
   );
   const latestPeriod = periods.at(-1);
-  return series.map(({ name, values }) => ({
+  return series.map(({ group, name, values, reasons }) => ({
     name,
     period: latestPeriod,
     value: values.at(-1),
     units: word(cashflow.units) || "Units not recorded",
-    description: caseDescription(name, stringsIn(cashflow.notes)),
+    description: caseDescription(group, stringsIn(cashflow.notes)),
+    ...(values.at(-1) === null && reasons.at(-1) ? { reason: reasons.at(-1) } : {}),
   }));
 }
 
 function caseDescription(name: string, notes: string[]) {
   const prefix = name === "Downside shock" ? "Downside case is" : `${name} is`;
-  return notes.find((note) => note.startsWith(prefix) && !containsReference(note));
+  const found = notes.find((note) => note.startsWith(prefix) && !containsReference(note));
+  return found && readerText(found);
 }
 
-function scopePassages(cashflow: Record<string, unknown>) {
-  const notes = stringsIn(cashflow.notes).filter((note) => note.startsWith("Base case is"));
-  const limits = stringsIn(cashflow.limits).filter((limit) =>
-    /unreviewed|not analytical review|base period|base interest|not comparable|not modelled|standalone|perimeter|machine input.*zero/i.test(
-      limit,
-    ),
-  );
-  return [...new Set([...notes, ...limits])].flatMap((passage) =>
-    // Keep complete recorded sentences; source-bearing sentences remain in the full record.
-    passage
-      .split(/(?<=[.!?])\s+(?=[A-Z])/u)
-      .filter((sentence) => !containsReference(sentence) && !/\bCP-[A-Z0-9]+\b/u.test(sentence)),
+function scopePassages(passages: string[]) {
+  return [...new Set(passages)].flatMap((recorded) =>
+    [...new Set(recorded.split(/(?<=[.!?])\s+(?=[A-Z])/u))]
+      .filter((sentence) => !containsReference(sentence) && !/\bCP-[A-Z0-9]+\b/u.test(sentence))
+      .map((text) => ({ text, recorded })),
   );
 }
 
 export function ForecastScope({
   model,
   source,
+  children,
 }: {
   model: unknown;
-  source?: (label: string) => ReactNode;
+  source?: ForecastSource;
+  children?: (shownQualifications: string[]) => ReactNode;
 }) {
-  const passages = scopePassages(record(record(model).cashflow));
+  const cashflow = record(record(model).cashflow);
+  const base = scopePassages(
+    stringsIn(cashflow.notes).filter((note) => note.startsWith("Base case is")),
+  );
+  const limits = scopePassages(
+    stringsIn(cashflow.limits).filter((limit) =>
+      /unreviewed|not analytical review|base period|base interest|not comparable|not modelled|standalone|perimeter|machine input.*zero/i.test(
+        limit,
+      ),
+    ),
+  );
+  function qualification({ text, recorded }: ReturnType<typeof scopePassages>[number]) {
+    return (
+      <div
+        key={JSON.stringify([recorded, text])}
+        className={`${TRACE_HOST} flex max-w-prose items-start gap-2`}
+      >
+        <p className="text-small text-text-secondary">{text}</p>
+        {source?.("Model scope qualification", { recordedQualification: recorded })}
+      </div>
+    );
+  }
   return (
-    <section
-      className="grid gap-3 rounded-ds-md border border-border-hairline bg-surface-subtle p-5"
-      aria-label="Model scope and basis"
-    >
-      <h3 className="font-display text-h3">Model scope and basis</h3>
-      <p className="text-small text-text-tertiary">
-        Selected qualifications from the recorded model. Full notes and limitations follow the model
-        tables.
-      </p>
-      {passages.length ? (
-        <div className="grid gap-3 lg:grid-cols-2">
-          {passages.map((passage, index) => (
-            <div key={index} className={TRACE_HOST}>
-              <p className="max-w-prose pr-12 text-small text-text-secondary sm:pr-8">{passage}</p>
-              <div className="absolute right-0 top-0">
-                {source?.(`Model scope qualification ${String(index + 1)}`)}
-              </div>
-            </div>
-          ))}
-        </div>
-      ) : (
-        <p className="text-small text-text-secondary">
-          No qualifications are available in this summary. Review the full model notes and
-          assumptions before interpreting the cases.
-        </p>
+    <>
+      {base.map(qualification)}
+      {children?.(base.map(({ text }) => text))}
+      <section className="min-w-0 wrap-anywhere" aria-label="Model scope and basis">
+        <details className="rounded-ds-md border border-border-hairline bg-surface-subtle px-4 py-3">
+          <summary className="cursor-pointer font-semibold">Model scope and basis</summary>
+          <div className="mt-3 grid gap-3">
+            {limits.map(qualification)}
+            {!limits.length && !base.length && (
+              <p>No qualifications are available in this summary.</p>
+            )}
+            <Button href="#evidence/record" color="link-gray" size="sm" className="w-fit">
+              Full model notes and limitations
+            </Button>
+          </div>
+        </details>
+      </section>
+    </>
+  );
+}
+
+function CashProxyPlot({
+  periods,
+  series,
+  units,
+  source,
+  sourceFor,
+  selectedCase,
+  table,
+  unified,
+}: {
+  periods: string[];
+  series: ReturnType<typeof cashProxyCases>["series"];
+  units: string;
+  source?: ReactNode;
+  sourceFor?: ForecastSource;
+  selectedCase?: string;
+  table: ComponentProps<typeof PathChart>["table"];
+  unified: boolean;
+}) {
+  return (
+    <PathChart
+      title="Cash proxy by scenario"
+      actions={
+        sourceFor?.("Cash proxy by scenario", { row: CASH_PROXY, case: "", periods }) ?? source
+      }
+      subtitle={units}
+      periods={periods}
+      series={series}
+      emphasis={series.some((item) => item.name === selectedCase) ? selectedCase : undefined}
+      yTicks={forecastTicks(
+        series.flatMap((item) => item.values),
+        true,
       )}
-    </section>
+      table={table}
+      tableCaption={unified ? "Scenario comparison" : undefined}
+    />
   );
 }
 
@@ -343,55 +423,84 @@ export function CashProxy({
   model,
   note,
   source,
+  sourceFor,
   selectedCase,
+  unified = false,
 }: {
   model: unknown;
   note?: ReactNode;
   source?: ReactNode;
+  sourceFor?: ForecastSource;
   selectedCase?: string;
+  unified?: boolean;
 }) {
   const raw = record(record(model).cashflow);
   const grid = gridOf(raw);
-  if (!grid) return null;
-  const { periods, series } = cashProxyCases(
-    grid,
-    gridOf(raw.other),
-    stringsIn(raw.notes).find((note) => note.startsWith("Downside case is")),
+  const { periods, series } = grid
+    ? cashProxyCases(
+        grid,
+        gridOf(raw.other),
+        stringsIn(raw.notes).find((note) => note.startsWith("Downside case is")),
+      )
+    : { periods: [], series: [] };
+  if (!unified && (periods.length < 2 || series.length === 0)) return null;
+  const head = ["Case", ...periods];
+  const rows = series.map(({ name, cells }) => ({
+    label: name,
+    cells,
+    current: name === selectedCase,
+    end: sourceFor?.(`${name} cash proxy`, { case: name, row: CASH_PROXY }) ?? source,
+  }));
+  const endHeading = source || sourceFor ? "Source" : undefined;
+  const comparison = (
+    <ChartTable caption="Scenario comparison" head={head} rows={rows} endHeading={endHeading} />
   );
-  const rows = series.map(({ name, cells }) => ({ label: name, cells }));
-  const values = series.flatMap((item) => item.values);
-  if (periods.length < 2 || series.length === 0) return null;
-  const table = { head: ["Case", ...periods], rows };
-  const unit = word(raw.units);
+  const plot = periods.length > 1 && series.length > 0 && (
+    <CashProxyPlot
+      periods={periods}
+      series={series}
+      units={word(raw.units)}
+      source={source}
+      sourceFor={sourceFor}
+      selectedCase={selectedCase}
+      table={
+        unified
+          ? { head, rows, endHeading }
+          : { head, rows: series.map(({ name, cells }) => ({ label: name, cells })) }
+      }
+      unified={unified}
+    />
+  );
+  const precision = (
+    <p className="text-small text-text-secondary">
+      Cash proxy figures are rounded to two decimal places. The statement keeps the recorded
+      display.
+    </p>
+  );
+  if (unified)
+    return (
+      <div className="grid min-w-0 content-start gap-4">
+        {plot ||
+          (series.length ? (
+            comparison
+          ) : (
+            <p className="text-text-secondary">No scenario cash proxy was recorded.</p>
+          ))}
+        {series.length > 0 && precision}
+        {note}
+      </div>
+    );
   return (
     <div className="grid min-w-0 gap-4 xl:grid-cols-[1.65fr_1fr]">
       <div className="min-w-0 rounded-xl border border-border-hairline bg-surface-card p-5">
-        <PathChart
-          title="Cash proxy by scenario"
-          actions={source}
-          subtitle={unit}
-          periods={periods}
-          series={series}
-          emphasis={series.some((item) => item.name === selectedCase) ? selectedCase : undefined}
-          yTicks={forecastTicks(values, true)}
-          table={table}
-        />
+        {plot}
       </div>
       <div className="grid min-w-0 content-start gap-4">
         <section className="grid min-w-0 gap-3 rounded-xl border border-border-hairline bg-surface-card p-5">
           <h3 className="font-display text-h4">Scenario comparison</h3>
-          <ChartTable
-            caption="Scenario comparison"
-            head={table.head}
-            rows={series.map(({ name, cells }) => ({
-              label: name,
-              cells,
-              current: name === selectedCase,
-              end: source,
-            }))}
-            endHeading={source ? "Source" : undefined}
-          />
+          {comparison}
         </section>
+        {precision}
         {note}
       </div>
     </div>
@@ -403,11 +512,13 @@ export function LegacyForecast({
   summary,
   source,
   selectedCase,
+  evidenceOnlyQualifications = false,
 }: {
   model?: unknown;
   summary?: ReactNode;
-  source?: (label: string) => ReactNode;
+  source?: ForecastSource;
   selectedCase?: string;
+  evidenceOnlyQualifications?: boolean;
 }) {
   const published = record(model);
   const cashflow = record(published.cashflow);
@@ -418,7 +529,7 @@ export function LegacyForecast({
   const units = word(cashflow.units);
   if (model === null || model === undefined) return null;
   return (
-    <section className="grid gap-4">
+    <section className="grid min-w-0 gap-4 wrap-anywhere">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h3 className="font-display text-h3">Cash flow model</h3>
         {source?.("Cash flow model")}
@@ -427,7 +538,7 @@ export function LegacyForecast({
         <p>This model has no readable calculation record.</p>
       ) : (
         <>
-          <p className="text-text-secondary">{units || "Units not recorded"}</p>
+          <p className="text-text-secondary">{unitLabel(units) || "Units not recorded"}</p>
           {summary}
           <ForecastTrends
             grid={grid}
@@ -438,6 +549,7 @@ export function LegacyForecast({
           />
           <SelectedForecastTable
             limits={limits}
+            evidenceOnlyQualifications={evidenceOnlyQualifications}
             source={source}
             grid={grid}
             title="Cash flow model"
@@ -447,6 +559,7 @@ export function LegacyForecast({
           {other && (
             <SelectedForecastTable
               limits={limits}
+              evidenceOnlyQualifications={evidenceOnlyQualifications}
               source={source}
               grid={other}
               title="Other forecast cases"
@@ -454,24 +567,29 @@ export function LegacyForecast({
               downsideNote={notes.find((note) => note.startsWith("Downside case is"))}
             />
           )}
-          {notes.length > 0 && (
+          {!evidenceOnlyQualifications && notes.length > 0 && (
             <ul className="list-disc pl-5">
               {notes.map((note, index) => (
-                <li key={index}>{note}</li>
+                <li key={index}>{readerText(note)}</li>
               ))}
             </ul>
           )}
-          {limits.length > 0 && (
+          {!evidenceOnlyQualifications && limits.length > 0 && (
             <section className="grid gap-2">
               <h4 className="font-display text-h4">Model limitations</h4>
               <ul className="list-disc pl-5">
                 {limits.map((limit, index) => (
-                  <li key={index}>{limit}</li>
+                  <li key={index}>{readerText(limit)}</li>
                 ))}
               </ul>
             </section>
           )}
         </>
+      )}
+      {evidenceOnlyQualifications && (
+        <a className="text-secondary underline" href="#evidence/record">
+          Model notes and limitations
+        </a>
       )}
     </section>
   );

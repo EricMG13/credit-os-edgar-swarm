@@ -1,4 +1,5 @@
 @theme {
+  --container-bottom-line: 62ch;
   --color-*: initial;
   --color-white: #ffffff;
   --color-transparent: transparent;
@@ -61,11 +62,16 @@
   /* Chart palette: six series in a fixed order, then Other */
   --color-chart-1: #001aff;
   --color-chart-2: #827bcc;
-  --color-chart-3: #994a34;
+  --color-chart-3: #331911;
   --color-chart-4: #b28b00;
   --color-chart-5: #0f8048;
   --color-chart-6: #8c9900;
   --color-chart-other: #7f848d;
+
+  /* Waterfall: the three kinds of column in a walk between totals */
+  --color-waterfall-total: var(--color-chart-1);
+  --color-waterfall-up: var(--color-brand-400);
+  --color-waterfall-down: var(--color-chart-3);
 
   /* Ultramarine: 50 = L9, 100 = L8, 200 = L7, 300 = L5, 400 = L3, 500 = L1, 600 = base,
      700 = D2, 800 = D4, 900 = D6, 950 = D8 */
@@ -276,6 +282,20 @@
   --shadow-skeuomorphic:
     0px 0px 0px 1px rgb(0 5 51 / 0.18) inset, 0px -2px 0px 0px rgb(0 5 51 / 0.05) inset;
   --shadow-xs-skeuomorphic: var(--shadow-skeuomorphic), var(--shadow-xs);
+}
+
+@utility reading-copy {
+  max-inline-size: 68ch;
+  overflow-wrap: anywhere;
+  text-wrap: pretty;
+}
+
+@utility module-reader-columns {
+  grid-template-columns: 16rem minmax(0, 1fr);
+}
+
+@utility run-intake-columns {
+  grid-template-columns: minmax(0, 1fr) 320px;
 }
 
 @utility transition-inherit-all {

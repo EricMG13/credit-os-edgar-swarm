@@ -58,11 +58,6 @@ def clear_runtime(target: Path, runtime: Path, manifest: Path) -> None:
 # Windows wrappers, one batch line per entry. Untested on Windows from this build host;
 # Smoke-test.ps1 on the target host is the acceptance.
 _PYTHON = '"%~dp0engine\\runtime\\python.exe" -I -B -X utf8'
-_DOCUMENTS = (
-    'if not defined WORKSPACE for /f "usebackq delims=" %%D in '
-    "(`powershell -NoProfile -Command \"[Environment]::GetFolderPath('MyDocuments')\"`) "
-    'do set "WORKSPACE=%%D\\FinalWorkflow"'
-)
 # The embeddable Python ignores PYTHONPATH and, started with a script, does not add the script's
 # folder, so the package's two import roots are listed here (paths are relative to the runtime
 # folder): engine\src holds deploy_workflow and deploy_vii, engine holds credit_os and
@@ -76,45 +71,8 @@ _ROOT_ARGUMENT = [
 WRAPPERS = {
     "Run workflow.cmd": [
         "@echo off",
-        "rem Start a CP-OS run with the launcher's own options (see README.md). Without --live",
-        "rem it only prepares and reviews the run; --live with a ruling is the paid run.",
+        "rem Prepare and review a CP-OS run offline with the embedded Python.",
         f'{_PYTHON} "%~dp0engine\\run_workflow.py" %*',
-        "exit /b %errorlevel%",
-    ],
-    "Update library.cmd": [
-        "@echo off",
-        "setlocal",
-        "rem Rebuild the Issuer Library page from the workspace's completed runs, then open it.",
-        "rem Workspace: the first argument, else FINAL_WORKFLOW_WORKSPACE, else",
-        "rem Documents\\FinalWorkflow.",
-        'set "WORKSPACE=%~1"',
-        'if not defined WORKSPACE set "WORKSPACE=%FINAL_WORKFLOW_WORKSPACE%"',
-        _DOCUMENTS,
-        'if not defined WORKSPACE set "WORKSPACE=%USERPROFILE%\\Documents\\FinalWorkflow"',
-        f'{_PYTHON} "%~dp0engine\\update_library.py" --workspace "%WORKSPACE%"',
-        "if errorlevel 1 (",
-        "  pause",
-        "  exit /b 1",
-        ")",
-        'start "" "%WORKSPACE%\\library\\index.html"',
-    ],
-    "Start run page.cmd": [
-        "@echo off",
-        "setlocal",
-        "rem Serve the run start page: analysts upload documents, answer the questions and Submit;",
-        "rem Submit starts a paid run. Folder: the first argument, else FINAL_WORKFLOW_WORKSPACE.",
-        "rem Address: the second argument, else 127.0.0.1 (this machine only). Pass this machine's",
-        "rem own address to serve colleagues; 0.0.0.0 is refused. The provider key must be in the",
-        "rem environment of the account that runs this; nothing here sets it (README.md).",
-        *_ROOT_ARGUMENT,
-        'set "HOSTADDR=%~2"',
-        'if not defined HOSTADDR set "HOSTADDR=127.0.0.1"',
-        "if not defined ROOT (",
-        "  echo Usage: Start run page.cmd ^<shared folder^> [address]",
-        "  echo Or set FINAL_WORKFLOW_WORKSPACE to the shared folder.",
-        "  exit /b 1",
-        ")",
-        f'{_PYTHON} -m deploy_workflow.run_start --root "%ROOT%" --host "%HOSTADDR%" --port 8765',
         "exit /b %errorlevel%",
     ],
     "Start signal.cmd": [
@@ -142,26 +100,43 @@ WRAPPERS = {
 }
 
 
-def ship_run_page_files(engine: Path) -> None:
-    """The run page's standing ruling and the start page the service serves.
-
-    The only ruling shipped is the run page's; any other paid run needs a ruling the person writes
-    in docs/rulings (docs/COPILOT.md)."""
-    for name in ["docs/rulings/2026-11-11-run-start-submit.md", "docs/templates/context-form.html"]:
-        (engine / name).parent.mkdir(parents=True, exist_ok=True)
-        shutil.copyfile(ROOT / name, engine / name)
+def _purge_retired_outputs(target: Path) -> None:
+    # Remove these outputs from an existing package folder before re-archiving it.
+    retired_paths = (
+        "Update library.cmd",
+        "Start run page.cmd",
+        "engine/docs/templates/context-form.html",
+        "engine/docs/rulings/2026-11-11-run-start-submit.md",
+        "engine/credit_os/web/index.html",
+    )
+    root = target.resolve()
+    for retired in retired_paths:
+        path = target / retired
+        for parent in path.parents:
+            if parent == target.parent:
+                break
+            if parent.is_symlink() or parent.is_junction():
+                raise ValueError(
+                    f"Refusing to purge package file through a linked folder: {parent}"
+                )
+            if parent.exists() and not parent.resolve().is_relative_to(root):
+                raise ValueError(f"Refusing to purge package file outside the build: {parent}")
+        path.unlink(missing_ok=True)
 
 
 def bundle(target: Path, architecture: str | None) -> None:
+    _purge_retired_outputs(target)
     engine = target / "engine"
     engine.mkdir(exist_ok=True)
     shutil.copyfile(APP / "engine/run_workflow.py", engine / "run_workflow.py")
     # The static library: its update script, the Credit OS store and page parts (not their tests),
-    # and the two double-click wrappers that run the launcher and the update (bundled Python).
+    # and the workflow and Signal wrappers (bundled Python).
     shutil.copyfile(APP / "update_library.py", engine / "update_library.py")
     if (engine / "credit_os").exists():
         shutil.rmtree(engine / "credit_os")
-    tests = shutil.ignore_patterns("*.test.cjs", "*_check.cjs", "__pycache__", "*.pyc")
+    tests = shutil.ignore_patterns(
+        "*.test.cjs", "*_check.cjs", "__pycache__", "*.pyc", "index.html"
+    )
     shutil.copytree(APP / "credit_os", engine / "credit_os", ignore=tests)
     for name, lines in WRAPPERS.items():
         (target / name).write_text("\n".join(lines) + "\n", encoding="ascii", newline="\r\n")
@@ -186,7 +161,6 @@ def bundle(target: Path, architecture: str | None) -> None:
     shutil.copyfile(
         ROOT / "docs/visualisations/catalogue.csv", engine / "docs/visualisations/catalogue.csv"
     )
-    ship_run_page_files(engine)
     if architecture is None:
         return
     runtime = engine / "runtime"

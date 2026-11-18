@@ -1,0 +1,1 @@
+PASS: reviewed guard is installed before page creation; service workers blocked; browser uses denial proxy

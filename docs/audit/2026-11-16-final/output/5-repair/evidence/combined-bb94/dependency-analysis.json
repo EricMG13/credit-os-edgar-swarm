@@ -1,0 +1,1826 @@
+{
+  "method": "Conservative dependency traversal from every original native blob test root through its retained module import graph",
+  "previousPin": "5e1d98b37305a9da59fb6944740ff17b721051af",
+  "currentPin": "bb94ddceff3a1f02c7239ebca72de285df79c607",
+  "target": "/workspace/audit-final/web/src/pages/connected/visuals/LegacyForecast.tsx",
+  "summary": [
+    {
+      "shard": 1,
+      "files": 39,
+      "rootsPresent": 39,
+      "consumingTestFiles": 5,
+      "tests": [
+        {
+          "file": "/workspace/audit-final/web/src/App.reviewTailTitles.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/components/chart/ChartTable.basis.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/components/chart/LimitsChart.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/components/chart/ScatterPlot.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/connected/ReportContent.records.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": [
+            "/workspace/audit-final/web/src/pages/connected/ReportContent.records.test.tsx",
+            "/workspace/audit-final/web/src/pages/connected/report/Modules.tsx",
+            "/workspace/audit-final/web/src/pages/connected/visuals/index.tsx",
+            "/workspace/audit-final/web/src/pages/connected/visuals/LegacyForecast.tsx"
+          ]
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/connected/publishedReport.reference-round2.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": [
+            "/workspace/audit-final/web/src/pages/connected/publishedReport.reference-round2.test.tsx",
+            "/workspace/audit-final/web/src/pages/connected/visuals/LegacyForecast.tsx"
+          ]
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/connected/readerText.lowercase.test.ts",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/connected/sourceFiles.test.ts",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/library/Evidence.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/library/EvidenceAddress.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/library/EvidenceRecord.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/library/Overview.dateTrace.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/library/Overview.qualifier.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/model/AnalysisPage.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/model/PortfolioFitPage.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/model/StatementsPage.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/model/StatementsSections.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/signal/controls.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/signal/facts.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/signal/name.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/signal/save-state.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/signal/tab-panels.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/components/application/file-upload/file-upload-base.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/components/base/tooltip/tooltip.focusScroll.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/connected/report/Changes.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/connected/report/Evidence.contracts.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": [
+            "/workspace/audit-final/web/src/pages/connected/report/Evidence.contracts.test.tsx",
+            "/workspace/audit-final/web/src/pages/connected/report/Evidence.tsx",
+            "/workspace/audit-final/web/src/pages/connected/report/ForecastRecord.tsx",
+            "/workspace/audit-final/web/src/pages/connected/visuals/LegacyForecast.tsx"
+          ]
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/connected/report/Modules.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": [
+            "/workspace/audit-final/web/src/pages/connected/report/Modules.test.tsx",
+            "/workspace/audit-final/web/src/pages/connected/report/Modules.tsx",
+            "/workspace/audit-final/web/src/pages/connected/visuals/index.tsx",
+            "/workspace/audit-final/web/src/pages/connected/visuals/LegacyForecast.tsx"
+          ]
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/connected/report/OverviewModules.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/connected/start/ReviewSheet.finalAudit.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/connected/start/analystName.test.ts",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/connected/visuals/finalAudit.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": [
+            "/workspace/audit-final/web/src/pages/connected/visuals/finalAudit.test.tsx",
+            "/workspace/audit-final/web/src/pages/connected/visuals/index.tsx",
+            "/workspace/audit-final/web/src/pages/connected/visuals/LegacyForecast.tsx"
+          ]
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/connected/visuals/visualData.chartTable.test.ts",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/library/parts/CopyToast.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/library/parts/FilterBar.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/library/parts/RunFrame.forecastReason.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/library/parts/StatementBlock.missing.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/library/parts/TraceReadable.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/run/activity/ActivityMore.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/run/start/StartPage.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        }
+      ]
+    },
+    {
+      "shard": 2,
+      "files": 39,
+      "rootsPresent": 39,
+      "consumingTestFiles": 9,
+      "tests": [
+        {
+          "file": "/workspace/audit-final/web/src/pages/Kit7e.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/components/card/cards.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/components/chart/ChartFrame.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/components/chart/ColumnsChart.check.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/components/metric/finalAudit.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/components/status/StatusBadge.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/components/timeline/Timeline.action.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/model/ForecastPage.noForecast.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/model/fixtureFinalAudit.test.ts",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/library/RunFrame.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/library/readEvidence.test.ts",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/library/readJump.test.ts",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/run/routes.firstDraft.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/signal/sources-slice.test.ts",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/signal/sources.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/connected/HeadlineFigures.signal.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/connected/ReportLibrary.wayfinding.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": [
+            "/workspace/audit-final/web/src/pages/connected/ReportLibrary.wayfinding.test.tsx",
+            "/workspace/audit-final/web/src/pages/connected/ConnectedApp.tsx",
+            "/workspace/audit-final/web/src/pages/connected/ReportLibrary.tsx",
+            "/workspace/audit-final/web/src/pages/connected/visuals/index.tsx",
+            "/workspace/audit-final/web/src/pages/connected/visuals/LegacyForecast.tsx"
+          ]
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/connected/api.finalAudit.test.ts",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/connected/libraryStates.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": [
+            "/workspace/audit-final/web/src/pages/connected/libraryStates.test.tsx",
+            "/workspace/audit-final/web/src/pages/connected/ConnectedApp.tsx",
+            "/workspace/audit-final/web/src/pages/connected/ReportLibrary.tsx",
+            "/workspace/audit-final/web/src/pages/connected/visuals/index.tsx",
+            "/workspace/audit-final/web/src/pages/connected/visuals/LegacyForecast.tsx"
+          ]
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/connected/report.auditFollowups.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": [
+            "/workspace/audit-final/web/src/pages/connected/report.auditFollowups.test.tsx",
+            "/workspace/audit-final/web/src/pages/connected/ReportLibrary.tsx",
+            "/workspace/audit-final/web/src/pages/connected/visuals/index.tsx",
+            "/workspace/audit-final/web/src/pages/connected/visuals/LegacyForecast.tsx"
+          ]
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/connected/reportView.earnings.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": [
+            "/workspace/audit-final/web/src/pages/connected/reportView.earnings.test.tsx",
+            "/workspace/audit-final/web/src/pages/connected/ReportLibrary.tsx",
+            "/workspace/audit-final/web/src/pages/connected/visuals/index.tsx",
+            "/workspace/audit-final/web/src/pages/connected/visuals/LegacyForecast.tsx"
+          ]
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/connected/reportView.test.ts",
+          "graphRootPresent": true,
+          "pathToEditedComponent": [
+            "/workspace/audit-final/web/src/pages/connected/reportView.test.ts",
+            "/workspace/audit-final/web/src/pages/connected/visuals/LegacyForecast.tsx"
+          ]
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/connected/runFigures.finalAudit.test.ts",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/model/parts/ModelShell.designReference.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/model/parts/TraceControl.drawer.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/model/slice/read-sections.zero.test.ts",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/run/activity/ActivityPage.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/run/activity/Summary.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/library/parts/LibraryPage.absent.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/library/parts/TraceControl.missing.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/connected/report/BreakPoints.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/connected/report/Calendar.bad-date.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/connected/report/Calendar.unplaced-rows.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/connected/report/Confidence.recovery.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/connected/report/Forecast.basis.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": [
+            "/workspace/audit-final/web/src/pages/connected/report/Forecast.basis.test.tsx",
+            "/workspace/audit-final/web/src/pages/connected/report/Forecast.tsx",
+            "/workspace/audit-final/web/src/pages/connected/visuals/LegacyForecast.tsx"
+          ]
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/connected/report/ScriptChecks.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": [
+            "/workspace/audit-final/web/src/pages/connected/report/ScriptChecks.test.tsx",
+            "/workspace/audit-final/web/src/pages/connected/report/Evidence.tsx",
+            "/workspace/audit-final/web/src/pages/connected/report/ForecastRecord.tsx",
+            "/workspace/audit-final/web/src/pages/connected/visuals/LegacyForecast.tsx"
+          ]
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/connected/visuals/EventLane.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/connected/visuals/LegacyVisuals.values.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": [
+            "/workspace/audit-final/web/src/pages/connected/visuals/LegacyVisuals.values.test.tsx",
+            "/workspace/audit-final/web/src/pages/connected/visuals/index.tsx",
+            "/workspace/audit-final/web/src/pages/connected/visuals/LegacyForecast.tsx"
+          ]
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/connected/visuals/charts.stackComma.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": [
+            "/workspace/audit-final/web/src/pages/connected/visuals/charts.stackComma.test.tsx",
+            "/workspace/audit-final/web/src/pages/connected/visuals/index.tsx",
+            "/workspace/audit-final/web/src/pages/connected/visuals/LegacyForecast.tsx"
+          ]
+        }
+      ]
+    },
+    {
+      "shard": 3,
+      "files": 39,
+      "rootsPresent": 39,
+      "consumingTestFiles": 2,
+      "tests": [
+        {
+          "file": "/workspace/audit-final/web/src/App.designReference.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/worked-example.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/shell/Shell.finalAudit.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/styles/theme.test.ts",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/components/chart/ChartFrame.cleanup.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/components/chart/RangeStripChart.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/components/chart/WrappedAxis.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/components/chart/seriesData.test.ts",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/components/gap/gap.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/components/status/shapes.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/connected/LibraryIndex.metricTrace.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/connected/PublishedTable.recordEmpty.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/connected/publishedReport.reference-regression.test.ts",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/connected/signal.test.ts",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/model/LimitationsPage.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/model/RunsIndexPage.plainRow.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/run/slice.test.ts",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/library/EvidenceJump.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/library/EvidenceRecord.moduleFilter.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/library/FinalAudit.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/library/Home.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/signal/feedstates.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/signal/slice.test.ts",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/signal/topic-ids.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/components/application/loading-indicator/loading-indicator.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/connected/start/plain.test.ts",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/connected/start/valuation.test.ts",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/model/parts/MetricTile.tap.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/model/parts/RunPage.plainNotice.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/model/parts/TraceControl.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/run/start/Start.savedExample.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/run/activity/ActivityEnded.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/library/parts/Limitations.narrow.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/library/parts/MetricTile.traced.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/connected/report/Calendar.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/connected/report/Evidence.finalAudit.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": [
+            "/workspace/audit-final/web/src/pages/connected/report/Evidence.finalAudit.test.tsx",
+            "/workspace/audit-final/web/src/pages/connected/report/Evidence.tsx",
+            "/workspace/audit-final/web/src/pages/connected/report/ForecastRecord.tsx",
+            "/workspace/audit-final/web/src/pages/connected/visuals/LegacyForecast.tsx"
+          ]
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/connected/report/Forecast.reader-text.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": [
+            "/workspace/audit-final/web/src/pages/connected/report/Forecast.reader-text.test.tsx",
+            "/workspace/audit-final/web/src/pages/connected/report/Forecast.tsx",
+            "/workspace/audit-final/web/src/pages/connected/visuals/LegacyForecast.tsx"
+          ]
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/connected/report/Record.finalAudit.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/connected/report/Securities.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        }
+      ]
+    },
+    {
+      "shard": 4,
+      "files": 39,
+      "rootsPresent": 39,
+      "consumingTestFiles": 5,
+      "tests": [
+        {
+          "file": "/workspace/audit-final/web/src/data.test.ts",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/route.test.ts",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/utils/cx.test.ts",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/shell/Shell.kitRail.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/Kit.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/route-table.test.ts",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/components/chart/StackChart.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/components/chart/series.test.ts",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/connected/ReportLibrary.design.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": [
+            "/workspace/audit-final/web/src/pages/connected/ReportLibrary.design.test.tsx",
+            "/workspace/audit-final/web/src/pages/connected/ConnectedApp.tsx",
+            "/workspace/audit-final/web/src/pages/connected/ReportLibrary.tsx",
+            "/workspace/audit-final/web/src/pages/connected/visuals/index.tsx",
+            "/workspace/audit-final/web/src/pages/connected/visuals/LegacyForecast.tsx"
+          ]
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/connected/linkStyle.test.ts",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/connected/moneyUnits.test.ts",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/connected/reportView.headline.test.ts",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/library/EvidenceTrace.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/library/History.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/library/Module.search.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/library/headingLevel.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/signal/ai-cost.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/signal/group.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/signal/share.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/signal/states.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/signal/thread.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/signal/wiring.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/components/application/tabs/tabs.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/connected/report/Calendar.reader-text.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/connected/report/Downside.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/connected/report/Evidence.handoff-title.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": [
+            "/workspace/audit-final/web/src/pages/connected/report/Evidence.handoff-title.test.tsx",
+            "/workspace/audit-final/web/src/pages/connected/report/Evidence.tsx",
+            "/workspace/audit-final/web/src/pages/connected/report/ForecastRecord.tsx",
+            "/workspace/audit-final/web/src/pages/connected/visuals/LegacyForecast.tsx"
+          ]
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/connected/report/Evidence.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": [
+            "/workspace/audit-final/web/src/pages/connected/report/Evidence.test.tsx",
+            "/workspace/audit-final/web/src/pages/connected/report/Evidence.tsx",
+            "/workspace/audit-final/web/src/pages/connected/report/ForecastRecord.tsx",
+            "/workspace/audit-final/web/src/pages/connected/visuals/LegacyForecast.tsx"
+          ]
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/connected/report/Modules.order.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": [
+            "/workspace/audit-final/web/src/pages/connected/report/Modules.order.test.tsx",
+            "/workspace/audit-final/web/src/pages/connected/report/Modules.tsx",
+            "/workspace/audit-final/web/src/pages/connected/visuals/index.tsx",
+            "/workspace/audit-final/web/src/pages/connected/visuals/LegacyForecast.tsx"
+          ]
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/connected/start/RowEditor.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/connected/start/StartRun.finalAudit.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/connected/visuals/ChartQualifications.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": [
+            "/workspace/audit-final/web/src/pages/connected/visuals/ChartQualifications.test.tsx",
+            "/workspace/audit-final/web/src/pages/connected/visuals/index.tsx",
+            "/workspace/audit-final/web/src/pages/connected/visuals/LegacyForecast.tsx"
+          ]
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/signal/parts/focus.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/model/slice/read-portfolio.test.ts",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/model/slice/read-sections.test.ts",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/model/parts/ModelShell.noForecast.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/model/parts/ShowSources.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/model/parts/StatementTable.narrow.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/model/parts/StatementTable.negativePattern.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/model/parts/StatementTable.tap.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        }
+      ]
+    },
+    {
+      "shard": 5,
+      "files": 38,
+      "rootsPresent": 38,
+      "consumingTestFiles": 10,
+      "tests": [
+        {
+          "file": "/workspace/audit-final/web/src/motion.test.ts",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/react-aria-style.test.ts",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/components/chart/BulletChart.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/components/chart/ComparisonChart.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/components/chart/DumbbellChart.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/components/chart/WaterfallChart.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/components/chart/endHeading.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/model/RunsIndexPage.designReference.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/model/chart-row-traces.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/library/Changes.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/library/Module.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/library/read.finalAudit.test.ts",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/library/read.test.ts",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/library/routes.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/connected/ConnectedApp.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": [
+            "/workspace/audit-final/web/src/pages/connected/ConnectedApp.test.tsx",
+            "/workspace/audit-final/web/src/pages/connected/ConnectedApp.tsx",
+            "/workspace/audit-final/web/src/pages/connected/ReportLibrary.tsx",
+            "/workspace/audit-final/web/src/pages/connected/visuals/index.tsx",
+            "/workspace/audit-final/web/src/pages/connected/visuals/LegacyForecast.tsx"
+          ]
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/connected/ReportContent.drawings.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": [
+            "/workspace/audit-final/web/src/pages/connected/ReportContent.drawings.test.tsx",
+            "/workspace/audit-final/web/src/pages/connected/report/Modules.tsx",
+            "/workspace/audit-final/web/src/pages/connected/visuals/index.tsx",
+            "/workspace/audit-final/web/src/pages/connected/visuals/LegacyForecast.tsx"
+          ]
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/connected/ReportLibrary.identity.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": [
+            "/workspace/audit-final/web/src/pages/connected/ReportLibrary.identity.test.tsx",
+            "/workspace/audit-final/web/src/pages/connected/ReportLibrary.tsx",
+            "/workspace/audit-final/web/src/pages/connected/visuals/index.tsx",
+            "/workspace/audit-final/web/src/pages/connected/visuals/LegacyForecast.tsx"
+          ]
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/connected/runStates.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": [
+            "/workspace/audit-final/web/src/pages/connected/runStates.test.tsx",
+            "/workspace/audit-final/web/src/pages/connected/ConnectedApp.tsx",
+            "/workspace/audit-final/web/src/pages/connected/ReportLibrary.tsx",
+            "/workspace/audit-final/web/src/pages/connected/visuals/index.tsx",
+            "/workspace/audit-final/web/src/pages/connected/visuals/LegacyForecast.tsx"
+          ]
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/run/FinalAudit.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/signal/ai-settings-slice.test.ts",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/signal/digests-slice.test.ts",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/signal/groups-slice.test.ts",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/signal/reader-rules.test.ts",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/signal/sweep-fixes.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/signal/topics-digests.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/model/slice/read.noForecast.test.ts",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/library/parts/ChangeCard.missingTrace.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/library/parts/ModuleNav.compact.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/connected/report/Calendar.auditFollowups.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/connected/report/Modules.navigator.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": [
+            "/workspace/audit-final/web/src/pages/connected/report/Modules.navigator.test.tsx",
+            "/workspace/audit-final/web/src/pages/connected/report/Modules.tsx",
+            "/workspace/audit-final/web/src/pages/connected/visuals/index.tsx",
+            "/workspace/audit-final/web/src/pages/connected/visuals/LegacyForecast.tsx"
+          ]
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/connected/report/PortfolioBasis.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": [
+            "/workspace/audit-final/web/src/pages/connected/report/PortfolioBasis.test.tsx",
+            "/workspace/audit-final/web/src/pages/connected/visuals/index.tsx",
+            "/workspace/audit-final/web/src/pages/connected/visuals/LegacyForecast.tsx"
+          ]
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/connected/start/plain.finalAudit.test.ts",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/connected/visuals/ForecastTable.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/connected/visuals/LegacyForecast.finalAuditUnits.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": [
+            "/workspace/audit-final/web/src/pages/connected/visuals/LegacyForecast.finalAuditUnits.test.tsx",
+            "/workspace/audit-final/web/src/pages/connected/visuals/LegacyForecast.tsx"
+          ]
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/connected/visuals/LegacyForecast.reader-text.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": [
+            "/workspace/audit-final/web/src/pages/connected/visuals/LegacyForecast.reader-text.test.tsx",
+            "/workspace/audit-final/web/src/pages/connected/visuals/LegacyForecast.tsx"
+          ]
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/connected/visuals/LegacyVisuals.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": [
+            "/workspace/audit-final/web/src/pages/connected/visuals/LegacyVisuals.test.tsx",
+            "/workspace/audit-final/web/src/pages/connected/visuals/index.tsx",
+            "/workspace/audit-final/web/src/pages/connected/visuals/LegacyForecast.tsx"
+          ]
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/connected/visuals/charts.commaScope.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": [
+            "/workspace/audit-final/web/src/pages/connected/visuals/charts.commaScope.test.tsx",
+            "/workspace/audit-final/web/src/pages/connected/visuals/index.tsx",
+            "/workspace/audit-final/web/src/pages/connected/visuals/LegacyForecast.tsx"
+          ]
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/run/activity/ActivityPage.labelWrap.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        }
+      ]
+    },
+    {
+      "shard": 6,
+      "files": 38,
+      "rootsPresent": 38,
+      "consumingTestFiles": 6,
+      "tests": [
+        {
+          "file": "/workspace/audit-final/web/src/pages/Kit7c.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/Kit7f.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/components/chart/ColumnsChart.label.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/components/chart/TrendChart.detail.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/library/Evidence.heldModule.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/library/EvidenceGaps.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/library/ModuleItems.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/library/Overview.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/library/readWbr.test.ts",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/connected/HeadlineFigures.trace.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": [
+            "/workspace/audit-final/web/src/pages/connected/HeadlineFigures.trace.test.tsx",
+            "/workspace/audit-final/web/src/pages/connected/ConnectedApp.tsx",
+            "/workspace/audit-final/web/src/pages/connected/ReportLibrary.tsx",
+            "/workspace/audit-final/web/src/pages/connected/visuals/index.tsx",
+            "/workspace/audit-final/web/src/pages/connected/visuals/LegacyForecast.tsx"
+          ]
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/connected/ReportContent.codes.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/connected/ReportLibrary.frame.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": [
+            "/workspace/audit-final/web/src/pages/connected/ReportLibrary.frame.test.tsx",
+            "/workspace/audit-final/web/src/pages/connected/ReportLibrary.tsx",
+            "/workspace/audit-final/web/src/pages/connected/visuals/index.tsx",
+            "/workspace/audit-final/web/src/pages/connected/visuals/LegacyForecast.tsx"
+          ]
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/connected/api.test.ts",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/model/FrontPage.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/model/RunsIndexPage.empty.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/signal/counts-slice.test.ts",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/signal/digest.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/signal/feed.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/signal/frame.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/signal/threadref-slice.test.ts",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/signal/threads-slice.test.ts",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/library/parts/ChangesTable.columns.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/library/parts/MatrixBlock.rowTraces.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/library/parts/MetricTile.yearChange.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/library/parts/ModuleFilter.clearFocus.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/library/parts/ResponsiveReading.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/connected/report/Evidence.t21.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": [
+            "/workspace/audit-final/web/src/pages/connected/report/Evidence.t21.test.tsx",
+            "/workspace/audit-final/web/src/pages/connected/report/Evidence.tsx",
+            "/workspace/audit-final/web/src/pages/connected/report/ForecastRecord.tsx",
+            "/workspace/audit-final/web/src/pages/connected/visuals/LegacyForecast.tsx"
+          ]
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/connected/report/Forecast.recovery.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": [
+            "/workspace/audit-final/web/src/pages/connected/report/Forecast.recovery.test.tsx",
+            "/workspace/audit-final/web/src/pages/connected/report/Forecast.tsx",
+            "/workspace/audit-final/web/src/pages/connected/visuals/LegacyForecast.tsx"
+          ]
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/connected/report/MacroSensitivity.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/connected/visuals/LegacyForecast.axes.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": [
+            "/workspace/audit-final/web/src/pages/connected/visuals/LegacyForecast.axes.test.tsx",
+            "/workspace/audit-final/web/src/pages/connected/visuals/LegacyForecast.tsx"
+          ]
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/connected/visuals/charts.decimalColumn.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": [
+            "/workspace/audit-final/web/src/pages/connected/visuals/charts.decimalColumn.test.tsx",
+            "/workspace/audit-final/web/src/pages/connected/visuals/index.tsx",
+            "/workspace/audit-final/web/src/pages/connected/visuals/LegacyForecast.tsx"
+          ]
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/connected/visuals/visualData.amount.test.ts",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/connected/visuals/visualData.test.ts",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/model/parts/RunPage.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/run/activity/ActivityPage.runsIndex.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/run/start/Documents.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/run/start/Purpose.focusRing.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/run/start/Steps.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        }
+      ]
+    },
+    {
+      "shard": 7,
+      "files": 38,
+      "rootsPresent": 38,
+      "consumingTestFiles": 1,
+      "tests": [
+        {
+          "file": "/workspace/audit-final/web/src/App.auditRoutes.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/App.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/Kit7b.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/Kit7d.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/Kit7g.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/components/chart/ChartTable.scrollCue.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/components/chart/ColumnsChart.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/components/chart/PairTile.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/components/chart/PathChart.frame.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/components/chart/PathChart.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/components/chart/StackChart.zero.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/components/path/plain.test.ts",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/components/status/sets.test.ts",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/model/RunsIndexPage.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/connected/ConnectedApp.loading.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": [
+            "/workspace/audit-final/web/src/pages/connected/ConnectedApp.loading.test.tsx",
+            "/workspace/audit-final/web/src/pages/connected/ConnectedApp.tsx",
+            "/workspace/audit-final/web/src/pages/connected/ReportLibrary.tsx",
+            "/workspace/audit-final/web/src/pages/connected/visuals/index.tsx",
+            "/workspace/audit-final/web/src/pages/connected/visuals/LegacyForecast.tsx"
+          ]
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/connected/publishedReport.test.ts",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/connected/shellFinalAudit.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/connected/useResource.test.ts",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/library/Module.limitationsOrder.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/library/fixtureAgreement.test.ts",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/library/fixtureFinalAudit.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/library/read.dateTrace.test.ts",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/signal/id-rules.test.ts",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/signal/kinds.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/signal/settings-slice.test.ts",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/signal/settings.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/components/application/empty-state/empty-state.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/components/base/buttons/button.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/components/base/tooltip/tooltip.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/components/base/select/select.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/model/slice/read-analysis.test.ts",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/model/slice/read-forecast.test.ts",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/model/slice/read.test.ts",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/connected/start/limits.test.ts",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/connected/visuals/ForecastTable.reader-text.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/connected/visuals/drawnQualifications.test.ts",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/library/parts/RunFrame.evidenceSwitch.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/run/start/Start.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        }
+      ]
+    },
+    {
+      "shard": 8,
+      "files": 38,
+      "rootsPresent": 38,
+      "consumingTestFiles": 8,
+      "tests": [
+        {
+          "file": "/workspace/audit-final/web/src/App.routeChange.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/ConnectedLoadBoundary.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/shell/Shell.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/styles/chart-lightness.test.ts",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/styles/project-caption.test.ts",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/components/alert/Alert.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/components/chart/ChartTable.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/components/chart/TrendChart.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/connected/ReportContent.findings.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/connected/ReportLibrary.place.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": [
+            "/workspace/audit-final/web/src/pages/connected/ReportLibrary.place.test.tsx",
+            "/workspace/audit-final/web/src/pages/connected/ConnectedApp.tsx",
+            "/workspace/audit-final/web/src/pages/connected/ReportLibrary.tsx",
+            "/workspace/audit-final/web/src/pages/connected/visuals/index.tsx",
+            "/workspace/audit-final/web/src/pages/connected/visuals/LegacyForecast.tsx"
+          ]
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/connected/RuntimeMetadata.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/connected/moduleCodes.test.ts",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/connected/publishedReport.reference-last.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": [
+            "/workspace/audit-final/web/src/pages/connected/publishedReport.reference-last.test.tsx",
+            "/workspace/audit-final/web/src/pages/connected/visuals/LegacyForecast.tsx"
+          ]
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/connected/publishedReport.reference.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/connected/runActivity.states.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": [
+            "/workspace/audit-final/web/src/pages/connected/runActivity.states.test.tsx",
+            "/workspace/audit-final/web/src/pages/connected/ConnectedApp.tsx",
+            "/workspace/audit-final/web/src/pages/connected/ReportLibrary.tsx",
+            "/workspace/audit-final/web/src/pages/connected/visuals/index.tsx",
+            "/workspace/audit-final/web/src/pages/connected/visuals/LegacyForecast.tsx"
+          ]
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/connected/runFigures.test.ts",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/connected/runReasons.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": [
+            "/workspace/audit-final/web/src/pages/connected/runReasons.test.tsx",
+            "/workspace/audit-final/web/src/pages/connected/ConnectedApp.tsx",
+            "/workspace/audit-final/web/src/pages/connected/ReportLibrary.tsx",
+            "/workspace/audit-final/web/src/pages/connected/visuals/index.tsx",
+            "/workspace/audit-final/web/src/pages/connected/visuals/LegacyForecast.tsx"
+          ]
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/library/Evidence.reviewTails.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/library/History.runs.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/library/Home.clearFocus.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/library/Home.startRun.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/library/readRecord.test.ts",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/model/ForecastPage.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/model/case-choice.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/model/one-case.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/signal/messages.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/components/application/table/table.missing.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/connected/report/ArtifactDownloads.states.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/connected/report/Changes.colour.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/connected/report/Evidence.t21-fix1.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": [
+            "/workspace/audit-final/web/src/pages/connected/report/Evidence.t21-fix1.test.tsx",
+            "/workspace/audit-final/web/src/pages/connected/report/Evidence.tsx",
+            "/workspace/audit-final/web/src/pages/connected/report/ForecastRecord.tsx",
+            "/workspace/audit-final/web/src/pages/connected/visuals/LegacyForecast.tsx"
+          ]
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/connected/report/Forecast.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": [
+            "/workspace/audit-final/web/src/pages/connected/report/Forecast.test.tsx",
+            "/workspace/audit-final/web/src/pages/connected/report/Forecast.tsx",
+            "/workspace/audit-final/web/src/pages/connected/visuals/LegacyForecast.tsx"
+          ]
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/connected/report/Record.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": [
+            "/workspace/audit-final/web/src/pages/connected/report/Record.test.tsx",
+            "/workspace/audit-final/web/src/pages/connected/report/Evidence.tsx",
+            "/workspace/audit-final/web/src/pages/connected/report/ForecastRecord.tsx",
+            "/workspace/audit-final/web/src/pages/connected/visuals/LegacyForecast.tsx"
+          ]
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/connected/start/ReviewSheet.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/connected/start/rows.test.ts",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/connected/visuals/LegacyForecast.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": [
+            "/workspace/audit-final/web/src/pages/connected/visuals/LegacyForecast.test.tsx",
+            "/workspace/audit-final/web/src/pages/connected/visuals/LegacyForecast.tsx"
+          ]
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/connected/visuals/visualData.moduleCode.test.ts",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/library/parts/recordNav.test.ts",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        },
+        {
+          "file": "/workspace/audit-final/web/src/pages/run/start/Started.focus.test.tsx",
+          "graphRootPresent": true,
+          "pathToEditedComponent": null
+        }
+      ]
+    }
+  ]
+}

@@ -14,7 +14,7 @@ export function DownloadButton({
   end = false,
 }: {
   download: Download;
-  color?: "secondary" | "link-color";
+  color?: "secondary" | "tertiary" | "link-color";
   open?: boolean;
   /** Stacks the disabled button over its reason, both against the cell's right edge. */
   end?: boolean;

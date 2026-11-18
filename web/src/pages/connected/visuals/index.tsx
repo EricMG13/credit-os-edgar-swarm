@@ -5,9 +5,9 @@ import { chartsWithQualifications } from "./drawnQualifications";
 import { ChartTable } from "@/components/chart/ChartTable";
 import { ChartWithTable } from "@/components/chart/ChartWithTable";
 import { TRACE_HOST } from "@/pages/library/parts/TraceControl";
-import { containsReference } from "../publishedReport";
+import { containsReference, readerText } from "../publishedReport";
 import { PublishedSource } from "../report/PublishedTrace";
-import { usePortfolioBasis } from "../report/PortfolioBasis";
+import { usePortfolioBasis, usePortfolioBasisLoading } from "../report/PortfolioBasis";
 import { portfolioLimits } from "./PortfolioLimits";
 import { publishedChart } from "./charts";
 import { edgeMap } from "./EdgeMap";
@@ -113,6 +113,7 @@ export function LegacyVisuals({
 }: LegacyVisualsProps) {
   const published = record(output);
   const basis = usePortfolioBasis();
+  const loading = usePortfolioBasisLoading();
   const sourceSections = sections ?? published.sections;
   const tables = publishedTables(sourceSections);
   const qualified = new Set(chartsWithQualifications(published, sourceSections));
@@ -145,7 +146,14 @@ export function LegacyVisuals({
         entry(first, (wide) => (
           <section key={key} className={`${TRACE_HOST} grid min-w-0 gap-2${box}${wide}`}>
             <Heading className="font-display text-h4 first-letter:uppercase">{title}</Heading>
-            <GapPanel role="note" reason={link && containsReference(gap) ? "See Evidence." : gap} />
+            <GapPanel
+              role="note"
+              reason={
+                link && containsReference(gap)
+                  ? `${/^(Not supplied|Not calculated|Not assessable|Not established|Withheld)\b/i.exec(gap)?.[1] ?? "Not established"}. See Evidence.`
+                  : readerText(gap)
+              }
+            />
             {actions}
           </section>
         )),
@@ -168,9 +176,10 @@ export function LegacyVisuals({
           </PublishedSource>
         )),
     };
-    const note = word(descriptor.unit) || undefined;
+    const note = descriptor.unit === "x" ? "x (times)" : word(descriptor.unit) || undefined;
     const frame = { title, note, actions, as: Heading };
     const chart = drawingChart({ category, descriptor, published, basis, link, table, frame });
+    const limits = category === "chart" && descriptor.kind === "limits";
     return [
       entry(first, (wide) => (
         <div
@@ -181,12 +190,23 @@ export function LegacyVisuals({
             <>
               <Heading className="font-display text-h4 first-letter:uppercase">{title}</Heading>
               {actions}
-              <p role="note" className="text-small text-text-secondary">
-                {category === "chart" && descriptor.kind === "limits"
-                  ? "Source table available. This report does not record a validated portfolio basis for a chart."
-                  : "Source table available. The chart could not be drawn on a common basis."}
-              </p>
-              <ChartTable caption={title} {...chartTable(table)} />
+              {limits && loading ? (
+                <p role="status" className="text-small text-text-secondary">
+                  Loading the portfolio limits.
+                </p>
+              ) : (
+                <>
+                  <GapPanel
+                    role="note"
+                    reason={
+                      limits
+                        ? "The portfolio limits could not be checked against the mandate for this run."
+                        : "The chart is not drawn because its figures are not on one comparable scale."
+                    }
+                  />
+                  <ChartTable caption={title} {...chartTable(table)} />
+                </>
+              )}
             </>
           )}
           {qualified.has(descriptor) && (

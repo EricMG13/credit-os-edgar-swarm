@@ -1,0 +1,79 @@
+✖ R4-019 observed Edge local download icon is an offline resource (1.621216ms)
+✖ fileicon classification is limited to absolute local paths on the two browser services (0.400744ms)
+✖ C1-025/C3-001 compact proof accepts only the exact selected lead and its source identity (1.719765ms)
+✔ compact proof retains exact public keys and rejects lead source or text drift (3.897271ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 1
+ℹ fail 3
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 123.568607
+
+✖ failing tests:
+
+test at docs/audit/2026-11-16-final/output/5-repair/fidelity/proof-local-consequences.test.mjs:17:1
+✖ R4-019 observed Edge local download icon is an offline resource (1.621216ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  false !== true
+  
+      at TestContext.<anonymous> (file:///workspace/audit-fidelity-guard-return/docs/audit/2026-11-16-final/output/5-repair/fidelity/proof-local-consequences.test.mjs:18:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at docs/audit/2026-11-16-final/output/5-repair/fidelity/proof-local-consequences.test.mjs:24:1
+✖ fileicon classification is limited to absolute local paths on the two browser services (0.400744ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  false !== true
+  
+      at TestContext.<anonymous> (file:///workspace/audit-fidelity-guard-return/docs/audit/2026-11-16-final/output/5-repair/fidelity/proof-local-consequences.test.mjs:27:14)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at docs/audit/2026-11-16-final/output/5-repair/fidelity/proof-local-consequences.test.mjs:78:1
+✖ C1-025/C3-001 compact proof accepts only the exact selected lead and its source identity (1.719765ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+    [
+      'folder',
+      'issuerKey',
+  +   'lead',
+      'pathway'
+    ]
+  
+      at checkCompactLibrary (eval at <anonymous> (file:///workspace/audit-fidelity-guard-return/docs/audit/2026-11-16-final/output/5-repair/fidelity/proof-local-consequences.test.mjs:15:29), <anonymous>:13:10)
+      at async checkFixture (file:///workspace/audit-fidelity-guard-return/docs/audit/2026-11-16-final/output/5-repair/fidelity/proof-local-consequences.test.mjs:74:3)
+      at async TestContext.<anonymous> (file:///workspace/audit-fidelity-guard-return/docs/audit/2026-11-16-final/output/5-repair/fidelity/proof-local-consequences.test.mjs:79:3)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: [ 'folder', 'issuerKey', 'lead', 'pathway' ],
+    expected: [ 'folder', 'issuerKey', 'pathway' ],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }

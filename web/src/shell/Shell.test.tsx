@@ -2,13 +2,12 @@ import { fireEvent, render, screen, within } from "@testing-library/react";
 import { PageHeader } from "./PageHeader";
 import { Shell, type Area } from "./Shell";
 
-// The five areas and their hashes, as the supplement for this step names them.
+// The four rail areas and their hashes; the kit is a page of the shell, not a rail item (Shell.kitRail.test.tsx).
 const AREAS: [Area, string, string][] = [
   ["library", "Library", "#/"],
   ["model", "Model", "#/model"],
   ["run", "Run", "#/run"],
   ["signal", "Signal", "#/signal"],
-  ["kit", "Kit", "#/kit"],
 ];
 
 describe("Shell", () => {

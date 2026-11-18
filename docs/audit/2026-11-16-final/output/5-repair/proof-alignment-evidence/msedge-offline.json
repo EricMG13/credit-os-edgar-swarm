@@ -1,0 +1,634 @@
+{
+  "non_loopback_requests": 0,
+  "attempts": [],
+  "proxy_blocks": [
+    {
+      "target": "http://edge.microsoft.com/browsernetworktime/time/1/current?cup2key=2:Bqjd0SEY4aSmHuHLreCNvqDefOWUopozIVIIDIO8SLs&cup2hreq=e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "method": "GET"
+    },
+    {
+      "target": "edge.microsoft.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "edge.microsoft.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "edge.microsoft.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.bing.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.bing.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.bing.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.bing.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.bing.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.bing.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.bing.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.bing.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.bing.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "edge.microsoft.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.bing.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.bing.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.bing.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.bing.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.bing.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.bing.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.bing.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.bing.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.bing.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.bing.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.bing.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "edge.microsoft.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.bing.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.bing.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "edge.microsoft.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.bing.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.bing.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "edge.microsoft.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "edge.microsoft.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.bing.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.bing.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.bing.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.bing.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.bing.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.bing.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "edge.microsoft.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.bing.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.bing.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "edge.microsoft.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.bing.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.bing.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "edge.microsoft.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "edge.microsoft.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.bing.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.bing.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.bing.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.bing.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.bing.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.bing.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.bing.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.bing.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.bing.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.bing.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.bing.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.bing.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.bing.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.bing.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.bing.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.bing.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.bing.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.bing.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.bing.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.bing.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.bing.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.bing.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.bing.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.bing.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.bing.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.bing.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.bing.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.bing.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.bing.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.bing.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.bing.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.bing.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.bing.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "edge.microsoft.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.bing.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.bing.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.bing.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.bing.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.bing.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.bing.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "edge.microsoft.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.bing.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.bing.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.bing.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "edge.microsoft.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.bing.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.bing.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.bing.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "edge.microsoft.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.bing.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.bing.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.bing.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "edge.microsoft.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.bing.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.bing.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.bing.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "edge.microsoft.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.bing.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.bing.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.bing.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "edge.microsoft.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.bing.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.bing.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.bing.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.bing.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.bing.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.bing.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.bing.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.bing.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "edge.microsoft.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.bing.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.bing.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.bing.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "edge.microsoft.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.bing.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.bing.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.bing.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.bing.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.bing.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.bing.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.bing.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.bing.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.bing.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.bing.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.bing.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.bing.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.bing.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.bing.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "edge.microsoft.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.bing.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.bing.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.bing.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.bing.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.bing.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.bing.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.bing.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.bing.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.bing.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.bing.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.bing.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.bing.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.bing.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.bing.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.bing.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.bing.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.bing.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.bing.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.bing.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.bing.com:443",
+      "method": "CONNECT"
+    },
+    {
+      "target": "www.bing.com:443",
+      "method": "CONNECT"
+    }
+  ]
+}

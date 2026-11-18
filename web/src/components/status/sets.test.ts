@@ -92,6 +92,29 @@ describe("STATUS_SETS", () => {
     }
   });
 
+  it("gives the slashed circle to 'Not assessable' and to no other state (D-29)", () => {
+    const slashed = Object.entries(STATUS_SETS).flatMap(([name, set]) =>
+      Object.values(set)
+        .filter((s) => s.shape === "slashed circle")
+        .map((s) => `${name}: ${s.word}`),
+    );
+    expect(slashed).toEqual(["Module state: Not assessable", "Change state: Not assessable"]);
+  });
+
+  it("gives 'Not ready' a shape of its own, in the neutral tone it had before (OQ-09)", () => {
+    expect(STATUS_SETS["Source readiness"]["Not ready"]).toEqual({
+      shape: "hollow square",
+      tone: "neutral",
+      word: "Not ready",
+    });
+    const sharing = Object.entries(STATUS_SETS).flatMap(([name, set]) =>
+      Object.values(set)
+        .filter((s) => s.shape === "hollow square")
+        .map((s) => `${name}: ${s.word}`),
+    );
+    expect(sharing).toEqual(["Source readiness: Not ready"]);
+  });
+
   it("shares only the slashed circle between module state and change state", () => {
     const module = new Set(Object.values(STATUS_SETS["Module state"]).map((s) => s.shape));
     const change = Object.values(STATUS_SETS["Change state"]).map((s) => s.shape);

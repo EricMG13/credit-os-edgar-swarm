@@ -2,7 +2,6 @@ import { STATUS_SETS, type Tone } from "@/components/status/sets";
 import { StatusShape } from "@/components/status/shapes";
 import { cx } from "@/utils/cx";
 import type { ActivityLine } from "../slice-activity";
-import "./activity.css";
 
 const MARK: Record<Tone, string> = {
   success: "text-success-mark",
@@ -20,16 +19,27 @@ function stateOf(line: ActivityLine) {
     : STATUS_SETS["Run states"][line.state];
 }
 
-/** The connected activity feed, newest first. In a live run the newest line rises in once. */
-export function Feed({ lines, live }: { lines: ActivityLine[]; live: boolean }) {
+/** The activity feed, newest first. */
+export function Feed({ lines }: { lines: ActivityLine[] }) {
+  // Count identical records oldest first so a new entry does not remount older rows.
+  const occurrences = new Map<string, number>();
+  const entries = [...lines]
+    .reverse()
+    .map((line) => {
+      const identity = JSON.stringify([line.time, line.who, line.state, line.text]);
+      const occurrence = (occurrences.get(identity) ?? 0) + 1;
+      occurrences.set(identity, occurrence);
+      return { line, key: `${identity}:${String(occurrence)}` };
+    })
+    .reverse();
   return (
     <ul>
-      {lines.map((line, i) => {
+      {entries.map(({ line, key }, i) => {
         const { shape, tone } = stateOf(line);
         const last = i === lines.length - 1;
         return (
-          <li key={`${line.time}-${line.who}-${String(i)}`}>
-            <article className={cx("flex gap-3", live && i === 0 && "feed-rise")}>
+          <li key={key}>
+            <article className="flex gap-3">
               <div className="flex flex-none flex-col items-center">
                 <span
                   className={cx(
@@ -49,10 +59,12 @@ export function Feed({ lines, live }: { lines: ActivityLine[]; live: boolean }) 
               </div>
               <div className={cx("flex min-w-0 flex-1 flex-col", last ? "pb-0" : "pb-8")}>
                 <div className="flex flex-wrap items-center gap-2">
-                  <span className="text-sm font-medium text-text-secondary">{line.who}</span>
-                  <time className="text-xs text-text-tertiary tabular-nums">{line.time}</time>
+                  <span className="min-w-0 text-sm font-medium wrap-anywhere text-text-secondary">
+                    {line.who}
+                  </span>
+                  <time className="text-caption text-text-tertiary tabular-nums">{line.time}</time>
                 </div>
-                <p className="text-sm text-pretty text-text-tertiary">{line.text}</p>
+                <p className="text-sm text-pretty wrap-anywhere text-text-tertiary">{line.text}</p>
               </div>
             </article>
           </li>

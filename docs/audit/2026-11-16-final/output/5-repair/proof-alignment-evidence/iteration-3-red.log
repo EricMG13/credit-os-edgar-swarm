@@ -1,0 +1,63 @@
+
+> credit-os-web@0.0.0 proof:connected
+> node scripts/connected-proof.mjs
+
+Browser proof artifacts: /workspace/audit-proof-alignment/proof-artifacts/run-aRos3A
+overview mobile: 6 headline cards fit at 375px
+
+✖ Google Chrome uploads, submits and opens a finished legacy report (18733.09619ms)
+overview mobile: 6 headline cards fit at 375px
+
+✖ Microsoft Edge uploads, submits and opens a finished legacy report (18780.745243ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 0
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 37519.243625
+
+✖ failing tests:
+
+test at scripts/connected-proof.mjs:1531:5
+✖ Google Chrome uploads, submits and opens a finished legacy report (18733.09619ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /Cover reaches watch level/u. Input:
+
+  'FCF reaches zero\n20%\nCalculated'
+
+      at checkDownsideThresholds (file:///workspace/audit-proof-alignment/web/scripts/connected-proof.mjs:818:10)
+      at async checkDownside (file:///workspace/audit-proof-alignment/web/scripts/connected-proof.mjs:808:3)
+      at async checkCharts (file:///workspace/audit-proof-alignment/web/scripts/connected-proof.mjs:933:3)
+      at async checkBrowserRun (file:///workspace/audit-proof-alignment/web/scripts/connected-proof.mjs:1413:3)
+      at async TestContext.<anonymous> (file:///workspace/audit-proof-alignment/web/scripts/connected-proof.mjs:1565:20)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'FCF reaches zero\n20%\nCalculated',
+    expected: /Cover reaches watch level/u,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at scripts/connected-proof.mjs:1531:5
+✖ Microsoft Edge uploads, submits and opens a finished legacy report (18780.745243ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /Cover reaches watch level/u. Input:
+
+  'FCF reaches zero\n20%\nCalculated'
+
+      at checkDownsideThresholds (file:///workspace/audit-proof-alignment/web/scripts/connected-proof.mjs:818:10)
+      at async checkDownside (file:///workspace/audit-proof-alignment/web/scripts/connected-proof.mjs:808:3)
+      at async checkCharts (file:///workspace/audit-proof-alignment/web/scripts/connected-proof.mjs:933:3)
+      at async checkBrowserRun (file:///workspace/audit-proof-alignment/web/scripts/connected-proof.mjs:1413:3)
+      at async TestContext.<anonymous> (file:///workspace/audit-proof-alignment/web/scripts/connected-proof.mjs:1565:20)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'FCF reaches zero\n20%\nCalculated',
+    expected: /Cover reaches watch level/u,
+    operator: 'match',
+    diff: 'simple'
+  }

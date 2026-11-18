@@ -1,0 +1,156 @@
+R4-012 last return — observed local command outputs
+Code pin: 78a6baab12e273f7794329e527f216e4e1ba6479
+
+## Unchanged boundary probe at 05da92cf; exit 1
+{"text":"The margin rose eleven pp. 3 quarters running.","actual":false,"checks":{"predicate":true,"chartCell":true,"findingParagraph":true,"plainTable":true,"forecastScope":true}}
+{"text":"The margin rose eleven pp. 3 fiscal quarters running.","actual":false,"checks":{"predicate":true,"chartCell":true,"findingParagraph":true,"plainTable":true,"forecastScope":true}}
+{"text":"The margin rose eleven pp. 3 consecutive fiscal quarters running.","actual":true,"checks":{"predicate":false,"chartCell":false,"findingParagraph":false,"plainTable":false,"forecastScope":false}}
+{"text":"The margin rose twenty-one pp. 3 consecutive fiscal quarters running.","actual":true,"checks":{"predicate":false,"chartCell":false,"findingParagraph":false,"plainTable":false,"forecastScope":false}}
+{"text":"The margin rose 11 pp. 3 consecutive fiscal quarters running.","actual":false,"checks":{"predicate":true,"chartCell":true,"findingParagraph":true,"plainTable":true,"forecastScope":true}}
+{"text":"See pp. 3 for the covenant.","actual":true,"checks":{"predicate":true,"chartCell":true,"findingParagraph":true,"plainTable":true,"forecastScope":true}}
+{"text":"See pp. 3 consecutive fiscal quarters after the summary for the covenant.","actual":true,"checks":{"predicate":true,"chartCell":true,"findingParagraph":true,"plainTable":true,"forecastScope":true}}
+{"text":"Threshold unknown (G12).","actual":true,"checks":{"predicate":true,"chartCell":true,"findingParagraph":true,"plainTable":true,"forecastScope":true}}
+{"text":"A gap remains between the Group of Seven (G7) economies.","actual":false,"checks":{"predicate":true,"chartCell":true,"findingParagraph":true,"plainTable":true,"forecastScope":true}}
+{"cases":9,"failed":2}
+
+## New 27-case tests before production change; exit 1
+
+ RUN  v4.1.12 /workspace/audit-reference-last/web
+
+ ❯ src/pages/connected/publishedReport.reference-last.test.tsx (27 tests | 7 failed) 874ms
+   × keeps the exact phrase boundary across actual readers: 'The margin rose eleven pp. 3 consecut…' 7ms
+   × keeps the exact phrase boundary across actual readers: 'The margin rose twenty-one pp. 3 cons…' 1ms
+   × keeps the exact phrase boundary across actual readers: 'The margin rose one hundred pp. 3 con…' 0ms
+   × keeps the exact phrase boundary across actual readers: 'The margin rose seventy-three pp. 12 …' 1ms
+   × keeps the exact phrase boundary across actual readers: 'pp. 3 quarters after the summary give…' 1ms
+   × keeps the exact phrase boundary across actual readers: 'Annual report, pp. 3 fiscal quarters …' 1ms
+   × keeps the exact phrase boundary across actual readers: 'The report (pp. 3 fiscal quarters aft…' 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/pages/connected/publishedReport.reference-last.test.tsx > keeps the exact phrase boundary across actual readers: 'The margin rose eleven pp. 3 consecut…'
+ FAIL  src/pages/connected/publishedReport.reference-last.test.tsx > keeps the exact phrase boundary across actual readers: 'The margin rose twenty-one pp. 3 cons…'
+ FAIL  src/pages/connected/publishedReport.reference-last.test.tsx > keeps the exact phrase boundary across actual readers: 'The margin rose one hundred pp. 3 con…'
+ FAIL  src/pages/connected/publishedReport.reference-last.test.tsx > keeps the exact phrase boundary across actual readers: 'The margin rose seventy-three pp. 12 …'
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ src/pages/connected/publishedReport.reference-last.test.tsx:56:35
+     54|   ...references.map((text) => ({ text, reference: true })),
+     55| ])("keeps the exact phrase boundary across actual readers: $text", ({ …
+     56|   expect(containsReference(text)).toBe(reference);
+       |                                   ^
+     57|   expect(chartTable(basisTable(text)).rows[0]?.cells).toEqual([
+     58|     "3.20",
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/7]⎯
+
+ FAIL  src/pages/connected/publishedReport.reference-last.test.tsx > keeps the exact phrase boundary across actual readers: 'pp. 3 quarters after the summary give…'
+ FAIL  src/pages/connected/publishedReport.reference-last.test.tsx > keeps the exact phrase boundary across actual readers: 'Annual report, pp. 3 fiscal quarters …'
+ FAIL  src/pages/connected/publishedReport.reference-last.test.tsx > keeps the exact phrase boundary across actual readers: 'The report (pp. 3 fiscal quarters aft…'
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ src/pages/connected/publishedReport.reference-last.test.tsx:56:35
+     54|   ...references.map((text) => ({ text, reference: true })),
+     55| ])("keeps the exact phrase boundary across actual readers: $text", ({ …
+     56|   expect(containsReference(text)).toBe(reference);
+       |                                   ^
+     57|   expect(chartTable(basisTable(text)).rows[0]?.cells).toEqual([
+     58|     "3.20",
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/7]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  7 failed | 20 passed (27)
+   Start at  19:07:56
+   Duration  3.01s (transform 390ms, setup 82ms, import 1.57s, tests 874ms, environment 359ms)
+
+
+## Unchanged boundary probe after repair; exit 0
+{"text":"The margin rose eleven pp. 3 quarters running.","actual":false,"checks":{"predicate":true,"chartCell":true,"findingParagraph":true,"plainTable":true,"forecastScope":true}}
+{"text":"The margin rose eleven pp. 3 fiscal quarters running.","actual":false,"checks":{"predicate":true,"chartCell":true,"findingParagraph":true,"plainTable":true,"forecastScope":true}}
+{"text":"The margin rose eleven pp. 3 consecutive fiscal quarters running.","actual":false,"checks":{"predicate":true,"chartCell":true,"findingParagraph":true,"plainTable":true,"forecastScope":true}}
+{"text":"The margin rose twenty-one pp. 3 consecutive fiscal quarters running.","actual":false,"checks":{"predicate":true,"chartCell":true,"findingParagraph":true,"plainTable":true,"forecastScope":true}}
+{"text":"The margin rose 11 pp. 3 consecutive fiscal quarters running.","actual":false,"checks":{"predicate":true,"chartCell":true,"findingParagraph":true,"plainTable":true,"forecastScope":true}}
+{"text":"See pp. 3 for the covenant.","actual":true,"checks":{"predicate":true,"chartCell":true,"findingParagraph":true,"plainTable":true,"forecastScope":true}}
+{"text":"See pp. 3 consecutive fiscal quarters after the summary for the covenant.","actual":true,"checks":{"predicate":true,"chartCell":true,"findingParagraph":true,"plainTable":true,"forecastScope":true}}
+{"text":"Threshold unknown (G12).","actual":true,"checks":{"predicate":true,"chartCell":true,"findingParagraph":true,"plainTable":true,"forecastScope":true}}
+{"text":"A gap remains between the Group of Seven (G7) economies.","actual":false,"checks":{"predicate":true,"chartCell":true,"findingParagraph":true,"plainTable":true,"forecastScope":true}}
+{"cases":9,"failed":0}
+
+## Original eight-case probe after repair; exit 0
+{"pass":true,"expected":false,"actual":false,"text":"A gap remains between the Group of Seven (G7) economies.","actualCell":"A gap remains between the Group of Seven (G7) economies.","expectedCell":"A gap remains between the Group of Seven (G7) economies."}
+{"pass":true,"expected":false,"actual":false,"text":"The margin rose eleven pp. 3 quarters running.","actualCell":"The margin rose eleven pp. 3 quarters running.","expectedCell":"The margin rose eleven pp. 3 quarters running."}
+{"pass":true,"expected":false,"actual":false,"text":"No series is available for the Group of Seven (G7) economies.","actualCell":"No series is available for the Group of Seven (G7) economies.","expectedCell":"No series is available for the Group of Seven (G7) economies."}
+{"pass":true,"expected":true,"actual":true,"text":"Lease detail not available (G12).","actualCell":"Qualification recorded in Evidence.","expectedCell":"Qualification recorded in Evidence."}
+{"pass":true,"expected":true,"actual":true,"text":"Threshold unknown (G12).","actualCell":"Qualification recorded in Evidence.","expectedCell":"Qualification recorded in Evidence."}
+{"pass":true,"expected":true,"actual":true,"text":"(G12).","actualCell":"Qualification recorded in Evidence.","expectedCell":"Qualification recorded in Evidence."}
+{"pass":true,"expected":true,"actual":true,"text":"See p. 1000 for the covenant.","actualCell":"Qualification recorded in Evidence.","expectedCell":"Qualification recorded in Evidence."}
+{"pass":true,"expected":true,"actual":true,"text":"See pages 1024–1026 for the covenant.","actualCell":"Qualification recorded in Evidence.","expectedCell":"Qualification recorded in Evidence."}
+{"failures":0}
+
+## Final focused 253 unchanged plus 27 new tests; exit 0
+
+ RUN  v4.1.12 /workspace/audit-reference-last/web
+
+
+ Test Files  8 passed (8)
+      Tests  280 passed (280)
+   Start at  19:10:37
+   Duration  14.24s (transform 674ms, setup 518ms, import 5.67s, tests 3.45s, environment 3.57s)
+
+
+## Additional actual callers; exit 0
+
+ RUN  v4.1.12 /workspace/audit-reference-last/web
+
+
+ Test Files  10 passed (10)
+      Tests  123 passed (123)
+   Start at  19:09:14
+   Duration  23.73s (transform 1.71s, setup 671ms, import 11.10s, tests 5.91s, environment 4.46s)
+
+
+## Frontend lint; exit 0
+
+> credit-os-web@0.0.0 lint
+> eslint --max-warnings=0 .
+
+
+## Frontend initial format check; exit 1 (new test formatting only)
+
+> credit-os-web@0.0.0 format:check
+> prettier --check .
+
+Checking formatting...
+[warn] src/pages/connected/publishedReport.reference-last.test.tsx
+[warn] Code style issues found in the above file. Run Prettier with --write to fix.
+
+## Frontend final format check; exit 0
+
+> credit-os-web@0.0.0 format:check
+> prettier --check .
+
+Checking formatting...
+All matched files use Prettier code style!
+
+## TypeScript; exit 0
+
+> credit-os-web@0.0.0 typecheck
+> tsc --noEmit
+
+
+## Changed-code Python quality gate base 05da92cf; exit 0
+quality gate: 0 finding(s) in 0 changed file(s), 0 line(s) in scope

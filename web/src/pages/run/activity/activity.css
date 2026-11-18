@@ -1,23 +1,29 @@
-/* Run activity motion, all inside a live run (queued or running). The kit supplies the halo and
-   the shimmer; the feed's rise-in and the thinner skeleton lines are this page's. */
-.activity-skel.queued-shimmer {
+.activity-skel {
   min-height: 0.875rem;
   height: 0.875rem;
+  border-radius: var(--radius-ds-xs);
+  background-color: var(--color-surface-subtle);
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  @keyframes feed-rise {
-    from {
-      opacity: 0;
-      transform: translateY(8px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
+.run-step-marker::after {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow:
+    0 0 0 2px var(--color-surface-card),
+    0 0 0 4px var(--color-action);
+  opacity: 0;
+  pointer-events: none;
+  content: "";
+}
 
-  .feed-rise {
-    animation: feed-rise 200ms cubic-bezier(0.2, 0, 0, 1) both;
+.run-step-marker-active::after {
+  opacity: 1;
+}
+
+/* The running ring hands off between the existing rows as their states update. */
+@media (prefers-reduced-motion: no-preference) {
+  .run-step-marker::after {
+    transition: opacity 180ms cubic-bezier(0.16, 1, 0.3, 1);
   }
 }

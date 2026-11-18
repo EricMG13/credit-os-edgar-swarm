@@ -286,9 +286,9 @@ source component keeps its own border widths in this system's border colours.
   16 beside `small` text and 20 beside `body` text.
 - Icons inherit the text colour. An icon never stands without a label, except the trace
   control, which carries an accessible name.
-- The ten status shapes (filled circle, half-filled circle, ring, dashed ring, slashed circle,
-  triangle, diamond, square, cross, pause bars) are part of this system and are drawn in CSS,
-  10px; they are not taken from the icon set.
+- The eleven status shapes (filled circle, half-filled circle, ring, dashed ring, slashed circle,
+  triangle, diamond, square, cross, pause bars, hollow square) are part of this system and are
+  drawn in CSS, 10px; they are not taken from the icon set.
 - The Claude Design page draws icons and the logo symbol as placeholders. The predecessor's
   symbol file is committed at step D2a (ruling 10); the wordmark is not.
 
@@ -311,7 +311,7 @@ Shadcnblocks piece redrawn on React Aria, which is redrawn to look like its sour
 | Input | Label, hint, error with message, disabled; the source's `md` size | UUI <https://www.untitledui.com/react/components/inputs> |
 | Select | Default, focus, disabled, invalid | UUI <https://www.untitledui.com/react/components/select> |
 | File upload | Drop zone; per-file progress, complete, failed with retry | UUI <https://www.untitledui.com/react/components/file-uploaders> |
-| Tabs | Selected in Ultramarine with a 2px line (underline when horizontal, side line when vertical); count badge neutral | UUI <https://www.untitledui.com/react/components/tabs> |
+| Tabs | Selected in Ultramarine with a 2px line (underline when horizontal, side line when vertical); hover changes the text colour only; count badge neutral | UUI <https://www.untitledui.com/react/components/tabs> |
 | Chart or Table toggle | The source's joined button group, single selection, with the selected segment as the source shows it, in these colours | UUI <https://www.untitledui.com/react/components/button-groups> |
 | Sidebar navigation | Light, in the variant the map names; selected item `surface-selected` with Ultramarine text and icon, hover `surface-subtle`, counts as neutral count badges | UUI <https://www.untitledui.com/react/components/sidebar-navigations> |
 | Card and tile | Card (`radius-lg`, padding 32, `shadow-1`) and tile (`radius-md`, padding 24), written here on the tokens. A card may hold a group of source components or a chart. A metric is the source's metric card, one card per metric, never a joined strip | This system; metric card UUI <https://www.untitledui.com/react/components/metrics> |
@@ -342,9 +342,9 @@ system's colours and typefaces.
 | Label badge | Word only, neutral (`text-secondary` on `surface-subtle`) | Pathway, kind, qualifier, "AI" |
 | Count badge | Number only, neutral | Counts on tabs and navigation items |
 | Dot badge | 8px `action` dot | Unread |
-| Trace control | Icon only, with an accessible name and tooltip; shown on hover and focus, and always shown on a touch device | One per paragraph, row or figure |
+| Trace control | Icon only, with an accessible name and tooltip; visible at rest. The page-level source-icon switch highlights the controls where offered (R10, OQ-09). | One per paragraph, row or figure |
 
-**Status shapes.** Ten shapes, each with one meaning:
+**Status shapes.** Eleven shapes, each with one meaning:
 
 | Shape | Meaning |
 | :--- | :--- |
@@ -358,6 +358,7 @@ system's colours and typefaces.
 | Pause bars | Paused, interrupted |
 | Slashed circle | "Not assessable", and nothing else (a blocked module, in every set that lists modules) |
 | Dashed ring | A gap, and nothing else: something this run did not establish |
+| Hollow square | "Not ready", and nothing else |
 
 A set is a group of states that can appear together in one list, table, legend or strip.
 Within a set every state has a different shape; no two states differ by colour or word alone.
@@ -370,7 +371,7 @@ Within a set every state has a different shape; no two states differ by colour o
 | Dated records | Past: filled circle, neutral. Next: half-filled circle, action. Later: ring, neutral |
 | Answer state | Answered: filled circle, success. Partly answered: half-filled circle, info. Not answered: ring, neutral |
 | Met or not met | Met: filled circle, success. Not met: triangle, warning |
-| Source readiness | Ready: filled circle, success. Ready with limitations: triangle, warning. Conditional: half-filled circle, info. Not ready: slashed circle, neutral |
+| Source readiness | Ready: filled circle, success. Ready with limitations: triangle, warning. Conditional: half-filled circle, info. Not ready: hollow square, neutral |
 | Security recommendation | Preferred: filled circle, success. Neutral: ring, neutral. Avoid: cross, error. Requires More Work: triangle, warning |
 | Freshness | Checked: filled circle, success. Not checked yet: ring, neutral |
 | Module state | Delivered: filled circle, success. Delivered with gaps: dashed ring, gap colours. Not assessable: slashed circle, neutral. Not run (only in a run that has ended): ring, neutral |
@@ -386,9 +387,10 @@ Healthy, Past, Answered, Met, Checked, Delivered and Read in full; the half-fill
 Running, Proposed, Next, Partly answered, Uploading and Awaiting your approval; the ring is
 Info, Queued, Quiet, Later, Not answered, Not checked yet, Low, Check and Not run; the triangle is
 Warning, Capped, Not met, Medium, Limited, Read in part and Changed; the diamond is Error, Failed,
-Failing, High, Will refuse and Unreadable; the square is Approved and Unchanged; the pause bars are
-Interrupted and Paused; the dashed ring is a gap, Gap, Delivered with gaps and State not known. Two
-states that share a shape never appear in one list together.
+Failing, High, Will refuse and Unreadable; the square is Approved and Unchanged; the pause bars
+are Interrupted and Paused; the dashed ring is a gap, Gap, Delivered with gaps and State not
+known; the hollow square is Not ready alone. Two states that share a shape never appear in one
+list together.
 
 The sets added at review 2 (ruling 7), and why each shape:
 
@@ -405,6 +407,8 @@ The sets added at review 2 (ruling 7), and why each shape:
 - **"Unreadable" is one state with one word** for a file that could not be read or was
   rejected at run start; the sentence beside it says which. It is the diamond, not the run
   state's cross.
+- **"Not ready" has its own shape** (owner, 2026-11-17, OQ-09). The shape is the hollow square:
+  an outlined 10px square, drawn in the ring's 1.5px stroke. No other state uses it.
 - **A module that fails inside a run reads "Not assessable"** with its sentence; "Failed" and
   the diamond on a run page stay the run's.
 - **"Not run" and "Queued" share the ring** and never meet: Queued exists only in a live run,
@@ -453,7 +457,7 @@ out; a seventh series folds into Other.
 | :--- | :--- | :--- | ---: | ---: | :--- |
 | 1 | Ultramarine | `#001AFF` | 8.10 | 44 | Solid, circle marker |
 | 2 | Violet D2 | `#827BCC` | 3.71 | 134 | Dashed, square marker |
-| 3 | Reef D4 | `#994A34` | 6.21 | 95 | Solid, triangle marker |
+| 3 | Reef D8 | `#331911` | 16.31 | 32 | Solid, triangle marker |
 | 4 | Orange D3 | `#B28B00` | 3.19 | 135 | Dotted, diamond marker |
 | 5 | Green D5 | `#0F8048` | 5.00 | 88 | Solid, ring marker |
 | 6 | Yellow D4 | `#8C9900` | 3.15 | 132 | Dash-dot, cross marker |
@@ -461,7 +465,18 @@ out; a seventh series folds into Other.
 
 Gray value is Rec. 601 luma on the 8-bit sRGB values: 0.299 R + 0.587 G + 0.114 B, rounded.
 
-How it was tested (palette validator, light mode, white surface, exit 0):
+The final audit's X1-020 repair darkens slot 3 within the existing Reef family. This is the
+implementer's choice under OQ-09's accepted lightness recommendation, not an owner-selected hex.
+The first three slots now have relative luminances 0.0796, 0.2327 and 0.0144; their pairwise
+contrast ratios are 2.18, 2.01 and 4.39. Each remains at least 3:1 against white. Only the chart
+slot and its waterfall-down alias changed; action and status colours did not.
+
+The measurements below describe the **previous Reef D4 palette**, before that repair. Its
+lightness-band and colour-blind separation results do not establish those properties for the
+new slot 3; simulated colour-blind separation has not been re-measured for the revised palette.
+Current grayscale and white-background contrast are checked independently in the frontend tests.
+
+How the previous palette was tested (palette validator, light mode, white surface, exit 0):
 
 - Every slot is at least 3:1 against white, inside the lightness band (OKLCH L 0.43 to 0.77)
   and above the chroma floor.
@@ -485,6 +500,15 @@ Other scales:
 | :--- | :--- |
 | Magnitude (one hue, light to dark) | `#99A3FF`, `#6676FF`, `#3348FF`, `#001AFF`, `#0012B2` |
 | Above and below a baseline | `#994A34`, `#E5704D`, `#DDDFE2` (neutral midpoint), `#6676FF`, `#001AFF` |
+
+A waterfall (a walk between totals) has three kinds of column, one token each (owner, 2026-11-17,
+OQ-09), so no colour in the chart is a local constant:
+
+| Token | Colour | Hex | Column |
+| :--- | :--- | :--- | :--- |
+| `waterfall-total` | Ultramarine (slot 1) | `#001AFF` | A total, drawn from the baseline |
+| `waterfall-up` | Ultramarine L3 (`brand-400`) | `#4D5FFF` | A step up |
+| `waterfall-down` | Reef D8 (slot 3) | `#331911` | A step down |
 
 Marks follow the source chart (review 2, ruling 5), read on the Untitled UI line and bar
 charts page on 2026-11-13: horizontal gridlines only, solid, in `border-hairline`; bars up to
@@ -529,7 +553,7 @@ and focus change state at once.
 | Rounded tiles, radius undefined | Radii 6, 12, 20, 28 and full | The owner's "rounded" |
 | Secondary colours paired with Navy as accents | Secondaries appear only as tints (L steps) and dark steps (D steps), never at full strength in the interface | At full strength none passes 3:1 on white |
 | Tertiary used sparingly | Tertiary steps supply all secondary text, borders, status and chart colours | They are the only brand values that pass contrast |
-| Chart series seen as Ultramarine, Green, Yellow, Violet, dark teal, Reef | Ultramarine, Violet D2, Reef D4, Orange D3, Green D5, Yellow D4 | Neon Green and Yellow fail 3:1; every dark Cyan step falls below the chroma floor and reads as grey; the order was searched for colour-blind separation |
+| Chart series seen as Ultramarine, Green, Yellow, Violet, dark teal, Reef | Ultramarine, Violet D2, Reef D8, Orange D3, Green D5, Yellow D4 | Neon Green and Yellow fail 3:1; every dark Cyan step falls below the chroma floor and reads as grey; the order was searched for colour-blind separation |
 | Flat fills, no gridlines | Flat fills kept; faint horizontal gridlines and the source chart's bar corners | Charts follow their source (review 2, ruling 5) |
 
 Kept from the guide: the 4-unit grid, sentence case, Navy as the anchor, Ultramarine for

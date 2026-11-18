@@ -29,7 +29,10 @@ CONFIG_PROVIDERS: Mapping[str, Provider] = MappingProxyType(
         "opus-high": "anthropic",
         "deepseek-max": "openrouter",
         "copilot-sol-medium": "copilot",
+        "copilot-sol-high": "copilot",
         "copilot-opus-medium": "copilot",
+        "copilot-opus-high": "copilot",
+        "copilot-luna-xhigh": "copilot",
     }
 )
 
@@ -42,7 +45,10 @@ CONFIG_MODELS: Mapping[str, str] = MappingProxyType(
         "opus-high": "claude-opus-5-5",
         "deepseek-max": "deepseek/deepseek-v4.1-flash-1017",
         "copilot-sol-medium": "gpt-6.1-sol",
+        "copilot-sol-high": "gpt-6.1-sol",
         "copilot-opus-medium": "claude-opus-5.5",
+        "copilot-opus-high": "claude-opus-5.5",
+        "copilot-luna-xhigh": "gpt-6-luna",
     }
 )
 
@@ -50,7 +56,8 @@ CONFIG_MODELS: Mapping[str, str] = MappingProxyType(
 MODEL_EFFORTS: Mapping[str, frozenset[str]] = {
     "gpt-6.1-sol": frozenset({"medium", "high"}),
     "claude-opus-5-5": frozenset({"medium", "high"}),
-    "claude-opus-5.5": frozenset({"medium"}),
+    "claude-opus-5.5": frozenset({"medium", "high"}),
+    "gpt-6-luna": frozenset({"xhigh"}),
     "deepseek/deepseek-v4.1-flash-1017": frozenset({"max"}),
 }
 

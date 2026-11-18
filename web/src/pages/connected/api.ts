@@ -8,7 +8,7 @@ export type Context = {
     cutoff?: string;
     pathway: string;
     case_kind: string;
-    reporting_currency: string;
+    reporting_currency?: string;
     current_period?: string;
     prior_period?: string;
   };
@@ -51,6 +51,7 @@ export type Answers = {
   model: string;
   effort: string;
   submitted_by: string;
+  newest_document_date?: string;
 };
 export type PriorInputs = {
   issuer_id: string;
@@ -77,16 +78,28 @@ export type Summary = Reading & {
   modules: string[];
   items: ReadinessItem[];
   omitted: string[];
+  /** The reader-facing title of each id in `omitted`; absent from an older service. */
+  omitted_titles?: string[];
   changes: string;
   lookup?: string[];
   web_search?: boolean;
+  /** The research module will have the lookup tools; absent from an older service. */
+  web_lookup?: boolean;
+  /** Reader-facing native Copilot search status; absent on older services. */
+  copilot_search?: string;
+  /** Seat support for the exact reviewed pair. */
+  copilot_verified?: boolean;
   prior?: { id: string; as_of: string; pathway: string } | null;
   model: string;
   effort: string;
 };
 
+// Held to `deploy_workflow.inbox.runs.Status` and `deploy_workflow.run_events.ModuleState` by
+// tests/test_react_frontend.py: the service sends these words and no others.
 export type RunStatus =
   "queued" | "running" | "finished" | "failed" | "capped" | "rejected" | "interrupted";
+/** A module's (or the Report's) state; "stopped": the run stopped while it ran. */
+export type ModuleState = "waiting" | "running" | "done" | "stopped";
 export type RunEvent = {
   at: string;
   kind:
@@ -107,7 +120,7 @@ export type Run = {
   issuer_name: string;
   as_of: string;
   pathway: string;
-  modules: [string, "done" | "running" | "waiting"][];
+  modules: [string, ModuleState][];
   stalled?: boolean;
   started_at?: string;
   ended_at?: string;
@@ -119,6 +132,25 @@ export type Run = {
   spent: string | null;
   settled_spent?: string | null;
   held?: string | null;
+  /** Why the service holds this run (Run activity's `held` note): sent while it is queued, or
+   * kept "running" after its log ended (a library that could not be rebuilt); else "". Absent
+   * from an older service. */
+  held_reason?: string;
+  /** The recorded cause of the engine's last stop; absent from an older service. */
+  stopped_by?: string;
+  /** Exact non-ready items in the approved summary; null/absent for historical records. */
+  approved_summary_limits?: ReadinessItem[] | null;
+  /** Existing accepted-response records, not a claim about paid calls or analytical completion. */
+  module_outputs?:
+    | {
+        module: string;
+        assessment: "not-assessable" | "readable" | null;
+        provenance: "retained-response" | "new-response" | null;
+        response_sha256: string | null;
+      }[]
+    | null;
+  /** Membership in the current admitted publication; no admission timestamp is inferred. */
+  library_admission?: "listed" | "not-listed" | null;
   events: RunEvent[] | null;
 };
 
@@ -148,7 +180,14 @@ export type Activity = {
   unreadable?: number;
 };
 
-type ReportEntry = { id: string; issuer: string; asOf: string; pathway: string };
+type ReportEntry = {
+  id: string;
+  issuer: string;
+  asOf: string;
+  pathway: string;
+  /** Designated published outputs explicitly marked not assessable; absent in older replies. */
+  not_assessable?: string[];
+};
 export class RequestError extends Error {
   constructor(
     message: string,
@@ -191,8 +230,15 @@ function postJson(payload: unknown): RequestInit {
 const submission = (id: string) => `/api/submissions/${encodeURIComponent(id)}`;
 
 export async function getContext(signal: AbortSignal) {
-  const { submission_caps_usd: amounts, ...template } = await request<
-    Context & { submission_caps_usd?: Record<string, string> }
+  const {
+    submission_caps_usd: amounts,
+    copilot_models: copilotModels,
+    ...template
+  } = await request<
+    Context & {
+      submission_caps_usd?: Record<string, string>;
+      copilot_models?: Record<string, string[]>;
+    }
   >("/connected/context", { signal });
   const caps = Object.fromEntries(
     Object.entries(amounts ?? {}).filter(
@@ -204,7 +250,7 @@ export async function getContext(signal: AbortSignal) {
         Number(amount) > 0,
     ),
   );
-  return { template, caps };
+  return { template, copilotModels, caps };
 }
 export const createSubmission = () =>
   request<{ id: string }>("/api/submissions", { method: "POST" });
@@ -220,7 +266,7 @@ export const removeDocument = (id: string, name: string) =>
 export const getPriorInputs = (run: string) =>
   request<PriorInputs>(`/api/runs/${encodeURIComponent(run)}/inputs`, undefined, true);
 export const getLatestIssuerRun = (issuer: string) =>
-  request<{ latest_run: string; runs: number; latest_as_of: string }>(
+  request<{ latest_run: string; runs: number; latest_as_of: string; issuer_name?: string }>(
     `/api/issuers/${encodeURIComponent(issuer)}`,
   );
 export const carryDocuments = (id: string, run: string) =>
@@ -265,14 +311,15 @@ export const PATHWAYS: Readonly<Record<string, { label: string; modules: string[
     modules: [
       "CP-0",
       "CP-1",
+      "CP-MODEL",
       "CP-1A",
       "CP-DR",
-      "CP-4",
       "CP-2",
       "CP-2A",
-      "CP-2E",
       "CP-2D",
+      "CP-2E",
       "CP-2G",
+      "CP-4",
       "CP-3C",
       "CP-3",
       "CP-5",
@@ -284,6 +331,7 @@ export const PATHWAYS: Readonly<Record<string, { label: string; modules: string[
     modules: [
       "CP-0",
       "CP-1",
+      "CP-MODEL",
       "CP-1A",
       "CP-1B",
       "CP-DR",
@@ -306,22 +354,23 @@ export const PATHWAYS: Readonly<Record<string, { label: string; modules: string[
   },
   earnings_update: {
     label: "Earnings Update",
-    modules: ["CP-0", "CP-1", "CP-1B", "CP-DR", "CP-2E", "CP-1D", "CP-5"],
+    // Owner, 2026-11-16: CP-1A joins (docs/rulings/2026-11-16-earnings-update-cp1a.md).
+    modules: ["CP-0", "CP-1", "CP-MODEL", "CP-1A", "CP-1B", "CP-1D", "CP-DR", "CP-2E", "CP-5"],
   },
   relative_value: {
     label: "Relative Value",
     modules: [
       "CP-0",
       "CP-1",
-      "CP-1A",
-      "CP-3D",
-      "CP-DR",
+      "CP-MODEL",
       "CP-1C",
+      "CP-DR",
       "CP-2",
-      "CP-2E",
       "CP-2D",
-      "CP-3C",
+      "CP-2E",
       "CP-3",
+      "CP-3C",
+      "CP-3D",
       "CP-5",
     ],
   },
@@ -330,14 +379,15 @@ export const PATHWAYS: Readonly<Record<string, { label: string; modules: string[
     modules: [
       "CP-0",
       "CP-1",
+      "CP-MODEL",
       "CP-1A",
       "CP-DR",
-      "CP-4",
       "CP-2",
       "CP-2A",
+      "CP-2D",
       "CP-2E",
       "CP-2G",
-      "CP-2D",
+      "CP-4",
       "CP-3C",
       "CP-5",
     ],
@@ -348,23 +398,31 @@ export const PATHWAYS: Readonly<Record<string, { label: string; modules: string[
       "CP-0",
       "CP-1",
       "CP-1A",
-      "CP-DR",
-      "CP-4",
       "CP-1C",
+      "CP-DR",
       "CP-2",
       "CP-2A",
       "CP-2E",
       "CP-2G",
       "CP-2H",
+      "CP-4",
       "CP-4C",
       "CP-5",
     ],
   },
   portfolio_decision: {
     label: "Portfolio Decision",
-    modules: ["CP-0", "CP-1", "CP-1A", "CP-DR", "CP-2", "CP-2E", "CP-3", "CP-5", "CP-6"],
+    modules: ["CP-0", "CP-1", "CP-MODEL", "CP-DR", "CP-2", "CP-2E", "CP-3", "CP-5", "CP-6"],
   },
 };
+/** `CP-MODEL` publishes the forecast and makes no model call: it is sent, never drawn as a module. */
+export const FORECAST_CODE = "CP-MODEL";
+
+/** The modules a pathway draws and counts: its list without the forecast. */
+export function drawnModules(modules: readonly string[]) {
+  return modules.filter((code) => code !== FORECAST_CODE);
+}
+
 export function pathwayModules(pathway: string) {
   return Object.hasOwn(PATHWAYS, pathway) ? (PATHWAYS[pathway]?.modules ?? []) : [];
 }

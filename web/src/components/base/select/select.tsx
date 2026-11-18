@@ -72,7 +72,7 @@ const SelectValue = ({
       <AriaSelectValue<SelectItemType>
         className={(state) =>
           cx(
-            "flex h-max w-full items-center justify-start truncate text-left align-middle",
+            "flex h-max w-full items-center justify-start text-left align-middle",
 
             size.root,
 
@@ -97,12 +97,14 @@ const SelectValue = ({
               ) : null}
 
               {selectedItem ? (
-                <section className={cx("flex w-full truncate", size.textContainer)}>
-                  <p className={cx("truncate font-medium text-primary", size.text)}>
+                <section className={cx("flex w-full min-w-0", size.textContainer)}>
+                  <p className={cx("min-w-0 font-medium wrap-anywhere text-primary", size.text)}>
                     {selectedItem.label}
                   </p>
                   {selectedItem.supportingText && (
-                    <p className={cx("text-tertiary", size.text)}>{selectedItem.supportingText}</p>
+                    <p className={cx("min-w-0 wrap-anywhere text-tertiary", size.text)}>
+                      {selectedItem.supportingText}
+                    </p>
                   )}
                 </section>
               ) : (

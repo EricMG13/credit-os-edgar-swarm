@@ -1,235 +1,30 @@
-# Issuer Library: two Python steps and static pages
+# Issuer library publication
 
-The library is static pages: it needs no server and opens from disk. (The run start page, below,
-is a separate service.) There is no compiled executable. Both steps run with a checkout's Python
-(`uv sync --locked`) or the Windows package's bundled Python.
+The active reader is the connected React application described in [Run Credit OS 2](../../docs/react-workflow.md). CP-OS publishes completed runs to the shared workspace; the React server reads the publication and serves the library, run activity, and connected reports over localhost.
 
-1. **Run the workflow**: `Run workflow.cmd` in the package, or
-   `python -m deploy_workflow.owners.cpos_launch` from a checkout, with the launcher's options
-   (root `README.md`). Without `--live` it only prepares and reviews; `--live` with a ruling is
-   the paid run, which publishes the report inside the run folder.
-2. **Update the library**: `Update library.cmd [workspace]` in the package, or
-   `uv run python apps/issuer-library/update_library.py --workspace <folder>`. It rebuilds
-   `<workspace>/library/` and the wrapper opens `library/index.html`. Without an argument the
-   wrapper uses `FINAL_WORKFLOW_WORKSPACE`, else `Documents\FinalWorkflow`. The script writes
-   nothing but `library/` (built beside it, then swapped in whole), and refuses to write through a
-   `library` link.
+## Publisher
 
-The run start page's service (below) runs both steps for a shared folder, so analysts do neither
-by hand.
+`update_library.py` validates completed CP-OS runs and atomically replaces `<workspace>/library/` with:
 
-`library/` is the Credit OS library: one card or row per issuer, and for each run its issuer report.
-The library draws a run from its handoffs and holds no copy of any delivered report; an old
-`#W-Reports/...` or `#W-Calendar/...` link opens the run's Report history. It has no run controls:
-runs are made by step 1 and shown by step 2.
+- `data.js`, containing the catalogue, run store, activity and trace data;
+- `downloads/<run>/`, containing the original handoffs and instructions copied byte for byte only after their recorded SHA-256 values are checked, plus `handoffs.zip`.
 
-**Pages and routes.** The left rail is Start a run (shown only when the library is served over http),
-Issuer library, Run activity and Search. Routes are hash routes.
+The publisher does not create an HTML page or copy a delivered report. It never changes run folders, performs analysis, or calls a provider. Its staging and swap preserve the previous publication if building the next one fails.
 
-| Page | Route | Shows |
-| :--- | :--- | :--- |
-| Issuer library | `#W-Library/cases` | Search and filter chips, Cards or List, one issuer per card with the latest view's lead sentence; the folders left out under "Not shown" |
-| Report history | `#W-Report/history` | The issuer's runs as a timeline, latest as-of date first, each with pathway, state and the modules it ran |
-| Overview | `#W-Overview` | Each module's own bottom line, key findings and limitations, and the nearest dates |
-| Changes | `#W-Changes` | What moved since the issuer's previous run of the same pathway, from the run's `changes.json` and CP-8's handoff; a first run says so |
-| Modules | `#<module id>/<section>` | The navigator and each module's page, charts, maps and timeline included |
-| Forecast | `#W-Forecast` | The cash flow model and the run's charts |
-| Evidence | `#W-Evidence` | Tabs: Summary, Trace, Sources, Calculations, Gaps, Registers, Run record; the handoffs, each downloadable |
-| Run activity | `#CP-OS/activity` | Runs by state, with labelled, connected steps |
+CP-OS invokes the publication step after a run completes. For an existing workspace, it can also be run directly:
 
-**Full credit assessment.** Since 2026-11-15 its runs hold Refinancing & LME (CP-3C) and Liquidity
-(CP-2D), each on its own module page and in Overview, and the Committee decision page (CP-6) holds
-the portfolio debate: its Portfolio posture section and its cross-examination, scoring and decision
-tables as findings; its gaps ledger is on Evidence (ruling
-`docs/rulings/2026-11-15-full-assessment-cp3c-cp6a.md`). No page code changed for this.
-
-**Portfolio workbook (full credit assessment and portfolio decision).** The start page asks for the
-fund's workbook (mandate, exposures and compliance limits, in the layout of
-`docs/templates/portfolio.template.xlsx`); it is not required. Before the run the launcher checks
-its sums and values (distributions adding to 100, holdings' shares against market value over NAV,
-top holdings against the holdings detail and top-10 figure, the sector-limit row against the
-sector, units, currencies, signs and dates against the run's as-of date) and tells CP-0, CP-3 and
-CP-6 each finding; no figure a finding names may be used as a live constraint or exposure. The
-library draws CP-6's Portfolio posture as before; a workbook that failed its checks is stated there
-in plain words (ruling `docs/rulings/2026-11-15-full-assessment-portfolio-workbook.md`). Check a
-workbook before uploading it (exit 0 when it passes; one line per finding otherwise):
-
-```
-uv run deploy-vii validate-input portfolio "<path to the workbook>.xlsx" --as-of <the run's as-of date, YYYY-MM-DD>
+```sh
+uv run python apps/issuer-library/update_library.py --workspace <folder>
 ```
 
-The fund's own export is accepted beside the template: its mandate, constraints and exposure report
-(CSV files, or sheets of one workbook) (the report in five stacked sections A to E, each a title row, a header row and data rows) and
-its holdings workbook (a `Holdings` sheet, optionally `Market Data`). The holdings are the
-authority: par, market value at mid, counts, issuer, sector and second-lien shares and par-weighted
-price, margin and yield are recomputed from them, and every figure the report, the constraints and
-the mandate state is checked against them and against their own totals (twelve classes of defect,
-`docs/templates/README.md`). Upload all the files and choose the holdings workbook as the
-portfolio workbook. Check them together before uploading:
+## Retained reference assets and Windows runtime
 
-```
-uv run deploy-vii validate-input portfolio-exports "<folder holding the export's files>" --as-of <the run's as-of date, YYYY-MM-DD>
+`credit_os/` retains the earlier static page parts as a design and fixture reference. They are not copied into the active publication. The Signal service still uses the required brand assets from this package.
+
+The legacy Windows runtime package is separate from the connected React application. Use `Run workflow.cmd` to prepare a run offline and `Start signal.cmd` to serve the Signal feed. Live Copilot runs use the connected package or the full CP-OS checkout. Build the embedded package with:
+
+```sh
+python apps/issuer-library/packaging/build.py
 ```
 
-**Where audit material is drawn.** Source references, file names, hashes, ids, calculation ids,
-registers, gap ledgers and run codes are drawn only on the Evidence page and in the trace drawer.
-Every other page shows findings and one trace control per paragraph, row or figure; the control opens
-the drawer. Text a module wrote for another module (Request, Next module, inter-module columns) is
-drawn nowhere, in search and the drawer included; it stays in the downloadable handoff. A run is
-named by its as-of date and pathway. The standing rule is in `AGENTS.md`; the screen-to-component map
-is `docs/visualisations/2026-11-13-screen-component-map.md`.
-
-**The page parts** are in `credit_os/web/`, plain JavaScript and CSS with no build step:
-
-| File | Purpose |
-| :--- | :--- |
-| `shapes.js` | Classifies sections, tables and columns (placement, role, which are hidden) |
-| `components.js` | Draws each shape: verdict panel, findings feed, measure tiles, statement bars with a Bars or Figures toggle, run steps, empty and gap states, toast |
-| `evidence.js` | The Evidence page and the trace drawer |
-| `views.js` | The pages: module page, Overview, Forecast, library home, Report history, Run activity |
-| `changes.js` | The Changes page |
-| `screen.js` | Routing, search and events |
-| `screen.css` | All styling; motion only for live run state, inside the reduced-motion query |
-
-`static-boot.js` loads the scripts after `data.js`. `calendar.js`, `reader.js`, `shared.js`,
-`hydrate.js` and `screening.js` are helpers. The store and its sources are listed in
-`credit_os/SOURCE.md`.
-
-**Build and test.** `uv run python apps/issuer-library/update_library.py --workspace <folder>` builds the
-library (step 2). The node tests are `node --test apps/issuer-library/credit_os/web/*.test.cjs`. The
-browser tests are `tests/test_library_page_browser.py` and `tests/test_library_changes_browser.py`. `apps/issuer-library/fixtures/shape-key.json` is the answer key for the
-classifiers in `shapes.js`, taken from the reference run `tdg-proof-snapshot-opus-002`, one record per line. Its table
-shapes were assigned by section heading, independently of the classifier; its section-role patterns are the
-same patterns `shapes.js` uses, so for roles it detects a change, not an error; `fixtures/build_synthetic_run.py` and `fixtures/synthetic-new-format` make a new-format run.
-
-**Build facts.** `data.js` holds the catalogue and the workspace store as data. Evidence's handoff
-and instruction downloads (and "Download all", a zip) are written under `library/downloads/<run>/`
-as the bytes the build hash-checked, so they also open when the library is served; other links to
-run files are relative (`../runs/...`) and the run start page's service does not serve those. The
-page opens from disk (`file://`) and blocks every network request through its content security
-policy. Its hashes are checked when it is built: update it after new runs.
-
-## Automated: the run start page
-
-`Start run page.cmd <root> [address]` in the package (or
-`uv run python -m deploy_workflow.run_start --root <root> --host <address> --port 8765`
-from a checkout) serves the start page. Analysts open `http://<address>:8765/`, upload the issuer's
-documents, answer the staged questions, approve the summary and choose Submit; Submit starts a
-paid run. The root README (section 3) has the stages, the three levels and the steps.
-
-The summary joins the launcher's forecast with the page's own rules (the worse outcome per module,
-both reasons). Approval needs a tick for every Gap, Limited and Will refuse item from either
-source, and for every Check that has a fix (a stage to go to); Ready, Note and a Check with
-nothing the analyst can do need none. An as-of date before the newest document and a legal answer
-the launcher's reading disagrees with are Limited for the whole run.
-
-- **Address:** `127.0.0.1` unless one is given; pass this machine's own address to serve
-  colleagues. `0.0.0.0` is refused. The service also serves the library and Run activity,
-  read-only; only files under `library/` are served, so `../runs/...` links are not.
-- **What happens:** Submit saves the run's record, moves the uploaded files to `_engine\drops\<id>`
-  with the `context.json` the page built, and the scheduler starts it as a paid run within the
-  limits. The finished report is filed as `issuers\<Issuer name> (<issuer_id>)\<as-of>
-  <pathway>[-N].html` and `library.html` in `<root>` opens the library, which is built in
-  `<root>\_engine\library`. A `<root>\inbox\` folder from the earlier folder watcher is never read.
-- **No login; the limits stand in for one:** the pathway's cap per run (Lite USD 15, Full 25, Deep
-  40, the five purpose pathways 20), `sol-medium`, 3 runs at once, 30 runs
-  started per day (`--max-running`, `--max-per-day`), 30 submissions waiting, 50 unfinished
-  submissions, and uploads of at most 50 MiB a file, 500 files and 512 MiB in total.
-- **Key and ruling:** the provider key comes only from the environment of the account that runs
-  the service. Every live launch passes the standing ruling `2026-11-11-run-start-submit.md`: in
-  the package at `engine\docs\rulings`, from a checkout at `docs\rulings`. The ruling lists `web-search`, so runs from the page search the web for CP-DR (queries use
-  public names only and go to OpenAI's search; the run's cap counts the fees).
-- **One service, one machine:** it holds an operating-system file lock on `_engine\watcher.lock`
-  (the name is kept so an old folder watcher and the service exclude each other) while it runs. A
-  second one on the same root is refused with exit code 2 ("another run page service (or an old
-  folder watcher) is running on this folder"). Run it on one machine only; the lock depends on the
-  file system honouring file locks (a local disk does; do not rely on it across machines; on
-  Windows the refusal reads "(no details)"). The root must be a folder on this machine's own disk,
-  shared to analysts if needed, because each run's cap depends on marker files that must not sit on
-  a network or synced path; a root starting with `\\` or `//` is refused. The root path must be 80
-  characters or fewer.
-- **Waiting runs:** a run waits when 3 are going or 30 have started today; Run activity lists it
-  under Waiting and names the daily limit when that is the cause. After a restart, a run that was
-  being started when the service stopped is shown as interrupted and is not started again; check
-  whether its process is still running before submitting it again. Runs and records the folder
-  watcher left still load and show in Run activity; every run it had queued (a record with no
-  submission) is marked failed, with the reason, at the service's first start and is never started. If the library cannot be rebuilt, Run activity says so and ended runs
-  wait for it.
-- **At boot:** Task Scheduler, "At startup", under a service account whose environment holds the
-  key, running `Start run page.cmd <root> <address>`. Only the service's account writes `_engine\`,
-  `issuers\` and `library.html`.
-- **Run activity** on the library page re-loads every 30 s while it is showing.
-  Run activity does not show spend; the run's cap is shown on the run start page, beside each pathway and before Submit, and a finished run's provider cap and settled amounts are on its Evidence page.
-- **Known limits:** Windows and browsers other than Chrome are not verified; whether the Relative
-  value and Committee modules honour the new mode settings is not proven until a paid run; two IDs
-  for one issuer make two folders; a run can end slightly above its cap after one overrunning call;
-  a report leaves the library list after a method update but stays in `issuers\`; whether each
-  pathway's cap covers it is not measured on the current module lists.
-
-## Which runs are listed
-
-`src/deploy_workflow/library_index.py` lists a folder under `<workspace>/runs/` only when both
-hold:
-
-- **Completed by CP-OS:** a `completed-<sha256>.json` record named by its own hash, of the
-  launcher's report kind, names a `delivery-<sha256>.json` manifest named by its own hash; one
-  `deliveries/<id>/` folder holds exactly the files its `delivery.json` lists, with those hashes,
-  including the report the completion record names; the handoffs still have their hashes; the
-  completion record, the manifest and the delivered copies name the same modules and handoffs; and
-  the manifest, the delivered `view.json` and `workflow.json` name the same run. The report is not
-  rebuilt, so a later renderer change does not unlist a run. The library shows a run from its
-  handoffs and presents no delivered report (ruling 2026-11-11, decisions 1 to 3).
-- **Methods:** every module was answered in this run (not reused from another run, not
-  synthetic). The request record beside its accepted answer still has the fingerprint CP-OS named
-  its folder by (`cpos.request_fingerprint`), so it holds the instructions actually sent. Their
-  method block is compared with what the launcher sends that module today
-  (`cpos_launch.method_text`). A run whose methods have since changed (a section changed, added
-  or dropped) is still listed and marked "Earlier methods"; Evidence's Run record names each
-  change (owner, 2026-11-11). A module with no current method is not assumed current: the run is
-  left out.
-
-Every other folder is left out, with its reason in the command output and in a collapsed list at
-the end of the page; a linked folder is reported and not followed. Each listed run shows its
-evidence date, pathway, model and effort, exact recorded spend (unknown charges counted, never
-zeroed), its scope statement, and each module's reader summary quoted from the handoff. "Latest"
-is per issuer by evidence date; runs sharing that date are all marked and counted.
-
-## Starting a run on an issuer
-
-When the library is served over http, the issuer header on every run tab (Report history, Overview, Changes,
-Modules, Forecast, Evidence) has a "Start a run on this issuer" link at the right of its title row (below the title on a narrow screen); it
-works only when that server is the run start service. It opens the start page from the latest
-run listed (`/?from=<run id>`): the issuer ID is locked to that run's, its documents are copied into
-the new submission, and its pathway, answers, module subset and turns per module fill the form. Each
-carried-over answer, the pathway, the module box and the turns input carries a "from run <id>" mark
-beside it, and the review lists them in one block; editing one removes its mark. Each carried
-document is marked "carried over from run <id>" and removable; a file the analyst uploads over a
-carried name is theirs and is not marked. Not carried, and not marked: the as-of and cutoff dates
-and periods, the submitter (the analyst's own name is kept), and the answers that depend on a chosen
-file (the agreement, bridge, portfolio and prior-case files). A subset naming a module the pathway
-lacks is not carried at all. When the earlier run has no usable stored answers, the only answers carried
-are the issuer name and ID (its documents are still carried when its folder exists) and nothing the
-analyst typed is cleared. "This is a different issuer" drops the
-carry (the level and the analyst's own uploads stay). If the browser still holds a submitted run,
-the link shows that run's progress with "Run <from> has not been started from yet: this page is
-showing run <stored id>." and "Start another run" then starts from `<from>`; when the stored run has
-already ended, the page starts from `<from>` at once. The link is absent when the library is opened
-from disk. The start page also says when a typed issuer ID already has runs (and, if the typed name
-differs from the filed one, shows the filed name), and a failed, capped, rejected or interrupted
-run's progress view offers "Start again from this run".
-
-## Windows package
-
-`python apps/issuer-library/packaging/build.py` makes `artifacts/issuer-library/Issuer-Library-<arch>.zip`
-for amd64 and arm64: the official embeddable Python 3.13.15 and the pinned wheels, each verified
-against its SHA-256 digest at build time; the engine's `src`, methods and prompts; the update
-script, the Credit OS store and page parts; `Run workflow.cmd`, `Update library.cmd`,
-`Start run page.cmd` and `Smoke-test.ps1`. It ships one ruling, the run page's standing one;
-any other paid run needs a ruling written in `engine\docs\rulings`. It ships no Copilot SDK or
-runtime either, so run the Copilot configurations from a checkout. The bundled Python's
-`python313._pth` lists `engine\src` and `engine`, because the embeddable Python ignores `PYTHONPATH`.
-
-The package is a pilot build, not a signed enterprise release, and it has not been run on Windows.
-Run `Smoke-test.ps1` on the target host as acceptance: it checks the bundled Python, an offline run
-review and a library update in a temporary folder, and calls no provider. IT can sign the
-interpreter and wrap the launch scripts in its own signed shortcuts.
+`Smoke-test.ps1` checks the bundled Python, an offline run review, and a publication in a temporary workspace. It makes no provider call. The React release package is built separately with `tools/package_react_windows.py`.

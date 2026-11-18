@@ -1,6 +1,7 @@
 import {
   useCallback,
   useEffect,
+  useEffectEvent,
   useId,
   useRef,
   useState,
@@ -10,7 +11,9 @@ import {
 import { File05, Folder } from "@untitledui/icons";
 import { FileUpload } from "@/components/application/file-upload/file-upload-base";
 import { Badge } from "@/components/base/badges/badges";
+import { Alert } from "@/components/alert/Alert";
 import { Button } from "@/components/base/buttons/button";
+import { Skeleton } from "@/components/gap/Skeleton";
 import { PurposeCards } from "../run/start/Purpose";
 import { SubmitConfirmation } from "../run/start/Start";
 import { Stepper } from "../run/start/Stepper";
@@ -30,6 +33,8 @@ import {
   RequestError,
   submit,
   upload,
+  drawnModules,
+  FORECAST_CODE,
   type Answers,
   type Context,
   type DocumentRecord,
@@ -39,36 +44,95 @@ import {
   type Mode,
   type Summary,
 } from "./api";
+import { AssumptionFields } from "./start/AssumptionFields";
+import {
+  ASSUMPTIONS_TITLE,
+  readAssumptions,
+  sendableAssumptions,
+  type AssumptionsForm,
+} from "./start/assumptions";
 import { RowEditor } from "./start/RowEditor";
-import { ROW_SPECS, sendableRows, type Row, type RowKind } from "./start/rows";
+import { ModuleOptionsFields } from "./start/ModuleOptionsFields";
+import { CONTEXT_ROW_KINDS, ROW_SPECS, sendableRows, type Row, type RowKind } from "./start/rows";
+import {
+  MODULE_OPTIONS_TITLE,
+  readModuleOptions,
+  readValuation,
+  sendableModuleOptions,
+  sendableValuation,
+  VALUATION_TITLE,
+  type ModuleOptionsForm,
+  type ValuationForm,
+} from "./start/valuation";
+import { ValuationFields } from "./start/ValuationFields";
 import { Breadcrumb, card, ErrorNotice, field, heading, label } from "./layout";
 import { carryAccepted, decided, groupLimits, needsCheck } from "./start/limits";
+import { ANALYST_NAME_RULE, isAnalystName } from "./start/analystName";
 import { ReviewSheet } from "./start/ReviewSheet";
 import { StartReadiness } from "./start/StartReadiness";
-import { documentDescription, LEVELS, PURPOSES, storedName } from "./start/plain";
-import { errorText, useResource } from "./useResource";
+import {
+  ANY_FOCUS,
+  ATTACHMENTS,
+  CASE_KIND_LABEL,
+  CASE_KINDS,
+  CONTEXT_DETAILS,
+  documentDescription,
+  documentRefusal,
+  EFFORTS,
+  ISSUE_CLASSES,
+  ISSUE_CLASSIFICATION,
+  ISSUER_DETAILS,
+  ISSUER_ID,
+  issuerIdFor,
+  filedElsewhere,
+  issuerIdRefusal,
+  ISSUER_LIST_BOXES,
+  ISSUER_TEXT_BOXES,
+  LEGAL_CHOICES,
+  LEGAL_DOCUMENTS,
+  LEVELS,
+  LISTED_EQUITY,
+  MODELS,
+  copilotEfforts,
+  copilotPairVerified,
+  PATHWAY_LABEL,
+  PURPOSES,
+  PURPOSE_STEP,
+  refusalLines,
+  refusalProblems,
+  RUN_PURPOSE_LABEL,
+  storedName,
+  TICKER,
+} from "./start/plain";
+import { asSentence, errorText, isUnreachable, useResource } from "./useResource";
 import { PageHeader } from "../../shell/PageHeader";
 
 const FORM_STEPS = {
   documents: { title: "Documents", next: "Continue to purpose", previous: null },
-  purpose: { title: "Purpose", next: "Continue to context", previous: "documents" },
+  purpose: { title: PURPOSE_STEP, next: "Continue to context", previous: "documents" },
   context: { title: "More context", next: "Review run", previous: "purpose" },
 } as const;
 type FormStep = keyof typeof FORM_STEPS;
 const STEPPER_STEPS = [
   { key: "documents", title: "Documents", note: "Add files" },
-  { key: "purpose", title: "Purpose", note: "Choose one" },
+  { key: "purpose", title: PURPOSE_STEP, note: "Choose one" },
   { key: "context", title: "More context", note: "Optional" },
   { key: "start", title: "Review and start", note: "Paid step" },
 ] as const;
 const STEP_TOTAL = STEPPER_STEPS.length;
 const FORM_STEP_KEYS = Object.keys(FORM_STEPS) as FormStep[];
+/** Where the analyst is: one of the three form steps, or the review sheet after them. */
+type Place = FormStep | "review";
+const PLACES: readonly Place[] = [...FORM_STEP_KEYS, "review"];
 const STEP_GUIDANCE: Record<FormStep, string> = {
   documents:
     "Add annual and interim reports, the credit agreement and any other material the analysis should read.",
   purpose: "The purpose determines which modules run.",
   context: "Optional. You can continue if the documents provide all the context.",
 };
+
+const EARNINGS_CONTEXT_GUIDANCE =
+  "Current period and Prior period are required for Earnings Update. Everything else here is optional: you can continue if the documents provide all the context.";
 
 const PATHWAY_DESCRIPTIONS: Record<string, string> = {
   lite_credit_assessment: "Review the issuer's fundamentals, credit drivers and downside.",
@@ -84,31 +148,76 @@ const PATHWAY_CARDS = Object.entries(PATHWAYS).map(([id, pathway]) => ({
   id,
   title: pathway.label,
   description: PATHWAY_DESCRIPTIONS[id] ?? "",
-  modules: `${String(pathway.modules.length)} base modules`,
+  modules: `${String(drawnModules(pathway.modules).length)} base modules`,
 }));
+const FILE_SIZE_LIMIT = 50 * 1024 * 1024;
+const SOURCE_TYPES = /\.(?:pdf|htm|html|docx|txt|md|xlsx|csv|json|jsonl)$/i;
+const SOURCE_TYPE_HINT = "PDF, HTML, DOCX, TXT, Markdown, XLSX, CSV, JSON and JSONL";
+const SYNTHETIC_LIMITS =
+  "The synthetic test can complete only a first Full credit assessment, with no earlier run to compare. Use northbridge-filing.txt and, optionally, northbridge-portfolio.xlsx and northbridge-credit-agreement.txt from the proof folder; no other files are accepted.";
 
 type FieldKey =
   | "issuer_name"
+  | "issuer_id"
+  | "submitted_by"
   | "cutoff"
+  | "current_period"
+  | "prior_period"
+  | "legal_documents"
   | "agreement"
   | "deal_terms"
+  | "quotes"
+  | "ratings"
+  | "research_questions"
+  | "analyst_note"
   | "turns"
   | "valuation"
   | "assumptions"
   | "module_options";
 
-/** A validation failure that belongs to one control: shown on it, not in the general notice. */
+/**
+ * A problem that belongs to one control: shown on it, not in the general notice. A service refusal
+ * that names several problems carries the others, in their labelled lines, as `others`.
+ */
 class FieldProblem extends Error {
   constructor(
     readonly field: FieldKey,
     message: string,
+    readonly others?: readonly string[],
+    /** For `issuer_id`: the free Issuer ID the page offers in its place. */
+    readonly offer?: string,
   ) {
     super(message);
   }
 }
 
-function stepOfField(field: FieldKey): FormStep {
-  return field === "issuer_name" ? "documents" : "context";
+/**
+ * The first problem of a summary refusal whose control is drawn becomes a FieldProblem and the rest
+ * its `others`; a failure that is not a refusal, or names no drawn control, is `undefined` (the
+ * general notice shows it as it is).
+ */
+function refusedField(
+  failure: unknown,
+  requested: readonly string[],
+  noteAt: number,
+): FieldProblem | undefined {
+  if (!(failure instanceof RequestError) || failure.status === 404) return undefined;
+  const problems = refusalProblems(failure.message, requested, noteAt);
+  const at = problems.findIndex(({ field }) => field !== undefined);
+  const first = problems[at];
+  if (!first?.field) return undefined;
+  return new FieldProblem(
+    first.field,
+    first.line,
+    problems.filter((_, position) => position !== at).map(({ line }) => line),
+  );
+}
+
+/** The step a control is drawn on: the issuer name and analyst name on Documents, the rest on Context. */
+export function stepOfField(field: FieldKey): FormStep {
+  return field === "issuer_name" || field === "issuer_id" || field === "submitted_by"
+    ? "documents"
+    : "context";
 }
 
 function problemAttrs(problem: FieldProblem | undefined, field: FieldKey) {
@@ -135,7 +244,13 @@ function focusField(field: FieldKey) {
   control?.scrollIntoView({ block: "center" });
 }
 
-type Review = { id: string; answers: Answers; summary: Summary; cap: string };
+type Review = {
+  id: string;
+  answers: Answers;
+  summary: Summary;
+  cap: string;
+  attachmentNames: Partial<Record<Attachment, string>>;
+};
 type Draft = { id: string; uploaded: Map<File, string>; copied: boolean };
 type Reviewed = {
   pathway: string;
@@ -155,18 +270,31 @@ function requireSummaryCap(summary: Summary, shownCap: string) {
     throw new Error("The pathway cap changed while preparing this summary. Review the run again.");
 }
 
-const ATTACHMENTS = {
-  management_bridge: "Management EBITDA bridge",
-  portfolio_workbook: "Portfolio workbook",
-  prior_case: "Prior decision record",
-};
-const ROW_KINDS = Object.keys(ROW_SPECS) as RowKind[];
-const COMPLEX_FIELDS = {
-  valuation: "Valuation and peers",
-  assumptions: "Scenario assumptions",
-  module_options: "Module options",
+/** The row editors of the Context step: each carries a `data-field` a refusal can name. */
+const isFieldRow = (kind: RowKind): kind is (typeof CONTEXT_ROW_KINDS)[number] =>
+  (CONTEXT_ROW_KINDS as readonly RowKind[]).includes(kind);
+type Forms = {
+  valuation?: ValuationForm;
+  module_options?: ModuleOptionsForm;
+  assumptions?: AssumptionsForm;
 };
 type LatestIssuerInputs = { run: string; prior: PriorInputs };
+/** The ID the review settled for a typed name, and the issuer that holds the name's usual ID. */
+type SettledSlug = { name: string; id: string; holder?: string };
+
+/**
+ * The name an ID is filed under (the latest run's), or undefined when no run holds it or the
+ * lookup failed: the service refuses an ID filed under another issuer at the summary and at Submit,
+ * so a failed lookup cannot merge two issuers.
+ */
+async function holderOf(issuerId: string): Promise<string | undefined> {
+  try {
+    const latest: { latest_run: string; issuer_name?: string } = await getLatestIssuerRun(issuerId);
+    return latest.latest_run ? (latest.issuer_name ?? "") : undefined;
+  } catch {
+    return undefined;
+  }
+}
 
 async function latestIssuerInputs(issuer: string): Promise<LatestIssuerInputs | null> {
   const latest = await getLatestIssuerRun(issuer);
@@ -174,16 +302,24 @@ async function latestIssuerInputs(issuer: string): Promise<LatestIssuerInputs | 
   return { run: latest.latest_run, prior: await getPriorInputs(latest.latest_run) };
 }
 
-type ComplexField = keyof typeof COMPLEX_FIELDS;
 type Attachment = keyof typeof ATTACHMENTS | "agreement";
-type DocumentRow = { name: string; stored?: string; file?: File };
+type DocumentRow = {
+  name: string;
+  stored?: string;
+  file?: File;
+  pendingCopy?: boolean;
+  copied?: boolean;
+};
 type IntakeView = {
   step: FormStep;
   busy?: "review" | "submit" | "documents" | "copy";
   canRead: boolean;
-  copy?: { run: string };
-  priorAsOf: string;
+  copy?: { run: string; prior: PriorInputs };
   priorNote: string;
+  issuerNotice: string;
+  changeNotice: string;
+  repeatedContent: ReadonlyMap<File, string>;
+  copilotModels?: Record<string, string[]>;
   identity: Context["identity"];
   issuerId: string;
   submittedBy: string;
@@ -201,13 +337,19 @@ type IntakeView = {
   level: string;
   analystNote: string;
   newest: string;
-  edits: Partial<Record<ComplexField, string>>;
+  forms: Forms;
+  valuation: ValuationForm;
+  moduleOptions: ModuleOptionsForm;
+  assumptions: AssumptionsForm;
+  changeAssumptions: (next: AssumptionsForm) => void;
+  changeValuation: (next: ValuationForm) => void;
+  changeModuleOptions: (next: ModuleOptionsForm) => void;
   modules: string[];
   requested: string[];
   turns: string;
   model: string;
   effort: string;
-  capText: string | null;
+  caps: Record<string, string>;
   synthetic: boolean;
   addFiles: (selected: Iterable<File> | null) => void;
   inspectDocuments: () => void;
@@ -229,11 +371,12 @@ type IntakeView = {
   changeNewestOverride: (value: string) => void;
   changeLegal: (value: string) => void;
   changeAttachment: (key: Attachment, value: string) => void;
-  changeDetail: (key: ComplexField, value: string) => void;
-  detailText: (key: ComplexField) => string;
   rowsOf: (kind: RowKind) => Row[];
   changeRows: (kind: RowKind, rows: Row[]) => void;
   problem?: FieldProblem;
+  /** On the review sheet: why the Issuer ID is not the usual one for the name; "" when it is. */
+  idNote: string;
+  useIssuerId: (id: string) => void;
   focusProblem: () => void;
   changeModel: (value: string) => void;
   changeEffort: (value: string) => void;
@@ -253,6 +396,8 @@ function useIntakeIdentityState(
   const [context, setContext] = useState<Context>(() => startingContext(template, initial?.prior));
   const [purposeTouched, setPurposeTouched] = useState(Boolean(initial?.prior.context));
   const [customSlug, setCustomSlug] = useState(initial?.prior.issuer_id);
+  // The ID the review settled for a typed name whose usual ID another issuer already holds.
+  const [settledSlug, setSettledSlug] = useState<SettledSlug>();
   const [newestOverride, setNewestOverride] = useState<string>();
   return {
     copy,
@@ -269,19 +414,22 @@ function useIntakeIdentityState(
     setPurposeTouched,
     customSlug,
     setCustomSlug,
+    settledSlug,
+    setSettledSlug,
     newestOverride,
     setNewestOverride,
   };
 }
 
-function useIntakeDocumentsState() {
+function useIntakeDocumentsState(initial?: { run: string; prior: PriorInputs }) {
   const [files, setFiles] = useState<File[]>([]);
   const [reading, setReading] = useState<Reading>();
   const [uploaded, setUploaded] = useState(new Map<File, string>());
+  const [documentsCopied, setDocumentsCopied] = useState(false);
   const [ignoredCopies, setIgnoredCopies] = useState<string[]>([]);
   const [attachments, setAttachments] = useState<Partial<Record<Attachment, string>>>({});
-  const [legal, setLegal] = useState("none");
-  const [edits, setEdits] = useState<Partial<Record<ComplexField, string>>>({});
+  const [legal, setLegal] = useState(() => carriedLegal(initial?.prior));
+  const [forms, setForms] = useState<Forms>({});
   const [rows, setRows] = useState<Partial<Record<RowKind, Row[]>>>({});
   const [analystNote, setAnalystNote] = useState("");
   return {
@@ -291,14 +439,16 @@ function useIntakeDocumentsState() {
     setReading,
     uploaded,
     setUploaded,
+    documentsCopied,
+    setDocumentsCopied,
     ignoredCopies,
     setIgnoredCopies,
     attachments,
     setAttachments,
     legal,
     setLegal,
-    edits,
-    setEdits,
+    forms,
+    setForms,
     rows,
     setRows,
     analystNote,
@@ -307,7 +457,9 @@ function useIntakeDocumentsState() {
 }
 
 function useIntakeRunOptions(initial?: { run: string; prior: PriorInputs }) {
-  const [level, setLevel] = useState(() => initial?.prior.level || "basic");
+  const [level, setLevel] = useState(() =>
+    initial?.prior.level === "advanced" ? "advanced" : "basic",
+  );
   const [model, setModel] = useState("gpt");
   const [effort, setEffort] = useState("balanced");
   const [turns, setTurns] = useState(() => String(initial?.prior.max_turns || 32));
@@ -336,6 +488,7 @@ function useIntakeReviewState() {
   const [busy, setBusy] = useState<"review" | "submit" | "documents" | "copy">();
   const [error, setError] = useState("");
   const [fieldError, setFieldError] = useState<FieldProblem>();
+  const [otherProblems, setOtherProblems] = useState<readonly string[]>([]);
   const [submitUncertain, setSubmitUncertain] = useState(false);
   return {
     review,
@@ -350,25 +503,46 @@ function useIntakeReviewState() {
     setError,
     fieldError,
     setFieldError,
+    otherProblems,
+    setOtherProblems,
     submitUncertain,
     setSubmitUncertain,
   };
 }
 
-function intakeDocuments(reading: Reading | undefined, files: File[], uploaded: Map<File, string>) {
+function intakeDocuments(
+  reading: Reading | undefined,
+  files: File[],
+  uploaded: Map<File, string>,
+  copy: { prior: PriorInputs } | undefined,
+  ignoredCopies: string[],
+  copied: boolean,
+) {
   const shownDocs = reading?.documents ?? [];
   const inspected = new Map(shownDocs.map((doc) => [storedName(doc), documentDescription(doc)]));
   const ignored = new Map(
     (reading?.ignored ?? []).map((item) =>
-      typeof item === "string" ? [item, "Will not be read"] : [item.source, item.reason],
+      typeof item === "string"
+        ? [
+            item,
+            SOURCE_TYPES.test(item)
+              ? "Not read; reason not recorded."
+              : "Not a document type the run reads.",
+          ]
+        : [item.source, item.reason],
     ),
   );
   const localNames = new Set(uploaded.values());
-  const documentRows = [
+  const documentRows: DocumentRow[] = [
     ...files.map((file) => ({ name: fileName(file), stored: uploaded.get(file), file })),
     ...[...new Set([...inspected.keys(), ...ignored.keys()])]
       .filter((name) => !localNames.has(name))
       .map((name) => ({ name, stored: name, file: undefined })),
+    ...(reading === undefined && !copy?.prior.error
+      ? (copy?.prior.files ?? [])
+          .filter(({ name }) => !ignoredCopies.includes(name) && !localNames.has(name))
+          .map(({ name }) => ({ name, pendingCopy: !copied, copied }))
+      : []),
   ];
   const fileChoices: Record<string, string> = Object.fromEntries([
     ["", "None"] as const,
@@ -418,6 +592,7 @@ function shownCapText(cap: number | null) {
 function intakeRunDetails({
   context,
   customSlug,
+  settledSlug,
   caps,
   files,
   copy,
@@ -425,9 +600,11 @@ function intakeRunDetails({
   accepted,
   newestOverride,
   reading,
+  ignoredCopies,
 }: {
   context: Context;
   customSlug?: string;
+  settledSlug?: SettledSlug;
   caps: Record<string, string>;
   files: File[];
   copy?: { prior: PriorInputs };
@@ -435,22 +612,84 @@ function intakeRunDetails({
   accepted: Set<string>;
   newestOverride?: string;
   reading?: Reading;
+  ignoredCopies: readonly string[];
 }) {
   const { run, identity } = context;
   const selectedCap = caps[run.pathway];
   return {
     run,
     identity,
-    issuerId: customSlug ?? issuerSlug(identity.issuer_name),
+    issuerId:
+      customSlug ??
+      (settledSlug?.name === identity.issuer_name.trim() ? settledSlug.id : undefined) ??
+      issuerSlug(identity.issuer_name),
     requested: pathwayModules(run.pathway),
     cap: selectedCap ? Number(selectedCap) : null,
     earnings: run.pathway === "earnings_update",
-    canRead: files.length > 0 || (!!copy?.prior.files.length && !copy.prior.error),
+    canRead:
+      files.length > 0 ||
+      (copy?.prior.files.some(({ name }) => !ignoredCopies.includes(name)) === true &&
+        !copy.prior.error),
     checksComplete: review?.summary.items.every(
       (item) => !needsCheck(item) || accepted.has(item.id),
     ),
     newest: newestOverride ?? newestPeriod(reading),
   };
+}
+
+/** The place a history entry of this form stands for; `undefined` for any other entry. */
+function placeOf(state: unknown): Place | undefined {
+  if (typeof state !== "object" || state === null || !("startRun" in state)) return undefined;
+  return PLACES.find((place) => place === state.startRun);
+}
+
+/**
+ * Each step and the review sheet is a history entry, so the browser's Back and Forward move
+ * between them with everything typed kept. `show` moves the form to a place and says whether it
+ * could; an entry the form cannot show, such as a review it no longer holds, is passed over.
+ */
+function useStepHistory(place: Place, show: (target: Place) => boolean) {
+  const entry = useRef(place);
+  const arrive = useEffectEvent((target: Place) => {
+    if (target !== place && !show(target)) {
+      window.history.back();
+      return;
+    }
+    entry.current = target;
+  });
+  useEffect(() => {
+    window.history.replaceState({ startRun: entry.current }, "");
+    const listen = (event: PopStateEvent) => {
+      const target = placeOf(event.state);
+      if (target) arrive(target);
+    };
+    window.addEventListener("popstate", listen);
+    return () => {
+      window.removeEventListener("popstate", listen);
+    };
+  }, []);
+  useEffect(() => {
+    if (entry.current === place) return;
+    entry.current = place;
+    window.history.pushState({ startRun: place }, "");
+  }, [place]);
+}
+
+/**
+ * While the form holds work, leaving the page (a link, Reload, closing the tab) asks the browser
+ * to confirm. Once Submit has started the run the page moves on without asking.
+ */
+function useLeaveWarning(holdsWork: boolean, submitted: RefObject<boolean>) {
+  useEffect(() => {
+    if (!holdsWork) return;
+    const warn = (event: BeforeUnloadEvent) => {
+      if (!submitted.current) event.preventDefault();
+    };
+    window.addEventListener("beforeunload", warn);
+    return () => {
+      window.removeEventListener("beforeunload", warn);
+    };
+  }, [holdsWork, submitted]);
 }
 
 function StepFields({
@@ -475,6 +714,131 @@ function documentsRead(inspected: number, ignored: number) {
   return `${String(inspected)} ${noun} inspected, ${String(ignored)} ignored.`;
 }
 
+/** One file's bytes are released after hashing; the comparison map retains only compact digests. */
+async function documentDigest(file: File) {
+  const bytes = await new Promise<ArrayBuffer>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (reader.result !== null && typeof reader.result !== "string") resolve(reader.result);
+      else reject(new Error(`${fileName(file)} could not be compared with the other documents.`));
+    };
+    reader.onerror = () => {
+      reject(new Error(`${fileName(file)} could not be compared with the other documents.`));
+    };
+    reader.readAsArrayBuffer(file);
+  });
+  const digest = await crypto.subtle.digest("SHA-256", bytes);
+  return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, "0")).join("");
+}
+
+/** Hash equal-size candidates sequentially, stopping when a newer selection replaces them. */
+async function repeatedDocuments(files: readonly File[], current: () => boolean) {
+  const counts = new Map<number, number>();
+  for (const file of files) counts.set(file.size, (counts.get(file.size) ?? 0) + 1);
+  const firstName = new Map<string, string>();
+  const repeated = new Map<File, string>();
+  for (const file of files) {
+    if (!current()) return repeated;
+    if ((counts.get(file.size) ?? 0) < 2) continue;
+    const content = await documentDigest(file);
+    const first = firstName.get(content);
+    if (first !== undefined)
+      repeated.set(file, `Same content as ${first}. Remove one copy before inspection.`);
+    else firstName.set(content, fileName(file));
+  }
+  return repeated;
+}
+
+/** A notice is for the ID still in the field; a late reply for a previous ID is ignored. */
+function useIssuerNotice(issuerId: string, typedName: string) {
+  const [notice, setNotice] = useState<{ issuerId: string; text: string }>();
+  useEffect(() => {
+    if (!issuerId) return;
+    let current = true;
+    const timer = window.setTimeout(() => {
+      void getLatestIssuerRun(issuerId).then(
+        (latest) => {
+          const named: typeof latest & { issuer_name?: string } = latest;
+          const filed =
+            named.issuer_name && named.issuer_name !== typedName.trim()
+              ? ` Filed name: ${named.issuer_name}.`
+              : "";
+          if (current)
+            setNotice(
+              latest.runs > 0
+                ? {
+                    issuerId,
+                    text: `This issuer has ${String(latest.runs)} ${latest.runs === 1 ? "run" : "runs"}; the latest is as of ${latest.latest_as_of}.${filed}`,
+                  }
+                : undefined,
+            );
+        },
+        () => {
+          if (current) setNotice(undefined);
+        },
+      );
+    }, 250);
+    return () => {
+      current = false;
+      window.clearTimeout(timer);
+    };
+  }, [issuerId, typedName]);
+  return notice?.issuerId === issuerId ? notice.text : "";
+}
+
+function documentBadge({
+  repeat,
+  reason,
+  description,
+  pendingCopy,
+  copied,
+}: {
+  repeat?: string;
+  reason?: string;
+  description?: string;
+  pendingCopy: DocumentRow["pendingCopy"];
+  copied: DocumentRow["copied"];
+}) {
+  if (repeat) return { color: "error", text: "Repeated content" } as const;
+  if (reason) return { color: "error", text: "Ignored" } as const;
+  if (description) return { color: "success", text: "Inspected" } as const;
+  if (pendingCopy) return { color: "gray", text: "Will be copied" } as const;
+  return { color: "gray", text: copied ? "Copied" : "Selected" } as const;
+}
+
+function IntakeDocumentRow({ row, view }: { row: DocumentRow; view: IntakeView }) {
+  const { name, stored, file, pendingCopy, copied } = row;
+  const repeat = file ? view.repeatedContent.get(file) : undefined;
+  const reason = repeat ?? (stored ? view.ignored.get(stored) : undefined);
+  const description = stored ? view.inspected.get(stored) : undefined;
+  const badge = documentBadge({ repeat, reason, description, pendingCopy, copied });
+  return (
+    <li className="flex min-w-0 items-start gap-3 rounded-xl p-3 text-sm ring-1 ring-secondary ring-inset">
+      <File05 aria-hidden="true" className="mt-1 size-5 shrink-0 text-text-tertiary" />
+      <div className="min-w-0 flex-1">
+        <p className="font-medium wrap-anywhere">{name}</p>
+        <Badge size="sm" color={badge.color}>
+          {badge.text}
+        </Badge>
+        {(reason || description) && (
+          <p className="mt-1 wrap-anywhere text-text-secondary">{reason || description}</p>
+        )}
+      </div>
+      <Button
+        size="sm"
+        color="secondary"
+        aria-label={`Remove ${name}`}
+        isDisabled={view.busy !== undefined}
+        onPress={() => {
+          view.discardDocument(name, file);
+        }}
+      >
+        Remove
+      </Button>
+    </li>
+  );
+}
+
 function DocumentFields({
   view,
   folderInput,
@@ -488,7 +852,7 @@ function DocumentFields({
         <FileUpload.DropZone
           inputLabel="Documents"
           chooseFiles
-          hint="Add filings and other source documents. Up to 50 MB per file."
+          hint={`Add ${SOURCE_TYPE_HINT}. Up to 50 MB per file.`}
           isDisabled={view.busy !== undefined}
           onDropFiles={view.addFiles}
         />
@@ -530,40 +894,9 @@ function DocumentFields({
         </p>
         {view.documentRows.length > 0 ? (
           <FileUpload.List aria-label="Documents added">
-            {view.documentRows.map(({ name, stored, file }, index) => {
-              const reason = stored ? view.ignored.get(stored) : undefined;
-              const description = stored ? view.inspected.get(stored) : undefined;
-              return (
-                <li
-                  key={`${name}-${String(index)}`}
-                  className="flex min-w-0 items-start gap-3 rounded-xl p-3 text-sm ring-1 ring-secondary ring-inset"
-                >
-                  <File05 aria-hidden="true" className="mt-1 size-5 shrink-0 text-text-tertiary" />
-                  <div className="min-w-0 flex-1">
-                    <p className="font-medium wrap-anywhere">{name}</p>
-                    <Badge size="sm" color={reason ? "error" : description ? "success" : "gray"}>
-                      {reason ? "Ignored" : description ? "Inspected" : "Selected"}
-                    </Badge>
-                    {(reason || description) && (
-                      <p className="mt-1 wrap-anywhere text-text-secondary">
-                        {reason || description}
-                      </p>
-                    )}
-                  </div>
-                  <Button
-                    size="sm"
-                    color="secondary"
-                    aria-label={`Remove ${name}`}
-                    isDisabled={view.busy !== undefined}
-                    onPress={() => {
-                      view.discardDocument(name, file);
-                    }}
-                  >
-                    Remove
-                  </Button>
-                </li>
-              );
-            })}
+            {view.documentRows.map((row, index) => (
+              <IntakeDocumentRow key={`${row.name}-${String(index)}`} row={row} view={view} />
+            ))}
           </FileUpload.List>
         ) : (
           <p className="text-sm text-text-secondary">No documents yet.</p>
@@ -572,10 +905,20 @@ function DocumentFields({
       <div className="grid gap-2 sm:col-span-2">
         <h3 className="font-semibold">Issuer and case date</h3>
         {view.copy && (
-          <p className="text-sm text-text-secondary">
-            Starting from run {view.copy.run}. Review the copied answers, add dates, and inspect its
-            available documents.
-          </p>
+          <>
+            <p className="text-sm text-text-secondary">{carriedIntro(view.copy.prior)}</p>
+            <Button
+              href={`/run/${encodeURIComponent(view.copy.run)}`}
+              target="_blank"
+              rel="noreferrer"
+              aria-label="Open source run (opens in a new tab)"
+              color="link-gray"
+              size="sm"
+              className="w-fit"
+            >
+              Open source run
+            </Button>
+          </>
         )}
         {view.priorNote && (
           <p role="status" className="text-sm text-text-secondary">
@@ -589,6 +932,7 @@ function DocumentFields({
           <input
             className={field}
             required
+            placeholder="e.g. Northbridge Group plc"
             {...problemAttrs(view.problem, "issuer_name")}
             value={view.identity.issuer_name}
             onChange={(event) => {
@@ -598,20 +942,42 @@ function DocumentFields({
         </label>
         <FieldMessage problem={view.problem} field="issuer_name" />
       </div>
-      <label className={label}>
-        Issuer ID
-        <input
-          className={field}
-          required
-          pattern="[a-z0-9][a-z0-9\\-]{0,39}"
-          maxLength={40}
-          value={view.issuerId}
-          readOnly={!!view.copy}
-          onChange={(event) => {
-            view.changeIssuerId(event.target.value);
-          }}
-        />
-      </label>
+      <div className="grid content-start gap-1">
+        <label className={label}>
+          {ISSUER_ID}
+          <input
+            className={field}
+            required
+            pattern="[a-z0-9][a-z0-9\-]{0,39}"
+            maxLength={40}
+            placeholder="e.g. northbridge-group-plc"
+            {...problemAttrs(view.problem, "issuer_id")}
+            value={view.issuerId}
+            readOnly={!!view.copy}
+            onChange={(event) => {
+              view.changeIssuerId(event.target.value);
+            }}
+          />
+        </label>
+        <FieldMessage problem={view.problem} field="issuer_id" />
+        {view.problem?.field === "issuer_id" && view.problem.offer && (
+          <div>
+            <Button
+              color="secondary"
+              size="sm"
+              onPress={() => {
+                view.useIssuerId(view.problem?.offer ?? "");
+              }}
+            >
+              {`Use ${view.problem.offer}`}
+            </Button>
+          </div>
+        )}
+        <p className="text-sm text-text-secondary">
+          Letters a–z, digits and hyphens, up to 40 characters.
+        </p>
+        {view.issuerNotice && <p className="text-sm text-text-secondary">{view.issuerNotice}</p>}
+      </div>
       <div className="grid content-start gap-1">
         <label className={label}>
           As-of date
@@ -625,55 +991,50 @@ function DocumentFields({
             }}
           />
         </label>
-        {view.priorAsOf && (
-          <p className="text-sm text-text-tertiary">
-            Set to today for the new run. The earlier run used {view.priorAsOf}.
-          </p>
-        )}
       </div>
-      <label className={label}>
-        Reporting currency
-        <input
-          className={field}
-          required
-          pattern="[A-Z]{3}"
-          maxLength={3}
-          value={view.run.reporting_currency}
-          onChange={(event) => {
-            view.changeRun("reporting_currency", event.target.value.toUpperCase());
-          }}
-        />
-      </label>
       <SelectField
-        title="Issue classification"
+        title={ISSUE_CLASSIFICATION}
         value={view.identity.issue_classification ?? ""}
-        choices={{
-          "": "Choose classification",
-          investment_grade: "Investment grade",
-          high_yield: "High yield",
-        }}
+        choices={{ "": "Choose classification", ...ISSUE_CLASSES }}
         onChange={(value) => {
           view.changeIdentity("issue_classification", value);
         }}
       />
-      <label className={label}>
-        Your name
-        <input
-          className={field}
-          maxLength={80}
-          value={view.submittedBy}
-          onChange={(event) => {
-            view.changeSubmittedBy(event.target.value);
-          }}
-        />
-      </label>
+      <div className="grid gap-2">
+        <label className={label}>
+          Your name <span aria-hidden="true">*</span>
+          <input
+            className={field}
+            required
+            aria-label="Your name"
+            maxLength={80}
+            autoComplete="off"
+            placeholder="Eric G"
+            {...problemAttrs(view.problem, "submitted_by")}
+            aria-describedby={
+              view.problem?.field === "submitted_by"
+                ? "error-submitted_by run-analyst-name"
+                : "run-analyst-name"
+            }
+            value={view.submittedBy}
+            onChange={(event) => {
+              view.changeSubmittedBy(event.target.value);
+            }}
+          />
+        </label>
+        <FieldMessage problem={view.problem} field="submitted_by" />
+        <p id="run-analyst-name" className="text-sm text-text-tertiary">
+          First name and initial, such as Eric G. Use two initials, such as Eric MG, if a colleague
+          has a similar name. Shown on Run activity and in Teams.
+        </p>
+      </div>
       {view.copy ? (
         <Button color="secondary" onPress={view.resetIssuer}>
           This is a different issuer
         </Button>
       ) : (
         <Button color="secondary" onPress={view.carryLatest}>
-          Carry over from latest run
+          Use inputs from latest run
         </Button>
       )}
     </>
@@ -683,16 +1044,27 @@ function DocumentFields({
 function PurposeFields({ view }: { view: IntakeView }) {
   return (
     <>
-      <div className="sm:col-span-2">
+      <div className="@container sm:col-span-2">
         <PurposeCards
-          label="Pathway"
+          className="@[44rem]:grid-cols-2"
+          label={PATHWAY_LABEL}
           value={view.run.pathway}
-          purposes={PATHWAY_CARDS}
+          purposes={PATHWAY_CARDS.map((pathway) => {
+            const cap = view.caps[pathway.id];
+            const capText = cap && shownCapText(Number(cap));
+            return {
+              ...pathway,
+              description: `${pathway.description} ${capText ? `Cap ${capText}.` : "Cap unavailable."}`,
+            };
+          })}
           onChange={view.changePathway}
         />
       </div>
+      {view.synthetic && (
+        <p className="text-sm text-text-secondary sm:col-span-2">{SYNTHETIC_LIMITS}</p>
+      )}
       <SelectField
-        title="Run purpose"
+        title={RUN_PURPOSE_LABEL}
         value={view.run.run_type ?? "research"}
         choices={
           view.earnings
@@ -706,10 +1078,10 @@ function PurposeFields({ view }: { view: IntakeView }) {
         onChange={view.changePurpose}
       />
       <SelectField
-        title="Case kind"
+        title={CASE_KIND_LABEL}
         value={view.run.case_kind}
-        help="Web research runs for public and private cases, never for a synthetic test case."
-        choices={{ public: "Public filer", private: "Private", synthetic: "Synthetic test case" }}
+        help="Public cases can use approved lookups. Native Copilot web search is unavailable."
+        choices={CASE_KINDS}
         onChange={(value) => {
           view.changeRun("case_kind", value);
         }}
@@ -717,7 +1089,7 @@ function PurposeFields({ view }: { view: IntakeView }) {
       <SelectField
         title="Run form level"
         value={view.level}
-        help="Advanced adds model, effort, turns per module, module selection and JSON inputs."
+        help="Advanced adds model, effort, turns per module, module selection and valuation and assumption fields."
         choices={LEVELS}
         onChange={view.changeLevel}
       />
@@ -731,9 +1103,48 @@ function ContextFields({ view }: { view: IntakeView }) {
       <ContextInputFields view={view} />
       <IssuerDetailsFields view={view} />
       <StructuredContextFields view={view} />
-      <JsonDetailsFields view={view} />
+      <ValuationSection view={view} />
+      <AssumptionsSection view={view} />
       <AdvancedOptionsFields view={view} />
     </>
+  );
+}
+
+/** A reporting period: required, and marked so, only when the pathway compares two periods. */
+function PeriodField({
+  view,
+  field: key,
+  title,
+  placeholder,
+}: {
+  view: IntakeView;
+  field: "current_period" | "prior_period";
+  title: string;
+  placeholder: string;
+}) {
+  return (
+    <div className="grid content-start gap-1">
+      <label className={label}>
+        {view.earnings ? (
+          <>
+            {title} <span className="font-normal text-text-tertiary">(required)</span>
+          </>
+        ) : (
+          title
+        )}
+        <input
+          className={field}
+          aria-required={view.earnings || undefined}
+          {...problemAttrs(view.problem, key)}
+          placeholder={placeholder}
+          value={view.run[key] ?? ""}
+          onChange={(event) => {
+            view.changeRun(key, event.target.value.trim().toLowerCase());
+          }}
+        />
+      </label>
+      <FieldMessage problem={view.problem} field={key} />
+    </div>
   );
 }
 
@@ -745,6 +1156,7 @@ function ContextInputFields({ view }: { view: IntakeView }) {
           Anything the analysis should know
           <textarea
             aria-describedby="run-analyst-questions"
+            {...problemAttrs(view.problem, "analyst_note")}
             className={field}
             rows={3}
             placeholder="For example, the committee wants a view on the 2028 maturities."
@@ -754,6 +1166,7 @@ function ContextInputFields({ view }: { view: IntakeView }) {
             }}
           />
         </label>
+        <FieldMessage problem={view.problem} field="analyst_note" />
         <p id="run-analyst-questions" className="text-sm text-text-tertiary">
           Your note is included in the run’s research questions.
         </p>
@@ -785,34 +1198,19 @@ function ContextInputFields({ view }: { view: IntakeView }) {
         </label>
         <FieldMessage problem={view.problem} field="cutoff" />
       </div>
-      <label className={label}>
-        Current period
-        <input
-          className={field}
-          required={view.earnings}
-          placeholder="q3-2026"
-          value={view.run.current_period ?? ""}
-          onChange={(event) => {
-            view.changeRun("current_period", event.target.value.trim().toLowerCase());
-          }}
-        />
-      </label>
-      <label className={label}>
-        Prior period
-        <input
-          className={field}
-          required={view.earnings}
-          placeholder="q2-2026"
-          value={view.run.prior_period ?? ""}
-          onChange={(event) => {
-            view.changeRun("prior_period", event.target.value.trim().toLowerCase());
-          }}
-        />
-      </label>
+      <PeriodField
+        view={view}
+        field="current_period"
+        title="Current period"
+        placeholder="q3-2026"
+      />
+      <PeriodField view={view} field="prior_period" title="Prior period" placeholder="q2-2026" />
       <SelectField
-        title="Legal documents"
+        title={LEGAL_DOCUMENTS}
         value={view.legal}
-        choices={{ none: "No agreement", executed: "Executed agreement", draft: "Draft agreement" }}
+        choices={LEGAL_CHOICES}
+        problem={view.problem}
+        problemField="legal_documents"
         onChange={view.changeLegal}
       />
       {view.legal !== "none" && (
@@ -863,21 +1261,14 @@ function ContextInputFields({ view }: { view: IntakeView }) {
 function IssuerDetailsFields({ view }: { view: IntakeView }) {
   return (
     <details className="rounded-lg border border-border-hairline p-3 sm:col-span-2">
-      <summary className="cursor-pointer font-semibold">Issuer details</summary>
+      <summary className="cursor-pointer font-semibold">{ISSUER_DETAILS}</summary>
       <div className="mt-3 grid gap-4 sm:grid-cols-2">
-        {(
-          [
-            ["borrower_name", "Borrower (legal entity)"],
-            ["parent_name", "Parent"],
-            ["sector", "Sector"],
-            ["country", "Country"],
-            ["sponsor", "Sponsor"],
-          ] as const
-        ).map(([key, title]) => (
+        {ISSUER_TEXT_BOXES.map(([key, title, example]) => (
           <label key={key} className={label}>
             {title}
             <input
               className={field}
+              placeholder={`e.g. ${example}`}
               value={view.identity[key] ?? ""}
               onChange={(event) => {
                 view.changeIdentity(key, event.target.value);
@@ -885,12 +1276,7 @@ function IssuerDetailsFields({ view }: { view: IntakeView }) {
             />
           </label>
         ))}
-        {(
-          [
-            ["aliases", "Other names in the filings"],
-            ["guarantors", "Guarantors"],
-          ] as const
-        ).map(([key, title]) => (
+        {ISSUER_LIST_BOXES.map(([key, title]) => (
           <label key={key} className={label}>
             {title}
             <textarea
@@ -918,11 +1304,11 @@ function IssuerDetailsFields({ view }: { view: IntakeView }) {
               view.changeListedEquity(event.target.checked);
             }}
           />{" "}
-          Listed equity
+          {LISTED_EQUITY}
         </label>
         {view.identity.listed_equity && (
           <label className={label}>
-            Ticker
+            {TICKER}
             <input
               className={field}
               value={view.identity.ticker ?? ""}
@@ -939,13 +1325,13 @@ function IssuerDetailsFields({ view }: { view: IntakeView }) {
 
 function StructuredContextFields({ view }: { view: IntakeView }) {
   const focusChoices = [
-    ["", "Any"] as const,
-    ...pathwayModules(view.run.pathway).map((id) => [id, moduleName(id)] as const),
+    ["", ANY_FOCUS] as const,
+    ...drawnModules(pathwayModules(view.run.pathway)).map((id) => [id, moduleName(id)] as const),
   ];
   return (
     <div className="grid gap-4 sm:col-span-2">
-      <h3 className="font-semibold">Context details</h3>
-      {ROW_KINDS.map((kind) => (
+      <h3 className="font-semibold">{CONTEXT_DETAILS}</h3>
+      {CONTEXT_ROW_KINDS.map((kind) => (
         <section key={kind} aria-labelledby={`rows-${kind}`} className="grid gap-2">
           <h4 id={`rows-${kind}`} className="text-sm font-semibold">
             {ROW_SPECS[kind].section}
@@ -959,11 +1345,7 @@ function StructuredContextFields({ view }: { view: IntakeView }) {
             primary={view.run.run_type === "primary"}
             required={kind === "deal_terms" && view.run.run_type === "primary"}
             focusChoices={focusChoices}
-            error={
-              kind === "deal_terms" && view.problem?.field === "deal_terms"
-                ? view.problem.message
-                : undefined
-            }
+            error={view.problem?.field === kind ? view.problem.message : undefined}
           />
         </section>
       ))}
@@ -971,50 +1353,91 @@ function StructuredContextFields({ view }: { view: IntakeView }) {
   );
 }
 
-function JsonDetailsFields({ view }: { view: IntakeView }) {
-  const shown = (Object.entries(COMPLEX_FIELDS) as [ComplexField, string][]).filter(
-    ([key]) => view.level === "advanced" || view.edits[key] !== undefined,
-  );
-  if (!shown.length) return null;
+function ValuationSection({ view }: { view: IntakeView }) {
+  const wanted = view.requested;
+  const runs = { cp3: wanted.includes("CP-3"), cp6: wanted.includes("CP-6") };
+  const named = view.problem?.field === "valuation" || view.problem?.field === "module_options";
+  if (view.level !== "advanced" && !view.forms.valuation && !view.forms.module_options && !named)
+    return null;
   return (
-    <div className="grid gap-2 sm:col-span-2">
-      <p className="text-sm text-text-secondary">
-        These values are JSON objects. The service validates the content during review.
-      </p>
-      {shown.map(([key, title]) => (
-        <details key={key} className="rounded-lg border border-border-hairline p-3">
-          <summary className="cursor-pointer text-sm font-semibold">{title}</summary>
-          <textarea
-            aria-label={title}
-            className={`mt-2 w-full font-mono ${field}`}
-            rows={key === "valuation" ? 12 : 5}
-            {...problemAttrs(view.problem, key)}
-            value={view.detailText(key)}
-            onChange={(event) => {
-              view.changeDetail(key, event.target.value);
-            }}
+    <div className="grid gap-3 sm:col-span-2">
+      <details className="rounded-lg border border-border-hairline p-3">
+        <summary className="cursor-pointer text-sm font-semibold">{VALUATION_TITLE}</summary>
+        <div className="mt-3">
+          <ValuationFields
+            form={view.valuation}
+            onChange={view.changeValuation}
+            marker={problemAttrs(view.problem, "valuation")}
+            message={<FieldMessage problem={view.problem} field="valuation" />}
           />
-          <FieldMessage problem={view.problem} field={key} />
+        </div>
+      </details>
+      {(runs.cp3 || runs.cp6) && (
+        <details className="rounded-lg border border-border-hairline p-3">
+          <summary className="cursor-pointer text-sm font-semibold">{MODULE_OPTIONS_TITLE}</summary>
+          <div className="mt-3">
+            <ModuleOptionsFields
+              form={view.moduleOptions}
+              runs={runs}
+              onChange={view.changeModuleOptions}
+              marker={problemAttrs(view.problem, "module_options")}
+              message={<FieldMessage problem={view.problem} field="module_options" />}
+            />
+          </div>
         </details>
-      ))}
+      )}
     </div>
+  );
+}
+
+function AssumptionsSection({ view }: { view: IntakeView }) {
+  if (view.level !== "advanced" && !view.forms.assumptions && view.problem?.field !== "assumptions")
+    return null;
+  return (
+    <details className="rounded-lg border border-border-hairline p-3 sm:col-span-2">
+      <summary className="cursor-pointer text-sm font-semibold">{ASSUMPTIONS_TITLE}</summary>
+      <div className="mt-3 grid gap-3">
+        <p className="text-sm text-text-secondary">
+          Optional. Pin a value only where you hold a house view; otherwise the module chooses.
+        </p>
+        <AssumptionFields
+          form={view.assumptions}
+          modules={view.requested}
+          onChange={view.changeAssumptions}
+          marker={problemAttrs(view.problem, "assumptions")}
+          message={<FieldMessage problem={view.problem} field="assumptions" />}
+        />
+      </div>
+    </details>
   );
 }
 
 function AdvancedOptionsFields({ view }: { view: IntakeView }) {
   if (view.level !== "advanced") return null;
+  const availableEfforts = copilotEfforts(view.copilotModels, view.model);
+  const modelChoices = copilotPairVerified(view.copilotModels, "luna", "xhigh")
+    ? MODELS
+    : { gpt: MODELS.gpt, claude: MODELS.claude };
+  const effortChoices = Object.fromEntries(
+    Object.entries(EFFORTS).filter(([key]) => availableEfforts.includes(key)),
+  );
+  if (!Object.keys(effortChoices).length) effortChoices.none = "No verified effort available";
+  const selectedEffort = effortChoices[view.effort]
+    ? view.effort
+    : (Object.keys(effortChoices)[0] ?? "");
   return (
     <>
       <SelectField
         title="Model"
         value={view.model}
-        choices={{ gpt: "GPT Sol", claude: "Claude Opus" }}
+        choices={modelChoices}
         onChange={view.changeModel}
       />
       <SelectField
         title="Reasoning effort"
-        value={view.effort}
-        choices={{ fast: "Fast", balanced: "Balanced", high: "High" }}
+        value={selectedEffort}
+        choices={effortChoices}
+        disabled={!availableEfforts.length}
         onChange={view.changeEffort}
       />
       <div className="grid content-start gap-1">
@@ -1039,12 +1462,12 @@ function AdvancedOptionsFields({ view }: { view: IntakeView }) {
       <fieldset className="min-w-0 rounded-lg border border-border-hairline p-3 sm:col-span-2">
         <legend className="px-1 text-sm font-semibold">Requested modules</legend>
         <div className="grid gap-2 sm:grid-cols-2">
-          {view.requested.map((code) => (
+          {drawnModules(view.requested).map((code) => (
             <label key={code} className="flex items-center gap-2 text-sm">
               <input
                 type="checkbox"
                 checked={!view.modules.length || view.modules.includes(code)}
-                disabled={view.modules.length === 1 && view.modules.includes(code)}
+                disabled={drawnModules(view.modules).length === 1 && view.modules.includes(code)}
                 onChange={(event) => {
                   view.toggleModule(code, event.target.checked);
                 }}
@@ -1074,6 +1497,7 @@ export function SelectField({
   value,
   choices,
   onChange,
+  disabled = false,
   problem,
   problemField,
   help,
@@ -1082,6 +1506,7 @@ export function SelectField({
   value: string;
   choices: Readonly<Record<string, string>>;
   onChange: (value: string) => void;
+  disabled?: boolean;
   problem?: FieldProblem;
   problemField?: FieldKey;
   help?: string;
@@ -1096,6 +1521,7 @@ export function SelectField({
       {title}
       <select
         className={field}
+        disabled={disabled}
         {...(problemField ? problemAttrs(problem, problemField) : {})}
         aria-describedby={describedBy}
         value={value}
@@ -1129,21 +1555,6 @@ function isRecord(item: unknown): item is Row {
   return item !== null && typeof item === "object" && !Array.isArray(item);
 }
 
-function readDetails(edits: Partial<Record<ComplexField, string>>) {
-  const details: Record<string, unknown> = {};
-  for (const [key, raw] of Object.entries(edits) as [ComplexField, string][]) {
-    let parsed: unknown;
-    try {
-      parsed = JSON.parse(raw);
-    } catch {
-      throw new FieldProblem(key, `${COMPLEX_FIELDS[key]} must contain valid JSON.`);
-    }
-    if (!isRecord(parsed)) throw new FieldProblem(key, `${COMPLEX_FIELDS[key]} must be an object.`);
-    details[key] = parsed;
-  }
-  return details;
-}
-
 export function StartRun({
   mode,
   navigate,
@@ -1153,6 +1564,9 @@ export function StartRun({
   navigate: (path: string) => void;
   from?: string;
 }) {
+  useEffect(() => {
+    document.title = "Start a run — Credit OS";
+  }, []);
   const load = useCallback(
     async (signal: AbortSignal) => {
       const runOptions = await getContext(signal);
@@ -1166,7 +1580,7 @@ export function StartRun({
     },
     [from],
   );
-  const { value, error } = useResource(load);
+  const { value, error, unreachable, retry } = useResource(load);
 
   return (
     <>
@@ -1175,24 +1589,142 @@ export function StartRun({
         title="Start a run"
         badges={mode === "synthetic" ? <Badge color="brand">Synthetic test</Badge> : undefined}
       />
-      <p className="mt-3 text-sm text-text-secondary">
-        Choose the documents and purpose, then review what will run.
-      </p>
       {value ? (
         <IntakeForm mode={mode} navigate={navigate} {...value} />
       ) : error ? (
-        <ErrorNotice>{error}</ErrorNotice>
+        <div className="mt-6">
+          <Alert
+            tone="error"
+            title={
+              unreachable ? "The service cannot be reached" : "The run options could not be loaded"
+            }
+            action={
+              <Button size="sm" color="secondary" onPress={retry}>
+                Try again
+              </Button>
+            }
+          >
+            {unreachable
+              ? "Check that the Credit OS service is running, then try again."
+              : "Try again. If the options still won’t load, ask the person running Credit OS to check it."}
+          </Alert>
+        </div>
       ) : (
-        <p role="status" className="mt-6 text-text-secondary">
-          Loading run options…
-        </p>
+        <div role="status" aria-label="Loading run options" className="mt-6">
+          <Skeleton lines={4} />
+        </div>
       )}
     </>
   );
 }
 
+function issuerFieldsEdited(
+  identity: Context["identity"],
+  customSlug: string | undefined,
+  prior: PriorInputs | undefined,
+  initial: Context["identity"],
+) {
+  return (
+    (customSlug !== undefined && customSlug !== (prior?.issuer_id ?? initial.issuer_id)) ||
+    identity.issue_classification !==
+      (prior?.context?.identity.issue_classification ?? initial.issue_classification) ||
+    identity.issuer_name !== (prior?.issuer_name ?? initial.issuer_name)
+  );
+}
+
+function useIntakeSession() {
+  const draftRef = useRef<Draft | null>(null);
+  // Snapshot of the last review, made when the analyst leaves it by a stepper or Edit button.
+  // The next review uses it once, only for the same issuer id and pathway. "Carry over from
+  // latest run" and "This is a different issuer" clear it.
+  const reviewedRef = useRef<Reviewed | null>(null);
+  const activeRef = useRef(false);
+  // The control that had focus when a busy state began; busy fieldsets disable it and drop focus.
+  const focusedBeforeRef = useRef<{ node: HTMLElement; text: string } | null>(null);
+  // Set when Submit has started the run, so leaving the page for it is not warned about.
+  const submittedRef = useRef(false);
+  return { draftRef, reviewedRef, activeRef, focusedBeforeRef, submittedRef };
+}
+
+function useIntakeViewState() {
+  const folderInput = useRef<HTMLInputElement>(null);
+  // The step heading takes focus only after the step changes, never on first render.
+  const [moved, setMoved] = useState(false);
+  const [changeNotice, setChangeNotice] = useState("");
+  return { folderInput, moved, setMoved, changeNotice, setChangeNotice };
+}
+
+function useDocumentSelectionState() {
+  // Counts finished inspections, so a repeated result is announced again.
+  const [inspections, setInspections] = useState(0);
+  const [repeatedContent, setRepeatedContent] = useState<ReadonlyMap<File, string>>(new Map());
+  const selectionRevisionRef = useRef(0);
+  const contentQueueRef = useRef<Promise<void>>(Promise.resolve());
+  useEffect(
+    () => () => {
+      selectionRevisionRef.current += 1;
+    },
+    [],
+  );
+
+  return {
+    inspections,
+    setInspections,
+    repeatedContent,
+    setRepeatedContent,
+    selectionRevisionRef,
+    contentQueueRef,
+  };
+}
+
+function useIntakeFocus(
+  fieldError: IntakeView["problem"],
+  busy: IntakeView["busy"],
+  focusedBeforeRef: ReturnType<typeof useIntakeSession>["focusedBeforeRef"],
+) {
+  useEffect(() => {
+    if (fieldError && busy === undefined) focusField(fieldError.field);
+  }, [fieldError, busy]);
+
+  useEffect(() => {
+    if (busy !== undefined) return;
+    const remembered = focusedBeforeRef.current;
+    focusedBeforeRef.current = null;
+    if (
+      remembered?.node.isConnected &&
+      document.activeElement === document.body &&
+      !remembered.node.matches(":disabled") &&
+      accessibleText(remembered.node) === remembered.text
+    )
+      remembered.node.focus();
+  }, [busy, focusedBeforeRef]);
+}
+
+function reviewIssuerNote(
+  review: Review | undefined,
+  settledSlug: ReturnType<typeof useIntakeIdentityState>["settledSlug"],
+) {
+  return review &&
+    settledSlug?.holder &&
+    review.answers.context.identity.issuer_id === settledSlug.id
+    ? `Issuer ID ${settledSlug.id} was used for this run because ${issuerSlug(settledSlug.name)} is filed under the name "${settledSlug.holder}". If that is this issuer under another name, type that name.`
+    : "";
+}
+
+function contextFormValues(
+  forms: ReturnType<typeof useIntakeDocumentsState>["forms"],
+  context: Context,
+) {
+  return {
+    valuation: forms.valuation ?? readValuation(context.valuation),
+    moduleOptions: forms.module_options ?? readModuleOptions(context.module_options),
+    assumptions: forms.assumptions ?? readAssumptions(context.assumptions),
+  };
+}
+
 function IntakeForm({
   template,
+  copilotModels,
   caps,
   initial,
   warning,
@@ -1200,6 +1732,7 @@ function IntakeForm({
   mode,
 }: {
   template: Context;
+  copilotModels?: Record<string, string[]>;
   caps: Record<string, string>;
   initial?: { run: string; prior: PriorInputs };
   warning?: string;
@@ -1207,7 +1740,7 @@ function IntakeForm({
   mode: Mode;
 }) {
   const identityState = useIntakeIdentityState(template, initial, warning);
-  const documentState = useIntakeDocumentsState();
+  const documentState = useIntakeDocumentsState(initial);
   const runOptions = useIntakeRunOptions(initial);
   const reviewState = useIntakeReviewState();
   const {
@@ -1225,6 +1758,8 @@ function IntakeForm({
     setPurposeTouched,
     customSlug,
     setCustomSlug,
+    settledSlug,
+    setSettledSlug,
     newestOverride,
     setNewestOverride,
   } = identityState;
@@ -1235,14 +1770,16 @@ function IntakeForm({
     setReading,
     uploaded,
     setUploaded,
+    documentsCopied,
+    setDocumentsCopied,
     ignoredCopies,
     setIgnoredCopies,
     attachments,
     setAttachments,
     legal,
     setLegal,
-    edits,
-    setEdits,
+    forms,
+    setForms,
     rows,
     setRows,
     analystNote,
@@ -1275,27 +1812,27 @@ function IntakeForm({
     setError,
     fieldError,
     setFieldError,
+    otherProblems,
+    setOtherProblems,
     submitUncertain,
     setSubmitUncertain,
   } = reviewState;
-  const draftRef = useRef<Draft | null>(null);
-  // Snapshot of the last review, made when the analyst leaves it by a stepper or Edit button.
-  // The next review uses it once, only for the same issuer id and pathway. "Carry over from
-  // latest run" and "This is a different issuer" clear it.
-  const reviewedRef = useRef<Reviewed | null>(null);
-  const active = useRef(false);
-  const folderInput = useRef<HTMLInputElement>(null);
-  // The control that had focus when a busy state began; busy fieldsets disable it and drop focus.
-  const focusedBefore = useRef<{ node: HTMLElement; text: string } | null>(null);
-  // The step heading takes focus only after the step changes, never on first render.
-  const [moved, setMoved] = useState(false);
-  // Counts finished inspections, so a repeated result is announced again.
-  const [inspections, setInspections] = useState(0);
+  const { draftRef, reviewedRef, activeRef, focusedBeforeRef, submittedRef } = useIntakeSession();
+  const { folderInput, moved, setMoved, changeNotice, setChangeNotice } = useIntakeViewState();
+  const {
+    inspections,
+    setInspections,
+    repeatedContent,
+    setRepeatedContent,
+    selectionRevisionRef,
+    contentQueueRef,
+  } = useDocumentSelectionState();
 
   const { run, identity, issuerId, requested, cap, earnings, canRead, checksComplete, newest } =
     intakeRunDetails({
       context,
       customSlug,
+      settledSlug,
       caps,
       files,
       copy,
@@ -1303,7 +1840,9 @@ function IntakeForm({
       accepted,
       newestOverride,
       reading,
+      ignoredCopies,
     });
+  const issuerNotice = useIssuerNotice(issuerId, identity.issuer_name);
 
   function clearProblem(...fields: FieldKey[]) {
     setFieldError((previous) =>
@@ -1313,6 +1852,7 @@ function IntakeForm({
 
   function changeRun(key: keyof Context["run"], value: string) {
     if (key === "pathway") invalidateReview();
+    if (key === "current_period" || key === "prior_period") clearProblem(key);
     setContext((previous) => ({ ...previous, run: { ...previous.run, [key]: value } }));
   }
 
@@ -1327,7 +1867,7 @@ function IntakeForm({
     key: K,
     value: Context["identity"][K],
   ) {
-    if (key === "issuer_name") clearProblem("issuer_name");
+    if (key === "issuer_name") clearProblem("issuer_name", "issuer_id");
     setContext((previous) => ({ ...previous, identity: { ...previous.identity, [key]: value } }));
   }
 
@@ -1346,33 +1886,52 @@ function IntakeForm({
     action: "review" | "documents" | "copy" | "submit",
     work: () => Promise<void>,
   ) {
-    if (active.current) return;
-    active.current = true;
-    focusedBefore.current =
+    if (activeRef.current) return;
+    activeRef.current = true;
+    focusedBeforeRef.current =
       document.activeElement instanceof HTMLElement
         ? { node: document.activeElement, text: accessibleText(document.activeElement) }
         : null;
     setBusy(action);
     setError("");
     setFieldError(undefined);
+    setOtherProblems([]);
     try {
       await work();
     } catch (failure) {
       if (failure instanceof FieldProblem) {
         setFieldError(failure);
+        setOtherProblems(failure.others ?? []);
         setStep(stepOfField(failure.field));
         return;
       }
       if (failure instanceof RequestError && failure.status === 404) {
         draftRef.current = null;
+        setDocumentsCopied(false);
         setUploaded(new Map());
         setReading(undefined);
       }
-      setError(errorText(failure));
+      setError(draftErrorText(failure));
     } finally {
-      active.current = false;
+      activeRef.current = false;
       setBusy(undefined);
     }
+  }
+
+  /** Selection and inspection share one queue, so at most one file buffer is being hashed. */
+  function checkRepeatedDocuments(
+    selected: readonly File[],
+    revision = selectionRevisionRef.current,
+  ) {
+    const result = contentQueueRef.current.then(() =>
+      repeatedDocuments(selected, () => revision === selectionRevisionRef.current),
+    );
+    // Each caller handles its own error; a failed read must not prevent a later selection's check.
+    contentQueueRef.current = result.then(
+      () => undefined,
+      () => undefined,
+    );
+    return result;
   }
 
   async function refreshDocuments() {
@@ -1381,6 +1940,9 @@ function IntakeForm({
     if (new Set(names).size !== names.length) {
       throw new Error("Choose documents with distinct file names.");
     }
+    const repeated = await checkRepeatedDocuments(files);
+    setRepeatedContent(repeated);
+    if (repeated.size > 0) throw new Error([...repeated.values()].join(" "));
     if (!draftRef.current) {
       const { id } = await createSubmission();
       draftRef.current = { id, uploaded: new Map(), copied: false };
@@ -1396,6 +1958,7 @@ function IntakeForm({
         )
       ) {
         draftRef.current = null;
+        setDocumentsCopied(false);
         setUploaded(new Map());
         setReading(undefined);
         throw new Error(
@@ -1411,10 +1974,33 @@ function IntakeForm({
         if (![...draft.uploaded.values()].includes(name)) await removeDocument(draft.id, name);
       }
       draft.copied = true;
+      setDocumentsCopied(true);
     }
-    const result = await getReading(draft.id);
+    return { draft, result: await readDocuments(draft) };
+  }
+
+  /**
+   * What the service reads from the draft's documents. A refusal that names a file is shown as one
+   * sentence with that file's row marked Ignored; every route that reads goes through here.
+   */
+  async function readDocuments(draft: Draft) {
+    const known = [
+      ...[...draft.uploaded].map(([file, stored]) => ({ name: stored, size: file.size })),
+      ...(copy?.prior.files ?? []),
+    ];
+    const result = await getReading(draft.id).catch((failure: unknown) => {
+      if (!(failure instanceof RequestError)) throw failure;
+      const { file, sentence } = documentRefusal(failure.message, known);
+      if (!file && sentence === failure.message) throw failure;
+      setReading({
+        documents: [],
+        ignored: file ? [{ source: file, reason: sentence }] : [],
+        error: "",
+      });
+      throw new Error(sentence);
+    });
     setReading(result);
-    return { draft, result };
+    return result;
   }
 
   async function discardDocument(name: string, file?: File) {
@@ -1427,33 +2013,64 @@ function IntakeForm({
           draft.uploaded.delete(file);
           setUploaded(new Map(draft.uploaded));
         }
-        if (copy) setIgnoredCopies((previous) => [...new Set([...previous, stored])]);
       }
-      if (file) setFiles((previous) => previous.filter((item) => item !== file));
+      if (copy && stored) setIgnoredCopies((previous) => [...new Set([...previous, stored])]);
+      if (file) {
+        const remaining = files.filter((item) => item !== file);
+        setFiles(remaining);
+        selectionRevisionRef.current += 1;
+        setRepeatedContent(await checkRepeatedDocuments(remaining));
+      }
       setAttachments((previous) =>
         Object.fromEntries(
           Object.entries(previous).filter(([, chosen]) => chosen !== (stored || name)),
         ),
       );
-      if (draft && stored) setReading(await getReading(draft.id));
+      if (draft && stored) await readDocuments(draft);
     });
   }
 
   function addFiles(selected: Iterable<File> | null) {
-    if (active.current) return;
-    const added = Array.from(selected ?? []).filter(
+    if (activeRef.current) return;
+    const candidates = Array.from(selected ?? []).filter(
       (file) =>
         !fileName(file)
           .split("/")
           .some((part) => part.startsWith(".")),
     );
+    const names = new Set(files.map((file) => fileName(file).normalize("NFC").toLowerCase()));
+    const added: File[] = [];
+    const problems: string[] = [];
+    for (const file of candidates) {
+      const name = fileName(file);
+      const key = name.normalize("NFC").toLowerCase();
+      if (file.size > FILE_SIZE_LIMIT) problems.push(`${name} exceeds the 50 MB limit.`);
+      else if (!SOURCE_TYPES.test(name))
+        problems.push(`${name} is not a document type the run reads.`);
+      else if (names.has(key)) problems.push(`${name} is already selected.`);
+      else {
+        names.add(key);
+        added.push(file);
+      }
+    }
     setFiles((previous) => [...previous, ...added]);
+    const revision = ++selectionRevisionRef.current;
+    void checkRepeatedDocuments([...files, ...added], revision).then(
+      (repeated) => {
+        if (revision === selectionRevisionRef.current) setRepeatedContent(repeated);
+      },
+      (failure: unknown) => {
+        if (revision === selectionRevisionRef.current) setError(errorText(failure));
+      },
+    );
     if (added.length > 0) setReading(undefined);
-    setError("");
+    setError(problems.join(" "));
   }
 
   async function copyLatestWork() {
-    const latest = await latestIssuerInputs(issuerId);
+    // The ID is settled before the lookup: another issuer's run must not be carried, and the ID
+    // locked by the carry is the one the review would use.
+    const latest = await latestIssuerInputs(await settleIssuerId());
     if (!latest) {
       setPriorNote("No earlier run was found for this issuer.");
       return;
@@ -1471,15 +2088,16 @@ function IntakeForm({
     setModel("gpt");
     setEffort("balanced");
     setModules(carriedModules(prior));
-    setEdits({});
+    setForms({});
     setRows({});
     setAnalystNote("");
     setAttachments({});
-    setLegal("none");
+    setLegal(carriedLegal(prior));
     setIgnoredCopies([]);
     setNewestOverride(undefined);
     setReading(undefined);
     draftRef.current = null;
+    setDocumentsCopied(false);
     setUploaded(new Map());
   }
 
@@ -1491,20 +2109,65 @@ function IntakeForm({
     await withDraft("copy", copyLatestWork);
   }
 
-  function makeAnswers(result: Reading, details: Record<string, unknown>): Answers {
+  /**
+   * The ID for the typed name: the usual one, unless a run of another issuer already holds it, for
+   * any name of any length. A typed or carried ID is the analyst's own; the service checks it.
+   */
+  async function settleIssuerId() {
+    const name = identity.issuer_name.trim();
+    if (customSlug !== undefined) return issuerId;
+    const usual = issuerSlug(name);
+    const holder = await holderOf(usual);
+    const id = issuerIdFor(name, holder);
+    setSettledSlug({ name, id, ...(id === usual || !holder ? {} : { holder }) });
+    return id;
+  }
+
+  /**
+   * A refusal of an ID filed under another issuer, as a problem on the Issuer ID field. When the
+   * refused ID is not the name's usual one, who holds the usual one decides what is offered.
+   */
+  async function idProblem(failure: unknown) {
+    const found = failure instanceof RequestError ? filedElsewhere(failure.message) : undefined;
+    if (!(failure instanceof RequestError) || !found) return undefined;
+    const usual = issuerSlug(found.name);
+    const usualHolder = usual && usual !== found.id ? await holderOf(usual) : undefined;
+    const refusal = issuerIdRefusal(failure.message, usualHolder);
+    return refusal && new FieldProblem("issuer_id", refusal.sentence, undefined, refusal.offer);
+  }
+
+  function checkResearchCutoff() {
     if (run.cutoff && run.cutoff > run.as_of)
       throw new FieldProblem("cutoff", "Research cutoff must be on or before the as-of date.");
+  }
+
+  function checkEarningsPeriods() {
+    if (earnings) {
+      for (const [key, title] of [
+        ["current_period", "Current period"],
+        ["prior_period", "Prior period"],
+      ] as const)
+        if (!run[key]) throw new FieldProblem(key, `${title} is required for Earnings Update.`);
+    }
+  }
+
+  function makeAnswers(result: Reading, details: Record<string, unknown>, id: string): Answers {
+    checkResearchCutoff();
     const available = new Set(result.documents.map(storedName));
     const chosen = (key: Attachment) => available.has(attachments[key] ?? "");
     if (legal !== "none" && !chosen("agreement"))
       throw new FieldProblem("agreement", "Choose the uploaded file that is the agreement.");
-    const advanced = level === "advanced";
+    checkEarningsPeriods();
+    const runSettings =
+      level === "advanced"
+        ? { max_turns: Number(turns), model, effort }
+        : { max_turns: 32, model: "gpt", effort: "balanced" };
     return {
       context: {
         ...context,
         ...details,
         run: { ...run, cutoff: run.cutoff || run.as_of },
-        identity: { ...identity, issuer_name: identity.issuer_name.trim(), issuer_id: issuerId },
+        identity: { ...identity, issuer_name: identity.issuer_name.trim(), issuer_id: id },
         ...(context.attachments
           ? {
               attachments: {
@@ -1516,12 +2179,13 @@ function IntakeForm({
             }
           : {}),
       },
-      modules: advanced ? modules : [],
-      max_turns: advanced ? Number(turns) : 32,
+      modules,
+      max_turns: runSettings.max_turns,
       level,
-      model: advanced ? model : "gpt",
-      effort: advanced ? effort : "balanced",
+      model: runSettings.model,
+      effort: runSettings.effort,
       submitted_by: submittedBy.trim(),
+      ...(newestOverride ? { newest_document_date: newestOverride } : {}),
     };
   }
 
@@ -1532,8 +2196,30 @@ function IntakeForm({
         "Enter an issuer name and an issuer ID using letters a–z, digits or hyphens.",
       );
     }
-    const details: Record<string, unknown> = readDetails(edits);
-    for (const kind of ROW_KINDS) {
+    if (!isAnalystName(submittedBy.trim()))
+      throw new FieldProblem("submitted_by", ANALYST_NAME_RULE);
+    const details = reviewContextDetails();
+    checkRunRequirements(details);
+    return details;
+  }
+
+  function reviewContextDetails() {
+    const details: Record<string, unknown> = {};
+    if (forms.valuation) details.valuation = sendableValuation(forms.valuation);
+    if (forms.module_options) {
+      const wanted = pathwayModules(run.pathway);
+      details.module_options = sendableModuleOptions(forms.module_options, {
+        cp3: wanted.includes("CP-3"),
+        cp6: wanted.includes("CP-6"),
+      });
+    }
+    if (forms.assumptions)
+      details.assumptions = sendableAssumptions(
+        forms.assumptions,
+        context.assumptions,
+        pathwayModules(run.pathway),
+      );
+    for (const kind of CONTEXT_ROW_KINDS) {
       const edited = rows[kind];
       if (edited) details[kind] = sendableRows(kind, edited, run.run_type === "primary");
     }
@@ -1547,6 +2233,10 @@ function IntakeForm({
       const listed: unknown[] = Array.isArray(questions) ? questions : [];
       details.research_questions = [...listed, { text: note, focus_module: "" }];
     }
+    return details;
+  }
+
+  function checkRunRequirements(details: Record<string, unknown>) {
     if (run.run_type === "primary") {
       const deals = details.deal_terms ?? context.deal_terms;
       if (!Array.isArray(deals) || deals.length === 0)
@@ -1558,52 +2248,48 @@ function IntakeForm({
     if (level === "advanced" && (!/^\d+$/.test(turns) || Number(turns) < 1 || Number(turns) > 64)) {
       throw new FieldProblem("turns", "Turns per module must be a whole number from 1 to 64.");
     }
-    return details;
   }
 
   async function prepareReview() {
     const details = reviewDetails();
     const { draft, result } = await refreshDocuments();
     if (!result.documents.length)
-      throw new Error("The service could not read any of the selected documents.");
-    const answers = makeAnswers(result, details);
+      throw new Error(
+        "None of the selected documents could be read. Check the file list in Documents and add a readable file.",
+      );
+    const answers = makeAnswers(result, details, await settleIssuerId());
+    const noteAt = noteIndex(details, analystNote);
     const shownCap = capForPathway(caps, answers.context.run.pathway);
-    const summary = await getSummary(draft.id, answers, shownCap);
+    const summary = await getSummary(draft.id, answers, shownCap).catch(
+      async (failure: unknown) => {
+        throw (await idProblem(failure)) ?? refusedField(failure, requested, noteAt) ?? failure;
+      },
+    );
     requireSummaryCap(summary, shownCap);
-    if (!summary.digest) throw new Error("The service did not issue an approval for this run.");
-    const newestDate = newestOverride ?? newestPeriod(result);
-    const dateLimitation =
-      newestDate && run.as_of < newestDate
-        ? [
-            {
-              id: "form:newest-document-date",
-              scope: "run",
-              outcome: "limited",
-              reason: `The as-of date (${run.as_of}) is before your newest document (${newestDate}). Modules may set this document aside.`,
-              fix: "Use an as-of date on or after the newest document date.",
-            },
-          ]
-        : [];
-    const items = [...summary.items, ...dateLimitation];
+    if (!summary.digest)
+      throw new Error(
+        "This summary could not be approved. Select Review run to request a new summary.",
+      );
     const reviewed = reviewedRef.current;
     reviewedRef.current = null;
     setAccepted(
       reviewed?.pathway === answers.context.run.pathway &&
         reviewed.issuerId === answers.context.identity.issuer_id
-        ? carryAccepted(reviewed.items, reviewed.accepted, items)
+        ? carryAccepted(reviewed.items, reviewed.accepted, summary.items)
         : new Set(),
     );
     setApproved(false);
     setReview({
       id: draft.id,
       answers,
-      summary: { ...summary, items },
+      summary,
       cap: shownCap,
+      attachmentNames: { portfolio_workbook: attachments.portfolio_workbook },
     });
   }
 
   async function makeReview() {
-    if (!canRead || active.current) return;
+    if (!canRead || activeRef.current) return;
     invalidateReview();
     await withDraft("review", prepareReview);
   }
@@ -1617,14 +2303,18 @@ function IntakeForm({
 
   async function advance(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (active.current) return;
+    if (activeRef.current) return;
     switch (step) {
       case "documents":
         if (!canRead) return;
         await withDraft("documents", async () => {
+          if (!isAnalystName(submittedBy.trim()))
+            throw new FieldProblem("submitted_by", ANALYST_NAME_RULE);
           const { result } = await refreshDocuments();
           if (!result.documents.length)
-            throw new Error("The service could not read any of the selected documents.");
+            throw new Error(
+              "None of the selected documents could be read. Check the file list in Documents and add a readable file.",
+            );
           goTo("purpose");
         });
         break;
@@ -1661,11 +2351,13 @@ function IntakeForm({
           review.summary.digest,
           review.cap,
         );
+        submittedRef.current = true;
         navigate(`/run/${encodeURIComponent(id)}`);
       } catch (failure) {
         if (failure instanceof RequestError && [400, 404].includes(failure.status)) {
           if (failure.status === 404) {
             draftRef.current = null;
+            setDocumentsCopied(false);
             setUploaded(new Map());
             setReading(undefined);
           }
@@ -1673,24 +2365,17 @@ function IntakeForm({
           setAccepted(new Set());
           setApproved(false);
           setSubmitUncertain(false);
-          setError(`${errorText(failure)} Review the run again before submitting.`);
+          const taken = await idProblem(failure);
+          if (taken) throw taken;
+          setError(
+            `${asSentence(draftErrorText(failure))} Review the run again before submitting.`,
+          );
         } else {
           setSubmitUncertain(true);
-          setError(`${errorText(failure)} Retrying Submit run is safe.`);
+          setError(lostSubmitText(failure));
         }
       }
     });
-  }
-
-  function detailText(key: ComplexField) {
-    return (
-      edits[key] ??
-      JSON.stringify(
-        context[key] ?? (key === "module_options" ? { cp3_mode: "", cp6_deep_debate: false } : {}),
-        null,
-        2,
-      )
-    );
   }
 
   function inspectDocuments() {
@@ -1701,6 +2386,15 @@ function IntakeForm({
   }
 
   function changePathway(pathway: string) {
+    if (modules.length > 0)
+      setChangeNotice(
+        "Module choice reset for the new pathway. Review the run again and decide its limits.",
+      );
+    else if (approved || accepted.size > 0 || reviewedRef.current)
+      setChangeNotice(
+        "You changed the pathway, so the approval and your decisions were cleared. Decide again.",
+      );
+    reviewedRef.current = null;
     invalidateReview();
     setContext((previous) => ({
       ...previous,
@@ -1721,6 +2415,13 @@ function IntakeForm({
   }
 
   function changePurpose(value: string) {
+    if (approved || accepted.size > 0 || reviewedRef.current) {
+      setChangeNotice(
+        "You changed the market view, so the approval and your decisions were cleared. Decide again.",
+      );
+      reviewedRef.current = null;
+      invalidateReview();
+    }
     setPurposeTouched(true);
     changeRun("run_type", value);
   }
@@ -1728,11 +2429,6 @@ function IntakeForm({
   function changeAttachment(key: Attachment, value: string) {
     if (key === "agreement") clearProblem("agreement");
     setAttachments((previous) => ({ ...previous, [key]: value }));
-  }
-
-  function changeDetail(key: ComplexField, value: string) {
-    clearProblem(key);
-    setEdits((previous) => ({ ...previous, [key]: value }));
   }
 
   function resetIssuer() {
@@ -1744,7 +2440,7 @@ function IntakeForm({
     setCustomSlug(undefined);
     setReading(undefined);
     setPriorNote("");
-    setEdits({});
+    setForms({});
     setRows({});
     setAnalystNote("");
     setAttachments({});
@@ -1755,8 +2451,12 @@ function IntakeForm({
     setEffort("balanced");
     setTurns("32");
     setIgnoredCopies([]);
+    setChangeNotice("");
+    selectionRevisionRef.current += 1;
+    setRepeatedContent(new Map());
     setNewestOverride(undefined);
     draftRef.current = null;
+    setDocumentsCopied(false);
     setUploaded(new Map());
   }
 
@@ -1776,7 +2476,7 @@ function IntakeForm({
   }
 
   function changeRows(kind: RowKind, next: Row[]) {
-    if (kind === "deal_terms") clearProblem("deal_terms");
+    if (isFieldRow(kind)) clearProblem(kind);
     setRows((previous) => ({ ...previous, [kind]: next }));
   }
 
@@ -1784,6 +2484,9 @@ function IntakeForm({
     reading,
     files,
     uploaded,
+    copy,
+    ignoredCopies,
+    documentsCopied,
   );
 
   const { title, previous, next } = FORM_STEPS[step];
@@ -1815,6 +2518,24 @@ function IntakeForm({
     goTo(target);
   }
 
+  /** Moves to a place the browser's Back or Forward named; false when the form cannot show it. */
+  function showPlace(target: Place) {
+    // A review is made by Review run and not kept once left, and a step past Documents needs
+    // documents that were read: Forward to either is passed over.
+    if (target === "review" || (target !== "documents" && reading === undefined)) return false;
+    if (step === "documents" && target !== "documents" && !isAnalystName(submittedBy.trim())) {
+      setFieldError(new FieldProblem("submitted_by", ANALYST_NAME_RULE));
+      return false;
+    }
+    editReviewedInputs(target);
+    return true;
+  }
+
+  function changeReviewedModules(next: string[]) {
+    editReviewedInputs("context");
+    setModules(next);
+  }
+
   function submitReviewedRun() {
     void submitReviewed();
   }
@@ -1832,8 +2553,11 @@ function IntakeForm({
     busy,
     canRead,
     copy,
-    priorAsOf: run.as_of === today() ? (copy?.prior.context?.run.as_of ?? "") : "",
     priorNote,
+    issuerNotice,
+    changeNotice,
+    repeatedContent,
+    copilotModels,
     identity,
     issuerId,
     submittedBy,
@@ -1851,13 +2575,26 @@ function IntakeForm({
     level,
     analystNote,
     newest,
-    edits,
+    forms,
+    ...contextFormValues(forms, context),
+    changeAssumptions: (next) => {
+      clearProblem("assumptions");
+      setForms((previous) => ({ ...previous, assumptions: next }));
+    },
+    changeValuation: (next) => {
+      clearProblem("valuation");
+      setForms((previous) => ({ ...previous, valuation: next }));
+    },
+    changeModuleOptions: (next) => {
+      clearProblem("module_options");
+      setForms((previous) => ({ ...previous, module_options: next }));
+    },
     modules,
     requested,
     turns,
     model,
     effort,
-    capText,
+    caps,
     synthetic,
     addFiles,
     inspectDocuments,
@@ -1869,29 +2606,41 @@ function IntakeForm({
       changeRun(key, value);
     },
     changeIssuerId: (value) => {
-      clearProblem("issuer_name");
+      clearProblem("issuer_name", "issuer_id");
       setCustomSlug(value);
     },
-    changeSubmittedBy: setSubmittedBy,
+    changeSubmittedBy: (value) => {
+      clearProblem("submitted_by");
+      setSubmittedBy(value);
+    },
     carryLatest: () => void copyLatest(),
     resetIssuer,
     changePathway,
     changePurpose,
-    changeLevel: setLevel,
-    changeAnalystNote: setAnalystNote,
+    changeLevel: (value) => {
+      if (value !== "advanced") setModules([]);
+      setLevel(value);
+    },
+    changeAnalystNote: (value) => {
+      clearProblem("analyst_note");
+      setAnalystNote(value);
+    },
     changeNewestOverride: (value) => {
       setNewestOverride(value || undefined);
     },
     changeLegal: (value) => {
-      clearProblem("agreement");
+      clearProblem("agreement", "legal_documents");
       setLegal(value);
     },
     changeAttachment,
-    changeDetail,
-    detailText,
     rowsOf,
     changeRows,
-    changeModel: setModel,
+    changeModel: (value) => {
+      setModel(value);
+      const valid = copilotEfforts(copilotModels, value);
+      const preferred = value === "luna" ? "xhigh" : "balanced";
+      setEffort(valid.includes(preferred) ? preferred : (valid[0] ?? preferred));
+    },
     changeEffort: setEffort,
     changeTurns: (value) => {
       clearProblem("turns");
@@ -1899,33 +2648,39 @@ function IntakeForm({
     },
     toggleModule,
     problem: fieldError,
+    idNote: reviewIssuerNote(review, settledSlug),
+    useIssuerId: (id) => {
+      clearProblem("issuer_id");
+      setCustomSlug(id);
+    },
     focusProblem: () => {
       if (fieldError) focusField(fieldError.field);
     },
   };
 
-  useEffect(() => {
-    if (fieldError && busy === undefined) focusField(fieldError.field);
-  }, [fieldError, busy]);
+  useIntakeFocus(fieldError, busy, focusedBeforeRef);
 
-  useEffect(() => {
-    if (busy !== undefined) return;
-    const remembered = focusedBefore.current;
-    focusedBefore.current = null;
-    if (
-      remembered?.node.isConnected &&
-      document.activeElement === document.body &&
-      !remembered.node.matches(":disabled") &&
-      accessibleText(remembered.node) === remembered.text
-    )
-      remembered.node.focus();
-  }, [busy]);
+  // Documents carried from an earlier run count as much as chosen ones. A legal or module choice
+  // is made on More context, which opens only once a purpose has been chosen.
+  const holdsWork = [
+    documentRows.some((row) => !row.pendingCopy),
+    ignoredCopies.length > 0,
+    purposeChosen,
+    review !== undefined,
+    submittedBy.trim() !== "",
+    analystNote.trim() !== "",
+    run.as_of !== "",
+    issuerFieldsEdited(identity, customSlug, copy?.prior, template.identity),
+  ].some(Boolean);
+  useLeaveWarning(holdsWork, submittedRef);
+  useStepHistory(review ? "review" : step, showPlace);
 
   return (
     <IntakePanels
       step={step}
       review={review}
       error={error}
+      otherProblems={otherProblems}
       accepted={accepted}
       approved={approved}
       checksComplete={checksComplete === true}
@@ -1944,6 +2699,7 @@ function IntakeForm({
       onAccept={acceptReviewItems}
       onApprove={setApproved}
       onEdit={editReviewedInputs}
+      onModules={changeReviewedModules}
       onSubmit={submitReviewedRun}
       onAdvance={advanceCurrentStep}
       onPrevious={returnToPreviousStep}
@@ -1955,6 +2711,7 @@ type IntakePanelsProps = {
   step: FormStep;
   review?: Review;
   error: string;
+  otherProblems: readonly string[];
   accepted: Set<string>;
   approved: boolean;
   checksComplete: boolean;
@@ -1973,16 +2730,36 @@ type IntakePanelsProps = {
   onAccept: (ids: readonly string[], checked: boolean) => void;
   onApprove: (value: boolean) => void;
   onEdit: (step: FormStep) => void;
+  onModules: (modules: string[]) => void;
   onSubmit: () => void;
   onAdvance: (event: SubmitEvent<HTMLFormElement>) => void;
   onPrevious: () => void;
 };
+
+/** Refusal lines in the screen's own words: one as a sentence, several as a list. */
+function RefusalNotice({ lines }: { lines: readonly string[] }) {
+  const [only] = lines;
+  return (
+    <ErrorNotice>
+      {lines.length === 1 ? (
+        only
+      ) : (
+        <ul className="list-disc pl-5">
+          {lines.map((line, position) => (
+            <li key={position}>{line}</li>
+          ))}
+        </ul>
+      )}
+    </ErrorNotice>
+  );
+}
 
 function IntakePanels(props: IntakePanelsProps) {
   const {
     step,
     review,
     error,
+    otherProblems,
     accepted,
     approved,
     checksComplete,
@@ -2001,6 +2778,7 @@ function IntakePanels(props: IntakePanelsProps) {
     onAccept,
     onApprove,
     onEdit,
+    onModules,
     onSubmit,
     onAdvance,
     onPrevious,
@@ -2008,12 +2786,18 @@ function IntakePanels(props: IntakePanelsProps) {
   const capBar = cap && capText ? { value: 0, max: cap, label: `USD 0.00 of ${capText}` } : null;
   const ready = `${String(readiness.filter((row) => row.met).length)} of ${String(readiness.length)} ready · ${capBar ? capBar.label : "Cap unavailable"}`;
   return (
-    <div className="mt-6 grid min-w-0 items-start gap-6 min-[1041px]:grid-cols-[minmax(0,1fr)_320px]">
+    <div className="mt-6 grid min-w-0 items-start gap-6 min-[1041px]:run-intake-columns">
       <div className={`min-w-0 ${card}`}>
         <div className="@container grid gap-5">
           <Stepper
             step={review ? "start" : step}
-            steps={STEPPER_STEPS}
+            steps={STEPPER_STEPS.map((item) =>
+              item.key === "context" && view.earnings
+                ? { ...item, note: "Periods required" }
+                : item.key === "start" && synthetic
+                  ? { ...item, note: "No-cost test" }
+                  : item,
+            )}
             onSelect={
               busy === undefined && !submitUncertain
                 ? (key) => {
@@ -2022,13 +2806,15 @@ function IntakePanels(props: IntakePanelsProps) {
                 : undefined
             }
           />
-          <p className="text-sm text-text-secondary @[620px]:hidden">
+          <p className="text-caption text-text-tertiary tabular-nums @[620px]:hidden">
             {review
               ? `Step ${String(STEP_TOTAL)} of ${String(STEP_TOTAL)} · Review and start`
               : `Step ${String(FORM_STEP_KEYS.indexOf(step) + 1)} of ${String(STEP_TOTAL)} · ${title}`}
           </p>
         </div>
-        {error && <ErrorNotice>{error}</ErrorNotice>}
+        {error && !review && <RefusalNotice lines={refusalLines(error)} />}
+        {view.changeNotice && <p className="text-sm text-text-secondary">{view.changeNotice}</p>}
+        {otherProblems.length > 0 && <RefusalNotice lines={otherProblems} />}
         {review ? (
           <ReviewConfirmation
             review={review}
@@ -2036,14 +2822,26 @@ function IntakePanels(props: IntakePanelsProps) {
             approved={approved}
             checksComplete={checksComplete}
             busy={busy}
+            error={error}
             submitUncertain={submitUncertain}
             capText={capText}
             capAvailable={Boolean(cap)}
             synthetic={synthetic}
+            modelVerified={
+              synthetic ||
+              (review.summary.copilot_verified !== false &&
+                copilotPairVerified(
+                  view.copilotModels,
+                  review.answers.model,
+                  review.answers.effort,
+                ))
+            }
             ready={ready}
+            idNote={view.idNote}
             onAccept={onAccept}
             onApprove={onApprove}
             onEdit={onEdit}
+            onModules={onModules}
             onSubmit={onSubmit}
           />
         ) : (
@@ -2069,61 +2867,19 @@ function IntakePanels(props: IntakePanelsProps) {
   );
 }
 
-function ReviewConfirmation({
-  review,
-  accepted,
+function ReviewApproval({
+  blocker,
   approved,
-  checksComplete,
-  busy,
-  submitUncertain,
-  capText,
-  capAvailable,
-  synthetic,
-  ready,
-  onAccept,
+  disabled,
   onApprove,
-  onEdit,
-  onSubmit,
 }: {
-  review: Review;
-  accepted: Set<string>;
+  blocker: string;
   approved: boolean;
-  checksComplete: boolean;
-  busy?: "review" | "submit" | "documents" | "copy";
-  submitUncertain: boolean;
-  capText: string | null;
-  capAvailable: boolean;
-  synthetic: boolean;
-  ready: string;
-  onAccept: (ids: readonly string[], checked: boolean) => void;
+  disabled: boolean;
   onApprove: (approved: boolean) => void;
-  onEdit: (step: FormStep) => void;
-  onSubmit: () => void;
 }) {
-  const submitLabel = submitLabelFor({ busy, synthetic, capText });
-  const confirmation = confirmationFor(synthetic, capText);
-  const submitDisabled =
-    !checksComplete || !approved || busy !== undefined || (!synthetic && !capAvailable);
-  const { groups } = groupLimits(review.summary.items);
-  const undecided = groups.filter((group) => !decided(group, accepted)).length;
-  const blocker = submitBlocker(undecided, approved);
   return (
-    <div className="grid gap-5">
-      <div className="grid gap-1">
-        <h2 ref={focusStep} tabIndex={-1} className={`${heading} ${HEADING_FOCUS}`}>
-          Review and start
-        </h2>
-        <p className="text-sm text-text-secondary">
-          Review the final run details and confirm to start.
-        </p>
-      </div>
-      <ReviewSheet
-        review={review}
-        accepted={accepted}
-        disabled={busy !== undefined || submitUncertain}
-        onEdit={onEdit}
-        onAccept={onAccept}
-      />
+    <>
       {blocker && (
         <p id="run-submit-blocker" className="text-sm text-text-secondary">
           {blocker}
@@ -2134,26 +2890,77 @@ function ReviewConfirmation({
           type="checkbox"
           aria-describedby={blocker ? "run-submit-blocker" : undefined}
           checked={approved}
-          disabled={!checksComplete || busy !== undefined || submitUncertain}
+          disabled={disabled}
           onChange={(event) => {
             onApprove(event.target.checked);
           }}
         />
         Approve: I have read this summary and want this run started
       </label>
+    </>
+  );
+}
+
+function ReviewNotes({ synthetic, idNote }: { synthetic: boolean; idNote: string }) {
+  return (
+    <>
+      {synthetic && <p className="text-sm text-text-secondary">{SYNTHETIC_LIMITS}</p>}
+      {idNote && <p className="text-sm text-text-secondary">{idNote}</p>}
+    </>
+  );
+}
+
+function ReviewSubmit({
+  modelVerified,
+  synthetic,
+  checksComplete,
+  approved,
+  busy,
+  capText,
+  capAvailable,
+  ready,
+  error,
+  onSubmit,
+}: Pick<
+  Parameters<typeof ReviewConfirmation>[0],
+  | "synthetic"
+  | "modelVerified"
+  | "checksComplete"
+  | "approved"
+  | "busy"
+  | "capText"
+  | "capAvailable"
+  | "ready"
+  | "error"
+  | "onSubmit"
+>) {
+  const submitLabel = submitLabelFor({ busy, synthetic, capText });
+  const confirmation = confirmationFor(synthetic, capText);
+  const submitDisabled =
+    !checksComplete ||
+    !approved ||
+    busy !== undefined ||
+    (!synthetic && (!capAvailable || !modelVerified));
+  return (
+    <>
       <div className="grid gap-1 border-t border-border-hairline pt-4">
         <h3 className="text-md font-semibold text-text-primary">
-          {synthetic ? "Submit starts a synthetic test" : "Submit starts a paid run"}
+          {synthetic ? "Confirm a synthetic test" : "Confirm a paid run"}
         </h3>
-        <p id="run-submit-cost" className="text-sm text-text-secondary">
+        <p id="run-submit-cost" className="reading-copy text-body text-text-secondary">
           <SubmissionCost synthetic={synthetic} capText={capText} />
         </p>
       </div>
-      <p className="text-sm text-text-secondary min-[1041px]:hidden">{ready}</p>
-      <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
-        <span className="text-sm text-text-tertiary">
-          Step {STEP_TOTAL} of {STEP_TOTAL}
-        </span>
+      {!synthetic && !modelVerified && (
+        <p className="text-sm text-text-secondary">
+          Paid Submit is unavailable because this model and effort pair is not verified for the
+          current Copilot CLI service. You can keep this offline review and return when a pair is
+          available.
+        </p>
+      )}
+      <p className="text-caption text-text-tertiary tabular-nums min-[1041px]:hidden">{ready}</p>
+      {error && <ErrorNotice>{error}</ErrorNotice>}
+      <div className="flex justify-end">
         <SubmitConfirmation
           className="w-full sm:w-auto"
           label={submitLabel}
@@ -2163,8 +2970,110 @@ function ReviewConfirmation({
           onConfirm={onSubmit}
         />
       </div>
+    </>
+  );
+}
+
+function ReviewConfirmation({
+  modelVerified,
+  review,
+  accepted,
+  approved,
+  checksComplete,
+  busy,
+  error,
+  submitUncertain,
+  capText,
+  capAvailable,
+  synthetic,
+  ready,
+  idNote,
+  onAccept,
+  onApprove,
+  onEdit,
+  onModules,
+  onSubmit,
+}: {
+  modelVerified: boolean;
+  idNote: string;
+  review: Review;
+  accepted: Set<string>;
+  approved: boolean;
+  checksComplete: boolean;
+  busy?: "review" | "submit" | "documents" | "copy";
+  error: string;
+  submitUncertain: boolean;
+  capText: string | null;
+  capAvailable: boolean;
+  synthetic: boolean;
+  ready: string;
+  onAccept: (ids: readonly string[], checked: boolean) => void;
+  onApprove: (approved: boolean) => void;
+  onEdit: (step: FormStep) => void;
+  onModules: (modules: string[]) => void;
+  onSubmit: () => void;
+}) {
+  const locked = busy !== undefined || submitUncertain;
+  const { groups } = groupLimits(review.summary.items);
+  const undecided = groups.filter((group) => !decided(group, accepted)).length;
+  const blocker = submitBlocker(undecided, approved);
+  return (
+    <div className="grid gap-5">
+      <h2 ref={focusStep} tabIndex={-1} className={`${heading} ${HEADING_FOCUS}`}>
+        Review and start
+      </h2>
+      <ReviewSheet
+        review={review}
+        accepted={accepted}
+        disabled={locked}
+        onEdit={onEdit}
+        onModules={onModules}
+        onAccept={onAccept}
+        synthetic={synthetic}
+      />
+      <ReviewNotes synthetic={synthetic} idNote={idNote} />
+      <ReviewApproval
+        blocker={blocker}
+        approved={approved}
+        disabled={!checksComplete || locked}
+        onApprove={onApprove}
+      />
+      <ReviewSubmit
+        modelVerified={modelVerified}
+        synthetic={synthetic}
+        checksComplete={checksComplete}
+        approved={approved}
+        busy={busy}
+        error={error}
+        capText={capText}
+        capAvailable={capAvailable}
+        ready={ready}
+        onSubmit={onSubmit}
+      />
     </div>
   );
+}
+
+function draftErrorText(failure: unknown) {
+  if (
+    failure instanceof RequestError &&
+    failure.status === 404 &&
+    failure.message === "unknown submission"
+  )
+    return "This draft is unavailable and may have expired. Your answers and selected documents are still here. Continue the form or review the run again to create a new draft and re-upload the documents.";
+  return errorText(failure);
+}
+
+/**
+ * What the analyst reads when the Submit request got no answer. The service starts one run for a
+ * submission and returns that run when the same submission arrives again (`scheduler.submit`), so a
+ * repeat is safe; the page cannot know whether the first one arrived, and says so.
+ */
+function lostSubmitText(failure: unknown) {
+  const lead = isUnreachable(failure)
+    ? "The page lost contact with the service, so it cannot tell whether the run started."
+    : `${asSentence(errorText(failure))} The run may or may not have started.`;
+  return `${lead} Submitting again is safe. The service starts one run for this approval and returns that run if it already exists.`;
 }
 
 function submitBlocker(undecided: number, approved: boolean) {
@@ -2175,13 +3084,18 @@ function submitBlocker(undecided: number, approved: boolean) {
 
 function SubmissionCost({ synthetic, capText }: { synthetic: boolean; capText: string | null }) {
   if (synthetic)
-    return <>The synthetic test uses the supplied documents and makes no paid provider calls.</>;
+    return (
+      <>
+        Submit opens a confirmation. The test uses the supplied documents and makes no paid provider
+        calls.
+      </>
+    );
   if (capText === null)
     return <>The spending cap is unavailable. Reopen the form to load it before submitting.</>;
   return (
     <>
-      It can spend up to <strong className="tabular-nums">{capText}</strong>. You confirm once more
-      before anything is spent.
+      Submit opens a confirmation. Once confirmed, this run can spend up to{" "}
+      <strong className="tabular-nums">{capText}</strong>.
     </>
   );
 }
@@ -2252,7 +3166,11 @@ function InputStepForm({
         >
           {title}
         </h2>
-        <p className="text-sm text-text-secondary">{STEP_GUIDANCE[view.step]}</p>
+        <p className="reading-copy text-body text-text-secondary">
+          {view.step === "context" && view.earnings
+            ? EARNINGS_CONTEXT_GUIDANCE
+            : STEP_GUIDANCE[view.step]}
+        </p>
       </div>
       <fieldset
         disabled={view.busy !== undefined}
@@ -2260,31 +3178,24 @@ function InputStepForm({
       >
         <StepFields view={view} folderInput={folderInput} />
       </fieldset>
-      <p className="text-sm text-text-secondary min-[1041px]:hidden">{ready}</p>
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <Button
-          color="secondary"
-          isDisabled={previous === null || view.busy !== undefined}
-          onPress={onPrevious}
-        >
-          Previous
-        </Button>
-        <div className="grid justify-items-center gap-1">
-          <span className="text-sm text-text-tertiary">
-            Step {FORM_STEP_KEYS.indexOf(view.step) + 1} of {STEP_TOTAL}
-          </span>
-          {view.problem && (
-            <Button
-              color="link-destructive"
-              size="sm"
-              className="max-w-full text-left whitespace-normal"
-              onPress={view.focusProblem}
-            >
-              {`1 problem to fix: ${view.problem.message}`}
-            </Button>
-          )}
-        </div>
-        <div className="flex flex-wrap items-center justify-end gap-3">
+      <p className="text-caption text-text-tertiary tabular-nums min-[1041px]:hidden">{ready}</p>
+      <div className="flex flex-wrap items-center gap-3">
+        {previous && (
+          <Button color="secondary" isDisabled={view.busy !== undefined} onPress={onPrevious}>
+            Previous
+          </Button>
+        )}
+        {view.problem && (
+          <Button
+            color="link-destructive"
+            size="sm"
+            className="max-w-full text-left whitespace-normal"
+            onPress={view.focusProblem}
+          >
+            {`1 problem to fix: ${view.problem.message}`}
+          </Button>
+        )}
+        <div className="ml-auto flex flex-wrap items-center justify-end gap-3">
           {blocked && (
             <p id="run-step-blocker" className="text-sm text-text-secondary">
               Add at least one document to continue.
@@ -2312,39 +3223,75 @@ function newestPeriod(reading?: Reading) {
   );
 }
 
-function today() {
-  const now = new Date();
-  const month = String(now.getMonth() + 1).padStart(2, "0");
-  const day = String(now.getDate()).padStart(2, "0");
-  return `${String(now.getFullYear())}-${month}-${day}`;
-}
-
 function startingContext(template: Context, prior?: PriorInputs): Context {
   const source = prior?.context ?? template;
-  const pathway = Object.hasOwn(PATHWAYS, source.run.pathway)
-    ? source.run.pathway
+  const safeSource = { ...source };
+  delete safeSource.copilot_models;
+  // The run's currency is the one CP-1's statements print, so a value the template or an earlier
+  // run holds is neither shown nor sent (docs/rulings/2026-11-16-reporting-currency-from-sources.md).
+  const heldRun = { ...safeSource.run };
+  delete heldRun.reporting_currency;
+  const pathway = Object.hasOwn(PATHWAYS, safeSource.run.pathway)
+    ? safeSource.run.pathway
     : "credit_snapshot";
   return {
-    ...source,
+    ...safeSource,
     run: {
-      ...source.run,
-      as_of: today(),
+      ...heldRun,
+      // The case date is the analyst's to enter: every entry path opens without one.
+      as_of: "",
       pathway,
       ...(pathway === "earnings_update"
         ? { run_type: "earnings" }
-        : source.run.run_type === "earnings"
+        : safeSource.run.run_type === "earnings"
           ? { run_type: "research" }
           : {}),
     },
     identity: {
-      ...source.identity,
-      issuer_name: prior?.issuer_name ?? source.identity.issuer_name,
-      issuer_id: prior?.issuer_id ?? source.identity.issuer_id,
+      ...safeSource.identity,
+      issuer_name: prior?.issuer_name ?? safeSource.identity.issuer_name,
+      issuer_id: prior?.issuer_id ?? safeSource.identity.issuer_id,
     },
   };
 }
 
-function carriedModules(prior?: PriorInputs) {
+/** The Legal documents choice an earlier run recorded, when the page still offers it. */
+function carriedLegal(prior?: PriorInputs) {
+  const recorded = prior?.context?.attachments?.legal_documents ?? "none";
+  return Object.hasOwn(LEGAL_CHOICES, recorded) ? recorded : "none";
+}
+
+/**
+ * The page's own line when it starts from an earlier run. The run recorded an agreement choice and
+ * a yes for each other file box it used, but not which file filled them: that is said, not guessed.
+ */
+function carriedIntro(prior: PriorInputs) {
+  const intro =
+    "Using an earlier run as a starting point. Review the answers, enter the new dates, and inspect any documents available to reuse.";
+  const recorded = prior.context?.attachments;
+  const roles = [
+    ...(carriedLegal(prior) === "none" ? [] : ["agreement"]),
+    ...Object.entries(ATTACHMENTS)
+      .filter(([key]) => recorded?.[key as keyof typeof ATTACHMENTS] === true)
+      .map(([, title]) => title.charAt(0).toLowerCase() + title.slice(1)),
+  ].map((role) => `the ${role}`);
+  if (!roles.length || prior.error || !prior.files.length) return intro;
+  const list = new Intl.ListFormat("en", { type: "conjunction" }).format(roles);
+  return `${intro} The earlier run didn’t record the files chosen for ${list}. Choose them again in More context.`;
+}
+
+export function carriedModules(prior?: PriorInputs) {
   const available = pathwayModules(prior?.context?.run.pathway ?? "");
-  return prior?.modules.every((code) => available.includes(code)) ? prior.modules : [];
+  const chosen = prior?.modules ?? [];
+  if (!drawnModules(chosen).length || !chosen.every((code) => available.includes(code))) return [];
+  // Runs recorded before the page listed the forecast kept none; the page offers no way to drop it.
+  return chosen.length && available.includes(FORECAST_CODE) && !chosen.includes(FORECAST_CODE)
+    ? available.filter((code) => chosen.includes(code) || code === FORECAST_CODE)
+    : chosen;
+}
+
+/** How many question rows were sent before the note, which goes last (none when no note). */
+function noteIndex(details: Record<string, unknown>, note: string) {
+  const sent = details.research_questions;
+  return note.trim() && Array.isArray(sent) ? sent.length - 1 : Infinity;
 }

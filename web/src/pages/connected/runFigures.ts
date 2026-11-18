@@ -1,13 +1,28 @@
-import type { ActivityLine, Figure, ModuleWord } from "../run/slice-activity";
-import { moduleName, type Run, type RunEvent } from "./api";
+import type { ActivityLine, Figure, ModuleStep, ModuleWord } from "../run/slice-activity";
+import { moduleName, serviceText, type Run, type RunEvent } from "./api";
 
-function amount(text: string | null | undefined): number | undefined {
+function amount(text: string | null | undefined): { value: number; text: string } | undefined {
   if (!text || !/^\d+(?:\.\d+)?(?:e[+-]?\d+)?$/i.test(text)) return;
   const value = Number(text);
-  if (Number.isFinite(value)) return value;
+  if (Number.isFinite(value)) return { value, text };
 }
 
-const usd = (value: number) => `USD ${value.toFixed(2)}`;
+/** Round the service's decimal text half up; binary floats are used only for bar geometry. */
+function usd({ text }: { text: string }) {
+  const [mantissa = "", exponent = "0"] = text.toLowerCase().split("e");
+  const [whole = "", fraction = ""] = mantissa.split(".");
+  const digits = whole + fraction;
+  if (BigInt(digits) === 0n) return "USD 0.00";
+  const shift = Number(exponent) - fraction.length + 2;
+  let cents: bigint;
+  if (shift >= 0) cents = BigInt(digits) * 10n ** BigInt(shift);
+  else if (-shift > digits.length) cents = 0n;
+  else {
+    const divisor = 10n ** BigInt(-shift);
+    cents = (BigInt(digits) + divisor / 2n) / divisor;
+  }
+  return `USD ${String(cents / 100n)}.${String(cents % 100n).padStart(2, "0")}`;
+}
 
 export function spendFigure(run: Run): Figure {
   const spent = amount(run.spent);
@@ -24,17 +39,17 @@ export function spendFigure(run: Run): Figure {
       ? `; ${usd(settled)} settled, ${usd(held)} reserved or unknown`
       : "";
   const cap = amount(run.cap);
-  if (!cap)
+  if (!cap?.value)
     return {
       value: usd(spent),
       bar: null,
-      note: `${cap === 0 ? "Configured cap is USD 0.00" : "Cap is unavailable"}${breakdown}`,
+      note: `${cap?.value === 0 ? "Configured cap is USD 0.00" : "Cap is unavailable"}${breakdown}`,
     };
   return {
     value: usd(spent),
     bar: {
-      value: Math.min(spent, cap),
-      max: cap,
+      value: Math.min(spent.value, cap.value),
+      max: cap.value,
       label: `${usd(spent)} of ${usd(cap)} cap usage${breakdown}`,
     },
   };
@@ -58,6 +73,22 @@ const STAMP = new Intl.DateTimeFormat("en-GB", {
   minute: "2-digit",
   hourCycle: "h23",
 });
+
+const CASE_DATE = new Intl.DateTimeFormat("en-GB", {
+  timeZone: "UTC",
+  day: "numeric",
+  month: "long",
+  year: "numeric",
+});
+
+/** The case date, distinct from the UTC time at which a run event happened. */
+export function asOfDate(at: string) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(at)) return at;
+  const date = new Date(`${at}T00:00:00Z`);
+  return Number.isFinite(date.getTime()) && date.toISOString().slice(0, 10) === at
+    ? CASE_DATE.format(date)
+    : at;
+}
 
 /** "16 Nov 2026, 14:32 UTC" for the service's UTC time; any other text is returned as it is. */
 export function stamp(at: string) {
@@ -121,11 +152,71 @@ export function feedLines(run: Run): ActivityLine[] {
       text,
     });
   }
+  if (run.ended_at && run.status !== "running" && run.status !== "queued") {
+    const word = {
+      finished: "Finished",
+      failed: "Failed",
+      capped: "Capped",
+      rejected: "Rejected",
+      interrupted: "Interrupted",
+    } as const;
+    lines.push({
+      who: "Run",
+      time: clock(run.ended_at),
+      state: word[run.status],
+      text: [`Run ${run.status}.`, serviceText(run.reason)].filter(Boolean).join(" "),
+    });
+  }
   return lines.reverse();
 }
 
-export function moduleWord(state: Run["modules"][number][1], live: boolean): ModuleWord {
+/** The word for a module's state. A module the run stopped at reads "Interrupted", unless the
+ * checks stopped the run there (`refused`): then it is the module the run could not assess. */
+export function moduleWord(
+  state: Run["modules"][number][1],
+  live: boolean,
+  refused = false,
+): ModuleWord {
   if (state === "done") return "Finished";
-  if (state === "running") return live ? "Running" : "Interrupted";
+  if (state === "running" && live) return "Running";
+  if (state === "stopped" || state === "running") return refused ? "Not assessable" : "Interrupted";
   return live ? "Queued" : "Not run";
+}
+
+/** The module the checks stopped the run at: the last module its log started, in a failed run whose
+ * recorded stop was the checks'. A run that ended any other way (a model provider's call, the
+ * ruling, an interruption, a launcher that exited, a failure the scheduler found after a clean exit)
+ * has none. */
+function refusedModule(run: Run) {
+  if (run.status !== "failed" || run.stopped_by !== "checker") return;
+  return (run.events ?? []).filter((event) => event.kind === "module_started").at(-1)?.module;
+}
+
+function stoppedDetail(run: Run, code: string) {
+  const rejected = (run.events ?? []).filter(
+    (event) => event.kind === "draft_rejected" && event.module === code,
+  ).length;
+  if (rejected === 0) return "The run stopped here.";
+  const times = rejected === 1 ? "once" : `${String(rejected)} times`;
+  return `The run stopped here after the checks rejected its draft ${times}.`;
+}
+
+/** The run page's module rows. Only what the run's record shows is said: the module the checks
+ * stopped the run at, and how many drafts of it they rejected. */
+export function moduleSteps(
+  run: Run,
+  live: boolean,
+  notAssessable: readonly string[] = [],
+): ModuleStep[] {
+  const refused = refusedModule(run);
+  return run.modules.map(([code, state]): ModuleStep => {
+    const published = state === "done" && notAssessable.includes(code);
+    const word = published ? "Not assessable" : moduleWord(state, live, code === refused);
+    return {
+      kind: "module",
+      name: moduleName(code),
+      state: word,
+      detail: word === "Not assessable" && !published ? stoppedDetail(run, code) : null,
+    };
+  });
 }

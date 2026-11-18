@@ -1,0 +1,57 @@
+{
+  "historicalPngs": 379,
+  "recreatedBefore": 379,
+  "observedAfter": 399,
+  "actualRawScreenshots": {
+    "before": 391,
+    "after": 421
+  },
+  "recreatedHistoricalExact": 379,
+  "observedHistoricalExact": 359,
+  "counts": {
+    "paired": 345,
+    "retired by approved repair": 4,
+    "paired retained failure": 4,
+    "waiting versus running timing": 2,
+    "relabelled chart slot": 24,
+    "final-only observed": 24
+  },
+  "offline": {
+    "before": {
+      "phases": 13,
+      "pageStateVisits": 51,
+      "nativeProxyDenials": 289,
+      "pageErrors": 0,
+      "outsideRequests": 0,
+      "outsideSockets": 0,
+      "loopbackSockets": 0,
+      "proxyFailures": 0,
+      "consoleErrors": 4,
+      "nonZeroPhases": {}
+    },
+    "after": {
+      "phases": 17,
+      "pageStateVisits": 60,
+      "nativeProxyDenials": 499,
+      "pageErrors": 0,
+      "outsideRequests": 0,
+      "outsideSockets": 0,
+      "loopbackSockets": 0,
+      "proxyFailures": 0,
+      "consoleErrors": 5,
+      "nonZeroPhases": {
+        "journey": 130
+      }
+    }
+  },
+  "missingByScreen": {},
+  "missingHistorical": [],
+  "timingVariants": [
+    "c1-run-activity-run2--running--1440.png",
+    "c1-run-activity-run2--running--390.png"
+  ],
+  "pairedPixelChange": {
+    "changed": 355,
+    "unchanged": 20
+  }
+}

@@ -1,0 +1,7 @@
+   Building issuer-library @ file:///workspace/audit-fidelity-guard-return/apps/issuer-library
+   Building deploy-workflow @ file:///workspace/audit-fidelity-guard-return
+      Built deploy-workflow @ file:///workspace/audit-fidelity-guard-return
+      Built issuer-library @ file:///workspace/audit-fidelity-guard-return/apps/issuer-library
+Uninstalled 2 packages in 1ms
+Installed 2 packages in 1ms
+quality gate: 0 finding(s) in 0 changed file(s), 0 line(s) in scope

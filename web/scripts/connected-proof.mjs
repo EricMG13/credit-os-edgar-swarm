@@ -6,9 +6,13 @@ import { arch, release } from "node:os";
 import path from "node:path";
 import { createInterface } from "node:readline";
 import { after, test } from "node:test";
+import { pathToFileURL } from "node:url";
 import { chromium } from "playwright";
+import { createOfflineProxy, installOfflineGuard } from "./offline-network.mjs";
 
+const desktopOnly = process.argv.includes("--desktop-only");
 const project = path.resolve(import.meta.dirname, "../..");
+const runAsScript = process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href;
 const sourceCommit = await readFile(path.join(project, "SOURCE-COMMIT.txt"), "utf8").then(
   (text) => text.trim(),
   (error) => {
@@ -31,9 +35,9 @@ const provenance = {
   architecture: arch(),
 };
 const proofRoot = path.join(project, "proof-artifacts");
-await mkdir(proofRoot, { recursive: true });
-const artifacts = await mkdtemp(path.join(proofRoot, "run-"));
-console.log(`Browser proof artifacts: ${artifacts}`);
+if (runAsScript) await mkdir(proofRoot, { recursive: true });
+const artifacts = runAsScript ? await mkdtemp(path.join(proofRoot, "run-")) : null;
+if (runAsScript) console.log(`Browser proof artifacts: ${artifacts}`);
 const python = path.join(
   project,
   ".venv",
@@ -41,14 +45,15 @@ const python = path.join(
 );
 const browserProofs = [];
 
-after(async () => {
-  if (browserProofs.length === 2) {
-    await writeFile(
-      path.join(artifacts, "proof.json"),
-      JSON.stringify({ ...provenance, browser_proofs: browserProofs }, null, 2) + "\n",
-    );
-  }
-});
+if (runAsScript)
+  after(async () => {
+    if (browserProofs.length === 2) {
+      await writeFile(
+        path.join(artifacts, "proof.json"),
+        JSON.stringify({ ...provenance, browser_proofs: browserProofs }, null, 2) + "\n",
+      );
+    }
+  });
 
 async function startService(workspace) {
   const child = spawn(python, ["-m", "proof.serve", "--root", workspace, "--port", "0"], {
@@ -100,21 +105,32 @@ function response(page, pathPattern, method) {
 const digest = (value) => createHash("sha256").update(value).digest("hex");
 
 async function checkRunDocuments(page, channel, paidPreview) {
-  await page.getByRole("link", { name: "Start a run", exact: true }).click();
+  // C1-002/T05 adds an empty-library action beside the existing header action.
+  await page.locator("main footer").getByRole("link", { name: "Start a run", exact: true }).click();
   const stepper = page.getByRole("list", { name: "Steps in this run" });
+  await checkDesktopIntake(page, stepper);
+  await stepper.getByText(paidPreview ? "Paid step" : "No-cost test", { exact: true }).waitFor();
+  await page
+    .getByRole("complementary", { name: "Readiness", exact: true })
+    .getByText("USD 0.00 of USD 25.00", { exact: true })
+    .waitFor();
+  if (!paidPreview)
+    await page.screenshot({ path: path.join(artifacts, `${channel}-run-documents.png`) });
+  if (!desktopOnly) await checkMobileDocuments(page, channel, paidPreview);
+}
+
+async function checkDesktopIntake(page, stepper) {
   const current = stepper.locator('[aria-current="step"]');
   const readiness = page.getByRole("complementary", { name: "Readiness", exact: true });
   const dropZone = page.locator("[data-dropzone]");
   await dropZone.waitFor();
   await checkRunBundle(page);
   const [drop, side] = await Promise.all([dropZone.boundingBox(), readiness.boundingBox()]);
-  assert.ok(drop && side && side.x >= drop.x + drop.width, "Readiness sits beside the form");
+  assert.ok(drop, "Document drop zone has a box");
+  assert.ok(side, "Readiness has a box");
+  assert.ok(side.x >= drop.x + drop.width, "Readiness sits beside the form");
   assert.equal(await stepper.getByRole("listitem").count(), 4);
   assert.match(await current.innerText(), /Documents/u);
-  await readiness.getByText("USD 0.00 of USD 25.00", { exact: true }).waitFor();
-  if (!paidPreview)
-    await page.screenshot({ path: path.join(artifacts, `${channel}-run-documents.png`) });
-  await checkMobileDocuments(page, channel, paidPreview);
 }
 
 async function checkRunBundle(page) {
@@ -153,12 +169,14 @@ async function checkMobileDocuments(page, channel, paidPreview) {
 async function uploadRunDocuments(page) {
   await page.getByLabel("Issuer name", { exact: true }).fill("Northbridge Synthetic Group");
   await page.getByLabel("As-of date", { exact: true }).fill("2025-03-31");
+  await page.getByLabel("Your name", { exact: true }).fill("Ana L");
   const files = [
     ["northbridge-filing.txt", "text/plain"],
     [
       "northbridge-portfolio.xlsx",
       "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     ],
+    ["northbridge-credit-agreement.txt", "text/plain"],
   ];
   const uploaded = files.map(([name]) =>
     page.waitForResponse(
@@ -254,6 +272,12 @@ async function approveRunInputs(page, paidPreview) {
   await page
     .getByRole("combobox", { name: "Portfolio workbook", exact: true })
     .selectOption({ label: "northbridge-portfolio.xlsx" });
+  await page
+    .getByRole("combobox", { name: "Legal documents", exact: true })
+    .selectOption("executed");
+  await page
+    .getByRole("combobox", { name: "The agreement", exact: true })
+    .selectOption({ label: "northbridge-credit-agreement.txt" });
   const ratings = page.getByRole("region", { name: "Ratings", exact: true });
   await ratings.getByRole("button", { name: "Add rating", exact: true }).click();
   await ratings.getByLabel("Agency", { exact: true }).selectOption("Moody's");
@@ -340,15 +364,17 @@ async function submit(page, channel, paidPreview = false) {
   return new URL(page.url()).pathname.split("/").at(-1);
 }
 
-async function checkPaidConfirmation(browser, endpoint, channel) {
-  const page = await browser.newPage();
+async function checkPaidConfirmation(context, endpoint, channel) {
+  const page = await context.newPage();
   try {
     // Exercise the production paid dialog with the offline service and no eligible submit URL.
     await page.route(/\/api\/submissions\/[^/]+\/submit$/u, (route) => route.abort());
     await page.route(
-      (url) => url.pathname === "/" || url.pathname === "/start",
+      (url) =>
+        url.origin === new URL(endpoint).origin &&
+        (url.pathname === "/" || url.pathname === "/start"),
       async (route) => {
-        const result = await route.fetch();
+        const result = await route.fetch({ maxRedirects: 0 });
         const body = (await result.text()).replace(
           'name="credit-os-mode" content="synthetic"',
           'name="credit-os-mode" content="live"',
@@ -373,7 +399,8 @@ async function checkActivity(page, channel) {
     .waitFor();
   await activity.getByRole("progressbar", { name: "14 of 14 modules" }).waitFor();
   await activity.getByText(/^(?:\d+ min )?\d+ s$/u).waitFor();
-  const modules = activity.getByRole("group", { name: "Modules", exact: true });
+  // S6-037: the card includes the separately delivered report.
+  const modules = activity.getByRole("group", { name: "Modules and report delivery", exact: true });
   const feed = activity.getByRole("group", { name: "Activity", exact: true });
   await feed.getByText("Report delivered.", { exact: true }).waitFor();
   const [left, right] = await Promise.all([modules.boundingBox(), feed.boundingBox()]);
@@ -425,7 +452,12 @@ async function checkOverviewTrace(report, page) {
 
 async function checkRecord(report, page, channel) {
   const nav = report.getByRole("navigation", { name: "Evidence sections" });
+  // C5-028/R4: wait for the actual run record, never accept the pending service-mode fallback.
+  const loaded = response(page, /\/connected\/activity\/[^/]+$/u, "GET");
   await nav.getByRole("link", { name: "Record", exact: true }).click();
+  const recordResponse = await loaded;
+  assert.equal(recordResponse.status(), 200);
+  assert.equal((await recordResponse.json()).execution, "synthetic");
   await report.getByRole("heading", { name: "Run record" }).waitFor();
   await report
     .getByRole("definition")
@@ -452,18 +484,22 @@ async function checkRecord(report, page, channel) {
     path: path.join(artifacts, `${channel}-evidence-record.png`),
     fullPage: true,
   });
-  await nav.getByRole("link", { name: "Summary", exact: true }).click();
+  const summary = nav.getByRole("link", { name: "Summary", exact: true });
+  await summary.click();
+  await summary.and(nav.locator('[aria-current="page"]')).waitFor();
   await report.getByRole("heading", { name: "Handoffs", exact: true }).waitFor();
   await report.getByRole("combobox", { name: "Module", exact: true }).selectOption("");
   await page.waitForURL((url) => url.hash === "#evidence/summary");
 }
 
-async function checkChangesTrace(browser, endpoint, id) {
-  const page = await browser.newPage();
+async function checkChangesTrace(context, endpoint, id) {
+  const page = await context.newPage();
   page.setDefaultTimeout(15000);
   try {
     // A separate fixture exercises paired-run links. The upload proof above uses the real publication.
-    const response = await page.request.get(new URL("/connected/snapshot", endpoint).href);
+    const response = await page.request.get(new URL("/connected/snapshot", endpoint).href, {
+      maxRedirects: 0,
+    });
     const snapshot = await response.json();
     const [key, current] = Object.entries(snapshot.workspace.runs).find(
       ([, run]) => run.folder === id,
@@ -574,7 +610,13 @@ async function checkChangesTrace(browser, endpoint, id) {
       },
       verdicts: { measures: { debt: { kind: "comparable", label: "Same definition" } } },
     };
-    await page.route("**/connected/snapshot?run=*", (route) => route.fulfill({ json: snapshot }));
+    await page.route(
+      (url) =>
+        url.origin === new URL(endpoint).origin &&
+        url.pathname === "/connected/snapshot" &&
+        url.searchParams.has("run"),
+      (route) => route.fulfill({ json: snapshot }),
+    );
     await page.goto(new URL(`/report/${id}#changes`, endpoint).href);
     const report = page.locator("main");
     const card = report.getByRole("listitem").filter({ hasText: "Net debt" });
@@ -684,7 +726,11 @@ async function checkDownside(report, modules, artifacts, channel, page) {
   const scenarios = report.getByRole("region", { name: "Downside scenarios", exact: true });
   const chart = scenarios.getByRole("figure", { name: "Stressed flows and credit metrics" });
   await chart.locator('[data-case="Cost shock"][data-zero]').waitFor();
-  const select = scenarios.getByRole("combobox", { name: "Compare with Control (unstressed)" });
+  // J3-016 identifies the selected stress case rather than the fixed control.
+  const select = scenarios.getByRole("combobox", {
+    name: "Stress case to compare with the unstressed control",
+    exact: true,
+  });
   await select.selectOption({ label: "Cost and rate shock" });
   await chart.getByText("-5.1250 (−USD 5.13 million)", { exact: true }).waitFor();
   const negative = chart.locator('[data-case="Cost and rate shock"][data-left="0"]').first();
@@ -692,7 +738,7 @@ async function checkDownside(report, modules, artifacts, channel, page) {
   await chart.screenshot({ path: path.join(artifacts, `${channel}-downside.png`) });
   await chart.getByRole("radio", { name: "Table", exact: true }).check();
   await chart.getByRole("cell", { name: "-5.1250 (−USD 5.13 million)", exact: true }).waitFor();
-  const trace = chart.getByRole("button", { name: "Show sources for Stressed FCF ($m)" });
+  const trace = chart.getByRole("button", { name: "Show sources for Stressed FCF (US$m)" });
   await checkTraceFocus(page, trace, /Filing p\.2/u);
   await scenarios.getByText("Full scenario results", { exact: true }).click();
   await scenarios
@@ -704,11 +750,33 @@ async function checkDownside(report, modules, artifacts, channel, page) {
 async function checkDownsideThresholds(report, page) {
   const panel = report.getByRole("region", { name: "EBITDA break points", exact: true });
   const chart = panel.getByRole("figure", { name: "EBITDA break points", exact: true });
-  await chart.getByText("0.10 (10%)", { exact: true }).waitFor();
-  assert.match(await chart.getByRole("listitem").first().innerText(), /FCF reaches zero/u);
+  // J3-016 uses percentages; C4-036 preserves this unranked T2DS.6 table's written order.
+  await chart.getByText("10%", { exact: true }).waitFor();
+  assert.equal(await chart.getByRole("list").evaluate((list) => list.tagName), "UL");
+  const writtenOrder = [
+    "FCF reaches zero",
+    "Cover reaches watch level",
+    "Net leverage watch level",
+  ];
+  assert.deepEqual(
+    (await chart.getByRole("listitem").allInnerTexts()).map((text) => text.split("\n")[0]),
+    writtenOrder,
+  );
+  for (const [index, value] of ["10%", "15%", "32%"].entries())
+    await chart.getByRole("listitem").nth(index).getByText(value, { exact: true }).waitFor();
   await panel.getByRole("combobox", { name: "Cash-interest basis" }).selectOption("1");
-  await chart.getByText("0.12 (12%)", { exact: true }).waitFor();
-  assert.match(await chart.getByRole("listitem").first().innerText(), /Cover reaches watch level/u);
+  await chart.getByText("12%", { exact: true }).waitFor();
+  assert.deepEqual(
+    (await chart.getByRole("listitem").allInnerTexts()).map((text) => text.split("\n")[0]),
+    writtenOrder,
+  );
+  await chart.getByRole("listitem").nth(0).getByText("20%", { exact: true }).waitFor();
+  await chart.getByRole("listitem").nth(1).getByText("12%", { exact: true }).waitFor();
+  await chart
+    .getByRole("listitem")
+    .nth(2)
+    .getByText("Not calculated: net debt is missing", { exact: true })
+    .waitFor();
   assert.equal(await chart.locator("[data-decline]").count(), 2);
   await chart.getByRole("radio", { name: "Table", exact: true }).check();
   await chart.getByRole("cell", { name: "Analyst watch level, not a covenant" }).waitFor();
@@ -720,6 +788,7 @@ async function checkDownsideThresholds(report, page) {
   const watches = report.getByRole("region", { name: "Monitoring sensitivities", exact: true });
   await watches.getByRole("img", { name: "Leading", exact: true }).waitFor();
   await watches.getByRole("img", { name: "Lagging", exact: true }).waitFor();
+  if (desktopOnly) return;
   const viewport = page.viewportSize();
   await page.setViewportSize({ width: 390, height: 844 });
   await page.waitForFunction(() => document.documentElement.scrollWidth === 390);
@@ -815,10 +884,13 @@ async function checkCharts(report, artifacts, channel, page, run) {
     report
       .getByRole("navigation", { name: "Report sections" })
       .getByRole("link", { name: name === "Modules" ? /^Modules(?: \d+)?$/u : name, exact: true });
+  await section("Overview").click();
+  await report.getByRole("link", { name: "Chart index", exact: true }).click();
+  await page.waitForFunction(() => document.activeElement?.id === "forecast-run-charts");
   await section("Changes").click();
   await report.getByText("No earlier run to compare.", { exact: true }).waitFor();
   await section("Modules").click();
-  await checkCompactModules(report, page, channel);
+  if (!desktopOnly) await checkCompactModules(report, page, channel);
   const modules = report.getByRole("navigation", { name: "Modules and sections" });
   await modules.getByRole("link", { name: /^Liquidity, Delivered/u }).waitFor();
   await modules.getByRole("link", { name: /^Refinancing & LME, Delivered/u }).waitFor();
@@ -865,13 +937,26 @@ async function checkCompactModules(report, page, channel) {
 
 async function checkForecastPresentation(report, page, channel) {
   const scope = report.getByRole("region", { name: "Model scope and basis" });
-  await scope.getByText(/conditional illustration/u).waitFor();
+  const cases = report.locator("#forecast-cases");
+  const qualification = cases
+    .locator("xpath=preceding-sibling::*[1]")
+    .getByText(/conditional illustration/u);
+  await qualification.waitFor();
+  assert.equal(await scope.locator("details").getAttribute("open"), null);
+  await scope.locator("summary").click();
+  await scope.getByText("Synthetic; not analytical review.", { exact: true }).waitFor();
+  await scope.getByRole("link", { name: "Full model notes and limitations" }).waitFor();
+  await scope.locator("summary").click();
   await report.getByRole("heading", { name: "Forecast cases", exact: true }).waitFor();
+  const chart = report.getByRole("figure", { name: "Cash proxy by scenario" });
+  await chart.getByRole("radio", { name: "Table", exact: true }).check();
   const comparison = report.getByRole("table", { name: "Scenario comparison" });
   await comparison.getByRole("rowheader", { name: "Base case", exact: true }).waitFor();
   await comparison.getByRole("rowheader", { name: "Downside shock", exact: true }).waitFor();
   assert.equal(await comparison.getByRole("rowheader").count(), 2);
-  await scope.scrollIntoViewIfNeeded();
+  await chart.getByRole("radio", { name: "Chart", exact: true }).check();
+  await report.getByRole("table", { name: "Cash flow model", exact: true }).waitFor();
+  await qualification.evaluate((element) => element.scrollIntoView({ block: "start" }));
   await page.screenshot({ path: path.join(artifacts, `${channel}-forecast.png`) });
 }
 
@@ -880,6 +965,7 @@ async function checkReadingLayout(report, page, channel) {
   const navigation = report.getByRole("navigation", { name: "Forecast sections", exact: true });
   await navigation.getByRole("button", { name: "Cash flow model", exact: true }).click();
   await page.waitForFunction(() => document.activeElement?.id === "forecast-model");
+  if (desktopOnly) return;
   await page.setViewportSize({ width: 390, height: 844 });
   await report
     .locator("summary")
@@ -999,11 +1085,13 @@ async function checkPortfolioEvidence(report, modules, artifacts, channel, page)
 
 async function checkForecastEvidence(report, artifacts, channel, page) {
   await checkForecastPresentation(report, page, channel);
+  await report.getByText("Cash flow trends by line item", { exact: true }).click();
   const revenue = report.getByRole("figure", { name: "Revenue", exact: true });
   await revenue.locator("svg.recharts-surface").first().waitFor();
   const sourceSwitch = report.getByRole("switch");
+  // J3-019 names the existing highlight behavior accurately.
   if (await sourceSwitch.isChecked())
-    await report.getByText("Show sources", { exact: true }).click();
+    await report.getByText("Highlight source icons", { exact: true }).click();
   await revenue.hover();
   const revenueSource = revenue.getByRole("button", {
     name: "Show sources for Revenue",
@@ -1028,15 +1116,16 @@ async function checkForecastEvidence(report, artifacts, channel, page) {
     .getByRole("link", { name: "Forecast", exact: true })
     .click();
   const model = report.getByRole("table", { name: "Cash flow model", exact: true });
+  // T18 C4-003/C5-004 adds a separately named source button to each row header.
   const revenueRow = model.getByRole("row").filter({
-    has: page.getByRole("rowheader", { name: "Revenue", exact: true }),
+    has: page.getByRole("rowheader").filter({ hasText: /^Revenue$/u }),
   });
+  await revenueRow.getByRole("button", { name: "Show sources for Revenue", exact: true }).waitFor();
   await revenueRow.getByRole("cell", { name: "1,050", exact: true }).first().waitFor();
   // Independent fixture arithmetic: 1,000 × 1.05 × 0.30 = 315; a 20% shock gives 252.
   const ebitdaRow = model.getByRole("row").filter({
-    has: page.getByRole("rowheader", {
-      name: "Adj EBITDA (as named in Financial foundation)",
-      exact: true,
+    has: page.getByRole("rowheader").filter({
+      hasText: /^Adj EBITDA \(as named in Financial foundation\)$/u,
     }),
   });
   await ebitdaRow.getByRole("cell", { name: "315", exact: true }).waitFor();
@@ -1044,7 +1133,9 @@ async function checkForecastEvidence(report, artifacts, channel, page) {
   await downsideCase.focus();
   await downsideCase.press("Space");
   assert.ok(await downsideCase.isChecked());
-  const comparison = report.getByRole("table", { name: "Scenario comparison" });
+  const cashProxy = report.getByRole("figure", { name: "Cash proxy by scenario", exact: true });
+  await cashProxy.getByRole("radio", { name: "Table", exact: true }).check();
+  const comparison = cashProxy.getByRole("table", { name: "Scenario comparison" });
   assert.equal(await comparison.getByRole("rowheader").count(), 2);
   assert.equal(
     await comparison.getByRole("row", { name: /Downside shock/u }).getAttribute("aria-current"),
@@ -1052,17 +1143,15 @@ async function checkForecastEvidence(report, artifacts, channel, page) {
   );
   await ebitdaRow.getByRole("cell", { name: "252", exact: true }).waitFor();
   assert.equal(await ebitdaRow.getByRole("cell", { name: "315", exact: true }).count(), 0);
-  const cashProxy = report.getByRole("figure", { name: "Cash proxy by scenario", exact: true });
-  await cashProxy.getByRole("radio", { name: "Table", exact: true }).check();
-  await cashProxy.getByRole("row", { name: /Downside shock/u }).waitFor();
-  // cc836f5f: the cash proxy draws every case, emphasising the selected one.
-  assert.equal(await cashProxy.getByRole("row", { name: /Base case/u }).count(), 1);
-  assert.equal(await cashProxy.getByRole("row", { name: /Downside shock/u }).count(), 1);
   const baseCase = report.getByRole("radio", { name: /^Base case/u });
   await baseCase.focus();
   await baseCase.press("Space");
   await ebitdaRow.getByRole("cell", { name: "315", exact: true }).waitFor();
-  await cashProxy.getByRole("row", { name: /Base case/u }).waitFor();
+  await comparison.getByRole("row", { name: /Base case/u }).waitFor();
+  await report.getByLabel("Statement columns").selectOption("compare");
+  await report.getByLabel("Comparison period").selectOption({ index: 0 });
+  await ebitdaRow.getByRole("cell", { name: "315", exact: true }).waitFor();
+  await ebitdaRow.getByRole("cell", { name: "252", exact: true }).waitFor();
 }
 
 async function checkForecastRunCharts(report, page, sourceHref) {
@@ -1089,8 +1178,20 @@ async function checkForecastRunCharts(report, page, sourceHref) {
     await bridge.getByRole("cell", { name: value, exact: true }).waitFor();
   }
   const refinancing = runCharts.getByRole("figure", { name: "Refinancing need", exact: true });
-  await refinancing.locator('[data-missing][data-series="Committed resources"]').waitFor();
+  // C4-020 uses period lines: two maturity points, one committed-resource point,
+  // and no invented zero for the second period's missing commitment.
+  const plotted = refinancing.locator(".recharts-wrapper");
+  await plotted.locator('[data-marker][data-series="Committed resources"]').waitFor();
+  assert.equal(await plotted.locator('[data-marker][data-series="Debt maturing"]').count(), 2);
+  assert.equal(
+    await plotted.locator('[data-marker][data-series="Committed resources"]').count(),
+    1,
+  );
   await refinancing.getByRole("radio", { name: "Table", exact: true }).check();
+  await refinancing
+    .getByRole("row", { name: /FY2026/u })
+    .getByRole("cell", { name: "300", exact: true })
+    .waitFor();
   await refinancing
     .getByRole("cell", { name: "Not supplied: no commitment is stated", exact: true })
     .waitFor();
@@ -1098,31 +1199,28 @@ async function checkForecastRunCharts(report, page, sourceHref) {
   await report.getByRole("heading", { name: "Financial foundation", exact: true }).waitFor();
 }
 
-async function checkRetainedSourceFile(report, page) {
-  const source = report.getByRole("link", {
-    name: "Open source file: northbridge-filing.txt",
-    exact: true,
-  });
-  const href = await source.getAttribute("href");
-  assert.ok(href);
-  const opened = page.waitForEvent("popup");
-  await source.click();
-  const sourcePage = await opened;
-  try {
-    await sourcePage.waitForLoadState();
-    const expected = await readFile(path.join(project, "proof", "northbridge-filing.txt"), "utf8");
-    assert.equal(await sourcePage.locator("pre").textContent(), expected);
-    await sourcePage.goto(new URL(`${href}?page=1`, page.url()).href);
-    assert.equal(await sourcePage.locator("pre").textContent(), expected);
-  } finally {
-    await sourcePage.close();
+// C5-011/OQ-04: source files are listed only, with their original identities.
+async function checkListedSourceFiles(report, page) {
+  for (const name of [
+    "northbridge-filing.txt",
+    "northbridge-portfolio.xlsx",
+    "northbridge-credit-agreement.txt",
+  ]) {
+    const row = report.getByRole("listitem").filter({ has: page.getByText(name, { exact: true }) });
+    await row.waitFor();
+    const expectedHash = digest(await readFile(path.join(project, "proof", name)));
+    await row.locator("code").getByText(expectedHash, { exact: true }).waitFor();
+    assert.equal(await row.getByRole("link").count(), 0, `${name} must be listed without a link`);
   }
+  assert.equal(await report.getByRole("link", { name: /^Open source file:/u }).count(), 0);
+  assert.equal(await report.locator('a[href*="/connected/sources/"]').count(), 0);
 }
 
 async function checkReportEvidence(report, page, channel, run) {
+  // J3-017 renames the existing report-history destination.
   await report
     .getByRole("navigation", { name: "Report sections" })
-    .getByRole("link", { name: "Report", exact: true })
+    .getByRole("link", { name: "History", exact: true })
     .click();
   await report.getByRole("heading", { name: "Report history", exact: true }).waitFor();
   await report
@@ -1132,7 +1230,7 @@ async function checkReportEvidence(report, page, channel, run) {
   const evidence = report.getByRole("navigation", { name: "Evidence sections" });
   await evidence.getByRole("link", { name: "Sources", exact: true }).click();
   await report.getByRole("heading", { name: "Sources", exact: true }).waitFor();
-  await checkRetainedSourceFile(report, page);
+  await checkListedSourceFiles(report, page);
   await evidence.getByRole("link", { name: "Summary", exact: true }).click();
   await page.reload();
   await report.getByRole("heading", { name: "Handoffs", exact: true }).waitFor();
@@ -1146,6 +1244,7 @@ async function checkReportEvidence(report, page, channel, run) {
 async function checkPublishedScriptChecks(report, page, channel, run) {
   const snapshot = await page.request.get(
     new URL(`/connected/snapshot?run=${encodeURIComponent(run)}`, page.url()).href,
+    { maxRedirects: 0 },
   );
   assert.equal(snapshot.status(), 200);
   const { workspace } = await snapshot.json();
@@ -1164,10 +1263,15 @@ async function checkPublishedScriptChecks(report, page, channel, run) {
   const module = report.getByRole("combobox", { name: "Module", exact: true });
   await module.selectOption("CP-2E");
   await page.waitForURL((url) => url.hash === "#evidence/checks/CP-2E");
-  const rate = report.getByRole("region", {
-    name: `${rateCheck.figure}: ${rateCheck.status}`,
-    exact: true,
-  });
+  // C5-014/batch a: the check is headed by its retained register and figure.
+  const rate = report
+    .getByRole("heading", {
+      name: [rateCheck.register, rateCheck.figure].filter(Boolean).join(" · "),
+      exact: true,
+    })
+    .locator("..")
+    .locator("..");
+  await rate.getByText(rateCheck.status, { exact: true }).waitFor();
   await rate.waitFor();
   await rate.getByText(rateCheck.reason, { exact: true }).waitFor();
   await checkOutcomeValues(rate, rateCheck);
@@ -1202,29 +1306,66 @@ async function checkCheckMetadata(report, record) {
 }
 
 async function checkCompactLibrary(page, endpoint, run) {
-  const response = await page.request.get(new URL("/connected/library", endpoint).href);
+  const response = await page.request.get(new URL("/connected/library", endpoint).href, {
+    maxRedirects: 0,
+  });
   assert.equal(response.status(), 200);
   const index = await response.json();
   assert.equal(index.chips, undefined);
   assert.deepEqual(Object.keys(index.workspace), ["runs"]);
   const found = Object.values(index.workspace.runs).find((item) => item.folder === run);
   assert.ok(found);
-  assert.deepEqual(Object.keys(found).sort(), ["folder", "issuerKey", "pathway"]);
+  // C1-025/C3-001 adds only the designated card paragraph and its exact provenance.
+  assert.deepEqual(Object.keys(found).sort(), ["folder", "issuerKey", "lead", "pathway"]);
+  const snapshot = await page.request.get(
+    new URL(`/connected/snapshot?run=${encodeURIComponent(run)}`, endpoint).href,
+    { maxRedirects: 0 },
+  );
+  assert.equal(snapshot.status(), 200);
+  const { workspace } = await snapshot.json();
+  const matched = Object.entries(workspace.runs).find(([, item]) => item.folder === run);
+  assert.ok(matched);
+  const [key, published] = matched;
+  assert.equal(found.issuerKey, published.issuerKey);
+  assert.equal(found.pathway, published.pathway);
+  const output = workspace.outputs[published.modules["CP-6"].default];
+  assert.ok(output);
+  assert.equal(output.id, published.modules["CP-6"].default);
+  assert.equal(output.run, key);
+  assert.equal(output.module, "CP-6");
+  assert.match(output.sha256, /^[0-9a-f]{64}$/u);
+  const paragraph = workspace.handoffs[output.sha256]
+    .find((section) => section.heading === "Bottom line" && section.level === 3)
+    ?.blocks.find((block) => block.type === "text");
+  assert.ok(paragraph);
+  assert.deepEqual(found.lead, {
+    module: "CP-6",
+    output: output.id,
+    sha256: output.sha256,
+    line: paragraph.line,
+    text: paragraph.text,
+  });
+  assert.equal(found.lead.text, "The synthetic issuer shows one observed item.");
+  assert.ok(Number.isInteger(found.lead.line) && found.lead.line > 0);
+  assert.ok(
+    JSON.stringify(found.lead).length < 2000,
+    "The card contains one paragraph, not a handoff",
+  );
   assert.ok(index.catalogue.real.some((item) => item.id === run));
 }
 
-async function checkLibrarySearch(browser, endpoint) {
-  const library = await browser.newPage();
+async function checkLibrarySearch(context, endpoint) {
+  const library = await context.newPage();
   library.setDefaultTimeout(15000);
   try {
     await library.goto(endpoint);
     const search = library.getByRole("searchbox", { name: "Search issuers" });
     await search.fill("zz no match");
-    await library.getByText("No issuers match these filters.", { exact: true }).waitFor();
+    await library.getByText(/No issuers match these filters/).waitFor();
     await search.fill("Northbridge");
     await library.getByRole("link", { name: "Open report", exact: true }).waitFor();
     await search.fill("zz again");
-    await library.getByText("No issuers match these filters.", { exact: true }).waitFor();
+    await library.getByText(/No issuers match these filters/).waitFor();
     await search.fill("");
     await library.getByRole("link", { name: "Open report", exact: true }).waitFor();
   } finally {
@@ -1232,9 +1373,7 @@ async function checkLibrarySearch(browser, endpoint) {
   }
 }
 
-async function checkBrowserRun(browser, service, workspace, channel, brand) {
-  const page = await browser.newPage();
-  page.setDefaultTimeout(15000);
+function recordBrowserRequests(page) {
   const errors = [];
   const publicationRequests = [];
   const scriptRequests = [];
@@ -1244,7 +1383,11 @@ async function checkBrowserRun(browser, service, workspace, channel, brand) {
     if (url.pathname.startsWith("/connected/")) publicationRequests.push(url.pathname + url.search);
   });
   page.on("pageerror", (error) => errors.push(error.message));
-  await page.goto(new URL("/start", service.endpoint).href);
+  return { errors, publicationRequests, scriptRequests };
+}
+
+async function checkStartRoute(page, endpoint, scriptRequests, brand) {
+  await page.goto(new URL("/start", endpoint).href);
   await page.getByLabel("Issuer name", { exact: true }).waitFor();
   assert.ok(scriptRequests.some((path) => /connected-assets\/StartRun-[^/]+\.js$/u.test(path)));
   assert.ok(
@@ -1252,25 +1395,34 @@ async function checkBrowserRun(browser, service, workspace, channel, brand) {
   );
   assert.ok(!scriptRequests.some((path) => /\/assets\/index-[^/]+\.js$/u.test(path)));
   scriptRequests.length = 0;
-  await page.goto(service.endpoint);
+  await page.goto(endpoint);
   const brands = await page.evaluate(() =>
     navigator.userAgentData?.brands.map(({ brand }) => brand),
   );
-  assert.ok(brands?.includes(brand), `Expected branded ${brand}, received ${String(brands)}`);
+  assert.ok(
+    (brands ?? []).includes(brand),
+    `Expected branded ${brand}, received ${String(brands)}`,
+  );
+}
 
-  await checkPaidConfirmation(browser, service.endpoint, channel);
-  const run = await submit(page, channel);
+async function waitForFinishedRun(page, endpoint, workspace, channel, run) {
   const open = page.getByRole("link", { name: "Open report", exact: true });
   const stopped = page
     .getByRole("status")
     .filter({ hasText: /^(Failed|Capped|Rejected|Interrupted)$/u });
   await open.or(stopped).waitFor({ timeout: 60000 });
-  const state = await page.request.get(new URL(`/api/runs/${run}`, service.endpoint).href);
+  const state = await page.request.get(new URL(`/api/runs/${run}`, endpoint).href, {
+    maxRedirects: 0,
+  });
   assert.equal(state.status(), 200);
   const completed = await state.json();
   assert.equal(completed.status, "finished", completed.reason ?? "The run did not finish.");
   await checkActivity(page, channel);
   await checkRateMethod(workspace, run);
+  return open;
+}
+
+async function checkFinishedReport(page, open, scriptRequests, channel, run) {
   await open.click();
   await page.waitForURL((url) => url.pathname === `/report/${run}`);
   await page.getByRole("heading", { name: "Overview" }).waitFor();
@@ -1294,10 +1446,18 @@ async function checkBrowserRun(browser, service, workspace, channel, brand) {
     fullPage: true,
   });
   await checkCompanyBand(report, channel);
-  await checkOverviewMobile(report, page, channel);
+  if (!desktopOnly) await checkOverviewMobile(report, page, channel);
   await checkOverviewTrace(report, page);
+  await report.getByRole("link", { name: "Chart index", exact: true }).click();
+  await page.waitForURL((url) => url.hash === "#forecast/run-charts");
+  await page.waitForFunction(() => document.activeElement?.id === "forecast-run-charts");
+  await report.getByRole("link", { name: "Overview", exact: true }).click();
   await checkCalendar(report, artifacts, channel, page);
   await checkCharts(report, artifacts, channel, page, run);
+  return report;
+}
+
+async function checkPublishedRun({ context, page, report, endpoint, run, publicationRequests }) {
   const download = report.getByRole("link", {
     name: "Download Fundamental credit",
     exact: true,
@@ -1305,12 +1465,21 @@ async function checkBrowserRun(browser, service, workspace, channel, brand) {
   await download.waitFor();
   const [file] = await Promise.all([page.waitForEvent("download"), download.click()]);
   assert.equal(file.suggestedFilename(), "CP-2.md");
+  const retired = await page.request.get(new URL("/library/index.html", endpoint).href, {
+    maxRedirects: 0,
+  });
+  assert.equal(retired.status(), 308);
+  assert.equal(retired.headers().location, "/");
+  const oldScript = await page.request.get(new URL("/library/views.js", endpoint).href);
+  assert.equal(oldScript.status(), 404);
   const bytes = await readFile(await file.path());
   assert.match(bytes.toString("utf8"), /The synthetic issuer shows one observed item\./u);
-  const publication = await page.request.get(new URL("/connected/snapshot", service.endpoint).href);
-  await checkChangesTrace(browser, service.endpoint, run);
-  await checkCompactLibrary(page, service.endpoint, run);
-  await checkLibrarySearch(browser, service.endpoint);
+  const publication = await page.request.get(new URL("/connected/snapshot", endpoint).href, {
+    maxRedirects: 0,
+  });
+  await checkChangesTrace(context, endpoint, run);
+  await checkCompactLibrary(page, endpoint, run);
+  await checkLibrarySearch(context, endpoint);
   assert.ok(publicationRequests.includes("/connected/library"));
   assert.ok(publicationRequests.includes(`/connected/snapshot?run=${encodeURIComponent(run)}`));
   assert.ok(!publicationRequests.includes("/connected/snapshot"));
@@ -1324,16 +1493,31 @@ async function checkBrowserRun(browser, service, workspace, channel, brand) {
   const designated = publishedWorkspace.outputs[published.modules["CP-2"].default];
   assert.equal(createHash("sha256").update(bytes).digest("hex"), designated.sha256);
   assert.equal(new URL(page.url()).pathname, `/report/${run}`);
-  assert.deepEqual(errors, []);
-  await page.screenshot({
-    path: path.join(artifacts, `${channel}-evidence.png`),
-    fullPage: true,
-  });
+}
+
+function browserProofRecord({ channel, brand, browserVersion, run }) {
+  const layout = desktopOnly
+    ? {
+        viewport: "desktop",
+        downside: "downside break-point ranking and watch timing",
+        forecast: "Desktop Forecast section jump",
+        modules: [],
+      }
+    : {
+        viewport: "desktop and mobile",
+        downside: "downside break-point ranking, watch timing, and narrow layout",
+        forecast:
+          "Forecast section jumps, full mobile reading width, 44px traces and separated chart period labels",
+        modules: [
+          "compact module and first-section navigation at 390px with complementary 1000/1001px breakpoints",
+        ],
+      };
   return {
     ...provenance,
     browser: brand,
-    version: browser.version(),
+    version: browserVersion,
     run,
+    viewport_scope: layout.viewport,
     screenshots: [
       "run-documents",
       "run-mobile",
@@ -1355,7 +1539,9 @@ async function checkBrowserRun(browser, service, workspace, channel, brand) {
       "evidence",
       "evidence-record",
       "evidence-script-checks",
-    ].map((view) => `${channel}-${view}.png`),
+    ]
+      .filter((view) => !desktopOnly || !view.endsWith("-mobile"))
+      .map((view) => `${channel}-${view}.png`),
     checks: [
       "upload",
       "four-step intake, document drop zone and responsive readiness panel",
@@ -1363,7 +1549,7 @@ async function checkBrowserRun(browser, service, workspace, channel, brand) {
       "paid cap confirmation and cancel without submission",
       "synthetic confirmation and exactly one submission",
       "run activity spend, module count, elapsed time and delivery feed",
-      "finished publication",
+      "finished publication and retired library pages unavailable",
       "compact library index, repeated issuer searches and report-scoped browser requests",
       "Run loads only connected route bundles without the report reader or offline app",
       "route-based JavaScript loads only after navigation (run, library, and report chunks)",
@@ -1374,23 +1560,23 @@ async function checkBrowserRun(browser, service, workspace, channel, brand) {
       "financial chart, table and source trace reload",
       "readiness and monitoring records with source traces",
       "downside case comparison with signed cash flow and explicit gap",
-      "downside break-point ranking, watch timing, and narrow layout",
+      layout.downside,
       "rate and currency shocks with zero and unreported hedge outcomes",
       "native completeness and rate sensitivity checks agreed",
       "dated instrument quotes, decision and recovery qualification",
       "selected workbook attestation, portfolio limits and proposal qualification",
       "forecast chart and model",
-      "Forecast section jumps, full mobile reading width, 44px traces and separated chart period labels",
-      "forecast qualifications precede cases and all-case comparison remains visible",
-      "compact module and first-section navigation at 390px with complementary 1000/1001px breakpoints",
-      "chart source control visible on hover with Show sources off",
+      layout.forecast,
+      "conditional base-case qualification immediately precedes cases, scope expands and the all-case comparison remains visible",
+      ...layout.modules,
+      "chart source control visible on hover with Highlight source icons off",
       "shared Base and Downside case selection updates cash proxy and exact model values",
       "evidence bookmark retains identity after reorder and rejects old ordinal addresses",
       "forecast run figures and original module",
       "signed liquidity bridge and unfunded refinancing row",
       "report history",
       "evidence reload and handoff",
-      "hash-attested original source file and exact retained page open from Evidence",
+      "all three supplied source names and original hashes listed without open/download links",
       "exact Overview passage, module chart row and Forecast inputs",
       "Evidence Record metadata, module timings, synthetic responses and hashes",
       "CP-2E script checks match retained status, recomputed values and native counts",
@@ -1399,17 +1585,48 @@ async function checkBrowserRun(browser, service, workspace, channel, brand) {
   };
 }
 
-function launchBrowser(channel, envName) {
-  const executablePath = process.env[envName];
-  return chromium.launch(executablePath === undefined ? { channel } : { executablePath });
+async function checkBrowserRun(context, service, workspace, channel, brand) {
+  const page = await context.newPage();
+  page.setDefaultTimeout(15000);
+  const { errors, publicationRequests, scriptRequests } = recordBrowserRequests(page);
+  await checkStartRoute(page, service.endpoint, scriptRequests, brand);
+  await checkPaidConfirmation(context, service.endpoint, channel);
+  const run = await submit(page, channel);
+  const open = await waitForFinishedRun(page, service.endpoint, workspace, channel, run);
+  const report = await checkFinishedReport(page, open, scriptRequests, channel, run);
+  await checkPublishedRun({
+    context,
+    page,
+    report,
+    endpoint: service.endpoint,
+    run,
+    publicationRequests,
+  });
+  assert.deepEqual(errors, []);
+  await page.screenshot({
+    path: path.join(artifacts, `${channel}-evidence.png`),
+    fullPage: true,
+  });
+  return browserProofRecord({ channel, brand, browserVersion: context.browser().version(), run });
 }
 
-for (const [channel, brand, envName] of [
-  ["chrome", "Google Chrome", "CHROME_PATH"],
-  ["msedge", "Microsoft Edge", "EDGE_PATH"],
-]) {
+function launchBrowser(channel, envName, proxy) {
+  const executablePath = process.env[envName];
+  return chromium.launch({
+    ...(executablePath === undefined ? { channel } : { executablePath }),
+    proxy,
+  });
+}
+
+const browserCases = runAsScript
+  ? [
+      ["chrome", "Google Chrome", "CHROME_PATH"],
+      ["msedge", "Microsoft Edge", "EDGE_PATH"],
+    ]
+  : [];
+for (const [channel, brand, envName] of browserCases) {
   test(
-    `${brand} uploads, submits and opens a finished legacy report`,
+    `${brand} uploads, submits and opens a finished connected report`,
     { timeout: 120000 },
     async () => {
       const workspace = await mkdtemp(
@@ -1418,10 +1635,32 @@ for (const [channel, brand, envName] of [
       let service;
       let browser;
       let record;
+      let context;
+      let guard;
+      let proxy;
+      let proofError;
       try {
         service = await startService(workspace);
-        browser = await launchBrowser(channel, envName);
-        record = await checkBrowserRun(browser, service, workspace, channel, brand);
+        proxy = await createOfflineProxy();
+        browser = await launchBrowser(channel, envName, proxy.settings);
+        context = await browser.newContext({ serviceWorkers: "block" });
+        guard = await installOfflineGuard(context);
+        const blank = await context.newPage();
+        await blank.goto("about:blank");
+        await writeFile(
+          path.join(artifacts, `${channel}-blank-offline.json`),
+          JSON.stringify(
+            {
+              url: blank.url(),
+              non_loopback_requests: guard.attempts.length,
+              proxy_blocks: [...proxy.attempts],
+            },
+            null,
+            2,
+          ) + "\n",
+        );
+        await blank.close();
+        record = await checkBrowserRun(context, service, workspace, channel, brand);
       } catch (error) {
         if (service !== undefined) console.error(service.stderr());
         await cp(path.join(workspace, "_engine", "logs"), path.join(artifacts, `${channel}-logs`), {
@@ -1429,12 +1668,40 @@ for (const [channel, brand, envName] of [
         }).catch((copyError) => {
           if (copyError.code !== "ENOENT") console.error(copyError);
         });
-        throw error;
+        proofError = error;
       } finally {
+        await context?.close();
         await browser?.close();
+        await proxy?.close();
+        if (guard) {
+          await writeFile(
+            path.join(artifacts, `${channel}-offline.json`),
+            JSON.stringify(
+              {
+                non_loopback_requests: guard.attempts.length,
+                attempts: guard.attempts,
+                proxy_blocks: proxy.attempts,
+              },
+              null,
+              2,
+            ) + "\n",
+          );
+        }
         await service?.stop();
         await rm(workspace, { recursive: true, force: true });
       }
+      try {
+        guard?.assertOffline();
+      } catch (error) {
+        if (proofError)
+          throw new AggregateError([proofError, error], "Proof and offline guard failed");
+        throw error;
+      }
+      if (proofError) throw proofError;
+      record.offline = {
+        non_loopback_requests: guard.attempts.length,
+        browser_proxy_blocks: proxy.attempts.length,
+      };
       await writeFile(
         path.join(artifacts, `${channel}.json`),
         JSON.stringify(record, null, 2) + "\n",

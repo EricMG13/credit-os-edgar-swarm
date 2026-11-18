@@ -51,7 +51,7 @@ def answers_for(**change: Any) -> dict[str, Any]:
         "level": "basic",
         "model": "gpt",
         "effort": "balanced",
-        "submitted_by": "analyst",
+        "submitted_by": "Ana L",
     }
     base.update(change)
     return base
@@ -119,9 +119,11 @@ class Service:
 def service_factory(root: Path, fake_env: Callable[[dict[str, Any]], None]) -> Iterator[Any]:
     started: list[Service] = []
 
-    def start(host: str = "127.0.0.1") -> Service:
+    def start(
+        host: str = "127.0.0.1", *, copilot_models: dict[str, frozenset[str]] | None = None
+    ) -> Service:
         fake_env({"sleep": 30})
-        watcher = Scheduler(settings(root))
+        watcher = Scheduler(settings(root, copilot_models=copilot_models))
         server = service.make_server(watcher, host, 0)
         threading.Thread(target=server.serve_forever, daemon=True).start()
         started.append(Service(watcher, server, root))
@@ -141,9 +143,7 @@ def svc(service_factory: Callable[[], Service]) -> Service:
 
 def test_upload_read_summarise_submit_and_see_the_run(svc):
     page = svc.call("GET", "/")
-    assert page.status == 200
-    assert page.headers["Content-Type"].startswith("text/html")
-    assert b"<title" in page.body
+    assert page.status == 404
     sid = svc.new()
     stored = svc.upload(sid, "notes/a.txt", b"Net sales were 100.")
     assert (stored.status, stored.json()["name"]) == (200, "notes/a.txt")
@@ -173,6 +173,27 @@ def test_upload_read_summarise_submit_and_see_the_run(svc):
     assert after.status == 404  # submitted: its folder is now the run's, uploads find nothing
 
 
+@pytest.mark.parametrize(("seat_effort", "verified"), [("high", False), ("xhigh", True)])
+def test_summary_checks_the_reviewed_luna_pair_without_blocking_preparation(
+    service_factory, seat_effort, verified
+):
+    svc = service_factory(copilot_models={"gpt-6-luna": frozenset({seat_effort})})
+    sid = svc.new()
+    assert svc.upload(sid, "notes.txt", b"Net sales were 100.").status == 200
+    answers = answers_for(level="advanced", model="luna", effort="xhigh")
+    reply = svc.call("POST", f"/api/submissions/{sid}/summary", answers)
+    assert reply.status == 200
+    summary = reply.json()
+    assert summary["digest"] and summary["copilot_verified"] is verified
+    if not verified:
+        body = {"answers": answers, "digest": summary["digest"]}
+        submitted = svc.call("POST", f"/api/submissions/{sid}/submit", body)
+        assert (
+            submitted.status == 400 and "unavailable on the Copilot seat" in submitted.body.decode()
+        )
+        assert load_all(layout(svc.root)) == []
+
+
 def test_a_post_without_or_with_a_foreign_origin_changes_nothing(svc):
     for origin in (None, "http://evil.example", f"https://{svc.host}", f"http://{svc.host}/"):
         made = svc.call("POST", "/api/submissions", origin=origin)
@@ -192,7 +213,7 @@ def test_a_request_for_another_host_name_is_refused(svc):
     assert svc.call("GET", "/", headers={"Host": "evil.example:1"}).status == 403
     port = svc.host.rsplit(":", 1)[1]
     assert (
-        svc.call("GET", "/", headers={"Host": f"localhost:{port}"}).status == 200
+        svc.call("GET", "/", headers={"Host": f"localhost:{port}"}).status == 404
     )  # loopback alias
     made = svc.call(
         "POST", "/api/submissions", headers={"Host": "evil.example"}, origin="http://evil.example"
@@ -204,7 +225,7 @@ def test_a_request_for_another_host_name_is_refused(svc):
 def test_a_service_started_on_another_name_has_no_loopback_alias(service_factory):
     other = service_factory("localhost")
     port = other.server.server_address[1]
-    assert other.call("GET", "/", headers={"Host": f"localhost:{port}"}).status == 200
+    assert other.call("GET", "/", headers={"Host": f"localhost:{port}"}).status == 404
     assert other.call("GET", "/", headers={"Host": f"127.0.0.1:{port}"}).status == 403
 
 
@@ -220,7 +241,7 @@ def _raw(svc: Service, request: bytes) -> bytes:
 def test_an_http_09_request_line_is_closed_without_a_reply_or_an_error(svc, caplog):
     with caplog.at_level(logging.INFO, logger=service.log.name):
         assert _raw(svc, b"GET /\r\n\r\n") == b""
-        assert svc.call("GET", "/").status == 200  # the service still answers
+        assert svc.call("GET", "/").status == 404  # the service still answers
     assert not [r for r in caplog.records if r.levelno >= logging.ERROR], caplog.text
 
 
@@ -296,22 +317,23 @@ def test_the_library_route_serves_nothing_outside_the_library(svc, path):
 
 def test_the_library_route_does_not_follow_a_link_out_and_serves_its_own_files(svc):
     library = layout(svc.root).engine / "library"
-    library.mkdir(parents=True, exist_ok=True)
-    (library / "index.html").write_text("<p>hi</p>", encoding="utf-8")
-    (library / "data.js").write_text("window.x=1;", encoding="utf-8")
-    (library / "out").symlink_to(layout(svc.root).state)
+    downloads = library / "downloads"
+    downloads.mkdir(parents=True, exist_ok=True)
+    (downloads / "index.html").write_text("<p>hi</p>", encoding="utf-8")
+    (downloads / "data.js").write_text("window.x=1;", encoding="utf-8")
+    (downloads / "out").symlink_to(layout(svc.root).state)
     (layout(svc.root).state / "inner.txt").write_text("secret", encoding="utf-8")
-    ok = svc.call("GET", "/library/index.html")
+    ok = svc.call("GET", "/library/downloads/")
     assert ok.status == 200 and ok.body == b"<p>hi</p>"
     assert ok.headers["X-Content-Type-Options"] == "nosniff"
     assert ok.headers["Content-Type"].startswith("text/html")
-    script = svc.call("GET", "/library/data.js")
+    script = svc.call("GET", "/library/downloads/data.js")
     assert "javascript" in script.headers["Content-Type"]
-    assert svc.call("GET", "/library/out/inner.txt").status == 404
-    assert svc.call("GET", "/library/%00").status == 404
-    assert svc.call("GET", "/library/%ff").status == 404
-    assert svc.call("GET", "/library//etc/hosts").status == 404
-    assert svc.call("GET", "/library/missing.html").status == 404
+    assert svc.call("GET", "/library/downloads/out/inner.txt").status == 404
+    assert svc.call("GET", "/library/downloads/%00").status == 404
+    assert svc.call("GET", "/library/downloads/%ff").status == 404
+    assert svc.call("GET", "/library/downloads//etc/hosts").status == 404
+    assert svc.call("GET", "/library/downloads/missing.html").status == 404
 
 
 def test_an_over_limit_upload_is_refused_while_receiving(svc, monkeypatch):
@@ -419,14 +441,8 @@ def test_an_unexpected_error_is_a_fixed_500_that_is_logged(svc, monkeypatch, cap
     assert any(r.exc_info for r in caplog.records)
 
 
-def test_the_page_is_served_with_a_same_origin_policy(svc):
-    page = svc.call("GET", "/")
-    policy = page.headers["Content-Security-Policy"]
-    assert "default-src 'none'" in policy
-    assert "script-src 'self' 'unsafe-inline'" in policy
-    assert "connect-src 'self'" in policy
-    assert "https:" not in policy and "http:" not in policy
-    assert page.headers["X-Content-Type-Options"] == "nosniff"
+def test_the_retired_root_page_is_not_served(svc):
+    assert svc.call("GET", "/").status == 404
     assert (
         svc.call("GET", "/api/runs/x").headers["Content-Type"] == "application/json; charset=utf-8"
     )
@@ -449,32 +465,46 @@ def _library(svc: Service) -> Path:
     return library
 
 
-def test_a_linked_index_html_is_not_served_from_outside_the_library(svc):
-    library = _library(svc)
+def test_a_linked_download_directory_stays_inside_the_downloads_root(svc):
+    downloads = _library(svc) / "downloads"
     (layout(svc.root).state / "inner.txt").write_text("secret", encoding="utf-8")
-    (library / "d").mkdir()
-    (library / "d" / "index.html").symlink_to(layout(svc.root).state / "inner.txt")
-    for path in ("/library/d/", "/library/d", "/library/d/index.html"):
+    (downloads / "d").mkdir(parents=True)
+    (downloads / "d" / "index.html").symlink_to(layout(svc.root).state / "inner.txt")
+    for path in (
+        "/library/downloads/d/",
+        "/library/downloads/d",
+        "/library/downloads/d/index.html",
+        "/library/downloads/../views.js",
+    ):
         reply = svc.call("GET", path)
         assert reply.status == 404 and b"secret" not in reply.body, path
-    (library / "e").mkdir()
-    (library / "e" / "index.html").write_text("<p>e</p>", encoding="utf-8")
-    assert svc.call("GET", "/library/e/").body == b"<p>e</p>"
+    (downloads / "e").mkdir()
+    (downloads / "e" / "index.html").write_text("<p>e</p>", encoding="utf-8")
+    assert svc.call("GET", "/library/downloads/e/").body == b"<p>e</p>"
 
 
 def test_a_foreign_site_cannot_read_a_library_file(svc):
-    library = _library(svc)
-    (library / "data.js").write_text("window.x=1;", encoding="utf-8")
+    downloads = _library(svc) / "downloads"
+    downloads.mkdir(parents=True)
+    (downloads / "handoff.js").write_text("window.x=1;", encoding="utf-8")
+    (downloads / "data.js").write_text("window.x=1;", encoding="utf-8")
     for site in ("cross-site", "same-site", "bogus"):
-        got = svc.call("GET", "/library/data.js", headers={"Sec-Fetch-Site": site})
+        got = svc.call("GET", "/library/downloads/handoff.js", headers={"Sec-Fetch-Site": site})
         assert got.status == 403 and b"window" not in got.body, site
     for site in ("same-origin", "none"):
-        assert svc.call("GET", "/library/data.js", headers={"Sec-Fetch-Site": site}).status == 200
-    foreign = svc.call("GET", "/library/data.js", headers={"Origin": "http://evil.example"})
+        assert (
+            svc.call(
+                "GET", "/library/downloads/handoff.js", headers={"Sec-Fetch-Site": site}
+            ).status
+            == 200
+        )
+    foreign = svc.call(
+        "GET", "/library/downloads/handoff.js", headers={"Origin": "http://evil.example"}
+    )
     assert foreign.status == 403
-    own = svc.call("GET", "/library/data.js", headers={"Origin": f"http://{svc.host}"})
+    own = svc.call("GET", "/library/downloads/handoff.js", headers={"Origin": f"http://{svc.host}"})
     assert own.status == 200
-    assert svc.call("GET", "/library/data.js").status == 200  # no header: not a browser
+    assert svc.call("GET", "/library/downloads/data.js").status == 200  # no header: not a browser
     page = svc.call("GET", "/", headers={"Sec-Fetch-Site": "cross-site"})
     assert page.status == 403
     blocked = svc.call("POST", "/api/submissions", headers={"Sec-Fetch-Site": "cross-site"})
@@ -482,12 +512,13 @@ def test_a_foreign_site_cannot_read_a_library_file(svc):
 
 
 def test_every_response_carries_a_same_origin_resource_policy(svc):
-    _library(svc)
-    (_library(svc) / "a.html").write_text("<p>a</p>", encoding="utf-8")
+    downloads = _library(svc) / "downloads"
+    downloads.mkdir()
+    (downloads / "a.html").write_text("<p>a</p>", encoding="utf-8")
     replies = [
         svc.call("GET", "/"),
-        svc.call("GET", "/library/a.html"),
-        svc.call("GET", "/library/missing"),
+        svc.call("GET", "/library/downloads/a.html"),
+        svc.call("GET", "/library/downloads/missing"),
         svc.call("GET", "/api/runs/none"),
         svc.call("POST", "/api/submissions"),
         svc.call("GET", "/", headers={"Host": "evil.example"}),
@@ -496,13 +527,12 @@ def test_every_response_carries_a_same_origin_resource_policy(svc):
     assert [r.headers["Cross-Origin-Resource-Policy"] for r in replies] == ["same-origin"] * 7
 
 
-def test_the_start_page_cannot_be_framed_and_a_library_page_cannot_call_the_api(svc):
-    _library(svc)
-    (_library(svc) / "a.html").write_text("<p>a</p>", encoding="utf-8")
-    page = svc.call("GET", "/")
-    assert "frame-ancestors 'none'" in page.headers["Content-Security-Policy"]
-    assert page.headers["X-Frame-Options"] == "DENY"
-    shown = svc.call("GET", "/library/a.html")
+def test_a_download_cannot_call_the_run_intake_api(svc):
+    downloads = _library(svc) / "downloads"
+    downloads.mkdir()
+    (downloads / "handoff.html").write_text("<p>handoff</p>", encoding="utf-8")
+    shown = svc.call("GET", "/library/downloads/handoff.html")
+    assert shown.status == 200
     assert shown.headers["Content-Security-Policy"] == (
         "connect-src 'none'; form-action 'none'; frame-ancestors 'self'"
     )
@@ -627,7 +657,8 @@ def test_a_library_file_swapped_for_a_link_after_the_check_is_not_served(svc, mo
     library = _library(svc)
     secret = layout(svc.root).state / "secret.txt"
     secret.write_text("SECRET-OUTSIDE-LIBRARY", encoding="utf-8")
-    target = library / "r.txt"
+    target = library / "downloads" / "r.txt"
+    target.parent.mkdir(parents=True, exist_ok=True)
     target.write_text("plain", encoding="utf-8")
     real_resolve = Path.resolve
     seen: list[Path] = []
@@ -642,19 +673,20 @@ def test_a_library_file_swapped_for_a_link_after_the_check_is_not_served(svc, mo
         return got
 
     monkeypatch.setattr(Path, "resolve", resolving)
-    got = svc.call("GET", "/library/r.txt")
+    got = svc.call("GET", "/library/downloads/r.txt")
     monkeypatch.undo()
     assert len(seen) == 2 and target.is_symlink()
     assert b"SECRET" not in got.body and got.status == 404
 
 
 def test_the_library_serves_a_plain_file_and_not_a_link_or_a_folder(svc):
-    library = _library(svc)
-    (library / "real.html").write_text("<p>real</p>", encoding="utf-8")
-    (library / "alias.html").symlink_to(library / "real.html")
-    assert svc.call("GET", "/library/real.html").body == b"<p>real</p>"
-    assert http_base.read_regular(library) is None
-    assert http_base.read_regular(library / "missing") is None
+    downloads = _library(svc) / "downloads"
+    downloads.mkdir()
+    (downloads / "real.html").write_text("<p>real</p>", encoding="utf-8")
+    (downloads / "alias.html").symlink_to(downloads / "real.html")
+    assert svc.call("GET", "/library/downloads/real.html").body == b"<p>real</p>"
+    assert http_base.read_regular(downloads) is None
+    assert http_base.read_regular(downloads / "missing") is None
 
 
 def test_every_reply_the_http_server_writes_itself_carries_the_policy_headers(svc):
@@ -733,11 +765,11 @@ def test_a_top_level_navigation_is_served_even_when_cross_site(svc):
     navigate = {"Sec-Fetch-Mode": "navigate", "Sec-Fetch-Dest": "document"}
     for site in ("cross-site", "same-site"):
         got = svc.call("GET", "/", headers={"Sec-Fetch-Site": site, **navigate})
-        assert got.status == 200, site
-        assert got.headers["X-Frame-Options"] == "DENY"
+        assert got.status == 404, site
     # every other cross-site request stays refused
-    _library(svc)
-    (_library(svc) / "a.html").write_text("<p>a</p>", encoding="utf-8")
+    downloads = _library(svc) / "downloads"
+    downloads.mkdir(exist_ok=True)
+    (downloads / "a.html").write_text("<p>a</p>", encoding="utf-8")
     cross = {"Sec-Fetch-Site": "cross-site"}
     refused = [
         {**cross, "Sec-Fetch-Mode": "navigate", "Sec-Fetch-Dest": "iframe"},  # framing
@@ -748,7 +780,9 @@ def test_a_top_level_navigation_is_served_even_when_cross_site(svc):
     ]
     for headers in refused:
         assert svc.call("GET", "/", headers=headers).status == 403, headers
-        assert svc.call("GET", "/library/a.html", headers=headers).status in (403,), headers
+        assert svc.call("GET", "/library/downloads/a.html", headers=headers).status in (403,), (
+            headers
+        )
     post = svc.call("POST", "/api/submissions", headers={**cross, **navigate})
     assert post.status == 403 and not list(layout(svc.root).uploads.iterdir())
 
@@ -756,9 +790,9 @@ def test_a_top_level_navigation_is_served_even_when_cross_site(svc):
 def test_on_port_80_host_and_origin_may_leave_the_port_out(svc):
     server = cast(service._Server, svc.server)
     server.allowed_hosts, server.advertised_port = http_base.hosts("127.0.0.1", 80), 80
-    assert svc.call("GET", "/", headers={"Host": "127.0.0.1"}).status == 200
-    assert svc.call("GET", "/", headers={"Host": "localhost"}).status == 200
-    assert svc.call("GET", "/", headers={"Host": "127.0.0.1:80"}).status == 200
+    assert svc.call("GET", "/", headers={"Host": "127.0.0.1"}).status == 404
+    assert svc.call("GET", "/", headers={"Host": "localhost"}).status == 404
+    assert svc.call("GET", "/", headers={"Host": "127.0.0.1:80"}).status == 404
     bare = svc.call(
         "POST", "/api/submissions", headers={"Host": "127.0.0.1"}, origin="http://127.0.0.1"
     )
@@ -785,12 +819,17 @@ def test_a_wildcard_address_is_refused_at_start_up(root, capsys):
         assert "pass this machine's own address, not 0.0.0.0" in capsys.readouterr().err
 
 
-def test_start_up_refuses_without_the_key_or_with_a_second_instance(root, monkeypatch, capsys):
+def test_offline_startup_still_refuses_a_second_instance(root, monkeypatch, capsys):
     argv = ["--root", str(root), "--port", "0"]
-    monkeypatch.delenv(KEY)
-    assert service.main(argv) == 2
-    assert KEY in capsys.readouterr().err
-    monkeypatch.setenv(KEY, "test-key-not-real")
+    for name in ("COPILOT_GITHUB_TOKEN", "COPILOT_CLI_PATH", "COPILOT_USE_GH_LOGIN"):
+        monkeypatch.delenv(name, raising=False)
+
+    def interrupt(_scheduler):
+        raise KeyboardInterrupt
+
+    monkeypatch.setattr(service, "_loop", interrupt)
+    assert service.main(argv) == 0
+    assert "serving http://127.0.0.1:" in capsys.readouterr().err
     first = Scheduler(settings(root))
     try:
         assert service.main(argv) == 2
@@ -971,41 +1010,8 @@ def test_the_inputs_route_does_not_serve_file_content(svc, fake_env):
     assert reply.json()["files"] == [{"name": "notes/a.txt", "size": len(secret)}]
 
 
-RAIL_MARKER = b"<!--rail-signal-->"
-FORM_PAGE = Path(__file__).resolve().parents[1] / "docs/templates/context-form.html"
-
-
-def test_without_a_signal_url_the_page_is_the_template_without_its_marker(svc):
-    template = FORM_PAGE.read_bytes()
-    assert template.count(RAIL_MARKER) == 1
-    page = svc.call("GET", "/").body
-    assert page == template.replace(RAIL_MARKER, b"")
-    assert b"rail-signal" not in page and RAIL_MARKER not in page
-
-
-def test_a_signal_url_adds_one_rail_link_after_the_activity_link(root, fake_env, monkeypatch):
-    fake_env({"sleep": 30})
-    watcher = Scheduler(settings(root))
-    server = service.make_server(watcher, "127.0.0.1", 0, signal_url="http://10.1.2.3:8766/")
-    threading.Thread(target=server.serve_forever, daemon=True).start()
-    try:
-        host = f"127.0.0.1:{server.server_address[1]}"
-        with urllib.request.urlopen(f"http://{host}/", timeout=20) as response:
-            page = response.read().decode()
-        policy = response.headers["Content-Security-Policy"]
-    finally:
-        server.shutdown()
-        server.server_close()
-        watcher.close()
-    assert page.count('id="rail-signal"') == 1
-    assert page.count("http://10.1.2.3:8766/") == 1
-    assert "<!--rail-signal-->" not in page
-    link = page[page.index('<a id="rail-signal"') :]
-    assert link.startswith('<a id="rail-signal" href="http://10.1.2.3:8766/" title="Signal">')
-    assert '<path d="M5 20v-4M10 20v-8M15 20V8M20 20V4"/>' in link.split("</a>")[0]
-    assert '<span class="sr-only">Signal</span></a>' in link
-    assert page.index('id="rail-activity"') < page.index('id="rail-signal"')
-    assert "10.1.2.3" not in policy
+def test_the_retired_form_route_is_not_served(svc):
+    assert svc.call("GET", "/").status == 404
 
 
 @pytest.mark.parametrize(
@@ -1097,3 +1103,19 @@ def test_a_run_beside_an_unreadable_record_resolves_and_its_own_bad_record_is_re
     assert refused.status == 500 and b"{not json" not in refused.body  # today's reply to ValueError
     assert refused.body != missing.body
     assert (bad.read_bytes(), bad.stat().st_mtime_ns) == before
+
+
+def test_a_eur_context_reviewed_on_the_service_has_no_item_about_us_dollars(svc):
+    """docs/rulings/2026-11-16-reporting-currency-from-sources.md: CP-2D works in the currency the
+    statements state, so a EUR issuer's summary carries no USD item."""
+    sid = svc.new()
+    svc.upload(sid, "notes/a.txt", b"Net sales were 100.")
+    answers = answers_for(modules=["CP-0", "CP-1", "CP-2D"])
+    answers["context"]["run"]["reporting_currency"] = "EUR"
+    got = svc.call("POST", f"/api/submissions/{sid}/summary", answers)
+    assert got.status == 200
+    summary = got.json()
+    assert summary["error"] == "", summary
+    text = json.dumps(summary)
+    assert "USD millions" not in text and "US$" not in text
+    assert "in USD" not in text and "not USD" not in text

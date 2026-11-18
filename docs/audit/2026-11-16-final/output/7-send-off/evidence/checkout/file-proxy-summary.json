@@ -1,0 +1,14 @@
+{
+  "handledSocketResets": [],
+  "nativeDenialsByHost": {
+    "accounts.google.com": 152,
+    "clients2.google.com": 133,
+    "redirector.gvt1.com": 134,
+    "update.googleapis.com": 266,
+    "www.google.com": 675,
+    "www.gstatic.com": 133
+  },
+  "nativeFilePasses": 138,
+  "nativeProxyDenials": 1493,
+  "unexpectedProxyFailures": []
+}

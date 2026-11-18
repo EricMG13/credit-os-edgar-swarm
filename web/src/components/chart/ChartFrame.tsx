@@ -1,6 +1,5 @@
-import { useId, useState, type ReactNode } from "react";
+import { useEffect, useId, useState, type ReactNode } from "react";
 import { ButtonGroup, ButtonGroupItem } from "@/components/base/button-group/button-group";
-import { TRACE_HOST } from "@/pages/library/parts/TraceControl";
 
 export type ChartView = "chart" | "table";
 
@@ -31,6 +30,13 @@ export function ChartFrame({
   const hasSubtitle = subtitle !== undefined && subtitle !== "";
   const titleId = useId();
   const subtitleId = useId();
+  useEffect(
+    () => () => {
+      if (!document.querySelector(".recharts-wrapper"))
+        document.getElementById("recharts_measurement_span")?.remove();
+    },
+    [],
+  );
   const heading = (
     <Heading
       id={titleId}
@@ -43,7 +49,7 @@ export function ChartFrame({
     <figure
       aria-labelledby={titleId}
       aria-describedby={hasSubtitle ? subtitleId : undefined}
-      className={`${TRACE_HOST} flex flex-col gap-4`}
+      className="group/trace relative flex flex-col gap-4"
     >
       <div className="flex flex-wrap items-center gap-3">
         {hasSubtitle ? (

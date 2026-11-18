@@ -1,0 +1,37 @@
+[probe] proof.serve up on http://127.0.0.1:8748 (root /tmp/cs-C2/r-CHJJ7e)
+ok   loading: no 'Loading run options…' sentence and no intro  [Library
+ / Start a run
+Start a run
+Synthetic test]
+ok   loading: a status region named 'Loading run options' holds a skeleton
+ok   loading: the form and the intro arrive together
+ok   500 json {error:'boom: internal'}: an alert with a fixed sentence and no raw text  [Error: The run options could not be loaded The run options could not be loaded. Try again, or ask whoever runs the service to check it. Try again]
+ok   500 json {error:'boom: internal'}: the intro is not shown
+ok   500 json {error:'boom: internal'}: Try again loads the form
+ok   500 html: an alert with a fixed sentence and no raw text  [Error: The run options could not be loaded The run options could not be loaded. Try again, or ask whoever runs the service to check it. Try again]
+ok   500 html: the intro is not shown
+ok   500 html: Try again loads the form
+ok   connection refused: an alert with a fixed sentence and no raw text  [Error: The service cannot be reached The run options could not be loaded. Try again, or ask whoever runs the service to check it. Try again]
+ok   connection refused: the intro is not shown
+ok   connection refused: Try again loads the form
+ok   s400: one alert  [["Documents or answers changed after approval. Review the run again before submitting."]]
+ok   s400: capitalised, with a full stop, then the next sentence  [Documents or answers changed after approval. Review the run again before submitting.]
+ok   s404: one alert  [["Unknown submission. Review the run again before submitting."]]
+ok   s404: capitalised, with a full stop, then the next sentence  [Unknown submission. Review the run again before submitting.]
+ok   s500: one alert  [["Launcher failed. The run may or may not have started. Submitting again is safe. The service starts one run for this approval and returns that run if it already exists."]]
+ok   s500: the alert is in the viewport, 86 px from Submit  [{"top":787,"submitTop":873}]
+ok   s500: says whether the run started and that a repeat is safe, no raw browser text, no repeated 'try again'  [Launcher failed. The run may or may not have started. Submitting again is safe. The service starts one run for this approval and returns that run if it already exists.]
+ok   s500: Submit can be pressed again (second request sent)  [2]
+ok   snet: one alert  [["The page lost contact with the service, so it cannot tell whether the run started. Submitting again is safe. The service starts one run for this approval and returns that run if it already exists."]]
+ok   snet: the alert is in the viewport, 86 px from Submit  [{"top":787,"submitTop":873}]
+ok   snet: says whether the run started and that a repeat is safe, no raw browser text, no repeated 'try again'  [The page lost contact with the service, so it cannot tell whether the run started. Submitting again is safe. The service starts one run for this approval and returns that run if it already exists.]
+ok   snet: Submit can be pressed again (second request sent)  [2]
+ok   Earnings Update: the step text says the two periods are required
+ok   Earnings Update: both labels are marked required  [["Current period (required)","Prior period (required)"]]
+ok   Earnings Update: the stepper note no longer says Optional
+ok   Earnings Update: Review run with both empty gives the page's own alert, not the browser's tooltip  [{"first":["Current period is required for Earnings Update."],"native":""}]
+ok   Earnings Update: then Prior period is reported  [["Prior period is required for Earnings Update."]]
+ok   Earnings Update: with both periods the review opens
+[probe] proof.serve on http://127.0.0.1:8748 stopped
+ok   walk-t08: no page error, console error or blocked request  [{"pageerrors":[],"console":[],"blocked":[]}]
+walk-t08: every check held

@@ -10,9 +10,9 @@ export function obj(v: unknown, path: string): Obj {
   if (typeof v !== "object" || v === null || Array.isArray(v)) return fail(path, "an object");
   return v as Obj;
 }
-// A module code (CP-3) stays off these pages: every string is checked where it is read.
+// A module code (CP-3, CP-DR, CP-L10, cp-1a) stays off these pages: every string is checked where it is read.
 const noCode = (v: string, at: string): string =>
-  /\bCP-\d/.test(v) ? fail(at, "no module code") : v;
+  /\bCP-[0-9A-Z]/i.test(v) ? fail(at, "no module code") : v;
 export function str(o: Obj, key: string, path: string): string {
   const v = o[key];
   return typeof v === "string" ? noCode(v, `${path}.${key}`) : fail(`${path}.${key}`, "a string");

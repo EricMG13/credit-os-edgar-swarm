@@ -1,0 +1,17 @@
+✔ capture refuses an old root without executing its proof module (57.274605ms)
+✔ capture validates FID_ATTACH before any browser launch (109.611489ms)
+✔ pairedSnapshot reads a direct loopback response and never follows a redirect (34.794894ms)
+✔ capture run-state API reads direct responses and never follows a redirect (36.215027ms)
+✔ both direct network readers reject a non-loopback initial URL before a request (0.621087ms)
+✔ R4-019 observed Edge local download icon is an offline resource (1.279902ms)
+✔ fileicon classification is limited to absolute local paths on the two browser services (0.949022ms)
+✔ C1-025/C3-001 compact proof accepts only the exact selected lead and its source identity (1.508136ms)
+✔ compact proof retains exact public keys and rejects lead source or text drift (7.142299ms)
+ℹ tests 9
+ℹ suites 0
+ℹ pass 9
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 743.401355

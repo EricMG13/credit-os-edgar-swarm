@@ -1,15 +1,30 @@
-import { screen, within } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
+import { Feed } from "./Feed";
 import { fixture, show, showFixture } from "../test-helpers";
 
 const LIVE_CLASSES = ".status-halo, .queued-shimmer, .animate-spin, .feed-rise";
-const STOP_REASON =
-  "Not available here: this page shows a saved example and is not connected to the run service.";
 
 const modulesList = () =>
   within(screen.getByRole("region", { name: "Modules" })).queryByRole("list");
 const stepsOf = () => within(modulesList() as HTMLElement).getAllByRole("listitem");
 const badgeCount = (word: string) =>
   within(modulesList() as HTMLElement).getAllByText(word, { selector: "span" }).length;
+
+it("retains prior feed rows when another identical event arrives", () => {
+  const event = {
+    who: "Module",
+    time: "08:00",
+    text: "Draft rejected.",
+    state: "Rejected",
+  } as const;
+  const { rerender } = render(<Feed lines={[event, event]} />);
+  const priorRows = screen.getAllByRole("listitem");
+  rerender(<Feed lines={[event, event, event]} />);
+  const rows = screen.getAllByRole("listitem");
+  expect(rows).toHaveLength(3);
+  expect(rows[1]).toBe(priorRows[0]);
+  expect(rows[2]).toBe(priorRows[1]);
+});
 
 describe("Run activity, running", () => {
   beforeEach(() => showFixture("/run/activity/running"));
@@ -30,7 +45,7 @@ describe("Run activity, running", () => {
     expect(screen.getByText("USD 7.40")).toBeTruthy();
     expect(screen.getByText("5 of 13")).toBeTruthy();
     expect(screen.getByText("16 min 12 s")).toBeTruthy();
-    expect(screen.getByText("USD 7.40 of USD 20.00")).toBeTruthy();
+    expect(screen.getByText("USD 7.40 of USD 25.00")).toBeTruthy();
     expect(screen.getByText("5 of 13 modules")).toBeTruthy();
     expect(screen.getByText("Started today at 14:38")).toBeTruthy();
     const bars = screen.getAllByRole("progressbar");
@@ -54,14 +69,16 @@ describe("Run activity, running", () => {
     expect(badgeCount("Queued")).toBe(7);
   });
 
-  it("shimmers the seven queued steps and pulses the one running badge", () => {
+  it("draws static placeholders for queued steps and marks the current step", () => {
     const steps = stepsOf();
-    const shimmering = steps.filter((s) => s.querySelector(".queued-shimmer") !== null);
-    expect(shimmering).toHaveLength(7);
-    expect(steps[5]?.querySelector(".status-halo")).not.toBeNull();
+    const placeholders = steps.filter((s) => s.querySelector(".activity-skel") !== null);
+    expect(placeholders).toHaveLength(7);
+    expect(steps[5]?.querySelector(".run-step-marker")).not.toBeNull();
+    expect(steps[5]).toHaveAttribute("aria-current", "step");
+    expect(document.querySelectorAll(LIVE_CLASSES)).toHaveLength(0);
   });
 
-  it("draws the feed, newest first, with the first line rising in", () => {
+  it("draws the feed, newest first", () => {
     const feed = screen.getByRole("region", { name: "Activity" });
     const lines = within(feed).getAllByRole("article");
     expect(lines).toHaveLength(7);
@@ -70,16 +87,11 @@ describe("Run activity, running", () => {
     expect(lines[0]?.textContent).toContain("Started.");
     expect(lines[0]?.querySelector("time")?.textContent).toBe("14:54");
     expect(lines[0]?.querySelector("time")?.hasAttribute("datetime")).toBe(false);
-    expect(feed.querySelectorAll(".feed-rise")).toHaveLength(1);
-    expect(lines[0]?.closest(".feed-rise")).not.toBeNull();
-    expect(lines[6]?.textContent).toContain("Started. 13 modules queued, cap USD 20.00.");
+    expect(lines[6]?.textContent).toContain("Started. 13 modules queued, cap USD 25.00.");
   });
 
-  it("disables Stop run and says why", () => {
-    const stop = screen.getByRole("button", { name: "Stop run" });
-    expect(stop.hasAttribute("disabled")).toBe(true);
-    expect(screen.getByText(STOP_REASON)).toBeTruthy();
-    expect(stop.getAttribute("aria-describedby")).toBe(screen.getByText(STOP_REASON).id);
+  it("S6-033 offers no unsupported Stop run action", () => {
+    expect(screen.queryByRole("button", { name: "Stop run" })).toBeNull();
   });
 });
 
@@ -221,6 +233,6 @@ describe("Run activity, a missing figure", () => {
     showFixture("/run/activity/starting");
     expect(screen.getByText("No module has reported yet")).toBeTruthy();
     const bars = screen.getAllByRole("progressbar");
-    expect(bars.map((b) => b.getAttribute("aria-valuemax"))).toEqual(["20"]);
+    expect(bars.map((b) => b.getAttribute("aria-valuemax"))).toEqual(["25"]);
   });
 });

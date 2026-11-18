@@ -257,7 +257,11 @@ export function Kit() {
           Button group
         </h2>
         <Row>
-          <ButtonGroup aria-label="Chart or Table" defaultSelectedKeys={["chart"]}>
+          <ButtonGroup
+            aria-label="Chart or Table"
+            defaultSelectedKeys={["chart"]}
+            disallowEmptySelection
+          >
             <ButtonGroupItem id="chart">Chart</ButtonGroupItem>
             <ButtonGroupItem id="table">Table</ButtonGroupItem>
           </ButtonGroup>

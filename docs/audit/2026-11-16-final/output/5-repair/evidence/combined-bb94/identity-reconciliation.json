@@ -1,0 +1,18 @@
+{
+  "definition": "absolute file path + 1-based in-file collected test ordinal + full test name",
+  "dynamicCollectionPin": "5e1d98b37305a9da59fb6944740ff17b721051af",
+  "currentExecutionPin": "bb94ddceff3a1f02c7239ebca72de285df79c607",
+  "expectedFiles": 308,
+  "expectedTests": 5259,
+  "actualFiles": 308,
+  "actualTests": 5259,
+  "distinctFiles": 308,
+  "distinctTests": 5259,
+  "missingFiles": [],
+  "extraFiles": [],
+  "duplicateFiles": 0,
+  "missingTests": [],
+  "extraTests": [],
+  "duplicateTests": 0,
+  "notPassed": []
+}

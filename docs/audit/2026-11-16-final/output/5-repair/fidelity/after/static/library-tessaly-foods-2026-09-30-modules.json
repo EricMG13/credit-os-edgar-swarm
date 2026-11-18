@@ -1,0 +1,93 @@
+{
+  "screen": {"id":"library--tessaly-foods--2026-09-30--modules","surface":"static","address":"/library/tessaly-foods/2026-09-30/modules","extra":false,"variant":null},
+  "page": {"title":"Modules — Business profile — Tessaly Foods — As of 30 Sep 2026 — Credit OS","headings":["Tessaly Foods","Business profile","The two largest retail accounts are moving to private label.","Key findings","Limitations 1"]},
+  "counts": {"textRuns":36,"figures":4,"figuresByKind":{"card":3,"paragraph":1},"tableViewFigures":0,"chartTableViews":0,"tables":0,"tableRows":0,"sourceLines":0,"drawerLines":0,"limitationSentences":3,"marks":6,"images":0,"traceControls":3,"traceDrawers":0,"traceUnavailable":3,"traceErrors":0,"coverageGap":0},
+  "expandedDisclosures": 0,
+  "outline": [
+    {"section":"","kind":"text","text":"Design reference with sample data"},
+    {"section":"","kind":"text","text":"This page shows a saved example. Its names and figures are samples, and it is not connected to the run service, so nothing here starts a run or spends money."},
+    {"section":"","kind":"link","text":"Library"},
+    {"section":"Tessaly Foods","kind":"heading","text":"Tessaly Foods"},
+    {"section":"Tessaly Foods","kind":"text","text":"As of 30 Sep 2026"},
+    {"section":"Tessaly Foods","kind":"text","text":"Monitoring update"},
+    {"section":"Tessaly Foods","kind":"text","text":"Finished"},
+    {"section":"Tessaly Foods","kind":"text","text":"Show sources"},
+    {"section":"Tessaly Foods","kind":"link","text":"Report history"},
+    {"section":"Tessaly Foods","kind":"link","text":"New run"},
+    {"section":"Tessaly Foods","kind":"link","text":"Overview"},
+    {"section":"Tessaly Foods","kind":"link","text":"Changes"},
+    {"section":"Tessaly Foods","kind":"link","text":"Modules"},
+    {"section":"Tessaly Foods","kind":"link","text":"2"},
+    {"section":"Tessaly Foods","kind":"text","text":"Forecast"},
+    {"section":"Tessaly Foods","kind":"text","text":"No forecast for this run"},
+    {"section":"Tessaly Foods","kind":"link","text":"Evidence"},
+    {"section":"Tessaly Foods","kind":"text","text":"On this page"},
+    {"section":"Tessaly Foods","kind":"control","text":"Bottom line"},
+    {"section":"Tessaly Foods","kind":"control","text":"Key findings"},
+    {"section":"Tessaly Foods","kind":"control","text":"Limitations"},
+    {"section":"Tessaly Foods","kind":"text","text":"Modules in this run"},
+    {"section":"Tessaly Foods","kind":"link","text":"Business profile"},
+    {"section":"Tessaly Foods","kind":"link","text":"Source readiness"},
+    {"section":"Tessaly Foods > Business profile","kind":"heading","text":"Business profile"},
+    {"section":"Tessaly Foods > Business profile","kind":"text","text":"Delivered"},
+    {"section":"Tessaly Foods > Business profile","kind":"text","text":"Bottom line"},
+    {"section":"Tessaly Foods > Business profile > The two largest retail accounts are moving to private label.","kind":"heading","text":"The two largest retail accounts are moving to private label."},
+    {"section":"Tessaly Foods > Business profile > The two largest retail accounts are moving to private label.","kind":"paragraph","text":"Private-label losses in these two accounts, three quarters of negative free cash flow and a 70% drawn facility are what moved in the supplied results."},
+    {"section":"Tessaly Foods > Business profile > Key findings","kind":"heading","text":"Key findings"},
+    {"section":"Tessaly Foods > Business profile > Key findings","kind":"item","text":"01"},
+    {"section":"Tessaly Foods > Business profile > Key findings","kind":"item","text":"Private-label losses"},
+    {"section":"Tessaly Foods > Business profile > Key findings","kind":"item","text":"Sales to the two largest retail accounts fell as they moved volume to private label."},
+    {"section":"Tessaly Foods > Business profile > Limitations 1","kind":"heading","text":"Limitations 1"},
+    {"section":"Tessaly Foods > Business profile > Limitations 1","kind":"link","text":"See this module’s gaps in Evidence"},
+    {"section":"Tessaly Foods > Business profile > Limitations 1","kind":"item","text":"Account-level sales come from management presentations."}
+  ],
+  "tables": [],
+  "figures": [
+    {"kind":"card","text":"As of 30 Sep 2026","tokens":["30","2026"],"section":"Tessaly Foods","label":"Monitoring update","period":"As of 30 Sep 2026","unit":null,"basis":null,"beside":"As of 30 Sep 2026 | Monitoring update | Finished"},
+    {"kind":"card","text":"2","tokens":["2"],"section":"Tessaly Foods","label":"Modules","period":null,"unit":null,"basis":null,"beside":"Modules | 2"},
+    {"kind":"paragraph","text":"Private-label losses in these two accounts, three quarters of negative free cash flow and a 70% drawn facility are what moved in the supplied results.","tokens":["70%"],"section":"Tessaly Foods > Business profile > The two largest retail accounts are moving to private label.","label":null,"period":null,"unit":"%","basis":null},
+    {"kind":"card","text":"01","tokens":["01"],"section":"Tessaly Foods > Business profile > Key findings","label":"Private-label losses","period":null,"unit":null,"basis":null,"beside":"01 | Private-label losses | Sales to the two largest retail accounts fell as they moved volume to private label."}
+  ],
+  "sources": [],
+  "limitations": [
+    {"via":"text","section":"","text":"This page shows a saved example. Its names and figures are samples, and it is not connected to the run service, so nothing here starts a run or spends money."},
+    {"via":"section","section":"Tessaly Foods > Business profile > Limitations 1","text":"See this module’s gaps in Evidence"},
+    {"via":"section","section":"Tessaly Foods > Business profile > Limitations 1","text":"Account-level sales come from management presentations."}
+  ],
+  "marks": [
+    {"in":null,"tag":"div","attrs":{"data-input-wrapper":"true","data-input-size":"md"}},
+    {"in":null,"tag":"span","attrs":{"data-module-name":"true"},"text":"Business profile"},
+    {"in":null,"tag":"span","attrs":{"data-module-name":"true"},"text":"Source readiness"},
+    {"in":null,"tag":"div","attrs":{"data-section":"bottom-line"},"text":"Bottom lineThe two largest retail accounts are moving to private label.Private-l"},
+    {"in":null,"tag":"div","attrs":{"data-section":"findings"},"text":"Key findings01Private-label lossesSales to the two largest retail accounts fell "},
+    {"in":null,"tag":"div","attrs":{"data-section":"limitations"},"text":"Limitations1See this module’s gaps in EvidenceAccount-level sales come from mana"}
+  ],
+  "controls": [
+    {"role":"switch","name":"Show sources","checked":false,"selected":null,"pressed":null},
+    {"role":"select","name":"Business profileSource readiness","value":"Business profile","options":[" ","Business profile","Source readiness"]},
+    {"role":"select","name":"Bottom lineKey findingsLimitations","value":"Bottom line","options":[" ","Bottom line","Key findings","Limitations"]}
+  ],
+  "links": [
+    {"text":"Library","href":"#/library/home"},
+    {"text":"Report history","href":"#/library/tessaly-foods/history"},
+    {"text":"New run","href":"#/run/start"},
+    {"text":"Overview","href":"#/library/tessaly-foods/2026-09-30/overview"},
+    {"text":"Changes","href":"#/library/tessaly-foods/2026-09-30/changes"},
+    {"text":"Modules 2","href":"#/library/tessaly-foods/2026-09-30/modules/business-profile"},
+    {"text":"Evidence","href":"#/library/tessaly-foods/2026-09-30/evidence/summary"},
+    {"text":"Business profile","href":"#/library/tessaly-foods/2026-09-30/modules/business-profile"},
+    {"text":"Source readiness","href":"#/library/tessaly-foods/2026-09-30/modules/source-readiness"},
+    {"text":"See this module’s gaps in Evidence","href":"#/library/tessaly-foods/2026-09-30/evidence/gaps"}
+  ],
+  "images": [],
+  "screenReaderOnly": [],
+  "coverage": {"innerText":6,"captured":6,"optionsNotDrawn":0,"selected":0,"typed":0,"screenReaderOnly":0},
+  "chartTableViews": [],
+  "sourceDrawers": [],
+  "unavailableSourceControls": [
+    {"n":1,"control":"Show sources for the bottom line: no source recorded","ariaDisabled":"true","disabled":false,"tooltip":"No source recorded","opensDialog":false},
+    {"n":2,"control":"Show sources for this finding: no source recorded","ariaDisabled":"true","disabled":false,"tooltip":"No source recorded","opensDialog":false},
+    {"n":3,"control":"Show sources for this limitation: no source recorded","ariaDisabled":"true","disabled":false,"tooltip":"No source recorded","opensDialog":false}
+  ],
+  "sourceControlErrors": []
+}

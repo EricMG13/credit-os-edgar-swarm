@@ -25,7 +25,7 @@ function PointTile({ point }: { point: Point }) {
           <div className="max-w-50 flex-none">
             <CellValue cell={point.figure} figureClass={FIGURE} />
           </div>
-          <div className="flex min-w-0 flex-1 flex-col items-start gap-2">
+          <div className="flex max-w-full min-w-0 flex-1 flex-col items-start gap-2">
             <p className="text-body">{point.text}</p>
             <Badge size="sm" className="max-w-full whitespace-normal">
               {point.qualifier}
@@ -65,6 +65,24 @@ export function Overview({ issuer, run }: { issuer: string | undefined; run: str
       {({ overview, id: runId }, issuerId) => (
         <div className="flex flex-col gap-8">
           <BottomLine text={overview.bottomLine} level={SECTION_HEADING} />
+          <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
+            <Section title="Key findings">
+              <Findings findings={overview.findings} />
+            </Section>
+            <div className="flex flex-col gap-10">
+              {overview.changeView === null ? null : (
+                <ChangeViewNote view={overview.changeView} label="Show sources for the triggers" />
+              )}
+              <Section title="Dates to watch">
+                <Timeline
+                  items={overview.dates.map((item) => ({
+                    ...item,
+                    action: <TraceControl trace={item.trace} label="Show sources for this date" />,
+                  }))}
+                />
+              </Section>
+            </div>
+          </div>
           {overview.metrics.length === 0 ? null : (
             <section aria-label={overview.metricsLabel}>
               <ul className="grid grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-4">
@@ -75,19 +93,6 @@ export function Overview({ issuer, run }: { issuer: string | undefined; run: str
             </section>
           )}
           {overview.sides === null ? null : <ForAndAgainst sides={overview.sides} />}
-          <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
-            <Section title="Key findings">
-              <Findings findings={overview.findings} />
-            </Section>
-            <div className="flex flex-col gap-10">
-              {overview.changeView === null ? null : (
-                <ChangeViewNote view={overview.changeView} label="Show sources for the triggers" />
-              )}
-              <Section title="Dates to watch">
-                <Timeline items={overview.dates} />
-              </Section>
-            </div>
-          </div>
           <Section title="Modules" note={overview.modules.summary}>
             <ModuleItems items={overview.modules.items} issuer={issuerId} run={runId} />
           </Section>

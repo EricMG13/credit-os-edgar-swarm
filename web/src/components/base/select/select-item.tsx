@@ -75,7 +75,7 @@ export const SelectItem = ({
           <div className={cx("flex w-full min-w-0 flex-1 flex-wrap", size.textContainer)}>
             <AriaText
               slot="label"
-              className={cx("truncate font-medium whitespace-nowrap text-primary", size.text)}
+              className={cx("min-w-0 font-medium wrap-anywhere text-primary", size.text)}
             >
               {label || (typeof children === "function" ? children(state) : children)}
             </AriaText>
@@ -83,7 +83,7 @@ export const SelectItem = ({
             {supportingText && (
               <AriaText
                 slot="description"
-                className={cx("whitespace-nowrap text-tertiary", size.text)}
+                className={cx("min-w-0 wrap-anywhere text-tertiary", size.text)}
               >
                 {supportingText}
               </AriaText>

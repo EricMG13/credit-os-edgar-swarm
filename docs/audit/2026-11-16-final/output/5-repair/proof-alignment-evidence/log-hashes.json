@@ -1,0 +1,229 @@
+{
+  "normalization": "Only trailing horizontal whitespace and final blank log lines removed; no assertion/value/status text changed. Original raw logs remain under /workspace/scratch.",
+  "logs": [
+    {
+      "file": "build-green.log",
+      "raw_sha256": "e533fd7cec8f797c1bf8cd7daa1487a4ae56a64664b733a94fd805020d52632e",
+      "portable_sha256": "e533fd7cec8f797c1bf8cd7daa1487a4ae56a64664b733a94fd805020d52632e",
+      "raw_bytes": 3012,
+      "portable_bytes": 3012
+    },
+    {
+      "file": "evidence-eslint-green.log",
+      "raw_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "portable_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "raw_bytes": 0,
+      "portable_bytes": 0
+    },
+    {
+      "file": "evidence-format-green.log",
+      "raw_sha256": "17aa973d3f004560237d9a95171210b0671deff23d61628eecf7322ff5938f20",
+      "portable_sha256": "17aa973d3f004560237d9a95171210b0671deff23d61628eecf7322ff5938f20",
+      "raw_bytes": 66,
+      "portable_bytes": 66
+    },
+    {
+      "file": "final-eslint-green.log",
+      "raw_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "portable_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "raw_bytes": 0,
+      "portable_bytes": 0
+    },
+    {
+      "file": "final-format-green.log",
+      "raw_sha256": "17aa973d3f004560237d9a95171210b0671deff23d61628eecf7322ff5938f20",
+      "portable_sha256": "17aa973d3f004560237d9a95171210b0671deff23d61628eecf7322ff5938f20",
+      "raw_bytes": 66,
+      "portable_bytes": 66
+    },
+    {
+      "file": "final-unit-green.log",
+      "raw_sha256": "a4e83325514fa2f81a7a08a27491df1f72634a2096f4c2db96806394065872f2",
+      "portable_sha256": "a4e83325514fa2f81a7a08a27491df1f72634a2096f4c2db96806394065872f2",
+      "raw_bytes": 371,
+      "portable_bytes": 371
+    },
+    {
+      "file": "format-green.log",
+      "raw_sha256": "2870cf5ce278d7b8366d0b6988efd5b96bf0b5a188a5c767cdbebab597f4782d",
+      "portable_sha256": "2870cf5ce278d7b8366d0b6988efd5b96bf0b5a188a5c767cdbebab597f4782d",
+      "raw_bytes": 124,
+      "portable_bytes": 124
+    },
+    {
+      "file": "guard-missing-red.log",
+      "raw_sha256": "27f70782d83b85fe38e8a6af5badd85d640254fa77f6e7f15546aa0530524484",
+      "portable_sha256": "27f70782d83b85fe38e8a6af5badd85d640254fa77f6e7f15546aa0530524484",
+      "raw_bytes": 930,
+      "portable_bytes": 930
+    },
+    {
+      "file": "iteration-1-red.log",
+      "raw_sha256": "83659a8db71d2773d8b438819898c27d87eed6ed0cba21644101f163e1db0436",
+      "portable_sha256": "62e19abf6c4a6bffd8bc6a53860f0ad500c70704606ec953b532766979177b80",
+      "raw_bytes": 2125,
+      "portable_bytes": 2121
+    },
+    {
+      "file": "iteration-2-red.log",
+      "raw_sha256": "3db6b288c49ee7edfc446dc57ea00ca9d779445d1be21b7e069fef49eb2035b6",
+      "portable_sha256": "a11dd6a3cecf789232b2e46a719371fee1a55abbd2d982806d194ff6cab1fbee",
+      "raw_bytes": 2574,
+      "portable_bytes": 2570
+    },
+    {
+      "file": "iteration-3-red.log",
+      "raw_sha256": "1343d522662048360e64312fc0ef1067e0bf6b3d9cb15c453ccdab5fc07230dd",
+      "portable_sha256": "6b82fd672b03dacecf62484843b13a69f9e76c19c5d7173ad725d86a8d7df9d7",
+      "raw_bytes": 2965,
+      "portable_bytes": 2957
+    },
+    {
+      "file": "iteration-4-red.log",
+      "raw_sha256": "2ebe8daaca122084734e517c1c463bff41a1fed9e4d3a6813f4596fecbde7c72",
+      "portable_sha256": "245b9324099ea7dd184f8737f0fee6d4820cda1ce531198182c49a9345f79613",
+      "raw_bytes": 3275,
+      "portable_bytes": 3267
+    },
+    {
+      "file": "iteration-5-red.log",
+      "raw_sha256": "97bf08a8fa8934547fb1f9f4ce9fa7a9bfd4207e423a6200663636137f7d1c7d",
+      "portable_sha256": "08f1f70c11ea2e6c0676788e906a8898c1cdcc8876652bec9a50bb2dd97f961a",
+      "raw_bytes": 2809,
+      "portable_bytes": 2805
+    },
+    {
+      "file": "iteration-6-red.log",
+      "raw_sha256": "8312656825a956d06369d239709b464453d62ad0f2fd1d980db25dc90408a9e1",
+      "portable_sha256": "40db277b7964da413ea4a6d212ff41dd3d47486bcb440ba7377a4c08985ad581",
+      "raw_bytes": 2941,
+      "portable_bytes": 2937
+    },
+    {
+      "file": "iteration-7-red.log",
+      "raw_sha256": "40a8eee8906f007cb4b668b492b8a86569074622dca7cf2c65a852443a0b2a3b",
+      "portable_sha256": "946e942b6435387471c115f8d8ba2df65b74f45b3a234aa5910dc6b0c9c76116",
+      "raw_bytes": 2827,
+      "portable_bytes": 2823
+    },
+    {
+      "file": "iteration-8-red.log",
+      "raw_sha256": "b7ad4a068fb65e7ee6452677c2e8918bf98719fd9a826df3cfada2f1f08fa5c1",
+      "portable_sha256": "a20d3c4d436039e717fe03776dedff14656a7328d8769efb360a314dedbca5b2",
+      "raw_bytes": 2563,
+      "portable_bytes": 2559
+    },
+    {
+      "file": "iteration-9-red.log",
+      "raw_sha256": "0784e6cae25bb774d03632cac8d15232f6fd35d3c08923dd3bd9939f41b1c12b",
+      "portable_sha256": "be8ee4bfcebd23e7d30c730d49c1e6aab9107c0397917922ed6ef79b3658b723",
+      "raw_bytes": 2565,
+      "portable_bytes": 2561
+    },
+    {
+      "file": "lint-green.log",
+      "raw_sha256": "b827ad5bd490a567317c4aff961912f2daef3d83a46e9e67e7079730de71c666",
+      "portable_sha256": "2a534c01fef6e14a06a1eba151b4f22f7d25085c441a80114772aa7384c536e1",
+      "raw_bytes": 57,
+      "portable_bytes": 56
+    },
+    {
+      "file": "network-guard-browser-green.log",
+      "raw_sha256": "1199489525b6abe6985bafdce13467fd2a2839dcc9593ff7c603274533d7c4f7",
+      "portable_sha256": "1199489525b6abe6985bafdce13467fd2a2839dcc9593ff7c603274533d7c4f7",
+      "raw_bytes": 300,
+      "portable_bytes": 300
+    },
+    {
+      "file": "network-guard-chrome-green.log",
+      "raw_sha256": "6ed710da9db4b101b53b0e8db773a6ecf8a5bb46d479c85d713cc711607579f4",
+      "portable_sha256": "6ed710da9db4b101b53b0e8db773a6ecf8a5bb46d479c85d713cc711607579f4",
+      "raw_bytes": 300,
+      "portable_bytes": 300
+    },
+    {
+      "file": "network-guard-edge-green.log",
+      "raw_sha256": "a1200f0519827231d141d07f0a876d735d0e9278498c64e1ac78c00f6f05c2e2",
+      "portable_sha256": "a1200f0519827231d141d07f0a876d735d0e9278498c64e1ac78c00f6f05c2e2",
+      "raw_bytes": 299,
+      "portable_bytes": 299
+    },
+    {
+      "file": "original-red.log",
+      "raw_sha256": "493bfc4164b07cd92c84496389268c3e4eb76ec4f8bce3e006ce4f29e0f3d10e",
+      "portable_sha256": "0260cba888db03840aacb75b8ac88f9d5a2cebafd2a2026da63fe4acbacdceba",
+      "raw_bytes": 4690,
+      "portable_bytes": 4682
+    },
+    {
+      "file": "route-only-redirect-red.log",
+      "raw_sha256": "9050ef4b5ad107294e3b2240957d14d29ff2e4491a3b9534da3418e811dac5d6",
+      "portable_sha256": "9a8d00b9e4eccf65bed706a9d2a4b0e4d961358cfe812add11adc87906962bf0",
+      "raw_bytes": 1530,
+      "portable_bytes": 1526
+    },
+    {
+      "file": "script-tests-green.log",
+      "raw_sha256": "2d0ad62098119bfa4af663b67b39280716eed9da1761a14fe1d2e6e996575e02",
+      "portable_sha256": "2d0ad62098119bfa4af663b67b39280716eed9da1761a14fe1d2e6e996575e02",
+      "raw_bytes": 5531,
+      "portable_bytes": 5531
+    },
+    {
+      "file": "settled-execution-red.log",
+      "raw_sha256": "f10e98c8949ed01f5674c9300248938246da440c44f77f17ffef78dfb4c8e5f2",
+      "portable_sha256": "7d3ff4d0c2555fac08d053cf900716b7a01c5947fccab935d525f5330c417b08",
+      "raw_bytes": 2843,
+      "portable_bytes": 2835
+    },
+    {
+      "file": "typecheck-green.log",
+      "raw_sha256": "0c62eaf58160b0d331009e7dbd28f0b9446e77ea0a7cdda50a6b9ca1824c662b",
+      "portable_sha256": "e65f4a10f72fb012f5fc8e15108ee3ec4386af07488f4b76e1cd21311b15fe7a",
+      "raw_bytes": 49,
+      "portable_bytes": 48
+    },
+    {
+      "file": "R4-016-startup-red.log",
+      "raw_sha256": "d883263d08259a4e5ce73ea37201449523c71d9658a664026aa4de538a85e7d4",
+      "portable_sha256": "d883263d08259a4e5ce73ea37201449523c71d9658a664026aa4de538a85e7d4",
+      "raw_bytes": 1497,
+      "portable_bytes": 1497
+    },
+    {
+      "file": "R4-016-startup-green.log",
+      "raw_sha256": "a253b945444fb79ea7a2360f7f1b1452f1473e4f629e4e1e09cd37ed657264f7",
+      "portable_sha256": "a253b945444fb79ea7a2360f7f1b1452f1473e4f629e4e1e09cd37ed657264f7",
+      "raw_bytes": 851,
+      "portable_bytes": 851
+    },
+    {
+      "file": "R4-016-chrome-green.log",
+      "raw_sha256": "ae619490624ad2d3db2fb012abbb8217f34853ff49effd8b55356b117a3277d1",
+      "portable_sha256": "ae619490624ad2d3db2fb012abbb8217f34853ff49effd8b55356b117a3277d1",
+      "raw_bytes": 299,
+      "portable_bytes": 299
+    },
+    {
+      "file": "R4-016-edge-green.log",
+      "raw_sha256": "ff0f2cbe978f9c68708d29423b5107c450909ec35eb37350e5553a08fb0b720c",
+      "portable_sha256": "ff0f2cbe978f9c68708d29423b5107c450909ec35eb37350e5553a08fb0b720c",
+      "raw_bytes": 301,
+      "portable_bytes": 301
+    },
+    {
+      "file": "R4-016-eslint-green.log",
+      "raw_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "portable_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "raw_bytes": 0,
+      "portable_bytes": 0
+    },
+    {
+      "file": "R4-016-format-green.log",
+      "raw_sha256": "17aa973d3f004560237d9a95171210b0671deff23d61628eecf7322ff5938f20",
+      "portable_sha256": "17aa973d3f004560237d9a95171210b0671deff23d61628eecf7322ff5938f20",
+      "raw_bytes": 66,
+      "portable_bytes": 66
+    }
+  ]
+}

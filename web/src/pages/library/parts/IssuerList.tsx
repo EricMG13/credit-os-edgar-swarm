@@ -63,7 +63,7 @@ function Figure({ measure }: { measure: NonNullable<Measure> }) {
         {measure.basis === "adjusted" ? (
           <>
             {" "}
-            <span className="text-xs text-text-tertiary">adj.</span>
+            <span className="text-caption text-text-tertiary">adj.</span>
           </>
         ) : null}
       </TooltipTrigger>
@@ -93,7 +93,7 @@ function Hidden({
       <h2 className="text-body font-semibold text-text-primary">{`Hidden by ${name}: ${reason}`}</h2>
       <ul className="flex flex-wrap gap-x-4 gap-y-1 text-small text-text-secondary">
         {rows.map((r) => (
-          <li key={r.issuer}>
+          <li key={r.issuer} className="min-w-0 wrap-anywhere">
             <Link href={cardHref(r.issuer, r.href)} className={`${TEXT_LINK} underline`}>
               {r.name}
             </Link>
@@ -166,21 +166,23 @@ export function IssuerList({
             <Table.Body>
               {shown.map((r) => (
                 <Table.Row key={r.issuer} id={r.issuer}>
-                  <Table.Cell className={NOWRAP}>
+                  <Table.Cell className={CELL}>
                     <Link
                       href={cardHref(r.issuer, r.href)}
-                      className={`${TEXT_LINK} text-text-primary underline`}
+                      className={`${TEXT_LINK} block max-w-56 wrap-anywhere text-text-primary underline`}
                     >
                       {r.name}
                     </Link>
                   </Table.Cell>
-                  <Table.Cell className={CELL}>{r.sector}</Table.Cell>
+                  <Table.Cell className={CELL}>
+                    <span className="block max-w-56 wrap-anywhere">{r.sector}</span>
+                  </Table.Cell>
                   <Table.Cell className={NOWRAP}>
                     <StatusBadge set="Run states" state={r.state} />
                   </Table.Cell>
-                  <Table.Cell className={NOWRAP}>{r.asOf}</Table.Cell>
+                  <Table.Cell className={`${NOWRAP} tabular-nums`}>{r.asOf}</Table.Cell>
                   <Table.Cell className={CELL}>{r.pathway}</Table.Cell>
-                  <Table.Cell className={CELL}>{r.progress.text}</Table.Cell>
+                  <Table.Cell className={`${CELL} tabular-nums`}>{r.progress.text}</Table.Cell>
                   {MEASURES.map((k) => {
                     const m = r.measures[k];
                     return (

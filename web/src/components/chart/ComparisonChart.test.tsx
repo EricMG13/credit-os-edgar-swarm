@@ -126,8 +126,34 @@ describe("ComparisonChart chart side", () => {
     const { container } = renderCmp();
     expect(container.querySelector("[data-bar]")).toHaveClass("rounded-ds-xs");
     const grid = container.querySelector("[data-bar]")?.parentElement?.parentElement;
-    expect(grid).toHaveClass("grid-cols-[72px_minmax(0,1fr)_56px]");
+    expect(grid).toHaveClass("grid-cols-[72px_minmax(0,1fr)_minmax(56px,max-content)]");
     expect(screen.getByRole("list", { name: "Legend" })).toHaveClass("justify-center");
+  });
+
+  // C4-011: a fixed 56px column broke "7.0100%" after "7.0100" and left the "%" alone on a second
+  // line. The column is 56px at least and grows to its widest value; no digit is changed.
+  it("sizes the value column to its widest value, so a unit stays on its number", () => {
+    const yields: ComparisonPanel = {
+      measure: "Yield",
+      max: 9.12,
+      values: [7.01, 9.12],
+      texts: ["7.0100%", "9.1200%"],
+    };
+    const { container } = render(
+      <ComparisonChart
+        title="Last-trade prices and yields"
+        cases={CASES}
+        panels={[yields]}
+        table={{ head: ["Measure", ...CASES], rows: [{ label: "Yield", cells: yields.texts }] }}
+      />,
+    );
+    const grid = container.querySelector("[data-bar]")?.parentElement?.parentElement;
+    expect(grid).toHaveClass("grid-cols-[72px_minmax(0,1fr)_minmax(56px,max-content)]");
+    expect(grid).not.toHaveClass("grid-cols-[72px_minmax(0,1fr)_56px]");
+    expect([...container.querySelectorAll("[data-value]")].map((v) => v.textContent)).toEqual([
+      "7.0100%",
+      "9.1200%",
+    ]);
   });
 
   it("labels the rows with the short names and legends the case names", () => {

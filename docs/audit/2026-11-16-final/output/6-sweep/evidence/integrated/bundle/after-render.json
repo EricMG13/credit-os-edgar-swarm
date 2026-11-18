@@ -1,0 +1,310 @@
+{
+  "commit": "22926bd1982c8847a9913459587d3003bb7986df",
+  "browser": "157.0.8103.78",
+  "node": "v24.22.1",
+  "run": "20261117-220939-01",
+  "viewport": {
+    "width": 1440,
+    "height": 900
+  },
+  "measurement": "Cold context, goto(load) through report navigation and exact visible section heading, then two frames; samples sequential",
+  "options": {
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "reducedMotion": "reduce",
+    "serviceWorkers": "block"
+  },
+  "rounds": 3,
+  "applicationOutsideRequests": 0,
+  "browserProxyBlocks": 447,
+  "results": [
+    {
+      "id": "forecast",
+      "address": "#forecast",
+      "heading": "Forecast",
+      "millis": [
+        1114.761,
+        1250.004,
+        1029.435
+      ],
+      "medianMillis": 1114.761
+    },
+    {
+      "id": "modules--CP-DR",
+      "address": "#modules/CP-DR",
+      "heading": "Research questions",
+      "millis": [
+        915,
+        1012.713,
+        1001.408
+      ],
+      "medianMillis": 1001.408
+    },
+    {
+      "id": "evidence--trace",
+      "address": "#evidence/trace",
+      "heading": "Handoffs",
+      "millis": [
+        938.085,
+        998.216,
+        1068.994
+      ],
+      "medianMillis": 998.216
+    },
+    {
+      "id": "evidence--checks",
+      "address": "#evidence/checks",
+      "heading": "Script checks",
+      "millis": [
+        1005.267,
+        929.924,
+        976.582
+      ],
+      "medianMillis": 976.582
+    },
+    {
+      "id": "modules--CP-4",
+      "address": "#modules/CP-4",
+      "heading": "Legal & covenants",
+      "millis": [
+        971.273,
+        987.362,
+        965.511
+      ],
+      "medianMillis": 971.273
+    },
+    {
+      "id": "modules--CP-1",
+      "address": "#modules/CP-1",
+      "heading": "Financial foundation",
+      "millis": [
+        919.331,
+        979.913,
+        965.595
+      ],
+      "medianMillis": 965.595
+    },
+    {
+      "id": "evidence--summary",
+      "address": "#evidence/summary",
+      "heading": "Run evidence",
+      "millis": [
+        987.377,
+        932.17,
+        963.696
+      ],
+      "medianMillis": 963.696
+    },
+    {
+      "id": "modules--CP-2E",
+      "address": "#modules/CP-2E",
+      "heading": "Rates, FX & hedging",
+      "millis": [
+        1024.613,
+        950.453,
+        960.564
+      ],
+      "medianMillis": 960.564
+    },
+    {
+      "id": "evidence--record",
+      "address": "#evidence/record",
+      "heading": "Run record",
+      "millis": [
+        966.229,
+        957.822,
+        960.492
+      ],
+      "medianMillis": 960.492
+    },
+    {
+      "id": "modules--CP-6",
+      "address": "#modules/CP-6",
+      "heading": "Committee decision",
+      "millis": [
+        1005.361,
+        958.546,
+        945.331
+      ],
+      "medianMillis": 958.546
+    },
+    {
+      "id": "modules--CP-0",
+      "address": "#modules/CP-0",
+      "heading": "Source readiness",
+      "millis": [
+        936.148,
+        958.395,
+        979.823
+      ],
+      "medianMillis": 958.395
+    },
+    {
+      "id": "calendar",
+      "address": "#calendar",
+      "heading": "Issuer calendar",
+      "millis": [
+        1073.335,
+        908.223,
+        955.226
+      ],
+      "medianMillis": 955.226
+    },
+    {
+      "id": "overview",
+      "address": "#overview",
+      "heading": "Overview",
+      "millis": [
+        904.814,
+        949.86,
+        951.139
+      ],
+      "medianMillis": 949.86
+    },
+    {
+      "id": "modules--CP-3",
+      "address": "#modules/CP-3",
+      "heading": "Security selection",
+      "millis": [
+        980.55,
+        947.958,
+        946.749
+      ],
+      "medianMillis": 947.958
+    },
+    {
+      "id": "modules--default",
+      "address": "#modules",
+      "heading": "Financial foundation",
+      "millis": [
+        936.812,
+        991.583,
+        943.701
+      ],
+      "medianMillis": 943.701
+    },
+    {
+      "id": "modules--CP-2D",
+      "address": "#modules/CP-2D",
+      "heading": "Liquidity",
+      "millis": [
+        891.936,
+        952.005,
+        940.279
+      ],
+      "medianMillis": 940.279
+    },
+    {
+      "id": "modules--CP-1A",
+      "address": "#modules/CP-1A",
+      "heading": "Business & governance",
+      "millis": [
+        925.845,
+        947.393,
+        935.844
+      ],
+      "medianMillis": 935.844
+    },
+    {
+      "id": "modules--CP-5",
+      "address": "#modules/CP-5",
+      "heading": "Evidence validation",
+      "millis": [
+        922.377,
+        934.578,
+        950.273
+      ],
+      "medianMillis": 934.578
+    },
+    {
+      "id": "modules--CP-2A",
+      "address": "#modules/CP-2A",
+      "heading": "Downside",
+      "millis": [
+        1077.197,
+        933.832,
+        925.776
+      ],
+      "medianMillis": 933.832
+    },
+    {
+      "id": "history",
+      "address": "#history",
+      "heading": "Report history",
+      "millis": [
+        907.555,
+        969.153,
+        932.542
+      ],
+      "medianMillis": 932.542
+    },
+    {
+      "id": "modules--CP-3C",
+      "address": "#modules/CP-3C",
+      "heading": "Refinancing & LME",
+      "millis": [
+        904.281,
+        930.231,
+        940.072
+      ],
+      "medianMillis": 930.231
+    },
+    {
+      "id": "evidence--sources",
+      "address": "#evidence/sources",
+      "heading": "Sources",
+      "millis": [
+        929.75,
+        914.946,
+        1075.353
+      ],
+      "medianMillis": 929.75
+    },
+    {
+      "id": "modules--CP-2G",
+      "address": "#modules/CP-2G",
+      "heading": "Forward credit model",
+      "millis": [
+        927.216,
+        920.817,
+        931.738
+      ],
+      "medianMillis": 927.216
+    },
+    {
+      "id": "modules--CP-2",
+      "address": "#modules/CP-2",
+      "heading": "Fundamental credit",
+      "millis": [
+        911.838,
+        923.123,
+        1025.924
+      ],
+      "medianMillis": 923.123
+    },
+    {
+      "id": "changes",
+      "address": "#changes",
+      "heading": "No earlier run to compare.",
+      "millis": [
+        920.781,
+        918.052,
+        946.809
+      ],
+      "medianMillis": 920.781
+    },
+    {
+      "id": "evidence--gaps",
+      "address": "#evidence/gaps",
+      "heading": "Gaps 0",
+      "millis": [
+        897.049,
+        911.363,
+        928.771
+      ],
+      "medianMillis": 911.363
+    }
+  ]
+}

@@ -1,0 +1,39 @@
+{
+  "headAtReport": "bb94ddceff3a1f02c7239ebca72de285df79c607",
+  "capture": {
+    "commit": "bb94ddceff3a1f02c7239ebca72de285df79c607",
+    "branch": "audit/final-repairs",
+    "treeIds": {
+      "web": "72556dd309c1bfc7b1ed9318db256e4c9fb3de14",
+      "src": "9417065f8ab1aca53dd7bbc22e42cbec0361bb7c",
+      "proof": "64937519ddad367e51e383b979e2ffcb7a5089b3",
+      "prompts": "7d1186ffdfb147aae72bd6c98b57b269481f33c2"
+    },
+    "changedUnderWebSrcProof": 0,
+    "webDistSha256": "eb9dc11c36a9f2ec565f68190325a15bdaca6933d47ec2e775be4d89909cad93",
+    "fixtures": {
+      "library.json": "22a3a3003de84aa32773259e71cc96aa3a831c3e7398f84145ff5cd548eb91cc",
+      "model.json": "b2b14cf3016aef2d6097038519abcf1c900a70cc90260e6c76b384c56b0bf9ab",
+      "run.json": "c42c2cbd3739e1b6d9913e895ebd43d99c8f517bbdc05000c08af6584d32dd6e",
+      "signal.json": "17ac974214cac6cafb860152ef5eec44d80eaecdae26109c8c71ba3fb3dc77c0"
+    },
+    "runtime": {
+      "node": "v24.22.1",
+      "browser": "157.0.8103.78"
+    }
+  },
+  "immutableCount": 126,
+  "immutableManifestSHA256": "050ddb0fb6e96c1941d888ced8420d1b18e18e18835f69643078bd58ad7a2b59",
+  "files": {
+    "after/index.json": "06e2169a58995029679bd7470c977e25720f79d6e8c573e2d175be5fde9c054d",
+    "compare-after.json": "a325e0187856fa4b72d56476316211ff475eb616b5a5b473c605d6fa6254d99a",
+    "compare-after.md": "897a566b84daf4f55d3fb9bfcf8300724567f374411d0aa987fee82318c4cef4",
+    "compare-diff.md": "00cabe64606d6b073d1ea2314fb2069af1ba914782d5910c832fa1c69dfc3f99",
+    "connected-readback.json": "9d916e89ef98bd76bf78e7de4040eb654ab3d65d5fc37693bce2e9f0ca55ed1a",
+    "static-readback.json": "62d3e97ddd24d3ed0e0c9672db5193797a3cea4348ebe744418e17456d8dda1e",
+    "exact-new-items.json": "653850a315a1af5b4fdb5c02997c19f562b83bd4907d6df95be45e8012dd7bf7",
+    "inventory.json": "939c5cc33db6f9e6303a691160ed963e692cac8774cc7a64e6f687278569e415",
+    "after-report.md": "e6a545bfab897a05c2e2e46786f619e754cdcd8a425a49c78f53390ff9e4bb53",
+    "VERIFICATION-draft.md": "61ae519816636f2f70d74fe609e3dba0892fbd6236c0941269ab243f20ea909d"
+  }
+}

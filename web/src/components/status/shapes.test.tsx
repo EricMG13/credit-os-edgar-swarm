@@ -10,7 +10,7 @@ describe("status shape size", () => {
     expect(container.querySelector("circle")).toHaveAttribute("stroke-width", "2");
   });
 
-  it("draws the other nine shapes 10 by 10", () => {
+  it("draws the other ten shapes 10 by 10", () => {
     for (const shape of SHAPES.filter((s) => s !== "dashed ring")) {
       const { container } = render(<StatusShape shape={shape} />);
       const svg = container.querySelector("svg");

@@ -1,0 +1,20 @@
+{
+  "removed": [
+    [
+      "python",
+      "pydantic",
+      "2.14.1"
+    ],
+    [
+      "npm",
+      "react",
+      "19.3.0"
+    ]
+  ],
+  "lockedPythonPairs": 37,
+  "lockedNpmPairs": 592,
+  "controlCounts": {
+    "npm": 592,
+    "python": 39
+  }
+}

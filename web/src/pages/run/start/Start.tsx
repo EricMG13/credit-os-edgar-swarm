@@ -28,20 +28,24 @@ export function Start({ recap, paid }: Pick<Step, "recap" | "paid">) {
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-1">
         <h2 className="font-display text-h3 text-text-primary">Start</h2>
-        <p className="text-sm text-text-secondary">
+        <p className="reading-copy text-body text-text-secondary">
           Everything is ready. This is the only step that spends money.
         </p>
       </div>
       <DetailsList rows={recap} />
       <div className="flex flex-col gap-1 border-t border-border-hairline pt-4">
         <h3 className="text-md font-semibold text-text-primary">Submit starts a paid run</h3>
-        <p className="max-w-140 text-body text-text-secondary">
+        <p className="reading-copy text-body text-text-secondary">
           <PaidText {...paid} />
         </p>
       </div>
     </div>
   );
 }
+
+/** The dialog's own line: this page shows a saved example, so confirming starts nothing. */
+const SAVED_EXAMPLE_SUBMIT =
+  "This page shows a saved example: confirming starts no run and spends nothing.";
 
 /** Submit and its one confirmation. Confirming only moves to the started snapshot: nothing is
  *  sent, stored or spent, because this page shows saved examples. */
@@ -58,6 +62,7 @@ export function Submit({
     <SubmitConfirmation
       label={label}
       confirm={confirm}
+      note={SAVED_EXAMPLE_SUBMIT}
       isDisabled={blocked !== undefined}
       describedBy={blocked?.id}
       onConfirm={() => {
@@ -70,6 +75,7 @@ export function Submit({
 export function SubmitConfirmation({
   label,
   confirm,
+  note,
   isDisabled,
   describedBy,
   className,
@@ -77,6 +83,8 @@ export function SubmitConfirmation({
 }: {
   label: string;
   confirm: Pick<Step["confirm"], "title" | "text" | "action">;
+  /** A line after the confirmation text, for a page whose Submit spends nothing. */
+  note?: string;
   isDisabled: boolean;
   describedBy?: string;
   className?: string;
@@ -108,11 +116,16 @@ export function SubmitConfirmation({
                       </span>
                     }
                   />
-                  <div className="flex flex-col gap-0.5">
-                    <Heading slot="title" className="text-md font-semibold text-text-primary">
+                  <div className="flex flex-col gap-1">
+                    <Heading slot="title" className="text-h4 text-balance text-text-primary">
                       {confirm.title}
                     </Heading>
-                    <p className="text-sm text-text-tertiary">{confirm.text}</p>
+                    <p className="reading-copy text-body text-text-secondary tabular-nums">
+                      {confirm.text}
+                    </p>
+                    {note === undefined ? null : (
+                      <p className="mt-2 text-sm font-medium text-text-secondary">{note}</p>
+                    )}
                   </div>
                 </div>
                 <div className="flex flex-col gap-3 sm:flex-row">

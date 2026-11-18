@@ -82,11 +82,11 @@ describe("Module, a delivered prose module", () => {
       ["H3", "Key findings"],
       ["H3", "Contrary evidence"],
       ["H3", "What would change the view"],
+      ["H3", "Limitations2"],
       ["H3", "Risks by probability and impact"],
       ["H3", "Indicators to watch"],
       ["H3", "Questions this module set out to answer"],
       ["H3", "How a programme delay reaches the credit"],
-      ["H3", "Limitations2"],
     ]);
   });
 
@@ -162,12 +162,12 @@ describe("Module, a delivered prose module", () => {
       "Show sources for this finding",
       "Show sources for the contrary evidence",
       "Show sources for the trigger",
+      "Show sources for this limitation",
+      "Show sources for this limitation",
       "Show sources for the risk matrix",
       ...Array<string>(5).fill("Show sources for this risk"),
       ...Array<string>(4).fill("Show sources for this indicator"),
       ...Array<string>(2).fill("Show sources for this answer"),
-      "Show sources for this limitation",
-      "Show sources for this limitation",
     ]);
     fireEvent.click(sourceButtons()[1] as HTMLElement);
     expect(
@@ -251,11 +251,11 @@ describe("Module, the risk matrix", () => {
     expect(screen.getByRole("dialog", { name: "Sources for the risk matrix" })).toBeVisible();
   });
 
-  it("is one Records entry in the navigator, and moves focus to the first block's heading", () => {
+  it("is an entry in the navigator named by the block's heading, and moves focus to it", () => {
     renderModule("business-profile");
     const scroll = vi.fn();
     Element.prototype.scrollIntoView = scroll;
-    fireEvent.click(within(nav()).getByRole("button", { name: "Records" }));
+    fireEvent.click(within(nav()).getByRole("button", { name: "Risks by probability and impact" }));
     const heading = screen.getByRole("heading", { name: "Risks by probability and impact" });
     expect(scroll.mock.contexts[0]).toBe(heading.closest("[data-section]"));
     expect(heading).toHaveFocus();
@@ -428,7 +428,9 @@ describe("Module, the pathway", () => {
 describe("Module, records that sit side by side", () => {
   it("stack up to 1199px wide and go two-up from 1200px, like the chart pair", () => {
     renderModule("business-profile");
-    const row = region("Indicators to watch").parentElement as HTMLElement;
+    // Each prose block is a navigator target, so it sits in its own [data-section] wrapper.
+    const row = region("Indicators to watch").closest("[data-section]")
+      ?.parentElement as HTMLElement;
     expect(row).toHaveClass("grid-cols-1", "min-[1200px]:grid-cols-2");
     expect(row).not.toHaveClass("md:grid-cols-2", "min-[1001px]:grid-cols-2");
   });
@@ -453,7 +455,7 @@ describe("Module, the navigator", () => {
     );
   });
 
-  it("lists this module's sections, Records among them", () => {
+  it("lists this module's sections, its record blocks among them by their headings", () => {
     renderModule("business-profile");
     const sections = within(within(nav()).getAllByRole("list")[0] as HTMLElement).getAllByRole(
       "button",
@@ -463,8 +465,11 @@ describe("Module, the navigator", () => {
       "Key findings",
       "Contrary evidence",
       "What would change the view",
-      "Records",
       "Limitations",
+      "Risks by probability and impact",
+      "Indicators to watch",
+      "Questions this module set out to answer",
+      "How a programme delay reaches the credit",
     ]);
   });
 
@@ -822,7 +827,7 @@ describe("Module, the facility terms", () => {
       Array<string>(7).fill("Show sources for this fact"),
     );
     fireEvent.click(buttons[0] as HTMLElement);
-    expect(screen.getByRole("dialog", { name: "Sources for the term loan" })).toBeVisible();
+    expect(screen.getByRole("dialog", { name: "Sources for Term loan B amount" })).toBeVisible();
   });
 
   it("sets a group of no name without a label, and a gap as the inline badge", () => {
@@ -878,9 +883,13 @@ describe("Module, the documentation tests", () => {
     expect(item).not.toHaveTextContent(/n\.a\./);
   });
 
-  it("draws no trace control where the mock draws none, and one where a test carries a trace", () => {
+  it("draws the missing-trace marker where a test has no trace, and a control where it carries one", () => {
     renderModule("capital-structure");
-    expect(within(tests()).queryAllByRole("button")).toHaveLength(0);
+    expect(
+      within(tests())
+        .getAllByRole("button")
+        .map((b) => b.getAttribute("aria-label")),
+    ).toEqual(Array<string>(4).fill("Show sources for this test: no source recorded"));
     cleanup();
     const library = withRecords((records) => {
       const group = ((records.find((r) => r["kind"] === "status") as Json)["groups"] as Json[])[0];
@@ -895,7 +904,10 @@ describe("Module, the documentation tests", () => {
       within(tests())
         .getAllByRole("button")
         .map((b) => b.getAttribute("aria-label")),
-    ).toEqual(["Show sources for this test"]);
+    ).toEqual([
+      "Show sources for this test",
+      ...Array<string>(3).fill("Show sources for this test: no source recorded"),
+    ]);
     expect(within(tests()).getByText("The certificate was due on 15 January.")).toBeVisible();
   });
 
@@ -961,9 +973,13 @@ describe("Module, the statement by year", () => {
     expect(screen.queryByRole("button", { name: /^(Bars|Figures)$/ })).toBeNull();
   });
 
-  it("draws a trace control only where the block carries a trace", () => {
+  it("draws the missing-trace marker where the block has no trace, and a control where it carries one", () => {
     renderModule("capital-structure");
-    expect(within(statement()).queryAllByRole("button")).toHaveLength(0);
+    expect(
+      within(statement())
+        .getAllByRole("button")
+        .map((b) => b.getAttribute("aria-label")),
+    ).toEqual(["Show sources for this table: no source recorded"]);
     cleanup();
     const library = withRecords((records) => {
       (records.find((r) => r["kind"] === "statement") as Json)["trace"] = "cs-net-debt";
@@ -1069,9 +1085,7 @@ describe("Module, the debt stack, maturities and headroom tables", () => {
       ["Other", "Due 2027", "USD 40m"],
     ]);
     expect(
-      within(card("Debt stack")).getByText(
-        "Basis: drawn amounts at face value; leases as reported.",
-      ),
+      within(card("Debt stack")).getByText("Drawn amounts at face value; leases as reported."),
     ).toBeVisible();
     expect(
       within(card("Debt stack"))
@@ -1309,6 +1323,7 @@ describe("Module, the data module as a whole", () => {
     expect(sourceButtons().map((b) => b.getAttribute("aria-label"))).toEqual([
       "Show sources for the bottom line",
       ...Array<string>(3).fill("Show sources for this finding"),
+      ...Array<string>(3).fill("Show sources for this limitation"),
       ...Array<string>(6).fill("Show sources for this figure"),
       ...Array<string>(3).fill("Show sources for this measure"),
       "Show sources for the debt stack",
@@ -1318,7 +1333,8 @@ describe("Module, the data module as a whole", () => {
       "Show sources for the peer scatter",
       "Show sources for the peer range",
       ...Array<string>(7).fill("Show sources for this fact"),
-      ...Array<string>(3).fill("Show sources for this limitation"),
+      ...Array<string>(4).fill("Show sources for this test: no source recorded"),
+      "Show sources for this table: no source recorded",
     ]);
   });
 
@@ -1327,7 +1343,7 @@ describe("Module, the data module as a whole", () => {
     const toggle = screen.getByRole<HTMLInputElement>("switch", { name: "Show sources" });
     if (!toggle.checked) fireEvent.click(toggle);
     expect(container.querySelector("[data-sources]")).toHaveAttribute("data-sources", "on");
-    expect(sourceButtons()).toHaveLength(29);
+    expect(sourceButtons()).toHaveLength(34);
   });
 
   it("opens the drawer of the bottom line, a finding and a limitation by their own traces", () => {
@@ -1336,7 +1352,7 @@ describe("Module, the data module as a whole", () => {
     for (const [index, title] of [
       [0, "Sources for the capital structure bottom line"],
       [3, "Sources for the capacity finding"],
-      [28, "Sources for the lease schedule limitation"],
+      [6, "Sources for the lease schedule limitation"],
     ] as const) {
       fireEvent.click(buttons[index] as HTMLElement);
       expect(screen.getByRole("dialog", { name: title })).toBeVisible();
@@ -1379,6 +1395,7 @@ describe("Module, the navigator of the data module", () => {
     ).toEqual([
       "Bottom line",
       "Key findings",
+      "Limitations",
       "Headline figures",
       "Debt stack and maturities",
       "Headroom",
@@ -1386,21 +1403,20 @@ describe("Module, the navigator of the data module", () => {
       "Against peers",
       "Terms and tests",
       "Hedges",
-      "Limitations",
     ]);
   });
 });
 
 describe("Module, a module that could not be delivered", () => {
-  it("draws the name, the kit's blocked line, the note and the gap link, and nothing else", () => {
+  it("S3-012 draws the blocked reason as Bottom line, with its note, state and gap link", () => {
     renderModule("recovery");
     expect(screen.getByRole("heading", { level: 2, name: "Recovery" })).toBeVisible();
-    expect(screen.getByText("Not assessable")).toBeVisible();
-    expect(
-      screen.getByText(
-        "The security package documents were not among the files provided, so recovery by class could not be assessed.",
-      ),
-    ).toBeVisible();
+    const reason = screen.getByText(
+      "The security package documents were not among the files provided, so recovery by class could not be assessed.",
+    );
+    expect(reason).toBeVisible();
+    const blocked = screen.getByRole("region", { name: "Bottom line" }).parentElement;
+    expect(within(blocked as HTMLElement).getByText("Not assessable")).toBeVisible();
     expect(
       screen.getByText(/^Nothing from this module is shown and no figure elsewhere rests on it/),
     ).toBeVisible();
@@ -1408,16 +1424,17 @@ describe("Module, a module that could not be delivered", () => {
       "href",
       `${BASE}2026-09-30/evidence/gaps`,
     );
-    expect(screen.queryByRole("region", { name: "Bottom line" })).toBeNull();
+    expect(screen.getByRole("region", { name: "Bottom line" })).toBeVisible();
     expect(screen.queryByRole("region", { name: "Limitations" })).toBeNull();
-    expect(within(nav()).queryByText("On this page")).toBeNull();
+    expect(within(nav()).getByText("On this page")).toBeVisible();
+    expect(within(nav()).getByRole("button", { name: "Bottom line" })).toBeVisible();
     expect(within(nav()).getByText("Modules in this run")).toBeVisible();
-    expect(screen.getAllByRole("heading").map((h) => h.tagName)).toEqual(["H1", "H2"]);
+    expect(screen.getAllByRole("heading").map((h) => h.tagName)).toEqual(["H1", "H2", "H3"]);
   });
 
   it("draws a module that did not run as Not run, never as Not assessable", () => {
     renderModule("forecast", "2026-03-31");
-    expect(screen.getByRole("heading", { level: 2, name: "Forecast" })).toBeVisible();
+    expect(screen.getByRole("heading", { level: 2, name: "Forward credit view" })).toBeVisible();
     expect(
       screen.getByText("The run reached its cost cap before this module started."),
     ).toBeVisible();
@@ -1436,12 +1453,12 @@ describe("Module, a module that could not be delivered", () => {
       "Recovery, Not run",
       "Rating outlook, Delivered",
       "Environmental, social and governance, Delivered",
-      "Forecast, Not run",
+      "Forward credit view, Not run",
       "Credit snapshot, Delivered",
     ]);
     expect(
       links.filter((l) => l.hasAttribute("aria-current")).map((l) => l.getAttribute("aria-label")),
-    ).toEqual(["Forecast, Not run"]);
+    ).toEqual(["Forward credit view, Not run"]);
   });
 });
 
@@ -1454,44 +1471,35 @@ describe("Module, a limitation longer than three lines", () => {
     vi.restoreAllMocks();
   });
 
-  it("clamps at three lines and offers Show all, then Show less, and prints open", () => {
+  it("S3-017 draws every limitation in full, with only the card collapse", () => {
     layout(true);
     renderModule("business-profile");
     const limits = region("Limitations");
-    const buttons = within(limits).getAllByRole("button", { name: /^Show (all|less)$/ });
-    expect(buttons).toHaveLength(2);
     const long = within(limits).getByText(/^The share of revenue under cost pass-through/);
-    expect(long).toHaveClass("line-clamp-3", "print:line-clamp-none");
-    const show = buttons[1] as HTMLElement;
-    expect(show).toHaveAttribute("aria-expanded", "false");
-    expect(show).toHaveClass("print:hidden");
-    fireEvent.click(show);
     expect(long).not.toHaveClass("line-clamp-3");
-    expect(show).toHaveTextContent("Show less");
-    expect(show).toHaveAttribute("aria-expanded", "true");
     expect(long.textContent).toMatch(/which the files do not show\.$/);
-    fireEvent.click(show);
-    expect(long).toHaveClass("line-clamp-3");
-    expect(show).toHaveTextContent("Show all");
+    expect(within(limits).queryByRole("button", { name: /^Show (all|less)$/ })).toBeNull();
+    expect(within(limits).getByRole("button", { name: "Collapse limitations" })).toBeVisible();
   });
 
-  it("builds one observer for each limitation, not one for every render", () => {
+  it("S3-017 needs no per-limitation resize observer when text is always whole", () => {
     layout(true);
     const Original = globalThis.ResizeObserver;
-    let built = 0;
+    const observed: Element[] = [];
     globalThis.ResizeObserver = class extends Original {
-      constructor(callback: ResizeObserverCallback) {
-        super(callback);
-        built += 1;
+      override observe(target: Element, options?: ResizeObserverOptions) {
+        observed.push(target);
+        super.observe(target, options);
       }
     };
     try {
       renderModule("business-profile");
-      const first = built;
-      expect(first).toBe(2);
+      const limits = region("Limitations");
+      const limitationTargets = () => observed.filter((target) => limits.contains(target));
+      expect(limitationTargets()).toEqual([]);
       fireEvent.click(screen.getByRole("switch", { name: "Show sources" }));
       fireEvent.click(screen.getByRole("switch", { name: "Show sources" }));
-      expect(built).toBe(first);
+      expect(limitationTargets()).toEqual([]);
     } finally {
       globalThis.ResizeObserver = Original;
     }
@@ -1648,6 +1656,21 @@ describe("Module, a data module that delivers no findings and no limitations", (
       .getAllByRole("button")
       .map((s) => s.textContent);
     expect(entries).toEqual(["Bottom line"]);
+  });
+});
+
+describe("Module, the fixture's data module (S3-014)", () => {
+  it("draws its readiness checks and its coverage after the bottom line, not a bare band", () => {
+    renderRoute(PATH, { issuer: "brevane-marine", run: "r-0412", module: "source-readiness" });
+    const checks = region("Readiness checks");
+    expect(within(checks).getAllByRole("listitem").length).toBeGreaterThan(0);
+    expect(within(checks).getByText("Source file read in full")).toBeVisible();
+    const coverage = region("Coverage");
+    expect(within(coverage).getByText("Source files")).toBeVisible();
+    const entries = within(within(nav()).getAllByRole("list")[0] as HTMLElement)
+      .getAllByRole("button")
+      .map((s) => s.textContent);
+    expect(entries).toEqual(["Bottom line", "Readiness", "Coverage"]);
   });
 });
 

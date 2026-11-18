@@ -1,0 +1,95 @@
+{
+  "fixture__library_halden-aerostructures_2026-09-30_modules__full__open-How_much_of_the_order_book_is_firm_Answe-52__1440": {
+    "id": "fixture__library_halden-aerostructures_2026-09-30_modules__full__open-How_much_of_the_order_book_is_firm_Answe-52__1440",
+    "variant": "fixture",
+    "address": "#/library/halden-aerostructures/2026-09-30/modules",
+    "width": 1440,
+    "status": "replay-planned",
+    "selector": "locator(\"#main > div > div > div:nth-of-type(2) > div > div:nth-of-type(6) > div:nth-of-type(2) > section:nth-of-type(2) > ul > li:nth-of-type(4) > details > summary\")",
+    "basis": "Replay the same summary text 'How much of the order book is firm?\\nAnswered' after the historical CSS landmark moved.",
+    "findings": [
+      "S3-005 / T37"
+    ]
+  },
+  "fixture__library_halden-aerostructures_2026-09-30_modules__full__open-Show_all-56__1440": {
+    "id": "fixture__library_halden-aerostructures_2026-09-30_modules__full__open-Show_all-56__1440",
+    "variant": "fixture",
+    "address": "#/library/halden-aerostructures/2026-09-30/modules",
+    "width": 1440,
+    "status": "retired-by-finding",
+    "selector": "getByRole(\"button\", { name: \"Show all\", exact: true })",
+    "basis": "The individual clamped limitation and its Show all action were removed. Limitations.tsx renders the full item in the open-by-default section. The corresponding packaged screenshot is fixture__library_halden-aerostructures_2026-09-30_modules__full__1440.png.",
+    "findings": [
+      "S3-017",
+      "S3-018"
+    ]
+  },
+  "fixture__library_halden-aerostructures_2026-09-30_modules_business-profile__full__open-How_much_of_the_order_book_is_firm_Answe-52__1440": {
+    "id": "fixture__library_halden-aerostructures_2026-09-30_modules_business-profile__full__open-How_much_of_the_order_book_is_firm_Answe-52__1440",
+    "variant": "fixture",
+    "address": "#/library/halden-aerostructures/2026-09-30/modules/business-profile",
+    "width": 1440,
+    "status": "replay-planned",
+    "selector": "locator(\"#main > div > div > div:nth-of-type(2) > div > div:nth-of-type(6) > div:nth-of-type(2) > section:nth-of-type(2) > ul > li:nth-of-type(4) > details > summary\")",
+    "basis": "Replay the same summary text 'How much of the order book is firm?\\nAnswered' after the historical CSS landmark moved.",
+    "findings": [
+      "S3-005 / T37"
+    ]
+  },
+  "fixture__library_halden-aerostructures_2026-09-30_modules_business-profile__full__open-Show_all-56__1440": {
+    "id": "fixture__library_halden-aerostructures_2026-09-30_modules_business-profile__full__open-Show_all-56__1440",
+    "variant": "fixture",
+    "address": "#/library/halden-aerostructures/2026-09-30/modules/business-profile",
+    "width": 1440,
+    "status": "retired-by-finding",
+    "selector": "getByRole(\"button\", { name: \"Show all\", exact: true })",
+    "basis": "The individual clamped limitation and its Show all action were removed. Limitations.tsx renders the full item in the open-by-default section. The corresponding packaged screenshot is fixture__library_halden-aerostructures_2026-09-30_modules_business-profile__full__1440.png.",
+    "findings": [
+      "S3-017",
+      "S3-018"
+    ]
+  },
+  "fixture__library_halden-aerostructures_2026-09-30_evidence_trace_net-leverage__full__sources-on__1440": {
+    "id": "fixture__library_halden-aerostructures_2026-09-30_evidence_trace_net-leverage__full__sources-on__1440",
+    "variant": "fixture",
+    "address": "#/library/halden-aerostructures/2026-09-30/evidence/trace/net-leverage",
+    "width": 1440,
+    "status": "retired-by-finding",
+    "selector": "getByRole(\"switch\", { name: \"Show sources\", exact: true })",
+    "basis": "The Evidence frame's inert Show sources switch was removed. The default Evidence Trace screen is fixture__library_halden-aerostructures_2026-09-30_evidence_trace_net-leverage__full__1440.png at this width.",
+    "findings": [
+      "S4-019",
+      "T38",
+      "OQ-03"
+    ]
+  },
+  "fixture__library_halden-aerostructures_2026-09-30_evidence_trace_net-leverage__full__sources-on__390": {
+    "id": "fixture__library_halden-aerostructures_2026-09-30_evidence_trace_net-leverage__full__sources-on__390",
+    "variant": "fixture",
+    "address": "#/library/halden-aerostructures/2026-09-30/evidence/trace/net-leverage",
+    "width": 390,
+    "status": "retired-by-finding",
+    "selector": "getByRole(\"switch\", { name: \"Show sources\", exact: true })",
+    "basis": "The Evidence frame's inert Show sources switch was removed. The default Evidence Trace screen is fixture__library_halden-aerostructures_2026-09-30_evidence_trace_net-leverage__full__390.png at this width.",
+    "findings": [
+      "S4-019",
+      "T38",
+      "OQ-03"
+    ]
+  },
+  "fixture__run_start_start__full__open-Submit_spend_up_to_USD_20.00-8__1440": {
+    "id": "fixture__run_start_start__full__open-Submit_spend_up_to_USD_20.00-8__1440",
+    "variant": "fixture",
+    "address": "#/run/start/start",
+    "width": 1440,
+    "status": "replay-planned",
+    "selector": "getByRole(\"button\", { name: \"Submit, spend up to USD 20.00\", exact: true })",
+    "basis": "The saved example's cap changed from USD 20.00 to USD 25.00 in fixtures/run.json. Open the mock's confirmation dialog from the relabelled exact button and verify the saved-example note. The plan ends at that dialog without activating its confirmation.",
+    "findings": [
+      "S1-007",
+      "S6-004",
+      "S6-003",
+      "T25"
+    ]
+  }
+}

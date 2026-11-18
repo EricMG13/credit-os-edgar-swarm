@@ -50,7 +50,10 @@ interface TitleProps extends ComponentPropsWithRef<"h2"> {
 
 const Title = ({ as: Heading = "h2", ...props }: TitleProps) => {
   return (
-    <Heading {...props} className={cx("text-xl font-semibold text-primary", props.className)} />
+    <Heading
+      {...props}
+      className={cx("font-display text-xl font-semibold text-primary", props.className)}
+    />
   );
 };
 

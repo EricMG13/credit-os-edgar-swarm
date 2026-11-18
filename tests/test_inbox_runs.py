@@ -26,10 +26,11 @@ from deploy_workflow.inbox.runs import (
     save,
     start,
 )
+from deploy_workflow.inbox.startup import STANDING_RULING
 from deploy_workflow.run_events import append_event
 
 FAKE = [sys.executable, str(Path(__file__).parent / "fixtures" / "fake_launcher.py")]
-RULING = Path(__file__).resolve().parents[1] / "docs" / "rulings" / "2026-11-09-inbox-automation.md"
+RULING = STANDING_RULING
 CTX = Path("c.json")
 RECORD = Record("id1", "credit_snapshot", "acme", "queued", "t")
 
@@ -42,6 +43,9 @@ def layout() -> Iterator[Layout]:
 
 @pytest.fixture
 def fake_env(monkeypatch: pytest.MonkeyPatch) -> Callable[[dict[str, object]], None]:
+    monkeypatch.setenv("COPILOT_GITHUB_TOKEN", "fake-key-for-the-test")
+    monkeypatch.setenv("COPILOT_CLI_PATH", FAKE[1])
+
     def set_plan(plan: dict[str, object]) -> None:
         monkeypatch.setenv("FAKE_PLAN", json.dumps(plan))
 
@@ -94,7 +98,7 @@ def test_command_for_prepare_and_live(layout):
         "--sources",
         str(layout.drops / "id1"),
         "--config",
-        "sol-medium",
+        "copilot-sol-medium",
         "--cap",
         "20",
         "--out",
@@ -138,6 +142,20 @@ def test_alive_for_this_process_and_not_for_an_exited_one():
         ([], 2, ("failed", "launcher exited 2; see logs/id1.log")),
         (
             [("module_started", {"module": "CP-0"})],
+            None,
+            ("interrupted", "the run's process ended without a result"),
+        ),
+        # Exit 0 is a delivery whose `delivered` line the advisory log lost (it said "failed").
+        ([("module_started", {"module": "CP-0"})], 0, ("finished", "")),
+        # The stop the log ends on decides, not the first: one log spans every launch.
+        (
+            [("stopped", {"reason": "provider"}), ("stopped", {"reason": "budget"})],
+            1,
+            ("capped", "stopped at the cap"),
+        ),
+        # A later launch started again after the stop and was then cut short: not that stop.
+        (
+            [("stopped", {"reason": "budget"}), ("module_started", {"module": "CP-0"})],
             None,
             ("interrupted", "the run's process ended without a result"),
         ),
@@ -267,11 +285,27 @@ def test_a_missing_event_log_is_not_warned_about(layout, caplog):
 
 
 def _fake_live(tmp_path, ruling, key):
-    env = {k: v for k, v in os.environ.items() if k != "OPENAI_API_KEY"}
-    env |= {"PYTHONPATH": child_environment()["PYTHONPATH"], "FAKE_PLAN": "{}"}
+    env = {
+        k: v
+        for k, v in os.environ.items()
+        if k not in {"COPILOT_GITHUB_TOKEN", "COPILOT_USE_GH_LOGIN"}
+    }
+    env |= {
+        "PYTHONPATH": child_environment()["PYTHONPATH"],
+        "FAKE_PLAN": "{}",
+        "COPILOT_CLI_PATH": FAKE[1],
+    }
     if key:
-        env["OPENAI_API_KEY"] = "fake-key-for-the-test"
-    argv = [*FAKE, "--context", "c.json", "--sources", str(tmp_path), "--config", "sol-medium"]
+        env["COPILOT_GITHUB_TOKEN"] = "fake-key-for-the-test"
+    argv = [
+        *FAKE,
+        "--context",
+        "c.json",
+        "--sources",
+        str(tmp_path),
+        "--config",
+        "copilot-sol-medium",
+    ]
     argv += ["--cap", "20", "--out", str(tmp_path / "out"), "--no-library", "--live"]
     if ruling is not None:
         argv += ["--ruling", str(ruling)]
@@ -284,7 +318,7 @@ def test_fake_launcher_refuses_what_the_real_one_refuses(tmp_path):
     bad_ruling = _fake_live(tmp_path, tmp_path / "r.md", key=True)
     assert bad_ruling.returncode == 2 and "ruling" in bad_ruling.stderr
     no_key = _fake_live(tmp_path, RULING, key=False)
-    assert no_key.returncode == 2 and "OPENAI_API_KEY" in no_key.stderr
+    assert no_key.returncode == 2 and "COPILOT_GITHUB_TOKEN" in no_key.stderr
     assert _fake_live(tmp_path, RULING, key=True).returncode == 0
 
 
@@ -480,12 +514,13 @@ def test_command_takes_every_method_name_and_the_turn_limits(layout):
 
 
 _LAUNCH = [
-    ("gpt", "fast", ["--config", "sol-medium", "--cap"]),
-    ("gpt", "balanced", ["--config", "sol-medium", "--balanced", "--cap"]),
-    ("gpt", "high", ["--config", "sol-high", "--cap"]),
-    ("claude", "fast", ["--config", "opus-medium", "--cap"]),
-    ("claude", "balanced", ["--config", "opus-medium", "--balanced", "--cap"]),
-    ("claude", "high", ["--config", "opus-high", "--cap"]),
+    ("gpt", "fast", ["--config", "copilot-sol-medium", "--cap"]),
+    ("gpt", "balanced", ["--config", "copilot-sol-medium", "--balanced", "--cap"]),
+    ("gpt", "high", ["--config", "copilot-sol-high", "--cap"]),
+    ("claude", "fast", ["--config", "copilot-opus-medium", "--cap"]),
+    ("claude", "balanced", ["--config", "copilot-opus-medium", "--balanced", "--cap"]),
+    ("claude", "high", ["--config", "copilot-opus-high", "--cap"]),
+    ("luna", "xhigh", ["--config", "copilot-luna-xhigh", "--cap"]),
 ]
 
 
@@ -510,7 +545,7 @@ def test_a_record_written_before_model_and_effort_loads_as_gpt_fast(layout):
     assert (record.model, record.effort) == ("gpt", "fast")
     argv = command(layout, record, Path("c.json"), launcher=["py"], ruling=None)
     at = argv.index("--config")
-    assert argv[at : at + 3] == ["--config", "sol-medium", "--cap"]
+    assert argv[at : at + 3] == ["--config", "copilot-sol-medium", "--cap"]
 
 
 @pytest.mark.parametrize(

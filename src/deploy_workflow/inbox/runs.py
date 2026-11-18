@@ -9,7 +9,7 @@ import re
 import subprocess
 import sys
 import unicodedata
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from dataclasses import asdict, dataclass
 from decimal import Decimal, InvalidOperation
 from pathlib import Path
@@ -18,8 +18,10 @@ from typing import Literal, cast, get_args
 from deploy_vii.contracts import PATHWAY_CAP_USD, PathwayId
 from deploy_workflow import platform_io
 from deploy_workflow.inbox.layout import Layout
+from deploy_workflow.model.configs import CONFIGS
 from deploy_workflow.owners.cpos_launch import METHODS
-from deploy_workflow.run_events import EVENTS, read_events
+from deploy_workflow.run_events import EVENTS, progress, read_events
+from deploy_workflow.run_expectations import Item
 
 log = logging.getLogger(__name__)
 
@@ -29,19 +31,20 @@ _REGISTRY = "issuers.json"
 DEFAULT_MAX_TURNS = 32
 _TURNS = (1, 64)  # the range submissions.validated accepts
 _PRIOR = re.compile(r"[A-Za-z0-9][A-Za-z0-9_.-]*")  # a run folder name, or `none`
-MODELS = ("gpt", "claude")
-EFFORTS = ("fast", "balanced", "high")
-# The only launches the service makes: (model, effort) -> (launcher --config, --balanced or not).
-# Every config named here must be named by the standing ruling; start-up checks all of them.
-_LAUNCHES: dict[tuple[str, str], tuple[str, bool]] = {
-    ("gpt", "fast"): ("sol-medium", False),
-    ("gpt", "balanced"): ("sol-medium", True),
-    ("gpt", "high"): ("sol-high", False),
-    ("claude", "fast"): ("opus-medium", False),
-    ("claude", "balanced"): ("opus-medium", True),
-    ("claude", "high"): ("opus-high", False),
+FORECAST_CODE = "CP-MODEL"  # in a module list: publish the forecast (cpos_launch.py)
+MODELS = ("gpt", "claude", "luna")
+EFFORTS = ("fast", "balanced", "high", "xhigh")
+# Service launch configurations. Every name is checked against the standing ruling at startup.
+_LAUNCHES: dict[tuple[str, str], str] = {
+    ("gpt", "fast"): "copilot-sol-medium",
+    ("gpt", "balanced"): "copilot-sol-medium",
+    ("gpt", "high"): "copilot-sol-high",
+    ("claude", "fast"): "copilot-opus-medium",
+    ("claude", "balanced"): "copilot-opus-medium",
+    ("claude", "high"): "copilot-opus-high",
+    ("luna", "xhigh"): "copilot-luna-xhigh",
 }
-LAUNCH_CONFIGS = tuple(dict.fromkeys(config for config, _ in _LAUNCHES.values()))
+LAUNCH_CONFIGS = tuple(dict.fromkeys(_LAUNCHES.values()))
 
 
 @dataclass
@@ -73,6 +76,25 @@ class Record:
     digest: str = ""  # the approved digest of the submitted files; the move is checked against it
     prior: str = ""  # the earlier run the approval named (a run folder name or `none`); "": search
     cap: str = ""  # USD the approved summary showed (`cap_of`); "": written before per-pathway caps
+    # Exact decision items from the issued summary; None means a record predates this metadata.
+    approved_summary_limits: list[Item] | None = None
+    newest_document_date: str = ""  # Optional approved override for sealed-upload recovery.
+    config: str = ""  # Copilot config shown when approved. Older records predate the cutover.
+
+
+def approved_summary_limits(value: object) -> list[Item] | None:
+    """Validate stored reader metadata without rebuilding or interpreting its limitations."""
+    if value is None:
+        return None
+    fields = ("id", "scope", "outcome", "reason", "fix")
+    if not isinstance(value, list) or any(
+        not isinstance(item, dict)
+        or not all(isinstance(item.get(key), str) for key in fields)
+        or item["outcome"] not in ("will_refuse", "gap", "limited", "check")
+        for item in value
+    ):
+        raise ValueError("approved summary limits could not be read")
+    return cast(list[Item], value)
 
 
 # The one cap of the standing ruling before per-pathway caps (ruling 2026-11-11-run-start-submit):
@@ -105,6 +127,7 @@ def cap_of(record: Record) -> Decimal:
     return value
 
 
+TEAMS_WEBHOOK_VARIABLE = "CREDIT_OS_TEAMS_WEBHOOK"  # read by deploy_workflow.inbox.teams
 PID_FILE_VARIABLE = "DEPLOY_WORKFLOW_PID_FILE"  # the launcher reads the same name
 
 
@@ -120,8 +143,9 @@ def child_environment() -> dict[str, str]:
     """The environment for a launcher child: this process's, plus the engine's ``src`` folder
     first on ``PYTHONPATH`` (so a child started outside the project's environment still finds it)
     and UTF-8 output. The provider key
-    passes through untouched."""
+    passes through untouched; the Teams webhook, a secret no run needs, is left out."""
     env = dict(os.environ)
+    env.pop(TEAMS_WEBHOOK_VARIABLE, None)
     existing = env.get("PYTHONPATH")
     env["PYTHONPATH"] = os.pathsep.join([str(_SRC), existing] if existing else [str(_SRC)])
     env["PYTHONUTF8"] = "1"
@@ -141,6 +165,9 @@ def _load(path: Path) -> Record:
         data = json.loads(path.read_text(encoding="utf-8"))
         data["files"] = tuple(data.get("files", ()))
         data["modules"] = tuple(data.get("modules", ()))
+        data["approved_summary_limits"] = approved_summary_limits(
+            data.get("approved_summary_limits")
+        )
         record = Record(**data)
         if record.status not in get_args(Status):
             raise ValueError(f"unknown status {record.status!r}")
@@ -228,9 +255,22 @@ def alive(pid: int) -> bool:
 def launch_options(model: str, effort: str) -> tuple[str, bool]:
     """The launcher ``--config`` and whether ``--balanced`` follows it, for a model and effort."""
     try:
-        return _LAUNCHES[model, effort]
+        return _LAUNCHES[model, effort], effort == "balanced"
     except (KeyError, TypeError):
         raise ValueError(f"no launch for model {model!r} at effort {effort!r}") from None
+
+
+def available_choices(
+    models: Mapping[str, frozenset[str]] | None,
+) -> dict[str, list[str]]:
+    """Map a verified seat catalogue to intake choices. None is reserved for synthetic runs."""
+    choices: dict[str, list[str]] = {}
+    for (model, effort), config in _LAUNCHES.items():
+        selected = CONFIGS[config]
+        required = {selected.effort, "high"} if effort == "balanced" else {selected.effort}
+        if models is None or required <= models.get(selected.model, frozenset()):
+            choices.setdefault(model, []).append(effort)
+    return choices
 
 
 def config_for(model: str, effort: str) -> str:
@@ -238,18 +278,30 @@ def config_for(model: str, effort: str) -> str:
     return launch_options(model, effort)[0]
 
 
+def known_module(name: object) -> bool:
+    """Whether ``name`` may stand in the launcher's ``--modules``: a method, or the forecast code.
+
+    The launcher takes CP-MODEL there to mean "publish the forecast" (it makes no model call and
+    has no method of its own; cpos_launch.py, owner 2026-11-11), and the run start page puts it in
+    every list it sends. Nothing else is added: CP-8 stays what ``METHODS`` already makes it."""
+    return isinstance(name, str) and (name in METHODS or name == FORECAST_CODE)
+
+
 def _check_options(record: Record) -> None:
-    """``ValueError`` unless the record's modules are method names, its turns a whole number in
-    range and its model and effort known: a hand-edited record must not put an option of its own
-    into the launcher's argv."""
+    """``ValueError`` unless the record's modules are method names or the forecast code, its
+    turns a whole number in range and its model and effort known: a hand-edited record must not
+    put an option of its own into the launcher's argv."""
     for field, allowed in (("model", MODELS), ("effort", EFFORTS)):
         value = getattr(record, field)
         if not isinstance(value, str) or value not in allowed:
             raise ValueError(
                 f"run {record.id}: {field} {value!r} is not one of {', '.join(allowed)}"
             )
+    config, _ = launch_options(record.model, record.effort)
+    if record.config and record.config != config:
+        raise ValueError("the recorded model configuration changed; review the run again")
     for name in record.modules:
-        if not isinstance(name, str) or name not in METHODS:
+        if not known_module(name):
             raise ValueError(f"run {record.id}: {name!r} is not a module")
     if not isinstance(record.prior, str) or (record.prior and not _PRIOR.fullmatch(record.prior)):
         raise ValueError(f"run {record.id}: prior {record.prior!r} is not a run folder name")
@@ -328,7 +380,10 @@ def start(
 
 
 def outcome(layout: Layout, record: Record, exit_code: int | None) -> tuple[Status, str]:
-    """Decide a run's end from its event log, then from the launcher's exit code."""
+    """Decide a run's end from its event log and the launcher's exit code. A delivery, or exit 0
+    (a live launch returns 0 only once it delivered; the log is advisory and may have lost that
+    line), is finished: the scheduler then checks the library lists the run. Otherwise the stop
+    the log ends on, else how the launcher ended."""
     try:
         events = read_events(layout.runs / record.id / EVENTS)
     except FileNotFoundError:
@@ -337,15 +392,14 @@ def outcome(layout: Layout, record: Record, exit_code: int | None) -> tuple[Stat
         # Documented fail-open: an unreadable log counts as no events; the exit code decides.
         log.warning("run %s: event log unreadable (%s); treated as no events", record.id, error)
         events = []
-    events = [e for e in events if isinstance(e, dict)]  # a valid JSON line need not be an event
-    if any(e.get("event") == "delivered" for e in events):
+    # a valid JSON line need not be an event
+    state = progress(e for e in events if isinstance(e, dict))
+    if state.delivered or exit_code == 0:
         return "finished", ""
-    for event in events:
-        if event.get("event") == "stopped":
-            reason = str(event.get("reason", ""))
-            if reason == "budget":
-                return "capped", "stopped at the cap"
-            return "failed", f"stopped: {reason}"
+    if state.stop == "budget":
+        return "capped", "stopped at the cap"
+    if state.stop is not None:
+        return "failed", f"stopped: {state.stop}"
     if exit_code is None:
         return "interrupted", "the run's process ended without a result"
     return "failed", f"launcher exited {exit_code}; see logs/{record.id}.log"

@@ -1,8 +1,8 @@
 # Prompt for the work PC
 
 Paste everything below the line into the work PC's coding assistant. Replace
-`<DOWNLOAD>` with the folder extracted from the new ZIP (for a GitHub ZIP, the
-`RBOT-HTML-main` folder inside it) and `<ADAPTED>` with the work PC's working copy.
+`<DOWNLOAD>` with the repository folder extracted from the new full source archive
+and `<ADAPTED>` with the work PC's working copy.
 
 ---
 
@@ -26,8 +26,11 @@ every edit must come from the download or from an adaptation already in my copy.
    must equal `head` in `<ADAPTED>/docs/work-pc/manifest.json` (if `<ADAPTED>` has no
    `docs/work-pc/` folder: must start with `04e7221`). If it does not, packs between
    my last sync and this download were removed. Then stop and ask me for `<OLD>`: the
-   extracted ZIP of that `head` commit
-   (`https://github.com/EricMG13/RBOT-HTML/archive/<head>.zip`). Confirm it with
+   extracted source archive of that `head` commit. Use the repository recorded
+   in the adaptations log. The Credit OS audit baseline is in
+   `https://github.com/EricMG13/credit-os2/archive/<head>.zip`; the historical
+   RBOT-HTML baseline is in `https://github.com/EricMG13/RBOT-HTML/archive/<head>.zip`.
+   Confirm the archive with
    `python <DOWNLOAD>/tools/work_pc_delta.py check <OLD> --manifest <ADAPTED>/docs/work-pc/manifest.json`
    (no `docs/work-pc/` folder: `--manifest <DOWNLOAD>/docs/work-pc/baselines/04e7221.json`),
    which must print `identical`. Wherever a later step uses the new packs, use `<OLD>`

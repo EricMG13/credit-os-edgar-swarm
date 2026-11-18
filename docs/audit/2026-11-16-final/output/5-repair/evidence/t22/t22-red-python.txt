@@ -1,0 +1,97 @@
+FFFFFF                                                                   [100%]
+=================================== FAILURES ===================================
+____ test_projection_uses_all_inputs_the_score_parser_accepted[True-False] _____
+
+separator = True, split = False
+
+    @pytest.mark.parametrize("separator,split", [(True, False), (False, False), (True, True)])
+    def test_projection_uses_all_inputs_the_score_parser_accepted(separator, split):
+        text = handoff(separator, split)
+        result = store.confidence_fields(text.encode())
+        assert result["confidence"] == {"value": 89, "band": "High"}
+>       assert result["confidenceTrace"]["inputs"] == [
+               ^^^^^^^^^^^^^^^^^^^^^^^^^
+            {"label": label, "value": value} for label, value in ROWS
+        ]
+E       KeyError: 'confidenceTrace'
+
+tests/test_confidence_trace_projection.py:42: KeyError
+____ test_projection_uses_all_inputs_the_score_parser_accepted[False-False] ____
+
+separator = False, split = False
+
+    @pytest.mark.parametrize("separator,split", [(True, False), (False, False), (True, True)])
+    def test_projection_uses_all_inputs_the_score_parser_accepted(separator, split):
+        text = handoff(separator, split)
+        result = store.confidence_fields(text.encode())
+        assert result["confidence"] == {"value": 89, "band": "High"}
+>       assert result["confidenceTrace"]["inputs"] == [
+               ^^^^^^^^^^^^^^^^^^^^^^^^^
+            {"label": label, "value": value} for label, value in ROWS
+        ]
+E       KeyError: 'confidenceTrace'
+
+tests/test_confidence_trace_projection.py:42: KeyError
+_____ test_projection_uses_all_inputs_the_score_parser_accepted[True-True] _____
+
+separator = True, split = True
+
+    @pytest.mark.parametrize("separator,split", [(True, False), (False, False), (True, True)])
+    def test_projection_uses_all_inputs_the_score_parser_accepted(separator, split):
+        text = handoff(separator, split)
+        result = store.confidence_fields(text.encode())
+        assert result["confidence"] == {"value": 89, "band": "High"}
+>       assert result["confidenceTrace"]["inputs"] == [
+               ^^^^^^^^^^^^^^^^^^^^^^^^^
+            {"label": label, "value": value} for label, value in ROWS
+        ]
+E       KeyError: 'confidenceTrace'
+
+tests/test_confidence_trace_projection.py:42: KeyError
+______ test_projection_states_the_existing_method_caps_rounding_and_bands ______
+
+    def test_projection_states_the_existing_method_caps_rounding_and_bands():
+>       method = store.confidence_fields(handoff().encode())["confidenceTrace"]["method"]
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       KeyError: 'confidenceTrace'
+
+tests/test_confidence_trace_projection.py:50: KeyError
+_ test_projection_preserves_zero_and_raw_count_spelling_and_does_not_score_twice _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f31ce390050>
+
+    def test_projection_preserves_zero_and_raw_count_spelling_and_does_not_score_twice(monkeypatch):
+        text = handoff().replace("| Directly Sourced | 8 |", "| Directly Sourced | 0008 |")
+        calls = []
+        original = confidence.score
+    
+        def counted(*args, **kwargs):
+            calls.append(True)
+            return original(*args, **kwargs)
+    
+        monkeypatch.setattr(confidence, "score", counted)
+        result = store.confidence_fields(text.encode())
+        assert result["confidence"] == {"value": 89, "band": "High"}
+>       assert result["confidenceTrace"]["inputs"][0] == {"label": "Directly Sourced", "value": "0008"}
+               ^^^^^^^^^^^^^^^^^^^^^^^^^
+E       KeyError: 'confidenceTrace'
+
+tests/test_confidence_trace_projection.py:76: KeyError
+_ test_projection_ignores_a_fenced_example_and_never_fills_missing_or_blocked_inputs _
+
+    def test_projection_ignores_a_fenced_example_and_never_fills_missing_or_blocked_inputs():
+        example = "## Findings\n```md\n### Confidence inputs\n| Input | Value |\n| MINOR | 999 |\n```\n"
+        result = store.confidence_fields((example + handoff()).encode())
+>       assert result["confidenceTrace"]["inputs"][-1] == {"label": "MINOR", "value": "1"}
+               ^^^^^^^^^^^^^^^^^^^^^^^^^
+E       KeyError: 'confidenceTrace'
+
+tests/test_confidence_trace_projection.py:84: KeyError
+=========================== short test summary info ============================
+FAILED tests/test_confidence_trace_projection.py::test_projection_uses_all_inputs_the_score_parser_accepted[True-False]
+FAILED tests/test_confidence_trace_projection.py::test_projection_uses_all_inputs_the_score_parser_accepted[False-False]
+FAILED tests/test_confidence_trace_projection.py::test_projection_uses_all_inputs_the_score_parser_accepted[True-True]
+FAILED tests/test_confidence_trace_projection.py::test_projection_states_the_existing_method_caps_rounding_and_bands
+FAILED tests/test_confidence_trace_projection.py::test_projection_preserves_zero_and_raw_count_spelling_and_does_not_score_twice
+FAILED tests/test_confidence_trace_projection.py::test_projection_ignores_a_fenced_example_and_never_fills_missing_or_blocked_inputs
+6 failed in 0.21s

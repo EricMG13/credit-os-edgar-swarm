@@ -1,11 +1,12 @@
 import { useCallback } from "react";
 import { Button } from "@/components/base/buttons/button";
+import { Badge } from "@/components/base/badges/badges";
 import { ProgressBar } from "@/components/base/progress-indicators/progress-indicators";
-import { getRun, moduleName, type Mode, type Run } from "../api";
+import { getRun, moduleName, serviceText, type Mode, type ReadinessItem, type Run } from "../api";
 import { card, heading } from "../layout";
 import { PublishedTable } from "../ReportContent";
 import { publishedHref, type OutputEntry, type PublishedRun } from "../publishedReport";
-import { elapsedFigure, spendFigure } from "../runFigures";
+import { elapsedFigure, spendFigure, stamp } from "../runFigures";
 import { useResource } from "../useResource";
 
 const EXECUTION: Record<NonNullable<Run["execution"]>, string> = {
@@ -13,6 +14,12 @@ const EXECUTION: Record<NonNullable<Run["execution"]>, string> = {
   "live-provider": "Live provider",
   "host-session": "Host session",
   "retained-response-replay": "Retained response replay",
+};
+const SUMMARY_OUTCOME: Record<string, string> = {
+  will_refuse: "Will refuse",
+  gap: "Gap",
+  limited: "Limited",
+  check: "Check",
 };
 
 type RecordModule = {
@@ -42,6 +49,56 @@ function moduleGroups(run: PublishedRun, entries: OutputEntry[]) {
   return groups;
 }
 
+/**
+ * The run record's delivery events, in words; the record holds no library-admission state. A log
+ * the service could not read (`events: null`) is not a log without a delivery.
+ */
+function deliveryFigure(run: Run) {
+  const events = run.events;
+  if (events === null) return "The run's event log could not be read.";
+  const delivered = events.find(({ kind }) => kind === "delivered");
+  if (delivered) return `Report delivered ${stamp(delivered.at)}`;
+  const started = events.find(({ kind }) => kind === "delivery_started");
+  if (started) return `Report delivery started ${stamp(started.at)}; not finished`;
+  return "No delivery recorded";
+}
+
+function ResponseProvenance({ value }: { value?: Run }) {
+  const outputs = value?.module_outputs;
+  return (
+    <section aria-label="Response provenance" className="grid gap-3">
+      <h4 className="font-semibold">Response provenance</h4>
+      {outputs == null ? (
+        <p className="text-sm text-text-secondary">
+          Original execution provenance is not recorded in this run record.
+        </p>
+      ) : outputs.length === 0 ? (
+        <p className="text-sm text-text-secondary">
+          No current accepted module responses are recorded.
+        </p>
+      ) : (
+        <ul className="divide-y divide-border-hairline">
+          {outputs.map((output) => (
+            <li key={output.module} className="grid gap-1 py-3">
+              <span className="font-semibold">{moduleName(output.module)}</span>
+              <span>
+                {output.provenance === "retained-response"
+                  ? "Reused retained response"
+                  : output.provenance === "new-response"
+                    ? "Response recorded for this run"
+                    : "Response provenance unavailable"}
+              </span>
+              {output.response_sha256 ? (
+                <span className="font-mono text-sm wrap-anywhere">{output.response_sha256}</span>
+              ) : null}
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
+  );
+}
+
 function RunTotals({
   value,
   mode,
@@ -55,8 +112,11 @@ function RunTotals({
 }) {
   const elapsed = value && elapsedFigure(value);
   const spend = value && spendFigure(value);
-  const runType =
-    mode === "synthetic" ? EXECUTION.synthetic : value?.execution && EXECUTION[value.execution];
+  const runType = value?.execution
+    ? EXECUTION[value.execution]
+    : pending && mode === "synthetic"
+      ? EXECUTION.synthetic
+      : null;
   const missing = pending ? "Loading…" : "Unavailable";
   return (
     <dl className="grid gap-5 rounded-ds-md bg-surface-subtle p-5 sm:grid-cols-3">
@@ -68,6 +128,10 @@ function RunTotals({
         <dt className="text-sm text-text-tertiary">Elapsed</dt>
         <dd className="font-semibold tabular-nums">{elapsed?.value ?? missing}</dd>
         {elapsed && <dd className="text-sm text-text-tertiary">{elapsed.note}</dd>}
+      </div>
+      <div className="grid content-start gap-1">
+        <dt className="text-sm text-text-tertiary">Delivery</dt>
+        <dd className="font-semibold">{value ? deliveryFigure(value) : missing}</dd>
       </div>
       <div className="grid content-start gap-1">
         <dt className="text-sm text-text-tertiary">Cap usage</dt>
@@ -90,45 +154,53 @@ function RunTotals({
 function ModuleRecord({
   group,
   folder,
+  name,
   synthetic,
 }: {
   group: RecordModule;
   folder: string;
-  synthetic: boolean;
+  name: string;
+  synthetic: boolean | null;
 }) {
+  const callsTitle =
+    synthetic === null
+      ? "Recorded responses"
+      : synthetic
+        ? "Synthetic adapter responses"
+        : "Model calls";
+  const statusTitle =
+    synthetic === null ? "Recorded status" : synthetic ? "Adapter status" : "HTTP status";
   return (
     <div className="mt-3 grid min-w-0 gap-4">
       {group.steps.length > 0 && (
-        <PublishedTable
-          evidence
-          table={{
-            type: "table",
-            line: 0,
-            headers: ["Started (UTC)", "Accepted (UTC)"],
-            rows: group.steps.map((step, line) => ({
-              line,
-              cells: [step.started || "", step.accepted || ""],
-            })),
-          }}
-        />
-      )}
-      {group.calls.length > 0 && (
         <section className="grid gap-2">
-          <h5 className="font-semibold">
-            {synthetic ? "Synthetic adapter responses" : "Model calls"}
-          </h5>
+          <h4 className="font-semibold">Started and accepted</h4>
           <PublishedTable
             evidence
+            emptyLabel="Not recorded for this module"
             table={{
               type: "table",
               line: 0,
-              headers: [
-                "Attempt",
-                "Started (UTC)",
-                synthetic ? "Adapter status" : "HTTP status",
-                "Error class",
-                "Settled USD",
-              ],
+              headers: ["Started (UTC)", "Accepted (UTC)"],
+              rows: group.steps.map((step, line) => ({
+                line,
+                cells: [step.started || "", step.accepted || ""],
+              })),
+            }}
+          />
+        </section>
+      )}
+      {group.calls.length > 0 && (
+        <section className="grid gap-2">
+          <h4 className="font-semibold">{callsTitle}</h4>
+          <PublishedTable
+            evidence
+            heading={`${name}: ${callsTitle}`}
+            emptyLabel="Not recorded for this call"
+            table={{
+              type: "table",
+              line: 0,
+              headers: ["Attempt", "Started (UTC)", statusTitle, "Error class", "Settled USD"],
               rows: group.calls.map((call, line) => ({
                 line,
                 cells: [
@@ -155,7 +227,7 @@ function ModuleRecord({
       })}
       {group.issues.map(({ output }) => (
         <div key={output.id} className="grid gap-1 text-sm text-text-secondary wrap-anywhere">
-          <h5 className="font-semibold">{output.label} · Handoff issues</h5>
+          <h4 className="font-semibold">{moduleName(output.module)} · Handoff issues</h4>
           {output.parseError && <p>{output.parseError}</p>}
           {output.issue?.split("; ").map((issue, i) => (
             <p key={i}>{issue}</p>
@@ -180,7 +252,13 @@ export function ReportRecord({
   const load = useCallback((signal: AbortSignal) => getRun(run.folder, signal), [run.folder]);
   const { value, error } = useResource(load);
   const groups = [...moduleGroups(run, entries)].filter(([id]) => !module || id === module);
-  const synthetic = mode === "synthetic" || value?.execution === "synthetic";
+  const synthetic = value?.execution
+    ? value.execution === "synthetic"
+    : value || error
+      ? null
+      : mode === "synthetic";
+  const recorded: (Run & { approved_summary_limits?: ReadinessItem[] | null }) | undefined = value;
+  const approvedLimits = recorded?.approved_summary_limits;
   return (
     <div className="grid min-w-0 gap-5">
       <section className={card}>
@@ -192,12 +270,58 @@ export function ReportRecord({
             {run.changes.note}
           </p>
         )}
+        {run.changes?.problem && (
+          <p className="text-sm wrap-anywhere">
+            <span className="text-text-tertiary">Comparison problem: </span>
+            {run.changes.problem}
+          </p>
+        )}
         <RunTotals
           value={value}
           mode={mode}
           cap={run.evidence.record.cap}
           pending={!value && !error}
         />
+        {error && (
+          <p role="alert" className="text-sm text-text-secondary">
+            {error}
+          </p>
+        )}
+        <p className="text-sm text-text-secondary">
+          {value?.library_admission === "listed"
+            ? "This run is listed in the current library."
+            : value?.library_admission === "not-listed"
+              ? "This run is not listed in the current library."
+              : "Library admission is not recorded in this run record."}
+        </p>
+        <ResponseProvenance value={value} />
+      </section>
+      <section className={card}>
+        <h3 className={heading}>Approved summary limits</h3>
+        {!value && !error ? (
+          <p className="text-text-secondary">Loading the approved summary limits…</p>
+        ) : approvedLimits == null ? (
+          <p className="text-text-secondary">
+            Approved summary limits were not recorded for this run.
+          </p>
+        ) : approvedLimits.length === 0 ? (
+          <p className="text-text-secondary">
+            The approved summary recorded no limits requiring a decision.
+          </p>
+        ) : (
+          <ul className="divide-y divide-border-hairline">
+            {approvedLimits.map((item, index) => (
+              <li key={`${item.id}-${String(index)}`} className="grid gap-2 py-3">
+                <h4 className="font-semibold">
+                  {item.scope === "run" ? "Run" : serviceText(item.scope)}
+                </h4>
+                <Badge>{SUMMARY_OUTCOME[item.outcome] ?? item.outcome}</Badge>
+                <p className="text-text-secondary">{serviceText(item.reason)}</p>
+                {item.fix && <p className="text-sm text-text-secondary">{serviceText(item.fix)}</p>}
+              </li>
+            ))}
+          </ul>
+        )}
       </section>
       <section className={card}>
         <h3 className={heading}>Module records</h3>
@@ -215,7 +339,7 @@ export function ReportRecord({
           <details
             key={id}
             open={module ? true : undefined}
-            className="min-w-0 rounded-ds-md border border-border-hairline p-4"
+            className="min-w-0 border-t border-border-hairline py-4"
           >
             <summary className="cursor-pointer font-semibold">
               {id ? moduleName(id) : "Unassigned calls"}
@@ -225,7 +349,12 @@ export function ReportRecord({
                 </span>
               )}
             </summary>
-            <ModuleRecord group={group} folder={run.folder} synthetic={synthetic} />
+            <ModuleRecord
+              group={group}
+              folder={run.folder}
+              name={id ? moduleName(id) : "Unassigned calls"}
+              synthetic={synthetic}
+            />
           </details>
         ))}
       </section>

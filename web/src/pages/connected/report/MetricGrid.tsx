@@ -5,7 +5,6 @@ import { TraceDrawer } from "@/pages/library/parts/TraceDrawer";
 import type { Metric, Trace } from "@/pages/library/slice";
 import { traceForLine } from "../ReportContent";
 import { evidenceHref, type OutputEntry, type Snapshot } from "../publishedReport";
-import { traceKey } from "../reportView";
 
 export function MetricGrid({
   records,
@@ -14,7 +13,7 @@ export function MetricGrid({
   snapshot,
   folder,
 }: {
-  records: { metric: Metric; line?: number }[];
+  records: { metric: Metric; line?: number; trace?: Trace }[];
   entry?: OutputEntry;
   entryIndex: number;
   snapshot: Snapshot;
@@ -22,11 +21,13 @@ export function MetricGrid({
 }) {
   const [open, setOpen] = useState<string | null>(null);
   const traces: Record<string, Trace> = {};
-  const metrics = records.map(({ metric, line }) => {
-    if (!entry || line === undefined) return metric;
-    const trace = traceForLine(snapshot, entry, entryIndex, line);
+  const metrics = records.map(({ metric, line, trace: recordedTrace }) => {
+    if (!entry) return metric;
+    const trace =
+      recordedTrace ??
+      (line === undefined ? undefined : traceForLine(snapshot, entry, entryIndex, line));
     if (!trace) return metric;
-    const key = traceKey(entry, line);
+    const key = trace.evidenceItem;
     traces[key] = trace;
     return { ...metric, trace: key };
   });

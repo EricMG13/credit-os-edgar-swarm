@@ -1,5 +1,13 @@
 import { ArrowRight } from "@untitledui/icons";
-import { useCallback, useEffect, useSyncExternalStore } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  useSyncExternalStore,
+  type RefObject,
+} from "react";
+import { Alert } from "@/components/alert/Alert";
 import { Badge } from "@/components/base/badges/badges";
 import { Button } from "@/components/base/buttons/button";
 import { StatusBadge } from "@/components/status/StatusBadge";
@@ -8,12 +16,15 @@ import { SourcesSwitch, useSourcesOn } from "@/pages/library/parts/SourcesSwitch
 import { PageHeader } from "../../shell/PageHeader";
 import { TextLink } from "../run/TextLink";
 import { Callout } from "@/components/alert/Alert";
-import { Breadcrumb, card, ErrorNotice, heading } from "./layout";
+import { Breadcrumb, card, heading } from "./layout";
 import {
   comparisonForRun,
   comparisonRows,
+  evidencePath,
   getSnapshot,
+  outputEntries,
   reportPath,
+  runLabels,
   runPathway,
   runTiming,
   type CatalogueRun,
@@ -23,12 +34,16 @@ import {
 } from "./publishedReport";
 import { ReportFindings } from "./ReportContent";
 import { ReportEvidence } from "./report/Evidence";
-import type { Mode } from "./api";
+import { getRun, moduleName, RequestError, type Mode, type Run } from "./api";
+import { LegacyVisuals } from "./visuals";
 import {
   actionBias,
   buildReportView,
   foundationMetrics,
+  headlineSources,
   moduleBottomLines,
+  moduleOrder,
+  overviewCharts,
   runLimitations,
   type MetricKey,
   type ReportView,
@@ -48,7 +63,7 @@ import { useResource } from "./useResource";
 import { HeadlineFigures } from "./HeadlineFigures";
 
 const tabs = [
-  ["history", "Report"],
+  ["history", "History"],
   ["overview", "Overview"],
   ["changes", "Changes"],
   ["modules", "Modules"],
@@ -68,11 +83,89 @@ function listenHash(fn: () => void) {
 const readHash = () => window.location.hash;
 const tabHref = (tab: ReportTab) => `#${tab}`;
 
+function readerPageName(tab: Tab, parts: string[]) {
+  if (tab === "calendar") return "Issuer calendar";
+  if (tab === "modules" && parts[0] && parts[0] !== "CP-8") return moduleName(parts[0]);
+  if (tab === "evidence" && parts[0]) {
+    const names: Record<string, string> = {
+      summary: "Summary",
+      trace: "Trace",
+      sources: "Sources",
+      gaps: "Gaps",
+      checks: "Script checks",
+      record: "Record",
+    };
+    return `Evidence: ${names[parts[0]] ?? "Handoff"}`;
+  }
+  return tabs.find(([name]) => name === tab)?.[1] ?? "Overview";
+}
+
+let entryCount = 0;
+/** The history entry on screen, named in its state so that Back can find where the reader left it. */
+function historyEntry() {
+  const state: unknown = window.history.state;
+  const named = typeof state === "object" && state !== null && "reportEntry" in state;
+  if (named && typeof state.reportEntry === "string") return state.reportEntry;
+  entryCount += 1;
+  const id = `${String(Date.now())}-${String(entryCount)}`;
+  window.history.replaceState({ ...(named ? state : null), reportEntry: id }, "");
+  return id;
+}
+
+/**
+ * The shell's `main` scrolls, so the browser restores nothing on its own. A new address opens its
+ * page at the top; Back and Forward return to the offset the reader left in that entry.
+ */
+function useReportPlace(root: RefObject<HTMLElement | null>, hash: string, ready: boolean) {
+  const left = useRef(new Map<string, number>());
+  const shown = useRef<string | null>(null);
+  const offset = useRef(0);
+  useEffect(() => {
+    const main = root.current?.closest("main");
+    if (!main) return;
+    const follow = () => {
+      offset.current = main.scrollTop;
+    };
+    main.addEventListener("scroll", follow);
+    return () => {
+      main.removeEventListener("scroll", follow);
+    };
+  }, [root]);
+  useEffect(() => {
+    if (!ready) return;
+    const id = historyEntry();
+    const previous = shown.current;
+    shown.current = id;
+    if (previous === id) return;
+    if (previous !== null) left.current.set(previous, offset.current);
+    const main = root.current?.closest("main");
+    const back = left.current.get(id);
+    const section = {
+      "#overview/limitations": "overview-limitations",
+      "#overview/key-charts": "overview-key-charts",
+      "#overview/dates": "overview-dates",
+      "#forecast": "forecast-report-nav",
+      "#forecast/run-charts": "forecast-run-charts",
+    }[hash];
+    const target = section && document.getElementById(section);
+    if (target && back === undefined) {
+      target.focus({ preventScroll: true });
+      target.scrollIntoView({ block: "start" });
+    } else if (main && previous !== null) {
+      main.scrollTop = back ?? 0;
+      offset.current = main.scrollTop;
+    }
+  }, [hash, ready, root]);
+}
+
 function ReportNav({ tab, modules }: { tab: Tab; modules: number }) {
   return (
     <nav
+      id={tab === "forecast" ? "forecast-report-nav" : undefined}
+      // This landmark receives focus when opening Forecast.
+      tabIndex={tab === "forecast" ? -1 : undefined}
       aria-label="Report sections"
-      className="flex flex-wrap gap-3 border-b border-border-hairline"
+      className="flex scroll-mt-3 flex-wrap gap-3 border-b border-border-hairline"
     >
       {tabs.map(([key, title]) => (
         <RunTabLink
@@ -88,9 +181,67 @@ function ReportNav({ tab, modules }: { tab: Tab; modules: number }) {
   );
 }
 
+/** Use compact history metadata when the scoped snapshot only retains the row's summary. */
+function runDetails(snapshot: Snapshot, key: string, run: PublishedRun) {
+  if (run.history)
+    return {
+      modules: run.history.modules.map(moduleName),
+      labels: [
+        ...(run.history.earlierFormat ? ["Earlier format"] : []),
+        ...(run.history.earlierMethods ? ["Earlier methods"] : []),
+      ],
+    };
+  if (!Object.hasOwn(run, "modules")) return null;
+  const modules = moduleOrder(run).filter((id) => run.modules[id]?.outputs.length);
+  return {
+    modules: modules.map(moduleName),
+    labels: runLabels(outputEntries(snapshot, run, key), run),
+  };
+}
+
+function modulesRun(details: ReturnType<typeof runDetails>) {
+  if (details) {
+    const count = details.modules.length;
+    if (count === 0) return "0 modules run";
+    return `${String(count)} ${count === 1 ? "module" : "modules"} run: ${details.modules.join(", ")}`;
+  }
+  return "The module list is unavailable for this run.";
+}
+
+function HistoryRow({
+  record,
+  catalogue,
+  details,
+}: {
+  record: PublishedRun;
+  catalogue: CatalogueRun | undefined;
+  details: ReturnType<typeof runDetails>;
+}) {
+  return (
+    <li className="flex flex-wrap items-center justify-between gap-4 border-t border-border-hairline pt-3">
+      <div className="grid min-w-0 gap-1">
+        <p className="font-semibold wrap-anywhere">
+          {runPathway(record, catalogue) || "Credit report"}
+        </p>
+        <p className="text-small text-text-tertiary tabular-nums">{runTiming(record)}</p>
+        <p className="reading-copy text-small text-text-secondary">{modulesRun(details)}</p>
+      </div>
+      <div className="flex flex-wrap items-center gap-3">
+        <StatusBadge set="Run states" state="Finished" />
+        {details?.labels.map((label) => (
+          <Badge key={label}>{label}</Badge>
+        ))}
+        <TextLink href={`${reportPath(record.folder)}#overview`}>Open overview</TextLink>
+        <TextLink href={`${reportPath(record.folder)}#changes`}>What changed</TextLink>
+      </div>
+    </li>
+  );
+}
+
+/** One row per published run of the issuer, newest first; every run listed here is finished. */
 function RunHistory({ snapshot, run }: { snapshot: Snapshot; run: PublishedRun }) {
-  const records = Object.values(snapshot.workspace.runs).filter(
-    (record) => record === run || Boolean(run.issuerKey && record.issuerKey === run.issuerKey),
+  const records = Object.entries(snapshot.workspace.runs).filter(
+    ([, record]) => record === run || Boolean(run.issuerKey && record.issuerKey === run.issuerKey),
   );
   const byFolder = new Map(snapshot.catalogue.real.map((item) => [item.id, item]));
   return (
@@ -98,29 +249,62 @@ function RunHistory({ snapshot, run }: { snapshot: Snapshot; run: PublishedRun }
       <h2 className={heading}>Report history</h2>
       <ul className="grid gap-3">
         {records
-          .sort((a, b) => (b.asOf ?? "").localeCompare(a.asOf ?? ""))
-          .map((record) => {
-            const catalogue = byFolder.get(record.folder);
-            return (
-              <li
-                key={record.folder}
-                className="flex flex-wrap items-center justify-between gap-4 border-t border-border-hairline pt-3"
-              >
-                <div className="grid gap-1">
-                  <p className="font-semibold">
-                    {runPathway(record, catalogue) || "Credit report"}
-                  </p>
-                  <p className="text-sm text-text-secondary">{runTiming(record)}</p>
-                </div>
-                <div className="flex items-center gap-3">
-                  {record === run && <StatusBadge set="Run states" state="Finished" />}
-                  <TextLink href={`${reportPath(record.folder)}#overview`}>Open overview</TextLink>
-                  <TextLink href={`${reportPath(record.folder)}#changes`}>What changed</TextLink>
-                </div>
-              </li>
-            );
-          })}
+          .sort(([, a], [, b]) => (b.asOf ?? "").localeCompare(a.asOf ?? ""))
+          .map(([key, record]) => (
+            <HistoryRow
+              key={key}
+              record={record}
+              catalogue={byFolder.get(record.folder)}
+              details={runDetails(snapshot, key, record)}
+            />
+          ))}
       </ul>
+    </section>
+  );
+}
+
+/** The key charts, repeated from the modules that own them, and the way to every chart of the run. */
+function KeyCharts({
+  run,
+  charts,
+}: {
+  run: PublishedRun;
+  charts: ReturnType<typeof overviewCharts>;
+}) {
+  return (
+    <section className="grid min-w-0 gap-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h2 id="overview-key-charts" tabIndex={-1} className={heading}>
+          Key charts
+        </h2>
+        <Button href="#forecast/run-charts" color="link-gray" size="sm" iconTrailing={ArrowRight}>
+          Chart index
+        </Button>
+      </div>
+      {charts.length ? (
+        charts.map(({ id, name, entry, output }) => (
+          <div key={id} className="grid min-w-0 gap-2">
+            <Button
+              className="w-fit"
+              href={`#modules/${encodeURIComponent(id)}`}
+              color="link-gray"
+              size="sm"
+              iconTrailing={ArrowRight}
+            >
+              {name}
+            </Button>
+            <LegacyVisuals
+              output={output}
+              sections={entry.sections}
+              evidenceHref={(line) => evidencePath(run.folder, entry, line)}
+              cards
+              headingLevel="h3"
+            />
+          </div>
+        ))
+      ) : (
+        <p className={card}>No key charts are available for this run.</p>
+      )}
     </section>
   );
 }
@@ -151,51 +335,68 @@ function Overview({
       entryIndex={foundation ? view.entries.indexOf(foundation) : -1}
     />
   ) : (
-    <HeadlineFigures catalogue={view.catalogue} />
+    <HeadlineFigures
+      catalogue={view.catalogue}
+      sources={headlineSources(foundation, view.catalogue, run.folder)}
+    />
   );
   return (
     <>
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h2 className="font-display text-h2">Overview</h2>
+        <h2 className="font-display text-h2 text-balance">Overview</h2>
         {hasCalendar && (
-          <Button color="secondary" size="sm" href="#calendar">
+          <Button color="tertiary" size="sm" href="#calendar">
             Issuer calendar
           </Button>
         )}
       </div>
+      <nav aria-label="Overview sections" className="flex flex-wrap items-center gap-4 text-sm">
+        <TextLink href="#overview/limitations">Limitations</TextLink>
+        <TextLink href="#overview/key-charts">Key charts</TextLink>
+        {calendar.rows.length > 0 && <TextLink href="#overview/dates">Dates to watch</TextLink>}
+      </nav>
       {view.lead ? (
-        <ReportFindings
-          key={view.lead.output.id}
-          snapshot={snapshot}
-          run={run}
-          entry={view.lead}
-          entryIndex={view.entries.indexOf(view.lead)}
-          overview
-          overviewLabel={view.lead.output.module === "CP-1B" ? "Earnings view" : undefined}
-          judgement={actionBias(view.lead)}
-          afterBottomLine={figures}
-        />
+        <>
+          <p className="text-sm text-text-secondary">
+            <Button href={`#modules/${view.lead.output.module}`} color="link-gray" size="sm">
+              {view.lead.output.module === "CP-1B" ? "Earnings view" : "Credit view"} from{" "}
+              {moduleName(view.lead.output.module)}
+            </Button>
+          </p>
+          <ReportFindings
+            key={view.lead.output.id}
+            snapshot={snapshot}
+            run={run}
+            entry={view.lead}
+            entryIndex={view.entries.indexOf(view.lead)}
+            overview
+            overviewLabel={view.lead.output.module === "CP-1B" ? "Earnings view" : "Credit view"}
+            judgement={actionBias(view.lead)}
+            afterBottomLine={figures}
+          />
+        </>
       ) : (
         <>
           {figures}
-          <p className={card}>
-            No credit view is available in the published handoffs for this run.
-          </p>
+          <p className={card}>No credit view is available for this run.</p>
         </>
       )}
       <ModuleBottomLines run={run} rows={moduleBottomLines(view, run)} />
       <RunLimitations run={run} rows={runLimitations(view, run)} />
+      <KeyCharts run={run} charts={overviewCharts(view, run)} />
       {calendar.rows.length > 0 && (
         <section className={`${card} grid gap-3`}>
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <h2 className={heading}>Dates to watch</h2>
+            <h2 id="overview-dates" tabIndex={-1} className={heading}>
+              Dates to watch
+            </h2>
             <Button href="#calendar" color="link-gray" size="sm" iconTrailing={ArrowRight}>
               Open issuer calendar
             </Button>
           </div>
           {watchRows === null ? (
             <p className="text-sm text-text-secondary" role="status">
-              Upcoming dates cannot be determined because this run has no valid as-of date.
+              This run needs a valid as-of date to identify upcoming events.
             </p>
           ) : watchRows.length === 0 ? (
             <p className="text-sm text-text-secondary" role="status">
@@ -224,10 +425,7 @@ function Overview({
                     )}
                   </div>
                   <div className="flex items-center gap-3 text-sm">
-                    <span>
-                      {event.cells[0]}
-                      {event.cells[1] ? ` · ${event.cells[1]}` : ""}
-                    </span>
+                    <span>{event.cells[0]}</span>
                     <Button href={event.href} color="link-gray" size="sm">
                       Evidence
                     </Button>
@@ -321,12 +519,20 @@ function ReportPage({
               output={parts[1]}
             />
           )}
-          {tab === "forecast" && <Forecast run={run} view={view} />}
+          {tab === "forecast" && (
+            <Forecast
+              run={run}
+              view={view}
+              section={parts[0]}
+              preview={Boolean(snapshot.preview)}
+            />
+          )}
           {tab === "evidence" && (
             <ReportEvidence
               snapshot={snapshot}
               run={run}
               entries={view.entries}
+              models={view.models}
               target={parts.join("/")}
               mode={mode}
               comparison={<ComparisonMeasures change={change} />}
@@ -343,11 +549,13 @@ function ReaderBadges({
   catalogue,
   preview,
   mode,
+  labels,
 }: {
   run: PublishedRun;
   catalogue?: CatalogueRun;
   preview?: Snapshot["preview"];
   mode: Mode;
+  labels: string[];
 }) {
   return (
     <>
@@ -361,6 +569,9 @@ function ReaderBadges({
           {mode === "synthetic" && <Badge color="brand">Synthetic test</Badge>}
         </>
       )}
+      {labels.map((label) => (
+        <Badge key={label}>{label}</Badge>
+      ))}
     </>
   );
 }
@@ -371,76 +582,253 @@ function ReaderHeader({
   preview,
   mode,
   id,
+  labels,
   sources,
   setSources,
+  evidence,
+  issuer,
 }: {
   run: PublishedRun | null;
   catalogue?: CatalogueRun;
   preview?: Snapshot["preview"];
   mode: Mode;
   id: string;
+  labels: string[];
   sources: boolean;
   setSources: (selected: boolean) => void;
+  evidence: boolean;
+  issuer: string | null;
 }) {
-  if (!run) return <PageHeader title="Credit report" />;
+  if (!run) return <PageHeader title={issuer ? `${issuer} report` : "Credit report"} />;
   return (
     <PageHeader
       title={catalogue?.name || run.issuerHeading || run.issuer}
-      badges={<ReaderBadges run={run} catalogue={catalogue} preview={preview} mode={mode} />}
+      badges={
+        <ReaderBadges
+          run={run}
+          catalogue={catalogue}
+          preview={preview}
+          mode={mode}
+          labels={labels}
+        />
+      }
       actions={
         <div className="flex flex-wrap items-center gap-2">
-          <SourcesSwitch isSelected={sources} onChange={setSources} />
-          <Button color="secondary" href={`/run/${encodeURIComponent(id)}`}>
-            Run activity
-          </Button>
+          {!evidence && (
+            <SourcesSwitch
+              isSelected={sources}
+              onChange={setSources}
+              label="Highlight source icons"
+            />
+          )}
+          {!preview && (
+            <Button color="tertiary" href={`/run/${encodeURIComponent(id)}`}>
+              Run progress
+            </Button>
+          )}
         </div>
       }
     />
   );
 }
 
-function ReaderStatus({
-  value,
-  error,
-  found,
+/** The report's snapshot, or why there is none: the service could not be reached, it answered
+ * with an error, or it publishes no report for this address (with the run's record, if any). */
+type Loaded =
+  | { snapshot: Snapshot | null }
+  | { failure: "unreachable" | "failed" }
+  | { failure: "unpublished"; run: Run | null };
+
+async function loadReport(signal: AbortSignal, id: string): Promise<Loaded> {
+  try {
+    return { snapshot: await getSnapshot(signal, id) };
+  } catch (failure) {
+    if (signal.aborted) throw failure;
+    if (failure instanceof TypeError) return { failure: "unreachable" };
+    if (!(failure instanceof RequestError) || failure.status !== 404) return { failure: "failed" };
+    const run = await getRun(id, signal).catch((reason: unknown) => {
+      if (signal.aborted) throw reason;
+      return null;
+    });
+    return { failure: "unpublished", run };
+  }
+}
+
+type Notice = {
+  tone: "info" | "warning" | "error";
+  title: string;
+  text: string;
+  actions: ("retry" | "run" | "library")[];
+};
+
+function unpublishedNotice(run: Run | null): Notice {
+  if (!run)
+    return {
+      tone: "warning",
+      title: "No report at this address",
+      text: "No published report or run record was found for this address.",
+      actions: ["library"],
+    };
+  if (run.status === "queued" || run.status === "running")
+    return {
+      tone: "info",
+      title: "This run is in progress",
+      text: "The report will appear here once it’s published.",
+      actions: ["run"],
+    };
+  if (run.status === "finished")
+    return {
+      tone: "warning",
+      title: "No report is listed for this run",
+      text: "The run finished. Check Run progress for the delivery record.",
+      actions: ["run", "library"],
+    };
+  return {
+    tone: "warning",
+    title: "This run ended without a report",
+    text: "Check Run progress to see where the run stopped.",
+    actions: ["run", "library"],
+  };
+}
+
+function failureNotice(loaded: Exclude<Loaded, { snapshot: Snapshot | null }>): Notice {
+  if (loaded.failure === "unpublished") return unpublishedNotice(loaded.run);
+  if (loaded.failure === "unreachable")
+    return {
+      tone: "error",
+      title: "The report service could not be reached",
+      text: "Check that Credit OS is still running on this computer, then try again.",
+      actions: ["retry"],
+    };
+  return {
+    tone: "error",
+    title: "The report could not be loaded",
+    text: "Try again or open Run progress to see the run’s record.",
+    actions: ["retry", "run"],
+  };
+}
+
+function ReportUnavailable({
+  loaded,
+  id,
+  retry,
 }: {
-  value: Snapshot | null | undefined;
-  error: string | undefined;
-  found: boolean;
+  loaded: Exclude<Loaded, { snapshot: Snapshot | null }>;
+  id: string;
+  retry: () => void;
 }) {
+  const { tone, title, text, actions } = failureNotice(loaded);
+  const action = {
+    retry: (
+      <Button key="retry" color="secondary" size="sm" onPress={retry}>
+        Try again
+      </Button>
+    ),
+    run: (
+      <Button key="run" color="secondary" size="sm" href={`/run/${encodeURIComponent(id)}`}>
+        Run progress
+      </Button>
+    ),
+    library: (
+      <Button key="library" color="link-gray" size="sm" href="/">
+        Back to the library
+      </Button>
+    ),
+  };
+  return (
+    <div className="mt-6">
+      <Alert
+        tone={tone}
+        title={title}
+        action={<div className="flex flex-wrap gap-3">{actions.map((name) => action[name])}</div>}
+      >
+        {text}
+      </Alert>
+    </div>
+  );
+}
+
+function ReaderStatus({
+  loaded,
+  found,
+  id,
+  retry,
+}: {
+  loaded: Loaded | undefined;
+  found: boolean;
+  id: string;
+  retry: () => void;
+}) {
+  if (loaded === undefined)
+    return (
+      <div role="status" className="mt-6 grid gap-5 text-text-secondary">
+        <p>Loading report…</p>
+        <div aria-hidden="true" className="grid gap-5">
+          <div className="h-10 w-3/4 rounded-ds-md bg-surface-subtle" />
+          <div className="h-40 rounded-ds-lg bg-surface-subtle" />
+          <div className="grid grid-cols-3 gap-3">
+            {[0, 1, 2].map((at) => (
+              <div key={at} className="h-24 rounded-ds-md bg-surface-subtle" />
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  if (!("snapshot" in loaded)) return <ReportUnavailable loaded={loaded} id={id} retry={retry} />;
   return (
     <>
-      {error && <ErrorNotice>{error}</ErrorNotice>}
-      {value?.preview?.reason && (
+      {loaded.snapshot?.preview?.reason && (
         <div className="mt-4">
-          <Callout title="Test preview">{value.preview.reason}</Callout>
+          <Callout title="Test preview">{loaded.snapshot.preview.reason}</Callout>
         </div>
       )}
-      {value === undefined && !error && (
-        <p role="status" className="mt-6 text-text-secondary">
-          Loading report…
-        </p>
-      )}
-      {value !== undefined && !found && (
-        <p className={`mt-6 ${card}`}>No report was published for this run.</p>
-      )}
+      {!found && <p className={`mt-6 ${card}`}>No report was published for this run.</p>}
     </>
   );
 }
 
+/** A report; Try again on a failed load reads it afresh. */
 export function ReportReader({ id, mode }: { id: string; mode: Mode }) {
-  const load = useCallback((signal: AbortSignal) => getSnapshot(signal, id), [id]);
-  const { value, error } = useResource(load);
-  const [sources, setSources] = useSourcesOn();
-  const hash = useSyncExternalStore(listenHash, readHash);
+  const [attempt, setAttempt] = useState(0);
+  const retry = useCallback(() => {
+    setAttempt((count) => count + 1);
+  }, []);
+  return <ReportReaderPage key={attempt} id={id} mode={mode} retry={retry} />;
+}
+
+function reportRoute(hash: string): { tab: Tab; parts: string[] } {
   const [route, ...parts] = hash.slice(1).split("/");
-  const tab =
-    route === "calendar" ? route : (tabs.find(([name]) => name === route)?.[0] ?? "overview");
+  if (route === "calendar") return { tab: route, parts };
+  if (route === "modules" && parts[0] === "CP-8") return { tab: "changes", parts };
+  return { tab: tabs.find(([name]) => name === route)?.[0] ?? "overview", parts };
+}
+
+function reportPublication(loaded: Loaded | undefined, id: string) {
+  const value = loaded && "snapshot" in loaded ? loaded.snapshot : undefined;
   const found = value && Object.entries(value.workspace.runs).find(([, run]) => run.folder === id);
   const catalogue = value?.catalogue.real.find((entry) => entry.id === id);
-  const run = found ? found[1] : null;
-  const issuer = run ? catalogue?.name || run.issuerHeading || run.issuer : null;
-  const page = tab === "calendar" ? "Issuer calendar" : tabs.find(([name]) => name === tab)?.[1];
+  const run = found?.[1] ?? null;
+  const labels =
+    value && found ? runLabels(outputEntries(value, found[1], found[0]), found[1]) : [];
+  return { value, found, run, catalogue, issuer: reportIssuer(run, catalogue, loaded), labels };
+}
+
+function reportIssuer(
+  run: PublishedRun | null,
+  catalogue: CatalogueRun | undefined,
+  loaded: Loaded | undefined,
+) {
+  if (run) return catalogue?.name || run.issuerHeading || run.issuer;
+  return unpublishedIssuer(loaded);
+}
+
+function unpublishedIssuer(loaded: Loaded | undefined) {
+  if (loaded && "failure" in loaded && loaded.failure === "unpublished")
+    return loaded.run?.issuer_name ?? null;
+  return null;
+}
+
+function useReportTitle(issuer: string | null, page: string) {
   useEffect(() => {
     if (!issuer || !page) return;
     document.title = `${page} — ${issuer} — Credit OS`;
@@ -448,19 +836,37 @@ export function ReportReader({ id, mode }: { id: string; mode: Mode }) {
       document.title = "Credit OS";
     };
   }, [issuer, page]);
+}
+
+function ReportReaderPage({ id, mode, retry }: { id: string; mode: Mode; retry: () => void }) {
+  const load = useCallback((signal: AbortSignal) => loadReport(signal, id), [id]);
+  const resource = useResource(load);
+  const loaded: Loaded | undefined =
+    resource.value ?? (resource.error ? { failure: "failed" } : undefined);
+  const [sources, setSources] = useSourcesOn();
+  const hash = useSyncExternalStore(listenHash, readHash);
+  const { tab, parts } = reportRoute(hash);
+  const { value, found, run, catalogue, issuer, labels } = reportPublication(loaded, id);
+  const root = useRef<HTMLDivElement>(null);
+  useReportPlace(root, hash, Boolean(run));
+  const page = run ? readerPageName(tab, parts) : "Credit report";
+  useReportTitle(issuer, page);
   return (
-    <div className="mx-auto w-full max-w-[96rem]" data-sources={sources ? "on" : "off"}>
-      <Breadcrumb>Report</Breadcrumb>
+    <div ref={root} className="mx-auto w-full max-w-[96rem]" data-sources={sources ? "on" : "off"}>
+      <Breadcrumb>{issuer || "Report"}</Breadcrumb>
       <ReaderHeader
         run={run}
         catalogue={catalogue}
         preview={value?.preview}
         mode={mode}
         id={id}
+        labels={labels}
         sources={sources}
         setSources={setSources}
+        evidence={tab === "evidence"}
+        issuer={issuer}
       />
-      <ReaderStatus value={value} error={error} found={Boolean(found)} />
+      <ReaderStatus loaded={loaded} found={Boolean(found)} id={id} retry={retry} />
       {value && found && (
         <ReportPage
           snapshot={value}

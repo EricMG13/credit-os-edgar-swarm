@@ -13,6 +13,7 @@ import {
   at,
   fail,
   is,
+  nullableRecord,
   object,
   oneOf,
   orNull,
@@ -212,11 +213,15 @@ function checkStatementNames(
       trace: b.trace,
       where: `${at(child(path, "bridges"), i)}.title`,
     })),
-    {
-      name: page.comparison.title,
-      trace: page.comparison.trace,
-      where: child(path, "comparison.title"),
-    },
+    ...(page.comparison === null
+      ? []
+      : [
+          {
+            name: page.comparison.title,
+            trace: page.comparison.trace,
+            where: child(path, "comparison.title"),
+          },
+        ]),
     {
       name: page.debt.stack.title,
       trace: page.debt.stack.trace,
@@ -294,13 +299,33 @@ const runFields = object<ModelRun>({
   statements,
   portfolioFit,
   limitations,
-  forecast,
+  forecast: nullableRecord(["tabs", "periods"], forecast),
 });
+
+/** Absent forecast and a one-case run's absent binary comparison read as explicit gaps. */
+function withOptionalParts(value: unknown): unknown {
+  const isRun = typeof value === "object" && value !== null && !Array.isArray(value);
+  if (!isRun) return value;
+  const record = value as Record<string, unknown>;
+  const ready = Object.hasOwn(record, "forecast") ? record : { ...record, forecast: null };
+  const statements = ready["statements"];
+  if (
+    Array.isArray(ready["cases"]) &&
+    ready["cases"].length === 1 &&
+    typeof statements === "object" &&
+    statements !== null &&
+    !Array.isArray(statements) &&
+    !Object.hasOwn(statements, "comparison")
+  ) {
+    return { ...ready, statements: { ...statements, comparison: null } };
+  }
+  return ready;
+}
 const run: Reader<ModelRun> = (value, path) => {
-  const read = runFields(value, path);
+  const read = runFields(withOptionalParts(value), path);
   if (read.cases.length === 0) fail(child(path, "cases"), "expected at least one case");
-  if (read.cases.length !== 2) {
-    fail(child(path, "cases"), "expected two cases, the side by side chart draws two");
+  if (read.cases.length > 2) {
+    fail(child(path, "cases"), "expected at most two cases");
   }
   const [first, second] = read.cases;
   if (first?.name === second?.name) {
@@ -313,7 +338,7 @@ const run: Reader<ModelRun> = (value, path) => {
   checkStatements(read.statements, read.cases.length, child(path, "statements"));
   checkSections(read.statements, read.cases, child(path, "statements"));
   checkStatementNames(read.statements, read.cases, child(path, "cases"), child(path, "statements"));
-  checkForecast(read.forecast, read.cases, child(path, "forecast"));
+  if (read.forecast !== null) checkForecast(read.forecast, read.cases, child(path, "forecast"));
   return read;
 };
 const sliceFields = object<{ runs: unknown[] }>({ runs: arrayOf((value) => value) });

@@ -15,11 +15,14 @@ const fixture = JSON.parse(
     "utf8",
   ),
 ) as { issuers: LibraryData["issuers"]; slice: Slice };
+const runFixture = JSON.parse(
+  readFileSync(path.resolve(import.meta.dirname, "..", "..", "..", "fixtures", "run.json"), "utf8"),
+) as { slice: unknown };
 
 const fresh = (): Slice => structuredClone(fixture.slice);
 
-function renderHome(library: unknown) {
-  const data: LibraryData = { schema: "credit-os-data/1", issuers: fixture.issuers, library };
+function renderHome(library: unknown, run: unknown = runFixture.slice) {
+  const data: LibraryData = { schema: "credit-os-data/1", issuers: fixture.issuers, library, run };
   const route = routes.find((r) => r.path === "/library/home");
   if (route === undefined) throw new Error("no /library route");
   return render(<SourceContext.Provider value={data}>{route.render({})}</SourceContext.Provider>);
@@ -48,7 +51,10 @@ describe("Library home, Cards side", () => {
   it("draws the delivered subtitle and a primary Start a run link to the run page", () => {
     renderHome(fixture.slice);
     expect(screen.getByText("Five issuers, each opening on its latest finished run")).toBeVisible();
-    expect(screen.getByRole("link", { name: "Start a run" })).toHaveAttribute("href", "#/run");
+    expect(screen.getByRole("link", { name: "Start a run" })).toHaveAttribute(
+      "href",
+      "#/run/start",
+    );
   });
 
   it("draws the filter bar: search, three selects, and no filter applied", () => {
@@ -144,7 +150,7 @@ describe("Library home, Cards side", () => {
         if (attr.name !== "class" && attr.name !== "style") expect(attr.value).not.toMatch(audit);
         if (attr.name === "href") {
           expect(attr.value).toMatch(
-            /^#\/(run|library\/[a-z-]+\/(history|\d{4}-\d{2}-\d{2}\/overview))$/,
+            /^#\/(run\/start|library\/[a-z-]+\/(history|\d{4}-\d{2}-\d{2}\/overview))$/,
           );
         }
       }
@@ -173,10 +179,16 @@ describe("Library home, Cards side", () => {
     expect(screen.queryByRole("grid", { name: "Issuers" })).toBeNull();
   });
 
-  it("says the data file holds no library pages when it has no library member, under the h1", () => {
+  it("explains how to start a run when this design reference has no library member", () => {
     renderHome(undefined);
     expect(screen.getByRole("heading", { level: 1, name: "Library" })).toBeVisible();
-    expect(screen.getByText("This data file holds no library pages")).toBeVisible();
+    expect(screen.getByRole("heading", { level: 2, name: "No runs yet" })).toBeVisible();
+    expect(
+      screen.getByText(
+        "This design reference contains no reports. Open the connected Credit OS app to start a run.",
+      ),
+    ).toBeVisible();
+    expect(screen.queryByRole("link", { name: "Start a run" })).toBeNull();
     expect(screen.queryByText("Library data is missing")).toBeNull();
   });
 
@@ -253,8 +265,26 @@ describe("Library home, other states", () => {
         "A run reads an issuer’s files and writes its report here. Start one to add the first issuer.",
       ),
     ).toBeVisible();
-    expect(screen.getByRole("link", { name: "Start a run" })).toHaveAttribute("href", "#/run");
+    expect(screen.getByRole("link", { name: "Start a run" })).toHaveAttribute(
+      "href",
+      "#/run/start",
+    );
     expect(screen.queryByRole("textbox", { name: "Search issuers" })).toBeNull();
+  });
+
+  it("does not send an empty loaded library into a run form when no draft exists", () => {
+    const slice = fresh();
+    slice.home = { ...slice.home, subtitle: "No issuers yet", cards: [] };
+    const run = structuredClone(runFixture.slice) as { drafts: unknown[] };
+    run.drafts = [];
+    renderHome(slice, run);
+
+    expect(
+      screen.getByText(
+        "This design reference contains no reports. Open the connected Credit OS app to start a run.",
+      ),
+    ).toBeVisible();
+    expect(screen.queryByRole("link", { name: "Start a run" })).toBeNull();
   });
 });
 
@@ -561,4 +591,9 @@ describe("Library home, List side", () => {
     }
     expect(within(table()).getAllByRole("columnheader")).toHaveLength(9);
   });
+});
+
+// S2-020 persists choices in a browser history entry; every independent test starts a fresh entry.
+beforeEach(() => {
+  window.history.replaceState({}, "");
 });

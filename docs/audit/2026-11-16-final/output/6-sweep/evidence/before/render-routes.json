@@ -1,0 +1,132 @@
+[
+  {
+    "id": "calendar",
+    "address": "#calendar",
+    "heading": "Issuer calendar"
+  },
+  {
+    "id": "changes",
+    "address": "#changes",
+    "heading": "No earlier run to compare."
+  },
+  {
+    "id": "evidence--checks",
+    "address": "#evidence/checks",
+    "heading": "Script checks"
+  },
+  {
+    "id": "evidence--gaps",
+    "address": "#evidence/gaps",
+    "heading": "Gaps 0"
+  },
+  {
+    "id": "evidence--record",
+    "address": "#evidence/record",
+    "heading": "Run record"
+  },
+  {
+    "id": "evidence--sources",
+    "address": "#evidence/sources",
+    "heading": "Sources"
+  },
+  {
+    "id": "evidence--summary",
+    "address": "#evidence/summary",
+    "heading": "Run evidence"
+  },
+  {
+    "id": "evidence--trace",
+    "address": "#evidence/trace",
+    "heading": "Handoffs"
+  },
+  {
+    "id": "forecast",
+    "address": "#forecast",
+    "heading": "Forecast"
+  },
+  {
+    "id": "history",
+    "address": "#history",
+    "heading": "Report history"
+  },
+  {
+    "id": "modules--CP-0",
+    "address": "#modules/CP-0",
+    "heading": "Source readiness"
+  },
+  {
+    "id": "modules--CP-1",
+    "address": "#modules/CP-1",
+    "heading": "Financial foundation"
+  },
+  {
+    "id": "modules--CP-1A",
+    "address": "#modules/CP-1A",
+    "heading": "Business & governance"
+  },
+  {
+    "id": "modules--CP-2",
+    "address": "#modules/CP-2",
+    "heading": "Fundamental credit"
+  },
+  {
+    "id": "modules--CP-2A",
+    "address": "#modules/CP-2A",
+    "heading": "Downside"
+  },
+  {
+    "id": "modules--CP-2D",
+    "address": "#modules/CP-2D",
+    "heading": "Liquidity"
+  },
+  {
+    "id": "modules--CP-2E",
+    "address": "#modules/CP-2E",
+    "heading": "Rates, FX & hedging"
+  },
+  {
+    "id": "modules--CP-2G",
+    "address": "#modules/CP-2G",
+    "heading": "Forward credit model"
+  },
+  {
+    "id": "modules--CP-3",
+    "address": "#modules/CP-3",
+    "heading": "Security selection"
+  },
+  {
+    "id": "modules--CP-3C",
+    "address": "#modules/CP-3C",
+    "heading": "Refinancing & LME"
+  },
+  {
+    "id": "modules--CP-4",
+    "address": "#modules/CP-4",
+    "heading": "Legal & covenants"
+  },
+  {
+    "id": "modules--CP-5",
+    "address": "#modules/CP-5",
+    "heading": "Evidence validation"
+  },
+  {
+    "id": "modules--CP-6",
+    "address": "#modules/CP-6",
+    "heading": "Committee decision"
+  },
+  {
+    "id": "modules--CP-DR",
+    "address": "#modules/CP-DR",
+    "heading": "Research questions"
+  },
+  {
+    "id": "modules--default",
+    "address": "#modules",
+    "heading": "Financial foundation"
+  },
+  {
+    "id": "overview",
+    "address": "#overview",
+    "heading": "Overview"
+  }
+]

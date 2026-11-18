@@ -61,7 +61,10 @@ describe("the library routes adopt the shell", () => {
     visit(hash);
     expect(screen.getByRole("heading", { level: 1, name: "Library" })).toBeVisible();
     expect(screen.getByText("Five issuers, each opening on its latest finished run")).toBeVisible();
-    expect(screen.getByRole("link", { name: "Start a run" })).toHaveAttribute("href", "#/run");
+    expect(screen.getByRole("link", { name: "Start a run" })).toHaveAttribute(
+      "href",
+      "#/run/start",
+    );
     expectOneH1AndNoSkip();
   });
 
@@ -105,7 +108,7 @@ describe("the library routes adopt the shell", () => {
       />,
     );
     expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
-    expect(screen.getByText("This data file holds no library pages")).toBeVisible();
+    expect(screen.getByText(/This design reference contains no reports/)).toBeVisible();
   });
 
   it("keeps one h1 when the library member is invalid", () => {

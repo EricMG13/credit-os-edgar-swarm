@@ -8,7 +8,7 @@ import {
   waitFor,
   within,
 } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ConnectedApp } from "./ConnectedApp";
 import type { Snapshot } from "./publishedReport";
 
@@ -121,7 +121,17 @@ class FakeObserver {
   unobserve() {}
 }
 
+beforeEach(() => {
+  Object.defineProperty(HTMLElement.prototype, "scrollIntoView", {
+    configurable: true,
+    writable: true,
+
+    value: vi.fn(),
+  });
+});
+
 afterEach(() => {
+  Reflect.deleteProperty(HTMLElement.prototype, "scrollIntoView");
   cleanup();
   vi.unstubAllGlobals();
   observers.length = 0;
@@ -174,14 +184,17 @@ describe("report wayfinding", () => {
     const bottom = document.getElementById("finding-10");
     const figures = document.getElementById("module-figures");
     if (!bottom || !figures) throw new Error("targets missing");
-    expect(bottom.contains(figures)).toBe(true);
+    // The figures follow the prose passages and no longer sit inside the Bottom line section, so
+    // nest them by hand to keep covering the rule for an entry that holds another.
+    expect(bottom.contains(figures)).toBe(false);
+    bottom.append(figures);
     act(() => {
       spy.callback([
         { target: bottom, isIntersecting: true },
         { target: figures, isIntersecting: true },
       ]);
     });
-    expect(marks()).toEqual([null, "location", null, null]);
+    expect(marks()).toEqual([null, null, "location", null]);
     act(() => {
       spy.callback([{ target: figures, isIntersecting: false }]);
     });
@@ -354,11 +367,11 @@ describe("report wayfinding", () => {
     for (const link of links) expect(link).toHaveClass("max-[480px]:min-h-11");
   });
 
-  it("offers the Report tab and no Report history link", async () => {
+  it("offers the History tab and no Report history link", async () => {
     useSnapshot();
     open("");
     const nav = await screen.findByRole("navigation", { name: "Report sections" });
-    expect(within(nav).getByRole("link", { name: "Report" })).toBeInTheDocument();
+    expect(within(nav).getByRole("link", { name: "History" })).toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "Report history" })).toBeNull();
   });
 

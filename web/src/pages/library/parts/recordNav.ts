@@ -6,12 +6,13 @@ export type RecordSection = NavSection & { first: RecordBlock };
 
 /**
  * The navigator entries of a module's record blocks, in page order. Blocks that carry a `nav` label
- * give one entry for each distinct label; blocks without one (the prose module's) share "Records".
+ * give one entry for each distinct label; the prose module's blocks have none, so each is named by
+ * its own heading. A data module whose blocks all say "no entry" keeps one "Records" entry.
  */
 export function recordSections(blocks: readonly RecordBlock[]): RecordSection[] {
   const sections: RecordSection[] = [];
   for (const block of blocks) {
-    const label = "nav" in block ? block.nav : null;
+    const label = "nav" in block ? block.nav : block.title;
     if (label !== null && !sections.some((section) => section.label === label)) {
       sections.push({
         key: `records-${String(sections.length)}`,

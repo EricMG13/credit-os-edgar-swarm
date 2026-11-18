@@ -13,6 +13,7 @@ import sys
 from pathlib import Path
 
 import pytest
+from library_fixtures import materialize_reference_ui
 from test_library_page_browser import visit
 
 pytestmark = pytest.mark.browser
@@ -54,7 +55,7 @@ def library(tmp_path_factory) -> Path:
             check=True,
             capture_output=True,
         )
-    return workspace / "library/index.html"
+    return materialize_reference_ui(workspace / "library")
 
 
 def shown(page: Path, route: str) -> str:

@@ -3,6 +3,7 @@ import { ArrowUpRight } from "@untitledui/icons";
 import { Badge } from "@/components/base/badges/badges";
 import { Button } from "@/components/base/buttons/button";
 import { StatusBadge } from "@/components/status/StatusBadge";
+import { DesignReferenceNote } from "@/shell/DesignReferenceNote";
 import { PageHeader } from "@/shell/PageHeader";
 import { cx } from "@/utils/cx";
 import { runAddress } from "../runAddress";
@@ -32,7 +33,11 @@ const COUNT =
 const TAB =
   "flex items-center gap-2 -mb-px border-b-2 px-1 pb-3 text-sm font-semibold outline-focus focus-visible:outline-2 focus-visible:outline-offset-2";
 
-/** What a Model page draws inside the app's main: breadcrumb, switch, header, tabs, then the page. */
+/**
+ * What a Model page draws inside the app's main: the design-reference note, breadcrumb, switch,
+ * header, tabs, then the page. The note says the run is a saved sample, so the header carries no
+ * Sample data badge to say it again.
+ */
 export function ModelShell({
   run,
   current,
@@ -44,9 +49,12 @@ export function ModelShell({
 }) {
   const base = runAddress(run.issuer, run.run);
   const { header, links } = run;
+  /** A run with no forecast has no library tabs for its Forecast form, which draws the Model's. */
+  const forecastTabs = current === FORECAST ? run.forecast?.tabs : undefined;
   return (
     <ShowSources>
       <div className="flex flex-col gap-5 p-8">
+        <DesignReferenceNote />
         <div className="flex flex-wrap items-center justify-between gap-4">
           <nav aria-label="Breadcrumb">
             <ol className="flex items-center gap-2 text-sm font-semibold text-text-tertiary">
@@ -63,7 +71,7 @@ export function ModelShell({
               </li>
             </ol>
           </nav>
-          <ShowSourcesSwitch />
+          {current !== FORECAST || run.forecast !== null ? <ShowSourcesSwitch /> : null}
         </div>
         <PageHeader
           as="h1"
@@ -73,22 +81,21 @@ export function ModelShell({
               <Badge>{header.asOf}</Badge>
               <Badge>{header.purpose}</Badge>
               <StatusBadge set="Run states" state={header.state} />
-              {header.sample ? <Badge>Sample data</Badge> : null}
             </>
           }
           actions={
             <Button
               href={current === FORECAST ? `${base}/front` : links.report}
               size="md"
-              color="secondary"
+              color={current === FORECAST ? "secondary" : "tertiary"}
             >
               {current === FORECAST ? "Open the financial model" : "Back to the report"}
             </Button>
           }
         />
         <nav aria-label="Pages" className="flex flex-wrap gap-4 border-b border-border-hairline">
-          {current === FORECAST ? (
-            run.forecast.tabs.map((tab) => (
+          {forecastTabs !== undefined ? (
+            forecastTabs.map((tab) => (
               <a
                 key={tab.label}
                 href={tab.href}

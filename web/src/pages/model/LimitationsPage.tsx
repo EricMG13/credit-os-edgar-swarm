@@ -27,7 +27,7 @@ export function LimitationsPage({ params }: { params: Record<string, string> }) 
                 <ArrowUpRight className="size-4" aria-hidden="true" />
               </a>
             </div>
-            <p className="max-w-[72ch] text-body text-text-secondary">{limitations.lead}</p>
+            <p className="reading-copy text-body text-text-secondary">{limitations.lead}</p>
             <div className="flex flex-col gap-3">
               {limitations.items.map((item, index) => (
                 <Collapsible

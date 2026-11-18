@@ -2,8 +2,9 @@ import { SearchLg } from "@untitledui/icons";
 import { EmptyState } from "@/components/application/empty-state/empty-state";
 import { ProgressBar } from "@/components/base/progress-indicators/progress-indicators";
 import { StatusBadge } from "@/components/status/StatusBadge";
-import type { RunRecord } from "./slice";
+import type { Reader, RunRecord } from "./slice";
 import { DownloadButton } from "./parts/DownloadButton";
+import { NothingForModule } from "./parts/ModuleFilter";
 import {
   PlainHead,
   REGISTER_CELL,
@@ -23,9 +24,18 @@ const H = "font-display text-h3 text-text-primary";
 /**
  * The module timings: the Table side of the mock's gantt, in the shared card; the Chart side is not
  * drawn (the kit has no such chart), so there is no Chart or Table toggle. The state sits in the
- * table's end column as the Module state badge. A run that holds no module says so instead.
+ * table's end column as the Module state badge. A run that holds no module says so instead. With a
+ * module chosen, its row is all that is drawn; a module the table lists no row of says so.
  */
-function Timings({ timings }: { timings: RunRecord["timings"] }) {
+function Timings({
+  timings,
+  chosen,
+  onClear,
+}: {
+  timings: RunRecord["timings"];
+  chosen: Reader | null;
+  onClear: () => void;
+}) {
   const [module, state, started, accepted, took] = timings.columns;
   if (timings.emptyText !== null) {
     const Title = SUBSECTION_HEADING;
@@ -41,20 +51,38 @@ function Timings({ timings }: { timings: RunRecord["timings"] }) {
       </EmptyState>
     );
   }
+  const held =
+    chosen === null ? timings.rows : timings.rows.filter((row) => row.module === chosen.name);
+  if (chosen !== null && held.length === 0) {
+    return (
+      <NothingForModule
+        title={`No time is listed for ${chosen.name}`}
+        clearLabel="Show all modules"
+        onClear={onClear}
+      />
+    );
+  }
   return (
     <TableCard
       title={timings.title}
-      note={timings.note}
+      note={chosen === null ? timings.note : `Unfiltered timing record: ${timings.note}`}
       label={timings.title}
       size="text-h3"
       trace={null}
       head={[module, started, accepted, took]}
       endHeading={state}
-      rows={timings.rows.map((row) => ({
+      rows={held.map((row) => ({
         label: row.module,
         cells: [row.started, row.accepted, row.took].map(toTableCell),
         end: <StatusBadge set="Module state" state={row.state} />,
       }))}
+      footnotes={
+        chosen === null
+          ? []
+          : [
+              `${String(held.length)} of ${String(timings.rows.length)} recorded module timings shown for ${chosen.name}.`,
+            ]
+      }
     />
   );
 }
@@ -113,17 +141,96 @@ function Registers({ registers }: { registers: RunRecord["registers"] }) {
   );
 }
 
+/** The delivered head of the column of module codes, which no page draws (amendment 2026-11-12). */
+const CODE_HEAD = "Code";
+
+/**
+ * The model-calls table as drawn: the delivered table without its "Code" column, every other head
+ * and cell as delivered. A row's cells are one fewer than the heads, so column `at` is cell `at - 1`.
+ */
+function withoutCodes({ columns, rows, total }: RunRecord["calls"]) {
+  const at = columns.indexOf(CODE_HEAD, 1);
+  const drop = <T,>(items: readonly T[], index: number) => items.filter((_, i) => i !== index);
+  const row = ({ label, cells }: RunRecord["calls"]["total"]) => ({
+    label,
+    cells: drop(cells, at - 1),
+  });
+  return { head: drop(columns, at), rows: rows.map(row), total: row(total) };
+}
+
+/**
+ * The model calls and their delivered total. The table lists the modules the record holds a row of,
+ * which may be fewer than the run's `modules`; then it says how many it lists, since its total is the
+ * run's. With a module chosen, its row is all that is drawn, with no total or count, which are the
+ * run's; a module the table lists no row of says so.
+ */
+function Calls({
+  calls,
+  modules,
+  chosen,
+  onClear,
+}: {
+  calls: RunRecord["calls"];
+  modules: number;
+  chosen: Reader | null;
+  onClear: () => void;
+}) {
+  const { head, rows, total } = withoutCodes(calls);
+  const held = chosen === null ? rows : rows.filter((row) => row.label === chosen.name);
+  if (chosen !== null && held.length === 0) {
+    return (
+      <NothingForModule
+        title={`No model calls are listed for ${chosen.name}`}
+        clearLabel="Show all modules"
+        onClear={onClear}
+      />
+    );
+  }
+  const partial = chosen === null && rows.length < modules;
+  return (
+    <TableCard
+      title={calls.title}
+      count={chosen === null ? calls.count : null}
+      note={chosen === null ? calls.note : `Unfiltered call record: ${calls.note}`}
+      label={calls.title}
+      size="text-h4"
+      trace={null}
+      head={head}
+      rows={chosen === null ? [...held, total] : held}
+      footnotes={
+        partial
+          ? [
+              `Call rows cover ${String(rows.length)} of ${String(modules)} modules in the run. The Total row is the delivered total for the run.`,
+            ]
+          : []
+      }
+      tableClass={chosen === null ? "[&_tbody_tr:last-child>*]:font-semibold" : ""}
+    />
+  );
+}
+
 /**
  * The Record tab: when each module started and was accepted, the hashes to copy, the spend against
- * the cap, the model calls and the registers as written. Module codes, configuration names and file
- * names appear only here. Every figure is the delivered text.
+ * the cap, the model calls and the registers as written. Configuration names and file names appear
+ * only here. Every figure is the delivered text. `modules` is the number of modules the run holds;
+ * `module` is the one chosen in the Evidence filter, which narrows the two tables of modules.
  */
-export function EvidenceRecord({ record }: { record: RunRecord }) {
+export function EvidenceRecord({
+  record,
+  modules,
+  module,
+  onClear,
+}: {
+  record: RunRecord;
+  modules: number;
+  module: Reader | null;
+  onClear: () => void;
+}) {
   const Heading = SUBSECTION_HEADING;
   const { hashes, spend, calls } = record;
   return (
     <div className="flex flex-col gap-8">
-      <Timings timings={record.timings} />
+      <Timings timings={record.timings} chosen={module} onClear={onClear} />
       <div className="grid grid-cols-1 gap-6 min-[1200px]:grid-cols-2">
         <section className="flex flex-col gap-4">
           <Heading className={H}>{hashes.title}</Heading>
@@ -148,20 +255,7 @@ export function EvidenceRecord({ record }: { record: RunRecord }) {
           <p className="text-small text-text-secondary">{spend.note}</p>
         </section>
       </div>
-      <TableCard
-        title={calls.title}
-        count={calls.count}
-        note={calls.note}
-        label={calls.title}
-        size="text-h4"
-        trace={null}
-        head={[...calls.columns]}
-        rows={[...calls.rows, calls.total].map((row) => ({
-          label: row.label,
-          cells: [...row.cells],
-        }))}
-        tableClass="[&_tr>:nth-child(2)]:text-left [&_td:nth-child(2)]:font-mono [&_tbody_tr:last-child>*]:font-semibold"
-      />
+      <Calls calls={calls} modules={modules} chosen={module} onClear={onClear} />
       <Registers registers={record.registers} />
     </div>
   );

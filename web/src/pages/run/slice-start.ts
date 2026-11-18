@@ -36,7 +36,7 @@ type DraftBase = {
   position: string; // "Step 1 of 5"
   previous: string | null; // sibling draft ids
   next: string | null;
-  nextLabel: string; // "Next", "Approve summary", "Submit, spend up to USD 20.00"
+  nextLabel: string; // "Next", "Approve summary", "Submit, spend up to USD 25.00"
   nextBlocked: string | null; // reason Next is unavailable
   readiness: Readiness;
 };

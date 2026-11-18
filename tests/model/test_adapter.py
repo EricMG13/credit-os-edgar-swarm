@@ -365,6 +365,11 @@ def test_live_adapter_runs_the_gate_in_its_constructor(live_ruling: Path, tmp_pa
     assert fake.requests == []
 
 
+def test_historical_ruling_cannot_enable_the_direct_http_transport(live_ruling: Path) -> None:
+    with pytest.raises(LivePauseInForce, match="direct HTTP model transport is retired"):
+        live_adapter(SPEC, live_ruling)
+
+
 def test_live_adapter_ruling_and_gate_are_read_only(live_ruling: Path) -> None:
     adapter = LiveAdapter(SPEC, live_ruling, FakeTransport(), {})
     assert adapter.ruling == live_ruling and adapter.gate.path == live_ruling.resolve()

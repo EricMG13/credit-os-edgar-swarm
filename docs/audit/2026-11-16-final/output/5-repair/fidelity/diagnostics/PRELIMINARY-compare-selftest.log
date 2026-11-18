@@ -1,0 +1,29 @@
+ok   connected/modules-cp-1.json: "1500" -> "1050" -> digits
+ok   connected/modules-cp-1.json: "3.75" -> "3.57" -> digits
+ok   connected/modules-cp-1.json: "275" -> "-275" -> sign
+ok   connected/modules-cp-1.json: "1125" -> "1125.0" -> precision
+ok   connected/modules-cp-1.json: "1400" -> "n.a." -> value drawn as missing
+ok   connected/modules-cp-1.json: "Not supplied: the schedule stops here" -> "0" -> missing drawn as zero
+ok   connected/modules-cp-1.json: "1,250" -> "1,520" -> digits
+ok   connected/overview.json: "2.25x" -> "2.52x" -> digits
+ok   connected/overview.json: "-0.75x vs FY2023" -> "0.75x vs FY2023" -> sign
+ok   connected/overview.json: "$2,250m" -> "2,250" -> unit missing
+ok   connected/overview.json: "$275m" -> "$275bn" -> unit
+ok   connected/overview.json: "4.00x" -> "4.0x" -> precision
+ok   connected/overview.json: "FY2024" -> "FY2023" -> period
+ok   connected/modules-cp-3.json: "$93.80; yield 7.0100%, 7.01% rounded" -> "$93.08; yield 7.0100%, 7.01% rounded" -> digits
+ok   connected/modules-cp-6.json: "2.37%" -> "2.73%" -> digits
+ok   connected/modules-cp-2.json: "The synthetic issuer's cover is thin at 3.1x." -> "The synthetic issuer's cover is thin at 3.7x." -> digits
+ok   connected/modules-cp-3c.json: "Scheduled 2" -> "Scheduled 9" -> digits
+ok   connected/modules-cp-1.json: "89" -> "88" -> digits
+ok   connected/modules-cp-3c.json: limitations -> "Synthetic data only in the cp three d case, so no conclusion carries weight." -> text
+ok   connected/modules-cp-1.json: sourceDrawers -> "Handoff line +3" -> source line
+ok   connected/modules-cp-1.json: sourceDrawers -> "Basis Synthetic p.9" -> basis
+ok   connected/modules-cp-1.json: mark Debt maturities FY2027: missing drawn as a bar -> missing drawn as a value
+ok   connected/modules-cp-1.json: mark Debt maturities FY2026: a value drawn as a zero bar -> value drawn as zero
+ok   static/library-halden-aerostructures-2026-09-30-overview.json: "4.6x" -> "4.9x" -> digits
+ok   static/library-halden-aerostructures-2026-09-30-overview.json: "23.1%" -> "21.3%" -> digits
+ok   static/library-halden-aerostructures-2026-09-30-overview.json: limitations -> "EBITDA for 2022 is not available on the current basis, so five-year trends start in 2024." -> text
+ok   static/library-halden-aerostructures-2026-09-30-modules-capital-structure.json: "USD 1,150m" -> "USD 1,510m" -> digits
+ok   static/library-halden-aerostructures-2026-09-30-modules-capital-structure.json: "USD 600m" -> "-USD 600m" -> sign
+28 changes, 28 reported; differences 0 in the baseline, 29 in the changed copy (expected at most 30)

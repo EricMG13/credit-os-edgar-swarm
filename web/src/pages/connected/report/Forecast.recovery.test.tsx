@@ -1,0 +1,696 @@
+import { fireEvent, render, screen, within } from "@testing-library/react";
+import { afterEach, expect, it, vi } from "vitest";
+import type { OutputEntry, PublishedRun, Snapshot } from "../publishedReport";
+import { FORECAST_INPUTS } from "../publishedReport";
+import type { Grid } from "../visuals/LegacyForecast";
+import type { buildReportView } from "../reportView";
+import { Forecast } from "./Forecast";
+import { ReportEvidence } from "./Evidence";
+import { PublishedTraceProvider } from "./PublishedTrace";
+import { forecastTraceContext, RecordedForecastAssumptions } from "./ForecastRecord";
+
+type View = ReturnType<typeof buildReportView>;
+const digest = "a".repeat(64);
+const missing = "Not calculable: cash is negative before funding";
+const ledger = "Receivables: the forecast inputs do not name the row and period of this line.";
+const input = {
+  schema_version: "cpos-forecast-inputs/1",
+  base: { revenue: { amount: "1000", reason: null }, cash: { amount: "100", reason: null } },
+  base_drivers: {
+    revenue_growth: {
+      values: ["0.05", "0.04"],
+      category: "Analyst Interpretation",
+      rationale: "Recorded growth.",
+      limitation: null,
+    },
+    interest_rate: {
+      values: ["0.06", "0.06"],
+      category: "Analyst Interpretation",
+      rationale: "Recorded rate.",
+      limitation: null,
+    },
+  },
+  downside_shock: { ebitda_decline: "0.20", rate_increase: "0.10" },
+  years: [
+    { year: 2025, start: "2025-04-01", end: "2026-03-31" },
+    { year: 2026, start: "2026-04-01", end: "2027-03-31" },
+  ],
+  scope_limits: ["Retained synthetic assumptions; not analytical review."],
+};
+const emptyEvidence = {
+  sources: [],
+  unused: [],
+  unrecorded: [],
+  noSourcesModules: [],
+  handoffs: [],
+  zip: null,
+  downloads: [],
+  record: { hashes: [], instructions: [], calls: [], cap: null },
+};
+const run = {
+  folder: "run",
+  asOf: "2025-03-31",
+  modules: {},
+  evidence: emptyEvidence,
+} as unknown as PublishedRun;
+const snapshot = {
+  workspace: { runs: {}, outputs: {}, handoffs: {}, models: [] },
+  chips: {},
+} as unknown as Snapshot;
+
+function fixture() {
+  const source: OutputEntry = {
+    selected: true,
+    output: {
+      id: "forward",
+      module: "CP-2G",
+      sha256: digest,
+      label: "Forward credit model",
+      href: "",
+    },
+    sections: [
+      {
+        heading: FORECAST_INPUTS,
+        level: 3,
+        line: 70,
+        blocks: [
+          {
+            type: "text",
+            line: 72,
+            end: 74,
+            text: `\x60\x60\x60json\n${JSON.stringify(input)}\n\x60\x60\x60`,
+          },
+        ],
+      },
+    ],
+  };
+  const cashflow: Grid & { units: string; notes: string[]; limits: string[]; other?: unknown } = {
+    units: "USD millions",
+    notes: [
+      "Base case is a conditional illustration.",
+      "Downside case is the stress case: a shock applied to the base-case drivers.",
+    ],
+    limits: [ledger],
+    columns: ["Base case", "Downside case"].flatMap((group) => [
+      { label: "FY2026E", group, start: "2025-04-01", end: "2026-03-31" },
+      { label: "FY2027E", group, start: "2026-04-01", end: "2027-03-31" },
+    ]),
+    rows: [
+      {
+        label: "Revenue",
+        band: "Revenue",
+        total: false,
+        cells: ["1050", "1092", "840", "873.6"].map((exact) => ({
+          status: "value",
+          exact,
+          display: exact,
+        })),
+      },
+      {
+        label: "Cash proxy (not issuer free cash flow)",
+        band: "Cash",
+        total: true,
+        cells: ["10.127", "12.345", "5", "6"].map((exact, index) => ({
+          status: "value",
+          exact,
+          display: ["10", "12", "5", "6"][index],
+        })),
+      },
+      {
+        label: "Receivables",
+        band: "Assets",
+        total: false,
+        cells: Array.from({ length: 4 }, () => ({
+          status: "na",
+          exact: null,
+          display: "n.a.",
+          reason: ledger,
+        })),
+      },
+    ],
+  };
+  const model = {
+    id: "model",
+    issuerKey: "issuer",
+    runId: "run",
+    runFolder: "run",
+    href: "",
+    download: "",
+    sources: [{ output: "forward", sha256: digest, role: "forecast" }],
+    cashflow,
+  };
+  const view: View = {
+    entries: [source],
+    modules: [],
+    models: [model],
+    catalogue: undefined,
+    lead: undefined,
+  };
+  return { view, source, model };
+}
+
+afterEach(() => vi.unstubAllGlobals());
+
+it("keeps the full model qualification ledger once on Evidence Record, not on Forecast", () => {
+  const { view, model } = fixture();
+  const drawn = render(<Forecast view={view} run={run} />);
+  expect(document.body.textContent).not.toContain(ledger);
+  expect(screen.getByRole("link", { name: "Model notes and limitations" })).toHaveAttribute(
+    "href",
+    "#evidence/record",
+  );
+  drawn.unmount();
+  vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("not available")));
+  const props = {
+    snapshot,
+    run,
+    entries: view.entries,
+    target: "record",
+    mode: "synthetic" as const,
+    models: [model],
+  };
+  render(<ReportEvidence {...props} />);
+  expect(screen.getAllByText(ledger)).toHaveLength(1);
+  expect(screen.getByText(/Receivables.*Base case.*FY2026E/)).toBeInTheDocument();
+});
+
+it("states missing or ambiguous forecast trace loss while preserving published figures", () => {
+  const { view } = fixture();
+  view.entries = [];
+  render(<Forecast view={view} run={run} />);
+  expect(
+    screen.getByText(/The model could not be matched to a single readable record of its inputs/),
+  ).toBeInTheDocument();
+  expect(screen.getByRole("figure", { name: "Revenue" })).toBeInTheDocument();
+  expect(screen.queryByRole("option", { name: "Assumptions" })).toBeNull();
+});
+
+it("describes missing inputs without claiming figures for an unreadable calculation record", () => {
+  const { view, model } = fixture();
+  view.entries = [];
+  view.models = [{ ...model, cashflow: null }];
+  render(<Forecast view={view} run={run} />);
+
+  expect(screen.getByText(/This model has no readable calculation record/)).toBeVisible();
+  expect(
+    screen.getByText(/The model could not be matched to a single readable record/),
+  ).toBeVisible();
+  expect(screen.queryByText(/Forecast figures are available/)).toBeNull();
+});
+
+it("ties promoted excerpts to the full recorded input and sends generated notes to Evidence Record", () => {
+  const { view, model } = fixture();
+  const recorded = "Retained sources are unreviewed. Standalone perimeter applies.";
+  model.cashflow.limits = [recorded];
+  const handoff = view.entries[0]?.sections[0]?.blocks[0];
+  if (handoff?.type !== "text") throw new Error("Missing forecast input fixture");
+  handoff.text = handoff.text.replace(
+    JSON.stringify(input),
+    JSON.stringify({
+      ...input,
+      scope_limits: [recorded],
+    }),
+  );
+  render(<Forecast view={view} run={run} />);
+  const note = screen.getByText("Base case is a conditional illustration.", { selector: "p" });
+  const group = note.parentElement;
+  if (!group) throw new Error("Missing base case qualification");
+  expect(within(group).getByRole("link")).toHaveAttribute("href", "#evidence/record");
+
+  const scope = screen.getByRole("region", { name: "Model scope and basis" });
+  fireEvent.click(within(scope).getByText("Model scope and basis"));
+  const excerpt = within(scope).getByText("Standalone perimeter applies.").parentElement;
+  if (!excerpt) throw new Error("Missing scope qualification");
+  expect(within(excerpt).getByRole("link")).toHaveAttribute("href", expect.stringContaining("-72"));
+  expect(
+    forecastTraceContext(model, { ...input, scope_limits: [recorded] }, "Scope", {
+      recordedQualification: recorded,
+    }),
+  ).toMatchObject({
+    statement: recorded,
+    details: [{ label: "scope_limits.0", value: recorded }],
+  });
+});
+
+it.each(["matching", "swapped headers", "duplicate row"])(
+  "links an assumption register row only to a unique exact source (%s)",
+  (variant) => {
+    const { view, source, model } = fixture();
+    const headers = ["Driver", "Basis"];
+    const cells = ["Interest", "Debt only"];
+    source.sections.push({
+      heading: "Assumption register",
+      level: 2,
+      line: 100,
+      blocks: [
+        {
+          type: "table",
+          line: 101,
+          headers: variant === "swapped headers" ? [...headers].reverse() : headers,
+          rows: [
+            { line: 103, cells },
+            ...(variant === "duplicate row" ? [{ line: 104, cells }] : []),
+          ],
+        },
+      ],
+    });
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(Response.json({})));
+    render(
+      <ReportEvidence
+        snapshot={snapshot}
+        run={run}
+        entries={view.entries}
+        target="record"
+        mode="synthetic"
+        models={[
+          {
+            ...model,
+            register: {
+              heading: "Assumption register",
+              intro: "Recorded basis",
+              headers,
+              rows: [cells],
+            },
+          },
+        ]}
+      />,
+    );
+    const region = within(screen.getByRole("region", { name: "Assumption register: model" }));
+    expect(region.getByRole("cell", { name: "Debt only" })).toBeInTheDocument();
+    if (variant === "matching") {
+      expect(region.getByRole("link", { name: "Source row" })).toHaveAttribute(
+        "href",
+        `/report/run#evidence/forward~${digest}-103`,
+      );
+    } else {
+      expect(region.queryByRole("link", { name: "Source row" })).toBeNull();
+      expect(region.getByText("Source row not matched")).toBeInTheDocument();
+    }
+  },
+);
+
+it("refuses a filename companion whose hash conflicts with retained model source identity", () => {
+  const { view, model, source } = fixture();
+  model.download = "/saved/run/annual.md";
+  source.output.href = "/saved/run/CP-2G.md";
+  source.output.sha256 = "b".repeat(64);
+  render(<Forecast view={view} run={run} />);
+  expect(
+    screen.getByText(/The model could not be matched to a single readable record of its inputs/),
+  ).toBeInTheDocument();
+  expect(screen.queryByText("Recorded growth.")).toBeNull();
+  expect(screen.getByRole("figure", { name: "Revenue" })).toBeInTheDocument();
+  expect(document.querySelector(`a[href*="${"b".repeat(64)}-72"]`)).toBeNull();
+});
+
+it("keeps the exact legacy filename companion when no source identity was retained", () => {
+  const { view, model, source } = fixture();
+  model.sources = [];
+  model.download = "/saved/run/annual.md";
+  source.output.href = "/saved/run/CP-2G.md";
+  render(<Forecast view={view} run={run} />);
+  expect(
+    screen.queryByText(/The model could not be matched to a single readable record of its inputs/),
+  ).toBeNull();
+  expect(screen.getByText("Recorded growth.")).toBeInTheDocument();
+});
+
+it("labels raw recorded monetary assumptions in their original currency and scale", () => {
+  const document = {
+    ...input,
+    currency: "GBP",
+    scale: 1000,
+    base_drivers: {
+      dividends: {
+        values: ["20000", "20000"],
+        category: "Analyst Interpretation",
+        rationale: "Retained dividend.",
+        limitation: null,
+      },
+    },
+    facilities: [
+      {
+        name: "Recorded bond",
+        balance: "600000",
+        annual_amortisation: "50000",
+        fixed_rate_pct: "5.1250",
+      },
+    ],
+  };
+  render(<RecordedForecastAssumptions document={document} />);
+  for (const region of ["Recorded forecast drivers", "Recorded facilities"])
+    expect(
+      within(screen.getByRole("region", { name: region })).getByText(/Amounts.*GBP thousands/),
+    ).toBeInTheDocument();
+  expect(screen.getAllByText("20000")).toHaveLength(2);
+  expect(screen.getByText("600000")).toBeInTheDocument();
+  expect(screen.getByText("5.1250")).toBeInTheDocument();
+  expect(
+    screen.getByRole("columnheader", { name: "2025 · 2025-04-01 to 2026-03-31" }),
+  ).toBeInTheDocument();
+  const trace = forecastTraceContext(fixture().model, document, "Dividends assumptions", {
+    case: "Base case",
+    inputPath: ["base_drivers", "dividends"],
+  });
+  expect(trace.details.find(({ label }) => label === "years")?.value).toContain("2025-04-01");
+});
+
+it("traces a trend to the actual figure and selected case instead of generic JSON", () => {
+  const { view } = fixture();
+  render(
+    <PublishedTraceProvider
+      snapshot={snapshot}
+      folder="run"
+      entries={view.entries}
+      route="forecast"
+    >
+      <Forecast view={view} run={run} />
+    </PublishedTraceProvider>,
+  );
+  fireEvent.click(
+    within(screen.getByRole("figure", { name: "Revenue" })).getByRole("button", {
+      name: /Show sources/,
+    }),
+  );
+  let drawer = within(screen.getByRole("dialog"));
+  expect(drawer.getByText(/Revenue.*Base case.*FY2026E.*1050/)).toBeInTheDocument();
+  expect(drawer.getByRole("link", { name: "Open in Evidence" })).toHaveAttribute(
+    "href",
+    `/report/run#evidence/forward~${digest}-72`,
+  );
+  const close = drawer.getAllByRole("button", { name: "Close" })[0];
+  if (!close) throw new Error("Missing drawer Close control");
+  fireEvent.click(close);
+  fireEvent.click(screen.getByRole("radio", { name: /^Downside shock/ }));
+  fireEvent.click(
+    within(screen.getByRole("figure", { name: "Revenue" })).getByRole("button", {
+      name: /Show sources/,
+    }),
+  );
+  drawer = within(screen.getByRole("dialog"));
+  expect(drawer.getByText(/Revenue.*Downside shock.*FY2026E.*840/)).toBeInTheDocument();
+  expect(drawer.queryByText(/Revenue.*Base case.*FY2026E.*1050/)).toBeNull();
+  expect(drawer.getByText("0.20")).toBeInTheDocument();
+});
+
+it("binds a selected additional scenario row to its own case", () => {
+  const { view, model } = fixture();
+  model.cashflow.other = {
+    columns: model.cashflow.columns
+      .slice(0, 2)
+      .map((column) => ({ ...column, group: "Downside (CP-2G drivers)" })),
+    rows: model.cashflow.rows.map((row) => ({ ...row, cells: row.cells.slice(0, 2) })),
+  };
+  render(
+    <PublishedTraceProvider
+      snapshot={snapshot}
+      folder="run"
+      entries={view.entries}
+      route="forecast"
+    >
+      <Forecast view={view} run={run} />
+    </PublishedTraceProvider>,
+  );
+  fireEvent.click(screen.getByRole("radio", { name: /^Downside drivers/ }));
+  fireEvent.click(
+    within(screen.getByRole("region", { name: "Cash flow model" })).getByRole("button", {
+      name: "Show sources for Revenue",
+    }),
+  );
+  const drawer = within(screen.getByRole("dialog"));
+  expect(
+    drawer.getByRole("heading", { level: 2, name: "Revenue · Downside drivers" }),
+  ).toBeInTheDocument();
+  expect(drawer.getByText(/Revenue.*Downside drivers.*FY2026E.*1050/)).toBeInTheDocument();
+  expect(drawer.queryByText(/Revenue.*Base case/)).toBeNull();
+});
+
+it("compares one period across cases and keeps accounts, ratios and growth rates separate", () => {
+  const { view, model } = fixture();
+  model.cashflow.rows.push(
+    {
+      label: "Interest coverage",
+      band: "Credit metrics",
+      kind: "multiple",
+      total: false,
+      cells: ["4.19x", "4.25x", "n.a.", "n.a."].map((display) => ({
+        display,
+        status: display === "n.a." ? "na" : "value",
+      })),
+    },
+    {
+      label: "Revenue YoY growth",
+      band: "Revenue",
+      kind: "percent",
+      total: false,
+      cells: ["5.0%", "4.0%", "0.0%", "4.0%"].map((display) => ({ display, status: "value" })),
+    },
+  );
+  render(<Forecast view={view} run={run} />);
+  const statement = () => within(screen.getByRole("table", { name: "Cash flow model" }));
+  const lines = within(screen.getByRole("radiogroup", { name: "Statement lines" }));
+  fireEvent.change(screen.getByLabelText("Statement columns"), { target: { value: "compare" } });
+  fireEvent.change(screen.getByLabelText("Comparison period"), { target: { value: "FY2026E" } });
+  expect(statement().getByRole("cell", { name: "1050" })).toBeInTheDocument();
+  expect(statement().getByRole("cell", { name: "840" })).toBeInTheDocument();
+  expect(statement().queryByRole("columnheader", { name: "FY2027E" })).toBeNull();
+  fireEvent.click(lines.getByRole("radio", { name: "Ratios" }));
+  expect(statement().getByRole("cell", { name: "4.19x" })).toBeInTheDocument();
+  expect(statement().getByRole("cell", { name: "n.a." })).toBeInTheDocument();
+  expect(statement().getByRole("columnheader", { name: "Downside shock" })).toBeInTheDocument();
+  expect(statement().queryByRole("rowheader", { name: "Revenue" })).toBeNull();
+  fireEvent.click(lines.getByRole("radio", { name: "Growth rates" }));
+  expect(statement().getByRole("cell", { name: "0.0%" })).toBeInTheDocument();
+  expect(statement().queryByRole("rowheader", { name: "Interest coverage" })).toBeNull();
+});
+
+it.each([true, false])(
+  "selects retained own-downside driver paths for the main downside (shock: %s)",
+  (shock) => {
+    const { model } = fixture();
+    model.cashflow.notes = [
+      shock
+        ? "Downside case is the stress case: a shock applied to the model's own downside drivers."
+        : "Downside case is CP-2G's own downside drivers; no CP-2A shock was supplied.",
+    ];
+    const document = {
+      ...input,
+      downside_drivers: {
+        revenue_growth: {
+          values: ["0.01", "0.01"],
+          category: "Analyst Interpretation",
+          rationale: "Recorded own-downside growth.",
+          limitation: null,
+        },
+      },
+      downside_shock: shock ? input.downside_shock : null,
+    };
+    const trace = forecastTraceContext(model, document, "Revenue", {
+      case: shock ? "Downside shock" : "Downside case",
+      row: "Revenue",
+    });
+    expect(
+      trace.details.find(({ label }) => label === "downside_drivers.revenue_growth")?.value,
+    ).toContain('"0.01"');
+    expect(trace.details.some(({ label }) => label === "base_drivers.revenue_growth")).toBe(false);
+    expect(trace.details.some(({ label }) => label === "downside_shock.ebitda_decline")).toBe(
+      shock,
+    );
+  },
+);
+
+it("preserves a retained historical stress explicitly recorded on base drivers", () => {
+  const { model } = fixture();
+  const document = {
+    ...input,
+    downside_drivers: {
+      revenue_growth: {
+        values: ["0.01", "0.01"],
+        category: "Analyst Interpretation",
+        rationale: "Separately recorded downside.",
+        limitation: null,
+      },
+    },
+  };
+  const trace = forecastTraceContext(model, document, "Revenue", {
+    case: "Downside shock",
+    row: "Revenue",
+  });
+  expect(
+    trace.details.find(({ label }) => label === "base_drivers.revenue_growth")?.value,
+  ).toContain('"0.05"');
+  expect(trace.details.some(({ label }) => label === "downside_drivers.revenue_growth")).toBe(
+    false,
+  );
+});
+
+it("retains the recorded facility fields behind debt, interest and cash figures", () => {
+  const { model } = fixture();
+  const document = {
+    ...input,
+    facilities: [
+      {
+        name: "Recorded fixed facility",
+        balance: "600",
+        fixed_rate_pct: "6.00",
+        annual_amortisation: "50",
+        maturity: "2028-03-31",
+      },
+    ],
+  };
+  for (const row of [
+    "Closing debt",
+    "Interest",
+    "Closing cash",
+    "Cash proxy (not issuer free cash flow)",
+  ]) {
+    const trace = forecastTraceContext(model, document, row, { case: "Base case", row });
+    expect(trace.details.find(({ label }) => label === "facilities.0.name")?.value).toBe(
+      "Recorded fixed facility",
+    );
+    expect(trace.details.find(({ label }) => label === "facilities.0.balance")?.value).toBe("600");
+    expect(
+      trace.details.find(({ label }) => label === "facilities.0.annual_amortisation")?.value,
+    ).toBe("50");
+    expect(trace.details.find(({ label }) => label === "facilities.0.fixed_rate_pct")?.value).toBe(
+      "6.00",
+    );
+  }
+});
+
+it("shows repayment drivers in the interest trace", () => {
+  const { model } = fixture();
+  const document = {
+    ...input,
+    base_drivers: {
+      ...input.base_drivers,
+      debt_repayment: {
+        values: ["20", "0"],
+        category: "Analyst Interpretation",
+        rationale: "Recorded repayments.",
+        limitation: null,
+      },
+    },
+  };
+  const trace = forecastTraceContext(model, document, "Interest", {
+    case: "Base case",
+    row: "Interest",
+    period: "FY2027E",
+  });
+  expect(
+    trace.details.find(({ label }) => label === "base_drivers.debt_repayment")?.value,
+  ).toContain('"20"');
+});
+
+it("shows recorded drivers and the downside shock with a separate facilities notice", () => {
+  const { view } = fixture();
+  render(<Forecast view={view} run={run} />);
+  expect(screen.getByText("Forecast assumptions")).toBeInTheDocument();
+  expect(screen.getByRole("table", { name: "Recorded forecast drivers" })).toBeInTheDocument();
+  expect(screen.getByText("Recorded growth.")).toBeInTheDocument();
+  expect(screen.getByText("20.00%")).toBeInTheDocument();
+  const facilities = screen.getByRole("region", { name: "Recorded facilities" });
+  expect(
+    within(facilities).getByText(/No facility-level assumptions were recorded/),
+  ).toBeInTheDocument();
+  expect(
+    within(screen.getByRole("table", { name: "Recorded forecast drivers" })).queryByText(
+      /facility-level/,
+    ),
+  ).toBeNull();
+});
+
+it("retains a cell qualification even when its calculation grid cannot be drawn", () => {
+  const { view, model } = fixture();
+  const row = model.cashflow.rows[0];
+  const cell = row?.cells[0];
+  if (!cell) throw new Error("Missing retained cell fixture");
+  cell.display = "";
+  cell.reason = "Retain the exact qualification from malformed-grid-source.pdf p.12";
+  const forecast = render(<Forecast view={view} run={run} />);
+  expect(screen.getByRole("link", { name: "Model notes and limitations" })).toHaveAttribute(
+    "href",
+    "#evidence/record",
+  );
+  forecast.unmount();
+  vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("not available")));
+  render(
+    <ReportEvidence
+      snapshot={snapshot}
+      run={run}
+      entries={view.entries}
+      target="record"
+      mode="synthetic"
+      models={[model]}
+    />,
+  );
+  expect(
+    screen.getByText("Retain the exact qualification from malformed-grid-source.pdf p.12"),
+  ).toBeInTheDocument();
+});
+
+it("keeps the missing cash-proxy reason on its case card and explains its precision", () => {
+  const { view, model } = fixture();
+  const cashProxy = model.cashflow.rows[1];
+  if (!cashProxy) throw new Error("Missing test cash-proxy row");
+  cashProxy.cells[3] = {
+    status: "na",
+    exact: null,
+    display: "n.a.",
+    reason: missing,
+  };
+  render(<Forecast view={view} run={run} />);
+  const cases = within(screen.getByRole("radiogroup", { name: "Forecast case" }));
+  expect(cases.getByText(missing)).toBeInTheDocument();
+  expect(cases.getByText("n.a.")).toBeInTheDocument();
+  expect(screen.getByRole("radiogroup", { name: "Forecast case" })).toHaveAccessibleDescription(
+    /Cash proxy.*2 decimals/,
+  );
+  expect(cases.queryByText(/2 decimals/)).toBeNull();
+});
+
+it("uses stored case names for descriptions and reader names for all column groups", () => {
+  const { view, model } = fixture();
+  model.cashflow.other = {
+    columns: [
+      { label: "FY2026E", group: "Upside" },
+      { label: "FY2027E", group: "Upside" },
+    ],
+    rows: model.cashflow.rows.map((row) => ({ ...row, cells: row.cells.slice(0, 2) })),
+  };
+  model.cashflow.notes.push("Upside is the optimistic case recorded by the module.");
+  render(<Forecast view={view} run={run} />);
+  expect(
+    within(screen.getByRole("radiogroup", { name: "Forecast case" })).getByText(
+      "Upside is the optimistic case recorded by the module.",
+    ),
+  ).toBeInTheDocument();
+  fireEvent.click(screen.getByRole("radio", { name: /^Downside shock/ }));
+  expect(
+    within(screen.getByRole("region", { name: "Cash flow model" })).getByRole("columnheader", {
+      name: "Downside shock",
+    }),
+  ).toBeInTheDocument();
+});
+
+it("names model choices by recorded cases and date, without builder mode jargon", () => {
+  const { view, model } = fixture();
+  view.models = [
+    { ...model, mode: "candidate" },
+    { ...model, id: "other", mode: "alternate" },
+  ];
+  render(<Forecast view={view} run={run} />);
+  const selector = screen.getByRole("combobox", { name: "Published model" });
+  expect(selector).not.toHaveTextContent(/candidate|alternate/);
+  expect(selector).toHaveTextContent("31 March 2025");
+  expect(selector).toHaveTextContent("Base case");
+});
+
+it("wraps recorded descriptions, model notes and qualifications at desktop widths", () => {
+  const { view } = fixture();
+  render(<Forecast view={view} run={run} />);
+  expect(screen.getByRole("region", { name: "Model scope and basis" }).className).toMatch(
+    /wrap-anywhere/,
+  );
+  expect(screen.getByRole("radiogroup", { name: "Forecast case" }).className).toMatch(/min-w-0/);
+});

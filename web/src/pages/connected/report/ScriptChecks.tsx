@@ -1,9 +1,18 @@
 import { Badge } from "@/components/base/badges/badges";
+import { EmptyState } from "@/components/application/empty-state/empty-state";
+import { FileSearch02 } from "@untitledui/icons";
 import { moduleName } from "../api";
 import { card, heading } from "../layout";
 import type { ScriptCheckOutcome, ScriptCheckRecord } from "../publishedReport";
 
 const meaningful = (value: string | null) => (value === "all" || value === "" ? null : value);
+
+/** Text without the markdown marks the service leaves on a register or a reason: backticks and heading hashes. */
+const plain = (text: string) =>
+  text
+    .replaceAll("`", "")
+    .replace(/(^|\s)#{2,6}\s+/g, "$1")
+    .trim();
 
 function groupOutcomes(outcomes: ScriptCheckOutcome[]) {
   const groups = new Map<string, ScriptCheckOutcome[]>();
@@ -50,25 +59,22 @@ function CheckField({ label, value }: { label: string; value: string | number | 
 function CheckCard({ group }: { group: ScriptCheckOutcome[] }) {
   const outcome = group[0];
   if (!outcome) return null;
-  const registers = group.flatMap(({ register }) => (register ? [register] : []));
+  const registers = group.flatMap(({ register }) => (register ? [plain(register)] : []));
   const named = meaningful(outcome.figure) ?? meaningful(outcome.row);
-  const title =
-    named ??
-    (group.length > 1 ? `${String(registers.length)} registers` : (registers[0] ?? "Check"));
+  // A card is headed by its register and the figure checked: the figure alone is often "columns".
+  const where = group.length > 1 ? `${String(registers.length)} registers` : registers[0];
+  const title = [where, named && plain(named)].filter(Boolean).join(" \u00b7 ") || "Check";
   const recomputed = [outcome.recomputed, outcome.recomputedLabel]
     .filter((value) => value !== null)
     .join(" ");
   return (
-    <section
-      className="grid gap-3 rounded-ds-md border border-border-hairline p-4"
-      aria-label={`${title}: ${outcome.status}`}
-    >
+    <section className="grid gap-3 border-t border-border-hairline pt-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <h4 className="font-semibold">{title}</h4>
         <CheckStatus status={outcome.status} />
       </div>
       <dl className="grid gap-3 sm:grid-cols-2">
-        <CheckField label="Reason" value={outcome.reason} />
+        <CheckField label="Reason" value={outcome.reason && plain(outcome.reason)} />
         {group.length > 1 && registers.length > 0 ? (
           <div className="grid gap-1">
             <dt className="text-sm text-text-secondary">Registers</dt>
@@ -147,16 +153,32 @@ export function ScriptChecks({
   return (
     <section className="grid gap-4">
       <h3 className={heading}>Script checks</h3>
+      <p className="text-sm text-text-secondary">
+        A script check compares a recorded figure or register with the result of a recorded checking
+        script.
+      </p>
+      <p className="text-sm text-text-secondary">
+        “Not checked” means no completed script check is recorded for that item; its reason states
+        whether a script was unavailable or was not run.
+      </p>
       {selected.length ? (
         selected.map((record, index) => (
           <ModuleChecks key={index} record={record} expanded={Boolean(module)} />
         ))
       ) : (
-        <p className={card}>
-          {module
-            ? `No script-check record is held for ${moduleName(module)}.`
-            : "No script-check record is held for this run."}
-        </p>
+        <EmptyState className="py-5">
+          <EmptyState.Header>
+            <EmptyState.FeaturedIcon icon={FileSearch02} />
+          </EmptyState.Header>
+          <EmptyState.Content>
+            <EmptyState.Title as="h3">No script checks recorded</EmptyState.Title>
+            <EmptyState.Description>
+              {module
+                ? `No script-check record is held for ${moduleName(module)}.`
+                : "No script-check record is held for this run."}
+            </EmptyState.Description>
+          </EmptyState.Content>
+        </EmptyState>
       )}
     </section>
   );

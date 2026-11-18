@@ -1,0 +1,25 @@
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_______ test_a_summary_issued_before_per_pathway_caps_must_be_made_again _______
+
+root = PosixPath('/tmp/ibxx45gy2r')
+
+    def test_a_summary_issued_before_per_pathway_caps_must_be_made_again(root: Path) -> None:
+        """A summary made before this change recorded no cap (it showed USD 20): Submit refuses it."""
+        answers, sid = _answers(DEEP), _upload(root)
+        got = submissions.summary(layout(root), sid, answers)
+        issued = layout(root).uploads / sid / "issued"
+>       digest, prior, cap_line = issued.read_text(encoding="ascii").split()
+        ^^^^^^^^^^^^^^^^^^^^^^^
+E       ValueError: too many values to unpack (expected 3)
+
+tests/test_pathway_tiers.py:251: ValueError
+=============================== warnings summary ===============================
+../audit-final/.venv/lib/python3.13/site-packages/_pytest/config/__init__.py:885
+  /workspace/audit-final/.venv/lib/python3.13/site-packages/_pytest/config/__init__.py:885: PytestAssertRewriteWarning: Module already imported so cannot be rewritten; inbox_fixtures
+    self.import_plugin(import_spec)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/test_pathway_tiers.py::test_a_summary_issued_before_per_pathway_caps_must_be_made_again
+1 failed, 1 warning in 2.20s

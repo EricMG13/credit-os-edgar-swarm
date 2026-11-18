@@ -1,4 +1,4 @@
-import { useId } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import {
   AlertTriangle,
   Flag01,
@@ -6,8 +6,11 @@ import {
   LayersThree01,
   List,
   RefreshCw01,
+  SearchLg,
 } from "@untitledui/icons";
 import { Button, Link } from "react-aria-components";
+import { Input } from "@/components/base/input/input";
+import { Select } from "@/components/base/select/select";
 import { STATUS_SETS } from "@/components/status/sets";
 import { StatusShape } from "@/components/status/shapes";
 import { cx } from "@/utils/cx";
@@ -42,9 +45,11 @@ export type NavSection = { key: string; label: string; icon: keyof typeof ICON }
 export type NavModule = { id: string; name: string; state: ModuleState };
 
 /**
- * The module page's navigator (N3): one vertical menu in two groups. The first moves to a section
- * of this page without changing the address; the second links every module of the run, each with
- * its state shape and word. Sticky from the wide layout, where it scrolls by itself when long.
+ * The module page's navigator (N3): a search at the top, then one vertical menu in two groups. The
+ * first moves to a section of this page without changing the address; the second links every
+ * module of the run, each with its state shape and word. The search narrows the second group by
+ * plain module name, in memory. The wide navigator keeps search visible and scrolls each list
+ * independently when space is limited.
  */
 export function ModuleNav({
   issuer,
@@ -69,61 +74,182 @@ export function ModuleNav({
 }) {
   const sectionsLabel = useId();
   const modulesLabel = useId();
-  const heading = "px-4 pt-3 pb-1 pl-4.75 text-xs font-medium text-text-tertiary";
+  const [search, setSearch] = useState("");
+  const menu = useRef<HTMLElement>(null);
+  const results = useRef<HTMLUListElement>(null);
+  const wanted = search.trim().toLowerCase();
+  const listed = modules.filter((module) => module.name.toLowerCase().includes(wanted));
+  useEffect(() => {
+    const align = () => {
+      const nav = menu.current;
+      if (nav === null) return;
+      if (window.innerWidth < 1001) {
+        nav.style.maxHeight = "";
+        return;
+      }
+      const view = nav.getBoundingClientRect();
+      if (view.height === 0) return;
+      const height = window.innerHeight - Math.max(view.top, 24) - 24;
+      nav.style.maxHeight = height > 0 ? `${String(height)}px` : "";
+      const list = results.current;
+      const entry = list?.querySelector('[aria-current="page"]');
+      if (!list || !entry || height <= 0) return;
+      const bounded = list.getBoundingClientRect();
+      const item = entry.getBoundingClientRect();
+      if (item.height === 0) return;
+      const bottom = Math.min(bounded.bottom, window.innerHeight);
+      const top = Math.max(bounded.top, 0);
+      if (item.bottom > bottom) list.scrollTop += item.bottom - bottom;
+      else if (item.top < top) list.scrollTop -= top - item.top;
+    };
+    const alignAfterScroll = (event: Event) => {
+      if (event.target instanceof Node && menu.current?.contains(event.target)) return;
+      align();
+    };
+    align();
+    window.addEventListener("resize", align);
+    window.addEventListener("scroll", alignAfterScroll, true);
+    return () => {
+      window.removeEventListener("resize", align);
+      window.removeEventListener("scroll", alignAfterScroll, true);
+    };
+  }, [current, wanted]);
+  const heading =
+    "shrink-0 px-4 pt-3 pb-1 pl-4.75 text-caption font-medium text-text-tertiary min-[1001px]:pt-1 min-[1001px]:leading-4";
   return (
     <nav
+      ref={menu}
       aria-label="Modules and sections"
       className={cx(
         "flex flex-col min-[1001px]:sticky min-[1001px]:top-6 min-[1001px]:max-h-[calc(100vh-3rem)] min-[1001px]:overflow-y-auto",
         className,
       )}
     >
-      {sections.length === 0 ? null : (
-        <>
-          <span id={sectionsLabel} className={heading}>
-            On this page
-          </span>
-          <ul aria-labelledby={sectionsLabel}>
-            {sections.map((section) => {
-              const Icon = ICON[section.icon];
-              return (
-                <li key={section.key}>
-                  <Button
-                    aria-current={section.key === active ? "location" : undefined}
-                    onPress={() => {
-                      onSection(section.key);
-                    }}
-                    className={cx(ENTRY, "py-3", section.key === active && CURRENT)}
-                  >
-                    <Icon aria-hidden="true" className="size-5 flex-none opacity-75" />
-                    {section.label}
-                  </Button>
-                </li>
-              );
-            })}
-          </ul>
-        </>
-      )}
-      <span id={modulesLabel} className={cx(heading, sections.length > 0 && "mt-4")}>
-        Modules in this run
-      </span>
-      <ul aria-labelledby={modulesLabel}>
-        {modules.map((module) => (
-          <li key={module.id}>
-            <Link
-              href={hrefFor?.(module.id) ?? modulesHref(issuer, run, module.id)}
-              aria-label={`${module.name}, ${module.state}`}
-              aria-current={module.id === current ? "page" : undefined}
-              className={cx(ENTRY, "py-2", module.id === current && CURRENT)}
+      <div className="shrink-0 px-4 pt-1 pb-2 min-[1001px]:pb-1">
+        <Input
+          aria-label="Search modules"
+          icon={SearchLg}
+          placeholder="Search modules"
+          value={search}
+          onChange={setSearch}
+        />
+      </div>
+      <div
+        data-compact-navigation
+        className="hidden flex-col gap-3 px-4 pb-3 min-[481px]:flex min-[1001px]:hidden"
+      >
+        <Select
+          label="Module"
+          value={listed.some((module) => module.id === current) ? current : null}
+          placeholder="Choose a module"
+          onChange={(key) => {
+            const id = String(key);
+            window.location.hash = hrefFor?.(id) ?? modulesHref(issuer, run, id);
+          }}
+        >
+          {listed.map((module) => (
+            <Select.Item
+              key={module.id}
+              id={module.id}
+              label={module.name}
+              value={{ id: module.id, label: module.name, supportingText: module.state }}
+            />
+          ))}
+        </Select>
+        {sections.length === 0 ? null : (
+          <Select
+            label="Page section"
+            value={active}
+            placeholder="Choose a section"
+            onChange={(key) => {
+              onSection(String(key));
+            }}
+          >
+            {sections.map((section) => (
+              <Select.Item
+                key={section.key}
+                id={section.key}
+                label={section.label}
+                value={{ id: section.key, label: section.label }}
+              />
+            ))}
+          </Select>
+        )}
+      </div>
+      {listed.length === 0 ? (
+        <p className="px-4 py-2 text-small text-text-tertiary">No module matches</p>
+      ) : null}
+      <div className="contents min-[481px]:max-[1001px]:hidden">
+        {sections.length === 0 ? null : (
+          <>
+            <span id={sectionsLabel} className={heading}>
+              On this page
+            </span>
+            <ul
+              aria-labelledby={sectionsLabel}
+              className="min-[1001px]:min-h-9 min-[1001px]:overflow-y-auto"
             >
-              <span className={cx("mx-1 flex", MARK[module.state])}>
-                <StatusShape shape={STATUS_SETS["Module state"][module.state].shape} />
-              </span>
-              <span>{module.name}</span>
-            </Link>
-          </li>
-        ))}
-      </ul>
+              {sections.map((section) => {
+                const Icon = ICON[section.icon];
+                return (
+                  <li key={section.key}>
+                    <Button
+                      aria-current={section.key === active ? "location" : undefined}
+                      onPress={() => {
+                        onSection(section.key);
+                      }}
+                      className={cx(
+                        ENTRY,
+                        "py-3 min-[1001px]:py-2",
+                        section.key === active && CURRENT,
+                      )}
+                    >
+                      <Icon aria-hidden="true" className="size-5 flex-none opacity-75" />
+                      {section.label}
+                    </Button>
+                  </li>
+                );
+              })}
+            </ul>
+          </>
+        )}
+        <span
+          id={modulesLabel}
+          className={cx(heading, sections.length > 0 && "mt-4 min-[1001px]:mt-2")}
+        >
+          Modules in this run
+        </span>
+        {listed.length === 0 ? null : (
+          <ul
+            ref={results}
+            aria-labelledby={modulesLabel}
+            className="min-[1001px]:min-h-11 min-[1001px]:shrink-3 min-[1001px]:overflow-y-auto"
+          >
+            {listed.map((module) => (
+              <li key={module.id}>
+                <Link
+                  href={hrefFor?.(module.id) ?? modulesHref(issuer, run, module.id)}
+                  aria-label={`${module.name}, ${module.state}`}
+                  aria-current={module.id === current ? "page" : undefined}
+                  className={cx(ENTRY, "py-2", module.id === current && CURRENT)}
+                >
+                  <span className={cx("mx-1 flex", MARK[module.state])}>
+                    <StatusShape shape={STATUS_SETS["Module state"][module.state].shape} />
+                  </span>
+                  <span className="flex min-w-0 flex-col gap-0.5">
+                    <span data-module-name>{module.name}</span>
+                    {module.state === "Delivered" ? null : (
+                      <small className="text-caption font-normal text-text-tertiary">
+                        {module.state}
+                      </small>
+                    )}
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
     </nav>
   );
 }

@@ -133,7 +133,7 @@ describe("published evidence gaps", () => {
     expect(screen.getByRole("heading", { name: "Gaps 1" })).toBeVisible();
     expect(screen.getByText("Effect: Could increase liquidity pressure")).toBeVisible();
     expect(screen.getByText("Financial foundation · Saved alternate")).toBeVisible();
-    expect(screen.getByRole("link", { name: "Open source" })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: "Open handoff line" })).toHaveAttribute(
       "href",
       `/report/case#evidence/${encodeURIComponent(saved.output.id)}~${saved.output.sha256}-7`,
     );
@@ -187,7 +187,7 @@ describe("published evidence gaps", () => {
     expect(row).toHaveTextContent("ID: G-1 Amount: 0 Reason: Last");
     expect(row).not.toHaveTextContent("Empty:");
     expect(screen.getByRole("row", { name: /Sparse trailing cells/ })).toBeVisible();
-    const links = screen.getAllByRole("link", { name: "Open source" });
+    const links = screen.getAllByRole("link", { name: "Open handoff line" });
     expect(links.map((link) => link.getAttribute("href"))).toEqual(
       [6, 7].map(
         (line) =>
@@ -221,7 +221,7 @@ describe("published evidence gaps", () => {
 
   it("handles empty lists and an unknown module filter without showing another module's rows", () => {
     const empty = renderGaps([]);
-    expect(screen.getByText("No recorded gaps for Financial foundation.")).toBeVisible();
+    expect(screen.getByText("No module-written gaps for Financial foundation.")).toBeVisible();
     empty.unmount();
     renderGaps(
       [
@@ -231,7 +231,7 @@ describe("published evidence gaps", () => {
       ],
       "CP-unknown",
     );
-    expect(screen.getByText("No recorded gaps for CP-unknown.")).toBeVisible();
+    expect(screen.getByText("No module-written gaps for CP-unknown.")).toBeVisible();
     expect(screen.queryByText("Different module gap.")).toBeNull();
   });
 });
@@ -270,7 +270,7 @@ it("keeps filtered summary counts, alternate handoffs and source identities acro
     unrecorded: [{ ...source, name: "Use unknown", sha256: null }],
   };
   const summary = renderEvidence(entries, "summary/CP-1", evidence);
-  expect(screen.getByText("1 designated handoffs · 2 source files")).toBeVisible();
+  expect(screen.getByText("1 designated handoff · 2 source files")).toBeVisible();
   expect(
     screen.getByRole("link", { name: "Financial foundation · Saved alternate" }),
   ).toHaveAttribute("href", `/report/case#evidence/alternate~${"a".repeat(64)}`);
@@ -296,7 +296,8 @@ it("does not admit a stale evidence address or display the handoff list for it",
   expect(screen.queryByRole("heading", { name: "Run evidence" })).toBeNull();
 });
 
-it("opens only verified retained files from the source inventory", () => {
+// Decision 9 (OQ-04, C5-011): supplied source files are listed only, never opened from the report.
+it("lists retained files from the source inventory without a link to open them", () => {
   const sha256 = "d".repeat(64);
   const href = `/connected/sources/case/${sha256}/Issuer.txt`;
   renderEvidence([], "sources", {
@@ -313,15 +314,14 @@ it("opens only verified retained files from the source inventory", () => {
       },
     ],
   });
-  expect(screen.getByRole("link", { name: "Open source file: Issuer.txt" })).toHaveAttribute(
-    "href",
-    href,
-  );
+  expect(screen.getByText("Issuer.txt")).toBeVisible();
+  expect(screen.queryByRole("link", { name: "Open source file: Issuer.txt" })).toBeNull();
+  expect(document.querySelector(`a[href="${href}"]`)).toBeNull();
   expect(screen.queryByRole("link", { name: "Open source file: Missing.txt" })).toBeNull();
   expect(screen.getByText("Retained source is unavailable")).toBeVisible();
 });
 
-it("preserves citation identity, warnings and exact source links without inventing missing detail", () => {
+it("preserves citation identity, warnings and cited pages without links or invented detail", () => {
   const entry = evidenceEntry("CP-1", "case/CP-1.md", true, [
     { type: "text", line: 5, end: 5, text: "A dated facility confirmation was not supplied." },
   ]);
@@ -374,13 +374,8 @@ it("preserves citation identity, warnings and exact source links without inventi
       "Printed page numbering differs. The recorded quote or value was not located on the cited page.",
     ),
   ).toBeVisible();
-  expect(citation.getByRole("link", { name: "Open source file: filing.txt" })).toHaveAttribute(
-    "href",
-    href,
-  );
-  expect(
-    citation.getByRole("link", { name: "Open cited source pages 2–3: filing.txt" }),
-  ).toHaveAttribute("href", `${href}?page=2&end=3`);
+  expect(citation.queryAllByRole("link")).toEqual([]);
+  expect(citation.getByText("Cited pages 2–3")).toBeVisible();
   expect(citation.getByText(hash).tagName).toBe("CODE");
   expect(item("Named source only").getByText("Issuer presentation")).toBeVisible();
   expect(item("Named source only").queryByRole("link")).toBeNull();

@@ -14,6 +14,7 @@ function basisView({
   value = "10",
   duplicate = false,
   omit = false,
+  multipleCases = false,
 } = {}): View {
   const handoff: OutputEntry = {
     output: {
@@ -87,6 +88,7 @@ function basisView({
       columns: [
         { label: "FY2025E", group: "Base case" },
         { label: "FY2026E", group: "Base case" },
+        ...(multipleCases ? [{ label: "FY2026E", group: "Downside case" }] : []),
       ],
       rows: [
         {
@@ -96,6 +98,7 @@ function basisView({
           cells: [
             { status: "value", exact: value, display: value },
             { status: "value", exact: "10", display: "10" },
+            ...(multipleCases ? [{ status: "value", exact: "5", display: "5" }] : []),
           ],
         },
       ],
@@ -115,7 +118,7 @@ const run = { folder: "current" } as PublishedRun;
 it("preserves the recorded bridge and its exact source lines", () => {
   render(<Forecast view={basisView()} run={run} />);
   expect(screen.getByText(/The calculation gives/)).toHaveTextContent(
-    "The calculation gives 10.00 cash proxy. The handoff gives 15.00 free cash flow. The displayed difference is $5.00m.",
+    "The calculation gives US$10.00m cash proxy. The Forward credit model gives US$15.00m free cash flow. The displayed difference is US$5.00m.",
   );
   expect(screen.getByRole("link", { name: "Free cash flow basis" })).toHaveAttribute(
     "href",
@@ -130,13 +133,21 @@ it("preserves the recorded bridge and its exact source lines", () => {
 it("preserves a zero-valued bridge", () => {
   render(<Forecast view={basisView({ original: "0", difference: "0", value: "0" })} run={run} />);
   expect(screen.getByText(/The calculation gives/)).toHaveTextContent(
-    "The calculation gives 0.00 cash proxy.",
+    "The calculation gives US$0.00m cash proxy.",
   );
   expect(screen.getByRole("link", { name: "Difference basis" })).toBeInTheDocument();
 });
 
+it("C4-013 labels Forecast case cards with the report's canonical money unit", () => {
+  render(<Forecast view={basisView({ multipleCases: true })} run={run} />);
+  const choices = screen.getByRole("radiogroup", { name: "Forecast case" });
+  expect(choices).toHaveAccessibleDescription(/US\$m/);
+  expect(choices).not.toHaveTextContent("USD millions");
+});
+
 it.each([
-  { units: "EUR millions" },
+  // docs/rulings/2026-11-16-reporting-currency-from-sources.md: "EUR millions" is now shown (below).
+  { units: "EUR thousands" },
   { units: "" },
   { original: "Not supplied" },
   { difference: "6" },
@@ -188,3 +199,30 @@ it.each([
     } else expect(links).toHaveLength(0);
   },
 );
+
+// docs/rulings/2026-11-16-reporting-currency-from-sources.md: the model records its own currency.
+it.each([
+  [
+    "GBP millions",
+    "The calculation gives GBP 10.00m cash proxy. The Forward credit model gives GBP 15.00m free cash flow. The displayed difference is GBP 5.00m.",
+  ],
+  [
+    "CHF millions",
+    "The calculation gives CHF 10.00m cash proxy. The Forward credit model gives CHF 15.00m free cash flow. The displayed difference is CHF 5.00m.",
+  ],
+  [
+    "EUR millions",
+    "The calculation gives EUR 10.00m cash proxy. The Forward credit model gives EUR 15.00m free cash flow. The displayed difference is EUR 5.00m.",
+  ],
+  [
+    "USD millions",
+    "The calculation gives US$10.00m cash proxy. The Forward credit model gives US$15.00m free cash flow. The displayed difference is US$5.00m.",
+  ],
+])("shows the bridge of a model recorded in %s with that unit", (units, text) => {
+  render(<Forecast view={basisView({ units })} run={run} />);
+  expect(screen.getByText(/The calculation gives/)).toHaveTextContent(text);
+  expect(screen.getByRole("link", { name: "Difference basis" })).toHaveAttribute(
+    "href",
+    `/report/current#evidence/forward~${"a".repeat(64)}-66`,
+  );
+});

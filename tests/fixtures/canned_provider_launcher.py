@@ -7,6 +7,7 @@ from __future__ import annotations
 import json
 import sys
 import tempfile
+from decimal import Decimal
 from pathlib import Path
 from typing import Any
 from unittest import mock
@@ -14,7 +15,8 @@ from unittest import mock
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from test_cpos_launch import AS_OF, ISSUER, covenant_answer
 
-from deploy_workflow.model.adapter import AdapterReply, LiveAdapter
+from deploy_workflow.model.adapter import AdapterReply
+from deploy_workflow.model.copilot_adapter import CopilotAdapter
 from deploy_workflow.model.turn import ToolCall, Turn, Usage
 from deploy_workflow.owners import cpos_launch
 
@@ -103,11 +105,15 @@ def main(argv: list[str]) -> int:
     out = given("--out")
     preview = Path(tempfile.mkdtemp()) / "preview"
     prepared = cpos_launch.prepare(
-        given("--context"), given("--sources"), preview, config="sol-medium", cap="15"
+        given("--context"),
+        given("--sources"),
+        preview,
+        config=argv[argv.index("--config") + 1],
+        cap="15",
     )
     routes = list(prepared.layout.routes)
 
-    def complete(_adapter: LiveAdapter, request: Any, **_: Any) -> AdapterReply:
+    def complete(_adapter: CopilotAdapter, request: Any, **_: Any) -> AdapterReply:
         context = json.loads(request.messages[1].text)
         usage = Usage(
             input_tokens=10,
@@ -122,10 +128,14 @@ def main(argv: list[str]) -> int:
             else covenant_answer(context, routes)
         )
         call = ToolCall("1", "write_handoff", {"markdown": text})
-        turn = Turn("", (call,), usage, "tool_use", "fake", "fake", 200)
-        return AdapterReply("ok", turn, None, 200, None, None, 1, 2, usage)
+        turn = Turn(
+            "", (call,), usage, "tool_use", _adapter._model.model, "fake", 200, Decimal("0.001")
+        )
+        return AdapterReply(
+            "ok", turn, None, 200, None, None, 1, 2, usage, billed_usd=turn.billed_usd
+        )
 
-    with mock.patch.object(LiveAdapter, "complete", complete):
+    with mock.patch.object(CopilotAdapter, "complete", complete):
         return cpos_launch.main(argv)
 
 

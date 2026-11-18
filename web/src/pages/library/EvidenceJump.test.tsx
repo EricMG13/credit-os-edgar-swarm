@@ -198,12 +198,24 @@ describe("Jump to an item, filtering and choosing", () => {
     expect(options()).toEqual(["Net debt ÷ EBITDAC-0412"]);
   });
 
-  it("matches the label only, not the detail", () => {
+  it("matches the label and the detail, so an id a row shows finds the row (S4-018)", () => {
     renderEvidence("summary");
     fireEvent.click(field());
     type("T-0014");
-    expect(within(dialog()).queryAllByRole("group")).toHaveLength(0);
+    expect(options()).toEqual(["Net leverage 4.6xCapital structure · T-0014"]);
+    type("c-0412");
+    expect(options()).toEqual(["Net debt ÷ EBITDAC-0412"]);
+    type("T-9999");
     expect(within(dialog()).getByText("No item matches")).toBeVisible();
+  });
+
+  it("keeps an id on one line, and draws no keyboard shortcut hint on a narrow layout (S4-018)", () => {
+    renderEvidence("summary");
+    expect(within(field()).getByText(/^(⌘K|Ctrl K)$/)).toHaveClass("max-sm:hidden");
+    fireEvent.click(field());
+    const detail = within(dialog()).getByText("Capital structure · T-0014");
+    expect(detail).toHaveClass("whitespace-nowrap");
+    expect(dialog().querySelector("[aria-hidden='true'].max-sm\\:hidden")).not.toBeNull();
   });
 
   it("says No item matches when nothing does, and lists everything again when cleared", () => {

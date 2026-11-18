@@ -72,6 +72,21 @@ it("stops adding at the maximum and states a requirement", () => {
   ).toBeInTheDocument();
 });
 
+it("says why the add button is disabled at the maximum, and only then", () => {
+  const max = ROW_SPECS.deal_terms.max;
+  const rows = Array.from({ length: max }, () => emptyRow("deal_terms"));
+  const { rerender } = render(
+    <RowEditor kind="deal_terms" rows={rows} onChange={vi.fn()} primary />,
+  );
+  const add = screen.getByRole("button", { name: "Add facility" });
+  expect(add).toBeDisabled();
+  expect(screen.getByText(`At most ${String(max)} facilities.`)).toBeInTheDocument();
+  expect(add).toHaveAccessibleDescription(`At most ${String(max)} facilities.`);
+  rerender(<RowEditor kind="deal_terms" rows={rows.slice(1)} onChange={vi.fn()} primary />);
+  expect(screen.queryByText(/At most/)).toBeNull();
+  expect(screen.getByRole("button", { name: "Add facility" })).toBeEnabled();
+});
+
 it("shows a held value that is not among the options", () => {
   const { rerender } = render(
     <RowEditor
@@ -171,7 +186,7 @@ it("marks the fields the static form requires", () => {
   }
   expect(screen.getByLabelText("Bid").closest("div")).not.toHaveTextContent("Required");
   expect(screen.getByLabelText("Bid")).not.toHaveAttribute("aria-required");
-  expect(Object.keys(ROW_SPECS)).toHaveLength(4);
+  expect(Object.keys(ROW_SPECS)).toHaveLength(8);
   const required = Object.fromEntries(
     Object.entries(ROW_SPECS).map(([kind, spec]) => [
       kind,
@@ -183,6 +198,10 @@ it("marks the fields the static form requires", () => {
     quotes: ["as_of", "provider"],
     ratings: ["agency", "rating"],
     research_questions: ["text"],
+    peer_names: [],
+    peers: [],
+    precedents: [],
+    scenarios: [],
   });
 });
 

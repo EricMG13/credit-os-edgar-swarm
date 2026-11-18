@@ -330,7 +330,7 @@ function FxShocks({ table, currency, href }: { table: Table; currency: string; h
   });
   return (
     <section aria-label="Currency shocks" className={`${card} ${TRACE_HOST}`}>
-      {compared ? (
+      {compared && moves.length > 2 ? (
         <label className={`${label} max-w-xs`}>
           Compare with the {compared[0]} move
           <select
@@ -347,6 +347,10 @@ function FxShocks({ table, currency, href }: { table: Table; currency: string; h
             ))}
           </select>
         </label>
+      ) : compared ? (
+        <p className="text-sm font-medium">
+          Compared with the {compared[0]} move: {compared[1]}
+        </p>
       ) : null}
       {compared && panels.length > 0 ? (
         compare(

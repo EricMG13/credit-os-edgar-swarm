@@ -22,18 +22,21 @@ import subprocess
 import sys
 import threading
 import time
-from collections.abc import Callable, Iterator
+from collections.abc import Callable, Iterator, Mapping
 from contextlib import contextmanager
-from dataclasses import dataclass, replace
+from dataclasses import dataclass, field, replace
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import IO, Any
 
 from deploy_vii.contracts import PATHWAY_CAP_USD
 from deploy_workflow.context import load_context
+from deploy_workflow.credit_os_catalogue import summary_fields
 from deploy_workflow.inbox import activity, filing, layout, runs, startup
 from deploy_workflow.inbox.runs import Record
 from deploy_workflow.inbox.startup import StartupRefused
+from deploy_workflow.inbox.teams import Config as TeamsConfig
+from deploy_workflow.inbox.teams import Notifier
 from deploy_workflow.owners import cpos_launch
 from deploy_workflow.run_start import submissions
 from deploy_workflow.run_start.submissions import Answers
@@ -67,6 +70,8 @@ class Settings:
     max_per_day: int = 30
     poll_seconds: float = 10
     ruling: Path = startup.STANDING_RULING
+    teams: TeamsConfig | None = None  # Teams cards are posted only when the service sets this
+    copilot_models: Mapping[str, frozenset[str]] | None = field(default_factory=dict)
     launcher: tuple[str, ...] = (
         sys.executable,
         "-X",
@@ -87,6 +92,16 @@ def _stop(child: subprocess.Popen[bytes]) -> None:
     except subprocess.TimeoutExpired:
         child.kill()
         child.wait()
+
+
+def _lead(library: Any, run_id: str) -> str:
+    """The bottom line the library's Overview leads with for this run, exactly as its module
+    wrote it; ``""`` when the library holds none."""
+    try:
+        run = next(run for run in library.runs if run["id"] == run_id)
+        return str(summary_fields(run)[0])
+    except (StopIteration, LookupError, TypeError):
+        return ""  # fail-open, display only: the card goes out without the line
 
 
 def _unreadable_note(count: int) -> str:
@@ -118,6 +133,7 @@ class Scheduler:
         now: Callable[[], datetime] = _local_now,
     ) -> None:
         self.settings, self.clock, self.now = settings, clock, now
+        self.model_choices = runs.available_choices(settings.copilot_models)
         self.layout = layout.ensure_layout(settings.root)
         startup.check_launchable(settings.ruling)
         self._lock: IO[str] | None = startup.take_lock(self.layout)
@@ -148,7 +164,12 @@ class Scheduler:
         self._bad_pid_files: set[str] = set()  # run IDs whose unusable PID file is logged
         self._limit_held = ""
         self._unreadable_held = _unreadable_note(len(self._unreadable))
-        startup.write_pages(self.layout)
+        # Run ID -> the report's lead bottom line, for its Teams card. Kept in memory only: a
+        # run that ends just before a restart gets its card without the line.
+        self._leads: dict[str, str] = {}
+        self._teams = (
+            Notifier(self.layout, settings.teams, self._logger) if settings.teams else None
+        )
         self._recover()
         self._rebuild()
 
@@ -239,7 +260,7 @@ class Scheduler:
         sealed = self._sealed(record)
         if not sealed.is_dir() or sealed.is_symlink():
             return
-        if self._sealed_digest(record, sealed) != record.digest or not record.digest:
+        if not record.digest or self._approval_digest(record, sealed) != record.digest:
             self._put(
                 replace(
                     record,
@@ -252,29 +273,36 @@ class Scheduler:
         os.rename(sealed, self.layout.drops / record.id)
         submissions.release(self.layout, record.submission)
 
-    def _sealed_digest(self, record: Record, sealed: Path) -> str:
-        """The approval digest of the sealed files as ``submit`` computed it (the digest ignores the
-        ``context.json`` it wrote there); "" when that cannot be recomputed (it then fails)."""
+    def _approval_digest(self, record: Record, folder: Path) -> str:
+        """Recreate the approved digest from the queued settings and current sources."""
         try:
-            answers = submissions.validated(
-                {
-                    "context": json.loads((sealed / "context.json").read_bytes()),
-                    "modules": list(record.modules),
-                    "max_turns": record.max_turns,
-                    "level": record.level,
-                    "model": record.model,
-                    "effort": record.effort,
-                    "submitted_by": record.submitted_by,
-                }
-            )
-        except (OSError, ValueError):  # no or unreadable context.json: it changed
+            context = folder / "context.json"
+            if folder.is_symlink() or context.is_symlink():
+                return ""
+            saved = {
+                "context": json.loads(context.read_bytes()),
+                "modules": list(record.modules),
+                "max_turns": record.max_turns,
+                "level": record.level,
+                "model": record.model,
+                "effort": record.effort,
+                "submitted_by": record.submitted_by,
+            }
+            if record.newest_document_date:
+                saved["newest_document_date"] = record.newest_document_date
+            answers = submissions.validated(saved)
+            if record.config:
+                pathway = load_context(submissions.context_bytes(answers)).run.pathway
+                if pathway != record.pathway or record.cap != str(PATHWAY_CAP_USD[pathway]):
+                    return ""
+            submissions.refuse_filed_elsewhere(self.layout, answers)
+            return submissions.bound(submissions.folder_digest(folder, answers), record.prior)
+        except (OSError, ValueError, TypeError):
             return ""
-        try:
-            return submissions.bound(
-                submissions.digest(self.layout, record.submission, answers), record.prior
-            )
-        except submissions.Refused:
-            return ""
+
+    def model_available(self, model: str, effort: str) -> bool:
+        """Whether the verified launch seat offers this intake model and effort."""
+        return effort in self.model_choices.get(model, ())
 
     def submit(self, sid: str, answers: Answers, approved_digest: str) -> Record:
         """Start one run for an approved submission. Repeating a submission returns its record.
@@ -287,19 +315,22 @@ class Scheduler:
         by the next poll against the digest the record keeps."""
         with self.lock:
             answers = submissions.validated(answers)
-            submissions.require_provider_key(answers)
             if not isinstance(sid, str) or not _SID.fullmatch(sid):
                 raise submissions.Refused("unknown submission")
             for record in self._records.values():
                 if record.submission == sid:
                     return record
+            if not self.model_available(answers["model"], answers["effort"]):
+                raise submissions.Refused(
+                    "This model and effort are unavailable on the Copilot seat."
+                )
             try:  # a context the launcher would refuse, or a deactivated pathway, is a 400
                 run = load_context(submissions.context_bytes(answers)).run
                 cpos_launch.refuse_deactivated(run.pathway)
             except ValueError as refusal:
                 raise submissions.Refused(str(refusal)) from refusal
             for name in answers["modules"]:
-                if name not in cpos_launch.METHODS:
+                if not runs.known_module(name):
                     raise submissions.Refused(f"unknown module {name}")
             if len(self._with_status("queued")) >= MAX_QUEUED:
                 raise submissions.Refused("too many runs are waiting; try again later")
@@ -319,11 +350,9 @@ class Scheduler:
         # context.json is made here from the answers; a left-over one (an earlier cut-short
         # attempt) is ours, since an upload may not carry that name.
         (sealed / "context.json").unlink(missing_ok=True)
-        prior = submissions.issued_prior(self.layout, sid)
-        current = submissions.bound(submissions.digest(self.layout, sid, answers), prior)
-        if not approved_digest or not (
-            approved_digest == submissions.issued(self.layout, sid) == current
-        ):
+        approval = submissions.issued_approval(self.layout, sid)
+        current = submissions.bound(submissions.digest(self.layout, sid, answers), approval.prior)
+        if not approved_digest or not (approved_digest == approval.digest == current):
             raise submissions.Refused(
                 "the documents or answers changed after approval; review the summary again"
             )
@@ -331,7 +360,7 @@ class Scheduler:
         # The cap the approved summary showed is the run's; a table changed since (or a summary
         # made before per-pathway caps, which records none) needs a new summary.
         cap = str(PATHWAY_CAP_USD[context["run"]["pathway"]])
-        if submissions.issued_cap(self.layout, sid) != cap:
+        if approval.cap != cap:
             raise submissions.Refused(
                 f"the run's cap is now USD {cap}, not the one the summary showed; review the "
                 "summary again"
@@ -353,10 +382,13 @@ class Scheduler:
             level=answers["level"],
             model=answers["model"],
             effort=answers["effort"],
+            config=runs.config_for(answers["model"], answers["effort"]),
             submitted_by=answers["submitted_by"],
             digest=current,
-            prior=prior,
+            prior=approval.prior,
             cap=cap,
+            approved_summary_limits=approval.limits(),
+            newest_document_date=answers.get("newest_document_date", ""),
         )
         self._put(record)
         return record
@@ -396,7 +428,7 @@ class Scheduler:
             # Documented fail-open: the rebuild is display. Ended runs wait unfiled and the next
             # poll retries; the traceback is logged and the page says why. KeyboardInterrupt and
             # SystemExit (BaseException) still stop the scheduler.
-            self._rebuild_failed(f"library rebuild failed: {error}", f"{error}", exc=True)
+            self._rebuild_failed(f"library rebuild failed: {error}", type(error).__name__, exc=True)
             return None
         if library is None:
             self._rebuild_failed(
@@ -411,7 +443,9 @@ class Scheduler:
         return library
 
     def _rebuild_failed(self, log_text: str, error: str, *, exc: bool = False) -> None:
-        """Keep the page notice; write the log line only when the error differs from the last."""
+        """Keep the page notice (``error`` is its kind only: the page serves it as written, and the
+        operating system's text names the server's paths); write the log line, which keeps the
+        full error, only when it differs from the last."""
         self._rebuild_error = _REBUILD_FAILED.format(error)
         if log_text != self._logged_rebuild_error:
             self._logged_rebuild_error = log_text
@@ -425,6 +459,11 @@ class Scheduler:
     def step(self) -> None:
         with self.lock:
             self._step()
+            records, leads = list(self._records.values()), dict(self._leads)
+        if self._teams is not None:  # outside the lock: a slow webhook never holds up a Submit
+            self._teams.tick(records, self.now(), leads)
+            for run_id in [i for i in self._leads if self._teams.settled(i)]:
+                del self._leads[run_id]  # only this thread writes _leads (here and in _reap)
 
     def _step(self) -> None:
         self._track_untracked()
@@ -472,7 +511,10 @@ class Scheduler:
             return  # nothing is decided without a rebuild; the next poll tries again
         for record, code in ended:
             with self._guard(f"run {record.id}"):
-                self._put(self._decide(record, code, library))
+                decided = self._decide(record, code, library)
+                self._put(decided)
+                if self._teams is not None and decided.status == "finished":
+                    self._leads[record.id] = _lead(library, record.id)
                 self._children.pop(record.id, None)
                 self._stopped.pop(record.id, None)
 
@@ -571,28 +613,37 @@ class Scheduler:
                 >= self.settings.max_running
             ):
                 break
+            if record.config and not self.model_available(record.model, record.effort):
+                self._limit_held = "Waiting for a Copilot seat that supports this model and effort."
+                continue
             with self._guard(f"run {record.id}"):
                 today += self._launch(record)
 
+    def _launch_approval_problem(self, record: Record) -> str:
+        if not record.submission or not record.digest:
+            return _OLD_WATCHER
+        if not record.config and self.settings.copilot_models is not None:
+            return "This approval predates Copilot routing. Open a new draft and review it."
+        return ""
+
+    def _drop_approval_problem(self, record: Record, drop: Path, context: Path) -> str:
+        if context.is_symlink() or not context.is_file():
+            return _NO_CONTEXT.format(record.id)
+        if record.config and self._approval_digest(record, drop) != record.digest:
+            return _CHANGED
+        return ""
+
     def _launch(self, record: Record) -> bool:
         """Start one run. True once it is recorded as started (and so counted for the day)."""
-        if not record.submission or not record.digest:
-            self._fail(record, _OLD_WATCHER)  # only Submit on an approved summary starts a run
+        if refusal := self._launch_approval_problem(record):
+            self._fail(record, refusal)
             return False
         drop = self.layout.drops / record.id
         if not os.path.lexists(drop) and self._sealed(record).is_dir():
             return False  # its move is not finished yet (a failed rename): _finish_moves retries
         context = drop / "context.json"
-        if context.is_symlink() or not context.is_file():
-            # A folder that has lost its context file: failed with the reason, never started.
-            self._put(
-                replace(
-                    record,
-                    status="failed",
-                    reason=_NO_CONTEXT.format(record.id),
-                    ended_at=self._utc(self.now()),
-                )
-            )
+        if refusal := self._drop_approval_problem(record, drop, context):
+            self._fail(record, refusal)
             return False
         try:
             runs.command(  # a record that cannot become a command fails here, before it is counted

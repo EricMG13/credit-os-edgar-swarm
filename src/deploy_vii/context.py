@@ -1,8 +1,7 @@
-"""Reader for the context form's ``context.json`` (schema ``context/1``).
+"""Reader for ``context.json`` (schema ``context/1``).
 
-``docs/templates/context-form.html`` (its ``build()``) is the normative rule set; each bound
-below is copied from it. Numbers stay strings in the model; ``amount`` turns one into a
-``Decimal``. An empty string means "not supplied", never zero.
+The schema and value checks below are the normative contract. Numbers stay strings in the model;
+``amount`` turns one into a ``Decimal``. An empty string means "not supplied", never zero.
 """
 
 from __future__ import annotations
@@ -56,7 +55,7 @@ Cp3Mode = Literal[
     "", "clo_screening", "single_name_rv", "capital_structure_rv", "watchlist_monitoring"
 ]
 
-# Row maxima: ROWS[...].max in the form.
+# Maximum row counts by context collection.
 _MAX_DEAL, _MAX_QUOTE, _MAX_RATING, _MAX_PEER = 20, 40, 20, 30
 _MAX_PREC, _MAX_SCEN, _MAX_Q = 30, 4, 10
 _OPTIONAL_TERMS = ("coupon_pct", "margin_bps", "maturity")
@@ -77,7 +76,11 @@ class RunSettings(Contract):
     as_of: str
     current_period: str
     prior_period: str
-    reporting_currency: str
+    # Optional and not asked (docs/rulings/2026-11-16-reporting-currency-from-sources.md): the run's
+    # currency is the one CP-1's statements print. "" = not stated; omitted on dump like cutoff,
+    # so a context without the field round-trips unchanged. A value given still has to be three
+    # uppercase letters.
+    reporting_currency: str = ""
     # Absent = the as-of date (O7b-2 D9). The empty string is the absent value: the serializer
     # omits it, and a file without the field reads back as "", so an explicit "" and an absent
     # field are one value and round-trip to a file without the field (O7b-2 S1 review).
@@ -91,6 +94,8 @@ class RunSettings(Contract):
         dumped: dict[str, Any] = handler(self)
         if self.cutoff == "":
             dumped.pop("cutoff", None)
+        if self.reporting_currency == "":
+            dumped.pop("reporting_currency", None)
         return dumped
 
 
@@ -298,7 +303,7 @@ class RunContext(Contract):
 
 
 def amount(text: str) -> Decimal | None:
-    """Parse a form number; the empty string is "not supplied", not zero."""
+    """Parse a context number; the empty string is "not supplied", not zero."""
     return None if text == "" else Decimal(text)
 
 
@@ -369,7 +374,7 @@ def _too_deep(root: Any) -> bool:
 def load_context(raw: bytes) -> RunContext:
     """Parse and validate ``context.json``; raise ``ContextRefused`` listing every problem.
 
-    Shape problems (unknown keys, wrong types, bad enum values) and the form's value rules
+    Shape problems (unknown keys, wrong types, bad enum values) and value rules
     are reported in two passes: the value rules need a well-shaped file to run on.
     """
     try:
@@ -409,7 +414,7 @@ def load_context(raw: bytes) -> RunContext:
 
 @dataclasses.dataclass(frozen=True)
 class Limit:
-    """One pinned assumption's value limits: the single copy the reader uses and the form test reads."""
+    """One pinned assumption's value limits: the single copy the reader uses."""
 
     req: bool = False
     whole: bool = False
@@ -436,7 +441,7 @@ ASSUMPTION_LIMITS: dict[str, Limit] = {
 
 
 class _Rules:
-    """The form's ``build()`` rules over a well-shaped context; collects every problem."""
+    """Value rules over a well-shaped context; collects every problem."""
 
     def __init__(self, ctx: RunContext) -> None:
         self.ctx = ctx
@@ -446,7 +451,7 @@ class _Rules:
     def bad(self, path: str, message: str) -> None:
         self.problems.append(f"{path}: {message}")
 
-    # -- field readers (the form's fld) ------------------------------------------------
+    # -- field readers -----------------------------------------------------------------
 
     def text(self, path: str, value: str, req: bool = False, cell: bool = False) -> None:
         """``cell``: the text is shown in a dossier table cell (a research question), so the
@@ -567,7 +572,7 @@ class _Rules:
             self.earnings_periods(a, b)
         if a and b and a[0] == b[0] and (b[2] > a[2] or (b[2] == a[2] and b[1] >= a[1])):
             self.bad("run.prior_period", "must be earlier than the current period.")
-        self.currency("run.reporting_currency", run.reporting_currency, req=True)
+        self.currency("run.reporting_currency", run.reporting_currency)
 
     def earnings_periods(
         self, current: tuple[str, int, int] | None, prior: tuple[str, int, int] | None

@@ -3,7 +3,7 @@ import { TextLink } from "../run/TextLink";
 
 export const card =
   "flex flex-col gap-5 rounded-ds-lg border border-border-subtle bg-surface-card p-5 shadow-1 sm:p-8";
-export const heading = "font-display text-h3 text-text-primary";
+export const heading = "min-w-0 font-display text-h3 text-balance wrap-anywhere text-text-primary";
 export const field =
   "w-full rounded-lg border border-border-hairline bg-surface-card px-3 py-2 text-text-primary aria-invalid:border-error-mark focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus";
 export const label = "flex min-w-0 flex-col gap-1.5 text-sm font-medium text-text-primary";
@@ -18,7 +18,7 @@ export function Breadcrumb({
   root?: string;
 }) {
   return (
-    <nav aria-label="Breadcrumb" className="mb-5 text-sm text-text-tertiary">
+    <nav aria-label="Breadcrumb" className="mb-5 text-sm wrap-anywhere text-text-tertiary">
       <TextLink href={href}>{root}</TextLink>
       {" / "}
       {children}
@@ -28,11 +28,11 @@ export function Breadcrumb({
 
 export function ErrorNotice({ children }: { children: ReactNode }) {
   return (
-    <p
+    <div
       role="alert"
       className="rounded-lg border border-border-hairline bg-surface-card p-3 text-sm text-error-primary"
     >
       {children}
-    </p>
+    </div>
   );
 }

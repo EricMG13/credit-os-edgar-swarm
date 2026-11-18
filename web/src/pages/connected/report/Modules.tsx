@@ -19,6 +19,7 @@ import {
 import {
   foundationMetrics,
   moduleState,
+  runMoneyUnit,
   type MetricKey,
   type buildReportView,
 } from "../reportView";
@@ -40,6 +41,51 @@ function sectionIcon(heading: string): NavSection["icon"] {
   return heading === "Limitations" ? "limitations" : "records";
 }
 
+function hasPublishedFigures(output: OutputEntry["output"]) {
+  return [output.charts, output.chartGaps, output.events, output.maps].some(
+    (records) => records?.length,
+  );
+}
+
+function navigatorSections(
+  entry: OutputEntry | undefined,
+  current: string,
+  hasLocalFigures: boolean,
+  figureTableLines: readonly number[],
+) {
+  if (!entry) return [];
+  const allSections = findingBlocks(entry.sections, entry, figureTableLines, true);
+  // A module that wrote no Key findings has its first table section listed under its own title.
+  const firstFinding =
+    allSections.find(({ heading }) => heading === "Key findings") ??
+    allSections.find(({ heading }) => sectionIcon(heading) === "records");
+  const sections = allSections.flatMap((item) => {
+    const { heading, line } = item;
+    const icon = sectionIcon(heading);
+    const watch = item.blocks.flatMap((block) =>
+      block.type === "table" ? (monitoringLabel(current, heading, block) ?? []) : [],
+    )[0];
+    const extra =
+      watch ??
+      (current === "CP-0" && heading === "Source-readiness summary" ? "Readiness by area" : null);
+    if (icon === "records" && item !== firstFinding && !extra) return [];
+    return [{ label: extra ?? drawingTitle(heading), key: `finding-${String(line)}`, icon }];
+  });
+  if (hasLocalFigures || hasPublishedFigures(entry.output)) {
+    // The page draws the figures after its prose passages, before Limitations.
+    const prose = new Set<NavSection["icon"]>(["bottom-line", "findings", "contrary"]);
+    const at = sections.map(({ icon }) => prose.has(icon)).lastIndexOf(true) + 1;
+    sections.splice(at, 0, {
+      label: "Charts and figures",
+      key: "module-figures",
+      icon: "records",
+    });
+  }
+  if (recordSections(entry.sections, entry).length)
+    sections.push({ label: "Statements and records", key: RECORDS_ID, icon: "records" });
+  return sections;
+}
+
 function Navigator({
   view,
   run,
@@ -55,45 +101,7 @@ function Navigator({
   hasLocalFigures: boolean;
   figureTableLines: readonly number[];
 }) {
-  const allSections = entry ? findingBlocks(entry.sections, entry, figureTableLines, true) : [];
-  const firstFinding =
-    allSections.find(({ heading }) => heading === "Key findings") ??
-    allSections.find(({ heading }) => sectionIcon(heading) === "records");
-  const sections = allSections.flatMap((item) => {
-    const { heading, line } = item;
-    const icon = sectionIcon(heading);
-    const watch = item.blocks.flatMap((block) =>
-      block.type === "table" ? (monitoringLabel(current, heading, block) ?? []) : [],
-    )[0];
-    const extra =
-      watch ??
-      (current === "CP-0" && heading === "Source-readiness summary" ? "Readiness by area" : null);
-    if (icon === "records" && item !== firstFinding && !extra) return [];
-    return [
-      {
-        label: extra ?? (item === firstFinding ? "Key findings" : drawingTitle(heading)),
-        key: `finding-${String(line)}`,
-        icon: item === firstFinding && !extra ? ("findings" as const) : icon,
-      },
-    ];
-  });
-  if (
-    entry &&
-    (hasLocalFigures ||
-      entry.output.charts?.length ||
-      entry.output.chartGaps?.length ||
-      entry.output.events?.length ||
-      entry.output.maps?.length)
-  ) {
-    const at = sections[0]?.icon === "bottom-line" ? 1 : 0;
-    sections.splice(at, 0, {
-      label: "Figures and records",
-      key: "module-figures",
-      icon: "records",
-    });
-  }
-  if (entry && recordSections(entry.sections, entry).length)
-    sections.push({ label: "Statements and records", key: RECORDS_ID, icon: "records" });
+  const sections = navigatorSections(entry, current, hasLocalFigures, figureTableLines);
   const [active, setActive] = useState(sections[0]?.key ?? null);
   const aside = useRef<HTMLElement>(null);
   // A clicked entry stays until the reader's own scroll input, so the scroll it causes cannot undo it.
@@ -270,7 +278,7 @@ function SavedOutputs({ current, entry }: { current: ModuleItem; entry?: OutputE
             href={`#modules/${encodeURIComponent(current.id)}/${String(at)}`}
             aria-current={item === entry ? "page" : undefined}
           >
-            {item.selected ? "Designated handoff" : `Retained output ${String(at + 1)}`}
+            {item.selected ? "Output used in report" : `Saved output ${String(at + 1)}`}
           </Button>
         ))}
       </nav>
@@ -305,33 +313,56 @@ function ModuleFindings({
       entryIndex={index}
       figureTableLines={figureTableLines}
       chartsDrawn
+      moduleConfidence={
+        <ModuleConfidence snapshot={snapshot} run={run} entry={entry} entryIndex={index} />
+      }
       afterBottomLine={
-        <>
-          <ModuleConfidence snapshot={snapshot} run={run} entry={entry} entryIndex={index} />
-          <MetricGrid
-            records={metrics}
-            entry={entry}
-            entryIndex={index}
-            snapshot={snapshot}
-            folder={run.folder}
-          />
-          <div id="module-figures" tabIndex={-1} className="grid min-w-0 gap-4">
-            {downside && <Downside data={downside} href={evidenceHref} />}
-            {breaks && <BreakPoints data={breaks} href={evidenceHref} />}
-            {macro && <MacroSensitivity data={macro} href={evidenceHref} />}
-            {securities && <Securities data={securities} href={evidenceHref} />}
-            <LegacyVisuals
-              output={entry.output}
-              sections={entry.sections}
-              primary={entry.output.module === "CP-1" ? "Debt maturities" : undefined}
-              cards
-              headingLevel="h3"
-              evidenceHref={evidenceHref}
+        <MetricGrid
+          records={metrics}
+          entry={entry}
+          entryIndex={index}
+          snapshot={snapshot}
+          folder={run.folder}
+        />
+      }
+      beforeLimitations={
+        <div id="module-figures" tabIndex={-1} className="grid min-w-0 gap-4">
+          {downside && <Downside data={downside} href={evidenceHref} />}
+          {breaks && <BreakPoints data={breaks} href={evidenceHref} />}
+          {macro && <MacroSensitivity data={macro} href={evidenceHref} />}
+          {securities && (
+            <Securities
+              data={securities}
+              href={evidenceHref}
+              runUnit={runMoneyUnit(view.catalogue)}
             />
-          </div>
-        </>
+          )}
+          <LegacyVisuals
+            output={entry.output}
+            sections={entry.sections}
+            primary={entry.output.module === "CP-1" ? "Debt maturities" : undefined}
+            cards
+            headingLevel="h3"
+            evidenceHref={evidenceHref}
+          />
+        </div>
       }
     />
+  );
+}
+
+function UnavailableHandoff({ outputCount }: { outputCount: number }) {
+  return (
+    <section className={card}>
+      <h3 className={heading}>Handoff unavailable</h3>
+      <p>
+        {outputCount > 1
+          ? "Choose a saved output above."
+          : outputCount === 1
+            ? "Choose this module again under Modules in this run."
+            : "No output was saved for this module."}
+      </p>
+    </section>
   );
 }
 
@@ -353,10 +384,10 @@ function SelectedModule({
   return (
     <>
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h2 className="font-display text-h2">{current.name}</h2>
+        <h2 className="min-w-0 font-display text-h2 text-balance wrap-anywhere">{current.name}</h2>
         <StatusBadge set="Module state" state={entry ? moduleState(entry) : current.state} />
       </div>
-      <div className="grid min-w-0 gap-5 min-[1001px]:grid-cols-[16rem_minmax(0,1fr)]">
+      <div className="grid min-w-0 gap-5 min-[1001px]:module-reader-columns">
         <Navigator
           key={entry?.output.id ?? current.id}
           view={view}
@@ -378,10 +409,7 @@ function SelectedModule({
               figures={figures}
             />
           ) : (
-            <section className={card}>
-              <h3 className={heading}>Handoff unavailable</h3>
-              <p>Choose a retained output where available.</p>
-            </section>
+            <UnavailableHandoff outputCount={current.outputs.length} />
           )}
         </div>
       </div>

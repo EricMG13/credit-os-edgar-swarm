@@ -1,0 +1,54 @@
+{
+  "screen": {"id":"library--corvane-packaging--history","surface":"static","address":"/library/corvane-packaging/history","extra":true,"variant":null},
+  "page": {"title":"Report history — Corvane Packaging — Credit OS","headings":["Corvane Packaging"]},
+  "counts": {"textRuns":18,"figures":6,"figuresByKind":{"paragraph":1,"card":5},"tableViewFigures":0,"chartTableViews":0,"tables":0,"tableRows":0,"sourceLines":0,"drawerLines":0,"limitationSentences":1,"marks":0,"images":0,"traceControls":0,"traceDrawers":0,"traceUnavailable":0,"traceErrors":0,"coverageGap":0},
+  "expandedDisclosures": 0,
+  "outline": [
+    {"section":"","kind":"text","text":"Design reference with sample data"},
+    {"section":"","kind":"text","text":"This page shows a saved example. Its names and figures are samples, and it is not connected to the run service, so nothing here starts a run or spends money."},
+    {"section":"","kind":"link","text":"Library"},
+    {"section":"Corvane Packaging","kind":"heading","text":"Corvane Packaging"},
+    {"section":"Corvane Packaging","kind":"link","text":"Open latest report"},
+    {"section":"Corvane Packaging","kind":"link","text":"New run"},
+    {"section":"Corvane Packaging","kind":"paragraph","text":"Report history: two runs since June 2026"},
+    {"section":"Corvane Packaging","kind":"item","text":"Run as of 30 Sep 2026"},
+    {"section":"Corvane Packaging","kind":"item","text":"Ran 3 Nov 2026"},
+    {"section":"Corvane Packaging","kind":"item","text":"Running"},
+    {"section":"Corvane Packaging","kind":"item","text":"Full review"},
+    {"section":"Corvane Packaging","kind":"item","text":"In progress. Nothing from this run is shown until it finishes."},
+    {"section":"Corvane Packaging","kind":"item","text":"Run as of 30 Jun 2026"},
+    {"section":"Corvane Packaging","kind":"item","text":"Ran 2 Aug 2026"},
+    {"section":"Corvane Packaging","kind":"item","text":"Finished"},
+    {"section":"Corvane Packaging","kind":"item","text":"Full review"},
+    {"section":"Corvane Packaging","kind":"item","text":"Improving: volume recovery and a cleared 2027 maturity leave two years of runway."},
+    {"section":"Corvane Packaging","kind":"link","text":"Open report"}
+  ],
+  "tables": [],
+  "figures": [
+    {"kind":"paragraph","text":"Report history: two runs since June 2026","tokens":["2026"],"section":"Corvane Packaging","label":null,"period":null,"unit":null,"basis":null},
+    {"kind":"card","text":"Run as of 30 Sep 2026","tokens":["30","2026"],"section":"Corvane Packaging","label":"Running","period":"Ran 3 Nov 2026","unit":null,"basis":null,"beside":"Run as of 30 Sep 2026 | Ran 3 Nov 2026 | Running | Full review | In progress. Nothing from this run is shown until it finishes."},
+    {"kind":"card","text":"Ran 3 Nov 2026","tokens":["3","2026"],"section":"Corvane Packaging","label":"Running","period":"Run as of 30 Sep 2026","unit":null,"basis":null,"beside":"Run as of 30 Sep 2026 | Ran 3 Nov 2026 | Running | Full review | In progress. Nothing from this run is shown until it finishes."},
+    {"kind":"card","text":"Run as of 30 Jun 2026","tokens":["30","2026"],"section":"Corvane Packaging","label":"Finished","period":"Ran 2 Aug 2026","unit":null,"basis":null,"beside":"Run as of 30 Jun 2026 | Ran 2 Aug 2026 | Finished | Full review | Improving: volume recovery and a cleared 2027 maturity leave two years of runway. | Open report"},
+    {"kind":"card","text":"Ran 2 Aug 2026","tokens":["2","2026"],"section":"Corvane Packaging","label":"Finished","period":"Run as of 30 Jun 2026","unit":null,"basis":null,"beside":"Run as of 30 Jun 2026 | Ran 2 Aug 2026 | Finished | Full review | Improving: volume recovery and a cleared 2027 maturity leave two years of runway. | Open report"},
+    {"kind":"card","text":"Improving: volume recovery and a cleared 2027 maturity leave two years of runway.","tokens":["2027"],"section":"Corvane Packaging","label":"Full review","period":"Run as of 30 Jun 2026","unit":null,"basis":null,"beside":"Run as of 30 Jun 2026 | Ran 2 Aug 2026 | Finished | Full review | Improving: volume recovery and a cleared 2027 maturity leave two years of runway. | Open report"}
+  ],
+  "sources": [],
+  "limitations": [
+    {"via":"text","section":"","text":"This page shows a saved example. Its names and figures are samples, and it is not connected to the run service, so nothing here starts a run or spends money."}
+  ],
+  "marks": [],
+  "controls": [],
+  "links": [
+    {"text":"Library","href":"#/library/home"},
+    {"text":"Open latest report","href":"#/library/corvane-packaging/2026-06-30/overview"},
+    {"text":"New run","href":"#/run/start"},
+    {"text":"Open report","href":"#/library/corvane-packaging/2026-06-30/overview"}
+  ],
+  "images": [],
+  "screenReaderOnly": [],
+  "coverage": {"innerText":10,"captured":10,"optionsNotDrawn":0,"selected":0,"typed":0,"screenReaderOnly":0},
+  "chartTableViews": [],
+  "sourceDrawers": [],
+  "unavailableSourceControls": [],
+  "sourceControlErrors": []
+}

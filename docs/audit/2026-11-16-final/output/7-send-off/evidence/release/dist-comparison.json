@@ -1,0 +1,16 @@
+{
+  "candidateFiles": 36,
+  "finalTreeFiles": 36,
+  "identicalFiles": 34,
+  "onlyInCandidate": [
+    "connected-assets/style-CAXYJFez.css"
+  ],
+  "onlyInFinalTree": [
+    "connected-assets/style-DSotP3OC.css"
+  ],
+  "differentFiles": [
+    "connected.html"
+  ],
+  "builtRoot": "/workspace/audit-final/web/dist",
+  "rootBuildExit": 0
+}

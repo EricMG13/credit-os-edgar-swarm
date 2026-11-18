@@ -124,6 +124,49 @@ def verified_one(
         return None
 
 
+def _earlier_handoff_format(sections: list[dict[str, Any]]) -> bool:
+    """Match the report frame's label for a held, structured handoff."""
+    if not sections or (
+        len(sections) == 1
+        and sections[0].get("level") == 1
+        and sections[0].get("heading") == "Unstructured handoff"
+    ):
+        return False
+    findings = False
+    for section in sections:
+        level, heading = section.get("level"), section.get("heading")
+        if findings:
+            if level == 3:
+                return heading != "Bottom line"
+            if level in (1, 2):
+                break
+        elif level == 2 and heading == "Findings":
+            findings = True
+    return True
+
+
+def _history_details(
+    workspace: dict[str, Any], run_key: str, run: dict[str, Any]
+) -> dict[str, Any]:
+    modules = run.get("modules", {})
+    steps = (run.get("record") or {}).get("steps") or []
+    order = dict.fromkeys([step.get("module") for step in steps] + list(modules))
+    outputs, handoffs = workspace.get("outputs", {}), workspace.get("handoffs", {})
+    earlier_format = any(
+        _earlier_handoff_format(handoffs.get(output.get("sha256"), []))
+        for code, module in modules.items()
+        for output_id in module.get("outputs", [])
+        if (output := outputs.get(output_id))
+        and output.get("module") == code
+        and (not output.get("run") or output["run"] == run_key)
+    )
+    return {
+        "modules": [code for code in order if modules.get(code, {}).get("outputs")],
+        "earlierFormat": earlier_format,
+        "earlierMethods": bool(run.get("methodChanges")),
+    }
+
+
 def scoped(snapshot: dict[str, Any], folder: str) -> dict[str, Any] | None:
     """Keep report history metadata and the selected run's validated Changes dependency."""
     workspace = snapshot["workspace"]
@@ -165,12 +208,15 @@ def scoped(snapshot: dict[str, Any], folder: str) -> dict[str, Any] | None:
                 related[prior_key] = earlier
                 full_keys.add(prior_key)
 
-    def summary(run: dict[str, Any]) -> dict[str, Any]:
-        return {
+    def summary(run_key: str, run: dict[str, Any]) -> dict[str, Any]:
+        metadata: dict[str, Any] = {
             field: run[field]
             for field in ("folder", "issuerKey", "pathway", "asOf", "period")
             if field in run
         }
+        if issuer and run.get("issuerKey") == issuer:
+            metadata["history"] = _history_details(workspace, run_key, run)
+        return metadata
 
     output_ids = {
         output_id
@@ -195,7 +241,7 @@ def scoped(snapshot: dict[str, Any], folder: str) -> dict[str, Any] | None:
         "workspace": {
             **workspace,
             "runs": {
-                run_key: run if run_key in full_keys else summary(run)
+                run_key: run if run_key in full_keys else summary(run_key, run)
                 for run_key, run in related.items()
             },
             "outputs": outputs,
@@ -222,6 +268,14 @@ def scoped(snapshot: dict[str, Any], folder: str) -> dict[str, Any] | None:
     }
 
 
+def _problem(error: OSError | ValueError, relative: str) -> str:
+    """Why ``relative`` could not be used. A refusal's own words name only the name inside the
+    run; an OSError's text names the server's absolute path, so only its kind is kept."""
+    if isinstance(error, OSError):
+        return f"{relative} could not be read ({type(error).__name__})"
+    return str(error)
+
+
 def _load_source(root: Path, folder: str, identity: tuple[str, str], checked: Checked) -> None:
     name, digest = identity
     checked.inventory[name] = (name, digest)
@@ -229,7 +283,7 @@ def _load_source(root: Path, folder: str, identity: tuple[str, str], checked: Ch
         source = _source(root, folder, name, digest)
     except (OSError, ValueError) as error:
         actual = error.actual if isinstance(error, SourceMismatch) else None
-        checked.cache[name] = ({}, actual, str(error))
+        checked.cache[name] = ({}, actual, _problem(error, f"{folder}/inputs/{digest}"))
         return
     checked.available[name] = source
     checked.cache[name] = (source.pages, source.digest, source.problem)
@@ -244,7 +298,7 @@ def verified(root: Path, record: dict[str, Any]) -> Checked:
         result.authority = True
         pin_problem = None
     except (OSError, ValueError) as error:
-        pins, pin_problem = {}, str(error)
+        pins, pin_problem = {}, _problem(error, f"{folder}/workflow.json")
     for item in _published(record):
         item.pop("href", None)
         item.pop("sourceWarning", None)
@@ -332,7 +386,13 @@ def _refresh(snapshot: dict[str, Any], key: str, record: dict[str, Any], root: P
         if old.rpartition(":")[0] in outputs:
             del chips[old]
     for oid, output in outputs.items():
-        for row in _rows(parsed.get(output["sha256"], [])):
+        sections = parsed.get(output["sha256"], [])
+        confidence_section = output.get("confidenceTrace", {}).get("section")
+        if confidence_section and not any(
+            section["heading"] == confidence_section["heading"] for section in sections
+        ):
+            sections = [*sections, confidence_section]
+        for row in _rows(sections):
             if not row.cells:
                 continue
             found = native.chips_for_cells(row, output["module"], pages)

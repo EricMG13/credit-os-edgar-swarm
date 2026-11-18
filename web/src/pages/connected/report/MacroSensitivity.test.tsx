@@ -75,3 +75,58 @@ it.each([
     expect(screen.getByRole("cell", { name: net })).toBeInTheDocument();
   },
 );
+
+function fxDataset(moves: string[]): OutputEntry {
+  const ordinal = ["first", "second", "third"];
+  const base = dataset("USD", "5.00");
+  base.sections = [
+    base.sections[0] as Section,
+    table(
+      "Currency shock",
+      [
+        "Shock",
+        "Currency move",
+        "Change in debt",
+        "Total debt after the move",
+        "Change in EBITDA",
+        "Total leverage after the move",
+      ],
+      moves.map((move, i) => [
+        `Foreign currency strengthens, ${ordinal[i] ?? ""} move`,
+        move,
+        "0.00",
+        String(800 + i),
+        String(2 + i),
+        `${String(3 + i / 100)}x`,
+      ]),
+      20,
+    ),
+  ];
+  return base;
+}
+
+function drawFx(moves: string[]) {
+  const data = macroView(fxDataset(moves));
+  if (!data) throw new Error("scenario was rejected");
+  render(<MacroSensitivity data={data} href={(line) => `#evidence/1-${String(line)}`} />);
+}
+
+it("states a comparison that has no alternative instead of drawing a selector with one option", () => {
+  drawFx(["5%", "10%"]);
+  expect(screen.queryByRole("combobox")).toBeNull();
+  expect(screen.getByText("Compared with the 5% move: 10%")).toBeInTheDocument();
+  expect(
+    screen.getByRole("figure", { name: "Foreign-currency strengthening" }),
+  ).toBeInTheDocument();
+});
+
+it("offers the selector when there are two moves to choose between", () => {
+  drawFx(["5%", "10%", "15%"]);
+  const select = screen.getByRole("combobox", { name: "Compare with the 5% move" });
+  expect(
+    within(select)
+      .getAllByRole("option")
+      .map((option) => option.textContent),
+  ).toEqual(["10%", "15%"]);
+  expect(screen.queryByText(/Compared with the 5% move:/)).toBeNull();
+});

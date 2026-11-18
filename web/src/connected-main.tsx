@@ -28,6 +28,7 @@ createRoot(container).render(
       >
         <ConnectedApp
           path={window.location.pathname}
+          readOnly={mode?.content === "preview"}
           mode={mode?.content === "synthetic" ? "synthetic" : "live"}
         />
       </Suspense>

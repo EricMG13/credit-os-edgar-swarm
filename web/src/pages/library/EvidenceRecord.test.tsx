@@ -28,6 +28,28 @@ function renderRecord(run: string, library: unknown = fixture.slice) {
   );
 }
 
+function withAvailableRegisters() {
+  const slice = structuredClone(fixture.slice) as {
+    issuers: {
+      runs: { evidence: { record: { registers: { downloadAll: Json; rows: Json[] } } } }[];
+    }[];
+  };
+  const registers = slice.issuers[0]?.runs[0]?.evidence.record.registers;
+  if (registers === undefined) throw new Error("no registers");
+  Object.assign(registers.downloadAll, {
+    href: "downloads/halden-aerostructures-2026-09-30-registers.zip",
+    reason: null,
+  });
+  const names = ["sources", "calculations", "gaps", "assumptions"];
+  for (const [index, name] of names.entries()) {
+    Object.assign(registers.rows[index] ?? {}, {
+      href: `downloads/halden-aerostructures-2026-09-30-registers/${name}.md`,
+      reason: null,
+    });
+  }
+  return slice;
+}
+
 afterEach(cleanup);
 
 const table = (name: string) => screen.getByRole("table", { name });
@@ -91,7 +113,7 @@ describe("Evidence, Record", () => {
       ["Capital structure", "5.6", "16.0", "10.4", "Delivered with gaps"],
       ["Recovery", "14.4", "n.a.", "n.a.", "Not assessable"],
       ["Peer comparison", "16.8", "25.6", "8.8", "Delivered with gaps"],
-      ["Forecast", "26.4", "37.6", "11.2", "Delivered"],
+      ["Forward credit view", "26.4", "37.6", "11.2", "Delivered"],
     ]);
   });
 
@@ -129,9 +151,9 @@ describe("Evidence, Record", () => {
 
   it("draws the spend as the bar with the delivered text, and the delivered sentence", () => {
     renderRecord(FULL);
-    const bar = screen.getByRole("progressbar", { name: "USD 11.40 of USD 20.00" });
+    const bar = screen.getByRole("progressbar", { name: "USD 11.40 of USD 25.00" });
     expect(bar).toHaveAttribute("aria-valuenow", "11.4");
-    expect(bar).toHaveAttribute("aria-valuemax", "20");
+    expect(bar).toHaveAttribute("aria-valuemax", "25");
     expect(
       screen.getByText(
         "The run finished inside its cap. Spend by module is in the model calls register below.",
@@ -142,9 +164,9 @@ describe("Evidence, Record", () => {
   it("draws the model calls right-aligned with the mock's rows, n.a. for a missing count, and the delivered total", () => {
     renderRecord(FULL);
     const head = within(table("Model calls")).getAllByRole("columnheader");
+    // S4-008 (OQ-10): the delivered "Code" column of module codes is not drawn
     expect(head.map((h) => h.textContent)).toEqual([
       "Module",
-      "Code",
       "Calls",
       "Retries",
       "Tokens in",
@@ -152,25 +174,25 @@ describe("Evidence, Record", () => {
       "Cost, USD",
     ]);
     expect(textOf("Model calls")).toEqual([
-      ["Business profile", "CP-1A", "3", "0", "182,400", "9,150", "0.92"],
-      ["Capital structure", "CP-2C", "5", "1", "264,900", "14,720", "1.38"],
-      ["Recovery", "CP-3B", "2", "1", "58,300", "1,040", "0.27"],
-      ["Peer comparison", "CP-2E", "4", "0", "n.a.", "n.a.", "0.81"],
-      ["Total", "All", "41", "6", "n.a.", "n.a.", "11.40"],
+      ["Business profile", "3", "0", "182,400", "9,150", "0.92"],
+      ["Capital structure", "5", "1", "264,900", "14,720", "1.38"],
+      ["Recovery", "2", "1", "58,300", "1,040", "0.27"],
+      ["Peer comparison", "4", "0", "n.a.", "n.a.", "0.81"],
+      ["Total", "41", "6", "n.a.", "n.a.", "11.40"],
     ]);
-    // the mock's figures are right-aligned; its code and module are left
+    // the mock's figures are right-aligned; its module is left
     const first = within(table("Model calls")).getAllByRole("row")[1] as HTMLElement;
     expect(within(first).getAllByRole("cell")[1]).toHaveClass("tabular-nums");
     expect(table("Model calls").closest("section")).toHaveClass("rounded-xl");
   });
 
-  it("lists the registers, each with Open as a link, and Download all", () => {
-    renderRecord(FULL);
+  it("lists explicitly available registers with Open links and Download all", () => {
+    renderRecord(FULL, withAvailableRegisters());
     expect(textOf("Registers as written").map((r) => r.slice(0, 4))).toEqual([
       ["Source register", "Every module", "212", "registers/sources.md"],
       ["Calculation register", "Financial kernel", "148", "registers/calculations.md"],
       ["Gap ledger", "Every module", "7", "registers/gaps.md"],
-      ["Assumption register", "Forecast", "23", "registers/assumptions.md"],
+      ["Assumption register", "Forward credit view", "23", "registers/assumptions.md"],
       ["Withheld register", "Delivery", "2", "registers/withheld.md"],
     ]);
     expect(screen.getByRole("link", { name: "Download all" })).toHaveAttribute(
@@ -222,7 +244,7 @@ describe("Evidence, Record", () => {
     renderRecord("2026-03-31");
     expect(screen.getByRole("button", { name: "Download all" })).toBeDisabled();
     expect(
-      screen.getByText("The run's registers were not packed, so there is nothing to download."),
+      screen.getAllByText("These sample bytes are not included in this saved example.")[0],
     ).toBeVisible();
   });
 

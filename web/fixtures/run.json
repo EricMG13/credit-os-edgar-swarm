@@ -8,7 +8,7 @@
         "previous": null,
         "next": "purpose",
         "nextLabel": "Next",
-        "nextBlocked": "Add at least one document to continue.",
+        "nextBlocked": "Add at least one document to continue. This page is a saved example, so nothing can be added here.",
         "readiness": {
           "line": "What still has to be true before the run can start.",
           "notMet": {
@@ -20,8 +20,8 @@
               "Summary approved"
             ]
           },
-          "met": { "count": "2", "items": ["Model service reachable", "Spending cap set"] },
-          "cap": { "label": "USD 0.00 of USD 20.00", "value": 0, "max": 20 }
+          "met": { "count": "0", "items": [] },
+          "cap": { "label": "USD 0.00 of USD 25.00", "value": 0, "max": 25 }
         },
         "step": "documents",
         "files": []
@@ -33,18 +33,15 @@
         "previous": null,
         "next": "purpose",
         "nextLabel": "Next",
-        "nextBlocked": "Replace or remove the unreadable file to continue.",
+        "nextBlocked": "Replace or remove the unreadable file to continue. This page is a saved example, so nothing can be replaced or removed here.",
         "readiness": {
           "line": "What still has to be true before the run can start.",
           "notMet": {
             "count": "3",
             "items": ["Every document can be read", "Purpose chosen", "Summary approved"]
           },
-          "met": {
-            "count": "3",
-            "items": ["At least one document added", "Model service reachable", "Spending cap set"]
-          },
-          "cap": { "label": "USD 0.00 of USD 20.00", "value": 0, "max": 20 }
+          "met": { "count": "1", "items": ["At least one document added"] },
+          "cap": { "label": "USD 0.00 of USD 25.00", "value": 0, "max": 25 }
         },
         "step": "documents",
         "files": [
@@ -110,16 +107,10 @@
           "line": "What still has to be true before the run can start.",
           "notMet": { "count": "1", "items": ["Summary approved"] },
           "met": {
-            "count": "5",
-            "items": [
-              "At least one document added",
-              "Every document can be read",
-              "Purpose chosen",
-              "Model service reachable",
-              "Spending cap set"
-            ]
+            "count": "3",
+            "items": ["At least one document added", "Every document can be read", "Purpose chosen"]
           },
-          "cap": { "label": "USD 0.00 of USD 20.00", "value": 0, "max": 20 }
+          "cap": { "label": "USD 0.00 of USD 25.00", "value": 0, "max": 25 }
         },
         "step": "purpose",
         "chosen": "full-review",
@@ -162,16 +153,10 @@
           "line": "What still has to be true before the run can start.",
           "notMet": { "count": "1", "items": ["Summary approved"] },
           "met": {
-            "count": "5",
-            "items": [
-              "At least one document added",
-              "Every document can be read",
-              "Purpose chosen",
-              "Model service reachable",
-              "Spending cap set"
-            ]
+            "count": "3",
+            "items": ["At least one document added", "Every document can be read", "Purpose chosen"]
           },
-          "cap": { "label": "USD 0.00 of USD 20.00", "value": 0, "max": 20 }
+          "cap": { "label": "USD 0.00 of USD 25.00", "value": 0, "max": 25 }
         },
         "step": "confirm",
         "groups": [
@@ -201,7 +186,7 @@
             "rows": [
               { "label": "Purpose", "value": "Full credit review" },
               { "label": "Modules", "value": "13" },
-              { "label": "Spending cap", "value": "USD 20.00" }
+              { "label": "Spending cap", "value": "USD 25.00" }
             ]
           }
         ]
@@ -218,17 +203,15 @@
           "line": "Everything the run needs is in place.",
           "notMet": { "count": "0", "items": [] },
           "met": {
-            "count": "6",
+            "count": "4",
             "items": [
               "At least one document added",
               "Every document can be read",
               "Purpose chosen",
-              "Summary approved",
-              "Model service reachable",
-              "Spending cap set"
+              "Summary approved"
             ]
           },
-          "cap": { "label": "USD 0.00 of USD 20.00", "value": 0, "max": 20 }
+          "cap": { "label": "USD 0.00 of USD 25.00", "value": 0, "max": 25 }
         },
         "step": "context",
         "note": ""
@@ -239,39 +222,37 @@
         "position": "Step 5 of 5",
         "previous": "context",
         "next": "started",
-        "nextLabel": "Submit, spend up to USD 20.00",
+        "nextLabel": "Submit, spend up to USD 25.00",
         "nextBlocked": null,
         "readiness": {
           "line": "Everything the run needs is in place.",
           "notMet": { "count": "0", "items": [] },
           "met": {
-            "count": "6",
+            "count": "4",
             "items": [
               "At least one document added",
               "Every document can be read",
               "Purpose chosen",
-              "Summary approved",
-              "Model service reachable",
-              "Spending cap set"
+              "Summary approved"
             ]
           },
-          "cap": { "label": "USD 0.00 of USD 20.00", "value": 0, "max": 20 }
+          "cap": { "label": "USD 0.00 of USD 25.00", "value": 0, "max": 25 }
         },
         "step": "start",
         "recap": [
           { "label": "Issuer", "value": "TransDigm Group Incorporated" },
           { "label": "Purpose", "value": "Full credit review, 13 modules" },
           { "label": "Documents", "value": "4, approved today at 14:36" },
-          { "label": "More context", "value": "One note added" }
+          { "label": "More context", "value": "No note added" }
         ],
         "paid": {
-          "text": "It can spend up to USD 20.00 and stops there. You confirm once more before anything is spent.",
-          "amount": "USD 20.00"
+          "text": "It can spend up to USD 25.00 and stops there. You confirm once more before anything is spent.",
+          "amount": "USD 25.00"
         },
         "confirm": {
           "title": "Start a paid run?",
-          "text": "This run can spend up to USD 20.00 and stops when it reaches that cap. Once it starts, what it has spent cannot be taken back.",
-          "action": "Start run, up to USD 20.00",
+          "text": "This run can spend up to USD 25.00 and stops when it reaches that cap. Once it starts, what it has spent cannot be taken back.",
+          "action": "Start run, up to USD 25.00",
           "started": "started"
         }
       },
@@ -287,22 +268,20 @@
           "line": "Everything the run needs is in place.",
           "notMet": { "count": "0", "items": [] },
           "met": {
-            "count": "6",
+            "count": "4",
             "items": [
               "At least one document added",
               "Every document can be read",
               "Purpose chosen",
-              "Summary approved",
-              "Model service reachable",
-              "Spending cap set"
+              "Summary approved"
             ]
           },
-          "cap": { "label": "USD 0.00 of USD 20.00", "value": 0, "max": 20 }
+          "cap": { "label": "USD 0.00 of USD 25.00", "value": 0, "max": 25 }
         },
         "step": "started",
         "title": "Run started",
-        "text": "13 modules will read 4 documents for a full credit review of TransDigm Group. Spending stops at USD 20.00.",
-        "cap": { "label": "USD 0.00 of USD 20.00", "value": 0, "max": 20 },
+        "text": "13 modules will read 4 documents for a full credit review of TransDigm Group. Spending stops at USD 25.00.",
+        "cap": { "label": "USD 0.00 of USD 25.00", "value": 0, "max": 25 },
         "activity": "running"
       }
     ],
@@ -318,7 +297,7 @@
         "open": null,
         "spend": {
           "value": "USD 7.40",
-          "bar": { "label": "USD 7.40 of USD 20.00", "value": 7.4, "max": 20 }
+          "bar": { "label": "USD 7.40 of USD 25.00", "value": 7.4, "max": 25 }
         },
         "finished": {
           "value": "5 of 13",
@@ -418,7 +397,7 @@
           {
             "who": "Run",
             "time": "14:38",
-            "text": "Started. 13 modules queued, cap USD 20.00.",
+            "text": "Started. 13 modules queued, cap USD 25.00.",
             "state": "Queued"
           }
         ]
@@ -434,7 +413,7 @@
         "open": null,
         "spend": {
           "value": "USD 0.00",
-          "bar": { "label": "USD 0.00 of USD 20.00", "value": 0, "max": 20 }
+          "bar": { "label": "USD 0.00 of USD 25.00", "value": 0, "max": 25 }
         },
         "finished": {
           "value": "0 of 13",
@@ -473,7 +452,7 @@
           {
             "who": "Run",
             "time": "14:37",
-            "text": "Submitted and queued. 13 modules, cap USD 20.00.",
+            "text": "Submitted and queued. 13 modules, cap USD 25.00.",
             "state": "Queued"
           }
         ]
@@ -489,7 +468,7 @@
         "open": null,
         "spend": {
           "value": "USD 0.00",
-          "bar": { "label": "USD 0.00 of USD 20.00", "value": 0, "max": 20 }
+          "bar": { "label": "USD 0.00 of USD 25.00", "value": 0, "max": 25 }
         },
         "finished": {
           "value": null,
@@ -502,7 +481,7 @@
           {
             "who": "Run",
             "time": "14:38",
-            "text": "Started. 13 modules queued, cap USD 20.00.",
+            "text": "Started. 13 modules queued, cap USD 25.00.",
             "state": "Queued"
           }
         ]
@@ -515,10 +494,13 @@
         "labels": ["Full credit review", "As of Q3 FY2026"],
         "line": null,
         "alert": null,
-        "open": { "label": "Open the library", "href": "#/" },
+        "open": {
+          "label": "Open the library",
+          "href": "#/library/transdigm/activity-finished/overview"
+        },
         "spend": {
           "value": "USD 16.65",
-          "bar": { "label": "USD 16.65 of USD 20.00", "value": 16.65, "max": 20 }
+          "bar": { "label": "USD 16.65 of USD 25.00", "value": 16.65, "max": 25 }
         },
         "finished": {
           "value": "12 of 13",
@@ -656,14 +638,17 @@
         "line": null,
         "alert": {
           "title": "The run failed",
-          "text": "Financial analysis stopped after three attempts because the model service returned no usable answer. Two modules finished and are kept. Starting again goes through Start and asks before it spends.",
-          "action": { "label": "Review and start again", "href": "#/run/start/start" },
-          "alt": { "label": "Open what finished", "href": "#/" }
+          "text": "Financial analysis stopped after three attempts because the model service returned no usable answer. Two modules finished and are kept.",
+          "action": {
+            "label": "Open what finished",
+            "href": "#/library/transdigm/activity-failed/overview"
+          },
+          "alt": null
         },
         "open": null,
         "spend": {
           "value": "USD 3.10",
-          "bar": { "label": "USD 3.10 of USD 20.00", "value": 3.1, "max": 20 }
+          "bar": { "label": "USD 3.10 of USD 25.00", "value": 3.1, "max": 25 }
         },
         "finished": {
           "value": "2 of 13",
@@ -761,7 +746,7 @@
           {
             "who": "Run",
             "time": "14:38",
-            "text": "Started. 13 modules queued, cap USD 20.00.",
+            "text": "Started. 13 modules queued, cap USD 25.00.",
             "state": "Queued"
           }
         ]
@@ -774,15 +759,18 @@
         "labels": ["Full credit review", "As of Q3 FY2026"],
         "line": null,
         "alert": {
-          "title": "The run reached its USD 20.00 cap",
+          "title": "The run reached its USD 25.00 cap",
           "text": "Nine modules finished and are in the library. Recovery was stopped part-way and three modules did not run. A new run has its own cap.",
-          "action": { "label": "Open what finished", "href": "#/" },
+          "action": {
+            "label": "Open what finished",
+            "href": "#/library/transdigm/activity-capped/overview"
+          },
           "alt": { "label": "Start a new run", "href": "#/run/start/no-documents" }
         },
         "open": null,
         "spend": {
-          "value": "USD 20.00",
-          "bar": { "label": "USD 20.00 of USD 20.00", "value": 20, "max": 20 }
+          "value": "USD 25.00",
+          "bar": { "label": "USD 25.00 of USD 25.00", "value": 25, "max": 25 }
         },
         "finished": {
           "value": "9 of 13",
@@ -873,7 +861,7 @@
           ]
         },
         "feed": [
-          { "who": "Run", "time": "15:09", "text": "Capped at USD 20.00.", "state": "Capped" },
+          { "who": "Run", "time": "15:09", "text": "Capped at USD 25.00.", "state": "Capped" },
           {
             "who": "Recovery",
             "time": "15:09",
@@ -916,7 +904,7 @@
         "open": null,
         "spend": {
           "value": "USD 0.00",
-          "bar": { "label": "USD 0.00 of USD 20.00", "value": 0, "max": 20 }
+          "bar": { "label": "USD 0.00 of USD 25.00", "value": 0, "max": 25 }
         },
         "finished": {
           "value": "0 of 13",
@@ -947,14 +935,17 @@
         "line": null,
         "alert": {
           "title": "The run was interrupted",
-          "text": "The run stopped at 14:56 while Covenants was running. Five modules finished and are kept. Resuming goes through Start and asks before it spends.",
-          "action": { "label": "Review and resume", "href": "#/run/start/start" },
-          "alt": { "label": "Open what finished", "href": "#/" }
+          "text": "The run stopped at 14:56 while Covenants was running. Five modules finished and are kept.",
+          "action": {
+            "label": "Open what finished",
+            "href": "#/library/transdigm/activity-interrupted/overview"
+          },
+          "alt": null
         },
         "open": null,
         "spend": {
           "value": "USD 7.40",
-          "bar": { "label": "USD 7.40 of USD 20.00", "value": 7.4, "max": 20 }
+          "bar": { "label": "USD 7.40 of USD 25.00", "value": 7.4, "max": 25 }
         },
         "finished": {
           "value": "5 of 13",
@@ -1079,7 +1070,7 @@
           {
             "who": "Run",
             "time": "14:38",
-            "text": "Started. 13 modules queued, cap USD 20.00.",
+            "text": "Started. 13 modules queued, cap USD 25.00.",
             "state": "Queued"
           }
         ]
@@ -1099,7 +1090,7 @@
         "open": null,
         "spend": {
           "value": "USD 17.45",
-          "bar": { "label": "USD 17.45 of USD 20.00", "value": 17.45, "max": 20 }
+          "bar": { "label": "USD 17.45 of USD 25.00", "value": 17.45, "max": 25 }
         },
         "finished": {
           "value": "12 of 22",

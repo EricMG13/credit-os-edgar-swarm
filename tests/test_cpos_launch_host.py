@@ -305,4 +305,4 @@ def test_a_finished_host_run_is_published_to_the_library_unless_no_library(
         answer_path.write_text(answer_for(asked, routes))
     out = capsys.readouterr()
     assert "Library:" in out.out, out
-    assert (tmp_path / "library/index.html").is_file()
+    assert (tmp_path / "library/data.js").is_file()  # main's library publishes data.js

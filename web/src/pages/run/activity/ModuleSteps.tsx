@@ -42,11 +42,11 @@ function rowsOf(steps: ModuleStep[], opened: ReadonlySet<number>, last: number |
   });
 }
 
-function ModuleBadge({ word, live }: { word: ModuleWord; live: boolean }) {
+function ModuleBadge({ word }: { word: ModuleWord }) {
   if (word === "Not assessable" || word === "Not run") {
     return <StatusBadge set="Module state" state={word} />;
   }
-  return <StatusBadge set="Run states" state={word} live={live} />;
+  return <StatusBadge set="Run states" state={word} />;
 }
 
 function Marker({ word }: { word: ModuleWord }) {
@@ -54,10 +54,9 @@ function Marker({ word }: { word: ModuleWord }) {
     <span
       aria-hidden="true"
       className={cx(
-        "z-10 flex size-6 shrink-0 items-center justify-center rounded-full",
-        word === "Finished" && "bg-action text-text-on-action",
-        word === "Running" &&
-          "bg-action shadow-[0_0_0_2px_var(--color-surface-card),0_0_0_4px_var(--color-action)]",
+        "run-step-marker relative z-10 flex size-6 shrink-0 items-center justify-center rounded-full",
+        word === "Finished" && "bg-surface-subtle text-text-secondary",
+        word === "Running" && "run-step-marker-active bg-action",
         word !== "Finished" &&
           word !== "Running" &&
           "bg-surface-card inset-ring-[1.5px] inset-ring-border-container",
@@ -120,7 +119,7 @@ export function ModuleSteps({ steps, live }: { steps: ModuleStep[]; live: boolea
                 className={cx(
                   "my-1 min-h-3 flex-1 rounded-xs border-s-2",
                   last && "border-transparent",
-                  !last && step.state === "Finished" && "border-action",
+                  !last && step.state === "Finished" && "border-border-container",
                   !last && step.state !== "Finished" && "border-border-hairline",
                 )}
               />
@@ -155,13 +154,13 @@ export function ModuleSteps({ steps, live }: { steps: ModuleStep[]; live: boolea
                   <span className="text-sm text-pretty text-text-tertiary">{detail}</span>
                 )}
                 {waiting ? (
-                  <div aria-hidden="true" className="flex max-w-80 flex-col gap-1.5 pt-1.5">
-                    <div className="activity-skel queued-shimmer w-[90%]" />
-                    <div className="activity-skel queued-shimmer w-[60%]" />
+                  <div aria-hidden="true" className="flex max-w-80 flex-col gap-2 pt-2">
+                    <div className="activity-skel w-[90%]" />
+                    <div className="activity-skel w-[60%]" />
                   </div>
                 ) : null}
               </div>
-              <ModuleBadge word={step.state} live={live} />
+              <ModuleBadge word={step.state} />
             </div>
           </li>
         );

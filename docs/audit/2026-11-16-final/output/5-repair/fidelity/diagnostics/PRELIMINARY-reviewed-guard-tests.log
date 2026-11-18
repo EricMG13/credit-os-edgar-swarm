@@ -1,0 +1,11 @@
+✔ offline proof accepts only local resource schemes and loopback hosts (1.707127ms)
+✔ context guard records and aborts external requests and WebSockets (8.757757ms)
+✔ denial proxy terminates HTTP and CONNECT locally without an upstream (17.5533ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 416.880957

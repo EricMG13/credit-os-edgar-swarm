@@ -34,7 +34,7 @@ export function Section({
         <Heading
           id={headingId}
           tabIndex={-1}
-          className={`font-display ${SIZE[level]} text-text-primary ${FOCUS}`}
+          className={`min-w-0 font-display ${SIZE[level]} text-balance wrap-anywhere text-text-primary ${FOCUS}`}
         >
           {title}
         </Heading>

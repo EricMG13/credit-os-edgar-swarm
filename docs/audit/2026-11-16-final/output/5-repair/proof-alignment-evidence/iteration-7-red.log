@@ -1,0 +1,49 @@
+
+> credit-os-web@0.0.0 proof:connected
+> node scripts/connected-proof.mjs
+
+Browser proof artifacts: /workspace/audit-proof-alignment/proof-artifacts/run-9YqnEC
+overview mobile: 6 headline cards fit at 375px
+
+✖ Google Chrome uploads, submits and opens a finished legacy report (50013.583714ms)
+overview mobile: 6 headline cards fit at 375px
+
+✖ Microsoft Edge uploads, submits and opens a finished legacy report (45782.436747ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 0
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 95949.128863
+
+✖ failing tests:
+
+test at scripts/connected-proof.mjs:1554:3
+✖ Google Chrome uploads, submits and opens a finished legacy report (50013.583714ms)
+  locator.waitFor: Timeout 15000ms exceeded.
+  Call log:
+  [2m  - waiting for locator('main').getByRole('region', { name: 'Run charts', exact: true }).getByRole('figure', { name: 'Refinancing need', exact: true }).locator('[data-missing][data-series="Committed resources"]') to be visible[22m
+
+      at checkForecastRunCharts (/workspace/audit-proof-alignment/web/scripts/connected-proof.mjs:1219:82)
+      at async checkCharts (/workspace/audit-proof-alignment/web/scripts/connected-proof.mjs:960:3)
+      at async checkBrowserRun (/workspace/audit-proof-alignment/web/scripts/connected-proof.mjs:1434:3)
+      at async TestContext.<anonymous> (/workspace/audit-proof-alignment/web/scripts/connected-proof.mjs:1589:18) {
+    log: [ `  - waiting for locator('main').getByRole('region', { name: 'Run charts', exact: true }).getByRole('figure', { name: 'Refinancing need', exact: true }).locator('[data-missing][data-series="Committed resources"]') to be visible` ],
+    name: 'TimeoutError'
+  }
+
+test at scripts/connected-proof.mjs:1554:3
+✖ Microsoft Edge uploads, submits and opens a finished legacy report (45782.436747ms)
+  locator.waitFor: Timeout 15000ms exceeded.
+  Call log:
+  [2m  - waiting for locator('main').getByRole('region', { name: 'Run charts', exact: true }).getByRole('figure', { name: 'Refinancing need', exact: true }).locator('[data-missing][data-series="Committed resources"]') to be visible[22m
+
+      at checkForecastRunCharts (/workspace/audit-proof-alignment/web/scripts/connected-proof.mjs:1219:82)
+      at async checkCharts (/workspace/audit-proof-alignment/web/scripts/connected-proof.mjs:960:3)
+      at async checkBrowserRun (/workspace/audit-proof-alignment/web/scripts/connected-proof.mjs:1434:3)
+      at async TestContext.<anonymous> (/workspace/audit-proof-alignment/web/scripts/connected-proof.mjs:1589:18) {
+    log: [ `  - waiting for locator('main').getByRole('region', { name: 'Run charts', exact: true }).getByRole('figure', { name: 'Refinancing need', exact: true }).locator('[data-missing][data-series="Committed resources"]') to be visible` ],
+    name: 'TimeoutError'
+  }

@@ -175,9 +175,21 @@ describe("WaterfallChart chart side", () => {
     expect(kind("EBITDA")).toBe("total");
     expect(kind("Interest")).toBe("down");
     expect(kind("Working capital")).toBe("up");
-    expect(barOf(container, "EBITDA").getAttribute("fill")).toBe("var(--color-chart-1)");
-    expect(barOf(container, "Interest").getAttribute("fill")).toBe("var(--color-chart-3)");
-    expect(barOf(container, "Working capital").getAttribute("fill")).toBe("var(--color-brand-400)");
+    // X1-026: the three colours are the waterfall tokens, not local constants.
+    expect(barOf(container, "EBITDA").getAttribute("fill")).toBe("var(--color-waterfall-total)");
+    expect(barOf(container, "Interest").getAttribute("fill")).toBe("var(--color-waterfall-down)");
+    expect(barOf(container, "Working capital").getAttribute("fill")).toBe(
+      "var(--color-waterfall-up)",
+    );
+  });
+
+  it("draws each legend swatch in its column's token", () => {
+    const { container } = renderWalk(DOWNSIDE);
+    const swatch = (kind: string) =>
+      container.querySelector(`li[data-kind="${kind}"] svg rect`)?.getAttribute("fill");
+    expect(swatch("total")).toBe("var(--color-waterfall-total)");
+    expect(swatch("down")).toBe("var(--color-waterfall-down)");
+    expect(swatch("up")).toBe("var(--color-waterfall-up)");
   });
 
   it("labels a zero step 0 with a hairline, not n.a.", () => {

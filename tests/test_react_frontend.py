@@ -1,21 +1,25 @@
+import dataclasses
 import json
 import os
+import re
 import threading
 from collections.abc import Iterator, Mapping
 from decimal import Decimal
 from http.client import HTTPConnection
 from pathlib import Path
 from tempfile import TemporaryDirectory
+from typing import Any, get_args
 
 import pytest
+import update_library
 
+from deploy_vii.contracts import PATHWAY_CAP_USD
 from deploy_workflow.inbox import activity, runs, startup
 from deploy_workflow.inbox.layout import Layout, ensure_layout
 from deploy_workflow.inbox.scheduler import Scheduler
 from deploy_workflow.model.budget import Budget
-from deploy_workflow.run_events import EVENTS, append_event
+from deploy_workflow.run_events import EVENTS, ModuleState, append_event
 from deploy_workflow.run_start.service import _Server
-from deploy_vii.contracts import PATHWAY_CAP_USD
 from react_frontend import make_server, run_activity
 
 PROJECT = Path(__file__).resolve().parents[1]
@@ -40,8 +44,7 @@ def root() -> Iterator[Path]:
 
 
 @pytest.fixture
-def hosted(root: Path, web: Path, monkeypatch: pytest.MonkeyPatch) -> Iterator[_Server]:
-    monkeypatch.setenv("OPENAI_API_KEY", "offline-test")
+def hosted(root: Path, web: Path) -> Iterator[_Server]:
     with make_server(root, web=web, signal_url="http://localhost:8766") as server:
         thread = threading.Thread(target=server.serve_forever)
         thread.start()
@@ -93,10 +96,29 @@ def test_react_page_routes_serve_the_build(hosted: _Server, web: Path) -> None:
         assert request(hosted, path)[0] == 404
 
 
+def _form_template() -> dict[str, Any]:
+    """The example case the start form opens from: its settings, but no issuer (J2-002)."""
+    template = json.loads((PROJECT / "cases/context/research-minimal.json").read_bytes())
+    template["identity"].update(issuer_name="", issuer_id="")
+    return template
+
+
+def test_start_form_template_names_no_issuer(hosted: _Server) -> None:
+    sent = json.loads(request(hosted, "/connected/context")[1])
+    assert sent["identity"]["issuer_name"] == ""
+    assert sent["identity"]["issuer_id"] == ""
+    assert "Northbridge" not in json.dumps(sent["identity"])
+    example = json.loads((PROJECT / "cases/context/research-minimal.json").read_bytes())
+    assert example["identity"]["issuer_name"] == "Northbridge Group"  # the file itself is unchanged
+    assert {k: v for k, v in sent["identity"].items() if k not in ("issuer_name", "issuer_id")} == {
+        k: v for k, v in example["identity"].items() if k not in ("issuer_name", "issuer_id")
+    }
+
+
 def test_same_origin_service_and_submit_gate(hosted: _Server) -> None:
-    context = json.loads((PROJECT / "cases/context/research-minimal.json").read_bytes())
     assert json.loads(request(hosted, "/connected/context")[1]) == {
-        **context,
+        **_form_template(),
+        "copilot_models": {},
         "submission_caps_usd": {pathway: str(cap) for pathway, cap in PATHWAY_CAP_USD.items()},
     }
     assert request(hosted, "/connected/context", headers={"Origin": "http://other.test"})[0] == 403
@@ -148,9 +170,47 @@ def test_activity_uses_the_pinned_cap_and_curates_native_events(hosted: _Server)
     assert record["modules"] == [["CP-0", "done"], ["CP-1", "waiting"], ["Report", "waiting"]]
     assert [event["kind"] for event in record["events"]] == ["module_started", "module_accepted"]
     assert set(record["events"][0]) == {"kind", "at", "module"}
+    assert record["held_reason"] == ""
+    # A stop ends the module that was running. The service's hold reaches the page of a run that
+    # waits on it: one kept "running" after its log ended; not an ended one, nor a running one.
+    append_event(directory, "module_started", module="CP-1")
+    append_event(directory, "stopped", reason="provider")
+    held = f"the library could not be rebuilt ({layout.root.resolve()}/x: disk full)"
+    activity.write(layout, {"updated": "", "held": held, "runs": []})
+    record = json.loads(request(hosted, "/connected/activity/activity")[1])
+    assert record["modules"] == [["CP-0", "done"], ["CP-1", "stopped"], ["Report", "waiting"]]
+    assert record["held_reason"] == ""  # interrupted: ended, not held
+    saved = runs.load_readable(layout)[0]
+    runs.save(
+        layout, dataclasses.replace(next(r for r in saved if r.id == "activity"), status="running")
+    )
+    reason = json.loads(request(hosted, "/connected/activity/activity")[1])["held_reason"]
+    assert (
+        reason.startswith("the library could not be rebuilt (") and str(layout.root) not in reason
+    )
+    append_event(directory, "module_started", module="CP-1")  # a later launch runs again
+    assert json.loads(request(hosted, "/connected/activity/activity")[1])["held_reason"] == ""
     (directory / EVENTS).write_text("invalid event\n{}\n", encoding="utf-8")
     assert json.loads(request(hosted, "/connected/activity/activity")[1])["events"] is None
     assert request(hosted, "/connected/activity/unknown")[0] == 404
+
+
+def test_the_react_pages_status_words_are_the_services() -> None:
+    """The React pages copy the run statuses and module states the service sends (api.ts); a word
+    missing there breaks a lookup table, one the service never sends is a dead branch."""
+    api = (Path(__file__).parents[1] / "web/src/pages/connected/api.ts").read_text("utf-8")
+
+    def union(pattern: str) -> list[str]:
+        match = re.search(pattern, api)
+        assert match is not None, pattern
+        return re.findall(r'"(\w+)"', match[1])
+
+    statuses = list(get_args(runs.Status))
+    assert union(r"export type RunStatus =([^;]*);") == statuses
+    ended = [s for s in statuses if s not in ("queued", "running", "finished")]
+    assert union(r"export type EndedRun = [^&]*& \{\s*status:([^;]*);") == ended
+    assert union(r"export type ModuleState =([^;]*);") == list(get_args(ModuleState))
+    assert list(run_activity._ENDED) == ended
 
 
 def test_activity_list_shows_runs_in_progress_without_spend_or_file_names(hosted: _Server) -> None:
@@ -321,8 +381,12 @@ def test_activity_sends_a_reason_without_the_service_root(hosted: _Server) -> No
     ended = {run["id"]: run["reason"] for run in listing["ended"]}
     single = json.loads(request(hosted, "/connected/activity/p-path")[1])["reason"]
 
-    relative = Path("_engine") / "state" / "issuers.json"
-    assert ended["p-path"] == f"could not be filed: {relative} is bad"
+    # A reason the scheduler wrote is sent as the reader's sentence, with no path in it; any other
+    # reason (the running run's below) is sent as stored with the root removed.
+    assert ended["p-path"] == (
+        "The run finished, but the service could not file its report. Ask whoever runs the "
+        "service to check the service's log before starting it again."
+    )
     assert single == ended["p-path"]
     assert ended["q-plain"] == "Provider error"
     assert listing["runs"][0]["reason"] == f"waiting on {Path('inbox') / 'a.pdf'}"
@@ -435,6 +499,73 @@ def test_reports_admission_and_reader_snapshot(hosted: _Server, root: Path) -> N
     assert request(hosted, "/connected/snapshot")[0] == 500
 
 
+@pytest.mark.parametrize("query", ["", "?run=demo"])
+def test_snapshot_sends_no_server_path_even_from_an_older_publication(
+    hosted: _Server, root: Path, query: str
+) -> None:
+    """An older data.js names the engine folder in catalogue.workspace; the snapshot drops it."""
+    scheduler = hosted.scheduler
+    assert isinstance(scheduler, Scheduler)
+    library = root / "_engine" / "library"
+    library.mkdir(exist_ok=True)
+    export = {
+        "catalogue": {
+            "real": [{"id": "demo", "name": "Émetteur", "date": "2026-10-31"}],
+            "workspace": str(root / "_engine"),
+            "built_at": "01 Nov 2026, 09:00:00 UTC",
+        },
+        "workspace": {"runs": {"run-key": {"folder": "demo", "pathway": "credit_snapshot"}}},
+        "activity": {"excluded": [], "issues": []},
+        "chips": {},
+    }
+    (library / "data.js").write_text(
+        f"window.CREDIT_OS_DATA={json.dumps(export)};\n", encoding="utf-8"
+    )
+    runs.save(
+        scheduler.layout,
+        runs.Record(
+            id="demo", pathway="credit_snapshot", folder="demo", status="finished", claimed_at=""
+        ),
+    )
+    status, body, _ = request(hosted, f"/connected/snapshot{query}")
+    assert status == 200
+    sent = json.loads(body)
+    assert "workspace" not in sent["catalogue"]
+    assert sent["catalogue"] == {
+        "real": export["catalogue"]["real"],
+        "built_at": export["catalogue"]["built_at"],
+    }
+    assert str(root) not in body.decode("utf-8")
+    assert sent["workspace"]["runs"] == export["workspace"]["runs"]
+
+
+@pytest.mark.parametrize(
+    "path",
+    ["/library", "/library/", "/library/index.html", "/library.html"],
+)
+def test_legacy_library_entry_urls_redirect_to_the_connected_app(
+    hosted: _Server, path: str
+) -> None:
+    status, body, headers = request(hosted, path)
+    assert status == 308 and body == b"" and headers["Location"] == "/"
+
+
+def test_legacy_library_assets_are_not_served_but_checked_downloads_are(
+    hosted: _Server, root: Path
+) -> None:
+    library = root / "_engine" / "library"
+    library.mkdir(parents=True, exist_ok=True)
+    (library / "views.js").write_text("legacy UI", encoding="utf-8")
+    download = library / "downloads" / "run-a" / "CP-1.md"
+    download.parent.mkdir(parents=True, exist_ok=True)
+    download.write_bytes(b"checked handoff")
+    assert request(hosted, "/library/views.js")[0] == 404
+    assert request(hosted, "/library/downloads/run-a/CP-1.md")[:2] == (
+        200,
+        b"checked handoff",
+    )
+
+
 def test_inherits_startup_checks_and_workspace_lock(
     hosted: _Server, root: Path, web: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -443,12 +574,10 @@ def test_inherits_startup_checks_and_workspace_lock(
         make_server(root, web=web),
     ):
         pytest.fail("two schedulers held the same lock")
-    monkeypatch.delenv("OPENAI_API_KEY")
-    with (
-        pytest.raises(startup.StartupRefused, match="OPENAI_API_KEY is not set"),
-        make_server(root, web=web),
-    ):
-        pytest.fail("started without the required key")
+    for name in ("COPILOT_GITHUB_TOKEN", "COPILOT_CLI_PATH", "COPILOT_USE_GH_LOGIN"):
+        monkeypatch.delenv(name, raising=False)
+    with make_server(root / "offline", web=web) as offline:
+        assert offline.scheduler.model_choices == {}
     with (
         pytest.raises(ValueError, match="synthetic mode"),
         make_server(root, web=web, launcher=("unspecified",)),
@@ -456,10 +585,7 @@ def test_inherits_startup_checks_and_workspace_lock(
         pytest.fail("accepted a launcher outside synthetic mode")
 
 
-def test_synthetic_mode_uses_the_explicit_launcher(
-    root: Path, web: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    monkeypatch.setenv("OPENAI_API_KEY", "offline-test")
+def test_synthetic_mode_uses_the_explicit_launcher(root: Path, web: Path) -> None:
     launcher = ("unused-by-test",)
     with make_server(root, web=web, launcher=launcher, synthetic=True) as server:
         assert server.scheduler.settings.launcher == launcher
@@ -469,8 +595,13 @@ def test_synthetic_mode_uses_the_explicit_launcher(
             page = request(server, "/")[1]
             assert b'credit-os-mode" content="synthetic"' in page
             assert b'credit-os-signal-url"' not in page
-            expected = json.loads((PROJECT / "cases/context/research-minimal.json").read_bytes())
+            expected = _form_template()
             expected["run"]["case_kind"] = "synthetic"
+            expected["copilot_models"] = {
+                "gpt": ["fast", "balanced", "high"],
+                "claude": ["fast", "balanced", "high"],
+                "luna": ["xhigh"],
+            }
             expected["submission_caps_usd"] = {
                 pathway: str(cap) for pathway, cap in PATHWAY_CAP_USD.items()
             }
@@ -740,3 +871,27 @@ def test_activity_list_counts_a_record_with_a_non_string_field(hosted: _Server, 
     assert status == 200
     assert listing["unreadable"] == 1
     assert [run["id"] for run in listing["ended"]] == ["d-failed"]
+
+
+def test_copilot_preflight_rpc_failure_still_launches_offline(
+    root: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    import sys
+
+    from copilot._jsonrpc import JsonRpcError
+
+    from react_frontend import __main__ as main
+
+    async def rejected(_adapter):
+        raise JsonRpcError(-32000, "private diagnostic")
+
+    launches = []
+    monkeypatch.setattr(main.CopilotAdapter, "seat_models", rejected)
+    monkeypatch.setattr(main, "serve", lambda path, **options: launches.append((path, options)))
+    monkeypatch.setattr(sys, "argv", ["react_frontend", "--root", str(root), "--copilot-preflight"])
+    main.main()
+    ((opened, options),) = launches
+    assert opened == root and options["copilot_models"] == {}
+    diagnostic = capsys.readouterr().err
+    assert "Copilot seat could not be verified" in diagnostic
+    assert "private diagnostic" not in diagnostic

@@ -1,0 +1,179 @@
+{
+  "dist": "/workspace/scratch/stage7-release/extracted/web/dist",
+  "files": [
+    "THIRD-PARTY-NOTICES.md",
+    "assets/index-5wt_9EAf.js",
+    "assets/style-Di29dHHt.css",
+    "data.js",
+    "fonts/Geist-Medium.woff2",
+    "fonts/Geist-Regular.woff2",
+    "fonts/Geist-SemiBold.woff2",
+    "fonts/GeistMono-Medium.woff2",
+    "fonts/GeistMono-Regular.woff2",
+    "fonts/OFL-Geist.txt",
+    "fonts/OFL-GeistMono.txt",
+    "fonts/OFL-SchibstedGrotesk.txt",
+    "fonts/SchibstedGrotesk-Bold.woff2",
+    "fonts/SchibstedGrotesk-SemiBold.woff2",
+    "index.html",
+    "symbol.svg"
+  ],
+  "hits": {
+    "http-url": [
+      {
+        "file": "THIRD-PARTY-NOTICES.md",
+        "hits": [
+          "https://github.com/markmead/hyperui",
+          "https://github.com/untitleduico/react"
+        ]
+      },
+      {
+        "file": "assets/index-5wt_9EAf.js",
+        "hits": [
+          "http://www.w3.org/1998/Math/MathML",
+          "http://www.w3.org/1999/xhtml",
+          "http://www.w3.org/1999/xlink",
+          "http://www.w3.org/2000/svg",
+          "http://www.w3.org/XML/1998/namespace",
+          "https://bit.ly/3cXEKWf",
+          "https://react.dev/errors/",
+          "https://redux-toolkit.js.org/Errors?code=",
+          "https://redux.js.org/Errors?code="
+        ]
+      },
+      {
+        "file": "assets/style-Di29dHHt.css",
+        "hits": [
+          "https://tailwindcss.com"
+        ]
+      },
+      {
+        "file": "fonts/OFL-Geist.txt",
+        "hits": [
+          "https://github.com/vercel/geist-font",
+          "https://openfontlicense.org"
+        ]
+      },
+      {
+        "file": "fonts/OFL-GeistMono.txt",
+        "hits": [
+          "https://github.com/vercel/geist-font",
+          "https://openfontlicense.org"
+        ]
+      },
+      {
+        "file": "fonts/OFL-SchibstedGrotesk.txt",
+        "hits": [
+          "https://github.com/schibsted/schibsted-grotesk",
+          "https://scripts.sil.org/OFL"
+        ]
+      },
+      {
+        "file": "symbol.svg",
+        "hits": [
+          "http://www.w3.org/2000/svg"
+        ]
+      }
+    ],
+    "css-url": [
+      {
+        "file": "assets/index-5wt_9EAf.js",
+        "hits": [
+          "url(#\".concat(B0e(n,e)",
+          "url(#\".concat(c,\")",
+          "url(#clipPath-\".concat(b,\")",
+          "url(#clipPath-\".concat(k?\"\":\"dots-\")",
+          "url(#clipPath-\".concat(m,\")",
+          "url(#clipPath-\".concat(t,\")",
+          "url(#clipPath-\".concat(x?\"\":\"dots-\")"
+        ]
+      },
+      {
+        "file": "assets/style-Di29dHHt.css",
+        "hits": [
+          "url(../fonts/Geist-Medium.woff2)",
+          "url(../fonts/Geist-Regular.woff2)",
+          "url(../fonts/Geist-SemiBold.woff2)",
+          "url(../fonts/GeistMono-Medium.woff2)",
+          "url(../fonts/GeistMono-Regular.woff2)",
+          "url(../fonts/SchibstedGrotesk-Bold.woff2)",
+          "url(../fonts/SchibstedGrotesk-SemiBold.woff2)"
+        ]
+      }
+    ],
+    "runtime-constructor": [],
+    "network-call": [],
+    "css-import": [],
+    "webscheme": []
+  },
+  "htmlAssets": [
+    {
+      "tag": "script",
+      "reference": "./assets/index-5wt_9EAf.js"
+    },
+    {
+      "tag": "link",
+      "reference": "./assets/style-Di29dHHt.css"
+    },
+    {
+      "tag": "script",
+      "reference": "./data.js"
+    }
+  ],
+  "contentSecurityPolicy": "default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self'; font-src 'self'; connect-src 'none'; base-uri 'none'; form-action 'none'",
+  "resolvedLocalFonts": [
+    {
+      "css": "assets/style-Di29dHHt.css",
+      "reference": "../fonts/Geist-Medium.woff2",
+      "file": "fonts/Geist-Medium.woff2"
+    },
+    {
+      "css": "assets/style-Di29dHHt.css",
+      "reference": "../fonts/Geist-Regular.woff2",
+      "file": "fonts/Geist-Regular.woff2"
+    },
+    {
+      "css": "assets/style-Di29dHHt.css",
+      "reference": "../fonts/Geist-SemiBold.woff2",
+      "file": "fonts/Geist-SemiBold.woff2"
+    },
+    {
+      "css": "assets/style-Di29dHHt.css",
+      "reference": "../fonts/GeistMono-Medium.woff2",
+      "file": "fonts/GeistMono-Medium.woff2"
+    },
+    {
+      "css": "assets/style-Di29dHHt.css",
+      "reference": "../fonts/GeistMono-Regular.woff2",
+      "file": "fonts/GeistMono-Regular.woff2"
+    },
+    {
+      "css": "assets/style-Di29dHHt.css",
+      "reference": "../fonts/SchibstedGrotesk-Bold.woff2",
+      "file": "fonts/SchibstedGrotesk-Bold.woff2"
+    },
+    {
+      "css": "assets/style-Di29dHHt.css",
+      "reference": "../fonts/SchibstedGrotesk-SemiBold.woff2",
+      "file": "fonts/SchibstedGrotesk-SemiBold.woff2"
+    }
+  ],
+  "additionalAssetChecks": {
+    "protocolRelativeString": [],
+    "runtimeProtocolString": [],
+    "workerConstructor": [],
+    "httpOrWsSchemeInWoff2": []
+  },
+  "generatedFixtureHttpHostsByGroup": {
+    "before": {
+      "signal": {
+        "example.com": 31
+      }
+    },
+    "after": {
+      "signal": {
+        "example.com": 31
+      }
+    }
+  }
+}

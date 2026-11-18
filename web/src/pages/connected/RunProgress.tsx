@@ -1,12 +1,15 @@
 import { useEffect, useState } from "react";
+import { Alert } from "@/components/alert/Alert";
 import { Button } from "@/components/base/buttons/button";
 import { Badge } from "@/components/base/badges/badges";
 import { Card } from "@/components/card/Card";
 import { StatusBadge } from "@/components/status/StatusBadge";
+import { Skeleton } from "@/components/gap/Skeleton";
 import { PageHeader } from "../../shell/PageHeader";
 import { ModuleSteps } from "../run/activity/ModuleSteps";
 import { Feed } from "../run/activity/Feed";
 import { Summary } from "../run/activity/Summary";
+import { TextLink } from "../run/TextLink";
 import {
   getReport,
   getRun,
@@ -14,13 +17,21 @@ import {
   moduleName,
   pathwayName,
   RequestError,
+  serviceText,
   type Mode,
   type Run,
   type RunStatus,
 } from "./api";
-import { Breadcrumb, ErrorNotice } from "./layout";
-import { elapsedFigure, feedLines, finishedFigure, moduleWord, spendFigure } from "./runFigures";
-import { errorText } from "./useResource";
+import { Breadcrumb } from "./layout";
+import {
+  asOfDate,
+  elapsedFigure,
+  feedLines,
+  finishedFigure,
+  moduleSteps,
+  spendFigure,
+} from "./runFigures";
+import { isUnreachable } from "./useResource";
 
 const WORDS = {
   queued: "Queued",
@@ -31,44 +42,125 @@ const WORDS = {
   rejected: "Rejected",
   interrupted: "Interrupted",
 } as const satisfies Record<RunStatus, string>;
+const RESTARTABLE: readonly RunStatus[] = ["failed", "capped", "rejected", "interrupted"];
+
+const POLL_MS = 2000;
+/** How long a finished run's report may be missing before the page says none was published. */
+const REPORT_WAIT_MS = 10_000;
+
+/** How a read of the run, or of its report, failed. */
+type Problem = "missing" | "unreachable" | "failed";
+/** A finished run's report: not there yet, there, not there after the wait, or unreadable. */
+type ReportState = "pending" | "ready" | "absent" | "unreachable" | "failed";
+
+function problemOf(failure: unknown): Problem {
+  if (failure instanceof RequestError && failure.status === 404) return "missing";
+  return isUnreachable(failure) ? "unreachable" : "failed";
+}
+
+const UNREACHABLE = "The service cannot be reached";
+const RUN_PROBLEMS = {
+  missing: {
+    tone: "warning",
+    title: "This run was not found",
+    text: "The service has no run at this address. Check the address, or find the run in Run activity.",
+  },
+  unreachable: {
+    tone: "error",
+    title: UNREACHABLE,
+    text: "This page keeps trying and updates when the service answers.",
+  },
+  failed: {
+    tone: "error",
+    title: "The run could not be loaded",
+    text: "This page retries automatically. You can also retry now.",
+  },
+} as const;
+const REPORT_PROBLEMS = {
+  absent: {
+    tone: "warning",
+    title: "No report was published for this run",
+    text: "The run finished, but the service has no published report for it.",
+  },
+  unreachable: {
+    tone: "error",
+    title: UNREACHABLE,
+    text: "Check that the Credit OS service is running, then check for the report again.",
+  },
+  failed: {
+    tone: "error",
+    title: "The report could not be loaded",
+    text: "Check for the report again.",
+  },
+} as const;
 
 export function RunProgress({ id, mode }: { id: string; mode: Mode }) {
   const [run, setRun] = useState<Run>();
-  const [error, setError] = useState("");
-  const [reportReady, setReportReady] = useState(false);
+  useEffect(() => {
+    document.title = `${run?.issuer_name || "Run progress"}${run?.issuer_name ? " run" : ""} — Credit OS`;
+  }, [run?.issuer_name]);
+  // Reading the run and reading its report fail apart, so one poll never clears the other's
+  // alert: an alert that is removed and inserted again is announced again.
+  const [problem, setProblem] = useState<Problem>();
+  const [report, setReport] = useState<ReportState>("pending");
+  const [notAssessable, setNotAssessable] = useState<string[]>([]);
+  // Counts of presses of "Try again" (the run) and "Check for report" (the report); each restarts the poll.
+  const [retries, setRetries] = useState(0);
+  const [rechecks, setRechecks] = useState(0);
   useEffect(() => {
     const controller = new AbortController();
     const { signal } = controller;
     let timer: ReturnType<typeof setTimeout> | undefined;
+    // Pressing "Check for report" asks once and is answered at once; only the first look waits.
+    let finishedAt: number | undefined = rechecks > 0 ? 0 : undefined;
     const cancelled = () => signal.aborted;
+    const waitOver = () => Date.now() - (finishedAt ?? Date.now()) >= REPORT_WAIT_MS;
     function schedule() {
       if (!cancelled())
         timer = setTimeout(() => {
           void poll();
-        }, 2000);
+        }, POLL_MS);
+    }
+    async function reportState(giveUp: boolean): Promise<ReportState> {
+      try {
+        const publication = await getReport(id, signal);
+        if (!cancelled())
+          setNotAssessable((current) => [
+            ...new Set([...current, ...(publication.not_assessable ?? [])]),
+          ]);
+        return "ready";
+      } catch (failure) {
+        if (isPendingReport(failure)) return giveUp ? "absent" : "pending";
+        return isUnreachable(failure) ? "unreachable" : "failed";
+      }
     }
     async function poll() {
       try {
         const next = await getRun(id, signal);
         if (cancelled()) return;
         setRun(next);
-        setError("");
+        setNotAssessable(
+          (next.module_outputs ?? [])
+            .filter((output) => output.assessment === "not-assessable")
+            .map((output) => output.module),
+        );
+        setProblem(undefined);
         if (next.status === "queued" || next.status === "running") {
           schedule();
         } else if (next.status === "finished") {
-          try {
-            await getReport(id, signal);
-            if (!cancelled()) setReportReady(true);
-          } catch (failure) {
-            if (cancelled()) return;
-            if (!isPendingReport(failure)) setError(errorText(failure));
-            schedule();
-          }
+          finishedAt ??= Date.now();
+          // Decided once per look: the same answer chooses the state and whether to look again.
+          const giveUp = waitOver();
+          const state = await reportState(giveUp);
+          if (cancelled()) return;
+          setReport(state);
+          if (state !== "ready" && state !== "absent" && !giveUp) schedule();
         }
       } catch (failure) {
         if (cancelled()) return;
-        setError(errorText(failure));
-        if (!(failure instanceof RequestError && failure.status === 404)) schedule();
+        const found = problemOf(failure);
+        setProblem(found);
+        if (found !== "missing") schedule();
       }
     }
     void poll();
@@ -76,30 +168,57 @@ export function RunProgress({ id, mode }: { id: string; mode: Mode }) {
       controller.abort();
       clearTimeout(timer);
     };
-  }, [id]);
+  }, [id, retries, rechecks]);
 
-  const restartable = run && ["failed", "capped", "rejected", "interrupted"].includes(run.status);
+  // The alert stays until the new answer arrives, so the button that was pressed keeps its place.
+  const tryAgain = () => {
+    setRetries((count) => count + 1);
+  };
+  const checkAgain = () => {
+    setRechecks((count) => count + 1);
+  };
+  const restartable = run && RESTARTABLE.includes(run.status);
   const live = run?.status === "queued" || run?.status === "running";
   const lines = run ? feedLines(run) : [];
+  const assessmentGaps =
+    run?.modules
+      .filter(
+        ([code, state]) =>
+          code !== "Report" &&
+          state === "done" &&
+          !notAssessable.includes(code) &&
+          !(run.module_outputs ?? []).some(
+            (output) => output.module === code && output.assessment !== null,
+          ),
+      )
+      .map(([code]) => moduleName(code)) ?? [];
+  const runProblem = problem && RUN_PROBLEMS[problem];
+  const reportProblem =
+    run?.status === "finished" && report !== "pending" && report !== "ready"
+      ? REPORT_PROBLEMS[report]
+      : undefined;
   return (
     <>
       <Breadcrumb href="/runs" root="Run activity">
         {run?.issuer_name || "Run"}
       </Breadcrumb>
       <PageHeader
-        title={run?.issuer_name || "Run activity"}
+        title={run?.issuer_name || "Run"}
         badges={
           run && (
             <>
               <span role="status">
-                <StatusBadge set="Run states" state={WORDS[run.status]} live={live} />
+                <StatusBadge set="Run states" state={WORDS[run.status]} />
               </span>
               <Badge color="brand">{pathwayName(run.pathway)}</Badge>
               {mode === "synthetic" && <Badge color="gray">Synthetic test</Badge>}
               {run.as_of && (
                 <Badge color="gray">
                   <span>
-                    As of <time dateTime={run.as_of}>{run.as_of}</time>
+                    As of{" "}
+                    <time className="tabular-nums" dateTime={run.as_of}>
+                      {asOfDate(run.as_of)}
+                    </time>
                   </span>
                 </Badge>
               )}
@@ -108,32 +227,87 @@ export function RunProgress({ id, mode }: { id: string; mode: Mode }) {
         }
         actions={
           <>
-            {reportReady && <Button href={`/report/${encodeURIComponent(id)}`}>Open report</Button>}
-            {(restartable || reportReady) && (
-              <Button color="secondary" href={`/start?from=${encodeURIComponent(id)}`}>
-                Start from this run
+            {report === "ready" && (
+              <Button href={`/report/${encodeURIComponent(id)}`}>Open report</Button>
+            )}
+            {(restartable || report === "ready" || report === "absent") && (
+              <Button
+                color="secondary"
+                href={`/start?from=${encodeURIComponent(id)}`}
+                aria-describedby="run-restart-note"
+              >
+                Use this run’s inputs
               </Button>
             )}
           </>
         }
       />
-      {error && (
+      {(restartable || report === "ready" || report === "absent") && (
+        <p id="run-restart-note" className="reading-copy mt-3 text-body text-text-secondary">
+          Review the inputs in a new draft. The new run has its own spending cap.
+        </p>
+      )}
+      {runProblem && (
         <div className="mt-6">
-          <ErrorNotice>{error}</ErrorNotice>
+          <Alert
+            tone={runProblem.tone}
+            title={runProblem.title}
+            action={
+              problem === "missing" ? (
+                <TextLink href="/runs">Back to Run activity</TextLink>
+              ) : (
+                <Button size="sm" color="secondary" onPress={tryAgain}>
+                  Try again
+                </Button>
+              )
+            }
+          >
+            {runProblem.text}
+          </Alert>
         </div>
       )}
       {run ? (
         <section aria-label="Run activity" className="mt-6 grid gap-6">
-          {run.reason && <ErrorNotice>{run.reason}</ErrorNotice>}
+          {run.reason && (
+            <Alert
+              tone={run.status === "capped" ? "warning" : "error"}
+              title="Why this run ended without a report"
+            >
+              <span className="wrap-anywhere">{serviceText(run.reason)}</span>
+            </Alert>
+          )}
+          {live && run.held_reason && (
+            <Alert tone="warning" title="Held by the service">
+              <span className="wrap-anywhere">{serviceText(run.held_reason)}</span>
+            </Alert>
+          )}
+          {run.status === "queued" && !run.held_reason && !run.reason && (
+            <p className="reading-copy text-body text-text-secondary">
+              Waiting for an available run slot.
+            </p>
+          )}
           {run.stalled && (
-            <p className="text-sm text-text-secondary">
+            <p className="reading-copy text-body text-text-secondary">
               No activity has been recorded in the last hour.
             </p>
           )}
-          {run.status === "finished" && !reportReady && (
-            <p role="status" className="text-sm text-text-secondary">
+          {run.status === "finished" && report === "pending" && (
+            <p role="status" className="reading-copy text-body text-text-secondary">
               Waiting for the report to become available…
             </p>
+          )}
+          {reportProblem && (
+            <Alert
+              tone={reportProblem.tone}
+              title={reportProblem.title}
+              action={
+                <Button size="sm" color="secondary" onPress={checkAgain}>
+                  Check for report
+                </Button>
+              }
+            >
+              {reportProblem.text}
+            </Alert>
           )}
           <Summary
             spendCaption="Cap usage"
@@ -144,23 +318,20 @@ export function RunProgress({ id, mode }: { id: string; mode: Mode }) {
             }}
           />
           <div className="grid min-w-0 items-start gap-6 xl:grid-cols-2">
-            <Card title="Modules">
-              <ModuleSteps
-                live={live}
-                steps={run.modules.map(([code, state]) => ({
-                  kind: "module",
-                  name: moduleName(code),
-                  state: moduleWord(state, live),
-                  detail: null,
-                }))}
-              />
+            <Card title="Modules and report delivery">
+              <ModuleSteps live={live} steps={moduleSteps(run, live, notAssessable)} />
+              {assessmentGaps.length > 0 && (
+                <p className="mt-4 text-sm text-text-secondary">
+                  No assessment status is recorded for {assessmentGaps.join(", ")}.
+                </p>
+              )}
             </Card>
             <Card title="Activity">
               {run.events === null && (
                 <p className="pb-3 text-sm text-text-secondary">The activity log is unavailable.</p>
               )}
               {lines.length > 0 ? (
-                <Feed lines={lines} live={live} />
+                <Feed lines={lines} />
               ) : (
                 run.events !== null && (
                   <p className="text-sm text-text-secondary">No activity recorded yet.</p>
@@ -170,10 +341,17 @@ export function RunProgress({ id, mode }: { id: string; mode: Mode }) {
           </div>
         </section>
       ) : (
-        !error && (
-          <p role="status" className="mt-6 text-text-secondary">
-            Loading run activity…
-          </p>
+        !problem && (
+          <div role="status" aria-label="Loading run progress" className="mt-6 grid gap-6">
+            <Skeleton lines={2} />
+            <div className="grid gap-6 xl:grid-cols-2">
+              {[0, 1].map((key) => (
+                <Card key={key}>
+                  <Skeleton lines={7} />
+                </Card>
+              ))}
+            </div>
+          </div>
         )
       )}
     </>

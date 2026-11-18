@@ -84,7 +84,7 @@ def test_reservation_equals_exact_fraction(i: int, w: int, o: int, n_in: int, n_
     assert Fraction(got) == expected
 
 
-def test_table_is_the_seven_configs_dated() -> None:
+def test_table_covers_current_and_historical_configs() -> None:
     assert set(PRICES) == set(CONFIG_PROVIDERS)
     assert set(PRICES) == {
         "sol-medium",
@@ -93,11 +93,14 @@ def test_table_is_the_seven_configs_dated() -> None:
         "opus-high",
         "deepseek-max",
         "copilot-sol-medium",
+        "copilot-sol-high",
         "copilot-opus-medium",
+        "copilot-opus-high",
+        "copilot-luna-xhigh",
     }
     assert PRICES["opus-high"] is PRICES["opus-medium"]
     assert pricing_module.PRICES_AS_OF.isoformat() == "2026-10-31"
-    assert pricing_module.COPILOT_PRICES_AS_OF.isoformat() == "2026-11-06"
+    assert pricing_module.COPILOT_PRICES_AS_OF.isoformat() == "2026-11-18"
     sol = PRICES["sol-medium"]
     key = _key()["sol"]
     rates = key["usd_per_million"]
@@ -159,13 +162,20 @@ def test_copilot_table_rates() -> None:
         Decimal(20),
     )
     assert sol.reservation_output_tokens == opus.reservation_output_tokens == 128_000
-    assert COPILOT_PRICES_AS_OF == date(2026, 11, 6)
+    assert COPILOT_PRICES_AS_OF == date(2026, 11, 18)
 
 
 def test_copilot_hold_prices_output_at_the_model_maximum() -> None:
     held = request_reservation_usd(price_of("copilot-opus-medium"), 1000, 32_000)
     assert held == request_reservation_usd(price_of("copilot-opus-medium"), 1000, 128_000)
     assert request_reservation_usd(price_of("opus-medium"), 1000, 32_000) < held
+
+
+@pytest.mark.parametrize("config", ["copilot-opus-medium", "copilot-opus-high"])
+def test_copilot_opus_handoff_reserves_one_input_token_per_serialized_byte(config: str) -> None:
+    prompt_bytes = 200_000
+    expected = ((prompt_bytes + 4096) * 8 + 128_000 * 20) * Decimal("0.000001")
+    assert pricing_module.handoff_reservation_usd(config, prompt_bytes, 32_000) == expected
 
 
 def test_copilot_live_charge_is_billed_only() -> None:
@@ -370,10 +380,16 @@ def test_anthropic_cache_prices_follow_the_docs_multipliers() -> None:
         output_tokens=100,
     )
     got = price_usage("opus-medium", five).usd
-    assert got == (
-        500 * opus.input + 2000 * D("1.25") * opus.input + 1000 * D("0.05") * opus.input
-        + 100 * opus.output
-    ) / 10**6
+    assert (
+        got
+        == (
+            500 * opus.input
+            + 2000 * D("1.25") * opus.input
+            + 1000 * D("0.05") * opus.input
+            + 100 * opus.output
+        )
+        / 10**6
+    )
     hour = Usage(
         input_tokens=500,
         cached_read_tokens=1000,
@@ -383,7 +399,22 @@ def test_anthropic_cache_prices_follow_the_docs_multipliers() -> None:
         output_tokens=100,
     )
     got = price_usage("opus-medium", hour).usd
-    assert got == (
-        500 * opus.input + 300 * 2 * opus.input + 1000 * D("0.05") * opus.input
-        + 100 * opus.output
-    ) / 10**6
+    assert (
+        got
+        == (
+            500 * opus.input
+            + 300 * 2 * opus.input
+            + 1000 * D("0.05") * opus.input
+            + 100 * opus.output
+        )
+        / 10**6
+    )
+
+
+def test_luna_reserves_the_long_context_and_uncapped_runtime_output() -> None:
+    price = price_of("copilot-luna-xhigh")
+    assert request_reservation_usd(price, 60_000, 32_000) == Decimal("0.3585")
+    usage = Usage(input_tokens=70_000, output_tokens=14_000)
+    assert price_usage("copilot-luna-xhigh", usage).cost_status == "unknown"
+    actual = price_usage("copilot-luna-xhigh", usage, Decimal("0.014"))
+    assert (actual.usd, actual.cost_status) == (Decimal("0.014"), "billed")

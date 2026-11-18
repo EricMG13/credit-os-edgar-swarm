@@ -1,3 +1,5 @@
+import { containsReference, readerText } from "../publishedReport";
+
 export function record(value: unknown): Record<string, unknown> {
   return value !== null && typeof value === "object" && !Array.isArray(value)
     ? (value as Record<string, unknown>)
@@ -58,10 +60,66 @@ export function publishedTables(sections: unknown) {
   return tables;
 }
 
-export function amount(cell: string): number | null {
-  if (!/^-?\d[\d,]*(?:\.\d+)?$/.test(cell)) return null;
-  const value = Number(cell.replaceAll(",", ""));
+// A comma groups digits only in threes ("1,250") or, in the Indian lakh and crore grouping, in a
+// last three and pairs before it ("21,00,000"); one other comma between digits is a decimal comma
+// ("3,75"); any other placement is not a number.
+const COMMA_GROUPS = /^-?(?:[1-9]\d{0,2}(?:,\d{3})+|[1-9]\d?(?:,\d{2})+,\d{3})(?:\.\d+)?$/;
+const DECIMAL_COMMA = /^-?\d+,\d+$/;
+const PLAIN_NUMBER = /^-?\d+(?:\.\d+)?$/;
+
+function numberText(cell: string, unit?: unknown): string | null {
+  let text = cell.trim().replaceAll("−", "-");
+  if (/^\([^()]+\)$/.test(text)) {
+    const inner = text.slice(1, -1);
+    if (/^[+-]/.test(inner)) return null;
+    text = `-${inner}`;
+  }
+  const suffix = /\s*(%|x|m|bn|millions?|billions?)$/i.exec(text);
+  if (suffix) {
+    if (typeof unit !== "string") return null;
+    const family = (value: string) => {
+      if (value === "%" || value === "x") return value;
+      if (/(?:bn|billions?)$/i.test(value)) return "bn";
+      return /(?:m|millions?)$/i.test(value) ? "m" : null;
+    };
+    if (family(suffix[1] ?? "") !== family(unit.trim())) return null;
+    text = text.slice(0, suffix.index);
+  }
+  if (/^-?\d{1,3}(?:[ \u00a0\u202f]\d{3})+(?:[.,]\d+)?$/.test(text))
+    text = text.replace(/[ \u00a0\u202f]/g, "");
+  return text;
+}
+
+function readAmount(cell: string, decimalComma: boolean, unit?: unknown): number | null {
+  let text = numberText(cell, unit);
+  if (text === null) return null;
+  if (DECIMAL_COMMA.test(text) && (decimalComma || !COMMA_GROUPS.test(text)))
+    text = text.replace(",", ".");
+  else if (COMMA_GROUPS.test(text)) text = text.replaceAll(",", "");
+  if (!PLAIN_NUMBER.test(text)) return null;
+  const value = Number(text);
   return Number.isFinite(value) ? value : null;
+}
+
+/** A cell's number with no column to ask: one comma and three digits ("2,800") is a thousands group. */
+export function amount(cell: string, unit?: unknown): number | null {
+  return readAmount(cell, false, unit);
+}
+
+// Only a decimal comma reads "3,75"; only English grouping reads "1,250,000" or "2,800.5".
+const onlyDecimalComma = (cell: string) =>
+  DECIMAL_COMMA.test(cell) && !COMMA_GROUPS.test(cell) && !/^-?0,000$/.test(cell);
+const onlyGrouping = (cell: string) => COMMA_GROUPS.test(cell) && !DECIMAL_COMMA.test(cell);
+
+/**
+ * A cell's number read with `scope`, the cells that state the same measure in the same unit. When a
+ * cell of the scope can only be a decimal comma ("3,75") and none can only be English grouping, one
+ * comma and three digits ("2,800") is a decimal comma too, 2.8. Otherwise, a scope written only in
+ * three-decimal commas included, the cell is read as `amount` reads it.
+ */
+export function cellAmount(cell: string, scope: readonly string[], unit?: unknown): number | null {
+  const texts = scope.map((value) => numberText(value, unit) ?? "");
+  return readAmount(cell, texts.some(onlyDecimalComma) && !texts.some(onlyGrouping), unit);
 }
 
 export function sharePosition(cell: string) {
@@ -148,12 +206,27 @@ export function ticks(
   });
 }
 
+const BASIS_COLUMN = /^Basis and limitation$/i;
+const DRAWER_COLUMN = /^(?:Source|Evidence)$/i;
+
+/**
+ * The Table form of a published chart table. The limitation text stays beside the figures, its module
+ * codes drawn as module names; only the columns of source references go to the row's trace drawer,
+ * and a limitation that itself names a source, a gap id or a run code is left to the drawer too (as
+ * `chartDrawsVerbatim` does for the prose).
+ */
 export function chartTable(table: SourceTable, columns = table.headers.map((_, index) => index)) {
-  const visible = table.evidenceInDrawer
-    ? columns.filter(
-        (index) => !/^(?:Source|Evidence|Basis and limitation)$/i.test(table.headers[index] ?? ""),
-      )
+  const inDrawer = table.evidenceInDrawer === true;
+  const visible = inDrawer
+    ? columns.filter((index) => !DRAWER_COLUMN.test(table.headers[index] ?? ""))
     : columns;
+  const cell = (row: string[], column: number) => {
+    const text = row[column] ?? "";
+    if (!inDrawer || !BASIS_COLUMN.test(table.headers[column] ?? "")) return text || null;
+    return containsReference(text)
+      ? "Qualification recorded in Evidence."
+      : readerText(text) || null;
+  };
   return {
     head: visible.map((index) => table.headers[index] ?? ""),
     endHeading: "Source",
@@ -162,7 +235,7 @@ export function chartTable(table: SourceTable, columns = table.headers.map((_, i
       const line = table.rowLines?.[index];
       return {
         label,
-        cells: visible.slice(1).map((column) => row[column] || null),
+        cells: visible.slice(1).map((column) => cell(row, column)),
         end: line === undefined ? undefined : table.rowSource?.(line, label),
       };
     }),

@@ -1,0 +1,1830 @@
+{
+  "sourceCommit": "a987af9b9ca5072d28f2e1f9e1dc5269c6c1858f",
+  "scope": "historical source evidence, not current unresolved results",
+  "entries": [
+    {
+      "path": "docs/COPILOT.md",
+      "startLine": 70,
+      "endLine": 78,
+      "text": "## Not verified\n\n- The pinned model ids `gpt-6.1-sol` and `claude-opus-5.5` on a real seat.\n- `numToolCalls` and the event order on a real seat.\n- `copilotUsage.totalNanoAiu` is present, and 1 AI unit = $0.01 holds.\n- `max_output_tokens` is not enforceable on the runtime (holds cover it; the output is not capped).\n- The Windows runtime path and whether the allowlisted environment is enough there.\n- `stop()` and `force_stop()` timing on a real runtime.\n- The runtime dispatches a turn's custom tool calls concurrently (the seat check now exercises two calls in one turn)."
+    },
+    {
+      "path": "VERIFICATION.md",
+      "startLine": 50,
+      "endLine": 50,
+      "text": "- Not verified: fresh independent primary/adversarial final verdicts, final combined branch and live cases."
+    },
+    {
+      "path": "VERIFICATION.md",
+      "startLine": 62,
+      "endLine": 62,
+      "text": "- Not verified: `pytest -m browser` (Chrome cannot start in this sandbox; `test_run_start_page.py` timed out), the full suite, a live run, Teams cards with a stopped module (they count done modules only)."
+    },
+    {
+      "path": "VERIFICATION.md",
+      "startLine": 71,
+      "endLine": 71,
+      "text": "- Not verified: anything fetched from a live Yahoo host (consent redirects, script-drawn pages, whether pages state no date); a mechanical check of the Yahoo citation rules (none exists; follow-up for the owner); a live CP-DR run; the full suite (weekly CI)."
+    },
+    {
+      "path": "VERIFICATION.md",
+      "startLine": 79,
+      "endLine": 79,
+      "text": "- Not verified: the whole Python suite and the web suite; Windows or a case-distinct file system; a real restart after repairing a file; a real launcher process; hundreds of bad files. Left as is: the page of the run whose own record is unreadable shows a generic failure and logs a traceback each poll. Predates the change (for the owner): `/library/` is served without admission; the comparison module can choose an unaccepted run folder; the folder lock leaks if start-up raises; a stray readable record is tracked under its id; `_load` does not check a record's id against its file name."
+    },
+    {
+      "path": "VERIFICATION.md",
+      "startLine": 88,
+      "endLine": 88,
+      "text": "- Not verified: Windows (paths tested as strings); an unquoted path with a space in a folder name, an apostrophe path in single quotes and a path after `file://`, `<`, `{`, a backtick or curly quotes still show (by ruling); a page with both an unreadable record and a listed run; `/sweep refactoring discover`, `confidence-review`, `rewrite-tournament` and the browser proof were not run; with one bad record file admission still fails library replies and the scheduler refuses to start (predates this PR; PR #39 addresses it)."
+    },
+    {
+      "path": "VERIFICATION.md",
+      "startLine": 97,
+      "endLine": 97,
+      "text": "- Not verified: Windows (path cases are simulated strings); `/sweep refactoring discover`, `confidence-review`, `rewrite-tournament` and the browser proof were not run; a path outside the service root, a file name under it, the bare root with nothing after it and a root in a different drive-letter case are still sent in a reason; a hand-edited record with a non-text reason or end time fails the whole list."
+    },
+    {
+      "path": "VERIFICATION.md",
+      "startLine": 107,
+      "endLine": 110,
+      "text": "- Not verified:\n  - `proof:connected`: it needs branded Google Chrome and Microsoft Edge; this container has Chrome for Testing only (`/opt/google/chrome/chrome` links to it) and no Edge.\n  - `pytest -m browser tests/test_run_start_page.py`: in this container the run did not finish: its first 12 tests failed at about two minutes each, and the first, run alone, failed because its headless Chrome `--dump-dom` call against the service hung to the 120 s timeout (Chrome renders a trivial page in 0.6 s). That file drives the older start page (`docs/templates/context-form.html`), which this branch does not change.\n  - Other pathways in a browser; a live or paid run; the full weekly suite."
+    },
+    {
+      "path": "VERIFICATION.md",
+      "startLine": 120,
+      "endLine": 120,
+      "text": "- Not verified: the forecast page of the proof run (limits shown) was not read; the before-fix failure was not re-run in this worktree."
+    },
+    {
+      "path": "VERIFICATION.md",
+      "startLine": 206,
+      "endLine": 208,
+      "text": "- Not verified: library and report views on live output; CP-3D on dated RV Book quotes; the cell\n  separator on a live page; Copilot's billing of summaries; other issuers; Windows; the full suite;\n  on this branch, the browser-marked tests, the connected proof and the web gates on Node 24."
+    },
+    {
+      "path": "VERIFICATION.md",
+      "startLine": 234,
+      "endLine": 237,
+      "text": "- Not verified:\n  - no live or paid run, and no real non-USD issuer, so whether models follow the new text is unknown;\n  - CP-1 computing a total from T4.18;\n  - the full weekly suite."
+    },
+    {
+      "path": "VERIFICATION.md",
+      "startLine": 249,
+      "endLine": 249,
+      "text": "- Not verified: no real model has read this text; no non-USD run (live or paid); the full weekly suite. Oldest entry trimmed."
+    },
+    {
+      "path": "VERIFICATION.md",
+      "startLine": 258,
+      "endLine": 258,
+      "text": "- Not verified: `proof:connected` (exit 1: it needs branded Google Chrome and Microsoft Edge, and this container has Chromium only; it stops at the brand check before any report page); a real non-USD run's pages. Oldest entry trimmed."
+    },
+    {
+      "path": "VERIFICATION.md",
+      "startLine": 268,
+      "endLine": 268,
+      "text": "- Not verified: an Earnings Update run with CP-1A (live or paid); the Company profile section's text in a delivered Earnings Update report; the Changes page against an earlier run without CP-1A (read from `changes.py`, not run)."
+    },
+    {
+      "path": "VERIFICATION.md",
+      "startLine": 279,
+      "endLine": 279,
+      "text": "- Not verified: a live or paid run from the page; focus, scroll and section opening for a routed refusal in a real browser by hand (jsdom tests and the browser proof only); Windows; the full Python suite."
+    },
+    {
+      "path": "VERIFICATION.md",
+      "startLine": 288,
+      "endLine": 288,
+      "text": "- Not verified: the page in a real browser by hand; React start page (unchanged); CI (deselects browser tests)."
+    },
+    {
+      "path": "VERIFICATION.md",
+      "startLine": 297,
+      "endLine": 297,
+      "text": "- Not verified: Teams itself, light or dark, desktop or mobile."
+    },
+    {
+      "path": "VERIFICATION.md",
+      "startLine": 307,
+      "endLine": 307,
+      "text": "- Not verified: a post to a real Teams channel, and so how Teams draws `Icon`, `Badge`, `ProgressBar`, `icon:Library` and the Fluent icon names; `tests/test_run_start_page.py` (browser), edited to type a valid name but not run: headless Chrome's `--dump-dom` hangs in this container even on a one-line local file; the full `web` gates and the full Python suite; Windows."
+    },
+    {
+      "path": "VERIFICATION.md",
+      "startLine": 323,
+      "endLine": 323,
+      "text": "- Not verified: a real CP-1 handoff or a paid run; the Overview tiles and coloured Changes cards in a browser (tests only); the band with a real description in a browser; colour contrast and screen-reader reading; `confidence-review`, `rewrite-tournament`, `/sweep refactoring discover` and the whole-branch review; Windows."
+    },
+    {
+      "path": "VERIFICATION.md",
+      "startLine": 334,
+      "endLine": 334,
+      "text": "- Not verified: the band with a real description and rating tiles in a browser (the synthetic run shows the gap state only); a real CP-1A handoff carrying the `company_description` register; entered ratings through a published `data.js` end to end (path read, not run); the older issuer-library page with a non-empty `ratings` list; `confidence-review`, `rewrite-tournament`, `/sweep refactoring discover` and the whole-branch review were not run; Windows."
+    },
+    {
+      "path": "VERIFICATION.md",
+      "startLine": 340,
+      "endLine": 340,
+      "text": "- Not verified: Windows; the proof ran once; the proof drives no row control of the typed-row editor (#20, #21) and the pages and controls its script does not open; the reader's PR 3 and the reports-formatting work are not yet on `main`, so the proof must run again after they land."
+    },
+    {
+      "path": "VERIFICATION.md",
+      "startLine": 352,
+      "endLine": 352,
+      "text": "- Not verified: Edge and Windows; a screen reader (whether the message is read once or twice; the announcements); Safari and Firefox; development StrictMode focus order (the built bundle is not affected); a paid run against a live provider; the earnings and new-issue pathways in the browser proof; the `/impeccable critique` re-run; #30 was retargeted to `main` after #31 merged; the merged tree equals #30's head tree, on which CI's two checks had passed; nothing was re-run on `main`."
+    },
+    {
+      "path": "VERIFICATION.md",
+      "startLine": 359,
+      "endLine": 359,
+      "text": "- Not verified: the audit has not been run; the briefs are untested as a workflow; the commands the briefs name were not executed; ruling R3 (which findings are repaired or parked) is the author's reading, not confirmed by the owner; CI's two checks passed on the PR head before merge."
+    },
+    {
+      "path": "VERIFICATION.md",
+      "startLine": 366,
+      "endLine": 366,
+      "text": "- Not verified: not run at the load of 170–210 where up to 4 of the 14 tests failed, so a slower machine could still pass 5 s; why the first render takes over a second was not profiled; CI's two checks passed on the PR head before merge."
+    },
+    {
+      "path": "VERIFICATION.md",
+      "startLine": 376,
+      "endLine": 376,
+      "text": "- Not verified: any page in a browser; a retained run (literal notes and fixtures only); a stored note that begins with none of the three phrases, beyond the empty and referenced cases; Windows; CI's two checks passed on the PR head before merge; nothing was re-run on the merged tree."
+    },
+    {
+      "path": "VERIFICATION.md",
+      "startLine": 386,
+      "endLine": 386,
+      "text": "- Not verified: no real published run checked, earlier-format included; a summary limitation that reads \"None\" would be listed as a limitation; the full suite on the head commit; CI's two checks passed on the PR head before merge; nothing was re-run on the merged tree."
+    },
+    {
+      "path": "VERIFICATION.md",
+      "startLine": 392,
+      "endLine": 392,
+      "text": "- Not verified: Windows; the proof drives no row control of the typed-row editor (#20, #21); the proof ran once."
+    },
+    {
+      "path": "VERIFICATION.md",
+      "startLine": 402,
+      "endLine": 402,
+      "text": "- Not verified: Edge and Windows; real keyboard and screen-reader use; a live request to the service (the service's reader was called directly by the review probes); paid mode against a live service; the Chrome proof drives no row control; #21's branch was updated with `main` (head `737d0758`) before merge and only CI ran on that head."
+    },
+    {
+      "path": "VERIFICATION.md",
+      "startLine": 412,
+      "endLine": 412,
+      "text": "- Not verified: any page in a browser; the retained runs (fixtures and literal cases only); a table whose cell is only a module code beside a name column on a findings page; the whole-branch adversarial pass, `confidence-review` and `rewrite-tournament`; Windows. `proof:connected` was not run on #23's own head; it ran on merged `main` at `ab661d8d` (entry above)."
+    },
+    {
+      "path": "VERIFICATION.md",
+      "startLine": 422,
+      "endLine": 422,
+      "text": "- Not verified: `/sweep refactoring discover`, `confidence-review`, `rewrite-tournament`, the browser proof and the fidelity check were not run; no live CP-8 handoff parsed end to end (fixtures are hand-built from the method); a passage drawn as a map or events table; the fallback generic table still draws the ledger's ref columns when a column is missing or a cell holds a reference; `ReportLibrary.wayfinding.test.tsx` (untouched) failed under heavy machine load during review and passed at normal load."
+    },
+    {
+      "path": "VERIFICATION.md",
+      "startLine": 432,
+      "endLine": 432,
+      "text": "- Not verified: a live or paid launch (no provider called); a browser render; the three web tests were not seen failing before the component existed (covered by the mutants); a ruling file or pause changing between summary and launch; Windows; the gates and CI ran on the branch head, not re-run on the merged tree."
+    },
+    {
+      "path": "VERIFICATION.md",
+      "startLine": 442,
+      "endLine": 442,
+      "text": "- Not verified: the layout at 375px and 44px targets (read from classes only); the look in a browser or grayscale; a screen reader; the full suite; `proof:connected`; the gates and CI ran on the branch head, not re-run on the merged tree."
+    },
+    {
+      "path": "VERIFICATION.md",
+      "startLine": 453,
+      "endLine": 453,
+      "text": "- Not verified: the reader in a browser (no fidelity check of the plain names, CP-1 lead or confidence tile on a retained run); `proof:connected`; a screen reader; Windows; Python gates (no Python changed); a mutation run. No paid execution."
+    },
+    {
+      "path": "VERIFICATION.md",
+      "startLine": 463,
+      "endLine": 463,
+      "text": "- Not verified: the gates and Chrome proof on the merged tree and on the last two fixes (`2056ece7`, `6805f268`); the review in Chrome after those two fixes (viewed at desktop and mobile widths before them); Edge and Windows; keyboard and screen-reader behaviour in a real browser (jsdom only); paid mode against the live service (mock fetch); behaviour against the live service for #11's grouping. No paid execution."
+    },
+    {
+      "path": "VERIFICATION.md",
+      "startLine": 471,
+      "endLine": 471,
+      "text": "- Not verified: that the hit-area check fails on a build without the outset (reasoned from the 28px box, not run); Windows; the full suite on this branch (script-only change)."
+    },
+    {
+      "path": "VERIFICATION.md",
+      "startLine": 484,
+      "endLine": 484,
+      "text": "- Not verified: a real screen reader; real touch devices; Windows; `proof:connected` (run here, 0 of 2: Chrome timed out waiting for the synthetic run to finish using the main checkout's Python environment, Edge is not installed, so the edited calendar check never executed; not tried on `main`); Scenario and User reminder events in a browser (answer key only); a mutation run beyond the reviewer's 12 hand mutants. No paid execution."
+    },
+    {
+      "path": "VERIFICATION.md",
+      "startLine": 495,
+      "endLine": 495,
+      "text": "- Not verified: a screen reader; real touch devices; Windows and CI; the browser proof script (`proof:connected`); the CP-2E coded-section fix in a browser (its handoffs are fixtures, not a retained run); the Changes page beyond its shared code path; a mutation run. No paid execution."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/0-baseline/api-map.md",
+      "startLine": 91,
+      "endLine": 99,
+      "text": "Not verified: no synthetic run was completed, so every per-run route was probed only with an unknown id\n(404 from the route itself), not with real data; `POST …/submit` was not sent (R4); `react_frontend`\nin live mode and `react_frontend.preview` were not started (their routes are read from the code; they\nshare the handler); HEAD and other methods were not probed; links drawn only from data\n(`/connected/sources/…`, `/connected/artifacts/…/<file>`, `/library/downloads/…`) were not followed.\nThe run root had to be `/tmp/claude-0/s0-apimap` instead of the assigned scratchpad folder, because the\nscheduler refuses a root longer than 80 characters (`src/deploy_workflow/inbox/layout.py:61`) and the\nassigned path is 102; a symlink did not help (the path is resolved). The service was stopped after the\nprobe."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/0-baseline/baseline.md",
+      "startLine": 146,
+      "endLine": 151,
+      "text": "Not verified: the gate's own browser path (`google-chrome`, the full Chromium 1243) completing a\npage check, because it hangs in this container; the page checks passed only through the\nheadless-shell diagnostic (row 8b). Also not verified: a single uninterrupted run of the fast Python\nsuite (it was completed in chunks); `tools/quality_gate.py` on any change before main's last merge;\nfallow (not available); the slow, live and browser pytest markers (excluded by the brief); Process\nsteps 3 to 9 (other workers)."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/0-baseline/offline.md",
+      "startLine": 87,
+      "endLine": 87,
+      "text": "Not verified: Chrome and Edge (only Playwright's Chromium headless shell build 1243); the regular `python -m react_frontend` mode and a live run (R4); the Teams path with its variables set; the release ZIP's contents (checked in stage 7); controls inside 31 connected disclosures that timed out and second-level dialogs."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/0-baseline/report.md",
+      "startLine": 47,
+      "endLine": 47,
+      "text": "Not verified: Chrome and Edge on Windows (only Playwright's Chromium build 1243 here); `test:file:gates` with its default browser on a machine where that browser works; one uninterrupted run of the fast Python suite; the slow, live and browser test markers; fallow (not installed; knip and jscpd stand in); the regular `python -m react_frontend` mode and any live run (R4); the Teams path with its variables set; the release ZIP's contents (stage 7); 31 connected disclosures that timed out on click and every second-level dialog; hover-only, keyboard-only and drag-and-drop reveals; whether the `/library/downloads/…` files the connected report links are present."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/0-baseline/sections.md",
+      "startLine": 114,
+      "endLine": 116,
+      "text": "Not verified: coverage was checked by a script over the file list (283 files, each matched exactly once); test files were matched to sections by convention only, not one by one; whether each\nstage-2 agent can audit a section whose files are drawn in the other surface (the cross-surface list\nabove) was not tried; nothing was rendered for this table."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/0-baseline/surface-map.md",
+      "startLine": 75,
+      "endLine": 80,
+      "text": "Not verified: the ZIP was not built (no `package_react_windows.py` run: it runs `npm ci`/`npm run build`,\nwhich this worker must not run); the ZIP contents above are read from the code, not listed from a real\narchive. The static app was not opened in a browser, so what each static page shows with the empty\n`data.js` is inferred from the code, not seen. `python -m react_frontend` (live) and\n`react_frontend.preview` were not started; `python -m deploy_workflow.run_start` was not started.\n`Run-React-Proof.cmd` was not run (Windows-only)."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/1-rubrics/design-rubric.md",
+      "startLine": 1371,
+      "endLine": 1371,
+      "text": "Not verified: no outside page was opened in full: every outside source (the 20 numbered entries above) was read from WebSearch result summaries only, because WebFetch failed for adriankrebs.ch, www.thefountaininstitute.com, www.w3.org and web.dev (outside the session's allowed network); the WCAG 2.2 level of 2.4.13 differs between those summaries, so check the W3C Recommendation before citing a level; no rule was run against a rendered screen or the built files, so every code signal (class names, file names, function names, line numbers in `theme.css`, `index.css`, `ReportContent.tsx`, `activity.css`, `IdentityBand.tsx`, `signal.ts`) is from a short read of the repository, not a scan; the design system itself says no component was opened from disk under the CSP at version 0.8, the layout was not checked at narrow widths, and the Untitled UI licence and paid tier were not read; \"no table ids\" (D-13 part 4) is recorded by the design system as \"nowhere yet\" and is taken here as an owner rule from the brief; the font `src:` URL form in `theme.css` (`/fonts/...`) was not tested under `file:`; \"badges on everything\" has no outside source; WCAG 2.2.2 pause-or-stop for the live halo is an interpretation not ruled by the owner; the ruling's amendments were read in full on the second pass (the first pass missed them), and D-13, D-31 and D-45 to D-48 follow their wording, not a rendered check of the code that implements them."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/1-rubrics/harmony-report.md",
+      "startLine": 194,
+      "endLine": 208,
+      "text": "Not verified: no screen was opened, and no page or component was compared with any row (that is stage 2).\nComponent names in rows are those the crosswalk, coverage document and sections table give; whether each\nfile draws what the row says was not read, apart from locating the run-start step of each control in\n`StartRun.tsx` and the static `run/start/` files. The rulings were read in full except `2026-11-13-cpdr-web-lookup.md` (read to line 140 and by search) and `2026-11-15-method-script-checks.md`\n(read by headings and search; per-module check detail was not mapped to a screen); `METHODOLOGY-REVIEW.md`\nwas read for its selection sections and appendix table, not line by line. The live-test rulings\n(`2026-11-11-cpdr-web-search-live-test`, `reader-format-live-test`, the 11-12 proof-run records,\n`2026-11-13-tdg-*`, `2026-11-16-tdg-subset-copilot-sol`) were read and produce no screen rule.\n`docs/visualisations/catalogue.csv`, `docs/design/component-map.md` and decision 0003 were not loaded\n(not declared inputs), so the Overview key-chart list and some component names are unconfirmed. Module\nlists of Relative Value, Covenant & Refinancing, Distressed & Restructuring and Portfolio Decision come from\n`web/src/pages/connected/api.ts`, not from a ruling. Whether the static app's data fixture or the connected\nservice shows each `not shown` item absent was not tested. The 91 visualisation-map rows were taken from the\nfile as written, including its gating words, without checking them against\n`docs/visualisations/catalogue.csv`."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/2-sections/C1/report.md",
+      "startLine": 83,
+      "endLine": 83,
+      "text": "Not verified: a Report history with two or more runs, 'Earlier format' and 'Earlier methods' labels and the CP-8 comparison (proof.serve refuses a second run of an issuer: 'synthetic proof requires a first Credit Snapshot run'); a capped, rejected or interrupted run, a blocked module's 'Not assessable' on Run activity and a 'Module draft rejected' event (no such data in the synthetic proof, so C1-028 rests on the code); queued, stalled, held and unreadable Run activity states and the 37-run ended list with live data (reached only with answers supplied in the browser); live mode (`python -m react_frontend`), the read-only preview and real spend figures (the synthetic spend is USD 0.00); a library with sectors, many issuers or adjusted-EBITDA leverage (CM-034 judged from the code); whether a synthetic or replayed run is unlisted in the live library (CM-033: the proof's completion record says live-provider); screen-reader output (judged from the accessibility tree and DOM, no assistive technology was run); real phones, text zoom, dark or forced-colours modes and print; the 11 px sideways scroll of the library cards at 390 px with long names (scrollWidth 401, element not traced); `/start?from=<id>` prefill (C2); the Teams webhook and `--signal-url` server code (outside C1's files); the report body of every tab (C3 to C5); the shell beyond how C1 uses it (S1 and X1); the impeccable critique itself (skill absent, rubric applied by hand)."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/2-sections/C2/report.md",
+      "startLine": 72,
+      "endLine": 72,
+      "text": "Not verified: behaviour against a live service (including the SEC contact-string sentence, which appeared only because the variable is unset here, and the live default `case_kind`); Safari, Firefox, Edge and headed Chrome; screen-reader output (live regions were read from the DOM, not heard); real pointer drag-and-drop (the drop was a synthetic DataTransfer event); 50 or more documents and a file exactly at 50 MB; the Teams card path; the short-snapshot fallback of `?from=`; a second analyst using the same service at once (C2-008 was shown for one)."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/2-sections/C3/report.md",
+      "startLine": 109,
+      "endLine": 109,
+      "text": "Not verified: a real CP-8 comparison pack and the server's pack builder (the synthetic launcher refuses a run with a prior run; the Changes page was driven by rewritten snapshots); a real Earnings Update, short-snapshot, Model or blocked-module run; the Overview and module pages for any issuer other than the synthetic Northbridge case (so whether the real CP-1 table always reaches the MetricGrid path is read from code, not from a real run); the Report history (`#history`), Forecast, Evidence and Issuer calendar tabs (C1, C4, C5); screen-reader output (no assistive technology was run; names and landmarks come from the accessibility tree and axe-core); Chrome and Edge (only the Playwright Chromium headless shell); keyboard use of the trace controls in the Table forms (mouse only for those 76); 86 content-matrix rows whose content the canned handoffs lack (marked \"not exercised\" in `harmony.csv`); dark theme and forced colours; the impeccable critique (skill absent)."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/2-sections/C4/report.md",
+      "startLine": 72,
+      "endLine": 72,
+      "text": "Not verified: a second run of the same issuer, so Forecast and Calendar with an earlier run (CP-8 comparison, cross-run isolation of models and events) were not exercised, because proof.serve refuses it ('synthetic proof requires a first Credit Snapshot run'); live-run content (real driver registers, real Basis and limitation text, a non-USD issuer, an Upside or second-grid case, T2H.7 and T2H.8 timing tables, the 'machine input is set to zero' basis note) since the canned handoffs carry none of it, so those paths were reached only by rewriting the JSON the service returns, never from a producer; the Lite pathway and a no-forecast run beyond the intercepted no-model state; the CP-1C, CP-2H, CP-3D and CP-4C visuals (no output in the canned run; ten harmony rows marked not exercised); EdgeMap.tsx, PortfolioLimits.tsx and the unit tests were not read; the dark theme, print and forced-colours (the app has none declared); screen-reader announcement (no assistive technology was run: names, roles and tab order were read from the DOM); contrast beyond a computed text check on five pages (one false positive, none real); whether the build already normalises U+2212 minus signs before the chart tables reach the page (C4-027); whether CP-2G handoffs in a live run write the base-period, base-interest and zero-input limitations the UI branches match (C4-033); the impeccable critique (skill not available, R7); no real Windows or Edge run."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/2-sections/C5/report.md",
+      "startLine": 41,
+      "endLine": 41,
+      "text": "Not verified: behaviour with live provider data (real handoffs, real gap and calculation registers, page excerpts and source page links, a CP-8 comparison and regression ledger, modules CP-1B/1C/1D/3D, web-research sources); the right severity of C5-001 and C5-005 under the owner's reading of the schema; whether the one missed `download` event per rapid-click pass was Playwright timing (isolated re-clicks all worked, curl is clean); screen-reader announcements; Edge on Windows (the ArrowDown behaviour of C5-006 was seen in headless Chromium only); the shared header and tab links beyond the Report-to-Evidence path (C1/C3); the CM-051 comparison-note reason with real data."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/2-sections/S1/report.md",
+      "startLine": 92,
+      "endLine": 92,
+      "text": "Not verified: Chrome and Edge on Windows (only Playwright's Chromium 1243); touch input and mobile browser chrome (`h-screen` against a dynamic address bar is untested); a screen reader (names and roles read from the accessibility tree and axe only); 200 % text size and text-spacing overrides (D-42 was checked by narrow widths only); the impeccable critique (skill not installed, rubric applied by hand); the drag-and-drop path of the kit's file drop zone; the kit's chart keyboard behaviour and the charts' text alternatives (X1's files); hover-only reveals other than the rail and kit tooltips; very long text in `PageHeader` (no S1 screen takes dynamic text); whether the static app can fail with no error boundary (no crashing input found); the `#/signal` address and the Signal rail link (out of scope); connected pages other than the shell frame; the shipped variant's kit by the full interactive sweep (the fixture variant ran it)."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/2-sections/S2/report.md",
+      "startLine": 98,
+      "endLine": 98,
+      "text": "Not verified: the impeccable critique (skill not installed; rubric applied by hand); Chrome, Edge and Firefox (only Playwright Chromium headless shell 1243); a real touch device (the \"always shown on touch\" trace rule was not seen); screen readers (names and states were read from the accessibility tree only); pinch zoom and 200 percent text size; print layout; contrast ratios (rubric table values assumed, none sampled); reduced motion and the Running badge halo; the real data path (no Python writes `credit-os-data/1`, so only the fixture and edited copies were drawn); the connected report's use of these parts (C3 to C5)."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/2-sections/S3/report.md",
+      "startLine": 116,
+      "endLine": 116,
+      "text": "Not verified: the impeccable critique (skill not installed, R7); how a screen reader announces any of these pages (no assistive technology was run; live regions, names and focus were read from the DOM); Edge and Chrome on Windows, Safari and Firefox (only Playwright's Chromium 1243 here); a touch device (the always-visible trace control on touch is a CSS rule); 200 percent text zoom and Windows high contrast; printing (the Limitations print rule); contrast of chart marks, hatch fills and the withheld stripe (text only, at 1440 px on three modules); reduced-motion behaviour (code read only); the zero-module \"No modules in this run\" state (S3-034); module-written text that holds a module code, so the display replacer (D-13 part 2) was not exercised; the connected report's use of `ModuleNav`, `MatrixBlock`, `QuestionsBlock`, `StatementBlock`, `StatusBlock` and `WatchBlock` (C3's); the trace drawer's own content (S4's) beyond what opens from these pages; any fixture or handoff other than `web/fixtures/library.json`."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/2-sections/S4/report.md",
+      "startLine": 93,
+      "endLine": 93,
+      "text": "Not verified: the impeccable critique (skill not installed here, rubric applied by hand); the \"Copied\" success toast and real clipboard writes; browsers other than headless Chromium and touch behaviour; Evidence with real delivered data, since the shipped build holds none and no fixture trace carries `sourceLinks`; the connected report's use of S4 parts (C5); CM-324 (portfolio-workbook failure wording), which no fixture run exercises; CT-036, CT-041 and CT-049, which no static screen can show; the 237 hidden react-aria \"Dismiss\" buttons; whether the static Record should draw per-module registers and confidence inputs (owner decision, S4-011)."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/2-sections/S5/report.md",
+      "startLine": 74,
+      "endLine": 74,
+      "text": "Not verified: the impeccable critique (skill not installed, rubric applied by hand); Chrome and Edge on Windows (only Chromium build 1243); hover and arrow-key interaction inside the 11 chart surfaces; a chart whose every value is null; a 320 px width and 200 percent text size; reduced-motion behaviour; contrast ratios (read from the screens, not measured); screen-reader announcements; a negative-cash forecast year; peer sets and real-run content of any Model page."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/2-sections/S6/report.md",
+      "startLine": 78,
+      "endLine": 78,
+      "text": "Not verified: the impeccable critique (skill not installed, rubric applied by hand); Chrome and Edge (only Playwright's headless Chromium 1243); a real screen reader (announcements are inferred from the DOM, roles and focus, S6-002 included); a native file drop onto the Documents page (the page has no drop handler; whether the browser then navigates away was not tried); 200 percent text size, forced colours and print; non-text contrast (1.4.11) of status shapes and borders; hover states beyond a read of the code (D-27); the connected `Start a paid run?` dialog, connected queued, failed, capped, interrupted and rejected run pages, and live polling announcements (D-43), which belong to C1 and C2; keyboard walks of `#/run`, `#/run/activity`, running, queued, starting, finished, capped, rejected, interrupted (covered by identical sibling controls); any real run slice (no code outside `web/fixtures` writes one), so every finding about wording, caps and links describes the fixture."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/2-sections/X1/report.md",
+      "startLine": 61,
+      "endLine": 61,
+      "text": "Not verified: how a screen reader announces the Alert role (X1-005), the chart application role (X1-007), the path chart's scroll region (X1-021) and the LoadingIndicator status (X1-011), since none was run; whether any real run has a middle-series bar at the top tick (X1-019) or a zero-balance debt part (X1-024), and whether the exporter can emit one, since the exporter is not in the repository; Bullet, Dumbbell, Comparison and RowChart were read in full but not rendered, and the Waterfall, Stack, Scatter, Limits, Path and Columns charts were rendered with small hand-written data, not with a real run's series; Chrome on Windows and Edge (only Playwright's headless shell build 1243); the connected report pages that draw these components; the Tab, Select and Table sort states beyond the focus and keyboard sweep; the Tooltip on touch; the `Geist Mono` face (unused in X1); the design system and component map were read for the lines cited only, not in full."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/3-journeys/J1/report.md",
+      "startLine": 24,
+      "endLine": 26,
+      "text": "## Not verified\n\nNot verified: the paid confirmation dialog (\"Start a paid run?\") and any paid run (R4; `proof.serve` shows only \"Start a synthetic test?\"); the regular `react_frontend` mode, including whether J1-001's refusal also stops a real submission; the native file chooser, folder upload and drag-and-drop (files were set on the input); progress over a run longer than 3 s, the 30 s refresh and any queue or cap state; report contents against their handoffs (J3 and J4), the Forecast and Evidence pages beyond that they draw, and whether \"cover is thin at 3.1x\" agrees with the 4.00x interest-coverage tile; Changes with an earlier run (the synthetic launcher refuses a second Full run on the same issuer); a 390 px window, keyboard-only use and long issuer names (J5); wrong file types, empty and duplicate files, reload during a run, leaving and returning mid-form (J2); Chrome and Edge on Windows and the work-PC journey (stage 7)."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/3-journeys/J1/report.md",
+      "startLine": 26,
+      "endLine": 26,
+      "text": "Not verified: the paid confirmation dialog (\"Start a paid run?\") and any paid run (R4; `proof.serve` shows only \"Start a synthetic test?\"); the regular `react_frontend` mode, including whether J1-001's refusal also stops a real submission; the native file chooser, folder upload and drag-and-drop (files were set on the input); progress over a run longer than 3 s, the 30 s refresh and any queue or cap state; report contents against their handoffs (J3 and J4), the Forecast and Evidence pages beyond that they draw, and whether \"cover is thin at 3.1x\" agrees with the 4.00x interest-coverage tile; Changes with an earlier run (the synthetic launcher refuses a second Full run on the same issuer); a 390 px window, keyboard-only use and long issuer names (J5); wrong file types, empty and duplicate files, reload during a run, leaving and returning mid-form (J2); Chrome and Edge on Windows and the work-PC journey (stage 7)."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/3-journeys/J2/report.md",
+      "startLine": 43,
+      "endLine": 43,
+      "text": "Not verified: the regular (non-synthetic) service and any live run (R4); how a real PDF, Word file or large workbook is read or refused; a file over 50 MB or more than 500 files (an operating-system-limit rule forbade making them); a restart of the service during a run, or reopening an earlier run after a restart (`proof.serve` refuses a non-empty root); runs that end Capped, Rejected or Interrupted; the 30-runs-a-day wait and its wording; whether a live run reads a duplicate document twice; the paid Submit dialog; Back, reload and leave behaviour on the static app and on a narrow window; keyboard-only and screen-reader use of the errors found here; Chrome and Edge on Windows."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/3-journeys/J3/report.md",
+      "startLine": 28,
+      "endLine": 28,
+      "text": "Not verified: Changes with a real comparison (CP-8 handoff, Cards and Table views, verdicts on a run from the real launcher) because the proof cannot produce a second run; the journey on a live run (all prose is canned proof text); a trace that reaches an uploaded source file (the proof's handoffs cite annual.txt, J3-021); the original HTML Model download (unavailable for the proof run); 390 px windows, keyboard-only use and a screen reader (J5 and stage 2); a failed or gap-bearing module, two issuers and a very long issuer name (J5); the static app and the work-PC journey (stage 7); Chrome and Edge on Windows; Back and Forward on every route (measured only from Forecast, Financial foundation and Overview)."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/3-journeys/J4/report.md",
+      "startLine": 51,
+      "endLine": 51,
+      "text": "Not verified: a second run for the same issuer, so Changes with data was not read (J5 and J3 cover it); a live or non-synthetic run, so how the library treats a real model's contradictions, missing sources or varying key findings is unknown (R4); the Model (it is unavailable on this run) and Excel exports; narrow windows, touch and a screen reader (hover and focus were tested only with Chromium on desktop width); Chrome and Edge on Windows; the work-PC clean-machine journey (`Run-React-Proof.cmd`, stage 7); the static app from disk (J6)."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/3-journeys/J5/report.md",
+      "startLine": 27,
+      "endLine": 27,
+      "text": "Not verified: a blocked or 'Not assessable' module, a capped run, an interrupted run and a module left out (refused at Submit, J1-001), none of which the proof can produce; any real module output, since the canned handoffs ignore the issuer and the inputs; a second run of one issuer that names a prior (fails at the launcher, J3-002) and any pathway but Full (J1-003); two runs in progress at once; touch gestures on a real 390 px device and horizontal swipe on the cut-off tables; a screen reader (the focus finding rests on `document.activeElement`); the operating system's file picker (answered with `filechooser.setFiles`); the date input's native picker focus ring; 200 percent text size and 400 percent zoom; Chrome and Edge on Windows and the work PC; the static app (J6)."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/3-journeys/J6/report.md",
+      "startLine": 47,
+      "endLine": 47,
+      "text": "Not verified: Chrome and Edge on Windows and any browser but Chromium build 1243; a data file produced by the real library writer (no Python code writes `credit-os-data/1`, so only the fixture and the empty file were available); the shipped build on a populated `data.js` other than the fixture; the 390 px window (J5 owns it; one side observation of a 48 px horizontal overflow of `<main>` on the Overview was not registered); Model pages' charts and the Forecast page's case choice beyond drawing; the `Open` register links (`target=_blank`) beyond their href; keyboard-only use start to finish (J5); screen-reader announcements (no assistive technology was run); Signal (out of scope)."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/4-register/report.md",
+      "startLine": 86,
+      "endLine": 90,
+      "text": "Not verified: Changes with a real comparison (the synthetic proof refuses a second run of an issuer;\nsection and journey agents reached it only by rewriting service JSON in the browser); the regular\n`python -m react_frontend` mode, a live run and the Teams path with its variables set (R4); Chrome\nand Edge on Windows; the five F-batch findings named above beyond their probes; whether the\ncanned-handoff inconsistencies (J3-006, J4-002) also occur in real module output; C5-011's probe."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/R4-011.md",
+      "startLine": 119,
+      "endLine": 119,
+      "text": "Not verified: fresh independent review of the committed repair; native/browser rendering and the combined fidelity capture; the lead's complete frontend/Signal gates, connected proof, release packaging and Windows/work-PC checks; historical records without the engine identity pin; retained-response execution beyond the existing metadata guard cases; real issuer/provider execution, paid Submit, seat access or Teams. No analytical correctness, paid-call occurrence or admission timestamp is established by these metadata checks."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/R4-012-last-return.md",
+      "startLine": 111,
+      "endLine": 111,
+      "text": "Not verified: fresh independent review/acceptance of the exact final code pin; combined-tree frontend/proof and native-browser fidelity; weekly/full Python suite and Windows/work-PC behavior; all possible natural-language citation forms or analytical module correctness; live issuer/model execution, paid/provider/live/seat/real Submit or Teams (outside this task)."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/R4-012-round2.md",
+      "startLine": 125,
+      "endLine": 125,
+      "text": "Not verified: fresh independent round-2 review and combined-tree acceptance; combined frontend/proof and native-browser fidelity capture; weekly/full Python and Windows checks; all possible natural-language citation forms; live issuer/model execution, paid/provider/live/seat/real Submit and Teams (outside this task)."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/R4-015.md",
+      "startLine": 104,
+      "endLine": 104,
+      "text": "Not verified: Native Chrome/Edge GREEN and the combined full proof/gates on the eventual accepted integration pin; actual paid/provider execution, real Submit, Teams and work-PC behaviour were not exercised."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/R4-020-final-web-consequences.md",
+      "startLine": 71,
+      "endLine": 71,
+      "text": "Not verified: full merged frontend coverage/gates, final presentation/fidelity capture, native-browser proof, release/Windows/work-PC checks and the stage 6 sweep were not rerun by this worker. No paid/provider/live run, seat check, real Submit or Teams action ran. Signal, prompts, methods, calculations, canned handoffs and module-written text were not changed."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/T01-review-2-adversarial.md",
+      "startLine": 156,
+      "endLine": 163,
+      "text": "## Not verified\n\nThe C1 probe `c1-001-snapshot-leaks-workspace-path.cjs` (port 8741 is not mine; its field is covered by the C5\nprobe and my sweeps); a real Windows path or the Windows spellings of the file name (`DATA~1.JS`, `::$DATA`,\ncase-insensitive names), argued from the content-based filter and not run; a retained preview from a real earlier\nbuild of the library (a constructed one was used); older publications written by builders before `64d0b92`;\n`catalogue.issues` and `activity.issues` text with a path (R-3, forced only by the first reviewer); the connected\napp's other browser journeys and `npm --prefix web run gates` (no `web/` file changed); a live run."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/T01-review-2.md",
+      "startLine": 157,
+      "endLine": 163,
+      "text": "Not verified: the C5 probe (`snapshot-path-leak.cjs`, port 8735), by instruction; a retained preview\nbuilt from a real earlier snapshot run end to end through `react_frontend.preview` (the preview path was\nread, and the older-file case was exercised by planting the file, not by `preview`); Windows path\nspellings (`DATA.JS`, `DATA~1.JS`) on the work PC, argued from the content-based filter only;\n`tests/test_library_page_browser.py` and `npm --prefix web run gates` / `proof:connected` (no `web/` file\nchanged; the static library tests do not go through this service); R-2, R-3, R-5 and R-6 of the earlier\nadversarial review (not part of this round); no live run."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/T01-review-3-adversarial.md",
+      "startLine": 175,
+      "endLine": 182,
+      "text": "Not verified: the body of each 500 (round 2 showed it is the fixed `{\"error\": \"the service failed; see its log\"}`; I saw only the status and that the traceback goes to the log); the C1 probe `c1-001-snapshot-leaks-workspace-path.cjs` (port 8741 not to be used; its field is covered\nby the C5 probe and my sweeps); a real Windows path, a real sharing lock (`WinError 32`) or Windows spellings of the\nfile name (`DATA~1.JS`, `::$DATA`), argued from the content-based filter and not run; the browser rendering of the\nlibrary home \"Not shown\" list and of Evidence with the leaked text (read from `views.js:1620-1627` and\n`Evidence.tsx:455`, not loaded); a retained preview from a real earlier build (constructed shapes only); concurrent\nrequests for a very large `data.js` (one request each, 35 MB: 0.3 to 0.4 s); the effect of F1 to F3 at the base\n`d8d3d634` (the files are unchanged by the diff, so argued, not re-run); the other reviewer's round-3 file\n`T01-review-3.md` (not read, so that this review stays independent); any live run."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/T01-review-3.md",
+      "startLine": 172,
+      "endLine": 179,
+      "text": "## Not verified\n\nThe C5 probe (`snapshot-path-leak.cjs`, port 8735), not requested; a real locked file forcing an `OSError` through\n`read_bytes` (the suite patches `Path.read_bytes`, as the report says); the static library page in a browser for the\nfiles round 3 now serves as read (taken from the second review's table); the \"Not shown\" disclosure rendered in a\nbrowser after a real `OSError` at 417 (read from `views.js`, not run); `describe()` leaks (R3-6) end to end through\n`update_library`; Windows spellings of the file name; `tests/test_library_page_browser.py` and\n`npm --prefix web run gates` (no `web/` file changed); a live run."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/T01-review-4-adversarial.md",
+      "startLine": 128,
+      "endLine": 137,
+      "text": "## Not verified\n\n- A real I/O error (EIO) or descriptor exhaustion (EMFILE) through the service. Their `describe` output was checked\n  only by direct call.\n- A real link swapped in between `is_symlink` and `os.open` (ELOOP). Reasoned through, not raced.\n- Windows error text and paths.\n- The browser rendering of the new issue words on the static library's \"Not shown\" list.\n- The 18-route sweep of round 3. Only the six routes above were run.\n- The C1 probe (port 8741 not to be used).\n- Any live run."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/T01-review-4.md",
+      "startLine": 68,
+      "endLine": 71,
+      "text": "Not verified: the C5 probe (not asked this round); R1-004 end to end through `update_library` to\n`/connected/snapshot` (`describe` checked by direct call and by reading every caller); a real locked\nfile at `credit_os_catalogue.py:417` (the suite patches `Path.read_bytes`); the static library page in a\nbrowser; the parked R1-005, R1-006, F2, F3, R2-2 and L-2 / R2-3; a live run."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/T01-review-adversarial.md",
+      "startLine": 130,
+      "endLine": 136,
+      "text": "Not verified: the C1 probe `c1-001-snapshot-leaks-workspace-path.cjs` (not run: port 8741 belongs to the other\nreviewer; its field, `catalogue.workspace` in the scoped snapshot, is covered by my probe A and B); a path in the\nhandoff text or source names written by an older builder (only the fresh synthetic run and one planted field\nwere exercised); the `/api/runs/<id>` `reason` on a launcher that fails to start (`scheduler.py:637-658` writes\n`could not be started: {error}`; read, not run); a real Windows path or a locked file (the OSError cases were\nforced with a raised `PermissionError`); the browser tests `tests/test_library_page_browser.py` (not run here;\nI loaded the static library page directly with the headless shell instead); any live run."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/T01-review.md",
+      "startLine": 99,
+      "endLine": 99,
+      "text": "Not verified: the C5 probe (`snapshot-path-leak.cjs`, port 8735) was not run by me, by instruction; a `data.js` published by an earlier build was not run end to end through a real browser against the connected app (the service-level test feeds one in directly, and the static library tests build `data.js` fresh); `npm --prefix web run gates` and `proof:connected` were not run (no `web/` file changed; they belong to stage 5 step 10); no live run; the `issues`-text path (finding 2) was not probed; the second, adversarial read that the stage brief requires for security code is not part of this review."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/T01.md",
+      "startLine": 383,
+      "endLine": 394,
+      "text": "Not verified: R1-004 end to end (a real unreadable run file through `update_library` to\n`/connected/snapshot` and `data.js`; `describe` is tested by direct call, as L6b allows); an\n`OSError` forced through a real locked file at `credit_os_catalogue.py:417` (the suite patches\n`Path.read_bytes`, because permissions may not be enforced for the test user); the static library\npage in a browser, including the \"Not shown\" list after the reasons changed; the browser behaviour of\nthe static library page for the files round 3 answers as read (from the second review's table); a\n`data.js` holding `NaN` (answers 500, as at `dd8acc5d`); L-2 / R2-3 (byte-order mark, whitespace or\na comment before the assignment; parked under R3); R1-005 and R1-006 (parked by L6b); F2\n(`react_frontend/sources.py`) and F3 (scheduler rebuild note), sent to the lead separately; R2-2 (the\nlegacy `run_start` service); the path in `held` on `/activity.js` and `/connected/activity`; Windows\nspellings of the file name; `tests/test_library_page_browser.py` and `npm --prefix web run gates`\n(no `web/` file changed); a live run."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/T01b-review-adversarial.md",
+      "startLine": 137,
+      "endLine": 143,
+      "text": "Not verified: a browser render of the Evidence page with the repaired sentence (the string reaches the snapshot, which I\nread; `Evidence.tsx:455` draws it unchanged); `proof.serve` and its `service._loop` end to end (the in-process Scheduler and\n`make_server` are the same classes, but `nobody` cannot run the Python under `/root`, so the synthetic launcher child could not\nrun as `nobody`; every run used a copy of a completed run root); a real chmod on a Windows or network file system; an OSError\nraised by something other than the file reads listed (disk full while writing `activity.js`, a failing `os.stat` after `lstat`\nbeyond the race mode's unlink); the web gates, Signal and the full suite; that N1 and N2 hold on a tree other than this base\n(`scheduler.py` is unchanged by T01, so they should); whether the Teams run card (`inbox/teams.py`, off in a synthetic service) carries a run `reason`; not read."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/T01b-review.md",
+      "startLine": 50,
+      "endLine": 57,
+      "text": "## Not verified\n\n- The implementer's browser scratch check (`proof.serve`, ports 8757, phase A and B): not re-run. I covered the same ground without a browser: the real `Scheduler` writing `_engine/activity.js` and `sources.enrich` over a synthetic run in a scratch copy, plus the unit-level run_activity mapping. The served route is `contained_file` on that file, read from `run_start/service.py:256`.\n- The Evidence page and the static library drawing the new texts in a browser.\n- A real `chmod 000` read: I run as root, so permissions are not enforced (the three skips); both new tests and my scratch tests force the `OSError` at `Path.read_bytes` or `os.stat`, as L10 allows.\n- A real library rebuild failing inside `pinned_context` or `update_library.handoff_zip`: the forcing is at `update_library_at`.\n- Other call sites that could carry OS text to a served route (F5; `credit_os_chips.Pages.read` at `:548`, which I judged unreachable from the snapshot because `_refresh` fills `Checked.cache` for every published source; `apps/issuer-library/credit_os/source.py` `describe`, T01).\n- `/library/data.js`, any live run, the web gates and Signal (no `web/` or Signal file changed), the full suite (weekly CI)."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/T01b.md",
+      "startLine": 153,
+      "endLine": 159,
+      "text": "Not verified: a real `chmod 000` read (the check forces the `OSError` at `Path.read_bytes`, as L10 allows; running\nas root, chmod would not fail); the Evidence page in a browser with the repaired warning text (the sentence reaches\n`Evidence.tsx:455` through the snapshot, which I read, not rendered); a real library rebuild failing on an\nunreadable pinned context, `workflow.json` or `instructions/*.md` (the rebuild is forced at `update_library_at`,\nwhose raise site is not where the real one is); other call sites that could carry an OSError text to a served route\n(`describe()` and `Pages.read` above, any other held or reason text); the effect on `/library/data.js`; any live\nrun; the web gates and Signal (no `web/` change); the full suite (weekly CI)."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/T01c.md",
+      "startLine": 16,
+      "endLine": 16,
+      "text": "Not verified: nothing was run for T01c; R1-013's leak remains in the code as accepted under R13."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/T02-review-2.md",
+      "startLine": 117,
+      "endLine": 123,
+      "text": "Not verified: a posted Teams card (the figures above are `teams.progress` on constructed records and event\nlogs; no webhook); that the page offers each single leave-out of relative_value and portfolio_decision (the\nlauncher's plan lists above are computed for every single leave-out, the Advanced picker was not driven on\nthose two pathways); a real launcher run of relative_value (the 11-module count comes from\n`deploy_vii.registry.plan`, which the launcher calls at `cpos_launch.py:1079`, not from a run); the regular\n(non-synthetic) service and any provider run (R4); `tests/test_run_start_page.py` (its browser launch hangs\nin this sandbox); the `web/` gates (no `web/` file changed)."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/T02-review-3-adversarial.md",
+      "startLine": 135,
+      "endLine": 141,
+      "text": "Not verified: a real posted Teams card (every figure is `teams.progress` on constructed or synthetic-run\nrecords, no webhook set); a launcher run with an earlier run (the synthetic proof service never finds one:\nits sheet says \"An earlier run exists but could not be used for comparison\", so finding 1 is shown with the\nreal `prepare`, manifest and run-page code on a hand-built prior run and event log, not a service run);\nany live or provider run (R4); the J1 probe itself on port 8761 (I ran my own copy of its Advanced flow on\n8756 and did not rerun the probe); the 16 random lists the launcher refused; `tests/test_run_start_page.py`\n(its browser launch hangs in this sandbox, as the report says); the `web/` gates (no `web/` file changed)."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/T02-review-3.md",
+      "startLine": 142,
+      "endLine": 149,
+      "text": "Not verified: a posted Teams card (all figures are `teams.progress` on constructed records and event logs,\nno webhook set); a real launcher run with an earlier run listed (the CP-8 rows above use `Prepared.ordered`\nfor runs without a prior and the launcher's code at `cpos_launch.py:1075-1081` plus synthetic CP-8 events\nfor the prior case, not a launched run with a prior); the run page's own row count for a leave-out run\n(read from `run_activity._planned`, not rendered); that the Advanced picker offers each single leave-out\non every pathway (the lists were built from the presets, as the page does, not clicked); the regular\n(non-synthetic) service and any provider run (R4); `tests/test_run_start_page.py` (browser launch hangs in\nthis sandbox); the `web/` gates (no `web/` file changed)."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/T02-review-4.md",
+      "startLine": 66,
+      "endLine": 70,
+      "text": "Not verified: a real launcher run with an earlier run listed (CP-8 states are `teams.progress` on\nconstructed event logs, the run-page figures read from round-3's measurement and `cpos_launch.prepare`, not\nfrom a run); a posted Teams card; `tests/test_run_start_page.py`; the live service path and providers; the\n`web/` gates (no `web/` change); whether the lead separately authorised round 4's change to the L6a formula\n(the report records no new ruling; the task brief for this review asks for the CP-8 fix)."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/T02-review-adversarial.md",
+      "startLine": 129,
+      "endLine": 134,
+      "text": "Not verified: a posted Teams card (finding 1 is from `teams.progress` on a constructed record and event log,\nnot a real post; no webhook set); the regular, non-synthetic service and any real provider run (R4); the legacy\nstart page `tests/test_run_start_page.py` (its browser launch hangs in this sandbox); the canonical probe on its\nown port 8761 (I ran a copy on 8756 as instructed); whether the forecast sections of the leave-out run's\nreport are populated (the run delivered; I did not open the Forecast page); the `web/` gates (no `web/` file\nchanged); `CP-8` planned-last behaviour with a leave-out list (only the offline `prepare` with a prior run)."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/T02-review.md",
+      "startLine": 113,
+      "endLine": 118,
+      "text": "Not verified: `tests/test_run_start_page.py` (the legacy start page; its browser launch hangs in this\nsandbox, as the implementer reported); the live service and a real provider run (R4); a run that\nleaves a module out taken to its report (the probe stops once the run starts); a real Teams post\n(the `(13, 14)` figure is from `teams.progress` on a constructed record and event log, not a posted card);\nthe `web/` gates (no `web/` file changed); the regular (non-synthetic) service beyond the shared\nscheduler code."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/T02.md",
+      "startLine": 226,
+      "endLine": 226,
+      "text": "Not verified: a real Teams webhook (work PC, ruling R15): T02's change to `teams.progress` and its card totals were checked only by tests on constructed records and event logs. Also not verified: `tests/test_run_start_page.py` (legacy start page; its browser launch hangs in this sandbox); the live service path and a real provider run (R4); the regular (non-synthetic) service beyond the shared scheduler code; a posted Teams card (the figures are `teams.progress` on constructed records and event logs, no webhook was set); a run that leaves a module out, run to its report (the probe stops once the run starts); that the page offers every single leave-out of relative_value and portfolio_decision (the tests use CP-5 and CP-6; the Advanced picker was not driven on those two pathways); a real launcher run of relative_value or portfolio_decision (the 11 and 8 come from `deploy_vii.registry.plan`, which the launcher calls at `cpos_launch.py:1079`, not from a run); a real launcher run planned with CP-8 because an earlier run of the issuer is listed, or one planned without it for the cap (the round-4 cases are `teams.progress` on constructed event logs, the pairs read from `cpos_launch.prepare`, not from a run); a hand-built list holding CP-8, CP-MEMO or CP-OS (`plan` accepts them, so they count; Submit's `METHODS` check and the launcher decide what runs of them, not examined); the `web/` gates (no `web/` change); `cpos_launch.py` still holds inline \"CP-MODEL\" literals with no named constant (outside T02's files, so `runs.FORECAST_CODE` is the one name only within them; the drift test pins it to the launcher's `NOT_ANALYTICAL`)."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/T03-review-2.md",
+      "startLine": 189,
+      "endLine": 199,
+      "text": "Not verified: no run was produced end to end for any path but the launcher refusal (exit 2); the\nother writers were checked against their code and driven through `runs.outcome`, the scheduler's\nconstants and `_shown`, not by running a service into them. A real SIGKILL was read with\n`Popen.poll()` and `runs.outcome`, not under the scheduler. No browser showed the held alert with\nthe joined notes or a multi-sentence Reason cell (wrapping is T05). Whether an analyst finds the\nsentences clear was not tested. Whether anything outside the launcher paths read can raise\n`LivePauseInForce` after the executor exists was checked by search of `src`, not exhaustively by\nexecution. `lint`, `format:check` and `typecheck` were not re-run (no `web/` file changed in round\n2; round 1's exits stand). Signal's tests, the full `npm --prefix web run gates` and\n`proof:connected` were not run (stage 5 step 10). The adversarial second read that stage 5\nreserves for money, ordering and security code was not run (T03 is not in that class)."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/T03-review.md",
+      "startLine": 154,
+      "endLine": 163,
+      "text": "Not verified: no run was produced for the paths other than the launcher refusal (`not listed`,\n`could not be filed`, `could not be started`, a missing `context.json`, a scheduler-stopped run),\nso the sentences were checked against the writers in the code, not against a running service; the\nnegative-exit-code and rebuild-note cases were driven through `runs.outcome` (a real SIGKILLed\nchild) and `_shown`, not through a running service and a browser; no screenshot of the Ended table\nwith a two- or three-sentence Reason cell was taken, so wrapping and width are not judged (C1's\nclipped-table finding is T05); the reader's reading of the sentences was not tested; Signal's\nvitest files and the full `gates` and `proof:connected` were not run (stage 5 step 10); the\nadversarial second read that stage 5 reserves for money, ordering and security code was not run\n(T03 is not in that class)."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/T03.md",
+      "startLine": 208,
+      "endLine": 221,
+      "text": "Not verified: a real library-refusal run (`not listed: ...`) and the other scheduler failure paths\n(`could not be started`, `could not be filed`, `stopped by the scheduler`, a missing context file,\na `ruling` stop, a failed library rebuild) were exercised only through stored records, the\nwriters' constants or `runs.outcome`, and unit tests, not by producing them in a running service;\nonly the launcher-refusal path (exit 2) was seen end to end, in the probe. A negative exit code was\nproduced by `runs.outcome` with `-9`, not by killing a launcher under the service. The start form\nfor a run with no context file (`/start?from=<run>`) was not opened. The mapped\nwording, including the `ruling` and rebuild sentences, was not read by an analyst, and the\n`stopped: ruling` cause is read from `check_ruling` and the start-up check, not seen in a run. The\nlegacy library page's activity view was not checked for the sentences. No screenshot was taken for\nthe repaired states, and wrapping of a multi-sentence Reason cell was not judged (T05). Signal's\nvitest files, `lint`, `format:check`, `typecheck` (no `web/` file changed in round 2), the full\n`npm --prefix web run gates` and `proof:connected` were not run in round 2 (stage 5 steps 10 and\nlater)."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/T04-review-2.md",
+      "startLine": 137,
+      "endLine": 137,
+      "text": "Not verified:"
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/T04-review.md",
+      "startLine": 69,
+      "endLine": 81,
+      "text": "## Not verified\n\n- A real failed run: the failed-run page was seen only on an intercepted service reply (a stopped\n  CP-4 with three `draft_rejected` events), not from a service run; the report's J5 evidence rests on\n  the pre-T12 launcher, which I did not re-create.\n- The race in finding 2 was found by reading, not reproduced (it needs the 10 s boundary to fall in a\n  sub-millisecond window); the library-swap 404 was read from `update_library.py`, not provoked.\n- Screen-reader announcement and keyboard order were not heard or walked; the single insertion of the\n  alert is measured by the probe's and the unit test's `MutationObserver`.\n- The probes of other tasks named in finding 6 were not run; their dependence on \"Failed to fetch\" was\n  read from their source.\n- `npm --prefix web run gates` in full (the remaining `test`, `audit`, `test:scripts` and\n  `test:file:gates` steps) was not run; only the steps named above."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/T04.md",
+      "startLine": 401,
+      "endLine": 401,
+      "text": "Not verified: the cause of the refusal (\"no agreement chosen\", what to change) is not shown by the page (R1-012, owner question OQ-15, outside group 1); a real failed run was produced only with the pre-T12 synthetic launcher and only for a checker stop at CP-4, so a provider, ruling or interrupted stop, a delivery failure with CP-8 not produced and a failure the scheduler found after a clean exit were tested on replies written in the tests and by Python tests of `stopped_by` from stored reasons, not on a service run; a service that does not send `stopped_by` was reasoned from the code, not run; `stopped_by` is not declared on `Run` in `api.ts`; the 10 s boundary race was reproduced and repaired with a clock that moves 5 s per reading in a unit test, not in a browser at the exact boundary; the \"rejected N times\" count is of the `draft_rejected` events for that module in the run's last 80 milestones, across every launch of the run folder, so a relaunch adds to it; review findings 5, 6 and 8 are open and C1-004's Library line is T05's; the alert wording was not read by an analyst, 390 px was not looked at, the Check again and Try again buttons were pressed in unit tests only, and nothing was heard with a screen reader or walked by keyboard; an outage during a poll of an already loaded run was not exercised in a browser; `npm --prefix web run gates` in full (the `test`, `audit`, `test:scripts` and `test:file:gates` steps) was not run, and Signal was not touched or tested (nothing under `web/src/pages/signal/` imports a changed file)."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/T05-review.md",
+      "startLine": 145,
+      "endLine": 145,
+      "text": "Not verified:"
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/T05.md",
+      "startLine": 193,
+      "endLine": 210,
+      "text": "## Not verified\n\n- Phone and narrow widths: the Waiting and Ended tables at 768 px and 390 px are as before (Ended rows 244 px tall\n  at 768 and 390, content reached by scrolling), by R14; no keyboard, focus or touch work was done.\n- C1-006 (a screen reader announcing a change of run state) is dropped under R16; Run activity has no live region\n  for a run that starts, ends, fails or is capped, as before. The `role` of the new alerts is the `Alert`\n  component's own; it was not heard with a screen reader.\n- No real browser scrollbar was seen: the headless browser hides scrollbars, so a Waiting table with a very long\n  issuer name (a name wider than about 400 px, which the link never wraps) still scrolls inside its panel at 1280\n  px, without a visible cue there. Widths between 1024 and 1280 px were not measured.\n- The wording of the new alerts and the empty-state sentence was not read by an analyst. The Run activity failure\n  alert has one action (\"Open the library\"), not a \"Try again\": the page reads again every 5 seconds.\n- Focus after \"Try again\" on the Library: the button keeps its place while the alert stays, and when the answer is\n  a success the alert and the button leave and focus falls to the page; not judged by keyboard (R14).\n- `npm --prefix web run gates` in full (the `test`, `audit`, `test:scripts` and `test:file:gates` steps) was not run;\n  Signal was not touched or tested; a failed poll in the middle of a long session of a real service was not seen,\n  only the intercepted sequence good, 500, good.\n- The unknown or unpublished report error (C1-004, T17) is not repaired here."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/T06.md",
+      "startLine": 17,
+      "endLine": 17,
+      "text": "Not verified: nothing was run for T06; J5-003's behaviour remains in the code as accepted under R14."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/T07-review-2.md",
+      "startLine": 110,
+      "endLine": 113,
+      "text": "Not verified: Firefox and Safari; closing a real tab; the real Back button and Chrome's history intervention; a Back\nduring a request in flight; the live path, the static app's and the legacy `/library` start forms; `proof:connected`\n(needs a branded browser); the visual look of the empty date and placeholders (no screenshot taken);\n`j2-001-leave-mid-form.cjs`, `p10-navigation.cjs`, `p13-from-run.cjs` and `p01-submit-flow.cjs` not re-run this round."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/T07-review.md",
+      "startLine": 165,
+      "endLine": 172,
+      "text": "Not verified: Firefox and Safari (only the Chromium headless shell and jsdom ran), including whether\n`preventDefault` alone raises the confirmation there; Chrome's skipping of history entries without a user\ngesture and the real Back button (Playwright's `goBack` used); bfcache restoring a submitted form after\nBack; a Back during Continue, Review run or Submit in flight; closing the tab; a second tab on the same\nform; `npm --prefix web run proof:connected` (needs a branded browser, which this machine lacks); the\nas-of date after Back to Documents across midnight; the legacy `/library` start form and the static app's run\nstart, neither of which this file serves; the Python test failing at BASE (the report's before-output was\nrelied on for that one, the vitest before-state I re-ran)."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/T07.md",
+      "startLine": 389,
+      "endLine": 400,
+      "text": "Not verified: the browser's confirmation text and behaviour in Firefox and Safari (only the Chromium headless shell and jsdom ran);\nclosing a real tab or window (Playwright's `page.close({ runBeforeUnload: true })` raised the confirmation and dismissing it kept\nthe page, which is not the same as a person closing the tab); Chrome's skipping of history entries made without a user gesture and\nthe real Back button (Playwright's `goBack` used); a Back during Continue, Review run or Submit in flight (a late result pushes its\nown entry); the live (paid) path and the static app's run start, neither of which this file serves; the legacy `/library` start form;\n`npm --prefix web run proof:connected` (needs a branded browser; it fills the As-of date itself, line 155, so it should be\nunaffected); a second tab on the same form; the visual look of the two placeholders, the empty date field and the longer\ncarried-run line (no screenshot was taken); the other two parts of J1-015 (the empty Your name, the documents list reading \"No documents yet\" before Inspect\ndocuments), which this change does not touch; Carry over from latest run still replaces a date typed before it, now with an empty date (before round 3: with today's date); legal, module and other choices are counted as work only through `purposeChosen` and the documents on the form (a Legal\ndocuments or module choice is made on More context, which opens only after Continue on Purpose), so a level, model or turns choice\nmade on Purpose and then every document removed is not counted; probes of other tasks that go through the start form (checked by\nsearch, not re-run); C2-005 (dropped under R14; no focus or announcement change was made)."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/T08-review.md",
+      "startLine": 113,
+      "endLine": 115,
+      "text": "Not verified: no screenshot compared by eye; no real two-Submit run against the service with a dropped reply (the\none-run claim is from reading `scheduler.submit` and re-running `tests/test_run_start_scheduler.py -k submit_twice`, 1 passed); `p12-states.cjs`\nnot re-run (judged from its source); the live (non-synthetic) Submit dialog only through the unit tests."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/T08.md",
+      "startLine": 109,
+      "endLine": 113,
+      "text": "Not verified: no screenshot was compared by eye (the viewport position is from the probe's bounding boxes and the walk's 900 px viewport); a\nreal lost-reply POST that the service did receive was not run (the claim that a repeat returns the existing run is from reading\n`scheduler.submit`, not from a run of two real Submits); the live (non-synthetic) Submit dialog and its \"Start run, up to USD …\" button were\nexercised only by the unit tests; the Alert's Try again button was not reached with a real stopped service, only with intercepted requests;\nthe unit test file `ConnectedApp.test.tsx` and the probes were not re-run more than once under load."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/T09-review-2-adversarial.md",
+      "startLine": 110,
+      "endLine": 110,
+      "text": "Not verified:"
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/T09-review-2.md",
+      "startLine": 140,
+      "endLine": 142,
+      "text": "Not verified: the J5-004 and p04/p05 probes (not re-run in this round); the Submit-time ID refusal at page\nlevel (finding 3); the identity of the 2 vitest failures in the first loaded run; the full vitest and pytest\nsuites; a real 32-bit code collision."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/T09-review-3-adversarial.md",
+      "startLine": 100,
+      "endLine": 106,
+      "text": "## Not verified\n\n- On \"Start from this run\", the copy has a read-only Issuer ID. If the name is then changed and refused, the `Use <id>`\n  offer may still set a new ID. I did not drive this.\n- Hash collisions of the 8-hex code, which I did not construct.\n- The full pytest and vitest suites.\n- The J2-003 half."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/T09-review-3.md",
+      "startLine": 123,
+      "endLine": 125,
+      "text": "Not verified: the J5-004, p04 and p05 probes (not re-run); finding 1 driven through the page or the service with\na live walk (the keys only were computed); the full vitest and pytest suites; a real 32-bit code collision; the\nrequest `settleIssuerId` sends to `/api/issuers/` for a name whose slug is empty (unchanged since round 2)."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/T09-review-adversarial.md",
+      "startLine": 98,
+      "endLine": 99,
+      "text": "Not verified: the final submit of the carry-over-then-retype merge (finding 2 follows from the code); a real\n32-bit code collision; Report history row naming; the J2-003 half beyond reading the diff; the full vitest suite."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/T09-review.md",
+      "startLine": 92,
+      "endLine": 94,
+      "text": "Not verified: p05-identity (not re-run); an encrypted real PDF (finding 3 for that case is\ninferred from `handoff.py:_pages`, not run); a lookup failure during review; the carried-copy path\nwith a long shared name; the full vitest suite."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/T09.md",
+      "startLine": 176,
+      "endLine": 180,
+      "text": "Not verified: that two issuers whose suffixed ID is also taken by a third issuer are told apart (the 8-hex code collides,\nnot constructed; the page then offers no second suffix and says to type another ID); the page on an ID already shared by two\nissuers before T09 (service accepts either; page suffixes by the latest run's name, R1-015); the Report history row naming;\nevery-problem-at-once for several unreadable files (service limit); walk-issuer-id on the base build; the full vitest suite\nand the full pytest suite."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/T10-review.md",
+      "startLine": 89,
+      "endLine": 92,
+      "text": "Not verified: the page's behaviour after an eviction in a browser (traced in code only); the\nbefore-state failure of the five new tests (not re-run on base); probe p22 itself (not re-run;\nthe walk covers the repair); concurrent Submit or upload during eviction under load; web lint,\ntypecheck and vitest (no web file changed)."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/T10.md",
+      "startLine": 43,
+      "endLine": 44,
+      "text": "Not verified: the T09 walk's exit code itself (only its FAIL count); behaviour under concurrent Submit during\neviction (both run under `_LOCK`; not stress-tested); web gates (no web change)."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/T10.md",
+      "startLine": 58,
+      "endLine": 58,
+      "text": "Not verified: the separate frontend expired/capacity recovery follow-up, final combined-browser/fidelity gates, Windows, weekly suite, a provider or real Submit."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/T11-review-2.md",
+      "startLine": 62,
+      "endLine": 62,
+      "text": "Not verified: Safari and Firefox rendering of `overflow-wrap: anywhere` and `flex-wrap` (headless Chromium only); the sheet after pressing Leave out (the flow leaves the Review step, so the \"Put back\" row was not measured; that row was already `flex-wrap` and is not changed); a sheet with two Leave out buttons (no pathway I ran produced more than one); long unbroken tokens in service reasons and in the Advanced-block values on round 2's build (measured on round 1's build by the first review; round 2 changed neither); a screen reader's reading of the wrapped Edit button; text sizes other than 125, 150 and 200 percent at 390 px; the full `npm --prefix web run gates` and `proof:connected` (stage 5 step 10 runs them after all groups)."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/T11-review.md",
+      "startLine": 74,
+      "endLine": 74,
+      "text": "Not verified: Safari and Firefox rendering of `overflow-wrap: anywhere` (headless Chromium only); viewport widths between 391 and 599 px and above 390 px for the Deep pathway; the other four purpose pathways (Earnings Update, Relative Value, Covenant & Refinancing, Distressed & Restructuring, Portfolio Decision) for a long Leave out label (I measured Lite, Full, Deep); a second Leave out button on a sheet with two Will refuse groups; whether a real service sends an unbroken token as long as my 150-character injected one; the design-rubric screenshots D-17, D-22, D-03 were not retaken; the full `npm --prefix web run gates` and `proof:connected` (stage 5 step 10 runs them after all groups)."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/T11.md",
+      "startLine": 211,
+      "endLine": 220,
+      "text": "Not verified: Safari and Firefox rendering of `overflow-wrap: anywhere` (headless Chromium only); widths\nbetween 391 and 599 px; the five purpose pathways' Leave out label (measured Deep only), and a sheet with two\nWill refuse groups (a second Leave out button); wrapping of a long unbroken token in service text inside a\nlimit card (the reviewer measured it on round 1's build, I did not repeat it); a title wrapping between words\n(at every size tried, up to 125 percent text, \"Issuer and documents\" and \"Purpose and modules\" fit on one\nline, so the between-words case itself was not exercised; the class rule is that `overflow-wrap` acts only\non overflow); the 150 and 200 percent text-size overflow of the Edit buttons above (not compared with\n`bc1b19b2`, but the nowrap Edit button and the grid track are unchanged); `p01-submit-flow.cjs` on this\ncommit (the reviewer ran it on `bc1b19b2` with exit 0; this round touches no approval or Submit code); the\ndesign-rubric screenshots D-17, D-22, D-03, D-32 and D-42 beyond the 390 px scratch screenshots."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/T12-review-2.md",
+      "startLine": 138,
+      "endLine": 138,
+      "text": "Not verified: a live model's CP-4 at the gate (R4, no paid call); `proof:connected` on branded Chrome and Edge (none here), so the doc's description of the proof was read against the script text, not run; Windows and the packaged proof (not built); the L2 test's `draft` case end to end through the scheduler (only `canned_handoff` is driven); a `--modules` subset with CP-4 but not CP-3 under no legal documents; the first review's J1 journey exit-1 explanation was not re-run."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/T12-review.md",
+      "startLine": 130,
+      "endLine": 134,
+      "text": "Not verified: what a live model writes at CP-4's gate (R4, no paid call; the blocked text is a stand-in copied from the engine's test fixture); the\npackaged zip (`tools/package_react_windows.py` was not built) and Windows; `proof:connected` on branded Chrome and Edge (this machine has neither); a\n`--modules` subset that includes CP-4 but not CP-3 under no legal documents (the scheduler's Full run never makes one; the engine would then keep\nCapital structure on CP-4 and the blocked CP-4 would lack it); the J1-002 probe against the base launcher (the worker's \"before\" output was not\nre-run; the base-launcher test failure reproduces the same cause); load timeouts under ten parallel agents (none seen)."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/T12.md",
+      "startLine": 212,
+      "endLine": 230,
+      "text": "## Not verified\n\n- The four modules the sheet lists under Also affects (Refinancing & LME, Security selection,\n  Evidence validation, Committee decision) run on their canned handoffs, so the synthetic run shows\n  no limit on them; the sheet's \"five limited modules\" is demonstrated for Legal & covenants only.\n  Changing them means changing `proof/handoffs/`, which this task may not do. The new doc paragraph\n  says so.\n- What a live model writes at the CP-4 gate (R4: no paid call); the blocked text is a stand-in.\n- The J1 journey probe's second half (a second Full run on the same issuer) still fails by the\n  launcher's first-run-only rule; `proof:connected` on branded Chrome and Edge (this machine has\n  neither); Windows PowerShell and the packaged proof (`tools/package_react_windows.py` ships `proof/` and\n  `docs/react-workflow.md` as they are; the package itself was not built).\n- The text shown for a refused module on the run page and in Run activity (the failure line\n  \"stopped: checker\" and \"Interrupted\" on the refused module): not changed, see `NEEDS FILE`.\n- The documentation wording of L3 was checked against the form's step list and the proof's script\n  text, not by running `proof:connected` (no branded Chrome or Edge here).\n- A `--modules` subset that includes CP-4 but not CP-3 with no legal documents (the scheduler's\n  Full run never makes one): the engine would keep Capital structure on CP-4 and the blocked CP-4\n  would lack it. Not exercised; the follow-up does not change it."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/T13.md",
+      "startLine": 137,
+      "endLine": 149,
+      "text": "## Not verified\n\n- The negative-value `periods()` branch (Blocked): its Table form still has no Basis and limitation.\n- How a long limitation lays out: `ChartTable.tsx` (X1) draws body cells `whitespace-nowrap` and right-aligned,\n  so a long limitation scrolls inside the table's `overflow-x-auto` wrapper rather than wrapping\n  (D-32 \"No horizontal scrolling for prose\"). From the code only; no screenshot taken, `ChartTable.tsx` not\n  in T13's files.\n- Decimal commas in other parsers outside `visualData.ts` (for example `Downside.position`,\n  `MacroSensitivity.moneyPosition`, `runFigures.amount`); not looked at, not in T13.\n- No live or paid run; every probe used `proof.serve` canned handoffs. The C4-028 case is a browser-side\n  rewrite of one handoff cell, as the probe does it.\n- `tools/quality_gate.py` and Signal's tests (no Python and no Signal import)."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/T13.md",
+      "startLine": 252,
+      "endLine": 253,
+      "text": "Not verified: a live or paid run (every check used `proof.serve` canned handoffs, with the cell rewrites the probe itself uses); real-length limitations in a live\nhandoff; the negative-value `periods()` branch after a repair (there is none); `vitest` on the whole `web/` suite (only the folders above, by the brief)."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/T13.md",
+      "startLine": 502,
+      "endLine": 510,
+      "text": "### Not verified\n\n- The seven chart kinds other than `periods()` for the column evidence (Decision 2): not changed, so a decimal-comma column there is still read per cell.\n- A real limitation in a live handoff: only the canned and the 235-character synthetic text; one sideways scroll of the Table form remains (Decision 4).\n- R2-001 in plain tables and in `chartDrawsVerbatim` (Decision 6): not changed.\n- The `Kit.tsx` page by eye: covered only by the static gate's route visits and the components and library vitest folders.\n- No live or paid run; every probe used `proof.serve` canned handoffs, with the cell rewrites the probes use.\n- `tools/quality_gate.py` (no Python changed)."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/T13.md",
+      "startLine": 577,
+      "endLine": 579,
+      "text": "Not verified (1b): the seven chart kinds were exercised in jsdom through `LegacyVisuals` with one synthetic table each (positions read from\nstyles and axis text), and in Chromium only for the Leverage period chart (the probes and `bar-check.cjs`); the paired, range, scatter, bullet,\nrecovery and waterfall charts were not looked at in a browser with a decimal comma. No live or paid run."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/T13.md",
+      "startLine": 676,
+      "endLine": 677,
+      "text": "Not verified: a live or paid run (every check used `proof.serve` canned handoffs with snapshot cell rewrites); real-length limitations from a live handoff; the waterfall, grouped, dumbbell, range, scatter, bullet and recovery charts with a decimal comma in a browser\n(jsdom only); the `Kit.tsx` page by eye (the static gate's route visits and the component tests only); `stack()` for the column evidence (T19)."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/T13.md",
+      "startLine": 775,
+      "endLine": 776,
+      "text": "Not verified: a real browser at 1440 or 390 px for long or unbroken limitation text; plain tables for the\nR2-001 patterns; a live run."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/T13.md",
+      "startLine": 863,
+      "endLine": 866,
+      "text": "Not verified: the scoped reading in a browser for the bullet, range, paired, scatter, recovery and waterfall charts (jsdom only; the\nLeverage period chart through the probes); a grouped or dumbbell chart whose rows are one measure in several periods with the\nevidence in one row only (read per row by design, so a `3,000` row beside a `3,75` row stays thousands); real limitation text from a\nlive handoff for `readerText`; Signal vitest (nothing under `web/src/pages/signal/` imports these files); no live or paid run."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/T13.md",
+      "startLine": 945,
+      "endLine": 946,
+      "text": "Not verified: the scoped reading in a browser for the bullet, range, paired, scatter, recovery and waterfall charts (jsdom only); `readerText`\non real limitation text from a live handoff; no live or paid run."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/T13.md",
+      "startLine": 1017,
+      "endLine": 1018,
+      "text": "Not verified: a real browser for the scoped bullet, range, paired, scatter, recovery and waterfall charts\n(jsdom only); the 1,440 px layout of long Basis text; a live or paid run."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/T14.md",
+      "startLine": 87,
+      "endLine": 87,
+      "text": "Not verified: touch behaviour of the native Module picker on a phone (only 390 px in desktop Chromium was driven). Screen-reader announcement of the focused heading (focus placement was checked with `document.activeElement` only). Back restore when a page's content grows after the first paint (the Forecast and Modules pages of the synthetic run were complete at restore time; a page that gains height later would clamp the offset). Firefox and Safari (only the headless Chromium shell was available). A module whose handoff is blocked or has a parse error was driven only by the unit test of the empty-sections path (figures still drawn), not on a live page. `ConnectedApp.test.tsx` first ran under CPU load from the concurrent probe run and timed out in four tests; run alone it passed (185 of 185). No screenshots are committed (none cited)."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/T14.md",
+      "startLine": 155,
+      "endLine": 155,
+      "text": "Not verified: Firefox and Safari; a phone's native picker; a screen reader's announcement of the focused heading; Back restore when a page grows after the first paint; a blocked or parse-error handoff on a live page (unit test only); Signal's vitest (not reached by any changed file, see above)."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/T14.md",
+      "startLine": 209,
+      "endLine": 209,
+      "text": "Not verified: Firefox and Safari (headless Chromium only); a screen reader; Back restore when a page grows after the first paint; a blocked or parse-error handoff on a live page (unit test only); Signal's vitest. Not exercised by design under R14: touch, keyboard-only flows and widths of 480 px or less. The earlier sections of this report describe the round 1 state (focus move, Open module, Apply filter); this section supersedes them for those parts. `VERIFICATION.md` fidelity entry for the coordinator: in round 2 the Module select and the Evidence filter behave as at f0b76b7, the focus after an address change is not moved, and the scope of round 1's fidelity note is otherwise unchanged."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/T14.md",
+      "startLine": 259,
+      "endLine": 259,
+      "text": "Not verified: Firefox and Safari (headless Chromium only); Back restore when a page grows after the first paint; a blocked or parse-error handoff on a live page (unit test only). Not exercised by design under R14 and R16: touch, keyboard-only flows, widths of 480 px or less, screen-reader announcements."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/T15.md",
+      "startLine": 78,
+      "endLine": 78,
+      "text": "Not verified: a retained or live run (only the canned synthetic CP-1 and unit snapshots were exercised; the main-path `MetricGrid` Overview, which already carries a trace, was not touched); a handoff whose chart table is headed with the adjusted names, beyond the unit test; a catalogue whose headline period differs between charts (only the unit test's missing-period case); the keyboard and tooltip behaviour of the tile control beyond focus return and Escape in the throwaway script (the control is the shared `TraceButton`); `npm --prefix web run proof:connected` and the whole vitest suite (stage 5 step 10, not run per the brief); Signal's tests (no import of a changed file); a screen reader reading the gap tile (`Missing` carries `not available` for it, but no assistive technology was run); a before screenshot (a test applies, so none was taken)."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/T15.md",
+      "startLine": 125,
+      "endLine": 125,
+      "text": "Not verified: a retained or live run, and a handoff whose reasons carry references beyond the throwaway tests above; the keyboard and screen-reader behaviour of the tile control beyond focus, Enter and Escape; `npm --prefix web run proof:connected` and the whole vitest suite (the lead's step 10); Signal's tests (not reached by any changed file)."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/T15.md",
+      "startLine": 300,
+      "endLine": 300,
+      "text": "Not verified: a retained or live run end to end (the repair is exercised by unit tests, the canned run with injected rows, and three retained fixtures through the real builder, none of which is a run folder); a handoff whose catalogue and handoff disagree beyond the injected scenarios; `npm --prefix web run proof:connected` and the whole vitest suite in one passing run (the lead's step 10; the folder run times out on unrelated tests under load, see Gates); Signal's tests (no import of a changed file); the J4-001 library home card (open for the lead, above); a screen reader on the gap tile; a before screenshot (a test applies, so none was taken)."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/T15.md",
+      "startLine": 428,
+      "endLine": 429,
+      "text": "Not verified: a retained or live run folder end to end; the MetricGrid main path; `LibraryIndex.tsx` beyond\nthe card screenshot."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/T16.md",
+      "startLine": 184,
+      "endLine": 189,
+      "text": "Not verified: `tests/test_library_page_browser.py` (browser test of the static library; it already expects\n`the Basis file is not in the Source readiness inventory`) was not run; a full pytest run was not done\n(only the files above); `apps/issuer-library/credit_os/web/static.test.cjs` was not run; no screenshot\nwas taken (the wording change was checked by page text before and after, not by pixels); runs delivered\nbefore this change keep their stored `Python's arithmetic` limit; the live (paid) path was not exercised;\nSignal tests were not run in round 1 (they were run in fix round 1; see there)."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/T16.md",
+      "startLine": 296,
+      "endLine": 301,
+      "text": "Not verified (reviewer): the 14 handoff views were checked only through the C5 probe (headings and codes), not by a\nbase-against-HEAD text diff; the live (paid) path; a delivered run that predates the change (its stored\n`forecast_exact.json` still holds `Python's arithmetic`; the report says so); a facility-bearing run in the browser (the\nfacility sentence is covered by the Python tests only); pixels (no screenshot); `static.test.cjs`; the full pytest\nsuite. A `--testTimeout` flag on the command line was used only to tell load timeouts from failures; no test file or\nconfig was changed."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/T16.md",
+      "startLine": 408,
+      "endLine": 410,
+      "text": "Not verified: `tests/test_library_page_browser.py` and `apps/issuer-library/credit_os/web/static.test.cjs`;\n`tests/test_cpos_launch.py` not re-run by this reviewer; Signal tests (no Signal import, by grep); the live\npath; screenshots."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/T16.md",
+      "startLine": 593,
+      "endLine": 603,
+      "text": "## Not verified (fix round 1)\n\nRuns delivered before the change (Review 2 issue 5): they stay as they are. A stored `forecast_exact.json` keeps\n`Python's arithmetic` and the old limit sentences, which the Forecast page draws as stored (only module codes are\nmapped); the chip note (C3-006) is recomputed from the stored handoffs on every snapshot and is fixed for them. The\nlive (paid) path; pixels (no screenshot); chart-gap reasons, the Evidence title variants and the gap-id hold-back in\na browser (unit tests only; the canned run contains none of them); a facility-bearing run in the browser; `tests/test_financial_workflow.py` as a whole (one test\ntimes out at 590 s under load, the others were stopped; the file reads no changed file); a full pytest\nrun (only the files listed). `--testTimeout=30000` was given on the command line only, under machine load; no test file or\nconfig sets it."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/T16.md",
+      "startLine": 700,
+      "endLine": 703,
+      "text": "Not verified (reviewer): a live (paid) handoff's title form (only the synthetic launcher's `# CP-x` was seen); a stored\nhandoff holding `∅ G#` or a bound gap id in a browser (none exists); `tests/test_library_page_browser.py`,\n`tests/test_library_changes_browser.py` and `tests/test_financial_workflow.py` (not re-run this round); the full pytest\nsuite; pixels. `--testTimeout` was given on the command line only."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/T16.md",
+      "startLine": 781,
+      "endLine": 782,
+      "text": "Not verified: J3, J4, C3 and C5 browser probes (Review 3 and the fixer cover them); `tests/test_cpos_launch.py`;\nthe library browser tests; the live path; pixels; a delivered run that predates the change."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/T16.md",
+      "startLine": 851,
+      "endLine": 854,
+      "text": "Not verified: the module-page chart gaps (`visuals/index.tsx`, the lead's batch: a page-citing reason there is still drawn\nas stored); a page citation written right after a number (`FY2025 p. 4`) is read as percentage points and drawn whole\n(none in a retained handoff); a gap record with its own status field (none exists, so no such branch was written); the\nlive (paid) path; pixels (no screenshot); the Python suites (no Python changed)."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/T16.md",
+      "startLine": 908,
+      "endLine": 908,
+      "text": "Not verified: the live (paid) path; pixels; the module-page chart gaps in `visuals/index.tsx` (the lead's batch)."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/T16.md",
+      "startLine": 1030,
+      "endLine": 1036,
+      "text": "Not verified: remaining ordinary false positives of the pattern: a lone `p`/`pg` before a one-to-three-digit number\nthat is not a page (for example `Q4 p 3`), and `pp` after a written number above ten (`eleven pp. 3`), are held back;\nunder-matches: `pp. 12` right after a digit (`2025 pp. 12`, read as percentage points), Roman page numbers (`p. iv`,\n`pages xii`), a page number of four digits; none appears in a retained chart-gap reason. A `summary.line` that is not a\npositive integer would make `LegacyVisuals` drop the withheld figure (the published summary line is used as a trace line\nelsewhere, e.g. `ReportContent.tsx`; no invalid one seen). The module-page chart gaps (`visuals/index.tsx`, lead's\nbatch); J4 (line 009 not touched this round); the live (paid) path; pixels."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/T17.md",
+      "startLine": 116,
+      "endLine": 124,
+      "text": "Not verified: the \"No report is listed for this run\" state (a finished run the library does not\nlist) and the \"The report could not be loaded\" state for a server 500 were exercised only in vitest\nand code read, not against `proof.serve`; a history row whose other-run snapshot fails to load\n(\"could not be read\") was not exercised; Earlier format / Earlier methods on a real stored run\n(proof.serve cannot make one; p08 rewrites the snapshot in the browser); CP-1A and CP-DR key\ncharts on Overview (the synthetic run draws CP-2's map; CP-1A's issuer-history lane did not reach\nOverview in the probe's titles because the probe only lists headings matching its own pattern, so\nit was not separately confirmed); C3-025 (navigator search) keeps p15 at exit 1 and is another\ntask's finding; no screenshot was taken (tests cover each finding)."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/T18.md",
+      "startLine": 71,
+      "endLine": 71,
+      "text": "Not verified: fresh independent primary/adversarial final verdicts on `f7f1e011`, final combined-branch coverage/dependency gates and any live model case. The duplicate C5 all-control loop and historical J4 harness were not rerun; their source/assumption behaviors were covered by the C4 and native checks above. The historical requested model executions were unavailable. No claim is made that the unavailable previous T18/T22 implementation passed review, or that early `eaf0a879` passed final review. The native proof is synthetic and the additional states are explicitly snapshot-intercepted; they do not establish a live analytical conclusion."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/T19.md",
+      "startLine": 69,
+      "endLine": 69,
+      "text": "Not verified: whether the exporter ever emits a zero part (its code is not in the repository; the finding states the same), and whether a real run has a middle-series value on the top tick: both fixed by construction, not seen in a real run. The Python side was not run (no Python change). The whole vitest suite was not run (only the folders above and the connected pages), nor Signal's vitest (no import path to a changed file). The all-zero static stack and the narrow (390 px) stack with a zero in the middle were checked by screenshot on the static fixture only (the narrow one was not saved); the connected app was exercised only through the C4-004 probe's synthetic run (one unstated and no zero part in that run). No screen-reader or keyboard session of the new legend row was run. One timeout in `ConnectedApp.test.tsx` (K5) under load, passing alone, is not explained further."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/T19.md",
+      "startLine": 121,
+      "endLine": 121,
+      "text": "Not verified: the whole vitest suite, and the connected tests outside the files listed above, were not run; the all-zero static stack and the connected app with a zero part were checked in a throwaway browser bundle of the real components (not through a synthetic run, whose Debt stack has one unstated and no zero part); no screen-reader or keyboard session of the new legend rows was run; whether the exporter emits a zero part or a real run has a middle-series value on the top tick is unestablished, as the findings state."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/T19.md",
+      "startLine": 207,
+      "endLine": 208,
+      "text": "Not verified: a real screen-reader session; whether the exporter ever emits a zero part (its code is\nnot in the repository)."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/T19.md",
+      "startLine": 247,
+      "endLine": 249,
+      "text": "Not verified: no probe drives a debt stack written with a decimal comma (the synthetic run's stack uses `1,200` and `800`); the\nrepair is checked by the vitest file only. The whole vitest suite and the Python side were not run (no Python change). No\nreview of this round yet."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/T19.md",
+      "startLine": 288,
+      "endLine": 288,
+      "text": "Not verified: the whole vitest suite; a connected run whose debt stack uses a decimal comma (no probe or canned handoff has one)."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/T20.md",
+      "startLine": 77,
+      "endLine": 78,
+      "text": "Not verified: screen-reader output (R16); keyboard and narrow widths (R14); a live module response\nwith a malformed date (the probe and tests use rewritten synthetic tables)."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/T20.md",
+      "startLine": 269,
+      "endLine": 273,
+      "text": "Not verified: a plotted row's Status cell is still drawn without the reference guard (pre-existing,\nReview 1 issue 2's second half; a placed row's status must start with a lane name, so a reference\ncan appear only after \"Historical — \" and the like); left as before, outside this round's issues.\nSection shapes the server never sends (headers that are not a string array) are trusted as typed,\nas elsewhere in the report code. Screen-reader output (R16); keyboard and narrow widths (R14)."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/T20.md",
+      "startLine": 366,
+      "endLine": 366,
+      "text": "Not verified:"
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/T20.md",
+      "startLine": 518,
+      "endLine": 519,
+      "text": "Not verified: a live module response with a referenced status (tests use synthetic tables);\nscreen-reader output (R16); keyboard and narrow widths (R14)."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/T20.md",
+      "startLine": 626,
+      "endLine": 630,
+      "text": "Not verified: a live module response with a referenced status, or with unidentified rows (the\ntests and the probe use synthetic tables). Screen-reader output (R16), keyboard use and narrow\nwidths (R14). Open for the lead, as the fixer noted: whether the valid rows of a table whose rows\nare not each identified should be shown (Review 2 issue 3, second half). It is withheld here, as at\n1778835."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/T21.md",
+      "startLine": 130,
+      "endLine": 133,
+      "text": "Not verified: no screenshot was taken (tests cover each finding); the trace drawer's change was\nchecked by the unit test only, since the synthetic run has no chip that carries a source link;\n`gaps-390.cjs` (C5-002, withdrawn) was not run; Signal's tests and the Python quality gate were not\nrun (nothing they cover changed); the full vitest suite was not run (brief)."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/T21.md",
+      "startLine": 300,
+      "endLine": 303,
+      "text": "Not verified: no live synthetic run puts a page-cited source chip in the trace drawer (round 1\nrecorded the same limit), so the drawer's \"Cited sources\" text was checked by the unit test only.\nPython and `tools/quality_gate.py` were not run because no Python changed. The full vitest suite\nwas not run, as the brief directs."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/T22-round2.md",
+      "startLine": 116,
+      "endLine": 116,
+      "text": "Not verified: fresh primary/adversarial verdicts on this code pin; combined final-T18/T22/lead-batch integration, gates and fidelity; original task probes rerun on round 2; full/weekly Python suite, full frontend gates/build/connected-service proof on this pin, Windows/work-PC behavior, real retained model analytical correctness, live/paid/provider/seat/real Submit/Teams execution, or unavailable named skills. No external application request was made."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/T22.md",
+      "startLine": 54,
+      "endLine": 54,
+      "text": "Not verified: Fresh independent primary/adversarial verdicts at this report revision; combined final-T18 and lead-batch integration; work-PC/Windows Chrome and Edge; real retained model responses, paid/live providers, seat checks, Teams; the unavailable historical T22 code/reviews and named skills. Historical helper portability outside the explicitly adapted local environment was not claimed."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/T23.md",
+      "startLine": 46,
+      "endLine": 46,
+      "text": "Not verified: no before/after screenshot was saved (the test and probe cover the state; the loading line is plain text in the existing card); the loading label was not checked at 390 px width or in dark theme; a live service (not `proof.serve`) was not exercised; the non-JSON and `null` replies above were reasoned from the code, not run; Signal's vitest and the Python quality gate were not run, for the reasons in the table."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/T23.md",
+      "startLine": 83,
+      "endLine": 83,
+      "text": "Not verified: no screenshot, 390 px width or dark theme was viewed; a live service (not `proof.serve`) was not exercised; the `null` and non-JSON replies in issue 1 were reasoned from the code, not run."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/T24.md",
+      "startLine": 16,
+      "endLine": 16,
+      "text": "Not verified: nothing was run for this task."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/T25.md",
+      "startLine": 105,
+      "endLine": 110,
+      "text": "Not verified: the model pages' labelling (left open above); the paid-run flow itself (no Submit, no paid\ncall; the connected dialog is covered only by the unit test that a caller with no `note` draws none and by\n`ConnectedApp.test.tsx` passing); `npm --prefix web run test:file:gates` and the full `gates` (the file\nchecks of the built app from disk, which include the kit page); a screen reader's reading of the note\nahead of the heading; the sticky/overlay behaviour of the note on pages taller than the viewport beyond\nthe 1440 and 390 px top-of-page screenshots."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/T25.md",
+      "startLine": 239,
+      "endLine": 243,
+      "text": "Not verified: `npm --prefix web run test:file:gates` and the full `gates` run (the from-disk file checks of the\nbuilt app); a screen reader's reading of the note ahead of the breadcrumb (it is a non-focusable `role=note`, so\nthe tab order is unchanged by construction, not by a test); how the note sits on a model page taller than the\nviewport beyond the top-of-page screenshots at 1440 and 390 px; the connected app (it does not use these pages);\nthe model pages with real, non-fixture data (none exists in the release)."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/T26.md",
+      "startLine": 89,
+      "endLine": 90,
+      "text": "Not verified: a run slice with no drafts in a browser (only the absent slice is tested); the connected app, which does not\nuse these routes; narrow-width layout of the start page, which this task does not change."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/T27.md",
+      "startLine": 225,
+      "endLine": 231,
+      "text": "Not verified: Firefox and Safari (only the headless Chromium shell and jsdom ran); a page reload followed by\nBack (the key in `history.state` survives a reload but the saved offsets do not, so such an entry opens at\nthe top, by design); Signal's own route changes by eye (its tests pass; `App`'s behaviour applies to its\npages as to the others); the hash entry `#main` (the skip link prevents it); the connected app (`App` is not\nused by it, and `Shell`, which it shares, is unchanged); keyboard focus after a route change and a screen\nreader's announcement of it, which R14 and R16 no longer ask for (after a keyboard route change focus now\nfalls to the body, and nothing is announced)."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/T28.md",
+      "startLine": 11,
+      "endLine": 11,
+      "text": "Not verified: everything in S1-003. The second half of the finding (the label read a second time as plain text on narrow screens) shows only at phone width, so R14 covers it too. Whether the duplicate reading also occurs at desktop width was not checked."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/T29.md",
+      "startLine": 103,
+      "endLine": 108,
+      "text": "Not verified: hover and focus behaviour in Firefox and Safari (only the headless Chromium shell was\nrun; the repair relies on the HTML rendering order that scroll events dispatch before\nanimation-frame callbacks, which the spec fixes and the other engines follow); a scroll that\narrives more than one frame after focus (smooth scrolling is not used anywhere in the app); a\ntooltip that is open when the user scrolls (unchanged, see above); the vitest files that render no\ntooltip (not run) and the full vitest suite and `npm --prefix web run gates` (stage 5 step 10 runs them)."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/T30.md",
+      "startLine": 82,
+      "endLine": 85,
+      "text": "Not verified: a screen reader's announcement after the focus move; touch devices; the pixel layout of the\nEvidence heading row and the library filter bar before and after the `display: contents` wrappers (no\nscreenshot compared; such a wrapper draws no box); the focus ring colour on the moved focus; Signal's\ntests (no shared component changed)."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/T31.md",
+      "startLine": 108,
+      "endLine": 113,
+      "text": "Not verified: the page was read in headless Chromium opened from disk (`file:`) at 1440 and 390 px wide,\nnot in a reader's own browser; the explanation says reports are \"written by runs on the run service\"\n(README section 3: the finished report appears in the issuer library at the service's address) but the\npage cannot link to that address, which depends on where the service runs; the J6 probe's step c was run\nfrom a scratch copy, not as the probe is committed; no Edge run; a screen reader was not used (the state's\nh2 and the button's name are asserted in the test)."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/T32.md",
+      "startLine": 85,
+      "endLine": 90,
+      "text": "Not verified: the connected app (it has its own report history); the J6 probe's remaining\n`noReportYet: true` is a data condition in the fixtures (above), so a fixture that holds a readable run\nfor the four carded issuers was not tried; the empty state's wording against the finding's alternative\n\"draw 'No report yet' only when the subtitle counts none\" (not adopted: it would change fixture-written\ntext); keyboard order and screen-reader reading of the list beneath the empty state were not exercised\nbeyond the new test's document order; the full vitest suite and Signal's tests were not run."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/T33.md",
+      "startLine": 111,
+      "endLine": 115,
+      "text": "Not verified: that S2-006 closes (not repaired); the 320 px and 390 px layout of the point tile in a real\nbrowser beyond the probe's measurements and one screenshot at 390 px; a qualifier that is one unbroken word longer\nthan the tile (it would still overflow, as the sentence above it would; not part of the finding);\nthe page-level sideways scroll left by the Limitations header (T36); Signal's tests (no shared file touched).\n(Round 1's first item, that S2-006 closes, is answered by the follow-up below; its Signal item is answered there too.)"
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/T33.md",
+      "startLine": 218,
+      "endLine": 222,
+      "text": "Not verified: a date that carries a real trace, in a real browser (the fixture's four dates carry none, so the Chrome check and screenshot\nshow only the marker; the live control, its hover reveal and its drawer are covered in jsdom by clicking it); which module trace each date\nshould point at, and whether the delivery will write `trace` on dates (a data choice L5 left to the fixture's owners; no delivery, handoff or\nfixture file was touched); the connected app (it does not draw `Timeline` or read a date, so its tests were not run); keyboard-only,\ntouch, 480 px-and-below and screen-reader behaviour of the marker on a date (out of scope under R14 and R16); the weekly full suite."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/T34.md",
+      "startLine": 95,
+      "endLine": 104,
+      "text": "## Not verified\n\n- Live and connected data: the connected app's Changes page is a different component and was not touched\n  or run.\n- A blank `kind`, `change`, `cause` or `effect` is drawn as n.a. in the Table but as an empty badge or\n  nothing in the Cards; the fixtures contain none, and the reader permits it, so this is covered only by\n  the synthetic test case 5.\n- Other widths between 390 and 1440 px and a dark theme were not looked at; the new columns use the kit\n  table's own colours and only wrap and align changes.\n- Table row hover trace-control visibility was not re-checked beyond the existing test that passes."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/T35.md",
+      "startLine": 222,
+      "endLine": 222,
+      "text": "Not verified: the connected statement tables were not rendered in a browser after L9a (their pre-T35 state is read from `ModuleTable.tsx` and the passing connected suite, not a connected-app probe); the connected places above were read from code, not rendered, and a connected run was not counted marker by marker (the reviewer lists and classifies them under L9(b)); the connected `ReportLibrary.design.test.tsx` failure was seen once and not reproduced, so \"load flake\" is a reading; the marker on touch devices and screen readers, and Chrome's rendering of the dashed outline at 390 px and on the navy band beyond the S3-002 probe's focus measurement (carried over from the first implementer); no before and after screenshot was taken; the quality gate was not run because no Python changed."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/T35.md",
+      "startLine": 294,
+      "endLine": 294,
+      "text": "Not verified: the connected risk matrix was not rendered in a browser after L9b (the check is a scratch vitest render of `typedModuleTable` plus the passing connected suite; the reviewer's proof.serve run on 8735 that scanned 41 pages was taken before L9b, and the \"after\" column of row 2 comes from the reviewer's scratch render, which I did not repeat on a server); the reviewer's measured list was copied as given and not re-measured; the connected `ReportLibrary.design.test.tsx` failure under load is a reading (seen failing twice in whole-directory runs, passing alone and with one worker); the marker with a screen reader, and Chrome's rendering of the dashed outline on the navy band beyond the S3-002 probe's focus measurement (carried over from the first implementer); no before and after screenshot was taken; the quality gate was not run because no Python changed."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/T36.md",
+      "startLine": 69,
+      "endLine": 74,
+      "text": "Not verified: the layout in a real browser at widths other than 1440, 768, 480, 390 and 320 px, and with\nLimitations text lengths other than the fixture's (module page: Halden business-profile at all five widths;\nOverview pages: Halden and Brevane at 390 px through `reflow.mjs`, Halden 2026-09-30 at 320 and 1440 px);\nthe connected app (served by `proof.serve`), which was not opened (the component is imported only by the library\n`Module.tsx` and `Overview.tsx`); the S3-003 probe at 320 px reaching exit 0 (blocked by the RunFrame \"New run\"\noverflow, S3-029); the new unit test checks classes, not rendered pixels; the full vitest suite (weekly CI)."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/T37.md",
+      "startLine": 102,
+      "endLine": 110,
+      "text": "Not verified: the connected (served) Modules page was checked only through its vitest files and the C3 probe's\n`navigator.inputs` count, not by eye; the search sits in the shared `ModuleNav` and the connected page keeps its own\nnarrow-screen `<select>` picker, which was left alone. The single-column layout from 481 px to 1,000 px (a narrow desktop\nwindow, where the navigator still comes first and now carries the search field above the list) is the same layout as the\ndropped narrow-screen picker; R14 names 480 px and below, and the lead's instruction dropped the picker for T37, so it was\nnot built, and whether that instruction covers a desktop window between 481 and 1,000 px was not confirmed. The `S3-006.mjs`\n390 px line was read, not acted on. The search does not filter the \"On this page\" list, and it does not search module text,\nonly plain names. The check that the module-written text is unchanged rests on the diff touching only ordering in\n`Module.tsx`, not on a byte comparison of rendered output before and after."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/T38.md",
+      "startLine": 217,
+      "endLine": 222,
+      "text": "Not verified: Signal's tests and the Python quality gate (not run, see Gates); the whole vitest\nsuite (only the affected folders ran); the library's Forecast tab for a run whose model has no\nforecast in the connected app (the connected surface reads another data source and was not\nexercised); a screenshot of the sentence (none committed; the scratch browser check read text,\ntabs and overflow only, not the look); the one-case model, which stays refused (R3-001, for the\nowner); the connected half of C5-005 (the lead repairs it in step 7); the live service."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/T39.md",
+      "startLine": 258,
+      "endLine": 266,
+      "text": "Not verified: the pixel layout of the Evidence heading row with the filter on Summary and Record (checked one 1440 px\nscreenshot of the Record, no before and after pair); any run other than the fixture's Halden runs; a real handoff whose\nModel calls table has a different head for its code column (the column is found by the head \"Code\"); whether the\nSummary's per-module tiles are the form the owner wants; screen readers, touch devices, narrow screens and keyboard-only\nuse (R14, R16: not required); Signal's tests (no shared component changed). Round 2: the Summary's middle tile\nunder a module is found by position (the second of the run's counts), as the three-tile Summary is built everywhere\nin the fixtures; a run that delivers a different number or order of count tiles was not tried; the built page was\nnot checked on a run other than the fixture's; the Lows L1 to L5 of the round 1 review were left to the lead (not\nacted on)."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/T40.md",
+      "startLine": 103,
+      "endLine": 125,
+      "text": "## Not verified\n\n1. The drawer is thin by necessity. The Model slice delivers an address into the run's Evidence and no trace\n   content, so the drawer shows the item's name, a fixed sentence (\"The sources for this item are listed on the\n   run's Evidence page.\"), an \"Item\" row and \"Open in Evidence\". CM-008's \"lists the Basis items with source,\n   page, quoted passage and calculation steps\" cannot be met until the slice (`slice/read.ts`, `types.ts`,\n   `fixtures/model.json`, delivery) carries trace content; those files are outside T40. In the static fixture the\n   run's Evidence page does not exist in the library fixture either (S5-003, OQ-01), so \"Open in Evidence\" still\n   ends in \"No such issuer\" there.\n2. The control stays a link (role link, `href`, `aria-haspopup=\"dialog\"`) rather than becoming a button: 45\n   assertions in eight existing test files (and `p-trace-nav.mjs`) locate it by link role and check its `href`,\n   and a link keeps Ctrl-click and copy-address working. A button, as in the library, would be the tidier role.\n3. `PressTip` lives in `StatementTable.tsx` and `MetricTile.tsx` imports it, to stay inside the task's files; its own\n   file would be tidier.\n4. No real touch device or screen reader: touch was emulated (Playwright `hasTouch`, jsdom pointer events). The\n   info button is still 16 px; its target size is not part of S5-008. A tooltip opened by a tap is closed by a\n   second tap, a press elsewhere, Escape or blur.\n5. Ctrl-, Meta- and Shift-click were tested in jsdom only (no drawer), not in Chromium.\n6. S5-005 was measured at 390 px only (not 320 or 200 percent text); from `sm` up the layout is unchanged.\n7. The reason of an unreadable run is logged only on that run's page; an unnamed unreadable run has no page and\n   no log, as before. Two unreadable runs of one issuer look identical in the list.\n8. Every existing test that makes a slice unreadable now prints one `console.warn` line (only `RunPage.test.tsx` silences it).\n9. Not run: the full suite, `npm --prefix web run gates`, `proof:connected`, `test:file:gates`, the other S5 probes."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/T41.md",
+      "startLine": 191,
+      "endLine": 199,
+      "text": "Not verified: no screen reader was used, so the announcement of \"Info: Run started\" after Confirm is inferred\nfrom the focused element's text, not heard; the focused title shows the browser's default focus ring (seen in\nheadless Chromium only), and the focus-return behaviour was probed in Chromium only (not Firefox or Safari);\nthe Purpose card's focus ring is checked by computed style and pixels, not on a real display, and the wrapped\nlabel chip only at 390 px and 1440 px (320 px reflow not re-measured); the Runs index was looked at at 1440 px\nand 390 px only, with the fixture's runs (its running and starting runs draw identical rows, so they differ\nonly in the link target); the connected app's Start page was not opened in a browser (its tests pass and it\nshares `PurposeCards`); the `none` run page's plain-text \"Runs\" trail was left unlinked (no run exists to list\nfrom it); `npm run test` with coverage, `test:scripts` and `audit` were not run."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/T42.md",
+      "startLine": 28,
+      "endLine": 28,
+      "text": "Not verified: browser pixels or a live provider; no paid call, real Submit, or supplied-source download was made. The synthetic combined fidelity check remains the lead's stage 5 check."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/batch-a-review.md",
+      "startLine": 130,
+      "endLine": 138,
+      "text": "Not verified: no browser run of any changed screen, so none of the layout claims is shown at pixel level\n(the Changes page without a card, the Overview flex row, the Add-button sentence, the Delivery item, the\nloading line, the calendar markers); the legacy start form's rendering of the two portfolio Checks was read\nfrom its source, not drawn; `npx vitest run src/pages src/components` (Signal's tests) and the full Python\nsuite were not run, and no shared or Signal file is in the diff; `tests/test_document_key.py` was not run;\nthe three 375 px tests and the one `ReportLibrary.design` test fail or flake in this environment on the base\nas well, so this review cannot say they would pass on the work PC; the chunk's file list was not given to\nthis review, so \"no file outside the list\" was judged against each finding's evidence paths, which every\nchanged file matches; `VERIFICATION.md` was not checked (not in the chunk)."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/batch-a-review.md",
+      "startLine": 205,
+      "endLine": 216,
+      "text": "Not verified: no browser run of either start page, so neither the Check text beside its button on the legacy\nform nor the connected review sheet was drawn, only read from the source and exercised by string tests; the\nconnected page's own go-to-step button for these two Checks is `batch-a.md`'s open item and was not looked at;\nthe `portfolio-workbook-not-chosen` rule has no pathway gate, so whether the Portfolio workbook select is\ndrawn at every level and pathway where that Check can fire was not traced (the control is drawn for\nAdvanced, Portfolio decision, Credit snapshot and Deep credit assessment, per `StartRun.tsx`; the sentence\nhad the same reach before round 2); `tests/test_run_start_page.py` (browser tests) was not run in round 2\n(round 1 ran it: 153 passed, 3 failed, the same 3 as on the base: 375 px windows); the rest of the Record\npage and the other vitest files were not rerun (round 1 ran all of `src/pages/connected`; the only source\nchange since is `deliveryFigure`); the full Python suite, Signal's tests and `tests/test_cpos_launch.py`\nwere not run; RV-3 was not re-examined; whether the owner accepts the wording \"The run's event log could not\nbe read.\" is the owner's call (the session chose it)."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/batch-a.md",
+      "startLine": 219,
+      "endLine": 229,
+      "text": "Not verified: the legacy start form's rendering of the two reworded Checks was read from its source and\nnot drawn (round 2); no browser run of any changed screen (no probe from `docs/audit/.../probes/` was re-run\nagainst `proof.serve`), so layout claims are untested at pixel level: the Changes page without a card,\nthe flex row on Overview, the Add-button sentence beside its button, the Delivery item in the Record\ntotals, the single-line yield label (open) and the 24 px markers (closed by R14); the\n`tests/test_cpos_launch.py` and `tests/test_document_key.py` runs did not finish in round 1 (the review\nran `test_cpos_launch.py` in parts, all passing); `tests/test_context_form.py` ran in round 2 (passed),\n`tests/test_run_start_page.py` (browser) did not run in round 2; the full Python suite and the weekly job were not run; no fidelity check was recorded in\n`VERIFICATION.md` for the presentation changes (that file is not in this chunk's list); the Record\n\"Delivery\" wording (including \"The run's event log could not be read.\") and the \"Loading the portfolio\nlimits.\" line were chosen by this session and have not been read by the owner."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/batch-audit-tools-review.md",
+      "startLine": 91,
+      "endLine": 91,
+      "text": "Not verified: the full Python suite, weekly/Windows CI, frontend/browser gates, browser fidelity and the eventual combined audit tree; live providers, paid Submit, seats and Teams; arbitrary malformed JSON outside the tested cases. Historical named models and confidence-review/rewrite-tournament skills are unavailable; this fresh source review and the explicit negative-case comparisons supply the audit brief's fallback review."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/batch-audit-tools-round2-review.md",
+      "startLine": 57,
+      "endLine": 57,
+      "text": "Not verified: final combined repository gates, the full Python/weekly/Windows suites and browser fidelity; live providers, seats and Teams. The separate default-quality-gate regression continues to require its normal Git baseline; the retained register fixture and builders were independently exercised without Git metadata. Historical named models and review skills remain unavailable; the explicit source and adversarial checks above supply the brief's fallback review."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/batch-audit-tools-round2.md",
+      "startLine": 59,
+      "endLine": 59,
+      "text": "Not verified: fresh independent review and the final combined repository gates; the full Python/weekly/Windows suites. The register fixture and builders work without Git metadata, but the existing separate cumulative quality-gate test still requires its normal Git baseline; this repair does not redesign that environment requirement. Requirements-table manifests and lock files remain unchanged and outside this register-input isolation scope."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/batch-audit-tools.md",
+      "startLine": 109,
+      "endLine": 114,
+      "text": "Not verified: the full Python suite, weekly and Windows CI, frontend/browser gates,\nbrowser fidelity, live providers and Teams cards. This is offline audit-tooling\nverification on the stated base and inputs. Named historical models and the\nconfidence-review/rewrite-tournament skills are unavailable; the explicit reviews\nabove use their stated fallback process. Fresh independent review is the lead's\nnext step before integration."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/batch-b-review.md",
+      "startLine": 171,
+      "endLine": 178,
+      "text": "Not verified: no browser, screenshot or `npm run build` / `file-check` run, so the label above the\nsearch field, the toast position, the readiness rows, the alert ring and the Documents step are\nunseen, and the fixture build was not exercised; the full vitest suite, the slow tests and the rest of\n`src/pages/connected` were not run; the chunk's file list was not available to this review, so the\nreasons for leaving J6-007, S3-036, S4-003 and S5-018 open and for leaving `Context.tsx` and\n`Start.tsx` (S6-022) alone rest on the report's statement that those files are outside the chunk\n(J6-007's `RunFrame.tsx` is confirmed as repair-3's in `tasks.md`); `Not verified` items in\n`batch-b.md` stand; no VERIFICATION.md entry, confidence-review or rewrite-tournament was checked."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/batch-b.md",
+      "startLine": 160,
+      "endLine": 164,
+      "text": "Not verified: no screenshot or browser run of any change (the focus ring, the label above the search\nfield, the toast, the readiness rows, the alert ring and the Documents step were checked in jsdom\nonly); no `npm run build` or `file-check` of the fixture build; the full vitest suite and the slow\ntests were not run; no Python changed, so the quality gate and Python tests were not run; the library\nfixture's USD 20.00 Evidence bars and the open findings above were not changed."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/batch-b.md",
+      "startLine": 261,
+      "endLine": 266,
+      "text": "Not verified: no browser run of the fixture build or of the four new reports (they were rendered in\njsdom only); the `ComparisonChart` wrap was measured in Chromium on a scratch page with the app's CSS,\nnot on the Securities page of the connected build, and with whatever font that CSS loads; no\n`npm run build`, `test:file` or file-check, and no `params` entries were added for the new issuers'\nhistory or run routes, so the build's route visits do not reach them; the full vitest suite and the\nslow tests were not run; the two `readRecord.test.ts` assertions were not changed."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/batch-b2-review.md",
+      "startLine": 185,
+      "endLine": 192,
+      "text": "Not verified: no run of the fixture build, `npm run build` or `test:file`/file-check (the new runs are\noutside `params`, so those visits would not reach them anyway); no browser view of the four new reports\nor of the Securities page in the connected build (the wrap was measured on a scratch page with Arial,\nnot the app's font or CSS, and \"7.0100%\" itself already fits 56px in that font, so the measured wrap\ncases are \"USD 1,150m\", \"7.005000%\" and \"-1,234,567.8\"); the full vitest suite and the slow tests; no\nPython test or `tools/quality_gate.py` (no Python changed); the `audit/lead-batch-c` merge was read\n(`a7a3891`) but not built with this branch; no check that the invented fixture sentences (covenant\ntiming, volumes, subscribers) are plausible beyond internal agreement; no paid call."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/batch-c-review.md",
+      "startLine": 151,
+      "endLine": 151,
+      "text": "Not verified:"
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/batch-c-review.md",
+      "startLine": 244,
+      "endLine": 255,
+      "text": "### Not verified:\n\n- The hollow square in a badge on a real page, by sight; and any grayscale or contrast check of the neutral badge with\n  it. I looked at the bare SVG at 1x and 8x only.\n- Whether the owner accepts the hollow square (OQ-09 does not name a shape).\n- That the new tests fail against the old `sets.ts` and `shapes.tsx`: I read them but did not run them against the\n  previous code (the implementer's report says four failures before the change).\n- The rest of `src/pages/connected/` (ConnectedApp, ReportContent.records), `src/pages/model`, `src/pages/library`,\n  `src/pages/run` and `src/styles` after this commit; they were not run in round 2 and are unaffected by it as far as\n  the diff shows (no file outside the status folder and the design doc changed).\n- The full vitest suite (weekly CI), `npm run unused`, `duplication`, and the Python gate (no Python in the diff).\n- Timing-sensitive tests at normal load."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/batch-c.md",
+      "startLine": 177,
+      "endLine": 193,
+      "text": "## Not verified:\n\n- The rest of `src/pages/connected/` (about 47 files) passed in one combined run that also had 8 failures, all in\n  `ConnectedApp.test.tsx` and `ReportContent.records.test.tsx`; both pass when run alone. The machine was at load 10\n  to 14 from other batches' test runs, which looks like timeouts, but I did not rerun the whole directory quietly.\n  Top-level `src/*.test.tsx` and `src/shell` were not run.\n- No browser check of the changed components (select wrapping, tab hover, the track n.a.); behaviour is asserted by\n  class and DOM in jsdom only. The Tailwind `wrap-anywhere` utility is the one the app already uses. For the new\n  shape (round 2) the only look is one headless screenshot of the bare SVG at 10px, not of the badge on a page, and\n  no grayscale or contrast check of the neutral badge with the hollow square.\n- The hollow square is my pick of shape for \"Not ready\"; the owner did not name one (OQ-09 says only \"its own\n  shape\"), so the lead may want the owner to confirm it. Other design docs that mention the ten shapes\n  (`docs/design/states-2.md`, `component-map.md`) are outside this chunk's file list and were not edited.\n- R-3 (`web/src/pages/model/slice/types.ts:392`, a comment that says a null range draws no marker) is not repaired.\n- The static library (`apps/issuer-library`) and the Python build were not looked at for a second drawing of the\n  Source readiness shapes; a grep of `src`, `apps` and `tests` found no shape table outside `web/`.\n- `npm run unused` (knip), `duplication` and the full `build`/file-open gates were not run."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/batch-charts-shared.md",
+      "startLine": 112,
+      "endLine": 112,
+      "text": "Not verified: new-slot colour-blind simulations or a physical grayscale print (the retained grayscale check measures relative luminance independently); all connected partial/malformed chart variants in a native browser (their source/DOM regressions passed); final combined-tree gates, proof and fidelity capture; weekly/full Python/Windows jobs; real issuer/model execution and Teams (outside this scope). Historical requested models and named confidence-review/rewrite-tournament skills are unavailable here; direct confidence and simplest-design reviews are recorded above."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/batch-connected-evidence.md",
+      "startLine": 103,
+      "endLine": 103,
+      "text": "Not verified: no browser/pixel checks or original C5 browser probes were rerun in this worker; the lead must run the combined presentation fidelity check and final frontend gates. No live provider, real Submit, Teams call, Windows/browser-channel or release-package check ran here. C5-025's drawer half, C5-033's actual admission/retention mechanism and C5-013's matrix wording remain lead work. Named historical models/skills were unavailable; available-agent direct confidence/simplification checks were used under R7."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/batch-connected-shell.md",
+      "startLine": 84,
+      "endLine": 84,
+      "text": "Not verified: browser hover/layout and native Back/Forward were not exercised in this worker; the existing NavButton tooltip was checked by its caller contract, not by a hover screenshot; the original browser probes were not rerun, and combined-branch screen/figure/source/limitation fidelity remains the lead's stage-5 check; ReportReader loading, report subpage titles, report unit/sign formatting, the distinct report Run-progress action and metric-level card traces are explicit handoffs above; Windows/work PC, native branded-browser connected proof, release packaging, real providers/paid Submit and Teams were not exercised here; the named historical models and named review skills were unavailable."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/batch-connected-start.md",
+      "startLine": 129,
+      "endLine": 135,
+      "text": "Not verified: no original browser probe or screenshot was rerun for this chunk; no combined fidelity\ncapture, full frontend gates or connected browser proof was run here (lead owns those); clipboard/folder\npicker behaviour and pixel layout were not measured; duplicate bytes of carried-only files cannot be\ncompared from filename-only prior metadata and were not claimed; real issuer data, model responses,\nprovider/paid execution, Teams, Windows and a real work-PC browser were not exercised; named\nconfidence-review/rewrite-tournament skills and requested historical model variants were unavailable,\nso their direct review/simplification fallback was used."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/batch-contract-docs.md",
+      "startLine": 112,
+      "endLine": 112,
+      "text": "Not verified: original downloads' bytes in a newly executed browser proof (producer/route mappings and exact existing offer addresses were read and unit-tested); browser/pixel rendering of these two added Record sections; the final combined fidelity capture and repository-wide frontend/Signal gates, which belong to the lead; every current matrix row against a live run; Windows, a real issuer/model/provider run, real Submit, Teams or a retained-preview execution. No Signal or shared library-part code changed, so Signal's suite was not repeated in this chunk. Historical named models/skills were unavailable; direct confidence and simplest-design reviews above used the available worker."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/batch-draft-review-tails.md",
+      "startLine": 80,
+      "endLine": 83,
+      "text": "Not verified: live/provider execution, Teams, work-PC setup, runtime OS-clock changes, multi-process\naccess to one root (the service is specified as one process), stress/load operation, real Submit,\nand an end-to-end browser eviction walk; this patch's recovery fidelity is exercised in the\nsynthetic component/service tests."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/batch-fixture-followups-round2.md",
+      "startLine": 54,
+      "endLine": 56,
+      "text": "Not verified: final combined repository gates, handoff fidelity capture, Windows/real-browser\nrendering, or a real provider run. This fixture-only round exercises the qualification through\nthe reader and rendered Record route in jsdom."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/batch-fixture-followups.md",
+      "startLine": 95,
+      "endLine": 95,
+      "text": "Not verified: browser rendering/clicks of the new saved TransDigm targets and unavailable downloads; the original audit probes (several assert removed fixture wording); the combined final-tree frontend/Signal gates and fidelity after-capture, which belong to the lead; the full Python/weekly/Windows suite; a real issuer or paid run; the started-page intro half of S6-031 (owned by the static run worker). The new target pages were checked as fixture/reader data, not as real-issuer analytical reports."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/batch-forecast.md",
+      "startLine": 22,
+      "endLine": 22,
+      "text": "Not verified: final combined fidelity/closure review, any live case, and independent primary/adversarial final verdicts on T18 code `f7f1e011`. Early independent source/context findings and their test-first fixes are recorded in T18.md; early `eaf0a879` is not claimed as a pass. The original Low/Info probes and snapshots remain unchanged. Native Chrome/Edge synthetic and snapshot-intercepted state checks passed as recorded in T18.md; no live-model conclusion is claimed."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/batch-integration.md",
+      "startLine": 101,
+      "endLine": 106,
+      "text": "Not verified: browser rendering and the before/after fidelity capture; full frontend\ngates and connected proof; weekly and Windows CI; real model execution and Teams\ncards (out of scope). Named historical models and the confidence-review and\nrewrite-tournament skills are unavailable here; the available agent performed the\nexplicit integration review above. Final combined-tree verification remains the\nlead's stage 5 and stage 7 work."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/batch-inventory.md",
+      "startLine": 271,
+      "endLine": 271,
+      "text": "Not verified: browser layout, command gates, final combined merge, and any newer remote pushes after this inventory; all classifications use retained source/report evidence only."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/batch-inventory.md",
+      "startLine": 295,
+      "endLine": 295,
+      "text": "Not verified: runtime behavior, layout, tests and gates; only the retained source/report evidence above was inspected."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/batch-report-followups.md",
+      "startLine": 134,
+      "endLine": 134,
+      "text": "Not verified: this worker did not rerun original browser probes or capture after pixels; the lead owns the combined fidelity check and VERIFICATION.md entry. No full weekly suite, live/model execution, real Submit, Teams call, Windows/release-package check or paid issuer proof ran. Other shell titles/skeletons/dates, Changes-wrapper repair, Evidence half of C5-025, T22 confidence-drawer parsing and LegacyForecast unit labels require their separate worker integration. Requested historical models/skills were unavailable; direct confidence and simplest-design review used the R7 fallback."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/batch-runtime-metadata.md",
+      "startLine": 152,
+      "endLine": 152,
+      "text": "Not verified: native browser/pixel rendering and the combined before/after fidelity capture; final complete frontend/Signal gates, connected proof, release packaging and Windows/work PC (lead stages 5–7); real issuer/provider execution, paid Submit, seat access or Teams (none attempted). Signal was not rerun in this metadata-only worker because no changed type/helper has a Signal caller; the lead's final full gate remains required. Metadata proves recorded accepted-response identity and current publication membership, not analytical correctness, actual paid execution or an admission timestamp. Historical named models and confidence-review/rewrite-tournament skills are unavailable; direct doubt tracing and simplification above were used."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/batch-static-followups-round2.md",
+      "startLine": 68,
+      "endLine": 70,
+      "text": "Not verified: repository-wide frontend gates and the combined handoff fidelity comparison;\nreal Windows use; paid or real-issuer execution; arbitrary browser zoom and fonts outside the\nrecorded native Linux browsers. The lead retains combined-tree verification responsibility."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/batch-static-followups.md",
+      "startLine": 119,
+      "endLine": 122,
+      "text": "Not verified: final combined Model/Signal test completion after the fixed 300-second attempt was\ncapped; final repository-wide gates and handoff fidelity comparison (the lead runs these on the\ncombined tree); real Windows/Edge use; a live model run; per-row source identities absent from the\nsaved fixture (displayed explicitly as not recorded); S6-026 paths outside the assigned new-run route."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/batch-static-library-run.md",
+      "startLine": 131,
+      "endLine": 131,
+      "text": "Not verified: real browser Back/Forward and pixel layout; before/after handoff fidelity capture, final combined frontend gates and connected proof (lead stages 5/7); the bare `/run/start` guard and fixture portions owned by other workers; Windows and weekly CI; live models and Teams (out of scope). Historical named models and confidence-review/rewrite-tournament skills are unavailable; direct doubt tracing and simplification above were used."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/batch-static-pair-review.md",
+      "startLine": 207,
+      "endLine": 207,
+      "text": "Not verified: repository-wide coverage/unused/duplication/audit and connected proof gates reserved for the lead; full combined handoff fidelity after-capture; every original browser probe (some inspect old wording or wrong heading levels); a full weekly/Python suite; Windows desktop operation; a real issuer/model run, provider, real Submit or Teams call. No Signal, method, prompt, calculation or proof-handoff file was changed by either reviewed chunk or this reviewer."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/batch-ui-review-tails.md",
+      "startLine": 121,
+      "endLine": 123,
+      "text": "Not verified: fresh independent review; final combined-branch gates and VERIFICATION.md entry;\nthe timed-out broad directory suite as a whole; full Python/frontend suites; Edge/work-PC\nbehavior; live/provider execution, real Submit or Teams (outside this task)."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/batch.md",
+      "startLine": 42,
+      "endLine": 44,
+      "text": "Not verified: real or paid runs, Windows, Teams work-PC behavior and\nrelease-package execution. Read the [fidelity limits](fidelity/after-report.md)\nfor capture coverage."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/closure-current.md",
+      "startLine": 295,
+      "endLine": 295,
+      "text": "Not verified: this read-only inventory reran no tests/build/browser/network activity. Lead combined acceptance, Stage6 and Stage7 remain separate; no live/paid/provider/seat/real Submit/Teams result is claimed."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/closure-planning-63a12ceb.md",
+      "startLine": 294,
+      "endLine": 294,
+      "text": "Not verified: no independent test/browser/gate run by this ledger worker; no production/register edit, push, merge or external paid/service action. Combined group2/Stage5 gates/fidelity, Stage6 and Stage7 remain lead-owned."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/contract-doc-scope.md",
+      "startLine": 123,
+      "endLine": 123,
+      "text": "Not verified: rendered UI/runtime behavior, analytical or handoff fidelity, paid/provider execution, seat checks, real Submit, Teams, application network activity, Windows/native-browser behavior, broad weekly suite and unrelated concurrent work."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/evidence/combined-bb94/frontend.md",
+      "startLine": 61,
+      "endLine": 61,
+      "text": "Not verified: Browser/connected flows, build/file gates, Python, provider/paid/live/seat/real Submit/Teams behavior, stage 6 changes, or any application source after the recorded bb94ddce pin."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/evidence/combined-bb94/python-first-pass.md",
+      "startLine": 176,
+      "endLine": 176,
+      "text": "Not verified: resolution of the pathway issued-record failure; the three known-failure nodes; the existing case-insensitive-filesystem scenario; live/paid providers, seat checks, real Submit and real Teams; browser-marked tests and full frontend Vitest/build/proof gates (owned by the coordinator/capture work); weekly/full suites and unchanged slow financial_workflow tests; stage 6 and stage 7."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/fidelity/README.md",
+      "startLine": 336,
+      "endLine": 346,
+      "text": "Not verified: whether a drawn value is right where it is `derived` and not recomputed (the forecast model output, the script checks, the run record, axis ticks, the calendar,\nthe evidence counts, whether a chart's ticks cover its data, and everything named only in `derivedSummary`); the height of a bar against its value (only\nwhether the mark is a bar, a zero bar or missing is checked); any item whose source cannot be identified and matched by existence only (the `via` values that say so), so a wrong\nnumber on a screen that happens to be in the same module's handoff, or the same run's fixture, under another label is not reported; the label, period, unit and basis fields\nof the capture, which the rules use where they are present (they are heuristics, see above), and a unit, period or label the screen leaves out altogether (except the Overview unit check);\ncolour, tone, ordering, layout and everything under \"What it leaves out\"; that the page's drawn text is what a reader understands; the wording of a drawer other than its statement, handoff line and basis;\nthe connected Changes page of a real two-run history (the paired-run screens are checked against the values `web/scripts/connected-proof.mjs` injects, not against a run); any real run, issuer or pathway (the\nhandoffs are the canned synthetic ones, the fixtures are design fixtures); the delivered handoff's own preamble and line numbering beyond the one offset the drawers imply; the markdown the handoff is\nrendered from beyond what the rules read (headings, tables, bullets, `Basis:` lines); the \"after\" capture and any before-and-after comparison, which do not exist yet; determinism on another machine or\nNode version (two runs here gave identical files, Node v22.23.4); and, from the capture, that the heuristic fields classify correctly on a changed screen, what a mark's pixel size stands for, hover and tooltip\ncontent, narrow layouts, dark mode and the choices and pages listed under \"What it leaves out\"."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/fidelity/after-report.md",
+      "startLine": 110,
+      "endLine": 116,
+      "text": "Not verified: issuer inputs outside this synthetic run and these static\nfixtures, the model calculations that the comparator only names, CSS\ncolour, visual mark placement and layout fidelity, other browsers or widths\nfor this capture, hover-only content and unenumerated controls such as\nstatic Home Layout List, physical print, Windows or the work PC, and\npaid/live/provider/seat/real Submit/Teams behavior. The full frontend\ngates and sweep acceptance are tracked separately."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/fidelity/compare-after.md",
+      "startLine": 366,
+      "endLine": 366,
+      "text": "Not verified: see README.md, \"Comparison\", end of section."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/fidelity/compare-before.md",
+      "startLine": 123,
+      "endLine": 123,
+      "text": "Not verified: see README.md, \"Comparison\", end of section."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/fidelity/diagnostics/PRELIMINARY-preparation.md",
+      "startLine": 54,
+      "endLine": 56,
+      "text": "Not verified: the final source and its report; a live model run; another machine or\nbrowser; visual mark geometry, hover content, and the existing comparator's stated\nlimitations. A fresh reviewer must accept the harness change before integration."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/fidelity/guard-return.md",
+      "startLine": 96,
+      "endLine": 100,
+      "text": "Not verified: final fidelity capture/comparison on the lead-approved source pin;\nfull synthetic browser journey; native browser execution of the optional evidence\nprobe; fresh security/caller review and lead second read; work-PC release execution;\nprovider/live/seat/real Submit/Teams behavior. No non-loopback connection, DNS override,\npaid execution, push or merge was performed."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/fidelity/missing-marker-capture.md",
+      "startLine": 127,
+      "endLine": 130,
+      "text": "Not verified: full merged connected/static AFTER capture, full final-source fidelity\ncomparison/diff and presentation acceptance; post-merge frontend/package/Windows\ngates; delayed dialogs beyond the marker's keyboard-event/two-frame observation;\npaid/provider/live execution, seats, real Submit, Teams or any outside application."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/fidelity/proof-local-consequences.md",
+      "startLine": 80,
+      "endLine": 82,
+      "text": "Not verified: native Chrome/Edge proof on the integrated approved combined pin;\nfinal fidelity capture/comparison; fresh combined security/caller review and lead\nsecond read; work-PC execution; provider/live/seat/real Submit/Teams behavior."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/issued-record-fixture.md",
+      "startLine": 59,
+      "endLine": 59,
+      "text": "Not verified: the complete final CI selection was not rerun here; browser/fidelity and release checks remain with the lead. No paid/provider/live execution, seat check, real Submit or Teams action ran. Signal, methods, prompts, calculations, canned handoffs and module text were not changed. Historical named review skills were unavailable; direct confidence and simplification review was used under R7."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/lead-connected-integration.md",
+      "startLine": 126,
+      "endLine": 130,
+      "text": "Not verified: acceptance of either original repair group, unpushed T18/T22 work,\nlater connected report/chart follow-ups, full frontend gates and connected proof,\ncombined browser fidelity, full Python/weekly/Windows CI, live providers and Teams\ncards. The static-pair review report contains its own native Chrome/Edge checks;\nthis task exercised the combined candidate through targeted offline tests only."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/lead-connected-integration.md",
+      "startLine": 212,
+      "endLine": 216,
+      "text": "Not verified: original group acceptance and later recovered T18/T22 commits;\nruntime and documentation-contract follow-ups; the complete combined frontend\ngates, connected proof and browser fidelity; full Python, weekly and Windows CI;\nlive providers and Teams cards. Review remains local and no branch was pushed or\npromoted by this task."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/lead-connected-integration.md",
+      "startLine": 322,
+      "endLine": 326,
+      "text": "Not verified: the five reference-matcher failures remain unresolved pending the\nlead's separately assigned R4-012 repair; runtime\nmetadata, contract/docs and T22 integration; group 2 PR/actual-final acceptance;\ncomplete combined gates, connected proof and browser fidelity; full\nPython/weekly/Windows CI; provider/live/Submit/Teams."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/lead-connected-integration.md",
+      "startLine": 386,
+      "endLine": 389,
+      "text": "Not verified: the original interrupted calls' tool exit records; R4-012's five untouched failures;\ncontract/docs R4-014 and T22 R4-013 repairs/reviews/integration; group 2 PR/CI and\nactual-final promotion; full combined gates/proof/fidelity, Windows/weekly/full\nPython and provider/live/Submit/Teams behavior."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/lead-connected-integration.md",
+      "startLine": 446,
+      "endLine": 450,
+      "text": "Not verified: R4-012's five unchanged failures and T22\nR4-013 repair/review/integration; group 2 PR/CI/actual-final acceptance; full combined\ngates, connected proof, browser/download-byte fidelity and release packaging;\nWindows/weekly/full Python, live providers, paid execution, seat, real Submit and\nTeams. No branch was pushed or promoted by this integration."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/lead-connected-integration.md",
+      "startLine": 523,
+      "endLine": 527,
+      "text": "Not verified: historical raw-log whitespace remains as\nlisted; R4-012 repair/final review/integration and proof-harness alignment;\noriginal group 2 PR/CI/actual-final acceptance; final combined full gates,\nconnected proof and browser/handoff fidelity; Windows/weekly/full Python,\nprovider/live/paid/seat/real Submit/Teams. No branch was pushed or promoted."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/lead-connected-integration.md",
+      "startLine": 592,
+      "endLine": 597,
+      "text": "Not verified: page-title timing under the eventual combined full gate; proof-harness alignment and\nadditive coordination audit-data/helper copying; final combined full gates,\nconnected proof, native-browser/handoff fidelity and actual-final promotion;\nhistorical raw-log whitespace remains as listed; Windows/weekly/full Python,\nunlimited natural-language citation forms, analytical correctness,\nprovider/live/paid/seat/real Submit/Teams. No branch was pushed or promoted."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/lead-connected-integration.md",
+      "startLine": 654,
+      "endLine": 659,
+      "text": "Not verified: the strict canonical Chrome/Edge connected proof after promotion\non actual-final's own environment; R4-017/R4-018 fidelity-helper return/review;\nadditive coordination audit-data/helper copying, final combined full gates and\nbrowser/handoff fidelity, Windows/weekly/full Python; earlier historical log\nwhitespace and page-title timing under the full gate; provider/live/paid/seat/\nreal Submit/Teams. No branch was pushed or promoted by this integration."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/lead-connected-integration.md",
+      "startLine": 725,
+      "endLine": 730,
+      "text": "Not verified: the next canonical native Chrome/Edge proof on actual final;\nfinal AFTER capture/comparison and browser/handoff fidelity acceptance; additive\ncoordination audit-data/helper copying and full combined gates; earlier raw-log\nwhitespace and page-title timing under the full gate; Windows/weekly/full Python,\nprovider/live/paid/seat/real Submit/Teams. No root worktree, source branch, final\nbranch or main was mutated, pushed or promoted by this task."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/lead-review-group1-preliminary.md",
+      "startLine": 98,
+      "endLine": 101,
+      "text": "Not verified: the C5 probe (not asked this round); R1-004 end to end through `update_library` to\n`/connected/snapshot` (`describe` checked by direct call and by reading every caller); a real locked\nfile at `credit_os_catalogue.py:417` (the suite patches `Path.read_bytes`); the static library page in a\nbrowser; the parked R1-005, R1-006, F2, F3, R2-2 and L-2 / R2-3; a live run."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/lead-review-group1-preliminary.md",
+      "startLine": 149,
+      "endLine": 153,
+      "text": "Not verified: a real launcher run with an earlier run listed (CP-8 states are `teams.progress` on\nconstructed event logs, the run-page figures read from round-3's measurement and `cpos_launch.prepare`, not\nfrom a run); a posted Teams card; `tests/test_run_start_page.py`; the live service path and providers; the\n`web/` gates (no `web/` change); whether the lead separately authorised round 4's change to the L6a formula\n(the report records no new ruling; the task brief for this review asks for the CP-8 fix)."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/lead-review-group1-preliminary.md",
+      "startLine": 239,
+      "endLine": 239,
+      "text": "Not verified:"
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/lead-review-group1-preliminary.md",
+      "startLine": 270,
+      "endLine": 272,
+      "text": "Not verified: no screenshot compared by eye; no real two-Submit run against the service with a dropped reply (the\none-run claim is from reading `scheduler.submit` and re-running `tests/test_run_start_scheduler.py -k submit_twice`, 1 passed); `p12-states.cjs`\nnot re-run (judged from its source); the live (non-synthetic) Submit dialog only through the unit tests."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/lead-review-group1-preliminary.md",
+      "startLine": 380,
+      "endLine": 380,
+      "text": "Not verified: a live model's CP-4 at the gate (R4, no paid call); `proof:connected` on branded Chrome and Edge (none here), so the doc's description of the proof was read against the script text, not run; Windows and the packaged proof (not built); the L2 test's `draft` case end to end through the scheduler (only `canned_handoff` is driven); a `--modules` subset with CP-4 but not CP-3 under no legal documents; the first review's J1 journey exit-1 explanation was not re-run."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/lead-review-group1-preliminary.md",
+      "startLine": 382,
+      "endLine": 382,
+      "text": "Not verified: clean all9-file Vitest run under concurrent load; final combined-tree CI/full frontend gates/fidelity; browser probes in this fresh review; branded-browser connected proof; Windows/work PC; real provider/paid Submit/Teams; future pushes after reviewed tip."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/lead-review-group2-preliminary.md",
+      "startLine": 73,
+      "endLine": 73,
+      "text": "Not verified: T18 round 4 and T22 are not pushed into this branch tip; no browser screenshots/probes or final combined-tree fidelity capture in this review; no frontend full gates or connected proof; no live/model/paid run, real Submit, Teams, work PC or Windows runtime; weekly full suite/Windows CI. Historical reports retain their own narrower limitations. The concrete new source-page loss is reproduced directly, not repaired or unit-tested by this read-only review."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/lead-review-repair1-lease.md",
+      "startLine": 44,
+      "endLine": 44,
+      "text": "Not verified: old-base red run not repeated by this reviewer; the parent's full affected pytest result is separate; high-load stress beyond the deterministic two-thread schedule, wall-clock jumps, browser UI recovery and Windows/work-PC file semantics were not exercised; no real provider/paid execution/seat/Submit or Teams."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/lead-small-review-fixes.md",
+      "startLine": 104,
+      "endLine": 109,
+      "text": "Not verified: final combined-branch gates, the full Python suite, all application\nroutes, Windows/work-PC behavior, real issuer/provider function, paid/live runs,\nseat checks, real Submit or Teams; named confidence-review/rewrite-tournament\ntools were unavailable. Native loading observations use a deliberately pending\nlocal synthetic response, and static history observations use the existing\nfixture; neither proves analytical output fidelity for a real run."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/matrices/amendments.md",
+      "startLine": 344,
+      "endLine": 344,
+      "text": "Not verified: this document is not a re-audit of every matrix row against a live run. The final combined browser/fidelity checks belong to the lead; no paid run, Windows operation or Teams call was made."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/proof-alignment-R4-016.md",
+      "startLine": 38,
+      "endLine": 41,
+      "text": "Not verified: independent rereview of this artifact-only cleanup; the complete\nconnected journey remains blocked by separately assigned R4-015 until the lead\napproves its product repair. No full proof, provider, paid/live run, real Submit,\nseat or Teams action was performed for this Low."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/proof-alignment-evidence/harness-independent-review.md",
+      "startLine": 131,
+      "endLine": 136,
+      "text": "Not verified: the complete connected journey after the known R4-015 product\nfailure (later Record, script checks, download/hash, paired Changes and final\nlibrary assertions); independent rerun of full frontend/Python/weekly/Windows,\npackaging/ZIP or original finding probes; actual provider/paid/live execution,\nreal Submit, seats, Teams or any application traffic to an outside host. No\nsuch action was performed in this review."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/proof-alignment.md",
+      "startLine": 165,
+      "endLine": 171,
+      "text": "Not verified: a complete green connected journey is blocked by the separately\nreported synthetic execution classification defect, so the later Record,\nscript-check, download/hash, paired Changes and final library assertions have\nnot yet completed; artifact-only R4-016 rereview and accepted runtime/T22/R4-012 integration,\noriginal finding probes, full combined fidelity/frontend/Python/weekly/Windows\ngates, release packaging, real providers, paid/live runs, real Submit, seats and\nTeams remain outside this harness task."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/repair-2-completion.md",
+      "startLine": 11,
+      "endLine": 11,
+      "text": "Not verified: final CI/PR acceptance, complete combined gates/fidelity/proof, weekly/full Python/Windows/release jobs, live or paid analytical execution, work-PC Teams and actual company inputs beyond the labelled synthetic scopes."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/report.md",
+      "startLine": 55,
+      "endLine": 57,
+      "text": "Not verified: real provider or paid execution, real Submit, seat access,\nTeams work-PC behavior, Windows or the release package. The fidelity\nreport identifies the exact inputs and presentation checks in scope."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/review.md",
+      "startLine": 35,
+      "endLine": 37,
+      "text": "Not verified: real or paid runs, Windows, work-PC behavior and release\npackaging. See [fidelity scope](fidelity/after-report.md) for screen and\ncomparator limits."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/reviews/R4-015-adversarial-review.md",
+      "startLine": 35,
+      "endLine": 35,
+      "text": "Not verified: canonical Chrome/Edge connected-proof GREEN after integration, combined-tree full gates/fidelity, Windows/work-PC and weekly/full suite, real provider/paid/live execution, actual Submit, seats, Teams, or analytical correctness beyond the explicit synthetic scheduler/artifact/display scope."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/reviews/R4-015-primary-review.md",
+      "startLine": 40,
+      "endLine": 40,
+      "text": "Not verified: native Chrome/Edge GREEN and canonical combined connected proof on the accepted integration pin, combined full gates/build/fidelity/Signal/knip/duplication, full weekly Python suite, work-PC behavior, or actual paid/provider/real Submit/Teams execution. Synthetic scheduler execution and mutated retained-metadata controls establish only the stated functional/provenance display scope, not real analytical or live-model success."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/reviews/R4-016-review.md",
+      "startLine": 21,
+      "endLine": 21,
+      "text": "Not verified: full combined connected journey, canonical post-integration R4-015 browser proof, combined gates/fidelity, Windows/work-PC and broad/weekly checks, real provider/paid/live execution, actual Submit, seats or Teams."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/reviews/capture-markers-review.md",
+      "startLine": 23,
+      "endLine": 23,
+      "text": "Not verified: full merged connected/static AFTER capture and final handoff/fixture comparison/diff; full application traversal, layout or presentation acceptance; dialogs delayed beyond the keyboard event and two-frame observation; independent rerun of the already reported guard/comparator/quality/lint/format gates; post-merge frontend/package/Windows gates; paid/provider/live execution, seats, real Submit, Teams or outside applications."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/reviews/contract-doc-scope-review.md",
+      "startLine": 35,
+      "endLine": 35,
+      "text": "Not verified: rendered UI/runtime behavior, analytical/handoff fidelity, full original contract chunk beyond the cited historical review, paid/provider execution, seat checks, real Submit, Teams, network behavior, Windows/native-browser behavior, weekly suite and unrelated concurrent changes."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/reviews/fidelity-capture-review.md",
+      "startLine": 122,
+      "endLine": 127,
+      "text": "Not verified: repaired R4-017/R4-018 code or integration; final source after\nR4-015 repair and proof-export integration; complete connected/static AFTER\ncapture, final comparison/diff and presentation fidelity acceptance; independent\nfull build/frontend/Python/weekly/Windows/package gates; actual DNS packet\nstatus for the disclosed failed reserved-host diagnostic; providers, paid/live\nexecution, real Submit, seats, Teams and any real external application service."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/reviews/fidelity-guard-final-review.md",
+      "startLine": 137,
+      "endLine": 142,
+      "text": "Not verified: native Chrome/Edge full proof or final connected/static AFTER\ncapture on the accepted integrated source; final capture comparison/fidelity\nacceptance and lead second read; R4-016's separately owned cleanup; independent\nfull frontend/typecheck/build/Python/weekly/Windows gates or release execution;\nactual providers, paid/live execution, real Submit, seats and Teams. This review\nmade no outside-network or DNS experiment."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/reviews/final-web-consequences-review.md",
+      "startLine": 24,
+      "endLine": 24,
+      "text": "Not verified: completion/exit of the running lint gate; independent rerun of the broader 97-test selection, format/typecheck/Python quality gates; full merged frontend coverage/gates, browser rendering, before/after presentation/fidelity capture, release/Windows/work-PC checks or stage 6 sweep; paid/provider/live execution, seats, real Submit, Teams or outside application calls."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/reviews/lead-connected-start-shell-review.md",
+      "startLine": 119,
+      "endLine": 119,
+      "text": "Not verified: SC-1's live blocked label remains open; native branded-browser layout/hover/folder-picker/Back-Forward, pixel screenshots and browser memory allocation were not independently exercised; extracted hash checks exercise logic rather than the mounted page, whose retained regressions passed; the complete frontend/Signal suite, original probes, combined screen/source/figure/limitation fidelity, release package and Windows/work PC are the lead's remaining gates; no real issuer/model/provider, paid execution, seat check, real Submit or Teams was exercised; final commits after d988f71a require a related-diff check."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/reviews/lead-evidence-static-library-review.md",
+      "startLine": 70,
+      "endLine": 70,
+      "text": "Not verified: browser/pixel rendering, actual browser Back/Forward and end-of-page section-marker geometry; final combined handoff fidelity, full frontend gates/connected proof, release ZIP, Windows/work-PC browsers and weekly full CI; original repair-2 T18/T22 work not in this candidate. No live/model/paid/provider/Teams/seat or real Submit call ran. Low E1 is a code-traced display-copy residual, reported for a failing surface test and display-only repair; no stored reason was modified by this review."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/reviews/proof-alignment-review.md",
+      "startLine": 131,
+      "endLine": 136,
+      "text": "Not verified: the complete connected journey after the known R4-015 product\nfailure (later Record, script checks, download/hash, paired Changes and final\nlibrary assertions); independent rerun of full frontend/Python/weekly/Windows,\npackaging/ZIP or original finding probes; actual provider/paid/live execution,\nreal Submit, seats, Teams or any application traffic to an outside host. No\nsuch action was performed in this review."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/reviews/reference-last-review.md",
+      "startLine": 34,
+      "endLine": 34,
+      "text": "Not verified: combined-tree acceptance/gates/proof, native-browser and Windows/work-PC fidelity at this final pin, broad/weekly suite, every possible natural-language citation form, analytical module correctness, live/paid/provider execution, seat checks, real Submit or Teams."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/reviews/reference-predicate-review.md",
+      "startLine": 49,
+      "endLine": 49,
+      "text": "Not verified: repaired follow-up code, native-browser/Windows behavior, broad suite, live/provider execution, and all possible natural-language citation forms. This is a bounded semantic review, not analytical module acceptance."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/reviews/reference-round2-review.md",
+      "startLine": 52,
+      "endLine": 52,
+      "text": "Not verified: a subsequent repaired pin, combined-tree gates/proof and native-browser fidelity, Windows/work-PC behavior, weekly/full suite, all possible natural-language citation forms, analytical module correctness, live/paid/provider execution, seat checks, real Submit or Teams."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/reviews/repair1-lease-final-review.md",
+      "startLine": 44,
+      "endLine": 44,
+      "text": "Not verified: old-base red run not repeated by this reviewer; the parent's full affected pytest result is separate; high-load stress beyond the deterministic two-thread schedule, wall-clock jumps, browser UI recovery and Windows/work-PC file semantics were not exercised; no real provider/paid execution/seat/Submit or Teams."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/reviews/report-charts-review.md",
+      "startLine": 101,
+      "endLine": 101,
+      "text": "Not verified: parent integration of the two reviewed small-fix commits; final combined full gates/proof and before/after handoff fidelity capture; all connected chart variants in a native browser; new-slot color-blind simulations/physical grayscale print; T18/T22 original-group completion; unrelated S1-010 App work; full Python/weekly/Windows/release jobs; live models, paid runs, real Submit and Teams. Parent/source commits reviewed are Report `2a5af229..153a3191` and Charts/shared `9d7fc4c1..7cc8cad0` excluding `0a918fa7`; candidate advance `cb5c0c9b..d4b3db28` was checked only for its related diff; isolated follow-ups `0160cdc8ee9043d91c57505744d928b34c545673` and `1c06c00cd514dbe3163889332a18e473c91be52d` were reviewed and tested on their `d4b3db28` source base."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/reviews/runtime-contract-review.md",
+      "startLine": 80,
+      "endLine": 80,
+      "text": "Not verified: paid/provider execution, real production Submit, Teams, native-browser/Windows fidelity, broad weekly suite, and unrelated concurrent branches. CP-8's generated `changes.json` independent source-pack pin under internally inconsistent/tampered metadata remains an adversarial coverage limit, not a confirmed finding or an expansion of R4-011. No live analytical-success claim is made."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/reviews/small-draft-ui-review.md",
+      "startLine": 118,
+      "endLine": 121,
+      "text": "Not verified: fresh independent full Signal or full frontend/Python suites; backend lifecycle\nlogic already independently reviewed; Windows/work-PC behavior; all application routes; live\nprovider behavior, paid execution, real Submit and Teams. Native draft responses are explicitly\nmocked and prove UI recovery/state preservation, not a real service's eviction timing."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/reviews/t18-adversarial-review.md",
+      "startLine": 54,
+      "endLine": 54,
+      "text": "Not verified: final combined-branch gates/fidelity, full end-to-end source workflow, live/paid/seat/real Submit/Teams behavior, and every source not represented by the explicit synthetic source-only inputs. No protected method, prompt, handoff, calculation, Signal or repository code/test file was changed by this review."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/reviews/t18-primary-review-eaf0a879.md",
+      "startLine": 86,
+      "endLine": 86,
+      "text": "Not verified: any live model, paid/provider/seat/real Submit or Teams behavior; Windows Chrome/Edge; final combined-branch gates/fidelity; independent reruns of knip/duplication/test:scripts/npm audit, Edge's full file gate, or the obsolete unchanged J4 harness; nonempty facility schedule analytical correctness (visibility/source omission was exercised); later source commits or uncommitted fixes after pinned eaf0a879; any fifth repair round. Source-selection reproductions use explicitly intercepted synthetic states and do not establish recalculated analytical correctness."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/reviews/t18-primary-review.md",
+      "startLine": 55,
+      "endLine": 55,
+      "text": "Not verified: final combined-branch coverage/dependency gates and fidelity, live/paid/provider/seat/real Submit/Teams execution, Windows browsers, analytical recalculation of intercepted cases, a fifth repair round, or independent final full suites/Signal/knip/duplication/Python/file-gates reruns beyond the explicit scopes above. No pending or obsolete probe is treated as passing."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/reviews/t22-adversarial-review.md",
+      "startLine": 32,
+      "endLine": 32,
+      "text": "Not verified: the pending R4-013 round-2 patch/final pin; final combined T18/T22/lead-batch gates/fidelity; full end-to-end retained-source workflows beyond these explicit synthetic fixtures; Windows/work-PC behavior; live/paid providers, seat checks, real Submit or Teams. No production/test changes, push, merge or subagent work was performed by this review."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/reviews/t22-primary-review.md",
+      "startLine": 39,
+      "endLine": 39,
+      "text": "Not verified: the pending R4-013 round-2 repair/final verdict, combined final-T18/lead-batch integration and gates/fidelity, Windows/Edge independently, broad/full or independent final Signal/knip/duplication/default-base Python gates, live/paid/provider/seat/real Submit/Teams execution, or real retained analytical correctness beyond the explicitly synthetic presentation/source scopes above. No code/test edits, push or merge performed."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/reviews/t22-round2-adversarial-review.md",
+      "startLine": 29,
+      "endLine": 29,
+      "text": "Not verified: combined final integration/fidelity/gates, full weekly suite, Windows/work-PC and Edge independently, live/paid/provider execution, seat checks, real Submit, Teams, or analytical correctness beyond the explicitly synthetic retained-source/presentation fixtures. This bounded second adversarial review covers the round-2 qualification/source-preservation repair, not unlimited input forms."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/reviews/t22-round2-primary-review.md",
+      "startLine": 42,
+      "endLine": 42,
+      "text": "Not verified: combined final-T18/T22/lead-batch integration, final fidelity/full frontend gates/build/connected-service proof, original task probes rerun on round2, full/weekly Python suite, independent final Signal/knip/duplication or Edge/Windows/work-PC runs, real retained analytical correctness beyond these explicitly synthetic source/presentation cases, live/paid/provider/seat/real Submit/Teams execution, or unavailable named skills."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/reviews/ui-tail-review.md",
+      "startLine": 26,
+      "endLine": 26,
+      "text": "Not verified: final combined-branch fidelity/gates, Windows/Edge behavior, live/provider/Submit/Teams behavior, broad directory/full suites, independent Signal/full format/Python reruns, and the interrupted narrow test process exit status beyond its retained all-passed log. The unchanged native probe's post-navigation timing race is explicitly retained above; only its scratch awaited replacement passes."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/5-repair/sendoff-readonly-prep.md",
+      "startLine": 80,
+      "endLine": 80,
+      "text": "Not verified by this preparation: stages 5/6 completion, final accepted source, any gates/tests, final browser/offline/screens/fidelity, package/checksum or Windows proof, the controlled-index rehearsal, actual work PC or real-source analytical behavior, providers/paid runs/seat/real Submit/Teams. No production change or test is needed for this read-only note."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/6-sweep/S6-036.md",
+      "startLine": 39,
+      "endLine": 40,
+      "text": "Not verified: combined sweep frontend gates and browser proof remain with\nthe sweep lead."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/6-sweep/SW-01.md",
+      "startLine": 47,
+      "endLine": 48,
+      "text": "Not verified: the combined sweep gates, browser proof and timings are\ncovered by the integrated sweep. This check used the JSDOM test surface."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/6-sweep/SW-02.md",
+      "startLine": 49,
+      "endLine": 50,
+      "text": "Not verified: full frontend suite and native browser proof on the\ncombined sweep branch remain with the sweep lead."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/6-sweep/SW-03.md",
+      "startLine": 68,
+      "endLine": 69,
+      "text": "Not verified: full frontend gates and native browser proof on the integrated\nsweep branch, and the other chart duplication families in X1-025."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/6-sweep/SW-D01.md",
+      "startLine": 37,
+      "endLine": 39,
+      "text": "Not verified: the default quality gate remains open for the two sweep\nmeasurement scripts. Combined sweep gates, browser proof and packaging\nremain with the sweep lead."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/6-sweep/SW-D05.md",
+      "startLine": 74,
+      "endLine": 76,
+      "text": "Not verified: combined branch gates, native browser and measured heap or\nrender latency. The checks here use a paired synthetic fixture with\nin-process fetch responses."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/6-sweep/discovery.md",
+      "startLine": 83,
+      "endLine": 85,
+      "text": "Not verified: implementation and after-measurements, native render timing, stage 6\nacceptance gates and release packaging. This discovery created no code changes\nand made no new runtime service or external application calls."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/6-sweep/evidence/before/summary.md",
+      "startLine": 144,
+      "endLine": 148,
+      "text": "Not verified: current stage 6 candidate diffs, after measurements, final full\ngate acceptance, runtime parity with the stage 0 browser, Windows, work PC,\nor paid/live/provider/seat/real Submit/Teams operations. The final browser file\ngate and the cancelled script file remain to be verified on the applicable\nacceptance tree. The stage 0 report records its separate browser limitation."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/6-sweep/evidence/integrated/frontend/report.md",
+      "startLine": 32,
+      "endLine": 32,
+      "text": "Not verified in this frontend test gate: builds, connected and file browser proof, Python and unrelated external services."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/6-sweep/evidence/integrated/python/report.md",
+      "startLine": 52,
+      "endLine": 54,
+      "text": "Not verified: unchanged weekly/slow tests, excluded known failures, browser-marked\nPython tests, the case-insensitive-filesystem scenario and paid/live operations.\nFrontend, file, browser and sweep acceptance checks are separate coordinator work."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/6-sweep/measurement-helper-quality.md",
+      "startLine": 47,
+      "endLine": 48,
+      "text": "Not verified: independent review and the combined sweep gates on the\nintegrated branch remain with the sweep lead."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/6-sweep/report.md",
+      "startLine": 79,
+      "endLine": 81,
+      "text": "Not verified: release ZIP and Windows or work-PC behavior, actual memory\nuse or a render speed improvement, live or paid execution, real Submit,\nseat access, or Teams behavior. The release checks follow in stage 7."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/6-sweep/reviews/S6-036-SW-D01.md",
+      "startLine": 31,
+      "endLine": 31,
+      "text": "Not verified: independent full submission/service regression rerun, full frontend/quality/import/package gates, repair-base remeasurement, combined sweep acceptance, native-browser rendering or final presentation/fidelity proof; resolution of the 62 default quality findings in inherited measurement scripts; paid/provider/live execution, seats, real Submit, Teams or outside application calls."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/6-sweep/reviews/SW-01-SW-03.md",
+      "startLine": 32,
+      "endLine": 32,
+      "text": "Not verified: completion of SW-01's worker gates/report; independent rerun of SW-03's broader worker selections or all lint/type/quality gates; full combined frontend coverage/gates, connected proof, fast Python/import contracts, final updated-repair-base measurements, native-browser behavior and presentation/fidelity acceptance; other X1-025 duplication families; paid/provider/live execution, seats, real Submit, Teams or outside application calls."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/6-sweep/reviews/SW-02.md",
+      "startLine": 49,
+      "endLine": 49,
+      "text": "Not verified: combined sweep gates and native browser proof."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/6-sweep/reviews/SW-D05.md",
+      "startLine": 59,
+      "endLine": 62,
+      "text": "Not verified: combined sweep proof and acceptance gates, heap or page\nrender timings, and behavior on malformed snapshot shapes outside the\nservice contract. The independent reviewer read the paired probe and\nits retained outputs and reran the existing frame test separately."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/6-sweep/reviews/measurement-helper-quality.md",
+      "startLine": 31,
+      "endLine": 31,
+      "text": "Not verified: full combined sweep/frontend/connected-proof/import/package acceptance, new after measurements or causal performance claims, native-browser rendering and final presentation/fidelity proof; new Python-version executions beyond the retained cross-version artifacts; paid/provider/live execution, seats, real Submit, Teams or outside application calls."
+    },
+    {
+      "path": "docs/audit/2026-11-16-final/output/sessions/repair-2/worker-brief.md",
+      "startLine": 196,
+      "endLine": 197,
+      "text": "Not verified: <everything nothing exercised, including any tool that was missing>\n```"
+    }
+  ]
+}

@@ -14,6 +14,8 @@ it only re-checks those places.
 | `manifest.json` | The git blob hash of every file at the newest pack's `head`, that `head`, and `last_pack`, the highest pack number issued so far. |
 | `baselines/04e7221.json` | The same for `04e7221`, the version the work PC first adapted (first sync only). |
 | `WORK-PC-PROMPT.md` | The prompt for the work PC's assistant. |
+| `WORK-PC-INIT-PROMPT.md` | First-time setup from the full audit source archive, including the approval stop, native proof and release scope. |
+| `audit-baseline.json` | Standalone hash baseline for the audit handoff archive. It preserves the existing numbered pack history. |
 
 Packs chain: each starts at the `head` of the one before it. `NNN` numbers them in order;
 a number is issued once and never reused.
@@ -35,7 +37,9 @@ whole files. What the missing packs would have supplied comes from the old upstr
 version instead:
 
 1. Take `head` from `<copy>/docs/work-pc/manifest.json` (first sync: `04e7221`) and
-   download that commit's ZIP: `https://github.com/EricMG13/RBOT-HTML/archive/<head>.zip`.
+   download that commit's ZIP from the source repository in the adaptations log.
+   The audit handoff uses `https://github.com/EricMG13/credit-os2/archive/<head>.zip`;
+   the historical baseline uses `https://github.com/EricMG13/RBOT-HTML/archive/<head>.zip`.
    `check <old download> --manifest <copy>/docs/work-pc/manifest.json` must print
    `identical` (first sync: `--manifest docs/work-pc/baselines/04e7221.json`).
 2. Package changes: compare `pyproject.toml` and `uv.lock` in the old and the new download.
@@ -44,6 +48,12 @@ version instead:
 With git, the same range is `git diff <head of the copy's manifest> origin/main`.
 
 ## On the work PC, after downloading
+
+For a fresh audit handoff, use [the initialisation prompt](WORK-PC-INIT-PROMPT.md)
+with the full source archive linked in the audit PR. It explains the
+separately checksummed runtime ZIP, verified source and archive identities,
+and how to check the standalone baseline.
+
 
 Give the work PC's coding assistant the prompt in [`WORK-PC-PROMPT.md`](WORK-PC-PROMPT.md).
 It backs up the adapted copy, reads the new packs, and then runs:

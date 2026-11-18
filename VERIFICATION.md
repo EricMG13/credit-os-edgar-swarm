@@ -91,6 +91,420 @@ engine is in [EricMG13/final-workflow](https://github.com/EricMG13/final-workflo
   combined final patch `8d22e936d4a5c2ebb0dedb59d1f506a387842bb5ce15645afd9471e4e894fd98`.
   No external provider calls; Codex token use unavailable, no Sonnet/cost comparison.
 
+## 2026-11-18 — Copilot cutover, compact handoffs and connected publication
+
+- Astra's end-of-phase review and follow-up confirmed the pinned SDK disables background
+  compaction and autonomous continuations. The Opus hold prices one input token per serialized
+  byte plus runtime framing. Tests covered rejected direct HTTP routes, unavailable Luna effort
+  and disabled seat policy, first and later context checks, and the approved configuration and cap.
+- Confidence review exercised interrupted publication, stale uploads and on-disk edits to approved
+  inputs, including module list, model route and cap. A restart refused the changed queue entries
+  before dispatch. Failed capability checks opened the app offline with paid choices unavailable.
+- Read-only TDG inputs estimated CP-3 at 61,424, CP-5 at 48,098 and CP-6 at 50,061 initial tokens.
+  The prior full requests estimated 209,269, 252,017 and 223,679 respectively. These are serialized
+  request estimates. Offline tests passed an exact chunk through the continuation and validated
+  the resulting handoff. Unknown transport versions and source text with split credentials refused.
+- Clean extraction of ZIP SHA-256 `8b5c0a8f03f776a2fbc0a40b4882be419546d93e3daa04cecaaa60f6292ba1c7`
+  (local proof snapshot `08e281b9`) passed Chrome `20261118-020520-01` and Edge
+  `20261118-020552-01` on macOS. Both exercised intake, report pages and verified a downloaded
+  handoff against its published SHA-256. The old library URL redirected and its script returned
+  404. Zero non-loopback page requests. Static fixture checks passed.
+- The Python quality gate passed. Focused Python checks passed for launch, model, scheduler,
+  intake and publication. Embedded packaging verified that rebuilding removes retired files.
+- Follow-up confidence and Astra review checked the stored first-prompt estimate, the oversized
+  repair refusal before reservation, and the exact seat status in the review summary. A stale
+  picker cannot enable paid Submit. Passed 509 web and 402 targeted Python tests plus the repair check.
+- On macOS the pinned SDK 1.0.28 opened a local stdio connection to Copilot CLI 1.0.108 (protocol 3).
+  The isolated status check reported unauthenticated and created zero sessions.
+- Integrated with main `c1439225`. ZIP SHA-256 `593911cc8a84f6d2722daee9e7aa983564ef57b9ec0a735f50c79bfb8c2bf47d`
+  (proof snapshot `b7fcc73b`) passed clean-extraction Chrome `20261118-020828-01`
+  and Edge `20261118-020859-01` on macOS with zero non-loopback page requests.
+  Passed 232 targeted Python tests, 540 web tests, the quality gate, lint and typecheck.
+  Astra confirmed the merge retained the desktop styles and Copilot approval and cap checks.
+- Deployment-seat verification, the first authorized paid run and Windows work-PC acceptance
+  are pending. Native Copilot search stays unavailable pending evidence and cost verification.
+
+## 2026-11-18 — Desktop review follow-up after PR #64
+
+- Astra reviewed the merged desktop diff. Fixed activity polling after a malformed response, source-run provenance for reused inputs, Forecast copy for missing calculations, and the retry action named by the service. Verified the regressions, exact source-run link and draft preservation, retained layout, 680 Forecast cells and three confidence scores in the live desktop checks. Chrome and Edge passed offline workflow proof (`run-ryqfCu`), and all 83 file routes rendered. 1,161 frontend and 42 Python tests, build, lint, formatting and the quality gate passed. Fallow passed against merged main with zero new findings and against the original base with 12 styling advisories for values already on that base.
+
+## 2026-11-18 — Desktop Impeccable refinement
+
+- Distill, Clarify, Layout, Typeset, Quieter, Harden, Animate and Polish covered the connected and file-based React workflow. The retained Caesars desktop preview checked Library, History, Overview, Calendar, Changes, Modules, Forecast and Evidence. All 680 Forecast display cells and confidence scores of 33, 0 and 54 matched, including source trace access.
+- Chrome and Edge passed the synthetic desktop workflow (`run-0lS2Cg`). Local browser fixtures verified long text, stale-filter recovery, keyboard focus as runs changed groups, stable feed and module rows, and the reduced-motion setting. Chrome rendered 83 file-based Library, Model and Run routes.
+- All 3,844 focused tests, production build, changed-file ESLint and Prettier, and the quality gate passed. The confidence review checked report figures, source destinations, run approval and caps, polling behavior, and missing values.
+
+## 2026-11-18 — Fallow follow-up on main
+
+- Verified all 18 original warnings with per-file Fallow inspection before refactoring. Fallow 3.8.1 audit against `origin/main` passed with zero new complexity, dead-code, or duplication findings. Seven styling advisories point to arbitrary utility literals already present on main. No suppressions or threshold changes.
+- All 570 focused tests passed. Build, changed-file lint and formatting, and Python quality gate passed. Desktop synthetic proof passed in Chrome and Edge (`run-LeBkY9`). Retained Caesars matched all 680 display cells and confidence scores of 33, 0, and 54 with their trace controls. Post-edit review retained the separate intake session, validation, and report trace responsibilities.
+
+## 2026-11-18 — Module Bottom line confidence
+
+- Retained Caesars desktop preview. Verified 33/100 and 0/100 as Insufficient Information and 54/100 as Low, with distinct fills and the original confidence and prose traces. The tile remains available when the score has no rendered Bottom line. All 97 focused tests, build, lint and formatting passed. The Python gate passed with the untracked predecessor copy excluded.
+
+## 2026-11-18 — Forecast redesign
+
+- Desktop preview verified at 1440 × 900 and 1280 × 900. Cash flow and scenario comparison open together. Compared all 680 historical and forecast display cells with the retained Caesars calculation record, including periods, missing values and zeros.
+- In-app preview verified FY2029E scenario comparison, Growth rates, Chart or Table and the downside source drawer. Design review confirmed the stronger selected-control state after recapture. Claude Model handoff and RBOT-HTML `fc010a7` informed the layout.
+- 174 focused tests passed. Chrome and Edge completed the synthetic desktop proof in `run-ikJ2Lt`. Build, lint and formatting passed. The Python gate passed with the untracked predecessor copy excluded. Post-edit review retained exact row matching and the separate-grid fallback.
+
+## 2026-11-18 — Desktop Forecast case comparison
+
+- Retained Caesars, Chrome at 1440 × 900. The four FY2029E figures fit on one row, reducing the case section from 384 to 230 px. Each value matched the retained preview. The opening qualification and shared rounding note appeared once in the comparison. Verified all four source buttons, arrow-key case selection, active comparison row and downside trace.
+- The focused frontend suite passed 134 tests. Chrome and Edge passed desktop synthetic proof (run-1oq0zs). Build, formatting and changed-component lint passed. The unfiltered Python gate found 3,008 issues in the untracked predecessor copy; excluding it yielded zero. Post-edit review confirmed the model supplies a common period and unit, and only exact matches to visible qualification text are removed from case labels.
+
+## 2026-11-18 — Connected desktop findings and Forecast proof
+
+- Retained Caesars preview at 1440 × 900 in Chrome. Library identified the test preview in both layouts and labelled 4.19× using the retained debt cash-interest basis. Read-only intake and progress controls were checked.
+- All 49 limitations across 12 modules matched the previous preview in order, prose and trace labels. Chart index focused Run charts 16 px from the top, including on reload. The Evidence model register appeared for Forward credit model and was absent under Legal.
+- Chrome and Edge passed the desktop-only synthetic proof (run-DQdHfb), including both intake cost labels, the qualification immediately preceding case figures, the scope disclosure and scenario comparison. An earlier Edge run timed out loading intake. The complete rerun passed on both browsers.
+- 314 focused frontend and 94 backend tests passed, as did build, lint and formatting. The Python gate reported 3,008 findings in the untracked predecessor copy and zero on the changed project code. Post-edit review retained grouped rows and per-history-entry scroll offsets.
+
+## 2026-11-18 — Forecast adversarial review
+
+- Exact recorded scope limits open their input trace. Generated notes link to Evidence Record. Assumption links require matching ordered headers and a unique full row. Jumps target available Forecast sections.
+- Retained Caesars Chrome fidelity check preserved four interest basis rows, the original input wording in the trace, and all 17 register rows and source links. Driver scrolling stayed within a 390 px viewport.
+- The combined local checkout passed 1,457 connected frontend tests and 170 focused Python tests. The isolated Forecast patch passed all 1,456 C1–C5 tests, build, lint, formatting, and the Python import gate. Chrome and Edge passed the full synthetic flow on the isolated patch.
+- Confidence review checked split excerpts, missing inputs, ambiguous row identity and section availability. Rewrite comparison kept the exact-row index and exact-text membership check.
+
+## 2026-11-17 — Caesars Forecast desktop
+
+- Retained test preview, 1440 × 900 Chrome. The base-case qualification immediately precedes the four FY2029E cash proxies (US$m 496.85, 131.38, 684.03, 326.97). The first value is visible in the opening viewport.
+- The Interest and Interest coverage basis rows in both tables matched the retained limitation exactly. The trace included the original scope limit. Evidence reproduced all 17 register rows cell for cell, with 17 matched source-row links. Forecast omitted the register identifiers and production categories.
+- At desktop widths the driver table has a named keyboard scroll region and pinned driver names. Focused tests passed (183), as did TypeScript, changed-file ESLint, formatting and the connected build. The unfiltered Python gate reported 3,008 findings in the existing untracked predecessor copy; excluding only that copy produced zero findings. Scope is presentation fidelity for this run.
+
+## 2026-11-17 — Post-audit app repairs
+
+- Re-ran connected sections C1–C5 and static sections S2 and S6. All 2,374 focused
+  frontend tests and 553 focused backend tests passed. The build and 125 offline
+  route visits passed. The Python quality gate passed in an isolated checkout
+  containing the patch. ESLint and Prettier passed on changed web files.
+- On macOS Chrome, the accepted newest-document warning matched the saved
+  metadata and Evidence Record. The static build guided readers to the connected
+  service when no draft was available and opened the sample form when one was.
+- Chrome and Edge passed the connected synthetic flow after the browser check
+  began waiting for the Evidence Summary tab to become active.
+- Confidence review checked digest compatibility, changed overrides, restart
+  recovery, approval snapshot consistency, History output ownership and labels,
+  prior repayment inputs, and the empty-draft boundary. The rewrite tournament
+  retained the ordered History metadata scan and date limit calculation.
+
+## 2026-11-17 — Stage 7 final audit handoff
+
+- Application source `a987af9b`. Stage 7 adds audit evidence and work-PC documents.
+- Locked setup, Python quality, 6,285 fast Python passes with one existing skip,
+  573 Node checks, 5,259 frontend passes at 97.69% lines and 73 script checks.
+- Native Chrome and Edge synthetic proof and 138 native file checks passed on
+  both the checkout and the checksummed runtime ZIP. The screenshot reports
+  record paired baseline and final states and the independent ZIP comparison.
+- The work-PC rehearsal stopped at the two missing pins with the source unchanged.
+  Actual Windows setup, live or paid runs, real Submit and Teams remain unverified.
+- [Final gates](docs/audit/2026-11-16-final/output/7-send-off/gates.md) ·
+  [Audit summary](docs/audit/2026-11-16-final/output/SUMMARY.md)
+
+## 2026-11-17 — Stage 6 sweep
+
+- Scope: six reviewed refactors on the repaired app, with the same tests, public routes,
+  handoffs and protected inputs. Nine production files add 21 and remove 66 lines.
+- Passed: 5,259 frontend tests including 630 Signal tests, native 97.69% lines,
+  6,285 Python tests plus one existing skip, 573 Node checks, both quality gates,
+  73 script checks, 138 native file checks, and synthetic Chrome and Edge proof.
+- Measured: 20 fewer duplicated frontend lines. Paired History row data 2,168 to
+  109 bytes with the same requests and markup.
+- Source pins, retry outcomes and limits: [sweep report](docs/audit/2026-11-16-final/output/6-sweep/report.md).
+
+## 2026-11-17 final audit presentation fidelity
+
+On repair tree `bb94ddce`, rebuilt both surfaces and captured connected
+synthetic Northbridge and the static fixture with native Chrome 157.0.8103.78
+at 1440 by 900. Both captures exited 0. Checked 267 distinct screens
+(29 connected, 238 static), 654 sourced drawers, 419 explicit missing-source
+markers and zero coverage gaps, trace errors or outside application-context
+attempts. The immutable comparator and baseline matched 126 stored hashes.
+Its 28 self-test cases passed. The full comparison covered 7,761 entries.
+The unmodified diff exited 1, reporting seven new differences, fourteen
+omissions and 352 not-found items. Each is explained in
+`docs/audit/2026-11-16-final/output/5-repair/fidelity/after-report.md`
+and the item readbacks, including scoped event counts, retained drawer basis
+and inputs, static sample notices and unchanged call totals. Static had no
+difference flags. Browser background proxy denials are counted separately.
+This evidence covers values, units, periods, source statements and
+qualifications in the captured screens. Other browsers, CSS presentation,
+remaining controls, work-PC and real-run behavior were outside this check.
+
+## 2026-11-17 — Final audit T18 Forecast recovery (audit/repair-2)
+
+- Scope: optional contextual Forecast traces; exact model qualification ledger on Evidence Record;
+  recorded drivers/shock/facilities; desktop long tokens; assigned Forecast Low/Info display fixes.
+  No analytical calculation, Python, prompt, handoff or protected Signal source changed.
+- Test first: eight recovery tests, a Downside containment test, three confidence/caption cases and
+  the invalid-grid Record-link assertion each failed before their corresponding production fix.
+- Passed: 333 affected tests, then 40 focused after final source metadata; 743 caller/Signal tests; lint, format, typecheck, knip, duplication,
+  build, 70 script tests, pinned-uv quality gate and native Chrome/Edge offline file gates.
+- Unchanged C4-002/003/025/026 probes passed. Native Chrome 157 and Edge 155 checked synthetic
+  source tokens, the ledger, selected-case figures and seven intercepted states each, with no
+  outside hosts or page errors. Exact scopes and original expected-text changes: [T18 report](docs/audit/2026-11-16-final/output/5-repair/T18.md).
+- Early independent source/context findings were reproduced red and addressed within the still-open fourth round; final code pin `f7f1e011`. Fresh final verdicts remain with the lead.
+- Not verified: fresh independent primary/adversarial final verdicts, final combined branch and live cases.
+
+## 2026-11-17 — Run state from one reading of the event log; a delivered run is finished (branch `claude/jolly-gauss-0erxtn`)
+
+Scope: how a run's end and its modules' states are read from `events.jsonl` (`run_events.progress`, used by `inbox/runs.outcome` and `inbox/activity.module_states`), the new module state `stopped` in the React run pages and the static library's run steps, the run page's `held_reason`, and CP-OS's relaunch of a folder that already holds a completion record (`owners/cpos.py`). Launcher options, caps, budget, checkers and delivery files unchanged. No provider was called and no paid run was made.
+- Owner, 2026-11-17: asked to find the app's implicit state machines, then "do it" to the fixes proposed from that inventory.
+- Changed: (1) the log is read once, in order: a `stopped` ends the running module and Report (`stopped`; before, a stopped module read `running` for good); modules run one at a time, so the next start or `delivery_started` ends one still running (a launch killed mid-module; a CP-8 not produced, which read running beside a delivered Report); a later start runs a module again; the run's end is the last stop no start followed (before: the first stop in a log shared by every launch); exit 0 is finished (a live launch returns 0 only once it delivered; before, a lost `delivered` line made it "failed: launcher exited 0"), and the scheduler still requires the library to list the run. (2) `stopped` reads "Interrupted" in React (`moduleWord`, Run activity) and in the static library (`runSteps`, amber segment, warning mark). (3) The single-run reply carries the scheduler's hold note as `held_reason` (`held` there is the reserved amount), path-scrubbed like `reason`, only for a run that waits on the service: queued, or kept "running" after its log ended (read from the log, not by probing the PID, which could reap the scheduler's child); the run page shows it. (4) A run folder with a completion record is finished: a live relaunch returns its delivery with no call and writes nothing; a non-live replay into it is refused (it would check no bytes); one with two records, or whose recorded delivery is gone, is refused (`cpos_delivered`, "start a new run"). A launch refused before it held the folder (its executor's settings differ from the running launch's: `identity_mismatch` on `live/loop.json`) no longer appends `stopped` to the running run's log. Before, a relaunch whose completion bytes differed (changed rendering, a forecast that now passes) wrote a second record and the library refused the run as ambiguous. This generalises the 2026-11-12 rule that a relaunch after CP-8 was not produced "leaves the delivery as it is, makes no new call and says so"; `_recorded_not_produced` is removed. (5) `tests/test_react_frontend.py` holds `RunStatus`, `EndedRun` and `ModuleState` in `web/src/pages/connected/api.ts` to the Python literals; the Python status-set copies are typed with `Status`.
+- Not changed, by decision: a module whose request was saved but whose response was not stays `cpos_interrupted` on relaunch. The request may have been paid; the executor keeps its own re-entry marker; a capped folder cannot continue anyway (the cap is pinned). Recovery remains a new run.
+- Tests: new cases for stop/relaunch ordering, one module at a time and CP-8 not produced, last-stop and exit-0 outcomes, `held_reason` (ended, held, running again) and a stopped module in the reply, the TS/Python contract, a delivered run's relaunch (no call, no `delivery_files` call, one record), a replay into a delivered folder, a folder with two records, and a refused second launch leaving the log as it was; the delivered-relaunch and two-record tests fail on the previous `cpos.py`, the second-launch test without the new guard. `test_an_unreadable_compaction_note_still_flags_the_module` now removes the completion record first (a launch killed before it), since a delivered run is no longer resumed.
+- Commands, exit 0: `tools/quality_gate.py` (0 findings); pytest `test_cpos_launch` (910 passed, 1 skipped paid), `test_changes`, `test_cp8_comparison`, `test_library_index`, `test_credit_os_store`, `test_handoff_loop`, `test_cpos_cp1_check`, `test_inbox_runs`, `test_inbox_activity`, `test_inbox_scheduler`, `test_inbox_teams`, `test_react_frontend`, `test_react_admission`, `test_run_start_submissions`, `test_context_form`; `node --test components.test.cjs static.test.cjs` (576); `npx vitest run src/pages/connected src/pages/run src/components` (1,467); `tsc --noEmit`; eslint and prettier on the changed files; `node scripts/build.mjs`.
+- Fidelity check: the static run steps (labelled and compact) rendered in Chromium with `screen.css`: the stopped step reads "Interrupted" with the warning mark on the neutral card, amber in the compact bar, 2 of 4 done. The built React run page served by `react_frontend` (synthetic mode) over a run held "running" after a `stopped` event: "Held by the service" with the note, CP-1 "Interrupted", "1 of 3" modules.
+- Review: one independent read-only review of the diff. Confirmed and fixed: the refused second launcher's `stopped` (now acted on by `progress`); `held_reason` was the service-wide note on any live run's page, unscrubbed; CP-8 not produced left running after delivery. Also taken: a non-live replay into a delivered folder passed unchecked (now refused); the missing-delivery refusal now says to start a new run. Left: a relaunch of a delivered folder with other loop settings stops at `loop.json` before the delivered check (exit 1, nothing written to the log now); a delivered run killed before its `delivered` line keeps its Report running in the log (the scheduler's exit-0 rule covers its own launches). Rewrite comparison for `progress`, `outcome`, `_recorded_delivery`: a table-driven `progress` was no shorter or clearer; kept.
+- Not verified: `pytest -m browser` (Chrome cannot start in this sandbox; `test_run_start_page.py` timed out), the full suite, a live run, Teams cards with a stopped module (they count done modules only).
+## 2026-11-17 — CP-DR may read finance.yahoo.com (PR #52, merged to `main` as `859b3ae1`)
+
+Scope: the research module's web allowlist and its statement on both start pages: `src/deploy_workflow/research/`, `src/deploy_workflow/run_start/`, `src/deploy_workflow/model/`, `docs/rulings/`, `docs/audit/`, `docs/templates/` (older start page), `web/src/pages/connected/start/` (review sheet) and their tests. No provider was called and nothing was fetched from a Yahoo host.
+- Owner, 2026-11-16: "Use public source like yahoo finance for cp-dr. We want information on all modules". Owner, 2026-11-17, asked with the exposure put plainly: "Yes, allow it".
+- Changed: `finance.yahoo.com` alone joins the allowlist (28 to 29 domains; `yahoo.com` and other Yahoo hosts are not added). The summary gains `web_lookup`, the launcher's own setting for the run; both start pages say, exactly when it is true, that the research module may read Yahoo Finance pages, that their addresses name what it looks up and that no document is sent. The research instruction tells the module how a Yahoo page is cited (Source type `Other`, a Gaps line, undated, current figures not used for an earlier cutoff). The ruling `docs/rulings/2026-11-13-cpdr-web-lookup.md` records the amendment, what Yahoo sees (three headers) and the header audit; `docs/audit/2026-11-16-final/README.md` rule R8 records the exception.
+- Fidelity check (presentation, as the PR body states it): `vitest run src/pages/connected/ConnectedApp.test.tsx` for the connected review sheet; for the older page a Playwright probe from disk (`file://`, no service) showed the Yahoo row once with `web_lookup` true and never with false, absent, a string or the research module left out; the browser-marked tests were then run locally by the PR manager.
+- Reviews: one independent adversarial review (first verdict request changes; three Medium, fixed and re-checked with probes: the older page's test could never pass, the Yahoo citation rules were not told to the module, a Claude run "reads only its files" sat beside the Yahoo row). After the send-back, the PR manager's combined run on the first head (4863dfa1) found six browser tests failing (four new Yahoo tests returning an `error` key the harness refuses; two existing "stay in view" tests broken because the new row made the card taller). Fix round 738d40a9 (Approve/Submit sticky in the older page; the test returns only asserted fields) was re-reviewed (Opus `mx-precise`: pass, one Info held for the end batch) and re-verified.
+- Commands on head 2c508753, run by the PR manager: `npm --prefix web run proof:connected` exit 0, pass 2 / fail 0 (Chrome 157, Edge 157); `pytest -m browser` on `tests/test_run_start_page.py`, `tests/test_reporting_currency_proof.py`, `tests/test_cpos_launch.py` 173 passed; CI both checks green. As recorded in the PR body (at 4863dfa, the author's run): `tests/test_weblookup.py` 241 passed, `tests/test_web_lookup_tools.py` 264, `tests/test_run_start_submissions.py` 164 (3 skipped), `tests/test_run_start_service.py` 97, `tests/test_cpos_launch.py` 938, `tools/quality_gate.py` 0 findings, `lint-imports` 3 contracts kept, web typecheck and lint exit 0, vitest 156 on the connected page file. The header audit is by test: a Yahoo request on the wire is the request line and three headers, and redirects to consent hosts are refused.
+- Not verified: anything fetched from a live Yahoo host (consent redirects, script-drawn pages, whether pages state no date); a mechanical check of the Yahoo citation rules (none exists; follow-up for the owner); a live CP-DR run; the full suite (weekly CI).
+
+## 2026-11-16 — Keep the library and the scheduler working beside an unreadable run record (PR #39, merged to `main` as `82f0fceb`)
+
+Scope: backend ordering and admission code, no presentation change and no web change: `react_frontend/admission.py`, `src/deploy_workflow/inbox/` (runs, scheduler), `src/deploy_workflow/run_start/` (prior, service) and their tests.
+- Owner's instruction: one unreadable run record (`state/<run id>.json`) used to fail every library reply and stop the scheduler. Now only the affected run is strict. The library hides that run's folder; the scheduler starts, never writes or deletes the file, reserves the id, counts one running slot and one daily start for it, keeps sealed uploads while any record is unreadable and ignores a readable copy with the same run id (`runs.name_key`, case and Unicode form). Run lookups refuse only that run. With no unreadable file nothing changes. `load_all` still raises.
+- Reviews (adversarial, ordering code): two High findings in two rounds (a readable copy carrying the bad file's id could overwrite it and start its run; the same through Unicode form), both fixed; the final re-review was clean (six mutants of the comparison caught, four hard limits held, 707 name pairs sharing one key).
+- Commands as recorded in the PR body, on head 0919f266: `uv run pytest` over admission, inbox scheduler and runs, prior, service, react frontend and run activity tests exit 0 (332 passed); `tools/quality_gate.py` exit 0. 507 changed lines, 12 files. One existing test replaced on purpose.
+- Not verified: the whole Python suite and the web suite; Windows or a case-distinct file system; a real restart after repairing a file; a real launcher process; hundreds of bad files. Left as is: the page of the run whose own record is unreadable shows a generic failure and logs a traceback each poll. Predates the change (for the owner): `/library/` is served without admission; the comparison module can choose an unaccepted run folder; the folder lock leaks if start-up raises; a stray readable record is tracked under its id; `_load` does not check a record's id against its file name.
+
+## 2026-11-16 — Run activity: no absolute path in a run's reason; an unreadable record no longer fails the list (PR #36, merged to `main` as `e70380c5`)
+
+Scope: the connected Run activity page and its service reply: `react_frontend/run_activity.py`, `src/deploy_workflow/inbox/runs.py` (read-only `load_readable`), `web/src/pages/connected/` (`RunActivity.tsx`, `api.ts`) and their tests. Scheduler, `load_all` and admission unchanged.
+- Changed: a run's reason (ended list, running list, single-run reply) no longer shows an absolute path: the bare service root reads "the service folder" and any other absolute path keeps its last segment (POSIX, Windows, network shares; a quoted path is cut whole). File names, URLs and relative paths stay. One unreadable run record no longer fails the list or a single-run page; the list sends an `unreadable` count and the page says "Some run records could not be read", and the empty state no longer claims nothing is running beside one. The skip is a documented fail-open on a display path; not logged because the page polls every 5 seconds.
+- Review: one adversarial review, three Medium (a spaced folder name kept its tail; a non-text id still failed the list; the page said nothing was running beside unreadable records), fixed and re-reviewed clean with mutation checks.
+- Fidelity check (presentation): not recorded in the PR body beyond the web tests below.
+- Commands as recorded in the PR body, on 9c459b17: `uv run pytest` on `tests/test_react_frontend.py`, `tests/test_react_run_activity.py`, `tests/test_run_start_scheduler.py` exit 0 (112 passed); `tools/quality_gate.py` 0; web `lint`, `format:check`, `typecheck`, `unused`, `duplication` exit 0; `npm test` exit 0 (3,507 tests). All 19 reason texts the scheduler writes come out as intended; a 100,000-character reason costs 32 to 44 ms.
+- Not verified: Windows (paths tested as strings); an unquoted path with a space in a folder name, an apostrophe path in single quotes and a path after `file://`, `<`, `{`, a backtick or curly quotes still show (by ruling); a page with both an unreadable record and a listed run; `/sweep refactoring discover`, `confidence-review`, `rewrite-tournament` and the browser proof were not run; with one bad record file admission still fails library replies and the scheduler refuses to start (predates this PR; PR #39 addresses it).
+
+## 2026-11-16 — Run activity: list runs that ended without a report (PR #34, merged to `main` as `94110a54`)
+
+Scope: PR 3 (Task 9) of `docs/superpowers/plans/2026-11-16-connected-reader-high-gaps.md`: `react_frontend/run_activity.py`, `web/src/pages/connected/` (`RunActivity.tsx`, `api.ts`), their tests and the plan. Task 10 is dropped (the Start flow has no Confirm step).
+- Changed: `GET /connected/activity` gains `ended` (the 20 latest runs that failed, hit the cap, were rejected or were interrupted; seven fields each, no spend, folders or file lists) and `ended_total`. The page adds a third group, "Ended without a report", with issuer linked to the run's page, pathway, state, end time and reason; the tally shows the real total and the group says "Showing the latest 20 of N." when cut; a run with no end time shows "Not recorded". A reason is sent without the service's root directory on the ended list, the running list and the single-run reply.
+- Reviews: task review approved; whole-branch adversarial review two Medium (the tally showed 20 for ever; a Windows OS-error path was not stripped), fixed and re-reviewed with mutation checks; a last test-only fix made the path test platform independent.
+- Fidelity check (presentation): not recorded in the PR body beyond the web tests below.
+- Commands as recorded in the PR body: `uv run pytest tests/test_react_frontend.py tests/test_react_run_activity.py` 29 passed on the head; `tools/quality_gate.py` 0 findings; web `lint`, `format:check`, `typecheck`, `unused`, `duplication` and `npm test` (163 files, 3,506 tests) exit 0 on the last commit that changed `web/`, before the rebase onto 3c96a3a2. The list is read-only (about 35 ms per poll at 1,000 saved records). 451 changed lines.
+- Not verified: Windows (path cases are simulated strings); `/sweep refactoring discover`, `confidence-review`, `rewrite-tournament` and the browser proof were not run; a path outside the service root, a file name under it, the bare root with nothing after it and a root in a different drive-letter case are still sent in a reason; a hand-edited record with a non-text reason or end time fails the whole list.
+
+## 2026-11-17 — PR 3: the review sheet shows every input Submit sends (branch `claude/review-sheet-every-input`)
+
+Scope: a presentation change to the connected start page's review sheet (`web/src/pages/connected/start/ReviewSheet.tsx`, new `start/reviewInputs.ts`), with labels moved unchanged from `StartRun.tsx` into `start/plain.ts` and `start/rows.ts`. What Submit sends, the reviewed-summary digest, the caps, limit acceptance and the service are unchanged; no Python changed. No provider was called.
+- Owner, 2026-11-16: the review sheet shows every input the analyst approves, in plain words.
+- Changed: the sheet adds the issuer ID and issue classification, the legal documents and the three file boxes, Issuer details, Context details (each facility, quote, rating and research question, the analyst's note among the questions), Valuation and peers, Module options and Scenario assumptions, and shows the form level, model and effort and turns per module at every level. Labels come from the page's own sources (`plain.ts`, `rows.ts`, `valuation.ts`, `assumptions.ts`); module lists use names, never the forecast. A blank or unsent input reads `Not given`, never 0. The form version (`context.schema`) is sent and not drawn.
+- Fidelity check, scope the review sheet of a Full credit assessment at the Basic and Advanced levels, synthetic inputs: V1–V26 in `ConnectedApp.test.tsx` assert each input's label and value as hand-written strings; 26 failed before the change (at the sheet lookup) and pass after. V27 asserts that no text on the sheet or its limits matches braces, `snake_case` keys, module codes, ids or `context/1`. It passed before and after (a guard). The N8 and N9 request bodies are unchanged and pass. One older assertion (Basic hides turns, model and effort) now asserts they are shown, under the owner's rule.
+- Browser check (scratch Playwright script, not committed; Chrome for Testing 153 on the synthetic `proof.serve`): an Advanced run with inputs in every group. The service accepted the summary. Every key of the sent body appears on the sheet with its value, except `context.schema` and the five new-issue facility boxes, which are sent blank and not drawn for a run that is not a new issue. The sheet text has no raw pattern.
+- Commands, exit 0 on 366bdb1: `npm --prefix web ci`; `npm --prefix web run` lint, format:check, typecheck, test (173 files, 3,944 tests), unused, duplication (1.57%), build; `tools/quality_gate.py` (0 findings, no Python changed). The first full test run, on 50dd42a, failed only by V27 timing out at 6.97 s against the 5 s default under load; 366bdb1 gives V27 20 s.
+- Not verified:
+  - `proof:connected`: it needs branded Google Chrome and Microsoft Edge; this container has Chrome for Testing only (`/opt/google/chrome/chrome` links to it) and no Edge.
+  - `pytest -m browser tests/test_run_start_page.py`: in this container the run did not finish: its first 12 tests failed at about two minutes each, and the first, run alone, failed because its headless Chrome `--dump-dom` call against the service hung to the 120 s timeout (Chrome renders a trivial page in 0.6 s). That file drives the older start page (`docs/templates/context-form.html`), which this branch does not change.
+  - Other pathways in a browser; a live or paid run; the full weekly suite.
+
+## 2026-11-17 — Browser proof declares an executed agreement (branch `claude/proof-cp4-gate`)
+
+Scope: `proof:connected` on main 4f8a375a. Synthetic fixtures and the proof script only; no product code changed, no provider called.
+- Broke: `proof:connected` failed (`pass 0, fail 2`, `AssertionError: stopped: checker`, run `failed`; reproduced by the PR manager, not re-run here) from d64bdf81 (#45). CP-4's acceptance now enforces its source gate: a run declaring no legal documents must write the blocked handoff. The proof declared none and its canned CP-4 is a full analysis.
+- Refused alternative: blocking the canned CP-4. The proof's calendar asserts 37 rows and 9 "Synthetic note" rows (`web/scripts/connected-proof.mjs`, checkCalendar), 4 rows from each of 9 handoffs including CP-4; a blocked CP-4 gives 34 and 8, and drops the covenant chart and maps. Ruling (PR manager, coordinator): declare the agreement instead; no assertion is changed.
+- Fix: `proof/northbridge-credit-agreement.txt` (fictional; "Credit Agreement" / "EXECUTION VERSION"); `verify_upload` accepts the filing plus optionally the workbook and the agreement, each byte-checked; the script uploads it and sets Legal documents to Executed and The agreement to that file. No assertion edited; no document-count assertion changed.
+- `guess_kind` reads the file as `credit_agreement`, executed True, so `cp4-declared-executed-none-recognised` cannot fire (checked on the fixture, not on the run's forecast page).
+- Results: `npm --prefix web run proof:connected` exit 0, pass 2 fail 0 (Chrome 157, Edge 157). `proof/test_launcher.py` 4 passed (one added). `tests/test_cpos_launch.py -m "not live and not browser"` 938 passed. Quality gate (tools/quality_gate.py) exit 0.
+- Not verified: the forecast page of the proof run (limits shown) was not read; the before-fix failure was not re-run in this worktree.
+
+## 2026-11-16 — Module test and repair routine: offline, one live Deep run on Claude Opus medium, then the market-data modules on GitHub Copilot GPT Sol (repairs ported onto `main` `4f8a375a` by branch `claude/module-routine-repairs`, from `e6028846`)
+
+Scope: offline gates and the canned browser proof on `main` `a438cb9f` plus the routine's repairs;
+one **live** launch from the React launcher (`python -m react_frontend`, Submit on an approved
+summary, standing ruling `2026-11-11-run-start-submit.md`), Deep credit assessment, Claude Opus at
+Fast (all medium, `opus-medium`), cap USD 40, the retained TDG FY2024 public files (as of
+2024-09-30, legal documents `none`), run `20261116-185348-01` in `~/cos-live/tdg-deep-20261116b`
+(outside the repo). Owner: "run the module test and repair routine offline then live", "Use opus
+medium anthropic key", "Deep, cap USD 40". One case and route; outputs are candidates until
+reviewed.
+
+- Offline, `main`: CP-OS tests 1,696 passed; React 129; library 245 (1 skipped, screenshot);
+  `web` gates exit 0 (171 files, 3,663 tests); `tools/quality_gate.py` 0 findings. The connected
+  browser proof **failed** in Chrome and Edge: PR #40 made the analyst's name required and the proof
+  never types it (`main` types it since `951bcda0`). CLI dry launch of the same Deep run: 20
+  modules, cap USD 40, exit 0, no provider.
+- Repaired, ported onto `main` `4f8a375a` by branch `claude/module-routine-repairs` (tests first:
+  5 of its 9 new tests failed on `main`; the other 4 are guards that pass before and after):
+  1. Uploaded names over 80 characters lost their extension (`safe_name` cut), so the TDG annual
+     report PDF (84 characters) was stored without `.pdf` and silently ignored by the launcher; two
+     long names agreeing for 80 characters overwrote each other. Now the last part keeps its suffix
+     and gains 8 hex of its SHA-256 (`run_start/submissions.py`); in the routine the launcher then
+     read all five files. 2. Issuer ID `pattern` was invalid under the `v` flag (console error,
+     native check skipped); now `[a-z0-9][a-z0-9\-]{0,39}` on the start page #42 rebuilt
+     (`StartRun.tsx`). 3. CP-DR's web page text ran table cells together (`Sep 30, 20241,398.32`);
+     cells are now separated by ` | `. The routine's other two repairs are not in this branch: the
+     proof's name line is on `main` since `951bcda0`; `finance.yahoo.com` is a separate PR. Gates
+     on the branch: 550 targeted tests (submissions, service, React frontend, web lookup) and 486
+     in the related start-page and lookup files passed, quality gate 0 findings, `web` typecheck,
+     lint, prettier and vitest (3,917) exit 0 on Node 22; one independent review: pass with Lows,
+     none High or Medium. Browser-marked tests and the connected proof run after the PR opens.
+- Live run: 18 of 20 modules accepted, then **stopped at the cap** before CP-5 (USD 35.62 settled;
+  the next call's hold would pass USD 40). No module failed; 11 drafts were sent back once and
+  corrected on the next write (page locators in prose, figures not backed by tables, unit-less
+  figures, chart-data wording). Handoff chain: every request's upstream hash equals that module's
+  accepted response (0 mismatches). Method-script checks: none sent back on any accepted handoff
+  (for example CP-4 46 agreed, CP-1B 32, CP-1D 12, CP-1 7). Run activity drew the run as Capped,
+  18 of 20, Evidence validation Interrupted, Committee decision and Report Not run; no report was
+  published, so the library and report views were not checked on live output.
+- Market test data: the owner's Bloomberg aerospace loan sheet transcribed (five TransDigm tranches,
+  nine peers, four index rows; 147 figures, each found in the OCR text) and **re-dated from
+  2026-06-27 to 2024-09-30 at the owner's instruction** ("This is a test just updated the figures to
+  make it run"); typed quotes for term loans J–N, ratings Moody's Ba3, S&P BB- (facility).
+- Module-output run (ruling `2026-11-16-tdg-subset-copilot-sol.md`, temp folder
+  `~/cos-live/tdg-subset-sol`, scratch driver): 13 Opus answers reused, CP-2H, CP-3D,
+  CP-3C, CP-4C, CP-3, CP-5, CP-6 on `copilot-sol-medium`: **7 of 7 accepted, USD 4.51**, 104 handoff
+  pins 0 mismatches, answer key 13 of 15 (the two misses are sound choices: CP-3 used the Ba and
+  Ba/B indices, −4 and −169 bp, correct; CP-3C declined the quotes after CP-3D's block). GPT Sol on
+  OpenAI was refused (no credits, USD 0).
+- Fixes, ranked (owner, 2026-11-16: modules that need the RV Book will have it at deployment):
+  1. High. **CP-4 acceptance must enforce its source gate.** CP-4 concluded covenant capacity and
+     compliance (5.50x against 7.25x) from the 10-K's summary with no executed agreement, though its
+     method says "Blocked: No executed governing document. STOP" and the launcher forecast "Will
+     refuse"; CP-OS accepted it. **Done: #45, merged `d64bdf81`** (refused unless Blocked when no
+     agreement is declared; CP-3 then writes Capital structure; CP-4 told its gate; review pass after
+     one fix round). Open: rerun CP-4 with the agreements in `~/cos-live/tdg-agreements`.
+  2. High, owner's call. **Opus medium does not finish Full or Deep under its cap** (Full's twelve
+     modules before CP-5 cost USD 25.91 against 25; Deep needs about 43 against 40), so an ordinary
+     run stops with no report. **Owner: "Default Full and Deep to GPT Sol"**: the start page already
+     does (2026-11-12 amendment); OpenAI has no credits, so the default cannot run until topped up.
+  3. Medium. **A wrong prose figure passed every check**: CP-1D says compensation lifts leverage
+     "about 0.39x"; its own formula gives 22,967/3,871 − 22,967/4,088 = 0.315x (CP-5 caught it as
+     minor). **Done: #47, merged `4f8a375a`**: a note in a table cell backed it; such a note now
+     holds only a restatement of its cell's value (review pass).
+  4. Medium. **Late requests are too large for Copilot**: first prompts CP-5 about 252,000 tokens
+     (plus 32,000 output, over the 272,000 limit), CP-6 224,000, CP-3 209,000; Copilot summarised all
+     three. No figure was lost this time (every CP-5 and CP-6 figure traces upstream). Smaller inputs
+     to CP-3, CP-5, CP-6 also remove fix 5's cause and cut Opus cost (fix 2).
+  5. Medium. **Summaries Copilot does not bill are invisible to the cap** (CP-3, CP-6): hold an
+     allowance per summary, or stop it happening (fix 4).
+  6. Medium, deployment setting. **Set `DEPLOY_WORKFLOW_SEC_USER_AGENT`**: without it CP-1C found no
+     peers and CP-DR's SEC lookups were refused; the launcher readiness could say so.
+  7. Check at deployment. Only CP-3's instructions say the Sector RV Book is current; CP-3D requires
+     dated quotes and blocked on the re-dated sheet. If RV Book rows carry no quote date, CP-3D,
+     CP-3C and CP-2H may block while CP-3 proceeds; then give them CP-3's policy.
+  8. Low, one batch after the final phase: GPT Sol writes calculator results at 37 decimals in tables
+     (34 lines in CP-3C, CP-5, CP-6; Opus none); a `.pdf.` name loses its suffix; `# Market quotes
+     as of` is not read as a quotes file; `_row_has_cell` is not reset at `table`; the review sheet
+     shows codes and "Will refuse wording open until A-live."; favicon 404.
+- No fix needed: CP-3D and CP-3C market inference, CP-3's comparisons and CP-2H's facility ratings
+  get the RV Book at deployment (CP-3 already worked fully on the test sheet). Leverage 6.02x and
+  5.50x are two labelled bases, not a conflict: CP-1 states both (reported EBITDA, and EBITDA As
+  Defined, the revolver test's measure) and the gap; this corrects the earlier note. CP-4C Not
+  Applicable is right (no distress trigger). The library leaves out runs with reused answers by design.
+- Not verified: library and report views on live output; CP-3D on dated RV Book quotes; the cell
+  separator on a live page; Copilot's billing of summaries; other issuers; Windows; the full suite;
+  on this branch, the browser-marked tests, the connected proof and the web gates on Node 24.
+
+## 2026-11-17 — PR 2: a run in the currency its source files report in (branch `claude/reporting-currency`)
+
+Scope: the whole branch against `main` 0bca1822. That covers the two entries below (PRs 44 and 46, merged into this branch) and the work listed here. Ruling: `docs/rulings/2026-11-16-reporting-currency-from-sources.md`. No provider was called and no paid run was made. The proof is synthetic: retained, canned module answers, labelled as such.
+- Owner, 2026-11-16: "it has to run run on any reported currency provided by the source files"; "modules should be currency agnostic, the source files dictate reporting currency"; on a facility with no reporting-currency amount: "the sources materials will contain a selected FX rate for the reporting. and that can be used to calculate it."
+- Money tables: CP-2D's liquidity bridge, CP-3C's refinancing need and CP-4C's value allocation take CP-1's money unit (`US$m` for USD, otherwise ISO code + `m`). They are told what it is, and told that a foreign instrument enters at T4.18's `Reporting Currency Amount`, otherwise `Not supplied`, never at a rate of their own. The issuer library accepts one money unit per table.
+- The currency is not asked: neither start page asks for or sends `run.reporting_currency`, which is optional in the context. The `cp2d-non-usd` rule and the US-dollar warnings are removed. The library's run currency comes from CP-1.
+- Forecast: the run's currency is CP-1's money unit. A CP-2G block stating another currency is refused. A facility whose T4.18 `Currency` is not the run's is refused, and its debt stays in the remainder at the interest-rate driver. CP-1's statement readers moved to `owners/cpos_cp1_statements.py` (a pure move; `.importlinter` gains membership only).
+- Reviews:
+  - Task reviews (mx-precise) on every task, PR 44 and PR 46.
+  - Money-path review (mx-adversary): one High, fixed. The forecast took its currency from CP-2G's block, defaulting to USD, so a USD 125 balance was scheduled as GBP.
+  - Whole-branch adversarial review (Opus 5.5; Fable unavailable): one Medium, fixed (CP-3C and CP-4C had no foreign-facility rule), and one Low on an ordinary USD input, fixed.
+  - Re-review: all fixed. Each reviewer's probe exits 1 on 2cf77df7 and 0 on 981cad96.
+  - Sweep (discover only): no High or Medium finding.
+- Fidelity check (`tests/test_reporting_currency_proof.py`, deep pathway, hand-written expected amounts):
+  - GBP and CHF runs go through the launcher's checks, delivery and the library with their own amounts (`£…m`, `CHF …m`).
+  - A facility with no stated amount and no stated rate shows a `Not supplied` total, never 0. The total is a fixture cell, since no code sums T4.18.
+  - The FX rate's locator appears only on Evidence.
+  - A USD run's delivered files and pages are byte-identical to `main`'s, after normalising timestamps, temp paths and hashes; the instruction files differ on purpose.
+- Correction to the PR 44 entry below: 14 of its 17 new cases failed before the change, not 9; three were added with the change.
+- Commands, exit 0 on 981cad96: all 9 browser-marked files exit 0 (changes 1, cpos_launch 12, library full assessment 3, library changes 8, library page 104 + 1 skipped, model shell 7, reporting-currency proof 5, run start page 152, signal page 13);
+  - `tools/quality_gate.py` (0 findings) and `lint-imports`;
+  - `tests/test_cpos_launch.py` (930 passed, 1 skipped);
+  - the facilities, scale, proof and CP-1 check tests (476 passed);
+  - on 943280ee (web unchanged since): `npm --prefix web run` lint, format:check, typecheck, test (3,909), unused, duplication, build and `proof:connected` (Chrome and Edge).
+- Not verified:
+  - no live or paid run, and no real non-USD issuer, so whether models follow the new text is unknown;
+  - CP-1 computing a total from T4.18;
+  - the full weekly suite.
+
+## 2026-11-16 — What the models are sent works in any currency (branch `claude/reporting-currency-method-text`, into `claude/reporting-currency`)
+
+Scope: method text and the launcher and repair text sent to models, under ruling `docs/rulings/2026-11-16-reporting-currency-from-sources.md`; the forecast's unit reader (`cpos_forecast._CURRENCY`) and facility check (`_check_facilities`). No rule id, selector or money-table unit changed; the one new check behaviour is the facility refusal below; the frozen non-CP-1 selector digest is unchanged. No provider was called.
+- Changed method text (new under the ruling, not copied from an earlier package; manifest named edits, METHODOLOGY-REVIEW rows): CP-1's step file (step 3: the presentation currency, a functional currency recorded in T4.2, conversion only at a rate the sources state; T4.18 gains `Reporting Currency Amount` and `FX Rate` (the rate only; its locator in `Source`) with their rules, the never-invent rule, amortisation in the instrument's currency, those cells plus the financing-cost row reconcile to `Total Debt`); CP-2D's SKILL Canon Core rule 11 (a foreign facility's debt balance at `Reporting Currency Amount`; its undrawn, commitment, amortisation or maturity amount only where CP-1 states it in the statements' currency, else `Not supplied`, never a partial total); CP-2A's stress copy and CP-8's method lose a USD default and three USD-only examples.
+- Changed launcher and repair text: `VOICE_RULES`, `PERIOD_TABLE_BLOCK`, `UNIT_EXAMPLE` (CP-1 check block and its unit refusal), the CP-1, CP-2E and CP-2G script notes and `prose_checks.FIGURE_ADVICE` show a GBP (and euro) example beside each USD one. `_CURRENCY` reads any ISO 4217 code in capitals, so `CHFk` is thousands; a scan of every table cell of the 408 tracked Markdown files (45,746 cells) found none whose reading changed.
+- PR 46 review (PR 2 controller; 1 High, 1 Medium, 2 Low), each fixed with its test red first: F1 `_check_facilities` refuses a facility whose T4.18 `Currency` is not the block's, naming it and its currency, and `FORECAST_BLOCK` tells CP-2G to leave it out (answer key: a GBP run, base debt 600, GBP term loan 250 at 6.00% and EUR notes EUR 400 = GBP 350; both rows refused, the GBP row alone accepted with year-1 interest 15.00 and unallocated debt 350); F2 rule 11 as above; F3 CP-1's check block: a figure in another currency is `Not supplied` "unless converted at a rate the sources state, as step 3 allows" (`CP1_CHECK_DIGEST` re-pinned); F4 `FX Rate and Source` renamed `FX Rate` so no locator is drawn outside Evidence.
+- PR 46 review round 2 (M1, Medium): the F1 check failed open (a facility named `EUR notes due 2030`, an `Instrument` `EUR notes (2030)`, a `Currency` cell `Euro`). Now T4.18's `Currency` is an ISO 4217 code, `FORECAST_BLOCK` asks for names copied exactly, and where any T4.18 row's currency does not read as the block's, every facility must match a block-currency row exactly (trimmed, emphasis removed, ignoring case) or is refused, named. Answer key (c)-(f) refused, (g)-(h) accepted, round 1's (a)-(b) unchanged; two round-1 cases (a `Currency` cell blank or `Not supplied`) now refuse their facility, as the ruling requires. Every retained live CP-1 handoff with a T4.18 (4 files) reads USD on every row, so none is affected.
+- Instruction sizes, each pathway's ceiling raised by its measured increase on the tree merged with base 943280e (+1,203 short_snapshot to +2,559 deep); method-text pins of CP-1, CP-2A, CP-2D and CP-8 recomputed. 9c685dd pins `CP1_CHECK_BLOCK`'s digest to show its money-unit sentence left CP-1's block alone; the widened unit example changes that block, so the test puts the example back before checking the pin, and F3 (below) re-pinned that digest for its added clause.
+- Tests, red on the base source and green here: `test_cp1_is_sent_each_instruments_reporting_currency_amount_and_never_invents_a_rate`, `test_cp2d_is_sent_one_currency_rule_for_its_liquidity_tables`, `test_no_text_sent_to_a_model_gives_usd_as_its_only_example` (one kept exemption: CP-4's illustrative covenant quote `$200m`), `test_cpos_scale.py` CHF cases.
+- Commands, exit 0 on the tree merged with base 943280e: `tools/quality_gate.py` (0 findings) and `--base origin/claude/reporting-currency` (CI's base; 0 findings); `pytest tests/test_cpos_launch.py tests/test_methodology_selection.py tests/test_method_scripts.py` (1,182 passed, 1 skipped); forecast tests `test_cpos_scale`, `test_cpos_periods`, `test_cpos_facilities`, `test_start_forecast_pathways`, `test_negative_cash_not_calculable`, `test_downside_follows_forward_model` (472 passed); `test_cpos_cp1_check`, `test_prose_checks`, `test_changes`, `test_context_form`, `test_context_module_options`, `test_credit_os_catalogue`, `test_run_expectations_words`, `test_run_start_service`, `test_inbox_activity` (1,521 passed, 1 skipped).
+- Not verified: no real model has read this text; no non-USD run (live or paid); the full weekly suite. Oldest entry trimmed.
+
+## 2026-11-16 — Report pages show a run's figures in its own currency (branch `claude/reporting-currency-report-pages`, into `claude/reporting-currency`, PR 2)
+
+Scope: the connected React report only (`web/src/pages/connected/reportView.ts`, `report/Forecast.tsx`, `report/Securities.tsx`, `report/Modules.tsx` and their tests); ruling `docs/rulings/2026-11-16-reporting-currency-from-sources.md`. No Python, method, launcher or library change; `withUnit` and `unitLabel` unchanged. No provider was called.
+- Owner, 2026-11-16: "it has to run run on any reported currency provided by the source files"; "the source files dictate reporting currency".
+- Changed: the Overview credit-metric tiles (liquidity, free cash flow, net debt, contractual principal, maturities) take the run's money unit, the one the catalogue records with the run's cash figure (CP-1's), else the one money unit (`US$m|[A-Z]{3}m`) the table states, and carry the row's unit into the value and year change; a row or schedule in another unit draws no tile. The Forecast basis note accepts `<ISO code> millions` and labels the difference with it. On a non-USD run the Instrument decisions card notes that market levels are US market quotes in US dollars.
+- Fidelity check: hand-written expected strings for GBP (`£1,250m`, `+£150m vs H1 2025`, `£5.00m`), CHF (`CHF 1,250m`, `CHF 5.00m`), EUR (`€5.00m`), mixed-unit tables and USD (`$1,250m`, `$5.00m`, the whole tile object); 9 new cases failed before the change, every USD case passed before and after. Two existing assertions pinned the superseded USD-only rule and change citing the ruling: the GBP maturity-schedule refusal now has its catalogue state the run's unit (`US$m`); the Forecast "unsupported unit" case uses `EUR thousands` for `EUR millions`.
+- Commands, exit 0: `npm --prefix web ci`; `npm --prefix web run` lint, format:check, typecheck, test (172 files, 3,906 tests), unused, duplication, build; `tools/quality_gate.py` (0 changed Python files).
+- Not verified: `proof:connected` (exit 1: it needs branded Google Chrome and Microsoft Edge, and this container has Chromium only; it stops at the brand check before any report page); a real non-USD run's pages. Oldest entry trimmed.
+- Follow-up (owner, 2026-11-16: "fix price chart"; branch `claude/reporting-currency-report-pages` restarted from `claude/reporting-currency` after #44 merged): the Instrument decisions price and yield chart accepts CP-3's last-trade basis line with its amounts in any `<ISO code> millions`, not only `USD millions`; the trades stay US market quotes. Tests: the chart drawn for GBP, CHF and EUR (prices `$99.00`, `$89.00`, yields `7.005000%`, `9.12%`), red before the change; withheld for `GBP thousands`, `£ millions`, `GBPm`, `gbp millions` and a line naming two currencies. `npm --prefix web ci` and `run` lint, format:check, typecheck, test (173 files, 3,917 tests), unused, duplication, build: exit 0. Not verified: a CP-3 handoff from a real non-USD run; `proof:connected` (Chromium only, as above).
+
+## 2026-11-16 — Earnings Update runs CP-1A (branch `claude/earnings-update-cp1a`)
+
+Scope: the `earnings_update` preset and its copies (`src/deploy_vii/contracts.py`, `web/src/pages/connected/api.ts`, `docs/templates/context-form.html` `PATHWAYS` and `RUN_ORDER`) and the tests that pin them; ruling `docs/rulings/2026-11-16-earnings-update-cp1a.md`. Caps, launcher, registry, method files and delivery code unchanged. No provider was called.
+- Owner, 2026-11-16: "Cp-1a should run most of the time. It describes the issuer."; asked about Earnings Update, "Add it to Earnings Update".
+- Changed: the preset gains CP-1A after CP-MODEL; run order from `registry.plan` CP-0, CP-1, CP-1A, CP-1B, CP-DR, CP-2E, CP-1D, CP-5; `company-profile` is routed to CP-1A instead of omitted. The owner's `PRESET_ANSWER_KEY` changes for `earnings_update` only. Instructions 546,723 → 651,532 characters (+104,809); the prompt-size ceiling rises by that, to 651,538.
+- Cap: USD 20 unchanged; estimate USD 4.18 to 5.64 from the last live Earnings Update run (USD 3.51) and CP-1A's recorded cost (USD 1.0643); not measured.
+- Commands, exit 0: `tools/quality_gate.py` (0 findings); `tests/test_cpos_launch.py` whole (906 passed, 1 skipped paid); the brief's pytest set (1,082 passed, incl. `test_start_forecast_pathways`, `test_context_form`, `test_pathway_tiers`, `test_changes`, `test_run_expectations*`, `test_run_start_*`); `pytest -m browser tests/test_run_start_page.py` (152 passed); `npm --prefix web run` lint, format:check, typecheck, test (3,889), unused, duplication, build, proof:connected (Chrome and Edge).
+- Not verified: an Earnings Update run with CP-1A (live or paid); the Company profile section's text in a delivered Earnings Update report; the Changes page against an earlier run without CP-1A (read from `changes.py`, not run).
+
+## 2026-11-16 — Start a run: Leave out, fields in place of JSON, no raw data shown (branch `claude/module-removal-pathways-1d072a`, PR 1)
+
+Scope: the connected React start page (`web/src/pages/connected/StartRun.tsx`, `api.ts`, `layout.tsx`, `start/*`), the summary answer's new `omitted_titles` (`owners/cpos_launch.py`, `run_start/submissions.py`, `run_start/service.py`) and the wording of 14 forecast rules (`run_expectations.py`). The launcher's rules, the digest, cap and acceptance code, the older start page and currency behaviour (PR 2) are unchanged. No provider was called and no paid run was made.
+- Owner, 2026-11-16: remove modules likely to fail "as a means of reducing costs, so modules do not run"; "Users should never be putting data into JSON entries"; "fix, no raw data should be visible", then "Yes, rewrite them" for the forecast sentences.
+- Changed: Leave out / Put back on each Will refuse card (the refusing modules and those refusing because they read them; the analyst presses Review run again); Valuation and peers, Module options and Scenario assumptions as fields with example input, the JSON text areas removed; a service refusal in the screen's labels, sent to its control through the field-error path where the control is drawn (the note's refusal to the note box), the rest in the notice; option labels for case kind, model and effort; omitted report sections by title; the Source lookup line in sentences; 14 rules' reason and fix reworded.
+- Pre-existing defect fixed here (owner ruling 2026-11-16, relayed): the React page's pathway lists differed from the service presets — no `CP-MODEL` on any forecast pathway, and CP-1A on Relative Value and Portfolio Decision — so any explicit module list it sent (an Advanced choice, a carried choice, now a Leave out) published no forecast on Earnings Update, Relative Value and Portfolio Decision while the summary looked the same. `PATHWAYS` in `web/src/pages/connected/api.ts` now equals `deploy_vii.contracts.PATHWAY_MODULES` for every listed pathway (`tests/test_start_forecast_pathways.py` reads the expected lists from the service); `CP-MODEL` is sent but never drawn or counted as a module; a carried list gains it only on a pathway whose preset holds it. Presets and launcher unchanged. A module choice made at Advanced is cleared when the level leaves Advanced, so a Basic run sends `modules: []` again.
+- Fidelity check: what is sent — N8 (Basic, nothing left out) compares the summary body with a literal written in the test, and the same test copied unchanged onto `main` a438cb9f passes there; N9 (Distressed, Legal & covenants left out) and R2a-c (one module left out on each forecast pathway, the preset list with `CP-MODEL`) pin the module lists; R1 pins `[]` at Basic after an Advanced choice. What is shown — refusal lines swept against every `_Rules` message template with no path, row index, snake-case token or quoted identifier left (D10); the review sheet's facts and module list, Leave out names, "Left out", the picker, the pathway cards and the focus choices never show a code or "Cash flow model" (R10, S3, S4, Task S fix round 1). Rule wording — a script loading `RULES` from `main` and from the branch compared all 21 rules field by field: only `reason`/`fix` differ (23 cells in 14 rules).
+- Commands, exit 0, on the final tree: `npm --prefix web run` build, lint, format:check, typecheck, unused, duplication, test (172 files, 3,889 tests) and proof:connected (Chrome and Edge, 2 pass); `uv run python tools/quality_gate.py` (0 findings, 430 lines in scope); `pytest tests/test_start_forecast_pathways.py tests/test_run_expectations_words.py tests/test_run_start_submissions.py tests/test_run_start_service.py tests/test_context_form.py` (352 passed); `pytest -m browser tests/test_run_start_page.py` 152 passed (before the fix round, which changed only `web/src`).
+- Review: one adversarial whole-branch review on Opus (High 0, Medium 2: a Basic run sending an Advanced module choice; the note's refusal on a question row that does not exist) and two scoped re-reviews (round 1 left a Medium: Leave out named "Cash flow model"; round 2 pass); the pathway-list change had its own task review (a Medium: the review sheet's Modules list showed and counted "Cash flow model"; fixed, re-review pass). Clean, with probes: Submit sends only the reviewed body; Leave out bypasses no acceptance, cap or digest; left-out modules do not run; the fields send loaded values back exactly ("0", "-50", "8.50", null, ""). A register-only refactoring sweep found no defect introduced and 13 Low structural costs, left for the next phase sweep; 7 Low and 2 Info review findings wait for the end batch.
+- Not verified: a live or paid run from the page; focus, scroll and section opening for a routed refusal in a real browser by hand (jsdom tests and the browser proof only); Windows; the full Python suite.
+
+## 2026-11-16 — Older start page: name refusal routes to the pathway step again (branch `claude/legacy-start-page-name`)
+
+Scope: `docs/templates/context-form.html` (`errorStage`), `tests/test_run_start_page.py` and `web/scripts/connected-proof.mjs` only.
+- Broke: after #40 the 15 browser tests in `tests/test_run_start_page.py` that open the review failed. Causes: (1) the service's new name sentence ("Enter your name as your first name and initial...") has no `submitted_by`, so `errorStage` gave a name refusal no "Go to" button; (2) setups that never typed a name now got a name refusal and so no summary items.
+- Fixed: `errorStage` also matches `first name and initial` and sends it to `pathway`; eight page setups type `Ana L`; the "80 characters" assertion now reads the service's new sentence. `links == ["pathway"]` unchanged; it failed (`[]`) before the page fix and passed after.
+- Commands: `pytest -m browser tests/test_run_start_page.py` 152 passed (one earlier loaded-machine run had 3 unrelated tests fail with a Chrome `CalledProcessError`; each passed alone and in the next full run); `tests/test_run_start_submissions.py tests/test_run_start_service.py` 257 passed; `tools/quality_gate.py` 0 findings.
+- Proof: `npm --prefix web run proof:connected` also failed on a438cb9f (Chrome and Edge, exit 1: the Submit, spend up to USD 25.00 button never appeared) because `web/scripts/connected-proof.mjs` never entered "Your name"; it now fills `Ana L` and passes (2 pass, exit 0).
+- Not verified: the page in a real browser by hand; React start page (unchanged); CI (deselects browser tests).
+
+## 2026-11-16 — Teams cards carry the design as inline images (branch `claude/zealous-keller-yvc5mb`)
+
+Scope: presentation of the four Teams cards only (`inbox/teams.py` card parts, `inbox/teams_brand.py`, new `tools/teams_brand_images.mjs`); no change to when or what is posted.
+- Owner asked why the cards fell short of the mock-ups, then "try step 2 now": the brand pieces as images inside the card.
+- Changed: status pills, shapes and meta icons are the app's own, drawn by the tool as palette PNGs (pill about 1.2 KB, shape about 0.2 KB); the state stripe, progress bars, callout tints and the Stopped tile are PNGs made by the sender, the tints partly transparent; `Badge`, `ProgressBar`, `Icon` and Markdown bold are no longer used; summary rows stop at a posted size of 23 KB; the post is compact JSON.
+- Fidelity check: the four sample cards in `docs/design/teams-cards/` rendered with adaptivecards 3 and Microsoft's Teams light and dark host configurations (`adaptivecards-designer`), `rendered-light-dark-2x.png`, compared with `docs/design/mockups/teams-cards.html`: header, stripe, pills, icons, callouts, bars, tiles and rows match the mock-up's layout; the font, the button colour and rounded borders do not (Teams' own). Sizes posted: 9.7 to 11.1 KB for a run card, 20.9 KB for the sample summary with five finished rows.
+- Tests: `tests/test_inbox_teams.py` 76 passed, with the stripe colour, bar fill and tint alpha read from the PNGs by a reader written in the test; scheduler, service and React-server files passed; quality gate 0 findings.
+- Not verified: Teams itself, light or dark, desktop or mobile.
+
+## 2026-11-16 — Teams run cards and the analyst's name (branch `claude/zealous-keller-yvc5mb`, `main` at `52f798f` merged)
+
+Scope: a new sender (`src/deploy_workflow/inbox/teams.py`, `teams_brand.py`), its hook in the scheduler and the two services' start-up, the name rule in `run_start/submissions.py`, the React start page and the older start page's help text. No provider, handoff, module or library change; nothing was posted to Teams and no paid run was made.
+- Owner, 2026-11-16: cards for run activity only (started, report ready, stopped, summary); summary at 09:00, 13:00, 17:00 and 21:00 UK time on weekdays, skipped when quiet, five finished runs then a count; every card links to the library; the analyst's name is required as a first name and one initial ("Eric G"), two allowed ("Eric MG").
+- Changed: with `CREDIT_OS_TEAMS_WEBHOOK` and `CREDIT_OS_TEAMS_LINK` both set the scheduler posts each run's cards once (ledger `_engine/teams.json`; the first poll records existing runs and posts none) and the summary on its slots; with neither it posts nothing; with one the service refuses to start. `submitted_by` is refused unless it is a first name, a space and one or two capital initials, on the service and on the React page (same rule, `start/analystName.ts`); an empty name is refused. The report-ready card carries the library Overview's lead bottom line (`summary_fields`) unchanged.
+- Tests (synthetic, no network; posts go to a list): `tests/test_inbox_teams.py` 74 passed, with expected card texts written out by hand, the UK summer-time boundaries of 2026, restart, failed-post, unsaved-ledger, hand-edited-record and unreadable-ledger cases, a local HTTP server for the post and its refused redirect, and one scheduler run through the fake launcher; `tests/test_run_start_submissions.py` 153 passed (7 accepted and 12 refused names); the scheduler, service, activity, prior, context-form, React-server and launcher files, 1,900 tests in all, passed; `web`: `src/pages/connected` 34 files passed, typecheck, eslint, prettier and knip clean. Quality gate on the working tree: 0 findings.
+- Review: one independent adversarial review of the working tree (2 High, 5 Medium, 7 Low) and its simpler-design pass. Fixed: any exception in the sender is caught and logged, so a bad record or a garbled reply cannot stop the poll; a webhook or link with an unreadable port, a control character, a query or a fragment refuses the start; launched runs no longer inherit the webhook; the summary lists at most 18 rows (measured under 22 KB for a 93-run day with 80-character names); a failed ledger save no longer stops the pass; the retry counter is replaced by an age limit (two hours for a run card, the slot window for a summary) and a summary that was not posted leaves its runs for the next; a redirect is refused. Left as designed: a run ending after 21:00 UK is in no summary; module-written Markdown marks in the bottom line are shown as written.
+- Card check: the four payloads in `docs/design/teams-cards/` are the sender's output for sample runs (5.2 to 12.8 KB posted); rendered with Microsoft's reference renderer (adaptivecards 3), where the header, layout and text draw and `Badge` and `ProgressBar` fall back to text.
+- Not verified: a post to a real Teams channel, and so how Teams draws `Icon`, `Badge`, `ProgressBar`, `icon:Library` and the Fluent icon names; `tests/test_run_start_page.py` (browser), edited to type a valid name but not run: headless Chrome's `--dump-dom` hangs in this container even on a one-line local file; the full `web` gates and the full Python suite; Windows.
+- For the owner: card text goes to Microsoft (issuer, pathway, analyst name, times, counts, cap, the lead bottom line); a card's links work only for a reader who can reach `CREDIT_OS_TEAMS_LINK`; the report-ready card shows no count of stated limits because the library holds none; earlier records keep their free-text names and the summary shortens them ("Dana Reyes" to "Dana R"). The oldest entry here (2026-11-13, CP-DR web lookup) was trimmed to stay under 1,000 lines; git history keeps it.
 ## 2026-11-16 — Reader: year-on-year comparator on metric cards; colour by a fixed better/worse table (branch `claude/reports-formatting-updates-cfb43a`, not pushed)
 
 Scope: the catalogue's headline metrics (`src/deploy_workflow/credit_os_catalogue.py`: `chart_rows`, `prior_metric`, `handoff_metrics`) and the connected reader (`web/src/pages/connected/{signal.ts,HeadlineFigures.tsx,reportView.ts,report/YearChange.tsx,report/Changes.tsx,report/IdentityBand.tsx}`, `web/src/pages/library/{slice.ts,parts/MetricTile.tsx,parts/ChangeCard.tsx}`). Sits on the entry below.
@@ -666,320 +1080,3 @@ Scope: presentation only, all under `web/`; no backend, handoff, provider or mod
   submission blocked. The separate synthetic preview completed
   `20261115-214052-01` with USD 0.00 spent and 14 of 14 modules finished.
   The ZIP stays local pending both browsers on the Windows work PC.
-
-## 2026-11-15 — RBOT-HTML 256101a and browser proof
-
-- Native backend and pins match upstream `256101a`. All 16 compiled React
-  files match the five-step Run candidate. The current upstream work-PC pack
-  and historical handoffs retain their original bytes.
-- Both browsers initially reached the new checker and failed on the old
-  synthetic CP-2E headers. The corrected fixture separates the chart data
-  from the native registers. Each browser verified the new completeness
-  records and native agreement on USD 500m unhedged debt, 62.5% and USD 5m
-  added interest. Confidence review also checked rejection of a renamed
-  header and an incorrect gross-interest value. Quality, 657 targeted
-  Python tests, 98 web tests and the build passed.
-- Candidate `8862b08` SHA-256
-  `0692c62a670c42e1af4d94c9d066920db09c4a5c53037467f6ad84574afea379`.
-  Clean macOS extraction passed Chrome (`20261115-210759-01`) and Edge
-  (`20261115-210811-01`). The offline preview completed
-  `20261115-210806-01`. Windows work-PC proof and publication are pending.
-
-## 2026-11-15 — Connected five-step Run intake
-
-- Compared the connected page with the Credit OS Run mock and kit. Documents,
-  Purpose, Confirm, More context and Start use the existing stepper, drop zone,
-  purpose cards, details list and side Readiness. The cap comes from the native
-  scheduler. At 390 px the compact stepper and uploader fit inside the form.
-- Confidence review checked drag and drop, duplicate stored names, valid
-  file attachment choices, back navigation, pre-approval refusal, expired
-  approval and identical retries. The native summary is requested after
-  More context and the final submit uses its exact answers and digest.
-  Targeted web (98) and Python (27) tests, quality, lint, format and build passed.
-- Candidate `cac625b`, SHA-256
-  `6fb94dabd80d044070e3ced0bb1850e4df2d3bcd321b4712185ae5f27060b2a3`.
-  Clean extraction passed Chrome (`20261115-210031-01`) and Edge
-  (`20261115-210040-01`) on macOS. The interactive offline preview completed
-  `20261115-205932-01` and serves the same compiled JS and CSS. The engine and
-  pins match the existing RBOT-HTML `b8cf4ca` baseline. Upstream advanced to
-  `256101a`. Windows work-PC proof and publication are pending.
-
-## 2026-11-15 — Windows candidate and extracted-project checks
-
-- The archive had omitted the React design system and brand tokens used by
-  12 web test files. Confidence review traced those reads and verified the
-  revised ZIP contains both files byte for byte. The Windows guide now records
-  the retained Caesars result. Packaged application, proof inputs and pins
-  match the preceding candidate. The Python quality gate and 27 targeted tests
-  passed. Extracted `CI=1 npm run gates` passed locally (3,047 web tests,
-  70 script tests and the file-browser checks).
-- Candidate `9c9a924`, SHA-256
-  `f6def4b788135bfb583e11829e339c92d90df22c1657ddcebf71bb6c2097fbfd`.
-  Its verified clean extraction passed macOS Chrome (`20261115-173348-01`)
-  and Edge (`20261115-173359-01`). The same build replayed all five Caesars
-  views at 1,440 and 390 px, checked against the mock layouts and native data.
-  The replay restored the download copy after local preview startup and verified
-  the CP-2 hash, C11/C14 and 464.86 versus 647.95 US$m. Windows work-PC proof
-  and publication are pending.
-
-## 2026-11-15 — Portfolio limits from a validated fund export
-
-- Confidence review exercised the frozen source links and pinned bytes, plot
-  and table agreement, exact zero and zero maximum, report date and check
-  date, absent NAV, duplicate limits, minimum limits and exposure definitions
-  the holdings cannot corroborate. The targeted Python suite passed 103
-  tests. The changed-code quality gate and packaged web build passed.
-- The standard candidate `b532d3e` had SHA-256
-  `422d6a7769214b199aa7cfdf50511f52dcfeb617866a25a4a99701efcb5febcc`.
-  Its verified clean extraction passed full macOS Chrome
-  (`20261115-172838-01`) and Edge (`20261115-172847-01`) proof.
-- A separate synthetic upload used the same application with export fixtures
-  and a matching canned CP-6 handoff. Chrome (`20261115-172851-01`) and Edge
-  (`20261115-172902-01`) rendered 29.80% against 30.0% and 0.00% against
-  5.00% in Modules and Forecast. The 29.90% illustrative proposal stayed in
-  the original table. Both browsers showed the retained Caesars portfolio gap
-  at 390 px in both views. Windows work-PC proof and publication are pending.
-
-## 2026-11-15 — Portfolio limits from a validated workbook
-
-- The native synthetic run uploaded and selected the test workbook. Both
-  browsers showed 2.37% against 2.50% and 3.73% against 5.00% in Modules and
-  Forecast. The illustrative 2.40 proposal stayed in the original table.
-- Confidence review checked the frozen source hash, selected output, date,
-  mismatching limit data and authored gap. CSV exports still use the source
-  table. Both browsers retained the Caesars gap at 390 px in both views.
-  Targeted web (97) and Python (17) tests, quality, lint, format and build passed.
-- Candidate `eb1a5c1` SHA-256
-  `8a2cd284e9b023c7138c973fcce0986a41067d7e9e6ad3b33c14213a8ddb3626`.
-  Clean macOS extraction passed Chrome (`20261115-172022-01`) and Edge
-  (`20261115-172031-01`). Windows work-PC proof and publication are pending.
-
-## 2026-11-15 — Security decisions and last trades
-
-- Both macOS browsers checked six retained Caesars decisions, two observed
-  bond prices ($93.28 and $84.94), exact yields (8.063520% and 9.318398%),
-  original quote and row traces, recovery qualifications, and year-precision
-  maturities. The module fit at 390 px with both tables open.
-- Confidence review checked future, impossible and conflicting quote dates,
-  missing locators, and unquoted rows. Targeted web (103) and Python (15)
-  tests, quality, lint, format and build passed.
-- Candidate `2c971bc` SHA-256
-  `79b6b93b02754cbfebc493f297bf4c4be06796f411f00df26d4a5b4fa1a79080`.
-  Clean macOS extraction passed Chrome (`20261115-170434-01`) and Edge
-  (`20261115-170442-01`). Windows work-PC proof and publication are pending.
-
-## 2026-11-15 — Rate and currency sensitivity
-
-- The read-only Caesars handoff's 100 bp shock adds USD 59.68 million
-  annual cash interest and moves all-in cover from 1.52x to 1.48x. Both
-  browsers checked the distinct calculation traces, hedge terms, FX gap and
-  dated events at 390 px. The hedged cash impact remains unestablished.
-- Confidence review checked mixed currencies, zero versus missing net interest,
-  before/after quote alignment, and the reported shock basis. Focused web
-  (85) and Python (15) tests, quality, lint, format and build passed.
-- Candidate `944bc5e` SHA-256
-  `8c2c14f4448697e51529a98cdd424b233417bce799aab95b998e94539b4176c6`.
-  Clean macOS extraction passed Chrome (`20261115-165617-01`) and Edge
-  (`20261115-165625-01`). Windows work-PC proof and publication are pending.
-
-## 2026-11-15 — Downside break points and narrow report layout
-
-- Retained Caesars showed the first break at 17.86% EBITDA decline with
-  interest held and 15.55% under the recorded cash-interest shock. Both
-  browsers verified the analyst-watch qualification, unresolved break
-  values, six leading and two lagging flags, and the original calculation.
-- Confidence review checked share spelling, zero, reversed rank, unknown
-  values, source focus, and the table header's containing block. Both
-  macOS browsers saw all five report routes at 390 px. Focused web (940)
-  and Python (15) tests, quality, lint, format and build passed.
-- Candidate `ecef6fc` SHA-256
-  `affdcadd30fece8505fabe1fc32412ce83ebc8dead650fe8f33724dd130fcaf1`.
-  Clean macOS extraction passed Chrome (`20261115-164826-01`) and Edge
-  (`20261115-164833-01`). Windows work-PC proof and publication are pending.
-
-## 2026-11-15 — Downside case comparison
-
-- The retained Caesars CP-2A handoff supplied an unstressed control and three
-  named shocks. Chrome and Edge matched the cover-watch result of −31.3278 USD
-  million free cash flow and 1.22x all-in cover across chart, table and row trace.
-  The 720 px layout passed after the trace tooltip closed. The report still has
-  the same pre-existing horizontal overflow at 390 px.
-- Confidence review verified reordered columns, ambiguous control and shock
-  inputs, negative and zero geometry, cross-currency rejection and missing
-  net debt. Focused web (80) and Python (15) tests, quality, lint and build passed.
-- Candidate `203c547` SHA-256
-  `697bdea7f42e71c7454d0f19ea0cb82b31ad891dead59a34658bc54c4d32a58f`.
-  Clean macOS extraction passed Chrome (`20261115-164043-01`) and Edge
-  (`20261115-164051-01`). Windows work-PC proof and publication are pending.
-
-## 2026-11-15 — Module readiness and monitoring records
-
-- The retained Caesars replay in macOS Chrome and Edge showed six CP-0 readiness
-  decisions (five with limitations, one conditional) and eight CP-2 triggers.
-  The USD 1,502 million liquidity threshold and the unresolved covenant basis
-  match the handoffs. Both browsers checked section jumps and row trace focus.
-- Confidence review checked the combined and split register columns, module
-  ownership, unavailable thresholds and preservation of source qualifications.
-  Focused web (927) and Python (15) tests, quality, lint, format and build passed.
-- Candidate `c96d161` SHA-256
-  `5b0599d74f0ccbedd122c8920f8deaf225f4494eef309c7ee4c19c957cae86df`.
-  Clean extraction passed macOS Chrome (`20261115-162914-01`) and Edge
-  (`20261115-162922-01`). Windows work-PC proof and publication are pending.
-
-## 2026-11-15 — Keyboard source traces for figures and calendar rows
-
-- Both macOS browsers opened the Caesars Watchlist passage, maturity chart
-  and calendar row by keyboard. Escape returned focus to the exact control
-  and kept the selected Table view. Modules and Forecast opened the same maturity
-  source. The Evidence route reloaded with the 3,962 US$m maturity and the original
-  quarterly filing reference. The calendar table fit the 720 px viewport.
-- Confidence review reproduced lost focus and the reset Table view. Checked
-  same-run row identities, deduplicated exact source records, both trace dismissal
-  and deep-link navigation, and chart stability during module route changes.
-  Focused web (305) and Python (15) tests, quality, lint, format and build passed.
-- Candidate `3104896` SHA-256
-  `f30be0c81281f0b7fa560ed148e26099018c98cf08837dd6ddd39e61a1070c4b`.
-  Clean extraction passed macOS Chrome (`20261115-161824-01`) and Edge
-  (`20261115-161832-01`), with paired proof. Windows work-PC proof and
-  publication are pending.
-
-## 2026-11-15 — Cross-module issuer calendar
-
-- Both macOS browsers checked 69 retained Caesars calendar rows, split into 46
-  historical and 23 scheduled events. Exact dates, publication dates, precision
-  and row traces matched the native handoffs. Both displayed the authored watch
-  gap, opened the source by keyboard, reloaded the route and fit 720 px.
-- Confidence review checked duplicate descriptors, coincident independent rows,
-  retained alternatives, incompatible dates and source text placement. The
-  synthetic path checked a scenario quarter and nine distinct same-day entries.
-  Focused web (53) and Python (15) tests, quality, lint, format and build passed.
-- Candidate `2611797` SHA-256
-  `0c89b8bbe33df260a6d7e8da45d2d8a174adddb1bc97c70650eb037ac5da92ff`.
-  Clean extraction passed macOS Chrome (`20261115-161013-01`) and Edge
-  (`20261115-161020-01`). The paired proof contains the hash and ten screenshots.
-  Windows work-PC proof and publication remain pending.
-
-## 2026-11-15 — Paired browser proof tied to the candidate ZIP
-
-- The Windows guide verifies the companion checksum and extracts into a fresh
-  local folder. The runner records the exact archive hash, source commit, host
-  platform and release, run IDs, browser versions and screenshot names together.
-  Windows synthetic workspaces use the short extraction path.
-- Confidence review checked invalid provenance and a failing second browser.
-  The latter returned exit 1, left Chrome's individual record, and wrote no
-  paired proof. The Python quality gate, focused Python tests (15), lint and
-  formatting passed.
-- Candidate `3712f2a`, ZIP SHA-256
-  `df2e529a8ea938989646d68f62711cfe4ac85335cd39f1d0979ecb602e00a044`.
-  A clean macOS extraction passed in Chrome (`20261115-160346-01`) and Edge
-  (`20261115-160352-01`). Verified `proof.json` against the ZIP, the exact
-  individual records and all eight screenshots. The React assets are identical
-  to the preceding candidate. Windows work-PC proof and publication are pending.
-
-## 2026-11-15 — Latest RBOT-HTML and additional chart contracts
-
-- Verified upstream at `b8cf4ca`. The engine, native library and Python pins match it.
-  The React lockfile is unchanged. [Upstream method and portfolio verification](https://github.com/EricMG13/RBOT-HTML/blob/b8cf4ca58083e1a822fb45515cd7ce63ce467834/VERIFICATION.md)
-- The new native validator recognizes the supplied holdings, market data, mandate, exposure
-  and constraints. Validation failed for both the May exposure date and the October
-  Caesars date. React now offers the workbook selection for Full credit assessment.
-- Confidence review reproduced intermittent-data chart fallback and dropped recovery
-  columns. Both macOS browsers verified ten plots and one mixed-unit record from the
-  native descriptor parser, with exact zero, no-quote and recovery gaps. The figures
-  used synthetic handoffs. Caesars separately passed 23 retained descriptor checks.
-- Restored the newly required CP-2E and CP-3 registers in the synthetic handoffs.
-  Candidate source `3cb2b40` and ZIP SHA-256
-  `e2c984bf061d7b571cdc20b1f0d046032abf184ae20f4becf00120db1690811c`.
-  The clean extraction passed macOS Chrome (`20261115-155903-01`) and Edge
-  (`20261115-155910-01`), including the signed bridge and missing funding commitment.
-  Python (285), web (302), quality, typecheck, formatting and build checks passed.
-  Windows work-PC proof and publication remain pending.
-
-## 2026-11-15 — Published run charts in Forecast
-
-- Forecast takes figures and stated gaps from the current module output. Each
-  chart keeps the owning module and same handoff-line trace used in Modules.
-  The collection works without a calculation model. Native chart rejections
-  keep their diagnostic text in Evidence Record.
-- Confidence review checked alternate output identity, non-assessable charts,
-  recorded build rejections, zero versus a missing value, and cited gap text.
-  No dated event lanes or relationship maps entered the Forecast collection.
-- The retained Caesars case showed eight figures in Chrome and Edge on macOS.
-  Both kept the portfolio gap, the FY2027 cash-basis reconciliation, and the
-  2030 maturity of 3,962 US$m through the chart table and Evidence reload.
-  Both layouts fit 720 px. See `proof-artifacts/caesars-forecast-run-charts/`.
-- Source `47cbd8b`, ZIP SHA-256 `70d1414ead1682be2791ced60b314cca7b2abdec2350034442513ad09027c4f2`.
-  Extracted-package synthetic runs passed in macOS Chrome (`20261115-154748-01`)
-  and Edge (`20261115-154754-01`). Targeted web tests passed (73) and Python
-  passed (15). Lint, format, typecheck, build and quality gate passed.
-  Windows work-PC proof and publication are pending.
-
-## 2026-11-15 — Portfolio evidence and all retained Caesars figures
-
-- The pinned portfolio validator at RBOT-HTML `fc010a7` rejects the supplied two-sheet
-  workbook and accepts the repository template. The dated May exposure was outside the
-  October Caesars case. No supplied portfolio files were included in the ZIP.
-- Confidence review reproduced a plot from numeric limits alone. The connected reader now
-  shows the source table, with a validation gap, when no validated portfolio basis is
-  published. Tests preserve 0.00, the exact limit and the reason when no proposal exists.
-  The existing portfolio chart component passed its synthetic component checks. The
-  native snapshot still has no validated portfolio basis to bind a positive PD.1 case.
-- The retained Caesars replay on macOS Chrome and Edge checked eight plotted financial
-  charts, six dated event lanes, seven maps, two authored gaps and the source links and
-  visible table rows of all 21 figures. Records are under
-  `proof-artifacts/caesars-figure-audit/`. The preview served an isolated copy with
-  same-origin POST and DELETE returning 405.
-- Candidate `425655b` SHA-256 `44bcf35e6bd4172a874cadbc363e60e92762be0a07af0467d755fef144e07df5`.
-  The extracted ZIP passed on macOS Chrome 157.0.8103.78 (run `20261115-153911-01`)
-  and Edge 157.0.4341.60 (run `20261115-153916-01`). Both checked chart-source route
-  reload, the portfolio table and its qualification, and the original CP-2 file hash.
-  Focused tests passed (70 web and 15 Python), with clean lint, format, build and
-  quality gate results. The work-PC browser proof and ZIP publication are pending.
-
-## 2026-11-15 — Credit OS 2 React issuer report redesign
-
-- Upstream GitHub main was verified at RBOT-HTML `fc010a7`. Engine files and
-  Python/workspace pins match that commit. React and its lockfile are preserved.
-- Read-only Caesars replay, macOS Chrome 157.0.8103.78 and Edge 157.0.4341.60.
-  Verified five report views, 12 retained handoffs, eight chart descriptors,
-  seven event lanes, seven maps and the explicit portfolio chart gap.
-- Fidelity checks used 3,962 US$m 2030 maturities, the original CP-2 hash,
-  C11/C14 lineage, and 464.86 versus 647.95 US$m FY2027 forecast bases.
-  Narrow report views fit at 720 px; Escape returned focus from the trace.
-- Confidence review checked run and output identity, qualified forecasts, zero
-  versus missing, comparable units and same-run artifact downloads. Fixed the
-  driver-only downside label, lost module filter, chart qualification,
-  methodology files in the package, and responsive overflow.
-- The 91-figure map documents available producers and table/gap states. The
-  browser evidence covers delivered cases and fixtures, not every pathway or
-  a new paid run. The Caesars replay remains a labelled test preview.
-- Candidate source `df9902b` and ZIP digest
-  `f0e0dde8da058c9d8e739bfc7d9265e7234b7295cc4efec849a9093281912507`.
-  A clean extraction passed the full 14-module synthetic workflow in macOS
-  Chrome (run `20261115-152941-01`) and Edge (run `20261115-152946-01`).
-  Both verified the exact handoff download. Package validation confirmed the
-  14 synthetic handoffs and excluded retained issuer data and credentials.
-  The extracted proof uses its own fixtures and made no provider calls.
-- Paired CP-8 proof used the RBOT-HTML synthetic lite-assessment publisher with
-  an earlier-format prior. macOS Chrome and Edge checked the exact −1.40x
-  leverage change, the withheld cash difference, maturity gap, module
-  explanation, and Evidence reload and back/forward. Targeted tests also cover
-  same-period revisions, mismatched pair identity, maturity zero versus missing,
-  and the distinction between missing, unreadable and first-run comparisons.
-- Work-PC proof is pending. Keep the ZIP local until both Windows browsers pass.
-
-## 2026-11-15 — Unified React frontend on RBOT-HTML
-
-- The RBOT-HTML engine under `src/`, Python pin and lock inputs match `9d040f8`.
-  The new entry point uses the same scheduler, run approval, spend cap and publisher.
-- Chrome 157.0.8103.78 and Edge 157.0.4341.60 on macOS completed synthetic Northbridge
-  from upload and approval to a finished report with original handoff download.
-  Both showed CP-1 debt maturities, its FY2027 gap, and calculated base revenue of 1,050.
-- Focused Python tests passed (369). Adapter quality gate reported zero findings.
-  Report checks exposed and corrected duplicate dating, retained-folder routing,
-  and event and relationship figures appearing among forecast charts.
-- The synthetic proof covers one full pathway with canned model responses.
-  Native Claude medium preflight could plan the pathway offline. The available
-  OpenRouter credential did not supply the direct Anthropic key it requires, and
-  the available sample pack lacks the evidence for a complete analytical report.
-  See [React workflow](docs/react-workflow.md).

@@ -1,0 +1,56 @@
+2026-11-17T22:56:33Z
+Start offline-openers-01
+{"arm":"after","planPath":"/workspace/scratch/stage7-static-screens/plans/offline-openers-01.json","distDir":"/workspace/scratch/stage7-release/extracted/web/dist","fixtureDir":"/workspace/scratch/stage7-static-screens/after/fixture","planned":30,"completed":30,"distinct":20,"statuses":{"clicked":51,"active-confirmation-or-paid-action-outside-scope":1,"unclickable":1},"appRequests":[],"appWebSockets":[],"errors":[],"blankProxyCount":9,"proxyDenials":169,"proxyResets":0,"proxyErrors":[]}
+offline-openers-01 exit 0
+2026-11-17T22:56:59Z
+Start offline-openers-02
+{"arm":"after","planPath":"/workspace/scratch/stage7-static-screens/plans/offline-openers-02.json","distDir":"/workspace/scratch/stage7-release/extracted/web/dist","fixtureDir":"/workspace/scratch/stage7-static-screens/after/fixture","planned":30,"completed":30,"distinct":0,"statuses":{},"appRequests":[],"appWebSockets":[],"errors":[],"blankProxyCount":7,"proxyDenials":103,"proxyResets":0,"proxyErrors":[]}
+offline-openers-02 exit 0
+2026-11-17T22:57:06Z
+Start offline-openers-03
+{"arm":"after","planPath":"/workspace/scratch/stage7-static-screens/plans/offline-openers-03.json","distDir":"/workspace/scratch/stage7-release/extracted/web/dist","fixtureDir":"/workspace/scratch/stage7-static-screens/after/fixture","planned":30,"completed":30,"distinct":13,"statuses":{},"appRequests":[],"appWebSockets":[],"errors":[],"blankProxyCount":7,"proxyDenials":102,"proxyResets":0,"proxyErrors":[]}
+offline-openers-03 exit 0
+2026-11-17T22:57:13Z
+Start offline-openers-04
+{"arm":"after","planPath":"/workspace/scratch/stage7-static-screens/plans/offline-openers-04.json","distDir":"/workspace/scratch/stage7-release/extracted/web/dist","fixtureDir":"/workspace/scratch/stage7-static-screens/after/fixture","planned":30,"completed":30,"distinct":16,"statuses":{},"appRequests":[],"appWebSockets":[],"errors":[],"blankProxyCount":9,"proxyDenials":104,"proxyResets":0,"proxyErrors":[]}
+offline-openers-04 exit 0
+2026-11-17T22:57:20Z
+Start offline-openers-05
+{"arm":"after","planPath":"/workspace/scratch/stage7-static-screens/plans/offline-openers-05.json","distDir":"/workspace/scratch/stage7-release/extracted/web/dist","fixtureDir":"/workspace/scratch/stage7-static-screens/after/fixture","planned":30,"completed":30,"distinct":30,"statuses":{},"appRequests":[],"appWebSockets":[],"errors":[],"blankProxyCount":8,"proxyDenials":104,"proxyResets":0,"proxyErrors":[]}
+offline-openers-05 exit 0
+2026-11-17T22:57:27Z
+Start offline-openers-06
+{"arm":"after","planPath":"/workspace/scratch/stage7-static-screens/plans/offline-openers-06.json","distDir":"/workspace/scratch/stage7-release/extracted/web/dist","fixtureDir":"/workspace/scratch/stage7-static-screens/after/fixture","planned":30,"completed":30,"distinct":26,"statuses":{},"appRequests":[],"appWebSockets":[],"errors":[],"blankProxyCount":8,"proxyDenials":104,"proxyResets":0,"proxyErrors":[]}
+offline-openers-06 exit 0
+2026-11-17T22:57:34Z
+Start offline-openers-07
+{"arm":"after","planPath":"/workspace/scratch/stage7-static-screens/plans/offline-openers-07.json","distDir":"/workspace/scratch/stage7-release/extracted/web/dist","fixtureDir":"/workspace/scratch/stage7-static-screens/after/fixture","planned":30,"completed":30,"distinct":30,"statuses":{"clicked":66,"active-confirmation-or-paid-action-outside-scope":1,"unclickable":1},"appRequests":[],"appWebSockets":[],"errors":[],"blankProxyCount":7,"proxyDenials":174,"proxyResets":0,"proxyErrors":[]}
+offline-openers-07 exit 0
+2026-11-17T22:57:58Z
+Start offline-openers-08
+{"arm":"after","planPath":"/workspace/scratch/stage7-static-screens/plans/offline-openers-08.json","distDir":"/workspace/scratch/stage7-release/extracted/web/dist","fixtureDir":"/workspace/scratch/stage7-static-screens/after/fixture","planned":30,"completed":30,"distinct":26,"statuses":{"clicked":122},"appRequests":[],"appWebSockets":[],"errors":[],"blankProxyCount":8,"proxyDenials":121,"proxyResets":0,"proxyErrors":[]}
+offline-openers-08 exit 0
+2026-11-17T22:58:21Z
+Start offline-openers-09
+{"arm":"after","planPath":"/workspace/scratch/stage7-static-screens/plans/offline-openers-09.json","distDir":"/workspace/scratch/stage7-release/extracted/web/dist","fixtureDir":"/workspace/scratch/stage7-static-screens/after/fixture","planned":30,"completed":30,"distinct":30,"statuses":{"clicked":187},"appRequests":[],"appWebSockets":[],"errors":[],"blankProxyCount":7,"proxyDenials":117,"proxyResets":0,"proxyErrors":[]}
+offline-openers-09 exit 0
+2026-11-17T22:58:51Z
+Start offline-openers-10
+{"arm":"after","planPath":"/workspace/scratch/stage7-static-screens/plans/offline-openers-10.json","distDir":"/workspace/scratch/stage7-release/extracted/web/dist","fixtureDir":"/workspace/scratch/stage7-static-screens/after/fixture","planned":30,"completed":30,"distinct":30,"statuses":{"clicked":135},"appRequests":[],"appWebSockets":[],"errors":[],"blankProxyCount":7,"proxyDenials":104,"proxyResets":0,"proxyErrors":[]}
+offline-openers-10 exit 0
+2026-11-17T22:59:12Z
+Start offline-openers-11
+{"arm":"after","planPath":"/workspace/scratch/stage7-static-screens/plans/offline-openers-11.json","distDir":"/workspace/scratch/stage7-release/extracted/web/dist","fixtureDir":"/workspace/scratch/stage7-static-screens/after/fixture","planned":30,"completed":30,"distinct":30,"statuses":{"clicked":203},"appRequests":[],"appWebSockets":[],"errors":[],"blankProxyCount":8,"proxyDenials":106,"proxyResets":0,"proxyErrors":[]}
+offline-openers-11 exit 0
+2026-11-17T22:59:41Z
+Start offline-openers-12
+{"arm":"after","planPath":"/workspace/scratch/stage7-static-screens/plans/offline-openers-12.json","distDir":"/workspace/scratch/stage7-release/extracted/web/dist","fixtureDir":"/workspace/scratch/stage7-static-screens/after/fixture","planned":30,"completed":30,"distinct":30,"statuses":{"clicked":210},"appRequests":[],"appWebSockets":[],"errors":[],"blankProxyCount":8,"proxyDenials":105,"proxyResets":0,"proxyErrors":[]}
+offline-openers-12 exit 0
+2026-11-17T23:00:13Z
+Start offline-openers-13
+{"arm":"after","planPath":"/workspace/scratch/stage7-static-screens/plans/offline-openers-13.json","distDir":"/workspace/scratch/stage7-release/extracted/web/dist","fixtureDir":"/workspace/scratch/stage7-static-screens/after/fixture","planned":30,"completed":30,"distinct":30,"statuses":{"clicked":130},"appRequests":[],"appWebSockets":[],"errors":[],"blankProxyCount":8,"proxyDenials":195,"proxyResets":0,"proxyErrors":[]}
+offline-openers-13 exit 0
+2026-11-17T23:00:43Z
+Start offline-openers-14
+{"arm":"after","planPath":"/workspace/scratch/stage7-static-screens/plans/offline-openers-14.json","distDir":"/workspace/scratch/stage7-release/extracted/web/dist","fixtureDir":"/workspace/scratch/stage7-static-screens/after/fixture","planned":12,"completed":12,"distinct":12,"statuses":{"clicked":19},"appRequests":[],"appWebSockets":[],"errors":[],"blankProxyCount":7,"proxyDenials":55,"proxyResets":0,"proxyErrors":[]}
+offline-openers-14 exit 0

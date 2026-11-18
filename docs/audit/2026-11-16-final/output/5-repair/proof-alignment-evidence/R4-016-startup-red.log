@@ -1,0 +1,29 @@
+✔ offline proof accepts only local resource schemes and loopback hosts (1.927368ms)
+✖ context guard blocks requests, redirects, popups and WebSockets before network (28.286867ms)
+
+Interrupted while running:
+
+⚠ docs/audit/2026-11-16-final/output/5-repair/proof-alignment-evidence/network-guard-browser.mjs (docs/audit/2026-11-16-final/output/5-repair/proof-alignment-evidence/network-guard-browser.mjs:1:1)
+✖ docs/audit/2026-11-16-final/output/5-repair/proof-alignment-evidence/network-guard-browser.mjs (4937.98796ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 1
+ℹ fail 1
+ℹ cancelled 1
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 4945.668615
+
+✖ failing tests:
+
+test at docs/audit/2026-11-16-final/output/5-repair/proof-alignment-evidence/network-guard-browser.mjs:37:1
+✖ context guard blocks requests, redirects, popups and WebSockets before network (28.286867ms)
+  browserType.launch: Failed to launch chromium because executable doesn't exist at /definitely-not-an-installed-browser
+      at TestContext.<anonymous> (/workspace/audit-proof-alignment/docs/audit/2026-11-16-final/output/5-repair/proof-alignment-evidence/network-guard-browser.mjs:53:34) {
+    name: 'Error',
+    log: []
+  }
+
+test at docs/audit/2026-11-16-final/output/5-repair/proof-alignment-evidence/network-guard-browser.mjs:1:1
+✖ docs/audit/2026-11-16-final/output/5-repair/proof-alignment-evidence/network-guard-browser.mjs (4937.98796ms)
+  'Promise resolution is still pending but the event loop has already resolved'

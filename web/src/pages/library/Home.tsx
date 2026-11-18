@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { BookOpen01 } from "@untitledui/icons";
 import { EmptyState } from "@/components/application/empty-state/empty-state";
 import { Button } from "@/components/base/buttons/button";
@@ -14,6 +14,8 @@ import {
 import { IssuerList, NO_BANDS, type Bands } from "./parts/IssuerList";
 import { IssuerCard, LoadingCard } from "./parts/IssuerCard";
 import { LibraryPage } from "./parts/LibraryPage";
+import { useSource } from "../source";
+import { readSlice } from "../run/slice";
 import { PAGE_NAME, PageTitle } from "./parts/PageTitle";
 import { RUN_START } from "./parts/links";
 import {
@@ -45,7 +47,14 @@ function applied(f: Filters): number {
 const appliedWithBands = (f: Filters, bands: Bands): number =>
   applied(f) + MEASURES.filter((key) => bands[key] !== null).length;
 
-function NoRuns() {
+const NO_RUNS =
+  "A run reads an issuer’s files and writes its report here. Start one to add the first issuer.";
+
+/** The shipped build holds no library at all (OQ-01: a design reference), which the reader is told. */
+const NO_LIBRARY =
+  "This design reference contains no reports. Open the connected Credit OS app to start a run.";
+
+function NoRuns({ description, canStart = true }: { description: string; canStart?: boolean }) {
   return (
     <EmptyState>
       <EmptyState.Header>
@@ -53,14 +62,13 @@ function NoRuns() {
       </EmptyState.Header>
       <EmptyState.Content>
         <EmptyState.Title>No runs yet</EmptyState.Title>
-        <EmptyState.Description>
-          A run reads an issuer’s files and writes its report here. Start one to add the first
-          issuer.
-        </EmptyState.Description>
+        <EmptyState.Description>{description}</EmptyState.Description>
       </EmptyState.Content>
-      <EmptyState.Footer>
-        <Button href={RUN_START}>Start a run</Button>
-      </EmptyState.Footer>
+      {canStart ? (
+        <EmptyState.Footer>
+          <Button href={RUN_START}>Start a run</Button>
+        </EmptyState.Footer>
+      ) : null}
     </EmptyState>
   );
 }
@@ -123,38 +131,56 @@ function RangeFilters({
 }
 
 function Layout({ home }: { home: LibraryHome }) {
-  const [filters, setFilters] = useState<Filters>(NO_FILTERS);
-  const [bands, setBands] = useState<Bands>(NO_BANDS);
-  const [layout, setLayout] = useState<"cards" | "list">("cards");
+  // Browser history restores this entry's choices before the home is mounted again.
+  const saved = (
+    window.history.state as {
+      libraryHome?: { filters: Filters; bands: Bands; layout: "cards" | "list" };
+    } | null
+  )?.libraryHome;
+  const [filters, setFilters] = useState<Filters>(saved?.filters ?? NO_FILTERS);
+  const [bands, setBands] = useState<Bands>(saved?.bands ?? NO_BANDS);
+  const [layout, setLayout] = useState<"cards" | "list">(saved?.layout ?? "cards");
+  useEffect(() => {
+    window.history.replaceState(
+      { ...window.history.state, libraryHome: { filters, bands, layout } },
+      "",
+    );
+  }, [filters, bands, layout]);
   const narrowed = applied(filters) > 0;
   const shown = home.cards.filter((card) => (isIssuer(card) ? matches(card, filters) : !narrowed));
+  /** The bar's first input is the search field. */
+  const bar = useRef<HTMLDivElement>(null);
   const clear = () => {
     setFilters(NO_FILTERS);
     setBands(NO_BANDS);
+    // "Clear filters" goes with the no-match state it sits in; the focus it held goes to the search.
+    bar.current?.querySelector("input")?.focus();
   };
   return (
     <>
-      <FilterBar
-        filters={home.filters}
-        values={filters}
-        onChange={setFilters}
-        appliedLabel={appliedLabel(home.filters.appliedLabels, appliedWithBands(filters, bands))}
-      >
-        <ButtonGroup
-          aria-label="Layout"
-          size="sm"
-          disallowEmptySelection
-          selectedKeys={[layout]}
-          onSelectionChange={(keys) => {
-            const [key] = keys;
-            if (key === "cards") setBands(NO_BANDS);
-            if (key === "cards" || key === "list") setLayout(key);
-          }}
+      <div ref={bar} className="contents">
+        <FilterBar
+          filters={home.filters}
+          values={filters}
+          onChange={setFilters}
+          appliedLabel={appliedLabel(home.filters.appliedLabels, appliedWithBands(filters, bands))}
         >
-          <ButtonGroupItem id="cards">Cards</ButtonGroupItem>
-          <ButtonGroupItem id="list">List</ButtonGroupItem>
-        </ButtonGroup>
-      </FilterBar>
+          <ButtonGroup
+            aria-label="Layout"
+            size="sm"
+            disallowEmptySelection
+            selectedKeys={[layout]}
+            onSelectionChange={(keys) => {
+              const [key] = keys;
+              if (key === "cards") setBands(NO_BANDS);
+              if (key === "cards" || key === "list") setLayout(key);
+            }}
+          >
+            <ButtonGroupItem id="cards">Cards</ButtonGroupItem>
+            <ButtonGroupItem id="list">List</ButtonGroupItem>
+          </ButtonGroup>
+        </FilterBar>
+      </div>
       {layout === "list" ? (
         <>
           <RangeFilters home={home} bands={bands} onChange={setBands} />
@@ -184,8 +210,13 @@ function Layout({ home }: { home: LibraryHome }) {
 
 /** The library home: the delivered cards, narrowed in memory by search and three filters. */
 export function Home() {
+  const run = readSlice(useSource().run);
+  const canStart = run.kind === "ok" && run.data.drafts.length > 0;
   return (
-    <LibraryPage title={PAGE_NAME.home}>
+    <LibraryPage
+      title={PAGE_NAME.home}
+      absent={<NoRuns description={NO_LIBRARY} canStart={false} />}
+    >
       {({ home }) => (
         <div className="flex flex-col gap-8">
           <div className="flex flex-wrap items-start gap-4 border-b border-secondary pb-4">
@@ -195,7 +226,11 @@ export function Home() {
             </div>
             {home.cards.length === 0 ? null : <Button href={RUN_START}>Start a run</Button>}
           </div>
-          {home.cards.length === 0 ? <NoRuns /> : <Layout home={home} />}
+          {home.cards.length === 0 ? (
+            <NoRuns description={canStart ? NO_RUNS : NO_LIBRARY} canStart={canStart} />
+          ) : (
+            <Layout home={home} />
+          )}
         </div>
       )}
     </LibraryPage>

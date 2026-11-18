@@ -36,7 +36,7 @@ def _turn(text: str = "hi", status: int = 200) -> Turn:
     )
 
 
-def test_config_providers_are_the_section_7_1_ids_and_the_copilot_pair() -> None:
+def test_config_providers_cover_historical_and_copilot_routes() -> None:
     assert dict(CONFIG_PROVIDERS) == {
         "sol-medium": "openai",
         "sol-high": "openai",
@@ -44,7 +44,10 @@ def test_config_providers_are_the_section_7_1_ids_and_the_copilot_pair() -> None
         "opus-high": "anthropic",
         "deepseek-max": "openrouter",
         "copilot-sol-medium": "copilot",
+        "copilot-sol-high": "copilot",
         "copilot-opus-medium": "copilot",
+        "copilot-opus-high": "copilot",
+        "copilot-luna-xhigh": "copilot",
     }
 
 
@@ -122,7 +125,10 @@ def test_config_models_cover_the_same_ids() -> None:
         "opus-high": "claude-opus-5-5",
         "deepseek-max": "deepseek/deepseek-v4.1-flash-1017",
         "copilot-sol-medium": "gpt-6.1-sol",
+        "copilot-sol-high": "gpt-6.1-sol",
         "copilot-opus-medium": "claude-opus-5.5",
+        "copilot-opus-high": "claude-opus-5.5",
+        "copilot-luna-xhigh": "gpt-6-luna",
     }
     assert set(CONFIG_MODELS) == set(CONFIG_PROVIDERS)
 
