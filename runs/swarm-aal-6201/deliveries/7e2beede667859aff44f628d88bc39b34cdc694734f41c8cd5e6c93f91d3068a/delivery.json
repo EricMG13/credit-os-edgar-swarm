@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for American Airlines Group Inc. as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "7cecd337b90bc997313fe751d33b512eb9c5b4e4175b16599cf6dc33508f8205",
+    "CP-1.md": "05037fb23d2662fabeb687b438aaae21db52f6b02a07d0d2149aa36326b2b2eb",
+    "CP-1A.md": "577d0a47a930e12b3bc4b2979be9f555dc1a0d8207c991df436659358eb2ed9c",
+    "CP-2.md": "da49bf0600e00f8050249114b82b65fbb8c36d1e1c8ae7d8b5f20ca08b8ac3b0",
+    "coverage.json": "5a28a61a908eb693c12c6f4f75ef94c0fb9a785d6e3b05f7987c74038ee72190",
+    "view.json": "487071c31edfcdf910e2b130a7a7f854294633d52fec1e4cbacfc930d62012e2",
+    "report-view.json": "d6ea5eb64ab383de3d5eaf82b78c970431c4741769cbfe5101fb1bd9c4745b2f"
+  }
+}

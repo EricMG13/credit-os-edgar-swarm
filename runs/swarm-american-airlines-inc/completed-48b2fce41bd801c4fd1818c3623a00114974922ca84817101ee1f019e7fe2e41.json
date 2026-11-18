@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for AMERICAN AIRLINES, INC. as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/2ba632adc36573e30f801b53ace2d2b4614c95b94dd52d5fa114466b7bfafcdf/1.response.md",
+    "CP-1": "requests/CP-1/10fd5a9f1ce2c56f856427c1c205f9532f3388bc616a37d1e0bbfa90b2717542/1.response.md",
+    "CP-1A": "requests/CP-1A/b0b5f62407d35866f30733ebd5d979b6bef3e1b5ebdeaf193d1d9597b24f99bb/1.response.md",
+    "CP-2": "requests/CP-2/03fe0d92aedebf9690b1c7edbd94582c39d6328910ef1d083470b8d1feed709d/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "d43d16daa45bee1b3f072f5fa3b09394ef426586dccdeea60ef8a8949a9b48f1",
+  "delivery_sha256": "f7eb57e7e1ba24ac88fc4d5af7d7302f20091462e5c6b1b4efae91aa10b54266"
+}

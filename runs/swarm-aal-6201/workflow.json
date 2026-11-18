@@ -1,0 +1,236 @@
+{
+  "run": {
+    "schema_version": "run/2",
+    "run_id": "aal-6201-2026-11-18-credit_snapshot-host",
+    "issuer_id": "aal-6201",
+    "issuer_name": "American Airlines Group Inc.",
+    "as_of": "2026-11-18",
+    "method_version": "deploy-v-r14",
+    "case_kind": "public",
+    "pathway": "credit_snapshot",
+    "requested_modules": [
+      "CP-0",
+      "CP-1",
+      "CP-1A",
+      "CP-2"
+    ]
+  },
+  "sources": {
+    "10-K_2024-12-31_aal_aal-20241231.htm.jsonl": {
+      "path": "source-text/10-K_2024-12-31_aal_aal-20241231.htm.jsonl",
+      "sha256": "40171f321a3a70066a71eca96cc90da1be58eb1ebd00b9a1b8c431865b3b4c43"
+    },
+    "10-K_2025-12-31_aal_aal-20251231.htm.jsonl": {
+      "path": "source-text/10-K_2025-12-31_aal_aal-20251231.htm.jsonl",
+      "sha256": "3eb23c0464e68fef149862964026f256c9605ce04703af6ff70058251bdcf5b2"
+    },
+    "10-Q_2026-03-31_aal_aal-20260331.htm.jsonl": {
+      "path": "source-text/10-Q_2026-03-31_aal_aal-20260331.htm.jsonl",
+      "sha256": "4d508067a75e5a9f9742c3b745edc528985dcea6c94c10fbd6b783ef3135b0f2"
+    },
+    "10-Q_2026-06-30_aal_aal-20260630.htm.jsonl": {
+      "path": "source-text/10-Q_2026-06-30_aal_aal-20260630.htm.jsonl",
+      "sha256": "8d9658397ad00683f4276ec55600aabf5cc9a277906ed6e5e362f6444a2209fc"
+    },
+    "10-Q_2026-09-30_aal_aal-20260930.htm.jsonl": {
+      "path": "source-text/10-Q_2026-09-30_aal_aal-20260930.htm.jsonl",
+      "sha256": "f168999186a9b1a437d84b1f3fe137f124143204927c394e8ae6f8f0dc498c4f"
+    },
+    "context": {
+      "path": "../../../inputs/contexts/6201-american-airlines-group-inc.json",
+      "sha256": "2184743c70a1808e414222bdb986edf643e55f8c5569a71606fd2c8637489cd2"
+    }
+  },
+  "instructions": {
+    "CP-0": {
+      "path": "instructions/CP-0.md",
+      "sha256": "ae657001a3551cb7d53c665d63fb389f288132b65214c2694686487a56221d6b"
+    },
+    "CP-1": {
+      "path": "instructions/CP-1.md",
+      "sha256": "81254e47aff587593dc570038c5663c8eaae4ba0e81656ee4b30320077afec91"
+    },
+    "CP-1A": {
+      "path": "instructions/CP-1A.md",
+      "sha256": "10798f5409fc535d7ead673fb316ac55672f4ba5575ef7e01adee6cb127d6af7"
+    },
+    "CP-2": {
+      "path": "instructions/CP-2.md",
+      "sha256": "af928c783ae27adf300a1e2a7820714afccc6784914a9799391281ce8d8159c6"
+    }
+  },
+  "retained_handoffs": {},
+  "model": null,
+  "layout": {
+    "blocks": [
+      "key-findings",
+      "company-operating-model",
+      "model-chart-strip",
+      "financials-credit-metrics",
+      "strengths-weaknesses",
+      "company-profile",
+      "transaction-summary"
+    ],
+    "routes": [
+      {
+        "module_id": "CP-2",
+        "heading": "Key findings",
+        "kind": "prose",
+        "block_id": "key-findings",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company and operating model",
+        "kind": "table",
+        "block_id": "company-operating-model",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: leverage",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.1",
+        "value_columns": [
+          "Total debt / EBITDA",
+          "Net debt / EBITDA"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: interest cover",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.2",
+        "value_columns": [
+          "EBITDA / cash interest"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: liquidity",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.3",
+        "value_columns": [
+          "Cash",
+          "Undrawn committed facilities"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: debt maturities",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.4",
+        "value_columns": [
+          "Debt maturing"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Financials and credit metrics",
+        "kind": "table",
+        "block_id": "financials-credit-metrics",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-2",
+        "heading": "Strengths and weaknesses",
+        "kind": "prose",
+        "block_id": "strengths-weaknesses",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company profile",
+        "kind": "table",
+        "block_id": "company-profile",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Transaction summary and new debt issues",
+        "kind": "prose",
+        "block_id": "transaction-summary",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      }
+    ],
+    "scope": "User-launched Full credit assessment run for American Airlines Group Inc. as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+    "title": "American Airlines Group Inc. — Full credit assessment",
+    "question": null,
+    "issuer_aliases": []
+  },
+  "changes_note": "changes: first run of this pathway",
+  "selection": "explicit",
+  "execution": "host-session",
+  "max_attempts": 3,
+  "provider_cap_usd": "0"
+}

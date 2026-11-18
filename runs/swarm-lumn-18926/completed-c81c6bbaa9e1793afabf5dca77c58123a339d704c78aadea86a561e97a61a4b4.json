@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for Lumen Technologies, Inc. as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/1df77d8bc4ea9937072597ac56fc454bafc9036c92139855463a21d5876c41f8/1.response.md",
+    "CP-1": "requests/CP-1/9b62840f5e2ce809d3aad701d48ba039b3a4832d4ff86285adcce1820d9fa229/1.response.md",
+    "CP-1A": "requests/CP-1A/7aecc6b14597a7819aa1089dcaee9764b1e5f433dc45a26df280d16407867fb4/1.response.md",
+    "CP-2": "requests/CP-2/02a672c5edb4cf3d8ea55754633f36db28ef58fb2485bd4c000df13f7721a86e/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "444cd7a96c979d68f41b5c650b2e15aba711fafa58a4866fc31b613e81869c8e",
+  "delivery_sha256": "930e3d3b53fd13cf627bd3feeb5d4448ce3822fe854631fbb063dd19d82a1a32"
+}

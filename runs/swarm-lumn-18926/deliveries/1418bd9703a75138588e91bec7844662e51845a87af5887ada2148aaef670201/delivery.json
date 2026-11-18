@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for Lumen Technologies, Inc. as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "4ade64ba775c7a818f591a3a4aa5713126a4051fd8e07ba2235d3a05424636be",
+    "CP-1.md": "78f008f6be9a021522f9a1fb4105cd4210ae32b0362d5fbeb2b8bd1e48e5c55d",
+    "CP-1A.md": "865cf04af08e2ec28e756a93d36a2c0b23dd1b0cb7b677644814d6b9f256c02e",
+    "CP-2.md": "29d4ee72479aa00d77c111a45239ec77e3f7bfb9b5dfeb275f88a8c01d9242b4",
+    "coverage.json": "1c50480b9fb0324402be8a3c2769e593c4a7520d6a8808c2e565b40d32c4deaf",
+    "view.json": "0390d4500e56de893f5ec420fc72d776b0814599c6650df2d46a90fb7b034271",
+    "report-view.json": "353686219826ae3c40e1aef66978161cf00f9885d09d6c3b72cdbfe7d59e4417"
+  }
+}

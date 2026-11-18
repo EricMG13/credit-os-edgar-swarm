@@ -1,0 +1,248 @@
+{
+  "run": {
+    "schema_version": "run/2",
+    "run_id": "lumn-18926-2026-11-18-credit_snapshot-host",
+    "issuer_id": "lumn-18926",
+    "issuer_name": "Lumen Technologies, Inc.",
+    "as_of": "2026-11-18",
+    "method_version": "deploy-v-r14",
+    "case_kind": "public",
+    "pathway": "credit_snapshot",
+    "requested_modules": [
+      "CP-0",
+      "CP-1",
+      "CP-1A",
+      "CP-2"
+    ]
+  },
+  "sources": {
+    "10-K_2024-12-31_lumn-20241231.htm.jsonl": {
+      "path": "source-text/10-K_2024-12-31_lumn-20241231.htm.jsonl",
+      "sha256": "6bb6dbddf80004b5a404cb37b56b9639ef6849ee89e8ac803d002926a3c094aa"
+    },
+    "10-K_2025-12-31_lumn-20251231.htm.jsonl": {
+      "path": "source-text/10-K_2025-12-31_lumn-20251231.htm.jsonl",
+      "sha256": "05828649cbec4ba11c33b7989bf76d70b43da9f98e408623e43db1a770396ce1"
+    },
+    "10-Q_2026-03-31_lumn-20260331.htm.jsonl": {
+      "path": "source-text/10-Q_2026-03-31_lumn-20260331.htm.jsonl",
+      "sha256": "986b3689ea0f29143a9e8e3394f8a3aecb4c4166b7cf06ae01f0bfc24d114ca4"
+    },
+    "10-Q_2026-06-30_lumn-20260630.htm.jsonl": {
+      "path": "source-text/10-Q_2026-06-30_lumn-20260630.htm.jsonl",
+      "sha256": "2bb84f7fb8b4d850d7bbfc9f33232e3f779d696ec1ebf97bb33d7fa44e29b501"
+    },
+    "10-Q_2026-09-30_lumn-20260930.htm.jsonl": {
+      "path": "source-text/10-Q_2026-09-30_lumn-20260930.htm.jsonl",
+      "sha256": "aad44f1f83da3557b780605360037e2255809e23152e38c7f073626600023c96"
+    },
+    "EX-99.1_2026-05-05_lumnq120268-kexhibit991.htm.jsonl": {
+      "path": "source-text/EX-99.1_2026-05-05_lumnq120268-kexhibit991.htm.jsonl",
+      "sha256": "b3da78af03c217a47f279527e30d7ab3707547b5617d174258d0cd8a964cbcd8"
+    },
+    "EX-99.1_2026-08-04_lumnq220268-kexhibit991.htm.jsonl": {
+      "path": "source-text/EX-99.1_2026-08-04_lumnq220268-kexhibit991.htm.jsonl",
+      "sha256": "b7270b856c6a8dec30da016ca9a204697e9d3db37b658f6c88ffe1ab7a12d9fa"
+    },
+    "EX-99.1_2026-11-04_lumnq320268-kexhibit991.htm.jsonl": {
+      "path": "source-text/EX-99.1_2026-11-04_lumnq320268-kexhibit991.htm.jsonl",
+      "sha256": "d6518603a9deda39b4938ee8395df33979f1cc716cce5b5ef44b874972f851dc"
+    },
+    "context": {
+      "path": "../../../inputs/contexts/18926-lumen-technologies-inc.json",
+      "sha256": "075d8b26199cdccf293d15449458883a4ca5cfcc8b054c3f9c9c29351c80fe08"
+    }
+  },
+  "instructions": {
+    "CP-0": {
+      "path": "instructions/CP-0.md",
+      "sha256": "258a04d38d49f8eafc1331dd68625ef763de0d2ad233f91505f8bd9b5282bc50"
+    },
+    "CP-1": {
+      "path": "instructions/CP-1.md",
+      "sha256": "7fe38f392e9ca50d394f9b537648ea14e6058acd233444edae8299712c5953b0"
+    },
+    "CP-1A": {
+      "path": "instructions/CP-1A.md",
+      "sha256": "bcb78c867c92f5e62069602fba2924544aba411b2a5308b8899630a84bf37590"
+    },
+    "CP-2": {
+      "path": "instructions/CP-2.md",
+      "sha256": "cd85389fd48b15f261ea3a742074060c41b28a765a6d84d241fce05c9a6de885"
+    }
+  },
+  "retained_handoffs": {},
+  "model": null,
+  "layout": {
+    "blocks": [
+      "key-findings",
+      "company-operating-model",
+      "model-chart-strip",
+      "financials-credit-metrics",
+      "strengths-weaknesses",
+      "company-profile",
+      "transaction-summary"
+    ],
+    "routes": [
+      {
+        "module_id": "CP-2",
+        "heading": "Key findings",
+        "kind": "prose",
+        "block_id": "key-findings",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company and operating model",
+        "kind": "table",
+        "block_id": "company-operating-model",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: leverage",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.1",
+        "value_columns": [
+          "Total debt / EBITDA",
+          "Net debt / EBITDA"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: interest cover",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.2",
+        "value_columns": [
+          "EBITDA / cash interest"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: liquidity",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.3",
+        "value_columns": [
+          "Cash",
+          "Undrawn committed facilities"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: debt maturities",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.4",
+        "value_columns": [
+          "Debt maturing"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Financials and credit metrics",
+        "kind": "table",
+        "block_id": "financials-credit-metrics",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-2",
+        "heading": "Strengths and weaknesses",
+        "kind": "prose",
+        "block_id": "strengths-weaknesses",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company profile",
+        "kind": "table",
+        "block_id": "company-profile",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Transaction summary and new debt issues",
+        "kind": "prose",
+        "block_id": "transaction-summary",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      }
+    ],
+    "scope": "User-launched Full credit assessment run for Lumen Technologies, Inc. as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+    "title": "Lumen Technologies, Inc. — Full credit assessment",
+    "question": null,
+    "issuer_aliases": []
+  },
+  "changes_note": "changes: first run of this pathway",
+  "selection": "explicit",
+  "execution": "host-session",
+  "max_attempts": 3,
+  "provider_cap_usd": "0"
+}

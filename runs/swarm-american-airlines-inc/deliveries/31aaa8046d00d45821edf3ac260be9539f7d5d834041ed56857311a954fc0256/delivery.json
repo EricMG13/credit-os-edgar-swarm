@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for AMERICAN AIRLINES, INC. as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "4252ff615ac41d676d95264f3441638e114fef5fac4ea9ed713cc85514f48952",
+    "CP-1.md": "c5f3ff8f1a6744184fae2ddb76c0cd75000e99e046f00aa3d7f5e94bbf644abc",
+    "CP-1A.md": "1e574271d787d587891382533728ad6f16c0399078003ef538f5b5c17063ef47",
+    "CP-2.md": "c13c95d971c5962a00c6524e771883bf21c5112aaf3d08a9b904b745f920397c",
+    "coverage.json": "4f2d2f2667f853655289ebf43f28aa87d1946bb7fdc1c0ec46b26f231d53350a",
+    "view.json": "b064eba77b6d7eeaf95438ddfebdd2679b8492dff7c316983ed082f7e0d71e1c",
+    "report-view.json": "3f08615e99fa4bafbe45bacc04078b63e399d6d9528c1a65f7540b346e780d52"
+  }
+}
