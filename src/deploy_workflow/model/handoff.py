@@ -1495,6 +1495,11 @@ class HandoffExecutor:
         self._starts, self._ended, self._reported = {}, set(), set()
         try:
             return self._run_module(task)
+        except Exception as error:
+            # Told now, before the session is drained below (the drain may take seconds): CP-OS
+            # starts no module and lets no other module send a call on a failure it has not heard.
+            task.failed(error)
+            raise
         finally:
             try:
                 self._finish_module(task)

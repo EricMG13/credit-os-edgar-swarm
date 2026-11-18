@@ -180,6 +180,10 @@ def _proceed() -> None:
     """Nothing stops a module that runs alone."""
 
 
+def _unheard(error: Exception) -> None:
+    """Nobody waits to hear of the failure of a module that runs alone: it is raised."""
+
+
 @dataclass(frozen=True)
 class HandoffTask:
     """Exact local model inputs; bytes and mapping proxies prevent in-place edits."""
@@ -199,6 +203,9 @@ class HandoffTask:
     # Raises ``ModuleHalted`` once the launch can no longer accept this module; the executor asks
     # before each paid exchange, so a module in flight stops at its next call.
     proceed: Callable[[], None] = _proceed
+    # Called by the executor with the failure of this module's run the moment it is raised,
+    # before the session is drained: with modules in flight at once, nothing starts after it.
+    failed: Callable[[Exception], None] = _unheard
 
 
 def _pinned_inputs(base: Path, entries: Mapping[str, HandoffInput]) -> dict[str, bytes]:
@@ -416,19 +423,45 @@ def report_compaction(directory: Path, response_path: str, module: str) -> None:
 
 
 class _Board:
-    """What the modules in flight share: the handoffs accepted so far and where the launch
-    stopped accepting. The scheduling thread writes; each module's thread reads and waits."""
+    """What the modules in flight share: the handoffs accepted so far, where the launch stopped
+    accepting and where it stopped sending, and the failures the module threads have reported.
+    One lock: a module thread's report and the scheduler's decision to start a module never
+    interleave, so a start is either before a failure was known or does not happen."""
 
     def __init__(self, ordered: Sequence[str], handoffs: dict[str, bytes]) -> None:
         self._index = {module_id: place for place, module_id in enumerate(ordered)}
         self._ordered, self._handoffs = tuple(ordered), handoffs
-        self._changed = threading.Condition()
+        self._changed = threading.Condition()  # re-entrant
         self._stopped = len(ordered)  # the place of the earliest module that was not accepted
+        self._held = len(ordered)  # the place of the module an observer stopped the run at
+        self.failed: dict[str, Exception] = {}  # reported by a module's thread as it fails
+        self.heard: Future[None] = Future()  # done once a failure was reported: wakes the loop
+
+    def __enter__(self) -> None:
+        self._changed.acquire()
+
+    def __exit__(self, *exc: object) -> None:
+        self._changed.release()
 
     def accept(self, module_id: str, raw: bytes) -> None:
         with self._changed:
             self._handoffs[module_id] = raw
             self._changed.notify_all()
+
+    def report(self, module_id: str, error: Exception) -> None:
+        """A module's thread says its run has failed, before it cleans up after itself."""
+        with self._changed:
+            self.failed.setdefault(module_id, error)
+            if not self.heard.done():
+                self.heard.set_result(None)
+
+    def listen(self) -> Future[None]:
+        """What the scheduler waits on beside the modules in flight, taken before it reads the
+        reports: a report made after this is not missed."""
+        with self._changed:
+            if self.heard.done():
+                self.heard = Future()
+            return self.heard
 
     def stop_after(self, module_id: str | None) -> None:
         """No module after ``module_id`` in the plan (after none: no module at all) can be
@@ -438,24 +471,34 @@ class _Board:
             self._stopped = min(self._stopped, place)
             self._changed.notify_all()
 
+    def hold_after(self, module_id: str) -> None:
+        """An observer stopped the run at ``module_id``, which is accepted: a module after it may
+        still be accepted on the call it has out, and sends no other."""
+        with self._changed:
+            self._held = min(self._held, self._index[module_id])
+
     def proceed(self, module_id: str) -> None:
-        if self._stopped < self._index[module_id]:
+        place = self._index[module_id]
+        if self._stopped < place:
             raise ModuleHalted(
                 f"cpos_halted: {module_id}: a module before it in the plan was not accepted"
+            )
+        if self._held < place:
+            raise ModuleHalted(
+                f"cpos_halted: {module_id}: the run was stopped for review before its next call"
             )
 
     def before(self, module_id: str) -> dict[str, bytes]:
         """The handoffs of every module the plan lists before ``module_id``, once all of them are
         accepted; ``ModuleHalted`` when one of them will not be."""
-        earlier = self._ordered[: self._index[module_id]]
+        place = self._index[module_id]
+        earlier = self._ordered[:place]
         with self._changed:
             self._changed.wait_for(
-                lambda: (
-                    self._stopped < self._index[module_id]
-                    or all(m in self._handoffs for m in earlier)
-                )
+                lambda: self._stopped < place or all(m in self._handoffs for m in earlier)
             )
-            self.proceed(module_id)
+            if self._stopped < place:
+                self.proceed(module_id)
             return {m: self._handoffs[m] for m in earlier}
 
 
@@ -631,30 +674,40 @@ class _ModuleLoop:
             self.on_handoff(task, raw)
 
     def _in_flight(self, width: int) -> None:
-        """Up to ``width`` modules at once (the class's rule). Once a module in flight is known to
-        have failed, nothing more starts. Modules already in flight end on their own: the ones
-        before the failed module are accepted as usual, the ones after it halt at their next call
-        or check (``ModuleHalted``). Then one failure is raised (``_cause``)."""
+        """Up to ``width`` modules at once (the class's rule). Once a module in flight has
+        failed, nothing more starts: its thread reports the failure as it happens
+        (``HandoffTask.failed``), before it drains its session. Modules already in flight end on
+        their own: the ones before the failed module are accepted as usual, the ones after it
+        halt at their next call or check (``ModuleHalted``). Then one failure is raised
+        (``_cause``).
+
+        An interrupt of this thread halts every module in flight and waits for their threads to
+        end (each at its next call or check, or when the call it has out returns) before it
+        propagates: no module thread is left running under an interpreter that is shutting down,
+        and the process ends with the interrupt's own exit status. A second interrupt does not
+        wait."""
         board = _Board(self.ordered, self.handoffs)
         pool = ThreadPoolExecutor(max_workers=width, thread_name_prefix="cpos-module")
         try:
             while True:
-                # Taken before landing: a module that finishes after this is still waited for,
-                # the wait returns at once and the next round lands it. Reading it after would
-                # leave it unlanded while the modules that wait for it at their checks are
-                # waited for.
+                # Taken before landing: a module that finishes, or a failure reported, after this
+                # is still waited for, the wait returns at once and the next round acts on it.
+                # Reading them after would leave a finished module unlanded while the modules that
+                # wait for it at their checks are waited for.
                 flying = [future for _, future in self.flights.values() if not future.done()]
+                heard = board.listen()
                 self._land(board)
                 started = set(self.flights)
                 self._take_off(board, pool, width)
                 flying += [self.flights[m][1] for m in self.flights.keys() - started]
                 if not flying:
                     break
-                wait(flying, return_when=FIRST_COMPLETED)
+                waited: list[Future[Any]] = [*flying, heard]
+                wait(waited, return_when=FIRST_COMPLETED)
         finally:
             # Also on an interrupt of this thread: no module in flight makes another call.
             board.stop_after(None)
-            pool.shutdown(wait=False, cancel_futures=True)
+            pool.shutdown(wait=True, cancel_futures=True)
         if self.failures:
             raise self._cause()
         if self.not_produced is None and set(self.selected) != set(self.ordered):
@@ -677,9 +730,16 @@ class _ModuleLoop:
 
     def _take_off(self, board: _Board, pool: ThreadPoolExecutor, width: int) -> None:
         """Start the modules not yet started, in plan order, while a slot is free and the next
-        one's producers are all accepted. Nothing starts once a module is known to have failed
-        (asked again before each start: a slot a failed module left is not a free slot), or once
-        CP-8 is known not to be produced. A module refused before its call fails the run."""
+        one's producers are all accepted. Nothing starts once a module has failed, or once CP-8
+        is known not to be produced. The board is held for the whole decision, the failures read
+        again before each start: a failure a module's thread reports is either read here before
+        the start, or reported after the module was started. A module refused before its call
+        fails the run."""
+        with board:
+            self._start(board, pool, width)
+
+    def _start(self, board: _Board, pool: ThreadPoolExecutor, width: int) -> None:
+        """``_take_off`` with the board held."""
         for module_id in self.ordered:
             if module_id in self.flights:
                 continue
@@ -700,22 +760,41 @@ class _ModuleLoop:
                 return
             if task is None:
                 return
-            self.flights[module_id] = task, pool.submit(self._work, task)
+            task = replace(task, failed=partial(self._report, board, module_id))
+            self.flights[module_id] = task, pool.submit(self._flown, board, task)
+
+    def _flown(self, board: _Board, task: HandoffTask) -> tuple[bytes, str]:
+        """``_work`` on a module's thread; a failure is reported the moment it is raised."""
+        try:
+            return self._work(task)
+        except Exception as error:
+            self._report(board, task.module_id, error)
+            raise
+
+    @staticmethod
+    def _report(board: _Board, module_id: str, error: Exception) -> None:
+        """Tell the board, from the module's own thread, that its run has failed. A module that
+        only halted has not failed, and a CP-8 the run goes on without has not either."""
+        if not isinstance(error, ModuleHalted) and not (
+            module_id == "CP-8" and _cp8_unaccepted(error)
+        ):
+            board.report(module_id, error)
 
     def _note_failures(self, board: _Board) -> None:
-        """Keep the failure of every module that has finished with one, wherever it is in the
-        plan, and halt the modules after it: a failure is acted on when it happens, not when the
-        modules before it have been accepted. A module that only halted has not failed, and a
-        CP-8 the run goes on without has not either (``_unaccepted``)."""
+        """Keep the failure of every module that has reported one, or finished with one, wherever
+        it is in the plan, and halt the modules after it: a failure is acted on when it happens,
+        not when the modules before it have been accepted, nor when the failed module's thread
+        has finished cleaning up. A module that only halted has not failed, and a CP-8 the run
+        goes on without has not either (``_unaccepted``)."""
         for module_id, (_, future) in self.flights.items():
-            if future.done() and module_id not in self.handoffs and module_id not in self.failures:
-                found = self._failure(module_id, future)
+            if module_id not in self.handoffs and module_id not in self.failures:
+                found = board.failed.get(module_id) or self._failure(module_id, future)
                 if found is not None:
                     self.failures.setdefault(module_id, found)
                     board.stop_after(module_id)
 
     def _failure(self, module_id: str, future: Future[tuple[bytes, str]]) -> Exception | None:
-        found = future.exception()
+        found = future.exception() if future.done() else None
         if found is None or isinstance(found, ModuleHalted):
             return None
         if not isinstance(found, Exception):
@@ -729,9 +808,11 @@ class _ModuleLoop:
 
         An observer that stops the run at an accepted module (``on_handoff`` raising: an evidence
         review) is a failure that leaves that module accepted. Nothing more starts and nothing
-        more is announced, but the modules still in flight are not halted: each finishes, its
-        answer is retained and is put on the board for the checks of the others in flight, so the
-        relaunch finds every started module's answer and resumes, as it does one at a time."""
+        more is announced. A module still in flight sends no new call (``_Board.hold_after``),
+        but it is not cut off from the call it has out: when that call's answer is accepted, the
+        answer is retained and put on the board for the checks of the others in flight, so the
+        relaunch reuses it, as it resumes one at a time. A module that needed another call is
+        halted, and waits for the relaunch like a module halted by a failure."""
         self._note_failures(board)
         quiet = False
         for module_id in self.ordered:
@@ -745,14 +826,15 @@ class _ModuleLoop:
             raw, path = future.result()
             board.accept(module_id, raw)
             if not quiet:
-                quiet = not self._announced(task, raw, path)
+                quiet = not self._announced(board, task, raw, path)
 
-    def _announced(self, task: HandoffTask, raw: bytes, path: str) -> bool:
+    def _announced(self, board: _Board, task: HandoffTask, raw: bytes, path: str) -> bool:
         """Record the acceptance and tell the observer; False when the observer stopped the run."""
         try:
             self._accept(task, raw, path)
         except Exception as error:  # noqa: BLE001 -- kept, and raised when the others end
             self.failures[task.module_id] = error
+            board.hold_after(task.module_id)
             return False
         return True
 

@@ -66,6 +66,15 @@ waits for an earlier module (a handler the runtime drops ends as an unknown
 charge, which stops the run). Leave the setting unset until a separately
 authorized paid run has checked them.
 
+At a width above 1 a stopped run can need more repair than one at a time. When a
+module fails, a later module already in flight is halted with its request sent and
+no answer kept. After the failed module is repaired, the relaunch stops with
+`cpos_interrupted: response not retained for <module>` at each such module:
+repair it the same way (a changed instruction gives it a new request) or start a
+new run folder. Nothing is sent or charged twice. Ctrl-C at a width above 1 waits
+for the calls already out to return before the launcher exits; a second Ctrl-C
+does not wait. The ruling lists every known difference.
+
 Add `--live --ruling docs/rulings/<file>.md` only for a separately authorized
 paid CLI run. The ruling must name the configuration. In the connected app,
 Submit on the approved summary authorizes the run at the displayed pathway

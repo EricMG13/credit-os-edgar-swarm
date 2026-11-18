@@ -45,7 +45,7 @@ addopts = "-ra --strict-markers"
 markers = [
     "live: paid/provider execution; paused",
     "browser: real browser proof",
-    "serial_calls: asserts the fake provider's call order across modules; one module at a time only",
+    "one_width: a fake-provider launcher test that makes no launch at two modules at once",
 ]
 
 [tool.ruff]
