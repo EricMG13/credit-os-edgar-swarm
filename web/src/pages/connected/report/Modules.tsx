@@ -76,7 +76,7 @@ function navigatorSections(
     const prose = new Set<NavSection["icon"]>(["bottom-line", "findings", "contrary"]);
     const at = sections.map(({ icon }) => prose.has(icon)).lastIndexOf(true) + 1;
     sections.splice(at, 0, {
-      label: "Figures and records",
+      label: "Charts and figures",
       key: "module-figures",
       icon: "records",
     });
@@ -278,7 +278,7 @@ function SavedOutputs({ current, entry }: { current: ModuleItem; entry?: OutputE
             href={`#modules/${encodeURIComponent(current.id)}/${String(at)}`}
             aria-current={item === entry ? "page" : undefined}
           >
-            {item.selected ? "Designated handoff" : `Retained output ${String(at + 1)}`}
+            {item.selected ? "Output used in report" : `Saved output ${String(at + 1)}`}
           </Button>
         ))}
       </nav>
@@ -369,7 +369,7 @@ function SelectedModule({
   return (
     <>
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h2 className="font-display text-h2">{current.name}</h2>
+        <h2 className="min-w-0 font-display text-h2 text-balance wrap-anywhere">{current.name}</h2>
         <StatusBadge set="Module state" state={entry ? moduleState(entry) : current.state} />
       </div>
       <div className="grid min-w-0 gap-5 min-[1001px]:grid-cols-[16rem_minmax(0,1fr)]">
@@ -396,7 +396,13 @@ function SelectedModule({
           ) : (
             <section className={card}>
               <h3 className={heading}>Handoff unavailable</h3>
-              <p>Choose a retained output where available.</p>
+              <p>
+                {current.outputs.length > 1
+                  ? "Choose a saved output above."
+                  : current.outputs.length === 1
+                    ? "Choose this module again under Modules in this run."
+                    : "No output was saved for this module."}
+              </p>
             </section>
           )}
         </div>

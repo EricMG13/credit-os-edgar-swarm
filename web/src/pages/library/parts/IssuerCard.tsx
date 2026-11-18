@@ -17,17 +17,23 @@ export function IssuerCard({ card }: { card: IssuerCardData }) {
       className={`${CARD} no-underline outline-none transition-colors duration-150 hover:border-action-subtle-hover focus-visible:ring-2 focus-visible:ring-brand motion-reduce:transition-none`}
     >
       <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <h2 className="font-display text-h3 text-text-primary">{card.name}</h2>
+        <div className="min-w-0 wrap-anywhere">
+          <h2 className="font-display text-h3 text-balance wrap-anywhere text-text-primary">
+            {card.name}
+          </h2>
           <span className="text-small text-text-tertiary">{card.sector}</span>
         </div>
         <StatusBadge set="Run states" state={card.state} />
       </div>
-      <p className="text-body text-text-primary">{card.lead}</p>
-      {card.note === null ? null : <p className="text-small text-text-secondary">{card.note}</p>}
+      <p className="reading-copy text-body text-text-primary">{card.lead}</p>
+      {card.note === null ? null : (
+        <p className="text-small wrap-anywhere text-text-secondary">{card.note}</p>
+      )}
       <div className="mt-auto flex flex-col gap-3.5 border-t border-border-hairline pt-5">
         <div className="flex flex-wrap gap-2">
-          <Badge size="sm">{card.asOf}</Badge>
+          <Badge size="sm" className="tabular-nums">
+            {card.asOf}
+          </Badge>
           <Badge size="sm">{card.pathway}</Badge>
         </div>
         <ProgressBar

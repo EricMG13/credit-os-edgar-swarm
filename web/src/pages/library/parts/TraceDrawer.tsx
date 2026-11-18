@@ -52,13 +52,15 @@ export function TraceDrawer({
       aria-label={trace.title}
     >
       <SlideoutMenu.Header>
-        <h2 className="pr-10 text-lg font-semibold text-text-primary">{trace.heading}</h2>
-        <p className="text-small text-text-tertiary">{trace.subtitle}</p>
+        <h2 className="pr-10 text-h4 text-balance wrap-anywhere text-text-primary">
+          {trace.heading}
+        </h2>
+        <p className="reading-copy text-small text-text-tertiary">{trace.subtitle}</p>
       </SlideoutMenu.Header>
       <SlideoutMenu.Content>
         <div className="flex flex-col gap-1.5">
           <span className={CAPTION}>The statement</span>
-          <p className="text-body text-text-primary">{trace.statement}</p>
+          <p className="reading-copy text-body text-text-primary">{trace.statement}</p>
         </div>
         <div className="flex flex-col gap-1.5">
           <span className={CAPTION}>How it was derived</span>
@@ -67,10 +69,10 @@ export function TraceDrawer({
         {trace.excerpt === null ? null : (
           <div className="flex flex-col gap-1.5">
             <span className={CAPTION}>Source excerpt</span>
-            <blockquote className="rounded-ds-sm bg-surface-subtle px-4 py-3 text-small text-text-secondary">
+            <blockquote className="reading-copy rounded-ds-sm bg-surface-subtle px-4 py-3 text-small text-text-secondary">
               {trace.excerpt.quote}
             </blockquote>
-            <span className="font-mono text-mono break-words text-text-tertiary">
+            <span className="font-mono text-mono wrap-anywhere text-text-tertiary">
               {trace.excerpt.source}
             </span>
           </div>
@@ -78,7 +80,7 @@ export function TraceDrawer({
         {trace.qualification === null ? null : (
           <div className="flex flex-col gap-1.5">
             <span className={CAPTION}>Qualification</span>
-            <p className="text-small text-text-secondary">{trace.qualification}</p>
+            <p className="reading-copy text-small text-text-secondary">{trace.qualification}</p>
           </div>
         )}
         <CitedSources links={trace.sourceLinks ?? []} />

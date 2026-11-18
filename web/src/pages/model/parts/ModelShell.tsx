@@ -87,7 +87,7 @@ export function ModelShell({
             <Button
               href={current === FORECAST ? `${base}/front` : links.report}
               size="md"
-              color="secondary"
+              color={current === FORECAST ? "secondary" : "tertiary"}
             >
               {current === FORECAST ? "Open the financial model" : "Back to the report"}
             </Button>

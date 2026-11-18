@@ -270,7 +270,12 @@ function UnplacedTable({ owner, events }: { owner: string; events: UnplacedEvent
             <KitTable.Row id={id}>
               <KitTable.Cell>{name}</KitTable.Cell>
               {values.map((value, at) => (
-                <KitTable.Cell key={at}>{value}</KitTable.Cell>
+                <KitTable.Cell
+                  key={at}
+                  className={at === 0 || at === 2 ? "tabular-nums" : undefined}
+                >
+                  {value}
+                </KitTable.Cell>
               ))}
               <KitTable.Cell>
                 <EventSource href={href} name={`${name} · ${owner}`} />
@@ -292,21 +297,18 @@ export function Calendar({ calendar }: { calendar: ReturnType<typeof buildCalend
           Back to Overview
         </Button>
       </div>
-      <p className="max-w-[76ch] text-sm text-text-secondary">
-        Historical and Scheduled are the module’s recorded categories, not classifications against
-        this run’s as-of date.
-      </p>
-      <p className="max-w-[76ch] text-sm text-text-secondary">
-        Date precision states whether the date identifies a day, month, quarter or year.
+      <p className="reading-copy text-body text-text-secondary">
+        Events keep their recorded status (Historical or Scheduled) regardless of the run’s as-of
+        date. Dates can be precise to the day, month, quarter or year.
       </p>
       {calendar.rows.length ? (
         <CalendarFigure rows={calendar.rows} />
       ) : (
         <p className={card}>
           {calendar.gaps.some(({ unplaced }) => unplaced?.some((event) => !event.unreadable))
-            ? "No published event could be placed on the calendar; the events and recorded gaps are listed below."
+            ? "No published events could be plotted. See the events and recorded gaps below."
             : calendar.gaps.length
-              ? "No events could be placed on the calendar; the recorded gaps are listed below."
+              ? "No events could be plotted. See the recorded gaps below."
               : "No dated events were published for this run."}
         </p>
       )}

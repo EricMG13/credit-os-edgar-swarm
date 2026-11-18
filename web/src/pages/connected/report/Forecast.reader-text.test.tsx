@@ -208,6 +208,6 @@ it("labels the way to the forward credit evidence by the model, not by a hand-ov
     models: [model as unknown as View["models"][number]],
   };
   render(<Forecast view={view} run={run} />);
-  expect(screen.getByText("Open the model evidence")).toBeInTheDocument();
+  expect(screen.getByText("View model records in Evidence")).toBeInTheDocument();
   expect(document.body.textContent).not.toMatch(/handoff/i);
 });

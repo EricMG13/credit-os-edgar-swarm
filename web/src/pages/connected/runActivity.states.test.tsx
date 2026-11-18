@@ -76,7 +76,9 @@ beforeAll(async () => {
 });
 
 beforeEach(() => {
-  vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout", "Date"] });
+  vi.useFakeTimers({
+    toFake: ["setTimeout", "clearTimeout", "Date", "requestAnimationFrame", "cancelAnimationFrame"],
+  });
 });
 
 afterEach(() => {
@@ -91,7 +93,7 @@ describe("a poll that fails", () => {
     await open();
     const alert = screen.getByRole("alert");
     expect(within(alert).getByText("Run activity could not be read")).toBeVisible();
-    expect(within(alert).getByText(/reads it again every few seconds/)).toBeVisible();
+    expect(within(alert).getByText(/This page retries every few seconds/)).toBeVisible();
     expect(within(alert).getByRole("link", { name: "Open the library" })).toHaveAttribute(
       "href",
       "/",
@@ -112,7 +114,7 @@ describe("a poll that fails", () => {
     expect(screen.getByText("Updated 17 Nov 2026, 08:00 UTC")).toBeVisible();
     const alert = screen.getByRole("alert");
     expect(within(alert).getByText("Run activity could not be refreshed")).toBeVisible();
-    expect(alert).toHaveTextContent("Showing the list as it was at 17 Nov 2026, 08:00 UTC");
+    expect(alert).toHaveTextContent("Showing the list from 17 Nov 2026, 08:00 UTC");
     expect(within(alert).getByRole("link", { name: "Open the library" })).toBeVisible();
     await wait(5000);
     expect(screen.queryByRole("alert")).toBeNull();
@@ -130,6 +132,67 @@ describe("a poll that fails", () => {
 });
 
 describe("the tables of waiting and ended runs", () => {
+  it("follows a focused waiting row to the same run in Running", async () => {
+    const queued = live({ status: "queued" });
+    const other = live({ id: "20261117-000000-02", issuer_name: "Beta", status: "queued" });
+    serve(ok(list([queued, other])), ok(list([live(), other])));
+    await open();
+    const table = screen.getByRole("grid", { name: "Waiting runs" });
+    const row = within(table).getByRole("row", { name: /Alpha/ });
+    act(() => {
+      row.focus();
+    });
+    expect(row).toHaveFocus();
+
+    await wait(5000);
+    await wait(32);
+    expect(
+      within(screen.getByRole("region", { name: "Running" })).getByRole("link", {
+        name: "Alpha",
+      }),
+    ).toHaveFocus();
+    expect(within(table).getByRole("link", { name: "Beta" })).toBeVisible();
+  });
+
+  it("preserves a reader's focus outside the lists across a poll", async () => {
+    serve(ok(list([live({ status: "queued" })])), ok(list([live()])));
+    await open();
+    const start = screen.getByRole("link", { name: "Start a run" });
+    act(() => {
+      start.focus();
+    });
+    await wait(5000);
+    await wait(32);
+    expect(start).toHaveFocus();
+  });
+
+  it("leaves focus on another control if the reader moved there during the refresh", async () => {
+    serve(ok(list([live({ status: "queued" })])), ok(list([live()])));
+    await open();
+    const row = screen.getByRole("row", { name: /Alpha/ });
+    act(() => {
+      row.focus();
+    });
+    await wait(5000);
+    const start = screen.getByRole("link", { name: "Start a run" });
+    act(() => {
+      start.focus();
+    });
+    await wait(32);
+    expect(start).toHaveFocus();
+  });
+
+  it("keeps a keyboard target when the focused run leaves the activity", async () => {
+    serve(ok(list([live()])), ok(list([])));
+    await open();
+    act(() => {
+      screen.getByRole("link", { name: "Alpha" }).focus();
+    });
+    await wait(5000);
+    await wait(32);
+    expect(screen.getByRole("region", { name: "Runs" })).toHaveFocus();
+  });
+
   it("are not cut off by a panel that hides overflow", async () => {
     serve(
       ok(

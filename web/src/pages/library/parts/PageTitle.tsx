@@ -13,5 +13,9 @@ export const PAGE_NAME = {
 
 /** The page's h1 where the page draws its own (every library route is full bleed). */
 export function PageTitle({ children }: { children: ReactNode }) {
-  return <h1 className="font-display text-h1 text-text-primary">{children}</h1>;
+  return (
+    <h1 className="font-display text-h1 text-balance wrap-anywhere text-text-primary">
+      {children}
+    </h1>
+  );
 }

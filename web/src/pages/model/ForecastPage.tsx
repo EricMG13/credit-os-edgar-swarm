@@ -78,7 +78,7 @@ export function ForecastPage({ params }: { params: Record<string, string> }) {
             <GapPanel reason="Only one case was published. A second case is not available for comparison." />
           ) : null}
           {run.forecast === null ? (
-            <p className="max-w-[72ch] text-body text-text-secondary">
+            <p className="reading-copy text-body text-text-secondary">
               No forecast was published for this run.
             </p>
           ) : (

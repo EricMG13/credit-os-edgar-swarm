@@ -38,7 +38,7 @@ it("keeps a finding paragraph at a readable measure with its control beside it",
     </RunContext.Provider>,
   );
   const p = screen.getByText(/Leverage fell/);
-  expect(p.className).toContain("max-w-[55ch]");
+  expect(p).toHaveClass("reading-copy");
   expect(p.parentElement?.className).not.toContain("justify-between");
 });
 

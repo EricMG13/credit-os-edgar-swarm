@@ -29,6 +29,8 @@ interface StatusBadgeProps<S extends SetName> {
   live?: boolean;
   /** Text in place of the state's word, for a named thing in that state; say the state beside it. */
   label?: string;
+  /** Additional presentation classes for contexts such as a readiness row. */
+  className?: string;
 }
 
 export function StatusBadge<S extends SetName>({
@@ -36,6 +38,7 @@ export function StatusBadge<S extends SetName>({
   state,
   live = false,
   label,
+  className,
 }: StatusBadgeProps<S>) {
   const states: Readonly<Record<string, State | undefined>> | undefined = Object.hasOwn(
     STATUS_SETS,
@@ -51,6 +54,7 @@ export function StatusBadge<S extends SetName>({
       tone={found.tone}
       word={label ?? found.word}
       live={live && set === "Run states" && state === "Running"}
+      className={className}
     />
   );
 }
@@ -58,14 +62,15 @@ export function StatusBadge<S extends SetName>({
 interface ToneBadgeProps extends State {
   /** Draw the pulsing halo; the caller has already decided this is the live Running badge. */
   live?: boolean;
+  className?: string;
 }
 
 /** One badge from a shape, tone and word. Private: callers go through the checked sets. */
-function ToneBadge({ shape, tone, word, live = false }: ToneBadgeProps) {
+function ToneBadge({ shape, tone, word, live = false, className }: ToneBadgeProps) {
   return (
     <Badge
       color={BADGE_COLOUR[tone]}
-      className="gap-1.5 pl-2"
+      className={cx("gap-1.5 pl-2", className)}
       icon={
         <span className={cx("inline-flex rounded-ds-full", MARK[tone], live && "status-halo")}>
           <StatusShape shape={shape} />

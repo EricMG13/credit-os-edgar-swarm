@@ -4,7 +4,6 @@ import { GapPanel } from "@/components/gap/GapPanel";
 import { sourceCitationNote, sourceFileLinks } from "./sourceFiles";
 import { Fragment, useState, type ReactNode } from "react";
 import { BottomLine } from "../library/parts/BottomLine";
-import { DownloadButton } from "../library/parts/DownloadButton";
 import { RunContext } from "../library/parts/RunContext";
 import { TraceControl, TRACE_HOST } from "../library/parts/TraceControl";
 import { TraceDrawer } from "../library/parts/TraceDrawer";
@@ -76,13 +75,15 @@ function matchingDownload(run: PublishedRun, entry: OutputEntry) {
 export function HandoffDownload({ run, entry }: { run: PublishedRun; entry: OutputEntry }) {
   const href = matchingDownload(run, entry);
   return href ? (
-    <DownloadButton
-      download={{
-        label: `Download ${moduleName(entry.output.module)}`,
-        href,
-        reason: null,
-      }}
-    />
+    <Button
+      href={href}
+      download
+      color="link-gray"
+      size="sm"
+      aria-label={`Download ${moduleName(entry.output.module)}`}
+    >
+      Download
+    </Button>
   ) : null;
 }
 
@@ -595,7 +596,7 @@ export function FindingParagraph({
   if (!body) return null;
   return (
     <div className={`${TRACE_HOST} flex items-start justify-start gap-3`}>
-      <p className="max-w-[55ch] text-body wrap-anywhere text-text-secondary">
+      <p className="reading-copy min-w-0 text-body text-text-secondary">
         {containsReference(body) ? (
           <Button href={href} color="link-gray" size="sm" iconTrailing={ArrowRight}>
             Read this passage in Evidence
@@ -622,7 +623,7 @@ function RecordsCard({
   return (
     <section className={card} id={RECORDS_ID} tabIndex={-1}>
       <h2 className={heading}>Statements and records</h2>
-      <p className="max-w-[76ch] text-body text-text-secondary">
+      <p className="reading-copy text-body text-text-secondary">
         These tables are part of this module's record and are shown in Evidence.
       </p>
       <ul className="grid gap-1">

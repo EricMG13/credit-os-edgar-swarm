@@ -15,6 +15,7 @@ export function MetricTile({ metric, traced = true }: { metric: Metric; traced?:
       as="li"
       label={metric.label}
       value={null}
+      alignInGrid
       figure={<CellValue cell={metric.value} figureClass={METRIC_FIGURE} />}
       actions={
         traced ? (

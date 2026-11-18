@@ -220,7 +220,7 @@ it("tells the reader how to choose something to trace when nothing is chosen", (
   renderEvidence([entryWith("CP-1", [])], "trace");
   expect(
     screen.getByText(
-      "Choose Show sources beside a paragraph, row or figure on another page to see here how it was derived, or open a handoff below.",
+      "Open a handoff below, or select the source icon beside a finding, row or figure and choose Open in Evidence.",
     ),
   ).toBeVisible();
 });

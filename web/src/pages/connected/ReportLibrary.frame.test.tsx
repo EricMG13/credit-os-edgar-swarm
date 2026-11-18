@@ -141,10 +141,10 @@ const unknownReport = () => json({ error: "unknown report" }, 404);
 it("says a run that is still going is still going, with its Run activity", async () => {
   serve({ [SNAPSHOT]: unknownReport, [ACTIVITY]: () => json({ id: "acme", status: "running" }) });
   open();
-  const alert = await screen.findByText("This run is still going");
+  const alert = await screen.findByText("This run is in progress");
   const box = alert.closest("[role]") as HTMLElement;
-  expect(box).toHaveTextContent("Its report appears here when the run finishes.");
-  expect(within(box).getByRole("link", { name: "Run activity" })).toHaveAttribute(
+  expect(box).toHaveTextContent("The report will appear here once it’s published.");
+  expect(within(box).getByRole("link", { name: "Run progress" })).toHaveAttribute(
     "href",
     "/run/acme",
   );
@@ -157,7 +157,7 @@ it("says a run that failed ended without a report, with its Run activity and the
   const box = (await screen.findByText("This run ended without a report")).closest(
     "[role]",
   ) as HTMLElement;
-  expect(within(box).getByRole("link", { name: "Run activity" })).toHaveAttribute(
+  expect(within(box).getByRole("link", { name: "Run progress" })).toHaveAttribute(
     "href",
     "/run/acme",
   );

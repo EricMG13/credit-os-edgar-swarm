@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { Alert } from "@/components/alert/Alert";
 import { EmptyState } from "@/components/application/empty-state/empty-state";
 import { Table } from "@/components/application/table/table";
@@ -37,6 +37,8 @@ const ENDED = {
   interrupted: "Interrupted",
 } as const satisfies Record<EndedRun["status"], string>;
 const panel = "rounded-ds-lg border border-border-subtle bg-surface-card shadow-1";
+const RUN_LINK = 'a[href^="/run/"]';
+const runLinkStyle = "whitespace-normal wrap-anywhere";
 
 const runPath = (run: { id: string }) => `/run/${encodeURIComponent(run.id)}`;
 const issuer = (run: { issuer_name: string }) => run.issuer_name || "Issuer not named";
@@ -52,7 +54,7 @@ const notes = (run: LiveRun) =>
  * The list, re-read while the page is open. A read that fails is never shown as an empty list:
  * the last good list stays and `failed` says the latest read did not work.
  */
-function useActivity() {
+function useActivity(beforeUpdate: (next: Activity) => void) {
   const [read, setRead] = useState<Activity>();
   const [failed, setFailed] = useState(false);
   useEffect(() => {
@@ -62,6 +64,7 @@ function useActivity() {
       const next = await getActivity(controller.signal).catch(() => null);
       if (controller.signal.aborted) return;
       if (next && Array.isArray(next.runs)) {
+        beforeUpdate(next);
         setRead(next);
         setFailed(false);
       } else {
@@ -74,13 +77,13 @@ function useActivity() {
       controller.abort();
       clearTimeout(timer);
     };
-  }, []);
+  }, [beforeUpdate]);
   return { read, failed };
 }
 
 function Tally({ counts }: { counts: [string, number][] }) {
   return (
-    <dl className="flex gap-8">
+    <dl className="flex flex-wrap gap-x-8 gap-y-3">
       {counts.map(([term, count]) => (
         <div key={term}>
           <dt className="text-sm text-text-tertiary">{term}</dt>
@@ -102,14 +105,18 @@ function RunningCard({ run }: { run: LiveRun }) {
     <li className={`${panel} flex flex-col gap-4 p-5`}>
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
-          <h3 className="text-base font-semibold">
-            <TextLink href={runPath(run)}>{issuer(run)}</TextLink>
+          <h3 className="text-body font-semibold text-balance wrap-anywhere">
+            <TextLink href={runPath(run)} className={runLinkStyle}>
+              {issuer(run)}
+            </TextLink>
           </h3>
-          {line && <p className="mt-0.5 text-sm text-text-tertiary">{line}</p>}
+          {line && (
+            <p className="reading-copy mt-0.5 text-small text-text-tertiary tabular-nums">{line}</p>
+          )}
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <Badge color="gray">{pathwayName(run.pathway)}</Badge>
-          <StatusBadge set="Run states" state="Running" live={!run.stalled} />
+          <StatusBadge set="Run states" state="Running" />
           {run.stalled && (
             <Badge color="warning" className="gap-1.5 pl-2" icon={<StatusShape shape="triangle" />}>
               No activity in the last hour
@@ -122,9 +129,11 @@ function RunningCard({ run }: { run: LiveRun }) {
           {bar && <ProgressBar value={bar.value} max={bar.max} label={bar.label} />}
           <ul aria-label="Modules" className="flex flex-wrap gap-1.5">
             {run.modules.map(([code, state]) => (
-              <li key={code} className="flex items-center gap-2">
-                <span className="text-sm text-text-secondary">{moduleName(code)}</span>
-                <StatusBadge set="Run states" state={STEP[state]} live={!run.stalled} />
+              <li key={code} className="flex min-w-0 items-center gap-2">
+                <span className="min-w-0 text-sm wrap-anywhere text-text-secondary">
+                  {moduleName(code)}
+                </span>
+                <StatusBadge set="Run states" state={STEP[state]} />
               </li>
             ))}
           </ul>
@@ -133,7 +142,9 @@ function RunningCard({ run }: { run: LiveRun }) {
       {foot.length > 0 && (
         <p className="flex flex-wrap gap-x-4 gap-y-1 border-t border-border-subtle pt-3 text-sm text-text-secondary">
           {foot.map((text) => (
-            <span key={text}>{text}</span>
+            <span key={text} className="min-w-0 wrap-anywhere">
+              {text}
+            </span>
           ))}
         </p>
       )}
@@ -152,17 +163,17 @@ function WaitingTable({ runs, held }: { runs: LiveRun[]; held: string }) {
         <Table.Body items={runs}>
           {(run) => (
             <Table.Row id={run.id}>
-              <Table.Cell>
-                <TextLink href={runPath(run)}>{issuer(run)}</TextLink>
+              <Table.Cell className="wrap-anywhere">
+                <TextLink href={runPath(run)} className={runLinkStyle}>
+                  {issuer(run)}
+                </TextLink>
                 {texts(
                   texts(
                     run.submitted_by && `submitted by ${run.submitted_by}`,
                     fileCount(run),
                   ).join(" · "),
                   ...notes(run),
-                  !run.reason &&
-                    !held &&
-                    "Waiting for an available run slot. It starts when the service can accept it.",
+                  !run.reason && !held && "Waiting for an available run slot.",
                 ).map((text) => (
                   <span key={text} className="block text-caption">
                     {text}
@@ -192,15 +203,19 @@ function EndedTable({ runs }: { runs: EndedRun[] }) {
         <Table.Body items={runs}>
           {(run) => (
             <Table.Row id={run.id}>
-              <Table.Cell>
-                <TextLink href={runPath(run)}>{issuer(run)}</TextLink>
+              <Table.Cell className="wrap-anywhere">
+                <TextLink href={runPath(run)} className={runLinkStyle}>
+                  {issuer(run)}
+                </TextLink>
               </Table.Cell>
               <Table.Cell>{pathwayName(run.pathway)}</Table.Cell>
               <Table.Cell>
                 <StatusBadge set="Run states" state={ENDED[run.status]} />
               </Table.Cell>
-              <Table.Cell>{run.ended_at ? stamp(run.ended_at) : "Not recorded"}</Table.Cell>
-              <Table.Cell>{serviceText(run.reason)}</Table.Cell>
+              <Table.Cell className="tabular-nums">
+                {run.ended_at ? stamp(run.ended_at) : "Not recorded"}
+              </Table.Cell>
+              <Table.Cell className="wrap-anywhere">{serviceText(run.reason)}</Table.Cell>
             </Table.Row>
           )}
         </Table.Body>
@@ -209,9 +224,17 @@ function EndedTable({ runs }: { runs: EndedRun[] }) {
   );
 }
 
-function Group({ title, children }: { title: string; children: ReactNode }) {
+function Group({
+  title,
+  group,
+  children,
+}: {
+  title: string;
+  group: LiveRun["status"] | "ended";
+  children: ReactNode;
+}) {
   return (
-    <section aria-label={title} className="grid min-w-0 content-start gap-3">
+    <section aria-label={title} data-run-group={group} className="grid min-w-0 content-start gap-3">
       <h2 className={heading}>{title}</h2>
       {children}
     </section>
@@ -242,7 +265,55 @@ export function RunActivity() {
   useEffect(() => {
     document.title = "Run activity — Credit OS";
   }, []);
-  const { read, failed } = useActivity();
+  const content = useRef<HTMLDivElement>(null);
+  const focusedRun = useRef<{ node: Element; href: string } | null>(null);
+  const rememberRunFocus = useCallback((next: Activity) => {
+    focusedRun.current = null;
+    const node = document.activeElement;
+    const region = content.current;
+    if (!node || !region?.contains(node)) return;
+    const link =
+      node.closest<HTMLAnchorElement>(RUN_LINK) ??
+      node.closest("tr")?.querySelector<HTMLAnchorElement>(RUN_LINK);
+    const group = link?.closest<HTMLElement>("[data-run-group]")?.dataset.runGroup;
+    if (!link || !group) return;
+    const sameRun = (run: { id: string }) => runPath(run) === link.pathname;
+    const newGroup =
+      next.runs.find(sameRun)?.status ?? (next.ended?.some(sameRun) ? "ended" : undefined);
+    if (newGroup !== group) {
+      focusedRun.current = { node, href: link.href };
+      // Leave the departing grid before it assigns focus to a different run.
+      region.focus({ preventScroll: true });
+    }
+  }, []);
+  const { read, failed } = useActivity(rememberRunFocus);
+  useEffect(() => {
+    const previous = focusedRun.current;
+    focusedRun.current = null;
+    const region = content.current;
+    if (!previous || !region) return;
+    const restoreFocus = () => {
+      if (document.activeElement !== region) return;
+      const link = [...region.querySelectorAll<HTMLAnchorElement>(RUN_LINK)].find(
+        (entry) => entry.href === previous.href,
+      );
+      link?.focus();
+    };
+    let frame: number | undefined;
+    // The React Aria collection can remove the old row in a separate commit from the poll.
+    const restoreAfterRemoval = () => {
+      if (previous.node.isConnected) return;
+      observer.disconnect();
+      frame = requestAnimationFrame(restoreFocus);
+    };
+    const observer = new MutationObserver(restoreAfterRemoval);
+    if (previous.node.isConnected) observer.observe(region, { childList: true, subtree: true });
+    else restoreAfterRemoval();
+    return () => {
+      observer.disconnect();
+      if (frame !== undefined) cancelAnimationFrame(frame);
+    };
+  }, [read]);
   const running = read?.runs.filter((run) => run.status === "running") ?? [];
   const waiting = read?.runs.filter((run) => run.status === "queued") ?? [];
   const ended = read?.ended ?? [];
@@ -253,25 +324,27 @@ export function RunActivity() {
         title="Run activity"
         badges={
           read && (
-            <span className="text-sm text-text-secondary">{`Updated ${stamp(read.updated)}`}</span>
+            <span className="text-caption text-text-tertiary tabular-nums">{`Updated ${stamp(read.updated)}`}</span>
           )
         }
-        actions={
-          <div className="flex items-center gap-8">
-            {read && (
-              <Tally
-                counts={[
-                  ["Running", running.length],
-                  ["Waiting", waiting.length],
-                  ["Ended without a report", endedTotal],
-                ]}
-              />
-            )}
-            <Button href="/start">Start a run</Button>
-          </div>
-        }
+        actions={<Button href="/start">Start a run</Button>}
       />
-      <div className="mt-6 grid gap-6">
+      <div
+        ref={content}
+        role="region"
+        aria-label="Runs"
+        tabIndex={-1}
+        className="mt-6 grid min-w-0 gap-6 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+      >
+        {read && (
+          <Tally
+            counts={[
+              ["Running", running.length],
+              ["Waiting", waiting.length],
+              ["Ended without a report", endedTotal],
+            ]}
+          />
+        )}
         {read === undefined && !failed && (
           <div
             role="status"
@@ -299,13 +372,13 @@ export function RunActivity() {
             }
           >
             {read
-              ? `Showing the list as it was at ${stamp(read.updated)}. This page reads it again every few seconds.`
-              : "Nothing is claimed about runs in progress, waiting or ended without a report. This page reads it again every few seconds. Finished runs are in the library."}
+              ? `Showing the list from ${stamp(read.updated)}. This page retries every few seconds.`
+              : "Run status is unknown. This page retries every few seconds. Finished reports are in the library."}
           </Alert>
         )}
         {read?.held && (
           <Alert tone="warning" title="Held by the service">
-            {serviceText(read.held)}
+            <span className="wrap-anywhere">{serviceText(read.held)}</span>
           </Alert>
         )}
         {read?.unreadable ? (
@@ -316,11 +389,9 @@ export function RunActivity() {
           </Alert>
         ) : null}
         {read && running.length + waiting.length + ended.length === 0 && (
-          <Empty
-            title={read.unreadable ? "No readable run record is in progress" : "No run in progress"}
-          >
+          <Empty title={read.unreadable ? "No active runs listed" : "No run in progress"}>
             {read.unreadable
-              ? "No readable run record is running or waiting. Finished runs are in the library."
+              ? "Other runs may be in progress if their records could not be read."
               : "No run is running or waiting. Finished runs are in the library."}
           </Empty>
         )}
@@ -331,7 +402,7 @@ export function RunActivity() {
             }
           >
             {running.length > 0 && (
-              <Group title="Running">
+              <Group title="Running" group="running">
                 <ul className="grid gap-4">
                   {running.map((run) => (
                     <RunningCard key={run.id} run={run} />
@@ -340,14 +411,14 @@ export function RunActivity() {
               </Group>
             )}
             {waiting.length > 0 && (
-              <Group title="Waiting">
+              <Group title="Waiting" group="queued">
                 <WaitingTable runs={waiting} held={read?.held ?? ""} />
               </Group>
             )}
           </div>
         )}
         {ended.length > 0 && (
-          <Group title="Ended without a report">
+          <Group title="Ended without a report" group="ended">
             {endedTotal > ended.length && (
               <p className="text-sm text-text-secondary">
                 {`Showing the latest ${String(ended.length)} of ${String(endedTotal)}.`}

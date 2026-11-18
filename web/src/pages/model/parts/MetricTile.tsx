@@ -17,6 +17,7 @@ export function MetricTile({ metric }: { metric: Metric }) {
     <MetricCard
       label={metric.label}
       value={null}
+      alignInGrid
       definitionControl={
         <PressTip
           title={metric.definition}

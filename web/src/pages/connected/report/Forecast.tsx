@@ -95,7 +95,7 @@ function BasisNote({
     <section className={card}>
       <h3 className={heading}>{fiscal ? `${fiscal} base case basis` : "Model basis"}</h3>
       {bridge && (
-        <p>
+        <p className="reading-copy text-body">
           The calculation gives <strong>{withUnit(bridge.value.toFixed(2), bridge.unit)}</strong>{" "}
           cash proxy. The {moduleName("CP-2G")} gives{" "}
           <strong>{withUnit(bridge.original.toFixed(2), bridge.unit)}</strong> free cash flow. The
@@ -113,7 +113,7 @@ function BasisNote({
           </PublishedSource>
         </div>
       )}
-      <p>{readerText(limitation)}</p>
+      <p className="reading-copy text-body">{readerText(limitation)}</p>
     </section>
   );
 }
@@ -182,12 +182,12 @@ function ForecastCases({
                   : "n.a."}
               </span>
               {(!description || !shownQualifications.includes(description)) && (
-                <span className="mt-2 block pr-7 text-small text-text-secondary">
+                <span className="reading-copy mt-2 block pr-7 text-small text-text-secondary">
                   {description || "Case description not recorded."}
                 </span>
               )}
               {reason && (
-                <span className="mt-2 block pr-7 text-small text-text-secondary">
+                <span className="reading-copy mt-2 block pr-7 text-small text-text-secondary">
                   {readerText(reason)}
                 </span>
               )}
@@ -203,7 +203,7 @@ function ForecastCases({
         ))}
       </div>
       <p id="forecast-case-note" className="text-small text-text-secondary">
-        Choose a case to update the model and charts. Figures are rounded to at most 2 decimals.
+        Case figures are rounded to at most 2 decimals.
       </p>
     </section>
   );
@@ -230,7 +230,7 @@ function ForecastAssumptions({
           size="sm"
           iconTrailing={ArrowRight}
         >
-          Open the model evidence
+          View model records in Evidence
         </Button>
       )}
     </details>
@@ -395,9 +395,9 @@ function ForecastContent({
             </section>
           </div>
           <ForecastTrendsSection model={model} selectedCase={selectedCase} source={source} />
-          <a className="mt-3 inline-block text-small text-action underline" href="#evidence/record">
+          <Button href="#evidence/record" color="link-gray" size="sm" className="mt-3 w-fit">
             Model notes and limitations
-          </a>
+          </Button>
         </div>
       )}
       {assumptions && (
@@ -567,12 +567,11 @@ export function Forecast({
   return (
     <>
       <ForecastHeading run={run} preview={preview} hasModel={Boolean(model)} />
-      {!model && <p className={card}>No forecast model was published from this run’s files.</p>}
+      {!model && <p className={card}>No forecast model was published for this run.</p>}
       {model && !input && (
         <p className={`${card} min-w-0 wrap-anywhere`}>
-          Forecast source details are not available: the model could not be matched to one readable
-          recorded-input block in its saved evidence. Published figures remain available; inspect
-          the saved model and its sources in Evidence before relying on them.
+          Forecast figures are available. The model could not be matched to a single readable record
+          of its inputs. Check the model and its sources in Evidence before relying on the figures.
         </p>
       )}
       <PublishedModelSelect

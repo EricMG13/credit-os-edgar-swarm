@@ -23,7 +23,7 @@ export function Purpose({
         <h2 id={headingId} className="font-display text-h3 text-text-primary">
           Purpose
         </h2>
-        <p className="text-sm text-text-secondary">
+        <p className="reading-copy text-body text-text-secondary">
           The purpose decides which modules run, and so how much of the cap the run can use.
         </p>
       </div>
@@ -37,25 +37,27 @@ export function PurposeCards({
   value,
   onChange,
   purposes,
+  className,
 }: {
   label: string;
   value: string | null;
   onChange: (value: string) => void;
   purposes: Step["purposes"];
+  className?: string;
 }) {
   return (
     <RadioGroup
       aria-label={label}
       value={value}
       onChange={onChange}
-      className="flex flex-col gap-3"
+      className={cx("grid grid-cols-1 gap-3", className)}
     >
       {purposes.map((p) => (
         <RadioField key={p.id} value={p.id} aria-label={p.title}>
           <RadioButton
             className={({ isSelected, isFocusVisible }) =>
               cx(
-                "block cursor-pointer rounded-xl bg-primary ring-1 ring-secondary ring-inset outline-none",
+                "block h-full cursor-pointer rounded-xl bg-primary ring-1 ring-secondary ring-inset outline-none",
                 isSelected && "ring-2 ring-brand",
                 isFocusVisible && "outline-2 outline-solid outline-offset-2 outline-brand",
               )

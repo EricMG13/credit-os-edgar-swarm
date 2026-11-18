@@ -304,7 +304,7 @@ describe("connected run start", () => {
     render(<ConnectedApp path="/start" mode="synthetic" navigate={navigate} />);
     await review();
     const submit = await screen.findByRole("button", { name: "Submit run" });
-    expect(screen.getByText("Step 4 of 4", { exact: true })).toBeInTheDocument();
+    expect(screen.getByText("Step 4 of 4 · Review and start")).toBeInTheDocument();
     expect(screen.queryByText(/of 5/)).toBeNull();
     // The issuer notice is a second read, independent of the review's ownership check.
     await waitFor(() => {
@@ -941,8 +941,8 @@ describe("connected run start", () => {
     fireEvent.change(await screen.findByLabelText("Issuer name"), {
       target: { value: "Northbridge" },
     });
-    fireEvent.click(screen.getByRole("button", { name: "Carry over from latest run" }));
-    await screen.findByText(/Starting from run latest-case/);
+    fireEvent.click(screen.getByRole("button", { name: "Use inputs from latest run" }));
+    await screen.findByText(/Using an earlier run as a starting point/);
     expect(screen.getByLabelText("Issuer ID")).toHaveAttribute("readonly");
     expect(screen.getByLabelText("Issuer name")).toHaveValue("Northbridge");
     fireEvent.change(screen.getByLabelText("As-of date"), { target: { value: "2026-10-31" } });
@@ -977,7 +977,7 @@ describe("connected run start", () => {
     fireEvent.change(await screen.findByLabelText("Issuer name"), {
       target: { value: "Northbridge" },
     });
-    fireEvent.click(screen.getByRole("button", { name: "Carry over from latest run" }));
+    fireEvent.click(screen.getByRole("button", { name: "Use inputs from latest run" }));
     expect(await screen.findByText("No earlier run was found for this issuer.")).toBeVisible();
     expect(screen.getByLabelText("Issuer ID")).not.toHaveAttribute("readonly");
     expect(screen.getByLabelText("Issuer name")).toHaveValue("Northbridge");
@@ -1879,11 +1879,9 @@ describe("connected activity and reports", () => {
     render(<ConnectedApp path="/runs" mode="synthetic" />);
     expect(await screen.findByText("Some run records could not be read")).toBeVisible();
     expect(screen.getByText("2 run records could not be read and are not listed.")).toBeVisible();
-    expect(screen.getByText("No readable run record is in progress")).toBeVisible();
+    expect(screen.getByText("No active runs listed")).toBeVisible();
     expect(
-      screen.getByText(
-        "No readable run record is running or waiting. Finished runs are in the library.",
-      ),
+      screen.getByText("Other runs may be in progress if their records could not be read."),
     ).toBeVisible();
     expect(screen.queryByText("No run in progress")).toBeNull();
     cleanup();
@@ -2667,7 +2665,7 @@ describe("connected run start: what an acceptance carries to", () => {
     expect(approvalBox()).toBeDisabled();
   });
 
-  it("carries nothing after Carry over from latest run", async () => {
+  it("carries nothing after Use inputs from latest run", async () => {
     testingFetch({ ...plan, items: cascade }, undefined, {
       "/api/issuers/acme": { latest_run: "earlier", runs: 1, latest_as_of: "2026-09-30" },
       "/api/runs/earlier/inputs": {
@@ -2691,7 +2689,7 @@ describe("connected run start: what an acceptance carries to", () => {
     fireEvent.click(screen.getByRole("button", { name: "Review run" }));
     fireEvent.click(await limitBox());
     fireEvent.click(screen.getByRole("button", { name: "Edit issuer and documents" }));
-    fireEvent.click(screen.getByRole("button", { name: "Carry over from latest run" }));
+    fireEvent.click(screen.getByRole("button", { name: "Use inputs from latest run" }));
     await screen.findByRole("button", { name: "This is a different issuer" });
     typeDate();
     typeName();
@@ -2966,7 +2964,7 @@ describe("connected run start: readiness after going back, and repeated announce
     fireEvent.click(screen.getByRole("button", { name: "Go back to Documents" }));
     fireEvent.change(screen.getByLabelText("Issuer name"), { target: { value: "Northbridge" } });
     expect(rowOf("Purpose chosen")).not.toHaveTextContent("Not met");
-    fireEvent.click(screen.getByRole("button", { name: "Carry over from latest run" }));
+    fireEvent.click(screen.getByRole("button", { name: "Use inputs from latest run" }));
     await screen.findByRole("button", { name: "This is a different issuer" });
     expect(rowOf("Purpose chosen")).toHaveTextContent("Not met");
     typeDate();
@@ -3057,10 +3055,10 @@ describe("connected run start: readiness after going back, and repeated announce
     fireEvent.change(await screen.findByLabelText("Issuer name"), {
       target: { value: "Northbridge" },
     });
-    const pressed = screen.getByRole("button", { name: "Carry over from latest run" });
+    const pressed = screen.getByRole("button", { name: "Use inputs from latest run" });
     pressed.focus();
     fireEvent.click(pressed);
-    await screen.findByText(/Starting from run latest-case/);
+    await screen.findByText(/Using an earlier run as a starting point/);
     await waitFor(() => expect(pressed).toBeEnabled());
     expect(pressed).toHaveTextContent("This is a different issuer");
     expect(document.activeElement).not.toBe(pressed);
@@ -4310,8 +4308,8 @@ describe("connected run start: the case date is the analyst's to enter (J2-002, 
     fireEvent.change(await screen.findByLabelText("Issuer name"), {
       target: { value: "Northbridge" },
     });
-    fireEvent.click(screen.getByRole("button", { name: "Carry over from latest run" }));
-    await screen.findByText(/Starting from run latest-case/);
+    fireEvent.click(screen.getByRole("button", { name: "Use inputs from latest run" }));
+    await screen.findByText(/Using an earlier run as a starting point/);
     fireEvent.click(await screen.findByRole("button", { name: "This is a different issuer" }));
     expect(screen.getByLabelText("As-of date")).toHaveValue("");
     expect(screen.queryByText(/Set to today/)).toBeNull();
@@ -4335,8 +4333,8 @@ describe("connected run start: the case date is the analyst's to enter (J2-002, 
     fireEvent.change(await screen.findByLabelText("Issuer name"), {
       target: { value: "Northbridge" },
     });
-    fireEvent.click(screen.getByRole("button", { name: "Carry over from latest run" }));
-    await screen.findByText(/Starting from run latest-case/);
+    fireEvent.click(screen.getByRole("button", { name: "Use inputs from latest run" }));
+    await screen.findByText(/Using an earlier run as a starting point/);
     const date = screen.getByLabelText("As-of date");
     expect(date).toHaveValue("");
     expect(date).toBeRequired();
@@ -4509,14 +4507,14 @@ describe("connected run start: leaving the form without losing it (C2-002)", () 
     expect(away()).toBe(true);
   });
 
-  it("asks once Carry over from latest run has carried its documents, with nothing typed", async () => {
+  it("asks once Use inputs from latest run has carried its documents, with nothing typed", async () => {
     testingFetch(plan, undefined, { ...latestRun, ...carriedOver });
     render(<ConnectedApp path="/start" mode="synthetic" />);
     fireEvent.change(await screen.findByLabelText("Issuer name"), {
       target: { value: "Northbridge" },
     });
-    fireEvent.click(screen.getByRole("button", { name: "Carry over from latest run" }));
-    await screen.findByText(/Starting from run latest-case/);
+    fireEvent.click(screen.getByRole("button", { name: "Use inputs from latest run" }));
+    await screen.findByText(/Using an earlier run as a starting point/);
     expect(away()).toBe(false);
     fireEvent.click(screen.getByRole("button", { name: "Inspect documents" }));
     await screen.findByRole("list", { name: "Documents added" });
@@ -4649,9 +4647,9 @@ describe("connected run start: carrying an earlier run keeps what it recorded (C
   it("says which file choices the earlier run did not record, and only those it had", async () => {
     testingFetch(plan, undefined, { "/api/runs/earlier/inputs": recorded(roles) });
     render(<ConnectedApp path="/start" search="?from=earlier" mode="synthetic" />);
-    expect(await screen.findByText(/Starting from run earlier\./)).toHaveTextContent(
-      "Starting from run earlier. Review the copied answers, add dates, and inspect its available documents. " +
-        "It did not record which files you chose for the agreement and the portfolio workbook: choose them again on More context.",
+    expect(await screen.findByText(/Using an earlier run as a starting point/)).toHaveTextContent(
+      "Using an earlier run as a starting point. Review the answers, enter the new dates, and inspect any documents available to reuse. " +
+        "The earlier run didn’t record the files chosen for the agreement and the portfolio workbook. Choose them again in More context.",
     );
     cleanup();
     vi.unstubAllGlobals();
@@ -4663,9 +4661,9 @@ describe("connected run start: carrying an earlier run keeps what it recorded (C
       }),
     });
     render(<ConnectedApp path="/start" search="?from=earlier" mode="synthetic" />);
-    expect(await screen.findByText(/Starting from run earlier\./)).not.toHaveTextContent(
-      "did not record",
-    );
+    expect(
+      await screen.findByText(/Using an earlier run as a starting point/),
+    ).not.toHaveTextContent("didn’t record");
   });
 
   it.each([
@@ -4684,8 +4682,8 @@ describe("connected run start: carrying an earlier run keeps what it recorded (C
     fireEvent.change(await screen.findByLabelText("Issuer name"), {
       target: { value: "Northbridge" },
     });
-    fireEvent.click(screen.getByRole("button", { name: "Carry over from latest run" }));
-    await screen.findByText(/Starting from run latest-case/);
+    fireEvent.click(screen.getByRole("button", { name: "Use inputs from latest run" }));
+    await screen.findByText(/Using an earlier run as a starting point/);
     typeDate();
     typeName();
     await advanceToPurpose();
@@ -4722,17 +4720,17 @@ describe("T08: run options, Submit failures and required periods", () => {
     const alert = await screen.findByRole("alert");
     expect(alert).toHaveTextContent("The run options could not be loaded");
     expect(alert).not.toHaveTextContent("boom");
-    expect(screen.queryByText(/Choose the documents and purpose/)).toBeNull();
+    expect(screen.queryByRole("heading", { name: "Documents" })).toBeNull();
     fireEvent.click(within(alert).getByRole("button", { name: "Try again" }));
     expect(await screen.findByLabelText("Issuer name")).toBeInTheDocument();
-    expect(screen.getByText(/Choose the documents and purpose/)).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Documents" })).toBeInTheDocument();
   });
 
   it("draws a skeleton, not a sentence, while the run options load (C2-004)", () => {
     testingFetch(plan, undefined, { "/connected/context": () => new Promise<Response>(() => {}) });
     render(<ConnectedApp path="/start" mode="synthetic" />);
     expect(screen.queryByText("Loading run options…")).toBeNull();
-    expect(screen.queryByText(/Choose the documents and purpose/)).toBeNull();
+    expect(screen.queryByRole("heading", { name: "Documents" })).toBeNull();
     expect(screen.getByRole("status", { name: "Loading run options" })).toBeInTheDocument();
   });
 

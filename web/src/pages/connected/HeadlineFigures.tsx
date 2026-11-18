@@ -20,7 +20,7 @@ const metricLabels = [
   ["cash", "Cash"],
 ] as const;
 
-const tile = `${TRACE_HOST} rounded-ds-md border border-border-hairline bg-surface-card p-4`;
+const tile = `${TRACE_HOST} rounded-ds-md border border-border-hairline bg-surface-card p-4 lg:row-span-2 lg:grid lg:grid-rows-subgrid lg:gap-y-0`;
 /** The label leaves room for the control at the tile's top right. */
 const label = (traceable: boolean) => `text-sm text-text-secondary${traceable ? " pr-9" : ""}`;
 
@@ -87,11 +87,13 @@ function GapTile({
   return (
     <div className={tile}>
       <dt className={label(Boolean(source || onRequest))}>{name}</dt>
-      <dd className="mt-1 font-display text-h3 whitespace-nowrap">
-        <Missing />
+      <dd className="mt-1">
+        <div className="font-display text-h3 whitespace-nowrap">
+          <Missing />
+        </div>
+        <div className="text-sm wrap-anywhere text-text-secondary">{gapWords(source)}</div>
+        {source && <div className="text-sm text-text-secondary">{source.period}</div>}
       </dd>
-      <dd className="text-sm wrap-anywhere text-text-secondary">{gapWords(source)}</dd>
-      {source && <dd className="text-sm text-text-secondary">{source.period}</dd>}
       <TileSource name={name} source={source} onRequest={onRequest} loading={loading} />
     </div>
   );
@@ -194,20 +196,22 @@ export function HeadlineFigures({
           return (
             <div className={tile} key={name}>
               <dt className={label(Boolean(source || load))}>{name}</dt>
-              <dd className="mt-1 font-display text-h3 whitespace-nowrap tabular-nums">
-                {withUnit(figure.value, figure.unit)}
-              </dd>
-              {figure.prior && figure.change != null && (
-                <dd>
+              <dd className="mt-1">
+                <div className="font-display text-h3 whitespace-nowrap tabular-nums">
+                  {withUnit(figure.value, figure.unit)}
+                </div>
+                {figure.prior && figure.change != null && (
                   <YearChange
                     metricKey={key}
                     change={figure.change}
                     unit={figure.unit}
                     prior={figure.prior.period}
                   />
-                </dd>
-              )}
-              {figure.period && <dd className="text-sm text-text-secondary">{figure.period}</dd>}
+                )}
+                {figure.period && (
+                  <div className="text-sm text-text-secondary">{figure.period}</div>
+                )}
+              </dd>
               <TileSource
                 name={name}
                 source={source}

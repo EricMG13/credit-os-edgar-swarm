@@ -33,7 +33,7 @@ export function ArtifactDownloads({ folder }: { folder: string }) {
       {value && (
         <div className="flex flex-wrap gap-3">
           {value.map(({ label, href }) => (
-            <DownloadButton key={href} download={{ label, href, reason: null }} />
+            <DownloadButton key={href} color="tertiary" download={{ label, href, reason: null }} />
           ))}
         </div>
       )}

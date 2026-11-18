@@ -73,7 +73,7 @@ const RUN_PROBLEMS = {
   failed: {
     tone: "error",
     title: "The run could not be loaded",
-    text: "The service could not read this run. This page keeps trying.",
+    text: "This page retries automatically. You can also retry now.",
   },
 } as const;
 const REPORT_PROBLEMS = {
@@ -85,12 +85,12 @@ const REPORT_PROBLEMS = {
   unreachable: {
     tone: "error",
     title: UNREACHABLE,
-    text: "The report could not be checked.",
+    text: "Check that the Credit OS service is running, then check for the report again.",
   },
   failed: {
     tone: "error",
     title: "The report could not be loaded",
-    text: "The service could not read this run's report.",
+    text: "Check for the report again.",
   },
 } as const;
 
@@ -104,14 +104,14 @@ export function RunProgress({ id, mode }: { id: string; mode: Mode }) {
   const [problem, setProblem] = useState<Problem>();
   const [report, setReport] = useState<ReportState>("pending");
   const [notAssessable, setNotAssessable] = useState<string[]>([]);
-  // Counts of presses of "Try again" (the run) and "Check again" (the report); each restarts the poll.
+  // Counts of presses of "Try again" (the run) and "Check for report" (the report); each restarts the poll.
   const [retries, setRetries] = useState(0);
   const [rechecks, setRechecks] = useState(0);
   useEffect(() => {
     const controller = new AbortController();
     const { signal } = controller;
     let timer: ReturnType<typeof setTimeout> | undefined;
-    // Pressing "Check again" asks once and is answered at once; only the first look waits.
+    // Pressing "Check for report" asks once and is answered at once; only the first look waits.
     let finishedAt: number | undefined = rechecks > 0 ? 0 : undefined;
     const cancelled = () => signal.aborted;
     const waitOver = () => Date.now() - (finishedAt ?? Date.now()) >= REPORT_WAIT_MS;
@@ -208,14 +208,17 @@ export function RunProgress({ id, mode }: { id: string; mode: Mode }) {
           run && (
             <>
               <span role="status">
-                <StatusBadge set="Run states" state={WORDS[run.status]} live={live} />
+                <StatusBadge set="Run states" state={WORDS[run.status]} />
               </span>
               <Badge color="brand">{pathwayName(run.pathway)}</Badge>
               {mode === "synthetic" && <Badge color="gray">Synthetic test</Badge>}
               {run.as_of && (
                 <Badge color="gray">
                   <span>
-                    As of <time dateTime={run.as_of}>{asOfDate(run.as_of)}</time>
+                    As of{" "}
+                    <time className="tabular-nums" dateTime={run.as_of}>
+                      {asOfDate(run.as_of)}
+                    </time>
                   </span>
                 </Badge>
               )}
@@ -228,16 +231,20 @@ export function RunProgress({ id, mode }: { id: string; mode: Mode }) {
               <Button href={`/report/${encodeURIComponent(id)}`}>Open report</Button>
             )}
             {(restartable || report === "ready" || report === "absent") && (
-              <Button color="secondary" href={`/start?from=${encodeURIComponent(id)}`}>
-                Start from this run
+              <Button
+                color="secondary"
+                href={`/start?from=${encodeURIComponent(id)}`}
+                aria-describedby="run-restart-note"
+              >
+                Use this run’s inputs
               </Button>
             )}
           </>
         }
       />
       {(restartable || report === "ready" || report === "absent") && (
-        <p className="mt-3 text-sm text-text-secondary">
-          Start from this run opens a new run with its own cap. The earlier run stays as it is.
+        <p id="run-restart-note" className="reading-copy mt-3 text-body text-text-secondary">
+          Review the inputs in a new draft. The new run has its own spending cap.
         </p>
       )}
       {runProblem && (
@@ -266,26 +273,26 @@ export function RunProgress({ id, mode }: { id: string; mode: Mode }) {
               tone={run.status === "capped" ? "warning" : "error"}
               title="Why this run ended without a report"
             >
-              {serviceText(run.reason)}
+              <span className="wrap-anywhere">{serviceText(run.reason)}</span>
             </Alert>
           )}
           {live && run.held_reason && (
             <Alert tone="warning" title="Held by the service">
-              {serviceText(run.held_reason)}
+              <span className="wrap-anywhere">{serviceText(run.held_reason)}</span>
             </Alert>
           )}
           {run.status === "queued" && !run.held_reason && !run.reason && (
-            <p className="text-sm text-text-secondary">
-              Waiting for an available run slot. It starts when the service can accept it.
+            <p className="reading-copy text-body text-text-secondary">
+              Waiting for an available run slot.
             </p>
           )}
           {run.stalled && (
-            <p className="text-sm text-text-secondary">
+            <p className="reading-copy text-body text-text-secondary">
               No activity has been recorded in the last hour.
             </p>
           )}
           {run.status === "finished" && report === "pending" && (
-            <p role="status" className="text-sm text-text-secondary">
+            <p role="status" className="reading-copy text-body text-text-secondary">
               Waiting for the report to become available…
             </p>
           )}
@@ -295,7 +302,7 @@ export function RunProgress({ id, mode }: { id: string; mode: Mode }) {
               title={reportProblem.title}
               action={
                 <Button size="sm" color="secondary" onPress={checkAgain}>
-                  Check again
+                  Check for report
                 </Button>
               }
             >
@@ -315,7 +322,7 @@ export function RunProgress({ id, mode }: { id: string; mode: Mode }) {
               <ModuleSteps live={live} steps={moduleSteps(run, live, notAssessable)} />
               {assessmentGaps.length > 0 && (
                 <p className="mt-4 text-sm text-text-secondary">
-                  Assessment metadata is unavailable for {assessmentGaps.join(", ")}.
+                  No assessment status is recorded for {assessmentGaps.join(", ")}.
                 </p>
               )}
             </Card>
@@ -324,7 +331,7 @@ export function RunProgress({ id, mode }: { id: string; mode: Mode }) {
                 <p className="pb-3 text-sm text-text-secondary">The activity log is unavailable.</p>
               )}
               {lines.length > 0 ? (
-                <Feed lines={lines} live={live} />
+                <Feed lines={lines} />
               ) : (
                 run.events !== null && (
                   <p className="text-sm text-text-secondary">No activity recorded yet.</p>

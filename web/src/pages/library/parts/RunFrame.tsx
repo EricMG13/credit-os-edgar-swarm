@@ -160,7 +160,7 @@ function RunHeader({
         actions={
           <>
             {sources}
-            <Button href={historyHref(issuer)} color="secondary">
+            <Button href={historyHref(issuer)} color="tertiary">
               Report history
             </Button>
             <Button href={RUN_START}>New run</Button>

@@ -11,7 +11,7 @@ export function Confirm({ groups }: { groups: Groups }) {
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="flex flex-col gap-1">
           <h2 className="font-display text-h3 text-text-primary">Confirm what was read</h2>
-          <p className="text-sm text-text-secondary">
+          <p className="reading-copy text-body text-text-secondary">
             This is what the documents say and what will run. Approving it costs nothing.
           </p>
         </div>

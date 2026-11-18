@@ -312,7 +312,9 @@ function TraceDetailsView({
                   {documentDate || "Document date n.a."}
                 </p>
                 {sha256 && (
-                  <code className="text-caption break-all text-text-tertiary">{sha256}</code>
+                  <code className="font-mono text-mono wrap-anywhere text-text-tertiary">
+                    {sha256}
+                  </code>
                 )}
               </li>
             ))}
@@ -625,7 +627,7 @@ function EvidenceSources({
                 <li key={source.name} className="grid gap-1 px-4 py-3 text-sm">
                   <p className="font-semibold wrap-anywhere">{source.name}</p>
                   <p className="text-text-secondary">{source.type || "Document type n.a."}</p>
-                  <p className="text-text-secondary">
+                  <p className="text-text-secondary tabular-nums">
                     {source.documentDate || "Document date n.a."}
                   </p>
                   {source.readBy.length > 0 && (
@@ -637,7 +639,9 @@ function EvidenceSources({
                         : `Read by ${source.readBy.map(moduleName).join(" · ")}`}
                     </p>
                   )}
-                  {source.sourceWarning && <p>{source.sourceWarning}</p>}
+                  {source.sourceWarning && (
+                    <p className="reading-copy text-small">{source.sourceWarning}</p>
+                  )}
                   {source.sha256 && (
                     <code className="wrap-anywhere text-text-tertiary">{source.sha256}</code>
                   )}
@@ -661,7 +665,7 @@ function EvidenceHandoffs({
 }) {
   const zip = publishedHref(run.evidence.zip, run.folder);
   return (
-    <section className={card}>
+    <section className={`${card} max-w-4xl`}>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h3 className={heading}>Handoffs</h3>
         {zip && (
@@ -906,12 +910,13 @@ function AssumptionRegister({
                   ))}
                   <td className="px-3 py-2">
                     {handoff && line != null ? (
-                      <a
-                        className="text-action underline"
+                      <Button
                         href={evidencePath(folder, handoff, line)}
+                        color="link-gray"
+                        size="sm"
                       >
                         Source row
-                      </a>
+                      </Button>
                     ) : (
                       "Source row not matched"
                     )}
@@ -982,8 +987,8 @@ export function ReportEvidence({
         <section role="alert" className={card}>
           <h3 className={heading}>Evidence link unavailable</h3>
           <p className="text-text-secondary">
-            This link does not identify a saved handoff revision in this report. Open a handoff from
-            the list to create a current evidence link.
+            This link does not match a saved handoff in this report. Go to Summary and choose a
+            handoff from the list.
           </p>
         </section>
       )}
@@ -996,8 +1001,8 @@ export function ReportEvidence({
       )}
       {tab === "Trace" && !entry && !invalidTraceAddress && (
         <p className="text-text-secondary">
-          Choose Show sources beside a paragraph, row or figure on another page to see here how it
-          was derived, or open a handoff below.
+          Open a handoff below, or select the source icon beside a finding, row or figure and choose
+          Open in Evidence.
         </p>
       )}
       {tab === "Record" && (

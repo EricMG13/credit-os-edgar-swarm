@@ -205,7 +205,7 @@ function modulesRun(details: ReturnType<typeof runDetails>) {
     if (count === 0) return "0 modules run";
     return `${String(count)} ${count === 1 ? "module" : "modules"} run: ${details.modules.join(", ")}`;
   }
-  return "The modules this run ran could not be read.";
+  return "The module list is unavailable for this run.";
 }
 
 function HistoryRow({
@@ -219,10 +219,12 @@ function HistoryRow({
 }) {
   return (
     <li className="flex flex-wrap items-center justify-between gap-4 border-t border-border-hairline pt-3">
-      <div className="grid gap-1">
-        <p className="font-semibold">{runPathway(record, catalogue) || "Credit report"}</p>
-        <p className="text-sm text-text-secondary">{runTiming(record)}</p>
-        <p className="text-sm text-text-secondary">{modulesRun(details)}</p>
+      <div className="grid min-w-0 gap-1">
+        <p className="font-semibold wrap-anywhere">
+          {runPathway(record, catalogue) || "Credit report"}
+        </p>
+        <p className="text-small text-text-tertiary tabular-nums">{runTiming(record)}</p>
+        <p className="reading-copy text-small text-text-secondary">{modulesRun(details)}</p>
       </div>
       <div className="flex flex-wrap items-center gap-3">
         <StatusBadge set="Run states" state="Finished" />
@@ -301,7 +303,7 @@ function KeyCharts({
           </div>
         ))
       ) : (
-        <p className={card}>No key chart has data in this run.</p>
+        <p className={card}>No key charts are available for this run.</p>
       )}
     </section>
   );
@@ -341,15 +343,14 @@ function Overview({
   return (
     <>
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h2 className="font-display text-h2">Overview</h2>
+        <h2 className="font-display text-h2 text-balance">Overview</h2>
         {hasCalendar && (
-          <Button color="secondary" size="sm" href="#calendar">
+          <Button color="tertiary" size="sm" href="#calendar">
             Issuer calendar
           </Button>
         )}
       </div>
       <nav aria-label="Overview sections" className="flex flex-wrap items-center gap-4 text-sm">
-        <span className="text-text-secondary">On this page</span>
         <TextLink href="#overview/limitations">Limitations</TextLink>
         <TextLink href="#overview/key-charts">Key charts</TextLink>
         {calendar.rows.length > 0 && <TextLink href="#overview/dates">Dates to watch</TextLink>}
@@ -377,9 +378,7 @@ function Overview({
       ) : (
         <>
           {figures}
-          <p className={card}>
-            No credit view is available in the published handoffs for this run.
-          </p>
+          <p className={card}>No credit view is available for this run.</p>
         </>
       )}
       <ModuleBottomLines run={run} rows={moduleBottomLines(view, run)} />
@@ -397,7 +396,7 @@ function Overview({
           </div>
           {watchRows === null ? (
             <p className="text-sm text-text-secondary" role="status">
-              Upcoming dates cannot be determined because this run has no valid as-of date.
+              This run needs a valid as-of date to identify upcoming events.
             </p>
           ) : watchRows.length === 0 ? (
             <p className="text-sm text-text-secondary" role="status">
@@ -623,7 +622,7 @@ function ReaderHeader({
             />
           )}
           {!preview && (
-            <Button color="secondary" href={`/run/${encodeURIComponent(id)}`}>
+            <Button color="tertiary" href={`/run/${encodeURIComponent(id)}`}>
               Run progress
             </Button>
           )}
@@ -673,21 +672,21 @@ function unpublishedNotice(run: Run | null): Notice {
   if (run.status === "queued" || run.status === "running")
     return {
       tone: "info",
-      title: "This run is still going",
-      text: "Its report appears here when the run finishes. Run activity shows its progress.",
+      title: "This run is in progress",
+      text: "The report will appear here once it’s published.",
       actions: ["run"],
     };
   if (run.status === "finished")
     return {
       tone: "warning",
       title: "No report is listed for this run",
-      text: "The run finished, but the library does not list its report. Run activity shows the run’s record.",
+      text: "The run finished. Check Run progress for the delivery record.",
       actions: ["run", "library"],
     };
   return {
     tone: "warning",
     title: "This run ended without a report",
-    text: "The run stopped before its report was published. Run activity shows where it stopped.",
+    text: "Check Run progress to see where the run stopped.",
     actions: ["run", "library"],
   };
 }
@@ -704,7 +703,7 @@ function failureNotice(loaded: Exclude<Loaded, { snapshot: Snapshot | null }>): 
   return {
     tone: "error",
     title: "The report could not be loaded",
-    text: "The service could not return this report. Try again; Run activity shows the run’s record.",
+    text: "Try again or open Run progress to see the run’s record.",
     actions: ["retry", "run"],
   };
 }
@@ -727,7 +726,7 @@ function ReportUnavailable({
     ),
     run: (
       <Button key="run" color="secondary" size="sm" href={`/run/${encodeURIComponent(id)}`}>
-        Run activity
+        Run progress
       </Button>
     ),
     library: (

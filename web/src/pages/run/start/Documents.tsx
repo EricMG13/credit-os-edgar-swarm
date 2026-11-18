@@ -112,7 +112,7 @@ export function Documents({ files }: { files: Files }) {
     <div className="flex flex-col gap-4">
       <div className="flex flex-col gap-1">
         <h2 className="font-display text-h3 text-text-primary">Documents</h2>
-        <p className="text-sm text-text-secondary">
+        <p className="reading-copy text-body text-text-secondary">
           Annual and interim reports, the credit agreement, and anything else the analysis should
           read.
         </p>

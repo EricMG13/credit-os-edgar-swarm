@@ -52,7 +52,7 @@ const NO_RUNS =
 
 /** The shipped build holds no library at all (OQ-01: a design reference), which the reader is told. */
 const NO_LIBRARY =
-  "This build is a design reference and holds no reports. Open the connected run service to start a run and add the first issuer.";
+  "This design reference contains no reports. Open the connected Credit OS app to start a run.";
 
 function NoRuns({ description, canStart = true }: { description: string; canStart?: boolean }) {
   return (

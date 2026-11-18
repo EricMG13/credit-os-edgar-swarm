@@ -359,7 +359,7 @@ it("J5-005 preserves the ruled first-run sentence and explains its decision time
   ).toBeInTheDocument();
   expect(
     screen.getByText(
-      "This describes the library when this run was made; runs listed afterwards do not change this comparison.",
+      "Only reports already listed when this run was made can be used for comparison.",
     ),
   ).toBeInTheDocument();
 });

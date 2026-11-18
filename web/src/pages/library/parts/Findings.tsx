@@ -20,8 +20,10 @@ export function Findings({ findings }: { findings: readonly Finding[] }) {
             {finding.number}
           </span>
           <div className="flex min-w-0 flex-1 flex-col gap-1">
-            <span className="text-body font-semibold text-text-primary">{finding.lead}</span>
-            <span className="max-w-[72ch] text-body text-text-secondary">{finding.body}</span>
+            <span className="reading-copy text-body font-semibold text-text-primary">
+              {finding.lead}
+            </span>
+            <span className="reading-copy text-body text-text-secondary">{finding.body}</span>
           </div>
           <TraceControl trace={finding.trace} label="Show sources for this finding" />
         </li>

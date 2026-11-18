@@ -1,4 +1,4 @@
-import { act, cleanup, render, screen, within } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { ConnectedApp } from "./ConnectedApp";
 
@@ -52,6 +52,7 @@ beforeAll(async () => {
 afterEach(() => {
   cleanup();
   vi.unstubAllGlobals();
+  window.history.replaceState(null, "", "/");
 });
 
 function open() {
@@ -75,7 +76,8 @@ describe.each([
     open();
     const root = await emptyState();
     expect(root.querySelector("svg")).not.toBeNull();
-    expect(within(root).getByText(/appears here once a run has finished/)).toBeVisible();
+    expect(within(root).getByText(/Reports appear here after they’re published/)).toBeVisible();
+    expect(screen.getAllByRole("link", { name: "Start a run" })).toHaveLength(1);
     expect(within(root).getByRole("link", { name: "Start a run" })).toHaveAttribute(
       "href",
       "/start",
@@ -105,10 +107,31 @@ describe("a library with a report", () => {
     expect(screen.getByText("Cards")).toBeVisible();
     expect(screen.queryByRole("heading", { name: "No reports yet" })).toBeNull();
   });
+
+  it("keeps an unavailable saved filter explicit and clears back to the selected layout", async () => {
+    window.history.replaceState(null, "", "/?sector=Mining&layout=list&pathway=Old+review");
+    serve(ok(FILLED));
+    open();
+
+    const clear = await screen.findByRole("button", { name: "Clear filters" });
+    expect(screen.getByLabelText("Sector")).toHaveValue("Mining");
+    expect(screen.getByRole("option", { name: "Mining (unavailable)" })).toHaveProperty(
+      "selected",
+      true,
+    );
+    expect(screen.getByLabelText("Pathway")).toHaveValue("Old review");
+    expect(screen.getByRole("status")).toHaveTextContent("No issuers match these filters.");
+
+    fireEvent.click(clear);
+    expect(screen.getByRole("searchbox", { name: "Search issuers" })).toHaveFocus();
+    expect(screen.getByRole("rowheader", { name: "Alpha Foods" })).toBeVisible();
+    expect(window.location.search).toBe("?layout=list");
+  });
 });
 
 describe("a library that cannot be read", () => {
   it("says so in an alert with an icon and a Try again action, not a plain line", async () => {
+    window.history.replaceState(null, "", "/?sector=Food");
     serve(refused);
     open();
     const alert = await screen.findByRole("alert");
@@ -117,6 +140,8 @@ describe("a library that cannot be read", () => {
     expect(within(alert).getByRole("button", { name: "Try again" })).toBeVisible();
     expect(screen.queryByText("The published library could not be loaded.")).toBeNull();
     expect(screen.queryByText("No reports yet")).toBeNull();
+    expect(screen.queryByRole("button", { name: "Clear filters" })).toBeNull();
+    expect(window.location.search).toBe("?sector=Food");
   });
 
   it("names a service that cannot be reached, never the browser's own word", async () => {

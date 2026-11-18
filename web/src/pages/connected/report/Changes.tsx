@@ -121,9 +121,8 @@ export function Changes({
             <EmptyState.Description>
               This is the first listed run for this issuer on this pathway.
             </EmptyState.Description>
-            <p className="max-w-[55ch] text-sm text-text-secondary">
-              This describes the library when this run was made; runs listed afterwards do not
-              change this comparison.
+            <p className="reading-copy text-body text-text-secondary">
+              Only reports already listed when this run was made can be used for comparison.
             </p>
           </EmptyState.Content>
           <EmptyState.Footer>
@@ -295,15 +294,19 @@ function ComparedModules({
               <div className="mt-3 grid gap-3 sm:grid-cols-2">
                 <div>
                   <h3 className="font-semibold">Earlier</h3>
-                  <p>{side(item.ran_prior, item.prior_bottom_line)}</p>
+                  <p className="reading-copy text-body">
+                    {side(item.ran_prior, item.prior_bottom_line)}
+                  </p>
                 </div>
                 <div>
                   <h3 className="font-semibold">Current</h3>
-                  <p>{side(item.ran_current, item.current_bottom_line)}</p>
+                  <p className="reading-copy text-body">
+                    {side(item.ran_current, item.current_bottom_line)}
+                  </p>
                 </div>
               </div>
               {explanation.length > 0 && (
-                <p className="mt-2 text-sm text-text-secondary">
+                <p className="reading-copy mt-2 text-small text-text-secondary">
                   {readerText(explanation.join(" · "))}
                 </p>
               )}

@@ -107,12 +107,7 @@ it("J3-011 explains published event categories and date precision without reclas
   );
   expect(
     screen.getByText(
-      "Historical and Scheduled are the module’s recorded categories, not classifications against this run’s as-of date.",
-    ),
-  ).toBeInTheDocument();
-  expect(
-    screen.getByText(
-      "Date precision states whether the date identifies a day, month, quarter or year.",
+      "Events keep their recorded status (Historical or Scheduled) regardless of the run’s as-of date. Dates can be precise to the day, month, quarter or year.",
     ),
   ).toBeInTheDocument();
 });

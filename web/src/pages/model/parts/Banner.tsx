@@ -19,8 +19,8 @@ export function Banner({
         <i className="size-3 rounded-full bg-text-on-action" />
       </span>
       <div className="min-w-0 flex-1">
-        <p className="max-w-[72ch] font-display text-h3 text-balance">{lead}</p>
-        <p className="mt-2 max-w-[78ch] text-body text-text-on-action/80">{children}</p>
+        <p className="max-w-[62ch] font-display text-h3 text-balance wrap-anywhere">{lead}</p>
+        <p className="reading-copy mt-2 text-body text-text-on-action/80">{children}</p>
       </div>
       {trace}
     </div>

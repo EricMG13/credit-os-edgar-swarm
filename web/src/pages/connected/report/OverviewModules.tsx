@@ -38,7 +38,7 @@ export function ModuleBottomLines({
             </div>
             <div className="flex items-start justify-start gap-3">
               {row.text !== null ? (
-                <p className="max-w-[65ch] text-body text-text-secondary">{row.text}</p>
+                <p className="reading-copy text-body text-text-secondary">{row.text}</p>
               ) : row.referenced ? (
                 <Button
                   color="link-gray"
@@ -102,7 +102,7 @@ export function RunLimitations({
                     key={`${row.entry.output.id}:${String(row.line)}`}
                     className="grid gap-1 border-t border-border-hairline pt-3 first:border-t-0 first:pt-0"
                   >
-                    <p className="max-w-[65ch] text-body wrap-anywhere text-text-secondary">
+                    <p className="reading-copy text-body text-text-secondary">
                       {containsReference(row.text) ? (
                         <Button color="link-gray" size="sm" href={href}>
                           Read this limitation in Evidence

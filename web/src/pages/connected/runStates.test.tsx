@@ -148,8 +148,8 @@ describe("a finished run whose report is not published", () => {
     expect(screen.queryByText(/Waiting for the report/)).toBeNull();
     const alert = screen.getByRole("alert");
     expect(within(alert).getByText("No report was published for this run")).toBeVisible();
-    expect(within(alert).getByRole("button", { name: "Check again" })).toBeVisible();
-    expect(screen.getByRole("link", { name: "Start from this run" })).toHaveAttribute(
+    expect(within(alert).getByRole("button", { name: "Check for report" })).toBeVisible();
+    expect(screen.getByRole("link", { name: "Use this run’s inputs" })).toHaveAttribute(
       "href",
       `/start?from=${ID}`,
     );
@@ -159,7 +159,7 @@ describe("a finished run whose report is not published", () => {
     expect(asked).toBeLessThanOrEqual(8);
   });
 
-  it("Check again asks once more and opens the report when it has appeared", async () => {
+  it("Check for report asks once more and opens the report when it has appeared", async () => {
     let published = false;
     const calls = serve({
       [RUN_URL]: json(finished),
@@ -173,7 +173,7 @@ describe("a finished run whose report is not published", () => {
     const asked = calls[REPORT_URL] ?? 0;
     published = true;
     await act(async () => {
-      screen.getByRole("button", { name: "Check again" }).click();
+      screen.getByRole("button", { name: "Check for report" }).click();
       await vi.advanceTimersByTimeAsync(50);
     });
     expect(calls[REPORT_URL]).toBe(asked + 1);
@@ -184,7 +184,7 @@ describe("a finished run whose report is not published", () => {
     );
   });
 
-  it("Check again with the report still missing answers at once and leaves the pressed button where it is", async () => {
+  it("Check for report with the report still missing answers at once and leaves the pressed button where it is", async () => {
     const calls = serve({
       [RUN_URL]: json(finished),
       [REPORT_URL]: json({ error: "unknown report" }, 404),
@@ -192,7 +192,7 @@ describe("a finished run whose report is not published", () => {
     await open();
     await wait(12_000);
     const asked = calls[REPORT_URL] ?? 0;
-    const button = screen.getByRole("button", { name: "Check again" });
+    const button = screen.getByRole("button", { name: "Check for report" });
     button.focus();
     await act(async () => {
       button.click();
@@ -200,7 +200,7 @@ describe("a finished run whose report is not published", () => {
     });
     expect(calls[REPORT_URL]).toBe(asked + 1);
     expect(screen.queryByText(/Waiting for the report/)).toBeNull();
-    expect(screen.getByRole("button", { name: "Check again" })).toBe(button);
+    expect(screen.getByRole("button", { name: "Check for report" })).toBe(button);
     expect(document.activeElement).toBe(button);
     await wait(30_000);
     expect(calls[REPORT_URL]).toBe(asked + 1);
