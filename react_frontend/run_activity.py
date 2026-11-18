@@ -203,14 +203,14 @@ def _plain_reason(root: str, sep: str, reason: str) -> str:
     return _ABSOLUTE.sub(_last_segment, _QUOTED.sub(_quoted_last_segment, reason))
 
 
-_TRY_AGAIN = "To try again, choose Start from this run on the run's page."
+_TRY_AGAIN = "To try again, choose Use this run’s inputs on the run's page."
 _REPEATS = "If it ends the same way again, ask whoever runs the service to check the run's"
 _ASK_LOG = f"{_REPEATS} log."
 _ASK_RECORD = f"{_REPEATS} record."
 # The scheduler writes the details of a failure of its own (a start, a filing, a save, a rebuild)
 # to the service's log, not to the run's log (``logs/<run>.log`` holds only the launcher's output).
 _SERVICE_LOG_THEN_TRY_AGAIN = (
-    "Ask whoever runs the service to check the service's log, then choose Start from this run on "
+    "Ask whoever runs the service to check the service's log, then choose Use this run’s inputs on "
     "the run's page."
 )
 _NO_REASON = (

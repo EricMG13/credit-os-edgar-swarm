@@ -129,6 +129,30 @@ describe("a poll that fails", () => {
     expect(screen.getByRole("link", { name: "Alpha" })).toBeVisible();
     expect(screen.queryByText("No run in progress")).toBeNull();
   });
+
+  it("keeps polling after a malformed ended list while a run has focus", async () => {
+    serve(
+      ok({ ...list([live()]), ended: undefined }),
+      ok({ ...list([]), ended: {} }),
+      ok(list([], [stopped()])),
+    );
+    await open();
+    const link = screen.getByRole("link", { name: "Alpha" });
+    act(() => {
+      link.focus();
+    });
+
+    await wait(5000);
+    expect(screen.getByRole("alert")).toHaveTextContent("Run activity could not be refreshed");
+    expect(link).toHaveFocus();
+
+    await wait(5000);
+    await wait(32);
+    expect(screen.queryByRole("alert")).toBeNull();
+    const table = screen.getByRole("grid", { name: "Runs that ended without a report" });
+    const row = within(table).getByRole("row", { name: /Alpha/ });
+    expect(row.contains(document.activeElement)).toBe(true);
+  });
 });
 
 describe("the tables of waiting and ended runs", () => {

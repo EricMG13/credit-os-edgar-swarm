@@ -943,6 +943,10 @@ describe("connected run start", () => {
     });
     fireEvent.click(screen.getByRole("button", { name: "Use inputs from latest run" }));
     await screen.findByText(/Using an earlier run as a starting point/);
+    expect(screen.getByRole("link", { name: /Open source run/ })).toHaveAttribute(
+      "href",
+      "/run/latest-case",
+    );
     expect(screen.getByLabelText("Issuer ID")).toHaveAttribute("readonly");
     expect(screen.getByLabelText("Issuer name")).toHaveValue("Northbridge");
     fireEvent.change(screen.getByLabelText("As-of date"), { target: { value: "2026-10-31" } });
@@ -1003,6 +1007,11 @@ describe("connected run start", () => {
     let summaries = 0;
     const fetchMock = testingFetch(plan, undefined, {
       "/api/runs/earlier/inputs": prior,
+      "/api/issuers/northbridge": {
+        latest_run: "newer-case",
+        runs: 2,
+        latest_as_of: "2026-10-31",
+      },
       "/api/submissions/sub-1/carry": { carried: [file.name], kept: [] },
       "/api/submissions/sub-1/summary": () =>
         Promise.resolve(
@@ -1033,6 +1042,10 @@ describe("connected run start", () => {
     expect(screen.getByLabelText("Issuer ID")).toHaveAttribute("readonly");
     expect(screen.getByLabelText("Your name")).toHaveValue("");
     expect(screen.getByLabelText("As-of date")).toHaveValue("");
+    expect(await screen.findByText(/the latest is as of 2026-10-31/)).toBeVisible();
+    const sourceRun = screen.getByRole("link", { name: /Open source run/ });
+    expect(sourceRun).toHaveAttribute("href", "/run/earlier");
+    expect(sourceRun).toHaveAttribute("target", "_blank");
     fireEvent.change(screen.getByLabelText("As-of date"), { target: { value: "2026-09-29" } });
     typeName();
     await advanceToPurpose();

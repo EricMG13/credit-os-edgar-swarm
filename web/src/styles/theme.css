@@ -1,4 +1,5 @@
 @theme {
+  --container-bottom-line: 62ch;
   --color-*: initial;
   --color-white: #ffffff;
   --color-transparent: transparent;
@@ -287,6 +288,14 @@
   max-inline-size: 68ch;
   overflow-wrap: anywhere;
   text-wrap: pretty;
+}
+
+@utility module-reader-columns {
+  grid-template-columns: 16rem minmax(0, 1fr);
+}
+
+@utility run-intake-columns {
+  grid-template-columns: minmax(0, 1fr) 320px;
 }
 
 @utility transition-inherit-all {

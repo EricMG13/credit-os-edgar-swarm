@@ -56,7 +56,7 @@ function Marker({ word }: { word: ModuleWord }) {
       className={cx(
         "run-step-marker relative z-10 flex size-6 shrink-0 items-center justify-center rounded-full",
         word === "Finished" && "bg-surface-subtle text-text-secondary",
-        word === "Running" && "bg-action",
+        word === "Running" && "run-step-marker-active bg-action",
         word !== "Finished" &&
           word !== "Running" &&
           "bg-surface-card inset-ring-[1.5px] inset-ring-border-container",

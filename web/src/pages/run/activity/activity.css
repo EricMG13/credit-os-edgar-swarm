@@ -17,7 +17,7 @@
   content: "";
 }
 
-[aria-current="step"] .run-step-marker::after {
+.run-step-marker-active::after {
   opacity: 1;
 }
 

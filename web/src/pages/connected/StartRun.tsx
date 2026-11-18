@@ -902,7 +902,20 @@ function DocumentFields({
       <div className="grid gap-2 sm:col-span-2">
         <h3 className="font-semibold">Issuer and case date</h3>
         {view.copy && (
-          <p className="text-sm text-text-secondary">{carriedIntro(view.copy.prior)}</p>
+          <>
+            <p className="text-sm text-text-secondary">{carriedIntro(view.copy.prior)}</p>
+            <Button
+              href={`/run/${encodeURIComponent(view.copy.run)}`}
+              target="_blank"
+              rel="noreferrer"
+              aria-label="Open source run (opens in a new tab)"
+              color="link-gray"
+              size="sm"
+              className="w-fit"
+            >
+              Open source run
+            </Button>
+          </>
         )}
         {view.priorNote && (
           <p role="status" className="text-sm text-text-secondary">
@@ -2742,7 +2755,7 @@ function IntakePanels(props: IntakePanelsProps) {
   const capBar = cap && capText ? { value: 0, max: cap, label: `USD 0.00 of ${capText}` } : null;
   const ready = `${String(readiness.filter((row) => row.met).length)} of ${String(readiness.length)} ready · ${capBar ? capBar.label : "Cap unavailable"}`;
   return (
-    <div className="mt-6 grid min-w-0 items-start gap-6 min-[1041px]:grid-cols-[minmax(0,1fr)_320px]">
+    <div className="mt-6 grid min-w-0 items-start gap-6 min-[1041px]:run-intake-columns">
       <div className={`min-w-0 ${card}`}>
         <div className="@container grid gap-5">
           <Stepper

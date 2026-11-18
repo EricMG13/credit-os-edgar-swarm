@@ -44,7 +44,7 @@ export function BottomLine({
         <span className="text-sm font-medium text-brand-100">{text.label}</span>
         <Lead
           tabIndex={-1}
-          className="max-w-[62ch] rounded-ds-xs font-display text-h3 text-balance wrap-anywhere outline-hidden focus-visible:ring-2 focus-visible:ring-white"
+          className="max-w-bottom-line rounded-ds-xs font-display text-h3 text-balance wrap-anywhere outline-hidden focus-visible:ring-2 focus-visible:ring-white"
         >
           {lead ?? text.lead}
         </Lead>

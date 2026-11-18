@@ -185,6 +185,19 @@ it("states missing or ambiguous forecast trace loss while preserving published f
   expect(screen.queryByRole("option", { name: "Assumptions" })).toBeNull();
 });
 
+it("describes missing inputs without claiming figures for an unreadable calculation record", () => {
+  const { view, model } = fixture();
+  view.entries = [];
+  view.models = [{ ...model, cashflow: null }];
+  render(<Forecast view={view} run={run} />);
+
+  expect(screen.getByText(/This model has no readable calculation record/)).toBeVisible();
+  expect(
+    screen.getByText(/The model could not be matched to a single readable record/),
+  ).toBeVisible();
+  expect(screen.queryByText(/Forecast figures are available/)).toBeNull();
+});
+
 it("ties promoted excerpts to the full recorded input and sends generated notes to Evidence Record", () => {
   const { view, model } = fixture();
   const recorded = "Retained sources are unreviewed. Standalone perimeter applies.";

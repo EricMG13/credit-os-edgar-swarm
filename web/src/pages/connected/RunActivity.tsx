@@ -38,10 +38,8 @@ const ENDED = {
 } as const satisfies Record<EndedRun["status"], string>;
 const panel = "rounded-ds-lg border border-border-subtle bg-surface-card shadow-1";
 const RUN_LINK = 'a[href^="/run/"]';
-const runLinkStyle = "whitespace-normal wrap-anywhere";
 
 const runPath = (run: { id: string }) => `/run/${encodeURIComponent(run.id)}`;
-const issuer = (run: { issuer_name: string }) => run.issuer_name || "Issuer not named";
 const fileCount = (run: LiveRun) =>
   run.files > 0 && `${String(run.files)} source file${run.files === 1 ? "" : "s"}`;
 const texts = (...parts: (string | false)[]) =>
@@ -63,7 +61,7 @@ function useActivity(beforeUpdate: (next: Activity) => void) {
     async function poll() {
       const next = await getActivity(controller.signal).catch(() => null);
       if (controller.signal.aborted) return;
-      if (next && Array.isArray(next.runs)) {
+      if (next && Array.isArray(next.runs) && (next.ended == null || Array.isArray(next.ended))) {
         beforeUpdate(next);
         setRead(next);
         setFailed(false);
@@ -94,6 +92,14 @@ function Tally({ counts }: { counts: [string, number][] }) {
   );
 }
 
+function RunIssuerLink({ run }: { run: Pick<LiveRun, "id" | "issuer_name"> }) {
+  return (
+    <TextLink href={runPath(run)} className="whitespace-normal wrap-anywhere">
+      {run.issuer_name || "Issuer not named"}
+    </TextLink>
+  );
+}
+
 function RunningCard({ run }: { run: LiveRun }) {
   const { bar } = finishedFigure(run);
   const line = texts(
@@ -106,9 +112,7 @@ function RunningCard({ run }: { run: LiveRun }) {
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
           <h3 className="text-body font-semibold text-balance wrap-anywhere">
-            <TextLink href={runPath(run)} className={runLinkStyle}>
-              {issuer(run)}
-            </TextLink>
+            <RunIssuerLink run={run} />
           </h3>
           {line && (
             <p className="reading-copy mt-0.5 text-small text-text-tertiary tabular-nums">{line}</p>
@@ -164,9 +168,7 @@ function WaitingTable({ runs, held }: { runs: LiveRun[]; held: string }) {
           {(run) => (
             <Table.Row id={run.id}>
               <Table.Cell className="wrap-anywhere">
-                <TextLink href={runPath(run)} className={runLinkStyle}>
-                  {issuer(run)}
-                </TextLink>
+                <RunIssuerLink run={run} />
                 {texts(
                   texts(
                     run.submitted_by && `submitted by ${run.submitted_by}`,
@@ -204,9 +206,7 @@ function EndedTable({ runs }: { runs: EndedRun[] }) {
           {(run) => (
             <Table.Row id={run.id}>
               <Table.Cell className="wrap-anywhere">
-                <TextLink href={runPath(run)} className={runLinkStyle}>
-                  {issuer(run)}
-                </TextLink>
+                <RunIssuerLink run={run} />
               </Table.Cell>
               <Table.Cell>{pathwayName(run.pathway)}</Table.Cell>
               <Table.Cell>
@@ -260,6 +260,13 @@ function Empty({ title, children }: { title: string; children: string }) {
   );
 }
 
+function groupForRunPath(activity: Activity, path: string) {
+  const sameRun = (run: { id: string }) => runPath(run) === path;
+  return (
+    activity.runs.find(sameRun)?.status ?? (activity.ended?.some(sameRun) ? "ended" : undefined)
+  );
+}
+
 /** What is running, waiting and ended without a report. A run's own page has its spend, modules and activity. */
 export function RunActivity() {
   useEffect(() => {
@@ -277,10 +284,7 @@ export function RunActivity() {
       node.closest("tr")?.querySelector<HTMLAnchorElement>(RUN_LINK);
     const group = link?.closest<HTMLElement>("[data-run-group]")?.dataset.runGroup;
     if (!link || !group) return;
-    const sameRun = (run: { id: string }) => runPath(run) === link.pathname;
-    const newGroup =
-      next.runs.find(sameRun)?.status ?? (next.ended?.some(sameRun) ? "ended" : undefined);
-    if (newGroup !== group) {
+    if (groupForRunPath(next, link.pathname) !== group) {
       focusedRun.current = { node, href: link.href };
       // Leave the departing grid before it assigns focus to a different run.
       region.focus({ preventScroll: true });

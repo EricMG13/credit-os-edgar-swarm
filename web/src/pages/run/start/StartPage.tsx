@@ -111,7 +111,7 @@ export function StartPage({ draft: id }: { draft: string }) {
           spent before the last step.
         </p>
       )}
-      <div className="grid items-start gap-6 min-[1041px]:grid-cols-[minmax(0,1fr)_320px]">
+      <div className="grid items-start gap-6 min-[1041px]:run-intake-columns">
         <div className="flex flex-col gap-6 rounded-ds-lg border border-border-subtle bg-surface-card p-8 shadow-1">
           <Stepper step={draft.step} />
           {draft.step === "documents" ? <Documents files={draft.files} /> : null}

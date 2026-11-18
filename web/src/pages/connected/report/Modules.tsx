@@ -351,6 +351,21 @@ function ModuleFindings({
   );
 }
 
+function UnavailableHandoff({ outputCount }: { outputCount: number }) {
+  return (
+    <section className={card}>
+      <h3 className={heading}>Handoff unavailable</h3>
+      <p>
+        {outputCount > 1
+          ? "Choose a saved output above."
+          : outputCount === 1
+            ? "Choose this module again under Modules in this run."
+            : "No output was saved for this module."}
+      </p>
+    </section>
+  );
+}
+
 function SelectedModule({
   snapshot,
   run,
@@ -372,7 +387,7 @@ function SelectedModule({
         <h2 className="min-w-0 font-display text-h2 text-balance wrap-anywhere">{current.name}</h2>
         <StatusBadge set="Module state" state={entry ? moduleState(entry) : current.state} />
       </div>
-      <div className="grid min-w-0 gap-5 min-[1001px]:grid-cols-[16rem_minmax(0,1fr)]">
+      <div className="grid min-w-0 gap-5 min-[1001px]:module-reader-columns">
         <Navigator
           key={entry?.output.id ?? current.id}
           view={view}
@@ -394,16 +409,7 @@ function SelectedModule({
               figures={figures}
             />
           ) : (
-            <section className={card}>
-              <h3 className={heading}>Handoff unavailable</h3>
-              <p>
-                {current.outputs.length > 1
-                  ? "Choose a saved output above."
-                  : current.outputs.length === 1
-                    ? "Choose this module again under Modules in this run."
-                    : "No output was saved for this module."}
-              </p>
-            </section>
+            <UnavailableHandoff outputCount={current.outputs.length} />
           )}
         </div>
       </div>
