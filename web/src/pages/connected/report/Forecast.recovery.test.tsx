@@ -178,7 +178,9 @@ it("states missing or ambiguous forecast trace loss while preserving published f
   const { view } = fixture();
   view.entries = [];
   render(<Forecast view={view} run={run} />);
-  expect(screen.getByText(/Forecast source details are not available/)).toBeInTheDocument();
+  expect(
+    screen.getByText(/The model could not be matched to a single readable record of its inputs/),
+  ).toBeInTheDocument();
   expect(screen.getByRole("figure", { name: "Revenue" })).toBeInTheDocument();
   expect(screen.queryByRole("option", { name: "Assumptions" })).toBeNull();
 });
@@ -280,7 +282,9 @@ it("refuses a filename companion whose hash conflicts with retained model source
   source.output.href = "/saved/run/CP-2G.md";
   source.output.sha256 = "b".repeat(64);
   render(<Forecast view={view} run={run} />);
-  expect(screen.getByText(/Forecast source details are not available/)).toBeInTheDocument();
+  expect(
+    screen.getByText(/The model could not be matched to a single readable record of its inputs/),
+  ).toBeInTheDocument();
   expect(screen.queryByText("Recorded growth.")).toBeNull();
   expect(screen.getByRole("figure", { name: "Revenue" })).toBeInTheDocument();
   expect(document.querySelector(`a[href*="${"b".repeat(64)}-72"]`)).toBeNull();
@@ -292,7 +296,9 @@ it("keeps the exact legacy filename companion when no source identity was retain
   model.download = "/saved/run/annual.md";
   source.output.href = "/saved/run/CP-2G.md";
   render(<Forecast view={view} run={run} />);
-  expect(screen.queryByText(/Forecast source details are not available/)).toBeNull();
+  expect(
+    screen.queryByText(/The model could not be matched to a single readable record of its inputs/),
+  ).toBeNull();
   expect(screen.getByText("Recorded growth.")).toBeInTheDocument();
 });
 

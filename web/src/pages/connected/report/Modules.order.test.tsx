@@ -104,7 +104,7 @@ it("still draws the figures when the handoff has no sections", () => {
   expect(document.getElementById("module-figures")).not.toBeNull();
 });
 
-it("lists Figures and records in On this page where the page draws them", () => {
+it("lists Charts and figures in On this page where the page draws them", () => {
   renderModule([
     passage("Bottom line", 4),
     passage("Key findings", 6),
@@ -118,7 +118,7 @@ it("lists Figures and records in On this page where the page draws them", () => 
     "Bottom line",
     "Key findings",
     CONTRARY,
-    "Figures and records",
+    "Charts and figures",
     "Limitations",
   ]);
 });

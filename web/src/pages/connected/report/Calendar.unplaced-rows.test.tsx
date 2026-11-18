@@ -81,9 +81,7 @@ it("says events are listed only when a gap card lists unplaced rows", () => {
   render(<Calendar calendar={recorded} />);
   expect(screen.queryByText(/events and date gaps are listed below/)).toBeNull();
   expect(
-    screen.getByText(
-      "No events could be placed on the calendar; the recorded gaps are listed below.",
-    ),
+    screen.getByText("No events could be plotted. See the recorded gaps below."),
   ).toBeInTheDocument();
 });
 
@@ -177,9 +175,7 @@ it("says events are listed only when a listed row is a readable event", () => {
   render(<Calendar calendar={buildCalendar([handoff(numbered([["a", "b"]]))], "current")} />);
   expect(screen.queryByText(/events and date gaps are listed below/)).toBeNull();
   expect(
-    screen.getByText(
-      "No events could be placed on the calendar; the recorded gaps are listed below.",
-    ),
+    screen.getByText("No events could be plotted. See the recorded gaps below."),
   ).toBeInTheDocument();
   expect(screen.getByRole("row", { name: /could not be read/ })).toBeInTheDocument();
 });

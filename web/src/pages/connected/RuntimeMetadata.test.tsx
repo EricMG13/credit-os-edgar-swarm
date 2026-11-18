@@ -84,7 +84,7 @@ it("C1-028 says which completed output lacks assessment metadata instead of gues
   });
   render(<RunProgress id="case" mode="synthetic" />);
   expect(
-    await screen.findByText("Assessment metadata is unavailable for Source readiness."),
+    await screen.findByText("No assessment status is recorded for Source readiness."),
   ).toBeVisible();
   expect(screen.getByText("1 of 2")).toBeVisible();
 });

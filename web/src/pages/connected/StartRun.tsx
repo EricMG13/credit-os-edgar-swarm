@@ -901,7 +901,9 @@ function DocumentFields({
       </FileUpload.Root>
       <div className="grid gap-2 sm:col-span-2">
         <h3 className="font-semibold">Issuer and case date</h3>
-        {view.copy && <p className="text-sm text-text-secondary">{carriedIntro(view.copy)}</p>}
+        {view.copy && (
+          <p className="text-sm text-text-secondary">{carriedIntro(view.copy.prior)}</p>
+        )}
         {view.priorNote && (
           <p role="status" className="text-sm text-text-secondary">
             {view.priorNote}
@@ -1016,7 +1018,7 @@ function DocumentFields({
         </Button>
       ) : (
         <Button color="secondary" onPress={view.carryLatest}>
-          Carry over from latest run
+          Use inputs from latest run
         </Button>
       )}
     </>
@@ -1026,8 +1028,9 @@ function DocumentFields({
 function PurposeFields({ view }: { view: IntakeView }) {
   return (
     <>
-      <div className="sm:col-span-2">
+      <div className="@container sm:col-span-2">
         <PurposeCards
+          className="@[44rem]:grid-cols-2"
           label={PATHWAY_LABEL}
           value={view.run.pathway}
           purposes={PATHWAY_CARDS.map((pathway) => {
@@ -1551,12 +1554,7 @@ export function StartRun({
         badges={mode === "synthetic" ? <Badge color="brand">Synthetic test</Badge> : undefined}
       />
       {value ? (
-        <>
-          <p className="mt-3 text-sm text-text-secondary">
-            Choose the documents and purpose, then review what will run.
-          </p>
-          <IntakeForm mode={mode} navigate={navigate} {...value} />
-        </>
+        <IntakeForm mode={mode} navigate={navigate} {...value} />
       ) : error ? (
         <div className="mt-6">
           <Alert
@@ -1570,8 +1568,9 @@ export function StartRun({
               </Button>
             }
           >
-            The run options could not be loaded. Try again, or ask whoever runs the service to check
-            it.
+            {unreachable
+              ? "Check that the Credit OS service is running, then try again."
+              : "Try again. If the options still won’t load, ask the person running Credit OS to check it."}
           </Alert>
         </div>
       ) : (
@@ -2217,7 +2216,9 @@ function IntakeForm({
     const details = reviewDetails();
     const { draft, result } = await refreshDocuments();
     if (!result.documents.length)
-      throw new Error("The service could not read any of the selected documents.");
+      throw new Error(
+        "None of the selected documents could be read. Check the file list in Documents and add a readable file.",
+      );
     const answers = makeAnswers(result, details, await settleIssuerId());
     const noteAt = noteIndex(details, analystNote);
     const shownCap = capForPathway(caps, answers.context.run.pathway);
@@ -2227,7 +2228,10 @@ function IntakeForm({
       },
     );
     requireSummaryCap(summary, shownCap);
-    if (!summary.digest) throw new Error("The service did not issue an approval for this run.");
+    if (!summary.digest)
+      throw new Error(
+        "This summary could not be approved. Select Review run to request a new summary.",
+      );
     const reviewed = reviewedRef.current;
     reviewedRef.current = null;
     setAccepted(
@@ -2270,7 +2274,9 @@ function IntakeForm({
             throw new FieldProblem("submitted_by", ANALYST_NAME_RULE);
           const { result } = await refreshDocuments();
           if (!result.documents.length)
-            throw new Error("The service could not read any of the selected documents.");
+            throw new Error(
+              "None of the selected documents could be read. Check the file list in Documents and add a readable file.",
+            );
           goTo("purpose");
         });
         break;
@@ -2756,7 +2762,7 @@ function IntakePanels(props: IntakePanelsProps) {
                 : undefined
             }
           />
-          <p className="text-sm text-text-secondary @[620px]:hidden">
+          <p className="text-caption text-text-tertiary tabular-nums @[620px]:hidden">
             {review
               ? `Step ${String(STEP_TOTAL)} of ${String(STEP_TOTAL)} · Review and start`
               : `Step ${String(FORM_STEP_KEYS.indexOf(step) + 1)} of ${String(STEP_TOTAL)} · ${title}`}
@@ -2881,18 +2887,15 @@ function ReviewSubmit({
     <>
       <div className="grid gap-1 border-t border-border-hairline pt-4">
         <h3 className="text-md font-semibold text-text-primary">
-          {synthetic ? "Submit starts a synthetic test" : "Submit starts a paid run"}
+          {synthetic ? "Confirm a synthetic test" : "Confirm a paid run"}
         </h3>
-        <p id="run-submit-cost" className="text-sm text-text-secondary">
+        <p id="run-submit-cost" className="reading-copy text-body text-text-secondary">
           <SubmissionCost synthetic={synthetic} capText={capText} />
         </p>
       </div>
-      <p className="text-sm text-text-secondary min-[1041px]:hidden">{ready}</p>
+      <p className="text-caption text-text-tertiary tabular-nums min-[1041px]:hidden">{ready}</p>
       {error && <ErrorNotice>{error}</ErrorNotice>}
-      <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
-        <span className="text-sm text-text-tertiary">
-          Step {STEP_TOTAL} of {STEP_TOTAL}
-        </span>
+      <div className="flex justify-end">
         <SubmitConfirmation
           className="w-full sm:w-auto"
           label={submitLabel}
@@ -2949,14 +2952,9 @@ function ReviewConfirmation({
   const blocker = submitBlocker(undecided, approved);
   return (
     <div className="grid gap-5">
-      <div className="grid gap-1">
-        <h2 ref={focusStep} tabIndex={-1} className={`${heading} ${HEADING_FOCUS}`}>
-          Review and start
-        </h2>
-        <p className="text-sm text-text-secondary">
-          Review the final run details and confirm to start.
-        </p>
-      </div>
+      <h2 ref={focusStep} tabIndex={-1} className={`${heading} ${HEADING_FOCUS}`}>
+        Review and start
+      </h2>
       <ReviewSheet
         review={review}
         accepted={accepted}
@@ -3018,13 +3016,18 @@ function submitBlocker(undecided: number, approved: boolean) {
 
 function SubmissionCost({ synthetic, capText }: { synthetic: boolean; capText: string | null }) {
   if (synthetic)
-    return <>The synthetic test uses the supplied documents and makes no paid provider calls.</>;
+    return (
+      <>
+        Submit opens a confirmation. The test uses the supplied documents and makes no paid provider
+        calls.
+      </>
+    );
   if (capText === null)
     return <>The spending cap is unavailable. Reopen the form to load it before submitting.</>;
   return (
     <>
-      It can spend up to <strong className="tabular-nums">{capText}</strong>. You confirm once more
-      before anything is spent.
+      Submit opens a confirmation. Once confirmed, this run can spend up to{" "}
+      <strong className="tabular-nums">{capText}</strong>.
     </>
   );
 }
@@ -3095,7 +3098,7 @@ function InputStepForm({
         >
           {title}
         </h2>
-        <p className="text-sm text-text-secondary">
+        <p className="reading-copy text-body text-text-secondary">
           {view.step === "context" && view.earnings
             ? EARNINGS_CONTEXT_GUIDANCE
             : STEP_GUIDANCE[view.step]}
@@ -3107,31 +3110,24 @@ function InputStepForm({
       >
         <StepFields view={view} folderInput={folderInput} />
       </fieldset>
-      <p className="text-sm text-text-secondary min-[1041px]:hidden">{ready}</p>
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <Button
-          color="secondary"
-          isDisabled={previous === null || view.busy !== undefined}
-          onPress={onPrevious}
-        >
-          Previous
-        </Button>
-        <div className="grid justify-items-center gap-1">
-          <span className="text-sm text-text-tertiary">
-            Step {FORM_STEP_KEYS.indexOf(view.step) + 1} of {STEP_TOTAL}
-          </span>
-          {view.problem && (
-            <Button
-              color="link-destructive"
-              size="sm"
-              className="max-w-full text-left whitespace-normal"
-              onPress={view.focusProblem}
-            >
-              {`1 problem to fix: ${view.problem.message}`}
-            </Button>
-          )}
-        </div>
-        <div className="flex flex-wrap items-center justify-end gap-3">
+      <p className="text-caption text-text-tertiary tabular-nums min-[1041px]:hidden">{ready}</p>
+      <div className="flex flex-wrap items-center gap-3">
+        {previous && (
+          <Button color="secondary" isDisabled={view.busy !== undefined} onPress={onPrevious}>
+            Previous
+          </Button>
+        )}
+        {view.problem && (
+          <Button
+            color="link-destructive"
+            size="sm"
+            className="max-w-full text-left whitespace-normal"
+            onPress={view.focusProblem}
+          >
+            {`1 problem to fix: ${view.problem.message}`}
+          </Button>
+        )}
+        <div className="ml-auto flex flex-wrap items-center justify-end gap-3">
           {blocked && (
             <p id="run-step-blocker" className="text-sm text-text-secondary">
               Add at least one document to continue.
@@ -3199,8 +3195,9 @@ function carriedLegal(prior?: PriorInputs) {
  * The page's own line when it starts from an earlier run. The run recorded an agreement choice and
  * a yes for each other file box it used, but not which file filled them: that is said, not guessed.
  */
-function carriedIntro({ run, prior }: { run: string; prior: PriorInputs }) {
-  const intro = `Starting from run ${run}. Review the copied answers, add dates, and inspect its available documents.`;
+function carriedIntro(prior: PriorInputs) {
+  const intro =
+    "Using an earlier run as a starting point. Review the answers, enter the new dates, and inspect any documents available to reuse.";
   const recorded = prior.context?.attachments;
   const roles = [
     ...(carriedLegal(prior) === "none" ? [] : ["agreement"]),
@@ -3210,7 +3207,7 @@ function carriedIntro({ run, prior }: { run: string; prior: PriorInputs }) {
   ].map((role) => `the ${role}`);
   if (!roles.length || prior.error || !prior.files.length) return intro;
   const list = new Intl.ListFormat("en", { type: "conjunction" }).format(roles);
-  return `${intro} It did not record which files you chose for ${list}: choose them again on More context.`;
+  return `${intro} The earlier run didn’t record the files chosen for ${list}. Choose them again in More context.`;
 }
 
 export function carriedModules(prior?: PriorInputs) {

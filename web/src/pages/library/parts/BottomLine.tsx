@@ -44,11 +44,11 @@ export function BottomLine({
         <span className="text-sm font-medium text-brand-100">{text.label}</span>
         <Lead
           tabIndex={-1}
-          className="rounded-ds-xs font-display text-h3 outline-hidden focus-visible:ring-2 focus-visible:ring-white"
+          className="max-w-[62ch] rounded-ds-xs font-display text-h3 text-balance wrap-anywhere outline-hidden focus-visible:ring-2 focus-visible:ring-white"
         >
           {lead ?? text.lead}
         </Lead>
-        <p className="max-w-[76ch] text-body">{text.rest}</p>
+        <p className="reading-copy text-body text-brand-100">{text.rest}</p>
       </div>
       <TraceControl trace={text.trace} label="Show sources for the bottom line" onDark />
     </section>

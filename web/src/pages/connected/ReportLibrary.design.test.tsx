@@ -133,7 +133,7 @@ describe("connected library and report design", () => {
     fireEvent.change(screen.getByLabelText("Pathway"), {
       target: { value: "Lite credit assessment" },
     });
-    expect(screen.getByText("No issuers match these filters.")).toBeInTheDocument();
+    expect(screen.getByText(/No issuers match these filters/)).toBeInTheDocument();
     fireEvent.change(screen.getByLabelText("Sector"), { target: { value: "all" } });
     expect(screen.getByRole("heading", { name: "Southbridge" })).toBeInTheDocument();
 
@@ -171,7 +171,7 @@ describe("connected library and report design", () => {
     const search = screen.getByRole("searchbox", { name: "Search issuers" });
     fireEvent.change(search, { target: { value: "zz" } });
     fireEvent.change(search, { target: { value: "zz no match" } });
-    expect(await screen.findByText("No issuers match these filters.")).toBeInTheDocument();
+    expect(await screen.findByText(/No issuers match these filters/)).toBeInTheDocument();
     fireEvent.change(search, { target: { value: "North" } });
     expect(await screen.findByRole("heading", { name: "Northbridge" })).toBeInTheDocument();
   });
@@ -372,7 +372,7 @@ it("shows a snapshot error without admitting a report or remaining in loading", 
   expect(screen.queryByText("Loading report…")).toBeNull();
   expect(screen.queryByRole("navigation", { name: "Report sections" })).toBeNull();
   expect(
-    within(screen.getByRole("main")).getByRole("link", { name: "Run activity" }),
+    within(screen.getByRole("main")).getByRole("link", { name: "Run progress" }),
   ).toHaveAttribute("href", "/run/northbridge-2026");
 });
 

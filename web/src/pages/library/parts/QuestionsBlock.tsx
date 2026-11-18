@@ -34,7 +34,9 @@ function QuestionRow({ item, open }: { item: Question; open: boolean }) {
         />
       </summary>
       <div className={`${TRACE_HOST} flex items-start gap-3 px-4 pt-1 pb-4`}>
-        <p className="max-w-[72ch] flex-1 text-body text-text-secondary">{item.answer}</p>
+        <p className="max-w-[72ch] min-w-0 flex-1 text-body text-pretty wrap-anywhere text-text-secondary">
+          {item.answer}
+        </p>
         <TraceControl trace={item.trace} label="Show sources for this answer" />
       </div>
     </details>

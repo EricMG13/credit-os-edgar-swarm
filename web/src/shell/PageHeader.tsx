@@ -14,11 +14,13 @@ export function PageHeader({ title, badges, actions, as: Heading = "h1" }: PageH
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-col gap-4 border-b border-secondary pb-4 lg:flex-row">
-        <div className="flex flex-1 flex-col gap-0.5">
-          <Heading className="font-display text-h1 text-text-primary">{title}</Heading>
+        <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+          <Heading className="font-display text-h1 text-balance wrap-anywhere text-text-primary">
+            {title}
+          </Heading>
           {badges ? <div className="flex flex-wrap items-center gap-2 pt-2">{badges}</div> : null}
         </div>
-        {actions ? <div className="flex items-start gap-3">{actions}</div> : null}
+        {actions ? <div className="flex flex-wrap items-start gap-3">{actions}</div> : null}
       </div>
     </div>
   );

@@ -1,5 +1,6 @@
 import { type ComponentProps, type ReactNode } from "react";
 import { ForecastTable } from "./ForecastTable";
+import { Button } from "@/components/base/buttons/button";
 import { PathChart } from "@/components/chart/PathChart";
 import { ChartTable } from "@/components/chart/ChartTable";
 import { TrendChart } from "@/components/chart/TrendChart";
@@ -369,9 +370,9 @@ export function ForecastScope({
             {!limits.length && !base.length && (
               <p>No qualifications are available in this summary.</p>
             )}
-            <a className="w-fit text-action underline" href="#evidence/record">
+            <Button href="#evidence/record" color="link-gray" size="sm" className="w-fit">
               Full model notes and limitations
-            </a>
+            </Button>
           </div>
         </details>
       </section>

@@ -1361,11 +1361,11 @@ async function checkLibrarySearch(context, endpoint) {
     await library.goto(endpoint);
     const search = library.getByRole("searchbox", { name: "Search issuers" });
     await search.fill("zz no match");
-    await library.getByText("No issuers match these filters.", { exact: true }).waitFor();
+    await library.getByText(/No issuers match these filters/).waitFor();
     await search.fill("Northbridge");
     await library.getByRole("link", { name: "Open report", exact: true }).waitFor();
     await search.fill("zz again");
-    await library.getByText("No issuers match these filters.", { exact: true }).waitFor();
+    await library.getByText(/No issuers match these filters/).waitFor();
     await search.fill("");
     await library.getByRole("link", { name: "Open report", exact: true }).waitFor();
   } finally {

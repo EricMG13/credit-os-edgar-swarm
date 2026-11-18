@@ -39,7 +39,7 @@ it("defaults to financial foundation and the designated output, retaining altern
     `/report/retained%20case#evidence/b~${"b".repeat(64)}`,
   );
   const saved = within(screen.getByRole("navigation", { name: "Saved outputs" }));
-  expect(saved.getByRole("link", { name: "Designated handoff" })).toHaveAttribute(
+  expect(saved.getByRole("link", { name: "Output used in report" })).toHaveAttribute(
     "aria-current",
     "page",
   );
@@ -48,11 +48,11 @@ it("defaults to financial foundation and the designated output, retaining altern
     "href",
     `/report/retained%20case#evidence/a~${"a".repeat(64)}`,
   );
-  expect(saved.getByRole("link", { name: "Retained output 1" })).toHaveAttribute(
+  expect(saved.getByRole("link", { name: "Saved output 1" })).toHaveAttribute(
     "aria-current",
     "page",
   );
-  expect(saved.getByRole("link", { name: "Designated handoff" })).not.toHaveAttribute(
+  expect(saved.getByRole("link", { name: "Output used in report" })).not.toHaveAttribute(
     "aria-current",
   );
 });

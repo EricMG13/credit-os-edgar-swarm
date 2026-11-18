@@ -18,13 +18,15 @@ export function TextLink({
   href,
   children,
   grey = false,
+  className,
 }: {
   href: string;
   children: string;
   grey?: boolean;
+  className?: string;
 }) {
   return (
-    <a href={href} className={textLinkClass(grey)}>
+    <a href={href} className={cx(textLinkClass(grey), className)}>
       <span data-text>{children}</span>
     </a>
   );

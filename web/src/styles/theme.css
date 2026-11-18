@@ -283,6 +283,12 @@
   --shadow-xs-skeuomorphic: var(--shadow-skeuomorphic), var(--shadow-xs);
 }
 
+@utility reading-copy {
+  max-inline-size: 68ch;
+  overflow-wrap: anywhere;
+  text-wrap: pretty;
+}
+
 @utility transition-inherit-all {
   transition-property: inherit;
   transition-duration: inherit;

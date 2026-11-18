@@ -23,6 +23,7 @@ it("offers compact module and section pickers for desktop windows below 1001px",
       current="business"
     />,
   );
+  expect(screen.getByRole("textbox", { name: "Search modules" })).toBeVisible();
   const modulePicker = screen.getByRole("button", { name: /Module/ });
   expect(modulePicker.closest("[data-compact-navigation]")).toHaveClass(
     "min-[481px]:flex",
@@ -57,12 +58,12 @@ it("S3-028 scrolls the current mouse-selected module into its own navigator", ()
     .spyOn(HTMLElement.prototype, "getBoundingClientRect")
     .mockImplementation(function (this: HTMLElement) {
       return {
-        top: this.tagName === "NAV" ? 0 : 710,
-        bottom: this.tagName === "NAV" ? 700 : 750,
+        top: this.tagName === "A" ? 710 : 0,
+        bottom: this.tagName === "A" ? 750 : 700,
         left: 0,
         right: 200,
         width: 200,
-        height: this.tagName === "NAV" ? 700 : 40,
+        height: this.tagName === "A" ? 40 : 700,
         x: 0,
         y: 0,
         toJSON() {},
@@ -80,7 +81,9 @@ it("S3-028 scrolls the current mouse-selected module into its own navigator", ()
         current="capital"
       />,
     );
-    expect(screen.getByRole("navigation", { name: "Modules and sections" }).scrollTop).toBe(50);
+    expect(screen.getByRole("list", { name: "Modules in this run" }).scrollTop).toBe(50);
+    expect(screen.getByRole("list", { name: "On this page" }).scrollTop).toBe(0);
+    expect(screen.getByRole("navigation", { name: "Modules and sections" }).scrollTop).toBe(0);
   } finally {
     bounds.mockRestore();
   }
@@ -93,12 +96,12 @@ it("S3-028 keeps the current entry inside the visible window when the reader hea
     .spyOn(HTMLElement.prototype, "getBoundingClientRect")
     .mockImplementation(function (this: HTMLElement) {
       return {
-        top: this.tagName === "NAV" ? 364 : 1112,
-        bottom: this.tagName === "NAV" ? 1216 : 1170,
+        top: this.tagName === "A" ? 1112 : 364,
+        bottom: this.tagName === "A" ? 1170 : 1216,
         left: 0,
         right: 200,
         width: 200,
-        height: this.tagName === "NAV" ? 852 : 58,
+        height: this.tagName === "A" ? 58 : 852,
         x: 0,
         y: 0,
         toJSON() {},
@@ -116,10 +119,11 @@ it("S3-028 keeps the current entry inside the visible window when the reader hea
         current="capital"
       />,
     );
-    expect(screen.getByRole("navigation", { name: "Modules and sections" }).scrollTop).toBe(270);
-    screen.getByRole("navigation", { name: "Modules and sections" }).scrollTop = 0;
+    const list = screen.getByRole("list", { name: "Modules in this run" });
+    expect(list.scrollTop).toBe(270);
+    list.scrollTop = 0;
     fireEvent(window, new Event("resize"));
-    expect(screen.getByRole("navigation", { name: "Modules and sections" }).scrollTop).toBe(270);
+    expect(list.scrollTop).toBe(270);
   } finally {
     bounds.mockRestore();
     if (height !== undefined) Object.defineProperty(window, "innerHeight", height);
@@ -136,23 +140,20 @@ it("S3-028 bounds a short page's navigator by its visible height without trappin
     .spyOn(HTMLElement.prototype, "getBoundingClientRect")
     .mockImplementation(function (this: HTMLElement) {
       const nav = this.tagName === "NAV" ? this : this.closest("nav");
-      if (nav !== null) {
-        Object.defineProperty(nav, "clientHeight", {
-          configurable: true,
-          get: () => (nav.style.maxHeight ? Number.parseFloat(nav.style.maxHeight) : 852),
-        });
-        Object.defineProperty(nav, "scrollHeight", { configurable: true, value: 894 });
-        Object.defineProperty(nav, "scrollTop", {
+      const list = this.tagName === "UL" ? this : this.closest("ul");
+      const navHeight = nav?.style.maxHeight ? Number.parseFloat(nav.style.maxHeight) : 852;
+      if (list !== null) {
+        Object.defineProperty(list, "scrollTop", {
           configurable: true,
           get: () => scrollTop,
           set: (value: number) => {
-            scrollTop = Math.max(0, Math.min(value, 894 - nav.clientHeight));
+            scrollTop = Math.max(0, Math.min(value, 894 - navHeight));
           },
         });
       }
-      const navHeight = nav?.clientHeight ?? 852;
-      const top = this.tagName === "NAV" ? 364 : 1220 - scrollTop;
-      const boxHeight = this.tagName === "NAV" ? navHeight : 38;
+      const top = this.tagName === "A" ? 1220 - scrollTop : this.tagName === "UL" ? 460 : 364;
+      const boxHeight =
+        this.tagName === "A" ? 38 : this.tagName === "UL" ? navHeight - 96 : navHeight;
       return {
         top,
         bottom: top + boxHeight,
@@ -178,17 +179,18 @@ it("S3-028 bounds a short page's navigator by its visible height without trappin
       />,
     );
     const nav = screen.getByRole("navigation", { name: "Modules and sections" });
-    expect(nav.clientHeight).toBe(512);
-    expect(nav.scrollTop).toBe(382);
-    nav.scrollTop = 0;
-    fireEvent.scroll(nav);
-    expect(nav.scrollTop).toBe(0);
+    const list = screen.getByRole("list", { name: "Modules in this run" });
+    expect(nav.style.maxHeight).toBe("512px");
+    expect(list.scrollTop).toBe(382);
+    list.scrollTop = 0;
+    fireEvent.scroll(list);
+    expect(list.scrollTop).toBe(0);
     fireEvent.scroll(window);
-    expect(nav.scrollTop).toBe(382);
+    expect(list.scrollTop).toBe(382);
     Object.defineProperty(window, "innerHeight", { configurable: true, value: 700 });
     fireEvent(window, new Event("resize"));
-    expect(nav.clientHeight).toBe(312);
-    expect(nav.scrollTop).toBe(582);
+    expect(nav.style.maxHeight).toBe("312px");
+    expect(list.scrollTop).toBe(582);
   } finally {
     bounds.mockRestore();
     if (height !== undefined) Object.defineProperty(window, "innerHeight", height);

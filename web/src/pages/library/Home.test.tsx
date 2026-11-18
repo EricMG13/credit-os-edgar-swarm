@@ -185,7 +185,7 @@ describe("Library home, Cards side", () => {
     expect(screen.getByRole("heading", { level: 2, name: "No runs yet" })).toBeVisible();
     expect(
       screen.getByText(
-        "This build is a design reference and holds no reports. Open the connected run service to start a run and add the first issuer.",
+        "This design reference contains no reports. Open the connected Credit OS app to start a run.",
       ),
     ).toBeVisible();
     expect(screen.queryByRole("link", { name: "Start a run" })).toBeNull();
@@ -281,7 +281,7 @@ describe("Library home, other states", () => {
 
     expect(
       screen.getByText(
-        "This build is a design reference and holds no reports. Open the connected run service to start a run and add the first issuer.",
+        "This design reference contains no reports. Open the connected Credit OS app to start a run.",
       ),
     ).toBeVisible();
     expect(screen.queryByRole("link", { name: "Start a run" })).toBeNull();

@@ -28,14 +28,14 @@ export function Start({ recap, paid }: Pick<Step, "recap" | "paid">) {
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-1">
         <h2 className="font-display text-h3 text-text-primary">Start</h2>
-        <p className="text-sm text-text-secondary">
+        <p className="reading-copy text-body text-text-secondary">
           Everything is ready. This is the only step that spends money.
         </p>
       </div>
       <DetailsList rows={recap} />
       <div className="flex flex-col gap-1 border-t border-border-hairline pt-4">
         <h3 className="text-md font-semibold text-text-primary">Submit starts a paid run</h3>
-        <p className="max-w-140 text-body text-text-secondary">
+        <p className="reading-copy text-body text-text-secondary">
           <PaidText {...paid} />
         </p>
       </div>
@@ -117,10 +117,12 @@ export function SubmitConfirmation({
                     }
                   />
                   <div className="flex flex-col gap-1">
-                    <Heading slot="title" className="text-md font-semibold text-text-primary">
+                    <Heading slot="title" className="text-h4 text-balance text-text-primary">
                       {confirm.title}
                     </Heading>
-                    <p className="text-sm text-text-tertiary">{confirm.text}</p>
+                    <p className="reading-copy text-body text-text-secondary tabular-nums">
+                      {confirm.text}
+                    </p>
                     {note === undefined ? null : (
                       <p className="mt-2 text-sm font-medium text-text-secondary">{note}</p>
                     )}

@@ -1,4 +1,4 @@
-import { useEffect, useState, type Dispatch, type SetStateAction } from "react";
+import { useEffect, useRef, useState, type Dispatch, type SetStateAction } from "react";
 import { ArrowRight, BookOpen01, FileSearch02 } from "@untitledui/icons";
 import { Alert } from "@/components/alert/Alert";
 import { EmptyState } from "@/components/application/empty-state/empty-state";
@@ -54,7 +54,7 @@ function CreditView({ run }: { run: LibraryIndex["workspace"]["runs"][string] | 
     return <TextLink href={href}>Read this credit view in Evidence</TextLink>;
   return (
     <div className="flex items-start justify-between gap-3">
-      <p className="text-body text-text-secondary">
+      <p className="reading-copy min-w-0 text-body text-text-secondary">
         {readerText(body.replaceAll("**", "").replaceAll("`", ""))}
       </p>
       <Button
@@ -122,6 +122,7 @@ function MatchRuns({
   setFilters: Dispatch<SetStateAction<LibraryFilters>>;
 }) {
   const { layout } = filters;
+  const search = useRef<HTMLInputElement>(null);
   const byFolder = new Map(Object.values(snapshot.workspace.runs).map((run) => [run.folder, run]));
   const groups = new Map<string, CatalogueRun[]>();
   for (const entry of snapshot.catalogue.real) {
@@ -161,10 +162,23 @@ function MatchRuns({
     })
     .filter((item): item is NonNullable<typeof item> => item !== null);
   return (
-    <div className="grid gap-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex flex-wrap gap-3">
-          <label className={label}>
+    <div className="grid min-w-0 gap-4">
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div className="flex min-w-0 flex-1 flex-wrap items-end gap-3">
+          <label className={`${label} w-full max-w-md sm:min-w-40 sm:flex-1`}>
+            Search issuers
+            <input
+              ref={search}
+              type="search"
+              value={filters.query}
+              onChange={(event) => {
+                const query = event.currentTarget.value;
+                setFilters((previous) => ({ ...previous, query }));
+              }}
+              className={field}
+            />
+          </label>
+          <label className={`${label} max-w-64`}>
             Sector
             <select
               aria-label="Sector"
@@ -176,6 +190,9 @@ function MatchRuns({
               className={field}
             >
               <option value="all">All</option>
+              {filters.sector !== "all" && !sectors.includes(filters.sector) && (
+                <option value={filters.sector}>{filters.sector} (unavailable)</option>
+              )}
               {sectors.map((sector) => (
                 <option key={sector} value={sector}>
                   {sector}
@@ -183,7 +200,7 @@ function MatchRuns({
               ))}
             </select>
           </label>
-          <label className={label}>
+          <label className={`${label} max-w-64`}>
             Pathway
             <select
               aria-label="Pathway"
@@ -195,6 +212,9 @@ function MatchRuns({
               className={field}
             >
               <option value="all">All</option>
+              {filters.pathway !== "all" && !pathways.includes(filters.pathway) && (
+                <option value={filters.pathway}>{filters.pathway} (unavailable)</option>
+              )}
               {pathways.map((pathway) => (
                 <option key={pathway} value={pathway}>
                   {pathway}
@@ -219,34 +239,49 @@ function MatchRuns({
         </ButtonGroup>
       </div>
       {cards.length === 0 ? (
-        <p className={card}>No issuers match these filters.</p>
+        <div className={`${card} items-start`}>
+          <p role="status">No issuers match these filters.</p>
+          <Button
+            color="secondary"
+            onPress={() => {
+              setFilters((previous) => ({ ...previous, query: "", sector: "all", pathway: "all" }));
+              search.current?.focus();
+            }}
+          >
+            Clear filters
+          </Button>
+        </div>
       ) : layout === "cards" ? (
         <ul className="grid gap-4 lg:grid-cols-2">
           {cards.map(({ key, entries, newest, linked }) => (
-            <li key={key} className={`${card} grid gap-5`}>
-              <header className="grid gap-1">
-                <h3 className={heading}>{newest.name}</h3>
+            <li key={key} className={card}>
+              <header className="grid min-w-0 gap-1 wrap-anywhere">
+                <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
+                  <h3 className={heading}>{newest.name}</h3>
+                  {snapshot.preview && byFolder.has(newest.id) ? (
+                    <Badge color="brand">Test preview</Badge>
+                  ) : byFolder.has(newest.id) ? (
+                    <StatusBadge set="Module state" state="Delivered" />
+                  ) : (
+                    <Badge color="gray">No report published</Badge>
+                  )}
+                </div>
                 {newest.sector && <p className="text-sm text-text-secondary">{newest.sector}</p>}
-                {snapshot.preview && byFolder.has(newest.id) ? (
-                  <Badge color="brand">Test preview</Badge>
-                ) : byFolder.has(newest.id) ? (
-                  <StatusBadge set="Module state" state="Delivered" />
-                ) : (
-                  <Badge color="gray">No report published</Badge>
-                )}
+                <p className="text-sm text-text-secondary">
+                  {runPathway(byFolder.get(newest.id) ?? { pathway: null }, newest)} ·{" "}
+                  <time className="tabular-nums" dateTime={newest.date}>
+                    {asOfDate(newest.date)}
+                  </time>
+                </p>
               </header>
-              <p className="text-sm text-text-secondary">
-                {runPathway(byFolder.get(newest.id) ?? { pathway: null }, newest)} ·{" "}
-                <time dateTime={newest.date}>{asOfDate(newest.date)}</time>
-              </p>
               <CreditView run={byFolder.get(newest.id)} />
               <HeadlineFigures
                 key={newest.id}
                 catalogue={newest}
                 requestSource={(key, signal) => figureSource(newest, key, signal)}
               />
-              {linked ? (
-                <div className="flex flex-wrap items-center gap-3">
+              {linked && (
+                <div className="mt-auto flex flex-wrap items-center gap-3">
                   <Button href={reportPath(linked.id)} color="secondary" iconTrailing={ArrowRight}>
                     Open report
                   </Button>
@@ -254,10 +289,6 @@ function MatchRuns({
                     href={`${reportPath(linked.id)}#history`}
                   >{`${String(entries.length)} ${entries.length === 1 ? "run" : "runs"}`}</TextLink>
                 </div>
-              ) : (
-                <p className="text-sm text-text-secondary">
-                  No run report was published for this entry.
-                </p>
               )}
             </li>
           ))}
@@ -277,15 +308,17 @@ function MatchRuns({
             <tbody>
               {cards.map(({ key, newest, linked }) => (
                 <tr key={key} className="border-b border-border-hairline last:border-0">
-                  <th scope="row" className="p-3 font-semibold">
+                  <th scope="row" className="p-3 font-semibold wrap-anywhere">
                     {newest.name}
                   </th>
-                  <td className="p-3">{newest.sector || "—"}</td>
-                  <td className="p-3">
+                  <td className="p-3 wrap-anywhere">{newest.sector || "—"}</td>
+                  <td className="p-3 wrap-anywhere">
                     {runPathway(byFolder.get(newest.id) ?? { pathway: null }, newest)}
                   </td>
                   <td className="p-3">
-                    <time dateTime={newest.date}>{asOfDate(newest.date)}</time>
+                    <time className="tabular-nums" dateTime={newest.date}>
+                      {asOfDate(newest.date)}
+                    </time>
                   </td>
                   <td className="p-3">
                     {linked ? (
@@ -309,11 +342,11 @@ type Problem = "unreachable" | "failed";
 const PROBLEMS = {
   unreachable: {
     title: "The service cannot be reached",
-    text: "The library could not be loaded. Try again, or ask whoever runs the service to check it.",
+    text: "Check that the Credit OS service is running, then try again.",
   },
   failed: {
     title: "The library could not be loaded",
-    text: "The service could not read the published library. Try again, or ask whoever runs the service to check it.",
+    text: "Try again. If the library still won’t open, ask the person running Credit OS to check it.",
   },
 } as const;
 
@@ -354,7 +387,7 @@ function EmptyLibrary({ readOnly }: { readOnly: boolean }) {
       <EmptyState.Content>
         <EmptyState.Title>No reports yet</EmptyState.Title>
         <EmptyState.Description>
-          A report appears here once a run has finished.
+          Reports appear here after they’re published.
         </EmptyState.Description>
       </EmptyState.Content>
       {!readOnly && (
@@ -396,7 +429,7 @@ export function ReportLibrary({ readOnly = false }: { readOnly?: boolean }) {
     <>
       <PageHeader
         title="Library"
-        actions={canStart && <Button href="/start">Start a run</Button>}
+        actions={canStart && !empty && <Button href="/start">Start a run</Button>}
       />
       <section className="mt-6 grid gap-4">
         {problem && (
@@ -424,21 +457,7 @@ export function ReportLibrary({ readOnly = false }: { readOnly?: boolean }) {
         {value?.preview && <Callout title="Test preview">{value.preview.reason}</Callout>}
         {empty && <EmptyLibrary readOnly={!canStart} />}
         {value && !empty && (
-          <>
-            <label className={`${label} max-w-md`}>
-              Search issuers
-              <input
-                type="search"
-                value={filters.query}
-                onChange={(event) => {
-                  const query = event.currentTarget.value;
-                  setFilters((previous) => ({ ...previous, query }));
-                }}
-                className={field}
-              />
-            </label>
-            <MatchRuns snapshot={value} filters={filters} setFilters={setFilters} />
-          </>
+          <MatchRuns snapshot={value} filters={filters} setFilters={setFilters} />
         )}
       </section>
     </>

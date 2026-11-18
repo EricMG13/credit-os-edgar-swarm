@@ -162,7 +162,7 @@ function Run({ run }: { run: RunRecord }) {
         title={run.issuer}
         badges={
           <>
-            <StatusBadge set="Run states" state={run.state} live={live} />
+            <StatusBadge set="Run states" state={run.state} />
             <Labels labels={run.labels} />
           </>
         }
@@ -186,7 +186,7 @@ function Run({ run }: { run: RunRecord }) {
             <h2 id="run-feed" className="mb-6 font-display text-h3 text-text-primary">
               Activity
             </h2>
-            <Feed lines={run.feed} live={live} />
+            <Feed lines={run.feed} />
           </Card>
         </section>
       </div>

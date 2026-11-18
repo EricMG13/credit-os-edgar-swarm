@@ -320,8 +320,8 @@ describe("final audit: connected intake", () => {
     fireEvent.change(await screen.findByLabelText("Issuer name"), {
       target: { value: "Northbridge" },
     });
-    fireEvent.click(screen.getByRole("button", { name: "Carry over from latest run" }));
-    await screen.findByText(/Starting from run earlier/);
+    fireEvent.click(screen.getByRole("button", { name: "Use inputs from latest run" }));
+    await screen.findByText(/Using an earlier run as a starting point/);
     fireEvent.change(screen.getByLabelText("As-of date"), { target: { value: "2026-10-31" } });
     fireEvent.change(screen.getByLabelText("Your name"), { target: { value: "Ana L" } });
     await purpose();

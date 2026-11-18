@@ -48,7 +48,8 @@ export type NavModule = { id: string; name: string; state: ModuleState };
  * The module page's navigator (N3): a search at the top, then one vertical menu in two groups. The
  * first moves to a section of this page without changing the address; the second links every
  * module of the run, each with its state shape and word. The search narrows the second group by
- * plain module name, in memory. Sticky from the wide layout, where it scrolls by itself when long.
+ * plain module name, in memory. The wide navigator keeps search visible and scrolls each list
+ * independently when space is limited.
  */
 export function ModuleNav({
   issuer,
@@ -75,6 +76,7 @@ export function ModuleNav({
   const modulesLabel = useId();
   const [search, setSearch] = useState("");
   const menu = useRef<HTMLElement>(null);
+  const results = useRef<HTMLUListElement>(null);
   const wanted = search.trim().toLowerCase();
   const listed = modules.filter((module) => module.name.toLowerCase().includes(wanted));
   useEffect(() => {
@@ -89,15 +91,16 @@ export function ModuleNav({
       if (view.height === 0) return;
       const height = window.innerHeight - Math.max(view.top, 24) - 24;
       nav.style.maxHeight = height > 0 ? `${String(height)}px` : "";
-      const entry = nav.querySelector('[aria-current="page"]');
-      if (entry === null || height <= 0) return;
-      const bounded = nav.getBoundingClientRect();
+      const list = results.current;
+      const entry = list?.querySelector('[aria-current="page"]');
+      if (!list || !entry || height <= 0) return;
+      const bounded = list.getBoundingClientRect();
       const item = entry.getBoundingClientRect();
       if (item.height === 0) return;
       const bottom = Math.min(bounded.bottom, window.innerHeight);
       const top = Math.max(bounded.top, 0);
-      if (item.bottom > bottom) nav.scrollTop += item.bottom - bottom;
-      else if (item.top < top) nav.scrollTop -= top - item.top;
+      if (item.bottom > bottom) list.scrollTop += item.bottom - bottom;
+      else if (item.top < top) list.scrollTop -= top - item.top;
     };
     const alignAfterScroll = (event: Event) => {
       if (event.target instanceof Node && menu.current?.contains(event.target)) return;
@@ -111,7 +114,8 @@ export function ModuleNav({
       window.removeEventListener("scroll", alignAfterScroll, true);
     };
   }, [current, wanted]);
-  const heading = "px-4 pt-3 pb-1 pl-4.75 text-caption font-medium text-text-tertiary";
+  const heading =
+    "shrink-0 px-4 pt-3 pb-1 pl-4.75 text-caption font-medium text-text-tertiary min-[1001px]:pt-1 min-[1001px]:leading-4";
   return (
     <nav
       ref={menu}
@@ -121,8 +125,14 @@ export function ModuleNav({
         className,
       )}
     >
-      <div className="px-4 pt-1 pb-2">
-        <Input icon={SearchLg} placeholder="Search modules" value={search} onChange={setSearch} />
+      <div className="shrink-0 px-4 pt-1 pb-2 min-[1001px]:pb-1">
+        <Input
+          aria-label="Search modules"
+          icon={SearchLg}
+          placeholder="Search modules"
+          value={search}
+          onChange={setSearch}
+        />
       </div>
       <div
         data-compact-navigation
@@ -175,7 +185,10 @@ export function ModuleNav({
             <span id={sectionsLabel} className={heading}>
               On this page
             </span>
-            <ul aria-labelledby={sectionsLabel}>
+            <ul
+              aria-labelledby={sectionsLabel}
+              className="min-[1001px]:min-h-9 min-[1001px]:overflow-y-auto"
+            >
               {sections.map((section) => {
                 const Icon = ICON[section.icon];
                 return (
@@ -185,7 +198,11 @@ export function ModuleNav({
                       onPress={() => {
                         onSection(section.key);
                       }}
-                      className={cx(ENTRY, "py-3", section.key === active && CURRENT)}
+                      className={cx(
+                        ENTRY,
+                        "py-3 min-[1001px]:py-2",
+                        section.key === active && CURRENT,
+                      )}
                     >
                       <Icon aria-hidden="true" className="size-5 flex-none opacity-75" />
                       {section.label}
@@ -196,11 +213,18 @@ export function ModuleNav({
             </ul>
           </>
         )}
-        <span id={modulesLabel} className={cx(heading, sections.length > 0 && "mt-4")}>
+        <span
+          id={modulesLabel}
+          className={cx(heading, sections.length > 0 && "mt-4 min-[1001px]:mt-2")}
+        >
           Modules in this run
         </span>
         {listed.length === 0 ? null : (
-          <ul aria-labelledby={modulesLabel}>
+          <ul
+            ref={results}
+            aria-labelledby={modulesLabel}
+            className="min-[1001px]:min-h-11 min-[1001px]:shrink-[3] min-[1001px]:overflow-y-auto"
+          >
             {listed.map((module) => (
               <li key={module.id}>
                 <Link

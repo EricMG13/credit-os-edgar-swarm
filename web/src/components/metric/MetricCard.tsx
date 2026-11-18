@@ -17,6 +17,8 @@ interface MetricCardProps {
   note?: string;
   /** Same metric card in a list, or as a standalone figure. */
   as?: "article" | "li";
+  /** Share label, figure and note rows with neighboring cards in a desktop grid. */
+  alignInGrid?: boolean;
   /** The source control belongs to the figure, without changing its card. */
   actions?: ReactNode;
   definitionControl?: ReactNode;
@@ -32,6 +34,7 @@ export function MetricCard({
   from,
   note,
   as: Component = "article",
+  alignInGrid = false,
   actions,
   definitionControl,
   figure,
@@ -39,8 +42,10 @@ export function MetricCard({
   children,
 }: MetricCardProps) {
   return (
-    <Component className="group/trace relative min-w-0 rounded-ds-sm border border-border-subtle bg-surface-card p-6 shadow-xs">
-      <div className="flex flex-col gap-2">
+    <Component
+      className={`group/trace relative min-w-0 rounded-ds-sm border border-border-subtle bg-surface-card p-6 shadow-xs${alignInGrid ? " lg:row-span-3 lg:grid lg:grid-rows-subgrid lg:gap-y-2" : ""}`}
+    >
+      <div className={`flex flex-col gap-2${alignInGrid ? " lg:contents" : ""}`}>
         <div className="flex items-start justify-between gap-2">
           <div className="flex min-w-0 items-center gap-2">
             <p className="text-sm text-text-tertiary">{label}</p>
@@ -58,7 +63,9 @@ export function MetricCard({
           </div>
           {actions}
         </div>
-        <div className="flex min-h-11 flex-wrap items-end justify-between gap-3">
+        <div
+          className={`flex min-h-11 flex-wrap items-end justify-between gap-3${alignInGrid ? " lg:content-start" : ""}`}
+        >
           {figure === undefined ? (
             <p>
               <span
@@ -80,7 +87,11 @@ export function MetricCard({
           )}
           {delta}
         </div>
-        {children}
+        {alignInGrid && children != null ? (
+          <div className="flex flex-col gap-2">{children}</div>
+        ) : (
+          children
+        )}
       </div>
     </Component>
   );

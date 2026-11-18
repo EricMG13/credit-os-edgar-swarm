@@ -46,7 +46,7 @@ export function Passage({
         <strong className="min-w-0 flex-1 text-small font-medium">{title}</strong>
         {trace}
       </div>
-      <p className="mt-1 ps-8 text-body">{children}</p>
+      <p className="reading-copy mt-1 ps-8 text-body">{children}</p>
     </section>
   );
 }

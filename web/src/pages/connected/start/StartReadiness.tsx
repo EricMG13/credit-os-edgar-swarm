@@ -16,16 +16,15 @@ export function StartReadiness({
       aria-label="Readiness"
       className="flex flex-col gap-4 rounded-ds-lg border border-border-subtle bg-surface-card p-6 shadow-1 min-[1041px]:sticky min-[1041px]:top-6"
     >
-      <div className="flex flex-col gap-1">
-        <h2 className="font-display text-h3 text-text-primary">Readiness</h2>
-        <p className="text-sm text-text-secondary">
-          Check the inputs and approve the run before it starts.
-        </p>
-      </div>
+      <h2 className="font-display text-h3 text-text-primary">Readiness</h2>
       <ul className="flex flex-col divide-y divide-border-hairline">
         {rows.map((row) => (
           <li key={row.label} className="flex flex-wrap items-center gap-x-3 gap-y-1 py-2">
-            <StatusBadge set="Met or not met" state={row.met ? "Met" : "Not met"} />
+            <StatusBadge
+              set="Met or not met"
+              state={row.met ? "Met" : "Not met"}
+              className="min-[1041px]:min-w-19 min-[1041px]:bg-transparent min-[1041px]:px-0 min-[1041px]:ring-0"
+            />
             <span className="text-sm font-medium text-text-primary">{row.label}</span>
             {row.detail ? (
               <span className="ml-auto text-sm text-text-secondary tabular-nums">{row.detail}</span>

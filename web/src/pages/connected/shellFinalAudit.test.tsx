@@ -155,26 +155,20 @@ describe("Run activity batch findings", () => {
   it("J2-015 explains a queued row's wait when no specific reason was supplied", async () => {
     reply({ updated: "2026-11-17T08:00:00Z", held: "", runs: [queued], ended: [] });
     render(<RunActivity />);
-    expect(
-      await screen.findByText(
-        "Waiting for an available run slot. It starts when the service can accept it.",
-      ),
-    ).toBeVisible();
+    expect(await screen.findByText("Waiting for an available run slot.")).toBeVisible();
   });
 });
 
 describe("Run progress batch findings", () => {
-  it("J2-009 says Start from this run opens a separate run with its own cap", async () => {
+  it("J2-009 says Use this run’s inputs opens a separate run with its own cap", async () => {
     reply(run);
     render(<RunProgress id={run.id} mode="synthetic" />);
-    expect(await screen.findByRole("link", { name: "Start from this run" })).toHaveAttribute(
+    expect(await screen.findByRole("link", { name: "Use this run’s inputs" })).toHaveAttribute(
       "href",
       "/start?from=north-run",
     );
     expect(
-      screen.getByText(
-        "Start from this run opens a new run with its own cap. The earlier run stays as it is.",
-      ),
+      screen.getByText("Review the inputs in a new draft. The new run has its own spending cap."),
     ).toBeVisible();
   });
 
@@ -193,11 +187,7 @@ describe("Run progress batch findings", () => {
   it("J2-015 explains a queued run's wait without inventing a count or queue position", async () => {
     reply({ ...run, status: "queued", reason: "", ended_at: undefined });
     render(<RunProgress id={run.id} mode="synthetic" />);
-    expect(
-      await screen.findByText(
-        "Waiting for an available run slot. It starts when the service can accept it.",
-      ),
-    ).toBeVisible();
+    expect(await screen.findByText("Waiting for an available run slot.")).toBeVisible();
   });
 });
 

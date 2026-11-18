@@ -106,7 +106,7 @@ export function StartPage({ draft: id }: { draft: string }) {
         {` / ${draft.issuer} / New run`}
       </nav>
       {draft.step === "started" ? null : (
-        <p className="text-body text-text-secondary">
+        <p className="reading-copy text-body text-text-secondary">
           Add the documents, say what the run is for, approve what was read, then start. Nothing is
           spent before the last step.
         </p>
