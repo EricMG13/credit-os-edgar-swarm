@@ -251,6 +251,8 @@ from credit_os.source import (
     valid_date,
 )
 from deploy_workflow import confidence as confidence_score
+from deploy_workflow.derived import derived
+from deploy_workflow.library_index import view_fields
 
 # The names moved to the sibling modules, re-exported: callers and tests read and patch them here.
 __all__ = [
@@ -613,14 +615,21 @@ def delivery_json(folder: Path) -> dict[str, Any]:
 
 
 def listed_view(folder: Path, delivery: dict[str, Any]) -> dict[str, Any]:
-    """folder/view.json when a plain file with the hash delivery.json lists; raises otherwise."""
+    """The fields read from folder/view.json (`library_index.VIEW_FIELDS`) when it is a plain
+    file with the hash delivery.json lists; raises otherwise. A view that is not a JSON object is
+    returned as it is, so its readers fail on it as they did."""
     if not isinstance(delivery.get("files"), dict):
         raise TypeError("files is not an object")
     raw = listed_bytes(folder, delivery, "view.json")
     if raw is None:
         raise UnreadableFile("view.json is not the plain file its delivery record lists")
-    view: dict[str, Any] = json.loads(raw.decode("utf-8"))
-    return view
+
+    def read() -> dict[str, Any]:
+        view: dict[str, Any] = json.loads(raw.decode("utf-8"))
+        return view_fields(view) if isinstance(view, dict) else view
+
+    # The bytes have the listed hash, so what is read from them is that hash's.
+    return derived(("listed-view", delivery["files"]["view.json"]), read)
 
 
 def locate_quote(
@@ -853,17 +862,35 @@ def confidence_fields(raw: bytes) -> dict[str, Any]:
     }
 
 
+def handoff_parts(
+    raw: bytes, strict: bool
+) -> tuple[list[dict[str, Any]], str | None, dict[str, Any]]:
+    """Everything read from a handoff's bytes alone: its sections, its parse problem and the
+    reader, report and confidence fields of an output holding it."""
+    sections, problem = structured(raw, strict)
+    fields = reader_fields(sections)
+    fields.update(report_fields(sections, fields["summary"]))
+    fields.update(confidence_fields(raw))
+    return sections, problem, fields
+
+
 class Handoffs:
     """Each distinct handoff parsed once, by digest, however many runs hold the same bytes."""
 
     def __init__(self, strict: bool) -> None:
         self.strict = strict
         self.parsed: dict[str, tuple[list[dict[str, Any]], str | None]] = {}
+        self.fields: dict[str, dict[str, Any]] = {}
 
     def read(self, digest: str, raw: bytes) -> tuple[list[dict[str, Any]], str | None]:
-        """The sections and parse problem of these bytes; the problem is each output's to report."""
+        """The sections and parse problem of these bytes; the problem is each output's to report.
+        `digest` is the sha256 of `raw`, so inside a publication the parts are that hash's."""
         if digest not in self.parsed:
-            self.parsed[digest] = structured(raw, self.strict)
+            sections, problem, fields = derived(
+                ("handoff", self.strict, digest), lambda: handoff_parts(raw, self.strict)
+            )
+            self.parsed[digest] = sections, problem
+            self.fields[digest] = fields
         return self.parsed[digest]
 
 
@@ -931,9 +958,7 @@ def collect_runs(
                     "scope": "Retained module output",
                     "firstHeading": config.get("firstHeading"),
                 }
-                record.update(reader_fields(sections))
-                record.update(report_fields(sections, record["summary"]))
-                record.update(confidence_fields(read[path].raw))
+                record.update(handoffs.fields[digest])
                 if record["issue"]:
                     issues.append(f"{output_id}: {record['issue']}")
                 if problem:

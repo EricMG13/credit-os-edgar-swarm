@@ -32,6 +32,7 @@ from deploy_workflow.changes import DEFAULT_LEAD, LEAD_MODULE, PACK_SCHEMAS
 from deploy_workflow.changes_check import page_verdicts
 from deploy_workflow.credit_os_catalogue import catalogue
 from deploy_workflow.credit_os_chips import chips
+from deploy_workflow.derived import reuse
 from deploy_workflow.library_index import (
     Library,
     Refused,
@@ -293,8 +294,17 @@ def remove_folder(folder: Path) -> None:
 def update_library(workspace: Path) -> Library:
     """Rebuild ``workspace/library`` whole: built beside it, then swapped in.
 
+    Every file is read and every recorded hash checked at each call. What was parsed from bytes
+    with a given sha256 is kept for the process's later calls (``deploy_workflow.derived``), so a
+    run that has not changed is read and checked again, not parsed again.
+
     Raises ``library_index.Refused`` (a ValueError) when the workspace or ``library`` cannot be
     used; only ``main`` turns that into an exit."""
+    with reuse():
+        return publish(workspace)
+
+
+def publish(workspace: Path) -> Library:
     workspace = workspace.resolve()
     if not workspace.is_dir():
         raise Refused(f"Workspace not found: {workspace}")

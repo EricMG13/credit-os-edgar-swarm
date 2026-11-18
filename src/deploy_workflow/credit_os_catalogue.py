@@ -14,7 +14,7 @@ import re
 from collections.abc import Mapping
 from datetime import UTC, datetime
 from decimal import Decimal, localcontext
-from pathlib import Path
+from pathlib import Path, PurePath
 from typing import Any
 from urllib.parse import quote
 
@@ -274,12 +274,15 @@ def run_files(folder: Path, name: str, issues: list[str]) -> list[dict[str, str]
     found: list[dict[str, str]] = []
     for base, directories, files in os.walk(folder):
         directories[:] = sorted(d for d in directories if not d.startswith("."))
+        inside = Path(base).relative_to(folder).as_posix()
+        prefix = "" if inside == "." else f"{inside}/"
+        href = file_url(f"runs/{name}/{prefix}")  # ends with "/": the entry is the last segment
         for entry in sorted(files):
-            path = Path(base) / entry
-            if entry.startswith(".") or path.is_symlink() or path.suffix.lower() not in LISTED:
+            if entry.startswith(".") or PurePath(entry).suffix.lower() not in LISTED:
                 continue
-            relative = path.relative_to(folder).as_posix()
-            found.append({"name": relative, "href": file_url(f"runs/{name}/{relative}")})
+            if os.path.islink(os.path.join(base, entry)):
+                continue
+            found.append({"name": prefix + entry, "href": href + quote(entry, safe=SEGMENT_SAFE)})
     if len(found) > RUN_FILE_LIMIT:
         issues.append(f"{name}: run file limit ({RUN_FILE_LIMIT}) reached; files not listed")
         return []
