@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for NEWELL BRANDS INC. as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "602a5147260725efc3da904fd44bda64960f80912a80af65c656d2b3400051fc",
+    "CP-1.md": "1abb587445025464de94f2b254a8f5d1280d59d13d43542e29c86be269c4c5db",
+    "CP-1A.md": "e39f8fe58a6b483b37b81d9c88e8e423661eb7f452da5650803b4677083916ed",
+    "CP-2.md": "d7afff46b4e97fd645e656aeb416ef6b6d90650736c701b3a4a7a348bd968093",
+    "coverage.json": "cd53c53ca8c0abd8ad9f4b719595f5cc727a79b8afab283ca865a4cb9dd417d5",
+    "view.json": "5f4cd72e038d54ede6e94e9ff448966e43787ec55aba4c312a57878e8656c801",
+    "report-view.json": "28e9c6d4345dbe8859d49ea306f81fbdbb07033dc8ce8072b410ff04b4b3371e"
+  }
+}

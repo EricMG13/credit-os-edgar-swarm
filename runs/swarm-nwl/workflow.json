@@ -1,0 +1,244 @@
+{
+  "run": {
+    "schema_version": "run/2",
+    "run_id": "nwl-2026-11-05-credit_snapshot-host",
+    "issuer_id": "nwl",
+    "issuer_name": "NEWELL BRANDS INC.",
+    "as_of": "2026-11-05",
+    "method_version": "deploy-v-r14",
+    "case_kind": "public",
+    "pathway": "credit_snapshot",
+    "requested_modules": [
+      "CP-0",
+      "CP-1",
+      "CP-1A",
+      "CP-2"
+    ]
+  },
+  "sources": {
+    "10-K_2025-12-31_nwl-20251231.htm.jsonl": {
+      "path": "source-text/10-K_2025-12-31_nwl-20251231.htm.jsonl",
+      "sha256": "dcc793cfdb2b8cc449076ad729ebed59fbf0fa17a270e35dd5b40e5638fe6453"
+    },
+    "10-Q_2026-03-31_nwl-20260331.htm.jsonl": {
+      "path": "source-text/10-Q_2026-03-31_nwl-20260331.htm.jsonl",
+      "sha256": "e491b436993330fb987ef524b9f78ce96b1802f1285b9af80a913a9adee3f88d"
+    },
+    "10-Q_2026-06-30_nwl-20260630.htm.jsonl": {
+      "path": "source-text/10-Q_2026-06-30_nwl-20260630.htm.jsonl",
+      "sha256": "b3b449c8e355a64543631b4a3e69f0acef91c01cc896e4386758050640b5804b"
+    },
+    "10-Q_2026-09-30_nwl-20260930.htm.jsonl": {
+      "path": "source-text/10-Q_2026-09-30_nwl-20260930.htm.jsonl",
+      "sha256": "8b58e3ae589a883e4dd1d132d51cbe5455a5976aebd62f8367be4b91ce06fe29"
+    },
+    "EX-99.1_2026-05-01_exhibit991_q1xmarchx2026.htm.jsonl": {
+      "path": "source-text/EX-99.1_2026-05-01_exhibit991_q1xmarchx2026.htm.jsonl",
+      "sha256": "944b1e0aff94a38b463c337c910588c7aa29def150477cd6c4593c7400267ccd"
+    },
+    "EX-99.1_2026-07-31_exhibit991_q2xjunex2026.htm.jsonl": {
+      "path": "source-text/EX-99.1_2026-07-31_exhibit991_q2xjunex2026.htm.jsonl",
+      "sha256": "5357537cee17090bbc993249463e8c84756e595916b24485d6cd92a469d185c7"
+    },
+    "EX-99.1_2026-10-30_exhibit991_q3xseptemberx20.htm.jsonl": {
+      "path": "source-text/EX-99.1_2026-10-30_exhibit991_q3xseptemberx20.htm.jsonl",
+      "sha256": "f28d7c981e9628280882affba403a5eab9c05f0b6a106f3147b334e29e9ba0d3"
+    },
+    "context": {
+      "path": "../../../inputs/contexts/814453-newell-brands-inc-nwl.json",
+      "sha256": "6bed67ca32030e1461ea08189ab22687642083ba91fdd1b6bdf65186613803b0"
+    }
+  },
+  "instructions": {
+    "CP-0": {
+      "path": "instructions/CP-0.md",
+      "sha256": "11e7d0c59ff2fb95f7b65474b449ce5ff247a6607540c3c3046e4932f3a5a3db"
+    },
+    "CP-1": {
+      "path": "instructions/CP-1.md",
+      "sha256": "d03fe7ed2fd25e8ff9e7264611a3394a45ce9686c0e83f42226ae5cc43b17ae0"
+    },
+    "CP-1A": {
+      "path": "instructions/CP-1A.md",
+      "sha256": "a8a5689cb9339bb3ad71177106793bf4a34700dedeada27a1820f33a77898594"
+    },
+    "CP-2": {
+      "path": "instructions/CP-2.md",
+      "sha256": "e61928dc32ca565e8cfaa917a3e5d28505078b9315d312856fc9298b31b6b418"
+    }
+  },
+  "retained_handoffs": {},
+  "model": null,
+  "layout": {
+    "blocks": [
+      "key-findings",
+      "company-operating-model",
+      "model-chart-strip",
+      "financials-credit-metrics",
+      "strengths-weaknesses",
+      "company-profile",
+      "transaction-summary"
+    ],
+    "routes": [
+      {
+        "module_id": "CP-2",
+        "heading": "Key findings",
+        "kind": "prose",
+        "block_id": "key-findings",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company and operating model",
+        "kind": "table",
+        "block_id": "company-operating-model",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: leverage",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.1",
+        "value_columns": [
+          "Total debt / EBITDA",
+          "Net debt / EBITDA"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: interest cover",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.2",
+        "value_columns": [
+          "EBITDA / cash interest"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: liquidity",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.3",
+        "value_columns": [
+          "Cash",
+          "Undrawn committed facilities"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: debt maturities",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.4",
+        "value_columns": [
+          "Debt maturing"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Financials and credit metrics",
+        "kind": "table",
+        "block_id": "financials-credit-metrics",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-2",
+        "heading": "Strengths and weaknesses",
+        "kind": "prose",
+        "block_id": "strengths-weaknesses",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company profile",
+        "kind": "table",
+        "block_id": "company-profile",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Transaction summary and new debt issues",
+        "kind": "prose",
+        "block_id": "transaction-summary",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      }
+    ],
+    "scope": "User-launched Full credit assessment run for NEWELL BRANDS INC. as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+    "title": "NEWELL BRANDS INC. — Full credit assessment",
+    "question": null,
+    "issuer_aliases": []
+  },
+  "changes_note": "changes: first run of this pathway",
+  "selection": "explicit",
+  "execution": "host-session",
+  "max_attempts": 3,
+  "provider_cap_usd": "0"
+}

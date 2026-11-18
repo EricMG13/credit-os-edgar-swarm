@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for Kaiser Aluminum Corp as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/5a90d9455aa4feac9a4e34662ad717a1b0f270519a1a33b5e7c7dde843501633/1.response.md",
+    "CP-1": "requests/CP-1/5750aa143f0c57fd4febdac691ed25974badee980f338f33ebb4a37bd89fc769/1.response.md",
+    "CP-1A": "requests/CP-1A/fd6bee9bec1aeae3023941f59670b3629b50ff9fc194047e9034eb8c5056893b/1.response.md",
+    "CP-2": "requests/CP-2/4683701e2dcc8ca4c9c5d67eba1b754714552be94a11cdc41facc3fb20294c6f/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "e198e26c05bb2e6141e9ce521f0bb2c9e50ba0a2683218c78d0281efa86e4d0f",
+  "delivery_sha256": "8739891c201441f73ea252f13538f848b3fc3ba85046702bf79ec5b2a0befd17"
+}

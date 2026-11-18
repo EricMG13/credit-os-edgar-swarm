@@ -573,8 +573,18 @@
       "pack": "/home/user/swarm-root/inputs/packs/811596-kaiser-aluminum-corp-kalu",
       "context": "/home/user/swarm-root/inputs/contexts/811596-kaiser-aluminum-corp-kalu.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-kalu-811596",
-      "status": "pending",
-      "attempts": 0
+      "status": "published",
+      "attempts": 4,
+      "claims": 1,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "exit_code": 0,
+      "reason": null,
+      "finished_at": "2026-11-18T13:26:22+00:00"
     },
     {
       "issuer_id": "mtn-812011",
@@ -584,8 +594,18 @@
       "pack": "/home/user/swarm-root/inputs/packs/812011-vail-resorts-inc-mtn",
       "context": "/home/user/swarm-root/inputs/contexts/812011-vail-resorts-inc-mtn.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-mtn-812011",
-      "status": "pending",
-      "attempts": 0
+      "status": "published",
+      "attempts": 4,
+      "claims": 1,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "exit_code": 0,
+      "reason": null,
+      "finished_at": "2026-11-18T13:26:35+00:00"
     },
     {
       "issuer_id": "nwl",
@@ -595,8 +615,18 @@
       "pack": "/home/user/swarm-root/inputs/packs/814453-newell-brands-inc-nwl",
       "context": "/home/user/swarm-root/inputs/contexts/814453-newell-brands-inc-nwl.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-nwl",
-      "status": "pending",
-      "attempts": 0
+      "status": "published",
+      "attempts": 4,
+      "claims": 1,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "exit_code": 0,
+      "reason": null,
+      "finished_at": "2026-11-18T13:26:49+00:00"
     },
     {
       "issuer_id": "fico",
@@ -606,8 +636,18 @@
       "pack": "/home/user/swarm-root/inputs/packs/814547-fair-isaac-corp-fico",
       "context": "/home/user/swarm-root/inputs/contexts/814547-fair-isaac-corp-fico.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-fico",
-      "status": "pending",
-      "attempts": 0
+      "status": "published",
+      "attempts": 4,
+      "claims": 1,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "exit_code": 0,
+      "reason": null,
+      "finished_at": "2026-11-18T13:27:02+00:00"
     },
     {
       "issuer_id": "ccl",

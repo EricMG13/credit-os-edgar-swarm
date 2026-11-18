@@ -1,0 +1,1070 @@
+{
+  "schema": "delivery-coverage/1",
+  "modules": {
+    "CP-0": [
+      {
+        "id": "raw-CP-0-0",
+        "heading": "Sources",
+        "kind": "table",
+        "line": 5,
+        "blocks": [
+          "evidence"
+        ]
+      },
+      {
+        "id": "raw-CP-0-1",
+        "heading": "T1 \u2014 Input gate",
+        "kind": "table",
+        "line": 29,
+        "blocks": [
+          "evidence"
+        ]
+      },
+      {
+        "id": "raw-CP-0-2",
+        "heading": "T2 \u2014 Source register",
+        "kind": "table",
+        "line": 46,
+        "blocks": [
+          "evidence"
+        ]
+      },
+      {
+        "id": "raw-CP-0-3",
+        "heading": "P3 \u2014 Input inventory",
+        "kind": "table",
+        "line": 58,
+        "blocks": [
+          "evidence"
+        ]
+      },
+      {
+        "id": "raw-CP-0-4",
+        "heading": "T4 \u2014 Content-to-module map",
+        "kind": "table",
+        "line": 71,
+        "blocks": [
+          "evidence"
+        ]
+      },
+      {
+        "id": "raw-CP-0-5",
+        "heading": "T6 \u2014 Evidence trace",
+        "kind": "table",
+        "line": 101,
+        "blocks": [
+          "evidence"
+        ]
+      },
+      {
+        "id": "raw-CP-0-6",
+        "heading": "Events: Sources",
+        "kind": "table",
+        "line": 131,
+        "blocks": [
+          "evidence"
+        ]
+      },
+      {
+        "id": "raw-CP-0-7",
+        "heading": "Confidence inputs",
+        "kind": "table",
+        "line": 143,
+        "blocks": [
+          "evidence"
+        ]
+      },
+      {
+        "id": "raw-CP-0-8",
+        "heading": "Calculations",
+        "kind": "table",
+        "line": 162,
+        "blocks": [
+          "evidence"
+        ]
+      },
+      {
+        "id": "raw-CP-0-9",
+        "heading": "Gaps",
+        "kind": "table",
+        "line": 178,
+        "blocks": [
+          "evidence"
+        ]
+      },
+      {
+        "id": "prose-CP-0-0",
+        "heading": "Request",
+        "kind": "prose",
+        "line": 1,
+        "blocks": [
+          "evidence"
+        ]
+      },
+      {
+        "id": "prose-CP-0-1",
+        "heading": "Sources",
+        "kind": "prose",
+        "line": 5,
+        "blocks": [
+          "evidence"
+        ]
+      },
+      {
+        "id": "prose-CP-0-2",
+        "heading": "Bottom line",
+        "kind": "prose",
+        "line": 21,
+        "blocks": [
+          "evidence"
+        ]
+      },
+      {
+        "id": "prose-CP-0-3",
+        "heading": "Next module",
+        "kind": "prose",
+        "line": 192,
+        "blocks": [
+          "evidence"
+        ]
+      }
+    ],
+    "CP-1": [
+      {
+        "id": "raw-CP-1-0",
+        "heading": "Sources",
+        "kind": "table",
+        "line": 5,
+        "blocks": [
+          "evidence"
+        ]
+      },
+      {
+        "id": "raw-CP-1-1",
+        "heading": "Sources",
+        "kind": "table",
+        "line": 5,
+        "blocks": [
+          "evidence"
+        ]
+      },
+      {
+        "id": "raw-CP-1-2",
+        "heading": "T4.1 Source register",
+        "kind": "table",
+        "line": 52,
+        "blocks": [
+          "evidence"
+        ]
+      },
+      {
+        "id": "raw-CP-1-3",
+        "heading": "T4.2 Entity period key",
+        "kind": "table",
+        "line": 64,
+        "blocks": [
+          "evidence"
+        ]
+      },
+      {
+        "id": "raw-CP-1-4",
+        "heading": "T4.3 Normalization register",
+        "kind": "table",
+        "line": 75,
+        "blocks": [
+          "evidence"
+        ]
+      },
+      {
+        "id": "raw-CP-1-5",
+        "heading": "T4.4 Income statement",
+        "kind": "table",
+        "line": 88,
+        "blocks": [
+          "evidence"
+        ]
+      },
+      {
+        "id": "raw-CP-1-6",
+        "heading": "T4.5 Cash flow statement",
+        "kind": "table",
+        "line": 111,
+        "blocks": [
+          "evidence"
+        ]
+      },
+      {
+        "id": "raw-CP-1-7",
+        "heading": "T4.6 Balance sheet",
+        "kind": "table",
+        "line": 156,
+        "blocks": [
+          "evidence"
+        ]
+      },
+      {
+        "id": "raw-CP-1-8",
+        "heading": "Period table",
+        "kind": "table",
+        "line": 189,
+        "blocks": [
+          "evidence"
+        ]
+      },
+      {
+        "id": "raw-CP-1-9",
+        "heading": "Segment schedule",
+        "kind": "table",
+        "line": 207,
+        "blocks": [
+          "evidence"
+        ]
+      },
+      {
+        "id": "raw-CP-1-10",
+        "heading": "T4.18 Debt instruments",
+        "kind": "table",
+        "line": 240,
+        "blocks": [
+          "evidence"
+        ]
+      },
+      {
+        "id": "raw-CP-1-11",
+        "heading": "T4.8 Constructed period register",
+        "kind": "table",
+        "line": 257,
+        "blocks": [
+          "evidence"
+        ]
+      },
+      {
+        "id": "raw-CP-1-12",
+        "heading": "Net debt data",
+        "kind": "table",
+        "line": 280,
+        "blocks": [
+          "evidence"
+        ]
+      },
+      {
+        "id": "raw-CP-1-13",
+        "heading": "Chart data: liquidity",
+        "kind": "table",
+        "line": 290,
+        "blocks": [
+          "model-chart-strip",
+          "evidence"
+        ]
+      },
+      {
+        "id": "raw-CP-1-14",
+        "heading": "Chart data: debt maturities",
+        "kind": "table",
+        "line": 300,
+        "blocks": [
+          "model-chart-strip",
+          "evidence"
+        ]
+      },
+      {
+        "id": "raw-CP-1-15",
+        "heading": "Debt principal to carrying value",
+        "kind": "table",
+        "line": 311,
+        "blocks": [
+          "evidence"
+        ]
+      },
+      {
+        "id": "raw-CP-1-16",
+        "heading": "Chart data: leverage",
+        "kind": "table",
+        "line": 317,
+        "blocks": [
+          "model-chart-strip",
+          "evidence"
+        ]
+      },
+      {
+        "id": "raw-CP-1-17",
+        "heading": "Chart data: interest cover",
+        "kind": "table",
+        "line": 327,
+        "blocks": [
+          "model-chart-strip",
+          "evidence"
+        ]
+      },
+      {
+        "id": "raw-CP-1-18",
+        "heading": "Chart data: revenue and EBITDA",
+        "kind": "table",
+        "line": 334,
+        "blocks": [
+          "evidence"
+        ]
+      },
+      {
+        "id": "raw-CP-1-19",
+        "heading": "Chart data: debt stack",
+        "kind": "table",
+        "line": 342,
+        "blocks": [
+          "evidence"
+        ]
+      },
+      {
+        "id": "raw-CP-1-20",
+        "heading": "Chart data: EBITDA bridge",
+        "kind": "table",
+        "line": 350,
+        "blocks": [
+          "evidence"
+        ]
+      },
+      {
+        "id": "raw-CP-1-21",
+        "heading": "Post-balance-sheet adjustments",
+        "kind": "table",
+        "line": 367,
+        "blocks": [
+          "evidence"
+        ]
+      },
+      {
+        "id": "raw-CP-1-22",
+        "heading": "T4.9 Calculation register",
+        "kind": "table",
+        "line": 373,
+        "blocks": [
+          "evidence"
+        ]
+      },
+      {
+        "id": "raw-CP-1-23",
+        "heading": "Financials and credit metrics",
+        "kind": "table",
+        "line": 423,
+        "blocks": [
+          "financials-credit-metrics"
+        ]
+      },
+      {
+        "id": "raw-CP-1-24",
+        "heading": "T4.10 KPI dashboard",
+        "kind": "table",
+        "line": 445,
+        "blocks": [
+          "evidence"
+        ]
+      },
+      {
+        "id": "raw-CP-1-25",
+        "heading": "T4.11 Definition conflict register",
+        "kind": "table",
+        "line": 459,
+        "blocks": [
+          "evidence"
+        ]
+      },
+      {
+        "id": "raw-CP-1-26",
+        "heading": "T4.13 Readiness",
+        "kind": "table",
+        "line": 473,
+        "blocks": [
+          "evidence"
+        ]
+      },
+      {
+        "id": "raw-CP-1-27",
+        "heading": "Confidence inputs",
+        "kind": "table",
+        "line": 486,
+        "blocks": [
+          "evidence"
+        ]
+      },
+      {
+        "id": "raw-CP-1-28",
+        "heading": "Calculations",
+        "kind": "table",
+        "line": 505,
+        "blocks": [
+          "evidence"
+        ]
+      },
+      {
+        "id": "raw-CP-1-29",
+        "heading": "Gaps",
+        "kind": "table",
+        "line": 526,
+        "blocks": [
+          "evidence"
+        ]
+      },
+      {
+        "id": "prose-CP-1-0",
+        "heading": "Request",
+        "kind": "prose",
+        "line": 1,
+        "blocks": [
+          "evidence"
+        ]
+      },
+      {
+        "id": "prose-CP-1-1",
+        "heading": "Bottom line",
+        "kind": "prose",
+        "line": 23,
+        "blocks": [
+          "evidence"
+        ]
+      },
+      {
+        "id": "prose-CP-1-2",
+        "heading": "Leverage and coverage",
+        "kind": "prose",
+        "line": 31,
+        "blocks": [
+          "evidence"
+        ]
+      },
+      {
+        "id": "prose-CP-1-3",
+        "heading": "Cash flow quality",
+        "kind": "prose",
+        "line": 36,
+        "blocks": [
+          "evidence"
+        ]
+      },
+      {
+        "id": "prose-CP-1-4",
+        "heading": "Liquidity and refinancing",
+        "kind": "prose",
+        "line": 41,
+        "blocks": [
+          "evidence"
+        ]
+      },
+      {
+        "id": "prose-CP-1-5",
+        "heading": "Data quality and definitions",
+        "kind": "prose",
+        "line": 46,
+        "blocks": [
+          "evidence"
+        ]
+      },
+      {
+        "id": "prose-CP-1-6",
+        "heading": "T4.2 Entity period key",
+        "kind": "prose",
+        "line": 64,
+        "blocks": [
+          "evidence"
+        ]
+      },
+      {
+        "id": "prose-CP-1-7",
+        "heading": "T4.18 Debt instruments",
+        "kind": "prose",
+        "line": 240,
+        "blocks": [
+          "evidence"
+        ]
+      },
+      {
+        "id": "prose-CP-1-8",
+        "heading": "T4.10 KPI dashboard",
+        "kind": "prose",
+        "line": 445,
+        "blocks": [
+          "evidence"
+        ]
+      },
+      {
+        "id": "prose-CP-1-9",
+        "heading": "Next module",
+        "kind": "prose",
+        "line": 543,
+        "blocks": [
+          "evidence"
+        ]
+      }
+    ],
+    "CP-1A": [
+      {
+        "id": "raw-CP-1A-0",
+        "heading": "Sources",
+        "kind": "table",
+        "line": 5,
+        "blocks": [
+          "evidence"
+        ]
+      },
+      {
+        "id": "raw-CP-1A-1",
+        "heading": "Sources",
+        "kind": "table",
+        "line": 5,
+        "blocks": [
+          "evidence"
+        ]
+      },
+      {
+        "id": "raw-CP-1A-2",
+        "heading": "Company and operating model",
+        "kind": "table",
+        "line": 77,
+        "blocks": [
+          "company-operating-model"
+        ]
+      },
+      {
+        "id": "raw-CP-1A-3",
+        "heading": "Company profile",
+        "kind": "table",
+        "line": 89,
+        "blocks": [
+          "company-profile"
+        ]
+      },
+      {
+        "id": "raw-CP-1A-4",
+        "heading": "Events: Issuer history",
+        "kind": "table",
+        "line": 123,
+        "blocks": [
+          "evidence"
+        ]
+      },
+      {
+        "id": "raw-CP-1A-5",
+        "heading": "Map: ownership and control",
+        "kind": "table",
+        "line": 171,
+        "blocks": [
+          "evidence"
+        ]
+      },
+      {
+        "id": "raw-CP-1A-6",
+        "heading": "Map: operating model to credit",
+        "kind": "table",
+        "line": 186,
+        "blocks": [
+          "evidence"
+        ]
+      },
+      {
+        "id": "raw-CP-1A-7",
+        "heading": "Confidence inputs",
+        "kind": "table",
+        "line": 205,
+        "blocks": [
+          "evidence"
+        ]
+      },
+      {
+        "id": "raw-CP-1A-8",
+        "heading": "company_description - Company description",
+        "kind": "table",
+        "line": 228,
+        "blocks": [
+          "evidence"
+        ]
+      },
+      {
+        "id": "raw-CP-1A-9",
+        "heading": "revenue_business_mix - Revenue and business mix",
+        "kind": "table",
+        "line": 234,
+        "blocks": [
+          "evidence"
+        ]
+      },
+      {
+        "id": "raw-CP-1A-10",
+        "heading": "ownership_register - Ownership register",
+        "kind": "table",
+        "line": 248,
+        "blocks": [
+          "evidence"
+        ]
+      },
+      {
+        "id": "raw-CP-1A-11",
+        "heading": "operating_model - Operating model",
+        "kind": "table",
+        "line": 260,
+        "blocks": [
+          "evidence"
+        ]
+      },
+      {
+        "id": "raw-CP-1A-12",
+        "heading": "transaction_summary - Transaction summary",
+        "kind": "table",
+        "line": 280,
+        "blocks": [
+          "evidence"
+        ]
+      },
+      {
+        "id": "raw-CP-1A-13",
+        "heading": "events_timeline - Events timeline",
+        "kind": "table",
+        "line": 296,
+        "blocks": [
+          "evidence"
+        ]
+      },
+      {
+        "id": "raw-CP-1A-14",
+        "heading": "T2D.1 - Source register",
+        "kind": "table",
+        "line": 344,
+        "blocks": [
+          "evidence"
+        ]
+      },
+      {
+        "id": "raw-CP-1A-15",
+        "heading": "T2D.3 - Governance register",
+        "kind": "table",
+        "line": 359,
+        "blocks": [
+          "evidence"
+        ]
+      },
+      {
+        "id": "raw-CP-1A-16",
+        "heading": "T2D.4 - Sponsor and shareholder behaviour flags",
+        "kind": "table",
+        "line": 375,
+        "blocks": [
+          "evidence"
+        ]
+      },
+      {
+        "id": "raw-CP-1A-17",
+        "heading": "T2D.5 - Capital allocation risk table",
+        "kind": "table",
+        "line": 394,
+        "blocks": [
+          "evidence"
+        ]
+      },
+      {
+        "id": "raw-CP-1A-18",
+        "heading": "T2D.9 - Sponsor and governance risk assessment",
+        "kind": "table",
+        "line": 410,
+        "blocks": [
+          "evidence"
+        ]
+      },
+      {
+        "id": "raw-CP-1A-19",
+        "heading": "T2D.11 - Gaps ledger",
+        "kind": "table",
+        "line": 422,
+        "blocks": [
+          "evidence"
+        ]
+      },
+      {
+        "id": "raw-CP-1A-20",
+        "heading": "gaps_ledger - Business and transaction gaps",
+        "kind": "table",
+        "line": 439,
+        "blocks": [
+          "evidence"
+        ]
+      },
+      {
+        "id": "raw-CP-1A-21",
+        "heading": "conflict_log - Conflict log",
+        "kind": "table",
+        "line": 451,
+        "blocks": [
+          "evidence"
+        ]
+      },
+      {
+        "id": "raw-CP-1A-22",
+        "heading": "Model snapshot fields",
+        "kind": "table",
+        "line": 462,
+        "blocks": [
+          "evidence"
+        ]
+      },
+      {
+        "id": "raw-CP-1A-23",
+        "heading": "Calculations",
+        "kind": "table",
+        "line": 474,
+        "blocks": [
+          "evidence"
+        ]
+      },
+      {
+        "id": "raw-CP-1A-24",
+        "heading": "Gaps",
+        "kind": "table",
+        "line": 499,
+        "blocks": [
+          "evidence"
+        ]
+      },
+      {
+        "id": "prose-CP-1A-0",
+        "heading": "Request",
+        "kind": "prose",
+        "line": 1,
+        "blocks": [
+          "evidence"
+        ]
+      },
+      {
+        "id": "prose-CP-1A-1",
+        "heading": "Bottom line",
+        "kind": "prose",
+        "line": 23,
+        "blocks": [
+          "evidence"
+        ]
+      },
+      {
+        "id": "prose-CP-1A-2",
+        "heading": "Key findings",
+        "kind": "prose",
+        "line": 31,
+        "blocks": [
+          "evidence"
+        ]
+      },
+      {
+        "id": "prose-CP-1A-3",
+        "heading": "Contrary evidence and what would change the view",
+        "kind": "prose",
+        "line": 60,
+        "blocks": [
+          "evidence"
+        ]
+      },
+      {
+        "id": "prose-CP-1A-4",
+        "heading": "Limitations",
+        "kind": "prose",
+        "line": 68,
+        "blocks": [
+          "evidence"
+        ]
+      },
+      {
+        "id": "prose-CP-1A-5",
+        "heading": "Transaction summary and new debt issues",
+        "kind": "prose",
+        "line": 109,
+        "blocks": [
+          "transaction-summary"
+        ]
+      },
+      {
+        "id": "prose-CP-1A-6",
+        "heading": "Analytical appendix \u2014 complete canonical registers",
+        "kind": "prose",
+        "line": 224,
+        "blocks": [
+          "evidence"
+        ]
+      },
+      {
+        "id": "prose-CP-1A-7",
+        "heading": "Next module",
+        "kind": "prose",
+        "line": 511,
+        "blocks": [
+          "evidence"
+        ]
+      }
+    ],
+    "CP-2": [
+      {
+        "id": "raw-CP-2-0",
+        "heading": "Sources",
+        "kind": "table",
+        "line": 5,
+        "blocks": [
+          "evidence"
+        ]
+      },
+      {
+        "id": "raw-CP-2-1",
+        "heading": "Sources",
+        "kind": "table",
+        "line": 5,
+        "blocks": [
+          "evidence"
+        ]
+      },
+      {
+        "id": "raw-CP-2-2",
+        "heading": "Map: credit-risk transmission",
+        "kind": "table",
+        "line": 112,
+        "blocks": [
+          "evidence"
+        ]
+      },
+      {
+        "id": "raw-CP-2-3",
+        "heading": "Confidence inputs",
+        "kind": "table",
+        "line": 136,
+        "blocks": [
+          "evidence"
+        ]
+      },
+      {
+        "id": "raw-CP-2-4",
+        "heading": "T2.1 - Source register",
+        "kind": "table",
+        "line": 255,
+        "blocks": [
+          "evidence"
+        ]
+      },
+      {
+        "id": "raw-CP-2-5",
+        "heading": "T2.10 - Materiality filter",
+        "kind": "table",
+        "line": 273,
+        "blocks": [
+          "evidence"
+        ]
+      },
+      {
+        "id": "raw-CP-2-6",
+        "heading": "T2.12 - Monitoring triggers",
+        "kind": "table",
+        "line": 288,
+        "blocks": [
+          "evidence"
+        ]
+      },
+      {
+        "id": "raw-CP-2-7",
+        "heading": "Model strengths and weaknesses",
+        "kind": "table",
+        "line": 301,
+        "blocks": [
+          "evidence"
+        ]
+      },
+      {
+        "id": "raw-CP-2-8",
+        "heading": "Calculations",
+        "kind": "table",
+        "line": 317,
+        "blocks": [
+          "evidence"
+        ]
+      },
+      {
+        "id": "raw-CP-2-9",
+        "heading": "Gaps",
+        "kind": "table",
+        "line": 342,
+        "blocks": [
+          "evidence"
+        ]
+      },
+      {
+        "id": "prose-CP-2-0",
+        "heading": "Request",
+        "kind": "prose",
+        "line": 1,
+        "blocks": [
+          "evidence"
+        ]
+      },
+      {
+        "id": "prose-CP-2-1",
+        "heading": "Bottom line",
+        "kind": "prose",
+        "line": 25,
+        "blocks": [
+          "evidence"
+        ]
+      },
+      {
+        "id": "prose-CP-2-2",
+        "heading": "Key findings",
+        "kind": "prose",
+        "line": 33,
+        "blocks": [
+          "key-findings"
+        ]
+      },
+      {
+        "id": "prose-CP-2-3",
+        "heading": "Contrary evidence and what would change the view",
+        "kind": "prose",
+        "line": 59,
+        "blocks": [
+          "evidence"
+        ]
+      },
+      {
+        "id": "prose-CP-2-4",
+        "heading": "Limitations",
+        "kind": "prose",
+        "line": 67,
+        "blocks": [
+          "evidence"
+        ]
+      },
+      {
+        "id": "prose-CP-2-5",
+        "heading": "Strengths and weaknesses",
+        "kind": "prose",
+        "line": 76,
+        "blocks": [
+          "strengths-weaknesses"
+        ]
+      },
+      {
+        "id": "prose-CP-2-6",
+        "heading": "Company description",
+        "kind": "prose",
+        "line": 155,
+        "blocks": [
+          "evidence"
+        ]
+      },
+      {
+        "id": "prose-CP-2-7",
+        "heading": "Ownership and group structure",
+        "kind": "prose",
+        "line": 160,
+        "blocks": [
+          "evidence"
+        ]
+      },
+      {
+        "id": "prose-CP-2-8",
+        "heading": "Revenue drivers and pricing power",
+        "kind": "prose",
+        "line": 168,
+        "blocks": [
+          "evidence"
+        ]
+      },
+      {
+        "id": "prose-CP-2-9",
+        "heading": "Cost structure and margin resilience",
+        "kind": "prose",
+        "line": 176,
+        "blocks": [
+          "evidence"
+        ]
+      },
+      {
+        "id": "prose-CP-2-10",
+        "heading": "Capital intensity and free cash flow conversion",
+        "kind": "prose",
+        "line": 181,
+        "blocks": [
+          "evidence"
+        ]
+      },
+      {
+        "id": "prose-CP-2-11",
+        "heading": "Porter\u2019s five forces",
+        "kind": "prose",
+        "line": 186,
+        "blocks": [
+          "evidence"
+        ]
+      },
+      {
+        "id": "prose-CP-2-12",
+        "heading": "PEST analysis",
+        "kind": "prose",
+        "line": 200,
+        "blocks": [
+          "evidence"
+        ]
+      },
+      {
+        "id": "prose-CP-2-13",
+        "heading": "SWOT analysis",
+        "kind": "prose",
+        "line": 208,
+        "blocks": [
+          "evidence"
+        ]
+      },
+      {
+        "id": "prose-CP-2-14",
+        "heading": "Financial profile and credit quality",
+        "kind": "prose",
+        "line": 213,
+        "blocks": [
+          "evidence"
+        ]
+      },
+      {
+        "id": "prose-CP-2-15",
+        "heading": "Outlook, tailwinds and headwinds",
+        "kind": "prose",
+        "line": 224,
+        "blocks": [
+          "evidence"
+        ]
+      },
+      {
+        "id": "prose-CP-2-16",
+        "heading": "Downside scenario",
+        "kind": "prose",
+        "line": 232,
+        "blocks": [
+          "evidence"
+        ]
+      },
+      {
+        "id": "prose-CP-2-17",
+        "heading": "Overall credit view",
+        "kind": "prose",
+        "line": 243,
+        "blocks": [
+          "evidence"
+        ]
+      },
+      {
+        "id": "prose-CP-2-18",
+        "heading": "Analytical appendix \u2014 complete canonical registers",
+        "kind": "prose",
+        "line": 251,
+        "blocks": [
+          "evidence"
+        ]
+      },
+      {
+        "id": "prose-CP-2-19",
+        "heading": "Next module",
+        "kind": "prose",
+        "line": 353,
+        "blocks": [
+          "evidence"
+        ]
+      }
+    ]
+  }
+}
