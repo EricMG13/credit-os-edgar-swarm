@@ -1,0 +1,248 @@
+{
+  "run": {
+    "schema_version": "run/2",
+    "run_id": "mog-b-67887-2026-11-18-credit_snapshot-host",
+    "issuer_id": "mog-b-67887",
+    "issuer_name": "Moog Inc.",
+    "as_of": "2026-11-18",
+    "method_version": "deploy-v-r14",
+    "case_kind": "public",
+    "pathway": "credit_snapshot",
+    "requested_modules": [
+      "CP-0",
+      "CP-1",
+      "CP-1A",
+      "CP-2"
+    ]
+  },
+  "sources": {
+    "10-K_2024-09-28_mog-20240928.htm.jsonl": {
+      "path": "source-text/10-K_2024-09-28_mog-20240928.htm.jsonl",
+      "sha256": "3b402ff64be1202f6be9680c58875dbb276067ca3513ab3b88eb6a8e639c6af6"
+    },
+    "10-K_2025-09-27_mog-20250927.htm.jsonl": {
+      "path": "source-text/10-K_2025-09-27_mog-20250927.htm.jsonl",
+      "sha256": "f37d2bd5c01848ad9369abd79b2696a21f86dba7c69f57168062c45090d1dc98"
+    },
+    "10-Q_2026-01-03_mog-20260103.htm.jsonl": {
+      "path": "source-text/10-Q_2026-01-03_mog-20260103.htm.jsonl",
+      "sha256": "21f5e19c79d9ceceb3715085e1193d5388acac7c9886cc60434c0715a707de0c"
+    },
+    "10-Q_2026-03-28_mog-20260328.htm.jsonl": {
+      "path": "source-text/10-Q_2026-03-28_mog-20260328.htm.jsonl",
+      "sha256": "6cbbed3998764227ae9d71afe789f78f830368715690ed88167976d1243ff99d"
+    },
+    "10-Q_2026-06-27_mog-20260627.htm.jsonl": {
+      "path": "source-text/10-Q_2026-06-27_mog-20260627.htm.jsonl",
+      "sha256": "6f1f8ffe6eca993088348fa51da5aa452cceb7617ff0949cbb2910e9989a0b8a"
+    },
+    "EX-99.1_2026-01-30_ex991-13026.htm.jsonl": {
+      "path": "source-text/EX-99.1_2026-01-30_ex991-13026.htm.jsonl",
+      "sha256": "c3b8bb295dc8d8d3961e468ad65afa5353afccae41e7386fc8a88781c65780d5"
+    },
+    "EX-99.1_2026-04-24_ex991-42426.htm.jsonl": {
+      "path": "source-text/EX-99.1_2026-04-24_ex991-42426.htm.jsonl",
+      "sha256": "5cb96d420346f59557d7294ce07fdb3d4dda43161b45f803372b3c5ef2eeadfa"
+    },
+    "EX-99.1_2026-07-31_ex991-73126.htm.jsonl": {
+      "path": "source-text/EX-99.1_2026-07-31_ex991-73126.htm.jsonl",
+      "sha256": "2b652fd164b2c20dfa6df6dd453b2a18a5d4d1caef8a46bb43f73ab6cd198995"
+    },
+    "context": {
+      "path": "../../../inputs/contexts/67887-moog-inc.json",
+      "sha256": "669d06a2bdd60a02be43719b2346e443ac970d88a5d7d56cb6e49a93ce2b2ff0"
+    }
+  },
+  "instructions": {
+    "CP-0": {
+      "path": "instructions/CP-0.md",
+      "sha256": "e1e42d222a7e7ad1d612d4a08bf5ad712679caf29ef5b3ebb3dc8f88e35abcc5"
+    },
+    "CP-1": {
+      "path": "instructions/CP-1.md",
+      "sha256": "f5c426b1db729b2f2a389b3ef2653a16a0da4fce806712b6ce886761d2bf48a7"
+    },
+    "CP-1A": {
+      "path": "instructions/CP-1A.md",
+      "sha256": "399b53ec54ce3c17162059fff76f09ba6a2c0ce046d6002894588c3405928646"
+    },
+    "CP-2": {
+      "path": "instructions/CP-2.md",
+      "sha256": "8cc5ade2d21f972d8686a5734ed0f7fc0aae0aaaf501979e1c0654690bec7e6c"
+    }
+  },
+  "retained_handoffs": {},
+  "model": null,
+  "layout": {
+    "blocks": [
+      "key-findings",
+      "company-operating-model",
+      "model-chart-strip",
+      "financials-credit-metrics",
+      "strengths-weaknesses",
+      "company-profile",
+      "transaction-summary"
+    ],
+    "routes": [
+      {
+        "module_id": "CP-2",
+        "heading": "Key findings",
+        "kind": "prose",
+        "block_id": "key-findings",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company and operating model",
+        "kind": "table",
+        "block_id": "company-operating-model",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: leverage",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.1",
+        "value_columns": [
+          "Total debt / EBITDA",
+          "Net debt / EBITDA"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: interest cover",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.2",
+        "value_columns": [
+          "EBITDA / cash interest"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: liquidity",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.3",
+        "value_columns": [
+          "Cash",
+          "Undrawn committed facilities"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: debt maturities",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.4",
+        "value_columns": [
+          "Debt maturing"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Financials and credit metrics",
+        "kind": "table",
+        "block_id": "financials-credit-metrics",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-2",
+        "heading": "Strengths and weaknesses",
+        "kind": "prose",
+        "block_id": "strengths-weaknesses",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company profile",
+        "kind": "table",
+        "block_id": "company-profile",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Transaction summary and new debt issues",
+        "kind": "prose",
+        "block_id": "transaction-summary",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      }
+    ],
+    "scope": "User-launched Full credit assessment run for Moog Inc. as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+    "title": "Moog Inc. — Full credit assessment",
+    "question": null,
+    "issuer_aliases": []
+  },
+  "changes_note": "changes: first run of this pathway",
+  "selection": "explicit",
+  "execution": "host-session",
+  "max_attempts": 3,
+  "provider_cap_usd": "0"
+}

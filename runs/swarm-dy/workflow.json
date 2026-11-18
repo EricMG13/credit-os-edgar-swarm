@@ -1,0 +1,244 @@
+{
+  "run": {
+    "schema_version": "run/2",
+    "run_id": "dy-2026-11-05-credit_snapshot-host",
+    "issuer_id": "dy",
+    "issuer_name": "DYCOM INDUSTRIES INC",
+    "as_of": "2026-11-05",
+    "method_version": "deploy-v-r14",
+    "case_kind": "public",
+    "pathway": "credit_snapshot",
+    "requested_modules": [
+      "CP-0",
+      "CP-1",
+      "CP-1A",
+      "CP-2"
+    ]
+  },
+  "sources": {
+    "10-K_2026-01-31_dy-20260131.htm.jsonl": {
+      "path": "source-text/10-K_2026-01-31_dy-20260131.htm.jsonl",
+      "sha256": "d3cce30e8b33b40ee726fca361a4ac5af2d47cfff9b57a3f36d911b5b73b8e31"
+    },
+    "10-Q_2025-10-25_dy-20251025.htm.jsonl": {
+      "path": "source-text/10-Q_2025-10-25_dy-20251025.htm.jsonl",
+      "sha256": "629b328324cc0ef5393e62b61d8db6e3a1e48e205e2a0f26575592aea3390dd7"
+    },
+    "10-Q_2026-05-02_dy-20260502.htm.jsonl": {
+      "path": "source-text/10-Q_2026-05-02_dy-20260502.htm.jsonl",
+      "sha256": "237d7d80121afc72a5bb1b73d79141b69d6396b9608af9b8f3dec2db64be0f4f"
+    },
+    "10-Q_2026-08-01_dy-20260801.htm.jsonl": {
+      "path": "source-text/10-Q_2026-08-01_dy-20260801.htm.jsonl",
+      "sha256": "666dcd463f60ce7cc9d18464ad1e3020b3cf1f9ca79b66ed79bb20b35e9cbf79"
+    },
+    "EX-99.2_2026-03-04_q42026presentationmateri.htm.jsonl": {
+      "path": "source-text/EX-99.2_2026-03-04_q42026presentationmateri.htm.jsonl",
+      "sha256": "6988c6bbc189fb06cb090ad132fb7c67f67f6d428cb3b75cae839c0b2d040376"
+    },
+    "EX-99.2_2026-05-27_q12027presentationmateri.htm.jsonl": {
+      "path": "source-text/EX-99.2_2026-05-27_q12027presentationmateri.htm.jsonl",
+      "sha256": "fb3e1da73422f05d34562fe3208f0c4af7eb6fffd05db64f60aea98effba2a9e"
+    },
+    "EX-99.2_2026-08-26_q22027presentationmateri.htm.jsonl": {
+      "path": "source-text/EX-99.2_2026-08-26_q22027presentationmateri.htm.jsonl",
+      "sha256": "db5426dcb5222e08c260f53364ad7255c795bb75eba46ab3566a5906d530e4b2"
+    },
+    "context": {
+      "path": "../../../inputs/contexts/67215-dycom-industries-inc-dy.json",
+      "sha256": "c91849e9583c2227ff5d8a95aa89da364bfff0f885232cdd128e95fb51281f42"
+    }
+  },
+  "instructions": {
+    "CP-0": {
+      "path": "instructions/CP-0.md",
+      "sha256": "9d15091d129efc2d3c5804258c3ef7859838e043907bcddd1e68054c1d9bfbdb"
+    },
+    "CP-1": {
+      "path": "instructions/CP-1.md",
+      "sha256": "8f67374fb76bd1e47ee7638055341b30db06ca3e793cf5f755e36f4ffedfd3b2"
+    },
+    "CP-1A": {
+      "path": "instructions/CP-1A.md",
+      "sha256": "cd494edd2c974c92b18b78e07827503ff41153a9ab888c4dd82f99f229a35ec2"
+    },
+    "CP-2": {
+      "path": "instructions/CP-2.md",
+      "sha256": "8dcb01371537ea2198d1aee772461bb1072afbfc6d31d421fc6a524af3b7b6c3"
+    }
+  },
+  "retained_handoffs": {},
+  "model": null,
+  "layout": {
+    "blocks": [
+      "key-findings",
+      "company-operating-model",
+      "model-chart-strip",
+      "financials-credit-metrics",
+      "strengths-weaknesses",
+      "company-profile",
+      "transaction-summary"
+    ],
+    "routes": [
+      {
+        "module_id": "CP-2",
+        "heading": "Key findings",
+        "kind": "prose",
+        "block_id": "key-findings",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company and operating model",
+        "kind": "table",
+        "block_id": "company-operating-model",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: leverage",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.1",
+        "value_columns": [
+          "Total debt / EBITDA",
+          "Net debt / EBITDA"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: interest cover",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.2",
+        "value_columns": [
+          "EBITDA / cash interest"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: liquidity",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.3",
+        "value_columns": [
+          "Cash",
+          "Undrawn committed facilities"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: debt maturities",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.4",
+        "value_columns": [
+          "Debt maturing"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Financials and credit metrics",
+        "kind": "table",
+        "block_id": "financials-credit-metrics",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-2",
+        "heading": "Strengths and weaknesses",
+        "kind": "prose",
+        "block_id": "strengths-weaknesses",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company profile",
+        "kind": "table",
+        "block_id": "company-profile",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Transaction summary and new debt issues",
+        "kind": "prose",
+        "block_id": "transaction-summary",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      }
+    ],
+    "scope": "User-launched Full credit assessment run for DYCOM INDUSTRIES INC as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+    "title": "DYCOM INDUSTRIES INC — Full credit assessment",
+    "question": null,
+    "issuer_aliases": []
+  },
+  "changes_note": "changes: first run of this pathway",
+  "selection": "explicit",
+  "execution": "host-session",
+  "max_attempts": 3,
+  "provider_cap_usd": "0"
+}

@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for TENET HEALTHCARE CORP as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/9b72e76b3bb1000f94a66b2d9ff9a6677e1ee98864cea1a0e12622c3d1b87bdf/1.response.md",
+    "CP-1": "requests/CP-1/faee1597486a5abf991a4422c6aa759d18146f92770c5488f5f1997e7dcebf91/1.response.md",
+    "CP-1A": "requests/CP-1A/934633562097bea64917b256eec8a4c9cac053cea3173d67ff0e5ee3a0247bac/1.response.md",
+    "CP-2": "requests/CP-2/5280b92442eaddcbd785b0a06c8060e6dda6aed4503664203c416705e0525593/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "fa77bf7ce3142189666292e4c330f107d7b79c2279ccebe916a88c874440bad3",
+  "delivery_sha256": "98960459ca473282f79d7212c5c8221c0f8b2421e2988165b63257427020b6d1"
+}

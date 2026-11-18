@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for Moog Inc. as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/1dcb24d4d03edd59a4f21c6f3d86be14641c355d88280e1f7a4e0440da37ad24/1.response.md",
+    "CP-1": "requests/CP-1/19e983a0e6c891c03b65c082e0d708545f2ca7aa1ccdf50e05b14442d834226a/1.response.md",
+    "CP-1A": "requests/CP-1A/8b994ab7e17c1bda76eb1d5c25f3e27acbd98b06356551995cd5e33c4bdc94a2/1.response.md",
+    "CP-2": "requests/CP-2/2392f591691adcf9f2dafa3acb5572bc08011f575aa920f11a131a16eb50ba49/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "a1efec79a80a665bee8c7c869fefb3f6bc0c638ce5f09fd3065f1d5f6174e5fe",
+  "delivery_sha256": "9b40447d6b5fe5c5cddb0eb2edf9e1e1f5f77205f30cd2e8ce706ca354b6b0bd"
+}

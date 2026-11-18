@@ -201,8 +201,18 @@
       "pack": "/home/user/swarm-root/inputs/packs/50725-griffon-corp-gff",
       "context": "/home/user/swarm-root/inputs/contexts/50725-griffon-corp-gff.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-gff-50725",
-      "status": "pending",
-      "attempts": 0
+      "status": "published",
+      "attempts": 4,
+      "claims": 1,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "exit_code": 0,
+      "reason": null,
+      "finished_at": "2026-11-18T12:54:29+00:00"
     },
     {
       "issuer_id": "dy",
@@ -212,8 +222,18 @@
       "pack": "/home/user/swarm-root/inputs/packs/67215-dycom-industries-inc-dy",
       "context": "/home/user/swarm-root/inputs/contexts/67215-dycom-industries-inc-dy.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-dy",
-      "status": "pending",
-      "attempts": 0
+      "status": "published",
+      "attempts": 4,
+      "claims": 1,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "exit_code": 0,
+      "reason": null,
+      "finished_at": "2026-11-18T12:54:43+00:00"
     },
     {
       "issuer_id": "mog-b-67887",
@@ -223,8 +243,18 @@
       "pack": "/home/user/swarm-root/inputs/packs/67887-moog-inc",
       "context": "/home/user/swarm-root/inputs/contexts/67887-moog-inc.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-mog-b-67887",
-      "status": "pending",
-      "attempts": 0
+      "status": "published",
+      "attempts": 4,
+      "claims": 1,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "exit_code": 0,
+      "reason": null,
+      "finished_at": "2026-11-18T12:54:58+00:00"
     },
     {
       "issuer_id": "thc",
@@ -234,8 +264,18 @@
       "pack": "/home/user/swarm-root/inputs/packs/70318-tenet-healthcare-corp-thc",
       "context": "/home/user/swarm-root/inputs/contexts/70318-tenet-healthcare-corp-thc.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-thc",
-      "status": "pending",
-      "attempts": 0
+      "status": "published",
+      "attempts": 4,
+      "claims": 1,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "exit_code": 0,
+      "reason": null,
+      "finished_at": "2026-11-18T12:55:12+00:00"
     },
     {
       "issuer_id": "oii-73756",

@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for Griffon Corp as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "358ac1d836ace37700461b65331ec7b85d10263a45413ac8e444e98640bca69d",
+    "CP-1.md": "772ba85ad910b07a7a329a4e841fddafcefd3972eb608f14d70d0f282f2b2d39",
+    "CP-1A.md": "358b87d4d91ebcb8d414f99fdd411489c6ec70981b2af81f09c261d11eb78996",
+    "CP-2.md": "c6a318afcd97d275203086ad41a927039613e8bd5077fa5550ca8599d42fd7bb",
+    "coverage.json": "1dbfcac6329085d2ed4e30aa27c263eca6f8dc65681ec4f5ce9d5f7060ee95b8",
+    "view.json": "975f4762ac2c2dda7d45770280aff21d658c1e60e694b8cd1cd8ed542adacdee",
+    "report-view.json": "60b3be34e26829a81e055578cebd27eb22c0c1361245cbd8a0c82a1df07ce00c"
+  }
+}
