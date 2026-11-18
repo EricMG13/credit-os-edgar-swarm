@@ -14,7 +14,9 @@ import io
 import json
 import logging
 import re
+import threading
 import time
+from collections import OrderedDict
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import asdict, dataclass, replace
 from datetime import UTC, date, datetime
@@ -472,7 +474,35 @@ def _workbook_pages(raw: bytes) -> list[str]:
     ]
 
 
+# The page text of sources already read in this process, by the sha256 of their bytes and whether
+# the name makes them page records (.jsonl): the same bytes give the same pages. A run read each
+# source once to prepare and once more for every module, and the connected reader once for every
+# report opened (about 9.6 s for a 250-page PDF each time; VERIFICATION.md 2026-11-18). The least
+# recently read go once the kept text passes the limit. Kept in memory only: text kept on disk
+# would be read back unchecked.
+_PAGE_TEXT: OrderedDict[tuple[str, bool], tuple[str, ...]] = OrderedDict()
+_PAGE_TEXT_LOCK = threading.Lock()
+_PAGE_TEXT_CHARS = 50_000_000
+
+
 def _pages(name: str, raw: bytes) -> list[str]:
+    """The pages of a source, read once for the same bytes; a failure to read is not kept."""
+    key = (hashlib.sha256(raw).hexdigest(), name.endswith(".jsonl"))
+    with _PAGE_TEXT_LOCK:
+        kept = _PAGE_TEXT.get(key)
+        if kept is not None:
+            _PAGE_TEXT.move_to_end(key)
+            return list(kept)
+    pages = tuple(_read_pages(name, raw))  # outside the lock: one long file holds up no other
+    with _PAGE_TEXT_LOCK:
+        _PAGE_TEXT[key] = pages
+        chars = sum(len(page) for texts in _PAGE_TEXT.values() for page in texts)
+        while chars > _PAGE_TEXT_CHARS and len(_PAGE_TEXT) > 1:
+            chars -= sum(map(len, _PAGE_TEXT.popitem(last=False)[1]))
+    return list(pages)
+
+
+def _read_pages(name: str, raw: bytes) -> list[str]:
     if raw.startswith(b"%PDF"):
         from pypdf import PdfReader
 

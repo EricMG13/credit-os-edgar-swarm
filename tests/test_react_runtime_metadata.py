@@ -73,7 +73,7 @@ def runtime(tmp_path: Path, *, retained: bool = False) -> tuple[Layout, Path, di
     directory.mkdir(parents=True)
     workflow: dict[str, Any] = {
         "run": {
-            "run_id": "issuer-2026-11-17-credit_snapshot-sol-medium",
+            "run_id": "issuer-2026-11-17-credit_snapshot-copilot-sol-medium",
             "issuer_id": "issuer",
             "issuer_name": "Issuer",
             "as_of": "2026-11-17",
@@ -249,7 +249,11 @@ def test_pending_activity_does_not_read_the_library(tmp_path, monkeypatch, statu
         assert relative != "library/data.js"
         return original(reader, relative, *args)
 
+    def published(_layout):
+        raise AssertionError("a pending run does not read the publication")
+
     monkeypatch.setattr(run_metadata._Reads, "raw", read)
+    monkeypatch.setattr(run_metadata.admission, "published", published)
     assert reply(layout, "case").body["library_admission"] == "not-listed"
 
 

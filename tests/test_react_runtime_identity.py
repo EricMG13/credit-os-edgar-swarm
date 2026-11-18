@@ -29,7 +29,9 @@ def engine_case(tmp_path_factory: pytest.TempPathFactory) -> Path:
 
     with pytest.MonkeyPatch.context() as patch:
         patch.setattr(test_launcher, "assert_exported_report", retain)
-        test_launcher.test_real_scheduler_exports_the_submitted_run(patch, "executed")
+        test_launcher.test_real_scheduler_exports_the_submitted_run(
+            patch, "executed", "gpt", "balanced", "copilot-sol-medium"
+        )
     return retained
 
 
@@ -48,7 +50,7 @@ def test_completed_engine_responses_supply_their_exact_verified_metadata(
     layout, record, directory = actual_run
     workflow = json.loads((directory / "workflow.json").read_bytes())
     assert workflow["run"]["run_id"] != record.id
-    assert workflow["run"]["run_id"] == "example-2025-04-30-credit_snapshot-sol-medium"
+    assert workflow["run"]["run_id"] == "example-2025-04-30-credit_snapshot-copilot-sol-medium"
     body = reply(layout, record.id).body
     assert body["module_outputs"] is not None
     outputs = {row["module"]: row for row in body["module_outputs"]}
