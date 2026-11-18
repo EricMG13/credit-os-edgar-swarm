@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for Kinetik Holdings Inc. as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "c6deb9a1a2fa3ea650313900a27fd2593fe663a4ee8f7a512a29a32bb07866f0",
+    "CP-1.md": "9138ce91e9fa79f3c7325081c59166f957c0f2913983723cae4a8023d973fa59",
+    "CP-1A.md": "7f45639144a83e140f889509eb46d111a307853e9a84fcf63f048efe7be5b91a",
+    "CP-2.md": "cd099c3a80759b214726b1e92603b39b93d176279b396f5a2dedcb0f6a380ac4",
+    "coverage.json": "25199e872d3efa47a0460b4222cf4d7d36b7a489b1940d4b4d0b211567967cb3",
+    "view.json": "c22cd01d995d14f21023abd2a064ef7a01fb62fcddbc5992bcec101d2bde814c",
+    "report-view.json": "f9d26209d7ae319c7103ea1aa1b293defff7f541d01d4ae8bc5973e039830fc9"
+  }
+}

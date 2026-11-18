@@ -1,0 +1,236 @@
+{
+  "run": {
+    "schema_version": "run/2",
+    "run_id": "sei-1697500-2026-11-18-credit_snapshot-host",
+    "issuer_id": "sei-1697500",
+    "issuer_name": "Solaris Energy Infrastructure, Inc.",
+    "as_of": "2026-11-18",
+    "method_version": "deploy-v-r14",
+    "case_kind": "public",
+    "pathway": "credit_snapshot",
+    "requested_modules": [
+      "CP-0",
+      "CP-1",
+      "CP-1A",
+      "CP-2"
+    ]
+  },
+  "sources": {
+    "10-K_2024-12-31_sei.htm.jsonl": {
+      "path": "source-text/10-K_2024-12-31_sei.htm.jsonl",
+      "sha256": "8c21247efa2f6d585dbecf4b9b5ce1bce9bea5e8cfdea78711c1881131630672"
+    },
+    "10-K_2025-12-31_sei.htm.jsonl": {
+      "path": "source-text/10-K_2025-12-31_sei.htm.jsonl",
+      "sha256": "1c296185e265a5c3bc40240b7cfe5cc86dc1d9fc635c3e2a92bda6d4544526ec"
+    },
+    "10-Q_2026-03-31_sei.htm.jsonl": {
+      "path": "source-text/10-Q_2026-03-31_sei.htm.jsonl",
+      "sha256": "9ce9bae7de360e463170992f73470b5447cebc5ebd932208c50a793f3e6b2151"
+    },
+    "10-Q_2026-06-30_sei.htm.jsonl": {
+      "path": "source-text/10-Q_2026-06-30_sei.htm.jsonl",
+      "sha256": "756f226c1182fe3d80e442b6f0a49c6463ff3f7048d89c877473e9793cba14f1"
+    },
+    "10-Q_2026-09-30_sei.htm.jsonl": {
+      "path": "source-text/10-Q_2026-09-30_sei.htm.jsonl",
+      "sha256": "f599fee4fb96a0deeaccdbafea8d9f7cf470e04ad04ae0f9c0956a33871e3f94"
+    },
+    "context": {
+      "path": "../../../inputs/contexts/1697500-solaris-energy-infrastructure-inc.json",
+      "sha256": "d0bb394aa6f7db24b1bfefd300440fe852eba37c7fc994d5279aeef82c0b62af"
+    }
+  },
+  "instructions": {
+    "CP-0": {
+      "path": "instructions/CP-0.md",
+      "sha256": "58a475f4d1b7f429b387e4f384fd0dbbbbb9b16c718fd4a29cf48c5585f41996"
+    },
+    "CP-1": {
+      "path": "instructions/CP-1.md",
+      "sha256": "10d3caa6d2980685a2d8942f4f9cdeee82ca95fa11c758411a1ebfc07a94210d"
+    },
+    "CP-1A": {
+      "path": "instructions/CP-1A.md",
+      "sha256": "388e239bb89dc73ea5a2d278d2769b89866cc668e20b1f022df8a00ba939134e"
+    },
+    "CP-2": {
+      "path": "instructions/CP-2.md",
+      "sha256": "c14f61a8452fe2be36297a24e1295da31d250a95108dba0b1b5c40b86d1659da"
+    }
+  },
+  "retained_handoffs": {},
+  "model": null,
+  "layout": {
+    "blocks": [
+      "key-findings",
+      "company-operating-model",
+      "model-chart-strip",
+      "financials-credit-metrics",
+      "strengths-weaknesses",
+      "company-profile",
+      "transaction-summary"
+    ],
+    "routes": [
+      {
+        "module_id": "CP-2",
+        "heading": "Key findings",
+        "kind": "prose",
+        "block_id": "key-findings",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company and operating model",
+        "kind": "table",
+        "block_id": "company-operating-model",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: leverage",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.1",
+        "value_columns": [
+          "Total debt / EBITDA",
+          "Net debt / EBITDA"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: interest cover",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.2",
+        "value_columns": [
+          "EBITDA / cash interest"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: liquidity",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.3",
+        "value_columns": [
+          "Cash",
+          "Undrawn committed facilities"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: debt maturities",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.4",
+        "value_columns": [
+          "Debt maturing"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Financials and credit metrics",
+        "kind": "table",
+        "block_id": "financials-credit-metrics",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-2",
+        "heading": "Strengths and weaknesses",
+        "kind": "prose",
+        "block_id": "strengths-weaknesses",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company profile",
+        "kind": "table",
+        "block_id": "company-profile",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Transaction summary and new debt issues",
+        "kind": "prose",
+        "block_id": "transaction-summary",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      }
+    ],
+    "scope": "User-launched Full credit assessment run for Solaris Energy Infrastructure, Inc. as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+    "title": "Solaris Energy Infrastructure, Inc. — Full credit assessment",
+    "question": null,
+    "issuer_aliases": []
+  },
+  "changes_note": "changes: first run of this pathway",
+  "selection": "explicit",
+  "execution": "host-session",
+  "max_attempts": 3,
+  "provider_cap_usd": "0"
+}

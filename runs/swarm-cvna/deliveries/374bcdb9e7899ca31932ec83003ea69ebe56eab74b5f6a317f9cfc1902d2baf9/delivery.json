@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for CARVANA CO. as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "635876df8cefe730525390bd6bd9a9573d3c1c8c3f850f4c60718c8a15fd881c",
+    "CP-1.md": "0b87c3e8980c19182d45e7dce03f60c918351d702255a69b223026c5365f8c92",
+    "CP-1A.md": "0e61067f5047b61e23aa3adc9f26860956ba7e130e17bc6a3e31e9276d8a4c87",
+    "CP-2.md": "c79bb1a43a5887482c344be36a669394da6848684705b77e055e7d3c5f0e0b22",
+    "coverage.json": "2e2b208a2c61d6b5e257d59736287c3f5fb6c97f12360f7d6c2bdbdb20cdd1e0",
+    "view.json": "46a282a4f0a66c20f6084d36afd394139ab3c139dfbed1b0a1f5ee4626943215",
+    "report-view.json": "b00113388f176ade894e08635d050f367e0b863913fbf2e3419239f06cbc4d2d"
+  }
+}

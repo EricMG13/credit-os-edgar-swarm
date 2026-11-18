@@ -1,0 +1,236 @@
+{
+  "run": {
+    "schema_version": "run/2",
+    "run_id": "kntk-1692787-2026-11-18-credit_snapshot-host",
+    "issuer_id": "kntk-1692787",
+    "issuer_name": "Kinetik Holdings Inc.",
+    "as_of": "2026-11-18",
+    "method_version": "deploy-v-r14",
+    "case_kind": "public",
+    "pathway": "credit_snapshot",
+    "requested_modules": [
+      "CP-0",
+      "CP-1",
+      "CP-1A",
+      "CP-2"
+    ]
+  },
+  "sources": {
+    "10-K_2024-12-31_kntk-20241231.htm.jsonl": {
+      "path": "source-text/10-K_2024-12-31_kntk-20241231.htm.jsonl",
+      "sha256": "5ca8438bb106793df3ba897b1491aa5b5909a1489ec3369b74d11f7601244942"
+    },
+    "10-K_2025-12-31_kntk-20251231.htm.jsonl": {
+      "path": "source-text/10-K_2025-12-31_kntk-20251231.htm.jsonl",
+      "sha256": "21a78d7ca72fe20fe6bc796d23693cb2a475e3a8716c7bf1d8d23f7743ae9fe9"
+    },
+    "10-Q_2026-03-31_kntk-20260331.htm.jsonl": {
+      "path": "source-text/10-Q_2026-03-31_kntk-20260331.htm.jsonl",
+      "sha256": "8994d14e1f153c306a299b669e4e47567734e8714f545685f9a968f3e5803b07"
+    },
+    "10-Q_2026-06-30_kntk-20260630.htm.jsonl": {
+      "path": "source-text/10-Q_2026-06-30_kntk-20260630.htm.jsonl",
+      "sha256": "5e82135d7b73413f69136f8a5db87966e83d86a73fd89498ac76297f8bccee4f"
+    },
+    "10-Q_2026-09-30_kntk-20260930.htm.jsonl": {
+      "path": "source-text/10-Q_2026-09-30_kntk-20260930.htm.jsonl",
+      "sha256": "465380250a44ce5e800af92686dec82c425c6bfcfcb9d54831ed4f1919668b56"
+    },
+    "context": {
+      "path": "../../../inputs/contexts/1692787-kinetik-holdings-inc-kntk.json",
+      "sha256": "c0d3eedccf3e0741f56805c9b1343e27c2cdbd08e518afc38a42dc092e005014"
+    }
+  },
+  "instructions": {
+    "CP-0": {
+      "path": "instructions/CP-0.md",
+      "sha256": "f094c4eb8525722e4713ef80cdd41b9c2aca44ca31f6e7c9466b1498f531ecc8"
+    },
+    "CP-1": {
+      "path": "instructions/CP-1.md",
+      "sha256": "28e5d9b4fb67f2b83f3811220213ed4de7e57383ac654bb634ba02a49eaa46ea"
+    },
+    "CP-1A": {
+      "path": "instructions/CP-1A.md",
+      "sha256": "4ea0fbfb8ce92367e9061cb58ac7f1037a34bc7f757ffa98155d13745008ada5"
+    },
+    "CP-2": {
+      "path": "instructions/CP-2.md",
+      "sha256": "3d09b43e147d4ed10018bb7c8ebd20547d9df9e3bd360f6a09fcb8239909f86f"
+    }
+  },
+  "retained_handoffs": {},
+  "model": null,
+  "layout": {
+    "blocks": [
+      "key-findings",
+      "company-operating-model",
+      "model-chart-strip",
+      "financials-credit-metrics",
+      "strengths-weaknesses",
+      "company-profile",
+      "transaction-summary"
+    ],
+    "routes": [
+      {
+        "module_id": "CP-2",
+        "heading": "Key findings",
+        "kind": "prose",
+        "block_id": "key-findings",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company and operating model",
+        "kind": "table",
+        "block_id": "company-operating-model",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: leverage",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.1",
+        "value_columns": [
+          "Total debt / EBITDA",
+          "Net debt / EBITDA"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: interest cover",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.2",
+        "value_columns": [
+          "EBITDA / cash interest"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: liquidity",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.3",
+        "value_columns": [
+          "Cash",
+          "Undrawn committed facilities"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: debt maturities",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.4",
+        "value_columns": [
+          "Debt maturing"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Financials and credit metrics",
+        "kind": "table",
+        "block_id": "financials-credit-metrics",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-2",
+        "heading": "Strengths and weaknesses",
+        "kind": "prose",
+        "block_id": "strengths-weaknesses",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company profile",
+        "kind": "table",
+        "block_id": "company-profile",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Transaction summary and new debt issues",
+        "kind": "prose",
+        "block_id": "transaction-summary",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      }
+    ],
+    "scope": "User-launched Full credit assessment run for Kinetik Holdings Inc. as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+    "title": "Kinetik Holdings Inc. — Full credit assessment",
+    "question": null,
+    "issuer_aliases": []
+  },
+  "changes_note": "changes: first run of this pathway",
+  "selection": "explicit",
+  "execution": "host-session",
+  "max_attempts": 3,
+  "provider_cap_usd": "0"
+}

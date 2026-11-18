@@ -1,0 +1,6 @@
+{
+  "issues": [
+    "Fidelity check, line 54: \"10,464 thousand\" appears only in a note beside a different table value, and a note states no value: write the value the table states, or state this figure as a table value with the calculation that gives it."
+  ],
+  "response_sha256": "730769906a20667969a4844163ba3f6e3ebee0f253fddca65febeaa8647f339b"
+}

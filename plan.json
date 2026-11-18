@@ -2373,8 +2373,18 @@
       "pack": "/home/user/swarm-root/inputs/packs/1690820-carvana-co-cvna",
       "context": "/home/user/swarm-root/inputs/contexts/1690820-carvana-co-cvna.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-cvna",
-      "status": "pending",
-      "attempts": 0
+      "status": "published",
+      "attempts": 4,
+      "claims": 1,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "exit_code": 0,
+      "reason": null,
+      "finished_at": "2026-11-18T13:11:48+00:00"
     },
     {
       "issuer_id": "kntk-1692787",
@@ -2384,8 +2394,18 @@
       "pack": "/home/user/swarm-root/inputs/packs/1692787-kinetik-holdings-inc-kntk",
       "context": "/home/user/swarm-root/inputs/contexts/1692787-kinetik-holdings-inc-kntk.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-kntk-1692787",
-      "status": "pending",
-      "attempts": 0
+      "status": "published",
+      "attempts": 4,
+      "claims": 1,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "exit_code": 0,
+      "reason": null,
+      "finished_at": "2026-11-18T13:12:02+00:00"
     },
     {
       "issuer_id": "sei-1697500",
@@ -2395,8 +2415,18 @@
       "pack": "/home/user/swarm-root/inputs/packs/1697500-solaris-energy-infrastructure-inc",
       "context": "/home/user/swarm-root/inputs/contexts/1697500-solaris-energy-infrastructure-inc.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-sei-1697500",
-      "status": "pending",
-      "attempts": 0
+      "status": "published",
+      "attempts": 4,
+      "claims": 1,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "exit_code": 0,
+      "reason": null,
+      "finished_at": "2026-11-18T13:12:14+00:00"
     },
     {
       "issuer_id": "ske",
@@ -2406,8 +2436,18 @@
       "pack": "/home/user/swarm-root/inputs/packs/1713748-skeena-resources-ltd-ske",
       "context": "/home/user/swarm-root/inputs/contexts/1713748-skeena-resources-ltd-ske.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-ske",
-      "status": "pending",
-      "attempts": 0
+      "status": "published",
+      "attempts": 5,
+      "claims": 1,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 2
+      },
+      "exit_code": 0,
+      "reason": null,
+      "finished_at": "2026-11-18T13:12:26+00:00"
     },
     {
       "issuer_id": "wh-1722684",
