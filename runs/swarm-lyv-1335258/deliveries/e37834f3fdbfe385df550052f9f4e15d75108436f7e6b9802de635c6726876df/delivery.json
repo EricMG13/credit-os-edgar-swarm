@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for Live Nation Entertainment, Inc. as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "90e63363a1182d799b5efb44f56ab03463e1972c1c6bb80cc5dfb70af07b57c4",
+    "CP-1.md": "6692408afe04029babef3fd05b6448aea093efb865832b984fc484f1af84fc89",
+    "CP-1A.md": "d48e8f3f11ef04bdd9e9c57321b537882db791bea7f3f571c6fb5fff604f3663",
+    "CP-2.md": "dfee4d5df1d29246516b89466367ef3ae41a0fb05778782a8658bffcaa9d103b",
+    "coverage.json": "9b11067e3767de9351394a7ab99742114a857d10f2b2b740283389304181258d",
+    "view.json": "963e19ec243ae9ef60f6177ae477528e58af7b3050b6b58831780fad62c01f1a",
+    "report-view.json": "9bd2547db68515f9caeebb87a98e4a5a36d1e1ebe1f0697f8e6b8afe44c769ab"
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for Mueller Water Products, Inc. as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "c4ae809a082241cae9986112f24fb9c585332a664a72c5c0459d9287e1fdcd3b",
+    "CP-1.md": "6ea5c919f6c8ea9651c1bdd8cf004c8c11b86d222967140a57bf2cb8a9f98807",
+    "CP-1A.md": "019c408c6a9f320b55462cf002df84b50626a5391116fea82d31db9568a3d9d3",
+    "CP-2.md": "3410062d0bb3aba329401188548ab7e63919f7eb813eec06f8deab22c6ebeb27",
+    "coverage.json": "7e44d58348aacc19b20b8281d2d64e94278918b925ac5d29316f77b50b7c10f4",
+    "view.json": "8da18d72a69d6f8044920eaa73b83613f2ee07f01d80447a751c45b9d377272c",
+    "report-view.json": "a7b71f5d6ac8e1fd865b43dc2a222b97d6b7b5147dc1df75b7226c2461f6f470"
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for Compass Group Diversified Holdings LLC as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/04e0392add8ae67108006c3976836450fc26bc03ad5cc854ee2f00c56b01daf1/1.response.md",
+    "CP-1": "requests/CP-1/676b258fe0af271053b8c5b2e9d0b87c574af4af5c4a3bd9f72a237e693e432d/1.response.md",
+    "CP-1A": "requests/CP-1A/edc97cb34a87229f53e62753b948c5987ad9947d56a6663becfac26d6ff09ae2/1.response.md",
+    "CP-2": "requests/CP-2/e1e50462846f9a9e74891fc8aa0da8f1cb0fb707a5b06d599f7e0e266f938ea6/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "d01f8802239a86eaab4e669859bad0871a9de0a8fce933ba76b0d56eabd4d4a3",
+  "delivery_sha256": "130b84edb257483b76081a26da1de8ead25838c30a6da3a8ac4b107f02f1c600"
+}

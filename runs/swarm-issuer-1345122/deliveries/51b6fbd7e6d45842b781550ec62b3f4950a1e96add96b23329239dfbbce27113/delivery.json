@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for Compass Group Diversified Holdings LLC as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "daa67528ebe0fce2e757c04e418e865ac6b9fbbcbfe142c751d427a20ea7559e",
+    "CP-1.md": "dd699c2a04d63b90bd954626ca19e7da3d96c5e92130ae44542a7c124124e4a9",
+    "CP-1A.md": "1450890708f715d9acf21bb73a2590cd3ae7b6305f15ebb0341a0239e3beabdc",
+    "CP-2.md": "05a87ec03c358a07cce2116bcfd2f77c5629fa118ab7c181fdd19f9faa182d01",
+    "coverage.json": "37c5b94887014218f6e0053d3143f53c037d48b92119a6fc88e6db0e6fe556a0",
+    "view.json": "a0c020bf9a36e67110fca4a6e35242fcc0a07ec97436ce5ccfd4abded703b281",
+    "report-view.json": "c233812ff6784f00f8f7964c7025221862645f515d9661a43761afdbe1682218"
+  }
+}

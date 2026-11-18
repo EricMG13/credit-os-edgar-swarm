@@ -1,0 +1,264 @@
+{
+  "run": {
+    "schema_version": "run/2",
+    "run_id": "issuer-1345122-2026-11-18-credit_snapshot-host",
+    "issuer_id": "issuer-1345122",
+    "issuer_name": "Compass Group Diversified Holdings LLC",
+    "as_of": "2026-11-18",
+    "method_version": "deploy-v-r14",
+    "case_kind": "public",
+    "pathway": "credit_snapshot",
+    "requested_modules": [
+      "CP-0",
+      "CP-1",
+      "CP-1A",
+      "CP-2"
+    ]
+  },
+  "sources": {
+    "10-K_2024-12-31_compass-group-diversified-holdings-llc.htm.jsonl": {
+      "path": "source-text/10-K_2024-12-31_compass-group-diversified-holdings-llc.htm.jsonl",
+      "sha256": "7b33af7dca601bcf0ef538a09e9f42f768ca137ad0c048ce8feecaf513790f52"
+    },
+    "10-K_2025-12-31_compass-group-diversified-holdings-llc.htm.jsonl": {
+      "path": "source-text/10-K_2025-12-31_compass-group-diversified-holdings-llc.htm.jsonl",
+      "sha256": "e069d7f7cf91d228bbae77becaea245ce72ea7d914005494a5f924b5ebd81820"
+    },
+    "10-Q_2025-09-30_compass-group-diversified-holdings-llc.htm.jsonl": {
+      "path": "source-text/10-Q_2025-09-30_compass-group-diversified-holdings-llc.htm.jsonl",
+      "sha256": "543a3b3d143dff4ea4810e51a69d146d7f983bbb18211153bb897152c8f291cf"
+    },
+    "10-Q_2026-03-31_compass-group-diversified-holdings-llc.htm.jsonl": {
+      "path": "source-text/10-Q_2026-03-31_compass-group-diversified-holdings-llc.htm.jsonl",
+      "sha256": "e708af7f71f337eb203c64f3bf3aeac961234b6474677e54eeb71bdec521444b"
+    },
+    "10-Q_2026-06-30_compass-group-diversified-holdings-llc.htm.jsonl": {
+      "path": "source-text/10-Q_2026-06-30_compass-group-diversified-holdings-llc.htm.jsonl",
+      "sha256": "3eb36774e80c14c1466180c4652a17339cf7ac40110f71a48c848f029f92dff8"
+    },
+    "10-Q_2026-09-30_compass-group-diversified-holdings-llc.htm.jsonl": {
+      "path": "source-text/10-Q_2026-09-30_compass-group-diversified-holdings-llc.htm.jsonl",
+      "sha256": "1e262c2c8637b8b0099a8d6e2e059b2f830de754f71c47317ca958e2a4cfd724"
+    },
+    "EX99.1_2025-09-30_compass-group-diversified-holdings-llc_codidistributionpressrelea-htm.htm.jsonl": {
+      "path": "source-text/EX99.1_2025-09-30_compass-group-diversified-holdings-llc_codidistributionpressrelea-htm.htm.jsonl",
+      "sha256": "266c850b6a201149171c54950cfa7786be3780211bc26caf632431de70b70bff"
+    },
+    "EX99.1_2025-09-30_compass-group-diversified-holdings-llc_exhibit991earningsreleaseq-htm.htm.jsonl": {
+      "path": "source-text/EX99.1_2025-09-30_compass-group-diversified-holdings-llc_exhibit991earningsreleaseq-htm.htm.jsonl",
+      "sha256": "57617429773033bf22af5ef3630da97823e025097fe6783ec2272503a65388c5"
+    },
+    "EX99.1_2026-03-31_compass-group-diversified-holdings-llc_ex991sternoclosingpressrel-htm.htm.jsonl": {
+      "path": "source-text/EX99.1_2026-03-31_compass-group-diversified-holdings-llc_ex991sternoclosingpressrel-htm.htm.jsonl",
+      "sha256": "b9f965c5958388a925cf31b8ff50d7b4e1e8b6a1536ac9067f2627f756fad736"
+    },
+    "EX99.1_2026-03-31_compass-group-diversified-holdings-llc_exhibit991earningsreleaseq-htm.htm.jsonl": {
+      "path": "source-text/EX99.1_2026-03-31_compass-group-diversified-holdings-llc_exhibit991earningsreleaseq-htm.htm.jsonl",
+      "sha256": "5b129f07e5d57729c80de529c18f6d6d419b871b9c30d83128344b57e454959d"
+    },
+    "EX99.1_2026-06-30_compass-group-diversified-holdings-llc_exhibit991earningsreleaseq-htm.htm.jsonl": {
+      "path": "source-text/EX99.1_2026-06-30_compass-group-diversified-holdings-llc_exhibit991earningsreleaseq-htm.htm.jsonl",
+      "sha256": "9ead7f6decc022543239adbbd60a226da09ac39f8abe67681f5d2fb92f98a1f8"
+    },
+    "EX99.1_2026-09-30_compass-group-diversified-holdings-llc_exhibit991earningsreleaseq-htm.htm.jsonl": {
+      "path": "source-text/EX99.1_2026-09-30_compass-group-diversified-holdings-llc_exhibit991earningsreleaseq-htm.htm.jsonl",
+      "sha256": "70ce6b9af71ab4b1a26ed115ec6bebabf7b297ecce4ff2b0d78893fb90dc2860"
+    },
+    "context": {
+      "path": "../../../inputs/contexts/1345122-compass-group-diversified-holdings-llc.json",
+      "sha256": "b2eb61773779254f2e6bdee0a9a460e28fad2a3cdf0e18c4ecac6b79336ed25a"
+    }
+  },
+  "instructions": {
+    "CP-0": {
+      "path": "instructions/CP-0.md",
+      "sha256": "b20ac51046fd581d86eb0822c11787bcbb9c61d57dced3c7fc7d07faa0272b3e"
+    },
+    "CP-1": {
+      "path": "instructions/CP-1.md",
+      "sha256": "c0e71d618322aa2d4332e6f82770b6e3423f872f30510484fe4591fe53f50a4b"
+    },
+    "CP-1A": {
+      "path": "instructions/CP-1A.md",
+      "sha256": "d16181515177af69c7e37f606f315fd0cb1840c5ac2a2fb35c7ab72a9445a485"
+    },
+    "CP-2": {
+      "path": "instructions/CP-2.md",
+      "sha256": "77c67738168ff54011903d6a0232aacc36f0b82ae5bd02c4ddfc1b08922f1b7b"
+    }
+  },
+  "retained_handoffs": {},
+  "model": null,
+  "layout": {
+    "blocks": [
+      "key-findings",
+      "company-operating-model",
+      "model-chart-strip",
+      "financials-credit-metrics",
+      "strengths-weaknesses",
+      "company-profile",
+      "transaction-summary"
+    ],
+    "routes": [
+      {
+        "module_id": "CP-2",
+        "heading": "Key findings",
+        "kind": "prose",
+        "block_id": "key-findings",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company and operating model",
+        "kind": "table",
+        "block_id": "company-operating-model",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: leverage",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.1",
+        "value_columns": [
+          "Total debt / EBITDA",
+          "Net debt / EBITDA"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: interest cover",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.2",
+        "value_columns": [
+          "EBITDA / cash interest"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: liquidity",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.3",
+        "value_columns": [
+          "Cash",
+          "Undrawn committed facilities"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: debt maturities",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.4",
+        "value_columns": [
+          "Debt maturing"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Financials and credit metrics",
+        "kind": "table",
+        "block_id": "financials-credit-metrics",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-2",
+        "heading": "Strengths and weaknesses",
+        "kind": "prose",
+        "block_id": "strengths-weaknesses",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company profile",
+        "kind": "table",
+        "block_id": "company-profile",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Transaction summary and new debt issues",
+        "kind": "prose",
+        "block_id": "transaction-summary",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      }
+    ],
+    "scope": "User-launched Full credit assessment run for Compass Group Diversified Holdings LLC as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+    "title": "Compass Group Diversified Holdings LLC — Full credit assessment",
+    "question": null,
+    "issuer_aliases": []
+  },
+  "changes_note": "changes: first run of this pathway",
+  "selection": "explicit",
+  "execution": "host-session",
+  "max_attempts": 3,
+  "provider_cap_usd": "0"
+}

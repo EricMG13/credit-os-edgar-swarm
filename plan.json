@@ -1653,8 +1653,18 @@
       "pack": "/home/user/swarm-root/inputs/packs/1334978-clear-channel-outdoor-holdings-inc",
       "context": "/home/user/swarm-root/inputs/contexts/1334978-clear-channel-outdoor-holdings-inc.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-cco",
-      "status": "pending",
-      "attempts": 0
+      "status": "published",
+      "attempts": 4,
+      "claims": 1,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "exit_code": 0,
+      "reason": null,
+      "finished_at": "2026-11-18T13:19:34+00:00"
     },
     {
       "issuer_id": "lyv-1335258",
@@ -1664,8 +1674,18 @@
       "pack": "/home/user/swarm-root/inputs/packs/1335258-live-nation-entertainment-inc",
       "context": "/home/user/swarm-root/inputs/contexts/1335258-live-nation-entertainment-inc.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-lyv-1335258",
-      "status": "pending",
-      "attempts": 0
+      "status": "published",
+      "attempts": 4,
+      "claims": 1,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "exit_code": 0,
+      "reason": null,
+      "finished_at": "2026-11-18T13:19:50+00:00"
     },
     {
       "issuer_id": "issuer-1345122",
@@ -1675,8 +1695,18 @@
       "pack": "/home/user/swarm-root/inputs/packs/1345122-compass-group-diversified-holdings-llc",
       "context": "/home/user/swarm-root/inputs/contexts/1345122-compass-group-diversified-holdings-llc.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-issuer-1345122",
-      "status": "pending",
-      "attempts": 0
+      "status": "published",
+      "attempts": 4,
+      "claims": 1,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "exit_code": 0,
+      "reason": null,
+      "finished_at": "2026-11-18T13:20:10+00:00"
     },
     {
       "issuer_id": "mwa-1350593",
@@ -1686,8 +1716,18 @@
       "pack": "/home/user/swarm-root/inputs/packs/1350593-mueller-water-products-inc",
       "context": "/home/user/swarm-root/inputs/contexts/1350593-mueller-water-products-inc.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-mwa-1350593",
-      "status": "pending",
-      "attempts": 0
+      "status": "published",
+      "attempts": 4,
+      "claims": 1,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "exit_code": 0,
+      "reason": null,
+      "finished_at": "2026-11-18T13:20:26+00:00"
     },
     {
       "issuer_id": "kbr",

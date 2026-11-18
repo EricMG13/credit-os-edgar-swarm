@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for Clear Channel Outdoor Holdings, Inc. as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "25f5941e7738cbbb9cc441b22baccaa2ada8f37b47d3d88bed27566de603a4d3",
+    "CP-1.md": "7f724cc2b9c46a3c836f5109e1eec236b8a7f2286230922ec397ea6e09266c84",
+    "CP-1A.md": "26bf0b66e126210b93f3fdcc3ac591cbb6580b611359bac1ac4963ea6b2c8bdf",
+    "CP-2.md": "889fb1a29d8243b047aa16e5417d3eaa2956f54daf7ee774726d7b7cc8f6a2f9",
+    "coverage.json": "a7f678525fa5d4910d6efd218f28b67eafade59a93363eb2a231898a1d186f87",
+    "view.json": "0d261ddf7a6b58a11c315242ea2515ab402cfb9901b1c62315653755eb52fe9e",
+    "report-view.json": "4c7685a944d2ee286e9b65829b27e219a23146c260ccdf1186c2bb1380fdd543"
+  }
+}

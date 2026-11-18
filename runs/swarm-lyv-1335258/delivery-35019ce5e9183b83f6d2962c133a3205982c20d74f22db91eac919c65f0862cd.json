@@ -1,0 +1,210 @@
+{
+  "run": {
+    "schema_version": "run/2",
+    "run_id": "lyv-1335258-2026-11-18-credit_snapshot-host",
+    "issuer_id": "lyv-1335258",
+    "issuer_name": "Live Nation Entertainment, Inc.",
+    "as_of": "2026-11-18",
+    "method_version": "deploy-v-r14",
+    "case_kind": "public",
+    "pathway": "credit_snapshot",
+    "requested_modules": [
+      "CP-0",
+      "CP-1",
+      "CP-1A",
+      "CP-2"
+    ]
+  },
+  "handoffs": {
+    "CP-0": {
+      "path": "requests/CP-0/9e134e4d0e408502644cc5fe1b0bf89b3ab154d7699af75e4ed11efe72b11e7b/1.response.md",
+      "sha256": "90e63363a1182d799b5efb44f56ab03463e1972c1c6bb80cc5dfb70af07b57c4"
+    },
+    "CP-1": {
+      "path": "requests/CP-1/ec836768f8cc74460c999831912989ccfb528e9db0bdb553f80cf05fb9322151/1.response.md",
+      "sha256": "6692408afe04029babef3fd05b6448aea093efb865832b984fc484f1af84fc89"
+    },
+    "CP-1A": {
+      "path": "requests/CP-1A/cd32a2ea843aa3a68d8320fdf76d8c0d6a6bf1e99989290402161ac0b20ef4f0/1.response.md",
+      "sha256": "d48e8f3f11ef04bdd9e9c57321b537882db791bea7f3f571c6fb5fff604f3663"
+    },
+    "CP-2": {
+      "path": "requests/CP-2/c7dc952562a83155082aad619b1eb7a2e041049317317cbfc7f9e32d78991afb/1.response.md",
+      "sha256": "dfee4d5df1d29246516b89466367ef3ae41a0fb05778782a8658bffcaa9d103b"
+    }
+  },
+  "model": null,
+  "layout": {
+    "blocks": [
+      "key-findings",
+      "company-operating-model",
+      "model-chart-strip",
+      "financials-credit-metrics",
+      "strengths-weaknesses",
+      "company-profile",
+      "transaction-summary"
+    ],
+    "routes": [
+      {
+        "module_id": "CP-2",
+        "heading": "Key findings",
+        "kind": "prose",
+        "block_id": "key-findings",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company and operating model",
+        "kind": "table",
+        "block_id": "company-operating-model",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: leverage",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.1",
+        "value_columns": [
+          "Total debt / EBITDA",
+          "Net debt / EBITDA"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: interest cover",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.2",
+        "value_columns": [
+          "EBITDA / cash interest"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: liquidity",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.3",
+        "value_columns": [
+          "Cash",
+          "Undrawn committed facilities"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: debt maturities",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.4",
+        "value_columns": [
+          "Debt maturing"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Financials and credit metrics",
+        "kind": "table",
+        "block_id": "financials-credit-metrics",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-2",
+        "heading": "Strengths and weaknesses",
+        "kind": "prose",
+        "block_id": "strengths-weaknesses",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company profile",
+        "kind": "table",
+        "block_id": "company-profile",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Transaction summary and new debt issues",
+        "kind": "prose",
+        "block_id": "transaction-summary",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      }
+    ],
+    "scope": "User-launched Full credit assessment run for Live Nation Entertainment, Inc. as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+    "title": "Live Nation Entertainment, Inc. — Full credit assessment",
+    "question": null,
+    "issuer_aliases": []
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  }
+}
