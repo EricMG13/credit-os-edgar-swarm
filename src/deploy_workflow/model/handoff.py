@@ -1515,11 +1515,7 @@ class HandoffExecutor:
         call it was for not sent."""
         task.proceed()
         self.budget.reserve(call_id, usd, config_id=self.adapter.config_id)
-        try:
-            task.proceed()
-        except BaseException:
-            self.budget.release(call_id)
-            raise
+        self._last_look(task, call_id)
 
     def _run_module(self, task: HandoffTask) -> bytes:
         if task.draft is not None and self.redactor.bytes_(task.draft) != task.draft:
@@ -1887,6 +1883,25 @@ class HandoffExecutor:
                     reason=reason,
                 )
 
+    def _last_look(self, task: HandoffTask, call_id: str) -> None:
+        """Asked once more immediately before the call is handed to the adapter (the hold and the
+        turn event were written since ``_hold`` asked): a module the run can no longer accept
+        releases its hold and sends nothing. A call handed over before the launch stopped
+        cannot be recalled; it is settled when it returns."""
+        try:
+            task.proceed()
+        except BaseException:
+            self.budget.release(call_id)
+            raise
+
+    @staticmethod
+    def _known_failed(task: HandoffTask, known: bool, what: str) -> None:
+        """An exchange is known to end the module's run (``_turn`` raises at its end). CP-OS is
+        told at once, before the reply is priced, settled and logged, so that no other module
+        starts or begins a call meanwhile; the failure CP-OS raises is the one ``_turn`` raises."""
+        if known:
+            task.failed(RuntimeError(f"cpos_live_stopped: {what}"))
+
     def _turn(
         self, task: HandoffTask, folder: Path, digest: str, index: int, request: TurnRequest
     ) -> Turn:
@@ -1912,6 +1927,7 @@ class HandoffExecutor:
                 held_usd=str(reserved),
                 cap_usd=str(self.budget.cap_usd),
             )
+        self._last_look(task, call_id)
         started = time.time()
         self._last_call = index
         try:
@@ -1930,6 +1946,7 @@ class HandoffExecutor:
                 time.time(),
                 message=self._fault_text(exc),
             )
+        self._known_failed(task, reply.kind != "ok", reply.kind)
         reply = self._fresh(reply)
         received, failure = _caught(partial(self._receive, reply))
         fault: str | None = None  # one line, for the stop message
@@ -1945,6 +1962,8 @@ class HandoffExecutor:
             turn, usage, priced = received
         actual = _charge(reply, priced, turn, search_hold)
         fault_class = reply.error_class if reply.kind != "ok" else "BadTurn"  # as loop.py
+        # an ``ok`` reply that cannot be used ends the run too
+        self._known_failed(task, turn is None or actual is None, f"{reply.kind}; charge={actual}")
         overrun = False
         try:
             if reply.kind == "not_sent":
@@ -1953,6 +1972,7 @@ class HandoffExecutor:
                 self.budget.settle(call_id, actual)
         except OverrunStop:
             overrun = True
+            self._known_failed(task, overrun, f"{reply.kind}; overrun=True")
         self.log.append(
             CallRecord.build(
                 self.redactor,

@@ -38,10 +38,15 @@ unknown charge, which stops the run); and the Windows runtime. The first live ru
 
 ## Known differences from one at a time, at a width above 1
 
-- A failure stops new starts at once: the failing module's thread reports it before it cleans up,
-  and nothing starts after that. A module already in flight after the failed one in the plan has
-  been started, and may have been charged for the calls it made before the failure; it sends no
-  further call. One at a time it would not have started.
+- A failure stops new starts at once: the failing module's thread reports it as soon as the
+  reply is known bad, before it settles, logs or cleans up, and from that report nothing starts.
+  A module after the failed one in the plan had already been started and may have been charged
+  for the calls it made before the report. It asks whether it may go on immediately before each
+  call and is refused once the report is made; a call that passed that last look before the
+  report, or was already with the provider, cannot be recalled, and is settled when it returns.
+  Measured on the synthetic case, in two runs of 80 failures each no call began after the report;
+  2 and 6 calls began in the fraction of a millisecond between the provider's bad reply and the
+  report. One at a time the module would not have started.
 - Such a module is left stranded. It was halted with its request retained and no answer, so after
   the failed module alone is repaired the relaunch stops at it with `cpos_interrupted: response not
   retained for <module>`, where a one-at-a-time folder, in which it never started, goes on. Nothing
@@ -58,7 +63,10 @@ unknown charge, which stops the run); and the Windows runtime. The first live ru
   one at a time; if the module needed another call it is stranded as above.
 - An interrupt (Ctrl-C) halts every module in flight and waits for their threads to end, each at
   its next call or check or when the call it has out returns, before the launcher exits with the
-  interrupt's status; a second interrupt does not wait. One at a time the launcher exits at once.
+  interrupt's status. A second interrupt ends that wait: the launcher exits at once and abandons
+  the calls still out, whose holds stay open as after a kill, so the relaunch treats the folder as
+  it treats a killed one (it stops on the open holds and the unanswered requests). One at a time
+  the launcher exits at once.
   A terminated or killed process ends at once at any width.
 - The event log, the call log and the library's copy of the call log are in the order things
   happened, so their line order differs between widths. The call log's contents are the same. The

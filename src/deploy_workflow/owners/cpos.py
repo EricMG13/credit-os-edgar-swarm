@@ -21,7 +21,7 @@ import sys
 import threading
 import warnings
 from collections.abc import Callable, Iterator, Mapping, Sequence
-from concurrent.futures import FIRST_COMPLETED, Future, ThreadPoolExecutor, wait
+from concurrent.futures import FIRST_COMPLETED, Future, wait
 from dataclasses import dataclass, field, replace
 from datetime import date
 from decimal import Decimal
@@ -203,8 +203,10 @@ class HandoffTask:
     # Raises ``ModuleHalted`` once the launch can no longer accept this module; the executor asks
     # before each paid exchange, so a module in flight stops at its next call.
     proceed: Callable[[], None] = _proceed
-    # Called by the executor with the failure of this module's run the moment it is raised,
-    # before the session is drained: with modules in flight at once, nothing starts after it.
+    # Called by the executor the moment this module's run is known to have failed: when a
+    # reply is known bad, before the settlement and the log are written, and again with the
+    # failure raised, before the session is drained. With modules in flight at once, nothing
+    # starts after it and no module after this one sends another call.
     failed: Callable[[Exception], None] = _unheard
 
 
@@ -435,7 +437,6 @@ class _Board:
         self._stopped = len(ordered)  # the place of the earliest module that was not accepted
         self._held = len(ordered)  # the place of the module an observer stopped the run at
         self.failed: dict[str, Exception] = {}  # reported by a module's thread as it fails
-        self.heard: Future[None] = Future()  # done once a failure was reported: wakes the loop
 
     def __enter__(self) -> None:
         self._changed.acquire()
@@ -449,19 +450,14 @@ class _Board:
             self._changed.notify_all()
 
     def report(self, module_id: str, error: Exception) -> None:
-        """A module's thread says its run has failed, before it cleans up after itself."""
+        """A module's thread says its run has failed, before it cleans up after itself. From
+        this instant no module after it is accepted or passes ``proceed``, whatever the scheduler
+        is doing, and the scheduler, which reads the reports with the board held before each
+        start, starts nothing."""
         with self._changed:
             self.failed.setdefault(module_id, error)
-            if not self.heard.done():
-                self.heard.set_result(None)
-
-    def listen(self) -> Future[None]:
-        """What the scheduler waits on beside the modules in flight, taken before it reads the
-        reports: a report made after this is not missed."""
-        with self._changed:
-            if self.heard.done():
-                self.heard = Future()
-            return self.heard
+            self._stopped = min(self._stopped, self._index[module_id])
+            self._changed.notify_all()
 
     def stop_after(self, module_id: str | None) -> None:
         """No module after ``module_id`` in the plan (after none: no module at all) can be
@@ -500,6 +496,39 @@ class _Board:
             if self._stopped < place:
                 self.proceed(module_id)
             return {m: self._handoffs[m] for m in earlier}
+
+
+class _Threads:
+    """The threads of the modules in flight, one each. The scheduler bounds how many there are
+    (it starts a module only while fewer than the width are unfinished). They are daemon threads:
+    a launch that is interrupted twice leaves without them."""
+
+    def __init__(self) -> None:
+        self._threads: list[threading.Thread] = []
+
+    def submit(
+        self,
+        work: Callable[[_Board, HandoffTask], tuple[bytes, str]],
+        board: _Board,
+        task: HandoffTask,
+    ) -> Future[tuple[bytes, str]]:
+        future: Future[tuple[bytes, str]] = Future()
+
+        def fly() -> None:
+            try:
+                future.set_result(work(board, task))
+            except BaseException as error:  # noqa: BLE001 -- handed to the scheduler
+                future.set_exception(error)
+
+        thread = threading.Thread(target=fly, name=f"cpos-module-{task.module_id}", daemon=True)
+        self._threads.append(thread)
+        thread.start()
+        return future
+
+    def join(self) -> None:
+        """Wait for every module thread to end."""
+        for thread in self._threads:
+            thread.join()
 
 
 class _Before(Mapping[str, bytes]):
@@ -684,30 +713,30 @@ class _ModuleLoop:
         An interrupt of this thread halts every module in flight and waits for their threads to
         end (each at its next call or check, or when the call it has out returns) before it
         propagates: no module thread is left running under an interpreter that is shutting down,
-        and the process ends with the interrupt's own exit status. A second interrupt does not
-        wait."""
+        and the process ends with the interrupt's own exit status. A second interrupt ends that
+        wait and propagates at once. The module threads are daemon threads, so the process then
+        exits without them: a call still out is abandoned and its hold stays open, as after a
+        kill, and the relaunch treats the folder as it treats a killed one."""
         board = _Board(self.ordered, self.handoffs)
-        pool = ThreadPoolExecutor(max_workers=width, thread_name_prefix="cpos-module")
+        pool = _Threads()
         try:
             while True:
-                # Taken before landing: a module that finishes, or a failure reported, after this
-                # is still waited for, the wait returns at once and the next round acts on it.
-                # Reading them after would leave a finished module unlanded while the modules that
-                # wait for it at their checks are waited for.
+                # Taken before landing: a module that finishes after this is still waited for,
+                # the wait returns at once and the next round lands it. Reading it after would
+                # leave it unlanded while the modules that wait for it at their checks are
+                # waited for.
                 flying = [future for _, future in self.flights.values() if not future.done()]
-                heard = board.listen()
                 self._land(board)
                 started = set(self.flights)
                 self._take_off(board, pool, width)
                 flying += [self.flights[m][1] for m in self.flights.keys() - started]
                 if not flying:
                     break
-                waited: list[Future[Any]] = [*flying, heard]
-                wait(waited, return_when=FIRST_COMPLETED)
+                wait(flying, return_when=FIRST_COMPLETED)
         finally:
             # Also on an interrupt of this thread: no module in flight makes another call.
             board.stop_after(None)
-            pool.shutdown(wait=True, cancel_futures=True)
+            pool.join()
         if self.failures:
             raise self._cause()
         if self.not_produced is None and set(self.selected) != set(self.ordered):
@@ -720,6 +749,13 @@ class _ModuleLoop:
         overrun) is not the cause while the module whose call stopped the run is among the
         failed: the run's recorded reason is the stop itself, a cap or an overrun as ``budget``,
         at any width."""
+        for module_id, (_, future) in self.flights.items():
+            # what the module's run raised in the end, not what it reported on the way
+            raised = future.exception() if future.done() else None
+            if module_id in self.failures and isinstance(raised, Exception):
+                self.failures[module_id] = (
+                    self.failures[module_id] if isinstance(raised, ModuleHalted) else raised
+                )
         failed = [m for m in self.ordered if m in self.failures]
         causes = [m for m in failed if not _stopped_by_another(self.failures[m])] or failed
         cause = self.failures[causes[0]]
@@ -728,7 +764,7 @@ class _ModuleLoop:
                 cause.add_note(f"{module_id} also stopped: {with_notes(self.failures[module_id])}")
         return cause
 
-    def _take_off(self, board: _Board, pool: ThreadPoolExecutor, width: int) -> None:
+    def _take_off(self, board: _Board, pool: _Threads, width: int) -> None:
         """Start the modules not yet started, in plan order, while a slot is free and the next
         one's producers are all accepted. Nothing starts once a module has failed, or once CP-8
         is known not to be produced. The board is held for the whole decision, the failures read
@@ -738,7 +774,7 @@ class _ModuleLoop:
         with board:
             self._start(board, pool, width)
 
-    def _start(self, board: _Board, pool: ThreadPoolExecutor, width: int) -> None:
+    def _start(self, board: _Board, pool: _Threads, width: int) -> None:
         """``_take_off`` with the board held."""
         for module_id in self.ordered:
             if module_id in self.flights:
@@ -782,16 +818,16 @@ class _ModuleLoop:
 
     def _note_failures(self, board: _Board) -> None:
         """Keep the failure of every module that has reported one, or finished with one, wherever
-        it is in the plan, and halt the modules after it: a failure is acted on when it happens,
-        not when the modules before it have been accepted, nor when the failed module's thread
-        has finished cleaning up. A module that only halted has not failed, and a CP-8 the run
-        goes on without has not either (``_unaccepted``)."""
+        it is in the plan: a failure is acted on when it happens, not when the modules before it
+        have been accepted, nor when the failed module's thread has finished cleaning up (its
+        report has already halted the modules after it, ``_Board.report``). A module that only
+        halted has not failed, and a CP-8 the run goes on without has not either
+        (``_unaccepted``)."""
         for module_id, (_, future) in self.flights.items():
             if module_id not in self.handoffs and module_id not in self.failures:
                 found = board.failed.get(module_id) or self._failure(module_id, future)
                 if found is not None:
                     self.failures.setdefault(module_id, found)
-                    board.stop_after(module_id)
 
     def _failure(self, module_id: str, future: Future[tuple[bytes, str]]) -> Exception | None:
         found = future.exception() if future.done() else None
@@ -820,9 +856,14 @@ class _ModuleLoop:
                 quiet = quiet or module_id in self.failures  # the observer stopped the run here
                 continue
             flight = self.flights.get(module_id)
-            if flight is None or not flight[1].done() or flight[1].exception() is not None:
+            if flight is None or not flight[1].done():
                 break
             task, future = flight
+            if future.exception() is not None:
+                # It ended without an answer (failed, or halted for a review): it will not be
+                # accepted in this launch, so no module after it waits at its check for it.
+                board.stop_after(module_id)
+                break
             raw, path = future.result()
             board.accept(module_id, raw)
             if not quiet:

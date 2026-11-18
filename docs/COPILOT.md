@@ -72,8 +72,10 @@ no answer kept. After the failed module is repaired, the relaunch stops with
 `cpos_interrupted: response not retained for <module>` at each such module:
 repair it the same way (a changed instruction gives it a new request) or start a
 new run folder. Nothing is sent or charged twice. Ctrl-C at a width above 1 waits
-for the calls already out to return before the launcher exits; a second Ctrl-C
-does not wait. The ruling lists every known difference.
+for the calls already out to return before the launcher exits. A second Ctrl-C
+exits at once and abandons those calls: their holds stay open, as after a kill,
+and the relaunch stops on them as it does after a kill. The ruling lists every
+known difference.
 
 Add `--live --ruling docs/rulings/<file>.md` only for a separately authorized
 paid CLI run. The ruling must name the configuration. In the connected app,
