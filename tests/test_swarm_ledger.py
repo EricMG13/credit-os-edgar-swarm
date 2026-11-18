@@ -88,8 +88,14 @@ def test_running_entry_without_claim_time_is_reclaimed(tmp_path: Path) -> None:
 
 def test_done_records_attempts_exit_code_and_clears_claim(tmp_path: Path) -> None:
     path = _plan(tmp_path, 1)
-    ledger.claim(tmp_path, 1, clock=lambda: T0)
-    ledger.done(tmp_path, "co0", {"CP-0": 1, "CP-1": 3, "CP-2": 2}, clock=lambda: T0)
+    (claimed,) = ledger.claim(tmp_path, 1, clock=lambda: T0)
+    ledger.done(
+        tmp_path,
+        "co0",
+        {"CP-0": 1, "CP-1": 3, "CP-2": 2},
+        claim=claimed["claims"],
+        clock=lambda: T0,
+    )
     stored = json.loads(path.read_text())["issuers"][0]
     assert stored["status"] == "published"
     assert stored["attempts_by_module"] == {"CP-0": 1, "CP-1": 3, "CP-2": 2}
@@ -101,25 +107,52 @@ def test_done_records_attempts_exit_code_and_clears_claim(tmp_path: Path) -> Non
 def test_done_refuses_over_cap_and_unclaimed(tmp_path: Path) -> None:
     path = _plan(tmp_path, 2)
     with pytest.raises(ledger.LedgerError, match="not running"):
-        ledger.done(tmp_path, "co0", {"CP-0": 1})
-    ledger.claim(tmp_path, 1)
+        ledger.done(tmp_path, "co0", {"CP-0": 1}, claim=1)
+    (claimed,) = ledger.claim(tmp_path, 1)
     with pytest.raises(ledger.LedgerError, match="over the cap"):
-        ledger.done(tmp_path, "co0", {"CP-1A": 4})
+        ledger.done(tmp_path, "co0", {"CP-1A": 4}, claim=claimed["claims"])
     with pytest.raises(ledger.LedgerError, match="at least 1"):
-        ledger.done(tmp_path, "co0", {"CP-1A": 0})
+        ledger.done(tmp_path, "co0", {"CP-1A": 0}, claim=claimed["claims"])
     with pytest.raises(ledger.LedgerError, match="not in the plan"):
-        ledger.done(tmp_path, "nope", {"CP-0": 1})
+        ledger.done(tmp_path, "nope", {"CP-0": 1}, claim=claimed["claims"])
+    assert _statuses(path)["co0"] == "running"
+
+
+def test_done_refuses_empty_attempts_and_nonzero_exit(tmp_path: Path) -> None:
+    _plan(tmp_path, 1)
+    (claimed,) = ledger.claim(tmp_path, 1)
+    with pytest.raises(ledger.LedgerError, match="at least one module"):
+        ledger.done(tmp_path, "co0", {}, claim=claimed["claims"])
+    with pytest.raises(ledger.LedgerError, match="exit code 0"):
+        ledger.done(tmp_path, "co0", {"CP-0": 1}, claim=claimed["claims"], exit_code=3)
+    assert _statuses(ledger.plan_path(tmp_path))["co0"] == "running"
+
+
+def test_old_claim_cannot_finish_after_stale_claim_is_reclaimed(tmp_path: Path) -> None:
+    path = _plan(tmp_path, 1)
+    (old_claim,) = ledger.claim(tmp_path, 1, clock=lambda: T0)
+    (new_claim,) = ledger.claim(
+        tmp_path, 1, stale_seconds=1, clock=lambda: T0 + timedelta(seconds=2)
+    )
+    assert new_claim["claims"] == old_claim["claims"] + 1
+    with pytest.raises(ledger.LedgerError, match="claim 1 was replaced"):
+        ledger.done(tmp_path, "co0", {"CP-0": 1}, claim=old_claim["claims"])
     assert _statuses(path)["co0"] == "running"
 
 
 def test_fail_keeps_reason_and_second_pass_claims_only_failed(tmp_path: Path) -> None:
     path = _plan(tmp_path, 3)
-    ledger.claim(tmp_path, 3)
+    claimed = ledger.claim(tmp_path, 3)
     ledger.fail(
-        tmp_path, "co0", "CP-1A rejected 3 times", exit_code=1, attempts_by_module={"CP-1A": 4}
+        tmp_path,
+        "co0",
+        "CP-1A rejected 3 times",
+        claim=claimed[0]["claims"],
+        exit_code=1,
+        attempts_by_module={"CP-1A": 4},
     )
-    ledger.done(tmp_path, "co1", {"CP-0": 1})
-    ledger.skip(tmp_path, "co2", "no filings of interest")
+    ledger.done(tmp_path, "co1", {"CP-0": 1}, claim=claimed[1]["claims"])
+    ledger.skip(tmp_path, "co2", "no filings of interest", claim=claimed[2]["claims"])
     stored = json.loads(path.read_text())["issuers"][0]
     assert (stored["status"], stored["reason"], stored["exit_code"]) == (
         "failed",
@@ -134,17 +167,17 @@ def test_fail_keeps_reason_and_second_pass_claims_only_failed(tmp_path: Path) ->
 
 def test_fail_and_skip_need_a_reason(tmp_path: Path) -> None:
     _plan(tmp_path, 1)
-    ledger.claim(tmp_path, 1)
+    (claimed,) = ledger.claim(tmp_path, 1)
     with pytest.raises(ledger.LedgerError, match="reason"):
-        ledger.fail(tmp_path, "co0", "  ")
+        ledger.fail(tmp_path, "co0", "  ", claim=claimed["claims"])
     with pytest.raises(ledger.LedgerError, match="reason"):
-        ledger.skip(tmp_path, "co0", "")
+        ledger.skip(tmp_path, "co0", "", claim=claimed["claims"])
 
 
 def test_resume_keeps_statuses_and_claims_what_is_left(tmp_path: Path) -> None:
     path = _plan(tmp_path, 4)
-    ledger.claim(tmp_path, 2, clock=lambda: T0)
-    ledger.done(tmp_path, "co0", {"CP-0": 1}, clock=lambda: T0)
+    claimed = ledger.claim(tmp_path, 2, clock=lambda: T0)
+    ledger.done(tmp_path, "co0", {"CP-0": 1}, claim=claimed[0]["claims"], clock=lambda: T0)
     # The session stops here: co1 stays running. A new session claims after the stale limit.
     resumed = ledger.claim(tmp_path, 10, stale_seconds=60, clock=lambda: T0 + timedelta(hours=2))
     assert [i["issuer_id"] for i in resumed] == ["co1", "co2", "co3"]
@@ -189,11 +222,14 @@ def test_cli_round_trip(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> N
     assert ledger.main([*root, "next", "--n", "1"]) == 0
     claimed = json.loads(capsys.readouterr().out)
     assert [c["issuer_id"] for c in claimed] == ["co0"]
-    assert ledger.main([*root, "done", "co0", "--attempts-by-module", '{"CP-0": 1}']) == 0
+    assert (
+        ledger.main([*root, "done", "co0", "--claim", "1", "--attempts-by-module", '{"CP-0": 1}'])
+        == 0
+    )
     assert ledger.main([*root, "status"]) == 0
     assert json.loads(capsys.readouterr().out.splitlines()[-1])["published"] == 1
-    assert ledger.main([*root, "done", "co1", "--attempts-by-module", "[1]"]) == 2
-    assert ledger.main([*root, "fail", "co1", "--reason", "x"]) == 2  # Not running.
+    assert ledger.main([*root, "done", "co1", "--claim", "1", "--attempts-by-module", "[1]"]) == 2
+    assert ledger.main([*root, "fail", "co1", "--claim", "1", "--reason", "x"]) == 2  # Not running.
 
 
 def test_missing_plan_is_refused(tmp_path: Path) -> None:

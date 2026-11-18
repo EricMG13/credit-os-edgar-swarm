@@ -133,7 +133,8 @@ def test_two_issuers_run_through_cp2_verify_publish_and_list_in_the_library():
     try:
         claimed = ledger(root, "next", "--n", "2")
         assert claimed.returncode == 0, claimed.stderr
-        assert [i["issuer_id"] for i in json.loads(claimed.stdout)] == ["alph", "beta"]
+        claims = {i["issuer_id"]: i["claims"] for i in json.loads(claimed.stdout)}
+        assert list(claims) == ["alph", "beta"]
         for issuer_id in ("alph", "beta"):
             code, attempts = drive(root, issuer_id, reject={})
             assert code == 0
@@ -142,7 +143,15 @@ def test_two_issuers_run_through_cp2_verify_publish_and_list_in_the_library():
             check = uv(str(SWARM / "run_issuer.py"), issuer_id, "--root", str(root), "verify")
             assert check.returncode == 0, check.stderr
             assert files_under(Path(plan_of(root)[issuer_id]["run_folder"])) == before
-            done = ledger(root, "done", issuer_id, "--attempts-by-module", json.dumps(attempts))
+            done = ledger(
+                root,
+                "done",
+                issuer_id,
+                "--claim",
+                str(claims[issuer_id]),
+                "--attempts-by-module",
+                json.dumps(attempts),
+            )
             assert done.returncode == 0, done.stderr
         final = plan_of(root)
         assert {k: v["status"] for k, v in final.items()} == {
@@ -179,12 +188,22 @@ def test_two_issuers_run_through_cp2_verify_publish_and_list_in_the_library():
 def test_resubmissions_within_the_cap_publish_and_beyond_it_fail_then_second_pass_reclaims():
     root = two_issuer_root()
     try:
-        assert ledger(root, "next", "--n", "2").returncode == 0
+        first_claims = ledger(root, "next", "--n", "2")
+        assert first_claims.returncode == 0
+        claims = {i["issuer_id"]: i["claims"] for i in json.loads(first_claims.stdout)}
         # alph: CP-1 rejected twice (the 2 resubmissions the rule allows), accepted on attempt 3.
         code, attempts = drive(root, "alph", reject={"CP-1": 2})
         assert code == 0
         assert attempts == {"CP-0": 1, "CP-1": 3, "CP-1A": 1, "CP-2": 1}
-        done = ledger(root, "done", "alph", "--attempts-by-module", json.dumps(attempts))
+        done = ledger(
+            root,
+            "done",
+            "alph",
+            "--claim",
+            str(claims["alph"]),
+            "--attempts-by-module",
+            json.dumps(attempts),
+        )
         assert done.returncode == 0, done.stderr
         # beta: CP-0 rejected three times, beyond the cap; the launcher stops with exit 1.
         code, attempts = drive(root, "beta", reject={"CP-0": 3})
@@ -192,7 +211,14 @@ def test_resubmissions_within_the_cap_publish_and_beyond_it_fail_then_second_pas
         assert attempts == {"CP-0": 3}
         failed = ledger(
             root,
-            *("fail", "beta", "--reason", "CP-0 rejected 3 times"),
+            *(
+                "fail",
+                "beta",
+                "--claim",
+                str(claims["beta"]),
+                "--reason",
+                "CP-0 rejected 3 times",
+            ),
             *("--attempts-by-module", json.dumps(attempts), "--exit-code", "1"),
         )
         assert failed.returncode == 0, failed.stderr

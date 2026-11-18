@@ -1829,22 +1829,40 @@ def _host_request(prepared: Prepared, path: Path) -> str:
     request = json.loads(path.read_bytes())
     module = request["module_id"]
     base = prepared.manifest.parent
-    accepted = {_sha(p.read_bytes()): p for p in prepared.directory.glob("requests/*/*/*.md")}
+    source_lines = []
+    for name, digest in request["sources"].items():
+        if name in prepared.plan.sources:
+            source_path = (base / prepared.plan.sources[name].path).resolve()
+        else:
+            if re.fullmatch(r"[0-9a-f]{64}", digest) is None:
+                raise ValueError(f"invalid retained source digest for {name}")
+            source_path = prepared.directory / "inputs" / digest
+            if not source_path.is_file() or _sha(source_path.read_bytes()) != digest:
+                raise ValueError(f"retained source is missing or changed: {name}")
+        source_lines.append(f"Source:   {name} sha256 {digest} at {source_path}")
+
+    handoff_lines = []
+    for name, digest in request["handoffs"].items():
+        accepted = next(
+            (
+                candidate
+                for candidate in (prepared.directory / "requests" / name).glob("*/*.md")
+                if _sha(candidate.read_bytes()) == digest
+            ),
+            None,
+        )
+        if accepted is None:
+            raise ValueError(f"accepted handoff is missing or changed: {name}")
+        handoff_lines.append(f"Handoff:  {name} sha256 {digest} at {accepted}")
+
     return "\n".join(
         (
             f"Answer needed: {module}, attempt {request['attempt']}/{prepared.plan.max_attempts}",
             f"Method:   {base / prepared.plan.instructions[module].path}",
             f"Request:  {path}",
             f"Answer:   {_answer_of(path)}",
-            *(
-                f"Source:   {name} sha256 {digest} at "
-                f"{(base / prepared.plan.sources[name].path).resolve()}"
-                for name, digest in request["sources"].items()
-            ),
-            *(
-                f"Handoff:  {name} sha256 {digest} at {accepted[digest]}"
-                for name, digest in request["handoffs"].items()
-            ),
+            *source_lines,
+            *handoff_lines,
             *(f"Feedback: {issue}" for issue in request["feedback"]),
             "Write the answer as UTF-8 Markdown at the Answer path, then run the same command.",
         )

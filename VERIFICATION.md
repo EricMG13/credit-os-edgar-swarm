@@ -4,6 +4,93 @@ Keep one running record here. A pass applies only to the stated scope. Earlier v
 engine is in [EricMG13/final-workflow](https://github.com/EricMG13/final-workflow)'s
 `VERIFICATION.md`, which also keeps the retained runs this copy leaves out.
 
+## 2026-11-18 — Codex issuer swarm and local library
+
+- Six reports delivered through Fundamental credit (CP-0, CP-1, CP-1A and CP-2):
+  American Airlines, Caesars, Churchill Downs, Dycom, Iron Mountain and Olin.
+  Actual Codex host responses consumed by the native CP-OS launcher with zero provider
+  API calls. Source cutoff 2026-11-05. The native pathway badge says Full credit
+  assessment, while this selection ends at CP-2. Forecast pages show retained charts
+  and an explicit gap. The batch produced no forecast or HTML Model/calculation JSON.
+- Source inventory from SECData `30f8f96848f3f9b668742cf66dbf888a597e5425` and the
+  owner's 242-name HY list. Registered 102 issuer input pairs, completed six and
+  left 96 queued. All 140 exclusions lacked a filing pack in the retained snapshot.
+  Input copies and 1,058 hashes are under the batch root. No ratings were inferred
+  from provisional list entries.
+- Latest credit-os2 main at launch `b2b236010e2b904e46305a0211ebcf5cd2448dc7`.
+  Existing host adapter applied without functional changes in isolated checkout
+  `../credit-os-edgar-swarm-runs/credit-os2-b2b23601`. Host function bytes match the
+  previously reviewed tournament winner. Confidence review rechecked provider refusal,
+  immutable pins, repeated launch and tamper refusal on this baseline. The 41 focused
+  tests, quality gate (zero findings in eight files) and production web build passed.
+- Source review corrected filing dates, Olin's previously redeemed notes, the October
+  Churchill Downs refinancing and adjusted earnings, Dycom's consolidated versus
+  Communications EBITDA, and American Airlines' subsidiary cash-flow perimeter.
+  Browser fidelity found Dycom's missing lead source trace and passed after a fresh
+  delivery with the source attached. Prior responses and superseded runs remain preserved.
+- Native relaunch checks for all six completed with no new files. Integrity audit verified
+  48 source/context pins, request dependency hashes and exact delivery bytes. Browser
+  proof checked 30 pages, six lead passages and source traces, 24 matching downloads,
+  sampled chart tables and zero JavaScript errors. Read-only POST returned 405. This
+  was a sampled source and presentation check.
+- Workspace `../credit-os-edgar-swarm-runs/swarm-codex-20261117/` contains
+  `swarm/plan.json`, `swarm/delivery-proof.jsonl`, `swarm/reader-proof.json` and
+  `host-adapter.patch` (SHA-256
+  `f52c4fc29e010c76297a6caf66c69cd79e44ceabdf4a2e4122d4ff89fb06f612`).
+  Read-only local library at `http://127.0.0.1:52093/`.
+
+## 2026-11-17 — Codex pilot on latest credit-os2
+
+- Outcome: five actual Codex host-session cases requested through Source readiness,
+  Financial foundation, Business & governance and Fundamental credit (CP-0/1/1A/2).
+  AdaptHealth and GFL completed those modules and library delivery; American Airlines,
+  Dycom and Caesars exhausted three CP-0 submissions and have no delivery. This is a
+  bounded partial-pathway pilot, not full credit assessment or a clean quality pass.
+- Engine: latest `EricMG13/credit-os2` main at launch,
+  `2b881075e51459592bb629ed8abe7ee24e4fa1d9`, verified through GitHub and `git ls-remote`,
+  isolated in `../credit-os-edgar-swarm-runs/credit-os2-2b881075`, branch
+  `codex/latest-engine-pilot`. Existing host adapter ported; native methods and delivery
+  retained. No commit/push or predecessor/historical-run change.
+- Retention: `../credit-os-edgar-swarm-runs/pilot-codex2-20261117/` holds inputs, contexts,
+  requests, 21 actual response submissions, reviews and deliveries. Evidence cutoff
+  2026-11-05; AdaptHealth added from SECData `30f8f96848f3f9b668742cf66dbf888a597e5425`.
+  Audit: 48 input hashes, 40 source/context pins, 20 instruction hashes, all eight accepted
+  handoff hashes and downstream consumption match; cap respected. Both completed runs
+  relaunch exit 0 without new files. Library lists two completed runs, excludes three failures.
+- Scope exclusions: no later modules, forecast model, HTML Model or calculation JSON.
+  Changes correctly states first run; Forecast states no model and draws existing charts.
+  Native pathway badge still says Full credit assessment: recorded scope-label limitation.
+- Fidelity: real Chrome, all five pages for both completed cases; exact fundamental
+  bottom lines, sampled financial/period/currency cells, notes-only maturity qualification,
+  eight downloaded handoffs byte-identical, two source drawers, no source filenames/hashes
+  in inspected finding views, no JavaScript errors. Both module views fit 390 px. Parent
+  inspected Overview and desktop/mobile principal screenshots. Not a full claim audit.
+- Confirmed defect repaired: principal metric dropped its Basis and limitation, making
+  AdaptHealth's selected USD 1,100.000m notes appear unqualified. Full reader-safe basis
+  now remains visible, including total principal USD 1,894.969m; reference-bearing basis
+  withholds the metric. Legacy no-Basis behavior preserved. Three regressions added.
+- Confidence review traced metric callers/rendering, missing/invalid data, reference
+  leakage, completed-relaunch validation and source identities. Unsafe completion-file
+  shortcut removed; native delivery plus accepted bytes verified. Tamper refused. Host
+  rejects provider options. Mixed empty-event row validator-defect hypothesis refuted;
+  raw HTML and parsed JSONL hashes correctly remain distinct representations.
+- Rewrite tournaments: host Snippet C extracted private completion validation; provider
+  gates retained. Principal incumbent holds after speed/memory/readability comparison.
+  GitNexus lacked this checkout; rg callers and typechecks supplied the impact set.
+- Checks: final host/swarm 41 passed; broader pre-extraction launcher 995 passed,
+  one paid-provider test skipped (134.48 s). Parent final report-view 38 passed, focused
+  ESLint/Prettier, TypeScript and production build passed. Final quality gate: zero findings
+  in eight changed Python files / 2,268 scope lines. Diff checks pass. No full suite/API run.
+- Unresolved analytical finding: GFL CP-0 Bottom line/T2/T4/T6/P3 claims annual audited
+  statements available; five-page 40-F only incorporates absent exhibits 99.2/99.3
+  (pp. 2–5). Financial/fundamental handoffs correctly flag missing annual statements.
+  Accepted CP-0 bytes retained at retry cap; this prevents a clean analytical quality pass.
+- Artifacts: `pilot-inputs.json`, `pilot-results.json`, `swarm/plan.json` and
+  `proof-artifacts/{integrity.json,reader-proof.json,reader-proof.mjs}` record scope/results.
+  Host patch SHA-256 `54c9bbfe7abd184fb460f6cf9130f3b8a6e1cf29e6a945c2b97235a6a7731706`;
+  combined final patch `8d22e936d4a5c2ebb0dedb59d1f506a387842bb5ce15645afd9471e4e894fd98`.
+  No external provider calls; Codex token use unavailable, no Sonnet/cost comparison.
+
 ## 2026-11-16 — Reader: year-on-year comparator on metric cards; colour by a fixed better/worse table (branch `claude/reports-formatting-updates-cfb43a`, not pushed)
 
 Scope: the catalogue's headline metrics (`src/deploy_workflow/credit_os_catalogue.py`: `chart_rows`, `prior_metric`, `handoff_metrics`) and the connected reader (`web/src/pages/connected/{signal.ts,HeadlineFigures.tsx,reportView.ts,report/YearChange.tsx,report/Changes.tsx,report/IdentityBand.tsx}`, `web/src/pages/library/{slice.ts,parts/MetricTile.tsx,parts/ChangeCard.tsx}`). Sits on the entry below.
@@ -896,104 +983,3 @@ Scope: presentation only, all under `web/`; no backend, handoff, provider or mod
   OpenRouter credential did not supply the direct Anthropic key it requires, and
   the available sample pack lacks the evidence for a complete analytical report.
   See [React workflow](docs/react-workflow.md).
-
-## 2026-11-15 — Restructure, second part: removals, method provenance, CP-3C and CP-6A, review (branch `claude/busy-dijkstra-bgex9m`, PR #126)
-
-Scope is **offline only**. No provider or model was called. No model has written a CP-3C or CP-6A
-handoff for the full credit assessment under the new instructions: that needs the owner's paid run.
-This entry follows the one below and its checks supersede that entry's totals.
-
-- Removed, code that no used entry point, journal registry, rule list or test reaches (5,181 lines,
-  no test removed): the Deploy VII earnings owner runtime (`earnings_workflow.py` 4,604 to 689
-  lines; `compose_delta` and what it reaches stay for CP-1B), `owner_workflow`'s JSON-lines
-  transport and `python -m` entry, CP-OS's `navigation`/`verify_navigation`, and 85 uncalled reader
-  and compute definitions in 16 module files. Checked independently: no kept top-level definition
-  changed (AST, docstrings aside), no removed name is referenced, no undefined name in `src`,
-  `apps` or `tools`. Launcher offline preparation, 10 runs over 7 pathways on synthetic input:
-  identical before and after each stage. Kept for the owner's decision: the `OwnerWorkflow` journal
-  chain (`model_testing`, `run_pathway`, `model.loop`), which a 2026-11-13 ruling and `tests/model`
-  still rely on.
-- Method provenance: `manifest.json` gives `source_revision` with its basis for 15 more files; 19
-  files say "not recorded at import; bytes pinned by sha256" (cp-os was not reachable; two of them
-  had been attributed to cp-os `b57a344` wrongly); a `project_files` list registers the three
-  project method files; three unregistered CP-3B duplicates removed after a byte comparison. No
-  method file's sha256 changed. `tests/test_methodology_selection.py` has no known differences left.
-- Full credit assessment (ruling `docs/rulings/2026-11-15-full-assessment-cp3c-cp6a.md`):
-  `credit_snapshot` adds CP-2D and CP-3C. CP-6's scope section no longer cuts T6E.4, T6E.6, T6E.7
-  and T6E.11 (project file, sha256 `617c887c18dd`); CP-6's instructions gain `CP6A_BLOCK` on both
-  pathways that run CP-6; `posture_issues` refuses a non-blocked CP-6 handoff without
-  `### Portfolio posture` and the method's `Final Sizing Posture:` first sentence. Launcher prepared
-  offline for the 7 active pathways before and after: only `credit_snapshot` (two new modules, CP-6)
-  and `portfolio_decision` (CP-6) differ. Fidelity check, synthetic fixture only: default library
-  build identical apart from `built_at` and the workspace path; with two hand-made SYNTHETIC
-  handoffs, `tests/test_library_full_assessment_browser.py` checks CP-6's and CP-3C's pages against
-  the Markdown. Prompt-size ceiling for the pathway raised to 1,483,647 characters (the owner's
-  1,340,000 plus the measured addition): for the owner to confirm. Cost is estimated, not measured.
-- Review: eight reviewers, one per slice, no high-severity finding. Fixed: Signal imports without
-  `credit_os` and names missing brand files at start-up; three permission skips no longer call
-  `os.geteuid` where it is absent (Windows); a failed pack prune no longer blocks the pack commit;
-  the bundle test starts a Python on the bundle's two import roots and finds the library and engine
-  inside it (Linux; not the Windows package). Gate: lines moved verbatim count as moved only in a
-  file the change adds, and code that only moved is still checked with ruff's `F` rules.
-- Open after review: delivery's call item reads a section named `Final Sizing Posture`, not the new
-  `### Portfolio posture` (the library page shows it; settle after a paid run); `posture_issues`
-  checks the first sentence only; no test pins that `OwnerWorkflow.open` refuses a retained
-  JSON-lines run; no test runs `compose_delta`.
-- Checks on the final head: the CI fast list 4,631 passed, 6 skipped, known failures deselected;
-  node page tests 567 passed; quality gate 0 findings; `lint-imports` 3 contracts kept. GitHub Actions,
-  full weekly suite on `7cba8c6` (before the removals): 5,956 passed, 1 failed, a test that read
-  one packet of a two-write reply; the test now reads to the close.
-- Not verified: the full weekly suite on the final head (re-run requested); `Smoke-test.ps1` and
-  the Windows package on Windows; the pack workflow on GitHub Actions. Oldest two entries trimmed.
-
-## 2026-11-15 — Restructure: packaging, shared HTTP base, import contracts, file splits (branch `claude/busy-dijkstra-bgex9m`)
-
-Scope is **offline only**: code layout, packaging, tooling and documents. No provider or model run,
-no analytical, method or presentation change. Evidence is deterministic tests plus before/after
-output comparisons on synthetic data and the retained TDG fixture of 2026-11-13 (labelled below).
-Each step was done on its own branch, reviewed, then merged here.
-
-- Packaging: a uv workspace; `apps/issuer-library` is the member `issuer-library` (`credit_os`,
-  `update_library`). No `sys.path` edit remains for engine/app discovery; Signal finds its brand
-  files with `importlib.resources`. The engine/library dependency is circular at run time and is
-  declared so. Synthetic fixture library built before and after: identical except `built_at` and
-  the workspace path in `data.js`.
-- HTTP: `deploy_workflow/http_base.py` holds the server, request checks, body rules and static
-  serving for run start and Signal; each passes its own policy. About 550 raw requests per service,
-  old code against new: byte-identical replies. Behaviour change, deliberate: run start now closes
-  an HTTP/0.9 request line with no reply (it answered a bare 500 and logged a traceback); the base
-  closes these for every service.
-- Import direction: `deploy_vii` no longer imports `deploy_workflow`. `platform_io`, `context`,
-  `financial_series`, `liquidity_series`, `restructuring_series` and `trailing_period` moved into
-  `deploy_vii`; each old name is an alias of the same module object. `.importlinter` (import-linter
-  2.16): engine contract with no exception; `deploy_workflow` layers, exhaustive, 5 ignored imports
-  each with what removes it. The gate runs it (`--checks imports`) and scopes a file git reports as
-  moved by its diff from the file it moved from.
-- Splits, pure moves (every top-level block verbatim, once, in order; checked by two independent
-  scripts): `owners/cpos_launch.py` 3,986 to about 1,830 lines plus `cpos_launch_methods`,
-  `_tables`, `_prompts`, `_review`; `credit_os/store.py` 3,976 to 1,639 plus `source`,
-  `handoff_fields`, `cashflow`, `evidence`. Launcher offline preparation, 10 runs on synthetic
-  input: output trees identical. Forecast grid from the retained TDG fixture
-  (`tdg_sol_high_2026_11_13`; dated evidence, one issuer) and the synthetic library: identical.
-  `pin_label_forged` and its normaliser moved from `cp3d` to `owners/pins` (1,849 inputs, same output).
-- Method selection: `METHODOLOGY-REVIEW.md` gains an appendix table of the 64 sent method files;
-  `tests/test_methodology_selection.py` fails when it drifts from `METHODS`, `manifest.json` or the
-  bytes on disk. Known differences are listed in the test; 8 deliberate drifts each failed it.
-- Documents and packs: 47 unread history files removed from `docs/` (in git before `3275ff7`).
-  Pack numbers follow the highest ever issued; the pack workflow prunes packs older than 14 days
-  (dry run on the real folder: 0 removed, 69 kept).
-- Not done, with reasons: no package merge or rename (direction was already nearly clean); no
-  module framework (measured: 401 lines of structural clones in 44,452); `earnings_workflow.py` and
-  `owner_workflow.py` not split (50 existing gate findings in code no test executes; branch
-  `-s5b-split-workflows` kept unmerged); `cp*.py` not split (no fixture drives their submit path).
-- Checks on the merged branch: CI fast list plus the new files, 5,101 passed, 6 skipped, with the
-  known failures deselected; node page tests 567 passed; quality gate 0 findings (61 files, 8,469
-  lines in scope); `lint-imports` 3 contracts kept. Two permission tests now skip under root, as
-  their neighbour already did.
-- Browser tests on the merged branch: library page 104 passed, 1 skipped; library changes 8;
-  Signal page 13; model shell 7; launcher 10; changes 1. The run start page's browser tests could
-  not run in this container: Chrome times out on `--dump-dom`, identically on `main` (9d040f8).
-- Not verified: the full suite; the run start page in a browser; `Smoke-test.ps1` and the Windows
-  package on Windows; the pack workflow and `checks.yml` on GitHub Actions;
-  `test_financial_workflow.py` genuine-case tests (over 300 s). Oldest two entries trimmed from
-  this file; git history keeps them.
