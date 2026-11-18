@@ -50,6 +50,9 @@ passes only on exit 0 with no new file.
 | `skipped` | set aside by the controller with a reason (`ledger.py skip`) |
 
 Only the controller (the workflow script) writes the ledger; analysts never do.
+`ledger.py next` returns each issuer's claim generation (`claims`). The controller passes that
+value with `--claim` to `done`, `fail` or `skip`; a worker holding an older, reclaimed claim cannot
+finish the newer claim.
 
 ## Effort and retry decision
 

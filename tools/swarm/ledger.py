@@ -1,9 +1,10 @@
 """The swarm ledger: status updates on ``<root>/swarm/plan.json`` (written by ``prepare.py``).
 
     uv run python tools/swarm/ledger.py --root DIR next --n 10 [--failed] [--stale-seconds 3600]
-    uv run python tools/swarm/ledger.py --root DIR done ISSUER_ID --attempts-by-module '{"CP-0":1}'
-    uv run python tools/swarm/ledger.py --root DIR fail ISSUER_ID --reason TEXT
-    uv run python tools/swarm/ledger.py --root DIR skip ISSUER_ID --reason TEXT
+    uv run python tools/swarm/ledger.py --root DIR done ISSUER_ID --claim N \
+        --attempts-by-module '{"CP-0":1}'
+    uv run python tools/swarm/ledger.py --root DIR fail ISSUER_ID --claim N --reason TEXT
+    uv run python tools/swarm/ledger.py --root DIR skip ISSUER_ID --claim N --reason TEXT
     uv run python tools/swarm/ledger.py --root DIR status
 
 Statuses: ``pending`` (not started), ``running`` (claimed, with ``claimed_at``), ``published``
@@ -147,8 +148,13 @@ def claim(
     return taken
 
 
-def _finish(
-    root: Path, issuer_id: str, status: str, changes: dict[str, Any], clock: Clock
+def _finish(  # noqa: PLR0913 -- claim generation and clock are required finish invariants.
+    root: Path,
+    issuer_id: str,
+    status: str,
+    changes: dict[str, Any],
+    claim: int,
+    clock: Clock,
 ) -> dict[str, Any]:
     path = plan_path(root)
     with _locked(path):
@@ -158,6 +164,11 @@ def _finish(
             raise LedgerError(
                 f"issuer {issuer_id!r} is {issuer['status']}, not running; claim it with `next`"
             )
+        if issuer.get("claims") != claim:
+            raise LedgerError(
+                f"issuer {issuer_id!r} claim {claim} was replaced; current claim is "
+                f"{issuer.get('claims')}"
+            )
         issuer.update(changes)
         issuer["status"] = status
         issuer["finished_at"] = _stamp(clock())
@@ -166,15 +177,20 @@ def _finish(
         return issuer
 
 
-def done(
+def done(  # noqa: PLR0913 -- run record and claim/exit evidence are separate inputs.
     root: Path,
     issuer_id: str,
     attempts_by_module: dict[str, int],
     *,
+    claim: int,
     exit_code: int = 0,
     clock: Clock = _utc_now,
 ) -> dict[str, Any]:
     """Record the issuer ``published`` with the launcher attempts of each module."""
+    if exit_code != 0:
+        raise LedgerError(f"a published issuer must have launcher exit code 0, got {exit_code}")
+    if not attempts_by_module:
+        raise LedgerError("a published issuer needs at least one module attempt")
     for module, attempts in attempts_by_module.items():
         if attempts < 1:
             raise LedgerError(f"{module}: attempts must be at least 1, got {attempts}")
@@ -193,15 +209,17 @@ def done(
             "exit_code": exit_code,
             "reason": None,
         },
+        claim,
         clock,
     )
 
 
-def fail(
+def fail(  # noqa: PLR0913 -- failure record keeps claim and execution evidence explicit.
     root: Path,
     issuer_id: str,
     reason: str,
     *,
+    claim: int,
     attempts_by_module: dict[str, int] | None = None,
     exit_code: int | None = None,
 ) -> dict[str, Any]:
@@ -212,14 +230,16 @@ def fail(
     if attempts_by_module is not None:
         changes["attempts_by_module"] = attempts_by_module
         changes["attempts"] = sum(attempts_by_module.values())
-    return _finish(root, issuer_id, "failed", changes, _utc_now)
+    return _finish(root, issuer_id, "failed", changes, claim, _utc_now)
 
 
-def skip(root: Path, issuer_id: str, reason: str, *, clock: Clock = _utc_now) -> dict[str, Any]:
+def skip(
+    root: Path, issuer_id: str, reason: str, *, claim: int, clock: Clock = _utc_now
+) -> dict[str, Any]:
     """Record the issuer ``skipped`` with its reason."""
     if not reason.strip():
         raise LedgerError("a skip needs a reason")
-    return _finish(root, issuer_id, "skipped", {"reason": reason}, clock)
+    return _finish(root, issuer_id, "skipped", {"reason": reason}, claim, clock)
 
 
 def status(root: Path) -> dict[str, int]:
@@ -254,15 +274,18 @@ def _parser() -> argparse.ArgumentParser:
     nxt.add_argument("--stale-seconds", type=float, default=DEFAULT_STALE_SECONDS)
     finish = sub.add_parser("done", help="record a published issuer")
     finish.add_argument("issuer_id")
+    finish.add_argument("--claim", type=int, required=True)
     finish.add_argument("--attempts-by-module", required=True)
     finish.add_argument("--exit-code", type=int, default=0)
     bad = sub.add_parser("fail", help="record a failed issuer")
     bad.add_argument("issuer_id")
+    bad.add_argument("--claim", type=int, required=True)
     bad.add_argument("--reason", required=True)
     bad.add_argument("--attempts-by-module")
     bad.add_argument("--exit-code", type=int)
     skp = sub.add_parser("skip", help="set an issuer aside")
     skp.add_argument("issuer_id")
+    skp.add_argument("--claim", type=int, required=True)
     skp.add_argument("--reason", required=True)
     sub.add_parser("status", help="count issuers by status")
     return parser
@@ -280,6 +303,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                 args.root,
                 args.issuer_id,
                 _attempts_arg(args.attempts_by_module),
+                claim=args.claim,
                 exit_code=args.exit_code,
             )
             print(f"{args.issuer_id}: published")
@@ -289,12 +313,13 @@ def main(argv: Sequence[str] | None = None) -> int:
                 args.root,
                 args.issuer_id,
                 args.reason,
+                claim=args.claim,
                 attempts_by_module=by_module,
                 exit_code=args.exit_code,
             )
             print(f"{args.issuer_id}: failed")
         elif args.command == "skip":
-            skip(args.root, args.issuer_id, args.reason)
+            skip(args.root, args.issuer_id, args.reason, claim=args.claim)
             print(f"{args.issuer_id}: skipped")
         else:
             print(json.dumps(status(args.root)))

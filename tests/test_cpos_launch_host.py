@@ -181,6 +181,10 @@ def test_host_run_asks_for_each_answer_then_publishes_and_relaunch_writes_nothin
     assert main(argv) == 0
     assert f"Delivery: {report}" in capsys.readouterr().out
     assert snapshot(outdir) == before
+    response = next(outdir.glob("requests/CP-2/*/*.response.md"))
+    response.write_text(response.read_text() + "\nTampered after delivery.\n")
+    assert main(argv) == 1
+    assert "cpos_response_changed: CP-2" in capsys.readouterr().err
 
 
 def test_unanswered_relaunch_asks_again_and_writes_nothing(tmp_path, capsys):
@@ -205,6 +209,72 @@ def test_a_rejected_answer_is_asked_again_with_feedback_and_stops_after_three(tm
     assert main(argv) == 1
     assert "cpos_module_failed: CP-0" in capsys.readouterr().err
     assert not (tmp_path / "out/deliveries").exists()
+
+
+def test_host_request_resolves_cp8_generated_comparison_pack(tmp_path):
+    prepared = prepare(
+        context_file(tmp_path),
+        issuer_folder(tmp_path),
+        tmp_path / "out",
+        config="host",
+        cap="15",
+        modules=("CP-1",),
+    )
+    pack = b"generated CP-8 comparison pack"
+    digest = hashlib.sha256(pack).hexdigest()
+    retained = prepared.directory / "inputs" / digest
+    retained.parent.mkdir(parents=True, exist_ok=True)
+    retained.write_bytes(pack)
+    request = prepared.directory / "requests/CP-1/test/1.request.json"
+    request.parent.mkdir(parents=True)
+    request.write_text(
+        json.dumps(
+            {
+                "module_id": "CP-1",
+                "attempt": 1,
+                "sources": {"changes.json": digest},
+                "handoffs": {},
+                "feedback": [],
+            }
+        )
+    )
+    text = cpos_launch._host_request(prepared, request)
+    assert f"Source:   changes.json sha256 {digest} at {retained}" in text
+
+
+def test_host_request_keeps_identical_handoffs_separate_by_module(tmp_path):
+    prepared = prepare(
+        context_file(tmp_path),
+        issuer_folder(tmp_path),
+        tmp_path / "out",
+        config="host",
+        cap=0,
+        modules=("CP-1",),
+    )
+    body = b"identical retained handoff"
+    digest = hashlib.sha256(body).hexdigest()
+    paths = {}
+    for module in ("CP-0", "CP-1"):
+        response = prepared.directory / "requests" / module / "fingerprint" / "1.response.md"
+        response.parent.mkdir(parents=True)
+        response.write_bytes(body)
+        paths[module] = response
+    request = prepared.directory / "requests/CP-1/current/1.request.json"
+    request.parent.mkdir(parents=True)
+    request.write_text(
+        json.dumps(
+            {
+                "module_id": "CP-1",
+                "attempt": 1,
+                "sources": {},
+                "handoffs": {module: digest for module in paths},
+                "feedback": [],
+            }
+        )
+    )
+    text = cpos_launch._host_request(prepared, request)
+    for module, path in paths.items():
+        assert f"Handoff:  {module} sha256 {digest} at {path}" in text
 
 
 def test_an_accepted_answer_edited_later_is_refused(tmp_path, capsys):

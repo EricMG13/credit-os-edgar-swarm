@@ -144,6 +144,7 @@ while (claimed < limit) {
   for (let i = 0; i < batch.length; i++) {
     const id = batch[i].issuer_id
     const outcome = analysed[i] ?? { issuer: batch[i], fail: 'analyst returned nothing' }
+    const claim = outcome.issuer.claims
     let reason = outcome.fail
     const report = outcome.report
     if (!reason && report.exit_code !== 0) {
@@ -156,7 +157,11 @@ while (claimed < limit) {
     }
     const by = report ? q(JSON.stringify(report.attempts_by_module)) : null
     if (!reason) {
-      const done = await run(`done ${id}`, 'Verify and record', ledger(`done ${q(id)} --attempts-by-module ${by}`))
+      const done = await run(
+        `done ${id}`,
+        'Verify and record',
+        ledger(`done ${q(id)} --claim ${claim} --attempts-by-module ${by}`),
+      )
       if (done && done.exit_code === 0) {
         published += 1
         continue
@@ -167,7 +172,10 @@ while (claimed < limit) {
     const bad = await run(
       `fail ${id}`,
       'Verify and record',
-      ledger(`fail ${q(id)} --reason ${q(reason)}` + (by ? ` --attempts-by-module ${by} --exit-code ${report.exit_code}` : '')),
+      ledger(
+        `fail ${q(id)} --claim ${claim} --reason ${q(reason)}` +
+          (by ? ` --attempts-by-module ${by} --exit-code ${report.exit_code}` : ''),
+      ),
     )
     if (!bad || bad.exit_code !== 0) {
       throw new Error(`could not record ${id} as failed: ${bad ? bad.stdout : 'runner returned nothing'}`)
