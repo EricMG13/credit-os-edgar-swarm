@@ -87,8 +87,12 @@ def _workflow(reader: _Reads, record: runs.Record) -> dict[str, Any]:
         raise Refused("workflow run identity is not recorded")
     identity = run_identity(workflow.get("run", {}))
     config = runs.config_for(record.model, record.effort)
+    stem = f"{record.issuer_id}-{record.as_of}-{record.pathway}-"
+    # A record with no ``config`` predates the Copilot cutover, when the same model and effort
+    # launched under the configuration's name without its ``copilot-`` prefix.
+    earlier = stem + config.removeprefix("copilot-")
     expected = {
-        "run_id": f"{record.issuer_id}-{record.as_of}-{record.pathway}-{config}",
+        "run_id": earlier if not record.config and identity["run_id"] == earlier else stem + config,
         "issuer_id": record.issuer_id,
         "issuer_name": record.issuer_name,
         "as_of": record.as_of,
@@ -378,9 +382,8 @@ def library_admission(layout: Layout, record: runs.Record) -> str | None:
     try:
         # A linked path or a publication over the size limit is unknown. The parse is the one
         # the service keeps between requests.
-        if _Reads(layout.engine).inside("library/data.js").stat().st_size > _PUBLICATION_BYTES:
-            raise Refused("library publication is too large")
-        snapshot = admission.published(layout)
+        _Reads(layout.engine).inside("library/data.js")
+        snapshot = admission.published(layout, limit=_PUBLICATION_BYTES)
         if snapshot is None:
             raise Refused("library publication is not a regular file")
         visible = admission.admitted(snapshot, layout)

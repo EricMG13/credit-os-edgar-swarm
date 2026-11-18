@@ -255,7 +255,7 @@ def _publish(layout: Layout, snapshot: dict[str, Any]) -> None:
     staging.rename(library)
 
 
-def test_a_settled_publication_is_parsed_once_and_a_new_one_is_read(
+def test_a_publication_is_parsed_once_for_the_same_bytes_and_a_new_one_is_read(
     publication: tuple[Layout, dict[str, Any]], monkeypatch: pytest.MonkeyPatch
 ) -> None:
     layout, snapshot = publication
@@ -268,7 +268,6 @@ def test_a_settled_publication_is_parsed_once_and_a_new_one_is_read(
 
     monkeypatch.setattr(admission, "_decoded", counted)
     monkeypatch.setattr(admission, "_kept", None)
-    monkeypatch.setattr(admission, "_SETTLED_NS", -1)  # as if written long ago
     _publish(layout, snapshot)
     for _ in range(3):
         assert _library_index(layout).body["catalogue"]["real"][0]["name"] == "Issuer"
@@ -282,21 +281,27 @@ def test_a_settled_publication_is_parsed_once_and_a_new_one_is_read(
     assert _library_index(layout).body is None and admission.published(layout) is None
 
 
-def test_a_file_rewritten_in_place_is_read_again_until_it_has_settled(
+def test_a_file_rewritten_in_place_under_the_same_times_is_read_again(
     publication: tuple[Layout, dict[str, Any]], monkeypatch: pytest.MonkeyPatch
 ) -> None:
     layout, snapshot = publication
     monkeypatch.setattr(admission, "_kept", None)
     _publish(layout, snapshot)
     path = layout.engine / "library" / "data.js"
-    for name in ("Issuer", "Second", "Third!"):  # the same size each time, the same instant
+    times = path.stat()
+    for name in ("Issuer", "Second", "Third!"):  # the same size and the same file times
         snapshot["catalogue"]["real"][0]["name"] = name
         path.write_text(f"window.CREDIT_OS_DATA={json.dumps(snapshot)};")
+        os.utime(path, ns=(times.st_atime_ns, times.st_mtime_ns))
         assert _library_index(layout).body["catalogue"]["real"][0]["name"] == name
-    assert admission._kept is None
     path.write_text("window.CREDIT_OS_DATA={invalid};")
     with pytest.raises(ValueError):
         admission.published(layout)
+    path.write_text(f"window.CREDIT_OS_DATA={json.dumps(snapshot)};")
+    size = path.stat().st_size
+    assert admission.published(layout, limit=size) is not None
+    with pytest.raises(ValueError, match="size limit"):
+        admission.published(layout, limit=size - 1)
 
 
 def test_no_reply_changes_the_publication_the_requests_share(
@@ -304,7 +309,6 @@ def test_no_reply_changes_the_publication_the_requests_share(
 ) -> None:
     layout, snapshot = publication
     monkeypatch.setattr(admission, "_kept", None)
-    monkeypatch.setattr(admission, "_SETTLED_NS", -1)
     _publish(layout, snapshot)
     kept = admission.published(layout)
     assert kept is admission.published(layout) and kept == snapshot
