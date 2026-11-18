@@ -354,7 +354,12 @@ def _verify_static_compression(server: Any, chunk: bytes) -> None:
     )
     assert status == 200 and identity == chunk and "Content-Encoding" not in headers
     assert headers["Vary"] == "Accept-Encoding"
-    # Stable names (not content-hashed): cached for a day, never immutable; data.js is not cached.
+    # Stable names (not content-hashed): cached for a day, never immutable. Only a font under
+    # /fonts/ is: a page or a licence text there, data.js and the notices get no lifetime.
+    for plain in ("/fonts/", "/fonts/licence.txt", "/data.js", "/THIRD-PARTY-NOTICES.md"):
+        status, body, headers = frontend.request(server, plain)
+        assert status == 200 and body == b"stable", plain
+        assert "max-age" not in headers.get("Cache-Control", ""), plain
     for stable in ("/fonts/text-regular.woff2", "/symbol.svg"):
         status, body, headers = frontend.request(server, stable)
         assert status == 200 and body == b"stable", stable
@@ -398,6 +403,8 @@ def test_http_source_download_only_checks_requested_file_and_rechecks_hash(
     (web / "fonts").mkdir()
     (web / "fonts" / "text-regular.woff2").write_bytes(b"stable")
     (web / "symbol.svg").write_bytes(b"stable")
+    for plain in ("fonts/index.html", "fonts/licence.txt", "data.js", "THIRD-PARTY-NOTICES.md"):
+        (web / plain).write_bytes(b"stable")
     read_calls: list[tuple[str, bool]] = []
     load = sources._source
 

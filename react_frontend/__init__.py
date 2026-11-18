@@ -244,7 +244,7 @@ def _static_cache(path: str, relative: str) -> str | None:
         r"-[A-Za-z0-9_-]{8,}\.", relative
     ):
         return "public, max-age=31536000, immutable"
-    if path == "/symbol.svg" or path.startswith("/fonts/"):
+    if path == "/symbol.svg" or (path.startswith("/fonts/") and relative.endswith(".woff2")):
         return STABLE_NAME_CACHE
     return None
 
