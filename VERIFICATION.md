@@ -4,6 +4,24 @@ Keep one running record here. A pass applies only to the stated scope. Earlier v
 engine is in [EricMG13/final-workflow](https://github.com/EricMG13/final-workflow)'s
 `VERIFICATION.md`, which also keeps the retained runs this copy leaves out.
 
+## 2026-11-24 — Frontend redesign: theme tokens and shell
+
+- Scope: `web/src/styles/theme.css` re-valued under the existing token names and
+  `web/src/shell/Shell.tsx` rebuilt as a top bar. No report, module, forecast or run page was
+  rebuilt; their layouts are unchanged and only take the new colours, type and radii. No handoff,
+  delivery or figure code changed, so no value, period, unit or source reference is affected.
+- Fidelity check: static build opened from disk in Chromium at 1440 and 390 px (`#/` and `#/kit`):
+  top bar, current-area tint and underline, buttons, badges, status marks, cards, metric tiles and
+  timeline draw in the new palette with no page errors. No report page was viewed with real run
+  data; the static build holds no report.
+- Web tests in four targeted runs: 320 files, 5,459 tests pass. One ConnectedApp run-start test
+  (leave-page prompt) failed once under load and passes alone, with and without this change.
+  Typecheck, knip, build and the 76 script tests pass. Full `npm run gates` and the Python suite
+  were not run.
+- `chart-lightness.test.ts` is unchanged; chart series 1 and 2 are a shade deeper than the
+  approved mockups to keep it.
+
+
 ## 2026-11-24 — Parallel CP-OS review fixes for PR #71
 
 - Offline fake-provider runs reproduced a reserved call reaching dispatch after an unknown charge
@@ -946,45 +964,3 @@ Scope: presentation only, all under `web/`; no backend, handoff, provider or mod
   Retained CP-2G bytes match the prior SHA-256; preview stays read-only with its
   Test preview/admission qualification. No providers, Signal work or tournaments.
 - ZIP not built or published; Chrome and Edge work-PC acceptance remains pending.
-
-## 2026-11-16 — Five Caesars design critique priorities implemented
-
-- Preserved Credit OS React components and RBOT-HTML source/Python pins at
-  `256101a`; React dependencies unchanged. No providers, Signal work or tournaments.
-- Forecast now promotes exact reference-free scope/basis sentences before case
-  selection, with traces and the complete original notes retained below. Case
-  cards say Forecast cases; descriptions come from retained notes or explicit gaps.
-  Comparison keeps every case, highlights the selection and retains row traces;
-  the chart and its table still follow the selected case, including missing values.
-- Forecast axes use readable labels without changing series/table values; close
-  ticks fall back to exact labels rather than merge through display rounding.
-- Dates to watch uses the run as-of date, excludes Historical events, retains
-  recorded precision/status/source identity and qualifies overlapping partial dates.
-  Narrow Modules uses a native selector and collapsible section jump; desktop
-  navigation is preserved, with complementary 1000/1001px visibility boundaries.
-- Confidence review ranked (1) analytical fidelity/reference leakage, (2) case
-  selection versus comparison, (3) date/status ambiguity, (4) keyboard/navigation
-  boundaries, (5) rounded values/missing versus zero. Tests and Astra reviewers
-  confirmed and repaired false absence wording, missing-case comparison vanishing,
-  historical partial dates appearing upcoming, first-section activation failing,
-  and the breakpoint overlap. Numeric inputs and retained handoffs were untouched.
-- Two independent Astra reviewers rereviewed their fixes and inspected actual
-  Caesars in Chrome. Forecast: four rows, selected chart, readable axes, exact
-  464.86/647.95/183.09 bridge, trace to handoff line 310. Overview: watch dates begin
-  November 2026. At 390px the module selector and first-section jump work; all
-  temporary review tabs closed and viewport restored. This is scoped fidelity
-  review, not analytical clearance or Windows proof.
-- 61 focused tests pass, plus TypeScript, changed-file ESLint/Prettier and Python
-  quality gate (zero findings). Fallow still reports five 'new' and two inherited
-  complexity warnings: AST comparison shows four flagged new functions unchanged
-  from HEAD and the fifth differs only in its axis formatter call, with no added
-  branching. Existing complexity risks are retained; no suppressions were added.
-- Fresh offline dependency install and production build; staged production tree
-  `fb91f1e5e7eb01f403a13ba30ffd5ca19d040d14`. Both branded browsers passed all 32
-  synthetic upload-to-report checks on macOS: Chrome 157.0.8103.78 run
-  `20261116-030448-01`, Edge 157.0.4341.60 run `20261116-030505-01`.
-  Evidence: `proof-artifacts/run-4l6Qel/proof.json`. Added checks cover all-case
-  comparison, early scope, compact navigation and breakpoint/first-section behavior.
-- Updated read-only actual Caesars preview is at port 58337, run
-  `20261115-114658-01`; original Test preview/admission qualification remains.
-  ZIP was not rebuilt or published. Chrome and Edge work-PC acceptance is pending.
