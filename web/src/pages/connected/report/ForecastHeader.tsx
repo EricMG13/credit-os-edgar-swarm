@@ -148,9 +148,11 @@ export function ForecastHeader({
           ))}
         </dl>
         <div className="flex flex-wrap gap-2">
-          <Button href="#modules/CP-2G" color="secondary" size="sm" iconTrailing={ArrowRight}>
-            Open module
-          </Button>
+          {state !== undefined && (
+            <Button href="#modules/CP-2G" color="secondary" size="sm" iconTrailing={ArrowRight}>
+              Open module
+            </Button>
+          )}
           {hasModel && (
             <Button href="#evidence/summary" color="link-gray" size="sm" iconTrailing={ArrowRight}>
               Forecast evidence and artifacts

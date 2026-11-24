@@ -157,3 +157,20 @@ it("says why a stat is empty, never zero", () => {
   expect(strip.getByText("Not calculated for Base case")).toBeInTheDocument();
   expect(strip.queryByText(/^0/)).toBeNull();
 });
+
+it("offers no way to a forward model the run does not have", () => {
+  render(
+    <ForecastHeader
+      run={run}
+      view={{ ...view([]), modules: [] }}
+      preview={false}
+      handoff={undefined}
+      cases={[]}
+      current={undefined}
+      onSelect={vi.fn()}
+      basis={[]}
+      hasModel={false}
+    />,
+  );
+  expect(screen.queryByRole("link", { name: "Open module" })).toBeNull();
+});
