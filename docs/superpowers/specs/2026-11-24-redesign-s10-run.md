@@ -37,7 +37,7 @@ Draws only what it is given; no reading of handoffs or run records.
   are plain connector colour.
 - Running node: tinted fill and accent edge. Blocked: dashed orange outline (as Overview).
   Failed (module stopped without an assessment word): badge tone sets the edge, never red for a finding.
-- Also exports `PipelineLegend` (dot/dash keys for the states present) for the run page.
+- Delivered and queued nodes are marked quietly (a dot or ring with a screen-reader word); running, blocked and failed nodes carry a status badge under the name. Names wrap; the bus is drawn per node so uneven node heights stay joined.
 
 ### `report/overview/PipelineRow.tsx`
 
@@ -137,4 +137,34 @@ stop, links, "Open report", Failed / Capped / Rejected / Interrupted words.
 
 ## 7. Verification
 
-(Filled in during phase 2.)
+Built as specified, with these differences: no `PipelineLegend` (state words are in the nodes);
+the pipeline tile is 9 columns and the spend tile 3 at 1280 px and up, both full width below
+(the six stage columns need the width); no per-module segment strip on the activity cards (the
+module list with state words and the meter carry it).
+
+Checks run (all in `web/`): `npx tsc --noEmit` clean; `npx eslint --max-warnings=0` and
+`npx prettier --check` on every changed file clean; `npm run build` clean; `vitest` on
+`src/pages/connected` (117 files, 1709 tests, ConnectedApp.test.tsx run separately), `src/components`,
+`src/styles`, `src/shell`, `src/pages/run` (68 files, 787 tests) all pass, including
+`lowerRows.test.tsx` (PipelineRow); `tools/quality_gate.py --base 1265838`: no Python changed, 0
+findings. `npm run unused` reports one unused type, `LeadProps` in the frozen
+`report/leads/types.ts`, which this branch does not touch.
+Tests rewritten (layout only): the "Modules and report delivery" heading locators in
+`shellFinalAudit.test.tsx` and `ConnectedApp.test.tsx` now locate the pipeline list. Tests added:
+`components/pipeline/Pipeline.test.tsx`, `pages/connected/runLayout.test.tsx`.
+
+Screenshots looked at, 1440 and 390 px, from the **built page served by `react_frontend` with the
+run and activity responses replaced by fixtures in a throwaway Playwright script** (the run states
+were not produced by the synthetic drive; synthetic data is thin and cannot show failed or capped):
+running, failed (checker stop; Downside is the stopped module), capped, finished (Open report +
+Use this run's inputs), unreachable (alert, three gap tiles), activity list (two running, one
+waiting, three ended), activity empty, activity unreachable. What I saw: the pipeline reads as
+five stage columns plus a Report delivery column at 1440 and as one vertical line at 390; the
+running node is tinted with a Running badge and a dashed animated edge into it; the stopped
+module is a dashed orange node with "Not assessable" and its detail; spend is one large mono
+amount with the cap meter; the failed notice leads the page with reason, where it stopped and what
+to do; no horizontal page scroll at 390 (the ended table scrolls inside its panel). A defect I
+found and fixed from these: node names broke mid-word and the "Not assessable" badge overflowed its
+node; names now wrap at word boundaries and the badge is compact.
+Not run: the paid or live drive; a real synthetic-drive screenshot of a run in flight; reduced-motion
+rendering was checked only by the CSS (the animation sits inside `prefers-reduced-motion: no-preference`).
