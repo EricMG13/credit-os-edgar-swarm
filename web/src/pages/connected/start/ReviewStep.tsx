@@ -1,4 +1,5 @@
 import { SubmitConfirmation } from "../../run/start/Start";
+import { pathwayName } from "../api";
 import { ErrorNotice, heading } from "../layout";
 import { decided, groupLimits } from "./limits";
 import { ReviewSheet } from "./ReviewSheet";
@@ -48,6 +49,36 @@ function ReviewNotes({ synthetic, idNote }: { synthetic: boolean; idNote: string
   );
 }
 
+/** The cap in mono, and the sentence Submit is described by. */
+function CostLead({
+  synthetic,
+  capText,
+  pathway,
+}: {
+  synthetic: boolean;
+  capText: string | null;
+  pathway: string;
+}) {
+  const figure = synthetic
+    ? { amount: "USD 0.00", note: "No-cost test" }
+    : capText && { amount: capText, note: `Spending cap · ${pathwayName(pathway)}` };
+  return (
+    <div className="grid gap-2">
+      {figure && (
+        <p className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          <span className="font-mono text-h2 font-medium text-text-primary tabular-nums">
+            {figure.amount}
+          </span>
+          <span className="text-small text-text-secondary">{figure.note}</span>
+        </p>
+      )}
+      <p id="run-submit-cost" className="reading-copy text-body text-text-secondary">
+        <SubmissionCost synthetic={synthetic} capText={capText} />
+      </p>
+    </div>
+  );
+}
+
 function ReviewSubmit({
   modelVerified,
   synthetic,
@@ -81,22 +112,7 @@ function ReviewSubmit({
     (!synthetic && (!capAvailable || !modelVerified));
   return (
     <>
-      <div className="grid gap-1 border-t border-border-hairline pt-4">
-        <h3 className="text-md font-semibold text-text-primary">
-          {synthetic ? "Confirm a synthetic test" : "Confirm a paid run"}
-        </h3>
-        <p id="run-submit-cost" className="reading-copy text-body text-text-secondary">
-          <SubmissionCost synthetic={synthetic} capText={capText} />
-        </p>
-      </div>
-      {!synthetic && !modelVerified && (
-        <p className="text-sm text-text-secondary">
-          Paid Submit is unavailable because this model and effort pair is not verified for the
-          current Copilot CLI service. You can keep this offline review and return when a pair is
-          available.
-        </p>
-      )}
-      <p className="text-caption text-text-tertiary tabular-nums min-[1041px]:hidden">{ready}</p>
+      <p className="text-caption text-text-tertiary tabular-nums lg:hidden">{ready}</p>
       {error && <ErrorNotice>{error}</ErrorNotice>}
       <div className="flex justify-end">
         <SubmitConfirmation
@@ -156,10 +172,15 @@ export function ReviewConfirmation({
   const undecided = groups.filter((group) => !decided(group, accepted)).length;
   const blocker = submitBlocker(undecided, approved);
   return (
-    <div className="grid gap-5">
-      <h2 ref={focusStep} tabIndex={-1} className={`${heading} ${HEADING_FOCUS}`}>
-        Review and start
-      </h2>
+    <div className="grid min-w-0 gap-4">
+      <div className="grid gap-1 px-1">
+        <h2 ref={focusStep} tabIndex={-1} className={`${heading} ${HEADING_FOCUS}`}>
+          Review and start
+        </h2>
+        <p className="reading-copy text-body text-text-secondary">
+          Check what the run will do, decide each limit, then approve and submit.
+        </p>
+      </div>
       <ReviewSheet
         review={review}
         accepted={accepted}
@@ -168,25 +189,47 @@ export function ReviewConfirmation({
         onModules={onModules}
         onAccept={onAccept}
         synthetic={synthetic}
-      />
-      <ReviewNotes synthetic={synthetic} idNote={idNote} />
-      <ReviewApproval
-        blocker={blocker}
-        approved={approved}
-        disabled={!checksComplete || locked}
-        onApprove={onApprove}
-      />
-      <ReviewSubmit
-        modelVerified={modelVerified}
-        synthetic={synthetic}
-        checksComplete={checksComplete}
-        approved={approved}
-        busy={busy}
-        error={error}
-        capText={capText}
-        capAvailable={capAvailable}
-        ready={ready}
-        onSubmit={onSubmit}
+        cost={{
+          lead: (
+            <CostLead
+              synthetic={synthetic}
+              capText={capText}
+              pathway={review.answers.context.run.pathway}
+            />
+          ),
+          actions: (
+            <>
+              <ReviewNotes synthetic={synthetic} idNote={idNote} />
+              {!synthetic && !modelVerified && (
+                <p className="text-sm text-text-secondary">
+                  Paid Submit is unavailable because this model and effort pair is not verified for
+                  the current Copilot CLI service. You can keep this offline review and return when
+                  a pair is available.
+                </p>
+              )}
+              <div className="grid gap-3 border-t border-border-hairline pt-4">
+                <ReviewApproval
+                  blocker={blocker}
+                  approved={approved}
+                  disabled={!checksComplete || locked}
+                  onApprove={onApprove}
+                />
+                <ReviewSubmit
+                  modelVerified={modelVerified}
+                  synthetic={synthetic}
+                  checksComplete={checksComplete}
+                  approved={approved}
+                  busy={busy}
+                  error={error}
+                  capText={capText}
+                  capAvailable={capAvailable}
+                  ready={ready}
+                  onSubmit={onSubmit}
+                />
+              </div>
+            </>
+          ),
+        }}
       />
     </div>
   );

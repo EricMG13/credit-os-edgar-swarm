@@ -529,23 +529,31 @@ describe("connected run start", () => {
     expect(fetchMock.mock.calls.filter(([, init]) => init?.body === file)).toHaveLength(2);
   });
 
+  // What leaves the building is stated in the cost block, directly above Submit (screen map,
+  // Start run, Review and start P2); the sentences were in the "What will run" block before.
+  const costBlock = () => screen.getByRole("region", { name: "What it will cost" });
+
   describe("web search statement", () => {
     const SENTENCE =
       "The research module will search the web. The issuer's name and the questions it researches go to OpenAI's search.";
 
     it("states once, on the review, that the research module searches the web", async () => {
       const sheet = await reviewSheet({ ...plan, web_search: true });
-      expect(within(sheet).getAllByText(SENTENCE)).toHaveLength(1);
+      expect(within(costBlock()).getAllByText(SENTENCE)).toHaveLength(1);
+      expect(screen.getAllByText(SENTENCE)).toHaveLength(1);
+      expect(sheet).not.toHaveTextContent(/search the web/);
     });
 
     it("says nothing about web search when the summary says it is off", async () => {
       const sheet = await reviewSheet({ ...plan, web_search: false });
       expect(sheet).not.toHaveTextContent(/search the web/);
+      expect(costBlock()).not.toHaveTextContent(/search the web/);
     });
 
     it("says nothing about web search when the summary does not say", async () => {
       const sheet = await reviewSheet(plan);
       expect(sheet).not.toHaveTextContent(/search the web/);
+      expect(costBlock()).not.toHaveTextContent(/search the web/);
     });
   });
 
@@ -556,37 +564,42 @@ describe("connected run start", () => {
 
     it("names Yahoo and the ticker once when the research module will use its lookup", async () => {
       const sheet = await reviewSheet({ ...research, web_lookup: true, model: "claude" });
-      expect(within(sheet).getAllByText(SENTENCE)).toHaveLength(1);
+      expect(within(costBlock()).getAllByText(SENTENCE)).toHaveLength(1);
+      expect(screen.getAllByText(SENTENCE)).toHaveLength(1);
+      expect(sheet).not.toHaveTextContent(/Yahoo/);
     });
 
     it("draws the Yahoo sentence once, directly after the OpenAI sentence", async () => {
       const openai =
         "The research module will search the web. The issuer's name and the questions it researches go to OpenAI's search.";
-      const sheet = await reviewSheet({
+      await reviewSheet({
         ...research,
         web_search: true,
         web_lookup: true,
         model: "claude",
       });
-      const first = within(sheet).getByText(openai);
-      const second = within(sheet).getByText(SENTENCE);
-      expect(within(sheet).getAllByText(SENTENCE)).toHaveLength(1);
+      const first = within(costBlock()).getByText(openai);
+      const second = within(costBlock()).getByText(SENTENCE);
+      expect(screen.getAllByText(SENTENCE)).toHaveLength(1);
       expect(first.nextElementSibling).toBe(second);
     });
 
     it("says nothing about Yahoo when the lookup is off", async () => {
       const sheet = await reviewSheet({ ...research, web_lookup: false, web_search: true });
       expect(sheet).not.toHaveTextContent(/Yahoo|ticker/);
+      expect(costBlock()).not.toHaveTextContent(/Yahoo|ticker/);
     });
 
     it("says nothing about Yahoo when the research module is left out", async () => {
       const sheet = await reviewSheet({ ...plan, web_lookup: false });
       expect(sheet).not.toHaveTextContent(/Yahoo|ticker/);
+      expect(costBlock()).not.toHaveTextContent(/Yahoo|ticker/);
     });
 
     it("says nothing about Yahoo when the summary does not say", async () => {
       const sheet = await reviewSheet(research);
       expect(sheet).not.toHaveTextContent(/Yahoo|ticker/);
+      expect(costBlock()).not.toHaveTextContent(/Yahoo|ticker/);
     });
   });
 
