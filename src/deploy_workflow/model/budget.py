@@ -458,6 +458,17 @@ class Budget:
 
     # -- operations -------------------------------------------------------------------
 
+    def check_running(self) -> None:
+        """Refuse a regular dispatch if a stop arose after its reservation."""
+        with self._lock:
+            self._orphan()
+            self._require_running()
+
+    def _require_running(self) -> None:
+        reason = self._stops()
+        if reason is not None:
+            raise RunStopped(f"the run is stopped: {reason}")
+
     def reserve(
         self, call_id: str, usd: Decimal, retry_of: str | None = None, *, config_id: str
     ) -> None:
@@ -470,9 +481,7 @@ class Budget:
             while True:
                 self._orphan()
                 if retry_of is None:
-                    reason = self._stops()
-                    if reason is not None:
-                        raise RunStopped(f"the run is stopped: {reason}")
+                    self._require_running()
                 else:
                     self._check_retry(_call_id(retry_of))
                 committed = _add(_add(self._reserved(), self._spent()), amount)

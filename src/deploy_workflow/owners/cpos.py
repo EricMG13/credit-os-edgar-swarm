@@ -71,6 +71,8 @@ from deploy_workflow.run_scopes import PUBLIC_S1A_MODULES
 from deploy_workflow.workflow import _put
 
 if TYPE_CHECKING:
+    from _thread import _ThreadHandle
+
     from deploy_workflow.model.adapter import LiveAdapter
     from deploy_workflow.model.copilot_adapter import CopilotAdapter
     from deploy_workflow.model.handoff import HandoffExecutor
@@ -499,12 +501,12 @@ class _Board:
 
 
 class _Threads:
-    """The threads of the modules in flight, one each. The scheduler bounds how many there are
-    (it starts a module only while fewer than the width are unfinished). They are daemon threads:
-    a launch that is interrupted twice leaves without them."""
+    """One daemon worker per module. The scheduler bounds unfinished module exchanges and
+    joins the workers on shutdown. A second interrupt can end that join early."""
 
     def __init__(self) -> None:
         self._threads: list[threading.Thread] = []
+        self._starting: threading.Thread | None = None
 
     def submit(
         self,
@@ -521,14 +523,22 @@ class _Threads:
                 future.set_exception(error)
 
         thread = threading.Thread(target=fly, name=f"cpos-module-{task.module_id}", daemon=True)
-        self._threads.append(thread)
+        self._starting = thread
         thread.start()
+        self._threads.append(thread)
+        self._starting = None
         return future
 
     def join(self) -> None:
         """Wait for every module thread to end."""
         for thread in self._threads:
             thread.join()
+        if self._starting is not None and self._starting not in self._threads:
+            # CPython 3.13 publishes the native handle's ident before Python thread bootstrap.
+            # If start() was interrupted, Thread.join() can still refuse a launched worker.
+            handle: _ThreadHandle = self._starting._handle  # type: ignore[attr-defined]
+            if handle.ident:
+                handle.join()
 
 
 class _Before(Mapping[str, bytes]):
@@ -592,12 +602,17 @@ class _ModuleLoop:
     failures: dict[str, Exception] = field(default_factory=dict)  # and each one that failed
 
     def run(self, width: int) -> None:
+        from deploy_workflow.model.handoff import HandoffExecutor
+
         if self.events is not None:
             # A launch boundary for the readers of the log (``run_events.progress``): what an
             # earlier, killed launch left running ended before this one started anything.
             append_event(self.events, "launch_started", modules_at_once=width)
         if width == 1:
             self._one_at_a_time()
+        elif isinstance(self.execute, HandoffExecutor):
+            with self.execute.shared_budget():
+                self._in_flight(width)
         else:
             self._in_flight(width)
 
@@ -710,13 +725,10 @@ class _ModuleLoop:
         halt at their next call or check (``ModuleHalted``). Then one failure is raised
         (``_cause``).
 
-        An interrupt of this thread halts every module in flight and waits for their threads to
-        end (each at its next call or check, or when the call it has out returns) before it
-        propagates: no module thread is left running under an interpreter that is shutting down,
-        and the process ends with the interrupt's own exit status. A second interrupt ends that
-        wait and propagates at once. The module threads are daemon threads, so the process then
-        exits without them: a call still out is abandoned and its hold stays open, as after a
-        kill, and the relaunch treats the folder as it treats a killed one."""
+        An interrupt stops new work and joins the workers. A second interrupt ends the join
+        and propagates to the caller. A paid Copilot launch still runs bounded adapter cleanup.
+        Workers can settle outstanding calls during shutdown. A relaunch reads the durable
+        markers, including any holds left open."""
         board = _Board(self.ordered, self.handoffs)
         pool = _Threads()
         try:
@@ -774,6 +786,18 @@ class _ModuleLoop:
         with board:
             self._start(board, pool, width)
 
+    def _has_slot(self, module_id: str, width: int) -> bool:
+        from deploy_workflow.model.handoff import HandoffExecutor
+
+        running = [m for m, (_, future) in self.flights.items() if not future.done()]
+        if len(running) >= width:
+            return False
+        if running and isinstance(self.execute, HandoffExecutor):
+            return self.execute.can_overlap(
+                [*running, module_id], self.request.run.case_kind, self.request.max_attempts
+            )
+        return True  # the first module uses ordinary per-call reservation
+
     def _start(self, board: _Board, pool: _Threads, width: int) -> None:
         """``_take_off`` with the board held."""
         for module_id in self.ordered:
@@ -782,9 +806,9 @@ class _ModuleLoop:
             self._note_failures(board)
             if self.failures or self.not_produced is not None:
                 return
-            if sum(not future.done() for _, future in self.flights.values()) >= width:
-                return
             if not self.producers[module_id] <= self.handoffs.keys():
+                return
+            if not self._has_slot(module_id, width):
                 return
             try:
                 task = self._dispatch(
@@ -881,9 +905,8 @@ class _ModuleLoop:
 
 
 def _stopped_by_another(error: Exception) -> bool:
-    """Whether a module failed only because the budget refused it a new hold on a run already
-    stopped: ``reserve`` raises a plain ``RunStopped`` for that. The module whose own call
-    stopped the run fails with that call's fault instead (the loop's ``cpos_live_stopped``)."""
+    """Whether a peer's sticky budget stop refused a new hold or an already-reserved dispatch.
+    Both raise a plain ``RunStopped``. The call that caused the stop reports its own fault."""
     return isinstance(error, RunStopped) and not isinstance(error, OverrunStop)
 
 

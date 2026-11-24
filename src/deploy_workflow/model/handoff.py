@@ -17,7 +17,8 @@ import re
 import threading
 import time
 from collections import OrderedDict
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Callable, Iterator, Mapping, Sequence
+from contextlib import contextmanager
 from dataclasses import asdict, dataclass, replace
 from datetime import UTC, date, datetime
 from decimal import Decimal, DecimalException, Inexact, localcontext
@@ -44,7 +45,7 @@ from deploy_vii.model.metrics import _ratio
 from deploy_vii.preparation import pdf_page_text, xlsx_content
 from deploy_vii.registry import modules
 from deploy_workflow.model.adapter import AdapterReply, ModelAdapter
-from deploy_workflow.model.budget import Budget, OverrunStop, exact_sum
+from deploy_workflow.model.budget import Budget, BudgetError, OverrunStop, exact_multiply, exact_sum
 from deploy_workflow.model.configs import CONFIGS
 from deploy_workflow.model.copilot import COMPACTION_SHARE, near_limit, prompt_tokens_estimate
 from deploy_workflow.model.handoff_transport import compact_index, read_handoff
@@ -52,6 +53,7 @@ from deploy_workflow.model.loop_helpers import _caught, redacted_request, redact
 from deploy_workflow.model.pricing import (
     Priced,
     handoff_reservation_usd,
+    price_of,
     price_usage,
     web_search_usd,
 )
@@ -1286,7 +1288,7 @@ class HandoffExecutor:
         self.effort_by_module: Mapping[str, str] = MappingProxyType(efforts)
         self._module = threading.local()  # the ``_PerModule`` attributes of each thread
         self._gate = threading.Lock()  # guards the two below
-        self._in_flight = 0  # module runs between entering and leaving ``__call__``
+        self._in_flight = 0  # references to the shared writer lock and ledger
         self._writer: AbstractContextManager[None] | None = None  # the folder lock they share
         self.directory, self.adapter, self.check = directory, adapter, check
         self.events = events
@@ -1455,18 +1457,43 @@ class HandoffExecutor:
         return (WEB_PAGES_UNREADABLE,) if unreadable and issues else issues
 
     def __call__(self, task: HandoffTask) -> bytes:
+        with self.shared_budget():
+            return self._run(task)
+
+    @contextmanager
+    def shared_budget(self) -> Iterator[None]:
+        """Keep the locked ledger current for the scheduler's admissions and its workers."""
         self._enter()
         try:
-            return self._run(task)
+            yield
         finally:
             self._leave()
 
+    def can_overlap(self, modules: Sequence[str], case_kind: str, max_attempts: int) -> bool:
+        """Whether settled spend leaves room for every turn of every listed module.
+        Call under shared_budget, with unfinished modules and the proposed start included."""
+        config = self.adapter.config_id
+        if price_of(config).reservation_context_tokens is None:
+            return False
+        # Every supported request on this route holds the whole context, including its framing.
+        # Count full module bounds even for workers that have already settled some turns.
+        turns = self.max_turns * max_attempts
+        searching = sum(
+            web_search_offered(self.web_search, module, case_kind) for module in modules
+        )
+        try:
+            with localcontext() as context:
+                context.traps[Inexact] = True
+                hold = handoff_reservation_usd(config, 0, self.max_output_tokens)
+                searches = web_search_usd(searching * turns * WEB_SEARCH_CALLS_PER_TURN)
+            tokens = exact_multiply(hold, Decimal(turns * len(modules)))
+            return exact_sum((self.budget.spent, tokens, searches)) <= self.budget.cap_usd
+        except (BudgetError, DecimalException):
+            # No exact combined bound. Each serial reservation still decides on its own merits.
+            return False
+
     def _enter(self) -> None:
-        """Take the folder's writer lock and load the budget for the first module run in flight;
-        one that overlaps it shares both. One module at a time therefore locks and reloads for
-        every call, as it always did. Overlapping runs cannot each take the lock (the second would
-        be refused as another run) and must share one budget, or the cap would be checked against
-        half the holds."""
+        """Acquire the writer lock and reload on first entry. Overlapping users share both."""
         with self._gate:
             if self._in_flight == 0:
                 writer = _single_writer(self.directory)
@@ -1482,7 +1509,7 @@ class HandoffExecutor:
             self._in_flight += 1
 
     def _leave(self) -> None:
-        """The last module run in flight lets the writer lock go."""
+        """The last user of the budget lets the writer lock go."""
         with self._gate:
             self._in_flight -= 1
             writer = self._writer
@@ -1884,12 +1911,11 @@ class HandoffExecutor:
                 )
 
     def _last_look(self, task: HandoffTask, call_id: str) -> None:
-        """Asked once more immediately before the call is handed to the adapter (the hold and the
-        turn event were written since ``_hold`` asked): a module the run can no longer accept
-        releases its hold and sends nothing. A call handed over before the launch stopped
-        cannot be recalled; it is settled when it returns."""
+        """Recheck the module and the shared ledger after reserving and just before dispatch.
+        A refused call releases its hold. A call already authorized settles when it returns."""
         try:
             task.proceed()
+            self.budget.check_running()
         except BaseException:
             self.budget.release(call_id)
             raise

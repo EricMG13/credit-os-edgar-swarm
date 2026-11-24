@@ -22,10 +22,18 @@ gives the permission; each point is the build's choice, not the owner's.
   sent is accepted and a slot is free, and they are accepted in plan order. A module's acceptance
   check reads every handoff the plan lists before it, as one at a time, so which handoffs are
   accepted and their bytes do not depend on which module finishes first. CP-8 still runs last.
-- The cap is unchanged. One budget serves every module in flight; spend plus open holds never passes
-  the run's pathway cap (`2026-11-15-pathway-tiers-and-caps.md`). A call that would pass it only
-  because another module's hold is open waits for that call to settle; one that would pass it on
-  settled spend is refused and the run stops as `capped`, as before.
+- The requested width bounds active module exchanges. A completed Copilot module's session
+  can remain open while its context is being compacted or its runtime is shutting down in the
+  background. Before overlapping modules, CP-OS checks the locked
+  ledger's settled spend plus the full cost bound for all unfinished modules and the proposed
+  start against the pathway cap (`2026-11-15-pathway-tiers-and-caps.md`). It prices each module's
+  configured turns and attempts at the full-context hold and adds its maximum hosted search fees
+  where applicable. If the cap cannot cover them together, the next start waits. Routes without
+  a flat context-priced ceiling, including Copilot Opus, run one module at a time. Copilot Sol's
+  32-turn launcher default also makes overlap exceed the pathway caps.
+- A module running alone keeps the usual per-call holds. For the same successful bounded replies,
+  a cap stop therefore preserves the modules that a serial run would accept. Unknown charges and
+  reservation overruns still stop the shared ledger.
 - A plan with retained handoffs runs one at a time whatever is asked.
 
 ## Not yet run live
@@ -61,13 +69,12 @@ unknown charge, which stops the run); and the Windows runtime. The first live ru
 - When an observer stops the run for review, a module in flight may be accepted on the call it
   already has out and sends no other. If that call brought an accepted handoff the run resumes as
   one at a time; if the module needed another call it is stranded as above.
-- An interrupt (Ctrl-C) halts every module in flight and waits for their threads to end, each at
-  its next call or check or when the call it has out returns, before the launcher exits with the
-  interrupt's status. A second interrupt ends that wait: the launcher exits at once and abandons
-  the calls still out, whose holds stay open as after a kill, so the relaunch treats the folder as
-  it treats a killed one (it stops on the open holds and the unanswered requests). One at a time
-  the launcher exits at once.
-  A terminated or killed process ends at once at any width.
+- Ctrl-C stops new work and waits for the active module workers to finish. A second Ctrl-C
+  ends the scheduler's wait for those workers. A paid Copilot launch still drains pending
+  compaction records and runs its bounded adapter shutdown. An outstanding call can settle
+  during shutdown or leave an open hold. A relaunch reads the durable reservation and settlement
+  records and stops on an open hold or unanswered request. A serial Copilot launch runs the same
+  adapter shutdown on the calling thread. A terminated or killed process ends at once at any width.
 - The event log, the call log and the library's copy of the call log are in the order things
   happened, so their line order differs between widths. The call log's contents are the same. The
   event log's are the same except two fields: each launch's `launch_started` states the width, and

@@ -13,7 +13,7 @@ import shutil
 import sys
 import threading
 import time
-from decimal import Decimal
+from decimal import Decimal, localcontext
 from pathlib import Path
 
 import pytest
@@ -587,6 +587,58 @@ def test_an_interrupt_halts_the_modules_in_flight_and_waits_for_their_threads(ca
         case.run("interrupted", execute, 2, on_handoff=interrupt)
     assert outcome == ["halted"]  # already there: the launch waited for the thread
     assert not _module_threads()
+
+
+@pytest.mark.parametrize("native_started", [False, True], ids=["before-launch", "during-bootstrap"])
+def test_a_startup_interrupt_joins_the_workers_that_started(case, monkeypatch, native_started):
+    interrupt = KeyboardInterrupt("module startup interrupted")
+    bootstrap_waiting = threading.Event()
+    release_bootstrap = threading.Event()
+    bootstrap_ended = threading.Event()
+    join_entered = threading.Event()
+    start_thread = threading.Thread.start
+    start_native = threading._start_joinable_thread
+
+    def start(thread):
+        if not native_started and thread.name == "cpos-module-CP-0":
+            raise interrupt
+        start_thread(thread)
+
+    def start_with_paused_bootstrap(function, *, handle, daemon):
+        if function.__self__.name != "cpos-module-CP-0":
+            return start_native(function, handle=handle, daemon=daemon)
+
+        def bootstrap():
+            bootstrap_waiting.set()
+            assert release_bootstrap.wait(WAIT)
+            function()
+            bootstrap_ended.set()
+
+        class ObservedHandle:
+            def __getattr__(self, name):
+                return getattr(handle, name)
+
+            def join(self):
+                join_entered.set()
+                release_bootstrap.set()
+                handle.join()
+
+        start_native(bootstrap, handle=handle, daemon=daemon)
+        assert bootstrap_waiting.wait(WAIT)
+        # Keep bootstrap parked until scheduler cleanup reaches the real native join.
+        function.__self__._handle = ObservedHandle()
+        raise interrupt
+
+    monkeypatch.setattr(threading.Thread, "start", start)
+    monkeypatch.setattr(threading, "_start_joinable_thread", start_with_paused_bootstrap)
+    try:
+        with pytest.raises(KeyboardInterrupt) as raised:
+            case.run(f"startup-interrupt-{native_started}", case.answer, 2)
+        assert raised.value is interrupt
+        assert join_entered.is_set() is native_started
+        assert bootstrap_ended.is_set() is native_started
+    finally:
+        release_bootstrap.set()
 
 
 INTERRUPTED_CHILD = """
@@ -1391,13 +1443,18 @@ class Priced:
         return self.reply(good) if found is None else found
 
 
-def _priced_run(case: Case, name: str, width: int, hook, cap: str = "25", **more):
+def _priced_run(case: Case, name: str, width: int, hook, cap: str = "40", **more):
     """The synthetic plan through the real executor and budget; a stop is recorded in the event
     log as `run_live_handoffs` records it. Returns the folder, the executor and the failure."""
     out = case.root / name
     adapter = more.pop("kind", Priced)(case, hook)  # `kind`: another adapter class or factory
     executor = adapter.executor = HandoffExecutor(
-        out / "live", adapter=adapter, cap_usd=Decimal(cap), check=case.check, events=out
+        out / "live",
+        adapter=adapter,
+        cap_usd=Decimal(cap),
+        check=case.check,
+        events=out,
+        max_turns=2,
     )
     try:
         case.run(name, executor, width, **more)
@@ -1449,12 +1506,56 @@ def test_an_overrun_is_reported_as_the_stop_whichever_module_meets_it_first(case
         assert note.startswith("CP-1 also stopped: the run is stopped:") and "overran" in note
 
 
+@pytest.mark.parametrize(
+    ("kind", "reason", "reported"),
+    [
+        ("unknown", "has an unknown charge", "provider"),
+        ("overrun", "overran its reservation", "budget"),
+    ],
+)
+def test_a_stopped_budget_releases_a_reserved_unsent_call(
+    case, monkeypatch, kind, reason, reported
+):
+    from deploy_workflow.model import handoff
+    from deploy_workflow.model.budget import read_reservation_snapshot
+
+    reserved = threading.Event()
+    adapter = Priced(case)
+    append = handoff.append_event
+
+    def delay_at_turn(directory, event, **fields):
+        append(directory, event, **fields)
+        if event == "turn" and fields["module"] == "CP-1":
+            reserved.set()
+            _until(lambda: adapter.executor.budget.stop_kind == kind, f"CP-1A's {kind} settlement")
+
+    def hook(_adapter, module, _index, good):
+        if module == "CP-1A":
+            assert reserved.wait(WAIT), "CP-1 did not reach its final check with a hold"
+            if kind == "overrun":
+                return Priced.reply(good, usd="8.00")
+            return AdapterReply("sent_unknown", None, None, None, "ConnectionLost", None, 1, 2)
+        return None
+
+    adapter.hook = hook
+    monkeypatch.setattr(handoff, "append_event", delay_at_turn)
+    name = f"reserved-unsent-{kind}"
+    out, executor, error = _priced_run(case, name, 2, hook, kind=lambda *_: adapter)
+    assert adapter.calls == [("CP-0", 0), ("CP-1A", 0)]
+    assert executor.budget.unsettled == ()
+    markers = {marker.status: marker for marker in read_reservation_snapshot(out / "live")}
+    assert markers.keys() == {"settled", "released", kind}
+    assert markers["released"].settled_usd == Decimal(0)
+    assert str(error).startswith("cpos_live_stopped:") and stop_reason(error) == reported
+    (note,) = error.__notes__
+    assert note == f"CP-1 also stopped: the run is stopped: {markers[kind].call_id!r} {reason}"
+
+
 @pytest.mark.parametrize("width", [1, 2])
 def test_a_cap_stop_is_capped_at_every_width_with_the_same_modules_accepted(case, width):
     """Each call is billed 0.10 and holds 7.17 against a cap of 7.40: CP-0, CP-1 and CP-1A fit
-    (0.20 spent + 7.17), CP-DR does not (0.30 + 7.17). At width 2 CP-1A's first reserve waits
-    for CP-1's hold instead of being refused, so the same modules are accepted and the run stops
-    at the same module, as `capped`."""
+    (0.20 spent + 7.17), CP-DR does not (0.30 + 7.17). At width 2 there is room
+    for one module at a time. Both runs stop at the same module, as `capped`."""
     name = f"capped-{width}"
     out, executor, error = _priced_run(case, name, width, None, cap="7.40")
     assert isinstance(error, BudgetExhausted) and stop_reason(error) == "budget"
@@ -1462,6 +1563,122 @@ def test_a_cap_stop_is_capped_at_every_width_with_the_same_modules_accepted(case
     assert case.events(name, "module_accepted") == ["CP-0", "CP-1", "CP-1A"]
     assert executor.budget.spent == Decimal("0.30") and executor.budget.reserved == 0
     assert len((out / "live" / "calls.jsonl").read_text().splitlines()) == 3  # none past the cap
+
+
+@pytest.mark.parametrize("width", [1, 2])
+def test_a_later_module_cannot_consume_an_earlier_modules_second_turn(case, monkeypatch, width):
+    from deploy_workflow.owners import cpos
+
+    name = f"second-turn-{width}"
+    decided = threading.Event()
+    overlapping = False
+    take_off = cpos._ModuleLoop._take_off
+
+    def after_starts(loop, board, pool, count):
+        nonlocal overlapping
+        take_off(loop, board, pool, count)
+        if "CP-1" in loop.flights and not decided.is_set():
+            overlapping = "CP-1A" in loop.flights
+            decided.set()
+
+    monkeypatch.setattr(cpos._ModuleLoop, "_take_off", after_starts)
+
+    def hook(adapter, module, index, good):
+        if module == "CP-1" and index == 0:
+            if width == 2:
+                assert decided.wait(WAIT)
+                if overlapping:
+                    _until(lambda: adapter.executor.budget.spent >= 7, "CP-1A's settlement")
+            return Priced.reply(None, "1.00")
+        return Priced.reply(good, "7.00" if module == "CP-1A" else "0.10")
+
+    _, executor, error = _priced_run(case, name, width, hook, cap="15")
+    assert isinstance(error, BudgetExhausted)
+    assert case.events(name, "module_accepted") == ["CP-0", "CP-1", "CP-1A"]
+    assert executor.budget.spent == Decimal("8.20")
+    assert executor.adapter.calls == [("CP-0", 0), ("CP-1", 0), ("CP-1", 1), ("CP-1A", 0)]
+
+
+def test_admission_and_every_worker_share_the_budget_reloaded_before_dispatch(case, monkeypatch):
+    from deploy_workflow.owners import cpos
+
+    name = "reload-before-dispatch"
+    adapter = Priced(case)
+    directory = case.root / name / "live"
+    executor = HandoffExecutor(
+        directory, adapter=adapter, cap_usd=Decimal(25), max_turns=1, check=case.check
+    )
+    with _single_writer(directory):
+        prior = Budget(Decimal(25), directory)
+        prior.reserve("prior", Decimal(12), config_id=CONFIG)
+        prior.settle("prior", Decimal(12))
+    first = []
+    dispatched = cpos._ModuleLoop._dispatch
+
+    def capture(loop, *args):
+        if not first:
+            first.append((executor.budget, executor.budget.spent))
+            with pytest.raises(RunDirBusy), _single_writer(directory):
+                pass
+        return dispatched(loop, *args)
+
+    monkeypatch.setattr(cpos._ModuleLoop, "_dispatch", capture)
+    case.run(name, executor, 2)
+    assert first == [(executor.budget, Decimal(12))]
+    events = [(e["event"], e.get("module")) for e in read_events(case.root / name / EVENTS)]
+    assert events.index(("module_accepted", "CP-1")) < events.index(("module_started", "CP-1A"))
+
+
+@pytest.mark.parametrize(
+    ("config", "case_kind", "cap", "funded"),
+    [
+        ("sol-medium", "public", "44.55999999999999999999999999999", False),
+        ("sol-medium", "private", "44.56", True),
+        ("sol-medium", "synthetic", "43.92", True),
+        ("copilot-opus-medium", "private", "1000000000", False),
+    ],
+)
+def test_overlap_prices_all_attempts_and_searches_and_requires_a_context_ceiling(
+    tmp_path, config, case_kind, cap, funded
+):
+    adapter = Priced(None)
+    adapter.config_id = config
+    executor = HandoffExecutor(
+        tmp_path,
+        adapter=adapter,
+        cap_usd=Decimal(cap),
+        check=lambda *_: (),
+        max_turns=2,
+        web_search=config == "sol-medium",
+    )
+    # Two turns in each of two attempts per module, at 5.49 each on Sol.
+    # Public/private CP-DR can also use 16 hosted searches per turn at 0.01 each.
+    with executor.shared_budget():
+        assert executor.can_overlap(("CP-1", "CP-DR"), case_kind, 2) is funded
+
+
+def test_overlap_defers_when_money_would_round(tmp_path):
+    adapter = Priced(None)
+    adapter.config_id = "sol-medium"
+    executor = HandoffExecutor(
+        tmp_path,
+        adapter=adapter,
+        cap_usd=Decimal("44.20"),
+        check=lambda *_: (),
+        max_turns=2,
+        web_search=True,
+    )
+    with executor.shared_budget():
+        with localcontext(prec=2):
+            # Full exposure is 44.56. An ambient two-digit price calculation admits both.
+            assert not executor.can_overlap(("CP-1", "CP-DR"), "public", 2)
+        executor.budget.reserve("prior", Decimal(1), config_id=adapter.config_id)
+        executor.budget.settle("prior", Decimal("1e-119"))
+        # The combined bound needs 121 significant digits with settled spend. A serial
+        # reservation fits at the ledger's 120-digit precision.
+        assert not executor.can_overlap(("CP-1", "CP-DR"), "public", 1)
+        executor.budget.reserve("one-call", Decimal("5.49"), config_id=adapter.config_id)
+        executor.budget.release("one-call")
 
 
 NOT_SENT = AdapterReply("not_sent", None, None, None, "RateLimited", None, 1, 2, message="429")
@@ -1920,6 +2137,8 @@ def _launched(root: Path, width: str | None, monkeypatch) -> dict[str, str]:
     argv = [
         *("--context", str(context), "--sources", str(drop), "--config", CONFIG, "--cap", "25"),
         *("--out", str(out), "--no-library", "--prior", "none", "--live", "--ruling", str(RULING)),
+        "--max-turns",
+        "1",
         *(() if width is None else ("--parallel-modules", width)),
     ]
     monkeypatch.setenv("COPILOT_GITHUB_TOKEN", DUMMY_KEY)

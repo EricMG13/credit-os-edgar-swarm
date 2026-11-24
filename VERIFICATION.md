@@ -4,6 +4,22 @@ Keep one running record here. A pass applies only to the stated scope. Earlier v
 engine is in [EricMG13/final-workflow](https://github.com/EricMG13/final-workflow)'s
 `VERIFICATION.md`, which also keeps the retained runs this copy leaves out.
 
+## 2026-11-24 — Parallel CP-OS review fixes for PR #71
+
+- Offline fake-provider runs reproduced a reserved call reaching dispatch after an unknown charge
+  or overrun. The final check now uses the shared ledger and releases the unsent hold at zero.
+  The original failure remains the recorded reason for the stop.
+- At a USD 15 cap, widths 1 and 2 now both accept CP-0, CP-1 and CP-1A and settle USD 8.20.
+  Funded workers still overlap. Admission checks the reloaded ledger, configured turns and
+  attempts, hosted search fees, and exact pricing. An unavailable bound defers to serial calls.
+- Tested interrupts before native startup and before Python bootstrap completed on CPython 3.13.
+  Cleanup joins started workers and preserves the original interrupt. The library admission test
+  now uses pytest's provider fixture and verifies a default-width launch.
+- Scope covers synthetic handoffs, scheduler runs and library admission. The concurrency review
+  and rewrite tournament retained the locked-ledger admission and the startup cleanup paths.
+- Targeted offline pytest passed 1,315 tests, with one historical retained-run test skipped.
+  The parallel scheduler file passed 70 tests. The changed-code gate reported zero findings.
+
 ## 2026-11-24 — Performance fixes on main `13b7d43b`
 
 - Recovered staged code from the earlier integration and applied it to current main. The two overlaps shared route parsing between preloading and rendering, and retained the run-chart memo boundary. Astra reproduced a same-grid Forecast crash when `Upside` and `Upside case` got different names in the chart and table. Both now share the resolved name. The new same-grid test failed before the fix and passed after it, alongside the existing split-grid test. Astra cleared that fix and both overlaps in patch `b1a24422`.

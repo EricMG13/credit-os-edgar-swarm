@@ -54,11 +54,17 @@ A run keeps one module in flight at a time. `--parallel-modules N`, or
 `CREDIT_OS_PARALLEL_MODULES=N` in the launching environment (the run start
 service passes no flag), lets CP-OS keep up to `N` independent modules in flight
 at once, `N` from 2 to 4 (`docs/rulings/2026-11-18-parallel-modules.md`). Modules
-still start and are accepted in plan order, and the run's cap covers all of them:
-a call that would pass the cap only because another module's hold is open waits
-for that call to settle. The adapter serves every call from one loop thread and
-gives each module its own runtime client and session, so a run at width `N` holds
-up to `N` sessions on the seat.
+still start and are accepted in plan order. Before starting a second or later
+module, CP-OS checks whether the remaining budget covers every permitted turn
+and attempt of all modules that would be in flight, including hosted search
+fees when offered. If the bound exceeds the available budget, CP-OS waits and
+runs one module at a time as needed. A module running alone still reserves one
+call at a time. Copilot Opus runs serially because its call hold depends on
+request size. At the launcher's default 32 turns, Copilot Sol also runs serially
+within the pathway caps. The adapter serves every call from one loop thread and
+gives each module its own runtime client and session. Width `N` permits up to
+`N` active module exchanges. A completed module's session can remain open while
+its context is being compacted or its runtime is shutting down in the background.
 
 A width above 1 has not been run against a live provider. Not checked: several
 sessions of one run on one seat, the seat's rate limits, and a tool result that
@@ -71,11 +77,13 @@ module fails, a later module already in flight is halted with its request sent a
 no answer kept. After the failed module is repaired, the relaunch stops with
 `cpos_interrupted: response not retained for <module>` at each such module:
 repair it the same way (a changed instruction gives it a new request) or start a
-new run folder. Nothing is sent or charged twice. Ctrl-C at a width above 1 waits
-for the calls already out to return before the launcher exits. A second Ctrl-C
-exits at once and abandons those calls: their holds stay open, as after a kill,
-and the relaunch stops on them as it does after a kill. The ruling lists every
-known difference.
+new run folder. Nothing is sent or charged twice.
+
+At a width above 1, Ctrl-C stops new work and waits for the active module
+workers to finish. A second Ctrl-C ends that wait. A paid Copilot launch still
+runs its bounded adapter shutdown. An outstanding call can settle during
+shutdown or leave an open hold. On relaunch, CP-OS reads the saved reservation
+and settlement records and stops on any open hold or unanswered request.
 
 Add `--live --ruling docs/rulings/<file>.md` only for a separately authorized
 paid CLI run. The ruling must name the configuration. In the connected app,
