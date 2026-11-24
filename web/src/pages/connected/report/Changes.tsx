@@ -314,7 +314,7 @@ function Comparison({
       <Verdict change={change} entry={entry} folder={folder} />
       <Measures change={change} entry={entry} trace={trace} />
       {Boolean(pack?.modules?.length) && (
-        <Tile span={5} label="Modules" title="What changed in the analysis">
+        <Tile span={5} label="Modules" title="What changed in the analysis" className="self-start">
           {pack?.prior?.format === "earlier" && (
             <p className="text-small text-text-secondary">
               The earlier run used an earlier report format.

@@ -19,7 +19,7 @@ function CauseLine({ cause, href }: { cause: Cause; href: string | undefined }) 
   switch (cause.kind) {
     case "written":
       return cause.text === "Unresolved" ? (
-        <span className="rounded-ds-xs border border-warning-edge bg-warning-fill px-1.5 py-0.5 text-caption font-medium text-warning-text">
+        <span className="justify-self-start rounded-ds-xs border border-warning-edge bg-warning-fill px-1.5 py-0.5 text-caption font-medium text-warning-text">
           Cause: Unresolved
         </span>
       ) : (

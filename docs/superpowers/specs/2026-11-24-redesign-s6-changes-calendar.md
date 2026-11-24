@@ -128,3 +128,22 @@ Failing tests outside this package: `ReportLibrary.design.test.tsx` "switches Ch
 a table" clicks `radio "Table"`; Changes now uses the kit `Segmented` (buttons with `aria-pressed`).
 "filters by sector and pathway" clicks the Library's own `radio "Cards"`; not touched here, not
 confirmed as pre-existing.
+
+## 8. Rework after coordinator review (2026-11-24)
+
+Changed against the review's numbers: 1 ranking removed (pack order; groups from the pack's own
+comparability); 2 reason with a reference becomes "See comparison evidence."; 3 cause states written,
+referenced (link), absent ("Cause not stated" only then), unmatched (link); 4 ledger rows that cite a
+source are links; 5 verdict is the first sentence of the Bottom line, rest as body, one trace, link when
+the paragraph cites a source, no false gap; 6 maturity pair in pack order, no invented years, signed
+bars from a baseline, unparsed cells shown as written; 7 grouping mirrors `comparisonRows`
+(`changeSign`, not `Number()`); 8 `ReportFindings` removed, CP-8 passages drawn once as tiles (also in the
+no-comparison state); 9, 12, 13, 17-19, 23 Calendar reworked (frame, month ticks and dated ends,
+direct labels, one legend, 32/44 px targets, stacked table at 390); 10 maturity tile on kit `Segmented`,
+outlined versus solid bars, values visible (the title names the comparison; no computed reading is
+drawn); 11 one module list with expandable rows; 14 gap in place of measures; 15 fixed 9 rem mark column;
+16 sentence only in the largest type; 20 headings; 21 only "Unresolved" is a chip; 24 the one control
+lookup in `ReportLibrary.design.test.tsx`; 25 links restored; 26 Calendar tested with and without asOf.
+Not done: limitation ledger rows other than New and Closed (Remaining, Parked, ...) are no longer on
+this page; they remain in Evidence. Checks: tsc, eslint, prettier clean on changed files; connected
+tests pass except the Library's own "Cards" radio test; knip only `LeadProps`.
