@@ -111,7 +111,9 @@ export function orderByPeriod<T>(items: readonly { cell: string; item: T }[]): O
   for (const [at, one] of dated.entries()) {
     const twice = dated
       .slice(0, at)
-      .find((other) => other.period.form === one.period.form && other.period.year === one.period.year);
+      .find(
+        (other) => other.period.form === one.period.form && other.period.year === one.period.year,
+      );
     if (twice) return { reason: `${one.period.label} is stated more than once.` };
   }
   const ordered = [...dated].sort(

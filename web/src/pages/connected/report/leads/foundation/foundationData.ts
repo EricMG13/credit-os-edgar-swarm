@@ -1,59 +1,217 @@
-import { unitLabel, type OutputEntry, type Table } from "../../../publishedReport";
+import { unitLabel, type OutputEntry, type Row, type Table } from "../../../publishedReport";
 import { tone } from "../../../signal";
-import { difference, percentOf, readCell, signOf, sum, type Reading } from "../kit/numbers";
+import { difference, readCell, signOf, sum, type Reading } from "../kit/numbers";
+import { IN_EVIDENCE, safeText } from "../kit/reader";
 import {
+  allTables,
   columnOf,
-  lastTwoRows,
-  periodLabel,
-  rowLabelled,
-  statementPair,
+  comparisonOf,
+  normalLabel,
+  orderByPeriod,
+  periodOf,
+  periodRows,
+  rowStarting,
+  statementColumns,
   tableUnder,
   tableWith,
+  unionPeriods,
+  type Period,
 } from "../kit/tables";
 
-/** One stated figure of one period: the cell as read, and the table line it came from. */
-type Stated = { cell: Reading; line: number };
-type PeriodPair = {
-  prior: Stated;
-  current: Stated;
-  priorLabel: string;
-  currentLabel: string;
+// The CP-1 data contract. Every reader returns the figures the handoff states, as written: every
+// stated period (one, two or more) in year order, gaps in place with their own reasons, and no
+// number the module did not write. The one computed figure is `change`: the exact difference of one
+// measure between the two periods of `comparison`, on one unit (ruling (i), 2026-11-24).
+
+export type { Period } from "../kit/tables";
+
+/** One period's figure as written (a number, a stated gap with its reason, or words), or null where the table states nothing for that period. */
+export type PeriodCell = { label: string; cell: Reading | null; line: number | null };
+/** The two periods a comparison is drawn between, earlier first; null with fewer than two of one form. */
+export type Comparison = { from: string; to: string } | null;
+
+const NOT_IN = (what: string) => `${what} is not in the handoff.`;
+
+/** The exact `to − from` of one measure on the comparison periods, when both are stated numbers. */
+function changeOf(values: readonly PeriodCell[], comparison: Comparison) {
+  if (!comparison) return null;
+  const at = (label: string) => values.find((value) => value.label === label)?.cell;
+  const [from, to] = [at(comparison.from), at(comparison.to)];
+  return from?.kind === "number" && to?.kind === "number" ? difference(to.text, from.text) : null;
+}
+
+/** A period-rows table read: its rows by period, and its one unit when every row states the same. */
+type PeriodTable = {
+  table: Table;
+  rows: { period: Period; row: Row }[];
+  unit: string | null;
 };
 
-/** The latest two periods of one column of a `Chart data` table, with its single reporting unit. */
-function chartPair(entry: OutputEntry, heading: string, column: string) {
+/** Chart and net debt tables: rows by period with a `Reporting unit` column; a reason when unreadable. */
+function periodTable(entry: OutputEntry, heading: string, what: string): PeriodTable | string {
   const table = tableUnder(entry, heading);
-  const rows = table && lastTwoRows(table);
-  const at = table ? columnOf(table, column) : -1;
-  const unitAt = table ? columnOf(table, "Reporting unit") : -1;
-  if (!table || !rows || at < 0 || unitAt < 0) return null;
-  const unit = rows.current.cells[unitAt] ?? "";
-  if (!unit || unit !== (rows.prior.cells[unitAt] ?? "")) return null;
-  const pair: PeriodPair = {
-    priorLabel: periodLabel(rows.prior.cells[0] ?? ""),
-    currentLabel: periodLabel(rows.current.cells[0] ?? ""),
-    prior: { cell: readCell(rows.prior.cells[at] ?? ""), line: rows.prior.line },
-    current: { cell: readCell(rows.current.cells[at] ?? ""), line: rows.current.line },
+  if (!table) return NOT_IN(what);
+  const ordered = periodRows(table);
+  if ("reason" in ordered) return `${what}: ${ordered.reason}`;
+  const unitAt = columnOf(table, "Reporting unit");
+  const units = new Set(ordered.periods.map(({ item }) => item.cells[unitAt] ?? ""));
+  const [unit] = [...units];
+  return {
+    table,
+    rows: ordered.periods.map(({ period, item }) => ({ period, row: item })),
+    unit: unitAt >= 0 && units.size === 1 && unit ? unitLabel(unit) : null,
   };
-  return { pair, unit, tableLine: table.line };
 }
 
-/** A labelled row of a two-period statement (`T4.4`, `T4.5`), with the unit the row states. */
-function statementRow(entry: OutputEntry, heading: string, label: string) {
-  const table = tableUnder(entry, heading);
-  const found = table && statementPair(table, label);
-  const row = table && rowLabelled(table, label);
-  if (!table || !found || !row) return null;
-  const unitAt = columnOf(table, "Unit");
-  const unit = unitAt < 0 ? "" : (row.cells[unitAt] ?? "");
-  const pair: PeriodPair = {
-    priorLabel: found.prior.label,
-    currentLabel: found.current.label,
-    prior: { cell: found.prior.cell, line: found.line },
-    current: { cell: found.current.cell, line: found.line },
-  };
-  return { pair, unit: unit ? unitLabel(unit) : null, tableLine: table.line };
+/** One column of a period table as period cells, in the table's period order. */
+function columnCells(read: PeriodTable, column: string): PeriodCell[] | null {
+  const at = columnOf(read.table, column);
+  if (at < 0) return null;
+  return read.rows.map(({ period, row }) => ({
+    label: period.label,
+    cell: readCell(row.cells[at] ?? ""),
+    line: row.line,
+  }));
 }
+
+/** A statement table (`| Line item | FY2024 | FY2023 | Unit | …`): its period columns, in order. */
+type Statement = { table: Table; columns: { period: Period; at: number }[] };
+
+function statement(entry: OutputEntry, heading: string): Statement | string {
+  const table = tableUnder(entry, heading);
+  if (!table) return NOT_IN(heading.replace(/^T\d+\.\d+ /, ""));
+  const ordered = statementColumns(table);
+  if ("reason" in ordered) return ordered.reason;
+  return { table, columns: ordered.periods.map(({ period, item }) => ({ period, at: item })) };
+}
+
+/** One row of a statement, every period, with its unit. */
+type StatementRow = { label: string; values: PeriodCell[]; unit: string | null; line: number };
+
+function statementRow(read: Statement, row: Row): StatementRow {
+  const unitAt = columnOf(read.table, "Unit");
+  const unit = unitAt < 0 ? "" : (row.cells[unitAt] ?? "").trim();
+  return {
+    label: (row.cells[0] ?? "").trim(),
+    values: read.columns.map(({ period, at }) => ({
+      label: period.label,
+      cell: readCell(row.cells[at] ?? ""),
+      line: row.line,
+    })),
+    unit: unit ? unitLabel(unit) : null,
+    line: row.line,
+  };
+}
+
+/** The statement row whose label begins with one of these, uniquely; a reason otherwise. */
+function findRow(read: Statement, prefixes: readonly string[], what: string) {
+  const row = rowStarting(read.table, prefixes);
+  if (row === "none") return NOT_IN(what);
+  if (row === "several") return `${what} matches more than one row of the statement.`;
+  return statementRow(read, row);
+}
+
+/** Cells re-laid onto a list of periods: a period the source does not state is null. */
+const onto = (periods: readonly Period[], values: readonly PeriodCell[]): PeriodCell[] =>
+  periods.map(
+    (period) =>
+      values.find((value) => value.label === period.label) ?? {
+        label: period.label,
+        cell: null,
+        line: null,
+      },
+  );
+
+const periodsOf = (values: readonly PeriodCell[]): Period[] =>
+  values.flatMap((value) => {
+    const period = periodOf(value.label);
+    return period ? [period] : [];
+  });
+
+// A cell's clauses that name a source, a register or a calculation are left out; the rest are the
+// module's own words, in its order. `safeText` screens each clause; a short calculation id ("C3")
+// the kit's screen does not catch is caught here too.
+const SHORT_ID = /\b[CD]\d{1,3}\b/;
+
+/** The module's own words of a Basis and limitation cell, without the clauses that cite a source. */
+export function basisText(cell: string): string | null {
+  const clauses = cell
+    .trim()
+    .split(/(?<=[;.])\s+/)
+    .filter(Boolean);
+  const kept = clauses.filter((clause) => {
+    const words = clause.replace(/[;.]$/, "");
+    return words && !SHORT_ID.test(words) && safeText(words) !== IN_EVIDENCE;
+  });
+  if (kept.length === 0) return clauses.length ? IN_EVIDENCE : null;
+  const text = kept.map((clause) => safeText(clause)).join(" ");
+  return text.replace(/;$/, ".");
+}
+
+// ---------------------------------------------------------------------------------------------
+// The periods the figures cover (the periods strip)
+// ---------------------------------------------------------------------------------------------
+
+export type StatedPeriods = {
+  /** Every period the figure tables state, by year; periods of different kinds are all listed. */
+  labels: string[];
+  periods: Period[];
+  /** "annual" when every period is a fiscal or calendar year; "other" otherwise or when none is stated. */
+  kind: "annual" | "other";
+  /** The two periods the figures compare, or null (one period is drawn as itself). */
+  comparison: Comparison;
+  /** Which figure table states which periods, in handoff order. */
+  tables: { heading: string; labels: string[] }[];
+  /** Figure tables whose periods cannot be read, with the reason (a repeated year, an undated label). */
+  gaps: { heading: string; reason: string }[];
+};
+
+const ROW_TABLES = [
+  "Chart data: revenue and EBITDA",
+  "Net debt data",
+  "Chart data: leverage",
+  "Chart data: liquidity",
+] as const;
+const STATEMENTS = ["T4.4 Income statement", "T4.5 Cash flow statement"] as const;
+
+/** The periods the CP-1 figures cover, read from the tables they draw (the maturity buckets are not periods). */
+export function statedPeriods(entry: OutputEntry): StatedPeriods {
+  const tables: StatedPeriods["tables"] = [];
+  const gaps: StatedPeriods["gaps"] = [];
+  const add = (heading: string, read: Ordered<unknown>) => {
+    if ("reason" in read) gaps.push({ heading, reason: read.reason });
+    else tables.push({ heading, labels: read.periods.map(({ period }) => period.label) });
+  };
+  const found = allTables(entry);
+  for (const heading of [...ROW_TABLES, ...STATEMENTS]) {
+    const same = found.filter((item) => item.heading === heading);
+    const [only] = same;
+    if (same.length > 1) gaps.push({ heading, reason: "The table is stated more than once." });
+    else if (only)
+      add(
+        heading,
+        (STATEMENTS as readonly string[]).includes(heading)
+          ? statementColumns(only.table)
+          : periodRows(only.table),
+      );
+  }
+  const segments = segmentSchedule(entry);
+  if (segments)
+    add("Segment schedule", { periods: segments.periods.map((period) => ({ period, item: 0 })) });
+  const periods = unionPeriods(
+    tables.map((table) => table.labels.flatMap((label) => periodOf(label) ?? [])),
+  );
+  return {
+    labels: periods.map((period) => period.label),
+    periods,
+    kind: periods.length > 0 && periods.every((p) => p.kind === "annual") ? "annual" : "other",
+    comparison: comparisonOf(periods),
+    tables,
+    gaps,
+  };
+}
+
+type Ordered<T> = ReturnType<typeof orderByPeriod<T>>;
 
 // ---------------------------------------------------------------------------------------------
 // Tile 1: earnings against debt and leverage
@@ -61,113 +219,124 @@ function statementRow(entry: OutputEntry, heading: string, label: string) {
 
 export type EarningsMeasure = {
   key: "sales" | "reportedEbitda" | "adjustedEbitda" | "grossDebt";
+  /** The measure's name: the table's column or row label as written. */
   label: string;
-  pair: PeriodPair;
-  /** Exact current less prior, derived; null when either is not a number. */
+  /** One cell per period of the figure, in order. */
+  values: PeriodCell[];
+  /** Exact `to − from` on the figure's comparison periods, both stated numbers; else null. */
   change: string | null;
-  /** Current less prior as a percentage of prior, derived, 2 dp. */
-  growth: string | null;
+  line: number;
+};
+
+export type LeverageSeries = {
+  label: string;
+  values: PeriodCell[];
+  change: string | null;
+  tone: ReturnType<typeof tone>;
+  /** The table's own Basis and limitation words per period (sources left out), or null. */
+  bases: (string | null)[];
   line: number;
 };
 
 export type EarningsAgainstDebt = {
   unit: string;
-  priorLabel: string;
-  currentLabel: string;
+  periods: Period[];
+  comparison: Comparison;
   measures: EarningsMeasure[];
-  /** Measures the handoff does not carry for these two periods, with the reason in words. */
+  /** Measures the handoff does not carry on this unit, with the reason in words. */
   absent: { label: string; reason: string }[];
-  leverage: {
-    label: string;
-    pair: PeriodPair;
-    change: string | null;
-    tone: ReturnType<typeof tone>;
-    line: number;
-  } | null;
+  leverage: LeverageSeries | null;
+  /** The leverage table's Basis and limitation words for its latest period; never assumed. */
+  leverageBasis: string | null;
   tableLine: number;
 };
 
-const MEASURES = [
-  {
-    key: "sales",
-    label: "Net sales",
-    heading: "Chart data: revenue and EBITDA",
-    column: "Revenue",
-  },
-  {
-    key: "adjustedEbitda",
-    label: "EBITDA As Defined",
-    heading: "Chart data: revenue and EBITDA",
-    column: "Adjusted EBITDA",
-  },
-  { key: "grossDebt", label: "Gross debt", heading: "Net debt data", column: "Gross debt" },
-] as const;
+type Read = { label: string; values: PeriodCell[]; unit: string | null; line: number } | string;
 
-/** The composed figure's data: money measures on one unit, and the leverage ratio beside them. */
+function chartMeasure(entry: OutputEntry, heading: string, column: string, label: string): Read {
+  const read = periodTable(entry, heading, label);
+  if (typeof read === "string") return read;
+  const values = columnCells(read, column);
+  if (!values) return NOT_IN(label);
+  if (!read.unit) return `${label} is not stated in one unit.`;
+  return { label, values, unit: read.unit, line: read.table.line };
+}
+
+function reportedEbitda(entry: OutputEntry): Read {
+  const read = statement(entry, "T4.4 Income statement");
+  if (typeof read === "string") return `EBITDA (Reported): ${read}`;
+  const row = findRow(read, ["EBITDA (Reported)"], "EBITDA (Reported)");
+  return typeof row === "string" ? row : { ...row, line: read.table.line };
+}
+
+/** The composed figure's data: money measures on one unit and the leverage ratio, every stated period. */
 export function earningsAgainstDebt(entry: OutputEntry): EarningsAgainstDebt | null {
-  const anchor = chartPair(entry, "Chart data: revenue and EBITDA", "Revenue");
-  if (!anchor) return null;
-  const { priorLabel, currentLabel } = anchor.pair;
-  const unit = unitLabel(anchor.unit);
-  const read = new Map<string, { pair: PeriodPair; line: number } | string>();
-  for (const spec of MEASURES) {
-    const found = chartPair(entry, spec.heading, spec.column);
-    if (!found) read.set(spec.key, `${spec.label} is not in the handoff.`);
-    else if (unitLabel(found.unit) !== unit)
-      read.set(spec.key, `${spec.label} is stated in a different unit.`);
-    else if (found.pair.priorLabel !== priorLabel || found.pair.currentLabel !== currentLabel)
-      read.set(spec.key, `${spec.label} is stated for different periods.`);
-    else read.set(spec.key, { pair: found.pair, line: found.tableLine });
+  const REVENUE = "Chart data: revenue and EBITDA";
+  const reads: { key: EarningsMeasure["key"]; label: string; read: Read }[] = [
+    { key: "sales", label: "Revenue", read: chartMeasure(entry, REVENUE, "Revenue", "Revenue") },
+    { key: "reportedEbitda", label: "EBITDA (Reported)", read: reportedEbitda(entry) },
+    {
+      key: "adjustedEbitda",
+      label: "Adjusted EBITDA",
+      read: chartMeasure(entry, REVENUE, "Adjusted EBITDA", "Adjusted EBITDA"),
+    },
+    {
+      key: "grossDebt",
+      label: "Gross debt",
+      read: chartMeasure(entry, "Net debt data", "Gross debt", "Gross debt"),
+    },
+  ];
+  const anchor = reads.map(({ read }) => read).find((read) => typeof read !== "string");
+  if (!anchor?.unit) return null;
+  const unit = anchor.unit;
+  const ready = reads.flatMap(({ key, read }) =>
+    typeof read !== "string" && read.unit === unit ? [{ key, read }] : [],
+  );
+  const absent = reads.flatMap(({ label, read }) => {
+    if (typeof read === "string") return [{ label, reason: read }];
+    return read.unit === unit ? [] : [{ label, reason: `${label} is stated in another unit.` }];
+  });
+  const lev = periodTable(entry, "Chart data: leverage", "Leverage");
+  const levValues = typeof lev === "string" ? null : columnCells(lev, "Total debt / EBITDA");
+  const periods = unionPeriods([
+    ...ready.map(({ read }) => periodsOf(read.values)),
+    levValues ? periodsOf(levValues) : [],
+  ]);
+  const comparison = comparisonOf(periods);
+  const measures = ready.map(({ key, read }): EarningsMeasure => {
+    const values = onto(periods, read.values);
+    return { key, label: read.label, values, change: changeOf(values, comparison), line: read.line };
+  });
+  let leverage: LeverageSeries | null = null;
+  let leverageBasis: string | null = null;
+  if (typeof lev !== "string" && levValues) {
+    const values = onto(periods, levValues);
+    const change = changeOf(values, comparison);
+    const basisAt = columnOf(lev.table, "Basis and limitation");
+    const basisOf = (label: string) => {
+      const row = lev.rows.find(({ period }) => period.label === label)?.row;
+      return row && basisAt >= 0 ? basisText(row.cells[basisAt] ?? "") : null;
+    };
+    leverage = {
+      label: "Total debt / EBITDA",
+      values,
+      change,
+      tone: change === null ? "none" : tone("leverage", change),
+      bases: periods.map((period) => basisOf(period.label)),
+      line: lev.table.line,
+    };
+    const latest = lev.rows.at(-1)?.period.label;
+    leverageBasis = latest ? basisOf(latest) : null;
   }
-  const reported = statementRow(entry, "T4.4 Income statement", "EBITDA (Reported)");
-  if (!reported) read.set("reportedEbitda", "Reported EBITDA is not in the handoff.");
-  else if (reported.unit !== unit)
-    read.set("reportedEbitda", "Reported EBITDA is stated in a different unit.");
-  else if (reported.pair.priorLabel !== priorLabel || reported.pair.currentLabel !== currentLabel)
-    read.set("reportedEbitda", "Reported EBITDA is stated for different periods.");
-  else read.set("reportedEbitda", { pair: reported.pair, line: reported.tableLine });
-
-  const ORDER = [
-    ["sales", "Net sales"],
-    ["reportedEbitda", "Reported EBITDA"],
-    ["adjustedEbitda", "EBITDA As Defined"],
-    ["grossDebt", "Gross debt"],
-  ] as const;
-  const measures: EarningsMeasure[] = [];
-  const absent: EarningsAgainstDebt["absent"] = [];
-  for (const [key, label] of ORDER) {
-    const got = read.get(key);
-    if (typeof got === "string" || got === undefined) {
-      absent.push({ label, reason: got ?? `${label} is not in the handoff.` });
-      continue;
-    }
-    const { prior, current } = got.pair;
-    const change = difference(current.cell.text, prior.cell.text);
-    const growth = change === null ? null : percentOf(change, prior.cell.text);
-    measures.push({ key, label, pair: got.pair, change, growth, line: got.line });
-  }
-  const lev = chartPair(entry, "Chart data: leverage", "Total debt / EBITDA");
-  const leverage =
-    lev && lev.pair.priorLabel === priorLabel && lev.pair.currentLabel === currentLabel
-      ? (() => {
-          const change = difference(lev.pair.current.cell.text, lev.pair.prior.cell.text);
-          return {
-            label: "Total debt / EBITDA",
-            pair: lev.pair,
-            change,
-            tone: change === null ? ("none" as const) : tone("leverage", change),
-            line: lev.tableLine,
-          };
-        })()
-      : null;
   return {
     unit,
-    priorLabel,
-    currentLabel,
+    periods,
+    comparison,
     measures,
     absent,
     leverage,
-    tableLine: anchor.tableLine,
+    leverageBasis,
+    tableLine: anchor.line,
   };
 }
 
@@ -175,198 +344,115 @@ export function earningsAgainstDebt(entry: OutputEntry): EarningsAgainstDebt | n
 // Tile 2: cash conversion ladder
 // ---------------------------------------------------------------------------------------------
 
-/** A level or step of the ladder in one period. `derived` marks an exact sum or difference of stated figures. */
-export type LadderValue = {
-  text: string;
-  value: number | null;
-  derived: boolean;
-  reason: string | null;
-};
+export type LadderKey =
+  | "ebitda"
+  | "interest"
+  | "taxes"
+  | "cfo"
+  | "capex"
+  | "fcf"
+  | "dividends"
+  | "repurchases"
+  | "afterDistributions"
+  | "acquisitions";
+
 export type LadderStep = {
-  key: "start" | "interest" | "taxes" | "remainder" | "cfo" | "capex" | "fcf" | "outflows" | "end";
-  label: string;
-  /** A level starts at zero; a deduction hangs off the level above it. */
+  key: LadderKey;
+  /** A level is a stated measure; a deduction is a stated outflow between levels. */
   kind: "level" | "deduction";
-  current: LadderValue;
-  prior: LadderValue;
+  /** The handoff's row label as written; the step's plain name when the handoff has no such row. */
+  label: string;
+  /** False when no row of this kind is usable; `absent` says why. */
+  stated: boolean;
+  absent: string | null;
+  /**
+   * How a deduction's figure is written: "paid", a positive amount paid (cash interest, cash taxes);
+   * "signed", an outflow negative (capex, acquisitions, distributions). Null for a level.
+   */
+  sign: "paid" | "signed" | null;
+  /** One cell per ladder period, as written; a stated gap keeps its reason. */
+  values: PeriodCell[];
+  line: number | null;
 };
+
 export type CashLadder = {
   unit: string;
-  priorLabel: string;
-  currentLabel: string;
+  periods: Period[];
+  comparison: Comparison;
   steps: LadderStep[];
-  /** The two stated outflows behind "acquisitions and distributions", for the label. */
-  outflowParts: { current: [string, string] | null };
   line: number;
 };
 
-const stated = (cell: Reading): LadderValue =>
-  cell.kind === "number"
-    ? { text: cell.text, value: cell.value, derived: false, reason: null }
-    : {
-        text: cell.text,
-        value: null,
-        derived: false,
-        reason: cell.kind === "gap" ? cell.reason : "Not a number in the handoff",
-      };
+type LadderSpec = {
+  key: LadderKey;
+  kind: "level" | "deduction";
+  name: string;
+  prefixes: readonly string[];
+  sign: "paid" | "signed" | null;
+};
 
-const unavailable = (reason: string): LadderValue => ({
-  text: "",
-  value: null,
-  derived: true,
-  reason,
-});
+// The contract's fixed rows (`EBITDA (Adjusted)`, `Net Cash from Operating Activities`, `Cash
+// Interest Paid`) and the label forms the retained handoffs use for the rest ("Cash taxes paid,
+// net of refunds", "Free cash flow, levered after working capital", "Discretionary cash flow after
+// dividends and equivalents"). The after-distributions level is the module's own measure: before
+// acquisitions, so acquisitions follow it and no level follows them.
+const LADDER: readonly LadderSpec[] = [
+  { key: "ebitda", kind: "level", name: "EBITDA (Adjusted)", prefixes: ["EBITDA Adjusted"], sign: null },
+  { key: "interest", kind: "deduction", name: "Cash interest paid", prefixes: ["Cash interest paid"], sign: "paid" },
+  { key: "taxes", kind: "deduction", name: "Cash taxes paid", prefixes: ["Cash taxes paid"], sign: "paid" },
+  { key: "cfo", kind: "level", name: "Net cash from operating activities", prefixes: ["Net cash from operating activities"], sign: null },
+  { key: "capex", kind: "deduction", name: "Capital expenditures", prefixes: ["Capital expenditures"], sign: "signed" },
+  { key: "fcf", kind: "level", name: "Free cash flow after capex", prefixes: ["Levered free cash flow", "Free cash flow levered"], sign: null },
+  { key: "dividends", kind: "deduction", name: "Dividends", prefixes: ["Dividends"], sign: "signed" },
+  { key: "repurchases", kind: "deduction", name: "Share repurchases", prefixes: ["Repurchases of", "Share repurchases"], sign: "signed" },
+  { key: "afterDistributions", kind: "level", name: "Cash flow after distributions", prefixes: ["Discretionary cash flow after"], sign: null },
+  { key: "acquisitions", kind: "deduction", name: "Acquisitions", prefixes: ["Acquisition of businesses", "Acquisitions"], sign: "signed" },
+];
 
-const negated = (text: string) => (text.startsWith("-") ? text.slice(1) : `-${text}`);
-const derivedValue = (text: string | null, reason: string): LadderValue =>
-  text === null ? unavailable(reason) : { text, value: Number(text), derived: true, reason: null };
-
-/** A deduction as the amount taken off the level above: paid-positive rows are negated, signed outflows kept. */
-function deduction(cell: Reading, convention: "paid" | "signed"): LadderValue {
-  const base = stated(cell);
-  if (base.value === null) return base;
-  const text = convention === "paid" ? negated(base.text) : base.text;
-  return { ...base, text, value: Number(text) };
-}
-
-const CASH = "T4.5 Cash flow statement";
-const ROWS = {
-  start: ["T4.4 Income statement", "EBITDA (Adjusted)"],
-  interest: [CASH, "Cash Interest Paid"],
-  taxes: [CASH, "Cash taxes paid"],
-  cfo: [CASH, "Net Cash from Operating Activities"],
-  capex: [CASH, "Capital expenditures"],
-  fcf: [CASH, "Levered free cash flow"],
-  acquisitions: [CASH, "Acquisition of businesses, net of cash acquired"],
-  distributions: [CASH, "Dividends and dividend equivalent payments"],
-} as const;
-
-/** Both periods of every statement row the ladder needs; null unless the anchor rows and one unit are present. */
+/** The ladder from the handoff's own stated levels and deductions, every period; no plug, no end level. */
 export function cashLadder(entry: OutputEntry): CashLadder | null {
-  const rows = Object.fromEntries(
-    Object.entries(ROWS).map(([key, [heading, label]]) => [
-      key,
-      statementRow(entry, heading, label),
-    ]),
-  ) as Record<keyof typeof ROWS, ReturnType<typeof statementRow>>;
-  const { start, cfo } = rows;
-  if (!start || !cfo || start.unit === null || start.unit !== cfo.unit) return null;
-  const unit = start.unit;
-  const { priorLabel, currentLabel } = start.pair;
-  const usable = (row: ReturnType<typeof statementRow>) =>
-    row !== null &&
-    row.unit === unit &&
-    row.pair.priorLabel === priorLabel &&
-    row.pair.currentLabel === currentLabel
-      ? row
-      : null;
-  const at = (key: keyof typeof ROWS, side: "prior" | "current") =>
-    usable(rows[key])?.pair[side].cell ?? null;
-  const gapCell = (label: string): Reading => ({
-    kind: "gap",
-    text: "",
-    reason: `${label} is not in the handoff`,
+  const cash = statement(entry, "T4.5 Cash flow statement");
+  if (typeof cash === "string") return null;
+  const income = statement(entry, "T4.4 Income statement");
+  const rows = LADDER.map((spec) => {
+    const source = spec.key === "ebitda" ? income : cash;
+    if (typeof source === "string") return { spec, read: `${spec.name}: ${source}` };
+    return { spec, read: findRow(source, spec.prefixes, spec.name) };
   });
-  const need = (key: keyof typeof ROWS, side: "prior" | "current", label: string) =>
-    at(key, side) ?? gapCell(label);
-
-  const build = (side: "prior" | "current") => {
-    const startCell = need("start", side, "EBITDA As Defined");
-    const interest = need("interest", side, "Cash interest paid");
-    const taxes = need("taxes", side, "Cash taxes paid");
-    const cfoCell = need("cfo", side, "Cash from operations");
-    const capex = need("capex", side, "Capital expenditures");
-    const fcf = need("fcf", side, "Free cash flow after capex");
-    const acq = need("acquisitions", side, "Acquisitions");
-    const dist = need("distributions", side, "Distributions");
-    const remainder = sum([
-      startCell.text,
-      negated(interest.text),
-      negated(taxes.text),
-      negated(cfoCell.text),
-    ]);
-    const outflows = sum([acq.text, dist.text]);
-    const end = outflows === null || fcf.kind !== "number" ? null : sum([fcf.text, outflows]);
+  const anchor = rows.find(({ spec }) => spec.key === "cfo")?.read;
+  const unit =
+    anchor && typeof anchor !== "string"
+      ? anchor.unit
+      : (rows.map(({ read }) => read).find((read) => typeof read !== "string")?.unit ?? null);
+  if (!unit) return null;
+  const usable = rows.map(({ spec, read }) => ({
+    spec,
+    read:
+      typeof read !== "string" && read.unit !== unit
+        ? `${read.label} is stated in another unit.`
+        : read,
+  }));
+  const periods = unionPeriods(
+    usable.map(({ read }) => (typeof read === "string" ? [] : periodsOf(read.values))),
+  );
+  const steps = usable.map(({ spec, read }): LadderStep => {
+    const found = typeof read !== "string";
     return {
-      start: stated(startCell),
-      interest: deduction(interest, "paid"),
-      taxes: deduction(taxes, "paid"),
-      // What the three lines above do not itemise: start less interest, taxes and operating cash, as the module reports them.
-      remainder: derivedValue(
-        remainder === null ? null : negated(remainder),
-        "Not itemised: an input is not stated",
-      ),
-      cfo: stated(cfoCell),
-      capex: deduction(capex, "signed"),
-      fcf: stated(fcf),
-      outflows: derivedValue(outflows, "An outflow is not stated"),
-      end: derivedValue(end, "A level it depends on is not stated"),
-      parts:
-        acq.kind === "number" && dist.kind === "number"
-          ? ([acq.text, dist.text] as [string, string])
-          : null,
+      key: spec.key,
+      kind: spec.kind,
+      label: found ? read.label : spec.name,
+      stated: found,
+      absent: found ? null : read,
+      sign: spec.sign,
+      values: onto(periods, found ? read.values : []),
+      line: found ? read.line : null,
     };
-  };
-  const [cur, pri] = [build("current"), build("prior")];
-  const steps: LadderStep[] = [
-    {
-      key: "start",
-      label: "EBITDA As Defined",
-      kind: "level",
-      current: cur.start,
-      prior: pri.start,
-    },
-    {
-      key: "interest",
-      label: "Cash interest paid",
-      kind: "deduction",
-      current: cur.interest,
-      prior: pri.interest,
-    },
-    { key: "taxes", label: "Cash taxes", kind: "deduction", current: cur.taxes, prior: pri.taxes },
-    {
-      key: "remainder",
-      label: "Other items, not itemised here",
-      kind: "deduction",
-      current: cur.remainder,
-      prior: pri.remainder,
-    },
-    { key: "cfo", label: "Cash from operations", kind: "level", current: cur.cfo, prior: pri.cfo },
-    { key: "capex", label: "Capex", kind: "deduction", current: cur.capex, prior: pri.capex },
-    {
-      key: "fcf",
-      label: "Free cash flow after capex",
-      kind: "level",
-      current: cur.fcf,
-      prior: pri.fcf,
-    },
-    {
-      key: "outflows",
-      label: "Acquisitions and distributions",
-      kind: "deduction",
-      current: cur.outflows,
-      prior: pri.outflows,
-    },
-    {
-      key: "end",
-      label: "Free cash flow after acquisitions and distributions",
-      kind: "level",
-      current: cur.end,
-      prior: pri.end,
-    },
-  ];
-  return {
-    unit,
-    priorLabel,
-    currentLabel,
-    steps,
-    outflowParts: { current: cur.parts },
-    line: start.tableLine,
-  };
+  });
+  return { unit, periods, comparison: comparisonOf(periods), steps, line: cash.table.line };
 }
 
 // ---------------------------------------------------------------------------------------------
-// Tile 3: net debt, with the pro forma a row states
+// Tile 3: net debt, the stated adjustments and liquidity
 // ---------------------------------------------------------------------------------------------
 
 export type NetDebtPeriod = {
@@ -375,100 +461,134 @@ export type NetDebtPeriod = {
   cash: Reading;
   net: Reading;
   line: number;
-  /** Net debt / EBITDA for the period, from the leverage table, when it states one. */
+  /** Net debt / EBITDA for the period from the leverage table, when it states that period. */
   leverage: Reading | null;
 };
+
+/** One post-balance-sheet adjustment row, every cell as written. */
 export type ProForma = {
   event: string;
-  date: string;
+  /** The date as written: `2024-10-18`, or the stated gap with its reason ("the source states … only"). */
+  date: Reading;
   amount: Reading;
   netDebt: Reading;
   leverage: Reading;
+  unit: string;
+  /** The row's Basis and limitation words, sources left out. */
+  basis: string | null;
   line: number;
 };
+
+export type LiquidityPeriod = { label: string; cash: Reading; undrawn: Reading; line: number };
+
 export type NetDebtView = {
   unit: string;
+  /** Every period of `Net debt data`, by year. */
   periods: NetDebtPeriod[];
-  /** The stated adjustment drawn on the bar: the largest by absolute amount. */
-  proForma: ProForma | null;
-  /** Other stated adjustments, each standalone from the same base, listed in words. */
-  otherAdjustments: ProForma[];
-  liquidity: { label: string; cash: Reading; undrawn: Reading; line: number }[];
+  comparison: Comparison;
+  /** The stated adjustments in handoff order; none is chosen or ranked here. */
+  adjustments: ProForma[];
+  /** True when the table's one row is the contract's "none" row: there is no adjustment. */
+  noAdjustments: boolean;
+  /** The module's words for that row: its Event cell, and its Basis and limitation words. */
+  noAdjustmentsWords: { event: string; basis: string | null } | null;
+  /** Cash and undrawn committed facilities per period, as stated; never summed here. */
+  liquidity: LiquidityPeriod[];
+  /** The handoff's own stated cash-plus-revolver figure, when it writes one. */
+  liquidityTotal: { label: string; values: PeriodCell[]; line: number } | null;
   tableLine: number;
 };
 
-/** Net debt for the two latest periods and the post-balance-sheet adjustment rows that state a pro forma. */
+/** The words of the one Event cell that states there is no adjustment (the contract's POST_BS_NONE). */
+export const NO_ADJUSTMENT = "None found in the sources read";
+const ADJUSTMENT_HEADERS = ["Event", "Pro forma net debt", "Pro forma net leverage"];
+
+function adjustmentsOf(entry: OutputEntry) {
+  const table = tableWith(entry, ADJUSTMENT_HEADERS);
+  if (!table) return { adjustments: [], none: null };
+  const at = (name: string) => columnOf(table, name);
+  const text = (row: Row, name: string) => (at(name) < 0 ? "" : (row.cells[at(name)] ?? "").trim());
+  const basisOf = (row: Row) => {
+    const cell = text(row, "Basis and limitation");
+    return cell ? basisText(cell) : null;
+  };
+  const [first] = table.rows;
+  if (table.rows.length === 1 && first && text(first, "Event") === NO_ADJUSTMENT)
+    return { adjustments: [], none: { event: NO_ADJUSTMENT, basis: basisOf(first) } };
+  const adjustments = table.rows.map(
+    (row): ProForma => ({
+      event: text(row, "Event"),
+      date: readCell(text(row, "Date")),
+      amount: readCell(text(row, "Amount")),
+      netDebt: readCell(text(row, "Pro forma net debt")),
+      leverage: readCell(text(row, "Pro forma net leverage")),
+      unit: unitLabel(text(row, "Reporting unit")),
+      basis: basisOf(row),
+      line: row.line,
+    }),
+  );
+  return { adjustments, none: null };
+}
+
+function liquidityTotal(entry: OutputEntry): NetDebtView["liquidityTotal"] {
+  const read = statement(entry, "Financials and credit metrics");
+  if (typeof read === "string") return null;
+  const row = findRow(read, ["Cash plus available revolver"], "Cash plus available revolver");
+  return typeof row === "string" ? null : { label: row.label, values: row.values, line: row.line };
+}
+
+/** Net debt for every stated period, the stated adjustments as written, and stated liquidity. */
 export function netDebtView(entry: OutputEntry): NetDebtView | null {
-  const table = tableUnder(entry, "Net debt data");
-  const rows = table && lastTwoRows(table);
-  if (!table || !rows) return null;
-  const col = (name: string) => columnOf(table, name);
-  const [g, c, n, u] = [col("Gross debt"), col("Cash"), col("Net debt"), col("Reporting unit")];
-  if ([g, c, n, u].some((at) => at < 0)) return null;
-  const unit = rows.current.cells[u] ?? "";
-  if (!unit || unit !== (rows.prior.cells[u] ?? "")) return null;
-  const leverage = tableUnder(entry, "Chart data: leverage");
-  const leverageAt = leverage ? columnOf(leverage, "Net debt / EBITDA") : -1;
-  const liquidityTable = tableUnder(entry, "Chart data: liquidity");
-  const periodsOf = [rows.prior, rows.current].map((row): NetDebtPeriod => {
-    const label = periodLabel(row.cells[0] ?? "");
-    const match = leverage?.rows.find((item) => periodLabel(item.cells[0] ?? "") === label);
+  const read = periodTable(entry, "Net debt data", "Net debt");
+  if (typeof read === "string" || !read.unit) return null;
+  const at = (name: string) => columnOf(read.table, name);
+  const [g, c, n] = [at("Gross debt"), at("Cash"), at("Net debt")];
+  if ([g, c, n].some((index) => index < 0)) return null;
+  const lev = periodTable(entry, "Chart data: leverage", "Leverage");
+  const levAt = typeof lev === "string" ? -1 : columnOf(lev.table, "Net debt / EBITDA");
+  const periods = read.rows.map(({ period, row }): NetDebtPeriod => {
+    const match =
+      typeof lev === "string" ? undefined : lev.rows.find((r) => r.period.label === period.label);
     return {
-      label,
+      label: period.label,
       gross: readCell(row.cells[g] ?? ""),
       cash: readCell(row.cells[c] ?? ""),
       net: readCell(row.cells[n] ?? ""),
       line: row.line,
-      leverage: match && leverageAt >= 0 ? readCell(match.cells[leverageAt] ?? "") : null,
+      leverage: match && levAt >= 0 ? readCell(match.row.cells[levAt] ?? "") : null,
     };
   });
-  const adjustments = tableWith(entry, ["Event", "Pro forma net debt", "Pro forma net leverage"]);
-  const eventAt = adjustments ? columnOf(adjustments, "Event") : -1;
-  const found = (adjustments?.rows ?? []).flatMap((row): ProForma[] => {
-    if (!adjustments) return [];
-    return [
-      {
-        event: row.cells[eventAt] ?? "",
-        date: row.cells[columnOf(adjustments, "Date")] ?? "",
-        amount: readCell(row.cells[columnOf(adjustments, "Amount")] ?? ""),
-        netDebt: readCell(row.cells[columnOf(adjustments, "Pro forma net debt")] ?? ""),
-        leverage: readCell(row.cells[columnOf(adjustments, "Pro forma net leverage")] ?? ""),
-        line: row.line,
-      },
-    ];
-  });
-  // Only a row that states both its amount and its pro forma net debt can be the bar; every other
-  // row stays listed, a stated gap with its reason.
-  const drawable = found.filter(
-    (item) => item.netDebt.kind === "number" && item.amount.kind === "number",
-  );
-  const size = (item: ProForma) =>
-    item.amount.kind === "number" ? Math.abs(item.amount.value) : 0;
-  const largest = drawable.reduce<ProForma | null>(
-    (best, item) => (best && size(best) >= size(item) ? best : item),
-    null,
-  );
-  const liquidity = (liquidityTable?.rows ?? []).flatMap((row) => {
-    const cash = columnOf(liquidityTable as Table, "Cash");
-    const undrawn = columnOf(liquidityTable as Table, "Undrawn committed facilities");
-    return cash < 0 || undrawn < 0
+  const liquid = periodTable(entry, "Chart data: liquidity", "Liquidity");
+  const liquidity =
+    typeof liquid === "string"
       ? []
-      : [
-          {
-            label: periodLabel(row.cells[0] ?? ""),
-            cash: readCell(row.cells[cash] ?? ""),
-            undrawn: readCell(row.cells[undrawn] ?? ""),
-            line: row.line,
-          },
-        ];
-  });
+      : liquid.rows.flatMap(({ period, row }) => {
+          const [cash, undrawn] = [
+            columnOf(liquid.table, "Cash"),
+            columnOf(liquid.table, "Undrawn committed facilities"),
+          ];
+          return cash < 0 || undrawn < 0
+            ? []
+            : [
+                {
+                  label: period.label,
+                  cash: readCell(row.cells[cash] ?? ""),
+                  undrawn: readCell(row.cells[undrawn] ?? ""),
+                  line: row.line,
+                },
+              ];
+        });
+  const { adjustments, none } = adjustmentsOf(entry);
   return {
-    unit: unitLabel(unit),
-    periods: periodsOf,
-    proForma: largest,
-    otherAdjustments: found.filter((item) => item !== largest),
+    unit: read.unit,
+    periods,
+    comparison: comparisonOf(read.rows.map(({ period }) => period)),
+    adjustments,
+    noAdjustments: none !== null,
+    noAdjustmentsWords: none,
     liquidity,
-    tableLine: table.line,
+    liquidityTotal: liquidityTotal(entry),
+    tableLine: read.table.line,
   };
 }
 
@@ -477,20 +597,41 @@ export function netDebtView(entry: OutputEntry): NetDebtView | null {
 // ---------------------------------------------------------------------------------------------
 
 export type BridgeStep = {
+  /** The step's label as written. */
   label: string;
   cell: Reading;
   line: number;
   kind: "opening" | "change" | "closing";
 };
+
 export type EbitdaBridge = {
   unit: string;
   steps: BridgeStep[];
-  /** True when the opening plus every change equals the closing, exactly. */
+  /**
+   * True when the opening plus every change equals the closing exactly. An internal check for
+   * whether the bridge can be drawn; the sum itself is never returned or printed.
+   */
   reconciles: boolean;
-  /** Exact sum of the changes, derived. */
-  addBacks: string | null;
   tableLine: number;
 };
+
+/**
+ * How a step reads in the legend: the opening and closing amounts, a stated change that raises or
+ * lowers the amount ("decrease" for `Disposal −10`, never an add-back), a stated zero, or a gap.
+ */
+export type BridgeKind = "opening" | "increase" | "decrease" | "no change" | "gap" | "closing";
+
+export function bridgeKind(step: BridgeStep): BridgeKind {
+  if (step.kind !== "change") return step.kind;
+  if (step.cell.kind !== "number") return "gap";
+  const sign = signOf(step.cell.text);
+  return sign === 0 ? "no change" : sign === 1 ? "increase" : "decrease";
+}
+
+/** The kinds a bridge's steps take, each once, in step order: what its legend names. */
+export function bridgeKinds(bridge: EbitdaBridge): BridgeKind[] {
+  return [...new Set(bridge.steps.map(bridgeKind))];
+}
 
 /** The steps of `Chart data: EBITDA bridge`; the first is the opening, the last the closing. */
 export function ebitdaBridge(entry: OutputEntry): EbitdaBridge | null {
@@ -502,96 +643,186 @@ export function ebitdaBridge(entry: OutputEntry): EbitdaBridge | null {
   const [unit] = [...units];
   if (amount < 0 || unitAt < 0 || units.size !== 1 || !unit) return null;
   const last = table.rows.length - 1;
-  const steps = table.rows.map((row, at): BridgeStep => ({
-    label: row.cells[0] ?? "",
-    cell: readCell(row.cells[amount] ?? ""),
-    line: row.line,
-    kind: at === 0 ? "opening" : at === last ? "closing" : "change",
-  }));
-  const texts = steps.map((step) => step.cell.text);
-  const changes = steps.filter((step) => step.kind === "change").map((step) => step.cell.text);
-  const total = sum(texts.slice(0, -1));
-  const closingCell = steps.at(-1)?.cell;
-  const closing = closingCell?.kind === "number" ? closingCell.text : null;
-  return {
-    unit: unitLabel(unit),
-    steps,
-    reconciles: closing !== null && total !== null && signOf(difference(total, closing)) === 0,
-    addBacks: sum(changes),
-    tableLine: table.line,
-  };
+  const steps = table.rows.map(
+    (row, at): BridgeStep => ({
+      label: (row.cells[0] ?? "").trim(),
+      cell: readCell(row.cells[amount] ?? ""),
+      line: row.line,
+      kind: at === 0 ? "opening" : at === last ? "closing" : "change",
+    }),
+  );
+  const total = sum(steps.slice(0, -1).map((step) => step.cell.text));
+  const closing = steps.at(-1)?.cell;
+  const reconciles =
+    closing?.kind === "number" && total !== null && signOf(difference(total, closing.text)) === 0;
+  return { unit: unitLabel(unit), steps, reconciles, tableLine: table.line };
 }
 
 // ---------------------------------------------------------------------------------------------
 // Tile 5: segments
 // ---------------------------------------------------------------------------------------------
 
-export type Segment = { name: string; sales: Reading; ebitda: Reading; line: number };
+export type Segment = {
+  /** The business unit as the handoff names it. */
+  name: string;
+  /** Net sales per period of the view (null: no row states it). */
+  sales: PeriodCell[];
+  ebitda: PeriodCell[];
+};
+
 export type SegmentView = {
-  period: string;
   unit: string;
+  periods: Period[];
+  comparison: Comparison;
+  /** The measures' names as the handoff writes them ("Net sales", "EBITDA As Defined"). */
+  salesLabel: string;
+  ebitdaLabel: string;
   segments: Segment[];
-  /** Unallocated corporate lines: stated apart, never ranked. */
+  /** Corporate and elimination lines: stated apart, never ranked. */
   apart: Segment[];
-  /** Group net sales for the period, when the handoff states it. */
-  groupSales: Reading | null;
-  groupEbitda: Reading | null;
-  /** Segment sales summed exactly, derived; null if any is not a number. */
-  salesTotal: string | null;
-  /** Segment EBITDA plus the apart rows, summed exactly, derived. */
-  ebitdaTotal: string | null;
   tableLine: number;
 };
 
-const YEAR = /(\d{4})/;
+type SegmentCell = { name: string; measure: "sales" | "ebitda"; label: string; cell: Reading; line: number };
+type SegmentRead = {
+  table: Table;
+  cells: SegmentCell[];
+  periods: Period[];
+  unit: string;
+  salesLabel: string;
+  ebitdaLabel: string;
+};
 
-/** The latest period of `Segment schedule`, one row per business unit. */
-export function segmentView(entry: OutputEntry): SegmentView | null {
-  const table = tableUnder(entry, "Segment schedule");
-  if (!table) return null;
-  const at = (name: string) => columnOf(table, name);
-  const [unitCol, periodCol, salesCol, ebitdaCol, unitAt] = [
+const EBITDA_WORDS = /EBITDA(?: As Defined| \((?:Adjusted|Reported)\))?/i;
+const SALES_WORDS = /\b(?:net sales|revenue|sales)\b/i;
+const SEPARATOR = /[\s,—–-]+/;
+
+/**
+ * A wide schedule row label read as segment and measure: "Airframe revenue", "Corporate and
+ * eliminations, EBITDA As Defined", "Total Power & Control" (sales), "Unallocated corporate EBITDA
+ * As Defined — deduction". A sub-line ("Power & Control — Defense") names no measure: null.
+ */
+function wideLabel(label: string): { name: string; measure: "sales" | "ebitda" } | null {
+  const ebitda = EBITDA_WORDS.exec(label);
+  const total = /^Total\s+/i.exec(label);
+  const sales = SALES_WORDS.exec(label);
+  const measure = ebitda ? "ebitda" : total || sales ? "sales" : null;
+  if (!measure) return null;
+  const cut = ebitda?.index ?? (total ? label.length : (sales?.index ?? label.length));
+  const name = label
+    .slice(total ? total[0].length : 0, cut)
+    .replace(new RegExp(`${SEPARATOR.source}$`), "")
+    .trim();
+  return name ? { name, measure } : null;
+}
+
+function longSchedule(table: Table, at: (name: string) => number): SegmentRead | null {
+  const [nameAt, periodAt, salesAt, ebitdaAt, unitAt] = [
     at("Business unit"),
     at("Period"),
     at("Net sales"),
     at("EBITDA As Defined"),
     at("Unit"),
   ];
-  if ([unitCol, periodCol, salesCol, ebitdaCol, unitAt].some((index) => index < 0)) return null;
-  const years = table.rows.map((row) => Number(YEAR.exec(row.cells[periodCol] ?? "")?.[1] ?? NaN));
-  if (years.some(Number.isNaN)) return null;
-  const latest = Math.max(...years);
-  const rows = table.rows.filter((_, index) => years[index] === latest);
-  const periods = new Set(rows.map((row) => row.cells[periodCol] ?? ""));
-  const units = new Set(rows.map((row) => row.cells[unitAt] ?? ""));
-  const [period] = [...periods];
+  if ([nameAt, periodAt, salesAt, ebitdaAt, unitAt].some((index) => index < 0)) return null;
+  const labels = [...new Set(table.rows.map((row) => (row.cells[periodAt] ?? "").trim()))];
+  const ordered = orderByPeriod(labels.map((cell) => ({ cell, item: cell })));
+  const units = new Set(table.rows.map((row) => row.cells[unitAt] ?? ""));
   const [unit] = [...units];
-  if (periods.size !== 1 || units.size !== 1 || !period || !unit) return null;
-  const all = rows.map((row): Segment => ({
-    name: row.cells[unitCol] ?? "",
-    sales: readCell(row.cells[salesCol] ?? ""),
-    ebitda: readCell(row.cells[ebitdaCol] ?? ""),
-    line: row.line,
-  }));
-  // Corporate lines are named as such; a business unit whose sales are a gap stays a unit, with the gap.
-  const isApart = (segment: Segment) => /^unallocated|\bcorporate\b/i.test(segment.name);
-  const segments = all.filter((segment) => !isApart(segment));
-  const apart = all.filter(isApart);
-  const revenue = chartPair(entry, "Chart data: revenue and EBITDA", "Revenue");
-  const adjusted = chartPair(entry, "Chart data: revenue and EBITDA", "Adjusted EBITDA");
-  const match = (found: ReturnType<typeof chartPair>) =>
-    found && found.pair.currentLabel === period && unitLabel(found.unit) === unitLabel(unit)
-      ? found.pair.current.cell
-      : null;
+  if ("reason" in ordered || units.size !== 1 || !unit) return null;
+  const cells = table.rows.flatMap((row): SegmentCell[] => {
+    const name = (row.cells[nameAt] ?? "").trim();
+    const label = periodOf(row.cells[periodAt] ?? "")?.label ?? "";
+    return [
+      { name, measure: "sales", label, cell: readCell(row.cells[salesAt] ?? ""), line: row.line },
+      { name, measure: "ebitda", label, cell: readCell(row.cells[ebitdaAt] ?? ""), line: row.line },
+    ];
+  });
   return {
-    period,
+    table,
+    cells,
+    periods: ordered.periods.map(({ period }) => period),
     unit: unitLabel(unit),
-    segments,
-    apart,
-    groupSales: match(revenue),
-    groupEbitda: match(adjusted),
-    salesTotal: sum(segments.map((segment) => segment.sales.text)),
-    ebitdaTotal: sum([...segments, ...apart].map((segment) => segment.ebitda.text)),
-    tableLine: table.line,
+    salesLabel: table.headers[salesAt] ?? "Net sales",
+    ebitdaLabel: table.headers[ebitdaAt] ?? "EBITDA",
+  };
+}
+
+function wideSchedule(table: Table): SegmentRead | null {
+  const columns = statementColumns(table);
+  const unitAt = columnOf(table, "Unit");
+  if ("reason" in columns || unitAt < 0) return null;
+  const read = table.rows.flatMap((row) => {
+    const parsed = wideLabel((row.cells[0] ?? "").trim());
+    return parsed ? [{ row, ...parsed }] : [];
+  });
+  const units = new Set(read.map(({ row }) => row.cells[unitAt] ?? ""));
+  const [unit] = [...units];
+  if (read.length === 0 || units.size !== 1 || !unit) return null;
+  const cells = read.flatMap(({ row, name, measure }) =>
+    columns.periods.map(({ period, item }): SegmentCell => ({
+      name,
+      measure,
+      label: period.label,
+      cell: readCell(row.cells[item] ?? ""),
+      line: row.line,
+    })),
+  );
+  const ebitdaLabel = read.flatMap(({ row }) => EBITDA_WORDS.exec(row.cells[0] ?? "")?.[0] ?? [])[0];
+  const salesWord = read.flatMap(({ row }) => SALES_WORDS.exec(row.cells[0] ?? "")?.[0] ?? [])[0];
+  return {
+    table,
+    cells,
+    periods: columns.periods.map(({ period }) => period),
+    unit: unitLabel(unit),
+    salesLabel: salesWord ? salesWord.charAt(0).toUpperCase() + salesWord.slice(1) : "Sales",
+    ebitdaLabel: ebitdaLabel ?? "EBITDA",
+  };
+}
+
+/** The schedule in either shape the handoffs write: a Period column, or one column per period. */
+function segmentSchedule(entry: OutputEntry): SegmentRead | null {
+  const table = tableUnder(entry, "Segment schedule");
+  if (!table) return null;
+  const at = (name: string) => columnOf(table, name);
+  return at("Period") >= 0 ? longSchedule(table, at) : wideSchedule(table);
+}
+
+function segmentPeriods(entry: OutputEntry): Ordered<null> | null {
+  const read = segmentSchedule(entry);
+  return read ? { periods: read.periods.map((period) => ({ period, item: null })) } : null;
+}
+
+const isApart = (name: string) => /^unallocated|\bcorporate\b|\beliminations?\b/i.test(name);
+
+/** Net sales and EBITDA per segment as written, every stated period; corporate lines apart; no sum, no ratio. */
+export function segmentView(entry: OutputEntry): SegmentView | null {
+  const read = segmentSchedule(entry);
+  if (!read) return null;
+  const key = (cell: SegmentCell) => `${normalLabel(cell.name)}|${cell.measure}|${cell.label}`;
+  const keys = read.cells.map(key);
+  if (new Set(keys).size !== keys.length) return null; // one figure stated twice: the table is a gap
+  const names = [...new Set(read.cells.map((cell) => cell.name))];
+  const series = (name: string, measure: SegmentCell["measure"]) =>
+    onto(
+      read.periods,
+      read.cells
+        .filter((cell) => cell.name === name && cell.measure === measure)
+        .map((cell) => ({ label: cell.label, cell: cell.cell, line: cell.line })),
+    );
+  const all = names.map((name): Segment => ({
+    name,
+    sales: series(name, "sales"),
+    ebitda: series(name, "ebitda"),
+  }));
+  return {
+    unit: read.unit,
+    periods: read.periods,
+    comparison: comparisonOf(read.periods),
+    salesLabel: read.salesLabel,
+    ebitdaLabel: read.ebitdaLabel,
+    segments: all.filter((segment) => !isApart(segment.name)),
+    apart: all.filter((segment) => isApart(segment.name)),
+    tableLine: read.table.line,
   };
 }

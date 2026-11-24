@@ -17,3 +17,20 @@ Removed from `earningsDelta.tsx` / `earningsDeltaData.ts`. Each is something the
 - A computed change next to a stated YoY column when the table states more than two annual periods (the stated column cannot be tied to one pair): the exact prior to current difference of the latest two is shown, marked derived.
 
 Kept, as the one allowed computed figure: the exact prior to current change of one stated measure on one basis and unit, only where the handoff states no change of its own (chart tables carry no change column), labelled "derived" in the row, the table view and the aria-label.
+
+## CP-1C / CP-1D / CP-L10 / CP-MODEL
+
+Removed under ruling (i) (delivery adds no analysis). Each is something the module should write if the
+page is to show it; none is a number or sentence the handoff states today.
+
+| Lead | Removed | What the module would have to write |
+|---|---|---|
+| CP-1C | "Issuer is above / below / at the peer median", its aria-label clause and its table column | A stated position of the issuer against the peer median (a sentence or a Position column in the range tables). |
+| CP-1D | "Add-backs total X" (exact sum of the steps) | A stated add-back total in the bridge or the share table (T1D.3 "Proposed add-backs"). |
+| CP-1D | "Supported Y / Partly supported / Not supported Z" exact sums by the stated support word | A stated amount per support class (T1D.3 "Accepted add-backs" and "Add-backs not accepted" cover two of them). |
+| CP-1D | "+1.3x derived" and "Restated is higher by 1.3x, worse" between leverage on the statements and on supported earnings | A stated difference or direction between the two bases in T1D.6 or T1D.4. |
+| CP-1D | The wording "add-backs" for every middle step of the bridge, including a negative one | A step type column (add-back, deduction) in the bridge. The page now says "step". |
+| CP-L10 | "up 1,355 (derived)" / "down 4 (derived)" words and the derived label | Kept: the signed exact change of ONE measure between two stated periods on one unit (ruling i allows it), now shown as "+0.5x" or "-4" with no "up/down" word and no "derived" label; "worse"/"better" only where `signal.ts` knows the measure. |
+| CP-L10 | The note "Changes are the exact difference of the two stated figures." | None: the signed change is the only computed figure. |
+| CP-MODEL | "Base case peaks at X in FY…" title, "peak X" and "high X" labels on the chart, the note "the highest stated value is …" | A stated peak or maximum per case in the model's own text (the page now singles out no value). |
+| CP-MODEL | The hatched full-height "no figure" column across all cases | Nothing: replaced by a hatched slot on the lacking case's own line. |

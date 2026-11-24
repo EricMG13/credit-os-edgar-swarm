@@ -74,7 +74,7 @@ describe("ModelLead", () => {
   it("draws each case from zero in proportion, and joins only neighbouring periods that both have a figure", () => {
     const { container } = render(<ModelLead {...props([TWO])} />);
     const point = (name: string) => container.querySelector(`[data-point="${name}"]`);
-    const height = (name: string) => ZERO - num(point(name), "cy");
+    const height = (name: string) => ZERO - num(point(name), "data-cy");
     expect(height("Downside case FY2026E") / height("Downside case FY2025E")).toBeCloseTo(
       3.5 / 2.5,
       6,
@@ -86,30 +86,94 @@ describe("ModelLead", () => {
     expect(container.querySelectorAll('[data-line="Downside case"]')).toHaveLength(2);
   });
 
-  it("draws the period with no figure as a hatched gap mark with the model's reason, never zero", () => {
+  it("marks a case's gap on that case's own line, not as a full-height column, and never as zero", () => {
     const { container } = render(<ModelLead {...props([TWO])} />);
-    expect(container.querySelectorAll("[data-gap]")).toHaveLength(1);
-    expect(container.querySelector('[data-gap="FY2026E"]')).not.toBeNull();
+    const marks = container.querySelectorAll("[data-gap]");
+    expect(marks).toHaveLength(1);
+    const mark = container.querySelector('[data-gap="Base case FY2026E"]');
+    expect(mark).not.toBeNull();
+    // A small slot: nowhere near the plot's full height (216), and not at the zero line.
+    expect(num(mark, "height")).toBeLessThan(30);
+    expect(num(mark, "y") + num(mark, "height") / 2).toBeLessThan(ZERO - 20);
+    // It sits at the height of the base case's own stated neighbour, in that case's colour.
+    const neighbour = num(container.querySelector('[data-point="Base case FY2025E"]'), "data-cy");
+    expect(num(mark, "y") + num(mark, "height") / 2).toBeCloseTo(neighbour, 6);
+    expect(mark?.getAttribute("class")).toContain("stroke-chart-1");
     expect(container.querySelector('[data-point="Base case FY2026E"]')).toBeNull();
     expect(
       screen.getByText("Base case, FY2026E: the inputs do not state this period."),
     ).toBeVisible();
   });
 
-  it("labels each case at its line end and its peak with the model's own text", () => {
-    const { container } = render(<ModelLead {...props([TWO])} />);
-    expect(container.querySelector('[data-case-label="Base case"]')?.textContent).toBe("Base case");
-    expect(container.querySelector('[data-case-label="Downside case"]')?.textContent).toBe(
-      "Downside case",
+  it("marks only the case that lacks the year when the other case states it", () => {
+    const { container } = render(
+      <ModelLead
+        {...props([
+          model({
+            "Base case": [
+              ["5.10x", "5.1"],
+              ["4.60x", "4.6"],
+              ["4.10x", "4.1"],
+            ],
+            Downside: [
+              ["5.50x", "5.5"],
+              ["6.00x", "6.0"],
+              ["n.a.", null],
+            ],
+          }),
+        ])}
+      />,
     );
-    expect(container.querySelector('[data-peak="Base case"]')?.textContent).toBe("high 2.00x");
-    expect(container.querySelector('[data-peak="Downside case"]')?.textContent).toBe("high 3.50x");
+    expect(container.querySelectorAll("[data-gap]")).toHaveLength(1);
+    expect(container.querySelector('[data-gap="Downside FY2027E"]')).not.toBeNull();
+    expect(container.querySelector('[data-point="Base case FY2027E"]')).not.toBeNull();
+    expect(container.querySelector('[data-line="Downside"]')).not.toBeNull();
+  });
+
+  it("gives each case its own colour, dash and marker, in the lines and in the legend", () => {
+    const three = model({
+      "Base case": [
+        ["2.00x", "2.0"],
+        ["2.10x", "2.1"],
+      ],
+      Downside: [
+        ["3.00x", "3.0"],
+        ["3.10x", "3.1"],
+      ],
+      Severe: [
+        ["4.00x", "4.0"],
+        ["4.10x", "4.1"],
+      ],
+    });
+    const { container } = render(<ModelLead {...props([three])} />);
+    const lineLook = (name: string) => {
+      const line = container.querySelector(`[data-line="${name}"]`);
+      return [line?.getAttribute("class"), line?.getAttribute("stroke-dasharray")].join("|");
+    };
+    expect(new Set(["Base case", "Downside", "Severe"].map(lineLook)).size).toBe(3);
+    const marker = (name: string) =>
+      container.querySelector(`[data-point="${name} FY2025E"]`)?.tagName;
+    expect(new Set(["Base case", "Downside", "Severe"].map(marker)).size).toBe(3);
+    const legend = [...container.querySelectorAll("ul li svg")].map((svg) => svg.innerHTML);
+    expect(new Set(legend).size).toBe(3);
+  });
+
+  it("labels each case at its line end with the model's own text, singles out no high or peak, and the title is plain", () => {
+    const { container } = render(<ModelLead {...props([TWO])} />);
+    expect(container.querySelector('[data-case-label="Base case"]')?.textContent).toBe(
+      "Base case1.00x",
+    );
+    expect(container.querySelector('[data-case-label="Downside case"]')?.textContent).toBe(
+      "Downside case3.00x",
+    );
+    expect(container.querySelector("[data-peak]")).toBeNull();
     const tile = screen.getByRole("region", { name: "Forward net leverage" });
     expect(within(tile).getByRole("heading", { level: 3 })).toHaveTextContent(
-      "Base case: highest stated value 2.00x in FY2025E; Downside case: highest stated value 3.50x in FY2026E",
+      /^Net leverage by case$/,
     );
+    expect(tile.textContent).not.toMatch(/\bhigh\b|highest|peak|derived/i);
     expect(within(tile).getByRole("img")).toHaveAccessibleName(
-      "Net leverage (net debt / Adj EBITDA), from zero. Base case: FY2025E 2.00x, FY2026E no figure, FY2027E 1.00x. Downside case: FY2025E 2.50x, FY2026E 3.50x, FY2027E 3.00x. The highest stated value of each case is marked (derived).",
+      "Net leverage (net debt / Adj EBITDA), from zero. Base case: FY2025E 2.00x, FY2026E no figure, FY2027E 1.00x. Downside case: FY2025E 2.50x, FY2026E 3.50x, FY2027E 3.00x.",
     );
   });
 
@@ -121,23 +185,22 @@ describe("ModelLead", () => {
     expect(document.body.textContent).not.toMatch(/CP-MODEL|CP-2G/);
   });
 
-  it("links to the Forecast page and names the cases", () => {
+  it("links to the Forecast page in a compact tile that holds just the link", () => {
     render(<ModelLead {...props([TWO])} />);
     const tile = screen.getByRole("region", { name: "Open the forecast" });
     expect(within(tile).getByRole("link", { name: "Open the forecast" })).toHaveAttribute(
       "href",
       "#forecast",
     );
-    expect(
-      within(tile)
-        .getAllByRole("listitem")
-        .map((item) => item.textContent),
-    ).toEqual(["Base case", "Downside case"]);
+    expect(tile.querySelectorAll("a, button")).toHaveLength(1);
+    expect(within(tile).queryByRole("heading")).toBeNull();
+    expect(within(tile).queryAllByRole("listitem")).toHaveLength(0);
   });
 
-  it("draws the gap and keeps the link when there is no model, or the model has no net leverage row", () => {
+  it("says the true condition: no model at all, or a model without a net leverage row; the link stays", () => {
     const { unmount } = render(<ModelLead {...props([])} />);
-    expect(screen.getByText("The published model states no net leverage path.")).toBeVisible();
+    expect(screen.getByText(/No published model for this run\./)).toBeVisible();
+    expect(screen.queryByText(/states no net leverage path/)).toBeNull();
     expect(screen.getByRole("link", { name: "Open the forecast" })).toHaveAttribute(
       "href",
       "#forecast",
@@ -146,7 +209,8 @@ describe("ModelLead", () => {
     unmount();
     const noRow = { cashflow: { ...TWO.cashflow, rows: [] } };
     render(<ModelLead {...props([noRow])} />);
-    expect(screen.getByText("The published model states no net leverage path.")).toBeVisible();
+    expect(screen.getByText(/The published model states no net leverage path\./)).toBeVisible();
+    expect(screen.queryByText(/No published model/)).toBeNull();
     expect(screen.getByRole("link", { name: "Open the forecast" })).toBeVisible();
   });
 
@@ -171,51 +235,8 @@ describe("ModelLead", () => {
         ])}
       />,
     );
-    expect(num(container.querySelector('[data-point="Base case FY2025E"]'), "cy")).toBe(ZERO);
+    expect(num(container.querySelector('[data-point="Base case FY2025E"]'), "data-cy")).toBe(ZERO);
     expect(container.querySelectorAll("[data-gap]")).toHaveLength(0);
-  });
-
-  it("keeps peak labels clear of the axis labels and of each other, at the first period or the second", () => {
-    const peaks = model({
-      "Base case": [
-        ["5.10x", "5.1"],
-        ["4.60x", "4.6"],
-        ["4.10x", "4.1"],
-      ],
-      "Downside case": [
-        ["4.90x", "4.9"],
-        ["5.00x", "5.0"],
-        ["n.a.", null],
-      ],
-    });
-    const { container } = render(<ModelLead {...props([peaks])} />);
-    // Estimated boxes: 7 px a character, 11 px high, from the baseline up.
-    const boxOf = (text: Element) => {
-      const x = num(text, "x");
-      const width = 7 * text.textContent.length;
-      const anchor = text.getAttribute("text-anchor");
-      const x0 = anchor === "end" ? x - width : anchor === "middle" ? x - width / 2 : x;
-      const y = num(text, "y");
-      return { x0, x1: x0 + width, y0: y - 11, y1: y };
-    };
-    const overlap = (a: ReturnType<typeof boxOf>, b: ReturnType<typeof boxOf>) =>
-      a.x0 < b.x1 && b.x0 < a.x1 && a.y0 < b.y1 && b.y0 < a.y1;
-    const labels = [...container.querySelectorAll("[data-peak]")].map(boxOf);
-    expect(labels).toHaveLength(2);
-    const ticks = [...container.querySelectorAll("text")]
-      .filter((text) => /^\d+x$/.test(text.textContent))
-      .map(boxOf);
-    expect(ticks.length).toBeGreaterThan(2);
-    const [first, second] = labels;
-    if (!first || !second) throw new Error("peak labels missing");
-    expect(overlap(first, second)).toBe(false);
-    for (const label of labels) {
-      for (const tick of ticks) expect(overlap(label, tick)).toBe(false);
-      // Clear of the axis: nothing is drawn left of the plot edge but the tick labels.
-      expect(label.x0).toBeGreaterThanOrEqual(60);
-    }
-    expect(container.querySelector('[data-peak="Base case"]')?.textContent).toBe("high 5.10x");
-    expect(container.querySelector('[data-peak="Downside case"]')?.textContent).toBe("high 5.00x");
   });
 
   it("keeps overlapping end labels apart", () => {
@@ -239,7 +260,7 @@ describe("ModelLead", () => {
     expect(Math.abs(top("Base case") - top("Downside case"))).toBeGreaterThanOrEqual(14);
   });
 
-  it("a blocked module is the frame's one gap", () => {
+  it("a blocked module draws nothing: the frame states it", () => {
     const blocked = entry(
       "CP-MODEL",
       [],
@@ -253,8 +274,11 @@ describe("ModelLead", () => {
         },
       ],
     );
-    render(<ModelLead {...leadProps(blocked, [TWO])} />);
-    expect(screen.getByText("Not assessable: no model inputs.")).toBeVisible();
-    expect(screen.queryByRole("img")).toBeNull();
+    const { container } = render(<ModelLead {...leadProps(blocked, [TWO])} />);
+    expect(container).toBeEmptyDOMElement();
+  });
+
+  it("declares that it draws none of the module's typed figures, events or maps", () => {
+    expect(ModelLead.draws).toEqual([]);
   });
 });

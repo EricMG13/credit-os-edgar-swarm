@@ -48,7 +48,13 @@ function Marker({
   size?: number;
   "data-point"?: string;
 }) {
-  const common = { className: `${look.fill} stroke-surface-card`, strokeWidth: 1.5, ...rest };
+  const common = {
+    className: `${look.fill} stroke-surface-card`,
+    strokeWidth: 1.5,
+    "data-cx": x,
+    "data-cy": y,
+    ...rest,
+  };
   if (look.shape === "circle") return <circle cx={x} cy={y} r={size} {...common} />;
   if (look.shape === "square")
     return <rect x={x - size} y={y - size} width={size * 2} height={size * 2} {...common} />;
