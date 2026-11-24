@@ -22,7 +22,7 @@ const VISIBLE_WORD_ROWS = 6;
 const SIGNAL = "border-warning-edge bg-warning-fill text-warning-text";
 
 /** A status as a shape; the register's own word always sits beside it. */
-export function StatusShapeMark({ shape }: { shape: StatusShape }) {
+function StatusShapeMark({ shape }: { shape: StatusShape }) {
   return (
     <svg
       viewBox="0 0 16 16"

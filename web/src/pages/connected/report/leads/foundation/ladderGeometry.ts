@@ -41,8 +41,8 @@ export const LADDER = {
   subWrap: 42,
 } as const;
 
-export type LadderSpan = { from: number; to: number; x: number; width: number };
-export type LadderPlace =
+type LadderSpan = { from: number; to: number; x: number; width: number };
+type LadderPlace =
   { state: "bar"; span: LadderSpan } | { state: "gap"; reason: string } | { state: "unplaced" };
 export type LadderRow = {
   step: LadderStep;
@@ -63,7 +63,7 @@ const isZero = (text: string | null) => text !== null && Number(text) === 0;
 const negate = (text: string) => (text.startsWith("-") ? text.slice(1) : `-${text}`);
 
 /** What the handoff says in place of a figure: its own gap wording, or the reason a step is not derived. */
-export function gapText(value: LadderValue) {
+function gapText(value: LadderValue) {
   return readerSafe(value.text.startsWith("Not ") ? value.text : (value.reason ?? "Not stated"));
 }
 

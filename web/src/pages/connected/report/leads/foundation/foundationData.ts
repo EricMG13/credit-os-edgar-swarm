@@ -12,8 +12,8 @@ import {
 } from "../kit/tables";
 
 /** One stated figure of one period: the cell as read, and the table line it came from. */
-export type Stated = { cell: Reading; line: number };
-export type PeriodPair = {
+type Stated = { cell: Reading; line: number };
+type PeriodPair = {
   prior: Stated;
   current: Stated;
   priorLabel: string;

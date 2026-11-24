@@ -19,14 +19,14 @@ import { Derived, FigureTile, LeadFrame, type TableViewData } from "./kit/LeadFr
 import { group } from "./kit/numbers";
 import type { LeadProps } from "./types";
 
-export const NO_BRIDGE = "No variance bridge in this handoff.";
+const NO_BRIDGE = "No variance bridge in this handoff.";
 const NOT_A_BRIDGE =
   "The variance bridge in this handoff does not add up, so it is not drawn as a bridge.";
 
 // The strip is about 580 px wide in the tile at 1440 px, so one drawing unit is about one pixel there
 // and 11-unit tick text is about 11 px. PAD leaves room for the widest tick label at each end.
-export const W = 580;
-export const PAD = 44;
+const W = 580;
+const PAD = 44;
 const MID = 14;
 const MINUS = "−";
 

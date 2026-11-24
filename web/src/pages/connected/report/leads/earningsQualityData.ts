@@ -24,7 +24,7 @@ const SUPPORT_WORDS: Support[] = [
   "Insufficient evidence",
 ];
 
-export type Step = { label: string; amount: string; value: number; line: number };
+type Step = { label: string; amount: string; value: number; line: number };
 
 export type Bridge = {
   state: "ready";
@@ -212,7 +212,7 @@ export function bridgeGeometry(bridge: Bridge) {
   return { lo, hi, truncated, x, rows };
 }
 
-export type Reported = { text: string; value: number };
+type Reported = { text: string; value: number };
 export type LeverageMeasure =
   | {
       kind: "pair";

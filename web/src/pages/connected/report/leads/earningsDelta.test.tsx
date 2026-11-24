@@ -487,14 +487,16 @@ describe("EarningsDeltaLead on the retained handoff", () => {
 
 describe("the axis text", () => {
   const axisTexts = (container: HTMLElement) =>
-    [...container.querySelectorAll("svg[aria-hidden='true']")].map((svg) => ({
-      width: Number(svg.getAttribute("viewBox")?.split(" ")[2]),
-      texts: [...svg.querySelectorAll("text")].map((text) => ({
-        x: Number(text.getAttribute("x")),
-        label: text.textContent ?? "",
-        size: Number(text.getAttribute("fontSize")),
-      })),
-    }));
+    [...container.querySelectorAll("svg[aria-hidden='true']")]
+      .filter((svg) => svg.querySelector("text"))
+      .map((svg) => ({
+        width: Number((svg.getAttribute("viewBox") ?? "").split(" ")[2]),
+        texts: [...svg.querySelectorAll("text")].map((text) => ({
+          x: Number(text.getAttribute("x")),
+          label: text.textContent,
+          size: Number(text.getAttribute("font-size")),
+        })),
+      }));
   it("keeps every tick label inside its drawing, at about 7 px a character", () => {
     const { container } = lead(cp1bEntry());
     const axes = axisTexts(container);
@@ -523,8 +525,11 @@ describe("the axis text", () => {
   });
   it("never lets a strip collapse below 220 px", () => {
     const { container } = lead(cp1bEntry());
-    for (const svg of container.querySelectorAll("svg"))
-      expect(svg.getAttribute("class")).toContain("min-w-[220px]");
+    const strips = [...container.querySelectorAll("svg")].filter((svg) =>
+      svg.getAttribute("viewBox")?.startsWith("0 0 580"),
+    );
+    expect(strips.length).toBeGreaterThan(10);
+    for (const svg of strips) expect(svg.getAttribute("class")).toContain("min-w-[220px]");
   });
 });
 

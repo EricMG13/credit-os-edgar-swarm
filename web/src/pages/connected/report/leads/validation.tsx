@@ -27,7 +27,7 @@ const WORD: Record<Shape, string> = {
 };
 
 /** A status as a shape: the word always sits beside it. */
-export function StatusMark({ shape, size = 16 }: { shape: Shape; size?: number }) {
+function StatusMark({ shape, size = 16 }: { shape: Shape; size?: number }) {
   return (
     <svg
       viewBox="0 0 16 16"

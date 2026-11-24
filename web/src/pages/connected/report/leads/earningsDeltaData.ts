@@ -9,19 +9,19 @@ import {
 import { difference, group, readCell, sum } from "./kit/numbers";
 import { allTables, columnOf, periodColumns, tableUnder } from "./kit/tables";
 
-export const RESULTS = "Chart data: prior and current results";
-export const KPIS = "Chart data: margin and KPI changes";
-export const STEP_HEADERS = ["Step", "Amount", "Reporting unit", "Basis and limitation"];
+const RESULTS = "Chart data: prior and current results";
+const KPIS = "Chart data: margin and KPI changes";
+const STEP_HEADERS = ["Step", "Amount", "Reporting unit", "Basis and limitation"];
 export const CAP = 10;
 
 export const NO_UNIT = "The handoff does not state the unit of its earnings table.";
-export const NO_RESULTS = "The handoff has no table of prior and current results.";
-export const NO_KPIS = "The handoff has no table of margin and KPI changes.";
-export const NO_MARGINS = "The handoff's earnings table has no margin row.";
-export const NO_COLUMNS = "The table of prior and current results lacks a column this page reads.";
-export const NO_PAIRS = "The handoff states no pair of figures to compare.";
+const NO_RESULTS = "The handoff has no table of prior and current results.";
+const NO_KPIS = "The handoff has no table of margin and KPI changes.";
+const NO_MARGINS = "The handoff's earnings table has no margin row.";
+const NO_COLUMNS = "The table of prior and current results lacks a column this page reads.";
+const NO_PAIRS = "The handoff states no pair of figures to compare.";
 export const NO_PERCENT = "The margin cells do not state a percent sign, so they are not drawn.";
-export const IN_EVIDENCE = "Detail is in Evidence.";
+const IN_EVIDENCE = "Detail is in Evidence.";
 
 const readable = (text: string, fallback = IN_EVIDENCE) =>
   containsReference(text) ? fallback : readerText(text).trim() || fallback;
@@ -76,7 +76,7 @@ export type Change = {
   conflict: boolean;
 };
 
-export type Tone = "better" | "worse" | "flat" | "none";
+type Tone = "better" | "worse" | "flat" | "none";
 
 export type Pair = {
   label: string;

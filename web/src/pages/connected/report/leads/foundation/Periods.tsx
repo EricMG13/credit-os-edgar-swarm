@@ -8,7 +8,7 @@ const NEEDS =
   "A longer trend, last twelve months and a full debt stack need a methodology change; until then they are not drawn.";
 
 /** What the gap tile says for the handoff's period table, or null when it carries three or more periods. */
-export function periodsGap(lead: LeadProps) {
+function periodsGap(lead: LeadProps) {
   const table = tableUnder(lead.entry, PERIODS);
   if (!table) return { title: "No period table", text: "The handoff has no period table." };
   const labels = [...new Set(table.rows.map((row) => periodLabel(row.cells[0] ?? "")))].filter(

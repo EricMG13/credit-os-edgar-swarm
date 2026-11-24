@@ -33,9 +33,9 @@ export function readinessState(cell: string | undefined): ReadinessState | null 
   return Object.hasOwn(NORMALISED, key) ? (NORMALISED[key] ?? null) : null;
 }
 
-export const IN_EVIDENCE = "Detail is in Evidence.";
-export const REASON_IN_EVIDENCE = "Reason is in Evidence.";
-export const NO_LIMITATION = "No limitation stated.";
+const IN_EVIDENCE = "Detail is in Evidence.";
+const REASON_IN_EVIDENCE = "Reason is in Evidence.";
+const NO_LIMITATION = "No limitation stated.";
 
 export type ReadinessRow = {
   area: string;
@@ -85,7 +85,7 @@ function readinessTable(entry: OutputEntry) {
 
 /** The Command column says DO NOT RUN: pipeline words, never drawn, but the row is not plainly ready. */
 const heldBack = (command: string | undefined) => /\bDO NOT RUN\b/i.test(command ?? "");
-export const HELD_BACK = "Held back by the source review.";
+const HELD_BACK = "Held back by the source review.";
 
 /** The readiness table as rows, or why there is nothing to draw. */
 export function sourceReadiness(entry: OutputEntry): SourceReadiness {

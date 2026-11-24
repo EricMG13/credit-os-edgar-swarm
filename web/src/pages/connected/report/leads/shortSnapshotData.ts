@@ -12,7 +12,7 @@ import { tone } from "../../signal";
  * what was expected. Nothing else is read.
  */
 
-export const KEY_FIGURE_HEADERS = ["Measure", "Value", "Period", "Source"] as const;
+const KEY_FIGURE_HEADERS = ["Measure", "Value", "Period", "Source"] as const;
 export const MOST_FIGURES = 6;
 
 const safe = (text: string) => (containsReference(text) ? null : readerText(text.trim()));
@@ -164,7 +164,7 @@ export function readKeyFigures(entry: OutputEntry): KeyFigures {
   return { state: "ready", line: table.line, figures };
 }
 
-export type ChangeItem = {
+type ChangeItem = {
   topic: string;
   prior: string;
   current: string;

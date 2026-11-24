@@ -9,7 +9,7 @@ export const PEER_HEADINGS = {
   percent: "Chart data: peer range — percent metrics",
   multiples: "Chart data: peer range — multiples",
 } as const;
-export type PeerKind = keyof typeof PEER_HEADINGS;
+type PeerKind = keyof typeof PEER_HEADINGS;
 
 const REQUIRED = [
   "Metric",
@@ -42,7 +42,7 @@ export function valueOf(cell: string): Value {
   };
 }
 
-export type Count =
+type Count =
   { kind: "number"; value: number; text: string } | { kind: "gap"; reason: string; text: string };
 
 function countOf(cell: string): Count {
@@ -62,7 +62,7 @@ function countOf(cell: string): Count {
 export type Side = "above" | "below" | "at";
 
 /** What can be drawn for one metric. */
-export type Drawing =
+type Drawing =
   /** The band is stated; the median and the issuer are drawn where stated. */
   | {
       kind: "strip";
@@ -239,7 +239,7 @@ export function peerGapSentence(entry: OutputEntry) {
   return first ? first : "Peer data was not supplied for this run.";
 }
 
-export const AXIS = { left: 88, right: 552 } as const;
+const AXIS = { left: 88, right: 552 } as const;
 
 /** One shared axis from zero for the rows of a unit; only rows with a drawable strip place values on it. */
 export function groupScale(group: PeerGroup) {

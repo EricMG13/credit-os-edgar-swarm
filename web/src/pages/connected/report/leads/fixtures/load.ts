@@ -10,7 +10,7 @@ import cp6 from "./cp6_synthetic.json";
 type Fixture = { module: string; charts: unknown[]; sections: unknown[] };
 
 /** A retained or synthetic handoff, parsed as the library parses it, as the module's selected entry. */
-export function fixtureEntry(data: Fixture): OutputEntry {
+function fixtureEntry(data: Fixture): OutputEntry {
   return {
     output: {
       module: data.module,

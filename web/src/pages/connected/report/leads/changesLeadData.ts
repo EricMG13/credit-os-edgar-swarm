@@ -6,7 +6,7 @@ import { cellAt, locate, said, saidText, type Said } from "./validationData";
 // ---------------------------------------------------------------------------------------------
 // What changed: the analysis
 
-export const KNOWN_STATUS = [
+const KNOWN_STATUS = [
   "Unchanged",
   "Strengthened",
   "Weakened",
@@ -25,7 +25,7 @@ const SHAPE: Record<(typeof KNOWN_STATUS)[number], StatusShape> = {
   "Not run this time": "not-run",
 };
 
-export type ModuleChange = {
+type ModuleChange = {
   name: string;
   status: string;
   cause: string;
@@ -33,7 +33,7 @@ export type ModuleChange = {
   line: number;
 };
 
-export type StatusCount = { word: string; shape: StatusShape; count: number };
+type StatusCount = { word: string; shape: StatusShape; count: number };
 
 export type AnalysisChanges = {
   line: number;

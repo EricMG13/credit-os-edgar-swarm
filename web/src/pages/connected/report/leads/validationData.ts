@@ -13,7 +13,7 @@ import { allTables } from "./kit/tables";
 export const IN_EVIDENCE = "Detail is in Evidence.";
 
 /** A handoff's words, reference-free and with module codes named; null when they cite a source. */
-export function safeText(text: string): string | null {
+function safeText(text: string): string | null {
   const trimmed = text.trim();
   return trimmed === "" || containsReference(trimmed) ? null : readerText(trimmed);
 }
@@ -72,7 +72,7 @@ export type Severity = {
 const KNOWN_SEVERITY = ["Critical", "Material", "Minor"] as const;
 const NOT_STATED_RANK = 4;
 
-export function severityOf(cell: string | undefined): Severity {
+function severityOf(cell: string | undefined): Severity {
   const value = said(cell);
   if (value.kind !== "text")
     return { word: "Severity not stated", rank: NOT_STATED_RANK, known: false, stated: false };
@@ -95,7 +95,7 @@ export type Issue = {
   affected: string[] | "evidence" | null;
 };
 
-export type Register =
+type Register =
   | { state: "rows"; issues: Issue[]; line: number }
   | { state: "none"; reason: string | null; line: number }
   | { state: "absent" | "duplicate" };
@@ -148,7 +148,7 @@ function readRegister(entry: OutputEntry, headers: string[], kind: Issue["kind"]
   };
 }
 
-export type Pip = { kind: Issue["kind"]; line: number };
+type Pip = { kind: Issue["kind"]; line: number };
 export type Group = { severity: Severity; pips: Pip[] };
 
 export type Issues = {
@@ -228,7 +228,7 @@ export type Clearance = {
 
 const SCOPE_SUFFIX = /\s+over the evaluated set\s*\.?$/i;
 
-export function shapeOf(status: string): Shape {
+function shapeOf(status: string): Shape {
   if (/^(?:accepted|cleared)\b/i.test(status)) return "filled";
   if (/^restricted\b/i.test(status)) return "half";
   if (/^(?:blocked|rejected|refused|not cleared|not accepted)\b/i.test(status)) return "slash";
@@ -300,7 +300,7 @@ export type ModuleIntegrity = {
   line: number;
 };
 
-export function resultShape(result: string): Shape {
+function resultShape(result: string): Shape {
   if (/blocked|not evaluated/i.test(result)) return "slash";
   if (/with findings/i.test(result)) return "half";
   if (/no finding/i.test(result)) return "filled";

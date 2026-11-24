@@ -11,9 +11,9 @@ import {
 } from "./sourceReadinessData";
 import type { LeadProps } from "./types";
 
-export const ABSENT = "Source readiness states no readiness by area.";
-export const UNRECOGNISED = "The readiness table uses states this page does not recognise.";
-export const NOT_HERE = "Key evidence located and conflicts are not in this handoff.";
+const ABSENT = "Source readiness states no readiness by area.";
+const UNRECOGNISED = "The readiness table uses states this page does not recognise.";
+const NOT_HERE = "Key evidence located and conflicts are not in this handoff.";
 
 type Shape = "dot" | "half-dot" | "ring" | "slash";
 const SHAPE: Record<ReadinessState, Shape> = {

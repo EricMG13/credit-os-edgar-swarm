@@ -7,7 +7,7 @@ import { Bento, GapNote, Tile } from "../../overview/Tile";
 import type { LeadProps } from "../types";
 
 /** The designed gap, for a lead whose module is blocked, absent or unreadable: one tile, the reason in words. */
-export function LeadGap({ label, reason }: { label: string; reason: string }) {
+function LeadGap({ label, reason }: { label: string; reason: string }) {
   return (
     <Tile span={12} label={label} kicker="Not assessable" tone="gap">
       <GapNote>{reason}</GapNote>
@@ -40,7 +40,7 @@ export type TableViewData = {
 };
 
 /** The figure's numbers as a real table, closed by default: every figure has one. */
-export function TableView({ caption, headers, rows }: TableViewData) {
+function TableView({ caption, headers, rows }: TableViewData) {
   return (
     <details className="group min-w-0 text-small text-text-secondary">
       <summary className="flex min-h-8 w-fit cursor-pointer items-center rounded-ds-xs px-1 text-caption font-medium text-text-link">
