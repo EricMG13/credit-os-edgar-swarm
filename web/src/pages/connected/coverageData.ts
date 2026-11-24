@@ -54,6 +54,8 @@ export type Coverage = {
   issuers: readonly Issuer[];
   fields: readonly Field[];
   facts: readonly Fact[];
+  /** Set when the publication is a retained test preview; the page says so, as the Library does. */
+  preview?: { reason: string } | null;
 };
 
 export const COVERAGE_ADDRESS = "/connected/coverage";
@@ -100,12 +102,65 @@ export function factsOf(data: Coverage, run: string, field?: string): Fact[] {
   return data.facts.filter((fact) => fact.run === run && (!field || fact.field === field));
 }
 
+/** The run's own row for one period of a field, as the module wrote it. */
+export function factAt(
+  data: Coverage,
+  run: string,
+  field: string,
+  period: string,
+): Fact | undefined {
+  return factsOf(data, run, field).find((fact) => fact.period === period);
+}
+
+function yearOf(period: string): number | null {
+  const year = /\d{4}/.exec(period)?.[0];
+  return year === undefined ? null : Number(year);
+}
+
 /**
- * The one fact of a field that stands for a run: the last stated figure in the module's own row
- * order, or the last row when every row is a stated gap. The module's period is shown with it.
+ * Period labels in reading order: those naming a year by that year, then the rest ("Thereafter")
+ * as first written. Labels are compared as written; two issuers' periods match only when equal.
  */
-export function headline(facts: readonly Fact[]): Fact | undefined {
-  return facts.filter((fact) => fact.at !== null).at(-1) ?? facts.at(-1);
+function inOrder(periods: readonly string[]): string[] {
+  const distinct = [...new Set(periods)];
+  const dated = distinct.filter((period) => yearOf(period) !== null);
+  const undated = distinct.filter((period) => yearOf(period) === null);
+  dated.sort((a, b) => (yearOf(a) ?? 0) - (yearOf(b) ?? 0) || a.localeCompare(b));
+  return [...dated, ...undated];
+}
+
+function newestFacts(data: Coverage, issuers: readonly Issuer[], field: string): Fact[] {
+  return issuers.flatMap((issuer) => {
+    const run = latestRun(issuer);
+    return run ? factsOf(data, run.key, field) : [];
+  });
+}
+
+/** The periods the issuers' newest runs state for a field, in reading order. */
+export function periodsOf(data: Coverage, issuers: readonly Issuer[], field: string): string[] {
+  return inOrder(newestFacts(data, issuers, field).flatMap((fact) => fact.period ?? []));
+}
+
+/**
+ * The period a view opens on: the one most newest runs state a figure for, the later of equals.
+ * The reader sees it in the Period control and can change it.
+ */
+export function commonPeriod(
+  data: Coverage,
+  issuers: readonly Issuer[],
+  field: string,
+): string | null {
+  const counts = new Map<string, number>();
+  for (const fact of newestFacts(data, issuers, field)) {
+    if (fact.period !== null && fact.at !== null)
+      counts.set(fact.period, (counts.get(fact.period) ?? 0) + 1);
+  }
+  let best: string | null = null;
+  for (const period of periodsOf(data, issuers, field)) {
+    if (counts.has(period) && (counts.get(period) ?? 0) >= (counts.get(best ?? "") ?? 0))
+      best = period;
+  }
+  return best ?? periodsOf(data, issuers, field).at(-1) ?? null;
 }
 
 function bound(text: string): number | null {
@@ -131,8 +186,13 @@ function says(data: Coverage, issuer: Issuer, run: CoverageRun, query: string): 
   return texts.some((text) => text.toLowerCase().includes(wanted));
 }
 
-/** The issuers whose newest run passes every filter; `field` is the chosen number field. */
-export function matchIssuers(data: Coverage, filters: Filters, field: string | null): Issuer[] {
+/** The issuers whose newest run passes every filter; the bounds read `field` at `period`. */
+export function matchIssuers(
+  data: Coverage,
+  filters: Filters,
+  field: string | null,
+  period: string | null = null,
+): Issuer[] {
   return data.issuers.filter((issuer) => {
     const run = latestRun(issuer);
     if (!run) return false;
@@ -145,7 +205,8 @@ export function matchIssuers(data: Coverage, filters: Filters, field: string | n
       const said = factsOf(data, run.key, filters.choice).map((fact) => fact.text);
       if (!said.includes(filters.word)) return false;
     }
-    if (field && !within(headline(factsOf(data, run.key, field)), filters)) return false;
+    if (field && period !== null && !within(factAt(data, run.key, field, period), filters))
+      return false;
     return says(data, issuer, run, filters.query);
   });
 }
@@ -154,15 +215,19 @@ type RankRow = { issuer: Issuer; run: CoverageRun; fact: Fact };
 export type Ranking = {
   /** One list per reporting unit: figures in different units are never ranked together. */
   units: { unit: string; rows: RankRow[] }[];
-  /** Issuers whose newest run states no figure for the field, with the module's reason if any. */
-  missing: { issuer: Issuer; run: CoverageRun; fact: Fact | undefined }[];
+  /**
+   * Issuers whose newest run states no figure for the period: `fact` is the module's stated gap
+   * when it wrote one, and `stated` the periods that run does state a figure for.
+   */
+  missing: { issuer: Issuer; run: CoverageRun; fact: Fact | undefined; stated: string[] }[];
 };
 
-/** Sort the delivered figures of one field, newest run per issuer. */
+/** Sort the delivered figures of one field at one period, newest run per issuer. */
 export function rank(
   data: Coverage,
   issuers: readonly Issuer[],
   field: string,
+  period: string,
   order: "high" | "low",
 ): Ranking {
   const units = new Map<string, RankRow[]>();
@@ -170,9 +235,12 @@ export function rank(
   for (const issuer of issuers) {
     const run = latestRun(issuer);
     if (!run) continue;
-    const fact = headline(factsOf(data, run.key, field));
+    const fact = factAt(data, run.key, field, period);
     if (fact?.at === null || fact?.at === undefined) {
-      missing.push({ issuer, run, fact });
+      const stated = factsOf(data, run.key, field)
+        .filter((other) => other.at !== null)
+        .flatMap((other) => other.period ?? []);
+      missing.push({ issuer, run, fact, stated });
       continue;
     }
     const unit = fact.unit ?? "";
@@ -198,56 +266,50 @@ export function groupKey(data: Coverage, issuer: Issuer, by: string): string {
 }
 
 export type TrendSeries = {
-  /** "Issuer · pathway": runs of different pathways are separate series. */
+  /** The issuer's name; two issuers of one name are numbered. */
   name: string;
-  /** One per date in `dates`; null where the series has no run or no figure on that date. */
+  run: CoverageRun;
+  /** One per period in `periods`; null where the run states no figure for it. */
   points: (Fact | null)[];
 };
 
-/** The reporting units a field's figures are stated in, across every run. */
-export function fieldUnits(data: Coverage, field: string): string[] {
-  const units = data.facts
-    .filter((fact) => fact.field === field && fact.at !== null)
+/** The reporting units the issuers' newest runs state a field's figures in. */
+export function fieldUnits(data: Coverage, issuers: readonly Issuer[], field: string): string[] {
+  const units = newestFacts(data, issuers, field)
+    .filter((fact) => fact.at !== null)
     .map((fact) => fact.unit ?? "");
   return [...new Set(units)].sort();
 }
 
 /**
- * One point per run for a number field in one reporting unit, oldest first. Each issuer and
- * pathway is its own series: runs of different pathways are never joined.
+ * A field down the module's own periods, one line per issuer from its newest run, in one
+ * reporting unit. How a figure moved between two runs is the Changes page's, not this one's.
  */
 export function trend(
   data: Coverage,
   issuers: readonly Issuer[],
   field: string,
   unit: string,
-): { dates: string[]; series: TrendSeries[] } {
-  const found = new Map<string, { name: string; points: Map<string, Fact> }>();
-  for (const issuer of issuers) {
-    for (const run of issuer.runs) {
-      const fact = headline(factsOf(data, run.key, field));
-      if (!run.asOf || fact?.at === null || fact?.at === undefined) continue;
-      if ((fact.unit ?? "") !== unit) continue;
-      const pathway = run.pathwayTitle ?? "pathway not recorded";
-      const key = JSON.stringify([issuer.key, pathway]);
-      const entry = found.get(key) ?? { name: `${issuer.name} · ${pathway}`, points: new Map() };
-      // Two runs of one pathway on one date: the newest listed (first) is kept.
-      if (!entry.points.has(run.asOf)) entry.points.set(run.asOf, fact);
-      found.set(key, entry);
-    }
-  }
-  const series = [...found.values()];
-  const dates = [...new Set(series.flatMap((entry) => [...entry.points.keys()]))].sort();
+): { periods: string[]; series: TrendSeries[] } {
+  const found = issuers.flatMap((issuer) => {
+    const run = latestRun(issuer);
+    if (!run) return [];
+    const facts = factsOf(data, run.key, field).filter(
+      (fact) => fact.at !== null && fact.period !== null && (fact.unit ?? "") === unit,
+    );
+    return facts.length > 0 ? [{ issuer, run, facts }] : [];
+  });
+  const periods = inOrder(found.flatMap(({ facts }) => facts.flatMap((fact) => fact.period ?? [])));
   const seen = new Map<string, number>();
   return {
-    dates,
-    series: series.map(({ name, points }) => {
-      // Two issuers of one name stay two series.
-      const count = (seen.get(name) ?? 0) + 1;
-      seen.set(name, count);
+    periods,
+    series: found.map(({ issuer, run, facts }) => {
+      const count = (seen.get(issuer.name) ?? 0) + 1;
+      seen.set(issuer.name, count);
       return {
-        name: count === 1 ? name : `${name} (${String(count)})`,
-        points: dates.map((date) => points.get(date) ?? null),
+        name: count === 1 ? issuer.name : `${issuer.name} (${String(count)})`,
+        run,
+        points: periods.map((period) => facts.find((fact) => fact.period === period) ?? null),
       };
     }),
   };

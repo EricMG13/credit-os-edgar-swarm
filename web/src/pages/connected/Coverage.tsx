@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { BarChartSquare02 } from "@untitledui/icons";
-import { Alert } from "@/components/alert/Alert";
+import { Alert, Callout } from "@/components/alert/Alert";
 import { EmptyState } from "@/components/application/empty-state/empty-state";
 import { ButtonGroup, ButtonGroupItem } from "@/components/base/button-group/button-group";
 import { Button } from "@/components/base/buttons/button";
@@ -10,6 +10,7 @@ import { StatusBadge } from "@/components/status/StatusBadge";
 import { PageHeader } from "../../shell/PageHeader";
 import { TextLink } from "../run/TextLink";
 import {
+  commonPeriod,
   evidenceLink,
   factsOf,
   fieldUnits,
@@ -19,6 +20,7 @@ import {
   latestRun,
   matchIssuers,
   NO_FILTERS,
+  periodsOf,
   rank,
   readGroups,
   trend,
@@ -27,7 +29,6 @@ import {
   type CellState,
   type Coverage as Data,
   type CoverageRun,
-  type Fact,
   type Field,
   type Filters,
   type Issuer,
@@ -50,7 +51,7 @@ const STATE_WORDS: Record<CellState, string> = {
   assessed: "Delivered",
   "not-assessable": "Not assessable",
   unreadable: "Unreadable",
-  "no-handoff": "Not run",
+  "no-handoff": "No handoff published",
   "not-in-pathway": "Not in this pathway",
 };
 
@@ -83,7 +84,8 @@ function StateMark({ cell }: { cell: Cell | undefined }) {
   if (cell.state === "unreadable") return <StatusBadge set="File state" state="Unreadable" />;
   if (cell.state === "not-assessable")
     return <StatusBadge set="Module state" state="Not assessable" />;
-  if (cell.state === "no-handoff") return <StatusBadge set="Module state" state="Not run" />;
+  if (cell.state === "no-handoff")
+    return <StatusBadge set="Module state" state="Not run" label="No handoff published" />;
   if (cell.gaps)
     return (
       <StatusBadge
@@ -320,16 +322,18 @@ function RankView({
   data,
   issuers,
   field,
+  period,
   order,
   by,
 }: {
   data: Data;
   issuers: Issuer[];
   field: Field | undefined;
+  period: string | null;
   order: "high" | "low";
   by: string;
 }) {
-  if (!field)
+  if (!field || period === null)
     return (
       <p role="status" className={card}>
         No module of a published run states a figure in a chart table yet, so there is nothing to
@@ -339,7 +343,7 @@ function RankView({
   return (
     <div className="grid gap-6">
       {grouped(data, issuers, by).map(([group, members]) => {
-        const ranking = rank(data, members, field.id, order);
+        const ranking = rank(data, members, field.id, period, order);
         return (
           <section key={group} className="grid gap-3" aria-label={group || "Ranking"}>
             {group && <h2 className={heading}>{group}</h2>}
@@ -347,7 +351,7 @@ function RankView({
               <div key={unit} className={tableBox}>
                 <table className="w-full text-sm">
                   <caption className="p-3 text-left text-text-secondary">
-                    {field.label}
+                    {field.label}, {period}
                     {unit ? `, reporting unit ${unit}` : ""}
                     {order === "high" ? ", highest first" : ", lowest first"}
                   </caption>
@@ -388,14 +392,18 @@ function RankView({
             {ranking.missing.length > 0 && (
               <div className={`${card} gap-2`}>
                 <h3 className="font-semibold text-text-primary">
-                  Not ranked: no figure stated in the newest run
+                  Not ranked: no figure for {period} in the newest run
                 </h3>
                 <ul className="grid gap-1 text-sm">
-                  {ranking.missing.map(({ issuer, fact }) => (
+                  {ranking.missing.map(({ issuer, fact, stated }) => (
                     <li key={issuer.key}>
                       <span className="font-medium">{issuer.name}</span>
                       {": "}
-                      {fact ? fact.text : "the module wrote no such table"}
+                      {fact
+                        ? fact.text
+                        : stated.length > 0
+                          ? `no figure could be read for this period; its run states ${stated.join(", ")}`
+                          : "no figure could be read for this measure"}
                     </li>
                   ))}
                 </ul>
@@ -496,24 +504,16 @@ function TrendView({
   issuers: Issuer[];
   field: Field | undefined;
 }) {
-  const units = field ? fieldUnits(data, field.id) : [];
+  const units = field ? fieldUnits(data, issuers, field.id) : [];
   const [picked, setPicked] = useState("");
   const unit = units.includes(picked) ? picked : (units[0] ?? "");
   if (!field || units.length === 0)
     return (
       <p role="status" className={card}>
-        No run of these issuers states this figure, so there is no trend to draw.
+        No newest run of these issuers states this figure, so there is no trend to draw.
       </p>
     );
-  const { dates, series } = trend(data, issuers, field.id, unit);
-  if (series.length === 0)
-    return (
-      <p role="status" className={card}>
-        No run of these issuers states this figure in {unit || "this unit"}.
-      </p>
-    );
-  const cell = (fact: Fact | null) =>
-    fact ? `${figure(fact)}${fact.period ? ` (${fact.period})` : ""}` : null;
+  const { periods, series } = trend(data, issuers, field.id, unit);
   return (
     <div className="grid gap-4">
       {units.length > 1 && (
@@ -527,16 +527,18 @@ function TrendView({
       )}
       <div className={card}>
         <TrendChart
-          title={`${field.label} by run`}
+          title={`${field.label} by period`}
           as="h3"
-          joined
-          note="One point per run, at the run’s as-of date, showing the last period that run states. A line joins runs of one issuer and pathway only. Each figure is as its module wrote it; bases can differ between runs."
-          periods={dates.map(asOfDate)}
+          note="One line per issuer, from its newest run, over the periods that run’s module states. Periods are matched as written, so issuers with different year ends sit at different points. Each figure is as its module wrote it; bases can differ between issuers."
+          periods={periods}
           series={series.map((item) => ({
             name: item.name,
             values: item.points.map((fact) => fact?.at ?? null),
           }))}
-          table={series.map((item) => ({ name: item.name, cells: item.points.map(cell) }))}
+          table={series.map((item) => ({
+            name: item.name,
+            cells: item.points.map((fact) => (fact ? figure(fact) : null)),
+          }))}
           yTicks={axisTicks(
             series.flatMap((item) => item.points.flatMap((fact) => fact?.at ?? [])),
             unit,
@@ -567,6 +569,7 @@ function Dashboard({ data }: { data: Data }) {
   const [view, setView] = useState<View>(start.view);
   const [filters, setFilters] = useState<Filters>(start.filters);
   const [fieldId, setFieldId] = useState(start.field);
+  const [periodPick, setPeriodPick] = useState("");
   const [order, setOrder] = useState<"high" | "low">("high");
   const [by, setBy] = useState("none");
   const [chosen, setChosen] = useState<ReadonlySet<string>>(new Set());
@@ -614,7 +617,11 @@ function Dashboard({ data }: { data: Data }) {
   const set = (change: Partial<Filters>) => {
     setFilters((previous) => ({ ...previous, ...change }));
   };
-  const matched = matchIssuers(data, filters, field?.id ?? null);
+  const stated = field ? periodsOf(data, data.issuers, field.id) : [];
+  const period =
+    stated.find((item) => item === periodPick) ??
+    (field ? commonPeriod(data, data.issuers, field.id) : null);
+  const matched = matchIssuers(data, filters, field?.id ?? null, period);
   const shown = onlyChosen ? matched.filter((issuer) => chosen.has(issuer.key)) : matched;
   const toggle = (key: string) => {
     setChosen((previous) => {
@@ -757,6 +764,13 @@ function Dashboard({ data }: { data: Data }) {
           <Choice name="Figure" value={field?.id ?? ""} onChange={setFieldId}>
             <FieldOptions fields={numbers} titles={titles} />
           </Choice>
+          {stated.length > 0 && view !== "trend" && (
+            <Choice name="Period" value={period ?? ""} onChange={setPeriodPick}>
+              {stated.map((item) => (
+                <option key={item}>{item}</option>
+              ))}
+            </Choice>
+          )}
           <label className={`${label} w-28`}>
             At least
             <input
@@ -877,7 +891,7 @@ function Dashboard({ data }: { data: Data }) {
           {detail && <IssuerDetail data={data} issuer={detail} />}
         </>
       ) : view === "rank" ? (
-        <RankView data={data} issuers={shown} field={field} order={order} by={by} />
+        <RankView data={data} issuers={shown} field={field} period={period} order={order} by={by} />
       ) : view === "find" ? (
         <FindView data={data} issuers={shown} query={filters.query} titles={titles} />
       ) : (
@@ -925,6 +939,7 @@ export function Coverage() {
             </EmptyState.Content>
           </EmptyState>
         )}
+        {value?.preview && <Callout title="Test preview">{value.preview.reason}</Callout>}
         {value && !empty && <Dashboard data={value} />}
       </section>
     </>

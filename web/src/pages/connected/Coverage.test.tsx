@@ -142,7 +142,10 @@ test("a rank shows the figure as written with period and basis, and missing apar
     `/report/alpha-run#evidence/alpha-run%2FCP-1.md~${SHA}-22`,
   );
   expect(within(table).queryByText(/Beta SA/)).not.toBeInTheDocument();
-  expect(screen.getByText("Not ranked: no figure stated in the newest run")).toBeInTheDocument();
+  expect(
+    screen.getByText("Not ranked: no figure for FY2025 in the newest run"),
+  ).toBeInTheDocument();
+  expect(screen.getByRole("combobox", { name: "Period" })).toHaveValue("FY2025");
   expect(screen.getByText(/Not supplied: cash not stated/)).toBeInTheDocument();
 });
 
@@ -172,6 +175,12 @@ test("ticked issuers can be saved as a group kept in this browser", async () => 
     target: { value: "Watch" },
   });
   expect(screen.getByText("1 of 2 issuers shown")).toBeInTheDocument();
+});
+
+test("a retained test preview says so, as the Library does", async () => {
+  answer({ ...data, preview: { reason: "Retained preview of one run." } });
+  render(<Coverage />);
+  expect(await screen.findByText("Retained preview of one run.")).toBeInTheDocument();
 });
 
 test("nothing published is said plainly", async () => {

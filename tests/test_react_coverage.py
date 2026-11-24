@@ -2,9 +2,14 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
+from pathlib import Path
 from typing import Any
 from urllib.parse import urlsplit
+
+import pytest
+from credit_os.store import handoff_parts
 
 from deploy_workflow import http_base
 from deploy_workflow.inbox.layout import Layout
@@ -264,3 +269,79 @@ def test_the_service_answers_from_the_admitted_publication_only(tmp_path: Any) -
     assert reply.headers == {"Cache-Control": "no-store"}
     assert [issuer["name"] for issuer in reply.body["issuers"]] == ["Alpha plc", "beta SA"]
     assert _app_page("/coverage")
+
+
+# Retained model output, module level only: TransDigm (TDG) as of 2024-09-30, the CP-1 handoffs of
+# the 2026-11-15 live runs. One publication per fixture; not a complete TDG pathway. Expected
+# values are read by hand from each Markdown file's `Chart data:` tables.
+LIVE = Path(__file__).parent / "fixtures" / "live_2026_11_15"
+LEVERAGE_ROWS = {
+    "distressed-CP-1-draft1.md": [
+        ("FY2023 / 2023-09-30", "6.27", "5.17"),
+        ("FY2024 / 2024-09-30", "6.53", "4.88"),
+    ],
+    "earnings_update-CP-1-draft3-accepted.md": [
+        ("FY2023 / 2023-09-30", "6.27", "5.17"),
+        ("FY2024 / 2024-09-30", "6.53", "4.88"),
+    ],
+    "relative_value-CP-1-draft1.md": [("FY2024 / 2024-09-30", "6.53", "4.88")],
+}
+FIRST_MATURITY = {
+    "distressed-CP-1-draft1.md": "580",
+    "earnings_update-CP-1-draft3-accepted.md": "580",
+    "relative_value-CP-1-draft1.md": "93",
+}
+
+
+def _retained(name: str) -> dict[str, Any]:
+    raw = (LIVE / name).read_bytes()
+    sections, problem, fields = handoff_parts(raw, strict=False)
+    assert problem is None
+    sha = hashlib.sha256(raw).hexdigest()
+    output = {"id": f"tdg/{name}", "module": "CP-1", "run": "tdg", "sha256": sha, **fields}
+    run = {
+        "folder": "tdg",
+        "issuerKey": "tdg",
+        "pathway": None,
+        "modules": {"CP-1": {"outputs": [output["id"]], "default": output["id"]}},
+    }
+    return {
+        "catalogue": {"real": [{"id": "tdg", "name": "TransDigm", "date": "2024-09-30"}]},
+        "workspace": {
+            "runs": {"tdg": run},
+            "outputs": {output["id"]: output},
+            "handoffs": {sha: sections},
+        },
+    }
+
+
+@pytest.mark.parametrize("name", sorted(LEVERAGE_ROWS))
+def test_a_retained_tdg_cp1_handoff_keeps_its_own_figures_periods_and_units(name: str) -> None:
+    page = coverage.coverage(_retained(name))
+    assert page is not None
+    assert page["issuers"][0]["runs"][0]["cells"]["CP-1"]["state"] == "assessed"
+
+    def column(field: str) -> list[dict[str, Any]]:
+        return [fact for fact in page["facts"] if fact["field"] == field]
+
+    total = column("cp-1/leverage/total-debt-ebitda")
+    net = column("cp-1/leverage/net-debt-ebitda")
+    assert [(t["period"], t["text"], n["text"]) for t, n in zip(total, net, strict=True)] == (
+        LEVERAGE_ROWS[name]
+    )
+    assert {fact["unit"] for fact in total + net} == {"x"}
+    assert total[-1]["at"] == 6.53 and net[-1]["at"] == 4.88
+    maturing = column("cp-1/debt-maturities/debt-maturing")
+    assert [fact["period"] for fact in maturing] == [
+        "FY2025", "FY2026", "FY2027", "FY2028", "FY2029", "Thereafter",
+    ]  # fmt: skip
+    assert maturing[0]["text"] == FIRST_MATURITY[name]
+    assert (maturing[-1]["text"], maturing[-1]["at"], maturing[-1]["unit"]) == (
+        "12637", 12637.0, "US$m",
+    )  # fmt: skip
+    assert all(fact["basis"] for fact in total + net + maturing)
+    # Each figure's line is its own row in the Markdown, so its Evidence link lands on it.
+    lines = (LIVE / name).read_text(encoding="utf-8").splitlines()
+    assert all(f"| {fact['text']} |" in lines[fact["line"] - 1] for fact in total + maturing)
+    bridges = [field for field in page["fields"] if "bridge" in field["id"]]
+    assert bridges == []

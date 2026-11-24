@@ -1,11 +1,13 @@
 import {
+  commonPeriod,
   evidenceLink,
+  factAt,
   fieldUnits,
   figure,
   groupKey,
-  headline,
   matchIssuers,
   NO_FILTERS,
+  periodsOf,
   rank,
   trend,
   type Coverage,
@@ -16,6 +18,7 @@ import {
 const LEVERAGE = "cp-1/leverage/net";
 const CONFIDENCE = "cp-2/reader-summary/confidence";
 const FINDING = "cp-2/reader-summary/finding";
+const MATURITY = "cp-1/debt-maturities/debt-maturing";
 
 function run(key: string, asOf: string, pathwayTitle = "Full credit assessment"): CoverageRun {
   return {
@@ -96,6 +99,9 @@ const data: Coverage = {
       gap: true,
       unit: "x",
     }),
+    fact("b1", "beta", MATURITY, { period: "Thereafter", text: "900", at: 900, unit: "US$m" }),
+    fact("b1", "beta", MATURITY, { period: "FY2027", text: "40", at: 40, unit: "US$m" }),
+    fact("b1", "beta", MATURITY, { period: "FY2026 / 2026-09-30", text: "5", at: 5, unit: "US$m" }),
     fact("a2", "alpha", CONFIDENCE, { text: "High" }),
     fact("b1", "beta", CONFIDENCE, { text: "Low" }),
     fact("a2", "alpha", FINDING, { text: "Covenant headroom is thin.", impact: "Waiver risk" }),
@@ -104,16 +110,21 @@ const data: Coverage = {
 
 const names = (issuers: readonly { name: string }[]) => issuers.map((issuer) => issuer.name);
 
-test("a run is stood for by its last stated figure, or its last stated gap", () => {
-  expect(headline(data.facts.filter((f) => f.run === "a2" && f.field === LEVERAGE))?.text).toBe(
-    "4.6",
-  );
-  expect(headline(data.facts.filter((f) => f.run === "d1"))?.text).toBe("Not supplied: no cash");
-  expect(headline([])).toBeUndefined();
+test("periods are read as written, ordered by year, and the view opens on the most stated", () => {
+  expect(periodsOf(data, data.issuers, LEVERAGE)).toEqual(["FY2024", "FY2025"]);
+  expect(commonPeriod(data, data.issuers, LEVERAGE)).toBe("FY2025");
+  expect(periodsOf(data, data.issuers, MATURITY)).toEqual([
+    "FY2026 / 2026-09-30",
+    "FY2027",
+    "Thereafter",
+  ]);
+  expect(factAt(data, "a2", LEVERAGE, "FY2024")?.text).toBe("5.1");
+  expect(factAt(data, "b1", LEVERAGE, "FY2024")).toBeUndefined();
+  expect(commonPeriod(data, data.issuers, "no such field")).toBeNull();
 });
 
-test("a rank keeps units apart, keeps zero as a figure and lists missing separately", () => {
-  const ranking = rank(data, data.issuers, LEVERAGE, "low");
+test("a rank reads one period, keeps units apart, keeps zero and lists missing separately", () => {
+  const ranking = rank(data, data.issuers, LEVERAGE, "FY2025", "low");
   expect(
     ranking.units.map((u) => [u.unit, u.rows.map((r) => [r.issuer.name, r.fact.text])]),
   ).toEqual([
@@ -126,49 +137,41 @@ test("a rank keeps units apart, keeps zero as a figure and lists missing separat
     ],
     ["US$m", [["Gamma", "1,250"]]],
   ]);
-  expect(ranking.missing.map((m) => [m.issuer.name, m.fact?.text])).toEqual([
-    ["Delta", "Not supplied: no cash"],
+  expect(ranking.missing.map((m) => [m.issuer.name, m.fact?.text, m.stated])).toEqual([
+    ["Delta", "Not supplied: no cash", []],
   ]);
-  expect(
-    names(rank(data, data.issuers, LEVERAGE, "high").units[0]?.rows.map((r) => r.issuer) ?? []),
-  ).toEqual(["Alpha", "Beta"]);
+  const high = rank(data, data.issuers, LEVERAGE, "FY2025", "high").units[0]?.rows ?? [];
+  expect(high.map((row) => row.issuer.name)).toEqual(["Alpha", "Beta"]);
+});
+
+test("an issuer with no figure for the chosen period is never ranked on another period", () => {
+  const ranking = rank(data, data.issuers, LEVERAGE, "FY2024", "high");
+  expect(ranking.units.map((u) => u.rows.map((r) => [r.issuer.name, r.fact.text]))).toEqual([
+    [["Alpha", "5.1"]],
+  ]);
+  expect(ranking.missing.map((m) => [m.issuer.name, m.fact?.text, m.stated])).toEqual([
+    ["Beta", undefined, ["FY2025"]],
+    ["Gamma", undefined, ["FY2025"]],
+    ["Delta", undefined, []],
+  ]);
 });
 
 test("filters read the newest run only, and a missing figure passes no numeric bound", () => {
-  expect(names(matchIssuers(data, NO_FILTERS, LEVERAGE))).toEqual([
-    "Alpha",
-    "Beta",
-    "Gamma",
-    "Delta",
-  ]);
-  expect(names(matchIssuers(data, { ...NO_FILTERS, max: "5" }, LEVERAGE))).toEqual([
-    "Alpha",
-    "Beta",
-  ]);
-  expect(names(matchIssuers(data, { ...NO_FILTERS, min: "5" }, LEVERAGE))).toEqual(["Gamma"]);
-  expect(names(matchIssuers(data, { ...NO_FILTERS, min: "0", max: "0" }, LEVERAGE))).toEqual([
-    "Beta",
-  ]);
-  expect(names(matchIssuers(data, { ...NO_FILTERS, sector: "Retail" }, null))).toEqual([
-    "Beta",
-    "Delta",
-  ]);
-  expect(
-    names(matchIssuers(data, { ...NO_FILTERS, pathway: "Lite credit assessment" }, null)),
-  ).toEqual(["Gamma"]);
-  expect(
-    names(matchIssuers(data, { ...NO_FILTERS, choice: CONFIDENCE, word: "High" }, null)),
-  ).toEqual(["Alpha"]);
-  expect(names(matchIssuers(data, { ...NO_FILTERS, query: "waiver" }, null))).toEqual(["Alpha"]);
-  expect(names(matchIssuers(data, { ...NO_FILTERS, query: "headroom IS thin" }, null))).toEqual([
-    "Alpha",
-  ]);
-  expect(
-    names(matchIssuers(data, { ...NO_FILTERS, module: "CP-6", state: "assessed" }, null)),
-  ).toEqual([]);
-  expect(
-    matchIssuers(data, { ...NO_FILTERS, module: "CP-6", state: "not-assessable" }, null),
-  ).toHaveLength(4);
+  const at = (filters: Partial<typeof NO_FILTERS>, period: string | null = "FY2025") =>
+    names(matchIssuers(data, { ...NO_FILTERS, ...filters }, LEVERAGE, period));
+  expect(at({})).toEqual(["Alpha", "Beta", "Gamma", "Delta"]);
+  expect(at({ max: "5" })).toEqual(["Alpha", "Beta"]);
+  expect(at({ min: "5" })).toEqual(["Gamma"]);
+  expect(at({ min: "0", max: "0" })).toEqual(["Beta"]);
+  expect(at({ max: "5.1" }, "FY2024")).toEqual(["Alpha"]);
+  expect(at({ max: "5" }, null)).toHaveLength(4);
+  expect(at({ sector: "Retail" })).toEqual(["Beta", "Delta"]);
+  expect(at({ pathway: "Lite credit assessment" })).toEqual(["Gamma"]);
+  expect(at({ choice: CONFIDENCE, word: "High" })).toEqual(["Alpha"]);
+  expect(at({ query: "waiver" })).toEqual(["Alpha"]);
+  expect(at({ query: "headroom IS thin" })).toEqual(["Alpha"]);
+  expect(at({ module: "CP-6", state: "assessed" })).toEqual([]);
+  expect(at({ module: "CP-6", state: "not-assessable" })).toHaveLength(4);
 });
 
 test("groups are the delivered word, the sector or the pathway", () => {
@@ -181,13 +184,13 @@ test("groups are the delivered word, the sector or the pathway", () => {
   expect(groupKey(data, alpha, "none")).toBe("");
 });
 
-test("a trend is one point per run in one unit, each issuer and pathway its own series", () => {
-  expect(fieldUnits(data, LEVERAGE)).toEqual(["US$m", "x"]);
-  const { dates, series } = trend(data, data.issuers, LEVERAGE, "x");
-  expect(dates).toEqual(["2025-03-31", "2026-03-31"]);
-  expect(series.map((s) => [s.name, s.points.map((p) => p?.text ?? null)])).toEqual([
-    ["Alpha · Full credit assessment", ["5.3", "4.6"]],
-    ["Beta · Full credit assessment", [null, "0.0"]],
+test("a trend follows the module's periods, one line per issuer's newest run, in one unit", () => {
+  expect(fieldUnits(data, data.issuers, LEVERAGE)).toEqual(["US$m", "x"]);
+  const { periods, series } = trend(data, data.issuers, LEVERAGE, "x");
+  expect(periods).toEqual(["FY2024", "FY2025"]);
+  expect(series.map((s) => [s.name, s.run.key, s.points.map((p) => p?.text ?? null)])).toEqual([
+    ["Alpha", "a2", ["5.1", "4.6"]],
+    ["Beta", "b1", [null, "0.0"]],
   ]);
 });
 

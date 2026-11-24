@@ -247,4 +247,5 @@ def coverage(snapshot: dict[str, Any] | None) -> dict[str, Any] | None:
         "issuers": sorted(issuers.values(), key=lambda item: str(item["name"]).casefold()),
         "fields": list(fields.values()),
         "facts": facts,
+        "preview": snapshot.get("preview"),
     }

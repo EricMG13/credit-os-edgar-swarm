@@ -40,8 +40,6 @@ interface TrendChartProps {
   yTicks?: YTick[];
   /** The Table form's own table, one row per period, when it carries more than the series' figures. */
   detailTable?: { head: string[]; rows: TableRowData[]; endHeading?: string };
-  /** Join a series across periods where it has no point (see SeriesLine `joined`). */
-  joined?: boolean;
 }
 
 export interface YTick {
@@ -147,14 +145,7 @@ function check({ periods, series, table }: Pick<TrendChartProps, "periods" | "se
   }
 }
 
-function Chart({
-  title,
-  periods,
-  series,
-  table,
-  yTicks,
-  joined,
-}: Omit<TrendChartProps, "note" | "as">) {
+function Chart({ title, periods, series, table, yTicks }: Omit<TrendChartProps, "note" | "as">) {
   const styles = assignSeries(series.map((s) => s.name));
   const data = periodSeriesData(periods, series);
   return (
@@ -173,13 +164,7 @@ function Chart({
             const style = styles.get(item.name);
             if (style === undefined) return null;
             return (
-              <SeriesLine
-                key={item.name}
-                name={item.name}
-                dataKey={keyOf(index)}
-                style={style}
-                joined={joined}
-              />
+              <SeriesLine key={item.name} name={item.name} dataKey={keyOf(index)} style={style} />
             );
           })}
         </LineChart>
@@ -200,21 +185,13 @@ export function TrendChart({
   yTicks,
   actions,
   detailTable,
-  joined,
 }: TrendChartProps) {
   check({ periods, series, table });
   return (
     <ChartFrame title={title} as={as} note={note} actions={actions}>
       {(view) =>
         view === "chart" ? (
-          <Chart
-            title={title}
-            periods={periods}
-            series={series}
-            table={table}
-            yTicks={yTicks}
-            joined={joined}
-          />
+          <Chart title={title} periods={periods} series={series} table={table} yTicks={yTicks} />
         ) : (
           <ChartTable
             caption={title}

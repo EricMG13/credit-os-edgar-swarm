@@ -41,8 +41,15 @@ Each point below is the build's choice, not the owner's.
   It computes no average, difference, score or composite. A figure is drawn as written, with its
   period, reporting unit and the module's Basis and limitation. Missing is listed apart from
   ranked values and is never zero. A rank compares one reporting unit at a time.
-- Trend is one point per run, labelled with the run's as-of date and pathway; each issuer, date
-  and pathway stays separate.
+- A rank reads one period, which the reader chooses from the periods the modules state. Periods
+  are matched as written; an issuer whose newest run states no figure for that period is listed
+  as not ranked, with the periods it does state, and is never ranked on another period.
+- Trend is a figure down the module's own periods, one line per issuer from its newest run.
+  How a figure moved between two runs of an issuer stays on the Changes page (CP-8).
+- Portfolio views read each issuer's newest run; older runs are listed under the issuer. Each
+  issuer, date and pathway stays separate.
+- A figure read down a row table (covenant tests, rating triggers, limits) is not offered for
+  ranking: its rows are each issuer's own names.
 - Working-page rule: no file name, hash, run code or gap ledger is drawn. A fact opens its run's
   report, where the trace control and the Evidence page are.
 - Filters, the chosen field and saved groups are page state; saved groups are kept in the
@@ -50,5 +57,7 @@ Each point below is the build's choice, not the owner's.
 
 ## Evidence scope
 
-The repository holds no complete retained multi-issuer publication, so the builder's tests are
-synthetic publications with hand-written expected values. No live run was made for this change.
+The repository holds no complete retained multi-issuer publication. The builder is tested on
+synthetic publications with hand-written expected values and on three retained TransDigm CP-1
+handoffs of the 2026-11-15 live runs (as of 2024-09-30), module level only: one issuer, one module,
+not a complete pathway and not a cross-issuer case. No live run was made for this change.

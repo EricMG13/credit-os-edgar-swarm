@@ -17,11 +17,6 @@ interface SeriesLineProps {
   nameDy?: number;
   /** The series stands out from the others: a heavier line, marked with a class. */
   emphasised?: boolean;
-  /**
-   * Draw the line across periods where this series has no point. Only for a chart whose periods
-   * are other series' own dates (one run each), where no point is not a missing value.
-   */
-  joined?: boolean;
 }
 
 export const EMPHASIS_CLASS = "series-emphasis";
@@ -120,7 +115,7 @@ export function SeriesLine(props: SeriesLineProps) {
       stroke={style.color}
       strokeWidth={props.emphasised ? EMPHASIS_WIDTH : LINE_WIDTH}
       strokeDasharray={style.dash}
-      connectNulls={props.joined ?? false}
+      connectNulls={false}
       isAnimationActive={false}
       activeDot={false}
       dot={(pointProps) => point(pointProps, props)}

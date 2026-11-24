@@ -10,18 +10,20 @@ engine is in [EricMG13/final-workflow](https://github.com/EricMG13/final-workflo
   `docs/rulings/2026-11-24-coverage-page.md`. It reads the admitted publication only: fourteen
   fixed module columns, five cell states by the Library's existing rules, and fields from the
   Reader summary and typed `Chart data:` tables. It adds no parser, score, average or difference.
-- Scope is synthetic only. The repository holds no complete multi-issuer publication, so no
-  retained or live run was read and no provider was called. This is not proof on real handoffs.
-- Fidelity check against hand-written expected values: figures keep their text, period, unit and
-  Basis; a stated gap is listed apart and never ranked or shown as zero; ranks keep reporting
-  units apart; a trend line joins runs of one issuer and pathway only; the page draws no module
-  code, hash, file name or run folder (they appear only inside the Evidence link's address).
-- Browser check in Chromium at 1500 px on a five-issuer synthetic publication: Modules, Rank,
+- Retained evidence, module level only: three TransDigm CP-1 handoffs of the 2026-11-15 live runs
+  (as of 2024-09-30), each as its own publication. Leverage, net leverage and debt maturities kept
+  the text, period, unit and Basis read by hand from each Markdown file, and each figure's line is
+  its own table row. One issuer and one module: not a TDG pathway and not a cross-issuer case.
+- Everything across issuers is synthetic: figures keep text, period, unit and Basis; a stated gap
+  is listed apart, never ranked or shown as zero; a rank reads one reader-chosen period and keeps
+  reporting units apart; the page draws no module code, hash, file name or run folder.
+- Presentation fidelity, Chromium at 1500 px on a five-issuer synthetic publication: Modules, Rank,
   Find and Trend drew with no console error. Edge, mobile widths and keyboard use were not checked.
-- Passed 16 Python tests (builder, reply, card rules), 266 `tests/test_react_*.py` tests, 669 web
-  tests (page, logic, shell, charts, app routes) and 76 Node script checks. ESLint, Prettier,
-  TypeScript, knip, the build and the changed-code Python gate reported no finding. The full web
-  and Python suites, confidence-review and rewrite-tournament were not run.
+  The Evidence link's address follows `resolveEvidenceLocation` by reading; it was not clicked
+  through to a published report.
+- Not done: confidence-review and rewrite-tournament (their definitions are not in this
+  repository or session), the full web and Python suites, and a check against the design system's
+  component rules; the page uses native selects, checkboxes and tables as the Library list does.
 
 ## 2026-11-24 — Parallel CP-OS review fixes for PR #71
 
