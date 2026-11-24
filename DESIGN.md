@@ -1,8 +1,8 @@
 # Design
 
 Started 2026-11-24 (owner: redesign the frontend design language and system from scratch).
-**Status: direction not yet chosen.** Three report-page mockups are with the owner; § Tokens is
-filled in when one is picked. Product, personas and the screen/module insight map are in
+**Status: direction chosen (§ Direction); implementation not started.** Mockups of the settled
+Overview, a module page and Forecast are with the owner. Product, personas and the insight map are in
 `PRODUCT.md`.
 
 This file replaces `docs/design/design-system.md` (v0.8) and `docs/design/brand-tokens.md` as
@@ -101,20 +101,54 @@ satisfy the content security policy.
 | Module and run pipeline | React Bits Pro pipeline |
 | Dates and run history | shadcnblocks timeline |
 
-## Candidate directions
+## Direction (owner, 2026-11-24)
 
-| | A · Brief | B · Signal | C · Desk |
-|---|---|---|---|
-| Idea | A committee brief that is live software | The system presents its conclusion | An analytics workstation |
-| Ground | Light, inset sidebar | Dark, top bar | Light, top navigation |
-| Lead | Prose; each claim beside its evidence | Bento; tile area is rank | Figures; aligned numerals, bars in tables |
-| Best for | Decider | Decider, demonstrations | Analyst |
-| Risk | Least "AI"; long page | Dark is harder for print and long reading | Dense for a first-time reader |
+"B for overview and overall look and card shape and layout, but not in dark. C for modules and
+forecast + colours." Of the three candidates (A · Brief, B · Signal, C · Desk):
+
+- **Look, shell, card shape, layout: B, in a light theme.** Top-bar shell with a centred command
+  field; a 12-column bento where tile area encodes importance and each tile states one fact
+  with one visual; the module pipeline drawn as a node graph.
+- **Colour: C.** Neutral zinc ground, teal primary, navy secondary, orange signal.
+- **Modules and Forecast: C's working patterns** inside B's shell and tile shape: a stats strip
+  divided by hairlines, tabbed chart groups, tables with inline proportional bars, small-multiple
+  strips, stepper tables, mono numerals.
+- A is not used.
 
 ## Tokens
 
-To be written when the direction is chosen: colour roles, type families and ramp, spacing,
-radius, elevation, chart series, status and gap states, motion.
+Light theme only. Values are the mockups'; names are final when `theme.css` is rewritten.
+
+| Role | Value |
+|---|---|
+| Page ground | `#FAFAFA` |
+| Tile surface | `#FFFFFF` |
+| Well, inset surface | `#F4F4F5` |
+| Hairline | `#E4E4E7` |
+| Strong divider | `#D4D4D8` |
+| Ink | `#0A0A0A` |
+| Secondary text | `#52525B` |
+| Label text (on white or ground only) | `#71717A` |
+| Accent, primary series | teal `#0F766E` |
+| Accent tint, border | `#F0FDFA`, `#99F6E4` |
+| Secondary series | navy `#1E3A5F` |
+| Counter-argument surface, border | `#EFF4FA`, `#C7D6E8` |
+| Prior-period marks | zinc `#A1A1AA` |
+| Signal marks (worse, pro forma, blocked, not tested) | orange `#EA580C` |
+| Signal text | `#C2410C` |
+| Signal tint, border | `#FFF7ED`, `#FED7AA` |
+| Gap state | hatch of `#D4D4D8` on `#FAFAFA`, dashed `#A1A1AA` outline, label `#52525B` |
+
+- "Better" is teal with the word; "worse" is orange with the word. No green/red pair. Signal
+  colour never appears without a word or icon.
+- **Type:** Geist 400/500/600 for text; Geist Mono 400/500 with tabular numerals for every
+  figure, code and axis label. Scale 11, 12, 13, 14, 15, 18, 20, 24, 32, 36, 44 px. Both
+  families are self-hosted (the app already ships Geist and Geist Mono).
+- **Shape:** 12-column grid, 16 px gap. Tile radius 20; wells 8 (concentric with tile padding of
+  20–24); controls 8; chips 4–6. One-pixel hairlines. No shadows except one soft level on
+  floating menus.
+- **Motion:** one animation, a slow dash along delivered pipeline edges; off under reduced motion.
+- **Trace control:** one small icon button, the same everywhere, per paragraph, row or figure.
 
 ## Migration
 
