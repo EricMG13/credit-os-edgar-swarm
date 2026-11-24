@@ -1912,12 +1912,17 @@ class HandoffExecutor:
 
     def _last_look(self, task: HandoffTask, call_id: str) -> None:
         """Recheck the module and the shared ledger after reserving and just before dispatch.
-        A refused call releases its hold. A call already authorized settles when it returns."""
+        A refused call releases its hold. A call already authorized settles when it returns.
+        A release that fails is noted on the refusal and never replaces it: the hold stays open,
+        left as a crash leaves one when the module ends (``_run``)."""
         try:
             task.proceed()
             self.budget.check_running()
-        except BaseException:
-            self.budget.release(call_id)
+        except BaseException as refusal:
+            try:
+                self.budget.release(call_id)
+            except Exception as failed:  # noqa: BLE001 -- the refusal is what the module raises
+                refusal.add_note(f"its hold was not released: {type(failed).__name__}: {failed}")
             raise
 
     @staticmethod
@@ -1942,6 +1947,8 @@ class HandoffExecutor:
         )
         call_id = f"call-{uuid4().hex}"
         self._hold(task, call_id, reserved)
+        # Before the event, which says the call is being sent: a refused call leaves none.
+        self._last_look(task, call_id)
         if self.events is not None:
             append_event(
                 self.events,
@@ -1953,7 +1960,6 @@ class HandoffExecutor:
                 held_usd=str(reserved),
                 cap_usd=str(self.budget.cap_usd),
             )
-        self._last_look(task, call_id)
         started = time.time()
         self._last_call = index
         try:

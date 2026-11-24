@@ -572,8 +572,8 @@ def test_an_interrupt_halts_the_modules_in_flight_and_waits_for_their_threads(ca
         while time.monotonic() < deadline:
             try:
                 task.proceed()  # what the executor asks before each paid exchange
-            except ModuleHalted:
-                outcome.append("halted")
+            except ModuleHalted as error:
+                outcome.append(str(error))
                 raise
             time.sleep(0.005)
         outcome.append("went on")
@@ -585,8 +585,48 @@ def test_an_interrupt_halts_the_modules_in_flight_and_waits_for_their_threads(ca
 
     with pytest.raises(KeyboardInterrupt):
         case.run("interrupted", execute, 2, on_handoff=interrupt)
-    assert outcome == ["halted"]  # already there: the launch waited for the thread
+    # already there: the launch waited for the thread. No module failed, and it is not told so.
+    assert outcome == ["cpos_halted: CP-1A: the launch was stopped before its next call"]
     assert not _module_threads()
+
+
+def test_a_halt_names_an_earlier_modules_failure_only_where_there_is_one():
+    """The launch-wide stop (an interrupt, or the end of a launch) halts every module. A module
+    after one that failed or was not accepted is told that; any other is told the launch was
+    stopped."""
+    from deploy_workflow.owners.cpos import _Board
+
+    def halt(board: _Board, module_id: str) -> str:
+        with pytest.raises(ModuleHalted) as raised:
+            board.proceed(module_id)
+        return str(raised.value)
+
+    not_accepted = "cpos_halted: {}: a module before it in the plan was not accepted"
+    stopped = "cpos_halted: {}: the launch was stopped before its next call"
+    ordered = ("CP-0", "CP-1", "CP-1A", "CP-2A")
+    board = _Board(ordered, {})
+    board.stop_after(None)
+    assert [halt(board, m) for m in ordered] == [stopped.format(m) for m in ordered]
+    for fail in (
+        lambda board: board.report("CP-1", RuntimeError("cpos_live_stopped: CP-1")),
+        lambda board: board.stop_after("CP-1"),
+    ):
+        for stop_first in (False, True):
+            board = _Board(ordered, {})
+            if stop_first:
+                board.stop_after(None)
+            fail(board)
+            if not stop_first:
+                board.proceed("CP-0")
+                board.proceed("CP-1")
+                assert halt(board, "CP-1A") == not_accepted.format("CP-1A")
+                board.stop_after(None)
+            assert halt(board, "CP-0") == stopped.format("CP-0")
+            assert halt(board, "CP-1") == stopped.format("CP-1")
+            assert halt(board, "CP-1A") == not_accepted.format("CP-1A")
+            assert halt(board, "CP-2A") == not_accepted.format("CP-2A")
+            with pytest.raises(ModuleHalted, match="CP-2A: a module before it"):
+                board.before("CP-2A")
 
 
 @pytest.mark.parametrize("native_started", [False, True], ids=["before-launch", "during-bootstrap"])
@@ -1521,13 +1561,14 @@ def test_a_stopped_budget_releases_a_reserved_unsent_call(
 
     reserved = threading.Event()
     adapter = Priced(case)
-    append = handoff.append_event
+    look = handoff.HandoffExecutor._last_look
 
-    def delay_at_turn(directory, event, **fields):
-        append(directory, event, **fields)
-        if event == "turn" and fields["module"] == "CP-1":
+    def delay_at_the_look(self, task, call_id):
+        # CP-1 holds its reservation here, before the look that precedes its `turn` event
+        if task.module_id == "CP-1":
             reserved.set()
             _until(lambda: adapter.executor.budget.stop_kind == kind, f"CP-1A's {kind} settlement")
+        look(self, task, call_id)
 
     def hook(_adapter, module, _index, good):
         if module == "CP-1A":
@@ -1538,10 +1579,12 @@ def test_a_stopped_budget_releases_a_reserved_unsent_call(
         return None
 
     adapter.hook = hook
-    monkeypatch.setattr(handoff, "append_event", delay_at_turn)
+    monkeypatch.setattr(handoff.HandoffExecutor, "_last_look", delay_at_the_look)
     name = f"reserved-unsent-{kind}"
     out, executor, error = _priced_run(case, name, 2, hook, kind=lambda *_: adapter)
     assert adapter.calls == [("CP-0", 0), ("CP-1A", 0)]
+    turns = [e["module"] for e in read_events(out / EVENTS) if e["event"] == "turn"]
+    assert turns == ["CP-0", "CP-1A"]  # none for CP-1's call, which was not sent
     assert executor.budget.unsettled == ()
     markers = {marker.status: marker for marker in read_reservation_snapshot(out / "live")}
     assert markers.keys() == {"settled", "released", kind}
@@ -2051,9 +2094,8 @@ def test_a_halted_module_reserves_nothing_and_sends_nothing(tmp_path):
 @pytest.mark.parametrize("ask", [2, 3])
 def test_a_module_halted_while_it_waited_for_the_cap_releases_its_hold_unsent(tmp_path, ask):
     """The executor asks three times for each exchange: before the hold, after it (the reserve
-    may have waited), and immediately before the call is handed to the adapter (the turn event
-    was written since). Halted at the second or the third, the hold is released and nothing is
-    sent."""
+    may have waited), and once more before the turn event, which says the call is being sent.
+    Halted at the second or the third, the hold is released and nothing is sent."""
     asked = []
 
     def halted_second_time() -> None:
@@ -2078,6 +2120,110 @@ def test_a_module_halted_while_it_waited_for_the_cap_releases_its_hold_unsent(tm
     assert (snapshot.spent, snapshot.reserved, snapshot.stop_reason) == (0, 0, None)
     settled = list((tmp_path / "owner-run-audit/reservations").glob("*.settled"))
     assert [json.loads(p.read_text())["status"] for p in settled] == ["released"]
+
+
+class _NeverCalled:
+    config_id = "sol-medium"
+    ruling = None
+
+    def complete(self, request, **_identity):
+        pytest.fail("a refused call was sent")
+
+
+def _turn_events(folder: Path) -> list[dict]:
+    log = folder / EVENTS
+    return [e for e in read_events(log) if e["event"] == "turn"] if log.exists() else []
+
+
+@pytest.mark.parametrize("ask", [2, 3])
+def test_a_call_refused_at_a_last_look_leaves_no_turn_event(tmp_path, ask):
+    """The `turn` event says a call is being sent, with its hold. A module halted at either look
+    after the reserve sends nothing, so it leaves a released hold and no `turn` event."""
+    asked = []
+
+    def halted() -> None:
+        asked.append(1)
+        if len(asked) >= ask:
+            raise ModuleHalted("cpos_halted: CP-1A")
+
+    executor = HandoffExecutor(
+        tmp_path / "live",
+        adapter=_NeverCalled(),
+        cap_usd=Decimal(20),
+        check=lambda task, raw: (),
+        events=tmp_path,
+    )
+    with pytest.raises(ModuleHalted):
+        executor(_task("CP-1A", halted))
+    assert len(asked) == ask
+    assert _turn_events(tmp_path) == []
+    assert (executor.budget.spent, executor.budget.reserved) == (0, 0)
+    settled = list((tmp_path / "live/owner-run-audit/reservations").glob("*.settled"))
+    assert [json.loads(p.read_text())["status"] for p in settled] == ["released"]
+
+
+def test_a_stop_met_at_the_last_look_leaves_no_turn_event(tmp_path):
+    """The same for the shared ledger: another module's unknown charge stops the run after this
+    module reserved. Its call is refused with a plain `RunStopped`, released, and not logged."""
+    executor = HandoffExecutor(
+        tmp_path / "live",
+        adapter=_NeverCalled(),
+        cap_usd=Decimal(20),
+        check=lambda task, raw: (),
+        events=tmp_path,
+    )
+    asked = []
+
+    def peer_stops_the_run() -> None:
+        asked.append(1)
+        if len(asked) == 3:  # after both of `_hold`'s asks: only the final look is left
+            budget = executor.budget  # the ledger this run of the module loaded
+
+            def peer() -> None:
+                budget.reserve("call-peer", Decimal(1), config_id="sol-medium")
+                budget.settle("call-peer", None)
+
+            thread, result = _in_thread(peer)
+            thread.join(WAIT)
+            assert result == [None]
+
+    with pytest.raises(RunStopped, match="has an unknown charge"):
+        executor(_task("CP-1A", peer_stops_the_run))
+    assert len(asked) == 3
+    assert _turn_events(tmp_path) == []
+    assert executor.budget.unsettled == ()
+
+
+def test_a_release_that_fails_does_not_replace_the_refusal(tmp_path, monkeypatch):
+    """The ledger faults after this module reserved (a peer's marker write failed), so its call
+    is refused with `RunStopped`, and the release of its hold cannot be written either. The
+    module still raises that `RunStopped`, the failed release noted on it: CP-OS reads it as a
+    bystander of the stop, not as the run's cause. The hold stays open, as a crash leaves one."""
+    from deploy_workflow.model import budget as ledger
+    from deploy_workflow.owners.cpos import _stopped_by_another
+
+    executor = HandoffExecutor(
+        tmp_path, adapter=_NeverCalled(), cap_usd=Decimal(20), check=lambda task, raw: ()
+    )
+    asked = []
+
+    def unwritable(path: Path, payload: dict[str, object]) -> None:
+        raise OSError("disk full")
+
+    def a_peers_write_fails() -> None:
+        asked.append(1)
+        if len(asked) == 2:  # after the reserve
+            monkeypatch.setattr(ledger, "_write_once", unwritable)
+            with executor.budget._lock:
+                executor.budget._faulted = True
+
+    with pytest.raises(RunStopped, match="a marker write failed") as raised:
+        executor(_task("CP-1A", a_peers_write_fails))
+    assert _stopped_by_another(raised.value)
+    (note,) = raised.value.__notes__
+    assert note == "its hold was not released: OSError: disk full"
+    assert list((tmp_path / "owner-run-audit/reservations").glob("*.settled")) == []
+    assert executor.budget.stop_kind == "faulted"
 
 
 # ---------------------------------------------------------------- the launcher's setting
@@ -2166,6 +2312,66 @@ def _launched(root: Path, width: str | None, monkeypatch) -> dict[str, str]:
             continue
         tree[name] = hashlib.sha256(text).hexdigest()
     return tree
+
+
+@pytest.mark.parametrize(
+    "asked_retained_said",
+    [
+        ("2", False, "Parallel: up to 2 independent modules at once, as asked"),
+        ("3", True, "Parallel: one module at a time, not the 3 asked"),
+        ("1", False, None),
+        ("1", True, None),
+        (None, True, None),
+    ],
+)
+def test_the_launcher_states_the_width_the_run_uses(
+    tmp_path, monkeypatch, capsys, asked_retained_said
+):
+    """The launcher's `Parallel` line, up to the hand-over to the loop (replaced here: nothing
+    runs). A plan with retained handoffs is run one module at a time whatever width is asked
+    (`test_a_plan_with_retained_handoffs_runs_one_at_a_time_whatever_width_is_asked`), and the
+    launcher says that instead of the width asked."""
+    import dataclasses
+
+    from deploy_workflow.owners.cpos import RetainedHandoff
+
+    asked, retained, said = asked_retained_said
+    prepare = cpos_launch.prepare
+
+    def prepared_with_retained(*args, **kwargs):
+        prepared = prepare(*args, **kwargs)
+        pin = RetainedHandoff(
+            path="retained/CP-0.md", sha256="0" * 64, source_hashes={}, upstream={}
+        )
+        plan = prepared.plan.model_copy(update={"retained_handoffs": {"CP-0": pin}})
+        return dataclasses.replace(prepared, plan=plan)
+
+    def not_run(*args, **kwargs):
+        raise RuntimeError("the loop is not part of this test")
+
+    if retained:
+        monkeypatch.setattr(cpos_launch, "prepare", prepared_with_retained)
+    monkeypatch.setattr(cpos_launch, "run_live_handoffs", not_run)
+    monkeypatch.delenv(cpos_launch.PARALLEL_VARIABLE, raising=False)
+    monkeypatch.setenv("COPILOT_GITHUB_TOKEN", DUMMY_KEY)
+    monkeypatch.setenv("COPILOT_CLI_PATH", str(Path(__file__)))
+    context, drop = workspace(tmp_path)
+    argv = [
+        *("--context", str(context), "--sources", str(drop), "--config", CONFIG, "--cap", "25"),
+        *("--out", str(tmp_path / "out"), "--no-library", "--prior", "none"),
+        *("--live", "--ruling", str(RULING)),
+        *(() if asked is None else ("--parallel-modules", asked)),
+    ]
+    assert cpos_launch.main(argv) == 1
+    lines = [line for line in capsys.readouterr().out.splitlines() if line.startswith("Parallel")]
+    if said is None:
+        assert lines == []
+        return
+    (line,) = lines
+    assert line.startswith(said)
+    if retained:
+        assert line.endswith("the plan has retained handoffs")
+        assert "at once" not in line
 
 
 def test_the_synthetic_run_is_the_same_tree_one_at_a_time_and_in_parallel(tmp_path, monkeypatch):
