@@ -120,3 +120,21 @@ it.each([
 ])("still reads an address as a reference: %s", (text) => {
   expect(containsReference(text)).toBe(true);
 });
+
+it.each([
+  "Copied to s3://bucket/run",
+  "Copied to gs://b/a",
+  "Fetched from sftp://h/d",
+  "Fetched from smb://s/x",
+  "Read git+ssh://host/repo",
+  "Read S3://Bucket/Run",
+])("reads an address with any URI scheme as a reference: %s", (text) => {
+  expect(containsReference(text)).toBe(true);
+});
+
+it.each(["Leverage rose to 3:1 by year end.", "Ratio 2:1 // compared with prior"])(
+  "does not read a ratio or a bare double slash as an address: %s",
+  (text) => {
+    expect(containsReference(text)).toBe(false);
+  },
+);

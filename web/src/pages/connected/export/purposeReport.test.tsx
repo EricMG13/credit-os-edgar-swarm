@@ -278,6 +278,7 @@ it.each(["matched", "wrong table", "private basis", "proposal note"])(
     );
     const { container } = open(snapshot, "portfolio-decision");
     expect(screen.getByText("Committee action requires more work.")).toBeInTheDocument();
+    expect(screen.getByText("Portfolio action and size withheld")).toBeInTheDocument();
     if (matched) {
       expect(
         await screen.findByRole("figure", { name: "Portfolio exposure and limits" }),
@@ -289,14 +290,15 @@ it.each(["matched", "wrong table", "private basis", "proposal note"])(
       expect(
         await screen.findByText(
           kind === "wrong table"
-            ? /could not be verified against this run/
-            : /Verified limit headroom .* unavailable/,
+            ? "The portfolio exposure and limits chart is not shown in this report."
+            : "No portfolio limits chart is shown in this report.",
         ),
       ).toBeInTheDocument();
       expect(screen.queryByText("2.37%")).toBeNull();
     }
     expect(container.textContent).not.toContain("2.40");
     expect(container.querySelectorAll("a[href]")).toHaveLength(0);
+    expectNoRetiredSentence(container);
   },
 );
 
@@ -544,6 +546,9 @@ it("keeps typed dated yields with the hold and excludes preferred-at-98 lead pro
     },
   ]);
   expect(projection?.restriction.reason).toBe("The market depth is unavailable.");
+  expect(projection?.restriction.label).toBe("Instrument preference withheld");
+  expect(screen.getByText("Other yield observations are not shown in this report.")).toBeVisible();
+  expectNoRetiredSentence(container);
   expect(container.textContent).not.toMatch(
     /preferred instrument at 98|entry at 98|size at 98|7\.999/i,
   );
@@ -683,6 +688,13 @@ it("shows only the exact archived disposition and typed marks when the owner par
   expect(container.textContent).not.toMatch(
     /preferred (?:instrument )?at 98|text at 98|take the trade/i,
   );
+  expectNoRetiredSentence(container);
+  expect(screen.getByRole("heading", { name: "Instrument preference not shown" })).toBeVisible();
+  expect(container.textContent).not.toMatch(/withheld/i);
+  expect(projection?.restriction).toEqual({
+    label: "Instrument preference not shown",
+    reason: "The entry level and executable yield curve are not shown in this report.",
+  });
 });
 
 it("retains an authored non-USD runway basis and never supplies a default date or scale", () => {
@@ -783,7 +795,7 @@ it("uses the same traced held portfolio facts in Overview and PDF and rejects po
   ]);
   const { container } = open(snapshot, "portfolio-decision");
   expect(screen.getByText("Final Sizing Posture: Requires More Work.")).toBeInTheDocument();
-  expect(screen.getByText("Portfolio action and size withheld")).toBeInTheDocument();
+  expect(screen.getByText("Portfolio action and size not shown")).toBeInTheDocument();
   expect(screen.getByText(/20,253,033.40 USD/)).toBeInTheDocument();
   expect(screen.getByText(/No dated governing cap/)).toBeInTheDocument();
   expect(screen.queryByText("US04010LBK89")).toBeNull();
@@ -805,7 +817,7 @@ it("uses the same traced held portfolio facts in Overview and PDF and rejects po
       body: datedExposure,
     },
   ]);
-  expect(projection?.restriction.label).toBe("Portfolio action and size withheld");
+  expect(projection?.restriction.label).toBe("Portfolio action and size not shown");
 });
 
 it.each([false, true])(
@@ -901,7 +913,7 @@ it("prints availability wording, not a conclusion, when the covenant headroom ta
   add("CP-2D", [context("Findings"), text("Liquidity view", "Reported cash is conditional.")]);
   const { container } = open(snapshot, "covenant-refinancing");
   expect(container.textContent).not.toMatch(/unestablished/i);
-  expect(container.textContent).toContain("Covenant headroom is not shown in this report.");
+  expect(occurrences(container, "No covenant headroom table is shown in this report.")).toBe(1);
 });
 
 it("prints availability wording, not a conclusion, when the recovery output is not found", () => {
@@ -909,10 +921,12 @@ it("prints availability wording, not a conclusion, when the recovery output is n
   add("CP-2A", [context("Findings"), text("Bottom line", "The downside case is described.")]);
   const { container } = open(snapshot, "distressed-restructuring");
   expect(container.textContent).not.toMatch(/unestablished/i);
-  expect(container.textContent).toContain(
-    "The restructuring path and class recovery are not shown in this report.",
-  );
-  expect(container.textContent).toContain("Class recovery is not shown in this report.");
+  expect(
+    occurrences(
+      container,
+      "No restructuring path section or class recovery table is shown in this report.",
+    ),
+  ).toBe(1);
   expect(container.textContent).not.toContain("Historical static stresses");
 });
 
@@ -937,4 +951,258 @@ it("prints the contrary-evidence passage with its own qualification and no deliv
   );
   expect(container.textContent).toContain("Severe case");
   expect(container.textContent).not.toMatch(/Static historical shocks|do not forecast/);
+});
+
+function occurrences(container: HTMLElement, sentence: string) {
+  return container.textContent.split(sentence).length - 1;
+}
+
+const NOT_SHOWN_DECISION =
+  "This decision is not shown in this report because no clearance for it is recorded.";
+const UNAVAILABLE_DECISION = "A published decision is unavailable for this run.";
+
+it("prints a covenant headroom table under its heading whatever its column names, without the not-shown sentence", () => {
+  const { snapshot, add } = publication("covenant_refinancing");
+  add("CP-4", [
+    context("Findings"),
+    text("Bottom line", "Covenant headroom is thin at the next test."),
+    table(
+      "Chart data: covenant headroom",
+      ["Covenant test", "Headroom, x"],
+      [["Leverage", "0.35"]],
+    ),
+  ]);
+  const { container } = open(snapshot, "covenant-refinancing");
+  expect(screen.getByRole("cell", { name: "0.35" })).toBeInTheDocument();
+  expect(screen.getByText("Covenant headroom is thin at the next test.")).toBeInTheDocument();
+  expect(container.textContent).not.toMatch(
+    /headroom (?:table )?is not shown|No covenant headroom/i,
+  );
+  const available = reportExports(snapshot, folder, "live").resolve("covenant-refinancing");
+  if (available.state !== "ready") throw new Error(available.reason);
+  expect(available.document.restrictions).toEqual([]);
+});
+
+it("prints a recovery passage with a sentence that speaks only of the missing recovery table", () => {
+  const { snapshot, add } = publication("distressed_restructuring");
+  add("CP-2A", [context("Findings"), text("Bottom line", "The downside case is described.")]);
+  add("CP-4C", [
+    context("Findings"),
+    text("Bottom line", "Secured lenders recover 62% in the reorganisation case."),
+  ]);
+  const { container } = open(snapshot, "distressed-restructuring");
+  expect(screen.getByText("Secured lenders recover 62% in the reorganisation case.")).toBeVisible();
+  expect(occurrences(container, "No class recovery table is shown in this report.")).toBe(1);
+  expect(container.textContent).not.toMatch(
+    /Class recovery is not shown|restructuring path section/,
+  );
+});
+
+function legacyEarningsPublication() {
+  const { snapshot, run, add } = publication("earnings_update");
+  run.assessmentScope = "unverified";
+  run.methodChanges = ["Earlier methods"];
+  add("CP-1B", [
+    {
+      level: 2,
+      heading: "Request",
+      line: 1,
+      blocks: [
+        {
+          type: "text",
+          line: 2,
+          end: 2,
+          text: "Compare the issuer's first fiscal-quarter results, preserving exact periods: current 1 March 2025 to 31 May 2025 (92 inclusive days), prior 1 March 2024 to 31 May 2024 (92 inclusive days). Both are labelled thirteen weeks by the issuer.",
+        },
+      ],
+    },
+    context("Findings", 4),
+    table(
+      "Financial performance / comparator register",
+      ["Metric", "Prior", "Current", "Absolute change", "Change %", "Definition / source"],
+      [["Revenue", "100.0", "110.0", "10.0", "10.0%", "Reported revenue"]],
+    ),
+    text(
+      "Definition lock and top sheet",
+      "Amounts are USD millions except reported percentages. Periods are as reported.",
+      30,
+    ),
+    text(
+      "Variance mechanics and comparative credit evaluation",
+      "OCF increased to USD 12.0 million (H4 table 3).",
+      40,
+    ),
+    text(
+      "Variance mechanics and comparative credit evaluation",
+      "The cash buffer nevertheless fell: cash was USD 5.0 million.",
+      42,
+    ),
+    text(
+      "Variance mechanics and comparative credit evaluation",
+      "Revenue rose on price (H4 table 4). Recurrence/acceptance belongs in CP-1D, especially the negative Other row and acquisition-related costs.",
+      44,
+    ),
+  ]);
+  return snapshot;
+}
+
+it("prints each module passage and cell with every number and qualification", () => {
+  const distressed = publication("distressed_restructuring");
+  const lead =
+    "Distress is advanced. The financial handoff reports September carrying debt of USD 1,234 thousand and LTM Adjusted EBITDA of USD 567 thousand; the severe static case consumes the remaining cash-generation buffer before earnings cease covering interest.";
+  distressed.add("CP-2A", [context("Findings"), text("Bottom line", lead)]);
+  expect(open(distressed.snapshot, "distressed-restructuring").container.textContent).toContain(
+    lead,
+  );
+  cleanup();
+
+  const covenant = publication("covenant_refinancing");
+  const funding =
+    "Funding need is near. The liquidity handoff's repeated-quarter-deficit illustrations require revolving borrowing to preserve the assumed cash floor, not necessarily external refinancing.";
+  covenant.add("CP-3C", [
+    context("Findings"),
+    text("Funding gap view", funding),
+    table(
+      "Refinancing need by maturity",
+      ["Local facility label", "June principal, USD m", "Inside 18-month horizon"],
+      [["Revolver", "120", "Yes in bound handoff"]],
+    ),
+  ]);
+  const funded = open(covenant.snapshot, "covenant-refinancing").container;
+  expect(funded.textContent).toContain(funding);
+  expect(screen.getByRole("cell", { name: "Yes in bound handoff" })).toBeInTheDocument();
+  cleanup();
+
+  const earnings = open(legacyEarningsPublication(), "earnings-update").container;
+  expect(earnings.textContent).toMatch(
+    /Revenue rose on price\. Recurrence\/acceptance belongs in \S.*, especially the negative Other row and acquisition-related costs\./,
+  );
+  expect(earnings.textContent).not.toMatch(/H4 table/);
+});
+
+const RETIRED_DELIVERY_SENTENCES = [
+  "Nominal maturity yields are model outputs under separate unverified clean and dirty price assumptions",
+  "Modelled yields under separate unverified price assumptions",
+  "A verified instrument preference and entry level are unavailable",
+  "Other observations in this run lack a verifiable market identity, date or yield basis",
+  "A comparable maturity, covenant headroom or accessible-liquidity chart is unavailable",
+  "This handoff provides no comparable results chart",
+  "A comparable chart on matched period lengths is unavailable",
+  "Reported fiscal Q1 year over year",
+  "The observation basis could not be established for this table",
+  "could not be verified against this run's portfolio inputs",
+  "Verified limit headroom and a pre/post exposure comparison are unavailable",
+];
+
+function expectNoRetiredSentence(container: HTMLElement) {
+  for (const sentence of RETIRED_DELIVERY_SENTENCES)
+    expect(container.textContent).not.toContain(sentence);
+}
+
+it("writes only what the report shows or does not show where a chart, basis or row is missing", () => {
+  const legacy = open(legacyEarningsPublication(), "earnings-update").container;
+  expectNoRetiredSentence(legacy);
+  expect(screen.getByText("No results chart is shown in this report.")).toBeInTheDocument();
+  expect(screen.getByRole("cell", { name: "110.0" })).toBeInTheDocument();
+  cleanup();
+
+  const current = publication("earnings_update");
+  current.add("CP-1B", [context("Findings"), text("Bottom line", "Revenue rose.")]);
+  expectNoRetiredSentence(open(current.snapshot, "earnings-update").container);
+  expect(screen.getByText("No results chart is shown in this report.")).toBeInTheDocument();
+  cleanup();
+
+  const covenant = publication("covenant_refinancing");
+  covenant.add("CP-2D", [
+    context("Findings"),
+    text("Liquidity view", "Reported cash is conditional."),
+    table(
+      "Liquidity and cash runway",
+      ["Decision driver", "Evidence-supported base"],
+      [["Reported cash", "45.0"]],
+    ),
+  ]);
+  expectNoRetiredSentence(open(covenant.snapshot, "covenant-refinancing").container);
+  expect(
+    screen.getByText("No maturity, covenant headroom or liquidity chart is shown in this report."),
+  ).toBeInTheDocument();
+  expect(
+    screen.getByText("The observation basis for this table is not shown in this report."),
+  ).toBeInTheDocument();
+});
+
+function currentRelativeValue(reason?: string) {
+  const { snapshot, run, add } = publication("relative_value");
+  const decision = add("CP-3", [
+    context("Findings"),
+    text("Bottom line", "The comparison is published."),
+  ]);
+  if (reason)
+    run.actionTreatment = {
+      "CP-3": {
+        output: decision.id,
+        sha256: decision.sha256,
+        scope: "instrument",
+        state: "withheld",
+        reason,
+      },
+    };
+  const row = (isin: string, maturity: string, value: string, basis: string) => [
+    isin,
+    maturity,
+    value,
+    "Not supplied: no spread",
+    date,
+    "Issuer reported quote",
+    "%",
+    basis,
+  ];
+  add("CP-3D", [
+    context("Findings"),
+    text("Bottom line", "Dated yields are published."),
+    table(
+      "Chart data: yield against maturity",
+      [...YIELD_COLUMNS],
+      [
+        row("US04010LBF94", "2029-03-01", "5.200", "Yield to maturity"),
+        row("US04010LBB80", "2028-06-15", "7.999", "Model yield"),
+      ],
+    ),
+  ]);
+  return { snapshot, run };
+}
+
+const YIELD_COLUMNS = [
+  "Instrument",
+  "Maturity date",
+  "Yield",
+  "Spread",
+  "Quote date",
+  "Source class",
+  "Reporting unit",
+  "Basis and limitation",
+] as const;
+
+it("says a readable instrument decision with no recorded hold is not shown, and an unprintable hold is unavailable", () => {
+  const free = currentRelativeValue();
+  const { container } = open(free.snapshot, "relative-value");
+  expectNoRetiredSentence(container);
+  expect(screen.getByText("Instrument preference not shown")).toBeInTheDocument();
+  expect(screen.getByText(NOT_SHOWN_DECISION)).toBeInTheDocument();
+  expect(screen.getByText("Other yield observations are not shown in this report.")).toBeVisible();
+  expect(container.textContent).not.toMatch(/withheld|Overview|holds/);
+  const ready = reportExports(free.snapshot, folder, "live").resolve("relative-value");
+  if (ready.state !== "ready") throw new Error(ready.reason);
+  expect(ready.document.restrictions).toEqual(["Instrument preference not shown"]);
+  expect(
+    specialistOverview(buildReportView(free.snapshot, folder, free.run), free.run, (t) => t)
+      ?.restriction,
+  ).toEqual({ label: "Instrument preference not shown", reason: NOT_SHOWN_DECISION });
+  cleanup();
+
+  const held = currentRelativeValue("Depth is in annual-report.pdf.");
+  const unprintable = open(held.snapshot, "relative-value").container;
+  expect(screen.getByText("Instrument preference unavailable")).toBeInTheDocument();
+  expect(screen.getByText(UNAVAILABLE_DECISION)).toBeInTheDocument();
+  expect(unprintable.textContent).not.toMatch(/clearance|annual-report/);
 });

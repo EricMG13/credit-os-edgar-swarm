@@ -195,7 +195,7 @@ it("fails closed for absent verification, stale lead or hold, and ambiguous char
   const page = buildIssuerFrontPage(view, stale);
   expect(page?.lead).toBeUndefined();
   expect(page?.actions[0]?.reason).toBe(
-    "This decision is not shown on Overview because its clearance is not recorded; the module holds it.",
+    "This decision is not shown in this report because no clearance for it is recorded.",
   );
   expect(
     buildIssuerFrontPage(
@@ -497,6 +497,13 @@ it("keeps the accepted issuer profile and dated gross debt stack together, with 
   notes.cells[3] = "July 1, 2027; 5.50%; callable";
   expect(noteCells()?.slice(3)).toEqual(["5.50%; callable", "1 Jul 2027"]);
   notes.cells[3] = "November 15, 2027; 5.50%";
+  const total = debt.rows.find(({ cells }) => cells[0]?.startsWith("Total funded debt"));
+  if (!total) throw new Error("Expected the total row");
+  const totalCells = () => buildIssuerFrontPage(view, run)?.capital?.table.rows.at(-1)?.cells;
+  total.cells[3] = "Excludes finance leases";
+  expect(totalCells()).toEqual(["Total funded debt", "", "4,300", "Excludes finance leases", ""]);
+  total.cells[3] = "Calculated";
+  expect(totalCells()).toEqual(["Total funded debt", "", "4,300", "", ""]);
   debt.rows.push({ line: 57, cells: ["Total secured notes", "0", "0", "Subtotal", "Source"] });
   expect(buildIssuerFrontPage(view, run)?.capitalBasis).toBeUndefined();
   debt.rows.pop();
@@ -691,3 +698,87 @@ it.each(["Basis is in issuer.pdf, section 4.", "page:12"])(
     expect(container).not.toHaveTextContent(/issuer\.pdf|page:12/);
   },
 );
+
+const NOT_SHOWN =
+  "This decision is not shown in this report because no clearance for it is recorded.";
+const UNAVAILABLE = "A published decision is unavailable for this run.";
+
+it("calls a readable decision with no recorded hold not shown, on screen and in print, and keeps unavailable otherwise", () => {
+  const { view, run } = inputs();
+  const free = buildIssuerFrontPage(view, { ...run, actionTreatment: {} });
+  if (!free) throw new Error("Expected a front page");
+  expect(free.actions).toEqual([
+    { label: "Committee action and size", status: "not shown", reason: NOT_SHOWN },
+  ]);
+  const { container, unmount } = render(<IssuerFrontPage page={free} print />);
+  expect(screen.getByText(NOT_SHOWN)).toBeVisible();
+  expect(container).not.toHaveTextContent(/Overview|holds|clearance is not recorded/);
+  const compact = container.querySelector<HTMLElement>(".issuer-brief-actions");
+  if (!compact) throw new Error("Expected the compact decision line");
+  expect(compact).toHaveTextContent("Committee action and sizeNot shown");
+  unmount();
+  const onScreen = render(<IssuerFrontPage page={free} />);
+  expect(screen.getByText(NOT_SHOWN)).toBeVisible();
+  expect(onScreen.container).not.toHaveTextContent(/holds|clearance is not recorded/);
+  onScreen.unmount();
+
+  const committee = view.entries[2];
+  if (!committee) throw new Error("Expected the committee output");
+  const decision = committee.sections[1];
+  if (!decision) throw new Error("Expected the committee bottom line");
+  const blockedView = {
+    ...view,
+    entries: view.entries.map((entry) =>
+      entry === committee
+        ? {
+            ...committee,
+            sections: [
+              committee.sections[0],
+              { ...decision, blocks: [paragraph(3, "Not assessable: no mandate inputs.")] },
+            ].filter((item): item is Section => Boolean(item)),
+          }
+        : entry,
+    ),
+  };
+  expect(buildIssuerFrontPage(blockedView, { ...run, actionTreatment: {} })?.actions).toEqual([
+    { label: "Committee action and size", status: "unavailable", reason: UNAVAILABLE },
+  ]);
+  const emptyView = {
+    ...view,
+    entries: view.entries.map((entry) =>
+      entry === committee ? { ...committee, sections: [] } : entry,
+    ),
+  };
+  expect(
+    buildIssuerFrontPage(emptyView, { ...run, actionTreatment: {} })?.actions[0],
+  ).toMatchObject({
+    status: "unavailable",
+    reason: UNAVAILABLE,
+  });
+  const hold = run.actionTreatment?.["CP-6"];
+  if (!hold) throw new Error("Expected the committee hold");
+  const unprintable = {
+    ...run,
+    actionTreatment: { "CP-6": { ...hold, reason: "The hold is set out in committee.pdf." } },
+  };
+  expect(buildIssuerFrontPage(view, unprintable)?.actions).toEqual([
+    { label: "Committee action and size", status: "unavailable", reason: UNAVAILABLE },
+  ]);
+});
+
+it("says in print that the cash and undrawn basis is not shown, and points to Evidence on screen", () => {
+  const { view, run } = inputs();
+  const page = buildIssuerFrontPage(view, run);
+  if (!page) throw new Error("Expected a front page");
+  const owner = { id: "CP-1", module: "CP-1", sha256: SHA };
+  const liquidity = { owner, line: 5, cash: "USD 120m", undrawn: "USD 300m", basis: "page:12" };
+  const { container, unmount } = render(<IssuerFrontPage page={{ ...page, liquidity }} print />);
+  expect(container).toHaveTextContent("Cash USD 120m");
+  expect(
+    screen.getByText("The basis for these amounts is not shown in this report."),
+  ).toBeVisible();
+  expect(container).not.toHaveTextContent(/amounts is available in Evidence|page:12/);
+  unmount();
+  render(<IssuerFrontPage page={{ ...page, liquidity }} />);
+  expect(screen.getByText("The basis for these amounts is available in Evidence.")).toBeVisible();
+});

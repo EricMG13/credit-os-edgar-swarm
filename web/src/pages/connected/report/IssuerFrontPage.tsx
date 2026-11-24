@@ -358,13 +358,15 @@ function ActionRows({
   if (!actions.length) return null;
   return (
     <dl className={compact ? "issuer-brief-actions flex flex-wrap gap-x-3 gap-y-1" : "grid gap-2"}>
-      {actions.map(({ label, reason, owner }) => (
+      {actions.map(({ label, reason, status, owner }) => (
         <div
           key={label}
           className={`${TRACE_HOST} flex flex-wrap items-baseline gap-x-2 gap-y-1 text-sm`}
         >
           <dt className="font-semibold">{label}</dt>
-          <dd className="text-text-secondary">{compact ? "Withheld" : reason}</dd>
+          <dd className="text-text-secondary">
+            {compact ? (status === "withheld" ? "Withheld" : "Not shown") : reason}
+          </dd>
           {owner && (
             <dd>
               <Source context={context} owner={owner} label={label} />
@@ -389,7 +391,7 @@ function Decision({
 }) {
   const lead = compact ? (page.compactLead ?? page.lead) : page.lead;
   const actions = compact
-    ? page.actions.filter(({ status }) => status === "withheld")
+    ? page.actions.filter(({ status }) => status !== "unavailable")
     : page.actions;
   return (
     <section className="issuer-front-page-decision grid gap-3 border-b border-border-hairline pb-4">
@@ -439,7 +441,9 @@ function CashAndRevolver({
   const basis =
     printable && !containsReference(printable)
       ? printable
-      : "The basis for these amounts is available in Evidence.";
+      : context.print
+        ? "The basis for these amounts is not shown in this report."
+        : "The basis for these amounts is available in Evidence.";
   return (
     <div className={`${TRACE_HOST} grid gap-1 border-t border-border-hairline pt-2 text-sm`}>
       <p>

@@ -45,7 +45,8 @@ type Headline = {
   owner: Owner;
   line: number;
 };
-type Action = { label: string; reason: string; status: "withheld" | "unavailable"; owner?: Owner };
+type DecisionStatus = "withheld" | "not shown" | "unavailable";
+type Action = { label: string; reason: string; status: DecisionStatus; owner?: Owner };
 
 export function selectedOutput(view: ReportView, module: string, allowBlocked = false) {
   const matches = view.entries.filter((entry) => entry.selected && entry.output.module === module);
@@ -55,6 +56,39 @@ export function selectedOutput(view: ReportView, module: string, allowBlocked = 
     (!entry.output.parseError && entry.output.state?.declared !== "Blocked" && !blocked(entry))
     ? entry
     : undefined;
+}
+
+export const NOT_SHOWN_DECISION =
+  "This decision is not shown in this report because no clearance for it is recorded.";
+export const UNAVAILABLE_DECISION = "A published decision is unavailable for this run.";
+
+/**
+ * How a CP-3 or CP-6 decision is described: a recorded hold with a printable reason is withheld;
+ * a readable, unblocked, non-empty output with no recorded hold is not shown; any other selected
+ * output (blocked, unparsed, empty, or a hold whose reason cannot be printed) is unavailable.
+ */
+export function decisionTreatment(
+  view: ReportView,
+  run: PublishedRun,
+  code: "CP-3" | "CP-6",
+  scope: "instrument" | "committee",
+  printable: (reason: string) => string,
+): { status: DecisionStatus; reason: string; entry: OutputEntry } | undefined {
+  const entry = selectedOutput(view, code, true);
+  if (!entry) return undefined;
+  const hold = run.actionTreatment?.[code];
+  const recorded =
+    hold?.state === "withheld" &&
+    hold.scope === scope &&
+    hold.output === entry.output.id &&
+    hold.sha256 === entry.output.sha256;
+  const reason = recorded ? printable(hold.reason) : "";
+  if (reason) return { status: "withheld", reason, entry };
+  const readable =
+    selectedOutput(view, code) === entry && entry.sections.some(({ blocks }) => blocks.length);
+  return !recorded && readable
+    ? { status: "not shown", reason: NOT_SHOWN_DECISION, entry }
+    : { status: "unavailable", reason: UNAVAILABLE_DECISION, entry };
 }
 
 function ownerOf({ output: { id, sha256, module } }: OutputEntry): Owner {
@@ -544,7 +578,11 @@ function legacyDebtRow({ line, cells }: Table["rows"][number]) {
       : "";
   const [maturity = "", ...clauses] = terms.split("; ");
   const date = compactDebtDate(maturity);
-  const rate = date ? clauses.join("; ") : name === LEGACY_TOTAL ? "" : terms;
+  const rate = date
+    ? clauses.join("; ")
+    : name === LEGACY_TOTAL && terms === "Calculated"
+      ? ""
+      : terms;
   return [
     {
       line,
@@ -786,46 +824,18 @@ function actions(view: ReportView, run: PublishedRun): Action[] {
     ["CP-6", "committee", "Committee action and size"],
   ] as const;
   return owners.flatMap<Action>(([code, scope, label]) => {
-    const entry = selectedOutput(view, code, true);
-    const hold = run.actionTreatment?.[code];
-    if (
-      entry &&
-      hold?.state === "withheld" &&
-      hold.scope === scope &&
-      hold.output === entry.output.id &&
-      hold.sha256 === entry.output.sha256 &&
-      hold.reason.trim() &&
-      !containsReference(hold.reason)
-    ) {
-      return [
-        {
-          label,
-          reason: readerText(hold.reason),
-          status: "withheld",
-          owner: ownerOf(entry),
-        },
-      ];
+    const treatment = decisionTreatment(view, run, code, scope, (reason) =>
+      reason.trim() && !containsReference(reason) ? readerText(reason) : "",
+    );
+    if (treatment) {
+      const { status, reason, entry } = treatment;
+      return [{ label, status, reason, owner: status === "withheld" ? ownerOf(entry) : undefined }];
     }
-    if (entry)
-      return [
-        {
-          label,
-          status: "unavailable",
-          reason:
-            "This decision is not shown on Overview because its clearance is not recorded; the module holds it.",
-        },
-      ];
     if (
       (code === "CP-3" && run.pathway === "relative_value") ||
       (code === "CP-6" && run.pathway === "portfolio_decision")
     )
-      return [
-        {
-          label,
-          status: "unavailable",
-          reason: "A published decision is unavailable for this run.",
-        },
-      ];
+      return [{ label, status: "unavailable", reason: UNAVAILABLE_DECISION }];
     return [];
   });
 }

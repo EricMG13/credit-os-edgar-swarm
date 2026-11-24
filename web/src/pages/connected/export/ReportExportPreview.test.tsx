@@ -219,10 +219,52 @@ it("does not call a generically unavailable decision an owner-recorded hold", as
     label: "",
   };
   open("#export/credit-snapshot", snapshot);
-  await screen.findByText(/is not shown on Overview because its clearance is not recorded/);
+  await screen.findByText("A published decision is unavailable for this run.");
   const footer = document.documentElement.style.getPropertyValue("--report-export-scope");
   expect(footer).toContain("Committee action and size unavailable");
   expect(footer).not.toContain("Committee action and size withheld");
+  expect(screen.queryByText(/clearance/)).toBeNull();
+});
+
+it("prints a readable decision with no recorded hold as not shown, in the body and the footer", async () => {
+  const snapshot: Snapshot = fixture();
+  const run = snapshot.workspace.runs[folder];
+  if (!run) throw new Error("Expected the fixture run");
+  const id = "committee";
+  const committeeSha = "d".repeat(64);
+  run.modules["CP-6"] = { outputs: [id], default: id };
+  snapshot.workspace.outputs[id] = {
+    id,
+    run: folder,
+    module: "CP-6",
+    sha256: committeeSha,
+    href: "",
+    label: "",
+  };
+  snapshot.workspace.handoffs[committeeSha] = [
+    { heading: "Findings", level: 2, line: 3, blocks: [] },
+    {
+      heading: "Bottom line",
+      level: 3,
+      line: 8,
+      blocks: [{ type: "text", line: 10, end: 10, text: "Add 1.00% NAV." }],
+    },
+  ];
+  open("#export/credit-snapshot", snapshot);
+  const paper = await screen.findByText(
+    "This decision is not shown in this report because no clearance for it is recorded.",
+  );
+  expect(paper.closest(".report-export-paper")).not.toBeNull();
+  await waitFor(() => {
+    expect(document.documentElement.style.getPropertyValue("--report-export-scope")).toContain(
+      "Committee action and size not shown",
+    );
+  });
+  const footer = document.documentElement.style.getPropertyValue("--report-export-scope");
+  expect(footer).not.toMatch(/Committee action and size (?:unavailable|withheld)/);
+  expect(document.querySelector(".report-export-paper")?.textContent).not.toMatch(
+    /Overview|holds|Add 1\.00% NAV/,
+  );
 });
 
 it("keeps an obsolete font completion from unlocking an unsupported route", async () => {

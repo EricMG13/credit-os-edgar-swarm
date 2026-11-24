@@ -13,7 +13,13 @@ import {
   type Table,
 } from "../publishedReport";
 import { PublishedTable } from "../ReportContent";
-import { scopedLead, selectedOutput, type SpecialistOverview } from "../report/frontPage";
+import {
+  decisionTreatment,
+  scopedLead,
+  selectedOutput,
+  UNAVAILABLE_DECISION,
+  type SpecialistOverview,
+} from "../report/frontPage";
 import {
   PortfolioBasisProvider,
   usePortfolioBasis,
@@ -223,7 +229,7 @@ function exhibit(
         },
   );
   const notes = [...(note ? [note] : []), ...released];
-  if (basisMissing) notes.push("The observation basis could not be established for this table.");
+  if (basisMissing) notes.push("The observation basis for this table is not shown in this report.");
   else if (unresolved)
     notes.push("Some observation qualifications are only available in Evidence.");
   return [{ title, table: { ...data, rows }, notes }];
@@ -344,36 +350,28 @@ function legacyEarnings(entry: OutputEntry, safe: SafeText): Purpose | null {
   const definitions = sectionBodies(entry, ["Definition lock and top sheet"], safe).find((body) =>
     body.startsWith("Amounts are USD millions except reported percentages."),
   );
+  const locator = / \(H4 table \d+\)| \(text \d+\)/g;
   const variance = sectionBodies(
     entry,
     ["Variance mechanics and comparative credit evaluation"],
-    (body) => safe(body.replace(/ \(H4 table \d+\)| \(text \d+\)/g, "")),
-  );
+    (body) => safe(body.replace(locator, "")),
+  ).map((body) => body.replace(locator, ""));
   const lead = variance.find((body) => body.startsWith("OCF increased"));
   const challenge = variance.find((body) => body.startsWith("The cash buffer nevertheless fell:"));
   if (!table || !basis?.[1] || !basis[2] || !definitions || !lead || !challenge) return null;
   const note =
-    `USD millions except reported percentages. Prior ${basis[2]}. Current ${basis[1]}. Both are labelled thirteen weeks by the issuer. Reported fiscal Q1 year over year.`.replace(
+    `USD millions except reported percentages. Prior ${basis[2]}. Current ${basis[1]}. Both are labelled thirteen weeks by the issuer.`.replace(
       /\s+/g,
       " ",
     );
   const headers = table.headers.map((name) =>
     name === "Definition / source" ? "Definition" : name,
   );
-  const drivers = variance
-    .filter((body) => body !== lead && body !== challenge)
-    .map((body) =>
-      body
-        .replace(/ \(H4 table \d+\)| \(text \d+\)/g, "")
-        .replace(
-          / Recurrence\/acceptance belongs in CP-1D, especially the negative Other row and acquisition-related costs\.$/,
-          "",
-        ),
-    );
+  const drivers = variance.filter((body) => body !== lead && body !== challenge);
   return {
     title: "Earnings view",
     decision: [lead, challenge],
-    gap: "A comparable chart on matched period lengths is unavailable. The published fiscal-quarter comparisons follow.",
+    gap: "No results chart is shown in this report.",
     exhibits: exhibit({ ...table, headers }, "Prior and current results", safe, note),
     passages: [
       { title: "Variance drivers and guidance", bodies: drivers },
@@ -407,7 +405,7 @@ export function earningsUpdate(
     title: "Earnings view",
     decision: [lead],
     charts,
-    gap: charts.length ? undefined : "This handoff provides no comparable results chart.",
+    gap: charts.length ? undefined : "No results chart is shown in this report.",
     passages: [
       {
         title: "Variance drivers and key findings",
@@ -423,23 +421,6 @@ export function earningsUpdate(
       chartExhibit(entry, heading, heading.replace("Chart data: ", ""), safe),
     ),
   };
-}
-
-function publishedHold(
-  view: ReportView,
-  run: PublishedRun,
-  module: "CP-3" | "CP-6",
-  scope: "instrument" | "committee",
-  safe: SafeText,
-) {
-  const selected = selectedOutput(view, module, true);
-  const hold = run.actionTreatment?.[module];
-  return hold?.state === "withheld" &&
-    hold.scope === scope &&
-    hold.output === selected?.output.id &&
-    hold.sha256 === selected.output.sha256
-    ? safe(hold.reason)
-    : "";
 }
 
 const ARCHIVED_RV_CLEAN =
@@ -466,6 +447,7 @@ function archivedPriceTrigger(entry: OutputEntry) {
 }
 
 function archivedRelativeValue(
+  view: ReportView,
   entry: OutputEntry,
   run: PublishedRun,
   safe: SafeText,
@@ -505,7 +487,7 @@ function archivedRelativeValue(
     )
   )
     return null;
-  const charts = archivedYieldFigures(table, run.asOf, safe);
+  const charts = archivedYieldFigures(table, safe);
   if (!charts.length) return null;
   const findings = [{ ...held, body: held.body.match(ARCHIVED_RV_CLEAN)?.[1] ?? disposition }];
   for (const passage of selection) {
@@ -513,11 +495,14 @@ function archivedRelativeValue(
     if (body && !findings.some(({ line }) => passage.line === line))
       findings.push({ ...passage, body });
   }
-  const title = "Instrument preference withheld";
-  const reason = "The entry level and executable yield curve are not shown in this report.";
+  const treatment = decisionTreatment(view, run, "CP-3", "instrument", safe);
+  const title = `Instrument preference ${treatment?.status ?? "unavailable"}`;
+  const gap = "The entry level and executable yield curve are not shown in this report.";
+  const hold = treatment?.status === "withheld" ? treatment.reason : "";
+  const reason = hold || gap;
   return {
     title,
-    decision: findings.map(({ body }) => body),
+    decision: [...findings.map(({ body }) => body), ...(hold ? [hold] : [])],
     passages: [{ title: "What would change the view", bodies: archivedPriceTrigger(entry) }],
     restrictions: [title],
     overview: {
@@ -526,14 +511,9 @@ function archivedRelativeValue(
       restriction: { label: title, reason },
     },
     charts,
-    gap: reason,
+    gap,
     exhibits: [
-      ...exhibit(
-        table,
-        "Conditional yield observations",
-        safe,
-        `Issuer evaluated marks observed on ${run.asOf}. Nominal maturity yields are model outputs under separate unverified clean and dirty price assumptions.`,
-      ),
+      ...exhibit(table, "Conditional yield observations", safe),
       ...exhibit(
         marks,
         "Issuer evaluated marks and security terms",
@@ -557,7 +537,7 @@ function maturityTicks(values: number[]) {
   ];
 }
 
-function archivedYieldFigures(table: Table, date: string, safe: SafeText) {
+function archivedYieldFigures(table: Table, safe: SafeText) {
   if (!safeTable(table, safe)) return [];
   const points = table.rows.map(
     ({ cells: [instrument = "", maturity = "", basis = "", value = ""] }) => ({
@@ -599,10 +579,6 @@ function archivedYieldFigures(table: Table, date: string, safe: SafeText) {
   return [
     <section key="conditional-maturity" className="grid min-w-0 gap-2">
       <h3 className="font-display text-h4">Conditional yield against maturity</h3>
-      <p>
-        Issuer evaluated marks on {date}. Modelled yields under separate unverified price
-        assumptions.
-      </p>
       <div className="grid min-w-0 gap-5 sm:grid-cols-2">
         {cases.map(({ basis, pair }) => (
           <ScatterPlot
@@ -774,14 +750,15 @@ export function relativeValue(view: ReportView, run: PublishedRun, safe: SafeTex
   const market = selectedOutput(view, "CP-3D");
   const comparison = selectedOutput(view, "CP-3");
   if (!comparison) return null;
-  const legacy = earlierScope(run) && archivedRelativeValue(comparison, run, safe);
+  const legacy = earlierScope(run) && archivedRelativeValue(view, comparison, run, safe);
   if (legacy) return legacy;
   if (!market || !run.asOf) return null;
   const observations = marketObservations(market, run.asOf, safe);
   if (!observations) return null;
-  const hold = publishedHold(view, run, "CP-3", "instrument", safe);
-  const label = hold ? "Instrument preference withheld" : "Instrument preference unavailable";
-  const reason = hold || "A verified instrument preference and entry level are unavailable.";
+  const treatment = decisionTreatment(view, run, "CP-3", "instrument", safe);
+  const status = treatment?.status ?? "unavailable";
+  const label = `Instrument preference ${status}`;
+  const reason = treatment?.reason ?? UNAVAILABLE_DECISION;
   const findings = observations.table.rows
     .slice(0, 2)
     .flatMap(({ line, cells: [instrument, maturity, yieldValue, quoteDate, source, , basis] }) => {
@@ -798,13 +775,13 @@ export function relativeValue(view: ReportView, run: PublishedRun, safe: SafeTex
       return safe(body) ? [locatedPassage(market, line, body)] : [];
     });
   return {
-    title: hold ? label : "Market-implied view",
+    title: status === "withheld" ? label : "Market-implied view",
     decision: [reason],
     restrictions: [label],
     overview: { title: "Dated market observations", findings, restriction: { label, reason } },
     charts: marketYieldChart(market, observations.table),
     gap: observations.omitted
-      ? "Other observations in this run lack a verifiable market identity, date or yield basis."
+      ? "Other yield observations are not shown in this report."
       : undefined,
     exhibits: exhibit(observations.table, "Dated market observations", safe),
   };
@@ -845,26 +822,15 @@ export function covenantRefinancing(
   const refinancing =
     funding &&
     (publishedBottomLine(view, run, funding, safe) ||
-      namedPassage(funding, ["Funding gap view"], safe)[0]?.replace(
-        / The liquidity handoff's repeated-quarter-deficit illustrations require revolving borrowing to preserve the assumed cash floor, not necessarily external refinancing\./,
-        "",
-      ));
+      namedPassage(funding, ["Funding gap view"], safe)[0]);
   const covenant = legal && publishedBottomLine(view, run, legal, safe);
   const lead = opening || refinancing || covenant;
   if (!lead) return null;
-  const headroom = findingTable(legal, "Chart data: covenant headroom", ["Test", "Headroom"]);
   const maturities = findingTable(funding, "Refinancing need by maturity", [
     "Local facility label",
     "June principal, USD m",
     "Inside 18-month horizon",
   ]);
-  const readableMaturities = maturities && {
-    ...maturities,
-    rows: maturities.rows.map((row) => ({
-      ...row,
-      cells: row.cells.map((cell) => cell.replace(/ in bound handoff\b/g, "")),
-    })),
-  };
   const runway = findingTable(cash, "Liquidity and cash runway", [
     "Decision driver",
     "Evidence-supported base",
@@ -879,25 +845,34 @@ export function covenantRefinancing(
   ]);
   const scenarioBasis = precedingTableNote(cash, scenarios);
   const scenarioUnit = /^(Amounts are .+? unless stated otherwise\.)/.exec(runwayBasis ?? "")?.[1];
-  const charts = publishedCharts(
-    view,
-    [
-      ["CP-4", "Chart data: covenant headroom"],
-      ["CP-3C", "Chart data: refinancing need"],
-      ["CP-2D", "Chart data: liquidity bridge"],
-    ],
-    safe,
-  );
+  // The not-shown sentence is decided by the same lookups that draw the headroom chart and table.
+  const headroomHeading = "Chart data: covenant headroom";
+  const headroomChart = ownerChart(legal, headroomHeading, safe);
+  const headroomTable = chartExhibit(legal, headroomHeading, "Covenant headroom", safe);
+  const charts = [
+    ...headroomChart,
+    ...publishedCharts(
+      view,
+      [
+        ["CP-3C", "Chart data: refinancing need"],
+        ["CP-2D", "Chart data: liquidity bridge"],
+      ],
+      safe,
+    ),
+  ];
   return {
     title: "Funding and lender implications",
-    decision: [lead, ...(!headroom ? ["Covenant headroom is not shown in this report."] : [])],
-    restrictions: headroom ? [] : ["Covenant headroom is not shown in this report."],
+    decision: [lead],
+    restrictions:
+      headroomChart.length || headroomTable.length
+        ? []
+        : ["No covenant headroom table is shown in this report."],
     charts,
     gap: charts.length
       ? undefined
-      : "A comparable maturity, covenant headroom or accessible-liquidity chart is unavailable.",
+      : "No maturity, covenant headroom or liquidity chart is shown in this report.",
     exhibits: [
-      ...exhibit(readableMaturities, "Refinancing need by maturity", safe),
+      ...exhibit(maturities, "Refinancing need by maturity", safe),
       ...exhibit(runway, "Liquidity and cash runway", safe, runwayBasis, [], !runwayBasis),
       ...exhibit(
         scenarios,
@@ -907,7 +882,7 @@ export function covenantRefinancing(
         scenarioBasis ? [scenarioBasis] : [],
         !scenarioBasis || !scenarioUnit,
       ),
-      ...chartExhibit(legal, "Chart data: covenant headroom", "Covenant headroom", safe),
+      ...headroomTable,
     ],
     passages: [
       {
@@ -943,10 +918,7 @@ export function distressedRestructuring(
     (publishedBottomLine(view, run, downside, safe) ||
       namedPassage(downside, ["Distress gate"], safe)[0]);
   const path = workout && publishedBottomLine(view, run, workout, safe);
-  const lead = (opening || path)?.replace(
-    / The financial handoff reports September carrying debt of USD [\d,]+ thousand and LTM Adjusted EBITDA of USD [\d,]+ thousand; the severe static case consumes the remaining cash-generation buffer before earnings cease covering interest\./,
-    "",
-  );
+  const lead = opening || path;
   if (!lead) return null;
   const stress = findingTable(downside, "Downside stress", [
     "Scenario and assumption",
@@ -956,33 +928,37 @@ export function distressedRestructuring(
     "Rank / break",
     "EBITDA decline required",
   ]);
-  const recovery = findingTable(workout, "Chart data: recovery by class", []);
-  const charts = publishedCharts(
-    view,
-    [
-      ["CP-4C", "Chart data: recovery by class"],
-      ["CP-4C", "Chart data: value allocation — scenario 1"],
-      ["CP-4C", "Chart data: value allocation — scenario 2"],
-      ["CP-4C", "Chart data: value allocation — scenario 3"],
-      ["CP-2D", "Chart data: liquidity bridge"],
-    ],
-    safe,
-  );
+  // The not-shown sentence is decided by the same lookups that draw the recovery chart and table.
+  const recoveryHeading = "Chart data: recovery by class";
+  const recoveryChart = ownerChart(workout, recoveryHeading, safe);
+  const recoveryTable = chartExhibit(workout, recoveryHeading, "Recovery by class", safe);
+  const charts = [
+    ...recoveryChart,
+    ...publishedCharts(
+      view,
+      [
+        ["CP-4C", "Chart data: value allocation — scenario 1"],
+        ["CP-4C", "Chart data: value allocation — scenario 2"],
+        ["CP-4C", "Chart data: value allocation — scenario 3"],
+        ["CP-2D", "Chart data: liquidity bridge"],
+      ],
+      safe,
+    ),
+  ];
   return {
     title: "Distress assessment",
-    decision: [
-      lead,
-      ...(!workout
-        ? ["The restructuring path and class recovery are not shown in this report."]
-        : []),
-    ],
-    restrictions: recovery ? [] : ["Class recovery is not shown in this report."],
+    decision: [lead],
+    restrictions: !workout
+      ? ["No restructuring path section or class recovery table is shown in this report."]
+      : recoveryChart.length || recoveryTable.length
+        ? []
+        : ["No class recovery table is shown in this report."],
     charts,
     gap: charts.length ? undefined : "A runway or recovery chart is not shown in this report.",
     exhibits: [
       ...exhibit(stress, "Historical downside stress", safe),
       ...exhibit(breaks, "Break points", safe),
-      ...chartExhibit(workout, "Chart data: recovery by class", "Recovery by class", safe),
+      ...recoveryTable,
     ],
     passages: [
       { title: "Restructuring path", bodies: path && path !== lead ? [path] : [] },
@@ -1039,10 +1015,7 @@ function PortfolioExhibit({
       )
     : null;
   if (waiting) return <p role="status">Checking portfolio evidence…</p>;
-  if (!chart)
-    return (
-      <p>Exposure and limit headroom could not be verified against this run's portfolio inputs.</p>
-    );
+  if (!chart) return <p>The portfolio exposure and limits chart is not shown in this report.</p>;
   return (
     <section className="grid min-w-0 gap-2">
       {chart}
@@ -1260,7 +1233,8 @@ export function portfolioDecision(
   const committee = selectedOutput(view, "CP-6");
   if (!committee) return null;
   const archive = earlierScope(run) ? archivedPortfolioDecision(committee, safe) : undefined;
-  const hold = publishedHold(view, run, "CP-6", "committee", safe);
+  const treatment = decisionTreatment(view, run, "CP-6", "committee", safe);
+  const hold = treatment?.status === "withheld" ? treatment.reason : "";
   if (!archive && !hold) return null;
   const position = portfolioExposure(view, safe, archive ? undefined : (run.asOf ?? ""));
   const historicalFinding = archive?.body === PORTFOLIO_DISPOSITION + " " + PORTFOLIO_EXPLANATION;
@@ -1274,8 +1248,8 @@ export function portfolioDecision(
     ...(archive ? [archive] : []),
     ...(position?.observed ? [position.observed] : []),
   ];
-  const label = "Portfolio action and size withheld";
-  const gap = "Verified limit headroom and a pre/post exposure comparison are unavailable.";
+  const label = `Portfolio action and size ${treatment?.status ?? "unavailable"}`;
+  const gap = "No portfolio limits chart is shown in this report.";
   const title = "Portfolio decision and sizing";
   return {
     title,
@@ -1286,7 +1260,7 @@ export function portfolioDecision(
       findings,
       restriction: {
         label,
-        reason: hold || constraint?.body || gap,
+        reason: hold || constraint?.body || (treatment?.reason ?? UNAVAILABLE_DECISION),
         source:
           !hold && constraint ? { owner: constraint.owner, line: constraint.line } : undefined,
       },
