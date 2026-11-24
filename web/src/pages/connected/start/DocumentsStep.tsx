@@ -4,7 +4,12 @@ import { FileUpload } from "@/components/application/file-upload/file-upload-bas
 import { Badge } from "@/components/base/badges/badges";
 import { Button } from "@/components/base/buttons/button";
 import { field, label } from "../layout";
-import { ISSUE_CLASSES, ISSUE_CLASSIFICATION, ISSUER_ID } from "./plain";
+import { StatusBadge } from "@/components/status/StatusBadge";
+import { serviceText } from "../api";
+import { GapNote } from "../report/overview/Tile";
+import { ISSUE_CLASSES, ISSUE_CLASSIFICATION, ISSUER_ID, storedName } from "./plain";
+import type { LimitGroup } from "./limits";
+import { OUTCOME_STATE, moduleNames } from "./limitWords";
 import {
   SOURCE_TYPE_HINT,
   type DocumentRow,
@@ -34,27 +39,42 @@ function documentBadge({
   return { color: "gray", text: copied ? "Copied" : "Selected" } as const;
 }
 
+/** The service's facts about a read file: its description without the kind the chip carries. */
+function factsOf(description: string | undefined, kind: string | undefined) {
+  if (!description || !kind) return description;
+  const words = kind.replaceAll("_", " ");
+  return description === words ? "" : description.replace(`${words} · `, "");
+}
+
 function IntakeDocumentRow({ row, view }: { row: DocumentRow; view: IntakeView }) {
   const { name, stored, file, pendingCopy, copied } = row;
   const repeat = file ? view.repeatedContent.get(file) : undefined;
   const reason = repeat ?? (stored ? view.ignored.get(stored) : undefined);
   const description = stored ? view.inspected.get(stored) : undefined;
+  const record = stored ? view.shownDocs.find((doc) => storedName(doc) === stored) : undefined;
   const badge = documentBadge({ repeat, reason, description, pendingCopy, copied });
+  const facts = reason || factsOf(description, record?.kind);
   return (
-    <li className="flex min-w-0 items-start gap-3 rounded-xl p-3 text-sm ring-1 ring-secondary ring-inset">
+    <li className="flex min-w-0 items-start gap-3 py-3 text-small">
       <File05 aria-hidden="true" className="mt-1 size-5 shrink-0 text-text-tertiary" />
-      <div className="min-w-0 flex-1">
-        <p className="font-medium wrap-anywhere">{name}</p>
-        <Badge size="sm" color={badge.color}>
-          {badge.text}
-        </Badge>
-        {(reason || description) && (
-          <p className="mt-1 wrap-anywhere text-text-secondary">{reason || description}</p>
-        )}
+      <div className="grid min-w-0 flex-1 gap-1">
+        <p className="font-medium wrap-anywhere text-text-primary">{name}</p>
+        <div className="flex flex-wrap items-center gap-2">
+          {record && (
+            <span className="rounded-ds-xs border border-border-hairline px-1.5 py-0.5 text-caption text-text-secondary">
+              {record.kind.replaceAll("_", " ")}
+            </span>
+          )}
+          <Badge size="sm" color={badge.color}>
+            {badge.text}
+          </Badge>
+        </div>
+        {facts && <p className="wrap-anywhere text-text-secondary">{facts}</p>}
       </div>
       <Button
         size="sm"
         color="secondary"
+        className="min-h-11 sm:min-h-8"
         aria-label={`Remove ${name}`}
         isDisabled={view.busy !== undefined}
         onPress={() => {
@@ -64,6 +84,60 @@ function IntakeDocumentRow({ row, view }: { row: DocumentRow; view: IntakeView }
         Remove
       </Button>
     </li>
+  );
+}
+
+function MissingRow({ group }: { group: LimitGroup }) {
+  const fixes = [
+    ...new Set(group.causes.map((cause) => serviceText(cause.fix ?? "")).filter(Boolean)),
+  ];
+  const also = moduleNames(group.consequences);
+  return (
+    <li className="grid gap-1 py-3 text-small">
+      <div className="flex flex-wrap items-center gap-2">
+        <StatusBadge set="Run limits" state={OUTCOME_STATE[group.outcome]} />
+        <span className="font-medium text-text-primary">
+          {moduleNames(group.causes).join(", ")}
+        </span>
+      </div>
+      {group.causes.map((cause) => (
+        <p key={cause.id} className="wrap-anywhere text-text-secondary">
+          {serviceText(cause.reason)}
+        </p>
+      ))}
+      {fixes.map((fix) => (
+        <p key={fix} className="wrap-anywhere text-text-primary">
+          {fix}
+        </p>
+      ))}
+      {also.length > 0 && (
+        <p className="wrap-anywhere text-text-tertiary">Also affects: {also.join(", ")}</p>
+      )}
+    </li>
+  );
+}
+
+function MissingForModules({ missing }: { missing: IntakeView["missing"] }) {
+  return (
+    <div className="grid gap-2 sm:col-span-2">
+      <h3 className="font-semibold">Missing for the modules</h3>
+      {missing === undefined ? (
+        <p className="text-small text-text-secondary">Checked when you review the run.</p>
+      ) : missing.length === 0 ? (
+        <p className="text-small text-text-secondary">Nothing was missing at your last review.</p>
+      ) : (
+        <>
+          <p className="text-small text-text-secondary">
+            At your last review. Review the run again after adding files.
+          </p>
+          <ul aria-label="Missing for the modules" className="divide-y divide-border-hairline">
+            {missing.map((group) => (
+              <MissingRow key={group.key} group={group} />
+            ))}
+          </ul>
+        </>
+      )}
+    </div>
   );
 }
 
@@ -83,6 +157,7 @@ export function DocumentFields({
           hint={`Add ${SOURCE_TYPE_HINT}. Up to 50 MB per file.`}
           isDisabled={view.busy !== undefined}
           onDropFiles={view.addFiles}
+          className="py-10"
         />
         <input
           ref={folderInput}
@@ -121,7 +196,7 @@ export function DocumentFields({
           ) : null}
         </p>
         {view.documentRows.length > 0 ? (
-          <FileUpload.List aria-label="Documents added">
+          <FileUpload.List aria-label="Documents added" className="divide-y divide-border-hairline">
             {view.documentRows.map((row, index) => (
               <IntakeDocumentRow key={`${row.name}-${String(index)}`} row={row} view={view} />
             ))}
@@ -129,7 +204,12 @@ export function DocumentFields({
         ) : (
           <p className="text-sm text-text-secondary">No documents yet.</p>
         )}
+        <GapNote>
+          Which modules each file serves is not reported before review: the service checks the files
+          against each module when you review the run.
+        </GapNote>
       </FileUpload.Root>
+      <MissingForModules missing={view.missing} />
       <div className="grid gap-2 sm:col-span-2">
         <h3 className="font-semibold">Issuer and case date</h3>
         {view.copy && (
