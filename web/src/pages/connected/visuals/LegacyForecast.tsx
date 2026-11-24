@@ -525,6 +525,15 @@ function scopePassages(passages: string[]) {
   );
 }
 
+function basePassages(cashflow: Record<string, unknown>) {
+  return scopePassages(stringsIn(cashflow.notes).filter((note) => note.startsWith("Base case is")));
+}
+
+/** The base-case qualifications `ForecastScope` promotes, as the reader sees them. */
+export function baseQualifications(model: unknown) {
+  return basePassages(record(record(model).cashflow)).map(({ text }) => text);
+}
+
 export function ForecastScope({
   model,
   source,
@@ -535,9 +544,7 @@ export function ForecastScope({
   children?: (shownQualifications: string[]) => ReactNode;
 }) {
   const cashflow = record(record(model).cashflow);
-  const base = scopePassages(
-    stringsIn(cashflow.notes).filter((note) => note.startsWith("Base case is")),
-  );
+  const base = basePassages(cashflow);
   const limits = scopePassages(
     stringsIn(cashflow.limits).filter((limit) =>
       /unreviewed|not analytical review|base period|base interest|not comparable|not modelled|standalone|perimeter|machine input.*zero/i.test(
@@ -561,8 +568,10 @@ export function ForecastScope({
       {base.map(qualification)}
       {children?.(base.map(({ text }) => text))}
       <section className="min-w-0 wrap-anywhere" aria-label="Model scope and basis">
-        <details className="rounded-ds-md border border-border-hairline bg-surface-subtle px-4 py-3">
-          <summary className="cursor-pointer font-semibold">Model scope and basis</summary>
+        <details className="border-t border-border-hairline pt-3">
+          <summary className="cursor-pointer text-small font-medium text-text-primary">
+            Model scope and basis
+          </summary>
           <div className="mt-3 grid gap-3">
             {limits.map(qualification)}
             {!limits.length && !base.length && (

@@ -10,6 +10,9 @@ import { GapNote, Tile, Well } from "./overview/Tile";
 import type { PathWall } from "../visuals/ForecastPath";
 import { PublishedSource } from "./PublishedTrace";
 
+/** A stress cell's leading figure; the cell's qualification in brackets is listed in full below. */
+const leading = (text: string) => text.split(" (")[0] ?? text;
+
 /** The selected case's last liquidity cell in a year at or before the wall. */
 function liquidityBefore(model: unknown, group: string | undefined, year: number) {
   const measure = forecastMeasure(model, /^Accessible liquidity$/u);
@@ -93,6 +96,13 @@ function StressPart({ view, folder }: { view: ReportView; folder: string }) {
   if (!entry || reason) return <GapNote>{reason}</GapNote>;
   const data = downsidePanels(entry);
   if (!data) return <GapNote>{`${name} states no stressed metric that can be drawn.`}</GapNote>;
+  const qualified = data.panels.flatMap((panel) =>
+    panel.cells.flatMap((cell, at) =>
+      cell.value !== null && leading(cell.text) !== cell.text
+        ? [`${data.cases[at]?.name ?? ""}, ${panel.measure}: ${cell.text}.`]
+        : [],
+    ),
+  );
   const gaps = data.panels.flatMap((panel) =>
     panel.cells.flatMap((cell, at) =>
       cell.value === null
@@ -126,13 +136,16 @@ function StressPart({ view, folder }: { view: ReportView; folder: string }) {
               {panel.cells.map((cell, at) => {
                 const scenario = data.cases[at];
                 return (
-                  <li key={scenario?.id ?? at} className="grid gap-0.5">
+                  <li
+                    key={scenario?.id ?? at}
+                    className="grid grid-cols-[minmax(0,7rem)_minmax(0,1fr)] items-center gap-2"
+                  >
                     <span className="text-caption text-text-secondary">{scenario?.name}</span>
                     {cell.value === null ? (
                       <span className="text-caption text-gap-text">Not calculated</span>
                     ) : (
                       <BarCell
-                        text={cell.text}
+                        text={leading(cell.text)}
                         share={most > 0 ? Math.abs(cell.value) / most : null}
                         tone={cell.value < 0 ? "signal" : scenario?.control ? "prior" : "primary"}
                       />
@@ -145,7 +158,7 @@ function StressPart({ view, folder }: { view: ReportView; folder: string }) {
         );
       })}
       <ul className="grid gap-1 text-caption text-text-secondary">
-        {[...data.assumptions, ...gaps].map((note) => (
+        {[...data.assumptions, ...qualified, ...gaps].map((note) => (
           <li key={note}>{note}</li>
         ))}
       </ul>

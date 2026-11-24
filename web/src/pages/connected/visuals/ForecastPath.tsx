@@ -220,9 +220,9 @@ function Limits({ limits, g }: { limits: Limit[]; g: Geometry }) {
             className="stroke-warning-mark"
           />
           <text
-            x={g.right - 4}
+            x={BOX.left + 6}
             y={g.y(limit.value) - 6}
-            textAnchor="end"
+            textAnchor="start"
 
             strokeWidth="3"
             paintOrder="stroke"
@@ -379,7 +379,7 @@ function WallRule({ wall, slots, g }: { wall?: WallYear | null; slots: Slot[]; g
         className="stroke-chart-2"
       />
       <text
-        x={Math.min(x, g.right - 70)}
+        x={Math.max(BOX.left + 70, Math.min(x, g.right - 70))}
         y={BOX.top - 16}
         textAnchor="middle"
         className="fill-chart-2 text-[12px] font-medium"

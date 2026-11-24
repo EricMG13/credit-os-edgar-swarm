@@ -73,7 +73,7 @@ it("keeps the recorded drivers behind a disclosure", () => {
 it("draws a gap when the inputs are unreadable", () => {
   render(<AssumptionsByCase document={null} />);
   expect(
-    screen.getByText("The model could not be matched to a single readable record of its inputs."),
+    screen.getByText("No recorded inputs to tabulate: the inputs record is not matched."),
   ).toBeTruthy();
   expect(screen.queryByRole("table")).toBeNull();
 });

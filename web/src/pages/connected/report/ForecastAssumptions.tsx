@@ -21,7 +21,7 @@ export function AssumptionsByCase({
   if (document === null)
     return (
       <Tile {...tile}>
-        <GapNote>The model could not be matched to a single readable record of its inputs.</GapNote>
+        <GapNote>No recorded inputs to tabulate: the inputs record is not matched.</GapNote>
       </Tile>
     );
   const { years, cases, rows } = driverTable(document);
