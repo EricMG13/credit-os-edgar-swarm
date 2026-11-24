@@ -140,7 +140,7 @@ it("preserves a zero-valued bridge", () => {
 
 it("C4-013 labels Forecast case cards with the report's canonical money unit", () => {
   render(<Forecast view={basisView({ multipleCases: true })} run={run} />);
-  const choices = screen.getByRole("radiogroup", { name: "Forecast case" });
+  const choices = screen.getByRole("list", { name: "Forecast cases" });
   expect(choices).toHaveAccessibleDescription(/US\$m/);
   expect(choices).not.toHaveTextContent("USD millions");
 });

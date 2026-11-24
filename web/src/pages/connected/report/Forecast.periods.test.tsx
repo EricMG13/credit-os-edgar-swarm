@@ -83,9 +83,16 @@ it("draws no comparison of cases that publish no period in common, and says so",
   expect(container.textContent).not.toContain("Not published");
 
   // Each case's own figures stay: its card, and its own columns in the statement.
-  const cards = within(screen.getByRole("radiogroup", { name: "Forecast case" }));
-  const base = cards.getByRole("radio", { name: /^Base case/ }).closest("label");
-  const downside = cards.getByRole("radio", { name: /^Downside case/ }).closest("label");
+  const items = within(screen.getByRole("list", { name: "Forecast cases" })).getAllByRole(
+    "listitem",
+  );
+  const caseItem = (name: string) => {
+    const item = items.find((node) => node.textContent.startsWith(name));
+    if (!item) throw new Error(`No case figure for ${name}`);
+    return item;
+  };
+  const base = caseItem("Base case");
+  const downside = caseItem("Downside case");
   expect(base).toHaveTextContent("11");
   expect(base).toHaveTextContent("FY2027E");
   expect(downside).toHaveTextContent("6");
@@ -93,7 +100,11 @@ it("draws no comparison of cases that publish no period in common, and says so",
   const statement = () => within(screen.getByRole("table", { name: "Cash flow model" }));
   for (const cell of ["100", "101"])
     expect(statement().getByRole("cell", { name: cell })).toBeInTheDocument();
-  fireEvent.click(cards.getByRole("radio", { name: /^Downside case/ }));
+  fireEvent.click(
+    within(screen.getByRole("group", { name: "Case" })).getByRole("button", {
+      name: /^Downside case/,
+    }),
+  );
   for (const cell of ["80", "81"])
     expect(statement().getByRole("cell", { name: cell })).toBeInTheDocument();
   expect(screen.queryByRole("figure", { name: "Cash proxy by scenario" })).toBeNull();

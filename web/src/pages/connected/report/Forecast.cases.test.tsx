@@ -53,6 +53,23 @@ function viewOf(
 
 const CASH_PROXY = "Cash proxy (not issuer free cash flow)";
 
+const caseItems = () =>
+  within(screen.getByRole("list", { name: "Forecast cases" })).getAllByRole("listitem");
+/** The first span of a case figure is the case name. */
+const nameOf = (item: HTMLElement) => item.querySelector("span")?.textContent ?? "";
+const itemShowing = (figure: string) => {
+  const item = caseItems().find((node) => within(node).queryByText(figure));
+  if (!item) throw new Error(`No case figure shows ${figure}`);
+  return item;
+};
+// These models publish no net leverage, so each case's button is named with that notice.
+const selectCase = (name: string) =>
+  fireEvent.click(
+    within(screen.getByRole("group", { name: "Case" })).getByRole("button", {
+      name: `${name}, no leverage path in the model`,
+    }),
+  );
+
 it("shows each same-label case's own columns and marks its own cash proxy row current", () => {
   const view = viewOf(
     ["Base case", "Upside", "Upside case"].flatMap((group) => [
@@ -65,9 +82,10 @@ it("shows each same-label case's own columns and marks its own cash proxy row cu
     },
   );
   render(<Forecast view={view} run={run} />);
-  const cards = within(screen.getByRole("radiogroup", { name: "Forecast case" }));
-  const names = cards.getAllByRole("radio").map((radio) => radio.closest("label")?.textContent);
+  const names = caseItems().map((item) => item.textContent);
   expect(new Set(names).size).toBe(3);
+  const buttons = within(screen.getByRole("group", { name: "Case" })).getAllByRole("button");
+  expect(new Set(buttons.map((button) => button.textContent)).size).toBe(3);
   const comparison = within(screen.getByRole("figure", { name: "Cash proxy by scenario" }));
   fireEvent.click(comparison.getByRole("radio", { name: "Table" }));
 
@@ -75,11 +93,17 @@ it("shows each same-label case's own columns and marks its own cash proxy row cu
     ["22", ["202", "203"], ["304", "305"], "22.00"],
     ["32", ["304", "305"], ["202", "203"], "32.00"],
   ] as const) {
-    const radio = cards
-      .getAllByRole("radio")
-      .find((input) => within(input.closest("label") as HTMLElement).queryByText(figure));
-    if (!radio) throw new Error(`No case card shows ${figure}`);
-    fireEvent.click(radio);
+    const name = nameOf(itemShowing(figure));
+    fireEvent.click(
+      within(screen.getByRole("group", { name: "Case" }))
+        .getAllByRole("button")
+        .filter((button) => button.textContent === name)[0] as HTMLElement,
+    );
+    expect(
+      within(screen.getByRole("group", { name: "Case" }))
+        .getAllByRole("button")
+        .filter((button) => button.getAttribute("aria-pressed") === "true"),
+    ).toHaveLength(1);
     const statement = within(screen.getByRole("table", { name: "Cash flow model" }));
     for (const cell of own) expect(statement.getByRole("cell", { name: cell })).toBeInTheDocument();
     for (const cell of [...peer, "100", "101"])
@@ -108,11 +132,7 @@ it("matches the selected case by raw group where the other grid is drawn as its 
     ),
   );
   render(<Forecast view={view} run={run} />);
-  const card = within(screen.getByRole("radiogroup", { name: "Forecast case" }))
-    .getAllByRole("radio")
-    .find((input) => within(input.closest("label") as HTMLElement).queryByText("22"));
-  if (!card) throw new Error("No case card shows 22");
-  fireEvent.click(card);
+  selectCase(nameOf(itemShowing("22")));
   const statement = within(screen.getByRole("table", { name: "Cash flow model" }));
   for (const cell of ["202", "203"])
     expect(statement.getByRole("cell", { name: cell })).toBeInTheDocument();
@@ -137,9 +157,8 @@ it("draws no period line on a case card that has only its placeholder column", (
     },
   );
   render(<Forecast view={view} run={run} />);
-  const cards = within(screen.getByRole("radiogroup", { name: "Forecast case" }));
-  const base = cards.getByRole("radio", { name: /^Base case/ }).closest("label");
-  const downside = cards.getByRole("radio", { name: /^Downside case/ }).closest("label");
+  const base = caseItems().find((item) => nameOf(item) === "Base case");
+  const downside = caseItems().find((item) => nameOf(item) === "Downside case");
   expect(base).toHaveTextContent("FY2028E");
   expect(downside).toHaveTextContent("n.a.");
   expect(downside).toHaveTextContent(reason);
@@ -157,14 +176,16 @@ it("draws no module code in a case name on the Forecast page", () => {
     { [CASH_PROXY]: ["10", "7", "8"].map(value) },
   );
   const { container } = render(<Forecast view={view} run={run} />);
-  expect(screen.getAllByRole("radio", { name: /^Downside drivers/ })).toHaveLength(2);
+  expect(caseItems().filter((item) => nameOf(item).startsWith("Downside drivers"))).toHaveLength(2);
+  expect(
+    within(screen.getByRole("group", { name: "Case" }))
+      .getAllByRole("button")
+      .filter((button) => button.textContent.startsWith("Downside drivers")),
+  ).toHaveLength(2);
   expect(container.textContent).not.toMatch(/CP-/);
 });
 
-const cardNames = () =>
-  within(screen.getByRole("radiogroup", { name: "Forecast case" }))
-    .getAllByRole("radio")
-    .map((radio) => radio.closest("label")?.querySelector("span")?.textContent ?? "");
+const cardNames = () => caseItems().map(nameOf);
 
 function showComparisonTable() {
   const comparison = within(screen.getByRole("figure", { name: "Cash proxy by scenario" }));
@@ -212,21 +233,12 @@ it("names two same-label cases apart, the same in the cards, statement, comparis
     ),
   );
   render(<Forecast view={view} run={run} />);
-  const cards = within(screen.getByRole("radiogroup", { name: "Forecast case" }));
-  const card = (figure: string) => {
-    const radio = cards
-      .getAllByRole("radio")
-      .find((input) => within(input.closest("label") as HTMLElement).queryByText(figure));
-    if (!radio) throw new Error(`No case card shows ${figure}`);
-    return radio;
-  };
-  const nameOn = (figure: string) =>
-    card(figure).closest("label")?.querySelector("span")?.textContent ?? "";
+  const nameOn = (figure: string) => nameOf(itemShowing(figure));
   const upside = nameOn("22");
   const upsideCase = nameOn("32");
   expect(upside).not.toBe(upsideCase);
 
-  fireEvent.click(card("22"));
+  selectCase(upside);
   const main = within(screen.getByRole("table", { name: "Cash flow model" }));
   expect(main.getByRole("columnheader", { name: upside })).toBeInTheDocument();
   const trend = within(screen.getByRole("figure", { name: "Revenue" }));
@@ -239,7 +251,7 @@ it("names two same-label cases apart, the same in the cards, statement, comparis
       .sort(),
   ).toEqual(["Base case", upside, upsideCase].sort());
 
-  fireEvent.click(card("32"));
+  selectCase(upsideCase);
   const other = within(screen.getByRole("table", { name: "Other forecast cases" }));
   expect(other.getByRole("columnheader", { name: upsideCase })).toBeInTheDocument();
 

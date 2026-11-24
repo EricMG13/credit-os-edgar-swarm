@@ -141,7 +141,7 @@ it("shows the recorded build rejection and keeps its raw table in Evidence", () 
   expect(screen.queryByText("725")).toBeNull();
 });
 
-it("provides local section jumps only for visible Forecast content", () => {
+it("draws the Forecast tiles for a published model in place of section jumps", () => {
   const model = {
     id: "model",
     issuerKey: "issuer",
@@ -187,35 +187,34 @@ it("provides local section jumps only for visible Forecast content", () => {
     models: [model as unknown as View["models"][number]],
   };
   render(<Forecast view={view} run={run} />);
-  const options = within(screen.getByLabelText("Jump to section"));
-  expect(options.getByRole("option", { name: "Cases" })).toHaveValue("forecast-cases");
-  expect(options.getByRole("option", { name: "Cash flow model" })).toHaveValue("forecast-model");
-  expect(options.getByRole("option", { name: "Assumptions" })).toHaveValue("forecast-assumptions");
-  expect(options.getByRole("option", { name: "Run charts" })).toHaveValue("forecast-run-charts");
-
-  const targets = new Map<string, ReturnType<typeof vi.fn>>();
-  for (const id of [
-    "forecast-cases",
-    "forecast-model",
-    "forecast-assumptions",
-    "forecast-run-charts",
-  ]) {
-    const target = document.getElementById(id);
-    if (!target) throw new Error(`Missing Forecast section target: ${id}`);
-    const scrollIntoView = vi.fn();
-    target.scrollIntoView = scrollIntoView;
-    targets.set(id, scrollIntoView);
-  }
-  fireEvent.change(screen.getByLabelText("Jump to section"), {
-    target: { value: "forecast-model" },
-  });
-  expect(document.activeElement).toBe(document.getElementById("forecast-model"));
-  expect(targets.get("forecast-model")).toHaveBeenCalledWith({ block: "start" });
-  expect(screen.getByLabelText("Jump to section")).toHaveValue("");
+  // Tiles replace the section jumps: each part of the page is a named region.
+  expect(screen.queryByRole("navigation", { name: "Forecast sections" })).toBeNull();
+  expect(screen.queryByLabelText("Jump to section")).toBeNull();
+  for (const name of [
+    "Forecast",
+    "Net leverage path",
+    "Forecast grid",
+    "Assumptions by case",
+    "Scope and limits",
+    "Cash proxy by case",
+  ])
+    expect(screen.getByRole("region", { name })).toBeInTheDocument();
+  expect(document.getElementById("forecast-run-charts")).not.toBeNull();
+  // The cases' figures and the model are drawn with their values.
+  const items = within(screen.getByRole("list", { name: "Forecast cases" })).getAllByRole(
+    "listitem",
+  );
+  expect(items.map((item) => item.querySelector("span")?.textContent)).toEqual([
+    "Base case",
+    "Downside case",
+  ]);
+  expect(items[0]).toHaveTextContent("12");
+  expect(items[1]).toHaveTextContent("6");
+  expect(document.getElementById("forecast-model")).not.toBeNull();
   expect(window.location.hash).toBe("");
 });
 
-it("omits section jumps when those Forecast sections are not present", () => {
+it("draws only the header and the run charts when no model was published", () => {
   const view: View = {
     catalogue: undefined,
     lead: undefined,
@@ -223,11 +222,29 @@ it("omits section jumps when those Forecast sections are not present", () => {
     modules: [],
     models: [],
   };
-  render(<Forecast view={view} run={run} />);
+  const { rerender } = render(<Forecast view={view} run={run} />);
+  const header = screen.getByRole("region", { name: "Forecast" });
+  expect(
+    within(header).getByText("No forecast model was published for this run."),
+  ).toBeInTheDocument();
+  for (const name of [
+    "Net leverage path",
+    "Forecast grid",
+    "Assumptions by case",
+    "Scope and limits",
+    "Cash proxy by case",
+  ])
+    expect(screen.queryByRole("region", { name })).toBeNull();
   expect(screen.queryByRole("navigation", { name: "Forecast sections" })).toBeNull();
   expect(screen.queryByLabelText("Jump to section")).toBeNull();
+  expect(screen.queryByRole("list", { name: "Forecast cases" })).toBeNull();
   expect(document.getElementById("forecast-cases")).toBeNull();
   expect(document.getElementById("forecast-model")).toBeNull();
   expect(document.getElementById("forecast-assumptions")).toBeNull();
   expect(document.getElementById("forecast-run-charts")).not.toBeNull();
+  const charts = () =>
+    screen.getByText("Charts from the other modules of this run").closest("details");
+  expect(charts()).not.toHaveAttribute("open");
+  rerender(<Forecast view={view} run={run} section="run-charts" />);
+  expect(charts()).toHaveAttribute("open");
 });

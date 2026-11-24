@@ -25,7 +25,11 @@ function CalculationDownload({ folder, model }: { folder: string; model: string 
     [folder],
   );
   const { value, error } = useResource(load);
-  if (error) return <p className="text-small text-text-secondary">{error}</p>;
+  // Whatever the failure, the reader is told the same thing in words; the detail is not drawn.
+  if (error)
+    return (
+      <p className="text-small text-text-secondary">The calculation file could not be listed.</p>
+    );
   if (!value)
     return (
       <p role="status" className="text-small text-text-secondary">

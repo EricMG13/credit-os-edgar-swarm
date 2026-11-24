@@ -344,16 +344,25 @@ it("places all four recorded cases between the conditional base qualification an
       run={{ folder: "run" } as PublishedRun}
     />,
   );
-  const choices = screen.getByRole("radiogroup", { name: "Forecast case" });
-  expect(within(choices).getAllByRole("radio")).toHaveLength(4);
+  const choices = screen.getByRole("list", { name: "Forecast cases" });
+  expect(within(choices).getAllByRole("listitem")).toHaveLength(4);
+  expect(within(screen.getByRole("group", { name: "Case" })).getAllByRole("button")).toHaveLength(
+    4,
+  );
   expect(screen.getByRole("heading", { name: "Forecast cases" })).toBeInTheDocument();
   expect(screen.queryByText("Two cases")).toBeNull();
   expect(within(choices).getAllByText("Case description not recorded.")).toHaveLength(2);
   const scope = screen.getByRole("region", { name: "Model scope and basis" });
-  const lead = screen.getAllByText("Base case is a conditional illustration.")[0];
-  expect(lead?.parentElement?.nextElementSibling).toContainElement(choices);
+  // The conditional base qualification stands in the scope tile, ahead of the full scope list.
+  const tile = screen.getByRole("region", { name: "Scope and limits" });
+  expect(within(tile).getByText("Base case is a conditional illustration.")).toBeInTheDocument();
+  expect(tile).toContainElement(scope);
+  expect(
+    within(tile)
+      .getByText("Base case is a conditional illustration.")
+      .compareDocumentPosition(scope) & Node.DOCUMENT_POSITION_FOLLOWING,
+  ).toBeTruthy();
   expect(within(choices).queryByText("Base case is a conditional illustration.")).toBeNull();
-  expect(choices.compareDocumentPosition(scope) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   expect(scope.querySelector("details")).not.toHaveAttribute("open");
   expect(
     within(scope).getByText("Base interest and forecast interest are not comparable."),
@@ -702,11 +711,12 @@ it("tells the reader when the cases share no period, instead of drawing blank co
   expect(screen.queryByRole("table", { name: "Scenario comparison" })).toBeNull();
   expect(container.textContent).not.toMatch(/omitted|left out|cannot be compared|Not published/i);
   // Each case keeps its own figure on its card.
-  const cards = within(screen.getByRole("radiogroup", { name: "Forecast case" }));
-  expect(cards.getByRole("radio", { name: /^Base case/ }).closest("label")).toHaveTextContent("10");
-  expect(cards.getByRole("radio", { name: /^Downside case/ }).closest("label")).toHaveTextContent(
-    "5",
+  const items = within(screen.getByRole("list", { name: "Forecast cases" })).getAllByRole(
+    "listitem",
   );
+  const caseItem = (name: string) => items.find((node) => node.textContent.startsWith(name));
+  expect(caseItem("Base case")).toHaveTextContent("10");
+  expect(caseItem("Downside case")).toHaveTextContent("5");
   unmount();
 
   // The standalone comparison draws none either.

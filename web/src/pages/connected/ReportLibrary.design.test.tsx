@@ -420,7 +420,7 @@ const CODED_VIEWS: [string, string][] = [
   ["#overview", "Credit is stable"],
   ["#changes", "Credit is stable"],
   ["#modules", "Cash runway"],
-  ["#forecast", "Forecast assumptions"],
+  ["#forecast", "Assumptions by case"],
   ["#evidence/summary", "Fundamental credit"],
 ];
 

@@ -10,6 +10,16 @@ import { PublishedTraceProvider } from "./PublishedTrace";
 import { forecastTraceContext, RecordedForecastAssumptions } from "./ForecastRecord";
 
 type View = ReturnType<typeof buildReportView>;
+const caseButton = (name: string | RegExp) =>
+  within(screen.getByRole("group", { name: "Case" })).getByRole("button", { name });
+/** The read-only figure of one case: its name is the item's first span. */
+const caseItem = (name: string) => {
+  const item = within(screen.getByRole("list", { name: "Forecast cases" }))
+    .getAllByRole("listitem")
+    .find((node) => node.querySelector("span")?.textContent === name);
+  if (!item) throw new Error(`No case figure for ${name}`);
+  return item;
+};
 const digest = "a".repeat(64);
 const missing = "Not calculable: cash is negative before funding";
 const ledger = "Receivables: the forecast inputs do not name the row and period of this line.";
@@ -375,7 +385,7 @@ it("traces a trend to the actual figure and selected case instead of generic JSO
   const close = drawer.getAllByRole("button", { name: "Close" })[0];
   if (!close) throw new Error("Missing drawer Close control");
   fireEvent.click(close);
-  fireEvent.click(screen.getByRole("radio", { name: /^Downside shock/ }));
+  fireEvent.click(caseButton(/^Downside shock/));
   fireEvent.click(
     within(screen.getByRole("figure", { name: "Revenue" })).getByRole("button", {
       name: /Show sources/,
@@ -405,7 +415,7 @@ it("binds a selected additional scenario row to its own case", () => {
       <Forecast view={view} run={run} />
     </PublishedTraceProvider>,
   );
-  fireEvent.click(screen.getByRole("radio", { name: /^Downside drivers/ }));
+  fireEvent.click(caseButton(/^Downside drivers/));
   fireEvent.click(
     within(screen.getByRole("region", { name: "Cash flow model" })).getByRole("button", {
       name: "Show sources for Revenue",
@@ -477,10 +487,10 @@ it("keeps differently dated partial years out of comparisons while retaining eac
   const periods = within(screen.getByLabelText("Comparison period"));
   expect(periods.getByRole("option", { name: "FY2026E" })).toBeInTheDocument();
   expect(periods.queryByRole("option", { name: "FY2027E" })).toBeNull();
-  const baseCard = screen.getByRole("radio", { name: /^Base case/ }).closest("label");
-  const downsideCard = screen.getByRole("radio", { name: /^Downside shock/ }).closest("label");
-  expect(baseCard?.textContent).toContain("FY2027E · 2026-04-01 to 2027-03-31");
-  expect(downsideCard?.textContent).toContain("FY2027E · 2026-10-01 to 2027-03-31");
+  const baseCard = caseItem("Base case");
+  const downsideCard = caseItem("Downside shock");
+  expect(baseCard.textContent).toContain("FY2027E · 2026-04-01 to 2027-03-31");
+  expect(downsideCard.textContent).toContain("FY2027E · 2026-10-01 to 2027-03-31");
 });
 
 it("shows the retained unavailable downside in the normal forecast case picker", () => {
@@ -506,16 +516,15 @@ it("shows the retained unavailable downside in the normal forecast case picker",
       <Forecast view={view} run={run} />
     </PublishedTraceProvider>,
   );
-  fireEvent.click(screen.getByRole("radio", { name: /^Downside shock/ }));
-  const downsideRadio = screen.getByRole("radio", { name: /^Downside shock/ });
-  const downsideLabel = downsideRadio.closest("label");
-  if (!downsideLabel) throw new Error("Downside card is missing its label");
+  fireEvent.click(caseButton(/^Downside shock/));
+  expect(caseButton(/^Downside shock/)).toHaveAttribute("aria-pressed", "true");
+  const downsideLabel = caseItem("Downside shock");
   expect(downsideLabel.textContent).toContain("No downside scenario was computed.");
   expect(screen.getByRole("table", { name: "Cash flow model" })).toHaveTextContent("n.a.");
   expect(screen.queryByLabelText("Comparison period")).toBeNull();
-  const card = downsideLabel.parentElement;
-  if (!card) throw new Error("Downside card is missing its source action");
-  fireEvent.click(within(card).getByRole("button", { name: "Show sources for Downside shock" }));
+  fireEvent.click(
+    within(downsideLabel).getByRole("button", { name: "Show sources for Downside shock" }),
+  );
   expect(
     within(screen.getByRole("dialog")).getByText(
       /Downside shock · Downside: n\.a\..*No downside scenario was computed\./,
@@ -561,14 +570,13 @@ it("withholds duplicated comparison periods and traces every retained date for t
   const close = trendDrawer.getAllByRole("button", { name: "Close" })[0];
   if (!close) throw new Error("Missing trend drawer close control");
   fireEvent.click(close);
-  const downsideCard = screen.getByRole("radio", { name: /^Downside shock/ }).closest("label");
-  if (!downsideCard) throw new Error("Downside card is missing its label");
+  const downsideCard = caseItem("Downside shock");
   expect(downsideCard.textContent).toContain("n.a.");
   expect(downsideCard.textContent).toContain("More than one published observation uses FY2027E");
   expect(downsideCard.textContent).not.toContain("2026-04-01 to 2027-03-31");
-  const card = downsideCard.parentElement;
-  if (!card) throw new Error("Downside card is missing its source action");
-  const caseTrace = within(card).getByRole("button", { name: "Show sources for Downside shock" });
+  const caseTrace = within(downsideCard).getByRole("button", {
+    name: "Show sources for Downside shock",
+  });
   fireEvent.click(caseTrace);
   const drawer = within(screen.getByRole("dialog"));
   expect(drawer.getByText(/FY2027E \(2026-04-01 to 2027-03-31\)/)).toBeInTheDocument();
@@ -589,9 +597,8 @@ it("sorts forecast labels before choosing the default latest case period", () =>
     if (firstCell && secondCell) row.cells.splice(0, 2, secondCell, firstCell);
   }
   render(<Forecast view={view} run={run} />);
-  const base = screen.getByRole("radio", { name: /^Base case/ });
-  expect(base).toBeChecked();
-  expect(base.closest("label")?.textContent).toContain("FY2027E");
+  expect(caseButton(/^Base case/)).toHaveAttribute("aria-pressed", "true");
+  expect(caseItem("Base case").textContent).toContain("FY2027E");
 });
 
 it.each(["separate grids", "one grid"])(
@@ -627,13 +634,15 @@ it.each(["separate grids", "one grid"])(
         <Forecast view={view} run={run} />
       </PublishedTraceProvider>,
     );
-    const first = screen.getByRole("radio", { name: /^Upside case · Upside6/ });
-    // "Upside case" would only repeat the label, so the card takes its place by raw-group order;
+    const first = caseButton("Upside case · Upside, no leverage path in the model");
+    // "Upside case" would only repeat the label, so the case takes its place by raw-group order;
     // the trace drawer below still identifies the column by its recorded raw group.
-    const second = screen.getByRole("radio", { name: /^Upside case · second case20/ });
-    expect(first.closest("label")?.textContent).toContain("6");
-    expect(second.closest("label")?.textContent).toContain("20");
+    const second = caseButton("Upside case · second case, no leverage path in the model");
+    expect(caseItem("Upside case · Upside").textContent).toContain("6");
+    expect(caseItem("Upside case · second case").textContent).toContain("20");
     fireEvent.click(second);
+    expect(second).toHaveAttribute("aria-pressed", "true");
+    expect(first).toHaveAttribute("aria-pressed", "false");
     fireEvent.click(screen.getByText("Cash flow trends by line item"));
     fireEvent.click(
       within(screen.getByRole("figure", { name: "Revenue" })).getByRole("button", {
@@ -782,10 +791,16 @@ it("ties same-labeled comparison trace values to the recorded period dates", () 
 it("shows recorded drivers and the downside shock with a separate facilities notice", () => {
   const { view } = fixture();
   render(<Forecast view={view} run={run} />);
-  expect(screen.getByText("Forecast assumptions")).toBeInTheDocument();
+  expect(screen.getByRole("region", { name: "Assumptions by case" })).toBeInTheDocument();
+  fireEvent.click(screen.getByText("Recorded drivers, rationale and limitations"));
   expect(screen.getByRole("table", { name: "Recorded forecast drivers" })).toBeInTheDocument();
   expect(screen.getByText("Recorded growth.")).toBeInTheDocument();
-  expect(screen.getByText("20.00%")).toBeInTheDocument();
+  expect(
+    within(screen.getByRole("region", { name: "Assumptions by case table" })).getByText("20.00%"),
+  ).toBeInTheDocument();
+  expect(
+    within(screen.getByRole("region", { name: "Recorded downside shock" })).getByText("20.00%"),
+  ).toBeInTheDocument();
   const facilities = screen.getByRole("region", { name: "Recorded facilities" });
   expect(
     within(facilities).getByText(/No facility-level assumptions were recorded/),
@@ -837,10 +852,10 @@ it("keeps the missing cash-proxy reason on its case card and explains its precis
     reason: missing,
   };
   render(<Forecast view={view} run={run} />);
-  const cases = within(screen.getByRole("radiogroup", { name: "Forecast case" }));
+  const cases = within(screen.getByRole("list", { name: "Forecast cases" }));
   expect(cases.getByText(missing)).toBeInTheDocument();
   expect(cases.getByText("n.a.")).toBeInTheDocument();
-  expect(screen.getByRole("radiogroup", { name: "Forecast case" })).toHaveAccessibleDescription(
+  expect(screen.getByRole("list", { name: "Forecast cases" })).toHaveAccessibleDescription(
     /Cash proxy.*2 decimals/,
   );
   expect(cases.queryByText(/2 decimals/)).toBeNull();
@@ -858,11 +873,11 @@ it("uses stored case names for descriptions and reader names for all column grou
   model.cashflow.notes.push("Upside is the optimistic case recorded by the module.");
   render(<Forecast view={view} run={run} />);
   expect(
-    within(screen.getByRole("radiogroup", { name: "Forecast case" })).getByText(
+    within(screen.getByRole("list", { name: "Forecast cases" })).getByText(
       "Upside is the optimistic case recorded by the module.",
     ),
   ).toBeInTheDocument();
-  fireEvent.click(screen.getByRole("radio", { name: /^Downside shock/ }));
+  fireEvent.click(caseButton(/^Downside shock/));
   expect(
     within(screen.getByRole("region", { name: "Cash flow model" })).getByRole("columnheader", {
       name: "Downside shock",
@@ -889,5 +904,8 @@ it("wraps recorded descriptions, model notes and qualifications at desktop width
   expect(screen.getByRole("region", { name: "Model scope and basis" }).className).toMatch(
     /wrap-anywhere/,
   );
-  expect(screen.getByRole("radiogroup", { name: "Forecast case" }).className).toMatch(/min-w-0/);
+  expect(screen.getByRole("list", { name: "Forecast cases" }).className).toMatch(/min-w-0/);
+  expect(
+    screen.getByRole("list", { name: "Forecast cases" }).closest("section")?.className,
+  ).toMatch(/wrap-anywhere/);
 });
