@@ -2,6 +2,8 @@ import { cx } from "@/utils/cx";
 
 /** One stated figure on a mark: where it sits (`value`) and the module's own text for it. */
 export type Mark = { label: string; value: number; text: string };
+/** One period of a series: a stated figure, or a gap (`value` null) the line breaks at. */
+export type Slot = { label: string; value: number | null; text: string };
 export type MarkTone = "better" | "worse" | "flat" | "none";
 
 const FILL = { worse: "fill-warning-mark", other: "fill-chart-1" } as const;
@@ -11,6 +13,7 @@ const ink = (tone: MarkTone) => (tone === "worse" ? "worse" : "other");
 const TICK = "fill-text-tertiary font-mono text-[11px]";
 const GRID = "stroke-border-hairline";
 const PRIOR_RING = "fill-surface-card stroke-chart-3";
+const GAP_RING = "fill-none stroke-border-gap";
 
 function niceStep(span: number, parts: number) {
   const raw = span > 0 ? span / parts : 1;
@@ -39,26 +42,100 @@ function axis(values: number[], parts: number, suffix: string) {
 const spread = (count: number, from: number, to: number) => (at: number) =>
   count === 1 ? (from + to) / 2 : from + (at * (to - from)) / (count - 1);
 
-/** A slope across the stated periods on a labelled axis: the large tile's mark. */
+const stated = (slots: Slot[]) =>
+  slots.flatMap((slot) => (slot.value === null ? [] : [slot.value]));
+
+/** Each pair of neighbouring periods that both state a figure: the line never crosses a gap. */
+function segments(slots: Slot[]) {
+  return slots.slice(1).flatMap((to, at) => {
+    const from = slots[at];
+    return from?.value != null && to.value !== null
+      ? [{ at, from: from.value, to: to.value, label: to.label }]
+      : [];
+  });
+}
+
+/** Runs of neighbouring stated periods, for a polyline broken at each gap. */
+function runs(slots: Slot[]) {
+  const all: { at: number; value: number }[][] = [[]];
+  slots.forEach((slot, at) => {
+    if (slot.value === null) all.push([]);
+    else all.at(-1)?.push({ at, value: slot.value });
+  });
+  return all.filter((run) => run.length > 1);
+}
+
+/** A drawn line, x1 y1 x2 y2, that a label must keep clear of. */
+type Line = readonly [number, number, number, number];
+type Spot = { x: number; y: number; anchor: "start" | "middle" | "end" };
+type Frame = { left: number; right: number; top: number; bottom: number };
+
+/** A label's box: monospace glyphs 0.6 em wide, cap height above the baseline. */
+function labelBox({ x, y, anchor }: Spot, text: string, size: number): Frame {
+  const width = text.length * size * 0.6;
+  const left = anchor === "middle" ? x - width / 2 : anchor === "end" ? x - width : x;
+  return { left, right: left + width, top: y - size * 0.8, bottom: y + size * 0.2 };
+}
+
+/** Whether a line passes through a box (Liang-Barsky clipping). */
+function crosses([x1, y1, x2, y2]: Line, box: Frame) {
+  const edges = [
+    [x1 - x2, x1 - box.left],
+    [x2 - x1, box.right - x1],
+    [y1 - y2, y1 - box.top],
+    [y2 - y1, box.bottom - y1],
+  ] as const;
+  let [from, to] = [0, 1];
+  for (const [p, q] of edges) {
+    if (p === 0 && q < 0) return false;
+    if (p < 0) from = Math.max(from, q / p);
+    if (p > 0) to = Math.min(to, q / p);
+    if (from > to) return false;
+  }
+  return true;
+}
+
+const inside = (box: Frame, frame: Frame) =>
+  box.left >= frame.left &&
+  box.right <= frame.right &&
+  box.top >= frame.top &&
+  box.bottom <= frame.bottom;
+
+/** The first spot whose label fits the frame and touches no line; the first spot if none does. */
+function clearSpot(
+  spots: [Spot, ...Spot[]],
+  text: string,
+  size: number,
+  lines: Line[],
+  frame: Frame,
+) {
+  const clear = spots.find((spot) => {
+    const box = labelBox(spot, text, size);
+    return inside(box, frame) && !lines.some((line) => crosses(line, box));
+  });
+  return clear ?? spots[0];
+}
+
+/** A slope across the stated periods on a labelled axis, broken at a gap: the large tile's mark. */
 export function Slope({
   marks,
   tone,
   suffix,
   label,
 }: {
-  marks: Mark[];
+  marks: Slot[];
   tone: MarkTone;
   suffix: string;
   label: string;
 }) {
-  const scale = axis(
-    marks.map((mark) => mark.value),
-    3,
-    suffix,
-  );
+  const scale = axis(stated(marks), 3, suffix);
   const x = spread(marks.length, 72, 336);
   const y = (value: number) => scale.place(value, 150, 24);
   const last = marks.length - 1;
+  const lines: Line[] = [
+    ...scale.ticks.map((tick): Line => [40, y(tick), 408, y(tick)]),
+    ...segments(marks).map((step): Line => [x(step.at), y(step.from), x(step.at + 1), y(step.to)]),
+  ];
   return (
     <svg viewBox="0 0 408 180" width="100%" role="img" aria-label={label} className="block">
       {scale.ticks.map((tick) => (
@@ -69,41 +146,97 @@ export function Slope({
           </text>
         </g>
       ))}
-      {marks.slice(1).map((mark, at) => (
+      {segments(marks).map((segment) => (
         <line
-          key={mark.label}
-          x1={x(at)}
-          y1={y(marks[at]?.value ?? mark.value)}
-          x2={x(at + 1)}
-          y2={y(mark.value)}
+          key={segment.label}
+          data-segment=""
+          x1={x(segment.at)}
+          y1={y(segment.from)}
+          x2={x(segment.at + 1)}
+          y2={y(segment.to)}
           strokeWidth="2"
-          className={at + 1 === last ? STROKE[ink(tone)] : "stroke-chart-3"}
+          className={segment.at + 1 === last ? STROKE[ink(tone)] : "stroke-chart-3"}
         />
       ))}
       {marks.map((mark, at) => (
         <g key={mark.label}>
-          {at === last ? (
-            <circle cx={x(at)} cy={y(mark.value)} r="6" className={FILL[ink(tone)]} />
-          ) : (
-            <circle cx={x(at)} cy={y(mark.value)} r="5" strokeWidth="2" className={PRIOR_RING} />
-          )}
-          <text
-            x={x(at)}
-            y={y(mark.value) < 44 ? y(mark.value) + 22 : y(mark.value) - 13}
-            textAnchor="middle"
-            className={cx(
-              "font-mono text-[13px]",
-              at === last ? "fill-text-primary font-medium" : "fill-text-secondary",
-            )}
-          >
-            {mark.text}
-          </text>
+          <SlopePoint mark={mark} cx={x(at)} y={y} latest={at === last} tone={tone} lines={lines} />
           <text x={x(at)} y="174" textAnchor="middle" className="fill-text-tertiary text-[12px]">
             {mark.label}
           </text>
         </g>
       ))}
     </svg>
+  );
+}
+
+const SLOPE_FRAME = { left: 40, right: 408, top: 0, bottom: 162 };
+
+function SlopePoint({
+  mark,
+  cx: at,
+  y,
+  latest,
+  tone,
+  lines,
+}: {
+  mark: Slot;
+  cx: number;
+  y: (value: number) => number;
+  latest: boolean;
+  tone: MarkTone;
+  lines: Line[];
+}) {
+  if (mark.value === null) return <GapDot cx={at} cy={87} r={5} />;
+  const cy = y(mark.value);
+  const spot = clearSpot(
+    [
+      { x: at, y: cy - 13, anchor: "middle" },
+      { x: at, y: cy + 22, anchor: "middle" },
+      { x: at + 11, y: cy + 4, anchor: "start" },
+      { x: at - 11, y: cy + 4, anchor: "end" },
+      { x: at, y: cy - 26, anchor: "middle" },
+      { x: at, y: cy + 35, anchor: "middle" },
+    ],
+    mark.text,
+    13,
+    lines,
+    SLOPE_FRAME,
+  );
+  return (
+    <>
+      {latest ? (
+        <circle cx={at} cy={cy} r="6" className={FILL[ink(tone)]} />
+      ) : (
+        <circle cx={at} cy={cy} r="5" strokeWidth="2" className={PRIOR_RING} />
+      )}
+      <text
+        x={spot.x}
+        y={spot.y}
+        textAnchor={spot.anchor}
+        className={cx(
+          "font-mono text-[13px]",
+          latest ? "fill-text-primary font-medium" : "fill-text-secondary",
+        )}
+      >
+        {mark.text}
+      </text>
+    </>
+  );
+}
+
+/** Where a period the module did not supply sits on a series mark: a dashed ring, no level. */
+function GapDot({ cx: at, cy, r }: { cx: number; cy: number; r: number }) {
+  return (
+    <circle
+      data-gap=""
+      cx={at}
+      cy={cy}
+      r={r}
+      strokeWidth="1.5"
+      strokeDasharray="2 2"
+      className={GAP_RING}
+    />
   );
 }
 
@@ -114,20 +247,23 @@ export function DotStrip({
   suffix,
   label,
 }: {
-  marks: Mark[];
+  marks: Slot[];
   tone: MarkTone;
   suffix: string;
   label: string;
 }) {
-  const scale = axis(
-    marks.map((mark) => mark.value),
-    4,
-    suffix,
-  );
+  const scale = axis(stated(marks), 4, suffix);
   const x = (value: number) => scale.place(value, 100, 396);
   const y = (at: number) => 36 + at * 46;
   const floor = y(marks.length - 1) + 22;
   const last = marks.length - 1;
+  const lines = segments(marks).map((step): Line => [
+    x(step.from),
+    y(step.at),
+    x(step.to),
+    y(step.at + 1),
+  ]);
+  const frame = { left: 96, right: 408, top: 0, bottom: floor };
   return (
     <svg
       viewBox={`0 0 408 ${String(floor + 22)}`}
@@ -144,13 +280,14 @@ export function DotStrip({
           </text>
         </g>
       ))}
-      {marks.slice(1).map((mark, at) => (
+      {segments(marks).map((segment) => (
         <line
-          key={mark.label}
-          x1={x(marks[at]?.value ?? mark.value)}
-          y1={y(at)}
-          x2={x(mark.value)}
-          y2={y(at + 1)}
+          key={segment.label}
+          data-segment=""
+          x1={x(segment.from)}
+          y1={y(segment.at)}
+          x2={x(segment.to)}
+          y2={y(segment.at + 1)}
           strokeWidth="1.5"
           strokeDasharray="3 3"
           className="stroke-chart-3"
@@ -168,39 +305,85 @@ export function DotStrip({
           >
             {mark.label}
           </text>
-          {at === last ? (
-            <circle cx={x(mark.value)} cy={y(at)} r="6" className={FILL[ink(tone)]} />
-          ) : (
-            <circle cx={x(mark.value)} cy={y(at)} r="5" strokeWidth="2" className={PRIOR_RING} />
-          )}
-          <text
-            x={x(mark.value) > 340 ? x(mark.value) - 12 : x(mark.value) + 12}
-            y={y(at) + 4}
-            textAnchor={x(mark.value) > 340 ? "end" : "start"}
-            className={cx(
-              "font-mono text-[12px]",
-              at === last ? "fill-text-primary font-medium" : "fill-text-secondary",
-            )}
-          >
-            {mark.text}
-          </text>
+          <StripPoint
+            mark={mark}
+            x={x}
+            cy={y(at)}
+            latest={at === last}
+            tone={tone}
+            lines={lines}
+            frame={frame}
+          />
         </g>
       ))}
     </svg>
   );
 }
 
-/** A small unlabelled slope: direction and steepness only; the figures sit above it. */
+function StripPoint({
+  mark,
+  x,
+  cy,
+  latest,
+  tone,
+  lines,
+  frame,
+}: {
+  mark: Slot;
+  x: (value: number) => number;
+  cy: number;
+  latest: boolean;
+  tone: MarkTone;
+  lines: Line[];
+  frame: Frame;
+}) {
+  if (mark.value === null) return <GapDot cx={106} cy={cy} r={5} />;
+  const at = x(mark.value);
+  const spot = clearSpot(
+    [
+      { x: at + 12, y: cy + 4, anchor: "start" },
+      { x: at - 12, y: cy + 4, anchor: "end" },
+      { x: at, y: cy - 12, anchor: "middle" },
+      { x: at, y: cy + 20, anchor: "middle" },
+    ],
+    mark.text,
+    12,
+    lines,
+    frame,
+  );
+  return (
+    <>
+      {latest ? (
+        <circle cx={at} cy={cy} r="6" className={FILL[ink(tone)]} />
+      ) : (
+        <circle cx={at} cy={cy} r="5" strokeWidth="2" className={PRIOR_RING} />
+      )}
+      <text
+        x={spot.x}
+        y={spot.y}
+        textAnchor={spot.anchor}
+        className={cx(
+          "font-mono text-[12px]",
+          latest ? "fill-text-primary font-medium" : "fill-text-secondary",
+        )}
+      >
+        {mark.text}
+      </text>
+    </>
+  );
+}
+
+/** A small unlabelled slope, broken at a gap: direction and steepness only; the figures sit above. */
 export function MiniSlope({
   marks,
   tone,
   label,
 }: {
-  marks: Mark[];
+  marks: Slot[];
   tone: MarkTone;
   label: string;
 }) {
-  const values = marks.map((mark) => mark.value);
+  const values = stated(marks);
   const min = Math.min(...values);
   const max = Math.max(...values);
   const x = spread(marks.length, 8, 176);
@@ -209,29 +392,27 @@ export function MiniSlope({
   return (
     <svg viewBox="0 0 184 40" width="100%" role="img" aria-label={label} className="block">
       <line x1="0" x2="184" y1="38" y2="38" className={GRID} />
-      <polyline
-        fill="none"
-        strokeWidth="2"
-        points={marks.map((mark, at) => `${String(x(at))},${String(y(mark.value))}`).join(" ")}
-        className={STROKE[ink(tone)]}
-      />
+      {runs(marks).map((run) => (
+        <polyline
+          key={run[0]?.at}
+          data-segment=""
+          fill="none"
+          strokeWidth="2"
+          points={run.map(({ at, value }) => `${String(x(at))},${String(y(value))}`).join(" ")}
+          className={STROKE[ink(tone)]}
+        />
+      ))}
       {marks.map((mark, at) =>
-        at === last ? (
-          <circle
-            key={mark.label}
-            cx={x(at)}
-            cy={y(mark.value)}
-            r="4"
-            className={FILL[ink(tone)]}
-          />
+        mark.value === null ? (
+          <GapDot key={mark.label} cx={x(at)} cy={20} r={3.5} />
         ) : (
           <circle
             key={mark.label}
             cx={x(at)}
             cy={y(mark.value)}
-            r="3.5"
-            strokeWidth="2"
-            className={PRIOR_RING}
+            r={at === last ? 4 : 3.5}
+            strokeWidth={at === last ? undefined : 2}
+            className={at === last ? FILL[ink(tone)] : PRIOR_RING}
           />
         ),
       )}

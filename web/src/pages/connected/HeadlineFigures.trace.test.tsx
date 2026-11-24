@@ -205,6 +205,7 @@ describe("the headline figures on Overview", () => {
       for (const [name, line] of Object.entries(rows)) {
         const controls = within(tile(name)).getAllByRole("button");
         expect(controls).toHaveLength(1);
+        expect(controls[0]).toHaveAccessibleName(`Show sources for ${name}`);
         fireEvent.click(controls[0] as HTMLElement);
         const drawer = await screen.findByRole("dialog");
         expect(drawer).toHaveTextContent(`Handoff line ${String(line)}`);
@@ -225,7 +226,8 @@ describe("the headline figures on Overview", () => {
       expect(gap).toHaveTextContent("n.a.");
       expect(gap).toHaveTextContent("FY2024: the measure is not stated");
       expect(gap).not.toHaveTextContent(/\$0m|\b0\b/);
-      fireEvent.click(within(gap).getByRole("button"));
+      const control = within(gap).getByRole("button", { name: "Show sources for Adjusted EBITDA" });
+      fireEvent.click(control);
       expect(await screen.findByRole("dialog")).toHaveTextContent("Handoff line 55");
     },
   );
@@ -238,13 +240,20 @@ describe("the headline figures on Overview", () => {
       const net = tile("Net debt / EBITDA");
       expect(net).toHaveTextContent("FY2024 / 2024-09-30");
       expect(net).toHaveTextContent("from 3.00x in FY2023 / 2023-09-30");
-      fireEvent.click(within(net).getByRole("button"));
+      fireEvent.click(
+        within(net).getByRole("button", { name: "Show sources for Net debt / EBITDA" }),
+      );
       expect(await screen.findByRole("dialog")).toHaveTextContent("Handoff line 25");
       fireEvent.click(screen.getAllByRole("button", { name: "Close" })[0] as HTMLElement);
       await waitFor(() => {
         expect(screen.queryByRole("dialog")).toBeNull();
       });
-      expect(tile("Adjusted EBITDA")).toHaveTextContent("FY2024: the measure is not stated");
+      const gap = tile("Adjusted EBITDA");
+      expect(gap).toHaveTextContent("FY2024: the measure is not stated");
+      fireEvent.click(
+        within(gap).getByRole("button", { name: "Show sources for Adjusted EBITDA" }),
+      );
+      expect(await screen.findByRole("dialog")).toHaveTextContent("Handoff line 55");
     },
   );
 
@@ -254,23 +263,40 @@ describe("the headline figures on Overview", () => {
     expect(gap).toHaveTextContent("n.a.");
     expect(gap).toHaveTextContent("FY2024: not shown here, the cell is not one figure");
     expect(gap).not.toHaveTextContent(/not supplied/i);
-    fireEvent.click(within(gap).getByRole("button"));
+    fireEvent.click(within(gap).getByRole("button", { name: "Show sources for Adjusted EBITDA" }));
     expect(await screen.findByRole("dialog")).toHaveTextContent("Handoff line 55");
   });
+
+  it(
+    "draw a neutral gap, with no control, where the chart cannot give a latest row",
+    READER,
+    async () => {
+      await opened({ periods: ["Q3 FY2023", "Q3 FY2024"], omit: ["net_leverage", "leverage"] });
+      for (const name of ["Net debt / EBITDA", "Total debt / EBITDA"]) {
+        const gap = tile(name);
+        expect(gap).toHaveTextContent("n.a.");
+        expect(gap).toHaveTextContent(NOT_SHOWN);
+        expect(gap).not.toHaveTextContent("Not supplied");
+        expect(within(gap).queryByRole("button")).toBeNull();
+      }
+    },
+  );
 
   it(
     "read the figures from the module's own chart table, whatever the catalogue could quote",
     READER,
     async () => {
-      await opened({ periods: ["Q3 FY2023", "Q3 FY2024"], omit: ["net_leverage", "leverage"] });
+      await opened({ omit: ["net_leverage", "leverage"] });
       for (const [name, figure] of [
         ["Net debt / EBITDA", "2.25x"],
         ["Total debt / EBITDA", "2.80x"],
       ] as const) {
         const shown = tile(name);
         expect(within(shown).getByText(figure, { selector: "span" })).toBeVisible();
-        expect(shown).toHaveTextContent("Q3 FY2024");
-        expect(within(shown).getAllByRole("button")).toHaveLength(1);
+        expect(shown).toHaveTextContent("FY2024");
+        expect(
+          within(shown).getByRole("button", { name: `Show sources for ${name}` }),
+        ).toBeVisible();
       }
     },
   );
@@ -286,7 +312,9 @@ describe("the headline figures on Overview", () => {
       const gap = tile("Adjusted EBITDA");
       expect(gap).toHaveTextContent("FY2024: not supplied");
       expect(gap).not.toHaveTextContent(/northbridge-filing|CP-1|GAP-12|0123456789abcdef/);
-      fireEvent.click(within(gap).getByRole("button"));
+      fireEvent.click(
+        within(gap).getByRole("button", { name: "Show sources for Adjusted EBITDA" }),
+      );
       expect(await screen.findByRole("dialog")).toHaveTextContent("Handoff line 55");
     },
   );

@@ -1,5 +1,6 @@
 import { cleanup, render, screen, within } from "@testing-library/react";
-import { afterEach, expect, it } from "vitest";
+import { afterEach, expect, it, vi } from "vitest";
+import { evidencePath, type OutputEntry } from "../../publishedReport";
 import { StressRow } from "./StressRow";
 import { entry, rowProps, section, table } from "./rows.fixture";
 
@@ -202,7 +203,7 @@ it("joins only neighbouring forecast periods that both have a figure", () => {
   const [first, last] = [...tile.querySelectorAll("[data-point]")];
   const base = 130;
   expect((base - x(first ?? null, "cy")) / (base - x(last ?? null, "cy"))).toBeCloseTo(2, 6);
-  expect(within(tile).getByText("by FY2027E")).toBeVisible();
+  expect(within(tile).getByText("Base case, by FY2027E")).toBeVisible();
   expect(within(tile).getByText("FY2026E: the inputs do not state this period.")).toBeVisible();
   expect(within(tile).getByText("Net leverage (net debt / Adj EBITDA)")).toBeVisible();
 });
@@ -213,4 +214,198 @@ it("says why when the run has no covenant module, downside module or forecast mo
   expect(screen.getByText("Downside did not run in this run.")).toBeVisible();
   expect(screen.getByText("No forecast model was published for this run.")).toBeVisible();
   expect(screen.queryByRole("img")).toBeNull();
+});
+
+const HEADS = [
+  "Test",
+  "Threshold",
+  "Current",
+  "Headroom",
+  "Direction",
+  "Reporting unit",
+  "Basis and limitation",
+];
+
+function covenantsOf(rows: string[][]) {
+  return entry(
+    "CP-4",
+    [
+      {
+        title: "Covenant headroom",
+        table: 43,
+        kind: "bullet",
+        direction: 4,
+        label: [0],
+        threshold: 1,
+        current: 2,
+        headroom: 3,
+        unit: "",
+      },
+    ],
+    [section("Chart data: covenant headroom", 42, table(43, HEADS, rows))],
+  );
+}
+
+const headroomTile = () => screen.getByRole("region", { name: "Covenant headroom" });
+
+it("draws a negative stated value as a figure, and keeps the module's own word for a gap", () => {
+  render(
+    <StressRow
+      {...rowProps([
+        covenantsOf([
+          ["Net leverage", "5.0", "4.2", "0.8x", "Passes at or below", "x", ""],
+          ["Minimum EBITDA", "-50", "-20", "30", "Passes at or above", "US$m", ""],
+          ["Fixed charge", "1.1", "Not calculated: covenant suspended", "", "", "x", ""],
+        ]),
+      ])}
+    />,
+  );
+  const [ebitda, charge] = within(headroomTile()).getAllByRole("listitem");
+  expect(ebitda).toHaveTextContent("-US$20m / -US$50m");
+  expect(ebitda).not.toHaveTextContent("Not supplied");
+  expect(ebitda?.querySelector(".bg-chart-1")).not.toBeNull();
+  expect(charge).toHaveTextContent("Not calculated");
+  expect(charge).toHaveTextContent("covenant suspended");
+  expect(charge).not.toHaveTextContent("Not supplied");
+});
+
+it("places a negative lead test and its threshold on one scale that holds zero", () => {
+  render(
+    <StressRow
+      {...rowProps([
+        covenantsOf([["Minimum EBITDA", "-50", "-20", "30", "Passes at or above", "US$m", ""]]),
+      ])}
+    />,
+  );
+  const tile = headroomTile();
+  const bar = tile.querySelector("[data-current]");
+  const zero = x(bar, "x") + x(bar, "width");
+  const threshold = x(tile.querySelector("[data-threshold]"), "x1");
+  expect(x(bar, "width") / (zero - threshold)).toBeCloseTo(20 / 50, 6);
+  expect(
+    within(tile).getByText("-US$20m against a threshold of -US$50m. Passes at or above."),
+  ).toBeVisible();
+});
+
+it("prints the test label as written and draws each test reason through the reader rule", () => {
+  const covenants = covenantsOf([
+    ["Net Leverage (CFR)", "5.0", "4.2", "0.8x", "Passes at or below", "x", ""],
+    ["Liquidity", "100", "Not supplied: facility agreement page 45", "", "", "US$m", ""],
+    ["Cover", "2.0", "Not supplied: CP-1C did not reconcile it", "", "", "x", ""],
+    ["Cover", "2.0", "2.5", "0.5x", "", "x", ""],
+  ]);
+  const errors = vi.spyOn(console, "error").mockImplementation(() => undefined);
+  render(<StressRow {...rowProps([covenants])} />);
+  const tile = headroomTile();
+  expect(within(tile).getByText("headroom, Net Leverage (CFR)")).toBeVisible();
+  expect(tile).not.toHaveTextContent(/page 45|CP-1C/);
+  expect(within(tile).getByText("Peer benchmark did not reconcile it")).toBeVisible();
+  expect(within(tile).getByRole("link", { name: "Read the reason in Evidence" })).toHaveAttribute(
+    "href",
+    evidencePath("run", covenants, 46),
+  );
+  expect(errors.mock.calls.flat().join(" ")).not.toMatch(/same key/);
+  errors.mockRestore();
+});
+
+function downsideWith(rows: string[][]) {
+  const [scenarios] = downside.sections;
+  return entry(
+    "CP-2A",
+    [],
+    [
+      scenarios as OutputEntry["sections"][number],
+      section(
+        "T2DS.4 Stressed flows and metrics",
+        105,
+        table(106, ["Metric", "s00", "s01", "s02", "Source"], rows),
+      ),
+    ],
+  );
+}
+
+it("prints a stress cell whole and draws its gap reasons through the reader rule", () => {
+  const stressed = downsideWith([
+    ["All-in cover (x)", "3.10", "2.00", "Not calculated: CP-1C did not reconcile it", "Filing"],
+    [
+      "Net leverage (x)",
+      "4.0",
+      "5.1 (covenant breached)",
+      "Not calculated: notes_2024.pdf page 88",
+      "Filing",
+    ],
+  ]);
+  render(<StressRow {...rowProps([stressed])} />);
+  const tile = screen.getByRole("region", { name: "Downside scenarios" });
+  expect(within(tile).getByText("5.1 (covenant breached)")).toBeInTheDocument();
+  expect(within(tile).getByRole("img").getAttribute("aria-label")).toContain(
+    "Net leverage (x) 5.1 (covenant breached)",
+  );
+  expect(tile).not.toHaveTextContent(/notes_2024|page 88|CP-1C/);
+  expect(
+    within(tile).getByText(
+      "Cost and rate shock, All-in cover (x): Peer benchmark did not reconcile it.",
+    ),
+  ).toBeVisible();
+  expect(within(tile).getByRole("link", { name: "Read the reason in Evidence" })).toHaveAttribute(
+    "href",
+    evidencePath("run", stressed, 109),
+  );
+});
+
+it("makes the downside figure a focusable scroll region only when it scrolls", () => {
+  render(<StressRow {...rowProps([downside])} />);
+  expect(screen.queryByRole("region", { name: /scrolls sideways/ })).toBeNull();
+  const tile = screen.getByRole("region", { name: "Downside scenarios" });
+  const frame = within(tile).getByRole("img").parentElement;
+  expect(frame).not.toHaveAttribute("tabindex");
+  expect(frame).not.toHaveAttribute("role");
+  cleanup();
+  const Original = globalThis.ResizeObserver;
+  globalThis.ResizeObserver = class Narrow extends Original {
+    constructor(callback: ResizeObserverCallback) {
+      super((entries, observer) => {
+        callback(
+          entries.map((item) => ({ ...item, contentRect: { ...item.contentRect, width: 320 } })),
+          observer,
+        );
+      });
+    }
+  };
+  try {
+    render(<StressRow {...rowProps([downside])} />);
+    expect(screen.getByRole("region", { name: /scrolls sideways/ })).toHaveAttribute(
+      "tabindex",
+      "0",
+    );
+  } finally {
+    globalThis.ResizeObserver = Original;
+  }
+});
+
+it("names the base case in the headline and draws model reasons through the reader rule", () => {
+  const coded = structuredClone(model);
+  const [row] = coded.cashflow.rows;
+  if (row?.cells[2]) row.cells[2].reason = "CP-2G could not roll forward";
+  coded.cashflow.limits = ["Not reviewed by CP-1C.\nBasis: model notes"];
+  render(<StressRow {...rowProps([], [coded])} />);
+  const tile = screen.getByRole("region", { name: "Forward path" });
+  expect(within(tile).getByText("Base case, by FY2027E")).toBeVisible();
+  expect(
+    within(tile).getByText("FY2026E: Forward credit model could not roll forward."),
+  ).toBeVisible();
+  expect(within(tile).getByText("Not reviewed by Peer benchmark.")).toBeVisible();
+  expect(tile).not.toHaveTextContent(/CP-2G|CP-1C|model notes/);
+});
+
+it("draws no headline figure when the model marks no case as the base case", () => {
+  const unmarked = structuredClone(model);
+  for (const column of unmarked.cashflow.columns) {
+    if (column.group === "Base case") column.group = "Management case";
+  }
+  render(<StressRow {...rowProps([], [unmarked])} />);
+  const tile = screen.getByRole("region", { name: "Forward path" });
+  expect(within(tile).queryByText(/by FY2027E/)).toBeNull();
+  expect(within(tile).getByText("The model marks no case as the base case.")).toBeVisible();
+  expect(within(tile).getByText("Management case")).toBeVisible();
 });

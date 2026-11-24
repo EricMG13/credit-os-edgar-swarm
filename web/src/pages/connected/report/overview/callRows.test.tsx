@@ -8,6 +8,10 @@ import { JudgementRow } from "./JudgementRow";
 
 afterEach(cleanup);
 
+/** A line by its whole text, where part of it (the change) sits in its own no-wrap span. */
+const wholeLine = (content: string) => (_: string, element: Element | null) =>
+  element?.tagName === "P" && element.textContent === content;
+
 let line = 0;
 const text = (heading: string, ...paragraphs: string[]): Section => ({
   heading,
@@ -196,7 +200,7 @@ it("draws the headline figures from the foundation's chart tables, each with its
   render(<FigureRow snapshot={snapshot} run={run} view={view([cp1])} />);
   const gross = screen.getByRole("region", { name: "Total debt / EBITDA" });
   expect(within(gross).getByText("2.80x", { selector: "span" })).toBeVisible();
-  expect(within(gross).getByText("from 3.75x in FY2023 (-0.95x)")).toBeVisible();
+  expect(within(gross).getByText(wholeLine("from 3.75x in FY2023 (-0.95x)"))).toBeVisible();
   expect(within(gross).getByText("Better")).toBeVisible();
   expect(
     within(gross).getByRole("img", {
@@ -244,7 +248,10 @@ it("draws a missing chart table as that tile's gap and keeps the others", () => 
   cp1.sections = cp1.sections.filter(({ heading }) => heading !== "Chart data: interest cover");
   render(<FigureRow snapshot={snapshot} run={run} view={view([cp1])} />);
   const cover = screen.getByRole("region", { name: "Interest cover" });
-  expect(within(cover).getByText("Not supplied in this run's financial foundation.")).toBeVisible();
+  expect(
+    within(cover).getByText("The financial foundation has no 'interest cover' chart table."),
+  ).toBeVisible();
+  expect(cover).not.toHaveTextContent(/Not supplied/);
   expect(screen.getByRole("region", { name: "Total debt / EBITDA" })).toBeVisible();
 });
 
@@ -264,11 +271,10 @@ it("numbers the lead's findings in its own words and links a paragraph that cite
   });
   expect(counter).toHaveClass("bg-info-fill");
   expect(within(counter).getByText("Cash generation improved.")).toBeVisible();
-  const change = screen.getByRole("region", { name: "What would change the view" });
-  expect(change).not.toHaveClass("bg-info-fill");
+  expect(screen.queryByRole("region", { name: "What would change the view" })).toBeNull();
   expect(
-    within(change).getByText(
-      "The two outcomes, resolved favourably and resolved adversely, are not typed in this run; the module's passage is quoted above as written.",
+    within(counter).getByText(
+      "The two outcomes, resolved favourably and resolved adversely, are not typed in this run.",
     ),
   ).toBeVisible();
 });
@@ -308,9 +314,9 @@ it("keeps the counter passage whole under its own heading, one trace per paragra
     within(counter).getByText("A refinancing of the 2028 notes would soften the view."),
   ).toBeVisible();
   expect(within(counter).getAllByRole("link", { name: /^Source for / })).toHaveLength(3);
-  const outcomes = screen.getByRole("region", { name: "What would change the view" });
-  expect(within(outcomes).queryByText(/Liquidity is thin|refinancing/)).toBeNull();
-  expect(within(outcomes).getByText(/are not typed in this run/)).toBeVisible();
+  expect(screen.queryByRole("region", { name: "What would change the view" })).toBeNull();
+  expect(within(counter).getAllByText(/Liquidity is thin/)).toHaveLength(1);
+  expect(within(counter).getByText(/are not typed in this run/)).toBeVisible();
 });
 
 it("names the modules that were not delivered in the run facts, by name and state", () => {

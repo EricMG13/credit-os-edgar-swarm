@@ -1,4 +1,4 @@
-import { blocked, containsReference, readerText, type OutputEntry } from "../../publishedReport";
+import { blocked, type OutputEntry } from "../../publishedReport";
 import type { ReportView } from "../../reportView";
 import {
   cellAmount,
@@ -8,6 +8,7 @@ import {
   word,
   type SourceTable,
 } from "../../visuals/visualData";
+import { readerReason } from "./reason";
 
 type Descriptor = Record<string, unknown>;
 
@@ -33,9 +34,7 @@ function blockedReason(entry: OutputEntry) {
     .find((section) => section.heading === "Bottom line")
     ?.blocks.find((block) => block.type === "text");
   const text = first?.type === "text" ? first.text : "";
-  return text && !containsReference(text)
-    ? readerText(text)
-    : "Not assessable; the reason is recorded in Evidence.";
+  return readerReason(text) ?? "Not assessable; the reason is recorded in Evidence.";
 }
 
 /** The module entry a tile reads, or the gap that takes its place. */
@@ -98,10 +97,7 @@ export function readCell(text: string, scope: readonly string[], unit: string): 
 export function basisNotes(table: SourceTable) {
   const column = table.headers.findIndex((header) => /^Basis and limitation$/i.test(header));
   if (column < 0) return [];
-  const notes = table.rows
-    .map((row) => row[column] ?? "")
-    .filter((note) => note.trim() && !containsReference(note))
-    .map(readerText);
+  const notes = table.rows.flatMap((row) => readerReason(row[column] ?? "") ?? []);
   return [...new Set(notes)];
 }
 
