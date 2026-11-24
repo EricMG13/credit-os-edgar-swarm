@@ -27,18 +27,27 @@ function published(folder: string, asOf: string | null, extra = {}): PublishedRu
   } as unknown as PublishedRun;
 }
 
+/** A run the server sends only as a summary (react_frontend/sources.py `scoped`): no modules. */
+function summary(folder: string, asOf: string | null, earlierFormat = false): PublishedRun {
+  const record = published(folder, asOf, {
+    history: { modules: ["CP-6"], earlierFormat, earlierMethods: false },
+  }) as unknown as Record<string, unknown>;
+  delete record.modules;
+  return record as unknown as PublishedRun;
+}
+
+/** As the server scopes it: the opened run and its validated prior in full, every other run a summary. */
 function setup() {
+  const prior = { run: "old", as_of: "2025-03-31", pathway: "full" };
   const runs: Record<string, PublishedRun> = {
     oldKey: published("old", "2025-03-31"),
-    midKey: published("mid", "2025-09-30", { modules: {} }),
-    earlyKey: published("early", "2024-03-31", {
-      modules: undefined,
-      history: { modules: ["CP-6"], earlierFormat: true, earlierMethods: false },
+    midKey: summary("mid", "2025-09-30"),
+    earlyKey: summary("early", "2024-03-31", true),
+    newKey: published("new", "2026-03-31", {
+      changes: { pack: { prior, current: { as_of: "2026-03-31", pathway: "full" } } },
     }),
-    newKey: published("new", "2026-03-31"),
-    otherKey: { ...published("other", "2026-06-30"), issuerKey: "beta" },
+    otherKey: { ...summary("other", "2026-06-30"), issuerKey: "beta" },
   };
-  delete (runs.earlyKey as unknown as Record<string, unknown>).modules;
   const output = (folder: string, sha256: string) => ({
     id: `${folder}/cp6`,
     run: `${folder}Key`,
@@ -89,12 +98,36 @@ it("lists this issuer's runs newest first with the as-of date and the heading", 
   ]);
 });
 
-it("reads each run's stance from its own decision and states none otherwise", () => {
+it("reads the stance of each run the page holds, and sends the reader to the run for the others", () => {
   const items = rows();
   expect(within(row(items, 0)).getByText("Watchlist")).toBeTruthy();
-  expect(within(row(items, 1)).getByText("Stance not stated")).toBeTruthy();
+  expect(within(row(items, 1)).getByText("Open the run to see its stance")).toBeTruthy();
   expect(within(row(items, 2)).getByText("Requires More Work")).toBeTruthy();
-  expect(within(row(items, 3)).getByText("Stance not stated")).toBeTruthy();
+  expect(within(row(items, 3)).getByText("Open the run to see its stance")).toBeTruthy();
+  expect(screen.queryByText("Stance not stated")).toBeNull();
+});
+
+it("says a stance is not stated only for a run it holds in full whose committee states none", () => {
+  const { snapshot, runs } = setup();
+  const bare = published("new", "2026-03-31", { modules: {} });
+  runs.newKey = bare;
+  render(<RunHistory snapshot={snapshot} run={bare} issuer="Acme" />);
+  const items = within(screen.getByRole("list", { name: "Runs, newest first" })).getAllByRole(
+    "listitem",
+  );
+  expect(within(row(items, 0)).getByText("Stance not stated")).toBeTruthy();
+});
+
+it("claims no order between runs of the same as-of date", () => {
+  const { snapshot, runs } = setup();
+  runs.twinKey = summary("twin", "2025-09-30");
+  render(<RunHistory snapshot={snapshot} run={runs.newKey as PublishedRun} issuer="Acme" />);
+  const items = within(screen.getByRole("list", { name: "Runs, newest first" })).getAllByRole(
+    "listitem",
+  );
+  const same = items.filter((item) => within(item).queryByText("Same as-of date"));
+  expect(same).toHaveLength(2);
+  expect(same.every((item) => item.textContent.includes("2025-09-30"))).toBe(true);
 });
 
 it("marks only the current run", () => {
@@ -108,7 +141,7 @@ it("shows pathway, finished state, labels, modules run and the two links", () =>
   expect(within(row(items, 0)).getByText("full")).toBeTruthy();
   expect(within(row(items, 0)).getByText(/Finished/)).toBeTruthy();
   expect(within(row(items, 0)).getByText(/1 module run: /)).toBeTruthy();
-  expect(within(row(items, 1)).getByText("0 modules run")).toBeTruthy();
+  expect(within(row(items, 1)).getByText(/1 module run: /)).toBeTruthy();
   expect(within(row(items, 3)).getByText("Earlier format")).toBeTruthy();
   const overview = within(row(items, 2)).getByRole("link", { name: "Open overview" });
   const changes = within(row(items, 2)).getByRole("link", { name: "What changed" });
@@ -123,7 +156,7 @@ it("says who started each run is not published", () => {
 
 it("leaves out runs of another issuer and says when the date is missing", () => {
   const { snapshot, runs } = setup();
-  runs.midKey = published("mid", null, { modules: {} });
+  runs.midKey = summary("mid", null);
   snapshot.workspace.runs = runs;
   render(<RunHistory snapshot={snapshot} run={runs.newKey as PublishedRun} issuer="Acme" />);
   expect(screen.getAllByRole("listitem")).toHaveLength(4);

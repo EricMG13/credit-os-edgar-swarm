@@ -45,14 +45,18 @@ function modulesRun(details: Details) {
 
 const chip = "flex min-h-6 items-center rounded-ds-xs border px-2 text-caption font-medium";
 
-/** The run's stance in the Overview's own chip; a quiet chip when the run states none. */
-function Stance({ stance }: { stance: string | undefined }) {
-  if (stance === undefined)
-    return (
-      <span className={`${chip} border-border-container text-text-secondary`}>
-        Stance not stated
-      </span>
-    );
+const QUIET = `${chip} border-border-container font-normal text-text-secondary`;
+
+/**
+ * The page holds a run's handoffs only for the opened run and its compared earlier run; every
+ * other run arrives as a summary with no modules, whose stance the page cannot know.
+ */
+const held = (record: PublishedRun) => !record.history && Object.hasOwn(record, "modules");
+
+/** The run's stance in the Overview's own chip; what is not stated, or not held here, says so. */
+function Stance({ record, stance }: { record: PublishedRun; stance: string | undefined }) {
+  if (!held(record)) return <span className={QUIET}>Open the run to see its stance</span>;
+  if (stance === undefined) return <span className={QUIET}>Stance not stated</span>;
   return <StanceChip stance={stance} />;
 }
 
@@ -72,12 +76,15 @@ function RunRow({
   record,
   stance,
   current,
+  tie,
   catalogue,
   details,
 }: {
   record: PublishedRun;
   stance: string | undefined;
   current: boolean;
+  /** Another run has the same as-of date: their order is not known. */
+  tie: boolean;
   catalogue: CatalogueRun | undefined;
   details: Details;
 }) {
@@ -91,7 +98,8 @@ function RunRow({
         ) : (
           <span className="text-h4 text-gap-text">As-of date not recorded</span>
         )}
-        <Stance stance={stance} />
+        <Stance record={record} stance={stance} />
+        {tie && <span className={QUIET}>Same as-of date</span>}
         {current && (
           <span className={`${chip} border-action-subtle-hover bg-surface-selected text-text-link`}>
             This run
@@ -148,6 +156,9 @@ export function RunHistory({
         (b.asOf ?? "").localeCompare(a.asOf ?? "") || b.folder.localeCompare(a.folder),
     );
   const byFolder = new Map(snapshot.catalogue.real.map((item) => [item.id, item]));
+  const dates = new Map<string, number>();
+  for (const [, record] of records)
+    if (record.asOf) dates.set(record.asOf, (dates.get(record.asOf) ?? 0) + 1);
   return (
     <section
       aria-labelledby="history-title"
@@ -169,6 +180,7 @@ export function RunHistory({
             record={record}
             stance={runStance(snapshot, key, record)}
             current={record === run}
+            tie={Boolean(record.asOf) && (dates.get(record.asOf ?? "") ?? 0) > 1}
             catalogue={byFolder.get(record.folder)}
             details={runDetails(snapshot, key, record)}
           />
