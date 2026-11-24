@@ -3,14 +3,13 @@ import { AssumptionFields } from "./AssumptionFields";
 import { ASSUMPTIONS_TITLE } from "./assumptions";
 import { RowEditor } from "./RowEditor";
 import { ModuleOptionsFields } from "./ModuleOptionsFields";
-import { CONTEXT_ROW_KINDS, ROW_SPECS } from "./rows";
+import { ROW_SPECS, type RowKind } from "./rows";
 import { MODULE_OPTIONS_TITLE, VALUATION_TITLE } from "./valuation";
 import { ValuationFields } from "./ValuationFields";
 import { field, label } from "../layout";
 import {
   ANY_FOCUS,
   ATTACHMENTS,
-  CONTEXT_DETAILS,
   EFFORTS,
   ISSUER_DETAILS,
   ISSUER_LIST_BOXES,
@@ -25,13 +24,42 @@ import {
 } from "./plain";
 import type { IntakeView } from "./intake";
 import { problemAttrs, FieldMessage, SelectField } from "./fields";
+import type { ReactNode } from "react";
+
+/** The row editors of the research group, and of the ratings, quotes and facilities group. */
+const RESEARCH_ROWS = ["research_questions"] as const;
+const DEAL_ROWS = ["ratings", "quotes", "deal_terms"] as const;
+
+/** A short titled group of controls: a quiet bordered block spanning both columns. */
+function Group({ title, children }: { title: string; children: ReactNode }) {
+  return (
+    <fieldset className="min-w-0 rounded-ds-md border border-border-hairline bg-surface-card p-3 sm:col-span-2">
+      <legend className="px-1">
+        <h3 className="text-small font-medium text-text-primary">{title}</h3>
+      </legend>
+      <div className="grid gap-4 sm:grid-cols-2">{children}</div>
+    </fieldset>
+  );
+}
 
 export function ContextFields({ view }: { view: IntakeView }) {
   return (
     <>
-      <ContextInputFields view={view} />
+      <Group title="For the research">
+        <AnalystNoteField view={view} />
+        <RowEditors view={view} kinds={RESEARCH_ROWS} />
+      </Group>
+      <Group title="Dates and periods">
+        <DateFields view={view} />
+      </Group>
+      <Group title="Legal documents">
+        <LegalFields view={view} />
+      </Group>
+      <FileRoleGroup view={view} />
+      <Group title="Ratings, quotes and facilities">
+        <RowEditors view={view} kinds={DEAL_ROWS} />
+      </Group>
       <IssuerDetailsFields view={view} />
-      <StructuredContextFields view={view} />
       <ValuationSection view={view} />
       <AssumptionsSection view={view} />
       <AdvancedOptionsFields view={view} />
@@ -77,29 +105,34 @@ function PeriodField({
   );
 }
 
-function ContextInputFields({ view }: { view: IntakeView }) {
+function AnalystNoteField({ view }: { view: IntakeView }) {
+  return (
+    <div className="grid gap-1 sm:col-span-2">
+      <label className={label}>
+        Anything the analysis should know
+        <textarea
+          aria-describedby="run-analyst-questions"
+          {...problemAttrs(view.problem, "analyst_note")}
+          className={field}
+          rows={3}
+          placeholder="For example, the committee wants a view on the 2028 maturities."
+          value={view.analystNote}
+          onChange={(event) => {
+            view.changeAnalystNote(event.target.value);
+          }}
+        />
+      </label>
+      <FieldMessage problem={view.problem} field="analyst_note" />
+      <p id="run-analyst-questions" className="text-sm text-text-tertiary">
+        Your note is included in the run’s research questions.
+      </p>
+    </div>
+  );
+}
+
+function DateFields({ view }: { view: IntakeView }) {
   return (
     <>
-      <div className="grid gap-1 sm:col-span-2">
-        <label className={label}>
-          Anything the analysis should know
-          <textarea
-            aria-describedby="run-analyst-questions"
-            {...problemAttrs(view.problem, "analyst_note")}
-            className={field}
-            rows={3}
-            placeholder="For example, the committee wants a view on the 2028 maturities."
-            value={view.analystNote}
-            onChange={(event) => {
-              view.changeAnalystNote(event.target.value);
-            }}
-          />
-        </label>
-        <FieldMessage problem={view.problem} field="analyst_note" />
-        <p id="run-analyst-questions" className="text-sm text-text-tertiary">
-          Your note is included in the run’s research questions.
-        </p>
-      </div>
       <label className={label}>
         Date of your newest file
         <input
@@ -134,6 +167,13 @@ function ContextInputFields({ view }: { view: IntakeView }) {
         placeholder="q3-2026"
       />
       <PeriodField view={view} field="prior_period" title="Prior period" placeholder="q2-2026" />
+    </>
+  );
+}
+
+function LegalFields({ view }: { view: IntakeView }) {
+  return (
+    <>
       <SelectField
         title={LEGAL_DOCUMENTS}
         value={view.legal}
@@ -154,7 +194,24 @@ function ContextInputFields({ view }: { view: IntakeView }) {
           }}
         />
       )}
-      {(view.earnings || view.level === "advanced") && (
+    </>
+  );
+}
+
+/** Files with a role; the whole group is left out when none of its controls is drawn. */
+function FileRoleGroup({ view }: { view: IntakeView }) {
+  const bridge = view.earnings || view.level === "advanced";
+  const keys = (["portfolio_workbook", "prior_case"] as const).filter(
+    (key) =>
+      view.level === "advanced" ||
+      view.run.pathway === "portfolio_decision" ||
+      (key === "portfolio_workbook" &&
+        ["credit_snapshot", "deep_credit_assessment"].includes(view.run.pathway)),
+  );
+  if (!bridge && !keys.length) return null;
+  return (
+    <Group title="Files with a role">
+      {bridge && (
         <SelectField
           title={ATTACHMENTS.management_bridge}
           value={view.attachments.management_bridge ?? ""}
@@ -164,26 +221,18 @@ function ContextInputFields({ view }: { view: IntakeView }) {
           }}
         />
       )}
-      {(["portfolio_workbook", "prior_case"] as const)
-        .filter(
-          (key) =>
-            view.level === "advanced" ||
-            view.run.pathway === "portfolio_decision" ||
-            (key === "portfolio_workbook" &&
-              ["credit_snapshot", "deep_credit_assessment"].includes(view.run.pathway)),
-        )
-        .map((key) => (
-          <SelectField
-            key={key}
-            title={ATTACHMENTS[key]}
-            value={view.attachments[key] ?? ""}
-            choices={view.fileChoices}
-            onChange={(value) => {
-              view.changeAttachment(key, value);
-            }}
-          />
-        ))}
-    </>
+      {keys.map((key) => (
+        <SelectField
+          key={key}
+          title={ATTACHMENTS[key]}
+          value={view.attachments[key] ?? ""}
+          choices={view.fileChoices}
+          onChange={(value) => {
+            view.changeAttachment(key, value);
+          }}
+        />
+      ))}
+    </Group>
   );
 }
 
@@ -252,15 +301,14 @@ function IssuerDetailsFields({ view }: { view: IntakeView }) {
   );
 }
 
-function StructuredContextFields({ view }: { view: IntakeView }) {
+function RowEditors({ view, kinds }: { view: IntakeView; kinds: readonly RowKind[] }) {
   const focusChoices = [
     ["", ANY_FOCUS] as const,
     ...drawnModules(pathwayModules(view.run.pathway)).map((id) => [id, moduleName(id)] as const),
   ];
   return (
     <div className="grid gap-4 sm:col-span-2">
-      <h3 className="font-semibold">{CONTEXT_DETAILS}</h3>
-      {CONTEXT_ROW_KINDS.map((kind) => (
+      {kinds.map((kind) => (
         <section key={kind} aria-labelledby={`rows-${kind}`} className="grid gap-2">
           <h4 id={`rows-${kind}`} className="text-sm font-semibold">
             {ROW_SPECS[kind].section}
