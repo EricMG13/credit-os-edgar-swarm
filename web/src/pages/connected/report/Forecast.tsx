@@ -338,10 +338,12 @@ function forecastSections(
 function ForecastTrendsSection({
   model,
   selectedCase,
+  selectedRawGroup,
   source,
 }: {
   model: Model;
   selectedCase?: string;
+  selectedRawGroup?: string;
   source?: ForecastSource;
 }) {
   const cashflow = record(model.cashflow);
@@ -355,7 +357,8 @@ function ForecastTrendsSection({
     ...new Set([...grid.columns, ...(other?.columns ?? [])].map(({ group }) => group)),
   ];
   const names = forecastCaseNames(rawGroups, downsideNote);
-  const selectedGroup = rawGroups.find((group) => names.get(group) === selectedCase);
+  const selectedGroup =
+    selectedRawGroup ?? rawGroups.find((group) => names.get(group) === selectedCase);
   const forecasts = other?.columns.some(({ group }) => group === selectedGroup) ? other : grid;
   return (
     <details className="mt-4 border-y border-border-hairline bg-surface-card px-4 py-3">
@@ -377,6 +380,7 @@ function ForecastTrendsSection({
 function ForecastContent({
   model,
   selectedCase,
+  selectedRawGroup,
   source,
   handoff,
   href,
@@ -386,6 +390,7 @@ function ForecastContent({
 }: {
   model?: Model;
   selectedCase?: string;
+  selectedRawGroup?: string;
   source: ForecastSource | undefined;
   handoff: OutputEntry | undefined;
   href: (line: number) => string;
@@ -403,7 +408,12 @@ function ForecastContent({
         >
           <div className="grid min-w-0 items-start gap-6 xl:grid-cols-[minmax(0,1.22fr)_minmax(0,1fr)] [&_button[aria-checked=true]]:bg-brand-950 [&_button[aria-checked=true]]:text-white">
             <div className="min-w-0 border-t-2 border-brand-950 bg-surface-card p-4">
-              <ForecastStatement model={model} selectedCase={selectedCase} source={source} />
+              <ForecastStatement
+                model={model}
+                selectedCase={selectedCase}
+                selectedRawGroup={selectedRawGroup}
+                source={source}
+              />
             </div>
             <section
               aria-label="Scenario comparison"
@@ -412,13 +422,19 @@ function ForecastContent({
               <CashProxy
                 model={model}
                 selectedCase={selectedCase}
+                selectedRawGroup={selectedRawGroup}
                 sourceFor={source}
                 note={<BasisNote model={model} handoff={handoff} href={href} />}
                 unified
               />
             </section>
           </div>
-          <ForecastTrendsSection model={model} selectedCase={selectedCase} source={source} />
+          <ForecastTrendsSection
+            model={model}
+            selectedCase={selectedCase}
+            selectedRawGroup={selectedRawGroup}
+            source={source}
+          />
           <Button href="#evidence/record" color="link-gray" size="sm" className="mt-3 w-fit">
             Model notes and limitations
           </Button>
@@ -578,6 +594,8 @@ export function Forecast({
   const selectedCase = caseOptions.some(({ name }) => name === chosenCase)
     ? chosenCase
     : caseOptions[0]?.name;
+  // The selected case's raw group, resolved once here: two raw groups can share one label.
+  const selectedRawGroup = caseOptions.find(({ name }) => name === selectedCase)?.rawGroup;
   const handoff = model && forecastHandoff(model, entries, run.folder);
   const href = (line: number) =>
     handoff ? evidencePath(run.folder, handoff, line) : "#evidence/summary";
@@ -627,6 +645,7 @@ export function Forecast({
       <ForecastContent
         model={model}
         selectedCase={selectedCase}
+        selectedRawGroup={selectedRawGroup}
         source={source}
         handoff={handoff}
         href={href}

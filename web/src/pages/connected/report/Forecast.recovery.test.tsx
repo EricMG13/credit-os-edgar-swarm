@@ -412,13 +412,12 @@ it("binds a selected additional scenario row to its own case", () => {
     }),
   );
   const drawer = within(screen.getByRole("dialog"));
+  // The selected view shows every period of the case, so its trace names no single date span.
+  const heading = drawer.getByRole("heading", { level: 2, name: /Revenue · Downside drivers/ });
+  expect(heading).not.toHaveTextContent("2026-04-01 to 2027-03-31");
   expect(
-    drawer.getByRole("heading", {
-      level: 2,
-      name: /Revenue · Downside drivers \(2026-04-01 to 2027-03-31\)/,
-    }),
+    drawer.getByText(/Revenue.*Downside drivers.*FY2026E.*1050.*Downside drivers.*FY2027E.*1092/),
   ).toBeInTheDocument();
-  expect(drawer.getByText(/Revenue.*Downside drivers.*FY2027E.*1092/)).toBeInTheDocument();
   expect(drawer.queryByText(/Revenue.*Base case/)).toBeNull();
 });
 

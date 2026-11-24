@@ -74,6 +74,7 @@ function SelectedForecastTable({
   grid: inputGrid,
   title,
   selectedCase,
+  selectedRawGroup,
   downsideNote,
   limits,
   source,
@@ -82,18 +83,28 @@ function SelectedForecastTable({
   grid: Grid;
   title: string;
   selectedCase?: string;
+  selectedRawGroup?: string;
   downsideNote?: string;
   limits: string[];
   source?: ForecastSource;
   evidenceOnlyQualifications?: boolean;
 }) {
+  // The raw group, where given, identifies the selected case: two raw groups can share a label.
+  const selectedLabel =
+    selectedRawGroup === undefined
+      ? selectedCase
+      : forecastCaseLabel(selectedRawGroup, downsideNote);
   const selectedIndexes = inputGrid.columns.flatMap((column, index) => {
     const caseLabel = forecastCaseLabel(column.group, downsideNote);
-    const isScenario = Object.hasOwn(caseLabels, column.group) || caseLabel === selectedCase;
-    return !isScenario || selectedCase === undefined || caseLabel === selectedCase ? [index] : [];
+    const isScenario = Object.hasOwn(caseLabels, column.group) || caseLabel === selectedLabel;
+    const chosen =
+      selectedRawGroup === undefined
+        ? caseLabel === selectedLabel
+        : column.group === selectedRawGroup;
+    return !isScenario || selectedLabel === undefined || chosen ? [index] : [];
   });
   const grid =
-    selectedCase === undefined || selectedIndexes.length === 0
+    selectedLabel === undefined || selectedIndexes.length === 0
       ? inputGrid
       : {
           columns: selectedIndexes
@@ -125,6 +136,7 @@ function SelectedForecastTable({
           source(name, {
             case: groups.length === 1 ? groups[0] : "",
             groups,
+            rawGroups: [...new Set(grid.columns.map((column) => column.group))],
             ...selection,
           }))
       }
@@ -170,8 +182,17 @@ export function forecastCaseLabel(group: string, downsideNote = "") {
   return Object.hasOwn(caseLabels, group) ? (caseLabels[group] ?? group) : group;
 }
 
+/** One distinct reader name per raw group. Groups that share a label are told apart by their
+ * raw group as reader text, never a module code (those are drawn only in Evidence). */
 export function forecastCaseNames(groups: string[], downsideNote = "") {
-  return scenarioGroupLabels(groups, (group) => forecastCaseLabel(group, downsideNote));
+  return scenarioGroupLabels(
+    groups,
+    (group) => forecastCaseLabel(group, downsideNote),
+    (group) => {
+      const text = readerText(group);
+      return /\bCP-[A-Z0-9]+/iu.test(text) ? "" : text;
+    },
+  );
 }
 
 function displayForecastCell(cell: Record<string, unknown> | undefined) {
@@ -353,13 +374,16 @@ function cashProxyCaseRows(observations: CashProxyObservation[], downsideNote: s
         .at(-1);
       const latest = latestPeriod ? dated.filter(({ period }) => period === latestPeriod) : [];
       const duplicate = latest.length > 1;
-      const selected = placeholder && dated.length === 0 ? placeholder : latest[0];
+      // A placeholder column is not a period: such a case records no period or dates.
+      const placeholderOnly = placeholder !== undefined && dated.length === 0;
+      const selected = placeholderOnly ? placeholder : latest[0];
+      const undated = duplicate || placeholderOnly;
       return {
         group,
         name,
-        period: selected?.period,
-        start: duplicate ? undefined : selected?.start,
-        end: duplicate ? undefined : selected?.end,
+        period: placeholderOnly ? undefined : selected?.period,
+        start: undated ? undefined : selected?.start,
+        end: undated ? undefined : selected?.end,
         value:
           !duplicate && selected?.cell?.status === "value"
             ? amount(word(selected.cell.exact))
@@ -451,7 +475,7 @@ export function forecastCaseOptions(model: unknown) {
     units: word(cashflow.units) || "Units not recorded",
     description: caseDescription(group, stringsIn(cashflow.notes)),
     ...(start && end ? { periodStart: start, periodEnd: end } : {}),
-    ...(reason ? { reason } : {}),
+    ...(reason && value === null ? { reason } : {}),
     ...(basisGap ? { comparisonBasisGap: true } : {}),
   }));
 }
@@ -529,6 +553,7 @@ export function CashProxy({
   source,
   sourceFor,
   selectedCase,
+  selectedRawGroup,
   unified = false,
 }: {
   model: unknown;
@@ -536,6 +561,8 @@ export function CashProxy({
   source?: ReactNode;
   sourceFor?: ForecastSource;
   selectedCase?: string;
+  /** The selected case's raw group, where the caller knows it: it decides the match. */
+  selectedRawGroup?: string;
   unified?: boolean;
 }) {
   const sourceAction =
@@ -551,7 +578,15 @@ export function CashProxy({
         detail={state.detail}
       />
     );
-  return cashProxyOutput(state, { note, source, sourceFor, sourceAction, selectedCase, unified });
+  return cashProxyOutput(state, {
+    note,
+    source,
+    sourceFor,
+    sourceAction,
+    selectedCase,
+    selectedRawGroup,
+    unified,
+  });
 }
 
 function cashProxyState(value: unknown) {
@@ -583,10 +618,11 @@ function cashProxyOutput(
     sourceFor?: ForecastSource;
     sourceAction: ReactNode;
     selectedCase?: string;
+    selectedRawGroup?: string;
     unified: boolean;
   },
 ) {
-  const { note, source, sourceFor, sourceAction, selectedCase, unified } = options;
+  const { note, source, sourceFor, sourceAction, selectedRawGroup, unified } = options;
   const { raw, grid, hasCashProxy } = state;
   const { periods, series, basisGap } = cashProxyCases(
     grid,
@@ -611,12 +647,24 @@ function cashProxyOutput(
         detail={failure}
       />
     );
+  // The raw group, where given, identifies the selected series: the names here are made over
+  // this chart's own groups and can differ from the caller's.
+  const selectedCase =
+    selectedRawGroup === undefined
+      ? options.selectedCase
+      : series.find(({ group }) => group === selectedRawGroup)?.name;
   const head = ["Case", ...periods];
-  const rows = series.map(({ name, cells }) => ({
+  const rows = series.map(({ group, name, cells }) => ({
     label: name,
     cells,
     current: name === selectedCase,
-    end: sourceFor?.(`${name} cash proxy`, { case: name, row: CASH_PROXY, periods }) ?? source,
+    end:
+      sourceFor?.(`${name} cash proxy`, {
+        case: name,
+        rawGroup: group,
+        row: CASH_PROXY,
+        periods,
+      }) ?? source,
   }));
   const endHeading = source || sourceFor ? "Source" : undefined;
   const comparison = (
@@ -840,12 +888,15 @@ export function LegacyForecast({
   summary,
   source,
   selectedCase,
+  selectedRawGroup,
   evidenceOnlyQualifications = false,
 }: {
   model?: unknown;
   summary?: ReactNode;
   source?: ForecastSource;
   selectedCase?: string;
+  /** The selected case's raw group, where the caller knows it: it decides the match. */
+  selectedRawGroup?: string;
   evidenceOnlyQualifications?: boolean;
 }) {
   const published = record(model);
@@ -873,6 +924,7 @@ export function LegacyForecast({
             units={units}
             source={source}
             selectedCase={selectedCase}
+            selectedRawGroup={selectedRawGroup}
             downsideNote={notes.find((note) => note.startsWith("Downside case is"))}
           />
           <SelectedForecastTable
@@ -882,6 +934,7 @@ export function LegacyForecast({
             grid={grid}
             title="Cash flow model"
             selectedCase={selectedCase}
+            selectedRawGroup={selectedRawGroup}
             downsideNote={notes.find((note) => note.startsWith("Downside case is"))}
           />
           {other && (
@@ -892,6 +945,7 @@ export function LegacyForecast({
               grid={other}
               title="Other forecast cases"
               selectedCase={selectedCase}
+              selectedRawGroup={selectedRawGroup}
               downsideNote={notes.find((note) => note.startsWith("Downside case is"))}
             />
           )}

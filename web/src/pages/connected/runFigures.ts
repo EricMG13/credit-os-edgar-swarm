@@ -183,13 +183,26 @@ export function moduleWord(
   return live ? "Queued" : "Not run";
 }
 
-/** The module the checks stopped the run at: the last module its log started, in a failed run whose
- * recorded stop was the checks'. A run that ended any other way (a model provider's call, the
- * ruling, an interruption, a launcher that exited, a failure the scheduler found after a clean exit)
- * has none. */
+/** The module the checks stopped the run at, in a failed run whose recorded stop was the checks':
+ * of the modules its log started and has not accepted since, the earliest in plan order
+ * (`run.modules`). Modules can run at once, and the run stops at the earliest failed one; the
+ * others in flight are bystanders. The last started module is the fallback. A run that ended any
+ * other way (a model provider's call, the ruling, an interruption, a launcher that exited, a
+ * failure the scheduler found after a clean exit) has none. */
 function refusedModule(run: Run) {
   if (run.status !== "failed" || run.stopped_by !== "checker") return;
-  return (run.events ?? []).filter((event) => event.kind === "module_started").at(-1)?.module;
+  const started = new Map<string, number>();
+  const accepted = new Map<string, number>();
+  (run.events ?? []).forEach((event, index) => {
+    if (!event.module) return;
+    if (event.kind === "module_started") started.set(event.module, index);
+    if (event.kind === "module_accepted") accepted.set(event.module, index);
+  });
+  const open = (code: string) => (started.get(code) ?? -1) > (accepted.get(code) ?? -1);
+  return (
+    run.modules.map(([code]) => code).find((code) => code !== "Report" && open(code)) ??
+    (run.events ?? []).filter((event) => event.kind === "module_started").at(-1)?.module
+  );
 }
 
 function stoppedDetail(run: Run, code: string) {

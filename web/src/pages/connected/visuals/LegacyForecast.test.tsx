@@ -1,7 +1,14 @@
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import { expect, it } from "vitest";
 import { EMPHASIS_CLASS } from "../../../components/chart/SeriesLine";
-import { CashProxy, forecastCaseOptions, ForecastScope, LegacyForecast } from "./LegacyForecast";
+import {
+  CashProxy,
+  cashProxyCases,
+  forecastCaseOptions,
+  ForecastScope,
+  gridOf,
+  LegacyForecast,
+} from "./LegacyForecast";
 
 import { Forecast } from "../report/Forecast";
 import type { PublishedRun } from "../publishedReport";
@@ -451,4 +458,195 @@ it("labels only the emphasised scenario's end value and keeps every scenario's n
   const [value] = labels;
   expect(value?.anchor).toBe("end");
   for (const name of names) expect(value?.x ?? Infinity).toBeLessThan(name.x);
+});
+
+function casesModel(
+  columns: { label: string; group: string }[],
+  cells: Record<string, unknown>[],
+  notes: string[] = [],
+) {
+  return {
+    cashflow: {
+      units: "USD millions",
+      notes,
+      columns,
+      rows: [
+        {
+          label: "Cash proxy (not issuer free cash flow)",
+          band: "Cash",
+          total: true,
+          cells,
+        },
+        {
+          label: "Revenue",
+          band: "Operating",
+          total: false,
+          cells: cells.map((_, index) => ({
+            status: "value",
+            exact: String(100 + index),
+            display: String(100 + index),
+          })),
+        },
+      ],
+    },
+  };
+}
+const valueCell = (value: string) => ({ status: "value", exact: value, display: value });
+
+it("keeps the periods only the longer case publishes, the shorter case blank there", () => {
+  const base = ["FY2026E", "FY2027E", "FY2028E", "FY2029E", "FY2030E"];
+  const downside = ["FY2026E", "FY2027E", "FY2028E"];
+  const grid = gridOf(
+    casesModel(
+      [
+        ...base.map((label) => ({ label, group: "Base case" })),
+        ...downside.map((label) => ({ label, group: "Downside case" })),
+      ],
+      ["10", "11", "12", "13", "14", "5", "6", "7"].map(valueCell),
+    ).cashflow,
+  );
+  if (!grid) throw new Error("Unreadable fixture");
+  const cases = cashProxyCases(grid, null);
+  expect(cases.periods).toEqual(["FY2026E", "FY2027E", "FY2028E", "FY2029E", "FY2030E"]);
+  expect(cases.series.map(({ name, values }) => [name, values])).toEqual([
+    ["Base case", [10, 11, 12, 13, 14]],
+    ["Downside case", [5, 6, 7, null, null]],
+  ]);
+  expect(cases.rows[1]?.cells).toEqual(["5.00", "6.00", "7.00", null, null]);
+  expect(cases.basisGap).toBe(false);
+});
+
+function sameLabelModel() {
+  return casesModel(
+    ["Base case", "Upside", "Upside case"].flatMap((group) => [
+      { label: "FY2027E", group },
+      { label: "FY2028E", group },
+    ]),
+    ["10", "12", "21", "22", "31", "32"].map(valueCell),
+  );
+}
+
+it("gives two raw groups with one label different names and keeps each raw group", () => {
+  const options = forecastCaseOptions(sameLabelModel());
+  expect(Object.fromEntries(options.map(({ rawGroup, value }) => [rawGroup, value]))).toEqual({
+    "Base case": 12,
+    Upside: 22,
+    "Upside case": 32,
+  });
+  expect(new Set(options.map(({ name }) => name)).size).toBe(3);
+});
+
+it.each([
+  ["Upside", "22.00", "32.00"],
+  ["Upside case", "32.00", "22.00"],
+])("marks the cash proxy row of the selected raw group %s current", (rawGroup, own, peer) => {
+  render(
+    <CashProxy model={sameLabelModel()} selectedCase="Upside case" selectedRawGroup={rawGroup} />,
+  );
+  const table = within(screen.getByRole("table", { name: "Scenario comparison" }));
+  const current = table.getAllByRole("row").filter((row) => row.hasAttribute("aria-current"));
+  expect(current).toHaveLength(1);
+  expect(current[0]).toHaveTextContent(own);
+  expect(current[0]).not.toHaveTextContent(peer);
+});
+
+it.each([
+  ["Upside", ["102", "103"], ["104", "105"]],
+  ["Upside case", ["104", "105"], ["102", "103"]],
+])("draws the selected raw group %s alone in the trends and model table", (rawGroup, own, peer) => {
+  render(
+    <LegacyForecast
+      model={sameLabelModel()}
+      selectedCase="Upside case"
+      selectedRawGroup={rawGroup}
+    />,
+  );
+  const chart = within(screen.getByRole("figure", { name: "Revenue" }));
+  fireEvent.click(chart.getByRole("radio", { name: "Table" }));
+  const table = within(screen.getByRole("region", { name: "Cash flow model" }));
+  for (const part of [chart, table]) {
+    for (const value of own) expect(part.getByRole("cell", { name: value })).toBeInTheDocument();
+    for (const value of [...peer, "100", "101"])
+      expect(part.queryByRole("cell", { name: value })).toBeNull();
+  }
+});
+
+const placeholderReason = "no downside case was computed in this run";
+function placeholderModel() {
+  return casesModel(
+    [
+      { label: "FY2027E", group: "Base case" },
+      { label: "FY2028E", group: "Base case" },
+      { label: "Downside", group: "Downside case" },
+    ],
+    [
+      valueCell("10"),
+      valueCell("12"),
+      { status: "na", exact: null, display: "n.a.", reason: placeholderReason },
+    ],
+  );
+}
+
+it("records no period for a case that has only its placeholder column", () => {
+  const downside = forecastCaseOptions(placeholderModel())[1];
+  expect(downside).toMatchObject({
+    name: "Downside case",
+    rawGroup: "Downside case",
+    value: null,
+    reason: placeholderReason,
+  });
+  expect(downside?.period).toBeUndefined();
+  expect(downside).not.toHaveProperty("periodStart");
+  expect(downside).not.toHaveProperty("periodEnd");
+});
+
+it("gives a reason only where the case has no figure", () => {
+  const valued = casesModel(
+    [
+      { label: "FY2027E", group: "Base case" },
+      { label: "FY2027E", group: "Downside case" },
+    ],
+    [
+      { ...valueCell("12"), reason: "Estimated from a partial year" },
+      { status: "na", exact: null, display: "n.a.", reason: "Not calculable" },
+    ],
+  );
+  const [base, downside] = forecastCaseOptions(valued);
+  expect(base?.value).toBe(12);
+  expect(base).not.toHaveProperty("reason");
+  expect(downside?.value).toBeNull();
+  expect(downside?.reason).toBe("Not calculable");
+
+  const duplicated = casesModel(
+    [
+      { label: "FY2027E", group: "Base case" },
+      { label: "FY2027E", group: "Base case" },
+      { label: "FY2027E", group: "Downside case" },
+    ],
+    [valueCell("12"), valueCell("13"), valueCell("5")],
+  );
+  const [twice] = forecastCaseOptions(duplicated);
+  expect(twice?.value).toBeNull();
+  expect(twice?.reason).toBe(
+    "More than one published observation uses FY2027E; no single value is shown.",
+  );
+});
+
+it("names colliding cases in reader text, without a module code", () => {
+  const options = forecastCaseOptions(
+    casesModel(
+      ["Base case", "Downside (CP-2G drivers)", "Downside drivers"].map((group) => ({
+        label: "FY2027E",
+        group,
+      })),
+      ["10", "7", "8"].map(valueCell),
+    ),
+  );
+  const names = options.map(({ name }) => name).sort();
+  expect(names).toEqual([
+    "Base case",
+    "Downside drivers · Downside (Forward credit model drivers)",
+    "Downside drivers · Downside drivers",
+  ]);
+  expect(options.map(({ rawGroup }) => rawGroup)).toContain("Downside (CP-2G drivers)");
 });

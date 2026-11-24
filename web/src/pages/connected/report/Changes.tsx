@@ -237,7 +237,9 @@ function ComparisonSupplements({
           change.pack.maturity_profile ? maturityTraces(snapshot, run, entries, change) : undefined
         }
       />
-      {change.pack.modules?.length && <ComparedModules change={change} source={trace.module} />}
+      {Boolean(change.pack.modules?.length) && (
+        <ComparedModules change={change} source={trace.module} />
+      )}
       {entry && (
         <ReportFindings snapshot={snapshot} run={run} entry={entry} entryIndex={entryIndex} />
       )}

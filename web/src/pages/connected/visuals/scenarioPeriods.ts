@@ -16,12 +16,25 @@ export function isDatedForecastPeriod(period: string) {
   return /^FY\d{4}E$/u.test(period);
 }
 
-export function scenarioGroupLabels(groups: string[], label: (group: string) => string) {
+/** One distinct name per group. Groups whose labels collide take `suffix(group)` (reader text
+ * the caller supplies; the raw group when none is given), or a neutral ordinal where that suffix
+ * is empty or would repeat a name. */
+export function scenarioGroupLabels(
+  groups: string[],
+  label: (group: string) => string,
+  suffix: (group: string) => string = (group) => group,
+) {
   const labels = new Map(groups.map((group) => [group, label(group)]));
   const counts = new Map<string, number>();
   for (const value of labels.values()) counts.set(value, (counts.get(value) ?? 0) + 1);
+  const used = new Set([...labels.values()].filter((value) => counts.get(value) === 1));
   for (const [group, value] of labels) {
-    if (counts.get(value) && (counts.get(value) ?? 0) > 1) labels.set(group, `${value} · ${group}`);
+    if ((counts.get(value) ?? 0) < 2) continue;
+    const detail = suffix(group);
+    let name = detail ? `${value} · ${detail}` : value;
+    for (let ordinal = 2; used.has(name); ordinal += 1) name = `${value} (${String(ordinal)})`;
+    used.add(name);
+    labels.set(group, name);
   }
   return labels;
 }
@@ -55,7 +68,6 @@ function comparablePeriod(
   candidates: ScenarioPeriodObservation[],
   groups: Set<string>,
 ): ComparableScenarioPeriod | null {
-  if (groups.size < 2) return null;
   const legacyBasis = candidates.every(({ start, end }) => !start && !end);
   const datedBasis = candidates.every(({ start, end }) =>
     Boolean(start && end && validSpan(start, end)),
@@ -71,9 +83,12 @@ function comparablePeriod(
   };
 }
 
-/** Shared source identity and eligibility for columns used as scenario observations. */
+/** Shared source identity and eligibility for columns used as scenario observations. With more
+ * than one scenario, a period only one of them publishes is kept when its own basis is valid (its
+ * `groups` names that one scenario); with a single scenario there is no comparison period. */
 export function analyzeScenarioPeriods<T extends ScenarioPeriodObservation>(observations: T[]) {
   const byPeriod = byDatedPeriod(observations);
+  const severalScenarios = scenarioCount(byPeriod) > 1;
   const periods: ComparableScenarioPeriod[] = [];
   const uniqueObservations: T[] = [];
   const ambiguousPeriods: string[] = [];
@@ -89,11 +104,12 @@ export function analyzeScenarioPeriods<T extends ScenarioPeriodObservation>(obse
       continue;
     }
     uniqueObservations.push(...candidates);
+    if (!severalScenarios) continue;
     const comparison = comparablePeriod(period, candidates, groups);
     if (comparison) periods.push(comparison);
-    else if (groups.size > 1) basisGap = true;
+    else basisGap = true;
   }
-  if (scenarioCount(byPeriod) > 1 && periods.length === 0) basisGap = true;
+  if (severalScenarios && periods.length === 0) basisGap = true;
   periods.sort((left, right) => left.period.localeCompare(right.period));
   return { periods, uniqueObservations, ambiguousPeriods, basisGap };
 }
