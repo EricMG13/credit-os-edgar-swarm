@@ -7,6 +7,7 @@ import {
   useRef,
   useState,
   useSyncExternalStore,
+  type ReactNode,
   type RefObject,
 } from "react";
 import { Alert } from "@/components/alert/Alert";
@@ -25,6 +26,7 @@ import {
   evidencePath,
   getSnapshot,
   outputEntries,
+  publishedRunForFolder,
   reportPath,
   runLabels,
   runPathway,
@@ -34,12 +36,10 @@ import {
   type PublishedRun,
   type Snapshot,
 } from "./publishedReport";
-import { ReportFindings } from "./ReportContent";
 import { ReportEvidence } from "./report/Evidence";
 import { getRun, moduleName, RequestError, type Mode, type ConnectedRun } from "./api";
 import { LegacyVisuals } from "./visuals";
 import {
-  actionBias,
   buildReportView,
   foundationMetrics,
   headlineSources,
@@ -63,6 +63,11 @@ import { PublishedTraceProvider } from "./report/PublishedTrace";
 import { PortfolioBasisProvider } from "./report/PortfolioBasis";
 import { useResource } from "./useResource";
 import { HeadlineFigures } from "./HeadlineFigures";
+import { IssuerFrontPage } from "./report/IssuerFrontPage";
+import { buildIssuerFrontPage } from "./report/frontPage";
+import { scopeLabel } from "./issuerEntry";
+import { ExportMenu, ReportExportPreview } from "./export/ReportExportPreview";
+import { exportRoute, reportExports, reportSpecialistOverview } from "./export/reportExport";
 
 const tabs = [
   ["history", "History"],
@@ -110,7 +115,10 @@ function historyEntry() {
   if (named && typeof state.reportEntry === "string") return state.reportEntry;
   entryCount += 1;
   const id = `${String(Date.now())}-${String(entryCount)}`;
-  window.history.replaceState({ ...(named ? state : null), reportEntry: id }, "");
+  window.history.replaceState(
+    { ...(typeof state === "object" && state !== null ? state : null), reportEntry: id },
+    "",
+  );
   return id;
 }
 
@@ -221,12 +229,11 @@ function HistoryRow({
 }) {
   return (
     <li className="flex flex-wrap items-center justify-between gap-4 border-t border-border-hairline pt-3">
-      <div className="grid min-w-0 gap-1">
-        <p className="font-semibold wrap-anywhere">
-          {runPathway(record, catalogue) || "Credit report"}
-        </p>
-        <p className="text-small text-text-tertiary tabular-nums">{runTiming(record)}</p>
-        <p className="reading-copy text-small text-text-secondary">{modulesRun(details)}</p>
+      <div className="grid gap-1">
+        <p className="font-semibold">{runPathway(record, catalogue) || "Credit report"}</p>
+        <p className="text-sm text-text-secondary">{runTiming(record)}</p>
+        <p className="text-sm text-text-secondary">{scopeLabel(record)}</p>
+        <p className="text-sm text-text-secondary">{modulesRun(details)}</p>
       </div>
       <div className="flex flex-wrap items-center gap-3">
         <StatusBadge set="Run states" state="Finished" />
@@ -243,7 +250,9 @@ function HistoryRow({
 /** One row per published run of the issuer, newest first; every run listed here is finished. */
 function RunHistory({ snapshot, run }: { snapshot: Snapshot; run: PublishedRun }) {
   const records = Object.entries(snapshot.workspace.runs).filter(
-    ([, record]) => record === run || Boolean(run.issuerKey && record.issuerKey === run.issuerKey),
+    ([key, record]) =>
+      publishedRunForFolder(snapshot.workspace.runs, record.folder)?.[0] === key &&
+      (record === run || Boolean(run.issuerKey && record.issuerKey === run.issuerKey)),
   );
   const byFolder = new Map(snapshot.catalogue.real.map((item) => [item.id, item]));
   return (
@@ -315,13 +324,18 @@ function Overview({
   snapshot,
   run,
   view,
+  routeKey,
   hasCalendar,
 }: {
   snapshot: Snapshot;
   run: PublishedRun;
   view: ReportView;
+  routeKey: string;
   hasCalendar: boolean;
 }) {
+  const frontPage = buildIssuerFrontPage(view, run);
+  const specialist = reportSpecialistOverview(view, run, routeKey);
+  const actionModules = ["CP-3", "CP-3D", "CP-5", "CP-6"];
   const calendar = buildCalendar(view.entries, run.folder);
   const watchRows = upcomingCalendarRows(calendar.rows, run.asOf);
   const foundation = view.entries.find((entry) => entry.selected && entry.output.module === "CP-1");
@@ -354,38 +368,39 @@ function Overview({
       </div>
       <nav aria-label="Overview sections" className="flex flex-wrap items-center gap-4 text-sm">
         <TextLink href="#overview/limitations">Limitations</TextLink>
-        <TextLink href="#overview/key-charts">Key charts</TextLink>
+        {(!frontPage || frontPage.figures.length > 0) && (
+          <TextLink href="#overview/key-charts">Key charts</TextLink>
+        )}
         {calendar.rows.length > 0 && <TextLink href="#overview/dates">Dates to watch</TextLink>}
       </nav>
-      {view.lead ? (
-        <>
-          <p className="text-sm text-text-secondary">
-            <Button href={`#modules/${view.lead.output.module}`} color="link-gray" size="sm">
-              {view.lead.output.module === "CP-1B" ? "Earnings view" : "Credit view"} from{" "}
-              {moduleName(view.lead.output.module)}
-            </Button>
-          </p>
-          <ReportFindings
-            key={view.lead.output.id}
-            snapshot={snapshot}
-            run={run}
-            entry={view.lead}
-            entryIndex={view.entries.indexOf(view.lead)}
-            overview
-            overviewLabel={view.lead.output.module === "CP-1B" ? "Earnings view" : "Credit view"}
-            judgement={actionBias(view.lead)}
-            afterBottomLine={figures}
-          />
-        </>
+      {frontPage ? (
+        <IssuerFrontPage page={frontPage} specialist={specialist} />
       ) : (
         <>
+          <p className={card}>
+            A verified credit view is unavailable for this run. Its published handoffs are available
+            under Modules.
+          </p>
           {figures}
-          <p className={card}>No credit view is available for this run.</p>
         </>
       )}
-      <ModuleBottomLines run={run} rows={moduleBottomLines(view, run)} />
-      <RunLimitations run={run} rows={runLimitations(view, run)} />
-      <KeyCharts run={run} charts={overviewCharts(view, run)} />
+      <ModuleBottomLines
+        run={run}
+        rows={moduleBottomLines(view, run).filter(
+          ({ id }) => id !== frontPage?.lead?.owner.module && !actionModules.includes(id),
+        )}
+      />
+      <RunLimitations
+        run={run}
+        rows={runLimitations(view, run).filter(
+          ({ id, line }) =>
+            !actionModules.includes(id) &&
+            !frontPage?.limitations.some(
+              (limitation) => limitation.owner.module === id && limitation.line === line,
+            ),
+        )}
+      />
+      {!frontPage && <KeyCharts run={run} charts={overviewCharts(view, run)} />}
       {calendar.rows.length > 0 && (
         <section className={`${card} grid gap-3`}>
           <div className="flex flex-wrap items-center justify-between gap-3">
@@ -486,6 +501,12 @@ const ReportPage = memo(function ReportPage({
   const calendar =
     tab === "overview" || tab === "calendar" ? buildCalendar(view.entries, run.folder) : null;
   const change = comparisonForRun(run, snapshot.workspace.runs);
+  const hasIssuerBrief =
+    tab === "overview" &&
+    run.publicationVerified === true &&
+    ["credit_snapshot", "lite_credit_assessment", "deep_credit_assessment"].includes(
+      run.pathway ?? "",
+    );
   return (
     <div className="mt-4 grid min-w-0 gap-5">
       <PortfolioBasisProvider
@@ -498,7 +519,9 @@ const ReportPage = memo(function ReportPage({
           folder={run.folder}
           entries={view.entries}
         >
-          <IdentityBand catalogue={catalogue} entries={view.entries} folder={run.folder} />
+          {!hasIssuerBrief && (
+            <IdentityBand catalogue={catalogue} entries={view.entries} folder={run.folder} />
+          )}
           <ReportNav tab={tab} modules={view.modules.length} />
           {tab === "history" && <RunHistory snapshot={snapshot} run={run} />}
           {tab === "overview" && (
@@ -506,6 +529,7 @@ const ReportPage = memo(function ReportPage({
               snapshot={snapshot}
               run={run}
               view={view}
+              routeKey={routeKey}
               hasCalendar={Boolean(calendar?.rows.length || calendar?.gaps.length)}
             />
           )}
@@ -564,6 +588,11 @@ function ReaderBadges({
     <>
       <Badge>{runTiming(run)}</Badge>
       <Badge>{runPathway(run, catalogue)}</Badge>
+      {run.publicationVerified === true && catalogue?.ticker && <Badge>{catalogue.ticker}</Badge>}
+      {run.publicationVerified === true &&
+        catalogue?.period &&
+        catalogue.period !== run.period &&
+        catalogue.period !== run.asOf && <Badge>Financial period {catalogue.period}</Badge>}
       {preview ? (
         <Badge color="brand">Test preview</Badge>
       ) : (
@@ -590,6 +619,7 @@ function ReaderHeader({
   setSources,
   evidence,
   issuer,
+  exportAction,
 }: {
   run: PublishedRun | null;
   catalogue?: CatalogueRun;
@@ -601,6 +631,7 @@ function ReaderHeader({
   setSources: (selected: boolean) => void;
   evidence: boolean;
   issuer: string | null;
+  exportAction: ReactNode;
 }) {
   if (!run) return <PageHeader title={issuer ? `${issuer} report` : "Credit report"} />;
   return (
@@ -617,6 +648,7 @@ function ReaderHeader({
       }
       actions={
         <div className="flex flex-wrap items-center gap-2">
+          {exportAction}
           {!evidence && (
             <SourcesSwitch
               isSelected={sources}
@@ -808,8 +840,9 @@ function reportRoute(hash: string): { tab: Tab; parts: string[] } {
 
 function reportPublication(loaded: Loaded | undefined, id: string) {
   const value = loaded && "snapshot" in loaded ? loaded.snapshot : undefined;
-  const found = value && Object.entries(value.workspace.runs).find(([, run]) => run.folder === id);
-  const catalogue = value?.catalogue.real.find((entry) => entry.id === id);
+  const found = value && publishedRunForFolder(value.workspace.runs, id);
+  const matches = value?.catalogue.real.filter((entry) => entry.id === id);
+  const catalogue = matches?.length === 1 ? matches[0] : undefined;
   const run = found?.[1] ?? null;
   const labels =
     value && found ? runLabels(outputEntries(value, found[1], found[0]), found[1]) : [];
@@ -833,12 +866,23 @@ function unpublishedIssuer(loaded: Loaded | undefined) {
 
 function useReportTitle(issuer: string | null, page: string) {
   useEffect(() => {
-    if (!issuer || !page) return;
-    document.title = `${page} — ${issuer} — Credit OS`;
+    document.title = [page, issuer, "Credit OS"].filter(Boolean).join(" — ");
     return () => {
       document.title = "Credit OS";
     };
   }, [issuer, page]);
+}
+
+function useReportExport(value: Snapshot | null | undefined, id: string, mode: Mode, hash: string) {
+  const exportId = exportRoute(hash);
+  const exports = useMemo(() => reportExports(value, id, mode), [value, id, mode]);
+  const preview =
+    exportId === null
+      ? ({ state: "unavailable", reason: "This PDF format is unavailable." } as const)
+      : exportId && value !== undefined
+        ? exports.resolve(exportId)
+        : undefined;
+  return { exportId, exports, preview };
 }
 
 function ReportReaderPage({ id, mode, retry }: { id: string; mode: Mode; retry: () => void }) {
@@ -852,8 +896,19 @@ function ReportReaderPage({ id, mode, retry }: { id: string; mode: Mode; retry: 
   const { value, found, run, catalogue, issuer, labels } = reportPublication(loaded, id);
   const root = useRef<HTMLDivElement>(null);
   useReportPlace(root, hash, Boolean(run));
-  const page = run ? readerPageName(tab, parts) : "Credit report";
-  useReportTitle(issuer, page);
+  const { exportId, exports, preview } = useReportExport(value, id, mode, hash);
+  const readyPreview = preview?.state === "ready" ? preview : null;
+  const reportPage = run ? readerPageName(tab, parts) : "Credit report";
+  const page = exportId === undefined ? reportPage : (readyPreview?.name ?? "PDF preview");
+  useReportTitle(exportId === undefined ? issuer : (readyPreview?.document.issuer ?? null), page);
+  if (exportId !== undefined)
+    return (
+      <div ref={root}>
+        <ReportExportPreview key={exportId ?? "unsupported"} report={preview}>
+          <ReaderStatus loaded={loaded} found={Boolean(found)} id={id} retry={retry} />
+        </ReportExportPreview>
+      </div>
+    );
   return (
     <div ref={root} className="mx-auto w-full max-w-[96rem]" data-sources={sources ? "on" : "off"}>
       <Breadcrumb>{issuer || "Report"}</Breadcrumb>
@@ -868,6 +923,7 @@ function ReportReaderPage({ id, mode, retry }: { id: string; mode: Mode; retry: 
         setSources={setSources}
         evidence={tab === "evidence"}
         issuer={issuer}
+        exportAction={run && <ExportMenu options={exports.options} reason={exports.reason} />}
       />
       <ReaderStatus loaded={loaded} found={Boolean(found)} id={id} retry={retry} />
       {value && found && (

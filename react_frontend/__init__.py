@@ -54,6 +54,15 @@ def _visible_scope(layout: Layout, folder: str | None) -> tuple[bytes, dict[str,
     if admitted is None:
         return b"null", None
     visible = sources.enrich(admitted, layout.runs)
+    # This identity belongs to the HTTP projection, not the stored publication.
+    visible.pop("reportFolder", None)
+    if folder is not None:
+        visible["reportFolder"] = folder
+    workspace = visible["workspace"]
+    for key, record in workspace["runs"].items():
+        record.update(_report_metadata(workspace, record, key))
+        if not record["publicationVerified"]:
+            record.pop("actionTreatment", None)
     visible["catalogue"] = _without_workspace(visible["catalogue"])
     return json.dumps(visible, ensure_ascii=False).encode("utf-8"), visible
 
@@ -79,6 +88,18 @@ def _admitted_scope(layout: Layout, folder: str | None) -> dict[str, Any] | None
     return admitted
 
 
+def _report_metadata(workspace: dict[str, Any], record: dict[str, Any], key: str) -> dict[str, Any]:
+    verified = record.get("publicationVerified") is True
+    return {
+        "publicationVerified": verified,
+        "lead": lead_summary(workspace, record, key) if verified else None,
+        "assessmentScope": (record.get("assessmentScope") or "unverified")
+        if verified
+        else "unverified",
+        "publishedAt": record.get("publishedAt") if verified else None,
+    }
+
+
 def _library_index(layout: Layout) -> http_base.Reply:
     snapshot = admission.published(layout)
     if snapshot is None:
@@ -89,9 +110,7 @@ def _library_index(layout: Layout) -> http_base.Reply:
         kept = {
             field: record[field] for field in ("folder", "issuerKey", "pathway") if field in record
         }
-        lead = lead_summary(visible["workspace"], record, key)
-        if lead is not None:
-            kept["lead"] = lead
+        kept.update(_report_metadata(visible["workspace"], record, key))
         runs[key] = kept
     # Without each run's ``files``: every file of its run folder (about 40 kB a run, 95% of this
     # reply), which no page of the library reads.

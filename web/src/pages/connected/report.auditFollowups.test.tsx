@@ -92,7 +92,7 @@ function fixture(): { run: PublishedRun; snapshot: Snapshot } {
           [
             section("Findings", 1, []),
             section("Bottom line", 3, [
-              module === "CP-6" ? "The credit view is stable." : `${module} view retained.`,
+              module === "CP-6" ? "The credit view is stable." : "Cash covers interest.",
               "The second paragraph remains qualified.",
             ]),
             section("Key findings", 8, ["Cash covers the next maturity."]),
@@ -195,17 +195,25 @@ it("T17 residual identifies an unpublished report's known issuer in its page tit
   expect(document.title).toBe("Credit report — Known issuer — Credit OS");
 });
 
-it("C3-015 C3-027 J1-009 names and attributes the lead view and its continuation", async () => {
-  const { snapshot } = fixture();
+it("C3-015 C3-027 J1-009 attributes the verified credit view to its exact Evidence line", async () => {
+  const { run, snapshot } = fixture();
+  run.publicationVerified = true;
+  run.lead = {
+    output: "current/CP-2",
+    module: "CP-2",
+    sha256: hashes[0],
+    line: 4,
+    text: "Cash covers interest.",
+  };
   reader(snapshot, "#overview");
-  const band = await screen.findByRole("region", { name: "Credit view" });
-  expect(band).toHaveTextContent("The credit view is stable.");
-  expect(screen.getByRole("link", { name: "Credit view from Committee decision" })).toHaveAttribute(
+  expect(await screen.findByRole("heading", { name: "Credit view" })).toBeVisible();
+  expect(screen.getAllByText("Cash covers interest.")).toHaveLength(1);
+  fireEvent.click(screen.getByRole("button", { name: "Show sources for Credit view" }));
+  expect(await screen.findByRole("link", { name: "Open in Evidence" })).toHaveAttribute(
     "href",
-    "#modules/CP-6",
+    `/report/current#evidence/current%2FCP-2~${hashes[0]}-4`,
   );
-  expect(screen.getByText("Credit view, continued")).toBeInTheDocument();
-  expect(screen.queryByText("Decision rationale")).toBeNull();
+  expect(screen.queryByText("The credit view is stable.")).toBeNull();
 });
 
 it("J3-019 labels the source toggle by the highlight it actually controls", async () => {

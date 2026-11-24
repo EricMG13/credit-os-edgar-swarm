@@ -56,6 +56,11 @@ function isLead(entry: OutputEntry, module: string) {
   );
 }
 
+function catalogueFor(snapshot: Snapshot, folder: string) {
+  const matches = snapshot.catalogue.real.filter((entry) => entry.id === folder);
+  return matches.length === 1 ? matches[0] : undefined;
+}
+
 export function buildReportView(snapshot: Snapshot, routeKey: string, run: PublishedRun) {
   const order = moduleOrder(run).filter((id) => Object.hasOwn(run.modules, id));
   const published = outputEntries(snapshot, run, routeKey);
@@ -67,14 +72,16 @@ export function buildReportView(snapshot: Snapshot, routeKey: string, run: Publi
       const selected = outputs.find((entry) => entry.selected);
       return { id, name: moduleName(id), state: moduleState(selected ?? outputs[0]), outputs };
     });
+  const scope: { folder?: string } = { folder: run.folder };
   return {
+    ...scope,
     entries,
     modules,
     lead: ["CP-6", "CP-2", "CP-L10", ...(run.pathway === "earnings_update" ? ["CP-1B"] : [])]
       .map((id) => entries.find((entry) => isLead(entry, id)))
       .find((entry) => entry !== undefined),
     models: runModels(snapshot, routeKey, run),
-    catalogue: snapshot.catalogue.real.find((entry) => entry.id === run.folder),
+    catalogue: catalogueFor(snapshot, run.folder),
   };
 }
 
@@ -463,7 +470,11 @@ function latestRow(table: Table, at: number) {
     ranked.push({ row, key });
   }
   const keys = ranked.map(({ key }) => key);
-  if (new Set(keys.map((key) => key[0])).size !== 1 || new Set(keys).size !== keys.length)
+  if (
+    ranked.length === 0 ||
+    new Set(keys.map((key) => key[0])).size !== 1 ||
+    new Set(keys).size !== keys.length
+  )
     return undefined;
   return ranked.reduce((latest, item) => (item.key > latest.key ? item : latest)).row;
 }

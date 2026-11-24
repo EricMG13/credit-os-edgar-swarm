@@ -33,6 +33,8 @@ const references = [
   "See p.12 for the covenant.",
   "See pp. 12–14 for the covenant.",
   "See page 12 for the covenant.",
+  "Q page:47 from the annual report.",
+  "A page: 172 sets the threshold.",
   "See pages 12 to 14 for the covenant.",
   "The accounts at 31 December 2025 p. 12 contain the covenant.",
   "The annual report 2025 page 83 contains the covenant.",

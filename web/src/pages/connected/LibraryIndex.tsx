@@ -1,4 +1,11 @@
-import { useEffect, useRef, useState, type Dispatch, type SetStateAction } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  type Dispatch,
+  type ReactNode,
+  type SetStateAction,
+} from "react";
 import { ArrowRight, BookOpen01, FileSearch02 } from "@untitledui/icons";
 import { Alert } from "@/components/alert/Alert";
 import { EmptyState } from "@/components/application/empty-state/empty-state";
@@ -12,25 +19,38 @@ import { PageHeader } from "../../shell/PageHeader";
 import { TextLink } from "../run/TextLink";
 import { card, field, heading, label } from "./layout";
 import {
-  getLibraryIndex,
   containsReference,
-  readParagraph,
+  getLibraryIndex,
   readerText,
   getSnapshot,
   outputEntries,
   evidenceHref,
+  evidenceToken,
   resolveEvidenceLocation,
   reportPath,
   runPathway,
   type CatalogueRun,
+  publishedRunForFolder,
   type Snapshot,
   type LibraryIndex,
 } from "./publishedReport";
 import { HeadlineFigures } from "./HeadlineFigures";
 import { isUnreachable } from "./useResource";
 import { asOfDate } from "./runFigures";
-import { headlineSources } from "./reportView";
+import { buildReportView, headlineSources } from "./reportView";
 import { traceForLine } from "./ReportContent";
+import { plainText, richParts } from "./richText";
+import {
+  isIssuerAssessment,
+  issuerGroups,
+  issuerPassageBody,
+  leadIdentity,
+  publishedLead,
+  relatedIssuerReports,
+  reportDate,
+  scopeLabel,
+  selectIssuerEntry,
+} from "./issuerEntry";
 
 type LibraryFilters = { query: string; sector: string; pathway: string; layout: "cards" | "list" };
 
@@ -44,18 +64,13 @@ function filtersFromAddress(): LibraryFilters {
   };
 }
 
-function CreditView({ run }: { run: LibraryIndex["workspace"]["runs"][string] | undefined }) {
-  const lead = run?.lead;
-  if (!lead)
-    return <p className="text-sm text-text-secondary">No credit view is supplied for this run.</p>;
-  const href = `${reportPath(run.folder)}#evidence/${encodeURIComponent(lead.output)}~${lead.sha256}-${String(lead.line)}`;
-  const { body } = readParagraph(lead.text);
-  if (containsReference(body))
-    return <TextLink href={href}>Read this credit view in Evidence</TextLink>;
+type CardFinding = { body: string; href: string };
+
+function LinkedFinding({ body, href }: CardFinding) {
   return (
     <div className="flex items-start justify-between gap-3">
       <p className="reading-copy min-w-0 text-body text-text-secondary">
-        {readerText(body.replaceAll("**", "").replaceAll("`", ""))}
+        {richParts(body, readerText)}
       </p>
       <Button
         href={href}
@@ -75,17 +90,118 @@ function metricIdentity(metric: CatalogueRun["metrics"][string] | undefined) {
   return JSON.stringify([value, unit, period]);
 }
 
+async function specialistCardFinding(
+  run: LibraryIndex["workspace"]["runs"][string],
+  date: string,
+  signal: AbortSignal,
+): Promise<CardFinding | null> {
+  const snapshot = await getSnapshot(signal, run.folder);
+  if (snapshot?.reportFolder !== run.folder) return null;
+  const admitted = publishedRunForFolder(snapshot.workspace.runs, run.folder);
+  if (!admitted) return null;
+  const [key, selected] = admitted;
+  if (
+    selected.asOf !== date ||
+    selected.pathway !== run.pathway ||
+    selected.issuerKey !== run.issuerKey
+  )
+    return null;
+  const { reportSpecialistOverview } = await import("./export/reportExport");
+  const finding = reportSpecialistOverview(buildReportView(snapshot, key, selected), selected, key)
+    ?.findings[0];
+  return finding
+    ? {
+        body: finding.body,
+        href: evidenceHref(run.folder, evidenceToken({ output: finding.owner }, finding.line)),
+      }
+    : null;
+}
+
+function SpecialistCardFinding({
+  run,
+  date,
+  unavailable,
+}: {
+  run: LibraryIndex["workspace"]["runs"][string];
+  date: string;
+  unavailable: ReactNode;
+}) {
+  const root = useRef<HTMLDivElement>(null);
+  const [finding, setFinding] = useState<CardFinding | null>();
+  useEffect(() => {
+    const target = root.current;
+    if (!target) return;
+    const controller = new AbortController();
+    const load = async () => {
+      const result = await specialistCardFinding(run, date, controller.signal).catch(() => null);
+      if (!controller.signal.aborted) setFinding(result);
+    };
+    const observer =
+      typeof IntersectionObserver === "undefined"
+        ? null
+        : new IntersectionObserver((entries) => {
+            if (!entries.some(({ isIntersecting }) => isIntersecting)) return;
+            observer?.disconnect();
+            void load();
+          });
+    if (observer) observer.observe(target);
+    else void load();
+    return () => {
+      observer?.disconnect();
+      controller.abort();
+    };
+  }, [date, run]);
+  return (
+    <div ref={root} className="min-h-px">
+      {finding === null ? unavailable : finding && <LinkedFinding {...finding} />}
+    </div>
+  );
+}
+
+function CreditView({
+  run,
+  date,
+  showUnavailableFinding,
+}: {
+  run: LibraryIndex["workspace"]["runs"][string] | undefined;
+  date: string;
+  showUnavailableFinding: boolean;
+}) {
+  const unavailable = showUnavailableFinding ? (
+    <p className="text-sm text-text-secondary">
+      A verified finding is unavailable for this report.
+    </p>
+  ) : null;
+  if (
+    run?.publicationVerified === true &&
+    (run.pathway === "relative_value" || run.pathway === "portfolio_decision")
+  )
+    return (
+      <SpecialistCardFinding
+        key={JSON.stringify([run.folder, date, run.pathway, run.issuerKey])}
+        run={run}
+        date={date}
+        unavailable={unavailable}
+      />
+    );
+  const lead = leadIdentity(run);
+  if (!run || !lead) return unavailable;
+  const href = `${reportPath(run.folder)}#evidence/${encodeURIComponent(lead.output)}~${lead.sha256}-${String(lead.line)}`;
+  const body = issuerPassageBody(lead.text);
+  if (containsReference(plainText(body)))
+    return <TextLink href={href}>Read this credit view in Evidence</TextLink>;
+  if (!publishedLead(run)) return unavailable;
+  return <LinkedFinding body={body} href={href} />;
+}
+
 function catalogueMetric(snapshot: Snapshot, id: string, key: string) {
   const matches = snapshot.catalogue.real.filter((item) => item.id === id);
   return matches.length === 1 ? matches[0]?.metrics[key] : undefined;
 }
 
 function resolveFigureSource(snapshot: Snapshot, catalogue: CatalogueRun, key: string) {
-  const matches = Object.entries(snapshot.workspace.runs).filter(
-    ([, run]) => run.folder === catalogue.id,
-  );
-  const [match] = matches;
-  if (!match || matches.length !== 1) return null;
+  const match = publishedRunForFolder(snapshot.workspace.runs, catalogue.id);
+  if (!match) return null;
   const [routeKey, run] = match;
   const entries = outputEntries(snapshot, run, routeKey);
   const foundations = entries.filter((entry) => entry.selected && entry.output.module === "CP-1");
@@ -148,6 +264,16 @@ function LibraryFilter({
   );
 }
 
+function AssessmentDate({ date }: { date: string }) {
+  return reportDate(date) ? (
+    <time className="tabular-nums" dateTime={date}>
+      {asOfDate(date)}
+    </time>
+  ) : (
+    "As-of date unavailable"
+  );
+}
+
 function MatchRuns({
   snapshot,
   filters,
@@ -159,44 +285,45 @@ function MatchRuns({
 }) {
   const { layout } = filters;
   const search = useRef<HTMLInputElement>(null);
-  const byFolder = new Map(Object.values(snapshot.workspace.runs).map((run) => [run.folder, run]));
-  const groups = new Map<string, CatalogueRun[]>();
-  for (const entry of snapshot.catalogue.real) {
-    const run = byFolder.get(entry.id);
-    const key = run?.issuerKey ?? entry.id;
-    groups.set(key, [...(groups.get(key) ?? []), entry]);
-  }
+  const groups = issuerGroups(snapshot);
+  const items = [...groups.values()].flat();
   const sectors = [
-    ...new Set(snapshot.catalogue.real.map((entry) => entry.sector).filter(Boolean)),
+    ...new Set(items.map(({ catalogue }) => catalogue.sector).filter(Boolean)),
   ].sort();
   const pathways = [
     ...new Set(
-      snapshot.catalogue.real
-        .map((entry) => {
-          const run = byFolder.get(entry.id);
-          return runPathway(run ?? { pathway: null }, entry);
-        })
+      items
+        .map(({ run, catalogue }) => runPathway(run ?? { pathway: null }, catalogue))
         .filter(Boolean),
     ),
   ].sort();
-  const cards = [...groups]
-    .map(([key, entries]) => {
-      const ordered = [...entries].sort((a, b) => b.date.localeCompare(a.date));
-      const newest = ordered[0];
-      if (!newest) return null;
-      const linked = ordered.find((entry) => byFolder.has(entry.id));
-      const newestRun = byFolder.get(newest.id);
-      const pathway = runPathway(newestRun ?? { pathway: null }, newest);
-      const matches =
-        [newest.name, newest.issuer, newest.title, newest.sector, newest.period, newest.date].some(
-          (value) => value.toLowerCase().includes(filters.query.trim().toLowerCase()),
-        ) &&
-        (filters.sector === "all" || newest.sector === filters.sector) &&
-        (filters.pathway === "all" || pathway === filters.pathway);
-      if (!matches) return null;
-      return { key, entries: ordered, newest, linked };
-    })
-    .filter((item): item is NonNullable<typeof item> => item !== null);
+  const query = filters.query.trim().toLowerCase();
+  const cards = [...groups].flatMap(([key, entries]) => {
+    const pathwayFiltered = filters.pathway !== "all";
+    const candidates = pathwayFiltered
+      ? entries.filter(
+          ({ run, catalogue }) =>
+            runPathway(run ?? { pathway: null }, catalogue) === filters.pathway,
+        )
+      : entries;
+    const selected = selectIssuerEntry(candidates, pathwayFiltered);
+    if (!selected) return [];
+    const { catalogue } = selected;
+    const matches = candidates.some(({ catalogue: item }) =>
+      [item.name, item.issuer, item.title, item.sector, item.period, item.date].some((value) =>
+        value.toLowerCase().includes(query),
+      ),
+    );
+    if (!matches || (filters.sector !== "all" && catalogue.sector !== filters.sector)) return [];
+    return [
+      {
+        key,
+        entries,
+        selected,
+        assessmentUnavailable: !pathwayFiltered && !isIssuerAssessment(selected.run),
+      },
+    ];
+  });
   return (
     <div className="grid min-w-0 gap-4">
       <div className="flex flex-wrap items-end justify-between gap-3">
@@ -261,45 +388,86 @@ function MatchRuns({
         </div>
       ) : layout === "cards" ? (
         <ul className="grid gap-4 lg:grid-cols-2">
-          {cards.map(({ key, entries, newest, linked }) => (
-            <li key={key} className={card}>
-              <header className="grid min-w-0 gap-1 wrap-anywhere">
-                <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
-                  <h3 className={heading}>{newest.name}</h3>
-                  {snapshot.preview && byFolder.has(newest.id) ? (
+          {cards.map(({ key, entries, selected, assessmentUnavailable }) => {
+            const { catalogue, run } = selected;
+            const related = relatedIssuerReports(entries, selected);
+            const count = entries.filter(({ run: entry }) => entry).length;
+            return (
+              <li key={key} className={card}>
+                <header className="grid min-w-0 gap-1 wrap-anywhere">
+                  <h3 className={heading}>{catalogue.name}</h3>
+                  {(catalogue.ticker || catalogue.sector) && (
+                    <p className="text-sm text-text-secondary">
+                      {[catalogue.ticker, catalogue.sector].filter(Boolean).join(" · ")}
+                    </p>
+                  )}
+                  {snapshot.preview && run ? (
                     <Badge color="brand">Test preview</Badge>
-                  ) : byFolder.has(newest.id) ? (
+                  ) : run ? (
                     <StatusBadge set="Module state" state="Delivered" />
                   ) : (
                     <Badge color="gray">No report published</Badge>
                   )}
+                </header>
+                <div className="grid gap-1 text-sm text-text-secondary">
+                  <p>
+                    {runPathway(run ?? { pathway: null }, catalogue)} ·{" "}
+                    <AssessmentDate date={catalogue.date} />
+                  </p>
+                  {catalogue.period && catalogue.period !== catalogue.date && (
+                    <p>Financial period {catalogue.period}</p>
+                  )}
+                  {run && <p>{scopeLabel(run)}</p>}
+                  {assessmentUnavailable && <p>A verified issuer assessment is unavailable.</p>}
                 </div>
-                {newest.sector && <p className="text-sm text-text-secondary">{newest.sector}</p>}
-                <p className="text-sm text-text-secondary">
-                  {runPathway(byFolder.get(newest.id) ?? { pathway: null }, newest)} ·{" "}
-                  <time className="tabular-nums" dateTime={newest.date}>
-                    {asOfDate(newest.date)}
-                  </time>
-                </p>
-              </header>
-              <CreditView run={byFolder.get(newest.id)} />
-              <HeadlineFigures
-                key={newest.id}
-                catalogue={newest}
-                requestSource={(key, signal) => figureSource(newest, key, signal)}
-              />
-              {linked && (
-                <div className="mt-auto flex flex-wrap items-center gap-3">
-                  <Button href={reportPath(linked.id)} color="secondary" iconTrailing={ArrowRight}>
-                    Open report
-                  </Button>
-                  <TextLink
-                    href={`${reportPath(linked.id)}#history`}
-                  >{`${String(entries.length)} ${entries.length === 1 ? "run" : "runs"}`}</TextLink>
-                </div>
-              )}
-            </li>
-          ))}
+                <CreditView
+                  run={run}
+                  date={catalogue.date}
+                  showUnavailableFinding={!assessmentUnavailable}
+                />
+                <HeadlineFigures
+                  key={catalogue.id}
+                  catalogue={catalogue}
+                  requestSource={
+                    run ? (key, signal) => figureSource(catalogue, key, signal) : undefined
+                  }
+                />
+                {run ? (
+                  <div className="mt-auto flex flex-wrap items-center gap-3">
+                    <Button
+                      href={reportPath(run.folder)}
+                      color="secondary"
+                      iconTrailing={ArrowRight}
+                    >
+                      Open report
+                    </Button>
+                    <TextLink
+                      href={`${reportPath(run.folder)}#history`}
+                    >{`${String(count)} ${count === 1 ? "run" : "runs"}`}</TextLink>
+                  </div>
+                ) : (
+                  <p className="text-sm text-text-secondary">
+                    No run report was published for this entry.
+                  </p>
+                )}
+                {related.length > 0 && (
+                  <ul className="grid gap-2 text-sm">
+                    {related.map(
+                      ({ catalogue: other, run: record, timing }) =>
+                        record && (
+                          <li key={other.id}>
+                            <span className="text-text-secondary">{timing} · </span>
+                            <TextLink
+                              href={reportPath(record.folder)}
+                            >{`${runPathway(record, other)} · ${reportDate(other.date) ? asOfDate(other.date) : "As-of date unavailable"}`}</TextLink>
+                          </li>
+                        ),
+                    )}
+                  </ul>
+                )}
+              </li>
+            );
+          })}
         </ul>
       ) : (
         <div className="overflow-x-auto rounded-ds-md border border-border-hairline bg-surface-card">
@@ -314,29 +482,49 @@ function MatchRuns({
               </tr>
             </thead>
             <tbody>
-              {cards.map(({ key, newest, linked }) => (
-                <tr key={key} className="border-b border-border-hairline last:border-0">
-                  <th scope="row" className="p-3 font-semibold wrap-anywhere">
-                    {newest.name}
-                  </th>
-                  <td className="p-3 wrap-anywhere">{newest.sector || "—"}</td>
-                  <td className="p-3 wrap-anywhere">
-                    {runPathway(byFolder.get(newest.id) ?? { pathway: null }, newest)}
-                  </td>
-                  <td className="p-3">
-                    <time className="tabular-nums" dateTime={newest.date}>
-                      {asOfDate(newest.date)}
-                    </time>
-                  </td>
-                  <td className="p-3">
-                    {linked ? (
-                      <TextLink href={reportPath(linked.id)}>Open report</TextLink>
-                    ) : (
-                      "Not published"
-                    )}
-                  </td>
-                </tr>
-              ))}
+              {cards.map(
+                ({ key, selected: { catalogue, run }, entries, assessmentUnavailable }) => (
+                  <tr key={key} className="border-b border-border-hairline last:border-0">
+                    <th scope="row" className="p-3 font-semibold wrap-anywhere">
+                      {catalogue.name}
+                    </th>
+                    <td className="p-3 wrap-anywhere">{catalogue.sector || "—"}</td>
+                    <td className="p-3 wrap-anywhere">
+                      {runPathway(run ?? { pathway: null }, catalogue)}
+                      {run && <p className="text-text-secondary">{scopeLabel(run)}</p>}
+                      {assessmentUnavailable && (
+                        <p className="text-text-secondary">
+                          A verified issuer assessment is unavailable.
+                        </p>
+                      )}
+                    </td>
+                    <td className="p-3">
+                      <AssessmentDate date={catalogue.date} />
+                    </td>
+                    <td className="p-3">
+                      {run ? (
+                        <div className="grid gap-1">
+                          <TextLink href={reportPath(run.folder)}>Open report</TextLink>
+                          <TextLink href={`${reportPath(run.folder)}#history`}>
+                            Report history
+                          </TextLink>
+                          {relatedIssuerReports(entries, { catalogue, run }).map(
+                            ({ catalogue: other, run: record, timing }) =>
+                              record && (
+                                <TextLink
+                                  key={other.id}
+                                  href={reportPath(record.folder)}
+                                >{`${timing} · ${runPathway(record, other)} · ${reportDate(other.date) ? asOfDate(other.date) : "As-of date unavailable"}`}</TextLink>
+                              ),
+                          )}
+                        </div>
+                      ) : (
+                        "Not published"
+                      )}
+                    </td>
+                  </tr>
+                ),
+              )}
             </tbody>
           </table>
         </div>

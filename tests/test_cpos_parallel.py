@@ -13,8 +13,10 @@ import shutil
 import sys
 import threading
 import time
+from datetime import datetime
 from decimal import Decimal, localcontext
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 
@@ -24,7 +26,7 @@ from deploy_workflow.model.budget import Budget, BudgetExhausted, RunStopped
 from deploy_workflow.model.handoff import HandoffExecutor
 from deploy_workflow.model.run_lock import RunDirBusy, _single_writer
 from deploy_workflow.model.turn import Compaction, ToolCall, Turn, Usage
-from deploy_workflow.owners import cpos_launch
+from deploy_workflow.owners import cpos, cpos_launch
 from deploy_workflow.owners.cpos import (
     MAX_MODULE_WIDTH,
     MODULE_WIDTH,
@@ -2173,6 +2175,10 @@ def test_the_synthetic_run_is_the_same_tree_one_at_a_time_and_in_parallel(tmp_pa
     delivery and the library build, with canned replies (no model, no latency). The earlier a
     module is in the plan, the longer its canned reply takes here, so modules after it finish
     their model work first and must wait for it."""
+    # Freeze publication time so the content-addressed completion records can be compared.
+    monkeypatch.setattr(
+        cpos, "datetime", SimpleNamespace(now=lambda tz: datetime(2026, 1, 29, tzinfo=tz))
+    )
     reply = launcher.canned_handoff
     order = Case(tmp_path / "plan").ordered
 
