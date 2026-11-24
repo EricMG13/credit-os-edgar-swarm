@@ -118,3 +118,31 @@ it("outlines a blocked node with a dashed orange edge", () => {
   const box = nodeOf("Legal & covenants").querySelector("[data-node]");
   expect(box).toHaveClass("border-dashed", "border-warning-mark");
 });
+
+it("says a word that is not its state's own in a visible badge, not only to screen readers", () => {
+  render(
+    <Pipeline
+      label="Stages"
+      stages={[
+        {
+          name: "Credit",
+          nodes: [
+            {
+              id: "CP-1",
+              name: "Financial foundation",
+              state: "queued",
+              word: "Delivered with gaps",
+            },
+            { id: "CP-2", name: "Fundamental credit", state: "queued", word: "Not run" },
+            { id: "CP-3", name: "Security selection", state: "queued", word: "Queued" },
+          ],
+        },
+      ]}
+    />,
+  );
+  expect(nodeOf("Financial foundation").querySelector(".sr-only")).toBeNull();
+  expect(nodeOf("Financial foundation")).toHaveTextContent("Delivered with gaps");
+  expect(nodeOf("Fundamental credit").querySelector(".sr-only")).toBeNull();
+  expect(nodeOf("Fundamental credit")).toHaveTextContent("Not run");
+  expect(nodeOf("Security selection").querySelector(".sr-only")).toHaveTextContent("Queued");
+});

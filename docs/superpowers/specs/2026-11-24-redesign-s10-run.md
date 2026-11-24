@@ -166,5 +166,14 @@ amount with the cap meter; the failed notice leads the page with reason, where i
 to do; no horizontal page scroll at 390 (the ended table scrolls inside its panel). A defect I
 found and fixed from these: node names broke mid-word and the "Not assessable" badge overflowed its
 node; names now wrap at word boundaries and the badge is compact.
-Not run: the paid or live drive; a real synthetic-drive screenshot of a run in flight; reduced-motion
+A real synthetic drive (`proof.serve` + `drive-synthetic-run.cjs`) was also screenshotted at 1440 px
+the moment the run was registered: 0 of 14 modules, all queued, the Synthetic test chip, USD 0.00
+of the cap (the service's own recorded zero). The synthetic run completes too fast to catch a module
+in progress, so running/failed/capped come from the fixtures above.
+An independent review (Opus, given the diff only) found: (1) a node with the word "Delivered with
+gaps" or "Not run" was drawn as a quiet ring with a screen-reader-only word: fixed (quiet only for
+the state's own word; test added); (2) and (3) the chip and read-only state need `ConnectedApp.tsx`,
+which this package does not own: they are requests 1 and 2 above. No other defect found (figures
+from the record, polling, restart-note id, edges, no test weakened, no hex or inline style).
+Not run: the paid or live drive; reduced-motion
 rendering was checked only by the CSS (the animation sits inside `prefers-reduced-motion: no-preference`).

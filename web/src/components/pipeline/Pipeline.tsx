@@ -29,6 +29,8 @@ const DEFAULT_WORD: Record<PipelineState, string> = {
   failed: "Failed",
 };
 
+const QUIET_WORDS: ReadonlySet<string> = new Set(["Delivered", "Finished", "Queued"]);
+
 // On a wide screen a stage's edges live in the 24px gap beside it: a 12px stub per node and a
 // vertical bus drawn in pieces, one per node, from the first node's centre to the last's.
 const STUB = "absolute top-1/2 hidden h-px w-3 lg:block";
@@ -96,7 +98,10 @@ function Stubs({ node, first, last }: { node: PipelineNode; first: boolean; last
 function NodeBody({ node }: { node: PipelineNode }) {
   const badge = badgeOf(node);
   const word = node.word ?? DEFAULT_WORD[node.state];
-  const quiet = node.state === "delivered" || node.state === "queued";
+  // Quiet only when the word is the state's own; "Delivered with gaps" or "Not run" is said aloud.
+  const quiet =
+    (node.state === "delivered" || node.state === "queued") &&
+    (node.word === undefined || QUIET_WORDS.has(node.word));
   return (
     <>
       <span className="flex min-w-0 items-start justify-between gap-2">
