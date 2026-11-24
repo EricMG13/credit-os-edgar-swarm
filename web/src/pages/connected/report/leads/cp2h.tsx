@@ -1,7 +1,8 @@
 import { withUnit } from "../../publishedReport";
 import { Key } from "../overview/figureParts";
 import { basisNotes } from "../overview/figureData";
-import { bulletGeometry, headroomTests, type HeadroomTest } from "../overview/stressData";
+import { headroomTests, type HeadroomTest } from "../overview/stressData";
+import { Bullets } from "./bullet";
 import { Bento, Figure } from "../overview/Tile";
 import { LeadBlocked, LeadFigure, LeadGap, NEEDS, Trace } from "./parts";
 import { blockedReason, chartOf, columnOf, leadHref, readerCell, registerTable } from "./read";
@@ -15,56 +16,6 @@ type Trigger = { agency: string; test: HeadroomTest; line: number };
 
 const shown = (test: HeadroomTest, cell: HeadroomTest["current"]) =>
   cell.value === null ? cell.text : withUnit(cell.text, test.unit);
-
-/** One trigger as an HTML bullet: value bar against a threshold tick, or the reason in words. */
-function TriggerRow({ trigger, href }: { trigger: Trigger; href: (line?: number) => string }) {
-  const { test } = trigger;
-  const geometry = bulletGeometry(test);
-  const reading = `${test.label}: ${shown(test, test.current)} against a threshold of ${shown(test, test.threshold)}.`;
-  return (
-    <li className="flex flex-col gap-1.5 border-t border-border-hairline py-3 first:border-t-0">
-      <span className="flex items-baseline justify-between gap-3 text-small">
-        <span className="min-w-0 text-text-primary wrap-anywhere">{test.label}</span>
-        <span className="flex shrink-0 items-baseline gap-2">
-          {geometry ? (
-            <Figure className="text-small">
-              {shown(test, test.current)}
-              <span className="text-text-tertiary"> / {shown(test, test.threshold)}</span>
-            </Figure>
-          ) : (
-            <span className="rounded-ds-xs border border-dashed border-border-gap px-1.5 text-caption text-gap-text">
-              Not supplied
-            </span>
-          )}
-          <Trace href={href(trigger.line)} name={test.label} />
-        </span>
-      </span>
-      {geometry ? (
-        <span
-          role="img"
-          aria-label={reading}
-          className="relative block h-2 rounded-ds-full bg-surface-subtle"
-        >
-          <span
-            aria-hidden="true"
-            className="absolute inset-y-0 left-0 rounded-ds-full bg-chart-1"
-            style={{ width: `${String(geometry.share.current * 100)}%` }}
-          />
-          <span
-            aria-hidden="true"
-            className="absolute -inset-y-1 w-0.5 bg-text-primary"
-            style={{ left: `${String(geometry.share.threshold * 100)}%` }}
-          />
-        </span>
-      ) : (
-        <span className="text-caption text-text-secondary">
-          {test.current.reason ?? test.threshold.reason ?? "No value in the handoff"}
-        </span>
-      )}
-      {test.direction && <span className="text-caption text-text-tertiary">{test.direction}</span>}
-    </li>
-  );
-}
 
 function Triggers({ entry, href }: { entry: LeadProps["entry"]; href: (line?: number) => string }) {
   const chart = chartOf(entry, TRIGGERS);
@@ -112,15 +63,18 @@ function Triggers({ entry, href }: { entry: LeadProps["entry"]; href: (line?: nu
       figure={
         <div className="flex flex-col gap-4">
           {agencies.map((agency) => (
-            <div key={agency} role="group" aria-label={agency} className="flex flex-col">
+            <div key={agency} role="group" aria-label={agency} className="flex flex-col gap-2">
               <h4 className="text-small font-medium text-text-primary">{agency}</h4>
-              <ul className="flex flex-col">
-                {triggers
-                  .filter((trigger) => trigger.agency === agency)
-                  .map((trigger) => (
-                    <TriggerRow key={trigger.line} trigger={trigger} href={href} />
-                  ))}
-              </ul>
+              {(() => {
+                const own = triggers.filter((trigger) => trigger.agency === agency);
+                return (
+                  <Bullets
+                    label={`${agency} triggers`}
+                    tests={own.map((trigger) => trigger.test)}
+                    href={(at) => href(own[at]?.line)}
+                  />
+                );
+              })()}
             </div>
           ))}
         </div>

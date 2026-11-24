@@ -126,7 +126,7 @@ it("gives the reason, not a bar or a zero, for a trigger the module did not supp
     },
   );
   expect(within(groupA).getByText("Interest cover")).toBeVisible();
-  expect(within(groupA).getByText("cover not split")).toBeVisible();
+  expect(within(groupA).getByText("Cover not split")).toBeVisible();
   expect(within(groupA).getAllByRole("img")).toHaveLength(1);
   expect(within(groupA).queryByText("0")).toBeNull();
 });
