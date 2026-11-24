@@ -906,6 +906,6 @@ it("wraps recorded descriptions, model notes and qualifications at desktop width
   );
   expect(screen.getByRole("list", { name: "Forecast cases" }).className).toMatch(/min-w-0/);
   expect(
-    screen.getByRole("list", { name: "Forecast cases" }).closest("section")?.className,
+    screen.getByRole("list", { name: "Forecast cases" }).closest("#forecast-cases")?.className,
   ).toMatch(/wrap-anywhere/);
 });

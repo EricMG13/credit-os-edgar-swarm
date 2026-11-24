@@ -499,7 +499,7 @@ export function Forecast({
           view={view}
           run={run}
           group={group}
-          caseName={current?.name ?? "Base case"}
+          caseName={current?.name ?? "the published model"}
           selectedCase={selectedCase}
           caseOptions={caseOptions}
           input={input}

@@ -169,3 +169,29 @@ it("draws the gap state in place when the model publishes no net leverage", () =
   expect(screen.getByRole("region", { name: "Net leverage path" })).toBeInTheDocument();
   expect(screen.getByText("The model publishes no net leverage figure.")).toBeInTheDocument();
 });
+
+it("draws no other case's line under a selected case the model has no leverage row for", () => {
+  const { container } = draw(measureOf(cols("Base case", ["FY2025E"]), [value("1.5")]), {
+    group: "Downside (CP-2G drivers)",
+  });
+  expect(container.querySelector("[data-segment]")).toBeNull();
+  expect(screen.queryByText("1.5x")).toBeNull();
+  expect(screen.getByText("No net leverage figure for Base case.")).toBeInTheDocument();
+});
+
+it("keeps the wall out of the legend and the reading when it lies beyond the axis", () => {
+  const far = { year: 2035, label: "FY2035", cell: { text: "900", value: 900, reason: null } };
+  draw(measureOf(cols("Base case", ["FY2025E"]), [value("2")]), {
+    wall: { years: [far], wall: far, unit: "US$m", offAxis: [], reason: null },
+  });
+  expect(screen.queryByText("Maturity wall, Financial foundation")).toBeNull();
+  expect(screen.getByRole("img").getAttribute("aria-label")).not.toMatch(/maturity wall/);
+  expect(screen.getByText("Beyond this axis: FY2035 900.")).toBeInTheDocument();
+});
+
+it("says the row has no dated forecast year rather than that it is absent", () => {
+  draw(measureOf(cols("Base case", ["FY26E"]), [value("2")]));
+  expect(
+    screen.getByText("The model's net leverage row has no dated forecast year."),
+  ).toBeInTheDocument();
+});

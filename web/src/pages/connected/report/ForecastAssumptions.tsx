@@ -26,6 +26,12 @@ export function AssumptionsByCase({
     );
   const { years, cases, rows } = driverTable(document);
   const caseNames = cases.map(({ name }) => name).join(" · ");
+  if (!rows.length)
+    return (
+      <Tile {...tile}>
+        <GapNote>The forecast inputs state no driver for any case.</GapNote>
+      </Tile>
+    );
   return (
     <Tile {...tile}>
       <div className="flex flex-col gap-1 text-small text-text-secondary">
@@ -76,7 +82,7 @@ export function AssumptionsByCase({
                 ? ["downside_shock", row.key]
                 : [baseStates || firstKey === undefined ? "base_drivers" : firstKey, row.key];
               return (
-                <tr key={row.key} className="border-t border-border-hairline align-top">
+                <tr key={row.id} className="border-t border-border-hairline align-top">
                   <th scope="row" className="py-2 pr-3 text-left font-medium text-text-primary">
                     {row.name}
                   </th>

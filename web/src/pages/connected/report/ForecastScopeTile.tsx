@@ -121,10 +121,10 @@ export function CaseFigures({
   const [first] = options;
   if (!first || options.length < 2) return null;
   return (
-    <section
+    // The list carries the accessible name; this wrapper is the deep-link target only.
+    <div
       id="forecast-cases"
       tabIndex={-1}
-      aria-labelledby="forecast-case-heading"
       className="grid min-w-0 scroll-mt-4 content-start gap-3 wrap-anywhere focus:outline-2 focus:outline-offset-2 focus:outline-focus"
     >
       <div className="grid gap-0.5">
@@ -184,6 +184,6 @@ export function CaseFigures({
       <p id="forecast-case-note" className="text-caption text-text-secondary">
         Case figures are rounded to at most 2 decimals.
       </p>
-    </section>
+    </div>
   );
 }

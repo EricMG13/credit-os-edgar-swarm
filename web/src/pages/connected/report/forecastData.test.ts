@@ -1,5 +1,6 @@
 import { expect, it } from "vitest";
 import {
+  cellsOf,
   driverTable,
   endOf,
   fiscalYear,
@@ -194,5 +195,46 @@ it("tabulates the retained TransDigm inputs exactly: upside dividends and flat d
     ["Not stated", false],
     ["Not stated", false],
     ["1.84%", true],
+  ]);
+});
+
+it("gives a case without a row for the measure no cells, never another case's", () => {
+  const other = {
+    columns: [{ label: "FY2025E", group: "Downside (CP-2G drivers)" }],
+    rows: [{ label: "Revenue", band: "", kind: "", total: false, cells: [value("9")] }],
+  };
+  const measure = forecastMeasure(
+    model(cols("Base case", ["FY2025E"]), { [NET]: [value("1")] }, other),
+    /^Net leverage\b/,
+  );
+  if (!measure) throw new Error("no measure");
+  expect(cellsOf(measure, "Downside (CP-2G drivers)")).toEqual([]);
+  expect(cellsOf(measure, "Base case").map(({ value: v }) => v)).toEqual([1]);
+});
+
+it("keeps a period whose dates differ between cases out of every case's cells", () => {
+  const columns = [
+    { label: "FY2025E", group: "Base case", start: "2024-10-01", end: "2025-09-30" },
+    { label: "FY2026E", group: "Base case", start: "2025-10-01", end: "2026-09-30" },
+    { label: "FY2025E", group: "Downside case", start: "2024-10-01", end: "2025-09-30" },
+    { label: "FY2026E", group: "Downside case", start: "2025-04-01", end: "2026-09-30" },
+  ];
+  const measure = forecastMeasure(
+    model(columns, { [NET]: [value("1"), value("2"), value("3"), value("4")] }),
+    /^Net leverage\b/,
+  );
+  expect(measure?.periods).toEqual(["FY2025E"]);
+  expect(measure?.cases.map(({ cells }) => [...cells.keys()])).toEqual([["FY2025E"], ["FY2025E"]]);
+  expect(measure?.notice).toMatch(/FY2026E \(recorded start and end dates do not match/);
+});
+
+it("lists a shock key a case also states as two rows, each with its own value", () => {
+  const table = driverTable({
+    base_drivers: { ebitda_decline: { values: ["0.1"] } },
+    downside_shock: { ebitda_decline: "0.2" },
+  });
+  expect(table.rows.map(({ id, cells }) => [id, cells.map(({ text }) => text)])).toEqual([
+    ["base_drivers.ebitda_decline", ["10.00%", "Not stated"]],
+    ["downside_shock.ebitda_decline", ["Not stated", "20.00%"]],
   ]);
 });

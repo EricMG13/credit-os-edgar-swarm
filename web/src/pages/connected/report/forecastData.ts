@@ -81,12 +81,24 @@ export function forecastMeasure(model: unknown, pattern: RegExp) {
   );
   const analysis = analyzeScenarioPeriods(observations);
   const groups = [...new Set(observations.map(({ group }) => group))].sort(byBaseFirst);
+  // With several cases, only a period kept for the comparison is drawn for the cases that keep
+  // it: a period left out (dates that do not match, a duplicate) is in no case's cells.
+  const kept = new Set(
+    analysis.periods.flatMap(({ period, groups: keeping }) =>
+      keeping.map((group) => `${period}\0${group}`),
+    ),
+  );
+  const several = new Set(observations.map(({ group }) => group)).size > 1;
   const cases: MeasureCase[] = groups.map((group) => ({
     group,
     name: names.get(group) ?? group,
     cells: new Map(
       analysis.uniqueObservations
-        .filter((observation) => observation.group === group)
+        .filter(
+          (observation) =>
+            observation.group === group &&
+            (!several || kept.has(`${observation.period}\0${group}`)),
+        )
         .map(({ period, start, end, display, value, reason }) => [
           period,
           { period, start, end, display, value, reason },
@@ -118,9 +130,11 @@ export function forecastMeasure(model: unknown, pattern: RegExp) {
 
 export type Measure = NonNullable<ReturnType<typeof forecastMeasure>>;
 
-/** The case's cells in period order. */
+/** The case's cells in period order; none for a case the measure has no row for. Without a
+ * selected case, the measure's first case. */
 export function cellsOf(measure: Measure, group: string | undefined) {
-  const found = measure.cases.find((item) => item.group === group) ?? measure.cases[0];
+  const found =
+    group === undefined ? measure.cases[0] : measure.cases.find((item) => item.group === group);
   return found ? [...found.cells.values()].sort((a, b) => a.period.localeCompare(b.period)) : [];
 }
 
@@ -273,11 +287,13 @@ export function driverTable(document: Record<string, unknown>) {
       (key === "downside_drivers" && hasShock),
   ).map(([key, name]) => ({ key, name }));
   const keys = [
-    ...new Set(cases.flatMap(({ key }) => Object.keys(record(document[key])))),
-    ...Object.keys(shock),
+    ...[...new Set(cases.flatMap(({ key }) => Object.keys(record(document[key]))))].map((key) => ({
+      key,
+      isShock: false,
+    })),
+    ...Object.keys(shock).map((key) => ({ key, isShock: true })),
   ];
-  const rows = keys.map((key) => {
-    const isShock = Object.hasOwn(shock, key);
+  const rows = keys.map(({ key, isShock }) => {
     const values = cases.map(({ key: group }) =>
       isShock
         ? group === "downside_drivers"
@@ -296,7 +312,16 @@ export function driverTable(document: Record<string, unknown>) {
         differs: at > 0 && (base === null || base.join("\0") !== recorded.join("\0")),
       };
     });
-    return { key, name: DRIVER_NAMES[key] ?? key.replaceAll("_", " "), shock: isShock, cells };
+    const id = isShock
+      ? `downside_shock.${key}`
+      : `${cases.find(({ key: group }) => record(document[group])[key] !== undefined)?.key ?? ""}.${key}`;
+    return {
+      id,
+      key,
+      name: DRIVER_NAMES[key] ?? key.replaceAll("_", " "),
+      shock: isShock,
+      cells,
+    };
   });
   return { years, cases, rows };
 }

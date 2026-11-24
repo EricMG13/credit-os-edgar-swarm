@@ -29,6 +29,9 @@ const MOST_CASES = 6;
 const WALL_REACH = 3;
 const SERIES = ["stroke-chart-1", "stroke-chart-2", "stroke-chart-5", "stroke-chart-6"] as const;
 const DOTS = ["fill-chart-1", "fill-chart-2", "fill-chart-5", "fill-chart-6"] as const;
+/** Cases other than the selected one are also told apart by dash, not by colour alone. */
+const DASHES = ["6 3", "2 3", "8 3 2 3", "4 2"] as const;
+const BORDERS = ["border-chart-1", "border-chart-2", "border-chart-5", "border-chart-6"] as const;
 const SWATCH = ["bg-chart-1", "bg-chart-2", "bg-chart-5", "bg-chart-6"] as const;
 
 const BOX = { left: 52, right: 20, top: 36 } as const;
@@ -79,13 +82,15 @@ function axisSlots(measure: Measure, drawn: MeasureCase[], wall: WallYear | null
       labels.get(year) ??
       (year === actual
         ? (measure.actual?.period ?? "")
-        : `FY${String(year)}${year > last ? "" : "E"}`);
+        : `FY${String(year)}${year > last || year < first ? "" : "E"}`);
     return { year, label, forecast: year >= first && year <= last };
   });
 }
 
 function drawnCases(measure: Measure, group: string | undefined) {
-  const selected = measure.cases.find((item) => item.group === group) ?? measure.cases[0];
+  // A selected case the measure has no row for is not replaced by another case.
+  const selected =
+    group === undefined ? measure.cases[0] : measure.cases.find((item) => item.group === group);
   if (!selected) return { selected: undefined, drawn: [] };
   const all = measure.compared && measure.cases.length <= MOST_CASES;
   const drawn = all ? measure.cases : [selected];
@@ -279,6 +284,7 @@ function Lines({
                 x2={g.x(fiscalYear(to.period) ?? 0)}
                 y2={g.y(to.value ?? 0)}
                 strokeWidth={on ? 2.5 : 1.5}
+                strokeDasharray={on ? undefined : DASHES[at % DASHES.length]}
                 strokeLinecap="round"
                 className={SERIES[at % SERIES.length]}
               />
@@ -517,12 +523,14 @@ function Legend({
   measure,
   limits,
   wall,
+  wallOnAxis,
 }: {
   drawn: MeasureCase[];
   selected: MeasureCase;
   measure: Measure;
   limits: PathLimits;
   wall: PathWall;
+  wallOnAxis: boolean;
 }) {
   // The gap key is shown only where a year of the selected case is drawn as a gap.
   const gap = measure.periods.some((period) => selected.cells.get(period)?.value == null);
@@ -532,7 +540,11 @@ function Legend({
         <li key={item.group} className="flex items-center gap-1.5">
           <span
             aria-hidden="true"
-            className={cx("h-0.5 w-5 rounded-ds-full", SWATCH[at % SWATCH.length])}
+            className={
+              item === selected
+                ? cx("h-0.5 w-5 rounded-ds-full", SWATCH[at % SWATCH.length])
+                : cx("w-5 border-t-2 border-dashed", BORDERS[at % BORDERS.length])
+            }
           />
           <span className={item === selected ? "font-medium text-text-primary" : undefined}>
             {item.name}
@@ -552,7 +564,7 @@ function Legend({
           {limits.trace}
         </li>
       )}
-      {wall.wall && (
+      {wallOnAxis && (
         <li className="flex items-center gap-1.5">
           <span aria-hidden="true" className="h-3 w-0.5 bg-chart-2" />
           Maturity wall, Financial foundation
@@ -675,7 +687,12 @@ function Chart({
     <div ref={ref} className="min-w-0">
       <svg
         role="img"
-        aria-label={reading(drawn, slots, limits.limits, wall.wall)}
+        aria-label={reading(
+          drawn,
+          slots,
+          limits.limits,
+          slots.some((slot) => slot.year === wall.wall?.year) ? wall.wall : null,
+        )}
         width={width}
         height={g.height}
         viewBox={`0 0 ${String(width)} ${String(g.height)}`}
@@ -739,7 +756,13 @@ export function LeveragePath({
       trace={trace}
     >
       {!measure || !selected ? (
-        <GapNote>The model publishes no net leverage figure.</GapNote>
+        <GapNote>
+          {!measure
+            ? "The model publishes no net leverage figure."
+            : measure.cases.length === 0
+              ? "The model's net leverage row has no dated forecast year."
+              : `No net leverage figure for ${caseName ?? "the selected case"}.`}
+        </GapNote>
       ) : (
         <>
           <div className="flex flex-wrap items-center justify-between gap-3">
@@ -749,6 +772,9 @@ export function LeveragePath({
               measure={measure}
               limits={limits}
               wall={wall}
+              wallOnAxis={axisSlots(measure, drawn, wall.wall).some(
+                (slot) => slot.year === wall.wall?.year,
+              )}
             />
             <Segmented
               label="Net leverage view"

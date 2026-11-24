@@ -41,7 +41,9 @@ function Chart({ slots }: { slots: Slot[] }) {
   const max = Math.max(0, ...slots.map(stacked));
   const step = stepFor(max);
   const top = Math.max(step, Math.ceil(max / step) * step);
-  const ticks = Array.from({ length: Math.round(top / step) + 1 }, (_, at) => at * step);
+  const ticks = Array.from({ length: Math.round(top / step) + 1 }, (_, at) =>
+    Number((at * step).toPrecision(12)),
+  );
   const scale = (BASELINE - TOP) / top;
   const slotWidth = (W - LEFT - RIGHT) / slots.length;
   const barWidth = Math.min(56, slotWidth * 0.5);

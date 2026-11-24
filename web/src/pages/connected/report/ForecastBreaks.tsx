@@ -74,17 +74,17 @@ function WallPart({
   const at = wall.wall;
   if (!at) return <GapNote>{wall.reason ?? "The maturity schedule names no wall."}</GapNote>;
   const liquidity = liquidityBefore(model, group, at.year);
-  const sameUnit = Boolean(units) && unitLabel(units) === unitLabel(wall.unit ?? "");
+  // One scale only for like with like: the same unit, and liquidity from the year before the wall.
+  const unitsMatch = Boolean(units) && unitLabel(units) === unitLabel(wall.unit ?? "");
+  const adjacent = at.year - (fiscalYear(liquidity?.period ?? "") ?? 0) <= 1;
+  const sameUnit = unitsMatch && adjacent;
+  const apart = !unitsMatch
+    ? `The two figures are not drawn on one scale: the model's units (${unitLabel(units) || "not recorded"}) and the schedule's (${unitLabel(wall.unit ?? "") || "not recorded"}) are not stated as the same.`
+    : "The two figures are not drawn on one scale: the last forecast year is not the year before the wall.";
   return (
     <>
       <Figures liquidity={liquidity} wall={at} sameUnit={sameUnit} />
-      {!sameUnit && (
-        <p className="text-caption text-text-secondary">
-          The two figures are not drawn on one scale: the model&apos;s units (
-          {unitLabel(units) || "not recorded"}) and the schedule&apos;s (
-          {unitLabel(wall.unit ?? "") || "not recorded"}) are not stated as the same.
-        </p>
-      )}
+      {!sameUnit && <p className="text-caption text-text-secondary">{apart}</p>}
       <GapNote>No module states a shortfall figure at the wall.</GapNote>
     </>
   );
