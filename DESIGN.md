@@ -1,14 +1,14 @@
 # Design
 
 Started 2026-11-24 (owner: redesign the frontend design language and system from scratch).
-**Status: direction chosen (§ Direction); implementation not started.** Mockups of the settled
+**Status: direction chosen (§ Direction); theme tokens and shell implemented, screens not yet rebuilt.** Mockups of the settled
 Overview, a module page and Forecast are with the owner. Product, personas and the insight map are in
 `PRODUCT.md`.
 
 This file replaces `docs/design/design-system.md` (v0.8) and `docs/design/brand-tokens.md` as
-the design authority. Those two files stay in the tree until the new tokens land, because
-`web/src/styles/theme.test.ts` and `web/scripts/kit-chrome.mjs` parse their tables; they are
-removed in the same change that replaces `web/src/styles/theme.css` (§ Migration).
+the design authority. `design-system.md` stays as the token register: twelve test files and
+`web/scripts/kit-chrome.mjs` parse its tables, which now carry the new values. Its prose and
+`brand-tokens.md` describe the previous design and are removed when the last screen is rebuilt.
 
 ## What carries over
 
@@ -117,36 +117,67 @@ forecast + colours." Of the three candidates (A · Brief, B · Signal, C · Desk
 
 ## Tokens
 
-Light theme only. Values are the mockups'; names are final when `theme.css` is rewritten.
+Light theme only. Implemented in `web/src/styles/theme.css` under the existing token names, so
+every screen takes the new values. The per-token register that tests parse is
+`docs/design/design-system.md` (tables only; its prose describes the previous design and is
+superseded by this file).
 
-| Role | Value |
-|---|---|
-| Page ground | `#FAFAFA` |
-| Tile surface | `#FFFFFF` |
-| Well, inset surface | `#F4F4F5` |
-| Hairline | `#E4E4E7` |
-| Strong divider | `#D4D4D8` |
-| Ink | `#0A0A0A` |
-| Secondary text | `#52525B` |
-| Label text (on white or ground only) | `#71717A` |
-| Accent, primary series | teal `#0F766E` |
-| Accent tint, border | `#F0FDFA`, `#99F6E4` |
-| Secondary series | navy `#1E3A5F` |
-| Counter-argument surface, border | `#EFF4FA`, `#C7D6E8` |
-| Prior-period marks | zinc `#A1A1AA` |
-| Signal marks (worse, pro forma, blocked, not tested) | orange `#EA580C` |
-| Signal text | `#C2410C` |
-| Signal tint, border | `#FFF7ED`, `#FED7AA` |
-| Gap state | hatch of `#D4D4D8` on `#FAFAFA`, dashed `#A1A1AA` outline, label `#52525B` |
+| Role | Token | Value |
+|---|---|---|
+| Page ground | `surface-canvas` | `#FAFAFA` |
+| Tile surface | `surface-card` | `#FFFFFF` |
+| Well, inset surface | `surface-subtle` | `#F4F4F5` |
+| Selected, accent tint | `surface-selected`, `action-subtle` | `#F0FDFA` |
+| Inverse | `surface-inverse` | `#0A0A0A` |
+| Hairline | `border-subtle`, `border-hairline` | `#E4E4E7` |
+| Strong divider | `border-container` | `#D4D4D8` |
+| Control edge | `border-control` | `#71717A` |
+| Ink | `text-primary` | `#0A0A0A` |
+| Secondary text | `text-secondary` | `#52525B` |
+| Label text | `text-tertiary` | `#6B6B74` |
+| Disabled, connector | `text-disabled`, `connector` | `#A1A1AA` |
+| Accent, link, focus | `action`, `text-link`, `focus` | teal `#0F766E` |
+| Accent hover, pressed | `action-hover`, `action-pressed` | `#115E59`, `#134E4A` |
+| Accent tint edge | `action-subtle-hover` | `#CCFBF1` |
+| Focus on dark | `focus-inverse` | `#5EEAD4` |
+| Gap edge, gap text | `border-gap`, `gap-text` | `#8E8E96`, `#52525B` |
 
-- "Better" is teal with the word; "worse" is orange with the word. No green/red pair. Signal
-  colour never appears without a word or icon.
-- **Type:** Geist 400/500/600 for text; Geist Mono 400/500 with tabular numerals for every
-  figure, code and axis label. Scale 11, 12, 13, 14, 15, 18, 20, 24, 32, 36, 44 px. Both
-  families are self-hosted (the app already ships Geist and Geist Mono).
-- **Shape:** 12-column grid, 16 px gap. Tile radius 20; wells 8 (concentric with tile padding of
-  20–24); controls 8; chips 4–6. One-pixel hairlines. No shadows except one soft level on
-  floating menus.
+Teal scale (`brand-50` to `brand-950`): `#F0FDFA`, `#CCFBF1`, `#99F6E4`, `#5EEAD4`, `#2DD4BF`,
+`#14B8A6`, `#0F766E`, `#115E59`, `#134E4A`, `#0F3F3C`, `#042F2E`.
+
+| Status | Text | Fill | Edge | Mark | Used for |
+|---|---|---|---|---|---|
+| Success | `#115E59` | `#F0FDFA` | `#99F6E4` | `#0F766E` | Delivered, better |
+| Warning (signal) | `#9A3412` | `#FFF7ED` | `#FED7AA` | `#EA580C` | Worse, pro forma, blocked, not tested |
+| Error | `#991B1B` | `#FEF2F2` | `#FECACA` | `#DC2626` | A failed run or an invalid field only; hover `#7F1D1D` |
+| Info | `#1E3A5F` | `#EFF4FA` | `#C7D6E8` | `#3B6591` | Notes, the counter-argument surface |
+
+| Chart series | Value | Use |
+|---|---|---|
+| 1 | `#115E59` | Primary (current period, secured) |
+| 2 | `#0F2440` | Secondary |
+| 3 | `#8E8E96` | Prior period |
+| 4 | `#EA580C` | Signal: worse, pro forma, shortfall |
+| 5 | `#3B6591` | Fifth series |
+| 6 | `#5EA8A1` | Sixth series |
+| Other | `#71717A` | Remainder |
+
+Series 1 and 2 are a shade deeper than the mockups' `#0F766E` and `#1E3A5F`: with those two the
+first three series cannot each reach 3:1 on white and stay 2:1 apart in greyscale
+(`chart-lightness.test.ts`). Label text is `#6B6B74`, not the mockups' `#71717A`, to hold 4.5:1
+on the well surface. Tooltip supporting text is `#D4D4D8`.
+
+- "Better" is teal with the word; "worse" is orange with the word. Signal colour never appears
+  without a word or icon. Red is kept for failures and invalid input, never for a finding.
+- **Type:** Geist 400/500/600 for text and headings; Geist Mono 400/500 with tabular numerals for
+  figures, codes and axis labels. Ramp (size / line): display 44/48, h1 32/38, h2 24/30,
+  h3 20/28, h4 18/26, lead 18/28, body 15/24, small 14/22, caption 12/16, metric 36/40,
+  mono 13/20.
+- **Shape:** 12-column grid, 16 px gap. Radius: tile 20 (`radius-lg`), 12 (`radius-md`), wells and
+  controls 8 (`radius-sm`), chips 6 (`radius-xs`). One-pixel hairlines. Cards carry no shadow
+  (`shadow-1` is empty); floating menus and tooltips use `shadow-2`.
+- **Shell:** one top bar — symbol, product name, areas — over the page. The current area has the
+  accent tint and an underline.
 - **Motion:** one animation, a slow dash along delivered pipeline edges; off under reduced motion.
 - **Trace control:** one small icon button, the same everywhere, per paragraph, row or figure.
 

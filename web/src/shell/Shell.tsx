@@ -1,8 +1,7 @@
 import { useRef, type ReactNode } from "react";
 import { BookOpen01, Cube01, PlayCircle, Signal01 } from "@untitledui/icons";
-import { NavButton } from "@/components/application/app-navigation/base-components/nav-button";
 
-/** `kit` is a page of the shell with no rail item: #/kit is reached by its address only. */
+/** `kit` is a page of the shell with no bar item: #/kit is reached by its address only. */
 export type Area = "library" | "model" | "run" | "signal" | "kit";
 
 const ITEMS = [
@@ -12,7 +11,7 @@ const ITEMS = [
   { area: "signal", label: "Signal", href: "#/signal", icon: Signal01 },
 ] as const;
 
-/** The slim icon rail and the page region on the canvas. */
+/** The top bar (symbol, product name, areas) and the page region on the canvas. */
 export function Shell({
   current,
   bleed = false,
@@ -37,7 +36,7 @@ export function Shell({
         });
   const main = useRef<HTMLElement>(null);
   return (
-    <div className="flex h-screen min-h-0 flex-col bg-surface-canvas text-text-primary min-[768px]:flex-row">
+    <div className="flex h-screen min-h-0 flex-col bg-surface-canvas text-text-primary">
       <a
         href="#main"
         // The app routes on the URL hash, so the link moves focus and leaves the hash alone.
@@ -49,40 +48,46 @@ export function Shell({
       >
         Skip to content
       </a>
-      <aside className="order-last flex h-16 w-full shrink-0 px-1 pt-1 min-[768px]:order-first min-[768px]:h-full min-[768px]:w-[68px] min-[768px]:py-1 min-[768px]:pl-1">
-        <div className="flex h-full w-full flex-row items-center rounded-xl bg-primary px-2 py-1 ring-1 ring-secondary ring-inset min-[768px]:w-auto min-[768px]:flex-col min-[768px]:items-stretch min-[768px]:px-0 min-[768px]:py-0 min-[768px]:pt-5">
-          <div className="flex shrink-0 justify-center px-2 min-[768px]:px-3">
-            <img src={symbol} alt="" width="24" height="24" className="size-6" />
+      <header className="shrink-0 border-b border-border-hairline bg-surface-card">
+        <div className="flex flex-wrap items-stretch gap-x-6 px-4 sm:px-8">
+          <div className="flex min-h-14 shrink-0 items-center gap-2.5">
+            <img src={symbol} alt="" width="22" height="22" className="size-[22px]" />
+            <span className="text-small font-semibold tracking-[-0.01em] text-text-primary">
+              Credit OS
+            </span>
           </div>
-          <nav aria-label="Areas" className="flex min-h-0 min-w-0 flex-1 flex-col">
-            <ul className="flex min-h-0 flex-1 items-center justify-around gap-0.5 px-1 min-[768px]:mt-5 min-[768px]:flex-col min-[768px]:items-stretch min-[768px]:justify-start min-[768px]:px-3.5">
-              {items.map((item) => (
-                <li
-                  key={item.area}
-                  className="relative flex min-w-0 flex-1 flex-col items-center min-[768px]:flex-none"
-                >
-                  {item.area === current && (
-                    <span
-                      aria-hidden="true"
-                      data-current-area
-                      className="absolute top-1 bottom-1 left-0 border-l-2 border-action min-[768px]:-left-2"
-                    />
-                  )}
-                  <NavButton
-                    current={item.area === current}
-                    href={item.href}
-                    label={item.label}
-                    icon={item.icon}
-                  />
-                  <span className="max-w-full truncate text-caption text-fg-quaternary min-[768px]:hidden">
-                    {item.label}
-                  </span>
-                </li>
-              ))}
+          <nav aria-label="Areas" className="flex min-w-0 flex-1">
+            <ul className="flex min-w-0 flex-1 items-stretch gap-1 overflow-x-auto">
+              {items.map(({ area, label, href, icon: Icon }) => {
+                const isCurrent = area === current;
+                return (
+                  <li key={area} className="relative flex min-h-14 shrink-0 items-center">
+                    <a
+                      href={href}
+                      aria-current={isCurrent ? "page" : undefined}
+                      className={`flex min-h-9 items-center gap-2 rounded-ds-sm px-3 text-small font-medium outline-focus-ring transition duration-100 ease-linear focus-visible:outline-2 focus-visible:outline-offset-2 max-[480px]:min-h-11 ${
+                        isCurrent
+                          ? "bg-surface-selected text-text-link"
+                          : "text-text-secondary hover:bg-surface-subtle hover:text-text-primary"
+                      }`}
+                    >
+                      <Icon aria-hidden="true" className="size-4 shrink-0" />
+                      {label}
+                    </a>
+                    {isCurrent && (
+                      <span
+                        aria-hidden="true"
+                        data-current-area
+                        className="absolute inset-x-3 bottom-0 border-b-2 border-action"
+                      />
+                    )}
+                  </li>
+                );
+              })}
             </ul>
           </nav>
         </div>
-      </aside>
+      </header>
       <main
         id="main"
         ref={main}

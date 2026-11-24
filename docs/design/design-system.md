@@ -1,5 +1,9 @@
 # Design system
 
+> **Token register only (2026-11-24).** The owner replaced this design; `DESIGN.md` at the repo
+> root is the authority. The token tables below carry the new values because tests parse them.
+> The prose, contrast figures and rulings on this page describe the previous design.
+
 Version 0.8, 2026-11-13, with the owner's rulings at reviews 1 and 2, the source-look
 instruction and the rules from the owner's own prompts applied (step D0 of the
 [design track plan](../superpowers/plans/2026-11-13-design-track.md);
@@ -57,35 +61,35 @@ review 2:
 
 | Token | Hex | Brand step | Use |
 | :--- | :--- | :--- | :--- |
-| `surface-canvas` | `#F6F5FF` | Violet L9 | Page background |
+| `surface-canvas` | `#FAFAFA` | Violet L9 | Page background |
 | `surface-card` | `#FFFFFF` | White | Cards, tiles, inputs, drawers |
 | `surface-subtle` | `#F4F4F5` | Neutral L9 | Row and item hover, disabled field, switch track |
-| `surface-selected` | `#E5E8FF` | Ultramarine L9 | Selected navigation item, subtle action fill |
-| `surface-inverse` | `#000533` | Navy | Tooltip; the bottom line band, with white text (review 2, ruling 6) |
+| `surface-selected` | `#F0FDFA` | Ultramarine L9 | Selected navigation item, subtle action fill |
+| `surface-inverse` | `#0A0A0A` | Navy | Tooltip; the bottom line band, with white text (review 2, ruling 6) |
 
 ### Text
 
 | Token | Hex | Brand step | Use |
 | :--- | :--- | :--- | :--- |
-| `text-primary` | `#000533` | Navy | Headings, body, figures |
-| `text-secondary` | `#474A4F` | Neutral D5 | Supporting prose, neutral badge text |
-| `text-tertiary` | `#63676E` | Neutral D3 | Captions, column headers, hints, "n.a." |
-| `text-disabled` | `#A4A9B1` | Neutral L2 | Disabled controls only |
+| `text-primary` | `#0A0A0A` | Navy | Headings, body, figures |
+| `text-secondary` | `#52525B` | Neutral D5 | Supporting prose, neutral badge text |
+| `text-tertiary` | `#6B6B74` | Neutral D3 | Captions, column headers, hints, "n.a." |
+| `text-disabled` | `#A1A1AA` | Neutral L2 | Disabled controls only |
 | `text-on-action` | `#FFFFFF` | White | Label on a filled button |
-| `text-link` | `#001AFF` | Ultramarine | Links, tertiary buttons, selected tab |
+| `text-link` | `#0F766E` | Ultramarine | Links, tertiary buttons, selected tab |
 
 ### Action, hover and focus
 
 | Token | Hex | Brand step | Use |
 | :--- | :--- | :--- | :--- |
-| `action` | `#001AFF` | Ultramarine | Primary button, selected state, progress fill |
-| `action-hover` | `#0015CC` | Ultramarine D2 | Primary button hover |
-| `action-pressed` | `#001099` | Ultramarine D4 | Primary button pressed |
-| `action-subtle` | `#E5E8FF` | Ultramarine L9 | Tertiary button hover, running badge fill |
-| `action-subtle-hover` | `#CCD1FF` | Ultramarine L8 | Running badge edge |
-| `action-disabled` | `#E8E9EB` | Neutral L8 | Disabled button fill |
-| `focus` | `#001AFF` | Ultramarine | Focus ring colour on light surfaces. Pieces written here draw it 2px wide with a 2px offset; a source component keeps its own ring width |
-| `focus-inverse` | `#4AD4FF` | Cyan | Focus ring colour on Navy |
+| `action` | `#0F766E` | Ultramarine | Primary button, selected state, progress fill |
+| `action-hover` | `#115E59` | Ultramarine D2 | Primary button hover |
+| `action-pressed` | `#134E4A` | Ultramarine D4 | Primary button pressed |
+| `action-subtle` | `#F0FDFA` | Ultramarine L9 | Tertiary button hover, running badge fill |
+| `action-subtle-hover` | `#CCFBF1` | Ultramarine L8 | Running badge edge |
+| `action-disabled` | `#E4E4E7` | Neutral L8 | Disabled button fill |
+| `focus` | `#0F766E` | Ultramarine | Focus ring colour on light surfaces. Pieces written here draw it 2px wide with a 2px offset; a source component keeps its own ring width |
+| `focus-inverse` | `#5EEAD4` | Cyan | Focus ring colour on Navy |
 
 Hover on a neutral surface (table row, navigation item, secondary button) is `surface-subtle`.
 
@@ -93,13 +97,13 @@ Hover on a neutral surface (table row, navigation item, secondary button) is `su
 
 | Token | Hex | Brand step | Use |
 | :--- | :--- | :--- | :--- |
-| `border-subtle` | `#E3E1FF` | Violet L7 | Card and tile edge (decorative) |
-| `border-hairline` | `#E8E9EB` | Neutral L8 | Row dividers (decorative) |
-| `border-control` | `#7F848D` | Neutral D1 | Edge colour of inputs and the secondary button; chart baseline |
-| `border-container` | `#D1D4D8` | Neutral L6 | A source's stronger container border: alert, featured icon, file icon (decorative) |
-| `connector` | `#BBBEC4` | Neutral L4 | Connector dots and lines between entries of an activity feed or timeline (decorative) |
-| `border-gap` | `#827BCC` | Violet D2 | Dashed edge of a gap state (3.71:1 on white) |
-| `border-strong` | `#000533` | Navy | Rare emphasis |
+| `border-subtle` | `#E4E4E7` | Violet L7 | Card and tile edge (decorative) |
+| `border-hairline` | `#E4E4E7` | Neutral L8 | Row dividers (decorative) |
+| `border-control` | `#71717A` | Neutral D1 | Edge colour of inputs and the secondary button; chart baseline |
+| `border-container` | `#D4D4D8` | Neutral L6 | A source's stronger container border: alert, featured icon, file icon (decorative) |
+| `connector` | `#A1A1AA` | Neutral L4 | Connector dots and lines between entries of an activity feed or timeline (decorative) |
+| `border-gap` | `#8E8E96` | Violet D2 | Dashed edge of a gap state (3.71:1 on white) |
+| `border-strong` | `#0A0A0A` | Navy | Rare emphasis |
 
 ### Status
 
@@ -107,10 +111,10 @@ Each status is a text colour on its own tinted fill, with a fixed shape.
 
 | Status | Shape | Text | Fill | Edge | Mark |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| Success | Filled circle | `#0C6639` Green D6 | `#E8FFF4` Green L9 | `#A5FFD2` Green L6 | `#0F8048` Green D5 |
-| Warning | Triangle | `#664F00` Orange D6 | `#FFF9E5` Orange L9 | `#FFE899` Orange L6 | `#997700` Orange D4 |
-| Error | Diamond | `#8E413E` Melon D4 | `#FDF0F0` Melon L9 | `#F7C5C2` Melon L6 | `#A54C48` Melon D3 |
-| Info | Ring | `#1E5566` Cyan D6 | `#EDFBFF` Cyan L9 | `#B7EEFF` Cyan L6 | `#2C7F99` Cyan D4 |
+| Success | Filled circle | `#115E59` Green D6 | `#F0FDFA` Green L9 | `#99F6E4` Green L6 | `#0F766E` Green D5 |
+| Warning | Triangle | `#9A3412` Orange D6 | `#FFF7ED` Orange L9 | `#FED7AA` Orange L6 | `#EA580C` Orange D4 |
+| Error | Diamond | `#991B1B` Melon D4 | `#FEF2F2` Melon L9 | `#FECACA` Melon L6 | `#DC2626` Melon D3 |
+| Info | Ring | `#1E3A5F` Cyan D6 | `#EFF4FA` Cyan L9 | `#C7D6E8` Cyan L6 | `#3B6591` Cyan D4 |
 
 The destructive button is white on Error text colour `#8E413E`.
 
@@ -122,7 +126,7 @@ it rates how much the gap matters, and the gap itself keeps its own form.
 
 | State | Wording | Drawn as |
 | :--- | :--- | :--- |
-| Gap | "Not established for this run" | A hatched dashed panel: diagonal white and `#F6F5FF` hatch, 1px dashed `#827BCC` edge, violet text `#514D80` (Violet D5), dashed ring. The inline badge form (same text, edge and ring) appears only in a table cell or on a chart |
+| Gap | "Not established for this run" | A hatched dashed panel: diagonal white and `#F6F5FF` hatch, 1px dashed `#827BCC` edge, violet text `#52525B` (Violet D5), dashed ring. The inline badge form (same text, edge and ring) appears only in a table cell or on a chart |
 | Blocked module | "Not assessable" | Neutral badge (`#474A4F` on `#F4F4F5`) with a slashed circle, always with one sentence saying why |
 | Missing figure | "n.a." | The text itself in `text-tertiary`, right-aligned like a number. Never 0, never a badge |
 | Missing value in a chart | "n.a." | No mark is drawn. A bar slot stays empty with "n.a." in `text-tertiary` on the baseline; a line breaks and is not joined across the gap. Never drawn at zero |
@@ -230,16 +234,16 @@ Fallback stack: `system-ui, sans-serif`; `ui-monospace, monospace` for mono.
 
 | Token | Size / line | Weight | Family | Tracking | Use |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| `display` | 48 / 52 | 700 | Schibsted Grotesk | -0.02em | Issuer name on a library cover |
-| `h1` | 36 / 42 | 700 | Schibsted Grotesk | -0.02em | Page title |
-| `h2` | 28 / 34 | 600 | Schibsted Grotesk | -0.015em | Section title |
-| `h3` | 22 / 30 | 600 | Schibsted Grotesk | -0.01em | Bottom line, card title |
+| `display` | 44 / 48 | 600 | Geist | -0.02em | Issuer name on a library cover |
+| `h1` | 32 / 38 | 600 | Geist | -0.02em | Page title |
+| `h2` | 24 / 30 | 600 | Geist | -0.015em | Section title |
+| `h3` | 20 / 28 | 600 | Geist | -0.01em | Bottom line, card title |
 | `h4` | 18 / 26 | 600 | Geist | 0 | Sub-section, tile title |
-| `lead` | 20 / 32 | 400 | Geist | 0 | Verdict and opening paragraph |
-| `body` | 16 / 26 | 400 | Geist | 0 | Prose |
+| `lead` | 18 / 28 | 400 | Geist | 0 | Verdict and opening paragraph |
+| `body` | 15 / 24 | 400 | Geist | 0 | Prose |
 | `small` | 14 / 22 | 400 | Geist | 0 | Supporting notes; text in pieces written here |
-| `caption` | 13 / 18 | 500 | Geist | 0 | Labels above a figure; the gap badge |
-| `metric` | 40 / 44 | 600 | Geist, tabular | -0.02em | Headline figure on a metric tile |
+| `caption` | 12 / 16 | 500 | Geist | 0 | Labels above a figure; the gap badge |
+| `metric` | 36 / 40 | 500 | Geist, tabular | -0.02em | Headline figure on a metric tile |
 | `mono` | 13 / 20 | 400 | Geist Mono | 0 | Evidence identifiers |
 
 The scale sets page text and the pieces written here. A page title is `h1` even inside a
@@ -261,15 +265,15 @@ page layout only (see "What this system supplies").
 | Radius token | Value | Use |
 | :--- | :--- | :--- |
 | `radius-xs` | 6px | Skeleton block |
-| `radius-sm` | 12px | Small pieces written here (trace control hit area, chart tooltip) |
-| `radius-md` | 20px | Tiles, gap panels |
-| `radius-lg` | 28px | Cards |
+| `radius-sm` | 8px | Small pieces written here (trace control hit area, chart tooltip) |
+| `radius-md` | 12px | Tiles, gap panels |
+| `radius-lg` | 20px | Cards |
 | `radius-full` | 999px | Status shapes, gap badge, withheld bar |
 
 | Elevation token | Value | Use |
 | :--- | :--- | :--- |
-| `shadow-1` | `0 1px 2px rgba(0,5,51,.06)` | Card at rest |
-| `shadow-2` | `0 6px 16px rgba(0,5,51,.08), 0 1px 2px rgba(0,5,51,.04)` | Chart tooltip |
+| `shadow-1` | `0 0 0 0 rgba(10, 10, 10, 0)` | Card at rest |
+| `shadow-2` | `0 8px 24px rgba(10, 10, 10, 0.08), 0 1px 2px rgba(10, 10, 10, 0.04)` | Chart tooltip |
 
 Shadows are Navy at low alpha. Depth separates layers and never decorates. A source drawer,
 modal or menu keeps its source's own shadow.
@@ -455,13 +459,13 @@ out; a seventh series folds into Other.
 
 | Slot | Colour | Hex | Contrast on white | Gray value (0 to 255) | Line style |
 | :--- | :--- | :--- | ---: | ---: | :--- |
-| 1 | Ultramarine | `#001AFF` | 8.10 | 44 | Solid, circle marker |
-| 2 | Violet D2 | `#827BCC` | 3.71 | 134 | Dashed, square marker |
-| 3 | Reef D8 | `#331911` | 16.31 | 32 | Solid, triangle marker |
-| 4 | Orange D3 | `#B28B00` | 3.19 | 135 | Dotted, diamond marker |
-| 5 | Green D5 | `#0F8048` | 5.00 | 88 | Solid, ring marker |
-| 6 | Yellow D4 | `#8C9900` | 3.15 | 132 | Dash-dot, cross marker |
-| Other | Neutral D1 | `#7F848D` | 3.76 | 132 | Solid, no marker |
+| 1 | Ultramarine | `#115E59` | 8.10 | 44 | Solid, circle marker |
+| 2 | Violet D2 | `#0F2440` | 3.71 | 134 | Dashed, square marker |
+| 3 | Reef D8 | `#8E8E96` | 16.31 | 32 | Solid, triangle marker |
+| 4 | Orange D3 | `#EA580C` | 3.19 | 135 | Dotted, diamond marker |
+| 5 | Green D5 | `#3B6591` | 5.00 | 88 | Solid, ring marker |
+| 6 | Yellow D4 | `#5EA8A1` | 3.15 | 132 | Dash-dot, cross marker |
+| Other | Neutral D1 | `#71717A` | 3.76 | 132 | Solid, no marker |
 
 Gray value is Rec. 601 luma on the 8-bit sRGB values: 0.299 R + 0.587 G + 0.114 B, rounded.
 
@@ -506,9 +510,9 @@ OQ-09), so no colour in the chart is a local constant:
 
 | Token | Colour | Hex | Column |
 | :--- | :--- | :--- | :--- |
-| `waterfall-total` | Ultramarine (slot 1) | `#001AFF` | A total, drawn from the baseline |
-| `waterfall-up` | Ultramarine L3 (`brand-400`) | `#4D5FFF` | A step up |
-| `waterfall-down` | Reef D8 (slot 3) | `#331911` | A step down |
+| `waterfall-total` | Ultramarine (slot 1) | `#0F2440` | A total, drawn from the baseline |
+| `waterfall-up` | Ultramarine L3 (`brand-400`) | `#115E59` | A step up |
+| `waterfall-down` | Reef D8 (slot 3) | `#EA580C` | A step down |
 
 Marks follow the source chart (review 2, ruling 5), read on the Untitled UI line and bar
 charts page on 2026-11-13: horizontal gridlines only, solid, in `border-hairline`; bars up to
