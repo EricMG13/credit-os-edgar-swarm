@@ -125,7 +125,8 @@ it("keeps unknown statuses and hostile text literal, and filters modules without
     scripts: [{ name: "other.py", sha256: null }],
   };
   const shown = show([record, other], "checks/CP-2");
-  expect(screen.getByText("unrecognised")).toBeVisible();
+  // The strip, the matrix cell and the module's card each draw the status word as recorded.
+  expect(screen.getAllByText("unrecognised")).toHaveLength(3);
   expect(screen.getByText("<img src=x onerror=alert(1)>")).toBeVisible();
   expect(screen.queryByRole("img")).toBeNull();
   expect(screen.queryByText("Net debt = gross debt - cash")).toBeNull();

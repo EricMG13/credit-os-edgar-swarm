@@ -102,7 +102,14 @@ it("shows existing original model and calculation offers after the run record", 
     "/saved/calculation.json",
   );
   const headings = screen.getAllByRole("heading").map((node) => node.textContent);
-  expect(headings.indexOf("Run record")).toBeLessThan(headings.indexOf("Handoffs"));
+  // The run record is the last, closed block of the Record tab (screen map: P3, closed by default).
+  expect(headings.indexOf("Handoffs")).toBeLessThan(headings.indexOf("Run record"));
+  expect(headings.indexOf("Model and calculation files")).toBeLessThan(
+    headings.indexOf("Run record"),
+  );
+  expect(
+    screen.getByText("Run record", { selector: "summary" }).closest("details"),
+  ).not.toHaveAttribute("open");
   expect(screen.getByText(annualInput)).toBeVisible();
 });
 

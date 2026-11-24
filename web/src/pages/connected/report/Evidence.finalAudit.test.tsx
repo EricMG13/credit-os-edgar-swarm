@@ -198,7 +198,7 @@ it("uses the ruled source groups and states missing dates, types and all-module 
     unrecorded: [{ ...source, name: "unrecorded.txt", readBy: [] }],
   });
   for (const name of ["Used by a module", "Supplied, not used", "Not recorded as used"])
-    expect(screen.getByRole("heading", { name })).toBeVisible();
+    expect(screen.getByRole("heading", { name: new RegExp(`^${name}`) })).toBeVisible();
   expect(screen.getAllByText("Document date n.a.")).toHaveLength(3);
   expect(screen.getAllByText("Document type n.a.")).toHaveLength(3);
   expect(screen.getByText("Read by all 2 modules")).toBeVisible();
@@ -317,9 +317,9 @@ it("separates a handoff's citation details with hairlines rather than nested bor
       ],
     },
   );
-  const article = document.querySelector("article");
-  expect(article?.querySelector("section.rounded-ds-md.border")).toBeNull();
-  expect(article?.querySelector("li.rounded-ds-sm.border")).toBeNull();
+  const article = screen.getByRole("region", { name: "Financial foundation handoff" });
+  expect(article.querySelector("section.rounded-ds-md.border")).toBeNull();
+  expect(article.querySelector("li.rounded-ds-sm.border")).toBeNull();
   const sourceRecords = screen.getByRole("heading", { name: "Source records" }).closest("section");
   if (!sourceRecords) throw new Error("Missing source records");
   expect(within(sourceRecords).getByText("Document date n.a.")).toBeVisible();

@@ -72,7 +72,7 @@ it("lists supplied source files with no link to open them", () => {
     ],
   });
   expect(screen.getByText("portfolio.xlsx")).toBeVisible();
-  expect(screen.getByText(fileHash).tagName).toBe("CODE");
+  expect(screen.getByText(fileHash)).toHaveClass("font-mono");
   expect(document.querySelector('a[href*="/connected/sources/"]')).toBeNull();
 });
 
@@ -169,7 +169,7 @@ it("draws recorded forecast inputs without the Markdown code fence, values exact
     },
   ]);
   const { container } = renderEvidence([entry], `out~${"a".repeat(64)}-93`);
-  const pre = container.querySelector("article pre");
+  const pre = container.querySelector("section pre");
   expect(pre?.textContent).toBe(json);
   expect(container.textContent).not.toContain("```");
 });

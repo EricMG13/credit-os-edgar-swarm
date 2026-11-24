@@ -1,4 +1,4 @@
-import { cleanup, render, screen, within } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { hasRecordedGap, ReportEvidence } from "./Evidence";
 import type { OutputEntry, PublishedRun, Snapshot } from "../publishedReport";
@@ -470,6 +470,7 @@ it("shows the service's comparison note in full on the Record tab", () => {
   render(
     <ReportEvidence snapshot={snapshot} run={run} entries={[]} target="record" mode="synthetic" />,
   );
+  fireEvent.click(screen.getByText("Run record", { selector: "summary" }));
   expect(screen.getByText("Comparison note:")).toBeVisible();
   expect(screen.getByText(note)).toBeVisible();
   vi.unstubAllGlobals();

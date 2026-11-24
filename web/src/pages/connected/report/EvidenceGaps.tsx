@@ -55,7 +55,7 @@ function tableGapRecords(block: Table): GapRecord[] {
   });
 }
 
-export function gapRecords(blocks: Section["blocks"]): GapRecord[] {
+function gapRecords(blocks: Section["blocks"]): GapRecord[] {
   const records: GapRecord[] = [];
   for (const block of blocks) {
     if (block.type === "text") {

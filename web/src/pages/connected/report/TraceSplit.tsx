@@ -10,7 +10,7 @@ import type { TreeNode } from "@/pages/library/slice";
 import { ArrowRight } from "@untitledui/icons";
 import { traceForLine } from "../ReportContent";
 import type { OutputEntry, PublishedRun, Snapshot } from "../publishedReport";
-import { Bento, Tile } from "./overview/Tile";
+import { Tile } from "./overview/Tile";
 import { heading } from "../layout";
 
 function referencedText(node: TreeNode): string {
@@ -55,17 +55,17 @@ export function TraceSplit({
   ].filter((source) => namesSource(references, source.name));
   return (
     <>
-      <Bento>
-        <Tile span={7} label="The claim" kicker={trace.subtitle} title={trace.heading}>
-          <TraceClaim trace={trace} />
-          <TraceBasis trace={trace} />
-        </Tile>
-        <Tile span={5} label="The source" kicker="What it rests on">
-          <TraceSourcePassage trace={trace} />
-          <CitedSources links={trace.sourceLinks ?? []} />
-        </Tile>
-      </Bento>
-      <div className={`grid min-w-0 gap-4 ${sources.length ? "lg:grid-cols-[3fr_2fr]" : ""}`}>
+      <Tile span={7} label="The claim" kicker={trace.subtitle} title={trace.heading}>
+        <TraceClaim trace={trace} />
+        <TraceBasis trace={trace} />
+      </Tile>
+      <Tile span={5} label="The source" kicker="What it rests on">
+        <TraceSourcePassage trace={trace} />
+        <CitedSources links={trace.sourceLinks ?? []} />
+      </Tile>
+      <div
+        className={`grid min-w-0 gap-4 lg:col-span-12 ${sources.length ? "lg:grid-cols-[3fr_2fr]" : ""}`}
+      >
         <section className="grid min-w-0 content-start gap-3 border-t border-border-hairline pt-5">
           <h3 className={heading}>Derivation</h3>
           <DerivationTree node={trace.derivation} />

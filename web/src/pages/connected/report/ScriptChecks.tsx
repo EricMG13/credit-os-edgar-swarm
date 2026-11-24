@@ -2,8 +2,9 @@ import { Badge } from "@/components/base/badges/badges";
 import { EmptyState } from "@/components/application/empty-state/empty-state";
 import { FileSearch02 } from "@untitledui/icons";
 import { moduleName } from "../api";
-import { card, heading } from "../layout";
 import type { ScriptCheckOutcome, ScriptCheckRecord } from "../publishedReport";
+import { Tile } from "./overview/Tile";
+import { ScriptCheckMatrix } from "./ScriptCheckMatrix";
 
 const meaningful = (value: string | null) => (value === "all" || value === "" ? null : value);
 
@@ -107,7 +108,7 @@ function CheckCard({ group }: { group: ScriptCheckOutcome[] }) {
 
 function ModuleChecks({ record, expanded }: { record: ScriptCheckRecord; expanded: boolean }) {
   return (
-    <details className={card} open={expanded}>
+    <details className="rounded-ds-md border border-border-hairline p-4" open={expanded}>
       <summary className="cursor-pointer font-semibold">
         <span>{moduleName(record.module)}</span>
         <span className="mt-2 flex flex-wrap gap-2">
@@ -151,16 +152,21 @@ export function ScriptChecks({
 }) {
   const selected = records.filter((record) => !module || record.module === module);
   return (
-    <section className="grid gap-4">
-      <h3 className={heading}>Script checks</h3>
-      <p className="text-sm text-text-secondary">
+    <Tile
+      span={12}
+      label="Script checks"
+      kicker="Recorded figures and registers against recorded checking scripts"
+      title="Script checks"
+    >
+      <p className="text-small text-text-secondary">
         A script check compares a recorded figure or register with the result of a recorded checking
         script.
       </p>
-      <p className="text-sm text-text-secondary">
+      <p className="text-small text-text-secondary">
         “Not checked” means no completed script check is recorded for that item; its reason states
         whether a script was unavailable or was not run.
       </p>
+      <ScriptCheckMatrix records={selected} />
       {selected.length ? (
         selected.map((record, index) => (
           <ModuleChecks key={index} record={record} expanded={Boolean(module)} />
@@ -180,6 +186,6 @@ export function ScriptChecks({
           </EmptyState.Content>
         </EmptyState>
       )}
-    </section>
+    </Tile>
   );
 }
