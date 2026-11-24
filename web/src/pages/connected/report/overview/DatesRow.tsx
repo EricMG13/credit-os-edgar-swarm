@@ -3,7 +3,7 @@ import { Button } from "@/components/base/buttons/button";
 import type { PublishedRun, Snapshot } from "../../publishedReport";
 import type { ReportView } from "../../reportView";
 import { buildCalendar, upcomingCalendarRows } from "../Calendar";
-import { Tile } from "./Tile";
+import { GapNote, Tile } from "./Tile";
 
 type RowProps = { snapshot: Snapshot; run: PublishedRun; view: ReportView };
 type WatchRow = NonNullable<ReturnType<typeof upcomingCalendarRows>>[number];
@@ -144,7 +144,12 @@ export function DatesRow({ run, view }: RowProps) {
           Open issuer calendar
         </Button>
       </div>
-      {calendar.rows.length === 0 ? (
+      {calendar.rows.length === 0 && calendar.gaps.length > 0 ? (
+        <GapNote>
+          No recorded event could be placed on the time axis. The issuer calendar lists the recorded
+          gaps.
+        </GapNote>
+      ) : calendar.rows.length === 0 ? (
         <p className="text-small text-text-secondary" role="status">
           No dated events were recorded in this run.
         </p>

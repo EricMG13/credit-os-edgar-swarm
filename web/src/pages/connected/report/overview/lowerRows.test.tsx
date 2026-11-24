@@ -11,6 +11,7 @@ const mocks = vi.hoisted(() => ({
   limitations: [] as unknown[],
   calendar: [] as unknown[],
   upcoming: [] as unknown[] | null,
+  gaps: [] as unknown[],
 }));
 
 vi.mock("../../reportView", () => ({
@@ -19,7 +20,7 @@ vi.mock("../../reportView", () => ({
   moduleState: () => "Delivered",
 }));
 vi.mock("../Calendar", () => ({
-  buildCalendar: () => ({ rows: mocks.calendar, gaps: [] }),
+  buildCalendar: () => ({ rows: mocks.calendar, gaps: mocks.gaps }),
   upcomingCalendarRows: () => mocks.upcoming,
 }));
 
@@ -68,6 +69,7 @@ afterEach(() => {
   mocks.lines = [];
   mocks.limitations = [];
   mocks.calendar = [];
+  mocks.gaps = [];
   mocks.upcoming = [];
 });
 
@@ -227,4 +229,20 @@ it("places marks by date, stacks marks on one day, and lists at most five events
   ]);
   expect(marks[0]?.style.top).not.toBe(marks[1]?.style.top);
   expect(within(tile).getByText("2026")).toBeInTheDocument();
+});
+
+it("says the recorded events could not be placed, not that none were recorded, when only gaps exist", () => {
+  mocks.gaps = [{ owner: "Legal & covenants", reason: "No date stated." }];
+  render(<DatesRow {...props} />);
+  const tile = screen.getByRole("region", { name: "Dates to watch" });
+  expect(
+    within(tile).getByText(
+      "No recorded event could be placed on the time axis. The issuer calendar lists the recorded gaps.",
+    ),
+  ).toBeVisible();
+  expect(within(tile).queryByText("No dated events were recorded in this run.")).toBeNull();
+  expect(within(tile).getByRole("link", { name: "Open issuer calendar" })).toHaveAttribute(
+    "href",
+    "#calendar",
+  );
 });

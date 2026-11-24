@@ -80,7 +80,8 @@ function Sentence({
 /** How many modules ran, and by name and state the ones that were not delivered. */
 function moduleCount(view: ReportView) {
   const total = String(view.modules.length);
-  const others = view.modules.filter(({ state }) => state !== "Delivered");
+  if (view.modules.length === 0) return "No module ran";
+  const others = view.modules.filter(({ state }) => !state.startsWith("Delivered"));
   if (others.length === 0) return `${total} · all delivered`;
   if (others.length === view.modules.length) return `${total} · none delivered`;
   const named = others.map(({ name, state }) => `${name} (${state.toLowerCase()})`);
@@ -104,6 +105,21 @@ function RunFacts({ run, view }: Pick<RowProps, "run" | "view">) {
         </div>
       ))}
     </dl>
+  );
+}
+
+/** A target-sized link inside a tile: 32 px, 44 px on a phone. */
+const LINK = "min-h-8 max-[480px]:min-h-11";
+
+/** A small tile's heading and its one trace control, as the mockup's 13 px tile head. */
+function Head({ children, trace }: { children: ReactNode; trace?: ReactNode }) {
+  return (
+    <div className="flex items-center justify-between gap-3">
+      <h3 className="flex items-center gap-2 text-small font-medium text-text-secondary">
+        {children}
+      </h3>
+      {trace}
+    </div>
   );
 }
 
@@ -131,7 +147,8 @@ function CallTile({ run, view }: Pick<RowProps, "run" | "view">) {
   const lead = view.lead;
   if (!lead)
     return (
-      <Tile span={8} label="The call" kicker="The call">
+      <Tile span={8} label="The call">
+        <Head>The call</Head>
         <GapNote>No credit view is available for this run.</GapNote>
         <RunFacts run={run} view={view} />
       </Tile>
@@ -148,6 +165,7 @@ function CallTile({ run, view }: Pick<RowProps, "run" | "view">) {
             {stance && <StanceChip stance={stance} large />}
           </div>
           <Button
+            className={LINK}
             color="link-gray"
             size="sm"
             href={`#modules/${lead.output.module}`}
@@ -272,7 +290,8 @@ function ConfidenceTile({ run, view }: Pick<RowProps, "run" | "view">) {
   const score = scoreOf(lead);
   if (!lead || !score)
     return (
-      <Tile span={12} label="Confidence" kicker="Confidence">
+      <Tile span={12} label="Confidence">
+        <Head>Confidence</Head>
         <GapNote>No confidence score was recorded for this credit view.</GapNote>
       </Tile>
     );
@@ -280,20 +299,19 @@ function ConfidenceTile({ run, view }: Pick<RowProps, "run" | "view">) {
   const second = scoreOf(selection);
   const caution = CAUTION_BANDS.test(score.band);
   return (
-    <Tile
-      span={12}
-      label="Confidence"
-      kicker="Confidence"
-      trace={
-        <Source
-          run={run}
-          entry={lead}
-          line={lead.output.confidenceTrace?.section?.line}
-          name="the confidence score"
-        />
-      }
-      className="gap-2"
-    >
+    <Tile span={12} label="Confidence" className="gap-2">
+      <Head
+        trace={
+          <Source
+            run={run}
+            entry={lead}
+            line={lead.output.confidenceTrace?.section?.line}
+            name="the confidence score"
+          />
+        }
+      >
+        Confidence
+      </Head>
       <p className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
         <Figure className="text-display font-medium">{score.value}</Figure>
         <span
@@ -323,19 +341,17 @@ function ClearanceTile({ run, view }: Pick<RowProps, "run" | "view">) {
   const name = moduleName("CP-5");
   if (!entry)
     return (
-      <Tile span={12} label="Evidence clearance" kicker="Evidence clearance">
+      <Tile span={12} label="Evidence clearance">
+        <Head>Evidence clearance</Head>
         <GapNote>{name} is not part of this run.</GapNote>
       </Tile>
     );
   const [first] = bottomLine(entry);
   return (
-    <Tile
-      span={12}
-      label="Evidence clearance"
-      kicker="Evidence clearance"
-      trace={<Source run={run} entry={entry} line={first?.line} name={name} />}
-      className="gap-3"
-    >
+    <Tile span={12} label="Evidence clearance" className="gap-3">
+      <Head trace={<Source run={run} entry={entry} line={first?.line} name={name} />}>
+        Evidence clearance
+      </Head>
       {moduleState(entry) !== "Delivered" && (
         <StatusBadge set="Module state" state={moduleState(entry)} />
       )}
@@ -347,7 +363,13 @@ function ClearanceTile({ run, view }: Pick<RowProps, "run" | "view">) {
       />
       <GapNote>Issue counts by severity and committee use are not typed in this run.</GapNote>
       <div>
-        <Button color="link-gray" size="sm" href="#modules/CP-5" iconTrailing={ArrowRight}>
+        <Button
+          className={LINK}
+          color="link-gray"
+          size="sm"
+          href="#modules/CP-5"
+          iconTrailing={ArrowRight}
+        >
           {name}
         </Button>
       </div>
@@ -358,7 +380,10 @@ function ClearanceTile({ run, view }: Pick<RowProps, "run" | "view">) {
 function ChangesBody({ snapshot, run, view }: RowProps): ReactNode {
   const change = comparisonForRun(run, snapshot.workspace.runs);
   const entry = entryOf(view, "CP-8");
-  if (!change?.pack || change.problem || !entry)
+  if (change?.problem) return <GapNote>{change.problem}</GapNote>;
+  if (change?.pack && !entry)
+    return <GapNote>The changes module&apos;s handoff is not part of this run.</GapNote>;
+  if (!change?.pack || !entry)
     return (
       <p className="text-small text-text-secondary">
         {change?.first_run
@@ -409,20 +434,20 @@ function StanceMove({ was, now }: { was: string; now: string }) {
 
 function ChangesTile(props: RowProps) {
   return (
-    <Tile
-      span={12}
-      label="Since the earlier run"
-      kicker={
-        <span className="flex items-center gap-2">
-          <ClockRewind aria-hidden="true" className="size-4" />
-          Since the earlier run
-        </span>
-      }
-      className="flex-1 gap-3"
-    >
+    <Tile span={12} label="Since the earlier run" className="flex-1 gap-3">
+      <Head>
+        <ClockRewind aria-hidden="true" className="size-4" />
+        Since the earlier run
+      </Head>
       <ChangesBody {...props} />
       <div>
-        <Button color="link-gray" size="sm" href="#changes" iconTrailing={ArrowRight}>
+        <Button
+          className={LINK}
+          color="link-gray"
+          size="sm"
+          href="#changes"
+          iconTrailing={ArrowRight}
+        >
           Open Changes
         </Button>
       </div>

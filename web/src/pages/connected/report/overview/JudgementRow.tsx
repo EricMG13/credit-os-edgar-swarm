@@ -74,17 +74,36 @@ function Findings({ run, entry }: Pick<RowProps, "run"> & { entry: OutputEntry }
   );
 }
 
-/** The counter-argument: the passage's opening paragraph, on its own surface so it reads as one. */
+/** One paragraph of a passage in a well, with its own trace control. */
+function PassageWell({ run, entry, passage, name }: Drawn & { name: string }) {
+  return (
+    <Well className="flex items-start justify-between gap-2 border border-info-edge bg-surface-card">
+      <Words
+        run={run}
+        entry={entry}
+        passage={passage}
+        className="text-small text-pretty text-text-primary"
+      />
+      <Source run={run} entry={entry} passage={passage} name={name} />
+    </Well>
+  );
+}
+
+/**
+ * The counter-argument, under the module's own heading and on its own surface: the opening
+ * paragraph as the quote, every further paragraph as written in its own well with its own trace.
+ */
 function Counter({
   run,
   entry,
-  first,
-}: Pick<RowProps, "run"> & { entry: OutputEntry; first?: Passage }) {
+  paragraphs,
+}: Pick<RowProps, "run"> & { entry: OutputEntry; paragraphs: Passage[] }) {
+  const [first, ...rest] = paragraphs;
   return (
     <Tile
       span={12}
-      label="Contrary evidence"
-      title="Contrary evidence"
+      label={CONTRARY}
+      title={CONTRARY}
       tone="counter"
       className="flex-1"
       trace={
@@ -103,51 +122,32 @@ function Counter({
       ) : (
         <GapNote>{MISSING}</GapNote>
       )}
+      {rest.map((passage, at) => (
+        <PassageWell
+          key={passage.line}
+          run={run}
+          entry={entry}
+          passage={passage}
+          name={`paragraph ${String(at + 2)} of the contrary evidence`}
+        />
+      ))}
     </Tile>
   );
 }
 
-const NOT_APART =
-  "Favourable and adverse outcomes are not written apart in this run; the passage is quoted above.";
+const OUTCOMES = "What would change the view";
+const NOT_TYPED =
+  "The two outcomes, resolved favourably and resolved adversely, are not typed in this run; the module's passage is quoted above as written.";
 
 /**
- * What would change the view: the passage's further paragraphs as the module wrote them, one well
- * each. Which outcome a paragraph names is the module's to type; it is never labelled here.
+ * What would change the view, as two outcomes: the module writes it inside the counter passage,
+ * so until it types the two outcomes apart this place is the designed gap. Which paragraph names
+ * which outcome is the module's to say, never the page's.
  */
-function Change({
-  run,
-  entry,
-  first,
-  rest,
-}: Pick<RowProps, "run"> & { entry: OutputEntry; first?: Passage; rest: Passage[] }) {
-  const [next] = rest;
+function Outcomes() {
   return (
-    <Tile
-      span={12}
-      label="What would change the view"
-      title="What would change the view"
-      trace={
-        next && <Source run={run} entry={entry} passage={next} name="what would change the view" />
-      }
-    >
-      {!first ? (
-        <GapNote>{MISSING}</GapNote>
-      ) : rest.length === 0 ? (
-        <GapNote>{NOT_APART}</GapNote>
-      ) : (
-        <div className="grid grid-cols-[repeat(auto-fit,minmax(min(200px,100%),1fr))] gap-2">
-          {rest.map((passage) => (
-            <Well key={passage.line} className="border border-border-hairline">
-              <Words
-                run={run}
-                entry={entry}
-                passage={passage}
-                className="text-small text-pretty text-text-primary"
-              />
-            </Well>
-          ))}
-        </div>
-      )}
+    <Tile span={12} label={OUTCOMES} title={OUTCOMES}>
+      <GapNote>{NOT_TYPED}</GapNote>
     </Tile>
   );
 }
@@ -158,11 +158,10 @@ function Change({
  * call tile already says there is none.
  */
 function CounterColumn({ run, entry }: Pick<RowProps, "run"> & { entry: OutputEntry }) {
-  const [first, ...rest] = passageParagraphs(entry, CONTRARY);
   return (
     <div className="flex min-w-0 flex-col gap-4 lg:col-span-5">
-      <Counter run={run} entry={entry} first={first} />
-      <Change run={run} entry={entry} first={first} rest={rest} />
+      <Counter run={run} entry={entry} paragraphs={passageParagraphs(entry, CONTRARY)} />
+      <Outcomes />
     </div>
   );
 }

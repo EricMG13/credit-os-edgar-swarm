@@ -2,13 +2,14 @@ import { comparisonForRun, type PublishedRun, type Snapshot } from "../../publis
 import { actionBias, buildReportView } from "../../reportView";
 import { entryOf } from "./read";
 
-const VERDICT = /^(better|worse|about the same)(?=[:;,.—–]|\s+since\b)/i;
+const VERDICT = /^(better|worse|about the same)(?=\s*[:;.—–]|\s+since\b)/i;
 const WORDS = { better: "Better", worse: "Worse", "about the same": "About the same" } as const;
 export type Verdict = (typeof WORDS)[keyof typeof WORDS];
 
 /**
  * The comparison's verdict when the changes module opens its bottom line with it, as its method
- * asks: "Better", "Worse" or "About the same", followed by punctuation or "since". Anything else
+ * asks: "Better", "Worse" or "About the same", then a colon, semicolon, full stop, dash or "since".
+ * A comma is not enough ("Better, worse or about the same cannot be judged"). Anything else
  * is no verdict; it is never inferred from the rest of the sentence.
  */
 export function changeVerdict(text: string | null | undefined): Verdict | null {

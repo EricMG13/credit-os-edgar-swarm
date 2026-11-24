@@ -259,14 +259,16 @@ it("numbers the lead's findings in its own words and links a paragraph that cite
   expect(
     within(findings).getByRole("link", { name: "Read this passage in Evidence" }),
   ).toBeVisible();
-  const counter = screen.getByRole("region", { name: "Contrary evidence" });
+  const counter = screen.getByRole("region", {
+    name: "Contrary evidence and what would change the view",
+  });
   expect(counter).toHaveClass("bg-info-fill");
   expect(within(counter).getByText("Cash generation improved.")).toBeVisible();
   const change = screen.getByRole("region", { name: "What would change the view" });
   expect(change).not.toHaveClass("bg-info-fill");
   expect(
     within(change).getByText(
-      "Favourable and adverse outcomes are not written apart in this run; the passage is quoted above.",
+      "The two outcomes, resolved favourably and resolved adversely, are not typed in this run; the module's passage is quoted above as written.",
     ),
   ).toBeVisible();
 });
@@ -278,37 +280,42 @@ it("draws a passage the lead did not write as a gap, and nothing without a credi
   );
   expect(
     screen.getAllByText("Not established for this run. The module's handoff has no such passage."),
-  ).toHaveLength(3);
+  ).toHaveLength(2);
+  expect(
+    screen.getByText(/The two outcomes, resolved favourably and resolved adversely/),
+  ).toBeVisible();
   unmount();
   const { container } = render(<JudgementRow snapshot={snapshot} run={run} view={view([])} />);
   expect(container).toBeEmptyDOMElement();
 });
 
-it("draws the further paragraphs of the counter passage as written under what would change the view", () => {
+it("keeps the counter passage whole under its own heading, one trace per paragraph, and never splits it by position", () => {
   const lead = entry("CP-6", [
     text(
       "Contrary evidence and what would change the view",
       "Cash generation improved.",
+      "Liquidity is thin.",
       "A refinancing of the 2028 notes would soften the view.",
-      "A second dividend would harden it.",
     ),
   ]);
   render(<JudgementRow snapshot={snapshot} run={run} view={view([lead], lead)} />);
-  const counter = screen.getByRole("region", { name: "Contrary evidence" });
+  const counter = screen.getByRole("region", {
+    name: "Contrary evidence and what would change the view",
+  });
   expect(within(counter).getByText("Cash generation improved.")).toBeVisible();
-  expect(within(counter).queryByText(/refinancing/)).toBeNull();
-  const change = screen.getByRole("region", { name: "What would change the view" });
+  expect(within(counter).getByText("Liquidity is thin.")).toBeVisible();
   expect(
-    within(change).getByText("A refinancing of the 2028 notes would soften the view."),
+    within(counter).getByText("A refinancing of the 2028 notes would soften the view."),
   ).toBeVisible();
-  expect(within(change).getByText("A second dividend would harden it.")).toBeVisible();
-  expect(within(change).queryByText(/resolved favourably|resolved adversely/i)).toBeNull();
-  expect(within(change).getAllByRole("link", { name: /^Source for / })).toHaveLength(1);
+  expect(within(counter).getAllByRole("link", { name: /^Source for / })).toHaveLength(3);
+  const outcomes = screen.getByRole("region", { name: "What would change the view" });
+  expect(within(outcomes).queryByText(/Liquidity is thin|refinancing/)).toBeNull();
+  expect(within(outcomes).getByText(/are not typed in this run/)).toBeVisible();
 });
 
 it("names the modules that were not delivered in the run facts, by name and state", () => {
   const lead = committee();
-  const states = { "CP-6": "Delivered", "CP-4": "Not assessable", "CP-1C": "Limited" };
+  const states = { "CP-6": "Delivered with gaps", "CP-4": "Not assessable", "CP-1C": "Not run" };
   const modules = Object.entries(states).map(([id, state]) => ({
     id,
     name: { "CP-6": "Committee decision", "CP-4": "Legal & covenants", "CP-1C": "Peer benchmark" }[
@@ -326,7 +333,7 @@ it("names the modules that were not delivered in the run facts, by name and stat
   );
   expect(
     screen.getByText(
-      "3 · all delivered except Legal & covenants (not assessable), Peer benchmark (limited)",
+      "3 · all delivered except Legal & covenants (not assessable), Peer benchmark (not run)",
     ),
   ).toBeVisible();
 });
@@ -419,4 +426,53 @@ it("draws no verdict word and no stance chips that the handoffs do not state", (
   expect(within(tile).queryByText(/^(Better|Worse|About the same)$/)).toBeNull();
   expect(within(tile).queryByText(/Stance was/)).toBeNull();
   expect(within(tile).getByText("Leverage rose while cover held.")).toBeVisible();
+});
+
+it("counts a module delivered with gaps as delivered, and says when no module ran", () => {
+  const lead = committee();
+  const one = (state: string) => ({ id: "CP-6", name: "Committee decision", state, outputs: [] });
+  const { unmount } = render(
+    <CallRow
+      snapshot={snapshot}
+      run={run}
+      view={
+        { ...view([lead], lead), modules: [one("Delivered with gaps")] } as unknown as ReportView
+      }
+    />,
+  );
+  expect(screen.getByText("1 · all delivered")).toBeVisible();
+  unmount();
+  render(
+    <CallRow
+      snapshot={snapshot}
+      run={run}
+      view={{ ...view([lead], lead), modules: [] } as unknown as ReportView}
+    />,
+  );
+  expect(screen.getByText("No module ran")).toBeVisible();
+  expect(screen.queryByText(/0 · all delivered/)).toBeNull();
+});
+
+it("gives the reason in place when the comparison does not stand", () => {
+  const mismatched = {
+    ...run,
+    changes: {
+      pack: null,
+      problem: "The comparison does not match the listed issuer, dates and pathway.",
+    },
+  } as unknown as PublishedRun;
+  render(<CallRow snapshot={snapshot} run={mismatched} view={view([])} />);
+  const tile = screen.getByRole("region", { name: "Since the earlier run" });
+  expect(
+    within(tile).getByText("The comparison does not match the listed issuer, dates and pathway."),
+  ).toBeVisible();
+});
+
+it("heads the confidence, clearance and since-earlier tiles with real headings", () => {
+  const lead = committee();
+  render(<CallRow snapshot={snapshot} run={run} view={view([lead], lead)} />);
+  for (const name of ["Confidence", "Evidence clearance", "Since the earlier run"])
+    expect(
+      within(screen.getByRole("region", { name })).getByRole("heading", { level: 3, name }),
+    ).toBeVisible();
 });
