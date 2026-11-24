@@ -229,3 +229,35 @@ it("shows an empty edge cell in the table view as missing, not as a crash", () =
   fireEvent.click(within(tile).getByRole("button", { name: "Table" }));
   expect(within(tile).getByRole("row", { name: /Parent/ })).toBeVisible();
 });
+
+it("keeps two nodes apart when both read In Evidence on the page", () => {
+  render(
+    <NodeList
+      label="Map"
+      edges={[
+        {
+          key: "Plan p.3",
+          from: "In Evidence",
+          relationship: "Funds",
+          type: "Other stated",
+          to: "Issuer",
+          line: 4,
+        },
+        {
+          key: "Memo p.9",
+          from: "In Evidence",
+          relationship: "Guarantees",
+          type: "Guarantee",
+          to: "Notes",
+          line: 5,
+        },
+      ]}
+    />,
+  );
+  const map = screen.getByRole("list", { name: "Map" });
+  const nodes = within(map)
+    .getAllByRole("listitem")
+    .filter((item) => item.parentElement === map);
+  expect(nodes).toHaveLength(2);
+  expect(within(map).queryByText(/p\.3|p\.9/)).toBeNull();
+});

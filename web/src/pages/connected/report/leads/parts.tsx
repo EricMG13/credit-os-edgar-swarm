@@ -198,17 +198,18 @@ export function NodeList({
   edges: readonly Edge[];
   href?: (line: number) => string;
 }) {
-  const nodes = [...new Set(edges.map((edge) => edge.from))];
+  const nodeOf = (edge: Edge) => edge.key ?? edge.from;
+  const nodes = [...new Map(edges.map((edge) => [nodeOf(edge), edge.from])).entries()];
   return (
     <ul aria-label={label} className="flex min-w-0 flex-col gap-3">
-      {nodes.map((node) => (
+      {nodes.map(([node, name]) => (
         <li key={node} className="flex min-w-0 flex-col gap-2">
           <h4 className="w-fit max-w-full rounded-ds-sm border border-border-control bg-surface-card px-3 py-1.5 text-small font-medium wrap-anywhere text-text-primary">
-            {node}
+            {name}
           </h4>
           <ul className="ml-4 flex flex-col gap-2 border-l border-connector pl-4">
             {edges
-              .filter((edge) => edge.from === node)
+              .filter((edge) => nodeOf(edge) === node)
               .map((edge) => (
                 <li key={edge.line} className="relative flex min-w-0 flex-col gap-0.5">
                   <span

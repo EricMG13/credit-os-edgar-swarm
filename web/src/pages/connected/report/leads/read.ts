@@ -148,7 +148,15 @@ export function chartsStartingWith(entry: OutputEntry, prefix: string) {
     });
 }
 
-export type Edge = { from: string; relationship: string; type: string; to: string; line: number };
+export type Edge = {
+  /** The source node as the module wrote it: tells nodes apart when two read the same on the page. */
+  key?: string;
+  from: string;
+  relationship: string;
+  type: string;
+  to: string;
+  line: number;
+};
 export type MapRead =
   | { state: "ready"; edges: Edge[]; line: number }
   | { state: "gap"; reason: string; line?: number }
@@ -172,6 +180,7 @@ export function mapOf(entry: OutputEntry, name: string): MapRead {
     [from, relationship, type, to].every(stated)
       ? [
           {
+            key: from,
             from: readerCell(from),
             relationship: readerCell(relationship),
             type: readerCell(type),
