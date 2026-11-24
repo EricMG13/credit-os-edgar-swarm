@@ -334,7 +334,7 @@ export function ModuleNav({
 }
 
 const STAGE_LINK =
-  "flex min-h-8 w-full items-center gap-2 rounded-ds-md px-2 py-1 text-small text-text-secondary outline-hidden hover:bg-surface-subtle focus-visible:ring-2 focus-visible:ring-brand max-[480px]:min-h-11";
+  "flex min-h-8 w-full items-center gap-2 rounded-ds-md px-2 py-1 text-[13px] leading-[18px] text-text-secondary outline-hidden hover:bg-surface-subtle focus-visible:ring-2 focus-visible:ring-brand max-[480px]:min-h-11";
 const STAGE_LINK_CURRENT = "bg-surface-selected text-text-link hover:bg-surface-selected";
 const DESKTOP = "(min-width: 1024px)";
 
@@ -391,14 +391,60 @@ function StageLink({
   );
 }
 
+type PageSection = { id: string; label: string };
+
+function goToSection(id: string): void {
+  const target = document.getElementById(id);
+  target?.focus({ preventScroll: true });
+  if (target && typeof target.scrollIntoView === "function")
+    target.scrollIntoView({ block: "start" });
+}
+
+function SectionList({
+  sections,
+  onPressed,
+}: {
+  sections: readonly PageSection[];
+  onPressed: () => void;
+}) {
+  const [active, setActive] = useState<string | null>(null);
+  return (
+    <ul aria-label="On this page" className="mt-0.5 mb-1 ml-5 flex flex-col">
+      {sections.map((section) => (
+        <li key={section.id}>
+          <button
+            type="button"
+            aria-current={section.id === active ? "location" : undefined}
+            onClick={() => {
+              setActive(section.id);
+              goToSection(section.id);
+              onPressed();
+            }}
+            className={cx(
+              "flex min-h-8 w-full cursor-pointer items-center rounded-ds-md px-2 text-left text-[13px] leading-[18px] text-text-secondary outline-hidden hover:bg-surface-subtle focus-visible:ring-2 focus-visible:ring-brand max-[480px]:min-h-11",
+              section.id === active && "font-medium text-text-link",
+            )}
+          >
+            {section.label}
+          </button>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 function StageGroups({
   modules,
   current,
   hrefFor,
+  sections,
+  onSection,
 }: {
   modules: readonly NavModule[];
   current: string;
   hrefFor: (id: string) => string;
+  sections: readonly PageSection[];
+  onSection: () => void;
 }) {
   return (
     <div className="flex flex-col gap-3">
@@ -421,12 +467,45 @@ function StageGroups({
                   current={module.id === current}
                   href={hrefFor(module.id)}
                 />
+                {module.id === current && sections.length > 0 ? (
+                  <SectionList sections={sections} onPressed={onSection} />
+                ) : null}
               </li>
             ))}
           </ul>
         </div>
       ))}
     </div>
+  );
+}
+
+function Legend() {
+  const item = "inline-flex items-center gap-1.5";
+  return (
+    <ul
+      aria-label="Legend"
+      className="mx-2 flex flex-wrap gap-x-3 gap-y-1.5 border-t border-border-subtle pt-2.5 text-caption text-text-secondary"
+    >
+      <li className={item}>
+        <span aria-hidden="true" className={cx("flex", MARK.Delivered)}>
+          <StatusShape shape={STATUS_SETS["Module state"].Delivered.shape} />
+        </span>
+        Delivered
+      </li>
+      <li className={item}>
+        <span aria-hidden="true" className="flex">
+          <SlashCircle />
+        </span>
+        Not assessable
+      </li>
+      <li className={item}>
+        <span
+          aria-hidden="true"
+          className="h-2.5 w-3 rounded-ds-xs border border-border-subtle bg-surface-selected"
+        />
+        This page
+      </li>
+    </ul>
   );
 }
 
@@ -456,11 +535,13 @@ export function StageNav({
   modules,
   current,
   hrefFor,
+  sections = [],
   className,
 }: {
   modules: readonly NavModule[];
   current: string;
   hrefFor: (id: string) => string;
+  sections?: readonly PageSection[];
   className?: string;
 }) {
   const desktop = useDesktop();
@@ -493,13 +574,24 @@ export function StageNav({
             <h2 className="text-small font-medium text-text-primary">Modules</h2>
             <p className="text-caption text-text-tertiary">{count}</p>
             {blocked > 0 ? (
-              <p className="flex items-center gap-1 text-caption text-warning-text">
-                <SlashCircle />
-                {String(blocked)} not assessable
+              <p>
+                <span className="inline-flex h-5 items-center gap-1 rounded-ds-xs border border-warning-edge bg-warning-fill px-1.5 text-caption font-medium text-warning-text">
+                  <SlashCircle />
+                  {String(blocked)} not assessable
+                </span>
               </p>
             ) : null}
           </header>
-          <StageGroups modules={modules} current={current} hrefFor={hrefFor} />
+          <StageGroups
+            modules={modules}
+            current={current}
+            hrefFor={hrefFor}
+            sections={sections}
+            onSection={() => {
+              if (!desktop) setOpen(false);
+            }}
+          />
+          <Legend />
         </div>
       </details>
     </nav>

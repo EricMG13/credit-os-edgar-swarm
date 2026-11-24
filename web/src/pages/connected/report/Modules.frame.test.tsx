@@ -85,16 +85,23 @@ const written: Section[] = [
   section("Limitations", 3, 30, [text(31, "Only one period was supplied.")]),
 ];
 
-it("draws the frame in rank order: header, findings beside the counter, limitations, records, next", () => {
+it("draws the frame in the mockup's order: header, findings beside the counter, records, limitations beside next", () => {
   page(written, { charts: [{ table: 21, title: "Leverage", kind: "line" }] });
   const order = [
     screen.getByRole("heading", { level: 2, name: "Fundamental credit" }),
     screen.getByRole("region", { name: "Key findings" }),
     screen.getByRole("region", { name: "Contrary evidence and what would change the view" }),
-    screen.getByRole("region", { name: "Limitations of this module" }),
     screen.getByRole("heading", { name: "Statements and records" }),
+    screen.getByRole("region", { name: "Limitations of this module" }),
     screen.getByRole("link", { name: "Next module: Committee decision" }),
   ];
+  // The last row: limitations in eight columns, the next module in four.
+  expect(screen.getByRole("region", { name: "Limitations of this module" })).toHaveClass(
+    "lg:col-span-8",
+  );
+  expect(screen.getByRole("link", { name: "Next module: Committee decision" })).toHaveClass(
+    "lg:col-span-4",
+  );
   for (const [at, item] of order.entries())
     if (at)
       expect(order[at - 1]?.compareDocumentPosition(item)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
@@ -123,7 +130,11 @@ it("draws no generic chart card: a chart's table is reachable in the records reg
   fireEvent.click(screen.getByRole("button", { name: /^Chart tables/ }));
   expect(screen.getByRole("heading", { level: 4, name: "Leverage" })).toBeVisible();
   expect(screen.getByText("4.2")).toBeVisible();
-  fireEvent.click(screen.getByRole("button", { name: /^Statements/ }));
+  fireEvent.click(
+    within(screen.getByRole("group", { name: "Record kind" })).getByRole("button", {
+      name: /^Statements/,
+    }),
+  );
   expect(screen.getByText("4.2x")).toBeVisible();
 });
 

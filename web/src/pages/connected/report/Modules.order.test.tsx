@@ -169,7 +169,9 @@ it("draws no chart card for a chart descriptor and keeps its table under Chart t
     LEVERAGE,
   ]);
   expect(screen.queryByRole("heading", { name: "Leverage" })).toBeNull();
-  expect(screen.queryByRole("list", { name: "On this page" })).toBeNull();
+  // The navigator lists the page's sections, never a chart that is not drawn.
+  const sections = within(screen.getByRole("list", { name: "On this page" }));
+  expect(sections.queryByRole("button", { name: "Leverage" })).toBeNull();
   const records = within(screen.getByRole("region", { name: "Statements and records" }));
   fireEvent.click(records.getByRole("button", { name: "Show records" }));
   const kinds = within(records.getByRole("group", { name: "Record kind" }));

@@ -1,11 +1,9 @@
 import { createElement, useState } from "react";
 import { Button } from "@/components/base/buttons/button";
-import { StatsStrip, type Stat } from "@/components/kit/StatsStrip";
 import { StageNav } from "@/pages/library/parts/ModuleNav";
 import { RunContext } from "@/pages/library/parts/RunContext";
 import { TraceDrawer } from "@/pages/library/parts/TraceDrawer";
 import type { Trace } from "@/pages/library/slice";
-import { card, heading } from "../layout";
 import { sectionTraces, traceForConfidence, traceForLine } from "../ReportContent";
 import {
   evidenceHref,
@@ -14,34 +12,26 @@ import {
   type PublishedRun,
   type Snapshot,
 } from "../publishedReport";
-import {
-  foundationMetrics,
-  moduleState,
-  runMoneyUnit,
-  traceKey,
-  type ReportView,
-} from "../reportView";
-import { changeText, tone } from "../signal";
-import { LegacyVisuals } from "../visuals";
-import { BreakPoints, breakPointView } from "./BreakPoints";
+import { moduleState, traceKey, type ReportView } from "../reportView";
+import { CompanyProfile } from "./CompanyProfile";
 import { ModuleConfidence } from "./Confidence";
-import { Downside, downsideView } from "./Downside";
 import { leadFor } from "./leads";
-import { MacroSensitivity, macroView } from "./MacroSensitivity";
-import { moduleFrame } from "./moduleFrame";
+import { framed, ModuleFigures, moduleFigures, type DrawingLead } from "./ModuleFigures";
+import { CONTRARY, KEY_FINDINGS, moduleFrame } from "./moduleFrame";
 import {
-  HeldTrace,
+  ANCHOR,
   ModuleFindings,
   ModuleHeader,
   ModuleLimitations,
   NextModule,
-  OtherSections,
   chartGaps,
   type FrameModule,
 } from "./ModuleFrame";
+import { ProseTiles } from "./ModuleProse";
 import { ModuleRecords } from "./ModuleRecords";
-import { Bento } from "./overview/Tile";
-import { Securities, securityView } from "./Securities";
+import { ModuleStats } from "./ModuleStats";
+import { moduleRecords } from "./moduleRecords";
+import { Bento, GapNote, Tile } from "./overview/Tile";
 import { byStage } from "./stages";
 
 type ModuleItem = ReportView["modules"][number];
@@ -58,81 +48,6 @@ function defaultOutput(outputs: OutputEntry[]) {
 function moduleOutput(current: ModuleItem, output: string | undefined) {
   if (output === undefined) return defaultOutput(current.outputs);
   return /^(?:0|[1-9]\d*)$/.test(output) ? current.outputs[Number(output)] : undefined;
-}
-
-/** The module's own typed figures, drawn in the lead's place until a lead exists. */
-function moduleFigures(entry: OutputEntry, run: PublishedRun) {
-  const downside = downsideView(entry);
-  const breaks = breakPointView(entry);
-  const macro = macroView(entry);
-  const securities = securityView(entry, run.asOf);
-  const tableLines = [securities?.summaryLine, securities?.outcomes?.line].filter(
-    (line) => line !== undefined,
-  );
-  return { downside, breaks, macro, securities, tableLines };
-}
-
-function TypedFigures({
-  entry,
-  run,
-  view,
-  figures,
-}: {
-  entry: OutputEntry;
-  run: PublishedRun;
-  view: ReportView;
-  figures: ReturnType<typeof moduleFigures>;
-}) {
-  const { downside, breaks, macro, securities } = figures;
-  const href = (line: number) => evidencePath(run.folder, entry, line);
-  // Event lanes and relationship maps are the module's own drawings; chart descriptors are not.
-  const drawings = { ...entry.output, charts: [], chartGaps: [] };
-  const hasDrawings = [entry.output.events, entry.output.maps].some((items) => items?.length);
-  if (!downside && !breaks && !macro && !securities && !hasDrawings) return null;
-  return (
-    <div className="grid min-w-0 gap-4 lg:col-span-12">
-      {downside && <Downside data={downside} href={href} />}
-      {breaks && <BreakPoints data={breaks} href={href} />}
-      {macro && <MacroSensitivity data={macro} href={href} />}
-      {securities && (
-        <Securities data={securities} href={href} runUnit={runMoneyUnit(view.catalogue)} />
-      )}
-      {hasDrawings && (
-        <LegacyVisuals
-          output={drawings}
-          sections={entry.sections}
-          cards
-          headingLevel="h3"
-          evidenceHref={href}
-        />
-      )}
-    </div>
-  );
-}
-
-/** The CP-1 headline figures as a stats strip: values as written, the change against a year earlier. */
-function headlineStats(entry: OutputEntry, view: ReportView): Stat[] {
-  return foundationMetrics(entry, view.catalogue).map(({ key, metric, line }) => {
-    const change = metric.yearChange;
-    const direction = change ? tone(change.key, change.change) : "none";
-    return {
-      label: metric.label,
-      value: metric.value?.kind === "value" ? metric.value.text : null,
-      ...(metric.value?.kind === "gap" && { gap: metric.value.reason }),
-      ...(change && { prior: change.prior, delta: changeText(change.change, change.unit) }),
-      ...((direction === "better" || direction === "worse") && { tone: direction }),
-      mark: metric.note ? (
-        <span className="text-caption text-text-tertiary">{metric.note}</span>
-      ) : undefined,
-      trace: (
-        <HeldTrace
-          trace={line === undefined ? "" : traceKey(entry, line)}
-          label={`Show sources for ${metric.label}`}
-        />
-      ),
-      key,
-    };
-  });
 }
 
 function pageTraces(snapshot: Snapshot, entry: OutputEntry, index: number) {
@@ -153,16 +68,66 @@ function nextModule(view: ReportView, id: string): FrameModule | undefined {
   return order[order.findIndex((item) => item.id === id) + 1];
 }
 
+/** Everything the page draws for one module output, read once per render. */
+function pageOf(run: PublishedRun, entry: OutputEntry) {
+  const figures = moduleFigures(entry, run);
+  const Lead = leadFor(entry.output.module) as DrawingLead | undefined;
+  const kinds = framed(Lead);
+  const frame = moduleFrame(entry, {
+    figureTableLines: figures.tableLines,
+    typedTables: kinds.has("figures"),
+  });
+  const gaps = chartGaps(entry);
+  const limitations = Boolean(
+    frame.limitations || frame.missing.includes("Limitations") || gaps.length,
+  );
+  const records = moduleRecords(entry);
+  const hasRecords = records.tables.length > 0 || records.evidence.length > 0;
+  return { figures, Lead, kinds, frame, gaps, limitations, hasRecords };
+}
+
+type Page = ReturnType<typeof pageOf>;
+
+/** The page's sections the navigator lists under this module, in page order. */
+function pageSections({ frame, limitations, hasRecords }: Page) {
+  const has = (passage: string, section: unknown) =>
+    Boolean(section) || frame.missing.includes(passage);
+  return [
+    ...(frame.bottomLine ? [{ id: ANCHOR.bottomLine, label: "Bottom line" }] : []),
+    ...(has(KEY_FINDINGS, frame.keyFindings) ? [{ id: ANCHOR.findings, label: KEY_FINDINGS }] : []),
+    ...(has(CONTRARY, frame.contrary) ? [{ id: ANCHOR.contrary, label: "Contrary evidence" }] : []),
+    ...frame.prose.map(({ section, title }) => ({
+      id: ANCHOR.section(section.line),
+      label: title,
+    })),
+    ...(hasRecords ? [{ id: ANCHOR.records, label: "Statements and records" }] : []),
+    ...(limitations ? [{ id: ANCHOR.limitations, label: "Limitations" }] : []),
+  ];
+}
+
 function EmptyHandoff({ run, entry }: { run: PublishedRun; entry: OutputEntry }) {
   return (
-    <p className="text-text-secondary lg:col-span-12">
-      {entry.output.parseError
-        ? "This handoff could not be read into sections."
-        : "This handoff has no findings in this report format."}{" "}
-      <Button href={evidencePath(run.folder, entry)} color="link-gray" size="sm">
-        Open Evidence
-      </Button>
-    </p>
+    <Tile span={12} label="Handoff">
+      <p className="text-text-secondary">
+        {entry.output.parseError
+          ? "This handoff could not be read into sections."
+          : "This handoff has no findings in this report format."}{" "}
+        <Button href={evidencePath(run.folder, entry)} color="link-gray" size="sm">
+          Open Evidence
+        </Button>
+      </p>
+    </Tile>
+  );
+}
+
+function isEmpty({ frame }: Page) {
+  return (
+    !frame.bottomLine &&
+    !frame.keyFindings &&
+    !frame.contrary &&
+    !frame.limitations &&
+    !frame.prose.length &&
+    !frame.missing.length
   );
 }
 
@@ -172,29 +137,21 @@ function ModulePage({
   view,
   current,
   entry,
+  page,
 }: {
   snapshot: Snapshot;
   run: PublishedRun;
   view: ReportView;
   current: ModuleItem;
   entry: OutputEntry;
+  page: Page;
 }) {
   const [open, setOpen] = useState<string | null>(null);
+  const { figures, Lead, kinds, frame, gaps, limitations } = page;
   const index = view.entries.indexOf(entry);
-  const figures = moduleFigures(entry, run);
-  const frame = moduleFrame(entry, figures.tableLines);
-  const Lead = leadFor(current.id);
   const traces = pageTraces(snapshot, entry, index);
-  const stats = headlineStats(entry, view);
-  const gaps = chartGaps(entry);
   const module = { ...current, state: moduleState(entry) };
-  const empty =
-    !frame.bottomLine &&
-    !frame.keyFindings &&
-    !frame.contrary &&
-    !frame.limitations &&
-    !frame.others.length &&
-    !frame.missing.length;
+  const next = nextModule(view, current.id);
   const active = open === null ? undefined : traces[open];
   return (
     <RunContext.Provider value={{ traces, open: setOpen }}>
@@ -205,6 +162,12 @@ function ModulePage({
           bottomLine={frame.bottomLine}
           owed={frame.missing.includes("Bottom line")}
           folder={run.folder}
+          basis={frame.basis}
+          about={
+            current.id === "CP-1A" ? (
+              <CompanyProfile entry={entry} folder={run.folder} />
+            ) : undefined
+          }
           confidence={
             <ModuleConfidence
               confidence={entry.output.confidence}
@@ -212,20 +175,22 @@ function ModulePage({
             />
           }
         />
-        {empty && <EmptyHandoff run={run} entry={entry} />}
-        {stats.length > 0 && (
-          <div className="min-w-0 lg:col-span-12">
-            <StatsStrip label="Headline figures" stats={stats} />
-          </div>
-        )}
-        {Lead ? (
+        {isEmpty(page) && <EmptyHandoff run={run} entry={entry} />}
+        <ModuleStats entry={entry} catalogue={view.catalogue} folder={run.folder} />
+        {Lead && (
           <div className="min-w-0 lg:col-span-12">
             {/* leadFor returns a component defined once at module scope, never one made here. */}
             {createElement(Lead, { snapshot, run, view, entry, entryIndex: index })}
           </div>
-        ) : (
-          <TypedFigures entry={entry} run={run} view={view} figures={figures} />
         )}
+        <ModuleFigures
+          entry={entry}
+          run={run}
+          view={view}
+          figures={figures}
+          kinds={kinds}
+          gaps={frame.drawingGaps}
+        />
         <ModuleFindings
           keyFindings={frame.keyFindings}
           contrary={frame.contrary}
@@ -233,23 +198,17 @@ function ModulePage({
           entry={entry}
           folder={run.folder}
         />
-        <OtherSections
-          sections={frame.others}
-          entry={entry}
-          folder={run.folder}
-          typedTables={!Lead}
-        />
+        <ProseTiles prose={frame.prose} entry={entry} folder={run.folder} />
+        <ModuleRecords run={run} entry={entry} anchorId={ANCHOR.records} />
         <ModuleLimitations
           section={frame.limitations}
           owed={frame.missing.includes("Limitations")}
           gaps={gaps}
           entry={entry}
           folder={run.folder}
+          span={next ? 8 : 12}
         />
-        <div className="min-w-0 lg:col-span-12">
-          <ModuleRecords run={run} entry={entry} />
-        </div>
-        <NextModule next={nextModule(view, current.id)} href={moduleHref} />
+        <NextModule next={next} href={moduleHref} wide={!limitations} />
       </Bento>
       {active && (
         <TraceDrawer
@@ -285,21 +244,21 @@ function SavedOutputs({ current, entry }: { current: ModuleItem; entry?: OutputE
   );
 }
 
-function UnavailableHandoff({ current }: { current: ModuleItem }) {
+function UnavailableHandoff({ current, next }: { current: ModuleItem; next?: FrameModule }) {
   const count = current.outputs.length;
   return (
     <Bento>
       <ModuleHeader module={current} bottomLine={null} owed={false} folder="" />
-      <section className={`${card} lg:col-span-12`}>
-        <h3 className={heading}>Handoff unavailable</h3>
-        <p>
+      <Tile span={next ? 8 : 12} label="Handoff unavailable" title="Handoff unavailable">
+        <GapNote>
           {count > 1
             ? "Choose a saved output above."
             : count === 1
               ? "Choose this module again under Modules in this run."
               : "No output was saved for this module."}
-        </p>
-      </section>
+        </GapNote>
+      </Tile>
+      <NextModule next={next} href={moduleHref} wide={false} />
     </Bento>
   );
 }
@@ -321,8 +280,16 @@ export function Modules({
     module === undefined
       ? (view.modules.find(({ id }) => id === "CP-1") ?? view.modules[0])
       : view.modules.find(({ id }) => id === module);
-  if (!current) return <p className={card}>This module is unavailable in the published run.</p>;
+  if (!current)
+    return (
+      <Bento>
+        <Tile span={12} label="Module unavailable">
+          <GapNote>This module is unavailable in the published run.</GapNote>
+        </Tile>
+      </Bento>
+    );
   const entry = moduleOutput(current, output);
+  const page = entry && pageOf(run, entry);
   return (
     <div className="grid min-w-0 gap-4 lg:grid-cols-[232px_minmax(0,1fr)]">
       <StageNav
@@ -330,11 +297,12 @@ export function Modules({
         modules={view.modules}
         current={current.id}
         hrefFor={moduleHref}
+        sections={page ? pageSections(page) : []}
         className="self-start"
       />
       <div className="flex min-w-0 flex-col gap-4">
         <SavedOutputs current={current} entry={entry} />
-        {entry ? (
+        {entry && page ? (
           <ModulePage
             key={entry.output.id}
             snapshot={snapshot}
@@ -342,9 +310,10 @@ export function Modules({
             view={view}
             current={current}
             entry={entry}
+            page={page}
           />
         ) : (
-          <UnavailableHandoff current={current} />
+          <UnavailableHandoff current={current} next={nextModule(view, current.id)} />
         )}
       </div>
     </div>

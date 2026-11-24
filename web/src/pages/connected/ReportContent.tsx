@@ -358,11 +358,66 @@ export function traceForConfidence(snapshot: Snapshot, entry: OutputEntry): Trac
 
 type Amounts = {
   columns: ReadonlySet<number>;
-  draw: (column: number, cell: string) => ReactNode | undefined;
+  /** `line` is the row's line in the handoff, for a row that draws no bar. */
+  draw: (column: number, cell: string, line: number) => ReactNode | undefined;
 };
 
-const amountCell = (amounts: Amounts | undefined, column: number, cell: string) =>
-  amounts?.columns.has(column) ? amounts.draw(column, cell) : undefined;
+/** Opt-in drawing of a records table; a caller that passes none of it gets the table as before. */
+type TableForm = {
+  /** The columns drawn, in order; every displayed column when not given. */
+  columns?: readonly number[];
+  /** Columns of numerals: mono, tabular and right-aligned, their header too. */
+  numeric?: ReadonlySet<number>;
+  /** A named, focusable scroll region at any column count, not only at five or more. */
+  region?: boolean;
+  /** Room for a bar column's bar beside its figure. */
+  wideBars?: boolean;
+  /** A cell's own drawing (a stated gap as a chip); undefined falls back to the text. */
+  drawCell?: (column: number, cell: string) => ReactNode | undefined;
+};
+
+const NUMERALS = " text-right font-mono tabular-nums";
+
+const amountCell = (amounts: Amounts | undefined, column: number, cell: string, line: number) =>
+  amounts?.columns.has(column) ? amounts.draw(column, cell, line) : undefined;
+
+/** A cell as the reader sees it: a reference as an Evidence link, an amount, the text, or blank. */
+function cellContent({
+  cell,
+  column,
+  line,
+  evidence,
+  sourceHref,
+  amounts,
+  form,
+  shown,
+  emptyLabel,
+}: {
+  cell: string;
+  column: number;
+  line: number;
+  evidence: boolean;
+  sourceHref: string | undefined;
+  amounts: Amounts | undefined;
+  form: TableForm;
+  shown: (text: string) => string;
+  emptyLabel: string;
+}) {
+  if (!evidence && containsReference(cell))
+    return sourceHref ? (
+      <Button href={sourceHref} color="link-gray" size="sm">
+        In Evidence
+      </Button>
+    ) : (
+      "Source reference unavailable"
+    );
+  if (!cell.trim()) return <span aria-label={emptyLabel}>—</span>;
+  return (
+    amountCell(amounts, column, cell, line) ??
+    form.drawCell?.(column, cell) ??
+    richParts(cell, shown)
+  );
+}
 
 export function PublishedTable({
   table,
@@ -374,6 +429,7 @@ export function PublishedTable({
   heading: tableHeading,
   emptyLabel = "Empty in the handoff",
   amounts,
+  ...form
 }: {
   table: Table;
   /** Amount columns: each figure is drawn by `draw` (a bar behind the text as written); a gap falls back. */
@@ -387,15 +443,17 @@ export function PublishedTable({
   rowSource?: (line: number, label: string) => ReactNode;
   rowHref?: (line: number) => string | undefined;
   href?: string;
-}) {
+} & TableForm) {
   // The Evidence page draws text as stored; findings pages name the module.
   const shown = evidence ? plainModuleNames : readerText;
-  const columns = displayColumns(table.headers, evidence, table.rows);
+  const columns = form.columns ?? displayColumns(table.headers, evidence, table.rows);
   if (!columns.length || !table.rows.length) return null;
   const pinned = (column: number, background: string) =>
     columns.length >= 5 && column === columns[0]
       ? ` sm:sticky sm:left-0 sm:min-w-56 ${background}`
       : "";
+  const numerals = (column: number) => (form.numeric?.has(column) ? NUMERALS : "");
+  const barWidth = form.wideBars ? " min-w-56" : " min-w-40";
   const sources =
     rowSource ??
     (traceAt &&
@@ -404,7 +462,7 @@ export function PublishedTable({
       )));
   // A wide table scrolls sideways: it is a named, focusable region so the keyboard can reach it.
   // Bars need room, so a table that draws them scrolls inside its own region at any width.
-  const wide = columns.length >= 5 || Boolean(amounts?.columns.size);
+  const wide = form.region || columns.length >= 5 || Boolean(amounts?.columns.size);
   // A row is named by the first column the reader sees, never by a hidden source column.
   const rowName = (row: Table["rows"][number]) => row.cells[columns[0] ?? 0] ?? "";
   const name = tableHeading || "Table";
@@ -419,7 +477,7 @@ export function PublishedTable({
             <th
               key={column}
               scope="col"
-              className={`px-3 py-2.5 text-left font-semibold${pinned(column, "bg-surface-subtle")}`}
+              className={`px-3 py-2.5 ${form.numeric?.has(column) ? "text-right" : "text-left"} font-semibold${pinned(column, "bg-surface-subtle")}`}
             >
               {richParts(table.headers[column] ?? "", shown)}
             </th>
@@ -434,30 +492,24 @@ export function PublishedTable({
       <tbody>
         {table.rows.map((row) => (
           <tr key={row.line} className={`${TRACE_HOST} border-t border-border-hairline align-top`}>
-            {columns.map((column) => {
-              const cell = row.cells[column] ?? "";
-              const sourceHref = rowHref?.(row.line) ?? href;
-              return (
-                <td
-                  key={column}
-                  className={`px-3 py-2.5 text-text-secondary${amounts?.columns.has(column) ? " min-w-40" : ""}${pinned(column, "bg-surface-card")}`}
-                >
-                  {!evidence && containsReference(cell) ? (
-                    sourceHref ? (
-                      <Button href={sourceHref} color="link-gray" size="sm">
-                        In Evidence
-                      </Button>
-                    ) : (
-                      "Source reference unavailable"
-                    )
-                  ) : cell.trim() ? (
-                    (amountCell(amounts, column, cell) ?? richParts(cell, shown))
-                  ) : (
-                    <span aria-label={emptyLabel}>—</span>
-                  )}
-                </td>
-              );
-            })}
+            {columns.map((column) => (
+              <td
+                key={column}
+                className={`px-3 py-2.5 text-text-secondary${amounts?.columns.has(column) ? barWidth : ""}${numerals(column)}${pinned(column, "bg-surface-card")}`}
+              >
+                {cellContent({
+                  cell: row.cells[column] ?? "",
+                  column,
+                  line: row.line,
+                  evidence,
+                  sourceHref: rowHref?.(row.line) ?? href,
+                  amounts,
+                  form,
+                  shown,
+                  emptyLabel,
+                })}
+              </td>
+            ))}
             {sources && (
               <td className="px-2 py-1.5">{sources(row.line, rowName(row) || "this row")}</td>
             )}

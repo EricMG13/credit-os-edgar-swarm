@@ -77,7 +77,10 @@ it("groups the modules by stage and marks the current one", () => {
   const other = nav.getByRole("link", { name: "Credit analysis, Delivered" });
   expect(other).not.toHaveAttribute("aria-current");
   expect(other).toHaveAttribute("href", "#modules/CP-2");
-  expect(screen.queryByRole("list", { name: "On this page" })).toBeNull();
+  // The current module lists its own sections under its link; no other module does.
+  const sections = nav.getByRole("list", { name: "On this page" });
+  expect(within(sections).getByRole("button", { name: "Bottom line" })).toBeInTheDocument();
+  expect(other.parentElement?.querySelector("[aria-label='On this page']")).toBeNull();
 });
 
 it("names the first table section by its own title when the module wrote no Key findings", () => {

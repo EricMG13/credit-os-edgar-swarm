@@ -1,5 +1,5 @@
-import { act, cleanup, render, screen, within } from "@testing-library/react";
-import { afterEach, expect, it } from "vitest";
+import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
+import { afterEach, expect, it, vi } from "vitest";
 import { StageNav, type NavModule } from "./ModuleNav";
 
 const modules: NavModule[] = [
@@ -125,4 +125,103 @@ it("omits the not-assessable count when there is none", () => {
 it("draws nothing for an empty list", () => {
   const { container } = renderNav([]);
   expect(container).toBeEmptyDOMElement();
+});
+
+const sections = [
+  { id: "sec-a", label: "Bottom line" },
+  { id: "sec-b", label: "Limitations" },
+];
+
+function renderWithSections() {
+  return render(
+    <>
+      <StageNav modules={modules} current="CP-1" hrefFor={hrefFor} sections={sections} />
+      <div id="sec-a" tabIndex={-1} />
+      <div id="sec-b" tabIndex={-1} />
+    </>,
+  );
+}
+
+it("draws a legend with delivered, not assessable and this page", () => {
+  renderNav();
+  const legend = screen.getByRole("list", { name: "Legend" });
+  expect(
+    within(legend)
+      .getAllByRole("listitem")
+      .map((li) => li.textContent),
+  ).toEqual(["Delivered", "Not assessable", "This page"]);
+});
+
+it("draws the not-assessable count as a warning chip", () => {
+  renderNav();
+  const chip = screen.getByText("1 not assessable");
+  expect(chip.className).toContain("bg-warning-fill");
+  expect(chip.className).toContain("text-warning-text");
+});
+
+it("lists the page sections only under the current module", () => {
+  renderWithSections();
+  const list = screen.getByRole("list", { name: "On this page" });
+  const item = list.closest("li") as HTMLElement;
+  expect(within(item).getByRole("link", { name: /Financial statements/ })).toBeVisible();
+  expect(
+    within(list)
+      .getAllByRole("button")
+      .map((b) => b.textContent),
+  ).toEqual(["Bottom line", "Limitations"]);
+  expect(screen.getAllByRole("list", { name: "On this page" })).toHaveLength(1);
+});
+
+it("draws no section list when sections is empty or absent", () => {
+  const { unmount } = render(
+    <StageNav modules={modules} current="CP-1" hrefFor={hrefFor} sections={[]} />,
+  );
+  expect(screen.queryByRole("list", { name: "On this page" })).toBeNull();
+  unmount();
+  renderNav();
+  expect(screen.queryByRole("list", { name: "On this page" })).toBeNull();
+});
+
+it("focuses and scrolls to a section and marks it as the current location", () => {
+  const scroll = vi.fn();
+  Element.prototype.scrollIntoView = scroll;
+  try {
+    renderWithSections();
+    const button = screen.getByRole("button", { name: "Limitations" });
+    fireEvent.click(button);
+    const target = document.getElementById("sec-b");
+    expect(document.activeElement).toBe(target);
+    expect(scroll).toHaveBeenCalledWith({ block: "start" });
+    expect(scroll.mock.contexts[0]).toBe(target);
+    expect(button).toHaveAttribute("aria-current", "location");
+    expect(screen.getByRole("button", { name: "Bottom line" })).not.toHaveAttribute("aria-current");
+    fireEvent.click(screen.getByRole("button", { name: "Bottom line" }));
+    expect(button).not.toHaveAttribute("aria-current");
+  } finally {
+    // @ts-expect-error remove the stub
+    delete Element.prototype.scrollIntoView;
+  }
+});
+
+it("closes the disclosure when a section is pressed on a narrow screen", () => {
+  window.matchMedia = ((query: string) => ({
+    matches: false,
+    media: query,
+    addEventListener: () => undefined,
+    removeEventListener: () => undefined,
+  })) as unknown as typeof window.matchMedia;
+  try {
+    const { container } = renderWithSections();
+    const details = container.querySelector("details") as HTMLDetailsElement;
+    act(() => {
+      details.open = true;
+      details.dispatchEvent(new Event("toggle"));
+    });
+    expect(details).toHaveAttribute("open");
+    fireEvent.click(screen.getByRole("button", { name: "Bottom line", hidden: true }));
+    expect(details).not.toHaveAttribute("open");
+  } finally {
+    // @ts-expect-error jsdom has no matchMedia; remove the stub
+    delete window.matchMedia;
+  }
 });

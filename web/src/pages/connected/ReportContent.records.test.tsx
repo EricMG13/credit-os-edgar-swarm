@@ -168,14 +168,15 @@ describe("coded registers leave the module page", () => {
     expect(screen.queryByRole("heading", { name: "Statements and records" })).toBeNull();
   });
 
-  it("draws the records region when every section is a record, with no section links", () => {
+  it("draws the records region when every section is a record, and lists it on the page", () => {
     const entry = entryOf("CP-1", [
       tableSection("T4.4 Income statement", 20),
       tableSection("Confidence inputs", 30),
     ]);
     page(entry);
     expect(screen.getByRole("heading", { name: "Statements and records" })).toBeInTheDocument();
-    expect(screen.queryByRole("list", { name: "On this page" })).toBeNull();
+    const sections = within(screen.getByRole("list", { name: "On this page" }));
+    expect(sections.getByRole("button", { name: "Statements and records" })).toBeInTheDocument();
     openRecords();
     expect(screen.getByRole("heading", { name: "Income statement", level: 4 })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Confidence inputs" })).toHaveAttribute(
@@ -248,7 +249,7 @@ const monitoringTable = (line: number): Section["blocks"][number] => ({
   rows: [{ line: line + 1, cells: ["Cover", "Leading", "Below 3x", "Indicative"] }],
 });
 
-describe("prose in a coded section stays on the module page", () => {
+describe("prose in a coded section goes with its table", () => {
   const coded = () =>
     entryOf("CP-2E", [
       text("Bottom line", 10),
@@ -264,20 +265,21 @@ describe("prose in a coded section stays on the module page", () => {
       ]),
     ]);
 
-  it("draws each sentence exactly once under the title without the code and its dash", () => {
+  it("draws a table's note with its table, once, under the title without the code and its dash", () => {
     page(coded());
+    // Closed, the page draws neither the tables nor their notes: a note belongs to its table.
+    expect(screen.queryByText(DEBT_SENTENCE)).toBeNull();
+    expect(screen.queryByRole("region", { name: "debt and rate exposure" })).toBeNull();
+    openRecords();
     expect(screen.getAllByText(DEBT_SENTENCE)).toHaveLength(1);
-    expect(screen.getAllByText(MACRO_SENTENCE)).toHaveLength(1);
     expect(screen.getByRole("heading", { name: "debt and rate exposure" })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "macro sensitivity summary" })).toBeInTheDocument();
     expect(document.body.textContent).not.toContain("T2F.2");
-    expect(screen.queryByRole("columnheader", { name: "Amount" })).toBeNull();
+    expect(screen.getByRole("columnheader", { name: "Amount" })).toBeInTheDocument();
   });
 
   it("keeps the table of a coded section in the closed records, named without the code or dash", () => {
     page(coded());
     expect(screen.queryByRole("columnheader", { name: "Amount" })).toBeNull();
-    expect(screen.getAllByText(DEBT_SENTENCE)).toHaveLength(1);
     openRecords();
     const tables = within(screen.getByRole("group", { name: "Table" }));
     expect(tables.getAllByRole("button").map((button) => button.textContent)).toEqual([
@@ -288,8 +290,8 @@ describe("prose in a coded section stays on the module page", () => {
     expect(screen.getByRole("region", { name: "Statements and records" }).textContent).not.toMatch(
       /T2F|\u2014/,
     );
-    // Opened, the record shows its section's prose above the table (spec 2.8), so the sentence is twice on the page.
-    expect(screen.getAllByText(DEBT_SENTENCE)).toHaveLength(2);
+    // The note is drawn once, with its table.
+    expect(screen.getAllByText(DEBT_SENTENCE)).toHaveLength(1);
   });
 
   it("draws prose and the promoted table of a partly promoted section and lists nothing", () => {
