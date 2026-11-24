@@ -280,7 +280,7 @@ describe("connected library and report design", () => {
     expect(within(dates).getByText("15 March 2027")).toBeInTheDocument();
     expect(within(dates).getByText("Scheduled")).toBeInTheDocument();
     const trace = within(dates).getByRole("link", {
-      name: /^Source for Refinancing maturity on 15 March 2027 from /,
+      name: "Source for Refinancing maturity on 15 March 2027",
     });
     expect(trace).toHaveAttribute("href", expect.stringMatching(/#evidence\//));
 

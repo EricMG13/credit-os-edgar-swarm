@@ -60,14 +60,15 @@ function yearTicks(list: readonly Event[]) {
     year++
   )
     ticks.push({ year, left: ((Date.UTC(year, 0, 1) - start) / (end - start)) * 100 });
-  return ticks;
+  // A year next to either end would print over that end's date.
+  return ticks.filter(({ left }) => left > 10 && left < 90);
 }
 
 /** The dates at the axis ends; one date is labelled once, under its mark in the middle. */
 function AxisEnds({ list }: { list: readonly Event[] }) {
   const first = list.reduce((a, b) => (b.from < a.from ? b : a));
   const last = list.reduce((a, b) => (b.from > a.from ? b : a));
-  const label = "absolute top-[100px] font-mono text-caption text-text-tertiary tabular-nums";
+  const label = "absolute bottom-0 font-mono text-caption text-text-tertiary tabular-nums";
   if (first.from === last.from)
     return (
       <span data-axis-label className={`${label} left-1/2 -translate-x-1/2`}>
@@ -89,14 +90,20 @@ function AxisEnds({ list }: { list: readonly Event[] }) {
 /** A true time axis: numbered marks placed by date, each on a lane that keeps it clear of its neighbours. */
 function Axis({ list }: { list: readonly Event[] }) {
   const marks = positions(list);
+  const lanes = Math.max(...marks.map(({ lane }) => lane)) + 1;
+  // Room above the line for each lane's ring and its name; the dates sit under the line.
+  const line = 28 + lanes * LANE;
   return (
-    <div aria-hidden="true" className="relative mx-4 h-[120px]">
-      <span className="absolute inset-x-0 top-[84px] border-t border-connector" />
+    <div aria-hidden="true" className="relative mx-4" style={{ height: `${String(line + 40)}px` }}>
+      <span
+        className="absolute inset-x-0 border-t border-connector"
+        style={{ top: `${String(line)}px` }}
+      />
       {yearTicks(list).map(({ year, left }) => (
         <span
           key={year}
-          className="absolute top-[78px] flex -translate-x-1/2 flex-col items-center gap-0.5"
-          style={{ left: `${String(left)}%` }}
+          className="absolute flex -translate-x-1/2 flex-col items-center gap-0.5"
+          style={{ left: `${String(left)}%`, top: `${String(line - 6)}px` }}
         >
           <span className="h-3 border-l border-connector" />
           <span className="font-mono text-caption text-text-tertiary tabular-nums">{year}</span>
@@ -107,14 +114,14 @@ function Axis({ list }: { list: readonly Event[] }) {
           key={list[index]?.key}
           data-mark
           className="absolute -translate-x-1/2"
-          style={{ left: `${String(left)}%`, top: `${String(72 - lane * LANE)}px` }}
+          style={{ left: `${String(left)}%`, top: `${String(line - 12 - lane * LANE)}px` }}
         >
           <span className="relative flex size-6 items-center justify-center rounded-ds-full border-2 border-action bg-surface-card font-mono text-caption text-text-primary tabular-nums">
             {index + 1}
             <span
               className={cx(
-                "absolute top-0.5 hidden max-w-24 truncate text-caption whitespace-nowrap text-text-secondary lg:block",
-                left > 70 ? "right-7" : "left-7",
+                "absolute -top-5 hidden max-w-32 truncate font-body text-caption whitespace-nowrap text-text-secondary lg:block",
+                left > 70 ? "right-0" : "left-0",
               )}
             >
               {list[index]?.name}
@@ -153,18 +160,11 @@ function EventItem({ event, index }: { event: Event; index: number }) {
           Timing falls within the recorded period; the exact date is unresolved.
         </p>
       )}
-      <span className="flex flex-wrap gap-1">
-        {event.rows.map((item, at) => {
-          const name = `${event.name} on ${shown(event.date)} from ${item.owner}`;
-          return (
-            <SourceLink
-              key={`${item.href}-${String(at)}`}
-              href={item.href}
-              label={`Source for ${name}`}
-            />
-          );
-        })}
-      </span>
+      {row && (
+        <span className="flex">
+          <SourceLink href={row.href} label={`Source for ${event.name} on ${shown(event.date)}`} />
+        </span>
+      )}
     </li>
   );
 }

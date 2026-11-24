@@ -436,7 +436,13 @@ function CaseRow({
         (cover.value === null ? (
           <GapMark x={DOWNSIDE.cover} y={y} text={cover.text} />
         ) : (
-          <text x={DOWNSIDE.cover} y={y + 4} fontSize="12" className="fill-text-primary font-mono">
+          <text
+            x={DOWNSIDE.width}
+            y={y + 4}
+            textAnchor="end"
+            fontSize="12"
+            className="fill-text-primary font-mono"
+          >
             {cover.text}
           </text>
         ))}
@@ -470,7 +476,13 @@ function DownsideFigure({ data, limit }: { data: Downside; limit: Limit }) {
           {data.leverage?.measure ?? "No stressed net leverage in the handoff"}
         </text>
         {data.cover && (
-          <text x={DOWNSIDE.cover} y="12" fontSize="11" className="fill-text-tertiary font-body">
+          <text
+            x={DOWNSIDE.width}
+            y="12"
+            textAnchor="end"
+            fontSize="11"
+            className="fill-text-tertiary font-body"
+          >
             {data.cover.measure}
           </text>
         )}

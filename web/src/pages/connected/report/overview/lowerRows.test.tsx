@@ -261,7 +261,7 @@ it("prints dates as the header does, labels the axis ends, and names each trace 
   expect(within(tile).getAllByText("1 July 2026").length).toBeGreaterThan(0);
   expect(within(tile).queryByRole("link", { name: "Evidence" })).toBeNull();
   expect(
-    within(tile).getByRole("link", { name: "Source for Coupon on 31 March 2025 from Liquidity" }),
+    within(tile).getByRole("link", { name: "Source for Coupon on 31 March 2025" }),
   ).toHaveAttribute("href", "/report/run#evidence/Coupon");
 });
 

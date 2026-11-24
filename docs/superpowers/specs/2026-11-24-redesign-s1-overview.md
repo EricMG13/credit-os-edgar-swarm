@@ -229,3 +229,21 @@ changed files pass; `npx vitest run src/pages/connected src/styles src/shell src
 `tools/quality_gate.py` (no Python changed; it also needs `origin/main`, absent here). Content
 was checked on the synthetic run only; long real text was exercised through the retained-text
 unit fixtures, not a rendered TransDigm run.
+
+### Coordinator review (parts 1 and 2), fixes and re-verification
+
+Every numbered item of both parts is fixed with a test written from the reviewer's input (item
+by item in the report to the coordinator). Re-rendered after the fixes, raw synthetic run and
+the same run with realistic text swapped into the snapshot in the browser (three-sentence
+bottom line, six 30–40-word findings), at 1440, 1280, 1024 and 390 px: no sideways page scroll
+at any width, no console errors. Seen: bottom line 44 px, the largest text, continuation behind
+Read on; trust tiles tight, clearance a one-line gap; figure tiles with basis, period and a
+change only against the year before; one counter tile with a one-line outcomes gap; the wall fits
+its tile at 1280 (FY2028 in view); stack labels beside their segments; downside dumbbells with
+the covenant limit and cover right-aligned (its clipped heading fixed after the first render);
+dates axis with one mark per event, names above, dates below, no overprint; at 390 the name
+follows the breadcrumb, utilities end the header, Confidence starts at about 1,130 px.
+
+Checks: tsc pass; eslint --max-warnings=0 and prettier --check on every file changed since the
+base pass; vitest src/pages/connected, src/styles, src/shell, src/components — 176 files, 2,500
+tests pass; npm run unused — only LeadProps in the frozen leads/types.ts; npm run build pass.
