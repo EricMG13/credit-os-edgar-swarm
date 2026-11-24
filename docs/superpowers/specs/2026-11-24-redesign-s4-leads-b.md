@@ -1,0 +1,183 @@
+# Redesign S4: lead visuals of the Credit and Structure-and-market modules
+
+2026-11-24. Work package S4 of `docs/superpowers/plans/2026-11-24-frontend-redesign.md`, branch
+`claude/redesign-s4-leads-b`. Owns `report/leads/credit.tsx`, `report/leads/structure.tsx`,
+`report/Downside.tsx`, `report/BreakPoints.tsx`, `report/MacroSensitivity.tsx`,
+`report/Securities.tsx` and new files beside them. Does not touch `Modules.tsx`, `leads/index.ts`
+or `leads/types.ts`.
+
+## 0. What the handoffs actually carry (research, 2026-11-24)
+
+Read from the retained fixtures, the synthetic handoffs (`proof/handoffs/`), the TransDigm
+review (`reviews/2026-11-12-…/latest-run-tdg-proof-snapshot-opus-002.md`), the method files CP-OS
+sends (`docs/reuse/selected-methods/skills/*`, `cpos_launch_methods.py`) and the launcher's owner
+tables (`src/deploy_workflow/owners/cpos_launch_tables.py`). All real evidence is TransDigm FY2024
+(as of 2024-09-30): **outdated evidence**, used for shape only.
+
+- **The only tables with enforced cell rules are the launcher's owner tables**: `Chart data: …`
+  (plain numbers or `Not supplied: <reason>`, one unit, fixed words), `Map: …` (edge tables) and
+  `Events: …`. The store publishes them as `output.charts`, `output.chartGaps`, `output.maps` and
+  `output.events` descriptors. Leads read these first, through `figureSource` / `moduleSource`.
+- **Registers are model-written text** with model-chosen headings. `<!-- table-id -->` markers do
+  not reach the web, and the Deploy VII stand-ins (`src/deploy_vii/methods`, `bindings`) reuse the
+  same ids for different tables. Leads read a register only by an id-prefixed heading **and** its
+  exact header row, and draw its cells as text.
+- Real handoffs retained: CP-2E (two whole handoffs, `tests/fixtures/esg/CP-2E-h3.md`, `-h4.md`),
+  CP-2A (table T2DS.1 only), CP-2G (the forecast-inputs block). CP-1A, CP-DR, CP-2, CP-3 and
+  CP-4 are known only through the review's quotations. **No real handoff at all** for CP-2D,
+  CP-2H, CP-3C, CP-3D, CP-4C.
+- The four existing figures' tests (`Downside`, `BreakPoints`, `MacroSensitivity(.retained)`,
+  `Securities`) are hand-built synthetic shapes; none copies real output.
+
+## 1. Screen-map rows covered
+
+Copied from `docs/design/screen-map.md` § Modules. Rank in brackets.
+
+| Module | Lead visual (P1) | Also show (P2) | Needs (screen map) |
+|---|---|---|---|
+| CP-1A Business & governance | Revenue mix and the operating-model map: segment → cash driver → credit effect | The transaction and new debt; ownership and control map | Code. Method for a typed mix table |
+| CP-DR Deep research | Question list with answered / not answered and the answer in one line | Coverage; causal scenarios | Code. Method for a typed question table |
+| CP-2 Fundamental credit | Strengths against weaknesses ledger beside leverage, cover and headroom | Credit-risk transmission map | Code |
+| CP-2A Downside | Break-point ladder: fall in EBITDA needed to reach each limit | Scenario comparison: leverage, cover, cash flow | Code. Method for a break-point table |
+| CP-2D Liquidity | Liquidity bridge: opening → sources → uses → closing | Funding dates; runway | Proof. Method for a monthly runway |
+| CP-2E Rates, FX & hedging | Sensitivity ladder: cost per shock step | Hedged against unhedged; foreign share | Code |
+| CP-2G Forward model | Case paths against limits (the Forecast lead) | Drivers by case | Method |
+| CP-2H Ratings migration | Trigger bullets per agency: current against trigger | Rating register; outlook | Proof |
+| CP-3 Security selection | Instrument table: rank, yield, spread, recommendation per instrument | Relative value against peers; portfolio fit | Input (market quotes). Method for a typed recommendation |
+| CP-3C Refinancing | Refinancing need on the maturity axis against available sources | Liability-management risk | Proof |
+| CP-3D Market-implied risk | Yield against maturity with the issuer's curve | Market-implied default | Input (market data) |
+| CP-4 Legal & covenants | Headroom bullet per test: actual against limit | Baskets and capacity; legal entity and intercreditor maps | Input |
+| CP-4C Restructuring | Value waterfall by class with the fulcrum marked | Recovery by class; plan treatment | Proof |
+
+**Unproven on a real run** (Needs "Proof" or "Input", or no retained real handoff of the table the
+lead reads): CP-2D, CP-2H, CP-3C, CP-3D, CP-4C entirely; CP-4's bullets (the only real CP-4 was
+blocked); CP-3's yield column (only the synthetic summary carries quotes); CP-2's typed
+strengths/weaknesses table; CP-2A's break-point table. These leads are built from the contract and
+the synthetic handoffs, with a first-class gap state, and must be proven on a real run.
+
+## 2. Components
+
+### 2.1 Shared parts (`report/leads/parts.tsx`, `report/leads/read.ts`)
+
+Every lead is `<Bento>` of `Tile`s (kit, `report/overview/Tile.tsx`). A lead never repeats the
+module header, bottom line, findings or limitations (S2 draws those).
+
+| Part | Props | Does |
+|---|---|---|
+| `LeadFigure` | `span`, `label`, `kicker`, `title` (the reading), `basis`, `legend`, `trace`, `figure`, `table` | A tile whose head is the reading, the basis line once, a legend, the one trace control (`PublishedSource`), and a `Segmented` Figure / Table view switch (kit). The table is `ChartTable` (`components/chart`), so every figure has a table view |
+| `LeadGap` | `span`, `label`, `title`, `reason`, `needs` | A `tone="gap"` tile: the title of what would be drawn, `GapNote` with the reason in words, and what unlocks it in plain words ("Needs a typed table in the handoff", "Needs …supplied at run start", "Not yet produced by a real run") |
+| `LeadBlocked` | `span`, `label`, `title`, `reason`, `unlock` | Dashed warning-edge tile, the `Module state` "Not assessable" badge (slashed circle), the reason in the module's words, and what would make it assessable |
+| `NodeList` | `edges`, `label` | A node map as real lists: one item per source node, nested list of "relationship → target · edge type". Table view through `LeadFigure`. Reads `edgeMap`'s header (`From | Relationship | Edge type | To | Evidence`); the Evidence column goes to the trace only |
+| `DatedList` | `records` | Dated events (`eventRecords`) in date order: mono date at its stated precision, event, status word. No day invented for a coarser date |
+| `Prose` | `paragraphs` | A module-written passage in a `Well`, paragraph by paragraph; a paragraph that names a source is replaced by "In Evidence" (`containsReference`) |
+| `registerTable(entry, id, headers)` (read.ts) | | The one table under a heading that starts with the id (`T2F.4`, any separator after it, any case of the title) whose header row contains every named header; else undefined. Cells are text |
+| `mapEdges(entry, name)` / `chartFigure(view, entry, title)` / `chartGap(entry, title)` (read.ts) | | The published map, chart descriptor + table, or the chart's stated gap reason |
+| `moneyLead(text, currency)` (read.ts) | | The leading stated amount of a cell written `[+−]USD 57.89 million …`, exactly; null otherwise. The bar's label is the whole cell as written |
+
+States every lead draws: **data** (figure), **gap** (`LeadGap`, the reason, never zero),
+**blocked** (`LeadBlocked`), **empty** (the module ran but wrote none of the lead's tables: each P1
+tile becomes its `LeadGap`). Loading is the page's (S2). Missing cells inside a drawn figure are
+hatched marks with "Not supplied" and the module's reason.
+
+Grid: P1 tile first and largest (8 or 12 columns at ≥ 1024 px); P2 tiles beside (4) or under it
+(6 + 6). At 390 px every tile is one column, figures scale by `viewBox` and tables scroll inside
+their tile, never the page.
+
+Accessibility: each figure is inline SVG with `role="img"` and an `aria-label` stating the reading
+with the figures; direct labels in mono; direction always in words; Figure/Table is a pressed
+button group; node maps and dated events are lists.
+
+### 2.2 Credit stage (`leads/credit.tsx` → `LEADS`)
+
+| Module | File | Tiles (1440 px span) | Reads | Gap / blocked |
+|---|---|---|---|---|
+| CP-1A | `cp1a.tsx` | P1 "Operating model to credit" `NodeList` (8); P1 revenue mix (4); P2 ownership and control `NodeList` (6); P2 transaction and new debt `Prose` (6) | `output.maps` "operating model to credit", "ownership and control" + their tables; section "Transaction summary and new debt issues" | Revenue mix is always `LeadGap` today: **Method** (no typed mix table; the register's mix is free text). Node roles (segment / driver / effect) are not typed, so the map is drawn as written, not in three columns: **Method**. A map with a `gap` draws its reason |
+| CP-DR | `cpdr.tsx` | P1 question list (12) ; P2 causal scenarios `Prose` (8); P2 research catalysts `DatedList` (4) | section "Causal synthesis and scenarios"; events lane "Research catalysts" | P1 question list is `LeadGap`: **Method** (TDR.3 is out of the CP-OS register scope; no typed question / state / answer table). Coverage has no fixed place: stated in the gap, **Method** |
+| CP-2 | `cp2.tsx` | P1 ledger: strengths column against weaknesses column (8); P1 beside it: leverage, cover, headroom (4); P2 transmission map `NodeList` (12) | The table with header `direction | rank | label | mechanism | …` (any heading), else `T2.10` with `Rank | Driver | … | Direction`; fallback the "Strengths and weaknesses" passage. Leverage and cover from CP-1 `Chart data: leverage` / `interest cover` (`periodSeries`); headroom from CP-4 `Covenant headroom` (`headroomTests`) | No typed ledger → the passage in a `Well` plus a gap line (**Proof**). CP-4 absent or blocked → headroom states why (**Input**). Rows are never counted into a score |
+| CP-2A | `Downside.tsx`, `BreakPoints.tsx` | P1 break-point ladder (8); P2 scenario comparison as small multiples, one panel per measure, every case on that measure's scale (4, or 12 below) | `breakPointView` (T2DS.6 / first-break ranking) and `downsideView` (T2DS.4 × T2DS.1), data reading unchanged | No break-point table → `LeadGap` "Break points are written in prose" (**Method**: CP-2A to write the break-point table). Cases not bound → table only with the stated note |
+| CP-2D | `cp2d.tsx` | P1 liquidity bridge, horizontal waterfall (8); P2 funding dates `DatedList` (4); P2 runway (4) | `Chart data: liquidity bridge` descriptor (Step / Amount); events lane "Financing" | Bridge that does not reconcile or has a gap amount → table view with the reason, no bars. Runway → `LeadGap` (**Method**: no monthly runway). Whole module **Proof** |
+| CP-2E | `MacroSensitivity.tsx` | P1 sensitivity ladder: one row per stated shock step, added annual interest before hedges with the after-hedges mark (8); P2 hedged against unhedged, one proportional bar (4); P2 foreign share (4); P3 hedge terms in the table view | `macroView` (deploy_vii shapes, kept), plus skill registers by id: `T2F.5` (`Sensitivity | … | Estimated Cash Impact`), `T2F.4` (`Metric | Amount`), `T2F.3` hedges | A single stated step is drawn as one row with its gross comparator; a ladder of more steps needs a step grid (**Method**). Foreign share → `LeadGap` with the module's FX limitation (**Input**) |
+| CP-2G | `cp2g.tsx` | P1 net leverage path by case from the published model (8) with a link to Forecast; P2 drivers by case (4 → 12 table) | `forwardPath` of `view.models[0]`; `forecastInput(entry)` drivers | No numeric limit is published with the model: the limit line is a `LeadGap` line (**Method**). Declined forecast (null drivers) → `LeadGap` with the module's reason. Per-year path beyond the model grid: **Method** |
+| CP-2H | `cp2h.tsx` | P1 trigger bullets grouped by agency (8); P2 rating register and outlook (4) | `Chart data: rating triggers` descriptor (`headroomTests`/`bulletGeometry`); register `T2R.1` (`agency | issuer/instrument | rating | outlook/watch`) | Row with a `Not supplied` value → gap row with reason. No table → `LeadGap`. Whole module **Proof** |
+
+### 2.3 Structure and market stage (`leads/structure.tsx` → `LEADS`)
+
+| Module | File | Tiles | Reads | Gap / blocked |
+|---|---|---|---|---|
+| CP-3 | `Securities.tsx` | P1 instrument table (12): instrument, rank as written, market level, yield as `BarCell` (share of the largest stated yield), spread, recommendation badge, one trace per row; P2 relative value (6) and portfolio fit (6) as `Prose` | `securityView` (kept) and the real run's `Recommendation` table shape (`Security group | Market level … | … | Recommendation`); sections "Relative value", "Portfolio Fit" | Spread column is always "Not supplied" with the reason (**Method** + **Input**: no spread column). Yield only where the cell states a last-trade yield; otherwise text, no bar (**Input**). Peer chart → `LeadGap` (**Input**) |
+| CP-3C | `cp3c.tsx` | P1 debt maturing against committed resources per period, paired bars on one scale from zero (8); P2 liability-management paths (4) | `Chart data: refinancing need` descriptor; register `T3D.6` (`Path Type | Feasibility | Likelihood Direction`) | Shortfall is not stated, so it is not drawn. Gap cells hatched with reason. No T3D.6 → `LeadGap`. Whole module **Proof** |
+| CP-3D | `cp3d.tsx` | P1 yield against maturity on a true date axis, points only (8); P2 market-implied default (4) | `Chart data: yield against maturity` descriptor; register `T3E.5` | The issuer curve line is a `LeadGap` note (**Method**: no curve points are stated; a line through the points would interpolate). Whole module **Input** |
+| CP-4 | `cp4.tsx` | P1 headroom bullet per test, each on its own scale, current against threshold, headroom as stated (8); P2 legal entities (4) and intercreditor (6) `NodeList`; P2 baskets and capacity (6) | `Covenant headroom` descriptor (`headroomTests`/`bulletGeometry`); maps "legal entities", "intercreditor"; register `T4C.5` text | **Blocked**: `LeadBlocked` "Not assessable" with the chart's own gap reason, else the bottom line's first sentence after `Not assessable:`; unlock line "Covenant headroom needs the executed credit agreement and indentures supplied at run start". Maps with a `gap` draw it |
+| CP-4C | `cp4c.tsx` | P1 value allocation waterfall per scenario (8); P2 recovery by class, claim against recovery with the stated recovery % (4); P2 plan treatment (12) | `Value allocation — scenario n` descriptors; `Recovery by class` descriptor; register `T4E.4` class treatment | The fulcrum marker is a gap line (**Method**: no drawable table states it; deriving it would be analysis). Whole module **Proof** |
+
+### 2.4 The four existing figures
+
+Their data readers (`downsideView`, `breakPointView`, `macroView`, `securityView`, and helpers)
+keep their signatures and behaviour; `stressData.ts` (S1) imports `downsideView` and
+`scenarioShareLabel`. Their presentation is rebuilt into the lead tiles above. The exported
+components `Downside`, `BreakPoints`, `MacroSensitivity`, `Securities` keep their props so
+`Modules.tsx` still compiles; they render the new tiles. Once S2 draws `leadFor(module)`,
+`Modules.tsx` should stop drawing them a second time (request below).
+
+## 3. Files
+
+Add: `leads/parts.tsx`, `leads/read.ts`, `leads/cp1a.tsx`, `cpdr.tsx`, `cp2.tsx`, `cp2d.tsx`,
+`cp2g.tsx`, `cp2h.tsx`, `cp3c.tsx`, `cp3d.tsx`, `cp4.tsx`, `cp4c.tsx`, a test per file, and
+`leads/markdown.fixture.ts` (test-only: turns a retained Markdown handoff into sections, so the
+real CP-2E and CP-2A fixtures are tested as written).
+Change: `leads/credit.tsx`, `leads/structure.tsx`, `Downside.tsx`, `BreakPoints.tsx`,
+`MacroSensitivity.tsx`, `Securities.tsx`.
+Tests rewritten to the new layout (behaviour kept: values, links, states, gaps, the case and
+basis choices): `Downside.test.tsx`, `BreakPoints.test.tsx`, `MacroSensitivity.test.tsx`,
+`MacroSensitivity.retained.test.tsx`, `Securities.test.tsx`. Delete nothing.
+
+## 4. Drawn as a gap today (for the methodology plan)
+
+| Module | Gap | Kind | What the handoff would need |
+|---|---|---|---|
+| CP-1A | Revenue mix | Method | A typed mix table: business line, period, revenue, share, unit, basis; coverage shown, never forced to 100% |
+| CP-1A | Map in three columns (segment → driver → effect) | Method | A node role on each map node |
+| CP-1A | New debt list | Method | Instrument, date, amount, secured, use of proceeds as a table |
+| CP-DR | Question list, answered state, one-line answer, coverage | Method | TDR.3 back in scope or a fixed `Research answers` table (up to 32 rows) with Deploy V state words, and coverage as a field |
+| CP-2 | Risk / support polarity on the transmission map | Method | An edge sign |
+| CP-2 | Typed ledger on a real run | Proof | — |
+| CP-2A | Break-point ladder on real runs | Method / Proof | T2DS.6 under a fixed heading and header, with the limit level as a number |
+| CP-2D | Runway | Method | A runway field or monthly path |
+| CP-2E | Ladder of several steps; foreign share | Method; Input | A step grid in T2F.5; currency shares in T2F.6 |
+| CP-2G | Limit lines; per-year path | Method | Numeric limits with the model; T2H.6 path per case |
+| CP-2H | Everything | Proof | — |
+| CP-3 | Spread; yield on real runs; typed recommendation; peers | Method; Input | A spread column; market quotes; a typed recommendation field; peer levels |
+| CP-3C, CP-3D, CP-4C | Everything; issuer curve; fulcrum | Proof; Method | Curve points; a stated fulcrum column |
+| CP-4 | Headroom | Input | Executed credit agreement and indentures |
+
+Also a reader change the methodology plan should weigh: real headings carry the id with an em
+dash ("T2DS.1 — Scenarios") while `downsideView` / `breakPointView` / `macroView` match exact
+titles, so on the retained real CP-2A and CP-2E output they find little. S4 keeps those readers
+as they are (their behaviour tests pin them) and adds id-prefixed lookup only for the new
+register reads.
+
+## 5. Sub-agent plan
+
+| Part | Model · effort | Why |
+|---|---|---|
+| Spec, shared parts, `read.ts` readers | Opus · high (me) | Reads handoff data; defines what every lead may draw |
+| CP-2A, CP-2E, CP-2D, CP-2G leads and their test rewrites | Opus · high | Data readers with real fixtures, cases and units that must not regress |
+| CP-3, CP-3C, CP-3D, CP-4, CP-4C leads | Opus · high | Market and legal states, blocked path |
+| CP-1A, CP-DR, CP-2, CP-2H leads | Sonnet · high | Mostly lists, prose and gap tiles from the shared parts |
+| Independent review of the whole diff | Opus · high, given the code only | Plan rule: one independent review before reporting |
+
+## 6. Requests to the coordinator
+
+1. **S2 / `Modules.tsx`**: once `leadFor(module)` is drawn, remove `moduleFigures`' direct
+   `Downside`, `BreakPoints`, `MacroSensitivity` and `Securities` calls, or the page draws them
+   twice. Their exports stay until then.
+2. **S1 / `report/overview`**: S4 imports `figureSource`, `moduleSource`, `readCell`,
+   `basisNotes` (`figureData.ts`), `headroomTests`, `bulletGeometry`, `forwardPath`,
+   `pathGeometry` (`stressData.ts`), `periodSeries`, `lastTwo`, `gapReason`
+   (`read.ts`) and `Key`, `GapPattern` (`figureParts.tsx`). Please keep these signatures, or say.
+3. **S5**: S4 imports `forecastInput` (`ForecastRecord.tsx`).
+4. **Kit**: a `blocked` tone on `Tile` (dashed warning edge) would replace the class S4 passes.
+
+## 7. Verification
+
+Filled in during phase 2.
