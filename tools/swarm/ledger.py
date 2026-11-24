@@ -6,6 +6,7 @@
     uv run python tools/swarm/ledger.py --root DIR fail ISSUER_ID --claim N --reason TEXT
     uv run python tools/swarm/ledger.py --root DIR skip ISSUER_ID --claim N --reason TEXT
     uv run python tools/swarm/ledger.py --root DIR status
+    uv run python tools/swarm/ledger.py --root DIR shard --index K --of N
 
 Statuses: ``pending`` (not started), ``running`` (claimed, with ``claimed_at``), ``published``
 (launcher exit 0 and the relaunch check passed), ``failed`` (stopped or over the retry cap; kept
@@ -242,6 +243,31 @@ def skip(
     return _finish(root, issuer_id, "skipped", {"reason": reason}, claim, clock)
 
 
+def shard(root: Path, index: int, of: int) -> list[str]:
+    """Keep shard ``index`` of ``of`` (a contiguous slice in plan order) and return its ids.
+
+    Every ``pending`` or ``running`` issuer outside the slice becomes ``skipped`` with a reason
+    naming the shard that keeps it, so sessions sharing one plan's ids never run the same issuer.
+    Issuers inside the slice and finished issuers are left as they are.
+    """
+    if of < 1 or not 0 <= index < of:
+        raise LedgerError(f"--index must be from 0 to {of - 1} and --of at least 1")
+    path = plan_path(root)
+    with _locked(path):
+        plan = _read(path)
+        issuers = plan["issuers"]
+        base, extra = divmod(len(issuers), of)
+        starts = [k * base + min(k, extra) for k in range(of + 1)]
+        for k in range(of):
+            for issuer in issuers[starts[k] : starts[k + 1]]:
+                if k != index and issuer["status"] in ("pending", "running"):
+                    issuer["status"] = "skipped"
+                    issuer["reason"] = f"shard {k} of {of}: run by another session"
+                    issuer.pop("claimed_at", None)
+        _write(path, plan)
+    return [i["issuer_id"] for i in issuers[starts[index] : starts[index + 1]]]
+
+
 def status(root: Path) -> dict[str, int]:
     """The number of issuers in each status (every status listed, zero included)."""
     plan = _read(plan_path(root))
@@ -288,6 +314,9 @@ def _parser() -> argparse.ArgumentParser:
     skp.add_argument("--claim", type=int, required=True)
     skp.add_argument("--reason", required=True)
     sub.add_parser("status", help="count issuers by status")
+    part = sub.add_parser("shard", help="keep one contiguous shard; skip the rest")
+    part.add_argument("--index", type=int, required=True)
+    part.add_argument("--of", type=int, required=True)
     return parser
 
 
@@ -321,6 +350,9 @@ def main(argv: Sequence[str] | None = None) -> int:
         elif args.command == "skip":
             skip(args.root, args.issuer_id, args.reason, claim=args.claim)
             print(f"{args.issuer_id}: skipped")
+        elif args.command == "shard":
+            kept = shard(args.root, args.index, args.of)
+            print(json.dumps({"kept": kept, "status": status(args.root)}, indent=2))
         else:
             print(json.dumps(status(args.root)))
     except (LedgerError, OSError) as error:

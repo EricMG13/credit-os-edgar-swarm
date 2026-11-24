@@ -280,3 +280,41 @@ def test_verify_passes_only_on_exit_zero_and_no_new_file(tmp_path: Path) -> None
     assert run_issuer.verify(entry, tmp_path, quiet) is None
     assert "exited 3" in str(run_issuer.verify(entry, tmp_path, stops))
     assert "1 new file" in str(run_issuer.verify(entry, tmp_path, writes))
+
+
+def test_shard_keeps_one_contiguous_slice_and_skips_the_rest(tmp_path: Path) -> None:
+    path = _plan(tmp_path, count=7)
+    ledger.claim(tmp_path, 1, clock=lambda: T0)  # co0 running: outside shard 1, so skipped
+    assert ledger.shard(tmp_path, 1, 3) == ["co3", "co4"]  # sizes 3, 2, 2
+    assert _statuses(path) == {
+        "co0": "skipped",
+        "co1": "skipped",
+        "co2": "skipped",
+        "co3": "pending",
+        "co4": "pending",
+        "co5": "skipped",
+        "co6": "skipped",
+    }
+    stored = json.loads(path.read_text())["issuers"]
+    assert stored[0]["reason"] == "shard 0 of 3: run by another session"
+    assert "claimed_at" not in stored[0]
+    assert stored[5]["reason"] == "shard 2 of 3: run by another session"
+
+
+def test_shards_cover_every_issuer_once(tmp_path: Path) -> None:
+    kept: list[str] = []
+    for k in range(4):
+        root = tmp_path / str(k)
+        _plan(root, count=10)
+        kept += ledger.shard(root, k, 4)
+    assert kept == [f"co{i}" for i in range(10)]
+
+
+def test_shard_leaves_finished_issuers_and_refuses_a_bad_index(tmp_path: Path) -> None:
+    path = _plan(tmp_path, count=4)
+    taken = ledger.claim(tmp_path, 1, clock=lambda: T0)[0]
+    ledger.done(tmp_path, "co0", {"CP-0": 1}, claim=taken["claims"], clock=lambda: T0)
+    ledger.shard(tmp_path, 1, 2)
+    assert _statuses(path)["co0"] == "published"
+    with pytest.raises(ledger.LedgerError):
+        ledger.shard(tmp_path, 2, 2)

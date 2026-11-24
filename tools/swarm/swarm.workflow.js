@@ -7,6 +7,11 @@
 //   args.limit         stop after this many issuers are claimed (pilot: 5); default no limit
 //   args.secondPass    true: claim `failed` issuers instead of `pending` ones
 //   args.stale_seconds running claims older than this return to pending; default 3600
+//   args.results       optional: a git worktree on a results branch; after each batch the run
+//                      folders (without inputs/ and source-text/, the filing copies), the library
+//                      and plan.json are copied there, committed and pushed
+//   args.trailer       optional: the closing lines of each results commit message
+//   args.effort        analyst effort: low, medium, high, xhigh or max; default high
 //
 // The script has no shell: every ledger, verify and update_library command runs inside a small
 // "runner" agent. The controller (this script) is the only ledger writer; analysts never are.
@@ -20,6 +25,7 @@ export const meta = {
     { title: 'Analyse', detail: 'one Sonnet analyst per issuer' },
     { title: 'Verify and record', detail: 'relaunch check, ledger done or fail' },
     { title: 'Library', detail: 'update_library once per batch' },
+    { title: 'Save', detail: 'commit and push the batch to the results branch' },
   ],
 }
 
@@ -29,10 +35,31 @@ const concurrency = Number(args.concurrency ?? 10)
 const limit = args.limit === undefined || args.limit === null ? Infinity : Number(args.limit)
 const staleSeconds = Number(args.stale_seconds ?? 3600)
 const secondPass = args.secondPass === true
+const { results, trailer } = args
+const effort = args.effort ?? 'high'
+if (!['low', 'medium', 'high', 'xhigh', 'max'].includes(effort)) {
+  throw new Error(`args.effort must be low, medium, high, xhigh or max, not ${effort}`)
+}
 
 const q = (s) => `'${String(s).replace(/'/g, `'\\''`)}'`
-const tool = (script, rest) => `cd ${q(repo)} && uv run python tools/swarm/${script} ${rest}`
+// uv prints a deprecation warning for UV_NATIVE_TLS that a runner can mix into the JSON it relays;
+// UV_SYSTEM_CERTS is its replacement and keeps the same certificates.
+const uv = 'env -u UV_NATIVE_TLS UV_SYSTEM_CERTS=1 uv'
+const tool = (script, rest) => `cd ${q(repo)} && ${uv} run python tools/swarm/${script} ${rest}`
 const ledger = (rest) => tool('ledger.py', `--root ${q(root)} ${rest}`)
+
+// Every save copies all runs again, so a save that failed is made good by the next one.
+// data.js can be rebuilt from the saved runs if it grows past GitHub's 100 MiB limit.
+const save = (message) =>
+  `(set -eo pipefail; cd ${q(results)}; rm -rf runs library; ` +
+  `tar -C ${q(root)}/_engine --exclude='runs/*/inputs' --exclude='runs/*/source-text' ` +
+  `--exclude='library/data.js' -cf - runs library | tar -xf -; ` +
+  `data=${q(root)}/_engine/library/data.js; ` +
+  `if [ -f "$data" ] && [ "$(wc -c < "$data")" -le 104857600 ]; then cp "$data" library/data.js; fi; ` +
+  `cp ${q(root)}/swarm/plan.json plan.json; ` +
+  `git add -A; git diff --cached --quiet || git commit -q -m ${q(message)}` +
+  `${trailer ? ` -m ${q(trailer)}` : ''}; ` +
+  `for i in 1 2 3 4; do git push -q origin HEAD && exit 0; sleep $((i * 4)); done; exit 1) 2>&1`
 
 const RUN_SCHEMA = {
   type: 'object',
@@ -109,7 +136,12 @@ while (claimed < limit) {
   if (!next || next.exit_code !== 0) {
     throw new Error(`ledger next failed: ${next ? next.stdout : 'runner returned nothing'}`)
   }
-  const batch = JSON.parse(next.stdout)
+  // The claim list (indented JSON) starts at the first line beginning with '['; anything a runner
+  // relays before it is dropped.
+  const lines = next.stdout.split('\n')
+  const start = lines.findIndex((l) => l.trimStart().startsWith('['))
+  if (start < 0) throw new Error(`ledger next printed no claim list: ${next.stdout}`)
+  const batch = JSON.parse(lines.slice(start).join('\n'))
   if (batch.length === 0) break
   claimed += batch.length
   batches += 1
@@ -132,7 +164,7 @@ while (claimed < limit) {
           phase: 'Analyse',
           schema: REPORT_SCHEMA,
           model: 'sonnet',
-          effort: 'high',
+          effort,
           agentType: 'general-purpose',
         },
       )
@@ -187,10 +219,19 @@ while (claimed < limit) {
   const lib = await run(
     'update_library',
     'Library',
-    `cd ${q(repo)} && uv run python apps/issuer-library/update_library.py --workspace ${q(root)}/_engine`,
+    `cd ${q(repo)} && ${uv} run python apps/issuer-library/update_library.py --workspace ${q(root)}/_engine`,
   )
   if (!lib || lib.exit_code !== 0) {
     throw new Error(`update_library failed: ${lib ? lib.stdout : 'runner returned nothing'}`)
+  }
+
+  if (results) {
+    phase('Save')
+    const message = `Swarm results after batch ${batches}: ${published} published, ${failed} failed in this run`
+    const saved = await run(`save batch ${batches}`, 'Save', save(message))
+    if (!saved || saved.exit_code !== 0) {
+      log(`save after batch ${batches} failed: ${saved ? saved.stdout.trim() : 'runner returned nothing'}`)
+    }
   }
 }
 

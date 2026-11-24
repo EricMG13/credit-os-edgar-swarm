@@ -127,6 +127,59 @@ describe("reader data fidelity", () => {
     ]);
   });
 
+  it("preserves a principal row's reader-safe basis and limitation on its metric", () => {
+    const debt = table(
+      "Debt principal to carrying value",
+      [
+        "Period",
+        "Contractual principal",
+        "Discount",
+        "Carrying value",
+        "Reporting unit",
+        "Basis and limitation",
+      ],
+      [
+        [
+          "2026-12-31",
+          "1100.000",
+          "0",
+          "1100.000",
+          "US$m",
+          "NOTES-ONLY; excludes term and revolver debt; see notes 8 and 9",
+        ],
+      ],
+      20,
+    );
+    const [principal] = foundationMetrics(foundation([period, debt]), date);
+    expect(principal).toMatchObject({
+      key: "principal",
+      metric: {
+        value: { text: "US$1,100.000m" },
+        note: "2026-12-31 · NOTES-ONLY; excludes term and revolver debt; see notes 8 and 9",
+      },
+    });
+  });
+
+  it("omits a principal metric when its basis contains a source reference", () => {
+    const debt = table(
+      "Debt principal to carrying value",
+      ["Period", "Contractual principal", "Discount", "Carrying value", "Reporting unit", "Basis"],
+      [["2026-12-31", "1100.000", "0", "1100.000", "US$m", "NOTES-ONLY; see annual-report.pdf"]],
+      20,
+    );
+    expect(foundationMetrics(foundation([period, debt]), date)).toEqual([]);
+  });
+
+  it("keeps date-only principal notes for legacy tables without a basis column", () => {
+    const debt = table(
+      "Debt principal to carrying value",
+      ["Period", "Contractual principal", "Discount", "Carrying value", "Reporting unit"],
+      [["2026-12-31", "1100.000", "0", "1100.000", "US$m"]],
+      20,
+    );
+    expect(foundationMetrics(foundation([period, debt]), date)[0]?.metric.note).toBe("2026-12-31");
+  });
+
   it("isolates trace identities for alternate outputs and other runs with the same row number", () => {
     const a = foundation([]);
     const b = foundation([], { run: "first", id: "foundation-b", sha256: "b".repeat(64) });

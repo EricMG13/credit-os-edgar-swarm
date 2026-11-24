@@ -86,15 +86,41 @@ def test_rerun_changes_nothing(inputs):
     assert (plan_file.stat().st_mtime_ns, registry_file.stat().st_mtime_ns) == mtimes
 
 
-def test_rerun_keeps_status_and_attempts(inputs):
+def test_rerun_keeps_claim_and_publication_evidence(inputs):
     run(inputs)
     plan_file = inputs["root"] / "swarm" / "plan.json"
     plan = json.loads(plan_file.read_text(encoding="utf-8"))
-    plan["issuers"][0].update(status="failed", attempts=2)
-    plan["issuers"][1].update(status="done", attempts=1)
+    plan["issuers"][0].update(status="running", claims=3, claimed_at="2026-11-18T12:00:00+00:00")
+    plan["issuers"][1].update(
+        status="published",
+        attempts=4,
+        attempts_by_module={"CP-0": 1, "CP-1": 1, "CP-1A": 1, "CP-2": 1},
+        exit_code=0,
+        finished_at="2026-11-18T12:01:00+00:00",
+    )
+    plan["issuers"][0]["pack"] = "/other/session/pack"
     plan_file.write_text(json.dumps(plan), encoding="utf-8")
+    plan["issuers"][0]["pack"] = str(inputs["packs"] / "1000001-alpha-industrial-holdings-inc")
     again = run(inputs)
-    assert [(i["status"], i["attempts"]) for i in again["issuers"]] == [("failed", 2), ("done", 1)]
+    assert again == plan
+
+
+def test_a_changed_issuer_id_gets_a_new_run(inputs):
+    plan = run(inputs)
+    plan["issuers"][0].update(status="published", attempts=4, claims=1)
+    plan_file = inputs["root"] / "swarm" / "plan.json"
+    plan_file.write_text(json.dumps(plan), encoding="utf-8")
+    context = inputs["contexts"] / "1000001-alpha-industrial-holdings-inc.json"
+    record = json.loads(context.read_text(encoding="utf-8"))
+    record["identity"]["issuer_id"] = "alpha"
+    context.write_text(json.dumps(record), encoding="utf-8")
+
+    fresh = run(inputs)["issuers"][0]
+
+    assert fresh["issuer_id"] == "alpha"
+    assert Path(fresh["run_folder"]).name == "swarm-alpha"
+    assert fresh["status"] == "pending" and fresh["attempts"] == 0
+    assert "claims" not in fresh
 
 
 def test_cli_prints_counts_and_skips(inputs, capsys):

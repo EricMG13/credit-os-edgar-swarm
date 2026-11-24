@@ -17,7 +17,8 @@ No filing, credential or key is committed. The packs, contexts and the root stay
 
 ## Steps
 
-1. Prepare (offline; rerun any time, it keeps statuses):
+1. Prepare offline while the workflow is stopped. A rerun keeps claim and completion details for
+   each unchanged issuer ID:
    `uv run python tools/swarm/prepare.py --approved hy-list.md --packs packs/ --contexts contexts/ --root ROOT`
    It registers each issuer and writes `ROOT/swarm/plan.json`; read its `skipped` list.
 2. Pilot batch: launch the script with
@@ -28,11 +29,25 @@ No filing, credential or key is committed. The packs, contexts and the root stay
 3. Full run: the same workflow with `args {root, repo, concurrency: 10}`. It claims batches of
    up to `concurrency` issuers, runs one Sonnet analyst (high effort) per issuer, records the
    outcome in the ledger, rebuilds the library once per batch, and stops when nothing is pending.
+   A cloud container is reclaimed when the session ends, and the root goes with it. To keep the
+   outputs, also pass `results: WORKTREE` (a git worktree on a results branch) and `trailer`
+   (the closing lines of each commit message). After each batch a runner copies the run folders
+   without `inputs/` and `source-text/` (the filing copies), the library and `plan.json` there,
+   commits and pushes. A failed save is logged; the next batch saves everything again.
+   If `library/data.js` exceeds GitHub's 100 MiB limit, the checkpoint keeps the runs, ledger and
+   downloads. Rebuild the index with `uv run python apps/issuer-library/update_library.py --workspace ROOT/_engine`.
+   `effort` sets the analysts' effort (default `high`, the approved level; `xhigh` only on the
+   owner's instruction for that run).
 4. Second pass: `args {root, repo, secondPass: true}` claims the `failed` issuers once more. It
    is explicit; the first pass never retries them. The launcher resumes the run folder.
 5. Resume after a stop: start the same workflow again. `running` claims older than an hour (set
    with `args.stale_seconds` or `ledger.py next --stale-seconds`) go back to `pending`; `published` stays published.
-   Remove a `plan.json.lock` file only if no ledger command is running.
+   Remove a `plan.json.lock` file only if no ledger command is running. In a fresh session with a
+   saved results worktree, first restore the same verified inputs under `ROOT/inputs`, copy
+   `WORKTREE/runs/` to `ROOT/_engine/runs/` and `WORKTREE/plan.json` to `ROOT/swarm/plan.json`,
+   then run prepare with the restored packs and contexts so the ledger uses the new root. Before
+   starting, confirm `ledger.py --root ROOT status` matches the checkpoint counts. Use one
+   workflow per results branch when saving batches.
 
 One issuer by hand: `uv run python tools/swarm/run_issuer.py ISSUER_ID --root ROOT` prints the
 launcher command (`--config host --modules through-cp2 --prior none --no-library --out RUN_FOLDER`);
@@ -65,4 +80,5 @@ recorded `published`; the issuer is `failed`.
 - Answers are format-checked by the launcher only; no independent review of content is run.
 - The pilot compared 4 issuers; high was preferred on all 4 by a blind sampled review. Its token cost over medium is not measured.
 - Ratings in `hy-list.md` are provisional.
-- `swarm.workflow.js` was syntax-checked with node, never run through the Workflow tool, so the agent schemas, the runner agents and `parallel` ordering are untested.
+- The Nov 18 cloud run exercised the workflow and pushed shard results. The Nov 24 checkpoint
+  changes were checked offline with Node and a temporary Git remote.
