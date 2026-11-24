@@ -44,6 +44,75 @@ describe("readiness states", () => {
   });
 });
 
+// Quoted from the retained review reviews/2026-11-12-module-output-adversarial/latest-run-tdg-proof-snapshot-opus-002.md
+// (lines 70, 83 and 155: outdated TransDigm evidence, shape only). The review prints the middle two
+// headers as "..." so their names here are stand-ins; the last row is synthetic.
+const CONSUMER_HEADERS = [
+  "Consumer",
+  "Readiness",
+  "Evidence demand",
+  "Available support",
+  "Bounded limitations carried",
+  "Command",
+];
+const CONSUMER_ROWS = [
+  ["CP-2G", "READY_WITH_LIMITATIONS", "Forecast inputs", "Filings", "No Q1 filing.", "RUN"],
+  [
+    "CP-8",
+    "CONDITIONAL",
+    "Needs a prior deliverable to compare",
+    "None",
+    "Context states no prior case attached",
+    "DO NOT RUN until a prior deliverable is supplied or scope is changed",
+  ],
+  ["CP-1", "READY", "Statements", "Filings", "", "DO NOT RUN"],
+];
+
+describe("the consumer shape of the readiness table", () => {
+  const result = () => sourceReadiness(readiness(CONSUMER_ROWS, CONSUMER_HEADERS));
+  it("reads the consumer as the area and the bounded limitation as the reason", () => {
+    const found = result();
+    if (found.kind !== "ready") throw new Error("expected rows");
+    expect(found.rows[0]).toMatchObject({ state: "limited", reason: "No Q1 filing." });
+    expect(found.rows[1]).toMatchObject({
+      state: "conditional",
+      reason: "Context states no prior case attached",
+    });
+    for (const row of found.rows) expect(row.area).not.toMatch(/CP-/);
+  });
+  it("never draws the Command column, and does not show a DO NOT RUN row as plainly ready", () => {
+    const found = result();
+    if (found.kind !== "ready") throw new Error("expected rows");
+    expect(JSON.stringify(found.rows)).not.toMatch(/DO NOT RUN|RUN/);
+    expect(found.rows[2]).toMatchObject({
+      state: "conditional",
+      reason: "Held back by the source review.",
+    });
+    expect(found.counts).toEqual({ ready: 0, limited: 1, conditional: 2, blocked: 0 });
+  });
+  it("draws the three rows with no pipeline words on the page", () => {
+    const { container } = lead(readiness(CONSUMER_ROWS, CONSUMER_HEADERS));
+    expect(container.textContent).not.toMatch(/DO NOT RUN|CP-|READY_WITH/);
+    const list = screen.getByRole("list", { name: "Readiness by area" });
+    expect(within(list).getAllByRole("listitem")).toHaveLength(3);
+    expect(within(list).getByText("Context states no prior case attached")).toBeVisible();
+  });
+  it("reads the earlier real run's shape, whose free-text column is named in its review", () => {
+    const found = sourceReadiness(
+      readiness(
+        [["Legal and covenant package", "CONDITIONAL", "No executed agreement.", "DO NOT RUN"]],
+        ["Canonical consumer", "Readiness", "Evidence demand and available support", "Command"],
+      ),
+    );
+    if (found.kind !== "ready") throw new Error("expected rows");
+    expect(found.rows[0]).toMatchObject({
+      area: "Legal and covenant package",
+      state: "conditional",
+      reason: "No executed agreement.",
+    });
+  });
+});
+
 describe("sourceReadiness data", () => {
   it("reads the retained handoff: two areas with their limitation, the source column left out", () => {
     const result = sourceReadiness(cp0Entry());

@@ -105,15 +105,16 @@ describe("EbitdaBridgeTile on the retained handoff", () => {
       "change",
       "closing",
     ]);
-    // Axis 3,600 .. 4,200 over x 184 .. 424: 0.4 px a unit.
-    expect(num(opening, "x")).toBeCloseTo(184, 6);
-    expect(num(opening, "width")).toBeCloseTo((3813 - 3600) * 0.4, 6);
+    // Axis 3,600 .. 4,200 over x 180 .. 370: 190 / 600 px a unit.
+    const per = 190 / 600;
+    expect(num(opening, "x")).toBeCloseTo(180, 6);
+    expect(num(opening, "width")).toBeCloseTo((3813 - 3600) * per, 6);
     expect(num(closing, "width") / num(opening, "width")).toBeCloseTo(573 / 213, 6);
     expect(num(stock, "width") / num(acquisition, "width")).toBeCloseTo(217 / 70, 6);
     expect(num(acquisition, "x")).toBeCloseTo(right(opening), 6);
     expect(num(stock, "x")).toBeCloseTo(right(acquisition), 6);
     expect(right(other)).toBeCloseTo(right(closing), 6);
-    expect(num(refinancing, "width")).toBeCloseTo(58 * 0.4, 6);
+    expect(num(refinancing, "width")).toBeCloseTo(58 * per, 6);
   });
 
   it("marks the axis break on both totals, says where it starts and brackets the derived add-back total", () => {
@@ -164,7 +165,7 @@ describe("EbitdaBridgeTile on the retained handoff", () => {
     const { tile, view } = draw(base);
     const lines = [...tile.querySelectorAll("tspan")].map((span) => span.textContent);
     expect(lines).toEqual(
-      expect.arrayContaining(["Acquisition transaction and", "integration-related expenses"]),
+      expect.arrayContaining(["Acquisition transaction and", "integration-related", "expenses"]),
     );
     expect(
       within(tile).getByRole("link", { name: "Source for the EBITDA bridge" }),
@@ -226,13 +227,13 @@ describe("EbitdaBridgeTile states", () => {
     ]);
     const { tile, bars } = draw(data);
     const [opening, cut, add] = bars;
-    // Positions 80 .. 130: spread 50, edge 55; ticks over 75 step by 20; axis 40 .. 140 over 184 .. 424.
+    // Positions 80 .. 130: spread 50, edge 55; ticks over 75 step by 20; axis 40 .. 140 over 180 .. 370 (1.9 px a unit).
     expect(
       within(tile).getByText("Axis starts at 40, marked on the two total bars."),
     ).toBeVisible();
     expect(right(cut)).toBeCloseTo(right(opening), 6);
     expect(num(cut, "width") / num(add, "width")).toBeCloseTo(20 / 50, 6);
-    expect(num(cut, "x")).toBeCloseTo(184 + (80 - 40) * 2.4, 6);
+    expect(num(cut, "x")).toBeCloseTo(180 + (80 - 40) * 1.9, 6);
     expect(within(within(tile).getByRole("img")).getByText("−20")).toBeInTheDocument();
     expect(within(tile).getByRole("img").getAttribute("aria-label")).toContain(
       "less Cut 20, plus Add 50",

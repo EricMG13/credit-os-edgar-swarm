@@ -6,16 +6,16 @@ import { readerSafe, wrapLines } from "./ladderGeometry";
 
 /** The layout of the bridge, in viewBox units. */
 export const BRIDGE = {
-  width: 600,
-  plotLeft: 184,
-  plotRight: 424,
-  bracketX: 484,
+  width: 520,
+  plotLeft: 180,
+  plotRight: 370,
+  bracketX: 422,
   top: 8,
   bar: 16,
   line: 14,
   gap: 14,
   axis: 24,
-  labelWrap: 28,
+  labelWrap: 27,
 } as const;
 
 export type BridgeAxis = {
