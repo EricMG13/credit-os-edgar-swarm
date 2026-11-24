@@ -88,44 +88,45 @@ describe.each([
     serve(answer);
     open();
     await emptyState();
-    expect(screen.queryByLabelText("Sector")).toBeNull();
-    expect(screen.queryByLabelText("Pathway")).toBeNull();
-    expect(screen.queryByLabelText("Search issuers")).toBeNull();
-    expect(screen.queryByRole("radio")).toBeNull();
-    expect(screen.queryByText("Cards")).toBeNull();
+    expect(screen.queryByRole("group", { name: "Sector" })).toBeNull();
+    expect(screen.queryByRole("group", { name: "Pathway" })).toBeNull();
+    expect(screen.queryByRole("searchbox", { name: "Search issuers" })).toBeNull();
   });
 });
 
 describe("a library with a report", () => {
-  it("keeps its filters and layout controls and draws no empty state", async () => {
+  it("keeps its search and filter chips and draws no empty state", async () => {
     serve(ok(FILLED));
     open();
     expect(await screen.findByRole("heading", { name: "Alpha Foods" })).toBeVisible();
-    expect(screen.getByLabelText("Sector")).toBeVisible();
-    expect(screen.getByLabelText("Pathway")).toBeVisible();
-    expect(screen.getByLabelText("Search issuers")).toBeVisible();
-    expect(screen.getByText("Cards")).toBeVisible();
+    expect(screen.getByRole("group", { name: "Sector" })).toBeVisible();
+    expect(screen.getByRole("group", { name: "Pathway" })).toBeVisible();
+    expect(screen.getByRole("group", { name: "State" })).toBeVisible();
+    expect(screen.getByRole("searchbox", { name: "Search issuers" })).toBeVisible();
+    expect(screen.queryByRole("radio")).toBeNull();
     expect(screen.queryByRole("heading", { name: "No reports yet" })).toBeNull();
   });
 
-  it("keeps an unavailable saved filter explicit and clears back to the selected layout", async () => {
+  it("keeps an unavailable saved filter explicit and clears back to an unfiltered library", async () => {
     window.history.replaceState(null, "", "/?sector=Mining&layout=list&pathway=Old+review");
     serve(ok(FILLED));
     open();
 
     const clear = await screen.findByRole("button", { name: "Clear filters" });
-    expect(screen.getByLabelText("Sector")).toHaveValue("Mining");
-    expect(screen.getByRole("option", { name: "Mining (unavailable)" })).toHaveProperty(
-      "selected",
-      true,
+    expect(screen.getByRole("button", { name: "Mining (unavailable)" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
     );
-    expect(screen.getByLabelText("Pathway")).toHaveValue("Old review");
+    expect(screen.getByRole("button", { name: "Old review (unavailable)" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
     expect(screen.getByRole("status")).toHaveTextContent("No issuers match these filters.");
 
     fireEvent.click(clear);
     expect(screen.getByRole("searchbox", { name: "Search issuers" })).toHaveFocus();
-    expect(screen.getByRole("rowheader", { name: "Alpha Foods" })).toBeVisible();
-    expect(window.location.search).toBe("?layout=list");
+    expect(screen.getByRole("heading", { name: "Alpha Foods" })).toBeVisible();
+    expect(window.location.search).toBe("");
   });
 });
 

@@ -1,0 +1,47 @@
+import { useEffect, useState } from "react";
+import { getSnapshot, outputEntries, type Snapshot } from "../publishedReport";
+import { buildCalendar, upcomingCalendarRows } from "../report/Calendar";
+
+export type NextEvent = { date: string; name: string; href: string };
+
+/**
+ * The first dated event after the run's as-of date, by the Calendar's own reader: the date as the
+ * module wrote it, the event name as the Calendar draws it, and the row's evidence link. Nothing
+ * when the run states no upcoming event or no as-of date.
+ */
+export function nextDatedEvent(snapshot: Snapshot, folder: string): NextEvent | null {
+  const found = Object.entries(snapshot.workspace.runs).find(([, run]) => run.folder === folder);
+  if (!found) return null;
+  const [routeKey, run] = found;
+  const { rows } = buildCalendar(outputEntries(snapshot, run, routeKey), folder);
+  const first = upcomingCalendarRows(rows, run.asOf)?.[0];
+  const date = first?.cells[0];
+  const name = first?.cells[3];
+  return first && date && name ? { date, name, href: first.href } : null;
+}
+
+export type NextEventState =
+  { status: "idle" | "loading" | "none" | "failed" } | { status: "found"; event: NextEvent };
+
+/** The run's next dated event, read from its scoped report once `enabled` (the row is opened). */
+export function useNextEvent(folder: string | undefined, enabled: boolean): NextEventState {
+  const [state, setState] = useState<{ folder: string; value: NextEventState } | null>(null);
+  useEffect(() => {
+    if (!enabled || !folder) return;
+    const controller = new AbortController();
+    void getSnapshot(controller.signal, folder)
+      .then((snapshot) => {
+        const event = snapshot ? nextDatedEvent(snapshot, folder) : null;
+        return event ? ({ status: "found", event } as const) : ({ status: "none" } as const);
+      })
+      .catch(() => ({ status: "failed" }) as const)
+      .then((value) => {
+        if (!controller.signal.aborted) setState({ folder, value });
+      });
+    return () => {
+      controller.abort();
+    };
+  }, [folder, enabled]);
+  if (!enabled || !folder) return { status: "idle" };
+  return state?.folder === folder ? state.value : { status: "loading" };
+}

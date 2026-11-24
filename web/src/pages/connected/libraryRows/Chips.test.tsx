@@ -1,0 +1,40 @@
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
+import { afterEach, expect, it, vi } from "vitest";
+import { ChipGroup } from "./Chips";
+
+afterEach(cleanup);
+
+it("draws All and each choice as pressed-state buttons in one labelled group", () => {
+  const onChange = vi.fn();
+  render(
+    <ChipGroup label="Sector" choices={["Food", "Mining"]} value="Food" onChange={onChange} />,
+  );
+  const group = screen.getByRole("group", { name: "Sector" });
+  expect(within(group).getByRole("button", { name: "Food" })).toHaveAttribute(
+    "aria-pressed",
+    "true",
+  );
+  expect(within(group).getByRole("button", { name: "All" })).toHaveAttribute(
+    "aria-pressed",
+    "false",
+  );
+  fireEvent.click(within(group).getByRole("button", { name: "Mining" }));
+  expect(onChange).toHaveBeenCalledWith("Mining");
+  fireEvent.click(within(group).getByRole("button", { name: "All" }));
+  expect(onChange).toHaveBeenLastCalledWith("all");
+});
+
+it("keeps a chosen value that no longer exists, marked unavailable and pressed", () => {
+  render(<ChipGroup label="Sector" choices={["Food"]} value="Mining" onChange={vi.fn()} />);
+  expect(screen.getByRole("button", { name: "Mining (unavailable)" })).toHaveAttribute(
+    "aria-pressed",
+    "true",
+  );
+});
+
+it("pressing the chosen chip again returns to All", () => {
+  const onChange = vi.fn();
+  render(<ChipGroup label="Sector" choices={["Food"]} value="Food" onChange={onChange} />);
+  fireEvent.click(screen.getByRole("button", { name: "Food" }));
+  expect(onChange).toHaveBeenCalledWith("all");
+});

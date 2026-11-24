@@ -1,0 +1,88 @@
+import { expect, it } from "vitest";
+import type { Snapshot } from "../publishedReport";
+import { EVENT_HEADERS } from "../visuals/EventLane";
+import { nextDatedEvent } from "./nextEvent";
+
+const SHA = "d".repeat(64);
+
+function snapshot(rows: string[][], asOf: string | null = "2026-03-31"): Snapshot {
+  return {
+    catalogue: { real: [] },
+    workspace: {
+      runs: {
+        run: {
+          folder: "acme-run",
+          asOf,
+          modules: { "CP-2D": { outputs: ["acme-run/liquidity"], default: "acme-run/liquidity" } },
+        },
+      },
+      outputs: {
+        "acme-run/liquidity": {
+          id: "acme-run/liquidity",
+          run: "run",
+          module: "CP-2D",
+          label: "Liquidity",
+          href: "",
+          sha256: SHA,
+          events: [{ table: 20, lane: "Dated events" }],
+        },
+      },
+      handoffs: {
+        [SHA]: [
+          {
+            heading: "Events: Dated events",
+            line: 19,
+            level: 3,
+            blocks: [
+              {
+                type: "table",
+                line: 20,
+                headers: EVENT_HEADERS,
+                rows: rows.map((cells, index) => ({ line: 22 + index, cells })),
+              },
+            ],
+          },
+        ],
+      },
+      models: [],
+    },
+    chips: {},
+  } as unknown as Snapshot;
+}
+
+const row = (date: string, event: string, status = "Scheduled — Contract") => [
+  date,
+  date.length === 4 ? "year" : "day",
+  "2026-01-01",
+  event,
+  status,
+  "Not a file",
+  "Refinancing",
+];
+
+it("is the earliest upcoming dated event with its date as written and its evidence line", () => {
+  const found = nextDatedEvent(
+    snapshot([row("2028-06-30", "Term loan due"), row("2026-09-15", "Notes call date")]),
+    "acme-run",
+  );
+  expect(found).toEqual({
+    date: "2026-09-15",
+    name: "Notes call date",
+    href: `/report/acme-run#evidence/acme-run%2Fliquidity~${SHA}-23`,
+  });
+});
+
+it("skips historical events and says nothing when none is upcoming", () => {
+  const past = snapshot([row("2025-01-01", "Notes issued", "Historical — Published")]);
+  expect(nextDatedEvent(past, "acme-run")).toBeNull();
+});
+
+it("is nothing for a run with no as-of date, never a guess", () => {
+  expect(
+    nextDatedEvent(snapshot([row("2028-06-30", "Term loan due")], null), "acme-run"),
+  ).toBeNull();
+});
+
+it("is nothing when the report is not in the snapshot", () => {
+  expect(nextDatedEvent(snapshot([row("2028-06-30", "Term loan due")]), "other")).toBeNull();
+});
