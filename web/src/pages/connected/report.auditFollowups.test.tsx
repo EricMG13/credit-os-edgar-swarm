@@ -15,7 +15,7 @@ import {
 } from "./publishedReport";
 import { buildReportView } from "./reportView";
 import { ModuleConfidence } from "./report/Confidence";
-import { Changes } from "./report/Changes";
+import { ReportChanges } from "./report/Changes";
 
 const names = ["CP-2", "CP-6", "CP-8"];
 const hashes = ["a".repeat(64), "b".repeat(64), "c".repeat(64)] as const;
@@ -353,7 +353,7 @@ it("C5-025 ties each real table citation to its exact row", () => {
 
 it("J5-005 preserves the ruled first-run sentence and explains its decision time", () => {
   const { run, snapshot } = fixture();
-  render(<Changes snapshot={snapshot} run={run} entries={[]} change={{ first_run: true }} />);
+  render(<ReportChanges snapshot={snapshot} run={run} entries={[]} change={{ first_run: true }} />);
   expect(
     screen.getByText("This is the first listed run for this issuer on this pathway."),
   ).toBeInTheDocument();

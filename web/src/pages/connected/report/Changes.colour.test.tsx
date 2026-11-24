@@ -1,7 +1,7 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
-import type { Changes as PublishedChanges, PublishedRun, Snapshot } from "../publishedReport";
-import { Changes } from "./Changes";
+import type { PublishedChanges, PublishedRun, Snapshot } from "../publishedReport";
+import { ReportChanges } from "./Changes";
 
 afterEach(cleanup);
 
@@ -35,7 +35,7 @@ function draw(cases: Case[]) {
       ),
     },
   };
-  render(<Changes snapshot={snapshot} run={run} entries={[]} change={change} />);
+  render(<ReportChanges snapshot={snapshot} run={run} entries={[]} change={change} />);
   return (key: string) => {
     const card = screen.getByText(`Measure ${key}`).closest("li");
     return card?.querySelector<HTMLElement>("span.rounded-ds-xs") ?? null;

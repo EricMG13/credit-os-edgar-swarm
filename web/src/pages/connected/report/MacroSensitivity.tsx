@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from "react";
-import { ComparisonChart, type ComparisonPanel } from "@/components/chart/ComparisonChart";
+import { ComparisonChart, type ChartComparisonPanel } from "@/components/chart/ComparisonChart";
 import { TRACE_HOST } from "@/pages/library/parts/TraceControl";
 import { card, field, heading, label } from "../layout";
 import { PublishedTable } from "../ReportContent";
@@ -60,35 +60,14 @@ function retainedRate(entry: OutputEntry) {
     "Creditor consequence",
     "Source",
   ]);
-  if (
-    source?.headers.join("|") !==
-    "Exposure|Measure|Hedge or offset|Cash effect|Creditor consequence|Source"
-  )
-    return null;
+  if (!hasRetainedRateHeaders(source)) return null;
   const floating = namedRow(source, ({ cells }) => cells[0] === "Floating-rate debt (Term SOFR)");
   const impact = namedRow(ledger, ({ cells }) => cells[0] === "R4");
   const cover = namedRow(ledger, ({ cells }) => cells[0] === "R9");
-  const cash = /^([A-Z]{3}) ([\d,.]+) million a year per (\d+) bp$/.exec(floating?.cells[3] ?? "");
-  const ratio = /^(\d+(?:\.\d+)?)x; ratio \d+(?:\.\d+)?; (\d+(?:\.\d+)?)x before the shock$/.exec(
-    cover?.cells[3] ?? "",
-  );
-  if (!cash || !ratio || !impact || !cover || !floating) return null;
-  const [, currency, money, bp] = cash;
-  const [, after, before] = ratio;
-  if (
-    !currency ||
-    !money ||
-    !bp ||
-    !after ||
-    !before ||
-    amount(money) === null ||
-    floating.cells[2] !== "None disclosed" ||
-    floating.cells[4] !== `All-in cover ${before}x to ${after}x` ||
-    impact.cells[1] !== `${bp} bp cash-interest impact on unhedged floating debt` ||
-    impact.cells[3] !== money ||
-    cover.cells[1] !== "All-in cover after the shock (reported EBITDA over debt interest plus rent)"
-  )
-    return null;
+  const parsed = retainedRateInputs(floating, cover);
+  if (!impact || !cover || !floating || !parsed) return null;
+  if (!retainedRateRowsMatch(floating, impact, cover, parsed)) return null;
+  const { currency, money, bp, after, before } = parsed;
   const basis = entry.sections
     .filter(({ heading }) => heading === "Calculations")
     .flatMap(({ blocks }) => blocks)
@@ -108,6 +87,43 @@ function retainedRate(entry: OutputEntry) {
     coverLine: cover.line,
     basis: basis?.type === "text" ? basis.text : undefined,
   };
+}
+
+function hasRetainedRateHeaders(source: Table | undefined) {
+  return (
+    source?.headers.join("|") ===
+    "Exposure|Measure|Hedge or offset|Cash effect|Creditor consequence|Source"
+  );
+}
+
+function retainedRateInputs(
+  floating: Table["rows"][number] | undefined,
+  cover: Table["rows"][number] | undefined,
+) {
+  const cash = /^([A-Z]{3}) ([\d,.]+) million a year per (\d+) bp$/.exec(floating?.cells[3] ?? "");
+  const ratio = /^(\d+(?:\.\d+)?)x; ratio \d+(?:\.\d+)?; (\d+(?:\.\d+)?)x before the shock$/.exec(
+    cover?.cells[3] ?? "",
+  );
+  const [, currency, money, bp] = cash ?? [];
+  const [, after, before] = ratio ?? [];
+  if (!currency || !money || !bp || !after || !before || amount(money) === null) return null;
+  return { currency, money, bp, after, before };
+}
+
+function retainedRateRowsMatch(
+  floating: Table["rows"][number],
+  impact: Table["rows"][number],
+  cover: Table["rows"][number],
+  parsed: NonNullable<ReturnType<typeof retainedRateInputs>>,
+) {
+  const { money, bp, after, before } = parsed;
+  return (
+    floating.cells[2] === "None disclosed" &&
+    floating.cells[4] === `All-in cover ${before}x to ${after}x` &&
+    impact.cells[1] === `${bp} bp cash-interest impact on unhedged floating debt` &&
+    impact.cells[3] === money &&
+    cover.cells[1] === "All-in cover after the shock (reported EBITDA over debt interest plus rent)"
+  );
 }
 
 export function macroView(entry: OutputEntry) {
@@ -183,7 +199,7 @@ function panel(
   measure: string,
   texts: [string | null, string | null],
   values: [number | null, number | null],
-): ComparisonPanel {
+): ChartComparisonPanel {
   const min = Math.min(0, values[0] ?? 0, values[1] ?? 0);
   return {
     measure,
@@ -198,7 +214,7 @@ function compare(
   title: string,
   cases: [string, string],
   rowLabels: [string, string],
-  panels: ComparisonPanel[],
+  panels: ChartComparisonPanel[],
   actions: ReactNode,
 ) {
   return (

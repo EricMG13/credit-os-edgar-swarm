@@ -56,6 +56,32 @@ function skippedLevels(): string[] {
     .map((h) => h.text);
 }
 
+function expectedTitle(pattern: string, params: Record<string, string>): string | undefined {
+  if (pattern.includes("/feed/")) return VIEW_TITLES[params["view"] ?? ""];
+  if (pattern.includes("/topic/")) return TOPIC_TITLES[params["topic"] ?? ""];
+  if (pattern.includes("/group/")) return GROUP_TITLES[params["group"] ?? ""];
+  if (pattern.includes("/digest/")) {
+    return DIGEST_TITLES[`${params["scene"] ?? ""}/${params["digest"] ?? ""}`];
+  }
+  return TITLES[pattern];
+}
+
+function verifyDeclaredPath(pattern: string, params: Record<string, string>): void {
+  const { hash, missing } = fillParams(pattern, params);
+  expect(missing).toEqual([]);
+  const view = show(hash);
+  // No-name and thread routes open overlays that hide the page from the accessibility tree.
+  const hidden = params["scene"] === "no-name" || pattern.includes("/thread/");
+  expect(screen.getAllByRole("heading", { level: 1, hidden })).toHaveLength(1);
+  const title = expectedTitle(pattern, params);
+  if (title === undefined) throw new Error(`no expected title for ${hash}`);
+  expect(screen.getByRole("heading", { level: 1, hidden }).textContent).toBe(title);
+  expect(skippedLevels()).toEqual([]);
+  expect(screen.queryByText("Page not found")).toBeNull();
+  expect(screen.queryByText(/^No such /)).toBeNull();
+  view.unmount();
+}
+
 describe("the Signal frame", () => {
   afterEach(() => {
     window.location.hash = "";
@@ -272,27 +298,7 @@ describe("the Signal frame", () => {
     let visits = 0;
     for (const pattern of declared) {
       for (const set of params[pattern] ?? []) {
-        const { hash, missing } = fillParams(pattern, set);
-        expect(missing).toEqual([]);
-        const view = show(hash);
-        // hidden: the no-name scene opens the name dialog and a thread route opens the thread panel; each hides the page from the accessibility tree.
-        const hidden = set["scene"] === "no-name" || pattern.includes("/thread/");
-        expect(screen.getAllByRole("heading", { level: 1, hidden })).toHaveLength(1);
-        const title = pattern.includes("/feed/")
-          ? VIEW_TITLES[set["view"] ?? ""]
-          : pattern.includes("/topic/")
-            ? TOPIC_TITLES[set["topic"] ?? ""]
-            : pattern.includes("/group/")
-              ? GROUP_TITLES[set["group"] ?? ""]
-              : pattern.includes("/digest/")
-                ? DIGEST_TITLES[`${set["scene"] ?? ""}/${set["digest"] ?? ""}`]
-                : TITLES[pattern];
-        if (title === undefined) throw new Error(`no expected title for ${hash}`);
-        expect(screen.getByRole("heading", { level: 1, hidden }).textContent).toBe(title);
-        expect(skippedLevels()).toEqual([]);
-        expect(screen.queryByText("Page not found")).toBeNull();
-        expect(screen.queryByText(/^No such /)).toBeNull();
-        view.unmount();
+        verifyDeclaredPath(pattern, set);
         visits += 1;
       }
     }

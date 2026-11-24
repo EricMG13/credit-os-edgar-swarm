@@ -26,7 +26,7 @@ const runSubject: NonNullable<Route["subject"]> = (params, data) => {
   return run === undefined ? undefined : `${run.header.issuerName} — ${run.header.asOf}`;
 };
 
-export const routes: readonly Route[] = [
+export const modelRoutes: readonly Route[] = [
   {
     path: "/model/runs",
     home: "/model/runs",

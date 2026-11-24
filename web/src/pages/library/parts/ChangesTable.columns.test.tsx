@@ -4,7 +4,7 @@ import { fireEvent, render, screen, within } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import type { LibraryData } from "@/data";
 import { SourceContext } from "../../source";
-import { routes } from "../routes";
+import { libraryRoutes as routes } from "../routes";
 
 const fixture = JSON.parse(
   readFileSync(

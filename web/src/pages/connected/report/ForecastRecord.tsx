@@ -9,11 +9,25 @@ import {
   type OutputEntry,
 } from "../publishedReport";
 import type { buildReportView } from "../reportView";
-import { forecastCaseLabel, gridOf } from "../visuals/LegacyForecast";
+import { forecastCaseLabel, forecastCaseNames, gridOf, type Grid } from "../visuals/LegacyForecast";
 import { items, record, stringsIn, word } from "../visuals/visualData";
 import type { PublishedTraceContext } from "./PublishedTrace";
 
 export type ForecastModel = ReturnType<typeof buildReportView>["models"][number];
+
+function pathDetails(
+  document: Record<string, unknown>,
+  details: PublishedTraceContext["details"],
+  paths: Set<string>,
+) {
+  return (path: string[]) => {
+    const label = path.join(".");
+    if (paths.has(label)) return;
+    paths.add(label);
+    details.push({ label, value: scalar(atPath(document, path)) });
+  };
+}
+
 export function forecastHandoff(model: ForecastModel, entries: OutputEntry[], folder: string) {
   const matches = entries.filter(
     ({ output }) =>
@@ -31,9 +45,13 @@ export function forecastHandoff(model: ForecastModel, entries: OutputEntry[], fo
 
 export type ForecastSelection = {
   case?: string;
+  rawGroup?: string;
+  rawGroups?: string[];
   row?: string;
   period?: string;
   periods?: string[];
+  periodStart?: string;
+  periodEnd?: string;
   groups?: string[];
   text?: string;
   inputPath?: string[];
@@ -106,28 +124,40 @@ function caseDriverGroup(name: string, downsideNote: string) {
   return downsideNote.includes("base-case drivers") ? "base_drivers" : null;
 }
 
+function includesCase(selection: ForecastSelection, group: string, name: string) {
+  if (selection.rawGroup !== undefined) return selection.rawGroup === group;
+  if (selection.rawGroups) return selection.rawGroups.includes(group);
+  if (selection.groups) return selection.groups.includes(name);
+  return !selection.case || selection.case === name;
+}
+
+function includesPeriod(selection: ForecastSelection, column: Grid["columns"][number]) {
+  if (selection.period && selection.period !== column.label) return false;
+  if (selection.periods && !selection.periods.includes(column.label)) return false;
+  if (selection.periodStart && selection.periodStart !== column.start) return false;
+  return !selection.periodEnd || selection.periodEnd === column.end;
+}
+
 function selectedValues(model: ForecastModel, rowName: string, selection: ForecastSelection) {
   const cashflow = record(model.cashflow);
   const downside = stringsIn(cashflow.notes).find((note) => note.startsWith("Downside case is"));
-  return rawGroups(model).flatMap((grid) => {
+  const grids = rawGroups(model);
+  const rawNames = grids.flatMap((grid) => grid.columns.map(({ group }) => group));
+  const names = forecastCaseNames([...new Set(rawNames)], downside);
+  return grids.flatMap((grid) => {
     const rows = grid.rows.filter((row) => row.label === rowName);
     if (rows.length !== 1) return [];
     const row = rows[0];
     if (!row) return [];
     return grid.columns.flatMap((column, index) => {
-      const name = forecastCaseLabel(column.group, downside);
-      if (
-        selection.groups
-          ? !selection.groups.includes(name)
-          : selection.case && selection.case !== name
-      )
+      const name = names.get(column.group) ?? forecastCaseLabel(column.group, downside);
+      if (!includesCase(selection, column.group, name) || !includesPeriod(selection, column))
         return [];
-      if (selection.period && selection.period !== column.label) return [];
-      if (selection.periods && !selection.periods.includes(column.label)) return [];
       const cell = row.cells[index];
       const value = word(cell?.exact) || word(cell?.display) || "n.a.";
       const reason = word(cell?.reason);
-      return [`${name} · ${column.label}: ${value}${reason ? ` (${reason})` : ""}`];
+      const span = column.start && column.end ? ` (${column.start} to ${column.end})` : "";
+      return [`${name} · ${column.label}${span}: ${value}${reason ? ` (${reason})` : ""}`];
     });
   });
 }
@@ -153,74 +183,140 @@ export function forecastTraceContext(
   const downsideNote =
     stringsIn(record(model.cashflow).notes).find((note) => note.startsWith("Downside case is")) ??
     "";
-  const details: PublishedTraceContext["details"] = [];
-  const paths = new Set<string>();
-  const add = (path: string[]) => {
-    const label = path.join(".");
-    if (paths.has(label)) return;
-    paths.add(label);
-    details.push({ label, value: scalar(atPath(document, path)) });
-  };
-  let missingBasis = false;
-  if (selection.inputPath) add(selection.inputPath);
-  else {
-    const base = record(document.base);
-    for (const key of BASE_FIELDS[rowName] ?? Object.keys(base)) add(["base", key]);
-    const forecastCases = rawGroups(model).flatMap((grid) =>
-      grid.columns
-        .filter((column) => /^FY\d+E$/.test(column.label))
-        .map((column) => forecastCaseLabel(column.group, downsideNote)),
-    );
-    const cases = (selection.groups ?? (selection.case ? [selection.case] : forecastCases)).filter(
-      (name) => forecastCases.includes(name),
-    );
-    for (const name of new Set(cases)) {
-      const group = caseDriverGroup(name, downsideNote);
-      if (!group) {
-        missingBasis = true;
-        details.push({ label: `${name} driver basis was not recorded`, value: null });
-        continue;
-      }
-      const baseDrivers = record(document.base_drivers);
-      if (group !== "base_drivers" && document[group] == null) {
-        missingBasis = true;
-        details.push({ label: `${name}: ${group} fields were not recorded`, value: null });
-        continue;
-      }
-      const overrides = group === "base_drivers" ? {} : record(document[group]);
-      const keys = DRIVER_FIELDS[rowName] ?? [
-        ...new Set([...Object.keys(baseDrivers), ...Object.keys(overrides)]),
-      ];
-      for (const key of keys) {
-        const chosen = overrides[key] != null ? group : "base_drivers";
-        if (Object.hasOwn(record(document[chosen]), key)) add([chosen, key]);
-      }
-    }
-    if (
-      cases.some(
-        (name) => name === "Downside shock" || name.startsWith("Downside stress (shock on "),
-      )
-    )
-      for (const key of Object.keys(record(document.downside_shock))) add(["downside_shock", key]);
-    if (cases.some((name) => name === "Downside shock" || name === "Downside case"))
-      details.push({ label: "Recorded downside basis", value: downsideNote || null });
-    if (/\b(?:cash|debt|interest|liquidity|leverage|repayment|facility)\b/i.test(rowName))
-      items(document.facilities).forEach((facility, index) => {
-        for (const key of Object.keys(record(facility))) add(["facilities", String(index), key]);
-      });
-  }
-  add(["years"]);
-  for (const key of ["currency", "scale"]) if (Object.hasOwn(document, key)) add([key]);
+  const basis = forecastInputBasis(model, document, rowName, selection, downsideNote);
+  const details = basis.details;
+  addForecastMetadata(document, details, basis.paths);
   return {
-    heading: `${name}${selection.case ? ` · ${selection.case}` : ""}${selection.period ? ` · ${selection.period}` : ""}`,
+    heading: `${name}${selection.case ? ` · ${selection.case}` : ""}${selection.period ? ` · ${selection.period}` : ""}${selection.periodStart && selection.periodEnd ? ` (${selection.periodStart} to ${selection.periodEnd})` : ""}`,
     statement: [rowName, selection.case, selection.text, ...values].filter(Boolean).join(" · "),
     details,
     qualification:
       "Values and input fields are retained as recorded. Input arrays follow their recorded planning years; no value is recomputed in this drawer." +
-      (missingBasis
+      (basis.missingBasis
         ? " A driver basis was not recorded for one or more displayed groups; no driver path is asserted for those groups."
         : ""),
   };
+}
+
+function forecastInputBasis(
+  model: ForecastModel,
+  document: Record<string, unknown>,
+  rowName: string,
+  selection: ForecastSelection,
+  downsideNote: string,
+) {
+  const details: PublishedTraceContext["details"] = [];
+  const paths = new Set<string>();
+  const add = pathDetails(document, details, paths);
+  let missingBasis = false;
+  if (selection.inputPath) add(selection.inputPath);
+  else {
+    missingBasis = addCaseDrivers(model, document, rowName, selection, downsideNote, add, details);
+    addDownsideDetails(
+      document,
+      forecastCases(model, downsideNote, selection),
+      downsideNote,
+      rowName,
+      add,
+      details,
+    );
+  }
+  return { details, paths, missingBasis };
+}
+
+function addCaseDrivers(
+  model: ForecastModel,
+  document: Record<string, unknown>,
+  rowName: string,
+  selection: ForecastSelection,
+  downsideNote: string,
+  add: (path: string[]) => void,
+  details: PublishedTraceContext["details"],
+) {
+  const base = record(document.base);
+  for (const key of BASE_FIELDS[rowName] ?? Object.keys(base)) add(["base", key]);
+  const cases = forecastCases(model, downsideNote, selection);
+  let missingBasis = false;
+  for (const name of new Set(cases)) {
+    missingBasis =
+      addCaseDriverGroup(document, rowName, downsideNote, name, add, details) || missingBasis;
+  }
+  return missingBasis;
+}
+
+function forecastCases(model: ForecastModel, downsideNote: string, selection: ForecastSelection) {
+  const available = rawGroups(model).flatMap((grid) =>
+    grid.columns.filter((column) => /^FY\d+E$/.test(column.label)).map((column) => column.group),
+  );
+  const names = forecastCaseNames([...new Set(available)], downsideNote);
+  const chosen = selection.rawGroups ?? (selection.rawGroup ? [selection.rawGroup] : undefined);
+  const selected = chosen
+    ? chosen
+    : (selection.groups ?? (selection.case ? [selection.case] : [...names.values()])).flatMap(
+        (name) => [...names].filter(([, display]) => display === name).map(([group]) => group),
+      );
+  return [...new Set(selected.filter((group) => available.includes(group)))].map((group) =>
+    forecastCaseLabel(group, downsideNote),
+  );
+}
+
+function addCaseDriverGroup(
+  document: Record<string, unknown>,
+  rowName: string,
+  downsideNote: string,
+  name: string,
+  add: (path: string[]) => void,
+  details: PublishedTraceContext["details"],
+) {
+  const group = caseDriverGroup(name, downsideNote);
+  if (!group) {
+    details.push({ label: `${name} driver basis was not recorded`, value: null });
+    return true;
+  }
+  const baseDrivers = record(document.base_drivers);
+  if (group !== "base_drivers" && document[group] == null) {
+    details.push({ label: `${name}: ${group} fields were not recorded`, value: null });
+    return true;
+  }
+  const overrides = group === "base_drivers" ? {} : record(document[group]);
+  const keys = DRIVER_FIELDS[rowName] ?? [
+    ...new Set([...Object.keys(baseDrivers), ...Object.keys(overrides)]),
+  ];
+  for (const key of keys) {
+    const chosen = overrides[key] != null ? group : "base_drivers";
+    if (Object.hasOwn(record(document[chosen]), key)) add([chosen, key]);
+  }
+  return false;
+}
+
+function addDownsideDetails(
+  document: Record<string, unknown>,
+  cases: string[],
+  downsideNote: string,
+  rowName: string,
+  add: (path: string[]) => void,
+  details: PublishedTraceContext["details"],
+) {
+  if (
+    cases.some((name) => name === "Downside shock" || name.startsWith("Downside stress (shock on "))
+  )
+    for (const key of Object.keys(record(document.downside_shock))) add(["downside_shock", key]);
+  if (cases.some((name) => name === "Downside shock" || name === "Downside case"))
+    details.push({ label: "Recorded downside basis", value: downsideNote || null });
+  if (/\b(?:cash|debt|interest|liquidity|leverage|repayment|facility)\b/i.test(rowName))
+    items(document.facilities).forEach((facility, index) => {
+      for (const key of Object.keys(record(facility))) add(["facilities", String(index), key]);
+    });
+}
+
+function addForecastMetadata(
+  document: Record<string, unknown>,
+  details: PublishedTraceContext["details"],
+  paths: Set<string>,
+) {
+  const add = pathDetails(document, details, paths);
+  add(["years"]);
+  for (const key of ["currency", "scale"]) if (Object.hasOwn(document, key)) add([key]);
 }
 
 const DRIVER_NAMES: Record<string, string> = {

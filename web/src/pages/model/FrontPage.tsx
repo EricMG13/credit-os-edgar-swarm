@@ -2,7 +2,7 @@ import { Card } from "@/components/card/Card";
 import { Banner } from "./parts/Banner";
 import { DetailsList } from "./parts/DetailsList";
 import { Item } from "./parts/Item";
-import { MetricTile } from "./parts/MetricTile";
+import { ModelMetricTile } from "./parts/MetricTile";
 import { RunPage } from "./parts/RunPage";
 import { TraceControl } from "./parts/TraceControl";
 import { runAddress } from "./runAddress";
@@ -37,7 +37,7 @@ export function FrontPage({ params }: { params: Record<string, string> }) {
             </div>
             <div className="grid grid-cols-[repeat(auto-fit,minmax(240px,1fr))] gap-6">
               {front.headline.metrics.map((metric, index) => (
-                <MetricTile key={index} metric={metric} />
+                <ModelMetricTile key={index} metric={metric} />
               ))}
             </div>
           </section>

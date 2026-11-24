@@ -1,4 +1,4 @@
-import { withUnit } from "./publishedReport";
+import { withUnit } from "./moneyUnits";
 
 const decimal = /^(-?)(\d+|\d{1,3}(?:,\d{3})+)(?:\.(\d+))?$/;
 

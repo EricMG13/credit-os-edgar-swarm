@@ -8,7 +8,7 @@ import type {
   Change,
   ChangeModuleItem,
   ChangeState,
-  Changes,
+  LibraryChangesData,
   ChangeView,
   BlockedBody,
   AnswerState,
@@ -720,7 +720,7 @@ function readChangeModule(value: unknown, path: string): ChangeModuleItem {
   };
 }
 
-function readChanges(value: unknown, path: string, traces: Traces): Changes {
+function readChanges(value: unknown, path: string, traces: Traces): LibraryChangesData {
   const c = rec(value, path);
   const kind = oneOf(c, "kind", path, ["none", "pending", "compared"]);
   if (kind === "none" || kind === "pending") {
@@ -1366,6 +1366,25 @@ function statesMatch(
  * held names can make, so the places a name can start and the names tried at each are bounded by
  * the names' own text.
  */
+function extendListedNames(
+  body: string,
+  from: number,
+  names: readonly string[],
+  reachable: Map<number, Set<number>>,
+  end: number,
+): Set<number> {
+  const found = new Set<number>();
+  for (const name of names) {
+    if (!body.startsWith(name, from)) continue;
+    const after = from + name.length;
+    const next = after === end ? after : body.startsWith(", ", after) ? after + 2 : -1;
+    const tail = reachable.get(next);
+    if (tail === undefined) continue;
+    for (const count of tail) found.add(count + 1);
+  }
+  return found;
+}
+
 function namesListed(lead: string, names: readonly string[]): Set<number> {
   if (!lead.endsWith(".")) return new Set();
   const body = lead.slice(0, -1);
@@ -1379,16 +1398,7 @@ function namesListed(lead: string, names: readonly string[]): Set<number> {
   const reach = new Map<number, Set<number>>([[end, new Set([0])]]);
   for (const from of [...starts].sort((x, y) => y - x)) {
     if (from === end) continue;
-    const found = new Set<number>();
-    for (const name of names) {
-      if (!body.startsWith(name, from)) continue;
-      const after = from + name.length;
-      const next = after === end ? after : body.startsWith(", ", after) ? after + 2 : -1;
-      const tail = reach.get(next);
-      if (tail === undefined) continue;
-      for (const n of tail) found.add(n + 1);
-    }
-    reach.set(from, found);
+    reach.set(from, extendListedNames(body, from, names, reach, end));
   }
   return reach.get(0) ?? new Set();
 }

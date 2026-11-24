@@ -47,6 +47,7 @@ it("offers the published Base and Downside cases with actual latest cash proxy v
   expect(forecastCaseOptions(model)).toEqual([
     {
       name: "Base case",
+      rawGroup: "Base case",
       period: "FY2028E",
       value: 12,
       units: "USD millions",
@@ -54,6 +55,7 @@ it("offers the published Base and Downside cases with actual latest cash proxy v
     },
     {
       name: "Downside shock",
+      rawGroup: "Downside case",
       period: "FY2028E",
       value: 6,
       units: "USD millions",
@@ -95,6 +97,86 @@ it("draws every case on the cash proxy chart and table, emphasising the selected
   expect(chart.getByRole("row", { name: /Downside shock/ })).toBeInTheDocument();
   expect(chart.getByRole("row", { name: /Base case/ })).toBeInTheDocument();
   expect(chart.getByRole("cell", { name: "6.00" })).toBeInTheDocument();
+});
+
+it("includes the published currency and scale when one period can only be shown as a table", () => {
+  const onePeriod = {
+    cashflow: {
+      units: "GBP millions",
+      columns: [
+        { label: "FY2027E", group: "Base case" },
+        { label: "FY2027E", group: "Downside case" },
+      ],
+      rows: [
+        {
+          label: "Cash proxy (not issuer free cash flow)",
+          band: "Cash",
+          total: true,
+          cells: ["42", "31"].map((value) => ({
+            status: "value",
+            exact: value,
+            display: value,
+          })),
+        },
+      ],
+    },
+  };
+  render(<CashProxy model={onePeriod} unified />);
+  expect(screen.getByText("Cash proxy values (GBP millions).")).toBeInTheDocument();
+  expect(screen.getByRole("table", { name: "Scenario comparison" })).toBeInTheDocument();
+});
+
+it("explains a recorded standalone cash proxy with no forecast periods", () => {
+  const cashflow = {
+    ...model.cashflow,
+    columns: model.cashflow.columns.map((column) => ({ ...column, label: "Historical" })),
+  };
+  render(<CashProxy model={{ cashflow }} />);
+  expect(screen.getByRole("note")).toHaveTextContent(
+    "The recorded cases do not form a readable scenario comparison.",
+  );
+  expect(screen.queryByRole("figure")).toBeNull();
+});
+
+it("explains incompatible standalone case dates without drawing a comparison", () => {
+  const cashflow = {
+    ...model.cashflow,
+    columns: model.cashflow.columns.map((column) => {
+      const year = column.label.slice(2, 6);
+      return {
+        ...column,
+        start: year + (column.group === "Base case" ? "-01-01" : "-07-01"),
+        end: year + "-12-31",
+      };
+    }),
+  };
+  render(<CashProxy model={{ cashflow }} />);
+  expect(screen.getByRole("note")).toHaveTextContent(
+    "The published cases do not share a unique, compatible period basis.",
+  );
+  expect(screen.queryByRole("table", { name: "Scenario comparison" })).toBeNull();
+});
+
+it("reports an unreadable cash proxy comparison instead of claiming the row is absent", () => {
+  const unreadable = structuredClone(model);
+  unreadable.cashflow.rows.push({
+    label: "Revenue",
+    band: "Operating",
+    total: false,
+    cells: [
+      { status: "value", exact: "100", display: "100" },
+      { status: "value", exact: "110", display: "" },
+      { status: "value", exact: "80", display: "80" },
+      { status: "value", exact: "90", display: "90" },
+    ],
+  });
+  render(
+    <CashProxy model={unreadable} unified sourceFor={() => <a href="#evidence">Source table</a>} />,
+  );
+  expect(screen.getByRole("note")).toHaveTextContent(/cash proxy is recorded/i);
+  expect(screen.getByRole("note")).toHaveTextContent(/calculation grid is unreadable/i);
+  expect(screen.queryByText("No scenario cash proxy was recorded.")).toBeNull();
+  expect(screen.getByRole("link", { name: "Source table" })).toHaveAttribute("href", "#evidence");
 });
 
 function fourCases() {

@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import { expect, it } from "vitest";
 import type { Metric } from "../slice";
-import { MetricTile } from "./MetricTile";
+import { LibraryMetricTile as MetricTile } from "./MetricTile";
 import { RunContext } from "./RunContext";
 
 const metric: Metric = {

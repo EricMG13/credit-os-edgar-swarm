@@ -4,7 +4,7 @@
 // `readSlice(useSource().library)`. Edit only this folder and fixtures/library.json.
 import type { LibraryData } from "../../data";
 import type { Route } from "../route-table";
-import { Changes } from "./Changes";
+import { LibraryChanges } from "./Changes";
 import { Evidence } from "./Evidence";
 import { History } from "./History";
 import { Home } from "./Home";
@@ -54,7 +54,7 @@ const moduleSubject = runSubject((params, run) => {
   return run.modules?.find((module) => module.id === wanted)?.name ?? null;
 });
 
-export const routes: readonly Route[] = [
+export const libraryRoutes: readonly Route[] = [
   {
     path: "/library/home",
     home: "/library/home",
@@ -81,7 +81,7 @@ export const routes: readonly Route[] = [
     layout: "bleed",
     title: PAGE_NAME.changes,
     subject: runPage,
-    render: (params) => <Changes issuer={params["issuer"]} run={params["run"]} />,
+    render: (params) => <LibraryChanges issuer={params["issuer"]} run={params["run"]} />,
   },
   {
     path: "/library/:issuer/:run/modules",

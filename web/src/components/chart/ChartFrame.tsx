@@ -1,7 +1,7 @@
 import { useEffect, useId, useState, type ReactNode } from "react";
 import { ButtonGroup, ButtonGroupItem } from "@/components/base/button-group/button-group";
 
-export type ChartView = "chart" | "table";
+type ChartView = "chart" | "table";
 
 interface ChartFrameProps {
   title: string;

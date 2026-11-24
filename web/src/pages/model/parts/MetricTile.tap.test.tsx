@@ -1,6 +1,6 @@
 import { act, fireEvent, render, screen } from "@testing-library/react";
 import type { Metric } from "../slice/types";
-import { MetricTile } from "./MetricTile";
+import { ModelMetricTile as MetricTile } from "./MetricTile";
 
 const DEFINITION = "Net debt divided by EBITDA as defined";
 const METRIC: Metric = {

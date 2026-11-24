@@ -4,7 +4,7 @@ import { GapPanel } from "@/components/gap/GapPanel";
 import { StatusBadge } from "@/components/status/StatusBadge";
 import { card, heading } from "../layout";
 import { containsReference, evidencePath, readerText, type PublishedRun } from "../publishedReport";
-import { richParts } from "../ReportContent";
+import { richParts } from "../richText";
 import type { moduleBottomLines, runLimitations } from "../reportView";
 import { PublishedSource } from "./PublishedTrace";
 

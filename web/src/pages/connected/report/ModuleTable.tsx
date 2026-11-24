@@ -8,7 +8,7 @@ import type { AnswerState, Cell } from "@/pages/library/slice";
 import { TRACE_HOST, TraceControl } from "@/pages/library/parts/TraceControl";
 import { SECTION_HEADING, SUBSECTION_HEADING } from "@/pages/library/parts/heading";
 import { containsReference, displayColumns, readerText, type Table } from "../publishedReport";
-import { plainText, richParts } from "../ReportContent";
+import { plainText, richParts } from "../richText";
 
 function visible(table: Table) {
   const indexes = displayColumns(table.headers, false, table.rows);

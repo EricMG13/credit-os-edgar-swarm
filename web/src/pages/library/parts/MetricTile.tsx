@@ -9,7 +9,7 @@ import { MetricCard, METRIC_FIGURE } from "@/components/metric/MetricCard";
  * The shared headline card, with the library's original value, qualification and source control. A tile with no trace draws the
  * missing-trace marker; `traced={false}` draws neither, for the Evidence page, which has no trace controls.
  */
-export function MetricTile({ metric, traced = true }: { metric: Metric; traced?: boolean }) {
+export function LibraryMetricTile({ metric, traced = true }: { metric: Metric; traced?: boolean }) {
   return (
     <MetricCard
       as="li"

@@ -6,7 +6,7 @@ import path from "node:path";
 import { render, screen, within } from "@testing-library/react";
 import type { LibraryData } from "@/data";
 import { SourceContext } from "../source";
-import { routes } from "./routes";
+import { libraryRoutes as routes } from "./routes";
 
 type Entry = {
   asOf: string;

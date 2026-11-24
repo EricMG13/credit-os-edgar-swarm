@@ -10,6 +10,7 @@ import { TraceDrawer } from "../library/parts/TraceDrawer";
 import type { Trace, TreeNode } from "../library/slice";
 import { moduleName } from "./api";
 import { traceKey } from "./reportView";
+import { plainText, richParts } from "./richText";
 import { card, heading } from "./layout";
 import { drawnQualificationLines } from "./visuals/drawnQualifications";
 import { monitoringLabel, typedModuleTable } from "./report/ModuleTable";
@@ -38,27 +39,6 @@ import {
   type Snapshot,
   type Table,
 } from "./publishedReport";
-
-/** Drawn marks and text; findings pages pass readerText, Evidence keeps the default. */
-export function richParts(value: string, clean = plainModuleNames): ReactNode {
-  return value.split(/(\*\*[^*]+\*\*|`[^`]+`)/g).map((part, index) => {
-    if (part.startsWith("**") && part.endsWith("**"))
-      return <strong key={index}>{clean(part.slice(2, -2))}</strong>;
-    if (part.startsWith("`") && part.endsWith("`"))
-      return <code key={index}>{part.slice(1, -1)}</code>;
-    return clean(part.replaceAll("\\|", "|"));
-  });
-}
-
-/** The text richParts draws, without its marks. */
-export function plainText(value: string): string {
-  return value
-    .replace(
-      /\*\*([^*]+)\*\*|`([^`]+)`/g,
-      (_, bold: string | undefined, code: string | undefined) => bold ?? code ?? "",
-    )
-    .replaceAll("\\|", "|");
-}
 
 function matchingDownload(run: PublishedRun, entry: OutputEntry) {
   const linked =

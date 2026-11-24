@@ -181,9 +181,44 @@ async function linkButton(send) {
 }
 
 /** Prints PASS or FAIL lines for the kit page opened from file:// and returns true when all pass. */
-export async function checkKitInChrome({ browser, folder }) {
-  const profile = mkdtempSync(path.join(tmpdir(), "credit-os-cdp-"));
-  const child = spawn(
+function accessibleLink(link, want) {
+  return (
+    link.found &&
+    link.disabledFound &&
+    link.reached === "ok" &&
+    link.announcedDisabled &&
+    link.tabStop !== null &&
+    link.tabStop.secondLink === "Back to the library" &&
+    !link.tabStop.reached &&
+    link.tabStop.tabIndex < 0 &&
+    link.ring?.colour === want &&
+    link.ring?.width === "2px" &&
+    link.ring?.style === "solid"
+  );
+}
+
+async function checkKitPage(send) {
+  const names = await unnamed(send);
+  console.log(
+    `${names.length === 0 ? "PASS" : "FAIL"} kit page: every column header and button has an accessible name${names.length ? ` (unnamed: ${names.join(", ")})` : ""}`,
+  );
+  const want = focusColour();
+  const rings = await invalidRingColours(send);
+  const wrong = rings.filter((shadow) => !shadow.includes(want));
+  const ringsOk = rings.length >= 2 && wrong.length === 0;
+  console.log(
+    `${ringsOk ? "PASS" : "FAIL"} kit page: ${rings.length} keyboard-focused invalid fields draw the focus colour ${want}${ringsOk ? "" : ` (found: ${wrong.join(" | ") || "no invalid fields"})`}`,
+  );
+  const link = await linkButton(send);
+  const linkOk = accessibleLink(link, want);
+  console.log(
+    `${linkOk ? "PASS" : "FAIL"} kit page: the link button has role link and its label as name (disabled one too, announced disabled and skipped by Tab from the second link) and a keyboard-focused one draws a 2px ${want} outline${linkOk ? "" : ` (found: ${JSON.stringify(link)})`}`,
+  );
+  return names.length === 0 && ringsOk && linkOk;
+}
+
+function launchChrome(browser, profile) {
+  return spawn(
     browser,
     [
       "--headless=new",
@@ -197,42 +232,20 @@ export async function checkKitInChrome({ browser, folder }) {
     ],
     { stdio: "ignore" },
   );
+}
+
+export async function checkKitInChrome({ browser, folder }) {
+  const profile = mkdtempSync(path.join(tmpdir(), "credit-os-cdp-"));
+  const child = launchChrome(browser, profile);
   try {
     const { send, close } = await connect(profile, child);
     await send("Page.enable");
-    await send("Page.navigate", {
-      url: pathToFileURL(path.join(folder, "index.html")).href + "#/kit",
-    });
+    const url = pathToFileURL(path.join(folder, "index.html")).href + "#/kit";
+    await send("Page.navigate", { url });
     await wait(1500);
-    const names = await unnamed(send);
-    console.log(
-      `${names.length === 0 ? "PASS" : "FAIL"} kit page: every column header and button has an accessible name${names.length ? ` (unnamed: ${names.join(", ")})` : ""}`,
-    );
-    const want = focusColour();
-    const rings = await invalidRingColours(send);
-    const wrong = rings.filter((shadow) => !shadow.includes(want));
-    const ok = rings.length >= 2 && wrong.length === 0;
-    console.log(
-      `${ok ? "PASS" : "FAIL"} kit page: ${rings.length} keyboard-focused invalid fields draw the focus colour ${want}${ok ? "" : ` (found: ${wrong.join(" | ") || "no invalid fields"})`}`,
-    );
-    const link = await linkButton(send);
-    const linkOk =
-      link.found &&
-      link.disabledFound &&
-      link.reached === "ok" &&
-      link.announcedDisabled &&
-      link.tabStop !== null &&
-      link.tabStop.secondLink === "Back to the library" &&
-      !link.tabStop.reached &&
-      link.tabStop.tabIndex < 0 &&
-      link.ring?.colour === want &&
-      link.ring?.width === "2px" &&
-      link.ring?.style === "solid";
-    console.log(
-      `${linkOk ? "PASS" : "FAIL"} kit page: the link button has role link and its label as name (disabled one too, announced disabled and skipped by Tab from the second link) and a keyboard-focused one draws a 2px ${want} outline${linkOk ? "" : ` (found: ${JSON.stringify(link)})`}`,
-    );
+    const passed = await checkKitPage(send);
     close();
-    return names.length === 0 && ok && linkOk;
+    return passed;
   } finally {
     child.kill("SIGKILL");
     rmSync(profile, { recursive: true, force: true, maxRetries: 10, retryDelay: 200 });

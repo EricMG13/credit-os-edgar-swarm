@@ -1,5 +1,5 @@
 import { render, screen, within } from "@testing-library/react";
-import { StackChart, type StackPart } from "./StackChart";
+import { StackChart, type ChartStackPart as StackPart } from "./StackChart";
 
 // X1-024 and C4-004: a facility with no balance is a legend row with no segment, never a failure.
 const DRAWN: StackPart = { name: "Term loan", value: 80, text: "80", share: "100%" };

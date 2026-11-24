@@ -5,7 +5,7 @@
 // the kit's empty state instead of the list. "Earlier digests" is a card of rows, one per earlier
 // issue (not links: no page holds one issue). A paused digest says so in an info alert, takes its own
 // name as the h1 and draws every issue as a row. The column is the mock's 820px.
-import { useRef, type ReactNode } from "react";
+import { useRef, type ReactNode, type RefObject } from "react";
 import { Alert } from "@/components/alert/Alert";
 import { Badge } from "@/components/base/badges/badges";
 import { Button } from "@/components/base/buttons/button";
@@ -141,6 +141,95 @@ function Row({ digest, issue }: { digest: SignalDigest; issue: SignalDigestIssue
   );
 }
 
+function DigestHeading({
+  digest,
+  current,
+}: {
+  digest: SignalDigest;
+  current: SignalDigestIssue | undefined;
+}) {
+  if (current === undefined) {
+    return (
+      <div className="flex flex-wrap items-center gap-3">
+        <PageTitle>{digest.name}</PageTitle>
+        {digest.paused === null ? null : <StatusBadge set="Signal source states" state="Paused" />}
+      </div>
+    );
+  }
+  return (
+    <>
+      <div className={META}>
+        <Badge size="sm">Digest</Badge>
+        {current.ai ? <Badge size="sm">AI</Badge> : null}
+        <span>{digest.name}</span>
+        {current.date === null ? null : <span>{current.date}</span>}
+      </div>
+      <PageTitle>{current.title}</PageTitle>
+      {current.summary === null ? null : (
+        <p className="mt-1 max-w-[72ch] text-sm text-text-tertiary">{current.summary}</p>
+      )}
+    </>
+  );
+}
+
+function PausedNotice({
+  scene,
+  digest,
+  writer,
+}: {
+  scene: SignalScene;
+  digest: SignalDigest;
+  writer: boolean;
+}) {
+  if (digest.paused === null) return null;
+  return (
+    <div className="mt-4">
+      <Alert
+        tone="info"
+        title={digest.paused}
+        action={
+          writer ? (
+            <a
+              href={sceneHref(scene, "settings/ai")}
+              className={`text-sm font-semibold text-text-link ${FOCUS}`}
+            >
+              Open AI and cost
+            </a>
+          ) : undefined
+        }
+      />
+    </div>
+  );
+}
+
+function EarlierDigests({
+  digest,
+  issues,
+  titleRef,
+}: {
+  digest: SignalDigest;
+  issues: SignalDigestIssue[];
+  titleRef: RefObject<HTMLHeadingElement | null>;
+}) {
+  if (issues.length === 0) return null;
+  return (
+    <section className="mt-8">
+      <h2
+        ref={titleRef}
+        tabIndex={-1}
+        className={`mb-3 text-lg font-semibold text-text-primary ${FOCUS}`}
+      >
+        Earlier digests
+      </h2>
+      <ul className="divide-y divide-border-hairline rounded-ds-lg border border-border-subtle bg-surface-card px-8 py-2 shadow-1">
+        {issues.map((issue) => (
+          <Row key={issue.id} digest={digest} issue={issue} />
+        ))}
+      </ul>
+    </section>
+  );
+}
+
 /** `none` is the empty state a digest with no issue draws (the page that owns the empty states passes it). */
 export function DigestPage({
   scene,
@@ -161,45 +250,8 @@ export function DigestPage({
   const earlier = current === undefined ? digest.issues : rest;
   return (
     <div className="max-w-[820px]">
-      {current === undefined ? (
-        <div className="flex flex-wrap items-center gap-3">
-          <PageTitle>{digest.name}</PageTitle>
-          {digest.paused === null ? null : (
-            <StatusBadge set="Signal source states" state="Paused" />
-          )}
-        </div>
-      ) : (
-        <>
-          <div className={META}>
-            <Badge size="sm">Digest</Badge>
-            {current.ai ? <Badge size="sm">AI</Badge> : null}
-            <span>{digest.name}</span>
-            {current.date === null ? null : <span>{current.date}</span>}
-          </div>
-          <PageTitle>{current.title}</PageTitle>
-          {current.summary === null ? null : (
-            <p className="mt-1 max-w-[72ch] text-sm text-text-tertiary">{current.summary}</p>
-          )}
-        </>
-      )}
-      {digest.paused === null ? null : (
-        <div className="mt-4">
-          <Alert
-            tone="info"
-            title={digest.paused}
-            action={
-              writer ? (
-                <a
-                  href={sceneHref(scene, "settings/ai")}
-                  className={`text-sm font-semibold text-text-link ${FOCUS}`}
-                >
-                  Open AI and cost
-                </a>
-              ) : undefined
-            }
-          />
-        </div>
-      )}
+      <DigestHeading digest={digest} current={current} />
+      <PausedNotice scene={scene} digest={digest} writer={writer} />
       {digest.issues.length === 0 ? none : null}
       {current === undefined ? null : (
         <Body
@@ -210,22 +262,7 @@ export function DigestPage({
           }}
         />
       )}
-      {earlier.length === 0 ? null : (
-        <section className="mt-8">
-          <h2
-            ref={earlierTitle}
-            tabIndex={-1}
-            className={`mb-3 text-lg font-semibold text-text-primary ${FOCUS}`}
-          >
-            Earlier digests
-          </h2>
-          <ul className="divide-y divide-border-hairline rounded-ds-lg border border-border-subtle bg-surface-card px-8 py-2 shadow-1">
-            {earlier.map((issue) => (
-              <Row key={issue.id} digest={digest} issue={issue} />
-            ))}
-          </ul>
-        </section>
-      )}
+      <EarlierDigests digest={digest} issues={earlier} titleRef={earlierTitle} />
     </div>
   );
 }

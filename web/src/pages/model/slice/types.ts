@@ -166,7 +166,7 @@ export type Bridge = ChartInfo & {
 };
 
 /** One measure of the side by side chart: a position and the exact text for each case. */
-export type ComparisonPanel = {
+export type ModelComparisonPanel = {
   measure: string;
   /** The label of this panel's row in the table, which may be shorter than the measure. */
   tableLabel: string;
@@ -183,10 +183,10 @@ export type Comparison = ChartInfo & {
   rowLabels: [string, string];
   /** The table's first column heading. */
   tableHead: string;
-  panels: ComparisonPanel[];
+  panels: ModelComparisonPanel[];
 };
 
-export type StackPart = {
+export type ModelStackPart = {
   name: string;
   value: number;
   text: string;
@@ -195,7 +195,7 @@ export type StackPart = {
 };
 
 /** One bar split into ranked parts; `head` is the label, amount and share headings. */
-export type Stack = ChartInfo & { head: string[]; parts: StackPart[] };
+export type Stack = ChartInfo & { head: string[]; parts: ModelStackPart[] };
 
 /** Bars by group and series, such as maturities by year; the table is the labels as drawn. */
 export type ColumnsData = ChartInfo & {

@@ -133,6 +133,91 @@ export interface LinkButtonProps
   isLoading?: undefined;
 }
 
+function ButtonContents({
+  leading,
+  trailing,
+  children,
+  loading,
+  link,
+}: {
+  leading: ButtonProps["iconLeading"];
+  trailing: ButtonProps["iconTrailing"];
+  children: ReactNode;
+  loading: boolean | undefined;
+  link: boolean;
+}) {
+  const Leading = leading;
+  const Trailing = trailing;
+  return (
+    <>
+      {isValidElement(Leading) && Leading}
+      {isReactComponent(Leading) && <Leading data-icon="leading" className={styles.common.icon} />}
+      {loading && <LoadingIcon />}
+      {children && (
+        <span data-text className={cx("transition-inherit-all", !link && "px-0.5")}>
+          {children}
+        </span>
+      )}
+      {isValidElement(Trailing) && Trailing}
+      {isReactComponent(Trailing) && (
+        <Trailing data-icon="trailing" className={styles.common.icon} />
+      )}
+    </>
+  );
+}
+
+function LoadingIcon() {
+  return (
+    <svg
+      fill="none"
+      data-icon="loading"
+      viewBox="0 0 20 20"
+      aria-hidden="true"
+      className={cx(
+        styles.common.icon,
+        "absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2",
+      )}
+    >
+      <circle
+        className="stroke-current opacity-30"
+        cx="10"
+        cy="10"
+        r="8"
+        fill="none"
+        strokeWidth="2"
+      />
+      <circle
+        className="origin-center animate-spin stroke-current"
+        cx="10"
+        cy="10"
+        r="8"
+        fill="none"
+        strokeWidth="2"
+        strokeDasharray="12.5 50"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
+function buttonClasses(
+  size: keyof typeof styles.sizes,
+  color: keyof typeof styles.colors,
+  isLinkType: boolean,
+  loading: boolean | undefined,
+  className: string | undefined,
+) {
+  return cx(
+    styles.common.root,
+    styles.sizes[size].root,
+    styles.colors[color].root,
+    isLinkType && styles.sizes[size].linkRoot,
+    loading && "pointer-events-none",
+    loading && "[&>*:not([data-icon=loading])]:opacity-0",
+    className,
+  );
+}
+
 export const Button = ({
   size = "md",
   color = "primary",
@@ -147,73 +232,7 @@ export const Button = ({
   const isLinkType =
     color === "link-color" || color === "link-gray" || color === "link-destructive";
 
-  const commonChildren = (
-    <>
-      {/* Leading icon */}
-      {isValidElement(IconLeading) && IconLeading}
-      {isReactComponent(IconLeading) && (
-        <IconLeading data-icon="leading" className={styles.common.icon} />
-      )}
-
-      {loading && (
-        <svg
-          fill="none"
-          data-icon="loading"
-          viewBox="0 0 20 20"
-          aria-hidden="true"
-          className={cx(
-            styles.common.icon,
-            "absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2",
-          )}
-        >
-          {/* Background circle */}
-          <circle
-            className="stroke-current opacity-30"
-            cx="10"
-            cy="10"
-            r="8"
-            fill="none"
-            strokeWidth="2"
-          />
-          {/* Spinning circle */}
-          <circle
-            className="origin-center animate-spin stroke-current"
-            cx="10"
-            cy="10"
-            r="8"
-            fill="none"
-            strokeWidth="2"
-            strokeDasharray="12.5 50"
-            strokeLinecap="round"
-          />
-        </svg>
-      )}
-
-      {children && (
-        <span data-text className={cx("transition-inherit-all", !isLinkType && "px-0.5")}>
-          {children}
-        </span>
-      )}
-
-      {/* Trailing icon */}
-      {isValidElement(IconTrailing) && IconTrailing}
-      {isReactComponent(IconTrailing) && (
-        <IconTrailing data-icon="trailing" className={styles.common.icon} />
-      )}
-    </>
-  );
-
-  const classes = cx(
-    styles.common.root,
-    styles.sizes[size].root,
-    styles.colors[color].root,
-    isLinkType && styles.sizes[size].linkRoot,
-    loading && "pointer-events-none",
-    // If in `loading` state, hide everything except the loading icon. Opacity, not visibility:
-    // hidden text names nothing in Chrome, and the label is the button's name.
-    loading && "[&>*:not([data-icon=loading])]:opacity-0",
-    className,
-  );
+  const classes = buttonClasses(size, color, isLinkType, loading, className);
 
   if (props.href !== undefined) {
     return (
@@ -224,7 +243,13 @@ export const Button = ({
         data-icon-only={isIcon ? true : undefined}
         className={classes}
       >
-        {commonChildren}
+        <ButtonContents
+          leading={IconLeading}
+          trailing={IconTrailing}
+          children={children}
+          loading={loading}
+          link={isLinkType}
+        />
       </AriaLink>
     );
   }
@@ -238,7 +263,13 @@ export const Button = ({
       isPending={loading}
       className={classes}
     >
-      {commonChildren}
+      <ButtonContents
+        leading={IconLeading}
+        trailing={IconTrailing}
+        children={children}
+        loading={loading}
+        link={isLinkType}
+      />
     </AriaButton>
   );
 };

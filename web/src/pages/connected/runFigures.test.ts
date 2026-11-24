@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { moduleWord, spendFigure } from "./runFigures";
-import type { Run } from "./api";
+import type { ConnectedRun as Run } from "./api";
 
 const run: Run = {
   id: "run-1",

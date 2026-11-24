@@ -14,7 +14,7 @@ import { ChartWithTable } from "./ChartWithTable";
 import { ReadoutRow } from "./PathChart";
 import { assignSeries, type SeriesStyle } from "./series";
 
-export interface StackPart {
+export interface ChartStackPart {
   name: string;
   /**
    * Position only: the segment's length is its value over the row's total. A part of zero, or of
@@ -34,7 +34,7 @@ interface StackChartProps {
   subtitle?: string;
   actions?: ReactNode;
   /** In rank order, as delivered. */
-  parts: StackPart[];
+  parts: ChartStackPart[];
   /** One row per part, in the same order: the amount, then the share when parts carry one. */
   table: { head: string[]; rows: TableRowData[]; endHeading?: string };
   /** Original disclosure when the source records additional information for each part. */
@@ -52,7 +52,7 @@ function keyOf(i: number): string {
 }
 
 /** A part with a balance above zero draws a segment and takes a swatch; any other is a legend row. */
-function isDrawn(part: StackPart): part is StackPart & { value: number } {
+function isDrawn(part: ChartStackPart): part is ChartStackPart & { value: number } {
   return part.value !== null && part.value > 0;
 }
 
@@ -121,7 +121,7 @@ function Segment({
 }
 
 /** The readout: every part's name, amount and share, as delivered. */
-function StackTooltip({ active, parts }: TooltipContentProps & { parts: StackPart[] }) {
+function StackTooltip({ active, parts }: TooltipContentProps & { parts: ChartStackPart[] }) {
   if (!active) return null;
   return (
     <div className="rounded-ds-sm bg-surface-inverse px-3 py-2 text-small text-text-on-action shadow-2">
@@ -143,7 +143,13 @@ function StackTooltip({ active, parts }: TooltipContentProps & { parts: StackPar
  * part that draws no segment has no swatch, and a balance the source does not state shows the
  * source's words in the tertiary text colour.
  */
-function RankedLegend({ parts, styles }: { parts: StackPart[]; styles: Map<string, SeriesStyle> }) {
+function RankedLegend({
+  parts,
+  styles,
+}: {
+  parts: ChartStackPart[];
+  styles: Map<string, SeriesStyle>;
+}) {
   const share = parts.some((p) => p.share !== undefined);
   return (
     <ol

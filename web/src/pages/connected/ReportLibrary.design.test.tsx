@@ -1,9 +1,9 @@
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { ConnectedApp } from "./ConnectedApp";
-import { Changes } from "./report/Changes";
+import { ReportChanges } from "./report/Changes";
 import { buildReportView, runLimitations } from "./reportView";
-import type { Changes as PublishedChanges, PublishedRun, Snapshot } from "./publishedReport";
+import type { PublishedChanges, PublishedRun, Snapshot } from "./publishedReport";
 
 const EMPTY_EVIDENCE = {
   sources: [],
@@ -203,7 +203,7 @@ describe("connected library and report design", () => {
       evidence: EMPTY_EVIDENCE,
     } as unknown as PublishedRun;
     const snapshot = { workspace: { runs: {} } } as unknown as Snapshot;
-    render(<Changes snapshot={snapshot} run={run} entries={[]} change={change} />);
+    render(<ReportChanges snapshot={snapshot} run={run} entries={[]} change={change} />);
     expect(screen.getByText("Net leverage")).toBeInTheDocument();
     expect(screen.queryByRole("columnheader", { name: "Earlier" })).toBeNull();
     fireEvent.click(screen.getByRole("radio", { name: "Table" }));

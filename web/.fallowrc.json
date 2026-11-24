@@ -1,3 +1,12 @@
 {
-  "entry": ["src/connected-main.tsx", "vite.connected.config.ts"]
+  "entry": [
+    "index.html",
+    "connected.html",
+    "public/data.js",
+    "src/main.tsx",
+    "src/connected-main.tsx",
+    "vite.config.ts",
+    "vite.connected.config.ts"
+  ],
+  "ignoreUnresolvedImports": ["?/data.js"]
 }

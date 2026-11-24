@@ -1,5 +1,5 @@
 import { expect, it } from "vitest";
-import { ticks } from "./visualData";
+import { publishedTables, ticks } from "./visualData";
 
 const values = (series: number[], zero: boolean) => ticks(series, zero).map((t) => t.value);
 const labels = (series: number[], zero: boolean) => ticks(series, zero).map((t) => t.label);
@@ -62,4 +62,27 @@ it("treats a series with a non-finite value as empty and terminates", () => {
   const empty = ticks([], false);
   expect(ticks([Number.NaN, 3], false)).toEqual(empty);
   expect(ticks([Infinity], false)).toEqual(empty);
+});
+
+it("rejects a duplicate table line when its first occurrence is malformed", () => {
+  const malformed = { type: "table", line: 12, headers: ["Label"], rows: [] };
+  const valid = {
+    type: "table",
+    line: 12,
+    headers: ["Label", "Value"],
+    rows: [{ cells: ["Revenue", "10"] }],
+  };
+  const tables = publishedTables([{ blocks: [malformed, valid] }]);
+  expect(tables.has(12)).toBe(false);
+});
+
+it("rejects a duplicate table line when the malformed occurrence follows a valid table", () => {
+  const valid = {
+    type: "table",
+    line: 13,
+    headers: ["Label", "Value"],
+    rows: [{ cells: ["Revenue", "10"] }],
+  };
+  const malformed = { type: "table", line: 13, headers: ["Label"], rows: [] };
+  expect(publishedTables([{ blocks: [valid, malformed] }]).has(13)).toBe(false);
 });

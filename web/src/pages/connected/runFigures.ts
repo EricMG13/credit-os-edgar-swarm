@@ -1,5 +1,5 @@
 import type { ActivityLine, Figure, ModuleStep, ModuleWord } from "../run/slice-activity";
-import { moduleName, serviceText, type Run, type RunEvent } from "./api";
+import { moduleName, serviceText, type ConnectedRun as Run, type RunEvent } from "./api";
 
 function amount(text: string | null | undefined): { value: number; text: string } | undefined {
   if (!text || !/^\d+(?:\.\d+)?(?:e[+-]?\d+)?$/i.test(text)) return;

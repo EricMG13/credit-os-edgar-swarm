@@ -66,6 +66,35 @@ const traceOf = (run: Run, key: string): Trace => {
   return found;
 };
 
+const GENERIC_GAP_WORDS = new Set([
+  "schedule",
+  "documents",
+  "figures",
+  "the",
+  "of",
+  "for",
+  "on",
+  "share",
+  "average",
+]);
+
+function assertModuleGapHasLimitation(run: Run, row: Gap): boolean {
+  if (row.where.page !== "module") return false;
+  const page = run.modules.find((module) => module.id === row.moduleId);
+  if (page === undefined) throw new RangeError(`${run.id} ${row.id}: no module ${row.moduleId}`);
+  const subject = row.gap
+    .toLowerCase()
+    .split(" ")
+    .find((word) => !GENERIC_GAP_WORDS.has(word));
+  if (subject === undefined) throw new RangeError(`${run.id} ${row.id}: no subject word`);
+  const items = (page.body.limitations?.items ?? []).map((item) => item.text.toLowerCase());
+  expect(
+    items.some((text) => text.includes(subject.slice(0, 5))),
+    `${run.id} ${row.id} ${row.gap}: ${row.moduleId} limitations ${JSON.stringify(items)}`,
+  ).toBe(true);
+  return true;
+}
+
 /** Every object that carries a trace key and a title (a chart, a table card), by walking the JSON. */
 function titled(node: unknown, found: { title: string; trace: string }[] = []) {
   if (Array.isArray(node)) {
@@ -132,36 +161,11 @@ describe("the fixture's runs agree with themselves", () => {
   it("shows each gap whose where is a module page in that module's limitations: the gap's subject word is in one of them", () => {
     // The rule: the first word of `gap` that is not a generic one, cut to five letters, is a
     // substring of a limitation item of the named module ("Hedge schedule" ~ "Hedge expiries ...").
-    const generic = new Set([
-      "schedule",
-      "documents",
-      "figures",
-      "the",
-      "of",
-      "for",
-      "on",
-      "share",
-      "average",
-    ]);
     let checked = 0;
     for (const run of loaded) {
       for (const group of run.evidence.gaps.groups) {
         for (const row of group.rows) {
-          if (row.where.page !== "module") continue;
-          const page = run.modules.find((m) => m.id === row.moduleId);
-          if (page === undefined)
-            throw new RangeError(`${run.id} ${row.id}: no module ${row.moduleId}`);
-          const subject = row.gap
-            .toLowerCase()
-            .split(" ")
-            .find((w) => !generic.has(w));
-          if (subject === undefined) throw new RangeError(`${run.id} ${row.id}: no subject word`);
-          const items = (page.body.limitations?.items ?? []).map((i) => i.text.toLowerCase());
-          expect(
-            items.some((text) => text.includes(subject.slice(0, 5))),
-            `${run.id} ${row.id} ${row.gap}: ${row.moduleId} limitations ${JSON.stringify(items)}`,
-          ).toBe(true);
-          checked += 1;
+          if (assertModuleGapHasLimitation(run, row)) checked += 1;
         }
       }
     }

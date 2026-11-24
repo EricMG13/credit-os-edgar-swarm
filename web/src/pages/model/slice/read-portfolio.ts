@@ -9,6 +9,7 @@ import {
   checkPresence,
   child,
   distinct,
+  distinctTraceControlNames,
   fail,
   needCells,
   nullableRecord,
@@ -270,9 +271,5 @@ export function checkPortfolioFit(page: PortfolioFitPage, path: string): void {
       `${["limits", "ratings", "scatter", "strips"][i] ?? ""}${isGap(c) ? ".gap" : ""}.title`,
     ),
   }));
-  named.forEach((item, i) => {
-    if (named.findIndex((other) => other.name === item.name) !== i) {
-      fail(item.where, "expected a name no other trace control on the page has");
-    }
-  });
+  distinctTraceControlNames(named);
 }
