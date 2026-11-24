@@ -24,6 +24,15 @@ SOURCES = {
         "CP-1",
         "tests/fixtures/live_2026_11_15/earnings_update-CP-1-draft3-accepted.md",
     ),
+    "relative_value_cp1": (
+        "CP-1",
+        "tests/fixtures/live_2026_11_15/relative_value-CP-1-draft1.md",
+    ),
+    "distressed_cp1": ("CP-1", "tests/fixtures/live_2026_11_15/distressed-CP-1-draft1.md"),
+    "earnings_update_cp1_draft1": (
+        "CP-1",
+        "tests/fixtures/live_2026_11_15/earnings_update-CP-1-draft1.md",
+    ),
     "cp1b_tdg_fy2024": ("CP-1B", "tests/fixtures/CP-1B-earnings_update-tdg-fy2024-t44-t46.md"),
     "cp0_synthetic": ("CP-0", "proof/handoffs/CP-0.md"),
     "cp5_synthetic": ("CP-5", "proof/handoffs/CP-5.md"),

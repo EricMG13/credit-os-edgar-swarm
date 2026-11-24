@@ -55,24 +55,18 @@ export const cellAt = (table: Table, row: Row, header: string) =>
 export type Severity = {
   /** The word as the handoff wrote it (Critical, Material and Minor in their one spelling). */
   word: string;
-  rank: number;
-  /** Critical, Material or Minor; any other word is drawn as written with a neutral mark. */
+  /** Exactly Critical, Material or Minor; any other word is drawn as written with a neutral mark. */
   known: boolean;
   stated: boolean;
 };
 
 const KNOWN_SEVERITY = ["Critical", "Material", "Minor"] as const;
-const NOT_STATED_RANK = 4;
 
 function severityOf(cell: string | undefined): Severity {
   const value = said(cell);
-  if (value.kind !== "text")
-    return { word: "Severity not stated", rank: NOT_STATED_RANK, known: false, stated: false };
-  const at = KNOWN_SEVERITY.findIndex((word) => word.toLowerCase() === value.text.toLowerCase());
-  const known = KNOWN_SEVERITY[at];
-  return known === undefined
-    ? { word: value.text, rank: 3, known: false, stated: true }
-    : { word: known, rank: at, known: true, stated: true };
+  if (value.kind !== "text") return { word: "Severity not stated", known: false, stated: false };
+  const known = KNOWN_SEVERITY.find((word) => word === value.text);
+  return { word: value.text, known: known !== undefined, stated: true };
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -95,12 +89,14 @@ type Register =
 const GAP_HEADERS = ["Gap", "Why it matters", "Affected modules", "Severity", "Action"];
 const CONTRADICTION_HEADERS = ["Contradiction", "Claims", "Nature", "Severity", "Rationale"];
 
-/** The handoff's own empty row: first cell `None`, every other cell a stated gap or empty. */
+const NOTHING = /^(?:none|—|-|–)$/i;
+
+/** The handoff's own empty row: first cell `None`, every other cell `None`, a dash, a gap or empty. */
 function noneRow(row: Row) {
   const [first = "", ...rest] = row.cells;
   return (
     first.trim().toLowerCase() === "none" &&
-    rest.every((cell) => ["gap", "empty"].includes(said(cell).kind))
+    rest.every((cell) => ["gap", "empty"].includes(said(cell).kind) || NOTHING.test(cell.trim()))
   );
 }
 
@@ -183,7 +179,8 @@ export function issues(entry: OutputEntry): Issues {
     group.pips.push({ kind: issue.kind, line: issue.line });
     words.set(key, group);
   }
-  const groups = [...words.values()].sort((a, b) => a.severity.rank - b.severity.rank);
+  // The handoff's own order: each severity word where it first appears, no ranking of our own.
+  const groups = [...words.values()];
   return {
     gaps,
     contradictions,
@@ -193,14 +190,10 @@ export function issues(entry: OutputEntry): Issues {
   };
 }
 
-/** The gaps register's actions in priority order: Critical first, the handoff's order within a rank. */
+/** The gaps register's actions in the handoff's own order. */
 export function remediation(entry: OutputEntry) {
   const { gaps } = issues(entry);
-  if (gaps.state !== "rows") return null;
-  return gaps.issues
-    .map((issue, order) => ({ issue, order }))
-    .sort((a, b) => a.issue.severity.rank - b.issue.severity.rank || a.order - b.order)
-    .map(({ issue }) => issue);
+  return gaps.state === "rows" ? gaps.issues : null;
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -221,10 +214,12 @@ export type Clearance = {
 
 const SCOPE_SUFFIX = /\s+over the evaluated set\s*\.?$/i;
 
+/** Only the module's own status words get a mark; any other wording is drawn as written, neutral. */
 function shapeOf(status: string): Shape {
-  if (/^(?:accepted|cleared)\b/i.test(status)) return "filled";
-  if (/^restricted\b/i.test(status)) return "half";
-  if (/^(?:blocked|rejected|refused|not cleared|not accepted)\b/i.test(status)) return "slash";
+  const word = status.trim().toLowerCase();
+  if (word === "accepted" || word === "cleared") return "filled";
+  if (word === "restricted") return "half";
+  if (["blocked", "rejected", "refused"].includes(word)) return "slash";
   return "ring";
 }
 
@@ -294,12 +289,12 @@ export type ModuleIntegrity = {
   line: number;
 };
 
+/** The three results the module writes get a mark; any other wording is drawn as written, neutral. */
 function resultShape(result: string): Shape {
-  // A negated word is not its state: "Not blocked" is left out before the words are read.
-  const read = result.replace(/\bnot\s+blocked\b/gi, "");
-  if (/blocked|not evaluated/i.test(read)) return "slash";
-  if (/with findings/i.test(read)) return "half";
-  if (/\bno findings?\b/i.test(read)) return "filled";
+  const word = result.trim().toLowerCase();
+  if (word === "evaluated: no finding") return "filled";
+  if (word === "evaluated with findings") return "half";
+  if (word === "blocked upstream: not evaluated") return "slash";
   return "ring";
 }
 

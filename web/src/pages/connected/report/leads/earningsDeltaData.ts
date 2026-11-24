@@ -2,19 +2,21 @@ import { tone } from "../../signal";
 import { readerText, unitLabel, type OutputEntry, type Table } from "../../publishedReport";
 import { difference, group, readCell, sum } from "./kit/numbers";
 import { IN_EVIDENCE, namesSource, safeText } from "./kit/reader";
-import { allTables, columnOf, periodColumns, tableUnder } from "./kit/tables";
+import { allTables, columnOf } from "./kit/tables";
 
 const RESULTS = "Chart data: prior and current results";
 const KPIS = "Chart data: margin and KPI changes";
 const STEP_HEADERS = ["Step", "Amount", "Reporting unit", "Basis and limitation"];
-export const CAP = 10;
 
 export const NO_UNIT = "The handoff does not state the unit of its earnings table.";
 const NO_RESULTS = "The handoff has no table of prior and current results.";
 const NO_KPIS = "The handoff has no table of margin and KPI changes.";
 const NO_MARGINS = "The handoff's earnings table has no margin row.";
-const NO_COLUMNS = "The table of prior and current results lacks a column this page reads.";
-const NO_PAIRS = "The handoff states no pair of figures to compare.";
+const NO_COLUMNS =
+  "The table of prior and current results lacks the measure, prior, current or unit column this page reads.";
+const NO_PAIRS = "The table states no row to compare.";
+const TWICE =
+  "The handoff states this table more than once, so this page does not choose between the copies.";
 export const NO_PERCENT = "The margin cells do not state a percent sign, so they are not drawn.";
 
 /** Handoff words for the page, or the Evidence pointer where they name a source or are empty. */

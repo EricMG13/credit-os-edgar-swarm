@@ -6,7 +6,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import { entry, section, table } from "../overview/rows.fixture";
 import { leadProps } from "./fixtures/load";
 import { PeerBenchmarkLead } from "./peerBenchmark";
-import { PEER_HEADINGS, peerGapSentence, readPeerBenchmark, valueOf } from "./peerBenchmarkData";
+import { PEER_HEADINGS, readPeerBenchmark, valueOf } from "./peerBenchmarkData";
 
 afterEach(cleanup);
 
@@ -97,13 +97,10 @@ describe("peerBenchmarkData: what the contract tables say", () => {
       median: 24,
       high: 33.1,
       issuer: 31.2,
-      side: "above",
     });
-    // The issuer is missing: the band is still a strip, and there is no side.
-    expect(percent?.rows[1]?.drawing).toMatchObject({ kind: "strip", issuer: null, side: null });
-    expect(
-      multiples?.rows.map((row) => (row.drawing.kind === "strip" ? row.drawing.side : null)),
-    ).toEqual(["above", "below", "at"]);
+    // The issuer is missing: the band is still a strip.
+    expect(percent?.rows[1]?.drawing).toMatchObject({ kind: "strip", issuer: null });
+    expect(multiples?.rows.map((row) => row.drawing.kind)).toEqual(["strip", "strip", "strip"]);
   });
 
   it("a median outside the band conflicts; low equal to high is a valid degenerate strip", () => {
@@ -154,21 +151,6 @@ describe("peerBenchmarkData: what the contract tables say", () => {
     const empty = readPeerBenchmark(peers([], null));
     expect(empty.gaps[0]).toBe("The peer range for percent metrics has no rows.");
   });
-
-  it("takes the module's own first bottom-line sentence, else the fixed statement", () => {
-    expect(peerGapSentence(peers(null, null))).toBe("Peer data is limited.");
-    const quiet = entry("CP-1C", [], [{ heading: "Findings", level: 2, line: 3, blocks: [] }]);
-    expect(peerGapSentence(quiet)).toBe("Peer data was not supplied for this run.");
-    const cited = entry(
-      "CP-1C",
-      [],
-      [
-        { heading: "Findings", level: 2, line: 3, blocks: [] },
-        bottom("See peer_sheet.xlsx page 4 for the data."),
-      ],
-    );
-    expect(peerGapSentence(cited)).toBe("Peer data was not supplied for this run.");
-  });
 });
 
 describe("PeerBenchmarkLead", () => {
@@ -195,40 +177,22 @@ describe("PeerBenchmarkLead", () => {
     render(<PeerBenchmarkLead {...leadProps(peers(PERCENT, MULTIPLES))} />);
     const percent = screen.getByRole("region", { name: "Peer range, percent metrics" });
     const multiples = screen.getByRole("region", { name: "Peer range, multiples" });
-    expect(within(percent).getByRole("heading", { level: 3 })).toHaveTextContent(
-      "Peer range for 4 percent metrics",
-    );
-    expect(within(multiples).getByRole("heading", { level: 3 })).toHaveTextContent(
-      "Peer range for 3 multiples",
-    );
+    expect(within(percent).getByRole("heading", { level: 3 })).toHaveTextContent(/^Peer range$/);
+    expect(within(multiples).getByRole("heading", { level: 3 })).toHaveTextContent(/^Peer range$/);
     expect(percent.querySelector('[data-row="Total leverage"]')).toBeNull();
     expect(within(multiples).getByText("issuer 6.1x")).toBeVisible();
     expect(within(percent).getByText("issuer 31.2%")).toBeVisible();
   });
 
-  it("states only which side of the median the issuer sits, labelled derived, never a rank", () => {
+  it("states no position against the median and no computed sentence, in text, aria-label or table", () => {
     render(<PeerBenchmarkLead {...leadProps(peers(PERCENT, MULTIPLES))} />);
     const multiples = screen.getByRole("region", { name: "Peer range, multiples" });
-    expect(within(multiples).getAllByText(/Issuer is above the peer median\./)).toHaveLength(1);
-    expect(within(multiples).getByText(/Issuer is below the peer median\./)).toBeVisible();
-    expect(within(multiples).getByText(/Issuer is at the peer median\./)).toBeVisible();
     expect(multiples.querySelector('[data-row="Total leverage"]')?.getAttribute("aria-label")).toBe(
-      "Total leverage: peer low 3.2x, median 4.5x, peer high 5.8x, issuer 6.1x, above the peer median (derived). 7 peers.",
+      "Total leverage: peer low 3.2x, median 4.5x, peer high 5.8x, issuer 6.1x. 7 peers.",
     );
-    expect(screen.queryByText(/percentile|rank/i)).toBeNull();
-  });
-
-  it("says derived wherever the position against the median is stated: text, aria-label and table view", () => {
-    render(<PeerBenchmarkLead {...leadProps(peers(PERCENT, MULTIPLES))} />);
-    for (const name of ["Peer range, percent metrics", "Peer range, multiples"]) {
-      const tile = screen.getByRole("region", { name });
-      for (const p of tile.querySelectorAll("p"))
-        if (/^Issuer is /.test(p.textContent)) expect(p).toHaveTextContent("derived");
-      for (const svg of tile.querySelectorAll("svg[aria-label]"))
-        if (/the peer median/.test(svg.getAttribute("aria-label") ?? ""))
-          expect(svg.getAttribute("aria-label")).toContain("(derived)");
-      expect(within(tile).getByText("Issuer against the median (derived)")).toBeInTheDocument();
-    }
+    expect(document.body.textContent).not.toMatch(
+      /above the peer median|below the peer median|at the peer median|derived|percentile|rank/i,
+    );
   });
 
   it("prints the peer count, singular for one peer", () => {
@@ -300,20 +264,56 @@ describe("PeerBenchmarkLead", () => {
     expect(screen.queryByText("Outliers and the peer table are not in this handoff.")).toBeNull();
   });
 
-  it("with no range table at all draws the designed gap in the module's own words", () => {
+  it("with no range table at all draws one gap tile naming the true condition, never the bottom line", () => {
     render(<PeerBenchmarkLead {...leadProps(peers(null, null))} />);
-    expect(screen.getByText("Peer data is limited.")).toBeVisible();
+    expect(screen.getByText(/No peer range table is in this handoff\./)).toBeVisible();
+    // The module wrote "Peer data is limited." as its bottom line: that sentence is not the reason.
+    expect(screen.queryByText(/Peer data is limited/)).toBeNull();
     expect(screen.queryByRole("img")).toBeNull();
-    expect(
-      screen.getByText("The peer range for percent metrics is not in this handoff."),
-    ).toBeVisible();
+    expect(document.querySelectorAll(".gap-hatch").length).toBeGreaterThan(0);
   });
 
-  it("with no bottom line says the fixed statement; a blocked module is the frame's gap", () => {
-    const quiet = entry("CP-1C", [], [{ heading: "Findings", level: 2, line: 3, blocks: [] }]);
-    const { unmount } = render(<PeerBenchmarkLead {...leadProps(quiet)} />);
-    expect(screen.getByText("Peer data was not supplied for this run.")).toBeVisible();
-    unmount();
+  it("names the true condition for each gap: repeated, short of columns, empty", () => {
+    const twice = peers(PERCENT, null, [
+      section(PEER_HEADINGS.percent, 50, table(51, HEAD, PERCENT)),
+    ] as never);
+    const short = peers(null, null, [
+      section(PEER_HEADINGS.percent, 9, table(10, ["Metric", "Issuer"], [["a", "1"]])),
+    ] as never);
+    const cases: [ReturnType<typeof peers>, RegExp][] = [
+      [twice, /appears more than once/],
+      [short, /lacks the columns Peer low/],
+      [peers([], null), /has no rows/],
+    ];
+    for (const [input, words] of cases) {
+      const { unmount } = render(<PeerBenchmarkLead {...leadProps(input)} />);
+      expect(screen.getAllByText(words).length).toBeGreaterThan(0);
+      expect(screen.queryByText(/Peer data is limited/)).toBeNull();
+      unmount();
+    }
+  });
+
+  it("reads the multiples table when its heading uses a hyphen or an en dash for the em dash", () => {
+    for (const dash of ["-", "\u2013"]) {
+      const heading = `Chart data: peer range ${dash} multiples`;
+      const input = entry(
+        "CP-1C",
+        [],
+        [
+          { heading: "Findings", level: 2, line: 3, blocks: [] },
+          section(heading, 29, table(30, HEAD, MULTIPLES)),
+        ],
+      );
+      const read = readPeerBenchmark(input);
+      expect(
+        read.tables.map((item) => item.kind),
+        heading,
+      ).toEqual(["multiples"]);
+      expect(read.gaps).toEqual(["The peer range for percent metrics is not in this handoff."]);
+    }
+  });
+
+  it("a blocked module draws nothing: the frame states it", () => {
     const blocked = entry(
       "CP-1C",
       [],
@@ -322,9 +322,12 @@ describe("PeerBenchmarkLead", () => {
         bottom("Not assessable: the peer data gate was not passed."),
       ],
     );
-    render(<PeerBenchmarkLead {...leadProps(blocked)} />);
-    expect(screen.getByText("Not assessable: the peer data gate was not passed.")).toBeVisible();
-    expect(screen.getByText("Not assessable")).toBeVisible();
+    const { container } = render(<PeerBenchmarkLead {...leadProps(blocked)} />);
+    expect(container).toBeEmptyDOMElement();
+  });
+
+  it("declares that it draws the module's typed figures", () => {
+    expect(PeerBenchmarkLead.draws).toEqual(["figures"]);
   });
 
   it("draws one row when the table has one row", () => {

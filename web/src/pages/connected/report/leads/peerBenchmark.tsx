@@ -1,13 +1,10 @@
-import { useId } from "react";
+import { useId, type FC } from "react";
 import { GapPattern } from "../overview/figureParts";
-import { GapNote, Tile } from "../overview/Tile";
-import { Derived, FigureTile, LeadFrame, ScrollFigure } from "./kit/LeadFrame";
+import { FigureTile, GapTile, LeadFrame, ScrollFigure } from "./kit/LeadFrame";
 import { safeText } from "./kit/reader";
 import {
   groupScale,
-  peerGapSentence,
   readPeerBenchmark,
-  SIDE_WORDS,
   withUnit,
   type PeerGroup,
   type PeerRow,
@@ -67,9 +64,7 @@ function reading(row: PeerRow) {
     stated("peer high", row.high),
     stated("issuer", row.issuer),
   ];
-  const side =
-    drawing.kind === "strip" && drawing.side ? `, ${SIDE_WORDS[drawing.side]} (derived)` : "";
-  return `${row.metric}: ${parts.join(", ")}${side}. ${count}.`;
+  return `${row.metric}: ${parts.join(", ")}. ${count}.`;
 }
 
 function GapSlot({
@@ -296,11 +291,6 @@ function Group({ group, showUnit }: { group: PeerGroup; showUnit: boolean }) {
               <h4 className="text-small font-medium text-text-primary">{row.metric}</h4>
               <span className="font-mono text-caption text-text-secondary">{peersText(row)}</span>
             </div>
-            {row.drawing.kind === "strip" && row.drawing.side && (
-              <p className="text-caption text-text-secondary">
-                Issuer is {SIDE_WORDS[row.drawing.side]}.<Derived />
-              </p>
-            )}
             {row.drawing.kind === "conflict" && (
               <p className="text-caption text-gap-text">
                 The stated values conflict, so no range is drawn.
@@ -317,25 +307,16 @@ function Group({ group, showUnit }: { group: PeerGroup; showUnit: boolean }) {
   );
 }
 
-const NOUN = { percent: "percent metric", multiples: "multiple" } as const;
-
 function PeerTile({ props, table, wide }: { props: LeadProps; table: PeerTable; wide: boolean }) {
-  const noun = NOUN[table.kind];
-  const count = table.rows.length;
   const basis = [...new Set(table.rows.flatMap(({ basis: note }) => (note ? [note] : [])))];
   const notes = [...table.rows.flatMap((row) => row.notes), ...basis];
-  const sideWords = table.rows.some(({ drawing }) => drawing.kind === "strip" && drawing.side);
   return (
     <FigureTile
       props={props}
       span={wide ? 12 : 6}
       label={`Peer range, ${table.kind === "percent" ? "percent metrics" : "multiples"}`}
-      kicker={
-        table.kind === "percent"
-          ? "Percent metrics, one axis per unit"
-          : "Multiples, one axis per unit"
-      }
-      title={`Peer range for ${String(count)} ${noun}${count === 1 ? "" : "s"}`}
+      kicker={table.kind === "percent" ? "Percent metrics" : "Multiples"}
+      title="Peer range"
       line={table.line}
       source={`the peer range, ${table.kind === "percent" ? "percent metrics" : "multiples"}`}
       legend={[
@@ -350,24 +331,10 @@ function PeerTile({ props, table, wide }: { props: LeadProps; table: PeerTable; 
           ? [{ tone: "gap" as const, text: "Not supplied or conflicting" }]
           : []),
       ]}
-      notes={[
-        ...(sideWords
-          ? ["Position against the median compares the two stated values only (derived)."]
-          : []),
-        ...notes,
-      ]}
+      notes={notes}
       table={{
         caption: `Peer range, ${table.kind === "percent" ? "percent metrics" : "multiples"}`,
-        headers: [
-          "Metric",
-          "Issuer",
-          "Peer low",
-          "Peer median",
-          "Peer high",
-          "Peer count",
-          "Unit",
-          "Issuer against the median (derived)",
-        ],
+        headers: ["Metric", "Issuer", "Peer low", "Peer median", "Peer high", "Peer count", "Unit"],
         rows: table.rows.map((row) => [
           row.metric,
           safeText(row.issuer.text),
@@ -376,9 +343,6 @@ function PeerTile({ props, table, wide }: { props: LeadProps; table: PeerTable; 
           safeText(row.high.text),
           safeText(row.count.text),
           safeText(row.unit),
-          row.drawing.kind === "strip" && row.drawing.side
-            ? SIDE_WORDS[row.drawing.side]
-            : "Not stated",
         ]),
       }}
     >
@@ -399,16 +363,9 @@ function Content(props: LeadProps) {
   const read = readPeerBenchmark(props.entry);
   if (!read.tables.length)
     return (
-      <Tile span={12} label="Peer benchmark" kicker="Peer range not drawn" tone="gap">
-        <GapNote>{peerGapSentence(props.entry)}</GapNote>
-        {read.gaps.length > 0 && (
-          <ul className="flex flex-col gap-1 text-caption text-gap-text">
-            {read.gaps.map((gap) => (
-              <li key={gap}>{gap}</li>
-            ))}
-          </ul>
-        )}
-      </Tile>
+      <GapTile span={12} label="Peer range" kicker="Peer range">
+        {read.gaps.join(" ")}
+      </GapTile>
     );
   const wide = read.tables.length === 1 && read.gaps.length === 0;
   return (
@@ -417,31 +374,28 @@ function Content(props: LeadProps) {
         <PeerTile key={table.kind} props={props} table={table} wide={wide} />
       ))}
       {read.gaps.map((gap) => (
-        <Tile
-          key={gap}
-          span={6}
-          label="Peer range not drawn"
-          kicker="Not in this handoff"
-          tone="gap"
-          className="self-start"
-        >
-          <GapNote>{gap}</GapNote>
-        </Tile>
+        <GapTile key={gap} span={6} label="Peer range not drawn" kicker="Peer range">
+          {gap}
+        </GapTile>
       ))}
       {!read.outliers && (
-        <Tile span={12} label="Outliers and the peer table" tone="gap">
-          <GapNote>Outliers and the peer table are not in this handoff.</GapNote>
-        </Tile>
+        <GapTile span={12} label="Outliers and the peer table" kicker="Outliers and the peer table">
+          Outliers and the peer table are not in this handoff.
+        </GapTile>
       )}
     </>
   );
 }
 
 /** CP-1C: a range strip per metric, the issuer marked; percent metrics and multiples on separate axes. */
-export function PeerBenchmarkLead(props: LeadProps) {
+export const PeerBenchmarkLead: FC<LeadProps> & {
+  draws?: readonly ("figures" | "events" | "maps")[];
+} = function PeerBenchmarkLead(props) {
   return (
     <LeadFrame props={props}>
       <Content {...props} />
     </LeadFrame>
   );
-}
+};
+// The peer range strips are the module's typed range figures, drawn by this lead.
+PeerBenchmarkLead.draws = ["figures"];

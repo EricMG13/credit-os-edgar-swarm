@@ -2,36 +2,39 @@ import type { OutputEntry } from "../../publishedReport";
 import { IN_EVIDENCE, namesSource, safeText } from "./kit/reader";
 import { allTables, columnOf, tableWith } from "./kit/tables";
 
-export type ReadinessState = "ready" | "limited" | "conditional" | "blocked";
+/** The mark a row's state is drawn with; `other` is any word the page does not know, drawn neutral. */
+export type ReadinessMark = "ready" | "limited" | "conditional" | "blocked" | "other";
 
-export const STATES: readonly ReadinessState[] = ["ready", "limited", "conditional", "blocked"];
+export const MARKS: readonly ReadinessMark[] = [
+  "ready",
+  "limited",
+  "conditional",
+  "blocked",
+  "other",
+];
 
-/** The word each state is drawn with: the library's own readiness vocabulary. */
-export const STATE_WORD: Record<ReadinessState, string> = {
-  ready: "Ready",
-  limited: "Ready with limitations",
-  conditional: "Conditional",
-  blocked: "Blocked",
+type Word = { word: string; mark: ReadinessMark };
+
+/**
+ * The states the handoff contract writes, and the library's words for them. "Not ready" stays "Not
+ * ready" and "Blocked" stays "Blocked": both are drawn with the same slash mark, neither is renamed.
+ */
+const KNOWN: Record<string, Word> = {
+  READY: { word: "Ready", mark: "ready" },
+  READY_WITH_LIMITATIONS: { word: "Ready with limitations", mark: "limited" },
+  READY_WITH_LIMITATION: { word: "Ready with limitations", mark: "limited" },
+  CONDITIONAL: { word: "Conditional", mark: "conditional" },
+  BLOCKED: { word: "Blocked", mark: "blocked" },
+  NOT_READY: { word: "Not ready", mark: "blocked" },
 };
 
-/** The contract's four values, and the library's own "Not ready" for a blocked area. */
-const NORMALISED: Record<string, ReadinessState> = {
-  READY: "ready",
-  READY_WITH_LIMITATIONS: "limited",
-  READY_WITH_LIMITATION: "limited",
-  CONDITIONAL: "conditional",
-  BLOCKED: "blocked",
-  NOT_READY: "blocked",
-};
-
-/** A readiness cell as one of the four states, or null for any other words. */
-export function readinessState(cell: string | undefined): ReadinessState | null {
-  const key = (cell ?? "")
-    .replaceAll("*", "")
-    .trim()
-    .toUpperCase()
-    .replace(/[\s-]+/g, "_");
-  return Object.hasOwn(NORMALISED, key) ? (NORMALISED[key] ?? null) : null;
+/** A readiness cell as the handoff wrote it; a word the page does not know is drawn as written. */
+export function readinessWord(cell: string | undefined): Word {
+  const text = (cell ?? "").replaceAll("*", "").trim();
+  const key = text.toUpperCase().replace(/[\s-]+/g, "_");
+  const known = Object.hasOwn(KNOWN, key) ? KNOWN[key] : undefined;
+  if (known) return known;
+  return { word: safeText(text) || "Not stated", mark: "other" };
 }
 
 const REASON_IN_EVIDENCE = "Reason is in Evidence.";
@@ -39,20 +42,24 @@ const NO_LIMITATION = "No limitation stated.";
 
 export type ReadinessRow = {
   area: string;
-  state: ReadinessState;
-  /** The key limitation in words; the Evidence pointer where it names a source. */
+  /** The state as written. */
+  word: string;
+  mark: ReadinessMark;
+  /** The free-text limitation in words; the Evidence pointer where it names a source. */
   reason: string;
+  /** The command's own hold words (without its syntax), or null when the table holds nothing back. */
+  hold: string | null;
   line: number;
 };
 
 export type SourceReadiness =
   | { kind: "absent" }
-  | { kind: "unrecognised"; line: number }
   | {
       kind: "ready";
       line: number;
+      /** The handoff's own name for the free-text column. */
+      reasonHeader: string;
       rows: ReadinessRow[];
-      counts: Record<ReadinessState, number>;
       /** Whether a table of the entry could carry the key evidence located or the conflicts. */
       hasEvidenceTable: boolean;
     };
@@ -82,31 +89,44 @@ function readinessTable(entry: OutputEntry) {
   return null;
 }
 
+const HOLD = /\bDO NOT RUN\b/i;
+const CONNECTIVE = /^(?:until|pending|unless|while|awaiting|after|when)\b/i;
+
+/**
+ * What the command column holds back, in its own words: the cell with the command token taken out
+ * ("DO NOT RUN until a prior deliverable is supplied" gives "On hold until a prior deliverable is
+ * supplied"); "On hold" alone when nothing else is said. A cell that does not say DO NOT RUN holds nothing.
+ */
+function holdOf(command: string | undefined) {
+  if (!command || !HOLD.test(command)) return null;
+  const said = safeText(command.replace(HOLD, "").replace(/^[\s:;,.\u2013\u2014-]+/, ""));
+  if (!said || said === IN_EVIDENCE) return "On hold";
+  return CONNECTIVE.test(said) ? `On hold ${said}` : `On hold: ${said}`;
+}
+
 /** The readiness table as rows, or why there is nothing to draw. */
 export function sourceReadiness(entry: OutputEntry): SourceReadiness {
   const found = readinessTable(entry);
   if (!found || found.table.rows.length === 0) return { kind: "absent" };
   const { table } = found;
-  // The Command column is never read: its words (RUN, DO NOT RUN) are the pipeline's, and the
-  // stated readiness is drawn as written.
-  const [area, readiness, limitation] = [found.area, "Readiness", found.reason].map((name) =>
-    columnOf(table, name),
-  );
-  const states = table.rows.map((row) => readinessState(row.cells[readiness ?? -1]));
-  if (states.some((state) => state === null)) return { kind: "unrecognised", line: table.line };
-  const rows = table.rows.map((row, at): ReadinessRow => {
+  const [area, readiness, limitation, command] = [
+    found.area,
+    "Readiness",
+    found.reason,
+    "Command",
+  ].map((name) => columnOf(table, name));
+  const rows = table.rows.map((row): ReadinessRow => {
     const text = row.cells[limitation ?? -1] ?? "";
     return {
       area: readable(row.cells[area ?? -1] ?? "", IN_EVIDENCE),
-      state: states[at] ?? "blocked",
+      ...readinessWord(row.cells[readiness ?? -1]),
       reason: namesSource(text) ? REASON_IN_EVIDENCE : readable(text, NO_LIMITATION),
+      hold: holdOf(row.cells[command ?? -1]),
       line: row.line,
     };
   });
-  const counts = { ready: 0, limited: 0, conditional: 0, blocked: 0 };
-  for (const row of rows) counts[row.state] += 1;
   const hasEvidenceTable = allTables(entry).some(
     ({ table: other }) => other !== table && other.headers.some(evidenceHeader),
   );
-  return { kind: "ready", line: table.line, rows, counts, hasEvidenceTable };
+  return { kind: "ready", line: table.line, reasonHeader: found.reason, rows, hasEvidenceTable };
 }

@@ -1,11 +1,14 @@
 // The retained CP-0 handoff is synthetic and thin (two areas); the larger and adversarial cases are
 // synthetic too, built from the module contract (src/deploy_vii/methods/cp0.md); not a real handoff.
+// The consumer-shaped tables quote the retained reviews of the TransDigm run (outdated evidence, shape
+// only): reviews/2026-11-12-module-output-adversarial/latest-run-tdg-proof-snapshot-opus-002.md
+// (lines 70, 83, 155) and earlier-run-tdg-reader-format-001.md (line 71).
 import { cleanup, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 import { entry, section, table } from "../overview/rows.fixture";
 import { cp0Entry, leadProps } from "./fixtures/load";
 import { SourceReadinessLead } from "./sourceReadiness";
-import { readinessState, sourceReadiness } from "./sourceReadinessData";
+import { readinessWord, sourceReadiness } from "./sourceReadinessData";
 
 afterEach(cleanup);
 
@@ -27,26 +30,6 @@ const FIVE = [
   ["Committee decision", "Not ready", "No prior deliverable was supplied."],
 ];
 
-describe("readiness states", () => {
-  it("reads the contract's values and the library's words, in any case or spacing", () => {
-    expect(readinessState("READY")).toBe("ready");
-    expect(readinessState(" Ready ")).toBe("ready");
-    expect(readinessState("READY_WITH_LIMITATIONS")).toBe("limited");
-    expect(readinessState("Ready with limitations")).toBe("limited");
-    expect(readinessState("ready-with-limitations")).toBe("limited");
-    expect(readinessState("CONDITIONAL")).toBe("conditional");
-    expect(readinessState("BLOCKED")).toBe("blocked");
-    expect(readinessState("Not ready")).toBe("blocked");
-  });
-  it("does not guess at any other word", () => {
-    for (const word of ["", "Mostly ready", "PARTIAL", "RUN", "Ready, with gaps"])
-      expect(readinessState(word)).toBeNull();
-  });
-});
-
-// Quoted from the retained review reviews/2026-11-12-module-output-adversarial/latest-run-tdg-proof-snapshot-opus-002.md
-// (lines 70, 83 and 155: outdated TransDigm evidence, shape only). The review prints the middle two
-// headers as "..." so their names here are stand-ins; the last row is synthetic.
 const CONSUMER_HEADERS = [
   "Consumer",
   "Readiness",
@@ -65,85 +48,85 @@ const CONSUMER_ROWS = [
     "Context states no prior case attached",
     "DO NOT RUN until a prior deliverable is supplied or scope is changed",
   ],
-  ["CP-1", "READY", "Statements", "Filings", "", "DO NOT RUN"],
+  [
+    "CP-1",
+    "READY",
+    "Statements",
+    "Filings",
+    "Complete.",
+    "DO NOT RUN until a prior deliverable is supplied",
+  ],
+  ["CP-3", "READY", "Terms", "Filings", "Complete.", "DO NOT RUN"],
 ];
 
-describe("the consumer shape of the readiness table", () => {
-  const result = () => sourceReadiness(readiness(CONSUMER_ROWS, CONSUMER_HEADERS));
-  it("reads the consumer as the area and the bounded limitation as the reason", () => {
-    const found = result();
-    if (found.kind !== "ready") throw new Error("expected rows");
-    expect(found.rows[0]).toMatchObject({ state: "limited", reason: "No Q1 filing." });
-    expect(found.rows[1]).toMatchObject({
-      state: "conditional",
-      reason: "Context states no prior case attached",
+describe("readiness words", () => {
+  it("keeps each state as the handoff wrote it, in the library's words for its enum forms", () => {
+    expect(readinessWord("READY")).toEqual({ word: "Ready", mark: "ready" });
+    expect(readinessWord(" Ready ")).toEqual({ word: "Ready", mark: "ready" });
+    expect(readinessWord("READY_WITH_LIMITATIONS")).toEqual({
+      word: "Ready with limitations",
+      mark: "limited",
     });
-    for (const row of found.rows) expect(row.area).not.toMatch(/CP-/);
-  });
-  it("never draws the Command column, and keeps the stated state of a DO NOT RUN row", () => {
-    const found = result();
-    if (found.kind !== "ready") throw new Error("expected rows");
-    expect(JSON.stringify(found.rows)).not.toMatch(/DO NOT RUN|RUN|Held back/);
-    // The table states READY for the last row: it is drawn ready, with nothing added to it.
-    expect(found.rows[2]).toMatchObject({ state: "ready", reason: "No limitation stated." });
-    expect(found.counts).toEqual({ ready: 1, limited: 1, conditional: 1, blocked: 0 });
-  });
-  it("draws the three rows with no pipeline words on the page", () => {
-    const { container } = lead(readiness(CONSUMER_ROWS, CONSUMER_HEADERS));
-    expect(container.textContent).not.toMatch(/DO NOT RUN|CP-|READY_WITH/);
-    const list = screen.getByRole("list", { name: "Readiness by area" });
-    expect(within(list).getAllByRole("listitem")).toHaveLength(3);
-    expect(within(list).getByText("Context states no prior case attached")).toBeVisible();
-  });
-  it("reads the earlier real run's shape, whose free-text column is named in its review", () => {
-    const found = sourceReadiness(
-      readiness(
-        [["Legal and covenant package", "CONDITIONAL", "No executed agreement.", "DO NOT RUN"]],
-        ["Canonical consumer", "Readiness", "Evidence demand and available support", "Command"],
-      ),
-    );
-    if (found.kind !== "ready") throw new Error("expected rows");
-    expect(found.rows[0]).toMatchObject({
-      area: "Legal and covenant package",
-      state: "conditional",
-      reason: "No executed agreement.",
+    expect(readinessWord("Ready with limitations")).toEqual({
+      word: "Ready with limitations",
+      mark: "limited",
     });
+    expect(readinessWord("CONDITIONAL")).toEqual({ word: "Conditional", mark: "conditional" });
+    expect(readinessWord("BLOCKED")).toEqual({ word: "Blocked", mark: "blocked" });
+  });
+  it('never turns "Not ready" into "Blocked"', () => {
+    expect(readinessWord("Not ready")).toEqual({ word: "Not ready", mark: "blocked" });
+    expect(readinessWord("NOT_READY")).toEqual({ word: "Not ready", mark: "blocked" });
+  });
+  it("draws any other word as written, with the neutral mark", () => {
+    expect(readinessWord("Mostly ready")).toEqual({ word: "Mostly ready", mark: "other" });
+    expect(readinessWord("PARTIAL")).toEqual({ word: "PARTIAL", mark: "other" });
+    expect(readinessWord("")).toEqual({ word: "Not stated", mark: "other" });
   });
 });
 
 describe("sourceReadiness data", () => {
   it("reads the retained handoff: two areas with their limitation, the source column left out", () => {
     const result = sourceReadiness(cp0Entry());
-    expect(result).toMatchObject({
-      kind: "ready",
-      line: 9,
-      counts: { ready: 0, limited: 1, conditional: 1, blocked: 0 },
-      hasEvidenceTable: false,
-    });
+    expect(result).toMatchObject({ kind: "ready", line: 9, reasonHeader: "Key limitation" });
     if (result.kind !== "ready") throw new Error("expected rows");
-    expect(result.rows.map(({ area, state, reason }) => [area, state, reason])).toEqual([
-      ["Financial statements", "limited", "Only the synthetic filing is available"],
-      ["Acquisition financing", "conditional", "Financing terms are absent"],
+    expect(result.rows.map(({ area, word, mark, reason }) => [area, word, mark, reason])).toEqual([
+      [
+        "Financial statements",
+        "Ready with limitations",
+        "limited",
+        "Only the synthetic filing is available",
+      ],
+      ["Acquisition financing", "Conditional", "conditional", "Financing terms are absent"],
     ]);
   });
-  it("counts five areas by state, keeping the handoff's order", () => {
+  it("keeps the handoff's order and states, and carries no count of its own", () => {
     const result = sourceReadiness(readiness(FIVE));
     if (result.kind !== "ready") throw new Error("expected rows");
-    expect(result.counts).toEqual({ ready: 1, limited: 1, conditional: 1, blocked: 2 });
     expect(result.rows.map((row) => row.area)).toEqual(FIVE.map((row) => row[0]));
+    expect(result.rows.map((row) => row.word)).toEqual([
+      "Ready",
+      "Ready with limitations",
+      "Conditional",
+      "Blocked",
+      "Not ready",
+    ]);
+    expect(Object.keys(result)).not.toContain("counts");
   });
   it("is absent without the table, with another header, with no rows, or when two tables carry it", () => {
     expect(sourceReadiness(entry("CP-0", [], []))).toEqual({ kind: "absent" });
-    expect(sourceReadiness(readiness(FIVE, ["Consumer", "Readiness", "Key limitation"]))).toEqual({
+    expect(sourceReadiness(readiness(FIVE, ["Owner", "Readiness", "Key limitation"]))).toEqual({
       kind: "absent",
     });
     expect(sourceReadiness(readiness([]))).toEqual({ kind: "absent" });
     const twice = readiness(FIVE, HEADERS, [section("Other", 40, table(41, HEADERS, FIVE))]);
     expect(sourceReadiness(twice)).toEqual({ kind: "absent" });
   });
-  it("is unrecognised when any row uses another word, never drawing the others", () => {
+  it("draws a row with another state word as written, and every other row as usual", () => {
     const result = sourceReadiness(readiness([...FIVE, ["Segments", "Mostly ready", "x"]]));
-    expect(result).toEqual({ kind: "unrecognised", line: 9 });
+    if (result.kind !== "ready") throw new Error("expected rows");
+    expect(result.rows).toHaveLength(6);
+    expect(result.rows[5]).toMatchObject({ word: "Mostly ready", mark: "other" });
   });
   it("points to Evidence for a reason or an area that names a source, and says so for an empty one", () => {
     const result = sourceReadiness(
@@ -193,40 +176,106 @@ describe("sourceReadiness data", () => {
   });
 });
 
+describe("the consumer shape of the readiness table", () => {
+  const result = () => sourceReadiness(readiness(CONSUMER_ROWS, CONSUMER_HEADERS));
+  it("reads the consumer as the area and the bounded limitation as the reason, under the handoff's own header", () => {
+    const found = result();
+    if (found.kind !== "ready") throw new Error("expected rows");
+    expect(found.reasonHeader).toBe("Bounded limitations carried");
+    expect(found.rows[0]).toMatchObject({
+      word: "Ready with limitations",
+      mark: "limited",
+      reason: "No Q1 filing.",
+      hold: null,
+    });
+    expect(found.rows[1]).toMatchObject({
+      word: "Conditional",
+      reason: "Context states no prior case attached",
+    });
+    for (const row of found.rows) expect(row.area).not.toMatch(/CP-/);
+  });
+  it("keeps a READY row ready and shows its hold in the command's words, without the command syntax", () => {
+    const found = result();
+    if (found.kind !== "ready") throw new Error("expected rows");
+    expect(found.rows[2]).toMatchObject({
+      word: "Ready",
+      mark: "ready",
+      hold: "On hold until a prior deliverable is supplied",
+    });
+    expect(found.rows[1]?.hold).toBe(
+      "On hold until a prior deliverable is supplied or scope is changed",
+    );
+    // A command that is only the token leaves nothing to quote.
+    expect(found.rows[3]).toMatchObject({ word: "Ready", hold: "On hold" });
+    expect(JSON.stringify(found.rows)).not.toMatch(/DO NOT RUN|\bRUN\b/);
+  });
+  it("names the earlier real run's free-text column as its own header", () => {
+    const found = sourceReadiness(
+      readiness(
+        [["Legal and covenant package", "NOT_READY", "No executed agreement.", "DO NOT RUN"]],
+        ["Canonical consumer", "Readiness", "Evidence demand and available support", "Command"],
+      ),
+    );
+    if (found.kind !== "ready") throw new Error("expected rows");
+    expect(found.reasonHeader).toBe("Evidence demand and available support");
+    expect(found.rows[0]).toMatchObject({
+      area: "Legal and covenant package",
+      word: "Not ready",
+      reason: "No executed agreement.",
+      hold: "On hold",
+    });
+  });
+});
+
 const lead = (handoff = cp0Entry()) => render(<SourceReadinessLead {...leadProps(handoff)} />);
-const rowOf = (name: string) =>
-  within(screen.getByRole("list", { name: "Readiness by area" }))
-    .getByText(name)
-    .closest("li") as HTMLElement;
+const matrix = () => screen.getByRole("list", { name: "Readiness by area" });
+const rowOf = (name: string) => within(matrix()).getByText(name).closest("li") as HTMLElement;
 
 describe("SourceReadinessLead", () => {
-  it("draws one row per area with the state as a shape and its word, and the reason in words", () => {
+  it("draws no headline count: the title names the subject, and there is no strip of counts", () => {
     lead(readiness(FIVE));
-    const rows = within(screen.getByRole("list", { name: "Readiness by area" })).getAllByRole(
-      "listitem",
-    );
+    expect(screen.getByRole("heading", { name: "Readiness by area" })).toBeVisible();
+    expect(screen.queryByRole("group", { name: /Areas by readiness/ })).toBeNull();
+    expect(document.body.textContent).not.toMatch(/\d+ of \d+ areas|\d+ areas?\b/);
+  });
+  it("draws one row per area with the state as a shape and the handoff's word, and the reason in words", () => {
+    lead(readiness(FIVE));
+    const rows = within(matrix()).getAllByRole("listitem");
     expect(rows).toHaveLength(5);
-    const shapes = rows.map((row) => row.querySelector("[data-state]")?.getAttribute("data-state"));
-    expect(shapes).toEqual(["ready", "limited", "conditional", "blocked", "blocked"]);
-    const shapeKinds = rows.map((row) =>
-      row.querySelector("[data-shape]")?.getAttribute("data-shape"),
-    );
-    expect(shapeKinds).toEqual(["dot", "half-dot", "ring", "slash", "slash"]);
+    expect(
+      rows.map((row) => row.querySelector("[data-state]")?.getAttribute("data-state")),
+    ).toEqual(["ready", "limited", "conditional", "blocked", "blocked"]);
+    expect(
+      rows.map((row) => row.querySelector("[data-shape]")?.getAttribute("data-shape")),
+    ).toEqual(["dot", "half-dot", "ring", "slash", "slash"]);
     expect(within(rowOf("Peer benchmark")).getByText("Conditional")).toBeVisible();
     expect(
       within(rowOf("Peer benchmark")).getByText("Peer financials were not supplied."),
     ).toBeVisible();
-    expect(within(rowOf("Committee decision")).getByText("Blocked")).toBeVisible();
-    expect(within(rowOf("Earnings delta")).getByText("Ready with limitations")).toBeVisible();
+    expect(within(rowOf("Committee decision")).getByText("Not ready")).toBeVisible();
+    expect(within(rowOf("Committee decision")).queryByText("Blocked")).toBeNull();
+    expect(within(rowOf("Acquisition financing")).getByText("Blocked")).toBeVisible();
+  });
+  it("draws a state word it does not know as written, with the neutral mark, and keeps the matrix", () => {
+    lead(readiness([...FIVE, ["Segments", "Mostly ready", "Thin."]]));
+    const row = rowOf("Segments");
+    expect(within(row).getByText("Mostly ready")).toBeVisible();
+    expect(row.querySelector("[data-shape]")?.getAttribute("data-shape")).toBe("neutral");
+    expect(within(matrix()).getAllByRole("listitem")).toHaveLength(6);
+    expect(
+      screen.queryByText("The readiness table uses states this page does not recognise."),
+    ).toBeNull();
   });
   it("puts the row's state in its own column and in no other", () => {
-    lead(readiness(FIVE));
-    const columns = ["ready", "limited", "conditional", "blocked"];
+    lead(readiness([...FIVE, ["Segments", "Mostly ready", "Thin."]]));
+    const columns = ["ready", "limited", "conditional", "blocked", "other"];
     for (const [area, state] of [
       ["Financial foundation", "ready"],
       ["Earnings delta", "limited"],
       ["Peer benchmark", "conditional"],
       ["Acquisition financing", "blocked"],
+      ["Committee decision", "blocked"],
+      ["Segments", "other"],
     ]) {
       const mark = rowOf(area as string).querySelector("[data-state]") as HTMLElement;
       expect(mark.className).toContain(
@@ -234,43 +283,39 @@ describe("SourceReadinessLead", () => {
       );
     }
   });
-  it("shows four counts of areas above the matrix, plain row counts", () => {
-    lead(readiness(FIVE));
-    const strip = screen.getByRole("group", { name: "Areas by readiness" });
-    const counts = [...strip.querySelectorAll("[data-count]")].map((item) => [
-      item.getAttribute("data-count"),
-      item.querySelector("[data-number]")?.textContent,
-    ]);
-    expect(counts).toEqual([
-      ["ready", "1"],
-      ["limited", "1"],
-      ["conditional", "1"],
-      ["blocked", "2"],
-    ]);
-    expect(strip).toHaveTextContent("areas");
-    expect(strip).toHaveTextContent("area");
+  it("shows the hold of a READY row beside its state, as the command's words", () => {
+    const { container } = lead(readiness(CONSUMER_ROWS, CONSUMER_HEADERS));
+    const row = rowOf("Changes since the last run");
+    expect(within(row).getByText("Conditional")).toBeVisible();
+    const ready = [...within(matrix()).getAllByRole("listitem")].filter((item) =>
+      item.querySelector('[data-state="ready"]'),
+    );
+    expect(ready).toHaveLength(2);
+    expect(ready[0]).toHaveTextContent("On hold until a prior deliverable is supplied");
+    expect(ready[1]).toHaveTextContent("On hold");
+    expect(container.textContent).not.toMatch(/DO NOT RUN|\bRUN\b|CP-|READY_WITH/);
   });
-  it("titles the figure with counts of its rows and keeps one trace control", () => {
-    lead(readiness(FIVE));
-    expect(
-      screen.getByRole("heading", { name: "1 of 5 areas are ready; 3 are conditional or blocked" }),
-    ).toBeVisible();
+  it("names the free-text column as the handoff does, in the table view too", () => {
+    const { container } = lead(readiness(CONSUMER_ROWS, CONSUMER_HEADERS));
+    expect(screen.getAllByText("Bounded limitations carried").length).toBeGreaterThan(0);
+    expect(container.textContent).not.toContain("Key limitation");
+    const heads = [...container.querySelectorAll("thead th")].map((cell) => cell.textContent);
+    expect(heads).toEqual(["Area", "Readiness", "Bounded limitations carried", "On hold"]);
+  });
+  it("keeps one trace control and hides the shapes from assistive technology", () => {
+    const { container } = lead(readiness(FIVE));
     expect(screen.getAllByRole("link", { name: /Source for/ })).toHaveLength(1);
     expect(screen.getByRole("link", { name: /Source for/ })).toHaveAttribute(
       "href",
       expect.stringContaining("/report/run#evidence/"),
     );
-  });
-  it("hides the shapes from assistive technology, the word beside each is what they read", () => {
-    const { container } = lead(readiness(FIVE));
     const shapes = container.querySelectorAll("[data-shape]");
-    expect(shapes.length).toBeGreaterThan(5);
+    expect(shapes.length).toBeGreaterThan(4);
     for (const shape of shapes) expect(shape.getAttribute("aria-hidden")).toBe("true");
   });
   it("carries a table view with every area, state and reason", () => {
-    lead(readiness(FIVE));
-    const view = screen.getByText("Table view").closest("details") as HTMLElement;
-    const cells = [...view.querySelectorAll("tbody tr")].map((row) =>
+    const { container } = lead(readiness(FIVE));
+    const cells = [...container.querySelectorAll("tbody tr")].map((row) =>
       [...row.querySelectorAll("td")].map((cell) => cell.textContent),
     );
     expect(cells[2]).toEqual([
@@ -278,23 +323,20 @@ describe("SourceReadinessLead", () => {
       "Conditional",
       "Peer financials were not supplied.",
     ]);
+    expect(cells[4]?.[1]).toBe("Not ready");
     expect(cells).toHaveLength(5);
   });
   it("draws no source reference, and the retained handoff's source column stays out", () => {
     const { container } = lead();
     expect(container.textContent).not.toMatch(/Filing p\.|\.md|sha256|CP-0/);
-    expect(
-      within(screen.getByRole("list", { name: "Readiness by area" })).getByText(
-        "Only the synthetic filing is available",
-      ),
-    ).toBeVisible();
+    expect(within(matrix()).getByText("Only the synthetic filing is available")).toBeVisible();
     expect(screen.queryByText("Filing p.1")).toBeNull();
   });
-  it("says in words that the key evidence located and the conflicts are not in the handoff", () => {
+  it("says in one gap tile that the key evidence located and the conflicts are not in the handoff", () => {
     lead();
-    expect(
-      screen.getByText("Key evidence located and conflicts are not in this handoff."),
-    ).toBeVisible();
+    const tile = screen.getByRole("region", { name: "Key evidence located and conflicts" });
+    expect(tile).toHaveTextContent(/Not in this handoff\./);
+    expect(tile.className).not.toContain("border-dashed");
   });
   it("does not say so when the handoff has a table that could hold them", () => {
     lead(
@@ -302,23 +344,25 @@ describe("SourceReadinessLead", () => {
         section("Located", 30, table(31, ["Item", "Evidence"], [["a", "b"]])),
       ]),
     );
-    expect(screen.queryByText(/not in this handoff/)).toBeNull();
-    expect(screen.getByRole("list", { name: "Readiness by area" })).toBeInTheDocument();
+    expect(screen.queryByText(/Not in this handoff/)).toBeNull();
+    expect(matrix()).toBeInTheDocument();
   });
-  it("draws no matrix and one gap for a state it does not recognise", () => {
-    lead(readiness([...FIVE, ["Segments", "Mostly ready", "x"]]));
-    expect(
-      screen.getByText("The readiness table uses states this page does not recognise."),
-    ).toBeVisible();
-    expect(screen.queryByRole("img")).toBeNull();
-    expect(screen.queryByRole("list")).toBeNull();
-    expect(screen.queryByText("Peer benchmark")).toBeNull();
-  });
-  it("draws one gap when the table is absent", () => {
+  it("draws one plain gap tile when the table is absent", () => {
     lead(entry("CP-0", [], []));
-    expect(screen.getByText("Source readiness states no readiness by area.")).toBeVisible();
+    const tile = screen.getByRole("region", { name: "Readiness by area" });
+    expect(tile).toHaveTextContent("Source readiness states no readiness by area.");
+    expect(tile.className).not.toContain("border-dashed");
     expect(screen.queryByRole("img")).toBeNull();
-    expect(screen.queryByText(/not in this handoff/)).toBeNull();
+    expect(screen.queryByText(/Not in this handoff/)).toBeNull();
+  });
+  it("draws nothing for a module the frame reports as unreadable", () => {
+    const source = readiness(FIVE);
+    (source.output as { parseError?: string }).parseError = "unreadable";
+    const { container } = lead(source);
+    expect(container).toBeEmptyDOMElement();
+  });
+  it("lists no figures, events or maps among what it draws itself", () => {
+    expect(SourceReadinessLead.draws).toEqual([]);
   });
   it("collapses to one chip column below lg and wraps the reason under the area", () => {
     lead(readiness(FIVE));
@@ -328,5 +372,7 @@ describe("SourceReadinessLead", () => {
     const reason = within(row).getByText("Peer financials were not supplied.");
     expect(reason.className).toContain("col-span-2");
     expect(reason.className).toContain("lg:col-span-1");
+    // Text on a phone is the page's caption size or larger, never smaller.
+    expect(row.querySelector("[class*='text-[']")).toBeNull();
   });
 });

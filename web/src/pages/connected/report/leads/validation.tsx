@@ -1,7 +1,7 @@
 import { useId } from "react";
 import { GapPattern } from "../overview/figureParts";
 import { GapNote, Figure } from "../overview/Tile";
-import { FigureTile, LeadFrame } from "./kit/LeadFrame";
+import { FigureTile, GapTile, LeadFrame } from "./kit/LeadFrame";
 import { IN_EVIDENCE } from "./kit/reader";
 import type { LeadProps } from "./types";
 import {
@@ -189,30 +189,36 @@ function registerNote(name: string, state: string) {
   return null;
 }
 
+/** Why no pip is drawn, in words; null when at least one issue is listed. */
+function noIssues(found: Issues) {
+  const { gaps, contradictions, total, placeholders } = found;
+  if (total > 0) return null;
+  const stated = [gaps, contradictions].filter((register) => register.state === "none");
+  if (stated.length === 2) return "No issues are listed.";
+  if (stated.length === 1) {
+    const note = [
+      registerNote("gaps", gaps.state),
+      registerNote("contradictions", contradictions.state),
+    ].find((item) => item !== null);
+    return `No issues are listed in the ${gaps.state === "none" ? "gaps" : "contradictions"} register. ${note ?? ""}`.trim();
+  }
+  const why = placeholders.length ? ` It states: ${placeholders.join("; ")}.` : "";
+  return `The handoff lists no issue register.${why}`;
+}
+
 /** The pips, or the sentence that says why there are none. */
 function IssuePips({ found }: { found: Issues }) {
   const hatch = useId();
-  const { gaps, contradictions, groups, total, placeholders } = found;
+  const { gaps, contradictions, groups } = found;
+  const none = noIssues(found);
+  if (none !== null) return <GapNote>{none}</GapNote>;
   const notes = [
     registerNote("gaps", gaps.state),
     registerNote("contradictions", contradictions.state),
   ].filter((note) => note !== null);
-  if (total === 0) {
-    const stated = [gaps, contradictions].filter((register) => register.state === "none");
-    if (stated.length === 2) return <GapNote>No issues are listed.</GapNote>;
-    if (stated.length === 1)
-      return (
-        <GapNote>
-          No issues are listed in the {gaps.state === "none" ? "gaps" : "contradictions"} register.{" "}
-          {notes.join(" ")}
-        </GapNote>
-      );
-    const why = placeholders.length ? ` It states: ${placeholders.join("; ")}.` : "";
-    return <GapNote>{`The handoff lists no issue register.${why}`}</GapNote>;
-  }
   return (
     <div className="flex flex-col gap-3">
-      <ul className="flex flex-col gap-3" aria-label="Issues listed, by severity">
+      <ul className="flex flex-col gap-3" aria-label="Issues listed, by severity word">
         {groups.map((group) => (
           <PipRow key={group.severity.word} group={group} hatch={hatch} />
         ))}
@@ -246,11 +252,12 @@ function ClearanceTile(props: LeadProps) {
   const verdict = clearance(entry);
   const found = issues(entry);
   const integrity = moduleIntegrity(entry);
-  const heading = verdict?.source === "verdict" ? verdict.status : null;
-  const title = [
-    heading ?? "Clearance status",
-    ...(found.total > 0 ? [`${plural(found.total, "issue")} listed`] : []),
-  ].join(", ");
+  if (verdict === null && integrity === null && noIssues(found) !== null)
+    return (
+      <GapTile span={8} label="Clearance" kicker="Clearance">
+        {`The handoff states no clearance status. ${noIssues(found) ?? ""}`.trim()}
+      </GapTile>
+    );
   const rows = [
     ...(verdict?.status
       ? [["Status", [verdict.status, verdict.scope ?? ""].join(" ").trim()]]
@@ -262,9 +269,9 @@ function ClearanceTile(props: LeadProps) {
     <FigureTile
       props={props}
       span={8}
-      label="Clearance and listed issues"
+      label="Clearance"
       kicker="Evidence validation"
-      title={title}
+      title="Clearance"
       line={verdict?.line}
       source="the clearance status"
       table={{
@@ -341,94 +348,91 @@ function RemediationTile(props: LeadProps) {
   const list = remediation(entry);
   const hatch = useId();
   const listed = found.gaps.state === "rows" ? found.gaps : null;
-  const empty =
-    found.gaps.state === "none"
-      ? "No gap actions are listed."
-      : "The handoff lists no integrity-gaps register.";
+  if (list === null)
+    return (
+      <GapTile span={4} label="Remediation" kicker="Remediation">
+        {found.gaps.state === "none"
+          ? "No gap actions are listed."
+          : "The handoff lists no integrity-gaps register."}
+      </GapTile>
+    );
   return (
     <FigureTile
       props={props}
       span={4}
-      label="Remediation by priority"
-      kicker="Remediation"
-      title={list ? `${plural(list.length, "action")}, Critical first` : "Remediation by priority"}
+      label="Remediation"
+      kicker="Actions, in the module's order"
+      title="Remediation"
       line={listed?.line}
       source="the remediation list"
-      table={
-        list
-          ? {
-              caption: "Remediation actions in priority order",
-              headers: ["Priority", "Severity", "Action", "Affects"],
-              rows: list.map((issue, at) => [
-                String(at + 1),
-                issue.severity.word,
-                issue.action ? saidText(issue.action) : "",
-                issue.affected === "evidence" ? IN_EVIDENCE : (issue.affected ?? []).join(", "),
-              ]),
-            }
-          : undefined
-      }
+      table={{
+        caption: "Remediation actions, in the order the module wrote them",
+        headers: ["Severity", "Action", "Affects"],
+        rows: list.map((issue) => [
+          issue.severity.word,
+          issue.action ? saidText(issue.action) : "",
+          issue.affected === "evidence" ? IN_EVIDENCE : (issue.affected ?? []).join(", "),
+        ]),
+      }}
     >
-      {list === null ? (
-        <GapNote>{empty}</GapNote>
-      ) : (
-        <ol className="flex min-w-0 flex-col gap-3">
-          {list.map((issue) => (
-            <li
-              key={issue.line}
-              className="flex min-w-0 gap-3"
-              data-severity={issue.severity.word}
-              data-action-line={issue.line}
+      <ol className="flex min-w-0 flex-col gap-3">
+        {list.map((issue) => (
+          <li
+            key={issue.line}
+            className="flex min-w-0 gap-3"
+            data-severity={issue.severity.word}
+            data-action-line={issue.line}
+          >
+            <svg
+              viewBox="0 0 16 16"
+              width="16"
+              height="16"
+              aria-hidden="true"
+              className="mt-1 flex-none"
             >
-              <svg
-                viewBox="0 0 16 16"
-                width="16"
-                height="16"
-                aria-hidden="true"
-                className="mt-1 flex-none"
-              >
-                <defs>
-                  <GapPattern id={`${hatch}${String(issue.line)}`} />
-                </defs>
-                <Pip
-                  kind="gap"
-                  severity={issue.severity}
-                  x={0}
-                  y={0}
-                  counted={false}
-                  hatch={`${hatch}${String(issue.line)}`}
-                />
-              </svg>
-              <div className="flex min-w-0 flex-col gap-0.5">
-                <p className="text-caption font-medium text-text-tertiary">{issue.severity.word}</p>
-                {issue.action?.kind === "text" ? (
-                  <p className="text-small text-text-primary text-pretty wrap-anywhere">
-                    {issue.action.text}
-                  </p>
-                ) : (
-                  <p className="text-small text-gap-text text-pretty wrap-anywhere">
-                    {issue.action?.kind === "gap"
-                      ? `Action not supplied: ${issue.action.reason}`
-                      : issue.action?.kind === "evidence"
-                        ? IN_EVIDENCE
-                        : "Action not stated."}
-                  </p>
-                )}
-                {Array.isArray(issue.affected) && issue.affected.length > 0 && (
-                  <p className="text-caption text-text-secondary wrap-anywhere">
-                    Affects: {issue.affected.join(", ")}
-                  </p>
-                )}
-              </div>
-            </li>
-          ))}
-        </ol>
-      )}
+              <defs>
+                <GapPattern id={`${hatch}${String(issue.line)}`} />
+              </defs>
+              <Pip
+                kind="gap"
+                severity={issue.severity}
+                x={0}
+                y={0}
+                counted={false}
+                hatch={`${hatch}${String(issue.line)}`}
+              />
+            </svg>
+            <div className="flex min-w-0 flex-col gap-0.5">
+              <p className="text-caption font-medium text-text-tertiary">{issue.severity.word}</p>
+              {issue.action?.kind === "text" ? (
+                <p className="text-small text-text-primary text-pretty wrap-anywhere">
+                  {issue.action.text}
+                </p>
+              ) : (
+                <p className="text-small text-gap-text text-pretty wrap-anywhere">
+                  {issue.action?.kind === "gap"
+                    ? `Action not supplied: ${issue.action.reason}`
+                    : issue.action?.kind === "evidence"
+                      ? IN_EVIDENCE
+                      : "Action not stated."}
+                </p>
+              )}
+              {Array.isArray(issue.affected) && issue.affected.length > 0 && (
+                <p className="text-caption text-text-secondary wrap-anywhere">
+                  Affects: {issue.affected.join(", ")}
+                </p>
+              )}
+            </div>
+          </li>
+        ))}
+      </ol>
     </FigureTile>
   );
 }
 
-/** CP-5: the clearance status, the issues listed by severity, the remediation by priority. */
+type Draw = "figures" | "events" | "maps";
+
+/** CP-5: the clearance status, the issues listed by severity word, the module's remediation actions. */
 export function ClearanceLead(props: LeadProps) {
   return (
     <LeadFrame props={props}>
@@ -437,3 +441,6 @@ export function ClearanceLead(props: LeadProps) {
     </LeadFrame>
   );
 }
+
+/** This lead draws no typed figure, event lane or map: the module frame keeps drawing them all. */
+ClearanceLead.draws = [] as readonly Draw[];

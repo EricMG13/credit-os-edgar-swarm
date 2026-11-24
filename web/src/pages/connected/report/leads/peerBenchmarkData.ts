@@ -1,5 +1,4 @@
 import type { OutputEntry } from "../../publishedReport";
-import { bottomLine } from "../overview/read";
 import { ticks } from "../../visuals/visualData";
 import { safeText as safe } from "./kit/reader";
 import { difference, readCell, signOf } from "./kit/numbers";
@@ -11,6 +10,15 @@ export const PEER_HEADINGS = {
   multiples: "Chart data: peer range — multiples",
 } as const;
 type PeerKind = keyof typeof PEER_HEADINGS;
+
+/** A heading with every dash alike and spaces collapsed: a hyphen for the em dash still names the table. */
+const headingKey = (heading: string) =>
+  heading
+    .replace(/[\u2010-\u2015\u2212-]+/g, "-")
+    .replace(/\s*-\s*/g, " - ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .toLowerCase();
 
 const REQUIRED = [
   "Metric",
@@ -56,8 +64,6 @@ function countOf(cell: string): Count {
   };
 }
 
-export type Side = "above" | "below" | "at";
-
 /** What can be drawn for one metric. */
 type Drawing =
   /** The band is stated; the median and the issuer are drawn where stated. */
@@ -67,7 +73,6 @@ type Drawing =
       high: number;
       median: number | null;
       issuer: number | null;
-      side: Side | null;
     }
   /** The band is not stated: only the labelled gap row. */
   | { kind: "gap" }
@@ -115,17 +120,12 @@ function drawingOf(row: Omit<PeerRow, "drawing" | "notes">): Drawing {
       kind: "conflict",
       message: `Peer median ${median.text} is outside the range ${low.text} to ${high.text}`,
     };
-  const sign =
-    issuer.kind === "number" && median.kind === "number"
-      ? signOf(difference(issuer.text, median.text))
-      : null;
   return {
     kind: "strip",
     low: low.value,
     high: high.value,
     median: median.kind === "number" ? median.value : null,
     issuer: issuer.kind === "number" ? issuer.value : null,
-    side: sign === null ? null : sign > 0 ? "above" : sign < 0 ? "below" : "at",
   };
 }
 
@@ -204,7 +204,9 @@ export function readPeerBenchmark(entry: OutputEntry): PeerRead {
   };
   const names = { percent: "percent metrics", multiples: "multiples" } as const;
   for (const kind of ["percent", "multiples"] as const) {
-    const found = tables.filter(({ heading }) => heading === PEER_HEADINGS[kind]);
+    const found = tables.filter(
+      ({ heading }) => headingKey(heading) === headingKey(PEER_HEADINGS[kind]),
+    );
     const [one] = found;
     if (found.length > 1) {
       read.gaps.push(
@@ -226,14 +228,10 @@ export function readPeerBenchmark(entry: OutputEntry): PeerRead {
       }
     }
   }
+  // Neither range table, under either heading: one plain statement of that.
+  if (!read.tables.length && read.gaps.every((gap) => gap.endsWith("is not in this handoff.")))
+    read.gaps = ["No peer range table is in this handoff."];
   return read;
-}
-
-/** The module's own first Bottom-line sentence when it can be drawn; else the one fixed statement. */
-export function peerGapSentence(entry: OutputEntry) {
-  const text = bottomLine(entry)[0]?.text;
-  const first = text?.split(/(?<=[.!?])\s+/)[0]?.trim();
-  return first ? first : "Peer data was not supplied for this run.";
 }
 
 const AXIS = { left: 88, right: 552 } as const;
@@ -257,9 +255,3 @@ export function withUnit(text: string, unit: string) {
   if (!unit) return tidy;
   return /^[%x]$/i.test(unit) ? `${tidy}${unit}` : `${tidy} ${safe(unit)}`;
 }
-
-export const SIDE_WORDS: Record<Side, string> = {
-  above: "above the peer median",
-  below: "below the peer median",
-  at: "at the peer median",
-};
