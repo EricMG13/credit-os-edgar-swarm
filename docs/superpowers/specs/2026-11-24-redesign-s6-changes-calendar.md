@@ -96,8 +96,35 @@ cause, href, empty-state sentence, unplaced-row and bad-date test.
 ## 6. Requests to the coordinator
 
 1. `ReportLibrary.tsx` (S1) should pass `asOf={run.asOf}` to `<Calendar>`; the prop is optional and the as-of rule is drawn only when it arrives.
-2. Overview's changes tile and dates tile are untouched by this package; `comparisonForRun`, `comparisonRows`, `buildCalendar`, `upcomingCalendarRows` and `ComparisonTable` keep their signatures.
+2. `ReportLibrary.design.test.tsx` (S1) needs its Changes view-switch step changed from `radio "Table"` to `button "Table"` (pressed). 
+3. Overview's changes tile and dates tile are untouched by this package; `comparisonForRun`, `comparisonRows`, `buildCalendar`, `upcomingCalendarRows` and `ComparisonTable` keep their signatures.
 
 ## 7. Verification
 
-(filled in during phase 2)
+**Fixture, not two synthetic runs.** `proof.serve` refuses a second run ("synthetic proof requires a
+first Credit Snapshot run"), so a run with an earlier run could not be driven. The first synthetic run
+published (Northbridge); Changes was then looked at on a throwaway page (uncommitted, outside the
+repo's tracked files) that renders `ReportChanges` and `Calendar` with a hand-built comparison pack,
+CP-8 handoff and seven events, built with the app's own Vite and Tailwind setup. Real sentences were
+not exercised; TransDigm retained fixtures were not run through these pages.
+
+Looked at (screenshots, 1440 and 390 px): Changes with a comparison; Calendar with as-of date;
+first-run and not-produced empty states (rendered; first-run and not-produced screenshots were
+produced but only the first two pages were inspected by eye). Seen: verdict sentence in the largest
+type with two date chips and the stance gap; ranked rows with dumbbells, orange worse / teal better
+each with a word and shape, "Unresolved" in an orange-edged chip, "Cause not stated"; module matrix
+with shapes; maturity pair with a hatched missing cell, an empty unstated year and a break before
+"Thereafter"; collapsed unmoved; two ledger lists; Calendar lanes with spans for quarter/month/year,
+as-of rule, table below. No horizontal page scroll at 390 px (scrollWidth 390). A first screenshot
+showed the CP-8 findings repeating the verdict; fixed by drawing the rest of the module's passages only.
+
+Checks run: `npx tsc --noEmit` clean; `npx eslint --max-warnings=0` and `npx prettier --check` on
+changed files clean; `npx vitest run src/pages/connected` 1955 pass, 2 fail (below); `npm run unused`
+reports only `LeadProps` (not mine); `npm run build` passes.
+Not run: `tools/quality_gate.py` (Python-only gate; uv 0.12.5 pin not installable here), the full suite,
+the 390 px first-run/not-produced screenshots by eye, contrast measurement.
+
+Failing tests outside this package: `ReportLibrary.design.test.tsx` "switches Changes between cards and
+a table" clicks `radio "Table"`; Changes now uses the kit `Segmented` (buttons with `aria-pressed`).
+"filters by sector and pathway" clicks the Library's own `radio "Cards"`; not touched here, not
+confirmed as pre-existing.

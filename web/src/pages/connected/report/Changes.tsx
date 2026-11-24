@@ -93,8 +93,13 @@ export function ReportChanges({
   const trace = comparisonTrace(run.folder, change?.problem ? [] : entries);
   if (change?.first_run === true && !change.pack && !change.problem && !change.note)
     return <FirstRun />;
-  const findings = entry && (
-    <ReportFindings snapshot={snapshot} run={run} entry={entry} entryIndex={entryIndex} />
+  // The verdict tile draws the Bottom line; the findings below carry the rest of the module's passages.
+  const rest =
+    entry && verdictSentence(entry) !== null && change?.pack
+      ? { ...entry, sections: entry.sections.filter(({ heading }) => heading !== "Bottom line") }
+      : entry;
+  const findings = rest && (
+    <ReportFindings snapshot={snapshot} run={run} entry={rest} entryIndex={entryIndex} />
   );
   if (change?.problem || !change?.pack)
     return (
