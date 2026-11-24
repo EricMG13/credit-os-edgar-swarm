@@ -4570,7 +4570,11 @@ describe("connected run start: leaving the form without losing it (C2-002)", () 
     });
     fireEvent.click(screen.getByRole("button", { name: "Use inputs from latest run" }));
     await screen.findByText(/Using an earlier run as a starting point/);
-    expect(away()).toBe(false);
+    // The carry lands outside act, so the commit that shows this text still has the typed name's
+    // leave warning attached; React removes it when its effects run, a task later.
+    await waitFor(() => {
+      expect(away()).toBe(false);
+    });
     fireEvent.click(screen.getByRole("button", { name: "Inspect documents" }));
     await screen.findByRole("list", { name: "Documents added" });
     await screen.findByText("1 document inspected, 0 ignored.");

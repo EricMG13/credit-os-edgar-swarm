@@ -19,7 +19,7 @@ from deploy_workflow.inbox.scheduler import Scheduler, Settings
 from deploy_workflow.run_start import service
 from deploy_vii.contracts import PATHWAY_CAP_USD, PathwayId
 
-from . import admission, artifacts, portfolio, run_activity, sources
+from . import admission, artifacts, coverage, portfolio, run_activity, sources
 from .library_cards import lead_summary, not_assessable_modules
 
 PROJECT = Path(__file__).resolve().parent.parent
@@ -270,7 +270,7 @@ def _static_cache(path: str, relative: str) -> str | None:
 
 def _app_page(path: str) -> bool:
     return bool(
-        path in {"/", "/index.html", "/start", "/runs"}
+        path in {"/", "/index.html", "/start", "/runs", "/coverage"}
         or RUN_PAGE.fullmatch(path)
         or _report_page(path)
     )
@@ -321,6 +321,9 @@ def _connected_reply(
 
 
 def _connected_report_reply(layout: Layout, path: str, url: SplitResult) -> http_base.Reply | None:
+    if path == "/connected/coverage":
+        body = coverage.coverage(_admitted_scope(layout, None))
+        return http_base.Reply(200, body, {"Cache-Control": "no-store"})
     if match := artifacts.GRAPH.fullmatch(path):
         snapshot = _admitted_scope(layout, None)
         return artifacts.reply(match, layout.engine / "runs", REPORT_FOLDER, snapshot)

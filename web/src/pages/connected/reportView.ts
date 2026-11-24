@@ -447,7 +447,7 @@ export const stated = (figure: Figure | undefined): figure is Figure & { value: 
  * `2024-09-30` or `FY2024 / 2024-09-30` (ordered by its date). The keys of one form compare as
  * text in date order; nothing for any other text, an impossible date, or a year that disagrees
  * with its date. */
-function periodOrder(cell: string) {
+export function periodOrder(cell: string) {
   const year = /^FY(\d{4})$/.exec(cell);
   if (year) return `1-${year[0].slice(2)}`;
   const dated = /^FY(\d{4}) \/ (\d{4}-\d{2}-\d{2})$/.exec(cell);

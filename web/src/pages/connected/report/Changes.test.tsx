@@ -193,6 +193,13 @@ describe("connected report Changes", () => {
     expect(document.body.textContent).not.toMatch(/\(CP-[A-Za-z0-9]+\)/);
   });
 
+  it("draws nothing, not a stray 0, for a pack that compared no modules", () => {
+    const { container } = renderChanges({ pack: { measures: [], modules: [] } });
+    expect(screen.queryByText("0")).toBeNull();
+    expect(container.textContent).not.toMatch(/(?<![\d.,])0(?![\d.,])/);
+    expect(screen.queryByRole("heading", { name: "What changed in the analysis" })).toBeNull();
+  });
+
   it("groups CP-8's limitations ledger by status without its reference columns", () => {
     renderChanges({ first_run: false }, [cp8(LEDGER)]);
     const ledger = screen.getByRole("region", { name: "Limitations" });

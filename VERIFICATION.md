@@ -35,6 +35,43 @@ engine is in [EricMG13/final-workflow](https://github.com/EricMG13/final-workflo
 - The focused Python group passed 1,121 checks with one paid case skipped. The task-isolated quality gate found zero findings in 13 Python files. The prescribed worktree gate reported 3,000 findings against the broader dirty comparison. No provider was called.
 - Final Connected reader and shared chart tests passed 2,158 checks in 138 files. Scoped lint and formatting, TypeScript, the production build and the open-from-disk check passed. The final Chrome Library cards for Ares and LQD matched the same first passage and exact Evidence owner and line opened by Overview. Both previews showed the held actions and returned to the originating run and tab. The card guards rejected a mismatched scoped response. Confidence review and the rewrite tournament retained the shared purpose selection and independently traced restrictions.
 - Astra cleared the final integration after independently inspecting the saved PDFs, exact held-action and exposure treatment, same-run card and Overview proofs, and final test and quality-gate results.
+## 2026-11-24 — Review fixes for PRs #72 and #71
+
+- Scope: the thirteen findings of the review of PRs #72 and #71, on `claude/gracious-hamilton-ciefz4`. Presentation under `web/src/pages/connected/` and the parallel CP-OS path in `handoff.py`, `cpos.py` and `cpos_launch.py`. Synthetic fixtures and fake providers only. No provider was called and no retained run was read.
+- Forecast page. The statement's source trace covers the columns shown. A period only one case publishes stays in the comparison and reads "Not published" for the others. Cases with no common period draw no comparison and say so. An excluded period is named with its reason. Case names are computed once per model; a label no other case shares is shown as published, and a collision gets the group's reader text or a worded ordinal. The selected case is matched by its raw group. Changes draws nothing for an empty module comparison. Run progress names the earliest unaccepted module at a checker stop.
+- Parallel CP-OS. The last look is the final step before dispatch and checks the ledger before the module. A call it refuses, and a call the adapter did not send, is logged as `turn_not_sent`. A failed hold release never replaces the refusal, and a halted module's unreleased hold is named on the launch's failure. The launcher states one module at a time when retained handoffs force it. A launch-wide stop is worded as one.
+- Checks run on the final tree: 1,874 connected-page tests, TypeScript, lint and format on the changed files; 247 targeted Python tests across the parallel, budget, handoff-loop and web-search files, 14 selected launcher tests with one historical case skipped, and the changed-code gate with zero findings. One connected-page test failed once in five runs while the Python tests ran alongside; it was not identified and did not repeat. The full suites were not run.
+- Review. Two spec reviews and two adversarial reviews, each followed by repairs. The first fix to the turn event let a stop arriving during the event write through to dispatch; the look was restored to last and the test that covered it was restored. The adversarial reviews mutated the source in scratch copies: 18 of 19 web and 5 of 6 Python mutations were caught. The confidence-review and rewrite-tournament skills were not available in this session; the adversarial passes stood in for them. No browser was used; pages were rendered in jsdom.
+- Known limitations, left as low. An `other` grid drawn as its own statement can show the no-common-period sentence beside a drawn comparison. One case that publishes a period twice gets a left-out sentence at the statement although both columns are drawn, and the trends section drops that period without a notice when no cash proxy row exists. A third case disjoint from two that share periods is drawn as "Not published" with no notice. The statement header applies reader text to a name where the cards do not. A `not_sent` reply whose release then fails leaves a `turn` with no `turn_not_sent`. A halt and a ledger stop met together now raise the ledger stop. At a width of three or more the run page may still name a bystander at a checker stop; not confirmed.
+## 2026-11-24 — Coverage page (`/coverage`), first build
+
+- New top-level page of the connected app and one read-only reply, `/connected/coverage`, under
+  `docs/rulings/2026-11-24-coverage-page.md`. It reads the admitted publication only: fourteen
+  fixed module columns, five cell states by the Library's existing rules, and fields from the
+  Reader summary and typed `Chart data:` tables. It adds no parser, score, average or difference.
+- Retained evidence, module level only: three TransDigm CP-1 handoffs of the 2026-11-15 live runs
+  (as of 2024-09-30), each as its own publication. Leverage, net leverage and debt maturities kept
+  the text, period, unit and Basis read by hand from each Markdown file, and each figure's line is
+  its own table row. One issuer and one module: not a TDG pathway and not a cross-issuer case.
+- Everything across issuers is synthetic: figures keep text, period, unit and Basis; a stated gap
+  is listed apart, never ranked or shown as zero; a rank reads one reader-chosen period and keeps
+  reporting units apart; the page draws no module code, hash, file name or run folder.
+- Presentation fidelity, Chromium at 1500 px on a five-issuer synthetic publication: Modules, Rank,
+  Find and Trend drew with no console error. Edge, mobile widths and keyboard use were not checked.
+  The Evidence link's address follows `resolveEvidenceLocation` by reading; it was not clicked
+  through to a published report.
+- Review fixes, same day: text now comes from the current Findings sections (the synthetic
+  current-format CP-2 gives its bottom line, three findings and three limitations); module text
+  and Basis pass the reader's reference rule; adjusted headings join their reported measure;
+  gaps count `## Gaps` entries and `Not supplied:` cells (the retained TDG CP-1 is no longer plain
+  "Delivered"); absent modules are read against the run's recorded `requested_modules`, a new
+  field of the published run; period order reuses the reader's `periodOrder`.
+- Browser check repeated after the review fixes, Chromium at 1500 px, same five-issuer synthetic
+  publication with recorded plans: Modules (gaps and "Not asked for in this run" drawn), Rank,
+  Find by issuer name, Trend and an unavailable sector from the link drew with no console error.
+- Not done: confidence-review and rewrite-tournament (their definitions are not in this
+  repository or session), the full web and Python suites, and a check against the design system's component rules; the page uses native selects,
+  checkboxes and tables as the Library list does.
 
 ## 2026-11-24 — Parallel CP-OS review fixes for PR #71
 
@@ -949,32 +986,3 @@ Scope: presentation only, all under `web/`; no backend, handoff, provider or mod
   preview/admission qualification; CP-2G download SHA-256 unchanged.
 - ZIP not built or published. Chrome and Edge acceptance on the Windows work PC
   remains pending; macOS passes do not satisfy that gate.
-
-## 2026-11-16 — Five branch-introduced Fallow findings resolved
-
-- Verified all five with their `fallow inspect --file ... --format json` commands
-  before editing. Extracted calendar validation/row mapping, forecast display and
-  unique-row lookup, and comparison rendering; simplified the unique-JSON lookup.
-  No suppressions, threshold changes, backend changes or dependency changes.
-- Fallow audit against `dd765b5`: PASS, zero introduced, two inherited findings
-  (`Modules` and `ReportReader`). RBOT-HTML and pins remain at `256101a`.
-- Confidence review with Astra ranked (1) calendar validation/order/source identity,
-  (2) unique forecast-input provenance, (3) missing/zero/duplicate chart cells and
-  caption layout, (4) comparison admission, (5) portfolio-provider scope. Traced
-  callers and previous code. Astra caught an empty-units caption regression;
-  normalized units outside the chart callback and added a regression. Other
-  semantics verified equivalent, including empty comparison headings being absent.
-- 71 focused tests pass across eight files; new guards cover ambiguous JSON,
-  invalid/duplicate event source lines and missing chart units. TypeScript,
-  changed-file ESLint/Prettier and changed-code quality gate pass (zero findings).
-- Fresh offline install and production build; source tree
-  `55f78cdd1d61e13e0dba8889e82fd63d1d785212`. Branded Chrome 157.0.8103.78
-  (`20261116-031230-01`) and Edge 157.0.4341.60 (`20261116-031246-01`) each pass
-  all 32 synthetic checks on macOS. Evidence: `proof-artifacts/run-rzGwkj/proof.json`.
-  This is source-snapshot proof, not ZIP or Windows acceptance.
-- Fidelity scope: unchanged compiled CSS (SHA-256
-  `914e40937b01bfc5efe4ecad2f6000924dff284e2fca629f897cb6831afd08f0`), browser
-  chart/table/trace assertions and actual Caesars Forecast opened at port 58338.
-  Retained CP-2G bytes match the prior SHA-256; preview stays read-only with its
-  Test preview/admission qualification. No providers, Signal work or tournaments.
-- ZIP not built or published; Chrome and Edge work-PC acceptance remains pending.
