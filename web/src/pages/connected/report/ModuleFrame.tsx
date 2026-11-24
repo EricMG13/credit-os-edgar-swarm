@@ -21,8 +21,7 @@ import { GapNote, Tile } from "./overview/Tile";
 import { stageOf } from "./stageNumber";
 import { CONTRARY, KEY_FINDINGS, type BottomLineSource, type TextBlock } from "./moduleFrame";
 
-export const MISSING_PASSAGE =
-  "Not established for this run. The module's handoff has no such passage.";
+const MISSING_PASSAGE = "Not established for this run. The module's handoff has no such passage.";
 
 export type FrameModule = { id: string; name: string; state: ModuleState };
 

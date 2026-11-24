@@ -13,7 +13,7 @@ export type TextBlock = Extract<Block, { type: "text" }>;
 
 export const KEY_FINDINGS = "Key findings";
 export const CONTRARY = "Contrary evidence and what would change the view";
-export const LIMITATIONS = "Limitations";
+const LIMITATIONS = "Limitations";
 
 /** The bottom line as the module wrote it: the passage's first paragraph, else its summary. */
 export type BottomLineSource =
@@ -71,5 +71,3 @@ export function moduleFrame(entry: OutputEntry, figureTableLines: readonly numbe
     missing: missingPassages(entry, bottomLine ? [...drawn, "Bottom line"] : drawn),
   };
 }
-
-export type ModuleFrameParts = ReturnType<typeof moduleFrame>;

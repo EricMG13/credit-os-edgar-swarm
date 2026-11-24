@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { createElement, useState } from "react";
 import { Button } from "@/components/base/buttons/button";
 import { StatsStrip, type Stat } from "@/components/kit/StatsStrip";
 import { StageNav } from "@/pages/library/parts/ModuleNav";
@@ -40,6 +40,7 @@ import {
   type FrameModule,
 } from "./ModuleFrame";
 import { ModuleRecords } from "./ModuleRecords";
+import { Bento } from "./overview/Tile";
 import { Securities, securityView } from "./Securities";
 import { byStage } from "./stages";
 
@@ -191,7 +192,7 @@ function ModulePage({
   const active = open === null ? undefined : traces[open];
   return (
     <RunContext.Provider value={{ traces, open: setOpen }}>
-      <div className="grid min-w-0 grid-cols-1 gap-4 lg:grid-cols-12">
+      <Bento>
         <ModuleHeader
           module={module}
           entry={entry}
@@ -214,7 +215,8 @@ function ModulePage({
         )}
         {Lead ? (
           <div className="min-w-0 lg:col-span-12">
-            <Lead snapshot={snapshot} run={run} view={view} entry={entry} entryIndex={index} />
+            {/* leadFor returns a component defined once at module scope, never one made here. */}
+            {createElement(Lead, { snapshot, run, view, entry, entryIndex: index })}
           </div>
         ) : (
           <TypedFigures entry={entry} run={run} view={view} figures={figures} />
@@ -243,7 +245,7 @@ function ModulePage({
           <ModuleRecords run={run} entry={entry} />
         </div>
         <NextModule next={nextModule(view, current.id)} href={moduleHref} />
-      </div>
+      </Bento>
       {active && (
         <TraceDrawer
           trace={active}
@@ -281,7 +283,7 @@ function SavedOutputs({ current, entry }: { current: ModuleItem; entry?: OutputE
 function UnavailableHandoff({ current }: { current: ModuleItem }) {
   const count = current.outputs.length;
   return (
-    <div className="grid min-w-0 grid-cols-1 gap-4 lg:grid-cols-12">
+    <Bento>
       <ModuleHeader module={current} bottomLine={null} owed={false} folder="" />
       <section className={`${card} lg:col-span-12`}>
         <h3 className={heading}>Handoff unavailable</h3>
@@ -293,7 +295,7 @@ function UnavailableHandoff({ current }: { current: ModuleItem }) {
               : "No output was saved for this module."}
         </p>
       </section>
-    </div>
+    </Bento>
   );
 }
 

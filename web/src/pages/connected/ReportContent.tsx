@@ -460,11 +460,11 @@ export function PublishedTable({
   );
 }
 
-export function readerBlock(block: Block): boolean {
+function readerBlock(block: Block): boolean {
   return block.type === "table" || (block.type === "text" && !methodNote(block.text));
 }
 
-export const RECORDS_ID = "statements-and-records";
+const RECORDS_ID = "statements-and-records";
 // One register code (T4.4, P3, T2F.2); the prefix also takes the dash that follows it.
 const CODE = String.raw`[TP]\d+[A-Z]?(?:\.\d+)?`;
 const RECORD_PREFIX = new RegExp(String.raw`^${CODE}\s+(?:[-\u2013\u2014]\s*)?`);

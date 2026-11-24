@@ -1,6 +1,7 @@
 import { useEffect, useId, useRef, useState, type RefObject } from "react";
 import {
   AlertTriangle,
+  ChevronDown,
   Flag01,
   InfoCircle,
   LayersThree01,
@@ -486,10 +487,14 @@ export function StageNav({
         onToggle={(event) => {
           if (!desktop) setOpen(event.currentTarget.open);
         }}
-        className="flex flex-col gap-3"
+        className="group/nav"
       >
-        <summary className="flex min-h-8 cursor-pointer items-center text-small font-medium text-text-primary max-[480px]:min-h-11 lg:hidden">
-          Modules in this run · {count}
+        <summary className="flex min-h-8 cursor-pointer list-none items-center justify-between gap-2 rounded-ds-sm px-2 text-small font-medium text-text-primary outline-focus-ring focus-visible:outline-2 max-[480px]:min-h-11 lg:hidden [&::-webkit-details-marker]:hidden">
+          <span>Modules in this run · {count}</span>
+          <ChevronDown
+            aria-hidden="true"
+            className="size-4 flex-none text-text-tertiary transition-transform group-open/nav:rotate-180 motion-reduce:transition-none"
+          />
         </summary>
         <div className="mt-3 flex flex-col gap-3 lg:mt-0">
           <header className="flex flex-col gap-0.5 px-2">
