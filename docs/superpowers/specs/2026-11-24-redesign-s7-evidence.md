@@ -189,4 +189,40 @@ None blocking. Noted: `report/Record.tsx` (S2) is wrapped, not edited; if S2 ren
 
 ## 7. Verification
 
-(filled in during phase 2)
+Run on the synthetic Northbridge run (`20261124-222235-01`, Full pathway), built with `npm run build`,
+viewed through `react_frontend`. Screenshots at 1440 and 390 px of Summary, Sources, Gaps, Checks, Record
+and the Trace tab arrived at from the drawer's "Open in Evidence", and of the open drawer, were looked at.
+
+What I saw:
+- Summary: segmented control with the current section tinted and dotted, "Checks 10 of 215" as a mono count; a
+  Gaps tile (this run records no gaps: the compact "No gaps recorded" state, no zeros drawn), a Run evidence
+  tile, the Handoffs table (name, SHA-256, download) and the model and calculation files tile.
+- Sources: one table per group; file, type with date, cited pages ("Not cited" in the gap colour, as the
+  synthetic handoffs cite no page), used by, full SHA-256. At 390 px the table scrolls inside its own labelled
+  region; the page does not scroll sideways.
+- Checks: outcome counts strip (9 agreed, 205 not checked, 1 noted), then the check × module matrix in a region
+  capped at 32 rem with a sticky header and first column; per-module disclosures closed below.
+- Record: Handoffs, model files, then two closed disclosures (model notes and assumption registers; run record).
+  The record page fell from 7,500 px to 1,780 px at 1440.
+- Trace: arrived from the drawer at line 48 of Fundamental credit: claim tile left (7/12), source tile right (5/12)
+  with the gap state, derivation below; stacked at 390 px.
+- Drawer, 1440 and 390 px: subtitle line, heading, the claim, the source gap state, derivation, Close and
+  "Open in Evidence".
+
+Not seen on a screen: the synthetic run records no gaps and no source passages, so the populated gap ledger,
+the populated source passage beside the claim, and a "disagreed" matrix cell are proved by tests
+(`EvidenceGaps.test`, `TraceSplit.test`, `TraceParts.test`, `ScriptCheckMatrix.test`, `Evidence.redesign.test`),
+not by screenshot. Not run: the retained TransDigm fixtures through the new page; `npm run build` ran, but not
+`npm run gates`, the file-open gate or Python tests that read the build; the Python quality gate (no Python
+changed).
+
+Checks run: `npx tsc --noEmit`; `npx eslint --max-warnings=0` on every changed file; `npx prettier --check`;
+`npm run unused` (the one remaining item, `LeadProps` in the frozen leads types, is not mine); `npm run build`;
+`npx vitest run src/pages/connected src/pages/library src/pages/model`: 211 files, 3,790 tests, all passing.
+
+Tests rewritten because they pinned layout (assertion kept, container or order changed): `Record.test`
+(opens the closed run record first; scopes region names to it), `Evidence.contracts` (run record is last and
+closed), `Evidence.finalAudit` (group headings carry a count; handoff container is a labelled region, not an
+`article`), `Evidence.t21` and `Evidence.t21-fix1` (same container change; hash drawn in mono rather than a
+`code` element), `Evidence.test` (opens the closed run record), `ScriptChecks.test` (a status word now shows in
+the strip, the matrix and the card). No test was deleted or skipped.
