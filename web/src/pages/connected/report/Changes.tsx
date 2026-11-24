@@ -1,41 +1,26 @@
-import { ArrowRight } from "@untitledui/icons";
+import { ArrowRight, ClockRewind } from "@untitledui/icons";
 import { useState } from "react";
-import { ClockRewind } from "@untitledui/icons";
-import { EmptyState } from "@/components/application/empty-state/empty-state";
 import { Button } from "@/components/base/buttons/button";
-import { ButtonGroup, ButtonGroupItem } from "@/components/base/button-group/button-group";
-import { Badge } from "@/components/base/badges/badges";
-import { ColumnsChart } from "@/components/chart/ColumnsChart";
-import { ChangeCard } from "@/pages/library/parts/ChangeCard";
-import type { Cell } from "@/pages/library/slice";
+import { Segmented } from "@/components/kit/Segmented";
 import { changesSentence } from "../api";
-import { card, heading } from "../layout";
 import {
   comparisonRows,
   containsReference,
-  readerText,
-  readParagraph,
-  type PublishedChanges,
   type MaturityProfile,
   type OutputEntry,
+  type PublishedChanges,
   type PublishedRun,
   type Snapshot,
 } from "../publishedReport";
 import { PublishedTable, ReportFindings } from "../ReportContent";
-import { tone } from "../signal";
-import { amount, distinct, ticks } from "../visuals/visualData";
-import { PublishedSource } from "./PublishedTrace";
+import { LedgerList } from "./changes/LedgerLists";
+import { MaturityPair, usableProfile } from "./changes/MaturityPair";
+import { MeasureList } from "./changes/MeasureList";
+import { ModuleMatrix } from "./changes/ModuleMatrix";
+import { classifyMeasures, ledgerLists, verdictSentence } from "./changes/model";
 import { comparisonTrace, maturityTraces } from "./comparisonTrace";
-
-/** The owner's tone for a comparable measure's difference as sent; none where the table has no direction. */
-function cardTone(measure: { key: string; difference?: number | string | null } | undefined) {
-  if (measure?.difference == null) return undefined;
-  const result = tone(measure.key, String(measure.difference));
-  return result === "none" ? undefined : result;
-}
-
-const cell = (value: string): Cell =>
-  value === "Not stated" ? null : { kind: "value", at: null, text: value };
+import { Bento, GapNote, Tile } from "./overview/Tile";
+import { PublishedSource } from "./PublishedTrace";
 
 export function ComparisonTable({
   rows,
@@ -106,396 +91,219 @@ export function ReportChanges({
   const entryIndex = entries.findIndex((entry) => entry.output.module === "CP-8" && entry.selected);
   const entry = change?.problem ? undefined : entries[entryIndex];
   const trace = comparisonTrace(run.folder, change?.problem ? [] : entries);
-  const rows = change?.pack && !change.problem ? comparisonRows(change, "reader") : [];
-  const note = noComparisonSentence(change?.note);
-  const [presentation, setPresentation] = useState<"cards" | "table">("cards");
   if (change?.first_run === true && !change.pack && !change.problem && !change.note)
-    return <FirstRunNotice />;
-  return (
-    <ChangesReport
-      snapshot={snapshot}
-      run={run}
-      entries={entries}
-      change={change}
-      entry={entry}
-      entryIndex={entryIndex}
-      rows={rows}
-      note={note}
-      trace={trace}
-      presentation={presentation}
-      setPresentation={setPresentation}
-    />
+    return <FirstRun />;
+  const findings = entry && (
+    <ReportFindings snapshot={snapshot} run={run} entry={entry} entryIndex={entryIndex} />
   );
-}
-
-function ChangesReport({
-  snapshot,
-  run,
-  entries,
-  change,
-  entry,
-  entryIndex,
-  rows,
-  note,
-  trace,
-  presentation,
-  setPresentation,
-}: {
-  snapshot: Snapshot;
-  run: PublishedRun;
-  entries: OutputEntry[];
-  change: PublishedChanges | null | undefined;
-  entry: OutputEntry | undefined;
-  entryIndex: number;
-  rows: string[][];
-  note: string;
-  trace: ReturnType<typeof comparisonTrace>;
-  presentation: "cards" | "table";
-  setPresentation: (value: "cards" | "table") => void;
-}) {
+  if (change?.problem || !change?.pack)
+    return (
+      <>
+        <h2 className="font-display text-h3 text-text-primary">Changes since the last run</h2>
+        <NoComparison change={change} />
+        {findings}
+      </>
+    );
   return (
     <>
-      <ComparisonPanel
-        change={change}
-        rows={rows}
-        note={note}
-        trace={trace}
-        presentation={presentation}
-        setPresentation={setPresentation}
-      />
-      <ComparisonSupplements
+      <h2 className="font-display text-h3 text-text-primary">Changes since the last run</h2>
+      <Comparison
         snapshot={snapshot}
         run={run}
         entries={entries}
         change={change}
         entry={entry}
-        entryIndex={entryIndex}
         trace={trace}
       />
+      {findings}
     </>
   );
 }
 
-function ComparisonPanel({
-  change,
-  rows,
-  note,
-  trace,
-  presentation,
-  setPresentation,
-}: {
-  change: PublishedChanges | null | undefined;
-  rows: string[][];
-  note: string;
-  trace: ReturnType<typeof comparisonTrace>;
-  presentation: "cards" | "table";
-  setPresentation: (value: "cards" | "table") => void;
-}) {
+function ComparedDates({ change }: { change: PublishedChanges }) {
+  const { prior, current } = change.pack ?? {};
+  if (!prior?.as_of || !current?.as_of) return null;
   return (
-    <section className={rows.length > 0 ? "grid gap-4" : card}>
-      <h2 className={heading}>Changes since the last run</h2>
-      <ComparisonStatus change={change} note={note} />
-      <ComparisonFallbackLinks change={change} />
-      {rows.length > 0 && (
-        <>
-          <PresentationToggle value={presentation} onChange={setPresentation} />
-          <ComparisonRows rows={rows} presentation={presentation} change={change} trace={trace} />
-        </>
-      )}
-      <ComparisonEvidenceLink change={change} handoff={trace.handoff} />
-    </section>
+    <p className="flex flex-wrap items-center gap-2 text-small text-text-secondary">
+      <span className="rounded-ds-xs bg-surface-subtle px-2 py-1">
+        Earlier run, as of {prior.as_of}
+      </span>
+      <ArrowRight aria-hidden="true" className="size-4 text-text-tertiary" />
+      <span className="rounded-ds-xs bg-surface-selected px-2 py-1 text-text-link">
+        This run, as of {current.as_of}
+      </span>
+      <span className="rounded-ds-xs border border-dashed border-border-gap px-2 py-1 text-gap-text">
+        Stance, earlier → current: not stated
+      </span>
+    </p>
   );
 }
 
-function ComparisonSupplements({
+/** Row 1: the verdict in one sentence, in the largest type on the page. */
+function Verdict({ change, entry }: { change: PublishedChanges; entry: OutputEntry | undefined }) {
+  const sentence = verdictSentence(entry);
+  return (
+    <Tile
+      span={12}
+      label="Verdict"
+      kicker={
+        <span className="flex items-center gap-2">
+          <ClockRewind aria-hidden="true" className="size-4" />
+          Since the earlier run
+        </span>
+      }
+    >
+      {sentence ? (
+        <p className="reading-copy font-display text-h1 text-balance text-text-primary">
+          {sentence}
+        </p>
+      ) : (
+        <GapNote>The comparison does not state a verdict in a sentence.</GapNote>
+      )}
+      <ComparedDates change={change} />
+    </Tile>
+  );
+}
+
+type Trace = ReturnType<typeof comparisonTrace>;
+
+function Measures({
+  change,
+  entry,
+  trace,
+}: {
+  change: PublishedChanges;
+  entry: OutputEntry | undefined;
+  trace: Trace;
+}) {
+  const [view, setView] = useState<"list" | "table">("list");
+  const groups = classifyMeasures(change, trace.measure, entry);
+  const rows = comparisonRows(change, "reader");
+  if (!rows.length) return null;
+  const { moved, revised, notAssessable } = groups;
+  return (
+    <Tile
+      span={7}
+      label="Measures that moved"
+      title="Measures that moved"
+      kicker="Earlier → current, largest move first"
+      trace={
+        <Segmented
+          label="Presentation"
+          current={view}
+          onSelect={(key) => {
+            setView(key === "table" ? "table" : "list");
+          }}
+          segments={[
+            { key: "list", label: "List" },
+            { key: "table", label: "Table" },
+          ]}
+        />
+      }
+    >
+      {view === "table" ? (
+        <section aria-label="Earlier against current">
+          <ComparisonTable rows={rows} source={trace.measure} />
+        </section>
+      ) : (
+        <>
+          {moved.length > 0 ? (
+            <MeasureList label="Measures that moved" items={moved} />
+          ) : (
+            <GapNote>No measure moved between the two runs.</GapNote>
+          )}
+          <MeasureGroup title="Revised for the same period" items={revised} />
+          <MeasureGroup title="Not assessable" items={notAssessable} ranked={false} />
+        </>
+      )}
+    </Tile>
+  );
+}
+
+function MeasureGroup({
+  title,
+  items,
+  ranked = true,
+}: {
+  title: string;
+  items: Parameters<typeof MeasureList>[0]["items"];
+  ranked?: boolean;
+}) {
+  if (!items.length) return null;
+  return (
+    <div className="grid gap-3 border-t border-border-hairline pt-4">
+      <h4 className="text-caption text-text-tertiary">{title}</h4>
+      <MeasureList label={title} items={items} ranked={ranked} />
+    </div>
+  );
+}
+
+function Comparison({
   snapshot,
   run,
   entries,
   change,
   entry,
-  entryIndex,
   trace,
 }: {
   snapshot: Snapshot;
   run: PublishedRun;
   entries: OutputEntry[];
-  change: PublishedChanges | null | undefined;
-  entry: OutputEntry | undefined;
-  entryIndex: number;
-  trace: ReturnType<typeof comparisonTrace>;
-}) {
-  if (change?.problem || !change?.pack)
-    return entry ? (
-      <ReportFindings snapshot={snapshot} run={run} entry={entry} entryIndex={entryIndex} />
-    ) : null;
-  return (
-    <>
-      <ComparisonMaturities
-        profile={change.pack.maturity_profile}
-        omitted={change.pack.omitted?.maturity_profile}
-        traces={
-          change.pack.maturity_profile ? maturityTraces(snapshot, run, entries, change) : undefined
-        }
-      />
-      {Boolean(change.pack.modules?.length) && (
-        <ComparedModules change={change} source={trace.module} />
-      )}
-      {entry && (
-        <ReportFindings snapshot={snapshot} run={run} entry={entry} entryIndex={entryIndex} />
-      )}
-    </>
-  );
-}
-
-function FirstRunNotice() {
-  return (
-    <section className={`${card} min-h-76 justify-center py-14`}>
-      <EmptyState>
-        <EmptyState.Header>
-          <EmptyState.FeaturedIcon icon={ClockRewind} />
-        </EmptyState.Header>
-        <EmptyState.Content>
-          <EmptyState.Title as="h2">No earlier run to compare.</EmptyState.Title>
-          <EmptyState.Description>
-            This is the first listed run for this issuer on this pathway.
-          </EmptyState.Description>
-          <p className="reading-copy text-body text-text-secondary">
-            Only reports already listed when this run was made can be used for comparison.
-          </p>
-        </EmptyState.Content>
-        <EmptyState.Footer>
-          <Button href="#overview" color="secondary">
-            Open the Overview
-          </Button>
-        </EmptyState.Footer>
-      </EmptyState>
-    </section>
-  );
-}
-
-function ComparisonStatus({
-  change,
-  note,
-}: {
-  change: PublishedChanges | null | undefined;
-  note: string;
-}) {
-  if (change?.problem)
-    return (
-      <p>
-        {containsReference(change.problem) ? "The comparison could not be read." : change.problem}
-      </p>
-    );
-  return change?.pack ? null : <p>{note}</p>;
-}
-
-function PresentationToggle({
-  value,
-  onChange,
-}: {
-  value: "cards" | "table";
-  onChange: (value: "cards" | "table") => void;
-}) {
-  return (
-    <div className="flex justify-end">
-      <ButtonGroup
-        aria-label="Presentation"
-        size="sm"
-        disallowEmptySelection
-        selectedKeys={[value]}
-        onSelectionChange={(keys) => {
-          const [key] = keys;
-          if (key === "cards" || key === "table") onChange(key);
-        }}
-      >
-        <ButtonGroupItem id="cards">Cards</ButtonGroupItem>
-        <ButtonGroupItem id="table">Table</ButtonGroupItem>
-      </ButtonGroup>
-    </div>
-  );
-}
-
-function ComparisonRows({
-  rows,
-  presentation,
-  change,
-  trace,
-}: {
-  rows: string[][];
-  presentation: "cards" | "table";
-  change: PublishedChanges | null | undefined;
-  trace: ReturnType<typeof comparisonTrace>;
-}) {
-  if (presentation === "table")
-    return (
-      <section aria-label="Earlier against current">
-        <ComparisonTable rows={rows} source={trace.measure} />
-      </section>
-    );
-  return (
-    <ul className="grid gap-4 lg:grid-cols-3">
-      {rows.map((row, index) => (
-        <ComparisonCard key={index} row={row} index={index} change={change} trace={trace} />
-      ))}
-    </ul>
-  );
-}
-
-function ComparisonCard({
-  row,
-  index,
-  change,
-  trace,
-}: {
-  row: string[];
-  index: number;
-  change: PublishedChanges | null | undefined;
-  trace: ReturnType<typeof comparisonTrace>;
-}) {
-  const [label = "", before = "", after = "", delta, reason = "", analysis = ""] = row;
-  const href = trace.measure(label);
-  const kind = reason.endsWith("Same-period analysis change")
-    ? "Same-period analysis change"
-    : delta && delta !== "—"
-      ? "Comparable"
-      : "Not assessable";
-  return (
-    <ChangeCard
-      source={
-        href && (
-          <PublishedSource href={href} name={label}>
-            Comparison row
-          </PublishedSource>
-        )
-      }
-      change={{
-        measure: label,
-        kind,
-        current: cell(after),
-        from: cell(before),
-        change: delta && delta !== "—" ? delta : null,
-        direction: "none",
-        tone: kind === "Comparable" ? cardTone(change?.pack?.measures?.[index]) : undefined,
-        cause: containsReference(reason) ? "See comparison evidence." : reason,
-        effect: containsReference(analysis) ? "" : analysis,
-        trace: null,
-      }}
-    />
-  );
-}
-
-function ComparisonEvidenceLink({
-  change,
-  handoff,
-}: {
-  change: PublishedChanges | null | undefined;
-  handoff: string | undefined;
-}) {
-  if (!change?.pack || change.problem) return null;
-  return (
-    <Button
-      href={handoff ?? "#evidence/trace/CP-8"}
-      color="link-gray"
-      size="sm"
-      iconTrailing={ArrowRight}
-    >
-      Review comparison evidence
-    </Button>
-  );
-}
-
-function ComparisonFallbackLinks({ change }: { change: PublishedChanges | null | undefined }) {
-  if (!change?.problem && change?.pack) return null;
-  return (
-    <div className="flex flex-wrap items-center gap-3">
-      <Button href="#overview" color="secondary" size="sm">
-        Open the Overview
-      </Button>
-      <Button href="#evidence/record" color="link-gray" size="sm" iconTrailing={ArrowRight}>
-        Review comparison evidence
-      </Button>
-    </div>
-  );
-}
-
-function ComparedModules({
-  change,
-  source,
-}: {
   change: PublishedChanges;
-  source: (module: string) => string | undefined;
+  entry: OutputEntry | undefined;
+  trace: Trace;
 }) {
-  const modules = change.pack?.modules ?? [];
-  const earlierFormat = change.pack?.prior?.format === "earlier";
-  function side(ran: boolean, bottomLine: string | null) {
-    if (bottomLine == null) return ran ? "Not stated" : "Did not run";
-    const { body } = readParagraph(bottomLine);
-    return containsReference(body)
-      ? "See the retained handoff in Evidence."
-      : readerText(body) || "Not stated";
-  }
+  const pack = change.pack;
+  const { unmoved } = classifyMeasures(change, trace.measure, entry);
+  const ledger = ledgerLists(entry);
+  const profile = pack?.maturity_profile;
+  const omitted = pack?.omitted?.maturity_profile;
   return (
-    <section className={card}>
-      <h2 className={heading}>What changed in the analysis</h2>
-      {earlierFormat && (
-        <p className="text-sm text-text-secondary">
-          The earlier run used an earlier report format.
-        </p>
+    <Bento>
+      <Verdict change={change} entry={entry} />
+      <Measures change={change} entry={entry} trace={trace} />
+      {Boolean(pack?.modules?.length) && (
+        <Tile span={5} label="Modules" title="What changed in the analysis">
+          {pack?.prior?.format === "earlier" && (
+            <p className="text-small text-text-secondary">
+              The earlier run used an earlier report format.
+            </p>
+          )}
+          <ModuleMatrix change={change} source={trace.module} />
+        </Tile>
       )}
-      <div className="grid gap-2">
-        {modules.map((item) => {
-          const verdict = change.verdicts?.modules?.[item.module];
-          const href = source(item.module);
-          const explanation = [verdict?.cause, verdict?.why].filter((value): value is string =>
-            Boolean(value && !containsReference(value)),
-          );
-          return (
-            <details key={item.module} className="rounded-lg border border-border-hairline p-3">
-              <summary className="cursor-pointer font-medium">
-                {item.title} <Badge size="sm">{verdict?.status || "Explanation not stated"}</Badge>
-              </summary>
-              <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                <div>
-                  <h3 className="font-semibold">Earlier</h3>
-                  <p className="reading-copy text-body">
-                    {side(item.ran_prior, item.prior_bottom_line)}
-                  </p>
-                </div>
-                <div>
-                  <h3 className="font-semibold">Current</h3>
-                  <p className="reading-copy text-body">
-                    {side(item.ran_current, item.current_bottom_line)}
-                  </p>
-                </div>
-              </div>
-              {explanation.length > 0 && (
-                <p className="reading-copy mt-2 text-small text-text-secondary">
-                  {readerText(explanation.join(" · "))}
-                </p>
-              )}
-              {href && (
-                <PublishedSource href={href} name={item.title}>
-                  Analysis comparison row
-                </PublishedSource>
-              )}
-            </details>
-          );
-        })}
-      </div>
-    </section>
+      <Maturities
+        profile={profile}
+        omitted={omitted}
+        traces={profile ? maturityTraces(snapshot, run, entries, change) : undefined}
+      />
+      {unmoved.length > 0 && (
+        <Tile span={12} label="Measures that did not move">
+          <details>
+            <summary className="cursor-pointer text-h4 font-medium text-text-primary">
+              Measures that did not move ({unmoved.length})
+            </summary>
+            <div className="mt-4">
+              <MeasureList label="Measures that did not move" items={unmoved} ranked={false} />
+            </div>
+          </details>
+        </Tile>
+      )}
+      {ledger && (
+        <>
+          <Tile span={6} label="Limitations added" title="Limitations added">
+            <LedgerList label="Limitations added" items={ledger.added} />
+          </Tile>
+          <Tile span={6} label="Limitations removed" title="Limitations removed">
+            <LedgerList label="Limitations removed" items={ledger.removed} />
+          </Tile>
+        </>
+      )}
+    </Bento>
   );
 }
 
-function MaturityGap({ reason }: { reason: string }) {
-  return (
-    <section className={card}>
-      <h2 className={heading}>Debt maturity schedules</h2>
-      <p role="note">{reason}</p>
-    </section>
-  );
-}
-
-function ComparisonMaturities({
+function Maturities({
   profile,
   omitted,
   traces,
@@ -506,87 +314,85 @@ function ComparisonMaturities({
 }) {
   if (!profile)
     return omitted ? (
-      <MaturityGap reason={containsReference(omitted) ? "See the comparison evidence." : omitted} />
+      <Tile span={12} label="Maturities then and now" title="Debt maturity schedules" tone="gap">
+        <p role="note" className="text-small text-gap-text">
+          {containsReference(omitted) ? "See the comparison evidence." : omitted}
+        </p>
+      </Tile>
     ) : null;
-  const groups = profile.rows.map((row) => row.period);
-  const series = (["prior", "current"] as const).map((key, index) => ({
-    name: index === 0 ? "Earlier run" : "Current run",
-    values: profile.rows.map((row) => amount(row[key] ?? "")),
-    labels: profile.rows.map((row) => (amount(row[key] ?? "") === null ? null : row[key])),
-  }));
-  const values = series.flatMap((item) => item.values);
-  if (
-    !profile.unit ||
-    !groups.length ||
-    !distinct(groups) ||
-    values.every((value) => value === null)
-  )
+  if (!usableProfile(profile))
     return (
-      <MaturityGap reason="The published comparison does not contain a usable maturity schedule." />
+      <Tile span={12} label="Maturities then and now" title="Debt maturity schedules" tone="gap">
+        <p role="note" className="text-small text-gap-text">
+          The published comparison does not contain a usable maturity schedule.
+        </p>
+      </Tile>
     );
   return (
-    <section className={card}>
-      <ColumnsChart
-        title="Debt maturity schedules"
-        as="h3"
-        note={profile.unit}
-        groups={groups}
-        series={series}
-        yTicks={ticks(values, true)}
-        actions={
-          <MaturitySources
-            name="Debt maturity schedules"
-            prior={traces?.prior?.table}
-            current={traces?.current.table}
-          />
-        }
-        table={{
-          head: ["Period", "Earlier run", "Current run"],
-          endHeading: "Sources",
-          rows: profile.rows.map((row) => {
-            const prior = traces?.prior?.row(row.period, row.prior, profile.unit);
-            const current = traces?.current.row(row.period, row.current, profile.unit);
-            return {
-              label: row.period,
-              cells: [row.prior, row.current],
-              end:
-                prior || current ? (
-                  <MaturitySources name={row.period} prior={prior} current={current} />
-                ) : undefined,
-            };
-          }),
-        }}
-      />
-    </section>
+    <Tile span={12} label="Maturities then and now">
+      <MaturityPair profile={profile} traces={traces} />
+    </Tile>
   );
 }
 
-function MaturitySources({
-  name,
-  prior,
-  current,
-}: {
-  name: string;
-  prior?: string;
-  current?: string;
-}) {
-  if (!prior && !current) return null;
+function Actions() {
   return (
-    <div className="flex flex-wrap gap-2">
-      {prior && (
-        <PublishedSource
-          href={prior}
-          name={`${name}, earlier run`}
-          linkLabel={`Earlier run source for ${name}`}
-        >
-          Earlier source
-        </PublishedSource>
-      )}
-      {current && (
-        <PublishedSource href={current} name={`${name}, current run`}>
-          Current source
-        </PublishedSource>
-      )}
+    <div className="flex flex-wrap items-center justify-center gap-3">
+      <Button href="#overview" color="secondary" size="sm">
+        Open the Overview
+      </Button>
+      <Button href="#evidence/record" color="link-gray" size="sm" iconTrailing={ArrowRight}>
+        Review comparison evidence
+      </Button>
     </div>
+  );
+}
+
+/** The designed empty state: one fixed sentence and the one action that fixes it. */
+function NoComparison({ change }: { change: PublishedChanges | null | undefined }) {
+  const note = noComparisonSentence(change?.note);
+  const sentence = change?.problem
+    ? containsReference(change.problem)
+      ? "The comparison could not be read."
+      : change.problem
+    : note;
+  return (
+    <Bento>
+      <Tile
+        span={12}
+        label="No comparison"
+        tone="gap"
+        className="min-h-60 items-center justify-center py-12 text-center"
+      >
+        <ClockRewind aria-hidden="true" className="size-8 text-gap-text" />
+        <p className="max-w-xl font-display text-h3 text-balance text-text-primary">{sentence}</p>
+        <Actions />
+      </Tile>
+    </Bento>
+  );
+}
+
+function FirstRun() {
+  return (
+    <Bento>
+      <Tile
+        span={12}
+        label="No earlier run"
+        tone="gap"
+        className="min-h-72 items-center justify-center py-14 text-center"
+      >
+        <ClockRewind aria-hidden="true" className="size-8 text-gap-text" />
+        <h2 className="font-display text-h2 text-text-primary">No earlier run to compare.</h2>
+        <p className="text-body text-text-secondary">
+          This is the first listed run for this issuer on this pathway.
+        </p>
+        <p className="reading-copy text-body text-text-secondary">
+          Only reports already listed when this run was made can be used for comparison.
+        </p>
+        <Button href="#overview" color="secondary">
+          Open the Overview
+        </Button>
+      </Tile>
+    </Bento>
   );
 }
