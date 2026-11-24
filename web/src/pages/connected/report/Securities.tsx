@@ -277,7 +277,7 @@ function YieldCell({ item }: { item: Instrument }) {
 // The table scrolls sideways inside its tile: a named, focusable region (as `PublishedTable`).
 const SCROLLER = { role: "region", "aria-label": "Instrument table", tabIndex: 0 } as const;
 const HEAD_CELL = "px-3 py-2 text-left text-caption font-medium text-text-tertiary";
-const BODY_CELL = "px-3 py-2.5 align-top wrap-anywhere text-text-secondary";
+const BODY_CELL = "px-3 py-2.5 align-top wrap-break-word text-text-secondary";
 
 /** CP-3's instrument table: rank, market level, yield, spread and recommendation per instrument. */
 export function InstrumentTable({ data, href }: { data: Instruments; href: EvidenceHref }) {
@@ -294,7 +294,7 @@ export function InstrumentTable({ data, href }: { data: Instruments; href: Evide
         <div className="flex flex-col gap-1.5 text-small text-text-secondary">{data.notes}</div>
       )}
       <div {...SCROLLER} className="min-w-0 overflow-x-auto">
-        <table className="w-full min-w-[48rem] border-collapse text-small">
+        <table className="w-full min-w-max border-collapse text-small">
           <caption className="sr-only">Instrument decisions</caption>
           <thead>
             <tr className="border-b border-border-hairline">
@@ -313,12 +313,12 @@ export function InstrumentTable({ data, href }: { data: Instruments; href: Evide
               <tr key={item.line} className="border-b border-border-hairline last:border-b-0">
                 <th
                   scope="row"
-                  className="px-3 py-2.5 text-left align-top font-medium wrap-anywhere text-text-primary"
+                  className="min-w-40 px-3 py-2.5 text-left align-top font-medium wrap-break-word text-text-primary"
                 >
                   {reader(item.name)}
                 </th>
-                <td className={BODY_CELL}>{reader(item.rank)}</td>
-                <td className={BODY_CELL}>{reader(item.market)}</td>
+                <td className={`${BODY_CELL} min-w-28`}>{reader(item.rank)}</td>
+                <td className={`${BODY_CELL} min-w-40`}>{reader(item.market)}</td>
                 <td className={BODY_CELL}>
                   <YieldCell item={item} />
                 </td>
