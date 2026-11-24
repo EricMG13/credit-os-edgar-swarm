@@ -52,16 +52,22 @@ function sequence(events: EventRecord[], asOf: AsOf | null): Item[] {
 
 type Bracket = { event: EventRecord; column: number; first: number; last: number };
 
-/** A period is a bracket from its own row to the last row dated inside it, in its own column. */
+/**
+ * A period is a bracket from its own row to the last row dated inside it, in its own column. The
+ * as-of rule counts as dated inside a period it falls in, so the rule reads as within the period.
+ */
 function brackets(items: Item[]): { drawn: Bracket[]; columns: number } {
   const ends: number[] = [];
   const drawn: Bracket[] = [];
   items.forEach((item, at) => {
     if (item.kind !== "event" || !isPeriod(item.event)) return;
     const { event } = item;
-    const inside = items.flatMap((other, to) =>
-      other.kind === "event" && other.event.from < endOf(event) && to >= at ? [to] : [],
-    );
+    // Items after the period's row are dated at or after its start, so only its end needs testing.
+    const inside = items.flatMap((other, to) => {
+      if (to < at || other.kind === "month") return [];
+      const time = other.kind === "event" ? other.event.from : other.asOf.time;
+      return time < endOf(event) ? [to] : [];
+    });
     const last = Math.max(at, ...inside);
     const free = ends.findIndex((end) => end < at);
     const column = free === -1 ? ends.length : free;
@@ -73,14 +79,10 @@ function brackets(items: Item[]): { drawn: Bracket[]; columns: number } {
 
 function RailRow({
   item,
-  line,
-  rail,
   rowId,
   onSelect,
 }: {
   item: Extract<Item, { kind: "event" }>;
-  line: number;
-  rail: number;
   rowId: (index: number) => string;
   onSelect: (index: number) => void;
 }) {
@@ -94,8 +96,7 @@ function RailRow({
       data-event-category={category}
       data-event-precision={precision}
       data-event-shape={isPeriod(event) ? "span" : "mark"}
-      className="group relative z-10 grid min-h-11 cursor-pointer grid-cols-[2rem_minmax(0,1fr)] items-start rounded-ds-sm text-left focus-visible:ring-2 focus-visible:ring-focus"
-      style={{ gridColumn: `${String(rail)} / -1`, gridRow: line }}
+      className="group grid min-h-11 w-full cursor-pointer grid-cols-[2rem_minmax(0,1fr)] items-start rounded-ds-sm text-left focus-visible:ring-2 focus-visible:ring-focus"
       onClick={() => {
         onSelect(event.index);
       }}
@@ -113,6 +114,24 @@ function RailRow({
         <span className="text-caption text-text-tertiary">{status}</span>
       </span>
     </button>
+  );
+}
+
+/** The as-of rule across the whole width; its words start clear of the period brackets. */
+function AsOfRow({ asOf, columns }: { asOf: AsOf; columns: number }) {
+  return (
+    <div className="relative flex h-7 items-center text-caption font-medium text-action">
+      <span
+        data-as-of-rule={asOf.text}
+        aria-hidden="true"
+        className="absolute inset-x-0 top-1/2 border-t-2 border-action"
+      />
+      <span
+        data-as-of-label=""
+        className="relative bg-surface-card px-1.5 whitespace-nowrap"
+        style={{ marginLeft: `${String(columns * BRACKET_PX)}px` }}
+      >{`As of ${asOf.text}`}</span>
+    </div>
   );
 }
 
@@ -165,49 +184,37 @@ export function VerticalAxis({
             }}
           />
         ))}
-        {items.map((item, at) => {
-          if (item.kind === "event") {
-            return (
-              <RailRow
-                key={item.key}
-                item={item}
-                line={at + 1}
-                rail={rail}
-                rowId={rowId}
-                onSelect={onSelect}
-              />
-            );
-          }
-          if (item.kind === "month") {
-            return (
-              <div
-                key={item.key}
-                data-rail-month=""
-                className="relative z-10 flex h-7 items-center gap-2 text-caption font-medium text-text-tertiary tabular-nums"
-                style={{ gridColumn: `${String(rail)} / -1`, gridRow: at + 1 }}
-              >
-                <span className="flex w-8 flex-none justify-center">
-                  <span className="w-3 border-t border-text-tertiary" />
-                </span>
-                {item.label}
-              </div>
-            );
-          }
-          return (
-            <div
+        <ol
+          role="list"
+          aria-label="Events in date order"
+          className="grid grid-cols-subgrid grid-rows-subgrid"
+          style={{ gridColumn: "1 / -1", gridRow: `1 / span ${String(Math.max(items.length, 1))}` }}
+        >
+          {items.map((item, at) => (
+            <li
               key={item.key}
-              className="relative z-10 flex h-7 items-center gap-2 text-caption font-medium text-action"
-              style={{ gridColumn: "1 / -1", gridRow: at + 1 }}
+              data-rail-month={item.kind === "month" ? "" : undefined}
+              className="relative z-10 min-w-0"
+              style={{
+                gridColumn: item.kind === "asOf" ? "1 / -1" : `${String(rail)} / -1`,
+                gridRow: at + 1,
+              }}
             >
-              <span className="whitespace-nowrap">{`As of ${item.asOf.text}`}</span>
-              <span
-                data-as-of-rule={item.asOf.text}
-                aria-hidden="true"
-                className="flex-1 border-t-2 border-action"
-              />
-            </div>
-          );
-        })}
+              {item.kind === "event" ? (
+                <RailRow item={item} rowId={rowId} onSelect={onSelect} />
+              ) : item.kind === "month" ? (
+                <h4 className="flex h-7 items-center gap-2 text-caption font-medium text-text-tertiary tabular-nums">
+                  <span aria-hidden="true" className="flex w-8 flex-none justify-center">
+                    <span className="w-3 border-t border-text-tertiary" />
+                  </span>
+                  {item.label}
+                </h4>
+              ) : (
+                <AsOfRow asOf={item.asOf} columns={columns} />
+              )}
+            </li>
+          ))}
+        </ol>
       </div>
       <div className="flex items-center justify-between gap-2 border-t border-border-hairline pt-1.5 text-caption text-text-secondary">
         <span>Axis range</span>

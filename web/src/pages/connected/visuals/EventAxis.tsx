@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type RefObject } from "react";
 import { cx } from "@/utils/cx";
 import { VerticalAxis } from "./EventAxisVertical";
 import {
@@ -12,7 +12,7 @@ import {
 } from "./EventLane";
 
 const DAY = 86_400_000;
-/** The plot's width before it is measured (the axis scrolls below 720px, so the plot is this wide at least). */
+/** The plot's width before it is measured. */
 const FALLBACK_PX = 560;
 /** One row of labelled marks; a target is at most this tall (44px on a phone). */
 const ROW_PX = 48;
@@ -21,9 +21,12 @@ const HALF_HIT_PX = 22;
 const LABEL_GAP_PX = 6;
 /** A label may reach this far past the plot into its margin. */
 const BOUND_PX = 12;
+/** Space kept between the as-of rule and any label text, and inside a bar before its label. */
+const RULE_CLEAR_PX = 4;
+const INSIDE_PAD_PX = 6;
 /** The least width worth drawing a truncated label in. */
 const MIN_LABEL_PX = 56;
-/** The widths a crowded lane's names are cut to, widest first. */
+/** The widths a crowded lane's names are cut to, widest first; a cut is kept only if it saves a row. */
 const NARROW_PX = [160, 112, 84];
 /** A lane taking more rows than this draws shorter labels. */
 const ROW_CAP = 3;
@@ -31,8 +34,12 @@ const ROW_CAP = 3;
 const INSIDE_MIN_PX = 72;
 const TICK_GAP_PX = 72;
 const PAD_DAYS = 30;
+/** The least width the horizontal plot is drawn at; narrower than this the axis runs down the page. */
+const PLOT_MIN_PX = 720;
 /** The phone layout draws the axis down the page. */
-const PHONE_QUERY = "(max-width: 640px)";
+const PHONE_QUERY = `(max-width: ${String(PLOT_MIN_PX)}px)`;
+/** Padding a tick label carries left of its text (pl-1), plus a pixel of slack. */
+const TICK_PAD_PX = 5;
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 /** Under about two years the axis is ticked by month, otherwise by year. */
 const MONTH_TICK_RANGE = 2 * 366 * DAY;
@@ -53,14 +60,15 @@ type Placed = {
   side: Side;
   /** The most pixels the label may take; the text decides the rest. */
   labelPx: number;
-  /** A crowded label gives up its date (the title and the table keep it) to keep the name. */
-  dateless: boolean;
+  /** An inside label starts this far right of its default so it clears the as-of rule. */
+  shift: number;
 };
 
 /** Text widths: measured on a canvas in the page's own fonts, estimated where there is no canvas. */
-type Measure = (text: string, mono: boolean) => number;
+type Kind = "mono" | "name" | "tick";
+type Measure = (text: string, kind: Kind) => number;
 
-const ESTIMATE: Measure = (text, mono) => text.length * (mono ? 7.4 : 7.2);
+const ESTIMATE: Measure = (text, kind) => text.length * (kind === "mono" ? 7.4 : 7.2);
 
 /** A 2d canvas for measuring text, or null where there is none (jsdom reports one as an error). */
 function measuringContext() {
@@ -78,27 +86,32 @@ const fontOf = (element: Element | null) => {
   return fontSize && fontFamily ? `${fontStyle} ${fontWeight} ${fontSize} ${fontFamily}` : "";
 };
 
-type Fonts = { mono: string; name: string };
+type Fonts = Record<Kind, string>;
 
 /** A measuring function for the label fonts; it re-reads them when the page's fonts finish loading. */
 function useTextWidth() {
   const mono = useRef<HTMLSpanElement>(null);
   const name = useRef<HTMLSpanElement>(null);
+  const tick = useRef<HTMLSpanElement>(null);
   const canvas = useRef<CanvasRenderingContext2D | null>(null);
   const [fonts, setFonts] = useState<Fonts | null>(null);
   useEffect(() => {
     canvas.current = measuringContext();
     if (!canvas.current) return;
     const read = () => {
-      setFonts({ mono: fontOf(mono.current), name: fontOf(name.current) });
+      setFonts({
+        mono: fontOf(mono.current),
+        name: fontOf(name.current),
+        tick: fontOf(tick.current),
+      });
     };
     read();
     void (document as Partial<Document>).fonts?.ready.then(read);
   }, []);
-  const measure: Measure = (text, isMono) => {
-    const font = fonts?.[isMono ? "mono" : "name"];
+  const measure: Measure = (text, kind) => {
+    const font = fonts?.[kind];
     const context = canvas.current;
-    if (!context || !font) return ESTIMATE(text, isMono);
+    if (!context || !font) return ESTIMATE(text, kind);
     context.font = font;
     return context.measureText(text).width;
   };
@@ -110,14 +123,19 @@ function useTextWidth() {
         className="invisible absolute font-mono text-caption tabular-nums"
       />
       <span ref={name} aria-hidden="true" className="invisible absolute text-small font-medium" />
+      <span
+        ref={tick}
+        aria-hidden="true"
+        className="invisible absolute text-caption tabular-nums"
+      />
     </>
   );
   return { measure, probes };
 }
 
-/** What a label takes: the date in mono, a gap, then the name. */
-const labelWidth = (event: EventRecord, measure: Measure) =>
-  Math.ceil(measure(event.date, true) + 6 + measure(event.event, false)) + 2;
+/** What a label takes: the date in mono, a gap, then the name (cut to `cap` when a lane is crowded). */
+const labelWidth = (event: EventRecord, measure: Measure, cap: number) =>
+  Math.ceil(measure(event.date, "mono") + 6 + Math.min(measure(event.event, "name"), cap)) + 2;
 
 type Extent = { left: number; right: number };
 
@@ -136,48 +154,97 @@ const overlaps = (a: Extent, b: Extent) =>
   a.left < b.right + LABEL_GAP_PX && b.left < a.right + LABEL_GAP_PX;
 
 /** A side, the width its label takes in the packing, and the most it may use before it truncates. */
-type Choice = { side: Side; label: number; max: number; dateless?: boolean };
+type Choice = { side: Side; label: number; max: number; shift: number };
+
+/** Whether the as-of rule (a plot x, or null) would strike text drawn between `left` and `right`. */
+const struck = (rule: number | null, left: number, right: number) =>
+  rule !== null && rule > left - RULE_CLEAR_PX && rule < right + RULE_CLEAR_PX;
+
+/**
+ * A label drawn inside a period's bar: the whole bar, or, where the as-of rule crosses the bar,
+ * the side of the rule that holds the label (the label is nudged; the rule stays put).
+ */
+function insideChoice(frame: Frame, wanted: number, rule: number | null): Choice | null {
+  const whole = Math.floor(frame.widthPx - 10);
+  const at = rule === null ? -1 : rule - frame.startPx;
+  if (at <= 0 || at >= frame.widthPx) return { side: "inside", label: whole, max: whole, shift: 0 };
+  const before = Math.floor(at - RULE_CLEAR_PX - INSIDE_PAD_PX);
+  const after = Math.floor(frame.widthPx - at - RULE_CLEAR_PX - 4);
+  const best = [before, after].find((room) => room >= wanted) ?? Math.max(before, after);
+  if (best < MIN_LABEL_PX) return null;
+  const shift = best === before ? 0 : Math.ceil(at + RULE_CLEAR_PX - INSIDE_PAD_PX);
+  return { side: "inside", label: best, max: best, shift };
+}
 
 /** The sides a label can take, best first, each with the room it has inside the plot. */
-function choices(frame: Frame, wanted: number, plotPx: number): Choice[] {
+function choices(frame: Frame, wanted: number, plotPx: number, rule: number | null): Choice[] {
   const hit = extentOf(frame, "inside", 0);
   const sides = [
     { side: "right" as const, room: Math.floor(plotPx + BOUND_PX - hit.right - LABEL_GAP_PX) },
     { side: "left" as const, room: Math.floor(hit.left - LABEL_GAP_PX + BOUND_PX) },
   ];
-  const inside = Math.floor(frame.widthPx - 10);
   const roomy = frame.period && frame.widthPx >= INSIDE_MIN_PX;
-  const within: Choice = { side: "inside", label: inside, max: inside };
-  if (roomy && inside >= wanted) return [within];
-  const whole = sides
-    .filter(({ room }) => room >= wanted)
-    .map(({ side, room }) => ({ side, label: wanted, max: room }));
+  const within = roomy ? insideChoice(frame, wanted, rule) : null;
+  if (within && within.label >= wanted) return [within];
+  const fits = sides.filter(({ room }) => room >= wanted);
+  const clear = fits.filter(({ side }) => {
+    const { left, right } = extentOf(frame, side, wanted);
+    return side === "left" ? !struck(rule, left, hit.left) : !struck(rule, hit.right, right);
+  });
+  const whole = (clear.length ? clear : fits).map(({ side, room }) => ({
+    side,
+    label: wanted,
+    max: room,
+    shift: 0,
+  }));
   if (whole.length) return whole;
-  if (roomy && inside >= wanted * 0.6) return [within];
+  if (within && within.label >= wanted * 0.6) return [within];
   const [best] = [...sides].sort((a, b) => b.room - a.room);
-  if (best && best.room >= MIN_LABEL_PX)
-    return [{ side: best.side, label: best.room, max: best.room }];
+  if (best && best.room >= MIN_LABEL_PX) {
+    return [{ side: best.side, label: best.room, max: best.room, shift: 0 }];
+  }
   const side = best?.side ?? "right";
-  return roomy ? [within] : [{ side, label: MIN_LABEL_PX, max: MIN_LABEL_PX }];
+  return within ? [within] : [{ side, label: MIN_LABEL_PX, max: MIN_LABEL_PX, shift: 0 }];
 }
-
-/** How much of each label a lane draws: whole, then the name alone, then the name cut to a width. */
-type Mode = { dateless: boolean; cap: number };
-const MODES: Mode[] = [
-  { dateless: false, cap: Infinity },
-  { dateless: true, cap: Infinity },
-  ...NARROW_PX.map((cap) => ({ dateless: true, cap })),
-];
 
 type Option = Choice & { extent: Extent };
 
+/** A placed label with the geometry the packing used. */
+type Slotted = { extent: Extent; frame: Frame; item: Placed };
+
 /** The first row, from the top, where one of the options overlaps nothing. */
-function slot(rows: Extent[][], options: Option[]) {
+function slot(rows: Slotted[][], options: Option[]) {
   for (let row = 0; ; row += 1) {
     const option = options.find((candidate) =>
-      (rows[row] ?? []).every((other) => !overlaps(candidate.extent, other)),
+      (rows[row] ?? []).every((other) => !overlaps(candidate.extent, other.extent)),
     );
     if (option) return { row, option };
+  }
+}
+
+/** A cut label may take any room its row leaves free beside it, up to the plot's edge. */
+function grow(rows: Slotted[][], plotPx: number) {
+  for (const row of rows) {
+    for (const entry of row) {
+      const { item, frame, extent } = entry;
+      if (item.side === "inside") continue;
+      const hit = extentOf(frame, "inside", 0);
+      const rest = row.filter((other) => other !== entry);
+      if (item.side === "right") {
+        const next = rest.filter((o) => o.extent.left >= hit.right).map((o) => o.extent.left);
+        const edge = Math.min(
+          plotPx + BOUND_PX + LABEL_GAP_PX,
+          ...next.map((n) => n - LABEL_GAP_PX),
+        );
+        item.labelPx = Math.max(item.labelPx, Math.floor(edge - hit.right - LABEL_GAP_PX));
+        extent.right = hit.right + LABEL_GAP_PX + item.labelPx;
+      } else {
+        const prev = rest.filter((o) => o.extent.right <= hit.left).map((o) => o.extent.right);
+        const edge = Math.max(-BOUND_PX, ...prev.map((p) => p + LABEL_GAP_PX));
+        item.labelPx = Math.max(item.labelPx, Math.floor(hit.left - LABEL_GAP_PX - edge));
+        extent.left = hit.left - LABEL_GAP_PX - item.labelPx;
+      }
+    }
   }
 }
 
@@ -188,11 +255,12 @@ function stack(
   range: number,
   plotPx: number,
   measure: Measure,
-  mode: Mode,
+  cap: number,
+  rule: number | null,
 ): Placed[] {
   const pct = (time: number) => (time - min) / range;
-  const rows: Extent[][] = [];
-  return [...events]
+  const rows: Slotted[][] = [];
+  const placed = [...events]
     .sort((a, b) => a.from - b.from || a.to - b.to || a.index - b.index)
     .map((event) => {
       const start = pct(event.from) * 100;
@@ -202,34 +270,34 @@ function stack(
         widthPx: (width / 100) * plotPx,
         period: isPeriod(event),
       };
-      const whole = labelWidth(event, measure);
-      const name = Math.ceil(measure(event.event, false)) + 2;
-      const wanted = mode.dateless ? Math.min(name, mode.cap) : whole;
-      const options = choices(frame, wanted, plotPx).map((choice) => ({
+      const wanted = labelWidth(event, measure, cap);
+      const options = choices(frame, wanted, plotPx, rule).map((choice) => ({
         ...choice,
-        max: Math.min(choice.max, mode.cap),
-        dateless: mode.dateless,
+        max: choice.side === "inside" ? choice.max : Math.min(choice.max, wanted),
         extent: extentOf(frame, choice.side, choice.label),
       }));
       const { row, option } = slot(rows, options);
-      (rows[row] ??= []).push(option.extent);
-      return {
+      const item: Placed = {
         event,
         start,
         width,
         row,
         side: option.side,
         labelPx: option.max,
-        dateless: mode.dateless,
+        shift: option.shift,
       };
+      (rows[row] ??= []).push({ extent: option.extent, frame, item });
+      return item;
     });
+  if (Number.isFinite(cap)) grow(rows, plotPx);
+  return placed;
 }
 
 const rowCount = (placed: Placed[]) => Math.max(0, ...placed.map(({ row }) => row + 1));
 
 /**
- * Pack a lane with whole labels; when that takes more than a few rows, give up each label's date,
- * then narrow the names, until the lane is short or the names are as narrow as they go.
+ * Pack a lane with whole labels. When that takes more than a few rows, narrow the names step by
+ * step, keeping a narrower step only if it lowers the row count. A label always keeps its date.
  */
 function place(
   events: EventRecord[],
@@ -237,13 +305,16 @@ function place(
   range: number,
   plotPx: number,
   measure: Measure,
+  rule: number | null,
 ): Placed[] {
-  let placed: Placed[] = [];
-  for (const mode of MODES) {
-    placed = stack(events, min, range, plotPx, measure, mode);
-    if (rowCount(placed) <= ROW_CAP) break;
+  const pack = (cap: number) => stack(events, min, range, plotPx, measure, cap, rule);
+  let best = pack(Infinity);
+  for (const cap of NARROW_PX) {
+    if (rowCount(best) <= ROW_CAP) break;
+    const next = pack(cap);
+    if (rowCount(next) < rowCount(best)) best = next;
   }
-  return placed;
+  return best;
 }
 
 type Tick = { key: string; label: string; time: number };
@@ -293,6 +364,25 @@ function axisTicks(min: number, max: number, plotPx: number): Tick[] {
     .map((year) => ({ key: String(year), label: String(year), time: Date.UTC(year, 0, 1) }));
 }
 
+type TickLabel = { key: string; label: string; left: string };
+
+/**
+ * Where each tick's text sits. A label that would run past the plot's right edge slides left to
+ * stay inside it; if that would touch the label before it, the label is left off (its line stays).
+ */
+function tickLabels(ticks: Tick[], min: number, range: number, plotPx: number, measure: Measure) {
+  let end = -Infinity;
+  return ticks.flatMap(({ key, label, time }): TickLabel[] => {
+    const at = ((time - min) / range) * plotPx;
+    const width = Math.ceil(measure(label, "tick")) + TICK_PAD_PX;
+    const left = Math.min(at, plotPx + BOUND_PX - width);
+    if (left < end + LABEL_GAP_PX) return [];
+    end = left + width;
+    const slid = left < at;
+    return [{ key, label, left: slid ? `${String(left)}px` : `${String((at / plotPx) * 100)}%` }];
+  });
+}
+
 /** The plot's measured width; the fallback holds until the browser reports one. */
 function usePlotWidth() {
   const ref = useRef<HTMLDivElement>(null);
@@ -317,12 +407,12 @@ function EventLabel({
   event,
   side,
   px,
-  dateless,
+  shift,
 }: {
   event: EventRecord;
   side: Side;
   px: number;
-  dateless: boolean;
+  shift: number;
 }) {
   return (
     <span
@@ -335,18 +425,19 @@ function EventLabel({
         side === "left" && "top-1/2 right-full mr-1.5 -translate-y-1/2 flex-row-reverse text-right",
         side === "right" && "top-1/2 left-full ml-1.5 -translate-y-1/2 text-left",
       )}
-      style={{ maxWidth: `${String(px)}px` }}
+      style={{
+        maxWidth: `${String(px)}px`,
+        ...(shift ? { marginLeft: `${String(shift)}px` } : {}),
+      }}
     >
-      {dateless ? null : (
-        <span
-          className={cx(
-            "flex-none font-mono text-text-secondary tabular-nums",
-            side !== "inside" && "text-caption",
-          )}
-        >
-          {event.date}
-        </span>
-      )}
+      <span
+        className={cx(
+          "flex-none font-mono text-text-secondary tabular-nums",
+          side !== "inside" && "text-caption",
+        )}
+      >
+        {event.date}
+      </span>
       <span
         className={cx(
           "min-w-0 truncate font-medium text-text-primary",
@@ -370,7 +461,7 @@ function EventButton({
   plotPx: number;
   onSelect: () => void;
 }) {
-  const { event, start, width, row, side, labelPx, dateless } = item;
+  const { event, start, width, row, side, labelPx, shift } = item;
   const { date, precision, status, category } = event;
   const period = isPeriod(event);
   return (
@@ -409,7 +500,7 @@ function EventButton({
           <Mark category={category} />
         </span>
       )}
-      <EventLabel event={event} side={side} px={labelPx} dateless={dateless} />
+      <EventLabel event={event} side={side} px={labelPx} shift={shift} />
     </button>
   );
 }
@@ -438,16 +529,20 @@ function axisRange(events: EventRecord[], asOf: number | null) {
 type AsOf = { time: number; text: string };
 type Range = ReturnType<typeof axisRange>;
 
-/** Whether the viewport is a phone's, where the axis runs down the page instead of across. */
-function usePhone() {
-  const [phone, setPhone] = useState(
+/**
+ * Whether the axis runs down the page: when the viewport is 720px or narrower, or, once the
+ * browser has measured it, whenever its container is narrower than the horizontal plot needs.
+ */
+function useNarrow(container: RefObject<HTMLDivElement | null>) {
+  const [viewport, setViewport] = useState(
     () => typeof window.matchMedia === "function" && window.matchMedia(PHONE_QUERY).matches,
   );
+  const [measured, setMeasured] = useState<boolean | null>(null);
   useEffect(() => {
     if (typeof window.matchMedia !== "function") return;
     const query = window.matchMedia(PHONE_QUERY);
     const read = () => {
-      setPhone(query.matches);
+      setViewport(query.matches);
     };
     read();
     query.addEventListener("change", read);
@@ -455,7 +550,20 @@ function usePhone() {
       query.removeEventListener("change", read);
     };
   }, []);
-  return phone;
+  useEffect(() => {
+    const element = container.current;
+    if (!element || typeof ResizeObserver === "undefined") return;
+    const read = () => {
+      if (element.clientWidth > 0) setMeasured(element.clientWidth < PLOT_MIN_PX);
+    };
+    read();
+    const observer = new ResizeObserver(read);
+    observer.observe(element);
+    return () => {
+      observer.disconnect();
+    };
+  }, [container]);
+  return measured ?? viewport;
 }
 
 function HorizontalAxis({
@@ -478,6 +586,7 @@ function HorizontalAxis({
   const [plot, plotPx] = usePlotWidth();
   const { measure, probes } = useTextWidth();
   const x = (time: number) => ((time - min) / range) * 100;
+  const rule = asOf === null ? null : (x(asOf.time) / 100) * plotPx;
   const lanes = EVENT_LANES.filter(
     (lane) => !hidden.has(lane) && events.some((event) => event.category === lane),
   ).map((lane) => {
@@ -487,10 +596,12 @@ function HorizontalAxis({
       range,
       plotPx,
       measure,
+      rule,
     );
     return { lane, placed, rows: Math.max(...placed.map(({ row }) => row)) + 1 };
   });
   const ticks = axisTicks(min, max, plotPx);
+  const labelled = tickLabels(ticks, min, range, plotPx, measure);
   const right = asOf !== null && x(asOf.time) > 80;
   return (
     <>
@@ -536,11 +647,12 @@ function HorizontalAxis({
           <div className="relative flex h-6 items-end text-caption text-text-tertiary">
             <span className="w-28 flex-none" />
             <div ref={plot} className="relative mx-4 h-full flex-1">
-              {ticks.map(({ key, label: tick, time }) => (
+              {labelled.map(({ key, label: tick, left }) => (
                 <span
                   key={key}
+                  data-axis-tick-label={key}
                   className="absolute bottom-0 pl-1 whitespace-nowrap tabular-nums"
-                  style={{ left: `${String(x(time))}%` }}
+                  style={{ left }}
                 >
                   {tick}
                 </span>
@@ -599,9 +711,6 @@ function HorizontalAxis({
           </div>
         </div>
       </div>
-      <p className="hidden text-caption text-text-tertiary max-[720px]:block">
-        Scroll the axis sideways to see its whole range.
-      </p>
     </>
   );
 }
@@ -624,7 +733,8 @@ export function EventAxis({
   onSelect: (index: number) => void;
 }) {
   const [hidden, setHidden] = useState<ReadonlySet<Category>>(new Set());
-  const phone = usePhone();
+  const frame = useRef<HTMLDivElement>(null);
+  const phone = useNarrow(frame);
   const toggle = (category: Category) => {
     setHidden((prev) => {
       const next = new Set(prev);
@@ -637,7 +747,7 @@ export function EventAxis({
   const label = `Events on a time axis: ${count}, ${range.firstDay} to ${range.lastDay}`;
   const shown = events.filter((event) => !hidden.has(event.category));
   return (
-    <div className="grid min-w-0 gap-3">
+    <div ref={frame} className="grid min-w-0 gap-3">
       <Legend events={events} hidden={hidden} onToggle={toggle} />
       {shown.length ? null : (
         <p role="status" className="text-small text-text-secondary">
