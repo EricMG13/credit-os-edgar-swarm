@@ -1,0 +1,259 @@
+{
+ "navigatedTo": "/run/<run>",
+ "runIdShape": true,
+ "storedUploads": {
+  "northbridge-credit-agreement.txt": "c92a94e6eb4ce34cf5de6d6794b9e4505c81387a2e09b4ebea4aaf1a6faefe2c",
+  "northbridge-filing.txt": "18db00ef7c8d09e0e1a1cb9533dbbb33d8a4a0b4c67bf3a520261ea7075d1f09",
+  "northbridge-portfolio.xlsx": "1866831c60158355205d27caf7e15c8cd948ecc3abf0795d6df8386a6fcbf6ec"
+ },
+ "requests": [
+  {
+   "method": "GET",
+   "path": "/connected/library",
+   "headers": {}
+  },
+  {
+   "method": "GET",
+   "path": "/connected/context",
+   "headers": {}
+  },
+  {
+   "method": "POST",
+   "path": "/api/submissions",
+   "headers": {}
+  },
+  {
+   "method": "POST",
+   "path": "/api/submissions/<submission>/files?name=northbridge-filing.txt",
+   "headers": {
+    "content-type": "text/plain"
+   }
+  },
+  {
+   "method": "POST",
+   "path": "/api/submissions/<submission>/files?name=northbridge-portfolio.xlsx",
+   "headers": {
+    "content-type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+   }
+  },
+  {
+   "method": "POST",
+   "path": "/api/submissions/<submission>/files?name=northbridge-credit-agreement.txt",
+   "headers": {
+    "content-type": "text/plain"
+   }
+  },
+  {
+   "method": "GET",
+   "path": "/api/submissions/<submission>/reading",
+   "headers": {}
+  },
+  {
+   "method": "GET",
+   "path": "/api/submissions/<submission>/reading",
+   "headers": {}
+  },
+  {
+   "method": "GET",
+   "path": "/api/issuers/northbridge-synthetic-group",
+   "headers": {}
+  },
+  {
+   "method": "GET",
+   "path": "/api/submissions/<submission>/reading",
+   "headers": {}
+  },
+  {
+   "method": "GET",
+   "path": "/api/issuers/northbridge-synthetic-group",
+   "headers": {}
+  },
+  {
+   "method": "POST",
+   "path": "/api/submissions/<submission>/summary",
+   "headers": {
+    "content-type": "application/json",
+    "x-shown-cap": "25"
+   },
+   "body": {
+    "context": {
+     "schema": "context/1",
+     "run": {
+      "run_type": "research",
+      "pathway": "credit_snapshot",
+      "case_kind": "synthetic",
+      "as_of": "2025-03-31",
+      "current_period": "",
+      "prior_period": "",
+      "cutoff": "2025-03-31"
+     },
+     "identity": {
+      "issuer_name": "Northbridge Synthetic Group",
+      "issuer_id": "northbridge-synthetic-group",
+      "borrower_name": "",
+      "parent_name": "",
+      "guarantors": [],
+      "aliases": [],
+      "listed_equity": false,
+      "ticker": "",
+      "sector": "",
+      "country": "",
+      "sponsor": ""
+     },
+     "deal_terms": [],
+     "quotes": [],
+     "ratings": [
+      {
+       "agency": "Moody's",
+       "scope": "issuer",
+       "rating": "B1",
+       "outlook": "Negative",
+       "as_of": "2025-02-28"
+      }
+     ],
+     "valuation": {
+      "peer_source": "cp_dr_public",
+      "basis": "auto",
+      "issuer_market": {
+       "market_cap_m": "",
+       "net_debt_m": "",
+       "ev_m": "",
+       "ebitda_basis": "LTM",
+       "as_of": "",
+       "source": ""
+      },
+      "peers": [],
+      "precedents": [],
+      "user_multiple": {
+       "value": "",
+       "basis": "LTM",
+       "rationale": ""
+      }
+     },
+     "assumptions": {
+      "cp2a": null,
+      "cp2d": null,
+      "cp2e": null,
+      "cp3c": null,
+      "cp3d": null,
+      "cp4c": null
+     },
+     "attachments": {
+      "legal_documents": "executed",
+      "management_bridge": false,
+      "portfolio_workbook": true,
+      "prior_case": false
+     },
+     "research_questions": [
+      {
+       "text": "Check the 2028 maturities. Include refinancing risk.",
+       "focus_module": ""
+      }
+     ]
+    },
+    "modules": [],
+    "max_turns": 32,
+    "level": "basic",
+    "model": "gpt",
+    "effort": "balanced",
+    "submitted_by": "Ana L"
+   },
+   "rawSha256": "1c27fd1b4e3a066e91539e817bfecabbcc4471b7f35c48b2698e2c5271212909"
+  },
+  {
+   "method": "POST",
+   "path": "/api/submissions/<submission>/submit",
+   "headers": {
+    "content-type": "application/json",
+    "x-shown-cap": "25"
+   },
+   "body": {
+    "answers": {
+     "context": {
+      "schema": "context/1",
+      "run": {
+       "run_type": "research",
+       "pathway": "credit_snapshot",
+       "case_kind": "synthetic",
+       "as_of": "2025-03-31",
+       "current_period": "",
+       "prior_period": "",
+       "cutoff": "2025-03-31"
+      },
+      "identity": {
+       "issuer_name": "Northbridge Synthetic Group",
+       "issuer_id": "northbridge-synthetic-group",
+       "borrower_name": "",
+       "parent_name": "",
+       "guarantors": [],
+       "aliases": [],
+       "listed_equity": false,
+       "ticker": "",
+       "sector": "",
+       "country": "",
+       "sponsor": ""
+      },
+      "deal_terms": [],
+      "quotes": [],
+      "ratings": [
+       {
+        "agency": "Moody's",
+        "scope": "issuer",
+        "rating": "B1",
+        "outlook": "Negative",
+        "as_of": "2025-02-28"
+       }
+      ],
+      "valuation": {
+       "peer_source": "cp_dr_public",
+       "basis": "auto",
+       "issuer_market": {
+        "market_cap_m": "",
+        "net_debt_m": "",
+        "ev_m": "",
+        "ebitda_basis": "LTM",
+        "as_of": "",
+        "source": ""
+       },
+       "peers": [],
+       "precedents": [],
+       "user_multiple": {
+        "value": "",
+        "basis": "LTM",
+        "rationale": ""
+       }
+      },
+      "assumptions": {
+       "cp2a": null,
+       "cp2d": null,
+       "cp2e": null,
+       "cp3c": null,
+       "cp3d": null,
+       "cp4c": null
+      },
+      "attachments": {
+       "legal_documents": "executed",
+       "management_bridge": false,
+       "portfolio_workbook": true,
+       "prior_case": false
+      },
+      "research_questions": [
+       {
+        "text": "Check the 2028 maturities. Include refinancing risk.",
+        "focus_module": ""
+       }
+      ]
+     },
+     "modules": [],
+     "max_turns": 32,
+     "level": "basic",
+     "model": "gpt",
+     "effort": "balanced",
+     "submitted_by": "Ana L"
+    },
+    "digest": "<digest from summary>"
+   },
+   "rawSha256": "0cedb83818392001117660e3f992da5acdd707eb038d9dc9159ef13cb1fe588d"
+  }
+ ]
+}

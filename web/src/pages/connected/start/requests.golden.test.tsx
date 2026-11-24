@@ -1,0 +1,505 @@
+/**
+ * Every request the Start run page sends, in order, for five fixed drives: paths, methods,
+ * headers, bodies. Recorded from the form as it stood before the 2026-11-24 redesign (S9) and held
+ * here as files, so a change to what the form sends fails this test. A presentation change must
+ * leave `requests.golden/*.txt` untouched; only a ruled change to the service contract may
+ * rewrite them, and then by hand, never with `-u`.
+ */
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { webcrypto } from "node:crypto";
+import { ConnectedApp } from "../ConnectedApp";
+
+Element.prototype.scrollIntoView = vi.fn();
+beforeEach(() => {
+  vi.stubGlobal("crypto", webcrypto);
+});
+afterEach(() => {
+  cleanup();
+  vi.unstubAllGlobals();
+});
+
+/** The synthetic service's own run options (proof.serve, 2026-11-24). */
+const TEMPLATE = {
+  copilot_models: {
+    gpt: ["fast", "balanced", "high"],
+    claude: ["fast", "balanced", "high"],
+    luna: ["xhigh"],
+  },
+  schema: "context/1",
+  run: {
+    run_type: "research",
+    pathway: "credit_snapshot",
+    case_kind: "synthetic",
+    as_of: "2026-10-31",
+    current_period: "",
+    prior_period: "",
+    reporting_currency: "USD",
+  },
+  identity: {
+    issuer_name: "",
+    issuer_id: "",
+    borrower_name: "",
+    parent_name: "",
+    guarantors: [],
+    aliases: [],
+    listed_equity: false,
+    ticker: "",
+    sector: "",
+    country: "",
+    sponsor: "",
+  },
+  deal_terms: [],
+  quotes: [],
+  ratings: [],
+  valuation: {
+    peer_source: "cp_dr_public",
+    basis: "auto",
+    issuer_market: {
+      market_cap_m: "",
+      net_debt_m: "",
+      ev_m: "",
+      ebitda_basis: "LTM",
+      as_of: "",
+      source: "",
+    },
+    peers: [],
+    precedents: [],
+    user_multiple: { value: "", basis: "LTM", rationale: "" },
+  },
+  assumptions: { cp2a: null, cp2d: null, cp2e: null, cp3c: null, cp3d: null, cp4c: null },
+  attachments: {
+    portfolio_workbook: false,
+    prior_case: false,
+    management_bridge: false,
+    legal_documents: "executed",
+  },
+  research_questions: [],
+  submission_caps_usd: {
+    lite_credit_assessment: "15",
+    credit_snapshot: "25",
+    deep_credit_assessment: "40",
+    earnings_update: "20",
+    relative_value: "20",
+    covenant_refinancing: "20",
+    distressed_restructuring: "20",
+    portfolio_decision: "20",
+    short_snapshot: "20",
+  },
+};
+
+const FILING = new File(["Northbridge annual filing"], "northbridge-filing.txt", {
+  type: "text/plain",
+});
+const WORKBOOK = new File(["workbook bytes"], "northbridge-portfolio.xlsx", {
+  type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+});
+const AGREEMENT = new File(["Credit Agreement"], "northbridge-credit-agreement.txt", {
+  type: "text/plain",
+});
+const EXTRA = new File(["a note"], "analyst-note.md", { type: "text/markdown" });
+const FILES = [FILING, WORKBOOK, AGREEMENT, EXTRA];
+
+/** The synthetic service's reading of the three Northbridge files (proof.serve, 2026-11-24). */
+const DOCUMENTS = [
+  {
+    source: "northbridge-credit-agreement.txt",
+    kind: "credit_agreement",
+    signal: "found 'Credit Agreement' on page 1",
+    executed: true,
+    period_end: null,
+  },
+  {
+    source: "northbridge-filing.txt",
+    kind: "unrecognised",
+    signal: "",
+    executed: null,
+    period_end: null,
+  },
+  {
+    source: "northbridge-portfolio.xlsx",
+    kind: "unrecognised",
+    signal: "",
+    executed: null,
+    period_end: null,
+  },
+];
+
+/** Its readiness items for that run, plus a refusal with a consequence, so every kind is decided. */
+const ITEMS = [
+  {
+    id: "run:run-financials-management-claims",
+    scope: "run",
+    outcome: "check",
+    reason:
+      "No filed financial report is recognised among the files, so financials are management claims, not filed statements.",
+    fix: "Add the filed annual or quarterly report.",
+    counted: true,
+    inherited_from: [],
+  },
+  {
+    id: "CP-3:cp3-no-quotes-no-talk",
+    scope: "CP-3",
+    outcome: "gap",
+    reason: "No quotes and no price talk were entered, and no quotes file is recognised.",
+    fix: "Add observed quotes under Observed quotes, or a quotes file.",
+    counted: true,
+    inherited_from: [],
+  },
+  {
+    id: "CP-4:cp4-no-agreement",
+    scope: "CP-4",
+    outcome: "will_refuse",
+    reason: "No executed agreement is among the files.",
+    fix: "Add the executed credit agreement.",
+    counted: true,
+    inherited_from: [],
+  },
+  {
+    id: "CP-4C:cp4c-blocked",
+    scope: "CP-4C",
+    outcome: "will_refuse",
+    reason: "Legal & covenants will refuse, so this module has no legal input.",
+    counted: true,
+    inherited_from: ["CP-4"],
+  },
+  {
+    id: "run:changes-first",
+    scope: "run",
+    outcome: "information",
+    reason: "This is the first run of this pathway, so nothing is compared.",
+    counted: false,
+    inherited_from: [],
+  },
+];
+
+function summaryFor(cap: string, modules: readonly string[]) {
+  return {
+    digest: `digest-${cap}`,
+    cap,
+    error: "",
+    documents: DOCUMENTS,
+    ignored: [],
+    modules,
+    items: ITEMS,
+    omitted: [],
+    omitted_titles: [],
+    changes: "first run",
+    lookup: ["Lookup:   off: synthetic case (default)"],
+    web_lookup: false,
+    web_search: false,
+    model: "gpt",
+    effort: "balanced",
+    copilot_verified: true,
+    prior: null,
+  };
+}
+
+type Recorded = {
+  method: string;
+  path: string;
+  headers?: Record<string, string>;
+  /** A JSON body exactly as sent; a file body as the name of the File object handed to fetch. */
+  body?: string | { file: string };
+};
+
+/**
+ * A fetch that answers as the synthetic service would and records every call. `submits` answers
+ * Submit in turn; a path the service would not know is answered 404, as it would be.
+ */
+function service({
+  cap = "25",
+  modules = [
+    "CP-0",
+    "CP-1",
+    "CP-MODEL",
+    "CP-1A",
+    "CP-DR",
+    "CP-2",
+    "CP-3",
+    "CP-4",
+    "CP-4C",
+    "CP-5",
+    "CP-6",
+  ],
+  submits = [() => Response.json({ run: "20261124-120000-01", status: "queued" })],
+  extra = {},
+}: {
+  cap?: string;
+  modules?: string[];
+  submits?: (() => Response)[];
+  extra?: Record<string, unknown>;
+} = {}) {
+  const log: Recorded[] = [];
+  const stored = new Set<string>();
+  let submitAt = 0;
+  const fetchMock = vi.fn((input: string, init?: RequestInit) => {
+    const method = init?.method ?? "GET";
+    const headers = init?.headers as Record<string, string> | undefined;
+    const body = init?.body;
+    const entry: Recorded = { method, path: input };
+    if (headers) entry.headers = headers;
+    if (typeof body === "string") entry.body = body;
+    else if (body instanceof File) {
+      const at = FILES.indexOf(body);
+      entry.body = { file: at < 0 ? "an unknown File object" : (FILES[at]?.name ?? "") };
+    }
+    log.push(entry);
+    const url = new URL(input, "http://service.test");
+    const name = url.searchParams.get("name") ?? "";
+    const reply = (value: unknown, status = 200) =>
+      Promise.resolve(Response.json(value, { status }));
+    if (Object.hasOwn(extra, input)) return reply(extra[input]);
+    if (input === "/connected/context") return reply(TEMPLATE);
+    if (input === "/api/submissions" && method === "POST") return reply({ id: "sub-1" });
+    if (url.pathname === "/api/submissions/sub-1/files" && method === "POST") {
+      stored.add(name);
+      return reply({ name });
+    }
+    if (url.pathname === "/api/submissions/sub-1/files" && method === "DELETE") {
+      stored.delete(name);
+      return reply({ name });
+    }
+    if (input === "/api/submissions/sub-1/carry") {
+      stored.add("northbridge-filing.txt");
+      return reply({ carried: ["northbridge-filing.txt"], kept: [] });
+    }
+    if (input === "/api/submissions/sub-1/reading")
+      return reply({
+        documents: DOCUMENTS.filter(({ source }) => stored.has(source)).concat(
+          stored.has(EXTRA.name)
+            ? [
+                {
+                  source: EXTRA.name,
+                  kind: "unrecognised",
+                  signal: "",
+                  executed: null,
+                  period_end: null,
+                },
+              ]
+            : [],
+        ),
+        ignored: [],
+        error: "",
+      });
+    if (input === "/api/submissions/sub-1/summary") return reply(summaryFor(cap, modules));
+    if (input === "/api/submissions/sub-1/submit") {
+      const answer = submits[Math.min(submitAt, submits.length - 1)];
+      submitAt += 1;
+      return Promise.resolve(
+        answer ? answer() : Response.json({ error: "no answer" }, { status: 500 }),
+      );
+    }
+    if (url.pathname.startsWith("/api/issuers/"))
+      return reply({ latest_run: "", runs: 0, latest_as_of: "" });
+    return reply({ error: `unknown path ${input}` }, 404);
+  });
+  vi.stubGlobal("fetch", fetchMock);
+  return log;
+}
+
+const issuerReads = (log: readonly Recorded[]) =>
+  log.filter(({ path }) => path.startsWith("/api/issuers/")).length;
+
+/** Types the issuer, the case date and the analyst's name, waiting out the issuer notice's lookup. */
+async function identify(log: readonly Recorded[], name = "Northbridge Synthetic Group") {
+  fireEvent.change(await screen.findByLabelText("Issuer name"), { target: { value: name } });
+  fireEvent.change(screen.getByLabelText("As-of date"), { target: { value: "2025-03-31" } });
+  fireEvent.change(screen.getByLabelText("Your name"), { target: { value: "Ana L" } });
+  await waitFor(() => {
+    expect(issuerReads(log)).toBeGreaterThan(0);
+  });
+}
+
+async function addAndInspect(files: readonly File[]) {
+  fireEvent.change(screen.getByLabelText("Documents"), { target: { files } });
+  fireEvent.click(screen.getByRole("button", { name: "Inspect documents" }));
+  await screen.findByText(/documents? inspected, 0 ignored\./);
+}
+
+async function toPurpose() {
+  fireEvent.click(screen.getByRole("button", { name: "Continue to purpose" }));
+  await screen.findByRole("heading", { name: "Purpose" });
+}
+
+async function toContext() {
+  fireEvent.click(screen.getByRole("button", { name: "Continue to context" }));
+  await screen.findByRole("heading", { name: "More context" });
+}
+
+function choose(label: string, value: string) {
+  fireEvent.change(screen.getByLabelText(label), { target: { value } });
+}
+
+async function reviewAndDecide() {
+  fireEvent.click(screen.getByRole("button", { name: "Review run" }));
+  const limits = await screen.findByRole("region", { name: "Limits to decide" });
+  for (const box of within(limits).getAllByRole("checkbox")) fireEvent.click(box);
+  fireEvent.click(screen.getByRole("checkbox", { name: /^Approve: I have read this summary/ }));
+}
+
+async function submitWith(button: string, action: string) {
+  fireEvent.click(screen.getByRole("button", { name: button }));
+  fireEvent.click(await screen.findByRole("button", { name: action }));
+}
+
+function golden(log: readonly Recorded[]) {
+  return `${JSON.stringify(log, null, 1)}\n`;
+}
+
+describe("the requests the Start run page sends", () => {
+  it("the Northbridge drive: three files, a note, workbook, agreement and a rating, synthetic", async () => {
+    const log = service();
+    const navigate = vi.fn();
+    render(<ConnectedApp path="/start" mode="synthetic" navigate={navigate} />);
+    await identify(log);
+    await addAndInspect([FILING, WORKBOOK, AGREEMENT]);
+    await toPurpose();
+    await toContext();
+    fireEvent.change(screen.getByLabelText("Anything the analysis should know"), {
+      target: { value: "Check the 2028 maturities.\nInclude refinancing risk." },
+    });
+    choose("Portfolio workbook", "northbridge-portfolio.xlsx");
+    choose("Legal documents", "executed");
+    choose("The agreement", "northbridge-credit-agreement.txt");
+    const ratings = screen.getByRole("region", { name: "Ratings" });
+    fireEvent.click(within(ratings).getByRole("button", { name: "Add rating" }));
+    fireEvent.change(within(ratings).getByLabelText("Agency"), { target: { value: "Moody's" } });
+    fireEvent.change(within(ratings).getByLabelText("Scope"), { target: { value: "issuer" } });
+    fireEvent.change(within(ratings).getByLabelText("Rating"), { target: { value: "B1" } });
+    fireEvent.change(within(ratings).getByLabelText("Outlook"), { target: { value: "Negative" } });
+    fireEvent.change(within(ratings).getByLabelText("As-of"), { target: { value: "2025-02-28" } });
+    await reviewAndDecide();
+    await submitWith("Submit run", "Start synthetic run");
+    await waitFor(() => {
+      expect(navigate).toHaveBeenCalledWith("/run/20261124-120000-01");
+    });
+    await expect(golden(log)).toMatchFileSnapshot("./requests.golden/northbridge-synthetic.txt");
+  });
+
+  it("a paid Deep run at the Advanced level: a module left out, another model, effort and turns", async () => {
+    const log = service({ cap: "40" });
+    const navigate = vi.fn();
+    render(<ConnectedApp path="/start" mode="live" navigate={navigate} />);
+    await identify(log);
+    await addAndInspect([FILING, AGREEMENT]);
+    await toPurpose();
+    fireEvent.click(screen.getByRole("radio", { name: "Deep credit assessment" }));
+    choose("Market view", "secondary");
+    choose("Case kind", "private");
+    choose("Run form level", "advanced");
+    await toContext();
+    choose("Model", "claude");
+    choose("Reasoning effort", "high");
+    fireEvent.change(screen.getByLabelText("Turns per module"), { target: { value: "20" } });
+    fireEvent.click(screen.getByRole("checkbox", { name: "Peer benchmark" }));
+    choose("Legal documents", "draft");
+    choose("The agreement", "northbridge-credit-agreement.txt");
+    await reviewAndDecide();
+    await submitWith("Submit, spend up to USD 40.00", "Start run, up to USD 40.00");
+    await waitFor(() => {
+      expect(navigate).toHaveBeenCalledWith("/run/20261124-120000-01");
+    });
+    await expect(golden(log)).toMatchFileSnapshot("./requests.golden/deep-advanced-live.txt");
+  });
+
+  it("an Earnings Update with periods, a removed file, and a step back and forward", async () => {
+    const log = service({ cap: "20" });
+    const navigate = vi.fn();
+    render(<ConnectedApp path="/start" mode="synthetic" navigate={navigate} />);
+    await identify(log);
+    await addAndInspect([FILING, EXTRA]);
+    fireEvent.click(screen.getByRole("button", { name: `Remove ${EXTRA.name}` }));
+    await screen.findByText("1 document inspected, 0 ignored.");
+    await toPurpose();
+    fireEvent.click(screen.getByRole("radio", { name: "Earnings Update" }));
+    await toContext();
+    fireEvent.click(screen.getByRole("button", { name: "Previous" }));
+    await screen.findByRole("heading", { name: "Purpose" });
+    await toContext();
+    fireEvent.change(screen.getByLabelText(/^Current period/), { target: { value: "Q3-2026" } });
+    fireEvent.change(screen.getByLabelText(/^Prior period/), { target: { value: "q2-2026" } });
+    choose("Legal documents", "none");
+    await reviewAndDecide();
+    await submitWith("Submit run", "Start synthetic run");
+    await waitFor(() => {
+      expect(navigate).toHaveBeenCalledWith("/run/20261124-120000-01");
+    });
+    await expect(golden(log)).toMatchFileSnapshot("./requests.golden/earnings-update.txt");
+  });
+
+  it("a run started from an earlier run: its documents carried, a new date, the same issuer", async () => {
+    const log = service({
+      extra: {
+        "/api/runs/earlier/inputs": {
+          issuer_id: "northbridge-synthetic-group",
+          issuer_name: "Northbridge Synthetic Group",
+          level: "basic",
+          max_turns: 32,
+          modules: [],
+          context: {
+            ...TEMPLATE,
+            run: { ...TEMPLATE.run, as_of: "2024-12-31", cutoff: "2024-12-31" },
+            identity: {
+              ...TEMPLATE.identity,
+              issuer_name: "Northbridge Synthetic Group",
+              issuer_id: "northbridge-synthetic-group",
+              sector: "Industrials",
+            },
+            attachments: {
+              legal_documents: "none",
+              management_bridge: false,
+              portfolio_workbook: false,
+              prior_case: false,
+            },
+          },
+          files: [{ name: "northbridge-filing.txt", size: 25 }],
+        },
+      },
+    });
+    const navigate = vi.fn();
+    render(
+      <ConnectedApp path="/start" search="?from=earlier" mode="synthetic" navigate={navigate} />,
+    );
+    await screen.findByText(/Using an earlier run as a starting point/);
+    fireEvent.change(screen.getByLabelText("As-of date"), { target: { value: "2025-03-31" } });
+    fireEvent.change(screen.getByLabelText("Your name"), { target: { value: "Ana L" } });
+    await waitFor(() => {
+      expect(issuerReads(log)).toBeGreaterThan(0);
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Inspect documents" }));
+    await screen.findByText("1 document inspected, 0 ignored.");
+    await toPurpose();
+    await toContext();
+    await reviewAndDecide();
+    await submitWith("Submit run", "Start synthetic run");
+    await waitFor(() => {
+      expect(navigate).toHaveBeenCalledWith("/run/20261124-120000-01");
+    });
+    await expect(golden(log)).toMatchFileSnapshot("./requests.golden/carried-from-earlier.txt");
+  });
+
+  it("a Submit with no answer, then the same Submit again", async () => {
+    const log = service({
+      submits: [
+        () => Response.json({ error: "Connection lost" }, { status: 500 }),
+        () => Response.json({ run: "20261124-120000-01", status: "queued" }),
+      ],
+    });
+    const navigate = vi.fn();
+    render(<ConnectedApp path="/start" mode="synthetic" navigate={navigate} />);
+    await identify(log);
+    await addAndInspect([FILING]);
+    await toPurpose();
+    await toContext();
+    choose("Legal documents", "none");
+    await reviewAndDecide();
+    await submitWith("Submit run", "Start synthetic run");
+    await screen.findByText(/Submitting again is safe/);
+    await submitWith("Submit run", "Start synthetic run");
+    await waitFor(() => {
+      expect(navigate).toHaveBeenCalledWith("/run/20261124-120000-01");
+    });
+    await expect(golden(log)).toMatchFileSnapshot("./requests.golden/submit-retry.txt");
+  });
+});
