@@ -73,8 +73,12 @@ export function ratioAxis(values: number[]) {
   const step = niceStep((max - min || Math.abs(max) / 10 || 1) / 4);
   const decimals = Math.max(0, -Math.floor(Math.log10(step) + 1e-9));
   const fix = (value: number) => Number(value.toFixed(decimals)) + 0;
-  const lo = fix(Math.floor(min / step + 1e-9) * step);
-  const hi = Math.max(fix(Math.ceil(max / step - 1e-9) * step), fix(lo + step));
+  // A value that falls on a round tick gets one step of room, so no mark sits on the axis end;
+  // an all-positive ratio's axis never goes below zero.
+  const floor = fix(Math.floor(min / step + 1e-9) * step);
+  const ceiling = fix(Math.ceil(max / step - 1e-9) * step);
+  const lo = floor === min && (min < 0 || floor - step >= 0) ? fix(floor - step) : floor;
+  const hi = ceiling === max ? fix(ceiling + step) : Math.max(ceiling, fix(lo + step));
   const count = Math.round((hi - lo) / step);
   const label = (value: number) => `${value.toFixed(decimals).replace("-", "−")}x`;
   return {

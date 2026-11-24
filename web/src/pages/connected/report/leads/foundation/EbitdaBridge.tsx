@@ -48,7 +48,7 @@ function BarRow({ bar, geometry }: { bar: BridgeBar; geometry: BridgeGeometry })
         className={cx("font-body", total ? "fill-text-primary font-medium" : "fill-text-secondary")}
       >
         {bar.labelLines.map((line, at) => (
-          <tspan key={line} x="0" y={baseline + at * BRIDGE.line}>
+          <tspan key={`${String(at)}-${line}`} x="0" y={baseline + at * BRIDGE.line}>
             {line}
           </tspan>
         ))}

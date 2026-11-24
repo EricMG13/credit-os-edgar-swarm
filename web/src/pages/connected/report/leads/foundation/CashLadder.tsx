@@ -32,7 +32,7 @@ function RowLabel({ row }: { row: LadderRow }) {
       className={cx("font-body", level ? "fill-text-primary font-medium" : "fill-text-secondary")}
     >
       {row.labelLines.map((line, at) => (
-        <tspan key={line} x={x} y={baseline + at * LADDER.line}>
+        <tspan key={`${String(at)}-${line}`} x={x} y={baseline + at * LADDER.line}>
           {at === 0 && !level ? `− ${line}` : line}
         </tspan>
       ))}
@@ -121,7 +121,7 @@ function RowMarks({ row, hatch }: { row: LadderRow; hatch: string }) {
       )}
       {row.sub.map((line, at) => (
         <text
-          key={line}
+          key={`${String(at)}-${line}`}
           x={LADDER.plotLeft}
           y={
             row.y +
