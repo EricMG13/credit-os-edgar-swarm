@@ -442,13 +442,7 @@ it("counts a module delivered with gaps as delivered, and says when no module ra
   );
   expect(screen.getByText("1 · all delivered")).toBeVisible();
   unmount();
-  render(
-    <CallRow
-      snapshot={snapshot}
-      run={run}
-      view={{ ...view([lead], lead), modules: [] } as unknown as ReportView}
-    />,
-  );
+  render(<CallRow snapshot={snapshot} run={run} view={{ ...view([lead], lead), modules: [] }} />);
   expect(screen.getByText("No module ran")).toBeVisible();
   expect(screen.queryByText(/0 · all delivered/)).toBeNull();
 });

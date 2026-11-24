@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { unitLabel, type PublishedRun, type Snapshot } from "../../publishedReport";
 import type { ReportView } from "../../reportView";
 import { basisNotes, figureSource, unitOf, type FigureSource } from "./figureData";
@@ -122,12 +122,12 @@ function wallReading(marks: WallMark[], unit: string) {
   return `Debt maturing by period${unit ? `, ${unit}` : ""}: ${parts.join(", ")}.`;
 }
 
-/** The frame's width in pixels once laid out; null before then. */
+/** The frame's width in pixels once laid out; null before then. A callback ref, so a frame that
+ * appears after the first render is measured too. */
 function useFrameWidth() {
-  const frame = useRef<HTMLDivElement>(null);
+  const [node, setNode] = useState<HTMLDivElement | null>(null);
   const [measured, setMeasured] = useState<number | null>(null);
   useEffect(() => {
-    const node = frame.current;
     if (!node) return;
     const observer = new ResizeObserver(([item]) => {
       setMeasured(item?.contentRect.width ?? null);
@@ -136,15 +136,17 @@ function useFrameWidth() {
     return () => {
       observer.disconnect();
     };
-  }, []);
-  return { frame, width: wallWidth(measured) };
+  }, [node]);
+  return { frame: setNode, measured };
 }
 
 function MaturityWall({ source }: { source: Ready }) {
-  const { frame, width } = useFrameWidth();
+  const { frame, measured } = useFrameWidth();
   const unit = unitOf(source.descriptor);
   const slots = wallSlots(source.table, source.descriptor, unit);
   if (!slots) return <FigureGap reason="The maturity schedule states no amount for any period." />;
+  const width = wallWidth(measured, slots.dated.length + slots.undated.length);
+  const scrolls = measured !== null && width > measured + 1;
   const { marks, bar, breakAt } = wallGeometry(slots.dated, slots.undated, width);
   const gaps = marks.filter((mark) => mark.height === null);
   const notes = [
@@ -160,10 +162,19 @@ function MaturityWall({ source }: { source: Ready }) {
         {slots.undated.length > 0 && <Key tone="undated">After the axis break: no single year</Key>}
         {gaps.length > 0 && <Key tone="gap">Not supplied</Key>}
       </div>
-      <div ref={frame} className="min-w-0">
+      {/* When the periods need more room than a phone gives, the wall scrolls sideways in its tile. */}
+      <div
+        ref={frame}
+        className="min-w-0 overflow-x-auto rounded-ds-sm outline-focus-ring focus-visible:outline-2"
+        {...(scrolls && {
+          role: "region",
+          "aria-label": "Maturity wall figure, scrolls sideways",
+          tabIndex: 0,
+        })}
+      >
         <svg
           viewBox={`0 0 ${String(width)} ${String(WALL.height)}`}
-          width="100%"
+          width={scrolls ? width : "100%"}
           role="img"
           aria-label={wallReading(marks, unitLabel(unit))}
         >

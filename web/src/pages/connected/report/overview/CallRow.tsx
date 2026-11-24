@@ -124,7 +124,7 @@ function Head({ children, trace }: { children: ReactNode; trace?: ReactNode }) {
 }
 
 /** A stated stance as a word chip: the adding stances in teal, every other in the signal colour. */
-function StanceChip({ stance, large = false }: { stance: string; large?: boolean }) {
+export function StanceChip({ stance, large = false }: { stance: string; large?: boolean }) {
   const adding = ADDING.test(stance);
   const Icon = adding ? Plus : Eye;
   return (
@@ -210,7 +210,10 @@ const meterReading = (first: Scored, second: Scored | null) =>
     ? ` ${second.name} scored ${String(second.score.value)}, band ${second.score.band}.`
     : "");
 
-/** A 0 to 100 meter: the score as the filled length, a second module's score as a tick. */
+/**
+ * A 0 to 100 meter: the score as the filled length, a second module's score as a tick. The two
+ * scores are named on a line under the bar, so their labels never collide or leave the scale.
+ */
 function Meter({
   first,
   second,
@@ -221,62 +224,60 @@ function Meter({
   caution: boolean;
 }) {
   const x = (score: number) => (Math.min(Math.max(score, 0), 100) / 100) * 408;
-  const value = first.score.value;
   const tick = second?.score.value ?? null;
-  const apart = tick !== null && Math.abs(x(tick) - x(value)) >= 140;
-  const after = tick !== null && tick > value;
   return (
-    <svg
-      viewBox="0 0 408 36"
-      width="100%"
-      role="img"
-      aria-label={meterReading(first, second)}
-      className="block overflow-visible"
-    >
-      <rect x="0" y="6" width="408" height="6" rx="3" className="fill-border-hairline" />
-      <rect
-        x="0"
-        y="6"
-        width={x(value)}
-        height="6"
-        rx="3"
-        className={caution ? "fill-warning-mark" : "fill-chart-1"}
-      />
-      {tick !== null && (
-        <line
-          x1={x(tick)}
-          x2={x(tick)}
-          y1="2"
-          y2="16"
-          strokeWidth="1.5"
-          className="stroke-text-primary"
-        />
-      )}
-      <text x="0" y="32" className="fill-text-tertiary font-mono text-[11px]">
-        0
-      </text>
-      <text
-        x={Math.max(x(value) - 4, 40)}
-        y="32"
-        textAnchor="end"
-        className="fill-text-secondary font-body text-[11px]"
+    <div className="flex flex-col gap-1.5">
+      <svg
+        viewBox="0 0 408 32"
+        width="100%"
+        role="img"
+        aria-label={meterReading(first, second)}
+        className="block overflow-visible"
       >
-        {first.name} {value}
-      </text>
-      {tick !== null && second && (
-        <text
-          x={apart || after ? x(tick) + 6 : x(tick) - 6}
-          y={apart || after ? 32 : 46}
-          textAnchor={apart || after ? "start" : "end"}
-          className="fill-text-secondary font-body text-[11px]"
-        >
-          {second.name} {tick}
+        <rect x="0" y="6" width="408" height="6" rx="3" className="fill-border-hairline" />
+        <rect
+          x="0"
+          y="6"
+          width={x(first.score.value)}
+          height="6"
+          rx="3"
+          className={caution ? "fill-warning-mark" : "fill-chart-1"}
+        />
+        {tick !== null && (
+          <line
+            x1={x(tick)}
+            x2={x(tick)}
+            y1="2"
+            y2="16"
+            strokeWidth="1.5"
+            className="stroke-text-primary"
+          />
+        )}
+        <text x="0" y="30" className="fill-text-tertiary font-mono text-[11px]">
+          0
         </text>
-      )}
-      <text x="408" y="32" textAnchor="end" className="fill-text-tertiary font-mono text-[11px]">
-        100
-      </text>
-    </svg>
+        <text x="408" y="30" textAnchor="end" className="fill-text-tertiary font-mono text-[11px]">
+          100
+        </text>
+      </svg>
+      <p
+        aria-hidden="true"
+        className="flex flex-wrap gap-x-4 gap-y-1 text-caption text-text-secondary"
+      >
+        <span className="flex items-center gap-1.5">
+          <span
+            className={cx("h-1.5 w-3 rounded-ds-full", caution ? "bg-warning-mark" : "bg-chart-1")}
+          />
+          <span>{`${first.name} ${String(first.score.value)}`}</span>
+        </span>
+        {second && (
+          <span className="flex items-center gap-1.5">
+            <span className="h-3 border-l-[1.5px] border-text-primary" />
+            <span>{`${second.name} ${String(second.score.value)}`}</span>
+          </span>
+        )}
+      </p>
+    </div>
   );
 }
 

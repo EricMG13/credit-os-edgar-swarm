@@ -134,9 +134,15 @@ export function stackGeometry(rows: StackRow[]) {
 /** Below this frame width the wall is drawn at the frame's own width, so its labels keep their size. */
 const WALL_NARROW = 560;
 const WALL_NARROWEST = 300;
+/** The least room one period takes on a narrow frame: its amount and year stay legible. */
+const SLOT_ROOM = 56;
 
-/** The drawing width for a frame of `measured` pixels: the full wall, or the frame itself when narrow. */
-export const wallWidth = (measured: number | null) =>
-  measured !== null && measured > 0 && measured < WALL_NARROW
-    ? Math.max(Math.round(measured), WALL_NARROWEST)
-    : WALL.width;
+/**
+ * The drawing width for a frame of `measured` pixels holding `slots` periods: the full wall, or on
+ * a narrow frame its own width, widened so each period keeps its room (the frame then scrolls).
+ */
+export function wallWidth(measured: number | null, slots = 0) {
+  if (measured === null || measured <= 0 || measured >= WALL_NARROW) return WALL.width;
+  const least = 2 * WALL.left + SLOT_ROOM * slots;
+  return Math.max(Math.round(measured), WALL_NARROWEST, least);
+}

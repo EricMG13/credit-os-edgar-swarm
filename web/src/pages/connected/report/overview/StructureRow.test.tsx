@@ -171,6 +171,9 @@ it("draws the wall at the frame's own width on a narrow screen, and at full widt
   expect(wallWidth(600)).toBe(WALL.width);
   expect(wallWidth(342.4)).toBe(342);
   expect(wallWidth(200)).toBe(300);
+  expect(wallWidth(342, 11)).toBe(2 * WALL.left + 56 * 11);
+  expect(wallWidth(342, 3)).toBe(342);
+  expect(wallWidth(700, 11)).toBe(WALL.width);
   const slots = [
     { label: "FY2026", cell: { text: "500", value: 500, reason: null } },
     { label: "FY2027", cell: { text: "1,250", value: 1250, reason: null } },

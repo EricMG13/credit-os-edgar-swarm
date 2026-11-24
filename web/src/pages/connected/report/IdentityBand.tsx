@@ -151,7 +151,12 @@ export function reportIdentity(catalogue: CatalogueRun | undefined, entries: Out
 export function DifferingRating({ differing }: { differing: string[] }) {
   if (!differing.length) return null;
   return (
-    <Button href="#modules/CP-2H" color="link-gray" size="sm">
+    <Button
+      href="#modules/CP-2H"
+      color="link-gray"
+      size="sm"
+      className="min-h-8 text-left whitespace-normal max-[480px]:min-h-11"
+    >
       {`${moduleName("CP-2H")} shows a different rating for ${differing.join(", ")}`}
     </Button>
   );

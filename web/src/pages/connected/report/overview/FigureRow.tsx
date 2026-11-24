@@ -87,7 +87,7 @@ function Level({ reading, large }: { reading: Reading; large: boolean }) {
       <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
         <Figure
           className={cx(
-            large ? "text-display font-medium" : "text-h2 font-medium",
+            large ? "text-display font-medium" : "text-h3 font-medium wrap-anywhere sm:text-h2",
             !stated && "text-text-tertiary",
           )}
         >

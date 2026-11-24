@@ -324,8 +324,9 @@ const ReportPage = memo(function ReportPage({
   );
 });
 
+/** A quiet fact chip; a long fact wraps inside it rather than widening the page. */
 const CHIP =
-  "flex h-6 items-center gap-1 rounded-ds-full border px-2.5 text-caption whitespace-nowrap";
+  "flex min-h-6 max-w-full flex-wrap items-center gap-x-1 rounded-ds-sm border px-2.5 py-0.5 text-caption wrap-anywhere";
 const QUIET = "border-border-hairline bg-surface-card text-text-secondary";
 const TEST = "border-action-subtle-hover bg-surface-selected font-medium text-text-link";
 const CRUMB =
@@ -377,7 +378,12 @@ function ReportUtilities({
         <SourcesSwitch isSelected={sources} onChange={setSources} label="Highlight source icons" />
       )}
       {!preview && (
-        <Button color="link-gray" size="sm" href={`/run/${encodeURIComponent(id)}`}>
+        <Button
+          className="min-h-8 max-[480px]:min-h-11"
+          color="link-gray"
+          size="sm"
+          href={`/run/${encodeURIComponent(id)}`}
+        >
           Run progress
         </Button>
       )}

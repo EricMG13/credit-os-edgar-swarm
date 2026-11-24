@@ -12,6 +12,7 @@ import {
   type Snapshot,
 } from "../publishedReport";
 import { moduleOrder } from "../reportView";
+import { StanceChip } from "./overview/CallRow";
 import { runStance } from "./overview/changeData";
 
 function runDetails(snapshot: Snapshot, key: string, run: PublishedRun) {
@@ -42,20 +43,17 @@ function modulesRun(details: Details) {
   return "The module list is unavailable for this run.";
 }
 
-const chip = "flex h-6 items-center rounded-ds-xs border px-2 text-caption font-medium";
-const positive = ["Starter Position", "Add Exposure"];
+const chip = "flex min-h-6 items-center rounded-ds-xs border px-2 text-caption font-medium";
 
-function StanceChip({ stance }: { stance: string | undefined }) {
+/** The run's stance in the Overview's own chip; a quiet chip when the run states none. */
+function Stance({ stance }: { stance: string | undefined }) {
   if (stance === undefined)
     return (
       <span className={`${chip} border-border-container text-text-secondary`}>
         Stance not stated
       </span>
     );
-  const tone = positive.includes(stance)
-    ? "border-success-edge bg-success-fill text-success-text"
-    : "border-warning-edge bg-warning-fill text-warning-text";
-  return <span className={`${chip} ${tone} wrap-anywhere`}>{stance}</span>;
+  return <StanceChip stance={stance} />;
 }
 
 function Node({ current }: { current: boolean }) {
@@ -93,7 +91,7 @@ function RunRow({
         ) : (
           <span className="text-h4 text-gap-text">As-of date not recorded</span>
         )}
-        <StanceChip stance={stance} />
+        <Stance stance={stance} />
         {current && (
           <span className={`${chip} border-action-subtle-hover bg-surface-selected text-text-link`}>
             This run
@@ -113,8 +111,18 @@ function RunRow({
       </div>
       <p className="text-small wrap-anywhere text-text-secondary">{modulesRun(details)}</p>
       <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
-        <TextLink href={`${href}#overview`}>Open overview</TextLink>
-        <TextLink href={`${href}#changes`}>What changed</TextLink>
+        <TextLink
+          className="inline-flex min-h-8 items-center max-[480px]:min-h-11"
+          href={`${href}#overview`}
+        >
+          Open overview
+        </TextLink>
+        <TextLink
+          className="inline-flex min-h-8 items-center max-[480px]:min-h-11"
+          href={`${href}#changes`}
+        >
+          What changed
+        </TextLink>
       </div>
     </li>
   );
@@ -135,7 +143,10 @@ export function RunHistory({
       ([, record]) =>
         record === run || Boolean(run.issuerKey && record.issuerKey === run.issuerKey),
     )
-    .sort(([, a], [, b]) => (b.asOf ?? "").localeCompare(a.asOf ?? ""));
+    .sort(
+      ([, a], [, b]) =>
+        (b.asOf ?? "").localeCompare(a.asOf ?? "") || b.folder.localeCompare(a.folder),
+    );
   const byFolder = new Map(snapshot.catalogue.real.map((item) => [item.id, item]));
   return (
     <section
