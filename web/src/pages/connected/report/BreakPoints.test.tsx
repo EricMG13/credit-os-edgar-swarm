@@ -24,6 +24,9 @@ function entry(heading: string, headers: string[], rows: string[][]): OutputEntr
   };
 }
 
+const tile = () => screen.getByRole("region", { name: "EBITDA break points" });
+const items = (node: HTMLElement) => [...node.querySelectorAll("li")];
+
 it("J3-016 gives the break-point decline one percentage form", () => {
   const data = breakPointView(
     entry(
@@ -34,7 +37,7 @@ it("J3-016 gives the break-point decline one percentage form", () => {
   );
   if (!data) throw new Error("Missing break-point fixture");
   render(<BreakPoints data={data} href={(line) => `#evidence/${String(line)}`} />);
-  expect(screen.getByText("10%", { exact: true })).toBeInTheDocument();
+  expect(within(tile()).getByText("10%", { exact: true })).toBeInTheDocument();
   expect(screen.queryByText("0.10 (10%)", { exact: true })).toBeNull();
 });
 
@@ -50,21 +53,24 @@ it("reads the canonical ranking's shares, drawing zero and keeping the original 
     ),
   );
   if (!data) throw new Error("ranking was rejected");
-  const { container } = render(
-    <BreakPoints data={data} href={(line) => `#evidence/0-${String(line)}`} />,
+  render(<BreakPoints data={data} href={(line) => `#evidence/0-${String(line)}`} />);
+  const figure = within(tile()).getByRole("img");
+  expect(figure).toHaveAccessibleName(
+    /Cover already below watch level 0%.*Cash flow reaches zero 12\.5%/,
   );
-  const chart = screen.getByRole("figure", { name: "EBITDA break points" });
-  expect(within(chart).getAllByRole("listitem")[0]).toHaveTextContent(
-    "Cover already below watch level",
-  );
-  expect(container.querySelector('[data-decline="0"]')).toHaveStyle({ width: "100%" });
-  fireEvent.click(within(chart).getByRole("radio", { name: "Table" }));
-  expect(within(chart).getByRole("cell", { name: "12.5%" })).toBeInTheDocument();
-  expect(within(chart).getByRole("cell", { name: "0%" })).toBeInTheDocument();
-  expect(within(chart).getAllByRole("link", { name: "Break point source" }).at(-1)).toHaveAttribute(
-    "href",
-    "#evidence/0-5",
-  );
+  expect(items(figure)[0]).toHaveTextContent("Cover already below watch level");
+  // A stated zero is a bar of no length on the fall-in-EBITDA axis, never a missing mark.
+  const zero = figure.querySelector('[data-decline="0"]');
+  expect(zero).toHaveStyle({ width: "0%" });
+  expect(figure.querySelector('[data-decline="0.125"]')).toHaveStyle({ width: "12.5%" });
+  fireEvent.click(within(tile()).getByRole("button", { name: "Table" }));
+  expect(within(tile()).getByRole("cell", { name: "12.5%" })).toBeInTheDocument();
+  expect(within(tile()).getByRole("cell", { name: "0%" })).toBeInTheDocument();
+  expect(
+    within(tile())
+      .getAllByRole("link", { name: /^Source for / })
+      .at(-1),
+  ).toHaveAttribute("href", "#evidence/0-5");
 });
 
 it("keeps incompatible spellings visible without plotting them", () => {
@@ -84,6 +90,9 @@ it("keeps incompatible spellings visible without plotting them", () => {
   expect(container.querySelectorAll("[data-decline]")).toHaveLength(1);
   expect(screen.getByText("0.10 (90%)")).toBeInTheDocument();
   expect(screen.getByText("Not calculated: facility terms missing")).toBeInTheDocument();
+  // No row reads as a zero: only the axis says 0%.
+  const list = within(tile()).getByRole("img").querySelector("ol") as HTMLElement;
+  expect(within(list).queryByText("0%")).toBeNull();
 });
 
 const RETAINED_HEADERS = [
@@ -105,15 +114,21 @@ it("keeps the handoff's row order for the break points table, as a list that ran
   const data = breakPointView(entry("T2DS.6 Break points", RETAINED_HEADERS, RETAINED_ROWS));
   if (!data) throw new Error("break points were rejected");
   render(<BreakPoints data={data} href={() => "#evidence"} />);
-  fireEvent.change(screen.getByRole("combobox", { name: "Cash-interest basis" }), {
-    target: { value: "1" },
-  });
-  const chart = screen.getByRole("figure", { name: "EBITDA break points" });
-  expect(chart.querySelector("ol")).toBeNull();
-  const order = (nodes: HTMLElement[]) => nodes.map((node) => node.textContent.slice(0, 5));
-  expect(order(within(chart).getAllByRole("listitem"))).toEqual(["FCF r", "Cover", "Net l"]);
-  fireEvent.click(within(chart).getByRole("radio", { name: "Table" }));
-  expect(order(within(chart).getAllByRole("row").slice(1))).toEqual(["FCF r", "Cover", "Net l"]);
+  const basis = within(tile()).getByRole("group", { name: "Cash-interest basis" });
+  expect(within(basis).getByRole("button", { name: "Interest held" })).toHaveAttribute(
+    "aria-pressed",
+    "true",
+  );
+  fireEvent.click(within(basis).getByRole("button", { name: "Cash-interest increase 5%" }));
+  const figure = within(tile()).getByRole("img");
+  expect(figure.querySelector("ol")).toBeNull();
+  const order = (nodes: Element[]) => nodes.map((node) => node.textContent.slice(0, 5));
+  expect(order(items(figure))).toEqual(["FCF r", "Cover", "Net l"]);
+  expect(within(figure).getByText("12%")).toBeInTheDocument();
+  expect(within(figure).getByText("Watch level")).toBeInTheDocument();
+  fireEvent.click(within(tile()).getByRole("button", { name: "Table" }));
+  expect(order(within(tile()).getAllByRole("row").slice(1))).toEqual(["FCF r", "Cover", "Net l"]);
+  expect(within(tile()).getByRole("cell", { name: "25%" })).toBeInTheDocument();
 });
 
 it("keeps drawing a module-written first-break ranking as an ordered list", () => {
@@ -130,4 +145,25 @@ it("keeps drawing a module-written first-break ranking as an ordered list", () =
   if (!data) throw new Error("ranking was rejected");
   const { container } = render(<BreakPoints data={data} href={() => "#evidence"} />);
   expect(container.querySelector("ol")).not.toBeNull();
+});
+
+it("states when the table does not establish a comparable ranking and keeps its rows", () => {
+  const data = breakPointView(
+    entry(
+      "T2DS.6 Break points",
+      ["Break ID", "Break", "EBITDA decline at break (interest held)", "Status", "Source"],
+      [["B1", "FCF reaches zero", "Not calculated: no base FCF", "Open", "Filing p.2"]],
+    ),
+  );
+  if (!data) throw new Error("break points were rejected");
+  render(<BreakPoints data={data} href={() => "#evidence/1"} />);
+  expect(within(tile()).queryByRole("img")).toBeNull();
+  expect(
+    within(tile()).getByText(
+      "The source table does not establish a comparable ranking for this basis.",
+    ),
+  ).toBeInTheDocument();
+  fireEvent.click(within(tile()).getByRole("button", { name: "Table" }));
+  expect(within(tile()).getByRole("cell", { name: "Not calculated: no base FCF" })).toBeVisible();
+  expect(within(tile()).queryByRole("cell", { name: "Filing p.2" })).toBeNull();
 });

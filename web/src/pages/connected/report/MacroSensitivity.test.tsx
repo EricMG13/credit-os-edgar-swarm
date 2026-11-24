@@ -56,9 +56,17 @@ it("uses the published reporting currency and retains a verified zero after hedg
     <MacroSensitivity data={data} href={(line) => `#evidence/1-${String(line)}`} />,
   );
   expect(container.querySelector('[data-zero][data-case="After hedges"]')).toBeInTheDocument();
-  const figure = screen.getByRole("figure", { name: "Added annual interest" });
-  fireEvent.click(within(figure).getByRole("radio", { name: "Table" }));
-  expect(within(figure).getByRole("cell", { name: "0.00" })).toBeInTheDocument();
+  const tile = screen.getByRole("region", { name: "Added annual interest" });
+  const figure = within(tile).getByRole("img");
+  expect(figure).toHaveAccessibleName(/\+100 bp: before hedges USD 8\.00m, after hedges 0\.00/);
+  expect(within(figure).getByText("USD 8.00m")).toBeInTheDocument();
+  fireEvent.click(within(tile).getByRole("button", { name: "Table" }));
+  expect(within(tile).getByRole("cell", { name: "0.00" })).toBeInTheDocument();
+  expect(
+    within(tile)
+      .getAllByRole("link", { name: /^Source for / })
+      .at(-1),
+  ).toHaveAttribute("href", "#evidence/1-13");
 });
 
 it.each([
@@ -70,9 +78,15 @@ it.each([
     const data = macroView(dataset(currency, net));
     if (!data) throw new Error("scenario was rejected");
     render(<MacroSensitivity data={data} href={() => "#evidence"} />);
-    expect(screen.queryByRole("figure", { name: "Added annual interest" })).toBeNull();
-    fireEvent.click(screen.getByText("All rate-shock results and limitations"));
-    expect(screen.getByRole("cell", { name: net })).toBeInTheDocument();
+    const tile = screen.getByRole("region", { name: "Added annual interest" });
+    expect(within(tile).queryByRole("img")).toBeNull();
+    expect(
+      within(tile).getByText(
+        "The rate-shock table does not establish comparable cash-interest values.",
+      ),
+    ).toBeVisible();
+    fireEvent.click(within(tile).getByRole("button", { name: "Table" }));
+    expect(within(tile).getByRole("cell", { name: net })).toBeInTheDocument();
   },
 );
 
@@ -113,20 +127,22 @@ function drawFx(moves: string[]) {
 
 it("states a comparison that has no alternative instead of drawing a selector with one option", () => {
   drawFx(["5%", "10%"]);
-  expect(screen.queryByRole("combobox")).toBeNull();
+  expect(screen.queryByRole("group", { name: "Compare with the 5% move" })).toBeNull();
   expect(screen.getByText("Compared with the 5% move: 10%")).toBeInTheDocument();
-  expect(
-    screen.getByRole("figure", { name: "Foreign-currency strengthening" }),
-  ).toBeInTheDocument();
+  const tile = screen.getByRole("region", { name: "Foreign-currency strengthening" });
+  expect(within(tile).getByRole("img")).toHaveAccessibleName(/Total debt after the move.*800.*801/);
 });
 
 it("offers the selector when there are two moves to choose between", () => {
   drawFx(["5%", "10%", "15%"]);
-  const select = screen.getByRole("combobox", { name: "Compare with the 5% move" });
+  const select = screen.getByRole("group", { name: "Compare with the 5% move" });
   expect(
     within(select)
-      .getAllByRole("option")
+      .getAllByRole("button")
       .map((option) => option.textContent),
   ).toEqual(["10%", "15%"]);
   expect(screen.queryByText(/Compared with the 5% move:/)).toBeNull();
+  const tile = screen.getByRole("region", { name: "Foreign-currency strengthening" });
+  fireEvent.click(within(select).getByRole("button", { name: "15%" }));
+  expect(within(tile).getByRole("img")).toHaveAccessibleName(/802/);
 });

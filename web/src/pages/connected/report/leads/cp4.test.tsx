@@ -152,9 +152,7 @@ it("draws the real blocked module as Not assessable with the headroom table's ow
   render(<LegalLead {...leadProps(blockedEntry())} />);
   const tile = screen.getByRole("region", { name: "Covenant headroom" });
   expect(within(tile).getByText("Not assessable")).toBeVisible();
-  expect(
-    within(tile).getByText("No executed governing document available"),
-  ).toBeVisible();
+  expect(within(tile).getByText("No executed governing document available")).toBeVisible();
   expect(
     within(tile).getByText(
       "Covenant headroom needs the executed credit agreement and indentures supplied at run start.",
