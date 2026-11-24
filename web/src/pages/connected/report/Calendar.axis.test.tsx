@@ -265,7 +265,11 @@ it("keeps the table to six columns and stacks each row below 640px", () => {
   ).toEqual(["Event", "Date", "Status", "Credit relevance", "Module", "Evidence trace"]);
   expect(table.querySelector("tr[id]")).toHaveClass("max-[640px]:block");
   expect(table.closest("[tabindex]")).toBeNull();
-  expect(within(table).getAllByText("Published", { exact: false }).length).toBeGreaterThan(0);
+  const bodyRows = within(table).getAllByRole("row").slice(1);
+  expect(bodyRows).toHaveLength(3);
+  bodyRows.forEach((bodyRow) => {
+    expect(within(bodyRow).getAllByText("Published", { exact: false })).toHaveLength(1);
+  });
 });
 
 it("lays the page out as a header, the axis tile above the table tile and gaps as tiles", () => {

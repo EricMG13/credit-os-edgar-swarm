@@ -15,7 +15,7 @@ const DAY = 86_400_000;
 /** The plot's width before it is measured (the axis scrolls below 720px, so the plot is this wide at least). */
 const FALLBACK_PX = 560;
 /** One row of labelled marks; a target is at most this tall (44px on a phone). */
-const ROW_PX = 52;
+const ROW_PX = 48;
 /** Half the widest hit area, so neighbouring targets never overlap. */
 const HALF_HIT_PX = 22;
 const LABEL_GAP_PX = 6;
@@ -23,9 +23,9 @@ const LABEL_GAP_PX = 6;
 const BOUND_PX = 12;
 /** The least width worth drawing a truncated label in. */
 const MIN_LABEL_PX = 56;
-/** A crowded label is narrowed to these widths before it takes a row of its own beyond the cap. */
+/** The widths a crowded lane's names are cut to, widest first. */
 const NARROW_PX = [160, 112, 84];
-/** Rows a lane fills, narrowing labels, before it grows another row for a full-width label. */
+/** A lane taking more rows than this draws shorter labels. */
 const ROW_CAP = 3;
 /** A period bar this wide can carry its own label. */
 const INSIDE_MIN_PX = 72;
@@ -78,27 +78,29 @@ const fontOf = (element: Element | null) => {
   return fontSize && fontFamily ? `${fontStyle} ${fontWeight} ${fontSize} ${fontFamily}` : "";
 };
 
-type Fonts = { canvas: CanvasRenderingContext2D; mono: string; name: string };
+type Fonts = { mono: string; name: string };
 
 /** A measuring function for the label fonts; it re-reads them when the page's fonts finish loading. */
 function useTextWidth() {
   const mono = useRef<HTMLSpanElement>(null);
   const name = useRef<HTMLSpanElement>(null);
+  const canvas = useRef<CanvasRenderingContext2D | null>(null);
   const [fonts, setFonts] = useState<Fonts | null>(null);
   useEffect(() => {
-    const canvas = measuringContext();
-    if (!canvas) return;
+    canvas.current = measuringContext();
+    if (!canvas.current) return;
     const read = () => {
-      setFonts({ canvas, mono: fontOf(mono.current), name: fontOf(name.current) });
+      setFonts({ mono: fontOf(mono.current), name: fontOf(name.current) });
     };
     read();
-    void document.fonts?.ready.then(read);
+    void (document as Partial<Document>).fonts?.ready.then(read);
   }, []);
   const measure: Measure = (text, isMono) => {
     const font = fonts?.[isMono ? "mono" : "name"];
-    if (!fonts || !font) return ESTIMATE(text, isMono);
-    fonts.canvas.font = font;
-    return fonts.canvas.measureText(text).width;
+    const context = canvas.current;
+    if (!context || !font) return ESTIMATE(text, isMono);
+    context.font = font;
+    return context.measureText(text).width;
   };
   const probes = (
     <>
@@ -143,13 +145,14 @@ function choices(frame: Frame, wanted: number, plotPx: number): Choice[] {
     { side: "right" as const, room: Math.floor(plotPx + BOUND_PX - hit.right - LABEL_GAP_PX) },
     { side: "left" as const, room: Math.floor(hit.left - LABEL_GAP_PX + BOUND_PX) },
   ];
+  const inside = Math.floor(frame.widthPx - 10);
+  const roomy = frame.period && frame.widthPx >= INSIDE_MIN_PX;
+  const within: Choice = { side: "inside", label: inside, max: inside };
+  if (roomy && inside >= wanted) return [within];
   const whole = sides
     .filter(({ room }) => room >= wanted)
     .map(({ side, room }) => ({ side, label: wanted, max: room }));
   if (whole.length) return whole;
-  const inside = Math.floor(frame.widthPx - 10);
-  const roomy = frame.period && frame.widthPx >= INSIDE_MIN_PX;
-  const within: Choice = { side: "inside", label: inside, max: inside };
   if (roomy && inside >= wanted * 0.6) return [within];
   const [best] = [...sides].sort((a, b) => b.room - a.room);
   if (best && best.room >= MIN_LABEL_PX)
@@ -204,6 +207,7 @@ function stack(
       const wanted = mode.dateless ? Math.min(name, mode.cap) : whole;
       const options = choices(frame, wanted, plotPx).map((choice) => ({
         ...choice,
+        max: Math.min(choice.max, mode.cap),
         dateless: mode.dateless,
         extent: extentOf(frame, choice.side, choice.label),
       }));
@@ -567,7 +571,7 @@ function HorizontalAxis({
               className="flex border-t border-border-hairline"
               style={{ height: `${String(rows * ROW_PX + 8)}px` }}
             >
-              <span className="sticky left-0 z-10 flex h-[52px] w-28 flex-none items-center gap-1.5 bg-surface-card text-small text-text-secondary">
+              <span className="sticky left-0 z-10 flex h-12 w-28 flex-none items-center gap-1.5 bg-surface-card text-small text-text-secondary">
                 <Mark category={lane} />
                 {lane}
               </span>

@@ -209,7 +209,7 @@ export function analysisRows(entry: OutputEntry | undefined, folder: string) {
 }
 
 /** A ledger row: its text in the module's words, or null where it cites a source (then `href` is the link). */
-export type LedgerItem = { text: string | null; note: string | null; line: number; href: string };
+type LedgerItem = { text: string | null; note: string | null; line: number; href: string };
 export type LedgerGroup = { status: string; heading: string; items: LedgerItem[] };
 
 const NAMED = ["New", "Closed", "Remaining", "Parked"];

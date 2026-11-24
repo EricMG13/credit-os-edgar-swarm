@@ -42,13 +42,12 @@ it("C4-030 retains the event name while moving its filename reference to Evidenc
     "current",
   );
   render(<Calendar calendar={calendar} />);
-  const figure = document.body;
-  expect(within(figure).getAllByText("Redemption notice", { exact: true }).length).toBeGreaterThan(
-    0,
-  );
-  expect(within(figure).getByText("Maturity wall", { exact: true })).toBeInTheDocument();
-  expect(figure).not.toHaveTextContent("notice_of_redemption.pdf");
-  expect(within(figure).getByRole("rowheader", { name: "Redemption notice" })).toBeInTheDocument();
+  const axis = within(screen.getByRole("group", { name: /^Events on a time axis/ }));
+  const table = within(screen.getByRole("table", { name: "Published events" }));
+  expect(axis.getAllByText("Redemption notice", { exact: true })).toHaveLength(1);
+  expect(table.getByText("Maturity wall", { exact: true })).toBeInTheDocument();
+  expect(document.body).not.toHaveTextContent("notice_of_redemption.pdf");
+  expect(table.getByRole("rowheader", { name: "Redemption notice" })).toBeInTheDocument();
 });
 
 it("T20 residual keeps the recorded status lane when an event cannot be plotted", () => {
