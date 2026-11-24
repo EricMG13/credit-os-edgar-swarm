@@ -97,7 +97,8 @@ function basisLine(module: FrameModule, unit: string | undefined) {
   const stage = stageOf(module.id);
   return [
     stage.number ? `${stage.name} · stage ${String(stage.number)} of ${String(stage.of)}` : "",
-    unit ? `Amounts in ${unit}` : "",
+    // The run's money unit, on the stages whose modules report amounts.
+    unit && stage.number >= 2 && stage.number <= 4 ? `Amounts in ${unit}` : "",
   ]
     .filter(Boolean)
     .join(" · ");
