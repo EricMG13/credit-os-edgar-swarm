@@ -77,3 +77,9 @@ it("draws a gap when the inputs are unreadable", () => {
   ).toBeTruthy();
   expect(screen.queryByRole("table")).toBeNull();
 });
+
+it("draws a gap, not an empty table, when the inputs state no driver", () => {
+  render(<AssumptionsByCase document={{}} />);
+  expect(screen.getByText("The forecast inputs state no driver for any case.")).toBeInTheDocument();
+  expect(screen.queryByRole("table")).toBeNull();
+});

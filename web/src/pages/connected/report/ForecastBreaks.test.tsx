@@ -158,3 +158,23 @@ it("names why a part cannot be drawn: no wall, no downside module", () => {
   expect(screen.getByText("Financial foundation did not run in this run.")).toBeInTheDocument();
   expect(screen.getByText("Downside did not run in this run.")).toBeInTheDocument();
 });
+
+it("puts liquidity and a far wall on no shared scale, and says why", () => {
+  const far = { year: 2031, label: "FY2031", cell: { text: "1,250", value: 1250, reason: null } };
+  render(
+    <WhatBreaks
+      view={view([])}
+      folder="current"
+      model={model([value("212"), value("295"), value("397")])}
+      group="Base case"
+      caseName="Base case"
+      wall={{ years: [far], wall: far, unit: "USD millions", offAxis: [], reason: null }}
+      units="USD millions"
+    />,
+  );
+  expect(
+    screen.getByText(
+      "The two figures are not drawn on one scale: the last forecast year is not the year before the wall.",
+    ),
+  ).toBeInTheDocument();
+});
