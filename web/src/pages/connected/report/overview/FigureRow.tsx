@@ -237,7 +237,7 @@ export function FigureRow({ run, view }: RowProps) {
           label={spoken(net.title, net.marks)}
         />
       </LargeTile>
-      <div className="grid min-w-0 auto-rows-fr grid-cols-1 gap-4 sm:grid-cols-2 lg:col-span-4">
+      <div className="grid min-w-0 auto-rows-fr grid-cols-2 gap-3 sm:gap-4 lg:col-span-4">
         <SmallTile run={run} entry={entry} reading={revenue}>
           <MiniSlope
             marks={revenue.marks}

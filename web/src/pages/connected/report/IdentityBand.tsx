@@ -24,7 +24,7 @@ const outlookIcons: Record<string, FC<IconProps>> = {
 
 const outlookColour: Record<string, string> = {
   positive: "text-success-text",
-  negative: "text-error-text",
+  negative: "text-warning-text",
 };
 
 const filled = (text: string | undefined) => (text?.trim() ? text : undefined);

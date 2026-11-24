@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from "react";
 import { unitLabel, type PublishedRun, type Snapshot } from "../../publishedReport";
 import type { ReportView } from "../../reportView";
 import { basisNotes, figureSource, unitOf, type FigureSource } from "./figureData";
@@ -15,6 +16,7 @@ import {
   stackGeometry,
   stackRows,
   wallGeometry,
+  wallWidth,
   wallSlots,
   type StackRow,
 } from "./structureData";
@@ -95,8 +97,7 @@ function WallLabels({ mark }: { mark: WallMark }) {
   );
 }
 
-function WallAxis({ breakAt }: { breakAt: number | null }) {
-  const end = WALL.width;
+function WallAxis({ breakAt, end }: { breakAt: number | null; end: number }) {
   if (breakAt === null)
     return <line x1="0" y1={WALL.base} x2={end} y2={WALL.base} className="stroke-connector" />;
   return (
@@ -121,11 +122,30 @@ function wallReading(marks: WallMark[], unit: string) {
   return `Debt maturing by period${unit ? `, ${unit}` : ""}: ${parts.join(", ")}.`;
 }
 
+/** The frame's width in pixels once laid out; null before then. */
+function useFrameWidth() {
+  const frame = useRef<HTMLDivElement>(null);
+  const [measured, setMeasured] = useState<number | null>(null);
+  useEffect(() => {
+    const node = frame.current;
+    if (!node) return;
+    const observer = new ResizeObserver(([item]) => {
+      setMeasured(item?.contentRect.width ?? null);
+    });
+    observer.observe(node);
+    return () => {
+      observer.disconnect();
+    };
+  }, []);
+  return { frame, width: wallWidth(measured) };
+}
+
 function MaturityWall({ source }: { source: Ready }) {
+  const { frame, width } = useFrameWidth();
   const unit = unitOf(source.descriptor);
   const slots = wallSlots(source.table, source.descriptor, unit);
   if (!slots) return <FigureGap reason="The maturity schedule states no amount for any period." />;
-  const { marks, bar, breakAt } = wallGeometry(slots.dated, slots.undated);
+  const { marks, bar, breakAt } = wallGeometry(slots.dated, slots.undated, width);
   const gaps = marks.filter((mark) => mark.height === null);
   const notes = [
     ...gaps.map(
@@ -140,33 +160,35 @@ function MaturityWall({ source }: { source: Ready }) {
         {slots.undated.length > 0 && <Key tone="undated">After the axis break: no single year</Key>}
         {gaps.length > 0 && <Key tone="gap">Not supplied</Key>}
       </div>
-      <svg
-        viewBox={`0 0 ${String(WALL.width)} ${String(WALL.height)}`}
-        width="100%"
-        role="img"
-        aria-label={wallReading(marks, unitLabel(unit))}
-      >
-        <defs>
-          <pattern
-            id="wall-undated"
-            width="6"
-            height="6"
-            patternUnits="userSpaceOnUse"
-            patternTransform="rotate(45)"
-          >
-            <rect width="6" height="6" className="fill-surface-selected" />
-            <line x1="0" y1="0" x2="0" y2="6" strokeWidth="2" className="stroke-chart-1" />
-          </pattern>
-          <GapPattern id="wall-gap" />
-        </defs>
-        {marks.map((mark) => (
-          <WallMarkShape key={mark.label} mark={mark} bar={bar} />
-        ))}
-        <WallAxis breakAt={breakAt} />
-        {marks.map((mark) => (
-          <WallLabels key={mark.label} mark={mark} />
-        ))}
-      </svg>
+      <div ref={frame} className="min-w-0">
+        <svg
+          viewBox={`0 0 ${String(width)} ${String(WALL.height)}`}
+          width="100%"
+          role="img"
+          aria-label={wallReading(marks, unitLabel(unit))}
+        >
+          <defs>
+            <pattern
+              id="wall-undated"
+              width="6"
+              height="6"
+              patternUnits="userSpaceOnUse"
+              patternTransform="rotate(45)"
+            >
+              <rect width="6" height="6" className="fill-surface-selected" />
+              <line x1="0" y1="0" x2="0" y2="6" strokeWidth="2" className="stroke-chart-1" />
+            </pattern>
+            <GapPattern id="wall-gap" />
+          </defs>
+          {marks.map((mark) => (
+            <WallMarkShape key={mark.label} mark={mark} bar={bar} />
+          ))}
+          <WallAxis breakAt={breakAt} end={width} />
+          {marks.map((mark) => (
+            <WallLabels key={mark.label} mark={mark} />
+          ))}
+        </svg>
+      </div>
       <FigureNotes notes={notes} />
     </>
   );

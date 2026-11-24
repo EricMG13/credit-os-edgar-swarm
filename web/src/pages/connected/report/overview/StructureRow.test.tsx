@@ -2,6 +2,7 @@ import { cleanup, render, screen, within } from "@testing-library/react";
 import { afterEach, expect, it } from "vitest";
 import { StructureRow } from "./StructureRow";
 import { entry, rowProps, section, table } from "./rows.fixture";
+import { WALL, wallGeometry, wallWidth } from "./structureData";
 
 afterEach(cleanup);
 
@@ -163,4 +164,18 @@ it("draws the gap when no period states an amount", () => {
   expect(screen.getByText("The maturity schedule states no amount for any period.")).toBeVisible();
   expect(screen.getByText("The debt stack states no amount for any facility.")).toBeVisible();
   expect(screen.queryByRole("img")).toBeNull();
+});
+
+it("draws the wall at the frame's own width on a narrow screen, and at full width otherwise", () => {
+  expect(wallWidth(null)).toBe(WALL.width);
+  expect(wallWidth(600)).toBe(WALL.width);
+  expect(wallWidth(342.4)).toBe(342);
+  expect(wallWidth(200)).toBe(300);
+  const slots = [
+    { label: "FY2026", cell: { text: "500", value: 500, reason: null } },
+    { label: "FY2027", cell: { text: "1,250", value: 1250, reason: null } },
+  ];
+  const narrow = wallGeometry(slots as never, [], 342);
+  expect(narrow.marks.at(-1)?.centre).toBeLessThan(342);
+  expect(wallGeometry(slots as never, [], WALL.width).marks.at(-1)?.centre).toBeGreaterThan(600);
 });

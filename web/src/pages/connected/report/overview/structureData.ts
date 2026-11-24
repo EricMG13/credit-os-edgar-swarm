@@ -49,12 +49,12 @@ const WIDEST_BAR = 88;
 const THINNEST = 2;
 
 /** Where each slot's mark sits: bar heights are the amounts on one scale from zero. */
-export function wallGeometry(dated: WallSlot[], undated: WallSlot[]) {
+export function wallGeometry(dated: WallSlot[], undated: WallSlot[], width: number = WALL.width) {
   const slots = [...dated, ...undated];
   const values = slots.map((slot) => slot.cell?.value ?? null);
   const top = ticks(values).at(-1)?.value ?? 1;
   const split = dated.length > 0 && undated.length > 0;
-  const room = WALL.width - 2 * WALL.left - (split ? BREAK : 0);
+  const room = width - 2 * WALL.left - (split ? BREAK : 0);
   const slot = room / slots.length;
   const bar = Math.min(WIDEST_BAR, slot * 0.65);
   const marks = slots.map((entry, at) => {
@@ -130,3 +130,13 @@ export function stackGeometry(rows: StackRow[]) {
   });
   return { segments, height: y };
 }
+
+/** Below this frame width the wall is drawn at the frame's own width, so its labels keep their size. */
+export const WALL_NARROW = 560;
+const WALL_NARROWEST = 300;
+
+/** The drawing width for a frame of `measured` pixels: the full wall, or the frame itself when narrow. */
+export const wallWidth = (measured: number | null) =>
+  measured !== null && measured > 0 && measured < WALL_NARROW
+    ? Math.max(Math.round(measured), WALL_NARROWEST)
+    : WALL.width;
