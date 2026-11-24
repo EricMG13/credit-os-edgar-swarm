@@ -16,7 +16,7 @@ import { useNextEvent } from "./nextEvent";
 
 /** The columns of a row on a wide screen; below it a row stacks and each cell names itself. */
 export const ROW_COLUMNS =
-  "xl:grid-cols-[minmax(13rem,1.5fr)_7.5rem_repeat(3,minmax(7.5rem,1fr))_minmax(10rem,1.1fr)_minmax(9rem,1fr)]";
+  "xl:grid-cols-[minmax(15rem,1.6fr)_8rem_repeat(3,minmax(7.5rem,1fr))_minmax(10rem,1.1fr)_minmax(9.5rem,1fr)]";
 
 const CELL_LABEL = "text-caption text-text-tertiary xl:sr-only";
 
@@ -129,7 +129,9 @@ export function IssuerRow({ group }: { group: IssuerGroup }) {
           <div className="grid min-w-0 gap-1 wrap-anywhere">
             <h3 className="font-display text-h4 text-text-primary">
               {linked && group.state !== "No report published" ? (
-                <TextLink href={reportPath(linked.id)}>{newest.name}</TextLink>
+                <TextLink href={reportPath(linked.id)} className="text-left whitespace-normal">
+                  {newest.name}
+                </TextLink>
               ) : (
                 newest.name
               )}
@@ -176,9 +178,7 @@ export function IssuerRow({ group }: { group: IssuerGroup }) {
         <div className="flex min-w-0 flex-col gap-1 md:col-span-3 xl:col-span-1">
           <span className={CELL_LABEL}>Next event</span>
           {linked ? (
-            <TextLink href={`${reportPath(linked.id)}#calendar`}>
-              Dates are on the Calendar
-            </TextLink>
+            <TextLink href={`${reportPath(linked.id)}#calendar`}>Open Calendar</TextLink>
           ) : (
             <span className="text-small text-gap-text">Needs a published report</span>
           )}

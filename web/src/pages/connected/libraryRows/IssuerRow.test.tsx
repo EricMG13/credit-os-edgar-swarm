@@ -70,7 +70,7 @@ it("draws one row for an issuer with the three figures, a stance gap, chips and 
   expect(within(row).getByText("Full credit assessment")).toBeVisible();
   expect(within(row).getByText("31 March 2026")).toBeVisible();
   expect(within(row).getByText("Delivered")).toBeVisible();
-  expect(within(row).getByRole("link", { name: "Dates are on the Calendar" })).toHaveAttribute(
+  expect(within(row).getByRole("link", { name: "Open Calendar" })).toHaveAttribute(
     "href",
     "/report/acme-2026#calendar",
   );

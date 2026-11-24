@@ -90,4 +90,45 @@ Tests written before each block: `FigureMark.test.tsx`, `IssuerRow.test.tsx`, `C
 
 ## 7. Verification
 
-Filled in during phase 2.
+Phase 2, 2026-11-24. Synthetic-run preview (README recipe) plus a fixture-driven page.
+
+**How multi-issuer pages were made.** The synthetic driver was run twice (the second from a scratch
+copy with another issuer name, as-of date and a direct `/start` visit, because with one report in
+the library the "Start a run" link is in the page header, not in `main footer`), giving two
+issuers. For five issuers with different values, states, gaps, two earlier runs and an unpublished
+run, a scratch Playwright script served fixture JSON for `/connected/library` and
+`/connected/coverage` over the built app. The fixture values are synthetic and invented for layout.
+`drive-synthetic-run.cjs` is unchanged: the empty-state "Start a run" link is kept, inside
+`main footer`, with the same name.
+
+**Screenshots looked at (1440 and 390):** Library empty; Library populated, synthetic (2 issuers)
+and fixture (5 issuers, one row open); Coverage Modules, Rank, Find, Trend, synthetic and fixture.
+What was seen and fixed: the issuer name ran into the stance chip and the Calendar link ran past the
+row edge at 1440 (name and link now wrap; link text shortened to "Open Calendar"); the 14-column
+matrix was wider than the content (column and cell padding reduced, header names at caption size).
+No horizontal page scroll at 390 on any of the ten shots (`scrollWidth <= innerWidth`).
+
+**Seen and left:** at 390 the Coverage filter area (view control, search, sector and pathway chips,
+more-filters line, figure strip, groups) is about 1,100 px tall before the matrix starts; it works
+and nothing overflows, but a phone reader scrolls a long way. The Library row at 390 stacks to
+about 770 px per issuer. The shell's top bar at 390 clips "Run activity" and shows no "Start a run"
+(frozen shell, not this package). Find on the synthetic run is 10,000 px because every module says
+the same sentence for every field.
+
+**Checks run:** `npx tsc --noEmit`; `npx eslint --max-warnings=0` and `npx prettier --check` on every
+changed file; `npx vitest run src/pages src/components src/shell src/styles` (320 files, 5,332
+tests pass; one unrelated test, `report.auditFollowups` T17, failed once under load in a wider run
+and passes alone and on the base); `npm run build`; `npm run unused` (reports `Bento` and
+`LeadProps`, which belong to the coordinator's frozen files; nothing of this package);
+`uv run python tools/quality_gate.py` (0 findings). **Not run:** Python tests, the weekly full suite,
+`npm run gates`, a retained-TransDigm fixture pass of the Library (no multi-issuer retained
+publication exists; the Library figures were checked on synthetic and fixture data only).
+
+**Tests rewritten because they pinned layout or control form:** `libraryStates` (select and layout
+radio to chips), `shellFinalAudit` Library group (C1-008, C1-019, C1-022 and the two credit-view
+tests now open the row first), `LibraryIndex.metricTrace` (the retained-preview test no longer has a
+layout switch; trace tests open the row; the scoped snapshot is now read when a row is opened for its
+next event as well as when a figure is traced, and the test says so), `ReportLibrary.design` (three
+tests), `Coverage.test` (view radios to pressed buttons; period, saved-group and sector controls to
+chips). Every assertion on values, links, gaps, groups, bounds, preview and empty states is kept.
+Added: `Chips`, `FigureMark`, `IssuerRow`, `nextEvent`, `coverage/Trend`, `coverage/views` tests.

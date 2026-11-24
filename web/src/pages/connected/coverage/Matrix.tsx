@@ -48,7 +48,7 @@ export function StageHead({
               key={column.code}
               scope="col"
               className={cx(
-                "min-w-28 px-3 pt-1 pb-3 text-left align-bottom text-small font-medium text-text-secondary",
+                "min-w-20 px-2 pt-1 pb-3 text-left align-bottom text-caption font-medium text-text-secondary",
                 index === 0 && "border-l border-border-hairline",
               )}
             >
@@ -68,7 +68,7 @@ export function StateCells({ data, cells }: { data: Data; cells: Record<string, 
         group.columns.map((column, index) => (
           <td
             key={column.code}
-            className={cx("p-3 align-top", index === 0 && "border-l border-border-hairline")}
+            className={cx("p-2 align-top", index === 0 && "border-l border-border-hairline")}
           >
             <StateMark cell={cells[column.code]} />
           </td>
@@ -98,7 +98,7 @@ export function Matrix({
     <div className={tableBox}>
       <table className="w-full text-small">
         <caption className="sr-only">Each issuer’s newest run: what every module delivered</caption>
-        <StageHead data={data} lead={[{ label: "Issuer", className: "min-w-56" }]} />
+        <StageHead data={data} lead={[{ label: "Issuer", className: "min-w-52" }]} />
         <tbody>
           {issuers.map((issuer) => {
             const run = latestRun(issuer);
@@ -107,7 +107,7 @@ export function Matrix({
               <tr key={issuer.key} className="border-b border-border-hairline last:border-0">
                 <th
                   scope="row"
-                  className="sticky left-0 z-10 min-w-56 bg-surface-card p-3 text-left align-top font-semibold wrap-anywhere"
+                  className="sticky left-0 z-10 min-w-52 bg-surface-card p-3 text-left align-top font-semibold wrap-anywhere"
                 >
                   <span className="flex items-start gap-3">
                     <input

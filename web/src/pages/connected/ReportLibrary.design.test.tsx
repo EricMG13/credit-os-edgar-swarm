@@ -120,26 +120,21 @@ describe("connected library and report design", () => {
     expect(await screen.findByRole("heading", { name: "Northbridge" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Southbridge" })).toBeInTheDocument();
 
-    fireEvent.change(screen.getByLabelText("Sector"), { target: { value: "Retail" } });
-    fireEvent.change(screen.getByLabelText("Pathway"), {
-      target: { value: "Lite credit assessment" },
-    });
+    const chip = (group: string, name: string) =>
+      fireEvent.click(
+        within(screen.getByRole("group", { name: group })).getByRole("button", { name }),
+      );
+    chip("Sector", "Retail");
+    chip("Pathway", "Lite credit assessment");
     expect(screen.queryByRole("heading", { name: "Northbridge" })).toBeNull();
-    fireEvent.change(screen.getByLabelText("Sector"), { target: { value: "all" } });
-    fireEvent.change(screen.getByLabelText("Pathway"), { target: { value: "all" } });
+    chip("Sector", "All");
+    chip("Pathway", "All");
 
-    fireEvent.change(screen.getByLabelText("Sector"), { target: { value: "Industrials" } });
+    chip("Sector", "Industrials");
     expect(screen.queryByRole("heading", { name: "Southbridge" })).toBeNull();
-    fireEvent.change(screen.getByLabelText("Pathway"), {
-      target: { value: "Lite credit assessment" },
-    });
+    chip("Pathway", "Lite credit assessment");
     expect(screen.getByText(/No issuers match these filters/)).toBeInTheDocument();
-    fireEvent.change(screen.getByLabelText("Sector"), { target: { value: "all" } });
-    expect(screen.getByRole("heading", { name: "Southbridge" })).toBeInTheDocument();
-
-    fireEvent.click(screen.getByRole("radio", { name: "List" }));
-    expect(screen.getByRole("columnheader", { name: "Issuer" })).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("radio", { name: "Cards" }));
+    chip("Sector", "All");
     expect(screen.getByRole("heading", { name: "Southbridge" })).toBeInTheDocument();
 
     cleanup();
@@ -156,7 +151,10 @@ describe("connected library and report design", () => {
     north.metrics = { leverage: { value: "965", unit: "US$m", period: "2026-06-30" } };
     useSnapshot(snapshot);
     render(<ConnectedApp path="/" mode="synthetic" />);
-    const value = await screen.findByText("US$965m");
+    fireEvent.click(
+      await screen.findByRole("button", { name: /Show runs and detail for Northbridge/ }),
+    );
+    const value = await screen.findByText("US$965m", { selector: "div" });
     expect(value).toHaveClass("whitespace-nowrap");
     const grid = value.closest("dl");
     expect(grid).toHaveClass("grid-cols-[repeat(auto-fit,minmax(9rem,1fr))]");
@@ -167,7 +165,11 @@ describe("connected library and report design", () => {
     useSnapshot(librarySnapshot());
     render(<ConnectedApp path="/" mode="synthetic" />);
     await screen.findByRole("heading", { name: "Northbridge" });
-    fireEvent.change(screen.getByLabelText("Sector"), { target: { value: "Industrials" } });
+    fireEvent.click(
+      within(screen.getByRole("group", { name: "Sector" })).getByRole("button", {
+        name: "Industrials",
+      }),
+    );
     const search = screen.getByRole("searchbox", { name: "Search issuers" });
     fireEvent.change(search, { target: { value: "zz" } });
     fireEvent.change(search, { target: { value: "zz no match" } });

@@ -16,7 +16,7 @@ const LOOK: Record<CellState, Look> = {
 const WITH_GAPS: Look = { shape: "dashed ring", tone: "text-text-secondary" };
 
 /** A cell's state as a shape and its word: never colour alone. */
-export function cellState(cell: Cell | undefined): { word: string; look: Look } {
+function cellState(cell: Cell | undefined): { word: string; look: Look } {
   const state = cell?.state ?? "plan-unknown";
   if (state === "assessed" && (cell?.gaps || cell?.issue))
     return { word: "Delivered with gaps", look: WITH_GAPS };
