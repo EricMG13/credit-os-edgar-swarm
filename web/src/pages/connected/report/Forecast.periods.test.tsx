@@ -67,6 +67,12 @@ const compareOneYear = () =>
       name: "Compare one year",
     }),
   );
+const allCases = () =>
+  fireEvent.click(
+    within(screen.getByRole("group", { name: "Grid columns" })).getByRole("button", {
+      name: "All cases",
+    }),
+  );
 const selectYear = (year: string) =>
   fireEvent.click(
     within(screen.getByRole("group", { name: "Year" })).getByRole("button", { name: year }),
@@ -247,8 +253,17 @@ it("marks a period a case does not publish apart from a figure it publishes as u
       return cell;
     });
   expect(downside(["FY2026E", "FY2027E", "FY2028E"])).toEqual(["5", "n.a. Not calculable", "n.a."]);
-  // The years only the base case publishes: the Downside case reads Not published.
-  expect(downside(["FY2029E", "FY2030E"])).toEqual(["Not published", "Not published"]);
+  // Every case over every kept year: the years only the base case publishes read Not published
+  // for the Downside case, apart from its figure, its recorded reason and its cell without one.
+  allCases();
+  expect(gridCells(CASH_PROXY)).toEqual([
+    ...["10", "11", "12", "13", "14"],
+    "5",
+    "n.a. Not calculable",
+    "n.a.",
+    "Not published This case publishes no FY2029E column.",
+    "Not published This case publishes no FY2030E column.",
+  ]);
 });
 
 it("marks an unpublished period in the line-item comparison when no case is selected", () => {
@@ -272,7 +287,15 @@ it("marks an unpublished period in the line-item comparison when no case is sele
     ["101", "81"],
   ]);
   // The year only the base case publishes: the Downside case reads Not published.
-  expect(revenue(["FY2028E"])).toEqual([["102", "Not published"]]);
+  allCases();
+  expect(gridCells("Revenue")).toEqual([
+    "100",
+    "101",
+    "102",
+    "80",
+    "81",
+    "Not published This case publishes no FY2028E column.",
+  ]);
 });
 
 it("says why more than six cases are not charted, and nothing about their periods", () => {

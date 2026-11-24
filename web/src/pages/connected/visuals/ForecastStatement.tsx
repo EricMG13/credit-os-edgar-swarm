@@ -14,7 +14,7 @@ const families = {
   other: "Other lines",
 } as const;
 type Family = keyof typeof families;
-type View = "selected" | "compare" | "history";
+type View = "selected" | "all" | "compare" | "history";
 
 function familyOf(row: Grid["rows"][number]): Family {
   const growth = /\b(?:YoY |annual )?growth$/i.test(row.label);
@@ -72,7 +72,7 @@ function statementColumns(
 type StatementColumn = ReturnType<typeof statementColumns>[number];
 /** A column the grid draws: one of the grid's own, or a case that publishes no column for the
  * compared year (`source` null). */
-type ShownColumn = GridColumn & { source: StatementColumn | null };
+type ShownColumn = GridColumn & { source: StatementColumn | null; missing?: string };
 
 const ACTUAL_YEAR = /^FY(\d{4})A?$/u;
 const INTEREST_ROW = /^(?:Interest|Interest coverage(?: \(.*\))?)$/i;
@@ -93,6 +93,35 @@ function latestActual(history: StatementColumn[]) {
   return latest ? [latest.column] : [];
 }
 
+type Kept = ReturnType<typeof analyzeScenarioPeriods>["periods"];
+
+/**
+ * Each shown case's own forecast columns, with a "Not published" column for every year kept for
+ * the comparison that another case publishes and this one does not: a year a case does not
+ * publish is said, never left to be inferred from a missing column.
+ */
+function caseColumns(lead: StatementColumn[], kept: Kept) {
+  const cases = [...new Map(lead.map((column) => [column.rawGroup, column])).values()];
+  return cases.flatMap((member) => {
+    const band = `Forecast · ${readerText(member.group)}`;
+    const own = lead.filter(({ rawGroup }) => rawGroup === member.rawGroup);
+    const absent = kept
+      .filter(
+        ({ period, groups }) =>
+          !groups.includes(member.rawGroup) && !own.some(({ label }) => label === period),
+      )
+      .map(({ period }): ShownColumn => ({
+        label: period,
+        band,
+        source: null,
+        missing: `This case publishes no ${period} column.`,
+      }));
+    return [...own.map((column) => shownOf(column, band)), ...absent].sort((a, b) =>
+      a.label.localeCompare(b.label),
+    );
+  });
+}
+
 function selectedView(
   selected: StatementColumn[],
   projections: StatementColumn[],
@@ -102,7 +131,7 @@ function selectedView(
   if (!lead.length) return history.map((column) => shownOf(column, readerText(column.group)));
   return [
     ...latestActual(history).map((column) => shownOf(column, "Actual")),
-    ...lead.map((column) => shownOf(column, `Forecast · ${readerText(column.group)}`)),
+    ...caseColumns(lead, []),
   ];
 }
 
@@ -151,6 +180,11 @@ function displayedColumns(
   const views = new Map<View, ShownColumn[]>([
     ["selected", selectedView(selected, projections, history)],
   ]);
+  // Every case over the years kept for the comparison, a year a case does not publish said so;
+  // with no year in common nothing is compared, so no year is said to be missing either.
+  const cases = new Set(projections.map(({ rawGroup }) => rawGroup));
+  if (cases.size > 1 && !comparison.noSharedPeriod)
+    views.set("all", caseColumns(projections, comparison.periods));
   if (period !== undefined) views.set("compare", compareView(projections, period));
   if (history.length)
     views.set(
@@ -160,6 +194,7 @@ function displayedColumns(
   const view = views.has(requestedView) ? requestedView : "selected";
   const shown = views.get(view) ?? [];
   return {
+    canShowAll: views.has("all"),
     hasSelected: selected.length > 0,
     hasProjections: projections.length > 0,
     hasHistory: history.length > 0,
@@ -212,7 +247,13 @@ function gridRows(grid: Grid, shown: ShownColumn[], period: string | undefined):
     band: row.band,
     total: row.total,
     family: families[familyOf(row)],
-    cells: shown.map(({ source }) => (source ? (row.cells[source.index] ?? {}) : unpublished)),
+    cells: shown.map(({ source, missing }) =>
+      source
+        ? (row.cells[source.index] ?? {})
+        : missing
+          ? { ...unpublished, reason: missing }
+          : unpublished,
+    ),
   }));
 }
 
@@ -225,7 +266,8 @@ function ColumnControls({
   setView: (view: View) => void;
   setPeriod: (period: string) => void;
 }) {
-  const { view, period, periods, hasSelected, hasProjections, hasHistory, canCompare } = facts;
+  const { view, period, periods, hasSelected, hasProjections, hasHistory, canCompare, canShowAll } =
+    facts;
   const segments = [
     {
       key: "selected",
@@ -235,6 +277,7 @@ function ColumnControls({
           ? "Forecast periods"
           : "Recorded periods",
     },
+    ...(canShowAll ? [{ key: "all", label: "All cases" }] : []),
     ...(canCompare ? [{ key: "compare", label: "Compare one year" }] : []),
     ...(hasHistory && hasProjections ? [{ key: "history", label: "History" }] : []),
   ];
