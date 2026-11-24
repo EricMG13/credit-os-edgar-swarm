@@ -635,22 +635,30 @@ export function ReportEvidence({
           <EvidenceHandoffs entries={entries} module={module} run={run} />
         )}
         {(tab === "Summary" || tab === "Record") && downloads}
-        {tab === "Record" && (!module || module === "CP-2G") && (
-          <>
-            {models.length > 0 && (
-              <div className="grid min-w-0 gap-4 lg:col-span-12">
-                <RecordedModelQualifications models={models} />
-              </div>
-            )}
-            {models.map((model) => (
-              <AssumptionRegister
-                key={model.id}
-                model={model}
-                entries={entries}
-                folder={run.folder}
-              />
-            ))}
-          </>
+        {tab === "Record" && (!module || module === "CP-2G") && models.length > 0 && (
+          <details className="min-w-0 rounded-ds-lg border border-border-subtle bg-surface-card p-5 sm:p-6 lg:col-span-12">
+            <summary className="cursor-pointer text-h4 font-medium text-text-primary">
+              Model notes and assumption registers
+              <span className="ml-2 text-small font-normal text-text-secondary">
+                as recorded for the forecast
+              </span>
+            </summary>
+            <div className="mt-4">
+              <Bento>
+                <div className="grid min-w-0 gap-4 lg:col-span-12">
+                  <RecordedModelQualifications models={models} />
+                </div>
+                {models.map((model) => (
+                  <AssumptionRegister
+                    key={model.id}
+                    model={model}
+                    entries={entries}
+                    folder={run.folder}
+                  />
+                ))}
+              </Bento>
+            </div>
+          </details>
         )}
         {tab === "Record" && (
           <details className="min-w-0 rounded-ds-lg border border-border-subtle bg-surface-card p-5 sm:p-6 lg:col-span-12">

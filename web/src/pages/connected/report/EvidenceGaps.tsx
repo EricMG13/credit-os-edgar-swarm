@@ -129,9 +129,9 @@ export function GapCounts({ items }: { items: GapItem[] }) {
   );
 }
 
-function NoGaps({ module }: { module?: string }) {
+function NoGaps({ module, compact = false }: { module?: string; compact?: boolean }) {
   return (
-    <EmptyState className="py-5">
+    <EmptyState className={compact ? "py-0" : "py-5"}>
       <EmptyState.Header>
         <EmptyState.FeaturedIcon icon={FileSearch02} />
       </EmptyState.Header>
@@ -246,7 +246,7 @@ export function GapSummary({
       }
     >
       {items.length === 0 ? (
-        <NoGaps module={module} />
+        <NoGaps module={module} compact />
       ) : (
         <>
           <GapCounts items={items} />

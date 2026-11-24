@@ -114,7 +114,7 @@ export function ScriptCheckMatrix({
         aria-label="Script checks by module"
         // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex
         tabIndex={0}
-        className="min-w-0 overflow-x-auto rounded-ds-md border border-border-hairline"
+        className="max-h-[32rem] min-w-0 overflow-auto rounded-ds-md border border-border-hairline"
       >
         <table className="w-full border-collapse text-small">
           <caption className="sr-only">Script check outcomes by check and module</caption>
@@ -122,7 +122,7 @@ export function ScriptCheckMatrix({
             <tr>
               <th
                 scope="col"
-                className="sticky left-0 min-w-40 bg-surface-card px-3 py-2 text-left font-medium text-text-secondary"
+                className="sticky top-0 left-0 z-20 min-w-40 bg-surface-subtle px-3 py-2 text-left font-medium text-text-secondary"
               >
                 Check
               </th>
@@ -130,7 +130,7 @@ export function ScriptCheckMatrix({
                 <th
                   key={id}
                   scope="col"
-                  className="min-w-32 px-3 py-2 text-left align-top font-medium"
+                  className="sticky top-0 z-10 min-w-32 bg-surface-subtle px-3 py-2 text-left align-top font-medium"
                 >
                   <a
                     href={`#evidence/checks/${encodeURIComponent(id)}`}

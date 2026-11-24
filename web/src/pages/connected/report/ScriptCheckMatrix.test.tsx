@@ -168,7 +168,7 @@ it("lays the table in a labelled, focusable scroll region with sticky first colu
   render(<ScriptCheckMatrix records={records} />);
   const region = screen.getByRole("region", { name: "Script checks by module" });
   expect(region).toHaveAttribute("tabindex", "0");
-  expect(region).toHaveClass("overflow-x-auto");
+  expect(region).toHaveClass("overflow-auto");
   expect(within(region).getByRole("table")).toBeInTheDocument();
   expect(screen.getByRole("columnheader", { name: "Check" })).toHaveClass("sticky", "left-0");
 });
