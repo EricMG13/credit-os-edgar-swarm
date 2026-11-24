@@ -109,10 +109,10 @@ mockup for a reason other than missing data):
 | Clearance | Status word, committee use, severity wells with pips | Module state badge + sentence | Status sentence as written (bottom line), then one designed gap well "Issue counts by severity and committee use are not typed in this run" (Method item 2) |
 | Since the earlier run | Verdict word (20 px), was → now chips, sentence | Sentence + link | Verdict word read from the first words of CP-8's bottom line when they are exactly "Better", "Worse" or "About the same" (the method requires that first sentence); stance chips: earlier run's CP-6 action bias → this run's, when both are stated; otherwise only the sentence. Never inferred |
 | Large figure tiles | Small title + basis line, 44 px figure, "from … in FY", Worse chip | Tile h4 title, period kicker | Title 13 px with the basis line under it (period, unit), as in the mockup |
-| Contrary evidence | Own tile, counter surface, "Contrary evidence" | One tile titled with the full module heading, rest paragraphs as wells | Contrary tile: the passage's first paragraph as the quote |
-| What would change the view | Own plain tile, two outcome wells | — | New tile: the passage's further paragraphs as written in wells; when the module wrote one paragraph, the designed gap "Favourable and adverse outcomes are not written apart in this run; the passage is quoted above" |
+| Contrary evidence | Own tile, counter surface | One tile, rest paragraphs as wells | Counter tile under the module's own heading ("Contrary evidence and what would change the view"): first paragraph as the quote, each further paragraph as written in its own well with its own trace. Never split by position (review finding: that would label a paragraph the module did not label) |
+| What would change the view | Own plain tile, two outcome wells | — | New tile, the designed gap until the outcomes are typed (Method 7): "The two outcomes, resolved favourably and resolved adversely, are not typed in this run; the module's passage is quoted above as written." |
 | Limits heading | "What this run could not do" | "Limitations" | Heading text as the mockup; h3; id `overview-limitations` kept |
-| Dates | Hidden when no dates | — | Tile always drawn; empty state "No dated events were recorded in this run." ; h3; id `overview-dates` kept |
+| Dates | Hidden when no dates | — | Tile always drawn; "No dated events were recorded in this run.", or, when events exist but none could be placed, the gap "No recorded event could be placed on the time axis. The issuer calendar lists the recorded gaps."; h3; id `overview-dates` kept |
 | Tile headings | — | Limits and Dates use h2 | h3, under the page's h2 |
 
 ### 2.3 History — `RunHistory` in `ReportLibrary.tsx`
@@ -183,7 +183,13 @@ Behaviour assertions (values, links, gaps, states) are kept against the new bloc
    `h2` every other tile heading is `h3`. Ask S10 to use `h3`.
 2. Publish who started a run (the run-start "Your name") on `PublishedRun` so History can draw it.
 3. `ReportFindings`' `overview` / `overviewLabel` / `afterBottomLine` / `besideBottomLine` props
-   (S2's `ReportContent.tsx`) are no longer used by the Overview; S2 may remove them.
+   (S2's `ReportContent.tsx`) are no longer used by the Overview; S2 may remove them. Likewise
+   `overviewCharts`, `foundationMetrics`, `headlineSources` in `reportView.ts` lost their Overview
+   caller.
+4. `Tile` (frozen) has no heading-level or small-head option: the mockup's 13 px tile heads are
+   written as an h3 inside the tile's children (`CallRow` `Head`), and History's h2 tile repeats
+   `Tile`'s classes. A `heading` prop on `Tile` would remove both.
+5. `report/stages.ts` fails `no-unnecessary-type-assertion` on the base commit (owner unclear).
 
 ## 7. Verification
 
@@ -198,4 +204,28 @@ Screenshots looked at, at 1440 and 390 px; what I saw:
 | v2, Overview 390 | Figures 2×2 legible; wall bars and labels at full size; downside scrolls in its tile; limits wells, pipeline (stages stacked), bottom lines and dates list all readable; breadcrumb wraps onto two lines. |
 | History 1440 / 390 | Crumbs end in "Runs"; no segment current; tile "Runs of Northbridge Synthetic Group", the who-started gap line, the timeline node marked as this run, date in mono, "Stance not stated" (the synthetic committee decision states no Final Action Bias, consistent with the call tile showing no stance chip), pathway chip, Finished, modules run, Open overview / What changed. |
 
-Checks: see the report to the coordinator (filled in when done).
+| Final, Overview 1440 | After the review fixes: same composition; counter tile titled with the module's heading; outcomes tile is the hatched gap; confidence scores named on a legend line under the bar; clearance, confidence and since-earlier have 13 px h3 heads. |
+| Final, Overview 390 | No horizontal page scroll (measured: `main` scroll width 390 = client width). Header chips wrap; maturity wall keeps 56 px per period and scrolls inside its tile when it needs more; downside scrolls inside its tile. |
+
+Independent review (Opus, given the code only) found 17 items; fixed: positional split of the
+counter passage; dates gaps shown as "none"; header chips forcing page scroll; module-count
+wording for "Delivered with gaps" and zero modules; 20 px link targets; verdict regex false
+positives on a comma; meter label collisions; maturity wall unreadable with many years and
+unmeasured frame; comparison problem not shown; two stance chips with different rules; small
+tiles without headings; History same-date order; small figures overflowing at 390. A further
+defect found by the trace tests: a gap reason citing a source was printed on the figure tile.
+Not fixed, noted: History repeats "Open overview" / "What changed" link names per row; the
+Forecast focus target is a wrapper `div`; the Downside scroll region is focusable on desktop too;
+rating "Entered at run start" is a tooltip only; `moduleName` falls back to a code for unknown
+earlier modules (pre-existing); History's tile repeats `Tile`'s classes because `Tile` has no
+h2 heading (request 4).
+
+Checks run: `npx tsc --noEmit` pass; `npx eslint --max-warnings=0` on every changed file pass
+(`report/stages.ts`, unchanged here, fails one rule on the base too); `npx prettier --check` on
+changed files pass; `npx vitest run src/pages/connected src/styles src/shell src/components`:
+170 files, 2,434 tests pass; `npm run unused`: one finding, `LeadProps` in the frozen
+`report/leads/types.ts` (not mine); `npm run build` pass. Not run: the full `npm run gates`
+(coverage, audit, duplication, file gates), the Python tests that read the web build, and
+`tools/quality_gate.py` (no Python changed; it also needs `origin/main`, absent here). Content
+was checked on the synthetic run only; long real text was exercised through the retained-text
+unit fixtures, not a rendered TransDigm run.
