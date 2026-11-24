@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from "react";
-import { ComparisonChart, type ComparisonPanel } from "@/components/chart/ComparisonChart";
+import { ComparisonChart, type ChartComparisonPanel } from "@/components/chart/ComparisonChart";
 import { STATUS_SETS } from "@/components/status/sets";
 import { StatusBadge } from "@/components/status/StatusBadge";
 import { TRACE_HOST } from "@/pages/library/parts/TraceControl";
@@ -186,7 +186,7 @@ function PriceAndYield({
   const second = quotes[chosen] ?? quotes[1];
   if (!first || !second) return null;
   const cases: [string, string] = [first.name, second.name];
-  const panels: ComparisonPanel[] = [
+  const panels: ChartComparisonPanel[] = [
     {
       measure: "Last-trade price ($)",
       max: Math.max(first.price, second.price, 1),

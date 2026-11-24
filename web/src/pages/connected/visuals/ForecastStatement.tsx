@@ -3,9 +3,10 @@ import { ButtonGroup, ButtonGroupItem } from "@/components/base/button-group/but
 import { field } from "../layout";
 import { unitLabel } from "../publishedReport";
 import type { ForecastSource } from "../report/ForecastRecord";
-import { forecastCaseLabel, gridOf, type Grid } from "./LegacyForecast";
+import { forecastCaseLabel, forecastCaseNames, gridOf, type Grid } from "./LegacyForecast";
 import { ForecastTable } from "./ForecastTable";
 import { record, stringsIn, word } from "./visualData";
+import { analyzeScenarioPeriods } from "./scenarioPeriods";
 
 const families = {
   accounts: "Accounts",
@@ -50,10 +51,15 @@ function joinCases(main: Grid, other: Grid | null): Grid | null {
 }
 
 function statementColumns(grid: Grid, selectedCase: string | undefined, downsideNote: string) {
+  const names = forecastCaseNames(
+    [...new Set(grid.columns.map(({ group }) => group))],
+    downsideNote,
+  );
   return grid.columns.map((column, index) => ({
     ...column,
     index,
-    group: forecastCaseLabel(column.group, downsideNote),
+    rawGroup: column.group,
+    group: names.get(column.group) ?? forecastCaseLabel(column.group, downsideNote),
     forecast:
       /^FY\d{4}E\b/u.test(column.label) ||
       /^(?:Base case|Downside\b|Upside\b)/u.test(column.group) ||
@@ -72,9 +78,17 @@ function displayedColumns(
   const projections = columns.filter(({ forecast }) => forecast);
   const history = columns.filter(({ forecast }) => !forecast);
   const selected = projections.filter(({ group }) => group === selectedCase);
-  const periods = [...new Set(projections.map(({ label }) => label))];
+  const comparison = analyzeScenarioPeriods(
+    projections.map(({ label, rawGroup, start, end }) => ({
+      period: label,
+      group: rawGroup,
+      start,
+      end,
+    })),
+  );
+  const periods = comparison.periods.map(({ period }) => period);
   const period = periods.includes(requestedPeriod) ? requestedPeriod : periods.at(-1);
-  const canCompare = new Set(projections.map(({ group }) => group)).size > 1;
+  const canCompare = periods.length > 0;
   const selectedColumns = [selected, projections, history].find((group) => group.length) ?? [];
   const views = new Map<View, typeof columns>([["selected", selectedColumns]]);
   if (canCompare)
@@ -85,7 +99,18 @@ function displayedColumns(
   if (history.length) views.set("history", history);
   const view = views.has(requestedView) ? requestedView : "selected";
   const visible = views.get(view) ?? selectedColumns;
-  return { selected, projections, history, periods, period, canCompare, view, visible };
+  return {
+    selected,
+    projections,
+    history,
+    periods,
+    period,
+    canCompare,
+    comparison,
+    comparisonBasisGap: comparison.basisGap,
+    view,
+    visible,
+  };
 }
 
 function displayedRows(grid: Grid, requestedFamily: Family, visible: { index: number }[]) {
@@ -114,6 +139,7 @@ function StatementPeriodControls({
   hasProjections,
   hasHistory,
   canCompare,
+  comparisonBasisGap,
   setView,
   setPeriod,
 }: {
@@ -124,6 +150,7 @@ function StatementPeriodControls({
   hasProjections: boolean;
   hasHistory: boolean;
   canCompare: boolean;
+  comparisonBasisGap: boolean;
   setView: (view: View) => void;
   setPeriod: (period: string) => void;
 }) {
@@ -165,6 +192,12 @@ function StatementPeriodControls({
           </select>
         </label>
       )}
+      {comparisonBasisGap && (
+        <p role="status" className="text-small text-text-secondary">
+          Some same-labeled scenario periods cannot be compared because their recorded start and end
+          dates do not match or cannot establish a unique period.
+        </p>
+      )}
     </>
   );
 }
@@ -189,10 +222,22 @@ function StatementView({
   const [requestedFamily, setFamily] = useState<Family>("accounts");
   const [requestedView, setView] = useState<View>("selected");
   const [requestedPeriod, setPeriod] = useState("");
-  const { selected, projections, history, periods, period, canCompare, view, visible } =
-    displayedColumns(grid, selectedCase, downsideNote, requestedView, requestedPeriod);
+  const {
+    selected,
+    projections,
+    history,
+    periods,
+    period,
+    canCompare,
+    comparison,
+    comparisonBasisGap,
+    view,
+    visible,
+  } = displayedColumns(grid, selectedCase, downsideNote, requestedView, requestedPeriod);
   const { rowsByFamily, family, rows } = displayedRows(grid, requestedFamily, visible);
   const groups = [...new Set(visible.map(({ group }) => group))];
+  const rawGroups = [...new Set(visible.map(({ rawGroup }) => rawGroup))];
+  const periodBasis = comparison.periods.find((candidate) => candidate.period === period);
   return (
     <section className="grid min-w-0 content-start gap-3">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
@@ -232,6 +277,7 @@ function StatementView({
           hasProjections={projections.length > 0}
           hasHistory={history.length > 0}
           canCompare={canCompare}
+          comparisonBasisGap={comparisonBasisGap}
           setView={setView}
           setPeriod={setPeriod}
         />
@@ -247,7 +293,10 @@ function StatementView({
             source(name, {
               case: groups.length === 1 ? groups[0] : "",
               groups,
+              rawGroups,
               periods: view === "compare" && period ? [period] : undefined,
+              periodStart: periodBasis?.start || undefined,
+              periodEnd: periodBasis?.end || undefined,
               ...selection,
             }))
         }

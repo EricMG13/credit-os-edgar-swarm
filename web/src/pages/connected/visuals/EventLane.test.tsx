@@ -1,6 +1,6 @@
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import { expect, it } from "vitest";
-import { EVENT_HEADERS, eventLane } from "./EventLane";
+import { EVENT_HEADERS, eventLane, eventRecords } from "./EventLane";
 import { KEY_EVENTS, KEY_GAPS, KEY_ORDER, KEY_YEARS, type KeyEvent } from "./EventLane.fixture";
 
 const cells = (e: KeyEvent) => [
@@ -40,6 +40,18 @@ function markerOf(index: number) {
 const strip = () => screen.getByRole("group", { name: "Events by year" });
 const list = () => screen.getByRole("group", { name: "Events in date order" });
 const yearLabel = (n: number) => (n === 1 ? "1 event" : `${String(n)} events`);
+
+it.each(["constructor", "toString", "valueOf"])(
+  "ignores inherited precision name %s safely",
+  (precision) => {
+    const table = {
+      line: 1,
+      headers: EVENT_HEADERS,
+      rows: [["2026-01-01", precision, "2025-12-01", "Event", "Historical", "Source", "Relevant"]],
+    };
+    expect(eventRecords(table)).toEqual([]);
+  },
+);
 
 it("draws one marker and one list item per event, each marker pointing at a distinct row", () => {
   draw();

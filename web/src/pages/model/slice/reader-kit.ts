@@ -10,6 +10,16 @@ export function fail(path: string, what: string): never {
   throw new SliceError(`${path}: ${what}`);
 }
 
+/** A reader page cannot expose two trace controls with the same accessible name. */
+export function distinctTraceControlNames(named: readonly { name: string; where: string }[]): void {
+  const seen = new Set<string>();
+  for (const item of named) {
+    if (seen.has(item.name))
+      fail(item.where, "expected a name no other trace control on the page has");
+    seen.add(item.name);
+  }
+}
+
 /** A string that may be empty: a chart's subtitle or note, which draws nothing when empty. */
 const freeText: Reader<string> = (value, path) =>
   typeof value === "string" ? value : fail(path, "expected a string");

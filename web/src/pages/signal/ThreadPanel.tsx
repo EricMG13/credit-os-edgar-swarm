@@ -4,7 +4,7 @@
 // route and moves focus to that thread's "Open thread" link. Everything here is in memory: posting
 // adds the comment to this page's list and a reaction toggle flips its pressed state; no count is
 // recomputed (the delivered string stays) and nothing is written.
-import { useRef, useState } from "react";
+import { useRef, useState, type RefObject } from "react";
 import { SlideoutMenu } from "@/components/application/slideout-menus/slideout-menu";
 import { Badge } from "@/components/base/badges/badges";
 import { CloseButton } from "@/components/base/buttons/close-button";
@@ -87,6 +87,108 @@ function freshId(thread: SignalThread, added: Added[]): string {
 const NOTE = "text-sm text-text-tertiary";
 const pressKey = (comment: SignalComment, word: ReactionWord) => JSON.stringify([comment.id, word]);
 
+function ConversationFooter({
+  thread,
+  writer,
+  viewer,
+  replyTo,
+  box,
+  onSend,
+  onCancelReply,
+}: {
+  thread: SignalThread;
+  writer: boolean;
+  viewer: ReturnType<typeof useSignalViewer>;
+  replyTo: SignalComment | null;
+  box: RefObject<HTMLTextAreaElement | null>;
+  onSend: (text: string) => void;
+  onCancelReply: () => void;
+}) {
+  let footer;
+  if (thread.archived) {
+    footer = <p className={NOTE}>This thread is archived. It can be read but not added to.</p>;
+  } else if (!writer) {
+    footer = <p className={NOTE}>Readers see this thread but not the reply box.</p>;
+  } else if (viewer.name === null || viewer.initials === null) {
+    footer = <p className={NOTE}>Set your name to write a comment.</p>;
+  } else {
+    footer = (
+      <Composer
+        name={viewer.name}
+        initials={viewer.initials}
+        replyingTo={replyTo === null ? null : replyTo.author.name}
+        onCancelReply={onCancelReply}
+        onSend={onSend}
+        boxRef={box}
+      />
+    );
+  }
+  return <SlideoutMenu.Footer>{footer}</SlideoutMenu.Footer>;
+}
+
+function ConversationContent({
+  thread,
+  story,
+  comments,
+  canWrite,
+  named,
+  flipped,
+  setReplyTo,
+  box,
+  said,
+  onToggle,
+}: {
+  thread: SignalThread;
+  story: SignalStory | null;
+  comments: SignalComment[];
+  canWrite: boolean;
+  named: boolean;
+  flipped: ReadonlySet<string>;
+  setReplyTo: (comment: SignalComment) => void;
+  box: RefObject<HTMLTextAreaElement | null>;
+  said: { count: number; text: string };
+  onToggle: (comment: SignalComment, word: ReactionWord) => void;
+}) {
+  return (
+    <SlideoutMenu.Content>
+      {thread.archivedLine === null ? null : (
+        <div className="self-start">
+          <ArchivedBadge>{thread.archivedLine}</ArchivedBadge>
+        </div>
+      )}
+      {story === null ? null : <Quoted story={story} />}
+      {thread.note === null ? null : (
+        <p className="rounded-ds-sm border border-border-hairline bg-surface-subtle px-3 py-2 whitespace-pre-wrap break-words text-text-primary">
+          {thread.note}
+        </p>
+      )}
+      {comments.length === 0 ? (
+        <p className={NOTE}>No comments yet</p>
+      ) : (
+        <MessageList
+          comments={comments}
+          onReply={
+            canWrite && named
+              ? (comment) => {
+                  setReplyTo(comment);
+                  box.current?.focus();
+                }
+              : null
+          }
+          isPressed={(comment, word) =>
+            (comment.reactions.find((r) => r.word === word)?.mine ?? false) !==
+            flipped.has(pressKey(comment, word))
+          }
+          onToggle={onToggle}
+        />
+      )}
+      <div role="status" className="sr-only">
+        {said.count > 0 ? <span key={said.count}>{said.text}</span> : null}
+      </div>
+    </SlideoutMenu.Content>
+  );
+}
+
 /** The thread's top, comments and footer; its state (what was posted, which reactions flipped) lives here. */
 function Conversation({
   thread,
@@ -129,71 +231,37 @@ function Conversation({
       text: replyTo === null ? "Comment posted" : `Reply to ${replyTo.author.name} posted`,
     });
   };
-  let footer;
-  if (thread.archived) {
-    footer = <p className={NOTE}>This thread is archived. It can be read but not added to.</p>;
-  } else if (!writer) {
-    footer = <p className={NOTE}>Readers see this thread but not the reply box.</p>;
-  } else if (viewer.name === null || viewer.initials === null) {
-    footer = <p className={NOTE}>Set your name to write a comment.</p>;
-  } else {
-    footer = (
-      <Composer
-        name={viewer.name}
-        initials={viewer.initials}
-        replyingTo={replyTo === null ? null : replyTo.author.name}
+  const onToggle = (comment: SignalComment, word: ReactionWord) => {
+    const next = new Set(flipped);
+    const key = pressKey(comment, word);
+    if (!next.delete(key)) next.add(key);
+    setFlipped(next);
+  };
+  return (
+    <>
+      <ConversationContent
+        thread={thread}
+        story={story}
+        comments={comments}
+        canWrite={canWrite}
+        named={named}
+        flipped={flipped}
+        setReplyTo={setReplyTo}
+        box={box}
+        said={said}
+        onToggle={onToggle}
+      />
+      <ConversationFooter
+        thread={thread}
+        writer={writer}
+        viewer={viewer}
+        replyTo={replyTo}
+        box={box}
+        onSend={send}
         onCancelReply={() => {
           setReplyTo(null);
         }}
-        onSend={send}
-        boxRef={box}
       />
-    );
-  }
-  return (
-    <>
-      <SlideoutMenu.Content>
-        {thread.archivedLine === null ? null : (
-          <div className="self-start">
-            <ArchivedBadge>{thread.archivedLine}</ArchivedBadge>
-          </div>
-        )}
-        {story === null ? null : <Quoted story={story} />}
-        {thread.note === null ? null : (
-          <p className="rounded-ds-sm border border-border-hairline bg-surface-subtle px-3 py-2 whitespace-pre-wrap break-words text-text-primary">
-            {thread.note}
-          </p>
-        )}
-        {comments.length === 0 ? (
-          <p className={NOTE}>No comments yet</p>
-        ) : (
-          <MessageList
-            comments={comments}
-            onReply={
-              canWrite && named
-                ? (comment) => {
-                    setReplyTo(comment);
-                    box.current?.focus();
-                  }
-                : null
-            }
-            isPressed={(comment, word) =>
-              (comment.reactions.find((r) => r.word === word)?.mine ?? false) !==
-              flipped.has(pressKey(comment, word))
-            }
-            onToggle={(comment, word) => {
-              const next = new Set(flipped);
-              const key = pressKey(comment, word);
-              if (!next.delete(key)) next.add(key);
-              setFlipped(next);
-            }}
-          />
-        )}
-        <div role="status" className="sr-only">
-          {said.count > 0 ? <span key={said.count}>{said.text}</span> : null}
-        </div>
-      </SlideoutMenu.Content>
-      <SlideoutMenu.Footer>{footer}</SlideoutMenu.Footer>
     </>
   );
 }

@@ -154,6 +154,22 @@ export function IdentityBand({
   entries: OutputEntry[];
   folder: string;
 }) {
+  const identity = identityDetails(catalogue, entries);
+  return (
+    <section
+      aria-label="Company"
+      className="flex flex-wrap items-start justify-between gap-x-8 gap-y-4 border-b border-border-hairline pb-4"
+    >
+      <div className="flex min-w-0 flex-1 basis-80 items-start gap-3">
+        <Building07 aria-hidden="true" className="mt-0.5 size-5 shrink-0 text-text-tertiary" />
+        <CompanyDescription {...identity} folder={folder} />
+      </div>
+      <CompanyRatings ratings={identity.ratings} differing={identity.differing} />
+    </section>
+  );
+}
+
+function identityDetails(catalogue: CatalogueRun | undefined, entries: OutputEntry[]) {
   const entry = entries.find(
     (item) => item.selected && item.output.module === "CP-1A" && !blocked(item),
   );
@@ -171,49 +187,63 @@ export function IdentityBand({
     (item) => item.selected && item.output.module === "CP-2H" && !blocked(item),
   );
   const differing = differingAgencies(registered, ratings);
+  return { entry, found, referenced, sector, ratings, differing };
+}
+
+type IdentityDetails = ReturnType<typeof identityDetails>;
+
+function CompanyDescription({
+  entry,
+  found,
+  referenced,
+  sector,
+  folder,
+}: Pick<IdentityDetails, "entry" | "found" | "referenced" | "sector"> & { folder: string }) {
   return (
-    <section
-      aria-label="Company"
-      className="flex flex-wrap items-start justify-between gap-x-8 gap-y-4 border-b border-border-hairline pb-4"
-    >
-      <div className="flex min-w-0 flex-1 basis-80 items-start gap-3">
-        <Building07 aria-hidden="true" className="mt-0.5 size-5 shrink-0 text-text-tertiary" />
-        <div className="grid min-w-0 gap-1">
-          {sector && <p className="text-caption text-text-tertiary">{sector}</p>}
-          {found && entry ? (
-            <p className={`${TRACE_HOST} flex items-start gap-2 text-text-primary`}>
-              <span
-                title={referenced ? undefined : found.text}
-                className={referenced ? "min-w-0 text-text-tertiary" : "line-clamp-2 min-w-0"}
-              >
-                {referenced ? IN_EVIDENCE : found.text}
-              </span>
-              <PublishedSource href={evidencePath(folder, entry, found.line)} name={DESCRIPTION}>
-                {DESCRIPTION}
-              </PublishedSource>
-            </p>
-          ) : (
-            <p className="text-text-tertiary">{NO_DESCRIPTION}</p>
-          )}
-        </div>
-      </div>
-      {ratings.length > 0 ? (
-        <div className="grid gap-1">
-          <ul className="flex flex-wrap gap-3">
-            {ratings.map((rating, index) => (
-              <RatingTile key={index} rating={rating} />
-            ))}
-          </ul>
-          <p className="text-caption text-text-secondary">{ENTERED}</p>
-          {differing.length > 0 && (
-            <Button href="#modules/CP-2H" color="link-gray" size="sm">
-              {`${moduleName("CP-2H")} shows a different rating for ${differing.join(", ")}`}
-            </Button>
-          )}
-        </div>
-      ) : (
-        <p className="text-text-tertiary">{NO_RATINGS}</p>
+    <div className="grid min-w-0 gap-1">
+      {sector && <p className="text-caption text-text-tertiary">{sector}</p>}
+      <DescriptionText entry={entry} found={found} referenced={referenced} folder={folder} />
+    </div>
+  );
+}
+
+function DescriptionText({
+  entry,
+  found,
+  referenced,
+  folder,
+}: Pick<IdentityDetails, "entry" | "found" | "referenced"> & { folder: string }) {
+  if (!found || !entry) return <p className="text-text-tertiary">{NO_DESCRIPTION}</p>;
+  return (
+    <p className={`${TRACE_HOST} flex items-start gap-2 text-text-primary`}>
+      <span
+        title={referenced ? undefined : found.text}
+        className={referenced ? "min-w-0 text-text-tertiary" : "line-clamp-2 min-w-0"}
+      >
+        {referenced ? IN_EVIDENCE : found.text}
+      </span>
+      <PublishedSource href={evidencePath(folder, entry, found.line)} name={DESCRIPTION}>
+        {DESCRIPTION}
+      </PublishedSource>
+    </p>
+  );
+}
+
+function CompanyRatings({ ratings, differing }: Pick<IdentityDetails, "ratings" | "differing">) {
+  if (!ratings.length) return <p className="text-text-tertiary">{NO_RATINGS}</p>;
+  return (
+    <div className="grid gap-1">
+      <ul className="flex flex-wrap gap-3">
+        {ratings.map((rating, index) => (
+          <RatingTile key={index} rating={rating} />
+        ))}
+      </ul>
+      <p className="text-caption text-text-secondary">{ENTERED}</p>
+      {differing.length > 0 && (
+        <Button href="#modules/CP-2H" color="link-gray" size="sm">
+          {`${moduleName("CP-2H")} shows a different rating for ${differing.join(", ")}`}
+        </Button>
       )}
-    </section>
+    </div>
   );
 }

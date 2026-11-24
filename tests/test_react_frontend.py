@@ -209,7 +209,7 @@ def test_the_react_pages_status_words_are_the_services() -> None:
     assert union(r"export type RunStatus =([^;]*);") == statuses
     ended = [s for s in statuses if s not in ("queued", "running", "finished")]
     assert union(r"export type EndedRun = [^&]*& \{\s*status:([^;]*);") == ended
-    assert union(r"export type ModuleState =([^;]*);") == list(get_args(ModuleState))
+    assert union(r"export type ConnectedModuleState =([^;]*);") == list(get_args(ModuleState))
     assert list(run_activity._ENDED) == ended
 
 

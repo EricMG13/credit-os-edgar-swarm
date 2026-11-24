@@ -54,7 +54,7 @@ function NewRun() {
   return <StartPage draft={firstDraft.id} />;
 }
 
-export const routes: readonly Route[] = [
+export const runRoutes: readonly Route[] = [
   {
     path: "/run/start",
     title: "Start a run",

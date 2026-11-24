@@ -37,6 +37,44 @@ interface FileUploadDropZoneProps {
   onSizeLimitExceed?: (files: File[]) => void;
 }
 
+function isFileTypeAccepted(file: File, accept?: string) {
+  if (!accept) return true;
+  const types = accept.split(",").map((type) => type.trim());
+  return types.some((type) => {
+    if (type.startsWith(".")) {
+      const extension = `.${file.name.split(".").pop()?.toLowerCase() ?? ""}`;
+      return extension === type.toLowerCase();
+    }
+    if (type.endsWith("/*")) {
+      const prefix = type.split("/")[0] ?? "";
+      return file.type.startsWith(`${prefix}/`);
+    }
+    return file.type === type;
+  });
+}
+
+function classifyFiles(
+  files: File[],
+  allowsMultiple: boolean,
+  maxSize: number | undefined,
+  accept: string | undefined,
+) {
+  const accepted: File[] = [];
+  const unaccepted: File[] = [];
+  const oversized: File[] = [];
+  const selected = allowsMultiple ? files : files.slice(0, 1);
+  for (const file of selected) {
+    if (maxSize !== undefined && file.size > maxSize) {
+      oversized.push(file);
+    } else if (isFileTypeAccepted(file, accept)) {
+      accepted.push(file);
+    } else {
+      unaccepted.push(file);
+    }
+  }
+  return { accepted, unaccepted, oversized };
+}
+
 export const FileUploadDropZone = ({
   className,
   hint,
@@ -50,34 +88,9 @@ export const FileUploadDropZone = ({
   onDropUnacceptedFiles,
   onSizeLimitExceed,
 }: FileUploadDropZoneProps) => {
-  const id = useId();
   const inputRef = useRef<HTMLInputElement>(null);
   const [isInvalid, setIsInvalid] = useState(false);
   const [isDraggingOver, setIsDraggingOver] = useState(false);
-
-  const isFileTypeAccepted = (file: File): boolean => {
-    if (!accept) return true;
-
-    // Split the accept string into individual types
-    const acceptedTypes = accept.split(",").map((type) => type.trim());
-
-    return acceptedTypes.some((acceptedType) => {
-      // Handle file extensions (e.g., .pdf, .doc)
-      if (acceptedType.startsWith(".")) {
-        const extension = `.${file.name.split(".").pop()?.toLowerCase() ?? ""}`;
-        return extension === acceptedType.toLowerCase();
-      }
-
-      // Handle wildcards (e.g., image/*)
-      if (acceptedType.endsWith("/*")) {
-        const typePrefix = acceptedType.split("/")[0] ?? "";
-        return file.type.startsWith(`${typePrefix}/`);
-      }
-
-      // Handle exact MIME types (e.g., application/pdf)
-      return file.type === acceptedType;
-    });
-  };
 
   const handleDragIn = (event: React.DragEvent<HTMLDivElement>) => {
     if (isDisabled) return;
@@ -99,40 +112,25 @@ export const FileUploadDropZone = ({
     // Reset the invalid state when processing files.
     setIsInvalid(false);
 
-    const acceptedFiles: File[] = [];
-    const unacceptedFiles: File[] = [];
-    const oversizedFiles: File[] = [];
+    const { accepted, unaccepted, oversized } = classifyFiles(
+      files,
+      allowsMultiple,
+      maxSize,
+      accept,
+    );
 
-    // If multiple files are not allowed, only process the first file
-    const filesToProcess = allowsMultiple ? files : files.slice(0, 1);
-
-    filesToProcess.forEach((file) => {
-      // Check file size first
-      if (maxSize !== undefined && file.size > maxSize) {
-        oversizedFiles.push(file);
-        return;
-      }
-
-      // Then check file type
-      if (isFileTypeAccepted(file)) {
-        acceptedFiles.push(file);
-      } else {
-        unacceptedFiles.push(file);
-      }
-    });
-
-    if (oversizedFiles.length > 0) {
+    if (oversized.length > 0) {
       setIsInvalid(true);
-      onSizeLimitExceed?.(oversizedFiles);
+      onSizeLimitExceed?.(oversized);
     }
 
-    if (acceptedFiles.length > 0) {
-      onDropFiles?.(acceptedFiles);
+    if (accepted.length > 0) {
+      onDropFiles?.(accepted);
     }
 
-    if (unacceptedFiles.length > 0) {
+    if (unaccepted.length > 0) {
       setIsInvalid(true);
-      onDropUnacceptedFiles?.(unacceptedFiles);
+      onDropUnacceptedFiles?.(unaccepted);
     }
 
     // Clear the input value to ensure the same file can be selected again
@@ -153,22 +151,71 @@ export const FileUploadDropZone = ({
   };
 
   return (
+    <DropZonePresentation
+      className={className}
+      hint={hint}
+      inputLabel={inputLabel}
+      chooseFiles={chooseFiles}
+      isDisabled={isDisabled}
+      accept={accept}
+      allowsMultiple={allowsMultiple}
+      isInvalid={isInvalid}
+      isDraggingOver={isDraggingOver}
+      inputRef={inputRef}
+      onDragIn={handleDragIn}
+      onDragOut={handleDragOut}
+      onDrop={handleDrop}
+      onInputChange={handleInputFileChange}
+    />
+  );
+};
+
+function DropZonePresentation({
+  className,
+  hint,
+  inputLabel,
+  chooseFiles,
+  isDisabled,
+  accept,
+  allowsMultiple,
+  isInvalid,
+  isDraggingOver,
+  inputRef,
+  onDragIn,
+  onDragOut,
+  onDrop,
+  onInputChange,
+}: {
+  className?: string;
+  hint: string;
+  inputLabel?: string;
+  chooseFiles: boolean;
+  isDisabled?: boolean;
+  accept?: string;
+  allowsMultiple: boolean;
+  isInvalid: boolean;
+  isDraggingOver: boolean;
+  inputRef: { current: HTMLInputElement | null };
+  onDragIn: (event: React.DragEvent<HTMLDivElement>) => void;
+  onDragOut: (event: React.DragEvent<HTMLDivElement>) => void;
+  onDrop: (event: React.DragEvent<HTMLDivElement>) => void;
+  onInputChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
+}) {
+  const id = useId();
+  return (
     <div
       data-dropzone
-      onDragOver={handleDragIn}
-      onDragEnter={handleDragIn}
-      onDragLeave={handleDragOut}
-      onDragEnd={handleDragOut}
-      onDrop={handleDrop}
-      className={cx(
-        "relative flex flex-col items-center gap-3 rounded-xl px-6 text-tertiary transition duration-100 ease-linear",
-        chooseFiles
-          ? "border border-dashed border-border-container bg-surface-subtle py-6"
-          : "bg-primary py-4 ring-1 ring-secondary ring-inset",
-        isDraggingOver && (chooseFiles ? "border-action" : "ring-2 ring-brand"),
-        isDisabled && "cursor-not-allowed bg-secondary",
+      onDragOver={onDragIn}
+      onDragEnter={onDragIn}
+      onDragLeave={onDragOut}
+      onDragEnd={onDragOut}
+      onDrop={onDrop}
+      className={dropZoneClassName({
         className,
-      )}
+        chooseFiles,
+        isDisabled,
+        isDraggingOver,
+      })}
     >
       <FeaturedIcon
         icon={UploadCloud02}
@@ -178,37 +225,16 @@ export const FileUploadDropZone = ({
       />
 
       <div className="flex flex-col gap-1 text-center">
-        <div
-          className={cx(
-            "flex justify-center gap-1 text-center",
-            chooseFiles && "flex-col items-center gap-3",
-          )}
-        >
-          <input
-            ref={inputRef}
-            id={id}
-            type="file"
-            aria-label={inputLabel ?? "Files"}
-            className="peer sr-only"
-            tabIndex={-1}
-            disabled={isDisabled}
-            accept={accept}
-            multiple={allowsMultiple}
-            onChange={handleInputFileChange}
-          />
-          {chooseFiles && (
-            <span className="text-sm font-semibold text-text-primary">Drop files here</span>
-          )}
-          <Button
-            color={chooseFiles ? "primary" : "link-color"}
-            size="md"
-            isDisabled={isDisabled}
-            onPress={() => inputRef.current?.click()}
-          >
-            {chooseFiles ? "Choose files" : "Click to upload"}
-          </Button>
-          {!chooseFiles && <span className="text-sm max-md:hidden">or drag and drop</span>}
-        </div>
+        <DropZonePrompt
+          id={id}
+          inputLabel={inputLabel}
+          chooseFiles={chooseFiles}
+          isDisabled={isDisabled}
+          accept={accept}
+          allowsMultiple={allowsMultiple}
+          inputRef={inputRef}
+          onInputChange={onInputChange}
+        />
         <p
           className={cx(
             "text-xs transition duration-100 ease-linear",
@@ -220,7 +246,83 @@ export const FileUploadDropZone = ({
       </div>
     </div>
   );
-};
+}
+
+function dropZoneClassName({
+  className,
+  chooseFiles,
+  isDisabled,
+  isDraggingOver,
+}: {
+  className?: string;
+  chooseFiles: boolean;
+  isDisabled?: boolean;
+  isDraggingOver: boolean;
+}) {
+  return cx(
+    "relative flex flex-col items-center gap-3 rounded-xl px-6 text-tertiary transition duration-100 ease-linear",
+    chooseFiles
+      ? "border border-dashed border-border-container bg-surface-subtle py-6"
+      : "bg-primary py-4 ring-1 ring-secondary ring-inset",
+    isDraggingOver && (chooseFiles ? "border-action" : "ring-2 ring-brand"),
+    isDisabled && "cursor-not-allowed bg-secondary",
+    className,
+  );
+}
+
+function DropZonePrompt({
+  id,
+  inputLabel,
+  chooseFiles,
+  isDisabled,
+  accept,
+  allowsMultiple,
+  inputRef,
+  onInputChange,
+}: {
+  id: string;
+  inputLabel?: string;
+  chooseFiles: boolean;
+  isDisabled?: boolean;
+  accept?: string;
+  allowsMultiple: boolean;
+  inputRef: { current: HTMLInputElement | null };
+  onInputChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
+}) {
+  return (
+    <div
+      className={cx(
+        "flex justify-center gap-1 text-center",
+        chooseFiles && "flex-col items-center gap-3",
+      )}
+    >
+      <input
+        ref={inputRef}
+        id={id}
+        type="file"
+        aria-label={inputLabel ?? "Files"}
+        className="peer sr-only"
+        tabIndex={-1}
+        disabled={isDisabled}
+        accept={accept}
+        multiple={allowsMultiple}
+        onChange={onInputChange}
+      />
+      {chooseFiles && (
+        <span className="text-sm font-semibold text-text-primary">Drop files here</span>
+      )}
+      <Button
+        color={chooseFiles ? "primary" : "link-color"}
+        size="md"
+        isDisabled={isDisabled}
+        onPress={() => inputRef.current?.click()}
+      >
+        {chooseFiles ? "Choose files" : "Click to upload"}
+      </Button>
+      {!chooseFiles && <span className="text-sm max-md:hidden">or drag and drop</span>}
+    </div>
+  );
+}
 
 export interface FileListItemProps {
   /** The name of the file. */

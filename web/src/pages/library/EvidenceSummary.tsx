@@ -3,7 +3,7 @@ import { Button } from "@/components/base/buttons/button";
 import { ProgressBar } from "@/components/base/progress-indicators/progress-indicators";
 import type { Evidence } from "./slice";
 import { DownloadButton } from "./parts/DownloadButton";
-import { MetricTile } from "./parts/MetricTile";
+import { LibraryMetricTile } from "./parts/MetricTile";
 import { Snippet } from "./parts/Snippet";
 import { SUBSECTION_HEADING } from "./parts/heading";
 import { evidenceHref } from "./parts/links";
@@ -46,7 +46,7 @@ export function EvidenceSummary({
       <section aria-label="Counts">
         <ul className="grid grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-4">
           {counts.map((count) => (
-            <MetricTile key={count.label} metric={count} traced={false} />
+            <LibraryMetricTile key={count.label} metric={count} traced={false} />
           ))}
         </ul>
       </section>

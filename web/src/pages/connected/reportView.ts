@@ -506,18 +506,32 @@ export function headlineSources(
   const sources: Record<string, HeadlineSource> = {};
   if (!entry || !catalogue || entry.output.module !== "CP-1" || blocked(entry)) return sources;
   for (const [key, where] of Object.entries(HEADLINE_CELLS)) {
-    const figure = catalogue.metrics[key];
-    const period = stated(figure) ? figure.period : undefined;
-    if (stated(figure) && !period) continue;
-    const found = headlineRow(entry, where, period ?? undefined);
-    if (!found) continue;
-    const href = evidencePath(folder, entry, found.line);
-    if (!stated(figure)) {
-      const said = found.cell.startsWith("Not supplied") ? { reason: found.cell } : {};
-      sources[key] = { href, period: found.period, ...said };
-    } else if (found.cell === String(figure.value)) sources[key] = { href, period: found.period };
+    const source = headlineSource(entry, catalogue, folder, key, where);
+    if (source) sources[key] = source;
   }
   return sources;
+}
+
+function headlineSource(
+  entry: OutputEntry,
+  catalogue: CatalogueRun,
+  folder: string,
+  key: string,
+  where: readonly [string, RegExp],
+): HeadlineSource | undefined {
+  const figure = catalogue.metrics[key];
+  const period = stated(figure) ? figure.period : undefined;
+  if (stated(figure) && !period) return undefined;
+  const found = headlineRow(entry, where, period ?? undefined);
+  if (!found) return undefined;
+  const href = evidencePath(folder, entry, found.line);
+  if (!stated(figure))
+    return {
+      href,
+      period: found.period,
+      ...(found.cell.startsWith("Not supplied") ? { reason: found.cell } : {}),
+    };
+  return found.cell === String(figure.value) ? { href, period: found.period } : undefined;
 }
 
 export function traceKey(entry: OutputEntry, line: number) {

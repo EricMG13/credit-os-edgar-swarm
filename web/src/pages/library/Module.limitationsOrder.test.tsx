@@ -4,7 +4,7 @@ import { cleanup, render, renderHook, screen, within } from "@testing-library/re
 import type { LibraryData } from "@/data";
 import { SourceContext } from "../source";
 import { useSourcesOn } from "./parts/SourcesSwitch";
-import { routes } from "./routes";
+import { libraryRoutes as routes } from "./routes";
 
 type Json = Record<string, unknown>;
 

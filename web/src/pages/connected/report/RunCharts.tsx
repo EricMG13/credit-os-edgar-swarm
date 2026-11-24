@@ -1,16 +1,8 @@
 import { memo } from "react";
-import { Button } from "@/components/base/buttons/button";
-import { ArrowRight } from "@untitledui/icons";
 import { heading } from "../layout";
-import {
-  blocked,
-  containsReference,
-  evidencePath,
-  type OutputEntry,
-  readerText,
-} from "../publishedReport";
+import { ModuleChartCard } from "./ModuleChartCard";
+import { blocked, containsReference, type OutputEntry, readerText } from "../publishedReport";
 import type { buildReportView } from "../reportView";
-import { LegacyVisuals } from "../visuals";
 
 const CHART_PREFIX = "Chart data: ";
 
@@ -100,25 +92,7 @@ export const RunCharts = memo(function RunCharts({
     <section aria-label="Run charts" className="grid min-w-0 gap-4">
       <h3 className={heading}>Run charts</h3>
       {groups.length ? (
-        groups.map(({ id, name, entry, output }) => (
-          <div key={id} className="grid min-w-0 gap-2">
-            <Button
-              className="w-fit"
-              href={`#modules/${encodeURIComponent(id)}`}
-              color="link-gray"
-              size="sm"
-              iconTrailing={ArrowRight}
-            >
-              {name}
-            </Button>
-            <LegacyVisuals
-              output={output}
-              sections={entry.sections}
-              evidenceHref={(line) => evidencePath(folder, entry, line)}
-              cards
-            />
-          </div>
-        ))
+        groups.map((chart) => <ModuleChartCard key={chart.id} chart={chart} folder={folder} />)
       ) : (
         <p>No charts were published for this run.</p>
       )}

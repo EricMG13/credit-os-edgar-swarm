@@ -18,7 +18,7 @@ import {
   CashProxy,
   cashProxyCases,
   forecastCaseOptions,
-  forecastCaseLabel,
+  forecastCaseNames,
   ForecastScope,
   gridOf,
   ForecastTrends,
@@ -87,8 +87,12 @@ function BasisNote({
   if (!limitation) return null;
   const grid = gridOf(raw);
   const cases = grid && cashProxyCases(grid, null);
-  const period = cases?.periods[0];
-  const value = cases?.series.find(({ name }) => name === "Base case")?.values[0];
+  const baseObservation = cases?.observations
+    .filter(({ group }) => group === "Base case")
+    .sort((a, b) => a.period.localeCompare(b.period))[0];
+  const period = baseObservation?.period;
+  const value =
+    baseObservation?.cell?.status === "value" ? amount(word(baseObservation.cell.exact)) : null;
   const fiscal = period?.slice(0, -1);
   const bridge = recordedBridge(handoff, raw.units, fiscal, value);
   return (
@@ -145,7 +149,7 @@ function ForecastCases({
           Forecast cases
         </h3>
         <p id="forecast-case-measure" className="text-sm text-text-secondary">
-          Cash proxy{first.period && ` · ${first.period}`} · {unitLabel(first.units)}
+          Cash proxy · each case's recorded period · {unitLabel(first.units)}
         </p>
       </div>
       <div
@@ -154,54 +158,72 @@ function ForecastCases({
         aria-describedby="forecast-case-measure forecast-case-note"
         className="grid min-w-0 overflow-hidden rounded-ds-md border border-border-hairline bg-border-hairline gap-px sm:grid-cols-2 xl:grid-cols-[repeat(auto-fit,minmax(13rem,1fr))]"
       >
-        {caseOptions.map(({ name, period, value, description, reason }) => (
-          <div
-            key={name}
-            className={`${TRACE_HOST} relative min-w-0 ${selectedCase === name ? "bg-surface-selected" : "bg-surface-card"}`}
-          >
-            <label className="block h-full cursor-pointer px-4 py-2 has-[:focus-visible]:outline-2 has-[:focus-visible]:-outline-offset-2 has-[:focus-visible]:outline-focus">
-              <input
-                type="radio"
-                name="forecast-case"
-                checked={selectedCase === name}
-                onChange={() => {
-                  setChosenCase(name);
-                }}
-                className="sr-only"
-              />
-              <span className="flex items-center justify-between gap-2 text-sm font-semibold text-text-primary">
-                {name}
-                <span
-                  aria-hidden="true"
-                  className={`size-4 flex-none rounded-full border ${selectedCase === name ? "border-5 border-action" : "border-border-control"}`}
+        {caseOptions.map(
+          ({ name, rawGroup, period, periodStart, periodEnd, value, description, reason }) => (
+            <div
+              key={name}
+              className={`${TRACE_HOST} relative min-w-0 ${selectedCase === name ? "bg-surface-selected" : "bg-surface-card"}`}
+            >
+              <label className="block h-full cursor-pointer px-4 py-2 has-[:focus-visible]:outline-2 has-[:focus-visible]:-outline-offset-2 has-[:focus-visible]:outline-focus">
+                <input
+                  type="radio"
+                  name="forecast-case"
+                  checked={selectedCase === name}
+                  onChange={() => {
+                    setChosenCase(name);
+                  }}
+                  className="sr-only"
                 />
-              </span>
-              <span className="mt-1 block pr-8 font-display text-h3 tabular-nums">
-                {typeof value === "number"
-                  ? new Intl.NumberFormat("en-US", { maximumFractionDigits: 2 }).format(value)
-                  : "n.a."}
-              </span>
-              {(!description || !shownQualifications.includes(description)) && (
-                <span className="reading-copy mt-2 block pr-7 text-small text-text-secondary">
-                  {description || "Case description not recorded."}
+                <span className="flex items-center justify-between gap-2 text-sm font-semibold text-text-primary">
+                  {name}
+                  <span
+                    aria-hidden="true"
+                    className={`size-4 flex-none rounded-full border ${selectedCase === name ? "border-5 border-action" : "border-border-control"}`}
+                  />
                 </span>
-              )}
-              {reason && (
-                <span className="reading-copy mt-2 block pr-7 text-small text-text-secondary">
-                  {readerText(reason)}
+                <span className="mt-1 block pr-8 font-display text-h3 tabular-nums">
+                  {typeof value === "number"
+                    ? new Intl.NumberFormat("en-US", { maximumFractionDigits: 2 }).format(value)
+                    : "n.a."}
                 </span>
-              )}
-            </label>
-            <div className="absolute right-2 bottom-2">
-              {source?.(name, {
-                case: name,
-                period,
-                row: "Cash proxy (not issuer free cash flow)",
-              })}
+                {period && (
+                  <span className="reading-copy mt-1 block pr-7 text-small text-text-secondary">
+                    {period}
+                    {periodStart && periodEnd ? ` · ${periodStart} to ${periodEnd}` : ""}
+                  </span>
+                )}
+                {(!description || !shownQualifications.includes(description)) && (
+                  <span className="reading-copy mt-2 block pr-7 text-small text-text-secondary">
+                    {description || "Case description not recorded."}
+                  </span>
+                )}
+                {reason && (
+                  <span className="reading-copy mt-2 block pr-7 text-small text-text-secondary">
+                    {readerText(reason)}
+                  </span>
+                )}
+              </label>
+              <div className="absolute right-2 bottom-2">
+                {source?.(name, {
+                  case: name,
+                  rawGroup,
+                  rawGroups: [rawGroup],
+                  period,
+                  row: "Cash proxy (not issuer free cash flow)",
+                  periodStart,
+                  periodEnd,
+                })}
+              </div>
             </div>
-          </div>
-        ))}
+          ),
+        )}
       </div>
+      {caseOptions.some(({ comparisonBasisGap: gap }) => gap) && (
+        <p role="status" className="reading-copy text-small text-text-secondary">
+          Some case periods are duplicate, differently dated, or do not share a recorded date basis.
+          Each case keeps its own dated figure; incompatible periods are omitted from comparisons.
+        </p>
+      )}
       <p id="forecast-case-note" className="text-small text-text-secondary">
         Case figures are rounded to at most 2 decimals.
       </p>
@@ -329,11 +351,12 @@ function ForecastTrendsSection({
     note.startsWith("Downside case is"),
   );
   if (!grid) return null;
-  const forecasts = other?.columns.some(
-    ({ group }) => forecastCaseLabel(group, downsideNote) === selectedCase,
-  )
-    ? other
-    : grid;
+  const rawGroups = [
+    ...new Set([...grid.columns, ...(other?.columns ?? [])].map(({ group }) => group)),
+  ];
+  const names = forecastCaseNames(rawGroups, downsideNote);
+  const selectedGroup = rawGroups.find((group) => names.get(group) === selectedCase);
+  const forecasts = other?.columns.some(({ group }) => group === selectedGroup) ? other : grid;
   return (
     <details className="mt-4 border-y border-border-hairline bg-surface-card px-4 py-3">
       <summary className="cursor-pointer font-semibold">Cash flow trends by line item</summary>
@@ -343,6 +366,7 @@ function ForecastTrendsSection({
           units={word(cashflow.units)}
           source={source}
           selectedCase={selectedCase}
+          selectedRawGroup={selectedGroup}
           downsideNote={downsideNote}
         />
       </div>

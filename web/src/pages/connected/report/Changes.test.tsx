@@ -1,19 +1,19 @@
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import type {
-  Changes as PublishedChanges,
+  PublishedChanges,
   OutputEntry,
   PublishedRun,
   Section,
   Snapshot,
 } from "../publishedReport";
-import { Changes } from "./Changes";
+import { ReportChanges } from "./Changes";
 
 const run = { folder: "current" } as PublishedRun;
 const snapshot = { chips: {} } as unknown as Snapshot;
 
 function renderChanges(change: PublishedChanges | null, entries: OutputEntry[] = []) {
-  return render(<Changes snapshot={snapshot} run={run} entries={entries} change={change} />);
+  return render(<ReportChanges snapshot={snapshot} run={run} entries={entries} change={change} />);
 }
 
 const LEDGER = [
@@ -80,7 +80,7 @@ describe("connected report Changes", () => {
     const { rerender } = renderChanges(null);
     expect(screen.getByText("No comparison was recorded for this run.")).toBeInTheDocument();
     rerender(
-      <Changes
+      <ReportChanges
         snapshot={snapshot}
         run={run}
         entries={[]}

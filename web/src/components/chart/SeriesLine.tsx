@@ -38,33 +38,68 @@ function point(
   return (
     <g key={index}>
       {mark}
-      {named ? (
-        <text
-          data-series-name={name}
-          data-emphasised={emphasised ? "" : undefined}
-          x={cx + NAME_INSET}
-          y={cy + 4 + nameDy}
-          fontSize={13}
-          fontWeight={emphasised ? 600 : 400}
-          fill={emphasised ? LABEL_FILL : NAME_FILL}
-        >
-          {name}
-        </text>
-      ) : null}
-      {label == null || labelOffset === undefined ? null : (
-        <text
-          data-label=""
-          data-series={name}
-          x={named ? cx - NAME_INSET : cx}
-          y={named ? cy - LABEL_RISE : cy + labelOffset}
-          textAnchor={named ? "end" : "middle"}
-          fontSize={13}
-          fill={LABEL_FILL}
-        >
-          {label}
-        </text>
-      )}
+      {named && <NameLabel name={name} x={cx} y={cy} dy={nameDy} emphasised={emphasised} />}
+      <ValueLabel label={label} name={name} x={cx} y={cy} named={named} offset={labelOffset} />
     </g>
+  );
+}
+
+function NameLabel({
+  name,
+  x,
+  y,
+  dy,
+  emphasised,
+}: {
+  name: string;
+  x: number;
+  y: number;
+  dy: number;
+  emphasised?: boolean;
+}) {
+  return (
+    <text
+      data-series-name={name}
+      data-emphasised={emphasised ? "" : undefined}
+      x={x + NAME_INSET}
+      y={y + 4 + dy}
+      fontSize={13}
+      fontWeight={emphasised ? 600 : 400}
+      fill={emphasised ? LABEL_FILL : NAME_FILL}
+    >
+      {name}
+    </text>
+  );
+}
+
+function ValueLabel({
+  label,
+  name,
+  x,
+  y,
+  named,
+  offset,
+}: {
+  label: string | null | undefined;
+  name: string;
+  x: number;
+  y: number;
+  named: boolean;
+  offset?: number;
+}) {
+  if (label == null || offset === undefined) return null;
+  return (
+    <text
+      data-label=""
+      data-series={name}
+      x={named ? x - NAME_INSET : x}
+      y={named ? y - LABEL_RISE : y + offset}
+      textAnchor={named ? "end" : "middle"}
+      fontSize={13}
+      fill={LABEL_FILL}
+    >
+      {label}
+    </text>
   );
 }
 

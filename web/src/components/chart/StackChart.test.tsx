@@ -1,5 +1,5 @@
 import { act, fireEvent, render, screen, within } from "@testing-library/react";
-import { StackChart, type StackPart } from "./StackChart";
+import { StackChart, type ChartStackPart as StackPart } from "./StackChart";
 
 // Values and strings are copied from the mock's script block (Model 3 Model, "Debt by instrument").
 const PARTS: StackPart[] = [

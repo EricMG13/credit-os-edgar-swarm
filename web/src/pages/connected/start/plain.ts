@@ -230,9 +230,17 @@ function valuationParts(
   index: (token?: string) => number | undefined,
 ): Resolved | null {
   const [first, ...more] = rest;
-  const top = [PEER_SOURCE_FIELD, BASIS_FIELD].find((item) => item.key === first);
   if (first === undefined) return { parts: [VALUATION_TITLE] };
+  const top = [PEER_SOURCE_FIELD, BASIS_FIELD].find((item) => item.key === first);
   if (top) return more.length ? null : { parts: [VALUATION_TITLE, top.label], field: top };
+  return valuationDetailParts(first, more, index);
+}
+
+function valuationDetailParts(
+  first: string,
+  more: string[],
+  index: (token?: string) => number | undefined,
+): Resolved | null {
   if (first === "peers" || first === "precedents") {
     const found = rowParts(first, more, ROW_SPECS[first].section);
     return found && { ...found, parts: [VALUATION_TITLE, ...found.parts] };

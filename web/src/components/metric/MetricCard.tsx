@@ -17,7 +17,7 @@ interface MetricCardProps {
   note?: string;
   /** Same metric card in a list, or as a standalone figure. */
   as?: "article" | "li";
-  /** Share label, figure and note rows with neighboring cards in a desktop grid. */
+  /** Share card rows with neighboring cards in desktop metric grids. */
   alignInGrid?: boolean;
   /** The source control belongs to the figure, without changing its card. */
   actions?: ReactNode;
@@ -26,6 +26,47 @@ interface MetricCardProps {
   figure?: ReactNode;
   delta?: ReactNode;
   children?: ReactNode;
+}
+
+function MetricDefinition({
+  label,
+  note,
+  control,
+}: {
+  label: string;
+  note?: string;
+  control?: ReactNode;
+}) {
+  if (control !== undefined) return control;
+  if (note === undefined) return null;
+  return (
+    <Tooltip title={note}>
+      <TooltipTrigger
+        aria-label={`About ${label}`}
+        className="rounded-ds-xs text-text-tertiary focus-visible:outline-2 focus-visible:outline-solid focus-visible:outline-offset-2 focus-visible:outline-focus"
+      >
+        <InfoCircle aria-hidden="true" className="size-4" />
+      </TooltipTrigger>
+    </Tooltip>
+  );
+}
+
+function MetricValue({ value, from }: { value: string | null; from?: string | null }) {
+  return (
+    <p>
+      <span className={`${METRIC_FIGURE} ${value === null ? "font-normal" : "font-semibold"}`}>
+        {value === null ? <Missing /> : value}
+      </span>
+      {from !== undefined && (
+        <>
+          {" "}
+          <span className="text-caption tabular-nums text-text-tertiary">
+            from {from === null ? <Missing /> : from}
+          </span>
+        </>
+      )}
+    </p>
+  );
 }
 
 export function MetricCard({
@@ -49,42 +90,14 @@ export function MetricCard({
         <div className="flex items-start justify-between gap-2">
           <div className="flex min-w-0 items-center gap-2">
             <p className="text-sm text-text-tertiary">{label}</p>
-            {definitionControl ??
-              (note !== undefined && (
-                <Tooltip title={note}>
-                  <TooltipTrigger
-                    aria-label={`About ${label}`}
-                    className="rounded-ds-xs text-text-tertiary focus-visible:outline-2 focus-visible:outline-solid focus-visible:outline-offset-2 focus-visible:outline-focus"
-                  >
-                    <InfoCircle aria-hidden="true" className="size-4" />
-                  </TooltipTrigger>
-                </Tooltip>
-              ))}
+            <MetricDefinition label={label} note={note} control={definitionControl} />
           </div>
           {actions}
         </div>
         <div
           className={`flex min-h-11 flex-wrap items-end justify-between gap-3${alignInGrid ? " lg:content-start" : ""}`}
         >
-          {figure === undefined ? (
-            <p>
-              <span
-                className={`${METRIC_FIGURE} ${value === null ? "font-normal" : "font-semibold"}`}
-              >
-                {value === null ? <Missing /> : value}
-              </span>
-              {from !== undefined && (
-                <>
-                  {" "}
-                  <span className="text-caption tabular-nums text-text-tertiary">
-                    from {from === null ? <Missing /> : from}
-                  </span>
-                </>
-              )}
-            </p>
-          ) : (
-            figure
-          )}
+          {figure === undefined ? <MetricValue value={value} from={from} /> : figure}
           {delta}
         </div>
         {alignInGrid && children != null ? (
