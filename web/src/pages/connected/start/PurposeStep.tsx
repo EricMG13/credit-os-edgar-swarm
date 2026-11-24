@@ -10,22 +10,12 @@ import {
 } from "./plain";
 import { SYNTHETIC_LIMITS, type IntakeView, shownCapText } from "./intake";
 import { SelectField } from "./fields";
-
-const PATHWAY_DESCRIPTIONS: Record<string, string> = {
-  lite_credit_assessment: "Review the issuer's fundamentals, credit drivers and downside.",
-  credit_snapshot: "Assess the issuer, downside, covenants, refinancing and forward cash flow.",
-  deep_credit_assessment: "Full credit assessment plus every specialist module.",
-  earnings_update: "Compare the latest results with an earlier period.",
-  relative_value: "Compare instruments, pricing and compensation for risk.",
-  covenant_refinancing: "Assess legal protections, funding needs and refinancing options.",
-  distressed_restructuring: "Assess stressed liquidity, covenants and recoveries.",
-  portfolio_decision: "Assess instruments and portfolio fit for a decision.",
-};
+import { PATHWAY_QUESTIONS } from "./pathways";
 
 const PATHWAY_CARDS = Object.entries(PATHWAYS).map(([id, pathway]) => ({
   id,
   title: pathway.label,
-  description: PATHWAY_DESCRIPTIONS[id] ?? "",
+  description: PATHWAY_QUESTIONS[id] ?? "",
   modules: `${String(drawnModules(pathway.modules).length)} base modules`,
 }));
 
@@ -40,10 +30,7 @@ export function PurposeFields({ view }: { view: IntakeView }) {
           purposes={PATHWAY_CARDS.map((pathway) => {
             const cap = view.caps[pathway.id];
             const capText = cap && shownCapText(Number(cap));
-            return {
-              ...pathway,
-              description: `${pathway.description} ${capText ? `Cap ${capText}.` : "Cap unavailable."}`,
-            };
+            return { ...pathway, cap: capText ? `Cap ${capText}` : "Cap unavailable" };
           })}
           onChange={view.changePathway}
         />
