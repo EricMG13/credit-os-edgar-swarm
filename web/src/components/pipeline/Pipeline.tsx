@@ -54,12 +54,17 @@ function stateOf(node: PipelineNode): State & { word: string } {
   return { ...(set[word] ?? STATUS_SETS["Run states"].Queued), word };
 }
 
-// Geometry in columns mode, in px: a node is 48 tall with an 8 gap; a second sub-column is offset
-// half a pitch so that every edge between sub-columns runs through a gap, never across a node.
-const NODE = 44;
-const PITCH = 52;
-const HALF = 26;
+// Geometry in columns mode, in px: a node is 44 tall (64 where its word is drawn) with an 8 gap; a
+// second sub-column is offset half a pitch so that every edge between sub-columns runs through a
+// gap, never across a node.
+const SHORT = 44;
+const TALL = 64;
+const GAP = 8;
 const WIDE = 4;
+
+/** A blocked module, or one delivered with gaps, has its word drawn in the node, not only keyed. */
+const showsWord = (node: PipelineNode) =>
+  node.state === "blocked" || node.word === "Delivered with gaps";
 
 type Sub = "S" | "A" | "B";
 interface Placed {
@@ -68,19 +73,22 @@ interface Placed {
   sub: Sub;
 }
 
-function place(nodes: readonly PipelineNode[]): { placed: Placed[]; height: number } {
+function place(nodes: readonly PipelineNode[]): { placed: Placed[]; height: number; node: number } {
+  const node = nodes.some(showsWord) ? TALL : SHORT;
+  const pitch = node + GAP;
   if (nodes.length <= WIDE)
     return {
-      placed: nodes.map((node, i) => ({ node, top: i * PITCH, sub: "S" })),
-      height: nodes.length * PITCH - (PITCH - NODE),
+      placed: nodes.map((entry, i) => ({ node: entry, top: i * pitch, sub: "S" })),
+      height: nodes.length * pitch - GAP,
+      node,
     };
   const split = Math.ceil(nodes.length / 2);
-  const placed: Placed[] = nodes.map((node, i) =>
+  const placed: Placed[] = nodes.map((entry, i) =>
     i < split
-      ? { node, top: i * PITCH, sub: "A" }
-      : { node, top: HALF + (i - split) * PITCH, sub: "B" },
+      ? { node: entry, top: i * pitch, sub: "A" }
+      : { node: entry, top: pitch / 2 + (i - split) * pitch, sub: "B" },
   );
-  return { placed, height: Math.max(...placed.map(({ top }) => top + NODE)) };
+  return { placed, height: Math.max(...placed.map(({ top }) => top + node)), node };
 }
 
 /** A stage's share of the width: two sub-columns take two, and a lone short name takes less. */
@@ -104,7 +112,7 @@ const AT = {
     head: "lg:h-8",
     body: "lg:flex lg:flex-1 lg:items-center",
     nodes: "lg:relative lg:block lg:h-(--h) lg:w-full",
-    item: "lg:absolute lg:top-(--top) lg:left-(--left) lg:h-11 lg:w-(--w)",
+    item: "lg:absolute lg:top-(--top) lg:left-(--left) lg:h-(--nh) lg:w-(--w)",
     box: "lg:h-full lg:px-1.5 lg:py-1.5 lg:text-caption",
     clamp: "lg:line-clamp-2",
     tag: "lg:sr-only",
@@ -118,7 +126,7 @@ const AT = {
     head: "xl:h-8",
     body: "xl:flex xl:flex-1 xl:items-center",
     nodes: "lg:grid-cols-3 xl:relative xl:block xl:h-(--h) xl:w-full",
-    item: "xl:absolute xl:top-(--top) xl:left-(--left) xl:h-11 xl:w-(--w)",
+    item: "xl:absolute xl:top-(--top) xl:left-(--left) xl:h-(--nh) xl:w-(--w)",
     box: "xl:h-full xl:px-1.5 xl:py-1.5 xl:text-caption",
     clamp: "xl:line-clamp-2",
     tag: "xl:sr-only",
@@ -130,7 +138,7 @@ const AT = {
 } as const;
 type Classes = (typeof AT)[keyof typeof AT];
 
-const STUB = "absolute top-1/2 h-px";
+const STUB = "pipeline-edge absolute top-1/2 h-px";
 
 function Mark({ shape, tone }: { shape: State["shape"]; tone: Tone }) {
   return (
@@ -142,6 +150,7 @@ function Mark({ shape, tone }: { shape: State["shape"]; tone: Tone }) {
 
 function NodeBody({ node, at }: { node: PipelineNode; at: Classes }) {
   const { shape, tone, word } = stateOf(node);
+  const drawn = showsWord(node);
   const quiet = QUIET_WORDS.has(word);
   return (
     <>
@@ -154,7 +163,18 @@ function NodeBody({ node, at }: { node: PipelineNode; at: Classes }) {
         )}
       </span>
       {quiet && <span className="sr-only">{word}</span>}
-      {!quiet && (
+      {drawn && (
+        <span
+          className={cx(
+            "flex items-center gap-1 text-caption font-medium text-warning-text",
+            MARK[tone === "neutral" ? "warning" : tone],
+          )}
+        >
+          <StatusShape shape={shape} />
+          <span className="text-warning-text">{word}</span>
+        </span>
+      )}
+      {!quiet && !drawn && (
         <>
           <span className={cx("flex-none", at.mark)}>
             <Mark shape={shape} tone={tone} />
@@ -184,7 +204,7 @@ const BOX =
   "relative flex min-h-11 min-w-0 flex-col justify-center gap-1 rounded-ds-sm border bg-surface-card px-3 py-2 text-small font-medium text-text-primary";
 
 function boxTone(node: PipelineNode) {
-  if (node.state === "blocked") return "border-dashed border-warning-mark";
+  if (node.state === "blocked") return "border-dashed border-warning-mark bg-warning-fill";
   if (node.state === "running") return "border-action bg-surface-selected";
   if (node.state === "failed")
     return stateOf(node).tone === "error" ? "border-error-mark" : "border-warning-mark";
@@ -219,7 +239,7 @@ function Stubs({
       {fed && (
         <span
           aria-hidden="true"
-          {...(flowing.into ? { "data-edge": "running" } : {})}
+          {...(flowing.into && node.state === "running" ? { "data-edge": "running" } : {})}
           className={cx(
             STUB,
             at.show,
@@ -253,19 +273,21 @@ function Bus({
   range,
   moving,
   at,
+  node,
 }: {
   side: "in" | "out";
   range: { top: number; height: number };
   moving: boolean;
   at: Classes;
+  node: number;
 }) {
   return (
     <span
       aria-hidden="true"
       data-bus={side}
-      style={{ top: range.top + NODE / 2, height: range.height }}
+      style={{ top: range.top + node / 2, height: range.height }}
       className={cx(
-        "absolute w-px bg-connector",
+        "pipeline-edge absolute w-px bg-connector",
         at.show,
         side === "in" ? "-left-3" : "-right-[13px]",
         moving && "pipeline-flow-y",
@@ -338,8 +360,8 @@ function Stage({
   at: Classes;
 }) {
   const Heading = level === 3 ? "h3" : "h4";
-  const { placed, height } = place(stage.nodes);
-  const middle = height / 2 - NODE / 2;
+  const { placed, height, node: nodeHeight } = place(stage.nodes);
+  const middle = height / 2 - nodeHeight / 2;
   const centres = (keep: (node: PipelineNode) => boolean) =>
     placed.filter(({ node }) => keep(node)).map(({ top }) => top);
   const emitters = context.last ? [] : centres((node) => !stops(node));
@@ -351,7 +373,9 @@ function Stage({
       </Heading>
       <div className={at.body}>
         <ul
-          style={{ "--h": `${String(height)}px` } as CSSProperties}
+          style={
+            { "--h": `${String(height)}px`, "--nh": `${String(nodeHeight)}px` } as CSSProperties
+          }
           className={cx("grid min-w-0 gap-2", at.nodes)}
         >
           {context.fed && (
@@ -363,10 +387,17 @@ function Stage({
               )}
               moving={context.busIn}
               at={at}
+              node={nodeHeight}
             />
           )}
           {emitters.length > 0 && (
-            <Bus side="out" range={span(emitters, middle)} moving={context.busOut} at={at} />
+            <Bus
+              side="out"
+              range={span(emitters, middle)}
+              moving={context.busOut}
+              at={at}
+              node={nodeHeight}
+            />
           )}
           {placed.map((entry) => (
             <NodeItem
@@ -377,8 +408,16 @@ function Stage({
                 fed: context.fed,
                 emits: !context.last && !stops(entry.node),
                 flowing: {
-                  into: context.flow === "running" && entry.node.state === "running",
-                  out: context.flow === "delivered" && entry.node.state === "delivered",
+                  into:
+                    context.flow === "running"
+                      ? entry.node.state === "running"
+                      : context.flow === "delivered" &&
+                        context.busIn &&
+                        entry.node.state !== "blocked",
+                  out:
+                    entry.node.state === "delivered" &&
+                    (context.flow === "delivered" ||
+                      (context.flow === "running" && context.busOut)),
                 },
               }}
             />

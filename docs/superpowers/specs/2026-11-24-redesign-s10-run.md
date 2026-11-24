@@ -194,3 +194,18 @@ stage headings on the Overview stay h3 beside the tile's h3 title, because `lowe
 Screenshots re-taken at 390, 768, 1024, 1280 and 1440 from the built page with fixtures (22-module
 run in flight, checker stop with three modules in flight, failed with no reason, capped, finished,
 unreachable; activity list with two running, one waiting, three ended with long reasons, empty).
+
+### Overview addendum (items 18–23)
+
+18 bottom lines are placed by count, not by the browser's column balancing: 13 lines are 5/4/4 in
+three columns and 7/6 in two (grid with per-item column/row variables, pipeline order kept).
+19 a blocked module draws its full name, the slash icon and "Not assessable" in a dashed orange
+outline on a warm fill; every node of its stage grows from 44 to 64 px so sub-columns still line up.
+20 the key lists only the states present (the old fixed legend text is gone). 21 the accessible name
+"Bottom line by module" is kept, and the visible heading now reads the same. 22 `byStage` returns
+rows in the stage's module order (one change in `report/stages.ts`); the lines are flattened from it.
+23 every edge is a solid connector-coloured line with the dashes laid over it, and in flight the
+delivered edges out of the stage before, the bus, and the edge into the running node move together.
+`lowerRows.test.tsx` is unchanged. Not verified in a browser: the Overview itself (this branch does
+not mount `PipelineRow`; S1 integrates it) — checked by DOM tests and on Run progress, which draws
+the same component with a blocked node.

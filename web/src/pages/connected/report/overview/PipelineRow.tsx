@@ -1,4 +1,5 @@
 import { ArrowRight, Dataflow03 } from "@untitledui/icons";
+import type { CSSProperties } from "react";
 import { Button } from "@/components/base/buttons/button";
 import { GapPanel } from "@/components/gap/GapPanel";
 import { Pipeline, type PipelineNode } from "@/components/pipeline";
@@ -34,10 +35,47 @@ function nodes(view: ReportView, lines: readonly Line[]): PipelineNode[] {
   }));
 }
 
-function LineText({ run, line }: { run: PublishedRun; line: Line }) {
+/** Where item `index` of `count` goes when they fill `columns` columns top to bottom, the first
+ *  columns taking the extra: thirteen items in three columns are 5, 4 and 4. */
+function cell(index: number, count: number, columns: number) {
+  const base = Math.floor(count / columns);
+  const extra = count % columns;
+  let column = 0;
+  let start = 0;
+  for (; column < columns; column += 1) {
+    const size = base + (column < extra ? 1 : 0);
+    if (index < start + size) return { column: column + 1, row: index - start + 1 };
+    start += size;
+  }
+  return { column: columns, row: 1 };
+}
+
+function LineText({
+  run,
+  line,
+  index,
+  count,
+}: {
+  run: PublishedRun;
+  line: Line;
+  index: number;
+  count: number;
+}) {
+  const two = cell(index, count, 2);
+  const three = cell(index, count, 3);
   const source = evidencePath(run.folder, line.entry, line.line ?? undefined);
   return (
-    <li className="mb-4 flex break-inside-avoid items-start justify-between gap-2 border-t border-border-hairline pt-3">
+    <li
+      style={
+        {
+          "--c2": two.column,
+          "--r2": two.row,
+          "--c3": three.column,
+          "--r3": three.row,
+        } as CSSProperties
+      }
+      className="flex items-start justify-between gap-2 border-t border-border-hairline pt-3 md:col-(--c2) md:row-(--r2) xl:col-(--c3) xl:row-(--r3)"
+    >
       <div className="grid min-w-0 gap-1">
         <h3 className="text-small font-medium text-text-primary">{line.name}</h3>
         {line.text !== null ? (
@@ -67,7 +105,8 @@ function OpenModules() {
 
 /** The run as a staged node graph, then each module's bottom line in three balanced columns. */
 export function PipelineRow({ run, view }: RowProps) {
-  const lines = moduleBottomLines(view, run);
+  // The graph's stage order, whatever order the service listed the lines in.
+  const lines = byStage(moduleBottomLines(view, run)).flatMap((stage) => stage.rows);
   const all = nodes(view, lines);
   if (!all.length) return null;
   const stages = byStage(all).map(({ name, rows }) => ({ name, nodes: rows }));
@@ -77,7 +116,7 @@ export function PipelineRow({ run, view }: RowProps) {
         <div className="flex flex-wrap items-baseline gap-x-3.5 gap-y-1">
           <h3 className="flex items-center gap-2.5 text-small font-medium text-text-primary">
             <Dataflow03 aria-hidden="true" className="size-4 text-text-secondary" />
-            Module pipeline
+            Bottom line by module
           </h3>
           <p className="text-caption text-text-tertiary">
             <span className="font-mono tabular-nums">{all.length}</span>{" "}
@@ -92,9 +131,12 @@ export function PipelineRow({ run, view }: RowProps) {
         <Pipeline label="Stages" stages={stages} flow="delivered" />
       </Well>
       {lines.length > 0 && (
-        <ul aria-label="Bottom lines" className="gap-x-8 md:columns-2 xl:columns-3">
-          {lines.map((line) => (
-            <LineText key={line.id} run={run} line={line} />
+        <ul
+          aria-label="Bottom lines"
+          className="grid gap-x-8 gap-y-4 md:grid-cols-2 xl:grid-cols-3"
+        >
+          {lines.map((line, index) => (
+            <LineText key={line.id} run={run} line={line} index={index} count={lines.length} />
           ))}
         </ul>
       )}

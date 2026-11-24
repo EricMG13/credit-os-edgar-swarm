@@ -162,15 +162,23 @@ it("flows nothing on a run that has stopped", () => {
   expect(document.querySelector(".pipeline-flow, .pipeline-flow-y")).toBeNull();
 });
 
-it("flows only into the running node on a run in flight", () => {
+it("flows only along the path into the running node on a run in flight, end to end", () => {
   render(<Pipeline label="Stages" stages={stages} flow="running" />);
   const moving = [...document.querySelectorAll(".pipeline-flow")];
-  expect(moving).toHaveLength(1);
-  expect(moving[0]?.closest("li")).toBe(nodeOf("Model"));
-  expect(moving[0]).toHaveAttribute("data-edge", "running");
-  // The bus beside it moves too, so the path reads as one line; no other stage's does.
+  // The path is continuous: the delivered nodes' edges out of the stage before, the bus, and the edge in.
+  expect(moving.map((edge) => edge.closest("li"))).toEqual([
+    nodeOf("Source readiness"),
+    nodeOf("Model"),
+  ]);
+  expect(moving.map((edge) => edge.getAttribute("data-edge"))).toEqual(["delivered", "running"]);
   expect(document.querySelectorAll(".pipeline-flow-y").length).toBeGreaterThan(0);
-  expect(nodeOf("Source readiness").querySelector(".pipeline-flow")).toBeNull();
+  expect(nodeOf("Financial foundation").querySelector(".pipeline-flow")).toBeNull();
+});
+
+it("draws every edge as a solid line, with the flow laid over it rather than replacing it", () => {
+  render(<Pipeline label="Stages" stages={stages} flow="delivered" />);
+  for (const edge of document.querySelectorAll(".pipeline-flow, .pipeline-flow-y"))
+    expect(edge).toHaveClass("pipeline-edge");
 });
 
 it("flows out of delivered nodes on a finished report, and marks only their edges delivered", () => {
@@ -243,4 +251,33 @@ it("gives a legend of the states in use, each as a shape and a word", () => {
 it("leaves the key out when its caller draws its own", () => {
   render(<Pipeline label="Stages" stages={stages} legend={false} />);
   expect(screen.queryByRole("list", { name: "Pipeline key" })).toBeNull();
+});
+
+it("gives a blocked node its full name, the slash icon and the word, drawn, not only read", () => {
+  render(<Pipeline label="Stages" stages={stages} />);
+  const blocked = nodeOf("Legal & covenants");
+  const box = blocked.querySelector("[data-node]");
+  expect(box).toHaveClass("border-dashed", "border-warning-mark", "bg-warning-fill");
+  const word = within(blocked).getByText("Not assessable");
+  expect(word.className).not.toMatch(/sr-only/);
+  expect(word.parentElement?.querySelector("svg[data-shape='slashed circle']")).not.toBeNull();
+});
+
+it("makes every node of a stage with a drawn word taller, so the sub-columns still line up", () => {
+  render(
+    <Pipeline
+      label="Stages"
+      stages={[
+        {
+          name: "Credit",
+          nodes: [...nodes(5), { id: "B", name: "Legal & covenants", state: "blocked" }],
+        },
+        { name: "Other", nodes: nodes(2) },
+      ]}
+    />,
+  );
+  const heights = [...document.querySelectorAll<HTMLElement>("ol ul")].map((ul) =>
+    ul.style.getPropertyValue("--nh"),
+  );
+  expect(heights).toEqual(["64px", "44px"]);
 });

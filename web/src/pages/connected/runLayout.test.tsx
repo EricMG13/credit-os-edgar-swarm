@@ -51,8 +51,8 @@ describe("Run progress layout", () => {
     expect(running).toHaveTextContent("Running");
     expect(running).toHaveAttribute("aria-current", "step");
     expect(running?.querySelector("[data-edge='running']")).toHaveClass("pipeline-flow");
-    // Only the path into the running module moves.
-    expect(pipeline.querySelectorAll(".pipeline-flow")).toHaveLength(1);
+    // Only the path into the running module moves: the delivered module's edge out, and the edge in.
+    expect(pipeline.querySelectorAll(".pipeline-flow")).toHaveLength(2);
   });
 
   it("makes the pipeline the h2 of its region, with the stage names beneath it", async () => {
