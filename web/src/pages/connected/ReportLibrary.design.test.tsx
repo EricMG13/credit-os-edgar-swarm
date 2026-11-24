@@ -549,7 +549,12 @@ describe("the overview carries every module's bottom line and the run's limitati
       "href",
       expect.stringMatching(/^\/report\/northbridge-2026#evidence\/.*-11$/),
     );
-    expect(within(lines).getAllByRole("listitem")).toHaveLength(4);
+    // Stages are list items too; a module is an item of a stage's own list.
+    expect(
+      within(lines)
+        .getAllByRole("listitem")
+        .filter((li) => li.parentElement?.tagName === "UL"),
+    ).toHaveLength(4);
     expect(lines.textContent).not.toMatch(/CP-/);
     expect(within(lines).queryByText(/Credit is stable/)).toBeNull();
 

@@ -44,6 +44,7 @@ import {
   foundationMetrics,
   headlineSources,
   moduleBottomLines,
+  moduleState,
   moduleOrder,
   overviewCharts,
   runLimitations,
@@ -58,7 +59,7 @@ import { Forecast } from "./report/Forecast";
 import { IdentityBand } from "./report/IdentityBand";
 import { MetricGrid } from "./report/MetricGrid";
 import { Modules } from "./report/Modules";
-import { ModuleBottomLines, RunLimitations } from "./report/OverviewModules";
+import { ModuleBottomLines, RunGlance, RunLimitations } from "./report/OverviewModules";
 import { PublishedTraceProvider } from "./report/PublishedTrace";
 import { PortfolioBasisProvider } from "./report/PortfolioBasis";
 import { useResource } from "./useResource";
@@ -342,6 +343,16 @@ function Overview({
       sources={headlineSources(foundation, view.catalogue, run.folder)}
     />
   );
+  const moduleRows = moduleBottomLines(view, run);
+  const limitations = runLimitations(view, run);
+  const next = watchRows?.[0];
+  const glance = (
+    <RunGlance
+      states={[...(view.lead ? [moduleState(view.lead)] : []), ...moduleRows.map((r) => r.state)]}
+      limitations={limitations.length}
+      nextDate={next ? { date: next.cells[0] ?? "", label: next.cells[3] || "Dated event" } : null}
+    />
+  );
   return (
     <>
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -375,6 +386,7 @@ function Overview({
             overviewLabel={view.lead.output.module === "CP-1B" ? "Earnings view" : "Credit view"}
             judgement={actionBias(view.lead)}
             afterBottomLine={figures}
+            besideBottomLine={glance}
           />
         </>
       ) : (
@@ -383,61 +395,69 @@ function Overview({
           <p className={card}>No credit view is available for this run.</p>
         </>
       )}
-      <ModuleBottomLines run={run} rows={moduleBottomLines(view, run)} />
-      <RunLimitations run={run} rows={runLimitations(view, run)} />
-      <KeyCharts run={run} charts={overviewCharts(view, run)} />
-      {calendar.rows.length > 0 && (
-        <section className={`${card} grid gap-3`}>
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <h2 id="overview-dates" tabIndex={-1} className={heading}>
-              Dates to watch
-            </h2>
-            <Button href="#calendar" color="link-gray" size="sm" iconTrailing={ArrowRight}>
-              Open issuer calendar
-            </Button>
-          </div>
-          {watchRows === null ? (
-            <p className="text-sm text-text-secondary" role="status">
-              This run needs a valid as-of date to identify upcoming events.
-            </p>
-          ) : watchRows.length === 0 ? (
-            <p className="text-sm text-text-secondary" role="status">
-              No recorded event dates fall on or after this run’s as-of date.
-            </p>
-          ) : (
-            <ul className="grid gap-2">
-              {watchRows.slice(0, 5).map((event, index) => (
-                <li
-                  key={`${event.href}-${String(index)}`}
-                  className="flex flex-wrap items-baseline justify-between gap-2 border-t border-border-hairline pt-2"
-                >
-                  <div>
-                    <p className="font-semibold">{event.cells[3] || "Dated event"}</p>
-                    <p className="text-sm text-text-secondary">
-                      {event.owner}
-                      {event.cells[6] ? ` · ${event.cells[6]}` : ""}
-                    </p>
-                    {event.cells[4] && (
-                      <p className="text-sm text-text-secondary">{event.cells[4]}</p>
-                    )}
-                    {event.timingWithinRecordedPeriod && (
+      <ModuleBottomLines run={run} rows={moduleRows} />
+      <div className="grid min-w-0 gap-4 lg:grid-cols-12">
+        <div
+          className={
+            calendar.rows.length > 0 ? "grid min-w-0 lg:col-span-7" : "grid min-w-0 lg:col-span-12"
+          }
+        >
+          <RunLimitations run={run} rows={limitations} />
+        </div>
+        {calendar.rows.length > 0 && (
+          <section className={`${card} grid content-start gap-3 lg:col-span-5`}>
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <h2 id="overview-dates" tabIndex={-1} className={heading}>
+                Dates to watch
+              </h2>
+              <Button href="#calendar" color="link-gray" size="sm" iconTrailing={ArrowRight}>
+                Open issuer calendar
+              </Button>
+            </div>
+            {watchRows === null ? (
+              <p className="text-sm text-text-secondary" role="status">
+                This run needs a valid as-of date to identify upcoming events.
+              </p>
+            ) : watchRows.length === 0 ? (
+              <p className="text-sm text-text-secondary" role="status">
+                No recorded event dates fall on or after this run’s as-of date.
+              </p>
+            ) : (
+              <ul className="grid gap-2">
+                {watchRows.slice(0, 5).map((event, index) => (
+                  <li
+                    key={`${event.href}-${String(index)}`}
+                    className="flex flex-wrap items-baseline justify-between gap-2 border-t border-border-hairline pt-2"
+                  >
+                    <div>
+                      <p className="font-semibold">{event.cells[3] || "Dated event"}</p>
                       <p className="text-sm text-text-secondary">
-                        Timing falls within the recorded period; the exact date is unresolved.
+                        {event.owner}
+                        {event.cells[6] ? ` · ${event.cells[6]}` : ""}
                       </p>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-3 text-sm">
-                    <span>{event.cells[0]}</span>
-                    <Button href={event.href} color="link-gray" size="sm">
-                      Evidence
-                    </Button>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
-      )}
+                      {event.cells[4] && (
+                        <p className="text-sm text-text-secondary">{event.cells[4]}</p>
+                      )}
+                      {event.timingWithinRecordedPeriod && (
+                        <p className="text-sm text-text-secondary">
+                          Timing falls within the recorded period; the exact date is unresolved.
+                        </p>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-3 text-sm">
+                      <span>{event.cells[0]}</span>
+                      <Button href={event.href} color="link-gray" size="sm">
+                        Evidence
+                      </Button>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+        )}
+      </div>
+      <KeyCharts run={run} charts={overviewCharts(view, run)} />
     </>
   );
 }

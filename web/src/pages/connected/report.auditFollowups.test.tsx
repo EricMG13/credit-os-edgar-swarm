@@ -216,7 +216,7 @@ it("J3-019 labels the source toggle by the highlight it actually controls", asyn
   expect(document.querySelector('[data-sources="on"]')).not.toBeNull();
 });
 
-it("C3-016 C3-021 keeps a referenced lead in its band with figures outside it", () => {
+it("C3-016 C3-021 keeps a referenced lead in its tile with figures outside it", () => {
   const { run, snapshot } = fixture();
   const entry = outputEntries(snapshot, run, "current").find(
     ({ output }) => output.module === "CP-6",
@@ -242,7 +242,7 @@ it("C3-016 C3-021 keeps a referenced lead in its band with figures outside it", 
     />,
   );
   const band = screen.getByRole("region", { name: "Credit view" });
-  expect(band).toHaveClass("bg-surface-inverse");
+  expect(band).toHaveClass("bg-surface-card", "rounded-ds-lg");
   expect(within(band).getByRole("link", { name: "Read this passage in Evidence" })).toHaveAttribute(
     "href",
     `/report/current#evidence/current%2FCP-6~${hashes[1]}-4`,

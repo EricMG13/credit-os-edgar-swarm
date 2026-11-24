@@ -656,10 +656,10 @@ function findingsTraces(snapshot: Snapshot, entry: OutputEntry, sections: Sectio
 }
 
 const CONFIDENCE_MARK_TONES = new Map([
-  ["High", "bg-brand-500 text-white"],
+  ["High", "bg-brand-700 text-white"],
   ["Medium", "bg-brand-200 text-text-primary"],
   ["Low", "bg-brand-50 text-text-primary"],
-  ["Insufficient Information", "bg-white/10 text-white"],
+  ["Insufficient Information", "bg-surface-subtle text-text-secondary"],
 ]);
 const CONFIDENCE_MARK_TRACE = "module-confidence";
 
@@ -671,7 +671,7 @@ function ConfidenceMark({ value, band, trace }: { value: number; band: string; t
       aria-label="Confidence score"
     >
       <div
-        className={`grid w-full justify-items-center gap-0.5 rounded-ds-sm px-2 py-2 text-center ${CONFIDENCE_MARK_TONES.get(band) ?? "bg-white/10 text-white"}`}
+        className={`grid w-full justify-items-center gap-0.5 rounded-ds-sm px-2 py-2 text-center ${CONFIDENCE_MARK_TONES.get(band) ?? "bg-surface-subtle text-text-secondary"}`}
       >
         <span className="text-xs font-medium">Confidence</span>
         <span className="font-display text-h4 tabular-nums">
@@ -680,7 +680,7 @@ function ConfidenceMark({ value, band, trace }: { value: number; band: string; t
         </span>
         <span className="text-xs leading-tight">{band}</span>
       </div>
-      <TraceControl trace={trace} label="Show sources for the confidence score" onDark />
+      <TraceControl trace={trace} label="Show sources for the confidence score" />
     </div>
   );
 }
@@ -887,9 +887,11 @@ function renderFindingGroups(
     const [section, contrary] = group;
     if (!contrary) return drawSection(section);
     return (
-      <div key={section.line} className="grid min-w-0 gap-4 lg:grid-cols-2">
-        {drawSection(section)}
-        {drawSection(contrary)}
+      <div key={section.line} className="grid min-w-0 gap-4 lg:grid-cols-12">
+        <div className="grid min-w-0 lg:col-span-7">{drawSection(section)}</div>
+        <div className="grid min-w-0 lg:col-span-5 [&>*]:border-info-edge [&>*]:bg-info-fill">
+          {drawSection(contrary)}
+        </div>
       </div>
     );
   });
@@ -911,6 +913,7 @@ type FindingSectionProps = {
   marker?: ReactNode;
   judgement?: string;
   trailingFigures?: ReactNode;
+  beside?: ReactNode;
 };
 
 function BottomLinePassage({
@@ -922,6 +925,7 @@ function BottomLinePassage({
   marker,
   judgement,
   trailingFigures,
+  beside,
   first,
 }: FindingSectionProps & { first: Extract<Block, { type: "text" }> }) {
   const body = readParagraph(first.text).body;
@@ -934,29 +938,33 @@ function BottomLinePassage({
       id={`finding-${String(section.line)}`}
       tabIndex={-1}
     >
-      <BottomLine
-        level="h2"
-        marker={marker}
-        lead={
-          referenced ? (
-            <Button
-              href={evidencePath(run.folder, entry, first.line)}
-              color="link-gray"
-              size="sm"
-              iconTrailing={ArrowRight}
-              className="text-white hover:text-white"
-            >
-              Read this passage in Evidence
-            </Button>
-          ) : undefined
-        }
-        text={{
-          label: findingLabel(section, overviewLabel),
-          lead: referenced ? "" : (judgement ?? prose),
-          rest: judgement ? prose : "",
-          trace: traceKey(entry, first.line),
-        }}
-      />
+      <div className={beside ? "grid min-w-0 gap-4 lg:grid-cols-12" : "grid min-w-0"}>
+        <div className={beside ? "min-w-0 lg:col-span-8" : "min-w-0"}>
+          <BottomLine
+            level="h2"
+            marker={marker}
+            lead={
+              referenced ? (
+                <Button
+                  href={evidencePath(run.folder, entry, first.line)}
+                  color="link-gray"
+                  size="sm"
+                  iconTrailing={ArrowRight}
+                >
+                  Read this passage in Evidence
+                </Button>
+              ) : undefined
+            }
+            text={{
+              label: findingLabel(section, overviewLabel),
+              lead: referenced ? "" : (judgement ?? prose),
+              rest: judgement ? prose : "",
+              trace: traceKey(entry, first.line),
+            }}
+          />
+        </div>
+        {beside ? <div className="min-w-0 lg:col-span-4">{beside}</div> : null}
+      </div>
       {trailingFigures}
       <BottomLineContinuation
         section={section}
@@ -1124,6 +1132,7 @@ export function ReportFindings({
   overview = false,
   overviewLabel,
   afterBottomLine,
+  besideBottomLine,
   moduleConfidence,
   beforeLimitations,
   judgement,
@@ -1137,6 +1146,8 @@ export function ReportFindings({
   overview?: boolean;
   overviewLabel?: string;
   afterBottomLine?: ReactNode;
+  /** Overview draws this tile beside the bottom line on a wide screen. */
+  besideBottomLine?: ReactNode;
   /** Modules supplies its confidence tile as a fallback for an unscored or absent Bottom line. */
   moduleConfidence?: ReactNode;
   /** Drawn after the prose passages and before Limitations (after the last passage without one). */
@@ -1191,6 +1202,7 @@ export function ReportFindings({
       marker={marker}
       judgement={judgement}
       trailingFigures={trailingFigures}
+      beside={besideBottomLine}
     />
   );
   const drawn = renderFindingGroups(groups, drawSection, summary, beforeLimitations, figuresAt);

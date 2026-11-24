@@ -4,7 +4,7 @@ import { expect, it } from "vitest";
 import { BottomLine } from "./BottomLine";
 import { TraceButton } from "./TraceControl";
 
-it("gives the bottom-line band a compact width treatment for phones", () => {
+it("gives the bottom-line tile a compact padding for phones", () => {
   render(
     <RunContext.Provider value={{ traces: {}, open: () => {} }}>
       <BottomLine
@@ -14,8 +14,8 @@ it("gives the bottom-line band a compact width treatment for phones", () => {
     </RunContext.Provider>,
   );
   const band = screen.getByRole("region", { name: "Bottom line" });
-  expect(band.className).toContain("px-4");
-  expect(band.className).toContain("sm:px-8");
+  expect(band.className).toContain("p-5");
+  expect(band.className).toContain("sm:p-8");
 });
 
 it("keeps source controls easy to tap on narrow screens and unchanged on desktop", () => {

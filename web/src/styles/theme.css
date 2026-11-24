@@ -398,8 +398,8 @@ body {
 .gap-hatch {
   background-image: repeating-linear-gradient(
     135deg,
-    var(--color-surface-card) 0 8px,
-    var(--color-surface-canvas) 8px 16px
+    var(--color-surface-card) 0 5px,
+    var(--color-border-container) 5px 6px
   );
 }
 

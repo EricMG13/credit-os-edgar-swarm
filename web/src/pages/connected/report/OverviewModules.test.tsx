@@ -48,7 +48,8 @@ const rows = [
 
 it("draws each row's trace control beside its sentence, not alone on a line below", () => {
   render(<ModuleBottomLines run={{ folder: "run" } as PublishedRun} rows={rows} />);
-  const items = screen.getAllByRole("listitem");
+  // Stages are list items too; a module is an item of a stage's own list.
+  const items = screen.getAllByRole("listitem").filter((li) => li.parentElement?.tagName === "UL");
   expect(items).toHaveLength(3);
   for (const item of items) {
     const control = within(item).getByRole("link", { name: /^Source for / });
