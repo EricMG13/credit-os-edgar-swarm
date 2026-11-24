@@ -1917,8 +1917,10 @@
       "pack": "/home/user/swarm-root/inputs/packs/1482512-hudson-pacific-properties-inc-hpp",
       "context": "/home/user/swarm-root/inputs/contexts/1482512-hudson-pacific-properties-inc-hpp.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-hpp-1482512",
-      "status": "pending",
-      "attempts": 0
+      "status": "running",
+      "attempts": 0,
+      "claimed_at": "2026-11-18T13:10:26+00:00",
+      "claims": 1
     },
     {
       "issuer_id": "chrd-1486159",
@@ -1928,8 +1930,10 @@
       "pack": "/home/user/swarm-root/inputs/packs/1486159-chord-energy-corp",
       "context": "/home/user/swarm-root/inputs/contexts/1486159-chord-energy-corp.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-chrd-1486159",
-      "status": "pending",
-      "attempts": 0
+      "status": "running",
+      "attempts": 0,
+      "claimed_at": "2026-11-18T13:10:26+00:00",
+      "claims": 1
     },
     {
       "issuer_id": "bwxt-1486957",
@@ -1939,8 +1943,10 @@
       "pack": "/home/user/swarm-root/inputs/packs/1486957-bwx-technologies-inc",
       "context": "/home/user/swarm-root/inputs/contexts/1486957-bwx-technologies-inc.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-bwxt-1486957",
-      "status": "pending",
-      "attempts": 0
+      "status": "running",
+      "attempts": 0,
+      "claimed_at": "2026-11-18T13:10:26+00:00",
+      "claims": 1
     },
     {
       "issuer_id": "rlj-1511337",
@@ -1950,8 +1956,10 @@
       "pack": "/home/user/swarm-root/inputs/packs/1511337-rlj-lodging-trust",
       "context": "/home/user/swarm-root/inputs/contexts/1511337-rlj-lodging-trust.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-rlj-1511337",
-      "status": "pending",
-      "attempts": 0
+      "status": "running",
+      "attempts": 0,
+      "claimed_at": "2026-11-18T13:10:26+00:00",
+      "claims": 1
     },
     {
       "issuer_id": "lind-1512499",
