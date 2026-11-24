@@ -162,7 +162,10 @@ it("groups limitations into one well per module and keeps the in-page anchor", (
     .getAllByRole("listitem")
     .filter((li) => li.className.includes("border-dashed"));
   expect(wells).toHaveLength(3);
-  expect(wells[0]).toHaveClass("border-warning-mark");
+  expect(wells[0]).toHaveClass("border-warning-mark", "gap-hatch");
+  expect(wells[0]?.className).not.toMatch(/repeating-linear-gradient/);
+  for (const link of within(tile).getAllByRole("link", { name: /^(Legal|Fundamental|Security)/ }))
+    expect(link).toHaveClass("min-h-8", "max-[480px]:min-h-11");
   expect(within(wells[0] as HTMLElement).getByText("Not assessable")).toBeInTheDocument();
   expect(within(wells[1] as HTMLElement).getByText("2 recorded")).toBeInTheDocument();
   expect(

@@ -14,6 +14,7 @@ import {
 import { moduleOrder } from "../reportView";
 import { StanceChip } from "./overview/CallRow";
 import { runStance } from "./overview/changeData";
+import { Tile } from "./overview/Tile";
 
 function runDetails(snapshot: Snapshot, key: string, run: PublishedRun) {
   if (run.history)
@@ -160,13 +161,7 @@ export function RunHistory({
   for (const [, record] of records)
     if (record.asOf) dates.set(record.asOf, (dates.get(record.asOf) ?? 0) + 1);
   return (
-    <section
-      aria-labelledby="history-title"
-      className="flex min-w-0 flex-col gap-5 rounded-ds-lg border border-border-subtle bg-surface-card p-5 sm:p-6"
-    >
-      <h2 id="history-title" className="text-h3 font-medium text-text-primary">
-        Runs of {issuer}
-      </h2>
+    <Tile span={12} as="h2" label={`Runs of ${issuer}`} title={`Runs of ${issuer}`}>
       <p className="text-caption text-gap-text">
         Who started each run is not published with the report.
       </p>
@@ -186,6 +181,6 @@ export function RunHistory({
           />
         ))}
       </ol>
-    </section>
+    </Tile>
   );
 }

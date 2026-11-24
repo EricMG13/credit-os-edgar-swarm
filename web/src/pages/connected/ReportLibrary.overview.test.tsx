@@ -114,7 +114,6 @@ const ORDER = [
   "Headline figures",
   "Key findings",
   "Contrary evidence and what would change the view",
-  "What would change the view",
   "Maturity wall",
   "Capital structure by rank",
   "Covenant headroom",
@@ -195,6 +194,16 @@ it("heads every report page with the breadcrumb, the name, the sector line and q
     "href",
     "/run/acme",
   );
+  const order = [
+    within(header).getByRole("heading", { level: 1 }),
+    within(header).getByRole("navigation", { name: "Report sections" }),
+    within(header).getByRole("link", { name: "Run progress" }),
+  ];
+  for (const [earlier, later] of [
+    [order[0], order[1]],
+    [order[1], order[2]],
+  ] as const)
+    expect(earlier.compareDocumentPosition(later) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   expect(within(header).queryByText(/acme-old|acmeKey|CP-6/)).toBeNull();
 });
 

@@ -76,6 +76,7 @@ export function Tile({
   className?: string;
   children: ReactNode;
 }) {
+  const Heading = as;
   return (
     <section
       aria-label={label}
@@ -94,7 +95,9 @@ export function Tile({
           <div className="flex min-w-0 flex-col gap-1">
             {kicker != null && <p className="text-caption text-text-tertiary">{kicker}</p>}
             {title != null && (
-              <h3 className="text-h4 font-medium text-balance text-text-primary">{title}</h3>
+              <Heading className="text-h4 font-medium text-balance text-text-primary">
+                {title}
+              </Heading>
             )}
           </div>
           {trace}

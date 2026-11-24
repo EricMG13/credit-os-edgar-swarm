@@ -326,7 +326,7 @@ const ReportPage = memo(function ReportPage({
 
 /** A quiet fact chip; a long fact wraps inside it rather than widening the page. */
 const CHIP =
-  "flex min-h-6 max-w-full flex-wrap items-center gap-x-1 rounded-ds-sm border px-2.5 py-0.5 text-caption wrap-anywhere";
+  "flex min-h-6 max-w-full flex-wrap items-center gap-x-1 rounded-ds-full border px-2.5 py-0.5 text-caption wrap-anywhere";
 const QUIET = "border-border-hairline bg-surface-card text-text-secondary";
 const TEST = "border-action-subtle-hover bg-surface-selected font-medium text-text-link";
 const CRUMB =
@@ -454,30 +454,35 @@ function ReportHeader({
 }) {
   const { sector, ratings, differing } = reportIdentity(catalogue, view.entries);
   return (
-    <section aria-labelledby="report-title" className="flex min-w-0 flex-col gap-2.5">
-      <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-1">
+    // Reading order is breadcrumb, name, facts, sections, then the quiet utilities; at desktop
+    // the grid lifts the utilities to the breadcrumb's row and the sections beside the name.
+    <section
+      aria-labelledby="report-title"
+      className="grid min-w-0 grid-cols-1 gap-x-8 gap-y-2.5 lg:grid-cols-[minmax(0,1fr)_auto]"
+    >
+      <div className="min-w-0 lg:col-start-1 lg:row-start-1">
         <Crumbs
           issuer={issuer}
           current={tab === "history" ? "Runs" : runPathway(run, catalogue) || "Credit report"}
         />
-        {utilities}
       </div>
-      <div className="flex flex-wrap items-end justify-between gap-x-8 gap-y-5">
-        <div className="flex min-w-0 flex-col gap-2.5">
-          <div className="flex flex-wrap items-baseline gap-x-3.5 gap-y-1">
-            <h1
-              id="report-title"
-              className="font-display text-h1 font-semibold tracking-tight text-balance wrap-anywhere text-text-primary"
-            >
-              {issuer}
-            </h1>
-            {sector && <p className="text-small text-text-secondary">{sector}</p>}
-          </div>
-          <FactChips run={run} catalogue={catalogue} ratings={ratings} facts={facts} />
-          <DifferingRating differing={differing} />
+      <div className="flex min-w-0 flex-col gap-2.5 lg:col-start-1 lg:row-start-2">
+        <div className="flex flex-wrap items-baseline gap-x-3.5 gap-y-1">
+          <h1
+            id="report-title"
+            className="font-display text-h1 font-semibold tracking-tight text-balance wrap-anywhere text-text-primary"
+          >
+            {issuer}
+          </h1>
+          {sector && <p className="text-small text-text-secondary">{sector}</p>}
         </div>
+        <FactChips run={run} catalogue={catalogue} ratings={ratings} facts={facts} />
+        <DifferingRating differing={differing} />
+      </div>
+      <div className="mt-2.5 min-w-0 lg:col-start-2 lg:row-start-2 lg:mt-0 lg:self-end">
         <ReportNav tab={tab} modules={view.modules.length} />
       </div>
+      <div className="min-w-0 lg:col-start-2 lg:row-start-1 lg:justify-self-end">{utilities}</div>
     </section>
   );
 }

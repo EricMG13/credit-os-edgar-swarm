@@ -19,8 +19,9 @@ type RowProps = { snapshot: Snapshot; run: PublishedRun; view: ReportView };
 
 const BLOCKED = "Not assessable";
 const WELL = "flex min-w-0 flex-col gap-2.5 rounded-ds-sm border border-dashed px-4 pt-3.5 pb-4";
-const SIGNAL_HATCH =
-  "bg-[repeating-linear-gradient(135deg,var(--color-warning-edge)_0_1px,transparent_1px_9px)]";
+/** A module link inside a well: 32 px, 44 px on a phone. */
+const MODULE_LINK =
+  "inline-flex min-h-8 items-center rounded-ds-xs outline-focus-ring hover:underline max-[480px]:min-h-11";
 
 /** Modules that could not assess: the lead first, then the others, each with what it wrote. */
 function blockedModules(view: ReportView, run: PublishedRun) {
@@ -42,10 +43,10 @@ function grouped(rows: readonly Limitation[]) {
 
 function BlockedWell({ id, name, text }: { id: string; name: string; text: string | null }) {
   return (
-    <li className={cx(WELL, SIGNAL_HATCH, "border-warning-mark bg-warning-fill")}>
+    <li className={cx(WELL, "gap-hatch border-warning-mark")}>
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h4 className="text-small font-medium text-text-primary">
-          <a href={`#modules/${id}`} className="rounded-ds-xs outline-focus-ring hover:underline">
+          <a href={`#modules/${id}`} className={MODULE_LINK}>
             {name}
           </a>
         </h4>
@@ -94,10 +95,7 @@ function LimitationWell({ run, rows }: { run: PublishedRun; rows: Limitation[] }
     <li className={cx(WELL, "gap-hatch border-border-gap")}>
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h4 className="text-small font-medium text-text-primary">
-          <a
-            href={`#modules/${first.id}`}
-            className="rounded-ds-xs outline-focus-ring hover:underline"
-          >
+          <a href={`#modules/${first.id}`} className={MODULE_LINK}>
             {first.name}
           </a>
         </h4>
