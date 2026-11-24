@@ -98,7 +98,12 @@ function renderScore(entry: OutputEntry, snapshot: Snapshot) {
     const trace = traceForConfidence(snapshot, entry);
     return (
       <RunContext.Provider
-        value={{ traces: trace ? { score: trace } : {}, open: () => setOpen(true) }}
+        value={{
+          traces: trace ? { score: trace } : {},
+          open: () => {
+            setOpen(true);
+          },
+        }}
       >
         <ModuleConfidence confidence={entry.output.confidence} trace={trace ? "score" : null} />
         {open && trace && (
@@ -106,7 +111,9 @@ function renderScore(entry: OutputEntry, snapshot: Snapshot) {
             trace={trace}
             evidenceHref={evidenceHref("run-a", trace.evidenceItem)}
             isOpen
-            onClose={() => setOpen(false)}
+            onClose={() => {
+              setOpen(false);
+            }}
           />
         )}
       </RunContext.Provider>

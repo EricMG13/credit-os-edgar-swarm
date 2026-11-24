@@ -10,6 +10,12 @@ import { SECTION_HEADING, SUBSECTION_HEADING } from "@/pages/library/parts/headi
 import { containsReference, displayColumns, readerText, type Table } from "../publishedReport";
 import { plainText, richParts } from "../richText";
 
+/** A register code at the start of a heading (T4.18, T2B.7 -, TL10.2), with its dash. */
+const REGISTER_CODE = /^(?:TL|T|P)\d+[A-Z]{0,2}(?:\.\d+)?\s+(?:[-\u2013\u2014]\s*)?/;
+
+/** A heading as a typed table draws it: no register code, module names for codes. */
+const shownTitle = (title: string) => readerText(plainText(title).replace(REGISTER_CODE, ""));
+
 function visible(table: Table) {
   const indexes = displayColumns(table.headers, false, table.rows);
   const headers = indexes.map((index) => table.headers[index] ?? "");
@@ -209,7 +215,7 @@ function statement(
     <StatementBlock
       block={{
         kind: "statement",
-        title,
+        title: shownTitle(title),
         nav: null,
         trace: null,
         periods,
@@ -240,7 +246,7 @@ function research(
     <QuestionsBlock
       block={{
         kind: "questions",
-        title,
+        title: shownTitle(title),
         items: data.rows.map(({ cells, line }) => ({
           question: readerText(cells[0] ?? ""),
           state: cells[1] as AnswerState,
@@ -279,7 +285,7 @@ export function typedModuleTable(
       <MatrixBlock
         block={{
           kind: "matrix",
-          title,
+          title: shownTitle(title),
           columns: data.headers,
           note: null,
           trace: null,
@@ -300,7 +306,7 @@ export function typedModuleTable(
       <WatchBlock
         block={{
           kind: "watch",
-          title,
+          title: shownTitle(title),
           items: data.rows.map(({ cells, line }) => ({
             indicator: readerText(cells[0] ?? ""),
             timing: cells[1]?.toLowerCase() === "leading" ? "leading" : "lagging",

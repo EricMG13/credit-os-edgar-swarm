@@ -392,3 +392,20 @@ it("21: draws no business description on other modules", () => {
   expect(screen.queryByText("Makes parts.")).toBeNull();
   expect(screen.queryByText("Business description not in this run")).toBeNull();
 });
+
+it("17: draws a typed table's section as one region of its name, without the register code", () => {
+  page([
+    findings,
+    bottom,
+    section("T2.12 Monitoring triggers", 3, 80, [
+      table(
+        81,
+        ["Trigger", "Threshold", "Signal", "Why It Matters", "Credit Impact"],
+        [["Interest cover", "Below 3.1x", "Falling", "Lower cash cover", "Less headroom"]],
+      ),
+    ]),
+  ]);
+  expect(screen.getAllByRole("region", { name: "Monitoring triggers" })).toHaveLength(1);
+  expect(screen.getByRole("region", { name: "Monitoring triggers table" })).toBeVisible();
+  expect(document.body.textContent).not.toContain("T2.12");
+});

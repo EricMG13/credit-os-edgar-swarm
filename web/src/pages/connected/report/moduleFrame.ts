@@ -90,7 +90,7 @@ function proseSection(
   if (typed.length !== tables.length) return null;
   const paragraphs = role === "registers" ? [] : textBlocks(section).filter(readable);
   if (!paragraphs.length && !typed.length) return null;
-  const title = readableTitle(section.heading);
+  const title = readableTitle(section.heading, "Untitled section");
   return { section, title, paragraphs, typed, words: wordCount(paragraphs) };
 }
 
@@ -106,7 +106,14 @@ function drawingGaps(entry: OutputEntry): DrawingGap[] {
     const blocks = textBlocks(section).filter(readable);
     if (!blocks.length) return [];
     const kind = KIND_OF_DRAWING.find(([prefix]) => prefix.test(section.heading))?.[1] ?? "figures";
-    return [{ title: readableTitle(section.heading), kind, blocks, line: section.line }];
+    return [
+      {
+        title: readableTitle(section.heading, "Untitled figure"),
+        kind,
+        blocks,
+        line: section.line,
+      },
+    ];
   });
 }
 

@@ -82,7 +82,7 @@ function stat(
 }
 
 /** The CP-1 headline figures from the run's catalogue, each with its period and basis. */
-export function headlineStats(
+function headlineStats(
   entry: OutputEntry,
   catalogue: CatalogueRun | undefined,
   folder: string,

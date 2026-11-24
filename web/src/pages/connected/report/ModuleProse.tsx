@@ -62,12 +62,15 @@ function ProseTile({
 }) {
   const { prose, span } = placed;
   const id = ANCHOR.section(prose.section.line);
-  // A section of typed tables only is drawn by those tables, which carry its heading and region.
+  // A section of typed tables only: the tables carry their own headings and regions, so the
+  // tile has no title and takes another name where theirs would repeat it.
   if (!prose.paragraphs.length)
     return (
-      <div id={id} tabIndex={-1} className="grid min-w-0 gap-4 lg:col-span-12">
-        <TypedTables prose={prose} entry={entry} />
-      </div>
+      <Tile span={12} label={`${prose.title} table`}>
+        <div id={id} tabIndex={-1} className="grid min-w-0 gap-4 outline-none">
+          <TypedTables prose={prose} entry={entry} />
+        </div>
+      </Tile>
     );
   const columns = span === 12 && prose.words > LONG;
   return (

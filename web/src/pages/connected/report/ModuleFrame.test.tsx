@@ -5,7 +5,9 @@ import { NextModule } from "./ModuleFrame";
 afterEach(cleanup);
 
 it("draws no next-module link after the last module", () => {
-  const { container } = render(<NextModule next={undefined} href={(id) => `#modules/${id}`} wide={false} />);
+  const { container } = render(
+    <NextModule next={undefined} href={(id) => `#modules/${id}`} wide={false} />,
+  );
   expect(container).toBeEmptyDOMElement();
 });
 

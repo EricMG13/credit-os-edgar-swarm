@@ -31,8 +31,7 @@ import {
 } from "./moduleFrame";
 import { readableTitle } from "./moduleRecords";
 
-export const MISSING_PASSAGE =
-  "Not established for this run. The module's handoff has no such passage.";
+const MISSING_PASSAGE = "Not established for this run. The module's handoff has no such passage.";
 
 export type FrameModule = { id: string; name: string; state: ModuleState };
 

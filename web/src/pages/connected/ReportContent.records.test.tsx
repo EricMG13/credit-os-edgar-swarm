@@ -121,8 +121,8 @@ describe("coded registers leave the module page", () => {
       "aria-expanded",
       "true",
     );
-    // Every statement is a table of its own, chosen by name under its record kind.
-    const tables = within(screen.getByRole("group", { name: "Table" }));
+    // Every statement is a table of its own, chosen by name under its record kind (a select
+    // once a kind holds more than six tables).
     for (const label of [
       "Income statement",
       "Cash flow statement",
@@ -131,7 +131,8 @@ describe("coded registers leave the module page", () => {
       "KPI dashboard",
       "Readiness",
     ]) {
-      fireEvent.click(tables.getByRole("button", { name: label }));
+      fireEvent.click(screen.getByRole("button", { name: /Table/ }));
+      fireEvent.click(screen.getByRole("option", { name: label }));
       expect(screen.getByRole("heading", { name: label, level: 4 })).toBeInTheDocument();
     }
     // The registers kept in Evidence are listed by name and link to their place there.

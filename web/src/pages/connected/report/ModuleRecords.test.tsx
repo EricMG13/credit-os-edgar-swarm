@@ -323,13 +323,13 @@ describe("records tables take the mockup's form", () => {
     const toggle = screen.getByRole("button", { name: "All columns" });
     expect(toggle).toHaveAttribute("aria-pressed", "false");
     fireEvent.click(toggle);
-    expect(screen.getByRole("button", { name: "Fewer columns" })).toHaveAttribute(
+    expect(screen.getByRole("button", { name: "All columns" })).toHaveAttribute(
       "aria-pressed",
       "true",
     );
     expect(headers()).toHaveLength(17);
     expect(headers()).toContain("Floor (bps)");
-    fireEvent.click(screen.getByRole("button", { name: "Fewer columns" }));
+    fireEvent.click(screen.getByRole("button", { name: "All columns" }));
     expect(headers()).toHaveLength(6);
   });
 

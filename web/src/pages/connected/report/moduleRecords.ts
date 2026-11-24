@@ -132,10 +132,10 @@ function withoutReference(title: string) {
 
 /** A heading as the reader sees it: no drawing prefix or register code, module names for codes,
  * and the title's own words without the source it cites, which belongs in Evidence. */
-export function readableTitle(heading: string) {
+export function readableTitle(heading: string, untitled = "Untitled table") {
   const coded = plainText(drawingTitle(heading)).replace(REGISTER_CODE, "");
   const title = readerText(withoutReference(coded)).trim();
-  return title && !containsReference(title) ? title : "Untitled table";
+  return title && !containsReference(title) ? title : untitled;
 }
 
 /** Whether a section of this heading and role is listed under "Held in Evidence" by its heading:

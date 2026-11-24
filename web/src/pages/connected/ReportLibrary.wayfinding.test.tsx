@@ -181,13 +181,24 @@ describe("module wayfinding", () => {
     );
   });
 
-  it("draws no section list and watches no scroll position on the module page", async () => {
+  it("lists the module's sections under it; an entry moves focus and scrolls to its section", async () => {
     vi.stubGlobal("IntersectionObserver", FakeObserver);
+    const scrolled = vi.fn();
+    HTMLElement.prototype.scrollIntoView = scrolled;
     useSnapshot();
     open("#modules/CP-1");
-    await modulesNav();
-    expect(screen.queryByRole("list", { name: "On this page" })).toBeNull();
-    expect(screen.queryByLabelText("Jump to section")).toBeNull();
+    const nav = await modulesNav();
+    const sections = within(within(nav).getByRole("list", { name: "On this page" }));
+    fireEvent.click(sections.getByRole("button", { name: "Bottom line" }));
+    const target = document.getElementById("module-bottom-line");
+    expect(target).not.toBeNull();
+    expect(document.activeElement).toBe(target);
+    expect(scrolled).toHaveBeenCalled();
+    expect(sections.getByRole("button", { name: "Bottom line" })).toHaveAttribute(
+      "aria-current",
+      "location",
+    );
+    // The entries follow presses only: the page watches no scroll position.
     expect(observers.filter((item) => item.observed.length > 0)).toHaveLength(0);
   });
 

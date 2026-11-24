@@ -377,6 +377,8 @@ type TableForm = {
 };
 
 const NUMERALS = " text-right font-mono tabular-nums";
+/** A figure is set in mono numerals; a stated gap in the same column keeps the reading face. */
+const FIGURE = /^[(+-]?\d[\d,]*(?:\.\d+)?\)?(?:%|x|bps)?$/;
 
 const amountCell = (amounts: Amounts | undefined, column: number, cell: string, line: number) =>
   amounts?.columns.has(column) ? amounts.draw(column, cell, line) : undefined;
@@ -452,7 +454,8 @@ export function PublishedTable({
     columns.length >= 5 && column === columns[0]
       ? ` sm:sticky sm:left-0 sm:min-w-56 ${background}`
       : "";
-  const numerals = (column: number) => (form.numeric?.has(column) ? NUMERALS : "");
+  const numerals = (column: number, cell: string) =>
+    form.numeric?.has(column) ? (FIGURE.test(cell.trim()) ? NUMERALS : " text-right") : "";
   const barWidth = form.wideBars ? " min-w-56" : " min-w-40";
   const sources =
     rowSource ??
@@ -495,7 +498,7 @@ export function PublishedTable({
             {columns.map((column) => (
               <td
                 key={column}
-                className={`px-3 py-2.5 text-text-secondary${amounts?.columns.has(column) ? barWidth : ""}${numerals(column)}${pinned(column, "bg-surface-card")}`}
+                className={`px-3 py-2.5 text-text-secondary${amounts?.columns.has(column) ? barWidth : ""}${numerals(column, row.cells[column] ?? "")}${pinned(column, "bg-surface-card")}`}
               >
                 {cellContent({
                   cell: row.cells[column] ?? "",

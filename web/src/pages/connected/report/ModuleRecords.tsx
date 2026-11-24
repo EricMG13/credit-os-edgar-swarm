@@ -138,7 +138,7 @@ function RecordDrawing({
                 setAll(!all);
               }}
             >
-              {all ? "Fewer columns" : "All columns"}
+              All columns
             </button>
           )}
         </div>
