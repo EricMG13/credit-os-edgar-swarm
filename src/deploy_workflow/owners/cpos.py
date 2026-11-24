@@ -783,7 +783,18 @@ class _ModuleLoop:
         for module_id in failed:
             if module_id != causes[0]:
                 cause.add_note(f"{module_id} also stopped: {with_notes(self.failures[module_id])}")
+        for module_id, halt in self._noted_halts():
+            cause.add_note(f"{module_id} halted: {with_notes(halt)}")
         return cause
+
+    def _noted_halts(self) -> Iterator[tuple[str, ModuleHalted]]:
+        """Each module that ended halted with a note on its halt (a hold whose release failed,
+        ``HandoffExecutor._last_look``). A halt is not a failure and is never the cause, but its
+        notes are part of the run's record: the cause carries them."""
+        for module_id, (_, future) in self.flights.items():
+            raised = future.exception() if future.done() else None
+            if isinstance(raised, ModuleHalted) and getattr(raised, "__notes__", None):
+                yield module_id, raised
 
     def _take_off(self, board: _Board, pool: _Threads, width: int) -> None:
         """Start the modules not yet started, in plan order, while a slot is free and the next

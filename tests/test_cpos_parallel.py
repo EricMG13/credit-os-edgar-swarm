@@ -1561,14 +1561,15 @@ def test_a_stopped_budget_releases_a_reserved_unsent_call(
 
     reserved = threading.Event()
     adapter = Priced(case)
-    look = handoff.HandoffExecutor._last_look
+    append = handoff.append_event
 
-    def delay_at_the_look(self, task, call_id):
-        # CP-1 holds its reservation here, before the look that precedes its `turn` event
-        if task.module_id == "CP-1":
+    def delay_at_turn(directory, event, **fields):
+        # CP-1 holds its reservation here, past the look after its reserve: only the last look,
+        # after this event, is left before its call would be sent
+        append(directory, event, **fields)
+        if event == "turn" and fields["module"] == "CP-1":
             reserved.set()
             _until(lambda: adapter.executor.budget.stop_kind == kind, f"CP-1A's {kind} settlement")
-        look(self, task, call_id)
 
     def hook(_adapter, module, _index, good):
         if module == "CP-1A":
@@ -1579,12 +1580,12 @@ def test_a_stopped_budget_releases_a_reserved_unsent_call(
         return None
 
     adapter.hook = hook
-    monkeypatch.setattr(handoff.HandoffExecutor, "_last_look", delay_at_the_look)
+    monkeypatch.setattr(handoff, "append_event", delay_at_turn)
     name = f"reserved-unsent-{kind}"
     out, executor, error = _priced_run(case, name, 2, hook, kind=lambda *_: adapter)
     assert adapter.calls == [("CP-0", 0), ("CP-1A", 0)]
-    turns = [e["module"] for e in read_events(out / EVENTS) if e["event"] == "turn"]
-    assert turns == ["CP-0", "CP-1A"]  # none for CP-1's call, which was not sent
+    unsent = [(e["module"], e["turn"]) for e in _events(out, "turn_not_sent")]
+    assert unsent == [("CP-1", 1)]  # its first turn was logged, then not sent
     assert executor.budget.unsettled == ()
     markers = {marker.status: marker for marker in read_reservation_snapshot(out / "live")}
     assert markers.keys() == {"settled", "released", kind}
@@ -2094,8 +2095,9 @@ def test_a_halted_module_reserves_nothing_and_sends_nothing(tmp_path):
 @pytest.mark.parametrize("ask", [2, 3])
 def test_a_module_halted_while_it_waited_for_the_cap_releases_its_hold_unsent(tmp_path, ask):
     """The executor asks three times for each exchange: before the hold, after it (the reserve
-    may have waited), and once more before the turn event, which says the call is being sent.
-    Halted at the second or the third, the hold is released and nothing is sent."""
+    may have waited), and immediately before the call is handed to the adapter (the turn event
+    was written since). Halted at the second or the third, the hold is released and nothing is
+    sent."""
     asked = []
 
     def halted_second_time() -> None:
@@ -2130,22 +2132,55 @@ class _NeverCalled:
         pytest.fail("a refused call was sent")
 
 
-def _turn_events(folder: Path) -> list[dict]:
+def _events(folder: Path, name: str) -> list[dict]:
     log = folder / EVENTS
-    return [e for e in read_events(log) if e["event"] == "turn"] if log.exists() else []
+    return [e for e in read_events(log) if e["event"] == name] if log.exists() else []
 
 
-@pytest.mark.parametrize("ask", [2, 3])
-def test_a_call_refused_at_a_last_look_leaves_no_turn_event(tmp_path, ask):
-    """The `turn` event says a call is being sent, with its hold. A module halted at either look
-    after the reserve sends nothing, so it leaves a released hold and no `turn` event."""
-    asked = []
+def _peer_unknown_charge(budget: Budget) -> None:
+    """Another module's call, on its own thread, settles with an unknown charge: the shared
+    ledger is stopped."""
 
-    def halted() -> None:
-        asked.append(1)
-        if len(asked) >= ask:
-            raise ModuleHalted("cpos_halted: CP-1A")
+    def peer() -> None:
+        budget.reserve("call-peer", Decimal(1), config_id="sol-medium")
+        budget.settle("call-peer", None)
 
+    thread, result = _in_thread(peer)
+    thread.join(WAIT)
+    assert result == [None]
+
+
+HALTED = "cpos_halted: CP-1A: halted for the test"
+# what the module raises, by the way its call is stopped: its own halt, or the peer's stop
+REFUSED = {"halt": (ModuleHalted, HALTED), "ledger": (RunStopped, "'call-peer' has an unknown")}
+
+
+def _released_unsent(executor: HandoffExecutor, folder: Path, stop: str) -> None:
+    """The hold of the module's one call was released, and the ledger holds nothing else of it."""
+    from deploy_workflow.model.budget import read_reservation_snapshot
+
+    markers = {m.call_id: m for m in read_reservation_snapshot(folder)}
+    (mine,) = markers.keys() - {"call-peer"}
+    assert (markers[mine].status, markers[mine].settled_usd) == ("released", Decimal(0))
+    assert executor.budget.reserved == 0 and executor.budget.unsettled == ()
+    if stop == "halt":
+        assert markers.keys() == {mine} and executor.budget.stop_reason is None
+    else:
+        assert markers["call-peer"].status == "unknown"
+
+
+@pytest.mark.parametrize("stop", ["halt", "ledger"])
+def test_a_stop_that_arrives_while_the_turn_event_is_written_stops_the_call(
+    tmp_path, monkeypatch, stop
+):
+    """The `turn` event is written after the reserve and the look that follows it, and the write
+    takes time (a process-wide lock and an fsync). A halt of the module, or a stop of the shared
+    ledger by another module's unknown charge, that arrives during that write still stops the
+    call: nothing is sent, the hold is released, a `turn_not_sent` event follows the `turn`
+    event, and the module raises the refusal with its own reason."""
+    from deploy_workflow.model import handoff
+
+    halted = threading.Event()
     executor = HandoffExecutor(
         tmp_path / "live",
         adapter=_NeverCalled(),
@@ -2153,18 +2188,40 @@ def test_a_call_refused_at_a_last_look_leaves_no_turn_event(tmp_path, ask):
         check=lambda task, raw: (),
         events=tmp_path,
     )
-    with pytest.raises(ModuleHalted):
-        executor(_task("CP-1A", halted))
-    assert len(asked) == ask
-    assert _turn_events(tmp_path) == []
-    assert (executor.budget.spent, executor.budget.reserved) == (0, 0)
-    settled = list((tmp_path / "live/owner-run-audit/reservations").glob("*.settled"))
-    assert [json.loads(p.read_text())["status"] for p in settled] == ["released"]
+    append = handoff.append_event
+
+    def stopped_while_written(directory, event, **fields):
+        append(directory, event, **fields)
+        if event == "turn":
+            if stop == "halt":
+                halted.set()
+            else:
+                _peer_unknown_charge(executor.budget)  # the ledger this run of the module loaded
+
+    def proceed() -> None:
+        if halted.is_set():
+            raise ModuleHalted(HALTED)
+
+    monkeypatch.setattr(handoff, "append_event", stopped_while_written)
+    kind, reason = REFUSED[stop]
+    with pytest.raises(kind, match=reason) as raised:
+        executor(_task("CP-1A", proceed))
+    assert type(raised.value) is kind and not getattr(raised.value, "__notes__", [])
+    logged = [
+        (e["event"], e["module"], e["turn"])
+        for e in read_events(tmp_path / EVENTS)
+        if e["event"] in {"turn", "turn_not_sent"}
+    ]
+    assert logged == [("turn", "CP-1A", 1), ("turn_not_sent", "CP-1A", 1)]
+    _released_unsent(executor, tmp_path / "live", stop)
 
 
-def test_a_stop_met_at_the_last_look_leaves_no_turn_event(tmp_path):
-    """The same for the shared ledger: another module's unknown charge stops the run after this
-    module reserved. Its call is refused with a plain `RunStopped`, released, and not logged."""
+def test_a_turn_not_sent_that_cannot_be_written_never_replaces_the_refusal(tmp_path, monkeypatch):
+    """The same halt, and the `turn_not_sent` event cannot be written: the module still raises
+    its halt, the failed write noted on it, and the hold is released."""
+    from deploy_workflow.model import handoff
+
+    halted = threading.Event()
     executor = HandoffExecutor(
         tmp_path / "live",
         adapter=_NeverCalled(),
@@ -2172,26 +2229,57 @@ def test_a_stop_met_at_the_last_look_leaves_no_turn_event(tmp_path):
         check=lambda task, raw: (),
         events=tmp_path,
     )
-    asked = []
+    append = handoff.append_event
 
-    def peer_stops_the_run() -> None:
-        asked.append(1)
-        if len(asked) == 3:  # after both of `_hold`'s asks: only the final look is left
-            budget = executor.budget  # the ledger this run of the module loaded
+    def unwritable_after_the_turn(directory, event, **fields):
+        if event == "turn_not_sent":
+            raise RuntimeError("log unwritable")
+        append(directory, event, **fields)
+        if event == "turn":
+            halted.set()
 
-            def peer() -> None:
-                budget.reserve("call-peer", Decimal(1), config_id="sol-medium")
-                budget.settle("call-peer", None)
+    def proceed() -> None:
+        if halted.is_set():
+            raise ModuleHalted(HALTED)
 
-            thread, result = _in_thread(peer)
-            thread.join(WAIT)
-            assert result == [None]
+    monkeypatch.setattr(handoff, "append_event", unwritable_after_the_turn)
+    with pytest.raises(ModuleHalted, match=HALTED) as raised:
+        executor(_task("CP-1A", proceed))
+    (note,) = raised.value.__notes__
+    assert note == "its turn_not_sent event was not written: RuntimeError: log unwritable"
+    assert [e["module"] for e in _events(tmp_path, "turn")] == ["CP-1A"]
+    _released_unsent(executor, tmp_path / "live", "halt")
 
-    with pytest.raises(RunStopped, match="has an unknown charge"):
-        executor(_task("CP-1A", peer_stops_the_run))
-    assert len(asked) == 3
-    assert _turn_events(tmp_path) == []
-    assert executor.budget.unsettled == ()
+
+@pytest.mark.parametrize("stop", ["halt", "ledger"])
+def test_a_call_refused_before_its_turn_event_leaves_none(tmp_path, stop):
+    """A module halted, or the shared ledger stopped, once its hold is reserved (the reserve may
+    have waited for another module's settlement) is refused before the `turn` event is written:
+    the log shows no turn for it, sent or not, and its hold is released."""
+    executor = HandoffExecutor(
+        tmp_path / "live",
+        adapter=_NeverCalled(),
+        cap_usd=Decimal(20),
+        check=lambda task, raw: (),
+        events=tmp_path,
+    )
+    peer_stopped = []
+
+    def proceed() -> None:
+        if executor.budget.reserved == 0:
+            return  # asked before the reserve
+        if stop == "halt":
+            raise ModuleHalted(HALTED)
+        if not peer_stopped:
+            peer_stopped.append(True)
+            _peer_unknown_charge(executor.budget)
+
+    kind, reason = REFUSED[stop]
+    with pytest.raises(kind, match=reason) as raised:
+        executor(_task("CP-1A", proceed))
+    assert type(raised.value) is kind and not getattr(raised.value, "__notes__", [])
+    assert _events(tmp_path, "turn") == [] and _events(tmp_path, "turn_not_sent") == []
+    _released_unsent(executor, tmp_path / "live", stop)
 
 
 def test_a_release_that_fails_does_not_replace_the_refusal(tmp_path, monkeypatch):
@@ -2224,6 +2312,49 @@ def test_a_release_that_fails_does_not_replace_the_refusal(tmp_path, monkeypatch
     assert note == "its hold was not released: OSError: disk full"
     assert list((tmp_path / "owner-run-audit/reservations").glob("*.settled")) == []
     assert executor.budget.stop_kind == "faulted"
+
+
+def test_a_halted_modules_unreleased_hold_is_noted_on_the_launchs_failure(case, monkeypatch):
+    """The observer stops the run at CP-1 while CP-1A's first `turn` event is being written, its
+    hold reserved. CP-1A is halted at the last look before its call is sent, and the release of
+    its hold cannot be written (the disk is full). A halted module is not a failure and CP-OS does
+    not report it, but the hold it left open is part of the run's record: the launch's failure,
+    still the observer's stop, carries a note naming CP-1A and the hold."""
+    from deploy_workflow.model import budget as ledger
+    from deploy_workflow.model import handoff
+
+    stopped = _the_scheduler_took_the_stop(monkeypatch)
+    disk_full = threading.Event()
+    append, write_once = handoff.append_event, ledger._write_once
+
+    def stop_taken_while_written(directory, event, **fields):
+        append(directory, event, **fields)
+        if event == "turn" and fields["module"] == "CP-1A":
+            assert stopped.wait(WAIT), "the observer's stop was not taken"
+            disk_full.set()  # CP-0 and CP-1 are settled; nothing else starts
+
+    def full(path: Path, payload: dict[str, object]) -> None:
+        if disk_full.is_set() and path.name.endswith(".settled"):
+            raise OSError("disk full")
+        write_once(path, payload)
+
+    def stop_at_cp1(task: HandoffTask, raw: bytes) -> None:
+        if task.module_id == "CP-1":
+            raise RuntimeError("evidence review")
+
+    monkeypatch.setattr(handoff, "append_event", stop_taken_while_written)
+    monkeypatch.setattr(ledger, "_write_once", full)
+    out, executor, error = _priced_run(case, "halt-noted", 2, None, on_handoff=stop_at_cp1)
+    assert str(error) == "evidence review"  # still the cause: CP-1A only halted
+    (note,) = error.__notes__
+    assert note == (
+        "CP-1A halted: cpos_halted: CP-1A: the run was stopped for review before its next call; "
+        "its hold was not released: OSError: disk full"
+    )
+    assert ("CP-1A", 0) not in executor.adapter.calls
+    assert [(e["module"], e["turn"]) for e in _events(out, "turn_not_sent")] == [("CP-1A", 1)]
+    assert len(executor.budget.unsettled) == 1 and executor.budget.stop_kind == "faulted"
+    assert case.events("halt-noted", "module_accepted") == ["CP-0", "CP-1"]
 
 
 # ---------------------------------------------------------------- the launcher's setting

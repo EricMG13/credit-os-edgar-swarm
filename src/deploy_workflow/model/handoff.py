@@ -1925,6 +1925,24 @@ class HandoffExecutor:
                 refusal.add_note(f"its hold was not released: {type(failed).__name__}: {failed}")
             raise
 
+    def _dispatch_look(self, task: HandoffTask, call_id: str, turn: int) -> None:
+        """The last look, after the ``turn`` event (whose write may take time) and immediately
+        before the call is handed to the adapter. A call it refuses was logged as a turn, so a
+        ``turn_not_sent`` event follows; a failure to write it is noted on the refusal, which is
+        what the module raises."""
+        try:
+            self._last_look(task, call_id)
+        except BaseException as refusal:
+            if self.events is not None:
+                try:
+                    append_event(self.events, "turn_not_sent", module=task.module_id, turn=turn)
+                except Exception as failed:  # noqa: BLE001 -- the refusal is raised
+                    refusal.add_note(
+                        f"its turn_not_sent event was not written: {type(failed).__name__}: "
+                        f"{failed}"
+                    )
+            raise
+
     @staticmethod
     def _known_failed(task: HandoffTask, known: bool, what: str) -> None:
         """An exchange is known to end the module's run (``_turn`` raises at its end). CP-OS is
@@ -1947,8 +1965,6 @@ class HandoffExecutor:
         )
         call_id = f"call-{uuid4().hex}"
         self._hold(task, call_id, reserved)
-        # Before the event, which says the call is being sent: a refused call leaves none.
-        self._last_look(task, call_id)
         if self.events is not None:
             append_event(
                 self.events,
@@ -1960,6 +1976,7 @@ class HandoffExecutor:
                 held_usd=str(reserved),
                 cap_usd=str(self.budget.cap_usd),
             )
+        self._dispatch_look(task, call_id, index + 1)  # nothing that can block follows it
         started = time.time()
         self._last_call = index
         try:
