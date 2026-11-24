@@ -2097,8 +2097,10 @@
       "pack": "/home/user/swarm-root/inputs/packs/1556739-thryv-holdings-inc",
       "context": "/home/user/swarm-root/inputs/contexts/1556739-thryv-holdings-inc.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-thry-1556739",
-      "status": "pending",
-      "attempts": 0
+      "status": "running",
+      "attempts": 0,
+      "claimed_at": "2026-11-18T12:40:11+00:00",
+      "claims": 1
     },
     {
       "issuer_id": "cstm",
@@ -2108,8 +2110,10 @@
       "pack": "/home/user/swarm-root/inputs/packs/1563411-constellium-se-cstm",
       "context": "/home/user/swarm-root/inputs/contexts/1563411-constellium-se-cstm.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-cstm",
-      "status": "pending",
-      "attempts": 0
+      "status": "running",
+      "attempts": 0,
+      "claimed_at": "2026-11-18T12:40:11+00:00",
+      "claims": 1
     },
     {
       "issuer_id": "snap-1564408",
@@ -2119,8 +2123,10 @@
       "pack": "/home/user/swarm-root/inputs/packs/1564408-snap-inc",
       "context": "/home/user/swarm-root/inputs/contexts/1564408-snap-inc.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-snap-1564408",
-      "status": "pending",
-      "attempts": 0
+      "status": "running",
+      "attempts": 0,
+      "claimed_at": "2026-11-18T12:40:11+00:00",
+      "claims": 1
     },
     {
       "issuer_id": "pbf-holding-co-llc",
@@ -2130,8 +2136,10 @@
       "pack": "/home/user/swarm-root/inputs/packs/1566011-pbf-holding-co-llc",
       "context": "/home/user/swarm-root/inputs/contexts/1566011-pbf-holding-co-llc.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-pbf-holding-co-llc",
-      "status": "pending",
-      "attempts": 0
+      "status": "running",
+      "attempts": 0,
+      "claimed_at": "2026-11-18T12:40:11+00:00",
+      "claims": 1
     },
     {
       "issuer_id": "saic-1571123",

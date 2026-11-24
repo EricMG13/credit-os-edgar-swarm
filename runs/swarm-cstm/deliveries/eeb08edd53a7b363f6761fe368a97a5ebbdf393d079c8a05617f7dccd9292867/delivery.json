@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for CONSTELLIUM SE as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "84cdf41c113f1349056f1d122dba5d9265bbff48d60d0eebe50f2c5819bfaed4",
+    "CP-1.md": "fd73ee9538d05f6b7d0aa7b43df2e83f43a8e4dd3f40523956a5e457e3c1449f",
+    "CP-1A.md": "e974cbf7f3ce064131c1ea8fb5d7530ea5646d84e8e1944c58ebeea62203d34d",
+    "CP-2.md": "3644935aa3541bef744fb6e8e22e61c74024d33f228d3d2d0d9925dce1a22882",
+    "coverage.json": "4002005db8016bfdfdbdaa145db35d1e139289637a508f432e7d915852d3044d",
+    "view.json": "9d43032c3aafd6ce95ba5b727ac6ba945f1ce39359d7fc71ba41235b6bddd9ed",
+    "report-view.json": "894efeb07f0763cba4a17fc9f5e534fa4654a1e3152608ec46d512945244af5b"
+  }
+}
