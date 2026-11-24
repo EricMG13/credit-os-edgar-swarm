@@ -56,6 +56,11 @@ function isLead(entry: OutputEntry, module: string) {
   );
 }
 
+function catalogueFor(snapshot: Snapshot, folder: string) {
+  const matches = snapshot.catalogue.real.filter((entry) => entry.id === folder);
+  return matches.length === 1 ? matches[0] : undefined;
+}
+
 export function buildReportView(snapshot: Snapshot, routeKey: string, run: PublishedRun) {
   const order = moduleOrder(run).filter((id) => Object.hasOwn(run.modules, id));
   const published = outputEntries(snapshot, run, routeKey);
@@ -67,14 +72,16 @@ export function buildReportView(snapshot: Snapshot, routeKey: string, run: Publi
       const selected = outputs.find((entry) => entry.selected);
       return { id, name: moduleName(id), state: moduleState(selected ?? outputs[0]), outputs };
     });
+  const scope: { folder?: string } = { folder: run.folder };
   return {
+    ...scope,
     entries,
     modules,
     lead: ["CP-6", "CP-2", "CP-L10", ...(run.pathway === "earnings_update" ? ["CP-1B"] : [])]
       .map((id) => entries.find((entry) => isLead(entry, id)))
       .find((entry) => entry !== undefined),
     models: runModels(snapshot, routeKey, run),
-    catalogue: snapshot.catalogue.real.find((entry) => entry.id === run.folder),
+    catalogue: catalogueFor(snapshot, run.folder),
   };
 }
 
@@ -178,12 +185,15 @@ const sameLimitation = (text: string) =>
     .replace(/\s+/g, " ")
     .trim();
 
-/** Each limitation of the run once, in module order; a module that could not assess writes none. */
-export function runLimitations(view: ReportView, run: PublishedRun) {
+/**
+ * Each limitation of the run once, in module order; a module that could not assess writes none.
+ * A module in `omit` is not read, so a limitation it shares with another module stays with that one.
+ */
+export function runLimitations(view: ReportView, run: PublishedRun, omit: readonly string[] = []) {
   const seen = new Set<string>();
   return overviewModules(run).flatMap((id) => {
     const entry = designated(view, id);
-    if (!entry || blocked(entry)) return [];
+    if (!entry || blocked(entry) || omit.includes(id)) return [];
     const written = passageTexts(entry, "Limitations");
     // An earlier-format handoff has no Limitations passage; its summary carries the limitation.
     const items = passages(entry.sections).some((section) => section.heading === "Limitations")
@@ -463,7 +473,11 @@ function latestRow(table: Table, at: number) {
     ranked.push({ row, key });
   }
   const keys = ranked.map(({ key }) => key);
-  if (new Set(keys.map((key) => key[0])).size !== 1 || new Set(keys).size !== keys.length)
+  if (
+    ranked.length === 0 ||
+    new Set(keys.map((key) => key[0])).size !== 1 ||
+    new Set(keys).size !== keys.length
+  )
     return undefined;
   return ranked.reduce((latest, item) => (item.key > latest.key ? item : latest)).row;
 }

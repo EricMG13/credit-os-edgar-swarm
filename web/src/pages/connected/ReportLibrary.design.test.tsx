@@ -124,7 +124,12 @@ describe("connected library and report design", () => {
     fireEvent.change(screen.getByLabelText("Pathway"), {
       target: { value: "Lite credit assessment" },
     });
-    expect(screen.queryByRole("heading", { name: "Northbridge" })).toBeNull();
+    const northCard = screen.getByRole("heading", { name: "Northbridge" }).closest("li");
+    if (!northCard) throw new Error("Expected a card for the selected pathway");
+    expect(within(northCard).getByRole("link", { name: "Open report" })).toHaveAttribute(
+      "href",
+      "/report/northbridge-2025",
+    );
     fireEvent.change(screen.getByLabelText("Sector"), { target: { value: "all" } });
     fireEvent.change(screen.getByLabelText("Pathway"), { target: { value: "all" } });
 
@@ -541,15 +546,15 @@ describe("the overview carries every module's bottom line and the run's limitati
     );
     expect(within(lines).getByText("Not assessable")).toBeVisible();
     expect(within(lines).getByText(/Leverage is high; Liquidity covers two years\./)).toBeVisible();
-    // CP-3 wrote no bottom line: a gap. CP-4 wrote one that cites a file: a link, not a gap.
-    expect(within(lines).getAllByText("Not established for this run")).toHaveLength(1);
+    // Unverified decision modules stay on their own pages. A source-bearing factual finding retains its link.
+    expect(within(lines).queryByRole("link", { name: "Relative value" })).toBeNull();
     expect(
       within(lines).getByRole("link", { name: "Read this bottom line in Evidence" }),
     ).toHaveAttribute(
       "href",
       expect.stringMatching(/^\/report\/northbridge-2026#evidence\/.*-11$/),
     );
-    expect(within(lines).getAllByRole("listitem")).toHaveLength(4);
+    expect(within(lines).getAllByRole("listitem")).toHaveLength(3);
     expect(lines.textContent).not.toMatch(/CP-/);
     expect(within(lines).queryByText(/Credit is stable/)).toBeNull();
 
@@ -585,7 +590,8 @@ describe("the overview carries every module's bottom line and the run's limitati
     ).toBeVisible();
     expect(within(limits).queryByRole("listitem")).toBeNull();
     expect(screen.queryByRole("region", { name: "Bottom line by module" })).toBeNull();
-    expect(screen.getByText("Credit is stable.")).toBeVisible();
+    expect(screen.getByText(/A verified credit view is unavailable/)).toBeVisible();
+    expect(screen.queryByText("Credit is stable.")).toBeNull();
   });
 
   it("draws the summary's limitation for an earlier-format run, and not the empty sentence", async () => {

@@ -23,7 +23,7 @@ import warnings
 from collections.abc import Callable, Iterator, Mapping, Sequence
 from concurrent.futures import FIRST_COMPLETED, Future, wait
 from dataclasses import dataclass, field, replace
-from datetime import date
+from datetime import UTC, date, datetime
 from decimal import Decimal
 from functools import partial
 from pathlib import Path
@@ -111,6 +111,10 @@ class HandoffPlan(Contract):
     # Only a preset run is a comparison base (`deploy_workflow.changes.find_prior`); an older
     # manifest records neither and is left unchanged.
     selection: Literal["preset", "explicit"] | None = Field(
+        default=None, exclude_if=lambda v: v is None
+    )
+    # The launcher records the relevant revision of the default analytical scope at submission.
+    preset_requested_modules: tuple[str, ...] | None = Field(
         default=None, exclude_if=lambda v: v is None
     )
     execution: Literal["host-session", "retained-response-replay", "synthetic", "live-provider"]
@@ -985,7 +989,8 @@ def run_handoffs(  # noqa: C901, PLR0912, PLR0913, PLR0915 -- legacy orchestrato
     """
     if not 1 <= width <= MAX_MODULE_WIDTH:
         raise ValueError(f"cpos_width: between 1 and {MAX_MODULE_WIDTH} modules at once")
-    request = HandoffPlan.model_validate_json(manifest.read_bytes())
+    workflow_raw = manifest.read_bytes()
+    request = HandoffPlan.model_validate_json(workflow_raw)
     from deploy_workflow.model.adapter import LiveAdapter
     from deploy_workflow.model.copilot_adapter import CopilotAdapter
     from deploy_workflow.model.handoff import HandoffExecutor
@@ -1225,6 +1230,8 @@ def run_handoffs(  # noqa: C901, PLR0912, PLR0913, PLR0915 -- legacy orchestrato
             **({} if changes_note is None else {"changes": changes_note}),
             "delivery_manifest_sha256": manifest_id,
             "delivery_sha256": _sha(receipt.read_bytes()),
+            "workflow_sha256": _sha(workflow_raw),
+            **({"published_at": datetime.now(UTC).isoformat()} if live else {}),
         }
         completion_raw = json.dumps(completion, indent=2).encode()
         _put(directory / f"completed-{_sha(completion_raw)}.json", completion_raw)

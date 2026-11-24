@@ -1172,6 +1172,9 @@ def _prepare(  # noqa: PLR0913, PLR0915 - `prepare`'s body: one keyword per sett
         prior=prior,
         changes_note=note,
         selection=selection,
+        preset_requested_modules=pathway_modules(settings)
+        if held is None
+        else held.preset_requested_modules,
         execution="live-provider",
         max_attempts=1,
         provider_cap_usd=Decimal(cap),

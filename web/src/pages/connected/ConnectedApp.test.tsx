@@ -1848,7 +1848,7 @@ describe("connected activity and reports", () => {
     });
     render(<ConnectedApp path="/runs" mode="synthetic" />);
     const ended = await screen.findByRole("region", { name: "Ended without a report" });
-    expect(within(ended).getByText("Not recorded")).toBeVisible();
+    expect(await within(ended).findByText("Not recorded")).toBeVisible();
     expect(within(ended).getByText("Rejected")).toBeVisible();
   });
 
@@ -2060,6 +2060,16 @@ describe("connected activity and reports", () => {
             folder,
             issuer: "SG",
             issuerHeading: report.issuer,
+            publicationVerified: true,
+            assessmentScope: "unverified",
+            lead: {
+              module: "CP-2",
+              output,
+              sha256: "d".repeat(64),
+              line: 3,
+              text: `The report read the filing.
+Basis: ${filing}, page 7.`,
+            },
             asOf: report.asOf,
             pathway: report.pathway,
             period: "FY2026",

@@ -203,7 +203,9 @@ describe("C1-008 original card credit view", () => {
   it("draws the original finding with one source control to its exact published line", async () => {
     reply({
       ...library,
-      workspace: { runs: { north: { ...library.workspace.runs.north, lead } } },
+      workspace: {
+        runs: { north: { ...library.workspace.runs.north, publicationVerified: true, lead } },
+      },
     });
     render(<ReportLibrary />);
     expect(await screen.findByText("Cover is 2.67x and debt is USD 3,105m.")).toBeVisible();
@@ -222,6 +224,7 @@ describe("C1-008 original card credit view", () => {
         runs: {
           north: {
             ...library.workspace.runs.north,
+            publicationVerified: true,
             lead: { ...lead, text: "The finding is in filing.txt." },
           },
         },
@@ -235,6 +238,31 @@ describe("C1-008 original card credit view", () => {
       `/report/north-2026#evidence/north-2026%2FCP-2.md~${"a".repeat(64)}-12`,
     );
     expect(document.body).not.toHaveTextContent("The finding is in filing.txt.");
+  });
+
+  it("refuses a specialist finding when the scoped response belongs to another report", async () => {
+    window.history.replaceState(null, "", "/?pathway=Relative+Value");
+    const selected = {
+      ...library.workspace.runs.north,
+      pathway: "relative_value",
+      publicationVerified: true,
+    };
+    const fetch = vi.fn((path: string) =>
+      Promise.resolve(
+        Response.json(
+          path === "/connected/library"
+            ? { ...library, workspace: { runs: { north: selected } } }
+            : { reportFolder: "other-report" },
+        ),
+      ),
+    );
+    vi.stubGlobal("fetch", fetch);
+    render(<ReportLibrary />);
+    expect(
+      await screen.findByText("A verified finding is unavailable for this report."),
+    ).toBeVisible();
+    expect(fetch).toHaveBeenCalledWith("/connected/snapshot?run=north-2026", expect.anything());
+    expect(screen.queryByRole("link", { name: "Sources for this credit view" })).toBeNull();
   });
 });
 
