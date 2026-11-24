@@ -199,7 +199,7 @@ it("keeps the invalid as-of and nothing-upcoming sentences", () => {
   );
 });
 
-it("places marks by date, stacks marks on one day, and lists at most five events", () => {
+it("places marks by date, keeps marks clear of each other, and lists at most five events", () => {
   const rows = [
     event("2025-07-01", "Securitization matures"),
     event("2025-07-01", "Coupon"),
@@ -213,13 +213,9 @@ it("places marks by date, stacks marks on one day, and lists at most five events
   const { container } = render(<DatesRow {...props} />);
   const tile = screen.getByRole("region", { name: "Dates to watch" });
   expect(within(tile).getByRole("heading", { level: 3 })).toHaveAttribute("id", "overview-dates");
-  expect(within(tile).getAllByRole("listitem")).toHaveLength(5);
+  expect(within(within(tile).getByRole("list")).getAllByRole("listitem")).toHaveLength(5);
   expect(within(tile).queryByText("Sixth")).toBeNull();
-  expect(within(tile).getAllByRole("link", { name: "Evidence" })[0]).toHaveAttribute(
-    "href",
-    "/report/run#evidence/Securitization matures",
-  );
-  const marks = [...container.querySelectorAll<HTMLElement>("[aria-hidden] > .rounded-ds-full")];
+  const marks = [...container.querySelectorAll<HTMLElement>("[data-mark]")];
   expect(marks.map((mark) => mark.style.left)).toEqual([
     "0%",
     "0%",
@@ -227,8 +223,52 @@ it("places marks by date, stacks marks on one day, and lists at most five events
     expect.any(String),
     "100%",
   ]);
-  expect(marks[0]?.style.top).not.toBe(marks[1]?.style.top);
+  const tops = (at: number) => marks[at]?.style.top;
+  expect(tops(0)).not.toBe(tops(1));
+  expect(tops(3)).not.toBe(tops(4));
   expect(within(tile).getByText("2026")).toBeInTheDocument();
+});
+
+it("collapses one event recorded by several modules into one mark that names them", () => {
+  const twice = [
+    { ...event("2025-03-31", "Synthetic note"), owner: "Source readiness" },
+    { ...event("2025-03-31", "Synthetic note"), owner: "Legal & covenants" },
+    { ...event("2025-03-31", "Synthetic note"), owner: "Liquidity" },
+    event("2026-07-01", "Notes mature"),
+  ];
+  mocks.calendar = twice;
+  mocks.upcoming = twice;
+  const { container } = render(<DatesRow {...props} />);
+  const tile = screen.getByRole("region", { name: "Dates to watch" });
+  const items = within(within(tile).getByRole("list")).getAllByRole("listitem");
+  expect(items).toHaveLength(2);
+  expect(items[0]).toHaveTextContent("Source readiness, Legal & covenants, Liquidity");
+  expect(container.querySelectorAll("[data-mark]")).toHaveLength(2);
+  expect(within(within(tile).getByRole("list")).getByText("Notes mature")).toBeVisible();
+});
+
+it("prints dates as the header does, labels the axis ends, and names each trace distinctly", () => {
+  const rows = [event("2025-03-31", "Coupon"), event("2026-07-01", "Notes mature")];
+  mocks.calendar = rows;
+  mocks.upcoming = rows;
+  render(<DatesRow {...props} />);
+  const tile = screen.getByRole("region", { name: "Dates to watch" });
+  expect(tile).not.toHaveTextContent("2025-03-31");
+  expect(within(tile).getAllByText("31 March 2025").length).toBeGreaterThan(0);
+  expect(within(tile).getAllByText("1 July 2026").length).toBeGreaterThan(0);
+  expect(within(tile).queryByRole("link", { name: "Evidence" })).toBeNull();
+  expect(
+    within(tile).getByRole("link", { name: "Source for Coupon on 31 March 2025 from Liquidity" }),
+  ).toHaveAttribute("href", "/report/run#evidence/Coupon");
+});
+
+it("draws one date with its tick and label in the middle of the axis", () => {
+  const rows = [event("2025-03-31", "Coupon")];
+  mocks.calendar = rows;
+  mocks.upcoming = rows;
+  const { container } = render(<DatesRow {...props} />);
+  expect(container.querySelector<HTMLElement>("[data-mark]")?.style.left).toBe("50%");
+  expect(container.querySelector("[data-axis-label]")).toHaveTextContent("31 March 2025");
 });
 
 it("says the recorded events could not be placed, not that none were recorded, when only gaps exist", () => {

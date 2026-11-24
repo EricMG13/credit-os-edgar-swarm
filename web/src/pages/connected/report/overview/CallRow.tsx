@@ -256,7 +256,7 @@ const meterReading = (first: Scored, second: Scored | null) =>
  */
 function Meter({ first, second }: { first: Scored; second: Second }) {
   const x = (score: number) => (Math.min(Math.max(score, 0), 100) / 100) * 408;
-  const scored = second?.score ? (second as Scored) : null;
+  const scored = second?.score ? second : null;
   const tick = scored?.score.value ?? null;
   return (
     <div className="flex flex-col gap-1.5">

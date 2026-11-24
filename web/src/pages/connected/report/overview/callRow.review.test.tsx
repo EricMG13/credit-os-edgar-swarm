@@ -109,7 +109,7 @@ it("labels the run's own timing as the run states it, never as the financials' d
 it("counts the modules as the pipeline does and names each state that is not delivered in its own words", () => {
   const lead = entry("CP-6", [text("Bottom line", "The view.")]);
   const gaps = entry("CP-1", [text("Bottom line", "Figures.")], { chartGaps: ["x"] } as never);
-  const broken = entry("CP-2A", [text("Bottom line", "Stress.")], { parseError: "bad" } as never);
+  const broken = entry("CP-2A", [text("Bottom line", "Stress.")], { parseError: "bad" });
   const changes = entry("CP-8", [text("Bottom line", "About the same.")]);
   const v = view([lead, gaps, broken, changes], lead);
   const ran = (id: string) => ({ outputs: [`${id}-1`], default: `${id}-1` });

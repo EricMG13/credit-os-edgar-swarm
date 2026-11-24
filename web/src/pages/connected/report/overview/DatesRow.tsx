@@ -3,72 +3,132 @@ import { Button } from "@/components/base/buttons/button";
 import type { PublishedRun, Snapshot } from "../../publishedReport";
 import type { ReportView } from "../../reportView";
 import { buildCalendar, upcomingCalendarRows } from "../Calendar";
+import { asOfDate } from "../../runFigures";
+import { PublishedSource } from "../PublishedTrace";
+import { cx } from "@/utils/cx";
 import { GapNote, Tile } from "./Tile";
 
 type RowProps = { snapshot: Snapshot; run: PublishedRun; view: ReportView };
 type WatchRow = NonNullable<ReturnType<typeof upcomingCalendarRows>>[number];
 
 const SHOWN = 5;
-const DAY = 86_400_000;
+/** Marks nearer than this share of the axis go on separate lanes so they never overprint. */
+const NEAR = 18;
+const LANES = 3;
+const LANE = 30;
 
-/** Where each event falls between the first and the last, as a share of the axis; one date sits mid-axis. */
-function positions(rows: readonly WatchRow[]) {
-  const start = Math.min(...rows.map((row) => row.from));
-  const span = Math.max(...rows.map((row) => row.from)) - start;
-  const seen = new Map<number, number>();
-  return rows.map((row) => {
-    const day = Math.floor(row.from / DAY);
-    const stack = seen.get(day) ?? 0;
-    seen.set(day, stack + 1);
-    return { left: span === 0 ? 50 : ((row.from - start) / span) * 100, stack };
+/** One dated event as the reader sees it: the same date and name from several modules is one event. */
+type Event = { key: string; date: string; name: string; from: number; rows: WatchRow[] };
+
+function events(rows: readonly WatchRow[]): Event[] {
+  const found = new Map<string, Event>();
+  for (const row of rows) {
+    const name = row.cells[3] || "Dated event";
+    const key = `${row.cells[0] ?? ""}|${name}`;
+    const known = found.get(key);
+    if (known) known.rows.push(row);
+    else found.set(key, { key, date: row.cells[0] ?? "", name, from: row.from, rows: [row] });
+  }
+  return [...found.values()];
+}
+
+const shown = (date: string) => asOfDate(date);
+const owners = (event: Event) => [...new Set(event.rows.map((row) => row.owner))].join(", ");
+
+/** Where each event falls between the first and the last, and the lane that keeps it clear. */
+function positions(list: readonly Event[]) {
+  const start = Math.min(...list.map((event) => event.from));
+  const span = Math.max(...list.map((event) => event.from)) - start;
+  const ends: number[] = [];
+  return list.map((event) => {
+    const left = span === 0 ? 50 : ((event.from - start) / span) * 100;
+    const free = ends.findIndex((end) => left - end >= NEAR);
+    const lane = free >= 0 ? free : Math.min(ends.length, LANES - 1);
+    ends[lane] = left;
+    return { left, lane };
   });
 }
 
 /** The first of January of each year the axis crosses. */
-function yearTicks(rows: readonly WatchRow[]) {
-  const start = Math.min(...rows.map((row) => row.from));
-  const end = Math.max(...rows.map((row) => row.from));
+function yearTicks(list: readonly Event[]) {
+  const start = Math.min(...list.map((event) => event.from));
+  const end = Math.max(...list.map((event) => event.from));
   const ticks: { year: number; left: number }[] = [];
   for (
     let year = new Date(start).getUTCFullYear() + 1;
     year <= new Date(end).getUTCFullYear();
     year++
-  ) {
+  )
     ticks.push({ year, left: ((Date.UTC(year, 0, 1) - start) / (end - start)) * 100 });
-  }
   return ticks;
 }
 
-/** A true time axis: numbered marks placed by date; marks on one day stack upward. */
-function Axis({ rows }: { rows: readonly WatchRow[] }) {
-  const marks = positions(rows);
+/** The dates at the axis ends; one date is labelled once, under its mark in the middle. */
+function AxisEnds({ list }: { list: readonly Event[] }) {
+  const first = list.reduce((a, b) => (b.from < a.from ? b : a));
+  const last = list.reduce((a, b) => (b.from > a.from ? b : a));
+  const label = "absolute top-[100px] font-mono text-caption text-text-tertiary tabular-nums";
+  if (first.from === last.from)
+    return (
+      <span data-axis-label className={`${label} left-1/2 -translate-x-1/2`}>
+        {shown(first.date)}
+      </span>
+    );
   return (
-    <div aria-hidden="true" className="relative mx-4 h-24">
-      <span className="absolute inset-x-0 top-16 border-t border-connector" />
-      {yearTicks(rows).map(({ year, left }) => (
+    <>
+      <span data-axis-label className={`${label} left-0`}>
+        {shown(first.date)}
+      </span>
+      <span data-axis-label className={`${label} right-0`}>
+        {shown(last.date)}
+      </span>
+    </>
+  );
+}
+
+/** A true time axis: numbered marks placed by date, each on a lane that keeps it clear of its neighbours. */
+function Axis({ list }: { list: readonly Event[] }) {
+  const marks = positions(list);
+  return (
+    <div aria-hidden="true" className="relative mx-4 h-[120px]">
+      <span className="absolute inset-x-0 top-[84px] border-t border-connector" />
+      {yearTicks(list).map(({ year, left }) => (
         <span
           key={year}
-          className="absolute top-[58px] flex -translate-x-1/2 flex-col items-center gap-1"
+          className="absolute top-[78px] flex -translate-x-1/2 flex-col items-center gap-0.5"
           style={{ left: `${String(left)}%` }}
         >
           <span className="h-3 border-l border-connector" />
           <span className="font-mono text-caption text-text-tertiary tabular-nums">{year}</span>
         </span>
       ))}
-      {marks.map(({ left, stack }, index) => (
+      {marks.map(({ left, lane }, index) => (
         <span
-          key={index}
-          className="absolute flex size-6 -translate-x-1/2 items-center justify-center rounded-ds-full border-2 border-action bg-surface-card font-mono text-caption text-text-primary tabular-nums"
-          style={{ left: `${String(left)}%`, top: `${String(52 - Math.min(stack, 2) * 22)}px` }}
+          key={list[index]?.key}
+          data-mark
+          className="absolute -translate-x-1/2"
+          style={{ left: `${String(left)}%`, top: `${String(72 - lane * LANE)}px` }}
         >
-          {index + 1}
+          <span className="relative flex size-6 items-center justify-center rounded-ds-full border-2 border-action bg-surface-card font-mono text-caption text-text-primary tabular-nums">
+            {index + 1}
+            <span
+              className={cx(
+                "absolute top-0.5 hidden max-w-24 truncate text-caption whitespace-nowrap text-text-secondary lg:block",
+                left > 70 ? "right-7" : "left-7",
+              )}
+            >
+              {list[index]?.name}
+            </span>
+          </span>
         </span>
       ))}
+      <AxisEnds list={list} />
     </div>
   );
 }
 
-function Event({ event, index }: { event: WatchRow; index: number }) {
+function EventItem({ event, index }: { event: Event; index: number }) {
+  const [row] = event.rows;
   return (
     <li className="grid content-start gap-1 border-t border-border-hairline pt-3">
       <p className="flex items-center gap-2">
@@ -79,23 +139,35 @@ function Event({ event, index }: { event: WatchRow; index: number }) {
           {index + 1}
         </span>
         <span className="font-mono text-small text-text-primary tabular-nums">
-          {event.cells[0]}
+          {shown(event.date)}
         </span>
       </p>
-      <p className="text-small font-medium text-text-primary">{event.cells[3] || "Dated event"}</p>
+      <p className="text-small font-medium text-text-primary">{event.name}</p>
       <p className="text-caption text-text-secondary">
-        {event.owner}
-        {event.cells[6] ? ` · ${event.cells[6]}` : ""}
+        {owners(event)}
+        {row?.cells[6] ? ` · ${row.cells[6]}` : ""}
       </p>
-      {event.cells[4] && <p className="text-caption text-text-secondary">{event.cells[4]}</p>}
-      {event.timingWithinRecordedPeriod && (
+      {row?.cells[4] && <p className="text-caption text-text-secondary">{row.cells[4]}</p>}
+      {row?.timingWithinRecordedPeriod && (
         <p className="text-caption text-text-secondary">
           Timing falls within the recorded period; the exact date is unresolved.
         </p>
       )}
-      <Button href={event.href} color="link-gray" size="sm">
-        Evidence
-      </Button>
+      <span className="flex flex-wrap gap-1">
+        {event.rows.map((item) => {
+          const name = `${event.name} on ${shown(event.date)} from ${item.owner}`;
+          return (
+            <PublishedSource
+              key={item.href}
+              href={item.href}
+              name={name}
+              linkLabel={`Source for ${name}`}
+            >
+              View source
+            </PublishedSource>
+          );
+        })}
+      </span>
     </li>
   );
 }
@@ -113,13 +185,13 @@ function Watch({ rows }: { rows: readonly WatchRow[] | null }) {
         No recorded event dates fall on or after this run’s as-of date.
       </p>
     );
-  const shown = rows.slice(0, SHOWN);
+  const list = events(rows).slice(0, SHOWN);
   return (
     <>
-      <Axis rows={shown} />
+      <Axis list={list} />
       <ol className="grid grid-cols-[repeat(auto-fit,minmax(min(200px,100%),1fr))] gap-4">
-        {shown.map((event, index) => (
-          <Event key={`${event.href}-${String(index)}`} event={event} index={index} />
+        {list.map((event, index) => (
+          <EventItem key={event.key} event={event} index={index} />
         ))}
       </ol>
     </>
