@@ -13,7 +13,6 @@ import { Alert } from "@/components/alert/Alert";
 import { Badge } from "@/components/base/badges/badges";
 import { Button } from "@/components/base/buttons/button";
 import { StatusBadge } from "@/components/status/StatusBadge";
-import { RunTabLink } from "@/pages/library/parts/RunFrame";
 import { SourcesSwitch, useSourcesOn } from "@/pages/library/parts/SourcesSwitch";
 import { PageHeader } from "../../shell/PageHeader";
 import { TextLink } from "../run/TextLink";
@@ -161,6 +160,10 @@ function useReportPlace(root: RefObject<HTMLElement | null>, hash: string, ready
   }, [hash, ready, root]);
 }
 
+const SEGMENT =
+  "flex min-h-8 items-center gap-2 rounded-ds-sm border px-3.5 text-small font-medium whitespace-nowrap outline-focus-ring transition duration-100 ease-linear focus-visible:outline-2 focus-visible:outline-offset-2 max-[480px]:min-h-11";
+
+/** The report's sections as one segmented control; the current section carries the accent tint and a dot. */
 function ReportNav({ tab, modules }: { tab: Tab; modules: number }) {
   return (
     <nav
@@ -168,23 +171,34 @@ function ReportNav({ tab, modules }: { tab: Tab; modules: number }) {
       // This landmark receives focus when opening Forecast.
       tabIndex={tab === "forecast" ? -1 : undefined}
       aria-label="Report sections"
-      className="flex scroll-mt-3 flex-wrap gap-3 border-b border-border-hairline"
+      className="flex w-fit max-w-full scroll-mt-3 flex-wrap gap-0.5 rounded-ds-md border border-border-hairline bg-surface-subtle p-1"
     >
-      {tabs.map(([key, title]) => (
-        <RunTabLink
-          key={key}
-          href={tabHref(key)}
-          label={title}
-          current={tab === key || (tab === "calendar" && key === "overview")}
-          count={key === "modules" ? String(modules) : undefined}
-          accessibleLabel={key === "modules" ? `Modules ${String(modules)}` : undefined}
-        />
-      ))}
+      {tabs.map(([key, title]) => {
+        const current = tab === key || (tab === "calendar" && key === "overview");
+        return (
+          <a
+            key={key}
+            href={tabHref(key)}
+            aria-label={key === "modules" ? `Modules ${String(modules)}` : undefined}
+            aria-current={current ? "page" : undefined}
+            className={`${SEGMENT} ${
+              current
+                ? "border-action-subtle-hover bg-surface-selected text-text-link"
+                : "border-transparent text-text-secondary hover:bg-surface-card hover:text-text-primary"
+            }`}
+          >
+            {current && <span aria-hidden="true" className="size-1.5 rounded-ds-full bg-action" />}
+            {title}
+            {key === "modules" && (
+              <span className="font-mono text-caption font-normal tabular-nums">{modules}</span>
+            )}
+          </a>
+        );
+      })}
     </nav>
   );
 }
 
-/** Use compact history metadata when the scoped snapshot only retains the row's summary. */
 function runDetails(snapshot: Snapshot, key: string, run: PublishedRun) {
   if (run.history)
     return {
