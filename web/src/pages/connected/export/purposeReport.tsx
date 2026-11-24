@@ -38,9 +38,11 @@ type PurposePassage = SpecialistOverview["findings"][number];
 type Exhibit = { title: string; table: Table; notes: string[] };
 /** `withheld` counts the module passages of this section that the reference check left out. */
 type PurposeSection = { title: string; bodies: string[]; withheld?: number };
+/** `withheld` is the same count for the decision's passages that no section below it counts. */
 type Purpose = {
   title: string;
   decision: string[];
+  withheld?: number;
   restrictions?: string[];
   charts?: ReactElement[];
   gap?: string;
@@ -99,7 +101,7 @@ export function purposeDocument(
 }
 
 function PurposeReport({ purpose }: { purpose: Purpose }) {
-  const { title, decision, restrictions, charts, gap, passages, exhibits } = purpose;
+  const { title, decision, withheld = 0, restrictions, charts, gap, passages, exhibits } = purpose;
   return (
     <div className="issuer-front-page grid min-w-0 gap-5">
       <section className="issuer-front-page-decision grid gap-2 border-b border-border-hairline pb-4">
@@ -114,14 +116,16 @@ function PurposeReport({ purpose }: { purpose: Purpose }) {
         {decision.map((body) => (
           <p key={body}>{richParts(body, readerText)}</p>
         ))}
+        {withheld > 0 && <p>{withheldLine(withheld)}</p>}
       </section>
       {charts}
       {gap && <p>{gap}</p>}
       {exhibits?.map(({ title, table, notes }) => (
         <section key={title} className="grid min-w-0 gap-2">
           <h3 className="font-display text-h4">{title}</h3>
-          {notes.map((note) => (
-            <p key={note}>{richParts(note, readerText)}</p>
+          {notes.map((note, at) => (
+            // A table's section can hold the same paragraph twice; each is printed.
+            <p key={at}>{richParts(note, readerText)}</p>
           ))}
           <PublishedTable table={table} heading={title} />
         </section>
@@ -152,10 +156,9 @@ function locatedPassage(entry: OutputEntry, line: number, body: string): Purpose
   return { owner: { id, module, sha256 }, line, body };
 }
 
-/** The passages under the headings that pass the reference check, and how many it left out. */
-function readPassages(entry: OutputEntry, headings: readonly string[], safe: SafeText) {
-  let withheld = 0;
-  const passages = classifySections(entry.sections)
+/** The module's passages under the headings as written, method notes left out. */
+function writtenPassages(entry: OutputEntry, headings: readonly string[]) {
+  return classifySections(entry.sections)
     .filter(
       ({ role, section }) =>
         (role === "finding" || role === "passage") && headings.includes(section.heading),
@@ -164,21 +167,22 @@ function readPassages(entry: OutputEntry, headings: readonly string[], safe: Saf
       section.blocks.flatMap((block) => {
         if (block.type !== "text") return [];
         const { body } = readParagraph(block.text);
-        if (!body || methodNote(plainText(body))) return [];
-        if (safe(body)) return [locatedPassage(entry, block.line, body)];
-        withheld += 1;
-        return [];
+        return body && !methodNote(plainText(body))
+          ? [locatedPassage(entry, block.line, body)]
+          : [];
       }),
     );
-  return { passages, withheld };
+}
+
+/** The passages under the headings that pass the reference check, and how many it left out. */
+function readPassages(entry: OutputEntry, headings: readonly string[], safe: SafeText) {
+  const written = writtenPassages(entry, headings);
+  const passages = written.filter(({ body }) => Boolean(safe(body)));
+  return { passages, withheld: written.length - passages.length };
 }
 
 function sectionPassages(entry: OutputEntry, headings: readonly string[], safe: SafeText) {
   return readPassages(entry, headings, safe).passages;
-}
-
-function sectionBodies(entry: OutputEntry, headings: readonly string[], safe: SafeText) {
-  return sectionPassages(entry, headings, safe).map(({ body }) => body);
 }
 
 /** A printed section of every passage under the headings, with the count that was left out. */
@@ -193,20 +197,45 @@ function passageSection(
   return { title, bodies: passages.map(({ body }) => body), withheld };
 }
 
+type ChosenPassage = { body?: string; withheld: number };
+
 /**
- * A section of the one passage chosen from the headings. When the module has none that passes the
- * reference check, the section carries the count of those left out.
+ * The one passage a module gives the lead or a one-passage section, and how many of its candidates
+ * the reference check left out. The candidates are the run's published lead when it is this
+ * module's, then the passages under each heading in the order the headings are given; the first
+ * that passes the check is chosen. Both answers are read from this one list, so the count holds
+ * neither a method note nor the passage that is printed.
  */
-function chosenSection(
-  title: string,
-  chosen: string | undefined,
-  lead: string,
+function chosenPassage(
+  view: ReportView,
+  run: PublishedRun,
   entry: OutputEntry | undefined,
   headings: readonly string[],
   safe: SafeText,
-): PurposeSection {
-  if (chosen) return { title, bodies: chosen === lead ? [] : [chosen] };
-  return { title, bodies: [], withheld: entry ? readPassages(entry, headings, safe).withheld : 0 };
+): ChosenPassage {
+  if (!entry) return { withheld: 0 };
+  const lead = scopedLead(view, run);
+  const published =
+    lead?.entry === entry && lead.passage.body !== null
+      ? [{ line: lead.passage.line, body: lead.passage.body }]
+      : [];
+  const candidates = [
+    ...published,
+    ...headings
+      .flatMap((heading) => writtenPassages(entry, [heading]))
+      .filter(({ line }) => !published.some((passage) => passage.line === line)),
+  ];
+  const allowed = candidates.filter(({ body }) => Boolean(safe(body)));
+  return { body: allowed[0]?.body, withheld: candidates.length - allowed.length };
+}
+
+/**
+ * A module's one-passage section. The passage is printed here unless it is the report's lead, and
+ * the count of the module's candidates that the check left out is printed here either way.
+ */
+function chosenSection(title: string, chosen: ChosenPassage, lead: string): PurposeSection {
+  const { body, withheld } = chosen;
+  return { title, bodies: body && body !== lead ? [body] : [], withheld };
 }
 
 function findingTable(
@@ -257,12 +286,12 @@ function exhibit(
   safe: SafeText,
   note?: string,
   qualifications: readonly string[] = [],
-  missing?: "basis" | "unit",
+  withhold = false,
 ): Exhibit[] {
   if (!table?.rows.length || table.headers.some((header) => !safe(header)) || (note && !safe(note)))
     return [];
   const released = qualifications.filter((body) => Boolean(safe(body)));
-  const unresolved = Boolean(missing) || released.length !== qualifications.length;
+  const unresolved = withhold || released.length !== qualifications.length;
   const data = printableTable(table, unresolved).table;
   const rows = data.rows.map((row) =>
     row.cells.every((cell) => !cell.trim() || safe(cell))
@@ -273,11 +302,15 @@ function exhibit(
         },
   );
   const notes = [...(note ? [note] : []), ...released];
-  // The basis sentence is printed only where no note of the table is: beside a printed note that
-  // lacks the unit sentence, the line speaks of the unit note alone.
-  if (missing === "unit" && released.length)
-    notes.push("No reporting-unit note for this table is shown in this report.");
-  else if (missing) notes.push("The observation basis for this table is not shown in this report.");
+  // Each sentence speaks only of what the page lacks. With no note printed over the table, that is
+  // its basis; under a printed note it is the cells, which read "Withheld", and nothing is said of
+  // the note.
+  if (withhold)
+    notes.push(
+      notes.length
+        ? 'This report does not show what the module wrote in the cells of this table that read "Withheld".'
+        : "The observation basis for this table is not shown in this report.",
+    );
   else if (unresolved)
     notes.push("Some observation qualifications are only available in Evidence.");
   return [{ title, table: { ...data, rows }, notes }];
@@ -352,17 +385,6 @@ function ownerChart(entry: OutputEntry | undefined, heading: string, safe: SafeT
   ];
 }
 
-function publishedBottomLine(
-  view: ReportView,
-  run: PublishedRun,
-  entry: OutputEntry,
-  safe: SafeText,
-) {
-  const lead = scopedLead(view, run);
-  const body = lead?.entry === entry ? lead.passage.body : undefined;
-  return body && safe(body) ? body : sectionBodies(entry, ["Bottom line"], safe)[0];
-}
-
 function earlierScope(run: PublishedRun) {
   return (
     run.assessmentScope === "unverified" &&
@@ -395,9 +417,10 @@ function legacyEarnings(entry: OutputEntry, safe: SafeText): Purpose | null {
     "legacy-comparator",
   );
   const basis = legacyComparisonBasis(entry);
-  const definitions = sectionBodies(entry, ["Definition lock and top sheet"], safe).find((body) =>
-    body.startsWith("Amounts are USD millions except reported percentages."),
-  );
+  const basisNotes = readPassages(entry, ["Definition lock and top sheet"], safe);
+  const definitions = basisNotes.passages
+    .map(({ body }) => body)
+    .find((body) => body.startsWith("Amounts are USD millions except reported percentages."));
   const locator = / \(H4 table \d+\)| \(text \d+\)/g;
   const mechanics = readPassages(
     entry,
@@ -417,6 +440,11 @@ function legacyEarnings(entry: OutputEntry, safe: SafeText): Purpose | null {
     name === "Definition / source" ? "Definition" : name,
   );
   const drivers = variance.filter((body) => body !== lead && body !== challenge);
+  const monitoring = readPassages(
+    entry,
+    ["Monitoring and method changes justified by observed output"],
+    safe,
+  );
   return {
     title: "Earnings view",
     decision: [lead, challenge],
@@ -424,14 +452,17 @@ function legacyEarnings(entry: OutputEntry, safe: SafeText): Purpose | null {
     exhibits: exhibit({ ...table, headers }, "Prior and current results", safe, note),
     passages: [
       { title: "Variance drivers and guidance", bodies: drivers, withheld: mechanics.withheld },
-      { title: "Reporting basis and limitations", bodies: [definitions] },
+      {
+        title: "Reporting basis and limitations",
+        bodies: [definitions],
+        withheld: basisNotes.withheld,
+      },
       {
         title: "What to watch",
-        bodies: sectionBodies(
-          entry,
-          ["Monitoring and method changes justified by observed output"],
-          safe,
-        ).filter((body) => body.startsWith("Track dated cash after distributions")),
+        bodies: monitoring.passages
+          .map(({ body }) => body)
+          .filter((body) => body.startsWith("Track dated cash after distributions")),
+        withheld: monitoring.withheld,
       },
     ],
   };
@@ -446,13 +477,15 @@ export function earningsUpdate(
   if (!entry) return null;
   const legacy = earlierScope(run) && legacyEarnings(entry, safe);
   if (legacy) return legacy;
-  const lead = publishedBottomLine(view, run, entry, safe);
+  // This format has no bottom-line section, so the lead's own section carries the count.
+  const { body: lead, withheld } = chosenPassage(view, run, entry, ["Bottom line"], safe);
   if (!lead) return null;
   const headings = ["Chart data: prior and current results", "Chart data: margin and KPI changes"];
   const charts = headings.flatMap((heading) => ownerChart(entry, heading, safe));
   return {
     title: "Earnings view",
     decision: [lead],
+    withheld,
     charts,
     gap: charts.length ? undefined : "No results chart is shown in this report.",
     passages: [
@@ -507,7 +540,8 @@ function archivedRelativeValue(
     "legacy-rv",
   );
   const disposition = "Both securities: Requires More Work; RV Unclear.";
-  const selection = sectionPassages(entry, ["Security-selection view"], safe).map((passage) => ({
+  const written = readPassages(entry, ["Security-selection view"], safe);
+  const selection = written.passages.map((passage) => ({
     ...passage,
     body: plainText(passage.body),
   }));
@@ -552,6 +586,7 @@ function archivedRelativeValue(
   return {
     title: label ?? "Market-implied view",
     decision: [...findings.map(({ body }) => body), ...(hold ? [hold] : [])],
+    withheld: written.withheld,
     passages: [{ title: "What would change the view", bodies: archivedPriceTrigger(entry) }],
     restrictions: label ? [label] : [],
     overview: {
@@ -840,10 +875,6 @@ export function relativeValue(view: ReportView, run: PublishedRun, safe: SafeTex
   };
 }
 
-function namedPassage(entry: OutputEntry | undefined, headings: readonly string[], safe: SafeText) {
-  return entry ? sectionBodies(entry, headings, safe) : [];
-}
-
 function publishedCharts(
   view: ReportView,
   choices: readonly (readonly [string, string])[],
@@ -857,11 +888,25 @@ function publishedCharts(
 // The sentence a table note opens with when it states the reporting unit of the table's amounts.
 const UNIT_NOTE = /^Amounts are .+? unless stated otherwise\./;
 
-function precedingTableNote(entry: OutputEntry | undefined, table: Table | undefined) {
-  if (!entry || !table) return "";
-  const section = entry.sections.find(({ blocks }) => blocks.includes(table));
-  const block = section?.blocks.find((item) => item.type === "text" && item.line < table.line);
-  return block?.type === "text" ? readParagraph(block.text).body : "";
+/**
+ * The notes of a table and whether they release its amounts. The notes are every text block of the
+ * table's own section that is not a method note, before and after the table, in published order.
+ * They are printed all or none: none when one of them fails the reference check. A section that
+ * holds a second table gives its text to neither, since nothing says which table a paragraph
+ * qualifies. The amounts are released only with the notes, and only when the first of them opens
+ * with the unit sentence.
+ */
+function tableNotes(entry: OutputEntry | undefined, table: Table | undefined, safe: SafeText) {
+  const section = table && entry?.sections.find(({ blocks }) => blocks.includes(table));
+  if (!section || section.blocks.filter(({ type }) => type === "table").length !== 1)
+    return { notes: [], released: false };
+  const notes = section.blocks.flatMap((block) => {
+    if (block.type !== "text") return [];
+    const { body } = readParagraph(block.text);
+    return body && !methodNote(plainText(body)) ? [body] : [];
+  });
+  if (!notes.every((body) => Boolean(safe(body)))) return { notes: [], released: false };
+  return { notes, released: UNIT_NOTE.test(plainText(notes[0] ?? "")) };
 }
 
 export function covenantRefinancing(
@@ -872,15 +917,10 @@ export function covenantRefinancing(
   const cash = selectedOutput(view, "CP-2D");
   const funding = selectedOutput(view, "CP-3C");
   const legal = selectedOutput(view, "CP-4");
-  const opening =
-    cash &&
-    (publishedBottomLine(view, run, cash, safe) || namedPassage(cash, ["Liquidity view"], safe)[0]);
-  const refinancing =
-    funding &&
-    (publishedBottomLine(view, run, funding, safe) ||
-      namedPassage(funding, ["Funding gap view"], safe)[0]);
-  const covenant = legal && publishedBottomLine(view, run, legal, safe);
-  const lead = opening || refinancing || covenant;
+  const opening = chosenPassage(view, run, cash, ["Bottom line", "Liquidity view"], safe);
+  const refinancing = chosenPassage(view, run, funding, ["Bottom line", "Funding gap view"], safe);
+  const covenant = chosenPassage(view, run, legal, ["Bottom line"], safe);
+  const lead = opening.body ?? refinancing.body ?? covenant.body;
   if (!lead) return null;
   const maturities = findingTable(funding, "Refinancing need by maturity", [
     "Local facility label",
@@ -891,14 +931,14 @@ export function covenantRefinancing(
     "Decision driver",
     "Evidence-supported base",
   ]);
-  // A table's note is printed whole or not at all, and only over the table it precedes.
-  const runwayNote = precedingTableNote(cash, runway);
-  const runwayBasis = UNIT_NOTE.test(runwayNote) && safe(runwayNote) ? runwayNote : undefined;
+  // The runway table prints its notes only with its amounts. The funding-gap table prints notes
+  // that pass the check even while its amounts are withheld for want of the unit sentence.
+  const runwayNotes = tableNotes(cash, runway, safe);
   const scenarios = findingTable(cash, "Funding gap", [
     "Case / horizon",
     "Floor-preserving revolver requirement",
   ]);
-  const scenarioNote = precedingTableNote(cash, scenarios);
+  const scenarioNotes = tableNotes(cash, scenarios, safe);
   // The not-shown sentence is decided by the same lookups that draw the headroom chart and table.
   const headroomHeading = "Chart data: covenant headroom";
   const headroomChart = ownerChart(legal, headroomHeading, safe);
@@ -931,31 +971,24 @@ export function covenantRefinancing(
         runway,
         "Liquidity and cash runway",
         safe,
-        runwayBasis,
-        [],
-        runwayBasis ? undefined : "basis",
+        undefined,
+        runwayNotes.released ? runwayNotes.notes : [],
+        !runwayNotes.released,
       ),
       ...exhibit(
         scenarios,
         "Funding gap illustrations",
         safe,
         undefined,
-        scenarioNote ? [scenarioNote] : [],
-        !scenarioNote ? "basis" : UNIT_NOTE.test(scenarioNote) ? undefined : "unit",
+        scenarioNotes.notes,
+        !scenarioNotes.released,
       ),
       ...headroomTable,
     ],
     passages: [
-      chosenSection("Liquidity view", opening, lead, cash, ["Bottom line", "Liquidity view"], safe),
-      chosenSection(
-        "Refinancing need",
-        refinancing,
-        lead,
-        funding,
-        ["Bottom line", "Funding gap view"],
-        safe,
-      ),
-      chosenSection("Covenant view", covenant, lead, legal, ["Bottom line"], safe),
+      chosenSection("Liquidity view", opening, lead),
+      chosenSection("Refinancing need", refinancing, lead),
+      chosenSection("Covenant view", covenant, lead),
       passageSection(
         "Contrary evidence and funding risks",
         cash,
@@ -977,12 +1010,9 @@ export function distressedRestructuring(
 ): Purpose | null {
   const downside = selectedOutput(view, "CP-2A");
   const workout = selectedOutput(view, "CP-4C");
-  const opening =
-    downside &&
-    (publishedBottomLine(view, run, downside, safe) ||
-      namedPassage(downside, ["Distress gate"], safe)[0]);
-  const path = workout && publishedBottomLine(view, run, workout, safe);
-  const lead = opening || path;
+  const opening = chosenPassage(view, run, downside, ["Bottom line", "Distress gate"], safe);
+  const path = chosenPassage(view, run, workout, ["Bottom line"], safe);
+  const lead = opening.body ?? path.body;
   if (!lead) return null;
   const stress = findingTable(downside, "Downside stress", [
     "Scenario and assumption",
@@ -1034,15 +1064,8 @@ export function distressedRestructuring(
       ...recoveryTable,
     ],
     passages: [
-      chosenSection(
-        "Distress gate",
-        opening,
-        lead,
-        downside,
-        ["Bottom line", "Distress gate"],
-        safe,
-      ),
-      chosenSection("Restructuring path", path, lead, workout, ["Bottom line"], safe),
+      chosenSection("Distress gate", opening, lead),
+      chosenSection("Restructuring path", path, lead),
       passageSection("Downside view", downside, ["Downside view", "Key findings"], safe),
       {
         ...contrary,
@@ -1254,6 +1277,7 @@ function portfolioExposure(view: ReportView, safe: SafeText, requiredObservation
     observed,
     exhibits: observed ? portfolioHoldings(position, safe) : [],
     conditions: stress ? [stress.body] : [],
+    withheld: readPassages(position, ["Portfolio view"], safe).withheld,
   };
 }
 
@@ -1305,7 +1329,8 @@ export function portfolioDecision(
 ): Purpose | null {
   const committee = selectedOutput(view, "CP-6");
   if (!committee) return null;
-  const archive = earlierScope(run) ? archivedPortfolioDecision(committee, safe) : undefined;
+  const archived = earlierScope(run);
+  const archive = archived ? archivedPortfolioDecision(committee, safe) : undefined;
   const treatment = decisionTreatment(view, run, "CP-6", "committee", safe);
   const hold = treatment?.status === "withheld" ? treatment.reason : "";
   if (!archive && !hold) return null;
@@ -1335,9 +1360,14 @@ export function portfolioDecision(
         : { label, reason: UNAVAILABLE_DECISION };
   const gap = "No portfolio limits chart is shown in this report.";
   const title = "Portfolio decision and sizing";
+  // The decision is chosen from the archived posture passages and the exposure passages: those the
+  // check left out are counted once, here, although the stress section reads the exposure passages
+  // too.
+  const posture = archived ? readPassages(committee, ["Final Sizing Posture"], safe).withheld : 0;
   return {
     title,
     decision: [...findings.map(({ body }) => body), ...(hold ? [hold] : [])],
+    withheld: posture + (position?.withheld ?? 0),
     restrictions: label ? [label] : [],
     overview: { title, findings, restriction },
     charts,

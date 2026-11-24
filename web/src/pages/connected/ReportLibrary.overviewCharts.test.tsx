@@ -293,23 +293,33 @@ it("leaves the limitations out when the recorded hold's reason cannot be shown",
   expect(screen.getAllByText(ELSEWHERE)).toHaveLength(1);
 });
 
-it("says on Overview that an unheld decision is not shown on this page, and shows it on the module page it names", async () => {
+const BOTTOM_LINE_NOT_ON_PAGE =
+  "This page does not show a bottom line for the Committee decision module, because no clearance for it is recorded. Other passages of that module, such as its limitations, may be shown on this page. The Committee decision page under Modules shows that module's findings.";
+
+it("says on Overview that an unheld module's bottom line is not shown on this page, and shows it on the module page it names", async () => {
   const data = fullSnapshot({ pathway: "credit_snapshot", lead: true });
   vi.stubGlobal("fetch", () => Promise.resolve(Response.json(data)));
   window.history.replaceState(null, "", "/#overview");
   const first = render(<ReportReader id="acme" mode="synthetic" />);
   await screen.findByText(LEAD);
-  expect(
-    screen.getByText(
-      "This decision is not shown on this page because no clearance for it is recorded. The Committee decision page under Modules shows that module's findings.",
-    ),
-  ).toBeInTheDocument();
+  expect(screen.getByText(BOTTOM_LINE_NOT_ON_PAGE)).toBeInTheDocument();
   expect(document.body.textContent).not.toMatch(/in this report|Add one percent of NAV/);
   first.unmount();
   window.history.replaceState(null, "", "/#modules/CP-6");
   render(<ReportReader id="acme" mode="synthetic" />);
   expect(await screen.findByRole("heading", { name: "Committee decision" })).toBeInTheDocument();
   expect(screen.getByText("Add one percent of NAV.")).toBeInTheDocument();
+});
+
+it("does not say a decision is not shown on the page that lists the module's limitation stating it", async () => {
+  await overview({ pathway: "credit_snapshot", lead: true, cp6Limit: SIZED_LIMIT });
+  // The owner keeps an unheld module's limitations listed, and this one states the action and size.
+  expect(screen.getByText(SIZED_LIMIT)).toBeInTheDocument();
+  expect(screen.getByText("Committee decision (1)")).toBeInTheDocument();
+  // So the page claims only what it leaves out: the module's bottom line.
+  expect(document.body.textContent).not.toMatch(/decision is not shown/i);
+  expect(screen.getByText(BOTTOM_LINE_NOT_ON_PAGE)).toBeInTheDocument();
+  expect(document.body.textContent).not.toContain("Add one percent of NAV.");
 });
 
 it("keeps another module's limitation that a held module also states", async () => {

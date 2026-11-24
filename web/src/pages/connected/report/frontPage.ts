@@ -115,10 +115,13 @@ export function decisionTreatment(
     selectedOutput(view, code) === entry && entry.sections.some(({ blocks }) => blocks.length);
   if (held || !readable)
     return { status: "unavailable", reason: UNAVAILABLE_DECISION, held, entry };
+  // Overview lists no bottom line for this module, but an unheld module's limitations stay in its
+  // list and can state the decision: the screen sentence names only the passage the page leaves out.
+  const name = moduleName(code);
   return {
     status: "not shown",
     reason: NOT_SHOWN_DECISION,
-    screenReason: `This decision is not shown on this page because no clearance for it is recorded. The ${moduleName(code)} page under Modules shows that module's findings.`,
+    screenReason: `This page does not show a bottom line for the ${name} module, because no clearance for it is recorded. Other passages of that module, such as its limitations, may be shown on this page. The ${name} page under Modules shows that module's findings.`,
     held,
     entry,
   };

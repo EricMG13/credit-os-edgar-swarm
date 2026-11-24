@@ -612,7 +612,7 @@ it("does not accept Relative Value on prose identity, missing quote date or unty
   unavailable(snapshot, "relative-value");
 });
 
-it("shows only the exact archived disposition and typed marks when the owner paragraph mixes in a recommendation", () => {
+function archivedRelativeValuePublication(extra: Section[] = []) {
   const { snapshot, run, add } = publication("relative_value");
   run.assessmentScope = "unverified";
   run.methodChanges = ["Earlier methods"];
@@ -627,6 +627,7 @@ it("shows only the exact archived disposition and typed marks when the owner par
       "If both equivalents are dirty, July's extra yield is18.522010bp and simple residual difference16.472695bp; rounding alone leaves that yield ordering positive. That is the strongest compensation countercase for July, but neither price basis nor executable depth is established. The 2029 note is our preferred instrument at 98.",
       15,
     ),
+    ...extra,
     table(
       "T3.5 — Relative value table",
       ["Security", "Market Level", "Market Date", "Quote Quality", "Seniority / Security"],
@@ -674,6 +675,11 @@ it("shows only the exact archived disposition and typed marks when the owner par
       35,
     ),
   ]);
+  return { snapshot, run };
+}
+
+it("shows only the exact archived disposition and typed marks when the owner paragraph mixes in a recommendation", () => {
+  const { snapshot, run } = archivedRelativeValuePublication();
   const { container } = open(snapshot, "relative-value");
   expect(screen.getByText(/^Both securities: Requires More Work; RV Unclear/)).toBeInTheDocument();
   const projection = specialistOverview(
@@ -973,7 +979,7 @@ function occurrences(container: HTMLElement, sentence: string) {
 const NOT_SHOWN_DECISION =
   "This decision is not shown in this report because no clearance for it is recorded.";
 const NOT_SHOWN_ON_SCREEN =
-  "This decision is not shown on this page because no clearance for it is recorded. The Security selection page under Modules shows that module's findings.";
+  "This page does not show a bottom line for the Security selection module, because no clearance for it is recorded. Other passages of that module, such as its limitations, may be shown on this page. The Security selection page under Modules shows that module's findings.";
 const UNAVAILABLE_DECISION = "A published decision is unavailable for this run.";
 const OTHER_ROWS = "Other rows of the module's yield table are not shown in this report.";
 
@@ -1238,7 +1244,8 @@ it("says a readable instrument decision with no recorded hold is not shown, and 
 });
 
 const BASIS_NOT_SHOWN = "The observation basis for this table is not shown in this report.";
-const UNIT_NOTE_NOT_SHOWN = "No reporting-unit note for this table is shown in this report.";
+const WITHHELD_VALUES =
+  'This report does not show what the module wrote in the cells of this table that read "Withheld".';
 
 function fundingPublication(runwayNote?: string, gapNote?: string) {
   const { snapshot, add } = publication("covenant_refinancing");
@@ -1275,7 +1282,9 @@ it("prints a runway note whole, and takes the funding-gap unit only from that ta
   expect(occurrences(container, "Amounts are USD millions unless stated otherwise.")).toBe(1);
   expect(screen.getByText(gapNote)).toBeVisible();
   expect(screen.queryByRole("cell", { name: "35.0" })).toBeNull();
-  expect(occurrences(container, UNIT_NOTE_NOT_SHOWN)).toBe(1);
+  // Under the printed note the line speaks only of the cells; it says nothing of a unit note.
+  expect(occurrences(container, WITHHELD_VALUES)).toBe(1);
+  expect(container.textContent).not.toContain("reporting-unit note");
   cleanup();
 
   const own = "Amounts are USD thousands unless stated otherwise. Illustrations hold the floor.";
@@ -1310,12 +1319,13 @@ it("does not say a table's basis is not shown beside that table's printed note",
   if (!exhibit) throw new Error("Expected the funding-gap exhibit");
   expect(exhibit.textContent).toContain(gapNote);
   expect(exhibit.textContent).not.toContain(BASIS_NOT_SHOWN);
-  expect(exhibit.textContent).toContain(UNIT_NOTE_NOT_SHOWN);
+  expect(exhibit.textContent).toContain(WITHHELD_VALUES);
+  expect(exhibit.textContent).not.toContain("reporting-unit note");
   expect(screen.queryByRole("cell", { name: "35.0" })).toBeNull();
   // The runway table has no note at all: there the basis sentence is true and stays.
   const runway = screen.getByRole("heading", { name: "Liquidity and cash runway" }).parentElement;
   expect(runway?.textContent).toContain(BASIS_NOT_SHOWN);
-  expect(runway?.textContent).not.toContain(UNIT_NOTE_NOT_SHOWN);
+  expect(runway?.textContent).not.toContain(WITHHELD_VALUES);
 });
 
 const SIZING_CONSTRAINT =
@@ -1514,4 +1524,342 @@ it("counts the opening module's passages when another module has to lead", () =>
   open(distressed.snapshot, "distressed-restructuring");
   expect(screen.getByText("Secured lenders recover 62% in the reorganisation case.")).toBeVisible();
   expect(section("Distress gate")).toBe(`Distress gate${oneWithheld}`);
+});
+
+const UNIT_SENTENCE = "Amounts are USD millions unless stated otherwise.";
+type Note = readonly [line: number, body: string];
+
+/** The runway table (line 20) and the funding-gap table (line 40), each with notes in its section. */
+function fundingNotes(runwayNotes: readonly Note[], gapNotes: readonly Note[], extra?: Table) {
+  const { snapshot, add } = publication("covenant_refinancing");
+  const withNotes = (section: Section, notes: readonly Note[]) => ({
+    ...section,
+    blocks: [
+      ...section.blocks,
+      ...notes.map(([line, body]) => ({ type: "text" as const, line, end: line, text: body })),
+      ...(extra && section.heading === "Liquidity and cash runway" ? [extra] : []),
+    ].sort((a, b) => a.line - b.line),
+  });
+  add("CP-2D", [
+    context("Findings"),
+    text("Liquidity view", "Reported cash is conditional."),
+    withNotes(
+      table(
+        "Liquidity and cash runway",
+        ["Decision driver", "Evidence-supported base"],
+        [["Reported cash", "123.4"]],
+      ),
+      runwayNotes,
+    ),
+    withNotes(
+      table(
+        "Funding gap",
+        ["Case / horizon", "Floor-preserving revolver requirement"],
+        [["Base, 12 months", "35.0"]],
+        40,
+      ),
+      gapNotes,
+    ),
+  ]);
+  return snapshot;
+}
+
+/** The paragraphs printed in the exhibit under the heading, in order. */
+function exhibitNotes(name: string) {
+  const exhibit = screen.getByRole("heading", { name }).parentElement;
+  if (!exhibit) throw new Error(`Expected the ${name} exhibit`);
+  return [...exhibit.querySelectorAll("p")].map((paragraph) => paragraph.textContent);
+}
+
+it("prints every note of a table's section, before and after the table, with its amounts", () => {
+  const restricted =
+    "Opening liquidity excludes USD 0.4 billion of restricted cash; the revolver is not drawable above 4.5x leverage.";
+  const forecast =
+    "Illustrations hold the June cash floor of USD 50.0 million constant; they are not forecasts.";
+  open(
+    fundingNotes(
+      [
+        [17, UNIT_SENTENCE],
+        [18, restricted],
+      ],
+      [
+        [37, UNIT_SENTENCE],
+        [38, forecast],
+      ],
+    ),
+    "covenant-refinancing",
+  );
+  expect(exhibitNotes("Liquidity and cash runway")).toEqual([UNIT_SENTENCE, restricted]);
+  expect(exhibitNotes("Funding gap illustrations")).toEqual([UNIT_SENTENCE, forecast]);
+  expect(screen.getByRole("cell", { name: "123.4" })).toBeInTheDocument();
+  expect(screen.getByRole("cell", { name: "35.0" })).toBeInTheDocument();
+  cleanup();
+
+  const escrow = "Reported cash includes USD 40.0 million held in escrow that is not accessible.";
+  const severe = "The severe case assumes no revolver access.";
+  open(
+    fundingNotes(
+      [
+        [18, UNIT_SENTENCE],
+        [30, escrow],
+      ],
+      [
+        [38, UNIT_SENTENCE],
+        [50, severe],
+      ],
+    ),
+    "covenant-refinancing",
+  );
+  expect(exhibitNotes("Liquidity and cash runway")).toEqual([UNIT_SENTENCE, escrow]);
+  expect(exhibitNotes("Funding gap illustrations")).toEqual([UNIT_SENTENCE, severe]);
+  expect(screen.getByRole("cell", { name: "123.4" })).toBeInTheDocument();
+  expect(screen.getByRole("cell", { name: "35.0" })).toBeInTheDocument();
+  cleanup();
+
+  // A method note is not a note of the table: it neither prints nor stands in for the unit note.
+  const method = "Module status: complete (see p. 2).";
+  open(
+    fundingNotes(
+      [
+        [17, method],
+        [18, UNIT_SENTENCE],
+      ],
+      [
+        [38, UNIT_SENTENCE],
+        [50, method],
+      ],
+    ),
+    "covenant-refinancing",
+  );
+  expect(exhibitNotes("Liquidity and cash runway")).toEqual([UNIT_SENTENCE]);
+  expect(exhibitNotes("Funding gap illustrations")).toEqual([UNIT_SENTENCE]);
+  expect(screen.getByRole("cell", { name: "123.4" })).toBeInTheDocument();
+  expect(screen.getByRole("cell", { name: "35.0" })).toBeInTheDocument();
+});
+
+it("withholds a table's amounts and prints none of its notes when one of them cannot be printed", () => {
+  const { container } = open(
+    fundingNotes(
+      [
+        [18, UNIT_SENTENCE],
+        [30, "Reported cash includes USD 40.0 million held in escrow (see p. 14)."],
+      ],
+      [
+        [37, UNIT_SENTENCE],
+        [38, "The severe case of USD 80.5 million is set out in liquidity.xlsx."],
+      ],
+    ),
+    "covenant-refinancing",
+  );
+  expect(exhibitNotes("Liquidity and cash runway")).toEqual([BASIS_NOT_SHOWN]);
+  expect(exhibitNotes("Funding gap illustrations")).toEqual([BASIS_NOT_SHOWN]);
+  expect(screen.queryByRole("cell", { name: "123.4" })).toBeNull();
+  expect(screen.queryByRole("cell", { name: "35.0" })).toBeNull();
+  expect(container.textContent).not.toMatch(/Amounts are USD millions|escrow|severe case|p\. 14/);
+});
+
+it("attributes no note to a table that shares its section with another table", () => {
+  const sensitivity: Table = {
+    type: "table",
+    line: 32,
+    headers: ["Sensitivity", "Change"],
+    rows: [{ line: 34, cells: ["Rate +100bp", "-4.0"] }],
+  };
+  const second = "Sensitivity changes are USD thousands.";
+  const { container } = open(
+    fundingNotes(
+      [
+        [18, UNIT_SENTENCE],
+        [30, second],
+      ],
+      [],
+      sensitivity,
+    ),
+    "covenant-refinancing",
+  );
+  // Nothing says which table a paragraph of this section qualifies, so neither takes it.
+  expect(exhibitNotes("Liquidity and cash runway")).toEqual([BASIS_NOT_SHOWN]);
+  expect(screen.queryByRole("cell", { name: "123.4" })).toBeNull();
+  expect(container.textContent).not.toMatch(/Amounts are USD millions|USD thousands/);
+});
+
+it.each([
+  "Illustrations hold the June cash floor of USD 50.0 million constant. Amounts are USD millions unless stated otherwise.",
+  "Amounts are in USD millions. Illustrations hold the floor.",
+])("says nothing about a unit note under a printed funding-gap note: %s", (gapNote) => {
+  const { container } = open(fundingPublication(undefined, gapNote), "covenant-refinancing");
+  // The note is printed whole; the line under it speaks only of the cells that read "Withheld".
+  expect(exhibitNotes("Funding gap illustrations")).toEqual([gapNote, WITHHELD_VALUES]);
+  expect(screen.queryByRole("cell", { name: "35.0" })).toBeNull();
+  expect(screen.getAllByRole("cell", { name: "Withheld" }).length).toBeGreaterThan(0);
+  expect(container.textContent).not.toMatch(/reporting-unit note|note for this table/);
+});
+
+it("reads the unit sentence of a note through its bold marks", () => {
+  open(
+    fundingPublication(
+      `**${UNIT_SENTENCE}** Opening liquidity is USD 1.2 billion.`,
+      `**${UNIT_SENTENCE}**`,
+    ),
+    "covenant-refinancing",
+  );
+  expect(exhibitNotes("Liquidity and cash runway")).toEqual([
+    `${UNIT_SENTENCE} Opening liquidity is USD 1.2 billion.`,
+  ]);
+  expect(exhibitNotes("Funding gap illustrations")).toEqual([UNIT_SENTENCE]);
+  expect(screen.getByRole("cell", { name: "123.4" })).toBeInTheDocument();
+  expect(screen.getByRole("cell", { name: "35.0" })).toBeInTheDocument();
+  expect(screen.queryByRole("cell", { name: "Withheld" })).toBeNull();
+});
+
+function sectionText(name: string) {
+  return screen.getByRole("heading", { name }).parentElement?.textContent ?? "";
+}
+
+it("counts a bottom line the check left out when another passage of the module is printed for it", () => {
+  // The whole Bottom line is left out and the module's Liquidity view leads.
+  const promoted = publication("covenant_refinancing");
+  promoted.add("CP-2D", [
+    context("Findings"),
+    text(
+      "Bottom line",
+      "Liquidity of USD 45.0 million covers only nine months; the revolver cannot be drawn above 4.5x (see p. 14).",
+    ),
+    text("Liquidity view", "Reported cash is conditional.", 14),
+  ]);
+  const first = open(promoted.snapshot, "covenant-refinancing").container;
+  expect(screen.getByText("Reported cash is conditional.")).toBeVisible();
+  expect(sectionText("Liquidity view")).toBe(`Liquidity view${oneWithheld}`);
+  expect(first.textContent).not.toMatch(/45\.0 million|p\. 14/);
+  cleanup();
+
+  // A citation inside a sentence keeps the bottom line out in the same way.
+  const cited = publication("covenant_refinancing");
+  cited.add("CP-2D", [
+    context("Findings"),
+    text("Bottom line", "Liquidity is thin [10-Q p. 4] and falling."),
+    text("Liquidity view", "Second view.", 14),
+  ]);
+  open(cited.snapshot, "covenant-refinancing");
+  expect(screen.getByText("Second view.")).toBeVisible();
+  expect(sectionText("Liquidity view")).toBe(`Liquidity view${oneWithheld}`);
+  cleanup();
+
+  // The first Bottom line paragraph is left out and the second is printed in its section.
+  const second = publication("covenant_refinancing");
+  second.add("CP-2D", [
+    context("Findings"),
+    text("Liquidity view", "Reported cash is conditional."),
+  ]);
+  second.add("CP-4", [
+    context("Findings"),
+    text(
+      "Bottom line",
+      "Leverage headroom is 0.2x and a breach is likely at the March test (covenant.pdf).",
+    ),
+    text("Bottom line", "Lenders have waived once before.", 12),
+  ]);
+  open(second.snapshot, "covenant-refinancing");
+  expect(sectionText("Covenant view")).toBe(
+    `Covenant viewLenders have waived once before.${oneWithheld}`,
+  );
+  expect(screen.queryByRole("heading", { name: "Liquidity view" })).toBeNull();
+  cleanup();
+
+  const distressed = publication("distressed_restructuring");
+  distressed.add("CP-2A", [
+    context("Findings"),
+    text("Bottom line", "Default within twelve months is the base case (p. 14)."),
+    text("Distress gate", "Distress is advanced.", 12),
+  ]);
+  distressed.add("CP-4C", [
+    context("Findings"),
+    text("Bottom line", "The fulcrum is the second lien at 35% recovery (recovery.xlsx)."),
+    text("Bottom line", "Senior lenders control the process.", 12),
+  ]);
+  open(distressed.snapshot, "distressed-restructuring");
+  expect(screen.getByText("Distress is advanced.")).toBeVisible();
+  expect(sectionText("Distress gate")).toBe(`Distress gate${oneWithheld}`);
+  expect(sectionText("Restructuring path")).toBe(
+    `Restructuring pathSenior lenders control the process.${oneWithheld}`,
+  );
+});
+
+it("counts an earnings bottom line the check left out under the lead that replaces it", () => {
+  const { snapshot, add } = publication("earnings_update");
+  add("CP-1B", [
+    context("Findings"),
+    text("Bottom line", "Revenue fell 12% and EBITDA 30% (see p. 3)."),
+    text("Bottom line", "Management kept guidance.", 12),
+    text("Key findings", "Margin held at 21%.", 14),
+  ]);
+  const { container } = open(snapshot, "earnings-update");
+  const decision = screen.getByRole("heading", { name: "Earnings view" }).parentElement;
+  expect(decision?.textContent).toBe(`Earnings viewManagement kept guidance.${oneWithheld}`);
+  expect(occurrences(container, oneWithheld)).toBe(1);
+  expect(container.textContent).not.toMatch(/fell 12%|p\. 3/);
+});
+
+it("counts only the candidates the check left out: no method note, printed passage or passage that passes", () => {
+  const { snapshot, run, add } = publication("covenant_refinancing");
+  const published = "Liquidity is thin and falling.";
+  const cash = add("CP-2D", [
+    context("Findings"),
+    {
+      heading: "Bottom line",
+      level: 3,
+      line: 9,
+      blocks: [
+        { type: "text", line: 10, end: 10, text: "Module status: complete (see p. 2)." },
+        { type: "text", line: 11, end: 11, text: "Cash of USD 45.0 million is on p. 14." },
+        { type: "text", line: 12, end: 12, text: published },
+        { type: "text", line: 13, end: 13, text: "The bridge is in liquidity.xlsx." },
+        { type: "text", line: 14, end: 14, text: "The revolver is undrawn." },
+      ],
+    },
+    text("Liquidity view", "Reported cash is conditional.", 18),
+  ]);
+  // The run's published lead is the third paragraph: it is printed, so it is not counted.
+  run.lead = { module: "CP-2D", output: cash.id, sha256: cash.sha256, line: 12, text: published };
+  const { container } = open(snapshot, "covenant-refinancing");
+  expect(occurrences(container, published)).toBe(1);
+  expect(sectionText("Liquidity view")).toBe(
+    "Liquidity view2 passages in this section are not shown in this report.",
+  );
+  expect(container.textContent).not.toMatch(/Module status|p\. 14|liquidity\.xlsx/);
+});
+
+it("counts a passage the check left out where an earlier-format report chooses one passage", () => {
+  const market = archivedRelativeValuePublication([
+    text("Security-selection view", "The price basis is reconciled in marks.xlsx.", 17),
+  ]);
+  open(market.snapshot, "relative-value");
+  expect(sectionText("Market-implied view")).toContain(oneWithheld);
+  cleanup();
+  const clean = archivedRelativeValuePublication();
+  expect(open(clean.snapshot, "relative-value").container.textContent).not.toMatch(
+    /passages? in this section/,
+  );
+  cleanup();
+
+  const earnings = legacyEarningsPublication();
+  Object.values(earnings.workspace.handoffs)[0]?.push(
+    text("Definition lock and top sheet", "Segment definitions are in definitions.xlsx.", 46),
+  );
+  open(earnings, "earnings-update");
+  expect(sectionText("Reporting basis and limitations")).toBe(
+    `Reporting basis and limitationsAmounts are USD millions except reported percentages. Periods are as reported.${oneWithheld}`,
+  );
+  cleanup();
+
+  const portfolio = archivedPortfolio();
+  portfolio.snapshot.workspace.handoffs[portfolio.committee.sha256]?.push(
+    text("Final Sizing Posture", "The mandate cap is recorded in mandate.pdf.", 30),
+  );
+  open(portfolio.snapshot, "portfolio-decision");
+  expect(sectionText("Portfolio decision and sizing")).toContain(oneWithheld);
+  cleanup();
+  expect(
+    open(archivedPortfolio().snapshot, "portfolio-decision").container.textContent,
+  ).not.toMatch(/passages? in this section/);
 });
