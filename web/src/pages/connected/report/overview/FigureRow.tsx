@@ -1,7 +1,13 @@
 import { ArrowDown, ArrowUp } from "@untitledui/icons";
 import type { ReactNode } from "react";
 import { cx } from "@/utils/cx";
-import { blocked, evidencePath, withUnit, type OutputEntry } from "../../publishedReport";
+import {
+  blocked,
+  containsReference,
+  evidencePath,
+  withUnit,
+  type OutputEntry,
+} from "../../publishedReport";
 import { changeSign, changeText, exactDifference, tone } from "../../signal";
 import { PublishedSource } from "../PublishedTrace";
 import { FigureHead } from "./figureParts";
@@ -74,6 +80,17 @@ function ToneChip({ reading }: { reading: Reading }) {
   );
 }
 
+/**
+ * Why a cell is not drawn as a figure: the module's own reason; "not supplied" when that reason
+ * cites a source (sources belong to Evidence and the trace); and for any other words the module
+ * wrote, that they are not one figure, never that the module did not supply it.
+ */
+function gapWords(cell: string) {
+  const reason = gapReason(cell);
+  if (reason === null) return "not shown here, the cell is not one figure";
+  return containsReference(reason) ? "not supplied" : reason;
+}
+
 /** The latest figure, where it came from and how it moved; a gap in the module's own words. */
 function Level({ reading, large }: { reading: Reading; large: boolean }) {
   const { series } = reading;
@@ -97,7 +114,7 @@ function Level({ reading, large }: { reading: Reading; large: boolean }) {
       </div>
       {!stated && latest && (
         <p className="text-caption text-gap-text">
-          {latest.period}: {gapReason(latest.cell) ?? "not supplied"}
+          {latest.period}: {gapWords(latest.cell)}
         </p>
       )}
       {earlier && (

@@ -470,3 +470,26 @@ it("heads the confidence, clearance and since-earlier tiles with real headings",
       within(screen.getByRole("region", { name })).getByRole("heading", { level: 3, name }),
     ).toBeVisible();
 });
+
+it("never prints a gap reason that cites a source, and never calls words the module wrote a missing figure", () => {
+  const cp1 = foundation();
+  const revenue = cp1.sections.find(({ heading }) => heading === "Chart data: revenue and EBITDA");
+  const block = revenue?.blocks[0];
+  if (block?.type !== "table") throw new Error("fixture");
+  const reference =
+    "Not supplied: not stated in northbridge-filing.txt page 4 [E3] CP-1-GAP-12 0123456789abcdef";
+  (block.rows[1] as { cells: string[] }).cells[2] = reference;
+  const { unmount } = render(<FigureRow snapshot={snapshot} run={run} view={view([cp1])} />);
+  const ebitda = screen.getByRole("region", { name: "Adjusted EBITDA" });
+  expect(within(ebitda).getByText("FY2024: not supplied")).toBeVisible();
+  expect(ebitda).not.toHaveTextContent(/northbridge-filing|CP-1|GAP-12|0123456789abcdef/);
+  unmount();
+  (block.rows[1] as { cells: string[] }).cells[2] = "approximately 410";
+  render(<FigureRow snapshot={snapshot} run={run} view={view([cp1])} />);
+  const words = screen.getByRole("region", { name: "Adjusted EBITDA" });
+  expect(within(words).getByText("n.a.")).toBeVisible();
+  expect(
+    within(words).getByText("FY2024: not shown here, the cell is not one figure"),
+  ).toBeVisible();
+  expect(words).not.toHaveTextContent(/not supplied/i);
+});
