@@ -11,6 +11,7 @@ import {
 } from "../coverageData";
 import { card } from "../layout";
 import { prose, RunLine } from "./shared";
+import { ZeroAxisBar } from "./ZeroAxisBar";
 
 function grouped(data: Data, issuers: readonly Issuer[], by: string) {
   const groups = new Map<string, Issuer[]>();
@@ -27,9 +28,9 @@ const FIGURE_WIDTH = "w-28";
 /**
  * One figure across issuers at the chosen period, as bars: per row the issuer, the bar and the
  * figure as written. One list per reporting unit (units are never ranked together); equal figures
- * share a rank. A bar is the figure over the list's largest, drawn from zero, so bars are drawn
- * only where every figure in the list is zero or above; a list that mixes signs shows its
- * figures without bars rather than a bar that hides the sign. Issuers with no figure for the
+ * share a rank. A bar is drawn from zero: the figure over the list's largest where every figure is
+ * zero or above; where any is below zero, bars run either side of a marked zero line on one scale
+ * (an all-negative list runs wholly to its left). Issuers with no figure for the
  * period are listed apart with the module's reason: never ranked and never zero.
  */
 export function RankView({
@@ -63,16 +64,17 @@ export function RankView({
             {group && <h3 className="font-display text-h4 text-text-primary">{group}</h3>}
             {ranking.units.map(({ unit, rows }) => {
               const values = rows.map(({ fact }) => fact.at ?? 0);
-              const bars = values.every((value) => value >= 0);
+              const signed = values.some((value) => value < 0);
               const largest = Math.max(...values);
+              const lowest = Math.min(...values);
               const name = `${field.label}, ${period}${unit ? `, reporting unit ${unit}` : ""}${order === "high" ? ", highest first" : ", lowest first"}`;
               return (
                 <div key={unit} className="grid gap-2">
                   <p className="text-small text-text-secondary">{name}</p>
-                  {!bars && (
-                    <p className="text-caption text-gap-text">
-                      This list mixes positive and negative figures, so no bars are drawn; the
-                      figures are as written.
+                  {signed && (
+                    <p className="text-caption text-text-secondary">
+                      Bars run from the zero line: figures below zero to its left, above zero to its
+                      right, on one scale.
                     </p>
                   )}
                   <ol
@@ -93,18 +95,26 @@ export function RankView({
                             <RunLine run={run} />
                           </div>
                         </div>
-                        {bars ? (
+                        {signed ? (
+                          <ZeroAxisBar
+                            text={figure(fact)}
+                            value={fact.at ?? 0}
+                            low={lowest}
+                            high={largest}
+                            valueWidth={FIGURE_WIDTH}
+                          />
+                        ) : (
                           <BarCell
                             text={figure(fact)}
                             share={largest === 0 ? 0 : (fact.at ?? 0) / largest}
                             valueWidth={FIGURE_WIDTH}
                           />
-                        ) : (
-                          <span className="font-mono text-small text-text-primary tabular-nums">
-                            {figure(fact)}
-                          </span>
                         )}
-                        <TextLink href={evidenceLink(run, fact)} grey className="text-small font-normal">
+                        <TextLink
+                          href={evidenceLink(run, fact)}
+                          grey
+                          className="inline-flex min-h-8 items-center text-small font-normal max-[480px]:min-h-11"
+                        >
                           View sources
                         </TextLink>
                         <p className="text-caption text-text-secondary wrap-anywhere sm:col-span-4 sm:col-start-2">

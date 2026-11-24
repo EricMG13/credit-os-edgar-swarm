@@ -157,3 +157,14 @@ Library's row reads its report once (shared by the dates and any figure trace) a
 answer. `web/scripts/connected-proof.mjs` is unchanged: the collapsed row keeps an exact "Open report"
 link for the newest published run. Kit additions: `valueWidth` on `BarCell` (default unchanged) and
 `components/kit/Chip.tsx` (Chip, ChipGroup, RemovableChip), each with a test.
+
+## Round 3: coordinator second-round review (R1–R11)
+
+Decisions: the module matrix is one shape per cell with the word as its name and tooltip and a legend
+above, module names on end, and a card per issuer with the five stages as rows on a phone (a
+`matchMedia` hook; the issuer detail uses the same stage rows with words). Numeric bounds apply again
+to Modules, Find and Rank and show as a removable chip; their inputs (with the figure and period on
+views that do not show them) are in the Filters disclosure. Row figures print the prior value and
+draw no bar (a bar on each row's own scale would look comparable across rows and is not); the
+two-point mark in the screen map is therefore arrow, change, direction word and the written prior.
+A rank list with any figure below zero draws bars either side of a marked zero line on one scale.

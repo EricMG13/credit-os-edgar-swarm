@@ -11,7 +11,9 @@ import { getLibraryIndex, type LibraryIndex } from "./publishedReport";
 import { isUnreachable } from "./useResource";
 import { ChipGroup } from "@/components/kit/Chip";
 import { groupIssuers, matchesQuery, RUN_STATES } from "./libraryRows/group";
+import { figureName } from "./libraryRows/FigureMark";
 import { IssuerRow, ROW_COLUMNS } from "./libraryRows/IssuerRow";
+import { stated } from "./reportView";
 
 type LibraryFilters = { query: string; sector: string; pathway: string; state: string };
 
@@ -46,6 +48,19 @@ function MatchRuns({
       (filters.pathway === "all" || group.pathway === filters.pathway) &&
       (filters.state === "all" || group.state === filters.state),
   );
+  // The column header carries the qualified label when every row that states the figure shares it.
+  const stating = rows.filter((group) => stated(group.newest.metrics.coverage));
+  const coverageName = figureName(
+    "coverage",
+    "Interest cover",
+    stating[0]?.newest.metrics.coverage,
+  );
+  const coverageInHeader =
+    coverageName !== "Interest cover" &&
+    stating.every(
+      (group) =>
+        figureName("coverage", "Interest cover", group.newest.metrics.coverage) === coverageName,
+    );
   const choose = (change: Partial<LibraryFilters>) => {
     setFilters((previous) => ({ ...previous, ...change }));
   };
@@ -117,15 +132,15 @@ function MatchRuns({
             <span className="pl-9">Issuer</span>
             <span>Stance</span>
             <span>Net leverage</span>
-            <span>Interest cover</span>
-            <span>Liquidity</span>
+            <span>{coverageInHeader ? coverageName : "Interest cover"}</span>
+            <span>Liquidity (cash)</span>
             <span>Run</span>
             <span>Next event</span>
           </div>
           <h2 className="sr-only">Issuers</h2>
           <ul aria-label="Issuers" className="grid gap-2">
             {rows.map((group) => (
-              <IssuerRow key={group.key} group={group} />
+              <IssuerRow key={group.key} group={group} coverageInHeader={coverageInHeader} />
             ))}
           </ul>
         </div>

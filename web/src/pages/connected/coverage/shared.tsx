@@ -46,3 +46,6 @@ export function RunLine({ run }: { run: CoverageRun }) {
     </span>
   );
 }
+
+/** A text link's hit area: 32 px, 44 px on a phone; the text stays small. */
+export const HIT = "inline-flex min-h-8 items-center max-[480px]:min-h-11";

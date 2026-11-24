@@ -123,7 +123,11 @@ it("qualifies retained coverage and keeps the preview reason visible with the ro
   snapshot.preview = { reason: "Retained test record." };
   vi.stubGlobal("fetch", () => Promise.resolve(Response.json(snapshot)));
   render(<ReportLibrary readOnly />);
-  await screen.findByText("Reported EBITDA / cash interest on debt");
+  // Every row that states the figure shares the qualified label, so the column header carries it.
+  expect(
+    (await screen.findAllByText("Reported EBITDA / cash interest on debt")).length,
+  ).toBeGreaterThan(0);
+  expect(screen.getAllByText("Liquidity (cash)").length).toBeGreaterThan(1);
   const issuers = within(screen.getByRole("list", { name: "Issuers" }));
   expect(issuers.queryByText("Delivered")).toBeNull();
   expect(issuers.getByText("Test preview")).toBeVisible();

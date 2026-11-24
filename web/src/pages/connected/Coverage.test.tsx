@@ -113,15 +113,19 @@ afterEach(() => {
   window.localStorage.clear();
 });
 
-test("the matrix says each module's state in words and draws no code, hash or file name", async () => {
+test("the matrix names each module's state in words and draws no code, hash or file name", async () => {
   answer(data);
   const { container } = render(<Coverage />);
   const table = await screen.findByRole("table");
   const alpha = within(table).getByRole("row", { name: /Alpha plc/ });
-  expect(within(alpha).getByText("Delivered with gaps")).toBeInTheDocument();
-  expect(within(alpha).getByText("Not assessable")).toBeInTheDocument();
+  expect(
+    within(alpha).getByLabelText(/Financial foundation.*: Delivered with gaps$/),
+  ).toBeInTheDocument();
+  expect(within(alpha).getByLabelText(/Fundamental credit.*: Not assessable$/)).toBeInTheDocument();
   const beta = within(table).getByRole("row", { name: /Beta SA/ });
-  expect(within(beta).getByText("Not asked for in this run")).toBeInTheDocument();
+  expect(
+    within(beta).getByLabelText(/Fundamental credit.*: Not asked for in this run$/),
+  ).toBeInTheDocument();
   expect(screen.getByText("2 of 2 issuers shown")).toBeInTheDocument();
   const drawn = container.textContent;
   for (const hidden of ["CP-1", "CP-2", SHA, ".md", "alpha-run", "credit_snapshot"])
@@ -244,22 +248,41 @@ test("a sector in the link that no issuer has is shown as unavailable, not hidde
   );
 });
 
-test("the detail closes when its issuer is filtered out, and an unreadable bound is marked in Rank", async () => {
+test("an unreadable bound is marked, and the detail closes when its issuer is filtered out", async () => {
   answer(data);
   render(<Coverage />);
   fireEvent.click(await screen.findByRole("button", { name: "Alpha plc" }));
   expect(screen.getByRole("heading", { name: "Alpha plc" })).toBeInTheDocument();
-  // Bounds read one figure at one period, so only Rank has them.
-  expect(screen.queryByRole("textbox", { name: /At most/ })).not.toBeInTheDocument();
+  fireEvent.change(screen.getByRole("textbox", { name: /At most/ }), { target: { value: "5x" } });
+  expect(screen.getByRole("textbox", { name: /At most/ })).toBeInvalid();
   fireEvent.click(
     within(screen.getByRole("group", { name: "Sector" })).getByRole("button", { name: "Retail" }),
   );
   expect(screen.queryByRole("heading", { name: "Alpha plc" })).not.toBeInTheDocument();
-  fireEvent.click(screen.getByRole("button", { name: "Rank" }));
-  fireEvent.change(screen.getByRole("textbox", { name: /At most/ }), { target: { value: "5x" } });
-  expect(screen.getByRole("textbox", { name: /At most/ })).toBeInvalid();
   fireEvent.click(screen.getByRole("button", { name: "Trend" }));
   expect(screen.queryByRole("textbox", { name: /At most/ })).not.toBeInTheDocument();
+});
+
+test("a bound filters Modules and Find as well as Rank, shows as a removable chip on each, and carries across views", async () => {
+  answer(data);
+  render(<Coverage />);
+  fireEvent.change(await screen.findByRole("textbox", { name: /At least/ }), {
+    target: { value: "5" },
+  });
+  // Alpha states 4.6 and Beta states no figure: neither passes a bound of 5 on the Modules view.
+  expect(screen.getByText("0 of 2 issuers shown")).toBeInTheDocument();
+  const chip = screen.getByRole("button", {
+    name: "Remove filter Net debt / EBITDA ≥ 5 · FY2025",
+  });
+  fireEvent.click(screen.getByRole("button", { name: "Find" }));
+  expect(screen.getByText("0 of 2 issuers shown")).toBeInTheDocument();
+  expect(chip).toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button", { name: "Rank" }));
+  expect(screen.getByText("1 of 2 issuers shown")).toBeInTheDocument();
+  expect(screen.getByText(/Not supplied: cash not stated/)).toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button", { name: /Remove filter Net debt/ }));
+  expect(screen.getByText("2 of 2 issuers shown")).toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: /Remove filter Net debt/ })).toBeNull();
 });
 
 test("a retained test preview says so, as the Library does", async () => {

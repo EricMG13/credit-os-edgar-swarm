@@ -12,7 +12,7 @@ const lev = {
   change: "-0.75",
 };
 
-it("draws the value in mono with its period, the change with its direction word and a from-zero mark", () => {
+it("draws the value in mono with its period, and the change from the prior value with its direction word", () => {
   const { container } = render(
     <FigureMark name="Net leverage" metricKey="net_leverage" figure={lev} />,
   );
@@ -20,33 +20,10 @@ it("draws the value in mono with its period, the change with its direction word 
   expect(screen.getByText("FY2024")).toBeVisible();
   expect(screen.getByText(/-0\.75x/)).toBeVisible();
   expect(screen.getByText("better")).toBeVisible();
-  expect(screen.getByText("vs FY2023")).toBeVisible();
-  const mark = screen.getByRole("img");
-  expect(mark).toHaveAccessibleName(/3\.00x.*2\.25x/);
-  expect(container.querySelectorAll("rect").length).toBeGreaterThan(1);
-});
-
-it("draws the mark from zero: a larger pair is longer than a smaller pair", () => {
-  const widths = (current: string, prior: string) => {
-    const { container, unmount } = render(
-      <FigureMark
-        name="Net leverage"
-        metricKey="net_leverage"
-        figure={{
-          value: current,
-          unit: "x",
-          prior: { value: prior, period: "FY2023" },
-          change: "1",
-        }}
-      />,
-    );
-    const rect = container.querySelector("rect");
-    const width = Number(rect?.getAttribute("width"));
-    unmount();
-    return width;
-  };
-  expect(widths("9", "8")).toBeGreaterThan(widths("2", "1") - 1);
-  expect(widths("9", "8")).toBeGreaterThan(0);
+  expect(screen.getByText("from 3.00x in FY2023")).toBeVisible();
+  // No bar: a bar on each row's own scale would look comparable across rows.
+  expect(container.querySelector("svg:not([aria-hidden])")).toBeNull();
+  expect(screen.queryByRole("img")).toBeNull();
 });
 
 it("states a missing prior period and draws no mark", () => {
@@ -62,7 +39,7 @@ it("states a missing prior period and draws no mark", () => {
   expect(screen.queryByRole("img")).toBeNull();
 });
 
-it("draws no mark and no zero for an empty or non-positive prior", () => {
+it("writes an empty prior as the empty text it is, never as zero", () => {
   render(
     <FigureMark
       name="Net leverage"
@@ -70,7 +47,8 @@ it("draws no mark and no zero for an empty or non-positive prior", () => {
       figure={{ value: "2", unit: "x", prior: { value: "", period: "FY2023" }, change: "2" }}
     />,
   );
-  expect(screen.queryByRole("img")).toBeNull();
+  expect(screen.getByText("No prior period stated")).toBeVisible();
+  expect(screen.queryByText(/from /)).toBeNull();
 });
 
 it("names worse in words, not by colour alone", () => {
@@ -136,4 +114,19 @@ it("places the figure's single trace control beside it", () => {
     />,
   );
   expect(screen.getByRole("button", { name: "trace" })).toBeVisible();
+});
+
+it("shows the qualified label in the cell on a wide screen when the header does not carry it", () => {
+  const figure = {
+    value: "4.19",
+    unit: "x",
+    basis: "LTM reported EBITDA over LTM cash interest for debt 776; calculation C34",
+  };
+  const { container, rerender } = render(
+    <FigureMark name="Interest cover" metricKey="coverage" figure={figure} />,
+  );
+  expect(screen.getByText("Reported EBITDA / cash interest on debt")).toHaveClass("xl:sr-only");
+  rerender(<FigureMark name="Interest cover" metricKey="coverage" figure={figure} showLabel />);
+  expect(screen.getByText("Reported EBITDA / cash interest on debt")).not.toHaveClass("xl:sr-only");
+  expect(container.textContent).toContain("4.19x");
 });

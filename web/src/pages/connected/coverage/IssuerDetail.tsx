@@ -3,10 +3,10 @@ import { TextLink } from "../../run/TextLink";
 import { moduleName } from "../api";
 import { evidenceLink, factsOf, latestRun, type Coverage as Data, type Issuer } from "../coverageData";
 import { card, heading } from "../layout";
-import { Scroller, StageHead, StateCells } from "./Matrix";
-import { named, prose, IN_EVIDENCE, reportPath, RunLine, STATE_WORDS } from "./shared";
+import { RunStates } from "./RunStates";
+import { HIT, IN_EVIDENCE, named, prose, reportPath, RunLine, STATE_WORDS } from "./shared";
 
-/** One issuer: every run against the fixed columns, and what its newest run says. */
+/** One issuer: every run's states by stage and what its newest run says. */
 export function IssuerDetail({ data, issuer }: { data: Data; issuer: Issuer }) {
   const newest = latestRun(issuer);
   const titles = new Map(data.columns.map((column) => [column.code, named(column)]));
@@ -20,32 +20,27 @@ export function IssuerDetail({ data, issuer }: { data: Data; issuer: Issuer }) {
         <h3 className={heading}>{issuer.name}</h3>
         {newest && <Button href={reportPath(newest.folder)}>Open newest report</Button>}
       </div>
-      <Scroller label={`Every run of ${issuer.name}`}>
-        <table className="w-full text-small">
-          <caption className="sr-only">Every run of {issuer.name}, newest first</caption>
-          <StageHead data={data} lead="Run" />
-          <tbody>
-            {issuer.runs.map((run) => (
-              <tr key={run.key} className="border-b border-border-hairline last:border-0">
-                <th scope="row" className="min-w-56 p-3 text-left align-top font-normal">
-                  <RunLine run={run} />
-                  <br />
-                  <TextLink href={reportPath(run.folder)}>Open report</TextLink>
-                  {run.other.length > 0 && (
-                    <span className="mt-1 block text-caption text-text-secondary">
-                      Other modules:{" "}
-                      {run.other
-                        .map((item) => `${named(item)} (${STATE_WORDS[item.state].toLowerCase()})`)
-                        .join("; ")}
-                    </span>
-                  )}
-                </th>
-                <StateCells data={data} run={run} issuer={issuer.name} />
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </Scroller>
+      <ol aria-label={`Every run of ${issuer.name}, newest first`} className="grid gap-6">
+        {issuer.runs.map((run) => (
+          <li key={run.key} className="grid gap-3 border-t border-border-hairline pt-4 first:border-t-0 first:pt-0">
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
+              <RunLine run={run} />
+              <TextLink href={reportPath(run.folder)} className={HIT}>
+ Open report
+ </TextLink>
+            </div>
+            <RunStates data={data} run={run} />
+            <p className="text-caption text-text-secondary">
+              Other modules:{" "}
+              {run.other.length === 0
+                ? "None"
+                : run.other
+                    .map((item) => `${named(item)} (${STATE_WORDS[item.state].toLowerCase()})`)
+                    .join("; ")}
+            </p>
+          </li>
+        ))}
+      </ol>
       {newest && said.length > 0 && (
         <div className="grid gap-3">
           <h4 className="font-semibold text-text-primary">Bottom lines of the newest run</h4>
@@ -59,7 +54,9 @@ export function IssuerDetail({ data, issuer }: { data: Data; issuer: Issuer }) {
                 <p className="reading-copy text-body text-text-primary">
                   {prose(fact.text) ?? IN_EVIDENCE}
                 </p>
-                <TextLink href={evidenceLink(newest, fact)}>View sources</TextLink>
+                <TextLink href={evidenceLink(newest, fact)} className={HIT}>
+ View sources
+ </TextLink>
               </li>
             ))}
           </ul>

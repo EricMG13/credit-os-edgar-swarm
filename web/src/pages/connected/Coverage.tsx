@@ -113,8 +113,8 @@ function Dashboard({ data }: { data: Data }) {
   const period =
     stated.find((item) => item === periodPick) ??
     (field ? commonPeriod(data, data.issuers, field.id) : null);
-  // The bounds read one figure at one period, which only Rank shows, so only Rank applies them.
-  const matched = matchIssuers(data, filters, view === "rank" ? (field?.id ?? null) : null, period);
+  // The bounds read one figure at one period; Trend draws every period, so it applies none.
+  const matched = matchIssuers(data, filters, field?.id ?? null, view === "trend" ? null : period);
   // A bound passes no issuer without a figure, but Rank lists those apart as not ranked, with the
   // module's reason, so they stay in its list whatever the bounds are.
   const unranked = (issuer: Issuer) => {
@@ -164,6 +164,35 @@ function Dashboard({ data }: { data: Data }) {
     },
   ].filter((item): item is NonNullable<typeof item> => Boolean(item));
   const phone = "max-[480px]:min-h-11";
+  const periodChips = stated.length > 0 && (
+    <div role="group" aria-label="Period" className="flex flex-wrap items-center gap-2 pb-0.5">
+      <span aria-hidden="true" className="text-caption text-text-tertiary">
+        Period
+      </span>
+      {stated.map((item) => (
+        <Chip
+          key={item}
+          pressed={item === period}
+          onPress={() => {
+            setPeriodPick(item);
+          }}
+        >
+          {item}
+        </Chip>
+      ))}
+    </div>
+  );
+  const figureSelect = (
+    <Choice name="Figure" value={field?.id ?? ""} onChange={setFieldId}>
+      <FieldOptions fields={numbers} titles={titles} />
+    </Choice>
+  );
+  // A bound reads one figure at one period, shown as a chip on every view that applies it.
+  const [low, high] = [readBound(filters.min), readBound(filters.max)];
+  const boundText =
+    field && period !== null && view !== "trend" && (low.value !== null || high.value !== null)
+      ? `${field.label} ${[low.value !== null && `≥ ${filters.min.trim()}`, high.value !== null && `≤ ${filters.max.trim()}`].filter(Boolean).join(", ")} · ${period}`
+      : null;
   const heading =
     view === "matrix"
       ? "What each module delivered, by issuer"
@@ -261,6 +290,15 @@ function Dashboard({ data }: { data: Data }) {
               {item.text}
             </RemovableChip>
           ))}
+          {boundText && (
+            <RemovableChip
+              onRemove={() => {
+                set({ min: "", max: "" });
+              }}
+            >
+              {boundText}
+            </RemovableChip>
+          )}
           <Button
             color="tertiary"
             size="sm"
@@ -277,7 +315,7 @@ function Dashboard({ data }: { data: Data }) {
           <summary
             className={`flex min-h-8 cursor-pointer items-center text-small font-medium text-text-secondary ${phone}`}
           >
-            Filters: module, module state, confidence, compare and save a group
+            Filters: figure bounds, module, module state, confidence, compare and save a group
           </summary>
           <div className="flex flex-wrap items-end gap-x-4 gap-y-3 py-3">
             <Choice
@@ -336,6 +374,33 @@ function Dashboard({ data }: { data: Data }) {
                 ))}
               </Choice>
             )}
+            {numbers.length > 0 && view !== "trend" && (
+              <>
+                {view !== "rank" && (
+                  <>
+                    {figureSelect}
+                    {periodChips}
+                  </>
+                )}
+                {(["min", "max"] as const).map((side) => (
+                  <label key={side} className={`${label} w-28`}>
+                    {side === "min" ? "At least" : "At most"}
+                    <input
+                      inputMode="decimal"
+                      value={filters[side]}
+                      aria-invalid={readBound(filters[side]).invalid || undefined}
+                      onChange={(event) => {
+                        set({ [side]: event.currentTarget.value });
+                      }}
+                      className={`${control} ${phone}`}
+                    />
+                    {readBound(filters[side]).invalid && (
+                      <span className="text-small font-normal text-error-text">Enter a number</span>
+                    )}
+                  </label>
+                ))}
+              </>
+            )}
             <label className={`flex min-h-8 items-center gap-2 text-small font-medium ${phone}`}>
               <input
                 type="checkbox"
@@ -374,50 +439,10 @@ function Dashboard({ data }: { data: Data }) {
           aria-label="Figure"
           className="flex flex-wrap items-end gap-x-4 gap-y-3 rounded-ds-lg border border-border-subtle bg-surface-card p-4"
         >
-          <Choice name="Figure" value={field?.id ?? ""} onChange={setFieldId}>
-            <FieldOptions fields={numbers} titles={titles} />
-          </Choice>
+          {figureSelect}
           {view === "rank" && (
             <>
-              {stated.length > 0 && (
-                <div
-                  role="group"
-                  aria-label="Period"
-                  className="flex flex-wrap items-center gap-2 pb-0.5"
-                >
-                  <span aria-hidden="true" className="text-caption text-text-tertiary">
-                    Period
-                  </span>
-                  {stated.map((item) => (
-                    <Chip
-                      key={item}
-                      pressed={item === period}
-                      onPress={() => {
-                        setPeriodPick(item);
-                      }}
-                    >
-                      {item}
-                    </Chip>
-                  ))}
-                </div>
-              )}
-              {(["min", "max"] as const).map((side) => (
-                <label key={side} className={`${label} w-28`}>
-                  {side === "min" ? "At least" : "At most"}
-                  <input
-                    inputMode="decimal"
-                    value={filters[side]}
-                    aria-invalid={readBound(filters[side]).invalid || undefined}
-                    onChange={(event) => {
-                      set({ [side]: event.currentTarget.value });
-                    }}
-                    className={`${control} ${phone}`}
-                  />
-                  {readBound(filters[side]).invalid && (
-                    <span className="text-small font-normal text-error-text">Enter a number</span>
-                  )}
-                </label>
-              ))}
+              {periodChips}
               <Segmented
                 label="Order"
                 current={order}

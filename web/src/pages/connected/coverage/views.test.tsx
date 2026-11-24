@@ -1,5 +1,5 @@
 import { cleanup, render, screen, within } from "@testing-library/react";
-import { afterEach, expect, it } from "vitest";
+import { afterEach, expect, it, vi } from "vitest";
 import type { Coverage, CoverageRun, Fact, Issuer } from "../coverageData";
 import { FindView } from "./Find";
 import { Matrix } from "./Matrix";
@@ -71,7 +71,7 @@ const data: Coverage = {
   ],
 };
 
-it("groups the module columns under the five stages and draws each state as a shape and a word", () => {
+it("groups the module columns under the five stages and draws each state as a shape named by its word", () => {
   render(
     <Matrix
       data={data}
@@ -92,11 +92,15 @@ it("groups the module columns under the five stages and draws each state as a sh
     svg.getAttribute("data-shape"),
   );
   expect(shapes).toEqual(["filled circle", "dashed ring", "slashed circle", "ring"]);
-  expect(within(alpha).getByText("Delivered with gaps")).toBeVisible();
-  expect(within(alpha).getByText("No handoff published")).toBeVisible();
+  expect(within(alpha).getByLabelText(/Fundamental credit.*: Delivered with gaps$/)).toBeVisible();
+  expect(within(alpha).getByLabelText(/Committee decision.*: No handoff published$/)).toBeVisible();
   const beta = within(table).getByRole("row", { name: /Beta SA/ });
-  expect(within(beta).getByText("Unreadable")).toBeVisible();
-  expect(within(beta).getByText("Not asked for in this run")).toBeVisible();
+  expect(within(beta).getByLabelText(/for Beta SA: Unreadable$/)).toBeVisible();
+  expect(within(beta).getByLabelText(/for Beta SA: Not asked for in this run$/)).toBeVisible();
+  // The words stand in a legend above the matrix, once each.
+  const legend = within(screen.getByRole("list", { name: "What the shapes mean" }));
+  expect(legend.getAllByRole("listitem")).toHaveLength(6);
+  expect(legend.getByText("Delivered with gaps")).toBeVisible();
 });
 
 const rankOf = (facts: Fact[], order: "high" | "low" = "high") =>
@@ -142,13 +146,40 @@ it("ranks bars from zero in one unit, apart from another unit, and lists a state
   expect(container.textContent).not.toContain("CP-1");
 });
 
-it("draws no bars for a list that mixes signs and writes the figures as they are", () => {
+const fills = (container: HTMLElement) =>
+  [...container.querySelectorAll<HTMLElement>("ol [style]")]
+    .filter((node) => node.className.includes("bg-chart"))
+    .map((node) => [Number.parseFloat(node.style.left), Number.parseFloat(node.style.width)]);
+
+it("draws a mixed list's bars either side of a marked zero line, on one scale, with the sign in the text", () => {
   const { container } = rankOf([fact("a", { text: "4.0", at: 4 }), fact("b", { text: "-2.0", at: -2 })]);
-  expect(container.querySelector("[style]")).toBeNull();
+  const [positive, negative] = fills(container);
+  expect(positive?.[0]).toBeCloseTo(33.33, 1);
+  expect(positive?.[1]).toBeCloseTo(66.67, 1);
+  expect(negative?.[0]).toBeCloseTo(0, 1);
+  expect(negative?.[1]).toBeCloseTo(33.33, 1);
   expect(screen.getByText("-2.0x")).toBeVisible();
-  expect(screen.getByText(/mixes positive and negative figures/)).toBeVisible();
-  const rows = within(screen.getByRole("list", { name: /FY2025/ })).getAllByRole("listitem");
-  expect(rows[0]?.textContent).toContain("Alpha plc");
+  expect(screen.getByText(/Bars run from the zero line/)).toBeVisible();
+});
+
+it("draws an all-negative list wholly to the left of the zero line, and no 'mixes signs' claim", () => {
+  const { container } = rankOf(
+    [fact("a", { text: "-1.0", at: -1 }), fact("b", { text: "-3.0", at: -3 })],
+    "high",
+  );
+  const [first, second] = fills(container);
+  expect(first?.[0]).toBeCloseTo(66.67, 1);
+  expect(first?.[1]).toBeCloseTo(33.33, 1);
+  expect(second?.[0]).toBeCloseTo(0, 1);
+  expect(second?.[1]).toBeCloseTo(100, 1);
+  expect(screen.queryByText(/mixes/)).toBeNull();
+});
+
+it("draws a single negative issuer as one bar to the left of zero", () => {
+  const { container } = rankOf([fact("a", { text: "-2.0", at: -2 })]);
+  const [only] = fills(container);
+  expect(only?.[0]).toBeCloseTo(0, 1);
+  expect(only?.[1]).toBeCloseTo(100, 1);
 });
 
 it("gives equal figures one rank", () => {
@@ -157,7 +188,7 @@ it("gives equal figures one rank", () => {
   expect(rows.map((row) => row.textContent.slice(0, 1))).toEqual(["1", "1", "3"]);
 });
 
-it("states each not-assessable module as a dashed blocked chip with a link to the module's page", () => {
+it("states each not-assessable module as a dashed blocked shape with a link to the module's page", () => {
   render(
     <Matrix
       data={data}
@@ -168,15 +199,42 @@ it("states each not-assessable module as a dashed blocked chip with a link to th
       setOpen={() => undefined}
     />,
   );
-  const word = screen.getByText("Not assessable");
-  expect(word.parentElement).toHaveClass("border-dashed");
-  expect(screen.getByRole("link", { name: "Legal & covenants for Alpha plc" })).toHaveAttribute(
-    "href",
-    "/report/a1-run#modules/CP-4",
-  );
+  const link = screen.getByRole("link", { name: "Legal & covenants for Alpha plc: Not assessable" });
+  expect(link).toHaveAttribute("href", "/report/a1-run#modules/CP-4");
+  expect(link).toHaveAttribute("title", "Not assessable");
+  expect(link.querySelector(".border-dashed")).not.toBeNull();
   expect(screen.queryByRole("link", { name: /Committee decision/ })).toBeNull();
   expect(screen.getByRole("region", { name: "Issuers by module" })).toHaveAttribute("tabindex", "0");
   expect(screen.getByRole("columnheader", { name: "Issuer" })).toHaveClass("sticky");
+});
+
+it("draws a card per issuer with the five stages as rows on a phone, each state a shape and its word", () => {
+  vi.stubGlobal("matchMedia", () => ({
+    matches: true,
+    addEventListener: () => undefined,
+    removeEventListener: () => undefined,
+  }));
+  render(
+    <Matrix
+      data={data}
+      issuers={[data.issuers[0] as Issuer]}
+      chosen={new Set()}
+      toggle={() => undefined}
+      open={null}
+      setOpen={() => undefined}
+    />,
+  );
+  expect(screen.queryByRole("table")).toBeNull();
+  const card = within(screen.getByRole("list", { name: "Issuers by module" }));
+  expect(card.getByText("Financials")).toBeVisible();
+  expect(card.getByText("Delivered with gaps")).toBeVisible();
+  expect(card.getByText("Not assessable")).toBeVisible();
+  expect(card.getByRole("link", { name: "Legal & covenants" })).toHaveAttribute(
+    "href",
+    "/report/a1-run#modules/CP-4",
+  );
+  expect(card.getByText(/Full credit assessment, as of/)).toBeVisible();
+  vi.unstubAllGlobals();
 });
 
 it("groups found passages by issuer, one section each, with a sources link per passage", () => {

@@ -163,16 +163,28 @@ describe("TrendView small multiples", () => {
   it("offers a reporting-unit chooser and never mixes units", () => {
     render(<TrendView data={data} issuers={issuers} field={field} />);
     const group = screen.getByRole("group", { name: "Reporting unit" });
-    expect(within(group).getAllByRole("button")).toHaveLength(2);
-    // The first unit is chosen by default.
-    expect(screen.getAllByRole("article")).toHaveLength(1);
-    expect(screen.getByRole("article", { name: "Delta Ltd" })).toBeTruthy();
-    fireEvent.click(within(group).getByRole("button", { name: "x" }));
+    expect(within(group).getAllByRole("button").map((b) => b.textContent)).toEqual(["%", "x"]);
+    // It opens on the unit most issuers' newest runs state a figure in: x (three) over % (one).
     expect(screen.getAllByRole("article")).toHaveLength(3);
     expect(within(group).getByRole("button", { name: "x" }).getAttribute("aria-pressed")).toBe(
       "true",
     );
     expect(screen.queryByRole("article", { name: "Delta Ltd" })).toBeNull();
+    fireEvent.click(within(group).getByRole("button", { name: "%" }));
+    expect(screen.getAllByRole("article")).toHaveLength(1);
+    expect(screen.getByRole("article", { name: "Delta Ltd" })).toBeTruthy();
+  });
+
+  it("counts issuers, not figures, and keeps the sorted order on a tie", () => {
+    const list = [issuer("a", "Alpha plc"), issuer("d", "Delta Ltd")];
+    const facts = [
+      ...["FY2021", "FY2022", "FY2023", "FY2024", "FY2025"].map((p) => fact("a", p, "3.0", "x")),
+      fact("d", "FY2025", "12", "%"),
+    ];
+    render(<TrendView data={{ ...data, issuers: list, facts }} issuers={list} field={field} />);
+    // One issuer each: the tie keeps % (sorted first), though x has more figures.
+    expect(screen.getByRole("button", { name: "%" }).getAttribute("aria-pressed")).toBe("true");
+    expect(screen.getByRole("article", { name: "Delta Ltd" })).toBeTruthy();
   });
 
   it("draws no chooser for one unit", () => {
@@ -326,11 +338,9 @@ describe("TrendView issuers with no figure to draw", () => {
         fact("d", "FY2025", "12", "%"),
         gap("e", "FY2025", "Not supplied: the issuer does not report EBITDA."),
         gap("g", "FY2025", "Not supplied: see annual-report.pdf"),
-        fact("g", "FY2024", "1.2", "%"),
       ],
       list,
     );
-    // The unit chooser starts on % (Delta); choose x.
     fireEvent.click(screen.getByRole("button", { name: "x" }));
     expect(screen.getAllByRole("article")).toHaveLength(1);
     const block = screen.getByRole("heading", { name: /^No figure to draw: / }).closest(".gap-hatch");
@@ -343,6 +353,34 @@ describe("TrendView issuers with no figure to draw", () => {
       "Gimel SpA: the module's reason is in Evidence",
     ]);
     expect(block?.textContent).not.toMatch(/\b0\b/);
+  });
+
+  it("gives another unit as the reason before a stated gap, in either direction", () => {
+    const list = [...one("a", "Alpha plc"), ...one("b", "Beta SA"), ...one("g", "Gimel SpA")];
+    view(
+      [
+        fact("a", "FY2024", "3.0", "x"),
+        fact("b", "FY2025", "40", "%"),
+        fact("b", "FY2024", "38", "%"),
+        gap("g", "FY2025", "Not supplied: the issuer does not report EBITDA."),
+        fact("g", "FY2024", "1.2", "x"),
+      ],
+      list,
+    );
+    // x is stated by two issuers: the view opens there.
+    const reasons = () =>
+      [
+        ...(screen
+          .getByRole("heading", { name: /^No figure to draw: / })
+          .closest(".gap-hatch")
+          ?.querySelectorAll("li") ?? []),
+      ].map((item) => item.textContent);
+    expect(reasons()).toEqual(["Beta SA: stated only in another unit (%), not drawn here"]);
+    fireEvent.click(screen.getByRole("button", { name: "%" }));
+    expect(reasons()).toEqual([
+      "Alpha plc: stated only in another unit (x), not drawn here",
+      "Gimel SpA: stated only in another unit (x), not drawn here",
+    ]);
   });
 
   it("draws no gap block when every issuer has a panel", () => {
@@ -409,5 +447,107 @@ describe("TrendView scale and labels", () => {
     view([fact("a", "FY2024", "-2.0", "x"), fact("a", "FY2025", "-1.0", "x")], one("a", "Alpha plc"));
     const zero = Number(panel("Alpha plc").querySelector("[data-zero]")?.getAttribute("y1"));
     for (const dot of dots("Alpha plc")) expect(Number(dot.getAttribute("cy"))).toBeGreaterThan(zero);
+  });
+});
+
+type Box = { left: number; right: number; top: number; bottom: number };
+/** A label's box from the attributes drawn: 7px per character, baseline less 11 to plus 3. */
+function labelBoxes(name: string): Box[] {
+  return [...panel(name).querySelectorAll("text[data-label]")].map((item) => {
+    const lx = Number(item.getAttribute("x"));
+    const ly = Number(item.getAttribute("y"));
+    const width = item.textContent.length * 7;
+    const anchor = item.getAttribute("text-anchor");
+    const left = anchor === "end" ? lx - width : anchor === "middle" ? lx - width / 2 : lx;
+    return { left, right: left + width, top: ly - 11, bottom: ly + 3 };
+  });
+}
+const centres = (name: string) =>
+  dots(name).map((dot) => ({ x: Number(dot.getAttribute("cx")), y: Number(dot.getAttribute("cy")) }));
+const inside = (box: Box, p: { x: number; y: number }) =>
+  p.x >= box.left && p.x <= box.right && p.y >= box.top && p.y <= box.bottom;
+const meet = (a: Box, b: Box) =>
+  a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom;
+
+function expectClear(name: string, count: number) {
+  const boxes = labelBoxes(name);
+  expect(boxes).toHaveLength(count);
+  const points = centres(name);
+  for (const box of boxes) {
+    expect(box.left).toBeGreaterThanOrEqual(0);
+    expect(box.right).toBeLessThanOrEqual(320);
+    expect(box.top).toBeGreaterThanOrEqual(0);
+    for (const point of points) expect(inside(box, point)).toBe(false);
+    // The drawn line, sampled, never runs through a label.
+    for (let i = 1; i < points.length; i += 1) {
+      const a = points[i - 1];
+      const b = points[i];
+      if (!a || !b) continue;
+      for (let t = 0; t <= 1; t += 0.02)
+        expect(inside(box, { x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t })).toBe(false);
+    }
+  }
+  const [first, last] = boxes;
+  if (first && last) expect(meet(first, last)).toBe(false);
+}
+
+const money = (who: string, period: string, text: string): Fact => ({
+  ...fact(who, period, "0", "US$m"),
+  text,
+  at: Number(text.replace(/,/g, "")),
+});
+
+describe("TrendView value labels never overprint", () => {
+  it("keeps two long figures apart", () => {
+    view([money("a", "FY2024", "900.00"), money("a", "FY2025", "1,250.00")], one("a", "Alpha plc"));
+    expect(panel("Alpha plc").querySelector('[data-label="first"]')?.textContent).toBe(
+      "900.00 US$m",
+    );
+    expect(panel("Alpha plc").querySelector('[data-label="last"]')?.textContent).toBe(
+      "1,250.00 US$m",
+    );
+    expectClear("Alpha plc", 2);
+  });
+
+  it("stacks two long figures at neighbouring periods of a long axis", () => {
+    const periods = Array.from({ length: 12 }, (_, i) => `FY${String(2014 + i)}`);
+    view(
+      [
+        money("a", "FY2024", "900.00"),
+        money("a", "FY2025", "1,250.00"),
+        ...periods.map((p) => money("b", p, "1,000.00")),
+      ],
+      [...one("a", "Alpha plc"), ...one("b", "Beta SA")],
+    );
+    expectClear("Alpha plc", 2);
+    expectClear("Beta SA", 2);
+  });
+
+  it("keeps labels off the line and dots of a three-point negative series", () => {
+    view(
+      [fact("a", "FY2023", "-1.20", "x"), fact("a", "FY2024", "0.50", "x"), fact("a", "FY2025", "-0.80", "x")],
+      one("a", "Alpha plc"),
+    );
+    expect(panel("Alpha plc").querySelector('[data-label="first"]')?.textContent).toBe("-1.20x");
+    expectClear("Alpha plc", 2);
+    view(
+      [fact("b", "FY2023", "0.40", "x"), fact("b", "FY2024", "-1.20", "x"), fact("b", "FY2025", "2.10", "x")],
+      one("b", "Beta SA"),
+    );
+    expectClear("Beta SA", 2);
+  });
+
+  it("keeps a single point's label inside the panel and off its dot", () => {
+    view([money("a", "FY2025", "1,250,000.00")], one("a", "Alpha plc"));
+    expectClear("Alpha plc", 1);
+  });
+});
+
+describe("TrendView targets", () => {
+  it("makes the table summary a 32px target, 44px on a phone", () => {
+    show("x");
+    const summary = screen.getByText("Table view", { selector: "summary" });
+    for (const name of ["flex", "items-center", "min-h-8", "max-[480px]:min-h-11"])
+      expect(summary.classList).toContain(name);
   });
 });

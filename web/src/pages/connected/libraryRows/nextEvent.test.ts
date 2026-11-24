@@ -70,6 +70,7 @@ it("is the earliest upcoming dated event with its date as written and its eviden
     name: "Notes call date",
     status: "Scheduled — Contract",
     withinRecordedPeriod: false,
+    unplaced: false,
     href: `/report/acme-run#evidence/acme-run%2Fliquidity~${SHA}-23`,
   });
 });
@@ -115,4 +116,12 @@ it("is unknown, not none, when an event row could not be placed on the calendar"
   expect(nextDatedEvent(snapshot([row("mid-2027", "Refinancing window")]), "acme-run")).toBe(
     "unknown",
   );
+});
+
+it("says an earlier-looking row could not be placed beside the event it does find", () => {
+  const found = nextDatedEvent(
+    snapshot([row("2029-06-30", "Notes due"), row("mid-2027", "Refinancing window")]),
+    "acme-run",
+  );
+  expect(found).toMatchObject({ date: "2029-06-30", unplaced: true });
 });

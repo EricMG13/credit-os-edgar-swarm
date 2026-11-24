@@ -8,7 +8,7 @@ import {
   type Issuer,
 } from "../coverageData";
 import { card, heading } from "../layout";
-import { IN_EVIDENCE, prose, RunLine } from "./shared";
+import { HIT, IN_EVIDENCE, prose, RunLine } from "./shared";
 
 /**
  * Module passages of the issuers' newest runs, grouped by issuer, each with its sources link. An
@@ -84,7 +84,9 @@ export function FindView({
                     {fact.confidence && (
                       <span className="text-text-secondary">Confidence: {fact.confidence}</span>
                     )}
-                    <TextLink href={evidenceLink(run, fact)}>View sources</TextLink>
+                    <TextLink href={evidenceLink(run, fact)} className={HIT}>
+ View sources
+ </TextLink>
                   </div>
                 </li>
               );

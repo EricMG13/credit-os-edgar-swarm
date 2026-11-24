@@ -16,11 +16,26 @@ const LOOK: Record<CellState, Look> = {
 
 const WITH_GAPS: Look = { shape: "dashed ring", tone: "text-text-secondary" };
 
+/** The six states a cell can say, with the shape and the word each is drawn with. */
+export const LEGEND: readonly { word: string; look: Look }[] = [
+  { word: STATE_WORDS.assessed, look: LOOK.assessed },
+  { word: "Delivered with gaps", look: WITH_GAPS },
+  { word: STATE_WORDS["not-assessable"], look: LOOK["not-assessable"] },
+  { word: STATE_WORDS.unreadable, look: LOOK.unreadable },
+  { word: STATE_WORDS["no-handoff"], look: LOOK["no-handoff"] },
+  { word: STATE_WORDS["not-in-pathway"], look: LOOK["not-in-pathway"] },
+];
+
 function cellState(cell: Cell | undefined): { word: string; look: Look; state: CellState } {
   const state = cell?.state ?? "plan-unknown";
   if (state === "assessed" && (cell?.gaps || cell?.issue))
     return { word: "Delivered with gaps", look: WITH_GAPS, state };
   return { word: STATE_WORDS[state], look: LOOK[state], state };
+}
+
+/** The word a cell's state is drawn with. */
+export function stateWord(cell: Cell | undefined): string {
+  return cellState(cell).word;
 }
 
 /** Whether the module's own page can be opened: the run holds a handoff for it. */
@@ -29,26 +44,53 @@ export function hasHandoff(cell: Cell | undefined): boolean {
   return state === "assessed" || state === "not-assessable" || state === "unreadable";
 }
 
-/**
- * A cell's state as a shape above its word: never colour alone. A module that could not run is
- * the blocked treatment: dashed orange outline, slash and the word; its reason is on the module's
- * page, which the cell opens.
- */
-export function StateMark({ cell }: { cell: Cell | undefined }) {
-  const { word, look, state } = cellState(cell);
-  const blocked = state === "not-assessable";
+/** A module that could not run is the blocked treatment: dashed orange outline and a slash. */
+function Shape({ cell }: { cell: Cell | undefined }) {
+  const { look, state } = cellState(cell);
   return (
     <span
       className={cx(
-        "inline-flex w-fit max-w-full flex-col items-start gap-1 text-caption text-text-primary",
-        blocked &&
-          "rounded-ds-xs border border-dashed border-warning-mark bg-warning-fill px-1.5 py-1 text-warning-text",
+        "inline-flex flex-none items-center justify-center",
+        state === "not-assessable" &&
+          "size-5 rounded-ds-xs border border-dashed border-warning-mark bg-warning-fill",
       )}
     >
       <span className={look.tone}>
         <StatusShape shape={look.shape} />
       </span>
+    </span>
+  );
+}
+
+/** A cell's state as a shape alone, for a matrix: the word is its accessible name and tooltip. */
+export function StateShape({ cell }: { cell: Cell | undefined }) {
+  return <Shape cell={cell} />;
+}
+
+/** A state as a shape beside its word: never colour alone. */
+export function StateMark({ cell }: { cell: Cell | undefined }) {
+  const { word, state } = cellState(cell);
+  return (
+    <span
+      className={cx(
+        "inline-flex items-center gap-1.5 text-caption text-text-primary",
+        state === "not-assessable" && "text-warning-text",
+      )}
+    >
+      <Shape cell={cell} />
       <span>{word}</span>
     </span>
+  );
+}
+
+/** One legend entry: a state's shape (from the legend table) and its word. */
+export function LegendItem({ word, look }: { word: string; look: Look }) {
+  return (
+    <li className="flex items-center gap-1.5 text-caption text-text-secondary">
+      <span className={look.tone}>
+        <StatusShape shape={look.shape} />
+      </span>
+      {word}
+    </li>
   );
 }

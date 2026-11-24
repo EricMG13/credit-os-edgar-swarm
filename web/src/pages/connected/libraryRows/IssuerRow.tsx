@@ -21,7 +21,8 @@ export const ROW_COLUMNS =
   "xl:grid-cols-[minmax(15rem,1.6fr)_8rem_repeat(3,minmax(8rem,1fr))_minmax(10rem,1.1fr)_minmax(9.5rem,1fr)]";
 
 const CELL_LABEL = "text-caption text-text-tertiary xl:sr-only";
-const QUIET_LINK = "text-small font-normal whitespace-normal text-left";
+const QUIET_LINK =
+  "inline-flex min-h-8 items-center text-left text-small font-normal whitespace-normal max-[480px]:min-h-11";
 
 /** What is not known, in the chip's place: dashed, hatched, with the reason in words. */
 function GapChip({ children }: { children: string }) {
@@ -87,7 +88,11 @@ function NextEventDetail({
   if (next.status === "unknown")
     return (
       <p className="text-small text-gap-text">
-        This report’s dates could not be read against its as-of date. Open its Calendar. {from}
+        This report’s dates could not be read against its as-of date.{" "}
+        <TextLink href={`${reportPath(linked.id)}#calendar`} className={QUIET_LINK}>
+          Open its Calendar
+        </TextLink>
+        . {from}
       </p>
     );
   if (next.status === "none")
@@ -109,6 +114,15 @@ function NextEventDetail({
       {event.withinRecordedPeriod && (
         <p className="text-caption text-text-secondary">
           Timing falls within the recorded period; the exact date is unresolved.
+        </p>
+      )}
+      {event.unplaced && (
+        <p className="text-caption text-gap-text">
+          Some dated rows in this report could not be placed on the Calendar, so an earlier date may
+          exist.{" "}
+          <TextLink href={`${reportPath(linked.id)}#calendar`} className={QUIET_LINK}>
+            Open its Calendar
+          </TextLink>
         </p>
       )}
       <p className="text-caption text-text-tertiary">{from}</p>
@@ -147,7 +161,14 @@ function moreStats(catalogue: CatalogueRun, trace: ReturnType<typeof useFigureTr
  * one row; the row opens to the credit view, every run, the next dated event and the figures the
  * row does not show.
  */
-export function IssuerRow({ group }: { group: IssuerGroup }) {
+export function IssuerRow({
+  group,
+  coverageInHeader = false,
+}: {
+  group: IssuerGroup;
+  /** The Interest cover column header already carries the qualified label. */
+  coverageInHeader?: boolean;
+}) {
   const [open, setOpen] = useState(false);
   const [opened, setOpened] = useState(false);
   const panel = useId();
@@ -159,12 +180,14 @@ export function IssuerRow({ group }: { group: IssuerGroup }) {
   const runs = `${String(entries.length)} ${entries.length === 1 ? "run" : "runs"}`;
   const figure = (key: string, name: string, order: string) => {
     const shown = figureName(key, name, metrics[key]);
+    const qualified = shown !== name;
     return (
       <FigureMark
         name={name}
         metricKey={key}
         figure={metrics[key]}
         className={order}
+        showLabel={qualified && !(key === "coverage" && coverageInHeader)}
         trace={stated(metrics[key]) ? trace.button(key, shown, newest.name) : undefined}
       />
     );
@@ -192,8 +215,11 @@ export function IssuerRow({ group }: { group: IssuerGroup }) {
           </button>
           <div className="grid min-w-0 gap-1 wrap-anywhere">
             <h3 className="font-display text-h4 text-text-primary">
-              {linked && group.state !== "No report published" ? (
-                <TextLink href={reportPath(linked.id)} className="text-left whitespace-normal">
+              {published ? (
+                <TextLink
+                  href={reportPath(newest.id)}
+                  className="inline-flex min-h-8 items-center text-left whitespace-normal max-[480px]:min-h-11"
+                >
                   {newest.name}
                 </TextLink>
               ) : (
@@ -201,6 +227,11 @@ export function IssuerRow({ group }: { group: IssuerGroup }) {
               )}
             </h3>
             {newest.sector && <p className="text-small text-text-secondary">{newest.sector}</p>}
+            {!published && (
+              <p className="text-small text-gap-text">
+                Run not published, as of {asOfDate(newest.date)}
+              </p>
+            )}
             <p className="flex flex-wrap items-center gap-x-3 gap-y-1">
               {published && (
                 <TextLink href={reportPath(newest.id)} grey className={QUIET_LINK}>

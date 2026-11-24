@@ -66,14 +66,32 @@ function missingAt(facts: readonly Fact[], period: string, unit: string): Missin
   return { long: "no figure stated for this period", short: "No figure" };
 }
 
-/** Why an issuer's newest run gives no panel in this unit. */
+/** Why an issuer's newest run gives no panel in this unit: another unit first, then its stated gap. */
 function absentReason(facts: readonly Fact[], unit: string): string {
+  const other = facts.filter((fact) => fact.at !== null && (fact.unit ?? "") !== unit);
+  if (other.length > 0) return `stated only in another unit (${unitsOf(other)}), not drawn here`;
   const gaps = facts.filter((fact) => fact.at === null);
   if (gaps.length > 0) return [...new Set(gaps.map(gapReason))].join("; ");
-  const other = facts.filter((fact) => (fact.unit ?? "") !== unit);
-  if (other.length > 0) return `stated only in another unit (${unitsOf(other)}), not drawn here`;
   if (facts.length > 0) return "states figures in this unit without a period, so none is drawn";
   return "no figure stated for this measure in its newest run";
+}
+
+/** The unit most issuers' newest runs state a figure in; a tie keeps the sorted order. */
+function openingUnit(
+  units: readonly string[],
+  issuers: readonly Issuer[],
+  factsFor: (run: CoverageRun) => Fact[],
+): string {
+  const count = new Map<string, number>();
+  for (const issuer of issuers) {
+    const run = latestRun(issuer);
+    const stated = run ? factsFor(run).filter((fact) => fact.at !== null) : [];
+    for (const item of new Set(stated.map((fact) => fact.unit ?? "")))
+      count.set(item, (count.get(item) ?? 0) + 1);
+  }
+  return units.reduce((best, item) =>
+    (count.get(item) ?? 0) > (count.get(best) ?? 0) ? item : best,
+  );
 }
 
 /** One scale for every panel, always holding zero: from the lowest figure (or zero) to the highest (or zero). */
@@ -139,31 +157,113 @@ function Lines({ dots, at }: { dots: readonly Dot[]; at: (dot: Dot) => string })
   });
 }
 
+/** SVG font size of a value label; its width is estimated at 7 units a character. */
+const LABEL_FONT = 11;
+const CHAR = 7;
+const ASCENT = 11;
+const DESCENT = 3;
+const EDGE = 1;
+const DOT_R = 4;
+type Point = { x: number; y: number };
+type Box = { left: number; right: number; top: number; bottom: number };
+type Anchor = "start" | "end" | "middle";
+type Side = "above" | "below";
+type Label = { which: "first" | "last"; text: string; x: number; y: number; anchor: Anchor; box: Box };
+type End = { which: "first" | "last"; at: Point; toward: Point | undefined; text: string };
+
+/** Where a label sits across: the first leans left of its dot, the last right, never past an edge. */
+function across(end: End, width: number, single: boolean): { x: number; anchor: Anchor } {
+  const { which, at } = end;
+  if (single) {
+    const x = Math.min(Math.max(at.x, EDGE + width / 2), WIDTH - EDGE - width / 2);
+    return { x, anchor: "middle" };
+  }
+  if (which === "first")
+    return at.x + 4 - width < EDGE ? { x: EDGE, anchor: "start" } : { x: at.x + 4, anchor: "end" };
+  return at.x - 4 + width > WIDTH - EDGE
+    ? { x: WIDTH - EDGE, anchor: "end" }
+    : { x: at.x - 4, anchor: "start" };
+}
+
+function place(end: End, side: Side, single: boolean): Label {
+  const width = end.text.length * CHAR;
+  const { x, anchor } = across(end, width, single);
+  const y = side === "above" ? end.at.y - 8 : end.at.y + 16;
+  const left = anchor === "end" ? x - width : anchor === "middle" ? x - width / 2 : x;
+  const box = { left, right: left + width, top: y - ASCENT, bottom: y + DESCENT };
+  return { which: end.which, text: end.text, x, y, anchor, box };
+}
+
+/** Away from the line: below when the neighbouring line rises from the dot, above otherwise. */
+function sides(end: End): Side[] {
+  return end.toward && end.toward.y < end.at.y ? ["below", "above"] : ["above", "below"];
+}
+
+const inBox = (box: Box, p: Point, pad = 0): boolean =>
+  p.x >= box.left - pad && p.x <= box.right + pad && p.y >= box.top - pad && p.y <= box.bottom + pad;
+
+const meet = (a: Box, b: Box): boolean =>
+  a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom;
+
+/** A label is clear when it stays above the period axis and off every dot and drawn line. */
+function clear(label: Label, points: readonly Point[], lines: readonly [Point, Point][]): boolean {
+  const { box } = label;
+  if (box.top < 0 || box.bottom > BOTTOM + 6) return false;
+  if (points.some((p) => inBox(box, p, DOT_R))) return false;
+  return lines.every(([a, b]) =>
+    Array.from({ length: 41 }, (_, i) => i / 40).every(
+      (t) => !inBox(box, { x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t }, 1),
+    ),
+  );
+}
+
+/** Both labels, on the first pair of sides that keeps them clear and apart; else the higher dot's above. */
+function layout(ends: readonly End[], points: readonly Point[], lines: readonly [Point, Point][]): Label[] {
+  const single = ends.length === 1;
+  const [a, b] = ends;
+  if (!a) return [];
+  if (!b) {
+    const options = sides(a).map((side) => place(a, side, true));
+    return [options.find((label) => clear(label, points, lines)) ?? (options[0] as Label)];
+  }
+  const pairs = sides(a).flatMap((sa) => sides(b).map((sb) => [place(a, sa, single), place(b, sb, single)]));
+  const found = pairs.find(
+    ([la, lb]) =>
+      la && lb && clear(la, points, lines) && clear(lb, points, lines) && !meet(la.box, lb.box),
+  );
+  if (found) return found;
+  const aHigher = a.at.y <= b.at.y;
+  return [place(a, aHigher ? "above" : "below", single), place(b, aHigher ? "below" : "above", single)];
+}
+
 function EndLabels({ dots, count, y }: { dots: readonly Dot[]; count: number; y: (v: number) => number }) {
-  const first = dots[0];
-  const last = dots.at(-1);
-  if (!first || !last) return null;
-  const ends = first === last ? [{ dot: first, which: "first" }] : [
-    { dot: first, which: "first" },
-    { dot: last, which: "last" },
-  ];
-  return ends.map(({ dot, which }) => {
-    const cy = y(dot.fact.at);
-    const anchor = first === last ? "middle" : which === "first" ? "start" : "end";
-    const shift = anchor === "start" ? -4 : anchor === "end" ? 4 : 0;
-    return (
-      <text
-        key={which}
-        data-label={which}
-        x={(x(dot.index, count) + shift).toFixed(2)}
-        y={(cy - 8 < PAD.top - 6 ? cy + 16 : cy - 8).toFixed(2)}
-        textAnchor={anchor}
-        className="fill-text-primary font-mono text-caption"
-      >
-        {figure(dot.fact)}
-      </text>
-    );
+  const points = dots.map((dot) => ({ x: x(dot.index, count), y: y(dot.fact.at) }));
+  const lines = dots.flatMap((dot, i): [Point, Point][] => {
+    const prev = dots[i - 1];
+    const from = points[i - 1];
+    const to = points[i];
+    return prev && from && to && prev.index === dot.index - 1 ? [[from, to]] : [];
   });
+  const end = (which: "first" | "last", i: number, toward: number): End[] => {
+    const dot = dots[i];
+    const at = points[i];
+    return dot && at ? [{ which, at, toward: points[toward], text: figure(dot.fact) }] : [];
+  };
+  const ends =
+    dots.length === 1 ? end("first", 0, 1) : [...end("first", 0, 1), ...end("last", dots.length - 1, dots.length - 2)];
+  return layout(ends, points, lines).map((label) => (
+    <text
+      key={label.which}
+      data-label={label.which}
+      x={label.x.toFixed(2)}
+      y={label.y.toFixed(2)}
+      textAnchor={label.anchor}
+      fontSize={LABEL_FONT}
+      className="fill-text-primary font-mono"
+    >
+      {label.text}
+    </text>
+  ));
 }
 
 function Panel({
@@ -324,7 +424,9 @@ function TableView({
 }) {
   return (
     <details className="rounded-ds-lg border border-border-subtle bg-surface-card p-4">
-      <summary className="cursor-pointer text-small font-medium">Table view</summary>
+      <summary className="flex min-h-8 cursor-pointer items-center text-small font-medium max-[480px]:min-h-11">
+        Table view
+      </summary>
       <div className="mt-3 overflow-x-auto">
         <table className="w-full border-collapse text-small tabular-nums">
           <caption className="pb-2 text-left text-text-secondary">
@@ -404,17 +506,18 @@ export function TrendView({
   field: Field | undefined;
 }) {
   const units = field ? fieldUnits(data, issuers, field.id) : [];
-  const [picked, setPicked] = useState("");
-  const unit = units.includes(picked) ? picked : (units[0] ?? "");
+  const [picked, setPicked] = useState<string | null>(null);
   if (!field || units.length === 0)
     return (
       <p role="status" className={card}>
         No newest run of these issuers states this figure, so there is no trend to draw.
       </p>
     );
+  const factsFor = (run: CoverageRun) => factsOf(data, run.key, field.id);
+  const unit =
+    picked !== null && units.includes(picked) ? picked : openingUnit(units, issuers, factsFor);
   const { periods, series } = trend(data, issuers, field.id, unit);
   const scale = scaleOf(series);
-  const factsFor = (run: CoverageRun) => factsOf(data, run.key, field.id);
   const drawn = new Set(series.map((item) => item.run.key));
   const absent = issuers.flatMap((issuer) => {
     const run = latestRun(issuer);

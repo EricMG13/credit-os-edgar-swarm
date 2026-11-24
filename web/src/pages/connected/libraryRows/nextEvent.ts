@@ -12,6 +12,8 @@ export type NextEvent = {
   /** The recorded period holds the as-of date, so the exact date is unresolved. */
   withinRecordedPeriod: boolean;
   href: string;
+  /** Some event row of the report could not be placed on the Calendar, so an earlier date may exist. */
+  unplaced: boolean;
 };
 
 /**
@@ -36,6 +38,7 @@ export function nextDatedEvent(snapshot: Snapshot, folder: string): NextEvent | 
       status: first.cells[4] ?? "",
       withinRecordedPeriod: first.timingWithinRecordedPeriod,
       href: first.href,
+      unplaced: gaps.length > 0,
     };
   return gaps.length > 0 ? "unknown" : "none";
 }
