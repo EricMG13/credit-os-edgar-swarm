@@ -1,8 +1,11 @@
 import type { RefObject, SubmitEvent } from "react";
 import { Button } from "@/components/base/buttons/button";
 import { Stepper } from "../../run/start/Stepper";
-import { card, ErrorNotice, heading } from "../layout";
-import { StartReadiness } from "./StartReadiness";
+import { Bento } from "../report/overview/Tile";
+import { pathwayName } from "../api";
+import { ErrorNotice, heading } from "../layout";
+import { moduleReadiness } from "./moduleReadiness";
+import { ReadinessRail, type ReadinessSource } from "./ReadinessRail";
 import { copilotPairVerified, refusalLines } from "./plain";
 import {
   type FormStep,
@@ -116,84 +119,94 @@ export function IntakePanels(props: IntakePanelsProps) {
   } = props;
   const capBar = cap && capText ? { value: 0, max: cap, label: `USD 0.00 of ${capText}` } : null;
   const ready = `${String(readiness.filter((row) => row.met).length)} of ${String(readiness.length)} ready · ${capBar ? capBar.label : "Cap unavailable"}`;
+  const planned = view.modules.length ? view.modules : view.requested;
+  const checked = review?.summary ?? view.checked;
+  const source: ReadinessSource = review ? "review" : view.checked ? "last" : "unchecked";
   return (
-    <div className="mt-6 grid min-w-0 items-start gap-6 min-[1041px]:run-intake-columns">
-      <div className={`min-w-0 ${card}`}>
-        <div className="@container grid gap-5">
-          <Stepper
-            step={review ? "start" : step}
-            steps={STEPPER_STEPS.map((item) =>
-              item.key === "context" && view.earnings
-                ? { ...item, note: "Periods required" }
-                : item.key === "start" && synthetic
-                  ? { ...item, note: "No-cost test" }
-                  : item,
-            )}
-            onSelect={
-              busy === undefined && !submitUncertain
-                ? (key) => {
-                    onEdit(key as FormStep);
-                  }
-                : undefined
-            }
-          />
-          <p className="text-caption text-text-tertiary tabular-nums @[620px]:hidden">
-            {review
-              ? `Step ${String(STEP_TOTAL)} of ${String(STEP_TOTAL)} · Review and start`
-              : `Step ${String(FORM_STEP_KEYS.indexOf(step) + 1)} of ${String(STEP_TOTAL)} · ${title}`}
-          </p>
+    <div className="mt-6">
+      <Bento>
+        <div className="flex min-w-0 flex-col gap-4 lg:col-span-8">
+          <div className="@container flex flex-col gap-3 rounded-ds-lg border border-border-subtle bg-surface-card px-5 py-4">
+            <Stepper
+              step={review ? "start" : step}
+              steps={STEPPER_STEPS.map((item) =>
+                item.key === "context" && view.earnings
+                  ? { ...item, note: "Periods required" }
+                  : item.key === "start" && synthetic
+                    ? { ...item, note: "No-cost test" }
+                    : item,
+              )}
+              onSelect={
+                busy === undefined && !submitUncertain
+                  ? (key) => {
+                      onEdit(key as FormStep);
+                    }
+                  : undefined
+              }
+            />
+            <p className="text-caption text-text-tertiary tabular-nums @[620px]:hidden">
+              {review
+                ? `Step ${String(STEP_TOTAL)} of ${String(STEP_TOTAL)} · Review and start`
+                : `Step ${String(FORM_STEP_KEYS.indexOf(step) + 1)} of ${String(STEP_TOTAL)} · ${title}`}
+            </p>
+          </div>
+          {error && !review && <RefusalNotice lines={refusalLines(error)} />}
+          {view.changeNotice && (
+            <p className="text-small text-text-secondary">{view.changeNotice}</p>
+          )}
+          {otherProblems.length > 0 && <RefusalNotice lines={otherProblems} />}
+          {review ? (
+            <ReviewConfirmation
+              review={review}
+              accepted={accepted}
+              approved={approved}
+              checksComplete={checksComplete}
+              busy={busy}
+              error={error}
+              submitUncertain={submitUncertain}
+              capText={capText}
+              capAvailable={Boolean(cap)}
+              synthetic={synthetic}
+              modelVerified={
+                synthetic ||
+                (review.summary.copilot_verified !== false &&
+                  copilotPairVerified(
+                    view.copilotModels,
+                    review.answers.model,
+                    review.answers.effort,
+                  ))
+              }
+              ready={ready}
+              idNote={view.idNote}
+              onAccept={onAccept}
+              onApprove={onApprove}
+              onEdit={onEdit}
+              onModules={onModules}
+              onSubmit={onSubmit}
+            />
+          ) : (
+            <InputStepForm
+              view={view}
+              folderInput={folderInput}
+              title={title}
+              previous={previous}
+              next={next}
+              ready={ready}
+              focusHeading={focusHeading}
+              onAdvance={onAdvance}
+              onPrevious={onPrevious}
+            />
+          )}
         </div>
-        {error && !review && <RefusalNotice lines={refusalLines(error)} />}
-        {view.changeNotice && <p className="text-sm text-text-secondary">{view.changeNotice}</p>}
-        {otherProblems.length > 0 && <RefusalNotice lines={otherProblems} />}
-        {review ? (
-          <ReviewConfirmation
-            review={review}
-            accepted={accepted}
-            approved={approved}
-            checksComplete={checksComplete}
-            busy={busy}
-            error={error}
-            submitUncertain={submitUncertain}
-            capText={capText}
-            capAvailable={Boolean(cap)}
-            synthetic={synthetic}
-            modelVerified={
-              synthetic ||
-              (review.summary.copilot_verified !== false &&
-                copilotPairVerified(
-                  view.copilotModels,
-                  review.answers.model,
-                  review.answers.effort,
-                ))
-            }
-            ready={ready}
-            idNote={view.idNote}
-            onAccept={onAccept}
-            onApprove={onApprove}
-            onEdit={onEdit}
-            onModules={onModules}
-            onSubmit={onSubmit}
-          />
-        ) : (
-          <InputStepForm
-            view={view}
-            folderInput={folderInput}
-            title={title}
-            previous={previous}
-            next={next}
-            ready={ready}
-            focusHeading={focusHeading}
-            onAdvance={onAdvance}
-            onPrevious={onPrevious}
-          />
-        )}
-      </div>
-      <StartReadiness
-        rows={readiness}
-        cap={capBar}
-        capTitle={synthetic ? "Configured cap for paid runs" : "Spending cap for this run"}
-      />
+        <ReadinessRail
+          rows={readiness}
+          cap={capBar}
+          capTitle={synthetic ? "Configured cap for paid runs" : "Spending cap for this run"}
+          pathway={pathwayName(view.run.pathway)}
+          modules={moduleReadiness(planned, checked)}
+          source={source}
+        />
+      </Bento>
     </div>
   );
 }
@@ -225,7 +238,7 @@ function InputStepForm({
       onSubmit={(event) => {
         onAdvance(event);
       }}
-      className="grid min-w-0 grid-cols-1 gap-5"
+      className="grid min-w-0 grid-cols-1 gap-5 rounded-ds-lg border border-border-subtle bg-surface-card p-5 sm:p-6"
     >
       <div className="grid gap-1">
         <h2
@@ -248,7 +261,7 @@ function InputStepForm({
       >
         <StepFields view={view} folderInput={folderInput} />
       </fieldset>
-      <p className="text-caption text-text-tertiary tabular-nums min-[1041px]:hidden">{ready}</p>
+      <p className="text-caption text-text-tertiary tabular-nums lg:hidden">{ready}</p>
       <div className="flex flex-wrap items-center gap-3">
         {previous && (
           <Button color="secondary" isDisabled={view.busy !== undefined} onPress={onPrevious}>
@@ -267,7 +280,7 @@ function InputStepForm({
         )}
         <div className="ml-auto flex flex-wrap items-center justify-end gap-3">
           {blocked && (
-            <p id="run-step-blocker" className="text-sm text-text-secondary">
+            <p id="run-step-blocker" className="text-small text-text-secondary">
               Add at least one document to continue.
             </p>
           )}

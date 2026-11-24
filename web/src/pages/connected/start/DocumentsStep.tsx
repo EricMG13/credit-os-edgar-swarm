@@ -196,7 +196,10 @@ export function DocumentFields({
           ) : null}
         </p>
         {view.documentRows.length > 0 ? (
-          <FileUpload.List aria-label="Documents added" className="divide-y divide-border-hairline">
+          <FileUpload.List
+            aria-label="Documents added"
+            className="gap-0 divide-y divide-border-hairline"
+          >
             {view.documentRows.map((row, index) => (
               <IntakeDocumentRow key={`${row.name}-${String(index)}`} row={row} view={view} />
             ))}
@@ -310,7 +313,9 @@ export function DocumentFields({
       />
       <div className="grid gap-2">
         <label className={label}>
-          Your name <span aria-hidden="true">*</span>
+          <span>
+            Your name <span aria-hidden="true">*</span>
+          </span>
           <input
             className={field}
             required

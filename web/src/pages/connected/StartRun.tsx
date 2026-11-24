@@ -1261,6 +1261,9 @@ function IntakeForm({
     problem: fieldError,
     idNote: reviewIssuerNote(review, settledSlug),
     missing: missingAtLastReview(lastReview, run.pathway, issuerId),
+    ...(lastReview?.pathway === run.pathway && lastReview.issuerId === issuerId
+      ? { checked: lastReview }
+      : {}),
     useIssuerId: (id) => {
       clearProblem("issuer_id");
       setCustomSlug(id);

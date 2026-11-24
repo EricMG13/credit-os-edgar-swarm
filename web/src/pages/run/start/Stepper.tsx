@@ -83,7 +83,7 @@ export function Stepper({
                   onClick={() => {
                     onSelect(s.key);
                   }}
-                  className="inline-flex cursor-pointer min-h-8 items-center gap-2 rounded-ds-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+                  className="inline-flex min-h-8 cursor-pointer items-center justify-center gap-2 rounded-ds-sm max-sm:min-h-11 max-sm:min-w-11 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
                 >
                   {marker}
                   {label}

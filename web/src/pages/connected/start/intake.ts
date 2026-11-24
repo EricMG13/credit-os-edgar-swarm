@@ -174,6 +174,8 @@ export type IntakeView = {
    * missing for the modules.
    */
   missing?: readonly LimitGroup[];
+  /** The last review's modules and items for this pathway and Issuer ID; undefined when none. */
+  checked?: Pick<LastReview, "modules" | "items">;
   busy?: "review" | "submit" | "documents" | "copy";
   canRead: boolean;
   copy?: { run: string; prior: PriorInputs };

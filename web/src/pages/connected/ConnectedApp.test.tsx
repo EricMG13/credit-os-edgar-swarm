@@ -1065,7 +1065,17 @@ describe("connected run start", () => {
     expect(screen.getByLabelText("Turns per module")).toHaveValue(24);
     fireEvent.click(screen.getByRole("button", { name: "Review run" }));
     const limit = await screen.findByRole("checkbox", { name: "I accept this limit" });
-    expect(screen.getByText(/before your newest document/)).toBeInTheDocument();
+    // The limit is decided on the review; the readiness rail repeats its reason beside the run.
+    expect(
+      within(screen.getByRole("region", { name: "Limits to decide" })).getByText(
+        /before your newest document/,
+      ),
+    ).toBeInTheDocument();
+    expect(
+      within(screen.getByRole("complementary", { name: "Readiness" })).getByText(
+        /before your newest document/,
+      ),
+    ).toBeInTheDocument();
     expect(screen.getByRole("checkbox", { name: /Approve:/ })).toBeDisabled();
     fireEvent.click(limit);
     expect(screen.getByRole("checkbox", { name: /Approve:/ })).toBeEnabled();
@@ -1110,7 +1120,10 @@ describe("connected run start", () => {
     render(<ConnectedApp path="/start" mode="synthetic" />);
     await fillInputs();
     const panel = within(screen.getByRole("complementary", { name: "Readiness" }));
-    expect(panel.getAllByRole("listitem")).toHaveLength(4);
+    // The rail also lists the run's modules; the four status rows are the list "Before Submit".
+    expect(
+      within(panel.getByRole("list", { name: "Before Submit" })).getAllByRole("listitem"),
+    ).toHaveLength(4);
     await advanceToPurpose();
     expect(
       screen.getByText(
