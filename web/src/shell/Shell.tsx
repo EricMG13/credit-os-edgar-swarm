@@ -1,8 +1,8 @@
 import { useRef, type ReactNode } from "react";
-import { BookOpen01, Cube01, PlayCircle, Signal01 } from "@untitledui/icons";
+import { BarChartSquare02, BookOpen01, Cube01, PlayCircle, Signal01 } from "@untitledui/icons";
 
 /** `kit` is a page of the shell with no bar item: #/kit is reached by its address only. */
-export type Area = "library" | "model" | "run" | "signal" | "kit";
+export type Area = "library" | "coverage" | "model" | "run" | "signal" | "kit";
 
 const ITEMS = [
   { area: "library", label: "Library", href: "#/", icon: BookOpen01 },
@@ -10,6 +10,10 @@ const ITEMS = [
   { area: "run", label: "Run", href: "#/run", icon: PlayCircle },
   { area: "signal", label: "Signal", href: "#/signal", icon: Signal01 },
 ] as const;
+
+/** Coverage is a page of the connected app only: it has a bar item where `sections` names it. */
+const COVERAGE = { area: "coverage", label: "Coverage", href: "/coverage", icon: BarChartSquare02 };
+const [LIBRARY, ...AFTER_LIBRARY] = ITEMS;
 
 /** The top bar (symbol, product name, areas) and the page region on the canvas. */
 export function Shell({
@@ -28,7 +32,7 @@ export function Shell({
   const items =
     sections === undefined
       ? ITEMS
-      : ITEMS.flatMap((item) => {
+      : [LIBRARY, COVERAGE, ...AFTER_LIBRARY].flatMap((item) => {
           const section = sections.find((entry) => entry.area === item.area);
           return section
             ? [{ ...item, href: section.href, label: section.label ?? item.label }]

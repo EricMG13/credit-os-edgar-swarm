@@ -65,6 +65,7 @@ Credit OS
 │       ├─ Evidence             Reviewer           sources, trace, gaps, checks, record
 │       ├─ Calendar             Decider            what is coming and when
 │       └─ History              Analyst            this issuer's earlier runs
+├─ Coverage                     Decider, Analyst   across the book: who has what, who ranks where
 ├─ Run activity                 Analyst            what is running, what failed
 │   └─ Run progress             Analyst            where this run is
 └─ Start run                    Analyst            what will this run do, not do, and cost
@@ -78,7 +79,7 @@ outside this map.
 
 | Element | What | How | Where |
 |---|---|---|---|
-| Top bar | Symbol, "Credit OS", areas (Library, Run activity; Start run as the primary action) | One bar; current area tinted and underlined | Top |
+| Top bar | Symbol, "Credit OS", areas (Library, Coverage, Run activity; Start run as the primary action) | One bar; current area tinted and underlined | Top |
 | Report header | Breadcrumb, issuer name, sector line, pathway, as-of date and period, currency and unit | Name large; facts as quiet chips | Under the top bar on every report page |
 | Section control | Overview, Changes, Modules (count), Forecast, Evidence, Calendar | One segmented control; current section tinted with a dot | Right of the report header |
 | Basis label | Reported, as defined, or pro forma; fiscal year end; unit | One quiet line per tile or table, stated once | Under the tile title |
@@ -104,6 +105,23 @@ Insight wanted: which names need attention and what changed.
 | P3 | Filters: sector, pathway, state | Filter chips above the list | Under search | Code |
 | P3 | Earlier runs of an issuer | Expanding row, newest first | Under the issuer row | Code |
 | P1 (empty) | No runs yet, and the one action that fixes it | Empty state with "Start a run" | Centre | Code |
+
+### Coverage
+
+For the Decider looking across the book and the Analyst checking what each name has. Goal:
+read every issuer's latest published run side by side (`docs/rulings/2026-11-24-coverage-page.md`).
+Insight wanted: which names are covered by which analysis, and where one name sits against the
+others on a figure. The page adds no score, average or difference of its own.
+
+| Rank | What to show | How | Where | Needs |
+|---|---|---|---|---|
+| P1 | Issuer × module: delivered, limited, blocked, not run, missing | Matrix with the five stages as column groups; state as a shape and a word, not colour alone | Modules view, the default | Code |
+| P1 | One figure across issuers for a period the reader chooses | Ranked horizontal bars in the figure's own unit; stated gaps listed apart, never ranked or zero | Rank view | Code |
+| P2 | Find a sentence or figure across issuers | Search field with results grouped by issuer, each with its trace | Find view | Code |
+| P2 | One figure over the periods each issuer published | Small multiples on one scale, one panel per issuer | Trend view | Code; Method for more than two periods |
+| P2 | Saved groups of issuers; filters by sector and pathway | Chips above the views | Top | Code |
+| P3 | Open the issuer's report at the figure | Link per cell and row | In place | Code |
+| E | Module codes, hashes, file names, run folders | Not on this page | Evidence | — |
 
 ### Report · Overview
 

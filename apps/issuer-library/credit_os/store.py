@@ -1010,6 +1010,7 @@ def collect_runs(
             "sector": sector,
             "period": period,
             "pathway": recorded.get("pathway") or None,
+            "requested": requested_modules(run_dir),
             "asOf": recorded.get("as_of") or None,
             "first": first or (with_outputs[0] if with_outputs else "W-Overview"),
             "modules": modules,
@@ -1428,6 +1429,19 @@ def recorded_run(run_dir: Path, issues: list[str] | None = None) -> dict[str, st
         if issues is not None:
             issues.append(f"{run_dir.name}: workflow.json could not be read ({describe(error)})")
         return {}
+
+
+def requested_modules(run_dir: Path) -> list[str] | None:
+    """The modules the launcher's manifest says the run asked for; None when it records none or
+    cannot be read (`recorded_run` names an unreadable manifest in the issues)."""
+    try:
+        raw = b"".join(regular_chunks(run_dir / "workflow.json", follow=False))
+        asked = json.loads(raw.decode("utf-8"))["run"]["requested_modules"]
+    except (OSError, ValueError, KeyError, TypeError, AttributeError, RecursionError, MemoryError):
+        return None
+    if isinstance(asked, list) and all(isinstance(module, str) for module in asked):
+        return asked
+    return None
 
 
 def delivery_identity(folder: str, manifest: dict[str, Any]) -> dict[str, Any] | str:
