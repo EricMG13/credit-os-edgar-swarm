@@ -333,10 +333,13 @@ describe("review fixes", () => {
         ? {
             ...table,
             rows: [
-              { ...table.rows[0]!, cells: ["EBITDA (Reported)", "3148.0", "US$m", "x"] },
-              { ...table.rows[1]!, cells: ["Add-backs", "1025", "US$m", "x"] },
-              { ...table.rows[5]!, cells: ["EBITDA (Adjusted)", "4173", "US$m", "x"] },
-            ],
+              ["EBITDA (Reported)", "3148.0"],
+              ["Add-backs", "1025"],
+              ["EBITDA (Adjusted)", "4173"],
+            ].map(([label, amount], at) => ({
+              line: table.line + 2 + at,
+              cells: [label ?? "", amount ?? "", "US$m", "x"],
+            })),
           }
         : table,
     );

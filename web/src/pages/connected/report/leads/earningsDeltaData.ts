@@ -439,7 +439,7 @@ export type Bridge =
   | { kind: "unreconciled"; line: number; message: string };
 
 const NOT_DRAWN = "The variance bridge is not drawn";
-export const NOT_A_BRIDGE =
+const NOT_A_BRIDGE =
   "The variance bridge in this handoff does not add up, so it is not drawn as a bridge.";
 
 const isZero = (exact: string | null) => exact !== null && /^-?0(?:\.0+)?$/.test(exact);

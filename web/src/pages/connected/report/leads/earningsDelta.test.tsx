@@ -802,6 +802,7 @@ describe("rows with no stated unit, screened text and titles", () => {
     // The note is not drawn at all, not repeated as a sentence of its own.
     const notes = [...tile.querySelectorAll("ul li")].map((item) => item.textContent);
     expect(notes).toEqual([
+      "No variance bridge in this handoff.",
       "Pairs that state words instead of a figure are in the table view only.",
     ]);
   });

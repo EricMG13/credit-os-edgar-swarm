@@ -239,4 +239,41 @@ and Playwright screenshots it. Screenshots are looked at and described in § 8.
 
 ## 8. Verification
 
-(Filled in during phase 2.)
+### Built as (departures from § 3, found while building)
+
+- CP-0 reads three readiness table shapes (`Area | Readiness | Key limitation`; the real TransDigm `Consumer | Readiness | … | Bounded limitations carried | Command`; the earlier `Canonical consumer | …`). The Command column is never drawn and a stated state is never reclassified.
+- CP-1: the shared `kit/reader.ts` `safeText` screens every handoff sentence (sources, `T4.4`/`T1D.2` register ids, `C07`/`D14` calculation ids). Prior and current are chosen by the year in the period label, never by row position (`lastTwoRows`). Pro forma rows whose figures are gaps stay listed. Wide SVGs sit in `ScrollFigure` (readable size, scroll inside the figure at phone width, hint line). A title that uses a derived number says "(derived)".
+- CP-1B: movers and margins read the contract chart tables first and the `T4.4` fallback second; a row with no stated unit never shares a scale; a bridge is drawn only when it reconciles exactly and says which of the cases (gap step, words, mixed units, does not add up) otherwise.
+- CP-5: severity pips are rows of the gaps and contradiction registers, labelled as counted from the listed issues; no typed counts, no use-restriction field.
+- CP-6: stance is the action-bias word the handoff writes; the verdict per claim is always the stated gap.
+- CP-8: a summary only (status counts, ranked measures with a stated unit, the rest in words); the Changes page is S6's and no Modules route reaches CP-8.
+- CP-MODEL: "highest stated value" per case (not "peaks"); a gap period breaks the line.
+- CP-L10 reads the contract's `Measure | Value | Period | Source` (cpl10.md, ruling M6); the change screen needs `Topic | Prior | Current`.
+- Gap tiles beside figure tiles use `self-start` so they do not stretch to the row.
+
+### Verification
+
+Run from `web/` unless stated. Evidence: retained TransDigm FY2024 CP-1 and CP-1B handoffs (outdated; shape and scope only) and synthetic handoffs; no live run, no provider call.
+
+| Check | Result |
+|---|---|
+| `npx tsc --noEmit` | clean |
+| `npx eslint --max-warnings=0 src/pages/connected/report/leads` | clean (one targeted `no-noninteractive-tabindex` disable on `ScrollFigure`, which must be keyboard-focusable) |
+| `npx prettier --check src/pages/connected/report/leads` | clean |
+| `npx vitest run src/pages/connected src/styles` | 142 files, 2,373 tests pass; the leads directory alone is 23 files and about 400 tests |
+| `npm run unused` (knip) | clean |
+| `node scripts/duplication.mjs` | exit 0 (2.2% against the 3% limit) |
+| `npm run build` | built |
+| `ruff check` / `ruff format --check` on `fixtures/build_fixtures.py` | clean |
+| Not run | `tools/quality_gate.py` (needs uv 0.12.5; this box has 0.11.32; no other Python changed); the full Python suite; a real browser run on a live run |
+
+Screenshots looked at (throwaway harness, not committed; the real stylesheet, headless Chromium, 1440 and 390 px):
+- **CP-1, 1440:** matches the mockup's structure: composed earnings/debt figure (four dumbbells on one scale with a derived growth column; leverage on its own axis from 6.2x, orange arrow and "worse"), cash ladder (hatched "not itemised here" step, −2,505 end level left of zero, FY2023 ticks), net debt (orange pro forma = 18,619 + 4,348), EBITDA bridge (axis starts at 3,600, bracket +360 derived), segments (ratios derived), compact maturity wall (axis break, hatched Thereafter, 764 bracket derived), periods gap tile.
+- **CP-1, 390:** no page overflow; wide figures scroll inside their box with a hint line.
+- **CP-1B (T4.4 fallback), CP-0, CP-5, CP-6, CP-8, CP-L10, CP-MODEL, CP-1C, CP-1D:** looked at at 1440 with populated entries built from the contracts; CP-0, CP-1B, CP-5 and CP-6 also at 390. Defects found and fixed from looking: CP-5 pips squeezed to specks; CP-1B tick labels clipped; gap tiles stretched; CP-MODEL peak label on the axis; 390 px labels unreadable.
+- Not looked at: CP-8, CP-L10, CP-1C, CP-1D at 390 px.
+
+Independent review (a fresh Opus reviewer given the code and the plan's phase-3 list): 13 confirmed findings, all important ones fixed with tests: prior/current by position, mixed or unstated units on one scale (CP-1B, CP-8), raw source and calculation ids (CP-1D, CP-6, CP-L10, CP-1B), dropped pro forma gap rows, a bridge that reconciled being called unreconciled, unlabelled derived titles, a false "does not add up" verdict, CP-0 reclassifying a stated state. Left as nits: issuer-specific wording in a few labels ("EBITDA As Defined" where the contract column says "Adjusted EBITDA"); several private `niceStep`/`GapSlot` copies.
+
+Known defects not fixed: CP-MODEL's "high" label can cross the other case's dashed line; at 390 px CP-1B's strip tick labels are about 6 px (each row prints its figures).
+
