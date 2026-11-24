@@ -40,10 +40,10 @@ export function bridgeSteps(table: SourceTable, amountColumn = 1) {
   return { steps, unit, why };
 }
 
-const W = { width: 640, label: 196, right: 584, row: 34, top: 8, bar: 16 } as const;
-
 /** Signed text for a change exactly as written, with a plus where the module wrote none. */
 const signed = (text: string) => (/^[+\-−(]/.test(text.trim()) ? text.trim() : `+${text.trim()}`);
+
+const pct = (value: number) => `${String(value * 100)}%`;
 
 /**
  * A horizontal bridge: the opening and closing from zero, each change floating from where the one
@@ -51,86 +51,91 @@ const signed = (text: string) => (/^[+\-−(]/.test(text.trim()) ? text.trim() :
  */
 export function Bridge({ steps, unit, label }: { steps: Step[]; unit: string; label: string }) {
   const values = steps.map((step) => step.cell.value ?? 0);
+  const last = steps.length - 1;
   const ends: number[] = [];
   values.forEach((value, at) => {
-    const last = at === values.length - 1;
-    ends.push(at === 0 || last ? value : (ends[at - 1] ?? 0) + value);
+    ends.push(at === 0 || at === last ? value : (ends[at - 1] ?? 0) + value);
   });
   const scale = ticks([0, ...ends]);
   const lo = scale[0]?.value ?? 0;
   const hi = scale.at(-1)?.value ?? 1;
-  const x = (value: number) => W.label + ((value - lo) / (hi - lo || 1)) * (W.right - W.label);
-  const height = W.top + steps.length * W.row + 26;
-  const last = steps.length - 1;
+  const at = (value: number) => (value - lo) / (hi - lo || 1);
+  const track = "relative h-7 min-w-0";
   return (
-    <svg
-      viewBox={`0 0 ${String(W.width)} ${String(height)}`}
-      width="100%"
-      role="img"
-      aria-label={label}
-      className="block"
-    >
-      {scale.map((tick) => (
-        <g key={tick.value}>
-          <line
-            x1={x(tick.value)}
-            x2={x(tick.value)}
-            y1={W.top}
-            y2={height - 22}
-            className={tick.value === 0 ? "stroke-connector" : "stroke-border-hairline"}
-          />
-          <text
-            x={x(tick.value)}
-            y={height - 6}
-            textAnchor="middle"
-            className="fill-text-tertiary font-mono text-[11px]"
-          >
-            {tick.label}
-          </text>
-        </g>
-      ))}
-      {steps.map((step, at) => {
-        const total = at === 0 || at === last;
-        const from = total ? 0 : (ends[at - 1] ?? 0);
-        const to = ends[at] ?? 0;
-        const left = x(Math.min(from, to));
-        const width = Math.max(2, Math.abs(x(to) - x(from)));
-        const y = W.top + at * W.row + (W.row - W.bar) / 2;
-        const text = total ? step.cell.text : signed(step.cell.text);
-        return (
-          <g key={step.line}>
-            <text
-              x="0"
-              y={y + W.bar - 3}
-              className={
-                total
-                  ? "fill-text-primary text-[13px] font-medium"
-                  : "fill-text-secondary text-[13px]"
-              }
+    <div role="img" aria-label={label} className="flex min-w-0 flex-col gap-1">
+      <ol aria-hidden="true" className="flex flex-col gap-1">
+        {steps.map((step, index) => {
+          const total = index === 0 || index === last;
+          const from = total ? 0 : (ends[index - 1] ?? 0);
+          const to = ends[index] ?? 0;
+          const left = at(Math.min(from, to));
+          const width = Math.abs(at(to) - at(from));
+          const right = left + width > 0.8;
+          return (
+            <li
+              key={step.line}
+              className="grid grid-cols-1 items-center gap-x-4 sm:grid-cols-[12rem_minmax(0,1fr)]"
             >
-              {step.label.length > 30 ? `${step.label.slice(0, 29)}…` : step.label}
-              <title>{step.label}</title>
-            </text>
-            <rect
-              x={left}
-              y={y}
-              width={width}
-              height={W.bar}
-              rx="2"
-              className={total ? "fill-chart-1" : "fill-chart-2"}
-            />
-            <text
-              x={Math.min(left + width + 6, W.width - 4)}
-              y={y + W.bar - 3}
-              textAnchor={left + width + 6 > W.width - 56 ? "end" : "start"}
-              className="fill-text-primary font-mono text-[12px]"
+              <span
+                className={
+                  total
+                    ? "text-small font-medium text-text-primary"
+                    : "text-small text-text-secondary"
+                }
+              >
+                {step.label}
+              </span>
+              <span className={track}>
+                {scale.map((tick) => (
+                  <span
+                    key={tick.value}
+                    className={`absolute inset-y-0 w-px ${tick.value === 0 ? "bg-connector" : "bg-border-hairline"}`}
+                    style={{ left: pct(at(tick.value)) }}
+                  />
+                ))}
+                <span
+                  className={`absolute top-1.5 h-4 min-w-0.5 rounded-[2px] ${total ? "bg-chart-1" : "bg-chart-2"}`}
+                  style={{ left: pct(left), width: pct(width) }}
+                />
+                <span
+                  className="absolute top-1 font-mono text-small whitespace-nowrap text-text-primary tabular-nums"
+                  style={
+                    right
+                      ? { right: pct(1 - left), paddingRight: "0.375rem" }
+                      : { left: pct(left + width), paddingLeft: "0.375rem" }
+                  }
+                >
+                  {total ? step.cell.text : signed(step.cell.text)}
+                </span>
+              </span>
+            </li>
+          );
+        })}
+      </ol>
+      <div
+        aria-hidden="true"
+        className="grid grid-cols-1 gap-x-4 sm:grid-cols-[12rem_minmax(0,1fr)]"
+      >
+        <span className="hidden sm:block" />
+        <span className="relative h-4">
+          {scale.map((tick, index) => (
+            <span
+              key={tick.value}
+              className={`absolute font-mono text-[11px] text-text-tertiary tabular-nums ${
+                index === 0
+                  ? ""
+                  : index === scale.length - 1
+                    ? "-translate-x-full"
+                    : "-translate-x-1/2"
+              }`}
+              style={{ left: pct(at(tick.value)) }}
             >
-              {text}
-            </text>
-          </g>
-        );
-      })}
-      <desc>{`Amounts in ${unitLabel(unit)}.`}</desc>
-    </svg>
+              {tick.label}
+            </span>
+          ))}
+        </span>
+      </div>
+      <p className="sr-only">{`Amounts in ${unitLabel(unit)}.`}</p>
+    </div>
   );
 }
