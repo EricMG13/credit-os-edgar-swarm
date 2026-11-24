@@ -4,6 +4,22 @@ Keep one running record here. A pass applies only to the stated scope. Earlier v
 engine is in [EricMG13/final-workflow](https://github.com/EricMG13/final-workflow)'s
 `VERIFICATION.md`, which also keeps the retained runs this copy leaves out.
 
+## 2026-11-24 — Parallel CP-OS review fixes for PR #71
+
+- Offline fake-provider runs reproduced a reserved call reaching dispatch after an unknown charge
+  or overrun. The final check now uses the shared ledger and releases the unsent hold at zero.
+  The original failure remains the recorded reason for the stop.
+- At a USD 15 cap, widths 1 and 2 now both accept CP-0, CP-1 and CP-1A and settle USD 8.20.
+  Funded workers still overlap. Admission checks the reloaded ledger, configured turns and
+  attempts, hosted search fees, and exact pricing. An unavailable bound defers to serial calls.
+- Tested interrupts before native startup and before Python bootstrap completed on CPython 3.13.
+  Cleanup joins started workers and preserves the original interrupt. The library admission test
+  now uses pytest's provider fixture and verifies a default-width launch.
+- Scope covers synthetic handoffs, scheduler runs and library admission. The concurrency review
+  and rewrite tournament retained the locked-ledger admission and the startup cleanup paths.
+- Targeted offline pytest passed 1,315 tests, with one historical retained-run test skipped.
+  The parallel scheduler file passed 70 tests. The changed-code gate reported zero findings.
+
 ## 2026-11-24 — Performance fixes on main `13b7d43b`
 
 - Recovered staged code from the earlier integration and applied it to current main. The two overlaps shared route parsing between preloading and rendering, and retained the run-chart memo boundary. Astra reproduced a same-grid Forecast crash when `Upside` and `Upside case` got different names in the chart and table. Both now share the resolved name. The new same-grid test failed before the fix and passed after it, alongside the existing split-grid test. Astra cleared that fix and both overlaps in patch `b1a24422`.
@@ -11,6 +27,38 @@ engine is in [EricMG13/final-workflow](https://github.com/EricMG13/final-workflo
 - Passed 1,882 connected and route tests, 3,468 offline web tests, 581 targeted Python tests, and 76 Node script checks. Build, ESLint, formatting, the changed-code Python gate and 126 offline route probes passed. The Python rerun used a short temporary directory to stay within the app's 80-character workspace limit.
 - Fallow found zero dead-code issues or duplicate groups. The six structural complexity findings also appear on main with the same scores.
 - In the earlier integration on `2e488751`, six pages of the retained Caesars preview matched at 1440 × 900. Forecast preserved all 118 controls and showed the four recorded FY2029E date spans. The earlier scanner benchmark over the same 9,537 tokens took 41–43 ms versus 84–85 ms at `1112176d`. Other prototype results were 326 to 1.4 ms for the 25-run library index, 323 to 151 ms for a repeated identical report response, and 770 to 693 ms for cold Chrome Overview rendering.
+
+## 2026-11-18 — Modules at once: an opt-in, off by default
+
+- Scope: synthetic adapters and canned replies only, one shared Linux container. Nothing above
+  width 1 has run against a live provider; no Windows. Ruling:
+  `docs/rulings/2026-11-18-parallel-modules.md` (owner, 2026-11-18: "Parallel modules
+  permitted.").
+- Changed: CP-OS can run up to four modules whose producers are accepted at once
+  (`--parallel-modules`, `CREDIT_OS_PARALLEL_MODULES`). The default is 1. Modules start and are
+  accepted in plan order, one budget serves the run, and a reserve blocked only by another
+  module's open hold waits for it to settle.
+- Width 1, two independent reviews: 35 launches over 19 scenarios (clean, rejections, kills,
+  interrupts, overruns, cap stops, relaunches) leave the same run folder, library, stdout and
+  exit codes as before, apart from one new `launch_started` event that every reader ignores.
+- Width 2 to 4: the cap held in every stress (3,114 rounds, never above the cap; no call sent
+  twice), and accepted handoffs, deliveries and the library are byte-identical to width 1 over
+  14 seeded runs. Three review rounds found and closed: a module that started and paid after
+  another had failed; a cap stop reported as a provider failure; a running module shown stopped
+  after a relaunch; a hang after an observer stop; a budget wait on a hold whose thread had
+  ended; an interrupt that did not exit.
+- Known limits of the opt-in, each stated in the ruling: a module in flight when another fails
+  keeps its request without an answer and must be repaired too before the run resumes; a call
+  can still begin in the instant between a bad reply and its report (5 of 80 trials built to
+  hit it, within 0.05 ms median); a later module's result waits for the modules before it,
+  which a live provider has not been seen to tolerate.
+- Commands: `tools/quality_gate.py` 0 findings; `tests/test_cpos_parallel.py` (58) with the
+  handoff, model, inbox, run page and proof files 1,453 passed; `tests/test_cpos_launch.py` and
+  the run start scheduler and service 1,172 passed. The reviewer's reproductions for the last
+  four findings were run again on the final commit: hang gone (1.1 s), second interrupt exits
+  in 1.3 s, no start after a bad reply, no call after its report.
+- Not verified: any live run above width 1; two sessions on one seat; Windows locks. The last
+  fix round was checked against its four findings only, not by a further open review.
 
 ## 2026-11-18 — Connected pages: first draw and report redraws
 
@@ -940,52 +988,3 @@ Scope: presentation only, all under `web/`; no backend, handoff, provider or mod
 - Updated read-only actual Caesars preview is at port 58337, run
   `20261115-114658-01`; original Test preview/admission qualification remains.
   ZIP was not rebuilt or published. Chrome and Edge work-PC acceptance is pending.
-
-## 2026-11-16 — Four remaining Fallow findings resolved
-
-- Split Forecast case cards and assumptions into components; split browser intake
-  checks and browser execution from resource ownership. Reclassified the Vite
-  Tailwind plugin as a development dependency after tracing its sole import to
-  vite.config.ts. All locked versions, resolutions and integrity values unchanged.
-- Fallow audit against `b3a607f`: PASS, zero introduced or inherited findings.
-  No suppressions or threshold changes. Native RBOT-HTML and Python pins still
-  match `256101a`. No provider execution, Signal work or tournaments.
-- Confidence review, ranked: (1) weakened proof or submission races — all 167
-  assertion/wait expressions preserved by AST comparison; response listeners
-  remain before actions, cancellation and exactly-one-submit pass in both browsers;
-  (2) case state and source identity — state remains in Forecast, exact row and
-  hash lookup unchanged, 15 focused boundary/Forecast tests pass;
-  (3) build dependency classification — clean offline npm ci and production build
-  pass with every package version unchanged; (4) design drift — all Forecast
-  class expressions and compiled CSS unchanged, desktop/mobile intake and debt
-  screenshots pixel-identical to the preceding proof, revenue chart visually checked.
-  Verified fine within this scope; Windows work-PC execution remains open.
-- TypeScript, ESLint, Prettier and changed-code quality gate pass (zero findings).
-  Built source tree `0fb3973faa8494c2b51093afbdbe71b20f1dfb36` in an isolated
-  directory with a fresh dependency install. Chrome 157.0.8103.78 run
-  `20261116-024417-01` and Edge 157.0.4341.60 run `20261116-024434-01` each passed
-  all 30 synthetic checks on macOS. Proof: `proof-artifacts/run-D9auAO/proof.json`.
-- This is source-snapshot proof, not Windows or archive acceptance. The held ZIP
-  was not regenerated or published; release still requires Chrome and Edge passes
-  on the Windows work PC. Oldest complete entries trimmed; git retains them.
-
-## 2026-11-16 — Two requested Fallow findings resolved
-
-- Verified both findings with `fallow inspect --file` for
-  `scripts/connected-proof.mjs` and `src/pages/connected/report/Forecast.tsx`.
-  Separated the forecast's recorded bridge validation from its rendering;
-  split the browser proof into debt, portfolio, forecast and Evidence checks.
-  No suppression or threshold change. Fallow audit against `b3a607f` PASS:
-  zero introduced findings, four inherited findings remain outside this request.
-- Confidence review checked zero versus missing values, unit identity,
-  duplicate or absent rows, nonfinite values, source line identity and proof
-  ordering. Nine new rendering cases plus existing Forecast tests pass (15).
-  AST comparison confirms all 45 assertions/waits from the original checkCharts
-  remain exact. TypeScript, ESLint, Prettier and changed-code quality gate pass.
-- Built staged source tree `ed759e0477d3c685619568dc160b7631368b0dbe` in an isolated
-  directory using installed pinned dependencies. Chrome 157.0.8103.78 run
-  `20261116-023941-01` and Edge 157.0.4341.60 run `20261116-023955-01` each passed
-  all 30 synthetic checks on macOS. Proof: `proof-artifacts/run-z6RLzy/proof.json`.
-  This is source-snapshot proof; the previously held ZIP was not regenerated.
-- RBOT-HTML and pins still match `256101a`; React lock unchanged. Windows work
-  PC acceptance remains pending. No ZIP publication, Signal work or tournaments.
