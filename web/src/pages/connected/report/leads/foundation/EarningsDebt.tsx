@@ -23,12 +23,12 @@ import { earningsAgainstDebt, type EarningsAgainstDebt } from "./foundationData"
 const LABEL = "Earnings against debt and leverage";
 export const NO_EARNINGS =
   "The handoff states no net sales and EBITDA chart data for two periods in one unit.";
-export const NO_MEASURES = "No earnings or debt measure is stated for both periods.";
+const NO_MEASURES = "No earnings or debt measure is stated for both periods.";
 export const NO_LEVERAGE = "Total debt / EBITDA is not in the handoff.";
-export const NO_RATIO = "Total debt / EBITDA is not stated as a number for either period.";
-export const DERIVED_NOTE =
+const NO_RATIO = "Total debt / EBITDA is not stated as a number for either period.";
+const DERIVED_NOTE =
   "Changes and growth are derived from the stated figures. Leverage is on reported EBITDA.";
-export const DERIVED_ONLY = "Changes and growth are derived from the stated figures.";
+const DERIVED_ONLY = "Changes and growth are derived from the stated figures.";
 
 const TICK = "fill-text-tertiary font-mono";
 const PRIOR_RING = "fill-surface-card stroke-chart-3";

@@ -58,7 +58,7 @@ export type ProFormaBar = {
 };
 
 /** Whether the base period's net debt plus the event's amount is the stated pro forma, exactly. */
-export function proFormaAdds(base: Reading, proForma: ProForma) {
+function proFormaAdds(base: Reading, proForma: ProForma) {
   if (base.kind !== "number" || proForma.netDebt.kind !== "number") return false;
   const total = sum([base.text, proForma.amount.text]);
   return total !== null && Number(total) === proForma.netDebt.value;

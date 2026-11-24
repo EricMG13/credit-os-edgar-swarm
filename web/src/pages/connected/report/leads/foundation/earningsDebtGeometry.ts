@@ -4,7 +4,7 @@ import { linear } from "../kit/geometry";
 import { group, signOf, type Reading } from "../kit/numbers";
 import type { EarningsAgainstDebt, EarningsMeasure } from "./foundationData";
 
-export const EVIDENCE = "Detail is in Evidence.";
+const EVIDENCE = "Detail is in Evidence.";
 
 /** Handoff text as a working page may draw it: module codes as names, a source reference never. */
 export const clean = (text: string) => (containsReference(text) ? EVIDENCE : readerText(text));
@@ -142,7 +142,7 @@ function beside(x: number, y: number, text: string, side: "left" | "right"): Lab
 }
 
 /** Growth is drawn only on a positive base: a percentage of zero or of a negative figure says nothing. */
-export const growthShown = (measure: EarningsMeasure) =>
+const growthShown = (measure: EarningsMeasure) =>
   measure.growth !== null &&
   measure.pair.prior.cell.kind === "number" &&
   measure.pair.prior.cell.value > 0;
@@ -222,7 +222,7 @@ function reasonsOf(measure: EarningsMeasure, priorLabel: string, currentLabel: s
  * The growth column is narrow: label its two ends and zero only, and drop a label that would
  * touch one already kept (zero and the far end are kept first).
  */
-export function sparse<T extends { value: number; x: number }>(marks: T[]) {
+function sparse<T extends { value: number; x: number }>(marks: T[]) {
   const ends = [marks.find((m) => m.value === 0), marks.at(-1), marks[0]];
   const kept: T[] = [];
   for (const mark of ends)
