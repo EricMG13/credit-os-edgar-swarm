@@ -158,37 +158,34 @@ function choices(frame: Frame, wanted: number, plotPx: number): Choice[] {
   return roomy ? [within] : [{ side, label: MIN_LABEL_PX, max: MIN_LABEL_PX }];
 }
 
+/** How much of each label a lane draws: whole, then the name alone, then the name cut to a width. */
+type Mode = { dateless: boolean; cap: number };
+const MODES: Mode[] = [
+  { dateless: false, cap: Infinity },
+  { dateless: true, cap: Infinity },
+  ...NARROW_PX.map((cap) => ({ dateless: true, cap })),
+];
+
 type Option = Choice & { extent: Extent };
 
-/** The same choices with each whole label narrowed to a width, without its date; squeezed ones stay. */
-const narrowed = (options: Choice[], wanted: number, width: number) =>
-  options.map((option) =>
-    option.label === wanted ? { ...option, label: width, max: width, dateless: true } : option,
-  );
-
-/** The first row and choice where nothing overlaps; narrower labels fill the capped rows first. */
-function slot(rows: Extent[][], sets: Option[][]) {
-  const free = (row: number, option: Option) =>
-    (rows[row] ?? []).every((other) => !overlaps(option.extent, other));
-  const [full] = sets;
-  const narrowest = sets.at(-1);
+/** The first row, from the top, where one of the options overlaps nothing. */
+function slot(rows: Extent[][], options: Option[]) {
   for (let row = 0; ; row += 1) {
-    const tried = row < ROW_CAP ? sets : narrowest ? [narrowest] : [];
-    for (const options of tried) {
-      const option = options.find((candidate) => free(row, candidate));
-      if (option) return { row, option };
-    }
-    if (row > 1000) return { row, option: full?.[0] };
+    const option = options.find((candidate) =>
+      (rows[row] ?? []).every((other) => !overlaps(candidate.extent, other)),
+    );
+    if (option) return { row, option };
   }
 }
 
 /** Stack labelled marks into sub-rows so no label or hit area covers another. */
-function place(
+function stack(
   events: EventRecord[],
   min: number,
   range: number,
   plotPx: number,
   measure: Measure,
+  mode: Mode,
 ): Placed[] {
   const pct = (time: number) => (time - min) / range;
   const rows: Extent[][] = [];
@@ -202,23 +199,47 @@ function place(
         widthPx: (width / 100) * plotPx,
         period: isPeriod(event),
       };
-      const wanted = labelWidth(event, measure);
-      const base = choices(frame, wanted, plotPx);
+      const whole = labelWidth(event, measure);
       const name = Math.ceil(measure(event.event, false)) + 2;
-      const widths = [wanted, ...[name, ...NARROW_PX].filter((px) => px < wanted)];
-      const sets = widths.map((px) =>
-        (px === wanted ? base : narrowed(base, wanted, px)).map((choice) => ({
-          ...choice,
-          extent: extentOf(frame, choice.side, choice.label),
-        })),
-      );
-      const { row, option } = slot(rows, sets);
-      if (!option)
-        return { event, start, width, row, side: "right" as Side, labelPx: 0, dateless: false };
+      const wanted = mode.dateless ? Math.min(name, mode.cap) : whole;
+      const options = choices(frame, wanted, plotPx).map((choice) => ({
+        ...choice,
+        dateless: mode.dateless,
+        extent: extentOf(frame, choice.side, choice.label),
+      }));
+      const { row, option } = slot(rows, options);
       (rows[row] ??= []).push(option.extent);
-      const { side, max, dateless = false } = option;
-      return { event, start, width, row, side, labelPx: max, dateless };
+      return {
+        event,
+        start,
+        width,
+        row,
+        side: option.side,
+        labelPx: option.max,
+        dateless: mode.dateless,
+      };
     });
+}
+
+const rowCount = (placed: Placed[]) => Math.max(0, ...placed.map(({ row }) => row + 1));
+
+/**
+ * Pack a lane with whole labels; when that takes more than a few rows, give up each label's date,
+ * then narrow the names, until the lane is short or the names are as narrow as they go.
+ */
+function place(
+  events: EventRecord[],
+  min: number,
+  range: number,
+  plotPx: number,
+  measure: Measure,
+): Placed[] {
+  let placed: Placed[] = [];
+  for (const mode of MODES) {
+    placed = stack(events, min, range, plotPx, measure, mode);
+    if (rowCount(placed) <= ROW_CAP) break;
+  }
+  return placed;
 }
 
 type Tick = { key: string; label: string; time: number };

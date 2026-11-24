@@ -257,7 +257,7 @@ export function ledgerOf(
   return { groups };
 }
 
-export type Paragraph = { line: number; text: string | null; href: string };
+type Paragraph = { line: number; text: string | null; href: string };
 export type PassageItem = ({ kind: "text" } & Paragraph) | { kind: "table"; table: Table };
 
 /** The blocks of one reader passage in order; `text` is null where a paragraph cites a source. */
