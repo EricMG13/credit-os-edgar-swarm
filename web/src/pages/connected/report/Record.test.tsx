@@ -70,8 +70,10 @@ function showRecord(run: Partial<PublishedRun>, entries: OutputEntry[] = [], tar
   );
   // The run record is closed by default (screen map, Evidence · Record): open it to read it.
   const record = screen.getByText("Run record", { selector: "summary" });
-  expect(record.closest("details")).not.toHaveAttribute("open");
-  fireEvent.click(record);
+  if (!run.changes?.problem) {
+    expect(record.closest("details")).not.toHaveAttribute("open");
+    fireEvent.click(record);
+  }
   return view;
 }
 

@@ -91,3 +91,63 @@ it("draws the recorded detail on the Gaps tab and labels an alternate handoff", 
   expect(screen.getByText("Effect: Effect text")).toBeVisible();
   expect(screen.getByText("Financial foundation · Saved")).toBeVisible();
 });
+
+it("reads a severity without regard to case, space or a trailing qualifier", () => {
+  const items = collectGaps([
+    entry("CP-1", [
+      ["A", "HIGH", ""],
+      ["B", " High ", ""],
+      ["C", "High (blocking)", ""],
+      ["D", "medium", ""],
+      ["E", "Critical", ""],
+    ]),
+  ]);
+  render(<GapCounts items={items} />);
+  const strip = within(screen.getByLabelText("Gaps by severity"));
+  expect(strip.getByText("High").closest("div")).toHaveTextContent("3");
+  expect(strip.getByText("Medium").closest("div")).toHaveTextContent("1");
+  expect(strip.getByText("Low").closest("div")).toHaveTextContent("0");
+  expect(strip.getByText("Other or not stated").closest("div")).toHaveTextContent("1");
+});
+
+it("groups the three qualified Highs together and shows the wording that differs", () => {
+  render(
+    <GapSummary
+      run={run}
+      entries={[
+        entry("CP-1", [
+          ["C", "High (blocking)", ""],
+          ["A", "HIGH", ""],
+        ]),
+      ]}
+    />,
+  );
+  expect(
+    [...document.querySelectorAll('th[scope="rowgroup"]')].map((cell) => cell.textContent),
+  ).toEqual(["High2"]);
+  expect(screen.getByText("Severity as written: High (blocking)")).toBeVisible();
+  expect(screen.getByText("Severity as written: HIGH")).toBeVisible();
+});
+
+it("draws no High, Medium or Low count as a fact when no gap states a rank", () => {
+  render(
+    <GapCounts
+      items={collectGaps([
+        entry("CP-1", [
+          ["A", "", ""],
+          ["B", "Critical", ""],
+        ]),
+      ])}
+    />,
+  );
+  const strip = within(screen.getByLabelText("Gaps by severity"));
+  expect(strip.queryByText("High")).toBeNull();
+  expect(strip.getByText("Other or not stated").closest("div")).toHaveTextContent("2");
+});
+
+it("names the order it draws, with the other stated words after Low", () => {
+  render(<GapSummary run={run} entries={entries} />);
+  expect(screen.getByRole("table")).toHaveAccessibleName(
+    /High, Medium, Low, then any other stated severity/,
+  );
+});

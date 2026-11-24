@@ -1,5 +1,5 @@
+/* eslint-disable jsx-a11y/no-redundant-roles, jsx-a11y/no-interactive-element-to-noninteractive-role -- explicit table roles keep the table semantics when the parts are drawn as stacked blocks on a phone */
 import { Button } from "@/components/base/buttons/button";
-import { DownloadButton } from "@/pages/library/parts/DownloadButton";
 import { ArrowRight } from "@untitledui/icons";
 import { HandoffDownload } from "../ReportContent";
 import {
@@ -8,8 +8,11 @@ import {
   type OutputEntry,
   type PublishedRun,
 } from "../publishedReport";
+import { STACK } from "./evidenceKit";
 import { handoffName } from "./evidenceLabels";
 import { Tile } from "./overview/Tile";
+
+const HEADINGS = ["Handoff", "SHA-256", "File"];
 
 /** The module handoffs as files: name, SHA-256, a way to open each in Evidence and to download it. */
 export function EvidenceHandoffs({
@@ -31,7 +34,9 @@ export function EvidenceHandoffs({
       title="Handoffs"
       trace={
         zip && (
-          <DownloadButton download={{ label: "Download all handoffs", href: zip, reason: null }} />
+          <Button href={zip} download color="secondary" className="min-h-8 max-[480px]:min-h-11">
+            Download all handoffs
+          </Button>
         )
       }
     >
@@ -52,39 +57,53 @@ export function EvidenceHandoffs({
           tabIndex={0}
           className="min-w-0 overflow-x-auto rounded-ds-md border border-border-hairline"
         >
-          <table className="w-full min-w-xl border-collapse text-left text-small">
+          <table role="table" className={STACK.table}>
             <caption className="sr-only">Handoffs</caption>
-            <thead className="bg-surface-subtle text-text-secondary">
-              <tr>
-                <th scope="col" className="px-4 py-3 font-medium">
-                  Handoff
-                </th>
-                <th scope="col" className="px-4 py-3 font-medium">
-                  SHA-256
-                </th>
-                <th scope="col" className="px-4 py-3 font-medium">
-                  File
-                </th>
+            <thead role="rowgroup" className={STACK.head}>
+              <tr role="row">
+                {HEADINGS.map((heading) => (
+                  <th
+                    key={heading}
+                    role="columnheader"
+                    scope="col"
+                    className="px-4 py-3 font-medium"
+                  >
+                    {heading}
+                  </th>
+                ))}
               </tr>
             </thead>
-            <tbody>
+            <tbody role="rowgroup" className={STACK.body}>
               {shown.map((item) => (
-                <tr key={item.output.id} className="border-t border-border-hairline align-top">
-                  <th scope="row" className="px-4 py-2 font-medium text-text-primary">
+                <tr role="row" key={item.output.id} className={STACK.row}>
+                  <th
+                    role="rowheader"
+                    scope="row"
+                    data-label={HEADINGS[0]}
+                    className={`${STACK.cell} font-medium text-text-primary`}
+                  >
                     <Button
                       href={evidencePath(run.folder, item)}
                       color="link-gray"
                       size="sm"
-                      className="underline"
+                      className="min-h-8 underline max-[480px]:min-h-11"
                       iconTrailing={ArrowRight}
                     >
                       {handoffName(item)}
                     </Button>
                   </th>
-                  <td className="max-w-72 px-4 py-3 font-mono text-mono wrap-anywhere text-text-tertiary">
-                    {item.output.sha256}
+                  <td
+                    role="cell"
+                    data-label={HEADINGS[1]}
+                    className={`${STACK.cell} font-mono text-mono wrap-anywhere text-text-tertiary`}
+                  >
+                    <code>{item.output.sha256}</code>
                   </td>
-                  <td className="px-4 py-2">
+                  <td
+                    role="cell"
+                    data-label={HEADINGS[2]}
+                    className={`${STACK.cell} [&_a]:inline-flex [&_a]:min-h-8 [&_a]:items-center max-[480px]:[&_a]:min-h-11`}
+                  >
                     <HandoffDownload run={run} entry={item} />
                   </td>
                 </tr>

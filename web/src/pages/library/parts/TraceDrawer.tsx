@@ -1,8 +1,15 @@
 import { Button } from "@/components/base/buttons/button";
 import { SlideoutMenu } from "@/components/application/slideout-menus/slideout-menu";
-import type { Trace } from "../slice";
 import { DerivationTree } from "./DerivationTree";
-import { CAPTION, CitedSources, TraceBasis, TraceClaim, TraceSourcePassage } from "./TraceParts";
+import {
+  CAPTION,
+  CitedSources,
+  TraceBasis,
+  TraceClaim,
+  TraceSourcePassage,
+  withoutBasis,
+  type SourcedTrace,
+} from "./TraceParts";
 
 /**
  * The sources of one figure, in the reviewer's order: the claim, the passage it rests on with its
@@ -15,13 +22,14 @@ export function TraceDrawer({
   isOpen,
   onClose,
 }: {
-  trace: Trace;
+  trace: SourcedTrace;
   evidenceHref: string;
   isOpen: boolean;
   onClose: () => void;
 }) {
   return (
     <SlideoutMenu
+      className="max-[480px]:pl-0"
       isOpen={isOpen}
       onOpenChange={(open) => {
         if (!open) onClose();
@@ -42,14 +50,14 @@ export function TraceDrawer({
         <TraceBasis trace={trace} />
         <div className="flex flex-col gap-1.5 border-t border-border-hairline pt-4">
           <span className={CAPTION}>How it was derived</span>
-          <DerivationTree node={trace.derivation} />
+          <DerivationTree node={withoutBasis(trace.derivation)} />
         </div>
       </SlideoutMenu.Content>
       <SlideoutMenu.Footer className="flex justify-end gap-3">
-        <Button color="secondary" slot="close">
+        <Button color="secondary" slot="close" className="max-[480px]:min-h-11">
           Close
         </Button>
-        <Button href={evidenceHref} onPress={onClose}>
+        <Button href={evidenceHref} onPress={onClose} className="max-[480px]:min-h-11">
           Open in Evidence
         </Button>
       </SlideoutMenu.Footer>

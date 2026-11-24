@@ -93,3 +93,30 @@ it("draws nothing for a line the handoff does not hold", () => {
   );
   expect(container).toBeEmptyDOMElement();
 });
+
+it("shows a citation whose page text could not be read, with its file and the chip's own reason", () => {
+  show({
+    "case/CP-2.md:4": [
+      {
+        label: "annual.pdf p. 84",
+        quote: null,
+        excerpt: null,
+        file: "annual.pdf",
+        source: null,
+        sha256: "c".repeat(64),
+        reason: "page not in source text",
+      },
+    ],
+  });
+  const source = within(screen.getByRole("region", { name: "The source" }));
+  expect(source.getByText("annual.pdf p. 84")).toBeVisible();
+  expect(source.getByText("annual.pdf")).toBeVisible();
+  expect(source.getByText("page not in source text")).toBeVisible();
+  expect(source.getByText("c".repeat(64))).toBeVisible();
+  expect(source.queryByText("No source passage was recorded for this item.")).toBeNull();
+});
+
+it("draws the basis once on the page: in the claim tile and not in the derivation", () => {
+  show();
+  expect(screen.getAllByText("FY2024 reported, USD m.")).toHaveLength(1);
+});

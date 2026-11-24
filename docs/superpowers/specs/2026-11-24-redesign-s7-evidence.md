@@ -238,3 +238,47 @@ a `<code>` element again (the old assertion is restored); the Sources group head
 designed: the drawer shows the Basis line and the derivation tree also holds it; matrix rows without a
 register or figure merge under "Check". `eslint` reports one pre-existing error in `report/stages.ts` (S2/S1
 territory), not changed.
+
+## Coordinator review 673ce7c: second pass
+
+Numbers are the coordinator's. Rendered on the synthetic run at 1440 and 390 with a Playwright route that
+adds fixture data to the snapshot (gaps worded "HIGH", "High (blocking)", "Critical", "Low" and unstated; a
+citation with a quote and a long passage; a citation whose page text could not be read; a source with no
+hash; an unused and an unrecorded-use file). No tab or the drawer scrolls the page sideways at either width.
+
+- 1 Sources "Cited as" shows the citation as written (attested pages where attested, else the chip's label);
+  "Not cited by a handoff" or, with a module selected, "Not cited in <module>"; sources with no hash match by
+  file name; the column says its scope.
+- 2 "Use not recorded" for the unrecorded group; "Not read by any module" for supplied-not-used.
+- 3 The source tile shows each citation (label, file, attested pages, quote, chip reason, hash); "No passage
+  text was recorded for this citation" plus the reason when a quote could not be read; the none-recorded gap only
+  when the line has no chip. The drawer from a handoff line carries the same; a drawer whose trace does not know
+  its citations says where to look instead of claiming none exist.
+- 4 Model notes and assumption registers are open on Record. The run record opens by default when the run
+  has a comparison note or problem, so "Review comparison evidence" lands on it.
+- 5 Severity read by leading word without case or space; other words kept as written and grouped; the three
+  counts are left out when no gap states a rank; the order is stated in the tile and the table caption.
+- 6 The matrix is gone (see 8). 7 The register wrapper is `grid-cols-1 min-w-0`.
+- 8 Checks rebuilt by the Opus sub-agent: outcome counts, module × outcome table, checks grouped by outcome
+  (disagreed first; "not checked" closed), never merged across modules, checking record table.
+- 9 Model and calculation files are a list; the artifact listing publishes no hash, so each row says "No hash
+  published" (stated gap). The run record sits in a `Disclosure` tile; `Record.tsx` (S2) is wrapped with
+  descendant overrides (no card in a card, its own "Run record" heading hidden to the eye, not the tree). What
+  I needed from S2: a `flat` prop on `ReportRecord` and a key-value rendering of the totals; not done here.
+- 10 The Trace tab: one claim tile (claim, qualification, basis), the source tile (passages capped at 15 rem,
+  scrolling), "How it was derived" without the Basis row, source records, then the handoff location.
+- 11 Summary leads with the Run evidence figures (a strip) and a one-line "No gaps recorded".
+- 12 Module select sits in the control row beside the tabs (32 px, 44 px at 480 px and below).
+- 13 `text-sm` removed from my files. 14 `GapNote` is used for the none-recorded state; inline stated gaps use a
+  new `GapText` (hatched frame, plain chip); `Disclosure` replaces the hand-copied tile classes.
+- 15 Drawer is full width at 390 (`max-[480px]:pl-0`), footer buttons 44 px. The header close button is the
+  slideout component's and stays 36 px (request: a larger close target in `components/application`).
+- 16 Gap table: column heads with scope, a caption, severity once (the group heading; the written wording only
+  where it differs), stacked blocks under 768 px. 17 Targets 32 px, 44 px at 480 px and below.
+- 18 Sources: own Document date column, hash on one line when it fits, stacked rows on a phone.
+- 19 Test loosening reverted: the group heading is asserted as name plus count; the forecast-inputs `pre` is
+  looked up inside the handoff region; the hash is a `<code>` again.
+
+Test edits this pass that pin layout: the summary figures are asserted on the strip (label and value), the
+Gaps tests read the group heading instead of a severity cell, the file-list row replaces the button row, and
+the derivation heading is "How it was derived".

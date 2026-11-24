@@ -1,11 +1,17 @@
 import { cleanup, render, screen, within } from "@testing-library/react";
 import { afterEach, expect, it } from "vitest";
-import type { Trace } from "../slice";
-import { basisOf, TraceBasis, TraceClaim, TraceSourcePassage } from "./TraceParts";
+import {
+  basisOf,
+  TraceBasis,
+  TraceClaim,
+  TraceSourcePassage,
+  withoutBasis,
+  type SourcedTrace,
+} from "./TraceParts";
 
 afterEach(cleanup);
 
-const trace = (over: Partial<Trace> = {}): Trace => ({
+const trace = (over: Partial<SourcedTrace> = {}): SourcedTrace => ({
   title: "Sources for Findings",
   heading: "Findings",
   subtitle: "Liquidity · Handoff line 5",
@@ -42,17 +48,65 @@ it("draws the source passage with its location", () => {
   expect(screen.getByText("annual-report.pdf · p. 84")).toBeVisible();
 });
 
-it("draws nothing for a trace that carries no passage, unless asked to state the gap", () => {
-  const { container } = render(<TraceSourcePassage trace={trace({ excerpt: null })} />);
-  expect(container).toBeEmptyDOMElement();
+it("says where to look, not that nothing was recorded, for a trace that does not know its citations", () => {
+  render(<TraceSourcePassage trace={trace({ excerpt: null })} />);
+  expect(screen.getByText(/This trace carries no passage/)).toBeVisible();
+  expect(screen.queryByText("No source passage was recorded for this item.")).toBeNull();
+  expect(screen.queryByText("Source excerpt")).toBeNull();
 });
 
-it("draws the gap state, not a blank, when the page holds the line and no passage was recorded", () => {
-  render(<TraceSourcePassage trace={trace({ excerpt: null })} gap />);
-  expect(screen.queryByText("Source excerpt")).toBeNull();
+it("states that nothing was cited when the trace knows its citations and there are none", () => {
+  render(<TraceSourcePassage trace={trace({ excerpt: null, citations: [] })} />);
   const gap = screen.getByText("No source passage was recorded for this item.");
   expect(gap).toBeVisible();
   expect(gap.closest(".gap-hatch")).not.toBeNull();
+});
+
+const cited = {
+  label: "annual.pdf p. 84",
+  file: "annual.pdf",
+  pages: "Cited page 84",
+  quote: "“Cash was USD 162m.”",
+  reason: null,
+  sha256: "c".repeat(64),
+};
+
+it("draws each citation with its file, pages, quote and hash", () => {
+  render(<TraceSourcePassage trace={trace({ citations: [cited] })} />);
+  expect(screen.getByText("“Cash was USD 162m.”")).toBeVisible();
+  expect(screen.getByText("annual.pdf")).toBeVisible();
+  expect(screen.getByText("Cited page 84")).toBeVisible();
+  expect(screen.getByText("c".repeat(64))).toBeVisible();
+});
+
+it("shows a citation whose page text could not be read with the chip's own reason, not as no passage", () => {
+  render(
+    <TraceSourcePassage
+      trace={trace({
+        excerpt: null,
+        citations: [{ ...cited, quote: null, reason: "page not in source text" }],
+      })}
+    />,
+  );
+  expect(screen.getByText("annual.pdf")).toBeVisible();
+  expect(screen.getByText("page not in source text")).toBeVisible();
+  expect(screen.getByText("No passage text was recorded for this citation.")).toBeVisible();
+  expect(screen.queryByText("No source passage was recorded for this item.")).toBeNull();
+});
+
+it("scrolls a long quote inside its box and names the scroll region", () => {
+  render(
+    <TraceSourcePassage trace={trace({ citations: [{ ...cited, quote: "x ".repeat(900) }] })} />,
+  );
+  const box = screen.getByRole("region", { name: "Passage from annual.pdf p. 84" });
+  expect(box).toHaveAttribute("tabindex", "0");
+  expect(box.className).toContain("overflow-y-auto");
+});
+
+it("takes the Basis row out of the derivation so the basis is drawn once", () => {
+  const withBasis = trace().derivation;
+  expect(withBasis.children.map(({ label }) => label)).toEqual(["Basis"]);
+  expect(withoutBasis(withBasis).children).toEqual([]);
 });
 
 it("reads the basis line from the derivation's Basis node", () => {

@@ -1,43 +1,66 @@
+/* eslint-disable jsx-a11y/no-redundant-roles, jsx-a11y/no-interactive-element-to-noninteractive-role -- explicit table roles keep the table semantics when the parts are drawn as stacked blocks on a phone */
 import { EmptyState } from "@/components/application/empty-state/empty-state";
 import { Badge } from "@/components/base/badges/badges";
 import { FileSearch02 } from "@untitledui/icons";
 import { moduleName } from "../api";
 import { citedSourcePages } from "../sourceFiles";
 import type { OutputEntry, PublishedRun, Snapshot } from "../publishedReport";
+import { GapText } from "@/pages/library/parts/GapText";
+import { STACK } from "./evidenceKit";
 import { Tile } from "./overview/Tile";
 
 export type SourceGroup = { label: string; rows: PublishedRun["evidence"]["sources"] };
 type SourceRow = SourceGroup["rows"][number];
 
+type Citation = { sha: string | null; label: string };
+
 /**
- * The pages each file is cited at, from the citations recorded in the given handoffs only (the
- * snapshot holds other runs' chips too), keyed by the file's name and, where recorded, its hash.
+ * What each file is cited as, from the citations recorded in the given handoffs only (the snapshot
+ * holds other runs' chips too), keyed by the file's name. A page is shown as attested where the
+ * bridge attests one and otherwise as the citation's own label, as written.
  */
-export function citedPagesBySource(snapshot: Snapshot, entries: OutputEntry[]) {
+export function citationsByFile(snapshot: Snapshot, entries: OutputEntry[]) {
   const ids = new Set(entries.map((entry) => entry.output.id));
-  const pages = new Map<string, Set<string>>();
+  const cited = new Map<string, Citation[]>();
   for (const [key, chips] of Object.entries(snapshot.chips)) {
     const id = key.slice(0, key.lastIndexOf(":"));
     if (!ids.has(id)) continue;
     const folder = id.split("/")[0] ?? "";
     for (const chip of chips) {
-      const name = chip.file ?? chip.source;
-      const label = name ? citedSourcePages(folder, chip) : null;
-      if (!name || !label) continue;
-      const at = `${name}\u0000${chip.sha256 ?? ""}`;
-      pages.set(at, new Set([...(pages.get(at) ?? []), label]));
+      if (!chip.file) continue;
+      const label = citedSourcePages(folder, chip) ?? chip.label ?? "Cited, no page recorded";
+      cited.set(chip.file, [...(cited.get(chip.file) ?? []), { sha: chip.sha256, label }]);
     }
   }
-  return pages;
+  return cited;
 }
 
-function pagesOf(pages: Map<string, Set<string>>, source: SourceRow) {
-  const hit = (hash: string) => pages.get(`${source.name}\u0000${hash}`) ?? [];
-  return [...new Set([...hit(source.sha256 ?? ""), ...(source.sha256 ? hit("") : [])])];
+/** The distinct citations that can be this file: same name, and the same hash where both record one. */
+function citationsOf(cited: Map<string, Citation[]>, source: SourceRow) {
+  return [
+    ...new Set(
+      (cited.get(source.name) ?? [])
+        .filter(({ sha }) => !source.sha256 || !sha || sha === source.sha256)
+        .map(({ label }) => label),
+    ),
+  ];
 }
 
-function UsedBy({ source, modules }: { source: SourceRow; modules: string[] }) {
-  if (source.readBy.length === 0) return <span className="text-text-tertiary">No module</span>;
+function UsedBy({
+  source,
+  modules,
+  group,
+}: {
+  source: SourceRow;
+  modules: string[];
+  group: string;
+}) {
+  if (source.readBy.length === 0)
+    return (
+      <GapText>
+        {group === "Supplied, not used" ? "Not read by any module" : "Use not recorded"}
+      </GapText>
+    );
   const all = modules.length > 0 && modules.every((id) => source.readBy.includes(id));
   return (
     <>
@@ -51,16 +74,26 @@ function UsedBy({ source, modules }: { source: SourceRow; modules: string[] }) {
 function SourceTable({
   group,
   modules,
-  pages,
+  cited,
+  scope,
 }: {
   group: SourceGroup;
   modules: string[];
-  pages: Map<string, Set<string>>;
+  cited: Map<string, Citation[]>;
+  scope?: string;
 }) {
+  const headings = [
+    "File",
+    "Type",
+    "Document date",
+    scope ? `Cited in ${moduleName(scope)}` : "Cited as",
+    "Used by",
+    "SHA-256",
+  ];
   return (
     <div className="grid min-w-0 gap-2">
       <h4 className="flex items-center gap-2 text-h4 font-medium text-text-primary">
-        {group.label}
+        {group.label}{" "}
         <Badge size="sm" color="gray">
           {String(group.rows.length)}
         </Badge>
@@ -72,33 +105,28 @@ function SourceTable({
         tabIndex={0}
         className="min-w-0 overflow-x-auto rounded-ds-md border border-border-hairline"
       >
-        <table className="w-full min-w-3xl border-collapse text-left text-small">
+        <table role="table" className={STACK.table}>
           <caption className="sr-only">{group.label}</caption>
-          <thead className="bg-surface-subtle text-text-secondary">
-            <tr>
-              <th scope="col" className="px-4 py-3 font-medium">
-                File
-              </th>
-              <th scope="col" className="px-4 py-3 font-medium">
-                Type
-              </th>
-              <th scope="col" className="px-4 py-3 font-medium">
-                Cited pages
-              </th>
-              <th scope="col" className="px-4 py-3 font-medium">
-                Used by
-              </th>
-              <th scope="col" className="px-4 py-3 font-medium">
-                SHA-256
-              </th>
+          <thead role="rowgroup" className={STACK.head}>
+            <tr role="row">
+              {headings.map((heading) => (
+                <th key={heading} role="columnheader" scope="col" className="px-4 py-3 font-medium">
+                  {heading}
+                </th>
+              ))}
             </tr>
           </thead>
-          <tbody>
+          <tbody role="rowgroup" className={STACK.body}>
             {group.rows.map((source) => {
-              const cited = pagesOf(pages, source);
+              const citations = citationsOf(cited, source);
               return (
-                <tr key={source.name} className="border-t border-border-hairline align-top">
-                  <th scope="row" className="px-4 py-3 font-medium wrap-anywhere text-text-primary">
+                <tr role="row" key={source.name} className={STACK.row}>
+                  <th
+                    role="rowheader"
+                    scope="row"
+                    data-label={headings[0]}
+                    className={`${STACK.cell} font-medium wrap-anywhere text-text-primary`}
+                  >
                     {source.name}
                     {source.sourceWarning && (
                       <span className="mt-1 block font-normal text-warning-text">
@@ -106,27 +134,53 @@ function SourceTable({
                       </span>
                     )}
                   </th>
-                  <td className="px-4 py-3 text-text-secondary">
-                    {source.type || "Document type n.a."}
-                    <span className="block tabular-nums">
-                      {source.documentDate || "Document date n.a."}
-                    </span>
+                  <td
+                    role="cell"
+                    data-label={headings[1]}
+                    className={`${STACK.cell} text-text-secondary`}
+                  >
+                    {source.type || <GapText>Document type n.a.</GapText>}
                   </td>
-                  <td className="px-4 py-3 text-text-secondary">
-                    {cited.length > 0 ? (
-                      cited.join("; ")
+                  <td
+                    role="cell"
+                    data-label={headings[2]}
+                    className={`${STACK.cell} text-text-secondary tabular-nums`}
+                  >
+                    {source.documentDate || <GapText>Document date n.a.</GapText>}
+                  </td>
+                  <td
+                    role="cell"
+                    data-label={headings[3]}
+                    className={`${STACK.cell} text-text-secondary`}
+                  >
+                    {citations.length > 0 ? (
+                      <ul className="grid gap-1">
+                        {citations.map((label) => (
+                          <li key={label}>{label}</li>
+                        ))}
+                      </ul>
                     ) : (
-                      <span className="text-gap-text">Not cited</span>
+                      <GapText>
+                        {scope ? `Not cited in ${moduleName(scope)}` : "Not cited by a handoff"}
+                      </GapText>
                     )}
                   </td>
-                  <td className="px-4 py-3 text-text-secondary">
-                    <UsedBy source={source} modules={modules} />
+                  <td
+                    role="cell"
+                    data-label={headings[4]}
+                    className={`${STACK.cell} text-text-secondary`}
+                  >
+                    <UsedBy source={source} modules={modules} group={group.label} />
                   </td>
-                  <td className="max-w-72 px-4 py-3 font-mono text-mono wrap-anywhere text-text-tertiary">
+                  <td
+                    role="cell"
+                    data-label={headings[5]}
+                    className={`${STACK.cell} font-mono text-mono wrap-anywhere text-text-tertiary`}
+                  >
                     {source.sha256 ? (
                       <code>{source.sha256}</code>
                     ) : (
-                      <span className="font-sans text-gap-text">No hash recorded</span>
+                      <GapText>No hash recorded</GapText>
                     )}
                   </td>
                 </tr>
@@ -159,7 +213,7 @@ export function EvidenceSources({
       rows: group.rows.filter((source) => !module || source.readBy.includes(module)),
     }))
     .filter(({ rows }) => rows.length > 0);
-  const pages = citedPagesBySource(
+  const cited = citationsByFile(
     snapshot,
     entries.filter((entry) => !module || entry.output.module === module),
   );
@@ -186,7 +240,13 @@ export function EvidenceSources({
         </EmptyState>
       ) : (
         shown.map((group) => (
-          <SourceTable key={group.label} group={group} modules={modules} pages={pages} />
+          <SourceTable
+            key={group.label}
+            group={group}
+            modules={modules}
+            cited={cited}
+            scope={module}
+          />
         ))
       )}
     </Tile>

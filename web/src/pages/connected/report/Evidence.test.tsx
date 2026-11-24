@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
+import { cleanup, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { hasRecordedGap, ReportEvidence } from "./Evidence";
 import type { OutputEntry, PublishedRun, Snapshot } from "../publishedReport";
@@ -157,9 +157,11 @@ describe("published evidence gaps", () => {
     ]);
     renderGaps([entry]);
     expect(screen.getByRole("heading", { name: "Gaps 1" })).toBeVisible();
-    expect(screen.getByRole("row", { name: /Missing covenant schedule/ })).toHaveTextContent(
-      "Critical",
-    );
+    // The stated word is kept as written, as the heading of the group its row sits in.
+    expect(
+      screen.getByText("Critical", { selector: 'th[scope="rowgroup"] *, th[scope="rowgroup"]' }),
+    ).toBeVisible();
+    expect(screen.getByRole("row", { name: /Missing covenant schedule/ })).toBeVisible();
     expect(screen.getByRole("row", { name: /Could hide a breach/ })).toHaveTextContent(
       "Effect: Could hide a breach",
     );
@@ -183,7 +185,9 @@ describe("published evidence gaps", () => {
     renderGaps([entry]);
     expect(screen.getByRole("heading", { name: "Gaps 2" })).toBeVisible();
     const row = screen.getByRole("row", { name: /Missing debt/ });
-    expect(row).toHaveTextContent("Critical");
+    expect(
+      screen.getByText("Critical", { selector: 'th[scope="rowgroup"] *, th[scope="rowgroup"]' }),
+    ).toBeVisible();
     expect(row).toHaveTextContent("ID: G-1 Amount: 0 Reason: Last");
     expect(row).not.toHaveTextContent("Empty:");
     expect(screen.getByRole("row", { name: /Sparse trailing cells/ })).toBeVisible();
@@ -270,7 +274,9 @@ it("keeps filtered summary counts, alternate handoffs and source identities acro
     unrecorded: [{ ...source, name: "Use unknown", sha256: null }],
   };
   const summary = renderEvidence(entries, "summary/CP-1", evidence);
-  expect(screen.getByText("1 designated handoff · 2 source files")).toBeVisible();
+  const holds = within(screen.getByLabelText("What this run holds"));
+  expect(holds.getByText("designated handoff").closest("div")).toHaveTextContent("1");
+  expect(holds.getByText("source files").closest("div")).toHaveTextContent("2");
   expect(
     screen.getByRole("link", { name: "Financial foundation · Saved alternate" }),
   ).toHaveAttribute("href", `/report/case#evidence/alternate~${"a".repeat(64)}`);
@@ -449,7 +455,7 @@ it.each(["Deck Q3.pdf", "Deck (CP-1) Q3.pdf"])(
       ],
     } as unknown as PublishedRun["evidence"];
     renderEvidence([entry], `out~${"a".repeat(64)}-4`, evidence);
-    expect(screen.getByRole("heading", { name: "Derivation" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "How it was derived" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Source records" })).toBeInTheDocument();
   },
 );
@@ -470,7 +476,10 @@ it("shows the service's comparison note in full on the Record tab", () => {
   render(
     <ReportEvidence snapshot={snapshot} run={run} entries={[]} target="record" mode="synthetic" />,
   );
-  fireEvent.click(screen.getByText("Run record", { selector: "summary" }));
+  // A comparison note opens the run record, so the link that sends a reader to it lands on it.
+  expect(
+    screen.getByText("Run record", { selector: "summary" }).closest("details"),
+  ).toHaveAttribute("open");
   expect(screen.getByText("Comparison note:")).toBeVisible();
   expect(screen.getByText(note)).toBeVisible();
   vi.unstubAllGlobals();

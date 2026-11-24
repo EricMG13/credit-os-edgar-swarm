@@ -1,7 +1,7 @@
 import { cleanup, render, screen, within } from "@testing-library/react";
 import { afterEach, expect, it } from "vitest";
 import type { OutputEntry, Snapshot } from "../publishedReport";
-import { citedPagesBySource, EvidenceSources, type SourceGroup } from "./EvidenceSources";
+import { citationsByFile, EvidenceSources, type SourceGroup } from "./EvidenceSources";
 
 afterEach(cleanup);
 
@@ -47,9 +47,9 @@ const groups: SourceGroup[] = [
   { label: "Not recorded as used", rows: [] },
 ];
 
-it("collects the pages each cited file is cited at, from the chips that name it", () => {
-  const pages = citedPagesBySource(snapshot({ "case/CP-1.md:5": [chip({})] }), [h1]);
-  expect([...(pages.get(`Issuer.txt\u0000${sha}`) ?? [])]).toEqual(["Cited pages 2–3"]);
+it("collects what each file is cited as, from the chips that name it", () => {
+  const cited = citationsByFile(snapshot({ "case/CP-1.md:5": [chip({})] }), [h1]);
+  expect(cited.get("Issuer.txt")).toEqual([{ sha, label: "Cited pages 2–3" }]);
 });
 
 it("draws the used and the supplied-not-used files as separate tables with exact hashes", () => {
@@ -68,9 +68,10 @@ it("draws the used and the supplied-not-used files as separate tables with exact
   expect(used.getByText("Cited pages 2–3")).toBeVisible();
   expect(used.getByText("Read by Financial foundation")).toBeVisible();
   expect(spare.queryByText("Issuer.txt")).toBeNull();
+  expect(spare.getByText("Not read by any module")).toBeVisible();
   expect(spare.getByText("Spare.txt")).toBeVisible();
   expect(spare.getByText("e".repeat(64))).toBeVisible();
-  expect(spare.getByText("Not cited")).toBeVisible();
+  expect(spare.getByText("Not cited by a handoff")).toBeVisible();
   expect(screen.queryByRole("table", { name: "Not recorded as used" })).toBeNull();
 });
 
@@ -138,4 +139,62 @@ it("ignores citations recorded in another run's or another module's handoffs", (
   );
   expect(screen.getByText("Cited pages 2–3")).toBeVisible();
   expect(screen.queryByText(/page 9|page 7/)).toBeNull();
+});
+
+it("shows a citation whose page the bridge does not attest as written, not as not cited", () => {
+  const unattested = chip({ label: "annual.pdf p. 84", pageHref: null });
+  render(
+    <EvidenceSources
+      entries={[h1]}
+      sourceGroups={groups}
+      modules={["CP-1"]}
+      snapshot={snapshot({ "case/CP-1.md:5": [unattested] })}
+    />,
+  );
+  expect(screen.getByText("annual.pdf p. 84")).toBeVisible();
+});
+
+it("matches a citation to a source that records no hash by file name alone", () => {
+  render(
+    <EvidenceSources
+      entries={[h1]}
+      sourceGroups={[{ label: "Used by a module", rows: [{ ...source, sha256: null }] }]}
+      modules={["CP-1"]}
+      snapshot={snapshot({ "case/CP-1.md:5": [chip({})] })}
+    />,
+  );
+  expect(screen.getByText("Cited pages 2–3")).toBeVisible();
+  expect(screen.getByText("No hash recorded")).toBeVisible();
+});
+
+it("says use was not recorded for files in the unrecorded group, not that no module read them", () => {
+  render(
+    <EvidenceSources
+      entries={[h1]}
+      sourceGroups={[
+        {
+          label: "Not recorded as used",
+          rows: [{ ...source, name: "Loose.txt", readBy: [] }],
+        },
+      ]}
+      modules={["CP-1"]}
+      snapshot={snapshot({})}
+    />,
+  );
+  expect(screen.getByText("Use not recorded")).toBeVisible();
+  expect(screen.queryByText("No module")).toBeNull();
+});
+
+it("states the module scope of the citations when one module is selected", () => {
+  render(
+    <EvidenceSources
+      entries={[h1]}
+      module="CP-1"
+      sourceGroups={groups}
+      modules={["CP-1"]}
+      snapshot={snapshot({})}
+    />,
+  );
+  expect(screen.getByRole("columnheader", { name: "Cited in Financial foundation" })).toBeVisible();
+  expect(screen.getByText("Not cited in Financial foundation")).toBeVisible();
 });

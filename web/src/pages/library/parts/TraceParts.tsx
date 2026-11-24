@@ -1,9 +1,33 @@
 import { citedSourceNames } from "@/pages/connected/sourceFiles";
-import type { Trace } from "../slice";
+import { GapNote } from "@/pages/connected/report/overview/Tile";
+import { GapText } from "./GapText";
+import type { TreeNode, Trace } from "../slice";
 
 export const CAPTION = "text-caption font-medium text-text-tertiary";
 
 const MISSING_BASIS = "Basis was not recorded for this item";
+
+/** One citation a handoff line carries: where it points and what could be read there. */
+export type TraceCitation = {
+  label: string;
+  file: string | null;
+  pages: string | null;
+  quote: string | null;
+  /** The citation's own note, for example that the page text could not be read. */
+  reason: string | null;
+  sha256: string | null;
+};
+
+/** A trace that also knows its citations: an array, empty when none were recorded; absent when unknown. */
+export type SourcedTrace = Trace & { citations?: readonly TraceCitation[] };
+
+/** The derivation without its Basis row, for a page that draws the basis line itself. */
+export function withoutBasis(node: TreeNode): TreeNode {
+  return {
+    ...node,
+    children: node.children.filter(({ label }) => label !== "Basis" && label !== MISSING_BASIS),
+  };
+}
 
 /** The basis line of a trace: what the derivation recorded under "Basis", or that none was recorded. */
 export function basisOf(trace: Trace) {
@@ -34,21 +58,79 @@ export function TraceClaim({ trace }: { trace: Trace }) {
   );
 }
 
-/** The passage the claim rests on and where it was read; with `gap`, the gap state when the handoff recorded none. */
-export function TraceSourcePassage({ trace, gap = false }: { trace: Trace; gap?: boolean }) {
-  if (trace.excerpt === null) {
-    // Only a page that holds the handoff line can say none was recorded; a trace that carries no
-    // passage by design (a Model item, a confidence fallback) says nothing.
-    if (!gap) return null;
+function Citation({ citation }: { citation: TraceCitation }) {
+  return (
+    <li className="flex min-w-0 flex-col gap-1.5 border-t border-border-hairline pt-3 first:border-t-0 first:pt-0">
+      <span className="text-small font-medium wrap-anywhere text-text-primary">
+        {citation.label}
+      </span>
+      {citation.file !== null && (
+        <span className="font-mono text-mono wrap-anywhere text-text-tertiary">
+          {citation.file}
+        </span>
+      )}
+      {citation.pages !== null && (
+        <span className="text-small text-text-secondary">{citation.pages}</span>
+      )}
+      {citation.quote === null ? (
+        <GapText>No passage text was recorded for this citation.</GapText>
+      ) : (
+        <blockquote
+          role="region"
+          aria-label={`Passage from ${citation.label}`}
+          // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex
+          tabIndex={0}
+          className="reading-copy max-h-60 overflow-y-auto rounded-ds-sm border-l-2 border-action bg-surface-subtle px-4 py-3 text-small wrap-anywhere text-text-primary"
+        >
+          {citation.quote}
+        </blockquote>
+      )}
+      {citation.reason !== null && (
+        <span className="text-small wrap-anywhere text-text-secondary">{citation.reason}</span>
+      )}
+      {citation.sha256 !== null && (
+        <code className="font-mono text-mono wrap-anywhere text-text-tertiary">
+          {citation.sha256}
+        </code>
+      )}
+    </li>
+  );
+}
+
+/**
+ * The passage the claim rests on and where it was read. A trace that lists its citations says what
+ * each holds, and says none were recorded when the list is empty; a trace that does not know its
+ * citations draws its excerpt if it has one and otherwise says where to look.
+ */
+export function TraceSourcePassage({ trace }: { trace: SourcedTrace }) {
+  if (trace.citations !== undefined) {
+    if (trace.citations.length === 0)
+      return (
+        <div className="flex min-w-0 flex-col gap-1.5">
+          <span className={CAPTION}>Source</span>
+          <GapNote>No source passage was recorded for this item.</GapNote>
+        </div>
+      );
     return (
       <div className="flex min-w-0 flex-col gap-1.5">
-        <span className={CAPTION}>Source</span>
-        <p className="gap-hatch rounded-ds-sm border border-dashed border-border-gap px-3 py-4 text-small text-gap-text">
-          No source passage was recorded for this item.
-        </p>
+        <span className={CAPTION}>Source excerpt</span>
+        <ul className="flex flex-col gap-3">
+          {trace.citations.map((citation, index) => (
+            <Citation key={`${String(index)}-${citation.label}`} citation={citation} />
+          ))}
+        </ul>
       </div>
     );
   }
+  if (trace.excerpt === null)
+    return (
+      <div className="flex min-w-0 flex-col gap-1.5">
+        <span className={CAPTION}>Source</span>
+        <p className="text-small text-text-secondary">
+          This trace carries no passage. The sources recorded for the item are on its Evidence page.
+        </p>
+      </div>
+    );
   return (
     <div className="flex min-w-0 flex-col gap-1.5">
       <span className={CAPTION}>Source excerpt</span>
@@ -74,9 +156,7 @@ export function TraceBasis({ trace }: { trace: Trace }) {
           {basis.text}
         </p>
       ) : (
-        <p className="gap-hatch rounded-ds-sm border border-dashed border-border-gap px-3 py-2 text-small text-gap-text">
-          {MISSING_BASIS}
-        </p>
+        <GapText>{MISSING_BASIS}</GapText>
       )}
     </div>
   );

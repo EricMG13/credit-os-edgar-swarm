@@ -1,5 +1,6 @@
 import { Button } from "@/components/base/buttons/button";
 import { Segmented } from "@/components/kit/Segmented";
+import { StatsStrip } from "@/components/kit/StatsStrip";
 import { citedSourcePages, sourceCitationNote } from "../sourceFiles";
 import type { ReactNode } from "react";
 import { moduleName, type Mode } from "../api";
@@ -29,6 +30,7 @@ import { ScriptChecks } from "./ScriptChecks";
 import { BARE_MODULE_CODE } from "./evidenceLabels";
 import { collectGaps, EvidenceGaps, GapSummary } from "./EvidenceGaps";
 import { EvidenceHandoffs } from "./EvidenceHandoffs";
+import { Disclosure } from "./evidenceKit";
 import { EvidenceSources, type SourceGroup } from "./EvidenceSources";
 import { Bento, Tile } from "./overview/Tile";
 import { TraceSplit } from "./TraceSplit";
@@ -61,7 +63,7 @@ function HandoffText({ text }: { text: string }) {
   const named = LIST_MARKER.test(text) ? NAMED_HASH.exec(plain) : null;
   if (named)
     return (
-      <div className="grid gap-0.5 text-sm">
+      <div className="grid gap-0.5 text-small">
         <p className="font-medium wrap-anywhere text-text-primary">{named[1]}</p>
         <code className="wrap-anywhere text-text-tertiary">{named[2]}</code>
       </div>
@@ -181,7 +183,7 @@ function EvidenceLocation({
                 <HandoffText text={block.text} />
               )}
               {block.type === "table" && basis && (
-                <p className="text-sm text-text-secondary">{plainModuleNames(basis)}</p>
+                <p className="text-small text-text-secondary">{plainModuleNames(basis)}</p>
               )}
               {block.type === "table" && rowCitations.length > 0 && (
                 <ul className="grid gap-3">
@@ -228,12 +230,18 @@ function EvidenceCitation({
   const note = sourceCitationNote(chip);
   const pages = citedSourcePages(outputId.split("/")[0] ?? "", chip);
   return (
-    <li className="border-t border-border-hairline py-3 text-sm text-text-secondary">
+    <li className="border-t border-border-hairline py-3 text-small text-text-secondary">
       <p className="font-medium text-text-primary">{chip.label}</p>
       {(chip.file || chip.source) && <p className="wrap-anywhere">{chip.file ?? chip.source}</p>}
       {note && <p>{note}</p>}
       {chip.excerpt && (
-        <blockquote className="mt-1 border-l-2 border-border-hairline pl-3">
+        <blockquote
+          role="region"
+          aria-label={`Passage from ${chip.label ?? "the cited source"}`}
+          // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex
+          tabIndex={0}
+          className="mt-1 max-h-60 overflow-y-auto border-l-2 border-border-hairline pl-3"
+        >
           {chip.excerpt}
         </blockquote>
       )}
@@ -287,24 +295,34 @@ function EvidenceSummary({
         ),
     ),
   ).length;
+  const plural = (n: number, one: string, many: string) => (n === 1 ? one : many);
   return (
-    <Tile span={12} label="Run evidence" kicker="What this run holds" title="Run evidence">
-      <p>
-        {handoffs} designated {handoffs === 1 ? "handoff" : "handoffs"} · {sources} source{" "}
-        {sources === 1 ? "file" : "files"}
-      </p>
-      <ul className="grid gap-1 text-small text-text-secondary">
-        <li>
-          {gaps} recorded {gaps === 1 ? "gap" : "gaps"}
-        </li>
-        <li>
-          {ran} of {outcomes.length} script checks ran
-        </li>
-        <li>
-          {unlocated} {unlocated === 1 ? "handoff" : "handoffs"} with an unlocated Basis
-        </li>
-      </ul>
-    </Tile>
+    <section aria-label="Run evidence" className="grid min-w-0 gap-2 lg:col-span-12">
+      <h3 className="text-h4 font-medium text-text-primary">Run evidence</h3>
+      <StatsStrip
+        label="What this run holds"
+        stats={[
+          { label: plural(gaps, "recorded gap", "recorded gaps"), value: String(gaps) },
+          {
+            label: plural(handoffs, "designated handoff", "designated handoffs"),
+            value: String(handoffs),
+          },
+          { label: plural(sources, "source file", "source files"), value: String(sources) },
+          {
+            label: "script checks ran",
+            value: `${String(ran)} of ${String(outcomes.length)}`,
+          },
+          {
+            label: plural(
+              unlocated,
+              "handoff with an unlocated Basis",
+              "handoffs with an unlocated Basis",
+            ),
+            value: String(unlocated),
+          },
+        ]}
+      />
+    </section>
   );
 }
 
@@ -344,14 +362,38 @@ function EvidenceNavigation({
     .filter((record) => !selectedModule || record.module === selectedModule)
     .flatMap((record) => record.outcomes);
   const ran = outcomes.filter((outcome) => outcome.status !== "not checked").length;
+  const segments = tabs
+    .filter((item) => item !== "Script checks" || checks.length > 0)
+    .map((item) =>
+      item === "Script checks"
+        ? {
+            key: tabRoute(item),
+            label: (
+              <>
+                Checks
+                <span className="font-mono text-caption tabular-nums">
+                  {String(ran)} of {String(outcomes.length)}
+                </span>
+              </>
+            ),
+            accessibleLabel: `Script checks, ${String(ran)} of ${String(outcomes.length)}`,
+            href: `#evidence/checks${selectedModule ? `/${selectedModule}` : ""}`,
+          }
+        : {
+            key: tabRoute(item),
+            label: item,
+            href: `#evidence/${tabRoute(item)}${selectedModule ? `/${selectedModule}` : ""}`,
+          },
+    );
   return (
     <>
+      <h2 className="font-display text-h2">Evidence</h2>
       <div className="flex flex-wrap items-end justify-between gap-3">
-        <h2 className="font-display text-h2">Evidence</h2>
+        <Segmented label="Evidence sections" current={tabRoute(tab)} segments={segments} />
         <label className="grid gap-1 text-small">
           Module
           <select
-            className={field}
+            className={`${field} min-h-8 max-[480px]:min-h-11`}
             value={selectedModule ?? ""}
             onChange={(event) => {
               window.location.assign(
@@ -373,33 +415,6 @@ function EvidenceNavigation({
           </select>
         </label>
       </div>
-      <Segmented
-        label="Evidence sections"
-        current={tabRoute(tab)}
-        segments={tabs
-          .filter((item) => item !== "Script checks" || checks.length > 0)
-          .map((item) =>
-            item === "Script checks"
-              ? {
-                  key: tabRoute(item),
-                  label: (
-                    <>
-                      Checks
-                      <span className="font-mono text-caption tabular-nums">
-                        {String(ran)} of {String(outcomes.length)}
-                      </span>
-                    </>
-                  ),
-                  accessibleLabel: `Script checks, ${String(ran)} of ${String(outcomes.length)}`,
-                  href: `#evidence/checks${selectedModule ? `/${selectedModule}` : ""}`,
-                }
-              : {
-                  key: tabRoute(item),
-                  label: item,
-                  href: `#evidence/${tabRoute(item)}${selectedModule ? `/${selectedModule}` : ""}`,
-                },
-          )}
-      />
     </>
   );
 }
@@ -582,7 +597,6 @@ export function ReportEvidence({
       <Bento>
         {tab === "Summary" && (
           <>
-            <GapSummary run={run} entries={entries} module={module} />
             <EvidenceSummary
               entries={entries}
               module={module}
@@ -590,6 +604,7 @@ export function ReportEvidence({
               checks={checks}
               snapshot={snapshot}
             />
+            <GapSummary run={run} entries={entries} module={module} />
           </>
         )}
         {entry && line !== undefined && (
@@ -636,40 +651,29 @@ export function ReportEvidence({
         )}
         {(tab === "Summary" || tab === "Record") && downloads}
         {tab === "Record" && (!module || module === "CP-2G") && models.length > 0 && (
-          <details className="min-w-0 rounded-ds-lg border border-border-subtle bg-surface-card p-5 sm:p-6 lg:col-span-12">
-            <summary className="cursor-pointer text-h4 font-medium text-text-primary">
-              Model notes and assumption registers
-              <span className="ml-2 text-small font-normal text-text-secondary">
-                as recorded for the forecast
-              </span>
-            </summary>
-            <div className="mt-4">
-              <div className="grid min-w-0 gap-4">
-                <RecordedModelQualifications models={models} />
-                {models.map((model) => (
-                  <AssumptionRegister
-                    key={model.id}
-                    model={model}
-                    entries={entries}
-                    folder={run.folder}
-                  />
-                ))}
-              </div>
-            </div>
-          </details>
+          <div className="grid min-w-0 grid-cols-1 gap-4 lg:col-span-12">
+            <RecordedModelQualifications models={models} />
+            {models.map((model) => (
+              <AssumptionRegister
+                key={model.id}
+                model={model}
+                entries={entries}
+                folder={run.folder}
+              />
+            ))}
+          </div>
         )}
         {tab === "Record" && (
-          <details className="min-w-0 rounded-ds-lg border border-border-subtle bg-surface-card p-5 sm:p-6 lg:col-span-12">
-            <summary className="cursor-pointer text-h4 font-medium text-text-primary">
-              Run record
-              <span className="ml-2 text-small font-normal text-text-secondary">
-                calls, cap, spend and models
-              </span>
-            </summary>
-            <div className="mt-4">
+          <Disclosure
+            label="Run record"
+            title="Run record"
+            hint="calls, cap, spend and models"
+            open={Boolean(run.changes?.note || run.changes?.problem)}
+          >
+            <div className="min-w-0 [&_section]:rounded-none [&_section]:border-0 [&_section]:bg-transparent [&_section]:p-0 [&_section]:shadow-none [&_h3]:text-h4 [&>div>section:first-child>h3]:sr-only">
               <ReportRecord run={run} entries={entries} module={module} mode={mode} />
             </div>
-          </details>
+          </Disclosure>
         )}
         {tab === "Trace" && !entry && (!module || module === "CP-8") && comparison && (
           <div className="min-w-0 lg:col-span-12">{comparison}</div>
