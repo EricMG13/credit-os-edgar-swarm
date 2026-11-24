@@ -1,8 +1,9 @@
 import { ArrowRight } from "@untitledui/icons";
-import type { ReactNode } from "react";
+import { useContext, type ReactNode } from "react";
 import { Button } from "@/components/base/buttons/button";
 import { StatusBadge } from "@/components/status/StatusBadge";
 import type { ModuleState } from "@/pages/library/slice";
+import { RunContext } from "@/pages/library/parts/RunContext";
 import { TRACE_HOST, TraceControl } from "@/pages/library/parts/TraceControl";
 import { cx } from "@/utils/cx";
 import { FindingParagraph, PublishedTable, drawingTitle } from "../ReportContent";
@@ -24,6 +25,16 @@ import { CONTRARY, KEY_FINDINGS, type BottomLineSource, type TextBlock } from ".
 const MISSING_PASSAGE = "Not established for this run. The module's handoff has no such passage.";
 
 export type FrameModule = { id: string; name: string; state: ModuleState };
+
+/**
+ * The trace control for a key the page may not hold: a line the handoff does not contain has no
+ * trace, and draws the missing-trace marker instead of failing the page.
+ */
+export function HeldTrace({ trace, label }: { trace: string; label: string }) {
+  const run = useContext(RunContext);
+  const held = run !== null && Object.hasOwn(run.traces, trace);
+  return <TraceControl trace={held ? trace : null} label={label} />;
+}
 
 function SlashCircle() {
   return (
@@ -75,7 +86,7 @@ function BottomLineText({
             className="max-w-bottom-line text-h4 font-medium text-balance wrap-anywhere text-text-primary sm:text-h3 lg:text-h2"
           />
         </div>
-        <TraceControl trace={traceKey(entry, line)} label="Show sources for the bottom line" />
+        <HeldTrace trace={traceKey(entry, line)} label="Show sources for the bottom line" />
       </div>
       {source.kind === "passage"
         ? source.rest.map((block) => (
@@ -409,7 +420,7 @@ function Well({ trace, label, children }: { trace: string; label: string; childr
         className="gap-hatch size-7 rounded-ds-sm border border-dashed border-border-gap"
       />
       <div className="flex min-w-0 flex-col gap-1">{children}</div>
-      <TraceControl trace={trace} label={label} />
+      <HeldTrace trace={trace} label={label} />
     </li>
   );
 }

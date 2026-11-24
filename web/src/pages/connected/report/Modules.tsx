@@ -3,7 +3,6 @@ import { Button } from "@/components/base/buttons/button";
 import { StatsStrip, type Stat } from "@/components/kit/StatsStrip";
 import { StageNav } from "@/pages/library/parts/ModuleNav";
 import { RunContext } from "@/pages/library/parts/RunContext";
-import { TraceControl } from "@/pages/library/parts/TraceControl";
 import { TraceDrawer } from "@/pages/library/parts/TraceDrawer";
 import type { Trace } from "@/pages/library/slice";
 import { card, heading } from "../layout";
@@ -31,6 +30,7 @@ import { leadFor } from "./leads";
 import { MacroSensitivity, macroView } from "./MacroSensitivity";
 import { moduleFrame } from "./moduleFrame";
 import {
+  HeldTrace,
   ModuleFindings,
   ModuleHeader,
   ModuleLimitations,
@@ -125,8 +125,8 @@ function headlineStats(entry: OutputEntry, view: ReportView): Stat[] {
         <span className="text-caption text-text-tertiary">{metric.note}</span>
       ) : undefined,
       trace: (
-        <TraceControl
-          trace={line === undefined ? null : traceKey(entry, line)}
+        <HeldTrace
+          trace={line === undefined ? "" : traceKey(entry, line)}
           label={`Show sources for ${metric.label}`}
         />
       ),
