@@ -43,8 +43,7 @@ export function valueOf(cell: string): Value {
 }
 
 export type Count =
-  | { kind: "number"; value: number; text: string }
-  | { kind: "gap"; reason: string; text: string };
+  { kind: "number"; value: number; text: string } | { kind: "gap"; reason: string; text: string };
 
 function countOf(cell: string): Count {
   const text = cell.trim();
@@ -93,7 +92,12 @@ export type PeerRow = {
   notes: string[];
 };
 
-const LABELS = { issuer: "Issuer", low: "Peer low", median: "Peer median", high: "Peer high" } as const;
+const LABELS = {
+  issuer: "Issuer",
+  low: "Peer low",
+  median: "Peer median",
+  high: "Peer high",
+} as const;
 
 /** `a <= b`, exact over the stated texts. */
 const atMost = (a: string, b: string) => (signOf(difference(b, a)) ?? -1) >= 0;
@@ -131,11 +135,15 @@ function drawingOf(row: Omit<PeerRow, "drawing" | "notes">): Drawing {
 function notesOf(row: Omit<PeerRow, "drawing" | "notes">, drawing: Drawing) {
   const reasons = (["issuer", "low", "median", "high"] as const).flatMap((key) => {
     const value = row[key];
-    return value.kind === "number" ? [] : [`${row.metric}, ${LABELS[key].toLowerCase()}: ${value.reason}.`];
+    return value.kind === "number"
+      ? []
+      : [`${row.metric}, ${LABELS[key].toLowerCase()}: ${value.reason}.`];
   });
   if (row.count.kind === "gap") reasons.push(`${row.metric}, peer count: ${row.count.reason}.`);
   if (drawing.kind === "conflict")
-    reasons.push(`${row.metric}: the stated values conflict, so no range is drawn. ${drawing.message}.`);
+    reasons.push(
+      `${row.metric}: the stated values conflict, so no range is drawn. ${drawing.message}.`,
+    );
   return reasons;
 }
 
@@ -202,7 +210,9 @@ export function readPeerBenchmark(entry: OutputEntry): PeerRead {
     const found = tables.filter(({ heading }) => heading === PEER_HEADINGS[kind]);
     const [one] = found;
     if (found.length > 1) {
-      read.gaps.push(`The peer range for ${names[kind]} appears more than once in this handoff, so none is drawn.`);
+      read.gaps.push(
+        `The peer range for ${names[kind]} appears more than once in this handoff, so none is drawn.`,
+      );
     } else if (!one) {
       read.gaps.push(`The peer range for ${names[kind]} is not in this handoff.`);
     } else {
@@ -234,14 +244,13 @@ export const AXIS = { left: 88, right: 552 } as const;
 /** One shared axis from zero for the rows of a unit; only rows with a drawable strip place values on it. */
 export function groupScale(group: PeerGroup) {
   const values = group.rows.flatMap(({ drawing }) =>
-    drawing.kind === "strip"
-      ? [drawing.low, drawing.high, drawing.median, drawing.issuer]
-      : [],
+    drawing.kind === "strip" ? [drawing.low, drawing.high, drawing.median, drawing.issuer] : [],
   );
   const scale = ticks(values);
   const lo = scale[0]?.value ?? 0;
   const hi = scale.at(-1)?.value ?? 1;
-  const x = (value: number) => AXIS.left + ((value - lo) / (hi - lo || 1)) * (AXIS.right - AXIS.left);
+  const x = (value: number) =>
+    AXIS.left + ((value - lo) / (hi - lo || 1)) * (AXIS.right - AXIS.left);
   return { x, ticks: scale.map((tick) => ({ label: tick.label, x: x(tick.value) })) };
 }
 

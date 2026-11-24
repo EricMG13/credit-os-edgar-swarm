@@ -304,7 +304,8 @@ function ClearanceTile(props: LeadProps) {
         <div className="flex min-w-0 flex-col gap-1">
           <p className="text-lead text-text-primary text-pretty wrap-anywhere">{verdict.status}</p>
           <p className="text-caption text-text-tertiary">
-            The handoff states no clearance status; this is the module&apos;s opening sentence.
+            No clearance status is drawn from the handoff; this is the module&apos;s opening
+            sentence.
           </p>
         </div>
       )}

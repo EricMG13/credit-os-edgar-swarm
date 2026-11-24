@@ -35,7 +35,12 @@ function lanes(labels: Label[]) {
     .sort((a, b) => a.x - b.x)
     .map((label) => {
       const width = span(label.text);
-      const from = label.anchor === "end" ? label.x - width : label.anchor === "middle" ? label.x - width / 2 : label.x;
+      const from =
+        label.anchor === "end"
+          ? label.x - width
+          : label.anchor === "middle"
+            ? label.x - width / 2
+            : label.x;
       let lane = 0;
       while (placed.some((p) => p.lane === lane && from < p.to && from + width > p.from)) lane += 1;
       placed.push({ from, to: from + width, lane });
@@ -52,7 +57,8 @@ function reading(row: PeerRow) {
   const unit = row.unit;
   const { drawing } = row;
   const count = peersText(row);
-  if (drawing.kind === "conflict") return `${row.metric}: ${drawing.message}, so no range is drawn. ${count}.`;
+  if (drawing.kind === "conflict")
+    return `${row.metric}: ${drawing.message}, so no range is drawn. ${count}.`;
   const stated = (label: string, value: PeerRow["low"]) =>
     `${label} ${value.kind === "number" ? withUnit(value.text, unit) : "not supplied"}`;
   const parts = [
@@ -66,7 +72,19 @@ function reading(row: PeerRow) {
   return `${row.metric}: ${parts.join(", ")}${side}. ${count}.`;
 }
 
-function GapSlot({ x, y, width, text, id }: { x: number; y: number; width: number; text: string; id: string }) {
+function GapSlot({
+  x,
+  y,
+  width,
+  text,
+  id,
+}: {
+  x: number;
+  y: number;
+  width: number;
+  text: string;
+  id: string;
+}) {
   const card = span(text);
   return (
     <>
@@ -89,7 +107,13 @@ function GapSlot({ x, y, width, text, id }: { x: number; y: number; width: numbe
         rx="3"
         className="fill-surface-card"
       />
-      <text x={x + width / 2} y={y + 14} textAnchor="middle" fontSize="11" className="fill-gap-text font-body">
+      <text
+        x={x + width / 2}
+        y={y + 14}
+        textAnchor="middle"
+        fontSize="11"
+        className="fill-gap-text font-body"
+      >
         {text}
       </text>
     </>
@@ -102,7 +126,13 @@ function Strip({ row, scale }: { row: PeerRow; scale: ReturnType<typeof groupSca
   if (drawing.kind !== "strip") {
     const text = drawing.kind === "conflict" ? "Stated values conflict" : "Peer range not supplied";
     return (
-      <svg viewBox={`0 0 ${String(WIDTH)} 36`} width="100%" role="img" aria-label={reading(row)} data-row={row.metric}>
+      <svg
+        viewBox={`0 0 ${String(WIDTH)} 36`}
+        width="100%"
+        role="img"
+        aria-label={reading(row)}
+        data-row={row.metric}
+      >
         <defs>
           <GapPattern id={id} />
         </defs>
@@ -113,10 +143,22 @@ function Strip({ row, scale }: { row: PeerRow; scale: ReturnType<typeof groupSca
   const x = scale.x;
   const top: Label[] = [
     { text: `low ${withUnit(row.low.text, unit)}`, x: x(drawing.low), anchor: "end", kind: "low" },
-    { text: `high ${withUnit(row.high.text, unit)}`, x: x(drawing.high), anchor: "start", kind: "high" },
+    {
+      text: `high ${withUnit(row.high.text, unit)}`,
+      x: x(drawing.high),
+      anchor: "start",
+      kind: "high",
+    },
     ...(drawing.median === null
       ? []
-      : [{ text: `median ${withUnit(row.median.text, unit)}`, x: x(drawing.median), anchor: "middle" as const, kind: "median" }]),
+      : [
+          {
+            text: `median ${withUnit(row.median.text, unit)}`,
+            x: x(drawing.median),
+            anchor: "middle" as const,
+            kind: "median",
+          },
+        ]),
   ];
   const placed = lanes(top);
   const laneCount = Math.max(...placed.map((label) => label.lane)) + 1;
@@ -127,11 +169,25 @@ function Strip({ row, scale }: { row: PeerRow; scale: ReturnType<typeof groupSca
   const bandTo = x(drawing.high);
   const issuerX = drawing.issuer === null ? null : x(drawing.issuer);
   const tickLines = scale.ticks.map((tick) => (
-    <line key={tick.label} x1={tick.x} x2={tick.x} y1="2" y2={height - 2} className="stroke-border-hairline" />
+    <line
+      key={tick.label}
+      x1={tick.x}
+      x2={tick.x}
+      y1="2"
+      y2={height - 2}
+      className="stroke-border-hairline"
+    />
   ));
-  const issuerAnchor = issuerX === null ? "middle" : issuerX < 130 ? "start" : issuerX > 510 ? "end" : "middle";
+  const issuerAnchor =
+    issuerX === null ? "middle" : issuerX < 130 ? "start" : issuerX > 510 ? "end" : "middle";
   return (
-    <svg viewBox={`0 0 ${String(WIDTH)} ${String(height)}`} width="100%" role="img" aria-label={reading(row)} data-row={row.metric}>
+    <svg
+      viewBox={`0 0 ${String(WIDTH)} ${String(height)}`}
+      width="100%"
+      role="img"
+      aria-label={reading(row)}
+      data-row={row.metric}
+    >
       <defs>
         <GapPattern id={id} />
       </defs>
@@ -173,22 +229,50 @@ function Strip({ row, scale }: { row: PeerRow; scale: ReturnType<typeof groupSca
       ))}
       {issuerX !== null && (
         <>
-          <circle data-issuer={row.issuer.text} cx={issuerX} cy={centre} r="7" strokeWidth="2" className="fill-chart-1 stroke-surface-card" />
-          <text x={issuerX} y={centre + 28} textAnchor={issuerAnchor} fontSize="12" className="fill-text-primary font-mono">
+          <circle
+            data-issuer={row.issuer.text}
+            cx={issuerX}
+            cy={centre}
+            r="7"
+            strokeWidth="2"
+            className="fill-chart-1 stroke-surface-card"
+          />
+          <text
+            x={issuerX}
+            y={centre + 28}
+            textAnchor={issuerAnchor}
+            fontSize="12"
+            className="fill-text-primary font-mono"
+          >
             issuer {withUnit(row.issuer.text, unit)}
           </text>
         </>
       )}
-      {issuerX === null && <GapSlot x={88} y={centre + 14} width={150} text="Issuer not supplied" id={id} />}
+      {issuerX === null && (
+        <GapSlot x={88} y={centre + 14} width={150} text="Issuer not supplied" id={id} />
+      )}
     </svg>
   );
 }
 
 function Axis({ scale, unit }: { scale: ReturnType<typeof groupScale>; unit: string }) {
   return (
-    <svg viewBox={`0 0 ${String(WIDTH)} 22`} width="100%" aria-hidden="true" focusable="false" data-axis>
+    <svg
+      viewBox={`0 0 ${String(WIDTH)} 22`}
+      width="100%"
+      aria-hidden="true"
+      focusable="false"
+      data-axis
+    >
       {scale.ticks.map((tick) => (
-        <text key={tick.label} x={tick.x} y="14" textAnchor="middle" fontSize="11" className="fill-text-tertiary font-mono">
+        <text
+          key={tick.label}
+          x={tick.x}
+          y="14"
+          textAnchor="middle"
+          fontSize="11"
+          className="fill-text-tertiary font-mono"
+        >
           {/^[%x]$/i.test(unit) ? `${tick.label}${unit}` : tick.label}
         </text>
       ))}
@@ -200,7 +284,9 @@ function Group({ group, showUnit }: { group: PeerGroup; showUnit: boolean }) {
   const scale = groupScale(group);
   return (
     <div className="flex min-w-0 flex-col gap-3">
-      {showUnit && group.unit && <p className="text-caption text-text-tertiary">Reporting unit: {safe(group.unit)}</p>}
+      {showUnit && group.unit && (
+        <p className="text-caption text-text-tertiary">Reporting unit: {safe(group.unit)}</p>
+      )}
       <ol className="flex min-w-0 flex-col gap-4">
         {group.rows.map((row) => (
           <li key={`${row.metric}-${String(row.line)}`} className="flex min-w-0 flex-col gap-1">
@@ -214,13 +300,17 @@ function Group({ group, showUnit }: { group: PeerGroup; showUnit: boolean }) {
               </p>
             )}
             {row.drawing.kind === "conflict" && (
-              <p className="text-caption text-gap-text">The stated values conflict, so no range is drawn.</p>
+              <p className="text-caption text-gap-text">
+                The stated values conflict, so no range is drawn.
+              </p>
             )}
             <Strip row={row} scale={scale} />
           </li>
         ))}
       </ol>
-      {group.rows.some(({ drawing }) => drawing.kind === "strip") && <Axis scale={scale} unit={group.unit} />}
+      {group.rows.some(({ drawing }) => drawing.kind === "strip") && (
+        <Axis scale={scale} unit={group.unit} />
+      )}
     </div>
   );
 }
@@ -238,21 +328,42 @@ function PeerTile({ props, table, wide }: { props: LeadProps; table: PeerTable; 
       props={props}
       span={wide ? 12 : 6}
       label={`Peer range, ${table.kind === "percent" ? "percent metrics" : "multiples"}`}
-      kicker={table.kind === "percent" ? "Percent metrics, one axis per unit" : "Multiples, one axis per unit"}
+      kicker={
+        table.kind === "percent"
+          ? "Percent metrics, one axis per unit"
+          : "Multiples, one axis per unit"
+      }
       title={`Peer range for ${String(count)} ${noun}${count === 1 ? "" : "s"}`}
       line={table.line}
       source={`the peer range, ${table.kind === "percent" ? "percent metrics" : "multiples"}`}
       legend={[
         { tone: "prior", text: "Peer low to peer high" },
         { tone: "primary", text: "Issuer" },
-        ...(table.rows.some((row) => row.drawing.kind !== "strip" || row.issuer.kind !== "number" || row.median.kind !== "number")
+        ...(table.rows.some(
+          (row) =>
+            row.drawing.kind !== "strip" ||
+            row.issuer.kind !== "number" ||
+            row.median.kind !== "number",
+        )
           ? [{ tone: "gap" as const, text: "Not supplied or conflicting" }]
           : []),
       ]}
-      notes={[...(sideWords ? ["Position against the median compares the two stated values; it is not a rank."] : []), ...notes]}
+      notes={[
+        ...(sideWords ? ["Position against the median compares the two stated values only."] : []),
+        ...notes,
+      ]}
       table={{
         caption: `Peer range, ${table.kind === "percent" ? "percent metrics" : "multiples"}`,
-        headers: ["Metric", "Issuer", "Peer low", "Peer median", "Peer high", "Peer count", "Unit", "Issuer against the median (derived)"],
+        headers: [
+          "Metric",
+          "Issuer",
+          "Peer low",
+          "Peer median",
+          "Peer high",
+          "Peer count",
+          "Unit",
+          "Issuer against the median (derived)",
+        ],
         rows: table.rows.map((row) => [
           row.metric,
           safe(row.issuer.text),
@@ -261,13 +372,19 @@ function PeerTile({ props, table, wide }: { props: LeadProps; table: PeerTable; 
           safe(row.high.text),
           safe(row.count.text),
           safe(row.unit),
-          row.drawing.kind === "strip" && row.drawing.side ? SIDE_WORDS[row.drawing.side] : "Not stated",
+          row.drawing.kind === "strip" && row.drawing.side
+            ? SIDE_WORDS[row.drawing.side]
+            : "Not stated",
         ]),
       }}
     >
       <div className="flex min-w-0 flex-col gap-6">
         {table.groups.map((group) => (
-          <Group key={group.unit || group.rows[0]?.metric} group={group} showUnit={table.groups.length > 1} />
+          <Group
+            key={group.unit || group.rows[0]?.metric}
+            group={group}
+            showUnit={table.groups.length > 1}
+          />
         ))}
       </div>
     </FigureTile>
@@ -296,7 +413,13 @@ function Content(props: LeadProps) {
         <PeerTile key={table.kind} props={props} table={table} wide={wide} />
       ))}
       {read.gaps.map((gap) => (
-        <Tile key={gap} span={6} label="Peer range not drawn" kicker="Not in this handoff" tone="gap">
+        <Tile
+          key={gap}
+          span={6}
+          label="Peer range not drawn"
+          kicker="Not in this handoff"
+          tone="gap"
+        >
           <GapNote>{gap}</GapNote>
         </Tile>
       ))}

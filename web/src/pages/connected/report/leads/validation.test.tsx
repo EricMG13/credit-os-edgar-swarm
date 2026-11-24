@@ -1,0 +1,331 @@
+// Synthetic, built from the module contract (src/deploy_vii/cp5_integrity.py registers and
+// methods/cp5.md); not a real handoff. No real CP-5 handoff is retained. The empty/thin case uses
+// the retained synthetic CP-5 fixture. Every expected value below is written out by hand.
+import { cleanup, render, screen, within } from "@testing-library/react";
+import { afterEach, describe, expect, it } from "vitest";
+import type { OutputEntry, Section } from "../../publishedReport";
+import { entry as buildEntry, table } from "../overview/rows.fixture";
+import { cp5Entry, leadProps } from "./fixtures/load";
+import { ClearanceLead } from "./validation";
+import { clearance, issues, moduleIntegrity, remediation } from "./validationData";
+
+afterEach(cleanup);
+
+let at = 0;
+const tbl = (heading: string, headers: string[], ...rows: string[][]): Section => ({
+  heading,
+  level: 3,
+  line: (at += 20),
+  blocks: [table((at += 2), headers, rows)],
+});
+const text = (heading: string, paragraph: string): Section => ({
+  heading,
+  level: 3,
+  line: (at += 20),
+  blocks: [{ type: "text", line: (at += 2), end: at, text: paragraph }],
+});
+const FINDINGS: Section = { heading: "Findings", level: 2, line: 1, blocks: [] };
+const cp5 = (...sections: Section[]): OutputEntry =>
+  buildEntry("CP-5", [], [FINDINGS, ...sections]);
+
+const VERDICT = tbl(
+  "T5B.8 Integrity verdict",
+  ["Item", "Value"],
+  ["Status", "Restricted over the evaluated set"],
+  ["Evaluated set", "CP-1, CP-2"],
+  ["Not evaluated", "CP-3"],
+  ["Scope", "Describes the evaluated set only: a module outside it is not implied to pass"],
+);
+const GAPS = tbl(
+  "T5B.5 Integrity gaps",
+  ["Gap ID", "Gap", "Why it matters", "Affected modules", "Severity", "Action"],
+  [
+    "CP-5-GAP-001",
+    "Debt schedule missing",
+    "Maturities unknown",
+    "CP-1, CP-2D",
+    "Critical",
+    "Obtain the signed debt schedule",
+  ],
+  ["CP-5-GAP-002", "Cover ratio dated", "Stale", "CP-2", "Minor", "Re-check the cover ratio"],
+  [
+    "CP-5-GAP-003",
+    "Owner unknown",
+    "Cannot assign",
+    "Report level",
+    "Material",
+    "Not supplied: owner not named",
+  ],
+);
+const CONTRADICTIONS = tbl(
+  "T5B.3 Cross-module contradictions",
+  ["Contradiction", "Claims", "Nature", "Severity", "Rationale"],
+  ["Leverage differs", "A vs B", "Numeric", "Material", "Two modules state different leverage"],
+  ["Cash differs", "C vs D", "Numeric", "Critical", "Cash is stated twice"],
+);
+const INTEGRITY = tbl(
+  "T5B.6 Module integrity status",
+  ["Module", "Head status", "CP-5 findings", "Result"],
+  ["CP-1", "accepted", "None", "Evaluated: no finding"],
+  ["CP-2", "restricted", "CP-5-GAP-002", "Evaluated with findings"],
+  ["CP-3", "blocked (up the input chain)", "None", "Blocked upstream: not evaluated"],
+  ["CP-4", "accepted", "None", "Something unexpected"],
+);
+const full = () => cp5(VERDICT, GAPS, CONTRADICTIONS, INTEGRITY);
+
+describe("clearance", () => {
+  it("reads the status word from the verdict row and shows the scope apart", () => {
+    expect(clearance(full())).toMatchObject({
+      status: "Restricted",
+      scope: "over the evaluated set",
+      notEvaluated: "Security selection",
+      shape: "half",
+      source: "verdict",
+    });
+  });
+  it("shapes Accepted as filled and an unknown word as a neutral ring", () => {
+    const word = (status: string) =>
+      clearance(cp5(tbl("V", ["Item", "Value"], ["Status", status])))?.shape;
+    expect(word("Accepted over the evaluated set")).toBe("filled");
+    expect(word("Cleared over the evaluated set")).toBe("filled");
+    expect(word("Blocked over the evaluated set")).toBe("slash");
+    expect(word("Pending review")).toBe("ring");
+  });
+  it("falls back to the module's first bottom-line sentence, then to nothing", () => {
+    const written = cp5(text("Bottom line", "Evidence is thin. A second sentence follows."));
+    expect(clearance(written)).toMatchObject({
+      status: "Evidence is thin.",
+      shape: null,
+      source: "bottom line",
+    });
+    expect(clearance(cp5())).toBeNull();
+  });
+  it("does not guess when two tables both carry a Status row", () => {
+    const two = cp5(VERDICT, tbl("Other", ["Item", "Value"], ["Status", "Accepted"]));
+    expect(clearance(two)).toBeNull();
+  });
+  it("treats a stated gap in the Status row as no verdict", () => {
+    const gap = cp5(tbl("V", ["Item", "Value"], ["Status", "Not supplied: not assessed"]));
+    expect(clearance(gap)).toBeNull();
+  });
+});
+
+describe("issues", () => {
+  it("counts the rows of both registers by severity, Critical first", () => {
+    const found = issues(full());
+    expect(found.total).toBe(5);
+    expect(
+      found.groups.map((group) => [
+        group.severity.word,
+        group.pips.filter((pip) => pip.kind === "gap").length,
+        group.pips.filter((pip) => pip.kind === "contradiction").length,
+      ]),
+    ).toEqual([
+      ["Critical", 1, 1],
+      ["Material", 1, 1],
+      ["Minor", 1, 0],
+    ]);
+  });
+  it("keeps an unrecognised severity as written and an unstated one apart, after the known words", () => {
+    const odd = cp5(
+      tbl(
+        "G",
+        ["Gap ID", "Gap", "Why it matters", "Affected modules", "Severity", "Action"],
+        ["g1", "a", "b", "CP-1", "Severe", "Fix"],
+        ["g2", "a", "b", "CP-1", "Not supplied: not rated", "Fix"],
+        ["g3", "a", "b", "CP-1", "minor", "Fix"],
+      ),
+    );
+    expect(issues(odd).groups.map((group) => [group.severity.word, group.pips.length])).toEqual([
+      ["Minor", 1],
+      ["Severe", 1],
+      ["Severity not stated", 1],
+    ]);
+  });
+  it("reads the handoff's own None row as a stated absence and draws no pip", () => {
+    const none = cp5(
+      tbl(
+        "G",
+        ["Gap ID", "Gap", "Why it matters", "Affected modules", "Severity", "Action"],
+        [
+          "None",
+          "Not supplied: None in this CP-5 review (integrity gaps)",
+          "Not supplied: None in this CP-5 review (integrity gaps)",
+          "Not supplied: None in this CP-5 review (integrity gaps)",
+          "Not supplied: None in this CP-5 review (integrity gaps)",
+          "Not supplied: None in this CP-5 review (integrity gaps)",
+        ],
+      ),
+    );
+    const found = issues(none);
+    expect(found.total).toBe(0);
+    expect(found.gaps.state).toBe("none");
+    expect(found.contradictions.state).toBe("absent");
+  });
+  it("treats the synthetic Item | Value placeholders as no register, with their reason kept", () => {
+    const found = issues(cp5Entry());
+    expect(found.gaps.state).toBe("absent");
+    expect(found.contradictions.state).toBe("absent");
+    expect(found.total).toBe(0);
+    expect(found.placeholders).toEqual(["nothing to report"]);
+  });
+  it("refuses a duplicated register instead of choosing one", () => {
+    const twice = cp5(CONTRADICTIONS, CONTRADICTIONS);
+    expect(issues(twice).contradictions.state).toBe("duplicate");
+    expect(issues(twice).total).toBe(0);
+  });
+  it("orders the remediation actions by severity and keeps the handoff's order within one", () => {
+    expect(remediation(full())?.map((item) => item.action)).toEqual([
+      { kind: "text", text: "Obtain the signed debt schedule" },
+      { kind: "gap", reason: "owner not named" },
+      { kind: "text", text: "Re-check the cover ratio" },
+    ]);
+    expect(remediation(cp5(VERDICT))).toBeNull();
+  });
+  it("names modules in the affected list and keeps a stated report level", () => {
+    const [first, , third] = remediation(full()) ?? [];
+    expect(first?.affected).toEqual(["Financial foundation", "Liquidity"]);
+    expect(third?.affected).toEqual(["Fundamental credit"]);
+  });
+});
+
+describe("module integrity", () => {
+  it("reads one row per module with the shape of its result", () => {
+    expect(moduleIntegrity(full())?.map((item) => [item.name, item.shape])).toEqual([
+      ["Financial foundation", "filled"],
+      ["Fundamental credit", "half"],
+      ["Security selection", "slash"],
+      ["Legal & covenants", "ring"],
+    ]);
+  });
+  it("is absent when the table is", () => {
+    expect(moduleIntegrity(cp5(VERDICT))).toBeNull();
+  });
+});
+
+const render5 = (entry: OutputEntry) => render(<ClearanceLead {...leadProps(entry)} />);
+
+describe("ClearanceLead", () => {
+  it("draws the status word with its shape, the scope quietly and the listed issues as pips", () => {
+    const { container } = render5(full());
+    const tile = screen.getByRole("region", { name: "Clearance and listed issues" });
+    expect(within(tile).getByRole("heading", { level: 3 }).textContent).toBe(
+      "Restricted, 5 issues listed",
+    );
+    expect(tile.querySelector("[data-clearance]")?.textContent).toBe("Restricted");
+    expect(within(tile).getByText("over the evaluated set")).toBeVisible();
+    expect(tile.querySelector('[data-shape="half"]')).not.toBeNull();
+    expect(within(tile).getByText("Not evaluated: Security selection")).toBeVisible();
+    expect(container.querySelectorAll("[data-pip]")).toHaveLength(5);
+    expect(container.querySelectorAll('[data-pip="gap"]')).toHaveLength(3);
+    expect(container.querySelectorAll('[data-pip="contradiction"]')).toHaveLength(2);
+    expect(
+      within(tile).getByRole("img", { name: "Critical: 2 listed (1 gap, 1 contradiction)." }),
+    ).toBeVisible();
+    expect(
+      within(tile).getByText(
+        "Counted from the issues listed in this module's registers; the handoff does not state counts.",
+      ),
+    ).toBeVisible();
+    // The words in pip order: Critical, Material, Minor.
+    const words = [...tile.querySelectorAll("ul[aria-label] > li")].map((item) =>
+      item.textContent.replace(/\d+/, ""),
+    );
+    expect(words).toEqual(["Critical", "Material", "Minor"]);
+  });
+  it("draws one trace control per figure and no source reference on the page", () => {
+    const { container } = render5(full());
+    const links = screen.getAllByRole("link", { name: /Source for/ });
+    expect(links).toHaveLength(2);
+    expect(container.textContent).not.toMatch(/CP-5-GAP|T5B|\bCP-\d/);
+  });
+  it("lists the module integrity chips with a shape and a word each", () => {
+    const { container } = render5(full());
+    const chips = [...container.querySelectorAll("[data-module-result]")];
+    expect(chips.map((chip) => chip.getAttribute("data-module-result"))).toEqual([
+      "Evaluated: no finding",
+      "Evaluated with findings",
+      "Blocked upstream: not evaluated",
+      "Something unexpected",
+    ]);
+    expect(
+      chips.map((chip) => chip.querySelector("[data-shape]")?.getAttribute("data-shape")),
+    ).toEqual(["filled", "half", "slash", "ring"]);
+  });
+  it("draws the remediation list in priority order with severity and affected modules", () => {
+    render5(full());
+    const tile = screen.getByRole("region", { name: "Remediation by priority" });
+    expect(within(tile).getByRole("heading", { level: 3 }).textContent).toBe(
+      "3 actions, Critical first",
+    );
+    const items = [...tile.querySelectorAll("ol > li")].map((item) => item.textContent);
+    expect(items[0]).toContain(
+      "CriticalObtain the signed debt scheduleAffects: Financial foundation, Liquidity",
+    );
+    expect(items[1]).toContain("MaterialAction not supplied: owner not named");
+    expect(items[2]).toContain("MinorRe-check the cover ratio");
+  });
+  it("says the handoff lists no issue register, with no pip and no zero, for the thin synthetic handoff", () => {
+    const { container } = render5(cp5Entry());
+    expect(container.querySelectorAll("[data-pip]")).toHaveLength(0);
+    expect(
+      screen.getByText("The handoff lists no issue register. It states: nothing to report."),
+    ).toBeVisible();
+    expect(screen.queryByText("No issues are listed.")).toBeNull();
+    // The thin handoff still has its bottom line, drawn as the status fallback.
+    expect(screen.getAllByText("The synthetic issuer shows one observed item.")[0]).toBeVisible();
+    expect(screen.getByText("The handoff lists no integrity-gaps register.")).toBeVisible();
+  });
+  it("says no issues are listed only when both registers state none", () => {
+    const empty = (headers: string[]) =>
+      tbl("R", headers, [
+        "None",
+        ...headers.slice(1).map(() => "Not supplied: None in this CP-5 review"),
+      ]);
+    render5(
+      cp5(
+        VERDICT,
+        empty(["Gap ID", "Gap", "Why it matters", "Affected modules", "Severity", "Action"]),
+        empty(["Contradiction", "Claims", "Nature", "Severity", "Rationale"]),
+      ),
+    );
+    expect(screen.getByText("No issues are listed.")).toBeVisible();
+    expect(screen.getByText("No gap actions are listed.")).toBeVisible();
+    expect(screen.getAllByText("Restricted")[0]).toBeVisible();
+  });
+  it("draws counts from the one register present and says the other is not in the handoff", () => {
+    const { container } = render5(cp5(VERDICT, CONTRADICTIONS));
+    expect(container.querySelectorAll("[data-pip]")).toHaveLength(2);
+    expect(screen.getByText("The gaps register is not in the handoff.")).toBeVisible();
+  });
+  it("shows a status that cites a source as a gap-free fallback, never the citation", () => {
+    const { container } = render5(
+      cp5(
+        tbl("V", ["Item", "Value"], ["Status", "Restricted, see annual.pdf"]),
+        text("Bottom line", "Evidence is thin."),
+      ),
+    );
+    expect(container.textContent).not.toContain("annual.pdf");
+    expect(screen.getAllByText("Evidence is thin.")[0]).toBeVisible();
+  });
+  it("wraps very long text and keeps a long action readable", () => {
+    const long = "x".repeat(300);
+    const { container } = render5(
+      cp5(
+        VERDICT,
+        tbl(
+          "G",
+          ["Gap ID", "Gap", "Why it matters", "Affected modules", "Severity", "Action"],
+          ["g", "g", "w", "CP-1", "Critical", long],
+        ),
+      ),
+    );
+    const action = screen.getAllByText(long)[0] as HTMLElement;
+    expect(action.className).toContain("wrap-anywhere");
+    expect(container.querySelector("svg[width]")).not.toBeNull();
+  });
+  it("does not draw an invented use-restriction field", () => {
+    const { container } = render5(full());
+    expect(container.textContent).not.toMatch(/use restriction|committee use/i);
+  });
+});

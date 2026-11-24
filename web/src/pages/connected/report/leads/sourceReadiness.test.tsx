@@ -97,6 +97,14 @@ describe("sourceReadiness data", () => {
       ["Detail is in Evidence.", "Complete."],
     ]);
   });
+  it("names a module by its page name, never by its code", () => {
+    const result = sourceReadiness(
+      readiness([["CP-8", "CONDITIONAL", "Needs a prior deliverable."]]),
+    );
+    if (result.kind !== "ready") throw new Error("expected rows");
+    expect(result.rows[0]?.area).not.toMatch(/CP-/);
+    expect(result.rows[0]?.area.length).toBeGreaterThan(3);
+  });
   it("sees a table with an Evidence or Conflict header, and nothing else, as the P2 items", () => {
     const withEvidence = readiness(FIVE, HEADERS, [
       section("Located", 30, table(31, ["Item", "Evidence located"], [["a", "b"]])),
