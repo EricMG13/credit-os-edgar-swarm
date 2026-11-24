@@ -57,21 +57,11 @@ function LineText({ run, line }: { run: PublishedRun; line: Line }) {
   );
 }
 
-function Legend() {
+function OpenModules() {
   return (
-    <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-caption text-text-secondary">
-      <span className="flex items-center gap-1.5">
-        <span aria-hidden="true" className="size-[7px] rounded-ds-full bg-action" />
-        {DELIVERED}
-      </span>
-      <span className="flex items-center gap-1.5">
-        <span aria-hidden="true" className="w-4 border-t border-dashed border-warning-mark" />
-        {BLOCKED}, nothing passed on
-      </span>
-      <Button color="secondary" size="sm" href="#modules" iconTrailing={ArrowRight}>
-        Open Modules
-      </Button>
-    </div>
+    <Button color="secondary" size="sm" href="#modules" iconTrailing={ArrowRight}>
+      Open Modules
+    </Button>
   );
 }
 
@@ -85,10 +75,10 @@ export function PipelineRow({ run, view }: RowProps) {
     <Tile span={12} label="Bottom line by module">
       <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2">
         <div className="flex flex-wrap items-baseline gap-x-3.5 gap-y-1">
-          <h2 className="flex items-center gap-2.5 text-small font-medium text-text-primary">
+          <h3 className="flex items-center gap-2.5 text-small font-medium text-text-primary">
             <Dataflow03 aria-hidden="true" className="size-4 text-text-secondary" />
             Module pipeline
-          </h2>
+          </h3>
           <p className="text-caption text-text-tertiary">
             <span className="font-mono tabular-nums">{all.length}</span>{" "}
             {all.length === 1 ? "module" : "modules"} in{" "}
@@ -96,10 +86,10 @@ export function PipelineRow({ run, view }: RowProps) {
             {stages.length === 1 ? "stage" : "stages"}
           </p>
         </div>
-        <Legend />
+        <OpenModules />
       </div>
       <Well className="border border-border-hairline p-4 sm:p-6">
-        <Pipeline label="Stages" stages={stages} />
+        <Pipeline label="Stages" stages={stages} flow="delivered" />
       </Well>
       {lines.length > 0 && (
         <ul aria-label="Bottom lines" className="gap-x-8 md:columns-2 xl:columns-3">

@@ -1,0 +1,24 @@
+/* The vertical half of the pipeline's one animation: the same slow dash as `.pipeline-flow` in
+   theme.css, run down a bus. It lives inside no-preference, so under reduced motion the bus keeps
+   its plain connector colour. */
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes pipeline-flow-y {
+    from {
+      background-position: 0 0;
+    }
+    to {
+      background-position: 0 8px;
+    }
+  }
+
+  .pipeline-flow-y {
+    background-color: transparent;
+    background-image: repeating-linear-gradient(
+      180deg,
+      var(--color-action) 0 4px,
+      transparent 4px 8px
+    );
+    background-size: 1px 8px;
+    animation: pipeline-flow-y 1.2s linear infinite;
+  }
+}
