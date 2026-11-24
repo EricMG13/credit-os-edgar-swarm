@@ -174,7 +174,7 @@ export function issues(entry: OutputEntry): Issues {
   );
   const words = new Map<string, Group>();
   for (const issue of listed) {
-    const key = issue.severity.word.toLowerCase();
+    const key = issue.severity.word;
     const group = words.get(key) ?? { severity: issue.severity, pips: [] };
     group.pips.push({ kind: issue.kind, line: issue.line });
     words.set(key, group);

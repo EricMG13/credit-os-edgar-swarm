@@ -88,7 +88,10 @@ function quality(
 const attr = (element: Element | null | undefined, name: string) =>
   Number(element?.getAttribute(name));
 const bar = (label: string) => document.querySelector(`[data-step="${label}"]`);
-const width = (label: string) => attr(bar(label), "width");
+const parts = (label: string) => [...(bar(label)?.querySelectorAll("rect") ?? [])];
+const width = (label: string) => parts(label).reduce((sum, rect) => sum + attr(rect, "width"), 0);
+const left = (label: string) => attr(parts(label)[0], "x");
+const fillOf = (label: string) => parts(label)[0]?.getAttribute("class") ?? "";
 
 describe("earningsQualityData", () => {
   it("reads a reconciling bridge, matches support by exact name ignoring case, and sums exactly", () => {
@@ -101,12 +104,40 @@ describe("earningsQualityData", () => {
       "Supported",
       "Not supported",
     ]);
-    expect(bridge.total).toBe("360");
-    expect(bridge.bySupport).toEqual([
-      { word: "Supported", count: 1, total: "100" },
-      { word: "Partly supported", count: 1, total: "200" },
-      { word: "Not supported", count: 1, total: "60" },
+    // The assessment states accepted 120 and not accepted 80 for the partly supported step.
+    expect(bridge.changes.map((step) => step.split)).toEqual([
+      { accepted: "120", notAccepted: "80" },
+      null,
+      null,
     ]);
+  });
+
+  it("splits a step only when the stated accepted and not accepted amounts make up the step", () => {
+    const row = (accepted: string, not: string) => [
+      "Run-rate savings",
+      "Partly supported",
+      "",
+      "",
+      "",
+      "",
+      accepted,
+      not,
+      "",
+    ];
+    for (const [accepted, not] of [
+      ["100", "80"],
+      ["Not supplied: not assessed", "80"],
+      ["about 120", "80"],
+      ["200", "0"],
+    ] as const) {
+      const bridge = readBridge(quality(BRIDGE, [row(accepted, not)]));
+      expect(bridge.state === "ready" && bridge.changes[0]?.split, `${accepted} ${not}`).toBeNull();
+    }
+    const exact = readBridge(quality(BRIDGE, [row("120.5", "79.5")]));
+    expect(exact.state === "ready" && exact.changes[0]?.split).toEqual({
+      accepted: "120.5",
+      notAccepted: "79.5",
+    });
   });
 
   it("states no support when the assessment is absent or does not name the add-back", () => {
@@ -140,7 +171,8 @@ describe("earningsQualityData", () => {
     expect(off).toMatchObject({ state: "gap" });
     if (off.state === "gap") {
       expect(off.reason).toContain("do not reconcile");
-      expect(off.reason).toContain("4,173 (derived)");
+      expect(off.reason).toContain("states 4,200");
+      expect(off.reason).not.toMatch(/derived/);
       expect(off.stated).toHaveLength(5);
       expect(off.stated[1]).toEqual({ label: "Run-rate savings", text: "200 US$m" });
     }
@@ -183,11 +215,15 @@ describe("earningsQualityData", () => {
     expect(bridgeGeometry(small)).toMatchObject({ lo: 0, truncated: false });
   });
 
-  it("reads reported and restated leverage only where both are stated, with the exact difference", () => {
+  it("reads reported and restated leverage only where both are stated", () => {
     const leverage = readLeverage(quality());
     if (leverage.state !== "ready") throw new Error(leverage.reason);
-    expect(leverage.measures[0]).toMatchObject({ kind: "pair", change: "1.3", tone: "worse" });
-    expect(leverage.measures[1]).toMatchObject({ kind: "pair", change: "0.9" });
+    expect(leverage.measures[0]).toMatchObject({
+      kind: "pair",
+      reported: { text: "6.1" },
+      restated: { text: "7.4" },
+    });
+    expect(leverage.measures[1]).toMatchObject({ kind: "pair" });
     const gap = readLeverage(
       quality(BRIDGE, ASSESSMENT, [
         LEVERAGE[0] ?? [],
@@ -198,7 +234,7 @@ describe("earningsQualityData", () => {
       kind: "gap",
       measure: "Total leverage",
     });
-    expect(gap.state === "ready" && gap.measures[1]).toMatchObject({ kind: "pair", change: "0.9" });
+    expect(gap.state === "ready" && gap.measures[1]).toMatchObject({ kind: "pair" });
     expect(readLeverage(quality(BRIDGE, ASSESSMENT, [LEVERAGE[0] ?? []])).state).toBe("gap");
     expect(readLeverage(quality(BRIDGE, ASSESSMENT, null)).state).toBe("gap");
   });
@@ -246,15 +282,16 @@ describe("no source reference in what is drawn", () => {
   });
 });
 
-describe("derived figures say so", () => {
-  it("labels the add-back total, the per-word sums and the leverage change as derived, in the table view too", () => {
+describe("no computed sentence", () => {
+  it("states no sum, difference, comparison or derived label in text, aria-label or table", () => {
     render(<EarningsQualityLead {...leadProps(quality())} />);
-    expect(document.querySelector("[data-total]")).toHaveTextContent("derived");
-    expect(document.querySelector("[data-by-support]")).toHaveTextContent("derived");
-    const leverage = screen.getByRole("region", { name: "Leverage restated" });
-    expect(within(leverage).getByText("Change (derived)")).toBeInTheDocument();
-    for (const svg of leverage.querySelectorAll("svg[aria-label]"))
-      expect(svg.getAttribute("aria-label")).toContain("(derived)");
+    expect(document.body.textContent).not.toMatch(
+      /derived|Add-backs total|higher by|lower by|worse|better/i,
+    );
+    for (const svg of document.querySelectorAll("svg[aria-label]"))
+      expect(svg.getAttribute("aria-label")).not.toMatch(/derived|higher|lower/i);
+    expect(document.querySelector("[data-total]")).toBeNull();
+    expect(document.querySelector("[data-by-support]")).toBeNull();
   });
 });
 
@@ -268,35 +305,39 @@ describe("EarningsQualityLead", () => {
     ).toBeCloseTo((3813 - 3600) / (4173 - 3600), 6);
     expect(document.querySelectorAll("[data-axis-cut]")).toHaveLength(2);
     // Each add-back starts where the last ended.
-    const end = (label: string) => attr(bar(label), "x") + width(label);
-    expect(attr(bar("Integration costs"), "x")).toBeCloseTo(end("Run-rate savings"), 6);
-    expect(attr(bar("Pro forma acquisition"), "x")).toBeCloseTo(end("Integration costs"), 6);
+    const end = (label: string) => left(label) + width(label);
+    expect(left("Integration costs")).toBeCloseTo(end("Run-rate savings"), 6);
+    expect(left("Pro forma acquisition")).toBeCloseTo(end("Integration costs"), 6);
     expect(screen.getByText(/The axis starts at 3,600, not zero/)).toBeVisible();
   });
 
-  it("colours each add-back by its stated word, with the word beside it, and totals as derived sums", () => {
+  it("colours each step by its stated word with the word beside it; the title is plain", () => {
     render(<EarningsQualityLead {...leadProps(quality())} />);
-    expect(bar("Run-rate savings")?.getAttribute("class")).toContain("fill-chart-2");
-    expect(bar("Integration costs")?.getAttribute("class")).toContain("fill-chart-1");
-    expect(bar("Pro forma acquisition")?.getAttribute("class")).toContain("fill-warning-mark");
-    const tile = screen.getByRole("region", { name: "Add-back bridge" });
+    expect(fillOf("Run-rate savings")).toContain("fill-chart-2");
+    expect(fillOf("Integration costs")).toContain("fill-chart-1");
+    expect(fillOf("Pro forma acquisition")).toContain("fill-warning-mark");
+    const tile = screen.getByRole("region", { name: "Earnings quality" });
     expect(within(tile).getByText("Supported", { selector: "p" })).toBeVisible();
-    expect(tile.querySelector("[data-total]")).toHaveTextContent(
-      "Add-backs total 360 US$m derived",
-    );
-    expect(tile.querySelector("[data-by-support]")).toHaveTextContent(
-      "Supported 100 · Partly supported 200 · Not supported 60 derived",
-    );
-    expect(within(tile).getByRole("heading", { level: 3 })).toHaveTextContent(
-      "Adjusted EBITDA, statements 3,813 to Management financing-case EBITDA 4,173 through 3 add-backs",
-    );
+    expect(within(tile).getByRole("heading", { level: 3 })).toHaveTextContent(/^Earnings quality$/);
+  });
+
+  it("draws a partly supported step as two parts in proportion to the stated accepted and not accepted amounts", () => {
+    render(<EarningsQualityLead {...leadProps(quality())} />);
+    const [accepted, not] = parts("Run-rate savings");
+    expect(attr(accepted, "width") / attr(not, "width")).toBeCloseTo(120 / 80, 6);
+    expect(attr(not, "x")).toBeCloseTo(attr(accepted, "x") + attr(accepted, "width"), 6);
+    expect(accepted?.getAttribute("class")).toContain("fill-chart-2");
+    expect(not?.getAttribute("class")).toContain("fill-warning-mark");
+    expect(parts("Integration costs")).toHaveLength(1);
+    expect(screen.getByText("Not accepted amount")).toBeVisible();
+    expect(screen.getByText(/Partly supported · accepted 120, not accepted 80/)).toBeVisible();
   });
 
   it("never infers support: without the assessment every add-back is neutral and the legend says so", () => {
     render(<EarningsQualityLead {...leadProps(quality(BRIDGE, null))} />);
     for (const label of ["Run-rate savings", "Integration costs", "Pro forma acquisition"])
-      expect(bar(label)?.getAttribute("class")).toContain("fill-chart-3");
-    expect(screen.getByText("Support is not stated per add-back")).toBeVisible();
+      expect(fillOf(label)).toContain("fill-chart-3");
+    expect(screen.getByText("Support is not stated per step")).toBeVisible();
     expect(document.querySelector("[data-by-support]")).toBeNull();
     expect(screen.getAllByText("Support not stated")).toHaveLength(3);
   });
@@ -309,10 +350,9 @@ describe("EarningsQualityLead", () => {
         )}
       />,
     );
-    expect(bar("Integration costs")?.getAttribute("class")).toContain("fill-chart-1");
-    expect(bar("Run-rate savings")?.getAttribute("class")).toContain("fill-chart-3");
-    expect(screen.getByText("Support not stated for this add-back")).toBeVisible();
-    expect(screen.getByText("Support is not stated for 2 add-backs.")).toBeVisible();
+    expect(fillOf("Integration costs")).toContain("fill-chart-1");
+    expect(fillOf("Run-rate savings")).toContain("fill-chart-3");
+    expect(screen.getByText("Support not stated for this step")).toBeVisible();
   });
 
   it("draws the gap with the stated steps listed when the bridge does not reconcile", () => {
@@ -321,15 +361,15 @@ describe("EarningsQualityLead", () => {
         {...leadProps(quality([...BRIDGE.slice(0, 4), ["Closing", "4200", "US$m", ""]]))}
       />,
     );
-    const tile = screen.getByRole("region", { name: "Add-back bridge" });
+    const tile = screen.getByRole("region", { name: "Earnings quality" });
     expect(within(tile).getByText(/do not reconcile/)).toBeVisible();
-    expect(within(tile).getByText("200 US$m")).toBeVisible();
+    expect(within(tile).getByText(/Run-rate savings 200 US\$m/)).toBeVisible();
     expect(tile.querySelector("svg")).toBeNull();
   });
 
-  it("draws reported and restated leverage on one axis with the derived gap labelled", () => {
+  it("draws reported and restated leverage on one axis from zero, the marks in the legend's colours", () => {
     render(<EarningsQualityLead {...leadProps(quality())} />);
-    const tile = screen.getByRole("region", { name: "Leverage restated" });
+    const tile = screen.getByRole("region", { name: "Restated leverage" });
     const total = tile.querySelector('[data-measure="Total leverage"]');
     const a = attr(total?.querySelector("[data-reported]"), "cx");
     const b = attr(total?.querySelector("[data-restated]"), "cx");
@@ -340,10 +380,16 @@ describe("EarningsQualityLead", () => {
     const d = attr(net?.querySelector("[data-restated]"), "cx");
     expect((c - 24) / (d - 24)).toBeCloseTo(5.0 / 5.9, 6);
     expect(total?.getAttribute("aria-label")).toBe(
-      "Total leverage: 6.1x on the statements, 7.4x on supported earnings; restated is higher by 1.3x (derived).",
+      "Total leverage: 6.1x on the statements, 7.4x on supported earnings.",
     );
-    expect(within(tile).getAllByText("+1.3x derived")[0]).toBeVisible();
-    expect(within(tile).getByText(/Restated is higher by 1.3x/)).toHaveTextContent("worse");
+    // The supported-earnings mark is the legend's primary colour whatever the direction.
+    expect(total?.querySelector("[data-restated]")?.getAttribute("class")).toContain(
+      "fill-chart-1",
+    );
+    expect(total?.querySelector("[data-reported]")?.getAttribute("class")).toContain(
+      "stroke-chart-3",
+    );
+    expect(screen.getByText("On supported earnings").firstElementChild).toHaveClass("bg-chart-1");
   });
 
   it("draws a leverage measure with a missing multiple as a gap with the handoff's reason", () => {
@@ -357,7 +403,7 @@ describe("EarningsQualityLead", () => {
         )}
       />,
     );
-    const tile = screen.getByRole("region", { name: "Leverage restated" });
+    const tile = screen.getByRole("region", { name: "Restated leverage" });
     expect(tile.querySelector('[data-measure="Total leverage"]')).toBeNull();
     expect(
       within(tile).getByText(/Not drawn: on supported earnings EBITDA not stated/),
@@ -367,18 +413,21 @@ describe("EarningsQualityLead", () => {
 
   it("each figure has one trace control and a table view; no source reference is drawn", () => {
     render(<EarningsQualityLead {...leadProps(quality())} />);
-    expect(screen.getByRole("link", { name: "Source for the add-back bridge" })).toBeVisible();
+    expect(
+      screen.getByRole("link", { name: "Source for the earnings-quality bridge" }),
+    ).toBeVisible();
     expect(screen.getByRole("link", { name: "Source for restated leverage" })).toBeVisible();
     expect(screen.getAllByText("Table view")).toHaveLength(2);
     expect(document.body.textContent).not.toMatch(/CP-1D|T1D\.|\.pdf|\.xlsx/);
   });
 
-  it("with no tables draws gaps in words, and a blocked module is the frame's one gap", () => {
+  it("with no tables draws gap tiles in words; a blocked module draws nothing", () => {
     const { unmount } = render(<EarningsQualityLead {...leadProps(quality(null, null, null))} />);
     expect(
-      screen.getByText("The handoff has no bridge table with Step and Amount columns."),
+      screen.getByText(/The handoff has no bridge table with Step and Amount columns\./),
     ).toBeVisible();
     expect(screen.getByText(/no table of leverage by earnings basis/)).toBeVisible();
+    expect(document.querySelectorAll(".gap-hatch").length).toBeGreaterThan(0);
     unmount();
     const blocked = entry(
       "CP-1D",
@@ -395,8 +444,30 @@ describe("EarningsQualityLead", () => {
         },
       ],
     );
-    render(<EarningsQualityLead {...leadProps(blocked)} />);
-    expect(screen.getByText("Not assessable: no bridge was supplied.")).toBeVisible();
+    const { container } = render(<EarningsQualityLead {...leadProps(blocked)} />);
+    expect(container).toBeEmptyDOMElement();
+  });
+
+  it("keeps the supported-earnings label inside the drawing when the mark is at the right edge", () => {
+    render(
+      <EarningsQualityLead
+        {...leadProps(
+          quality(BRIDGE, ASSESSMENT, [
+            ["Statements (CP-1)", "", "", "", "1.0", "1.0"],
+            ["Supported", "", "", "", "5.9", "5.9"],
+          ]),
+        )}
+      />,
+    );
+    const label = [...document.querySelectorAll("text")].find((text) =>
+      /^supported 5\.9x$/.test(text.textContent),
+    );
+    expect(label?.getAttribute("text-anchor")).toBe("end");
+    expect(attr(label, "x")).toBeLessThanOrEqual(490);
+  });
+
+  it("declares that it draws none of the module's typed figures, events or maps", () => {
+    expect(EarningsQualityLead.draws).toEqual([]);
   });
 
   it("draws a bridge with no add-backs and one with a deduction", () => {
@@ -414,7 +485,8 @@ describe("EarningsQualityLead", () => {
         )}
       />,
     );
-    expect(screen.getByRole("heading", { level: 3, name: /through 0 add-backs/ })).toBeVisible();
+    expect(screen.getByRole("heading", { level: 3, name: "Earnings quality" })).toBeVisible();
+    expect(bar("Opening")).not.toBeNull();
     unmount();
     render(
       <EarningsQualityLead
@@ -433,5 +505,6 @@ describe("EarningsQualityLead", () => {
     );
     expect(bar("Reversal")).not.toBeNull();
     expect(bar("Reversal")?.closest("svg")?.textContent).toBe("−10");
+    expect(document.body.textContent).not.toMatch(/Add-back/);
   });
 });

@@ -114,17 +114,15 @@ export function readKeyFigures(entry: OutputEntry): KeyFigures {
   const found = allTables(entry).filter(({ table }) =>
     KEY_FIGURE_HEADERS.every((name) => table.headers.includes(name)),
   );
-  const expected = `Expected a Key figures table with the columns ${KEY_FIGURE_HEADERS.join(", ")}.`;
-  if (found.length === 0)
-    return { state: "gap", reason: `No key figures are in this handoff. ${expected}` };
+  if (found.length === 0) return { state: "gap", reason: "No key figures are in this handoff." };
   if (found.length > 1)
     return {
       state: "gap",
-      reason: `The handoff has more than one table with the Key figures columns, so none is drawn. ${expected}`,
+      reason: "The handoff has more than one table of key figures, so none is drawn.",
     };
   const [only] = found;
   const table = only?.table;
-  if (!table?.rows.length) return { state: "gap", reason: "The Key figures table has no rows." };
+  if (!table?.rows.length) return { state: "gap", reason: "The key figures table has no rows." };
   const at = (name: string) => table.headers.indexOf(name);
   const rows = table.rows.map((row) => ({
     measure: safeText(row.cells[at("Measure")] ?? ""),
@@ -185,12 +183,11 @@ export function readChangeScreen(entry: OutputEntry): ChangeScreen {
       !KEY_FIGURE_HEADERS.every((name) => table.headers.includes(name)),
   );
   if (candidates.length === 0) return null;
-  const expected = "Expected a change screen with the columns Topic, Prior and Current.";
   const table = tableWith(entry, ["Topic", "Prior", "Current"]);
   if (candidates.length > 1 || !table)
     return {
       state: "gap",
-      reason: `The handoff's change screen is not in a shape this page reads. ${expected}`,
+      reason: "The handoff's change screen is not in a shape this page reads, so none is drawn.",
     };
   const at = (name: string) => table.headers.indexOf(name);
   const textAt = TEXT_HEADERS.map(at).find((index) => index >= 0) ?? -1;

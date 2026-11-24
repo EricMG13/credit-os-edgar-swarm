@@ -111,7 +111,7 @@ describe("clearance", () => {
 });
 
 describe("issues", () => {
-  it("counts the rows of both registers by severity, Critical first", () => {
+  it("counts the rows of both registers by severity word, in the handoff's order", () => {
     const found = issues(full());
     expect(found.total).toBe(5);
     expect(
@@ -122,25 +122,65 @@ describe("issues", () => {
       ]),
     ).toEqual([
       ["Critical", 1, 1],
-      ["Material", 1, 1],
       ["Minor", 1, 0],
+      ["Material", 1, 1],
     ]);
   });
-  it("keeps an unrecognised severity as written and an unstated one apart, after the known words", () => {
+  it("keeps any other severity word as written, unranked, in the handoff's order", () => {
     const odd = cp5(
       tbl(
         "G",
         ["Gap ID", "Gap", "Why it matters", "Affected modules", "Severity", "Action"],
-        ["g1", "a", "b", "CP-1", "Severe", "Fix"],
+        ["g1", "a", "b", "CP-1", "High", "Fix"],
         ["g2", "a", "b", "CP-1", "Not supplied: not rated", "Fix"],
-        ["g3", "a", "b", "CP-1", "minor", "Fix"],
+        ["g3", "a", "b", "CP-1", "Minor", "Fix"],
+        ["g4", "a", "b", "CP-1", "Critical (blocks committee)", "Fix"],
+        ["g5", "a", "b", "CP-1", "Critical", "Fix"],
+        ["g6", "a", "b", "CP-1", "minor", "Fix"],
       ),
     );
-    expect(issues(odd).groups.map((group) => [group.severity.word, group.pips.length])).toEqual([
-      ["Minor", 1],
-      ["Severe", 1],
-      ["Severity not stated", 1],
+    expect(
+      issues(odd).groups.map((group) => [
+        group.severity.word,
+        group.severity.known,
+        group.pips.length,
+      ]),
+    ).toEqual([
+      ["High", false, 1],
+      ["Severity not stated", false, 1],
+      ["Minor", true, 1],
+      ["Critical (blocks committee)", false, 1],
+      ["Critical", true, 1],
+      ["minor", false, 1],
     ]);
+  });
+  it("does not count a register row of None in every cell as an issue", () => {
+    const four = cp5(
+      tbl(
+        "C",
+        ["Contradiction", "Claims", "Nature", "Severity", "Rationale"],
+        ["None", "None", "None", "None", "None"],
+        ["Leverage differs", "A vs B", "Numeric", "Material", "Two modules differ"],
+      ),
+      GAPS,
+    );
+    const found = issues(four);
+    expect(found.total).toBe(4);
+    expect(found.contradictions).toMatchObject({ state: "rows" });
+    expect(
+      found.contradictions.state === "rows" && found.contradictions.issues.map((i) => i.line),
+    ).toHaveLength(1);
+    const onlyNone = issues(
+      cp5(
+        tbl(
+          "C",
+          ["Contradiction", "Claims", "Nature", "Severity", "Rationale"],
+          ["None", "None", "None", "None", "None"],
+        ),
+      ),
+    );
+    expect(onlyNone.contradictions.state).toBe("none");
+    expect(onlyNone.total).toBe(0);
   });
   it("reads the handoff's own None row as a stated absence and draws no pip", () => {
     const none = cp5(
@@ -174,18 +214,18 @@ describe("issues", () => {
     expect(issues(twice).contradictions.state).toBe("duplicate");
     expect(issues(twice).total).toBe(0);
   });
-  it("orders the remediation actions by severity and keeps the handoff's order within one", () => {
+  it("lists the remediation actions in the handoff's order, with no priority of our own", () => {
     expect(remediation(full())?.map((item) => item.action)).toEqual([
       { kind: "text", text: "Obtain the signed debt schedule" },
-      { kind: "gap", reason: "owner not named" },
       { kind: "text", text: "Re-check the cover ratio" },
+      { kind: "gap", reason: "owner not named" },
     ]);
     expect(remediation(cp5(VERDICT))).toBeNull();
   });
   it("names modules in the affected list and keeps a stated report level", () => {
-    const [first, , third] = remediation(full()) ?? [];
+    const [first, second] = remediation(full()) ?? [];
     expect(first?.affected).toEqual(["Financial foundation", "Liquidity"]);
-    expect(third?.affected).toEqual(["Fundamental credit"]);
+    expect(second?.affected).toEqual(["Fundamental credit"]);
   });
 });
 
@@ -208,10 +248,8 @@ const render5 = (entry: OutputEntry) => render(<ClearanceLead {...leadProps(entr
 describe("ClearanceLead", () => {
   it("draws the status word with its shape, the scope quietly and the listed issues as pips", () => {
     const { container } = render5(full());
-    const tile = screen.getByRole("region", { name: "Clearance and listed issues" });
-    expect(within(tile).getByRole("heading", { level: 3 }).textContent).toBe(
-      "Restricted, 5 issues listed",
-    );
+    const tile = screen.getByRole("region", { name: "Clearance" });
+    expect(within(tile).getByRole("heading", { level: 3 }).textContent).toBe("Clearance");
     expect(tile.querySelector("[data-clearance]")?.textContent).toBe("Restricted");
     expect(within(tile).getByText("over the evaluated set")).toBeVisible();
     expect(tile.querySelector('[data-shape="half"]')).not.toBeNull();
@@ -227,11 +265,11 @@ describe("ClearanceLead", () => {
         "Counted from the issues listed in this module's registers; the handoff does not state counts.",
       ),
     ).toBeVisible();
-    // The words in pip order: Critical, Material, Minor.
+    // The words in the handoff's order: gaps register first.
     const words = [...tile.querySelectorAll("ul[aria-label] > li")].map((item) =>
       item.textContent.replace(/\d+/, ""),
     );
-    expect(words).toEqual(["Critical", "Material", "Minor"]);
+    expect(words).toEqual(["Critical", "Minor", "Material"]);
   });
   it("draws one trace control per figure and no source reference on the page", () => {
     const { container } = render5(full());
@@ -252,18 +290,17 @@ describe("ClearanceLead", () => {
       chips.map((chip) => chip.querySelector("[data-shape]")?.getAttribute("data-shape")),
     ).toEqual(["filled", "half", "slash", "ring"]);
   });
-  it("draws the remediation list in priority order with severity and affected modules", () => {
+  it("draws the remediation list in the module's order with severity and affected modules", () => {
     render5(full());
-    const tile = screen.getByRole("region", { name: "Remediation by priority" });
-    expect(within(tile).getByRole("heading", { level: 3 }).textContent).toBe(
-      "3 actions, Critical first",
-    );
+    const tile = screen.getByRole("region", { name: "Remediation" });
+    expect(within(tile).getByRole("heading", { level: 3 }).textContent).toBe("Remediation");
     const items = [...tile.querySelectorAll("ol > li")].map((item) => item.textContent);
     expect(items[0]).toContain(
       "CriticalObtain the signed debt scheduleAffects: Financial foundation, Liquidity",
     );
-    expect(items[1]).toContain("MaterialAction not supplied: owner not named");
-    expect(items[2]).toContain("MinorRe-check the cover ratio");
+    expect(items[1]).toContain("MinorRe-check the cover ratio");
+    expect(items[2]).toContain("MaterialAction not supplied: owner not named");
+    expect(tile.textContent).not.toMatch(/priority|first/i);
   });
   it("says the handoff lists no issue register, with no pip and no zero, for the thin synthetic handoff", () => {
     const { container } = render5(cp5Entry());
@@ -274,7 +311,7 @@ describe("ClearanceLead", () => {
     expect(screen.queryByText("No issues are listed.")).toBeNull();
     // The thin handoff still has its bottom line, drawn as the status fallback.
     expect(screen.getAllByText("The synthetic issuer shows one observed item.")[0]).toBeVisible();
-    expect(screen.getByText("The handoff lists no integrity-gaps register.")).toBeVisible();
+    expect(screen.getByText(/The handoff lists no integrity-gaps register\./)).toBeVisible();
   });
   it("says no issues are listed only when both registers state none", () => {
     const empty = (headers: string[]) =>
@@ -290,7 +327,7 @@ describe("ClearanceLead", () => {
       ),
     );
     expect(screen.getByText("No issues are listed.")).toBeVisible();
-    expect(screen.getByText("No gap actions are listed.")).toBeVisible();
+    expect(screen.getByText(/No gap actions are listed\./)).toBeVisible();
     expect(screen.getAllByText("Restricted")[0]).toBeVisible();
   });
   it("draws counts from the one register present and says the other is not in the handoff", () => {
@@ -353,7 +390,7 @@ describe("ClearanceLead", () => {
   });
 });
 
-describe("negated words keep to their own meaning", () => {
+describe("only exact words get a mark", () => {
   const result = (word: string) =>
     moduleIntegrity(
       cp5(
@@ -367,17 +404,38 @@ describe("negated words keep to their own meaning", () => {
   const status = (word: string) =>
     clearance(cp5(tbl("V", ["Item", "Value"], ["Status", `${word} over the evaluated set`])))
       ?.shape;
-  it("does not read 'Not blocked' as blocked", () => {
-    expect(result("Not blocked; no findings")).toBe("filled");
-    expect(result("Not blocked")).toBe("ring");
-    expect(result("Blocked upstream: not evaluated")).toBe("slash");
+  it("gives a mark only to the three results the module writes", () => {
+    expect(result("Evaluated: no finding")).toBe("filled");
     expect(result("Evaluated with findings")).toBe("half");
+    expect(result("Blocked upstream: not evaluated")).toBe("slash");
+    expect(result("Not blocked; no findings")).toBe("ring");
+    expect(result("Not blocked")).toBe("ring");
+    expect(result("Evaluated with findings, partly blocked")).toBe("ring");
   });
-  it("does not read 'Not restricted' as restricted or 'Not cleared' as cleared", () => {
-    expect(status("Not restricted")).toBe("ring");
-    expect(status("Not cleared")).toBe("slash");
-    expect(status("Not cleared")).not.toBe("filled");
+  it("gives a mark only to an exact status word; any other wording is drawn as written, neutral", () => {
+    expect(status("Accepted")).toBe("filled");
     expect(status("Cleared")).toBe("filled");
+    expect(status("Restricted")).toBe("half");
+    expect(status("Accepted with restrictions")).toBe("ring");
+    expect(status("Not restricted")).toBe("ring");
+    expect(status("Not cleared")).toBe("ring");
+    expect(status("Cleared pending review")).toBe("ring");
+  });
+  it("draws 'Accepted with restrictions' as written beside a neutral mark, never the cleared mark", () => {
+    const { container } = render5(
+      cp5(
+        tbl(
+          "V",
+          ["Item", "Value"],
+          ["Status", "Accepted with restrictions over the evaluated set"],
+        ),
+      ),
+    );
+    expect(container.querySelector("[data-clearance]")?.textContent).toBe(
+      "Accepted with restrictions",
+    );
+    expect(container.querySelector('[data-shape="filled"]')).toBeNull();
+    expect(container.querySelector('[data-shape="ring"]')).not.toBeNull();
   });
   it("sends an action or opening sentence that names a register id to Evidence", () => {
     const { container } = render5(
@@ -392,5 +450,22 @@ describe("negated words keep to their own meaning", () => {
     );
     expect(container.textContent).not.toMatch(/T5B/);
     expect(screen.getAllByText("Detail is in Evidence.").length).toBeGreaterThan(0);
+  });
+});
+
+describe("titles and what the lead draws", () => {
+  it("names each tile plainly, with no count and no ordering claim", () => {
+    render5(full());
+    const titles = screen.getAllByRole("heading", { level: 3 }).map((h) => h.textContent);
+    expect(titles).toEqual(["Clearance", "Remediation"]);
+  });
+  it("draws no typed figure, event lane or map", () => {
+    expect(ClearanceLead.draws).toEqual([]);
+  });
+  it("uses the one gap tile when the status, the issues and the actions are all absent", () => {
+    render5(cp5());
+    expect(screen.getByText(/The handoff states no clearance status\./)).toBeVisible();
+    expect(screen.getByText(/The handoff lists no integrity-gaps register\./)).toBeVisible();
+    expect(screen.queryByRole("img")).toBeNull();
   });
 });

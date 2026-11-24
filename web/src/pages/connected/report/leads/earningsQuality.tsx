@@ -1,5 +1,5 @@
-import { cx } from "@/utils/cx";
-import { GapNote, Tile } from "../overview/Tile";
+import type { FC } from "react";
+import { GapNote } from "../overview/Tile";
 import {
   BRIDGE,
   bridgeGeometry,
@@ -10,7 +10,7 @@ import {
   type LeverageMeasure,
   type Support,
 } from "./earningsQualityData";
-import { Derived, FigureTile, LeadFrame, ScrollFigure } from "./kit/LeadFrame";
+import { FigureTile, GapTile, LeadFrame, ScrollFigure } from "./kit/LeadFrame";
 import { group } from "./kit/numbers";
 import type { LeadProps } from "./types";
 
@@ -19,7 +19,8 @@ import type { LeadProps } from "./types";
  * src/deploy_workflow/owners/cp1d.py (the add-back bridge, the assessment T1D.2, the leverage table
  * T1D.6); no real CP-1D handoff has ever been retained, so this lead is unproven on a real run.
  * Support (supported / not supported) is drawn only where the assessment states a word for that
- * add-back's own name; it is never inferred.
+ * step's own name; it is never inferred. No sum, difference or comparison is stated in words:
+ * the drawing places stated figures, and the table view lists them.
  */
 
 const FILL: Record<Support | "none", string> = {
@@ -47,38 +48,63 @@ function Row({
   const change =
     row.kind === "change" ? bridge.changes.find((item) => item.line === step.line) : undefined;
   const support = change?.support ?? null;
+  const split = change?.split ?? null;
+  const parts = split
+    ? ` Accepted ${group(split.accepted)}, not accepted ${group(split.notAccepted)}.`
+    : "";
   const label =
     row.kind === "total"
       ? `${step.label}: ${group(step.amount)} ${bridge.unit}${geometry.truncated ? `, drawn from an axis that starts at ${group(String(geometry.lo))}` : ""}`
-      : `${step.label}: ${signed(step.amount)} ${bridge.unit}. ${support ? `Support stated: ${support}.` : "Support is not stated."}`;
-  const width = Math.max(2, row.x1 - row.x0);
+      : `${step.label}: ${signed(step.amount)} ${bridge.unit}. ${support ? `Support stated: ${support}.` : "Support is not stated."}${parts}`;
+  const full = Math.max(2, row.x1 - row.x0);
+  const accepted = split ? (Number(split.accepted) / Number(step.amount)) * full : 0;
   const text = row.kind === "total" ? group(step.amount) : signed(step.amount);
+  const fill = row.kind === "total" ? "fill-text-secondary" : FILL[support ?? "none"];
   return (
     <li className="grid min-w-0 gap-1 sm:grid-cols-[minmax(0,12rem)_minmax(0,1fr)] sm:items-center sm:gap-3">
       <div className="min-w-0">
         <p className="text-small text-text-primary wrap-anywhere">{step.label}</p>
         {row.kind === "change" && (
-          <p className="text-caption text-text-tertiary">{support ?? "Support not stated"}</p>
+          <p className="text-caption text-text-tertiary">
+            {support ?? "Support not stated"}
+            {split &&
+              ` · accepted ${group(split.accepted)}, not accepted ${group(split.notAccepted)}`}
+          </p>
         )}
       </div>
-      <ScrollFigure label="Add-back bridge figure" size="narrow">
+      <ScrollFigure label="Earnings quality figure" size="narrow">
         <svg
           viewBox={`0 0 ${String(BRIDGE.width)} ${String(BRIDGE.height)}`}
           width="100%"
           role="img"
           aria-label={label}
         >
-          <rect
-            data-step={step.label}
-            data-from={row.from}
-            data-to={row.to}
-            x={row.x0}
-            y="7"
-            width={width}
-            height="16"
-            rx="2"
-            className={row.kind === "total" ? "fill-text-secondary" : FILL[support ?? "none"]}
-          />
+          <g data-step={step.label} data-from={row.from} data-to={row.to}>
+            {split ? (
+              <>
+                <rect
+                  data-part="accepted"
+                  x={row.x0}
+                  y="7"
+                  width={accepted}
+                  height="16"
+                  rx="2"
+                  className={fill}
+                />
+                <rect
+                  data-part="not-accepted"
+                  x={row.x0 + accepted}
+                  y="7"
+                  width={full - accepted}
+                  height="16"
+                  rx="2"
+                  className="fill-warning-mark"
+                />
+              </>
+            ) : (
+              <rect x={row.x0} y="7" width={full} height="16" rx="2" className={fill} />
+            )}
+          </g>
           {row.kind === "total" && geometry.truncated && (
             <path
               data-axis-cut
@@ -108,13 +134,15 @@ function legendOf(bridge: Bridge) {
   const items: { tone: LegendTone; text: string }[] = (Object.keys(tones) as Support[])
     .filter((word) => words.has(word))
     .map((word) => ({ tone: tones[word], text: word }));
+  if (bridge.changes.some((step) => step.split))
+    items.push({ tone: "signal", text: "Not accepted amount" });
   const unstated = bridge.changes.some((step) => step.support === null);
   if (unstated)
     items.push({
       tone: "prior",
       text: bridge.supportStated
-        ? "Support not stated for this add-back"
-        : "Support is not stated per add-back",
+        ? "Support not stated for this step"
+        : "Support is not stated per step",
     });
   return items;
 }
@@ -122,17 +150,15 @@ function legendOf(bridge: Bridge) {
 function BridgeTile({ props, bridge }: { props: LeadProps; bridge: Bridge }) {
   const geometry = bridgeGeometry(bridge);
   const unit = bridge.unit;
-  const count = bridge.changes.length;
-  const unstated = bridge.changes.filter((step) => step.support === null).length;
   return (
     <FigureTile
       props={props}
       span={7}
-      label="Add-back bridge"
+      label="Earnings quality"
       kicker={`${unit}${geometry.truncated ? `, both totals cut: axis starts at ${group(String(geometry.lo))}` : ""}`}
-      title={`${bridge.opening.label} ${group(bridge.opening.amount)} to ${bridge.closing.label} ${group(bridge.closing.amount)} through ${String(count)} add-back${count === 1 ? "" : "s"}`}
+      title="Earnings quality"
       line={bridge.line}
-      source="the add-back bridge"
+      source="the earnings-quality bridge"
       legend={legendOf(bridge)}
       notes={[
         ...(geometry.truncated
@@ -143,17 +169,19 @@ function BridgeTile({ props, bridge }: { props: LeadProps; bridge: Bridge }) {
         ...bridge.notes,
       ]}
       table={{
-        caption: "Add-back bridge",
-        headers: ["Step", "Amount", "Unit", "Support stated"],
+        caption: "Earnings quality bridge",
+        headers: ["Step", "Amount", "Unit", "Support stated", "Accepted", "Not accepted"],
         rows: [
-          [bridge.opening.label, group(bridge.opening.amount), unit, "Not applicable"],
+          [bridge.opening.label, group(bridge.opening.amount), unit, "Not applicable", "", ""],
           ...bridge.changes.map((step) => [
             step.label,
             group(step.amount),
             unit,
             step.support ?? "Not stated",
+            step.split ? group(step.split.accepted) : "Not stated",
+            step.split ? group(step.split.notAccepted) : "Not stated",
           ]),
-          [bridge.closing.label, group(bridge.closing.amount), unit, "Not applicable"],
+          [bridge.closing.label, group(bridge.closing.amount), unit, "Not applicable", "", ""],
         ],
       }}
     >
@@ -167,72 +195,21 @@ function BridgeTile({ props, bridge }: { props: LeadProps; bridge: Bridge }) {
           />
         ))}
       </ol>
-      <div className="flex flex-col gap-1 border-t border-border-hairline pt-3 text-small text-text-secondary">
-        <p data-total>
-          Add-backs total{" "}
-          <span className="font-mono text-text-primary tabular-nums">{group(bridge.total)}</span>{" "}
-          {unit}
-          <Derived />
-        </p>
-        {bridge.bySupport.length > 0 && (
-          <p data-by-support>
-            {bridge.bySupport.map((item, at) => (
-              <span key={item.word}>
-                {at > 0 && " · "}
-                {item.word}{" "}
-                <span className="font-mono text-text-primary tabular-nums">
-                  {group(item.total)}
-                </span>
-              </span>
-            ))}
-            <Derived />
-          </p>
-        )}
-        {bridge.supportStated && unstated > 0 && (
-          <p className="text-caption text-text-tertiary">
-            Support is not stated for {String(unstated)} add-back{unstated === 1 ? "" : "s"}.
-          </p>
-        )}
-      </div>
     </FigureTile>
   );
 }
 
-function BridgeGap({
-  reason,
-  stated,
-}: {
-  reason: string;
-  stated: { label: string; text: string }[];
-}) {
-  return (
-    <Tile span={7} label="Add-back bridge" kicker="Not drawn" tone="gap" className="self-start">
-      <GapNote>{reason}</GapNote>
-      {stated.length > 0 && (
-        <ul className="flex flex-col gap-1 text-small text-text-secondary">
-          {stated.map((step, at) => (
-            <li key={`${step.label}-${String(at)}`} className="flex justify-between gap-4">
-              <span>{step.label}</span>
-              <span className="font-mono tabular-nums">{step.text}</span>
-            </li>
-          ))}
-        </ul>
-      )}
-    </Tile>
-  );
-}
-
 const withX = (text: string) => `${group(text)}x`;
-const changeWord = (change: string) =>
-  Number(change) > 0 ? "higher" : Number(change) < 0 ? "lower" : "equal";
+
+/** Where a label centred on `x` can sit inside the drawing without leaving it. */
+const anchorAt = (x: number) => (x < 90 ? "start" : x > 400 ? "end" : "middle");
 
 function Pair({ item }: { item: Extract<LeverageMeasure, { kind: "pair" }> }) {
   const scale = leverageScale([item.reported.value, item.restated.value]);
   const a = scale.x(item.reported.value);
   const b = scale.x(item.restated.value);
   const close = Math.abs(a - b) < 120;
-  const delta = `${Number(item.change) > 0 ? "+" : ""}${group(item.change)}x`;
-  const reading = `${item.measure}: ${withX(item.reported.text)} on the statements, ${withX(item.restated.text)} on supported earnings; restated is ${changeWord(item.change)} by ${group(item.change.replace(/^-/, ""))}x (derived).`;
+  const reading = `${item.measure}: ${withX(item.reported.text)} on the statements, ${withX(item.restated.text)} on supported earnings.`;
   return (
     <div className="flex min-w-0 flex-col gap-1">
       <h4 className="text-small font-medium text-text-primary">{item.measure}</h4>
@@ -265,7 +242,7 @@ function Pair({ item }: { item: Extract<LeverageMeasure, { kind: "pair" }> }) {
           y1="34"
           y2="34"
           strokeWidth="3"
-          className={item.tone === "worse" ? "stroke-warning-mark" : "stroke-chart-1"}
+          className="stroke-chart-1"
         />
         <circle
           data-reported={item.reported.text}
@@ -275,26 +252,11 @@ function Pair({ item }: { item: Extract<LeverageMeasure, { kind: "pair" }> }) {
           strokeWidth="2"
           className="fill-surface-card stroke-chart-3"
         />
-        <circle
-          data-restated={item.restated.text}
-          cx={b}
-          cy="34"
-          r="7"
-          className={item.tone === "worse" ? "fill-warning-mark" : "fill-chart-1"}
-        />
-        <text
-          x={(a + b) / 2}
-          y="20"
-          textAnchor="middle"
-          fontSize="12"
-          className="fill-text-primary font-mono"
-        >
-          {delta} derived
-        </text>
+        <circle data-restated={item.restated.text} cx={b} cy="34" r="7" className="fill-chart-1" />
         <text
           x={a}
           y="58"
-          textAnchor="middle"
+          textAnchor={anchorAt(a)}
           fontSize="12"
           className="fill-text-secondary font-mono"
         >
@@ -303,23 +265,13 @@ function Pair({ item }: { item: Extract<LeverageMeasure, { kind: "pair" }> }) {
         <text
           x={b}
           y={close ? 74 : 58}
-          textAnchor="middle"
+          textAnchor={anchorAt(b)}
           fontSize="12"
           className="fill-text-primary font-mono"
         >
           supported {withX(item.restated.text)}
         </text>
       </svg>
-      <p
-        className={cx(
-          "text-caption",
-          item.tone === "worse" ? "text-warning-text" : "text-text-secondary",
-        )}
-      >
-        Restated is {changeWord(item.change)} by {group(item.change.replace(/^-/, ""))}x
-        <Derived />
-        {item.tone === "worse" || item.tone === "better" ? `, ${item.tone}` : ""}
-      </p>
     </div>
   );
 }
@@ -328,23 +280,18 @@ function LeverageTile({ props }: { props: LeadProps }) {
   const leverage = readLeverage(props.entry);
   if (leverage.state === "gap")
     return (
-      <Tile span={5} label="Leverage restated" kicker="Not drawn" tone="gap" className="self-start">
-        <GapNote>{leverage.reason}</GapNote>
-      </Tile>
+      <GapTile span={5} label="Restated leverage" kicker="Restated leverage">
+        {leverage.reason}
+      </GapTile>
     );
-  const [first] = leverage.measures;
-  const title =
-    first?.kind === "pair"
-      ? `${first.measure} ${withX(first.reported.text)} on the statements, ${withX(first.restated.text)} on supported earnings`
-      : "Leverage on the statements and on supported earnings";
   const pairs = leverage.measures.filter((item) => item.kind === "pair");
   return (
     <FigureTile
       props={props}
       span={5}
-      label="Leverage restated"
+      label="Restated leverage"
       kicker="Multiples of EBITDA, from zero"
-      title={title}
+      title="Restated leverage"
       line={leverage.line}
       source="restated leverage"
       legend={[
@@ -353,16 +300,11 @@ function LeverageTile({ props }: { props: LeadProps }) {
       ]}
       table={{
         caption: "Leverage on the statements and on supported earnings",
-        headers: ["Measure", "Statements", "Supported earnings", "Change (derived)"],
+        headers: ["Measure", "Statements", "Supported earnings"],
         rows: leverage.measures.map((item) =>
           item.kind === "pair"
-            ? [
-                item.measure,
-                withX(item.reported.text),
-                withX(item.restated.text),
-                `${Number(item.change) > 0 ? "+" : ""}${group(item.change)}x`,
-              ]
-            : [item.measure, "Not stated", "Not stated", item.reason],
+            ? [item.measure, withX(item.reported.text), withX(item.restated.text)]
+            : [item.measure, "Not stated", "Not stated"],
         ),
       }}
     >
@@ -388,18 +330,26 @@ function Content(props: LeadProps) {
       {bridge.state === "ready" ? (
         <BridgeTile props={props} bridge={bridge} />
       ) : (
-        <BridgeGap reason={bridge.reason} stated={bridge.stated} />
+        <GapTile span={7} label="Earnings quality" kicker="Earnings quality">
+          {bridge.reason}
+          {bridge.stated.length > 0 &&
+            ` Stated steps: ${bridge.stated.map((step) => `${step.label} ${step.text}`).join("; ")}.`}
+        </GapTile>
       )}
       <LeverageTile props={props} />
     </>
   );
 }
 
-/** CP-1D: the add-back bridge from reported to adjusted EBITDA, and leverage restated on supported earnings. */
-export function EarningsQualityLead(props: LeadProps) {
+/** CP-1D: the earnings-quality bridge from reported to adjusted EBITDA, and leverage restated on supported earnings. */
+export const EarningsQualityLead: FC<LeadProps> & {
+  draws?: readonly ("figures" | "events" | "maps")[];
+} = function EarningsQualityLead(props) {
   return (
     <LeadFrame props={props}>
       <Content {...props} />
     </LeadFrame>
   );
-}
+};
+// This lead draws no typed figure, event lane or map of the module's own.
+EarningsQualityLead.draws = [];

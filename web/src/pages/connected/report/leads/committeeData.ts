@@ -1,5 +1,5 @@
 import { readParagraph, type OutputEntry } from "../../publishedReport";
-import { readCell } from "./kit/numbers";
+import { difference, readCell, signOf } from "./kit/numbers";
 import { safeText } from "./kit/reader";
 import { cellAt, locate, said, saidText, type Said } from "./validationData";
 
@@ -85,6 +85,8 @@ export function stance(entry: OutputEntry): Stance {
 
 export type LedgerRow = {
   line: number;
+  /** The challenged point: the CP-2 row the module cross-examined, as it wrote it. */
+  point: Said;
   evidenceFor: Said;
   counterCase: Said;
   evidenceAgainst: Said;
@@ -125,6 +127,7 @@ export function ledger(entry: OutputEntry): Ledger {
     line: table.line,
     rows: real.map((row) => ({
       line: row.line,
+      point: said(cellAt(table, row, "CP-2 row")),
       evidenceFor: said(cellAt(table, row, "Evidence for")),
       counterCase: said(cellAt(table, row, "Counter-case")),
       evidenceAgainst: said(cellAt(table, row, "Evidence against")),
@@ -134,6 +137,7 @@ export function ledger(entry: OutputEntry): Ledger {
 }
 
 export const ledgerCells = (row: LedgerRow) => [
+  saidText(row.point),
   saidText(row.evidenceFor),
   saidText(row.counterCase),
   saidText(row.evidenceAgainst),
@@ -165,7 +169,15 @@ export type Bullet = {
   /** The proposed exposure's place, or null where it is not supplied. */
   proposed: number | null;
   limit: number;
+  /** Stated against stated: true only when the figure is above the limit value. */
+  currentAbove: boolean;
+  proposedAbove: boolean;
 };
+
+const above = (value: Figure, limit: Figure) =>
+  value.kind === "number" &&
+  limit.kind === "number" &&
+  signOf(difference(value.text, limit.text)) === 1;
 
 function niceStep(span: number) {
   const raw = span / 4;
@@ -221,6 +233,8 @@ export function bulletMarks(values: {
     current: x(current.value),
     proposed: proposed.kind === "number" ? x(proposed.value) : null,
     limit: x(limit.value),
+    currentAbove: above(current, limit),
+    proposedAbove: above(proposed, limit),
   };
 }
 
@@ -266,4 +280,37 @@ export function limits(entry: OutputEntry): Limits | null {
     };
   });
   return { line: table.line, rows };
+}
+
+// ---------------------------------------------------------------------------------------------
+// Watch items
+
+export type WatchItem = {
+  date: string;
+  event: string;
+  status: string | null;
+  line: number;
+};
+
+export type Watch = { line: number; items: WatchItem[] };
+
+const asWritten = (value: Said) => (value.kind === "text" ? value.text : saidText(value));
+
+/** The module's decision-and-watch events, dates as written; null when the table is absent. */
+export function watch(entry: OutputEntry): Watch | null {
+  const found = locate(entry, ["Event date", "Event", "Status"]);
+  if (found.state !== "found" || found.table.rows.length === 0) return null;
+  const { table } = found;
+  return {
+    line: table.line,
+    items: table.rows.map((row) => {
+      const status = said(cellAt(table, row, "Status"));
+      return {
+        date: asWritten(said(cellAt(table, row, "Event date"))) || "Date not stated",
+        event: asWritten(said(cellAt(table, row, "Event"))) || "Event not stated",
+        status: status.kind === "text" ? status.text : null,
+        line: row.line,
+      };
+    }),
+  };
 }

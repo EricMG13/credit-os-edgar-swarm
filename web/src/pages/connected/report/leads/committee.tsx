@@ -2,12 +2,13 @@ import { useId } from "react";
 import { cx } from "@/utils/cx";
 import { GapPattern } from "../overview/figureParts";
 import { GapNote } from "../overview/Tile";
-import { FigureTile, LeadFrame } from "./kit/LeadFrame";
+import { FigureTile, GapTile, LeadFrame } from "./kit/LeadFrame";
 import {
   BULLET,
   ledger,
   ledgerCells,
   limits,
+  watch,
   stance,
   type Conditions,
   type Figure,
@@ -133,86 +134,87 @@ function ConditionList({ conditions }: { conditions: Conditions }) {
 function StanceTile(props: LeadProps) {
   const found = stance(props.entry);
   const stated = found.state === "stated" ? found : null;
+  if (stated === null)
+    return (
+      <GapTile span={12} label="Committee stance" kicker="Committee stance">
+        {found.state === "gap" && found.reason
+          ? `The handoff states no action bias: ${found.reason}.`
+          : "The handoff states no action bias."}
+      </GapTile>
+    );
   const conditionRows =
-    stated?.conditions?.kind === "list"
+    stated.conditions?.kind === "list"
       ? stated.conditions.items.map((value) => ["Condition", saidText(value)])
       : [];
   return (
     <FigureTile
       props={props}
-      span={5}
+      span={12}
       label="Committee stance"
       kicker="Committee decision"
-      title={
-        stated
-          ? `${stated.word}${stated.confidence ? `, confidence ${stated.confidence}` : ""}`
-          : "Committee stance"
-      }
-      line={stated?.line}
+      title="Committee stance"
+      line={stated.line}
       source="the committee stance"
-      table={
-        stated
-          ? {
-              caption: "Action bias, confidence and conditions as the handoff states them",
-              headers: ["Item", "Value"],
-              rows: [
-                ["Action bias", stated.word],
-                ["Confidence", stated.confidence ?? "Not stated"],
-                ...conditionRows,
-              ],
-            }
-          : undefined
-      }
+      table={{
+        caption: "Action bias, confidence and conditions as the handoff states them",
+        headers: ["Item", "Value"],
+        rows: [
+          ["Action bias", stated.word],
+          ["Confidence", stated.confidence ?? "Not stated"],
+          ...conditionRows,
+        ],
+      }}
     >
-      {stated === null ? (
-        <GapNote>
-          {found.state === "gap" && found.reason
-            ? `The handoff states no action bias: ${found.reason}.`
-            : "The handoff states no action bias."}
-        </GapNote>
-      ) : (
-        <div className="flex min-w-0 flex-col gap-3">
-          <div className="flex min-w-0 flex-col gap-1">
-            <p className="text-h1 text-text-primary wrap-anywhere" data-action-bias={stated.word}>
-              {stated.word}
-            </p>
-            {stated.confidence ? (
-              <p className="flex min-w-0 flex-wrap items-center gap-2 text-small text-text-secondary">
-                <span data-confidence-word>{`Confidence ${stated.confidence}`}</span>
-                <ConfidenceMeter word={stated.confidence} />
-              </p>
-            ) : (
-              <p className="text-small text-gap-text">The handoff states no confidence.</p>
-            )}
-          </div>
-          <p className="text-caption text-text-tertiary">
-            As written by the module; the stance is not a typed field.
+      <div className="flex min-w-0 flex-col gap-3">
+        <div className="flex min-w-0 flex-col gap-1">
+          <p className="text-h1 text-text-primary wrap-anywhere" data-action-bias={stated.word}>
+            {stated.word}
           </p>
-          <ConditionList conditions={stated.conditions} />
+          {stated.confidence ? (
+            <p className="flex min-w-0 flex-wrap items-center gap-2 text-small text-text-secondary">
+              <span data-confidence-word>{`Confidence ${stated.confidence}`}</span>
+              <ConfidenceMeter word={stated.confidence} />
+            </p>
+          ) : (
+            <p className="text-small text-gap-text">The handoff states no confidence.</p>
+          )}
         </div>
-      )}
+        <p className="text-caption text-text-tertiary">
+          As written by the module; the stance is not a typed field.
+        </p>
+        <ConditionList conditions={stated.conditions} />
+      </div>
     </FigureTile>
   );
 }
 
+const LABEL = "text-caption font-medium text-text-tertiary";
+
 function LedgerItem({ row }: { row: LedgerRow }) {
   return (
     <li className="grid min-w-0 gap-3 border-t border-border-hairline pt-4 first:border-t-0 first:pt-0 sm:grid-cols-2">
+      <div className="flex min-w-0 flex-col gap-1 sm:col-span-2" data-cell="point">
+        <p className={LABEL}>Challenged point</p>
+        <SaidText value={row.point} lines={2} className="font-medium" />
+      </div>
+      <div className="flex min-w-0 flex-col gap-1 sm:col-span-2" data-cell="counter">
+        <p className={LABEL}>Counter-case</p>
+        <SaidText value={row.counterCase} lines={2} />
+      </div>
       <div className="flex min-w-0 flex-col gap-1" data-cell="for">
-        <p className="text-caption font-medium text-text-tertiary">The case for</p>
+        <p className={LABEL}>Evidence for this point</p>
         <SaidText value={row.evidenceFor} lines={2} />
       </div>
       <div className="flex min-w-0 flex-col gap-1" data-cell="against">
-        <p className="text-caption font-medium text-text-tertiary">The case against</p>
-        <SaidText value={row.counterCase} lines={2} className="font-medium" />
+        <p className={LABEL}>Evidence against this point</p>
         <SaidText value={row.evidenceAgainst} lines={2} />
       </div>
       <div className="flex min-w-0 flex-col gap-1" data-cell="change">
-        <p className="text-caption font-medium text-text-tertiary">What would change the view</p>
+        <p className={LABEL}>What would change the view</p>
         <SaidText value={row.wouldChange} lines={1} />
       </div>
       <div className="flex min-w-0 flex-col gap-1" data-cell="verdict">
-        <p className="text-caption font-medium text-text-tertiary">Verdict</p>
+        <p className={LABEL}>Verdict</p>
         <p className={MINI_GAP}>No verdict is stated per claim.</p>
       </div>
     </li>
@@ -230,70 +232,60 @@ function LedgerTile(props: LeadProps) {
       : found.state === "duplicate"
         ? "The handoff has more than one cross-examination table, so none is read."
         : "The handoff has no cross-examination of the credit case.";
+  if (found.state !== "rows")
+    return (
+      <GapTile span={7} label="Challenged points" kicker="Challenged points">
+        {gap}
+      </GapTile>
+    );
   return (
     <FigureTile
       props={props}
       span={7}
-      label="The case for against the case against"
-      kicker="Bull against bear"
-      title={
-        rows.length
-          ? `${String(rows.length)} ${rows.length === 1 ? "claim" : "claims"} cross-examined`
-          : "Bull against bear"
-      }
-      line={found.state === "rows" ? found.line : undefined}
+      label="Challenged points"
+      kicker="Cross-examination"
+      title="Challenged points"
+      line={found.line}
       source="the cross-examination"
-      table={
-        rows.length
-          ? {
-              caption: "Cross-examination, one row per claim of the credit case",
-              headers: [
-                "Claim",
-                "Evidence for",
-                "Counter-case",
-                "Evidence against",
-                "What would change the view",
-                "Verdict",
-              ],
-              rows: rows.map((row, at) => [
-                String(at + 1),
-                ...ledgerCells(row),
-                "No verdict is stated per claim.",
-              ]),
-            }
-          : undefined
-      }
+      table={{
+        caption: "Cross-examination, one row per challenged point",
+        headers: [
+          "Challenged point",
+          "Evidence for",
+          "Counter-case",
+          "Evidence against",
+          "What would change the view",
+          "Verdict",
+        ],
+        rows: rows.map((row) => [...ledgerCells(row), "No verdict is stated per claim."]),
+      }}
     >
-      {found.state !== "rows" ? (
-        <GapNote>{gap}</GapNote>
-      ) : (
-        <div className="flex min-w-0 flex-col gap-4">
-          <ol
-            className="flex min-w-0 flex-col gap-4"
-            aria-label="Claims and their cross-examination"
-          >
-            {visible.map((row) => (
-              <LedgerItem key={row.line} row={row} />
-            ))}
-          </ol>
-          {rest.length > 0 && (
-            <details className="min-w-0">
-              <summary className="flex min-h-8 w-fit cursor-pointer items-center text-caption font-medium text-text-link">
-                {`Show ${String(rest.length)} more ${rest.length === 1 ? "claim" : "claims"}`}
-              </summary>
-              <ol
-                start={VISIBLE_ROWS + 1}
-                className="mt-4 flex min-w-0 flex-col gap-4"
-                aria-label="More claims and their cross-examination"
-              >
-                {rest.map((row) => (
-                  <LedgerItem key={row.line} row={row} />
-                ))}
-              </ol>
-            </details>
-          )}
-        </div>
-      )}
+      <div className="flex min-w-0 flex-col gap-4">
+        <ol
+          className="flex min-w-0 flex-col gap-4"
+          aria-label="Challenged points and their cross-examination"
+        >
+          {visible.map((row) => (
+            <LedgerItem key={row.line} row={row} />
+          ))}
+        </ol>
+        {rest.length > 0 && (
+          <details className="min-w-0">
+            <summary className="flex min-h-8 w-fit cursor-pointer items-center text-caption font-medium text-text-link">
+              {`Show ${String(rest.length)} more ${rest.length === 1 ? "point" : "points"}`}
+            </summary>
+            <ol
+              start={VISIBLE_ROWS + 1}
+              className="mt-4 flex min-w-0 flex-col gap-4"
+              aria-label="More challenged points and their cross-examination"
+            >
+              {rest.map((row) => (
+                <LedgerItem key={row.line} row={row} />
+              ))}
+            </ol>
+          </details>
+        )}
+      </div>
     </FigureTile>
   );
 }
@@ -317,8 +309,8 @@ function LimitBullet({ item }: { item: Limit }) {
       </li>
     );
   const label = [
-    `${item.name}: current ${shown(item.current, unit ?? "")}`,
-    `proposed ${item.proposed.kind === "number" ? shown(item.proposed, unit ?? "") : "not supplied"}`,
+    `${item.name}: current ${shown(item.current, unit ?? "")}${bullet.currentAbove ? ", above the limit" : ""}`,
+    `proposed ${item.proposed.kind === "number" ? shown(item.proposed, unit ?? "") : "not supplied"}${bullet.proposedAbove ? ", above the limit" : ""}`,
     `limit ${shown(item.limit, unit ?? "")}`,
     "on one scale from zero.",
   ].join(", ");
@@ -379,9 +371,9 @@ function LimitBullet({ item }: { item: Limit }) {
         />
       </svg>
       <p className="flex flex-wrap gap-x-4 gap-y-0.5 font-mono text-caption text-text-secondary tabular-nums">
-        <span>{`Current ${shown(item.current, unit ?? "")}`}</span>
+        <span>{`Current ${shown(item.current, unit ?? "")}${bullet.currentAbove ? " (above the limit)" : ""}`}</span>
         <span className={cx(item.proposed.kind !== "number" && "text-gap-text")}>
-          {`Proposed: ${shown(item.proposed, unit ?? "")}`}
+          {`Proposed: ${shown(item.proposed, unit ?? "")}${bullet.proposedAbove ? " (above the limit)" : ""}`}
         </span>
         <span>{`Limit ${shown(item.limit, unit ?? "")}`}</span>
       </p>
@@ -399,7 +391,7 @@ function LimitsTile(props: LeadProps) {
       span={12}
       label="Portfolio limits"
       kicker="Portfolio limits"
-      title={`${String(found.rows.length)} ${found.rows.length === 1 ? "limit" : "limits"}, exposure against each`}
+      title="Portfolio limits"
       line={found.line}
       source="the portfolio limits"
       legend={[
@@ -427,13 +419,70 @@ function LimitsTile(props: LeadProps) {
   );
 }
 
-/** CP-6: the stance as written and the bull against bear ledger; portfolio limits when stated. */
+const WATCH_ROWS = 8;
+
+/** The module's decision and watch events: a plain list, dates as written. */
+function WatchTile(props: LeadProps) {
+  const found = watch(props.entry);
+  if (found === null) return null;
+  const visible = found.items.slice(0, WATCH_ROWS);
+  const rest = found.items.slice(WATCH_ROWS);
+  const item = (entry: (typeof found.items)[number]) => (
+    <li key={entry.line} className="flex min-w-0 flex-col gap-0.5" data-watch={entry.event}>
+      <p className="font-mono text-caption text-text-secondary tabular-nums">{entry.date}</p>
+      <p className="text-small text-text-primary text-pretty wrap-anywhere">{entry.event}</p>
+      {entry.status && (
+        <p className="text-caption text-text-secondary wrap-anywhere">{entry.status}</p>
+      )}
+    </li>
+  );
+  return (
+    <FigureTile
+      props={props}
+      span={12}
+      label="Watch items"
+      kicker="Decision and watch"
+      title="Watch items"
+      line={found.line}
+      source="the watch items"
+      table={{
+        caption: "Decision and watch events, dates as written",
+        headers: ["Event date", "Event", "Status"],
+        rows: found.items.map((entry) => [entry.date, entry.event, entry.status ?? ""]),
+      }}
+    >
+      <ul className="flex min-w-0 flex-col gap-3">{visible.map(item)}</ul>
+      {rest.length > 0 && (
+        <details className="min-w-0">
+          <summary className="flex min-h-8 w-fit cursor-pointer items-center text-caption font-medium text-text-link">
+            {`Show ${String(rest.length)} more`}
+          </summary>
+          <ul className="mt-3 flex min-w-0 flex-col gap-3">{rest.map(item)}</ul>
+        </details>
+      )}
+    </FigureTile>
+  );
+}
+
+type Draw = "figures" | "events" | "maps";
+
+/**
+ * CP-6: the stance as written, the challenged points, the decision-and-watch events and the
+ * portfolio limits. The stance and the watch items stack in one column, so neither is padded to the
+ * ledger's height.
+ */
 export function CommitteeLead(props: LeadProps) {
   return (
     <LeadFrame props={props}>
-      <StanceTile {...props} />
+      <div className="flex min-w-0 flex-col gap-4 lg:col-span-5">
+        <StanceTile {...props} />
+        <WatchTile {...props} />
+      </div>
       <LedgerTile {...props} />
       <LimitsTile {...props} />
     </LeadFrame>
   );
 }
+
+/** This lead draws the portfolio-limits figure and the module's watch events itself. */
+CommitteeLead.draws = ["figures", "events"] as readonly Draw[];

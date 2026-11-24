@@ -1,5 +1,4 @@
 import { readerText, type OutputEntry, type Table } from "../../publishedReport";
-import { tone } from "../../signal";
 import { namesSource, safeText } from "./kit/reader";
 import { difference, group, readCell, signOf, sum } from "./kit/numbers";
 import { allTables, tableWith } from "./kit/tables";
@@ -24,6 +23,9 @@ const SUPPORT_WORDS: Support[] = [
   "Insufficient evidence",
 ];
 
+/** The accepted and not accepted amounts the assessment states for a step, when they make up the step. */
+export type Split = { accepted: string; notAccepted: string };
+
 type Step = { label: string; amount: string; value: number; line: number };
 
 export type Bridge = {
@@ -33,13 +35,9 @@ export type Bridge = {
   opening: Step;
   closing: Step;
   /** The add-backs, in the order the handoff states them. */
-  changes: (Step & { support: Support | null })[];
+  changes: (Step & { support: Support | null; split: Split | null })[];
   /** Whether the assessment table is there and states a word for at least one add-back. */
   supportStated: boolean;
-  /** Exact sum of the add-backs (derived). */
-  total: string;
-  /** Exact sums of the add-backs by the stated word (derived); only words that occur. */
-  bySupport: { word: Support; count: number; total: string }[];
   notes: string[];
 };
 export type BridgeGap = {
@@ -58,18 +56,47 @@ function stepTable(entry: OutputEntry): Table | null | "several" {
   return bridges.length === 1 ? (bridges[0]?.table ?? null) : "several";
 }
 
-/** Support words by add-back name, only where the assessment table states a recognised word once. */
-function supportByName(entry: OutputEntry) {
+/**
+ * What the assessment table states per add-back name: the support word and, where it states both
+ * accepted and not accepted amounts, those amounts. A name that appears twice cannot be matched.
+ */
+function assessmentByName(entry: OutputEntry) {
   const table = tableWith(entry, ["Achievability"]);
-  const names = new Map<string, Support | null>();
+  const names = new Map<
+    string,
+    { support: Support | null; accepted: string; notAccepted: string }
+  >();
   const at = table?.headers.indexOf("Achievability") ?? -1;
+  const acceptedAt = table?.headers.indexOf("Accepted amount") ?? -1;
+  const notAcceptedAt = table?.headers.indexOf("Not accepted") ?? -1;
+  const none = { support: null, accepted: "", notAccepted: "" };
   for (const row of table?.rows ?? []) {
     const name = norm(row.cells[0] ?? "");
     const word = SUPPORT_WORDS.find((item) => norm(item) === norm(row.cells[at] ?? "")) ?? null;
-    // A name that appears twice cannot be matched: no word for either.
-    names.set(name, names.has(name) ? null : word);
+    names.set(
+      name,
+      names.has(name)
+        ? none
+        : {
+            support: word,
+            accepted: acceptedAt < 0 ? "" : (row.cells[acceptedAt] ?? ""),
+            notAccepted: notAcceptedAt < 0 ? "" : (row.cells[notAcceptedAt] ?? ""),
+          },
+    );
   }
   return names;
+}
+
+/** Both amounts plain numbers that make up the step exactly: only then is the step drawn as two parts. */
+function splitOf(step: Step, stated: { accepted: string; notAccepted: string } | undefined) {
+  const accepted = readCell(stated?.accepted ?? "");
+  const notAccepted = readCell(stated?.notAccepted ?? "");
+  if (accepted.kind !== "number" || notAccepted.kind !== "number") return null;
+  if (accepted.value <= 0 || notAccepted.value <= 0) return null;
+  const made = sum([accepted.text, notAccepted.text]);
+  return made !== null && signOf(difference(step.amount, made)) === 0
+    ? { accepted: accepted.text, notAccepted: notAccepted.text }
+    : null;
 }
 
 const gapOf = (reason: string, stated: BridgeGap["stated"] = []): BridgeGap => ({
@@ -129,19 +156,16 @@ export function readBridge(entry: OutputEntry): Bridge | BridgeGap {
   const [opening, ...rest] = read;
   const closing = rest.pop();
   if (!opening || !closing) return gapOf("The bridge states fewer than two steps.", stated);
-  const total = sum(rest.map((step) => step.amount));
   const rebuilt = sum([opening.amount, ...rest.map((step) => step.amount)]);
   if (rebuilt === null || signOf(difference(closing.amount, rebuilt)) !== 0)
     return gapOf(
-      `The steps do not reconcile: ${opening.label} ${group(opening.amount)} plus the add-backs is ${group(rebuilt ?? "")} (derived), while ${closing.label} states ${group(closing.amount)}.`,
+      `The steps do not reconcile: ${opening.label} states ${group(opening.amount)} and ${closing.label} states ${group(closing.amount)}, which the steps between them do not bridge.`,
       stated,
     );
-  const names = supportByName(entry);
-  const changes = rest.map((step) => ({ ...step, support: names.get(norm(step.label)) ?? null }));
-  const bySupport = SUPPORT_WORDS.flatMap((word) => {
-    const group_ = changes.filter((step) => step.support === word);
-    const sumOf = sum(group_.map((step) => step.amount));
-    return group_.length && sumOf !== null ? [{ word, count: group_.length, total: sumOf }] : [];
+  const names = assessmentByName(entry);
+  const changes = rest.map((step) => {
+    const found = names.get(norm(step.label));
+    return { ...step, support: found?.support ?? null, split: splitOf(step, found) };
   });
   const notes = [
     ...new Set(
@@ -159,8 +183,6 @@ export function readBridge(entry: OutputEntry): Bridge | BridgeGap {
     closing,
     changes,
     supportStated: changes.some((step) => step.support !== null),
-    total: total ?? "0",
-    bySupport,
     notes,
   };
 }
@@ -219,9 +241,6 @@ export type LeverageMeasure =
       measure: string;
       reported: Reported;
       restated: Reported;
-      /** Exact `restated - reported`, derived. */
-      change: string;
-      tone: "better" | "worse" | "flat" | "none";
     }
   | { kind: "gap"; measure: string; reason: string };
 
@@ -240,10 +259,7 @@ function multiple(cell: string) {
 }
 
 const BASIS_ROWS = { reported: "statements", restated: "supported" } as const;
-const MEASURES = [
-  { header: "Total leverage", key: "leverage" },
-  { header: "Net leverage", key: "net_leverage" },
-] as const;
+const MEASURES = ["Total leverage", "Net leverage"] as const;
 
 export type Leverage =
   { state: "ready"; line: number; measures: LeverageMeasure[] } | { state: "gap"; reason: string };
@@ -269,7 +285,7 @@ export function readLeverage(entry: OutputEntry): Leverage {
       reason:
         "The leverage table does not state one row each for the statements and for supported earnings.",
     };
-  const measures = MEASURES.map(({ header, key }): LeverageMeasure => {
+  const measures = MEASURES.map((header): LeverageMeasure => {
     const at = table.headers.indexOf(header);
     const a = multiple(from.cells[at] ?? "");
     const b = multiple(to.cells[at] ?? "");
@@ -280,15 +296,7 @@ export function readLeverage(entry: OutputEntry): Leverage {
       ].filter((text) => text !== null);
       return { kind: "gap", measure: header, reason: why.join("; ") };
     }
-    const change = difference(b.text, a.text) ?? "0";
-    return {
-      kind: "pair",
-      measure: header,
-      reported: a,
-      restated: b,
-      change,
-      tone: tone(key, change),
-    };
+    return { kind: "pair", measure: header, reported: a, restated: b };
   });
   return { state: "ready", line: table.line, measures };
 }

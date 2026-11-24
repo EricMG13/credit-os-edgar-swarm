@@ -250,7 +250,7 @@ describe("PeerBenchmarkLead", () => {
 
   it("notes that outliers and the peer table are not in this handoff, unless an outlier table exists", () => {
     const { unmount } = render(<PeerBenchmarkLead {...leadProps(peers(PERCENT, MULTIPLES))} />);
-    expect(screen.getByText("Outliers and the peer table are not in this handoff.")).toBeVisible();
+    expect(screen.getByText(/Outliers and the peer table are not in this handoff\./)).toBeVisible();
     unmount();
     render(
       <PeerBenchmarkLead
@@ -261,7 +261,7 @@ describe("PeerBenchmarkLead", () => {
         )}
       />,
     );
-    expect(screen.queryByText("Outliers and the peer table are not in this handoff.")).toBeNull();
+    expect(screen.queryByText(/Outliers and the peer table are not in this handoff\./)).toBeNull();
   });
 
   it("with no range table at all draws one gap tile naming the true condition, never the bottom line", () => {
@@ -337,9 +337,7 @@ describe("PeerBenchmarkLead", () => {
       />,
     );
     const tile = screen.getByRole("region", { name: "Peer range, multiples" });
-    expect(within(tile).getByRole("heading", { level: 3 })).toHaveTextContent(
-      "Peer range for 1 multiple",
-    );
+    expect(within(tile).getByRole("heading", { level: 3 })).toHaveTextContent(/^Peer range$/);
     expect(tile.querySelectorAll("[data-band]")).toHaveLength(1);
   });
 

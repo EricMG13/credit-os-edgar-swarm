@@ -1,7 +1,7 @@
 import { StatsStrip, type Stat } from "@/components/kit/StatsStrip";
 import { MiniSlope } from "../overview/marks";
-import { GapNote, Tile } from "../overview/Tile";
-import { FigureTile, LeadFrame } from "./kit/LeadFrame";
+import type { FC } from "react";
+import { FigureTile, GapTile, LeadFrame } from "./kit/LeadFrame";
 import {
   MOST_FIGURES,
   readChangeScreen,
@@ -18,7 +18,17 @@ import type { LeadProps } from "./types";
  * a table with Topic, Prior and Current columns (the contract names no others).
  */
 
-const DIRECTION = { "-1": "down", "0": "unchanged", "1": "up" } as const;
+/** A figure the module did not supply: the system's hatched not-known slot, with its reason. */
+function GapSlot({ reason }: { reason: string }) {
+  return (
+    <span className="gap-hatch flex min-h-9 items-center justify-center rounded-ds-xs border border-dashed border-border-gap p-1.5 text-caption text-gap-text">
+      <span className="rounded-ds-xs bg-surface-card px-1.5 py-0.5">{reason}</span>
+    </span>
+  );
+}
+
+const signed = (sign: -1 | 0 | 1, size: string) =>
+  sign === 1 ? `+${size}` : sign === -1 ? `\u2212${size}` : size;
 
 const stated = (figure: Figure) => (figure.kind === "value" ? figure.text : "not supplied");
 
@@ -27,7 +37,7 @@ function statOf(item: KeyFigure): Stat {
   const label = `${item.measure}, ${current.period}`;
   const base: Stat =
     current.kind === "gap"
-      ? { label, value: null, gap: current.reason }
+      ? { label, value: null, gap: "Not supplied", mark: <GapSlot reason={current.reason} /> }
       : { label, value: current.text };
   if (!prior) return base;
   const stat: Stat = {
@@ -36,7 +46,7 @@ function statOf(item: KeyFigure): Stat {
       prior.kind === "value" ? `${prior.text} in ${prior.period}` : `${prior.period}: not supplied`,
   };
   if (change) {
-    stat.delta = `${DIRECTION[String(change.sign) as keyof typeof DIRECTION]}${change.sign === 0 ? "" : ` ${change.size}`} (derived)`;
+    stat.delta = signed(change.sign, change.size);
     if (change.tone === "better" || change.tone === "worse") stat.tone = change.tone;
   }
   if (marks && change)
@@ -57,9 +67,9 @@ function Strip({ props }: { props: LeadProps }) {
   const read = readKeyFigures(props.entry);
   if (read.state === "gap")
     return (
-      <Tile span={12} label="Key figures" kicker="Not drawn" tone="gap">
-        <GapNote>{read.reason}</GapNote>
-      </Tile>
+      <GapTile span={12} label="Key figures" kicker="Key figures">
+        {read.reason}
+      </GapTile>
     );
   const shown = read.figures.slice(0, MOST_FIGURES);
   const more = read.figures.length - shown.length;
@@ -69,27 +79,17 @@ function Strip({ props }: { props: LeadProps }) {
       span={12}
       label="Key figures"
       kicker="Each figure in the period the module states"
-      title={`${String(read.figures.length)} key figure${read.figures.length === 1 ? "" : "s"}`}
+      title="Key figures"
       line={read.line}
       source="the key figures"
       notes={[
         ...(more > 0
           ? [`${String(more)} more figure${more === 1 ? " is" : "s are"} in the table view.`]
           : []),
-        ...(read.figures.some((item) => item.change)
-          ? ["Changes are the exact difference of the two stated figures."]
-          : []),
       ]}
       table={{
         caption: "Key figures",
-        headers: [
-          "Measure",
-          "Period",
-          "Value",
-          "Earlier period",
-          "Earlier value",
-          "Change (derived)",
-        ],
+        headers: ["Measure", "Period", "Value", "Earlier period", "Earlier value", "Change"],
         rows: read.figures.map((item) => [
           item.measure,
           item.current.period,
@@ -116,9 +116,9 @@ function ChangeScreen({ props }: { props: LeadProps }) {
   if (!read) return null;
   if (read.state === "gap")
     return (
-      <Tile span={12} label="Change screen" kicker="Not drawn" tone="gap">
-        <GapNote>{read.reason}</GapNote>
-      </Tile>
+      <GapTile span={12} label="Change screen" kicker="Change screen">
+        {read.reason}
+      </GapTile>
     );
   return (
     <FigureTile
@@ -126,7 +126,7 @@ function ChangeScreen({ props }: { props: LeadProps }) {
       span={12}
       label="Change screen"
       kicker="Topic by topic, earlier to later"
-      title={`${String(read.items.length)} topic${read.items.length === 1 ? "" : "s"} screened`}
+      title="Change screen"
       line={read.line}
       source="the change screen"
       table={{
@@ -168,11 +168,15 @@ function ChangeScreen({ props }: { props: LeadProps }) {
 }
 
 /** CP-L10: the key-figure strip, each figure prior to current where the table states both periods; then the change screen. */
-export function ShortSnapshotLead(props: LeadProps) {
+export const ShortSnapshotLead: FC<LeadProps> & {
+  draws?: readonly ("figures" | "events" | "maps")[];
+} = function ShortSnapshotLead(props) {
   return (
     <LeadFrame props={props}>
       <Strip props={props} />
       <ChangeScreen props={props} />
     </LeadFrame>
   );
-}
+};
+// This lead draws no typed figure, event lane or map of the module's own.
+ShortSnapshotLead.draws = [];

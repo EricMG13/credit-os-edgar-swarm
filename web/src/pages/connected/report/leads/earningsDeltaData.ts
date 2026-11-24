@@ -14,10 +14,22 @@ const NO_KPIS = "The handoff has no table of margin and KPI changes.";
 const NO_MARGINS = "The handoff's earnings table has no margin row.";
 const NO_COLUMNS =
   "The table of prior and current results lacks the measure, prior, current or unit column this page reads.";
-const NO_PAIRS = "The table states no row to compare.";
-const TWICE =
-  "The handoff states this table more than once, so this page does not choose between the copies.";
+const NO_ROWS = "The table of prior and current results has no rows.";
+const NO_PAIRS = "The earnings table states no row with a figure for both periods.";
 export const NO_PERCENT = "The margin cells do not state a percent sign, so they are not drawn.";
+export const TWICE_RESULTS =
+  "The handoff states the table of prior and current results more than once, so this page does not choose between them.";
+export const TWICE_KPIS =
+  "The handoff states the table of margin and KPI changes more than once, so this page does not choose between them.";
+export const TWICE_EARNINGS =
+  "The handoff has more than one earnings table, so this page does not choose between them.";
+export const TWICE_BRIDGE =
+  "The handoff has more than one variance bridge table, so this page does not choose between them.";
+export const FEW_PERIODS =
+  "The earnings table states fewer than two annual periods, so it has no prior and current to compare.";
+export const MIXED_PERIODS =
+  "The earnings table's two latest annual periods are different kinds of period, so they are not compared.";
+export const SAME_YEAR = "The earnings table's two latest annual periods are the same year.";
 
 /** Handoff words for the page, or the Evidence pointer where they name a source or are empty. */
 const readable = (text: string) => safeText(text) || IN_EVIDENCE;
@@ -65,6 +77,7 @@ export type Side = {
 export type Change = {
   /** The change in the unit's own words with its sign: `+1,355`, `−0.5 percentage points`. */
   text: string;
+  /** `stated`: the module wrote the change; `derived`: the exact prior to current difference. */
   basis: "stated" | "derived";
   sign: -1 | 0 | 1;
   magnitude: number;
@@ -73,6 +86,9 @@ export type Change = {
 };
 
 type Tone = "better" | "worse" | "flat" | "none";
+
+/** A period the handoff states beside the two compared, listed as its own: `LTM Dec-2024`. */
+export type OtherPeriod = { period: string; text: string };
 
 export type Pair = {
   label: string;
@@ -83,6 +99,9 @@ export type Pair = {
   current: Side;
   change: Change | null;
   tone: Tone;
+  /** The two periods are different kinds (`FY2024` to `LTM Dec-2024`): no change figure is made. */
+  mixedBasis: boolean;
+  others: OtherPeriod[];
 };
 
 export type PairGroup = {
@@ -91,10 +110,8 @@ export type PairGroup = {
   percent: boolean;
   /** The row states no unit: it is alone on its own scale, never on one shared with another row. */
   unitNotStated: boolean;
-  /** Pairs with both figures stated, the largest change first. */
-  ranked: Pair[];
-  /** The ranked pairs the figure draws (at most CAP). */
-  shown: Pair[];
+  /** Pairs with both figures stated, in the handoff's own order. */
+  rows: Pair[];
   /** Pairs with a stated gap: drawn as the gap, with the handoff's reason. */
   gaps: Pair[];
   /** Pairs that state words where a figure belongs: in the table view only. */
@@ -110,6 +127,8 @@ export type PairFigure =
       /** The handoff's earnings table was read, since it carries no chart table for this figure. */
       fallback: boolean;
       notes: string[];
+      /** Periods stated beside the compared two, as the table states them (their own columns in the table view). */
+      otherPeriods: string[];
     }
   | { kind: "gap"; reason: string; line?: number };
 
@@ -146,6 +165,7 @@ function changeText(sign: number, abs: string, unit: string) {
 const signOfAbs = (abs: string, negative: boolean): -1 | 0 | 1 =>
   Number(abs) === 0 ? 0 : negative ? -1 : 1;
 
+/** The one computed figure this page makes: the exact prior to current difference of one measure. */
 function derivedChange(prior: Side, current: Side, unit: string): Change | null {
   const exact = difference(current.text, prior.text);
   if (exact === null) return null;
@@ -160,17 +180,22 @@ function derivedChange(prior: Side, current: Side, unit: string): Change | null 
   };
 }
 
-/** A plain number the module states as the change (`1355`, `-2`, `+129`), in the unit's words. */
+const AMOUNT = /^([+−-]?)\s*(\d[\d,]*(?:\.\d+)?)(?:\s+([A-Za-z][A-Za-z ,]*))?$/;
+
+/** The change the module states beside its figures (`1355`, `-2`, `+129`, `22 reported`), as written. */
 function statedAmount(cell: string | undefined, unit: string): Change | null {
-  const reading = readCell((cell ?? "").trim().replace(/^\+/, ""));
+  const found = AMOUNT.exec((cell ?? "").trim());
+  if (!found) return null;
+  const [, mark = "", digits = "", words = ""] = found;
+  const reading = readCell(digits);
   if (reading.kind !== "number") return null;
-  const abs = magnitudeOf(reading.text);
-  const sign = signOfAbs(abs, reading.value < 0);
+  const sign = signOfAbs(reading.text, mark === "-" || mark === MINUS);
+  const tail = words && !namesSource(words) ? ` ${readerText(words.trim())}` : "";
   return {
-    text: changeText(sign, abs, unit),
+    text: `${changeText(sign, reading.text, unit)}${tail}`,
     basis: "stated",
     sign,
-    magnitude: Number(abs),
+    magnitude: Number(reading.text),
     conflict: false,
   };
 }
@@ -200,7 +225,8 @@ function settle(stated: Change | null, derived: Change | null): Change | null {
 }
 
 // Measures the owner's table (signal.ts) knows, by the label as the handoff writes it. Any other label
-// gets a direction and no better or worse word.
+// gets a direction and no better or worse word. The keys are CP-1's own: a ratio of debt to EBITDA
+// rising is worse here exactly as it is there.
 const SIGNAL_KEY = new Map([
   ["revenue", "revenue"],
   ["adjusted ebitda", "adjusted_ebitda"],
@@ -212,50 +238,61 @@ const SIGNAL_KEY = new Map([
   ["total debt", "gross_debt"],
   ["leverage", "leverage"],
   ["total leverage", "leverage"],
+  ["gross leverage", "leverage"],
+  ["total debt / ebitda", "leverage"],
   ["net leverage", "net_leverage"],
+  ["net debt / ebitda", "net_leverage"],
   ["interest coverage", "coverage"],
+  ["interest cover", "coverage"],
   ["coverage", "coverage"],
+  ["liquidity", "liquidity"],
+  ["undrawn committed facilities", "undrawn"],
 ]);
 
 function toneOf(label: string, change: Change | null): Tone {
-  const key = SIGNAL_KEY.get(label.trim().toLowerCase());
+  const key = SIGNAL_KEY.get(label.trim().replace(/\s+/g, " ").toLowerCase());
   if (!key || !change) return "none";
   return tone(key, `${change.sign < 0 ? "-" : ""}${String(change.magnitude)}`);
 }
 
-type PairInput = Omit<Pair, "change" | "tone"> & { unit: string; stated: Change | null };
+/** The kind of a period label with its year and punctuation removed (`FY2024` is `FY`). */
+const kindOf = (label: string) =>
+  label
+    .replace(/\d{4}/g, "")
+    .replace(/[^A-Za-z]/g, "")
+    .toUpperCase();
 
-function pairOf({ unit, stated, ...parts }: PairInput): Pair {
-  const change = settle(stated, derivedChange(parts.prior, parts.current, unit));
-  return { ...parts, change, tone: toneOf(parts.label, change) };
+type PairInput = Omit<Pair, "change" | "tone" | "mixedBasis" | "others"> & {
+  unit: string;
+  stated: Change | null;
+  others?: OtherPeriod[];
+};
+
+function pairOf({ unit, stated, others = [], ...parts }: PairInput): Pair {
+  const mixedBasis =
+    parts.priorPeriod !== null &&
+    parts.currentPeriod !== null &&
+    kindOf(parts.priorPeriod) !== kindOf(parts.currentPeriod);
+  const change = settle(stated, mixedBasis ? null : derivedChange(parts.prior, parts.current, unit));
+  return { ...parts, change, tone: toneOf(parts.label, change), mixedBasis, others };
 }
 
 const drawable = (pair: Pair) => pair.prior.kind === "number" && pair.current.kind === "number";
 const hasGap = (pair: Pair) => [pair.prior, pair.current].some((one) => one.kind === "gap");
 
 /**
- * One unit's pairs. `amounts` is a figure of amounts (ranked movers: largest change first, one scale
- * from zero); otherwise levels (margins and KPIs: the handoff's order, a scale around the values).
+ * One unit's pairs, in the handoff's own order. `amounts` is a figure of amounts (one scale from
+ * zero); otherwise levels (a scale around the values, said to start where it does).
  */
 function groupOf(unit: string, pairs: Pair[], amounts: boolean): PairGroup {
-  const ranked = pairs
-    .filter(drawable)
-    .map((pair, at) => ({ pair, at }))
-    .sort((a, b) =>
-      amounts
-        ? (b.pair.change?.magnitude ?? 0) - (a.pair.change?.magnitude ?? 0) || a.at - b.at
-        : a.at - b.at,
-    )
-    .map(({ pair }) => pair);
-  const shown = ranked.slice(0, CAP);
-  const values = shown.flatMap((pair) => [pair.prior.value ?? 0, pair.current.value ?? 0]);
+  const rows = pairs.filter(drawable);
+  const values = rows.flatMap((pair) => [pair.prior.value ?? 0, pair.current.value ?? 0]);
   const rest = pairs.filter((pair) => !drawable(pair));
   return {
     unit,
     percent: PERCENT_UNIT.test(unit),
     unitNotStated: unit === "",
-    ranked,
-    shown,
+    rows,
     gaps: rest.filter(hasGap),
     words: rest.filter((pair) => !hasGap(pair)),
     axis: values.length > 0 ? axisFor(values, amounts) : null,
@@ -296,16 +333,24 @@ const basisNotes = (table: Table) => {
 };
 
 const NOTE_ROWS = "Pairs that state words instead of a figure are in the table view only.";
+const NOTE_MIXED =
+  "A pair whose two periods are different kinds of period has no change figure; its two figures are drawn as stated.";
 
-/** A `Chart data: …` pair table (`Measure | Prior period | Prior | Current period | Current | Reporting unit`). */
+const hasMixed = (groups: PairGroup[]) =>
+  groups.some((one) => [...one.rows, ...one.gaps, ...one.words].some((pair) => pair.mixedBasis));
+
+/** A `Chart data: …` pair table (`Measure | Prior period | Prior | Current period | Current | Reporting unit`); null when the handoff has none. */
 function chartPairs(
   entry: OutputEntry,
   heading: string,
   amounts: boolean,
-  none: string,
-): PairFigure {
-  const table = tableUnder(entry, heading);
-  if (!table) return { kind: "gap", reason: none };
+  twice: string,
+): PairFigure | null {
+  const found = allTables(entry).filter((item) => item.heading === heading);
+  const [only] = found;
+  if (!only) return null;
+  if (found.length > 1) return { kind: "gap", reason: twice };
+  const { table } = only;
   const at = (name: string) => columnOf(table, name);
   const [measure, priorPeriod, prior, currentPeriod, current, unit] = [
     "Measure",
@@ -321,8 +366,6 @@ function chartPairs(
   const pairs = table.rows.map((row) => {
     const unitText = (cell(row.cells, unit) ?? "").trim();
     const unitName = unitLabel(unitText);
-    const priorSide = side(cell(row.cells, prior));
-    const currentSide = side(cell(row.cells, current));
     return {
       unit: unitName,
       pair: pairOf({
@@ -330,42 +373,88 @@ function chartPairs(
         line: row.line,
         priorPeriod: period(cell(row.cells, priorPeriod)),
         currentPeriod: period(cell(row.cells, currentPeriod)),
-        prior: priorSide,
-        current: currentSide,
+        prior: side(cell(row.cells, prior)),
+        current: side(cell(row.cells, current)),
         unit: unitName,
         stated: null,
       }),
     };
   });
-  if (pairs.length === 0) return { kind: "gap", reason: NO_PAIRS, line: table.line };
+  if (pairs.length === 0) return { kind: "gap", reason: NO_ROWS, line: table.line };
   const groups = byUnit(pairs, amounts);
   const notes = [
     ...basisNotes(table),
     ...(groups.some((one) => one.words.length) ? [NOTE_ROWS] : []),
+    ...(hasMixed(groups) ? [NOTE_MIXED] : []),
   ];
-  return { kind: "ready", line: table.line, groups, fallback: false, notes };
+  return { kind: "ready", line: table.line, groups, fallback: false, notes, otherPeriods: [] };
 }
 
 // ---------------------------------------------------------------------------------------------
 // The handoff's own earnings table (T4.4), when it carries no chart table
 
-type Statement = { table: Table; unit: string | null };
+type Column = { at: number; label: string; year: number; kind: string };
+
+type Statement =
+  | {
+      kind: "table";
+      table: Table;
+      unit: string | null;
+      prior: Column;
+      current: Column;
+      /** The stated change column describes these two periods: they are the table's only annual periods. */
+      statedAgrees: boolean;
+      others: Column[];
+    }
+  | { kind: "gap"; reason: string; line?: number };
 
 const UNIT_SENTENCE = /All money amounts are ([^.;]+?)\s*(?:[.;]|$)/i;
+const ANNUAL = /^(FY|CY)?\s?(\d{4})$/i;
 
-/** The one line-item table with two period columns, and the unit its heading's text states. */
-function statement(entry: OutputEntry): Statement | null {
-  const found = allTables(entry).filter(
-    ({ table }) => table.headers[0]?.trim() === "Line Item" && periodColumns(table) !== null,
-  );
+/** The periods a statement table's headers state, annual ones apart from any other (`LTM Dec-2024`). */
+function periodsOf(table: Table) {
+  const annual: Column[] = [];
+  const other: Column[] = [];
+  table.headers.forEach((header, at) => {
+    const label = header.trim();
+    if (at === 0 || /^yoy\b/i.test(label)) return;
+    const year = /(\d{4})/.exec(label)?.[1];
+    if (year === undefined) return;
+    const dated = ANNUAL.exec(label);
+    const column = { at, label, year: Number(year), kind: (dated?.[1] ?? "").toUpperCase() };
+    (dated ? annual : other).push(column);
+  });
+  return { annual, other };
+}
+
+/** The one line-item table, its two latest annual periods, and the unit its heading's text states. */
+function statement(entry: OutputEntry): Statement {
+  const found = allTables(entry).filter(({ table }) => table.headers[0]?.trim() === "Line Item");
   const [only] = found;
-  if (found.length !== 1 || !only) return null;
-  const section = entry.sections.find((one) => one.blocks.includes(only.table));
+  if (!only) return { kind: "gap", reason: NO_RESULTS };
+  if (found.length > 1) return { kind: "gap", reason: TWICE_EARNINGS };
+  const { table } = only;
+  const { annual, other } = periodsOf(table);
+  const ordered = [...annual].sort((a, b) => a.year - b.year);
+  const current = ordered.at(-1);
+  const prior = ordered.at(-2);
+  if (!current || !prior) return { kind: "gap", reason: FEW_PERIODS, line: table.line };
+  if (prior.year === current.year) return { kind: "gap", reason: SAME_YEAR, line: table.line };
+  if (prior.kind !== current.kind) return { kind: "gap", reason: MIXED_PERIODS, line: table.line };
+  const section = entry.sections.find((one) => one.blocks.includes(table));
   const sentence = (section?.blocks ?? []).flatMap((block) =>
     block.type === "text" ? [UNIT_SENTENCE.exec(block.text)?.[1]?.trim()] : [],
   );
   const stated = sentence.find((text) => text);
-  return { table: only.table, unit: stated ? unitLabel(stated) : null };
+  return {
+    kind: "table",
+    table,
+    unit: stated ? unitLabel(stated) : null,
+    prior,
+    current,
+    statedAgrees: annual.length === 2,
+    others: [...ordered.slice(0, -2), ...other],
+  };
 }
 
 const PERCENT_CELL = /^(-?\d+(?:\.\d+)?)\s*%$/;
@@ -383,13 +472,16 @@ function percentSide(cell: string | undefined): Side {
 /** Money rows (both periods plain numbers) or margin rows (a percent sign in every stated cell). */
 function statementPairs(entry: OutputEntry, margins: boolean): PairFigure {
   const read = statement(entry);
-  if (!read) return { kind: "gap", reason: margins ? NO_KPIS : NO_RESULTS };
-  const { table, unit } = read;
-  const periods = periodColumns(table);
-  if (!periods) return { kind: "gap", reason: NO_RESULTS, line: table.line };
+  if (read.kind === "gap")
+    return {
+      kind: "gap",
+      reason: read.reason === NO_RESULTS && margins ? NO_KPIS : read.reason,
+      ...(read.line === undefined ? {} : { line: read.line }),
+    };
+  const { table, unit, prior, current, others } = read;
   const rows = table.rows.filter((row) => isMargin(row.cells[0] ?? "") === margins);
   const change = columnOf(table, "YoY Change (Abs)");
-  const cells = rows.map((row) => [row.cells[periods.prior.at], row.cells[periods.current.at]]);
+  const cells = rows.map((row) => [row.cells[prior.at], row.cells[current.at]]);
   if (margins) {
     const stated = cells.flat().filter((cell) => side(cell).kind !== "gap");
     if (!stated.every((cell) => PERCENT_CELL.test((cell ?? "").trim().replaceAll("−", "-"))))
@@ -398,40 +490,54 @@ function statementPairs(entry: OutputEntry, margins: boolean): PairFigure {
   const unitName = margins ? "%" : (unit ?? "");
   const pairs = rows.map((row, at) => {
     const [priorCell, currentCell] = cells[at] ?? [];
-    const stateds = change < 0 ? undefined : row.cells[change];
+    const stateds = change < 0 || !read.statedAgrees ? undefined : row.cells[change];
     return {
       unit: unitName,
       pair: pairOf({
         label: readable(row.cells[0] ?? ""),
         line: row.line,
-        priorPeriod: periods.prior.label,
-        currentPeriod: periods.current.label,
+        priorPeriod: prior.label,
+        currentPeriod: current.label,
         prior: margins ? percentSide(priorCell) : side(priorCell),
         current: margins ? percentSide(currentCell) : side(currentCell),
         unit: unitName,
         stated: margins ? statedPoints(stateds) : statedAmount(stateds, unitName),
+        others: others.map((column) => ({
+          period: column.label,
+          text: readable(row.cells[column.at] ?? ""),
+        })),
       }),
     };
   });
   if (pairs.length === 0)
     return { kind: "gap", reason: margins ? NO_MARGINS : NO_PAIRS, line: table.line };
   const groups = byUnit(pairs, !margins);
-  if (groups.every((one) => one.shown.length === 0 && one.gaps.length === 0))
+  if (groups.every((one) => one.rows.length === 0 && one.gaps.length === 0))
     return { kind: "gap", reason: NO_PAIRS, line: table.line };
-  const notes = groups.some((one) => one.words.length) ? [NOTE_ROWS] : [];
-  return { kind: "ready", line: table.line, groups, fallback: true, notes };
+  const names = others.map((column) => column.label);
+  const notes = [
+    ...(groups.some((one) => one.words.length) ? [NOTE_ROWS] : []),
+    ...(names.length > 0
+      ? [
+          `Compared: ${prior.label} to ${current.label}. Also stated, in the table view only: ${names.join(", ")}.`,
+        ]
+      : []),
+  ];
+  return { kind: "ready", line: table.line, groups, fallback: true, notes, otherPeriods: names };
 }
 
 // ---------------------------------------------------------------------------------------------
 // The variance bridge
 
 export type Step = {
+  /** The step's name as the handoff writes it. */
   label: string;
   role: "opening" | "change" | "closing";
   text: string;
   value: number;
   /** Where a change step starts and ends on the axis; the totals are drawn from the axis start. */
   from: number | null;
+  /** Where the step ends on the axis: drawing geometry only, never printed. */
   level: number;
   line: number;
 };
@@ -455,10 +561,11 @@ export function bridge(entry: OutputEntry): Bridge | null {
       table.headers.every((header, at) => header === STEP_HEADERS[at]),
   );
   const [only] = tables;
-  if (tables.length !== 1 || !only) return null;
+  if (!only) return null;
   const { table } = only;
-  const amounts = table.rows.map((row) => row.cells[1] ?? "");
   const refuse = (message: string): Bridge => ({ kind: "unreconciled", line: table.line, message });
+  if (tables.length > 1) return refuse(TWICE_BRIDGE);
+  const amounts = table.rows.map((row) => row.cells[1] ?? "");
   if (table.rows.length < 3)
     return refuse(`${NOT_DRAWN}: it has no change steps between its opening and its closing.`);
   const readings = amounts.map(readCell);
@@ -520,13 +627,9 @@ export type EarningsDelta = {
 };
 
 export function earningsDelta(entry: OutputEntry): EarningsDelta {
-  const results = chartPairs(entry, RESULTS, true, NO_RESULTS);
-  const kpis = chartPairs(entry, KPIS, false, NO_KPIS);
-  const hasChartTable = (figure: PairFigure) =>
-    figure.kind === "ready" || figure.line !== undefined;
   return {
     bridge: bridge(entry),
-    movers: hasChartTable(results) ? results : statementPairs(entry, false),
-    kpis: hasChartTable(kpis) ? kpis : statementPairs(entry, true),
+    movers: chartPairs(entry, RESULTS, true, TWICE_RESULTS) ?? statementPairs(entry, false),
+    kpis: chartPairs(entry, KPIS, false, TWICE_KPIS) ?? statementPairs(entry, true),
   };
 }

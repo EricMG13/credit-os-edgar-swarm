@@ -58,7 +58,7 @@ const LEDGER_HEADERS = [
 ];
 const claim = (n: number, over: Partial<Record<string, string>> = {}) => [
   `r${String(n)}`,
-  `T2.${String(n)}`,
+  over["point"] ?? `Point ${String(n)}`,
   over["counter"] ?? `Counter ${String(n)}`,
   over["for"] ?? `For ${String(n)}`,
   over["against"] ?? `Against ${String(n)}`,
@@ -249,9 +249,7 @@ describe("CommitteeLead", () => {
   it("draws the stance as written, the caption, the confidence meter and the conditions", () => {
     const { container } = renderLead(FULL());
     const tile = screen.getByRole("region", { name: "Committee stance" });
-    expect(within(tile).getByRole("heading", { level: 3 }).textContent).toBe(
-      "Underweight, confidence Medium",
-    );
+    expect(within(tile).getByRole("heading", { level: 3 }).textContent).toBe("Committee stance");
     expect(tile.querySelector("[data-action-bias]")?.textContent).toBe("Underweight");
     expect(within(tile).getByText("Confidence Medium")).toBeVisible();
     expect(
@@ -269,20 +267,18 @@ describe("CommitteeLead", () => {
   });
   it("draws the gap when no action bias is stated", () => {
     renderLead(cp6Entry());
-    expect(screen.getByText("The handoff states no action bias.")).toBeVisible();
+    expect(screen.getByText(/The handoff states no action bias\./)).toBeVisible();
   });
   it("draws one ledger row per claim with a verdict gap that is always the same designed words", () => {
     renderLead(FULL());
-    const tile = screen.getByRole("region", { name: "The case for against the case against" });
-    expect(within(tile).getByRole("heading", { level: 3 }).textContent).toBe(
-      "2 claims cross-examined",
-    );
+    const tile = screen.getByRole("region", { name: "Challenged points" });
+    expect(within(tile).getByRole("heading", { level: 3 }).textContent).toBe("Challenged points");
     const rows = tile.querySelectorAll("ol > li");
     expect(rows).toHaveLength(2);
+    expect(rows[0]?.querySelector('[data-cell="point"]')?.textContent).toContain("Point 1");
     expect(rows[0]?.querySelector('[data-cell="for"]')?.textContent).toContain("For 1");
-    const against = rows[1]?.querySelector('[data-cell="against"]')?.textContent ?? "";
-    expect(against.indexOf("Counter 2")).toBeGreaterThan(-1);
-    expect(against.indexOf("Counter 2")).toBeLessThan(against.indexOf("Against 2"));
+    expect(rows[1]?.querySelector('[data-cell="counter"]')?.textContent).toContain("Counter 2");
+    expect(rows[1]?.querySelector('[data-cell="against"]')?.textContent).toContain("Against 2");
     expect(rows[0]?.querySelector('[data-cell="change"]')?.textContent).toContain("Change 1");
     for (const row of rows)
       expect(row.querySelector('[data-cell="verdict"]')?.textContent).toContain(
@@ -295,15 +291,13 @@ describe("CommitteeLead", () => {
       tbl("T6A.4", LEDGER_HEADERS, ...[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((n) => claim(n))),
     );
     renderLead(many);
-    const tile = screen.getByRole("region", { name: "The case for against the case against" });
+    const tile = screen.getByRole("region", { name: "Challenged points" });
     const lists = tile.querySelectorAll("ol");
     expect(lists[0]?.children).toHaveLength(8);
     const more = tile.querySelector("details");
-    expect(more?.querySelector("summary")?.textContent).toBe("Show 2 more claims");
+    expect(more?.querySelector("summary")?.textContent).toBe("Show 2 more points");
     expect(more?.querySelectorAll("li")).toHaveLength(2);
-    expect(within(tile).getByRole("heading", { level: 3 }).textContent).toBe(
-      "10 claims cross-examined",
-    );
+    expect(within(tile).getByRole("heading", { level: 3 }).textContent).toBe("Challenged points");
   });
   it("trims a long case to two lines with Show more, and draws a stated gap and a citation as such", () => {
     const long = "A long statement about the credit case. ".repeat(8).trim();
@@ -339,7 +333,7 @@ describe("CommitteeLead", () => {
   it("draws a gap for a ledger that is absent or empty", () => {
     renderLead(cp6(bias("Neutral", "x", "Low")));
     expect(
-      screen.getByText("The handoff has no cross-examination of the credit case."),
+      screen.getByText(/The handoff has no cross-examination of the credit case\./),
     ).toBeVisible();
   });
   it("draws each limit as a bullet in proportion, and the unsupplied proposal as a gap mark", () => {
@@ -372,6 +366,40 @@ describe("CommitteeLead", () => {
     const { container } = renderLead(cp6Entry());
     expect(container.querySelectorAll('[data-cell="verdict"]')).toHaveLength(0);
     expect(screen.getByRole("region", { name: "Portfolio limits" })).toBeVisible();
+  });
+  it("draws the challenged point as the row's subject, with the module's own column names and no bull or bear words", () => {
+    const { container } = renderLead(
+      cp6(
+        bias("Neutral", "x", "Low"),
+        tbl(
+          "T6A.4",
+          LEDGER_HEADERS,
+          claim(1, {
+            point: "Weakness: leverage is high and rising",
+            for: "Gross debt rose from 19,750 to 24,880 while EBITDA rose less.",
+            counter: "EBITDA growth may outpace debt.",
+            against: "Cash covers the 2026 maturity.",
+          }),
+        ),
+      ),
+    );
+    const row = container.querySelector("ol > li") as HTMLElement;
+    expect(row.querySelector('[data-cell="point"]')?.textContent).toBe(
+      "Challenged pointWeakness: leverage is high and rising",
+    );
+    const labels = [...row.querySelectorAll("p")]
+      .filter((p) => p.className.includes("font-medium text-text-tertiary"))
+      .map((p) => p.textContent);
+    expect(labels).toEqual([
+      "Challenged point",
+      "Counter-case",
+      "Evidence for this point",
+      "Evidence against this point",
+      "What would change the view",
+      "Verdict",
+    ]);
+    expect(row.querySelector('[data-cell="for"]')?.textContent).toContain("Gross debt rose");
+    expect(container.textContent).not.toMatch(/bull|bear|case for|case against/i);
   });
   it("wraps very long words", () => {
     const long = "y".repeat(200);
@@ -410,5 +438,75 @@ describe("a gap reason that names a source", () => {
       screen.getByText("Current exposure is not supplied: Detail is in Evidence."),
     ).toBeVisible();
     expect(container.textContent).not.toMatch(/xlsx|CP-2/);
+  });
+});
+
+describe("layout, titles and what the lead draws", () => {
+  it("names each tile plainly, with no count", () => {
+    renderLead(FULL());
+    const titles = screen.getAllByRole("heading", { level: 3 }).map((h) => h.textContent);
+    expect(titles).toEqual(["Committee stance", "Challenged points", "Portfolio limits"]);
+  });
+  it("says it draws figures and events itself", () => {
+    expect(CommitteeLead.draws).toEqual(["figures", "events"]);
+  });
+  it("stacks the stance and the watch items in one column, so neither is stretched by the ledger", () => {
+    const { container } = renderLead(cp6Entry());
+    const column = screen.getByRole("region", { name: "Watch items" }).parentElement as HTMLElement;
+    expect(column.className).toContain("flex-col");
+    expect(column.className).toContain("lg:col-span-5");
+    expect(container.querySelector('section[aria-label="Committee stance"]')).not.toBeNull();
+  });
+  it("marks a proposed exposure above its limit with the words, in text and aria", () => {
+    const { container } = renderLead(
+      cp6(
+        tbl("Chart data: portfolio limits", LIMIT_HEADERS, [
+          "Max single issuer",
+          "11.0",
+          "12.6",
+          "12.0",
+          "% NAV",
+          "n",
+        ]),
+      ),
+    );
+    const bullet = container.querySelector("[data-limit]") as HTMLElement;
+    expect(within(bullet).getByText("Proposed: 12.6 % NAV (above the limit)")).toBeVisible();
+    expect(bullet.querySelector("svg")?.getAttribute("aria-label")).toContain(
+      "proposed 12.6 % NAV, above the limit",
+    );
+    expect(within(bullet).getByText("Current 11.0 % NAV")).toBeVisible();
+  });
+  it("says nothing of the limit when the exposure is within it or equal to it", () => {
+    const { container } = renderLead(
+      cp6(
+        tbl("Chart data: portfolio limits", LIMIT_HEADERS, [
+          "Max",
+          "12.0",
+          "12.00",
+          "12.0",
+          "% NAV",
+          "n",
+        ]),
+      ),
+    );
+    expect(container.textContent).not.toContain("above the limit");
+  });
+  it("draws the decision-and-watch events as a plain list, dates as written, with no source column", () => {
+    renderLead(cp6Entry());
+    const tile = screen.getByRole("region", { name: "Watch items" });
+    expect(within(tile).getByRole("heading", { level: 3 }).textContent).toBe("Watch items");
+    const items = [...tile.querySelectorAll("ul > li")].map((item) => item.textContent);
+    expect(items).toEqual([
+      "2025-03-31Synthetic noteScheduled — matures",
+      "2025-06Synthetic callHistorical — noted",
+      "2025-Q3Synthetic reviewScenario — modelled",
+      "2026Synthetic maturityScheduled — maturity",
+    ]);
+    expect(tile.textContent).not.toMatch(/Filing|Memo/);
+  });
+  it("draws no watch tile when the handoff has no events table", () => {
+    renderLead(cp6(bias("Neutral", "x", "Low")));
+    expect(screen.queryByRole("region", { name: "Watch items" })).toBeNull();
   });
 });
