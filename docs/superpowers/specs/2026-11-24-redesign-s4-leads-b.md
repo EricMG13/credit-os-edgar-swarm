@@ -97,7 +97,7 @@ button group; node maps and dated events are lists.
 | CP-2A | `Downside.tsx`, `BreakPoints.tsx` | P1 break-point ladder (8); P2 scenario comparison as small multiples, one panel per measure, every case on that measure's scale (4, or 12 below) | `breakPointView` (T2DS.6 / first-break ranking) and `downsideView` (T2DS.4 × T2DS.1), data reading unchanged | No break-point table → `LeadGap` "Break points are written in prose" (**Method**: CP-2A to write the break-point table). Cases not bound → table only with the stated note |
 | CP-2D | `cp2d.tsx` | P1 liquidity bridge, horizontal waterfall (8); P2 funding dates `DatedList` (4); P2 runway (4) | `Chart data: liquidity bridge` descriptor (Step / Amount); events lane "Financing" | Bridge that does not reconcile or has a gap amount → table view with the reason, no bars. Runway → `LeadGap` (**Method**: no monthly runway). Whole module **Proof** |
 | CP-2E | `MacroSensitivity.tsx` | P1 sensitivity ladder: one row per stated shock step, added annual interest before hedges with the after-hedges mark (8); P2 hedged against unhedged, one proportional bar (4); P2 foreign share (4); P3 hedge terms in the table view | `macroView` (deploy_vii shapes, kept), plus skill registers by id: `T2F.5` (`Sensitivity | … | Estimated Cash Impact`), `T2F.4` (`Metric | Amount`), `T2F.3` hedges | A single stated step is drawn as one row with its gross comparator; a ladder of more steps needs a step grid (**Method**). Foreign share → `LeadGap` with the module's FX limitation (**Input**) |
-| CP-2G | `cp2g.tsx` | P1 net leverage path by case from the published model (8) with a link to Forecast; P2 drivers by case (4 → 12 table) | `forwardPath` of `view.models[0]`; `forecastInput(entry)` drivers | No numeric limit is published with the model: the limit line is a `LeadGap` line (**Method**). Declined forecast (null drivers) → `LeadGap` with the module's reason. Per-year path beyond the model grid: **Method** |
+| CP-2G | `cp2g.tsx` | P1 net leverage path by case from the published model, one small panel per case on one scale (12: three panels need the width) with a link to Forecast; P2 drivers by case, driver × case × year (12: unreadable at 4) | `forwardPath` of `view.models[0]`; `forecastInput(entry)` drivers | No numeric limit is published with the model: the limit line is a `LeadGap` line (**Method**). Declined forecast (null drivers) → `LeadGap` with the module's reason. Per-year path beyond the model grid: **Method** |
 | CP-2H | `cp2h.tsx` | P1 trigger bullets grouped by agency (8); P2 rating register and outlook (4) | `Chart data: rating triggers` descriptor (`headroomTests`/`bulletGeometry`); register `T2R.1` (`agency | issuer/instrument | rating | outlook/watch`) | Row with a `Not supplied` value → gap row with reason. No table → `LeadGap`. Whole module **Proof** |
 
 ### 2.3 Structure and market stage (`leads/structure.tsx` → `LEADS`)
@@ -177,7 +177,75 @@ register reads.
    (`read.ts`) and `Key`, `GapPattern` (`figureParts.tsx`). Please keep these signatures, or say.
 3. **S5**: S4 imports `forecastInput` (`ForecastRecord.tsx`).
 4. **Kit**: a `blocked` tone on `Tile` (dashed warning edge) would replace the class S4 passes.
+5. **Shared parts that now exist twice** (review nit, left for the coordinator because the other
+   copy is frozen or owned by S1): `leads/bullet.tsx` re-implements the Overview's covenant bullet
+   (`overview/StressRow.tsx` `TestRow` / `BulletChart`); `LeadFigure`'s notes list repeats
+   `FigureNotes`; `cp3c.tsx` `BarLine` is close to the kit `BarCell` but needs a hatched gap mark
+   and a signed track. A kit bullet row and a `BarCell` gap mark would let both pages share one.
+6. **Reader titles**: the methodology plan should fix headings and headers for T2DS.4 / T2DS.6
+   (CP-2A) and T2F.3–T2F.6 (CP-2E), or the existing exact-title readers keep missing real output
+   (§4, last paragraph).
 
 ## 7. Verification
 
-Filled in during phase 2.
+2026-11-24, on the branch head. All built against §2; nothing in §1 is left without a tile or
+its stated gap.
+
+**Checks run** (from `web/`): `npx tsc --noEmit` clean; `npx eslint --max-warnings=0` and
+`npx prettier --check` on the 46 changed files clean; `npx vitest run src/pages/connected` 134
+files, 2078 tests passed; `npm run unused` clean (it lists only `src/harness-leads.tsx`, the
+untracked throwaway harness below, never committed); `npm run duplication` passes; `npm run build`
+passes. **Not run**: `npm run gates` in full (the audit, script and file-gate steps are the
+coordinator's at integration); the Python tests (no Python file changed:
+`git diff --name-only 1265838..HEAD | grep -c '\.py$'` is 0); `tools/quality_gate.py` could not
+run here (it diffs against `origin/main`, which this clone does not have) and has no Python change
+to check.
+
+**Real fixtures in tests** (TransDigm FY2024, as of 2024-09-30, outdated evidence, shape only):
+CP-2E on both retained handoffs (`tests/fixtures/esg/CP-2E-h3.md`, `-h4.md`); CP-2A on both
+retained T2DS.1 tables; CP-2G on the sol-high and the declined sol-medium forecast blocks; the
+real blocked CP-4 shape as the review quotes it.
+
+**Independent review** (Opus, given the code only): ten confirmed findings — blocked modules
+missed when their reason named a source; the reason cut at "Inc."; source text reaching map,
+event, bridge and bullet labels; a table view crash on an empty cell; a range drawn as a point;
+negative share drivers shown raw; yields in two units on one axis; ledger rows dropped; status
+detail cut; gap texts claiming what was not checked — plus nits. All fixed with a regression test
+each (`leads/blocked.test.tsx` runs every lead through three blocked forms). A further defect the
+fix exposed (two different source-naming nodes merging into one "In Evidence" node) is fixed and
+tested. Duplication nits are request 5.
+
+**Screenshots, looked at** (throwaway harnesses, not committed: an uncommitted patch to
+`Modules.tsx` drawing `leadFor(module)` under the title on the synthetic Northbridge run, and a
+stand-alone page rendering leads from contract-shaped samples and the retained real fixtures).
+Every lead at 1440 and 390 px — 36 shots — has no console error and no horizontal page scroll.
+What I saw and changed:
+
+- CP-2D (synthetic): bridge 900 → +120 → −450 → 570 reads left to right; funding dates in date
+  order with their precision; runway as a hatched gap. At 390 the first SVG version shrank labels
+  to ~6 px: all row figures were rebuilt as HTML rows; a near-full bar's figure was clipped off
+  the left edge at 390 (CP-4C, "00"): it now sits inside the bar.
+- CP-1A / CP-2 / CP-DR (synthetic): maps as node lists with their edge type chips; revenue mix,
+  question list, causal scenarios as hatched gaps with reasons; CP-2's leverage 2.80x from 3.75x,
+  cover 4.00x from 3.20x, headroom 4.2x / 5.0x, 0.8x from CP-1 and CP-4.
+- CP-2A (synthetic): ladder 10% / 15% / 32% on a 0–100% fall axis with the basis switch; small
+  multiples with the control marked; net leverage listed as not drawn with the module's words. On
+  the real T2DS.1 both tiles are gaps, no zero.
+- CP-2E: synthetic two-step ladder with after-hedges ticks; on real h3 one stated step "+USD
+  57.89 million", the issuer's ~USD 30 million and the gross comparator listed as text, hedged USD
+  3,400 million against unhedged USD 5,789 million, gross as text, hedge terms table scrolling in
+  its tile.
+- CP-2G (synthetic): base and downside panels, highest 1.80x labelled, no limit line (stated);
+  drivers table.
+- CP-2H, CP-3D, CP-4C, blocked CP-4 (contract samples): agency groups with bullets and a Not
+  supplied row; quoted yields on a date axis — instrument names collided and scaled with the tile
+  at 1440, so points are numbered with a key list; value allocation per scenario with the fulcrum
+  stated as a gap; blocked CP-4 badge, the reason once (it repeated "Not assessable"), the unlock
+  line, both maps' own gap reasons.
+- CP-3 (synthetic): instrument table with yield bars only on the two stated yields, spread Not
+  supplied; at 390 the table broke words into fragments, now it scrolls inside its tile.
+- CP-3C / CP-4 (synthetic): paired bars with the FY2027 commitment hatched and its reason; headroom
+  bullets per test, minimum liquidity Not supplied with "Not stated".
+
+Not seen: the leads inside S2's real module frame (not merged); a real run of CP-2D, CP-2H, CP-3C,
+CP-3D, CP-4C (none exists).
