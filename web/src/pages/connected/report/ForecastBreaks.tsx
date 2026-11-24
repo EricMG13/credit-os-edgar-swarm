@@ -308,7 +308,9 @@ function StressMultiple({
 }) {
   const { ref, width } = useMeasuredWidth(400);
   const across = (width - NAMES) / panels.length >= 150 ? panels.length : 1;
-  const room = (width - NAMES - GUTTER * across) / across;
+  // Stacked panels leave room for whole scenario names.
+  const names = across === 1 ? Math.min(168, Math.round(width * 0.4)) : NAMES;
+  const room = (width - names - GUTTER * across) / across;
   const block = HEAD + cases.length * ROW + 8;
   const height = Math.ceil(panels.length / across) * block;
   const reading = cases
@@ -329,7 +331,7 @@ function StressMultiple({
       >
         {panels.map((panel, index) => {
           const top = Math.floor(index / across) * block;
-          const left = NAMES + GUTTER + (index % across) * (room + GUTTER);
+          const left = names + GUTTER + (index % across) * (room + GUTTER);
           // The bars leave room for their figures, so no figure runs past its panel.
           const bars = Math.max(40, room - LABEL);
           const span = panel.max - panel.min || 1;
@@ -350,7 +352,10 @@ function StressMultiple({
                       item.control ? "fill-text-secondary" : "fill-text-primary",
                     )}
                   >
-                    {item.name.length > 16 ? `${item.name.slice(0, 15)}…` : item.name}
+                    <title>{item.name}</title>
+                    {item.name.length > names / 6.5
+                      ? `${item.name.slice(0, Math.floor(names / 6.5) - 1)}…`
+                      : item.name}
                   </text>
                 ))}
               <line
@@ -490,13 +495,7 @@ export function WhatBreaks({
   const apart = modelLimitation(handoff, /maturit|refinanc/iu);
   const covenant = modelLimitation(handoff, /covenant/iu);
   return (
-    <Tile
-      span={4}
-      label="What breaks, and when"
-      title="What breaks, and when"
-      trace={trace}
-      className="lg:row-span-2 lg:self-start"
-    >
+    <Tile span={4} label="What breaks, and when" title="What breaks, and when" trace={trace}>
       <FundingGapPart view={view} folder={folder} />
       <LiquidityPart model={model} group={group} caseName={caseName} />
       {apart && (

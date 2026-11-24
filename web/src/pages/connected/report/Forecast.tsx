@@ -331,15 +331,19 @@ function ModelTiles({
           leverage ? source("Net leverage path", { row: leverage.label, case: "" }) : undefined
         }
       />
-      <WhatBreaks
-        view={view}
-        folder={run.folder}
-        model={model}
-        handoff={handoff}
-        group={group}
-        caseName={caseName}
-        schedule={{ ...schedule, entry: schedule.source.entry, trace: scheduleTrace }}
-      />
+
+      <div className="flex min-w-0 flex-col gap-4 lg:col-span-4 lg:row-span-2">
+        <WhatBreaks
+          view={view}
+          folder={run.folder}
+          model={model}
+          handoff={handoff}
+          group={group}
+          caseName={caseName}
+          schedule={{ ...schedule, entry: schedule.source.entry, trace: scheduleTrace }}
+        />
+        <UsesOfCash model={model} group={group} caseName={caseName} source={source} />
+      </div>
       <AssumptionsByCase
         document={input?.value ?? null}
         source={source}
@@ -347,7 +351,7 @@ function ModelTiles({
         downsideNote={stringsIn(cashflow.notes).find((note) => note.startsWith("Downside case is"))}
       />
       <Tile
-        span={8}
+        span={12}
         label="Forecast grid"
         title="Forecast grid"
         kicker="Rows by measure, columns by year · only cells the model wrote; the others are the gap cell"
@@ -374,17 +378,14 @@ function ModelTiles({
           </Button>
         </div>
       </Tile>
-      <div className="flex min-w-0 flex-col gap-4 lg:col-span-4">
-        <UsesOfCash model={model} group={group} caseName={caseName} source={source} />
-        <ForecastScopeTiles
-          model={model}
-          folder={run.folder}
-          source={source}
-          note={<BasisNote model={model} handoff={handoff} href={href} />}
-          register={Boolean(model.register)}
-          select={select}
-        />
-      </div>
+      <ForecastScopeTiles
+        model={model}
+        folder={run.folder}
+        source={source}
+        note={<BasisNote model={model} handoff={handoff} href={href} />}
+        register={Boolean(model.register)}
+        select={select}
+      />
     </>
   );
 }

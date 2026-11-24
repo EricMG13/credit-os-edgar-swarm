@@ -185,9 +185,9 @@ it("draws only the selected case's own periods when the cases share none, and sa
   expect(container.querySelector("[data-gap]")).toBeNull();
   expect(screen.queryByText(/Not published/)).toBeNull();
   expect(screen.queryByText(/No figure for/)).toBeNull();
-  expect(screen.getByRole("region", { name: "Net leverage path" })).toHaveTextContent(
-    "Net leverage, Base case, FY2025E to FY2025E",
-  );
+  const tile = within(screen.getByRole("region", { name: "Net leverage path" }));
+  expect(tile.getByRole("heading", { name: "Net leverage, Base case" })).toBeInTheDocument();
+  expect(tile.getByText("FY2025E to FY2025E")).toBeInTheDocument();
   expect(
     screen.getByText("The cases publish no period in common, so no scenario comparison is drawn."),
   ).toBeInTheDocument();

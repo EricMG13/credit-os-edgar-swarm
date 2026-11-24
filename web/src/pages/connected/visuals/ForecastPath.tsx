@@ -262,7 +262,7 @@ function GapColumns({ selected, slots, g }: { selected: MeasureCase; slots: Slot
               />
               <text
                 x={centre}
-                y={BOTTOM - 70}
+                y={TOP + 16}
                 textAnchor="middle"
                 strokeWidth="4"
                 paintOrder="stroke"
@@ -443,7 +443,7 @@ function Lane({ schedule, slots, g }: { schedule: PathSchedule; slots: Slot[]; g
   return (
     <g>
       <text x={LEFT} y={LANE_TOP - 10} className="fill-text-secondary text-caption">
-        {`Debt maturing in the year${schedule.unit ? `, ${schedule.unit}` : ""}`}
+        {`Debt maturing in the year${schedule.unit ? `, ${schedule.unit}` : ""}${g.step < 96 && placed.some((item) => item.cell?.value === null) ? " · n.s. not supplied" : ""}`}
       </text>
       <line
         x1={LEFT}
@@ -474,7 +474,7 @@ function Lane({ schedule, slots, g }: { schedule: PathSchedule; slots: Slot[]; g
                 textAnchor="middle"
                 className="fill-gap-text text-caption"
               >
-                Not supplied
+                {g.step < 96 ? "n.s." : "Not supplied"}
               </text>
             </g>
           );
@@ -831,9 +831,10 @@ export function LeveragePath({
       label="Net leverage path"
       title={
         drawn.length > 1
-          ? `Net leverage by case${span}`
-          : `Net leverage, ${caseName ?? selected?.name ?? "model"}${span}`
+          ? "Net leverage by case"
+          : `Net leverage, ${caseName ?? selected?.name ?? "model"}`
       }
+      kicker={span ? span.slice(2) : undefined}
       className="lg:self-start"
       trace={
         <div className="flex flex-none items-center gap-2">

@@ -79,13 +79,12 @@ export function ForecastScopeTiles({
   const { base, limits } = scopeQualifications(model);
   const passages = [...base, ...limits];
   return (
-    <div className="flex min-w-0 flex-col gap-4 lg:col-span-4">
+    <>
       <Tile
-        span={4}
+        span={8}
         label="Scope and limits"
         title="Scope and limits"
         kicker="What this forecast can and cannot show"
-        className="flex-1"
       >
         {passages.length ? (
           <ul className="grid min-w-0 gap-3 wrap-anywhere">
@@ -125,6 +124,7 @@ export function ForecastScopeTiles({
         label="Published model"
         title="Published model"
         kicker="The model, its charts and the calculation are part of this report"
+        className="lg:self-start"
       >
         <div className="flex flex-wrap items-end gap-3">
           {select}
@@ -140,6 +140,6 @@ export function ForecastScopeTiles({
           Forecast evidence and artifacts
         </Button>
       </Tile>
-    </div>
+    </>
   );
 }

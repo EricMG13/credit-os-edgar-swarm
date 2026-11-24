@@ -88,7 +88,7 @@ it("states the unit of monetary drivers and draws Not stated as a gap chip in th
   expect(rowOf("Revenue growth").textContent).toContain("Fraction");
   const chips = screen.getAllByText("Not stated");
   expect(chips.length).toBeGreaterThan(1);
-  for (const chip of chips) expect(chip).toHaveClass("gap-hatch", "border-border-gap");
+  for (const chip of chips) expect(chip.closest(".gap-hatch")).toHaveClass("border-border-gap");
 });
 
 it("renders the trace control once per row", () => {
