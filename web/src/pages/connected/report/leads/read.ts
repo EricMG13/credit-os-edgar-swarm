@@ -158,8 +158,6 @@ export function mapOf(entry: OutputEntry, name: string): MapRead {
   return { state: "ready", edges, line: table.line };
 }
 
-export type Dated = ReturnType<typeof eventRecords>[number] & { line: number };
-
 /** The module's dated events of one lane, earliest first; precision as the module states it. */
 export function eventsOf(entry: OutputEntry, lane: string) {
   const descriptor = items(entry.output.events)

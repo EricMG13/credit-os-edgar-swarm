@@ -148,7 +148,7 @@ type EvidenceHref = (line: number) => string;
 type SecurityData = NonNullable<ReturnType<typeof securityView>>;
 
 /** One instrument as the module wrote it; `share` places its yield bar where a yield reads. */
-export type Instrument = {
+type Instrument = {
   line: number;
   name: string;
   rank: string;

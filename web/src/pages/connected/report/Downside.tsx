@@ -81,7 +81,7 @@ export function downsideView(entry: OutputEntry) {
 }
 
 /** A stressed measure's cell as a number on the measure's stated unit; null when it does not read. */
-export function position(measure: string, cell: string) {
+function position(measure: string, cell: string) {
   const unit = /\(([A-Z]{3}) millions\)$/.exec(measure)?.[1];
   if (!unit && !/\((?:x|%)\)$/.test(measure)) return null;
   const numeric = cell.replaceAll("−", "-");
