@@ -79,28 +79,29 @@ it("lays the tiles in the screen map's order, the lead first after the figures",
         "Net leverage path",
         "What breaks, and when",
         "Assumptions by case",
-        "Uses of cash",
         "Forecast grid",
+        "Uses of cash",
         "Scope and limits",
         "Published model",
-        "Cash proxy by case",
       ].includes(name ?? ""),
     );
   expect(names).toEqual([
     "Forecast",
     "Net leverage path",
     "What breaks, and when",
-    "Assumptions by case",
     "Uses of cash",
+    "Assumptions by case",
     "Forecast grid",
     "Scope and limits",
     "Published model",
-    "Cash proxy by case",
   ]);
+  // The case list and its cash proxy tile are gone: the figure is the header's.
+  expect(screen.queryByRole("region", { name: "Cash proxy by case" })).toBeNull();
   const figures = screen.getByLabelText("Forecast figures");
   const lead = screen.getByRole("region", { name: "Net leverage path" });
   expect(figures.compareDocumentPosition(lead) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-  expect(screen.getByText("1.23x peak")).toBeInTheDocument();
+  // The chart labels the selected case's highest published year as that selection.
+  expect(screen.getByText("1.23x · FY2025E")).toBeInTheDocument();
 });
 
 it("draws no source reference, hash or module code on the page", () => {

@@ -208,20 +208,16 @@ it("draws the Forecast tiles for a published model in place of section jumps", (
     "Forecast grid",
     "Assumptions by case",
     "Scope and limits",
-    "Cash proxy by case",
   ])
     expect(screen.getByRole("region", { name })).toBeInTheDocument();
   expect(document.getElementById("forecast-run-charts")).not.toBeNull();
-  // The cases' figures and the model are drawn with their values.
-  const items = within(screen.getByRole("list", { name: "Forecast cases" })).getAllByRole(
-    "listitem",
-  );
-  expect(items.map((item) => item.querySelector("span")?.textContent)).toEqual([
-    "Base case",
-    "Downside case",
-  ]);
-  expect(items[0]).toHaveTextContent("12");
-  expect(items[1]).toHaveTextContent("6");
+  // The cases' figures and the model are drawn with their values: each case in the header's
+  // switch, the selected case's cash proxy under it.
+  const items = within(screen.getByRole("group", { name: "Case" })).getAllByRole("button");
+  expect(items.map((item) => item.textContent)).toEqual(["Base case", "Downside case"]);
+  expect(screen.getByLabelText("Selected case cash proxy")).toHaveTextContent("12");
+  fireEvent.click(items[1] as HTMLElement);
+  expect(screen.getByLabelText("Selected case cash proxy")).toHaveTextContent("6");
   expect(document.getElementById("forecast-model")).not.toBeNull();
   expect(window.location.hash).toBe("");
 });
@@ -244,7 +240,6 @@ it("draws only the header and the run charts when no model was published", () =>
     "Forecast grid",
     "Assumptions by case",
     "Scope and limits",
-    "Cash proxy by case",
   ])
     expect(screen.queryByRole("region", { name })).toBeNull();
   expect(screen.queryByRole("navigation", { name: "Forecast sections" })).toBeNull();
@@ -254,9 +249,9 @@ it("draws only the header and the run charts when no model was published", () =>
   expect(document.getElementById("forecast-model")).toBeNull();
   expect(document.getElementById("forecast-assumptions")).toBeNull();
   expect(document.getElementById("forecast-run-charts")).not.toBeNull();
-  const charts = () =>
-    screen.getByText("Charts from the other modules of this run").closest("details");
-  expect(charts()).not.toHaveAttribute("open");
+  // The run's chart tables are drawn open, deep-linked or not.
+  const charts = () => screen.getByRole("region", { name: "Chart tables from this run" });
+  expect(charts()).toHaveTextContent("No charts were published for this run.");
   rerender(<Forecast view={view} run={run} section="run-charts" />);
-  expect(charts()).toHaveAttribute("open");
+  expect(charts()).toHaveTextContent("No charts were published for this run.");
 });

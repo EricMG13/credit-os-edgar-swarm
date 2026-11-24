@@ -51,6 +51,47 @@ const calendarYear = (label: string) => {
   return { start: `${year}-01-01`, end: `${year}-12-31` };
 };
 
+/** The grid's notice about the cases' periods, drawn above it in every column view. */
+const gridNotice = () =>
+  within(screen.getByRole("region", { name: "Forecast grid" })).getByRole("status");
+/** The selected case's cash proxy figure in the header, with its notice. */
+const caseFigure = () => screen.getByLabelText("Selected case cash proxy");
+const caseCard = () => caseFigure().parentElement as HTMLElement;
+const caseButton = (name: string) =>
+  within(screen.getByRole("group", { name: "Case" })).getByRole("button", {
+    name: `${name}, no leverage path in the model`,
+  });
+const compareOneYear = () =>
+  fireEvent.click(
+    within(screen.getByRole("group", { name: "Grid columns" })).getByRole("button", {
+      name: "Compare one year",
+    }),
+  );
+const selectYear = (year: string) =>
+  fireEvent.click(
+    within(screen.getByRole("group", { name: "Year" })).getByRole("button", { name: year }),
+  );
+/** The forecast grid's column names, under their bands. */
+const gridColumns = () => {
+  const [, columns] = within(screen.getByRole("table", { name: "Forecast grid" })).getAllByRole(
+    "row",
+  );
+  return within(columns as HTMLElement)
+    .getAllByRole("columnheader")
+    .map((cell) => cell.textContent);
+};
+/** A row's figure cells in the forecast grid, in column order, as the reader reads them: a gap
+ * cell's recorded reason with its word. The row's trace cell follows them. */
+const gridCells = (row: string) =>
+  within(
+    within(screen.getByRole("table", { name: "Forecast grid" }))
+      .getByRole("rowheader", { name: row })
+      .closest("tr") as HTMLElement,
+  )
+    .getAllByRole("cell")
+    .slice(0, gridColumns().length)
+    .map((cell) => cell.getAttribute("aria-label") ?? cell.textContent);
+
 const NO_COMMON_PERIOD =
   "The cases publish no period in common, so no scenario comparison is drawn.";
 const ANY_OMISSION = /omitted|left out|cannot be compared/i;
@@ -67,47 +108,33 @@ it("draws no comparison of cases that publish no period in common, and says so",
     },
   );
 
-  expect(screen.queryByRole("figure", { name: "Cash proxy by scenario" })).toBeNull();
-  expect(screen.queryByRole("table", { name: "Scenario comparison" })).toBeNull();
+  // No comparison is offered in the grid and no other case's line is drawn.
+  expect(screen.queryByRole("button", { name: "Compare one year" })).toBeNull();
+  expect(screen.queryByRole("img", { name: /^Net leverage by case/ })).toBeNull();
   expect(screen.queryByText(/^Cash proxy values/)).toBeNull();
-  expect(
-    within(screen.getByRole("region", { name: "Scenario comparison" })).getByText(NO_COMMON_PERIOD),
-  ).toBeInTheDocument();
-  expect(
-    within(screen.getByLabelText("Statement columns")).queryByRole("option", {
-      name: "Compare scenarios",
-    }),
-  ).toBeNull();
+  expect(gridNotice()).toHaveTextContent(NO_COMMON_PERIOD);
+  expect(within(caseCard()).getByRole("status")).toHaveTextContent(NO_COMMON_PERIOD);
   // Nothing was excluded, so nothing says a period is omitted, and no cell is drawn as unpublished.
   expect(container.textContent).not.toMatch(ANY_OMISSION);
   expect(container.textContent).not.toContain("Not published");
 
-  // Each case's own figures stay: its card, and its own columns in the statement.
-  const items = within(screen.getByRole("list", { name: "Forecast cases" })).getAllByRole(
-    "listitem",
-  );
-  const caseItem = (name: string) => {
-    const item = items.find((node) => node.textContent.startsWith(name));
-    if (!item) throw new Error(`No case figure for ${name}`);
-    return item;
-  };
-  const base = caseItem("Base case");
-  const downside = caseItem("Downside case");
-  expect(base).toHaveTextContent("11");
+  // Each case's own figures stay: its figure in the header, and its own columns in the grid.
+  const base = caseFigure();
+  expect(base).toHaveTextContent("Cash proxy, Base case");
+  expect(within(base).getByText("11")).toBeInTheDocument();
   expect(base).toHaveTextContent("FY2027E");
-  expect(downside).toHaveTextContent("6");
-  expect(downside).toHaveTextContent("FY2029E");
-  const statement = () => within(screen.getByRole("table", { name: "Cash flow model" }));
+  const statement = () => within(screen.getByRole("table", { name: "Forecast grid" }));
   for (const cell of ["100", "101"])
     expect(statement().getByRole("cell", { name: cell })).toBeInTheDocument();
-  fireEvent.click(
-    within(screen.getByRole("group", { name: "Case" })).getByRole("button", {
-      name: /^Downside case/,
-    }),
-  );
+  fireEvent.click(caseButton("Downside case"));
+  const downside = caseFigure();
+  expect(downside).toHaveTextContent("Cash proxy, Downside case");
+  expect(within(downside).getByText("6")).toBeInTheDocument();
+  expect(downside).toHaveTextContent("FY2029E");
   for (const cell of ["80", "81"])
     expect(statement().getByRole("cell", { name: cell })).toBeInTheDocument();
-  expect(screen.queryByRole("figure", { name: "Cash proxy by scenario" })).toBeNull();
+  expect(screen.queryByRole("button", { name: "Compare one year" })).toBeNull();
+  expect(gridNotice()).toHaveTextContent(NO_COMMON_PERIOD);
 });
 
 it("compares the shared periods and names the period left out, without saying the cases cannot be compared", () => {
@@ -131,29 +158,29 @@ it("compares the shared periods and names the period left out, without saying th
     },
   );
 
-  const comparison = within(screen.getByRole("figure", { name: "Cash proxy by scenario" }));
-  fireEvent.click(comparison.getByRole("radio", { name: "Table" }));
-  const table = within(screen.getByRole("table", { name: "Scenario comparison" }));
-  expect(table.getAllByRole("columnheader").map((header) => header.textContent)).toEqual([
-    "Case",
-    "FY2026E",
-    "FY2027E",
-  ]);
-  expect(table.getByRole("row", { name: /^Downside case/ })).toHaveTextContent("5.006.00");
-
   expect(container.textContent).not.toMatch(/cannot be compared|omitted|no period in common/i);
   const leftOut =
     "Periods left out of the scenario comparison: FY2028E (recorded start and end dates do not match between cases, or are incomplete or invalid).";
   const notices = screen.getAllByRole("status").map((status) => status.textContent);
-  // Beside the case cards, the statement's column choice and the comparison itself.
-  expect(notices.filter((text) => text === leftOut)).toHaveLength(3);
+  // Under the selected case's figure and above the grid, in every column view.
+  expect(notices.filter((text) => text === leftOut)).toHaveLength(2);
+  expect(within(caseCard()).getByRole("status").textContent).toBe(leftOut);
+  expect(gridNotice().textContent).toBe(leftOut);
 
-  fireEvent.change(screen.getByLabelText("Statement columns"), { target: { value: "compare" } });
-  const periods = within(screen.getByLabelText("Comparison period"));
-  expect(periods.getAllByRole("option").map((option) => option.textContent)).toEqual([
+  compareOneYear();
+  expect(gridNotice().textContent).toBe(leftOut);
+  const periods = within(screen.getByRole("group", { name: "Year" }));
+  expect(periods.getAllByRole("button").map((option) => option.textContent)).toEqual([
     "FY2026E",
     "FY2027E",
   ]);
+  // The shared years compared case by case: the cash proxy of each case, the Downside case's
+  // own 5 and 6.
+  expect(gridColumns()).toEqual(["Base case", "Downside case"]);
+  selectYear("FY2026E");
+  expect(gridCells(CASH_PROXY)).toEqual(["10", "5"]);
+  selectYear("FY2027E");
+  expect(gridCells(CASH_PROXY)).toEqual(["11", "6"]);
 });
 
 it("says nothing is omitted when no case is selected and the cases share no period", () => {
@@ -167,10 +194,9 @@ it("says nothing is omitted when no case is selected and the cases share no peri
   );
   expect(screen.queryByRole("radiogroup", { name: "Forecast case" })).toBeNull();
   expect(container.textContent).not.toMatch(ANY_OMISSION);
-  const trends = screen.getByText("Cash flow trends by line item").closest("details");
-  if (!trends) throw new Error("The trends section is missing");
-  expect(within(trends).getByRole("status")).toHaveTextContent(NO_COMMON_PERIOD);
+  expect(gridNotice()).toHaveTextContent(NO_COMMON_PERIOD);
   // No line-item comparison is drawn over columns each case leaves blank for the other.
+  expect(screen.queryByRole("button", { name: "Compare one year" })).toBeNull();
   expect(screen.queryByRole("figure", { name: "Revenue" })).toBeNull();
 });
 
@@ -186,11 +212,10 @@ it("names an excluded period when no case is selected, and still draws no compar
     ],
     { Revenue: ["100", "101", "80", "81", "110", "90"].map(value) },
   );
-  const trends = screen.getByText("Cash flow trends by line item").closest("details");
-  if (!trends) throw new Error("The trends section is missing");
-  expect(within(trends).getByRole("status")).toHaveTextContent(
+  expect(gridNotice()).toHaveTextContent(
     "Periods left out of the scenario comparison: FY2030E (recorded start and end dates do not match between cases, or are incomplete or invalid). No other period is published by more than one case, so no scenario comparison is drawn.",
   );
+  expect(screen.queryByRole("button", { name: "Compare one year" })).toBeNull();
   expect(screen.queryByRole("figure", { name: "Revenue" })).toBeNull();
   expect(container.textContent).not.toMatch(/omitted|cannot be compared|no period in common/i);
 });
@@ -210,17 +235,20 @@ it("marks a period a case does not publish apart from a figure it publishes as u
       ],
     },
   );
-  const comparison = within(screen.getByRole("figure", { name: "Cash proxy by scenario" }));
-  fireEvent.click(comparison.getByRole("radio", { name: "Table" }));
-  const downside = within(comparison.getByRole("row", { name: /^Downside case/ }));
-  expect(
-    downside
-      .getAllByRole("cell")
-      .slice(0, 5)
-      .map((cell) => cell.textContent),
-  ).toEqual(["5.00", "Not calculable", "n.a.not available", "Not published", "Not published"]);
-  const base = within(comparison.getByRole("row", { name: /^Base case/ }));
-  expect(base.queryByText("Not published")).toBeNull();
+  // Year by year, the Downside case's cash proxy beside the base case's: its figure, its
+  // recorded reason, a cell without one, then the years it does not publish.
+  compareOneYear();
+  expect(gridColumns()).toEqual(["Base case", "Downside case"]);
+  const downside = (years: string[]) =>
+    years.map((year) => {
+      selectYear(year);
+      const [base, cell] = gridCells(CASH_PROXY);
+      expect(base).not.toBe("Not published");
+      return cell;
+    });
+  expect(downside(["FY2026E", "FY2027E", "FY2028E"])).toEqual(["5", "n.a. Not calculable", "n.a."]);
+  // The years only the base case publishes: the Downside case reads Not published.
+  expect(downside(["FY2029E", "FY2030E"])).toEqual(["Not published", "Not published"]);
 });
 
 it("marks an unpublished period in the line-item comparison when no case is selected", () => {
@@ -231,18 +259,20 @@ it("marks an unpublished period in the line-item comparison when no case is sele
     }),
     { Revenue: ["100", "101", "102", "80", "81"].map(value) },
   );
-  const chart = within(screen.getByRole("figure", { name: "Revenue" }));
-  fireEvent.click(chart.getByRole("radio", { name: "Table" }));
-  expect(
-    within(chart.getByRole("row", { name: /^Downside case/ }))
-      .getAllByRole("cell")
-      .map((cell) => cell.textContent),
-  ).toEqual(["80", "81", "Not published"]);
-  expect(
-    within(chart.getByRole("row", { name: /^Base case/ }))
-      .getAllByRole("cell")
-      .map((cell) => cell.textContent),
-  ).toEqual(["100", "101", "102"]);
+  // The grid's one-year comparison, year by year: [Base case, Downside case].
+  compareOneYear();
+  expect(gridColumns()).toEqual(["Base case", "Downside case"]);
+  const revenue = (years: string[]) =>
+    years.map((year) => {
+      selectYear(year);
+      return gridCells("Revenue");
+    });
+  expect(revenue(["FY2026E", "FY2027E"])).toEqual([
+    ["100", "80"],
+    ["101", "81"],
+  ]);
+  // The year only the base case publishes: the Downside case reads Not published.
+  expect(revenue(["FY2028E"])).toEqual([["102", "Not published"]]);
 });
 
 it("says why more than six cases are not charted, and nothing about their periods", () => {
@@ -255,15 +285,9 @@ it("says why more than six cases are not charted, and nothing about their period
     { [CASH_PROXY]: groups.flatMap((_, index) => [String(index), String(index + 10)]).map(value) },
   );
   const tooMany = "More than six cases are published, so the cash proxy comparison is not drawn.";
-  expect(
-    within(screen.getByRole("region", { name: "Scenario comparison" })).getByRole("note"),
-  ).toHaveTextContent(tooMany);
+  expect(within(caseCard()).getByRole("status")).toHaveTextContent(tooMany);
   expect(screen.queryByRole("figure", { name: "Cash proxy by scenario" })).toBeNull();
   // Every period is shared and none is excluded: no notice says otherwise.
   expect(container.textContent).not.toMatch(/period basis|omitted|left out|in common/i);
-  expect(
-    within(screen.getByLabelText("Statement columns")).getByRole("option", {
-      name: "Compare scenarios",
-    }),
-  ).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "Compare one year" })).toBeInTheDocument();
 });
