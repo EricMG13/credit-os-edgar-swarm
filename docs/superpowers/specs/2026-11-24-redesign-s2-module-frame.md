@@ -66,9 +66,9 @@ unit, CP-1 headline figures) and `run` (folder, as-of). Nothing else.
 
 ### 2.2 Header tile — `ModuleHeader` (new, `report/ModuleFrame.tsx`)
 
-- Content: module code chip and name (h2), `StatusBadge` "Module state"; basis line: stage name,
-  "stage `n` of 5", and "Amounts in `<unit>`" where the run states a money unit
-  (`runMoneyUnit(view.catalogue)`); the bottom line in large type (`text-h3`, `text-h2` from lg)
+- Content: module code chip and name (h2), `StatusBadge` "Module state"; basis line: stage name
+  and "stage `n` of 5" (a unit claim was dropped in review: the run's cash unit is not what every
+  module reports, so the page would state a basis the handoff does not); the bottom line in large type (`text-h3`, `text-h2` from lg)
   with one trace control; continuation paragraphs of the Bottom line passage below it in body
   type, each with its own trace; the confidence meter at the right (2.3).
 - Source of the bottom line: the `Bottom line` passage's first paragraph; else the module's
@@ -102,7 +102,12 @@ unit, CP-1 headline figures) and `run` (folder, as-of). Nothing else.
 ### 2.5 Lead — `leadFor(module)`
 
 - `const Lead = leadFor(id)`; when defined, `<Lead snapshot run view entry entryIndex />` is drawn
-  directly under the header (and the stats strip), span 12, nothing around it.
+  under the header, span 12, nothing around it. Where a stats strip exists (CP-1 only today) it sits
+  between the header and the lead, as the approved CP-1 mockup draws it; with no strip the lead is
+  the header's next sibling (tested).
+- When a lead is defined, the module's event lanes and relationship maps are not drawn by the frame
+  (the lead owns the module's visual; their tables stay in the records region). S3 and S4 should
+  draw them in their leads where the screen map ranks them (CP-1A history, CP-2 transmission map).
 - When undefined: the module's existing typed figures, unchanged components: `Downside`,
   `BreakPoints`, `MacroSensitivity`, `Securities` (CP-2A, CP-2E, CP-3), the module's event
   lanes and relationship maps (`LegacyVisuals` given only `events` and `maps`, never `charts`),
@@ -246,6 +251,55 @@ links, states and gaps are kept.
    screen map's blocked state is the signal colour with a slash. The navigator draws its own
    signal slash beside the badge; a set change would make every badge agree.
 
+3. `report/stages.ts`: export the five stage names in order. The frame needs a stage's fixed
+   number ("stage 2 of 5", "02" in the navigator) and today derives it by probing `byStage` with one
+   module of each stage (`report/stageNumber.ts`); a plain export would remove the probe.
+
 ## 7. Verification
 
-Filled in during phase 2.
+Checks run on `b56b83d` (web/, Node 22; each under five minutes):
+
+| Check | Result |
+|---|---|
+| `npx tsc --noEmit` | Pass |
+| `npx eslint --max-warnings=0` on every changed file | Pass (one scoped disable: `jsx-a11y/no-noninteractive-tabindex` on the focusable scroll region of a wide table, the pattern the table already used) |
+| `npx prettier --check` on changed files | Pass |
+| `npx vitest run src/pages/connected/report src/pages/library/parts` + `ReportContent.records`, `ReportContent.drawings` | 78 files, 707 tests pass (then +3 for the title fix) |
+| `npx vitest run src/pages/connected/ConnectedApp.test.tsx` | 221 pass |
+| Wide run `src/pages src/components src/styles` | See the coordinator report |
+| `npm run unused` (knip) | Clean |
+| `npm run build` | Pass |
+| `tools/quality_gate.py` | Not applicable: no Python changed; it also cannot resolve `origin/main` in this clone |
+
+Tests: new `moduleRecords.test.ts` (kinds, Evidence list, amount columns, mixed units, gaps,
+zero, titles), `ModuleRecords.test.tsx`, `Modules.frame.test.tsx` (rank order, numbered claims,
+counter surface, lead under the header with its props, nothing in its place, blocked header,
+passage gaps incl. Basis-only and table-only bottom lines, chart gaps, next link),
+`ModuleFrame.test.tsx`, `StageNav.test.tsx`, `stageNumber.test.ts`. Rewritten to the new frame,
+behaviour kept: `Modules.test.tsx`, `Modules.order.test.tsx`, `Modules.navigator.test.tsx`,
+`ReportContent.records.test.tsx`, `ReportContent.drawings.test.tsx`,
+`ReportLibrary.wayfinding.test.tsx` (the removed scroll spy's nine tests replaced by tests of the
+staged navigator's wayfinding), `ReportLibrary.place.test.tsx`, `ReportLibrary.design.test.tsx`,
+`ConnectedApp.test.tsx` (one case opens the records first), `Confidence.recovery.test.tsx`,
+`report.auditFollowups.test.tsx` (J3-015). The rewrite caught one real regression (a summary
+bottom line whose line has no block failed the page); fixed with `HeldTrace`.
+
+Independent review (Opus, given the code and requirements only) reported twelve findings; all
+fixed except: the stats strip stays between header and lead (mockup order, above); a blocked
+module whose handoff has no Bottom line shows the bottom-line gap in its header, since the output
+carries no reason field; a four-column table that overflows at 390 px scrolls inside its border
+without being a focusable region (the existing five-column rule of `PublishedTable`, pinned by a
+test, is kept; tables with bars are always a focusable region).
+
+Screenshots on the synthetic Northbridge run (`proof.serve`, then `react_frontend`), looked at:
+
+| Page | 1440 | 390 |
+|---|---|---|
+| CP-1 | Navigator by stage with fixed numbers, current tinted; header with code chip, name, state, "Financials · stage 2 of 5", confidence meter 89 / 100 High, bottom line in large type with one trace; no stats strip (the synthetic catalogue holds no CP-1 headline figures; the old page drew none either); no generic chart cards; records closed ("15 tables · 3 held in Evidence"); next module CP-1A. Open: kind tabs Statements 8 · Chart tables 7, table tabs, Leverage table, Held in Evidence links | Navigator is a closed disclosure with a chevron; header stacks with the meter under the name; records toggle; no horizontal scroll (scroll width 390) |
+| CP-2A | Typed figures (scenarios, break points) and the stress map in the lead slot; Key findings 01 beside the info-tinted counter surface; monitoring sensitivities with one heading; one limitation well; records closed; next CP-2E | Same order stacked; open records: Registers / Calculations / Chart tables; the four-column monitoring table scrolls inside its border; held registers listed without codes; no page scroll |
+| CP-2 | Transmission map in the lead slot; findings and counter; "Strengths and weaknesses" prose tile; monitoring triggers; limitations; records; next CP-2A | Stacked, no page scroll |
+| CP-0 | Event lane and readiness groups (typed figures) under the header; records; next CP-1 | Stacked, no page scroll |
+
+Not run: the full suite (weekly in CI), the Python tests that read the web build, a check against
+the retained TransDigm fixtures in a browser (the synthetic text is one sentence per module; the
+frame's tests use TDG-shaped tables: coded statements, debt instruments, chart descriptors).
