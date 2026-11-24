@@ -50,19 +50,81 @@ describe("Run progress layout", () => {
     ).toEqual(["Sources1", "Financials1", "Structure and market1", "Report delivery1"]);
     const running = within(pipeline).getByText("Financial foundation").closest("li");
     expect(running).toHaveTextContent("Running");
+    expect(running).toHaveAttribute("aria-current", "step");
     expect(running?.querySelector("[data-edge='running']")).toHaveClass("pipeline-flow");
-    expect(screen.getByText("1 of 3 modules done")).toBeVisible();
+    // Only the path into the running module moves.
+    expect(pipeline.querySelectorAll(".pipeline-flow")).toHaveLength(1);
   });
 
-  it("draws spend against the cap as one meter with the amount in mono", async () => {
+  it("makes the pipeline the h2 of its region, with the stage names beneath it", async () => {
+    serve(run);
+    render(<ConnectedApp path={`/run/${ID}`} mode="live" />);
+    await screen.findByRole("list", { name: "Modules in this run" });
+    const region = screen.getByRole("region", { name: "Pipeline" });
+    expect(
+      within(region).getByRole("heading", { level: 2, name: "Module pipeline" }),
+    ).toBeVisible();
+    expect(screen.getAllByRole("heading", { level: 3 }).length).toBeGreaterThan(0);
+    expect(screen.queryAllByRole("heading").map((h) => h.tagName)).not.toContain("H4");
+  });
+
+  it("moves nothing on a run that has ended", async () => {
+    serve({
+      ...run,
+      status: "capped",
+      reason: "Stopped at the cap.",
+      ended_at: "2026-11-24T21:05:00Z",
+    });
+    render(<ConnectedApp path={`/run/${ID}`} mode="live" />);
+    const pipeline = await screen.findByRole("list", { name: "Modules in this run" });
+    expect(pipeline.querySelector(".pipeline-flow, .pipeline-flow-y")).toBeNull();
+  });
+
+  it("draws spend against the cap as one meter with a visible track and the cap marked", async () => {
     serve(run);
     render(<ConnectedApp path={`/run/${ID}`} mode="live" />);
     const amount = await screen.findByText("USD 7.40");
     expect(amount).toHaveClass("font-mono");
-    expect(
-      screen.getByRole("progressbar", { name: /USD 7.40 of USD 25.00 cap usage/ }),
-    ).toBeVisible();
+    const region = screen.getByRole("region", { name: "Spend" });
+    const meter = within(region).getByRole("progressbar", {
+      name: /USD 7.40 of USD 25.00 cap usage/,
+    });
+    expect(meter).toHaveClass("border", "bg-surface-subtle");
+    expect(within(region).getByText("Cap USD 25.00")).toBeVisible();
+    // One meter in the tile; the modules' progress is the pipeline's own.
+    expect(within(region).getAllByRole("progressbar")).toHaveLength(1);
+    expect(screen.getByRole("progressbar", { name: "1 of 3 modules" })).toBeVisible();
     expect(screen.queryByText("Synthetic test")).toBeNull();
+  });
+
+  it("puts spend before the pipeline in reading order, beside it from lg up", async () => {
+    serve(run);
+    render(<ConnectedApp path={`/run/${ID}`} mode="live" />);
+    const spend = await screen.findByRole("region", { name: "Spend" });
+    const pipeline = screen.getByRole("region", { name: "Pipeline" });
+    expect(spend.compareDocumentPosition(pipeline) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(spend).toHaveClass("lg:col-start-10", "lg:row-start-1");
+    expect(pipeline).toHaveClass("lg:col-start-1", "lg:row-start-1");
+  });
+
+  it("draws the loading page in the same layout as the loaded one", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(() => new Promise(() => undefined)),
+    );
+    const { unmount } = render(<ConnectedApp path={`/run/${ID}`} mode="synthetic" />);
+    const loading = (
+      await screen.findByRole("status", { name: "Loading run progress" })
+    ).querySelectorAll("section");
+    const shapes = [...loading].map((tile) => [tile.getAttribute("aria-label"), tile.className]);
+    unmount();
+    vi.unstubAllGlobals();
+    serve(run);
+    render(<ConnectedApp path={`/run/${ID}`} mode="synthetic" />);
+    await screen.findByRole("list", { name: "Modules in this run" });
+    for (const [label, classes] of shapes) {
+      expect(screen.getByRole("region", { name: label ?? "" }).className).toBe(classes);
+    }
   });
 
   it("marks a synthetic run from the first paint, before the run has loaded", () => {
@@ -73,15 +135,56 @@ describe("Run progress layout", () => {
     render(<ConnectedApp path={`/run/${ID}`} mode="synthetic" />);
     expect(screen.getByText("Synthetic test")).toBeVisible();
     expect(screen.getByRole("status", { name: "Loading run progress" })).toBeVisible();
-    expect(screen.getByRole("region", { name: "Pipeline" })).toBeVisible();
+  });
+
+  const stopped = {
+    ...run,
+    status: "failed",
+    stopped_by: "checker",
+    reason: "The checks rejected a draft.",
+    ended_at: "2026-11-24T21:03:30Z",
+  };
+
+  it("names only the earliest unaccepted module when the checks stopped a run with several in flight", async () => {
+    serve({
+      ...stopped,
+      modules: [
+        ["CP-0", "done"],
+        ["CP-2", "stopped"],
+        ["CP-3", "stopped"],
+        ["CP-4", "stopped"],
+        ["Report", "waiting"],
+      ],
+      events: [
+        { kind: "module_started", at: "2026-11-24T21:03:00Z", module: "CP-2" },
+        { kind: "module_started", at: "2026-11-24T21:03:01Z", module: "CP-3" },
+        { kind: "module_started", at: "2026-11-24T21:03:02Z", module: "CP-4" },
+        { kind: "draft_rejected", at: "2026-11-24T21:03:20Z", module: "CP-2" },
+        { kind: "stopped", at: "2026-11-24T21:03:30Z" },
+      ],
+    });
+    render(<ConnectedApp path={`/run/${ID}`} mode="live" />);
+    const alert = await screen.findByRole("alert");
+    expect(within(alert).getByText(/Where it stopped: Fundamental credit\./)).toBeVisible();
+    expect(alert).not.toHaveTextContent("Security selection");
+    expect(alert).not.toHaveTextContent("Where it stopped: Fundamental credit, ");
+  });
+
+  it("draws the stop notice, with its action inside, when the record gives no reason", async () => {
+    serve({ ...stopped, reason: "" });
+    render(<ConnectedApp path={`/run/${ID}`} mode="live" />);
+    const alert = await screen.findByRole("alert");
+    expect(within(alert).getByText("Run failed.")).toBeVisible();
+    expect(within(alert).getByText("The run record gives no reason.")).toBeVisible();
+    const again = within(alert).getByRole("link", { name: "Use this run’s inputs" });
+    expect(again).toHaveAttribute("href", `/start?from=${ID}`);
+    // One such control, not one in the header as well.
+    expect(screen.getAllByRole("link", { name: "Use this run’s inputs" })).toHaveLength(1);
   });
 
   it("says where a stopped run stopped and what to do, inside its notice", async () => {
     serve({
-      ...run,
-      status: "failed",
-      stopped_by: "checker",
-      reason: "The checks rejected a draft.",
+      ...stopped,
       modules: [
         ["CP-0", "done"],
         ["CP-4", "stopped"],
@@ -91,11 +194,10 @@ describe("Run progress layout", () => {
         { kind: "module_started", at: "2026-11-24T21:03:00Z", module: "CP-4" },
         { kind: "stopped", at: "2026-11-24T21:03:30Z" },
       ],
-      ended_at: "2026-11-24T21:03:30Z",
     });
     render(<ConnectedApp path={`/run/${ID}`} mode="live" />);
     const alert = await screen.findByRole("alert");
-    expect(within(alert).getByText("Where it stopped: Legal & covenants.")).toBeVisible();
+    expect(within(alert).getByText(/Where it stopped: Legal & covenants\./)).toBeVisible();
     expect(within(alert).getByText(/Review the inputs in a new draft/)).toBeVisible();
     expect(screen.queryByRole("link", { name: "Open report" })).toBeNull();
   });

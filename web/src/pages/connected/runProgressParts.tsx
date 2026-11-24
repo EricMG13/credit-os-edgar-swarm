@@ -1,5 +1,4 @@
-import type { ReactNode } from "react";
-import { ProgressBar } from "@/components/base/progress-indicators/progress-indicators";
+import { useId } from "react";
 import { Missing } from "@/components/gap/Missing";
 import type { PipelineNode, PipelineStage, PipelineState } from "@/components/pipeline";
 import type { Figure as RunFigure, ModuleStep, ModuleWord } from "../run/slice-activity";
@@ -45,72 +44,86 @@ export function pipelineStages(
   return delivery.length > 0 ? [...stages, { name: "Report delivery", nodes: delivery }] : stages;
 }
 
-/** The modules the run stopped at: the ones the record marks as not assessable or interrupted. */
-export function stoppedAt(steps: readonly ModuleStep[]): string[] {
-  return steps.flatMap((step) =>
-    step.kind === "module" && (step.state === "Interrupted" || step.detail !== null)
-      ? [step.name]
-      : [],
-  );
+/** Where the run stopped, as the record marks it: the module the checks stopped it at (alone, the
+ * others in flight being bystanders) or, for a run that was lost, the modules it was running. */
+export function stoppedAt(steps: readonly ModuleStep[]): {
+  names: string[];
+  detail: string | null;
+} {
+  const modules = steps.filter((step) => step.kind === "module");
+  const refused = modules.find((step) => step.detail !== null);
+  if (refused) return { names: [refused.name], detail: refused.detail };
+  return {
+    names: modules.filter((step) => step.state === "Interrupted").map((step) => step.name),
+    detail: null,
+  };
 }
 
-function KeyValue({ term, children }: { term: string; children: ReactNode }) {
+/** The tiles' places: spend first in reading order, beside the pipeline from lg up. */
+export const PIPELINE_TILE = "lg:col-span-9 lg:col-start-1 lg:row-start-1";
+export const SPEND_TILE = "lg:col-start-10 lg:row-start-1 lg:self-start";
+
+/** Value against a limit: a track you can see, the spend filled, the cap marked at its end. */
+function CapMeter({ bar }: { bar: { value: number; max: number; label: string } }) {
+  const labelId = useId();
+  const share = (bar.value * 100) / bar.max;
   return (
-    <div className="flex min-w-0 flex-col gap-1.5">
-      <dt className="text-caption text-text-tertiary">{term}</dt>
-      <dd className="flex min-w-0 flex-col gap-1.5">{children}</dd>
+    <div className="flex flex-col gap-1.5">
+      <div
+        role="progressbar"
+        aria-labelledby={labelId}
+        aria-valuenow={bar.value}
+        aria-valuemin={0}
+        aria-valuemax={bar.max}
+        className="relative h-2.5 w-full overflow-hidden rounded-ds-full border border-border-container bg-surface-subtle"
+      >
+        <div className="h-full rounded-ds-full bg-chart-1" style={{ width: `${String(share)}%` }} />
+        <span aria-hidden="true" className="absolute inset-y-0 right-0 w-0.5 bg-text-primary" />
+      </div>
+      <span id={labelId} className="text-small text-text-secondary tabular-nums">
+        {bar.label}
+      </span>
     </div>
   );
 }
 
-function Meter({ figure }: { figure: RunFigure }) {
-  if (figure.bar === null)
-    return <span className="text-small text-text-tertiary">{figure.note}</span>;
-  return (
-    <ProgressBar
-      value={figure.bar.value}
-      max={figure.bar.max}
-      label={figure.bar.label}
-      labelBelow
-    />
-  );
+/** The cap as the figure states it: the label ends "of USD 25.00 cap usage". */
+function capOf(label: string) {
+  return /of (USD [\d,.]+) cap usage/.exec(label)?.[1];
 }
 
-/** Spend against the cap as the page's one meter, with the amount in mono; then progress and time. */
+/** Spend against the cap as the page's one meter, with the amount in mono; then the time. */
 export function SpendTile({
   spend,
-  finished,
   elapsed,
 }: {
   spend: RunFigure;
-  finished: RunFigure;
   elapsed: { value: string | null; note: string };
 }) {
+  const cap = spend.bar === null ? undefined : capOf(spend.bar.label);
   return (
-    <Tile
-      span={4}
-      className="lg:col-span-12 xl:col-span-3 xl:self-start"
-      label="Spend and progress"
-      kicker="Spend against the cap"
-    >
-      <div className="flex flex-col gap-3">
-        {spend.value === null ? (
-          <GapNote>{spend.bar === null ? spend.note : "Spend is not known"}</GapNote>
-        ) : (
+    <Tile span={3} className={SPEND_TILE} label="Spend">
+      <h2 className="text-caption text-text-tertiary">Spend against the cap</h2>
+      {spend.value === null ? (
+        <GapNote>{spend.bar === null ? spend.note : "Spend is not known"}</GapNote>
+      ) : (
+        <div className="flex flex-col gap-3">
           <Figure className="text-metric font-medium">{spend.value}</Figure>
-        )}
-        {spend.value !== null && <Meter figure={spend} />}
-      </div>
-      <dl className="grid gap-4 border-t border-border-hairline pt-4 sm:grid-cols-2 xl:grid-cols-1">
-        <KeyValue term="Modules finished">
-          <Figure className="text-h4">{finished.value ?? <Missing />}</Figure>
-          <Meter figure={finished} />
-        </KeyValue>
-        <KeyValue term="Elapsed">
-          <Figure className="text-h4">{elapsed.value ?? <Missing />}</Figure>
-          <span className="text-small text-text-tertiary">{elapsed.note}</span>
-        </KeyValue>
-      </dl>
+          {spend.bar === null ? (
+            <span className="text-small text-text-tertiary">{spend.note}</span>
+          ) : (
+            <>
+              <CapMeter bar={spend.bar} />
+              {cap !== undefined && <Figure className="text-small">{`Cap ${cap}`}</Figure>}
+            </>
+          )}
+        </div>
+      )}
+      <p className="flex flex-wrap items-baseline gap-x-3 gap-y-1 border-t border-border-hairline pt-4 text-small text-text-secondary">
+        <span>Elapsed</span>
+        <Figure className="text-body font-medium">{elapsed.value ?? <Missing />}</Figure>
+        <span className="text-text-tertiary">{elapsed.note}</span>
+      </p>
     </Tile>
   );
 }

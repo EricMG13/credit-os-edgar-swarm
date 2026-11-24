@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Alert } from "@/components/alert/Alert";
 import { Button } from "@/components/base/buttons/button";
 import { Badge } from "@/components/base/badges/badges";
+import { ProgressBar } from "@/components/base/progress-indicators/progress-indicators";
 import { Pipeline } from "@/components/pipeline";
 import { StatusBadge } from "@/components/status/StatusBadge";
 import { Skeleton } from "@/components/gap/Skeleton";
@@ -22,7 +23,13 @@ import {
 } from "./api";
 import { Breadcrumb } from "./layout";
 import { Bento, GapNote, Tile, Well } from "./report/overview/Tile";
-import { pipelineStages, SpendTile, stoppedAt } from "./runProgressParts";
+import {
+  PIPELINE_TILE,
+  pipelineStages,
+  SPEND_TILE,
+  SpendTile,
+  stoppedAt,
+} from "./runProgressParts";
 import {
   asOfDate,
   elapsedFigure,
@@ -199,14 +206,13 @@ export function RunProgress({ id, mode }: { id: string; mode: Mode }) {
       ? REPORT_PROBLEMS[report]
       : undefined;
   const mayRestart = restartable || report === "ready" || report === "absent";
-  // What to do about a run that stopped: said inside its notice when it has one, else under the header.
   const restartNote = (
     <p id="run-restart-note" className="reading-copy text-body text-text-secondary">
       Review the inputs in a new draft. The new run has its own spending cap.
     </p>
   );
-  const noticed = Boolean(run?.reason);
-  const stopped = restartable ? stoppedAt(steps) : [];
+  const stopped = restartable ? stoppedAt(steps) : undefined;
+  const finished = run ? finishedFigure(run) : undefined;
   return (
     <>
       <Breadcrumb href="/runs" root="Run activity">
@@ -242,7 +248,7 @@ export function RunProgress({ id, mode }: { id: string; mode: Mode }) {
             {report === "ready" && (
               <Button href={`/report/${encodeURIComponent(id)}`}>Open report</Button>
             )}
-            {mayRestart && (
+            {mayRestart && !restartable && (
               <Button
                 color="secondary"
                 href={`/start?from=${encodeURIComponent(id)}`}
@@ -254,7 +260,7 @@ export function RunProgress({ id, mode }: { id: string; mode: Mode }) {
           </>
         }
       />
-      {mayRestart && !(noticed && restartable) && <div className="mt-3">{restartNote}</div>}
+      {mayRestart && !restartable && <div className="mt-3">{restartNote}</div>}
       {runProblem && (
         <div className="mt-6">
           <Alert
@@ -276,19 +282,40 @@ export function RunProgress({ id, mode }: { id: string; mode: Mode }) {
       )}
       {run ? (
         <section aria-label="Run activity" className="mt-6 grid gap-6">
-          {run.reason && (
+          {stopped ? (
             <Alert
               tone={run.status === "capped" ? "warning" : "error"}
               title="Why this run ended without a report"
+              action={
+                <Button
+                  size="sm"
+                  color="secondary"
+                  href={`/start?from=${encodeURIComponent(id)}`}
+                  aria-describedby="run-restart-note"
+                >
+                  Use this run’s inputs
+                </Button>
+              }
             >
               <span className="grid gap-2">
-                <span className="wrap-anywhere">{serviceText(run.reason)}</span>
-                {stopped.length > 0 && (
-                  <span className="wrap-anywhere">{`Where it stopped: ${stopped.join(", ")}.`}</span>
+                <span>{`Run ${run.status}.`}</span>
+                <span className="wrap-anywhere">
+                  {run.reason ? serviceText(run.reason) : "The run record gives no reason."}
+                </span>
+                {stopped.names.length > 0 && (
+                  <span className="wrap-anywhere">
+                    {`Where it stopped: ${stopped.names.join(", ")}.${stopped.detail ? ` ${stopped.detail}` : ""}`}
+                  </span>
                 )}
-                {restartable && restartNote}
+                {restartNote}
               </span>
             </Alert>
+          ) : (
+            run.reason && (
+              <Alert tone="error" title="Why this run ended without a report">
+                <span className="wrap-anywhere">{serviceText(run.reason)}</span>
+              </Alert>
+            )
           )}
           {live && run.held_reason && (
             <Alert tone="warning" title="Held by the service">
@@ -324,19 +351,27 @@ export function RunProgress({ id, mode }: { id: string; mode: Mode }) {
             </Alert>
           )}
           <Bento>
-            <Tile
-              span={8}
-              className="lg:col-span-12 xl:col-span-9"
-              label="Pipeline"
-              kicker="Module pipeline"
-              title={
-                finishedFigure(run).value === null
-                  ? "No analytical modules listed"
-                  : `${finishedFigure(run).value ?? ""} modules done`
-              }
-            >
+            <SpendTile spend={spendFigure(run)} elapsed={elapsedFigure(run)} />
+            <Tile span={8} className={PIPELINE_TILE} label="Pipeline">
+              <div className="flex flex-col gap-3">
+                <h2 className="text-h4 font-medium text-text-primary">Module pipeline</h2>
+                {finished?.bar ? (
+                  <ProgressBar
+                    value={finished.bar.value}
+                    max={finished.bar.max}
+                    label={finished.bar.label}
+                  />
+                ) : (
+                  <p className="text-small text-text-tertiary">{finished?.note}</p>
+                )}
+              </div>
               <Well className="border border-border-hairline p-4">
-                <Pipeline label="Modules in this run" stages={pipelineStages(run.modules, steps)} />
+                <Pipeline
+                  label="Modules in this run"
+                  stages={pipelineStages(run.modules, steps)}
+                  flow={live ? "running" : "none"}
+                  columns="xl"
+                />
               </Well>
               {assessmentGaps.length > 0 && (
                 <p className="text-small text-text-secondary">
@@ -344,12 +379,8 @@ export function RunProgress({ id, mode }: { id: string; mode: Mode }) {
                 </p>
               )}
             </Tile>
-            <SpendTile
-              spend={spendFigure(run)}
-              finished={finishedFigure(run)}
-              elapsed={elapsedFigure(run)}
-            />
-            <Tile span={12} label="Activity" kicker="Activity" title="What just happened">
+            <Tile span={12} label="Activity">
+              <h2 className="text-h4 font-medium text-text-primary">What just happened</h2>
               {run.events === null && (
                 <p className="text-small text-text-secondary">The activity log is unavailable.</p>
               )}
@@ -370,17 +401,17 @@ export function RunProgress({ id, mode }: { id: string; mode: Mode }) {
           className="mt-6"
         >
           <Bento>
-            <Tile span={8} label="Pipeline" kicker="Module pipeline">
+            <Tile span={3} className={SPEND_TILE} label="Spend">
+              {problem ? <GapNote>Spend is not known.</GapNote> : <Skeleton lines={5} />}
+            </Tile>
+            <Tile span={8} className={PIPELINE_TILE} label="Pipeline">
               {problem ? (
                 <GapNote>Progress is not known while this run cannot be read.</GapNote>
               ) : (
                 <Skeleton lines={7} />
               )}
             </Tile>
-            <Tile span={4} label="Spend and progress" kicker="Spend against the cap">
-              {problem ? <GapNote>Spend is not known.</GapNote> : <Skeleton lines={5} />}
-            </Tile>
-            <Tile span={12} label="Activity" kicker="Activity">
+            <Tile span={12} label="Activity">
               {problem ? <GapNote>No activity is known.</GapNote> : <Skeleton lines={3} />}
             </Tile>
           </Bento>
