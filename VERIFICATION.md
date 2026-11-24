@@ -21,9 +21,16 @@ engine is in [EricMG13/final-workflow](https://github.com/EricMG13/final-workflo
   Find and Trend drew with no console error. Edge, mobile widths and keyboard use were not checked.
   The Evidence link's address follows `resolveEvidenceLocation` by reading; it was not clicked
   through to a published report.
+- Review fixes, same day: text now comes from the current Findings sections (the synthetic
+  current-format CP-2 gives its bottom line, three findings and three limitations); module text
+  and Basis pass the reader's reference rule; adjusted headings join their reported measure;
+  gaps count `## Gaps` entries and `Not supplied:` cells (the retained TDG CP-1 is no longer plain
+  "Delivered"); absent modules are read against the run's recorded `requested_modules`, a new
+  field of the published run; period order reuses the reader's `periodOrder`.
 - Not done: confidence-review and rewrite-tournament (their definitions are not in this
-  repository or session), the full web and Python suites, and a check against the design system's
-  component rules; the page uses native selects, checkboxes and tables as the Library list does.
+  repository or session), the full web and Python suites, a browser check after the review
+  fixes, and a check against the design system's component rules; the page uses native selects,
+  checkboxes and tables as the Library list does.
 
 ## 2026-11-24 — Parallel CP-OS review fixes for PR #71
 

@@ -7,6 +7,7 @@ import {
   groupKey,
   matchIssuers,
   NO_FILTERS,
+  readBound,
   periodsOf,
   rank,
   trend,
@@ -113,10 +114,11 @@ const names = (issuers: readonly { name: string }[]) => issuers.map((issuer) => 
 test("periods are read as written, ordered by year, and the view opens on the most stated", () => {
   expect(periodsOf(data, data.issuers, LEVERAGE)).toEqual(["FY2024", "FY2025"]);
   expect(commonPeriod(data, data.issuers, LEVERAGE)).toBe("FY2025");
+  // "Thereafter" cannot be ordered, so the module's own order stands.
   expect(periodsOf(data, data.issuers, MATURITY)).toEqual([
-    "FY2026 / 2026-09-30",
-    "FY2027",
     "Thereafter",
+    "FY2027",
+    "FY2026 / 2026-09-30",
   ]);
   expect(factAt(data, "a2", LEVERAGE, "FY2024")?.text).toBe("5.1");
   expect(factAt(data, "b1", LEVERAGE, "FY2024")).toBeUndefined();
@@ -137,9 +139,9 @@ test("a rank reads one period, keeps units apart, keeps zero and lists missing s
     ],
     ["US$m", [["Gamma", "1,250"]]],
   ]);
-  expect(ranking.missing.map((m) => [m.issuer.name, m.fact?.text, m.stated])).toEqual([
-    ["Delta", "Not supplied: no cash", []],
-  ]);
+  expect(
+    ranking.missing.map((m) => [m.issuer.name, m.fact?.text, m.stated, m.repeated.length]),
+  ).toEqual([["Delta", "Not supplied: no cash", [], 0]]);
   const high = rank(data, data.issuers, LEVERAGE, "FY2025", "high").units[0]?.rows ?? [];
   expect(high.map((row) => row.issuer.name)).toEqual(["Alpha", "Beta"]);
 });
@@ -149,10 +151,12 @@ test("an issuer with no figure for the chosen period is never ranked on another 
   expect(ranking.units.map((u) => u.rows.map((r) => [r.issuer.name, r.fact.text]))).toEqual([
     [["Alpha", "5.1"]],
   ]);
-  expect(ranking.missing.map((m) => [m.issuer.name, m.fact?.text, m.stated])).toEqual([
-    ["Beta", undefined, ["FY2025"]],
-    ["Gamma", undefined, ["FY2025"]],
-    ["Delta", undefined, []],
+  expect(
+    ranking.missing.map((m) => [m.issuer.name, m.fact?.text, m.stated, m.repeated.length]),
+  ).toEqual([
+    ["Beta", undefined, ["FY2025"], 0],
+    ["Gamma", undefined, ["FY2025"], 0],
+    ["Delta", undefined, [], 0],
   ]);
 });
 
@@ -204,4 +208,54 @@ test("a figure is drawn as written and links to its own line of evidence", () =>
   expect(evidenceLink(alpha.runs[0], first)).toBe(
     `/report/folder%20a2#evidence/a2%2FCP-1.md~${"a".repeat(64)}-1`,
   );
+});
+
+test("a period of one form is put in time order whatever order the rows are in", () => {
+  const dated = (period: string) =>
+    fact("b1", "beta", "x", { period, text: "1", at: 1, unit: "x" });
+  const mixed: Coverage = {
+    ...data,
+    facts: [
+      dated("FY2025 / 2025-06-30"),
+      dated("FY2024 / 2024-12-28"),
+      dated("FY2023 / 2023-12-30"),
+    ],
+  };
+  expect(periodsOf(mixed, mixed.issuers, "x")).toEqual([
+    "FY2023 / 2023-12-30",
+    "FY2024 / 2024-12-28",
+    "FY2025 / 2025-06-30",
+  ]);
+  const loose: Coverage = { ...data, facts: [dated("30 June 2025"), dated("31 March 2025")] };
+  expect(periodsOf(loose, loose.issuers, "x")).toEqual(["30 June 2025", "31 March 2025"]);
+});
+
+test("a period stated twice has no one figure: it is not ranked, bounded or drawn", () => {
+  const twice: Coverage = {
+    ...data,
+    facts: [
+      ...data.facts,
+      fact("a2", "alpha", LEVERAGE, { period: "FY2025", text: "4.1", at: 4.1, unit: "x" }),
+    ],
+  };
+  expect(factAt(twice, "a2", LEVERAGE, "FY2025")).toBeUndefined();
+  const ranking = rank(twice, twice.issuers, LEVERAGE, "FY2025", "high");
+  expect(ranking.units[0]?.rows.map((row) => row.issuer.name)).toEqual(["Beta"]);
+  const alpha = ranking.missing.find((item) => item.issuer.name === "Alpha");
+  expect(alpha?.repeated.map((row) => row.text)).toEqual(["4.6", "4.1"]);
+  expect(names(matchIssuers(twice, { ...NO_FILTERS, max: "5" }, LEVERAGE, "FY2025"))).toEqual([
+    "Beta",
+  ]);
+  const [series] = trend(twice, twice.issuers, LEVERAGE, "x").series;
+  expect(series?.points.map((point) => point?.text ?? null)).toEqual(["5.1", null]);
+});
+
+test("a bound may carry thousands separators; any other text is invalid, not ignored silently", () => {
+  expect(readBound("")).toEqual({ value: null, invalid: false });
+  expect(readBound(" 1,250 ")).toEqual({ value: 1250, invalid: false });
+  expect(readBound("-0.5")).toEqual({ value: -0.5, invalid: false });
+  expect(readBound("5x")).toEqual({ value: null, invalid: true });
+  expect(names(matchIssuers(data, { ...NO_FILTERS, min: "1,000" }, LEVERAGE, "FY2025"))).toEqual([
+    "Gamma",
+  ]);
 });

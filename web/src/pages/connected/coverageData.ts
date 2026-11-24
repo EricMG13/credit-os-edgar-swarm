@@ -1,18 +1,22 @@
 import { request } from "./ahead";
+import { periodOrder } from "./reportView";
 
 /**
  * Coverage's reply (`react_frontend/coverage.py`). Every `text` is the module's own; `at` only
  * sorts and screens. Nothing here averages, differences or scores a delivered value.
  */
 export type CellState =
-  "assessed" | "not-assessable" | "unreadable" | "no-handoff" | "not-in-pathway";
-export type Cell = { state: CellState; gaps?: number };
+  "assessed" | "not-assessable" | "unreadable" | "no-handoff" | "not-in-pathway" | "plan-unknown";
+/** `gaps` counts what the handoff states as missing; `issue` is a fixed table not in its shape. */
+export type Cell = { state: CellState; gaps?: number; issue?: boolean };
 export type CoverageRun = {
   key: string;
   folder: string;
   asOf: string | null;
   pathway: string | null;
   pathwayTitle: string | null;
+  /** How many other runs of the issuer share this run's as-of date. */
+  sharedWith?: number;
   cells: Record<string, Cell>;
   other: readonly ({ code: string; title: string } & Cell)[];
 };
@@ -41,6 +45,8 @@ export type Fact = {
   text: string;
   at: number | null;
   gap?: boolean;
+  /** The column heading as the module wrote it, where it is the adjusted twin of the field's. */
+  heading?: string;
   unit?: string;
   basis?: string;
   impact?: string;
@@ -93,7 +99,7 @@ export const NO_FILTERS: Filters = {
   max: "",
 };
 
-/** The run a portfolio view reads for an issuer: its newest. Older runs are read by Trend only. */
+/** The run every view reads for an issuer: its newest. The reply carries facts for that run only. */
 export function latestRun(issuer: Issuer): CoverageRun | undefined {
   return issuer.runs[0];
 }
@@ -102,31 +108,33 @@ export function factsOf(data: Coverage, run: string, field?: string): Fact[] {
   return data.facts.filter((fact) => fact.run === run && (!field || fact.field === field));
 }
 
-/** The run's own row for one period of a field, as the module wrote it. */
+/** Every row the run states for one period of a field, as the module wrote them. */
+function factsAt(data: Coverage, run: string, field: string, period: string): Fact[] {
+  return factsOf(data, run, field).filter((fact) => fact.period === period);
+}
+
+/** The run's one row for a period; nothing when it states none, or states the period twice. */
 export function factAt(
   data: Coverage,
   run: string,
   field: string,
   period: string,
 ): Fact | undefined {
-  return factsOf(data, run, field).find((fact) => fact.period === period);
-}
-
-function yearOf(period: string): number | null {
-  const year = /\d{4}/.exec(period)?.[0];
-  return year === undefined ? null : Number(year);
+  const found = factsAt(data, run, field, period);
+  return found.length === 1 ? found[0] : undefined;
 }
 
 /**
- * Period labels in reading order: those naming a year by that year, then the rest ("Thereafter")
- * as first written. Labels are compared as written; two issuers' periods match only when equal.
+ * Period labels in time order by the reader's own rule (`periodOrder`), which orders one form of
+ * label only. Where a label cannot be ordered or the forms are mixed, the order is the modules'
+ * own: as first written. Labels are compared as written; two periods match only when equal.
  */
 function inOrder(periods: readonly string[]): string[] {
   const distinct = [...new Set(periods)];
-  const dated = distinct.filter((period) => yearOf(period) !== null);
-  const undated = distinct.filter((period) => yearOf(period) === null);
-  dated.sort((a, b) => (yearOf(a) ?? 0) - (yearOf(b) ?? 0) || a.localeCompare(b));
-  return [...dated, ...undated];
+  const keys = new Map(distinct.map((period) => [period, periodOrder(period)]));
+  const forms = new Set([...keys.values()].map((key) => key?.[0]));
+  if (forms.size !== 1 || forms.has(undefined)) return distinct;
+  return distinct.sort((a, b) => (keys.get(a) ?? "").localeCompare(keys.get(b) ?? ""));
 }
 
 function newestFacts(data: Coverage, issuers: readonly Issuer[], field: string): Fact[] {
@@ -163,13 +171,18 @@ export function commonPeriod(
   return best ?? periodsOf(data, issuers, field).at(-1) ?? null;
 }
 
-function bound(text: string): number | null {
-  const value = Number(text.trim());
-  return text.trim() !== "" && Number.isFinite(value) ? value : null;
+/** A typed bound: empty is open; thousands separators are allowed; any other text is invalid. */
+export function readBound(text: string): { value: number | null; invalid: boolean } {
+  const typed = text.trim();
+  if (typed === "") return { value: null, invalid: false };
+  const plain = /^-?\d[\d,]*(?:\.\d+)?$/.test(typed);
+  return plain
+    ? { value: Number(typed.replaceAll(",", "")), invalid: false }
+    : { value: null, invalid: true };
 }
 
 function within(fact: Fact | undefined, filters: Filters): boolean {
-  const [min, max] = [bound(filters.min), bound(filters.max)];
+  const [min, max] = [readBound(filters.min).value, readBound(filters.max).value];
   if (min === null && max === null) return true;
   // A missing figure is not zero: it passes no numeric bound.
   if (fact?.at === null || fact?.at === undefined) return false;
@@ -219,7 +232,14 @@ export type Ranking = {
    * Issuers whose newest run states no figure for the period: `fact` is the module's stated gap
    * when it wrote one, and `stated` the periods that run does state a figure for.
    */
-  missing: { issuer: Issuer; run: CoverageRun; fact: Fact | undefined; stated: string[] }[];
+  missing: {
+    issuer: Issuer;
+    run: CoverageRun;
+    fact: Fact | undefined;
+    stated: string[];
+    /** The rows of a period the run states more than once: none of them is ranked. */
+    repeated: Fact[];
+  }[];
 };
 
 /** Sort the delivered figures of one field at one period, newest run per issuer. */
@@ -235,12 +255,13 @@ export function rank(
   for (const issuer of issuers) {
     const run = latestRun(issuer);
     if (!run) continue;
-    const fact = factAt(data, run.key, field, period);
+    const rows = factsAt(data, run.key, field, period);
+    const fact = rows.length === 1 ? rows[0] : undefined;
     if (fact?.at === null || fact?.at === undefined) {
       const stated = factsOf(data, run.key, field)
         .filter((other) => other.at !== null)
         .flatMap((other) => other.period ?? []);
-      missing.push({ issuer, run, fact, stated });
+      missing.push({ issuer, run, fact, stated, repeated: rows.length > 1 ? rows : [] });
       continue;
     }
     const unit = fact.unit ?? "";
@@ -309,7 +330,11 @@ export function trend(
       return {
         name: count === 1 ? issuer.name : `${issuer.name} (${String(count)})`,
         run,
-        points: periods.map((period) => facts.find((fact) => fact.period === period) ?? null),
+        // A period the run states twice has no one figure, so it draws no point.
+        points: periods.map((period) => {
+          const rows = facts.filter((fact) => fact.period === period);
+          return rows.length === 1 ? (rows[0] ?? null) : null;
+        }),
       };
     }),
   };

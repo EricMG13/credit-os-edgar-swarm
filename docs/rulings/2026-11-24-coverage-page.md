@@ -29,14 +29,21 @@ Each point below is the build's choice, not the owner's.
 - The fixed 14 columns are the Full credit assessment's analytical modules (its requested modules
   without CP-MODEL), in plan order, named by their titles. A run's handoffs from any other module
   are listed under the issuer, not as columns.
-- A cell says one of five things, by the rules the Library already applies
-  (`react_frontend/library_cards.py`): assessed; not assessable (the module's own declaration);
-  unreadable (the handoff did not parse); no handoff (the pathway asks for the module and the run
-  published none); not in this pathway. An assessed cell also counts the chart tables the module
-  itself wrote as `Not supplied:`. There is no "partial" state and no coverage score.
-- Fields come from what the existing parser (`credit_os.handoff_fields`) already types: the Reader
-  summary (bottom line, confidence, main limitation, findings with creditor impact) and the
-  `Chart data:` tables. Coverage adds no parser and reads no free prose for numbers.
+- A cell says one of six things. Four are by the rules the Library already applies
+  (`react_frontend/library_cards.py`): delivered; delivered with gaps; not assessable (the
+  module's own declaration); unreadable (the handoff did not parse). Two read the run's own plan,
+  the requested modules its manifest records: no handoff (the run asked for the module and
+  published none) and not asked for in this run. A run with no recorded plan says only that there
+  is no handoff. "With gaps" means the handoff states something missing (a chart table or cell
+  written `Not supplied:`, or an entry under `## Gaps`) or a fixed table could not be read. There
+  is no "partial" state and no coverage score.
+- Fields come from what the existing parser (`credit_os.handoff_fields`) already types: the
+  `Chart data:` tables and, for the reader's text, the Findings sections (bottom line, key
+  findings, limitations) with the confidence band, or the Reader summary of an earlier-format
+  handoff. Coverage adds no parser and reads no free prose for numbers. A CP-1 table headed with
+  the adjusted measure joins its reported measure and is drawn with the heading the module wrote.
+- Module text is drawn by the reader's rule: a passage or Basis carrying a source reference is
+  left to Evidence, and module codes are drawn as names.
 - Delivery adds no analysis, so the page only selects, filters, sorts and groups delivered text.
   It computes no average, difference, score or composite. A figure is drawn as written, with its
   period, reporting unit and the module's Basis and limitation. Missing is listed apart from
@@ -46,8 +53,9 @@ Each point below is the build's choice, not the owner's.
   as not ranked, with the periods it does state, and is never ranked on another period.
 - Trend is a figure down the module's own periods, one line per issuer from its newest run.
   How a figure moved between two runs of an issuer stays on the Changes page (CP-8).
-- Portfolio views read each issuer's newest run; older runs are listed under the issuer. Each
-  issuer, date and pathway stays separate.
+- Every view reads each issuer's newest run; older runs are listed under the issuer. Runs
+  sharing the newest date keep the catalogue's order, as the Library's cards do, and say so.
+  A period a run states twice has no one figure and is not ranked.
 - A figure read down a row table (covenant tests, rating triggers, limits) is not offered for
   ranking: its rows are each issuer's own names.
 - Working-page rule: no file name, hash, run code or gap ledger is drawn. A fact opens its run's

@@ -118,10 +118,10 @@ test("the matrix says each module's state in words and draws no code, hash or fi
   const { container } = render(<Coverage />);
   const table = await screen.findByRole("table");
   const alpha = within(table).getByRole("row", { name: /Alpha plc/ });
-  expect(within(alpha).getByText("Delivered, 1 stated gap")).toBeInTheDocument();
+  expect(within(alpha).getByText("Delivered with gaps")).toBeInTheDocument();
   expect(within(alpha).getByText("Not assessable")).toBeInTheDocument();
   const beta = within(table).getByRole("row", { name: /Beta SA/ });
-  expect(within(beta).getByText("Not in this pathway")).toBeInTheDocument();
+  expect(within(beta).getByText("Not asked for in this run")).toBeInTheDocument();
   expect(screen.getByText("2 of 2 issuers shown")).toBeInTheDocument();
   const drawn = container.textContent;
   for (const hidden of ["CP-1", "CP-2", SHA, ".md", "alpha-run", "credit_snapshot"])
@@ -175,6 +175,62 @@ test("ticked issuers can be saved as a group kept in this browser", async () => 
     target: { value: "Watch" },
   });
   expect(screen.getByText("1 of 2 issuers shown")).toBeInTheDocument();
+});
+
+test("module text is drawn by the reader's rule: references stay in Evidence, codes are named", async () => {
+  const [figure, gap, finding] = data.facts;
+  if (!figure || !gap || !finding) throw new Error("fixture");
+  answer({
+    ...data,
+    facts: [
+      {
+        ...figure,
+        basis: "Carrying debt; calculated C3; annual filing pages 71 and 120.",
+        heading: "Net debt / adjusted EBITDA",
+      },
+      gap,
+      { ...finding, text: "Headroom is **thin** per CP-4.", impact: "See filing.pdf, page 12" },
+    ],
+  });
+  window.history.replaceState(null, "", "/coverage?view=rank");
+  const { container } = render(<Coverage />);
+  expect(await screen.findByText("Qualification recorded in Evidence.")).toBeInTheDocument();
+  expect(screen.getByText("Stated as Net debt / adjusted EBITDA")).toBeInTheDocument();
+  expect(container.textContent).not.toContain("pages 71");
+  fireEvent.click(screen.getByRole("radio", { name: "Find" }));
+  expect(await screen.findByText("Headroom is thin per Legal & covenants.")).toBeInTheDocument();
+  expect(container.textContent).not.toContain("filing.pdf");
+});
+
+test("searching an issuer's name in Find lists that issuer's passages", async () => {
+  answer(data);
+  window.history.replaceState(null, "", "/coverage?view=find&q=alpha");
+  render(<Coverage />);
+  expect(await screen.findByText("Covenant headroom is thin.")).toBeInTheDocument();
+  expect(screen.getByText("1 of 2 issuers shown")).toBeInTheDocument();
+});
+
+test("a sector in the link that no issuer has is shown as unavailable, not hidden", async () => {
+  answer(data);
+  window.history.replaceState(null, "", "/coverage?sector=Chemicals");
+  render(<Coverage />);
+  expect(await screen.findByRole("combobox", { name: "Sector" })).toHaveValue("Chemicals");
+  expect(screen.getByRole("option", { name: "Chemicals (unavailable)" })).toBeInTheDocument();
+});
+
+test("an unreadable bound is marked, and the detail closes when its issuer is filtered out", async () => {
+  answer(data);
+  render(<Coverage />);
+  fireEvent.click(await screen.findByRole("button", { name: "Alpha plc" }));
+  expect(screen.getByRole("heading", { name: "Alpha plc" })).toBeInTheDocument();
+  fireEvent.change(screen.getByRole("textbox", { name: /At most/ }), { target: { value: "5x" } });
+  expect(screen.getByRole("textbox", { name: /At most/ })).toBeInvalid();
+  fireEvent.change(screen.getByRole("combobox", { name: "Sector" }), {
+    target: { value: "Retail" },
+  });
+  expect(screen.queryByRole("heading", { name: "Alpha plc" })).not.toBeInTheDocument();
+  fireEvent.click(screen.getByRole("radio", { name: "Trend" }));
+  expect(screen.queryByRole("textbox", { name: /At most/ })).not.toBeInTheDocument();
 });
 
 test("a retained test preview says so, as the Library does", async () => {

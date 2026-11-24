@@ -9,20 +9,25 @@ import re
 from functools import cache
 from typing import Any
 
-from credit_os.handoff_fields import (  # type: ignore[import-untyped]
+from credit_os.handoff_fields import (  # type: ignore[import-untyped, unused-ignore]
     PLAIN_AMOUNT,
     STATED_GAP,
 )
 
-from react_frontend.library_cards import _blocked, _designated_output
+from deploy_workflow.owners.cpos_cp1_check import ADJUSTED_TWIN
+from react_frontend.library_cards import _blocked, _bottom_line, _designated_output
 
 BASE_PATHWAY = "credit_snapshot"
 NO_COLUMN = frozenset({"CP-MODEL"})  # The Model is a destination, not an analytical module.
 SUMMARY_FIELDS = (
     ("bottomLine", "Bottom line", "text"),
     ("confidence", "Confidence", "choice"),
-    ("limitation", "Main limitation", "text"),
+    ("limitation", "Limitation", "text"),
 )
+# A CP-1 chart table may be headed with the adjusted names; they are the same measures, so the
+# adjusted heading joins its reported field and the fact keeps the heading the module wrote.
+_REPORTED = {adjusted: reported for reported, adjusted in ADJUSTED_TWIN.items()}
+_NO_GAP = re.compile(r"(?:none|no gaps?)\b", re.IGNORECASE)
 _SLUG = re.compile(r"[^a-z0-9]+")
 
 
@@ -50,21 +55,50 @@ def columns() -> list[dict[str, str]]:
     ]
 
 
+def _stated_gaps(output: dict[str, Any], sections: list[dict[str, Any]]) -> int:
+    """What the handoff itself states as missing: chart tables written as `Not supplied:`, single
+    `Not supplied:` chart cells, and the entries of its `## Gaps` section."""
+    count = len(output.get("chartGaps") or [])
+    for chart in output.get("charts") or []:
+        table = _table(sections, chart.get("table"))
+        rows = table["rows"] if table is not None else []
+        count += sum(
+            bool(STATED_GAP.match(row["cells"][at])) for row in rows for at in chart["columns"]
+        )
+    inside = False
+    for section in sections:
+        if section["level"] <= 2:
+            inside = section["level"] == 2 and section["heading"] == "Gaps"
+        if not inside:
+            continue
+        for block in section["blocks"]:
+            if block["type"] == "table":
+                count += len(block["rows"])
+            elif block["type"] == "text" and not _NO_GAP.match(block["text"].lstrip("-* ")):
+                count += 1
+    return count
+
+
 def _cell(
     workspace: dict[str, Any], record: dict[str, Any], key: str, code: str
 ) -> tuple[dict[str, Any], dict[str, Any] | None]:
     """The module's state in this run and its designated output when one can be read."""
     output = _designated_output(workspace, record, key, code)
     if output is None:
-        asked = _method()[0].get(record.get("pathway") or "")
-        absent = "not-in-pathway" if asked is not None and code not in asked else "no-handoff"
-        return {"state": absent}, None
+        # The run's own plan, as its manifest records it; without one nothing is said of the plan.
+        asked = record.get("requested")
+        if not isinstance(asked, list):
+            return {"state": "plan-unknown"}, None
+        return {"state": "no-handoff" if code in asked else "not-in-pathway"}, None
     sections = workspace.get("handoffs", {}).get(output["sha256"], [])
     if output.get("parseError"):
         return {"state": "unreadable"}, None
     if _blocked(output, sections):
         return {"state": "not-assessable"}, output
-    return {"state": "assessed", "gaps": len(output.get("chartGaps") or [])}, output
+    cell = {"state": "assessed", "gaps": _stated_gaps(output, sections)}
+    if output.get("issue"):
+        cell["issue"] = True  # A fixed table was not in its shape, so its figures are not read.
+    return cell, output
 
 
 def _number(text: str) -> float | None:
@@ -104,11 +138,12 @@ def _chart_facts(
             text = cells[at]
             if not text:
                 continue
+            measure = _REPORTED.get(headers[at], headers[at])
             field = {
-                "id": _slug(code, chart["title"], headers[at]),
+                "id": _slug(code, chart["title"], measure),
                 "module": code,
                 "group": chart["title"],
-                "label": headers[at],
+                "label": measure,
                 "kind": "number",
                 # A row table's rows are each issuer's own names, so they are not ranked together.
                 "series": "period" if periods else "row",
@@ -123,6 +158,8 @@ def _chart_facts(
                 "basis": cells[-1],
                 "line": row["line"],
             }
+            if measure != headers[at]:
+                fact["heading"] = headers[at]
             found.append((field, fact))
     return found
 
@@ -164,12 +201,68 @@ def _summary_facts(
     return found
 
 
+def _passage(block: dict[str, Any]) -> dict[str, Any]:
+    """A paragraph or list item without its marker, its `Basis:` line kept apart."""
+    lines = block["text"].split("\n")
+    basis = lines.pop()[7:] if lines[-1].startswith("Basis: ") else None
+    text = re.sub(r"^[-*] ", "", " ".join(lines).strip())
+    fact = {"period": None, "row": None, "text": text, "at": None, "line": block["line"]}
+    return fact if basis is None else {**fact, "basis": basis}
+
+
+def _section_facts(
+    code: str, output: dict[str, Any], sections: list[dict[str, Any]]
+) -> list[tuple[dict[str, Any], dict[str, Any]]]:
+    """The current handoff's Findings: bottom line, key findings, limitations and confidence."""
+
+    def field(name: str, label: str, kind: str) -> dict[str, Any]:
+        return {
+            "id": _slug(code, "reader summary", name),
+            "module": code,
+            "group": "Findings",
+            "label": label,
+            "kind": kind,
+        }
+
+    found = []
+    lead = _bottom_line(sections)
+    if lead is not None:
+        found.append((field("bottomLine", "Bottom line", "text"), _passage(lead)))
+    parent, line = "", None
+    for section in sections:
+        if section["level"] <= 2:
+            parent = section["heading"] if section["level"] == 2 else ""
+        if section["heading"] == "Confidence inputs":
+            line = section["line"]
+        if parent != "Findings" or section["level"] != 3:
+            continue
+        named = {
+            "Key findings": ("finding", "Finding"),
+            "Limitations": ("limitation", "Limitation"),
+        }
+        if section["heading"] in named:
+            name, label = named[section["heading"]]
+            found.extend(
+                (field(name, label, "text"), _passage(block))
+                for block in section["blocks"]
+                if block["type"] == "text"
+            )
+    confidence = output.get("confidence")
+    band = confidence.get("band") if isinstance(confidence, dict) else None
+    if isinstance(band, str) and line is not None:
+        fact = {"period": None, "row": None, "text": band, "at": None, "line": line}
+        found.append((field("confidence", "Confidence", "choice"), fact))
+    return found
+
+
 def _output_facts(
     code: str, output: dict[str, Any], sections: list[dict[str, Any]]
 ) -> list[tuple[dict[str, Any], dict[str, Any]]]:
-    found = []
+    # An earlier-format handoff states its call in the Reader summary tables.
     if output.get("summary"):
-        found.extend(_summary_facts(code, output["summary"]))
+        found = _summary_facts(code, output["summary"])
+    else:
+        found = _section_facts(code, output, sections)
     for chart in output.get("charts") or []:
         table = _table(sections, chart.get("table"))
         # A bridge's steps are the module's own names, not a measure shared across issuers.
@@ -190,7 +283,7 @@ def _run_entry(
         cell, output = _cell(workspace, record, key, code)
         if code in fixed:
             cells[code] = cell
-        elif code not in NO_COLUMN and cell["state"] != "no-handoff":
+        elif code not in NO_COLUMN and output is not None:
             other.append({"code": code, "title": module_titles.get(code, code), **cell})
         if output is not None and cell["state"] == "assessed":
             sections = workspace.get("handoffs", {}).get(output["sha256"], [])
@@ -208,8 +301,16 @@ def _run_entry(
     return entry, facts
 
 
-def _newest_first(run: dict[str, Any]) -> tuple[str, str]:
-    return (run["asOf"] or "", run["folder"])
+def _order(issuer: dict[str, Any]) -> None:
+    """Newest as-of date first; runs sharing a date keep the catalogue's order, as the Library's
+    cards do, and each says how many others share its date."""
+    runs = issuer["runs"]
+    runs.sort(key=lambda run: run["asOf"] or "", reverse=True)  # Stable: equals keep their order.
+    for run in runs:
+        run["sharedWith"] = sum(
+            other is not run and bool(run["asOf"]) and other["asOf"] == run["asOf"]
+            for other in runs
+        )
 
 
 def coverage(snapshot: dict[str, Any] | None) -> dict[str, Any] | None:
@@ -217,15 +318,16 @@ def coverage(snapshot: dict[str, Any] | None) -> dict[str, Any] | None:
     if snapshot is None:
         return None
     workspace = snapshot["workspace"]
-    listed = {run["id"]: run for run in snapshot["catalogue"].get("real", [])}
+    by_folder = {
+        record.get("folder"): (key, record) for key, record in workspace.get("runs", {}).items()
+    }
     issuers: dict[str, dict[str, Any]] = {}
-    fields: dict[str, dict[str, Any]] = {}
-    facts = []
-    for key, record in workspace.get("runs", {}).items():
-        catalogued = listed.get(record.get("folder"))
-        if catalogued is None:
+    found: dict[str, list[tuple[dict[str, Any], dict[str, Any]]]] = {}
+    for catalogued in snapshot["catalogue"].get("real", []):  # The catalogue's order.
+        if catalogued["id"] not in by_folder:
             continue
-        entry, found = _run_entry(workspace, key, record, catalogued)
+        key, record = by_folder[catalogued["id"]]
+        entry, found[key] = _run_entry(workspace, key, record, catalogued)
         issuer_key = str(record.get("issuerKey") or record["folder"])
         issuer = issuers.setdefault(
             issuer_key,
@@ -237,11 +339,14 @@ def coverage(snapshot: dict[str, Any] | None) -> dict[str, Any] | None:
             },
         )
         issuer["runs"].append(entry)
-        for field, fact in found:
-            fields.setdefault(field["id"], field)
-            facts.append({"field": field["id"], "issuer": issuer_key, "run": key, **fact})
+    fields: dict[str, dict[str, Any]] = {}
+    facts = []
     for issuer in issuers.values():
-        issuer["runs"].sort(key=_newest_first, reverse=True)
+        _order(issuer)
+        newest = issuer["runs"][0]["key"]  # The page reads facts of each issuer's newest run only.
+        for field, fact in found[newest]:
+            fields.setdefault(field["id"], field)
+            facts.append({"field": field["id"], "issuer": issuer["key"], "run": newest, **fact})
     return {
         "columns": columns(),
         "issuers": sorted(issuers.values(), key=lambda item: str(item["name"]).casefold()),

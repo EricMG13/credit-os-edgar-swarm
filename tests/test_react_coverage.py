@@ -131,12 +131,13 @@ def _snapshot() -> dict[str, Any]:
         ],
     }
 
-    def run(key: str, issuer: str, pathway: str | None) -> dict[str, Any]:
+    def run(key: str, issuer: str, pathway: str | None, requested: Any) -> dict[str, Any]:
         mine = [o for o in outputs if o["run"] == key]
         return {
             "folder": f"folder-{key}",
             "issuerKey": issuer,
             "pathway": pathway,
+            "requested": requested,
             "sector": "Aerospace" if issuer == "alpha" else None,
             "modules": {o["module"]: {"outputs": [o["id"]], "default": o["id"]} for o in mine},
         }
@@ -150,8 +151,10 @@ def _snapshot() -> dict[str, Any]:
         },
         "workspace": {
             "runs": {
-                "a1": run("a1", "alpha", "credit_snapshot"),
-                "b1": run("b1", "beta", "short_snapshot"),
+                "a1": run(
+                    "a1", "alpha", "credit_snapshot", ["CP-0", "CP-1", "CP-2", "CP-4", "CP-6"]
+                ),
+                "b1": run("b1", "beta", "short_snapshot", None),
                 "hidden": {
                     "folder": "not-listed",
                     "issuerKey": "gamma",
@@ -177,7 +180,7 @@ def test_the_fixed_columns_are_the_full_assessments_fourteen_analytical_modules(
     assert coverage.columns()[1] == {"code": "CP-1", "title": "Canonical data foundation"}
 
 
-def test_cells_say_the_five_states_and_never_guess() -> None:
+def test_cells_say_their_state_from_the_runs_own_plan_and_never_guess() -> None:
     page = coverage.coverage(_snapshot())
     assert page is not None
     assert [(i["key"], i["name"], i["sector"]) for i in page["issuers"]] == [
@@ -190,18 +193,21 @@ def test_cells_say_the_five_states_and_never_guess() -> None:
         "credit_snapshot",
         "Full credit assessment",
     )
-    assert alpha["cells"]["CP-1"] == {"state": "assessed", "gaps": 1}
+    # One chart table written as not supplied and one `Not supplied:` cell in the leverage table.
+    assert alpha["cells"]["CP-1"] == {"state": "assessed", "gaps": 2}
     assert alpha["cells"]["CP-2"] == {"state": "assessed", "gaps": 0}
     assert alpha["cells"]["CP-6"] == {"state": "not-assessable"}
     assert alpha["cells"]["CP-5"] == {"state": "unreadable"}
-    assert alpha["cells"]["CP-0"] == {"state": "no-handoff"}
+    assert alpha["cells"]["CP-0"] == {"state": "no-handoff"}  # asked for, none published
+    assert alpha["cells"]["CP-3"] == {"state": "not-in-pathway"}  # this run did not ask for it
     assert alpha["other"] == [
         {"code": "CP-1B", "title": "Earnings delta", "state": "assessed", "gaps": 0}
     ]
     beta = page["issuers"][1]["runs"][0]
     assert beta["cells"]["CP-1"] == {"state": "assessed", "gaps": 0}
-    assert beta["cells"]["CP-0"] == {"state": "no-handoff"}  # the short snapshot asks for CP-0
-    assert beta["cells"]["CP-2"] == {"state": "not-in-pathway"}
+    # No recorded plan: nothing is said about what the run asked for.
+    assert beta["cells"]["CP-0"] == {"state": "plan-unknown"}
+    assert beta["cells"]["CP-2"] == {"state": "plan-unknown"}
     assert len(alpha["cells"]) == len(beta["cells"]) == 14
 
 
@@ -345,3 +351,94 @@ def test_a_retained_tdg_cp1_handoff_keeps_its_own_figures_periods_and_units(name
     assert all(f"| {fact['text']} |" in lines[fact["line"] - 1] for fact in total + maturing)
     bridges = [field for field in page["fields"] if "bridge" in field["id"]]
     assert bridges == []
+
+
+def _published(name: str, code: str) -> tuple[dict[str, Any], dict[str, Any]]:
+    path = Path(__file__).parent.parent / name
+    snapshot = _retained_at(path, code)
+    return snapshot, coverage.coverage(snapshot) or {}
+
+
+def _retained_at(path: Path, code: str) -> dict[str, Any]:
+    raw = path.read_bytes()
+    sections, _, fields = handoff_parts(raw, strict=False)
+    sha = hashlib.sha256(raw).hexdigest()
+    output = {"id": f"r/{code}.md", "module": code, "run": "r", "sha256": sha, **fields}
+    run = {
+        "folder": "r",
+        "issuerKey": "i",
+        "pathway": None,
+        "modules": {code: {"outputs": [output["id"]], "default": output["id"]}},
+    }
+    return {
+        "catalogue": {"real": [{"id": "r", "name": "N", "date": "2025-03-31"}]},
+        "workspace": {
+            "runs": {"r": run},
+            "outputs": {output["id"]: output},
+            "handoffs": {sha: sections},
+        },
+    }
+
+
+def test_a_current_format_handoff_gives_its_findings_and_counts_its_gaps() -> None:
+    """Synthetic fixture in the current format: no Reader summary, sections under Findings."""
+    _, page = _published(
+        "apps/issuer-library/fixtures/synthetic-new-format/SYNTHETIC-CP-2.md", "CP-2"
+    )
+    said: dict[str, list[dict[str, Any]]] = {}
+    for fact in page["facts"]:
+        said.setdefault(fact["field"], []).append(fact)
+    lead = said["cp-2/reader-summary/bottomline"][0]
+    assert lead["text"].startswith("Creditors are exposed to refinancing risk")
+    assert lead["basis"] == "NBG_2025-03-31_annual-report.pdf, page 41; calculation K1"
+    assert "Basis:" not in lead["text"] and lead["line"] == 17
+    findings = said["cp-2/reader-summary/finding"]
+    assert [fact["line"] for fact in findings] == [22, 24, 26]
+    assert findings[0]["text"].startswith("Leverage is moderate but not low, at 4.2x")
+    limits = said["cp-2/reader-summary/limitation"]
+    assert len(limits) == 3 and "basis" not in limits[0]
+    assert limits[1]["basis"] == "calculation K1"
+    # The handoff's `## Gaps` table has one row.
+    assert page["issuers"][0]["runs"][0]["cells"]["CP-2"] == {"state": "assessed", "gaps": 1}
+
+
+def test_the_retained_tdg_handoff_with_a_gaps_section_is_not_plain_delivered() -> None:
+    _, page = _published("tests/fixtures/live_2026_11_15/distressed-CP-1-draft1.md", "CP-1")
+    assert page["issuers"][0]["runs"][0]["cells"]["CP-1"]["gaps"] > 0
+
+
+def test_an_adjusted_heading_joins_its_reported_measure_and_keeps_its_own_words() -> None:
+    snapshot = _snapshot()
+    table = snapshot["workspace"]["handoffs"]["1" * 64][0]["blocks"][0]
+    table["headers"][1:3] = ["Total debt / adjusted EBITDA", "Net debt / adjusted EBITDA"]
+    page = coverage.coverage(snapshot)
+    assert page is not None
+    total = [f for f in page["facts"] if f["field"] == "cp-1/leverage/total-debt-ebitda"]
+    assert [(f["text"], f["heading"]) for f in total] == [
+        ("5.1", "Total debt / adjusted EBITDA"),
+        ("4.8", "Total debt / adjusted EBITDA"),
+    ]
+    labels = {f["id"]: f["label"] for f in page["fields"]}
+    assert labels["cp-1/leverage/total-debt-ebitda"] == "Total debt / EBITDA"
+    assert not [f for f in page["fields"] if "adjusted-ebitda" in f["id"]]
+
+
+def test_runs_sharing_a_date_keep_catalogue_order_and_only_the_newest_sends_facts() -> None:
+    snapshot = _snapshot()
+    runs = snapshot["workspace"]["runs"]
+    runs["b1"]["issuerKey"] = "alpha"  # A second run of Alpha: catalogued after, same as-of date.
+    snapshot["catalogue"]["real"][1]["date"] = "2026-03-31"
+    older = {**runs["b1"], "folder": "folder-old", "modules": {}}
+    runs["old"] = older
+    snapshot["catalogue"]["real"].insert(
+        0, {"id": "folder-old", "name": "Alpha plc", "date": "2025-01-31"}
+    )
+    page = coverage.coverage(snapshot)
+    assert page is not None
+    [alpha] = page["issuers"]
+    assert [(run["key"], run["sharedWith"]) for run in alpha["runs"]] == [
+        ("a1", 1),
+        ("b1", 1),
+        ("old", 0),
+    ]
+    assert {fact["run"] for fact in page["facts"]} == {"a1"}

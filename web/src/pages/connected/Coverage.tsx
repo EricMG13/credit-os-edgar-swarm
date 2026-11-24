@@ -22,6 +22,7 @@ import {
   NO_FILTERS,
   periodsOf,
   rank,
+  readBound,
   readGroups,
   trend,
   writeGroups,
@@ -36,6 +37,7 @@ import {
 } from "./coverageData";
 import { moduleName } from "./api";
 import { card, field as control, heading, label } from "./layout";
+import { containsReference, readerText } from "./publishedReport";
 import { asOfDate } from "./runFigures";
 import { useResource } from "./useResource";
 
@@ -52,8 +54,20 @@ const STATE_WORDS: Record<CellState, string> = {
   "not-assessable": "Not assessable",
   unreadable: "Unreadable",
   "no-handoff": "No handoff published",
-  "not-in-pathway": "Not in this pathway",
+  "not-in-pathway": "Not asked for in this run",
+  "plan-unknown": "No handoff; run plan not recorded",
 };
+
+/**
+ * Module prose for a working page, by the reader's own rule: Markdown marks dropped and module
+ * codes named; nothing when the text carries a source reference, which is read in Evidence.
+ */
+function prose(text: string | undefined): string | null {
+  const plain = (text ?? "").replaceAll("**", "").replaceAll("`", "");
+  return plain === "" || containsReference(plain) ? null : readerText(plain);
+}
+
+const IN_EVIDENCE = "Read this in Evidence.";
 
 const reportPath = (folder: string) => `/report/${encodeURIComponent(folder)}`;
 const th = "p-3 text-left align-bottom font-medium";
@@ -79,21 +93,16 @@ function axisTicks(values: number[], unit: string) {
 }
 
 function StateMark({ cell }: { cell: Cell | undefined }) {
-  if (!cell || cell.state === "not-in-pathway")
-    return <span className="text-text-tertiary">Not in this pathway</span>;
+  if (!cell || cell.state === "not-in-pathway" || cell.state === "plan-unknown")
+    return <span className="text-text-tertiary">{STATE_WORDS[cell?.state ?? "plan-unknown"]}</span>;
   if (cell.state === "unreadable") return <StatusBadge set="File state" state="Unreadable" />;
   if (cell.state === "not-assessable")
     return <StatusBadge set="Module state" state="Not assessable" />;
   if (cell.state === "no-handoff")
     return <StatusBadge set="Module state" state="Not run" label="No handoff published" />;
-  if (cell.gaps)
-    return (
-      <StatusBadge
-        set="Module state"
-        state="Delivered with gaps"
-        label={`Delivered, ${String(cell.gaps)} stated ${cell.gaps === 1 ? "gap" : "gaps"}`}
-      />
-    );
+  // Stated gaps (whole tables, single cells, the Gaps section) or a table that could not be read.
+  if (cell.gaps || cell.issue)
+    return <StatusBadge set="Module state" state="Delivered with gaps" />;
   return <StatusBadge set="Module state" state="Delivered" />;
 }
 
@@ -165,6 +174,9 @@ function RunLine({ run }: { run: CoverageRun }) {
       {run.pathwayTitle ?? "Pathway not recorded"}
       {", as of "}
       {run.asOf ? <time dateTime={run.asOf}>{asOfDate(run.asOf)}</time> : "a date not recorded"}
+      {run.sharedWith
+        ? `; ${String(run.sharedWith)} other ${run.sharedWith === 1 ? "run shares" : "runs share"} this date`
+        : ""}
     </span>
   );
 }
@@ -298,7 +310,9 @@ function IssuerDetail({ data, issuer }: { data: Data; issuer: Issuer }) {
                   {titles.get(fields.get(fact.field)?.module ?? "") ??
                     moduleName(fields.get(fact.field)?.module ?? "")}
                 </span>
-                <p className="reading-copy text-body text-text-primary">{fact.text}</p>
+                <p className="reading-copy text-body text-text-primary">
+                  {prose(fact.text) ?? IN_EVIDENCE}
+                </p>
                 <TextLink href={evidenceLink(newest, fact)}>View sources</TextLink>
               </li>
             ))}
@@ -377,9 +391,19 @@ function RankView({
                           <br />
                           <RunLine run={run} />
                         </th>
-                        <td className="p-3 text-right tabular-nums">{figure(fact)}</td>
+                        <td className="p-3 text-right tabular-nums">
+                          {figure(fact)}
+                          {fact.heading && (
+                            <>
+                              <br />
+                              <span className="text-text-secondary">Stated as {fact.heading}</span>
+                            </>
+                          )}
+                        </td>
                         <td className="p-3">{fact.period ?? fact.row ?? "Not stated"}</td>
-                        <td className="max-w-md p-3 wrap-anywhere">{fact.basis}</td>
+                        <td className="max-w-md p-3 wrap-anywhere">
+                          {prose(fact.basis) ?? "Qualification recorded in Evidence."}
+                        </td>
                         <td className="p-3">
                           <TextLink href={evidenceLink(run, fact)}>View sources</TextLink>
                         </td>
@@ -395,15 +419,17 @@ function RankView({
                   Not ranked: no figure for {period} in the newest run
                 </h3>
                 <ul className="grid gap-1 text-sm">
-                  {ranking.missing.map(({ issuer, fact, stated }) => (
+                  {ranking.missing.map(({ issuer, fact, stated, repeated }) => (
                     <li key={issuer.key}>
                       <span className="font-medium">{issuer.name}</span>
                       {": "}
-                      {fact
-                        ? fact.text
-                        : stated.length > 0
-                          ? `no figure could be read for this period; its run states ${stated.join(", ")}`
-                          : "no figure could be read for this measure"}
+                      {repeated.length > 0
+                        ? `its run states this period more than once (${repeated.map(figure).join("; ")}), so none is ranked`
+                        : fact
+                          ? (prose(fact.text) ?? "the module's reason is in Evidence")
+                          : stated.length > 0
+                            ? `no figure could be read for this period; its run states ${stated.join(", ")}`
+                            : "no figure could be read for this measure"}
                     </li>
                   ))}
                 </ul>
@@ -432,14 +458,14 @@ function FindView({
   const hits = issuers.flatMap((issuer) => {
     const run = latestRun(issuer);
     if (!run) return [];
-    return factsOf(data, run.key)
-      .filter(
-        (fact) =>
-          fact.at === null &&
-          fields.get(fact.field)?.kind === "text" &&
-          (!wanted || `${fact.text} ${fact.impact ?? ""}`.toLowerCase().includes(wanted)),
-      )
-      .map((fact) => ({ issuer, run, fact }));
+    const passages = factsOf(data, run.key).filter(
+      (fact) => fact.at === null && fields.get(fact.field)?.kind === "text",
+    );
+    const matching = passages.filter((fact) =>
+      `${fact.text} ${fact.impact ?? ""}`.toLowerCase().includes(wanted),
+    );
+    // An issuer the search kept for its name, sector or another field shows all its passages.
+    return (matching.length > 0 ? matching : passages).map((fact) => ({ issuer, run, fact }));
   });
   if (hits.length === 0)
     return (
@@ -452,7 +478,7 @@ function FindView({
       <table className="w-full text-sm">
         <caption className="p-3 text-left text-text-secondary">
           {String(hits.length)} {hits.length === 1 ? "passage" : "passages"} from the newest runs
-          {wanted ? ` containing “${query.trim()}”` : ""}
+          {wanted ? ` of issuers matching “${query.trim()}”` : ""}
         </caption>
         <thead>
           <tr className="border-b border-border-hairline text-text-secondary">
@@ -480,8 +506,8 @@ function FindView({
                   <br />
                   <span className="text-text-secondary">{item?.label}</span>
                 </td>
-                <td className="max-w-xl p-3 wrap-anywhere">{fact.text}</td>
-                <td className="max-w-xs p-3 wrap-anywhere">{fact.impact ?? ""}</td>
+                <td className="max-w-xl p-3 wrap-anywhere">{prose(fact.text) ?? IN_EVIDENCE}</td>
+                <td className="max-w-xs p-3 wrap-anywhere">{prose(fact.impact) ?? ""}</td>
                 <td className="p-3">{fact.confidence ?? ""}</td>
                 <td className="p-3">
                   <TextLink href={evidenceLink(run, fact)}>View sources</TextLink>
@@ -621,7 +647,8 @@ function Dashboard({ data }: { data: Data }) {
   const period =
     stated.find((item) => item === periodPick) ??
     (field ? commonPeriod(data, data.issuers, field.id) : null);
-  const matched = matchIssuers(data, filters, field?.id ?? null, period);
+  // Trend draws every period, so the bounds, which read one period, are not applied there.
+  const matched = matchIssuers(data, filters, field?.id ?? null, view === "trend" ? null : period);
   const shown = onlyChosen ? matched.filter((issuer) => chosen.has(issuer.key)) : matched;
   const toggle = (key: string) => {
     setChosen((previous) => {
@@ -638,7 +665,7 @@ function Dashboard({ data }: { data: Data }) {
     writeGroups(next);
     setGroupName("");
   };
-  const detail = data.issuers.find((issuer) => issuer.key === open);
+  const detail = shown.find((issuer) => issuer.key === open);
 
   return (
     <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-5">
@@ -685,6 +712,9 @@ function Dashboard({ data }: { data: Data }) {
           }}
         >
           <option value="all">All</option>
+          {filters.sector !== "all" && !sectors.includes(filters.sector) && (
+            <option value={filters.sector}>{filters.sector} (unavailable)</option>
+          )}
           {sectors.map((item) => (
             <option key={item}>{item}</option>
           ))}
@@ -697,6 +727,9 @@ function Dashboard({ data }: { data: Data }) {
           }}
         >
           <option value="all">All</option>
+          {filters.pathway !== "all" && !pathways.includes(filters.pathway) && (
+            <option value={filters.pathway}>{filters.pathway} (unavailable)</option>
+          )}
           {pathways.map((item) => (
             <option key={item}>{item}</option>
           ))}
@@ -771,28 +804,24 @@ function Dashboard({ data }: { data: Data }) {
               ))}
             </Choice>
           )}
-          <label className={`${label} w-28`}>
-            At least
-            <input
-              inputMode="decimal"
-              value={filters.min}
-              onChange={(event) => {
-                set({ min: event.currentTarget.value });
-              }}
-              className={control}
-            />
-          </label>
-          <label className={`${label} w-28`}>
-            At most
-            <input
-              inputMode="decimal"
-              value={filters.max}
-              onChange={(event) => {
-                set({ max: event.currentTarget.value });
-              }}
-              className={control}
-            />
-          </label>
+          {view !== "trend" &&
+            (["min", "max"] as const).map((side) => (
+              <label key={side} className={`${label} w-28`}>
+                {side === "min" ? "At least" : "At most"}
+                <input
+                  inputMode="decimal"
+                  value={filters[side]}
+                  aria-invalid={readBound(filters[side]).invalid || undefined}
+                  onChange={(event) => {
+                    set({ [side]: event.currentTarget.value });
+                  }}
+                  className={control}
+                />
+                {readBound(filters[side]).invalid && (
+                  <span className="text-sm font-normal text-error-primary">Enter a number</span>
+                )}
+              </label>
+            ))}
           {view === "rank" && (
             <>
               <Choice
