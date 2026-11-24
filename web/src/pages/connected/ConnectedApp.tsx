@@ -5,6 +5,7 @@ import { PageHeader } from "../../shell/PageHeader";
 import { Shell, type Area } from "../../shell/Shell";
 import { askAhead, LIBRARY_ADDRESS, snapshotAddress } from "./ahead";
 import type { Mode } from "./api";
+import { COVERAGE_ADDRESS } from "./coverageData";
 
 type PageFile<P> = { default: ComponentType<P> };
 
@@ -46,6 +47,7 @@ function page<P extends object>(load: () => Promise<ComponentType<P>>) {
 }
 
 const ReportLibrary = page(() => import("./LibraryIndex").then((file) => file.ReportLibrary));
+const Coverage = page(() => import("./Coverage").then((file) => file.Coverage));
 const ReportReader = page(() => import("./ReportLibrary").then((file) => file.ReportReader));
 const RunActivity = page(() => import("./RunActivity").then((file) => file.RunActivity));
 const RunProgress = page(() => import("./RunProgress").then((file) => file.RunProgress));
@@ -72,6 +74,7 @@ function LoadingPage() {
 
 const SECTIONS: { area: Area; href: string; label?: string }[] = [
   { area: "library", href: "/" },
+  { area: "coverage", href: "/coverage" },
   { area: "run", href: "/runs", label: "Run activity" },
 ];
 
@@ -96,6 +99,7 @@ const RUN = /^\/run\/([a-zA-Z0-9][a-zA-Z0-9_.-]{0,79})\/?$/;
 
 type Route =
   | { kind: "library" }
+  | { kind: "coverage" }
   | { kind: "run-list" }
   | { kind: "run"; id: string }
   | { kind: "report"; id: string }
@@ -104,6 +108,7 @@ type Route =
 
 function routeOf(path: string): Route {
   if (path === "/" || path === "/index.html") return { kind: "library" };
+  if (path === "/coverage" || path === "/coverage/") return { kind: "coverage" };
   if (path === "/runs" || path === "/runs/") return { kind: "run-list" };
   if (path === "/start" || path === "/start/") return { kind: "start" };
   const run = RUN.exec(path)?.[1];
@@ -125,6 +130,7 @@ export function preloadPage(path: string, readOnly: boolean): Promise<unknown> {
   if (route.kind === "library") return ReportLibrary.ask().then(reads(LIBRARY_ADDRESS), unloaded);
   if (route.kind === "report")
     return ReportReader.ask().then(reads(snapshotAddress(route.id)), unloaded);
+  if (route.kind === "coverage") return Coverage.ask().then(reads(COVERAGE_ADDRESS), unloaded);
   if (readOnly) return Promise.resolve();
   if (route.kind === "start") return StartRun.ask().catch(unloaded);
   if (route.kind === "run-list") return RunActivity.ask().catch(unloaded);
@@ -137,6 +143,7 @@ function routeTitle(route: Route) {
   if (route.kind === "run-list") return "Run activity";
   if (route.kind === "run") return "Run progress";
   if (route.kind === "report") return "Credit report";
+  if (route.kind === "coverage") return "Coverage";
   return "Library";
 }
 
@@ -154,6 +161,7 @@ function CurrentPage({
   navigate: (path: string) => void;
 }) {
   if (route.kind === "library") return <ReportLibrary readOnly={readOnly} />;
+  if (route.kind === "coverage") return <Coverage />;
   if (readOnly && ["start", "run-list", "run"].includes(route.kind)) {
     return (
       <PageHeader title="Read-only preview" actions={<Button href="/">Back to Library</Button>} />
@@ -187,11 +195,15 @@ export function ConnectedApp({
     document.title = `${title} — Credit OS`;
   }, [title]);
   const current =
-    route.kind === "start" || route.kind === "run-list" || route.kind === "run" ? "run" : "library";
+    route.kind === "start" || route.kind === "run-list" || route.kind === "run"
+      ? "run"
+      : route.kind === "coverage"
+        ? "coverage"
+        : "library";
   return (
     <Shell
       current={current}
-      sections={readOnly ? SECTIONS.slice(0, 1) : SECTIONS}
+      sections={readOnly ? SECTIONS.slice(0, 2) : SECTIONS}
       symbol="/symbol.svg"
     >
       <Suspense fallback={<LoadingPage />}>
