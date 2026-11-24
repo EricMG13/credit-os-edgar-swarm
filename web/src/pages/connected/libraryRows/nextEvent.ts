@@ -9,19 +9,23 @@ export type NextEvent = { date: string; name: string; href: string };
  * module wrote it, the event name as the Calendar draws it, and the row's evidence link. Nothing
  * when the run states no upcoming event or no as-of date.
  */
-export function nextDatedEvent(snapshot: Snapshot, folder: string): NextEvent | null {
+export function nextDatedEvent(snapshot: Snapshot, folder: string): NextEvent | "none" | "unknown" {
   const found = Object.entries(snapshot.workspace.runs).find(([, run]) => run.folder === folder);
-  if (!found) return null;
+  if (!found) return "unknown";
   const [routeKey, run] = found;
   const { rows } = buildCalendar(outputEntries(snapshot, run, routeKey), folder);
-  const first = upcomingCalendarRows(rows, run.asOf)?.[0];
+  // Without a readable as-of date nothing can be called upcoming: that is not "no event".
+  const upcoming = upcomingCalendarRows(rows, run.asOf);
+  if (upcoming === null) return "unknown";
+  const first = upcoming[0];
   const date = first?.cells[0];
   const name = first?.cells[3];
-  return first && date && name ? { date, name, href: first.href } : null;
+  return first && date && name ? { date, name, href: first.href } : "none";
 }
 
 export type NextEventState =
-  { status: "idle" | "loading" | "none" | "failed" } | { status: "found"; event: NextEvent };
+  | { status: "idle" | "loading" | "none" | "unknown" | "failed" }
+  | { status: "found"; event: NextEvent };
 
 /** The run's next dated event, read from its scoped report once `enabled` (the row is opened). */
 export function useNextEvent(folder: string | undefined, enabled: boolean): NextEventState {
@@ -31,8 +35,10 @@ export function useNextEvent(folder: string | undefined, enabled: boolean): Next
     const controller = new AbortController();
     void getSnapshot(controller.signal, folder)
       .then((snapshot) => {
-        const event = snapshot ? nextDatedEvent(snapshot, folder) : null;
-        return event ? ({ status: "found", event } as const) : ({ status: "none" } as const);
+        const event = snapshot ? nextDatedEvent(snapshot, folder) : "unknown";
+        return typeof event === "string"
+          ? ({ status: event } as const)
+          : ({ status: "found", event } as const);
       })
       .catch(() => ({ status: "failed" }) as const)
       .then((value) => {

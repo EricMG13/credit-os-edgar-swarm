@@ -22,7 +22,7 @@ const PAD = { left: 12, right: 12, top: 12, bottom: 26 };
 const PLOT_WIDTH = WIDTH - PAD.left - PAD.right;
 const PLOT_HEIGHT = HEIGHT - PAD.top - PAD.bottom;
 const BASELINE = PAD.top + PLOT_HEIGHT;
-/** Where a figure is drawn only as dots and written values, not as a line. */
+/** From this many points a series is drawn as a line; fewer are dots (two with a connector) and written values. */
 const LINE_FROM = 3;
 
 const isStated = (fact: Fact | null): fact is Stated => fact !== null && fact.at !== null;

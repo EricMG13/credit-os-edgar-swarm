@@ -106,14 +106,12 @@ it("opens to every run newest first, each with its report", () => {
     expect.stringContaining("31 March 2024"),
   ]);
   expect(within(runs[0] as HTMLElement).getByText("Latest")).toBeVisible();
-  expect(within(runs[1] as HTMLElement).getByRole("link", { name: "Open report" })).toHaveAttribute(
-    "href",
-    "/report/acme-2025",
-  );
-  expect(within(runs[2] as HTMLElement).getByRole("link", { name: "Open report" })).toHaveAttribute(
-    "href",
-    "/report/acme-2024",
-  );
+  expect(
+    within(runs[1] as HTMLElement).getByRole("link", { name: /^Open report of / }),
+  ).toHaveAttribute("href", "/report/acme-2025");
+  expect(
+    within(runs[2] as HTMLElement).getByRole("link", { name: /^Open report of / }),
+  ).toHaveAttribute("href", "/report/acme-2024");
 });
 
 it("says a run without a report has none, and offers no link to it", () => {

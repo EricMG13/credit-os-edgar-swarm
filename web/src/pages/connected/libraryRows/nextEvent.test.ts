@@ -74,15 +74,15 @@ it("is the earliest upcoming dated event with its date as written and its eviden
 
 it("skips historical events and says nothing when none is upcoming", () => {
   const past = snapshot([row("2025-01-01", "Notes issued", "Historical — Published")]);
-  expect(nextDatedEvent(past, "acme-run")).toBeNull();
+  expect(nextDatedEvent(past, "acme-run")).toBe("none");
 });
 
-it("is nothing for a run with no as-of date, never a guess", () => {
-  expect(
-    nextDatedEvent(snapshot([row("2028-06-30", "Term loan due")], null), "acme-run"),
-  ).toBeNull();
+it("is unknown, not none, for a run with no as-of date", () => {
+  expect(nextDatedEvent(snapshot([row("2028-06-30", "Term loan due")], null), "acme-run")).toBe(
+    "unknown",
+  );
 });
 
-it("is nothing when the report is not in the snapshot", () => {
-  expect(nextDatedEvent(snapshot([row("2028-06-30", "Term loan due")]), "other")).toBeNull();
+it("is unknown when the report is not in the snapshot", () => {
+  expect(nextDatedEvent(snapshot([row("2028-06-30", "Term loan due")]), "other")).toBe("unknown");
 });

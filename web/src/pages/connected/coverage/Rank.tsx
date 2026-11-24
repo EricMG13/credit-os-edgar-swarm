@@ -80,12 +80,14 @@ export function RankView({
                       </tr>
                     </thead>
                     <tbody>
-                      {rows.map(({ issuer, run, fact }, index) => (
+                      {rows.map(({ issuer, run, fact }) => (
                         <tr
                           key={issuer.key}
                           className="border-b border-border-hairline align-top last:border-0"
                         >
-                          <td className="p-3 font-mono tabular-nums">{index + 1}</td>
+                          <td className="p-3 font-mono tabular-nums">
+                            {rows.findIndex((other) => other.fact.at === fact.at) + 1}
+                          </td>
                           <th scope="row" className="min-w-48 p-3 text-left font-semibold wrap-anywhere">
                             {issuer.name}
                             <br />

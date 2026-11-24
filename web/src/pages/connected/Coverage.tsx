@@ -8,6 +8,7 @@ import { Segmented } from "@/components/kit/Segmented";
 import { PageHeader } from "../../shell/PageHeader";
 import {
   commonPeriod,
+  factAt,
   getCoverage,
   latestRun,
   matchIssuers,
@@ -18,6 +19,7 @@ import {
   writeGroups,
   type Coverage as Data,
   type Filters,
+  type Issuer,
   type SavedGroup,
 } from "./coverageData";
 import { card, field as control, label } from "./layout";
@@ -113,7 +115,19 @@ function Dashboard({ data }: { data: Data }) {
     (field ? commonPeriod(data, data.issuers, field.id) : null);
   // Trend draws every period, so the bounds, which read one period, are not applied there.
   const matched = matchIssuers(data, filters, field?.id ?? null, view === "trend" ? null : period);
-  const shown = onlyChosen ? matched.filter((issuer) => chosen.has(issuer.key)) : matched;
+  // A bound passes no issuer without a figure, but Rank lists those apart as not ranked, with the
+  // module's reason, so they stay in its list whatever the bounds are.
+  const unranked = (issuer: Issuer) => {
+    const run = latestRun(issuer);
+    return !run || !field || period === null || factAt(data, run.key, field.id, period)?.at == null;
+  };
+  const counted =
+    view === "rank" && (filters.min || filters.max)
+      ? matchIssuers(data, { ...filters, min: "", max: "" }, null).filter(
+          (issuer) => matched.includes(issuer) || unranked(issuer),
+        )
+      : matched;
+  const shown = onlyChosen ? counted.filter((issuer) => chosen.has(issuer.key)) : counted;
   const toggle = (key: string) => {
     setChosen((previous) => {
       const next = new Set(previous);

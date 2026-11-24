@@ -132,3 +132,16 @@ next event as well as when a figure is traced, and the test says so), `ReportLib
 tests), `Coverage.test` (view radios to pressed buttons; period, saved-group and sector controls to
 chips). Every assertion on values, links, gaps, groups, bounds, preview and empty states is kept.
 Added: `Chips`, `FigureMark`, `IssuerRow`, `nextEvent`, `coverage/Trend`, `coverage/views` tests.
+
+**Independent review (Opus, given the diff only) and what was done.** Fixed: `aria-controls` pointed
+at a panel that exists only when open; "no upcoming dated event" was drawn also when the run had no
+readable as-of date or the report was not in the snapshot (now a separate "dates could not be read"
+sentence); a Rank bound dropped issuers with no figure from the "Not ranked" list (they now stay
+listed apart whatever the bounds); equal figures now share a rank; an empty pathway draws
+"Pathway not recorded"; the run links in the opened row name their date; a stale comment in
+`Trend.tsx`. Left, with reason: bars scale by magnitude so mixed-sign lists do not follow rank
+length, and a negative bar takes the signal tone without a word (the sign is in the written figure;
+no measure-specific meaning is claimed); Trend panels carry no per-panel sources link (the Rank and
+Find views, and the Library, carry them; the ruling's "a fact opens its run's report" is met there);
+the row's undrawn line has no trace of its own (it is drawn under cash; its source is in the opened
+row's headline figures); the next event's date is not in the collapsed row (see Requests 2).

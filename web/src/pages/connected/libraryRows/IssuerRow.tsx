@@ -50,7 +50,9 @@ function Runs({ group }: { group: IssuerGroup }) {
             <span className="text-text-secondary">{entry.title}</span>
             {index === 0 && <Badge color="gray">Latest</Badge>}
             {open ? (
-              <TextLink href={reportPath(entry.id)}>Open report</TextLink>
+              <TextLink href={reportPath(entry.id)} className="whitespace-normal">
+                {`Open report of ${asOfDate(entry.date)}`}
+              </TextLink>
             ) : (
               <span className="text-text-tertiary">Not published</span>
             )}
@@ -74,6 +76,12 @@ function NextEventDetail({ folder }: { folder: string | undefined }) {
   if (next.status === "failed")
     return (
       <p className="text-small text-gap-text">Dates could not be loaded. Open the Calendar.</p>
+    );
+  if (next.status === "unknown")
+    return (
+      <p className="text-small text-gap-text">
+        This run’s dates could not be read against its as-of date. Open the Calendar.
+      </p>
     );
   if (next.status !== "found")
     return <p className="text-small text-gap-text">The report states no upcoming dated event.</p>;
@@ -113,7 +121,7 @@ export function IssuerRow({ group }: { group: IssuerGroup }) {
           <button
             type="button"
             aria-expanded={open}
-            aria-controls={panel}
+            aria-controls={open ? panel : undefined}
             aria-label={`${open ? "Hide" : "Show"} runs and detail for ${newest.name}`}
             onClick={() => {
               setOpen((was) => !was);
@@ -167,7 +175,7 @@ export function IssuerRow({ group }: { group: IssuerGroup }) {
         </FigureMark>
         <div className="flex min-w-0 flex-wrap items-center gap-2 md:col-span-3 xl:col-span-1">
           <span className={`${CELL_LABEL} w-full`}>Run</span>
-          <Badge color="gray">{pathway}</Badge>
+          <Badge color="gray">{pathway || "Pathway not recorded"}</Badge>
           <Badge color="gray">
             <time className="font-mono tabular-nums" dateTime={newest.date}>
               {asOfDate(newest.date)}

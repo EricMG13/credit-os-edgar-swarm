@@ -151,6 +151,26 @@ test("a rank shows the figure as written with period and basis, and missing apar
   expect(screen.getByText(/Not supplied: cash not stated/)).toBeInTheDocument();
 });
 
+test("a bound in Rank keeps issuers with no figure listed apart, never ranked", async () => {
+  answer(data);
+  window.history.replaceState(null, "", "/coverage?view=rank");
+  render(<Coverage />);
+  fireEvent.change(await screen.findByRole("textbox", { name: /At least/ }), {
+    target: { value: "4" },
+  });
+  const table = screen.getByRole("table");
+  expect(within(table).getByText("Alpha plc")).toBeInTheDocument();
+  expect(
+    screen.getByText("Not ranked: no figure for FY2025 in the newest run"),
+  ).toBeInTheDocument();
+  expect(screen.getByText(/Not supplied: cash not stated/)).toBeInTheDocument();
+  fireEvent.change(screen.getByRole("textbox", { name: /At least/ }), {
+    target: { value: "5" },
+  });
+  expect(screen.queryByRole("table")).toBeNull();
+  expect(screen.getByText(/Not supplied: cash not stated/)).toBeInTheDocument();
+});
+
 test("searching module text narrows the issuers and Find lists the passage", async () => {
   answer(data);
   window.history.replaceState(null, "", "/coverage?view=find");
