@@ -14,7 +14,7 @@ const UNDATED = "cp1-wall-undated";
 const GAP = "cp1-wall-gap";
 
 /** The compact wall: the Overview wall's geometry, scaled into a smaller box. */
-const BOX = { width: 520, height: 220, base: 180, top: 60, gapMark: 24, thinnest: 2 } as const;
+const BOX = { width: 520, height: 220, base: 186, top: 52, gapMark: 24, thinnest: 2 } as const;
 const SX = BOX.width / WALL.width;
 const SY = (BOX.base - BOX.top) / (WALL.base - WALL.top);
 /** Below this slot width an amount label would run into its neighbour; the table view has it. */
