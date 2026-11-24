@@ -145,7 +145,9 @@ test("a rank shows the figure as written with period and basis, and missing apar
   expect(
     screen.getByText("Not ranked: no figure for FY2025 in the newest run"),
   ).toBeInTheDocument();
-  expect(screen.getByRole("combobox", { name: "Period" })).toHaveValue("FY2025");
+  expect(
+    within(screen.getByRole("group", { name: "Period" })).getByRole("button", { name: "FY2025" }),
+  ).toHaveAttribute("aria-pressed", "true");
   expect(screen.getByText(/Not supplied: cash not stated/)).toBeInTheDocument();
 });
 
@@ -171,9 +173,11 @@ test("ticked issuers can be saved as a group kept in this browser", async () => 
   expect(JSON.parse(window.localStorage.getItem("credit-os-coverage-groups") ?? "")).toEqual([
     { name: "Watch", issuers: ["alpha"] },
   ]);
-  fireEvent.change(screen.getByRole("combobox", { name: "Saved group" }), {
-    target: { value: "Watch" },
-  });
+  fireEvent.click(
+    within(screen.getByRole("group", { name: "Saved group" })).getByRole("button", {
+      name: "Watch",
+    }),
+  );
   expect(screen.getByText("1 of 2 issuers shown")).toBeInTheDocument();
 });
 
@@ -197,7 +201,7 @@ test("module text is drawn by the reader's rule: references stay in Evidence, co
   expect(await screen.findByText("Qualification recorded in Evidence.")).toBeInTheDocument();
   expect(screen.getByText("Stated as Net debt / adjusted EBITDA")).toBeInTheDocument();
   expect(container.textContent).not.toContain("pages 71");
-  fireEvent.click(screen.getByRole("radio", { name: "Find" }));
+  fireEvent.click(screen.getByRole("button", { name: "Find" }));
   expect(await screen.findByText("Headroom is thin per Legal & covenants.")).toBeInTheDocument();
   expect(container.textContent).not.toContain("filing.pdf");
 });
@@ -214,8 +218,10 @@ test("a sector in the link that no issuer has is shown as unavailable, not hidde
   answer(data);
   window.history.replaceState(null, "", "/coverage?sector=Chemicals");
   render(<Coverage />);
-  expect(await screen.findByRole("combobox", { name: "Sector" })).toHaveValue("Chemicals");
-  expect(screen.getByRole("option", { name: "Chemicals (unavailable)" })).toBeInTheDocument();
+  expect(await screen.findByRole("button", { name: "Chemicals (unavailable)" })).toHaveAttribute(
+    "aria-pressed",
+    "true",
+  );
 });
 
 test("an unreadable bound is marked, and the detail closes when its issuer is filtered out", async () => {
@@ -225,11 +231,11 @@ test("an unreadable bound is marked, and the detail closes when its issuer is fi
   expect(screen.getByRole("heading", { name: "Alpha plc" })).toBeInTheDocument();
   fireEvent.change(screen.getByRole("textbox", { name: /At most/ }), { target: { value: "5x" } });
   expect(screen.getByRole("textbox", { name: /At most/ })).toBeInvalid();
-  fireEvent.change(screen.getByRole("combobox", { name: "Sector" }), {
-    target: { value: "Retail" },
-  });
+  fireEvent.click(
+    within(screen.getByRole("group", { name: "Sector" })).getByRole("button", { name: "Retail" }),
+  );
   expect(screen.queryByRole("heading", { name: "Alpha plc" })).not.toBeInTheDocument();
-  fireEvent.click(screen.getByRole("radio", { name: "Trend" }));
+  fireEvent.click(screen.getByRole("button", { name: "Trend" }));
   expect(screen.queryByRole("textbox", { name: /At most/ })).not.toBeInTheDocument();
 });
 

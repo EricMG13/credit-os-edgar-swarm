@@ -1,44 +1,34 @@
-import { useEffect, useMemo, useState, type ReactNode } from "react";
-import { BarChartSquare02 } from "@untitledui/icons";
+import { useEffect, useMemo, useState } from "react";
+import { BarChartSquare02, SearchLg, XClose } from "@untitledui/icons";
 import { Alert, Callout } from "@/components/alert/Alert";
 import { EmptyState } from "@/components/application/empty-state/empty-state";
-import { ButtonGroup, ButtonGroupItem } from "@/components/base/button-group/button-group";
 import { Button } from "@/components/base/buttons/button";
-import { TrendChart } from "@/components/chart/TrendChart";
 import { Skeleton } from "@/components/gap/Skeleton";
-import { StatusBadge } from "@/components/status/StatusBadge";
+import { Segmented } from "@/components/kit/Segmented";
 import { PageHeader } from "../../shell/PageHeader";
-import { TextLink } from "../run/TextLink";
 import {
   commonPeriod,
-  evidenceLink,
-  factsOf,
-  fieldUnits,
-  figure,
   getCoverage,
-  groupKey,
   latestRun,
   matchIssuers,
   NO_FILTERS,
   periodsOf,
-  rank,
   readBound,
   readGroups,
-  trend,
   writeGroups,
-  type Cell,
-  type CellState,
   type Coverage as Data,
-  type CoverageRun,
-  type Field,
   type Filters,
-  type Issuer,
   type SavedGroup,
 } from "./coverageData";
-import { moduleName } from "./api";
-import { card, field as control, heading, label } from "./layout";
-import { containsReference, readerText } from "./publishedReport";
-import { asOfDate } from "./runFigures";
+import { card, field as control, label } from "./layout";
+import { Chip, ChipGroup } from "./libraryRows/Chips";
+import { Choice, FieldOptions } from "./coverage/Controls";
+import { FindView } from "./coverage/Find";
+import { IssuerDetail } from "./coverage/IssuerDetail";
+import { Matrix } from "./coverage/Matrix";
+import { RankView } from "./coverage/Rank";
+import { named, STATE_WORDS } from "./coverage/shared";
+import { TrendView } from "./coverage/Trend";
 import { useResource } from "./useResource";
 
 type View = "matrix" | "rank" | "find" | "trend";
@@ -48,532 +38,6 @@ const VIEWS: readonly { id: View; name: string }[] = [
   { id: "find", name: "Find" },
   { id: "trend", name: "Trend" },
 ];
-
-const STATE_WORDS: Record<CellState, string> = {
-  assessed: "Delivered",
-  "not-assessable": "Not assessable",
-  unreadable: "Unreadable",
-  "no-handoff": "No handoff published",
-  "not-in-pathway": "Not asked for in this run",
-  "plan-unknown": "No handoff; run plan not recorded",
-};
-
-/**
- * Module prose for a working page, by the reader's own rule: Markdown marks dropped and module
- * codes named; nothing when the text carries a source reference, which is read in Evidence.
- */
-function prose(text: string | undefined): string | null {
-  const plain = (text ?? "").replaceAll("**", "").replaceAll("`", "");
-  return plain === "" || containsReference(plain) ? null : readerText(plain);
-}
-
-const IN_EVIDENCE = "Read this in Evidence.";
-
-const reportPath = (folder: string) => `/report/${encodeURIComponent(folder)}`;
-const th = "p-3 text-left align-bottom font-medium";
-const tableBox = "overflow-x-auto rounded-ds-md border border-border-hairline bg-surface-card";
-
-/** The module's name as the rest of the app says it; the service's title where the app has none. */
-function named(column: { code: string; title: string }) {
-  const name = moduleName(column.code);
-  return name === column.code ? column.title : name;
-}
-
-/** Four even steps from zero (or the lowest figure below it) to just above the highest. */
-function axisTicks(values: number[], unit: string) {
-  const low = Math.min(0, ...values);
-  const span = Math.max(...values) - low || 1;
-  const step = Number((span / 4).toPrecision(1));
-  const count = Math.ceil(span / step);
-  const suffix = unit === "x" || unit === "%" ? unit : "";
-  return Array.from({ length: count + 1 }, (_, index) => {
-    const value = Number((low + index * step).toPrecision(12));
-    return { value, label: `${String(value)}${suffix}` };
-  });
-}
-
-function StateMark({ cell }: { cell: Cell | undefined }) {
-  if (!cell || cell.state === "not-in-pathway" || cell.state === "plan-unknown")
-    return <span className="text-text-tertiary">{STATE_WORDS[cell?.state ?? "plan-unknown"]}</span>;
-  if (cell.state === "unreadable") return <StatusBadge set="File state" state="Unreadable" />;
-  if (cell.state === "not-assessable")
-    return <StatusBadge set="Module state" state="Not assessable" />;
-  if (cell.state === "no-handoff")
-    return <StatusBadge set="Module state" state="Not run" label="No handoff published" />;
-  // Stated gaps (whole tables, single cells, the Gaps section) or a table that could not be read.
-  if (cell.gaps || cell.issue)
-    return <StatusBadge set="Module state" state="Delivered with gaps" />;
-  return <StatusBadge set="Module state" state="Delivered" />;
-}
-
-/** A run's cell under each fixed column, in column order. */
-function StateCells({ data, run }: { data: Data; run: CoverageRun }) {
-  return (
-    <>
-      {data.columns.map((column) => (
-        <td key={column.code} className="p-3">
-          <StateMark cell={run.cells[column.code]} />
-        </td>
-      ))}
-    </>
-  );
-}
-
-function Choice({
-  name,
-  value,
-  onChange,
-  children,
-}: {
-  name: string;
-  value: string;
-  onChange: (value: string) => void;
-  children: ReactNode;
-}) {
-  return (
-    <label className={`${label} max-w-md`}>
-      {name}
-      <select
-        value={value}
-        onChange={(event) => {
-          onChange(event.currentTarget.value);
-        }}
-        className={control}
-      >
-        {children}
-      </select>
-    </label>
-  );
-}
-
-function fieldName(field: Field, titles: ReadonlyMap<string, string>) {
-  return `${titles.get(field.module) ?? moduleName(field.module)}: ${field.group}, ${field.label}`;
-}
-
-function FieldOptions({
-  fields,
-  titles,
-}: {
-  fields: Field[];
-  titles: ReadonlyMap<string, string>;
-}) {
-  return (
-    <>
-      {fields.map((item) => (
-        <option key={item.id} value={item.id}>
-          {fieldName(item, titles)}
-        </option>
-      ))}
-    </>
-  );
-}
-
-function RunLine({ run }: { run: CoverageRun }) {
-  return (
-    <span className="text-sm text-text-secondary">
-      {run.pathwayTitle ?? "Pathway not recorded"}
-      {", as of "}
-      {run.asOf ? <time dateTime={run.asOf}>{asOfDate(run.asOf)}</time> : "a date not recorded"}
-      {run.sharedWith
-        ? `; ${String(run.sharedWith)} other ${run.sharedWith === 1 ? "run shares" : "runs share"} this date`
-        : ""}
-    </span>
-  );
-}
-
-function Matrix({
-  data,
-  issuers,
-  chosen,
-  toggle,
-  open,
-  setOpen,
-}: {
-  data: Data;
-  issuers: Issuer[];
-  chosen: ReadonlySet<string>;
-  toggle: (key: string) => void;
-  open: string | null;
-  setOpen: (key: string | null) => void;
-}) {
-  return (
-    <div className={tableBox}>
-      <table className="w-full text-sm">
-        <caption className="sr-only">Each issuer’s newest run: what every module delivered</caption>
-        <thead>
-          <tr className="border-b border-border-hairline text-text-secondary">
-            <th className={th}>Compare</th>
-            <th className={th}>Issuer</th>
-            {data.columns.map((column) => (
-              <th key={column.code} className={`${th} min-w-32`}>
-                {named(column)}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {issuers.map((issuer) => {
-            const run = latestRun(issuer);
-            if (!run) return null;
-            return (
-              <tr key={issuer.key} className="border-b border-border-hairline last:border-0">
-                <td className="p-3">
-                  <input
-                    type="checkbox"
-                    aria-label={`Compare ${issuer.name}`}
-                    checked={chosen.has(issuer.key)}
-                    onChange={() => {
-                      toggle(issuer.key);
-                    }}
-                  />
-                </td>
-                <th scope="row" className="min-w-48 p-3 text-left font-semibold wrap-anywhere">
-                  <button
-                    type="button"
-                    className="text-left underline-offset-2 hover:underline"
-                    aria-expanded={open === issuer.key}
-                    onClick={() => {
-                      setOpen(open === issuer.key ? null : issuer.key);
-                    }}
-                  >
-                    {issuer.name}
-                  </button>
-                  <br />
-                  <RunLine run={run} />
-                </th>
-                <StateCells data={data} run={run} />
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
-    </div>
-  );
-}
-
-/** One issuer: every run against the fixed columns, and what its newest run says. */
-function IssuerDetail({ data, issuer }: { data: Data; issuer: Issuer }) {
-  const newest = latestRun(issuer);
-  const titles = new Map(data.columns.map((column) => [column.code, named(column)]));
-  const fields = new Map(data.fields.map((item) => [item.id, item]));
-  const said = newest
-    ? factsOf(data, newest.key).filter((fact) => fact.field.endsWith("/bottomline"))
-    : [];
-  return (
-    <section className={card} aria-label={issuer.name}>
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <h2 className={heading}>{issuer.name}</h2>
-        {newest && <Button href={reportPath(newest.folder)}>Open newest report</Button>}
-      </div>
-      <div className={tableBox}>
-        <table className="w-full text-sm">
-          <caption className="sr-only">Every run of {issuer.name}, newest first</caption>
-          <thead>
-            <tr className="border-b border-border-hairline text-text-secondary">
-              <th className={th}>Run</th>
-              {data.columns.map((column) => (
-                <th key={column.code} className={`${th} min-w-32`}>
-                  {named(column)}
-                </th>
-              ))}
-              <th className={th}>Other modules</th>
-            </tr>
-          </thead>
-          <tbody>
-            {issuer.runs.map((run) => (
-              <tr key={run.key} className="border-b border-border-hairline last:border-0">
-                <th scope="row" className="min-w-48 p-3 text-left font-normal">
-                  <RunLine run={run} />
-                  <br />
-                  <TextLink href={reportPath(run.folder)}>Open report</TextLink>
-                </th>
-                <StateCells data={data} run={run} />
-                <td className="min-w-48 p-3">
-                  {run.other.length === 0
-                    ? "None"
-                    : run.other
-                        .map((item) => `${named(item)} (${STATE_WORDS[item.state].toLowerCase()})`)
-                        .join("; ")}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-      {newest && said.length > 0 && (
-        <div className="grid gap-3">
-          <h3 className="font-semibold text-text-primary">Bottom lines of the newest run</h3>
-          <ul className="grid gap-3">
-            {said.map((fact) => (
-              <li key={`${fact.output}-${String(fact.line)}`} className="grid gap-1">
-                <span className="text-sm font-medium text-text-secondary">
-                  {titles.get(fields.get(fact.field)?.module ?? "") ??
-                    moduleName(fields.get(fact.field)?.module ?? "")}
-                </span>
-                <p className="reading-copy text-body text-text-primary">
-                  {prose(fact.text) ?? IN_EVIDENCE}
-                </p>
-                <TextLink href={evidenceLink(newest, fact)}>View sources</TextLink>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-    </section>
-  );
-}
-
-function grouped(data: Data, issuers: readonly Issuer[], by: string) {
-  const groups = new Map<string, Issuer[]>();
-  for (const issuer of issuers) {
-    const key = groupKey(data, issuer, by);
-    groups.set(key, [...(groups.get(key) ?? []), issuer]);
-  }
-  return [...groups].sort(([a], [b]) => a.localeCompare(b));
-}
-
-function RankView({
-  data,
-  issuers,
-  field,
-  period,
-  order,
-  by,
-}: {
-  data: Data;
-  issuers: Issuer[];
-  field: Field | undefined;
-  period: string | null;
-  order: "high" | "low";
-  by: string;
-}) {
-  if (!field || period === null)
-    return (
-      <p role="status" className={card}>
-        No module of a published run states a figure in a chart table yet, so there is nothing to
-        rank.
-      </p>
-    );
-  return (
-    <div className="grid gap-6">
-      {grouped(data, issuers, by).map(([group, members]) => {
-        const ranking = rank(data, members, field.id, period, order);
-        return (
-          <section key={group} className="grid gap-3" aria-label={group || "Ranking"}>
-            {group && <h2 className={heading}>{group}</h2>}
-            {ranking.units.map(({ unit, rows }) => (
-              <div key={unit} className={tableBox}>
-                <table className="w-full text-sm">
-                  <caption className="p-3 text-left text-text-secondary">
-                    {field.label}, {period}
-                    {unit ? `, reporting unit ${unit}` : ""}
-                    {order === "high" ? ", highest first" : ", lowest first"}
-                  </caption>
-                  <thead>
-                    <tr className="border-b border-border-hairline text-text-secondary">
-                      <th className={th}>Rank</th>
-                      <th className={th}>Issuer</th>
-                      <th className={`${th} text-right`}>{field.label}</th>
-                      <th className={th}>Period</th>
-                      <th className={th}>Basis and limitation</th>
-                      <th className={th}>Sources</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {rows.map(({ issuer, run, fact }, index) => (
-                      <tr
-                        key={issuer.key}
-                        className="border-b border-border-hairline last:border-0"
-                      >
-                        <td className="p-3 tabular-nums">{index + 1}</td>
-                        <th scope="row" className="p-3 text-left font-semibold wrap-anywhere">
-                          {issuer.name}
-                          <br />
-                          <RunLine run={run} />
-                        </th>
-                        <td className="p-3 text-right tabular-nums">
-                          {figure(fact)}
-                          {fact.heading && (
-                            <>
-                              <br />
-                              <span className="text-text-secondary">Stated as {fact.heading}</span>
-                            </>
-                          )}
-                        </td>
-                        <td className="p-3">{fact.period ?? fact.row ?? "Not stated"}</td>
-                        <td className="max-w-md p-3 wrap-anywhere">
-                          {prose(fact.basis) ?? "Qualification recorded in Evidence."}
-                        </td>
-                        <td className="p-3">
-                          <TextLink href={evidenceLink(run, fact)}>View sources</TextLink>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            ))}
-            {ranking.missing.length > 0 && (
-              <div className={`${card} gap-2`}>
-                <h3 className="font-semibold text-text-primary">
-                  Not ranked: no figure for {period} in the newest run
-                </h3>
-                <ul className="grid gap-1 text-sm">
-                  {ranking.missing.map(({ issuer, fact, stated, repeated }) => (
-                    <li key={issuer.key}>
-                      <span className="font-medium">{issuer.name}</span>
-                      {": "}
-                      {repeated.length > 0
-                        ? `its run states this period more than once (${repeated.map(figure).join("; ")}), so none is ranked`
-                        : fact
-                          ? (prose(fact.text) ?? "the module's reason is in Evidence")
-                          : stated.length > 0
-                            ? `no figure could be read for this period; its run states ${stated.join(", ")}`
-                            : "no figure could be read for this measure"}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-          </section>
-        );
-      })}
-    </div>
-  );
-}
-
-function FindView({
-  data,
-  issuers,
-  query,
-  titles,
-}: {
-  data: Data;
-  issuers: Issuer[];
-  query: string;
-  titles: ReadonlyMap<string, string>;
-}) {
-  const wanted = query.trim().toLowerCase();
-  const fields = new Map(data.fields.map((item) => [item.id, item]));
-  const hits = issuers.flatMap((issuer) => {
-    const run = latestRun(issuer);
-    if (!run) return [];
-    const passages = factsOf(data, run.key).filter(
-      (fact) => fact.at === null && fields.get(fact.field)?.kind === "text",
-    );
-    const matching = passages.filter((fact) =>
-      `${fact.text} ${fact.impact ?? ""}`.toLowerCase().includes(wanted),
-    );
-    // An issuer the search kept for its name, sector or another field shows all its passages.
-    return (matching.length > 0 ? matching : passages).map((fact) => ({ issuer, run, fact }));
-  });
-  if (hits.length === 0)
-    return (
-      <p role="status" className={card}>
-        No module passage of these issuers’ newest runs matches.
-      </p>
-    );
-  return (
-    <div className={tableBox}>
-      <table className="w-full text-sm">
-        <caption className="p-3 text-left text-text-secondary">
-          {String(hits.length)} {hits.length === 1 ? "passage" : "passages"} from the newest runs
-          {wanted ? ` of issuers matching “${query.trim()}”` : ""}
-        </caption>
-        <thead>
-          <tr className="border-b border-border-hairline text-text-secondary">
-            <th className={th}>Issuer</th>
-            <th className={th}>Module</th>
-            <th className={th}>What it says</th>
-            <th className={th}>Creditor impact</th>
-            <th className={th}>Confidence</th>
-            <th className={th}>Sources</th>
-          </tr>
-        </thead>
-        <tbody>
-          {hits.map(({ issuer, run, fact }) => {
-            const item = fields.get(fact.field);
-            return (
-              <tr
-                key={`${fact.output}-${String(fact.line)}-${fact.field}`}
-                className="border-b border-border-hairline align-top last:border-0"
-              >
-                <th scope="row" className="p-3 text-left font-semibold wrap-anywhere">
-                  {issuer.name}
-                </th>
-                <td className="p-3">
-                  {titles.get(item?.module ?? "") ?? moduleName(item?.module ?? "")}
-                  <br />
-                  <span className="text-text-secondary">{item?.label}</span>
-                </td>
-                <td className="max-w-xl p-3 wrap-anywhere">{prose(fact.text) ?? IN_EVIDENCE}</td>
-                <td className="max-w-xs p-3 wrap-anywhere">{prose(fact.impact) ?? ""}</td>
-                <td className="p-3">{fact.confidence ?? ""}</td>
-                <td className="p-3">
-                  <TextLink href={evidenceLink(run, fact)}>View sources</TextLink>
-                </td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
-    </div>
-  );
-}
-
-function TrendView({
-  data,
-  issuers,
-  field,
-}: {
-  data: Data;
-  issuers: Issuer[];
-  field: Field | undefined;
-}) {
-  const units = field ? fieldUnits(data, issuers, field.id) : [];
-  const [picked, setPicked] = useState("");
-  const unit = units.includes(picked) ? picked : (units[0] ?? "");
-  if (!field || units.length === 0)
-    return (
-      <p role="status" className={card}>
-        No newest run of these issuers states this figure, so there is no trend to draw.
-      </p>
-    );
-  const { periods, series } = trend(data, issuers, field.id, unit);
-  return (
-    <div className="grid gap-4">
-      {units.length > 1 && (
-        <Choice name="Reporting unit" value={unit} onChange={setPicked}>
-          {units.map((item) => (
-            <option key={item} value={item}>
-              {item || "No unit stated"}
-            </option>
-          ))}
-        </Choice>
-      )}
-      <div className={card}>
-        <TrendChart
-          title={`${field.label} by period`}
-          as="h3"
-          note="One line per issuer, from its newest run, over the periods that run’s module states. Periods are matched as written, so issuers with different year ends sit at different points. Each figure is as its module wrote it; bases can differ between issuers."
-          periods={periods}
-          series={series.map((item) => ({
-            name: item.name,
-            values: item.points.map((fact) => fact?.at ?? null),
-          }))}
-          table={series.map((item) => ({
-            name: item.name,
-            cells: item.points.map((fact) => (fact ? figure(fact) : null)),
-          }))}
-          yTicks={axisTicks(
-            series.flatMap((item) => item.points.flatMap((fact) => fact?.at ?? [])),
-            unit,
-          )}
-        />
-      </div>
-    </div>
-  );
-}
 
 function addressState(): { view: View; field: string; filters: Filters } {
   const query = new URLSearchParams(window.location.search);
@@ -666,6 +130,25 @@ function Dashboard({ data }: { data: Data }) {
     setGroupName("");
   };
   const detail = shown.find((issuer) => issuer.key === open);
+  const column = data.columns.find((item) => item.code === filters.module);
+  const choiceField = choices.find((item) => item.id === filters.choice);
+  // Filters set in the disclosure show above as chips that remove themselves.
+  const active = [
+    column && {
+      key: "module",
+      text: `Module: ${named(column)}${filters.state === "all" ? "" : `, ${STATE_WORDS[filters.state]}`}`,
+      clear: () => {
+        set({ module: "all", state: "all" });
+      },
+    },
+    choiceField && {
+      key: "choice",
+      text: `${titles.get(choiceField.module) ?? ""} ${choiceField.label}${filters.word === "all" ? "" : `: ${filters.word}`}`.trim(),
+      clear: () => {
+        set({ choice: "all", word: "all" });
+      },
+    },
+  ].filter((item): item is NonNullable<typeof item> => Boolean(item));
 
   return (
     <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-5">
@@ -674,135 +157,170 @@ function Dashboard({ data }: { data: Data }) {
         its module wrote it; this page only selects, sorts and groups them. Portfolio views read
         each issuer’s newest run.
       </p>
-      <ButtonGroup
-        aria-label="View"
-        size="sm"
-        disallowEmptySelection
-        selectedKeys={[view]}
-        onSelectionChange={(keys) => {
-          const [key] = keys;
-          const next = VIEWS.find((item) => item.id === key);
-          if (next) setView(next.id);
-        }}
-      >
-        {VIEWS.map((item) => (
-          <ButtonGroupItem key={item.id} id={item.id}>
-            {item.name}
-          </ButtonGroupItem>
-        ))}
-      </ButtonGroup>
-
-      <section aria-label="Filters" className="flex flex-wrap items-end gap-3">
-        <label className={`${label} w-full max-w-md sm:min-w-40 sm:flex-1`}>
-          Search issuers and module text
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <Segmented
+          label="View"
+          current={view}
+          segments={VIEWS.map((item) => ({ key: item.id, label: item.name }))}
+          onSelect={(key) => {
+            const next = VIEWS.find((item) => item.id === key);
+            if (next) setView(next.id);
+          }}
+        />
+        <label className="relative block w-full max-w-md sm:flex-1">
+          <span className="sr-only">Search issuers and module text</span>
+          <SearchLg
+            aria-hidden
+            className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-text-tertiary"
+          />
           <input
             type="search"
+            aria-label="Search issuers and module text"
+            placeholder="Search issuers and module text"
             value={filters.query}
             onChange={(event) => {
               set({ query: event.currentTarget.value });
             }}
-            className={control}
+            className="h-10 w-full rounded-ds-md border border-border-hairline bg-surface-canvas pr-3 pl-9 text-body text-text-primary placeholder:text-text-tertiary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
           />
         </label>
-        <Choice
-          name="Sector"
-          value={filters.sector}
-          onChange={(sector) => {
-            set({ sector });
-          }}
-        >
-          <option value="all">All</option>
-          {filters.sector !== "all" && !sectors.includes(filters.sector) && (
-            <option value={filters.sector}>{filters.sector} (unavailable)</option>
-          )}
-          {sectors.map((item) => (
-            <option key={item}>{item}</option>
+      </div>
+
+      <section aria-label="Filters" className="grid gap-3">
+        <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
+          <ChipGroup
+            label="Sector"
+            choices={sectors}
+            value={filters.sector}
+            onChange={(sector) => {
+              set({ sector });
+            }}
+          />
+          <ChipGroup
+            label="Pathway"
+            choices={pathways}
+            value={filters.pathway}
+            onChange={(pathway) => {
+              set({ pathway });
+            }}
+          />
+          {active.map((item) => (
+            <button
+              key={item.key}
+              type="button"
+              aria-label={`Remove filter ${item.text}`}
+              onClick={item.clear}
+              className="inline-flex min-h-8 cursor-pointer items-center gap-1.5 rounded-ds-xs border border-action-subtle-hover bg-surface-selected px-3 text-small font-medium text-text-link outline-focus-ring focus-visible:outline-2 focus-visible:outline-offset-2 max-[480px]:min-h-11"
+            >
+              {item.text}
+              <XClose aria-hidden className="size-3.5" />
+            </button>
           ))}
-        </Choice>
-        <Choice
-          name="Pathway"
-          value={filters.pathway}
-          onChange={(pathway) => {
-            set({ pathway });
-          }}
-        >
-          <option value="all">All</option>
-          {filters.pathway !== "all" && !pathways.includes(filters.pathway) && (
-            <option value={filters.pathway}>{filters.pathway} (unavailable)</option>
-          )}
-          {pathways.map((item) => (
-            <option key={item}>{item}</option>
-          ))}
-        </Choice>
-        <Choice
-          name="Module"
-          value={filters.module}
-          onChange={(module) => {
-            set({ module });
-          }}
-        >
-          <option value="all">Any</option>
-          {data.columns.map((column) => (
-            <option key={column.code} value={column.code}>
-              {named(column)}
-            </option>
-          ))}
-        </Choice>
-        {filters.module !== "all" && (
-          <Choice
-            name="Module state"
-            value={filters.state}
-            onChange={(state) => {
-              set({ state: state as Filters["state"] });
+          <Button
+            color="tertiary"
+            size="sm"
+            onPress={() => {
+              setFilters(NO_FILTERS);
+              setOnlyChosen(false);
             }}
           >
-            <option value="all">Any</option>
-            {Object.entries(STATE_WORDS).map(([state, word]) => (
-              <option key={state} value={state}>
-                {word}
-              </option>
-            ))}
-          </Choice>
-        )}
-        {choices.length > 0 && (
-          <Choice
-            name="Module confidence"
-            value={filters.choice}
-            onChange={(choice) => {
-              set({ choice, word: "all" });
-            }}
-          >
-            <option value="all">Any</option>
-            <FieldOptions fields={choices} titles={titles} />
-          </Choice>
-        )}
-        {filters.choice !== "all" && (
-          <Choice
-            name="Is"
-            value={filters.word}
-            onChange={(word) => {
-              set({ word });
-            }}
-          >
-            <option value="all">Any</option>
-            {words.map((item) => (
-              <option key={item}>{item}</option>
-            ))}
-          </Choice>
-        )}
+            Clear filters
+          </Button>
+        </div>
+        <details className="group rounded-ds-md border border-border-hairline bg-surface-card px-4 py-2">
+          <summary className="min-h-8 cursor-pointer text-small font-medium text-text-secondary">
+            More filters: module, module state, module confidence
+          </summary>
+          <div className="flex flex-wrap items-end gap-3 py-3">
+            <Choice
+              name="Module"
+              value={filters.module}
+              onChange={(module) => {
+                set({ module });
+              }}
+            >
+              <option value="all">Any</option>
+              {data.columns.map((item) => (
+                <option key={item.code} value={item.code}>
+                  {named(item)}
+                </option>
+              ))}
+            </Choice>
+            {filters.module !== "all" && (
+              <Choice
+                name="Module state"
+                value={filters.state}
+                onChange={(state) => {
+                  set({ state: state as Filters["state"] });
+                }}
+              >
+                <option value="all">Any</option>
+                {Object.entries(STATE_WORDS).map(([state, word]) => (
+                  <option key={state} value={state}>
+                    {word}
+                  </option>
+                ))}
+              </Choice>
+            )}
+            {choices.length > 0 && (
+              <Choice
+                name="Module confidence"
+                value={filters.choice}
+                onChange={(choice) => {
+                  set({ choice, word: "all" });
+                }}
+              >
+                <option value="all">Any</option>
+                <FieldOptions fields={choices} titles={titles} />
+              </Choice>
+            )}
+            {filters.choice !== "all" && (
+              <Choice
+                name="Is"
+                value={filters.word}
+                onChange={(word) => {
+                  set({ word });
+                }}
+              >
+                <option value="all">Any</option>
+                {words.map((item) => (
+                  <option key={item}>{item}</option>
+                ))}
+              </Choice>
+            )}
+          </div>
+        </details>
       </section>
 
       {numbers.length > 0 && (
-        <section aria-label="Figure" className="flex flex-wrap items-end gap-3">
+        <section
+          aria-label="Figure"
+          className="flex flex-wrap items-end gap-x-4 gap-y-3 rounded-ds-lg border border-border-subtle bg-surface-card p-4"
+        >
           <Choice name="Figure" value={field?.id ?? ""} onChange={setFieldId}>
             <FieldOptions fields={numbers} titles={titles} />
           </Choice>
           {stated.length > 0 && view !== "trend" && (
-            <Choice name="Period" value={period ?? ""} onChange={setPeriodPick}>
+            <div
+              role="group"
+              aria-label="Period"
+              className="flex flex-wrap items-center gap-2 pb-0.5"
+            >
+              <span aria-hidden="true" className="text-caption text-text-tertiary">
+                Period
+              </span>
               {stated.map((item) => (
-                <option key={item}>{item}</option>
+                <Chip
+                  key={item}
+                  pressed={item === period}
+                  onPress={() => {
+                    setPeriodPick(item);
+                  }}
+                >
+                  {item}
+                </Chip>
               ))}
-            </Choice>
+            </div>
           )}
           {view !== "trend" &&
             (["min", "max"] as const).map((side) => (
@@ -818,22 +336,23 @@ function Dashboard({ data }: { data: Data }) {
                   className={control}
                 />
                 {readBound(filters[side]).invalid && (
-                  <span className="text-sm font-normal text-error-primary">Enter a number</span>
+                  <span className="text-small font-normal text-error-text">Enter a number</span>
                 )}
               </label>
             ))}
           {view === "rank" && (
             <>
-              <Choice
-                name="Order"
-                value={order}
-                onChange={(next) => {
-                  setOrder(next === "low" ? "low" : "high");
+              <Segmented
+                label="Order"
+                current={order}
+                segments={[
+                  { key: "high", label: "Highest first" },
+                  { key: "low", label: "Lowest first" },
+                ]}
+                onSelect={(key) => {
+                  setOrder(key === "low" ? "low" : "high");
                 }}
-              >
-                <option value="high">Highest first</option>
-                <option value="low">Lowest first</option>
-              </Choice>
+              />
               <Choice name="Group by" value={by} onChange={setBy}>
                 <option value="none">No grouping</option>
                 <option value="sector">Sector</option>
@@ -845,8 +364,8 @@ function Dashboard({ data }: { data: Data }) {
         </section>
       )}
 
-      <section aria-label="Groups" className="flex flex-wrap items-end gap-3">
-        <label className="flex items-center gap-2 py-2 text-sm font-medium">
+      <section aria-label="Groups" className="flex flex-wrap items-end gap-x-4 gap-y-3">
+        <label className="flex min-h-8 items-center gap-2 py-2 text-small font-medium">
           <input
             type="checkbox"
             checked={onlyChosen}
@@ -857,21 +376,31 @@ function Dashboard({ data }: { data: Data }) {
           Only the {String(chosen.size)} issuers ticked to compare
         </label>
         {groups.length > 0 && (
-          <Choice
-            name="Saved group"
-            value=""
-            onChange={(name) => {
-              const group = groups.find((item) => item.name === name);
-              if (!group) return;
-              setChosen(new Set(group.issuers));
-              setOnlyChosen(true);
-            }}
+          <div
+            role="group"
+            aria-label="Saved group"
+            className="flex flex-wrap items-center gap-2 pb-0.5"
           >
-            <option value="">Choose a group</option>
+            <span aria-hidden="true" className="text-caption text-text-tertiary">
+              Saved groups
+            </span>
             {groups.map((group) => (
-              <option key={group.name}>{group.name}</option>
+              <Chip
+                key={group.name}
+                pressed={
+                  onlyChosen &&
+                  group.issuers.length === chosen.size &&
+                  group.issuers.every((key) => chosen.has(key))
+                }
+                onPress={() => {
+                  setChosen(new Set(group.issuers));
+                  setOnlyChosen(true);
+                }}
+              >
+                {group.name}
+              </Chip>
             ))}
-          </Choice>
+          </div>
         )}
         <label className={`${label} w-56`}>
           Save ticked issuers as
@@ -890,18 +419,9 @@ function Dashboard({ data }: { data: Data }) {
         >
           Save group
         </Button>
-        <Button
-          color="tertiary"
-          onPress={() => {
-            setFilters(NO_FILTERS);
-            setOnlyChosen(false);
-          }}
-        >
-          Clear filters
-        </Button>
       </section>
 
-      <p role="status" className="text-sm text-text-secondary">
+      <p role="status" className="text-small text-text-secondary">
         {String(shown.length)} of {String(data.issuers.length)} issuers shown
       </p>
 
