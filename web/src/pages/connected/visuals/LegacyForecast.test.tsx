@@ -4,6 +4,7 @@ import { EMPHASIS_CLASS } from "../../../components/chart/SeriesLine";
 import {
   CashProxy,
   cashProxyCases,
+  forecastCaseNames,
   forecastCaseOptions,
   ForecastScope,
   gridOf,
@@ -649,4 +650,41 @@ it("names colliding cases in reader text, without a module code", () => {
     "Downside drivers · Downside drivers",
   ]);
   expect(options.map(({ rawGroup }) => rawGroup)).toContain("Downside (CP-2G drivers)");
+});
+
+function disjointModel() {
+  return casesModel(
+    [
+      { label: "FY2026E", group: "Base case" },
+      { label: "FY2027E", group: "Downside case" },
+    ],
+    ["10", "5"].map(valueCell),
+  );
+}
+
+it("tells the reader when the cases share no period, instead of drawing blank columns", () => {
+  const disjointGrid = gridOf(disjointModel().cashflow);
+  if (!disjointGrid) throw new Error("Unreadable fixture");
+  expect(cashProxyCases(disjointGrid, null).basisGap).toBe(true);
+  render(<CashProxy model={disjointModel()} />);
+  expect(screen.getByRole("note")).toHaveTextContent(
+    "The published cases do not share a unique, compatible period basis.",
+  );
+  expect(screen.queryByRole("table", { name: "Scenario comparison" })).toBeNull();
+});
+
+it("says the line-item periods are omitted when the cases share no period", () => {
+  render(<LegacyForecast model={disjointModel()} />);
+  expect(screen.getByRole("status")).toHaveTextContent(
+    "Some line-item periods are omitted because their scenarios do not share",
+  );
+});
+
+it("names a module-coded raw group the same in every caller, with no module code", () => {
+  const groups = ["Upside", "CP-3 Upside", "CP-4 Upside"];
+  const all = forecastCaseNames(groups);
+  const pair = forecastCaseNames(["Upside", "CP-4 Upside"]);
+  expect(all.get("CP-4 Upside")).toBe(pair.get("CP-4 Upside"));
+  for (const name of [...all.values(), ...pair.values()]) expect(name).not.toContain("CP-");
+  expect(new Set(all.values()).size).toBe(3);
 });

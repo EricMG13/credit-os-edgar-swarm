@@ -208,8 +208,8 @@ function StatementPeriodControls({
       )}
       {comparisonBasisGap && (
         <p role="status" className="text-small text-text-secondary">
-          Some same-labeled scenario periods cannot be compared because their recorded start and end
-          dates do not match or cannot establish a unique period.
+          The cases cannot be compared period by period: they share no period, or their recorded
+          start and end dates do not match or cannot establish a unique period.
         </p>
       )}
     </>

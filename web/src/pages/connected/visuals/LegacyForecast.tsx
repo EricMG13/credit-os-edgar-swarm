@@ -426,6 +426,9 @@ export function cashProxyCases(grid: Grid, other: Grid | null, downsideNote = ""
     observations: analysis.uniqueObservations,
     scenarios,
     basisGap: analysis.basisGap || !validGroups,
+    // Several cases, but no period published by more than one of them.
+    disjoint:
+      groups.length > 1 && !analysis.periods.some(({ groups: shared }) => shared.length > 1),
     comparison: !singleGroup,
   };
 }
@@ -624,7 +627,7 @@ function cashProxyOutput(
 ) {
   const { note, source, sourceFor, sourceAction, selectedRawGroup, unified } = options;
   const { raw, grid, hasCashProxy } = state;
-  const { periods, series, basisGap } = cashProxyCases(
+  const { periods, series, basisGap, disjoint } = cashProxyCases(
     grid,
     gridOf(raw.other),
     stringsIn(raw.notes).find((entry) => entry.startsWith("Downside case is")),
@@ -635,6 +638,7 @@ function cashProxyOutput(
     hasCashProxy,
     basisGap,
     unified,
+    disjoint,
   );
   if (failure === "hidden") return null;
   if (failure)
@@ -719,8 +723,13 @@ function cashProxyDisplayFailure(
   hasCashProxy: boolean,
   basisGap: boolean,
   unified: boolean,
+  disjoint: boolean,
 ) {
-  if (unified || (periodCount >= 2 && seriesCount > 0)) return null;
+  if (unified) return null;
+  // Cases with no period in common would be drawn as columns each blank in the other's.
+  if (disjoint && hasCashProxy && seriesCount > 0)
+    return "The published cases do not share a unique, compatible period basis.";
+  if (periodCount >= 2 && seriesCount > 0) return null;
   if (seriesCount === 0 && hasCashProxy)
     return "The recorded cases do not form a readable scenario comparison.";
   if (basisGap && hasCashProxy)

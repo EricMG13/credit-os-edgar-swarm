@@ -88,3 +88,29 @@ it("falls back to a neutral ordinal when cleaned suffixes collide or are empty",
   );
   expect([...empty.values()]).toEqual(["Stress", "Stress (2)"]);
 });
+
+it("flags a gap when several cases publish periods and none is shared", () => {
+  const result = analyzeScenarioPeriods([
+    { period: "FY2026E", group: "Base case" },
+    { period: "FY2027E", group: "Downside case" },
+  ]);
+  expect(result.periods.map(({ period }) => period)).toEqual(["FY2026E", "FY2027E"]);
+  expect(result.basisGap).toBe(true);
+});
+
+const rawGroups = ["CP-3 Upside", "CP-4 Upside", "Z"];
+const sharedLabel = () => "Upside case";
+
+it("names a raw group the same whichever other groups are named with it", () => {
+  const all = scenarioGroupLabels(rawGroups, sharedLabel);
+  const withZ = scenarioGroupLabels(["CP-4 Upside", "Z"], sharedLabel);
+  expect(all.get("CP-4 Upside")).toBe(withZ.get("CP-4 Upside"));
+  expect(new Set(all.values()).size).toBe(3);
+  for (const name of [...all.values(), ...withZ.values()]) expect(name).not.toContain("CP-");
+});
+
+it("falls back to an ordinal only when module-code-stripped groups still collide", () => {
+  const names = scenarioGroupLabels(["CP-3 Upside", "CP-4 Upside"], sharedLabel);
+  expect(new Set(names.values()).size).toBe(2);
+  for (const name of names.values()) expect(name).not.toContain("CP-");
+});
