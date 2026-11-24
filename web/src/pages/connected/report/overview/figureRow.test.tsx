@@ -28,8 +28,35 @@ const chart = (name: string, headers: string[], ...rows: string[][]): Section =>
 const LEVERAGE = ["Period", "Total debt / EBITDA", "Net debt / EBITDA", "Reporting unit", "Basis"];
 const REVENUE = ["Period", "Revenue", "Adjusted EBITDA", "Reporting unit", "Basis"];
 
-/** A foundation whose leverage chart has the rows given; the other charts are plain FY2023→FY2024. */
-function foundation(leverage: Section, extra: Partial<OutputEntry["output"]> = {}): OutputEntry {
+/** Calendar fiscal years: each starts and ends a year after the one before. */
+const CALENDAR = ["2020", "2021", "2022", "2023", "2024"].map((year) => [
+  `FY${year}`,
+  `${year}-01-01`,
+  `${year}-12-31`,
+]);
+const periodTable = (rows: string[][]): Section => ({
+  heading: "Period table",
+  level: 3,
+  line: 10,
+  blocks: [
+    {
+      type: "table" as const,
+      line: 11,
+      headers: ["Period", "Start", "End"],
+      rows: rows.map((cells, at) => ({ line: 12 + at, cells })),
+    },
+  ],
+});
+
+/**
+ * A foundation whose leverage chart has the rows given; the other charts are plain FY2023→FY2024.
+ * Its period table states when each period starts and ends (none when `periods` is null).
+ */
+function foundation(
+  leverage: Section,
+  extra: Partial<OutputEntry["output"]> = {},
+  periods: string[][] | null = CALENDAR,
+): OutputEntry {
   return {
     output: {
       id: "CP-1-1",
@@ -40,6 +67,7 @@ function foundation(leverage: Section, extra: Partial<OutputEntry["output"]> = {
       ...extra,
     },
     sections: [
+      ...(periods ? [periodTable(periods)] : []),
       leverage,
       chart(
         "interest cover",
@@ -95,42 +123,101 @@ describe("the latest figure is the latest period, never the last row", () => {
     ).toBeVisible();
   });
 
-  it("draws a neutral gap with no trace control when a period cannot be ordered", () => {
+  it.each([
+    ["a period with words after it", "FY2023 (restated)", "FY2024"],
+    ["bare years", "2023", "2024"],
+    ["two-digit years", "FY23", "FY24"],
+    ["an estimate", "FY2024", "FY2025E"],
+    ["a quarter", "FY2024", "Q1 2025"],
+    ["periods of mixed forms", "FY2023", "FY2024 / 2024-09-30"],
+    ["a period that repeats", "FY2024", "FY2024"],
+  ])(
+    "draws each stated figure with its period as written, and its trace, for %s",
+    (_, first, second) => {
+      draw(
+        foundation(
+          chart(
+            "leverage",
+            LEVERAGE,
+            [first, "5.00", "4.50", "x", "Stated."],
+            [second, "4.00", "3.50", "x", "Stated."],
+          ),
+        ),
+      );
+      const tile = gross();
+      expect(within(tile).getByText(`5.00x in ${first}`)).toBeVisible();
+      expect(within(tile).getByText(`4.00x in ${second}`)).toBeVisible();
+      expect(
+        within(tile).getByText(
+          "The periods cannot be put in order, so no latest figure or change is drawn.",
+        ),
+      ).toBeVisible();
+      expect(tile).not.toHaveTextContent(/n\.a\.|Not supplied|Better|Worse|from |-1\.00x/);
+      expect(within(tile).getByRole("link", { name: "Source for Total debt / EBITDA" })).toBeVisible();
+      expect(within(tile).queryByRole("img")).toBeNull();
+    },
+  );
+
+  it("reads a figure with its unit, a Unicode minus and a padded period", () => {
     draw(
       foundation(
         chart(
           "leverage",
           LEVERAGE,
-          ["FY2024", "4.00", "3.50", "x", "Stated."],
-          ["Q1 2025", "5.00", "4.50", "x", "Stated."],
+          ["FY2023 ", "5.0x", "\u22122.0", "x", "Stated."],
+          ["FY2024", "4.0x", "\u22121.5", "x", "Stated."],
         ),
       ),
     );
     const tile = gross();
-    expect(tile).toHaveTextContent("n.a.");
-    expect(tile).toHaveTextContent("Not shown here");
-    expect(tile).not.toHaveTextContent(/Not supplied|5\.00x|4\.00x|Better|Worse/);
-    expect(within(tile).queryByRole("link")).toBeNull();
-    expect(within(tile).queryByRole("button")).toBeNull();
-    expect(within(tile).queryByRole("img")).toBeNull();
+    expect(within(tile).getByText("4.0x", { selector: "span" })).toBeVisible();
+    expect(within(tile).getByText(wholeLine("from 5.0x in FY2023 (-1.0x)"))).toBeVisible();
+    expect(tile).not.toHaveTextContent(/n\.a\.|not one figure/);
+    const net = screen.getByRole("region", { name: "Net debt / EBITDA" });
+    expect(within(net).getByText("-1.5x", { selector: "span" })).toBeVisible();
+    expect(within(net).getByText(wholeLine("from -2.0x in FY2023 (+0.5x)"))).toBeVisible();
   });
 
-  it.each([
-    ["periods of mixed forms", "FY2023", "2024-09-30"],
-    ["a period that repeats", "FY2024", "FY2024"],
-  ])("refuses a latest for %s", (_, first, second) => {
+  it("compares only a period whose start and end are both a year earlier, by the period table", () => {
+    const rows = [
+      ["FY2023", "2022-07-01", "2023-12-31"],
+      ["FY2024", "2024-01-01", "2024-12-31"],
+    ];
     draw(
       foundation(
         chart(
           "leverage",
           LEVERAGE,
-          [first, "5.00", "4.50", "x", "Stated."],
-          [second, "4.00", "3.50", "x", "Stated."],
+          ["FY2023", "5.00", "4.50", "x", "Stated."],
+          ["FY2024", "4.00", "3.50", "x", "Stated."],
         ),
+        {},
+        rows,
       ),
     );
-    expect(gross()).toHaveTextContent("Not shown here");
-    expect(within(gross()).queryByRole("link")).toBeNull();
+    expect(within(gross()).getByText("No period a year earlier to compare.")).toBeVisible();
+    expect(gross()).not.toHaveTextContent(/Better|Worse|-1\.00x/);
+  });
+
+  it("draws no change where the period table does not say when the latest period runs", () => {
+    draw(
+      foundation(
+        chart(
+          "leverage",
+          LEVERAGE,
+          ["FY2023", "5.00", "4.50", "x", "Stated."],
+          ["FY2024", "4.00", "3.50", "x", "Stated."],
+        ),
+        {},
+        null,
+      ),
+    );
+    expect(
+      within(gross()).getByText(
+        "No change is drawn: the handoff's period table does not state when FY2024 starts and ends.",
+      ),
+    ).toBeVisible();
+    expect(gross()).not.toHaveTextContent(/Better|Worse|-1\.00x/);
   });
 
   it("draws no change or chip when the prior period is not a year earlier, and says why", () => {
@@ -160,6 +247,12 @@ describe("the latest figure is the latest period, never the last row", () => {
           ["2024-03-31", "4.50", "4.00", "x", "Stated."],
           ["2024-09-30", "4.00", "3.50", "x", "Stated."],
         ),
+        {},
+        [
+          ["FY2023", "2022-10-01", "2023-09-30"],
+          ["H1 FY2024", "2023-10-01", "2024-03-31"],
+          ["FY2024", "2023-10-01", "2024-09-30"],
+        ],
       ),
     );
     expect(within(gross()).getByText(wholeLine("from 5.00x in 2023-09-30 (-1.00x)"))).toBeVisible();
@@ -192,6 +285,10 @@ describe("each figure's basis", () => {
         "Not compared with FY2023: the two periods are stated on different bases.",
       ),
     ).toBeVisible();
+    for (const name of ["Total debt / EBITDA", "Net debt / EBITDA"]) {
+      const mark = within(screen.getByRole("region", { name })).getByRole("img");
+      expect(mark.querySelectorAll("[data-segment]")).toHaveLength(0);
+    }
   });
 
   it("links a basis that cites a source to Evidence and prints none of it", () => {
@@ -476,5 +573,45 @@ describe("the trace control of a tile with no figure", () => {
     expect(
       within(gross()).getByRole("link", { name: "Source for Total debt / EBITDA" }),
     ).toBeVisible();
+  });
+});
+
+describe("series marks place periods by time", () => {
+  it("spaces dated points by their dates", () => {
+    draw(
+      foundation(
+        chart(
+          "leverage",
+          LEVERAGE,
+          ["2023-12-31", "5.00", "4.50", "x", "Stated."],
+          ["2024-03-31", "4.50", "4.00", "x", "Stated."],
+          ["2024-12-31", "4.00", "3.50", "x", "Stated."],
+        ),
+      ),
+    );
+    const dots = [...within(gross()).getByRole("img").querySelectorAll("circle")].map((dot) =>
+      Number(dot.getAttribute("cx")),
+    );
+    const [first = 0, second = 0, third = 0] = dots;
+    expect((second - first) / (third - second)).toBeCloseTo(91 / 275, 2);
+  });
+
+  it("leaves a missing year as room on the slope, not an even step", () => {
+    draw(
+      foundation(
+        chart(
+          "leverage",
+          LEVERAGE,
+          ["FY2021", "5.00", "4.50", "x", "Stated."],
+          ["FY2023", "4.50", "4.00", "x", "Stated."],
+          ["FY2024", "4.00", "3.50", "x", "Stated."],
+        ),
+      ),
+    );
+    const dots = [...within(gross()).getByRole("img").querySelectorAll("circle")].map((dot) =>
+      Number(dot.getAttribute("cx")),
+    );
+    const [first = 0, second = 0, third = 0] = dots;
+    expect((second - first) / (third - second)).toBeCloseTo(2, 5);
   });
 });

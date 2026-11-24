@@ -312,3 +312,58 @@ it("reads a year with no row as the label draws it, and a gap in the module's ow
     "Debt maturing by period, US$m: FY2026 500, FY2027 no row in the schedule, FY2028 not calculated.",
   );
 });
+
+// Round 2 review: N5, N6, N11.
+
+it("draws a wall cell with no figure through the reader rule, on the mark and in the reading", () => {
+  const { wall } = wallOf([
+    ["FY2026", "500", "US$m", ""],
+    ["FY2027", "see notes_2024.pdf page 88", "US$m", ""],
+  ]);
+  expect(wall).not.toHaveTextContent(/notes_2024|page 88/);
+  expect(within(wall).getByRole("img").getAttribute("aria-label")).toBe(
+    "Debt maturing by period, US$m: FY2026 500, FY2027 no figure.",
+  );
+  expect(within(wall).getByText("No figure", { selector: "text" })).toBeInTheDocument();
+  expect(within(wall).getByRole("link", { name: "Read the reason in Evidence" })).toBeVisible();
+});
+
+it("draws wall and stack labels, and basis notes, through the reader rule", () => {
+  const { wall } = wallOf(
+    [
+      [
+        "FY2026 (credit_agreement.pdf page 3)",
+        "500",
+        "US$m",
+        "Unaudited; see notes_2024.pdf page 9",
+      ],
+      ["FY2027", "300", "US$m", ""],
+    ],
+    [
+      ["Term loan (credit_agreement.pdf page 3)", "1", "Yes", "1,200", "2.4", "US$m", ""],
+      ["Senior notes", "2", "No", "800", "4.0", "US$m", ""],
+    ],
+  );
+  expect(wall).not.toHaveTextContent(/credit_agreement|notes_2024|page 3|page 9/);
+  expect(within(wall).getByText("FY2026")).toBeInTheDocument();
+  // A dated label stays on the year axis once its citation is set aside.
+  expect(wall.querySelector("[data-axis-break]")).toBeNull();
+  expect(within(wall).getByRole("link", { name: "Read the reason in Evidence" })).toBeVisible();
+  const tile = screen.getByRole("region", { name: "Capital structure by rank" });
+  expect(tile).not.toHaveTextContent(/credit_agreement|page 3/);
+  expect(within(tile).getByText("Term loan")).toBeVisible();
+});
+
+it("draws a stated gap in the stack's cumulative leverage with its reason", () => {
+  wallOf(
+    [["FY2026", "500", "US$m", ""]],
+    [
+      ["Term loan", "1", "Yes", "1,200", "Not calculated: no EBITDA for the year", "US$m", ""],
+      ["Senior notes", "2", "No", "800", "4.0", "US$m", ""],
+    ],
+  );
+  const tile = screen.getByRole("region", { name: "Capital structure by rank" });
+  expect(
+    within(tile).getByText("Secured · Cumulative leverage not calculated: no EBITDA for the year"),
+  ).toBeVisible();
+});

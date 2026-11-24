@@ -159,41 +159,15 @@ const downside = entry(
   ],
 );
 
-const cx = (element: Element | null) => Number(element?.getAttribute("cx"));
-
-it("draws each case's leverage as a dumbbell from the control case, with cover beside it", () => {
+// Round 2, N1: the dumbbell against a covenant limit matched by name is withdrawn. The legal
+// module's "Net leverage" (5.0, current 4.2x) and the downside module's "Net leverage (x)"
+// (control 1.25x) are different definitions; a covenant level is drawn only on the covenant tile.
+it("draws no covenant limit and makes no covenant claim on the downside tile", () => {
   render(<StressRow {...rowProps([downside, covenants("Net leverage")])} />);
   const tile = screen.getByRole("region", { name: "Downside scenarios" });
-  const control = tile.querySelector('[data-dot="Control"]');
-  const shock = tile.querySelector('[data-dot="Cost shock"]');
-  const limit = tile.querySelector("[data-limit]");
-  expect((cx(shock) - cx(control)) / (Number(limit?.getAttribute("x1")) - cx(control))).toBeCloseTo(
-    (2.5 - 1.25) / (5.0 - 1.25),
-    6,
-  );
-  expect(tile.querySelectorAll("[data-dumbbell]")).toHaveLength(1);
-  expect(tile.querySelector('[data-dot="Cost and rate shock"]')).toBeNull();
-  expect(within(tile).getByText("Not calculated")).toBeInTheDocument();
-  for (const value of ["1.25", "2.50", "3.10", "2.00", "1.40"])
-    expect(within(tile).getByText(value)).toBeInTheDocument();
-  expect(within(tile).getByText("Covenant limit 5.0x")).toBeInTheDocument();
-  expect(within(tile).getByRole("img").getAttribute("aria-label")).toBe(
-    "Downside scenarios. Control: Net leverage (x) 1.25, All-in cover (x) 3.10. Cost shock: Net leverage (x) 2.50, All-in cover (x) 2.00. Cost and rate shock: Net leverage (x) not calculated, All-in cover (x) 1.40. Covenant limit 5.0x.",
-  );
-});
-
-it("draws no limit where the covenant table states no leverage threshold in the same measure and unit", () => {
-  for (const covenant of [covenants("Net Leverage (CFR)"), covenants("Net leverage", "%")]) {
-    render(<StressRow {...rowProps([downside, covenant])} />);
-    const tile = screen.getByRole("region", { name: "Downside scenarios" });
-    expect(tile.querySelector("[data-limit]")).toBeNull();
-    expect(within(tile).queryByText(/Covenant limit/)).toBeNull();
-    cleanup();
-  }
-  render(<StressRow {...rowProps([downside])} />);
-  expect(
-    screen.getByRole("region", { name: "Downside scenarios" }).querySelector("[data-limit]"),
-  ).toBeNull();
+  expect(tile.querySelector("[data-limit]")).toBeNull();
+  expect(tile).not.toHaveTextContent(/covenant limit|against the covenant/i);
+  expect(within(tile).getByRole("img").getAttribute("aria-label")).not.toMatch(/covenant/i);
 });
 
 const SHA = (digit: string) => digit.repeat(64);

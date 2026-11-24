@@ -174,20 +174,19 @@ it("draws the blocked module's own reason in place of the headroom figure", () =
   expect(within(tile).queryByRole("img")).toBeNull();
 });
 
-// Rewritten for the dumbbell layout (review part 2, P2-7): the bars-from-zero panels it pinned
-// are gone; its behaviour (each case placed by its figure, a gap where a case has none, the gap's
-// reason and each case's assumptions) is kept. The proportions are in rowsDesign.test.tsx.
-it("places each case's leverage by its figure, and draws a gap where a case has no figure", () => {
+// Restored (round 2, N2): the per-measure small multiples are back, so the base's own test is.
+it("draws each stressed metric's bars from zero in proportion, and a gap where a case has no figure", () => {
   render(<StressRow {...rowProps([downside])} />);
   const tile = screen.getByRole("region", { name: "Downside scenarios" });
-  const control = x(tile.querySelector('[data-dot="Control"]'), "cx");
-  const shock = x(tile.querySelector('[data-dot="Cost shock"]'), "cx");
-  expect(shock).toBeGreaterThan(control);
-  expect(tile.querySelectorAll("[data-dumbbell]")).toHaveLength(1);
-  expect(tile.querySelector('[data-dot="Cost and rate shock"]')).toBeNull();
-  expect(tile.querySelectorAll("[data-gap]")).toHaveLength(1);
-  for (const value of ["3.10", "2.00", "1.40", "1.25", "1.30"])
-    expect(within(tile).getByText(value)).toBeInTheDocument();
+  const cover = tile.querySelector('[data-panel="All-in cover (x)"]');
+  const widths = ["3.10", "2.00", "1.40"].map((text) =>
+    x(cover?.querySelector(`[data-bar="${text}"]`) ?? null, "width"),
+  );
+  expect((widths[1] ?? 0) / (widths[0] ?? 1)).toBeCloseTo(2.0 / 3.1, 6);
+  expect((widths[2] ?? 0) / (widths[0] ?? 1)).toBeCloseTo(1.4 / 3.1, 6);
+  const leverage = tile.querySelector('[data-panel="Net leverage (x)"]');
+  expect(leverage?.querySelectorAll("[data-bar]")).toHaveLength(2);
+  expect(leverage?.querySelectorAll("[data-gap]")).toHaveLength(1);
   expect(
     within(tile).getByText("Cost and rate shock, Net leverage (x): net debt is missing."),
   ).toBeVisible();
@@ -401,4 +400,206 @@ it("draws no headline figure when the model marks no case as the base case", () 
   expect(within(tile).queryByText(/by FY2027E/)).toBeNull();
   expect(within(tile).getByText("The model marks no case as the base case.")).toBeVisible();
   expect(within(tile).getByText("Management case")).toBeVisible();
+});
+
+// Round 2 review: N2, N10, N5, N6.
+
+const downsideTile = () => screen.getByRole("region", { name: "Downside scenarios" });
+const panelNames = () =>
+  [...downsideTile().querySelectorAll("[data-panel]")].map((panel) =>
+    panel.getAttribute("data-panel"),
+  );
+
+it("draws every measure the handoff states, in its order and as written, each on its own scale", () => {
+  render(
+    <StressRow
+      {...rowProps([
+        downsideWith([
+          ["Stressed FCF (USD millions)", "10.00", "0.00", "-5.1250 (−USD 5.13 million)", "F"],
+          ["Covenant cover headroom (x)", "0.9", "0.5", "0.2", "F"],
+          ["Interest cover (x)", "3.1", "2.0", "1.4", "F"],
+          ["Net debt / EBITDA (x)", "4.0", "4.5", "5.0", "F"],
+          ["EBITDA / cash interest (x)", "3.0", "2.5", "2.0", "F"],
+        ]),
+      ])}
+    />,
+  );
+  expect(panelNames()).toEqual([
+    "Stressed FCF (USD millions)",
+    "Covenant cover headroom (x)",
+    "Interest cover (x)",
+    "Net debt / EBITDA (x)",
+    "EBITDA / cash interest (x)",
+  ]);
+  expect(downsideTile()).not.toHaveTextContent(/states no stressed/);
+  expect(within(downsideTile()).getByText("-5.1250 (−USD 5.13 million)")).toBeInTheDocument();
+  // Each panel on its own scale: the largest figure of each spans the same width.
+  const widest = (name: string, text: string) =>
+    x(downsideTile().querySelector(`[data-panel="${name}"] [data-bar="${text}"]`) ?? null, "width");
+  expect(widest("Net debt / EBITDA (x)", "5.0")).toBeCloseTo(
+    widest("Interest cover (x)", "3.1"),
+    6,
+  );
+});
+
+it("draws a measure the module could not calculate, with its reasons, beside the one it did", () => {
+  render(
+    <StressRow
+      {...rowProps([
+        downsideWith([
+          [
+            "Net leverage (x)",
+            "Not calculated: net debt is missing",
+            "Not calculated: net debt is missing",
+            "Not calculated: net debt is missing",
+            "F",
+          ],
+          ["Net leverage pro forma (x)", "1.2", "1.4", "1.9", "F"],
+        ]),
+      ])}
+    />,
+  );
+  expect(panelNames()).toEqual(["Net leverage (x)", "Net leverage pro forma (x)"]);
+  expect(
+    within(downsideTile()).getByText("Control, Net leverage (x): net debt is missing."),
+  ).toBeVisible();
+  expect(
+    downsideTile().querySelectorAll('[data-panel="Net leverage (x)"] [data-gap]'),
+  ).toHaveLength(3);
+});
+
+function scenariosOf(rows: string[][]) {
+  return entry(
+    "CP-2A",
+    [],
+    [
+      section(
+        "T2DS.1 Scenarios",
+        95,
+        table(
+          96,
+          [
+            "Scenario ID",
+            "Name",
+            "EBITDA decline s",
+            "Cash-interest increase k",
+            "Anchor",
+            "What the assumption leaves out",
+            "Category",
+            "Confidence",
+          ],
+          rows,
+        ),
+      ),
+      section(
+        "T2DS.4 Stressed flows and metrics",
+        105,
+        table(
+          106,
+          ["Metric", "s00", "s01", "s02", "Source"],
+          [["Net leverage (x)", "1.2", "1.4", "1.9", "F"]],
+        ),
+      ),
+    ],
+  );
+}
+
+it("names no control when two cases state no shock, and calls the one unshocked case what it is", () => {
+  render(
+    <StressRow
+      {...rowProps([
+        scenariosOf([
+          ["s00", "As reported", "0", "0", "", "", "", ""],
+          ["s01", "Flat", "0", "0", "", "", "", ""],
+          ["s02", "Cost shock", "0.1 (10%)", "0", "", "", "", ""],
+        ]),
+      ])}
+    />,
+  );
+  expect(downsideTile()).not.toHaveTextContent(/control|no shock applied/i);
+  expect(within(downsideTile()).getByText("As reported")).toBeInTheDocument();
+  cleanup();
+  render(
+    <StressRow
+      {...rowProps([
+        scenariosOf([
+          ["s00", "As reported", "0", "0", "", "", "", ""],
+          ["s01", "Cost shock", "0.1 (10%)", "0", "", "", "", ""],
+          ["s02", "Rate shock", "0", "0.05 (5%)", "", "", "", ""],
+        ]),
+      ])}
+    />,
+  );
+  expect(
+    within(downsideTile()).getByText("As reported: the case with no shock applied."),
+  ).toBeVisible();
+  expect(downsideTile()).not.toHaveTextContent(/control/i);
+});
+
+it("never draws a scenario id as a case name, and says the module named none", () => {
+  const unnamed = entry(
+    "CP-2A",
+    [],
+    [
+      section(
+        "T2DS.4 Stressed flows and metrics",
+        105,
+        table(106, ["Metric", "s00", "s01", "Source"], [["Net leverage (x)", "1.2", "1.4", "F"]]),
+      ),
+    ],
+  );
+  render(<StressRow {...rowProps([unnamed])} />);
+  const tile = downsideTile();
+  expect(tile).not.toHaveTextContent(/s00|s01/);
+  expect(within(tile).getByText("Case 1")).toBeInTheDocument();
+  expect(within(tile).getByText("Case 2")).toBeInTheDocument();
+  expect(
+    within(tile).getByText(
+      "The module names none of these cases; they are numbered here in the handoff's order.",
+    ),
+  ).toBeVisible();
+});
+
+it("reads a figure with its unit, and draws a cell with no figure through the reader rule", () => {
+  render(
+    <StressRow
+      {...rowProps([
+        downsideWith([
+          ["Net leverage (x)", "1.25", "7.5x", "1.40", "F"],
+          ["All-in cover (x)", "3.10", "n.m. per notes_2024.pdf page 88", "1.40", "F"],
+        ]),
+      ])}
+    />,
+  );
+  const tile = downsideTile();
+  expect(tile.querySelector('[data-panel="Net leverage (x)"] [data-bar="7.5x"]')).not.toBeNull();
+  expect(tile).not.toHaveTextContent(/notes_2024|No value in the handoff/);
+  expect(within(tile).getByRole("img").getAttribute("aria-label")).not.toMatch(/notes_2024/);
+  expect(within(tile).getByRole("link", { name: "Read the reason in Evidence" })).toBeVisible();
+});
+
+it("draws every covenant cell and label through the reader rule", () => {
+  const covenants = covenantsOf([
+    ["Net leverage [E3]", "5.0", "4.2", "0.8x (CP-4-CALC-01)", "Passes at or below", "x", ""],
+    [
+      "Interest cover",
+      "2.0",
+      "n.m. per notes_2024.pdf page 88",
+      "",
+      "Passes at or above per credit_agreement.pdf page 88",
+      "x",
+      "Unaudited; see notes_2024.pdf page 9",
+    ],
+  ]);
+  render(<StressRow {...rowProps([covenants])} />);
+  const tile = headroomTile();
+  expect(tile).not.toHaveTextContent(/\[E3\]|CP-4-CALC-01|notes_2024|credit_agreement|page 88/);
+  expect(within(tile).getByText("0.8x")).toBeVisible();
+  expect(within(tile).getByText("headroom, Net leverage")).toBeVisible();
+  const [cover] = within(tile).getAllByRole("listitem");
+  expect(cover).toHaveTextContent("No figure");
+  expect(cover).not.toHaveTextContent("No value in the handoff");
+  expect(within(tile).getAllByRole("link", { name: "Read the reason in Evidence" })).toHaveLength(
+    3,
+  );
 });
