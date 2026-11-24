@@ -338,14 +338,14 @@ describe("report wayfinding", () => {
     ]);
   });
 
-  it("marks Overview as the current tab on the calendar", async () => {
+  it("marks Calendar as the current section on the calendar", async () => {
     useSnapshot();
     open("#calendar");
     const nav = await screen.findByRole("navigation", { name: "Report sections" });
     const current = within(nav)
       .getAllByRole("link")
       .filter((link) => link.getAttribute("aria-current") === "page");
-    expect(current.map((link) => link.textContent)).toEqual(["Overview"]);
+    expect(current.map((link) => link.textContent)).toEqual(["Calendar"]);
   });
 
   it("keeps the reader on Forecast when the skip link is activated", async () => {
@@ -367,12 +367,15 @@ describe("report wayfinding", () => {
     for (const link of links) expect(link).toHaveClass("max-[480px]:min-h-11");
   });
 
-  it("offers the History tab and no Report history link", async () => {
+  it("offers no History segment and no Report history link, and reaches the runs from the issuer crumb", async () => {
     useSnapshot();
     open("");
     const nav = await screen.findByRole("navigation", { name: "Report sections" });
-    expect(within(nav).getByRole("link", { name: "History" })).toBeInTheDocument();
+    expect(within(nav).queryByRole("link", { name: "History" })).toBeNull();
     expect(screen.queryByRole("link", { name: "Report history" })).toBeNull();
+    const crumbs = screen.getByRole("navigation", { name: "Breadcrumb" });
+    const issuer = within(crumbs).getAllByRole("link").at(-1);
+    expect(issuer).toHaveAttribute("href", "#history");
   });
 
   it("titles the document by page and issuer, and restores it on unmount", async () => {

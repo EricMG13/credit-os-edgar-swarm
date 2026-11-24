@@ -145,8 +145,15 @@ describe("connected library and report design", () => {
     cleanup();
     window.history.replaceState(null, "", "/report/northbridge-2026");
     render(<ConnectedApp path="/report/northbridge-2026" mode="synthetic" />);
-    expect(await screen.findByText("Synthetic test")).toBeInTheDocument();
-    expect(screen.getByText("Finished")).toBeInTheDocument();
+    const header = await screen.findByRole("region", { name: "Northbridge" }, { timeout: 5000 });
+    expect(within(header).getByText("Synthetic test")).toBeInTheDocument();
+    // The header carries no run-state chip; each run's "Finished" state is on its row in Runs.
+    expect(within(header).queryByText("Finished")).toBeNull();
+    cleanup();
+    window.history.replaceState(null, "", "/report/northbridge-2026#history");
+    render(<ConnectedApp path="/report/northbridge-2026" mode="synthetic" />);
+    const runs = await screen.findByRole("region", { name: "Runs of Northbridge" });
+    expect(within(runs).getAllByText("Finished")).toHaveLength(2);
   });
 
   it("lays the metric tiles out in an auto-fit grid and keeps each value on one line", async () => {
@@ -535,62 +542,69 @@ describe("the overview carries every module's bottom line and the run's limitati
     useSnapshot(snapshot);
     await showOverview();
     const lines = await screen.findByRole("region", { name: "Bottom line by module" });
-    expect(within(lines).getByRole("link", { name: "Liquidity" })).toHaveAttribute(
+    const bottomLines = within(lines).getByRole("list", { name: "Bottom lines" });
+    expect(within(lines).getByRole("link", { name: /^Liquidity/ })).toHaveAttribute(
       "href",
       "#modules/CP-2D",
     );
-    expect(within(lines).getByText("Not assessable")).toBeVisible();
-    expect(within(lines).getByText(/Leverage is high; Liquidity covers two years\./)).toBeVisible();
-    // CP-3 wrote no bottom line: a gap. CP-4 wrote one that cites a file: a link, not a gap.
-    expect(within(lines).getAllByText("Not established for this run")).toHaveLength(1);
+    expect(within(lines).getAllByText("Not assessable").length).toBeGreaterThan(0);
+    expect(within(bottomLines).getByText(/no liquidity schedule was supplied/)).toBeVisible();
     expect(
-      within(lines).getByRole("link", { name: "Read this bottom line in Evidence" }),
+      within(bottomLines).getByText(/Leverage is high; Liquidity covers two years\./),
+    ).toBeVisible();
+    // CP-3 wrote no bottom line: a gap. CP-4 wrote one that cites a file: a link, not a gap.
+    expect(within(bottomLines).getAllByText(/handoff has no bottom line/)).toHaveLength(1);
+    expect(
+      within(bottomLines).getByRole("link", { name: "Read this bottom line in Evidence" }),
     ).toHaveAttribute(
       "href",
       expect.stringMatching(/^\/report\/northbridge-2026#evidence\/.*-11$/),
     );
-    // Stages are list items too; a module is an item of a stage's own list.
-    expect(
-      within(lines)
-        .getAllByRole("listitem")
-        .filter((li) => li.parentElement?.tagName === "UL"),
-    ).toHaveLength(4);
+    // One line per other module; the lead's own bottom line is the call's, not repeated here.
+    expect(within(bottomLines).getAllByRole("listitem")).toHaveLength(4);
     expect(lines.textContent).not.toMatch(/CP-/);
-    expect(within(lines).queryByText(/Credit is stable/)).toBeNull();
+    expect(within(bottomLines).queryByText(/Credit is stable/)).toBeNull();
 
-    const limits = screen.getByRole("region", { name: "Limitations" });
-    expect(within(limits).getByText("Lead limitation.")).not.toBeVisible();
-    for (const summary of limits.querySelectorAll("summary")) fireEvent.click(summary);
+    const limits = screen.getByRole("region", { name: "What this run could not do" });
     const view = buildReportView(snapshot, "north", run);
     expect(runLimitations(view, run)).toHaveLength(3);
-    expect(within(limits).getAllByRole("listitem")).toHaveLength(runLimitations(view, run).length);
-    expect(within(limits).getAllByRole("button", { name: /^Show sources for/ })).toHaveLength(
-      within(limits).getAllByRole("listitem").length,
-    );
+    // One recorded-limitation line per limitation, once; the blocked module is a well, not a line.
+    const wells = within(limits).getAllByRole("listitem");
+    const lineItems = wells.filter((item) => item.querySelector(":scope > p.reading-copy"));
+    expect(lineItems).toHaveLength(runLimitations(view, run).length);
     expect(within(limits).getByText("Cash is shown under Liquidity only.")).toBeVisible();
     expect(within(limits).getByText("Lead limitation.")).toBeVisible();
     expect(
       within(limits).getByRole("link", { name: "Read this limitation in Evidence" }),
     ).toBeVisible();
+    for (const line of lineItems)
+      expect(
+        within(line).getByRole("button", { name: /^Show sources for this limitation/ }),
+      ).toBeInTheDocument();
+    expect(within(limits).getByText("Not assessable")).toBeVisible();
     expect(within(limits).queryByText(/Blocked limitation/)).toBeNull();
     expect(limits.textContent).not.toMatch(/CP-/);
-    // The lead's own Limitations card is gone from the lead's passages.
-    expect(screen.getAllByRole("heading", { name: "Limitations" })).toHaveLength(1);
+    expect(screen.getAllByRole("heading", { name: "What this run could not do" })).toHaveLength(1);
   });
 
   it("says so when no module recorded a limitation, and omits the list of other modules for a lone lead", async () => {
     const { snapshot } = overviewSnapshot([["CP-2", "Credit is stable.", []]]);
     useSnapshot(snapshot);
     await showOverview();
-    const limits = await screen.findByRole("region", { name: "Limitations" });
+    const limits = await screen.findByRole("region", { name: "What this run could not do" });
     expect(
       within(limits).getByText(
         "No limitation is listed on this page for this run. Each module's page shows what it recorded.",
       ),
     ).toBeVisible();
     expect(within(limits).queryByRole("listitem")).toBeNull();
-    expect(screen.queryByRole("region", { name: "Bottom line by module" })).toBeNull();
-    expect(screen.getByText("Credit is stable.")).toBeVisible();
+    // The lone lead is the pipeline's one node and its bottom line is the call's, not a repeat.
+    const lines = screen.getByRole("region", { name: "Bottom line by module" });
+    expect(within(lines).queryByRole("list", { name: "Bottom lines" })).toBeNull();
+    expect(within(lines).queryByText("Credit is stable.")).toBeNull();
+    expect(
+      within(screen.getByRole("region", { name: "The call" })).getByText("Credit is stable."),
+    ).toBeVisible();
   });
 
   it("draws the summary's limitation for an earlier-format run, and not the empty sentence", async () => {
@@ -610,8 +624,11 @@ describe("the overview carries every module's bottom line and the run's limitati
     await showOverview();
     const lines = await screen.findByRole("region", { name: "Bottom line by module" });
     expect(within(lines).getByText("Leverage is high.")).toBeVisible();
-    const limits = screen.getByRole("region", { name: "Limitations" });
-    fireEvent.click(within(limits).getByText(/financial foundation \(1\)/iu));
+    const limits = screen.getByRole("region", { name: "What this run could not do" });
+    expect(within(limits).getByRole("link", { name: "Financial foundation" })).toHaveAttribute(
+      "href",
+      "#modules/CP-1",
+    );
     expect(within(limits).getByText("The 2025 accounts are unaudited.")).toBeVisible();
     expect(limits.textContent).not.toMatch(/No limitation is listed/);
   });

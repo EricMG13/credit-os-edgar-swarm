@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, within } from "@testing-library/react";
 import { afterEach, expect, it, vi } from "vitest";
 import { ReportReader } from "./ReportLibrary";
 import { buildReportView } from "./reportView";
@@ -82,6 +82,14 @@ it("labels the published earnings lead and renders its conclusion once", async (
   const { snapshot } = fixture();
   vi.stubGlobal("fetch", vi.fn().mockResolvedValue(Response.json(snapshot)));
   render(<ReportReader id="earnings" mode="synthetic" />);
-  expect(await screen.findByText("Earnings view")).toBeVisible();
+  const call = await screen.findByRole("region", { name: "The call" });
+  expect(
+    within(call).getByRole("heading", { level: 3, name: "The call · Earnings changes" }),
+  ).toBeVisible();
+  expect(within(call).getByRole("link", { name: "Earnings changes" })).toHaveAttribute(
+    "href",
+    "#modules/CP-1B",
+  );
   expect(screen.getAllByText("Published earnings conclusion.")).toHaveLength(1);
+  expect(within(call).getByText("Published earnings conclusion.")).toBeVisible();
 });
