@@ -27,9 +27,11 @@ engine is in [EricMG13/final-workflow](https://github.com/EricMG13/final-workflo
   gaps count `## Gaps` entries and `Not supplied:` cells (the retained TDG CP-1 is no longer plain
   "Delivered"); absent modules are read against the run's recorded `requested_modules`, a new
   field of the published run; period order reuses the reader's `periodOrder`.
+- Browser check repeated after the review fixes, Chromium at 1500 px, same five-issuer synthetic
+  publication with recorded plans: Modules (gaps and "Not asked for in this run" drawn), Rank,
+  Find by issuer name, Trend and an unavailable sector from the link drew with no console error.
 - Not done: confidence-review and rewrite-tournament (their definitions are not in this
-  repository or session), the full web and Python suites, a browser check after the review
-  fixes, and a check against the design system's component rules; the page uses native selects,
+  repository or session), the full web and Python suites, and a check against the design system's component rules; the page uses native selects,
   checkboxes and tables as the Library list does.
 
 ## 2026-11-24 — Parallel CP-OS review fixes for PR #71
