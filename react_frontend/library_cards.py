@@ -37,6 +37,19 @@ _NAMED_GAP = re.compile(
 _QUANTITY = re.compile(r"(?:^|[,;:=]|\b(?:is|equals?))\s*\d+(?:\.\d+)?x\s*$", re.IGNORECASE)
 
 
+def _bottom_line(sections: list[dict[str, Any]]) -> dict[str, Any] | None:
+    """The first text block in Findings > Bottom line, without altering its Basis line.
+    Coverage reads it; the Library card's lead is chosen by ``_candidate``."""
+    parent = ""
+    for section in sections:
+        level = section["level"]
+        if level <= 2:
+            parent = section["heading"] if level == 2 else ""
+        if parent == "Findings" and level == 3 and section["heading"] == "Bottom line":
+            return next((block for block in section["blocks"] if block["type"] == "text"), None)
+    return None
+
+
 def _finding_paragraphs(sections: list[dict[str, Any]], heading: str) -> Iterator[dict[str, Any]]:
     """The text blocks under a designated Findings heading, in their published order."""
     parent = ""
