@@ -126,7 +126,12 @@ it("draws the module's figures directly under the header, before the findings an
 
 it("draws the Limitations gap last when the module wrote none", () => {
   renderModule([passage("Bottom line", 4), passage("Key findings", 6), passage(CONTRARY, 8)]);
-  expect(drawn()).toEqual(["Credit analysis", "Key findings", CONTRARY, "Limitations of this module"]);
+  expect(drawn()).toEqual([
+    "Credit analysis",
+    "Key findings",
+    CONTRARY,
+    "Limitations of this module",
+  ]);
   expect(screen.getByRole("region", { name: "Limitations of this module" })).toHaveTextContent(
     "Not established for this run",
   );

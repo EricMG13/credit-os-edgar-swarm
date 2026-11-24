@@ -2172,6 +2172,8 @@ describe("connected activity and reports", () => {
       "#modules",
     );
     window.location.hash = "modules/CP-2";
+    // The module's table is in its records region, closed until the reader opens it.
+    fireEvent.click(await screen.findByRole("button", { name: "Show records" }));
     expect(await screen.findByRole("cell", { name: "0" })).toBeInTheDocument();
     expect(screen.queryByRole("columnheader", { name: "Source" })).toBeNull();
     expect(screen.queryByText("Downstream-only instructions.")).toBeNull();

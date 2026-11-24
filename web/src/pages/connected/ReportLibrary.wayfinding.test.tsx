@@ -26,7 +26,7 @@ const EVIDENCE = {
   record: { hashes: [], instructions: [], calls: [], cap: null },
 };
 
-function snapshot(name = "Northbridge", withFigures = false): Snapshot {
+function snapshot(name = "Northbridge"): Snapshot {
   const id = "northbridge-2026/outputs/CP-1.md";
   const second = "northbridge-2026/outputs/CP-2.md";
   const text = (line: number) => ({
@@ -77,7 +77,6 @@ function snapshot(name = "Northbridge", withFigures = false): Snapshot {
           href: id,
           sha256: "digest",
           state: { established: true, declared: null },
-          ...(withFigures ? { charts: [{ title: "Leverage", table: 99, kind: "periods" }] } : {}),
         },
         [second]: {
           id: second,
@@ -107,10 +106,10 @@ function snapshot(name = "Northbridge", withFigures = false): Snapshot {
   } as unknown as Snapshot;
 }
 
-function useSnapshot(name?: string, withFigures?: boolean) {
+function useSnapshot(name?: string) {
   vi.stubGlobal(
     "fetch",
-    vi.fn(() => Promise.resolve(Response.json(snapshot(name, withFigures)))),
+    vi.fn(() => Promise.resolve(Response.json(snapshot(name)))),
   );
 }
 
@@ -167,14 +166,15 @@ describe("module wayfinding", () => {
     useSnapshot();
     open("#modules/CP-1");
     const nav = await modulesNav();
-    expect(within(nav).getAllByRole("heading", { level: 3 }).map((node) => node.textContent)).toEqual(
-      ["Financials", "Credit"],
-    );
+    expect(
+      within(nav)
+        .getAllByRole("heading", { level: 3 })
+        .map((node) => node.textContent),
+    ).toEqual(["Financials", "Credit"]);
     expect(current(nav)).toEqual(["Financial foundation, Delivered"]);
-    expect(within(nav).getByRole("link", { name: "Financial foundation, Delivered" })).toHaveAttribute(
-      "href",
-      "#modules/CP-1",
-    );
+    expect(
+      within(nav).getByRole("link", { name: "Financial foundation, Delivered" }),
+    ).toHaveAttribute("href", "#modules/CP-1");
     expect(within(nav).getByRole("link", { name: /^Fundamental credit, / })).toHaveAttribute(
       "href",
       "#modules/CP-2",
@@ -199,7 +199,9 @@ describe("module wayfinding", () => {
     await waitFor(() => {
       expect(window.location.hash).toBe("#modules/CP-2");
     });
-    expect(await screen.findByRole("heading", { level: 2, name: "Fundamental credit" })).toBeVisible();
+    expect(
+      await screen.findByRole("heading", { level: 2, name: "Fundamental credit" }),
+    ).toBeVisible();
     expect(current(await modulesNav())).toEqual([expect.stringMatching(/^Fundamental credit, /)]);
   });
 
