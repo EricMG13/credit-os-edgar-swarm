@@ -156,7 +156,7 @@ function PipRow({ group, hatch }: { group: Group; hatch: string }) {
         </span>
       </div>
       <svg
-        viewBox={`0 0 ${String(PER_LINE * PIP)} ${String(lines * PIP)}`}
+        viewBox={`0 0 ${String(Math.min(group.pips.length, PER_LINE) * PIP)} ${String(lines * PIP)}`}
         width={Math.min(group.pips.length, PER_LINE) * PIP}
         height={lines * PIP}
         role="img"

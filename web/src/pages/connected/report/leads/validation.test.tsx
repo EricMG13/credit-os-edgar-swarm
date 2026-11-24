@@ -336,6 +336,8 @@ describe("ClearanceLead", () => {
       expect(Number(svg.getAttribute("width"))).toBeGreaterThanOrEqual(12);
       expect(Number(svg.getAttribute("height"))).toBeGreaterThanOrEqual(12);
       expect(svg.getAttribute("class")).toContain("flex-none");
+      // The viewBox is as wide as the svg, so a pip is drawn at its own size and not squeezed.
+      expect(svg.getAttribute("viewBox")?.split(" ")[2]).toBe(svg.getAttribute("width"));
     }
     // Two Material pips, each 22 px of the row: the svg is as wide as its pips.
     expect(container.querySelector('svg[data-group="Material"]')?.getAttribute("width")).toBe("44");
