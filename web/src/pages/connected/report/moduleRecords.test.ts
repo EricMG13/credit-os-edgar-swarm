@@ -143,6 +143,7 @@ describe("amountColumns", () => {
         ["Period", "Cash"],
         [
           ["FY2024", "275"],
+          ["FY2025", "100"],
           ["FY2023", "Not supplied: synthetic"],
           ["FY2022", ""],
         ],
@@ -151,6 +152,33 @@ describe("amountColumns", () => {
     expect(columns.get(1)?.share("Not supplied: synthetic")).toBeNull();
     expect(columns.get(1)?.share("")).toBeNull();
     expect(columns.get(1)?.share("275")).toBe(1);
+  });
+
+  it("bars only a named value with two figures or more, never a generic Value column", () => {
+    expect(
+      amountColumns(
+        table(
+          1,
+          ["Item", "Value"],
+          [
+            ["A", "1"],
+            ["B", "2"],
+          ],
+        ),
+      ).size,
+    ).toBe(0);
+    expect(amountColumns(table(1, ["Period", "Cash"], [["FY2024", "275"]])).size).toBe(0);
+    const carrying = amountColumns(
+      table(
+        1,
+        ["Item", "Carrying Value"],
+        [
+          ["A", "1"],
+          ["B", "2"],
+        ],
+      ),
+    );
+    expect(carrying.get(1)?.share("1")).toBe(0.5);
   });
 
   it("draws a zero as a figure with no length, and no bars when the largest value is zero", () => {

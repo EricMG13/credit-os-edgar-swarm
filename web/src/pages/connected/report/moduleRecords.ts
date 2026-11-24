@@ -110,7 +110,7 @@ export function moduleRecords(entry: OutputEntry) {
 const GAP_CELL = /^(?:not\b|n\/?a\b|withheld\b|none\b|—$|-$)/i;
 const NUMBER = /^(\()?(-)?(\d{1,3}(?:,\d{3})+|\d+)(\.\d+)?(\))?$/;
 const AMOUNT_HEADER =
-  /principal|amount|debt|cash|balance|commitment|drawn|maturing|liquidity|outstanding|value|revenue|sales|ebitda|flow|capex|proceeds/i;
+  /principal|amount|debt|cash|balance|commitment|drawn|maturing|liquidity|outstanding|(?:carrying|market|face|fair|book) value|revenue|sales|ebitda|flow|capex|proceeds/i;
 const NOT_AMOUNT =
   /\/|ratio|bps|%|rate|spread|margin|coupon|floor|multiple|cover|leverage|date|year|period|unit|basis|source|tier|status/i;
 const PERIOD_HEADER = /^(?:FY|H[12] |Q[1-4] |LTM |20\d\d)/;
@@ -138,7 +138,8 @@ function amountColumn(cells: string[]): AmountColumn | null {
     const value = amount(cell);
     return value === null ? [] : [value];
   });
-  if (!values.length || cells.some((cell) => amount(cell) === null && !isGap(cell))) return null;
+  // One figure has nothing to be compared with: it draws no bar.
+  if (values.length < 2 || cells.some((cell) => amount(cell) === null && !isGap(cell))) return null;
   const largest = Math.max(...values.map(Math.abs));
   if (largest === 0) return null;
   return {

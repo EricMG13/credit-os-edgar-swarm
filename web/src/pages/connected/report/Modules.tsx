@@ -1,16 +1,15 @@
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { Button } from "@/components/base/buttons/button";
-import { StatusBadge } from "@/components/status/StatusBadge";
-import { ModuleNav, type NavSection } from "@/pages/library/parts/ModuleNav";
-import { card, field, heading } from "../layout";
+import { StatsStrip, type Stat } from "@/components/kit/StatsStrip";
+import { StageNav } from "@/pages/library/parts/ModuleNav";
+import { RunContext } from "@/pages/library/parts/RunContext";
+import { TraceControl } from "@/pages/library/parts/TraceControl";
+import { TraceDrawer } from "@/pages/library/parts/TraceDrawer";
+import type { Trace } from "@/pages/library/slice";
+import { card, heading } from "../layout";
+import { sectionTraces, traceForConfidence, traceForLine } from "../ReportContent";
 import {
-  RECORDS_ID,
-  ReportFindings,
-  drawingTitle,
-  findingBlocks,
-  recordSections,
-} from "../ReportContent";
-import {
+  evidenceHref,
   evidencePath,
   type OutputEntry,
   type PublishedRun,
@@ -20,222 +19,34 @@ import {
   foundationMetrics,
   moduleState,
   runMoneyUnit,
-  type MetricKey,
-  type buildReportView,
+  traceKey,
+  type ReportView,
 } from "../reportView";
-
-const TILE_KEYS: readonly MetricKey[] = ["netDebt", "principal", "interestCover"];
+import { changeText, tone } from "../signal";
 import { LegacyVisuals } from "../visuals";
-import { ModuleConfidence } from "./Confidence";
-import { MetricGrid } from "./MetricGrid";
-import { monitoringLabel } from "./ModuleTable";
-import { Downside, downsideView } from "./Downside";
 import { BreakPoints, breakPointView } from "./BreakPoints";
+import { ModuleConfidence } from "./Confidence";
+import { Downside, downsideView } from "./Downside";
+import { leadFor } from "./leads";
 import { MacroSensitivity, macroView } from "./MacroSensitivity";
+import { moduleFrame } from "./moduleFrame";
+import {
+  ModuleFindings,
+  ModuleHeader,
+  ModuleLimitations,
+  NextModule,
+  OtherSections,
+  chartGaps,
+  type FrameModule,
+} from "./ModuleFrame";
+import { ModuleRecords } from "./ModuleRecords";
 import { Securities, securityView } from "./Securities";
+import { byStage } from "./stages";
 
-function sectionIcon(heading: string): NavSection["icon"] {
-  if (heading === "Bottom line") return "bottom-line";
-  if (heading === "Key findings") return "findings";
-  if (heading.startsWith("Contrary evidence")) return "contrary";
-  return heading === "Limitations" ? "limitations" : "records";
-}
-
-function hasPublishedFigures(output: OutputEntry["output"]) {
-  return [output.charts, output.chartGaps, output.events, output.maps].some(
-    (records) => records?.length,
-  );
-}
-
-function navigatorSections(
-  entry: OutputEntry | undefined,
-  current: string,
-  hasLocalFigures: boolean,
-  figureTableLines: readonly number[],
-) {
-  if (!entry) return [];
-  const allSections = findingBlocks(entry.sections, entry, figureTableLines, true);
-  // A module that wrote no Key findings has its first table section listed under its own title.
-  const firstFinding =
-    allSections.find(({ heading }) => heading === "Key findings") ??
-    allSections.find(({ heading }) => sectionIcon(heading) === "records");
-  const sections = allSections.flatMap((item) => {
-    const { heading, line } = item;
-    const icon = sectionIcon(heading);
-    const watch = item.blocks.flatMap((block) =>
-      block.type === "table" ? (monitoringLabel(current, heading, block) ?? []) : [],
-    )[0];
-    const extra =
-      watch ??
-      (current === "CP-0" && heading === "Source-readiness summary" ? "Readiness by area" : null);
-    if (icon === "records" && item !== firstFinding && !extra) return [];
-    return [{ label: extra ?? drawingTitle(heading), key: `finding-${String(line)}`, icon }];
-  });
-  if (hasLocalFigures || hasPublishedFigures(entry.output)) {
-    // The page draws the figures after its prose passages, before Limitations.
-    const prose = new Set<NavSection["icon"]>(["bottom-line", "findings", "contrary"]);
-    const at = sections.map(({ icon }) => prose.has(icon)).lastIndexOf(true) + 1;
-    sections.splice(at, 0, {
-      label: "Charts and figures",
-      key: "module-figures",
-      icon: "records",
-    });
-  }
-  if (recordSections(entry.sections, entry).length)
-    sections.push({ label: "Statements and records", key: RECORDS_ID, icon: "records" });
-  return sections;
-}
-
-function Navigator({
-  view,
-  run,
-  current,
-  entry,
-  hasLocalFigures,
-  figureTableLines,
-}: {
-  view: ReturnType<typeof buildReportView>;
-  run: PublishedRun;
-  current: string;
-  entry?: OutputEntry;
-  hasLocalFigures: boolean;
-  figureTableLines: readonly number[];
-}) {
-  const sections = navigatorSections(entry, current, hasLocalFigures, figureTableLines);
-  const [active, setActive] = useState(sections[0]?.key ?? null);
-  const aside = useRef<HTMLElement>(null);
-  // A clicked entry stays until the reader's own scroll input, so the scroll it causes cannot undo it.
-  const pinned = useRef(false);
-  const sectionKeys = sections.map(({ key }) => key).join("\n");
-  useEffect(() => {
-    // Without IntersectionObserver the entry follows clicks only.
-    if (typeof IntersectionObserver === "undefined") return;
-    const keys = sectionKeys.split("\n");
-    const targets = keys.flatMap((key) => document.getElementById(key) ?? []);
-    if (!targets.length) return;
-    const inView = new Set<string>();
-    const root = aside.current?.closest("main") ?? null;
-    // One decision for the scroll listener and the observer, so they cannot disagree. A short last
-    // section never reaches the top band, so the bottom of a scrolling page selects it.
-    const choose = () => {
-      if (pinned.current) return;
-      const scrolls = root !== null && root.scrollHeight > root.clientHeight;
-      const atBottom = scrolls && root.scrollTop + root.clientHeight >= root.scrollHeight - 2;
-      // An entry that holds another entry in view is not the one being read: the deepest wins.
-      const live = targets.filter((target) => inView.has(target.id));
-      const deepest = live.find((a) => !live.some((b) => b !== a && a.contains(b)));
-      const next = atBottom ? keys.at(-1) : deepest?.id;
-      if (next) setActive(next);
-    };
-    // The scrolling region is the shell's `main`, so the top third is measured against it.
-    const spy = new IntersectionObserver(
-      (changes) => {
-        for (const { target, isIntersecting } of changes) {
-          if (isIntersecting) inView.add(target.id);
-          else inView.delete(target.id);
-        }
-        choose();
-      },
-      { root, rootMargin: "0px 0px -66% 0px" },
-    );
-    for (const target of targets) spy.observe(target);
-    const release = (event: Event) => {
-      const from = event.target as Node;
-      // Enter and Space on the navigator's own buttons press them; every other key may scroll.
-      if (event instanceof KeyboardEvent && (event.key === "Enter" || event.key === " ")) {
-        if (aside.current?.contains(from)) return;
-      }
-      // A press on the container itself is its scrollbar; one on a descendant is not.
-      if (event.type === "pointerdown" && from !== root) return;
-      pinned.current = false;
-    };
-    const inputs = ["wheel", "touchmove", "keydown", "pointerdown"];
-    for (const name of inputs) root?.addEventListener(name, release);
-    root?.addEventListener("scroll", choose);
-    return () => {
-      spy.disconnect();
-      for (const name of inputs) root?.removeEventListener(name, release);
-      root?.removeEventListener("scroll", choose);
-    };
-  }, [sectionKeys]);
-  const [mobileSection, setMobileSection] = useState("");
-  const moduleHref = (id: string) => `#modules/${encodeURIComponent(id)}`;
-  const sectionNavigate = (id: string) => {
-    const target = document.getElementById(id);
-    target?.focus();
-    target?.scrollIntoView({ block: "start" });
-    pinned.current = true;
-    setActive(id);
-  };
-  return (
-    <aside
-      ref={aside}
-      className="self-start rounded-xl border border-border-hairline bg-surface-card py-2 min-[1001px]:sticky min-[1001px]:top-4"
-    >
-      <div className="grid gap-2 px-3 pb-2 min-[1001px]:hidden">
-        <label className="grid gap-1 text-sm text-text-secondary">
-          Module
-          <select
-            aria-label="Module"
-            className={field}
-            value={current}
-            onChange={(event) => {
-              const href = moduleHref(event.currentTarget.value);
-              window.location.href = href;
-            }}
-          >
-            {view.modules.map((item) => (
-              <option key={item.id} value={item.id}>
-                {item.name} · {item.state}
-              </option>
-            ))}
-          </select>
-        </label>
-        {sections.length > 0 && (
-          <details>
-            <summary className="cursor-pointer py-2 text-sm font-medium text-action">
-              On this page
-            </summary>
-            <label className="grid gap-1 pt-1 text-sm text-text-secondary">
-              Jump to section
-              <select
-                aria-label="Jump to section"
-                className={field}
-                value={mobileSection}
-                onChange={(event) => {
-                  const id = event.currentTarget.value;
-                  setMobileSection("");
-                  if (id) sectionNavigate(id);
-                }}
-              >
-                <option value="">Choose a section</option>
-                {sections.map((section) => (
-                  <option key={section.key} value={section.key}>
-                    {section.label}
-                  </option>
-                ))}
-              </select>
-            </label>
-          </details>
-        )}
-      </div>
-      <ModuleNav
-        issuer={run.issuer}
-        run={run.folder}
-        current={current}
-        modules={view.modules}
-        sections={sections}
-        active={active}
-        hrefFor={moduleHref}
-        className="max-[1001px]:hidden"
-        onSection={sectionNavigate}
-      />
-    </aside>
-  );
-}
-
-type ReportView = ReturnType<typeof buildReportView>;
 type ModuleItem = ReportView["modules"][number];
+
+const CONFIDENCE_TRACE = "module-confidence";
+const moduleHref = (id: string) => `#modules/${encodeURIComponent(id)}`;
 
 function defaultOutput(outputs: OutputEntry[]) {
   return (
@@ -248,22 +59,203 @@ function moduleOutput(current: ModuleItem, output: string | undefined) {
   return /^(?:0|[1-9]\d*)$/.test(output) ? current.outputs[Number(output)] : undefined;
 }
 
+/** The module's own typed figures, drawn in the lead's place until a lead exists. */
 function moduleFigures(entry: OutputEntry, run: PublishedRun) {
   const downside = downsideView(entry);
   const breaks = breakPointView(entry);
   const macro = macroView(entry);
   const securities = securityView(entry, run.asOf);
-  const figureTableLines = [securities?.summaryLine, securities?.outcomes?.line].filter(
+  const tableLines = [securities?.summaryLine, securities?.outcomes?.line].filter(
     (line) => line !== undefined,
   );
-  return {
-    downside,
-    breaks,
-    macro,
-    securities,
-    tableLines: figureTableLines,
-    hasLocalFigures: Boolean(downside || breaks || macro || securities),
-  };
+  return { downside, breaks, macro, securities, tableLines };
+}
+
+function TypedFigures({
+  entry,
+  run,
+  view,
+  figures,
+}: {
+  entry: OutputEntry;
+  run: PublishedRun;
+  view: ReportView;
+  figures: ReturnType<typeof moduleFigures>;
+}) {
+  const { downside, breaks, macro, securities } = figures;
+  const href = (line: number) => evidencePath(run.folder, entry, line);
+  // Event lanes and relationship maps are the module's own drawings; chart descriptors are not.
+  const drawings = { ...entry.output, charts: [], chartGaps: [] };
+  const hasDrawings = [entry.output.events, entry.output.maps].some((items) => items?.length);
+  if (!downside && !breaks && !macro && !securities && !hasDrawings) return null;
+  return (
+    <div className="grid min-w-0 gap-4 lg:col-span-12">
+      {downside && <Downside data={downside} href={href} />}
+      {breaks && <BreakPoints data={breaks} href={href} />}
+      {macro && <MacroSensitivity data={macro} href={href} />}
+      {securities && (
+        <Securities data={securities} href={href} runUnit={runMoneyUnit(view.catalogue)} />
+      )}
+      {hasDrawings && (
+        <LegacyVisuals
+          output={drawings}
+          sections={entry.sections}
+          cards
+          headingLevel="h3"
+          evidenceHref={href}
+        />
+      )}
+    </div>
+  );
+}
+
+/** The CP-1 headline figures as a stats strip: values as written, the change against a year earlier. */
+function headlineStats(entry: OutputEntry, view: ReportView): Stat[] {
+  return foundationMetrics(entry, view.catalogue).map(({ key, metric, line }) => {
+    const change = metric.yearChange;
+    const direction = change ? tone(change.key, change.change) : "none";
+    return {
+      label: metric.label,
+      value: metric.value?.kind === "value" ? metric.value.text : null,
+      ...(metric.value?.kind === "gap" && { gap: metric.value.reason }),
+      ...(change && { prior: change.prior, delta: changeText(change.change, change.unit) }),
+      ...((direction === "better" || direction === "worse") && { tone: direction }),
+      mark: metric.note ? (
+        <span className="text-caption text-text-tertiary">{metric.note}</span>
+      ) : undefined,
+      trace: (
+        <TraceControl
+          trace={line === undefined ? null : traceKey(entry, line)}
+          label={`Show sources for ${metric.label}`}
+        />
+      ),
+      key,
+    };
+  });
+}
+
+function pageTraces(snapshot: Snapshot, entry: OutputEntry, index: number) {
+  const traces: Record<string, Trace> = sectionTraces(snapshot, entry, entry.sections);
+  const extra = [entry.output.summary?.line, ...chartGaps(entry).map(({ line }) => line)];
+  for (const line of extra) {
+    if (line === undefined) continue;
+    const trace = traceForLine(snapshot, entry, index, line);
+    if (trace) traces[traceKey(entry, line)] = trace;
+  }
+  const confidence = traceForConfidence(snapshot, entry);
+  if (confidence) traces[CONFIDENCE_TRACE] = confidence;
+  return traces;
+}
+
+function nextModule(view: ReportView, id: string): FrameModule | undefined {
+  const order = byStage(view.modules).flatMap(({ rows }) => rows);
+  return order[order.findIndex((item) => item.id === id) + 1];
+}
+
+function EmptyHandoff({ run, entry }: { run: PublishedRun; entry: OutputEntry }) {
+  return (
+    <p className="text-text-secondary lg:col-span-12">
+      {entry.output.parseError
+        ? "This handoff could not be read into sections."
+        : "This handoff has no findings in this report format."}{" "}
+      <Button href={evidencePath(run.folder, entry)} color="link-gray" size="sm">
+        Open Evidence
+      </Button>
+    </p>
+  );
+}
+
+function ModulePage({
+  snapshot,
+  run,
+  view,
+  current,
+  entry,
+}: {
+  snapshot: Snapshot;
+  run: PublishedRun;
+  view: ReportView;
+  current: ModuleItem;
+  entry: OutputEntry;
+}) {
+  const [open, setOpen] = useState<string | null>(null);
+  const index = view.entries.indexOf(entry);
+  const figures = moduleFigures(entry, run);
+  const frame = moduleFrame(entry, figures.tableLines);
+  const Lead = leadFor(current.id);
+  const traces = pageTraces(snapshot, entry, index);
+  const stats = headlineStats(entry, view);
+  const gaps = chartGaps(entry);
+  const module = { ...current, state: moduleState(entry) };
+  const empty = !frame.bottomLine && !frame.keyFindings && !frame.contrary && !frame.others.length;
+  const active = open === null ? undefined : traces[open];
+  return (
+    <RunContext.Provider value={{ traces, open: setOpen }}>
+      <div className="grid min-w-0 grid-cols-1 gap-4 lg:grid-cols-12">
+        <ModuleHeader
+          module={module}
+          entry={entry}
+          bottomLine={frame.bottomLine}
+          owed={frame.missing.includes("Bottom line")}
+          folder={run.folder}
+          unit={runMoneyUnit(view.catalogue)}
+          confidence={
+            <ModuleConfidence
+              confidence={entry.output.confidence}
+              trace={traces[CONFIDENCE_TRACE] ? CONFIDENCE_TRACE : null}
+            />
+          }
+        />
+        {empty && <EmptyHandoff run={run} entry={entry} />}
+        {stats.length > 0 && (
+          <div className="min-w-0 lg:col-span-12">
+            <StatsStrip label="Headline figures" stats={stats} />
+          </div>
+        )}
+        {Lead ? (
+          <div className="min-w-0 lg:col-span-12">
+            <Lead snapshot={snapshot} run={run} view={view} entry={entry} entryIndex={index} />
+          </div>
+        ) : (
+          <TypedFigures entry={entry} run={run} view={view} figures={figures} />
+        )}
+        <ModuleFindings
+          keyFindings={frame.keyFindings}
+          contrary={frame.contrary}
+          missing={frame.missing}
+          entry={entry}
+          folder={run.folder}
+        />
+        <OtherSections
+          sections={frame.others}
+          entry={entry}
+          folder={run.folder}
+          typedTables={!Lead}
+        />
+        <ModuleLimitations
+          section={frame.limitations}
+          owed={frame.missing.includes("Limitations")}
+          gaps={gaps}
+          entry={entry}
+          folder={run.folder}
+        />
+        <div className="min-w-0 lg:col-span-12">
+          <ModuleRecords run={run} entry={entry} />
+        </div>
+        <NextModule next={nextModule(view, current.id)} href={moduleHref} />
+      </div>
+      {active && (
+        <TraceDrawer
+          trace={active}
+          evidenceHref={evidenceHref(run.folder, active.evidenceItem)}
+          isOpen
+          onClose={() => {
+            setOpen(null);
+          }}
+        />
+      )}
+    </RunContext.Provider>
+  );
 }
 
 function SavedOutputs({ current, entry }: { current: ModuleItem; entry?: OutputEntry }) {
@@ -286,134 +278,22 @@ function SavedOutputs({ current, entry }: { current: ModuleItem; entry?: OutputE
   );
 }
 
-function ModuleFindings({
-  snapshot,
-  run,
-  view,
-  entry,
-  figures,
-}: {
-  snapshot: Snapshot;
-  run: PublishedRun;
-  view: ReportView;
-  entry: OutputEntry;
-  figures: ReturnType<typeof moduleFigures>;
-}) {
-  const index = view.entries.indexOf(entry);
-  const { downside, breaks, macro, securities, tableLines: figureTableLines } = figures;
-  const evidenceHref = (line: number) => evidencePath(run.folder, entry, line);
-  const allMetrics = foundationMetrics(entry, view.catalogue);
-  const metrics = allMetrics.filter(({ key }) => TILE_KEYS.includes(key));
+function UnavailableHandoff({ current }: { current: ModuleItem }) {
+  const count = current.outputs.length;
   return (
-    <ReportFindings
-      key={entry.output.id}
-      snapshot={snapshot}
-      run={run}
-      entry={entry}
-      entryIndex={index}
-      figureTableLines={figureTableLines}
-      chartsDrawn
-      moduleConfidence={
-        <ModuleConfidence snapshot={snapshot} run={run} entry={entry} entryIndex={index} />
-      }
-      afterBottomLine={
-        <MetricGrid
-          records={metrics}
-          entry={entry}
-          entryIndex={index}
-          snapshot={snapshot}
-          folder={run.folder}
-        />
-      }
-      beforeLimitations={
-        <div id="module-figures" tabIndex={-1} className="grid min-w-0 gap-4">
-          {downside && <Downside data={downside} href={evidenceHref} />}
-          {breaks && <BreakPoints data={breaks} href={evidenceHref} />}
-          {macro && <MacroSensitivity data={macro} href={evidenceHref} />}
-          {securities && (
-            <Securities
-              data={securities}
-              href={evidenceHref}
-              runUnit={runMoneyUnit(view.catalogue)}
-            />
-          )}
-          <LegacyVisuals
-            output={entry.output}
-            sections={entry.sections}
-            primary={entry.output.module === "CP-1" ? "Debt maturities" : undefined}
-            cards
-            headingLevel="h3"
-            evidenceHref={evidenceHref}
-          />
-        </div>
-      }
-    />
-  );
-}
-
-function UnavailableHandoff({ outputCount }: { outputCount: number }) {
-  return (
-    <section className={card}>
-      <h3 className={heading}>Handoff unavailable</h3>
-      <p>
-        {outputCount > 1
-          ? "Choose a saved output above."
-          : outputCount === 1
-            ? "Choose this module again under Modules in this run."
-            : "No output was saved for this module."}
-      </p>
-    </section>
-  );
-}
-
-function SelectedModule({
-  snapshot,
-  run,
-  view,
-  current,
-  entry,
-}: {
-  snapshot: Snapshot;
-  run: PublishedRun;
-  view: ReturnType<typeof buildReportView>;
-  current: ReportView["modules"][number];
-  entry?: OutputEntry;
-}) {
-  const figures = entry ? moduleFigures(entry, run) : null;
-  const figureTableLines = figures?.tableLines ?? [];
-  return (
-    <>
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h2 className="min-w-0 font-display text-h2 text-balance wrap-anywhere">{current.name}</h2>
-        <StatusBadge set="Module state" state={entry ? moduleState(entry) : current.state} />
-      </div>
-      <div className="grid min-w-0 gap-5 min-[1001px]:module-reader-columns">
-        <Navigator
-          key={entry?.output.id ?? current.id}
-          view={view}
-          run={run}
-          current={current.id}
-          entry={entry}
-          hasLocalFigures={Boolean(figures?.hasLocalFigures)}
-          figureTableLines={figureTableLines}
-        />
-        <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-4">
-          <SavedOutputs current={current} entry={entry} />
-          {entry && figures ? (
-            <ModuleFindings
-              key={entry.output.id}
-              snapshot={snapshot}
-              run={run}
-              view={view}
-              entry={entry}
-              figures={figures}
-            />
-          ) : (
-            <UnavailableHandoff outputCount={current.outputs.length} />
-          )}
-        </div>
-      </div>
-    </>
+    <div className="grid min-w-0 grid-cols-1 gap-4 lg:grid-cols-12">
+      <ModuleHeader module={current} bottomLine={null} owed={false} folder="" />
+      <section className={`${card} lg:col-span-12`}>
+        <h3 className={heading}>Handoff unavailable</h3>
+        <p>
+          {count > 1
+            ? "Choose a saved output above."
+            : count === 1
+              ? "Choose this module again under Modules in this run."
+              : "No output was saved for this module."}
+        </p>
+      </section>
+    </div>
   );
 }
 
@@ -435,13 +315,30 @@ export function Modules({
       ? (view.modules.find(({ id }) => id === "CP-1") ?? view.modules[0])
       : view.modules.find(({ id }) => id === module);
   if (!current) return <p className={card}>This module is unavailable in the published run.</p>;
+  const entry = moduleOutput(current, output);
   return (
-    <SelectedModule
-      snapshot={snapshot}
-      run={run}
-      view={view}
-      current={current}
-      entry={moduleOutput(current, output)}
-    />
+    <div className="grid min-w-0 gap-4 lg:grid-cols-[232px_minmax(0,1fr)]">
+      <StageNav
+        modules={view.modules}
+        current={current.id}
+        hrefFor={moduleHref}
+        className="self-start"
+      />
+      <div className="flex min-w-0 flex-col gap-4">
+        <SavedOutputs current={current} entry={entry} />
+        {entry ? (
+          <ModulePage
+            key={entry.output.id}
+            snapshot={snapshot}
+            run={run}
+            view={view}
+            current={current}
+            entry={entry}
+          />
+        ) : (
+          <UnavailableHandoff current={current} />
+        )}
+      </div>
+    </div>
   );
 }
