@@ -2,7 +2,8 @@
 
 Rewritten 2026-11-24 for the frontend redesign (owner: "re-design the entire frontend design
 language and system from scratch"). Replaces the earlier PRODUCT.md. Visual language lives in
-`DESIGN.md`.
+`DESIGN.md`. The full map of every screen and module — what to show, in what form, where,
+for whom and how much it matters — is `docs/design/screen-map.md`.
 
 ## What Credit OS is
 
