@@ -4,6 +4,15 @@ Keep one running record here. A pass applies only to the stated scope. Earlier v
 engine is in [EricMG13/final-workflow](https://github.com/EricMG13/final-workflow)'s
 `VERIFICATION.md`, which also keeps the retained runs this copy leaves out.
 
+## 2026-11-24 — Review fixes for PRs #72 and #71
+
+- Scope: the thirteen findings of the review of PRs #72 and #71, on `claude/gracious-hamilton-ciefz4`. Presentation under `web/src/pages/connected/` and the parallel CP-OS path in `handoff.py`, `cpos.py` and `cpos_launch.py`. Synthetic fixtures and fake providers only. No provider was called and no retained run was read.
+- Forecast page. The statement's source trace covers the columns shown. A period only one case publishes stays in the comparison and reads "Not published" for the others. Cases with no common period draw no comparison and say so. An excluded period is named with its reason. Case names are computed once per model; a label no other case shares is shown as published, and a collision gets the group's reader text or a worded ordinal. The selected case is matched by its raw group. Changes draws nothing for an empty module comparison. Run progress names the earliest unaccepted module at a checker stop.
+- Parallel CP-OS. The last look is the final step before dispatch and checks the ledger before the module. A call it refuses, and a call the adapter did not send, is logged as `turn_not_sent`. A failed hold release never replaces the refusal, and a halted module's unreleased hold is named on the launch's failure. The launcher states one module at a time when retained handoffs force it. A launch-wide stop is worded as one.
+- Checks run on the final tree: 1,874 connected-page tests, TypeScript, lint and format on the changed files; 247 targeted Python tests across the parallel, budget, handoff-loop and web-search files, 14 selected launcher tests with one historical case skipped, and the changed-code gate with zero findings. One connected-page test failed once in five runs while the Python tests ran alongside; it was not identified and did not repeat. The full suites were not run.
+- Review. Two spec reviews and two adversarial reviews, each followed by repairs. The first fix to the turn event let a stop arriving during the event write through to dispatch; the look was restored to last and the test that covered it was restored. The adversarial reviews mutated the source in scratch copies: 18 of 19 web and 5 of 6 Python mutations were caught. The confidence-review and rewrite-tournament skills were not available in this session; the adversarial passes stood in for them. No browser was used; pages were rendered in jsdom.
+- Known limitations, left as low. An `other` grid drawn as its own statement can show the no-common-period sentence beside a drawn comparison. One case that publishes a period twice gets a left-out sentence at the statement although both columns are drawn, and the trends section drops that period without a notice when no cash proxy row exists. A third case disjoint from two that share periods is drawn as "Not published" with no notice. The statement header applies reader text to a name where the cards do not. A `not_sent` reply whose release then fails leaves a `turn` with no `turn_not_sent`. A halt and a ledger stop met together now raise the ledger stop. At a width of three or more the run page may still name a bystander at a checker stop; not confirmed.
+
 ## 2026-11-24 — Parallel CP-OS review fixes for PR #71
 
 - Offline fake-provider runs reproduced a reserved call reaching dispatch after an unknown charge
@@ -946,45 +955,3 @@ Scope: presentation only, all under `web/`; no backend, handoff, provider or mod
   Retained CP-2G bytes match the prior SHA-256; preview stays read-only with its
   Test preview/admission qualification. No providers, Signal work or tournaments.
 - ZIP not built or published; Chrome and Edge work-PC acceptance remains pending.
-
-## 2026-11-16 — Five Caesars design critique priorities implemented
-
-- Preserved Credit OS React components and RBOT-HTML source/Python pins at
-  `256101a`; React dependencies unchanged. No providers, Signal work or tournaments.
-- Forecast now promotes exact reference-free scope/basis sentences before case
-  selection, with traces and the complete original notes retained below. Case
-  cards say Forecast cases; descriptions come from retained notes or explicit gaps.
-  Comparison keeps every case, highlights the selection and retains row traces;
-  the chart and its table still follow the selected case, including missing values.
-- Forecast axes use readable labels without changing series/table values; close
-  ticks fall back to exact labels rather than merge through display rounding.
-- Dates to watch uses the run as-of date, excludes Historical events, retains
-  recorded precision/status/source identity and qualifies overlapping partial dates.
-  Narrow Modules uses a native selector and collapsible section jump; desktop
-  navigation is preserved, with complementary 1000/1001px visibility boundaries.
-- Confidence review ranked (1) analytical fidelity/reference leakage, (2) case
-  selection versus comparison, (3) date/status ambiguity, (4) keyboard/navigation
-  boundaries, (5) rounded values/missing versus zero. Tests and Astra reviewers
-  confirmed and repaired false absence wording, missing-case comparison vanishing,
-  historical partial dates appearing upcoming, first-section activation failing,
-  and the breakpoint overlap. Numeric inputs and retained handoffs were untouched.
-- Two independent Astra reviewers rereviewed their fixes and inspected actual
-  Caesars in Chrome. Forecast: four rows, selected chart, readable axes, exact
-  464.86/647.95/183.09 bridge, trace to handoff line 310. Overview: watch dates begin
-  November 2026. At 390px the module selector and first-section jump work; all
-  temporary review tabs closed and viewport restored. This is scoped fidelity
-  review, not analytical clearance or Windows proof.
-- 61 focused tests pass, plus TypeScript, changed-file ESLint/Prettier and Python
-  quality gate (zero findings). Fallow still reports five 'new' and two inherited
-  complexity warnings: AST comparison shows four flagged new functions unchanged
-  from HEAD and the fifth differs only in its axis formatter call, with no added
-  branching. Existing complexity risks are retained; no suppressions were added.
-- Fresh offline dependency install and production build; staged production tree
-  `fb91f1e5e7eb01f403a13ba30ffd5ca19d040d14`. Both branded browsers passed all 32
-  synthetic upload-to-report checks on macOS: Chrome 157.0.8103.78 run
-  `20261116-030448-01`, Edge 157.0.4341.60 run `20261116-030505-01`.
-  Evidence: `proof-artifacts/run-4l6Qel/proof.json`. Added checks cover all-case
-  comparison, early scope, compact navigation and breakpoint/first-section behavior.
-- Updated read-only actual Caesars preview is at port 58337, run
-  `20261115-114658-01`; original Test preview/admission qualification remains.
-  ZIP was not rebuilt or published. Chrome and Edge work-PC acceptance is pending.
