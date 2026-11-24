@@ -147,3 +147,23 @@ it("draws no source reference or module code in a bridge step's label or a gap's
   const again = screen.getByRole("region", { name: "Liquidity bridge" });
   expect(again.textContent).not.toMatch(/cash_flow\.xlsx/);
 });
+
+it("keeps a bar's figure inside the track when the bar spans most of it", () => {
+  const full = [
+    ["Opening accessible liquidity", "1,000", "US$m", "Synthetic."],
+    ["Debt repayment", "-400", "US$m", "Synthetic."],
+    ["Closing accessible liquidity", "600", "US$m", "Synthetic."],
+  ];
+  render(<LiquidityLead {...leadProps(liquidity(full))} />);
+  const figure = within(screen.getByRole("region", { name: "Liquidity bridge" })).getByRole("img");
+  // The opening fills its 0 to 1,000 axis: its figure sits inside the bar, not off the left edge.
+  const placed = [...figure.querySelectorAll("[data-label]")].map((label) => [
+    label.textContent,
+    label.getAttribute("data-label"),
+  ]);
+  expect(placed).toEqual([
+    ["1,000", "inside"],
+    ["-400", "before"],
+    ["600", "after"],
+  ]);
+});

@@ -73,7 +73,9 @@ export function Bridge({ steps, unit, label }: { steps: Step[]; unit: string; la
           const to = ends[index] ?? 0;
           const left = at(Math.min(from, to));
           const width = Math.abs(at(to) - at(from));
-          const right = left + width > 0.8;
+          // The figure after the bar; before it when the bar ends near the right; inside it when
+          // the bar spans most of the track.
+          const place = left + width <= 0.8 ? "after" : left >= 0.2 ? "before" : "inside";
           return (
             <li
               key={step.line}
@@ -101,11 +103,18 @@ export function Bridge({ steps, unit, label }: { steps: Step[]; unit: string; la
                   style={{ left: pct(left), width: pct(width) }}
                 />
                 <span
-                  className="absolute top-1 font-mono text-small whitespace-nowrap text-text-primary tabular-nums"
+                  data-label={place}
+                  className={`absolute font-mono whitespace-nowrap tabular-nums ${
+                    place === "inside"
+                      ? "top-1.5 text-caption leading-4 text-text-on-action"
+                      : "top-1 text-small text-text-primary"
+                  }`}
                   style={
-                    right
-                      ? { right: pct(1 - left), paddingRight: "0.375rem" }
-                      : { left: pct(left + width), paddingLeft: "0.375rem" }
+                    place === "after"
+                      ? { left: pct(left + width), paddingLeft: "0.375rem" }
+                      : place === "before"
+                        ? { right: pct(1 - left), paddingRight: "0.375rem" }
+                        : { right: pct(1 - left - width), paddingRight: "0.375rem" }
                   }
                 >
                   {total ? step.cell.text : signed(step.cell.text)}
