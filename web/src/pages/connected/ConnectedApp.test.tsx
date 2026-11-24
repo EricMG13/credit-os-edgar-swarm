@@ -1769,7 +1769,10 @@ describe("connected activity and reports", () => {
       "aria-valuenow",
       "1",
     );
-    expect(screen.getByText("Source readiness").closest("li")).toHaveTextContent("Finished");
+    // A run in flight is one row: how far, and the module it is on. Every module is on Run progress.
+    expect(screen.getByText("1 of 2")).toBeVisible();
+    expect(screen.getByText("Now: Financial foundation")).toBeVisible();
+    expect(screen.queryByText("Source readiness")).toBeNull();
     expect(
       screen.getByText("submitted by Dana Reyes · started 16 Nov 2026, 14:02 UTC"),
     ).toBeInTheDocument();

@@ -6,6 +6,7 @@ import { Shell, type Area } from "../../shell/Shell";
 import { askAhead, LIBRARY_ADDRESS, snapshotAddress } from "./ahead";
 import type { Mode } from "./api";
 import { COVERAGE_ADDRESS } from "./coverageData";
+import { RunReadOnly } from "./RunReadOnly";
 
 type PageFile<P> = { default: ComponentType<P> };
 
@@ -162,14 +163,16 @@ function CurrentPage({
 }) {
   if (route.kind === "library") return <ReportLibrary readOnly={readOnly} />;
   if (route.kind === "coverage") return <Coverage />;
-  if (readOnly && ["start", "run-list", "run"].includes(route.kind)) {
+  if (readOnly && route.kind === "run-list") return <RunReadOnly title="Run activity" />;
+  if (readOnly && route.kind === "run") return <RunReadOnly title="Run progress" />;
+  if (readOnly && route.kind === "start") {
     return (
       <PageHeader title="Read-only preview" actions={<Button href="/">Back to Library</Button>} />
     );
   }
   if (route.kind === "start")
     return <StartRun key={prior} mode={mode} navigate={navigate} from={prior ?? undefined} />;
-  if (route.kind === "run-list") return <RunActivity />;
+  if (route.kind === "run-list") return <RunActivity mode={mode} />;
   if (route.kind === "run") return <RunProgress key={route.id} id={route.id} mode={mode} />;
   if (route.kind === "report") return <ReportReader key={route.id} id={route.id} mode={mode} />;
   return <PageHeader title="Page not found" actions={<Button href="/">Library</Button>} />;

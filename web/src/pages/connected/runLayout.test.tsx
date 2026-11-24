@@ -1,7 +1,6 @@
 import { cleanup, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { ConnectedApp } from "./ConnectedApp";
-import { RunActivity, RunReadOnly } from "./RunActivity";
 
 const ID = "20261124-210000-01";
 const run = {
@@ -116,7 +115,10 @@ describe("Run progress layout", () => {
     const loading = (
       await screen.findByRole("status", { name: "Loading run progress" })
     ).querySelectorAll("section");
-    const shapes = [...loading].map((tile) => [tile.getAttribute("aria-label"), tile.className]);
+    const shapes = [...loading].map((tile) => [
+      tile.getAttribute("aria-label")?.replace(", loading", ""),
+      tile.className,
+    ]);
     unmount();
     vi.unstubAllGlobals();
     serve(run);
@@ -216,7 +218,7 @@ describe("Run progress layout", () => {
 });
 
 describe("Run activity layout", () => {
-  const live = (id: string, issuer: string) => ({
+  const live = (id: string, issuer: string, extra: object = {}) => ({
     id,
     issuer_name: issuer,
     pathway: "credit_snapshot",
@@ -230,50 +232,132 @@ describe("Run activity layout", () => {
     modules: [
       ["CP-0", "done"],
       ["CP-1", "running"],
+      ["CP-2", "waiting"],
     ],
+    ...extra,
+  });
+  const ended = (id: string, issuer: string, reason: string) => ({
+    id,
+    issuer_name: issuer,
+    pathway: "credit_snapshot",
+    status: "failed",
+    reason,
+    ended_at: "2026-11-23T10:00:00Z",
+    submitted_by: "",
+  });
+  const list = {
+    updated: "2026-11-24T21:04:10Z",
+    held: "",
+    runs: [
+      live("a", "Alder Metals"),
+      live("w", "Waiting Co", { status: "queued", reason: "3 runs are already running" }),
+    ],
+    ended: [ended("b", "Birch Retail", "The checks rejected a draft of the legal module.")],
+    ended_total: 1,
+  };
+
+  it("draws a run in flight as one compact row: state, modules done of total, and the module it is on", async () => {
+    serve(list);
+    render(<ConnectedApp path="/runs" mode="live" />);
+    await screen.findByRole("link", { name: "Alder Metals" });
+    const running = screen.getByRole("region", { name: "Running" });
+    const rows = within(running).getAllByRole("listitem");
+    expect(rows).toHaveLength(1);
+    expect(within(rows[0] as HTMLElement).getByText("1 of 3")).toHaveClass("font-mono");
+    expect(within(rows[0] as HTMLElement).getAllByRole("progressbar")).toHaveLength(1);
+    expect(within(rows[0] as HTMLElement).getByText("Now: Financial foundation")).toBeVisible();
+    // The per-module view is Run progress's: the row does not list every module.
+    expect(rows[0]).not.toHaveTextContent("Fundamental credit");
+    expect(within(running).queryByRole("grid")).toBeNull();
   });
 
-  it("draws runs in flight before the runs that ended, with modules done of total in mono", async () => {
-    serve({
-      updated: "2026-11-24T21:04:10Z",
-      held: "",
-      runs: [live("a", "Alder Metals")],
-      ended: [
-        {
-          id: "b",
-          issuer_name: "Birch Retail",
-          pathway: "credit_snapshot",
-          status: "failed",
-          reason: "The checks rejected a draft.",
-          ended_at: "2026-11-23T10:00:00Z",
-          submitted_by: "",
-        },
-      ],
-      ended_total: 1,
-    });
-    render(<RunActivity mode="synthetic" />);
-    const running = await screen.findByRole("region", { name: "Running" });
-    expect(within(running).getByText("1 of 2")).toHaveClass("font-mono");
-    const ended = screen.getByRole("region", { name: "Ended without a report" });
-    expect(running.compareDocumentPosition(ended) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    // The reason is on the row, in words, beside the state.
-    const row = within(ended).getByRole("link", { name: "Birch Retail" }).closest("tr");
+  it("puts runs in flight first, the runs that stopped directly under them, and waiting runs after", async () => {
+    serve(list);
+    render(<ConnectedApp path="/runs" mode="live" />);
+    await screen.findByRole("link", { name: "Alder Metals" });
+    const [first, second, third] = ["Running", "Ended without a report", "Waiting"].map((name) =>
+      screen.getByRole("region", { name }),
+    ) as [HTMLElement, HTMLElement, HTMLElement];
+    expect(first.compareDocumentPosition(second) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(second.compareDocumentPosition(third) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it("says why a run stopped, in words, on its own row", async () => {
+    serve(list);
+    render(<ConnectedApp path="/runs" mode="live" />);
+    await screen.findByRole("link", { name: "Birch Retail" });
+    const stopped = screen.getByRole("region", { name: "Ended without a report" });
+    const row = within(stopped).getByRole("link", { name: "Birch Retail" }).closest("li");
     expect(row).toHaveTextContent("Failed");
-    expect(row).toHaveTextContent("The checks rejected a draft.");
-    expect(screen.getByText("Synthetic test")).toBeVisible();
+    expect(row).toHaveTextContent("The checks rejected a draft of the legal module.");
   });
 
-  it("draws no synthetic chip for a live service", async () => {
-    serve({ updated: "2026-11-24T21:04:10Z", held: "", runs: [], ended: [] });
-    render(<RunActivity mode="live" />);
-    expect(await screen.findByText("No run in progress")).toBeVisible();
+  it("says when a stopped run's record gives no reason, rather than leaving the row blank", async () => {
+    serve({ ...list, ended: [ended("b", "Birch Retail", "")] });
+    render(<ConnectedApp path="/runs" mode="live" />);
+    await screen.findByRole("link", { name: "Birch Retail" });
+    const stopped = screen.getByRole("region", { name: "Ended without a report" });
+    expect(within(stopped).getByText("The run record gives no reason.")).toBeVisible();
+  });
+
+  it("makes a run's link 32px tall, 44px on a phone, and breaks its name only between words", async () => {
+    serve(list);
+    render(<ConnectedApp path="/runs" mode="live" />);
+    const link = await screen.findByRole("link", { name: "Alder Metals" });
+    expect(link).toHaveClass("min-h-8", "max-[480px]:min-h-11", "wrap-break-word");
+    expect(link).not.toHaveClass("wrap-anywhere");
+  });
+
+  it("draws the synthetic chip from the app for a synthetic service, and none for a live one", async () => {
+    serve(list);
+    const { unmount } = render(<ConnectedApp path="/runs" mode="synthetic" />);
+    expect(await screen.findByText("Synthetic test")).toBeVisible();
+    unmount();
+    render(<ConnectedApp path="/runs" mode="live" />);
+    expect(await screen.findByRole("link", { name: "Alder Metals" })).toBeVisible();
     expect(screen.queryByText("Synthetic test")).toBeNull();
   });
 
-  it("explains a read-only preview as a gap with a way back", () => {
-    render(<RunReadOnly />);
-    expect(screen.getByRole("heading", { level: 1, name: "Run activity" })).toBeVisible();
-    expect(screen.getByText(/not available in a read-only preview/)).toBeVisible();
-    expect(screen.getByRole("link", { name: "Back to Library" })).toHaveAttribute("href", "/");
+  it("draws the loading page in the same layout as the loaded one", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(() => new Promise(() => undefined)),
+    );
+    const { unmount } = render(<ConnectedApp path="/runs" mode="live" />);
+    const loading = await screen.findByRole("status", { name: "Loading run activity" });
+    const shapes = [...loading.querySelectorAll("section")].map((tile) => [
+      tile.getAttribute("aria-label")?.replace(", loading", ""),
+      tile.className,
+    ]);
+    unmount();
+    vi.unstubAllGlobals();
+    serve(list);
+    render(<ConnectedApp path="/runs" mode="live" />);
+    await screen.findByRole("link", { name: "Alder Metals" });
+    for (const [label, classes] of shapes)
+      expect(screen.getByRole("region", { name: label ?? "" }).className).toBe(classes);
+  });
+
+  it("draws nothing as a run when the service cannot be reached, only a gap that says so", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(() => Promise.reject(new TypeError("Failed to fetch"))),
+    );
+    render(<ConnectedApp path="/runs" mode="live" />);
+    expect(await screen.findByText("Run activity could not be read")).toBeVisible();
+    expect(screen.getByText(/is not known\./)).toBeVisible();
+  });
+
+  it("explains a read-only preview of either run screen as a gap with a way back", () => {
+    for (const [path, title] of [
+      ["/runs", "Run activity"],
+      [`/run/${ID}`, "Run progress"],
+    ] as const) {
+      render(<ConnectedApp path={path} mode="live" readOnly />);
+      expect(screen.getByRole("heading", { level: 1, name: title })).toBeVisible();
+      expect(screen.getByText(/not available in a read-only preview/)).toBeVisible();
+      expect(screen.getByRole("link", { name: "Back to Library" })).toHaveAttribute("href", "/");
+      cleanup();
+    }
   });
 });

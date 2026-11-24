@@ -1,55 +1,18 @@
-import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Alert } from "@/components/alert/Alert";
 import { EmptyState } from "@/components/application/empty-state/empty-state";
-import { Table } from "@/components/application/table/table";
 import { Badge } from "@/components/base/badges/badges";
 import { Button } from "@/components/base/buttons/button";
-import { StatsStrip } from "@/components/kit/StatsStrip";
-import { ProgressBar } from "@/components/base/progress-indicators/progress-indicators";
-import { StatusBadge } from "@/components/status/StatusBadge";
-import { StatusShape } from "@/components/status/shapes";
 import { Skeleton } from "@/components/gap/Skeleton";
 import { PageHeader } from "../../shell/PageHeader";
 import { TextLink } from "../run/TextLink";
-import {
-  getActivity,
-  moduleName,
-  pathwayName,
-  serviceText,
-  type Activity,
-  type EndedRun,
-  type LiveRun,
-  type ConnectedModuleState,
-  type Mode,
-} from "./api";
-import { heading } from "./layout";
-import { Figure, GapNote } from "./report/overview/Tile";
-import { finishedFigure, stamp } from "./runFigures";
+import { getActivity, serviceText, type Activity, type Mode } from "./api";
+import { Figure, GapNote, Tile } from "./report/overview/Tile";
+import { EndedRow, RunGroup, RunningRow, runPath, WaitingRow } from "./runActivityParts";
+import { stamp } from "./runFigures";
 
 const RELOAD_MS = 5000;
-const STEP = {
-  done: "Finished",
-  running: "Running",
-  stopped: "Interrupted",
-  waiting: "Queued",
-} as const satisfies Record<ConnectedModuleState, string>;
-const ENDED = {
-  failed: "Failed",
-  capped: "Capped",
-  rejected: "Rejected",
-  interrupted: "Interrupted",
-} as const satisfies Record<EndedRun["status"], string>;
-const panel = "rounded-ds-lg border border-border-subtle bg-surface-card";
 const RUN_LINK = 'a[href^="/run/"]';
-
-const runPath = (run: { id: string }) => `/run/${encodeURIComponent(run.id)}`;
-const fileCount = (run: LiveRun) =>
-  run.files > 0 && `${String(run.files)} source file${run.files === 1 ? "" : "s"}`;
-const texts = (...parts: (string | false)[]) =>
-  parts.filter((part): part is string => Boolean(part));
-/** Why a run is not moving, and the name warning: the card and the waiting row both say them. */
-const notes = (run: LiveRun) =>
-  texts(serviceText(run.reason), run.name_differs && "Issuer name differs from earlier runs");
 
 /**
  * The list, re-read while the page is open. A read that fails is never shown as an empty list:
@@ -82,172 +45,6 @@ function useActivity(beforeUpdate: (next: Activity) => void) {
   return { read, failed };
 }
 
-function Tally({ counts }: { counts: [string, number][] }) {
-  return (
-    <StatsStrip
-      label="Run counts"
-      stats={counts.map(([label, count]) => ({ label, value: String(count) }))}
-    />
-  );
-}
-
-function RunIssuerLink({ run }: { run: Pick<LiveRun, "id" | "issuer_name"> }) {
-  return (
-    <TextLink href={runPath(run)} className="whitespace-normal wrap-anywhere">
-      {run.issuer_name || "Issuer not named"}
-    </TextLink>
-  );
-}
-
-function RunningCard({ run }: { run: LiveRun }) {
-  const { bar } = finishedFigure(run);
-  const line = texts(
-    run.submitted_by && `submitted by ${run.submitted_by}`,
-    run.started_at && `started ${stamp(run.started_at)}`,
-  ).join(" · ");
-  const foot = texts(fileCount(run), ...notes(run));
-  return (
-    <li className={`${panel} flex min-w-0 flex-col gap-4 p-5 sm:p-6`}>
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="min-w-0">
-          <h3 className="text-h4 font-medium text-balance wrap-anywhere">
-            <RunIssuerLink run={run} />
-          </h3>
-          {line && (
-            <p className="reading-copy mt-0.5 text-small text-text-tertiary tabular-nums">{line}</p>
-          )}
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <Badge color="gray">{pathwayName(run.pathway)}</Badge>
-          <StatusBadge set="Run states" state="Running" live />
-          {run.stalled && (
-            <Badge color="warning" className="gap-1.5 pl-2" icon={<StatusShape shape="triangle" />}>
-              No activity in the last hour
-            </Badge>
-          )}
-        </div>
-      </div>
-      {run.modules.length > 0 && (
-        <>
-          {bar && (
-            <div className="flex flex-col gap-2">
-              <Figure className="text-h3 font-medium">{`${String(bar.value)} of ${String(bar.max)}`}</Figure>
-              <ProgressBar value={bar.value} max={bar.max} label={bar.label} />
-            </div>
-          )}
-          <ul
-            aria-label="Modules"
-            className="grid gap-x-4 gap-y-1.5 rounded-ds-sm bg-surface-subtle p-3 sm:grid-cols-2"
-          >
-            {run.modules.map(([code, state]) => (
-              <li key={code} className="flex min-w-0 items-center justify-between gap-2">
-                <span className="min-w-0 text-small wrap-anywhere text-text-secondary">
-                  {moduleName(code)}
-                </span>
-                <StatusBadge set="Run states" state={STEP[state]} />
-              </li>
-            ))}
-          </ul>
-        </>
-      )}
-      {foot.length > 0 && (
-        <p className="flex flex-wrap gap-x-4 gap-y-1 border-t border-border-hairline pt-3 text-small text-text-secondary">
-          {foot.map((text) => (
-            <span key={text} className="min-w-0 wrap-anywhere">
-              {text}
-            </span>
-          ))}
-        </p>
-      )}
-    </li>
-  );
-}
-
-function WaitingTable({ runs, held }: { runs: LiveRun[]; held: string }) {
-  return (
-    <div className={`${panel} overflow-x-auto`}>
-      <Table aria-label="Waiting runs" size="sm" className="min-w-[24rem]">
-        <Table.Header>
-          <Table.Head id="issuer" isRowHeader label="Issuer" />
-          <Table.Head id="pathway" label="Pathway" />
-        </Table.Header>
-        <Table.Body items={runs}>
-          {(run) => (
-            <Table.Row id={run.id}>
-              <Table.Cell className="wrap-anywhere">
-                <RunIssuerLink run={run} />
-                {texts(
-                  texts(
-                    run.submitted_by && `submitted by ${run.submitted_by}`,
-                    fileCount(run),
-                  ).join(" · "),
-                  ...notes(run),
-                  !run.reason && !held && "Waiting for an available run slot.",
-                ).map((text) => (
-                  <span key={text} className="block text-caption">
-                    {text}
-                  </span>
-                ))}
-              </Table.Cell>
-              <Table.Cell>{pathwayName(run.pathway)}</Table.Cell>
-            </Table.Row>
-          )}
-        </Table.Body>
-      </Table>
-    </div>
-  );
-}
-
-function EndedTable({ runs }: { runs: EndedRun[] }) {
-  return (
-    <div className={`${panel} overflow-x-auto`}>
-      <Table aria-label="Runs that ended without a report" size="sm" className="min-w-[44rem]">
-        <Table.Header>
-          <Table.Head id="issuer" isRowHeader label="Issuer" />
-          <Table.Head id="pathway" label="Pathway" />
-          <Table.Head id="state" label="State" />
-          <Table.Head id="ended" label="Ended" />
-          <Table.Head id="reason" label="Reason" />
-        </Table.Header>
-        <Table.Body items={runs}>
-          {(run) => (
-            <Table.Row id={run.id}>
-              <Table.Cell className="wrap-anywhere">
-                <RunIssuerLink run={run} />
-              </Table.Cell>
-              <Table.Cell>{pathwayName(run.pathway)}</Table.Cell>
-              <Table.Cell>
-                <StatusBadge set="Run states" state={ENDED[run.status]} />
-              </Table.Cell>
-              <Table.Cell className="tabular-nums">
-                {run.ended_at ? stamp(run.ended_at) : "Not recorded"}
-              </Table.Cell>
-              <Table.Cell className="wrap-anywhere">{serviceText(run.reason)}</Table.Cell>
-            </Table.Row>
-          )}
-        </Table.Body>
-      </Table>
-    </div>
-  );
-}
-
-function Group({
-  title,
-  group,
-  children,
-}: {
-  title: string;
-  group: LiveRun["status"] | "ended";
-  children: ReactNode;
-}) {
-  return (
-    <section aria-label={title} data-run-group={group} className="grid min-w-0 content-start gap-3">
-      <h2 className={heading}>{title}</h2>
-      {children}
-    </section>
-  );
-}
-
 function Empty({ title, children }: { title: string; children: string }) {
   return (
     <EmptyState>
@@ -275,7 +72,7 @@ function groupForRunPath(activity: Activity, path: string) {
 }
 
 /** What is running, waiting and ended without a report. A run's own page has its spend, modules and activity. */
-export function RunActivity({ mode }: { mode?: Mode } = {}) {
+export function RunActivity({ mode }: { mode?: Mode }) {
   useEffect(() => {
     document.title = "Run activity — Credit OS";
   }, []);
@@ -286,14 +83,12 @@ export function RunActivity({ mode }: { mode?: Mode } = {}) {
     const node = document.activeElement;
     const region = content.current;
     if (!node || !region?.contains(node)) return;
-    const link =
-      node.closest<HTMLAnchorElement>(RUN_LINK) ??
-      node.closest("tr")?.querySelector<HTMLAnchorElement>(RUN_LINK);
+    const link = node.closest<HTMLAnchorElement>(RUN_LINK);
     const group = link?.closest<HTMLElement>("[data-run-group]")?.dataset.runGroup;
     if (!link || !group) return;
     if (groupForRunPath(next, link.pathname) !== group) {
       focusedRun.current = { node, href: link.href };
-      // Leave the departing grid before it assigns focus to a different run.
+      // Leave the departing row before the list moves its run to another group.
       region.focus({ preventScroll: true });
     }
   }, []);
@@ -311,7 +106,7 @@ export function RunActivity({ mode }: { mode?: Mode } = {}) {
       link?.focus();
     };
     let frame: number | undefined;
-    // The React Aria collection can remove the old row in a separate commit from the poll.
+    // The old row can be removed in a separate commit from the poll.
     const restoreAfterRemoval = () => {
       if (previous.node.isConnected) return;
       observer.disconnect();
@@ -329,6 +124,7 @@ export function RunActivity({ mode }: { mode?: Mode } = {}) {
   const waiting = read?.runs.filter((run) => run.status === "queued") ?? [];
   const ended = read?.ended ?? [];
   const endedTotal = Math.max(read?.ended_total ?? 0, ended.length);
+  const none = running.length + waiting.length + ended.length === 0;
   return (
     <>
       <PageHeader
@@ -348,35 +144,34 @@ export function RunActivity({ mode }: { mode?: Mode } = {}) {
         role="region"
         aria-label="Runs"
         tabIndex={-1}
-        className="mt-6 grid min-w-0 gap-6 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+        className="mt-6 grid min-w-0 gap-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
       >
         {read && (
-          <Tally
-            counts={[
-              ["Running", running.length],
-              ["Waiting", waiting.length],
-              ["Ended without a report", endedTotal],
-            ]}
-          />
+          <dl className="flex flex-wrap items-baseline gap-x-8 gap-y-2">
+            {(
+              [
+                ["Running", running.length],
+                ["Waiting", waiting.length],
+                ["Ended without a report", endedTotal],
+              ] as const
+            ).map(([term, count]) => (
+              <div key={term} className="flex items-baseline gap-2">
+                <dt className="text-small text-text-tertiary">{term}</dt>
+                <dd>
+                  <Figure className="text-h4 font-medium">{String(count)}</Figure>
+                </dd>
+              </div>
+            ))}
+          </dl>
         )}
         {read === undefined && !failed && (
-          <div role="status" aria-label="Loading run activity" className="grid gap-6">
-            <div className={`${panel} grid h-24 grid-cols-3 gap-4 p-5`}>
-              {[0, 1, 2].map((key) => (
-                <Skeleton key={key} lines={2} />
-              ))}
-            </div>
-            <div className="grid gap-4 xl:grid-cols-2">
-              {[0, 1].map((key) => (
-                <div key={key} className={`${panel} p-5 sm:p-6`}>
-                  <Skeleton lines={5} />
-                </div>
-              ))}
-            </div>
+          <div role="status" aria-label="Loading run activity" className="grid gap-4">
+            {["Running", "Ended without a report"].map((title) => (
+              <Tile key={title} span={12} label={`${title}, loading`}>
+                <Skeleton lines={4} />
+              </Tile>
+            ))}
           </div>
-        )}
-        {read && running.length + waiting.length + ended.length > 0 && (
-          <TextLink href="/">Finished runs are in the library</TextLink>
         )}
         {failed && (
           <Alert
@@ -393,6 +188,11 @@ export function RunActivity({ mode }: { mode?: Mode } = {}) {
               : "Run status is unknown. This page retries every few seconds. Finished reports are in the library."}
           </Alert>
         )}
+        {failed && read === undefined && (
+          <Tile span={12} label="Runs unknown">
+            <GapNote>Which runs are in flight, waiting or stopped is not known.</GapNote>
+          </Tile>
+        )}
         {read?.held && (
           <Alert tone="warning" title="Held by the service">
             <span className="wrap-anywhere">{serviceText(read.held)}</span>
@@ -405,7 +205,7 @@ export function RunActivity({ mode }: { mode?: Mode } = {}) {
               : `${String(read.unreadable)} run records could not be read and are not listed.`}
           </Alert>
         ) : null}
-        {read && running.length + waiting.length + ended.length === 0 && (
+        {read && none && (
           <Empty title={read.unreadable ? "No active runs listed" : "No run in progress"}>
             {read.unreadable
               ? "Other runs may be in progress if their records could not be read."
@@ -413,43 +213,38 @@ export function RunActivity({ mode }: { mode?: Mode } = {}) {
           </Empty>
         )}
         {running.length > 0 && (
-          <Group title="Running" group="running">
-            <ul className="grid items-start gap-4 xl:grid-cols-2">
-              {running.map((run) => (
-                <RunningCard key={run.id} run={run} />
-              ))}
-            </ul>
-          </Group>
-        )}
-        {waiting.length > 0 && (
-          <Group title="Waiting" group="queued">
-            <WaitingTable runs={waiting} held={read?.held ?? ""} />
-          </Group>
+          <RunGroup title="Running" group="running" count={running.length}>
+            {running.map((run) => (
+              <RunningRow key={run.id} run={run} />
+            ))}
+          </RunGroup>
         )}
         {ended.length > 0 && (
-          <Group title="Ended without a report" group="ended">
-            {endedTotal > ended.length && (
-              <p className="text-sm text-text-secondary">
-                {`Showing the latest ${String(ended.length)} of ${String(endedTotal)}.`}
-              </p>
-            )}
-            <EndedTable runs={ended} />
-          </Group>
+          <RunGroup
+            title="Ended without a report"
+            group="ended"
+            count={endedTotal}
+            intro={
+              endedTotal > ended.length && (
+                <p className="text-small text-text-secondary">
+                  {`Showing the latest ${String(ended.length)} of ${String(endedTotal)}.`}
+                </p>
+              )
+            }
+          >
+            {ended.map((run) => (
+              <EndedRow key={run.id} run={run} />
+            ))}
+          </RunGroup>
         )}
-      </div>
-    </>
-  );
-}
-
-/** The preview that holds no run records: the screen's own header and a gap that says why. */
-export function RunReadOnly() {
-  return (
-    <>
-      <PageHeader title="Run activity" actions={<Button href="/">Back to Library</Button>} />
-      <div className="mt-6">
-        <GapNote>
-          Runs are not available in a read-only preview. The library and reports are.
-        </GapNote>
+        {waiting.length > 0 && (
+          <RunGroup title="Waiting" group="queued" count={waiting.length}>
+            {waiting.map((run) => (
+              <WaitingRow key={run.id} run={run} held={read?.held ?? ""} />
+            ))}
+          </RunGroup>
+        )}
+        {read && !none && <TextLink href="/">Finished runs are in the library</TextLink>}
       </div>
     </>
   );

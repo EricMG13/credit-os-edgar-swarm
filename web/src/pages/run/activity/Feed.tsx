@@ -59,7 +59,7 @@ export function Feed({ lines }: { lines: ActivityLine[] }) {
               </div>
               <div className={cx("flex min-w-0 flex-1 flex-col", last ? "pb-0" : "pb-4")}>
                 <div className="flex flex-wrap items-center gap-2">
-                  <span className="min-w-0 text-sm font-medium wrap-anywhere text-text-secondary">
+                  <span className="min-w-0 text-small font-medium wrap-anywhere text-text-secondary">
                     {line.who}
                   </span>
                   <time className="font-mono text-caption text-text-tertiary tabular-nums">

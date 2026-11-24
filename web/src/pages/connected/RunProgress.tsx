@@ -401,17 +401,17 @@ export function RunProgress({ id, mode }: { id: string; mode: Mode }) {
           className="mt-6"
         >
           <Bento>
-            <Tile span={3} className={SPEND_TILE} label="Spend">
+            <Tile span={3} className={SPEND_TILE} label="Spend, loading">
               {problem ? <GapNote>Spend is not known.</GapNote> : <Skeleton lines={5} />}
             </Tile>
-            <Tile span={8} className={PIPELINE_TILE} label="Pipeline">
+            <Tile span={8} className={PIPELINE_TILE} label="Pipeline, loading">
               {problem ? (
                 <GapNote>Progress is not known while this run cannot be read.</GapNote>
               ) : (
                 <Skeleton lines={7} />
               )}
             </Tile>
-            <Tile span={12} label="Activity">
+            <Tile span={12} label="Activity, loading">
               {problem ? <GapNote>No activity is known.</GapNote> : <Skeleton lines={3} />}
             </Tile>
           </Bento>
